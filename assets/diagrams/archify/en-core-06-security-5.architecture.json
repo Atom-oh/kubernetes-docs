@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS Security Enhancement",
+    "locale": "en",
+    "output": "en-core-06-security-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      620
+    ],
+    "views": [
+      {
+        "id": "pod-protection",
+        "label": "Pod protection",
+        "focus": [
+          "iam",
+          "sg",
+          "sm",
+          "pod"
+        ],
+        "note": "IRSA grants permissions, Pod Security Groups control the network, and External Secrets Operator provides secrets."
+      },
+      {
+        "id": "api-protection",
+        "label": "API server protection",
+        "focus": [
+          "kms",
+          "waf",
+          "api"
+        ],
+        "note": "KMS encrypts Kubernetes Secrets and WAF protects traffic through the ALB integration."
+      },
+      {
+        "id": "node-protection",
+        "label": "Worker node protection",
+        "focus": [
+          "gd",
+          "node"
+        ],
+        "note": "GuardDuty EKS Threat Detection monitors the worker node runtime."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "sublabel": "IRSA (IAM Roles for Service Accounts)",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "security",
+      "label": "AWS Security Groups",
+      "sublabel": "Pod Security Groups",
+      "pos": [
+        60,
+        138
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "sm",
+      "type": "security",
+      "label": "AWS Secrets Manager",
+      "sublabel": "External Secrets Operator",
+      "pos": [
+        60,
+        226
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "kms",
+      "type": "security",
+      "label": "AWS KMS",
+      "sublabel": "Kubernetes Secret Encryption",
+      "pos": [
+        60,
+        314
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "waf",
+      "type": "security",
+      "label": "AWS WAF",
+      "sublabel": "Application Load Balancer (ALB) Integration",
+      "pos": [
+        60,
+        402
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "gd",
+      "type": "security",
+      "label": "AWS GuardDuty",
+      "sublabel": "EKS Threat Detection",
+      "pos": [
+        60,
+        490
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "Workloads",
+      "pos": [
+        760,
+        138
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "Control plane",
+      "pos": [
+        760,
+        358
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "Worker Node",
+      "sublabel": "Data plane",
+      "pos": [
+        760,
+        490
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Security Services → EKS Security Integration",
+      "wraps": [
+        "iam",
+        "sg",
+        "sm",
+        "kms",
+        "waf",
+        "gd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Cluster",
+      "wraps": [
+        "pod",
+        "api",
+        "node"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "iam-pod",
+      "from": "iam",
+      "to": "pod",
+      "label": "Grants permissions",
+      "variant": "security"
+    },
+    {
+      "id": "sg-pod",
+      "from": "sg",
+      "to": "pod",
+      "label": "Network security",
+      "variant": "security",
+      "labelDx": -60
+    },
+    {
+      "id": "sm-pod",
+      "from": "sm",
+      "to": "pod",
+      "label": "Provides secrets",
+      "variant": "security"
+    },
+    {
+      "id": "kms-api",
+      "from": "kms",
+      "to": "api",
+      "label": "Encrypts",
+      "variant": "security"
+    },
+    {
+      "id": "waf-api",
+      "from": "waf",
+      "to": "api",
+      "label": "Protects traffic",
+      "variant": "security"
+    },
+    {
+      "id": "gd-node",
+      "from": "gd",
+      "to": "node",
+      "label": "Monitors",
+      "variant": "security"
+    }
+  ]
+}

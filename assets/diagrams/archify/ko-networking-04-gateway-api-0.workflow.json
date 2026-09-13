@@ -1,0 +1,119 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Gateway API의 장점",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "messagebus": {
+          "label": "프로토콜 라우팅"
+        },
+        "security": {
+          "label": "권한 모델"
+        },
+        "cloud": {
+          "label": "표준 리소스"
+        },
+        "backend": {
+          "label": "확장 메커니즘"
+        }
+      }
+    },
+    "viewBox": [
+      972,
+      282
+    ]
+  },
+  "lanes": [
+    {
+      "id": "features",
+      "label": "Gateway API 특징"
+    }
+  ],
+  "mainPath": [
+    "exp",
+    "role",
+    "port",
+    "ext"
+  ],
+  "nodes": [
+    {
+      "id": "exp",
+      "lane": "features",
+      "col": 1,
+      "type": "messagebus",
+      "label": "표현력",
+      "sublabel": "다양한 프로토콜 지원",
+      "tag": "HTTP · gRPC · TCP · UDP",
+      "width": 160
+    },
+    {
+      "id": "role",
+      "lane": "features",
+      "col": 2,
+      "type": "security",
+      "label": "역할 기반 권한 분리",
+      "sublabel": "권한 분리",
+      "width": 160,
+      "tag": "인프라 · 운영 · 개발"
+    },
+    {
+      "id": "port",
+      "lane": "features",
+      "col": 3,
+      "type": "cloud",
+      "label": "이식성",
+      "sublabel": "표준화된 리소스",
+      "tag": "annotation 의존 제거",
+      "width": 160
+    },
+    {
+      "id": "ext",
+      "lane": "features",
+      "col": 4,
+      "type": "backend",
+      "label": "확장성",
+      "sublabel": "CRD 기반 확장",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "exp-role",
+      "from": "exp",
+      "to": "role"
+    },
+    {
+      "id": "role-port",
+      "from": "role",
+      "to": "port"
+    },
+    {
+      "id": "port-ext",
+      "from": "port",
+      "to": "ext"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "보완하는 Ingress API의 한계",
+      "items": [
+        "표현력 부족: HTTP 라우팅 외 TCP/UDP/gRPC 지원 미흡",
+        "역할 분리 불가: 인프라 관리자와 애플리케이션 개발자 권한 구분 어려움",
+        "Annotation 남용: 구현체별 기능을 annotation으로 처리하여 이식성 저하",
+        "확장성 제한: 새로운 프로토콜이나 기능 추가 어려움"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "개발·구현",
+      "items": [
+        "SIG-Network에서 개발하는 차세대 인그레스 API",
+        "Istio, Cilium, Envoy Gateway 등 다양한 구현체가 지원"
+      ]
+    }
+  ]
+}

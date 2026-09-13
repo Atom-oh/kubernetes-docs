@@ -1,0 +1,225 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Blue/Green Deployment Flow",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1183,
+      534
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Argo Rollouts step"
+        },
+        "security": {
+          "label": "Verification"
+        },
+        "frontend": {
+          "label": "Approval gate"
+        },
+        "external": {
+          "label": "Final state"
+        },
+        "messagebus": {
+          "label": "Rollback"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "promote",
+        "label": "Promotion path",
+        "focus": [
+          "deploy",
+          "pretest",
+          "approve",
+          "switch",
+          "posttest",
+          "scaledown",
+          "end"
+        ],
+        "note": "Deploy Green, verify it on the Preview Service, and switch production traffic from Blue to Green after approval."
+      },
+      {
+        "id": "rollback",
+        "label": "Rollback path",
+        "focus": [
+          "pretest",
+          "approve",
+          "posttest",
+          "rollback",
+          "quickrollback"
+        ],
+        "note": "A failed pre-test or rejected approval deletes Green; a failed post-verification switches back to Blue immediately."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prepare",
+      "label": "Deploy Green · Pre-test (Blue active)"
+    },
+    {
+      "id": "cutover",
+      "label": "Traffic switch · Post-verify"
+    },
+    {
+      "id": "recovery",
+      "label": "Rollback",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "deploy",
+    "pretest",
+    "approve",
+    "switch",
+    "posttest",
+    "scaledown",
+    "end"
+  ],
+  "nodes": [
+    {
+      "id": "deploy",
+      "lane": "prepare",
+      "col": 0,
+      "type": "cloud",
+      "label": "Deploy Green",
+      "sublabel": "Start · Blue active",
+      "width": 150
+    },
+    {
+      "id": "pretest",
+      "lane": "prepare",
+      "col": 1,
+      "type": "security",
+      "label": "Pre-test",
+      "sublabel": "Preview Service",
+      "tag": "smoke-tests",
+      "width": 150
+    },
+    {
+      "id": "approve",
+      "lane": "prepare",
+      "col": 2,
+      "type": "frontend",
+      "label": "Manual approval",
+      "sublabel": "or auto promotion",
+      "tag": "autoPromotion: off",
+      "width": 150
+    },
+    {
+      "id": "switch",
+      "lane": "prepare",
+      "col": 3,
+      "type": "cloud",
+      "label": "Traffic switch",
+      "sublabel": "Blue → Green",
+      "tag": "Active Service",
+      "width": 150
+    },
+    {
+      "id": "posttest",
+      "lane": "cutover",
+      "col": 3,
+      "type": "security",
+      "label": "Post-verify",
+      "sublabel": "Green in production",
+      "width": 150
+    },
+    {
+      "id": "scaledown",
+      "lane": "cutover",
+      "col": 4,
+      "type": "cloud",
+      "label": "Scale down Blue",
+      "sublabel": "after 30s",
+      "tag": "scaleDownDelay 30s",
+      "width": 150
+    },
+    {
+      "id": "end",
+      "lane": "cutover",
+      "col": 5,
+      "type": "external",
+      "label": "Complete",
+      "sublabel": "Green active",
+      "width": 150
+    },
+    {
+      "id": "rollback",
+      "lane": "recovery",
+      "col": 1,
+      "type": "messagebus",
+      "label": "Rollback",
+      "sublabel": "Delete Green",
+      "width": 150
+    },
+    {
+      "id": "quickrollback",
+      "lane": "recovery",
+      "col": 3,
+      "type": "messagebus",
+      "label": "Instant rollback",
+      "sublabel": "Switch to Blue",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "deploy",
+      "to": "pretest"
+    },
+    {
+      "from": "pretest",
+      "to": "approve",
+      "label": "Success",
+      "route": "straight"
+    },
+    {
+      "from": "approve",
+      "to": "switch",
+      "label": "Approve",
+      "variant": "emphasis"
+    },
+    {
+      "from": "switch",
+      "to": "posttest"
+    },
+    {
+      "from": "posttest",
+      "to": "scaledown",
+      "label": "Success",
+      "route": "straight"
+    },
+    {
+      "from": "scaledown",
+      "to": "end"
+    },
+    {
+      "from": "pretest",
+      "to": "rollback",
+      "label": "Fail",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "from": "approve",
+      "to": "rollback",
+      "label": "Reject",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "from": "posttest",
+      "to": "quickrollback",
+      "label": "Fail",
+      "variant": "dashed",
+      "role": "error"
+    }
+  ]
+}

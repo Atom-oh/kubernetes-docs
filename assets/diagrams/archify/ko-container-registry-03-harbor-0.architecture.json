@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Harbor 아키텍처",
+    "output": "ko-container-registry-03-harbor-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "image-path",
+        "label": "이미지 요청 경로",
+        "focus": [
+          "portal",
+          "core",
+          "registry"
+        ],
+        "note": "Core는 인증·인가와 아티팩트 관리를 담당한다. 이미지 데이터는 클라이언트와 Registry 사이에서 전송된다."
+      },
+      {
+        "id": "async-security",
+        "label": "비동기 작업과 보안",
+        "focus": [
+          "core",
+          "jobservice",
+          "trivy"
+        ],
+        "note": "Core가 복제·GC·스캔 작업을 Job Service에 맡기고, Trivy가 취약점을 스캔한다."
+      },
+      {
+        "id": "data-layer",
+        "label": "데이터 계층",
+        "focus": [
+          "core",
+          "postgres",
+          "redis"
+        ],
+        "note": "PostgreSQL이 프로젝트·사용자·정책 메타데이터를, Redis가 세션과 작업 큐를 담당한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "portal",
+      "type": "frontend",
+      "label": "Portal",
+      "sublabel": "Web UI · 관리 대시보드",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Core",
+      "sublabel": "API · 인증/인가 · 프로젝트",
+      "pos": [
+        500,
+        170
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "API"
+    },
+    {
+      "id": "registry",
+      "type": "backend",
+      "label": "Registry",
+      "sublabel": "OCI Distribution API",
+      "pos": [
+        120,
+        300
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "jobservice",
+      "type": "backend",
+      "label": "Job Service",
+      "sublabel": "복제 · GC · 스캔",
+      "pos": [
+        880,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "메타데이터",
+      "pos": [
+        400,
+        460
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "캐시 · 작업 큐",
+      "pos": [
+        620,
+        460
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "trivy",
+      "type": "security",
+      "label": "Trivy",
+      "sublabel": "취약점 스캐닝",
+      "pos": [
+        880,
+        460
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Harbor",
+      "wraps": [
+        "portal",
+        "core",
+        "registry",
+        "jobservice",
+        "postgres",
+        "redis",
+        "trivy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 계층",
+      "wraps": [
+        "postgres",
+        "redis"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "보안",
+      "wraps": [
+        "trivy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "portal-core",
+      "from": "portal",
+      "to": "core",
+      "label": "UI 요청",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "core-registry",
+      "from": "core",
+      "to": "registry",
+      "label": "Artifact API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "core-jobservice",
+      "from": "core",
+      "to": "jobservice",
+      "label": "작업 요청"
+    },
+    {
+      "id": "core-postgres",
+      "from": "core",
+      "to": "postgres",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "core-redis",
+      "from": "core",
+      "to": "redis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "jobservice-trivy",
+      "from": "jobservice",
+      "to": "trivy",
+      "label": "스캔",
+      "variant": "security",
+      "labelDy": 24
+    }
+  ]
+}

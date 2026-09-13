@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KEDA 아키텍처",
+    "output": "ko-service-mesh-istio-advanced-readme-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1290,
+      575
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "스케일 대상 워크로드",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카, 메트릭 노출",
+      "pos": [
+        300,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭 수집",
+      "pos": [
+        640,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "AWS CloudWatch",
+      "sublabel": "ADOT Collector 경유",
+      "pos": [
+        640,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "keda",
+      "type": "backend",
+      "label": "KEDA",
+      "sublabel": "Operator",
+      "pos": [
+        980,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "스케일링 결정"
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA",
+      "sublabel": "Controller",
+      "pos": [
+        980,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "scaledobject",
+      "type": "backend",
+      "label": "ScaledObject",
+      "sublabel": "스케일링 정책",
+      "pos": [
+        980,
+        420
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Service Mesh",
+      "wraps": [
+        "service",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "관찰성 스택",
+      "wraps": [
+        "prometheus",
+        "cloudwatch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "오토스케일링",
+      "wraps": [
+        "keda",
+        "hpa",
+        "scaledobject"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "service-envoy",
+      "from": "service",
+      "to": "envoy",
+      "label": "트래픽"
+    },
+    {
+      "id": "envoy-prometheus",
+      "from": "envoy",
+      "to": "prometheus",
+      "label": "메트릭",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-cloudwatch",
+      "from": "envoy",
+      "to": "cloudwatch",
+      "label": "메트릭",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "prometheus-keda",
+      "from": "prometheus",
+      "to": "keda",
+      "label": "PromQL 쿼리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cloudwatch-keda",
+      "from": "cloudwatch",
+      "to": "keda",
+      "label": "쿼리",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "scaledobject-keda",
+      "from": "scaledobject",
+      "to": "keda",
+      "label": "정책 정의",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "labelDx": 48
+    },
+    {
+      "id": "keda-hpa",
+      "from": "keda",
+      "to": "hpa",
+      "label": "생성 / 관리",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "hpa-service",
+      "from": "hpa",
+      "to": "service",
+      "label": "스케일",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          1065,
+          370
+        ],
+        [
+          125,
+          370
+        ]
+      ],
+      "labelSegment": 1
+    }
+  ]
+}

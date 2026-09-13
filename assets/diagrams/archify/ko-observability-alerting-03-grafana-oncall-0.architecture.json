@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana OnCall 구성 요소",
+    "output": "ko-observability-alerting-03-grafana-oncall-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "alert-path",
+        "label": "알림 처리 경로",
+        "focus": [
+          "sources",
+          "api",
+          "engine",
+          "routes",
+          "escalation",
+          "schedules",
+          "groups",
+          "channels"
+        ],
+        "note": "알림 소스에서 들어온 알림이 API Server와 Alert Engine을 거쳐 라우팅·에스컬레이션·스케줄 순으로 처리되어 알림 채널로 나간다."
+      },
+      {
+        "id": "state",
+        "label": "데이터 저장소",
+        "focus": [
+          "engine",
+          "postgres",
+          "redis",
+          "celery"
+        ],
+        "note": "Alert Engine은 PostgreSQL과 Redis에 상태를 기록하고, Celery Workers가 Redis를 통해 백그라운드 작업을 처리한다."
+      },
+      {
+        "id": "features",
+        "label": "기능",
+        "focus": [
+          "routes",
+          "escalation",
+          "schedules",
+          "groups"
+        ],
+        "note": "Routes, Escalation Chains, Schedules, Alert Groups가 온콜 관리 기능의 핵심이다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "sources",
+      "type": "external",
+      "label": "알림 소스",
+      "sublabel": "Alertmanager · Grafana · CloudWatch · Webhook",
+      "pos": [
+        20,
+        210
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "알림 수신",
+      "pos": [
+        320,
+        210
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "Alert Engine",
+      "sublabel": "알림 처리",
+      "pos": [
+        520,
+        210
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "영구 저장소",
+      "pos": [
+        770,
+        130
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "캐시 · 작업 큐",
+      "pos": [
+        770,
+        290
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "celery",
+      "type": "backend",
+      "label": "Celery Workers",
+      "sublabel": "백그라운드 작업",
+      "pos": [
+        970,
+        290
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "routes",
+      "type": "backend",
+      "label": "Routes",
+      "sublabel": "알림 라우팅",
+      "pos": [
+        320,
+        470
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "escalation",
+      "type": "backend",
+      "label": "Escalation Chains",
+      "sublabel": "에스컬레이션 체인",
+      "pos": [
+        520,
+        470
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "schedules",
+      "type": "backend",
+      "label": "Schedules",
+      "sublabel": "온콜 스케줄",
+      "pos": [
+        740,
+        470
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "groups",
+      "type": "backend",
+      "label": "Alert Groups",
+      "sublabel": "알림 그룹화",
+      "pos": [
+        940,
+        470
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "channels",
+      "type": "external",
+      "label": "알림 채널",
+      "sublabel": "Slack · Teams · Phone · SMS · Email · Mobile",
+      "pos": [
+        890,
+        650
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Grafana OnCall",
+      "wraps": [
+        "api",
+        "engine",
+        "postgres",
+        "redis",
+        "celery",
+        "routes",
+        "escalation",
+        "schedules",
+        "groups"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "핵심 컴포넌트",
+      "wraps": [
+        "api",
+        "engine"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "데이터 저장소",
+      "wraps": [
+        "postgres",
+        "redis",
+        "celery"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "기능",
+      "wraps": [
+        "routes",
+        "escalation",
+        "schedules",
+        "groups"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sources-to-api",
+      "from": "sources",
+      "to": "api",
+      "label": "알림 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-engine",
+      "from": "api",
+      "to": "engine",
+      "variant": "emphasis"
+    },
+    {
+      "id": "engine-to-routes",
+      "from": "engine",
+      "to": "routes",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "routes-to-escalation",
+      "from": "routes",
+      "to": "escalation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "escalation-to-schedules",
+      "from": "escalation",
+      "to": "schedules",
+      "variant": "emphasis"
+    },
+    {
+      "id": "schedules-to-groups",
+      "from": "schedules",
+      "to": "groups",
+      "variant": "emphasis"
+    },
+    {
+      "id": "groups-to-channels",
+      "from": "groups",
+      "to": "channels",
+      "label": "알림 발송",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "engine-to-postgres",
+      "from": "engine",
+      "to": "postgres"
+    },
+    {
+      "id": "engine-to-redis",
+      "from": "engine",
+      "to": "redis"
+    },
+    {
+      "id": "celery-to-redis",
+      "from": "celery",
+      "to": "redis",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "알림 유입",
+      "items": [
+        "Alertmanager, Grafana Alerting, CloudWatch, Webhook 통합으로 알림을 받는다",
+        "API Server가 수신하고 Alert Engine이 처리한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "온콜 관리 기능",
+      "items": [
+        "Routes로 알림을 라우팅한다",
+        "Escalation Chains로 시간 기반 자동 에스컬레이션을 수행한다",
+        "Schedules로 로테이션·오버라이드·휴일을 관리한다",
+        "Alert Groups로 관련 알림을 통합한다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "알림 채널",
+      "items": [
+        "Slack, MS Teams 등 ChatOps 연동",
+        "Phone Call, SMS, Email 알림",
+        "iOS/Android 모바일 앱 푸시 알림"
+      ]
+    }
+  ]
+}

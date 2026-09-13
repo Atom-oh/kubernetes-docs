@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "패턴 3: Hybrid (Istio + VPC Lattice)",
+    "output": "ko-service-mesh-istio-advanced-02-multi-cluster-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "intra",
+        "label": "클러스터 내부: Istio",
+        "focus": [
+          "istiod1",
+          "svc-a1",
+          "svc-b1",
+          "istiod2",
+          "svc-a2",
+          "svc-b2"
+        ],
+        "note": "각 클러스터 안에서는 Istio Mesh가 mTLS, Retry 등 Istio 전체 기능을 담당한다."
+      },
+      {
+        "id": "cross",
+        "label": "클러스터 간: VPC Lattice",
+        "focus": [
+          "svc-b1",
+          "lattice-sn",
+          "svc-b2"
+        ],
+        "note": "클러스터 간 통신은 East-West Gateway 없이 AWS VPC Lattice Service Network가 담당한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "istiod1",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Istio Mesh 컨트롤 플레인",
+      "pos": [
+        150,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-a1",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "로컬 Envoy 경유",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-b1",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "로컬 Envoy 경유",
+      "pos": [
+        280,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "istiod2",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Istio Mesh 컨트롤 플레인",
+      "pos": [
+        780,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-b2",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "로컬 Envoy 경유",
+      "pos": [
+        670,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-a2",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "로컬 Envoy 경유",
+      "pos": [
+        910,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lattice-sn",
+      "type": "cloud",
+      "label": "Service Network",
+      "sublabel": "Cross-cluster",
+      "pos": [
+        450,
+        410
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "클러스터 1 · us-east-1 (Istio Mesh)",
+      "wraps": [
+        "istiod1",
+        "svc-a1",
+        "svc-b1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클러스터 2 · us-west-2 (Istio Mesh)",
+      "wraps": [
+        "istiod2",
+        "svc-b2",
+        "svc-a2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS VPC Lattice",
+      "wraps": [
+        "lattice-sn"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istiod1-to-a1",
+      "from": "istiod1",
+      "to": "svc-a1",
+      "label": "Istio 전체 기능",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "a1-to-b1",
+      "from": "svc-a1",
+      "to": "svc-b1",
+      "label": "mTLS · Retry",
+      "variant": "emphasis"
+    },
+    {
+      "id": "istiod2-to-a2",
+      "from": "istiod2",
+      "to": "svc-a2",
+      "label": "Istio 전체 기능",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b2-to-a2",
+      "from": "svc-b2",
+      "to": "svc-a2",
+      "label": "mTLS · Retry",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b1-to-sn",
+      "from": "svc-b1",
+      "to": "lattice-sn",
+      "label": "VPC Lattice",
+      "variant": "dashed"
+    },
+    {
+      "id": "sn-to-b2",
+      "from": "lattice-sn",
+      "to": "svc-b2",
+      "label": "VPC Lattice",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "클러스터 내부: Istio",
+      "items": [
+        "Retry, Circuit Breaker, 세밀한 라우팅 등 Istio의 모든 고급 기능",
+        "mTLS와 인증/인가, 분산 추적은 Istio가 담당"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "클러스터 간: VPC Lattice",
+      "items": [
+        "East-West Gateway가 필요 없어 운영 복잡도 감소",
+        "Cross-region 트래픽 최소화로 비용 최적화",
+        "Cross-cluster 트래픽은 Lattice 기능 범위에 제한"
+      ]
+    }
+  ]
+}

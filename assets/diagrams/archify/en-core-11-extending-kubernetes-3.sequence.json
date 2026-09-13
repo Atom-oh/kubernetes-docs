@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How Admission Controllers Work",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1600,
+      640
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "authn-authz",
+        "label": "Authentication · Authorization",
+        "focus": [
+          "user",
+          "auth",
+          "mac"
+        ],
+        "note": "The user's API request passes authentication and authorization first, then enters the admission phase."
+      },
+      {
+        "id": "mutating",
+        "label": "Mutating admission",
+        "focus": [
+          "mac",
+          "mwh",
+          "vac"
+        ],
+        "note": "The mutating admission controller calls the mutating webhook to modify the resource, then hands it to validation."
+      },
+      {
+        "id": "validating",
+        "label": "Validating admission · store",
+        "focus": [
+          "vac",
+          "vwh",
+          "api",
+          "stor"
+        ],
+        "note": "The validating admission controller only validates via its webhook; the validated request is processed by the API and stored in etcd."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "Webhook call"
+        },
+        "return": {
+          "label": "Response"
+        },
+        "emphasis": {
+          "label": "Request"
+        },
+        "security": {
+          "label": "Auth passed"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User"
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "AuthN · AuthZ"
+    },
+    {
+      "id": "mac",
+      "type": "backend",
+      "label": "Mutating Admission"
+    },
+    {
+      "id": "mwh",
+      "type": "external",
+      "label": "Mutating Webhook"
+    },
+    {
+      "id": "vac",
+      "type": "backend",
+      "label": "Validating Admission"
+    },
+    {
+      "id": "vwh",
+      "type": "external",
+      "label": "Validating Webhook"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Processing"
+    },
+    {
+      "id": "stor",
+      "type": "database",
+      "label": "etcd Storage"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 250,
+      "label": "Authentication · Authorization"
+    },
+    {
+      "from": 270,
+      "to": 370,
+      "label": "Mutating phase"
+    },
+    {
+      "from": 390,
+      "to": 490,
+      "label": "Validating phase"
+    },
+    {
+      "from": 510,
+      "to": 560,
+      "label": "Store"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "user",
+      "to": "auth",
+      "y": 200,
+      "label": "1. API Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m2",
+      "from": "auth",
+      "to": "mac",
+      "y": 240,
+      "label": "2. Request Passes",
+      "variant": "security"
+    },
+    {
+      "id": "m3",
+      "from": "mac",
+      "to": "mwh",
+      "y": 290,
+      "label": "Webhook Call",
+      "variant": "dashed"
+    },
+    {
+      "id": "m4",
+      "from": "mwh",
+      "to": "mac",
+      "y": 322,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "mac",
+      "to": "vac",
+      "y": 360,
+      "label": "3. Mutated Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m6",
+      "from": "vac",
+      "to": "vwh",
+      "y": 410,
+      "label": "Webhook Call",
+      "variant": "dashed"
+    },
+    {
+      "id": "m7",
+      "from": "vwh",
+      "to": "vac",
+      "y": 442,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "m8",
+      "from": "vac",
+      "to": "api",
+      "y": 480,
+      "label": "4. Validated Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m9",
+      "from": "api",
+      "to": "stor",
+      "y": 530,
+      "label": "5. Store",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "auth",
+      "from": 195,
+      "to": 245,
+      "type": "security"
+    },
+    {
+      "participant": "mac",
+      "from": 235,
+      "to": 365,
+      "type": "backend"
+    },
+    {
+      "participant": "mwh",
+      "from": 285,
+      "to": 327,
+      "type": "external"
+    },
+    {
+      "participant": "vac",
+      "from": 355,
+      "to": 485,
+      "type": "backend"
+    },
+    {
+      "participant": "vwh",
+      "from": 405,
+      "to": 447,
+      "type": "external"
+    },
+    {
+      "participant": "api",
+      "from": 475,
+      "to": 535,
+      "type": "backend"
+    },
+    {
+      "participant": "stor",
+      "from": 525,
+      "to": 545,
+      "type": "database"
+    }
+  ]
+}

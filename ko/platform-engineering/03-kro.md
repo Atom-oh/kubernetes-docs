@@ -1,504 +1,272 @@
-# Kubernetes Resource Operator (KRO)
+# Kube Resource Orchestrator (kro)
 
-> **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 2월 21일
+> **마지막 업데이트**: 2026년 9월 12일 · **기준 버전**: kro 0.9.4
 
-## 개요
+## 개념과 적용 범위
 
-Kubernetes Resource Operator(KRO)는 Kubernetes 리소스 간의 관계를 선언적으로 정의하고 관리하는 프레임워크입니다. 기존 Helm 차트의 한계를 넘어, ResourceGraphDefinition(RGD)을 통해 리소스 그래프를 모델링하고 단일 Custom Resource로 복잡한 애플리케이션을 배포할 수 있습니다.
+kro의 공식 이름은 Kube Resource Orchestrator입니다. Kubernetes SIG Cloud Provider의 하위 프로젝트이며 ResourceGraphDefinition(RGD)으로 여러 Kubernetes 리소스의 입력 schema, 참조 관계와 상태를 정의합니다. RGD를 검증·컴파일한 뒤 생성한 CRD의 인스턴스를 동적으로 reconcile합니다.
 
-## KRO 핵심 개념
+RGD는 실행 중인 app 인스턴스가 아니라 API와 리소스 그래프의 정의입니다. 인스턴스 CR의 spec이 입력이고, spec.resources의 template이 Deployment·Service 같은 자원을 만듭니다. ACK 등 이미 설치된 CRD도 포함할 수 있지만 해당 controller의 역할이나 AWS IAM 권한을 kro가 대신 제공하지 않습니다.
 
-### Kubernetes Resource Operator란?
+YAML 안의 `${...}`는 CEL 표현식입니다. 예전 문서의 `.parent`, `.children`, childResources, resourceKind, statusMappings와 Go template 구문은 이 API의 예제가 아닙니다. 별도로 같은 app CRD를 손으로 생성해 RGD와 경쟁 관리하지 않습니다.
 
-Kubernetes Resource Operator(KRO)는 Kubernetes 리소스 간의 관계를 선언적으로 정의하고 관리하기 위한 프레임워크입니다. KRO는 다음과 같은 핵심 개념을 기반으로 합니다:
+## Helm·Kustomize·Operator와 비교
 
-1. **선언적 리소스 관계**: 리소스 간의 관계를 명시적으로 정의하여 복잡한 애플리케이션 구조를 표현합니다.
-2. **상태 기반 조정**: 원하는 상태와 실제 상태 간의 차이를 지속적으로 조정합니다.
-3. **리소스 그래프**: 리소스 간의 의존성과 관계를 그래프 형태로 모델링합니다.
-4. **자동화된 수명 주기 관리**: 리소스의 생성, 업데이트, 삭제를 자동으로 처리합니다.
+| 도구 | 주된 역할과 경계 |
+| --- | --- |
+| Helm | Go template으로 chart를 렌더링하고 release 이력을 관리합니다. v2 chart dependency는 Chart.yaml에 선언합니다. |
+| Kustomize | base와 patch로 manifest를 변환합니다. 자체 실행 중 controller는 아닙니다. |
+| 사용자 정의 Operator | 서비스별 복구·migration·백업 같은 도메인 동작을 코드로 구현할 수 있습니다. |
+| kro | CEL 참조를 분석해 리소스 그래프를 만들고 인스턴스를 reconcile합니다. 도메인별 DB 복구 알고리즘을 자동 생성하지 않습니다. |
 
-### ResourceGraphDefinition(RGD)
+Helm chart로 kro controller를 설치하고 GitOps로 RGD와 인스턴스를 관리할 수 있습니다. 도구들은 함께 사용할 수 있으며 Helm에서 kro로 옮긴다는 이유만으로 보안·복구·운영이 개선되는 것은 아닙니다. Kubernetes의 Deployment controller는 Helm으로 만든 Deployment도 계속 관리합니다.
 
-ResourceGraphDefinition(RGD)은 KRO의 핵심 구성 요소로, 커스텀 리소스와 그에 종속된 Kubernetes 네이티브 리소스 간의 관계를 정의합니다. RGD는 다음과 같은 기능을 제공합니다:
+## 설치와 권한
 
-1. **부모-자식 관계 정의**: 상위 리소스(부모)와 하위 리소스(자식) 간의 계층 구조를 정의합니다.
-2. **템플릿 기반 리소스 생성**: 부모 리소스의 속성을 기반으로 자식 리소스를 동적으로 생성합니다.
-3. **상태 전파**: 자식 리소스의 상태를 부모 리소스에 전파하여 전체 애플리케이션 상태를 파악할 수 있게 합니다.
-4. **의존성 관리**: 자식 리소스 간의 의존성을 정의하여 올바른 순서로 생성 및 업데이트되도록 합니다.
-
-### KRO vs 기존 접근 방식
-
-KRO는 기존의 Kubernetes 리소스 관리 접근 방식과 비교하여 다음과 같은 차별점을 가집니다:
-
-| 특징 | KRO | Helm | Operator SDK | Kustomize |
-|------|-----|------|--------------|-----------|
-| **리소스 관계 모델링** | 명시적 그래프 | 암시적 | 코드 기반 | 없음 |
-| **상태 전파** | 자동 | 수동 | 코드 기반 | 없음 |
-| **의존성 관리** | 선언적 | 암시적 | 코드 기반 | 없음 |
-| **확장성** | 높음 | 중간 | 높음 | 낮음 |
-| **학습 곡선** | 중간 | 낮음 | 높음 | 낮음 |
-| **GitOps 친화성** | 높음 | 중간 | 중간 | 높음 |
-
-### KRO 아키텍처
-
-KRO는 다음과 같은 구성 요소로 이루어져 있습니다:
-
-1. **KRO 컨트롤러**: ResourceGraphDefinition을 감시하고 리소스 그래프를 관리합니다.
-2. **리소스 그래프 엔진**: 리소스 간의 관계와 의존성을 처리합니다.
-3. **상태 관리자**: 리소스의 상태를 추적하고 전파합니다.
-4. **조정 루프**: 원하는 상태와 실제 상태 간의 차이를 조정합니다.
-
-```
-+-------------------+     +-------------------+     +-------------------+
-|  커스텀 리소스    |     | ResourceGraph     |     | Kubernetes        |
-|  (CR)            |<--->| Definition        |<--->| 네이티브 리소스    |
-+-------------------+     +-------------------+     +-------------------+
-         ^                        ^                         ^
-         |                        |                         |
-         v                        v                         v
-+-----------------------------------------------------------------------+
-|                          KRO 컨트롤러                                  |
-|                                                                       |
-|  +----------------+  +----------------+  +----------------+           |
-|  | 리소스 그래프  |  |   상태 관리자  |  |   조정 루프    |           |
-|  |     엔진       |  |                |  |                |           |
-|  +----------------+  +----------------+  +----------------+           |
-+-----------------------------------------------------------------------+
-```
-
-## KRO의 탄생 배경과 진화
-
-### Kubernetes 리소스 관리의 과제
-
-Kubernetes 애플리케이션이 복잡해지면서 리소스 관리 방식도 진화해 왔습니다:
-
-1. **kubectl 직접 관리**: 개별 YAML 파일을 수동으로 적용 — 리소스 간 관계와 순서 관리가 어려움
-2. **Helm**: 템플릿 기반 패키징으로 배포를 단순화했지만, Go 템플릿의 복잡성과 릴리스 상태 관리의 한계
-3. **Operator SDK**: 완전한 커스텀 컨트롤러 개발 가능하지만, Go 프로그래밍 지식과 높은 개발/유지보수 비용 필요
-4. **KRO**: 선언적 ResourceGraphDefinition으로 코딩 없이 리소스 그래프를 정의 — Operator의 강력함과 Helm의 간편함을 결합
-
-### KRO가 해결하는 문제
-
-| 기존 한계 | KRO의 해결 방식 |
-|-----------|----------------|
-| Helm 템플릿 복잡성 | 순수 YAML + 리소스 참조 구문 |
-| Operator 개발 비용 | RGD 선언만으로 CRD + 컨트롤러 자동 생성 |
-| 리소스 간 상태 전파 없음 | statusMappings로 자식→부모 상태 자동 전파 |
-| 의존성 순서 수동 관리 | 리소스 그래프에서 의존성 자동 해결 |
-
-## 실습 환경 설정
-
-이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
-
-### 필수 도구
-- kubectl v1.31 이상
-- Helm v3.10 이상
-- kro CLI v0.5.0 이상
-- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
-
-### KRO 설치
+공식 저장소는 kubernetes-sigs/kro이며 과거 kro-run 경로는 redirect될 수 있습니다. 아래는 현재 OCI chart를 pin한 **오프라인 검사**입니다. 원문의 kro-project 다운로드 URL과 별도 kro CLI 설치 명령은 사용하지 않습니다. 이 release에 CLI 실행 파일은 배포되지 않으며 kubectl/Helm으로 조작합니다.
 
 ```bash
-# KRO 컨트롤러 설치
-kubectl apply -f https://github.com/kro-project/kro/releases/download/v0.5.0/kro-controller.yaml
-
-# KRO CLI 설치
-curl -L https://github.com/kro-project/kro/releases/download/v0.5.0/kro-cli-$(uname -s)-$(uname -m) -o kro
-chmod +x kro
-sudo mv kro /usr/local/bin/
-
-# 설치 확인
-kubectl get pods -n kro-system
+helm template kro oci://registry.k8s.io/kro/charts/kro \
+  --version 0.9.4 --namespace kro-system \
+  --set rbac.mode=aggregation --include-crds
 ```
 
-## Helm과 KRO 비교
+실제 설치 전에는 지원 중인 Kubernetes 버전과 admission 정책, namespace, 기존 CRD·controller를 확인합니다. 예전 1.31~1.33 목록을 최신 지원 범위로 제시하지 않습니다. Helm upgrade는 crds/의 CRD를 자동 갱신하지 않으므로 0.9.4 release와 CRD 변경을 검토한 별도 절차가 필요합니다.
 
-### Helm
-
-Helm은 Kubernetes 애플리케이션을 패키징하고 배포하는 데 널리 사용되는 도구입니다. Helm은 다음과 같은 특징을 가지고 있습니다:
-
-- **템플릿 기반**: Go 템플릿 언어를 사용하여 Kubernetes 매니페스트를 생성
-- **차트 개념**: 애플리케이션을 패키징하는 단위
-- **릴리스 관리**: 배포된 애플리케이션의 버전 관리
-- **중앙 저장소**: 차트를 공유하고 재사용하기 위한 저장소
-
-### Kubernetes Resource Operator (KRO)
-
-KRO는 Kubernetes 커스텀 리소스를 사용하여 애플리케이션을 관리하는 접근 방식입니다:
-
-- **선언적 API**: Kubernetes 네이티브 방식으로 리소스 정의
-- **상태 기반**: 원하는 상태를 선언하고 컨트롤러가 실제 상태를 조정
-- **GitOps 친화적**: 버전 제어 시스템과 통합이 용이
-- **확장성**: 커스텀 리소스 정의(CRD)를 통한 확장
-
-### 비교 표
-
-| 기능 | Helm | KRO |
-|------|------|-----|
-| **패키징 방식** | 차트 (tgz 아카이브) | 커스텀 리소스 |
-| **템플릿 엔진** | Go 템플릿 | 없음 (순수 YAML) |
-| **버전 관리** | 릴리스 기록 | Git 기반 |
-| **롤백 메커니즘** | helm rollback | GitOps 기반 롤백 |
-| **의존성 관리** | requirements.yaml | ResourceGraphDefinition |
-| **사용자 정의** | values.yaml | CR 스펙 |
-| **설치 방법** | helm install | kubectl apply |
-| **업그레이드 방법** | helm upgrade | kubectl apply |
-| **삭제 방법** | helm uninstall | kubectl delete |
-| **후크** | 설치/업그레이드/삭제 후크 | Kubernetes 이벤트 기반 |
-
-## Helm에서 KRO로 마이그레이션하는 이유
-
-1. **Kubernetes 네이티브 접근 방식**: KRO는 Kubernetes의 선언적 API 모델을 따르므로 더 일관된 경험 제공
-2. **버전 관리 개선**: 각 리소스의 변경 사항을 개별적으로 추적 가능
-3. **세분화된 제어**: 개별 리소스 수준에서 더 세밀한 제어 가능
-4. **의존성 관리 간소화**: 명시적인 의존성 선언으로 복잡한 관계 관리 용이
-5. **보안 강화**: 최소 권한 원칙에 따라 필요한 권한만 부여 가능
-6. **상태 관리 개선**: 리소스 상태를 자동으로 전파하고 집계
-7. **GitOps 워크플로우 통합**: 선언적 접근 방식으로 GitOps 도구와의 통합 용이
-
-## 실제 예제: Nginx Helm 차트를 KRO로 마이그레이션
-
-### 기존 Helm 차트 (values.yaml)
+기본 rbac.mode=unrestricted는 광범위한 cluster 권한을 줍니다. 예제는 aggregation 모드를 렌더링했고, 이 모드에서도 CRD/RGD/GraphRevision·ConfigMap 등 기본 권한이 있습니다. app의 generated API와 자식 리소스에 대한 권한은 추가해야 합니다. 아래 ClusterRole은 이 예제의 타입을 허용하는 구성으로, cluster 전체에 해당 타입 권한을 줄 수 있으므로 신뢰된 platform 관리자가 RGD와 aggregation label을 관리해야 합니다.
 
 ```yaml
-# Nginx Helm 차트 values.yaml
-replicaCount: 2
-
-image:
-  repository: nginx
-  tag: 1.21.0
-  pullPolicy: IfNotPresent
-
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: true
-  hosts:
-    - host: example.com
-      paths:
-        - path: /
-          pathType: Prefix
-
-resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
-  requests:
-    cpu: 50m
-    memory: 64Mi
-```
-
-### KRO 커스텀 리소스 정의
-
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
 metadata:
-  name: nginxapps.kro.example.com
-spec:
-  group: kro.example.com
-  names:
-    kind: NginxApp
-    listKind: NginxAppList
-    plural: nginxapps
-    singular: nginxapp
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              properties:
-                replicas:
-                  type: integer
-                  default: 1
-                image:
-                  type: object
-                  properties:
-                    repository:
-                      type: string
-                    tag:
-                      type: string
-                    pullPolicy:
-                      type: string
-                      enum: [Always, IfNotPresent, Never]
-                service:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                      enum: [ClusterIP, NodePort, LoadBalancer]
-                    port:
-                      type: integer
-                ingress:
-                  type: object
-                  properties:
-                    enabled:
-                      type: boolean
-                    hosts:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          host:
-                            type: string
-                          paths:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                path:
-                                  type: string
-                                pathType:
-                                  type: string
-                resources:
-                  type: object
-                  properties:
-                    limits:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
-                    requests:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
+  name: kro:controller:reviewed-nginxapps
+  labels:
+    rbac.kro.run/aggregate-to-controller: "true"
+rules:
+  - apiGroups: [platform.example.com]
+    resources: [nginxapps]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [platform.example.com]
+    resources: [nginxapps/status, nginxapps/finalizers]
+    verbs: [get, update, patch]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [services]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: [get, list, watch, create, update, patch, delete]
 ```
 
-### ResourceGraphDefinition 생성
+## 완전한 NginxApp 예제
+
+저장소의 examples/platform/kro에 아래 RGD, 인스턴스와 RBAC 파일이 있습니다. ingress는 기본 비활성화입니다. 활성화하려면 승인된 IngressClass/controller, host DNS와 같은 namespace의 TLS Secret을 먼저 준비하세요. className=internal이라는 문자열만으로 내부 load balancer가 구성되지는 않습니다.
+
+image는 기존 Helm 예제와 같은 nginx-unprivileged tag를 사용합니다. 비특권 UID와 읽기 전용 root, /tmp volume을 구성했지만 실제 image 실행은 검증하지 않았습니다. 운영 시 digest·아키텍처·정책을 확인합니다.
+
+### ResourceGraphDefinition
 
 ```yaml
 apiVersion: kro.run/v1alpha1
 kind: ResourceGraphDefinition
 metadata:
-  name: nginxapp-graph
+  name: reviewed-nginxapps
 spec:
-  resourceKind:
-    group: kro.example.com
+  schema:
+    apiVersion: v1alpha1
+    group: platform.example.com
     kind: NginxApp
-    version: v1
-  childResources:
-    - apiVersion: apps/v1
-      kind: Deployment
-      nameTemplate: "{{.parent.metadata.name}}"
-      template: |
+    scope: Namespaced
+    spec:
+      replicas: integer | default=2 minimum=1 maximum=5
+      image: string | default="nginxinc/nginx-unprivileged:1.30.4-alpine"
+      ingress:
+        enabled: boolean | default=false
+        className: string | default="internal"
+        host: string | default="app.example.com"
+        tlsSecret: string | default="app-tls"
+    status:
+      availableReplicas: ${deployment.status.availableReplicas}
+      serviceIP: ${service.spec.clusterIP}
+  resources:
+    - id: deployment
+      readyWhen:
+        - ${deployment.status.availableReplicas >= deployment.spec.replicas}
+        - ${deployment.status.observedGeneration >= deployment.metadata.generation}
+      template:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
         spec:
-          replicas: {{.parent.spec.replicas}}
+          replicas: ${schema.spec.replicas}
           selector:
             matchLabels:
-              app: {{.parent.metadata.name}}
+              app.kubernetes.io/name: ${schema.metadata.name}
           template:
             metadata:
               labels:
-                app: {{.parent.metadata.name}}
+                app.kubernetes.io/name: ${schema.metadata.name}
             spec:
+              automountServiceAccountToken: false
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 101
+                runAsGroup: 101
+                fsGroup: 101
+                seccompProfile:
+                  type: RuntimeDefault
               containers:
-              - name: nginx
-                image: {{.parent.spec.image.repository}}:{{.parent.spec.image.tag}}
-                imagePullPolicy: {{.parent.spec.image.pullPolicy}}
-                ports:
-                - containerPort: {{.parent.spec.service.port}}
-                resources:
-                  {{- if .parent.spec.resources }}
-                  limits:
-                    {{- if .parent.spec.resources.limits.cpu }}
-                    cpu: {{.parent.spec.resources.limits.cpu}}
-                    {{- end }}
-                    {{- if .parent.spec.resources.limits.memory }}
-                    memory: {{.parent.spec.resources.limits.memory}}
-                    {{- end }}
-                  requests:
-                    {{- if .parent.spec.resources.requests.cpu }}
-                    cpu: {{.parent.spec.resources.requests.cpu}}
-                    {{- end }}
-                    {{- if .parent.spec.resources.requests.memory }}
-                    memory: {{.parent.spec.resources.requests.memory}}
-                    {{- end }}
-                  {{- end }}
-
-    - apiVersion: v1
-      kind: Service
-      nameTemplate: "{{.parent.metadata.name}}"
-      template: |
-        spec:
-          selector:
-            app: {{.parent.metadata.name}}
-          ports:
-          - port: {{.parent.spec.service.port}}
-            targetPort: {{.parent.spec.service.port}}
-          type: {{.parent.spec.service.type}}
-
-    - apiVersion: networking.k8s.io/v1
-      kind: Ingress
-      nameTemplate: "{{.parent.metadata.name}}"
-      condition: "{{.parent.spec.ingress.enabled}}"
-      template: |
-        spec:
-          rules:
-          {{- range .parent.spec.ingress.hosts }}
-          - host: {{.host}}
-            http:
-              paths:
-              {{- range .paths }}
-              - path: {{.path}}
-                pathType: {{.pathType}}
-                backend:
-                  service:
-                    name: {{$.parent.metadata.name}}
-                    port:
-                      number: {{$.parent.spec.service.port}}
-              {{- end }}
-          {{- end }}
-
-  statusMappings:
-    - childResource:
-        kind: Deployment
-        name: "{{.parent.metadata.name}}"
-      conditions:
-        - type: Available
-          mapping:
-            type: Ready
-      fieldMappings:
-        - child: "status.availableReplicas"
-          parent: "status.availableReplicas"
-        - child: "status.readyReplicas"
-          parent: "status.readyReplicas"
-
-    - childResource:
+                - name: web
+                  image: ${schema.spec.image}
+                  ports:
+                    - name: http
+                      containerPort: 8080
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                      drop: [ALL]
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 64Mi
+                    limits:
+                      cpu: 500m
+                      memory: 128Mi
+                  readinessProbe:
+                    httpGet:
+                      path: /
+                      port: http
+                  volumeMounts:
+                    - name: tmp
+                      mountPath: /tmp
+              volumes:
+                - name: tmp
+                  emptyDir:
+                    sizeLimit: 64Mi
+    - id: service
+      template:
+        apiVersion: v1
         kind: Service
-        name: "{{.parent.metadata.name}}"
-      fieldMappings:
-        - child: "spec.clusterIP"
-          parent: "status.serviceIP"
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        spec:
+          type: ClusterIP
+          selector: ${deployment.spec.selector.matchLabels}
+          ports:
+            - name: http
+              port: 8080
+              targetPort: http
+    - id: ingress
+      includeWhen:
+        - ${schema.spec.ingress.enabled}
+      template:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        spec:
+          ingressClassName: ${schema.spec.ingress.className}
+          tls:
+            - hosts:
+                - ${schema.spec.ingress.host}
+              secretName: ${schema.spec.ingress.tlsSecret}
+          rules:
+            - host: ${schema.spec.ingress.host}
+              http:
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: ${service.metadata.name}
+                        port:
+                          number: 8080
 ```
 
-### KRO 커스텀 리소스 인스턴스
+### 인스턴스
 
 ```yaml
-apiVersion: kro.example.com/v1
+apiVersion: platform.example.com/v1alpha1
 kind: NginxApp
 metadata:
-  name: my-nginx
+  name: reviewed-web
+  namespace: example
 spec:
   replicas: 2
-  image:
-    repository: nginx
-    tag: 1.21.0
-    pullPolicy: IfNotPresent
-  service:
-    type: ClusterIP
-    port: 80
+  image: nginxinc/nginx-unprivileged:1.30.4-alpine
   ingress:
-    enabled: true
-    hosts:
-      - host: example.com
-        paths:
-          - path: /
-            pathType: Prefix
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 50m
-      memory: 64Mi
+    enabled: false
+    className: internal
+    host: app.example.com
+    tlsSecret: app-tls
 ```
 
-### 배포 및 검증
+schema.spec의 SimpleSchema는 타입·default·범위를 표현하며 kro가 generated CRD의 OpenAPI schema로 변환합니다. CEL의 schema.metadata/spec은 인스턴스를 가리키고 deployment/service는 resource id를 가리킵니다. status는 schema.status의 CEL로 정의합니다.
+
+이 예제의 readyWhen은 Deployment 자신의 availableReplicas와 observedGeneration을 확인합니다. 준비 조건이 없으면 자원이 존재하고 참조가 해석되는 수준에서 다음 단계로 갈 수 있습니다. readyWhen은 자신의 resource id만 참조하는 Boolean 식이어야 합니다. app SLO·DB 연결 검사는 별도입니다.
+
+Service가 Deployment selector를, Ingress가 Service 이름을 참조하므로 dependency가 생깁니다. 독립 자원은 같은 wave에서 처리할 수 있으며 순환 dependency는 허용하지 않습니다. includeWhen은 조건부 포함이며 조건이 바뀌면 자원이 추가되거나 제거될 수 있습니다. Secret 같은 기존 리소스를 externalRef로 읽으면 해당 자원의 소유권을 가져와 생성·삭제하는 것과 다릅니다.
+
+### 적용 순서와 확인
+
+실제 cluster에서 승인된 RBAC와 RGD를 적용한 뒤 RGD가 Active인지, 생성된 nginxapps.platform.example.com CRD가 Established인지 확인하고 인스턴스를 적용합니다. 단순 kubectl apply 성공을 graph 컴파일이나 app readiness 성공으로 해석하지 않습니다.
 
 ```bash
-# CRD 및 RGD 적용
-kubectl apply -f nginxapp-crd.yaml
-kubectl apply -f nginxapp-rgd.yaml
-
-# 커스텀 리소스 인스턴스 적용
-kubectl apply -f my-nginx.yaml
-
-# 생성된 리소스 확인
-kubectl get deployments,services,ingress -l app=my-nginx
-
-# 커스텀 리소스 상태 확인
-kubectl get nginxapp my-nginx -o yaml
+kubectl get rgd reviewed-nginxapps -o yaml
+kubectl get graphrevisions \
+  -l internal.kro.run/resource-graph-definition-name=reviewed-nginxapps
+kubectl get crd nginxapps.platform.example.com -o yaml
+kubectl get nginxapps.platform.example.com reviewed-web -n example -o yaml
+kubectl get deployments,services,ingresses -n example \
+  -l app.kubernetes.io/name=reviewed-web
 ```
 
-## KRO 사용 사례
+## GraphRevision와 변경 관리
 
-### 1. 마이크로서비스 애플리케이션 관리
+0.9.4는 RGD spec의 변경을 immutable GraphRevision으로 기록하고 컴파일합니다. latest revision이 실패하면 이전 revision으로 자동 fallback하지 않고 인스턴스 진행이 멈출 수 있습니다. GraphAccepted, GraphVerified, GraphRevisionsResolved 등의 조건과 오류 메시지를 확인하고 유효한 spec을 다시 적용합니다.
 
-KRO는 여러 구성 요소로 이루어진 마이크로서비스 애플리케이션을 관리하는 데 이상적입니다. 각 마이크로서비스는 다음과 같은 리소스로 구성될 수 있습니다:
+GraphRevision은 internal.kro.run API이므로 관찰·진단 목적으로 사용하고 구조에 의존하는 외부 도구를 만들 때 버전 안정성을 가정하지 않습니다. Git 이전 spec으로 돌아가도 새 revision에서 다시 검증되며, DB 데이터·외부 부작용까지 되돌리는 transaction은 아닙니다.
 
-- Deployment 또는 StatefulSet
-- Service
-- ConfigMap
-- Secret
-- HorizontalPodAutoscaler
-- PodDisruptionBudget
+group, kind, apiVersion, scope는 해당 RGD에서 immutable 필드입니다. 같은 API의 호환성 변경과 신규 API 마이그레이션을 구분하고 기존 인스턴스·schema·저장 데이터를 검토하세요. conversion webhook이 자동 생성된다고 가정하지 않습니다.
 
-KRO를 사용하면 이러한 리소스 간의 관계를 명시적으로 정의하고, 단일 커스텀 리소스를 통해 전체 마이크로서비스를 관리할 수 있습니다.
+## 삭제와 소유권
 
-### 2. 데이터베이스 클러스터 관리
+인스턴스 삭제 시 kro는 ApplySet inventory와 삭제 wave를 사용해 dependent부터 정리하고, 관리 자원이 사라질 때까지 finalizer를 유지합니다. child finalizer가 다음 wave를 막을 수 있습니다. externalRef는 읽기 전용 참조이며 kro가 삭제하지 않습니다.
 
-데이터베이스 클러스터(예: PostgreSQL, MySQL)는 여러 구성 요소와 복잡한 설정이 필요합니다. KRO를 사용하면 다음과 같은 리소스를 관리할 수 있습니다:
+모든 child가 즉시 garbage collection된다는 설명은 부정확합니다. ResourcesReady=Unknown/UnderDeletion 조건, inventory와 child finalizer를 조사하세요. controller를 제거하기 전에 instance/RGD/CRD·데이터의 정리 및 보존 계획을 세워야 합니다. CRD 삭제는 인스턴스 데이터에도 영향을 줍니다.
 
-- 마스터 및 레플리카 StatefulSet
-- 서비스 엔드포인트
-- 영구 볼륨 클레임
-- 백업 및 복원 작업
-- 모니터링 구성
+## 마이그레이션과 운영 패턴
 
-### 3. 멀티 클러스터 애플리케이션 배포
+Helm과 kro가 같은 object를 동시에 관리하지 않도록 이름·selector·소유권·field manager·GitOps controller를 먼저 확인합니다. 새 이름의 graph를 검증하고 traffic을 전환하는 방법 또는 검토된 소유권 이전 절차를 선택합니다. 기존 release를 단순 uninstall해서 StatefulSet/PVC/DB를 정리하는 방식으로 마이그레이션하지 않습니다.
 
-KRO는 여러 Kubernetes 클러스터에 걸쳐 있는 애플리케이션을 관리하는 데도 사용할 수 있습니다. 이를 통해 다음과 같은 시나리오를 지원합니다:
+여러 환경에는 동일한 API 계약과 검증된 이미지 digest를 사용하되 namespace, replicas, ingress와 정책은 별도 인스턴스로 관리합니다. ApplicationSet 같은 fleet 도구를 사용하려면 각 cluster에 kro/RGD/권한을 먼저 준비해야 합니다. kro가 임의 원격 cluster에 자동 접속하는 기능은 아닙니다.
 
-- 지역별 배포
-- 개발, 스테이징, 프로덕션 환경 간의 일관된 배포
-- 하이브리드 클라우드 환경에서의 애플리케이션 관리
+DB·stateful app은 전용 DB Operator 또는 관리형 서비스의 backup, restore, failover, schema migration 기능이 필요합니다. kro의 리소스 조정만으로 데이터 복구가 구현되지는 않습니다. RGD 크기와 권한을 제한하고 재사용 단위를 나누며 필요한 status만 공개하세요. Secret 내용을 status·label·로그로 내보내지 않습니다.
 
-## KRO의 모범 사례
+## 검증 범위와 참고 자료
 
-### 1. 리소스 그래프 설계
+원문 본문 504줄·퀴즈 423줄씩, 16개 고유 code block과 각 언어 20개 문제 주제를 검토했습니다. kro 0.9.4 OCI chart의 aggregation 렌더링과 공식 RGD 구조를 확인했고, 해당 버전이 사용하는 cel-go 0.31.0으로 본문의 14개 고유 식을 실제 컴파일·평가했습니다. ingress on/off, 준비 replica 부족과 오래된 observedGeneration의 4가지 합성 사례가 통과했습니다.
 
-- **단일 책임 원칙**: 각 커스텀 리소스는 명확한 단일 책임을 가져야 합니다.
-- **적절한 추상화 수준**: 너무 세부적이거나 너무 추상적이지 않은 적절한 수준의 추상화를 선택합니다.
-- **명확한 경계**: 리소스 간의 경계와 책임을 명확히 정의합니다.
-- **재사용성**: 공통 패턴을 식별하고 재사용 가능한 구성 요소로 추출합니다.
+이 검사는 dynamic 합성 입력을 사용하는 CEL 검사이며 kro 전체 graph compiler의 타입 추론, Kubernetes API discovery, generated CRD admission이나 실제 controller 실행을 검증한 것은 아닙니다. container·Ingress·TLS·DB·클러스터 리소스는 실행하지 않았습니다.
 
-### 2. 상태 관리
+- [kro 0.9.4](https://github.com/kubernetes-sigs/kro/releases/tag/v0.9.4)
+- [Versioned API and source](https://github.com/kubernetes-sigs/kro/tree/v0.9.4)
+- [RGD schema](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/concepts/rgd/01-schema.md)
+- [Access control](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/01-access-control.md)
+- [Graph revisions](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/05-graph-revisions.md)
+- [Instance deletion](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/06-instance-deletion.md)
 
-- **의미 있는 상태**: 사용자에게 의미 있는 상태 정보를 제공합니다.
-- **상태 집계**: 여러 자식 리소스의 상태를 적절히 집계합니다.
-- **조건 정의**: 명확한 조건 유형과 상태를 정의합니다.
-- **진단 정보**: 문제 해결에 도움이 되는 진단 정보를 포함합니다.
-
-### 3. 버전 관리
-
-- **API 버전 관리**: 커스텀 리소스 API의 버전을 적절히 관리합니다.
-- **변환 웹훅**: 버전 간 변환을 위한 웹훅을 구현합니다.
-- **하위 호환성**: 가능한 한 하위 호환성을 유지합니다.
-- **점진적 마이그레이션**: 대규모 변경은 점진적으로 도입합니다.
-
-### 4. 보안
-
-- **최소 권한**: 컨트롤러에 필요한 최소한의 권한만 부여합니다.
-- **RBAC 정책**: 적절한 RBAC 정책을 정의하여 액세스를 제어합니다.
-- **비밀 관리**: 민감한 정보는 Secret으로 관리합니다.
-- **검증 웹훅**: 입력 유효성 검사를 위한 웹훅을 구현합니다.
-
-## 결론
-
-Helm에서 KRO로의 마이그레이션은 Kubernetes 네이티브 접근 방식으로 전환하는 중요한 단계입니다. 이를 통해 더 선언적이고, 확장 가능하며, GitOps 친화적인 애플리케이션 관리가 가능해집니다. 특히 복잡한 애플리케이션의 경우, KRO는 더 세분화된 제어와 개선된 버전 관리를 제공합니다.
-
-ResourceGraphDefinition(RGD)은 KRO의 핵심 개념으로, 리소스 간의 관계를 명시적으로 정의하고 상태를 전파하는 메커니즘을 제공합니다. 이를 통해 복잡한 애플리케이션 구조를 더 쉽게 모델링하고 관리할 수 있습니다.
-
-마이그레이션 과정은 초기에 추가 작업이 필요하지만, 장기적으로는 유지 관리 및 운영 측면에서 상당한 이점을 제공합니다. 점진적인 마이그레이션 접근 방식을 통해 위험을 최소화하면서 KRO의 이점을 활용할 수 있습니다.
-
-KRO는 아직 발전 중인 기술이지만, Kubernetes 생태계의 미래 방향성을 보여주는 중요한 접근 방식입니다. 선언적 API, 리소스 관계 모델링, 상태 전파와 같은 개념은 클라우드 네이티브 애플리케이션 관리의 핵심 원칙이 되고 있습니다.
-
-## 퀴즈
-
-이 장에서 배운 내용을 테스트하려면 [KRO 퀴즈](../quizzes/platform-engineering/03-kro-quiz.md)를 풀어보세요.
+[kro 퀴즈](../quizzes/platform-engineering/03-kro-quiz.md)

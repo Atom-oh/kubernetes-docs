@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Full-Mesh BGP (5 Nodes)",
+    "output": "en-networking-calico-04-bgp-deep-dive-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      700
+    ],
+    "column_fit": "spread",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "iBGP session (direct peering between a node pair)"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "AS 64512"
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "AS 64512"
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "Node 3",
+      "sublabel": "AS 64512"
+    },
+    {
+      "id": "n4",
+      "type": "backend",
+      "label": "Node 4",
+      "sublabel": "AS 64512"
+    },
+    {
+      "id": "n5",
+      "type": "backend",
+      "label": "Node 5",
+      "sublabel": "AS 64512"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 322,
+      "label": "Node 1 → the other 4 nodes (4 sessions)"
+    },
+    {
+      "from": 340,
+      "to": 454,
+      "label": "Node 2 → 3 remaining nodes (3 sessions)"
+    },
+    {
+      "from": 472,
+      "to": 548,
+      "label": "Node 3 → 2 remaining nodes (2 sessions)"
+    },
+    {
+      "from": 566,
+      "to": 606,
+      "label": "Node 4 → Node 5 (1 session) · total 4+3+2+1 = 10"
+    }
+  ],
+  "messages": [
+    {
+      "id": "n1-n2",
+      "from": "n1",
+      "to": "n2",
+      "y": 190,
+      "label": "iBGP session 1/10"
+    },
+    {
+      "id": "n1-n3",
+      "from": "n1",
+      "to": "n3",
+      "y": 228,
+      "label": "iBGP session 2/10"
+    },
+    {
+      "id": "n1-n4",
+      "from": "n1",
+      "to": "n4",
+      "y": 266,
+      "label": "iBGP session 3/10"
+    },
+    {
+      "id": "n1-n5",
+      "from": "n1",
+      "to": "n5",
+      "y": 304,
+      "label": "iBGP session 4/10"
+    },
+    {
+      "id": "n2-n3",
+      "from": "n2",
+      "to": "n3",
+      "y": 360,
+      "label": "iBGP session 5/10"
+    },
+    {
+      "id": "n2-n4",
+      "from": "n2",
+      "to": "n4",
+      "y": 398,
+      "label": "iBGP session 6/10"
+    },
+    {
+      "id": "n2-n5",
+      "from": "n2",
+      "to": "n5",
+      "y": 436,
+      "label": "iBGP session 7/10"
+    },
+    {
+      "id": "n3-n4",
+      "from": "n3",
+      "to": "n4",
+      "y": 492,
+      "label": "iBGP session 8/10"
+    },
+    {
+      "id": "n3-n5",
+      "from": "n3",
+      "to": "n5",
+      "y": 530,
+      "label": "iBGP session 9/10"
+    },
+    {
+      "id": "n4-n5",
+      "from": "n4",
+      "to": "n5",
+      "y": 586,
+      "label": "iBGP session 10/10"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Full-mesh BGP sessions = N × (N-1) / 2",
+      "items": [
+        "5 nodes → 10 sessions, 10 nodes → 45 sessions (fine)",
+        "50 nodes → 1,225 sessions, 100 nodes → 4,950 sessions",
+        "Route Reflectors are recommended at 50+ nodes",
+        "Top-to-bottom order only enumerates the sessions; it does not imply establishment order"
+      ]
+    }
+  ]
+}

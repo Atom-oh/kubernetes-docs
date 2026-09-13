@@ -1,132 +1,117 @@
 # Linkerd Architecture
 
-> **Supported Versions**: Linkerd 2.16+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 / proxy release/v2.368.0
 
-## Overview
-
-Linkerd follows a service mesh architecture consisting of a control plane and data plane. This document provides detailed explanations of each component's role, their interactions, the certificate hierarchy, and the proxy lifecycle.
+This chapter explains the current component roles, identity hierarchy, traffic capture and injection lifecycle. Use the [installation guide](01-installation.md) for the supported release/cluster combination and pinned artifacts. The examples below are configuration illustrations; no live deployment or CA rotation was performed in this audit.
 
 ## Overall Architecture
 
-![Architecture diagram showing Linkerd's control plane (Destination, Identity, Proxy Injector, Policy controllers) configuring the linkerd-proxy sidecars in two application pods, which exchange traffic over mTLS while the Viz extension collects metrics.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-0.png)
+![Simplified view of three core Linkerd Deployments and two meshed peers. The policy controller runs with Destination and is not drawn separately; selected connections are shown.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-0.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-0.html)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-0.html)
+
+The default control-plane namespace is linkerd. The pinned chart has three core Deployments: linkerd-destination, linkerd-identity and linkerd-proxy-injector. Destination also contains the policy and ServiceProfile-validator containers; logical controller roles are not the same as separate Deployments. Optional Viz and multicluster components have their own lifecycles.
+
+The data plane uses Rust proxies alongside enrolled applications. Native sidecars are the default for this release. The Identity Deployment deliberately uses a regular proxy with startup waiting disabled, so inspection must consider both containers and initContainers.
 
 ## Control Plane
 
-The control plane is deployed in the `linkerd` namespace and consists of components that configure and manage the data plane proxies.
-
 ### Destination Controller
 
-The Destination controller is the core component responsible for service discovery and policy distribution.
+Destination watches discovery state and provides endpoint addresses, expected identities and profile information through streaming APIs. Current defaults use EndpointSlices. ServiceProfiles remain an earlier configuration mechanism; Gateway API routing and authorization also involve the policy controller. Do not describe current Linkerd routing as only SMI TrafficSplit or assume Destination directly watches that legacy extension's resources.
 
-![Architecture diagram showing the Destination controller reading Kubernetes Services, Endpoints, ServiceProfiles, and TrafficSplits, then streaming service-discovery, routing, and traffic-split data to proxies over its gRPC API.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-1.svg)
+| Responsibility | Meaning |
+|---|---|
+| Discovery | Endpoint additions/removals and metadata for the requested Service |
+| Expected identity | Information used by the outbound proxy to authenticate the selected peer |
+| Profiles | Supported route/profile configuration for metrics, retries and timeouts |
+| Load-balancing inputs | Endpoint and configured weight information; runtime latency observations and request/connection selection occur in the proxy |
 
-**Key Functions:**
+This is a **Protocol Buffers service excerpt**, not Go source. Message definitions and imports are in the pinned proxy API:
 
-| Function | Description |
-|----------|-------------|
-| Service Discovery | Monitors Kubernetes services and endpoints, provides real-time updates to proxies |
-| Policy Distribution | Delivers policies like ServiceProfile and TrafficSplit to proxies |
-| Load Balancing Info | Endpoint weight information for EWMA-based load balancing |
-| Service Profiles | Per-route retries, timeouts, and metrics configuration |
-
-**Destination API Operation:**
-
-```go
-// Destination API sends updates to proxies via gRPC streaming
-// Proxy requests information about target service
+```protobuf
+// Excerpt: message definitions/imports are in the linked API source.
 service Destination {
-    // Get returns update stream for a specific destination
-    rpc Get(GetDestination) returns (stream Update);
-
-    // GetProfile returns service profile update stream
-    rpc GetProfile(GetDestination) returns (stream DestinationProfile);
+  rpc Get(GetDestination) returns (stream Update) {}
+  rpc GetProfile(GetDestination) returns (stream DestinationProfile) {}
 }
 ```
 
+Get streams destination updates; GetProfile streams profile updates. Neither a stream nor a local cache makes configuration changes instantaneous or eliminates the need to handle unavailable endpoints.
+
 ### Identity Controller
 
-The Identity controller handles certificate issuance and management for mTLS.
+The default Kubernetes identity flow is:
 
-![Sequence diagram showing a linkerd-proxy requesting a certificate from the Identity controller, which validates the pod's ServiceAccount, has the trust anchor sign it, and later reissues a fresh certificate before the original expires.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-2.svg)
+1. Proxy startup establishes local private-key/CSR material.
+2. The identity client submits the CSR, requested identity and ServiceAccount token.
+3. Identity validates the token using Kubernetes TokenReview and derives the DNS-form identity.
+4. The configured **issuer signing credential**, normally the intermediate issuer, signs the workload certificate.
+5. The client loads the returned certificate/chain and renews it before expiry.
 
-**Certificate Issuance Process:**
+The trust anchor is the basis for chain validation. Its private key is not required by the Linkerd identity controller; the root does not act as an online signer for every workload CSR.
 
-1. Proxy generates CSR (Certificate Signing Request) at startup
-2. Identity controller validates Pod's ServiceAccount
-3. Signs certificate with Trust Anchor (Root CA)
-4. Delivers workload certificate to proxy
-5. Default 24-hour validity, automatic renewal
-
-**Identity Configuration:**
+The following is a **Helm values fragment** for the installation owner:
 
 ```yaml
-# Identity settings in linkerd-config ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: linkerd-config
-  namespace: linkerd
-data:
-  values: |
-    identity:
-      issuer:
-        # Certificate issuance lifetime (default 24 hours)
-        issuanceLifetime: 24h0m0s
-        # Clock skew allowance
-        clockSkewAllowance: 20s
-        # Issuer scheme (kubernetes.io/tls)
-        scheme: kubernetes.io/tls
+identity:
+  issuer:
+    issuanceLifetime: 24h0m0s
+    clockSkewAllowance: 20s
+    scheme: linkerd.io/tls
 ```
+
+linkerd.io/tls is the default issuer scheme. A kubernetes.io/tls integration uses the corresponding externally managed Secret format. Do not change the scheme without matching the credential owner and keys, and do not overwrite linkerd-config's entire values entry with a partial identity ConfigMap.
 
 ### Proxy Injector
 
-The Proxy Injector operates as a Kubernetes Admission Webhook to automatically inject sidecars into Pods.
+![Conceptual admission flow for eligible Pods without Linkerd CNI. The API server applies the injector mutation; native proxy placement and exclusions are described in the text.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
 
-![Sequence diagram showing the Kubernetes API server calling the Proxy Injector admission webhook on pod creation, which either injects the linkerd-proxy sidecar and returns a mutated pod spec, or returns the pod unchanged when injection is disabled.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-3.svg)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-3.html)
 
-**Injection Conditions:**
+The injector is a mutating admission webhook. Its response describes mutations that the API server applies; the diagram is conceptual, not a wire-format example. Actual webhook selection, Pod overrides and platform eligibility still apply.
+
+Enable a selected namespace:
 
 ```yaml
-# Namespace-level injection enablement
 apiVersion: v1
 kind: Namespace
 metadata:
   name: my-app
   annotations:
     linkerd.io/inject: enabled
-
----
-# Pod-level injection control
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-pod
-  annotations:
-    # Enable injection
-    linkerd.io/inject: enabled
-    # Or disable
-    # linkerd.io/inject: disabled
 ```
 
-**Injected Components:**
+For a Deployment, put overrides in its **Pod template**. This fragment belongs inside the existing workload definition:
 
-| Component | Role |
-|-----------|------|
-| `linkerd-init` | Init container, sets up iptables rules |
-| `linkerd-proxy` | Sidecar container, traffic proxy |
-| Volumes | Identity tokens, configuration |
-| Environment Variables | Proxy settings, destination addresses |
+```yaml
+spec:
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: enabled
+        config.linkerd.io/proxy-cpu-request: 100m
+        config.linkerd.io/proxy-memory-request: 64Mi
+        config.linkerd.io/proxy-cpu-limit: '1'
+        config.linkerd.io/proxy-memory-limit: 250Mi
+        config.linkerd.io/proxy-log-level: warn,linkerd=info
+```
+
+Use one literal value, enabled or disabled, not enabled|disabled. Adding an annotation does not modify existing Pods. The installed webhook excludes designated system namespaces, and explicit Pod overrides can disable otherwise enabled injection.
+
+| Injected/configured item | Role |
+|---|---|
+| linkerd-init | Pod-network capture setup when Linkerd CNI is not used |
+| linkerd-proxy | Data-plane proxy, normally a restartable init container in this release |
+| Projected identity token and local identity storage | Bootstrap and workload certificate use; the proxy key is not distributed as a shared workload Secret |
+| Environment/probes/resources | Version-specific runtime configuration generated by injection |
 
 ### Policy Controller
 
-The Policy Controller manages Linkerd's authorization policies.
+Policy controls inbound authorization and supported outbound/request-routing behavior. This example selects Pods labeled app:web with a declared port named http, and authorizes the meshed api-gateway ServiceAccount in my-app:
 
 ```yaml
-# Server resource - defines inbound traffic
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
   name: web-http
@@ -137,13 +122,34 @@ spec:
       app: web
   port: http
   proxyProtocol: HTTP/1
-
+  accessPolicy: deny
 ---
-# ServerAuthorization - defines access permissions
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: web-api-gateway
+  namespace: my-app
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: web-http
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: api-gateway
+```
+
+A Server selects existing Pod/port pairs; it does not create an application, Service or listener. The named port must exist. Selected traffic defaults to deny unless permitted by applicable policy or an explicitly selected alternative access policy. Stage and test the policy scope before enforcing it.
+
+AuthorizationPolicy can target a Server or supported route. ServiceAccount references are a convenient authentication requirement; MeshTLSAuthentication and NetworkAuthentication express additional identity/network sets. All required authentication references within one policy must match; review other policies that can also authorize traffic.
+
+For an existing ServerAuthorization workflow, this is a supported **alternative**, not an extra requirement to apply with the preceding authorization:
+
+```yaml
+apiVersion: policy.linkerd.io/v1beta1
 kind: ServerAuthorization
 metadata:
-  name: web-authz
+  name: web-authz-legacy
   namespace: my-app
 spec:
   server:
@@ -151,382 +157,187 @@ spec:
   client:
     meshTLS:
       serviceAccounts:
-        - name: api-gateway
-          namespace: my-app
+      - name: api-gateway
+        namespace: my-app
 ```
+
+The released CRDs serve ServerAuthorization v1beta1, not the original example's v1beta2. Server v1beta2 remains served; the example uses its current storage version v1beta3. AuthorizationPolicy is the more flexible preferred interface. Do not conflate these Linkerd resources with Istio's similarly named resources in another API group.
 
 ## Data Plane
 
-The data plane consists of `linkerd-proxy` sidecars injected into application Pods.
+### Proxy behavior and protocol scope
 
-### linkerd2-proxy
+linkerd2-proxy is written in Rust and is purpose-built for the mesh. It supports HTTP/1.1, HTTP/2, gRPC and TCP. HTTP-level routing/metrics require visible HTTP; application-originated TLS is opaque, and UDP/QUIC or skipped traffic is not covered by the TCP proxy path.
 
-Linkerd's data plane proxy is an ultra-lightweight micro-proxy written in Rust.
+For eligible meshed TCP peers, Linkerd provides transport mTLS. The documented mesh transport uses TLS 1.3; application-originated TLS passthrough is a separate layer. Unmeshed peers and explicit capture bypasses need separate consideration. The default inbound policy accepts unmeshed plaintext; automatic mTLS is not equivalent to enforcing authenticated access from every source.
 
-![Architecture diagram showing traffic entering the linkerd-proxy sidecar through its inbound listener and TLS termination into the application, and application traffic leaving through the outbound listener, load balancer, and TLS origination back out, while the admin server exposes metrics.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-4.svg)
+The proxy uses latency-aware balancing for HTTP requests and connection-level balancing for opaque TCP. Endpoint weights and routing rules are distinct from runtime latency estimates. Do not interpret EWMA as a guarantee that every request goes to one deterministically fastest endpoint.
 
-**Proxy Characteristics:**
-
-| Characteristic | Value |
-|----------------|-------|
-| Language | Rust |
-| Memory Usage | ~10MB |
-| CPU Overhead | Minimal |
-| Latency Overhead | <1ms p99 |
-| Protocols | HTTP/1.1, HTTP/2, gRPC, TCP |
-| TLS | TLS 1.3 (rustls) |
-
-**Comparison with Istio Envoy:**
-
-| Characteristic | linkerd2-proxy | Envoy (Istio) |
-|----------------|---------------|---------------|
-| Language | Rust | C++ |
-| Memory | ~10MB | ~50-100MB |
-| Binary Size | ~10MB | ~60MB |
-| Latency | <1ms p99 | 2-5ms p99 |
-| Config Complexity | Low (automatic) | High (xDS) |
-| Extensibility | Limited | Wasm, Lua |
-| Protocol Support | HTTP, gRPC, TCP | Very extensive |
+There is no universal 10MB memory, <1ms p99 or fixed binary-size guarantee. Measurements depend on version/build, architecture, connection count, policy/configuration, workload and instrumentation.
 
 ### Proxy Traffic Flow
 
-![Sequence diagram showing a client app's request transparently redirected into its linkerd-proxy, which resolves and load-balances the destination and opens an mTLS connection to the server's proxy, which verifies the connection and policy before forwarding to the server app and returning the response.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-5.svg)
+![An HTTP request over a new meshed connection: the outbound proxy discovers/selects a destination, the proxies establish mTLS, and inbound policy precedes application delivery. Existing connections can be reused.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-5.png)
 
-### linkerd-init (Init Container)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-5.html)
 
-`linkerd-init` sets up iptables rules to redirect traffic to the proxy.
+Outbound discovery, routing/balancing, retries and timeouts differ from inbound authorization. A new connection can perform discovery and mTLS setup; existing connections and cached configuration may be reused. Safe request retry behavior remains an application/protocol decision, especially for writes.
+
+### Traffic capture: linkerd-init or CNI
+
+Use the generated proxy-init or Linkerd CNI configuration. The following is a conceptual order, **not host iptables commands to execute**:
+
+```text
+Inside the Pod network namespace:
+  outbound TCP -> evaluate proxy-UID and configured bypass rules first
+               -> redirect intercepted traffic to the outbound proxy (default 4140)
+  inbound TCP  -> evaluate configured bypass rules
+               -> redirect intercepted traffic to the inbound proxy (default 4143)
+
+Linkerd CNI: installs the Linkerd-specific capture setup through the CNI chain.
+linkerd-init: performs the setup at Pod startup when Linkerd CNI is not used.
+```
+
+The former example appended the proxy-UID bypass after an all-TCP REDIRECT, where it would not protect the proxy's own outbound traffic. Applying such rules in the host namespace is also not the Pod-specific Linkerd setup. The real implementation includes additional exclusions/chains and supports configured iptables modes.
+
+Opaque ports skip protocol detection while retaining proxy transport handling. Skip ports bypass the proxy and its mesh features. For server-first traffic, do not use skip merely as a substitute for correct opaque/protocol configuration.
+
+### Inspect the generated Pod instead of hand-building a proxy
+
+The old manually assembled Pod omitted identity/bootstrap material and used an unavailable upstream stable-2.16.0 image assumption. Generate or inspect configuration with the selected CLI and installed control-plane configuration:
 
 ```bash
-# Example iptables rules set by linkerd-init
-# Redirect outbound traffic (to port 4140)
-iptables -t nat -A OUTPUT -p tcp -j REDIRECT --to-port 4140
+# The input is a complete, reviewed application manifest.
+# Default mode adds the injection annotation for server-side admission.
+linkerd inject web.yaml > web-annotated.yaml
 
-# Redirect inbound traffic (to port 4143)
-iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 4143
-
-# Exclude proxy's own traffic
-iptables -t nat -A OUTPUT -m owner --uid-owner 2102 -j RETURN
+# Manual mode materializes the proxy spec using the selected cluster configuration.
+# Review/remove conflicting input config annotations before selecting CLI flags.
+linkerd inject --manual --native-sidecar \
+  --proxy-cpu-request 100m --proxy-memory-request 64Mi \
+  --proxy-cpu-limit 1 --proxy-memory-limit 250Mi \
+  web.yaml > web-manually-injected.yaml
 ```
 
-**Injected Pod Structure:**
+Default inject mode is an annotation transform. In edge-26.9.1, manual generation also consumes existing input configuration annotations: an observed CPU-request annotation of 700m took precedence over a 100m CLI flag, and an input log-level annotation was applied. Update/remove conflicting inputs and inspect the resulting proxy fields. A manually materialized proxy is not automatically regenerated by later annotation edits; update the generated workload through its owner rather than copying a shortened container as a complete installation.
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-app
-  annotations:
-    linkerd.io/inject: enabled
-spec:
-  initContainers:
-  - name: linkerd-init
-    image: cr.l5d.io/linkerd/proxy-init:v2.3.0
-    args:
-    - --incoming-proxy-port=4143
-    - --outgoing-proxy-port=4140
-    - --proxy-uid=2102
-    securityContext:
-      capabilities:
-        add:
-        - NET_ADMIN
-        - NET_RAW
-
-  containers:
-  - name: my-app
-    image: my-app:latest
-
-  - name: linkerd-proxy
-    image: cr.l5d.io/linkerd/proxy:stable-2.16.0
-    ports:
-    - containerPort: 4143  # Inbound
-      name: linkerd-proxy
-    - containerPort: 4191  # Admin/Metrics
-      name: linkerd-admin
-    env:
-    - name: LINKERD2_PROXY_LOG
-      value: warn,linkerd=info
-    - name: LINKERD2_PROXY_DESTINATION_SVC_ADDR
-      value: linkerd-dst.linkerd.svc.cluster.local:8086
-    - name: LINKERD2_PROXY_IDENTITY_SVC_ADDR
-      value: linkerd-identity.linkerd.svc.cluster.local:8080
-    resources:
-      requests:
-        cpu: 100m
-        memory: 64Mi
-      limits:
-        cpu: 1000m
-        memory: 250Mi
-    readinessProbe:
-      httpGet:
-        path: /ready
-        port: 4191
-    livenessProbe:
-      httpGet:
-        path: /live
-        port: 4191
+```bash
+: "${APP_POD:?Set an application Pod name in my-app}"
+kubectl -n my-app get pod "$APP_POD" -o json |
+  jq '{pod: .metadata.name, proxies: ([.spec.containers[]?, .spec.initContainers[]?] | map(select(.name == "linkerd-proxy") | {image, restartPolicy, resources, startupProbe, readinessProbe, livenessProbe}))}'
 ```
+
+Native sidecars appear in initContainers with restartPolicy: Always. A linkerd-init container is omitted with the configured CNI path. Proxy health endpoints are /live and /ready on the configured admin port (default 4191); native startup/readiness behavior and application readiness are separate.
 
 ## Certificate Hierarchy
 
-Linkerd uses a hierarchical PKI (Public Key Infrastructure) to implement mTLS.
+| Material | Default role/storage |
+|---|---|
+| Trust anchor certificate/bundle | Public trust basis; linkerd-identity-trust-roots ConfigMap, ca-bundle.crt |
+| Root CA private key | PKI-owner material; Linkerd does not need it to run |
+| Issuer certificate/private key | linkerd-identity-issuer Secret; default format uses crt.pem/key.pem |
+| Kubernetes TLS issuer integration | A deliberately configured alternative using tls.crt/tls.key and matching scheme |
+| Workload key/certificate | Proxy-local credential material; nominal certificate validity 24h, automatically renewed |
 
-### Certificate Hierarchy Structure
+Issuer and trust-anchor validity depend on their configured PKI. Default CLI-generated roots/issuers have one-year validity; a custom ten-year example is not a default or a universal recommendation. Inspect actual certificate dates instead of copying a fixed example timestamp.
 
-![Tree diagram showing the Linkerd PKI: a long-lived trust anchor root CA signs a one-year intermediate identity issuer, which in turn signs short-lived 24-hour workload certificates for each proxy.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-6.svg)
+### Kubernetes workload identity
 
-### Trust Anchor (Root CA)
+For the default Kubernetes identity mechanism, the identity is DNS-form:
 
-The Trust Anchor is the root of the PKI and the foundation of trust for all certificate chains.
+```text
+<service-account>.<namespace>.serviceaccount.identity.<linkerd-namespace>.<identity-trust-domain>
+
+web-service.my-app.serviceaccount.identity.linkerd.cluster.local
+```
+
+Multiple Pods using the same ServiceAccount share this identity while holding their own local credentials. The identity trust domain is a configurable concept, not necessarily identical to a changed Kubernetes DNS suffix.
+
+The original spiffe://root.linkerd.cluster.local/ns/.../sa/... string was not the default Kubernetes identity format. SPIFFE/SPIRE-based identities are supported for a distinct [external-workload mesh-expansion path](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/); do not substitute its identity/bootstrap model for Kubernetes TokenReview.
+
+### Renewal and rotation
+
+In proxy release/v2.368.0, the identity client normally schedules the next certificate attempt at 70% of the **remaining** validity, clamped by configured minimum/maximum refresh intervals. Error/expiry paths can use the minimum delay. This is not a fixed wall-clock guarantee for every certificate.
+
+That client reuses its loaded key/CSR documents when requesting renewed certificates. Certificate renewal is not the same as private-key rotation, issuer rotation or trust-anchor rotation.
 
 ```bash
-# Create Trust Anchor (using step CLI)
-step certificate create root.linkerd.cluster.local ca.crt ca.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h  # 10 years
-
-# Verify Trust Anchor
-openssl x509 -in ca.crt -text -noout
-
-# Example output:
-# Certificate:
-#     Data:
-#         Version: 3 (0x2)
-#         Serial Number: ...
-#         Signature Algorithm: ecdsa-with-SHA256
-#         Issuer: CN = root.linkerd.cluster.local
-#         Validity
-#             Not Before: Feb 21 00:00:00 2026 GMT
-#             Not After : Feb 21 00:00:00 2036 GMT
-#         Subject: CN = root.linkerd.cluster.local
-#         ...
-#         X509v3 extensions:
-#             X509v3 Key Usage: critical
-#                 Certificate Sign, CRL Sign
-#             X509v3 Basic Constraints: critical
-#                 CA:TRUE
+set -euo pipefail
+kubectl -n linkerd get configmap linkerd-identity-trust-roots \
+  -o jsonpath='{.data.ca-bundle\.crt}' > trust-bundle.pem
+openssl crl2pkcs7 -nocrl -certfile trust-bundle.pem |
+  openssl pkcs7 -print_certs -text -noout
+kubectl -n linkerd get secret linkerd-identity-issuer -o json |
+  jq -er '.data["crt.pem"] // .data["tls.crt"]' |
+  base64 -d | openssl x509 -noout -dates
 ```
 
-**Trust Anchor Storage:**
+A complete trust-anchor transition has multiple phases:
 
-```yaml
-# Stored as Kubernetes Secret
-apiVersion: v1
-kind: Secret
-metadata:
-  name: linkerd-identity-trust-roots
-  namespace: linkerd
-type: Opaque
-data:
-  ca-bundle.crt: <base64-encoded-ca.crt>
-```
+1. Inventory the current valid roots, issuer, all consumers and the installation/PKI owners.
+2. Add the new root alongside the old root through the owner's configuration. Ensure affected proxies/control-plane components and multicluster peers actually load the overlap bundle.
+3. Rotate the issuer to a credential signed by the new root and confirm the identity service loaded it.
+4. Renew/recreate consumers as required by their configuration source; verify actual new credentials and mTLS traffic across the affected paths.
+5. Remove the old root only when no required peer depends on it, propagate the final bundle and re-verify.
 
-### Identity Issuer (Intermediate CA)
-
-The Identity Issuer is the intermediate CA that issues workload certificates.
+The former ConfigMap update plus one namespace restart stopped before issuer transition and old-root removal; it was not a complete rotation procedure. Avoid direct mutations that fight Helm/cert-manager/trust-manager ownership. An already expired root needs a recovery procedure rather than a normal valid-root rollover.
 
 ```bash
-# Create Identity Issuer certificate
-step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
-  --profile intermediate-ca \
-  --ca ca.crt \
-  --ca-key ca.key \
-  --no-password \
-  --insecure \
-  --not-after=8760h  # 1 year
-
-# Verify Issuer certificate
-openssl x509 -in issuer.crt -text -noout
+linkerd check
+linkerd check --proxy
+kubectl -n linkerd get events --field-selector reason=IssuerUpdated
+# Inspect each affected namespace/workload and its actual proxy version/identity.
+kubectl -n my-app get pods -o wide
 ```
 
-**Identity Issuer Secret:**
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: linkerd-identity-issuer
-  namespace: linkerd
-type: kubernetes.io/tls
-data:
-  tls.crt: <base64-encoded-issuer.crt>
-  tls.key: <base64-encoded-issuer.key>
-  ca.crt: <base64-encoded-ca.crt>
-```
-
-### Workload Certificates
-
-Each proxy receives a unique workload certificate.
-
-![Sequence diagram showing a linkerd-proxy obtaining its ServiceAccount token, generating a CSR with a SPIFFE identity, and having the Identity controller validate and sign it into a 24-hour workload certificate that is renewed before it expires.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-7.svg)
-
-**SPIFFE ID Format:**
-
-```
-spiffe://root.linkerd.cluster.local/ns/<namespace>/sa/<service-account>
-
-# Example:
-spiffe://root.linkerd.cluster.local/ns/my-app/sa/web-service
-```
-
-### Certificate Rotation
-
-```yaml
-# Certificate lifetime configuration
-identity:
-  issuer:
-    # Workload certificate lifetime (default 24 hours)
-    issuanceLifetime: 24h0m0s
-    # Clock skew allowance (default 20 seconds)
-    clockSkewAllowance: 20s
-
-# Proxy automatically renews certificates before expiration
-# By default, renewal starts at 70% of certificate lifetime
-```
-
-**Trust Anchor Rotation:**
-
-```bash
-# Create new Trust Anchor
-step certificate create root.linkerd.cluster.local ca-new.crt ca-new.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h
-
-# Create bundle (existing + new)
-cat ca.crt ca-new.crt > ca-bundle.crt
-
-# Update ConfigMap
-kubectl create configmap linkerd-identity-trust-roots \
-  --from-file=ca-bundle.crt=ca-bundle.crt \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
-
-# Then restart all proxies to apply new bundle
-kubectl rollout restart deploy -n my-app
-```
+An IssuerUpdated event is one observation, not proof that every proxy or remote cluster has transitioned. cert-manager can automate issuer renewal and trust-manager can distribute bundles, but root cutover still needs coordinated verification. Follow the [manual](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/) or [managed credential workflow](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/) for the actual PKI design; this chapter did not execute a rotation.
 
 ## Sidecar Injection Details
 
-### Injection Workflow
+![Injection decisions combine namespace intent, Pod-template overrides and eligibility before Pod creation. An annotation is not a guarantee that every Pod is injected.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-8.png)
 
-![Flowchart showing a pod creation request triggering the injection webhook, which checks the namespace annotation, pod annotation, and workload type before injecting the linkerd-proxy sidecar and letting pod creation proceed.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-8.svg)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-8.html)
 
-### Injection Annotations
+For controller workloads, use Pod-template annotations and inspect the resulting Pods. Duplicate metadata keys in one YAML mapping overwrite/conflict; keep namespace and workload examples as separate resources/fragments.
 
-```yaml
-# Namespace level
-metadata:
-  annotations:
-    linkerd.io/inject: enabled  # Inject into all Pods
-
-# Pod/Deployment level
-metadata:
-  annotations:
-    # Enable/disable injection
-    linkerd.io/inject: enabled|disabled
-
-    # Proxy configuration overrides
-    config.linkerd.io/proxy-cpu-request: "100m"
-    config.linkerd.io/proxy-memory-request: "64Mi"
-    config.linkerd.io/proxy-cpu-limit: "1"
-    config.linkerd.io/proxy-memory-limit: "250Mi"
-
-    # Proxy log level
-    config.linkerd.io/proxy-log-level: "warn,linkerd=info"
-
-    # Skip ports (bypass proxy)
-    config.linkerd.io/skip-inbound-ports: "25,587"
-    config.linkerd.io/skip-outbound-ports: "25,587"
-
-    # Opaque ports (bypass protocol detection)
-    config.linkerd.io/opaque-ports: "3306,5432"
-```
-
-### Proxy Readiness/Liveness
-
-```yaml
-# Proxy health check endpoints
-livenessProbe:
-  httpGet:
-    path: /live
-    port: 4191
-  initialDelaySeconds: 10
-  periodSeconds: 10
-
-readinessProbe:
-  httpGet:
-    path: /ready
-    port: 4191
-  initialDelaySeconds: 2
-  periodSeconds: 10
-```
+The resource/log annotations shown earlier set intended proxy requests/limits and log configuration. They are not measurements of actual consumption. Opaque-port overrides replace the default port list rather than simply adding two database ports; retain all required ports. Skip-port overrides intentionally remove traffic from mesh handling.
 
 ## Inter-Component Communication
 
-![Architecture diagram showing proxies calling the Destination, Identity, and Policy controllers over gRPC, and the Kubernetes API server plus webhook configuration invoking the Proxy Injector's admission webhook on pod creation.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-9.svg)
+![Selected control-plane communication roles: discovery, identity validation, policy and admission. Current defaults use EndpointSlices and TokenReview; the port table also covers opaque TCP.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-9.png)
 
-**Port Summary:**
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-9.html)
 
-| Component | Port | Protocol | Purpose |
-|-----------|------|----------|---------|
-| Destination | 8086 | gRPC | Service discovery API |
-| Identity | 8080 | gRPC | Certificate issuance API |
-| Policy | 8090 | gRPC | Policy API |
-| Proxy Injector | 8443 | HTTPS | Admission Webhook |
-| Proxy (Inbound) | 4143 | HTTP/gRPC | Inbound traffic |
-| Proxy (Outbound) | 4140 | HTTP/gRPC | Outbound traffic |
-| Proxy (Admin) | 4191 | HTTP | Metrics, health checks |
+| Component/path | Default port | Protocol/purpose |
+|---|---|---|
+| Destination Service | 8086 | Streaming discovery/profile gRPC |
+| Identity Service | 8080 | Certificate API gRPC |
+| Policy Service | 8090 | Policy gRPC |
+| Proxy Injector | Service 443 → Pod 8443 | HTTPS admission webhook |
+| Proxy inbound | 4143 | Intercepted TCP, including HTTP/gRPC or opaque traffic |
+| Proxy outbound | 4140 | Intercepted outbound TCP |
+| Proxy admin | 4191 | HTTP metrics and health endpoints |
+
+These ports can be configured and are not a blanket network-access rule. The admin endpoint is not an Envoy-style routing configuration interface; policy/configuration is delivered through the control-plane APIs.
 
 ## Comparison with Istio Architecture
 
-### Control Plane Comparison
+| Aspect | Linkerd | Istio |
+|---|---|---|
+| Control-plane packaging | Three core Deployments in this release, with several logical controllers | Unified Istiod for major control functions, plus mode-specific components |
+| Data plane | Purpose-built Rust proxies | Envoy sidecars or ambient ztunnel with selected waypoints |
+| Configuration | Linkerd streaming gRPC APIs and its supported resources | xDS for Envoy and supported Istio/Gateway API configuration |
+| Extensions | Check the supported Linkerd feature/API surface | Check mode/version-specific Envoy/Wasm/Lua support and attachment |
+| Resource/performance comparison | Measure matched workloads and actual configuration | Measure matched workloads and actual configuration |
 
-![Side-by-side comparison showing Linkerd's three small, distributed control-plane components and lightweight Rust proxy next to Istio's unified istiod control plane and heavier C++ Envoy proxy.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-10.svg)
+xDS also commonly uses gRPC; protocol naming is not an intrinsic complexity ranking. CRD counts vary with versions and extensions and do not measure runtime overhead. Requests/limits are configured reservations/caps, not observed memory or latency. Compare the same workload, traffic, protocol, policy and failure budget before making a choice; see the [maintained comparison](../istio/comparison/README.md).
 
-| Characteristic | Linkerd | Istio |
-|----------------|---------|-------|
-| Control Plane | Distributed (3 components) | Unified (istiod) |
-| Proxy | linkerd2-proxy (Rust) | Envoy (C++) |
-| Config Protocol | Custom gRPC | xDS (complex) |
-| Number of CRDs | ~10 | ~50+ |
-| Learning Curve | Gentle | Steep |
-| Resource Usage | Low | High |
-| Extensibility | Limited | Wasm, Lua |
+## Next Steps and Sources
 
-### Proxy Comparison
-
-```yaml
-# Linkerd Proxy Resources (typical)
-resources:
-  requests:
-    cpu: 100m
-    memory: 64Mi
-  limits:
-    cpu: 1000m
-    memory: 250Mi
-
-# Envoy Proxy Resources (typical)
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 2000m
-    memory: 1Gi
-```
-
-## Next Steps
-
-- [Traffic Management](./03-traffic-management.md): ServiceProfile and traffic splitting
-- [Security](./04-security.md): mTLS and authorization policies
-- [Observability](./05-observability.md): Metrics and dashboards
-
-## References
-
-- [Linkerd Architecture](https://linkerd.io/2/reference/architecture/)
-- [linkerd2-proxy GitHub](https://github.com/linkerd/linkerd2-proxy)
-- [Linkerd Identity](https://linkerd.io/2/features/automatic-mtls/)
-- [Proxy Injection](https://linkerd.io/2/features/proxy-injection/)
+- [Traffic Management](03-traffic-management.md), [Security](04-security.md), [Observability](05-observability.md)
+- [Architecture Quiz](../../quizzes/service-mesh/linkerd/architecture.md)
+- [Official architecture](https://linkerd.io/docs/reference/architecture/), [injection](https://linkerd.io/docs/features/proxy-injection/) and [policy reference](https://linkerd.io/docs/reference/authorization-policy/)
+- [Automatic mTLS](https://linkerd.io/docs/features/automatic-mtls/), [protocol handling](https://linkerd.io/docs/features/protocol-detection/) and [load balancing](https://linkerd.io/docs/features/load-balancing/)
+- [Pinned Destination API](https://github.com/linkerd/linkerd2-proxy-api/blob/v0.20.0/proto/destination.proto)
+- [Kubernetes token validation](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/validator.go) and [identity formatting](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/domain.go)
+- [Pinned certificate refresh implementation](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/proxy/identity-client/src/certify.rs)

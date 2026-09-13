@@ -1,0 +1,305 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Service Mesh 선택 기준",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "k8s-path",
+        "label": "Kubernetes 플랫폼 선택",
+        "focus": [
+          "need",
+          "platform",
+          "complexity",
+          "basic_svc",
+          "consul_kong",
+          "istio",
+          "linkerd"
+        ],
+        "note": "Service Mesh가 필요한지, 멀티플랫폼인지, 복잡도를 수용할 수 있는지 순서로 판단해 Istio·Linkerd·Consul/Kong Mesh 중 고른다."
+      },
+      {
+        "id": "aws-path",
+        "label": "AWS 중심 아키텍처 선택",
+        "focus": [
+          "aws_centric",
+          "serverless",
+          "multicloud",
+          "lattice",
+          "istio_eks",
+          "istio_mc",
+          "regional"
+        ],
+        "note": "AWS 중심이면 서버리스·간편함 요구에 따라 VPC Lattice 또는 Istio on EKS를, 아니면 멀티 클라우드 여부에 따라 Istio Multi-cluster 또는 리전별 솔루션을 고른다."
+      },
+      {
+        "id": "recommended",
+        "label": "권장 솔루션",
+        "focus": [
+          "complexity",
+          "istio",
+          "serverless",
+          "lattice"
+        ],
+        "note": "풍부한 기능이 필요하면 Istio, AWS 네이티브·서버리스 우선이면 VPC Lattice가 권장 솔루션이다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "의사결정"
+        },
+        "frontend": {
+          "label": "Mesh 없이 운영"
+        },
+        "external": {
+          "label": "Kubernetes Service Mesh"
+        },
+        "cloud": {
+          "label": "AWS 환경 솔루션"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "k8s_q",
+      "label": "Kubernetes 플랫폼 선택 · 질문"
+    },
+    {
+      "id": "k8s_out",
+      "label": "Kubernetes 플랫폼 선택 · 결과"
+    },
+    {
+      "id": "aws_q",
+      "label": "AWS 중심 아키텍처 선택 · 질문"
+    },
+    {
+      "id": "aws_out",
+      "label": "AWS 중심 아키텍처 선택 · 결과"
+    }
+  ],
+  "mainPath": [
+    "need",
+    "platform",
+    "complexity",
+    "istio"
+  ],
+  "nodes": [
+    {
+      "id": "need",
+      "lane": "k8s_q",
+      "col": 0,
+      "width": 172,
+      "type": "backend",
+      "label": "Service Mesh 필요?",
+      "sublabel": "mTLS·트래픽 제어 요구"
+    },
+    {
+      "id": "platform",
+      "lane": "k8s_q",
+      "col": 1,
+      "width": 172,
+      "type": "backend",
+      "label": "플랫폼?",
+      "sublabel": "K8s 전용 vs 멀티플랫폼"
+    },
+    {
+      "id": "complexity",
+      "lane": "k8s_q",
+      "col": 2,
+      "width": 172,
+      "type": "backend",
+      "label": "복잡도 수용 가능?",
+      "sublabel": "운영 복잡도 vs 기능"
+    },
+    {
+      "id": "basic_svc",
+      "lane": "k8s_out",
+      "col": 0,
+      "width": 172,
+      "type": "frontend",
+      "label": "기본 K8s Service",
+      "sublabel": "Service + Ingress로 충분"
+    },
+    {
+      "id": "consul_kong",
+      "lane": "k8s_out",
+      "col": 1,
+      "width": 172,
+      "type": "external",
+      "label": "Consul/Kong Mesh",
+      "sublabel": "VM 워크로드·멀티플랫폼"
+    },
+    {
+      "id": "istio",
+      "lane": "k8s_out",
+      "col": 2,
+      "width": 172,
+      "type": "external",
+      "label": "Istio 선택",
+      "sublabel": "권장 · 풍부한 기능·엔터프라이즈",
+      "tag": "권장"
+    },
+    {
+      "id": "linkerd",
+      "lane": "k8s_out",
+      "col": 3,
+      "width": 172,
+      "type": "external",
+      "label": "Linkerd 선택",
+      "sublabel": "단순함·낮은 오버헤드"
+    },
+    {
+      "id": "aws_centric",
+      "lane": "aws_q",
+      "col": 0,
+      "width": 172,
+      "type": "backend",
+      "label": "AWS 중심?",
+      "sublabel": "EKS·ECS·Lambda 혼합"
+    },
+    {
+      "id": "serverless",
+      "lane": "aws_q",
+      "col": 1,
+      "width": 172,
+      "type": "backend",
+      "label": "서버리스 / 간편함?",
+      "sublabel": "운영 오버헤드 최소화"
+    },
+    {
+      "id": "multicloud",
+      "lane": "aws_q",
+      "col": 2,
+      "width": 172,
+      "type": "backend",
+      "label": "멀티 클라우드?",
+      "sublabel": "클라우드 중립 요구"
+    },
+    {
+      "id": "lattice",
+      "lane": "aws_out",
+      "col": 1,
+      "width": 172,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "권장 · AWS 네이티브·완전 관리형",
+      "tag": "권장"
+    },
+    {
+      "id": "istio_eks",
+      "lane": "aws_out",
+      "col": 0,
+      "width": 172,
+      "type": "cloud",
+      "label": "Istio on EKS",
+      "sublabel": "더 풍부한 기능 필요 시"
+    },
+    {
+      "id": "istio_mc",
+      "lane": "aws_out",
+      "col": 2,
+      "width": 172,
+      "type": "cloud",
+      "label": "Istio Multi-cluster",
+      "sublabel": "멀티 클러스터 페더레이션"
+    },
+    {
+      "id": "regional",
+      "lane": "aws_out",
+      "col": 3,
+      "width": 172,
+      "type": "cloud",
+      "label": "리전별 솔루션",
+      "sublabel": "단일 클라우드·리전 단위"
+    }
+  ],
+  "edges": [
+    {
+      "id": "need-platform",
+      "from": "need",
+      "to": "platform",
+      "label": "예"
+    },
+    {
+      "id": "need-basic",
+      "from": "need",
+      "to": "basic_svc",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "platform-complexity",
+      "from": "platform",
+      "to": "complexity",
+      "label": "Kubernetes 전용"
+    },
+    {
+      "id": "platform-consul",
+      "from": "platform",
+      "to": "consul_kong",
+      "label": "멀티플랫폼",
+      "role": "branch"
+    },
+    {
+      "id": "complexity-istio",
+      "from": "complexity",
+      "to": "istio",
+      "label": "예 · 풍부한 기능",
+      "variant": "emphasis"
+    },
+    {
+      "id": "complexity-linkerd",
+      "from": "complexity",
+      "to": "linkerd",
+      "label": "아니오 · 단순함",
+      "role": "branch"
+    },
+    {
+      "id": "aws-serverless",
+      "from": "aws_centric",
+      "to": "serverless",
+      "label": "예"
+    },
+    {
+      "id": "aws-multicloud",
+      "from": "aws_centric",
+      "to": "multicloud",
+      "label": "아니오",
+      "role": "branch",
+      "route": "up-channel",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "serverless-lattice",
+      "from": "serverless",
+      "to": "lattice",
+      "label": "예 · 서버리스",
+      "variant": "emphasis"
+    },
+    {
+      "id": "serverless-istio-eks",
+      "from": "serverless",
+      "to": "istio_eks",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "multicloud-istio-mc",
+      "from": "multicloud",
+      "to": "istio_mc",
+      "label": "예 · 멀티 클라우드"
+    },
+    {
+      "id": "multicloud-regional",
+      "from": "multicloud",
+      "to": "regional",
+      "label": "아니오",
+      "role": "branch"
+    }
+  ]
+}

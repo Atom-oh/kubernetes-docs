@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "IPIP CrossSubnet Mode",
+    "locale": "en",
+    "output": "en-networking-calico-03-networking-modes-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      520
+    ],
+    "views": [
+      {
+        "id": "same-subnet",
+        "label": "Same subnet",
+        "focus": [
+          "node1",
+          "node2",
+          "node3",
+          "node4"
+        ],
+        "note": "Nodes inside one L2 subnet route pod traffic directly with no encapsulation."
+      },
+      {
+        "id": "cross-subnet",
+        "label": "Cross-subnet",
+        "focus": [
+          "node1",
+          "node3",
+          "node2",
+          "node4"
+        ],
+        "note": "Only traffic crossing the L3 boundary between subnets is wrapped in IPIP."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "10.0.1.10",
+      "pos": [
+        120,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "10.0.1.11",
+      "pos": [
+        120,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "backend",
+      "label": "Node 3",
+      "sublabel": "10.0.2.10",
+      "pos": [
+        720,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node4",
+      "type": "backend",
+      "label": "Node 4",
+      "sublabel": "10.0.2.11",
+      "pos": [
+        720,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Subnet 10.0.1.0/24",
+      "wraps": [
+        "node1",
+        "node2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Subnet 10.0.2.0/24",
+      "wraps": [
+        "node3",
+        "node4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1-n2",
+      "from": "node1",
+      "to": "node2",
+      "label": "Direct routing, no encapsulation",
+      "variant": "emphasis",
+      "labelAt": [
+        195,
+        250
+      ]
+    },
+    {
+      "id": "n3-n4",
+      "from": "node3",
+      "to": "node4",
+      "label": "Direct routing, no encapsulation",
+      "variant": "emphasis",
+      "labelAt": [
+        795,
+        250
+      ]
+    },
+    {
+      "id": "n1-n3",
+      "from": "node1",
+      "to": "node3",
+      "label": "IPIP encapsulation (cross-subnet)",
+      "variant": "dashed"
+    },
+    {
+      "id": "n2-n4",
+      "from": "node2",
+      "to": "node4",
+      "label": "IPIP encapsulation (cross-subnet)",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Same subnet",
+      "items": [
+        "Node 1 <-> Node 2 and Node 3 <-> Node 4 route pod traffic directly",
+        "No tunnel header, full 1500-byte MTU"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Cross-subnet",
+      "items": [
+        "Only hops between 10.0.1.0/24 and 10.0.2.0/24 are IPIP-encapsulated",
+        "20-byte overhead applies to that hop only (effective MTU 1480)"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "IPPool setting",
+      "items": [
+        "ipipMode: CrossSubnet",
+        "Optimization for hybrid environments spanning L3 boundaries"
+      ]
+    }
+  ]
+}

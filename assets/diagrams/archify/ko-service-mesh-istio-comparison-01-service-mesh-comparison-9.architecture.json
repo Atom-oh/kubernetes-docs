@@ -1,0 +1,379 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zone 간 서비스 디스커버리",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Global CP"
+        },
+        "backend": {
+          "label": "Zone CP / api"
+        },
+        "database": {
+          "label": "database"
+        },
+        "frontend": {
+          "label": "애플리케이션"
+        },
+        "security": {
+          "label": "Kuma DP"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "register",
+        "label": "서비스 등록과 통합",
+        "focus": [
+          "svc1",
+          "svc2",
+          "svc3",
+          "zcp1",
+          "zcp2",
+          "zcp3",
+          "registry"
+        ],
+        "note": "각 Zone의 서비스가 Zone CP에 등록되고, Zone CP는 서비스 정보를 Global CP의 통합 레지스트리로 보낸다."
+      },
+      {
+        "id": "distribute",
+        "label": "통합 서비스 맵 배포",
+        "focus": [
+          "registry",
+          "zcp1",
+          "zcp2",
+          "zcp3"
+        ],
+        "note": "Global CP가 모든 Zone의 서비스를 합친 통합 서비스 맵을 각 Zone CP에 다시 배포한다."
+      },
+      {
+        "id": "route",
+        "label": "로컬 우선 라우팅",
+        "focus": [
+          "app",
+          "dp",
+          "zcp1",
+          "svc1",
+          "svc2"
+        ],
+        "note": "Kuma DP가 Zone CP 1에서 Endpoints를 받아 같은 Zone의 api(80%)를 우선하고 나머지는 Zone 2로 보낸다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "registry",
+      "type": "cloud",
+      "label": "통합 서비스 레지스트리",
+      "sublabel": "api: [Zone1, Zone2] · database: [Zone3]",
+      "pos": [
+        455,
+        40
+      ],
+      "size": [
+        300,
+        70
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "요청 발신",
+      "pos": [
+        300,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dp",
+      "type": "security",
+      "label": "Kuma DP",
+      "sublabel": "사이드카 프록시",
+      "pos": [
+        520,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "zcp1",
+      "type": "backend",
+      "label": "Zone CP 1",
+      "sublabel": "Zone Control Plane",
+      "pos": [
+        520,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Service: api",
+      "sublabel": "Tag: version=v1",
+      "pos": [
+        800,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "zcp2",
+      "type": "backend",
+      "label": "Zone CP 2",
+      "sublabel": "Zone Control Plane",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Service: api",
+      "sublabel": "Tag: version=v2",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "zcp3",
+      "type": "backend",
+      "label": "Zone CP 3",
+      "sublabel": "Zone Control Plane",
+      "pos": [
+        1060,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "database",
+      "label": "Service: database",
+      "sublabel": "Tag: tier=primary",
+      "pos": [
+        1060,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Global Control Plane",
+      "wraps": [
+        "registry"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 1 - AWS",
+      "wraps": [
+        "app",
+        "dp",
+        "zcp1",
+        "svc1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Client (Zone 1)",
+      "wraps": [
+        "app",
+        "dp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 2 - GCP",
+      "wraps": [
+        "zcp2",
+        "svc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 3 - On-Prem",
+      "wraps": [
+        "zcp3",
+        "svc3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "svc1-register",
+      "from": "svc1",
+      "to": "zcp1",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [
+        [
+          885,
+          250
+        ]
+      ],
+      "label": "등록"
+    },
+    {
+      "id": "svc2-register",
+      "from": "svc2",
+      "to": "zcp2",
+      "variant": "dashed",
+      "label": "등록"
+    },
+    {
+      "id": "svc3-register",
+      "from": "svc3",
+      "to": "zcp3",
+      "variant": "dashed",
+      "label": "등록"
+    },
+    {
+      "id": "zcp1-report",
+      "from": "zcp1",
+      "to": "registry",
+      "labelDx": -70,
+      "label": "서비스 정보 전송",
+      "labelDy": -42
+    },
+    {
+      "id": "zcp2-report",
+      "from": "zcp2",
+      "to": "registry"
+    },
+    {
+      "id": "zcp3-report",
+      "from": "zcp3",
+      "to": "registry"
+    },
+    {
+      "id": "registry-map1",
+      "from": "registry",
+      "to": "zcp1",
+      "variant": "dashed"
+    },
+    {
+      "id": "registry-map2",
+      "from": "registry",
+      "to": "zcp2",
+      "variant": "dashed"
+    },
+    {
+      "id": "registry-map3",
+      "from": "registry",
+      "to": "zcp3",
+      "variant": "dashed",
+      "labelSegment": 0,
+      "labelDy": -16,
+      "label": "통합 서비스 맵 배포"
+    },
+    {
+      "id": "app-to-dp",
+      "from": "app",
+      "to": "dp"
+    },
+    {
+      "id": "dp-query",
+      "from": "dp",
+      "to": "zcp1",
+      "labelDx": -70,
+      "label": "1. api 서비스 요청",
+      "labelDy": -57
+    },
+    {
+      "id": "zcp1-endpoints",
+      "from": "zcp1",
+      "to": "dp",
+      "variant": "dashed",
+      "labelDx": 62,
+      "labelDy": 83,
+      "label": "2. Endpoints 반환"
+    },
+    {
+      "id": "dp-local",
+      "from": "dp",
+      "to": "svc1",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        745,
+        438
+      ],
+      "label": "3. 로컬 우선 80%"
+    },
+    {
+      "id": "dp-cross",
+      "from": "dp",
+      "to": "svc2",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          605,
+          530
+        ],
+        [
+          125,
+          530
+        ]
+      ],
+      "labelAt": [
+        365,
+        518
+      ],
+      "label": "4. Cross-Zone 20%"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "서비스 디스커버리 특징",
+      "items": [
+        "자동 등록: 각 Zone의 서비스가 Zone CP에 자동 등록",
+        "글로벌 뷰: Global CP가 모든 Zone의 서비스 통합",
+        "로컬 우선: 같은 Zone 내 서비스를 우선 라우팅",
+        "자동 페일오버: 로컬 서비스 실패 시 다른 Zone으로 자동 전환",
+        "태그 기반 라우팅: 서비스 태그를 사용한 세밀한 라우팅 제어"
+      ]
+    }
+  ]
+}

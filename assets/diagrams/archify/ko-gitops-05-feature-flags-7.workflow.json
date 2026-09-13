@@ -1,0 +1,314 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "워크로드와 플래그의 별도 제어",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "start",
+        "label": "배포와 카나리 시작",
+        "focus": [
+          "deploy",
+          "canary",
+          "flag_on"
+        ],
+        "note": "코드 배포 후 제한된 플래그 노출을 별도 변경으로 승인합니다. 자동 webhook 연결이 아닙니다."
+      },
+      {
+        "id": "gate",
+        "label": "메트릭 분석과 롤백",
+        "focus": [
+          "canary",
+          "flag_on",
+          "metrics",
+          "rollback",
+          "expand"
+        ],
+        "note": "실패 검사 한도에 따라 워크로드를 복원합니다. 플래그 복원은 별도 결정입니다."
+      },
+      {
+        "id": "expand",
+        "label": "점진적 확대와 정리",
+        "focus": [
+          "expand",
+          "flag_expand",
+          "full",
+          "flag_full",
+          "cleanup"
+        ],
+        "note": "워크로드 승격과 플래그 전체 노출은 각각 검증합니다. 소비자·롤백 기간 확인 후 정리합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "코드 배포"
+        },
+        "cloud": {
+          "label": "트래픽 분할 (Flagger)"
+        },
+        "backend": {
+          "label": "Flag 제어 (flagd)"
+        },
+        "security": {
+          "label": "분석 게이트 · 롤백"
+        }
+      }
+    },
+    "viewBox": [
+      1200,
+      540
+    ]
+  },
+  "lanes": [
+    {
+      "id": "traffic",
+      "label": "인프라 수준 · 트래픽 분할 (Flagger)"
+    },
+    {
+      "id": "flag",
+      "label": "애플리케이션 수준 · Feature Flag"
+    },
+    {
+      "id": "exceptions",
+      "label": "실패 대응 · 별도 복원",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "label": "1단계 · 코드 배포",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p2",
+      "label": "2단계 · 카나리 트래픽",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "p3",
+      "label": "3단계 · 메트릭 분석",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p4",
+      "label": "4단계 · 점진적 확대",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "p5",
+      "label": "5단계 · 전체 릴리스",
+      "fromCol": 4,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "deploy",
+    "canary",
+    "metrics",
+    "expand",
+    "full",
+    "flag_full",
+    "cleanup"
+  ],
+  "nodes": [
+    {
+      "id": "deploy",
+      "lane": "traffic",
+      "col": 0,
+      "type": "frontend",
+      "label": "새 버전 배포",
+      "sublabel": "Feature Flag OFF",
+      "width": 160
+    },
+    {
+      "id": "canary",
+      "lane": "traffic",
+      "col": 1,
+      "type": "cloud",
+      "label": "카나리 릴리스",
+      "sublabel": "소량 트래픽만 라우팅",
+      "width": 160
+    },
+    {
+      "id": "flag_on",
+      "lane": "flag",
+      "col": 1,
+      "type": "backend",
+      "label": "제한된 Flag 노출",
+      "sublabel": "신뢰할 릴리스·사용자 속성",
+      "tag": "별도 Git 변경",
+      "width": 160
+    },
+    {
+      "id": "metrics",
+      "lane": "traffic",
+      "col": 2,
+      "type": "security",
+      "label": "메트릭 분석",
+      "sublabel": "오류율 · 지연시간",
+      "tag": "interval 1m",
+      "width": 160
+    },
+    {
+      "id": "expand",
+      "lane": "traffic",
+      "col": 3,
+      "type": "cloud",
+      "label": "트래픽 확대",
+      "sublabel": "예: 10 → 50%",
+      "width": 160
+    },
+    {
+      "id": "flag_expand",
+      "lane": "flag",
+      "col": 3,
+      "type": "backend",
+      "label": "Flag 타겟 확대",
+      "sublabel": "별도 코호트 검증",
+      "width": 160
+    },
+    {
+      "id": "full",
+      "lane": "traffic",
+      "col": 4,
+      "type": "cloud",
+      "label": "워크로드 승격",
+      "sublabel": "배포 분석 통과",
+      "width": 160
+    },
+    {
+      "id": "flag_full",
+      "lane": "flag",
+      "col": 4,
+      "type": "backend",
+      "label": "전체 노출 승인",
+      "sublabel": "플래그 별도 판정",
+      "width": 160
+    },
+    {
+      "id": "cleanup",
+      "lane": "flag",
+      "col": 5,
+      "type": "backend",
+      "label": "Flag 정리",
+      "sublabel": "소비자·롤백 기간 확인",
+      "width": 160
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 2,
+      "type": "security",
+      "label": "워크로드 복원",
+      "sublabel": "실제 잔여 트래픽 확인",
+      "tag": "플래그는 별도",
+      "width": 160
+    },
+    {
+      "id": "flag_restore",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "backend",
+      "width": 160,
+      "label": "Flag 설정 복원",
+      "sublabel": "승인된 별도 변경"
+    }
+  ],
+  "edges": [
+    {
+      "id": "deploy-canary",
+      "from": "deploy",
+      "to": "canary"
+    },
+    {
+      "id": "canary-metrics",
+      "from": "canary",
+      "to": "metrics"
+    },
+    {
+      "id": "metrics-expand",
+      "from": "metrics",
+      "to": "expand",
+      "label": "통과",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metrics-rollback",
+      "from": "metrics",
+      "to": "rollback",
+      "label": "실패 한도",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "expand-full",
+      "from": "expand",
+      "to": "full"
+    },
+    {
+      "id": "deploy-flag",
+      "from": "deploy",
+      "to": "flag_on",
+      "label": "별도 PR",
+      "variant": "dashed"
+    },
+    {
+      "id": "flag-expand",
+      "from": "flag_on",
+      "to": "flag_expand"
+    },
+    {
+      "id": "flag-approve",
+      "from": "flag_expand",
+      "to": "flag_full"
+    },
+    {
+      "id": "full-approve",
+      "from": "full",
+      "to": "flag_full",
+      "label": "별도 승인",
+      "variant": "dashed"
+    },
+    {
+      "id": "flag-cleanup",
+      "from": "flag_full",
+      "to": "cleanup"
+    },
+    {
+      "id": "restore",
+      "from": "rollback",
+      "to": "flag_restore",
+      "label": "별도 변경",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "분석 게이트 (Canary.spec.analysis)",
+      "items": [
+        "threshold 5: 누적 실패 검사 한도",
+        "예시 정책: 성공률 ≥99%, 지연 ≤500ms",
+        "메트릭 준비와 표본 수 확인"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "독립된 Flag 결정",
+      "items": [
+        "워크로드 승격이 Flag 비율을 자동 변경하지 않음",
+        "Flagger rollback 훅의 성공은 롤백 요청",
+        "Flag 복원과 소비자 신선도 확인은 별도"
+      ]
+    }
+  ]
+}

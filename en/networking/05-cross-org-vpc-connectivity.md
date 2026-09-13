@@ -1,84 +1,94 @@
 # Cross-Org VPC Connectivity
 
-> **Last Updated**: September 1, 2026
+> **Original report timestamp**: September 1, 2026
+>
+> **Content review**: September 12, 2026
 
-This document covers five ways to **connect VPCs across two different AWS Organizations** — for example, when GPU workloads are contracted under a separate payer (separate Organization) from the existing MSP payer. Every number here comes from a live build-and-measure verification across two real Organizations (ap-northeast-2, both accounts pinned to ZoneId `apne2-az1`).
+This chapter compares five patterns for connecting accounts in **different AWS Organizations**, such as an existing environment and a separately governed GPU environment. The tables retain the measurements reported in the earlier document. This review checks AWS behavior and the arithmetic; it does not claim a new live deployment or independently reproduced benchmark.
 
 ## Table of Contents
 
 1. [Why Cross-Org Connectivity](#why-cross-org-connectivity)
 2. [Comparing the Five Options](#comparing-the-five-options)
-3. [Field Verification Results](#field-verification-results)
+3. [Reported Verification Results](#reported-verification-results)
 4. [Latency Measurements (M1–M7)](#latency-measurements-m1m7)
-5. [Operational Findings from the Field](#operational-findings-from-the-field)
-6. [Recommended Architecture by Scenario](#recommended-architecture-by-scenario)
-7. [Conclusion](#conclusion)
+5. [Operational Findings](#operational-findings)
+6. [Architecture Selection by Requirement](#architecture-selection-by-requirement)
+7. [Limitations and Next Checks](#limitations-and-next-checks)
 
 ## Why Cross-Org Connectivity
 
-GPU instances (P5/P6, etc.) carry costs large enough that organizations increasingly contract them under a **separate payer (separate AWS Organization)** rather than the existing MSP payer. Common motivations:
+Contractual ownership, acquisitions, independent governance, or isolation requirements can place GPU workloads and existing services in different Organizations. Organization structure should follow those requirements, rather than an assumption that a second Organization automatically improves GPU discounts, quotas or compliance.
 
-- **Billing separation**: GPU-specific volume discounts / EDP optimization
-- **Service quota isolation**: manage GPU vCPU limits and Capacity Blocks independently
-- **Blast radius containment**: keep SCP misconfigurations and security incidents away from existing production
-- **Regulatory compliance**: separate data boundaries and audit trails for AI/ML workloads
+EC2 resource quotas are generally set for an **account and Region**; a separate account can provide that separation without requiring another Organization. Billing aggregation, negotiated discounts and duplicated governance also need review. An Organization boundary does not replace application authorization, network segmentation or audit controls.
 
-The key challenge becomes connecting the existing environment (ORG A) with the GPU environment (ORG B). From an EKS perspective, this covers training clusters (ORG B) reaching existing data pipelines (ORG A), or exposing inference APIs back to existing services.
+For EKS, distinguish ordinary IP access to data pipelines/inference APIs from GPU collective communication. A CPU-instance request/response benchmark does not establish NCCL, throughput or RDMA performance. **EFA OS-bypass traffic cannot cross VPCs or Availability Zones**; normal IP traffic from its ENA interface remains routable.
 
 ## Comparing the Five Options
 
-| Aspect | ① TGW RAM Sharing | ② VPC Peering | ③ PrivateLink | ④ TGW Peering | ⑤ VPC Lattice |
+The PrivateLink and Lattice columns describe the **tested NLB-backed endpoint-service and HTTP-service patterns**. PrivateLink also has resource and service-network endpoint types; Lattice also has TCP resource configurations. They are not universally “NLB required” or “L7 only” products.
+
+| Aspect | ① TGW RAM Sharing | ② VPC Peering | ③ PrivateLink endpoint service | ④ TGW Peering | ⑤ VPC Lattice HTTP service |
 |---|---|---|---|---|---|
-| Mechanism | Share TGW to external account via RAM | 1:1 VPC connection | NLB-based endpoint | Peering between per-ORG TGWs | L7 service network |
-| Overlapping CIDRs | ❌ | ❌ | ✅ (ENI-based) | ❌ | ✅ (link-local based) |
-| Direction | Bidirectional L3 | Bidirectional L3 | One-way (Consumer→Provider) | Bidirectional L3 | One-way (Consumer→Provider) |
-| Transitive routing | ✅ via TGW RT | ❌ | ❌ | ✅ | ❌ (per service) |
-| Routing control | **TGW owner account (ORG A)** | Both sides independent | Provider controls principals | **Each ORG independent** | Service network owner |
-| Provisioning time (measured) | TGW ~3 min + acceptance steps | **Under 1 min** | Endpoint ~3 min | **~7 min (longest)** | ~5 min |
+| Mechanism | Share a TGW with the external account | Direct VPC pair | Consumer interface endpoint → provider NLB/service | Connect each owner's TGW | Associate services and client VPCs with a service network |
+| Address overlap | Direct routing needs an unambiguous address plan | Overlapping CIDRs cannot be peered | Service access can handle overlapping VPC CIDRs | Direct routing needs an unambiguous address plan | Service access can handle overlapping VPC CIDRs |
+| Connection model | Bidirectional IP routing when permitted | Bidirectional IP routing when permitted | Consumer initiates; responses can return on the connection | Bidirectional IP routing when permitted | Clients initiate requests to published services; reverse access needs its own configuration |
+| Routing setup | VPC routes plus TGW tables/associations | Routes on both sides; no transitive VPC peering | Endpoint/service permissions and network controls, rather than general VPC transit | Explicit static routes toward the peer plus VPC routes | Service/network associations and policies, rather than general VPC transit |
+| Control | TGW owner manages its TGW tables; consumers retain their VPC controls | Each VPC owner | Provider controls service permissions/targets; consumer controls its endpoints | Each TGW owner, with coordinated routes | Network/service owners and client-network controls |
+| Original reported provisioning time | TGW ~3 min plus acceptance | Under 1 min | Endpoint ~3 min | ~7 min | ~5 min |
 
-## Field Verification Results
+The provisioning times are observations from the original report, not SLAs or end-to-end delivery estimates. The routing row describes the two-TGW topology in this chapter; it does not assert unrestricted transit through arbitrary chains of peers. NAT or address redesign are additional approaches to overlap and require their own design.
 
-All five options were built across accounts in two different Organizations and tested through both control plane (connection establishment) and data plane (real traffic). **All five are implementable.** Nothing is blocked by the organization boundary itself — the boundary shows up only as explicit procedures: **naming the account ID plus acceptance on the receiving side**.
+## Reported Verification Results
 
-![Topology of five cross-organization VPC paths — VPC Peering, shared TGW, TGW Peering, PrivateLink, and VPC Lattice — annotated with each path's measured p50 latency.](../.gitbook/assets/en-networking-05-cross-org-vpc-connectivity-0.png)
+The original report states that all five patterns were established and traffic was exchanged across two Organizations. AWS documentation supports cross-account deployment of these patterns; a common Organization is not inherently required. However, IAM/SCP/sharing restrictions can block setup, and routes, security groups, NACLs, DNS and service authorization determine whether traffic works. Account IDs and acceptance alone are insufficient.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-05-cross-org-vpc-connectivity-0.html)
+![The original cross-organization topology shows TCP_RR p50 values for peering, TGW and PrivateLink paths, and an HTTP keep-alive p50 for the Lattice HTTP-service path.](../.gitbook/assets/en-networking-05-cross-org-vpc-connectivity-0.png)
+
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-05-cross-org-vpc-connectivity-0.html)
+
+The figure preserves the original observations. Its Lattice value is **HTTP KA**, while the other displayed values are **TCP_RR**; they are not one directly comparable metric. The “GPU” label identifies the proposed environment, not a GPU benchmark.
 
 ## Latency Measurements (M1–M7)
 
-**Measurement design** — the signal is sub-millisecond, so measurement error must be smaller than the signal:
+**Reported setup:** `ap-northeast-2`, matching ZoneId `apne2-az1` across accounts, `c7g.large`, and one EC2 responder with nginx returning a fixed HTTP 200. The report describes three ENIs with per-path subnets/return routes, five round-robin interleaved rounds, 1,500 persistent TCP_RR samples per path, 100 ICMP samples per path, and 275 HTTP keep-alive samples per path.
 
-- **c7g.large** instances (no burstable types); the responder is **one EC2 instance (nginx fixed 200)** — load balancers appear only where structurally required (③⑤, plus M7 to isolate the NLB hop)
-- The responder has 3 ENIs (per-path subnets with separate return route tables), so **M1–M7 run round-robin interleaved ×5 rounds** without route swapping
-- Primary metric: **persistent TCP_RR ping-pong, 1,500 samples/path** (eliminates process startup and handshake costs); secondary: ICMP 100/path, HTTP keep-alive 275/path
+The nginx description identifies the HTTP responder; the page does not identify the TCP_RR implementation or message sizes. Raw samples, software/kernel versions, timer boundaries and Linux return-path policy configuration are not linked here. Persistent connections aim to reduce repeated setup effects, but their timer boundaries cannot be independently checked from these tables.
+
+**All latency values below are milliseconds; TTL is a separate packet field.** TCP_RR and ICMP are request/response round-trip measures. HTTP KA includes application processing. The two measurement campaigns below must be interpreted separately.
 
 | ID | Path | ICMP p50 | TCP_RR p50 | RR p99 | RR sd | HTTP KA p50 | TTL |
 |---|---|---|---|---|---|---|---|
 | M1 | Same VPC → EC2 (baseline) | 0.121 | **0.049** | 0.062 | 0.007 | 0.087 | 127 |
 | M2 | ② VPC Peering → EC2 | 0.125 | **0.048** | 0.057 | 0.011 | 0.080 | 127 |
 | M3 | ① Shared TGW (RAM) → EC2 | 0.535 | **0.619** | 0.695 | 0.141 | 0.686 | 126 |
-| M4 | ④ TGW Peering (2 hops) → EC2 | 0.912 | **0.599** | 0.855 | 0.133 | 0.488 | 125 |
+| M4 | ④ TGW Peering (two TGWs) → EC2 | 0.912 | **0.599** | 0.855 | 0.133 | 0.488 | 125 |
 | M5 | ③ PrivateLink → NLB → EC2 | not measured | **0.961** | 1.084 | 0.035 | 0.711 | — |
-| M6 | ⑤ VPC Lattice → EC2 target | not measured | not measured (L7 only) | — | — | **1.635** | — |
+| M6 | ⑤ VPC Lattice → EC2 target | not measured | not measured for this HTTP service | — | — | **1.635** | — |
 | M7 | ② Peering → NLB → EC2 (NLB hop isolation) | not measured | **0.841** | 0.909 | 0.119 | 0.883 | — |
 
-**Derived metrics (p50, ms):**
+### Differences Between Reported Medians
 
-| Metric | Definition | TCP_RR | ICMP |
-|---|---|---|---|
-| TGW 1-hop cost | M3 − M2 | **+0.571** | +0.410 |
-| TGW 2-hop cost | M4 − M2 | **+0.551** | +0.787 |
-| NLB hop cost | M7 − M2 | **+0.793** | — |
-| Pure PrivateLink ENI overhead | M5 − M7 | **+0.120** | — |
-| Lattice proxy cost (HTTP) | M6 − M2 | +1.555 | — |
+These are **differences of path medians**, not isolated one-way hop costs or measurements of an individual ENI/proxy component.
 
-**Verdict:**
+| Observed path comparison | Difference | Δ TCP_RR p50 | Δ ICMP p50 | Δ HTTP KA p50 |
+|---|---|---|---|---|
+| Peering vs same-VPC baseline | M2 − M1 | -0.001 | +0.004 | -0.007 |
+| Shared TGW path vs peering | M3 − M2 | +0.571 | +0.410 | +0.606 |
+| Two-TGW path vs peering | M4 − M2 | +0.551 | +0.787 | +0.408 |
+| Peering with NLB vs direct peering | M7 − M2 | +0.793 | — | +0.803 |
+| PrivateLink/NLB vs peering/NLB | M5 − M7 | +0.120 | — | -0.172 |
+| Lattice HTTP service vs direct peering HTTP | M6 − M2 | — | — | +1.555 |
 
-> **Within the same AZ, a TGW hop adds 0.4–0.6 ms at p50** — consistent with the common "sub-ms per hop" observation.
-> **VPC Peering's latency cost is zero within measurement limits** (M2 0.048 ≈ M1 baseline 0.049).
-> **The PrivateLink ENI itself adds only +0.12 ms** — the bulk of PrivateLink's total latency (0.96 ms) is the structurally required **NLB hop (+0.79 ms)**. Lattice's L7 proxy costs +1.6 ms.
+- M2 is close to the same-VPC baseline, but the tables do not establish statistical equivalence or zero overhead.
+- The two-TGW path's TCP_RR median is lower than the single shared-TGW path's median. The data therefore do not support a universal “0.4–0.6 ms per TGW hop” or a linear hop-cost formula.
+- M5−M7 is **+0.120 ms for TCP_RR but −0.172 ms for HTTP KA**. It cannot be labeled a pure PrivateLink ENI cost.
+- The Lattice comparison is **HTTP +1.555 ms**, not TCP_RR. It describes this HTTP-service test, not every Lattice mode.
+- TTL does not reveal the path's hop count without the initial TTL and relevant network behavior.
 
-**Additional measurement — service-fronted fair comparison (NLB on every path):** In real deployments the Peering and TGW paths also front the service with an NLB, so an NLB-fronted configuration was additionally built and measured for every L3 path (per-subnet NLBs, IP targets, same methodology).
+### Separate Service-Fronted Campaign
+
+The original report also placed NLBs on each L3 path. This is a useful comparison for that service-exposure pattern, not a requirement for every production Peering/TGW deployment.
 
 | Configuration | TCP_RR p50 | HTTP KA p50 |
 |---|---|---|
@@ -86,48 +96,56 @@ All five options were built across accounts in two different Organizations and t
 | ③ PrivateLink → NLB → EC2 | **0.658** | 0.845 |
 | ① Shared TGW → NLB → EC2 | **1.273** | 1.257 |
 | ④ TGW Peering → NLB → EC2 | **1.425** | 1.279 |
-| ⑤ Lattice (acts as the LB itself — no NLB needed) | — | **1.680** |
+| ⑤ Lattice HTTP service (no separate NLB in this test) | — | **1.680** |
 
-> **Service-exposure-frame verdict:** the pure PrivateLink ENI cost is +0.036 ms (N5−N2) — effectively zero. In a real service-exposure setup where an NLB in front of the responder is the common baseline, **③ PrivateLink matches Peering+NLB and is roughly 2× faster than the TGW paths + NLB.** "Direct TGW beats PrivateLink" holds only in the LB-less direct frame. Lattice acts as the load balancer itself, so no separate NLB is needed — its gap to TGW+NLB in the same frame narrows to +0.3–0.4 ms.
+In this campaign, PrivateLink/NLB minus Peering/NLB is **+0.036 ms TCP_RR** and **+0.197 ms HTTP KA**. The shared-TGW and peered-TGW TCP_RR medians are respectively **1.93× and 2.17×** the PrivateLink median; the HTTP ratios are **1.49× and 1.51×**. These are latency ratios, not throughput multipliers or proof that the paths are equivalent.
 
-**Methodology lesson** (why an earlier measurement round was discarded and redone): combining a burstable instance (t-family), a two-stage NLB→ALB proxy chain, and a fresh connection per request (curl) buries a sub-ms signal under noise (path-independent p95 around 7 ms). New TCP flows do pay a real +0.6–1.6 ms flow-setup cost on the first RTT through TGW/NLB, so **evaluate latency separately for keep-alive/long-lived connection workloads (gRPC, NCCL, DB pools) versus one-shot connection workloads**.
+Lattice's HTTP median exceeds the shared-TGW/NLB and peered-TGW/NLB HTTP medians by **+0.423 ms and +0.401 ms**. Do not combine this campaign with the M1–M7 campaign to derive a component cost: even the Peering/NLB medians differ between runs.
 
-## Operational Findings from the Field
+The original report additionally describes a discarded burstable-instance/NLB→ALB/fresh-curl pilot with p95 around **7 ms**, and first-flow increments of **0.6–1.6 ms**. These remain attributed observations without linked raw samples, not AWS guarantees. Measure connection establishment and steady-state behavior separately for the actual application.
 
-1. **Cross-org RAM sharing requires an explicit invitation acceptance step** — sharing is rejected without `--allow-external-principals`, and the resource is invisible until the receiver runs `accept-resource-share-invitation` (same for TGW and Lattice). Automation pipelines need this acceptance step.
-2. **A foreign ORG's attachment to a shared TGW stalls at `pendingAcceptance`** — the TGW owner must accept it. "Owner-side central control" is enforced at the API level.
-3. **TGW peering shows different attachment IDs on each side** — calling the accept API with the requester-side ID returns `NotFound`. The accepter account must list and find its own ID, and propagation takes about 2 minutes.
-4. **TGW peering does not support BGP** — static routes must be added manually to both TGW route tables.
-5. **The Lattice data plane arrives from link-local (169.254.171.0/24)** — if the target SG only allows the VPC CIDR, every health check goes UNHEALTHY. Add the managed prefix list `com.amazonaws.<region>.vpc-lattice` to the SG.
-6. **Static TGW routes take priority over propagated routes** — watch for unintended path selection when both coexist.
-7. **Account automation interferes with teardown** — GuardDuty Runtime Monitoring's managed SG blocks VPC deletion (DependencyViolation), and auto-attached IAM policies block role deletion; a lingering Lattice target group also blocks VPC deletion.
+## Operational Findings
 
-## Recommended Architecture by Scenario
+1. **RAM external sharing:** external principals must be allowed and the outside-Organization account must accept the share invitation. The `CreateResourceShare` API's `allowExternalPrincipals` default is **true**; explicitly setting `--allow-external-principals` documents intent, but omitting that literal CLI flag is not universally a failure cause. Verify the effective share configuration and permissions.
+2. **Shared TGW VPC attachment acceptance:** with `AutoAcceptSharedAttachments` disabled (the default), the TGW owner must accept the shared attachment. Enabling it changes that workflow. RAM share acceptance and TGW attachment acceptance are different steps. Consumers cannot modify the owner's TGW route tables, but still control their own VPC routes and security settings.
+3. **TGW peering acceptance:** the accepter TGW owner accepts the pending peering request **in the accepter Region**, even for same-account peering. Use that request's `TransitGatewayAttachmentId`; do not confuse it with a TGW ID or VPC-attachment ID. A `NotFound` response does not establish a rule that the two sides require different IDs. The original report's roughly two-minute visibility delay is an observation, not a fixed wait guarantee.
+4. **Peering routes:** direct TGW-to-TGW peering uses explicitly configured static routes, not BGP route propagation across the peering attachment. Configure the relevant TGW and VPC route tables in both directions. Automation can manage these static routes.
+5. **Route priority:** longest-prefix matching comes first. A static route wins over a propagated route **for the same destination prefix**; a less-specific static route does not override a more-specific propagated route.
+6. **Lattice target security groups:** for the documented VPC-association service path, use the Region/IP-family managed prefix lists (`com.amazonaws.REGION.vpc-lattice` and `com.amazonaws.REGION.ipv6.vpc-lattice`) on the actual target and health-check ports. The original `169.254.171.0/24` example is not a universal list definition; managed lists can include link-local or non-routable public addresses. Endpoint/resource-gateway paths have their own controls. IAM service authentication must also be configured; it is not enabled merely by associating a VPC.
+7. **Cleanup ownership:** the original report describes GuardDuty-managed networking dependencies, IAM policy attachments and remaining Lattice resources affecting teardown. Inspect the actual dependency IDs and owning service before acting. Do not disable managed security controls or delete unrelated resources simply to force a VPC/role deletion.
 
-| Scenario | First choice | Rationale (measured) |
+## Architecture Selection by Requirement
+
+| Requirement | Candidate pattern | Checks that matter |
 |---|---|---|
-| Full GPU ORG separation, bidirectional bulk (training data) | **④ TGW Peering** | Independent routing per ORG + 0.4–0.6 ms/hop penalty is negligible |
-| Exposing only an inference API (one-way) | **③ PrivateLink** | Minimal exposure, overlapping CIDRs OK, matches Peering+NLB in the service-fronted comparison (~2× faster than TGW paths + NLB) |
-| Unavoidable CIDR overlap (M&A, MSP migration) | **③ PrivateLink / ⑤ Lattice** | ENI / link-local based — CIDR-independent |
-| Adding just a GPU account to an existing TGW | **① TGW RAM Sharing** | Reuses the existing hub; the foreign ORG cannot change routing |
-| Small PoC (1–2 VPCs) | **② VPC Peering** | Under 1 minute to set up, latency cost ≈ 0, no extra infrastructure |
-| Service exposure needing L7 auth/governance | **⑤ VPC Lattice** | Built-in IAM Auth and service discovery (accepting +1.6 ms proxy cost) |
+| Each Organization must retain its own TGW routing authority | ④ TGW Peering | Static-route coordination, address plan, throughput, availability, inspection and transfer charges |
+| A small set of inference/service endpoints should be exposed | ③ PrivateLink endpoint service | Supported protocol/model, endpoint acceptance, application auth, DNS, cost and actual payload/concurrency |
+| Service access across overlapping CIDRs | ③ PrivateLink or ⑤ Lattice | Service/resource scope; evaluate NAT/address redesign if broader IP routing is required |
+| Another account can use a centrally controlled hub | ① TGW RAM Sharing | External share policy, acceptance settings and the owner's TGW control model |
+| A small number of direct VPC pairs | ② VPC Peering | Non-overlapping CIDRs, pairwise route maintenance, quotas and data-transfer charges |
+| Managed HTTP service identity/discovery/governance is required | ⑤ VPC Lattice | Explicit IAM auth policies, signed requests, service connectivity and workload measurements |
 
-For most GPU-separation scenarios the hybrid of **④ TGW Peering (bidirectional infrastructure) + ③ PrivateLink (inference API exposure)** is optimal, and the measurements support that recommendation.
+A hybrid of TGW peering and PrivateLink may fit independent network governance plus limited API exposure. The published latency tables do not establish that it is optimal for most GPU environments. Choose based on the required connectivity and controls, then measure the actual workload.
 
-## Conclusion
+## Limitations and Next Checks
 
-- All five options can be configured across different Organizations purely through APIs; the organization boundary appears only as "name the account ID + acceptance on the receiving side."
-- In the same AZ: TGW 0.4–0.6 ms/hop, VPC Peering ≈ 0, NLB hop +0.79 ms, PrivateLink ENI +0.12 ms, Lattice proxy +1.6 ms — latency cost scales honestly with hops and proxy layers.
-- For EKS: route bulk training-data transfer (long-lived connections) over TGW, and expose inference APIs via PrivateLink.
+The original report excludes measured Network Firewall inspection paths, cross-Region latency, and throughput/concurrency. It reports functional overlap checks without publishing overlap latency results. GPU collectives, EFA/RDMA, representative payload sizes, uncertainty estimates and full reproduction artifacts are also not established by this page.
 
-**Limitations (not measured):** paths through Network Firewall inspection, Cross-Region, overlapping-CIDR environments (functionally confirmed only), and the throughput/concurrency axis.
-
----
+Keep the reported numbers as historical context. Before deployment, validate the target accounts' policies and supported connection model, required bidirectional routes or service access, failure behavior and the application's latency/throughput budget. This review performed no AWS provisioning or live benchmark.
 
 ## References
 
-- [Building Scalable Multi-VPC Network Infrastructure (AWS Whitepaper)](https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html)
-- [TGW Cross-Org Sharing with RAM (AWS Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-3-1.html)
-- [Choosing Single vs Multiple Organizations (AWS Architecture Blog)](https://aws.amazon.com/blogs/architecture/choosing-between-single-or-multiple-organizations-in-aws-organizations/)
-- [VPC Lattice (this series)](02-vpc-lattice.md)
+- [Scalable multi-VPC networking whitepaper](https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html)
+- [Cross-account TGW sharing](https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-3-1.html)
+- [Single or multiple Organizations](https://aws.amazon.com/blogs/architecture/choosing-between-single-or-multiple-organizations-in-aws-organizations/)
+- [RAM CreateResourceShare API](https://docs.aws.amazon.com/ram/latest/APIReference/API_CreateResourceShare.html)
+- [TGW acceptance options](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_TransitGatewayRequestOptions.html)
+- [TGW peering acceptance](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering-accept-reject.html)
+- [TGW routing and evaluation order](https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html)
+- [PrivateLink endpoint types](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html)
+- [Private NAT and overlapping networks](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-scenarios.html)
+- [Lattice security groups](https://docs.aws.amazon.com/vpc-lattice/latest/ug/security-groups.html)
+- [EC2 account/Region quotas](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html)
+- [EFA limitations](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html)
+- [VPC Lattice guide](02-vpc-lattice.md)
+- [Cross-Org quiz](../quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)

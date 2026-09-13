@@ -1,7 +1,7 @@
 # Windows in Kubernetes
 
-> **지원 버전**: Kubernetes 1.32, 1.33, 1.34
-> **마지막 업데이트**: 2026년 2월 11일
+> **검토한 upstream Kubernetes 버전**: Kubernetes 1.35, 1.36, 1.37
+> **마지막 업데이트**: 2026년 9월 11일
 
 Kubernetes는 원래 Linux 컨테이너를 위해 설계되었지만, 버전 1.14부터 Windows 컨테이너에 대한 프로덕션 지원이 추가되었습니다. 이 장에서는 Kubernetes에서 Windows 워크로드를 실행하는 방법, 아키텍처, 제한 사항, 그리고 Amazon EKS에서의 Windows 지원에 대해 알아보겠습니다.
 
@@ -25,15 +25,17 @@ Windows 컨테이너는 Windows 운영 체제에서 실행되는 컨테이너로
 
 ### Windows 컨테이너 유형
 
-Windows 컨테이너에는 두 가지 유형이 있습니다:
+Windows에는 두 가지 격리 유형이 있지만 Kubernetes는 **프로세스 격리만 지원**합니다. 아래 Hyper-V 설명은 운영 체제 배경 지식이며 Kubernetes 배포 옵션이 아닙니다:
 
-1. **Windows Server 컨테이너**: Linux 컨테이너와 유사하게 호스트 OS 커널을 공유합니다. 가볍고 빠르게 시작되지만, 호스트와 동일한 Windows 버전이 필요합니다.
+1. **Windows Server 컨테이너**: Linux 컨테이너와 유사하게 호스트 OS 커널을 공유합니다. 가볍고 빠르게 시작되지만, Microsoft가 지원하는 호스트/이미지 조합이 필요합니다.
 
 2. **Hyper-V 격리 컨테이너**: 각 컨테이너가 경량 VM에서 실행되어 더 높은 수준의 격리를 제공합니다. 호스트와 다른 Windows 버전을 실행할 수 있지만, 더 많은 리소스를 사용합니다.
 
 다음 다이어그램은 두 가지 Windows 컨테이너 유형의 아키텍처 차이를 보여줍니다:
 
-![Windows Server 컨테이너는 커널을 공유하는 컨테이너 런타임을 통해 물리 호스트에 연결되고, Hyper-V 격리 컨테이너는 각 앱이 경량 VM으로 분리되어 하이퍼바이저를 거쳐 같은 물리 호스트에 연결되는 구조를 비교한다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-0.svg)
+![Windows Server 컨테이너는 여러 Windows 앱이 하나의 컨테이너 런타임과 호스트 OS 커널을 공유하고, Hyper-V 격리 컨테이너는 앱마다 경량 VM과 전용 Windows OS 커널을 가진 채 Hyper-V 하이퍼바이저를 거쳐 같은 Windows Server OS와 물리적 하드웨어에 연결되는 구조를 비교한다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-0.html)
 
 ### Windows 컨테이너 이미지
 
@@ -41,17 +43,15 @@ Windows 컨테이너 이미지는 Microsoft에서 제공하는 기본 이미지�
 
 1. **Windows Server Core**: 최소한의 Windows Server 환경을 제공하는 경량 이미지
 2. **Nano Server**: 더 작은 공간을 차지하는 초경량 이미지
-3. **Windows**: 전체 Windows Server 환경을 제공하는 이미지
+3. **Windows**: 더 넓은 Windows API를 제공하는 이미지이며 전체 데스크톱/GUI 서버는 아님
 
 예시 Dockerfile:
 
 ```dockerfile
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
-WORKDIR /app
-COPY . .
-RUN powershell -Command "Install-WindowsFeature Web-Server"
+FROM mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
+COPY website/ C:/inetpub/wwwroot/
 EXPOSE 80
-CMD ["powershell", "-Command", "Start-Service W3SVC; Get-Content -Path 'C:\\inetpub\\logs\\LogFiles\\W3SVC1\\u_ex*' -Wait"]
+# Inherit the IIS image entrypoint (ServiceMonitor.exe).
 ```
 
 ## Kubernetes의 Windows 지원 아키텍처
@@ -66,7 +66,9 @@ Kubernetes의 Windows 지원 아키텍처는 다음과 같습니다:
 2. **Linux 워커 노드**: 시스템 구성 요소(CoreDNS, metrics-server 등)를 실행합니다.
 3. **Windows 워커 노드**: Windows 애플리케이션 워크로드를 실행합니다.
 
-![Linux에서만 실행되는 컨트롤 플레인의 kube-apiserver가 Linux 워커 노드의 시스템 포드와 Windows 워커 노드의 kubelet·kube-proxy를 통해 Windows 컨테이너를 함께 관리하는 혼합 클러스터 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-1.svg)
+![Linux에서만 실행되는 컨트롤 플레인(kube-apiserver, kube-controller-manager, kube-scheduler, etcd)이 CoreDNS·metrics-server 등 시스템 Pod를 실행하는 Linux 워커 노드와, kubelet·kube-proxy로 Windows 컨테이너를 실행하는 두 개의 Windows 워커 노드를 함께 관리하는 혼합 클러스터 구조를 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-1.html)
 
 ### Windows 노드 구성 요소
 
@@ -83,88 +85,40 @@ Kubernetes에서 Windows 노드를 사용할 때 알아야 할 몇 가지 제한
 
 ### 기능 제한 사항
 
-1. **특권 컨테이너**: Windows는 특권 컨테이너를 지원하지 않습니다.
-2. **호스트 네트워크 모드**: Windows 포드는 호스트 네트워크 모드를 사용할 수 없습니다.
-3. **포드 보안 컨텍스트**: 일부 보안 컨텍스트 기능(runAsUser, fsGroup 등)은 지원되지 않습니다.
-4. **DaemonSet**: Windows 노드에서 실행되는 DaemonSet은 특별한 고려 사항이 필요합니다.
-5. **emptyDir 볼륨**: Windows에서는 메모리 기반 emptyDir 볼륨이 지원되지 않습니다.
-6. **리소스 제한**: Windows에서는 CPU 제한이 다르게 적용됩니다.
+1. `privileged`는 지원하지 않습니다. 노드 에이전트에는 hostProcess와 hostNetwork를 함께 설정한 **HostProcess 컨테이너**를 사용하며 호스트 권한을 신중하게 제한합니다.
+2. 일반 Windows Pod는 hostNetwork를 지원하지 않습니다. HostProcess는 예외입니다.
+3. `spec.os.name: windows`인 Pod는 runAsUser, fsGroup, seccomp, capabilities, readOnlyRootFilesystem 등 Linux 전용 필드를 설정할 수 없습니다.
+4. OS별 이미지와 nodeSelector로 DaemonSet을 분리할 수 있습니다.
+5. 메모리 기반 emptyDir, raw block volumeDevices, PIDPressure, Linux 방식 OOM eviction은 지원하지 않습니다.
+6. CPU/메모리 제한은 Windows 방식으로 구현됩니다. Windows에는 Linux OOM killer가 없으며 메모리 부족 시 할당 실패나 페이징으로 성능이 저하될 수 있습니다.
 
 ### 네트워킹 제한 사항
 
-1. **네트워크 모드**: Windows는 L3 네트워킹만 지원합니다.
-2. **서비스 유형**: Windows 노드는 일부 서비스 유형에 제한이 있습니다.
-3. **로드 밸런싱**: 일부 로드 밸런싱 기능이 제한될 수 있습니다.
+Windows HNS와 CNI의 L2bridge/overlay 등 지원 모드를 확인합니다. 같은 Pod의 컨테이너는 네트워크와 localhost를 공유하지만 프로세스 네임스페이스와 루트 파일 시스템은 공유하지 않습니다. NetworkPolicy, 서비스 및 DSR 지원은 OS/CNI/클러스터 조합에 따라 확인해야 합니다.
 
 ### 운영 체제 버전 호환성
 
-Windows 컨테이너는 호스트 OS 버전과의 호환성이 중요합니다:
+Kubernetes v1.37의 Windows 워커 지원 대상은 Windows Server 2022와 2025입니다. 이 장의 예제는 **Windows Server 2022 + ltsc2022** 조합을 사용합니다. Microsoft 호환성 표와 배포판 지원 범위를 함께 확인하고 월별 보안 패치를 적용합니다. Hyper-V 격리로 Kubernetes의 호환성 제한을 우회할 수 없습니다.
 
-| 컨테이너 기본 이미지 | 호환되는 호스트 OS 버전 |
-|-------------------|----------------------|
-| Windows Server 2019 | Windows Server 2019 |
-| Windows Server 2022 | Windows Server 2022 |
-
-Hyper-V 격리를 사용하면 이러한 제한을 완화할 수 있지만, 추가 리소스가 필요합니다.
 ## Windows 노드 설정
 
 Kubernetes 클러스터에 Windows 노드를 추가하는 과정을 알아보겠습니다.
 
 ### 사전 요구 사항
 
-Windows 노드를 설정하기 전에 다음 사항을 확인해야 합니다:
-
-1. **Kubernetes 버전**: 1.14 이상
-2. **Windows 버전**: Windows Server 2019 이상
-3. **네트워크 플러그인**: Windows를 지원하는 CNI 플러그인(Calico, Flannel 등)
-4. **컨테이너 런타임**: Docker, containerd 등
+지원 중인 Kubernetes/Windows 조합, Linux 컨트롤 플레인, Windows 지원 CNI 및 CRI 호환 containerd가 필요합니다. Docker Engine 자체는 CRI를 제공하지 않으며 내장 dockershim은 Kubernetes 1.24에서 제거되었습니다. EKS 노드는 아래 EKS 절차를 사용합니다.
 
 ### Windows 노드 준비
 
-Windows 노드를 준비하는 단계:
-
-1. **Windows Server 설치**: Windows Server 2019 이상 설치
-2. **컨테이너 기능 활성화**:
+관리자 PowerShell에서 Containers 기능을 활성화하고 필요한 재부팅을 완료합니다. 아래는 **자체 관리 kubeadm 워커**용입니다. 공식 sig-windows-tools의 `hostprocess/Install-Containerd.ps1`과 `hostprocess/PrepareNode.ps1`을 검토한 커밋에서 다운로드하고 체크섬을 확인한 후 실행합니다. 지원되는 containerd 패치와 클러스터 버전에 맞는 kubelet을 선택합니다. 설치 스크립트가 만든 방화벽 규칙도 검토하여 10250 접근을 필요한 컨트롤 플레인 소스로 제한합니다.
 
 ```powershell
-Install-WindowsFeature -Name Containers
-Restart-Computer -Force
-```
-
-3. **Docker 설치**:
-
-```powershell
-Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
-Install-Package -Name Docker -ProviderName DockerMsftProvider -Force
-Restart-Computer -Force
-```
-
-4. **Kubernetes 구성 요소 설치**:
-
-```powershell
-# 디렉토리 생성
-mkdir -p c:\k
-
-# kubelet, kubeadm, kubectl 다운로드
-curl.exe -LO https://dl.k8s.io/v1.22.0/bin/windows/amd64/kubelet.exe
-curl.exe -LO https://dl.k8s.io/v1.22.0/bin/windows/amd64/kubectl.exe
-curl.exe -LO https://dl.k8s.io/v1.22.0/bin/windows/amd64/kube-proxy.exe
-curl.exe -LO https://github.com/kubernetes-sigs/sig-windows-tools/releases/latest/download/wins.exe
-
-# 파일을 C:\k로 이동
-mv kubelet.exe C:\k
-mv kubectl.exe C:\k
-mv kube-proxy.exe C:\k
-mv wins.exe C:\k
-```
-
-5. **네트워크 구성**:
-
-```powershell
-# 방화벽 규칙 설정
-New-NetFirewallRule -Name kubelet -DisplayName 'kubelet' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 10250
-New-NetFirewallRule -Name https -DisplayName 'https' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 443
-New-NetFirewallRule -Name http -DisplayName 'http' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 80
+$ErrorActionPreference = "Stop"
+$ContainerdVersion = Read-Host "Validated containerd version (without v)"
+$KubernetesVersion = Read-Host "Cluster-compatible Kubernetes version (vX.Y.Z)"
+if (-not $ContainerdVersion -or -not $KubernetesVersion) { throw "Versions required" }
+.\Install-Containerd.ps1 -ContainerDVersion $ContainerdVersion
+.\PrepareNode.ps1 -KubernetesVersion $KubernetesVersion
 ```
 
 ### kubeadm을 사용한 Windows 노드 조인
@@ -181,18 +135,14 @@ Windows 노드에서 조인 명령 실행:
 # kubeadm 조인 명령 실행
 kubeadm join <control-plane-host>:<control-plane-port> --token <token> --discovery-token-ca-cert-hash sha256:<hash>
 
-# kubelet 서비스 등록 및 시작
-sc.exe create kubelet binPath= "C:\k\kubelet.exe --windows-service --kubeconfig=C:\k\config"
-Start-Service kubelet
 ```
 
 ### Windows 노드 레이블 설정
 
-Windows 노드에 적절한 레이블을 설정하여 워크로드 스케줄링을 제어합니다:
+kubelet이 게시한 OS/아키텍처/빌드 레이블을 확인합니다. 잘못된 OS 레이블을 덮어써서 스케줄링을 강제하지 않습니다. `spec.os.name`은 OS를 명시하지만 스케줄러 선택자를 대신하지 않으므로 nodeSelector도 사용합니다.
 
 ```bash
-kubectl label node <windows-node-name> kubernetes.io/os=windows
-kubectl label node <windows-node-name> kubernetes.io/arch=amd64
+kubectl get nodes -L kubernetes.io/os,kubernetes.io/arch,node.kubernetes.io/windows-build
 ```
 
 ## Windows 컨테이너 배포
@@ -218,11 +168,13 @@ spec:
       labels:
         app: iis
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: iis
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         resources:
           limits:
             cpu: 1
@@ -251,11 +203,13 @@ kind: Pod
 metadata:
   name: windows-custom-script
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     command:
     - powershell.exe
     - -Command
@@ -276,22 +230,27 @@ kind: Pod
 metadata:
   name: windows-multi-container
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
-  - name: web
-    image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-    ports:
-    - containerPort: 80
+  - name: writer
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    command: [powershell.exe, -Command, 'while ($true) { Add-Content C:\shared-logs\app.log "Log at $(Get-Date)"; Start-Sleep 10 }']
+    volumeMounts:
+    - name: logs
+      mountPath: C:\shared-logs
   - name: logger
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
-    command:
-    - powershell.exe
-    - -Command
-    - |
-      while ($true) {
-        Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
-      }
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    command: [powershell.exe, -Command, 'while (-not (Test-Path C:\shared-logs\app.log)) { Start-Sleep 2 }; Get-Content C:\shared-logs\app.log -Wait']
+    volumeMounts:
+    - name: logs
+      mountPath: C:\shared-logs
+      readOnly: true
+  volumes:
+  - name: logs
+    emptyDir: {}
 ```
 
 ## 네트워킹
@@ -300,7 +259,9 @@ Windows 노드의 네트워킹은 Linux 노드와 다른 특성을 가집니다.
 
 다음 다이어그램은 Windows 노드와 Linux 노드가 혼합된 Kubernetes 클러스터의 네트워킹 아키텍처를 보여줍니다:
 
-![외부 클라이언트의 요청이 로드 밸런서와 Kubernetes 서비스를 거쳐 Linux 포드와 Windows 포드로 분산되고, 두 포드가 서로 다른 OS의 노드에 있어도 클러스터 네트워크로 직접 통신할 수 있음을 보여준다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-2.svg)
+![외부 클라이언트의 요청이 로드 밸런서와 Kubernetes 서비스를 거쳐 Linux Pod와 Windows Pod로 분산되고, 두 Pod가 서로 다른 OS의 노드에 있어도 클러스터 네트워크로 직접 통신할 수 있음을 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-2.html)
 
 ### 지원되는 네트워크 플러그인
 
@@ -314,72 +275,7 @@ Windows 노드에서 지원되는 네트워크 플러그인:
 
 ### Flannel 설정 예시
 
-Flannel을 사용한 Windows 네트워킹 설정:
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: kube-flannel-ds-windows
-  namespace: kube-system
-  labels:
-    tier: node
-    app: flannel
-spec:
-  selector:
-    matchLabels:
-      app: flannel
-  template:
-    metadata:
-      labels:
-        tier: node
-        app: flannel
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/os
-                operator: In
-                values:
-                - windows
-      hostNetwork: true
-      containers:
-      - name: kube-flannel
-        image: sigwindowstools/flannel:v0.13.0
-        command:
-        - powershell
-        args:
-        - -file
-        - /opt/bin/flannel-host.ps1
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        volumeMounts:
-        - name: host-run
-          mountPath: /run
-        - name: cni
-          mountPath: /etc/cni/net.d
-        - name: flannel-cfg
-          mountPath: /etc/kube-flannel/
-      volumes:
-      - name: host-run
-        hostPath:
-          path: /run
-      - name: cni
-        hostPath:
-          path: /etc/cni/net.d
-      - name: flannel-cfg
-        configMap:
-          name: kube-flannel-cfg
-```
+Flannel의 Linux 매니페스트를 Windows DaemonSet으로 복사하면 동작하지 않습니다. Windows 바이너리, HNS, CNI 경로, RBAC 및 HostProcess 구성이 필요합니다. 클러스터 배포판의 Windows 지원 설치 절차를 사용하고 Linux 측 네트워크와 Windows 측 win-overlay/win-bridge 구성을 함께 맞춥니다. Windows Flannel VXLAN은 VNI 4096/UDP 4789 조건을 확인합니다. 일반 애플리케이션 Pod에 hostNetwork를 추가하는 방식으로 설치하지 않습니다.
 
 ### 서비스 노출
 
@@ -430,7 +326,9 @@ Windows 노드에서 사용할 수 있는 스토리지 옵션을 알아보겠습
 
 다음 다이어그램은 Windows 노드에서 사용 가능한 다양한 스토리지 옵션을 보여줍니다:
 
-![Windows 컨테이너가 임시성 로컬 볼륨, API로 전달되는 ConfigMap·Secret 볼륨, 그리고 PersistentVolume과 CSI 드라이버를 거쳐 Azure Disk나 AWS EBS 같은 외부 스토리지에 연결되는 세 가지 스토리지 경로를 보여준다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-3.svg)
+![Windows Pod의 컨테이너가 Windows 노드의 emptyDir·hostPath 볼륨(hostPath는 노드 디스크로 연결), Kubernetes API에서 전달되는 ConfigMap·Secret 볼륨, 그리고 CSI 드라이버를 거쳐 Azure Disk/File, AWS EBS, SMB 공유에 연결되는 PersistentVolume을 마운트하는 세 가지 스토리지 경로를 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-3.html)
 
 ### 지원되는 볼륨 유형
 
@@ -440,10 +338,7 @@ Windows 노드에서 지원되는 볼륨 유형:
 2. **hostPath**: 호스트 노드의 파일 시스템
 3. **configMap**: 구성 데이터
 4. **secret**: 민감한 데이터
-5. **azureFile**: Azure File 스토리지
-6. **awsElasticBlockStore**: AWS EBS 볼륨
-7. **azureDisk**: Azure Disk 스토리지
-8. **CSI**: Container Storage Interface 드라이버
+5. **CSI/PVC**: Windows 호환 Azure Files, Azure Disk, EBS 또는 SMB CSI 드라이버와 파일 시스템 볼륨을 사용하며 OS/파일 시스템 지원을 확인합니다.
 
 ### emptyDir 볼륨 예시
 
@@ -453,11 +348,13 @@ kind: Pod
 metadata:
   name: windows-emptydir
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: temp-volume
       mountPath: C:\temp
@@ -483,11 +380,13 @@ kind: Pod
 metadata:
   name: windows-hostpath
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: logs-volume
       mountPath: C:\logs
@@ -535,23 +434,25 @@ kind: Pod
 metadata:
   name: windows-config-secret
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: config-volume
       mountPath: C:\config
     - name: secret-volume
       mountPath: C:\secret
+      readOnly: true
     command:
     - powershell.exe
     - -Command
     - |
       Get-Content -Path C:\config\config.json
-      Get-Content -Path C:\secret\username
-      Get-Content -Path C:\secret\password
+      if (-not (Test-Path C:\secret\username) -or -not (Test-Path C:\secret\password)) { throw "Secret files missing" }
       while ($true) { Start-Sleep -Seconds 10 }
   volumes:
   - name: config-volume
@@ -564,7 +465,9 @@ spec:
 
 ### CSI 드라이버 사용
 
-Windows에서 CSI 드라이버를 사용하는 예시:
+사전 요구 사항: Windows 호환 CSI 드라이버와 파일 시스템(예: NTFS 및 WaitForFirstConsumer를 사용하는 EBS CSI)으로 windows-csi StorageClass를 먼저 생성합니다. 이름만으로 드라이버가 설치되지 않습니다. EBS는 AZ에 종속되며 raw block 대신 파일 시스템 모드를 사용합니다.
+
+예시:
 
 ```yaml
 apiVersion: v1
@@ -584,11 +487,13 @@ kind: Pod
 metadata:
   name: windows-csi-pod
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: data-volume
       mountPath: C:\data
@@ -618,11 +523,10 @@ Windows 노드 모니터링을 위한 도구:
 Windows 노드에 Prometheus Windows Exporter 설치:
 
 ```powershell
-# Windows Exporter 다운로드
-Invoke-WebRequest -Uri https://github.com/prometheus-community/windows_exporter/releases/download/v0.16.0/windows_exporter-0.16.0-amd64.msi -OutFile windows_exporter.msi
-
-# Windows Exporter 설치
-Start-Process msiexec.exe -ArgumentList '/i', 'windows_exporter.msi', 'ENABLED_COLLECTORS=cpu,memory,disk,net,service,os,system', '/quiet' -Wait
+# Download a supported release MSI, verify its checksum, then install locally.
+$ExporterMsi = (Resolve-Path .\windows_exporter.msi).Path
+Start-Process msiexec.exe -ArgumentList "/i `"$ExporterMsi`" ENABLED_COLLECTORS=cpu,memory,logical_disk,net,service,os,system REMOVE=FirewallException /quiet" -Wait
+# Restrict any separately configured port 9182 firewall rule to Prometheus sources.
 ```
 
 Prometheus 구성:
@@ -646,12 +550,11 @@ Windows 컨테이너 로그 수집을 위한 도구:
 
 Windows 노드에 Fluent Bit 설치:
 
-```powershell
-# Fluent Bit 다운로드
-Invoke-WebRequest -Uri https://fluentbit.io/releases/1.8/fluent-bit-1.8.11-win64.zip -OutFile fluent-bit.zip
+실제 Elasticsearch 주소/인증 및 신뢰할 CA를 구성합니다. 서비스 계정에는 Security 이벤트 로그 읽기 권한과 체크포인트 경로 쓰기 권한이 필요합니다.
 
-# 압축 해제
-Expand-Archive -Path fluent-bit.zip -DestinationPath C:\fluent-bit
+```powershell
+# Install a supported Windows Fluent Bit release, verify its checksum,
+# and arrange bin/ and conf/ under C:\fluent-bit before continuing.
 
 # 구성 파일 생성
 @"
@@ -663,6 +566,7 @@ Expand-Archive -Path fluent-bit.zip -DestinationPath C:\fluent-bit
 [INPUT]
     Name         winlog
     Channels     Application,System,Security
+    DB           C:\fluent-bit\winlog.db
 
 [OUTPUT]
     Name         es
@@ -670,6 +574,9 @@ Expand-Archive -Path fluent-bit.zip -DestinationPath C:\fluent-bit
     Host         elasticsearch-host
     Port         9200
     Index        windows_logs
+    Suppress_Type_Name On
+    tls          On
+    tls.verify   On
 "@ | Out-File -FilePath C:\fluent-bit\conf\fluent-bit.conf -Encoding ascii
 
 # 서비스 등록
@@ -679,38 +586,7 @@ Start-Service fluent-bit
 
 ### 애플리케이션 로그 수집
 
-Windows 컨테이너 애플리케이션 로그 수집:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: windows-logging
-spec:
-  nodeSelector:
-    kubernetes.io/os: windows
-  containers:
-  - name: iis
-    image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-    volumeMounts:
-    - name: logs
-      mountPath: C:\inetpub\logs\LogFiles
-  - name: log-collector
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
-    command:
-    - powershell.exe
-    - -Command
-    - |
-      while ($true) {
-        Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
-      }
-    volumeMounts:
-    - name: logs
-      mountPath: C:\inetpub\logs\LogFiles
-  volumes:
-  - name: logs
-    emptyDir: {}
-```
+IIS의 파일/ETW/Event Log를 stdout으로 내보내려면 Microsoft LogMonitor를 애플리케이션 이미지에 통합하고 LogMonitorConfig.json에 실제 소스를 정의합니다. ServiceMonitor와 IIS 수명을 유지하는 진입점을 테스트합니다. 위 shared-file sidecar는 볼륨 공유를 설명하는 예제이며 파일 회전/재시작 중 중복·유실 처리를 제공하지 않습니다. 운영 수집기는 체크포인트와 회전을 처리해야 합니다. `kubectl logs`는 stdout/stderr만 보여 주며 IIS 파일을 자동 수집하지 않습니다.
 
 ## 보안
 
@@ -732,13 +608,13 @@ Windows 컨테이너 보안을 위한 권장 사항:
 
 1. **최소 기본 이미지**: 가능한 작은 기본 이미지 사용(Nano Server 등)
 2. **이미지 스캐닝**: 컨테이너 이미지 취약점 스캐닝
-3. **ReadOnlyRootFilesystem**: 가능한 경우 읽기 전용 루트 파일 시스템 사용
+3. **파일 시스템 권한**: NTFS ACL 및 지원되는 읽기 전용 데이터 마운트를 사용합니다. Windows는 readOnlyRootFilesystem을 지원하지 않습니다.
 4. **비특권 사용자**: 비특권 사용자로 애플리케이션 실행
 5. **네트워크 정책**: 적절한 네트워크 정책 적용
 
 ### RunAsUsername
 
-Windows 컨테이너에서는 `runAsUser` 대신 `runAsUsername`을 사용하여 컨테이너 내에서 실행할 사용자를 지정할 수 있습니다:
+Windows 컨테이너에서는 `runAsUser` 대신 `securityContext.windowsOptions.runAsUserName`을 사용하여 컨테이너 내에서 실행할 사용자를 지정할 수 있습니다:
 
 ```yaml
 apiVersion: v1
@@ -746,6 +622,8 @@ kind: Pod
 metadata:
   name: windows-runasusername
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   securityContext:
@@ -753,7 +631,7 @@ spec:
       runAsUserName: "ContainerUser"
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     command:
     - powershell.exe
     - -Command
@@ -764,49 +642,79 @@ spec:
 
 ### 그룹 관리 서비스 계정(gMSA)
 
-Windows 컨테이너에서 Active Directory 인증을 위한 gMSA 구성:
+`gmsaCredentialSpecName`은 Secret이 아닌 클러스터 범위 **GMSACredentialSpec**을 참조합니다. CRD, mutating/validating webhook 및 ServiceAccount의 `use` RBAC 권한이 필요합니다. 아래 도메인/호스트 이름은 실제 값으로 바꾸고 CredentialSpec 모듈로 AD의 SID/GUID/NetBIOS/DNS 범위를 생성합니다. 도메인 가입 호스트 방식의 예이며 지원되는 비도메인 호스트용 portable identity 구성은 별도 준비가 필요합니다.
 
-1. **Active Directory에 gMSA 생성**:
+`Get-KdsRootKey`로 기존 키를 확인합니다. 새 키가 필요하면 AD 관리자가 `Add-KdsRootKey -EffectiveImmediately` 후 복제 대기 시간(최대 10시간)을 확보합니다. 10시간 backdate는 단일 DC 테스트 환경 전용입니다. gMSA는 네트워크 인증 자격이며 컨테이너를 도메인에 가입시키거나 `whoami`를 gMSA 이름으로 바꾸지 않습니다. 실제 서비스의 Kerberos 인증과 `klist`로 검증합니다.
 
 ```powershell
-# gMSA 생성
-New-ADServiceAccount -Name WebApp1 -DNSHostName WebApp1.contoso.com -ServicePrincipalNames http/WebApp1.contoso.com -PrincipalsAllowedToRetrieveManagedPassword "Domain Controllers", "Domain Computers"
+# On an authorized AD administration host, after KDS readiness is confirmed:
+Import-Module ActiveDirectory
+New-ADGroup -Name 'WebAppHosts' -SamAccountName 'WebAppHosts' -GroupScope DomainLocal
+Add-ADGroupMember -Identity 'WebAppHosts' -Members 'ContainerHost01$'
+New-ADServiceAccount -Name WebApp1 -DNSHostName WebApp1.contoso.com -ServicePrincipalNames http/WebApp1.contoso.com -PrincipalsAllowedToRetrieveManagedPassword WebAppHosts
+# Install/review the official CredentialSpec PowerShell module first.
+Import-Module CredentialSpec
+New-CredentialSpec -AccountName WebApp1 -Path C:\gmsa-credspec.json
+$spec = Get-Content C:\gmsa-credspec.json -Raw | ConvertFrom-Json
+@{ apiVersion='windows.k8s.io/v1'; kind='GMSACredentialSpec'; metadata=@{name='gmsa-cred-spec'}; credspec=$spec } |
+    ConvertTo-Json -Depth 20 | Set-Content C:\gmsa-resource.json -Encoding utf8
 ```
 
-2. **Kubernetes에 gMSA 자격 증명 저장**:
+```bash
+# Requires the GMSA CRD and mutating/validating webhooks installed by an administrator.
+kubectl apply -f gmsa-resource.json
+```
 
 ```yaml
 apiVersion: v1
-kind: Secret
+kind: ServiceAccount
 metadata:
-  name: gmsa-cred-spec
-type: microsoft.com/gmsa-credential-spec
-data:
-  credspec.json: <base64-encoded-credential-spec>
-```
-
-3. **포드에 gMSA 구성 적용**:
-
-```yaml
+  name: windows-app
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: use-webapp-gmsa
+rules:
+- apiGroups: [windows.k8s.io]
+  resources: [gmsacredentialspecs]
+  resourceNames: [gmsa-cred-spec]
+  verbs: [use]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: use-webapp-gmsa
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: use-webapp-gmsa
+subjects:
+- kind: ServiceAccount
+  name: windows-app
+  namespace: default
+---
 apiVersion: v1
 kind: Pod
 metadata:
   name: windows-gmsa
+  namespace: default
 spec:
+  os:
+    name: windows
+  serviceAccountName: windows-app
   nodeSelector:
     kubernetes.io/os: windows
   securityContext:
     windowsOptions:
       gmsaCredentialSpecName: gmsa-cred-spec
+      runAsUserName: 'NT AUTHORITY\NETWORK SERVICE'
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
-    command:
-    - powershell.exe
-    - -Command
-    - |
-      whoami
-      while ($true) { Start-Sleep -Seconds 10 }
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    command: [powershell.exe, -Command, 'whoami; Start-Sleep -Seconds 3600']
 ```
 
 ## Amazon EKS에서의 Windows 지원
@@ -815,23 +723,15 @@ Amazon EKS에서 Windows 워크로드를 실행하는 방법을 알아보겠습�
 
 다음 다이어그램은 Amazon EKS에서의 Windows 지원 아키텍처를 보여줍니다:
 
-![EKS 컨트롤 플레인이 Linux 노드 그룹과 Windows 노드 그룹을 함께 관리하며 AWS IAM·VPC·CloudWatch와 연동하고, Windows 애플리케이션 포드가 Elastic Load Balancer를 통해 사용자에게 서비스를 제공하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-4.svg)
+![EKS 컨트롤 플레인이 Linux 노드 그룹(CoreDNS·VPC CNI·kube-proxy 시스템 Pod)과 Windows 노드 그룹(Windows 애플리케이션 Pod)을 함께 관리하며 AWS IAM·Amazon VPC·CloudWatch와 연동하고, Windows 애플리케이션 Pod가 Elastic Load Balancer를 통해 사용자에게 서비스를 제공하는 구조를 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-4.html)
 
 ### EKS에서 Windows 지원 활성화
 
-Amazon EKS에서 Windows 지원을 활성화하는 단계:
+Windows IPAM은 EKS가 관리하는 VPC resource controller가 담당합니다. 예전 release-1.11 controller/webhook 매니페스트를 설치하지 않습니다. 클러스터 IAM 역할에 `AmazonEKSVPCResourceController` 권한을 부여하고 현재 AWS 절차에 따라 `kube-system/amazon-vpc-cni` ConfigMap의 `enable-windows-ipam: "true"`를 설정합니다. 기존 키를 보존하며 Helm/애드온 관리 설정과 충돌하지 않게 적용합니다.
 
-1. **VPC CNI 플러그인 업데이트**:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.11/config/master/vpc-resource-controller.yaml
-```
-
-2. **Windows VPC 어드미션 웹훅 설치**:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.11/config/master/vpc-admission-webhook.yaml
-```
+CoreDNS용 Linux 노드 또는 지원되는 Fargate 구성이 필요합니다. Windows는 EKS Auto Mode, Fargate 워크로드, Hybrid Nodes, IPv6, 사용자 지정 네트워킹 및 Pod별 보안 그룹을 지원하지 않습니다. Windows 노드 역할의 access entry 유형은 `EC2_WINDOWS`이며, 레거시 aws-auth 구성에서는 `eks:kube-proxy-windows` 그룹을 확인합니다.
 
 ### Windows 노드 그룹 생성
 
@@ -847,7 +747,7 @@ eksctl create nodegroup \
   --nodes-min 1 \
   --nodes-max 4 \
   --managed \
-  --node-ami-family WindowsServer2019FullContainer
+  --node-ami-family WindowsServer2022FullContainer
 ```
 
 AWS Management Console을 사용하여 Windows 노드 그룹 생성:
@@ -882,11 +782,13 @@ spec:
         tier: backend
         track: stable
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: windows-server-iis
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         ports:
         - name: http
           containerPort: 80
@@ -915,43 +817,9 @@ spec:
 
 ### EKS에서 Windows 컨테이너 로깅
 
-CloudWatch Logs를 사용하여 Windows 컨테이너 로그 수집:
+Windows 노드의 Container Insights는 CloudWatch Observability EKS 애드온 1.5.0 이상에서 지원합니다. 클러스터와 호환되는 애드온 버전, IAM 권한 및 Windows 노드용 에이전트 구성을 선택합니다. Windows Application Signals는 지원하지 않습니다.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: amazon-cloudwatch
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
-
-    [INPUT]
-        Name          tail
-        Tag           kube.*
-        Path          /var/log/containers/*.log
-        Parser        docker
-        DB            /var/fluent-bit/state/flb_container.db
-        Mem_Buf_Limit 50MB
-
-    [FILTER]
-        Name          kubernetes
-        Match         kube.*
-        Kube_URL      https://kubernetes.default.svc:443
-        Merge_Log     On
-
-    [OUTPUT]
-        Name          cloudwatch_logs
-        Match         kube.*
-        region        us-west-2
-        log_group_name /aws/eks/my-cluster/windows-logs
-        log_stream_prefix windows-
-        auto_create_group true
-```
+Windows stdout/stderr는 kubelet의 CRI 로그 경로(일반적으로 `C:\var\log\pods` 및 `C:\var\log\containers`)에서 수집합니다. 실제 배포판 경로를 확인하며 Linux `/var/log`/Docker parser 설정을 그대로 복사하지 않습니다. EKS의 kubelet/kube-proxy 로그는 **EKS Windows** 이벤트 로그에 기록됩니다. 일반 컨테이너에 .evtx 파일만 마운트해도 winlog 입력이 호스트 이벤트 API를 읽게 되지는 않습니다. 호스트 서비스나 검토된 HostProcess 수집기를 사용합니다.
 
 ## 모범 사례
 
@@ -1002,3 +870,14 @@ Windows in Kubernetes를 성공적으로 구현하려면 적절한 계획, 설�
 ## 퀴즈
 
 이 장에서 배운 내용을 테스트하려면 [Windows in Kubernetes 퀴즈](../quizzes/core/10-windows-in-kubernetes-quiz.md)를 풀어보세요.
+
+## 검증 참고 자료
+
+- https://kubernetes.io/docs/concepts/windows/intro/
+- https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/adding-windows-nodes/
+- https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/
+- https://kubernetes.io/docs/tasks/configure-pod-container/configure-gmsa/
+- https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility
+- https://github.com/microsoft/windows-container-tools/tree/main/LogMonitor
+- https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html
+- https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html

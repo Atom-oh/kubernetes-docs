@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Fault Injection Overview",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-08-fault-injection-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      420
+    ],
+    "views": [
+      {
+        "id": "delay-path",
+        "label": "Delay injection",
+        "focus": [
+          "client",
+          "delay",
+          "service"
+        ],
+        "note": "A delayed request reaches the service slowly, after a 3 second hold."
+      },
+      {
+        "id": "abort-path",
+        "label": "Abort injection",
+        "focus": [
+          "client",
+          "abort"
+        ],
+        "note": "An aborted request never reaches the service; an HTTP 503 error goes straight back to the client."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "Sends request",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "delay",
+      "type": "security",
+      "label": "Delay",
+      "sublabel": "fixedDelay 3s",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "abort",
+      "type": "security",
+      "label": "Abort",
+      "sublabel": "httpStatus 503",
+      "pos": [
+        330,
+        290
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "Destination workload",
+      "pos": [
+        660,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Fault Injection",
+      "wraps": [
+        "delay",
+        "abort"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-delay",
+      "from": "client",
+      "to": "delay",
+      "label": "request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "client-to-abort",
+      "from": "client",
+      "to": "abort",
+      "label": "request"
+    },
+    {
+      "id": "delay-to-service",
+      "from": "delay",
+      "to": "service",
+      "label": "slow response",
+      "variant": "dashed"
+    },
+    {
+      "id": "abort-to-client",
+      "from": "abort",
+      "to": "client",
+      "label": "error (HTTP 503)",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ]
+}

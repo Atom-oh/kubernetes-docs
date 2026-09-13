@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OSI Model and TCP/IP Model Comparison",
+    "locale": "en",
+    "output": "en-networking-cilium-networking-concepts-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      640
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Application group"
+        },
+        "backend": {
+          "label": "Transport layer"
+        },
+        "cloud": {
+          "label": "Network layer"
+        },
+        "messagebus": {
+          "label": "Data link layer"
+        },
+        "external": {
+          "label": "Physical layer"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "app-group",
+        "label": "Application group mapping",
+        "focus": [
+          "osi7",
+          "osi6",
+          "osi5",
+          "tcp4"
+        ],
+        "note": "The OSI Application, Presentation and Session layers collapse into the single TCP/IP Application layer."
+      },
+      {
+        "id": "one-to-one",
+        "label": "Transport and network 1:1",
+        "focus": [
+          "osi4",
+          "tcp3",
+          "osi3",
+          "tcp2"
+        ],
+        "note": "The Transport layer (TCP, UDP) maps directly; the Network layer (IP, ICMP) corresponds to the Internet layer."
+      },
+      {
+        "id": "link-group",
+        "label": "Link and physical mapping",
+        "focus": [
+          "osi2",
+          "osi1",
+          "tcp1"
+        ],
+        "note": "The TCP/IP Network Interface layer corresponds to the OSI Physical and Data Link layers."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "osi7",
+      "type": "frontend",
+      "label": "7. Application Layer",
+      "sublabel": "HTTP, FTP, SMTP, DNS",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi6",
+      "type": "frontend",
+      "label": "6. Presentation Layer",
+      "sublabel": "SSL/TLS, JPEG, ASCII",
+      "pos": [
+        60,
+        116
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi5",
+      "type": "frontend",
+      "label": "5. Session Layer",
+      "sublabel": "NetBIOS, RPC",
+      "pos": [
+        60,
+        192
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi4",
+      "type": "backend",
+      "label": "4. Transport Layer",
+      "sublabel": "TCP, UDP",
+      "pos": [
+        60,
+        268
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi3",
+      "type": "cloud",
+      "label": "3. Network Layer",
+      "sublabel": "IP, ICMP, IGMP",
+      "pos": [
+        60,
+        344
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi2",
+      "type": "messagebus",
+      "label": "2. Data Link Layer",
+      "sublabel": "Ethernet, PPP, ARP",
+      "pos": [
+        60,
+        420
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi1",
+      "type": "external",
+      "label": "1. Physical Layer",
+      "sublabel": "RS-232, Ethernet",
+      "pos": [
+        60,
+        496
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "tcp4",
+      "type": "frontend",
+      "label": "4. Application Layer",
+      "sublabel": "maps to OSI layers 7·6·5",
+      "pos": [
+        900,
+        116
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "tcp3",
+      "type": "backend",
+      "label": "3. Transport Layer",
+      "sublabel": "maps to OSI layer 4",
+      "pos": [
+        900,
+        268
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "tcp2",
+      "type": "cloud",
+      "label": "2. Internet Layer",
+      "sublabel": "maps to OSI layer 3",
+      "pos": [
+        900,
+        344
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "tcp1",
+      "type": "external",
+      "label": "1. Network Interface Layer",
+      "sublabel": "maps to OSI layers 2·1",
+      "pos": [
+        900,
+        458
+      ],
+      "size": [
+        300,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "OSI 7-Layer Model",
+      "wraps": [
+        "osi7",
+        "osi6",
+        "osi5",
+        "osi4",
+        "osi3",
+        "osi2",
+        "osi1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "TCP/IP 4-Layer Model",
+      "wraps": [
+        "tcp4",
+        "tcp3",
+        "tcp2",
+        "tcp1"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "osi7-tcp4",
+      "from": "osi7",
+      "to": "tcp4"
+    },
+    {
+      "id": "osi6-tcp4",
+      "from": "osi6",
+      "to": "tcp4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "osi5-tcp4",
+      "from": "osi5",
+      "to": "tcp4"
+    },
+    {
+      "id": "osi4-tcp3",
+      "from": "osi4",
+      "to": "tcp3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "osi3-tcp2",
+      "from": "osi3",
+      "to": "tcp2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "osi2-tcp1",
+      "from": "osi2",
+      "to": "tcp1"
+    },
+    {
+      "id": "osi1-tcp1",
+      "from": "osi1",
+      "to": "tcp1"
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Latency Comparison (P99)",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-06-best-practices-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      470
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client Pod",
+      "sublabel": "same workload request",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "native",
+      "type": "cloud",
+      "label": "Native",
+      "sublabel": "direct pod-to-pod networking",
+      "tag": "P99 0.1ms",
+      "pos": [
+        330,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cilium",
+      "type": "cloud",
+      "label": "Cilium SM",
+      "sublabel": "eBPF datapath",
+      "tag": "P99 0.3ms",
+      "pos": [
+        330,
+        210
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "istio",
+      "type": "cloud",
+      "label": "Istio",
+      "sublabel": "sidecar proxy",
+      "tag": "P99 2.5ms",
+      "pos": [
+        330,
+        350
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Server Pod",
+      "sublabel": "handles request",
+      "pos": [
+        670,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "P99 latency per data plane",
+      "wraps": [
+        "native",
+        "cilium",
+        "istio"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-native",
+      "from": "client",
+      "to": "native"
+    },
+    {
+      "id": "client-cilium",
+      "from": "client",
+      "to": "cilium",
+      "variant": "emphasis"
+    },
+    {
+      "id": "client-istio",
+      "from": "client",
+      "to": "istio"
+    },
+    {
+      "id": "native-server",
+      "from": "native",
+      "to": "server",
+      "label": "0.1ms"
+    },
+    {
+      "id": "cilium-server",
+      "from": "cilium",
+      "to": "server",
+      "label": "0.3ms",
+      "variant": "emphasis",
+      "labelDx": -40
+    },
+    {
+      "id": "istio-server",
+      "from": "istio",
+      "to": "server",
+      "label": "2.5ms"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Benchmark Results",
+      "items": [
+        "Native 0.1ms · Cilium SM 0.3ms · Istio 2.5ms (P99)",
+        "Cilium Service Mesh stays closest to native performance thanks to its eBPF datapath",
+        "The Istio sidecar adds an order of magnitude more latency than native"
+      ]
+    }
+  ]
+}

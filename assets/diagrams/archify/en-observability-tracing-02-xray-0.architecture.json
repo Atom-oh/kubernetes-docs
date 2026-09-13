@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AWS X-Ray Tracing Architecture",
+    "output": "en-observability-tracing-02-xray-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      620
+    ],
+    "views": [
+      {
+        "id": "eks-collect",
+        "label": "EKS collection path",
+        "focus": [
+          "apps",
+          "daemon",
+          "adot",
+          "xray"
+        ],
+        "note": "SDK-instrumented pods send segments to the X-Ray daemon and OTLP data to the ADOT collector; both paths converge on AWS X-Ray."
+      },
+      {
+        "id": "auto-instr",
+        "label": "Auto instrumentation",
+        "focus": [
+          "others",
+          "xray"
+        ],
+        "note": "Traces from managed services such as Lambda, API Gateway, SQS, and SNS reach X-Ray through auto instrumentation."
+      },
+      {
+        "id": "analysis",
+        "label": "Analysis tools",
+        "focus": [
+          "xray",
+          "cw",
+          "lens",
+          "insights"
+        ],
+        "note": "Traces collected in X-Ray feed CloudWatch, ServiceLens, and X-Ray Insights for service maps and latency analysis."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "apps",
+      "type": "backend",
+      "label": "Service A / B / C",
+      "sublabel": "X-Ray SDK instrumented",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "daemon",
+      "type": "backend",
+      "label": "X-Ray Daemon",
+      "sublabel": "DaemonSet",
+      "pos": [
+        300,
+        120
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "adot",
+      "type": "backend",
+      "label": "ADOT Collector",
+      "sublabel": "Sidecar / DaemonSet",
+      "pos": [
+        300,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "xray",
+      "type": "cloud",
+      "label": "AWS X-Ray",
+      "sublabel": "Central tracing service",
+      "pos": [
+        590,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "others",
+      "type": "external",
+      "label": "Other AWS services",
+      "sublabel": "Lambda · API Gateway · SQS · SNS",
+      "pos": [
+        570,
+        500
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "cw",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "Metrics · alarms",
+      "pos": [
+        860,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "lens",
+      "type": "cloud",
+      "label": "ServiceLens",
+      "sublabel": "Service map",
+      "pos": [
+        860,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "insights",
+      "type": "cloud",
+      "label": "X-Ray Insights",
+      "sublabel": "Latency · error-rate analysis",
+      "pos": [
+        860,
+        350
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS cluster",
+      "wraps": [
+        "apps",
+        "daemon",
+        "adot"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS services",
+      "wraps": [
+        "xray",
+        "cw",
+        "lens",
+        "insights"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "apps-daemon",
+      "from": "apps",
+      "to": "daemon",
+      "label": "Segments",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apps-adot",
+      "from": "apps",
+      "to": "adot",
+      "label": "OTLP"
+    },
+    {
+      "id": "daemon-xray",
+      "from": "daemon",
+      "to": "xray",
+      "label": "UDP/TCP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "adot-xray",
+      "from": "adot",
+      "to": "xray",
+      "label": "OTLP"
+    },
+    {
+      "id": "others-xray",
+      "from": "others",
+      "to": "xray",
+      "label": "Auto instrumentation",
+      "variant": "dashed"
+    },
+    {
+      "id": "xray-cw",
+      "from": "xray",
+      "to": "cw"
+    },
+    {
+      "id": "xray-lens",
+      "from": "xray",
+      "to": "lens"
+    },
+    {
+      "id": "xray-insights",
+      "from": "xray",
+      "to": "insights"
+    }
+  ]
+}

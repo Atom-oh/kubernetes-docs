@@ -1,0 +1,176 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Token Bucket Algorithm",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Request intake"
+        },
+        "backend": {
+          "label": "Token handling"
+        },
+        "database": {
+          "label": "Bucket state"
+        },
+        "security": {
+          "label": "Rejected"
+        }
+      }
+    },
+    "viewBox": [
+      1000,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "bucket",
+      "label": "Token Bucket · Token supply"
+    },
+    {
+      "id": "request",
+      "label": "Request handling path"
+    },
+    {
+      "id": "rejected",
+      "label": "Limit exceeded",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "check",
+    "allow"
+  ],
+  "nodes": [
+    {
+      "id": "refill",
+      "lane": "bucket",
+      "col": 0,
+      "type": "backend",
+      "label": "Refill",
+      "sublabel": "10 tokens/sec",
+      "width": 140
+    },
+    {
+      "id": "tokens",
+      "lane": "bucket",
+      "col": 1,
+      "type": "database",
+      "label": "Token Bucket",
+      "sublabel": "Max 100 tokens",
+      "width": 150
+    },
+    {
+      "id": "request",
+      "lane": "request",
+      "col": 0,
+      "type": "frontend",
+      "label": "Request Arrives",
+      "sublabel": "Received by Envoy proxy",
+      "width": 152
+    },
+    {
+      "id": "check",
+      "lane": "request",
+      "col": 1,
+      "type": "backend",
+      "label": "Tokens Available?",
+      "sublabel": "Check remaining tokens",
+      "width": 164
+    },
+    {
+      "id": "allow",
+      "lane": "request",
+      "col": 2,
+      "type": "backend",
+      "label": "Allow Request",
+      "sublabel": "Consume 1 token",
+      "width": 152
+    },
+    {
+      "id": "reject",
+      "lane": "rejected",
+      "col": 2,
+      "type": "security",
+      "label": "Reject Request",
+      "sublabel": "Return 429",
+      "width": 152
+    }
+  ],
+  "edges": [
+    {
+      "id": "refill-tokens",
+      "from": "refill",
+      "to": "tokens",
+      "label": "Add 10 per second",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "id": "request-check",
+      "from": "request",
+      "to": "check",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tokens-check",
+      "from": "tokens",
+      "to": "check",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "check-allow",
+      "from": "check",
+      "to": "allow",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-reject",
+      "from": "check",
+      "to": "reject",
+      "label": "No",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "allow-tokens",
+      "from": "allow",
+      "to": "tokens",
+      "label": "Decrease tokens",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "EnvoyFilter token_bucket settings",
+      "items": [
+        "max_tokens: 100 — maximum tokens the bucket can hold",
+        "tokens_per_fill: 10 / fill_interval: 1s — refills 10 per second",
+        "When no token is left, Envoy returns 429"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Characteristics of Local Rate Limiting",
+      "items": [
+        "Each Envoy proxy manages its own bucket independently",
+        "100 req/s per pod → 3 pods allow up to 300 req/s total",
+        "Fast and simple, but cluster-wide accuracy is low"
+      ]
+    }
+  ]
+}

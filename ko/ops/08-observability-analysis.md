@@ -1,1421 +1,1151 @@
 # 관측성 분석: Logs/Metrics/Traces 상관 분석
 
-> **지원 버전**: Loki 3.0+, Tempo 2.4+, Prometheus 2.50+, Grafana 10.0+
-> **마지막 업데이트**: 2026년 2월 23일
+> **검토 기준**: OTel Go 1.46.0 / otelhttp 0.71.0, Python SDK 1.44.0 / instrumentation 0.65b0, Collector 0.160.0, Alloy 1.19.2, Loki 3.7.7, Tempo 3.0.3, Grafana 13.2.1\
+> **마지막 검토**: 2026년 9월 11일. SDK·로그·exemplar는 메모리 exporter와 HTTP 테스트 대역으로, LogQL은 로컬 Loki의 합성 로그로 확인했습니다. 실제 클러스터나 외부 telemetry backend로 데이터를 내보내지 않았습니다.
 
-< [이전: 운영 알림 구성](./07-observability-alerts.md) | [목차](./README.md) | [다음: 관측성 스택 운영](./09-observability-stack.md) >
+< [이전: 운영 알림](07-observability-alerts.md) | [목차](README.md) | [다음: 스택 운영](09-observability-stack.md) >
 
----
+상관 분석은 같은 시간·서비스·요청에 관한 근거를 연결하는 작업입니다. 함께 발생했다는 사실만으로 root cause가 확정되지는 않습니다. 데이터 누락·샘플링·보존 기간도 확인한 뒤 가설을 검증합니다.
 
-## 목차
+## 1. 식별자와 실제 전송 경로
 
-1. [상관 분석 전략](#상관-분석-전략)
-2. [Loki LogQL 분석](#loki-logql-분석)
-3. [Prometheus PromQL 패턴](#prometheus-promql-패턴)
-4. [Tempo TraceQL 분석](#tempo-traceql-분석)
-5. [Grafana 대시보드](#grafana-대시보드)
+![트레이스는 Collector로, JSON 로그는 Alloy로, OpenMetrics는 Prometheus scrape로 수집하고 Grafana 데이터소스 링크로 연결하는 예제 구조.](../.gitbook/assets/ko-ops-08-observability-analysis-0.png)
 
----
+[인터랙티브 다이어그램](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-08-observability-analysis-0.html)
 
-## 상관 분석 전략
+| 신호 | 이 장의 생성·전송 경로 | 연결 기준 |
+|---|---|---|
+| Traces | SDK → OTLP/HTTP Collector → Tempo | W3C context와 `service.name` |
+| Logs | JSON stdout → Alloy Kubernetes log source → Loki | JSON의 `trace_id`, `span_id` |
+| Metrics | Prometheus client → `/metrics` OpenMetrics scrape | exemplar의 `trace_id` |
+| 조회 | Grafana → 각 데이터소스 | 고정 UID와 명시적인 label 매핑 |
 
-효과적인 관측성(Observability)은 로그, 메트릭, 트레이스 세 가지 신호(Three Pillars)를 상호 연결하여 분석할 때 진정한 가치를 발휘합니다. 상관 분석을 통해 문제의 근본 원인을 신속하게 파악할 수 있습니다.
+Trace exporter는 stdout 로그나 Prometheus client metric을 자동으로 OTLP로 바꾸지 않습니다. 모든 신호를 OTLP로 보내려면 각각의 SDK exporter/수집기와 Collector pipeline을 별도로 구성해야 합니다. Tempo가 로그·메트릭을 자동 결합하는 허브도 아닙니다.
 
-### Trace ID 전파
+### W3C와 B3
 
-분산 시스템에서 요청을 추적하려면 Trace ID를 모든 서비스 간에 전파해야 합니다.
-
-#### W3C TraceContext 표준
-
-W3C TraceContext는 분산 추적을 위한 표준화된 HTTP 헤더 형식입니다.
-
-```
-# W3C TraceContext 헤더 형식
-traceparent: 00-{trace-id}-{span-id}-{flags}
-tracestate: {vendor-specific-data}
-
-# 예시
+```text
 traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01
-tracestate: congo=t61rcWkgMzE,rojo=00f067aa0ba902b7
 ```
 
-- **trace-id**: 32자리 16진수 (128비트)
-- **span-id**: 16자리 16진수 (64비트)
-- **flags**: 2자리 16진수 (샘플링 결정 등)
+W3C trace ID는 32자리 hex, parent span ID는 16자리 hex이며 all-zero ID는 유효하지 않습니다. 마지막 flags는 sampled 등의 비트를 나타냅니다. Sampled flag나 유효한 ID만으로 backend 저장·보존까지 보장되지는 않습니다.
 
-#### B3 헤더 형식 (Zipkin 호환)
+B3는 별도 지원되는 전파 형식이며 B3 trace ID에는 64-bit/128-bit 형태가 있습니다. 전파 형식을 함께 사용할 때는 충돌하는 헤더의 우선순위와 ingress 신뢰 경계를 정합니다. 아래 코드는 W3C TraceContext만 사용합니다. Baggage에 민감한 값을 무작정 넣어 전파하지 않습니다.
 
+## 2. 실행 가능한 SDK 예제
+
+Go와 Python은 같은 로그·메트릭 계약을 구현하는 **대안**입니다. 둘을 같은 포트에 동시에 실행하지 않습니다. main의 서버는 loopback에 바인딩하는 로컬 데모이며, 실제 배포에서는 애플리케이션 서버·Service·bind 주소를 해당 운영 방식에 맞춥니다.
+
+공통 서비스 이름은 `correlation-api`입니다. JSON에는 `timestamp`, `level`, `message`, `service_name`, `route`, `status_code`, `latency_ms`와 유효한 trace/span ID를 넣습니다. Route는 제한된 템플릿을 사용하고 raw URL·사용자 ID를 일반 metric label에 넣지 않습니다.
+
+### Go
+
+지원되는 최신 patch의 Go 1.25 이상 환경에서 다음 모듈 파일과 코드를 사용합니다. 이 검토의 로컬 컴파일 도구는 Go 1.25.0이었으며 운영용 patch 선택과는 별개입니다.
+
+```text
+module example.com/correlation-demo
+
+go 1.25.0
+
+require (
+	github.com/prometheus/client_golang v1.24.1
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0
+	go.opentelemetry.io/otel v1.46.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.46.0
+	go.opentelemetry.io/otel/sdk v1.46.0
+	go.opentelemetry.io/otel/trace v1.46.0
+)
+
+require (
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/felixge/httpsnoop v1.1.0 // indirect
+	github.com/go-logr/logr v1.4.4 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/prometheus/client_model v0.6.2 // indirect
+	github.com/prometheus/common v0.70.1 // indirect
+	github.com/prometheus/procfs v0.21.1 // indirect
+	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.46.0 // indirect
+	go.opentelemetry.io/otel/metric v1.46.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 // indirect
+	google.golang.org/grpc v1.83.1 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
+)
 ```
-# B3 Single Header
-b3: {TraceId}-{SpanId}-{SamplingState}-{ParentSpanId}
-
-# B3 Multiple Headers
-X-B3-TraceId: 80f198ee56343ba864fe8b2a57d3eff7
-X-B3-SpanId: e457b5a2e4d86bd1
-X-B3-ParentSpanId: 05e3ac9a4f6e3b90
-X-B3-Sampled: 1
-```
-
-### OpenTelemetry SDK 계측 패턴
-
-애플리케이션에서 OpenTelemetry SDK를 사용하여 자동 및 수동 계측을 구현합니다.
-
-#### Go 애플리케이션 계측
 
 ```go
+// main.go
 package main
 
 import (
-    "context"
-    "net/http"
-    "log"
+	"context"
+	"encoding/json"
+	"errors"
+	"io"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
 
-    "go.opentelemetry.io/otel"
-    "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-    "go.opentelemetry.io/otel/propagation"
-    "go.opentelemetry.io/otel/sdk/resource"
-    sdktrace "go.opentelemetry.io/otel/sdk/trace"
-    semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
-    "go.opentelemetry.io/otel/trace"
-    "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
-var tracer trace.Tracer
+const serviceName = "correlation-api"
 
-func initTracer() func() {
-    ctx := context.Background()
+func newLogger(writer io.Writer) *slog.Logger {
+	return slog.New(slog.NewJSONHandler(writer, &slog.HandlerOptions{
+		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+			if len(groups) == 0 {
+				if attr.Key == slog.TimeKey {
+					attr.Key = "timestamp"
+				}
+				if attr.Key == slog.MessageKey {
+					attr.Key = "message"
+				}
+			}
+			return attr
+		},
+	}))
+}
 
-    // OTLP exporter 설정
-    exporter, err := otlptracegrpc.New(ctx,
-        otlptracegrpc.WithEndpoint("otel-collector:4317"),
-        otlptracegrpc.WithInsecure(),
-    )
-    if err != nil {
-        log.Fatal(err)
-    }
+func newProvider(exporter sdktrace.SpanExporter, ratio float64) *sdktrace.TracerProvider {
+	// Explicit resource attributes avoid mixing incompatible schema URLs.
+	return sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(resource.NewSchemaless(
+			attribute.String("service.name", serviceName),
+			attribute.String("service.version", "1.0.0"),
+			attribute.String("deployment.environment.name", "demo"),
+		)),
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(ratio))),
+	)
+}
 
-    // Resource 설정 (서비스 메타데이터)
-    res, _ := resource.Merge(
-        resource.Default(),
-        resource.NewWithAttributes(
-            semconv.SchemaURL,
-            semconv.ServiceName("my-service"),
-            semconv.ServiceVersion("1.0.0"),
-            semconv.DeploymentEnvironment("production"),
-        ),
-    )
-
-    // TracerProvider 설정
-    tp := sdktrace.NewTracerProvider(
-        sdktrace.WithBatcher(exporter),
-        sdktrace.WithResource(res),
-        sdktrace.WithSampler(sdktrace.AlwaysSample()),
-    )
-    otel.SetTracerProvider(tp)
-
-    // Propagator 설정 (W3C TraceContext + Baggage)
-    otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-        propagation.TraceContext{},
-        propagation.Baggage{},
-    ))
-
-    tracer = tp.Tracer("my-service")
-
-    return func() {
-        tp.Shutdown(ctx)
-    }
+func newHandler(tp *sdktrace.TracerProvider, logger *slog.Logger, downstream string, transport http.RoundTripper) http.Handler {
+	registry := prometheus.NewRegistry()
+	requests := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_total", Help: "Completed requests",
+	}, []string{"method", "route", "status"})
+	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "http_request_duration_seconds", Help: "HTTP duration in seconds", Buckets: prometheus.DefBuckets,
+	}, []string{"method", "route", "status"})
+	registry.MustRegister(requests, duration)
+	propagator := propagation.TraceContext{}
+	client := &http.Client{
+		Transport: otelhttp.NewTransport(transport, otelhttp.WithTracerProvider(tp), otelhttp.WithPropagators(propagator)),
+		Timeout:   5 * time.Second,
+	}
+	tracer := tp.Tracer("correlation-demo")
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{EnableOpenMetrics: true}))
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	mux.Handle("GET /api/orders", otelhttp.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		started := time.Now()
+		status := http.StatusOK
+		ctx, span := tracer.Start(r.Context(), "prepare-order-response")
+		span.SetAttributes(attribute.String("app.operation", "orders.list"))
+		if downstream != "" {
+			// Trusted configuration only; never derive the destination from request input.
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, downstream, nil)
+			if err == nil {
+				var response *http.Response
+				response, err = client.Do(req)
+				if err == nil {
+					_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 4096))
+					_ = response.Body.Close()
+					if response.StatusCode >= 400 {
+						err = errors.New("dependency returned unsuccessful status")
+					}
+				}
+			}
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, "dependency unavailable")
+				status = http.StatusBadGateway
+			}
+		}
+		span.End()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_ = json.NewEncoder(w).Encode(map[string]bool{"ok": status == http.StatusOK})
+		seconds := time.Since(started).Seconds()
+		statusLabel := strconv.Itoa(status)
+		method := r.Method // The GET ServeMux pattern accepts GET and HEAD.
+		requests.WithLabelValues(method, "/api/orders", statusLabel).Inc()
+		context := trace.SpanContextFromContext(r.Context())
+		observer := duration.WithLabelValues(method, "/api/orders", statusLabel)
+		if context.IsValid() && context.IsSampled() {
+			observer.(prometheus.ExemplarObserver).ObserveWithExemplar(seconds, prometheus.Labels{"trace_id": context.TraceID().String()})
+		} else {
+			observer.Observe(seconds)
+		}
+		attributes := []any{
+			"service_name", serviceName, "method", method, "route", "/api/orders",
+			"status_code", status, "latency_ms", seconds * 1000,
+		}
+		if context.IsValid() {
+			attributes = append(attributes, "trace_id", context.TraceID().String(), "span_id", context.SpanID().String())
+		}
+		level := slog.LevelInfo
+		if status >= 500 {
+			level = slog.LevelError
+		}
+		logger.Log(r.Context(), level, "request completed", attributes...)
+	}), "orders", otelhttp.WithTracerProvider(tp), otelhttp.WithPropagators(propagator),
+		otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {
+			return r.Method + " /api/orders"
+		})))
+	return mux
 }
 
 func main() {
-    cleanup := initTracer()
-    defer cleanup()
-
-    // HTTP 핸들러에 자동 계측 적용
-    handler := otelhttp.NewHandler(http.HandlerFunc(handleRequest), "handle-request")
-    http.Handle("/api/v1/users", handler)
-    http.ListenAndServe(":8080", nil)
-}
-
-func handleRequest(w http.ResponseWriter, r *http.Request) {
-    ctx := r.Context()
-
-    // 수동 span 생성
-    ctx, span := tracer.Start(ctx, "process-user-request")
-    defer span.End()
-
-    // span에 속성 추가
-    span.SetAttributes(
-        semconv.HTTPMethod(r.Method),
-        semconv.HTTPRoute("/api/v1/users"),
-    )
-
-    // 비즈니스 로직 수행
-    processRequest(ctx)
-}
-
-func processRequest(ctx context.Context) {
-    _, span := tracer.Start(ctx, "database-query")
-    defer span.End()
-    // DB 쿼리 실행
+	logger := newLogger(os.Stdout)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	// Standard OTEL exporter variables configure the real endpoint and TLS/auth.
+	exporter, err := otlptracehttp.New(ctx, otlptracehttp.WithTimeout(5*time.Second))
+	if err != nil {
+		logger.Error("cannot configure trace exporter", "error", err)
+		os.Exit(1)
+	}
+	provider := newProvider(exporter, 0.1)
+	server := &http.Server{
+		Addr:              "127.0.0.1:8080",
+		Handler:           newHandler(provider, logger, os.Getenv("DEMO_DOWNSTREAM_URL"), http.DefaultTransport),
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	failed := make(chan error, 1)
+	go func() { failed <- server.ListenAndServe() }()
+	select {
+	case err := <-failed:
+		if !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("HTTP server failed", "error", err)
+		}
+	case <-ctx.Done():
+	}
+	shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := server.Shutdown(shutdown); err != nil {
+		logger.Error("HTTP shutdown incomplete", "error", err)
+	}
+	// Use a fresh deadline so HTTP draining does not consume the exporter budget.
+	flush, cancelFlush := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFlush()
+	if err := provider.Shutdown(flush); err != nil {
+		logger.Error("trace shutdown incomplete", "error", err)
+	}
 }
 ```
 
-#### Python 애플리케이션 계측
+`resource.NewSchemaless`에 필요한 속성을 명시해 서로 다른 semantic-convention SchemaURL의 merge 오류를 숨기지 않습니다. Provider와 propagator를 handler/transport에 연결하고, 별도의 종료 deadline으로 trace buffer를 비웁니다. 실패한 dependency는 error span과 HTTP 502로 남깁니다.
+
+### Python
+
+Python 3.12에서 확인한 직접 의존성입니다.
+
+```text
+opentelemetry-sdk==1.44.0
+opentelemetry-exporter-otlp-proto-http==1.44.0
+opentelemetry-instrumentation-flask==0.65b0
+opentelemetry-instrumentation-requests==0.65b0
+Flask==3.1.3
+requests==2.34.2
+prometheus-client==0.26.0
+```
 
 ```python
+# app.py
+"""Local correlation demo: OTLP traces, JSON stdout logs, OpenMetrics metrics."""
+import json
+import logging
+import os
+import sys
+import time
+from datetime import datetime, timezone
+
+import requests
+from flask import Flask, Response, g, jsonify, request
 from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.resources import Resource, SERVICE_NAME
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.propagate import set_global_textmap
-from opentelemetry.propagators.composite import CompositePropagator
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
+from opentelemetry.trace import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.baggage.propagation import W3CBaggagePropagator
-import logging
+from prometheus_client import CollectorRegistry, Counter, Histogram
+from prometheus_client.openmetrics.exposition import CONTENT_TYPE_LATEST, generate_latest
 
-# Resource 설정
-resource = Resource.create({
-    SERVICE_NAME: "python-api-service",
-    "service.version": "1.0.0",
-    "deployment.environment": "production",
-})
+SERVICE_NAME = "correlation-api"
 
-# TracerProvider 설정
-provider = TracerProvider(resource=resource)
-processor = BatchSpanProcessor(
-    OTLPSpanExporter(endpoint="otel-collector:4317", insecure=True)
-)
-provider.add_span_processor(processor)
-trace.set_tracer_provider(provider)
 
-# Propagator 설정
-set_global_textmap(CompositePropagator([
-    TraceContextTextMapPropagator(),
-    W3CBaggagePropagator(),
-]))
+class CorrelatedJSON(logging.Formatter):
+    def format(self, record):
+        result = {
+            "timestamp": datetime.fromtimestamp(record.created, timezone.utc).isoformat(),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "service_name": SERVICE_NAME,
+        }
+        context = trace.get_current_span().get_span_context()
+        # Unsampled context can still be valid. Do not invent all-zero IDs.
+        if context.is_valid:
+            result.update(trace_id=f"{context.trace_id:032x}", span_id=f"{context.span_id:016x}")
+        for key in ("method", "route", "status_code", "latency_ms"):
+            if hasattr(record, key):
+                result[key] = getattr(record, key)
+        return json.dumps(result, ensure_ascii=False, allow_nan=False)
 
-# tracer 인스턴스
-tracer = trace.get_tracer(__name__)
 
-# Flask 자동 계측
-from flask import Flask
-app = Flask(__name__)
-FlaskInstrumentor().instrument_app(app)
-RequestsInstrumentor().instrument()
-
-@app.route('/api/orders')
-def get_orders():
-    # 현재 span 컨텍스트 가져오기
-    current_span = trace.get_current_span()
-    trace_id = format(current_span.get_span_context().trace_id, '032x')
-
-    # 로그에 trace_id 포함
-    logging.info(f"Processing order request", extra={
-        'trace_id': trace_id,
-        'span_id': format(current_span.get_span_context().span_id, '016x')
-    })
-
-    # 수동 span 생성
-    with tracer.start_as_current_span("fetch-orders-from-db") as span:
-        span.set_attribute("db.system", "postgresql")
-        span.set_attribute("db.operation", "SELECT")
-        orders = fetch_orders()
-
-    return orders
-```
-
-### Exemplars: 메트릭과 트레이스 연결
-
-Exemplars는 메트릭과 특정 트레이스를 연결하여 이상 징후가 발생한 정확한 요청을 추적할 수 있게 합니다.
-
-```go
-// Go에서 Prometheus 메트릭에 Exemplar 추가
-import (
-    "github.com/prometheus/client_golang/prometheus"
-    "go.opentelemetry.io/otel/trace"
-)
-
-var httpRequestDuration = prometheus.NewHistogramVec(
-    prometheus.HistogramOpts{
-        Name:    "http_request_duration_seconds",
-        Help:    "HTTP request duration in seconds",
-        Buckets: prometheus.DefBuckets,
-    },
-    []string{"method", "path", "status"},
-)
-
-func recordMetricWithExemplar(ctx context.Context, duration float64, labels prometheus.Labels) {
-    span := trace.SpanFromContext(ctx)
-    traceID := span.SpanContext().TraceID().String()
-
-    // Exemplar와 함께 메트릭 기록
-    httpRequestDuration.With(labels).(prometheus.ExemplarObserver).ObserveWithExemplar(
-        duration,
-        prometheus.Labels{"trace_id": traceID},
+def make_provider(exporter, sample_ratio=0.1):
+    if not 0 <= sample_ratio <= 1:
+        raise ValueError("sample_ratio must be between zero and one")
+    provider = TracerProvider(
+        resource=Resource({
+            "service.name": SERVICE_NAME,
+            "service.version": "1.0.0",
+            "deployment.environment.name": "demo",
+        }),
+        sampler=ParentBased(TraceIdRatioBased(sample_ratio)),
+        shutdown_on_exit=False,
     )
-}
+    provider.add_span_processor(BatchSpanProcessor(exporter))
+    return provider
+
+
+def create_app(provider, log_stream=None, session=None, downstream_url=None):
+    app = Flask(__name__)
+    registry = CollectorRegistry()
+    counts = Counter("http_requests_total", "Completed HTTP requests", ["method", "route", "status"], registry=registry)
+    duration = Histogram("http_request_duration_seconds", "HTTP duration in seconds", ["method", "route", "status"], registry=registry)
+    logger = logging.getLogger("correlation-demo")
+    logger.handlers.clear()
+    logger.propagate = False
+    handler = logging.StreamHandler(log_stream if log_stream is not None else sys.stdout)
+    handler.setFormatter(CorrelatedJSON())
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    set_global_textmap(TraceContextTextMapPropagator())
+    FlaskInstrumentor().instrument_app(app, tracer_provider=provider, excluded_urls="metrics,healthz")
+    RequestsInstrumentor().instrument(tracer_provider=provider)
+    tracer = provider.get_tracer("correlation-demo")
+    client = session if session is not None else requests.Session()
+
+    @app.before_request
+    def start_timer():
+        g.started = time.perf_counter()
+
+    @app.after_request
+    def observe(response):
+        route = request.url_rule.rule if request.url_rule is not None else "unmatched"
+        if route in {"/metrics", "/healthz"}:
+            return response
+        elapsed = time.perf_counter() - g.started
+        method = request.method if request.method in {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"} else "_OTHER"
+        status = str(response.status_code)
+        context = trace.get_current_span().get_span_context()
+        exemplar = {"trace_id": f"{context.trace_id:032x}"} if context.is_valid and context.trace_flags.sampled else None
+        counts.labels(method, route, status).inc()
+        duration.labels(method, route, status).observe(elapsed, exemplar=exemplar)
+        logger.log(logging.ERROR if response.status_code >= 500 else logging.INFO, "request completed",
+                   extra={"method": method, "route": route, "status_code": response.status_code, "latency_ms": round(elapsed * 1000, 3)})
+        return response
+
+    @app.get("/api/orders")
+    def orders():
+        with tracer.start_as_current_span("prepare-order-response") as span:
+            span.set_attribute("app.operation", "orders.list")
+            if downstream_url is not None:
+                try:
+                    # This URL comes from trusted configuration, not request input.
+                    with client.get(downstream_url, timeout=(2, 5)) as response:
+                        response.raise_for_status()
+                except requests.RequestException as error:
+                    span.record_exception(error)
+                    span.set_status(Status(StatusCode.ERROR))
+                    return jsonify(error="dependency unavailable"), 502
+            # Demonstration data, not a real database query.
+            return jsonify(orders=[{"id": "demo-1", "state": "ready"}])
+
+    @app.get("/metrics")
+    def metrics():
+        return Response(generate_latest(registry), content_type=CONTENT_TYPE_LATEST)
+
+    @app.get("/healthz")
+    def health():
+        return jsonify(status="ok")
+
+    return app, client
+
+
+if __name__ == "__main__":
+    # Configure the real OTLP endpoint/TLS/auth through standard exporter settings.
+    provider = make_provider(OTLPSpanExporter(), sample_ratio=0.1)
+    app, session = create_app(provider, downstream_url=os.environ.get("DEMO_DOWNSTREAM_URL"))
+    try:
+        # Local demonstration server. Use a proper WSGI server for deployment.
+        app.run(host="127.0.0.1", port=8080, debug=False, use_reloader=False)
+    finally:
+        session.close()
+        RequestsInstrumentor().uninstrument()
+        provider.shutdown()
 ```
 
-### Log-Trace 상관관계
+로그 formatter와 INFO level을 실제로 연결했습니다. `logging.info(..., extra=...)`만 쓰면 기본 설정에서 로그가 출력되지 않거나 extra 필드가 보이지 않을 수 있습니다. Sampled가 아니어도 유효한 context는 로그에 남기며, context가 없을 때 all-zero ID를 만들지 않습니다.
 
-로그에 Trace ID를 주입하여 로그와 트레이스를 연결합니다.
+HTTP semantic-convention 속성은 instrumentation의 버전과 opt-in 설정에 따라 달라집니다. 이 Python 실행에서 기본 HTTP 속성은 `http.method`, `http.status_code` 같은 호환 이름으로 출력됐습니다. 최신 SDK라는 이유만으로 모든 query를 새 이름으로 바꾸지 말고 실제 span attributes를 확인합니다.
 
-#### 구조화된 로깅 (JSON)
+Exporter는 표준 OTel 환경 설정으로 실제 endpoint를 받습니다. HTTP/protobuf 예시:
 
-```json
-{
-  "timestamp": "2025-01-15T10:30:45.123Z",
-  "level": "ERROR",
-  "message": "Failed to process payment",
-  "service": "payment-service",
-  "trace_id": "0af7651916cd43dd8448eb211c80319c",
-  "span_id": "b7ad6b7169203331",
-  "user_id": "user-12345",
-  "order_id": "order-67890",
-  "error": "insufficient_funds"
-}
+```bash
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.observability.svc:4318
 ```
 
-#### Logback 설정 (Java/Spring)
+이 주소는 준비된 Collector Service를 전제로 합니다. 배포에 필요한 TLS·인증·네트워크 정책을 별도로 구성합니다. Base endpoint와 `/v1/traces`를 포함하는 signal별 endpoint 설정을 혼동하지 않습니다.
+
+### Java JSON logging
+
+Logback 1.6.3, logstash-logback-encoder 9.0과 JDK 21에서 다음 encoder 구성을 확인했습니다.
 
 ```xml
 <configuration>
-    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <provider class="net.logstash.logback.composite.loggingevent.LoggingEventCompositeJsonProvider">
-                <providers>
-                    <timestamp/>
-                    <logLevel/>
-                    <message/>
-                    <mdc/>
-                    <stackTrace/>
-                </providers>
-            </provider>
-        </encoder>
-    </appender>
-
-    <root level="INFO">
-        <appender-ref ref="JSON"/>
-    </root>
+  <!-- A configured OTel Java agent or MDC bridge must supply these MDC keys. -->
+  <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <fieldNames>
+        <timestamp>timestamp</timestamp>
+      </fieldNames>
+      <customFields>{"service_name":"correlation-api"}</customFields>
+      <includeMdcKeyName>trace_id</includeMdcKeyName>
+      <includeMdcKeyName>span_id</includeMdcKeyName>
+    </encoder>
+  </appender>
+  <root level="INFO">
+    <appender-ref ref="JSON"/>
+  </root>
 </configuration>
 ```
 
-### 아키텍처 다이어그램
+실제 OTel Java agent 또는 MDC bridge가 `trace_id`/`span_id`를 먼저 넣어야 합니다. XML만으로 자동 계측이 켜지지 않습니다. Java agent의 service.name도 로그와 같은 실제 서비스 이름으로 맞춥니다. 검증에서는 MDC 값을 직접 넣어 encoder와 허용 key, multiline 문자열의 한 줄 JSON 인코딩을 확인했으며 Java agent의 전파까지 실행한 것은 아닙니다.
 
-![애플리케이션의 트레이스·로그·메트릭이 OpenTelemetry Collector(Receivers→Processors→Exporters)를 거쳐 Prometheus/AMP, Loki, Tempo에 각각 저장되고, Grafana가 세 저장소를 조회하며 Tempo가 exemplar와 trace_id로 메트릭·로그를 연결하는 상관관계 허브 역할을 하는 관찰 가능성 파이프라인 구조를 보여준다.](../../assets/diagrams/rendered/ko-ops-08-observability-analysis-0.svg)
+## 3. 수집기와 backend 연결
 
-### 상관 분석 워크플로우
+아래 파일은 **이미 배포할 Collector/Alloy/Prometheus의 설정**입니다. ConfigMap 하나를 만드는 것만으로 Deployment, Service, RBAC나 backend가 생기지는 않습니다. 실제 namespace·Service 이름·인증을 맞춰야 합니다.
 
-문제 발생 시 상관 분석을 통한 근본 원인 분석 워크플로우입니다.
-
-![메트릭 알림이 발생했을 때 exemplar 존재 여부에 따라 트레이스를 바로 조회하거나 시간 범위로 검색한 뒤, 스팬을 분석하고 관련 로그를 확인해 근본 원인을 파악하고 해결 조치로 이어지는 장애 조사 절차를 보여준다.](../../assets/diagrams/rendered/ko-ops-08-observability-analysis-1.svg)
-
-1. **Alert 발생**: Prometheus에서 알림 트리거
-2. **Metric 확인**: 관련 메트릭 대시보드에서 이상 패턴 확인
-3. **Trace 조회**: Exemplar를 통해 또는 시간 범위로 관련 트레이스 검색
-4. **Span 분석**: 트레이스 내 개별 span에서 지연 또는 오류 구간 식별
-5. **Log 조회**: Trace ID로 관련 로그 필터링하여 상세 컨텍스트 확인
-6. **근본 원인 파악**: 수집된 정보를 종합하여 문제 원인 도출
-
----
-
-## Loki LogQL 분석
-
-Loki의 LogQL은 Prometheus의 PromQL에서 영감을 받은 로그 쿼리 언어입니다. 스트림 선택자와 필터를 조합하여 로그를 검색하고 분석합니다.
-
-### 오류율 계산
-
-```logql
-# 네임스페이스별 ERROR 로그 발생률 (5분 윈도우)
-sum(rate({namespace="production"} |= "ERROR" [5m])) by (app)
-
-# 서비스별 오류 로그 비율
-sum(rate({app="api-gateway"} |= "error" [5m]))
-/
-sum(rate({app="api-gateway"} [5m]))
-
-# HTTP 5xx 오류 로그 카운트
-sum(count_over_time({namespace="production"} | json | status_code >= 500 [1h])) by (service)
-```
-
-### 지연 시간 추출
-
-JSON 형식 로그에서 지연 시간을 추출하고 분석합니다.
-
-```logql
-# 지연 시간 500ms 초과 로그 필터링
-{app="api-service"} | json | latency_ms > 500
-
-# 지연 시간 분포 분석 (히스토그램)
-quantile_over_time(0.95, {app="api-service"} | json | unwrap latency_ms [5m]) by (endpoint)
-
-# P99 지연 시간이 높은 엔드포인트 찾기
-topk(5,
-  quantile_over_time(0.99,
-    {app="api-service"} | json | unwrap response_time_ms [5m]
-  ) by (endpoint)
-)
-
-# 평균 지연 시간 추세
-avg_over_time({app="api-service"} | json | unwrap latency_ms [5m]) by (endpoint)
-```
-
-### 로그 기반 알림 규칙
-
-Loki Ruler를 사용하여 로그 기반 알림을 설정합니다.
+### 트레이스 Collector
 
 ```yaml
+# collector.yaml
+# Trace gateway configuration only. Deploy a matching Collector Service and
+# constrain network/authentication separately; this file does not install it.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  batch:
+    timeout: 1s
+    send_batch_size: 512
+exporters:
+  otlphttp/tempo:
+    endpoint: http://tempo-distributor.observability.svc:4318
+    timeout: 5s
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/tempo]
+```
+
+이 gateway는 traces만 처리합니다. Memory limiter와 batch를 사용하며 불필요한 wildcard CORS를 켜지 않습니다. Kubernetes metadata가 필요하면 올바른 `k8sattributes` processor, pod association과 RBAC를 batch보다 앞에 추가합니다. 중간 proxy를 거친 connection IP만으로 원래 Pod를 식별할 수 있다고 가정하지 않습니다.
+
+SDK resource attribute와 전파 헤더도 신뢰 경계에 따라 검증해야 하며 인증·인가 식별자를 대신하지 않습니다.
+
+### stdout 로그와 Alloy
+
+Promtail은 2026년 3월 2일 EOL에 도달했습니다. 이 예제는 Alloy의 Kubernetes API log source를 사용합니다.
+
+```yaml
+# log-reader-rbac.yaml
 apiVersion: v1
-kind: ConfigMap
+kind: ServiceAccount
 metadata:
-  name: loki-rules
-  namespace: monitoring
-data:
-  rules.yaml: |
-    groups:
-      - name: log-based-alerts
-        interval: 1m
-        rules:
-          # 오류 로그 급증 알림
-          - alert: HighErrorLogRate
-            expr: |
-              sum(rate({namespace="production"} |= "ERROR" [5m])) by (app) > 10
-            for: 5m
-            labels:
-              severity: warning
-            annotations:
-              summary: "높은 오류 로그 발생률: {{ $labels.app }}"
-              description: "{{ $labels.app }}에서 분당 10건 이상의 오류 로그 발생"
-
-          # 특정 오류 패턴 감지
-          - alert: DatabaseConnectionError
-            expr: |
-              count_over_time({app=~".+"} |~ "connection refused|timeout|connection reset" [5m]) > 5
-            for: 2m
-            labels:
-              severity: critical
-            annotations:
-              summary: "데이터베이스 연결 오류 감지"
-              description: "데이터베이스 연결 관련 오류 로그가 5건 이상 발생했습니다"
-
-          # OOM 킬러 감지
-          - alert: OOMKillerDetected
-            expr: |
-              count_over_time({unit="kernel"} |= "Out of memory: Killed process" [5m]) > 0
-            for: 0m
-            labels:
-              severity: critical
-            annotations:
-              summary: "OOM Killer 활성화 감지"
-              description: "커널에서 OOM Killer가 프로세스를 종료했습니다"
-
-          # 보안 관련 로그 감지
-          - alert: SuspiciousLoginAttempts
-            expr: |
-              count_over_time({app="auth-service"} |= "authentication failed" [5m]) > 50
-            for: 2m
-            labels:
-              severity: warning
-            annotations:
-              summary: "의심스러운 로그인 시도 감지"
-              description: "5분 내 50회 이상의 인증 실패가 발생했습니다"
-```
-
-### 레이블 전략과 카디널리티
-
-Loki에서 효율적인 쿼리를 위한 레이블 전략입니다.
-
-```yaml
-# 권장 레이블 (낮은 카디널리티)
-scrape_configs:
-  - job_name: kubernetes-pods
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      # 정적이고 유한한 값을 가진 레이블만 사용
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        target_label: app
-      - source_labels: [__meta_kubernetes_pod_container_name]
-        target_label: container
-      # 높은 카디널리티 레이블 제외 (pod name, node name 등)
-
-# 피해야 할 레이블 (높은 카디널리티)
-# - pod: 동적으로 생성되는 파드 이름 (예: api-6d4f5b7c8d-xj2kl)
-# - request_id: 요청마다 고유한 값
-# - user_id: 사용자 ID
-```
-
-### LogQL 패턴 매칭 및 파싱
-
-```logql
-# Nginx 액세스 로그 패턴 파싱
-{app="nginx"}
-  | pattern `<ip> - - [<_>] "<method> <path> <_>" <status> <size>`
-  | status >= 400
-
-# JSON 로그 파싱 및 필터링
-{app="api-service"}
-  | json
-  | level = "error"
-  | message =~ ".*timeout.*"
-  | line_format "{{.timestamp}} [{{.level}}] {{.service}}: {{.message}}"
-
-# 정규식을 사용한 필드 추출
-{app="api-service"}
-  | regexp `(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}) (?P<level>\w+) (?P<message>.*)`
-  | level = "ERROR"
-
-# logfmt 형식 파싱
-{app="go-service"}
-  | logfmt
-  | duration > 1s
-  | status_code >= 500
-```
-
-### 집계 쿼리
-
-```logql
-# 상위 5개 오류 발생 엔드포인트
-topk(5,
-  sum(count_over_time({app="api-service"} | json | status_code >= 500 [1h])) by (endpoint)
-)
-
-# 시간별 오류 분포
-sum(count_over_time({namespace="production"} |= "ERROR" [1h])) by (app)
-
-# 백분위수 계산 (지연 시간)
-quantile_over_time(0.99,
-  {app="api-service"} | json | unwrap latency_ms [5m]
-) by (endpoint)
-
-# 로그 볼륨 비율
-sum(rate({namespace=~".+"}[5m])) by (namespace) / ignoring(namespace) group_left
-sum(rate({namespace=~".+"}[5m]))
-```
-
-### 멀티라인 로그 처리
-
-스택 트레이스와 같은 멀티라인 로그를 처리합니다.
-
-```yaml
-# Promtail 설정에서 멀티라인 처리
-scrape_configs:
-  - job_name: java-apps
-    kubernetes_sd_configs:
-      - role: pod
-    pipeline_stages:
-      - multiline:
-          firstline: '^\d{4}-\d{2}-\d{2}'
-          max_wait_time: 3s
-          max_lines: 128
-      - regex:
-          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}) (?P<level>\w+) (?P<message>[\s\S]*)'
-      - labels:
-          level:
-```
-
-### 전체 Loki 알림 규칙 예시
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: loki-alerting-rules
-  namespace: monitoring
-  labels:
-    release: prometheus
-spec:
-  groups:
-  - name: loki.log.alerts
-    rules:
-    # 로그 수집 지연
-    - alert: LokiIngestionLag
-      expr: |
-        sum(loki_distributor_bytes_received_total) == 0
-      for: 5m
-      labels:
-        severity: critical
-      annotations:
-        summary: "Loki 로그 수집 중단"
-        description: "Loki가 5분 이상 로그를 수집하지 못하고 있습니다"
-
-    # 로그 저장 실패
-    - alert: LokiIngesterFailures
-      expr: |
-        rate(loki_ingester_chunk_stored_bytes_total[5m]) == 0
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Loki 로그 저장 실패"
-        description: "Loki Ingester가 로그를 저장하지 못하고 있습니다"
-```
-
+  name: correlation-log-reader
+  namespace: observability
 ---
-
-## Prometheus PromQL 패턴
-
-PromQL은 시계열 데이터를 쿼리하고 분석하기 위한 강력한 표현식 언어입니다.
-
-### RPS (Requests Per Second) 계산
-
-```promql
-# 서비스별 초당 요청 수
-sum(rate(http_requests_total[5m])) by (service)
-
-# 엔드포인트별 RPS
-sum(rate(http_requests_total[5m])) by (method, path)
-
-# 전체 클러스터 RPS
-sum(rate(http_requests_total[5m]))
-
-# 증가 추세 비교 (이전 시간 대비)
-sum(rate(http_requests_total[5m]))
-/
-sum(rate(http_requests_total[5m] offset 1h))
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: correlation-log-reader
+  namespace: observability
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: correlation-log-reader
+  namespace: observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: correlation-log-reader
+subjects:
+  - kind: ServiceAccount
+    name: correlation-log-reader
+    namespace: observability
 ```
 
-### RED 메소드 구현
+Alloy를 `observability` namespace의 `correlation-log-reader` 계정으로 실행하고 다음 설정을 실제 config 경로에 공급합니다. 대상 Pod에는 `app=correlation-api` label이 있어야 합니다.
 
-RED(Rate, Errors, Duration) 메소드는 서비스 모니터링의 황금 신호입니다.
+```alloy
+// logs.alloy
+// Kubernetes API log source: configure its ServiceAccount permissions first.
+discovery.kubernetes "application" {
+  role = "pod"
+  namespaces {
+    names = ["observability"]
+  }
+  selectors {
+    role  = "pod"
+    label = "app=correlation-api"
+  }
+}
 
-```promql
-# Rate: 초당 요청 수
-sum(rate(http_requests_total[5m])) by (service)
+discovery.relabel "application_logs" {
+  targets = discovery.kubernetes.application.targets
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    target_label  = "service_name"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label  = "container"
+  }
+}
 
-# Errors: 오류율 (5xx 응답 비율)
-sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
-/
-sum(rate(http_requests_total[5m])) by (service)
+loki.source.kubernetes "application" {
+  targets    = discovery.relabel.application_logs.output
+  forward_to = [loki.process.application.receiver]
+}
 
-# Duration: 요청 지연 시간 백분위수
-# P50
-histogram_quantile(0.50,
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-)
+loki.process "application" {
+  stage.json {
+    expressions = {
+      level = "level",
+    }
+  }
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+  // Keep the complete JSON body, including trace_id/span_id. They are not
+  // indexed stream labels and remain available for parsing/correlation.
+  forward_to = [loki.write.backend.receiver]
+}
 
-# P95
-histogram_quantile(0.95,
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-)
-
-# P99
-histogram_quantile(0.99,
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-)
-
-# 평균 지연 시간
-sum(rate(http_request_duration_seconds_sum[5m])) by (service)
-/
-sum(rate(http_request_duration_seconds_count[5m])) by (service)
+loki.write "backend" {
+  endpoint {
+    url = "http://loki.observability.svc:3100/loki/api/v1/push"
+  }
+}
 ```
 
-### Istio Service Mesh 메트릭
+Kubernetes API log source와 host file tail은 다른 경로입니다. File tail을 쓴다면 CRI/Docker framing, partial line과 multiline 처리를 그 입력에 맞춥니다. JSON 한 이벤트에 stack trace를 escaped newline으로 담으면 여러 독립 라인을 잘못 합칠 가능성을 줄일 수 있습니다.
 
-Istio 환경에서 서비스 간 통신 메트릭을 분석합니다.
+Trace ID, request ID, 사용자 ID를 Loki stream label로 올리지 않습니다. Log line 또는 적절한 structured metadata에 두고 query 시 필터링합니다. Pod·instance label도 변경량과 보존 기간을 고려합니다.
 
-```promql
-# 서비스별 요청 수
-sum(rate(istio_requests_total[5m])) by (destination_service_name)
+현재 Collector에서 제거된 `loki` exporter 설정을 재사용하지 않습니다. OTLP logs를 직접 Loki에 보낼 대안은 `otlphttp` exporter의 `http://<loki>/otlp` endpoint와 logs pipeline입니다. Loki의 structured metadata/schema 요구 사항도 맞춰야 합니다. 이는 위의 JSON stdout 수집 경로와 다른 선택입니다.
 
-# 서비스 간 요청 실패율
-sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (source_app, destination_app)
-/
-sum(rate(istio_requests_total[5m])) by (source_app, destination_app)
-
-# P99 지연 시간
-histogram_quantile(0.99,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le, destination_service_name)
-)
-
-# 서비스 메시 트래픽 볼륨
-sum(rate(istio_tcp_sent_bytes_total[5m])) by (source_app, destination_app)
-
-# mTLS 적용률
-sum(rate(istio_requests_total{connection_security_policy="mutual_tls"}[5m]))
-/
-sum(rate(istio_requests_total[5m]))
-
-# Envoy 프록시 오류
-sum(rate(envoy_cluster_upstream_cx_connect_fail[5m])) by (cluster_name)
-```
-
-### ALB 메트릭 (CloudWatch 연동)
-
-Amazon Managed Prometheus(AMP)에서 CloudWatch 메트릭을 쿼리합니다.
-
-```promql
-# ALB 평균 응답 시간
-avg(aws_alb_target_response_time_average) by (load_balancer)
-
-# ALB 요청 수
-sum(rate(aws_alb_request_count_sum[5m])) by (load_balancer)
-
-# ALB HTTP 5xx 오류 수
-sum(rate(aws_alb_httpcode_target_5xx_count_sum[5m])) by (load_balancer)
-
-# ALB 활성 연결 수
-sum(aws_alb_active_connection_count_sum) by (load_balancer)
-
-# Target Group 건강 상태
-aws_alb_tg_healthy_host_count /
-(aws_alb_tg_healthy_host_count + aws_alb_tg_unhealthy_host_count)
-
-# Unhealthy target 감지
-aws_alb_tg_unhealthy_host_count > 0
-```
-
-### AMP (Amazon Managed Prometheus) 쿼리 패턴
-
-```promql
-# 크로스 리전 메트릭 집계
-sum(rate(http_requests_total{region=~"ap-northeast-1|ap-northeast-2"}[5m])) by (service, region)
-
-# 장기 보존 데이터 쿼리 (30일 추세)
-avg_over_time(http_requests_total[30d])
-
-# 다중 클러스터 비교
-sum(rate(http_requests_total[5m])) by (cluster)
-
-# AMP 메트릭 수집 상태
-up{job="amp-remote-write"}
-```
-
-### Recording Rules
-
-자주 사용하는 쿼리를 Recording Rule로 사전 계산하여 성능을 최적화합니다.
+### 메트릭과 exemplar 저장
 
 ```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: recording-rules
-  namespace: monitoring
-  labels:
-    release: prometheus
-spec:
-  groups:
-  - name: service.slo.rules
-    interval: 30s
-    rules:
-    # 서비스별 요청률
-    - record: service:http_requests_total:rate5m
-      expr: sum(rate(http_requests_total[5m])) by (service)
-
-    # 서비스별 오류율
-    - record: service:http_requests_errors:rate5m
-      expr: |
-        sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
-        /
-        sum(rate(http_requests_total[5m])) by (service)
-
-    # 서비스별 P99 지연 시간
-    - record: service:http_request_duration_seconds:p99
-      expr: |
-        histogram_quantile(0.99,
-          sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-        )
-
-    # 서비스별 P95 지연 시간
-    - record: service:http_request_duration_seconds:p95
-      expr: |
-        histogram_quantile(0.95,
-          sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-        )
-
-    # 서비스별 평균 지연 시간
-    - record: service:http_request_duration_seconds:avg
-      expr: |
-        sum(rate(http_request_duration_seconds_sum[5m])) by (service)
-        /
-        sum(rate(http_request_duration_seconds_count[5m])) by (service)
-
-  - name: node.resources.rules
-    interval: 60s
-    rules:
-    # 노드별 CPU 사용률
-    - record: node:cpu_utilization:ratio
-      expr: |
-        1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance)
-
-    # 노드별 메모리 사용률
-    - record: node:memory_utilization:ratio
-      expr: |
-        1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
-
-    # 노드별 디스크 사용률
-    - record: node:disk_utilization:ratio
-      expr: |
-        1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})
-
-  - name: namespace.resources.rules
-    interval: 60s
-    rules:
-    # 네임스페이스별 CPU 사용량
-    - record: namespace:container_cpu_usage_seconds:sum_rate
-      expr: |
-        sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace)
-
-    # 네임스페이스별 메모리 사용량
-    - record: namespace:container_memory_working_set_bytes:sum
-      expr: |
-        sum(container_memory_working_set_bytes{container!=""}) by (namespace)
-
-    # 네임스페이스별 네트워크 수신 대역폭
-    - record: namespace:container_network_receive_bytes:sum_rate
-      expr: |
-        sum(rate(container_network_receive_bytes_total[5m])) by (namespace)
+# prometheus.yaml
+# Direct application scrape. HTTP/2 does not enable exemplar storage.
+global:
+  scrape_interval: 15s
+rule_files:
+  - recording-rules.yaml
+scrape_configs:
+  - job_name: correlation-api
+    scrape_protocols: [OpenMetricsText1.0.0, PrometheusText0.0.4]
+    static_configs:
+      - targets: [correlation-api.observability.svc:8080]
+        labels:
+          service: correlation-api
+          namespace: observability
+storage:
+  exemplars:
+    max_exemplars: 10000
 ```
 
-### Recording Rules YAML 전체 예시
+Prometheus 3.14의 exemplar 저장에는 다음 feature 설정도 필요합니다. `enable_http2`는 exemplar 저장을 켜는 옵션이 아닙니다.
+
+```bash
+prometheus --config.file=prometheus.yaml --enable-feature=exemplar-storage
+```
+
+파일과 recording rule은 같은 설정 디렉터리에 둡니다. SDK 예제는 OpenMetrics exposition을 제공하고 sampled·valid context의 ID만 exemplar에 첨부합니다. 샘플링, 버퍼 교체나 Tempo 보존 만료로 링크 대상이 없을 수 있습니다. Exemplar가 histogram의 모든 요청이나 정확한 P99 요청을 대표하는 것도 아닙니다.
+
+## 4. LogQL
+
+로그 query는 이 예제의 `service_name`, JSON 대문자 level과 completion-record 계약을 기준으로 합니다. 임의의 `error` substring 비율을 요청 실패율과 동일시하지 않습니다.
+
+### 필터와 집계
+
+```logql
+{service_name="correlation-api"} | json | level="ERROR" | __error__=""
+```
+
+```logql
+sum by (service_name) (rate({service_name="correlation-api"} | json | message="request completed" | status_code>=500 | status_code<600 | __error__="" [5m]))
+```
+
+```logql
+sum by (service_name) (count_over_time({service_name="correlation-api"} | json | level="ERROR" | __error__="" [1h]))
+```
+
+`rate`는 lines/s, `count_over_time`은 각 범위의 line count입니다. 여러 stream의 합계가 필요하면 집계합니다. `|=`는 대소문자를 구분하는 substring 필터이며 JSON severity 검사와 다릅니다.
+
+### 지연과 오류 처리
+
+```logql
+quantile_over_time(0.95, {service_name="correlation-api"} | json | latency_ms>=0 | __error__="" | unwrap latency_ms | __error__="" [5m]) by (route)
+```
+
+```logql
+avg_over_time({service_name="correlation-api"} | json | latency_ms>=0 | __error__="" | unwrap latency_ms | __error__="" [5m]) by (route)
+```
+
+JSON 파싱·숫자 비교·unwrap이 오류를 만들 수 있으므로 적절한 위치의 `__error__=""` 필터가 필요합니다. 이 예제는 먼저 `latency_ms>=0`으로 숫자를 검증합니다. Loki 3.7.7에서 정상 10ms/800ms, 잘못된 숫자와 깨진 JSON을 섞어 테스트했고, 수정한 query는 평균 405ms와 P95 760.5ms를 반환했습니다.
+
+이것은 unwrap한 값의 범위 집계이며 Prometheus histogram bucket과 다릅니다. 전체 자유 형식 `message`나 raw URL을 집계 label로 쓰면 query 결과의 cardinality도 폭증할 수 있습니다.
+
+### Trace ID 조회
+
+```logql
+{service_name="correlation-api"} | json | trace_id="0af7651916cd43dd8448eb211c80319c" | __error__=""
+```
+
+Regex/pattern/json parser 뒤의 오류도 확인합니다. 중첩 JSON을 파싱할 때 두 번째 `| json`이 자동으로 특정 내부 문자열을 대상으로 삼는 것은 아닙니다. 필요한 field를 명시적으로 추출하거나 line을 변환한 뒤 다시 파싱합니다.
+
+### Loki Ruler
 
 ```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: complete-recording-rules
-  namespace: monitoring
-  labels:
-    release: prometheus
-    app: kube-prometheus-stack
-spec:
-  groups:
-  # SLO 관련 recording rules
-  - name: slo.rules
+# loki-rules.yaml
+# Native Loki Ruler file. Store through the configured Ruler backend/API.
+# This is not a PrometheusRule CRD and not a Grafana Alerting provisioning file.
+groups:
+  - name: correlation.logs
+    rules:
+      - alert: CompletedRequestErrorLogsHigh
+        expr: |
+          sum by (service_name) (
+            rate({service_name="correlation-api"} | json
+              | message="request completed" | status_code>=500 | __error__="" [5m])
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High completed-request error log rate
+          description: '{{ $labels.service_name }} emitted {{ printf "%.2f" $value }} matching log lines/s.'
+```
+
+이 파일은 Loki Ruler의 storage/API에 연결해야 합니다. LogQL을 PrometheusRule CRD에 넣어 Prometheus가 평가하도록 할 수 없습니다. Grafana Alerting provisioning의 `apiVersion`·schema도 별개입니다.
+
+Loki 수집량 counter의 누적값이 0인지 보는 것은 수집 중단 검사가 아닙니다. 최근 증가율과 예상 입력, collector 오류·backpressure·저장 오류를 함께 확인합니다. 입력이 없는 시간에 저장량이 0인 것만으로 장애를 확정하지 않습니다.
+
+## 5. PromQL과 metric 단위
+
+```yaml
+# recording-rules.yaml
+groups:
+  - name: correlation.red
     interval: 30s
     rules:
-    - record: slo:service_availability:ratio_rate5m
-      expr: |
-        1 - (
-          sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+      - record: service:http_requests:rate5m
+        expr: sum by (namespace, service) (rate(http_requests_total[5m]))
+      - record: service:http_errors:rate5m
+        expr: |
+          sum by (namespace, service) (rate(http_requests_total{status=~"5.."}[5m]))
+          or on (namespace, service) (0 * service:http_requests:rate5m)
+      - record: service:http_error_ratio:rate5m
+        expr: service:http_errors:rate5m / (service:http_requests:rate5m > 0)
+      - record: service:http_latency_p99:seconds
+        expr: |
+          histogram_quantile(0.99,
+            sum by (namespace, service, le) (rate(http_request_duration_seconds_bucket[5m]))
+          )
+      - record: service:http_latency_mean:seconds
+        expr: |
+          sum by (namespace, service) (rate(http_request_duration_seconds_sum[5m]))
           /
-          sum(rate(http_requests_total[5m])) by (service)
-        )
-
-    - record: slo:service_latency_p99:seconds
-      expr: |
-        histogram_quantile(0.99,
-          sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
-        )
-
-  # 리소스 효율성 rules
-  - name: efficiency.rules
-    interval: 60s
-    rules:
-    - record: pod:cpu_usage_vs_request:ratio
-      expr: |
-        sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace, pod)
-        /
-        sum(kube_pod_container_resource_requests{resource="cpu"}) by (namespace, pod)
-
-    - record: pod:memory_usage_vs_request:ratio
-      expr: |
-        sum(container_memory_working_set_bytes{container!=""}) by (namespace, pod)
-        /
-        sum(kube_pod_container_resource_requests{resource="memory"}) by (namespace, pod)
-
-  # Istio 관련 rules
-  - name: istio.rules
-    interval: 30s
-    rules:
-    - record: istio:service_request_rate:sum_rate5m
-      expr: sum(rate(istio_requests_total[5m])) by (destination_service_name)
-
-    - record: istio:service_error_rate:ratio_rate5m
-      expr: |
-        sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (destination_service_name)
-        /
-        sum(rate(istio_requests_total[5m])) by (destination_service_name)
-
-    - record: istio:service_latency_p99:milliseconds
-      expr: |
-        histogram_quantile(0.99,
-          sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le, destination_service_name)
-        )
+          (sum by (namespace, service) (rate(http_request_duration_seconds_count[5m])) > 0)
 ```
 
----
+Classic histogram은 `le`를 보존해서 집계합니다. Error series가 아직 없으면 같은 서비스의 실제 요청 series를 기준으로 0을 채우고, 요청도 0이면 비율을 정상 0으로 만들지 않습니다. 기록 규칙의 단위와 dashboard의 `s`, `percentunit`, `reqps`를 맞춥니다.
 
-## Tempo TraceQL 분석
+RPS는 counter의 `rate`로 구하고 장기 추세도 rate/증가량을 목적에 맞게 사용합니다. 누적 counter를 30일 평균내면 평균 요청률이 되지 않습니다. 평균·백분위수와 histogram quantile은 서로 다른 통계입니다.
 
-Grafana Tempo의 TraceQL은 분산 트레이스를 쿼리하기 위한 언어입니다.
+Istio 요청 metric은 source/destination reporter가 중복될 수 있으므로 관측 방향을 선택합니다. 예를 들어 destination 관찰값을 집계할 때:
 
-### 기본 TraceQL 구문
+```promql
+sum by (cluster, destination_service_namespace, destination_service_name) (
+  rate(istio_requests_total{reporter="destination"}[5m])
+)
+```
+
+Istio duration metric의 milliseconds와 애플리케이션 seconds를 혼동하지 않습니다. L7 metric의 mTLS 비율은 관측한 HTTP 요청의 비율이며 모든 L4 트래픽의 암호화 정책 증명은 아닙니다. Ambient 구성은 waypoint 여부 등 실제 L7 telemetry 경로를 확인합니다.
+
+CloudWatch exporter의 `_sum`은 기간 통계 gauge일 수 있습니다. 이를 monotonic counter로 보고 `rate()`를 적용하지 않습니다. 집계 기간이 60초인 RequestCount Sum을 RPS로 환산한다면 그 기간과 exporter의 timestamp/delay·중복 series를 확인한 뒤 나눕니다. Metric prefix와 label은 exporter마다 다릅니다.
+
+AMP는 ingest한 데이터를 query하는 workspace입니다. CloudWatch 수집, 다른 workspace/리전 통합이나 `up{job="amp-remote-write"}`가 자동으로 만들어지는 것은 아닙니다. 실제 remote-write queue/오류와 AMP가 제공하는 수집 상태를 확인합니다.
+
+## 6. TraceQL
+
+다음은 Tempo 3.0.3 문서와 Grafana 공식 parser로 확인한 구문입니다. 속성 이름은 실제 instrumentation의 semantic-convention 출력과 일치해야 합니다.
 
 ```traceql
-# 기본 쿼리 구조
-{ <span selector> }
-
-# 서비스 이름으로 필터링
-{ resource.service.name = "api-gateway" }
-
-# Span 속성으로 필터링
-{ span.http.status_code >= 500 }
-
-# 여러 조건 조합
-{ resource.service.name = "api-gateway" && span.http.status_code >= 500 }
-
-# 정규식 매칭
-{ span.http.url =~ "/api/v1/users.*" }
+{ resource.service.name = "correlation-api" }
 ```
-
-### 지연 시간 분석
 
 ```traceql
-# 2초 이상 걸린 트레이스
-{ duration > 2s }
-
-# 특정 서비스에서 지연이 발생한 트레이스
-{ resource.service.name = "database-service" && duration > 1s }
-
-# 오류와 함께 높은 지연 시간
-{ duration > 2s && status = error }
-
-# Span 레벨 지연 시간 분석
-{ span.name = "db.query" && span.duration > 500ms }
+{ resource.service.name = "correlation-api" && span:duration > 500ms }
 ```
-
-### 오류 트레이스 검색
 
 ```traceql
-# HTTP 5xx 오류가 있는 트레이스
-{ span.http.status_code >= 500 }
-
-# 오류 상태의 트레이스
-{ status = error }
-
-# 특정 오류 메시지 포함
-{ span.error.message =~ ".*timeout.*" }
-
-# gRPC 오류 코드
-{ span.rpc.grpc.status_code != 0 }
-
-# 데이터베이스 오류
-{ span.db.system = "postgresql" && status = error }
+{ trace:duration > 2s }
 ```
 
-### 서비스 의존성 매핑
+`span:duration`은 span, `trace:duration`은 trace 전체 시간 범위입니다. `span:name` 같은 intrinsic과 `span.name`이라는 사용자 attribute는 다릅니다.
 
 ```traceql
-# 특정 서비스를 호출하는 모든 서비스
-{ resource.service.name != "target-service" } >> { resource.service.name = "target-service" }
-
-# 서비스 간 호출 경로
-{ resource.service.name = "frontend" } >> { resource.service.name = "api-gateway" } >> { resource.service.name = "user-service" }
-
-# 외부 API 호출 추적
-{ span.http.url =~ "https://external-api.com.*" }
+{ resource.service.name = "correlation-api" && span:status = error }
 ```
-
-### Span 속성 필터링
 
 ```traceql
-# HTTP 메서드별 필터링
-{ span.http.method = "POST" }
-
-# 특정 엔드포인트
-{ span.http.route = "/api/v1/orders" }
-
-# 데이터베이스 쿼리 분석
-{ span.db.system = "mysql" && span.db.operation = "SELECT" }
-
-# Kafka 메시지 추적
-{ span.messaging.system = "kafka" && span.messaging.destination = "orders-topic" }
-
-# 사용자별 요청 추적
-{ span.user.id = "user-12345" }
+{ resource.service.name = "correlation-api" && span.http.status_code >= 500 }
 ```
 
-### 구조적 쿼리 (부모-자식 관계)
+Go 실행에서는 `http.request.method`와 `http.response.status_code`가 기록됐습니다. 같은 예제의 Go backend에는 다음 query를 사용합니다.
 
 ```traceql
-# 부모 span 다음에 오는 자식 span
-{ resource.service.name = "api-gateway" } >> { resource.service.name = "user-service" }
-
-# 자식 span이 오류인 트레이스
-{ resource.service.name = "api-gateway" } >> { status = error }
-
-# 특정 깊이의 span
-{ resource.service.name = "frontend" } >> { } >> { span.db.system = "postgresql" }
-
-# 형제 span 관계
-{ resource.service.name = "api-gateway" }
-  >> ({ span.http.route = "/users" } || { span.http.route = "/orders" })
+{ resource.service.name = "correlation-api" && span.http.response.status_code >= 500 }
 ```
 
-### 트레이스 비교 (배포 전후)
+Error status는 정확한 HTTP 500과 같은 조건이 아닙니다. 이 예제의 기본 Python instrumentation은 `http.status_code`를 출력했지만 새 semantic convention을 선택했다면 `http.response.status_code` 등 실제 이름에 맞춰 query를 변경합니다.
+
+### 관계와 집계
 
 ```traceql
-# 특정 버전의 트레이스
-{ resource.service.version = "v2.0.0" }
-
-# 배포 환경별 비교
-{ resource.deployment.environment = "canary" && duration > 1s }
-
-# 특정 시간 범위의 트레이스 (Grafana UI에서 시간 선택기 사용)
-{ resource.service.name = "api-gateway" }
+{ span:kind = server } > { span:name = "prepare-order-response" }
 ```
 
-### 서비스 그래프 생성
+```traceql
+{ span:kind = server } >> { span:status = error }
+```
 
-Tempo는 트레이스 데이터로부터 서비스 그래프를 자동 생성할 수 있습니다.
+```traceql
+{ span:name = "check-stock" } ~ { span:name = "check-payment" }
+```
+
+`>`는 직접 자식, `>>`는 임의 깊이의 후손, `<`는 직접 부모, `~`는 같은 부모를 가진 형제 관계입니다. 동일 서비스의 client/server span만 선택하는 query가 모든 상대 서비스를 자동 매핑하는 것은 아닙니다.
+
+```traceql
+{ resource.service.name = "correlation-api" } | by(span:name) | count() > 1
+```
+
+같은 이름의 span이 여러 개 있다는 것만으로 retry를 확정하지 않습니다. `{ }*` 같은 지원하지 않는 반복 구문을 쓰지 말고 trace ID 조회와 명시적 구조 query를 사용합니다.
+
+```traceql
+{ resource.service.name = "correlation-api" } | quantile_over_time(duration, 0.99)
+```
+
+이 결과는 TraceQL metrics 시계열이며 느린 개별 trace 목록이 아닙니다. 선택한 query 모드와 해당 Tempo 배포의 기능·데이터 경로를 확인합니다. Service graph가 필요하면 지원되는 생성기/processor와 저장·조회 경로를 별도로 구성합니다.
+
+`traces_service_graph_request_total` 같은 생성된 metric은 Prometheus/호환 metric backend의 **PromQL**로 조회합니다. Client/server span 종류·대응 관계·샘플링에 따라 graph가 불완전할 수 있습니다. 오래된 `processor.*.enabled=true` 조각만으로 현재 Tempo 구성이 완성된다고 가정하지 않습니다.
+
+## 7. Grafana 데이터소스와 대시보드
 
 ```yaml
-# Tempo 설정에서 서비스 그래프 활성화
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tempo-config
-  namespace: monitoring
-data:
-  tempo.yaml: |
-    metrics_generator:
-      registry:
-        external_labels:
-          source: tempo
-          cluster: eks-production
-      storage:
-        path: /var/tempo/wal
-        remote_write:
-          - url: http://prometheus:9090/api/v1/write
-      traces_storage:
-        path: /var/tempo/traces
-      processor:
-        service_graphs:
-          enabled: true
-          histogram_buckets: [0.1, 0.2, 0.4, 0.8, 1.6, 3.2]
-          dimensions: [service.namespace]
-        span_metrics:
-          enabled: true
-          histogram_buckets: [0.002, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
-```
-
-### TraceQL 고급 패턴
-
-```traceql
-# 느린 데이터베이스 쿼리를 포함한 트레이스
-{ } >> { span.db.system != "" && span.duration > 100ms }
-
-# 재시도가 발생한 트레이스 (동일 span.name이 여러 번)
-{ } | count() > 1 by (span.name)
-
-# 특정 사용자의 전체 요청 경로
-{ span.user.id = "user-12345" } >> { }*
-
-# 캐시 미스 패턴
-{ span.cache.hit = false }
-
-# 서킷 브레이커 트리거
-{ span.circuitbreaker.state = "open" }
-```
-
----
-
-## Grafana 대시보드
-
-Grafana에서 메트릭, 로그, 트레이스를 통합하여 시각화하고 상관 분석을 수행합니다.
-
-### RED 메소드 대시보드
-
-```json
-{
-  "panels": [
-    {
-      "title": "Request Rate",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "sum(rate(http_requests_total[5m])) by (service)",
-          "legendFormat": "{{ service }}"
-        }
-      ]
-    },
-    {
-      "title": "Error Rate",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service)",
-          "legendFormat": "{{ service }}"
-        }
-      ]
-    },
-    {
-      "title": "Latency (P99)",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))",
-          "legendFormat": "{{ service }}"
-        }
-      ]
-    }
-  ]
-}
-```
-
-### USE 메소드 (인프라)
-
-USE(Utilization, Saturation, Errors) 메소드는 리소스 모니터링에 적합합니다.
-
-```json
-{
-  "panels": [
-    {
-      "title": "CPU Utilization",
-      "type": "gauge",
-      "targets": [
-        {
-          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-          "legendFormat": "CPU Usage %"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "max": 100,
-          "thresholds": {
-            "steps": [
-              { "value": 0, "color": "green" },
-              { "value": 70, "color": "yellow" },
-              { "value": 85, "color": "red" }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "title": "Memory Utilization",
-      "type": "gauge",
-      "targets": [
-        {
-          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-          "legendFormat": "Memory Usage %"
-        }
-      ]
-    },
-    {
-      "title": "Disk Saturation (I/O Wait)",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "rate(node_cpu_seconds_total{mode=\"iowait\"}[5m]) * 100",
-          "legendFormat": "{{ instance }}"
-        }
-      ]
-    }
-  ]
-}
-```
-
-### 크로스 데이터소스 링킹
-
-Grafana에서 Prometheus, Loki, Tempo 간의 연결을 설정합니다.
-
-#### Prometheus → Tempo (Exemplars)
-
-```yaml
-# Grafana 데이터소스 설정
+# datasources.yaml
 apiVersion: 1
 datasources:
   - name: Prometheus
+    uid: prometheus
     type: prometheus
-    url: http://prometheus:9090
+    access: proxy
+    url: http://prometheus.observability.svc:9090
     jsonData:
       httpMethod: POST
       exemplarTraceIdDestinations:
         - name: trace_id
           datasourceUid: tempo
-          urlDisplayLabel: View Trace
-
-  - name: Tempo
-    type: tempo
-    uid: tempo
-    url: http://tempo:3200
-    jsonData:
-      tracesToLogs:
-        datasourceUid: loki
-        tags: ['service.name', 'trace_id']
-        spanStartTimeShift: '-1h'
-        spanEndTimeShift: '1h'
-        filterByTraceID: true
-        filterBySpanID: true
-```
-
-#### Loki → Tempo (Derived Fields)
-
-```yaml
-# Loki 데이터소스에서 Derived Fields 설정
-datasources:
+          urlDisplayLabel: View trace
   - name: Loki
+    uid: loki
     type: loki
-    url: http://loki:3100
+    access: proxy
+    url: http://loki.observability.svc:3100
     jsonData:
       derivedFields:
         - name: TraceID
-          matcherRegex: '"trace_id":"([a-f0-9]+)"'
-          url: 'http://grafana:3000/explore?orgId=1&left=["now-1h","now","Tempo",{"query":"${__value.raw}"}]'
+          matcherRegex: '"trace_id"\s*:\s*"([0-9a-f]{32})"'
           datasourceUid: tempo
+          url: '$${__value.raw}'
+          urlDisplayLabel: View trace
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo-query-frontend.observability.svc:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: "-5m"
+        spanEndTimeShift: "5m"
+        tags:
+          - key: service.name
+            value: service_name
+        filterByTraceID: true
+        filterBySpanID: false
+        customQuery: false
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: "-5m"
+        spanEndTimeShift: "5m"
+        tags:
+          - key: service.name
+            value: service
+        queries:
+          - name: Request rate
+            query: 'sum(rate(http_requests_total{$$__tags}[5m]))'
 ```
 
-### 대시보드 프로비저닝
+세 UID를 모두 명시하고 참조를 일치시켰습니다. Prometheus exemplar의 `trace_id`, JSON log의 `trace_id`와 Loki derived field를 연결합니다. JSON의 공백 유무를 허용하며 32자리 ID를 검사합니다.
+
+프로비저닝 YAML에서는 `$`를 `$$`로 보존해야 Grafana의 `${__value.raw}`와 `__tags` macro가 유지됩니다. 내부 Tempo 링크에는 raw trace ID query를 전달하고 별도의 Explore URL을 중복 조합하지 않습니다.
+
+`tracesToLogsV2`는 trace의 `service.name`을 Loki `service_name` label로 매핑합니다. Trace 전체 로그를 보고 싶을 때 span ID까지 불필요하게 제한하지 않습니다. 다중 tenant·TLS·인증·실제 Service URL은 운영 환경에 맞춰 준비합니다.
+
+### 재현 가능한 파일 형식
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-dashboards-config
-  namespace: monitoring
-data:
-  dashboards.yaml: |
-    apiVersion: 1
-    providers:
-      - name: 'default'
-        orgId: 1
-        folder: 'Kubernetes'
-        type: file
-        disableDeletion: false
-        updateIntervalSeconds: 30
-        options:
-          path: /var/lib/grafana/dashboards/default
-      - name: 'observability'
-        orgId: 1
-        folder: 'Observability'
-        type: file
-        disableDeletion: false
-        options:
-          path: /var/lib/grafana/dashboards/observability
+# dashboard-provider.yaml
+apiVersion: 1
+providers:
+  - name: correlation
+    orgId: 1
+    folder: Observability
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards/correlation
 ```
 
-### 변수 템플릿
-
-네임스페이스 및 서비스 필터링을 위한 대시보드 변수입니다.
+Datasource 파일은 Grafana datasource provisioning 경로에, 위 provider 파일은 dashboard provisioning 경로에, 아래 JSON은 provider가 읽는 디렉터리에 마운트합니다. ConfigMap만 생성해서는 연결되지 않습니다.
 
 ```json
 {
-  "templating": {
-    "list": [
-      {
-        "name": "namespace",
-        "type": "query",
-        "datasource": "Prometheus",
-        "query": "label_values(kube_namespace_labels, namespace)",
-        "multi": true,
-        "includeAll": true
-      },
-      {
-        "name": "service",
-        "type": "query",
-        "datasource": "Prometheus",
-        "query": "label_values(http_requests_total{namespace=~\"$namespace\"}, service)",
-        "multi": true,
-        "includeAll": true
-      },
-      {
-        "name": "pod",
-        "type": "query",
-        "datasource": "Prometheus",
-        "query": "label_values(kube_pod_info{namespace=~\"$namespace\"}, pod)",
-        "multi": true,
-        "includeAll": true
-      }
-    ]
-  }
-}
-```
-
-### 통합 관측성 대시보드 JSON
-
-```json
-{
-  "title": "Service Observability",
-  "uid": "service-observability",
-  "tags": ["kubernetes", "observability"],
+  "id": null,
+  "uid": "correlation-demo",
+  "title": "Service correlation demo",
+  "tags": [
+    "observability",
+    "correlation"
+  ],
   "timezone": "browser",
-  "schemaVersion": 30,
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "panels": [
     {
       "id": 1,
-      "title": "Request Rate",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "title": "Request rate",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
       "targets": [
         {
-          "datasource": "Prometheus",
-          "expr": "sum(rate(http_requests_total{namespace=~\"$namespace\", service=~\"$service\"}[5m]))"
+          "refId": "A",
+          "expr": "service:http_requests:rate5m{service=\"correlation-api\",namespace=\"observability\"}",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
         }
       }
     },
     {
       "id": 2,
-      "title": "Error Rate",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "title": "HTTP error ratio",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
       "targets": [
         {
-          "datasource": "Prometheus",
-          "expr": "sum(rate(http_requests_total{namespace=~\"$namespace\", service=~\"$service\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{namespace=~\"$namespace\", service=~\"$service\"}[5m]))"
+          "refId": "A",
+          "expr": "service:http_error_ratio:rate5m{service=\"correlation-api\",namespace=\"observability\"}",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
-          "thresholds": {
-            "steps": [
-              { "value": 0, "color": "green" },
-              { "value": 0.01, "color": "yellow" },
-              { "value": 0.05, "color": "red" }
-            ]
-          }
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
         }
       }
     },
     {
       "id": 3,
-      "title": "P99 Latency",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "title": "P99 latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
       "targets": [
         {
-          "datasource": "Prometheus",
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=~\"$namespace\", service=~\"$service\"}[5m])) by (le))"
+          "refId": "A",
+          "expr": "service:http_latency_p99:seconds{service=\"correlation-api\",namespace=\"observability\"}",
+          "legendFormat": "{{service}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
         }
       }
     },
     {
       "id": 4,
-      "title": "Active Traces",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
-      "targets": [
-        {
-          "datasource": "Tempo",
-          "queryType": "search",
-          "search": "{ resource.service.name = \"$service\" }"
-        }
-      ]
-    },
-    {
-      "id": 5,
-      "title": "Request Rate Over Time",
+      "title": "Request histogram with trace exemplars",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
       "targets": [
         {
-          "datasource": "Prometheus",
-          "expr": "sum(rate(http_requests_total{namespace=~\"$namespace\", service=~\"$service\"}[5m])) by (service)",
-          "legendFormat": "{{ service }}"
+          "refId": "A",
+          "expr": "sum by (le) (rate(http_request_duration_seconds_bucket{service=\"correlation-api\",namespace=\"observability\"}[5m]))",
+          "legendFormat": "le={{le}}",
+          "exemplar": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
         }
       ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0
+        },
+        "overrides": []
+      },
       "options": {
-        "legend": { "displayMode": "list" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       }
     },
     {
-      "id": 6,
-      "title": "Latency Distribution",
-      "type": "heatmap",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "sum(rate(http_request_duration_seconds_bucket{namespace=~\"$namespace\", service=~\"$service\"}[5m])) by (le)",
-          "legendFormat": "{{ le }}"
-        }
-      ]
-    },
-    {
-      "id": 7,
-      "title": "Recent Error Logs",
+      "id": 5,
+      "title": "Correlated application logs",
       "type": "logs",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 9
+      },
       "targets": [
         {
-          "datasource": "Loki",
-          "expr": "{namespace=~\"$namespace\", app=~\"$service\"} |= \"error\" | json"
+          "refId": "A",
+          "expr": "{namespace=\"observability\",service_name=\"correlation-api\"}",
+          "queryType": "range",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
         }
       ],
       "options": {
         "showTime": true,
         "showLabels": false,
-        "wrapLogMessage": true
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
       }
-    },
-    {
-      "id": 8,
-      "title": "Service Map",
-      "type": "nodeGraph",
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 20 },
-      "targets": [
-        {
-          "datasource": "Tempo",
-          "queryType": "serviceMap"
-        }
-      ]
-    },
-    {
-      "id": 9,
-      "title": "Slow Traces",
-      "type": "table",
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 20 },
-      "targets": [
-        {
-          "datasource": "Tempo",
-          "queryType": "search",
-          "search": "{ resource.service.name = \"$service\" && duration > 1s }"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {},
-            "indexByName": {
-              "traceID": 0,
-              "serviceName": 1,
-              "duration": 2,
-              "startTime": 3
-            }
-          }
-        }
-      ]
     }
-  ]
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  }
 }
 ```
 
----
+File provisioning에는 이처럼 dashboard 객체 자체를 저장합니다. HTTP API의 `{"dashboard": ...}` wrapper를 사용하지 않습니다. 이 예제는 정의되지 않은 변수를 없애고 고정된 서비스와 datasource UID를 사용합니다.
+
+구형 `graph` panel 대신 현재 `timeseries`를 사용합니다. Cumulative histogram bucket 곡선은 heatmap의 bucket별 분포와 다릅니다. Trace search 결과를 변환 없이 “Active Traces” 숫자나 service-map panel로 표시하지 않습니다.
+
+변수를 추가할 때는 실제 query/metric에 존재하는 label을 사용합니다. Multi/All 값은 적절한 regex escaping과 매칭 연산자가 필요하며 단일 문자열과 같다고 가정하지 않습니다. 데이터소스별 문법에 맞춰 테스트합니다.
+
+## 검증 범위
+
+![알림·메트릭·트레이스·로그를 연결한 뒤 원인 가설을 검증하고 승인된 조치의 효과를 확인하는 절차.](../.gitbook/assets/ko-ops-08-observability-analysis-1.png)
+
+[조사 절차 다이어그램](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-08-observability-analysis-1.html)
+
+SDK 테스트는 외부 OTLP exporter를 만들지 않고 명시적인 in-memory exporter와 fake HTTP transport만 사용했습니다. 해당 격리된 테스트 안에서만 recording을 켰으며 개인 endpoint/resource 환경값은 사용하지 않았습니다.
+
+Collector/Alloy native 설정 검사, Loki 합성 로그 query 결과, Prometheus recording rule 계산, Java encoder, Trace ID regex와 UID 연결을 확인했습니다. TraceQL parser 검증은 실제 Tempo ingest/search 실행을 대신하지 않으며 Grafana UI·실제 backend 인증과 배포는 별도로 확인해야 합니다.
 
 ## 참고 자료
 
-- [Grafana Loki LogQL 문서](https://grafana.com/docs/loki/latest/query/)
-- [Prometheus PromQL 문서](https://prometheus.io/docs/prometheus/latest/querying/basics/)
-- [Grafana Tempo TraceQL 문서](https://grafana.com/docs/tempo/latest/traceql/)
-- [OpenTelemetry SDK 문서](https://opentelemetry.io/docs/)
-- [Grafana Dashboard Best Practices](https://grafana.com/docs/grafana/latest/best-practices/common-observability-strategies/)
+- [OpenTelemetry Go 1.46](https://github.com/open-telemetry/opentelemetry-go/releases/tag/v1.46.0)
+- [Loki native OTLP](https://grafana.com/docs/loki/latest/send-data/otel/)
+- [Promtail EOL](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [Tempo 3.0.3 TraceQL](https://github.com/grafana/tempo/blob/v3.0.3/docs/sources/tempo/traceql/construct-traceql-queries.md)
+- [Grafana Tempo provisioning](https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/)
+- [Grafana Loki configuration](https://grafana.com/docs/grafana/latest/datasources/loki/configure/)
+- [이 장의 퀴즈](../quizzes/ops/08-observability-analysis-quiz.md)
 
----
-
-## 관련 문서
-
-- [모니터링 스택](../observability/README.md) - Prometheus, VictoriaMetrics, Grafana 설정
-- [로깅 스택](../observability/logging/README.md) - Loki, Tempo 설정
-- [관측성 최적화](../observability/09-observability-optimization.md) - 고급 최적화 전략
-
----
-
-< [이전: 운영 알림 구성](./07-observability-alerts.md) | [목차](./README.md) | [다음: 관측성 스택 운영](./09-observability-stack.md) >
+< [이전: 운영 알림](07-observability-alerts.md) | [목차](README.md) | [다음: 스택 운영](09-observability-stack.md) >

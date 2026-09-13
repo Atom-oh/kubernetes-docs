@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Crossplane v2 concepts",
+    "output": "en-platform-engineering-07-crossplane-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "self-service",
+        "label": "Self Service",
+        "focus": [
+          "claim",
+          "xr",
+          "xrd",
+          "comp"
+        ],
+        "note": "Crossplane v2 namespaced flow; legacy Claims are a separate compatibility path."
+      },
+      {
+        "id": "provisioning",
+        "label": "Provisioning",
+        "focus": [
+          "comp",
+          "mr",
+          "providers",
+          "aws",
+          "gcp",
+          "azure"
+        ],
+        "note": "Crossplane v2 namespaced flow; legacy Claims are a separate compatibility path."
+      },
+      {
+        "id": "extension",
+        "label": "Extension",
+        "focus": [
+          "core",
+          "providers"
+        ],
+        "note": "Crossplane v2 namespaced flow; legacy Claims are a separate compatibility path."
+      }
+    ],
+    "viewBox": [
+      1380,
+      740
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "claim",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "Namespaced XR request",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "xr",
+      "type": "backend",
+      "label": "Composite Resource",
+      "sublabel": "v2 namespaced XR",
+      "pos": [
+        280,
+        300
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "xrd",
+      "type": "backend",
+      "label": "CompositeResourceDefinition",
+      "sublabel": "API schema",
+      "pos": [
+        265,
+        100
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "comp",
+      "type": "backend",
+      "label": "Composition",
+      "sublabel": "Function pipeline",
+      "pos": [
+        610,
+        300
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "mr",
+      "type": "backend",
+      "label": "Managed resources",
+      "sublabel": "v2 namespaced MRs",
+      "pos": [
+        920,
+        300
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Crossplane core",
+      "sublabel": "Controller",
+      "pos": [
+        610,
+        510
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "providers",
+      "type": "backend",
+      "label": "Providers",
+      "sublabel": "Selected service controllers",
+      "pos": [
+        920,
+        510
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS",
+      "sublabel": "Cloud API",
+      "pos": [
+        1220,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "gcp",
+      "type": "cloud",
+      "label": "GCP",
+      "sublabel": "Selected provider",
+      "pos": [
+        1220,
+        510
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "azure",
+      "type": "cloud",
+      "label": "Azure",
+      "sublabel": "Selected provider",
+      "pos": [
+        1220,
+        620
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes resources",
+      "wraps": [
+        "claim"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes resources",
+      "wraps": [
+        "xr",
+        "xrd",
+        "comp",
+        "mr",
+        "core",
+        "providers"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cloud provider",
+      "wraps": [
+        "aws",
+        "gcp",
+        "azure"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "claim-to-xr",
+      "from": "claim",
+      "to": "xr",
+      "label": "request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xr-to-xrd",
+      "from": "xr",
+      "to": "xrd",
+      "label": "schema",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "xr-to-comp",
+      "from": "xr",
+      "to": "comp",
+      "label": "pipeline",
+      "variant": "emphasis"
+    },
+    {
+      "id": "comp-to-mr",
+      "from": "comp",
+      "to": "mr",
+      "label": "desired MRs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mr-to-providers",
+      "from": "mr",
+      "to": "providers",
+      "label": "watch",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "core-to-providers",
+      "from": "core",
+      "to": "providers",
+      "variant": "dashed"
+    },
+    {
+      "id": "providers-to-aws",
+      "from": "providers",
+      "to": "aws",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "providers-to-gcp",
+      "from": "providers",
+      "to": "gcp",
+      "label": "API"
+    },
+    {
+      "id": "providers-to-azure",
+      "from": "providers",
+      "to": "azure",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "v2 scope",
+      "items": [
+        "XRD v2 defaults to Namespaced",
+        "Example MRs use *.aws.m.upbound.io/v1beta1",
+        "LegacyCluster retains the older Claim path"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Reconciliation and permissions",
+      "items": [
+        "Functions calculate desired resources",
+        "Provider controllers call cloud APIs",
+        "Namespaces and ProviderConfigs alone do not isolate IAM access"
+      ]
+    }
+  ]
+}

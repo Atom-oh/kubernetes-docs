@@ -1,0 +1,232 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "A/B Testing 동작 원리",
+    "output": "ko-gitops-04-flagger-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "routing",
+        "label": "라우팅 조건 분기",
+        "focus": [
+          "user",
+          "lb",
+          "match",
+          "canary",
+          "primary"
+        ],
+        "note": "analysis.match 조건(x-canary 헤더 등)에 맞는 요청만 Canary v2로, 나머지는 Primary v1로 라우팅된다."
+      },
+      {
+        "id": "analysis",
+        "label": "분석과 승격",
+        "focus": [
+          "canary",
+          "primary",
+          "metrics",
+          "verdict",
+          "promote"
+        ],
+        "note": "선택한 canary 지표로 승격을 판단한다. 통계적 A/B 결론과 인증은 별도 설계가 필요하다."
+      },
+      {
+        "id": "rollback",
+        "label": "실패 시 롤백",
+        "focus": [
+          "metrics",
+          "verdict",
+          "rollback"
+        ],
+        "note": "승격 전 누적 실패 한도에 도달하면 정상 primary로 복귀한다."
+      }
+    ],
+    "viewBox": [
+      1080,
+      560
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "lanes": [
+    {
+      "id": "traffic",
+      "label": "요청 · 분석"
+    },
+    {
+      "id": "canary_lane",
+      "label": "Canary"
+    },
+    {
+      "id": "primary_lane",
+      "label": "Primary · 롤백"
+    }
+  ],
+  "phases": [
+    {
+      "id": "route",
+      "label": "라우팅",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "serve",
+      "label": "버전별 처리",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "decide",
+      "label": "분석 + 결정",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "user",
+    "lb",
+    "match",
+    "canary",
+    "metrics",
+    "verdict",
+    "promote"
+  ],
+  "nodes": [
+    {
+      "id": "user",
+      "lane": "traffic",
+      "col": 0,
+      "type": "external",
+      "label": "사용자 요청"
+    },
+    {
+      "id": "lb",
+      "lane": "traffic",
+      "col": 1,
+      "type": "cloud",
+      "label": "Load Balancer",
+      "width": 124
+    },
+    {
+      "id": "match",
+      "lane": "traffic",
+      "col": 2,
+      "type": "security",
+      "label": "라우팅 조건",
+      "sublabel": "analysis.match",
+      "tag": "헤더 · 쿠키",
+      "width": 124
+    },
+    {
+      "id": "canary",
+      "lane": "canary_lane",
+      "col": 3,
+      "type": "backend",
+      "label": "Canary · v2",
+      "sublabel": "x-canary: insider",
+      "width": 124
+    },
+    {
+      "id": "primary",
+      "lane": "primary_lane",
+      "col": 3,
+      "type": "backend",
+      "label": "Primary · v1",
+      "sublabel": "조건 미충족 트래픽",
+      "width": 124
+    },
+    {
+      "id": "metrics",
+      "lane": "traffic",
+      "col": 4,
+      "type": "database",
+      "label": "메트릭 수집",
+      "sublabel": "성공률 · 지연시간",
+      "width": 124
+    },
+    {
+      "id": "verdict",
+      "lane": "traffic",
+      "col": 5,
+      "type": "security",
+      "label": "분석 결과",
+      "sublabel": "반복 검사 · 누적 실패",
+      "width": 124
+    },
+    {
+      "id": "promote",
+      "lane": "canary_lane",
+      "col": 5,
+      "type": "backend",
+      "label": "전체 승격",
+      "sublabel": "v2 → Primary",
+      "width": 124
+    },
+    {
+      "id": "rollback",
+      "lane": "primary_lane",
+      "col": 5,
+      "type": "messagebus",
+      "label": "롤백",
+      "sublabel": "분석 중 primary 복구",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "from": "user",
+      "to": "lb"
+    },
+    {
+      "from": "lb",
+      "to": "match"
+    },
+    {
+      "from": "match",
+      "to": "canary",
+      "label": "CANARY",
+      "variant": "emphasis"
+    },
+    {
+      "from": "match",
+      "to": "primary",
+      "label": "조건 미충족",
+      "role": "branch"
+    },
+    {
+      "from": "canary",
+      "to": "metrics",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "from": "primary",
+      "to": "metrics",
+      "variant": "dashed",
+      "label": "선택 비교"
+    },
+    {
+      "from": "metrics",
+      "to": "verdict"
+    },
+    {
+      "from": "verdict",
+      "to": "promote",
+      "label": "성공",
+      "variant": "emphasis"
+    },
+    {
+      "from": "verdict",
+      "to": "rollback",
+      "label": "한도 도달",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "right",
+      "toSide": "right"
+    }
+  ]
+}

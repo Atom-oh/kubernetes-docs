@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Network Policy Controller vs Calico",
+    "locale": "en",
+    "output": "en-networking-calico-08-eks-integration-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "k8s-policy",
+        "label": "Kubernetes NetworkPolicy path",
+        "focus": [
+          "k8snp",
+          "npc",
+          "felix",
+          "pods"
+        ],
+        "note": "A standard NetworkPolicy is handled by both the AWS native controller and Calico Felix."
+      },
+      {
+        "id": "calico-only",
+        "label": "Calico-only policy path",
+        "focus": [
+          "calnp",
+          "felix",
+          "pods"
+        ],
+        "note": "projectcalico.org/v3 resources such as GlobalNetworkPolicy are handled only by Felix."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "k8snp",
+      "type": "security",
+      "label": "Kubernetes NetworkPolicy",
+      "sublabel": "networking.k8s.io/v1",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "calnp",
+      "type": "security",
+      "label": "Calico-only policy",
+      "sublabel": "e.g. GlobalNetworkPolicy (projectcalico.org/v3)",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "npc",
+      "type": "cloud",
+      "label": "Network Policy Controller",
+      "sublabel": "VPC CNI add-on · dataplane: eBPF",
+      "pos": [
+        400,
+        120
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "tag": "enableNetworkPolicy: true"
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix Agent",
+      "sublabel": "calico-node · dataplane: iptables/eBPF",
+      "pos": [
+        400,
+        340
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Worker Node Pod",
+      "sublabel": "policy enforcement target",
+      "pos": [
+        780,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS native (EKS 1.25+)",
+      "wraps": [
+        "npc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Calico",
+      "wraps": [
+        "felix"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8snp-to-npc",
+      "from": "k8snp",
+      "to": "npc",
+      "label": "handles",
+      "variant": "emphasis"
+    },
+    {
+      "id": "k8snp-to-felix",
+      "from": "k8snp",
+      "to": "felix",
+      "label": "handles"
+    },
+    {
+      "id": "calnp-to-felix",
+      "from": "calnp",
+      "to": "felix",
+      "label": "Felix only",
+      "variant": "emphasis",
+      "labelDx": -45
+    },
+    {
+      "id": "npc-to-pods",
+      "from": "npc",
+      "to": "pods",
+      "label": "eBPF rules"
+    },
+    {
+      "id": "felix-to-pods",
+      "from": "felix",
+      "to": "pods",
+      "label": "iptables/eBPF rules"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "EKS Native Policy",
+      "items": [
+        "Full Kubernetes NetworkPolicy support",
+        "No GlobalNetworkPolicy · NetworkSet · Tiers",
+        "Observability: CloudWatch"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Calico",
+      "items": [
+        "GlobalNetworkPolicy · NetworkSet · Tiers · Host Endpoint supported",
+        "L7 and DNS-based policy require Enterprise",
+        "Observability: Prometheus"
+      ]
+    }
+  ]
+}

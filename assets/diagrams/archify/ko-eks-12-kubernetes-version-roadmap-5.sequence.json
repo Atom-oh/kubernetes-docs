@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "EOL(End of Life) 시 자동 업그레이드 동작",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      640
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "notify",
+        "label": "단계적 알림",
+        "focus": [
+          "eks",
+          "admin"
+        ],
+        "note": "종료일 60일·30일·7일 전에 AWS EKS가 관리자에게 알림을 보낸다."
+      },
+      {
+        "id": "auto-upgrade",
+        "label": "컨트롤 플레인 자동 업그레이드",
+        "focus": [
+          "eks",
+          "cp"
+        ],
+        "note": "Extended Support 종료일에 컨트롤 플레인만 자동 업그레이드된다."
+      },
+      {
+        "id": "manual-nodes",
+        "label": "노드 그룹 수동 업그레이드",
+        "focus": [
+          "admin",
+          "nodes"
+        ],
+        "note": "노드 그룹은 자동 업그레이드 대상이 아니므로 관리자가 직접 업그레이드해야 한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "AWS EKS",
+      "sublabel": "매니지드 서비스"
+    },
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "클러스터 관리자",
+      "sublabel": "운영 담당"
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "컨트롤 플레인",
+      "sublabel": "EKS 관리 영역"
+    },
+    {
+      "id": "nodes",
+      "type": "backend",
+      "label": "노드 그룹",
+      "sublabel": "고객 관리 영역"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 300,
+      "label": "Extended Support 종료 전 알림"
+    },
+    {
+      "from": 325,
+      "to": 465,
+      "label": "Extended Support 종료일 도달"
+    },
+    {
+      "from": 480,
+      "to": 530,
+      "label": "노드 그룹은 자동 업그레이드 대상 아님 · 수동 업그레이드 필요"
+    }
+  ],
+  "messages": [
+    {
+      "id": "n60",
+      "from": "eks",
+      "to": "admin",
+      "y": 190,
+      "label": "60일 전 알림"
+    },
+    {
+      "id": "n30",
+      "from": "eks",
+      "to": "admin",
+      "y": 235,
+      "label": "30일 전 추가 알림"
+    },
+    {
+      "id": "n7",
+      "from": "eks",
+      "to": "admin",
+      "y": 280,
+      "label": "7일 전 최종 경고",
+      "variant": "security"
+    },
+    {
+      "id": "cp-start",
+      "from": "eks",
+      "to": "cp",
+      "y": 355,
+      "label": "컨트롤 플레인 자동 업그레이드 시작",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cp-done",
+      "from": "cp",
+      "to": "eks",
+      "y": 400,
+      "label": "업그레이드 완료",
+      "variant": "return"
+    },
+    {
+      "id": "cp-notify",
+      "from": "eks",
+      "to": "admin",
+      "y": 445,
+      "label": "컨트롤 플레인 업그레이드 완료 알림"
+    },
+    {
+      "id": "node-manual",
+      "from": "admin",
+      "to": "nodes",
+      "y": 500,
+      "label": "노드 그룹 수동 업그레이드",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "cp",
+      "from": 350,
+      "to": 406,
+      "type": "backend"
+    },
+    {
+      "participant": "nodes",
+      "from": 495,
+      "to": 530,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "자동 업그레이드 범위",
+      "items": [
+        "Extended Support 종료 시 컨트롤 플레인만 다음 지원 버전으로 자동 업그레이드",
+        "노드 그룹은 그대로 유지되어 관리자가 직접 업그레이드해야 함"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "자동 업그레이드의 위험성",
+      "items": [
+        "버전 스큐 정책상 노드는 컨트롤 플레인보다 최대 3개 마이너 버전 낮을 수 있음",
+        "Deprecated API를 사용하는 매니페스트가 갑자기 동작하지 않을 수 있음",
+        "애드온 호환성 문제 발생 가능"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "권장",
+      "items": [
+        "자동 업그레이드에 의존하지 말고 반드시 사전에 계획된 업그레이드를 수행"
+      ]
+    }
+  ]
+}

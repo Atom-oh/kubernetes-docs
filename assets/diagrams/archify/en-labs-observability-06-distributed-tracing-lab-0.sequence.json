@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Drill-Down Analysis Workflow — Metric → Trace → Logs",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      650
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "Operator"
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Dashboard / Explore"
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metrics"
+    },
+    {
+      "id": "tempo",
+      "type": "backend",
+      "label": "Tempo",
+      "sublabel": "Traces"
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "Logs"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 275,
+      "label": "Metric"
+    },
+    {
+      "from": 290,
+      "to": 425,
+      "label": "Trace"
+    },
+    {
+      "from": 470,
+      "to": 590,
+      "label": "Logs → root cause: missing index"
+    }
+  ],
+  "messages": [
+    {
+      "id": "spike",
+      "from": "operator",
+      "to": "grafana",
+      "y": 190,
+      "label": "Notice latency spike on RED dashboard"
+    },
+    {
+      "id": "p99",
+      "from": "grafana",
+      "to": "prometheus",
+      "y": 225,
+      "label": "Query p99 latency graph"
+    },
+    {
+      "id": "exemplars",
+      "from": "prometheus",
+      "to": "grafana",
+      "y": 258,
+      "label": "Return metrics with exemplars",
+      "variant": "return"
+    },
+    {
+      "id": "click-exemplar",
+      "from": "operator",
+      "to": "grafana",
+      "y": 305,
+      "label": "Click exemplar point"
+    },
+    {
+      "id": "trace-lookup",
+      "from": "grafana",
+      "to": "tempo",
+      "y": 340,
+      "label": "Query trace by TraceID",
+      "variant": "emphasis"
+    },
+    {
+      "id": "span-timeline",
+      "from": "tempo",
+      "to": "grafana",
+      "y": 375,
+      "label": "Show span timeline",
+      "variant": "return"
+    },
+    {
+      "id": "slow-span",
+      "from": "operator",
+      "to": "grafana",
+      "y": 410,
+      "label": "Identify slow span (DB query 800ms)"
+    },
+    {
+      "id": "span-to-logs",
+      "from": "operator",
+      "to": "grafana",
+      "y": 485,
+      "label": "Click Span → Logs"
+    },
+    {
+      "id": "log-lookup",
+      "from": "grafana",
+      "to": "loki",
+      "y": 520,
+      "label": "Query logs by TraceID + time range",
+      "variant": "emphasis"
+    },
+    {
+      "id": "logs",
+      "from": "loki",
+      "to": "grafana",
+      "y": 555,
+      "label": "Show correlated error / slow-query logs",
+      "variant": "return",
+      "note": "Operator identifies root cause — missing index"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "grafana",
+      "from": 185,
+      "to": 560,
+      "type": "frontend"
+    },
+    {
+      "participant": "prometheus",
+      "from": 220,
+      "to": 263,
+      "type": "database"
+    },
+    {
+      "participant": "tempo",
+      "from": 335,
+      "to": 380,
+      "type": "backend"
+    },
+    {
+      "participant": "loki",
+      "from": 515,
+      "to": 560,
+      "type": "database"
+    }
+  ]
+}

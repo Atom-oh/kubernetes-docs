@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "지리적 분산 및 지연 시간 최적화",
+    "output": "ko-service-mesh-istio-advanced-02-multi-cluster-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "config-sync",
+        "label": "구성 동기화",
+        "focus": [
+          "mesh",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "Istio Mesh가 세 리전의 EKS 클러스터에 동일한 구성을 동기화해 통합 관리한다."
+      },
+      {
+        "id": "cross-region",
+        "label": "Cross-region mTLS",
+        "focus": [
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "리전 간 서비스 호출은 클러스터 사이의 Cross-region mTLS로 보호된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "mesh",
+      "type": "security",
+      "label": "Istio Mesh",
+      "sublabel": "통합 관리",
+      "pos": [
+        500,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "cloud",
+      "label": "EKS Cluster",
+      "sublabel": "us-east-1",
+      "pos": [
+        100,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "cloud",
+      "label": "EKS Cluster",
+      "sublabel": "eu-west-1",
+      "pos": [
+        500,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "cloud",
+      "label": "EKS Cluster",
+      "sublabel": "ap-northeast-2",
+      "pos": [
+        900,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "미국 리전",
+      "wraps": [
+        "c1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "유럽 리전",
+      "wraps": [
+        "c2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "아시아 리전",
+      "wraps": [
+        "c3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sync-us",
+      "from": "mesh",
+      "to": "c1",
+      "label": "구성 동기화",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sync-eu",
+      "from": "mesh",
+      "to": "c2",
+      "label": "구성 동기화",
+      "variant": "dashed",
+      "labelDy": 154
+    },
+    {
+      "id": "sync-apac",
+      "from": "mesh",
+      "to": "c3",
+      "label": "구성 동기화",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mtls-us-eu",
+      "from": "c1",
+      "to": "c2",
+      "label": "Cross-region mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-eu-apac",
+      "from": "c2",
+      "to": "c3",
+      "label": "Cross-region mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-us-apac",
+      "from": "c1",
+      "to": "c3",
+      "label": "Cross-region mTLS",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          190,
+          470
+        ],
+        [
+          990,
+          470
+        ]
+      ]
+    }
+  ]
+}

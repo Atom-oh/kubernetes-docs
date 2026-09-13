@@ -1,0 +1,148 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "카디널리티 관리",
+    "output": "public/archmaps/ko-observability-logging-01-loki-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "inputs",
+        "label": "라벨이 스트림을 만든다",
+        "focus": [
+          "labelCount",
+          "valueKinds",
+          "streams"
+        ],
+        "note": "총 스트림 수 = namespace 값 수 × app 값 수 × component 값 수 × … — 라벨 수와 라벨값 종류가 곱해집니다."
+      },
+      {
+        "id": "impact",
+        "label": "스트림 수가 좌우하는 것",
+        "focus": [
+          "streams",
+          "indexSize",
+          "queryPerf",
+          "memory"
+        ],
+        "note": "스트림 수 하나가 인덱스 크기, 쿼리 성능, 메모리 사용량을 함께 결정합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "라벨 설계 입력"
+        },
+        "database": {
+          "label": "스트림 수"
+        },
+        "backend": {
+          "label": "Loki 영향"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "designLane",
+      "label": "라벨 설계"
+    },
+    {
+      "id": "streamLane",
+      "label": "스트림"
+    },
+    {
+      "id": "impactLane",
+      "label": "Loki 영향"
+    }
+  ],
+  "mainPath": [
+    "labelCount",
+    "streams",
+    "indexSize"
+  ],
+  "nodes": [
+    {
+      "id": "labelCount",
+      "lane": "designLane",
+      "col": 0,
+      "type": "frontend",
+      "label": "라벨 수",
+      "sublabel": "namespace, app, component …",
+      "width": 190
+    },
+    {
+      "id": "valueKinds",
+      "lane": "designLane",
+      "col": 1,
+      "type": "frontend",
+      "label": "라벨값 종류",
+      "sublabel": "라벨당 고유 값 수",
+      "width": 170
+    },
+    {
+      "id": "streams",
+      "lane": "streamLane",
+      "col": 2,
+      "type": "database",
+      "label": "총 스트림 수",
+      "sublabel": "라벨별 값 수의 곱",
+      "tag": "클러스터당 < 100,000",
+      "width": 190
+    },
+    {
+      "id": "indexSize",
+      "lane": "impactLane",
+      "col": 3,
+      "type": "backend",
+      "label": "인덱스 크기",
+      "width": 170
+    },
+    {
+      "id": "queryPerf",
+      "lane": "impactLane",
+      "col": 4,
+      "type": "backend",
+      "label": "쿼리 성능",
+      "width": 170
+    },
+    {
+      "id": "memory",
+      "lane": "impactLane",
+      "col": 5,
+      "type": "backend",
+      "label": "메모리 사용량",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "from": "labelCount",
+      "to": "streams",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "valueKinds",
+      "to": "streams",
+      "role": "branch"
+    },
+    {
+      "from": "streams",
+      "to": "indexSize",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "streams",
+      "to": "queryPerf",
+      "role": "branch"
+    },
+    {
+      "from": "streams",
+      "to": "memory",
+      "role": "branch"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed docsandfixedPIIcode:reversiblesurface-specifictokens/reservedmarkeravoidance/NFCspans;numericboundariesandnoinvented-letterstripping;source-spancoverageleakage,normalizedunique-paircounts/denominators/hallucinationflagindependence/strictIDandgoldvalidation;precisemetriclimitationsanddatasetnotgeneralization;50CPUtests+2200oracle(no model).",
+    "reviewedSha256": "b008ee6536fa78dde16b41bbb144582295f40a800d2fdba8d4b4223ba5f9f18f"
+  },
+  {
+    "path": "ko/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed docsandfixedPIIcode:reversiblesurface-specifictokens/reservedmarkeravoidance/NFCspans;numericboundariesandnoinvented-letterstripping;source-spancoverageleakage,normalizedunique-paircounts/denominators/hallucinationflagindependence/strictIDandgoldvalidation;precisemetriclimitationsanddatasetnotgeneralization;50CPUtests+2200oracle(no model).",
+    "reviewedSha256": "fa71999141f2103d2ffcb615c72e9a8cdef1180965dc0f505e886f32301002b1"
+  },
+  {
+    "path": "en/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed docsandfixedPIIcode:reversiblesurface-specifictokens/reservedmarkeravoidance/NFCspans;numericboundariesandnoinvented-letterstripping;source-spancoverageleakage,normalizedunique-paircounts/denominators/hallucinationflagindependence/strictIDandgoldvalidation;precisemetriclimitationsanddatasetnotgeneralization;50CPUtests+2200oracle(no model).",
+    "reviewedSha256": "c2f8c390ba8e5e1716b3603d2af83ff95bb256761dd4078bccf35b09ed80d212"
+  },
+  {
+    "path": "en/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed docsandfixedPIIcode:reversiblesurface-specifictokens/reservedmarkeravoidance/NFCspans;numericboundariesandnoinvented-letterstripping;source-spancoverageleakage,normalizedunique-paircounts/denominators/hallucinationflagindependence/strictIDandgoldvalidation;precisemetriclimitationsanddatasetnotgeneralization;50CPUtests+2200oracle(no model).",
+    "reviewedSha256": "8f763c7408bdcc6aa5d0b40cb9a334930ea9dd32e7a3107b73e13204e2d02e6c"
+  }
+]

@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Overall EKS Observability Architecture",
+    "locale": "en",
+    "output": "en-observability-09-observability-optimization-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1140,
+      600
+    ],
+    "views": [
+      {
+        "id": "logs",
+        "label": "Log path",
+        "focus": [
+          "app",
+          "fluentbit",
+          "logstore",
+          "grafana"
+        ],
+        "note": "The Fluent Bit DaemonSet collects Pod logs and ships them to CloudWatch Logs, Loki, or OpenSearch."
+      },
+      {
+        "id": "metrics",
+        "label": "Metrics path",
+        "focus": [
+          "app",
+          "otel",
+          "prom",
+          "metricstore",
+          "grafana"
+        ],
+        "note": "The OTel Collector and Prometheus store metrics in AMP or VictoriaMetrics."
+      },
+      {
+        "id": "traces",
+        "label": "Trace path",
+        "focus": [
+          "app",
+          "otel",
+          "tracestore",
+          "grafana"
+        ],
+        "note": "The OTel Collector exports traces to X-Ray, Tempo, or Jaeger."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Pod",
+      "sublabel": "emits logs · metrics · traces",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "fluentbit",
+      "type": "backend",
+      "label": "Fluent Bit",
+      "sublabel": "DaemonSet",
+      "pos": [
+        320,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "backend",
+      "label": "OTel Collector",
+      "sublabel": "DaemonSet",
+      "pos": [
+        320,
+        410
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "metrics scrape",
+      "pos": [
+        320,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "logstore",
+      "type": "database",
+      "label": "Log Storage",
+      "sublabel": "CloudWatch Logs · Loki · OpenSearch",
+      "pos": [
+        600,
+        90
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "metricstore",
+      "type": "database",
+      "label": "Metrics Storage",
+      "sublabel": "Amazon Managed Prometheus · VictoriaMetrics",
+      "pos": [
+        600,
+        250
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "tracestore",
+      "type": "database",
+      "label": "Trace Storage",
+      "sublabel": "X-Ray · Grafana Tempo · Jaeger",
+      "pos": [
+        600,
+        410
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "unified visualization",
+      "pos": [
+        940,
+        250
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Workloads",
+      "wraps": [
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Collection Layer",
+      "wraps": [
+        "fluentbit",
+        "otel",
+        "prom"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage Layer",
+      "wraps": [
+        "logstore",
+        "metricstore",
+        "tracestore"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Visualization Layer",
+      "wraps": [
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-fluentbit",
+      "from": "app",
+      "to": "fluentbit",
+      "label": "logs",
+      "labelSegment": 1
+    },
+    {
+      "id": "app-otel",
+      "from": "app",
+      "to": "otel",
+      "label": "metrics · traces",
+      "variant": "emphasis",
+      "labelSegment": 1
+    },
+    {
+      "id": "fluentbit-logstore",
+      "from": "fluentbit",
+      "to": "logstore"
+    },
+    {
+      "id": "otel-metricstore",
+      "from": "otel",
+      "to": "metricstore",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "otel-tracestore",
+      "from": "otel",
+      "to": "tracestore"
+    },
+    {
+      "id": "prom-metricstore",
+      "from": "prom",
+      "to": "metricstore"
+    },
+    {
+      "id": "logstore-grafana",
+      "from": "logstore",
+      "to": "grafana"
+    },
+    {
+      "id": "metricstore-grafana",
+      "from": "metricstore",
+      "to": "grafana",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tracestore-grafana",
+      "from": "tracestore",
+      "to": "grafana"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "eBPF Layer",
+      "items": [
+        "Collects data from kernel-level hooks with no code changes (see Section 5)",
+        "Cilium Hubble · Pixie · Coroot"
+      ]
+    }
+  ]
+}

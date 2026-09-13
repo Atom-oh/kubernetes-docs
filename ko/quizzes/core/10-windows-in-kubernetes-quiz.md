@@ -5,20 +5,19 @@
 ## 객관식 문제
 
 1. Kubernetes에서 Windows 노드를 사용할 때 컨테이너 런타임으로 지원되는 것은 무엇인가요?
-   - A) Docker 및 containerd
+   - A) Windows CRI를 지원하는 containerd
    - B) CRI-O 및 Docker
    - C) containerd 및 CRI-O
    - D) Docker, containerd 및 gVisor
-   
+
 <details>
 <summary>정답 보기</summary>
 
-**정답: A) Docker 및 containerd**
+**정답: A) Windows CRI를 지원하는 containerd**
 
 **설명:**
-Kubernetes에서 Windows 노드를 사용할 때 공식적으로 지원되는 컨테이너 런타임은 Docker와 containerd입니다. 
+Windows 호환 containerd를 사용합니다. Docker Engine 자체는 CRI를 구현하지 않으며 내장 dockershim은 Kubernetes 1.24에서 제거되었습니다.
 
-- **Docker**: Windows에서 Docker는 Windows 컨테이너를 실행하기 위한 전통적인 옵션이었습니다. 그러나 Kubernetes에서 Docker 지원은 점차 줄어들고 있으며, containerd로의 전환이 권장됩니다.
 
 - **containerd**: 현재 Windows 노드에서 권장되는 컨테이너 런타임입니다. containerd는 경량화되고 안정적인 런타임으로, Kubernetes 1.20 이상에서 Windows 노드에 대한 공식 지원을 받습니다.
 
@@ -34,7 +33,7 @@ Windows 노드에서 컨테이너 런타임을 설정할 때는 Kubernetes 버�
    - B) Flannel, Calico, Antrea와 같은 Windows를 지원하는 CNI 플러그인
    - C) Windows 노드는 CNI 플러그인 없이 kubenet만 사용해야 함
    - D) Windows 노드는 항상 호스트 네트워크 모드만 사용해야 함
-   
+
 <details>
 <summary>정답 보기</summary>
 
@@ -49,29 +48,29 @@ Windows 노드를 지원하는 주요 CNI 플러그인은 다음과 같습니다
 - **Calico**: Windows 노드에 대한 지원을 제공하며, BGP 모드와 VXLAN 모드를 모두 지원합니다.
 - **Antrea**: Windows 노드에 대한 지원을 제공하며, OVS(Open vSwitch)를 사용합니다.
 
-이외에도 Azure CNI, OVN-Kubernetes 등이 Windows 노드를 지원합니다.
+Azure CNI와 AWS VPC CNI는 해당 환경에서 Windows를 지원합니다.
 
 Windows 노드에서 CNI 플러그인을 설정할 때 고려해야 할 사항:
 - Windows 노드는 Linux 노드와 다른 네트워킹 스택을 가지고 있습니다.
 - 일부 네트워킹 기능은 Windows에서 제한될 수 있습니다.
 - CNI 플러그인의 Windows 지원 버전과 구성 요구 사항을 확인해야 합니다.
 
-kubenet은 Windows 노드에서 지원되지 않으며, Windows 노드는 호스트 네트워크 모드를 사용할 수 없습니다(HostNetwork=true가 Windows 포드에서 지원되지 않음).
+kubenet은 지원하지 않습니다. 일반 Windows Pod는 hostNetwork를 사용할 수 없지만 HostProcess Pod는 hostNetwork: true가 필요합니다.
 </details>
 
-3. Windows 컨테이너의 기본 격리 모드는 무엇인가요?
+3. Kubernetes는 Windows 애플리케이션 컨테이너에 어떤 격리 모드를 지원하나요?
    - A) Hyper-V 격리
    - B) 프로세스 격리
    - C) 가상 머신 격리
    - D) 샌드박스 격리
-   
+
 <details>
 <summary>정답 보기</summary>
 
 **정답: B) 프로세스 격리**
 
 **설명:**
-Windows 컨테이너의 기본 격리 모드는 프로세스 격리(Process Isolation)입니다. 이 모드에서 Windows 컨테이너는 호스트 운영 체제의 커널을 공유하며, 각 컨테이너는 격리된 프로세스 그룹으로 실행됩니다.
+Kubernetes는 Windows 애플리케이션 컨테이너에 프로세스 격리를 지원합니다. 이 모드에서 Windows 컨테이너는 호스트 운영 체제의 커널을 공유하며, 각 컨테이너는 격리된 프로세스 그룹으로 실행됩니다.
 
 프로세스 격리 모드의 특징:
 - 호스트 OS와 동일한 커널 버전을 사용해야 합니다.
@@ -83,11 +82,7 @@ Windows는 또한 Hyper-V 격리(Hyper-V Isolation)라는 대체 격리 모드�
 - 호스트 OS와 다른 커널 버전을 사용할 수 있습니다.
 - 더 높은 수준의 격리를 제공하지만, 오버헤드가 더 큽니다.
 
-Kubernetes에서 Hyper-V 격리를 사용하려면 포드 스펙에 다음과 같은 주석을 추가해야 합니다:
-```yaml
-annotations:
-  io.kubernetes.cri-containerd.isolation: hyperv
-```
+**Kubernetes는 Hyper-V 격리를 지원하지 않으며 Pod 주석으로 활성화할 수 없습니다.** 이 설명은 Windows OS 배경 지식입니다.
 
 가상 머신 격리는 Windows 컨테이너의 공식 격리 모드가 아니며, 샌드박스 격리는 Windows 컨테이너에서 사용되는 용어가 아닙니다.
 </details>
@@ -96,8 +91,8 @@ annotations:
    - A) 특권 컨테이너(privileged containers)를 사용할 수 없음
    - B) HostPath 볼륨을 사용할 수 없음
    - C) 포드의 SecurityContext 기능 중 일부만 지원됨
-   - D) 포드 네트워크 네임스페이스를 공유할 수 없음
-   
+   - D) Windows 컨테이너 간 프로세스 네임스페이스를 공유할 수 없음
+
 <details>
 <summary>정답 보기</summary>
 
@@ -111,16 +106,16 @@ Windows 노드에서 HostPath 볼륨을 사용할 때는 Windows 경로 형식�
 volumes:
 - name: data
   hostPath:
-    path: C:\\data
+    path: 'C:\data'
 ```
 
 Kubernetes에서 Windows 노드를 사용할 때의 실제 제한 사항은 다음과 같습니다:
 
-- **특권 컨테이너(privileged containers)**: Windows 노드에서는 특권 컨테이너를 사용할 수 없습니다. Linux의 특권 모드와 동등한 개념이 Windows에 없기 때문입니다.
+- **특권 모드**: privileged 플래그는 지원하지 않습니다. 호스트 접근이 필요한 신뢰된 에이전트는 HostProcess를 사용합니다.
 
 - **SecurityContext 제한**: Windows 노드에서는 포드의 SecurityContext 기능 중 일부만 지원됩니다. 예를 들어, runAsUser, runAsGroup, fsGroup, seccomp, SELinux 등은 지원되지 않습니다.
 
-- **포드 네트워크 네임스페이스 공유**: Windows 노드에서는 포드 간에 네트워크 네임스페이스를 공유할 수 없습니다. 이는 hostNetwork: true, dnsPolicy: ClusterFirstWithHostNet, 포드 내 컨테이너 간 localhost 통신 등에 영향을 미칩니다.
+- **네임스페이스 공유**: 같은 Pod의 컨테이너는 네트워크와 localhost를 공유하지만 프로세스 네임스페이스와 루트 파일 시스템은 공유하지 않습니다.
 
 기타 Windows 노드의 제한 사항:
 - DaemonSet이 모든 노드(Linux 및 Windows)에서 실행되도록 하려면 nodeSelector를 사용해야 합니다.
@@ -133,7 +128,7 @@ Kubernetes에서 Windows 노드를 사용할 때의 실제 제한 사항은 다�
    - B) beta.kubernetes.io/os=windows
    - C) node.kubernetes.io/windows=true
    - D) kubernetes.io/windows=enabled
-   
+
 <details>
 <summary>정답 보기</summary>
 
@@ -168,30 +163,30 @@ affinity:
 참고: Linux 노드는 `kubernetes.io/os=linux` 레이블을 가집니다.
 </details>
 
-6. Windows 노드에서 컨테이너 이미지를 가져올 때 기본 기본 이미지(base image)는 무엇인가요?
+6. 전통적인 Windows 애플리케이션에 Nano Server보다 넓은 Windows API를 제공하는 Microsoft 기본 이미지는 무엇인가요?
    - A) mcr.microsoft.com/windows/servercore
    - B) mcr.microsoft.com/windows/nanoserver
    - C) mcr.microsoft.com/dotnet/framework/runtime
    - D) mcr.microsoft.com/powershell
-   
+
 <details>
 <summary>정답 보기</summary>
 
 **정답: A) mcr.microsoft.com/windows/servercore**
 
 **설명:**
-Windows 컨테이너의 가장 일반적인 기본 이미지는 `mcr.microsoft.com/windows/servercore`입니다. 이 이미지는 Windows Server Core 설치를 기반으로 하며, 대부분의 Windows 애플리케이션을 실행하는 데 필요한 핵심 구성 요소를 포함하고 있습니다.
+Kubernetes가 기본 이미지를 자동 선택하지는 않습니다. 전통적인 Windows 애플리케이션에 적합한 선택은 `mcr.microsoft.com/windows/servercore`입니다. 이 이미지는 Windows Server Core 설치를 기반으로 하며, 대부분의 Windows 애플리케이션을 실행하는 데 필요한 핵심 구성 요소를 포함하고 있습니다.
 
 Windows 컨테이너에 사용할 수 있는 주요 기본 이미지는 다음과 같습니다:
 
 1. **Windows Server Core** (`mcr.microsoft.com/windows/servercore`):
-   - 중간 크기의 이미지(약 2-4GB)
+   - 이미지 크기는 릴리스/레이어/압축 방식에 따라 달라집니다.
    - 대부분의 Windows 애플리케이션 지원
-   - .NET Framework, PowerShell 등 포함
+   - Windows PowerShell을 포함하며 필요한 .NET Framework 런타임 이미지는 별도로 선택
    - 가장 널리 사용되는 Windows 기본 이미지
 
 2. **Nano Server** (`mcr.microsoft.com/windows/nanoserver`):
-   - 매우 작은 크기의 이미지(약 100-200MB)
+   - 이미지 크기는 릴리스/레이어/압축 방식에 따라 달라집니다.
    - 제한된 Windows API 지원
    - .NET Core 애플리케이션에 적합
    - 최소한의 공격 표면
@@ -219,7 +214,7 @@ Windows 컨테이너 이미지는 호스트 OS와 동일한 버전이거나 호�
    - B) OS별로 별도의 DaemonSet을 생성하고 nodeSelector 사용
    - C) Windows 노드에는 DaemonSet 대신 StatefulSet 사용
    - D) 모든 DaemonSet에 tolerations 추가
-   
+
 <details>
 <summary>정답 보기</summary>
 
@@ -248,6 +243,8 @@ spec:
       labels:
         app: monitoring-agent
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
@@ -289,17 +286,17 @@ Windows 노드에서도 DaemonSet을 사용할 수 있으므로, StatefulSet으�
    - B) Windows 노드에서는 CoreDNS 대신 Windows DNS 서버를 사용해야 함
    - C) Windows 노드에서도 Linux 노드와 동일한 DNS 구성 사용 가능
    - D) Windows 노드에서는 포드마다 별도의 DNS 서버 구성 필요
-   
+
 <details>
 <summary>정답 보기</summary>
 
 **정답: C) Windows 노드에서도 Linux 노드와 동일한 DNS 구성 사용 가능**
 
 **설명:**
-Windows 노드에서도 Linux 노드와 동일한 DNS 구성을 사용할 수 있습니다. Kubernetes의 DNS 서비스(일반적으로 CoreDNS)는 Windows 포드에서도 동일하게 작동합니다.
+Windows 노드에서도 Linux 노드와 동일한 DNS 구성을 사용할 수 있습니다. 같은 네임스페이스에서는 단순 Service 이름을, 그 외에는 전체 FQDN을 사용합니다. 점이 포함된 부분 이름에는 Linux 검색 목록이 적용되지 않습니다.
 
 Windows 포드의 DNS 구성:
-- `/etc/resolv.conf`에 해당하는 구성이 Windows 포드 내에 자동으로 생성됩니다.
+- Windows는 /etc/resolv.conf 대신 HNS/DNS 설정과 단일 네임스페이스 접미사를 사용합니다.
 - 포드는 클러스터의 DNS 서비스(CoreDNS)를 사용하여 서비스 이름을 확인할 수 있습니다.
 - `dnsPolicy` 및 `dnsConfig` 필드를 사용하여 DNS 설정을 구성할 수 있습니다.
 
@@ -310,24 +307,18 @@ kind: Pod
 metadata:
   name: windows-pod
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     command:
     - powershell.exe
     - -Command
     - "Start-Sleep -Seconds 3600"
   dnsPolicy: ClusterFirst
-  dnsConfig:
-    nameservers:
-    - 8.8.8.8
-    searches:
-    - example.com
-    options:
-    - name: ndots
-      value: "5"
 ```
 
 Windows 노드에서 DNS 사용 시 고려 사항:
@@ -343,7 +334,7 @@ Windows 노드에서 별도의 DNS 서버를 구성하거나 Windows DNS 서버�
    - B) Windows 노드의 포드는 같은 노드의 포드와만 통신 가능
    - C) Windows 노드의 포드는 Linux 노드의 포드와 통신할 수 없음
    - D) Windows 노드의 포드는 CNI 플러그인을 통해 다른 모든 포드와 통신 가능
-   
+
 <details>
 <summary>정답 보기</summary>
 
@@ -362,7 +353,7 @@ Windows 노드에서 포드 간 통신을 지원하는 CNI 플러그인:
 - Calico
 - Antrea
 - Azure CNI
-- OVN-Kubernetes
+- AWS VPC CNI
 
 예를 들어, Flannel을 사용하는 경우:
 - Windows 노드의 포드는 VXLAN 캡슐화를 통해 다른 노드의 포드와 통신합니다.
@@ -382,7 +373,7 @@ Windows 노드의 포드는 Linux 노드의 포드와 완벽하게 통신할 수
     - B) CPU 제한은 지원하지만 메모리 제한은 지원하지 않음
     - C) 메모리 제한은 지원하지만 CPU 제한은 지원하지 않음
     - D) CPU 및 메모리 제한 모두 지원함
-    
+
 <details>
 <summary>정답 보기</summary>
 
@@ -398,11 +389,13 @@ kind: Pod
 metadata:
   name: windows-resource-demo
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     resources:
       requests:
         memory: "128Mi"
@@ -414,14 +407,14 @@ spec:
 
 Windows 컨테이너의 리소스 관리 특징:
 - **CPU 제한**: Windows는 CPU 공유 및 제한을 구현하여 컨테이너 간 CPU 리소스 할당을 관리합니다.
-- **메모리 제한**: Windows는 컨테이너의 메모리 사용량을 제한하고 초과 시 OOM(Out of Memory) 종료를 수행합니다.
+- Windows에는 Linux OOM killer가 없습니다. 제한 초과 시 메모리 할당 실패나 페이징으로 성능이 저하될 수 있습니다.
 - **리소스 모니터링**: kubelet은 Windows 컨테이너의 리소스 사용량을 모니터링하고 Kubernetes API에 보고합니다.
 
 Windows 컨테이너의 리소스 관리 고려 사항:
 - Windows 컨테이너의 기본 리소스 오버헤드가 Linux 컨테이너보다 클 수 있습니다.
 - 리소스 제한의 정확한 구현은 Windows 버전에 따라 다를 수 있습니다.
 - 메모리 제한을 너무 낮게 설정하면 Windows 컨테이너가 제대로 작동하지 않을 수 있습니다.
-- Hyper-V 격리 모드를 사용하는 경우 추가 리소스 오버헤드가 발생합니다.
+- Hyper-V 격리는 Kubernetes에서 지원하지 않습니다.
 
 Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사용하여 리소스 사용량을 모니터링할 수 있습니다.
 </details>
@@ -437,15 +430,15 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
 **Kubernetes 클러스터에 Windows 노드 추가 단계:**
 
 1. **사전 요구 사항 확인:**
-   - Kubernetes 버전 1.14 이상 (최신 버전 권장)
+   - 지원 중인 Kubernetes/Windows 조합; upstream v1.37은 Windows Server 2022/2025 지원
    - 컨트롤 플레인은 Linux 노드에서 실행되어야 함
-   - Windows Server 2019 이상 (Windows Server 2022 권장)
+   - 이 ltsc2022 예제에는 Windows Server 2022 사용
    - 호환되는 CNI 플러그인 (Flannel, Calico, Antrea 등)
 
 2. **네트워킹 구성:**
    - Windows 노드를 지원하는 CNI 플러그인 설치
    - 클러스터 CIDR 및 서비스 CIDR 구성
-   - 예시 (Flannel 구성):
+   - 예시 (Linux 측 Flannel 구성; Windows CNI는 별도 설치):
      ```yaml
      kind: ConfigMap
      apiVersion: v1
@@ -492,38 +485,29 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
      ```
    - 컨테이너 런타임 설치 (containerd 권장):
      ```powershell
-     # containerd 다운로드 및 설치
-     curl.exe -L https://github.com/containerd/containerd/releases/download/v1.6.8/containerd-1.6.8-windows-amd64.tar.gz -o containerd.tar.gz
-     tar.exe xvf containerd.tar.gz
-     mkdir -p $env:ProgramFiles\containerd
-     Copy-Item -Path ".\bin\*" -Destination "$env:ProgramFiles\containerd" -Recurse -Force
-     
-     # containerd 서비스 등록
-     & $env:ProgramFiles\containerd\containerd.exe config default | Out-File $env:ProgramFiles\containerd\config.toml -Encoding ascii
-     # 구성 파일 편집 (Windows 관련 설정 추가)
-     
-     # 서비스 등록 및 시작
-     & $env:ProgramFiles\containerd\containerd.exe --register-service
-     Start-Service containerd
+     # 본문의 검증된 sig-windows-tools 설치 절차를 사용합니다.
+     # Install-Containerd.ps1: supported runtime; PrepareNode.ps1: matching kubeadm/kubelet.
+     # Do not start kubelet with an empty configuration.
      ```
 
 4. **kubelet 및 kube-proxy 설치:**
    - Kubernetes 바이너리 다운로드:
      ```powershell
-     curl.exe -L https://dl.k8s.io/v1.26.0/kubernetes-node-windows-amd64.tar.gz -o kubernetes-node-windows-amd64.tar.gz
-     tar.exe xvf kubernetes-node-windows-amd64.tar.gz
-     mkdir -p $env:ProgramFiles\Kubernetes\bin
-     Copy-Item -Path "kubernetes\node\bin\*" -Destination "$env:ProgramFiles\Kubernetes\bin" -Recurse -Force
+     # 본문의 검증된 sig-windows-tools 설치 절차를 사용합니다.
+     # Install-Containerd.ps1: supported runtime; PrepareNode.ps1: matching kubeadm/kubelet.
+     # Do not start kubelet with an empty configuration.
      ```
    - kubelet 구성 파일 생성:
      ```powershell
-     New-Item -Path "$env:ProgramFiles\Kubernetes\kubelet-config.yaml" -ItemType File -Force
-     # 구성 파일 내용 추가
+     # 본문의 검증된 sig-windows-tools 설치 절차를 사용합니다.
+     # Install-Containerd.ps1: supported runtime; PrepareNode.ps1: matching kubeadm/kubelet.
+     # Do not start kubelet with an empty configuration.
      ```
    - kubelet 서비스 등록 및 시작:
      ```powershell
-     & $env:ProgramFiles\Kubernetes\bin\kubelet.exe --windows-service --config=$env:ProgramFiles\Kubernetes\kubelet-config.yaml
-     Start-Service kubelet
+     # 본문의 검증된 sig-windows-tools 설치 절차를 사용합니다.
+     # Install-Containerd.ps1: supported runtime; PrepareNode.ps1: matching kubeadm/kubelet.
+     # Do not start kubelet with an empty configuration.
      ```
    - kube-proxy 설정 및 시작 (일반적으로 DaemonSet으로 배포)
 
@@ -548,11 +532,13 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
      metadata:
        name: windows-test-pod
      spec:
+       os:
+         name: windows
        nodeSelector:
          kubernetes.io/os: windows
        containers:
        - name: windows-server
-         image: mcr.microsoft.com/windows/servercore:ltsc2019
+         image: mcr.microsoft.com/windows/servercore:ltsc2022
          command:
          - powershell.exe
          - -Command
@@ -607,7 +593,7 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
 
 3. **격리 모드:**
    - **Linux 컨테이너**: 단일 격리 모드(네임스페이스 기반)
-   - **Windows 컨테이너**: 프로세스 격리 및 Hyper-V 격리 두 가지 모드 지원
+   - **Windows 컨테이너**: Kubernetes는 프로세스 격리를 지원하며 Hyper-V는 지원 범위 밖
 
 4. **파일 시스템:**
    - **Linux 컨테이너**: 계층화된 파일 시스템(OverlayFS 등)
@@ -635,6 +621,8 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
    - **노드 레이블 사용**: `kubernetes.io/os=windows` 또는 `kubernetes.io/os=linux`
    - **nodeSelector 사용**:
      ```yaml
+     os:
+       name: windows
      nodeSelector:
        kubernetes.io/os: windows
      ```
@@ -670,12 +658,15 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
              app: myapp
              os: windows
          spec:
+           os:
+             name: windows
            nodeSelector:
              kubernetes.io/os: windows
            containers:
            - name: windows-app
              image: myregistry/windows-app:latest
-     
+
+     ---
      # Linux 워크로드용 Deployment
      apiVersion: apps/v1
      kind: Deployment
@@ -716,6 +707,8 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
            labels:
              app: monitoring-agent
          spec:
+           os:
+             name: windows
            nodeSelector:
              kubernetes.io/os: windows
            containers:
@@ -783,8 +776,8 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
        runAsUser: 1000
        runAsGroup: 3000
        fsGroup: 2000
-     
-     # Windows 포드는 위 설정을 무시하고 다른 보안 메커니즘 사용
+
+     # spec.os.name: windows이면 위 Linux 전용 필드는 거부됩니다.
      ```
 
 9. **모니터링 및 로깅:**
@@ -813,77 +806,14 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
 
 **Windows 컨테이너에서 gMSA 사용 방법:**
 
-1. **사전 요구 사항:**
-   - Active Directory 도메인 컨트롤러
-   - Windows 노드가 도메인에 조인되어 있어야 함
-   - Kubernetes 버전 1.14 이상
-   - containerd 또는 Docker 컨테이너 런타임
+1. AD/DNS 연결과 지원되는 자격 증명 검색 방식을 준비합니다. 도메인 가입 호스트 또는 별도로 구성한 portable identity가 필요하며 컨테이너 자체는 도메인에 가입하지 않습니다.
+2. `Get-KdsRootKey`로 기존 키를 확인하고 필요한 경우에만 AD 관리자가 새 키를 생성하여 복제 대기 시간(최대 10시간)을 확보합니다. 10시간 backdate는 단일 DC 테스트 전용입니다.
+3. 전체 Domain Computers가 아닌 전용 호스트 그룹에 암호 검색 권한을 부여합니다. CredentialSpec 모듈의 `New-CredentialSpec`으로 실제 SID/GUID/DNS/NetBIOS 값을 생성합니다.
+4. 관리자가 GMSACredentialSpec CRD와 mutating/validating webhook을 설치합니다. 생성한 JSON을 `windows.k8s.io/v1`의 `GMSACredentialSpec.credspec`에 넣습니다. 이는 Secret이 아니며 암호를 포함하지 않습니다.
+5. ServiceAccount에 해당 리소스의 `use` 권한을 부여하고 Pod의 `serviceAccountName` 및 `windowsOptions.gmsaCredentialSpecName`을 설정합니다.
+6. 실제 애플리케이션 Kerberos 인증과 `klist`로 검증합니다. `whoami`는 로컬 프로세스 사용자를 표시하며 gMSA 네트워크 이름으로 바뀌지 않습니다.
 
-2. **Active Directory에서 gMSA 설정:**
-   ```powershell
-   # 1. KDS 루트 키 생성 (도메인 컨트롤러에서 실행)
-   Add-KdsRootKey -EffectiveTime (Get-Date).AddHours(-10)
-   
-   # 2. gMSA 계정 생성
-   New-ADServiceAccount -Name "gmsa-k8s" -DnsHostName "gmsa-k8s.example.com" -ServicePrincipalNames "host/gmsa-k8s", "host/gmsa-k8s.example.com" -PrincipalsAllowedToRetrieveManagedPassword "Domain Computers"
-   ```
-
-3. **gMSA 자격 증명 스펙 생성:**
-   ```yaml
-   apiVersion: windows.k8s.io/v1
-   kind: GMSACredentialSpec
-   metadata:
-     name: gmsa-k8s-credspec
-   credspec:
-     ActiveDirectoryConfig:
-       GroupManagedServiceAccounts:
-       - Name: gmsa-k8s
-         Scope: EXAMPLE
-     CmsPlugins:
-     - ActiveDirectory
-     DomainJoinConfig:
-       DnsName: example.com
-       DnsTreeName: example.com
-       Guid: 12345678-1234-1234-1234-123456789012
-       MachineAccountName: gmsa-k8s
-       NetBiosName: EXAMPLE
-   ```
-
-4. **자격 증명 스펙을 Kubernetes 시크릿으로 저장:**
-   ```bash
-   kubectl create secret generic gmsa-k8s-secret --from-file=credspec.json=/path/to/gmsa-credspec.json
-   ```
-
-5. **포드 정의에 gMSA 구성 추가:**
-   ```yaml
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: iis-gmsa
-     labels:
-       app: iis-gmsa
-   spec:
-     securityContext:
-       windowsOptions:
-         gmsaCredentialSpecName: gmsa-k8s-credspec
-     nodeSelector:
-       kubernetes.io/os: windows
-     containers:
-     - name: iis
-       image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-       ports:
-       - containerPort: 80
-   ```
-
-6. **gMSA 사용 검증:**
-   ```powershell
-   # 컨테이너 내에서 실행
-   whoami
-   # 출력: EXAMPLE\gmsa-k8s$
-   
-   nltest /sc_verify:example.com
-   # 출력: Trusted DC connections... Passed
-   ```
+완전한 생성 및 RBAC 예제는 [본문 gMSA 절차](../../core/10-windows-in-kubernetes.md)를 참조합니다.
 
 **gMSA 사용의 이점:**
 
@@ -954,40 +884,7 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
 **Windows 노드 로깅 구성 방법:**
 
 1. **Fluent Bit 또는 Fluentd 설정:**
-   ```yaml
-   apiVersion: apps/v1
-   kind: DaemonSet
-   metadata:
-     name: fluent-bit-windows
-     namespace: logging
-   spec:
-     selector:
-       matchLabels:
-         app: fluent-bit-windows
-     template:
-       metadata:
-         labels:
-           app: fluent-bit-windows
-       spec:
-         nodeSelector:
-           kubernetes.io/os: windows
-         containers:
-         - name: fluent-bit
-           image: fluent/fluent-bit:windows-latest
-           volumeMounts:
-           - name: config
-             mountPath: C:/fluent-bit/conf/
-           - name: windows-logs
-             mountPath: C:/Windows/System32/winevt/Logs
-             readOnly: true
-         volumes:
-         - name: config
-           configMap:
-             name: fluent-bit-windows-config
-         - name: windows-logs
-           hostPath:
-             path: C:/Windows/System32/winevt/Logs
-   ```
+   호스트 이벤트 로그는 본문의 Fluent Bit Windows 서비스 또는 검토된 HostProcess 수집기로 읽습니다. 일반 컨테이너의 .evtx 마운트만으로 winlog가 호스트 API를 읽지는 않습니다. 아래 설정은 Security 채널 읽기 권한과 영속 체크포인트 디렉토리가 필요합니다.
 
 2. **Windows 이벤트 로그 수집 구성:**
    ```ini
@@ -996,19 +893,21 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
        Name            winlog
        Channels        System,Application,Security
        Interval_Sec    1
-       DB              C:\\fluent-bit\\winlog.db
-   
+       DB              C:\fluent-bit\winlog.db
+
    [OUTPUT]
-       Name            elasticsearch
+       Name            es
        Match           *
        Host            elasticsearch-master
        Port            9200
        Index           windows_logs
-       Type            _doc
+       Suppress_Type_Name On
+       tls             On
+       tls.verify      On
    ```
 
 3. **컨테이너 로그 수집:**
-   - containerd 로그 경로: `C:\ProgramData\containerd\root\containers`
+   - containerd 로그 경로: `C:\var\log\containers`
    - kubelet 로그 경로: `C:\k\logs` 또는 Windows 이벤트 로그
 
 **2. 모니터링 구성:**
@@ -1038,21 +937,43 @@ Windows 노드에서도 `kubectl top pods` 및 `kubectl top nodes` 명령을 사
          labels:
            app: windows-exporter
        spec:
+         os:
+           name: windows
          nodeSelector:
            kubernetes.io/os: windows
          containers:
          - name: windows-exporter
-           image: prometheuscommunity/windows-exporter:latest
+           image: ghcr.io/prometheus-community/windows-exporter:REPLACE_WITH_TESTED_RELEASE
            args:
-           - --collectors.enabled=cpu,memory,disk,net,service,os,system,container
+           - --collectors.enabled=cpu,memory,logical_disk,net,service,os,system,container
            ports:
            - containerPort: 9182
              name: metrics
              protocol: TCP
+         hostNetwork: true
+         securityContext:
+           windowsOptions:
+             hostProcess: true
+             runAsUserName: NT AUTHORITY\SYSTEM
    ```
 
 2. **Prometheus 스크래핑 구성:**
    ```yaml
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: windows-exporter
+     namespace: monitoring
+     labels:
+       app: windows-exporter
+   spec:
+     selector:
+       app: windows-exporter
+     ports:
+     - name: metrics
+       port: 9182
+       targetPort: metrics
+   ---
    apiVersion: monitoring.coreos.com/v1
    kind: ServiceMonitor
    metadata:
@@ -1142,6 +1063,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 5. **보안 모니터링:**
    - Windows 보안 이벤트 로그 수집 및 분석
    - 권한 변경 및 로그인 시도 모니터링
+monitoring 네임스페이스, Prometheus Operator/ServiceMonitor 검색 설정 및 검증한 릴리스 태그가 필요합니다. HostProcess의 PSS 예외와 9182 방화벽 소스를 제한합니다. 호스트 로그 경로/채널은 배포판별로 확인하며 EKS는 kubelet/kube-proxy를 EKS Windows 채널에 기록합니다. Elasticsearch 예제에는 신뢰할 CA와 인증 설정도 필요합니다.
 </details>
 
 5. Kubernetes에서 Windows 컨테이너를 위한 스토리지 옵션과 볼륨 마운트 구성 방법을 설명하세요.
@@ -1159,7 +1081,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    - 포드 수명 동안 임시 데이터 저장
    - Windows 노드의 로컬 NTFS 볼륨에 생성됨
    - 포드가 삭제되면 데이터도 삭제됨
-   
+
    ```yaml
    volumes:
    - name: temp-data
@@ -1168,14 +1090,14 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 
 2. **hostPath:**
    - Windows 노드의 파일 시스템에 직접 접근
-   - Windows 경로 형식 사용 필요 (백슬래시 이스케이프)
+   - YAML 큰따옴표 문자열에서만 백슬래시를 이스케이프합니다. 일반/작은따옴표 경로에는 단일 백슬래시를 사용합니다.
    - 노드 간 데이터 공유 불가
-   
+
    ```yaml
    volumes:
    - name: logs
      hostPath:
-       path: C:\\Logs
+       path: 'C:\Logs'
        type: DirectoryOrCreate
    ```
 
@@ -1183,7 +1105,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    - 구성 데이터 및 민감한 정보 저장
    - Windows 컨테이너에서도 동일하게 작동
    - 파일 권한 설정은 Windows에서 다르게 적용됨
-   
+
    ```yaml
    volumes:
    - name: config
@@ -1195,7 +1117,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    - 영구 스토리지 요청
    - Windows 호환 스토리지 클래스 필요
    - CSI 드라이버 지원 여부 확인 필요
-   
+
    ```yaml
    volumes:
    - name: data
@@ -1209,7 +1131,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    - Azure Kubernetes Service에서 Windows 노드 지원
    - SMB 프로토콜 기반 Azure Files 사용 가능
    - Azure Disk CSI 드라이버 지원
-   
+
    ```yaml
    # Azure File PVC
    apiVersion: v1
@@ -1229,7 +1151,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    - Amazon EKS의 Windows 노드 지원
    - EBS CSI 드라이버 사용 가능
    - 단일 AZ 내 접근 제한
-   
+
    ```yaml
    # AWS EBS PVC
    apiVersion: v1
@@ -1247,9 +1169,9 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 
 3. **SMB/CIFS 볼륨:**
    - Windows 환경에 적합한 네트워크 파일 시스템
-   - FlexVolume 또는 CSI 드라이버 필요
+   - Windows 호환 SMB CSI 드라이버 필요
    - 여러 포드 간 ReadWriteMany 접근 지원
-   
+
    ```yaml
    # SMB CSI 드라이버 사용 예시
    apiVersion: v1
@@ -1266,62 +1188,40 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    ```
 
 4. **iSCSI:**
-   - Windows 노드에서 iSCSI 이니시에이터 구성 필요
-   - 블록 스토리지 접근 제공
-   - 고성능 요구 사항에 적합
-   
-   ```yaml
-   # iSCSI PV 예시
-   apiVersion: v1
-   kind: PersistentVolume
-   metadata:
-     name: iscsi-windows-pv
-   spec:
-     capacity:
-       storage: 100Gi
-     accessModes:
-     - ReadWriteOnce
-     persistentVolumeReclaimPolicy: Retain
-     iscsi:
-       targetPortal: 192.168.1.10:3260
-       iqn: iqn.2000-01.com.example:storage.kube.sys1.xyz
-       lun: 0
-       fsType: ntfs
-       readOnly: false
-   ```
+   - Windows의 iSCSI 기능만으로 Kubernetes in-tree iscsi 볼륨이 지원되지는 않습니다. 공급자가 Windows 지원을 명시한 CSI 드라이버로 파일 시스템 볼륨을 제공합니다. Windows Pod는 volumeDevices raw block을 지원하지 않습니다.
 
 **3. Windows 컨테이너의 볼륨 마운트 구성:**
 
 1. **볼륨 마운트 경로:**
    - Windows 컨테이너는 Windows 경로 형식 사용
    - 일반적으로 `C:\` 드라이브 내 경로 사용
-   - 경로에 백슬래시 사용 시 YAML에서 이스케이프 필요
-   
+   - YAML 큰따옴표 문자열에서만 백슬래시를 이스케이프합니다. 일반/작은따옴표 경로에는 단일 백슬래시를 사용합니다.
+
    ```yaml
    volumeMounts:
    - name: data
-     mountPath: C:\\data
+     mountPath: 'C:\data'
    ```
 
 2. **읽기 전용 마운트:**
    - Windows 컨테이너에서도 지원됨
    - NTFS 권한으로 적용됨
-   
+
    ```yaml
    volumeMounts:
    - name: config
-     mountPath: C:\\config
+     mountPath: 'C:\config'
      readOnly: true
    ```
 
 3. **하위 경로 마운트:**
    - 볼륨의 특정 하위 경로만 마운트 가능
    - Windows 경로 구분자 주의
-   
+
    ```yaml
    volumeMounts:
    - name: shared-data
-     mountPath: C:\\app\\logs
+     mountPath: 'C:\app\logs'
      subPath: logs
    ```
 
@@ -1334,18 +1234,20 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    metadata:
      name: windows-web-app
    spec:
+     os:
+       name: windows
      nodeSelector:
        kubernetes.io/os: windows
      containers:
      - name: web
-       image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+       image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
        volumeMounts:
        - name: website
-         mountPath: C:\\inetpub\\wwwroot
+         mountPath: 'C:\inetpub\wwwroot'
        - name: logs
-         mountPath: C:\\inetpub\\logs
+         mountPath: 'C:\inetpub\logs'
        - name: config
-         mountPath: C:\\config
+         mountPath: 'C:\config'
          readOnly: true
      volumes:
      - name: website
@@ -1363,26 +1265,27 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    apiVersion: v1
    kind: Pod
    metadata:
-     name: windows-sql
+     name: linux-sql-for-windows-apps
    spec:
      nodeSelector:
-       kubernetes.io/os: windows
+       kubernetes.io/os: linux
+       kubernetes.io/arch: amd64
      containers:
      - name: sql
-       image: mcr.microsoft.com/mssql/server:2019-latest
+       image: mcr.microsoft.com/mssql/server:2022-latest
        env:
        - name: ACCEPT_EULA
          value: "Y"
-       - name: SA_PASSWORD
+       - name: MSSQL_SA_PASSWORD
          valueFrom:
            secretKeyRef:
              name: sql-credentials
              key: sa-password
        volumeMounts:
        - name: data
-         mountPath: C:\\var\\opt\\mssql\\data
+         mountPath: /var/opt/mssql/data
        - name: backup
-         mountPath: C:\\var\\opt\\mssql\\backup
+         mountPath: /var/opt/mssql/backup
      volumes:
      - name: data
        persistentVolumeClaim:
@@ -1390,12 +1293,14 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
      - name: backup
        persistentVolumeClaim:
          claimName: sql-backup-pvc
+     os:
+       name: linux
    ```
 
 **5. Windows 컨테이너 스토리지 사용 시 고려 사항:**
 
 1. **경로 구분자:**
-   - Windows는 백슬래시(`\`)를 사용하지만 YAML에서는 이스케이프 필요
+   - YAML 큰따옴표 문자열에서만 백슬래시를 이스케이프합니다. 일반/작은따옴표 경로에는 단일 백슬래시를 사용합니다.
    - 대안으로 슬래시(`/`)를 사용할 수 있지만 애플리케이션 호환성 확인 필요
 
 2. **파일 권한:**
@@ -1414,12 +1319,14 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 5. **백업 및 복구:**
    - Windows 볼륨 섀도 복사본 서비스(VSS) 통합 고려
    - 애플리케이션 일관성 있는 백업 메커니즘 구현
+SQL Server 이미지는 Linux용이며 Windows 애플리케이션은 네트워크로 연결합니다. Linux 호환 PVC와 SQL 프로세스의 쓰기 권한, 기존 sql-credentials Secret이 필요합니다.
+예제 StorageClass는 먼저 생성해야 하며 Windows EBS 클래스에는 NTFS와 WaitForFirstConsumer를 설정합니다. 이름만으로 드라이버/클래스가 설치되지 않습니다.
 </details>
 ## 실습 문제
 
 1. Windows 노드와 Linux 노드가 혼합된 Kubernetes 클러스터에서 다음 요구 사항을 충족하는 Deployment 매니페스트를 작성하세요:
    - 애플리케이션 이름: web-app
-   - Windows 컨테이너 이미지: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+   - Windows 컨테이너 이미지: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
    - 레플리카: 2
    - 포트: 80
    - 환경 변수: WEBSITE_NAME=MyWindowsApp
@@ -1447,11 +1354,13 @@ spec:
       labels:
         app: web-app
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: iis
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         ports:
         - containerPort: 80
         env:
@@ -1459,7 +1368,7 @@ spec:
           value: "MyWindowsApp"
         volumeMounts:
         - name: config-volume
-          mountPath: C:\inetpub\wwwroot\web.config
+          mountPath: 'C:\inetpub\wwwroot\web.config'
           subPath: web.config
       volumes:
       - name: config-volume
@@ -1500,8 +1409,9 @@ spec:
    - 포트 80을 통해 접근 가능
 
 **참고 사항**:
-- Windows 경로에서 백슬래시(`\`)는 YAML에서 이스케이프 문자로 처리되므로 주의해야 합니다. 이 예제에서는 일반 백슬래시를 사용했지만, 더 복잡한 경로에서는 이중 백슬래시(`\\`)나 슬래시(`/`)를 사용할 수 있습니다.
+- YAML 큰따옴표 문자열에서만 백슬래시를 이스케이프합니다. 일반/작은따옴표 경로에는 단일 백슬래시를 사용합니다.
 - Windows 컨테이너는 Linux 컨테이너보다 리소스 요구 사항이 더 높을 수 있으므로, 프로덕션 환경에서는 적절한 리소스 요청 및 제한을 설정하는 것이 좋습니다.
+WEBSITE_NAME만 설정해도 IIS 사이트 이름이 바뀌지는 않습니다. 기존 web-config의 web.config 키가 필요하며 subPath는 자동 갱신되지 않습니다.
 </details>
 
 2. Windows 노드와 Linux 노드 모두에서 실행되는 모니터링 에이전트를 배포하기 위한 DaemonSet 매니페스트를 작성하세요. 각 OS에 맞는 이미지와 구성을 사용해야 합니다.
@@ -1512,7 +1422,6 @@ spec:
 **정답:**
 
 ```yaml
-# Linux 노드용 DaemonSet
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -1567,8 +1476,10 @@ spec:
       - name: root
         hostPath:
           path: /
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
 ---
-# Windows 노드용 DaemonSet
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -1588,18 +1499,24 @@ spec:
         app: monitoring-agent
         os: windows
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: agent
-        image: prometheuscommunity/windows-exporter:latest
+        image: ghcr.io/prometheus-community/windows-exporter:REPLACE_WITH_TESTED_RELEASE
         ports:
         - containerPort: 9182
           name: metrics
         args:
-        - --collectors.enabled=cpu,memory,disk,net,service,os,system,container
+        - --collectors.enabled=cpu,memory,logical_disk,net,service,os,system,container
+      hostNetwork: true
+      securityContext:
+        windowsOptions:
+          hostProcess: true
+          runAsUserName: NT AUTHORITY\SYSTEM
 ---
-# 모니터링 에이전트를 위한 서비스
 apiVersion: v1
 kind: Service
 metadata:
@@ -1610,13 +1527,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: linux-metrics
+  - name: metrics
     port: 9100
-    targetPort: 9100
-    protocol: TCP
-  - name: windows-metrics
-    port: 9182
-    targetPort: 9182
+    targetPort: metrics
     protocol: TCP
   selector:
     app: monitoring-agent
@@ -1646,6 +1559,7 @@ spec:
 - Linux와 Windows 노드에서 메트릭 수집 방식이 다르므로 별도의 DaemonSet으로 분리했습니다.
 - 레이블을 사용하여 OS 유형을 구분하면 모니터링 시스템에서 메트릭을 필터링하고 시각화하는 데 유용합니다.
 - 프로덕션 환경에서는 리소스 요청 및 제한, 보안 컨텍스트, 서비스 계정 등을 추가로 구성해야 합니다.
+monitoring 네임스페이스와 검증한 exporter 릴리스 태그를 준비합니다. HostProcess의 PSS 예외와 9182 방화벽 규칙을 제한합니다. Prometheus는 모든 노드를 수집하도록 Service의 개별 엔드포인트를 검색/스크레이프해야 합니다.
 </details>
 
 3. Windows 컨테이너에서 Active Directory 인증을 사용하는 .NET 애플리케이션을 배포하기 위한 포드 매니페스트를 작성하세요. 그룹 관리 서비스 계정(gMSA)을 사용해야 합니다.
@@ -1656,17 +1570,6 @@ spec:
 **정답:**
 
 ```yaml
-# gMSA 자격 증명 스펙을 위한 시크릿
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gmsa-credential-spec
-  namespace: default
-type: Opaque
-data:
-  credspec.json: BASE64_ENCODED_CREDENTIAL_SPEC_HERE
----
-# gMSA를 사용하는 Windows 포드
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1674,11 +1577,13 @@ metadata:
   labels:
     app: ad-auth-app
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   securityContext:
     windowsOptions:
-      gmsaCredentialSpecName: gmsa-credential-spec
+      gmsaCredentialSpecName: gmsa-cred-spec
   containers:
   - name: dotnet-app
     image: myregistry/ad-auth-app:latest
@@ -1686,47 +1591,35 @@ spec:
     - containerPort: 80
     env:
     - name: ASPNETCORE_ENVIRONMENT
-      value: "Production"
+      value: Production
     volumeMounts:
     - name: app-config
       mountPath: C:\app\appsettings.json
       subPath: appsettings.json
     resources:
       requests:
-        memory: "2Gi"
-        cpu: "500m"
+        memory: 2Gi
+        cpu: 500m
       limits:
-        memory: "4Gi"
-        cpu: "1000m"
+        memory: 4Gi
+        cpu: 1000m
   volumes:
   - name: app-config
     configMap:
       name: ad-auth-app-config
+  serviceAccountName: windows-app
 ---
-# 애플리케이션 구성을 위한 ConfigMap
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ad-auth-app-config
 data:
-  appsettings.json: |
-    {
-      "Logging": {
-        "LogLevel": {
-          "Default": "Information",
-          "Microsoft": "Warning"
-        }
-      },
-      "ConnectionStrings": {
-        "DefaultConnection": "Server=sql-server;Database=AppDB;Integrated Security=True;"
-      },
-      "ActiveDirectory": {
-        "Domain": "example.com",
-        "UseWindowsAuthentication": true
-      }
-    }
+  appsettings.json: "{\n  \"Logging\": {\n    \"LogLevel\": {\n      \"Default\":\
+    \ \"Information\",\n      \"Microsoft\": \"Warning\"\n    }\n  },\n  \"ConnectionStrings\"\
+    : {\n    \"DefaultConnection\": \"Server=sql-server;Database=AppDB;Integrated\
+    \ Security=True;\"\n  },\n  \"ActiveDirectory\": {\n    \"Domain\": \"example.com\"\
+    ,\n    \"UseWindowsAuthentication\": true\n  }\n}\n"
 ---
-# 서비스 정의
 apiVersion: v1
 kind: Service
 metadata:
@@ -1742,9 +1635,9 @@ spec:
 
 **설명:**
 
-1. **gMSA 자격 증명 스펙 시크릿**:
-   - Active Directory gMSA 자격 증명 스펙을 Base64로 인코딩하여 시크릿으로 저장
-   - 이 시크릿은 포드가 도메인 인증을 위해 사용
+1. **GMSACredentialSpec과 권한**:
+   - 생성한 자격 증명 메타데이터를 GMSACredentialSpec에 저장하며 암호는 포함하지 않음
+   - webhook이 ServiceAccount의 use 권한을 확인한 후 명명된 spec을 확장함
 
 2. **Windows 포드 구성**:
    - `nodeSelector`를 사용하여 Windows 노드에 스케줄링
@@ -1762,38 +1655,7 @@ spec:
 
 **gMSA 설정을 위한 사전 요구 사항**:
 
-1. **Active Directory 도메인 컨트롤러 설정**:
-   ```powershell
-   # KDS 루트 키 생성 (도메인 컨트롤러에서 실행)
-   Add-KdsRootKey -EffectiveTime (Get-Date).AddHours(-10)
-   
-   # gMSA 계정 생성
-   New-ADServiceAccount -Name "k8s-gmsa" -DnsHostName "k8s-gmsa.example.com" -ServicePrincipalNames "host/k8s-gmsa", "host/k8s-gmsa.example.com" -PrincipalsAllowedToRetrieveManagedPassword "Domain Computers"
-   ```
-
-2. **자격 증명 스펙 생성**:
-   ```powershell
-   # Windows 노드에서 실행
-   Import-Module ActiveDirectory
-   $CredSpec = New-CimInstance -Namespace root/Microsoft/Windows/CredentialSpecification -ClassName Win32_CredentialSpecification -Property @{Name = "k8s-gmsa"; ActiveDirectoryCredentialSpec = Get-CredentialSpec -Name k8s-gmsa -Json}
-   
-   # 자격 증명 스펙 내용 확인
-   Get-CredentialSpec -Name k8s-gmsa -Json
-   ```
-
-3. **자격 증명 스펙을 Kubernetes 시크릿으로 변환**:
-   ```bash
-   # 자격 증명 스펙 JSON을 Base64로 인코딩
-   cat credspec.json | base64 -w 0
-   
-   # 인코딩된 값을 시크릿 YAML에 추가
-   ```
-
-**참고 사항**:
-- Windows 노드가 Active Directory 도메인에 조인되어 있어야 합니다.
-- containerd 또는 Docker가 gMSA를 지원하도록 구성되어 있어야 합니다.
-- 실제 환경에서는 자격 증명 스펙 내용을 안전하게 관리해야 합니다.
-- 애플리케이션이 Windows 인증을 올바르게 사용하도록 구성되어 있어야 합니다.
+본문의 `gmsa-cred-spec`, `windows-app` ServiceAccount 및 이름이 제한된 use RBAC 권한을 먼저 생성합니다. CRD와 두 webhook이 필요합니다. 커스텀 애플리케이션 이미지와 설정은 Windows Server 2022용으로 빌드/검증해야 합니다. gMSA는 네트워크 인증용이며 애플리케이션도 Windows 인증을 사용하도록 구성해야 합니다. ConfigMap subPath 마운트는 자동 갱신되지 않으므로 변경 시 Pod를 재생성합니다.
 </details>
 
 4. Windows 노드와 Linux 노드가 혼합된 클러스터에서 네트워크 정책(NetworkPolicy)을 사용하여 다음 요구 사항을 충족하는 매니페스트를 작성하세요:
@@ -1890,11 +1752,13 @@ spec:
       labels:
         app: windows-web
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: web
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         ports:
         - containerPort: 80
 ```
@@ -1929,6 +1793,7 @@ spec:
               name: mysql-secret
               key: password
 ```
+NetworkPolicy는 허용 규칙이 합산됩니다. 다른 정책이 추가 접근을 허용할 수 있으며 정책 자체가 외부 LoadBalancer/Ingress를 생성하지 않습니다. DNS 이름을 쓰는 앱에는 클러스터 DNS로 UDP/TCP 53 egress도 필요합니다. 뒤의 데이터베이스 예제는 비영속 학습용이며 실제 서비스에는 PVC/백업이 필요합니다.
 </details>
 
 5. Windows 노드에서 실행되는 .NET Framework 애플리케이션을 위한 Deployment 매니페스트를 작성하세요. 애플리케이션은 Azure Blob Storage에 접근하기 위해 환경 변수로 연결 문자열을 필요로 합니다. 또한 로그를 위한 영구 볼륨을 구성하세요.
@@ -1939,29 +1804,18 @@ spec:
 **정답:**
 
 ```yaml
-# Azure Storage 연결 문자열을 위한 시크릿
-apiVersion: v1
-kind: Secret
-metadata:
-  name: azure-storage-secret
-type: Opaque
-data:
-  connection-string: QWNjb3VudE5hbWU9bXlzdG9yYWdlYWNjb3VudDtBY2NvdW50S2V5PW15YWNjb3VudGtleTtFbmRwb2ludFN1ZmZpeD1jb3JlLndpbmRvd3MubmV0
----
-# 로그를 위한 영구 볼륨 클레임
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: windows-logs-pvc
 spec:
   accessModes:
-    - ReadWriteOnce
-  storageClassName: managed-premium  # Azure Disk 스토리지 클래스 예시
+  - ReadWriteMany
+  storageClassName: azurefile-csi
   resources:
     requests:
       storage: 10Gi
 ---
-# .NET Framework 애플리케이션 Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1978,6 +1832,8 @@ spec:
       labels:
         app: dotnet-framework-app
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
@@ -1992,9 +1848,9 @@ spec:
               name: azure-storage-secret
               key: connection-string
         - name: LOG_LEVEL
-          value: "Information"
+          value: Information
         - name: ASPNET_ENVIRONMENT
-          value: "Production"
+          value: Production
         volumeMounts:
         - name: logs-volume
           mountPath: C:\app\logs
@@ -2003,11 +1859,11 @@ spec:
           subPath: web.config
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "500m"
+            memory: 2Gi
+            cpu: 500m
           limits:
-            memory: "4Gi"
-            cpu: "1000m"
+            memory: 4Gi
+            cpu: 1000m
         readinessProbe:
           httpGet:
             path: /health
@@ -2028,32 +1884,21 @@ spec:
         configMap:
           name: dotnet-app-config
 ---
-# 애플리케이션 구성을 위한 ConfigMap
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: dotnet-app-config
 data:
-  web.config: |
-    <?xml version="1.0" encoding="utf-8"?>
-    <configuration>
-      <system.web>
-        <compilation debug="false" targetFramework="4.8" />
-        <httpRuntime targetFramework="4.8" />
-      </system.web>
-      <system.webServer>
-        <handlers>
-          <remove name="ExtensionlessUrlHandler-Integrated-4.0" />
-          <add name="ExtensionlessUrlHandler-Integrated-4.0" path="*." verb="*" type="System.Web.Handlers.TransferRequestHandler" preCondition="integratedMode,runtimeVersionv4.0" />
-        </handlers>
-      </system.webServer>
-      <appSettings>
-        <add key="BlobContainerName" value="appdata" />
-        <add key="LogDirectory" value="C:\app\logs" />
-      </appSettings>
-    </configuration>
+  web.config: "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<configuration>\n  <system.web>\n\
+    \    <compilation debug=\"false\" targetFramework=\"4.8\" />\n    <httpRuntime\
+    \ targetFramework=\"4.8\" />\n  </system.web>\n  <system.webServer>\n    <handlers>\n\
+    \      <remove name=\"ExtensionlessUrlHandler-Integrated-4.0\" />\n      <add\
+    \ name=\"ExtensionlessUrlHandler-Integrated-4.0\" path=\"*.\" verb=\"*\" type=\"\
+    System.Web.Handlers.TransferRequestHandler\" preCondition=\"integratedMode,runtimeVersionv4.0\"\
+    \ />\n    </handlers>\n  </system.webServer>\n  <appSettings>\n    <add key=\"\
+    BlobContainerName\" value=\"appdata\" />\n    <add key=\"LogDirectory\" value=\"\
+    C:\\app\\logs\" />\n  </appSettings>\n</configuration>\n"
 ---
-# 서비스 정의
 apiVersion: v1
 kind: Service
 metadata:
@@ -2070,13 +1915,13 @@ spec:
 **설명:**
 
 1. **시크릿 구성**:
-   - Azure Storage 연결 문자열을 Base64로 인코딩하여 시크릿으로 저장
+   - 배포 전 보호된 입력 또는 외부 시크릿 관리자로 azure-storage-secret을 생성하며 예제 계정 키는 제공하지 않음
    - 애플리케이션에서 환경 변수로 안전하게 접근 가능
 
 2. **영구 볼륨 클레임**:
    - 로그 파일을 위한 10GB 영구 스토리지 요청
-   - Azure Disk 스토리지 클래스 사용 (환경에 맞게 조정 필요)
-   - ReadWriteOnce 접근 모드 사용
+   - Windows 호환 Azure Files SMB CSI StorageClass 사용
+   - 다른 노드의 복제본도 마운트하도록 ReadWriteMany 사용
 
 3. **Deployment 구성**:
    - `nodeSelector`를 사용하여 Windows 노드에만 스케줄링
@@ -2099,10 +1944,11 @@ spec:
 - .NET Framework 애플리케이션은 Windows Server Core 기반 이미지를 사용해야 합니다.
 - 프로덕션 환경에서는 인그레스 컨트롤러나 로드 밸런서를 통해 외부 접근을 구성할 수 있습니다.
 - Azure Storage 연결 문자열과 같은 민감한 정보는 Azure Key Vault와 같은 외부 시크릿 관리 시스템과 통합하는 것이 좋습니다.
+두 복제본이 서로 다른 파일 이름 또는 Pod별 디렉토리에 로그를 기록하도록 구성합니다. 애플리케이션은 환경 변수를 읽고 /health를 구현해야 합니다. subPath ConfigMap은 자동 갱신되지 않습니다.
 </details>
 ## 고급 주제
 
-1. Kubernetes에서 Windows 노드의 컨테이너 런타임으로 containerd를 구성할 때 가장 중요한 설정은 무엇인가요?
+1. containerd 1.x에서 Windows Pod sandbox 이미지를 선택하는 설정은 무엇인가요?
    - A) sandbox_image 설정
    - B) 로그 수준 및 로그 경로
    - C) 메모리 제한 및 CPU 공유
@@ -2114,36 +1960,10 @@ spec:
 **정답: A) sandbox_image 설정**
 
 **설명:**
-Kubernetes에서 Windows 노드의 컨테이너 런타임으로 containerd를 구성할 때 가장 중요한 설정은 `sandbox_image` 설정입니다. 이 설정은 Windows 노드에서 포드 인프라 컨테이너(pause 컨테이너)로 사용할 이미지를 지정합니다.
 
-Windows 노드의 containerd 구성에서 `sandbox_image` 설정이 중요한 이유:
+containerd 1.x의 CRI 설정은 `plugins."io.containerd.grpc.v1.cri".sandbox_image`를 사용합니다. containerd 2.x의 config v3에서는 `plugins."io.containerd.cri.v1.images".pinned_images.sandbox`를 사용합니다. 설치된 런타임의 `containerd config default`와 공식 Windows 설치 절차를 기준으로 구성하며, 서로 다른 설정 버전의 테이블을 혼합하지 않습니다.
 
-1. **포드 네트워킹**: pause 컨테이너는 포드의 네트워크 네임스페이스를 설정하고 유지하는 역할을 합니다. Windows에서는 Linux와 다른 네트워킹 스택을 사용하므로, Windows 전용 pause 이미지가 필요합니다.
-
-2. **OS 호환성**: Linux pause 이미지는 Windows 노드에서 작동하지 않으며, Windows pause 이미지는 Linux 노드에서 작동하지 않습니다.
-
-3. **버전 호환성**: Windows 버전(예: Windows Server 2019, Windows Server 2022)과 호환되는 적절한 pause 이미지를 선택해야 합니다.
-
-Windows 노드의 containerd 구성 예시:
-```toml
-[plugins."io.containerd.grpc.v1.cri".containerd]
-  default_runtime_name = "microsoft/windows"
-  
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."microsoft/windows"]
-  runtime_type = "io.containerd.runhcs.v1"
-  
-[plugins."io.containerd.grpc.v1.cri"]
-  sandbox_image = "mcr.microsoft.com/oss/kubernetes/pause:3.6-windows-ltsc2019"
-```
-
-일반적으로 사용되는 Windows pause 이미지:
-- Windows Server 2019 LTSC: `mcr.microsoft.com/oss/kubernetes/pause:3.6-windows-ltsc2019`
-- Windows Server 2022: `mcr.microsoft.com/oss/kubernetes/pause:3.6-windows-ltsc2022`
-
-다른 옵션들도 중요하지만, `sandbox_image` 설정이 가장 중요합니다:
-- 로그 수준 및 로그 경로는 디버깅에 유용하지만, 기능적으로 필수적이지 않습니다.
-- 메모리 제한 및 CPU 공유는 성능 튜닝에 중요하지만, 기본 기능에는 영향을 미치지 않습니다.
-- 이미지 풀 정책 및 레지스트리 구성은 이미지 관리에 중요하지만, 컨테이너 런타임의 기본 작동에는 영향을 미치지 않습니다.
+Pod sandbox 이미지는 호스트 Windows 빌드와 호환되어야 합니다. Linux 전용 pause 이미지는 Windows에서 실행되지 않습니다. CNI/HNS가 네트워크를 구성하며 sandbox가 Pod 수명 동안 이를 유지합니다. 이미지 pull/레지스트리, runhcs 런타임, CNI 경로, 로그 설정도 정상 동작에 필요합니다. 오래된 3.6 태그를 고정 복사하지 말고 배포판이 검증한 Windows 이미지를 사용합니다.
 </details>
 
 2. Windows 컨테이너에서 Hyper-V 격리 모드를 사용하는 주요 이점은 무엇인가요?
@@ -2162,7 +1982,7 @@ Windows 컨테이너에서 Hyper-V 격리 모드를 사용하는 주요 이점�
 
 Hyper-V 격리 모드의 주요 이점:
 
-1. **버전 호환성**: 
+1. **버전 호환성**:
    - 호스트 OS와 컨테이너 OS 간의 버전 불일치 문제를 해결합니다.
    - 예를 들어, Windows Server 2022 호스트에서 Windows Server 2019 기반 컨테이너를 실행할 수 있습니다.
    - 이는 프로세스 격리 모드에서는 불가능합니다(프로세스 격리에서는 호스트와 컨테이너가 동일한 커널 버전을 사용해야 함).
@@ -2176,21 +1996,7 @@ Hyper-V 격리 모드의 주요 이점:
    - 각 컨테이너는 자체 Windows 커널 인스턴스를 가집니다.
    - 이로 인해 커널 수준 격리가 제공되어 한 컨테이너의 커널 문제가 다른 컨테이너나 호스트에 영향을 미치지 않습니다.
 
-Kubernetes에서 Hyper-V 격리 모드를 사용하려면 포드 스펙에 다음과 같은 주석을 추가합니다:
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: iis-hyper-v
-  annotations:
-    io.kubernetes.cri-containerd.isolation: "hyperv"
-spec:
-  nodeSelector:
-    kubernetes.io/os: windows
-  containers:
-  - name: iis
-    image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-```
+**Kubernetes는 Hyper-V 격리를 지원하지 않으며 Pod 주석으로 활성화할 수 없습니다.** 이 설명은 Windows OS 배경 지식입니다.
 
 Hyper-V 격리 모드의 단점:
 - 더 많은 리소스(메모리, CPU)를 사용합니다.
@@ -2236,7 +2042,7 @@ Windows 노드의 포드 네트워킹 특징:
 
 예시 - Flannel CNI 구성:
 ```yaml
-# Linux 및 Windows 노드 모두를 위한 Flannel ConfigMap
+# Linux 측 Flannel ConfigMap; Windows HNS/CNI 구성은 별도 설치합니다.
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -2284,7 +2090,7 @@ $networkMode = "overlay"
 
 다른 옵션들의 문제점:
 - Windows 노드는 CNI 플러그인을 사용하며, 자체 네트워킹 스택만 사용하지 않습니다(A는 틀림).
-- Windows 노드는 호스트 네트워크 모드를 지원하지 않습니다. `hostNetwork: true`는 Windows 포드에서 작동하지 않습니다(C는 틀림).
+- 일반 Windows Pod는 hostNetwork를 지원하지 않으며 HostProcess는 예외입니다(C는 틀림).
 - Windows 노드는 오버레이 네트워크(VXLAN 등)를 지원합니다(D는 틀림).
 </details>
 
@@ -2306,17 +2112,17 @@ Windows 노드의 리소스 관리 특징:
 
 1. **Job Objects**:
    - Windows에서는 Job Objects를 사용하여 프로세스 그룹의 리소스 사용을 제한합니다.
-   - 컨테이너 런타임(containerd 또는 Docker)은 Job Objects API를 사용하여 CPU 및 메모리 제한을 적용합니다.
+   - 컨테이너 런타임(Windows 호환 containerd)은 Job Objects API를 사용하여 CPU 및 메모리 제한을 적용합니다.
    - Job Objects는 프로세스 그룹에 대한 CPU 시간, 메모리 사용량, 작업 시간 등을 제한할 수 있습니다.
 
 2. **CPU 제한**:
-   - Windows에서 CPU 제한은 CPU 공유(weights) 메커니즘을 통해 구현됩니다.
+   - CPU 제한은 CPU 시간을 제한하며 상대적 CPU 공유 가중치와 구분해야 합니다.
    - 이는 Linux의 CPU 공유와 유사하지만 구현 방식이 다릅니다.
    - Windows는 CPU 코어 수에 따라 CPU 공유를 조정합니다.
 
 3. **메모리 제한**:
-   - Windows 컨테이너의 메모리 제한은 Job Objects의 메모리 제한 기능을 통해 구현됩니다.
-   - 컨테이너가 메모리 제한을 초과하면 OOM(Out of Memory) 종료가 발생합니다.
+   - Windows 컨테이너의 메모리 제한은 Job Objects로 구현합니다.
+   - Windows에는 Linux OOM killer가 없습니다. 제한 초과 시 메모리 할당 실패나 페이징으로 성능이 저하될 수 있습니다.
    - Windows의 메모리 관리는 Linux와 다르게 작동하므로, 동일한 메모리 제한 값이라도 실제 동작이 다를 수 있습니다.
 
 4. **리소스 요청 및 제한 구성**:
@@ -2344,7 +2150,7 @@ Windows 노드의 리소스 관리 고려 사항:
 
 다른 옵션들의 문제점:
 - Windows 노드는 리소스 제한을 지원합니다(A는 틀림).
-- Windows 노드는 일반적으로 Linux 노드보다 덜 정확한 리소스 제한을 제공합니다(B는 틀림).
+- 어느 OS의 제한이 항상 더 정확하다고 할 수 없으며 구현 방식이 다릅니다(B는 틀림).
 - Windows 노드는 cgroups가 아닌 Job Objects를 사용합니다(D는 틀림).
 </details>
 
@@ -2401,3 +2207,17 @@ Windows 노드의 보안을 강화하기 위한 추가 모범 사례:
 - 컨테이너 이미지에 불필요한 도구 및 구성 요소 제거
 - 런타임 보안 모니터링 구현
 </details>
+
+## 검증 참고 자료
+
+- https://kubernetes.io/docs/concepts/windows/intro/
+- https://kubernetes.io/docs/concepts/configuration/windows-resource-management/
+- https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#dns-windows
+- https://kubernetes.io/docs/tasks/configure-pod-container/configure-gmsa/
+- https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/
+- https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/manage-serviceaccounts
+- https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/gmsa-run-container
+- https://github.com/prometheus-community/windows_exporter/blob/master/kubernetes/windows-exporter-daemonset.yaml
+- https://github.com/fluent/fluent-bit-docs/blob/master/installation/downloads/windows.md
+- https://github.com/containerd/containerd/blob/main/docs/cri/config.md
+- https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker?view=sql-server-ver17&tabs=cli

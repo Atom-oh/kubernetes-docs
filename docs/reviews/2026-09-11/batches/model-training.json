@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/ai-ml/05-model-training.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "da465e2ada0c56a4a156a2a8bce2667aa1285b9604231b9895ff88a38455ca70",
+    "summary": "Reviewedallprose/76uniqueblocks;currentSlurm/MPI/Volcano/Neuronsemantics,correctlaunch/globalbatch/checkpoints;nativeCPUresumeandlauncherfixture+Helm/CRDs+6figures18responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/model-training-validation.json"
+  },
+  {
+    "path": "en/ai-ml/05-model-training.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "33e57526c6df689e042d8821d216f6cfbafc6c5e509fc90cc7f583672cfab538",
+    "summary": "Reviewedallprose/76uniqueblocks;currentSlurm/MPI/Volcano/Neuronsemantics,correctlaunch/globalbatch/checkpoints;nativeCPUresumeandlauncherfixture+Helm/CRDs+6figures18responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/model-training-validation.json"
+  },
+  {
+    "path": "ko/quizzes/ai-ml/05-model-training-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "cab09ae19515fdde5b5b650f1ae9169148aaf9efb2f8e884994096e1f5b39aa3",
+    "summary": "Reviewedallprose/76uniqueblocks;currentSlurm/MPI/Volcano/Neuronsemantics,correctlaunch/globalbatch/checkpoints;nativeCPUresumeandlauncherfixture+Helm/CRDs+6figures18responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/model-training-validation.json"
+  },
+  {
+    "path": "en/quizzes/ai-ml/05-model-training-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "7813001d9cb0828123513f2e0706b3a5dc00920da7b619dcd5c86da7b04b31f4",
+    "summary": "Reviewedallprose/76uniqueblocks;currentSlurm/MPI/Volcano/Neuronsemantics,correctlaunch/globalbatch/checkpoints;nativeCPUresumeandlauncherfixture+Helm/CRDs+6figures18responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/model-training-validation.json"
+  }
+]

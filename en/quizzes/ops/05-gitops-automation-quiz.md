@@ -21,7 +21,7 @@ Atlantis is a self-hosted application that listens for Terraform pull requests a
 
 </details>
 
-### 2. What is a key advantage of Terraform Cloud over self-hosted Terraform?
+### 2. What is a key advantage of HCP Terraform over self-hosted Terraform?
 
 - A) Free unlimited usage
 - B) Managed state, runs, and collaboration features
@@ -34,24 +34,24 @@ Atlantis is a self-hosted application that listens for Terraform pull requests a
 **Answer: B) Managed state, runs, and collaboration features**
 
 **Explanation:**
-Terraform Cloud provides managed remote state storage, run execution, team collaboration, policy enforcement (Sentinel), and a private module registry. These managed features reduce operational overhead compared to self-hosted setups.
+HCP Terraform provides managed remote state storage, run execution, team collaboration, policy enforcement (Sentinel), and a private module registry. These managed features reduce operational overhead compared to self-hosted setups.
 
 </details>
 
 ### 3. How does FluxCD differ from ArgoCD in its architecture?
 
 - A) FluxCD has no UI
-- B) FluxCD uses a pull-based, distributed architecture without central server
+- B) Both use reconciliation, with different APIs, controllers and UI choices
 - C) FluxCD only supports Helm
 - D) FluxCD requires a database
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) FluxCD uses a pull-based, distributed architecture without central server**
+**Answer: B) Both use reconciliation, with different APIs, controllers and UI choices**
 
 **Explanation:**
-FluxCD runs controllers directly in each cluster that pull from git, while ArgoCD uses a centralized server model. FluxCD's approach is more lightweight and scales naturally in multi-cluster scenarios without a central hub.
+Flux uses GitRepository, Kustomization and other controller-specific APIs. Argo CD also has multiple components and supports different deployment topologies. Resource use and multi-cluster behavior depend on configuration rather than a universal architectural ranking.
 
 </details>
 
@@ -68,24 +68,23 @@ FluxCD runs controllers directly in each cluster that pull from git, while ArgoC
 **Answer: B) Scans registries and updates git with new image tags**
 
 **Explanation:**
-The Image Automation Controller watches container registries for new image tags, then automatically commits updates to git repositories. This enables fully automated deployments when new images are pushed, maintaining GitOps principles.
+The image-reflector-controller scans registries and evaluates ImagePolicies. The separate image-automation-controller applies those choices to marked files and commits them to Git. This enables fully automated deployments when new images are pushed, maintaining GitOps principles.
 
 </details>
 
-### 5. In Atlantis workflow, what happens when a PR is approved and merged?
+### 5. What is the ordinary Atlantis apply-and-merge sequence?
 
-- A) Terraform plan runs automatically
-- B) Atlantis runs terraform apply on the merged code
-- C) The PR is closed without action
-- D) A new branch is created
+- A) Merging any PR always applies its Terraform automatically
+- B) Review a PR plan, satisfy requirements, explicitly apply the saved plan, then merge
+- C) Merge first and ignore the saved plan
+- D) A successful plan is itself an apply
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Atlantis runs terraform apply on the merged code**
+**Answer: B) Review a PR plan, satisfy requirements, explicitly apply the saved plan, then merge**
 
-**Explanation:**
-When configured with auto-apply or after explicit approval, Atlantis runs `terraform apply` after PR merge. This ensures infrastructure changes are applied only after code review and approval, maintaining change control.
+**Explanation:** Atlantis applies from the PR workflow; merge is not an apply trigger by itself. Optional automerge merges after successful applies. Review/re-plan changed commits and do not let a PR override server-enforced requirements.
 
 </details>
 
@@ -119,7 +118,7 @@ AIOps applies machine learning to detect anomalies in metrics and logs, correlat
 **Answer: B) By detecting anomalies and creating PRs to update weight configurations in git**
 
 **Explanation:**
-AIOps can monitor metrics, detect issues in the green deployment (error rates, latency), and automatically create a PR to shift traffic weights back to blue. This maintains GitOps principles while enabling automated incident response.
+AIOps can monitor metrics, detect issues in the green deployment (error rates, latency), and automatically create a PR to shift traffic weights back to blue. The proposal still needs data-quality checks, authorized approval and a constrained executor that rechecks current state, capacity and target health. An anomaly or a newly opened PR alone is not permission to shift traffic.
 
 </details>
 
@@ -140,24 +139,23 @@ GitRepository is a Flux custom resource that specifies a git repository URL, bra
 
 </details>
 
-### 9. When comparing FluxCD and ArgoCD, which statement is accurate?
+### 9. Which statement about multi-tenancy is accurate?
 
-- A) ArgoCD has better multi-tenancy through its Project model
-- B) FluxCD has a richer built-in UI
-- C) ArgoCD uses GitOps while FluxCD doesn't
-- D) FluxCD requires external databases
+- A) Argo CD is always more secure because it has AppProjects
+- B) A Flux namespace alone completes tenant isolation
+- C) Both require deliberate source, identity, RBAC and resource-boundary configuration
+- D) Image automation also performs vulnerability scanning
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) ArgoCD has better multi-tenancy through its Project model**
+**Answer: C) Both require deliberate source, identity, RBAC and resource-boundary configuration**
 
-**Explanation:**
-ArgoCD's Project resource provides robust multi-tenancy with fine-grained access control over repositories, clusters, and namespaces. FluxCD achieves multi-tenancy through namespace isolation but with less granular control.
+**Explanation:** AppProjects and Flux tenant identities constrain different parts of reconciliation. Neither automatically supplies every network, Kubernetes authorization or untrusted-code isolation boundary. Avoid having two controllers own the same resource fields.
 
 </details>
 
-### 10. In Terraform Cloud, what is a Sentinel policy?
+### 10. In HCP Terraform, what is a Sentinel policy?
 
 - A) A backup strategy
 - B) A policy-as-code framework for governance and compliance
@@ -170,6 +168,6 @@ ArgoCD's Project resource provides robust multi-tenancy with fine-grained access
 **Answer: B) A policy-as-code framework for governance and compliance**
 
 **Explanation:**
-Sentinel is HashiCorp's policy-as-code framework that enforces rules before Terraform applies changes. Policies can mandate tagging, restrict instance types, require encryption, or enforce any custom compliance requirements.
+Sentinel is HashiCorp's policy-as-code framework that enforces rules before Terraform applies changes. Policies can check tags, instance types, encryption or other modeled requirements. Their actual effect depends on policy-set scope, enforcement and handling of missing/unknown values; an example does not automatically cover every resource.
 
 </details>

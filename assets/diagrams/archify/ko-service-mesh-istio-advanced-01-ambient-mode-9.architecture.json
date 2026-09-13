@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "리소스 사용량 시각화",
+    "output": "ko-service-mesh-istio-advanced-01-ambient-mode-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "데이터 플레인 모드"
+        },
+        "cloud": {
+          "label": "절감 효과"
+        }
+      }
+    },
+    "viewBox": [
+      1220,
+      340
+    ]
+  },
+  "components": [
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "Sidecar Mode",
+      "sublabel": "메모리 5GB · CPU 10 vCPU · 파드당 50MB + 0.1 CPU",
+      "pos": [
+        70,
+        90
+      ],
+      "size": [
+        320,
+        72
+      ]
+    },
+    {
+      "id": "ambient",
+      "type": "backend",
+      "label": "Ambient Mode",
+      "sublabel": "메모리 700MB · CPU 1.5 vCPU · ztunnel 10개 + waypoint 1개",
+      "pos": [
+        450,
+        90
+      ],
+      "size": [
+        320,
+        72
+      ]
+    },
+    {
+      "id": "savings",
+      "type": "cloud",
+      "label": "절감량",
+      "sublabel": "메모리 86% · CPU 85% · 비용 약 80% 절감",
+      "pos": [
+        830,
+        90
+      ],
+      "size": [
+        320,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "100개 파드 클러스터",
+      "wraps": [
+        "sidecar",
+        "ambient",
+        "savings"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sidecar-to-ambient",
+      "from": "sidecar",
+      "to": "ambient",
+      "label": "비교",
+      "variant": "dashed"
+    },
+    {
+      "id": "ambient-to-savings",
+      "from": "ambient",
+      "to": "savings",
+      "label": "결과",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Sidecar Mode 계산",
+      "items": [
+        "메모리: 100 파드 × 50MB = 5,000MB (5GB)",
+        "CPU: 100 파드 × 0.1 vCPU = 10 vCPU"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ambient Mode 계산 (노드 10개)",
+      "items": [
+        "메모리: ztunnel 10 × 50MB + waypoint 200MB = 700MB",
+        "CPU: ztunnel 10 × 0.1 + waypoint 0.5 = 1.5 vCPU",
+        "절감: 메모리 4,300MB(~86%), CPU 8.5 vCPU(~85%)"
+      ]
+    }
+  ]
+}

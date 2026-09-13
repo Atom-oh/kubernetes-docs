@@ -1,7 +1,7 @@
 # WorkloadEntry
 
-> **Supported Version**: Istio 1.28+
-> **Last Updated**: February 19, 2026
+> **Reviewed Version**: Istio 1.31.0
+> **Last Updated**: September 11, 2026
 
 WorkloadEntry is a resource for registering Virtual Machines (VMs) or bare-metal servers into the Istio service mesh. This enables workloads outside of Kubernetes to utilize the mesh's traffic management, security, and observability features.
 
@@ -21,13 +21,17 @@ WorkloadEntry is a resource for registering Virtual Machines (VMs) or bare-metal
 
 ## Overview
 
+WorkloadEntry describes a workload; creating it does not install Envoy, bootstrap identity, create network connectivity, or publish a DNS record. This chapter uses sidecar-mode VM integration. Examples are independent; keep each ServiceEntry, selected WorkloadEntries, and ServiceAccount in the intended namespace. The diagrams show registry/configuration relationships, not extra network hops.
+
 ### What is WorkloadEntry?
 
 WorkloadEntry is an Istio Custom Resource Definition (CRD) that registers workloads (VMs, bare-metal) outside the mesh into the Istio service mesh.
 
 ### Use Scenarios
 
-![Architecture diagram showing legacy VMs and a bare-metal server registering with the istiod control plane while their applications keep talking over mTLS to matching workloads inside a Kubernetes cluster.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-0.svg)
+![Architecture diagram showing legacy VMs and a bare-metal server registering with the istiod control plane, which delivers configuration to the Envoy sidecars in Kubernetes Pods while the VMs and Pod workloads talk over mTLS.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-13-workload-entry-0.html)
 
 **Primary Use Cases**:
 1. **Gradual Migration**: Incrementally migrate legacy applications to Kubernetes
@@ -53,13 +57,17 @@ WorkloadEntry is an Istio Custom Resource Definition (CRD) that registers worklo
 
 ### Traffic Flow Comparison
 
-![Flowchart comparing how a client request reaches a Kubernetes Pod through automatic Service discovery against how it reaches a VM through a manually registered ServiceEntry and WorkloadEntry.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-1.svg)
+![Flowchart comparing how a client request reaches a Kubernetes Pod through automatic Service discovery against how it reaches a VM through a manually registered ServiceEntry and WorkloadEntry.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-13-workload-entry-1.html)
 
 ## Architecture
 
 ### VM Workload Architecture
 
-![Architecture diagram showing a manually installed Envoy sidecar on a VM exchanging mTLS traffic with a Pod's auto-injected Envoy, while istiod pushes xDS config and certificates to both proxies.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-2.svg)
+![Architecture diagram showing a manually installed Envoy sidecar on a VM exchanging mTLS traffic with a Pod's auto-injected Envoy, while istiod pushes xDS config to both proxies and issues a certificate to the VM side.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-13-workload-entry-2.html)
 
 ### Key Components
 
@@ -112,7 +120,7 @@ spec:
 
 | Field | Description | Example |
 |-------|-------------|---------|
-| **address** | VM's IP address (required) | `192.168.1.100` |
+| **address** | Endpoint address (IP, or DNS with DNS resolution; may be omitted for a configured remote network) | `192.168.1.100` |
 | **labels** | Labels for ServiceEntry matching | `app: legacy-api` |
 | **serviceAccount** | SA for mTLS authentication | `legacy-api-sa` |
 | **ports** | Port map to expose | `http: 8080` |
@@ -212,7 +220,9 @@ spec:
 
 ### Operation Flow
 
-![Sequence diagram showing a Kubernetes Pod resolving a virtual IP through Istio DNS, then the Envoy proxy matching a ServiceEntry and WorkloadEntry before opening an mTLS connection to the registered VM and returning its response.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-3.svg)
+![Sequence diagram showing a Kubernetes Pod resolving a virtual IP through Istio DNS, then the Envoy proxy matching a ServiceEntry and WorkloadEntry before opening an mTLS connection to the registered VM and returning its response.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-13-workload-entry-3.html)
 
 ### Load Balancing
 
@@ -223,6 +233,7 @@ apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: database-cluster
+  namespace: vm-workloads
 spec:
   hosts:
   - db.cluster.internal
@@ -236,13 +247,37 @@ spec:
     labels:
       app: postgres
       tier: database
+      role: primary
+---
+# Separate read-only replica service
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: database-replicas
+  namespace: vm-workloads
+spec:
+  hosts:
+  - db-replicas.cluster.internal
+  ports:
+  - number: 5432
+    name: postgresql
+    protocol: TCP
+  location: MESH_INTERNAL
+  resolution: STATIC
+  workloadSelector:
+    labels:
+      app: postgres
+      tier: database
+      role: replica
 ---
 # Primary DB
 apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: postgres-primary
+  namespace: vm-workloads
 spec:
+  serviceAccount: vm-postgres-sa
   address: 10.0.1.100
   labels:
     app: postgres
@@ -255,7 +290,9 @@ apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: postgres-replica-1
+  namespace: vm-workloads
 spec:
+  serviceAccount: vm-postgres-sa
   address: 10.0.1.101
   labels:
     app: postgres
@@ -268,7 +305,9 @@ apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: postgres-replica-2
+  namespace: vm-workloads
 spec:
+  serviceAccount: vm-postgres-sa
   address: 10.0.1.102
   labels:
     app: postgres
@@ -277,19 +316,23 @@ spec:
   weight: 50
 ```
 
+Send writes only to the primary service and reads to replicas only when the application tolerates replication semantics. Generic endpoint weights do not understand PostgreSQL roles. Configure DNS capture/unique VIPs for same-port services, and bootstrap each VM with the stated ServiceAccount.
+
 ## VM Registration Practical Guide
 
 ### Prerequisites
 
 1. **VM Requirements**:
    - Network: Can communicate with Kubernetes cluster
-   - OS: Linux (Ubuntu 20.04+ recommended)
-   - Ports: Envoy ports open (15012, 15017, etc.)
+   - OS/CPU: a Linux distribution and architecture supported by the selected sidecar package; this example uses the Debian package
+   - Connectivity: reach istiod xDS/CA through its exposed VM gateway (normally 15012), and route workload traffic over the chosen topology. 15017 is a Kubernetes webhook port, not a VM application requirement.
 
 2. **Kubernetes Preparation**:
    - Istio installation complete
    - Create namespace for VM usage
    - Create ServiceAccount
+
+Before generating bootstrap files, expose the existing control plane for VM access using the [official VM installation procedure](https://istio.io/latest/docs/setup/install/virtual-machine/). A cluster-only istiod Service is not enough. This walkthrough assumes routed Pod-to-VM connectivity in one logical network; use the documented east-west/network configuration for separated networks. The generated cluster ID must match istiod’s configuration.
 
 ### Step 1: Create ServiceAccount
 
@@ -300,19 +343,10 @@ kubectl create namespace vm-workloads
 # Create ServiceAccount
 kubectl create serviceaccount vm-postgres-sa -n vm-workloads
 
-# (Optional) RBAC setup
-kubectl create role vm-postgres-role \
-  --verb=get,list,watch \
-  --resource=configmaps,secrets \
-  -n vm-workloads
-
-kubectl create rolebinding vm-postgres-binding \
-  --role=vm-postgres-role \
-  --serviceaccount=vm-workloads:vm-postgres-sa \
-  -n vm-workloads
+# VM identity bootstrap does not require listing Kubernetes Secrets.
 ```
 
-### Step 2: Create WorkloadGroup (Optional)
+### Step 2: Prepare WorkloadGroup Bootstrap Input
 
 WorkloadGroup serves as a template for multiple WorkloadEntries:
 
@@ -329,9 +363,10 @@ spec:
       version: v14
   template:
     serviceAccount: vm-postgres-sa
-    network: vm-network
+    network: ""  # Same logical network in this walkthrough
     ports:
       postgresql: 5432
+      metrics: 9187
 ```
 
 ### Step 3: Install Envoy on VM
@@ -340,11 +375,11 @@ spec:
 
 ```bash
 # Generate VM registration files with istioctl
+umask 077
 istioctl x workload entry configure \
   -f workloadgroup.yaml \
   -o vm-postgres-1 \
-  --clusterID Kubernetes \
-  --autoregister
+  --clusterID Kubernetes
 
 # Generated files:
 # - cluster.env: Cluster information
@@ -357,38 +392,33 @@ istioctl x workload entry configure \
 #### Execute Installation on VM
 
 ```bash
-# Connect to VM
+# Run on the administration workstation before entering the VM shell
+ssh user@192.168.1.100 'install -d -m 700 "$HOME/istio-bootstrap"'
+scp vm-postgres-1/* user@192.168.1.100:istio-bootstrap/
 ssh user@192.168.1.100
 
-# Copy files (using SCP)
-scp -r vm-postgres-1/* user@192.168.1.100:/tmp/
-
-# Install Envoy on VM
-sudo apt-get update
-sudo apt-get install -y curl
-
-# Install Istio sidecar
-curl -LO https://storage.googleapis.com/istio-release/releases/1.28.0/deb/istio-sidecar.deb
+# From this point, run on the VM
+VM_BOOTSTRAP_DIR="$HOME/istio-bootstrap"
+curl -fsSLo istio-sidecar.deb \
+  https://blob.istio.io/istio-release/releases/1.31.0/deb/istio-sidecar.deb
 sudo dpkg -i istio-sidecar.deb
-
-# Place configuration files
-sudo mkdir -p /etc/certs
-sudo cp /tmp/root-cert.pem /etc/certs/
-sudo cp /tmp/istio-token /var/run/secrets/tokens/
-sudo cp /tmp/cluster.env /var/lib/istio/envoy/
-sudo cp /tmp/mesh.yaml /etc/istio/config/mesh
-
-# Start Envoy
-sudo systemctl start istio
-sudo systemctl enable istio
-
-# Check status
+sudo install -d -o istio-proxy -m 0750 \
+  /etc/certs /var/run/secrets/tokens /var/lib/istio/envoy /etc/istio/config /etc/istio/proxy
+sudo install -o istio-proxy -m 0644 "$VM_BOOTSTRAP_DIR/root-cert.pem" /etc/certs/root-cert.pem
+sudo install -o istio-proxy -m 0600 "$VM_BOOTSTRAP_DIR/istio-token" /var/run/secrets/tokens/istio-token
+sudo install -o istio-proxy -m 0600 "$VM_BOOTSTRAP_DIR/cluster.env" /var/lib/istio/envoy/cluster.env
+sudo install -o istio-proxy -m 0600 "$VM_BOOTSTRAP_DIR/mesh.yaml" /etc/istio/config/mesh
+# Review/merge once; replace stale istiod entries rather than appending duplicates
+cat "$VM_BOOTSTRAP_DIR/hosts" | sudo tee -a /etc/hosts >/dev/null
+sudo systemctl enable --now istio
 sudo systemctl status istio
 ```
 
+
+
 ### Step 4: Register WorkloadEntry
 
-If auto-registration is enabled, it's automatically created when Envoy starts. Manual registration:
+The commands above use manual registration. Apply this WorkloadEntry after the VM agent is bootstrapped; do not also create a duplicate manual entry for an auto-registered VM:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -404,6 +434,7 @@ spec:
   serviceAccount: vm-postgres-sa
   ports:
     postgresql: 5432
+    metrics: 9187
 ```
 
 ```bash
@@ -427,6 +458,9 @@ spec:
   - number: 5432
     name: postgresql
     protocol: TCP
+  - number: 9187
+    name: metrics
+    protocol: HTTP
   location: MESH_INTERNAL
   resolution: STATIC
   workloadSelector:
@@ -440,26 +474,39 @@ kubectl apply -f serviceentry.yaml
 
 ### Step 6: Test Connection
 
-```bash
-# Create test pod
-kubectl run -it --rm debug \
-  --image=postgres:14 \
-  --restart=Never \
-  --namespace=vm-workloads \
-  -- psql -h postgres.vm.internal -U dbuser -d mydb
-
-# On successful connection:
-# Password for user dbuser:
-# psql (14.x)
-# Type "help" for help.
-# mydb=#
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pg-client
+  namespace: vm-workloads
+  labels:
+    sidecar.istio.io/inject: "true"
+  annotations:
+    proxy.istio.io/config: |
+      proxyMetadata:
+        ISTIO_META_DNS_CAPTURE: "true"
+spec:
+  containers:
+  - name: postgres
+    image: postgres:14
+    command: ["sleep", "infinity"]
 ```
+
+```bash
+kubectl apply -f pg-client.yaml
+kubectl wait -n vm-workloads --for=condition=Ready pod/pg-client --timeout=120s
+kubectl exec -it pg-client -n vm-workloads -c postgres -- \
+  psql -h postgres.vm.internal -U dbuser -d mydb
+```
+
+Save the Pod manifest as pg-client.yaml. The PostgreSQL client version is an application example, independent of the Istio version. Supply valid database credentials interactively. After applying the restrictive policy below, use an allowed ServiceAccount for tests; the default test identity will be denied. Remove the test Pod when finished.
 
 ## Security Settings (mTLS)
 
 ### Automatic mTLS Enablement
 
-WorkloadEntry automatically supports mTLS:
+With the VM agent bootstrapped for the declared ServiceAccount, mesh proxies can use auto mTLS. WorkloadEntry alone does not turn a plain VM into a mesh participant:
 
 ```yaml
 # Force mTLS with PeerAuthentication
@@ -474,6 +521,8 @@ spec:
 ```
 
 ### VM Identity Verification
+
+Unlike pod-sidecar bootstrap, the VM integration persists its issued certificate/key under /etc/certs and uses the existing mTLS identity for renewal. These files appear after successful bootstrap. Keep keys private; regenerate bootstrap material only as part of a diagnosed recovery, not by printing or copying credentials into logs.
 
 ```bash
 # Check certificates on VM
@@ -512,7 +561,6 @@ spec:
     to:
     - operation:
         ports: ["5432"]
-        methods: ["*"]
 
   # Allow monitoring service access
   - from:
@@ -527,27 +575,23 @@ spec:
 ### mTLS Verification
 
 ```bash
-# Test connection from pod to VM
-kubectl exec -it <pod-name> -n production -- \
-  curl -v --cacert /etc/certs/root-cert.pem \
-  --cert /etc/certs/cert-chain.pem \
-  --key /etc/certs/key.pem \
-  https://postgres.vm.internal:5432
-
-# Verify mTLS with Envoy stats
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats | grep ssl
-
-# Example output:
-# listener.0.0.0.0_15006.ssl.connection_error: 0
-# listener.0.0.0.0_15006.ssl.handshake: 1234
+# Use a PostgreSQL client in an authorized mesh workload; PostgreSQL is not HTTPS
+kubectl exec -it <authorized-client-pod> -n production -c <app-container> -- \
+  psql -h postgres.vm.internal -U dbuser -d mydb
+# Inspect the client proxy's TLS transport and certificates separately
+istioctl proxy-config clusters <authorized-client-pod> -n production --fqdn postgres.vm.internal -o json
+istioctl proxy-config secret <authorized-client-pod> -n production
+# On the VM, inspect public certificate information through its local admin interface
+curl -fsS http://127.0.0.1:15000/certs
 ```
 
 ## Health Checks and Monitoring
 
 ### Health Check Configuration
 
-WorkloadEntry does not support automatic health checks, so manual configuration is required:
+For the optional automated workflow, the relevant control-plane flags are `PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRATION` and `PILOT_ENABLE_WORKLOAD_ENTRY_HEALTHCHECKS`; merge them into the existing installation settings as documented.
+
+WorkloadGroup supports readiness probes. The documented auto-registration/health-check workflow requires enabling its istiod flags, applying the WorkloadGroup, and generating bootstrap files with --autoregister. It is an opt-in workflow, distinct from the manual path above. The DestinationRule below is passive connection-failure detection, not an active health probe:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -561,14 +605,24 @@ spec:
     connectionPool:
       tcp:
         maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
     outlierDetection:
-      consecutiveErrors: 5  # Exclude after 5 consecutive failures
+      consecutive5xxErrors: 5  # Exclude after 5 consecutive failures
       interval: 30s         # Check every 30 seconds
       baseEjectionTime: 30s # Exclude for 30 seconds
       maxEjectionPercent: 50 # Exclude up to 50%
-      minHealthPercent: 50   # Maintain at least 50%
+      minHealthPercent: 0    # Disable panic fail-open threshold
+```
+
+```yaml
+# Optional WorkloadGroup probe fragment for the documented auto-registration workflow
+spec:
+  probe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    tcpSocket:
+      host: 127.0.0.1
+      port: 5432
 ```
 
 ### VM Health Check Endpoint
@@ -586,56 +640,46 @@ app = Flask(__name__)
 def health():
     try:
         # Verify database connection
-        conn = psycopg2.connect("dbname=mydb user=dbuser")
+        conn = psycopg2.connect("dbname=mydb user=dbuser", connect_timeout=3)
         conn.close()
         return jsonify({"status": "healthy"}), 200
-    except Exception as e:
-        return jsonify({"status": "unhealthy", "error": str(e)}), 503
+    except psycopg2.Error:
+        return jsonify({"status": "unhealthy"}), 503
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='127.0.0.1', port=8080)
 ```
 
 ### Prometheus Metrics Collection
 
+ServiceMonitor discovers Kubernetes Services/endpoints, not WorkloadEntry or ServiceEntry directly. For this VM, deploy postgres_exporter on 9187, expose that named port in the WorkloadEntry/ServiceEntry, and add an explicit scrape job to the existing collector configuration. The collector must resolve the synthetic hostname, use mesh mTLS, and have an identity allowed by the exporter AuthorizationPolicy.
+
 ```yaml
-# Collect VM metrics with ServiceMonitor
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: postgres-vm-metrics
-  namespace: vm-workloads
-spec:
-  selector:
-    matchLabels:
-      app: postgres
-  endpoints:
-  - port: metrics
-    interval: 30s
-    path: /metrics
+# Fragment for the existing Prometheus scrape_configs
+- job_name: workloadentry-postgres
+  scrape_interval: 30s
+  metrics_path: /metrics
+  static_configs:
+  - targets: ["postgres.vm.internal:9187"]
 ```
 
 ### Grafana Dashboard Queries
 
 ```promql
-# VM workload request count
-sum(rate(istio_requests_total{destination_workload="postgres-vm-1"}[5m]))
+# Native PostgreSQL traffic has TCP counters, not HTTP status/latency metrics
+sum(rate(istio_tcp_connections_opened_total{reporter="source",destination_service="postgres.vm.internal"}[5m]))
+sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service="postgres.vm.internal"}[5m]))
 
-# VM workload error rate
-sum(rate(istio_requests_total{destination_workload="postgres-vm-1",response_code="500"}[5m]))
-/
-sum(rate(istio_requests_total{destination_workload="postgres-vm-1"}[5m]))
-* 100
-
-# VM workload latency (P99)
-histogram_quantile(0.99,
-  sum(rate(istio_request_duration_milliseconds_bucket{destination_workload="postgres-vm-1"}[5m])) by (le)
-)
+# Collector/exporter health; inspect the actual emitted labels
+up{job="workloadentry-postgres"}
+pg_up{job="workloadentry-postgres"}
 ```
 
 ## Advanced Configuration
 
 ### Multi-Network Environment
+
+A network name only identifies topology. Configure reachability/east-west gateways and matching mesh network data separately; it does not create a VPC route, peering connection, or gateway. Locality is region/zone/subzone; use real values that agree with the client proxy.
 
 Register VMs in different networks:
 
@@ -680,7 +724,7 @@ spec:
   address: 192.168.1.100
   labels:
     app: api-service
-  locality: us-west/us-west-2/us-west-2a
+  locality: us-west-2/us-west-2a
   weight: 100
 ---
 apiVersion: networking.istio.io/v1
@@ -691,7 +735,7 @@ spec:
   address: 10.0.1.100
   labels:
     app: api-service
-  locality: us-east/us-east-1/us-east-1a
+  locality: us-east-1/us-east-1a
   weight: 100
 ---
 # Locality-aware routing with DestinationRule
@@ -706,14 +750,14 @@ spec:
       localityLbSetting:
         enabled: true
         distribute:
-        - from: us-west/*
+        - from: us-west-2/*
           to:
-            "us-west/*": 80
-            "us-east/*": 20
-        - from: us-east/*
+            "us-west-2/*": 80
+            "us-east-1/*": 20
+        - from: us-east-1/*
           to:
-            "us-east/*": 80
-            "us-west/*": 20
+            "us-east-1/*": 80
+            "us-west-2/*": 20
 ```
 
 ### Canary Deployment
@@ -818,7 +862,10 @@ apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: postgres-vm-1
+  namespace: vm-workloads
 spec:
+  address: 192.168.1.100
+  serviceAccount: vm-postgres-sa
   labels:
     app: postgres  # Must be identical to ServiceEntry
     version: v14
@@ -843,22 +890,23 @@ sudo openssl x509 -in /etc/certs/cert-chain.pem -noout -dates
 
 # Check ServiceAccount token
 sudo ls -la /var/run/secrets/tokens/
-sudo cat /var/run/secrets/tokens/istio-token
+sudo stat /var/run/secrets/tokens/istio-token
 ```
 
 **Resolution**:
 
 ```bash
-# Reissue certificates
+# Regenerate bootstrap inputs from the admin workstation; this command does not issue a certificate
+umask 077
 istioctl x workload entry configure \
   -f workloadgroup.yaml \
   -o vm-postgres-1 \
-  --clusterID Kubernetes \
-  --autoregister
+  --clusterID Kubernetes
 
 # Copy to VM and restart Envoy
-scp -r vm-postgres-1/* user@192.168.1.100:/tmp/
-ssh user@192.168.1.100 "sudo cp /tmp/root-cert.pem /etc/certs/ && sudo systemctl restart istio"
+scp vm-postgres-1/* user@192.168.1.100:istio-bootstrap/
+# Reapply all reviewed runtime files and permissions using the VM installation steps,
+# including the token and mesh configuration; then restart istio. Do not replace only the root CA.
 ```
 
 ### Traffic Not Reaching Due to Health Check Failure
@@ -886,17 +934,20 @@ apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: postgres-healthcheck
+  namespace: vm-workloads
 spec:
   host: postgres.vm.internal
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 10     # More lenient
+      consecutive5xxErrors: 10     # More lenient
       interval: 60s             # Increase check interval
       baseEjectionTime: 60s
-      maxEjectionPercent: 100   # Prevent all from being excluded
+      maxEjectionPercent: 50    # Bound ejection; 100 would allow excluding every endpoint
 ```
 
 ### DNS Lookup Failure
+
+A ServiceEntry VIP alone does not create a CoreDNS record. Enable DNS capture on the calling sidecar and recreate its Pod, or provide a real DNS record. VM bootstrap enables the VM DNS proxy; that does not automatically enable capture on every Kubernetes client.
 
 **Symptom**: `postgres.vm.internal` lookup fails from pod
 
@@ -907,8 +958,7 @@ spec:
 kubectl get serviceentry -n vm-workloads
 
 # DNS lookup test
-kubectl run -it --rm debug --image=busybox --restart=Never -- \
-  nslookup postgres.vm.internal
+kubectl exec pg-client -n vm-workloads -c postgres -- getent hosts postgres.vm.internal
 
 # Check Istio DNS Proxy enablement
 kubectl get pod <pod-name> -o yaml | grep ISTIO_META_DNS_CAPTURE
@@ -922,6 +972,7 @@ apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: postgres-service
+  namespace: vm-workloads
 spec:
   hosts:
   - postgres.vm.internal
@@ -942,7 +993,7 @@ spec:
 
 ### 1. Naming Conventions
 
-```yaml
+```text
 # WorkloadEntry name: <app>-<role>-<id>
 name: postgres-primary-1
 name: postgres-replica-2
@@ -991,33 +1042,30 @@ kubectl create role db-limited \
 ### 4. Monitoring and Alerting
 
 ```yaml
-# Alert setup with PrometheusRule
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: workloadentry-alerts
+  namespace: vm-workloads
 spec:
   groups:
   - name: workloadentry
     rules:
-    - alert: WorkloadEntryDown
-      expr: up{job="workloadentry-postgres"} == 0
+    - alert: VMExporterScrapeDown
+      expr: up{job="workloadentry-postgres"} == 0 or absent(up{job="workloadentry-postgres"})
       for: 5m
       labels:
         severity: critical
       annotations:
-        summary: "WorkloadEntry {{ $labels.instance }} is down"
-
-    - alert: WorkloadEntryHighErrorRate
-      expr: |
-        rate(istio_requests_total{
-          destination_workload=~".*-vm-.*",
-          response_code="500"
-        }[5m]) > 0.05
-      for: 10m
+        summary: "VM exporter scrape target is unavailable"
+    - alert: PostgresExporterReportsDown
+      expr: pg_up{job="workloadentry-postgres"} == 0
+      for: 5m
       labels:
         severity: warning
 ```
+
+
 
 ### 5. Documentation
 
@@ -1044,6 +1092,8 @@ spec:
 
 ### 6. Backup and Disaster Recovery
 
+Preserve the original WorkloadGroup/ServiceEntry/manual WorkloadEntry manifests and mesh version separately from diagnostic exports. Securely back up the VM’s persisted identity as required. Exported objects contain server metadata/status that must be reviewed before restore; auto-registered entries should be recreated by their controller, not duplicated manually. Restore namespaces/accounts and control-plane reachability first.
+
 ```bash
 # Backup WorkloadEntry
 kubectl get workloadentry -n vm-workloads -o yaml > workloadentries-backup.yaml
@@ -1052,13 +1102,53 @@ kubectl get workloadentry -n vm-workloads -o yaml > workloadentries-backup.yaml
 kubectl get serviceentry -n vm-workloads -o yaml > serviceentries-backup.yaml
 
 # Restore
-kubectl apply -f workloadentries-backup.yaml
-kubectl apply -f serviceentries-backup.yaml
+kubectl apply -f serviceentry.yaml
+# Manual-registration path only: use the reviewed declarative source, not raw status snapshots
+kubectl apply -f workloadentry.yaml
 ```
 
 ### 7. Gradual Migration Strategy
 
-![Flowchart of the five-phase path for moving a workload off a VM: register it in the mesh, split traffic, deploy to Kubernetes, transition traffic, then remove the VM.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-4.svg)
+![Five-phase gradual migration flow that moves a VM workload registered with WorkloadEntry onto Kubernetes, with the phase-4 traffic transition highlighted as the key step.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-13-workload-entry-4.html)
+
+Before these phases, bootstrap the legacy VM identity and create the shared ServiceEntry/subsets below. The Kubernetes deployment must be in vm-workloads with app=api and version=k8s, and its proxy/DNS configuration must be ready before traffic moves.
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: api-migration-service
+  namespace: vm-workloads
+spec:
+  hosts: [api.internal]
+  addresses: [240.240.4.1]
+  ports:
+  - number: 8080
+    name: http
+    protocol: HTTP
+  location: MESH_INTERNAL
+  resolution: STATIC
+  workloadSelector:
+    labels:
+      app: api
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: api-migration-subsets
+  namespace: vm-workloads
+spec:
+  host: api.internal
+  subsets:
+  - name: legacy
+    labels:
+      version: legacy
+  - name: k8s
+    labels:
+      version: k8s
+```
 
 **Phase 1: VM Mesh Registration**
 ```yaml
@@ -1067,7 +1157,9 @@ apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: legacy-api-vm
+  namespace: vm-workloads
 spec:
+  serviceAccount: api-sa
   address: 192.168.1.100
   labels:
     app: api
@@ -1080,6 +1172,7 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-migration
+  namespace: vm-workloads
 spec:
   hosts:
   - api.internal
@@ -1093,7 +1186,7 @@ spec:
 
 **Phase 3: Kubernetes Deployment**
 ```bash
-kubectl apply -f kubernetes-deployment.yaml
+kubectl apply -n vm-workloads -f kubernetes-deployment.yaml
 ```
 
 **Phase 4: Gradual Traffic Transition**
@@ -1103,13 +1196,18 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-migration
+  namespace: vm-workloads
 spec:
+  hosts:
+  - api.internal
   http:
   - route:
     - destination:
+        host: api.internal
         subset: legacy  # VM
       weight: 90
     - destination:
+        host: api.internal
         subset: k8s     # Kubernetes
       weight: 10
 ```
@@ -1136,3 +1234,12 @@ kubectl delete workloadentry legacy-api-vm -n vm-workloads
 ### Additional Resources
 - [Istio VM Integration Guide](https://istio.io/latest/blog/2020/workload-entry/)
 - [Envoy Proxy Documentation](https://www.envoyproxy.io/docs/envoy/latest/)
+
+- [Primary reference 1](https://istio.io/latest/docs/setup/install/virtual-machine/)
+- [Primary reference 2](https://istio.io/latest/docs/ops/diagnostic-tools/virtual-machines/)
+- [Primary reference 3](https://istio.io/latest/docs/reference/config/networking/workload-entry/)
+- [Primary reference 4](https://istio.io/latest/docs/reference/config/networking/workload-group/)
+- [Primary reference 5](https://istio.io/latest/docs/reference/config/security/authorization-policy/)
+- [Primary reference 6](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [Primary reference 7](https://prometheus-operator.dev/docs/api-reference/api/)
+- [Primary reference 8](https://istio.io/latest/docs/reference/config/networking/destination-rule/)

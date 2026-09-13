@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM 확장과 용량 경계",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1190,
+      430
+    ]
+  },
+  "components": [
+    {
+      "id": "metrics",
+      "type": "external",
+      "label": "검증한 메트릭",
+      "sublabel": "queue / request / utilization",
+      "pos": [
+        30,
+        80
+      ],
+      "size": [
+        250,
+        75
+      ]
+    },
+    {
+      "id": "scaler",
+      "type": "backend",
+      "label": "하나의 Pod scaler",
+      "sublabel": "HPA 또는 KEDA / adapter",
+      "pos": [
+        465,
+        80
+      ],
+      "size": [
+        250,
+        75
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "독립 모델 replica",
+      "sublabel": "readiness / load / drain",
+      "pos": [
+        900,
+        80
+      ],
+      "size": [
+        250,
+        75
+      ]
+    },
+    {
+      "id": "capacity",
+      "type": "cloud",
+      "label": "노드 용량 owner",
+      "sublabel": "Karpenter 또는 Cluster Autoscaler",
+      "pos": [
+        900,
+        300
+      ],
+      "size": [
+        250,
+        75
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "metrics-scaler",
+      "from": "metrics",
+      "to": "scaler",
+      "label": "관측 신호"
+    },
+    {
+      "id": "scaler-pods",
+      "from": "scaler",
+      "to": "pods",
+      "label": "원하는 replica 수"
+    },
+    {
+      "id": "pods-capacity",
+      "from": "pods",
+      "to": "capacity",
+      "label": "스케줄링 수요",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1055,
+        245
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "확장 단위",
+      "items": [
+        "TP/PP worker group은 독립 replica와 다른 lifecycle입니다.",
+        "같은 대상에 여러 scaler나 node owner를 경쟁시키지 않습니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "용량과 비용",
+      "items": [
+        "가용 GPU·할당량·AMI·정책과 모델 로드 시간을 확인합니다.",
+        "Pod가 줄어도 노드 종료 전 EC2 비용이 남을 수 있습니다."
+      ]
+    }
+  ]
+}

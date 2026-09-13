@@ -324,6 +324,16 @@
   * [Flagger Progressive Delivery](gitops/04-flagger.md)
   * [Feature Flags와 OpenFeature](gitops/05-feature-flags.md)
 
+## 엔터프라이즈 클라우드 거버넌스
+
+* [거버넌스 개요](governance/00-governance-overview.md)
+* [Landing Zone, OU와 조직 Control](governance/01-landing-zone-and-ou.md)
+* [Account 구성과 IAM 경계](governance/02-account-and-iam.md)
+* [EKS 멀티 계정·멀티 클러스터 아키텍처](governance/03-eks-multi-account-multi-cluster.md)
+* [Shared VPC와 Connectivity](governance/04-shared-vpc-and-connectivity.md)
+* [Data·Security 경계](governance/05-data-security-boundaries.md)
+* [의사결정 프레임워크와 POC 설계](governance/06-decision-framework-and-poc.md)
+
 ## Platform Engineering
 
 * [Platform Engineering 개요](platform-engineering/00-platform-engineering-overview.md)
@@ -332,7 +342,7 @@
   * [S3 및 IAM 예제](platform-engineering/ack/01-s3-iam.md)
   * [SQS 및 SNS 예제](platform-engineering/ack/02-sqs-sns.md)
   * [ELBv2, Route 53, RDS 예제](platform-engineering/ack/03-elbv2-route53-rds.md)
-* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Kube Resource Orchestrator (kro)](platform-engineering/03-kro.md)
 * [Kubernetes 확장 메커니즘](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO 통합 예제](platform-engineering/05-example-corp-app.md)
 * [Backstage IDP](platform-engineering/06-backstage-idp.md)
@@ -393,6 +403,7 @@
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [Zonal 클러스터 운영 전략](ops/15-zonal-operations-guide.md)
   * [트러블슈팅 플레이북](ops/16-troubleshooting-playbook.md)
+  * [EKS Spot 운영 적용 실험과 결과 판정](ops/17-spot-production-experiments.md)
 
 ## Lab Guides
 
@@ -644,10 +655,19 @@
     * [보안 퀴즈](quizzes/gitops/argocd/07-security-quiz.md)
     * [알림 퀴즈](quizzes/gitops/argocd/08-notifications-quiz.md)
     * [모범 사례 퀴즈](quizzes/gitops/argocd/09-best-practices-quiz.md)
+    * [Rollouts Experiment 심층 분석 퀴즈](quizzes/gitops/argocd/10-rollouts-experiment-quiz.md)
   * [FluxCD 퀴즈](quizzes/gitops/02-fluxcd-quiz.md)
   * [GitOps 도구 비교 퀴즈](quizzes/gitops/03-gitops-comparison-quiz.md)
   * [Flagger Progressive Delivery 퀴즈](quizzes/gitops/04-flagger-quiz.md)
   * [Feature Flags와 OpenFeature 퀴즈](quizzes/gitops/05-feature-flags-quiz.md)
+* 엔터프라이즈 클라우드 거버넌스
+  * [거버넌스 개요 퀴즈](quizzes/governance/00-governance-overview-quiz.md)
+  * [Landing Zone, OU와 조직 Control 퀴즈](quizzes/governance/01-landing-zone-and-ou-quiz.md)
+  * [Account 구성과 IAM 경계 퀴즈](quizzes/governance/02-account-and-iam-quiz.md)
+  * [EKS 멀티 계정·멀티 클러스터 아키텍처 퀴즈](quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md)
+  * [Shared VPC와 Connectivity 퀴즈](quizzes/governance/04-shared-vpc-and-connectivity-quiz.md)
+  * [Data·Security 경계 퀴즈](quizzes/governance/05-data-security-boundaries-quiz.md)
+  * [의사결정 프레임워크와 POC 설계 퀴즈](quizzes/governance/06-decision-framework-and-poc-quiz.md)
 * Observability
   * Metrics
     * [메트릭 개요 퀴즈](quizzes/observability/metrics/00-metrics-overview-quiz.md)
@@ -707,3 +727,4 @@
   * [Tekton Pipelines 퀴즈](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Zonal 클러스터 운영 전략 퀴즈](quizzes/ops/15-zonal-operations-guide-quiz.md)
   * [트러블슈팅 플레이북 퀴즈](quizzes/ops/16-troubleshooting-playbook-quiz.md)
+  * [EKS Spot 운영 적용 실험 퀴즈](quizzes/ops/17-spot-production-experiments-quiz.md)

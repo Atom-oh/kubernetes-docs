@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cluster Networking Components and Communication Flows",
+    "locale": "en",
+    "output": "en-core-09-cluster-administration-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inbound",
+        "label": "Inbound request path",
+        "focus": [
+          "client",
+          "ingress",
+          "svc",
+          "pod1",
+          "pod2"
+        ],
+        "note": "Client requests pass through Ingress and the Service to pods on two nodes."
+      },
+      {
+        "id": "pod-to-pod",
+        "label": "Pod-to-pod communication",
+        "focus": [
+          "pod1",
+          "pod2"
+        ],
+        "note": "Every pod must reach pods on other nodes directly, without NAT."
+      },
+      {
+        "id": "outbound",
+        "label": "Outbound to external service",
+        "focus": [
+          "pod1",
+          "pod2",
+          "extsvc"
+        ],
+        "note": "Pods must be able to communicate with services outside the cluster."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "External user",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "cloud",
+      "label": "Ingress",
+      "sublabel": "External entry point",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "Stable endpoint",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "Runs on Node 1",
+      "pos": [
+        720,
+        150
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "Runs on Node 2",
+      "pos": [
+        720,
+        450
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "extsvc",
+      "type": "external",
+      "label": "External Service",
+      "sublabel": "Outside the cluster",
+      "pos": [
+        990,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster Internal",
+      "wraps": [
+        "ingress",
+        "svc",
+        "pod1",
+        "pod2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Node 1",
+      "wraps": [
+        "pod1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Node 2",
+      "wraps": [
+        "pod2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-ingress",
+      "from": "client",
+      "to": "ingress",
+      "label": "Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingress-to-svc",
+      "from": "ingress",
+      "to": "svc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-to-pod1",
+      "from": "svc",
+      "to": "pod1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-to-pod2",
+      "from": "svc",
+      "to": "pod2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod1-to-pod2",
+      "from": "pod1",
+      "to": "pod2",
+      "label": "Pod-to-pod (bidirectional)",
+      "variant": "dashed",
+      "labelAt": [
+        785,
+        330
+      ]
+    },
+    {
+      "id": "pod1-to-ext",
+      "from": "pod1",
+      "to": "extsvc",
+      "label": "Outbound"
+    },
+    {
+      "id": "pod2-to-ext",
+      "from": "pod2",
+      "to": "extsvc",
+      "label": "Outbound"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Kubernetes network model requirements",
+      "items": [
+        "All pods can communicate with all other pods without NAT",
+        "Node agents (kubelet) can communicate with all pods on that node",
+        "Pods running in NAT mode can communicate with the outside"
+      ]
+    }
+  ]
+}

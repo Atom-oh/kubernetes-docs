@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Typha-based Multi-Cluster Federation",
+    "output": "en-networking-calico-07-advanced-topics-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "fed",
+      "type": "backend",
+      "label": "Federation Controller",
+      "sublabel": "Federation layer · state aggregation",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "typha-a1",
+      "type": "messagebus",
+      "label": "Typha A1",
+      "sublabel": "lead instance",
+      "pos": [
+        90,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "typha-a2",
+      "type": "messagebus",
+      "label": "Typha A2",
+      "sublabel": "Typha instance",
+      "pos": [
+        330,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-a1",
+      "type": "backend",
+      "label": "Felix A1",
+      "sublabel": "node agent",
+      "pos": [
+        90,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-a2",
+      "type": "backend",
+      "label": "Felix A2",
+      "sublabel": "node agent",
+      "pos": [
+        330,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "typha-b1",
+      "type": "messagebus",
+      "label": "Typha B1",
+      "sublabel": "lead instance",
+      "pos": [
+        660,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "typha-b2",
+      "type": "messagebus",
+      "label": "Typha B2",
+      "sublabel": "Typha instance",
+      "pos": [
+        900,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-b1",
+      "type": "backend",
+      "label": "Felix B1",
+      "sublabel": "node agent",
+      "pos": [
+        660,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-b2",
+      "type": "backend",
+      "label": "Felix B2",
+      "sublabel": "node agent",
+      "pos": [
+        900,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster A",
+      "wraps": [
+        "typha-a1",
+        "typha-a2",
+        "felix-a1",
+        "felix-a2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster B",
+      "wraps": [
+        "typha-b1",
+        "typha-b2",
+        "felix-b1",
+        "felix-b2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "typha-a1-to-fed",
+      "from": "typha-a1",
+      "to": "fed",
+      "label": "Cluster A state",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "typha-b1-to-fed",
+      "from": "typha-b1",
+      "to": "fed",
+      "label": "Cluster B state",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "felix-a1-to-typha-a1",
+      "from": "felix-a1",
+      "to": "typha-a1",
+      "label": "sync"
+    },
+    {
+      "id": "felix-a2-to-typha-a2",
+      "from": "felix-a2",
+      "to": "typha-a2"
+    },
+    {
+      "id": "felix-b1-to-typha-b1",
+      "from": "felix-b1",
+      "to": "typha-b1",
+      "label": "sync"
+    },
+    {
+      "id": "felix-b2-to-typha-b2",
+      "from": "felix-b2",
+      "to": "typha-b2"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Typha-based federation",
+      "items": [
+        "Each node's Felix connects to a Typha in its own cluster",
+        "One lead Typha per cluster pushes state up to the Federation Controller",
+        "A federation layout that leans on Typha for large multi-cluster estates"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Cross-cluster policy",
+      "items": [
+        "GlobalNetworkPolicy: allow Cluster B pod CIDR 10.245.0.0/16 → TCP 8080",
+        "BGPPeer cluster-b-peer: peerIP 192.168.2.1, asNumber 64513"
+      ]
+    }
+  ]
+}

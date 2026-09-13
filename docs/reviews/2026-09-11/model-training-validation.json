@@ -1,0 +1,1212 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T22:17:09.585077+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 30,
+    "originalTopicsPerLocale": 15,
+    "figures": 6
+  },
+  "contentPreservation": {
+    "originalUniqueBlocksRead": 76,
+    "originalGuidesLinesEach": 1504,
+    "originalQuizLinesEach": 669,
+    "preserved": "All15quiztopicsandtrainingpipeline,parallelism,Slurm/ArgoCD/Karpenter,GPU/EFA,BioNeMo,Trainium,Ray/MPI/Volcano/JupyterHub,storage/checkpoint,AMP/accumulation/attention/scheduler/ZeRO topics retained.",
+    "changes": "ActualSlurmAPIandlifecycle,launcheroversubscription,DPglobalbatch,Neuronrank/master/precompile,Raycheckpoint,MPI slots,VolcanoPodsnotnodes,FSx/EFSboundaries;unverifiedperformanceguaranteesremoved;boundednativeCPUtraining/resumeexampleadded."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/05-model-training.md",
+        "sha256": "da465e2ada0c56a4a156a2a8bce2667aa1285b9604231b9895ff88a38455ca70",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks에서의-모델-훈련"
+          },
+          {
+            "tag": "h2",
+            "id": "훈련-파이프라인"
+          },
+          {
+            "tag": "h2",
+            "id": "분산-훈련-전략"
+          },
+          {
+            "tag": "h2",
+            "id": "slurm과-slinky"
+          },
+          {
+            "tag": "h3",
+            "id": "실제-api와-lifecycle"
+          },
+          {
+            "tag": "h3",
+            "id": "slurm에서-torchrun-실행"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu-통신과-efa"
+          },
+          {
+            "tag": "h2",
+            "id": "bionemo"
+          },
+          {
+            "tag": "h2",
+            "id": "trainium과-neuron"
+          },
+          {
+            "tag": "h3",
+            "id": "멀티노드-job과-사전-컴파일"
+          },
+          {
+            "tag": "h2",
+            "id": "ray-train-mpi와-volcano"
+          },
+          {
+            "tag": "h2",
+            "id": "훈련-스토리지와-체크포인트"
+          },
+          {
+            "tag": "h3",
+            "id": "실행-가능한-작은-cpu-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "수치-정밀도와-메모리-최적화"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "eks에서의-모델-훈련",
+          "훈련-파이프라인",
+          "분산-훈련-전략",
+          "slurm과-slinky",
+          "실제-api와-lifecycle",
+          "slurm에서-torchrun-실행",
+          "$SLURM_JOB_ID",
+          "gpu-통신과-efa",
+          "bionemo",
+          "trainium과-neuron",
+          "멀티노드-job과-사전-컴파일",
+          "ray-train-mpi와-volcano",
+          "훈련-스토리지와-체크포인트",
+          "실행-가능한-작은-cpu-예제",
+          "수치-정밀도와-메모리-최적화",
+          "검증-범위",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/05-model-training.md",
+        "sha256": "33e57526c6df689e042d8821d216f6cfbafc6c5e509fc90cc7f583672cfab538",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "model-training-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "training-pipeline"
+          },
+          {
+            "tag": "h2",
+            "id": "distributed-training-strategies"
+          },
+          {
+            "tag": "h2",
+            "id": "slurm-and-slinky"
+          },
+          {
+            "tag": "h3",
+            "id": "actual-apis-and-lifecycle"
+          },
+          {
+            "tag": "h3",
+            "id": "launching-torchrun-from-slurm"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu-communication-and-efa"
+          },
+          {
+            "tag": "h2",
+            "id": "bionemo"
+          },
+          {
+            "tag": "h2",
+            "id": "trainium-and-neuron"
+          },
+          {
+            "tag": "h3",
+            "id": "multi-node-jobs-and-precompilation"
+          },
+          {
+            "tag": "h2",
+            "id": "ray-train-mpi-and-volcano"
+          },
+          {
+            "tag": "h2",
+            "id": "training-storage-and-checkpoints"
+          },
+          {
+            "tag": "h3",
+            "id": "executable-tiny-cpu-example"
+          },
+          {
+            "tag": "h2",
+            "id": "numerical-precision-and-memory-optimization"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "model-training-on-eks",
+          "training-pipeline",
+          "distributed-training-strategies",
+          "slurm-and-slinky",
+          "actual-apis-and-lifecycle",
+          "launching-torchrun-from-slurm",
+          "$SLURM_JOB_ID",
+          "gpu-communication-and-efa",
+          "bionemo",
+          "trainium-and-neuron",
+          "multi-node-jobs-and-precompilation",
+          "ray-train-mpi-and-volcano",
+          "training-storage-and-checkpoints",
+          "executable-tiny-cpu-example",
+          "numerical-precision-and-memory-optimization",
+          "verification-scope",
+          "references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/05-model-training-quiz.md",
+        "sha256": "cab09ae19515fdde5b5b650f1ae9169148aaf9efb2f8e884994096e1f5b39aa3",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-모델-훈련-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-텐서-병렬화는-무엇을-분할하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-200b-모델과-global-batch를-어떻게-설계하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-slurmctld와-slurmdbd의-상태-관리-역할은-어떻게-다른가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-slinky1-2-2의-compute-group-api는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-fi-provider-efa만-설정하면-nccl-efa가-작동하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-bionemo3-0-0에서-확인할-것은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-optimum-neuron의-trainer가-모든-hf-모델-훈련을-보장하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-훈련-스토리지에서-fsx와-s3-연동을-어떻게-확인하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-volcano-minavailable-4이면-node가4개-필요하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-bf16이-fp16과-다른-점은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-activation-checkpointing과-복구-checkpoint는-어떻게-다른가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-zero-stage3는-자동-cpu-offload인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-mpijob-slotsperworker가-무엇을-보장하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-체크포인트-주기와-복구-성공을-어떻게-검증하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-efa용-단일-az와-karpenter-disruption-budget의-의미는-무엇인가요"
+          }
+        ],
+        "renderedIds": [
+          "eks-모델-훈련-퀴즈",
+          "_1-텐서-병렬화는-무엇을-분할하나요",
+          "_2-200b-모델과-global-batch를-어떻게-설계하나요",
+          "_3-slurmctld와-slurmdbd의-상태-관리-역할은-어떻게-다른가요",
+          "_4-slinky1-2-2의-compute-group-api는-무엇인가요",
+          "_5-fi-provider-efa만-설정하면-nccl-efa가-작동하나요",
+          "_6-bionemo3-0-0에서-확인할-것은-무엇인가요",
+          "_7-optimum-neuron의-trainer가-모든-hf-모델-훈련을-보장하나요",
+          "_8-훈련-스토리지에서-fsx와-s3-연동을-어떻게-확인하나요",
+          "_9-volcano-minavailable-4이면-node가4개-필요하나요",
+          "_10-bf16이-fp16과-다른-점은-무엇인가요",
+          "_11-activation-checkpointing과-복구-checkpoint는-어떻게-다른가요",
+          "_12-zero-stage3는-자동-cpu-offload인가요",
+          "_13-mpijob-slotsperworker가-무엇을-보장하나요",
+          "_14-체크포인트-주기와-복구-성공을-어떻게-검증하나요",
+          "_15-efa용-단일-az와-karpenter-disruption-budget의-의미는-무엇인가요"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/05-model-training-quiz.md",
+        "sha256": "7813001d9cb0828123513f2e0706b3a5dc00920da7b619dcd5c86da7b04b31f4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "model-training-on-eks-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-does-tensor-parallelism-partition"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-how-should-a200b-model-and-global-batch-be-planned"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-how-do-slurmctld-and-slurmdbd-state-responsibilities-differ"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-what-is-the-slinky1-2-2-compute-group-api"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-does-fi-provider-efa-alone-enable-nccl-over-efa"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-what-should-be-checked-for-bionemo3-0-0"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-does-optimum-neuron-trainer-guarantee-training-for-every-hf-model"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-how-should-fsx-and-s3-integration-be-verified"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-does-volcano-minavailable-4-require-four-nodes"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-how-does-bf16-differ-from-fp16"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-how-do-activation-checkpoints-differ-from-recovery-checkpoints"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-does-zero-stage3-automatically-offload-to-cpu"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-what-does-mpijob-slotsperworker-establish"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-how-should-checkpoint-frequency-and-recovery-be-verified"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-what-do-same-az-efa-placement-and-karpenter-disruption-budgets-mean"
+          }
+        ],
+        "renderedIds": [
+          "model-training-on-eks-quiz",
+          "_1-what-does-tensor-parallelism-partition",
+          "_2-how-should-a200b-model-and-global-batch-be-planned",
+          "_3-how-do-slurmctld-and-slurmdbd-state-responsibilities-differ",
+          "_4-what-is-the-slinky1-2-2-compute-group-api",
+          "_5-does-fi-provider-efa-alone-enable-nccl-over-efa",
+          "_6-what-should-be-checked-for-bionemo3-0-0",
+          "_7-does-optimum-neuron-trainer-guarantee-training-for-every-hf-model",
+          "_8-how-should-fsx-and-s3-integration-be-verified",
+          "_9-does-volcano-minavailable-4-require-four-nodes",
+          "_10-how-does-bf16-differ-from-fp16",
+          "_11-how-do-activation-checkpoints-differ-from-recovery-checkpoints",
+          "_12-does-zero-stage3-automatically-offload-to-cpu",
+          "_13-what-does-mpijob-slotsperworker-establish",
+          "_14-how-should-checkpoint-frequency-and-recovery-be-verified",
+          "_15-what-do-same-az-efa-placement-and-karpenter-disruption-budgets-mean"
+        ]
+      }
+    ]
+  },
+  "charts": {
+    "status": "passed",
+    "slurmVersion": "1.2.2",
+    "charts": [
+      {
+        "chart": "crds",
+        "resourceKinds": {
+          "CustomResourceDefinition": 6
+        },
+        "sha256": "b0ffddd27522c3dc0ec74df162f8308d4b2ec70bde7a50c1302ff5fedc1e0eda"
+      },
+      {
+        "chart": "operator",
+        "resourceKinds": {
+          "ServiceAccount": 2,
+          "ClusterRole": 2,
+          "ClusterRoleBinding": 2,
+          "Service": 2,
+          "Deployment": 2,
+          "Certificate": 2,
+          "Issuer": 2,
+          "MutatingWebhookConfiguration": 1,
+          "ValidatingWebhookConfiguration": 1
+        },
+        "sha256": "cb974431ad1ab2c44a857ffb24159175441b5bcdc42381dc6086e549d6beb033"
+      },
+      {
+        "chart": "slurm",
+        "resourceKinds": {
+          "Secret": 2,
+          "Controller": 1,
+          "NodeSet": 1,
+          "RestApi": 1
+        },
+        "sha256": "6257b46038c58423779d640d36b0d64c6bfe396ca419cf500a21169845db7ba1"
+      }
+    ],
+    "CRDkindCount": 6,
+    "nativeRenderedCRsValidated": [
+      "Controller",
+      "NodeSet",
+      "RestApi"
+    ],
+    "mpiCRDVersion": "v2beta1",
+    "scope": "OfficialOCIHelmrenderingandrenderedCRJSONschema(OpenAPInullabletranslatedtonulltype);generatedrandomchartSecretsnotdeployedormadepublic. NoKubernetesadmission/controller/runtime/Slurm/GPUexecution."
+  },
+  "toyCPUTraining": {
+    "status": "passed",
+    "torch": "2.14.0+cpu",
+    "cuda": null,
+    "threads": 1,
+    "fixture": "16samples/Linear2to1/4SGDupdates/2microbatchesperupdate",
+    "resumeMatchesUninterruptedBitwise": true,
+    "scheduleCases": 8,
+    "sourceSha256": "85c5a746eabafb5e09c3001f976008a8ff34ad52ef3bec7183b8c10e79e625eb",
+    "scope": "TinyCPUonly;noGPU/Neuron/DDP/Slurm/MPI/cloud/modeldownload. Atomic local file replacement does not prove filesystem-crash or remote-object durability."
+  },
+  "launcher": {
+    "status": "passed",
+    "launchers": 4,
+    "processesPerLauncher": 8,
+    "intendedTotalProcesses": 32,
+    "uniqueNodeRanks": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "sourceSha256": "70fc272a4c90df3ddf54db9682c46be75b2a8da33b75714ab584e7de6ecfda6b",
+    "scope": "Actual bash expansion with fixture scontrol/srun/torchrun executables; no Slurm allocation, distributed training or GPU launch."
+  },
+  "publishedExamples": {
+    "status": "passed",
+    "checks": [
+      {
+        "locale": "ko",
+        "example": "launch.slurm",
+        "exactNativeSourceMatch": true
+      },
+      {
+        "locale": "ko",
+        "example": "toy_training.py",
+        "exactNativeSourceMatch": true
+      },
+      {
+        "locale": "en",
+        "example": "launch.slurm",
+        "exactNativeSourceMatch": true
+      },
+      {
+        "locale": "en",
+        "example": "toy_training.py",
+        "exactNativeSourceMatch": true
+      }
+    ]
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "9e0f542bddc943adf01e955d4477bac652f1ddc2581cf54ccefc733c8b176e91"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "9e0f542bddc943adf01e955d4477bac652f1ddc2581cf54ccefc733c8b176e91"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "9e0f542bddc943adf01e955d4477bac652f1ddc2581cf54ccefc733c8b176e91"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "1e9acd51d1d688a713e2606a80e68c58c0689304553fd8937781bd06c3250950"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "1e9acd51d1d688a713e2606a80e68c58c0689304553fd8937781bd06c3250950"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "1e9acd51d1d688a713e2606a80e68c58c0689304553fd8937781bd06c3250950"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "5b7a7724a8c14c1ed8a913eca6be120e09c9cf9ca11297669cca0d715f8c2303"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "5b7a7724a8c14c1ed8a913eca6be120e09c9cf9ca11297669cca0d715f8c2303"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "5b7a7724a8c14c1ed8a913eca6be120e09c9cf9ca11297669cca0d715f8c2303"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "fe99b23ea88969ec3572d78665235c6b329da68e31513161ad5e8b3848745d35"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "fe99b23ea88969ec3572d78665235c6b329da68e31513161ad5e8b3848745d35"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "fe99b23ea88969ec3572d78665235c6b329da68e31513161ad5e8b3848745d35"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "074f5a934b0fcdb25c68c8a0581b37a9613dff06cc9967b93507ac5f7ff6140c"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "074f5a934b0fcdb25c68c8a0581b37a9613dff06cc9967b93507ac5f7ff6140c"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "074f5a934b0fcdb25c68c8a0581b37a9613dff06cc9967b93507ac5f7ff6140c"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "c767be14b935ba8844dbfc5cc0f436b1fe73c7b4167b721f029a108af5271abe"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "c767be14b935ba8844dbfc5cc0f436b1fe73c7b4167b721f029a108af5271abe"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "c767be14b935ba8844dbfc5cc0f436b1fe73c7b4167b721f029a108af5271abe"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngs": [
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-05-model-training-0.png",
+      "sha256": "7d221994ffdf2d5073c525e6667ef77ef8503a6f349d485b3d1494902fdaf4b7"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-05-model-training-1.png",
+      "sha256": "6bcdd6bae5867c3970e2a20afba3a482e4b7937d4077e0d074b6b9b59334037e"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-05-model-training-2.png",
+      "sha256": "b1a4e5b75aaed05ce6be2aa47057ad0e0208a92b210883b6a51e54e713aee6cf"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-05-model-training-0.png",
+      "sha256": "316733e9dd2c23811d08df8aa2e878bc8b7c24af49d0b68d6c14ed35d3bb0e00"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-05-model-training-1.png",
+      "sha256": "9c2bea0b145cd96e0ac6c97f0de8c6fd5feb82ee426e04fa9e59e217b0dc94f6"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-05-model-training-2.png",
+      "sha256": "5f93c3fb2275ffd5ed8058b0e270e82bcf18a79aea290a2f40215f2c085b3f44"
+    }
+  ],
+  "publishedLinks": [
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/best-practices/aiml-networking.html",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/NVIDIA/bionemo-framework/tree/v3.0.0",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/SlinkyProject/slurm-operator/tree/v1.2.2",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/aws-neuron/aws-neuron-sdk/tree/v2.32.0",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/deepspeedai/DeepSpeed/blob/v0.19.6/deepspeed/runtime/zero/config.py",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/huggingface/optimum-neuron/tree/v0.4.5",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/kubeflow/mpi-operator/tree/v0.8.2",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/pytorch/pytorch/blob/v2.14.0/torch/distributed/run.py",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/volcano-sh/volcano/blob/v1.15.2/pkg/scheduler/plugins/gang/gang.go",
+      "status": 200
+    },
+    {
+      "url": "https://slurm.schedmd.com/slurmctld.html",
+      "status": 200
+    },
+    {
+      "url": "https://slurm.schedmd.com/slurmdbd.html",
+      "status": 200
+    }
+  ],
+  "primarySources": [
+    {
+      "file": "slurm-release.json",
+      "url": "https://api.github.com/repos/SchedMD/slurm-operator/releases/latest",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "mpi-release.json",
+      "url": "https://api.github.com/repos/kubeflow/mpi-operator/releases/latest",
+      "status": 200,
+      "version": "v0.8.2",
+      "publishedAt": "2026-07-03T15:20:13Z",
+      "sha256": "de0f84b7d5ca5f32a521976445af523b80c7bc4ce77b88b8f863ee7ac820f58c"
+    },
+    {
+      "file": "volcano-release.json",
+      "url": "https://api.github.com/repos/volcano-sh/volcano/releases/latest",
+      "status": 200,
+      "version": "v1.15.2",
+      "publishedAt": "2026-08-29T07:41:48Z",
+      "sha256": "de19650e6711725ebb316418dfe1c215fce7c42047f2f2fe223723fb6ecc41fd"
+    },
+    {
+      "file": "bionemo-release.json",
+      "url": "https://api.github.com/repos/NVIDIA/bionemo-framework/releases/latest",
+      "status": 200,
+      "version": "v3.0.0",
+      "publishedAt": "2026-06-24T18:26:26Z",
+      "sha256": "c6317ed9ec5d359e950c2f5155a8eec49518b3791f6c642e876210246bbb4d6b"
+    },
+    {
+      "file": "deepspeed-release.json",
+      "url": "https://api.github.com/repos/deepspeedai/DeepSpeed/releases/latest",
+      "status": 200,
+      "version": "v0.19.6",
+      "publishedAt": "2026-08-27T19:08:33Z",
+      "sha256": "9608cafc909d17a6aabbb64a2a4bfeacd659fc4b83f066f8b702a1e6e119a730"
+    },
+    {
+      "file": "torch-release.json",
+      "url": "https://api.github.com/repos/pytorch/pytorch/releases/latest",
+      "status": 200,
+      "version": "v2.14.0",
+      "publishedAt": "2026-09-02T17:40:10Z",
+      "sha256": "6b0d5abff4b30f57d34cd55ce9a67837d9a8376d1bedabea5ec35971bf8cbc80"
+    },
+    {
+      "file": "optimum-release.json",
+      "url": "https://api.github.com/repos/huggingface/optimum-neuron/releases/latest",
+      "status": 200,
+      "version": "v0.4.5",
+      "publishedAt": "2026-02-11T10:28:18Z",
+      "sha256": "7f021ef0faa687af42a181a3b8e99d43264e38ef68107d1696f92f157d2bbe99"
+    },
+    {
+      "file": "slurm-README.md",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/v1.2.2/README.md",
+      "status": 200,
+      "sha256": "1501ea2cef5b79482081ef9a7c7c6704dd9a1e6ffa44e0c903ec07269f1e8b9e"
+    },
+    {
+      "file": "slurm-docs_concepts_architecture.md",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/v1.2.2/docs/concepts/architecture.md",
+      "status": 200,
+      "sha256": "33272cb0fddd5825ae1c1c0899bc0d7764d7c5ff116e93d2b48eaaeda035745c"
+    },
+    {
+      "file": "slurm-helm_slurm_values.yaml",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/v1.2.2/helm/slurm/values.yaml",
+      "status": 200,
+      "sha256": "a00d6363a4698a631020f50170067dcad88496cf459337a73a066617828b2ce7"
+    },
+    {
+      "file": "slurm-helm_slurm_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/v1.2.2/helm/slurm/Chart.yaml",
+      "status": 200,
+      "sha256": "4440c492a55fb887f62cdde37b3ad967df9b3757eb96a2acbc8047c2fc421934"
+    },
+    {
+      "file": "slurm-helm_slurm-operator_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/v1.2.2/helm/slurm-operator/Chart.yaml",
+      "status": 200,
+      "sha256": "cdb2f17c24660530117a9dad0dd2785bf41c27a48d745e127b7165c35ee09f24"
+    },
+    {
+      "file": "slurm-api_v1beta1_nodeset_types.go",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/v1.2.2/api/v1beta1/nodeset_types.go",
+      "status": 200,
+      "sha256": "71c596734a38718ac6141aa2a21ad64f665c3f0a868abb209ad01eea0863354e"
+    },
+    {
+      "file": "slurm-config_crd_bases_slinky.slurm.net_nodesets.yaml",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/v1.2.2/config/crd/bases/slinky.slurm.net_nodesets.yaml",
+      "status": 200,
+      "sha256": "7ae218e2730770548bf7429bb8e3847187041e14584ef50b7f7b066257240b4d"
+    },
+    {
+      "file": "slurm-config_crd_bases_slinky.slurm.net_controllers.yaml",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/v1.2.2/config/crd/bases/slinky.slurm.net_controllers.yaml",
+      "status": 200,
+      "sha256": "9c435f78ca81eebb656d2d4c45f34a745c1ef1d6474ecc16b5917ad73e87d4c1"
+    },
+    {
+      "file": "slurm-helm_slurm_templates_nodeset_nodeset-cr.yaml",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/v1.2.2/helm/slurm/templates/nodeset/nodeset-cr.yaml",
+      "status": 200,
+      "sha256": "b6e3ec324e82e9c4a3e4497624b0c0d6c550cfeaa56c38c161bb7d6390fd820a"
+    },
+    {
+      "file": "mpi-README.md",
+      "url": "https://raw.githubusercontent.com/kubeflow/mpi-operator/v0.8.2/README.md",
+      "status": 200,
+      "sha256": "8a93ffc4e5f9e36df666680a091f66d2fe341cf8b7bc06fa266d87468deeca34"
+    },
+    {
+      "file": "mpi-pkg_apis_kubeflow_v2beta1_types.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/mpi-operator/v0.8.2/pkg/apis/kubeflow/v2beta1/types.go",
+      "status": 200,
+      "sha256": "2928ed003524d553d2c2695dd31889ff018b86898e668e9069471c320e76a37d"
+    },
+    {
+      "file": "mpi-manifests_base_crd.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/mpi-operator/v0.8.2/manifests/base/crd.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "mpi-pkg_controller_mpi_job_controller.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/mpi-operator/v0.8.2/pkg/controller/mpi_job_controller.go",
+      "status": 200,
+      "sha256": "48ab4f9b1fbc1b5325a568189e01ec300bbdac4531b5ef481bb77ca28858266a"
+    },
+    {
+      "file": "volcano-config_crd_volcano_bases_batch.volcano.sh_jobs.yaml",
+      "url": "https://raw.githubusercontent.com/volcano-sh/volcano/v1.15.2/config/crd/volcano/bases/batch.volcano.sh_jobs.yaml",
+      "status": 200,
+      "sha256": "a03feedc265bc8c9d71240063a37e0e818fa70fcad7b8a113b0875dc53fffa90"
+    },
+    {
+      "file": "volcano-pkg_scheduler_plugins_gang_gang.go",
+      "url": "https://raw.githubusercontent.com/volcano-sh/volcano/v1.15.2/pkg/scheduler/plugins/gang/gang.go",
+      "status": 200,
+      "sha256": "989c9f36d7178873ba6fd87edac34e8c915d703fa0d6a9cc04b1164aa89a23f3"
+    },
+    {
+      "file": "volcano-example_kubecon-2019-china_gang_nginx.yaml",
+      "url": "https://raw.githubusercontent.com/volcano-sh/volcano/v1.15.2/example/kubecon-2019-china/gang/nginx.yaml",
+      "status": 200,
+      "sha256": "d7aa2a179c58dbfe9548b07aa6fc09a1dd9285b77a7668156e9957261cdca764"
+    },
+    {
+      "file": "bionemo-README.md",
+      "url": "https://raw.githubusercontent.com/NVIDIA/bionemo-framework/v3.0.0/README.md",
+      "status": 200,
+      "sha256": "8918da91562c2ece4284a86b6ca971dc75272d8e48d17ab204e870c4e5141199"
+    },
+    {
+      "file": "optimum-optimum_neuron___init__.py",
+      "url": "https://raw.githubusercontent.com/huggingface/optimum-neuron/v0.4.5/optimum/neuron/__init__.py",
+      "status": 200,
+      "sha256": "17d7ee38792aeef8eee8363b7cc8ae7a474427ac04ae977718a74138b13077ce"
+    },
+    {
+      "file": "optimum-optimum_neuron_trainers_training_args.py",
+      "url": "https://raw.githubusercontent.com/huggingface/optimum-neuron/v0.4.5/optimum/neuron/trainers/training_args.py",
+      "status": 200,
+      "sha256": "575d8880f0cccca6f0746885fce1ee6a22a16800a47a3199b550d5a96f002295"
+    },
+    {
+      "file": "optimum-optimum_neuron_trainers_transformers.py",
+      "url": "https://raw.githubusercontent.com/huggingface/optimum-neuron/v0.4.5/optimum/neuron/trainers/transformers.py",
+      "status": 200,
+      "sha256": "dd6c2073fda567c4e150dfa4adef17244bd5555ce01acdfb227a99b0932f5cfd"
+    },
+    {
+      "file": "optimum-optimum_neuron_models_training_modeling_auto.py",
+      "url": "https://raw.githubusercontent.com/huggingface/optimum-neuron/v0.4.5/optimum/neuron/models/training/modeling_auto.py",
+      "status": 200,
+      "sha256": "e879524d10e53c1f4026f5bc1bf137d5dd0f3dd11a4f26cbb0d34095ecd30f1d"
+    },
+    {
+      "file": "deepspeed-deepspeed_runtime_zero_config.py",
+      "url": "https://raw.githubusercontent.com/deepspeedai/DeepSpeed/v0.19.6/deepspeed/runtime/zero/config.py",
+      "status": 200,
+      "sha256": "6cf59704f4294882dce488d0fb0b1e21e50db9c0b2feb756df0139f29e2d95eb"
+    },
+    {
+      "file": "deepspeed-deepspeed_runtime_zero_offload_config.py",
+      "url": "https://raw.githubusercontent.com/deepspeedai/DeepSpeed/v0.19.6/deepspeed/runtime/zero/offload_config.py",
+      "status": 200,
+      "sha256": "3ad8d23fd24a19c62c839267c01c79e67fa45d070f2435c2799563b5788335bb"
+    },
+    {
+      "file": "torch-torch_distributed_run.py",
+      "url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.14.0/torch/distributed/run.py",
+      "status": 200,
+      "sha256": "7d48d1e28a7e3cff62e25a03d995db5b3af2f0c73dacb9bed8be4111aeeae640"
+    },
+    {
+      "file": "torch-torch_amp_autocast_mode.py",
+      "url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.14.0/torch/amp/autocast_mode.py",
+      "status": 200,
+      "sha256": "a927f545435b1ce7cfbe2754c2f44da316a234cf7eaac555a93266708ad8db03"
+    },
+    {
+      "file": "torch-torch_utils_checkpoint.py",
+      "url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.14.0/torch/utils/checkpoint.py",
+      "status": 200,
+      "sha256": "86a3d3ce928f5e302996e5a4f185dd47d42bdfe55021355cec90c37259b89887"
+    },
+    {
+      "file": "torch-torch_optim_lr_scheduler.py",
+      "url": "https://raw.githubusercontent.com/pytorch/pytorch/v2.14.0/torch/optim/lr_scheduler.py",
+      "status": 200,
+      "sha256": "86de19442f38e8817ee3283853ef4377565d3b6b936a779ce7f5f599f1312849"
+    },
+    {
+      "file": "mpi-manifests_base_kubeflow.org_mpijobs.yaml",
+      "status": 200,
+      "url": "https://raw.githubusercontent.com/kubeflow/mpi-operator/v0.8.2/manifests/base/kubeflow.org_mpijobs.yaml"
+    },
+    {
+      "file": "slurmctld.html",
+      "status": 200,
+      "url": "https://slurm.schedmd.com/slurmctld.html"
+    },
+    {
+      "file": "slurmdbd.html",
+      "status": 200,
+      "url": "https://slurm.schedmd.com/slurmdbd.html"
+    },
+    {
+      "file": "slurm-tags.json",
+      "url": "https://api.github.com/repos/SlinkyProject/slurm-operator/tags?per_page=20",
+      "status": 200
+    },
+    {
+      "file": "slurm-readme.md",
+      "url": "https://raw.githubusercontent.com/SlinkyProject/slurm-operator/main/README.md",
+      "status": 200
+    },
+    {
+      "file": "slurm-schedmd-website.html",
+      "url": "https://slurm.schedmd.com/slinky.html",
+      "status": 200
+    },
+    {
+      "file": "torch-pypi.json",
+      "url": "https://pypi.org/pypi/torch/json",
+      "status": 200
+    },
+    {
+      "file": "slurm-repo.json",
+      "status": 200,
+      "url": "https://api.github.com/repos/SlinkyProject/slurm-operator",
+      "fullName": "SlinkyProject/slurm-operator",
+      "tag": null,
+      "publishedAt": null
+    },
+    {
+      "url": "https://api.github.com/repos/SlinkyProject/slurm-operator/releases/latest",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://api.github.com/repos/SchedMD/slurm-operator",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://slinky.schedmd.com/projects/slurm-operator/en/latest/",
+      "error": "HTTP Error 404: Not Found"
+    }
+  ],
+  "limitations": [
+    "PyTorch2.14.0+cpu installed fromofficialCPUindex;1thread16samples4updates;noCUDA/modelweightsdownload.",
+    "NoSlurm/MPI/Volcano/EFA/GPU/Neuron/cloudexecution.",
+    "OpenAPInullabletranslatedforJSONschema;noKubernetesadmission/CEL/controllerverification.",
+    "Atomiclocalfile replacementisnotremote/filesystemcrashdurabilityproof.",
+    "CPUfixtureemittedmissingNumPywarningbutdoesnotuseNumPy;allassertionspassed.",
+    "No full local VitePress build."
+  ]
+}

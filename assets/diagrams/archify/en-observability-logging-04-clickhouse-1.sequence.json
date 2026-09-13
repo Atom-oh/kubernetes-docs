@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ClickHouse Log Data Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      580
+    ],
+    "views": [
+      {
+        "id": "ingest",
+        "label": "Ingestion",
+        "focus": [
+          "app",
+          "fb",
+          "kafka",
+          "ch"
+        ],
+        "note": "FluentBit buffers logs in Kafka; ClickHouse reads them via the Kafka Engine and stores them in a MergeTree table."
+      },
+      {
+        "id": "tiering",
+        "label": "Tiering",
+        "focus": [
+          "ch",
+          "s3"
+        ],
+        "note": "Under the TTL policy (TO VOLUME 'cold'), aged parts move to the S3 cold volume."
+      }
+    ],
+    "column_fit": "spread"
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "Application",
+      "sublabel": "Generate logs"
+    },
+    {
+      "id": "fb",
+      "type": "backend",
+      "label": "FluentBit",
+      "sublabel": "collector"
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka",
+      "sublabel": "optional · buffer"
+    },
+    {
+      "id": "ch",
+      "type": "database",
+      "label": "ClickHouse",
+      "sublabel": "MergeTree"
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "cold volume"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 330,
+      "label": "Ingestion"
+    },
+    {
+      "from": 350,
+      "to": 440,
+      "label": "Tiering (TTL)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "gen",
+      "from": "app",
+      "to": "fb",
+      "y": 190,
+      "label": "Generate logs"
+    },
+    {
+      "id": "buf",
+      "from": "fb",
+      "to": "kafka",
+      "y": 235,
+      "label": "Buffering"
+    },
+    {
+      "id": "ingest",
+      "from": "kafka",
+      "to": "ch",
+      "y": 280,
+      "label": "Kafka Engine ingestion",
+      "variant": "emphasis",
+      "note": "Stored in MergeTree table"
+    },
+    {
+      "id": "tier",
+      "from": "ch",
+      "to": "s3",
+      "y": 400,
+      "label": "Move cold data",
+      "variant": "dashed",
+      "note": "Based on TTL policy"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "fb",
+      "from": 185,
+      "to": 242,
+      "type": "backend"
+    },
+    {
+      "participant": "ch",
+      "from": 275,
+      "to": 410,
+      "type": "database"
+    },
+    {
+      "participant": "s3",
+      "from": 395,
+      "to": 410,
+      "type": "cloud"
+    }
+  ]
+}

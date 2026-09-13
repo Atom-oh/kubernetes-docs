@@ -1,0 +1,310 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Crossplane 아키텍처: 핵심 개념",
+    "output": "ko-platform-engineering-07-crossplane-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "self-service",
+        "label": "셀프서비스 요청",
+        "focus": [
+          "claim",
+          "xr",
+          "xrd",
+          "comp"
+        ],
+        "note": "v2 namespaced XR와 MR의 흐름. v1 LegacyCluster Claims는 별도 호환 경로입니다."
+      },
+      {
+        "id": "provisioning",
+        "label": "프로비저닝 경로",
+        "focus": [
+          "comp",
+          "mr",
+          "providers",
+          "aws",
+          "gcp",
+          "azure"
+        ],
+        "note": "v2 namespaced XR와 MR의 흐름. v1 LegacyCluster Claims는 별도 호환 경로입니다."
+      },
+      {
+        "id": "extension",
+        "label": "Provider 확장",
+        "focus": [
+          "core",
+          "providers"
+        ],
+        "note": "v2 namespaced XR와 MR의 흐름. v1 LegacyCluster Claims는 별도 호환 경로입니다."
+      }
+    ],
+    "viewBox": [
+      1380,
+      740
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "claim",
+      "type": "external",
+      "label": "개발자",
+      "sublabel": "namespace XR 요청",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "xr",
+      "type": "backend",
+      "label": "Composite Resource",
+      "sublabel": "v2: Namespaced XR",
+      "pos": [
+        280,
+        300
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "xrd",
+      "type": "backend",
+      "label": "CompositeResourceDefinition",
+      "sublabel": "XRD · 스키마 정의",
+      "pos": [
+        265,
+        100
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "comp",
+      "type": "backend",
+      "label": "Composition",
+      "sublabel": "레시피 (MR 매핑)",
+      "pos": [
+        610,
+        300
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "mr",
+      "type": "backend",
+      "label": "Managed Resources",
+      "sublabel": "v2: Namespaced MR",
+      "pos": [
+        920,
+        300
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Crossplane Core",
+      "sublabel": "crossplane-system",
+      "pos": [
+        610,
+        510
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "providers",
+      "type": "backend",
+      "label": "Providers",
+      "sublabel": "선택한 Provider controller",
+      "pos": [
+        920,
+        510
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS",
+      "sublabel": "provider-aws",
+      "pos": [
+        1220,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "gcp",
+      "type": "cloud",
+      "label": "GCP",
+      "sublabel": "provider-gcp",
+      "pos": [
+        1220,
+        510
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "azure",
+      "type": "cloud",
+      "label": "Azure",
+      "sublabel": "provider-azure",
+      "pos": [
+        1220,
+        620
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "개발자 Namespace",
+      "wraps": [
+        "claim"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Crossplane 컨트롤 플레인",
+      "wraps": [
+        "xr",
+        "xrd",
+        "comp",
+        "mr",
+        "core",
+        "providers"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클라우드 인프라",
+      "wraps": [
+        "aws",
+        "gcp",
+        "azure"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "claim-to-xr",
+      "from": "claim",
+      "to": "xr",
+      "label": "생성 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xr-to-xrd",
+      "from": "xr",
+      "to": "xrd",
+      "label": "정의 참조",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "xr-to-comp",
+      "from": "xr",
+      "to": "comp",
+      "label": "Composition 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "comp-to-mr",
+      "from": "comp",
+      "to": "mr",
+      "label": "Managed Resource 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mr-to-providers",
+      "from": "mr",
+      "to": "providers",
+      "label": "변경 감지",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "core-to-providers",
+      "from": "core",
+      "to": "providers",
+      "variant": "dashed"
+    },
+    {
+      "id": "providers-to-aws",
+      "from": "providers",
+      "to": "aws",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "providers-to-gcp",
+      "from": "providers",
+      "to": "gcp",
+      "label": "API 호출"
+    },
+    {
+      "id": "providers-to-azure",
+      "from": "providers",
+      "to": "azure",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "v2 범위",
+      "items": [
+        "XRD v2 기본 scope는 Namespaced",
+        "예제 MR은 *.aws.m.upbound.io/v1beta1",
+        "v1 LegacyCluster XRD에서만 기존 Claim 경로 사용"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "조정과 권한",
+      "items": [
+        "Composition Functions가 원하는 리소스를 계산",
+        "Provider controller가 AWS API를 호출",
+        "namespace / ProviderConfig만으로 IAM 격리가 완성되지 않음"
+      ]
+    }
+  ]
+}

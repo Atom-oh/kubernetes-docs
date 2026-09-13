@@ -1,0 +1,64 @@
+{
+  "status": "complete",
+  "userDecision": "Use GA4 dashboard only; onsite statistics cancelled",
+  "pullRequest": 220,
+  "mergeCommit": "5f780f63ee5d1df9db141d3bf3cf5aade867f7ca",
+  "reviewedHEAD": "7885e131d1da12db4a90b6503e215b065b622936",
+  "quality": {
+    "scope": "changed static Markdown/navigation",
+    "score": 90,
+    "maximum": 90,
+    "critical": 0,
+    "major": 0
+  },
+  "tests": 118,
+  "hostedBuildRun": 34697080975,
+  "deployment": {
+    "conclusion": "success",
+    "headSha": "5f780f63ee5d1df9db141d3bf3cf5aade867f7ca",
+    "status": "completed",
+    "updatedAt": "2026-09-12T14:13:19Z"
+  },
+  "liveBrowser": {
+    "passed": true,
+    "results": [
+      {
+        "locale": "ko",
+        "initialViews": 1,
+        "afterSpaViews": 2,
+        "afterAnchorViews": 2,
+        "statsPanels": 0,
+        "statsLinks": 0,
+        "mobilePanels": 0,
+        "viewports": [
+          1920,
+          390
+        ],
+        "gaTag": "G-GWVLEW5JLL"
+      },
+      {
+        "locale": "en",
+        "initialViews": 1,
+        "afterSpaViews": 2,
+        "afterAnchorViews": 2,
+        "statsPanels": 0,
+        "statsLinks": 0,
+        "mobilePanels": 0,
+        "viewports": [
+          1920,
+          390
+        ],
+        "gaTag": "G-GWVLEW5JLL"
+      }
+    ],
+    "errors": [],
+    "snapshotRequests": 0,
+    "analyticsCollection": "intercepted; no synthetic views sent to GA4",
+    "browserFallback": "Playwright MCP could not find /opt/google/chrome/chrome; used existing Chromium headless shell with regular Playwright.",
+    "deploymentRun": 34697657957,
+    "commit": "5f780f63ee5d1df9db141d3bf3cf5aade867f7ca",
+    "checkedAt": "2026-09-12T14:14:51.325Z"
+  },
+  "googleCloudChanges": "None. Setup script archived and three API-related GitHub variables removed. Existing GA4 collection retained.",
+  "overallContentAudit": "Still in progress; this report covers only the cancelled onsite statistics feature and its cleanup."
+}

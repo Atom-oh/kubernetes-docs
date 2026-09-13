@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "알림 생명주기",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "detection",
+        "label": "감지",
+        "focus": [
+          "inactive",
+          "pending",
+          "firing"
+        ],
+        "note": "조건이 임계값을 초과한 규칙은 Pending에 들어가며, for: 기간이 경과한 뒤에야 Firing으로 전환됩니다."
+      },
+      {
+        "id": "notification",
+        "label": "알림 전송",
+        "focus": [
+          "firing",
+          "notified",
+          "acknowledged"
+        ],
+        "note": "발생한 알림은 수신자(receiver)로 라우팅되고, 이어서 담당자가 확인합니다."
+      },
+      {
+        "id": "resolution",
+        "label": "해결",
+        "focus": [
+          "acknowledged",
+          "in_progress",
+          "resolved",
+          "inactive"
+        ],
+        "note": "담당자가 문제를 해결하면 수동으로, 메트릭이 정상 범위로 돌아오면 자동으로 해결됩니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "start": {
+          "label": "비활성"
+        },
+        "waiting": {
+          "label": "대기"
+        },
+        "failure": {
+          "label": "발생"
+        },
+        "active": {
+          "label": "처리 중"
+        },
+        "success": {
+          "label": "해결"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "감지 + 알림 전송"
+    },
+    {
+      "id": "respond",
+      "label": "담당자 조치"
+    },
+    {
+      "id": "terminal",
+      "label": "결과"
+    }
+  ],
+  "states": [
+    {
+      "id": "inactive",
+      "type": "start",
+      "label": "Inactive",
+      "sublabel": "조건 미충족",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "pending",
+      "type": "waiting",
+      "label": "Pending",
+      "sublabel": "for: 기간 동안 대기",
+      "lane": "main",
+      "col": 1,
+      "tag": "for: 5m"
+    },
+    {
+      "id": "firing",
+      "type": "failure",
+      "label": "Firing",
+      "sublabel": "수신자 전송 대기",
+      "lane": "main",
+      "col": 2
+    },
+    {
+      "id": "notified",
+      "type": "waiting",
+      "label": "Notified",
+      "sublabel": "Slack, Email, PagerDuty",
+      "lane": "main",
+      "col": 3
+    },
+    {
+      "id": "acknowledged",
+      "type": "active",
+      "label": "Acknowledged",
+      "sublabel": "담당자 확인 완료",
+      "lane": "main",
+      "col": 4
+    },
+    {
+      "id": "in_progress",
+      "type": "active",
+      "label": "In Progress",
+      "sublabel": "담당자가 문제 조치 중",
+      "lane": "respond",
+      "col": 2
+    },
+    {
+      "id": "resolved",
+      "type": "success",
+      "label": "Resolved",
+      "sublabel": "문제 해결됨",
+      "lane": "terminal",
+      "col": 2
+    }
+  ],
+  "transitions": [
+    {
+      "from": "inactive",
+      "to": "pending",
+      "label": "임계값 초과",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "pending",
+      "to": "firing",
+      "label": "대기 시간 경과",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "firing",
+      "to": "notified",
+      "label": "알림 전송",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "notified",
+      "to": "acknowledged",
+      "label": "담당자 확인",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "acknowledged",
+      "to": "in_progress",
+      "label": "조치 진행",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "in_progress",
+      "to": "resolved",
+      "label": "문제 해결",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "pending",
+      "to": "inactive",
+      "label": "임계값 이내 복귀",
+      "variant": "dashed",
+      "route": "bottom-channel",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "from": "firing",
+      "to": "inactive",
+      "label": "자동 해결",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          402,
+          78
+        ],
+        [
+          20,
+          78
+        ],
+        [
+          20,
+          157
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "감지",
+      "items": [
+        "임계값·변화율·이상 탐지·로그 패턴 기반 감지",
+        "for: 조건이 지속될 때까지 알림을 Pending으로 유지"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "알림 전송",
+      "items": [
+        "알림 유형에 따라 적절한 수신자로 라우팅",
+        "관련 알림을 그룹화하고 반복 알림은 중복 제거"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "해결",
+      "items": [
+        "수동: 담당자가 문제 해결 후 알림 종료",
+        "자동: 메트릭이 정상 범위로 돌아오면 자동 종료",
+        "문제 해결 시 해결 알림 전송"
+      ]
+    }
+  ]
+}

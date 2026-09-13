@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Dual Route Reflectors (Small/Medium Clusters)",
+    "locale": "en",
+    "output": "en-networking-calico-04-bgp-deep-dive-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "rr-mesh",
+        "label": "RR-to-RR peering",
+        "focus": [
+          "rr1",
+          "rr2"
+        ],
+        "note": "The two route reflectors peer with each other (route-reflector-mesh BGPPeer)."
+      },
+      {
+        "id": "local-peering",
+        "label": "Local zone peering",
+        "focus": [
+          "nodes-az1",
+          "rr1",
+          "nodes-az2",
+          "rr2"
+        ],
+        "note": "Every non-RR node peers with the route reflector in its own zone."
+      },
+      {
+        "id": "cross-zone",
+        "label": "Cross-zone redundancy",
+        "focus": [
+          "nodes-az1",
+          "rr2",
+          "nodes-az2",
+          "rr1"
+        ],
+        "note": "Nodes also peer with the other zone's route reflector, so losing one RR isolates no node."
+      }
+    ],
+    "viewBox": [
+      1060,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "rr1",
+      "type": "backend",
+      "label": "Route Reflector 1",
+      "sublabel": "calico-route-reflector=true",
+      "pos": [
+        140,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "nodes-az1",
+      "type": "backend",
+      "label": "Node 1 / Node 2 / Node 3",
+      "sublabel": "non-RR nodes, peer with both RRs",
+      "pos": [
+        120,
+        320
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "rr2",
+      "type": "backend",
+      "label": "Route Reflector 2",
+      "sublabel": "calico-route-reflector=true",
+      "pos": [
+        700,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "nodes-az2",
+      "type": "backend",
+      "label": "Node 4 / Node 5 / Node 6",
+      "sublabel": "non-RR nodes, peer with both RRs",
+      "pos": [
+        680,
+        320
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Availability Zone 1",
+      "wraps": [
+        "rr1",
+        "nodes-az1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Availability Zone 2",
+      "wraps": [
+        "rr2",
+        "nodes-az2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rr-mesh",
+      "from": "rr1",
+      "to": "rr2",
+      "label": "RR-to-RR peering",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          240,
+          40
+        ],
+        [
+          800,
+          40
+        ]
+      ],
+      "labelSegment": 1
+    },
+    {
+      "id": "n1-rr1",
+      "from": "nodes-az1",
+      "to": "rr1",
+      "label": "local RR",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "n2-rr2",
+      "from": "nodes-az2",
+      "to": "rr2",
+      "label": "local RR",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "n1-rr2",
+      "from": "nodes-az1",
+      "to": "rr2",
+      "label": "cross-zone RR",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          560,
+          352
+        ],
+        [
+          560,
+          112
+        ]
+      ],
+      "labelSegment": 1
+    },
+    {
+      "id": "n2-rr1",
+      "from": "nodes-az2",
+      "to": "rr1",
+      "label": "cross-zone RR",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          1000,
+          352
+        ],
+        [
+          1000,
+          460
+        ],
+        [
+          60,
+          460
+        ],
+        [
+          60,
+          112
+        ]
+      ],
+      "labelSegment": 2
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Configuration",
+      "items": [
+        "nodeToNodeMeshEnabled: false in BGPConfiguration",
+        "RR nodes labeled calico-route-reflector=true with a shared routeReflectorClusterID",
+        "BGPPeer peer-to-route-reflectors: nodeSelector !has(calico-route-reflector), peerSelector has(calico-route-reflector)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Redundancy",
+      "items": [
+        "One route reflector per availability zone",
+        "Every node peers with both route reflectors",
+        "Losing one zone's RR does not isolate any node"
+      ]
+    }
+  ]
+}

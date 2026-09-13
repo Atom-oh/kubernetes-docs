@@ -1,0 +1,214 @@
+[
+  {
+    "path": "ko/ops/12-event-capacity-planning.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete capacity guides/quizzes corrected with deterministic pricing/capacity calculations, current scaling/reservation semantics, tested configs and six regenerated diagrams.",
+    "sources": [
+      "https://keda.sh/docs/2.20/scalers/cron/",
+      "https://keda.sh/docs/2.20/scalers/aws-cloudwatch/",
+      "https://keda.sh/docs/2.20/scalers/aws-sqs/",
+      "https://keda.sh/docs/2.20/reference/scaledobject-spec/",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://karpenter.sh/docs/concepts/nodeclasses/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-capacity-reservations.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/capacity-reservations-pricing-billing.html"
+    ],
+    "validation": [
+      "ops-event-capacity-validation.json",
+      "ops-event-diagrams-validation.json",
+      "46fences8queries20questions;11manifests4metadatasets3distinctSOtargets;18calculator12Cron3TFmock5Promcalccases;6figures9/9+browser+visual+PNGs"
+    ],
+    "initialCandidates": [
+      "StaleKarpenter0.37KEDA2.14claims/currentv1CRDs;6diagramrefs containinstant/guaranteedreadiness,MAXatKEDAnotHPA,pods/10exactnodeassumptions;needssemanticregenerationandPNGs.",
+      "WorksheetRPMvsRPSvscompletedordersmixedunits,noceil/allocatable/PODmax/topology/SLOconstraints;arbitrary10pods/node;30%marginnotAZfailurecapacity;currencyformulaKOuniterrorandSeoulpriceslikelyUSincorrect;needdeterministiccalculator+datedofficialpricing.",
+      "KEDA5fieldCronhasNOyear/singleeventrepeatsyearly;pastMay2026dates/NYMayEDTnotEST;IANA/DST/overlapandcleanupneedtest;CronfloorHPAconstraintsnotReadyguarantee,metricsnotceilingmaxReplicaCountis;multipleSOssametargetmustbealternativesnotconcurrent.",
+      "DynamicNodePoolweight/limitsdoNOTcreatewarmnodes;distinguishcurrentstaticNodePoolreplicasifavailablefromASGWarmPool;selfmanagedEC2NodeClassvsAutoNodeClassAPIs;weightnotschedulingguarantee,labels/taints/noactualworkloadselectors.",
+      "ODCRtargetednotsecurityNodePoolallowlist;successfulactive matchingcapacityvsuptimeguarantee;Karpenterreservedcapacitytype/selector/gate/currentversionmustverify,existingeventNodePoolsreferenceevent-nodesnotreservedclass. Reservationbillingstartsactive,D-30creationcostnot4h;usedcapacitynotdoublecountedwithreservation;future-datedreservationdifferentconditions;pastenddateinvalid.",
+      "PausePodsdesiredreplicas20replenishedafterpreemptioncanprovisionextra20nodes;handoffmustremove/reduceplaceholderorpreferactualappwarm/staticpool. Requests14CPUexclude8CPUtypes;noeventnodeSelector/taintinNodePool;instantpreemption/readinessnotguaranteed.",
+      "Incomingrequest/backlogshoulddrivecapacity;completedorderscanflatline/dropundersaturationcausingwrongscaledown. Recordlabels/service/cluster/counterunits/Promquerysinglevalue/NoDatahandling;Nginxpathmetricsnotstandard.",
+      "CloudWatchcustomPageViewsPerMinuteSumunitsdoubleaggregation/authIRSAidentityOwner/binding/SAroleundefined;SQSvisible+inflightdefaultapprox/workerconcurrency/backlogage/DLQmetrics;KEDApoll0to1vsHPA1toNinterval,cooldownonlytozero,min>0activationlimitedeffects.",
+      "HPApoliciesrollingperiodnotclocktick/stabilizationnotfixeddelay/scalerbounds/noinstant0coldstart;timelineCronfloor150until15butshows50at14:30inconsistent desiredvsready;capacity/network/DBquotasnotonlyPodsNodes.",
+      "ImagecacheDSrunsappimagesunknownsh/echo(distroless),allNodewildtolerations/resourcesnoprereq/digest/cacheGC/IfNotPresent/registryauth;cachecannotguaranteenopullstartup/coldstart0.",
+      "EmergencykubectlscaleoverwrittenHPA/KEDAandpatchwrongHPAname(normallykeda-hpa...). RaiseSOminwithinapprovedmax/GitOpsownershiporuseexplicitpause/resumeguards;noarbitrarynewNodePool,APIerrorsnofalsecountpass.",
+      "DeleteSOdoesnotrestorebaselineunlessconfiguredandHPAdeleted;NodePooldeletecascadesNodes;automaticsleep1800delete/destructivetf-targetunsafestaterestore;retainbaselineSOremoveeventtrigger/reconcileworkloadplacement/ODCRbothAZcleanupcost.",
+      "GrafanaAPIwrappervsdashboardbody,inventedHPA_target_metricnotdesiredreplicas;Runningphasecountcountszeros,appReadynotRunning;node_cost_hourlyproviderundefined,CloudWatchgaugeperiods;KubecostPOSTvsGETportAPImodelcurrentverify;namespaceeventlabelnotautomaticallyPod/EC2billingtag.",
+      "Quizmaxcontrollersemantics/30minReadyguarantee/targetedonlyspecificpoolfalse/HPA120secondstickfalse/initcontainersallNodes+alwayscachefalse/OnDemanduptimeguaranteefalse/Spot2minbest-effortexceptionsneeded."
+    ],
+    "reviewedSha256": "e63873eb128fb240da6b5977f235af4d43ec4541ea2f2a0f1c82fb18d9c9a937",
+    "findings": [
+      "Replacedunmeasuredtrafficmultipliers/instantReady/zeroColdStartclaimswithSLO/profile/allocatable/quotas/failureobjectives;actualappsReadyandnodeReadyseparated.",
+      "Decimalcalculator18cases:consistentRPMunits,ceil,CPU/memory/Podslots,AZsurvival,timezoneintervals,unusedreservationswithoutdoublecounting,unknownothercoststotalnull. Original26nodes15/11failsAZloss.",
+      "PublicAWSPriceList4successfulGetProductsreadsverifySeoulLinuxSharedc5.2xl.384,c5.4xl.768,c6i.4xl.768,m5.4xl.944;oldregionpriceswrong. Same26*4compute79.87,earlyreservation30days14456.83illustrative(notactualbill).",
+      "OneSOeachfororder-api/worker/frontend;KEDACron5fieldsnoyear,annualrecurrenceandNYEDT/ESTverified12cases;HPAownsmaxrecommendation/behavior/minmax,notReadyguarantee/metricsceiling.",
+      "Incomingrequestsnotcompletedordersalone;metriccontract/scope/singlevalue/nodata;CloudWatchmetricStatnotmetricStatType,minMetricValueisNoDatafallbacknotactivation,period/collectionoffsetexplicit;SQSvisibleinflightapprox/controlroleversusconsumerroles.",
+      "Karpenter1.14.1staticreplicasexistsandseparatefromASGWarmPool;dynamicweight/limitsnotprecreate. Staticreplicas0doesnotlaunch,immutablemode/no weight/onlylimits.nodes/noconsolidation/scalebypassesnodebudgetsbutPDBhonored.",
+      "SelfmanagedNodeClassAMIaliaspinnedverifiedpublicSSMEKS1.36Seoulrelease1.36.3-20260903;AutoModeNodeClassdifferentAPIbutCURRENTLYsupportsreservations—avoidedfalseunsupportedfinding.",
+      "ODCRtargetednotNodePoolsecurityACL;matchingactiveusage/PriorityreservedtypeNOTRI;immediatecreationversusfutureenddate/billingstart;3TFmockcasesrejectfractionalcountandpastdate.",
+      "Placementtags/taints/selectorsandPodcostlabelsexplicit;dynamic/staticalternativesnotblindlycombined;staticactivation/placement/GitOpsownershipsequence;placeholderreplenishmentcancreateextranodesandhandoffmustremoveitsdemand.",
+      "Removedgenericsh-echoimagecacheguarantee,blindHPA/Deploymentemergencyoverwrites,deleteSOrestoresbaselineassumptionandtimedNodePooldelete/targetdestroy;documentedbaselineCron/floorrestoreandrealcleanupverification.",
+      "Dashboarddesired/availablemetricscorrect,notHPAmetricthresholdnorcount0phasegauges;undefinedcost/exportermetricsqualified;APIwrapper/partialdashboardremoved,referencesFinOpschapter.",
+      "Sixexistingfiguressemanticallyrewritten:properplaceholderhandoff,HPAmetricownership,controller/scheduler/Karpenter/kubeletstageswithoutfixednodecounts/latency. All9/9/currentbrowserreceipts+assistantvisualinspection+PNGs."
+    ]
+  },
+  {
+    "path": "ko/quizzes/ops/12-event-capacity-planning-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete capacity guides/quizzes corrected with deterministic pricing/capacity calculations, current scaling/reservation semantics, tested configs and six regenerated diagrams.",
+    "sources": [
+      "https://keda.sh/docs/2.20/scalers/cron/",
+      "https://keda.sh/docs/2.20/scalers/aws-cloudwatch/",
+      "https://keda.sh/docs/2.20/scalers/aws-sqs/",
+      "https://keda.sh/docs/2.20/reference/scaledobject-spec/",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://karpenter.sh/docs/concepts/nodeclasses/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-capacity-reservations.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/capacity-reservations-pricing-billing.html"
+    ],
+    "validation": [
+      "ops-event-capacity-validation.json",
+      "ops-event-diagrams-validation.json",
+      "46fences8queries20questions;11manifests4metadatasets3distinctSOtargets;18calculator12Cron3TFmock5Promcalccases;6figures9/9+browser+visual+PNGs"
+    ],
+    "initialCandidates": [
+      "StaleKarpenter0.37KEDA2.14claims/currentv1CRDs;6diagramrefs containinstant/guaranteedreadiness,MAXatKEDAnotHPA,pods/10exactnodeassumptions;needssemanticregenerationandPNGs.",
+      "WorksheetRPMvsRPSvscompletedordersmixedunits,noceil/allocatable/PODmax/topology/SLOconstraints;arbitrary10pods/node;30%marginnotAZfailurecapacity;currencyformulaKOuniterrorandSeoulpriceslikelyUSincorrect;needdeterministiccalculator+datedofficialpricing.",
+      "KEDA5fieldCronhasNOyear/singleeventrepeatsyearly;pastMay2026dates/NYMayEDTnotEST;IANA/DST/overlapandcleanupneedtest;CronfloorHPAconstraintsnotReadyguarantee,metricsnotceilingmaxReplicaCountis;multipleSOssametargetmustbealternativesnotconcurrent.",
+      "DynamicNodePoolweight/limitsdoNOTcreatewarmnodes;distinguishcurrentstaticNodePoolreplicasifavailablefromASGWarmPool;selfmanagedEC2NodeClassvsAutoNodeClassAPIs;weightnotschedulingguarantee,labels/taints/noactualworkloadselectors.",
+      "ODCRtargetednotsecurityNodePoolallowlist;successfulactive matchingcapacityvsuptimeguarantee;Karpenterreservedcapacitytype/selector/gate/currentversionmustverify,existingeventNodePoolsreferenceevent-nodesnotreservedclass. Reservationbillingstartsactive,D-30creationcostnot4h;usedcapacitynotdoublecountedwithreservation;future-datedreservationdifferentconditions;pastenddateinvalid.",
+      "PausePodsdesiredreplicas20replenishedafterpreemptioncanprovisionextra20nodes;handoffmustremove/reduceplaceholderorpreferactualappwarm/staticpool. Requests14CPUexclude8CPUtypes;noeventnodeSelector/taintinNodePool;instantpreemption/readinessnotguaranteed.",
+      "Incomingrequest/backlogshoulddrivecapacity;completedorderscanflatline/dropundersaturationcausingwrongscaledown. Recordlabels/service/cluster/counterunits/Promquerysinglevalue/NoDatahandling;Nginxpathmetricsnotstandard.",
+      "CloudWatchcustomPageViewsPerMinuteSumunitsdoubleaggregation/authIRSAidentityOwner/binding/SAroleundefined;SQSvisible+inflightdefaultapprox/workerconcurrency/backlogage/DLQmetrics;KEDApoll0to1vsHPA1toNinterval,cooldownonlytozero,min>0activationlimitedeffects.",
+      "HPApoliciesrollingperiodnotclocktick/stabilizationnotfixeddelay/scalerbounds/noinstant0coldstart;timelineCronfloor150until15butshows50at14:30inconsistent desiredvsready;capacity/network/DBquotasnotonlyPodsNodes.",
+      "ImagecacheDSrunsappimagesunknownsh/echo(distroless),allNodewildtolerations/resourcesnoprereq/digest/cacheGC/IfNotPresent/registryauth;cachecannotguaranteenopullstartup/coldstart0.",
+      "EmergencykubectlscaleoverwrittenHPA/KEDAandpatchwrongHPAname(normallykeda-hpa...). RaiseSOminwithinapprovedmax/GitOpsownershiporuseexplicitpause/resumeguards;noarbitrarynewNodePool,APIerrorsnofalsecountpass.",
+      "DeleteSOdoesnotrestorebaselineunlessconfiguredandHPAdeleted;NodePooldeletecascadesNodes;automaticsleep1800delete/destructivetf-targetunsafestaterestore;retainbaselineSOremoveeventtrigger/reconcileworkloadplacement/ODCRbothAZcleanupcost.",
+      "GrafanaAPIwrappervsdashboardbody,inventedHPA_target_metricnotdesiredreplicas;Runningphasecountcountszeros,appReadynotRunning;node_cost_hourlyproviderundefined,CloudWatchgaugeperiods;KubecostPOSTvsGETportAPImodelcurrentverify;namespaceeventlabelnotautomaticallyPod/EC2billingtag.",
+      "Quizmaxcontrollersemantics/30minReadyguarantee/targetedonlyspecificpoolfalse/HPA120secondstickfalse/initcontainersallNodes+alwayscachefalse/OnDemanduptimeguaranteefalse/Spot2minbest-effortexceptionsneeded."
+    ],
+    "reviewedSha256": "e4fffabe07c3518cb108e54a42c40bbe327fc8f8e50bbea6f4bea889030484f4",
+    "findings": [
+      "Replacedunmeasuredtrafficmultipliers/instantReady/zeroColdStartclaimswithSLO/profile/allocatable/quotas/failureobjectives;actualappsReadyandnodeReadyseparated.",
+      "Decimalcalculator18cases:consistentRPMunits,ceil,CPU/memory/Podslots,AZsurvival,timezoneintervals,unusedreservationswithoutdoublecounting,unknownothercoststotalnull. Original26nodes15/11failsAZloss.",
+      "PublicAWSPriceList4successfulGetProductsreadsverifySeoulLinuxSharedc5.2xl.384,c5.4xl.768,c6i.4xl.768,m5.4xl.944;oldregionpriceswrong. Same26*4compute79.87,earlyreservation30days14456.83illustrative(notactualbill).",
+      "OneSOeachfororder-api/worker/frontend;KEDACron5fieldsnoyear,annualrecurrenceandNYEDT/ESTverified12cases;HPAownsmaxrecommendation/behavior/minmax,notReadyguarantee/metricsceiling.",
+      "Incomingrequestsnotcompletedordersalone;metriccontract/scope/singlevalue/nodata;CloudWatchmetricStatnotmetricStatType,minMetricValueisNoDatafallbacknotactivation,period/collectionoffsetexplicit;SQSvisibleinflightapprox/controlroleversusconsumerroles.",
+      "Karpenter1.14.1staticreplicasexistsandseparatefromASGWarmPool;dynamicweight/limitsnotprecreate. Staticreplicas0doesnotlaunch,immutablemode/no weight/onlylimits.nodes/noconsolidation/scalebypassesnodebudgetsbutPDBhonored.",
+      "SelfmanagedNodeClassAMIaliaspinnedverifiedpublicSSMEKS1.36Seoulrelease1.36.3-20260903;AutoModeNodeClassdifferentAPIbutCURRENTLYsupportsreservations—avoidedfalseunsupportedfinding.",
+      "ODCRtargetednotNodePoolsecurityACL;matchingactiveusage/PriorityreservedtypeNOTRI;immediatecreationversusfutureenddate/billingstart;3TFmockcasesrejectfractionalcountandpastdate.",
+      "Placementtags/taints/selectorsandPodcostlabelsexplicit;dynamic/staticalternativesnotblindlycombined;staticactivation/placement/GitOpsownershipsequence;placeholderreplenishmentcancreateextranodesandhandoffmustremoveitsdemand.",
+      "Removedgenericsh-echoimagecacheguarantee,blindHPA/Deploymentemergencyoverwrites,deleteSOrestoresbaselineassumptionandtimedNodePooldelete/targetdestroy;documentedbaselineCron/floorrestoreandrealcleanupverification.",
+      "Dashboarddesired/availablemetricscorrect,notHPAmetricthresholdnorcount0phasegauges;undefinedcost/exportermetricsqualified;APIwrapper/partialdashboardremoved,referencesFinOpschapter.",
+      "Sixexistingfiguressemanticallyrewritten:properplaceholderhandoff,HPAmetricownership,controller/scheduler/Karpenter/kubeletstageswithoutfixednodecounts/latency. All9/9/currentbrowserreceipts+assistantvisualinspection+PNGs."
+    ]
+  },
+  {
+    "path": "en/ops/12-event-capacity-planning.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete capacity guides/quizzes corrected with deterministic pricing/capacity calculations, current scaling/reservation semantics, tested configs and six regenerated diagrams.",
+    "sources": [
+      "https://keda.sh/docs/2.20/scalers/cron/",
+      "https://keda.sh/docs/2.20/scalers/aws-cloudwatch/",
+      "https://keda.sh/docs/2.20/scalers/aws-sqs/",
+      "https://keda.sh/docs/2.20/reference/scaledobject-spec/",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://karpenter.sh/docs/concepts/nodeclasses/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-capacity-reservations.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/capacity-reservations-pricing-billing.html"
+    ],
+    "validation": [
+      "ops-event-capacity-validation.json",
+      "ops-event-diagrams-validation.json",
+      "46fences8queries20questions;11manifests4metadatasets3distinctSOtargets;18calculator12Cron3TFmock5Promcalccases;6figures9/9+browser+visual+PNGs"
+    ],
+    "initialCandidates": [
+      "StaleKarpenter0.37KEDA2.14claims/currentv1CRDs;6diagramrefs containinstant/guaranteedreadiness,MAXatKEDAnotHPA,pods/10exactnodeassumptions;needssemanticregenerationandPNGs.",
+      "WorksheetRPMvsRPSvscompletedordersmixedunits,noceil/allocatable/PODmax/topology/SLOconstraints;arbitrary10pods/node;30%marginnotAZfailurecapacity;currencyformulaKOuniterrorandSeoulpriceslikelyUSincorrect;needdeterministiccalculator+datedofficialpricing.",
+      "KEDA5fieldCronhasNOyear/singleeventrepeatsyearly;pastMay2026dates/NYMayEDTnotEST;IANA/DST/overlapandcleanupneedtest;CronfloorHPAconstraintsnotReadyguarantee,metricsnotceilingmaxReplicaCountis;multipleSOssametargetmustbealternativesnotconcurrent.",
+      "DynamicNodePoolweight/limitsdoNOTcreatewarmnodes;distinguishcurrentstaticNodePoolreplicasifavailablefromASGWarmPool;selfmanagedEC2NodeClassvsAutoNodeClassAPIs;weightnotschedulingguarantee,labels/taints/noactualworkloadselectors.",
+      "ODCRtargetednotsecurityNodePoolallowlist;successfulactive matchingcapacityvsuptimeguarantee;Karpenterreservedcapacitytype/selector/gate/currentversionmustverify,existingeventNodePoolsreferenceevent-nodesnotreservedclass. Reservationbillingstartsactive,D-30creationcostnot4h;usedcapacitynotdoublecountedwithreservation;future-datedreservationdifferentconditions;pastenddateinvalid.",
+      "PausePodsdesiredreplicas20replenishedafterpreemptioncanprovisionextra20nodes;handoffmustremove/reduceplaceholderorpreferactualappwarm/staticpool. Requests14CPUexclude8CPUtypes;noeventnodeSelector/taintinNodePool;instantpreemption/readinessnotguaranteed.",
+      "Incomingrequest/backlogshoulddrivecapacity;completedorderscanflatline/dropundersaturationcausingwrongscaledown. Recordlabels/service/cluster/counterunits/Promquerysinglevalue/NoDatahandling;Nginxpathmetricsnotstandard.",
+      "CloudWatchcustomPageViewsPerMinuteSumunitsdoubleaggregation/authIRSAidentityOwner/binding/SAroleundefined;SQSvisible+inflightdefaultapprox/workerconcurrency/backlogage/DLQmetrics;KEDApoll0to1vsHPA1toNinterval,cooldownonlytozero,min>0activationlimitedeffects.",
+      "HPApoliciesrollingperiodnotclocktick/stabilizationnotfixeddelay/scalerbounds/noinstant0coldstart;timelineCronfloor150until15butshows50at14:30inconsistent desiredvsready;capacity/network/DBquotasnotonlyPodsNodes.",
+      "ImagecacheDSrunsappimagesunknownsh/echo(distroless),allNodewildtolerations/resourcesnoprereq/digest/cacheGC/IfNotPresent/registryauth;cachecannotguaranteenopullstartup/coldstart0.",
+      "EmergencykubectlscaleoverwrittenHPA/KEDAandpatchwrongHPAname(normallykeda-hpa...). RaiseSOminwithinapprovedmax/GitOpsownershiporuseexplicitpause/resumeguards;noarbitrarynewNodePool,APIerrorsnofalsecountpass.",
+      "DeleteSOdoesnotrestorebaselineunlessconfiguredandHPAdeleted;NodePooldeletecascadesNodes;automaticsleep1800delete/destructivetf-targetunsafestaterestore;retainbaselineSOremoveeventtrigger/reconcileworkloadplacement/ODCRbothAZcleanupcost.",
+      "GrafanaAPIwrappervsdashboardbody,inventedHPA_target_metricnotdesiredreplicas;Runningphasecountcountszeros,appReadynotRunning;node_cost_hourlyproviderundefined,CloudWatchgaugeperiods;KubecostPOSTvsGETportAPImodelcurrentverify;namespaceeventlabelnotautomaticallyPod/EC2billingtag.",
+      "Quizmaxcontrollersemantics/30minReadyguarantee/targetedonlyspecificpoolfalse/HPA120secondstickfalse/initcontainersallNodes+alwayscachefalse/OnDemanduptimeguaranteefalse/Spot2minbest-effortexceptionsneeded."
+    ],
+    "reviewedSha256": "e20653a6afbb259aeef58a7391178ffb2734df04e5c350b05c9594a230b38e7b",
+    "findings": [
+      "Replacedunmeasuredtrafficmultipliers/instantReady/zeroColdStartclaimswithSLO/profile/allocatable/quotas/failureobjectives;actualappsReadyandnodeReadyseparated.",
+      "Decimalcalculator18cases:consistentRPMunits,ceil,CPU/memory/Podslots,AZsurvival,timezoneintervals,unusedreservationswithoutdoublecounting,unknownothercoststotalnull. Original26nodes15/11failsAZloss.",
+      "PublicAWSPriceList4successfulGetProductsreadsverifySeoulLinuxSharedc5.2xl.384,c5.4xl.768,c6i.4xl.768,m5.4xl.944;oldregionpriceswrong. Same26*4compute79.87,earlyreservation30days14456.83illustrative(notactualbill).",
+      "OneSOeachfororder-api/worker/frontend;KEDACron5fieldsnoyear,annualrecurrenceandNYEDT/ESTverified12cases;HPAownsmaxrecommendation/behavior/minmax,notReadyguarantee/metricsceiling.",
+      "Incomingrequestsnotcompletedordersalone;metriccontract/scope/singlevalue/nodata;CloudWatchmetricStatnotmetricStatType,minMetricValueisNoDatafallbacknotactivation,period/collectionoffsetexplicit;SQSvisibleinflightapprox/controlroleversusconsumerroles.",
+      "Karpenter1.14.1staticreplicasexistsandseparatefromASGWarmPool;dynamicweight/limitsnotprecreate. Staticreplicas0doesnotlaunch,immutablemode/no weight/onlylimits.nodes/noconsolidation/scalebypassesnodebudgetsbutPDBhonored.",
+      "SelfmanagedNodeClassAMIaliaspinnedverifiedpublicSSMEKS1.36Seoulrelease1.36.3-20260903;AutoModeNodeClassdifferentAPIbutCURRENTLYsupportsreservations—avoidedfalseunsupportedfinding.",
+      "ODCRtargetednotNodePoolsecurityACL;matchingactiveusage/PriorityreservedtypeNOTRI;immediatecreationversusfutureenddate/billingstart;3TFmockcasesrejectfractionalcountandpastdate.",
+      "Placementtags/taints/selectorsandPodcostlabelsexplicit;dynamic/staticalternativesnotblindlycombined;staticactivation/placement/GitOpsownershipsequence;placeholderreplenishmentcancreateextranodesandhandoffmustremoveitsdemand.",
+      "Removedgenericsh-echoimagecacheguarantee,blindHPA/Deploymentemergencyoverwrites,deleteSOrestoresbaselineassumptionandtimedNodePooldelete/targetdestroy;documentedbaselineCron/floorrestoreandrealcleanupverification.",
+      "Dashboarddesired/availablemetricscorrect,notHPAmetricthresholdnorcount0phasegauges;undefinedcost/exportermetricsqualified;APIwrapper/partialdashboardremoved,referencesFinOpschapter.",
+      "Sixexistingfiguressemanticallyrewritten:properplaceholderhandoff,HPAmetricownership,controller/scheduler/Karpenter/kubeletstageswithoutfixednodecounts/latency. All9/9/currentbrowserreceipts+assistantvisualinspection+PNGs."
+    ]
+  },
+  {
+    "path": "en/quizzes/ops/12-event-capacity-planning-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete capacity guides/quizzes corrected with deterministic pricing/capacity calculations, current scaling/reservation semantics, tested configs and six regenerated diagrams.",
+    "sources": [
+      "https://keda.sh/docs/2.20/scalers/cron/",
+      "https://keda.sh/docs/2.20/scalers/aws-cloudwatch/",
+      "https://keda.sh/docs/2.20/scalers/aws-sqs/",
+      "https://keda.sh/docs/2.20/reference/scaledobject-spec/",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://karpenter.sh/docs/concepts/nodeclasses/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-capacity-reservations.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/capacity-reservations-pricing-billing.html"
+    ],
+    "validation": [
+      "ops-event-capacity-validation.json",
+      "ops-event-diagrams-validation.json",
+      "46fences8queries20questions;11manifests4metadatasets3distinctSOtargets;18calculator12Cron3TFmock5Promcalccases;6figures9/9+browser+visual+PNGs"
+    ],
+    "initialCandidates": [
+      "StaleKarpenter0.37KEDA2.14claims/currentv1CRDs;6diagramrefs containinstant/guaranteedreadiness,MAXatKEDAnotHPA,pods/10exactnodeassumptions;needssemanticregenerationandPNGs.",
+      "WorksheetRPMvsRPSvscompletedordersmixedunits,noceil/allocatable/PODmax/topology/SLOconstraints;arbitrary10pods/node;30%marginnotAZfailurecapacity;currencyformulaKOuniterrorandSeoulpriceslikelyUSincorrect;needdeterministiccalculator+datedofficialpricing.",
+      "KEDA5fieldCronhasNOyear/singleeventrepeatsyearly;pastMay2026dates/NYMayEDTnotEST;IANA/DST/overlapandcleanupneedtest;CronfloorHPAconstraintsnotReadyguarantee,metricsnotceilingmaxReplicaCountis;multipleSOssametargetmustbealternativesnotconcurrent.",
+      "DynamicNodePoolweight/limitsdoNOTcreatewarmnodes;distinguishcurrentstaticNodePoolreplicasifavailablefromASGWarmPool;selfmanagedEC2NodeClassvsAutoNodeClassAPIs;weightnotschedulingguarantee,labels/taints/noactualworkloadselectors.",
+      "ODCRtargetednotsecurityNodePoolallowlist;successfulactive matchingcapacityvsuptimeguarantee;Karpenterreservedcapacitytype/selector/gate/currentversionmustverify,existingeventNodePoolsreferenceevent-nodesnotreservedclass. Reservationbillingstartsactive,D-30creationcostnot4h;usedcapacitynotdoublecountedwithreservation;future-datedreservationdifferentconditions;pastenddateinvalid.",
+      "PausePodsdesiredreplicas20replenishedafterpreemptioncanprovisionextra20nodes;handoffmustremove/reduceplaceholderorpreferactualappwarm/staticpool. Requests14CPUexclude8CPUtypes;noeventnodeSelector/taintinNodePool;instantpreemption/readinessnotguaranteed.",
+      "Incomingrequest/backlogshoulddrivecapacity;completedorderscanflatline/dropundersaturationcausingwrongscaledown. Recordlabels/service/cluster/counterunits/Promquerysinglevalue/NoDatahandling;Nginxpathmetricsnotstandard.",
+      "CloudWatchcustomPageViewsPerMinuteSumunitsdoubleaggregation/authIRSAidentityOwner/binding/SAroleundefined;SQSvisible+inflightdefaultapprox/workerconcurrency/backlogage/DLQmetrics;KEDApoll0to1vsHPA1toNinterval,cooldownonlytozero,min>0activationlimitedeffects.",
+      "HPApoliciesrollingperiodnotclocktick/stabilizationnotfixeddelay/scalerbounds/noinstant0coldstart;timelineCronfloor150until15butshows50at14:30inconsistent desiredvsready;capacity/network/DBquotasnotonlyPodsNodes.",
+      "ImagecacheDSrunsappimagesunknownsh/echo(distroless),allNodewildtolerations/resourcesnoprereq/digest/cacheGC/IfNotPresent/registryauth;cachecannotguaranteenopullstartup/coldstart0.",
+      "EmergencykubectlscaleoverwrittenHPA/KEDAandpatchwrongHPAname(normallykeda-hpa...). RaiseSOminwithinapprovedmax/GitOpsownershiporuseexplicitpause/resumeguards;noarbitrarynewNodePool,APIerrorsnofalsecountpass.",
+      "DeleteSOdoesnotrestorebaselineunlessconfiguredandHPAdeleted;NodePooldeletecascadesNodes;automaticsleep1800delete/destructivetf-targetunsafestaterestore;retainbaselineSOremoveeventtrigger/reconcileworkloadplacement/ODCRbothAZcleanupcost.",
+      "GrafanaAPIwrappervsdashboardbody,inventedHPA_target_metricnotdesiredreplicas;Runningphasecountcountszeros,appReadynotRunning;node_cost_hourlyproviderundefined,CloudWatchgaugeperiods;KubecostPOSTvsGETportAPImodelcurrentverify;namespaceeventlabelnotautomaticallyPod/EC2billingtag.",
+      "Quizmaxcontrollersemantics/30minReadyguarantee/targetedonlyspecificpoolfalse/HPA120secondstickfalse/initcontainersallNodes+alwayscachefalse/OnDemanduptimeguaranteefalse/Spot2minbest-effortexceptionsneeded."
+    ],
+    "reviewedSha256": "8c963e79dae4f17e5c188f398aeb74cc3193c454af2b737fb82324c9e7260934",
+    "findings": [
+      "Replacedunmeasuredtrafficmultipliers/instantReady/zeroColdStartclaimswithSLO/profile/allocatable/quotas/failureobjectives;actualappsReadyandnodeReadyseparated.",
+      "Decimalcalculator18cases:consistentRPMunits,ceil,CPU/memory/Podslots,AZsurvival,timezoneintervals,unusedreservationswithoutdoublecounting,unknownothercoststotalnull. Original26nodes15/11failsAZloss.",
+      "PublicAWSPriceList4successfulGetProductsreadsverifySeoulLinuxSharedc5.2xl.384,c5.4xl.768,c6i.4xl.768,m5.4xl.944;oldregionpriceswrong. Same26*4compute79.87,earlyreservation30days14456.83illustrative(notactualbill).",
+      "OneSOeachfororder-api/worker/frontend;KEDACron5fieldsnoyear,annualrecurrenceandNYEDT/ESTverified12cases;HPAownsmaxrecommendation/behavior/minmax,notReadyguarantee/metricsceiling.",
+      "Incomingrequestsnotcompletedordersalone;metriccontract/scope/singlevalue/nodata;CloudWatchmetricStatnotmetricStatType,minMetricValueisNoDatafallbacknotactivation,period/collectionoffsetexplicit;SQSvisibleinflightapprox/controlroleversusconsumerroles.",
+      "Karpenter1.14.1staticreplicasexistsandseparatefromASGWarmPool;dynamicweight/limitsnotprecreate. Staticreplicas0doesnotlaunch,immutablemode/no weight/onlylimits.nodes/noconsolidation/scalebypassesnodebudgetsbutPDBhonored.",
+      "SelfmanagedNodeClassAMIaliaspinnedverifiedpublicSSMEKS1.36Seoulrelease1.36.3-20260903;AutoModeNodeClassdifferentAPIbutCURRENTLYsupportsreservations—avoidedfalseunsupportedfinding.",
+      "ODCRtargetednotNodePoolsecurityACL;matchingactiveusage/PriorityreservedtypeNOTRI;immediatecreationversusfutureenddate/billingstart;3TFmockcasesrejectfractionalcountandpastdate.",
+      "Placementtags/taints/selectorsandPodcostlabelsexplicit;dynamic/staticalternativesnotblindlycombined;staticactivation/placement/GitOpsownershipsequence;placeholderreplenishmentcancreateextranodesandhandoffmustremoveitsdemand.",
+      "Removedgenericsh-echoimagecacheguarantee,blindHPA/Deploymentemergencyoverwrites,deleteSOrestoresbaselineassumptionandtimedNodePooldelete/targetdestroy;documentedbaselineCron/floorrestoreandrealcleanupverification.",
+      "Dashboarddesired/availablemetricscorrect,notHPAmetricthresholdnorcount0phasegauges;undefinedcost/exportermetricsqualified;APIwrapper/partialdashboardremoved,referencesFinOpschapter.",
+      "Sixexistingfiguressemanticallyrewritten:properplaceholderhandoff,HPAmetricownership,controller/scheduler/Karpenter/kubeletstageswithoutfixednodecounts/latency. All9/9/currentbrowserreceipts+assistantvisualinspection+PNGs."
+    ]
+  }
+]

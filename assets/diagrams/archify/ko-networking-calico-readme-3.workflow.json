@@ -1,0 +1,241 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Calico vs Cilium: CNI 선택 가이드",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "시작"
+        },
+        "security": {
+          "label": "선택 질문"
+        },
+        "cloud": {
+          "label": "Calico (기본 권장)"
+        },
+        "backend": {
+          "label": "Cilium (특수 요건)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "windows",
+        "label": "Windows 하이브리드",
+        "focus": [
+          "start",
+          "q_windows",
+          "calico"
+        ],
+        "note": "Windows 워크로드가 있는 하이브리드 환경이면 다른 질문 없이 Calico를 선택합니다."
+      },
+      {
+        "id": "l7",
+        "label": "L7 정책 요건",
+        "focus": [
+          "q_windows",
+          "q_l7",
+          "calico",
+          "cilium"
+        ],
+        "note": "L7 Network Policy가 오픈소스로 필요하면 Cilium, Tigera Enterprise로 충분하면 Calico입니다."
+      },
+      {
+        "id": "bgp_obs",
+        "label": "BGP와 관측성",
+        "focus": [
+          "q_l7",
+          "q_bgp",
+          "q_obs",
+          "calico",
+          "cilium"
+        ],
+        "note": "고급 BGP(온프레미스/데이터센터)는 Calico로, Hubble 기반 고급 관측성이 필수면 Cilium으로 향합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "calico_lane",
+      "label": "Calico 선택"
+    },
+    {
+      "id": "decision",
+      "label": "선택 질문"
+    },
+    {
+      "id": "cilium_lane",
+      "label": "Cilium 선택"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_windows",
+    "q_l7",
+    "q_bgp",
+    "q_obs",
+    "calico"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decision",
+      "col": 0,
+      "type": "external",
+      "label": "CNI 선택",
+      "sublabel": "요건 점검 시작",
+      "width": 120
+    },
+    {
+      "id": "q_windows",
+      "lane": "decision",
+      "col": 1,
+      "type": "security",
+      "label": "Windows 워크로드?",
+      "sublabel": "하이브리드 환경",
+      "width": 160
+    },
+    {
+      "id": "q_l7",
+      "lane": "decision",
+      "col": 2,
+      "type": "security",
+      "label": "L7 정책 필요?",
+      "sublabel": "오픈소스 vs Enterprise",
+      "width": 164
+    },
+    {
+      "id": "q_bgp",
+      "lane": "decision",
+      "col": 3,
+      "type": "security",
+      "label": "BGP 필수?",
+      "sublabel": "온프레미스 · 데이터센터",
+      "width": 172
+    },
+    {
+      "id": "q_obs",
+      "lane": "decision",
+      "col": 4,
+      "type": "security",
+      "label": "관측성 우선?",
+      "sublabel": "Hubble 필요 여부",
+      "width": 148
+    },
+    {
+      "id": "calico",
+      "lane": "calico_lane",
+      "col": 5,
+      "type": "cloud",
+      "label": "Calico 선택",
+      "sublabel": "검증된 성숙성 · BGP",
+      "tag": "CNI",
+      "width": 168
+    },
+    {
+      "id": "cilium",
+      "lane": "cilium_lane",
+      "col": 5,
+      "type": "backend",
+      "label": "Cilium 선택",
+      "sublabel": "오픈소스 L7 · Hubble",
+      "tag": "CNI",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-windows",
+      "from": "start",
+      "to": "q_windows"
+    },
+    {
+      "id": "windows-calico",
+      "from": "q_windows",
+      "to": "calico",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "windows-l7",
+      "from": "q_windows",
+      "to": "q_l7",
+      "label": "NO"
+    },
+    {
+      "id": "l7-calico",
+      "from": "q_l7",
+      "to": "calico",
+      "label": "Enterprise OK",
+      "role": "branch",
+      "toSide": "left"
+    },
+    {
+      "id": "l7-cilium",
+      "from": "q_l7",
+      "to": "cilium",
+      "label": "오픈소스 필요",
+      "role": "branch"
+    },
+    {
+      "id": "l7-bgp",
+      "from": "q_l7",
+      "to": "q_bgp",
+      "label": "NO"
+    },
+    {
+      "id": "bgp-calico",
+      "from": "q_bgp",
+      "to": "calico",
+      "label": "고급 BGP",
+      "role": "branch"
+    },
+    {
+      "id": "bgp-obs",
+      "from": "q_bgp",
+      "to": "q_obs",
+      "label": "기본 BGP"
+    },
+    {
+      "id": "obs-calico",
+      "from": "q_obs",
+      "to": "calico",
+      "label": "기본 충분",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "obs-cilium",
+      "from": "q_obs",
+      "to": "cilium",
+      "label": "Hubble 필수",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Calico를 선택해야 하는 경우",
+      "items": [
+        "BGP 기반 온프레미스/데이터센터 환경",
+        "Windows 워크로드가 있는 하이브리드 환경",
+        "검증된 성숙한 솔루션이 필요한 엔터프라이즈",
+        "기존 iptables 기반 인프라와의 호환성, Tigera Enterprise/Cloud 지원"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Cilium을 선택해야 하는 경우",
+      "items": [
+        "L7 Network Policy가 오픈소스로 필요한 경우",
+        "내장 Service Mesh 기능이 필요한 경우",
+        "Hubble 기반 고급 관측성이 필수인 경우",
+        "최신 eBPF 기능을 적극 활용하려는 경우"
+      ]
+    }
+  ]
+}

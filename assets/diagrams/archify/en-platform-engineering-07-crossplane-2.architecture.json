@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "One Composition with environment inputs",
+    "output": "en-platform-engineering-07-crossplane-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "schema",
+        "label": "Schema",
+        "focus": [
+          "xrd",
+          "comp_dev",
+          "comp_prod"
+        ],
+        "note": "The same Composition rendered with alternative environment inputs."
+      },
+      {
+        "id": "dev-path",
+        "label": "Dev Path",
+        "focus": [
+          "claim_a",
+          "comp_dev",
+          "rds_a",
+          "sg_a",
+          "sub_a"
+        ],
+        "note": "The same Composition rendered with alternative environment inputs."
+      },
+      {
+        "id": "prod-path",
+        "label": "Prod Path",
+        "focus": [
+          "claim_b",
+          "comp_prod",
+          "rds_b",
+          "sg_b",
+          "sub_b"
+        ],
+        "note": "The same Composition rendered with alternative environment inputs."
+      }
+    ],
+    "viewBox": [
+      1140,
+      580
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "claim_a",
+      "type": "external",
+      "label": "XR: dev",
+      "sublabel": "environment: dev",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "claim_b",
+      "type": "external",
+      "label": "XR: production",
+      "sublabel": "environment: production",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "xrd",
+      "type": "backend",
+      "label": "XRD",
+      "sublabel": "API schema",
+      "pos": [
+        420,
+        225
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "comp_dev",
+      "type": "backend",
+      "label": "Pipeline: dev input",
+      "sublabel": "db.t4g.medium / 50GB / Single-AZ",
+      "pos": [
+        420,
+        110
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "comp_prod",
+      "type": "backend",
+      "label": "Pipeline: prod input",
+      "sublabel": "db.r6g.large / 200GB / Multi-AZ",
+      "pos": [
+        420,
+        340
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "rds_a",
+      "type": "database",
+      "label": "RDS Instance",
+      "sublabel": "db.t4g.medium",
+      "pos": [
+        900,
+        56
+      ],
+      "size": [
+        170,
+        48
+      ]
+    },
+    {
+      "id": "sg_a",
+      "type": "security",
+      "label": "SG + ingress rule",
+      "pos": [
+        900,
+        118
+      ],
+      "size": [
+        170,
+        48
+      ],
+      "sublabel": "Approved client SG only"
+    },
+    {
+      "id": "sub_a",
+      "type": "cloud",
+      "label": "SubnetGroup",
+      "pos": [
+        900,
+        180
+      ],
+      "size": [
+        170,
+        48
+      ]
+    },
+    {
+      "id": "rds_b",
+      "type": "database",
+      "label": "RDS Instance",
+      "sublabel": "db.r6g.large",
+      "pos": [
+        900,
+        286
+      ],
+      "size": [
+        170,
+        48
+      ]
+    },
+    {
+      "id": "sg_b",
+      "type": "security",
+      "label": "SG + ingress rule",
+      "pos": [
+        900,
+        348
+      ],
+      "size": [
+        170,
+        48
+      ],
+      "sublabel": "Approved client SG only"
+    },
+    {
+      "id": "sub_b",
+      "type": "cloud",
+      "label": "SubnetGroup",
+      "pos": [
+        900,
+        410
+      ],
+      "size": [
+        170,
+        48
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes control plane",
+      "wraps": [
+        "claim_a",
+        "claim_b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes control plane",
+      "wraps": [
+        "xrd",
+        "comp_dev",
+        "comp_prod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes control plane",
+      "wraps": [
+        "rds_a",
+        "sg_a",
+        "sub_a",
+        "rds_b",
+        "sg_b",
+        "sub_b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "xrd-dev",
+      "from": "xrd",
+      "to": "comp_dev"
+    },
+    {
+      "id": "xrd-prod",
+      "from": "xrd",
+      "to": "comp_prod"
+    },
+    {
+      "id": "claim-a-dev",
+      "from": "claim_a",
+      "to": "comp_dev",
+      "label": "environment: dev",
+      "variant": "emphasis"
+    },
+    {
+      "id": "claim-b-prod",
+      "from": "claim_b",
+      "to": "comp_prod",
+      "label": "environment: production",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dev-rds",
+      "from": "comp_dev",
+      "to": "rds_a"
+    },
+    {
+      "id": "dev-sg",
+      "from": "comp_dev",
+      "to": "sg_a"
+    },
+    {
+      "id": "dev-sub",
+      "from": "comp_dev",
+      "to": "sub_a"
+    },
+    {
+      "id": "prod-rds",
+      "from": "comp_prod",
+      "to": "rds_b"
+    },
+    {
+      "id": "prod-sg",
+      "from": "comp_prod",
+      "to": "sg_b"
+    },
+    {
+      "id": "prod-sub",
+      "from": "comp_prod",
+      "to": "sub_b"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Validated values",
+      "items": [
+        "Native Functions preserve Boolean and numeric maps",
+        "Production: deletion protection and 30-day backups",
+        "Actual cloud creation, load and HA need separate validation"
+      ]
+    }
+  ]
+}

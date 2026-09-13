@@ -30,7 +30,7 @@ A Refresh operation fetches the latest manifests from Git and compares them to t
 **Answer: B) Enables automatic synchronization when the desired state differs from live state**
 
 **Explanation:**
-When `syncPolicy.automated` is enabled, ArgoCD will automatically sync the application whenever it detects that the live state has drifted from the desired state defined in Git.
+When `syncPolicy.automated` is enabled, Argo CD applies OutOfSync changes according to policy. Live-only drift needs selfHeal, deletion needs prune, and identical failed commits are not unconditionally retried forever.
 
 </details>
 
@@ -46,7 +46,7 @@ When `syncPolicy.automated` is enabled, ArgoCD will automatically sync the appli
 **Answer: B) To automatically delete resources that are no longer defined in Git**
 
 **Explanation:**
-When `prune: true` is set in automated sync, ArgoCD will automatically delete Kubernetes resources that exist in the cluster but are no longer defined in the Git repository.
+When `prune: true` is set in automated sync, Argo CD deletes tracked resources belonging to this Application that disappear from the desired source, not every unmanaged resource in the cluster.
 
 </details>
 
@@ -62,7 +62,7 @@ When `prune: true` is set in automated sync, ArgoCD will automatically delete Ku
 **Answer: B) Automatically syncs when live state deviates from desired state due to manual changes**
 
 **Explanation:**
-Self-heal ensures that if someone makes a manual change to a resource in the cluster (outside of Git), ArgoCD will automatically revert it to match the desired state in Git.
+With automated sync enabled, selfHeal reconciles compared live-only drift, subject to windows, authorization and ignore rules. It does not restore lost data or repair YAML errors.
 
 </details>
 
@@ -78,6 +78,6 @@ Self-heal ensures that if someone makes a manual change to a resource in the clu
 **Answer: B) Replace=true**
 
 **Explanation:**
-The `Replace=true` sync option tells ArgoCD to use `kubectl replace` instead of `kubectl apply`, which completely replaces the resource rather than patching it. This is useful when dealing with immutable fields.
+The `Replace=true` sync option tells ArgoCD to use `kubectl replace` instead of `kubectl apply`, which completely replaces the resource rather than patching it. replace/create does not automatically bypass immutable-field restrictions. Force=true with Replace=true can delete/recreate resources and is not a PVC migration shortcut.
 
 </details>

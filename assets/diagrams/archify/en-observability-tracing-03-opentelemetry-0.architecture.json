@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How OpenTelemetry Came to Be and Its Components",
+    "output": "en-observability-tracing-03-opentelemetry-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Predecessor project"
+        },
+        "cloud": {
+          "label": "Merged project"
+        },
+        "backend": {
+          "label": "Core component"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "merge",
+        "label": "Project merger",
+        "focus": [
+          "opentracing",
+          "opencensus",
+          "opentelemetry"
+        ],
+        "note": "OpenTracing and OpenCensus merged in 2019 to form OpenTelemetry."
+      },
+      {
+        "id": "components",
+        "label": "Core components",
+        "focus": [
+          "opentelemetry",
+          "spec",
+          "sdk",
+          "collector",
+          "protocol"
+        ],
+        "note": "OpenTelemetry defines four core components: Specification, SDKs, Collector, and Protocol."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "opentracing",
+      "type": "external",
+      "label": "OpenTracing",
+      "sublabel": "2016",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "opencensus",
+      "type": "external",
+      "label": "OpenCensus",
+      "sublabel": "2017",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "opentelemetry",
+      "type": "cloud",
+      "label": "OpenTelemetry",
+      "sublabel": "2019 · merged",
+      "pos": [
+        300,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Specification",
+      "sublabel": "API · semantic conventions",
+      "pos": [
+        640,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "sdk",
+      "type": "backend",
+      "label": "SDKs",
+      "sublabel": "per-language implementations",
+      "pos": [
+        640,
+        160
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "collector",
+      "type": "backend",
+      "label": "Collector",
+      "sublabel": "receive · process · export",
+      "pos": [
+        640,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "protocol",
+      "type": "backend",
+      "label": "Protocol",
+      "sublabel": "OTLP",
+      "pos": [
+        640,
+        360
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "History",
+      "wraps": [
+        "opentracing",
+        "opencensus",
+        "opentelemetry"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Components",
+      "wraps": [
+        "spec",
+        "sdk",
+        "collector",
+        "protocol"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ot-to-otel",
+      "from": "opentracing",
+      "to": "opentelemetry",
+      "label": "merged",
+      "variant": "emphasis"
+    },
+    {
+      "id": "oc-to-otel",
+      "from": "opencensus",
+      "to": "opentelemetry",
+      "label": "merged",
+      "variant": "emphasis"
+    },
+    {
+      "id": "otel-to-spec",
+      "from": "opentelemetry",
+      "to": "spec"
+    },
+    {
+      "id": "otel-to-sdk",
+      "from": "opentelemetry",
+      "to": "sdk"
+    },
+    {
+      "id": "otel-to-collector",
+      "from": "opentelemetry",
+      "to": "collector"
+    },
+    {
+      "id": "otel-to-protocol",
+      "from": "opentelemetry",
+      "to": "protocol"
+    }
+  ]
+}

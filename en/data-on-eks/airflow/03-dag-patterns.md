@@ -1,168 +1,325 @@
 # Part 3: DAG Patterns and KubernetesPodOperator
 
-> **Last Updated**: July 15, 2026
+> **Review baseline**: Airflow 3.3.1 / cncf-kubernetes provider 10.21.0 · September 12, 2026
 
-## Lab Environment Setup
+## 1. Executors, KPO and physical pod count
 
-To follow along with the examples in this document, you will need the following tools and environment:
+KubernetesPodOperator (KPO) lets an Airflow task create and observe a separate
+workload pod. It can run through CeleryExecutor, KubernetesExecutor or another
+compatible executor. The Airflow task environment needs the provider, but
+**the workload pod does not inherently need Airflow installed**.
 
-### Required Tools
+| Typical new execution | Newly created pods and shared resources |
+| --- | --- |
+| CeleryExecutor + KPO | An existing worker process runs KPO and creates a workload pod; multiple tasks can share the worker pod |
+| KubernetesExecutor + KPO | Creates an Airflow task-runner pod and a separate KPO workload pod |
 
-* `kubectl` configured against an EKS cluster (1.30+) with the Airflow 3 deployment from Part 2 running
-* An IAM role for IRSA (or an EKS Pod Identity association) scoped to whatever a task actually needs — for the examples here, read/write access to a specific S3 prefix
-* A container image you can launch through `KubernetesPodOperator` — any image works for the pod-template examples; the Spark example later in this document assumes the Spark Operator setup from [Part 2 of the Spark section](../spark/02-spark-operator.md)
+Changing the executor can therefore change physical pod count. Two logical
+execution roles do not imply an unchanged number of pods. Retries/reattachment
+can reuse pods or create further attempts; deferrable mode can release a worker
+slot while a triggerer continues observation. Exactly two live pods is not a guarantee.
 
-## KubernetesPodOperator Is Not Tied to Your Executor Choice
+## 2. Precedence includes merge behavior
 
-Part 2 walked through choosing between `KubernetesExecutor` and `CeleryExecutor` — the mechanism Airflow uses to run *the DAG's own task instances*. `KubernetesPodOperator` (KPO, `airflow.providers.cncf.kubernetes.operators.pod`) is a different thing entirely: it's an operator, available under either executor, whose `execute()` method creates an arbitrary Pod through the Kubernetes API and waits for it to finish. Whichever process runs that `execute()` call — a fresh per-task pod under `KubernetesExecutor`, or a warm Celery worker under `CeleryExecutor` — it ends up creating and watching a second, separate Pod that does the actual work.
+Provider 10.21.0 constructs the pod as follows:
 
-This distinction matters because it's a common source of confusion: switching a deployment from `CeleryExecutor` to `KubernetesExecutor` does not add a second layer of pods to a DAG that already uses KPO, and it does not remove one either. A KPO task always produces exactly one task-execution context (a Celery worker process or a KubernetesExecutor pod) plus exactly one Pod for the work KPO launches. What the executor choice changes is only how the *first* half — the bookkeeping side that calls `execute()` — is scheduled; KPO's own Pod-launching behavior is identical either way.
+1. Select pod_template_file when present. It does not additionally merge
+   pod_template_dict from the same call.
+2. Otherwise select pod_template_dict, or start from full_pod_spec/an empty pod.
+3. Merge the chosen template with full_pod_spec, then with KPO's constructed pod.
+4. Airflow labels, secret/XCom handling, pod_mutation_hook and server-side
+   admission/defaulting can further affect the result.
 
-## Pod Spec Precedence
+Specified nonempty values such as image/namespace generally override the template,
+but not every field is a simple replacement. Running the released merge methods confirms:
 
-KPO builds the Pod it launches by merging several possible sources of pod configuration, and when more than one is set, the more specific source wins. From highest to lowest priority:
+| Input | Result |
+| --- | --- |
+| Nonempty image | Overrides template image |
+| Empty command or tolerations | Can retain template values |
+| False automount overriding a true template value | Falsy override can retain True; inspect the final pod |
+| Lists such as env/volume_mounts | Can concatenate; an empty list need not erase the base |
+| container_resources with only limits | Does not preserve the previous requests |
+| Nonempty node_selector | Can replace the whole previous selector |
+| Metadata labels | Merge by key |
+| Init containers | Merge matching names and append others |
 
-1. **KPO constructor arguments** — `image`, `cmds`, `env_vars`, `resources`, and similar attributes passed directly to the operator. These always win over anything set through the other sources.
-2. **`full_pod_spec`** — a complete `kubernetes.client.models.V1Pod` object passed in Python, giving you full control when you need it.
-3. **`pod_template_file`** — a path to a YAML file containing a base Pod spec.
-4. **`pod_template_dict`** — the same idea as `pod_template_file`, but as an in-memory dict instead of a file path.
-5. **The default, empty `V1Pod`** — whatever KPO falls back to when none of the above set a given field.
+Use **container_resources=V1ResourceRequirements(...)** for Kubernetes container
+resources. Do not confuse generic resources arguments with that setting.
+Inspect dry_run output and actual admitted pods, not merely the original template.
 
-In practice, most teams settle on `pod_template_file` as the baseline for an entire DAG or deployment, and use KPO's constructor arguments only to override the handful of fields (image, command, a resource bump for one specific task) that legitimately vary per task.
+## 3. Prepare a small runnable DAG
 
-## The `pod_template_file` Pattern
+First prepare Part 2's Airflow and DAG-distribution path. This example prints a
+run ID and does not access S3, so it needs no AWS data role. Real workloads need
+their own image, packages and data permissions.
 
-`pod_template_file` is the standard way to give every KPO task in a deployment a consistent starting point — resource requests/limits, tolerations, a service account — without repeating that YAML in every DAG. A typical base template looks like this:
+In workload-access.yaml, set the RoleBinding subject to the **Airflow worker
+service account that actually runs KPO**. The example uses airflow-worker in the
+airflow namespace. This differs from the workload pod's service account.
 
 ```yaml
-# base-pod-template.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: airflow-workloads
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: workload-smoke
+  namespace: airflow-workloads
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: airflow-kpo
+  namespace: airflow-workloads
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - patch
+  - delete
+- apiGroups:
+  - ''
+  resources:
+  - pods/log
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: airflow-kpo-worker
+  namespace: airflow-workloads
+subjects:
+- kind: ServiceAccount
+  name: airflow-worker
+  namespace: airflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: airflow-kpo
+```
+
+The Role is scoped to the workload namespace, but can affect all matching pod
+resources there. Use trust boundaries and admission controls to restrict untrusted
+DAG authors from selecting privileged identities or dangerous pod specs.
+This synchronous example needs no XCom exec permission. Adding an XCom sidecar
+or deferral requires review of pods/exec and triggerer observation rights.
+
+Distribute these files together in the DAG bundle:
+
+```text
+dags/
+  kpo_smoke.py
+  templates/
+    base-pod-template.yaml
+```
+
+templates/base-pod-template.yaml is completed by KPO, not a standalone pod
+deployment. Its resources, filesystem and UID settings fit this example workload.
+
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
   labels:
-    app: airflow-task
+    app: airflow-kpo-smoke
 spec:
-  serviceAccountName: airflow-task-sa  # overridden per task via IRSA-scoped SAs
+  serviceAccountName: workload-smoke
+  automountServiceAccountToken: false
   restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    seccompProfile:
+      type: RuntimeDefault
   containers:
-    - name: base
-      image: python:3.12-slim  # overridden per task
-      resources:
-        requests:
-          cpu: "500m"
-          memory: "1Gi"
-        limits:
-          cpu: "1"
-          memory: "2Gi"
-  tolerations:
-    - key: "workload"
-      operator: "Equal"
-      value: "airflow-tasks"
-      effect: "NoSchedule"
+  - name: base
+    image: python:3.12-slim
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
 ```
 
-A DAG task then references it and overrides only what's task-specific:
+kpo_smoke.py defines an actual discoverable DAG. It resolves the template relative
+to the bundle file on the worker rather than assuming a universal /opt/airflow/dags path.
 
 ```python
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+from airflow.sdk import Asset, DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
+from kubernetes.client import models as k8s
 
-extract_orders = KubernetesPodOperator(
-    task_id="extract_orders",
-    namespace="airflow",
-    name="extract-orders",
-    image="my-registry/orders-extractor:1.4.0",
-    cmds=["python", "extract.py"],
-    arguments=["--date", "{{ ds }}"],
-    pod_template_file="/opt/airflow/dags/templates/base-pod-template.yaml",
-    service_account_name="orders-extractor-sa",
-    is_delete_operator_pod=True,
-)
+TEMPLATES = Path(__file__).parent / "templates"
+smoke_completed = Asset("demo://kpo-smoke-completed")
+
+with DAG(
+    dag_id="kpo_smoke",
+    schedule=None,
+    start_date=datetime(2026, 9, 1, tzinfo=timezone.utc),
+    catchup=False,
+) as dag:
+    run_smoke = KubernetesPodOperator(
+        task_id="run_smoke",
+        name="kpo-smoke",
+        namespace="airflow-workloads",
+        in_cluster=True,
+        pod_template_file=str(TEMPLATES / "base-pod-template.yaml"),
+        service_account_name="workload-smoke",
+        image="python:3.12-slim",
+        cmds=["python", "-B", "-c"],
+        arguments=["import sys; print('KPO_SMOKE_OK run_id=' + sys.argv[1])", "{{ run_id }}"],
+        container_resources=k8s.V1ResourceRequirements(
+            requests={"cpu": "250m", "memory": "128Mi"},
+            limits={"cpu": "500m", "memory": "256Mi"},
+        ),
+        random_name_suffix=True,
+        reattach_on_restart=True,
+        deferrable=False,
+        get_logs=True,
+        do_xcom_push=False,
+        startup_timeout_seconds=120,
+        active_deadline_seconds=180,
+        execution_timeout=timedelta(minutes=5),
+        on_finish_action="delete_pod",
+        on_kill_action="delete_pod",
+        outlets=[smoke_completed],
+    )
+
+if __name__ == "__main__":
+    run_smoke.dry_run()
 ```
 
-Jinja templating (`{{ ds }}` above) works the same way in KPO's arguments as it does in any other operator, since the operator still renders its templated fields before building the Pod. The `image` and `cmds`/`arguments` passed to the constructor take precedence over whatever the template file sets for those same fields, per the precedence order above — the template supplies the shared defaults, and the constructor supplies what's actually different about this task.
+In an Airflow environment with the provider installed, python kpo_smoke.py prints
+the pod configuration. With explicit namespace and XCom disabled, this example
+avoids live Kubernetes-client initialization in 10.21.0's dry_run path.
+Jinja arguments and task-instance labels still need the real execution context;
+dry_run is not final admission or successful execution.
 
-## Pinning Tasks to Dedicated Node Pools
+run_id is passed as a separate command argument. Asset-triggered DAG runs can lack
+time context such as logical_date/ds, so do not assume `{{ ds }}` exists for every task.
 
-Task pods launched by KPO are ordinary Pods, so the usual Kubernetes mechanism for steering workloads onto specific nodes applies unchanged: set `affinity` and `tolerations` — either directly as KPO constructor arguments, or baked into the pod template — to match a taint on a dedicated node group. This is the same pattern you'd use to pin any workload to a Karpenter-managed NodePool, applied here to Airflow task pods specifically:
+Apply the namespace/RBAC, verify DAG delivery/parsing, then trigger kpo_smoke through
+the UI or CLI. Inspect task status, KPO_SMOKE_OK logs and the actual pod's image,
+service account and resources. Post-success deletion is configured behavior;
+durable logs need Part 5's remote-logging setup.
 
-```yaml
-# in the pod template, or passed to KPO's affinity/tolerations arguments
-tolerations:
-  - key: "workload"
-    operator: "Equal"
-    value: "airflow-tasks"
-    effect: "NoSchedule"
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: "karpenter.sh/nodepool"
-              operator: In
-              values: ["airflow-tasks"]
-```
+### Deletion, killing and restart
 
-Isolating task pods onto a tainted, Airflow-specific node pool keeps them from competing for capacity with (or getting evicted by) unrelated workloads on shared nodes, and lets that pool scale independently based purely on task pod demand.
+Provider 10.21.0 accepts is_delete_operator_pod but does not use that argument in
+its constructor. False does not reliably request retention. Configure
+**on_finish_action** and **on_kill_action** for their respective paths.
+Reattachment resumes observation of an existing pod after restart; it does not
+guarantee exactly-once external writes.
 
-## IRSA Per Task
+## 4. Dedicated nodes and AWS access
 
-The `serviceAccountName` set through `pod_template_file` (or passed directly as KPO's `service_account_name` argument) is also how each task gets its own AWS permissions. Annotate the Kubernetes ServiceAccount with an IAM role ARN the usual IRSA way, and any Pod that runs under that ServiceAccount — including a KPO-launched task pod — assumes that role's permissions for the lifetime of the pod:
+When required, add selectors/required affinity and tolerations matching a prepared
+NodePool. Tolerations permit taints rather than force placement. Dedicated pools
+do not prevent Spot reclamation, node failure, disk pressure or disruption, and
+other workloads may tolerate the same taint.
 
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: orders-extractor-sa
-  namespace: airflow
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/orders-extractor-task-role
-```
+For actual S3 work, prepare IRSA OIDC trust or Pod Identity associations/Agent, IAM
+permissions and compatible SDKs/providers for the workload service account.
+An annotation or service_account_name string alone does not complete S3 access.
+Inspect other credential sources such as environment variables, IMDS and the
+SDK's default chain. Pod lifetime also need not equal temporary-credential expiry.
+Separate Kubernetes RBAC from AWS data permissions and test allowed/denied access.
 
-This is a meaningfully different permission boundary than whatever role the Airflow control-plane components (scheduler, api-server, dag-processor) run under. A task that only needs to read one S3 prefix gets a role scoped to exactly that, instead of inheriting broader permissions the platform components might need for their own operation. Since `service_account_name` is one of the fields that follows the precedence order above, a task-specific override always beats whatever service account the base pod template sets — letting most tasks share a template's default while a handful of tasks needing distinct AWS permissions declare their own.
+## 5. DAG bundles and rerun code versions
 
-## DAG Bundles: Airflow 3's Replacement for a Single DAG Folder
+Bundles supply DAG code and related files to processors and workers.
+LocalDagBundle and S3DagBundle/GCSDagBundle currently do not version bundles.
+This does not guarantee a parser-time snapshot matches the code later read by a
+worker. GitDagBundle supports versioning; git-sync also remains supported.
 
-Airflow 2 assumed every component read DAG files from the same local disk path, which meant the dag-processor (and, in 2.x, the scheduler) needed some way to get that path populated — usually a `git-sync` sidecar polling a repository into a shared volume, or baking DAGs into the deployment's container image. Airflow 3 replaces that assumption with **DAG bundles**: a pluggable abstraction for where the dag-processor pulls DAG source from, configured per bundle rather than hard-coded to one local path.
+Even a versioned bundle does not force every rerun onto the original commit.
+In 3.3.1 the selection order is:
 
-* **`LocalDagBundle`** — reads DAGs from a local filesystem path, exactly like the old model. No versioning: whatever is on disk right now is what runs. This fits a baked-image deployment or local development, where "what's on disk" is already pinned by the image build.
-* **`GitDagBundle`** — pulls DAGs directly from a Git repository, and is versioning-aware natively: every DAG run records the exact commit SHA it executed against. Re-running a historical DAG run replays it against the code as it existed at that commit, not whatever the repository's HEAD has since become. This is the property `git-sync` never gave you — a sidecar keeps the working copy current, but nothing in Airflow 2 recorded which commit a given run actually saw.
-* **`S3DagBundle`** / **`GCSDagBundle`** — pull DAGs from an S3 bucket or GCS bucket respectively. Like `LocalDagBundle`, neither tracks a version per run; whatever object is at the configured key/prefix when the dag-processor parses it is what runs.
+1. Explicit run_on_latest_version in the API request.
+2. The DAG's rerun_with_latest_version value.
+3. Global [core] rerun_with_latest_version.
+4. When unset, per-call fallback: False for clear/rerun, True for backfill.
 
-A `git-sync` sidecar still works with the official Helm chart from Part 2 — nothing in Airflow 3 removes that support — but for any DAG run where reproducibility matters (rerunning a backfill months later and getting the exact code that originally ran), `GitDagBundle` is the pattern that actually gives you that guarantee, which is why it's positioned as `git-sync`'s modern replacement rather than just an alternative.
+disable_bundle_versioning separately disables tracking on runs; rerun defaults
+cannot preserve a version that was not tracked. Retaining a Git commit also does
+not reproduce results when images, packages, external data or configuration change.
+Preserve repository history/access and pin execution dependencies as needed.
 
-![Diagram of the extract_orders task lifecycle: the DAG code invokes the KubernetesPodOperator, which builds and launches a pod from a pod template; the pod runs under a dedicated IRSA-annotated service account and is scheduled onto a tainted node pool, then reports completion status back to the operator, which reports task success or failure to the Airflow scheduler and metadata database.](../../../assets/diagrams/rendered/en-data-on-eks-airflow-03-dag-patterns-0.svg)
+Bundle kwargs can be exposed through the Config API. Reference Airflow Connections
+or suitable credential mechanisms instead of embedding tokens in repo_url.
 
-## Authoring Patterns
+![Airflow worker running KPO, workload pod creation and observation, and Airflow state reporting.](../../.gitbook/assets/en-data-on-eks-airflow-03-dag-patterns-0.png)
 
-TaskFlow API and dynamic task mapping remain Airflow's core authoring patterns in 3.x — neither is a 3.x-specific feature, but both are now DAG-versioning-aware in the UI, so a mapped task's history stays legible even across DAG bundle changes. The pattern worth calling out here is how KPO composes with them to launch work that doesn't run as native Python: a TaskFlow-decorated DAG can still have one or more tasks be `KubernetesPodOperator` instances, mixed in alongside regular `@task`-decorated Python callables.
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-airflow-03-dag-patterns-0.html)
 
-A common real integration is launching a Spark job from an Airflow DAG. The pattern that fits Kubernetes-native Spark (see [Part 2 of the Spark section](../spark/02-spark-operator.md)) is a KPO task whose container image applies a `SparkApplication` manifest and polls it to completion, rather than the DAG talking to the Kubernetes API directly:
+## 6. Spark, dbt and Asset integration
 
-```python
-spark_etl = KubernetesPodOperator(
-    task_id="run_spark_etl",
-    namespace="airflow",
-    name="run-spark-etl",
-    image="my-registry/spark-submitter:1.0.0",
-    cmds=["/bin/sh", "-c"],
-    arguments=["kubectl apply -f /manifests/orders-etl-sparkapp.yaml && "
-                "kubectl wait --for=jsonpath='{.status.applicationState.state}'=COMPLETED "
-                "sparkapplication/orders-etl --timeout=30m"],
-    pod_template_file="/opt/airflow/dags/templates/base-pod-template.yaml",
-    service_account_name="spark-submitter-sa",  # IRSA-scoped for S3 + SparkApplication RBAC
-)
-```
+KPO can run packaged dbt or other CLI workloads. Spark has several integration paths:
 
-The same shape works for a dbt container image (`dbt run` as the KPO task's command against a data warehouse) or any other tool that's easier to run as a purpose-built container than to reimplement as native Airflow logic.
+| Path | What to verify |
+| --- | --- |
+| SparkKubernetesOperator | SparkApplication API/CRD and provider compatibility, caller RBAC, driver observation/cleanup |
+| SparkSubmitOperator or a KPO submitter image | spark-submit runtime/authentication, driver/executor roles and completion/failure handling |
+| CustomObjects client or submission service | Explicit namespace, unique execution identity and state/retry/cleanup contracts |
 
-Airflow 3's asset/event-driven scheduling is a good fit for chaining this kind of task to what comes next: instead of a downstream DAG polling on a schedule to check whether the Spark job's output landed, the upstream DAG can update an Asset on completion, and the downstream DAG triggers directly off that Asset update rather than a time-based schedule. This turns a KPO-launched batch job into a proper event source for the rest of the pipeline instead of just another scheduled task.
+The old fixed-name SparkApplication apply followed only by waiting for COMPLETED
+can mistake a previous COMPLETED state for a new successful run. It can also wait
+in the wrong namespace and fails to handle terminal failure promptly.
+That combination is not used as a runnable baseline here.
 
-## Next Steps
+A native operator is not automatically compatible with every release combination.
+The reviewed 10.21.0 SparkKubernetesOperator adds spec.labels in its reattachment
+setup, but the Spark chapter's Kubeflow 2.5.2 CRD lacks that field. Server field
+validation/pruning can affect behavior: validate the **final generated CR**.
+That version's kill path deletes the Spark CR; delete_on_termination=False does
+not preserve it across that path. Validating only input YAML is not an integration test.
 
-This document covered how `KubernetesPodOperator` launches Pods independently of the `KubernetesExecutor`/`CeleryExecutor` choice from Part 2, the pod spec precedence order that governs `pod_template_file`/`full_pod_spec`/`pod_template_dict`, using `affinity`/`tolerations` and per-task IRSA to give KPO tasks dedicated compute and scoped AWS permissions, and Airflow 3's DAG bundle model — particularly `GitDagBundle`'s commit-level versioning as the modern replacement for a bare `git-sync` sidecar.
+The basic DAG's demo://kpo-smoke-completed is a **demo Asset event** emitted on
+success. It does not automatically detect S3 objects or validate data.
+A downstream DAG can use schedule=[smoke_completed], but real pipelines should
+emit their outlet event only after the intended data is committed.
 
-[Return to Main Page](./README.md)
+## Validation scope
 
-## Quiz
+Merge behavior was checked by executing the unchanged released merge functions
+with real Kubernetes Python models. Constructor checks are source/AST checks.
+This is not a completed Airflow task, Kubernetes API, IAM/S3 or Spark-cluster
+execution/recovery test.
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md).
+
+- [Kubernetes provider 10.21.0 operators](https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/10.21.0/operators.html)
+- [KPO implementation](https://github.com/apache/airflow/blob/providers-cncf-kubernetes/10.21.0/providers/cncf/kubernetes/src/airflow/providers/cncf/kubernetes/operators/pod.py)
+- [Released PodGenerator merge implementation](https://github.com/apache/airflow/blob/providers-cncf-kubernetes/10.21.0/providers/cncf/kubernetes/src/airflow/providers/cncf/kubernetes/pod_generator.py)
+- [DAG bundles and rerun version selection](https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/dag-bundles.html)
+- [Template context and logical dates](https://airflow.apache.org/docs/apache-airflow/3.3.1/templates-ref.html)
+- [SparkKubernetesOperator implementation](https://github.com/apache/airflow/blob/providers-cncf-kubernetes/10.21.0/providers/cncf/kubernetes/src/airflow/providers/cncf/kubernetes/operators/spark_kubernetes.py)
+- [Kubeflow SparkApplication 2.5.2 CRD](https://github.com/kubeflow/spark-operator/blob/v2.5.2/config/crd/bases/sparkoperator.k8s.io_sparkapplications.yaml)
+
+[Part 4: MWAA integration](04-mwaa-integration.md)
+
+[README](README.md)
+
+[Quiz](../../quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)

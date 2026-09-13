@@ -24,17 +24,17 @@ In the hub-spoke model, a central "hub" cluster runs ArgoCD and manages deployme
 ### 2. How does ArgoCD achieve High Availability (HA)?
 
 - A) By running a single replica with auto-restart
-- B) By running multiple replicas of each component with leader election
+- B) By combining component-specific replication, controller sharding, and resilient placement
 - C) By using external database replication
 - D) By deploying across multiple regions
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) By running multiple replicas of each component with leader election**
+**Answer: B) By combining component-specific replication, controller sharding, and resilient placement**
 
 **Explanation:**
-ArgoCD HA deploys multiple replicas of the application-controller, repo-server, and server components. The application-controller uses leader election to ensure only one instance processes each application while others stand by.
+The Application Controller shards target clusters rather than keeping every other replica on standby. ApplicationSet uses separate leader election, and the Server is stateless. Redis HA, placement, capacity and PDBs address different failure modes; adding replicas alone is not an availability guarantee.
 
 </details>
 
@@ -68,24 +68,24 @@ ApplicationSet is a controller that uses generators (List, Cluster, Git, Matrix,
 **Answer: C) Cluster generator**
 
 **Explanation:**
-The Cluster generator iterates over all clusters registered in ArgoCD (stored as secrets) and generates an Application for each one. This enables automatic deployment to new clusters without modifying the ApplicationSet.
+The Cluster generator selects registered clusters using the configured selector and supplies their metadata. A default local cluster may lack a Secret, so Secret-label selection can exclude it. New clusters are selected only if their registration and labels match.
 
 </details>
 
 ### 5. How can IAM Identity Center (SSO) be integrated with ArgoCD?
 
 - A) Direct database connection
-- B) SAML or OIDC authentication with group-based RBAC
+- B) SAML through Dex, with verified assertion attributes mapped to Argo CD RBAC
 - C) SSH key authentication
 - D) API key management
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) SAML or OIDC authentication with group-based RBAC**
+**Answer: B) SAML through Dex, with verified assertion attributes mapped to Argo CD RBAC**
 
 **Explanation:**
-ArgoCD supports SAML and OIDC for SSO integration. IAM Identity Center groups can be mapped to ArgoCD RBAC roles, enabling centralized access management where permissions are controlled through your identity provider.
+This chapter follows the documented Identity Center SAML + Dex path. A SAML URL is not an OIDC issuer. Group assignment does not guarantee a groups claim; the upstream guide identifies group attribute mapping as a workaround. The minimal example explicitly maps verified email identities.
 
 </details>
 
@@ -119,24 +119,24 @@ External Secrets Operator automatically creates Kubernetes secrets from external
 **Answer: B) Allowed git repositories for applications**
 
 **Explanation:**
-The `sourceRepos` field in ArgoCD Projects specifies which git repositories can be used as sources for Applications in that project. This provides security boundaries by preventing unauthorized repository access.
+The `sourceRepos` field in ArgoCD Projects specifies which git repositories can be used as sources for Applications in that project. It constrains Application source selection, but does not itself supply repository credentials, target RBAC, or a sandbox for untrusted code.
 
 </details>
 
 ### 8. What is the benefit of using Matrix generator in ApplicationSets?
 
 - A) It performs mathematical calculations
-- B) It combines multiple generators to create Cartesian product of parameters
+- B) It combines two child generators to produce matching parameter combinations
 - C) It encrypts application manifests
 - D) It validates YAML syntax
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It combines multiple generators to create Cartesian product of parameters**
+**Answer: B) It combines two child generators to produce matching parameter combinations**
 
 **Explanation:**
-The Matrix generator combines two or more generators, creating Applications for every combination of their outputs. For example, combining a Cluster generator with a List generator deploys multiple services to multiple clusters.
+A Matrix generator has exactly two child generators. It combines their output parameters, subject to compatible keys and supported nesting restrictions. For example, combining a Cluster generator with a List generator deploys multiple services to multiple clusters.
 
 </details>
 
@@ -153,7 +153,7 @@ The Matrix generator combines two or more generators, creating Applications for 
 **Answer: B) Changes should be gradual to avoid disrupting running workloads**
 
 **Explanation:**
-NodePool changes through GitOps should be carefully managed because modifications can trigger node replacements. Using strategies like Progressive Sync or separate Applications for node management helps avoid disruption.
+NodePool changes through GitOps should be carefully managed because modifications can trigger node replacements. Review changes, replacement capacity, applicable disruption budgets and deletion behavior. Separate manually synchronized infrastructure Applications can limit accidental changes; no synchronization strategy guarantees that node replacement will be disruption-free.
 
 </details>
 
@@ -170,6 +170,6 @@ NodePool changes through GitOps should be carefully managed because modification
 **Answer: B) Use `argocd cluster add` or create a cluster Secret with credentials**
 
 **Explanation:**
-Remote clusters are added using the `argocd cluster add` CLI command or by creating a Secret with the cluster's API server URL and credentials. ArgoCD uses these credentials to deploy and sync applications to remote clusters.
+Remote clusters are added using the `argocd cluster add` CLI command or by creating a Secret with the cluster's API server URL and credentials. The CLI can mutate target RBAC. The declarative AWS path requires existing role trust, EKS Access Entries/RBAC, real endpoint/CA data and network connectivity; a Secret alone grants none of those prerequisites.
 
 </details>

@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Airflow 3 on EKS Core Architecture",
+    "locale": "en",
+    "output": "en-data-on-eks-airflow-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control",
+        "label": "Metadata / control",
+        "focus": [
+          "bundle",
+          "processor",
+          "db",
+          "triggerer",
+          "api",
+          "scheduler"
+        ],
+        "note": "Core roles and optional triggerer; prepare metadata storage and code delivery separately."
+      },
+      {
+        "id": "kubernetes",
+        "label": "KubernetesExecutor",
+        "focus": [
+          "scheduler",
+          "kpod",
+          "api"
+        ],
+        "note": "Task pods are created through Kubernetes; supervisors call the Execution API."
+      },
+      {
+        "id": "celery",
+        "label": "CeleryExecutor",
+        "focus": [
+          "scheduler",
+          "broker",
+          "worker",
+          "api"
+        ],
+        "note": "Workers receive broker tasks; task supervisors use the Execution API."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "bundle",
+      "type": "database",
+      "label": "DAG bundle / code",
+      "sublabel": "Processor + worker code",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "processor",
+      "type": "backend",
+      "label": "DAG processor",
+      "sublabel": "Parse and serialize",
+      "pos": [
+        290,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Metadata DB",
+      "sublabel": "PostgreSQL / MySQL",
+      "pos": [
+        540,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "triggerer",
+      "type": "backend",
+      "label": "Triggerer (optional)",
+      "sublabel": "Async triggers",
+      "pos": [
+        790,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "frontend",
+      "label": "API server",
+      "sublabel": "UI / REST / Execution API",
+      "pos": [
+        540,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Scheduler + executor",
+      "sublabel": "State and task submission",
+      "pos": [
+        790,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "kpod",
+      "type": "backend",
+      "label": "Kubernetes task pod",
+      "sublabel": "Task SDK + supervisor",
+      "pos": [
+        290,
+        410
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Celery worker pool",
+      "sublabel": "Task SDK + supervisor",
+      "pos": [
+        540,
+        410
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "broker",
+      "type": "messagebus",
+      "label": "Celery broker",
+      "sublabel": "Redis or alternative",
+      "pos": [
+        790,
+        410
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Airflow 3: logical components",
+      "wraps": [
+        "bundle",
+        "processor",
+        "db",
+        "triggerer",
+        "api",
+        "scheduler",
+        "kpod",
+        "worker",
+        "broker"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "code-to-processor",
+      "from": "bundle",
+      "to": "processor",
+      "label": "DAG code",
+      "labelAt": [
+        260,
+        70
+      ]
+    },
+    {
+      "id": "processor-to-db",
+      "from": "processor",
+      "to": "db",
+      "label": "serialize",
+      "labelAt": [
+        510,
+        70
+      ]
+    },
+    {
+      "id": "triggerer-to-db",
+      "from": "triggerer",
+      "to": "db",
+      "label": "trigger state",
+      "labelAt": [
+        760,
+        134
+      ]
+    },
+    {
+      "id": "api-to-db",
+      "from": "api",
+      "to": "db",
+      "label": "state R/W",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        615,
+        184
+      ]
+    },
+    {
+      "id": "scheduler-to-db",
+      "from": "scheduler",
+      "to": "db",
+      "label": "DAG / state R/W",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          885,
+          180
+        ],
+        [
+          1000,
+          180
+        ],
+        [
+          1000,
+          5
+        ],
+        [
+          635,
+          5
+        ]
+      ],
+      "labelAt": [
+        925,
+        165
+      ]
+    },
+    {
+      "id": "scheduler-to-broker",
+      "from": "scheduler",
+      "to": "broker",
+      "label": "queue tasks",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        927,
+        357
+      ]
+    },
+    {
+      "id": "broker-to-worker",
+      "from": "broker",
+      "to": "worker",
+      "label": "task delivery",
+      "labelAt": [
+        760,
+        492
+      ]
+    },
+    {
+      "id": "worker-to-api",
+      "from": "worker",
+      "to": "api",
+      "label": "Execution API",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        677,
+        357
+      ]
+    },
+    {
+      "id": "kpod-to-api",
+      "from": "kpod",
+      "to": "api",
+      "label": "Execution API",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          510,
+          442
+        ],
+        [
+          510,
+          262
+        ]
+      ],
+      "labelAt": [
+        469,
+        352
+      ]
+    },
+    {
+      "id": "scheduler-to-kpod",
+      "from": "scheduler",
+      "to": "kpod",
+      "label": "Kubernetes API: create task pod",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          1030,
+          262
+        ],
+        [
+          1030,
+          515
+        ],
+        [
+          385,
+          515
+        ]
+      ],
+      "labelAt": [
+        910,
+        503
+      ]
+    }
+  ]
+}

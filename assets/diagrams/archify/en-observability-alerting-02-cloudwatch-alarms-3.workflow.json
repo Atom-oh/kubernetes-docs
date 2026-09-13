@@ -1,0 +1,202 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "CloudWatch Anomaly Detection Flow",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "learning",
+        "label": "Learning Phase",
+        "focus": [
+          "historical",
+          "mlModel",
+          "band"
+        ],
+        "note": "An ML model learns the normal pattern from historical metrics and produces the expected band; the model is created with the first alarm."
+      },
+      {
+        "id": "detection",
+        "label": "Detection Phase",
+        "focus": [
+          "band",
+          "currentMetrics",
+          "withinBand",
+          "normal",
+          "anomalyAlert"
+        ],
+        "note": "Current metrics are compared with the band: within it is Normal, outside it raises an Anomaly Alert."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "learn",
+      "label": "Learning Phase"
+    },
+    {
+      "id": "detect",
+      "label": "Detection Phase"
+    },
+    {
+      "id": "alert",
+      "label": "Anomaly Alert",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "historical",
+    "mlModel",
+    "band",
+    "withinBand",
+    "normal"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "historical",
+      "currentMetrics"
+    ],
+    "allowedTerminals": [
+      "normal",
+      "anomalyAlert"
+    ],
+    "requiredPaths": [
+      {
+        "from": "historical",
+        "to": "normal"
+      },
+      {
+        "from": "currentMetrics",
+        "to": "anomalyAlert"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "historical",
+      "lane": "learn",
+      "col": 0,
+      "type": "database",
+      "label": "Historical Data",
+      "sublabel": "historical metrics",
+      "width": 156
+    },
+    {
+      "id": "mlModel",
+      "lane": "learn",
+      "col": 1,
+      "type": "backend",
+      "label": "ML Model",
+      "sublabel": "learns normal pattern",
+      "width": 136
+    },
+    {
+      "id": "band",
+      "lane": "learn",
+      "col": 2,
+      "type": "cloud",
+      "label": "Expected Band",
+      "sublabel": "ANOMALY_DETECTION_BAND",
+      "width": 170
+    },
+    {
+      "id": "currentMetrics",
+      "lane": "detect",
+      "col": 2,
+      "type": "database",
+      "label": "Current Metrics",
+      "sublabel": "current metrics",
+      "width": 156
+    },
+    {
+      "id": "withinBand",
+      "lane": "detect",
+      "col": 3,
+      "type": "security",
+      "label": "Within Band?",
+      "sublabel": "evaluation",
+      "width": 124,
+      "tag": "decision"
+    },
+    {
+      "id": "normal",
+      "lane": "detect",
+      "col": 4,
+      "type": "backend",
+      "label": "Normal",
+      "sublabel": "within band"
+    },
+    {
+      "id": "anomalyAlert",
+      "lane": "alert",
+      "col": 4,
+      "type": "external",
+      "label": "Anomaly Alert",
+      "sublabel": "outside band",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "historical",
+      "to": "mlModel",
+      "label": "train",
+      "role": "main"
+    },
+    {
+      "from": "mlModel",
+      "to": "band",
+      "label": "produce band",
+      "role": "main"
+    },
+    {
+      "from": "band",
+      "to": "withinBand",
+      "label": "baseline",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "currentMetrics",
+      "to": "withinBand",
+      "label": "compare",
+      "role": "branch"
+    },
+    {
+      "from": "withinBand",
+      "to": "normal",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "withinBand",
+      "to": "anomalyAlert",
+      "label": "No",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Band Width (stddev multiplier)",
+      "items": [
+        "ANOMALY_DETECTION_BAND(m1, 2) — 2 standard deviations, about 95% confidence interval (default)",
+        "ANOMALY_DETECTION_BAND(m1, 3) — 3 standard deviations, about 99.7% confidence interval",
+        "ANOMALY_DETECTION_BAND(m1, 1) — 1 standard deviation, more sensitive detection"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Adjusting the Training Period",
+      "items": [
+        "The model is created automatically with the first alarm",
+        "Exclude maintenance or incident periods from training with ExcludedTimeRanges in put-anomaly-detector"
+      ]
+    }
+  ]
+}

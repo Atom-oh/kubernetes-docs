@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Historical vLLM L4 measurement report",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "locale": "en",
+    "viewBox": [
+      1280,
+      560
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "svc",
+          "vllm",
+          "gpu"
+        ],
+        "note": "The client Job's requests reach vLLM through a ClusterIP Service; vLLM batches them onto the L4 GPU."
+      },
+      {
+        "id": "scaling",
+        "label": "Concurrency scaling",
+        "focus": [
+          "vllm",
+          "gpu",
+          "kv"
+        ],
+        "note": "Historical report:p50rose33.1% as aggregate throughput increased. Not rerun in this audit."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "backend",
+      "label": "bench client Job",
+      "sublabel": "Python · ThreadPoolExecutor",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "vllm-server Service",
+      "sublabel": "ClusterIP :8000",
+      "pos": [
+        340,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "vllm",
+      "type": "backend",
+      "label": "vLLM OpenAI server",
+      "sublabel": "v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16",
+      "pos": [
+        640,
+        240
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "database",
+      "label": "NVIDIA L4 GPU",
+      "sublabel": "24GB · g6.2xlarge",
+      "pos": [
+        980,
+        100
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "kv",
+      "type": "security",
+      "label": "KV cache blocks",
+      "sublabel": "gpu-memory-utilization 0.9",
+      "pos": [
+        980,
+        380
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Reported historical namespace setup",
+      "wraps": [
+        "client",
+        "svc",
+        "vllm"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Reported historical GPU NodePool",
+      "wraps": [
+        "gpu",
+        "kv"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-client-svc",
+      "from": "client",
+      "to": "svc",
+      "label": "chat completion request",
+      "variant": "emphasis",
+      "labelDy": 56
+    },
+    {
+      "id": "c-svc-vllm",
+      "from": "svc",
+      "to": "vllm",
+      "label": "1..16 concurrent"
+    },
+    {
+      "id": "c-vllm-gpu",
+      "from": "vllm",
+      "to": "gpu",
+      "label": "continuous batching"
+    },
+    {
+      "id": "c-vllm-kv",
+      "from": "vllm",
+      "to": "kv",
+      "label": "block_size=16, max_model_len=4096"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Reported throughput",
+      "items": [
+        "Concurrency4:58.67 /8:109.04 /16:208.08tokens/s (client)",
+        "Maximum server interval average:243tokens/s; not instantaneous peak"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Reported latency",
+      "items": [
+        "p50:5.65s →7.52s (+33.1%), end-to-end HTTP",
+        "Reported KV occupancy:up to2.6%; distinct from total VRAM"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Evidence limits",
+      "items": [
+        "2026-09-04 commit8622d388; raw logs/client artifact not found",
+        "Bandwidth roofline is an estimate, not a profiled bottleneck."
+      ]
+    }
+  ]
+}

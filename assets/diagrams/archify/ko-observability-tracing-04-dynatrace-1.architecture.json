@@ -1,0 +1,303 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Davis AI 작동 방식",
+    "output": "ko-observability-tracing-04-dynatrace-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "collect",
+        "label": "데이터 수집",
+        "focus": [
+          "metrics",
+          "traces",
+          "logs",
+          "events",
+          "topo",
+          "baseline"
+        ],
+        "note": "메트릭·트레이스·로그·이벤트·토폴로지 다섯 종류의 텔레메트리가 모두 기준선 학습으로 들어간다."
+      },
+      {
+        "id": "analyze",
+        "label": "Davis AI 분석",
+        "focus": [
+          "baseline",
+          "anomaly",
+          "correlate",
+          "root"
+        ],
+        "note": "기준선 학습 → 이상 탐지 → 상관관계 분석 → 근본 원인 식별 순서로 처리된다."
+      },
+      {
+        "id": "results",
+        "label": "분석 결과",
+        "focus": [
+          "root",
+          "problem",
+          "impact",
+          "remediation"
+        ],
+        "note": "식별된 근본 원인이 문제 카드, 영향 분석, 해결 제안 세 가지 결과로 전달된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "metrics",
+      "type": "external",
+      "label": "메트릭",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "traces",
+      "type": "external",
+      "label": "트레이스",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "external",
+      "label": "로그",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "events",
+      "type": "external",
+      "label": "이벤트",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "topo",
+      "type": "external",
+      "label": "토폴로지",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "baseline",
+      "type": "backend",
+      "label": "기준선 학습",
+      "sublabel": "1단계",
+      "pos": [
+        280,
+        216
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "anomaly",
+      "type": "backend",
+      "label": "이상 탐지",
+      "sublabel": "2단계",
+      "pos": [
+        460,
+        216
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "correlate",
+      "type": "backend",
+      "label": "상관관계 분석",
+      "sublabel": "3단계",
+      "pos": [
+        640,
+        216
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "root",
+      "type": "backend",
+      "label": "근본 원인 식별",
+      "sublabel": "4단계",
+      "pos": [
+        820,
+        216
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "problem",
+      "type": "frontend",
+      "label": "문제 카드",
+      "pos": [
+        1100,
+        100
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "impact",
+      "type": "frontend",
+      "label": "영향 분석",
+      "pos": [
+        1100,
+        216
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "remediation",
+      "type": "frontend",
+      "label": "해결 제안",
+      "pos": [
+        1100,
+        332
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "데이터 수집",
+      "wraps": [
+        "metrics",
+        "traces",
+        "logs",
+        "events",
+        "topo"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Davis AI 엔진",
+      "wraps": [
+        "baseline",
+        "anomaly",
+        "correlate",
+        "root"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "분석 결과",
+      "wraps": [
+        "problem",
+        "impact",
+        "remediation"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "metrics-baseline",
+      "from": "metrics",
+      "to": "baseline"
+    },
+    {
+      "id": "traces-baseline",
+      "from": "traces",
+      "to": "baseline"
+    },
+    {
+      "id": "logs-baseline",
+      "from": "logs",
+      "to": "baseline",
+      "variant": "emphasis"
+    },
+    {
+      "id": "events-baseline",
+      "from": "events",
+      "to": "baseline"
+    },
+    {
+      "id": "topo-baseline",
+      "from": "topo",
+      "to": "baseline"
+    },
+    {
+      "id": "baseline-anomaly",
+      "from": "baseline",
+      "to": "anomaly",
+      "variant": "emphasis"
+    },
+    {
+      "id": "anomaly-correlate",
+      "from": "anomaly",
+      "to": "correlate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "correlate-root",
+      "from": "correlate",
+      "to": "root",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-problem",
+      "from": "root",
+      "to": "problem"
+    },
+    {
+      "id": "root-impact",
+      "from": "root",
+      "to": "impact",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-remediation",
+      "from": "root",
+      "to": "remediation"
+    }
+  ]
+}

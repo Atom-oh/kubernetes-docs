@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Windows HNS Integration",
+    "locale": "en",
+    "output": "en-networking-calico-07-advanced-topics-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      500
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Containers / Calico agent"
+        },
+        "cloud": {
+          "label": "HNS (convergence point)"
+        },
+        "security": {
+          "label": "Packet filtering layer"
+        },
+        "external": {
+          "label": "Physical interface"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pod-traffic",
+        "label": "Container traffic path",
+        "focus": [
+          "c1",
+          "c2",
+          "hns",
+          "vfp",
+          "nic"
+        ],
+        "note": "All container traffic converges on HNS, passes VFP filtering, and leaves through the physical NIC."
+      },
+      {
+        "id": "policy-programming",
+        "label": "Calico programming HNS",
+        "focus": [
+          "cw",
+          "hns",
+          "vfp"
+        ],
+        "note": "The Calico Node Windows Service programs networking and policy into the HNS dataplane (windowsDataplane: HNS)."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "Container 1",
+      "sublabel": "Windows Pod",
+      "pos": [
+        60,
+        190
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "Container 2",
+      "sublabel": "Windows Pod",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cw",
+      "type": "backend",
+      "label": "Calico Node",
+      "sublabel": "Windows Service",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hns",
+      "type": "cloud",
+      "label": "HNS",
+      "sublabel": "Host Networking Service",
+      "pos": [
+        560,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "vfp",
+      "type": "security",
+      "label": "VFP",
+      "sublabel": "Virtual Filtering Platform",
+      "pos": [
+        820,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nic",
+      "type": "external",
+      "label": "Physical NIC",
+      "sublabel": "Node physical interface",
+      "pos": [
+        1080,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Windows Node",
+      "wraps": [
+        "c1",
+        "c2",
+        "cw",
+        "hns",
+        "vfp",
+        "nic"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Container Runtime",
+      "wraps": [
+        "c1",
+        "c2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Calico Windows",
+      "wraps": [
+        "cw",
+        "hns",
+        "vfp"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1-hns",
+      "from": "c1",
+      "to": "hns",
+      "label": "Pod traffic"
+    },
+    {
+      "id": "c2-hns",
+      "from": "c2",
+      "to": "hns"
+    },
+    {
+      "id": "cw-hns",
+      "from": "cw",
+      "to": "hns",
+      "label": "Network / policy programming",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "hns-vfp",
+      "from": "hns",
+      "to": "vfp",
+      "label": "Packet filtering",
+      "labelDy": -24
+    },
+    {
+      "id": "vfp-nic",
+      "from": "vfp",
+      "to": "nic",
+      "label": "Egress"
+    }
+  ]
+}

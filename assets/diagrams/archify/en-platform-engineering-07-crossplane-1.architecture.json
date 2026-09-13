@@ -1,0 +1,359 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Crossplane control plane",
+    "output": "en-platform-engineering-07-crossplane-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "resource-chain",
+        "label": "Resource Chain",
+        "focus": [
+          "claim",
+          "xr",
+          "comp",
+          "mr"
+        ],
+        "note": "Crossplane v2 namespaced resources and explicit lifecycle boundaries."
+      },
+      {
+        "id": "provider-path",
+        "label": "Provider Path",
+        "focus": [
+          "mr",
+          "pctrl",
+          "pcrd",
+          "aws"
+        ],
+        "note": "Crossplane v2 namespaced resources and explicit lifecycle boundaries."
+      },
+      {
+        "id": "core-plane",
+        "label": "Core Plane",
+        "focus": [
+          "core",
+          "pkg",
+          "api",
+          "etcd",
+          "pctrl"
+        ],
+        "note": "Crossplane v2 namespaced resources and explicit lifecycle boundaries."
+      }
+    ],
+    "viewBox": [
+      1380,
+      700
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Crossplane core",
+      "sublabel": "Controller",
+      "pos": [
+        490,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pkg",
+      "type": "backend",
+      "label": "Package manager",
+      "sublabel": "Providers and Functions",
+      "pos": [
+        270,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Kubernetes API server",
+      "sublabel": "Resource API",
+      "pos": [
+        710,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "Kubernetes state",
+      "pos": [
+        950,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "claim",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "Namespaced XR request",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "xr",
+      "type": "backend",
+      "label": "Composite Resource",
+      "sublabel": "v2 namespaced XR",
+      "pos": [
+        270,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "comp",
+      "type": "backend",
+      "label": "Composition",
+      "sublabel": "Function pipeline",
+      "pos": [
+        490,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "mr",
+      "type": "backend",
+      "label": "Managed resources",
+      "sublabel": "v2 namespaced MRs",
+      "pos": [
+        710,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pctrl",
+      "type": "backend",
+      "label": "AWS provider controller",
+      "sublabel": "Observe and reconcile MRs",
+      "pos": [
+        950,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pcrd",
+      "type": "database",
+      "label": "Provider CRDs",
+      "sublabel": "Selected service APIs",
+      "pos": [
+        950,
+        530
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS API",
+      "sublabel": "Cloud resources",
+      "pos": [
+        1200,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "core",
+        "pkg",
+        "api",
+        "etcd",
+        "xr",
+        "comp",
+        "mr",
+        "pctrl",
+        "pcrd"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "region",
+      "label": "crossplane-system Namespace",
+      "wraps": [
+        "core",
+        "pkg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Namespace scope",
+      "wraps": [
+        "xr"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "Cluster scope",
+      "wraps": [
+        "comp"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "Namespace scope",
+      "wraps": [
+        "mr"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "Provider integration",
+      "wraps": [
+        "pctrl",
+        "pcrd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "core-api",
+      "from": "core",
+      "to": "api"
+    },
+    {
+      "id": "api-etcd",
+      "from": "api",
+      "to": "etcd"
+    },
+    {
+      "id": "pkg-pctrl",
+      "from": "pkg",
+      "to": "pctrl",
+      "label": "install",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pctrl-pcrd",
+      "from": "pctrl",
+      "to": "pcrd",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "claim-xr",
+      "from": "claim",
+      "to": "xr",
+      "label": "apply XR",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "xr-comp",
+      "from": "xr",
+      "to": "comp",
+      "label": "pipeline",
+      "variant": "emphasis",
+      "labelDy": 64
+    },
+    {
+      "id": "comp-mr",
+      "from": "comp",
+      "to": "mr",
+      "label": "desired MRs",
+      "variant": "emphasis",
+      "labelDy": 64
+    },
+    {
+      "id": "mr-pctrl",
+      "from": "mr",
+      "to": "pctrl",
+      "label": "reconcile",
+      "variant": "emphasis",
+      "labelAt": [
+        920,
+        414
+      ]
+    },
+    {
+      "id": "pctrl-aws",
+      "from": "pctrl",
+      "to": "aws",
+      "label": "AWS API",
+      "variant": "emphasis",
+      "labelDy": -24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "v2 scope",
+      "items": [
+        "XRD v2 defaults to Namespaced",
+        "Example MRs use *.aws.m.upbound.io/v1beta1",
+        "LegacyCluster retains the older Claim path"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Reconciliation and permissions",
+      "items": [
+        "Functions calculate desired resources",
+        "Provider controllers call cloud APIs",
+        "Namespace and ProviderConfig are not complete IAM isolation"
+      ]
+    }
+  ]
+}

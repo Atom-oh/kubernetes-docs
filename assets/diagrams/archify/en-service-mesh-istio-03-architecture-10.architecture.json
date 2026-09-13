@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istiod Internal Structure",
+    "output": "en-service-mesh-istio-03-architecture-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "validate",
+        "label": "Config validation",
+        "focus": [
+          "k8s-api",
+          "galley"
+        ],
+        "note": "Istio CRDs from the Kubernetes API are validated and processed first by the Galley functions."
+      },
+      {
+        "id": "xds-push",
+        "label": "xDS config push",
+        "focus": [
+          "galley",
+          "pilot",
+          "envoy"
+        ],
+        "note": "Validated config is converted to Envoy config by the Pilot functions and pushed to sidecars over the xDS API."
+      },
+      {
+        "id": "certs",
+        "label": "Certificate issuance",
+        "focus": [
+          "galley",
+          "citadel",
+          "envoy"
+        ],
+        "note": "The Citadel functions act as the CA, verify the SPIFFE identity, and deliver X.509 certificates over the SDS API."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "k8s-api",
+      "type": "external",
+      "label": "Kubernetes API",
+      "sublabel": "API Server + Istio CRDs",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "citadel",
+      "type": "security",
+      "label": "Citadel functions",
+      "sublabel": "CA · Identity (SPIFFE)",
+      "pos": [
+        80,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "galley",
+      "type": "backend",
+      "label": "Galley functions",
+      "sublabel": "Config validation · processing",
+      "pos": [
+        430,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pilot",
+      "type": "backend",
+      "label": "Pilot functions",
+      "sublabel": "Service Discovery · xDS",
+      "pos": [
+        780,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "frontend",
+      "label": "Envoy Proxies",
+      "sublabel": "Sidecars 1..N",
+      "pos": [
+        430,
+        470
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istiod · single process",
+      "wraps": [
+        "citadel",
+        "galley",
+        "pilot"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-to-galley",
+      "from": "k8s-api",
+      "to": "galley",
+      "label": "Config validation request",
+      "labelDy": 40
+    },
+    {
+      "id": "galley-to-citadel",
+      "from": "galley",
+      "to": "citadel",
+      "label": "validated"
+    },
+    {
+      "id": "galley-to-pilot",
+      "from": "galley",
+      "to": "pilot",
+      "label": "validated"
+    },
+    {
+      "id": "citadel-to-envoy",
+      "from": "citadel",
+      "to": "envoy",
+      "label": "X.509 · SDS API",
+      "variant": "security"
+    },
+    {
+      "id": "pilot-to-envoy",
+      "from": "pilot",
+      "to": "envoy",
+      "label": "xDS API · config push",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istiod single binary",
+      "items": [
+        "Since Istio 1.5, Pilot, Citadel, and Galley are internal functions of Istiod (pilot-discovery), not separate components",
+        "Pilot/Citadel/Galley are historical names used to describe functionality"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Delivery to the Data Plane",
+      "items": [
+        "Pilot functions: convert Istio CRDs to Envoy config and push over the xDS API",
+        "Citadel functions: verify the SPIFFE identity, then issue X.509 certificates"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MLflow: metadata와 artifact 경로",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1120,
+      500
+    ],
+    "views": [
+      {
+        "id": "proxy",
+        "label": "서버 프록시",
+        "focus": [
+          "client",
+          "server",
+          "backend",
+          "artifact"
+        ],
+        "note": "metadata와 proxied artifact는 서버 API를 사용합니다."
+      },
+      {
+        "id": "direct",
+        "label": "직접 artifact",
+        "focus": [
+          "client",
+          "artifact"
+        ],
+        "note": "직접 URI는 클라이언트의 저장소 권한이 필요합니다."
+      },
+      {
+        "id": "browser",
+        "label": "웹 UI",
+        "focus": [
+          "ui",
+          "server",
+          "backend"
+        ],
+        "note": "브라우저는 HTTP API를 호출하며 SQL DB에 직접 연결하지 않습니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "저장소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "MLflow SDK client",
+      "sublabel": "training / evaluation",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Tracking server",
+      "sublabel": "metadata + artifact API",
+      "pos": [
+        410,
+        70
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "database",
+      "label": "SQL backend",
+      "sublabel": "experiments / runs / models",
+      "pos": [
+        830,
+        30
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "artifact",
+      "type": "database",
+      "label": "Artifact store",
+      "sublabel": "files / model weights",
+      "pos": [
+        830,
+        290
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Browser UI",
+      "sublabel": "HTTP API requests",
+      "pos": [
+        410,
+        270
+      ],
+      "size": [
+        230,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "metadata",
+      "from": "client",
+      "to": "server",
+      "label": "metadata / proxy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "db",
+      "from": "server",
+      "to": "backend",
+      "label": "SQL",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "proxy-file",
+      "from": "server",
+      "to": "artifact",
+      "label": "proxy files",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "ui-api",
+      "from": "ui",
+      "to": "server",
+      "label": "HTTP",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "dashed"
+    },
+    {
+      "id": "direct-file",
+      "from": "client",
+      "to": "artifact",
+      "label": "direct mode: client credentials",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Metadata",
+      "items": [
+        "새 환경 기본값 SQLite · 운영용 DB는 명시적으로 선택",
+        "로컬 SDK는 별도 HTTP 서버 없이도 SQL backend 사용 가능"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Artifact permissions",
+      "items": [
+        "프록시: 서버 권한 / 직접: 클라이언트 저장소 권한",
+        "기존 experiment artifact URI는 서버 flag 변경으로 바뀌지 않음"
+      ]
+    }
+  ]
+}

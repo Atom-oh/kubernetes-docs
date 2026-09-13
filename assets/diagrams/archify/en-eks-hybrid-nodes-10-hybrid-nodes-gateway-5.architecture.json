@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Gateway High Availability Deployment Architecture",
+    "locale": "en",
+    "output": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "leader-path",
+        "label": "Leader responsibilities",
+        "focus": [
+          "gw1",
+          "lease",
+          "vtep",
+          "rt"
+        ],
+        "note": "The lease holder owns CiliumVTEPConfig and the VPC route table entries."
+      },
+      {
+        "id": "standby-watch",
+        "label": "Standby takeover",
+        "focus": [
+          "gw2",
+          "lease"
+        ],
+        "note": "The standby only watches the lease; it acts once the lease expires."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gw1",
+      "type": "backend",
+      "label": "Gateway Pod 1 (Leader)",
+      "sublabel": "Node ip-10-0-1-100 · eni-abc123",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        230,
+        70
+      ],
+      "tag": "leader"
+    },
+    {
+      "id": "gw2",
+      "type": "backend",
+      "label": "Gateway Pod 2 (Standby)",
+      "sublabel": "Node ip-10-0-2-200 · eni-def456",
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        230,
+        70
+      ],
+      "tag": "standby"
+    },
+    {
+      "id": "lease",
+      "type": "security",
+      "label": "Kubernetes Lease",
+      "sublabel": "holder: gateway-pod-1",
+      "pos": [
+        400,
+        83
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "vtep",
+      "type": "backend",
+      "label": "CiliumVTEPConfig",
+      "sublabel": "vtepIPs: [10.0.1.100]",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "cloud",
+      "label": "VPC Route Table",
+      "sublabel": "10.100.0.0/20 → eni-abc123",
+      "pos": [
+        400,
+        300
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Availability Zone A",
+      "wraps": [
+        "gw1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Availability Zone B",
+      "wraps": [
+        "gw2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gw1-holds-lease",
+      "from": "gw1",
+      "to": "lease",
+      "label": "Holds",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw1-manages-vtep",
+      "from": "gw1",
+      "to": "vtep",
+      "label": "Manages",
+      "labelDy": 24
+    },
+    {
+      "id": "gw1-programs-rt",
+      "from": "gw1",
+      "to": "rt",
+      "label": "Programs"
+    },
+    {
+      "id": "gw2-monitors-lease",
+      "from": "gw2",
+      "to": "lease",
+      "label": "Monitors",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Leader",
+      "items": [
+        "Holds the Kubernetes Lease",
+        "Manages CiliumVTEPConfig vtepIPs",
+        "Programs hybrid Pod CIDR routes to its ENI"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Standby",
+      "items": [
+        "Runs in a different AZ (topologySpreadConstraints)",
+        "Watches the lease; acquires it when it expires",
+        "End-to-end failover takes about 15-25s"
+      ]
+    }
+  ]
+}

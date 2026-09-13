@@ -1,6 +1,6 @@
 # Part 1: 인프라 구성
 
-> **난이도**: 중급 (Intermediate) **예상 소요 시간**: 60분 **마지막 업데이트**: 2026년 2월 23일
+> **난이도**: 중급 (Intermediate) **예상 소요 시간**: 60분 **마지막 업데이트**: 2026년 9월 9일
 
 ## 학습 목표
 
@@ -14,7 +14,9 @@
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-0.html)
 
-![관리형 클러스터의 ArgoCD가 GitOps로 서비스 클러스터(Karpenter, MSA Apps)에 배포하고, 관리형 클러스터의 관측성 스택과 서비스 클러스터의 앱이 각각 AWS 관리형 관측성 서비스(AMP·AMG·OpenSearch)와 데이터·메시징 서비스(Aurora·SQS·SNS·MWAA)를 사용하는 실습 인프라 구조를 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-01-infrastructure-setup-lab-0.svg)
+![관리형 클러스터의 ArgoCD가 GitOps로 서비스 클러스터(Karpenter, MSA Apps, Argo Rollouts)에 배포하고, 관리형 클러스터의 관측성 스택과 서비스 클러스터의 앱이 각각 AWS 관리형 관측성 서비스(AMP·AMG·OpenSearch)와 데이터·메시징 서비스(Aurora·SQS·SNS·MWAA)를 사용하는 실습 인프라 구조를 보여준다.](../../.gitbook/assets/ko-labs-observability-01-infrastructure-setup-lab-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-01-infrastructure-setup-lab-0.html)
 
 ***
 
@@ -283,7 +285,7 @@ managedNodeGroups:
       Purpose: service
 
 karpenter:
-  version: 'v0.35.0'
+  version: '1.14.1'
   createServiceAccount: true
   withSpotInterruptionQueue: true
 ```
@@ -318,12 +320,14 @@ spec:
           operator: In
           values: ["m5.large", "m5.xlarge", "m5.2xlarge", "m6i.large", "m6i.xlarge"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default
   limits:
     cpu: 100
     memory: 200Gi
   disruption:
-    consolidationPolicy: WhenUnderutilized
+    consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 30s
 ---
 apiVersion: karpenter.k8s.aws/v1
@@ -331,7 +335,8 @@ kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  amiFamily: AL2
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: obs-service-cluster

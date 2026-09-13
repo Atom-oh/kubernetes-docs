@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "DNS Resolution Process — Looking up www.example.com",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      520
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "asks for www.example.com"
+    },
+    {
+      "id": "root",
+      "type": "backend",
+      "label": "Root DNS Server",
+      "sublabel": "top of the hierarchy"
+    },
+    {
+      "id": "tld",
+      "type": "backend",
+      "label": ".com DNS Server",
+      "sublabel": "TLD"
+    },
+    {
+      "id": "auth",
+      "type": "backend",
+      "label": "example.com DNS Server",
+      "sublabel": "authoritative server"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 340,
+      "label": "Referrals down the hierarchy"
+    },
+    {
+      "from": 360,
+      "to": 440,
+      "label": "Final answer"
+    }
+  ],
+  "messages": [
+    {
+      "id": "q1",
+      "from": "client",
+      "to": "root",
+      "y": 200,
+      "label": "1. Query www.example.com",
+      "variant": "emphasis"
+    },
+    {
+      "id": "r2",
+      "from": "root",
+      "to": "tld",
+      "y": 260,
+      "label": "2. Refer to .com DNS Server"
+    },
+    {
+      "id": "r3",
+      "from": "tld",
+      "to": "auth",
+      "y": 320,
+      "label": "3. Refer to example.com DNS Server"
+    },
+    {
+      "id": "a4",
+      "from": "auth",
+      "to": "client",
+      "y": 405,
+      "label": "4. www.example.com = 192.0.2.1",
+      "variant": "return",
+      "note": "A record answer"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "root",
+      "from": 195,
+      "to": 265,
+      "type": "backend"
+    },
+    {
+      "participant": "tld",
+      "from": 255,
+      "to": 325,
+      "type": "backend"
+    },
+    {
+      "participant": "auth",
+      "from": 315,
+      "to": 412,
+      "type": "backend"
+    }
+  ]
+}

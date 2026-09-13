@@ -18,19 +18,19 @@ ArgoCD는 애플리케이션 관리를 위한 내장된 기능이 풍부한 Web 
 
 </details>
 
-2. 배포 소스로서 OCI 아티팩트에 대한 네이티브 지원이 더 좋은 도구는 무엇인가요?
-   - A) ArgoCD
-   - B) FluxCD
-   - C) 둘 다 동등한 지원
+2. 현재 OCI 기반 배포 소스를 지원하는 도구에 대한 설명으로 옳은 것은?
+   - A) ArgoCD만 지원
+   - B) FluxCD만 지원
+   - C) 둘 다 지원하지만 source 설정·layer·검증 기능은 다름
    - D) 둘 다 OCI 지원 안 함
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) FluxCD**
+**정답: C) 둘 다 지원하지만 source 설정·layer·검증 기능은 다름**
 
 **설명:**
-FluxCD는 OCIRepository 소스 유형을 통해 OCI 아티팩트에 대한 일급 지원을 제공하여 OCI 호환 레지스트리에서 저장하고 배포할 수 있습니다. ArgoCD의 OCI 지원은 Helm 차트로 제한됩니다.
+FluxCD는 OCIRepository 소스 유형을 통해 OCI 아티팩트에 대한 일급 지원을 제공하여 OCI 호환 레지스트리에서 저장하고 배포할 수 있습니다. 현재 Argo CD도 일반 OCI Application 소스를 지원합니다. 각 도구의 버전·media type·인증·검증 설정을 확인해야 합니다.
 
 </details>
 
@@ -46,7 +46,7 @@ FluxCD는 OCIRepository 소스 유형을 통해 OCI 아티팩트에 대한 일�
 **정답: B) FluxCD (네이티브)**
 
 **설명:**
-FluxCD는 Image Reflector 및 Image Automation 컨트롤러를 통해 내장 이미지 자동화를 제공합니다. ArgoCD는 유사한 기능을 위해 별도의 Argo Image Updater 프로젝트가 필요합니다.
+Flux는 선택 설치하는 Image Reflector 및 Image Automation 컨트롤러를 제공합니다. 기본 bootstrap에 이 두 컨트롤러가 항상 포함되는 것은 아닙니다. ArgoCD는 유사한 기능을 위해 별도의 Argo Image Updater 프로젝트가 필요합니다.
 
 </details>
 
@@ -78,6 +78,6 @@ ArgoCD는 팀이 Web UI를 통한 시각적 피드백, 포괄적인 RBAC, 엔터
 **정답: B) 예, 서로 보완할 수 있음**
 
 **설명:**
-ArgoCD와 FluxCD는 함께 사용할 수 있습니다. 일반적인 패턴은 FluxCD를 인프라 관리 및 이미지 자동화에 사용하고 ArgoCD를 UI와 함께 애플리케이션 배포에 사용하는 것입니다.
+ArgoCD와 FluxCD는 리소스 소유권을 분리하면 함께 사용할 수 있습니다. 동일한 리소스를 두 도구가 동시에 reconcile/prune하게 두지 않습니다. 일반적인 패턴은 FluxCD를 인프라 관리 및 이미지 자동화에 사용하고 ArgoCD를 UI와 함께 애플리케이션 배포에 사용하는 것입니다.
 
 </details>

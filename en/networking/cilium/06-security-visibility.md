@@ -1,93 +1,330 @@
 # Security and Visibility
 
-> **Supported Versions**: Cilium 1.18
-> **Last Updated**: February 22, 2026
+> **Review baseline**: Cilium 1.20.1; Cilium CLI 0.20.0; Hubble CLI 1.19.4.
+> **Last reviewed**: September 12, 2026. Kubernetes 1.33–1.36 is the Cilium 1.20 compatibility range; choose kubectl within the API server's supported version skew.
 
 ## Lab Environment Setup
 
-To follow along with the examples in this document, you need the following tools and environment:
+Use an existing Cilium 1.20.1 test cluster with at least two schedulable Linux nodes, working DNS, and policy enforcement enabled. Follow [the installation and platform prerequisites](README.md), including the EKS restrictions and verified CLI downloads. These examples do not install or replace a CNI. They require Helm, kubectl, the Cilium and Hubble CLIs, and jq.
 
-### Required Tools
-- kubectl v1.31 or higher
-- A working Kubernetes cluster (EKS, minikube, kind, etc.)
-- Cilium CLI
-- Hubble CLI
+The lab assumes CoreDNS Pods labeled `k8s-app=kube-dns` in `kube-system`. Verify the actual resolver path; NodeLocal DNS or a different distribution needs different destinations/ports. Policies, proxy configuration and platform controls already present in the cluster can affect the results.
 
 ### Hubble Installation and Setup
 
+Save `hubble-values.yaml`. This fragment enables the local servers, Relay, UI and selected metric plugins. Apply it to an **existing release at the same chart version**; review the retained installation values first. For a version upgrade, use the upgrade procedure instead of blindly reusing old values.
+
+```yaml
+# hubble-values.yaml
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+  metrics:
+    enabled:
+    - dns
+    - drop
+    - tcp
+    - flow
+    - httpV2
+    serviceMonitor:
+      enabled: false
+```
 ```bash
-# Enable Hubble
-cilium hubble enable --ui
+helm upgrade cilium cilium/cilium --namespace kube-system \
+  --version 1.20.1 --reuse-values --values hubble-values.yaml --wait
+cilium status --wait
+# Terminal 1: keep this process running; stop it with Ctrl-C.
+cilium hubble port-forward
+```
 
-# Install Hubble CLI
-export HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
-curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz
-tar xzvfC hubble-linux-amd64.tar.gz /usr/local/bin
-rm hubble-linux-amd64.tar.gz
+In another terminal, verify API connectivity. Port forwarding stays local; it does not publish Relay or UI through a public LoadBalancer.
 
-# Set up Hubble port forwarding
-cilium hubble port-forward &
-
-# Verify Hubble connection
+```bash
+# Terminal 2
 hubble status
+hubble observe --last 20
+# Optional UI; keep its local forwarding process running while using it.
+cilium hubble ui
 ```
 
 ## Cilium's Security Features
 
-Cilium leverages eBPF to provide powerful security features for containerized environments. These features provide comprehensive security from network layer to application layer.
+Cilium combines network policy with endpoint identities and optional encryption. Hubble makes the resulting network events observable. Their boundaries matter when evaluating a security requirement.
 
 ### Cilium Security Architecture
 
-![Traffic flows down through Cilium's four defense-in-depth security layers — Network Security, Application Security, Threat Detection, and Runtime Security — with Hubble's eBPF-native observability in the Threat Detection layer highlighted as the visibility foundation underlying the others.](../../../assets/diagrams/rendered/en-networking-cilium-06-security-visibility-0.svg)
+| Responsibility | Component and scope |
+| --- | --- |
+| Network microsegmentation | Cilium L3/L4 policy selects identities, addresses, ports and directions. A namespaced CiliumNetworkPolicy selects endpoints in its namespace. |
+| HTTP policy | Cilium's Envoy integration filters methods, paths and headers when the proxy can see HTTP. DNS policy uses the DNS proxy. |
+| DNS/FQDN control | DNS rules control queries; `toFQDNs` permits destination IPs learned from observed DNS answers. This is not an automatic malicious-domain reputation feed. |
+| Node transport encryption | IPsec or WireGuard protects supported traffic between nodes. Coverage depends on mode and configuration. |
+| Network investigation | Hubble records flow metadata and policy verdicts; Relay, CLI and UI expose it. |
+| Process and syscall security | **Tetragon** is a separate project for runtime events and configured enforcement. Enabling Hubble does not install it. |
+| Threat detection and response | External alert rules, SIEM/WAF and response controllers must be configured for the intended detection and action. |
 
-### Network Security Features:
+### Network and Application Security
 
-1. **Microsegmentation**:
-   - Prevents lateral movement with granular network policies
-   - Applies least privilege principle
-   - Restricts inter-service communication
+Use least-privilege policy to limit lateral movement and explicit egress to limit dependencies. Security identities derive from security-relevant labels; they are not necessarily unique per Pod and do not authenticate an end user.
 
-2. **Encryption**:
-   - Inter-node IPsec or WireGuard encryption
-   - Data protection in transit
-   - Transparent encryption implementation
+Current Cilium policy supports HTTP and DNS L7 rules. gRPC can use HTTP method/path/header rules where its HTTP/2 traffic is visible. Kafka topic policies are no longer supported. HTTP `headers` entries with values are literal matches, not regular-expression authentication. An `Authorization` header's presence or shape does not validate a JWT, its issuer, signature or authorization claims. Use the application's authentication layer or a configured gateway for that.
 
-3. **Threat Detection**:
-   - Detection of abnormal network activity
-   - Identification of known attack patterns
-   - Real-time alerts and response
+An HTTP rule on port 8443 does not decrypt HTTPS. TLS termination or a separately supported inspection arrangement is required before HTTP policy can evaluate encrypted application data. Do not bypass a service mesh's encryption merely to make L7 inspection work.
 
-4. **DNS Security**:
-   - DNS-based network policies
-   - Malicious domain blocking
-   - DNS request monitoring
+### Identity, Authentication and Encryption
 
-### Application Security Features:
+Cilium's SPIRE-based **mutual authentication remains Beta**: it performs an out-of-band handshake for security identities. That handshake alone does not encrypt application traffic. Its documented limitations include no ClusterMesh support and no interoperability with arbitrary external mTLS systems. The separate **ztunnel workload mTLS feature is also Beta**; it has its own enrollment and certificate prerequisites. Neither feature should be presented as the automatic consequence of an identity selector.
 
-1. **API-aware Security**:
-   - HTTP method, path, header-based filtering
-   - gRPC method and metadata-based filtering
-   - Kafka topic and operation-based filtering
+### Encryption Configuration
 
-2. **Identity-based Security**:
-   - Service identity-based policies
-   - Mutual TLS (mTLS) integration
-   - SPIFFE/SPIRE integration
-
-3. **Runtime Security**:
-   - Process and system call monitoring
-   - Container escape detection
-   - Privilege escalation prevention
-
-### Security Policy Example:
+The following are **alternative Helm fragments**, not two settings to enable together. Select one for a planned installation/change and validate the kernel, routing and platform prerequisites.
 
 ```yaml
-# comprehensive-security-policy.yaml
-apiVersion: "cilium.io/v2"
+# wireguard-values.yaml
+encryption:
+  enabled: true
+  type: wireguard
+  nodeEncryption: false
+```
+```yaml
+# ipsec-values.yaml
+encryption:
+  enabled: true
+  type: ipsec
+  nodeEncryption: false
+  ipsec:
+    secretName: cilium-ipsec-keys
+```
+
+WireGuard requires kernel support and the node-to-node UDP path on port 51871. IPsec requires a correctly formatted, securely managed `cilium-ipsec-keys` Secret in Cilium's namespace before enabling it; follow the official key creation and rotation procedure. Merely naming a key file in a ConfigMap does not provision that key or its volume.
+
+By default, these modes protect supported Cilium-managed Pod traffic crossing nodes; same-node traffic is not encrypted by these node tunnels. Traffic to arbitrary external destinations is not automatically covered. WireGuard node-to-node encryption is a separate Beta option; control-plane nodes are excluded from that extension by default, while their Cilium-managed cross-node Pod traffic can still be encrypted. Verify the actual packet path and use application TLS where required. Host firewall compatibility also depends on the encryption mode.
+
+## Network Visibility with Hubble
+
+Hubble receives datapath, proxy and agent events and enriches them with Kubernetes metadata. It is not simply a reader that periodically polls all eBPF maps.
+
+```text
+Kernel/datapath events + proxy/agent events
+                  |
+                  v
+       Hubble server in each Cilium agent
+          |             |                |
+   bounded flow      metric endpoint   optional file exporter
+      buffer          TCP 9965            |
+          |             ^             log collector/storage
+     Relay query        | scrape
+          ^          Prometheus <--- Grafana queries
+          |
+       CLI / UI
+```
+
+The server maintains bounded in-memory history. Relay queries multiple servers; it is not a durable database. UI offers flow exploration and service dependency maps, while the CLI supports explicit filters. No matching records can mean no traffic, the wrong filter, unavailable peers, missing L7 visibility or overwritten/lost events.
+
+### Hubble CLI Usage Examples
+
+```bash
+hubble observe --namespace cilium-security-demo --last 100
+hubble observe --from-pod cilium-security-demo/frontend \
+  --to-service cilium-security-demo/backend --last 100
+hubble observe --namespace cilium-security-demo --protocol http \
+  --http-status '4+' --http-status '5+' --last 100
+hubble observe --namespace cilium-deny-demo --verdict DROPPED \
+  --drop-reason-desc POLICY_DENIED --last 100
+hubble observe --pod cilium-security-demo/frontend --follow
+```
+
+`--pod namespace/name` matches either endpoint; use `--from-pod`/`--to-pod` for direction. Pod names are not label selectors: use `--from-label` or `--to-label` when selecting labels. Do not combine `--namespace` with `--from-pod`/`--to-pod`; the CLI rejects that combination.
+
+`DROPPED` is a verdict. `POLICY_DENIED` is a drop reason, selected with `--drop-reason-desc`. HTTP status prefixes use `4+` and `5+`, not `4..` and `5..`. HTTP filters require proxy-derived L7 events; a dropped TCP connection need not have an HTTP status.
+
+## Network Visibility and Monitoring
+
+### Hubble Metrics
+
+The enabled plugins expose different observations:
+
+| Plugin | Example metric | Meaning and limit |
+| --- | --- | --- |
+| `flow` | `hubble_flows_processed_total` | Processed flow events by protocol/type/verdict; not unique requests or packets on every path. |
+| `drop` | `hubble_drop_total{reason="POLICY_DENIED"}` | Observed drops; the reason label is the enum name. |
+| `tcp` | `hubble_tcp_flags_total` | Observed TCP flags; not a general RTT, retransmission or concurrent-connection metric. |
+| `dns` | `hubble_dns_queries_total`, `hubble_dns_responses_total` | Observed DNS queries/responses and response codes; not a generic DNS latency histogram. |
+| `httpV2` | `hubble_http_requests_total`, `hubble_http_request_duration_seconds` | HTTP response-flow-derived request counts/status and duration in seconds. Requires HTTP visibility. |
+
+Do not enable `http` and `httpV2` together. Choose source/destination labels carefully to control cardinality, and avoid adding request headers or sensitive identities without a reason. Check `hubble_lost_events_total` and peer availability before treating a missing event as proof that traffic did not occur.
+
+### Prometheus Integration
+
+The chart creates the headless `hubble-metrics` Service in the Cilium namespace, exposing port **9965** by default. Its Service label `k8s-app=hubble` is used for discovery; the Service selects agent Pods labeled `k8s-app=cilium`. Prometheus should discover the individual endpoints rather than rely on one static DNS target.
+
+With an existing Prometheus Operator and ServiceMonitor CRD, merge this fragment into the release values. `release: monitoring` is an example: it must match your Prometheus `serviceMonitorSelector`, and its namespace selector must include the ServiceMonitor's namespace. A resource that Prometheus does not select will not be scraped.
+
+```yaml
+# hubble-servicemonitor-values.yaml
+hubble:
+  metrics:
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: monitoring
+```
+
+The chart's ServiceMonitor uses the named port `hubble-metrics` and the Cilium namespace's endpoints. Without the Operator, configure equivalent Kubernetes service discovery in your actual Prometheus configuration. Creating an unrelated ConfigMap does not configure Prometheus. `*.hubble-metrics.cilium.io` is used in metrics TLS identity configuration; it is not a public scrape target on port 9091.
+
+Grafana dashboards query Prometheus metrics; Hubble UI's service map queries Relay. Import dashboards that match the enabled plugins and labels. HTTP dashboards will be empty for traffic whose HTTP payload is not observable.
+
+### Flow Export and Retention
+
+For node-local rotated files, optionally merge `hubble-export-values.yaml`. The field mask deliberately keeps network metadata; it does not export full HTTP headers.
+
+```yaml
+# hubble-export-values.yaml
+hubble:
+  export:
+    static:
+      enabled: true
+      filePath: /var/run/cilium/hubble/events.log
+      fileMaxSizeMb: 10
+      fileMaxBackups: 5
+      fieldMask:
+      - time
+      - source.namespace
+      - source.pod_name
+      - destination.namespace
+      - destination.pod_name
+      - l4
+      - IP
+      - node_name
+      - is_reply
+      - verdict
+      - drop_reason_desc
+```
+
+The static exporter writes on each node and rotates according to its file settings. Arrange a separate collector, access controls and storage retention if events must survive node loss. Static configuration changes require agent rollout; the dynamic exporter supports different update behavior. Exporter filters and field masks can intentionally omit events/fields, and finite buffers can still lose observations.
+
+## Real-time Threat Detection
+
+Hubble supplies evidence for investigations; it does not include a switch that makes it a complete IDS, WAF or automatic quarantine system. There are no supported Cilium settings named `enable-threat-detection`, `enable-anomaly-detection` or `alert-to-slack`.
+
+Repeated denied destinations may suggest scanning; a traffic spike may justify investigation. These observations are not proof of an attack. Correlate them with application authentication logs, workload changes, API audit events and, where deployed, Tetragon runtime events. SQL injection, XSS and command injection require suitable application/WAF/detection rules; a normal HTTP flow record alone does not classify them.
+
+For alerts, define and test external Prometheus/SIEM rules against normal traffic, missing data and event loss. Rate limits, firewall isolation and response automation are separately configured controls. Bound the response scope and provide a recovery path; do not automatically isolate every Pod that records a dropped packet.
+
+## Lab: Hubble Installation and Usage
+
+This lab uses two **fresh, separate namespaces** so a broad allow rule cannot invalidate the default-deny exercise. It creates no database or external API. Commands are examples for your test cluster; the documentation audit checked schemas and local fixtures, not a live deployment.
+
+### 1. Create and Check the Workloads
+
+Save `visibility-app.yaml`. The client and server images match Cilium CLI's versioned test defaults. Backend anti-affinity requires a second schedulable node, making the frontend-to-backend path cross-node.
+
+```yaml
+# visibility-app.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  automountServiceAccountToken: false
+  containers:
+  - name: client
+    image: quay.io/cilium/alpine-curl:v1.10.0@sha256:913e8c9f3d960dde03882defa0edd3a919d529c2eb167caa7f54194528bde364
+    command:
+    - /usr/bin/pause
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: outsider
+  labels:
+    app: outsider
+spec:
+  automountServiceAccountToken: false
+  containers:
+  - name: client
+    image: quay.io/cilium/alpine-curl:v1.10.0@sha256:913e8c9f3d960dde03882defa0edd3a919d529c2eb167caa7f54194528bde364
+    command:
+    - /usr/bin/pause
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      automountServiceAccountToken: false
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: frontend
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: http
+        image: quay.io/cilium/json-mock:v1.4.1@sha256:6a66df90808a39c02e7a9d58af7bf0e54d8f8b7d4bc528f48c891969a7049195
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: backend
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+    protocol: TCP
+```
+```bash
+set -eu
+for ns in cilium-security-demo cilium-deny-demo; do
+  kubectl create namespace "$ns"
+  kubectl label namespace "$ns" audit-lab=security-visibility
+  kubectl --namespace "$ns" apply -f visibility-app.yaml
+  kubectl --namespace "$ns" wait --for=condition=Ready pod/frontend pod/outsider --timeout=120s
+  kubectl --namespace "$ns" rollout status deployment/backend --timeout=120s
+  for client in frontend outsider; do
+    kubectl --namespace "$ns" exec "$client" -- \
+      curl --fail --silent --show-error --max-time 5 http://backend:8080/
+  done
+done
+```
+
+Both clients in both namespaces must reach the backend before applying policy. If not, resolve readiness, scheduling, DNS and network issues first. Do not infer a policy denial from an arbitrary curl error.
+
+### 2. Apply and Observe HTTP Policy
+
+Save `backend-http.yaml`. It allows the `frontend` identity to issue `GET /` to backend TCP 8080. No broad ingress rule should overlap this example: an L4 allow can bypass the intended L7 restriction.
+
+```yaml
+# backend-http.yaml
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "comprehensive-security"
-  namespace: app
+  name: backend-http
+  namespace: cilium-security-demo
 spec:
   endpointSelector:
     matchLabels:
@@ -95,441 +332,188 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:io.kubernetes.pod.namespace: cilium-security-demo
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: "GET"
-          path: "/api/v1/data"
-  egress:
-  - toEndpoints:
-    - matchLabels:
-        app: database
-    toPorts:
-    - ports:
-      - port: "3306"
-        protocol: TCP
-  - toFQDNs:
-    - matchName: "api.example.com"
-    toPorts:
-    - ports:
-      - port: "443"
-        protocol: TCP
+        - method: GET
+          path: /
+```
+```bash
+kubectl apply -f backend-http.yaml
+# After the endpoint has realized the policy:
+kubectl -n cilium-security-demo exec frontend -- \
+  curl --fail --silent --show-error --max-time 5 http://backend:8080/
+# Display the HTTP response code; do not use --fail here.
+kubectl -n cilium-security-demo exec frontend -- \
+  curl --silent --show-error --max-time 5 --output /dev/null \
+    --write-out '%{http_code}\n' --request POST http://backend:8080/
+# A separate client is not in the allowed identity selector.
+kubectl -n cilium-security-demo exec outsider -- \
+  curl --silent --show-error --max-time 5 http://backend:8080/
+hubble observe --namespace cilium-security-demo --verdict DROPPED --last 100
 ```
 
-## Network Visibility with Hubble
+After policy realization, expect frontend `GET /` to succeed and its `POST /` to receive the proxy's HTTP 403. The outsider's new connection should be denied at L3/L4. Correlate the request time, endpoints and Hubble event; DNS errors, missing containers and unrelated HTTP errors are not a successful denial test. Use Hubble UI to inspect the generated dependency edge and drops.
 
-> **Key Concept**: Hubble is Cilium's observability layer that leverages eBPF to monitor and analyze network flows in real-time.
-
-Hubble is Cilium's observability layer that leverages eBPF to monitor and analyze network flows in real-time. It can be used for various purposes including network troubleshooting, security monitoring, and performance analysis.
+For a real backend that needs a database and an external API, the following **optional dependency policy** illustrates egress. It is not applied by this lab: `database` and `api.example.com` must be replaced with real dependencies. Verify DNS endpoints first.
 
 ```yaml
-apiVersion: "cilium.io/v2"
+# backend-dependencies.yaml
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "comprehensive-security"
+  name: backend-dependencies
+  namespace: cilium-security-demo
 spec:
   endpointSelector:
     matchLabels:
-      app: secure-app
-  ingress:
-  - fromEndpoints:
+      app: backend
+  egress:
+  - toEndpoints:
     - matchLabels:
-        app: authorized-client
-        io.kubernetes.pod.namespace: default
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "8443"
+      - port: '53'
+        protocol: UDP
+      - port: '53'
         protocol: TCP
       rules:
-        http:
-        - method: "GET"
-          path: "/api/v1/secure"
-          headers:
-          - "Authorization: Bearer [a-zA-Z0-9\\.]*"
-  egress:
+        dns:
+        - matchPattern: '*'
   - toEndpoints:
     - matchLabels:
-        k8s:app: kube-dns
-        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:io.kubernetes.pod.namespace: cilium-security-demo
+        k8s:app: database
     toPorts:
     - ports:
-      - port: "53"
-        protocol: UDP
+      - port: '3306'
+        protocol: TCP
   - toFQDNs:
-    - matchName: "api.internal.secure"
+    - matchName: api.example.com
     toPorts:
     - ports:
-      - port: "443"
-        protocol: TCP
-  - toCIDR:
-    - 10.0.0.0/8
-    toPorts:
-    - ports:
-      - port: "5432"
+      - port: '443'
         protocol: TCP
 ```
 
-### Encryption Configuration:
+TCP and UDP DNS are allowed, and DNS proxy rules let Cilium observe answers used by `toFQDNs`. Permitting DNS queries is distinct from permitting subsequent connections to their resolved IPs. This policy's DNS `*` allows all query names; it is not a domain blocklist.
+
+### 3. Verify Default Deny Separately
+
+Save `deny-except-dns.yaml`. The explicit `policyTypes` activate isolation in both directions; `ingress: []` contains **no ingress allow rules**. The single egress exception permits DNS to the matched resolver Pods only.
 
 ```yaml
-# encryption-config.yaml
-apiVersion: v1
-kind: ConfigMap
+# deny-except-dns.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
 metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable IPsec encryption
-  enable-ipsec: "true"
-  ipsec-key-file: /etc/ipsec/keys
-
-  # Or enable WireGuard encryption
-  enable-wireguard: "true"
-
-  # Encryption node selection
-  encrypt-node: "true"
-
-  # Encryption interface
-  encrypt-interface: "eth0"
-```
-
-## Network Visibility and Monitoring
-
-Cilium provides comprehensive network visibility and monitoring capabilities in containerized environments through Hubble. This enables real-time observation and troubleshooting of network flows.
-
-### Hubble Architecture:
-
-```
-+-------------------+        +-------------------+
-| Hubble UI         |        | Grafana           |
-+--------+----------+        +--------+----------+
-         |                            |
-         v                            v
-+-------------------+        +-------------------+
-| Hubble Relay      |        | Prometheus        |
-+--------+----------+        +--------+----------+
-         |                            |
-         v                            v
-+-------------------+        +-------------------+
-| Hubble            |<-------| Cilium            |
-+-------------------+        +-------------------+
-         |                            |
-         v                            v
-+-------------------+        +-------------------+
-| eBPF Maps         |        | Kernel            |
-+-------------------+        +-------------------+
-```
-
-### Hubble Components:
-
-1. **Hubble Server**:
-   - Integrated with Cilium agent
-   - Collects network flow data from eBPF maps
-   - Provides local API endpoint
-
-2. **Hubble Relay**:
-   - Aggregates data from multiple Hubble servers
-   - Provides cluster-wide visibility
-   - Provides gRPC API endpoint
-
-3. **Hubble UI**:
-   - Network flow visualization
-   - Service dependency maps
-   - Interactive query interface
-
-4. **Hubble CLI**:
-   - Command-line interface
-   - Network flow querying and filtering
-   - Troubleshooting tool
-
-### Hubble Installation:
-
-```bash
-# Enable Hubble
-cilium hubble enable --ui
-
-# Check Hubble status
-cilium hubble status
-
-# Hubble UI port forwarding
-cilium hubble ui
-
-# Install Hubble CLI
-curl -L --remote-name-all https://github.com/cilium/hubble/releases/latest/download/hubble-linux-amd64.tar.gz
-sudo tar xzvfC hubble-linux-amd64.tar.gz /usr/local/bin
-```
-
-### Hubble CLI Usage Examples:
-
-```bash
-# Observe all network flows
-hubble observe
-
-# Filter flows for a specific namespace
-hubble observe --namespace default
-
-# Filter HTTP requests
-hubble observe --protocol http
-
-# Filter dropped packets
-hubble observe --verdict DROPPED
-
-# Filter communication between specific pods
-hubble observe --pod app1/pod-1 --to-pod app2/pod-2
-
-# Filter traffic to a specific service
-hubble observe --to-service kube-system/kube-dns
-
-# Output in JSON format
-hubble observe -o json
-```
-
-## Hubble Architecture and Usage
-
-Hubble is Cilium's eBPF-based observability layer that provides deep visibility into container networks. Hubble provides real-time information about network flows, application protocols, security events, and more.
-
-### Hubble Data Flow:
-
-1. **Data Collection**:
-   - eBPF programs capture network events
-   - Extract packet metadata
-   - Collect connection tracking information
-
-2. **Data Processing**:
-   - Generate flow records
-   - L7 protocol parsing
-   - Metric aggregation
-
-3. **Data Storage**:
-   - Temporary storage in ring buffer
-   - Optional persistent storage support
-   - Metric export
-
-4. **Data Query**:
-   - Real-time flow observation
-   - Filtering and aggregation
-   - Visualization and analysis
-
-### Hubble Metrics:
-
-Hubble collects various metrics to monitor network performance and security status:
-
-- **TCP/IP Metrics**: Connection count, retransmissions, RTT
-- **HTTP Metrics**: Request count, response codes, latency
-- **DNS Metrics**: Query count, response codes, latency
-- **Security Metrics**: Policy decisions, dropped packets, security events
-- **Service Metrics**: Inter-service communication, load balancing decisions
-
-### Prometheus Integration:
-
-Hubble integrates with Prometheus to collect and monitor network metrics:
-
-```yaml
-# prometheus-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus-config
-  namespace: monitoring
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 15s
-    scrape_configs:
-      - job_name: 'cilium-hubble'
-        static_configs:
-          - targets: ['hubble-metrics.cilium.io:9091']
-        metrics_path: '/metrics'
-```
-
-### Grafana Dashboards:
-
-Hubble integrates with Grafana to visualize network metrics:
-
-1. **Network Overview Dashboard**:
-   - Total network traffic volume
-   - Protocol distribution
-   - Top communicating endpoints
-
-2. **Service Map Dashboard**:
-   - Service dependency visualization
-   - Communication pattern analysis
-   - Service status monitoring
-
-3. **Security Dashboard**:
-   - Policy decision visualization
-   - Dropped packet analysis
-   - Security event tracking
-
-4. **HTTP Dashboard**:
-   - Request volume by endpoint
-   - Response code distribution
-   - Latency distribution
-
-## Real-time Threat Detection
-
-Cilium and Hubble leverage eBPF to provide real-time threat detection capabilities. This enables detection and response to network-based attacks.
-
-### Detectable Threat Types:
-
-1. **Network Scans**:
-   - Port scan detection
-   - Service enumeration attempts
-   - Brute force attacks
-
-2. **Abnormal Traffic Patterns**:
-   - Sudden traffic increases
-   - Abnormal protocol usage
-   - Abnormal connection patterns
-
-3. **Policy Violations**:
-   - Unauthorized inter-service communication
-   - Unauthorized external connections
-   - Unauthorized protocol usage
-
-4. **Known Attack Patterns**:
-   - SQL injection attempts
-   - XSS (Cross-Site Scripting) attempts
-   - Command injection attempts
-
-### Threat Detection Configuration:
-
-```yaml
-# threat-detection-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable threat detection
-  enable-threat-detection: "true"
-
-  # Enable anomaly detection
-  enable-anomaly-detection: "true"
-
-  # Alert configuration
-  alert-to-slack: "true"
-  slack-webhook-url: "https://hooks.slack.com/services/..."
-
-  # Logging configuration
-  log-level: "info"
-  enable-flow-logs: "true"
-```
-
-### Threat Response Automation:
-
-Cilium can configure automatic responses to detected threats:
-
-1. **Automatic Blocking**:
-   - Malicious IP address blocking
-   - Abnormal pod isolation
-   - Malicious domain blocking
-
-2. **Rate Limiting**:
-   - Excessive request limiting
-   - Connection count limiting
-   - Bandwidth limiting
-
-3. **Alerts and Logging**:
-   - Alerts to Slack, PagerDuty, etc.
-   - Log forwarding to central logging systems
-   - Security Information and Event Management (SIEM) integration
-
-### Threat Detection Monitoring:
-
-```bash
-# Monitor dropped packets
-hubble observe --verdict DROPPED
-
-# Monitor policy violations
-hubble observe --verdict POLICY_DENIED
-
-# Monitor HTTP errors
-hubble observe --protocol http --http-status 4.. --http-status 5..
-
-# Monitor traffic from specific IP
-hubble observe --ip 10.0.0.1
-
-# Set up real-time threat alerts
-hubble observe --verdict DROPPED --output json | jq -c 'select(.verdict.reason == "Policy denied")' | webhook-forwarder
-```
-
-## Lab: Hubble Installation and Usage
-
-### 1. Hubble Installation and Configuration:
-
-```bash
-# Enable Hubble
-cilium hubble enable --ui
-
-# Check Hubble status
-cilium hubble status
-
-# Access Hubble UI
-cilium hubble ui
-```
-
-### 2. Network Policy Application and Monitoring:
-
-```bash
-# Apply default deny policy
-kubectl apply -f - <<EOF
-apiVersion: "cilium.io/v2"
-kind: CiliumNetworkPolicy
-metadata:
-  name: "deny-all"
+  name: deny-except-dns
+  namespace: cilium-deny-demo
 spec:
-  endpointSelector: {}
-  ingress:
-  - {}
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
   egress:
-  - toEndpoints:
-    - matchLabels:
-        k8s:app: kube-dns
-        k8s:io.kubernetes.pod.namespace: kube-system
-    toPorts:
-    - ports:
-      - port: "53"
-        protocol: UDP
-EOF
-
-# Monitor policy violations
-hubble observe --verdict DROPPED
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+```
+```bash
+kubectl apply -f deny-except-dns.yaml
+kubectl -n cilium-deny-demo exec frontend -- \
+  curl --silent --show-error --max-time 5 http://backend:8080/
+hubble observe --namespace cilium-deny-demo --verdict DROPPED \
+  --drop-reason-desc POLICY_DENIED --last 100
 ```
 
-### 3. Service Dependency Map Creation:
+Do not replace the empty ingress list with `ingress: [{}]`: that is an allow-all ingress rule. Standard NetworkPolicy allows are additive, so another policy can open traffic. Cilium deny rules and cluster policies can impose further restrictions. This namespace exercise does not claim to isolate host-network traffic or every host-originated path.
+
+### 4. Inspect JSON and Export a Local Summary
+
+Save the following as `flow-summary.jq`. `--output jsonpb` gives the protobuf response envelope with `.flow`; this avoids relying on the CLI's legacy `json` compatibility setting.
+
+```text
+[.[] | select(.flow != null) | .flow] as $flows
+| {
+    flow_records: ($flows | length),
+    other_records: (length - ($flows | length)),
+    policy_denied_records: (
+      [$flows[] | select(.verdict == "DROPPED"
+                        and .drop_reason_desc == "POLICY_DENIED")] | length
+    ),
+    dropped_by_reason: (
+      [$flows[] | select(.verdict == "DROPPED")]
+      | group_by(.drop_reason_desc // "UNKNOWN")
+      | map({reason: (.[0].drop_reason_desc // "UNKNOWN"), records: length})
+    )
+  }
+```
 
 ```bash
-# Deploy test application
-kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/master/examples/minikube/http-sw-app.yaml
-
-# Generate traffic
-kubectl exec -ti deployment/xwing -- curl -s -XPOST deathstar.default.svc.cluster.local/v1/request-landing
-
-# View service map
-cilium hubble ui
+set -eu
+hubble observe --namespace cilium-deny-demo --last 100 --output jsonpb > flows.jsonl
+jq --slurp --from-file flow-summary.jq flows.jsonl
 ```
 
-### 4. Security Event Monitoring:
+The result counts **flow records in this finite sample**, not unique attacks, connections or all cluster packets. It separately counts non-flow records; inspect them for loss/status information. For a live local filter:
 
 ```bash
-# Monitor security events
-hubble observe --type drop --output json
-
-# Monitor security events for specific pod
-hubble observe --pod app=deathstar --verdict DROPPED
-
-# Security event statistics
-hubble observe --verdict DROPPED --output json | jq -c '.verdict.reason' | sort | uniq -c
+hubble observe --namespace cilium-deny-demo --follow --output jsonpb |
+  jq --unbuffered -c 'select(.flow.verdict == "DROPPED"
+    and .flow.drop_reason_desc == "POLICY_DENIED")'
 ```
+
+This pipeline prints locally. Notifications require a separately configured integration, credentials, retry/deduplication policy and handling of stream failures.
+
+### 5. Clean Up the Test Namespaces
+
+After reviewing the namespace names, remove only this lab's workloads and policies. The ownership check stops on lookup failure or a different label.
+
+```bash
+set -eu
+for ns in cilium-security-demo cilium-deny-demo; do
+  LAB_OWNER=$(kubectl get namespace "$ns" -o jsonpath='{.metadata.labels.audit-lab}')
+  test "$LAB_OWNER" = security-visibility
+  kubectl delete namespace "$ns"
+done
+```
+
+## Primary References
+
+- [Cilium policy enforcement](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/intro.rst)
+- [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [HTTP policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst)
+- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst)
+- [Hubble setup](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/setup.rst)
+- [Metrics](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/metrics.rst)
+- [Flow exporter](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/configuration/export.rst)
+- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
+- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
+- [Mutual authentication](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [ztunnel](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)
+- [Tetragon](https://raw.githubusercontent.com/cilium/tetragon/main/README.md)
+- [Hubble CLI filters](https://raw.githubusercontent.com/cilium/hubble/v1.19.4/vendor/github.com/cilium/cilium/hubble/cmd/observe/flows.go)
 
 [Return to Main Page](README.md)
 
 ## Quiz
 
-To test what you learned in this chapter, try the [Topic Quiz](../../quizzes/networking/cilium/06-security-visibility-quiz.md).
+Test the policy, encryption and observability boundaries in the [topic quiz](../../quizzes/networking/cilium/06-security-visibility-quiz.md).

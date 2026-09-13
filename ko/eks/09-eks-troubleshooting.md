@@ -1,6 +1,6 @@
 # Amazon EKS 문제 해결
 
-> **마지막 업데이트**: 2026년 7월 3일
+> **마지막 업데이트**: 2026년 9월 12일
 
 Amazon EKS 클러스터를 운영하다 보면 다양한 문제가 발생할 수 있습니다. 이 문서에서는 EKS 클러스터에서 발생할 수 있는 일반적인 문제와 그 해결 방법을 제공합니다.
 
@@ -19,1940 +19,1072 @@ Amazon EKS 클러스터를 운영하다 보면 다양한 문제가 발생할 수
 
 ## 문제 해결 기본 사항
 
-![EKS 문제 해결의 접근 방식, 필수 도구, 로그 수집, 진단 정보 수집이라는 네 가지 기본 축을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-0.svg)
+![증상 식별, 근거 수집, 가설 검증, 수정, 확인과 기록으로 이어지는 EKS 문제 해결 과정.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-0.html)
 
 ### 문제 해결 접근 방식
 
-EKS 클러스터 문제를 효과적으로 해결하기 위한 체계적인 접근 방식:
+1. 증상, 영향받는 사용자·워크로드와 장애 시간 범위를 식별합니다.
+2. 리소스를 변경하기 전에 관련 상태·로그·이벤트·메트릭을 수집합니다.
+3. 근거로 여러 가설을 비교합니다. 일반적인 오류 메시지를 확정 원인으로 취급하지 않습니다.
+4. 데이터·가용성 영향을 파악한 표적 수정을 소유자를 통해 적용합니다.
+5. 명령 종료 코드뿐 아니라 앱 동작·메트릭으로 복구를 확인합니다.
+6. 원인, 변경, 결과, 남은 불확실성과 예방책을 기록합니다.
 
-1. **문제 식별**: 문제의 증상과 영향을 명확히 파악합니다.
-2. **정보 수집**: 관련 로그, 이벤트 및 메트릭을 수집합니다.
-3. **분석**: 수집된 정보를 분석하여 근본 원인을 파악합니다.
-4. **해결**: 적절한 해결책을 적용합니다.
-5. **검증**: 문제가 해결되었는지 확인합니다.
-6. **문서화**: 문제와 해결 방법을 문서화하여 향후 참조할 수 있도록 합니다.
+이 장의 명령은 검토한 환경을 위한 예시이며 위에서 아래로 모두 실행하는 스크립트가 아닙니다. 조회, debug 워크로드 생성, 구성 요소 재시작과 인프라 삭제의 효과는 다릅니다. 이번 검토에서는 실제 AWS·Kubernetes 작업을 실행하지 않았습니다.
 
 ### 필수 도구 및 명령어
 
-EKS 문제 해결에 필요한 필수 도구 및 명령어:
-
-#### AWS CLI
-
-AWS CLI를 사용하여 EKS 클러스터 정보를 확인합니다:
+**기존** 클러스터에서는 계정·리전·클러스터·kubectl 컨텍스트를 지정하고 일치를 확인합니다. 임의의 context 별칭에서 클러스터 이름을 추출하지 않습니다. 사용할 클러스터가 생성되기 전에 실패했다면 생성 절차의 계정·리전·원래 요청·stack 근거를 사용합니다.
 
 ```bash
-# EKS 클러스터 목록 확인
-aws eks list-clusters
-
-# 클러스터 세부 정보 확인
-aws eks describe-cluster --name my-cluster
-
-# 노드 그룹 목록 확인
-aws eks list-nodegroups --cluster-name my-cluster
-
-# 노드 그룹 세부 정보 확인
-aws eks describe-nodegroup --cluster-name my-cluster --nodegroup-name my-nodegroup
+set -euo pipefail
+: "${AWS_REGION:?Set the intended Region}"
+: "${CLUSTER_NAME:?Set the existing cluster name}"
+: "${EXPECTED_ACCOUNT_ID:?Set the intended 12-digit account ID}"
+: "${KUBE_CONTEXT:?Set the explicit kubectl context}"
+ACTUAL_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+if [ "$ACTUAL_ACCOUNT_ID" != "$EXPECTED_ACCOUNT_ID" ]; then
+  echo "Account mismatch" >&2; exit 1
+fi
+CLUSTER_ENDPOINT=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query cluster.endpoint --output text)
+KUBE_ENDPOINT=$(kubectl config view --context "$KUBE_CONTEXT" --minify \
+  -o jsonpath='{.clusters[0].cluster.server}')
+if [ "$CLUSTER_ENDPOINT" != "$KUBE_ENDPOINT" ]; then
+  echo "kubectl context does not match the selected EKS cluster" >&2; exit 1
+fi
+export AWS_REGION CLUSTER_NAME EXPECTED_ACCOUNT_ID KUBE_CONTEXT
 ```
+
+#### AWS CLI 및 eksctl
+
+```bash
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.{arn:arn,status:status,version:version,health:health,access:accessConfig}'
+aws eks list-nodegroups --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
+aws eks list-addons --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
+eksctl get nodegroup --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
+```
+
+관리형 노드 그룹과 설치된 EKS 애드온 목록이며 모든 자체 관리 컨트롤러·컴퓨팅 리소스를 포함하지는 않습니다. 절차 선택 전에 실제 소유자와 컴퓨팅 유형을 기록합니다.
 
 #### kubectl
 
-kubectl을 사용하여 Kubernetes 리소스를 확인합니다:
-
 ```bash
-# 노드 상태 확인
-kubectl get nodes
-kubectl describe node <node-name>
-
-# 파드 상태 확인
-kubectl get pods --all-namespaces
-kubectl describe pod <pod-name> -n <namespace>
-
-# 서비스 상태 확인
-kubectl get services --all-namespaces
-kubectl describe service <service-name> -n <namespace>
-
-# 이벤트 확인
-kubectl get events --all-namespaces --sort-by='.lastTimestamp'
-
-# 로그 확인
-kubectl logs <pod-name> -n <namespace>
-kubectl logs <pod-name> -n <namespace> -c <container-name>
+kubectl --context "$KUBE_CONTEXT" get nodes -o wide
+kubectl --context "$KUBE_CONTEXT" get pods -A -o wide
+kubectl --context "$KUBE_CONTEXT" get services -A
+kubectl --context "$KUBE_CONTEXT" get events -A --sort-by='.metadata.creationTimestamp'
+: "${NAMESPACE:?}"; : "${POD_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" describe pod "$POD_NAME"
 ```
 
-#### eksctl
-
-eksctl을 사용하여 EKS 클러스터를 관리합니다:
-
-```bash
-# 클러스터 목록 확인
-eksctl get clusters
-
-# 노드 그룹 목록 확인
-eksctl get nodegroup --cluster my-cluster
-
-# 클러스터 로그 활성화
-eksctl utils update-cluster-logging --enable-types all --cluster my-cluster --approve
-```
-
-#### AWS CloudWatch
-
-CloudWatch를 사용하여 EKS 클러스터 로그 및 메트릭을 확인합니다:
-
-```bash
-# CloudWatch 로그 그룹 확인
-aws logs describe-log-groups --log-group-name-prefix /aws/eks/my-cluster
-
-# CloudWatch 로그 스트림 확인
-aws logs describe-log-streams --log-group-name /aws/eks/my-cluster/cluster
-
-# CloudWatch 로그 이벤트 확인
-aws logs get-log-events --log-group-name /aws/eks/my-cluster/cluster --log-stream-name <log-stream-name>
-```
+영향받는 namespace·Pod·container·node를 명시적으로 선택합니다. `describe`와 앱 로그에는 민감한 운영 정보가 포함될 수 있습니다. `kubectl auth can-i`는 특정 동작의 인가를 확인하고 `aws sts get-caller-identity`는 AWS 자격 증명 주체를 확인합니다. 어느 하나만으로 네트워크 접근이나 전체 Kubernetes 권한을 증명하지 못합니다.
 
 ### 로그 수집 및 분석
 
 #### EKS 컨트롤 플레인 로그
 
-EKS 컨트롤 플레인 로그를 활성화하고 확인합니다:
+기존 로깅 설정과 제한된 장애 시간 범위를 확인합니다.
 
 ```bash
-# 컨트롤 플레인 로그 활성화
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-
-# CloudWatch에서 로그 확인
-aws logs get-log-events \
-  --log-group-name /aws/eks/my-cluster/cluster \
-  --log-stream-name kube-apiserver-<timestamp>
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"
+: "${START_TIME_MS:?Set the incident-window start in epoch milliseconds}"
+: "${END_TIME_MS:?Set the incident-window end in epoch milliseconds}"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query cluster.logging --output json
+aws logs filter-log-events --region "$AWS_REGION" \
+  --log-group-name "/aws/eks/$CLUSTER_NAME/cluster" \
+  --start-time "$START_TIME_MS" --end-time "$END_TIME_MS" \
+  --max-items 200 --output json --no-cli-pager
 ```
+
+컨트롤 플레인 로깅 활성화는 자체 Update ID·권한·CloudWatch 비용이 있는 별도 `UpdateClusterConfig` 변경입니다. 과거 로그를 복구하거나 앱·호스트 로그 수집을 활성화하지는 않습니다. 그룹 부재·조회 거부·빈 시간 범위는 관찰 한계입니다. 앱·호스트 로그는 `/aws/containerinsights/<cluster>/...` 또는 실제 수집기 목적지를 확인합니다.
 
 #### 노드 로그
 
-노드 로그를 확인합니다:
+운영자가 접근할 수 있는 표준 Linux EC2 노드는 `spec.providerID`, 계정·리전과 SSM 전제 조건을 확인한 뒤 세션을 엽니다.
 
 ```bash
-# SSM을 사용하여 노드에 접속
-aws ssm start-session --target <instance-id>
-
-# 노드 로그 확인
-sudo journalctl -u kubelet
-
-# 컨테이너 런타임 로그 확인
-sudo journalctl -u docker
-sudo journalctl -u containerd
+: "${INSTANCE_ID:?Verify the node EC2 ProviderID and account/Region first}"
+aws ssm start-session --target "$INSTANCE_ID" --region "$AWS_REGION"
 ```
+
+다음은 로컬 터미널이 아니라 **해당 노드 세션 안에서** 실행합니다. systemd·containerd 도구가 있는 이미지를 가정합니다. Bottlerocket, Fargate와 Auto Mode는 지원되는 진단 경로를 사용합니다.
+
+```bash
+sudo journalctl -u kubelet --since "15 minutes ago" --no-pager
+sudo journalctl -u containerd --since "15 minutes ago" --no-pager
+df -h
+df -i
+free -m
+```
+
+현재 EKS 최적화 Linux 노드는 containerd를 사용합니다. 해당 노드의 Docker daemon 로그는 kubelet 런타임 로그가 아닙니다. 이미지 정리·journal 삭제·재시작 전에 로그와 디스크·inode 근거를 보존합니다. 비정상 노드의 `kubectl top` 메트릭 부재만으로 CPU·메모리 고갈을 확정하지 않습니다.
 
 #### 파드 로그
 
-파드 로그를 확인합니다:
-
 ```bash
-# 파드 로그 확인
-kubectl logs <pod-name> -n <namespace>
-
-# 이전 파드의 로그 확인
-kubectl logs <pod-name> -n <namespace> --previous
-
-# 특정 컨테이너의 로그 확인
-kubectl logs <pod-name> -n <namespace> -c <container-name>
-
-# 로그 스트리밍
-kubectl logs -f <pod-name> -n <namespace>
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" \
+  -c "$CONTAINER_NAME" --since=15m --tail=200 --timestamps=true
+# Run only when a previous container instance exists in this same Pod.
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" \
+  -c "$CONTAINER_NAME" --previous --tail=200 --timestamps=true
 ```
+
+`--previous`는 **동일 Pod**의 지정 컨테이너에서 이전에 종료된 인스턴스입니다. 삭제된 이전 Pod 로그를 조회하지 못하므로 보존 이력은 로그 백엔드를 사용합니다. 일반·init container 상태, readiness와 종료 이유를 함께 확인합니다.
 
 ### 진단 정보 수집
 
-#### 클러스터 진단 정보
-
-클러스터 진단 정보를 수집합니다:
-
 ```bash
-# 클러스터 정보 수집
-kubectl cluster-info dump > cluster-info.txt
-
-# 노드 정보 수집
-kubectl describe nodes > nodes-info.txt
-
-# 파드 정보 수집
-kubectl get pods --all-namespaces -o wide > pods-info.txt
-kubectl describe pods --all-namespaces > pods-desc-info.txt
-
-# 서비스 정보 수집
-kubectl get services --all-namespaces -o wide > services-info.txt
-kubectl describe services --all-namespaces > services-desc-info.txt
+set -euo pipefail
+: "${EVIDENCE_PARENT:?Set an existing private directory}"
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"
+umask 077
+EVIDENCE_DIR=$(mktemp -d "$EVIDENCE_PARENT/eks-diagnosis.XXXXXXXX")
+kubectl --context "$KUBE_CONTEXT" get nodes -o wide > "$EVIDENCE_DIR/nodes.txt"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -o wide > "$EVIDENCE_DIR/pods.txt"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get services -o wide > "$EVIDENCE_DIR/services.txt"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --sort-by='.metadata.creationTimestamp' > "$EVIDENCE_DIR/events.txt"
+printf 'Evidence saved to %s; assess the findings before remediation.\n' "$EVIDENCE_DIR"
 ```
 
-#### 시스템 리소스 정보
+조회 실패 시 예제가 중단되며 기존 파일은 부분 근거입니다. 범위를 제한한 정보로 충분하면 무차별 `cluster-info dump`나 전체 Pod 상세 수집을 피하고 공유 전에 근거를 검토·마스킹합니다.
 
-시스템 리소스 정보를 수집합니다:
+리소스 압박은 requests·limits, 노드 allocatable과 Metrics Server가 있을 때의 `kubectl top`을 비교합니다. 접근 가능한 노드에서는 `df -h`와 `df -i`를 모두 확인합니다. 여유 바이트가 있어도 inode는 고갈될 수 있습니다. node debug Pod의 루트와 `/host`에 마운트된 호스트 루트는 다르므로 대상 경로 없는 `df -h`는 다른 파일시스템을 볼 수 있습니다. debug Pod 생성에는 namespace·이미지·profile·권한·정리 절차 검토가 필요합니다.
 
-```bash
-# 노드 리소스 사용량 확인
-kubectl top nodes
+네트워크 진단은 출발 Pod·namespace·node, 목적지·프로토콜·포트를 식별하고 적용 정책과 출발지 resolver부터 확인합니다. 새 debug Pod는 실제 워크로드와 레이블·identity·DNS·경로가 다를 수 있습니다. ICMP ping은 TCP·UDP 앱 접근을 증명하지 못합니다. 공통 이름·미고정 이미지의 `dnsutils`·`netshoot` Pod를 반복 생성하기보다 소유자를 통해 도구·정리를 준비하고 실제 허용 경로에서 제한된 검사를 수행합니다.
 
-# 파드 리소스 사용량 확인
-kubectl top pods --all-namespaces
-
-# 노드 디스크 사용량 확인
-kubectl debug node/<node-name> -it --image=busybox -- df -h
-```
-
-#### 네트워크 진단
-
-네트워크 진단 정보를 수집합니다:
-
-```bash
-# 네트워크 정책 확인
-kubectl get networkpolicies --all-namespaces
-
-# DNS 확인
-kubectl run dnsutils --image=tutum/dnsutils --restart=Never -- sleep 3600
-kubectl exec -it dnsutils -- nslookup kubernetes.default
-
-# 네트워크 연결 확인
-kubectl run netshoot --image=nicolaka/netshoot --restart=Never -- sleep 3600
-kubectl exec -it netshoot -- ping <target-ip>
-kubectl exec -it netshoot -- traceroute <target-ip>
-```
+출처: [EKS 문제 해결](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html), [Kubernetes 로그](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/), [노드 디버깅](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/).
 
 ## 클러스터 생성 및 관리 문제
 
-![클러스터 생성 실패, 엔드포인트 접근 문제, 삭제 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-1.svg)
+![클러스터 생성·엔드포인트 접근·삭제 증상과 조사할 가설.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-1.html)
 
 ### 클러스터 생성 실패
 
 #### 일반적인 원인
 
-EKS 클러스터 생성 실패의 일반적인 원인:
-
-1. **IAM 권한 부족**: 클러스터를 생성하는 IAM 사용자 또는 역할에 필요한 권한이 없음
-2. **서비스 할당량 초과**: EKS 클러스터 또는 관련 리소스(예: VPC, 서브넷)의 할당량 초과
-3. **네트워크 구성 문제**: VPC, 서브넷 또는 보안 그룹 구성 오류
-4. **리소스 이름 충돌**: 이미 사용 중인 클러스터 이름 또는 리소스 이름 사용
-5. **AWS 서비스 가용성 문제**: EKS 또는 관련 서비스의 가용성 문제
+실패한 요청·CloudFormation 이벤트에서 호출자 권한, 클러스터 서비스 역할 trust·policy, 서비스 할당량, 지원 서브넷·AZ 선택, IP 여유, 이름 충돌과 서비스 가용성을 확인합니다. 이는 가설이며 실제 오류에 따라 가능성이 다릅니다.
 
 #### 문제 해결 단계
 
-1. **IAM 권한 확인**:
-
 ```bash
-# IAM 권한 확인
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${CLUSTER_ROLE_NAME:?}"; : "${VPC_ID:?}"
 aws sts get-caller-identity
-
-# 필요한 IAM 정책 확인
-aws iam list-attached-role-policies --role-name <role-name>
+aws iam get-role --role-name "$CLUSTER_ROLE_NAME" \
+  --query 'Role.{Arn:Arn,Trust:AssumeRolePolicyDocument}'
+aws iam list-attached-role-policies --role-name "$CLUSTER_ROLE_NAME"
+aws iam list-role-policies --role-name "$CLUSTER_ROLE_NAME"
+aws ec2 describe-subnets --region "$AWS_REGION" --filters "Name=vpc-id,Values=$VPC_ID" \
+  --query 'Subnets[].{Id:SubnetId,AZ:AvailabilityZone,AZId:AvailabilityZoneId,AvailableIPs:AvailableIpAddressCount,CIDR:CidrBlock}'
+aws service-quotas list-service-quotas --service-code eks --region "$AWS_REGION"
+aws cloudtrail lookup-events --region "$AWS_REGION" \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=CreateCluster \
+  --max-items 20 --output json
 ```
 
-2. **서비스 할당량 확인**:
+연결된 정책만으로 호출자의 유효 권한을 알 수 없습니다. inline policy, permissions boundary, session policy와 Organizations 제어도 포함합니다. `AmazonEKSClusterPolicy`는 EKS 클러스터 서비스 역할용입니다. 사용자에게 연결해도 필요한 `eks:CreateCluster`·`iam:PassRole`이나 Kubernetes 접근 권한을 부여하지 않습니다. service-linked role 생성에도 별도 권한·생명주기가 있습니다.
 
-```bash
-# EKS 클러스터 할당량 확인
-aws service-quotas get-service-quota --service-code eks --quota-code L-1194D53C
+네트워크는 선택한 클러스터 서브넷과 정확한 라우팅·보안 그룹·NACL을 확인합니다. 클러스터 서브넷 요구와 노드·Pod·LB 주소 용량은 별도 계획입니다. 사설 클러스터는 NAT gateway·일반 인터넷 없이 필요한 서비스 endpoint를 사용할 수 있습니다. `kubernetes.io/cluster/...` 서브넷 태그는 컨트롤 플레인 생성의 보편적 해결책이 아닙니다.
 
-# VPC 할당량 확인
-aws service-quotas get-service-quota --service-code vpc --quota-code L-F678F1CE
-```
-
-3. **네트워크 구성 확인**:
-
-```bash
-# VPC 확인
-aws ec2 describe-vpcs --vpc-ids <vpc-id>
-
-# 서브넷 확인
-aws ec2 describe-subnets --subnet-ids <subnet-id-1> <subnet-id-2>
-
-# 라우팅 테이블 확인
-aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"
-
-# 보안 그룹 확인
-aws ec2 describe-security-groups --group-ids <security-group-id>
-```
-
-4. **CloudTrail 로그 확인**:
-
-```bash
-# CloudTrail 이벤트 확인
-aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=CreateCluster
-```
-
-5. **AWS 서비스 상태 확인**:
-
-AWS 서비스 상태 대시보드(https://status.aws.amazon.com/)에서 EKS 및 관련 서비스의 상태를 확인합니다.
+할당량 오류는 해당 서비스·quota를 식별하고 적용된 현재 값을 조회한 뒤 증가를 요청합니다. EKS 클러스터 수, EC2 vCPU·인스턴스 계열, VPC 한도는 다릅니다. “limit is 5” 같은 과거 메시지는 예시이며 현재 계정 한도가 아닙니다.
 
 #### 일반적인 해결 방법
 
-1. **IAM 권한 추가**:
+인프라 소유자를 통해 실제 권한·서비스 역할 trust·서브넷·IP·quota 문제를 수정하고 재시도를 검토합니다. `UnsupportedAvailabilityZoneException`은 지정한 클러스터 서브넷의 AZ가 해당 계정에서 EKS를 지원하지 않는다는 뜻입니다. 오류에 표시된 지원 AZ를 선택하며 EC2 인스턴스 유형 제공 목록만으로 진단하지 않습니다.
 
-```bash
-# EKS 클러스터 관리를 위한 IAM 정책 추가
-aws iam attach-role-policy \
-  --role-name <role-name> \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-```
-
-2. **서비스 할당량 증가 요청**:
-
-```bash
-# 서비스 할당량 증가 요청
-aws service-quotas request-service-quota-increase \
-  --service-code eks \
-  --quota-code L-1194D53C \
-  --desired-value <new-value>
-```
-
-3. **네트워크 구성 수정**:
-
-```bash
-# 서브넷 태그 추가
-aws ec2 create-tags \
-  --resources <subnet-id> \
-  --tags Key=kubernetes.io/cluster/<cluster-name>,Value=shared
-
-# 보안 그룹 규칙 추가
-aws ec2 authorize-security-group-ingress \
-  --group-id <security-group-id> \
-  --protocol tcp \
-  --port 443 \
-  --cidr <cidr-block>
-```
-
-4. **다른 리전에서 시도**:
-
-```bash
-# 다른 리전에서 클러스터 생성
-aws eks create-cluster \
-  --region <different-region> \
-  --name my-cluster \
-  --role-arn <role-arn> \
-  --resources-vpc-config subnetIds=<subnet-id-1>,<subnet-id-2>,securityGroupIds=<security-group-id>
-```
+AWS Health의 서비스 이벤트를 확인합니다. 리전 변경은 별도 배치·데이터·네트워크 설계와 추가 클러스터를 만들 수 있으므로 기본 재시도 방식이 아닙니다. `eksctl create cluster --verbose ...`나 AWS CLI debug 플래그도 실제 생성을 실행합니다. 새 프로비저닝 전에 기존 stack event·요청 ID를 확인합니다.
 
 ### 클러스터 엔드포인트 접근 문제
 
-#### 일반적인 원인
+#### DNS·전송·TLS·인증·인가를 구분하여 진단
 
-EKS 클러스터 엔드포인트 접근 문제의 일반적인 원인:
-
-1. **네트워크 접근 제한**: 클러스터 엔드포인트에 대한 네트워크 접근 제한
-2. **인증 문제**: 클러스터에 대한 인증 문제
-3. **kubeconfig 구성 오류**: 잘못된 kubeconfig 구성
-4. **API 서버 가용성 문제**: API 서버 가용성 문제
-
-#### 문제 해결 단계
-
-1. **클러스터 엔드포인트 확인**:
+endpoint mode, 허용 public CIDR과 cluster security group을 확인하고 클러스터 CA·타임아웃으로 테스트합니다.
 
 ```bash
-# 클러스터 엔드포인트 확인
-aws eks describe-cluster --name my-cluster --query "cluster.endpoint"
-
-# 엔드포인트 접근 테스트
-curl -k <cluster-endpoint>
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${EVIDENCE_PARENT:?}"
+umask 077
+ENDPOINT_DIR=$(mktemp -d "$EVIDENCE_PARENT/eks-endpoint.XXXXXXXX")
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --output json > "$ENDPOINT_DIR/cluster.json"
+jq -er '.cluster.certificateAuthority.data' "$ENDPOINT_DIR/cluster.json" \
+  | base64 --decode > "$ENDPOINT_DIR/cluster-ca.crt"
+ENDPOINT=$(jq -er '.cluster.endpoint' "$ENDPOINT_DIR/cluster.json")
+jq '.cluster.resourcesVpcConfig | {endpointPublicAccess,endpointPrivateAccess,publicAccessCidrs,clusterSecurityGroupId,vpcId}' \
+  "$ENDPOINT_DIR/cluster.json"
+curl --silent --show-error --connect-timeout 5 --max-time 10 \
+  --cacert "$ENDPOINT_DIR/cluster-ca.crt" --output /dev/null \
+  --write-out 'HTTP status: %{http_code}\n' "$ENDPOINT"
 ```
 
-2. **클러스터 엔드포인트 접근 정책 확인**:
+Kubernetes bearer token을 보내지 않는 요청입니다. 401·403은 접근이 거부되더라도 DNS·TCP·TLS 연결 성공을 보여줄 수 있습니다. HTTP 성공도 앱 상태 증명은 아닙니다. `curl -k`는 인증서 검증 오류를 숨깁니다. DNS 조회는 `https://` URL 전체가 아닌 endpoint URL의 hostname을 사용합니다.
+
+public endpoint는 클라이언트의 실제 egress·NAT 주소와 허용 CIDR을 비교합니다. private endpoint는 VPC·연결 네트워크 경로, DNS와 보안 그룹 접근을 확인합니다. `com.amazonaws.<region>.eks` interface endpoint는 Kubernetes API가 아닌 **EKS 관리 API**용입니다. 이를 생성하는 것만으로 kubectl 접근을 해결하지 못하며 Kubernetes private endpoint는 별개입니다.
+
+#### kubeconfig 및 권한
+
+원시 자격 증명을 출력하지 않고 context 이름·server를 확인합니다. 별도 진단 kubeconfig에는 명시적 경로·alias를 사용하고 `NAMESPACE`를 의도한 인가 범위로 설정합니다.
 
 ```bash
-# 클러스터 엔드포인트 접근 정책 확인
-aws eks describe-cluster --name my-cluster --query "cluster.resourcesVpcConfig.endpointPublicAccess"
-aws eks describe-cluster --name my-cluster --query "cluster.resourcesVpcConfig.endpointPrivateAccess"
-aws eks describe-cluster --name my-cluster --query "cluster.resourcesVpcConfig.publicAccessCidrs"
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"
+: "${NAMESPACE:?Set the namespace for the authorization check}"
+: "${DIAGNOSTIC_KUBECONFIG:?Set a separate writable kubeconfig path}"
+: "${KUBE_CONTEXT:?Choose an explicit alias for this cluster}"
+umask 077
+aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --kubeconfig "$DIAGNOSTIC_KUBECONFIG" --alias "$KUBE_CONTEXT"
+export KUBECONFIG="$DIAGNOSTIC_KUBECONFIG"
+kubectl --context "$KUBE_CONTEXT" auth can-i get pods --namespace "$NAMESPACE"
 ```
 
-3. **kubeconfig 구성 확인**:
+kubeconfig 생성에는 `eks:DescribeCluster`가 필요하고 Kubernetes 인증·인가는 별도 요구입니다. role assume이 필요하면 검토한 `--role-arn`과 trust·STS 권한을 사용합니다. 세션 토큰을 출력하지 말고 설정한 SSO 세션 등 실제 자격 증명 제공자를 통해 갱신합니다.
 
 ```bash
-# kubeconfig 구성 확인
-cat ~/.kube/config
-
-# kubeconfig 업데이트
-aws eks update-kubeconfig --name my-cluster --region <region>
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.accessConfig'
+# Use the next command when API or API_AND_CONFIG_MAP authentication is enabled.
+aws eks list-access-entries --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 ```
 
-4. **인증 확인**:
+access-entry 인증이 켜져 있으면 해당 entry·연결 policy scope를 확인합니다. 기존 `CONFIG_MAP`·혼합 클러스터는 `aws-auth`도 사용할 수 있습니다. 기존 노드 매핑을 보존하고 계획한 마이그레이션을 수행합니다. 일반 접근 오류를 고치려고 `system:masters`를 부여하거나 ConfigMap 전체를 덮어쓰지 않습니다. IRSA의 IAM OIDC provider는 워크로드 AWS 자격 증명용이며 사람 IAM 주체의 Kubernetes 권한 매핑이 아닙니다.
 
-```bash
-# AWS CLI 자격 증명 확인
-aws sts get-caller-identity
+#### 접근 경로 수정
 
-# kubectl 인증 테스트
-kubectl auth can-i get pods
-```
+endpoint mode에 맞는 사설 관리 경로나 검토한 public CIDR allow-list를 사용합니다. 진단 명령을 성공시키려고 `0.0.0.0/0`을 열지 않습니다. public access를 제거하기 전에 사설 경로를 테스트하고 무관한 기존 VPC 설정을 유지하며 configuration Update ID를 추적합니다. 계획된 변경은 [보안 장의 endpoint 절차](./05-eks-security.md)를 따릅니다.
 
-#### 일반적인 해결 방법
+#### CloudShell 원클릭 접근
 
-1. **클러스터 엔드포인트 접근 정책 수정**:
+2026년 4월 30일 원클릭 기능은 실제 지원됩니다. 클러스터 상세 화면의 **Connect**를 선택하면 kubectl이 구성된 CloudShell이 열립니다. public·private API endpoint를 모두 지원합니다. private endpoint는 CloudShell VPC environment를 자동으로 시작하며 이름을 입력하도록 안내합니다. EKS 리전에서 기능 자체의 추가 요금 없이 사용할 수 있습니다.
 
-```bash
-# 퍼블릭 엔드포인트 접근 활성화
-aws eks update-cluster-config \
-  --name my-cluster \
-  --resources-vpc-config endpointPublicAccess=true,publicAccessCidrs=["0.0.0.0/0"]
+콘솔 접근에도 IAM·CloudShell·VPC environment 권한, Kubernetes 접근과 정상 네트워크 구성이 필요합니다. 로컬 설정을 줄여줄 뿐 인가를 우회하지 않습니다. 적용 가능한 리소스·데이터 전송 비용과 세션 주체를 확인한 뒤 명령을 실행합니다.
 
-# 프라이빗 엔드포인트 접근 활성화
-aws eks update-cluster-config \
-  --name my-cluster \
-  --resources-vpc-config endpointPrivateAccess=true
-```
-
-2. **kubeconfig 재생성**:
-
-```bash
-# kubeconfig 재생성
-aws eks update-kubeconfig --name my-cluster --region <region>
-```
-
-3. **IAM 인증 구성**:
-
-```bash
-# aws-auth ConfigMap 확인
-kubectl describe configmap aws-auth -n kube-system
-
-# aws-auth ConfigMap 업데이트
-eksctl create iamidentitymapping \
-  --cluster my-cluster \
-  --arn <iam-role-or-user-arn> \
-  --username <username> \
-  --group system:masters
-```
-
-4. **VPC 엔드포인트 생성**:
-
-```bash
-# EKS용 VPC 엔드포인트 생성
-aws ec2 create-vpc-endpoint \
-  --vpc-id <vpc-id> \
-  --service-name com.amazonaws.<region>.eks \
-  --vpc-endpoint-type Interface \
-  --subnet-ids <subnet-id-1> <subnet-id-2> \
-  --security-group-ids <security-group-id>
-```
-
-5. **CloudShell 원클릭 클러스터 접속 활용** (2026년 4월 30일 출시):
-
-로컬 환경의 kubeconfig 구성이나 네트워크 접근 문제로 클러스터 접속이 막힌 경우, EKS 콘솔에서 곧바로 접속할 수 있는 대안입니다. 클러스터 목록에서 **Connect** 버튼을 클릭하면 AWS CloudShell이 자동으로 실행되고 kubectl이 해당 클러스터에 맞게 사전 구성된 상태로 즉시 사용할 수 있습니다. 로컬에 kubectl을 설치하거나 AWS CLI 자격 증명·kubeconfig를 별도로 구성할 필요가 없어, 브라우저만으로 바로 트러블슈팅을 시작할 수 있습니다. Public/Private API 엔드포인트 클러스터를 모두 지원하며, 모든 리전에서 사용 가능하고 CloudShell/EKS 기존 과금 외 추가 비용은 없습니다. (출처: [Amazon EKS one-click cluster access](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-one-click-cluster-access/))
+출처: [kubeconfig·CloudShell](https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html), [원클릭 발표](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-one-click-cluster-access/), [EKS PrivateLink 구분](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html), [클러스터 문제 해결](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html).
 
 ### 클러스터 삭제 문제
 
-#### 일반적인 원인
+#### 차단하는 의존성 확인
 
-EKS 클러스터 삭제 문제의 일반적인 원인:
+클러스터 삭제는 의도적인 폐기 작업이며 일반적인 문제 해결 수단이 아닙니다. 정확한 EKS·CloudFormation 오류, 클러스터 ARN·계정·리전, 업데이트 상태와 삭제 보호 설정을 확인합니다. 관리형 노드 그룹·Fargate 프로필 외에 삭제 보호와 설치한 EKS Capabilities도 삭제를 막을 수 있습니다. 삭제가 끝날 때까지 클러스터 IAM·서비스 역할을 유지합니다.
 
-1. **리소스 의존성**: 클러스터에 의존하는 리소스가 아직 존재함
-2. **IAM 권한 부족**: 클러스터를 삭제하는 IAM 사용자 또는 역할에 필요한 권한이 없음
-3. **리소스 삭제 실패**: 클러스터 리소스 삭제 실패
-
-#### 문제 해결 단계
-
-1. **클러스터 상태 확인**:
+선택한 클러스터를 조사하고 엔드포인트를 명시적 kubectl 컨텍스트와 비교합니다. 아래 명령은 읽기 전용이며 삭제 대상을 자동으로 선택하지 않습니다.
 
 ```bash
-# 클러스터 상태 확인
-aws eks describe-cluster --name my-cluster --query "cluster.status"
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the cluster being deliberately retired}"
+: "${AWS_REGION:?}"; : "${KUBE_CONTEXT:?}"; : "${EXPECTED_ACCOUNT_ID:?}"
+ACTUAL_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+if [ "$ACTUAL_ACCOUNT_ID" != "$EXPECTED_ACCOUNT_ID" ]; then
+  echo "Account mismatch; stop" >&2
+  exit 1
+fi
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.{arn:arn,status:status,deletionProtection:deletionProtection,endpoint:endpoint}'
+kubectl config view --context "$KUBE_CONTEXT" --minify \
+  -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
+# Compare the endpoints before inspecting Kubernetes resources.
+kubectl --context "$KUBE_CONTEXT" get services -A \
+  -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,TYPE:.spec.type,CLASS:.spec.loadBalancerClass,ADDRESS:.status.loadBalancer.ingress'
+kubectl --context "$KUBE_CONTEXT" get ingress -A
+kubectl --context "$KUBE_CONTEXT" get pvc -A
+kubectl --context "$KUBE_CONTEXT" get pv \
+  -o custom-columns='NAME:.metadata.name,CLAIM_NS:.spec.claimRef.namespace,CLAIM:.spec.claimRef.name,RECLAIM:.spec.persistentVolumeReclaimPolicy,DRIVER:.spec.csi.driver,HANDLE:.spec.csi.volumeHandle'
+aws eks list-nodegroups --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
+aws eks list-fargate-profiles --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
+aws eks list-capabilities --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
+aws eks list-addons --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 ```
 
-2. **클러스터 리소스 확인**:
+Service의 `EXTERNAL-IP` 출력만으로 소유권을 판단할 수 없습니다. 컨트롤러 관리 `LoadBalancer` Service, 수동 external IP와 다른 Service 유형을 구분합니다. namespace·name·UID, 컨트롤러 소유권, AWS ARN과 관련 태그를 기록합니다. 컨트롤러가 설치된 Ingress·Gateway·TargetGroupBinding도 포함하고 대상 그룹·로드 밸런서 공유 여부를 확인합니다.
+
+#### 소유자의 순서에 따라 리소스 폐기
+
+1. 트래픽·워크로드를 이전하고 애플리케이션 일관성 백업·복원과 데이터 보존 요구를 확인합니다. PVC YAML 저장은 데이터 백업이 아닙니다. `Delete` reclaim policy는 claim 삭제 시 실제 스토리지를 삭제할 수 있으며 `Retain`은 별도 데이터·스토리지 처리 결정이 필요합니다.
+2. 필요한 로드 밸런서 컨트롤러가 실행 중일 때 로드 밸런서를 소유하는 검토된 Kubernetes 리소스만 제거합니다. finalizer 처리를 기다리고 해당 AWS 리소스가 해제됐는지 확인합니다. 컨트롤러 노드를 삭제하기 전에 IAM·의존성 오류를 해결합니다. 정리 실패를 숨기려고 finalizer를 제거하지 않습니다.
+3. 문서화된 소유권·리소스 삭제 의미에 따라 EKS Capabilities를 제거합니다. 관리형 노드 그룹·Fargate 프로필을 검토한 순서로 삭제하고 완료를 기다립니다. 자체 관리 노드·스택은 별도 폐기가 필요합니다. 애드온 삭제도 Kubernetes 구성 요소를 제거할 수 있으므로 네트워크·스토리지 컨트롤러는 의존 리소스 정리가 끝날 때까지 유지합니다.
+4. 명시적인 폐기 결정으로만 삭제 보호를 해제하고 원래 인프라 소유자를 통해 클러스터를 삭제합니다. Auto Mode 클러스터 삭제는 관리 노드와 로드 밸런서도 삭제합니다. 이 범위와 내장 TargetGroupBinding의 대상 그룹 생명주기도 고려합니다.
+5. 전용 스택·VPC, 볼륨·스냅샷, 로드 밸런서, IAM, 로그와 Prometheus scraper 등 남은 리소스의 정확한 소유권을 확인합니다. 공유 리소스와 보존 데이터는 독립적인 생명주기를 가지며 비용이 계속 발생할 수 있습니다.
+
+다음은 앞의 트래픽·데이터 검토 후 명시적으로 선택한 Service **하나**를 삭제하는 예시이며, 조회 결과 전체를 삭제하는 루프가 아닙니다.
 
 ```bash
-# 노드 그룹 확인
-aws eks list-nodegroups --cluster-name my-cluster
-
-# Fargate 프로필 확인
-aws eks list-fargate-profiles --cluster-name my-cluster
-
-# 애드온 확인
-aws eks list-addons --cluster-name my-cluster
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${SERVICE_NAMESPACE:?}"; : "${SERVICE_NAME:?}"
+# Separate approved teardown step after traffic/data migration and owner review.
+kubectl --context "$KUBE_CONTEXT" -n "$SERVICE_NAMESPACE" get service "$SERVICE_NAME" -o yaml
+kubectl --context "$KUBE_CONTEXT" -n "$SERVICE_NAMESPACE" delete service "$SERVICE_NAME" \
+  --wait=true --timeout=10m
 ```
 
-3. **CloudTrail 로그 확인**:
+타임아웃은 AWS 로드 밸런서의 보존·삭제를 증명하지 않습니다. finalizer, 컨트롤러 이벤트와 정확한 AWS ARN을 확인합니다. Kubernetes와 AWS 리소스 정리 완료 시점은 다를 수 있습니다.
 
-```bash
-# CloudTrail 이벤트 확인
-aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=DeleteCluster
-```
+#### 삭제 오류와 force 동작
 
-#### 일반적인 해결 방법
+EKS 업데이트 상세와 CloudFormation stack event로 의존성·권한·진행 중 작업 오류를 확인합니다. eksctl 0.229의 `delete cluster --force`는 실제 지원되며 오류가 발생해도 삭제를 계속하게 합니다. 완전한 정리나 orphan 소유권을 보장하지 않습니다. 별도 `--disable-nodegroup-eviction`은 eviction 대신 delete를 사용하여 PDB 검사를 우회합니다. 둘 다 기본 장애 대응 절차가 아닙니다.
 
-1. **의존 리소스 삭제**:
+계정·리전 전체 ELB·ELBv2 목록을 삭제 명령에 연결하거나, 의존성 오류를 없애려고 모든 Service·PVC·namespace를 삭제하지 않습니다. orphan을 수동 제거해야 한다면 정확한 클러스터·스택 소유권과 데이터·트래픽 영향을 확인한 뒤 해당 서비스의 검토된 폐기 절차를 따릅니다.
 
-```bash
-# 노드 그룹 삭제
-aws eks delete-nodegroup --cluster-name my-cluster --nodegroup-name <nodegroup-name>
+출처: [EKS 클러스터 삭제](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html), [삭제 문제 해결](https://repost.aws/knowledge-center/eks-delete-cluster-issues), [영구 볼륨 생명주기](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
 
-# Fargate 프로필 삭제
-aws eks delete-fargate-profile --cluster-name my-cluster --fargate-profile-name <profile-name>
-
-# 애드온 삭제
-aws eks delete-addon --cluster-name my-cluster --addon-name <addon-name>
-```
-
-2. **강제 삭제**:
-
-```bash
-# eksctl을 사용한 강제 삭제
-eksctl delete cluster --name my-cluster --force
-```
-
-3. **수동 리소스 정리**:
-
-```bash
-# 로드 밸런서 삭제
-kubectl delete services --all --all-namespaces
-
-# PVC 삭제
-kubectl delete pvc --all --all-namespaces
-
-# 네임스페이스 삭제
-kubectl delete namespaces --all --ignore-not-found=true
-```
-
-4. **AWS 리소스 정리**:
-
-```bash
-# ELB 삭제
-aws elb describe-load-balancers | jq -r '.LoadBalancerDescriptions[].LoadBalancerName' | xargs -I {} aws elb delete-load-balancer --load-balancer-name {}
-
-# NLB/ALB 삭제
-aws elbv2 describe-load-balancers | jq -r '.LoadBalancers[].LoadBalancerArn' | xargs -I {} aws elbv2 delete-load-balancer --load-balancer-arn {}
-
-# 보안 그룹 삭제
-aws ec2 describe-security-groups --filters "Name=tag:kubernetes.io/cluster/<cluster-name>,Values=owned" | jq -r '.SecurityGroups[].GroupId' | xargs -I {} aws ec2 delete-security-group --group-id {}
-```
 ## 네트워킹 문제
 
-EKS 클러스터에서 네트워킹 문제는 가장 흔하게 발생하는 문제 중 하나입니다. 이 섹션에서는 일반적인 네트워킹 문제와 그 해결 방법을 다룹니다.
+![Pod 통신, Service 접근, 로드 밸런서, DNS와 CNI·IP 할당으로 구분한 네트워크 증상.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-2.png)
 
-![파드 간 통신, 서비스 접근, 로드 밸런서, DNS, VPC CNI 다섯 갈래의 네트워킹 문제와 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-2.svg)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-2.html)
+
+먼저 실제 컴퓨팅·데이터 플레인을 식별합니다. 오픈소스 VPC CNI를 사용하는 표준 EC2, Fargate, Auto Mode의 에이전트·설정은 다릅니다. Auto Mode는 `NodeClass` 네트워크 제어를 사용하며 `aws-node` DaemonSet·`ENIConfig` 변경으로 Auto Mode 노드를 구성하지 못합니다.
 
 ### 파드 간 통신 문제
 
-#### 일반적인 원인
+#### 실패 경로 추적
 
-파드 간 통신 문제의 일반적인 원인:
-
-1. **네트워크 정책**: 제한적인 네트워크 정책이 파드 간 통신을 차단
-2. **보안 그룹 규칙**: 제한적인 보안 그룹 규칙이 파드 간 통신을 차단
-3. **CNI 플러그인 문제**: CNI 플러그인 구성 또는 버전 문제
-4. **파드 CIDR 충돌**: 파드 CIDR 범위 충돌
-5. **MTU 불일치**: 네트워크 인터페이스 간 MTU 불일치
-
-#### 문제 해결 단계
-
-1. **네트워크 정책 확인**:
+출발·목적 Pod, namespace, node·AZ, IP 계열, 프로토콜과 목적 포트를 기록합니다. 허용된 테스트로 차이를 분리할 수 있으면 같은 노드·다른 노드 경로를 비교합니다. 해당 경로의 정책, 보안 그룹, 라우팅·NACL, CNI 상태, IP 할당과 path MTU를 확인합니다.
 
 ```bash
-# 네트워크 정책 확인
-kubectl get networkpolicies --all-namespaces
-kubectl describe networkpolicy <networkpolicy-name> -n <namespace>
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o wide
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" \
+  -o jsonpath='{.metadata.labels}{"\n"}{.spec.nodeName}{"\n"}{.spec.hostNetwork}{"\n"}'
+kubectl --context "$KUBE_CONTEXT" get namespace "$NAMESPACE" --show-labels
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get networkpolicies
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --sort-by='.metadata.creationTimestamp'
 ```
 
-2. **보안 그룹 규칙 확인**:
+표준 `networking.k8s.io/v1` NetworkPolicy는 허용 트래픽을 합집합으로 적용하며 규칙 우선순위나 “마지막 정책 우선”이 없습니다. 양쪽이 격리되어 있으면 출발 egress와 목적 ingress가 모두 허용해야 합니다. admin·cluster-wide API와 벤더 정책 엔진의 의미는 별도입니다. namespace 레이블과 `namespaceSelector`·`podSelector`가 같은 peer의 AND인지, 별도 peer의 OR인지 확인합니다.
 
-```bash
-# 노드 보안 그룹 확인
-aws ec2 describe-instances \
-  --filters "Name=tag:eks:cluster-name,Values=my-cluster" \
-  --query "Reservations[*].Instances[*].SecurityGroups[*]" \
-  --output text
+VPC CNI는 네이티브 정책 집행을 지원하므로 별도 정책 Pod가 없다는 이유만으로 Calico·Cilium을 설치하지 않습니다. 지원 CNI·platform·kernel과 policy-agent 활성화 설정을 확인합니다. standard startup mode는 정책 구성이 끝날 때까지 새 Pod를 허용하고 strict mode는 거부에서 시작하여 DNS·의존성 정책이 필요합니다. host-network 동작과 기타 적용 범위는 해당 구현 문서를 확인합니다.
 
-# 보안 그룹 규칙 확인
-aws ec2 describe-security-group-rules \
-  --filters "Name=group-id,Values=<security-group-id>"
-```
+표준 VPC CNI에서는 해당 컨테이너가 존재할 때 실제 `aws-node` Pod의 `aws-network-policy-agent` 로그를 확인합니다. `kubectl get pods -l ...`이 빈 목록으로 성공해도 플러그인 설치를 증명하지 않습니다. Auto Mode는 내장 정책 제어를 사용합니다.
 
-3. **CNI 플러그인 확인**:
+#### 의도한 흐름만 수정
 
-```bash
-# CNI 플러그인 버전 확인
-kubectl describe daemonset aws-node -n kube-system | grep Image
+namespace 전체 allow-all을 추가하거나 정책을 삭제하기보다 전체 허용 흐름을 검토합니다. 아래는 backend API Pod를 선택하여 frontend web Pod의 TCP 8080만 허용하는 예시입니다.
 
-# CNI 플러그인 구성 확인
-kubectl describe configmap aws-node -n kube-system
-```
-
-4. **파드 CIDR 확인**:
-
-```bash
-# 파드 CIDR 확인
-kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
-
-# 파드 IP 확인
-kubectl get pods -o wide --all-namespaces
-```
-
-5. **MTU 확인**:
-
-```bash
-# 노드 MTU 확인
-kubectl debug node/<node-name> -it --image=busybox -- ifconfig
-
-# CNI MTU 확인
-kubectl describe configmap aws-node -n kube-system | grep MTU
-```
-
-#### 일반적인 해결 방법
-
-1. **네트워크 정책 수정**:
-
-```bash
-# 허용 네트워크 정책 생성
-cat <<EOF | kubectl apply -f -
+```yaml
+# Example ingress policy only: review both peers and the complete allowed-flow matrix.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-all
-  namespace: <namespace>
+  name: api-from-web
+  namespace: backend
 spec:
-  podSelector: {}
-  ingress:
-  - {}
-  egress:
-  - {}
+  podSelector:
+    matchLabels:
+      app: api
   policyTypes:
-  - Ingress
-  - Egress
-EOF
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: frontend
+          podSelector:
+            matchLabels:
+              app: web
+      ports:
+        - protocol: TCP
+          port: 8080
 ```
 
-2. **보안 그룹 규칙 수정**:
+적용하면 다른 정책이 허용하지 않는 backend ingress는 격리될 수 있습니다. client egress, DNS와 모든 의존성을 설정하지 않으므로 허용·거부 테스트로 따로 확인합니다. 예시 이름 대신 실제 namespace·레이블을 사용합니다.
 
-```bash
-# 노드 간 통신 허용 규칙 추가
-aws ec2 authorize-security-group-ingress \
-  --group-id <security-group-id> \
-  --protocol all \
-  --source-group <security-group-id>
-```
-
-3. **CNI 플러그인 업데이트**:
-
-```bash
-# CNI 플러그인 업데이트
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name vpc-cni \
-  --addon-version <latest-version> \
-  --resolve-conflicts PRESERVE
-```
-
-4. **CNI 구성 수정**:
-
-```bash
-# CNI MTU 구성 수정
-kubectl set env daemonset aws-node -n kube-system AWS_VPC_ENI_MTU=1500
-```
-
-5. **파드 재시작**:
-
-```bash
-# 파드 재시작
-kubectl delete pod <pod-name> -n <namespace>
-```
+보안 그룹은 Pod 그룹·사용자 지정 Pod 서브넷을 포함한 실제 출발·목적 ENI의 그룹을 확인합니다. 소유자를 통해 필요한 source·port를 허용하며 모든 프로토콜이나 넓은 CIDR을 일반 해결책으로 추가하지 않습니다. 1500·9001 같은 MTU는 경로에 따라 다릅니다. CNI 변경·Pod 교체 전에 실패를 측정하고 캡슐화를 고려합니다.
 
 ### 서비스 접근 문제
 
-#### 일반적인 원인
-
-서비스 접근 문제의 일반적인 원인:
-
-1. **서비스 선택자 불일치**: 서비스 선택자가 파드 레이블과 일치하지 않음
-2. **엔드포인트 문제**: 서비스 엔드포인트가 생성되지 않음
-3. **파드 상태 문제**: 파드가 준비되지 않음
-4. **서비스 포트 불일치**: 서비스 포트가 파드 포트와 일치하지 않음
-5. **kube-proxy 문제**: kube-proxy 구성 또는 상태 문제
-
-#### 문제 해결 단계
-
-1. **서비스 및 파드 확인**:
+Service selector, 실제 Pod readiness, endpoint 조건과 포트 매핑을 함께 확인합니다.
 
 ```bash
-# 서비스 확인
-kubectl get services -n <namespace>
-kubectl describe service <service-name> -n <namespace>
-
-# 파드 확인
-kubectl get pods -l <service-selector> -n <namespace>
-kubectl describe pod <pod-name> -n <namespace>
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${SERVICE_NAME:?}"
+SERVICE_JSON=$(kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get service "$SERVICE_NAME" -o json)
+printf '%s\n' "$SERVICE_JSON" | jq '{metadata: {name: .metadata.name, namespace: .metadata.namespace}, spec: .spec, status: .status}'
+SELECTOR=$(printf '%s\n' "$SERVICE_JSON" | jq -r '(.spec.selector // {}) | to_entries | map("\(.key)=\(.value)") | join(",")')
+if [ -n "$SELECTOR" ]; then
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -l "$SELECTOR" -o wide
+  kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -l "$SELECTOR" -o json \
+    | jq '.items[] | {name:.metadata.name,phase:.status.phase,ready:[.status.conditions[]? | select(.type=="Ready")],containers:.status.containerStatuses}'
+else
+  printf 'No selector: inspect ExternalName or explicitly managed EndpointSlices as applicable.\n'
+fi
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get endpointslices \
+  -l "kubernetes.io/service-name=$SERVICE_NAME" -o yaml
 ```
 
-2. **엔드포인트 확인**:
+폐기 예정 Endpoints API에 의존하지 말고 EndpointSlice를 사용합니다. `ready`·`serving`·`terminating`과 `publishNotReadyAddresses`, `externalTrafficPolicy`, `internalTrafficPolicy`를 확인합니다. Running Pod가 Ready라는 보장은 없습니다.
 
-```bash
-# 엔드포인트 확인
-kubectl get endpoints <service-name> -n <namespace>
-kubectl describe endpoints <service-name> -n <namespace>
-```
+`ExternalName`은 선택된 Pod 대신 DNS alias를 진단합니다. headless Service의 `clusterIP: None`은 의도된 값입니다. selector가 없는 Service는 소유자가 관리하는 EndpointSlice를 사용할 수 있습니다. Service `port`와 `targetPort`는 달라도 되며 container port 선언만으로 앱이 해당 포트를 listen하지는 않습니다.
 
-3. **파드 상태 확인**:
+레이블·포트가 잘못되면 릴리스 설정에서 소유 Service·Pod template을 수정합니다. 컨트롤러 소유 Pod 하나의 레이블 변경은 지속적인 해결책이 아닙니다. 패치 전에 포트 목록 전체와 immutable 필드를 확인합니다. 원인 진단 없이 Service 삭제·재생성, ClusterIP 변경, kube-proxy 전체 재시작을 하지 않습니다.
 
-```bash
-# 파드 상태 확인
-kubectl get pods -l <service-selector> -n <namespace> -o wide
-kubectl describe pod <pod-name> -n <namespace>
-```
+정책이 허용하는 같은 출발지·프로토콜로 직접 Pod와 Service 접근을 비교합니다. iptables·nftables·eBPF를 조사하기 전에 kube-proxy, 대안 구현, Auto Mode 중 실제 데이터 플레인을 확인합니다. kube-proxy Pod 부재가 항상 장애는 아닙니다.
 
-4. **서비스 포트 확인**:
-
-```bash
-# 서비스 포트 확인
-kubectl get service <service-name> -n <namespace> -o jsonpath='{.spec.ports[*]}'
-
-# 파드 포트 확인
-kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.containers[*].ports[*]}'
-```
-
-5. **kube-proxy 확인**:
-
-```bash
-# kube-proxy 상태 확인
-kubectl get pods -n kube-system -l k8s-app=kube-proxy
-kubectl logs -n kube-system -l k8s-app=kube-proxy
-```
-
-#### 일반적인 해결 방법
-
-1. **서비스 선택자 수정**:
-
-```bash
-# 서비스 선택자 수정
-kubectl patch service <service-name> -n <namespace> -p '{"spec":{"selector":{"app":"<app-label>"}}}'
-```
-
-2. **파드 레이블 수정**:
-
-```bash
-# 파드 레이블 수정
-kubectl label pod <pod-name> -n <namespace> app=<app-label> --overwrite
-```
-
-3. **서비스 포트 수정**:
-
-```bash
-# 서비스 포트 수정
-kubectl patch service <service-name> -n <namespace> -p '{"spec":{"ports":[{"port":80,"targetPort":8080}]}}'
-```
-
-4. **kube-proxy 재시작**:
-
-```bash
-# kube-proxy 재시작
-kubectl delete pod -n kube-system -l k8s-app=kube-proxy
-```
-
-5. **서비스 재생성**:
-
-```bash
-# 서비스 삭제
-kubectl delete service <service-name> -n <namespace>
-
-# 서비스 생성
-kubectl expose deployment <deployment-name> -n <namespace> --port=80 --target-port=8080
-```
 ### 로드 밸런서 문제
 
-#### 일반적인 원인
+Service·Ingress class, 어노테이션과 소유권에서 컨트롤러를 식별합니다. 표준 AWS Load Balancer Controller와 Auto Mode는 class·API·생명주기가 다릅니다. 해당 소유자의 이벤트, 서브넷 선택, IAM, 보안 그룹, target 등록과 health check를 확인합니다.
 
-로드 밸런서 문제의 일반적인 원인:
-
-1. **서브넷 태그 누락**: 로드 밸런서 서브넷 태그 누락
-2. **보안 그룹 규칙 제한**: 제한적인 보안 그룹 규칙
-3. **상태 확인 실패**: 로드 밸런서 상태 확인 실패
-4. **서비스 주석 문제**: 잘못된 서비스 주석
-5. **할당량 초과**: 로드 밸런서 할당량 초과
-
-#### 문제 해결 단계
-
-1. **서비스 상태 확인**:
+워크로드에 연결된 정확한 LB·target group ARN을 사용합니다.
 
 ```bash
-# 서비스 상태 확인
-kubectl get service <service-name> -n <namespace>
-kubectl describe service <service-name> -n <namespace>
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${LOAD_BALANCER_ARN:?}"; : "${TARGET_GROUP_ARN:?}"
+aws elbv2 describe-load-balancers --region "$AWS_REGION" \
+  --load-balancer-arns "$LOAD_BALANCER_ARN"
+aws elbv2 describe-tags --region "$AWS_REGION" \
+  --resource-arns "$LOAD_BALANCER_ARN" "$TARGET_GROUP_ARN"
+aws elbv2 describe-load-balancer-attributes --region "$AWS_REGION" \
+  --load-balancer-arn "$LOAD_BALANCER_ARN"
+aws elbv2 describe-target-groups --region "$AWS_REGION" \
+  --target-group-arns "$TARGET_GROUP_ARN"
+aws elbv2 describe-target-health --region "$AWS_REGION" \
+  --target-group-arn "$TARGET_GROUP_ARN"
 ```
 
-2. **로드 밸런서 상태 확인**:
+`describe-load-balancer-attributes`는 속성이며 운영 상태는 `describe-load-balancers`에서 확인합니다. target health reason, health-check protocol·port·path, listener·rule 경로와 앱 응답을 확인합니다. instance target은 보통 node·NodePort, IP target은 Pod target port로 접근합니다. 보안 그룹은 실제 경로에 맞아야 합니다.
 
-```bash
-# 로드 밸런서 ARN 확인
-aws elbv2 describe-load-balancers \
-  --query "LoadBalancers[?contains(DNSName, '<load-balancer-dns>')].LoadBalancerArn" \
-  --output text
+자동 discovery에 사용하는 subnet role tag와 public·internal scheme, route table, IP 여유와 AZ를 확인합니다. 같은 서브넷에 public·private role tag를 모두 추가하는 것은 해결책이 아닙니다. 명시적 subnet 지정·controller 버전에 따라 tag 요구가 달라질 수 있습니다. health check 실패를 우회하려고 frontend·backend SG에 `0.0.0.0/0`을 열지 않습니다.
 
-# 로드 밸런서 상태 확인
-aws elbv2 describe-load-balancer-attributes \
-  --load-balancer-arn <load-balancer-arn>
+소유자의 현재 scheme·type 설정을 사용합니다. 기존 `aws-load-balancer-internal`·`aws-load-balancer-type: nlb` 예시를 현재 class와 혼용하지 않습니다. 소유자·scheme 변경에는 계획한 교체·트래픽 이전이 필요할 수 있으며 어노테이션 수정이 인플레이스 전환을 보장하지 않습니다. Auto Mode는 자체 관리 컨트롤러의 기존 LB를 인수하지 않습니다.
 
-# 대상 그룹 상태 확인
-aws elbv2 describe-target-health \
-  --target-group-arn <target-group-arn>
-```
-
-3. **서브넷 태그 확인**:
-
-```bash
-# 서브넷 태그 확인
-aws ec2 describe-subnets \
-  --subnet-ids <subnet-id-1> <subnet-id-2> \
-  --query "Subnets[*].{ID:SubnetId,Tags:Tags}"
-```
-
-4. **보안 그룹 규칙 확인**:
-
-```bash
-# 보안 그룹 규칙 확인
-aws ec2 describe-security-group-rules \
-  --filters "Name=group-id,Values=<security-group-id>"
-```
-
-5. **서비스 이벤트 확인**:
-
-```bash
-# 서비스 이벤트 확인
-kubectl get events -n <namespace> --field-selector involvedObject.name=<service-name>
-```
-
-#### 일반적인 해결 방법
-
-1. **서브넷 태그 추가**:
-
-```bash
-# 퍼블릭 서브넷 태그 추가
-aws ec2 create-tags \
-  --resources <subnet-id-1> <subnet-id-2> \
-  --tags Key=kubernetes.io/role/elb,Value=1
-
-# 프라이빗 서브넷 태그 추가
-aws ec2 create-tags \
-  --resources <subnet-id-1> <subnet-id-2> \
-  --tags Key=kubernetes.io/role/internal-elb,Value=1
-```
-
-2. **보안 그룹 규칙 추가**:
-
-```bash
-# 인바운드 규칙 추가
-aws ec2 authorize-security-group-ingress \
-  --group-id <security-group-id> \
-  --protocol tcp \
-  --port 80 \
-  --cidr 0.0.0.0/0
-
-# 아웃바운드 규칙 추가
-aws ec2 authorize-security-group-egress \
-  --group-id <security-group-id> \
-  --protocol tcp \
-  --port 80 \
-  --cidr 0.0.0.0/0
-```
-
-3. **서비스 주석 수정**:
-
-```bash
-# 내부 로드 밸런서 주석 추가
-kubectl annotate service <service-name> -n <namespace> \
-  service.beta.kubernetes.io/aws-load-balancer-internal="true" \
-  --overwrite
-
-# 로드 밸런서 유형 주석 추가
-kubectl annotate service <service-name> -n <namespace> \
-  service.beta.kubernetes.io/aws-load-balancer-type="nlb" \
-  --overwrite
-```
-
-4. **서비스 재생성**:
-
-```bash
-# 서비스 백업
-kubectl get service <service-name> -n <namespace> -o yaml > service-backup.yaml
-
-# 서비스 삭제
-kubectl delete service <service-name> -n <namespace>
-
-# 서비스 생성
-kubectl apply -f service-backup.yaml
-```
-
-5. **로드 밸런서 수동 생성**:
-
-```bash
-# 로드 밸런서 생성
-aws elbv2 create-load-balancer \
-  --name <load-balancer-name> \
-  --type application \
-  --subnets <subnet-id-1> <subnet-id-2> \
-  --security-groups <security-group-id>
-```
+Service 삭제는 LB 삭제로 이어질 수 있고, export한 Service YAML은 완전한 트래픽·데이터 롤백 계획이 아닙니다. ALB를 수동 생성해도 Kubernetes Service에 자동으로 연결되지 않습니다. 변경 전에 선택한 소유자의 [네트워킹 가이드](./03-eks-networking-part2.md)를 확인합니다.
 
 ### DNS 문제
 
-#### 일반적인 원인
-
-DNS 문제의 일반적인 원인:
-
-1. **CoreDNS 파드 문제**: CoreDNS 파드가 실행되지 않거나 준비되지 않음
-2. **kube-dns 서비스 문제**: kube-dns 서비스가 올바르게 구성되지 않음
-3. **DNS 정책 문제**: 파드 DNS 정책이 올바르게 구성되지 않음
-4. **네트워크 정책 제한**: 네트워크 정책이 DNS 트래픽을 차단
-5. **CoreDNS 구성 문제**: CoreDNS 구성 오류
-
-#### 문제 해결 단계
-
-1. **CoreDNS 파드 확인**:
+#### 실제 Pod가 사용하는 resolver 확인
 
 ```bash
-# CoreDNS 파드 확인
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-kubectl describe pod -n kube-system -l k8s-app=kube-dns
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" \
+  -o jsonpath='{.spec.dnsPolicy}{"\n"}{.spec.dnsConfig}{"\n"}{.spec.hostNetwork}{"\n"}'
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" \
+  -c "$CONTAINER_NAME" -- cat /etc/resolv.conf
+# Where this container actually includes nslookup, test the intended name.
+: "${DNS_TEST_NAME:?Set the intended Service FQDN or reviewed external hostname}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" \
+  -c "$CONTAINER_NAME" -- nslookup "$DNS_TEST_NAME"
 ```
 
-2. **kube-dns 서비스 확인**:
+이미지에 shell·DNS 도구가 없다면 도구 제한이지 DNS 질의 실패가 아닙니다. 관련 network·identity context를 유지하는 검토된 debug 방식을 준비합니다. 새 debug Pod의 DNS·정책은 실제 Pod와 다를 수 있습니다.
+
+표준 비 Auto 노드는 설치된 CoreDNS Deployment·Service, 설정과 EndpointSlice를 확인합니다.
 
 ```bash
-# kube-dns 서비스 확인
-kubectl get service kube-dns -n kube-system
-kubectl describe service kube-dns -n kube-system
+kubectl --context "$KUBE_CONTEXT" -n kube-system get deployment coredns
+kubectl --context "$KUBE_CONTEXT" -n kube-system get pods -l k8s-app=kube-dns -o wide
+kubectl --context "$KUBE_CONTEXT" -n kube-system get service kube-dns
+kubectl --context "$KUBE_CONTEXT" -n kube-system get endpointslices \
+  -l kubernetes.io/service-name=kube-dns
+kubectl --context "$KUBE_CONTEXT" -n kube-system get configmap coredns -o yaml
+kubectl --context "$KUBE_CONTEXT" -n kube-system logs -l k8s-app=kube-dns \
+  --all-containers=true --prefix=true --since=15m --tail=100
 ```
 
-3. **CoreDNS 구성 확인**:
+**Auto Mode 노드**에서는 CoreDNS가 node system service로 실행됩니다. 순수 Auto Mode는 기존 Deployment 없이도 동작할 수 있습니다. 혼합 Auto·비 Auto 클러스터는 비 Auto 노드용 Deployment를 유지해야 합니다. Auto Mode 문제를 고치려고 NodeLocal DNSCache를 설치하거나 없는 Deployment를 재시작하지 않습니다.
+
+Pod nameserver, CoreDNS·NodeLocal upstream과 VPC resolver를 구분합니다. `169.254.20.10`은 흔히 선택하는 NodeLocal DNSCache 주소이지 보편적인 VPC DNS 주소가 아닙니다. `8.8.8.8` 같은 public resolver는 Kubernetes Service zone·AWS private DNS의 fallback이 아닙니다.
 
 ```bash
-# CoreDNS 구성 확인
-kubectl get configmap coredns -n kube-system -o yaml
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${VPC_ID:?}"
+aws ec2 describe-vpc-attribute --region "$AWS_REGION" --vpc-id "$VPC_ID" \
+  --attribute enableDnsSupport
+aws ec2 describe-vpc-attribute --region "$AWS_REGION" --vpc-id "$VPC_ID" \
+  --attribute enableDnsHostnames
+aws ec2 describe-vpcs --region "$AWS_REGION" --vpc-ids "$VPC_ID" \
+  --query 'Vpcs[].{VpcId:VpcId,DhcpOptionsId:DhcpOptionsId}'
 ```
 
-4. **DNS 해결 테스트**:
+DNS 속성은 `describe-vpcs`의 필드가 아니라 `describe-vpc-attribute`로 조회합니다. 반환된 ID로 DHCP option을 확인합니다. 다른 워크로드를 검토하지 않고 공유 VPC의 DHCP 설정을 바꾸지 않습니다.
 
-```bash
-# DNS 해결 테스트 파드 생성
-kubectl run dnsutils --image=tutum/dnsutils --restart=Never -- sleep 3600
+#### 원인에 맞는 DNS 수정
 
-# DNS 해결 테스트
-kubectl exec -it dnsutils -- nslookup kubernetes.default
-kubectl exec -it dnsutils -- nslookup <service-name>.<namespace>.svc.cluster.local
-```
+필요한 UDP·TCP 53, 실제 CoreDNS readiness·설정, upstream 접근, DNS policy·search 설정을 확인합니다. hostNetwork Pod가 cluster DNS를 쓰려면 일반적으로 `ClusterFirstWithHostNet`이 필요하고 `dnsPolicy: None`은 완전하고 의도적인 resolver 설정이 필요합니다. DNS만 허용하는 egress policy도 다른 정책이 허용하지 않으면 선택한 Pod의 나머지 egress를 격리합니다.
 
-5. **DNS 디버깅**:
+소유 Corefile의 사용자 설정을 보존하고 애드온 지원 스키마를 사용합니다. scale·restart 전에 replica·resource·PDB·scheduling과 autoscaling 소유자를 확인합니다. Update ID와 실제 DNS 테스트를 유지하며 처음부터 모든 DNS Pod를 삭제하거나 추정한 최신 이미지를 설치하지 않습니다.
 
-```bash
-# DNS 디버깅 파드 생성
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: dnsutils
-  namespace: default
-spec:
-  containers:
-  - name: dnsutils
-    image: tutum/dnsutils
-    command:
-      - sleep
-      - "3600"
-    imagePullPolicy: IfNotPresent
-  restartPolicy: Always
-EOF
-
-# DNS 디버깅
-kubectl exec -it dnsutils -- cat /etc/resolv.conf
-kubectl exec -it dnsutils -- dig kubernetes.default.svc.cluster.local
-```
-
-#### 일반적인 해결 방법
-
-1. **CoreDNS 재시작**:
-
-```bash
-# CoreDNS 파드 재시작
-kubectl delete pod -n kube-system -l k8s-app=kube-dns
-```
-
-2. **CoreDNS 구성 수정**:
-
-```bash
-# CoreDNS 구성 수정
-kubectl edit configmap coredns -n kube-system
-```
-
-3. **CoreDNS 스케일 업**:
-
-```bash
-# CoreDNS 스케일 업
-kubectl scale deployment coredns -n kube-system --replicas=3
-```
-
-4. **DNS 정책 수정**:
-
-```bash
-# DNS 정책 수정
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"dnsPolicy":"ClusterFirst"}}}}'
-```
-
-5. **CoreDNS 업데이트**:
-
-```bash
-# CoreDNS 업데이트
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name coredns \
-  --addon-version <latest-version> \
-  --resolve-conflicts PRESERVE
-```
 ### VPC CNI 문제
 
-#### 일반적인 원인
-
-VPC CNI 문제의 일반적인 원인:
-
-1. **IP 주소 부족**: 노드에 할당된 IP 주소 부족
-2. **ENI 한도 도달**: 노드의 ENI(Elastic Network Interface) 한도 도달
-3. **CNI 버전 문제**: 오래된 또는 호환되지 않는 CNI 버전
-4. **CNI 구성 오류**: 잘못된 CNI 구성
-5. **권한 문제**: CNI에 필요한 IAM 권한 부족
-
-#### 문제 해결 단계
-
-1. **VPC CNI 파드 확인**:
+다음은 **오픈소스 VPC CNI를 사용하는 표준 EC2 노드**용입니다. 문제 노드의 Pod를 명시적으로 선택합니다. `kubectl exec`는 label selector를 받지 않습니다.
 
 ```bash
-# VPC CNI 파드 확인
-kubectl get pods -n kube-system -l k8s-app=aws-node
-kubectl describe pod -n kube-system -l k8s-app=aws-node
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NODE_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" \
+  -o jsonpath='{.spec.providerID}{"\n"}{.status.nodeInfo}{"\n"}{.status.allocatable.pods}{"\n"}'
+kubectl --context "$KUBE_CONTEXT" -n kube-system get daemonset aws-node -o json \
+  | jq '.spec.template.spec | {containers:[.containers[] | {name,image,args,env}],initContainers:[.initContainers[]? | {name,image,args,env}]}'
+kubectl --context "$KUBE_CONTEXT" -n kube-system get pods \
+  -l k8s-app=aws-node --field-selector "spec.nodeName=$NODE_NAME" -o wide
+kubectl --context "$KUBE_CONTEXT" get pods -A \
+  --field-selector "spec.nodeName=$NODE_NAME" -o wide
+: "${AWS_NODE_POD:?Select the aws-node Pod on that exact node}"
+kubectl --context "$KUBE_CONTEXT" -n kube-system logs "$AWS_NODE_POD" \
+  -c aws-node --since=15m --tail=200
 ```
 
-2. **VPC CNI 로그 확인**:
+애드온 `configurationValues`, DaemonSet env와 관련 custom resource를 확인합니다. 모든 설정이 `aws-node` ConfigMap에 있다고 가정하지 않습니다. 노드 `.spec.podCIDR`은 VPC CNI Pod 주소 인벤토리로 신뢰할 수 없으므로 실제 Pod IP, EC2 ENI·prefix·subnet을 확인합니다.
 
 ```bash
-# VPC CNI 로그 확인
-kubectl logs -n kube-system -l k8s-app=aws-node
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${INSTANCE_ID:?Verify it from the selected node ProviderID}"
+aws ec2 describe-instances --region "$AWS_REGION" --instance-ids "$INSTANCE_ID" \
+  --query 'Reservations[].Instances[].{Id:InstanceId,Type:InstanceType,Subnet:SubnetId,SGs:SecurityGroups,ENIs:NetworkInterfaces}'
+: "${SUBNET_ID:?Set the actual node or custom Pod subnet being investigated}"
+aws ec2 describe-subnets --region "$AWS_REGION" --subnet-ids "$SUBNET_ID" \
+  --query 'Subnets[].{Id:SubnetId,CIDR:CidrBlock,AvailableIPs:AvailableIpAddressCount}'
+: "${INSTANCE_TYPE:?Set the selected instance type}"
+aws ec2 describe-instance-types --region "$AWS_REGION" --instance-types "$INSTANCE_TYPE" \
+  --query 'InstanceTypes[].{Type:InstanceType,Network:NetworkInfo}'
 ```
 
-3. **IP 주소 사용량 확인**:
+활성화된 IPAMD introspection은 노드에 설정된 endpoint(보통 loopback 61679)에서 제공합니다. 필요한 도구가 있는 허용된 node·agent 진단 방법을 사용합니다. CNI 이미지에 curl이 없다는 것은 IPAM 장애가 아닙니다.
 
-```bash
-# IP 주소 사용량 확인
-kubectl exec -n kube-system -l k8s-app=aws-node -- curl -s http://localhost:61679/v1/enis | jq
-```
+#### 할당 제약 구분
 
-4. **CNI 구성 확인**:
+- **서브넷 고갈·단편화:** free IP와 prefix를 비교합니다. prefix delegation에는 지원 인스턴스·설정과 연속된 prefix 블록이 필요합니다. 여유 IP 개수만으로 /28 할당 가능성을 증명하지 못합니다.
+- **인스턴스 ENI·IP 한도:** `NetworkInfo`와 기존 ENI를 확인합니다. node-group desired·min·max는 노드 수이며 인스턴스 유형·노드별 한도를 바꾸지 않습니다. 검토한 새 그룹이나 지원되는 원래 launch-template 업데이트 경로로 인스턴스 설정을 변경합니다.
+- **Custom networking:** 활성화 전에 맞는 `ENIConfig`, Pod subnet·SG와 node 선택을 준비합니다. secondary ENI·Pod IP의 출처를 바꾸며 무제한 용량을 만들지 않습니다.
+- **Warm target:** `WARM_IP_TARGET`은 여유 IP, `MINIMUM_IP_TARGET`은 전체 할당 IP의 하한입니다. 문서에 따라 warm-ENI 동작을 우선하고 prefix mode의 warm-prefix에도 영향을 줍니다. 양의 warm 여유 없이 minimum만 설정하면 추가 할당을 막을 수 있습니다. 임의의 1·2·5 값 대신 워크로드·IP 예산에서 도출합니다.
+- **Identity·소유권:** 실제 CNI IRSA·Pod Identity 또는 적용 node role과 IPv4·IPv6 policy를 확인합니다. 모든 node role에 IPv4 CNI policy를 붙이는 것은 보편적 해결책이 아닙니다.
 
-```bash
-# CNI 구성 확인
-kubectl describe daemonset aws-node -n kube-system | grep -A 10 Environment
-```
+Auto Mode는 `NodeClass`의 subnet·SG·policy를 사용하고 이 warm-IP·ENI 또는 `ENIConfig` 설정을 받지 않습니다. 관리형 네트워크 모델을 유지합니다.
 
-5. **IAM 권한 확인**:
+지원 중간 버전·스키마에 따라 소유자를 통해 검토한 CNI 버전·설정을 적용합니다. [업그레이드 가이드](./08-eks-upgrades.md)로 정확한 애드온 요청을 추적하고 네트워크를 검증합니다. 컨테이너 이미지 하나만 바꾸거나 설정을 무조건 덮어쓰거나 모든 워크로드를 재시작하여 할당 실패를 숨기지 않습니다.
 
-```bash
-# 노드 IAM 역할 확인
-aws eks describe-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --query "nodegroup.nodeRole"
-
-# IAM 정책 확인
-aws iam list-attached-role-policies \
-  --role-name <node-role-name>
-```
-
-#### 일반적인 해결 방법
-
-1. **IP 주소 부족 해결**:
-
-```bash
-# 프리픽스 위임 활성화
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-# 사용자 지정 네트워킹 활성화
-kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true
-```
-
-2. **ENI 한도 증가**:
-
-```bash
-# 더 큰 인스턴스 유형으로 노드 그룹 업데이트
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --scaling-config desiredSize=<desired-size>,minSize=<min-size>,maxSize=<max-size> \
-  --update-config maxUnavailable=1
-```
-
-3. **VPC CNI 업데이트**:
-
-```bash
-# VPC CNI 업데이트
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name vpc-cni \
-  --addon-version <latest-version> \
-  --resolve-conflicts PRESERVE
-```
-
-4. **CNI 구성 수정**:
-
-```bash
-# CNI 구성 수정
-kubectl set env daemonset aws-node -n kube-system WARM_ENI_TARGET=1
-kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=5
-```
-
-5. **IAM 권한 추가**:
-
-```bash
-# IAM 정책 추가
-aws iam attach-role-policy \
-  --role-name <node-role-name> \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-```
+출처: [VPC CNI 정책 설정](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html), [Auto Mode 네트워크](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html), [custom networking](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html), [CNI 설정](https://github.com/aws/amazon-vpc-cni-k8s), [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/), [EndpointSlice](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/).
 
 ## 노드 및 파드 문제
 
-![노드 상태 문제, 파드 문제, 자동 스케일링 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-3.svg)
+![노드·Pod 증상과 리소스, kubelet, 네트워크, 워크로드·확장 관련 조사 가설.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-3.html)
 
 ### 노드 상태 문제
 
-#### 일반적인 원인
+#### 조건과 실제 노드 확인
 
-노드 상태 문제의 일반적인 원인:
-
-1. **리소스 부족**: CPU, 메모리 또는 디스크 공간 부족
-2. **kubelet 문제**: kubelet 서비스 중단 또는 구성 오류
-3. **네트워크 연결 문제**: 노드와 컨트롤 플레인 간 네트워크 연결 문제
-4. **인증 문제**: 노드 인증서 만료 또는 인증 문제
-5. **시스템 문제**: 커널 또는 운영 체제 문제
-
-#### 문제 해결 단계
-
-1. **노드 상태 확인**:
+`Ready=False`와 `Ready=Unknown`은 다른 근거가 필요합니다. 비정상 kubelet·런타임이 실패를 보고할 수 있고 heartbeat 부재는 연결 단절·노드 정지일 수 있습니다. Memory·Disk·PID pressure는 별도 조건이며 항상 NotReady를 뜻하지 않습니다. 한 레이블로 원인을 단정하지 말고 condition reason·시각과 lease·event를 확인합니다.
 
 ```bash
-# 노드 상태 확인
-kubectl get nodes
-kubectl describe node <node-name>
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NODE_NAME:?}"
+NODE_JSON=$(kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" -o json)
+printf '%s\n' "$NODE_JSON" | jq '{name:.metadata.name,uid:.metadata.uid,labels:.metadata.labels,providerID:.spec.providerID,taints:.spec.taints,unschedulable:.spec.unschedulable,nodeInfo:.status.nodeInfo,conditions:.status.conditions,capacity:.status.capacity,allocatable:.status.allocatable}'
+NODE_UID=$(printf '%s\n' "$NODE_JSON" | jq -er '.metadata.uid')
+kubectl --context "$KUBE_CONTEXT" get events -A --field-selector "involvedObject.uid=$NODE_UID" \
+  --sort-by='.metadata.creationTimestamp'
+kubectl --context "$KUBE_CONTEXT" get pods -A --field-selector "spec.nodeName=$NODE_NAME" -o wide
 ```
 
-2. **노드 리소스 확인**:
+EC2 확인에는 정확한 ProviderID를 사용합니다. node IP를 `grep`으로 매칭하면 다른 리소스를 선택할 수 있습니다. 관리형 그룹은 health·이미지·release·repair 설정을 확인합니다.
 
 ```bash
-# 노드 리소스 확인
-kubectl top node <node-name>
-
-# 노드 디스크 사용량 확인
-kubectl debug node/<node-name> -it --image=busybox -- df -h
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" \
+  --region "$AWS_REGION" \
+  --query 'nodegroup.{status:status,health:health,version:version,releaseVersion:releaseVersion,amiType:amiType,nodeRepairConfig:nodeRepairConfig,updateConfig:updateConfig,scalingConfig:scalingConfig}'
 ```
 
-3. **kubelet 상태 확인**:
+노드 접근을 지원하는 환경에서는 기본 사항의 원격 세션 절차로 kubelet·containerd journal, 네트워크, disk byte·inode와 메모리를 확인합니다. private key를 출력하지 않고 실제 certificate·kubeconfig 경로를 검사합니다. `kubeadm certs renew`는 EKS 관리형 컨트롤 플레인 복구가 아니며 `eksctl replace nodegroup` 명령도 지원되지 않습니다. AL2023는 nodeadm 설정을 사용하므로 모든 이미지에 AL2 `/etc/eks/bootstrap.sh`를 재실행하지 않습니다.
+
+#### 복구와 자동 repair
+
+근거를 보존한 뒤 소유자와 복구 동작을 선택합니다. kubelet·containerd 재시작, reboot·교체는 워크로드에 영향을 주며 지속적인 IAM·네트워크·bootstrap 문제를 해결하지 못할 수 있습니다. reboot API 응답이 instance·kubelet Ready를 뜻하지는 않습니다. 동일 node·instance와 워크로드를 확인한 뒤 uncordon합니다.
+
+계획한 교체는 용량, 영구 데이터, PDB와 교체 소유권을 확인하고 노드 하나를 timeout과 함께 drain합니다.
 
 ```bash
-# SSM을 사용하여 노드에 접속
-aws ssm start-session --target <instance-id>
-
-# kubelet 상태 확인
-sudo systemctl status kubelet
-sudo journalctl -u kubelet
+set -euo pipefail
+: "${KUBE_CONTEXT:?Set the reviewed cluster context}"
+: "${NODE_NAME:?Set one reviewed old node}"
+kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" -o wide
+kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" \
+  -o jsonpath='{.spec.providerID}{"\n"}'
+kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces \
+  --field-selector "spec.nodeName=$NODE_NAME" -o wide
+# Stop on failure. Do not terminate the instance or delete the node group here.
+kubectl --context "$KUBE_CONTEXT" drain "$NODE_NAME" --ignore-daemonsets --timeout=10m
 ```
 
-4. **노드 이벤트 확인**:
+drain 실패 후 EC2 종료로 진행하거나 기본적으로 `emptyDir` 데이터를 버리지 않습니다. 일부만 비워진 노드는 cordon 상태일 수 있습니다. PDB는 eviction 경로를 보호하며 모든 인프라 장애·종료·컨트롤러 scale-down을 막지는 않습니다. 패키지를 직접 바꾸기보다 [노드 업그레이드 절차](./08-eks-upgrades.md)의 관리형 교체를 따릅니다.
 
-```bash
-# 노드 이벤트 확인
-kubectl get events --field-selector involvedObject.name=<node-name>
-```
+EKS 자동 node repair는 실제 지원되는 별도 기능입니다. Auto Mode는 기본 활성화이고 관리형 그룹은 `nodeRepairConfig`, Karpenter는 자체 feature·설정 요구를 사용합니다. monitoring이 조건을 보고해도 repair가 자동 활성화되지는 않습니다. 현재 기본 표에는 지속적인 Ready·runtime·kernel·networking·storage 실패 교체가 있으며 **MemoryPressure·DiskPressure의 기본 repair 동작은 없습니다**. repair threshold·parallelism과 unhealthy fleet·ARC 제어가 새 동작을 멈출 수 있지만 진행 중 동작은 계속될 수 있습니다. Lambda 하나, ASG tag 또는 `maxUnavailable`만으로 이 동작을 제공한다고 설명하지 않습니다.
 
-5. **노드 인증서 확인**:
-
-```bash
-# 노드 인증서 확인
-aws ssm start-session --target <instance-id>
-sudo openssl x509 -in /var/lib/kubelet/pki/kubelet-client-current.pem -text | grep "Not After"
-```
-
-#### 일반적인 해결 방법
-
-1. **kubelet 재시작**:
-
-```bash
-# kubelet 재시작
-aws ssm start-session --target <instance-id>
-sudo systemctl restart kubelet
-```
-
-2. **노드 드레이닝 및 재시작**:
-
-```bash
-# 노드 드레이닝
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
-
-# 노드 재시작
-aws ec2 reboot-instances --instance-ids <instance-id>
-
-# 노드 uncordon
-kubectl uncordon <node-name>
-```
-
-3. **디스크 공간 확보**:
-
-```bash
-# 컨테이너 로그 정리
-aws ssm start-session --target <instance-id>
-sudo crictl rmi --prune
-sudo journalctl --vacuum-time=1d
-```
-
-4. **노드 교체**:
-
-```bash
-# 노드 드레이닝
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
-
-# 노드 종료
-aws ec2 terminate-instances --instance-ids <instance-id>
-```
-
-5. **노드 그룹 업데이트**:
-
-```bash
-# 노드 그룹 업데이트
-aws eks update-nodegroup-version \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name>
-```
 ### 파드 문제
 
-#### 일반적인 원인
-
-파드 문제의 일반적인 원인:
-
-1. **리소스 제약**: CPU, 메모리 또는 스토리지 제약
-2. **이미지 문제**: 이미지를 찾을 수 없거나 액세스할 수 없음
-3. **구성 오류**: 파드 구성 오류
-4. **권한 문제**: 서비스 계정 또는 보안 컨텍스트 문제
-5. **노드 문제**: 노드 리소스 부족 또는 상태 문제
-
-#### 문제 해결 단계
-
-1. **파드 상태 확인**:
+#### 상태·이벤트·소유 컨트롤러 확인
 
 ```bash
-# 파드 상태 확인
-kubectl get pods -n <namespace>
-kubectl describe pod <pod-name> -n <namespace>
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"
+POD_JSON=$(kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json)
+printf '%s\n' "$POD_JSON" | jq '{
+  name:.metadata.name,uid:.metadata.uid,owners:.metadata.ownerReferences,
+  node:.spec.nodeName,serviceAccount:.spec.serviceAccountName,
+  imagePullSecrets:.spec.imagePullSecrets,
+  containers:[.spec.containers[] | {name,image,imagePullPolicy,resources}],
+  initContainers:[.spec.initContainers[]? | {name,image,resources}],
+  phase:.status.phase,reason:.status.reason,message:.status.message,
+  conditions:.status.conditions,containerStatuses:.status.containerStatuses,
+  initContainerStatuses:.status.initContainerStatuses
+}'
+POD_UID=$(printf '%s\n' "$POD_JSON" | jq -er '.metadata.uid')
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --field-selector "involvedObject.uid=$POD_UID" --sort-by='.metadata.creationTimestamp'
 ```
 
-2. **파드 로그 확인**:
+기본 사항의 container별 로그 절차를 사용합니다. Pending, ContainerCreating, image-pull 대기, init-container 실패, readiness 실패, OOMKilled와 restart backoff는 서로 다른 문제입니다. CrashLoopBackOff는 반복 실패 후 backoff이며 근본 원인이 아닙니다.
+
+| 근거 | 다음 확인 |
+| --- | --- |
+| Image pull 오류 | Registry·name·tag·digest·architecture, node 측 DNS·TLS·route, rate limit과 실제 pull identity |
+| FailedScheduling | requests·allocatable, Pod 수, taint·affinity·topology, quota와 PVC 소비자 제약 |
+| FailedMount / attach | PVC·PV·StorageClass, CSI·identity, AZ·현재 attachment. 스토리지 절 참조 |
+| OOMKilled / Evicted | container 종료 상태, limit, node pressure와 사용 이력. 누수로 단정하지 않음 |
+| Forbidden / admission 실패 | 정확한 API 주체와 RBAC·admission policy. Pod list 권한 추가가 registry·filesystem 접근을 고치지 않음 |
+
+`imagePullPolicy: Always`는 없는 이미지·잘못된 자격 증명을 고치지 않습니다. 노트북 Docker pull은 node 경로·identity 검증이 아니고 Docker load도 containerd 런타임에 이미지를 자동으로 넣지 않습니다.
+
+#### Registry 자격 증명과 워크로드 변경
+
+private ECR은 실제 node·Fargate execution identity와 repository policy를 확인합니다. 앱 IRSA·Pod Identity는 앱 시작 전에 이미지를 pull하는 주체가 아닙니다. 사설 ECR 경로에는 API·DKR·S3 접근이 필요할 수 있으며 ECR endpoint가 임의 registry의 사설 접근을 제공하지는 않습니다.
+
+image-pull Secret이 필요한 registry는 올바른 자격 증명이 포함된 보호된 Docker auth JSON을 사용합니다. `.dockerconfigjson`이나 비밀번호를 로그·명령 인자에 출력하지 않습니다. 데스크톱 credential-helper 참조만으로 kubelet이 사용할 자격 증명이 제공되지는 않습니다.
 
 ```bash
-# 파드 로그 확인
-kubectl logs <pod-name> -n <namespace>
-kubectl logs <pod-name> -n <namespace> -c <container-name>
-kubectl logs <pod-name> -n <namespace> --previous
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${DEPLOYMENT_NAME:?}"
+: "${PULL_SECRET_NAME:?Choose an application-specific secret name}"
+: "${DOCKER_CONFIG_JSON:?Provide a protected registry auth JSON file}"
+# Separate reviewed change; an existing Secret causes create to fail rather than replacing it.
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" create secret generic "$PULL_SECRET_NAME" \
+  --type=kubernetes.io/dockerconfigjson \
+  --from-file=".dockerconfigjson=$DOCKER_CONFIG_JSON"
+PATCH=$(jq -n --arg name "$PULL_SECRET_NAME" \
+  '{spec:{template:{spec:{imagePullSecrets:[{name:$name}]}}}}')
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" patch deployment "$DEPLOYMENT_NAME" \
+  --type=strategic --patch "$PATCH"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" rollout status \
+  "deployment/$DEPLOYMENT_NAME" --timeout=5m
 ```
 
-3. **파드 이벤트 확인**:
+Secret은 Pod와 같은 namespace여야 합니다. strategic Pod-template patch는 이름 기준으로 pull-secret 항목을 병합하고 통제된 Deployment rollout을 시작합니다. 릴리스 소유권과 다른 설정을 보존합니다. 기존 Pod의 `imagePullSecrets`는 일반적으로 수정 가능한 필드가 아닙니다. ServiceAccount 기본값은 새로 승인되는 Pod에 적용되며 namespace의 default SA 변경은 무관한 워크로드에도 영향을 줄 수 있습니다. timer로 공유 Secret을 삭제·재생성하지 말고 자격 증명 소유자를 통해 만료를 관리합니다.
+
+다른 설정 오류도 컨트롤러의 선언 template에서 고치고 rollout·readiness를 관찰합니다. 적절한 컨트롤러가 있을 때만 Pod 삭제 후 재생성되며 삭제로 근거가 사라질 수 있습니다. debug `--copy-to`는 앱 부작용을 복제할 수 있으므로 라이브 앱에 패키지를 설치하기보다 권한·정리가 명시된 검토된 진단 방식·이미지를 사용합니다.
+
+### 리소스 제약 문제
 
 ```bash
-# 파드 이벤트 확인
-kubectl get events -n <namespace> --field-selector involvedObject.name=<pod-name>
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get resourcequotas,limitranges
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -o wide
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
+kubectl --context "$KUBE_CONTEXT" top nodes
 ```
 
-4. **파드 리소스 사용량 확인**:
+메트릭 명령은 Metrics Server와 정상 kubelet 접근이 필요합니다. 스케줄링은 현재 top 사용률이 아니라 requests·node allocatable을 사용합니다. 해당하는 init container, Pod overhead, ephemeral storage, extended resource와 Pod 수 한도를 포함합니다. namespace quota·LimitRange는 별도 제약입니다.
 
-```bash
-# 파드 리소스 사용량 확인
-kubectl top pod <pod-name> -n <namespace>
-```
+측정한 필요량이 뒷받침할 때만 requests를 줄입니다. memory request 감소는 Insufficient pods를 해결하거나 limit 내 동작을 보장하지 않습니다. limit 증가는 pressure를 node로 옮길 수 있습니다. 로그·cache 삭제 전에 disk·inode·image·filesystem 사용을 확인하고 장애 근거를 보존합니다.
 
-5. **파드 디버깅**:
-
-```bash
-# 디버깅 컨테이너 실행
-kubectl debug <pod-name> -n <namespace> -it --image=busybox --share-processes --copy-to=<pod-name>-debug
-```
-
-#### 일반적인 해결 방법
-
-1. **파드 재시작**:
-
-```bash
-# 파드 삭제
-kubectl delete pod <pod-name> -n <namespace>
-```
-
-2. **리소스 제약 조정**:
-
-```bash
-# 리소스 요청 및 제한 조정
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"containers":[{"name":"<container-name>","resources":{"requests":{"cpu":"100m","memory":"128Mi"},"limits":{"cpu":"200m","memory":"256Mi"}}}]}}}}'
-```
-
-3. **이미지 문제 해결**:
-
-```bash
-# 이미지 풀 정책 변경
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"containers":[{"name":"<container-name>","imagePullPolicy":"Always"}]}}}}'
-
-# 이미지 풀 시크릿 추가
-kubectl create secret docker-registry <secret-name> \
-  --docker-server=<registry-server> \
-  --docker-username=<username> \
-  --docker-password=<password> \
-  --docker-email=<email> \
-  -n <namespace>
-
-kubectl patch serviceaccount <service-account-name> -n <namespace> -p '{"imagePullSecrets":[{"name":"<secret-name>"}]}'
-```
-
-4. **권한 문제 해결**:
-
-```bash
-# 서비스 계정 권한 추가
-kubectl create role <role-name> \
-  --verb=get,list,watch \
-  --resource=pods,services \
-  -n <namespace>
-
-kubectl create rolebinding <rolebinding-name> \
-  --role=<role-name> \
-  --serviceaccount=<namespace>:<service-account-name> \
-  -n <namespace>
-```
-
-5. **노드 선택기 조정**:
-
-```bash
-# 노드 선택기 추가
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"nodeSelector":{"<key>":"<value>"}}}}}'
-```
+node 수 증가는 instance별 용량을 바꾸지 않습니다. 관리형 그룹 desired·min·max는 autoscaler와 조율하며 scaling config 축소는 PDB를 따르지 않습니다. instance type 변경은 적절한 새 그룹이나 지원되는 원래 launch-template/version 경로를 사용합니다. Pod를 스케줄하기 위해 taint·affinity·topology 제약을 무조건 제거하지 않습니다.
 
 ### 자동 스케일링 문제
 
-#### 일반적인 원인
-
-자동 스케일링 문제의 일반적인 원인:
-
-1. **메트릭 문제**: 메트릭 서버 또는 메트릭 수집 문제
-2. **HPA 구성 오류**: HPA(Horizontal Pod Autoscaler) 구성 오류
-3. **리소스 제약**: 클러스터 리소스 제약으로 인한 스케일링 제한
-4. **노드 그룹 구성 오류**: 노드 그룹 자동 스케일링 구성 오류
-5. **쿨다운 기간**: 스케일링 작업 간 쿨다운 기간
-
-#### 문제 해결 단계
-
-1. **HPA 상태 확인**:
+replica 확장(HPA), resource 추천·갱신(VPA), node provisioning(CA·Karpenter·Auto Mode)과 앱 병목을 구분합니다. 다른 provisioner가 용량을 소유하면 CA Pod가 없는 것이 정상일 수 있습니다.
 
 ```bash
-# HPA 상태 확인
-kubectl get hpa -n <namespace>
-kubectl describe hpa <hpa-name> -n <namespace>
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get hpa -o json \
+  | jq '.items[] | {name:.metadata.name,target:.spec.scaleTargetRef,min:.spec.minReplicas,max:.spec.maxReplicas,current:.status.currentReplicas,desired:.status.desiredReplicas,metrics:.status.currentMetrics,conditions:.status.conditions}'
+kubectl --context "$KUBE_CONTEXT" get apiservice v1beta1.metrics.k8s.io
+kubectl --context "$KUBE_CONTEXT" get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/$NAMESPACE/pods"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --sort-by='.metadata.creationTimestamp'
 ```
 
-2. **메트릭 서버 확인**:
+AbleToScale·ScalingActive·ScalingLimited 등 HPA 조건, 현재 metrics와 behavior를 확인합니다. desired/current replica의 일시적 차이가 곧 장애는 아닙니다. CPU·memory utilization target에는 requests가 필요하며 custom·external metrics는 별도 adapter·KEDA 연동을 사용합니다. metric 오류는 scale-down을 막을 수 있습니다.
 
-```bash
-# 메트릭 서버 상태 확인
-kubectl get pods -n kube-system -l k8s-app=metrics-server
-kubectl logs -n kube-system -l k8s-app=metrics-server
-```
+CA는 설치 릴리스, 지원 Kubernetes minor, identity, discovery tag, unschedulable Pod 제약과 group max·quota를 확인합니다. 평균 node CPU가 높다는 이유만으로 node를 추가하지 않습니다. Karpenter·Auto Mode는 해당 NodePool·NodeClaim·provider limit과 event를 확인하며 CA를 보편적 해결책으로 설치하지 않습니다.
 
-3. **노드 그룹 자동 스케일링 확인**:
+VPA는 추천만 하는 Off, 생성 시점 Initial과 의도적인 update mode를 구분합니다. Auto는 Recreate로 대체되어 deprecated 상태이며 mode 변경은 워크로드 중단·동일 CPU/memory 신호를 쓰는 HPA 충돌을 일으킬 수 있습니다. API 조회 실패가 VPA CRD 미설치를 증명하지는 않습니다.
 
-```bash
-# 노드 그룹 자동 스케일링 확인
-aws eks describe-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --query "nodegroup.scalingConfig"
-```
+아래는 custom metrics 구성이 아닌 **resource metrics** HPA 예시입니다.
 
-4. **클러스터 자동 스케일러 로그 확인**:
-
-```bash
-# 클러스터 자동 스케일러 로그 확인
-kubectl logs -n kube-system -l app=cluster-autoscaler
-```
-
-5. **메트릭 확인**:
-
-```bash
-# 파드 메트릭 확인
-kubectl top pod <pod-name> -n <namespace>
-
-# 노드 메트릭 확인
-kubectl top node
-```
-
-#### 일반적인 해결 방법
-
-1. **메트릭 서버 재시작**:
-
-```bash
-# 메트릭 서버 재시작
-kubectl delete pod -n kube-system -l k8s-app=metrics-server
-```
-
-2. **HPA 구성 수정**:
-
-```bash
-# HPA 구성 수정
-kubectl edit hpa <hpa-name> -n <namespace>
-```
-
-3. **클러스터 자동 스케일러 구성 수정**:
-
-```bash
-# 클러스터 자동 스케일러 구성 수정
-kubectl edit deployment cluster-autoscaler -n kube-system
-```
-
-4. **노드 그룹 자동 스케일링 구성 수정**:
-
-```bash
-# 노드 그룹 자동 스케일링 구성 수정
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --scaling-config minSize=<min-size>,maxSize=<max-size>,desiredSize=<desired-size>
-```
-
-5. **사용자 지정 메트릭 구성**:
-
-```bash
-# 사용자 지정 메트릭 HPA 생성
-cat <<EOF | kubectl apply -f -
+```yaml
+# Resource metrics example, not a custom/external-metrics adapter configuration.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: <hpa-name>
-  namespace: <namespace>
+  name: app-hpa
+  namespace: applications
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: <deployment-name>
-  minReplicas: 1
+    name: app
+  minReplicas: 2
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 50
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 50
-EOF
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
 ```
+
+70%·80%, replica 범위와 stabilization window는 예시이며 측정 기반 권고가 아닙니다. target Deployment, 적절한 requests와 용량이 필요합니다. HPA는 여러 metrics 중 가장 큰 replica 추천을 선택하며 memory 동작·adapter 오류는 워크로드별 테스트가 필요합니다. replica 소유자를 하나로 유지하고 Terraform·GitOps가 spec.replicas를 계속 되돌리지 않게 합니다.
+
+[자동 스케일링 개념](../core/09-cluster-administration.md)과 설치한 컨트롤러의 설정 문서를 사용합니다. 미검토 master manifest를 적용하거나 node role에 AutoScalingFullAccess를 주기보다 실제 Helm values·identity·검증하고 고정한 릴리스를 확인합니다.
+
+출처: [EKS node repair](https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html), [Pod 생명주기](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/), [private image pull](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/), [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/), [VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler).
+
 ## IAM 및 인증 문제
 
-![IAM 인증 문제와 RBAC 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-4.svg)
+<!-- Audit 2026-09-11: parent diagram repair pending; see core-audit/eks-troubleshooting/diagram-review.json.
+![IAM·Kubernetes 인가 증상에서 실제 호출자와 클러스터 인증 모드에 따라 진단 경로 선택.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-4.png)
 
-### IAM 인증 문제
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-4.html)
+-->
 
-#### 일반적인 원인
+### 클러스터 접근 거부
 
-IAM 인증 문제의 일반적인 원인:
-
-1. **aws-auth ConfigMap 오류**: aws-auth ConfigMap 구성 오류
-2. **IAM 역할 권한 부족**: IAM 역할에 필요한 권한 부족
-3. **OIDC 공급자 문제**: OIDC 공급자 구성 오류
-4. **AWS CLI 자격 증명 문제**: AWS CLI 자격 증명 만료 또는 구성 오류
-5. **kubeconfig 문제**: kubeconfig 구성 오류
-
-#### 문제 해결 단계
-
-1. **aws-auth ConfigMap 확인**:
+AWS 호출자, EKS API 권한, kubeconfig·STS 인증, 클러스터 identity mapping과 Kubernetes 인가를 구분합니다. EKS 컨트롤 플레인의 IAM 역할과 운영자 역할은 다릅니다. AWS DescribeCluster 성공만으로 Kubernetes 접근이 부여되지 않습니다.
 
 ```bash
-# aws-auth ConfigMap 확인
-kubectl get configmap aws-auth -n kube-system -o yaml
-```
-
-2. **IAM 역할 확인**:
-
-```bash
-# IAM 역할 확인
-aws iam get-role --role-name <role-name>
-
-# IAM 역할 정책 확인
-aws iam list-attached-role-policies --role-name <role-name>
-```
-
-3. **OIDC 공급자 확인**:
-
-```bash
-# OIDC 공급자 확인
-aws eks describe-cluster --name my-cluster --query "cluster.identity.oidc.issuer"
-
-# OIDC 공급자 목록 확인
-aws iam list-open-id-connect-providers
-```
-
-4. **AWS CLI 자격 증명 확인**:
-
-```bash
-# AWS CLI 자격 증명 확인
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"
 aws sts get-caller-identity
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.{arn:arn,endpoint:endpoint,access:accessConfig}'
+kubectl config view --context "$KUBE_CONTEXT" --minify \
+  -o jsonpath='{.contexts[0].name}{"\n"}{.clusters[0].cluster.server}{"\n"}'
+kubectl --context "$KUBE_CONTEXT" auth can-i get pods -n "$NAMESPACE"
 ```
 
-5. **kubeconfig 확인**:
+전송 오류는 접근 절의 endpoint·CA 검사를 사용합니다. 만료된 자격 증명은 설정한 SSO·federation·assumed-role 세션을 갱신하고 선택한 profile·role을 확인합니다. `sts get-session-token`은 보편적 갱신 명령이 아니며 출력에 자격 증명이 노출될 수 있습니다.
+
+identity mapping을 판단하기 전에 클러스터 인증 모드를 확인합니다.
 
 ```bash
-# kubeconfig 확인
-cat ~/.kube/config
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${PRINCIPAL_ARN:?Set the exact IAM principal}"
+# These APIs apply to clusters with API or API_AND_CONFIG_MAP authentication.
+aws eks list-access-entries --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
+aws eks describe-access-entry --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --principal-arn "$PRINCIPAL_ARN"
+aws eks list-associated-access-policies --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --principal-arn "$PRINCIPAL_ARN"
 ```
 
-#### 일반적인 해결 방법
+API 접근은 정확한 principal, entry type, Kubernetes group과 연결 policy의 namespace·cluster scope를 확인합니다. `aws-auth`는 CONFIG_MAP·혼합 모드의 legacy 경로에 관련되며 부재가 전체 접근 장애를 뜻하지 않습니다. node mapping을 유지하고 인증 모드 변경 전에 문서화된 마이그레이션 방향을 확인합니다.
 
-1. **aws-auth ConfigMap 수정**:
-
-```bash
-# aws-auth ConfigMap 수정
-kubectl edit configmap aws-auth -n kube-system
-```
-
-2. **IAM 역할 권한 추가**:
-
-```bash
-# IAM 역할 권한 추가
-aws iam attach-role-policy \
-  --role-name <role-name> \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-```
-
-3. **OIDC 공급자 생성**:
-
-```bash
-# OIDC 공급자 생성
-eksctl utils associate-iam-oidc-provider \
-  --cluster my-cluster \
-  --approve
-```
-
-4. **AWS CLI 자격 증명 업데이트**:
-
-```bash
-# AWS CLI 자격 증명 업데이트
-aws configure
-```
-
-5. **kubeconfig 재생성**:
-
-```bash
-# kubeconfig 재생성
-aws eks update-kubeconfig --name my-cluster --region <region>
-```
+짧은 예시로 `aws-auth` 전체를 덮어쓰거나 일반 해결책으로 `system:masters`를 부여하지 않습니다. namespace 제한 권한을 추가해도 다른 binding·access policy의 더 넓은 권한이 취소되지는 않습니다. 접근 소유자를 통해 의도한 경로를 수정합니다.
 
 ### RBAC 문제
 
-#### 일반적인 원인
-
-RBAC 문제의 일반적인 원인:
-
-1. **권한 부족**: 사용자 또는 서비스 계정에 필요한 권한 부족
-2. **역할 바인딩 문제**: 역할 바인딩 구성 오류
-3. **네임스페이스 범위 문제**: 네임스페이스 범위 권한 문제
-4. **서비스 계정 구성 오류**: 서비스 계정 구성 오류
-5. **클러스터 역할 문제**: 클러스터 역할 구성 오류
-
-#### 문제 해결 단계
-
-1. **권한 확인**:
+인증 실패, Kubernetes Forbidden, impersonation 요청 실패는 다른 근거입니다. 정확한 verb, resource·subresource, namespace와 subject kind를 확인합니다.
 
 ```bash
-# 권한 확인
-kubectl auth can-i <verb> <resource> -n <namespace> --as <user>
-kubectl auth can-i <verb> <resource> -n <namespace> --as system:serviceaccount:<namespace>:<serviceaccount>
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get roles,rolebindings
+kubectl --context "$KUBE_CONTEXT" get clusterroles,clusterrolebindings
+: "${SUBJECT_NAME:?Set the exact subject name}"
+kubectl --context "$KUBE_CONTEXT" get rolebindings -A -o json \
+  | jq --arg name "$SUBJECT_NAME" '.items[] | select(any(.subjects[]?; .name == $name)) | {namespace:.metadata.namespace,name:.metadata.name,roleRef,subjects}'
+kubectl --context "$KUBE_CONTEXT" get clusterrolebindings -o json \
+  | jq --arg name "$SUBJECT_NAME" '.items[] | select(any(.subjects[]?; .name == $name)) | {name:.metadata.name,roleRef,subjects}'
 ```
 
-2. **역할 및 역할 바인딩 확인**:
+쿼리는 이름이 일치하는 후보를 찾습니다. 같은 문자열이 다른 주체일 수 있으므로 kind, ServiceAccount namespace와 roleRef를 확인합니다. `kubectl auth can-i --as=...`는 impersonation 권한이 필요합니다. impersonated RBAC 검사·`--list`는 EKS access policy 권한 전체를 재현하지 못하므로 실제 의도한 주체로도 확인합니다.
+
+예를 들어 표준 IAM access entry를 `eks-troubleshoot-readers` 그룹에 의도적으로 매핑한 뒤 다음 Role로 namespace의 Pod·Service·event·EndpointSlice 읽기와 Pod log만 부여할 수 있습니다.
+
+```yaml
+# Example for a deliberately mapped Kubernetes group in an existing namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: troubleshooting-reader
+  namespace: applications
+rules:
+  - apiGroups: [""]
+    resources: [pods, services, events]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: troubleshooting-readers
+  namespace: applications
+subjects:
+  - kind: Group
+    name: eks-troubleshoot-readers
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: troubleshooting-reader
+  apiGroup: rbac.authorization.k8s.io
+```
+
+namespace는 이미 존재해야 하고 group mapping은 별도 검토합니다. 앱 ServiceAccount라면 kind ServiceAccount와 정확한 이름·namespace를 지정한 별도 binding을 사용합니다. node·namespace 읽기는 cluster scope이므로 검토한 ClusterRole이 필요합니다. 모든 진단 사용자에게 cluster-admin을 부여하지 않습니다. Secret 읽기가 없어도 log 권한으로 앱 데이터가 노출될 수 있습니다.
+
+### IRSA 및 Pod Identity 문제
+
+IRSA는 **워크로드 AWS 자격 증명**을 제공하며 cluster IAM OIDC provider는 사람 IAM 주체의 Kubernetes RBAC 접근 방식이 아닙니다. 실제 Pod ServiceAccount, trust·permission policy, SDK credential chain과 서비스 endpoint 접근을 확인합니다.
 
 ```bash
-# 역할 확인
-kubectl get roles -n <namespace>
-kubectl describe role <role-name> -n <namespace>
-
-# 역할 바인딩 확인
-kubectl get rolebindings -n <namespace>
-kubectl describe rolebinding <rolebinding-name> -n <namespace>
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${KUBE_CONTEXT:?}"
+: "${NAMESPACE:?}"; : "${SERVICE_ACCOUNT:?}"; : "${POD_NAME:?}"; : "${ROLE_NAME:?}"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query cluster.identity.oidc.issuer --output text
+aws iam get-role --role-name "$ROLE_NAME" --query 'Role.{Arn:Arn,Trust:AssumeRolePolicyDocument}'
+aws iam list-attached-role-policies --role-name "$ROLE_NAME"
+aws iam list-role-policies --role-name "$ROLE_NAME"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get serviceaccount "$SERVICE_ACCOUNT" -o json \
+  | jq '{name:.metadata.name,namespace:.metadata.namespace,annotations:.metadata.annotations}'
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
+  | jq '{serviceAccount:.spec.serviceAccountName,containers:[.spec.containers[] | {name,awsEnvironmentNames:[.env[]? | select(.name | startswith("AWS_")) | .name]}]}'
 ```
 
-3. **클러스터 역할 및 클러스터 역할 바인딩 확인**:
+여기서는 AWS 환경 변수 이름만 출력합니다. 전체 env 값이나 projected token을 출력하지 않습니다. IRSA는 지원 SDK가 projected web-identity token과 지정 역할을 사용하는지 확인합니다. 더 앞선 static·default credential source가 우선할 수 있습니다.
+
+아래 trust 예시는 ServiceAccount subject 하나와 STS audience에 연결합니다. 계정·partition·리전·issuer ID·subject를 검증한 값으로 바꾸며 공유 역할에 그대로 덮어쓸 정책이 아닙니다.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLE"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLE:aud": "sts.amazonaws.com",
+          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLE:sub": "system:serviceaccount:applications:app"
+        }
+      }
+    }
+  ]
+}
+```
+
+역할 변경 시 기존의 정당한 trust statement를 유지합니다. assume 성공 후에도 IAM permission·resource policy·KMS grant·조직 제어가 AWS 동작을 거부할 수 있습니다. ServiceAccount annotation 변경은 기존 Pod에 env·volume을 소급 주입하지 않으므로 소유자를 통해 rollout을 조율합니다.
+
+현재 EKS는 OIDC discovery·JWKS용 별도 `com.amazonaws.<region>.oidc-eks` PrivateLink endpoint를 지원합니다. EKS 관리 endpoint, Pod Identity용 eks-auth, STS와 구분합니다. 사설 OIDC 접근만으로 IAM provider·role trust·STS 접근이 제공되지는 않습니다.
+
+EKS Pod Identity는 정확한 namespace·ServiceAccount의 association을 확인합니다.
 
 ```bash
-# 클러스터 역할 확인
-kubectl get clusterroles
-kubectl describe clusterrole <clusterrole-name>
-
-# 클러스터 역할 바인딩 확인
-kubectl get clusterrolebindings
-kubectl describe clusterrolebinding <clusterrolebinding-name>
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NAMESPACE:?}"; : "${SERVICE_ACCOUNT:?}"
+aws eks list-pod-identity-associations --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --namespace "$NAMESPACE" --service-account "$SERVICE_ACCOUNT"
 ```
 
-4. **서비스 계정 확인**:
+반환된 association ID, role trust·permission과 agent·SDK·compute 지원 조건을 확인합니다. IRSA annotation 부재가 Pod Identity 장애는 아닙니다. association 변경, credential cache와 앞선 SDK provider를 고려합니다. 모든 소비자를 검증하기 전에 identity 방식을 바꾸거나 기존 IRSA trust를 제거하지 않습니다. 현재 설정·마이그레이션은 [보안 장](./05-eks-security.md)을 확인합니다.
+
+### 노드 조인 실패
 
 ```bash
-# 서비스 계정 확인
-kubectl get serviceaccounts -n <namespace>
-kubectl describe serviceaccount <serviceaccount-name> -n <namespace>
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${NODEGROUP_NAME:?}"
+aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NODEGROUP_NAME" \
+  --region "$AWS_REGION" \
+  --query 'nodegroup.{name:nodegroupName,status:status,health:health,nodeRole:nodeRole,subnets:subnets,amiType:amiType,release:releaseVersion,launchTemplate:launchTemplate}'
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.{endpoint:endpoint,access:accessConfig,vpc:resourcesVpcConfig}'
 ```
 
-5. **액세스 검토**:
+관리형 그룹은 health.issues, launch-template·AMI·bootstrap과 실제 EC2 상태를 사용합니다. 자체 관리·hybrid는 관리형 API가 설명한다고 가정하지 말고 해당 bootstrap·등록 방식을 확인합니다.
 
-```bash
-# 액세스 검토
-kubectl get clusterrolebinding -o json | jq '.items[] | select(.subjects[].name=="<user-or-serviceaccount>")'
-kubectl get rolebinding --all-namespaces -o json | jq '.items[] | select(.subjects[].name=="<user-or-serviceaccount>")'
-```
+instance-profile ARN이 아닌 IAM **role ARN**과 적절한 node 인증 mapping·access entry를 확인합니다. 관리형 그룹·Fargate에는 서비스가 관리하는 identity 동작이 있으므로 매핑을 덮어쓰지 않습니다. node entry의 type·의미는 사람용 standard entry와 다릅니다. role path·legacy aws-auth 제약도 인증 모드별 문서를 따릅니다.
 
-#### 일반적인 해결 방법
+필요 node policy·ECR pull 권한을 확인하되 지원되는 CNI·CSI·앱 권한은 실제 identity에 유지합니다. node role에 AmazonEKSClusterPolicy나 모든 CNI·storage 권한을 붙이는 것은 보편적인 등록 해결책이 아닙니다.
 
-1. **역할 생성**:
+node→API server HTTPS, API server→kubelet 10250과 실제 webhook·의존성 경로의 DNS·route·NACL·SG 방향을 확인합니다. backend webhook 규칙 때문에 모든 node에 임의 출발지의 inbound 443이 필요한 것은 아닙니다.
 
-```bash
-# 역할 생성
-kubectl create role <role-name> \
-  --verb=get,list,watch \
-  --resource=pods,services \
-  -n <namespace>
-```
+AMI의 bootstrap 모델을 따릅니다. AL2023·nodeadm, Bottlerocket 설정과 custom AMI의 전제 조건은 다릅니다. AL2 스크립트 재실행·kubelet만 교체하는 것으로 모든 이미지를 복구하지 못합니다. 검증한 원인을 해결한 뒤 근거를 보존하고 소유자의 node 교체 절차를 따릅니다.
 
-2. **역할 바인딩 생성**:
+출처: [EKS access entry](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html), [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/), [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html), [OIDC PrivateLink](https://docs.aws.amazon.com/eks/latest/userguide/irsa-fetch-keys.html), [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html).
 
-```bash
-# 역할 바인딩 생성
-kubectl create rolebinding <rolebinding-name> \
-  --role=<role-name> \
-  --user=<user> \
-  -n <namespace>
-
-# 서비스 계정에 대한 역할 바인딩 생성
-kubectl create rolebinding <rolebinding-name> \
-  --role=<role-name> \
-  --serviceaccount=<namespace>:<serviceaccount> \
-  -n <namespace>
-```
-
-3. **클러스터 역할 생성**:
-
-```bash
-# 클러스터 역할 생성
-kubectl create clusterrole <clusterrole-name> \
-  --verb=get,list,watch \
-  --resource=nodes,namespaces
-```
-
-4. **클러스터 역할 바인딩 생성**:
-
-```bash
-# 클러스터 역할 바인딩 생성
-kubectl create clusterrolebinding <clusterrolebinding-name> \
-  --clusterrole=<clusterrole-name> \
-  --user=<user>
-
-# 서비스 계정에 대한 클러스터 역할 바인딩 생성
-kubectl create clusterrolebinding <clusterrolebinding-name> \
-  --clusterrole=<clusterrole-name> \
-  --serviceaccount=<namespace>:<serviceaccount>
-```
-
-5. **서비스 계정 생성**:
-
-```bash
-# 서비스 계정 생성
-kubectl create serviceaccount <serviceaccount-name> -n <namespace>
-```
 ## 스토리지 문제
 
-![EBS 볼륨 문제와 EFS 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-5.svg)
+![EBS·EFS 스토리지 증상: topology, identity, CSI, mount target과 볼륨 생명주기.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-5.html)
+
+
+### PVC·PV·소비자 진단
+
+정확한 namespace·claim·UID, provisioner와 소비자부터 확인합니다. WaitForFirstConsumer의 Pending은 적합한 소비 Pod가 스케줄될 때까지 정상일 수 있습니다. storage controller뿐 아니라 해당 Pod의 scheduling·zone·capacity 제약도 확인합니다.
+
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${PVC_NAME:?}"
+PVC_JSON=$(kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pvc "$PVC_NAME" -o json)
+printf '%s\n' "$PVC_JSON" | jq '{name:.metadata.name,uid:.metadata.uid,status:.status,spec:.spec,storageClassFieldPresent:(.spec | has("storageClassName"))}'
+PVC_UID=$(printf '%s\n' "$PVC_JSON" | jq -er '.metadata.uid')
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
+  --field-selector "involvedObject.uid=$PVC_UID" --sort-by='.metadata.creationTimestamp'
+SC_NAME=$(printf '%s\n' "$PVC_JSON" | jq -r '.spec.storageClassName // empty')
+if [ -n "$SC_NAME" ]; then
+  kubectl --context "$KUBE_CONTEXT" get storageclass "$SC_NAME" -o yaml
+else
+  printf 'Inspect absent versus explicitly empty storageClassName and default/static binding intent.\n'
+fi
+PV_NAME=$(printf '%s\n' "$PVC_JSON" | jq -r '.spec.volumeName // empty')
+if [ -n "$PV_NAME" ]; then
+  kubectl --context "$KUBE_CONTEXT" get pv "$PV_NAME" -o yaml
+  kubectl --context "$KUBE_CONTEXT" get volumeattachments -o json \
+    | jq --arg pv "$PV_NAME" '.items[] | select(.spec.source.persistentVolumeName == $pv) | {name:.metadata.name,spec,status}'
+fi
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -o json \
+  | jq --arg pvc "$PVC_NAME" '.items[] | select(any(.spec.volumes[]?; .persistentVolumeClaim.claimName == $pvc)) | {name:.metadata.name,node:.spec.nodeName,phase:.status.phase,conditions:.status.conditions}'
+```
+
+Pod API에는 `spec.volumes.persistentVolumeClaim.claimName` field selector가 없으므로 위 JSON 쿼리로 소비자를 찾습니다. storageClassName 부재와 명시적 빈 문자열은 default·static binding 의도가 다릅니다. `<default>`라는 class를 그대로 조회하지 않습니다.
+
+PVC YAML은 객체 설정이며 데이터 백업이 아닙니다. claim 삭제·재생성은 Delete 정책에서 실제 storage를 삭제하거나 Retain PV를 별도 재바인딩 대상으로 남길 수 있습니다. Pending·FailedMount의 일반 해결책으로 사용하지 않습니다. 생명주기 변경 전에 reclaim policy, snapshot·backup과 workload·data 소유권을 확인합니다. Bound만으로 앱의 mount·read를 증명하지 못합니다.
 
 ### EBS 볼륨 문제
 
-#### 일반적인 원인
+#### Driver와 실제 volume 확인
 
-EBS 볼륨 문제의 일반적인 원인:
+표준 `ebs.csi.aws.com`, Auto Mode `ebs.csi.eks.amazonaws.com`, legacy·migrated volume과 소유자를 구분합니다. 표준 EBS CSI controller는 구성된 IAM identity를 사용하므로 node role만 조사해서는 충분하지 않습니다. 실제 KMS key 권한과 controller·node 구성 요소 상태도 확인합니다.
 
-1. **볼륨 한도 초과**: EBS 볼륨 한도 초과
-2. **권한 문제**: EBS 볼륨 생성 또는 연결 권한 부족
-3. **가용 영역 불일치**: 파드와 EBS 볼륨의 가용 영역 불일치
-4. **스토리지 클래스 문제**: 스토리지 클래스 구성 오류
-5. **CSI 드라이버 문제**: EBS CSI 드라이버 문제
+Auto Mode node의 root·data volume 암호화가 모든 workload PVC의 암호화를 보장하지는 않습니다. 현재 [Auto Mode StorageClass reference](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)는 encrypted 기본값을 false로 명시합니다. 두 EBS provisioner 모두 `encrypted: "true"`를 명시하고 실제 EBS volume·key를 확인합니다. 계정의 기본 암호화와 snapshot 속성도 결과에 영향을 줄 수 있습니다.
 
-#### 문제 해결 단계
-
-1. **PVC 상태 확인**:
+Auto Mode 자체 volume에는 표준 EBS CSI controller를 별도 설치할 필요가 없습니다. EBS는 Fargate Pod에 mount할 수 없고 EKS Hybrid Nodes도 EBS CSI driver·volume 지원 대상이 아닙니다. Fargate에서 controller를 실행할 수 있어도 Fargate workload의 EBS mount를 지원한다는 뜻은 아닙니다.
 
 ```bash
-# PVC 상태 확인
-kubectl get pvc -n <namespace>
-kubectl describe pvc <pvc-name> -n <namespace>
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${VOLUME_ID:?Verify it from the selected PV CSI volumeHandle}"
+aws ec2 describe-volumes --region "$AWS_REGION" --volume-ids "$VOLUME_ID" \
+  --query 'Volumes[].{Id:VolumeId,State:State,AZ:AvailabilityZone,Type:VolumeType,Size:Size,Encrypted:Encrypted,KmsKey:KmsKeyId,Attachments:Attachments}'
+aws ec2 describe-volume-status --region "$AWS_REGION" --volume-ids "$VOLUME_ID"
 ```
 
-2. **PV 상태 확인**:
+선택한 Pod·node와 EBS가 같은 AZ에서 사용할 수 있는지, attachment limit, CSI 오류와 VolumeAttachment·EC2 상태를 확인합니다. PVC 이름은 namespace·과거 volume 사이에서 고유하지 않으므로 PV에서 정확한 volume을 식별합니다.
 
-```bash
-# PV 상태 확인
-kubectl get pv
-kubectl describe pv <pv-name>
-```
+#### Attach·mount 복구
 
-3. **스토리지 클래스 확인**:
+Multi-Attach는 기존 소비자가 아직 실행·쓰기 중인지, node가 연결·격리되었는지, rollout이 다른 node에 두 번째 소비자를 배치했는지 확인합니다. ReadWriteOnce는 단일 node access mode이지 단일 Pod lock이 아닙니다. workload shutdown과 CSI unmount·detach를 조율하며 Pod 객체를 삭제했다고 실제 프로세스가 멈췄다고 가정하지 않습니다.
 
-```bash
-# 스토리지 클래스 확인
-kubectl get storageclass
-kubectl describe storageclass <storageclass-name>
-```
+수동 attach·detach는 CSI 조정을 대체하지 못합니다. 수동 복구가 필요하면 writer 정지를 확인하고 데이터를 보호한 뒤 EBS 복구 절차를 따릅니다. mount된 volume을 분리하면 데이터가 손상될 수 있습니다. 반복 reboot·force detach로 attachment 오류를 우회하지 않습니다.
 
-4. **EBS CSI 드라이버 확인**:
+#### StorageClass와 프로비저닝
 
-```bash
-# EBS CSI 드라이버 확인
-kubectl get pods -n kube-system -l app=ebs-csi-controller
-kubectl logs -n kube-system -l app=ebs-csi-controller -c ebs-plugin
-```
+**새** 표준 driver class에 암호화·지연 binding·보존을 명시한 예시입니다.
 
-5. **이벤트 확인**:
-
-```bash
-# 이벤트 확인
-kubectl get events -n <namespace> --field-selector involvedObject.name=<pvc-name>
-```
-
-#### 일반적인 해결 방법
-
-1. **EBS CSI 드라이버 설치 또는 업데이트**:
-
-```bash
-# EBS CSI 드라이버 설치
-eksctl create addon \
-  --name aws-ebs-csi-driver \
-  --cluster my-cluster \
-  --force
-```
-
-2. **IAM 역할 권한 추가**:
-
-```bash
-# IAM 역할 생성
-eksctl create iamserviceaccount \
-  --name ebs-csi-controller-sa \
-  --namespace kube-system \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-  --approve \
-  --role-only \
-  --role-name AmazonEKS_EBS_CSI_DriverRole
-```
-
-3. **스토리지 클래스 생성**:
-
-```bash
-# gp3 스토리지 클래스 생성
-cat <<EOF | kubectl apply -f -
+```yaml
+# New, explicitly selected StorageClass for standard EBS CSI, not an in-place edit.
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: gp3
+  name: diagnostic-ebs-gp3
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
   encrypted: "true"
+  csi.storage.k8s.io/fstype: ext4
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
-EOF
+reclaimPolicy: Retain
 ```
 
-4. **PVC 재생성**:
+기존 PVC class를 변경하지 않습니다. 기존 StorageClass의 provisioner·parameters·binding mode는 자유롭게 수정할 수 없으며 default class 변경은 다른 claim에도 영향을 줍니다. Retain은 별도 정리 결정을 위해 storage를 남기므로 비용이 계속 발생할 수 있습니다. 확장은 driver·class·filesystem 지원이 필요하며 요청 용량을 줄여 PVC를 축소할 수 없습니다.
 
-```bash
-# PVC 백업
-kubectl get pvc <pvc-name> -n <namespace> -o yaml > pvc-backup.yaml
+기존 소유자를 통해 호환 CSI add-on과 실제 IRSA·Pod Identity·전체 설정을 구성합니다. `eksctl create iamserviceaccount --role-only`는 역할을 만들 뿐 add-on에 연결하지 않습니다. 강제 재설치 대신 조사한 add-on identity와 업데이트 절차를 사용합니다.
 
-# PVC 삭제
-kubectl delete pvc <pvc-name> -n <namespace>
-
-# PVC 생성
-kubectl apply -f pvc-backup.yaml
-```
-
-5. **볼륨 수동 연결**:
-
-```bash
-# 볼륨 ID 확인
-aws ec2 describe-volumes \
-  --filters "Name=tag:kubernetes.io/created-for/pvc/name,Values=<pvc-name>"
-
-# 볼륨 연결
-aws ec2 attach-volume \
-  --volume-id <volume-id> \
-  --instance-id <instance-id> \
-  --device /dev/xvdf
-```
+Auto Mode 이전은 [EBS 가이드](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)의 snapshot 경로와 [Auto Mode 이전 가이드](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)의 workload 정지·Retain·static PV 경로가 문서화되어 있습니다. 선택 전에 적용 driver, tag·IAM, claim·finalizer 생명주기와 복구 계획을 검증합니다. bound claim의 provisioner 문자열 변경은 마이그레이션이 아닙니다. snapshot에는 CSI snapshot controller·CRD, 적절한 class·권한도 필요합니다.
 
 ### EFS 문제
 
-#### 일반적인 원인
+#### 프로비저닝과 mount 접근을 구분
 
-EFS 문제의 일반적인 원인:
-
-1. **마운트 대상 문제**: EFS 마운트 대상 구성 오류 또는 누락
-2. **보안 그룹 문제**: EFS 마운트 대상 보안 그룹 규칙 제한
-3. **권한 문제**: EFS 액세스 권한 문제
-4. **CSI 드라이버 문제**: EFS CSI 드라이버 문제
-5. **네트워크 문제**: EFS 마운트 대상에 대한 네트워크 연결 문제
-
-#### 문제 해결 단계
-
-1. **PVC 및 PV 상태 확인**:
+PV의 filesystem·access point, 소비 node·AZ, mount target 가용성, DNS·NFS 경로를 확인합니다. access point 생성용 controller API 권한과 mount·파일 접근용 client 권한은 다릅니다. filesystem policy, TLS·IAM 요구, access-point POSIX identity·root-directory 소유권과 앱 UID·GID를 확인합니다.
 
 ```bash
-# PVC 상태 확인
-kubectl get pvc -n <namespace>
-kubectl describe pvc <pvc-name> -n <namespace>
-
-# PV 상태 확인
-kubectl get pv
-kubectl describe pv <pv-name>
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${FILE_SYSTEM_ID:?Verify the filesystem from the PV}"
+aws efs describe-file-systems --region "$AWS_REGION" --file-system-id "$FILE_SYSTEM_ID"
+aws efs describe-mount-targets --region "$AWS_REGION" --file-system-id "$FILE_SYSTEM_ID"
+aws efs describe-access-points --region "$AWS_REGION" --file-system-id "$FILE_SYSTEM_ID"
+: "${MOUNT_TARGET_ID:?Choose the mount target on the affected path}"
+aws efs describe-mount-target-security-groups --region "$AWS_REGION" \
+  --mount-target-id "$MOUNT_TARGET_ID"
 ```
 
-2. **EFS CSI 드라이버 확인**:
+실제 client network identity와 mount target 사이 TCP 2049, route·NACL·SG를 확인합니다. control-plane subnet에서 node subnet을 추정하지 않습니다. workload AZ·topology에 맞는 mount target을 사용하며 추가 생성은 별도 인프라 변경입니다.
 
-```bash
-# EFS CSI 드라이버 확인
-kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-efs-csi-driver
-kubectl logs -n kube-system -l app.kubernetes.io/name=aws-efs-csi-driver -c efs-plugin
-```
+지원 EC2 환경은 설치된 EFS CSI controller·node plugin과 현재 호환 버전을 확인합니다. Fargate는 내장 EFS mount와 문서화된 static provisioning을 사용하며 현재 EKS 가이드는 Fargate node의 dynamic provisioning을 지원하지 않습니다. EFS CSI driver는 Windows container·EKS Hybrid Nodes를 지원하지 않습니다. 오래된 release-1.5 manifest를 무조건 설치하거나 관리형 add-on을 중복 설치하지 않습니다.
 
-3. **EFS 마운트 대상 확인**:
+#### Dynamic과 static provisioning은 대안 경로
 
-```bash
-# EFS 파일 시스템 확인
-aws efs describe-file-systems --file-system-id <file-system-id>
+Dynamic provisioning은 **기존** EFS filesystem에 access point를 생성하며 filesystem·mount target을 만들지 않습니다. 예시 ID를 바꾸고 access-point 소유권·권한, quota·보존을 검토합니다.
 
-# EFS 마운트 대상 확인
-aws efs describe-mount-targets --file-system-id <file-system-id>
-```
-
-4. **보안 그룹 규칙 확인**:
-
-```bash
-# 마운트 대상 보안 그룹 확인
-aws efs describe-mount-target-security-groups \
-  --mount-target-id <mount-target-id>
-
-# 보안 그룹 규칙 확인
-aws ec2 describe-security-group-rules \
-  --filters "Name=group-id,Values=<security-group-id>"
-```
-
-5. **파드 마운트 디버깅**:
-
-```bash
-# 디버깅 파드 생성
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: efs-mount-debugger
-  namespace: default
-spec:
-  containers:
-  - name: debugger
-    image: amazonlinux:2
-    command: ["sleep", "3600"]
-    volumeMounts:
-    - name: efs-volume
-      mountPath: /mnt/efs
-  volumes:
-  - name: efs-volume
-    persistentVolumeClaim:
-      claimName: <pvc-name>
-EOF
-
-# 마운트 확인
-kubectl exec -it efs-mount-debugger -- df -h
-```
-
-#### 일반적인 해결 방법
-
-1. **EFS CSI 드라이버 설치 또는 업데이트**:
-
-```bash
-# EFS CSI 드라이버 설치
-eksctl create addon \
-  --name aws-efs-csi-driver \
-  --cluster my-cluster \
-  --force
-```
-
-2. **IAM 역할 권한 추가**:
-
-```bash
-# IAM 역할 생성
-eksctl create iamserviceaccount \
-  --name efs-csi-controller-sa \
-  --namespace kube-system \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy \
-  --approve \
-  --role-only \
-  --role-name AmazonEKS_EFS_CSI_DriverRole
-```
-
-3. **EFS 마운트 대상 생성**:
-
-```bash
-# 서브넷 확인
-aws eks describe-cluster \
-  --name my-cluster \
-  --query "cluster.resourcesVpcConfig.subnetIds"
-
-# 마운트 대상 생성
-aws efs create-mount-target \
-  --file-system-id <file-system-id> \
-  --subnet-id <subnet-id> \
-  --security-groups <security-group-id>
-```
-
-4. **보안 그룹 규칙 추가**:
-
-```bash
-# 보안 그룹 규칙 추가
-aws ec2 authorize-security-group-ingress \
-  --group-id <security-group-id> \
-  --protocol tcp \
-  --port 2049 \
-  --source-group <node-security-group-id>
-```
-
-5. **스토리지 클래스 및 PV 생성**:
-
-```bash
-# 스토리지 클래스 생성
-cat <<EOF | kubectl apply -f -
+```yaml
+# Dynamic EFS access-point provisioning example for a supported EC2-node setup.
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: efs-sc
+  name: diagnostic-efs-ap
 provisioner: efs.csi.aws.com
 parameters:
   provisioningMode: efs-ap
-  fileSystemId: <file-system-id>
+  fileSystemId: fs-0123456789abcdef0
   directoryPerms: "700"
-EOF
+mountOptions:
+  - tls
+reclaimPolicy: Retain
+```
 
-# PV 생성
-cat <<EOF | kubectl apply -f -
+대신 준비한 기존 access point를 static PV로 참조할 수도 있습니다.
+
+```yaml
+# Alternative static provisioning: replace the filesystem/access-point IDs.
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: efs-pv
+  name: diagnostic-efs-static
 spec:
   capacity:
     storage: 5Gi
@@ -1960,1306 +1092,383 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: efs-sc
+  storageClassName: ""
+  mountOptions:
+    - tls
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: <file-system-id>
-EOF
+    volumeHandle: fs-0123456789abcdef0::fsap-0123456789abcdef0
 ```
+
+static PV에는 검토한 claim의 `storageClassName: ""`와 의도한 volumeName을 지정하고 binding·claimRef 의미를 유지합니다. dynamic class와 혼용하여 filesystem root에 의도치 않게 binding하지 않습니다. 5Gi capacity는 Kubernetes binding metadata이며 EFS directory·filesystem의 강제 용량 한도가 아닙니다.
+
+mount 진단은 기존 Pod·CSI event·log부터 사용합니다. 진단 Pod는 claim과 같은 namespace, 호환 node·identity가 필요합니다. df 확인을 위해 앱 PVC를 read-write mount하면 writer를 추가할 수 있습니다. probe가 필요하면 검토한 read-only mount, 준비한 이미지, 제한된 수명과 소유권에 맞는 정리를 사용합니다. 무관한 EBS volume 생성·수동 device 연결을 storage “테스트”로 실행하지 않습니다.
+
+출처: [EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html), [EFS CSI](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html), [영구 볼륨](https://kubernetes.io/docs/concepts/storage/persistent-volumes/), [StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/).
+
 ## 로깅 및 모니터링 문제
 
-![CloudWatch 로그 문제와 모니터링 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-6.svg)
+![CloudWatch 로그 수집과 메트릭·모니터링 경로의 권한, 설정, 리소스 및 네트워크 조사.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-6.png)
 
-### CloudWatch 로그 문제
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-6.html)
 
-#### 일반적인 원인
+### CloudWatch 로그와 Container Insights
 
-CloudWatch 로그 문제의 일반적인 원인:
-
-1. **로그 그룹 권한 문제**: CloudWatch 로그 그룹에 대한 권한 부족
-2. **Fluent Bit 또는 Fluentd 구성 오류**: 로그 수집기 구성 오류
-3. **로그 볼륨 제한**: 로그 볼륨 제한 초과
-4. **컨테이너 로그 경로 문제**: 컨테이너 로그 경로 구성 오류
-5. **IAM 역할 권한 문제**: 로그 수집기에 대한 IAM 역할 권한 부족
-
-#### 문제 해결 단계
-
-1. **클러스터 로깅 상태 확인**:
+EKS control-plane log 전송, Fluent Bit 등 앱·host collector, CloudWatch agent metrics와 앱 instrumentation을 구분합니다. cluster logging 활성화가 앱 collector를 설치하지 않으며 collector 실행만으로 의도한 account·region·group 도착을 증명하지 못합니다.
 
 ```bash
-# 클러스터 로깅 상태 확인
-aws eks describe-cluster \
-  --name my-cluster \
-  --query "cluster.logging"
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${KUBE_CONTEXT:?}"
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query cluster.logging
+aws logs describe-log-groups --region "$AWS_REGION" \
+  --log-group-name-prefix "/aws/eks/$CLUSTER_NAME/"
+aws logs describe-log-groups --region "$AWS_REGION" \
+  --log-group-name-prefix "/aws/containerinsights/$CLUSTER_NAME/"
+: "${COLLECTOR_NAMESPACE:?}"; : "${COLLECTOR_POD:?}"; : "${COLLECTOR_CONTAINER:?}"
+kubectl --context "$KUBE_CONTEXT" -n "$COLLECTOR_NAMESPACE" get pod "$COLLECTOR_POD" -o wide
+kubectl --context "$KUBE_CONTEXT" -n "$COLLECTOR_NAMESPACE" logs "$COLLECTOR_POD" \
+  -c "$COLLECTOR_CONTAINER" --since=15m --tail=200 --timestamps=true
 ```
 
-2. **Fluent Bit 파드 확인**:
+이름·레이블을 가정하지 말고 실제 collector의 namespace·Pod·container·설정·목적지를 사용합니다. input path·parser·filter, buffering·backpressure, filesystem 용량, timestamp, output error, DNS·TLS·endpoint·quota를 확인합니다. log group 부재는 미전송·다른 목적지·조회 권한 부족일 수 있으며 group 생성만으로 producer가 고쳐지지 않습니다.
+
+실제 IRSA·Pod Identity 등 지원 identity를 확인합니다. node policy·ServiceAccount annotation만으로 실제 사용하는 credentials를 증명하지 못합니다. CloudWatch Observability EKS add-on으로 설치한 경우 해당 identity·health를 확인합니다.
 
 ```bash
-# Fluent Bit 파드 확인
-kubectl get pods -n amazon-cloudwatch -l k8s-app=fluent-bit
-kubectl describe pod -n amazon-cloudwatch -l k8s-app=fluent-bit
-kubectl logs -n amazon-cloudwatch -l k8s-app=fluent-bit
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"
+# Only for an installation actually owned by this EKS add-on.
+aws eks describe-addon --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --addon-name amazon-cloudwatch-observability \
+  --query 'addon.{status:status,version:addonVersion,health:health,role:serviceAccountRoleArn,podIdentity:podIdentityAssociations}'
 ```
 
-3. **CloudWatch 로그 그룹 확인**:
+API 오류가 add-on 부재를 증명하지는 않습니다. 오류와 실제 Helm·add-on 소유자를 확인하고 업데이트 시 소유권·사용자 설정을 보존합니다. 오래된 미렌더링 Fluentd·Fluent Bit quickstart를 적용하거나 기존 ServiceAccount를 덮어쓰는 것을 일반 복구로 사용하지 않습니다. Windows·Fargate·Auto Mode·EC2 수집 경로는 다릅니다.
+
+Container Insights는 실제 metric namespace·dimension·time window를 조회합니다. metric 목록은 metadata이며 현재 datapoint·alarm·notification 동작 증명이 아닙니다. 제한된 data query와 collector log를 비교합니다. 설정·로그 근거를 보호하고 retention·KMS 변경은 group 소유자를 통해 수행합니다.
+
+### Metrics Server와 Resource Metrics
 
 ```bash
-# CloudWatch 로그 그룹 확인
-aws logs describe-log-groups \
-  --log-group-name-prefix /aws/containerinsights/my-cluster
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"
+kubectl --context "$KUBE_CONTEXT" get apiservice v1beta1.metrics.k8s.io -o yaml
+kubectl --context "$KUBE_CONTEXT" get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/$NAMESPACE/pods"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
+kubectl --context "$KUBE_CONTEXT" top nodes
 ```
 
-4. **IAM 역할 권한 확인**:
+resource Metrics API, kube-state-metrics의 객체 metrics, Prometheus·cAdvisor sample은 서로 다른 데이터 소스입니다. APIService condition, aggregator·RBAC 접근, Metrics Server log와 kubelet 연결을 확인합니다.
+
+Unauthorized는 어떤 호출자·endpoint가 credentials를 거부했는지, Forbidden은 정확한 RBAC verb·resource를 확인합니다. scrape 실패는 route, kubelet address·port, certificate, authentication 또는 kubelet 장애 때문일 수 있습니다. 과거 unauthenticated 10255를 열거나 kubelet-insecure-tls를 보편적인 해결책으로 사용하지 않습니다.
+
+v1.Pod resource-not-found만으로 EKS API-server 설정 결함을 확정하지 않습니다. kubeconfig·URL, discovery, client 호환성과 proxy 응답을 확인합니다. 근거 수집 전 최신 Metrics Server 재설치·전체 Pod 재시작은 문제를 숨길 수 있습니다.
+
+### Prometheus 및 Grafana
 
 ```bash
-# IAM 역할 확인
-kubectl get serviceaccount -n amazon-cloudwatch fluent-bit -o yaml
-kubectl describe serviceaccount -n amazon-cloudwatch fluent-bit
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${MONITORING_NAMESPACE:?}"; : "${MONITORING_RELEASE:?}"
+helm status "$MONITORING_RELEASE" --namespace "$MONITORING_NAMESPACE" --kube-context "$KUBE_CONTEXT"
+helm history "$MONITORING_RELEASE" --namespace "$MONITORING_NAMESPACE" --kube-context "$KUBE_CONTEXT"
+kubectl --context "$KUBE_CONTEXT" -n "$MONITORING_NAMESPACE" get pods,services,pvc
+kubectl --context "$KUBE_CONTEXT" -n "$MONITORING_NAMESPACE" get events \
+  --sort-by='.metadata.creationTimestamp'
 ```
 
-5. **로그 이벤트 확인**:
+실제 chart·operator, release namespace, service port, storage와 selector를 식별합니다. prometheus-community/prometheus는 standalone chart이며 설치만으로 ServiceMonitor용 Operator 조정이 제공되지 않습니다. Operator stack에는 CRD, Prometheus custom resource와 selector·RBAC 요구가 있습니다.
+
+기존 Prometheus를 검사하려면 한 터미널에서 loopback 전용 port-forward를 유지합니다.
 
 ```bash
-# 로그 이벤트 확인
-aws logs get-log-events \
-  --log-group-name /aws/containerinsights/my-cluster/application \
-  --log-stream-name <log-stream-name>
+: "${KUBE_CONTEXT:?}"; : "${MONITORING_NAMESPACE:?}"
+: "${PROMETHEUS_SERVICE:?Select the actual Prometheus Service}"
+: "${PROMETHEUS_SERVICE_PORT:?Select its Service port}"
+kubectl --context "$KUBE_CONTEXT" -n "$MONITORING_NAMESPACE" port-forward \
+  --address 127.0.0.1 "service/$PROMETHEUS_SERVICE" "9090:$PROMETHEUS_SERVICE_PORT"
 ```
 
-#### 일반적인 해결 방법
-
-1. **클러스터 로깅 활성화**:
+이 접근을 허용하는 endpoint에 대해 두 번째 로컬 터미널에서 조회합니다.
 
 ```bash
-# 클러스터 로깅 활성화
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
+set -euo pipefail
+curl --fail --silent --show-error --max-time 10 \
+  http://127.0.0.1:9090/api/v1/targets \
+  | jq '.data.activeTargets[] | {scrapePool,health,lastError,lastScrape}'
 ```
 
-2. **Fluent Bit 설치 또는 업데이트**:
+실제 endpoint의 scheme·authentication에 맞추고 접근 제어를 우회하지 않습니다. scrape error, relabeling, discovery, query window와 retention을 확인합니다. 빈 쿼리는 label·data 부재일 수 있으며 정상 사용량 0이 아닙니다.
+
+#### ServiceMonitor 선택
+
+아래는 기존 앱의 이름 있는 metrics port와 Operator ServiceMonitor를 연결하는 예시입니다.
+
+```yaml
+# Requires an existing application exporting metrics on a named container port "metrics".
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-metrics
+  namespace: applications
+  labels:
+    app: metrics-demo
+spec:
+  selector:
+    app: metrics-demo
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+---
+# Requires Prometheus Operator and a Prometheus CR selecting this namespace/label.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: app-metrics
+  namespace: monitoring
+  labels:
+    release: observability
+spec:
+  namespaceSelector:
+    matchNames:
+      - applications
+  selector:
+    matchLabels:
+      app: metrics-demo
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+```
+
+namespace·label·release selector를 실제 설치에 맞춥니다. Prometheus의 ServiceMonitor namespace 선택, serviceMonitorSelector의 monitor label 선택, monitor namespaceSelector·selector의 Service 선택을 구분합니다. endpoints.port는 임의 container port가 아닌 **Service port 이름**입니다. 앱이 실제로 listen하고 기대한 metrics path를 제공해야 합니다. Prometheus에는 discovery 권한과 network·TLS·auth 접근도 필요합니다.
+
+#### 설정 보존과 변경 검증
 
 ```bash
-# Fluent Bit 설치
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/fluent-bit/fluent-bit.yaml
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${MONITORING_NAMESPACE:?}"; : "${MONITORING_RELEASE:?}"
+: "${EVIDENCE_PARENT:?Set an existing private directory}"
+umask 077
+MONITORING_EVIDENCE=$(mktemp -d "$EVIDENCE_PARENT/monitoring-config.XXXXXXXX")
+helm get values "$MONITORING_RELEASE" --namespace "$MONITORING_NAMESPACE" \
+  --kube-context "$KUBE_CONTEXT" --all > "$MONITORING_EVIDENCE/values.yaml"
+printf 'Protected configuration snapshot: %s\n' "$MONITORING_EVIDENCE"
 ```
 
-3. **IAM 역할 권한 추가**:
+보호된 파일의 values에도 민감 데이터가 있을 수 있으므로 공유 전에 가립니다. 대상 chart·version 기본값, CRD migration, custom values, workload resources와 PVC 용량을 검토합니다. 기존 소유자를 통해 업데이트하고 scrape·alert 동작을 검증합니다. stack 중복 설치·무조건 resource limit patch는 진단이 아닙니다.
 
-```bash
-# IAM 역할 생성
-eksctl create iamserviceaccount \
-  --name fluent-bit \
-  --namespace amazon-cloudwatch \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy \
-  --approve \
-  --override-existing-serviceaccounts
-```
+Grafana는 datasource UID·URL·authentication, network, query label·time range와 dashboard provisioning·sidecar 선택을 확인합니다. 기대한 label·namespace 없는 ConfigMap이 자동으로 dashboard가 되지는 않습니다. 기존 login·SSO를 사용하고 관리자 비밀번호를 진단 로그에 출력하지 않습니다.
 
-4. **Fluent Bit 구성 수정**:
+검토한 설치·query·alert 절차는 [EKS 모니터링과 로깅](./06-eks-monitoring-logging.md)을 참고합니다. 위 예시는 진단·설정 template이며 실제 log 전송·monitoring coverage·운영 준비 검증을 주장하지 않습니다.
 
-```bash
-# Fluent Bit 구성 수정
-kubectl edit configmap fluent-bit-config -n amazon-cloudwatch
-```
+출처: [CloudWatch EKS add-on](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-addon.html), [Metrics Server](https://github.com/kubernetes-sigs/metrics-server), [Prometheus Operator 문제 해결](https://prometheus-operator.dev/docs/platform/troubleshooting/).
 
-5. **로그 그룹 수동 생성**:
-
-```bash
-# 로그 그룹 생성
-aws logs create-log-group \
-  --log-group-name /aws/containerinsights/my-cluster/application
-
-aws logs create-log-group \
-  --log-group-name /aws/containerinsights/my-cluster/host
-```
-
-### 모니터링 문제
-
-#### 일반적인 원인
-
-모니터링 문제의 일반적인 원인:
-
-1. **메트릭 서버 문제**: 메트릭 서버 구성 또는 상태 문제
-2. **Prometheus 구성 오류**: Prometheus 구성 오류
-3. **CloudWatch Container Insights 문제**: Container Insights 구성 또는 상태 문제
-4. **리소스 제약**: 모니터링 구성 요소에 대한 리소스 제약
-5. **네트워크 문제**: 모니터링 구성 요소 간 네트워크 연결 문제
-
-#### 문제 해결 단계
-
-1. **메트릭 서버 확인**:
-
-```bash
-# 메트릭 서버 확인
-kubectl get pods -n kube-system -l k8s-app=metrics-server
-kubectl logs -n kube-system -l k8s-app=metrics-server
-kubectl top nodes
-kubectl top pods --all-namespaces
-```
-
-2. **Prometheus 확인**:
-
-```bash
-# Prometheus 파드 확인
-kubectl get pods -n prometheus -l app=prometheus
-kubectl logs -n prometheus -l app=prometheus-server
-```
-
-3. **CloudWatch Container Insights 확인**:
-
-```bash
-# CloudWatch Container Insights 확인
-kubectl get pods -n amazon-cloudwatch
-kubectl logs -n amazon-cloudwatch -l name=cloudwatch-agent
-```
-
-4. **CloudWatch 메트릭 확인**:
-
-```bash
-# CloudWatch 메트릭 확인
-aws cloudwatch list-metrics \
-  --namespace ContainerInsights
-```
-
-5. **대시보드 확인**:
-
-```bash
-# Grafana 확인
-kubectl get pods -n grafana -l app.kubernetes.io/name=grafana
-kubectl port-forward -n grafana svc/grafana 3000:80
-```
-
-#### 일반적인 해결 방법
-
-1. **메트릭 서버 설치 또는 업데이트**:
-
-```bash
-# 메트릭 서버 설치
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-```
-
-2. **Container Insights 설치**:
-
-```bash
-# Container Insights 설치
-curl -s https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml | \
-sed "s/{{cluster_name}}/my-cluster/;s/{{region_name}}/<region>/" | \
-kubectl apply -f -
-```
-
-3. **Prometheus 설치**:
-
-```bash
-# Prometheus 네임스페이스 생성
-kubectl create namespace prometheus
-
-# Helm 저장소 추가
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-
-# Prometheus 설치
-helm install prometheus prometheus-community/prometheus \
-  --namespace prometheus \
-  --set server.persistentVolume.storageClass=gp2
-```
-
-4. **Grafana 설치**:
-
-```bash
-# Grafana 네임스페이스 생성
-kubectl create namespace grafana
-
-# Helm 저장소 추가
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-
-# Grafana 설치
-helm install grafana grafana/grafana \
-  --namespace grafana \
-  --set persistence.storageClassName=gp2 \
-  --set persistence.enabled=true
-```
-
-5. **리소스 제약 조정**:
-
-```bash
-# Prometheus 리소스 제약 조정
-kubectl patch deployment -n prometheus prometheus-server -p '{"spec":{"template":{"spec":{"containers":[{"name":"prometheus-server","resources":{"requests":{"cpu":"200m","memory":"512Mi"},"limits":{"cpu":"500m","memory":"1Gi"}}}]}}}}'
-
-# Grafana 리소스 제약 조정
-kubectl patch deployment -n grafana grafana -p '{"spec":{"template":{"spec":{"containers":[{"name":"grafana","resources":{"requests":{"cpu":"100m","memory":"256Mi"},"limits":{"cpu":"200m","memory":"512Mi"}}}]}}}}'
-```
 ## 성능 문제
 
-![노드 성능, 파드 성능, 네트워크 성능 세 갈래의 성능 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-7.svg)
+<!-- Audit 2026-09-11: parent diagram repair pending; see core-audit/eks-troubleshooting/diagram-review.json.
+![노드·Pod·네트워크 성능 증상에서 리소스, 경합, 경로와 앱 원인을 구분.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-7.html)
+-->
+
+### 비교 가능한 기준선 수립
+
+워크로드, 요청률, 지연·오류 분포, requests·limits, node·AMI·runtime, placement와 기간을 기록합니다. 현재 사용량과 예약 용량·포화는 다르며 메모리 증가만으로 누수를 증명하지 못합니다. node·Pod·storage·network·application 병목을 구분합니다.
+
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${NODE_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" top nodes
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
+kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" -o json \
+  | jq '{nodeInfo:.status.nodeInfo,allocatable:.status.allocatable,conditions:.status.conditions}'
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
+  | jq '{containers:[.spec.containers[] | {name,resources}],status:.status}'
+```
+
+메트릭 수집 경로가 정상이어야 합니다. CPU throttling, working set·RSS·heap, OOM 종료, disk latency·queue와 network drop을 필요에 따라 포함합니다. 앱 부하와 연결하며 무관한 워크로드에 같은 100m·128Mi를 처방하지 않습니다.
 
 ### 노드 성능 문제
 
-#### 일반적인 원인
-
-노드 성능 문제의 일반적인 원인:
-
-1. **리소스 부족**: CPU, 메모리 또는 디스크 리소스 부족
-2. **노드 오버프로비저닝**: 노드에 너무 많은 파드 배치
-3. **인스턴스 유형 제약**: 워크로드에 부적합한 인스턴스 유형
-4. **커널 또는 운영 체제 문제**: 커널 또는 운영 체제 구성 문제
-5. **네트워크 병목 현상**: 네트워크 대역폭 또는 패킷 처리 제약
-
-#### 문제 해결 단계
-
-1. **노드 리소스 사용량 확인**:
+확인한 원격 Linux node 세션에서 필요한 도구가 있을 때 제한된 관찰을 수행합니다.
 
 ```bash
-# 노드 리소스 사용량 확인
-kubectl top nodes
-kubectl describe node <node-name> | grep -A 10 "Allocated resources"
-```
-
-2. **시스템 메트릭 확인**:
-
-```bash
-# SSM을 사용하여 노드에 접속
-aws ssm start-session --target <instance-id>
-
-# CPU 사용량 확인
 top -b -n 1
-
-# 메모리 사용량 확인
 free -m
-
-# 디스크 사용량 확인
 df -h
-
-# I/O 사용량 확인
+df -i
 iostat -x 1 5
+ip -s link
+ss -s
 ```
 
-3. **네트워크 메트릭 확인**:
+이를 실행하려고 운영 앱 container에 도구를 설치하지 않습니다. 준비된 진단 이미지·지원 node 접근을 사용하고 host 변경 전에 근거를 보존합니다.
+
+node 추가는 schedulable capacity에 도움이 되지만 instance별 network·ENI·EBS 한도를 바꾸지 않습니다. instance type은 지원 교체·launch-template 경로를 사용하며 `update-nodegroup-config --launch-template`는 유효한 명령이 아닙니다. 소유자 몰래 resize하지 말고 autoscaling·placement와 조율합니다.
+
+#### Kernel 설정
+
+튜닝 전에 의도한 host 또는 Pod namespace의 관련 설정을 확인합니다.
 
 ```bash
-# 네트워크 사용량 확인
-aws ssm start-session --target <instance-id>
-iftop -P
-
-# 네트워크 연결 확인
-netstat -an | grep ESTABLISHED | wc -l
+sysctl net.ipv4.ip_local_port_range net.ipv4.tcp_fin_timeout
+sysctl net.core.somaxconn net.ipv4.tcp_max_syn_backlog fs.file-max
 ```
 
-4. **커널 파라미터 확인**:
+여러 network sysctl은 namespaced입니다. hostPID만으로 host network namespace에 들어가지 않으므로 privileged DaemonSet이 다른 network namespace와 node-global 설정을 섞어 변경할 수 있습니다. 허용된 namespaced 설정은 Pod securityContext.sysctls, node-level 설정은 소유 node 구성으로 관리합니다. kernel·Kubernetes policy 지원, 격리와 효과를 확인한 뒤 변경합니다. 임의 cluster-wide privileged sysctl 튜닝은 성능 진단이 아닙니다.
+
+#### EBS 성능 변경
+
+변경 전에 실제 volume type·IOPS·throughput과 instance EBS 대역폭을 확인합니다. EC2 modify-instance-attribute block-device mapping은 volume type·IOPS·throughput 튜닝 인터페이스가 아니며 EBS 작업은 ModifyVolume입니다. CSI storage는 지원하는 storage-owner 경로로 구성 일치를 유지합니다.
+
+다음 선택적 **변경**은 owner가 지원 limit·ratio, instance 능력, 비용, 기존 modification 상태와 app·data 영향을 검토했다고 가정합니다.
 
 ```bash
-# 커널 파라미터 확인
-aws ssm start-session --target <instance-id>
-sysctl -a | grep "fs.file-max\|fs.nr_open\|net.ipv4.ip_local_port_range\|net.ipv4.tcp_fin_timeout"
+set -euo pipefail
+: "${AWS_REGION:?}"; : "${VOLUME_ID:?Verify the owned EBS volume}"
+: "${TARGET_IOPS:?Set a reviewed supported gp3 IOPS value}"
+: "${TARGET_THROUGHPUT:?Set a reviewed supported gp3 MiB/s value}"
+: "${EVIDENCE_PARENT:?Set an existing private directory}"
+umask 077
+EBS_CHANGE_DIR=$(mktemp -d "$EVIDENCE_PARENT/ebs-performance.XXXXXXXX")
+aws ec2 describe-volumes --region "$AWS_REGION" --volume-ids "$VOLUME_ID" \
+  --output json > "$EBS_CHANGE_DIR/before.json"
+# Separate approved volume change; this is not a diagnostic read.
+aws ec2 modify-volume --region "$AWS_REGION" --volume-id "$VOLUME_ID" \
+  --volume-type gp3 --iops "$TARGET_IOPS" --throughput "$TARGET_THROUGHPUT" \
+  --output json > "$EBS_CHANGE_DIR/request.json"
+aws ec2 describe-volumes-modifications --region "$AWS_REGION" --volume-ids "$VOLUME_ID" \
+  --output json
 ```
 
-5. **kubelet 메트릭 확인**:
+비동기 요청이므로 modifying·optimizing·completed·failed를 추적합니다. 첫 응답은 완료가 아닙니다. 변경 빈도 제한을 확인하고 이전 modification이 끝난 뒤 다음 요청을 합니다. 용량 증가에는 별도 filesystem 확장도 고려합니다. 기존 16000 IOPS·1000 MiB/s는 설정 예시이며 측정한 보편적 최적값이 아닙니다. 이번 검토에서 EBS 변경을 실행하지 않았습니다.
 
-```bash
-# kubelet 메트릭 확인
-aws ssm start-session --target <instance-id>
-curl -s http://localhost:10255/metrics | grep "kubelet_"
-```
+### 파드 성능과 메모리 문제
 
-#### 일반적인 해결 방법
+container별 사용량·limit, restart·termination reason을 요청 부하와 연결합니다. OOMKilled는 container status에서 확인하며 Event reason 문자열에 없을 수 있습니다. node에 여유 메모리가 있어도 cgroup limit으로 OOM이 날 수 있습니다. cache 증가, allocator, burst, reachable retained object는 다른 조사이며 주기적 GC·node reboot는 일반 누수 해결책이 아닙니다.
 
-1. **노드 스케일 업**:
+실제 runtime·version에 맞는 profiler를 검토한 절차로 대상 process에 연결합니다. node --inspect는 새 프로세스를 시작하며 기존 앱에 자동 연결하지 않습니다. JVM·Python·Go profiler에는 도구·symbol·code·endpoint 전제 조건이 있습니다. heap dump는 pause·disk 고갈·secret 노출을 일으킬 수 있으므로 수집을 제한하고 보호합니다. 이번 장 검토에서는 profile·benchmark를 실행하지 않았습니다.
 
-```bash
-# 더 큰 인스턴스 유형으로 노드 그룹 업데이트
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --launch-template id=<launch-template-id>,version=<version>
-```
-
-2. **노드 스케일 아웃**:
-
-```bash
-# 노드 그룹 스케일 아웃
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --scaling-config desiredSize=<desired-size>,minSize=<min-size>,maxSize=<max-size>
-```
-
-3. **파드 리소스 제약 조정**:
-
-```bash
-# 파드 리소스 제약 조정
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"containers":[{"name":"<container-name>","resources":{"requests":{"cpu":"100m","memory":"128Mi"},"limits":{"cpu":"200m","memory":"256Mi"}}}]}}}}'
-```
-
-4. **커널 파라미터 조정**:
-
-```bash
-# 커널 파라미터 조정
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: sysctl-tuner
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      name: sysctl-tuner
-  template:
-    metadata:
-      labels:
-        name: sysctl-tuner
-    spec:
-      hostPID: true
-      containers:
-      - name: sysctl-tuner
-        image: busybox
-        securityContext:
-          privileged: true
-        command:
-        - /bin/sh
-        - -c
-        - |
-          sysctl -w net.ipv4.tcp_fin_timeout=15
-          sysctl -w net.core.somaxconn=32768
-          sysctl -w net.ipv4.tcp_max_syn_backlog=8096
-          sysctl -w fs.file-max=1000000
-          sleep infinity
-EOF
-```
-
-5. **인스턴스 스토리지 최적화**:
-
-```bash
-# 인스턴스 스토리지 최적화
-aws ec2 modify-instance-attribute \
-  --instance-id <instance-id> \
-  --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeType":"gp3","Iops":16000,"Throughput":1000}}]'
-```
-
-### 파드 성능 문제
-
-#### 일반적인 원인
-
-파드 성능 문제의 일반적인 원인:
-
-1. **리소스 제약**: CPU 또는 메모리 제약
-2. **리소스 경합**: 노드에서 리소스 경합
-3. **네트워크 지연 시간**: 네트워크 지연 시간 또는 대역폭 제약
-4. **디스크 I/O 제약**: 디스크 I/O 제약
-5. **애플리케이션 코드 문제**: 비효율적인 애플리케이션 코드
-
-#### 문제 해결 단계
-
-1. **파드 리소스 사용량 확인**:
-
-```bash
-# 파드 리소스 사용량 확인
-kubectl top pod <pod-name> -n <namespace>
-kubectl top pod <pod-name> -n <namespace> --containers
-```
-
-2. **파드 로그 확인**:
-
-```bash
-# 파드 로그 확인
-kubectl logs <pod-name> -n <namespace>
-kubectl logs <pod-name> -n <namespace> -c <container-name>
-```
-
-3. **파드 이벤트 확인**:
-
-```bash
-# 파드 이벤트 확인
-kubectl get events -n <namespace> --field-selector involvedObject.name=<pod-name>
-```
-
-4. **파드 디버깅**:
-
-```bash
-# 디버깅 컨테이너 실행
-kubectl debug <pod-name> -n <namespace> -it --image=nicolaka/netshoot --share-processes --copy-to=<pod-name>-debug
-```
-
-5. **애플리케이션 프로파일링**:
-
-```bash
-# 프로파일링 도구 설치
-kubectl exec -it <pod-name> -n <namespace> -- apt-get update
-kubectl exec -it <pod-name> -n <namespace> -- apt-get install -y linux-tools-common linux-tools-generic
-
-# CPU 프로파일링
-kubectl exec -it <pod-name> -n <namespace> -- perf record -F 99 -p 1 -g -- sleep 30
-kubectl exec -it <pod-name> -n <namespace> -- perf report
-```
-
-#### 일반적인 해결 방법
-
-1. **파드 리소스 제약 조정**:
-
-```bash
-# 파드 리소스 제약 조정
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"containers":[{"name":"<container-name>","resources":{"requests":{"cpu":"200m","memory":"256Mi"},"limits":{"cpu":"500m","memory":"512Mi"}}}]}}}}'
-```
-
-2. **파드 안티어피니티 구성**:
-
-```bash
-# 파드 안티어피니티 구성
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"affinity":{"podAntiAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"weight":100,"podAffinityTerm":{"labelSelector":{"matchExpressions":[{"key":"app","operator":"In","values":["<app-label>"]}]},"topologyKey":"kubernetes.io/hostname"}}]}}}}}}'
-```
-
-3. **노드 선택기 구성**:
-
-```bash
-# 노드 선택기 구성
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"nodeSelector":{"node.kubernetes.io/instance-type":"<instance-type>"}}}}}'
-```
-
-4. **토폴로지 분산 제약 구성**:
-
-```bash
-# 토폴로지 분산 제약 구성
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"topologySpreadConstraints":[{"maxSkew":1,"topologyKey":"topology.kubernetes.io/zone","whenUnsatisfiable":"ScheduleAnyway","labelSelector":{"matchLabels":{"app":"<app-label>"}}}]}}}}'
-```
-
-5. **HPA 구성**:
-
-```bash
-# HPA 구성
-kubectl autoscale deployment <deployment-name> -n <namespace> --cpu-percent=50 --min=2 --max=10
-```
+측정한 필요량·runtime overhead로 requests·limits를 조정하고 quota·rollout·HPA·VPA 소유권을 확인합니다. preferred anti-affinity·ScheduleAnyway topology spread는 선호이며 보장이 아닙니다. strict 규칙은 적격 node가 부족하면 Pending을 만들 수 있습니다. replica 확장으로 단일 thread·storage·downstream 병목이 반드시 해결되지는 않습니다.
 
 ### 네트워크 성능 문제
 
-#### 일반적인 원인
+실제 CNI·policy·SG 경로, instance bandwidth·PPS·connection limit, MTU·DNS·placement를 확인합니다. MTU 9001 변경, ENA 활성화, launch-template 교체는 보편적인 라이브 수정이 아닙니다. platform·state 전제 조건과 소유 rollout을 따릅니다. Auto Mode는 이미 node DNS와 자체 network 설정을 제공합니다.
 
-네트워크 성능 문제의 일반적인 원인:
-
-1. **CNI 구성 문제**: CNI 구성 또는 버전 문제
-2. **네트워크 정책 제한**: 제한적인 네트워크 정책
-3. **MTU 불일치**: 네트워크 인터페이스 간 MTU 불일치
-4. **대역폭 제약**: 인스턴스 유형 또는 네트워크 인터페이스 대역폭 제약
-5. **DNS 해결 지연**: DNS 해결 지연 또는 제한
-
-#### 문제 해결 단계
-
-1. **네트워크 성능 테스트**:
+계획한 테스트는 호환 client·server image, resource, node·AZ placement와 TCP 5201 허용을 분리된 범위에 준비합니다. image·version·방향·topology를 기록합니다. 아래는 원래 30초 시간을 유지하면서 단일 stream의 target bitrate를 제한한 예시입니다.
 
 ```bash
-# 네트워크 성능 테스트 파드 생성
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: netperf
-  namespace: default
-spec:
-  containers:
-  - name: netperf
-    image: networkstatic/iperf3
-    command:
-      - sleep
-      - "3600"
-EOF
-
-# 서버 파드 생성
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: iperf-server
-  namespace: default
-spec:
-  containers:
-  - name: iperf-server
-    image: networkstatic/iperf3
-    command:
-      - iperf3
-      - -s
-    ports:
-    - containerPort: 5201
-EOF
-
-# 서버 IP 확인
-SERVER_IP=$(kubectl get pod iperf-server -o jsonpath='{.status.podIP}')
-
-# 네트워크 성능 테스트
-kubectl exec -it netperf -- iperf3 -c $SERVER_IP -t 30
+set -euo pipefail
+: "${KUBE_CONTEXT:?Set the approved test context}"
+: "${TEST_NAMESPACE:?}"; : "${CLIENT_POD:?}"; : "${CLIENT_CONTAINER:?}"
+: "${SERVER_IP:?Set the prepared test server IP}"
+# Existing prepared test client/server only: one stream, 30 seconds, 10 Mbit/s target.
+kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" exec "$CLIENT_POD" \
+  -c "$CLIENT_CONTAINER" -- iperf3 -c "$SERVER_IP" -P 1 -t 30 -b 10M -J
 ```
 
-2. **CNI 구성 확인**:
+10 Mbit/s는 test pacing이며 예상 성능·network ceiling 증명이 아닙니다. 여러 stream은 각각 해당 제한을 적용받습니다. 먼저 client·server Ready를 확인하고 준비한 테스트 리소스만 정리합니다. DNS timing은 cache hit, upstream lookup과 command·exec overhead를 구분합니다. 실제 근거 없이 운영 throughput·latency나 성공한 benchmark를 주장하지 않습니다.
 
-```bash
-# CNI 구성 확인
-kubectl describe daemonset aws-node -n kube-system | grep -A 10 Environment
-```
+출처: [Kubernetes sysctl](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/), [EBS ModifyVolume](https://docs.aws.amazon.com/botocore/latest/reference/services/ec2/client/modify_volume.html), [iperf 매뉴얼](https://software.es.net/iperf/invoking.html).
 
-3. **MTU 확인**:
-
-```bash
-# MTU 확인
-kubectl debug node/<node-name> -it --image=busybox -- ifconfig
-```
-
-4. **DNS 성능 확인**:
-
-```bash
-# DNS 성능 확인
-kubectl run dnsperf --image=tutum/dnsutils --restart=Never -- sleep 3600
-kubectl exec -it dnsperf -- time dig kubernetes.default.svc.cluster.local
-```
-
-5. **네트워크 정책 확인**:
-
-```bash
-# 네트워크 정책 확인
-kubectl get networkpolicies --all-namespaces
-```
-
-#### 일반적인 해결 방법
-
-1. **CNI 구성 최적화**:
-
-```bash
-# CNI MTU 구성 수정
-kubectl set env daemonset aws-node -n kube-system AWS_VPC_ENI_MTU=9001
-```
-
-2. **인스턴스 유형 업그레이드**:
-
-```bash
-# 네트워크 성능이 향상된 인스턴스 유형으로 업그레이드
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --launch-template id=<launch-template-id>,version=<version>
-```
-
-3. **향상된 네트워킹 활성화**:
-
-```bash
-# 향상된 네트워킹 활성화
-aws ec2 modify-instance-attribute \
-  --instance-id <instance-id> \
-  --ena-support
-```
-
-4. **CoreDNS 스케일 업**:
-
-```bash
-# CoreDNS 스케일 업
-kubectl scale deployment coredns -n kube-system --replicas=3
-```
-
-5. **NodeLocal DNSCache 설치**:
-
-```bash
-# NodeLocal DNSCache 설치
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/addons/dns/nodelocaldns/nodelocaldns.yaml
-```
 ## 업그레이드 문제
 
-![클러스터, 노드 그룹, 애드온 업그레이드 세 갈래의 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-8.svg)
+![클러스터·노드 그룹·애드온 업데이트를 정확한 요청과 의존성별로 진단.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-8.png)
 
-### 클러스터 업그레이드 문제
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-8.html)
 
-#### 일반적인 원인
+### 정확한 작업 식별
 
-클러스터 업그레이드 문제의 일반적인 원인:
-
-1. **버전 호환성 문제**: 컨트롤 플레인과 노드 간 버전 호환성 문제
-2. **API 사용 중단**: 사용 중단된 API 사용
-3. **애드온 호환성 문제**: 애드온과 새 버전 간 호환성 문제
-4. **리소스 제약**: 업그레이드 중 리소스 제약
-5. **네트워크 문제**: 업그레이드 중 네트워크 연결 문제
-
-#### 문제 해결 단계
-
-1. **클러스터 버전 확인**:
+cluster·node group의 ACTIVE는 특정 요청 결과를 대체하지 못합니다. Update ID, 작업 scope, 대상 version·config, 마지막 성공 단계와 오류를 기록합니다.
 
 ```bash
-# 클러스터 버전 확인
-aws eks describe-cluster --name my-cluster --query "cluster.version"
-
-# 노드 버전 확인
-kubectl get nodes -o custom-columns=NAME:.metadata.name,VERSION:.status.nodeInfo.kubeletVersion
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${UPDATE_ID:?}"
+: "${UPDATE_KIND:?Set control-plane, nodegroup, or addon}"
+args=(--name "$CLUSTER_NAME" --region "$AWS_REGION" --update-id "$UPDATE_ID")
+case "$UPDATE_KIND" in
+  control-plane) ;;
+  nodegroup) : "${NODEGROUP_NAME:?}"; args+=(--nodegroup-name "$NODEGROUP_NAME") ;;
+  addon) : "${ADDON_NAME:?}"; args+=(--addon-name "$ADDON_NAME") ;;
+  *) echo "Invalid UPDATE_KIND" >&2; exit 2 ;;
+esac
+aws eks describe-update "${args[@]}" --output json --no-cli-pager
 ```
 
-2. **업그레이드 상태 확인**:
+진행 중 작업은 [EKS 업그레이드](./08-eks-upgrades.md)의 제한된 exact-ID 폴러를 사용합니다. Successful만 성공이며 실패·취소·unknown·조회 오류는 조사해야 합니다. 로컬 timeout은 AWS 작업 취소가 아닙니다.
+
+### 컨트롤 플레인과 API 호환성
 
 ```bash
-# 업그레이드 상태 확인
-aws eks describe-update \
-  --name my-cluster \
-  --update-id <update-id>
+set -euo pipefail
+: "${CLUSTER_NAME:?}"; : "${AWS_REGION:?}"; : "${TARGET_VERSION:?}"
+FILTER=$(jq -n --arg target "$TARGET_VERSION" \
+  '{categories:["UPGRADE_READINESS"],kubernetesVersions:[$target]}')
+aws eks list-insights --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --filter "$FILTER" --output json
+aws eks describe-addon-versions --kubernetes-version "$TARGET_VERSION" --region "$AWS_REGION" \
+  --output json
 ```
 
-3. **사용 중단된 API 확인**:
+애드온 카탈로그와 클러스터 버전 카탈로그는 다릅니다. 실제 현재 버전·EKS 카탈로그에서 다음 지원 minor를 선택하며 upstream release로 EKS 지원을 추정하지 않습니다. 보수적 준비로 node를 현재 control-plane version에 맞추되 지원 skew 범위와 구분합니다. 일부 애드온은 control-plane 변경 전에 중간 버전이 필요합니다.
 
-```bash
-# 사용 중단된 API 확인
-kubectl get -l k8s-app!=kube-dns deployments --all-namespaces -o json | jq '.items[].spec.template.spec.containers[].image' | sort | uniq
+원래 manifest·Helm metadata, runtime API caller, insight와 admission·conversion webhook을 확인합니다. container image 목록이나 현재 반환된 객체의 apiVersion으로 제거된 API 호출 부재를 증명하지 못합니다. migration guide와 본문 upgrade 장의 검증된 Pluto 명령을 사용합니다. kubectl convert는 별도 plugin이지 보편적인 내장 migration·test가 아닙니다.
 
-# 사용 중단된 API 사용 확인
-kubectl get $(kubectl api-resources --verbs=list -o name | paste -sd, -) \
-  --all-namespaces -o json | jq '.items[] | select(.apiVersion | contains("beta"))' | jq -r '.kind,.apiVersion,.metadata.name' | sort | uniq
-```
+현재 EKS 가이드에서 일반 upgrade insight의 force 강제는 일시 철회되었으며 ROLLBACK_READINESS 차단과 별개입니다. 이전 명령 timeout만으로 업그레이드를 재제출하지 않고, 시작한 일반 control-plane upgrade를 취소할 수 있다고 가정하지 않습니다.
 
-4. **애드온 버전 확인**:
+### 노드 그룹·애드온 복구
 
-```bash
-# 애드온 버전 확인
-aws eks describe-addon \
-  --cluster-name my-cluster \
-  --addon-name <addon-name> \
-  --query "addon.addonVersion"
-```
+PDB allowed disruptions, replica·readiness, 교체 EC2·IP 용량, AMI·bootstrap과 실제 update 오류를 확인합니다. kubectl drain --force는 unmanaged Pod 제거를 허용하며 PDB eviction 검사를 우회하지 않습니다. disable-eviction과 managed-node force update는 별도 중단 의미를 가집니다. 오류를 없애려고 minAvailable을 0으로 만들거나 emptyDir 데이터를 버리지 않습니다.
 
-5. **이벤트 확인**:
+EKS 최적화 AMI는 Kubernetes version과 AMI release를 모두 검토합니다. custom AMI group은 정확한 API·option으로 원래 launch template의 검토한 새 버전을 사용합니다. 실패한 update가 fleet 자동 롤백을 보장하지 않습니다. 즉시 group을 만들고 삭제하기보다 앞 node·Pod 절과 단계적 upgrade 절차를 따릅니다.
 
-```bash
-# 이벤트 확인
-kubectl get events --all-namespaces --sort-by='.lastTimestamp'
-```
+애드온은 version·config·schema, IAM·Pod Identity와 owner를 유지합니다. PRESERVE는 전체 config 병합·기능 보장이 아니며 OVERWRITE는 customization을 버릴 수 있습니다. network·storage add-on 삭제·재생성은 의존 cleanup·workload 접근을 중단할 수 있습니다. 임의 key:value payload나 CoreDNS라고 잘못 표시한 VPC CNI manifest는 유효한 복구가 아닙니다.
 
-#### 일반적인 해결 방법
+### 롤백은 별도 판단
 
-1. **단계적 업그레이드**:
+현재 EKS는 완료된 인플레이스 upgrade 후 7일 내 바로 이전 minor로 조건부 rollback을 지원합니다. 자격, support policy, feature 전제 조건, compute별 순서와 ROLLBACK_READINESS를 충족해야 합니다. managed node는 control plane보다 먼저, Auto Mode는 서비스가 node부터 조정합니다. timeout·cancel·disruption은 일반 upgrade와 다릅니다.
 
-```bash
-# 한 번에 한 마이너 버전씩 업그레이드
-aws eks update-cluster-version \
-  --name my-cluster \
-  --kubernetes-version <version>
-```
+force는 rollback insight를 우회할 뿐 전제 조건·Auto Mode disruption 제어를 우회하지 않습니다. version rollback은 workload·data 상태를 보존하며 backup restore가 아니고 add-on도 자동 복원하지 않습니다. Fargate·hybrid·custom node, support policy·복구 조건은 [전체 rollback 절차](./08-eks-upgrades.md)를 따릅니다. Git·CloudFormation rollback이 이 서비스 작업은 아닙니다.
 
-2. **사용 중단된 API 업데이트**:
-
-```bash
-# 사용 중단된 API 업데이트
-kubectl convert -f <old-manifest.yaml> --output-version <new-api-version> > <new-manifest.yaml>
-kubectl apply -f <new-manifest.yaml>
-```
-
-3. **애드온 업데이트**:
-
-```bash
-# 애드온 업데이트
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name <addon-name> \
-  --addon-version <addon-version> \
-  --resolve-conflicts PRESERVE
-```
-
-4. **노드 그룹 업데이트**:
-
-```bash
-# 노드 그룹 업데이트
-aws eks update-nodegroup-version \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name>
-```
-
-5. **업그레이드 재시도**:
-
-```bash
-# 업그레이드 재시도
-aws eks update-cluster-version \
-  --name my-cluster \
-  --kubernetes-version <version>
-```
-
-### 노드 그룹 업그레이드 문제
-
-#### 일반적인 원인
-
-노드 그룹 업그레이드 문제의 일반적인 원인:
-
-1. **파드 중단 예산 문제**: 파드 중단 예산(PDB) 구성 오류
-2. **드레이닝 실패**: 노드 드레이닝 실패
-3. **AMI 호환성 문제**: AMI와 Kubernetes 버전 간 호환성 문제
-4. **리소스 제약**: 업그레이드 중 리소스 제약
-5. **인스턴스 시작 실패**: 새 인스턴스 시작 실패
-
-#### 문제 해결 단계
-
-1. **노드 그룹 상태 확인**:
-
-```bash
-# 노드 그룹 상태 확인
-aws eks describe-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --query "nodegroup.status"
-```
-
-2. **업그레이드 상태 확인**:
-
-```bash
-# 업그레이드 상태 확인
-aws eks describe-update \
-  --name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --update-id <update-id>
-```
-
-3. **PDB 확인**:
-
-```bash
-# PDB 확인
-kubectl get pdb --all-namespaces
-kubectl describe pdb <pdb-name> -n <namespace>
-```
-
-4. **노드 상태 확인**:
-
-```bash
-# 노드 상태 확인
-kubectl get nodes
-kubectl describe node <node-name>
-```
-
-5. **이벤트 확인**:
-
-```bash
-# 이벤트 확인
-kubectl get events --all-namespaces --sort-by='.lastTimestamp'
-```
-
-#### 일반적인 해결 방법
-
-1. **PDB 수정**:
-
-```bash
-# PDB 수정
-kubectl edit pdb <pdb-name> -n <namespace>
-```
-
-2. **노드 수동 드레이닝**:
-
-```bash
-# 노드 수동 드레이닝
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
-```
-
-3. **업그레이드 구성 수정**:
-
-```bash
-# 업그레이드 구성 수정
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --update-config maxUnavailable=1
-```
-
-4. **노드 그룹 재생성**:
-
-```bash
-# 새 노드 그룹 생성
-aws eks create-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name <new-nodegroup-name> \
-  --subnets <subnet-id-1> <subnet-id-2> \
-  --instance-types <instance-type> \
-  --node-role <node-role-arn> \
-  --scaling-config minSize=<min-size>,maxSize=<max-size>,desiredSize=<desired-size>
-
-# 워크로드 마이그레이션 후 기존 노드 그룹 삭제
-aws eks delete-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name <old-nodegroup-name>
-```
-
-5. **AMI ID 지정**:
-
-```bash
-# 특정 AMI ID로 노드 그룹 업데이트
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name <nodegroup-name> \
-  --launch-template id=<launch-template-id>,version=<version>
-```
-
-### 애드온 업그레이드 문제
-
-#### 일반적인 원인
-
-애드온 업그레이드 문제의 일반적인 원인:
-
-1. **구성 충돌**: 사용자 정의 구성과 새 버전 간 충돌
-2. **호환성 문제**: 애드온과 Kubernetes 버전 간 호환성 문제
-3. **리소스 제약**: 업그레이드에 필요한 리소스 부족
-4. **권한 문제**: 애드온 서비스 계정 권한 문제
-5. **네트워크 문제**: 애드온 구성 요소 간 네트워크 연결 문제
-
-#### 문제 해결 단계
-
-1. **애드온 상태 확인**:
-
-```bash
-# 애드온 상태 확인
-aws eks describe-addon \
-  --cluster-name my-cluster \
-  --addon-name <addon-name>
-```
-
-2. **애드온 파드 확인**:
-
-```bash
-# CoreDNS 파드 확인
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-kubectl describe pod -n kube-system -l k8s-app=kube-dns
-
-# kube-proxy 파드 확인
-kubectl get pods -n kube-system -l k8s-app=kube-proxy
-kubectl describe pod -n kube-system -l k8s-app=kube-proxy
-
-# VPC CNI 파드 확인
-kubectl get pods -n kube-system -l k8s-app=aws-node
-kubectl describe pod -n kube-system -l k8s-app=aws-node
-```
-
-3. **애드온 로그 확인**:
-
-```bash
-# CoreDNS 로그 확인
-kubectl logs -n kube-system -l k8s-app=kube-dns
-
-# kube-proxy 로그 확인
-kubectl logs -n kube-system -l k8s-app=kube-proxy
-
-# VPC CNI 로그 확인
-kubectl logs -n kube-system -l k8s-app=aws-node
-```
-
-4. **애드온 구성 확인**:
-
-```bash
-# CoreDNS 구성 확인
-kubectl get configmap coredns -n kube-system -o yaml
-
-# kube-proxy 구성 확인
-kubectl get configmap kube-proxy-config -n kube-system -o yaml
-
-# VPC CNI 구성 확인
-kubectl describe daemonset aws-node -n kube-system | grep -A 10 Environment
-```
-
-5. **이벤트 확인**:
-
-```bash
-# 이벤트 확인
-kubectl get events -n kube-system --sort-by='.lastTimestamp'
-```
-
-#### 일반적인 해결 방법
-
-1. **충돌 해결 전략 변경**:
-
-```bash
-# 충돌 해결 전략 변경
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name <addon-name> \
-  --addon-version <addon-version> \
-  --resolve-conflicts OVERWRITE
-```
-
-2. **애드온 재설치**:
-
-```bash
-# 애드온 삭제
-aws eks delete-addon \
-  --cluster-name my-cluster \
-  --addon-name <addon-name>
-
-# 애드온 설치
-aws eks create-addon \
-  --cluster-name my-cluster \
-  --addon-name <addon-name> \
-  --addon-version <addon-version>
-```
-
-3. **IAM 역할 권한 추가**:
-
-```bash
-# IAM 역할 생성
-eksctl create iamserviceaccount \
-  --name <serviceaccount-name> \
-  --namespace kube-system \
-  --cluster my-cluster \
-  --attach-policy-arn <policy-arn> \
-  --approve \
-  --override-existing-serviceaccounts
-```
-
-4. **애드온 구성 수정**:
-
-```bash
-# 애드온 구성 수정
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name <addon-name> \
-  --addon-version <addon-version> \
-  --configuration-values '{"key":"value"}'
-```
-
-5. **애드온 수동 설치**:
-
-```bash
-# CoreDNS 수동 설치
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/aws-k8s-cni.yaml
-```
+출처: [EKS update](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html), [관리형 node update](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html), [EKS rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html), [Auto Mode rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html).
 
 ## 일반적인 오류 메시지 및 해결 방법
 
-![클러스터, 노드/파드, 네트워킹, IAM/인증, 스토리지 다섯 영역별 대표 오류 메시지를 정리한 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-9.svg)
-
-### 클러스터 생성 및 관리 오류
-
-#### `UnsupportedAvailabilityZoneException`
-
-**원인**: 지정된 가용 영역에서 요청된 인스턴스 유형을 사용할 수 없습니다.
-
-**해결 방법**:
-- 다른 가용 영역 선택
-- 다른 인스턴스 유형 선택
-- 해당 가용 영역에서 사용 가능한 인스턴스 유형 확인
-
-```bash
-# 사용 가능한 인스턴스 유형 확인
-aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values=<availability-zone> --region <region>
-```
-
-#### `ResourceLimitExceeded`
-
-**원인**: AWS 계정의 리소스 한도를 초과했습니다.
-
-**해결 방법**:
-- 사용하지 않는 리소스 정리
-- 서비스 할당량 증가 요청
-- 다른 리전에서 시도
-
-```bash
-# 서비스 할당량 증가 요청
-aws service-quotas request-service-quota-increase \
-  --service-code eks \
-  --quota-code L-1194D53C \
-  --desired-value <new-value>
-```
-
-#### `InvalidParameterException: Error in role params`
-
-**원인**: 지정된 IAM 역할이 없거나 필요한 권한이 없습니다.
-
-**해결 방법**:
-- IAM 역할 생성 또는 확인
-- 필요한 권한 추가
-
-```bash
-# 클러스터 역할 생성
-aws iam create-role \
-  --role-name AmazonEKSClusterRole \
-  --assume-role-policy-document file://cluster-trust-policy.json
-
-# 필요한 정책 연결
-aws iam attach-role-policy \
-  --role-name AmazonEKSClusterRole \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-```
-
-#### `ClusterUnreachable`
-
-**원인**: 클러스터 API 서버에 연결할 수 없습니다.
-
-**해결 방법**:
-- 네트워크 연결 확인
-- 보안 그룹 규칙 확인
-- kubeconfig 구성 확인
-
-```bash
-# kubeconfig 재생성
-aws eks update-kubeconfig --name my-cluster --region <region>
-```
-
-### 노드 및 파드 오류
-
-#### `FailedScheduling: 0/3 nodes are available: 3 Insufficient memory`
-
-**원인**: 노드에 파드를 스케줄링하기 위한 충분한 메모리가 없습니다.
-
-**해결 방법**:
-- 더 큰 인스턴스 유형으로 노드 그룹 업데이트
-- 노드 그룹 스케일 아웃
-- 파드 리소스 요청 감소
-
-```bash
-# 파드 리소스 요청 감소
-kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template":{"spec":{"containers":[{"name":"<container-name>","resources":{"requests":{"memory":"128Mi"}}}]}}}}'
-```
-
-#### `CrashLoopBackOff`
-
-**원인**: 컨테이너가 반복적으로 충돌하고 재시작됩니다.
-
-**해결 방법**:
-- 컨테이너 로그 확인
-- 애플리케이션 구성 확인
-- 리소스 제약 확인
-
-```bash
-# 컨테이너 로그 확인
-kubectl logs <pod-name> -n <namespace>
-kubectl logs <pod-name> -n <namespace> --previous
-```
-
-#### `ImagePullBackOff`
-
-**원인**: 컨테이너 이미지를 가져올 수 없습니다.
-
-**해결 방법**:
-- 이미지 이름 및 태그 확인
-- 이미지 레지스트리 접근성 확인
-- 이미지 풀 시크릿 구성
-
-```bash
-# 이미지 풀 시크릿 생성
-kubectl create secret docker-registry <secret-name> \
-  --docker-server=<registry-server> \
-  --docker-username=<username> \
-  --docker-password=<password> \
-  --docker-email=<email> \
-  -n <namespace>
-
-# 서비스 계정에 시크릿 추가
-kubectl patch serviceaccount <service-account-name> -n <namespace> -p '{"imagePullSecrets":[{"name":"<secret-name>"}]}'
-```
-
-#### `Evicted`
-
-**원인**: 노드 리소스 부족으로 인해 파드가 축출되었습니다.
-
-**해결 방법**:
-- 노드 리소스 확인
-- 파드 리소스 요청 및 제한 조정
-- 노드 그룹 스케일 아웃
-
-```bash
-# 노드 리소스 확인
-kubectl describe node <node-name> | grep -A 10 "Allocated resources"
-```
-
-### 네트워킹 오류
-
-#### `FailedCreateServiceEndpoints`
-
-**원인**: 서비스 엔드포인트를 생성할 수 없습니다.
-
-**해결 방법**:
-- 서비스 선택자 확인
-- 파드 레이블 확인
-- 파드 상태 확인
-
-```bash
-# 서비스 선택자 확인
-kubectl get service <service-name> -n <namespace> -o jsonpath='{.spec.selector}'
-
-# 파드 레이블 확인
-kubectl get pods -n <namespace> --show-labels
-```
-
-#### `EniLimitExceeded`
-
-**원인**: 노드의 ENI 한도를 초과했습니다.
-
-**해결 방법**:
-- 더 큰 인스턴스 유형으로 노드 그룹 업데이트
-- 프리픽스 위임 활성화
-- 사용자 지정 네트워킹 활성화
-
-```bash
-# 프리픽스 위임 활성화
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-```
-
-#### `FailedLoadBalancerCreation`
-
-**원인**: 로드 밸런서를 생성할 수 없습니다.
-
-**해결 방법**:
-- 서브넷 태그 확인
-- 보안 그룹 규칙 확인
-- 서비스 주석 확인
-
-```bash
-# 서브넷 태그 추가
-aws ec2 create-tags \
-  --resources <subnet-id-1> <subnet-id-2> \
-  --tags Key=kubernetes.io/role/elb,Value=1
-```
-
-### IAM 및 인증 오류
-
-#### `error: You must be logged in to the server (Unauthorized)`
-
-**원인**: 클러스터에 대한 인증 문제입니다.
-
-**해결 방법**:
-- AWS CLI 자격 증명 확인
-- kubeconfig 재생성
-- aws-auth ConfigMap 확인
-
-```bash
-# AWS CLI 자격 증명 확인
-aws sts get-caller-identity
-
-# kubeconfig 재생성
-aws eks update-kubeconfig --name my-cluster --region <region>
-```
-
-#### `error: You must be logged in to the server (the server has asked for the client to provide credentials)`
-
-**원인**: IAM 인증 문제입니다.
-
-**해결 방법**:
-- AWS CLI 자격 증명 확인
-- aws-auth ConfigMap 확인
-- IAM 역할 또는 사용자 매핑 추가
-
-```bash
-# aws-auth ConfigMap 확인
-kubectl get configmap aws-auth -n kube-system -o yaml
-
-# IAM 역할 또는 사용자 매핑 추가
-eksctl create iamidentitymapping \
-  --cluster my-cluster \
-  --arn <iam-role-or-user-arn> \
-  --username <username> \
-  --group system:masters
-```
-
-#### `error: error loading config file "/home/user/.kube/config": open /home/user/.kube/config: permission denied`
-
-**원인**: kubeconfig 파일 권한 문제입니다.
-
-**해결 방법**:
-- kubeconfig 파일 권한 수정
-- kubeconfig 파일 재생성
-
-```bash
-# kubeconfig 파일 권한 수정
-chmod 600 ~/.kube/config
-
-# kubeconfig 파일 재생성
-aws eks update-kubeconfig --name my-cluster --region <region>
-```
-
-### 스토리지 오류
-
-#### `FailedAttachVolume: Multi-Attach error for volume`
-
-**원인**: 볼륨이 이미 다른 노드에 연결되어 있습니다.
-
-**해결 방법**:
-- 이전 파드 삭제
-- 볼륨 수동 분리
-- 노드 재시작
-
-```bash
-# 이전 파드 삭제
-kubectl delete pod <old-pod-name> -n <namespace>
-
-# 볼륨 수동 분리
-aws ec2 detach-volume --volume-id <volume-id>
-```
-
-#### `FailedMount: Unable to mount volumes for pod: timeout expired waiting for volumes to attach or mount`
-
-**원인**: 볼륨을 마운트할 수 없습니다.
-
-**해결 방법**:
-- 볼륨 상태 확인
-- CSI 드라이버 확인
-- 노드 재시작
-
-```bash
-# 볼륨 상태 확인
-aws ec2 describe-volumes --volume-ids <volume-id>
-
-# CSI 드라이버 확인
-kubectl get pods -n kube-system -l app=ebs-csi-controller
-kubectl logs -n kube-system -l app=ebs-csi-controller -c ebs-plugin
-```
-
-#### `PersistentVolumeClaim is not bound`
-
-**원인**: PVC가 PV에 바인딩되지 않았습니다.
-
-**해결 방법**:
-- PVC 및 PV 상태 확인
-- 스토리지 클래스 확인
-- 볼륨 바인딩 모드 확인
-
-```bash
-# PVC 상태 확인
-kubectl describe pvc <pvc-name> -n <namespace>
-
-# PV 상태 확인
-kubectl get pv
-
-# 스토리지 클래스 확인
-kubectl get storageclass
-```
-
-### 로깅 및 모니터링 오류
-
-#### `Failed to list *v1.Pod: Unauthorized`
-
-**원인**: 메트릭 서버에 대한 인증 문제입니다.
-
-**해결 방법**:
-- 메트릭 서버 서비스 계정 확인
-- RBAC 구성 확인
-- 메트릭 서버 재시작
-
-```bash
-# 메트릭 서버 재시작
-kubectl delete pod -n kube-system -l k8s-app=metrics-server
-```
-
-#### `Failed to scrape node`
-
-**원인**: 메트릭 서버가 노드 메트릭을 수집할 수 없습니다.
-
-**해결 방법**:
-- kubelet 구성 확인
-- 메트릭 서버 구성 확인
-- 네트워크 연결 확인
-
-```bash
-# kubelet 구성 확인
-aws ssm start-session --target <instance-id>
-sudo cat /etc/kubernetes/kubelet/kubelet-config.json
-```
-
-#### `Failed to list *v1.Pod: the server could not find the requested resource`
-
-**원인**: API 서버 구성 문제입니다.
-
-**해결 방법**:
-- API 서버 구성 확인
-- 클러스터 버전 확인
-- 메트릭 서버 재설치
-
-```bash
-# 메트릭 서버 재설치
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-```
+![클러스터·노드·네트워크·identity·storage 오류를 실제 요청과 근거로 구분.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-9.html)
+
+아래는 예시 메시지·패턴이며 모든 현재 controller가 같은 문자열을 낸다는 뜻은 아닙니다. 실제 error code, resource UID, request ID와 condition을 사용합니다. 근거가 뒷받침되기 전 원인은 가설입니다.
+
+| 메시지 / 패턴 | 근거와 다음 조치 |
+| --- | --- |
+| UnsupportedAvailabilityZoneException | 선택한 cluster subnet·AZ가 해당 계정의 EKS를 지원하지 않음. EC2 instance 제공 목록만 보지 말고 오류의 지원 AZ 확인 |
+| ResourceLimitExceeded / quota 오류 | 실제 service·quota·적용 limit 확인. 과거 limit 5는 현재 한도가 아님 |
+| InvalidParameterException: Error in role params | role 존재·trust, caller iam:PassRole, 필요 권한과 요청 확인. 공유 role을 무조건 새로 만들지 않음 |
+| ClusterUnreachable | endpoint DNS·route·SG·NACL·TLS 확인. kubeconfig 재생성만으로 전송을 고치지 못함 |
+| You must be logged in ... (Unauthorized) / the server has asked for the client to provide credentials | credential provider·role·profile·exec auth와 cluster auth mode·access entry·legacy mapping 확인 |
+| Forbidden | 실제 subject·verb·resource·subresource·namespace·grant 확인. impersonation 실패와 구분 |
+| error loading ... .kube/config ... permission denied | 파일·owner·부모 directory 권한 확인. chmod 600만으로 잘못된 owner·path가 고쳐지지 않음 |
+| dial tcp: lookup ... no such host | endpoint hostname과 실제 resolver·private path 확인. HTTPS URL 전체를 DNS 조회에 넣지 않음 |
+| FailedScheduling ... Insufficient memory | requests·overhead, 적격 node allocatable, placement·quota 비교. 현재 free-memory·top만으로 scheduler 계산을 알 수 없음 |
+| Insufficient pods | node allocatable Pod slot·현재 할당 확인. memory request 감소로 slot이 생기지 않음 |
+| CrashLoopBackOff | 일반·init container의 현재·이전 종료 상태, previous-instance log, config·probe 확인 |
+| ImagePullBackOff | image·digest·platform, node registry route·TLS·rate limit·pull identity를 실제 오류로 확인. credentials를 노출하지 않음 |
+| Evicted | Pod reason·message와 node pressure·시각 확인. 적절한 데이터·가용성 복구 적용 |
+| FailedCreateServiceEndpoints / EndpointSlice update 오류 | Service selector·type, Pod Ready·endpoint condition, named port와 controller event 확인 |
+| EniLimitExceeded / IPAM allocation 오류 | 실제 ENI·IP·subnet·prefix·quota·오류 context 확인. prefix·custom networking은 모든 한도를 제거하지 않음 |
+| FailedLoadBalancerCreation / controller provisioning 오류 | 정확한 owner·subnet·IAM·target health·SG 경로 확인. 무차별 tag·전체 허용 규칙을 추가하지 않음 |
+| FailedAttachVolume: Multi-Attach ... | 실제 consumer·attachment·fencing 확인. force detach 대신 CSI unmount·detach와 데이터 안전 조율 |
+| FailedMount ... timeout ... | CSI controller·node plugin, identity·KMS·topology·filesystem·attachment event 확인. node restart는 자동 해결책이 아님 |
+| PersistentVolumeClaim is not bound | 정상 지연 binding과 class·provisioner·identity·consumer scheduling 문제 구분. claim을 삭제하지 않음 |
+| Failed to list *v1.Pod: Unauthorized | 거부 endpoint·caller·token·identity 확인. Metrics Server restart가 누락 credentials를 복원하지 않음 |
+| Failed to scrape node | 인증된 kubelet scrape 경로, certificate·address·port·network·node health 확인 |
+| Failed to list *v1.Pod: the server could not find the requested resource | EKS control-plane 설정 탓으로 돌리기 전 API URL·context·discovery·client·proxy 확인 |
+
+위 관련 절에서 범위를 제한한 근거를 수집하고 소유자와 수정을 선택합니다. 결과·미확인 가정을 보존하며 예시 메시지만으로 진단·복구 검증을 주장하지 않습니다.
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/eks/09-eks-troubleshooting-quiz.md)를 풀어보세요.
+[주제 퀴즈](../quizzes/eks/09-eks-troubleshooting-quiz.md)로 이해를 확인하세요.

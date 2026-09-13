@@ -1,0 +1,305 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Linkerd 문제 해결 워크플로우",
+    "output": "public/archmaps/ko-service-mesh-linkerd-05-observability-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "시작 / 종료"
+        },
+        "backend": {
+          "label": "linkerd viz 명령"
+        },
+        "messagebus": {
+          "label": "판단 분기"
+        },
+        "security": {
+          "label": "원인 확인"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "success-path",
+        "label": "성공률 낮음",
+        "focus": [
+          "stat",
+          "check",
+          "top",
+          "tap",
+          "logs"
+        ],
+        "note": "성공률이 낮으면 viz top으로 상위 경로를 찾고 tap으로 실시간 요청을 살핀 뒤 프록시 로그를 확인합니다."
+      },
+      {
+        "id": "latency-path",
+        "label": "지연 시간 높음",
+        "focus": [
+          "check",
+          "latency",
+          "routes",
+          "tap"
+        ],
+        "note": "성공률은 정상인데 지연 시간이 높으면 viz routes로 ServiceProfile 라우트별 메트릭을 보고 tap으로 이어갑니다."
+      },
+      {
+        "id": "mtls-path",
+        "label": "mTLS 확인",
+        "focus": [
+          "latency",
+          "edges",
+          "check_tls",
+          "cert",
+          "end"
+        ],
+        "note": "둘 다 정상이면 viz edges로 서비스 간 연결을 확인하고 mTLS 문제가 있으면 인증서를 점검합니다."
+      }
+    ],
+    "viewBox": [
+      1184,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "detect",
+      "label": "문제 감지"
+    },
+    {
+      "id": "success",
+      "label": "성공률 낮음"
+    },
+    {
+      "id": "latency",
+      "label": "지연 시간 높음"
+    },
+    {
+      "id": "mtls",
+      "label": "mTLS 확인 · 해결"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "stat",
+    "check",
+    "top",
+    "tap",
+    "logs",
+    "end"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "end"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "end"
+      },
+      {
+        "from": "routes",
+        "to": "tap"
+      },
+      {
+        "from": "cert",
+        "to": "end"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "detect",
+      "col": 0,
+      "type": "external",
+      "label": "문제 감지",
+      "width": 148
+    },
+    {
+      "id": "stat",
+      "lane": "detect",
+      "col": 1,
+      "type": "backend",
+      "label": "linkerd viz stat",
+      "sublabel": "성공률·RPS·지연 시간",
+      "tag": "CLI",
+      "width": 156
+    },
+    {
+      "id": "check",
+      "lane": "detect",
+      "col": 2,
+      "type": "messagebus",
+      "label": "성공률 낮음?",
+      "width": 170
+    },
+    {
+      "id": "top",
+      "lane": "success",
+      "col": 3,
+      "type": "backend",
+      "label": "linkerd viz top",
+      "sublabel": "가장 활발한 경로",
+      "tag": "CLI",
+      "width": 148
+    },
+    {
+      "id": "tap",
+      "lane": "success",
+      "col": 4,
+      "type": "backend",
+      "label": "linkerd viz tap",
+      "sublabel": "실시간 요청 스트림",
+      "tag": "CLI",
+      "width": 148
+    },
+    {
+      "id": "logs",
+      "lane": "success",
+      "col": 5,
+      "type": "security",
+      "label": "프록시 로그 확인",
+      "width": 170
+    },
+    {
+      "id": "latency",
+      "lane": "latency",
+      "col": 2,
+      "type": "messagebus",
+      "label": "지연 시간 높음?",
+      "width": 150
+    },
+    {
+      "id": "routes",
+      "lane": "latency",
+      "col": 3,
+      "type": "backend",
+      "label": "linkerd viz routes",
+      "sublabel": "라우트별 메트릭",
+      "tag": "CLI",
+      "width": 164
+    },
+    {
+      "id": "edges",
+      "lane": "mtls",
+      "col": 2,
+      "type": "backend",
+      "label": "linkerd viz edges",
+      "sublabel": "서비스 간 연결",
+      "tag": "CLI",
+      "width": 160
+    },
+    {
+      "id": "check_tls",
+      "lane": "mtls",
+      "col": 3,
+      "type": "messagebus",
+      "label": "mTLS 문제?",
+      "width": 140
+    },
+    {
+      "id": "cert",
+      "lane": "mtls",
+      "col": 4,
+      "type": "security",
+      "label": "인증서 확인",
+      "width": 176
+    },
+    {
+      "id": "end",
+      "lane": "mtls",
+      "col": 5,
+      "type": "external",
+      "label": "문제 해결",
+      "width": 148
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "stat",
+      "role": "main"
+    },
+    {
+      "from": "stat",
+      "to": "check",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "top",
+      "label": "예",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "latency",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "top",
+      "to": "tap",
+      "role": "main"
+    },
+    {
+      "from": "tap",
+      "to": "logs",
+      "role": "main"
+    },
+    {
+      "from": "latency",
+      "to": "routes",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "latency",
+      "to": "edges",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "routes",
+      "to": "tap",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "edges",
+      "to": "check_tls",
+      "role": "branch"
+    },
+    {
+      "from": "check_tls",
+      "to": "cert",
+      "label": "예",
+      "variant": "security",
+      "role": "branch"
+    },
+    {
+      "from": "check_tls",
+      "to": "end",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "logs",
+      "to": "end",
+      "role": "main"
+    },
+    {
+      "from": "cert",
+      "to": "end",
+      "role": "branch"
+    }
+  ]
+}

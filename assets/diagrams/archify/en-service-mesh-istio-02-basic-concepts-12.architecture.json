@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VM Registration Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "data-path",
+        "label": "mTLS data path",
+        "focus": [
+          "legacy-app",
+          "envoy-vm",
+          "envoy-pod",
+          "app"
+        ],
+        "note": "Each application talks only to its own Envoy locally; traffic between the two Envoys is protected with mTLS."
+      },
+      {
+        "id": "control-plane",
+        "label": "istiod configuration delivery",
+        "focus": [
+          "istiod",
+          "envoy-vm",
+          "envoy-pod"
+        ],
+        "note": "istiod delivers xDS configuration and certificates to both Envoys, inside and outside the cluster."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "legacy-app",
+      "type": "external",
+      "label": "Legacy Application",
+      "sublabel": "VM workload",
+      "pos": [
+        60,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "envoy-vm",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "manual install",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "Pod container",
+      "pos": [
+        540,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "envoy-pod",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "auto-injected",
+      "pos": [
+        540,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        820,
+        440
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Virtual Machine",
+      "wraps": [
+        "legacy-app",
+        "envoy-vm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "app",
+        "envoy-pod",
+        "istiod"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod",
+      "wraps": [
+        "app",
+        "envoy-pod"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "vm-local",
+      "from": "legacy-app",
+      "to": "envoy-vm",
+      "label": "Local communication",
+      "labelDy": 24
+    },
+    {
+      "id": "pod-local",
+      "from": "app",
+      "to": "envoy-pod",
+      "label": "Local communication",
+      "labelDy": 24
+    },
+    {
+      "id": "mtls",
+      "from": "envoy-vm",
+      "to": "envoy-pod",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xds-vm",
+      "from": "istiod",
+      "to": "envoy-vm",
+      "label": "xDS config · certificates",
+      "variant": "dashed",
+      "toSide": "bottom"
+    },
+    {
+      "id": "xds-pod",
+      "from": "istiod",
+      "to": "envoy-pod",
+      "label": "xDS config · certificates",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "VM Workload Registration",
+      "items": [
+        "Register the VM's address and serviceAccount with WorkloadEntry",
+        "Pair with ServiceEntry (MESH_INTERNAL) to expose it as an in-mesh service",
+        "Envoy is installed manually on the VM"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Kubernetes Pod",
+      "items": [
+        "Envoy Sidecar is injected automatically",
+        "Automatic service discovery via Service + Pod"
+      ]
+    }
+  ]
+}

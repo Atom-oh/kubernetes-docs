@@ -1,0 +1,6920 @@
+{
+  "date": "2026-09-11",
+  "documents": 300,
+  "passed": 300,
+  "results": [
+    {
+      "path": "en/networking/01-vpc-cni.md",
+      "errors": []
+    },
+    {
+      "path": "en/networking/02-vpc-lattice.md",
+      "errors": []
+    },
+    {
+      "path": "en/networking/03-aws-lb-controller.md",
+      "errors": []
+    },
+    {
+      "path": "en/networking/04-gateway-api.md",
+      "errors": []
+    },
+    {
+      "path": "en/networking/05-cross-org-vpc-connectivity.md",
+      "errors": []
+    },
+    {
+      "path": "en/networking/06-pod-network-benchmark.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/01-introduction.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/02-architecture.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/03-networking-modes.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/04-bgp-deep-dive.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/05-network-policy.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/06-ebpf-dataplane.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/07-advanced-topics.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/08-eks-integration.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/09-operations.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/README.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/calico/glossary.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/cilium/01-introduction.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/networking/cilium/README.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/00-networking-overview-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/01-vpc-cni-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/02-vpc-lattice-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/03-aws-lb-controller-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/04-gateway-api-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/06-pod-network-benchmark-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/01-introduction-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/02-architecture-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/03-networking-modes-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/04-bgp-deep-dive-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/05-network-policy-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/06-ebpf-dataplane-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/07-advanced-topics-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/08-eks-integration-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/09-operations-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/calico/glossary-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/networking/cilium/01-introduction-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/02-istio-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/security.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/advanced.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/basic.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/comparison.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/resilience.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/security.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/installation.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/security.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/02-istio.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/01-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/02-traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/03-security.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/04-observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/06-best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/01-installation.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/02-basic-concepts.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/03-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/04-aws-integration.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/01-ambient-mode.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/02-multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/03-envoy-filter.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/04-dns-cache.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/05-grpc.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/06-websocket.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/07-sidecar-injection.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/08-argo-rollouts.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/10-keda-autoscaling.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/glossary.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/01-metrics.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/02-tracing.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/03-logging.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/04-dashboards.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/01-outlier-detection.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/02-rate-limiting.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/03-zone-aware-routing.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/security/01-mtls.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/security/02-authentication.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/security/03-authorization.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/security/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/01-gateway-virtualservice.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/02-routing.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/03-destination-rule.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/05-retry-timeout.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/06-load-balancing.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/07-circuit-breaker.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/08-fault-injection.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/09-traffic-mirror.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/10-session-affinity.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/11-egress-control.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/12-service-entry.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/13-workload-entry.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/troubleshooting/common-errors.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/01-installation.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/02-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/03-traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/04-security.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/05-observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/06-multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/07-best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/networking/01-vpc-cni.md",
+      "errors": []
+    },
+    {
+      "path": "ko/networking/02-vpc-lattice.md",
+      "errors": []
+    },
+    {
+      "path": "ko/networking/03-aws-lb-controller.md",
+      "errors": []
+    },
+    {
+      "path": "ko/networking/04-gateway-api.md",
+      "errors": []
+    },
+    {
+      "path": "ko/networking/05-cross-org-vpc-connectivity.md",
+      "errors": []
+    },
+    {
+      "path": "ko/networking/06-pod-network-benchmark.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/01-introduction.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/02-architecture.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/03-networking-modes.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/04-bgp-deep-dive.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/05-network-policy.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/06-ebpf-dataplane.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/07-advanced-topics.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/08-eks-integration.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/09-operations.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/README.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/calico/glossary.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/cilium/01-introduction.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/networking/cilium/README.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/00-networking-overview-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/01-vpc-cni-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/02-vpc-lattice-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/03-aws-lb-controller-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/04-gateway-api-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/06-pod-network-benchmark-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/01-introduction-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/02-architecture-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/03-networking-modes-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/04-bgp-deep-dive-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/05-network-policy-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/06-ebpf-dataplane-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/07-advanced-topics-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/08-eks-integration-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/09-operations-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/calico/glossary-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/01-introduction-quiz.md",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/02-istio-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/advanced.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/basic.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/comparison.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/resilience.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/installation.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/02-istio.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/01-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/02-traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/03-security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/04-observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/06-best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/01-installation.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/02-basic-concepts.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/03-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/04-aws-integration.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/01-ambient-mode.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/02-multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/03-envoy-filter.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/04-dns-cache.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/05-grpc.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/06-websocket.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/07-sidecar-injection.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/08-argo-rollouts.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/10-keda-autoscaling.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/glossary.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/01-metrics.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/02-tracing.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/03-logging.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/04-dashboards.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/01-outlier-detection.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/02-rate-limiting.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/03-zone-aware-routing.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/security/01-mtls.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/security/02-authentication.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/security/03-authorization.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/security/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/01-gateway-virtualservice.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/02-routing.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/03-destination-rule.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/05-retry-timeout.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/06-load-balancing.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/07-circuit-breaker.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/08-fault-injection.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/09-traffic-mirror.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/10-session-affinity.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/11-egress-control.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/12-service-entry.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/13-workload-entry.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/troubleshooting/common-errors.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/01-installation.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/02-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/03-traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/04-security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/05-observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/06-multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/07-best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/networking/cilium/02-ebpf.md",
+      "sha256": "3a94f29492f26630b46d29b4ff14a6a32a1de8fce1129cc0bde773ebc1c2f810",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "ebpf-technology-deep-dive"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-environment-setup"
+        },
+        {
+          "tag": "h2",
+          "id": "introduction-to-ebpf-technology-and-historical-background"
+        },
+        {
+          "tag": "h3",
+          "id": "from-bpf-to-ebpf-history-of-evolution"
+        },
+        {
+          "tag": "h3",
+          "id": "technical-evolution-of-ebpf-key-features-by-kernel-version"
+        },
+        {
+          "tag": "h3",
+          "id": "growth-and-application-areas"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-vs-traditional-kernel-modules-paradigm-shift"
+        },
+        {
+          "tag": "h2",
+          "id": "in-depth-analysis-of-ebpf-architecture-inside-the-kernel"
+        },
+        {
+          "tag": "h3",
+          "id": "detailed-description-of-ebpf-architecture-components"
+        },
+        {
+          "tag": "h3",
+          "id": "detailed-analysis-of-ebpf-program-lifecycle"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-program-types-and-characteristics"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-maps-core-of-data-sharing-and-state-storage"
+        },
+        {
+          "tag": "h2",
+          "id": "utilizing-ebpf-in-cilium-innovation-in-container-networking"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-architecture-and-the-role-of-ebpf"
+        },
+        {
+          "tag": "h3",
+          "id": "detailed-analysis-of-cilium-s-ebpf-datapath"
+        },
+        {
+          "tag": "h3",
+          "id": "detailed-description-of-cilium-s-major-ebpf-programs"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-s-ebpf-map-usage"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-based-features-and-their-boundaries"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-ebpf-program-development-and-debugging"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-basic-ebpf-program-development"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-advanced-ebpf-program-using-maps"
+        },
+        {
+          "tag": "h4",
+          "id": "user-space-application-and-attachment-lifetime"
+        },
+        {
+          "tag": "h4",
+          "id": "compile-and-run"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-exploring-and-debugging-cilium-ebpf-programs"
+        },
+        {
+          "tag": "h3",
+          "id": "_4-performance-analysis-and-optimization"
+        },
+        {
+          "tag": "h3",
+          "id": "_5-troubleshooting-tips"
+        },
+        {
+          "tag": "h2",
+          "id": "sources"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/02-ebpf-quiz.md",
+      "sha256": "e58f49d7cb28b8a08e159f748ce798dde3433b88c6e8bca6abce9a07b4736cd4",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-ebpf-quiz"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-basic-concepts"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-and-cilium"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-programming"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-performance-and-monitoring"
+        }
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/02-ebpf.md",
+      "sha256": "5c28dea019cb5787b84d0c0c564c6e7f16890b442a51c49031e5fefed2d02bdb",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "ebpf-기술-심층-분석"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-환경-설정"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-기술-소개-및-역사적-배경"
+        },
+        {
+          "tag": "h3",
+          "id": "bpf에서-ebpf로-발전-역사"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf의-기술적-진화-커널-버전별-주요-기능"
+        },
+        {
+          "tag": "h3",
+          "id": "생태계-성장과-활용-분야"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf와-전통적-커널-모듈-비교"
+        },
+        {
+          "tag": "h2",
+          "id": "커널-내부-ebpf-아키텍처-심층-분석"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-아키텍처-구성-요소-상세-설명"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-프로그램-생명주기-상세-분석"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-프로그램-유형과-특성"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-맵-데이터-공유와-상태-저장의-핵심"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium에서의-ebpf-활용-컨테이너-네트워킹의-혁신"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-아키텍처와-ebpf의-역할"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-ebpf-데이터플레인-상세-분석"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-주요-ebpf-프로그램-상세-설명"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium의-ebpf-맵-활용"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-기반-기능과-경계"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-ebpf-프로그램-개발-및-디버깅"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-기본-ebpf-프로그램-개발"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-맵을-활용한-고급-ebpf-프로그램"
+        },
+        {
+          "tag": "h4",
+          "id": "사용자-공간-애플리케이션과-연결-수명"
+        },
+        {
+          "tag": "h4",
+          "id": "컴파일-및-실행"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-cilium-ebpf-프로그램-탐색-및-디버깅"
+        },
+        {
+          "tag": "h3",
+          "id": "_4-성능-분석-및-최적화"
+        },
+        {
+          "tag": "h3",
+          "id": "_5-문제-해결-팁"
+        },
+        {
+          "tag": "h2",
+          "id": "참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/02-ebpf-quiz.md",
+      "sha256": "a2154a73497a9a017266e1f2af5479e93f85c33fceb19acb7988d442cd35504a",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-ebpf-퀴즈"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-기본-개념"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf와-cilium"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-프로그래밍"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-성능-및-모니터링"
+        }
+      ]
+    },
+    {
+      "path": "en/networking/cilium/03-networking.md",
+      "sha256": "3b09a0059bbb4b0e116c1b5ab1b30b51bb0ac3fa902b6818f8a9ed34c16e04df",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "networking-models-and-vxlan"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-environment-setup"
+        },
+        {
+          "tag": "h3",
+          "id": "network-analysis-tools"
+        },
+        {
+          "tag": "h2",
+          "id": "container-networking-model-comparison"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-networking-modes"
+        },
+        {
+          "tag": "h2",
+          "id": "vxlan-technology-deep-dive"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan-packet-structure"
+        },
+        {
+          "tag": "h3",
+          "id": "mtu-budget"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan-vs-other-encapsulations"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium-s-overlay-networking"
+        },
+        {
+          "tag": "h2",
+          "id": "routing-mechanisms"
+        },
+        {
+          "tag": "h3",
+          "id": "encapsulation"
+        },
+        {
+          "tag": "h3",
+          "id": "native-routing"
+        },
+        {
+          "tag": "h2",
+          "id": "performance-optimization-techniques"
+        },
+        {
+          "tag": "h2",
+          "id": "cloud-provider-specific-networking"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-cilium-networking-mode-configuration-and-performance-testing"
+        },
+        {
+          "tag": "h3",
+          "id": "select-one-mode-on-a-fresh-prepared-cluster"
+        },
+        {
+          "tag": "h3",
+          "id": "network-performance-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "sources"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "networking-models-and-vxlan",
+        "lab-environment-setup",
+        "network-analysis-tools",
+        "container-networking-model-comparison",
+        "cilium-networking-modes",
+        "vxlan-technology-deep-dive",
+        "vxlan-packet-structure",
+        "mtu-budget",
+        "vxlan-vs-other-encapsulations",
+        "cilium-s-overlay-networking",
+        "routing-mechanisms",
+        "encapsulation",
+        "native-routing",
+        "performance-optimization-techniques",
+        "cloud-provider-specific-networking",
+        "lab-cilium-networking-mode-configuration-and-performance-testing",
+        "select-one-mode-on-a-fresh-prepared-cluster",
+        "network-performance-testing",
+        "sources",
+        "quiz"
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/03-networking-quiz.md",
+      "sha256": "870d0c4340e9762bf531df6cee792ee1d3f46a65441422ecaf09005d8c915e68",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-networking-validation-exercises"
+        },
+        {
+          "tag": "h2",
+          "id": "prerequisites"
+        },
+        {
+          "tag": "h2",
+          "id": "_1-installation-and-basic-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "_2-network-policy-testing"
+        },
+        {
+          "tag": "h3",
+          "id": "create-an-isolated-test-namespace-and-workloads"
+        },
+        {
+          "tag": "h3",
+          "id": "apply-and-check-the-policy"
+        },
+        {
+          "tag": "h2",
+          "id": "_3-hubble-visibility-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "_4-performance-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "_5-optional-advanced-feature-checks"
+        },
+        {
+          "tag": "h2",
+          "id": "_6-compatibility-checks"
+        },
+        {
+          "tag": "h2",
+          "id": "_7-troubleshooting"
+        },
+        {
+          "tag": "h2",
+          "id": "_8-cleanup"
+        },
+        {
+          "tag": "h2",
+          "id": "validation-limits-and-references"
+        }
+      ],
+      "renderedIds": [
+        "cilium-networking-validation-exercises",
+        "prerequisites",
+        "_1-installation-and-basic-testing",
+        "_2-network-policy-testing",
+        "create-an-isolated-test-namespace-and-workloads",
+        "apply-and-check-the-policy",
+        "_3-hubble-visibility-testing",
+        "_4-performance-testing",
+        "_5-optional-advanced-feature-checks",
+        "_6-compatibility-checks",
+        "_7-troubleshooting",
+        "_8-cleanup",
+        "validation-limits-and-references"
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/03-networking.md",
+      "sha256": "e552c34f3eef0d4aa90d6a422c571766bb30085e9a9875c5eb332e1056618a0c",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "네트워킹-모델-및-vxlan"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-환경-설정"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-분석-도구"
+        },
+        {
+          "tag": "h2",
+          "id": "컨테이너-네트워킹-모델-비교"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-네트워킹-모드"
+        },
+        {
+          "tag": "h2",
+          "id": "vxlan-기술-심층-분석"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan-패킷-구조"
+        },
+        {
+          "tag": "h3",
+          "id": "mtu-계산"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan과-다른-캡슐화-비교"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium의-오버레이-네트워킹"
+        },
+        {
+          "tag": "h2",
+          "id": "라우팅-메커니즘"
+        },
+        {
+          "tag": "h3",
+          "id": "캡슐화"
+        },
+        {
+          "tag": "h3",
+          "id": "네이티브-라우팅"
+        },
+        {
+          "tag": "h2",
+          "id": "성능-최적화-기법"
+        },
+        {
+          "tag": "h2",
+          "id": "클라우드-제공업체별-네트워킹"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-cilium-네트워킹-모드-구성-및-성능-테스트"
+        },
+        {
+          "tag": "h3",
+          "id": "준비된-새-클러스터에서-한-모드-선택"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-성능-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "네트워킹-모델-및-vxlan",
+        "실습-환경-설정",
+        "네트워크-분석-도구",
+        "컨테이너-네트워킹-모델-비교",
+        "cilium-네트워킹-모드",
+        "vxlan-기술-심층-분석",
+        "vxlan-기술-심층-분석",
+        "vxlan-패킷-구조",
+        "mtu-계산",
+        "vxlan과-다른-캡슐화-비교",
+        "cilium의-오버레이-네트워킹",
+        "라우팅-메커니즘",
+        "캡슐화",
+        "네이티브-라우팅",
+        "성능-최적화-기법",
+        "클라우드-제공업체별-네트워킹",
+        "실습-cilium-네트워킹-모드-구성-및-성능-테스트",
+        "준비된-새-클러스터에서-한-모드-선택",
+        "네트워크-성능-테스트",
+        "참고-자료",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/03-networking-quiz.md",
+      "sha256": "9aadee19d5232ed424cd1f5556f9a61f35dcbf600376e72a09560abc5c2cd962",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-네트워킹-검증-실습"
+        },
+        {
+          "tag": "h2",
+          "id": "사전-요구-사항"
+        },
+        {
+          "tag": "h2",
+          "id": "_1-설치-및-기본-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "_2-네트워크-정책-테스트"
+        },
+        {
+          "tag": "h3",
+          "id": "독립적인-namespace와-workload-생성"
+        },
+        {
+          "tag": "h3",
+          "id": "정책-적용과-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "_3-hubble-가시성-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "_4-성능-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "_5-선택적-고급-기능-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "_6-호환성-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "_7-문제-해결"
+        },
+        {
+          "tag": "h2",
+          "id": "_8-정리"
+        },
+        {
+          "tag": "h2",
+          "id": "검증-한계와-참고-자료"
+        }
+      ],
+      "renderedIds": [
+        "cilium-네트워킹-검증-실습",
+        "사전-요구-사항",
+        "_1-설치-및-기본-테스트",
+        "_2-네트워크-정책-테스트",
+        "독립적인-namespace와-workload-생성",
+        "정책-적용과-확인",
+        "_3-hubble-가시성-테스트",
+        "_4-성능-테스트",
+        "_5-선택적-고급-기능-확인",
+        "_6-호환성-확인",
+        "_7-문제-해결",
+        "_8-정리",
+        "검증-한계와-참고-자료"
+      ]
+    },
+    {
+      "path": "en/networking/cilium/04-ipam-policy.md",
+      "sha256": "ea90361a7e86ac25935aafb382527b2cc593402f88b27661c7f176a20c811154",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "ipam-and-network-policies"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-environment-setup"
+        },
+        {
+          "tag": "h2",
+          "id": "ip-address-management-strategies"
+        },
+        {
+          "tag": "h3",
+          "id": "allocators-and-authoritative-state"
+        },
+        {
+          "tag": "h3",
+          "id": "kubernetes-cni-integration"
+        },
+        {
+          "tag": "h2",
+          "id": "ipam-configuration"
+        },
+        {
+          "tag": "h3",
+          "id": "cluster-pool"
+        },
+        {
+          "tag": "h3",
+          "id": "multi-pool-and-ciliumpodippool"
+        },
+        {
+          "tag": "h3",
+          "id": "aws-eni"
+        },
+        {
+          "tag": "h2",
+          "id": "querying-per-node-allocation-state"
+        },
+        {
+          "tag": "h3",
+          "id": "ciliumnode-example"
+        },
+        {
+          "tag": "h3",
+          "id": "mode-specific-inventory"
+        },
+        {
+          "tag": "h2",
+          "id": "network-policy-design-and-implementation"
+        },
+        {
+          "tag": "h3",
+          "id": "resource-and-rule-semantics"
+        },
+        {
+          "tag": "h3",
+          "id": "matched-policy-lab"
+        },
+        {
+          "tag": "h3",
+          "id": "l3-l4-policy"
+        },
+        {
+          "tag": "h3",
+          "id": "l7-http-policy"
+        },
+        {
+          "tag": "h3",
+          "id": "kafka-policy-boundary"
+        },
+        {
+          "tag": "h3",
+          "id": "dns-fqdn-policy"
+        },
+        {
+          "tag": "h3",
+          "id": "cidrs-services-and-entities"
+        },
+        {
+          "tag": "h2",
+          "id": "multi-cluster-scenarios"
+        },
+        {
+          "tag": "h3",
+          "id": "setup-prerequisites-and-partial-sequence"
+        },
+        {
+          "tag": "h3",
+          "id": "global-services-and-cross-cluster-policy"
+        },
+        {
+          "tag": "h2",
+          "id": "validation-and-cleanup"
+        },
+        {
+          "tag": "h2",
+          "id": "sources"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "ipam-and-network-policies",
+        "lab-environment-setup",
+        "ip-address-management-strategies",
+        "allocators-and-authoritative-state",
+        "kubernetes-cni-integration",
+        "ipam-configuration",
+        "cluster-pool",
+        "multi-pool-and-ciliumpodippool",
+        "aws-eni",
+        "querying-per-node-podcidrs-via-ciliumnode-cr",
+        "querying-per-node-allocation-state",
+        "ciliumnode-example",
+        "mode-specific-inventory",
+        "network-policy-design-and-implementation",
+        "resource-and-rule-semantics",
+        "matched-policy-lab",
+        "l3-l4-policy",
+        "l7-http-policy",
+        "kafka-policy-boundary",
+        "dns-fqdn-policy",
+        "cidrs-services-and-entities",
+        "multi-cluster-scenarios",
+        "setup-prerequisites-and-partial-sequence",
+        "global-services-and-cross-cluster-policy",
+        "validation-and-cleanup",
+        "sources",
+        "quiz"
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+      "sha256": "f81f263006770e0d70f4d0dd42d4a973b7160c5c6e02e5ad3888a58ebf614866",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-ipam-and-network-policy-quiz"
+        },
+        {
+          "tag": "h2",
+          "id": "ipam"
+        },
+        {
+          "tag": "h2",
+          "id": "policy-basics"
+        },
+        {
+          "tag": "h2",
+          "id": "peer-selection"
+        },
+        {
+          "tag": "h2",
+          "id": "l7-policy"
+        }
+      ],
+      "renderedIds": [
+        "cilium-ipam-and-network-policy-quiz",
+        "ipam",
+        "policy-basics",
+        "peer-selection",
+        "l7-policy"
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/04-ipam-policy.md",
+      "sha256": "d4117c9f827d0952e9a326a0722f4325d516485c8753b8ee391d6307c650e1ef",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "ipam-및-네트워크-정책"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-환경-설정"
+        },
+        {
+          "tag": "h2",
+          "id": "ip-주소-관리-전략"
+        },
+        {
+          "tag": "h3",
+          "id": "할당-주체와-기준-데이터"
+        },
+        {
+          "tag": "h3",
+          "id": "kubernetes-cni-통합"
+        },
+        {
+          "tag": "h2",
+          "id": "ipam-구성"
+        },
+        {
+          "tag": "h3",
+          "id": "클러스터-풀"
+        },
+        {
+          "tag": "h3",
+          "id": "multi-pool과-ciliumpodippool"
+        },
+        {
+          "tag": "h3",
+          "id": "aws-eni"
+        },
+        {
+          "tag": "h2",
+          "id": "노드별-할당-상태-조회"
+        },
+        {
+          "tag": "h3",
+          "id": "ciliumnode-예제"
+        },
+        {
+          "tag": "h3",
+          "id": "모드별-인벤토리"
+        },
+        {
+          "tag": "h2",
+          "id": "네트워크-정책-설계-및-구현"
+        },
+        {
+          "tag": "h3",
+          "id": "리소스와-규칙-의미"
+        },
+        {
+          "tag": "h3",
+          "id": "label이-일치하는-정책-실습"
+        },
+        {
+          "tag": "h3",
+          "id": "l3-l4-정책"
+        },
+        {
+          "tag": "h3",
+          "id": "l7-http-정책"
+        },
+        {
+          "tag": "h3",
+          "id": "kafka-정책의-경계"
+        },
+        {
+          "tag": "h3",
+          "id": "dns-fqdn-정책"
+        },
+        {
+          "tag": "h3",
+          "id": "cidr·service·entity"
+        },
+        {
+          "tag": "h2",
+          "id": "멀티-클러스터-시나리오"
+        },
+        {
+          "tag": "h3",
+          "id": "설정-조건과-부분-절차"
+        },
+        {
+          "tag": "h3",
+          "id": "global-service와-클러스터-간-정책"
+        },
+        {
+          "tag": "h2",
+          "id": "검증과-정리"
+        },
+        {
+          "tag": "h2",
+          "id": "참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "ipam-및-네트워크-정책",
+        "실습-환경-설정",
+        "ip-주소-관리-전략",
+        "할당-주체와-기준-데이터",
+        "kubernetes-cni-통합",
+        "ipam-구성",
+        "클러스터-풀",
+        "multi-pool과-ciliumpodippool",
+        "aws-eni",
+        "ciliumnode-cr을-활용한-노드별-podcidr-조회",
+        "ciliumnode-cr을-활용한-노드별-podcidr-조회",
+        "노드별-할당-상태-조회",
+        "ciliumnode-예제",
+        "모드별-인벤토리",
+        "네트워크-정책-설계-및-구현",
+        "리소스와-규칙-의미",
+        "label이-일치하는-정책-실습",
+        "l3-l4-정책",
+        "l7-http-정책",
+        "kafka-정책의-경계",
+        "dns-fqdn-정책",
+        "cidr·service·entity",
+        "멀티-클러스터-시나리오",
+        "설정-조건과-부분-절차",
+        "global-service와-클러스터-간-정책",
+        "검증과-정리",
+        "참고-자료",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+      "sha256": "5d58e7ec9bbd80c4ceb362644b2a0dca5e421e77fdd6bb6708eb1d2e2b51c27d",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-ipam-및-네트워크-정책-퀴즈"
+        },
+        {
+          "tag": "h2",
+          "id": "ipam"
+        },
+        {
+          "tag": "h2",
+          "id": "정책-기본"
+        },
+        {
+          "tag": "h2",
+          "id": "통신-대상-선택"
+        },
+        {
+          "tag": "h2",
+          "id": "l7-정책"
+        }
+      ],
+      "renderedIds": [
+        "cilium-ipam-및-네트워크-정책-퀴즈",
+        "ipam",
+        "정책-기본",
+        "통신-대상-선택",
+        "l7-정책"
+      ]
+    },
+    {
+      "path": "en/networking/cilium/05-l2-l7-networking.md",
+      "sha256": "21d7638c2eca6b452ee87e9b15431f04ac20546c8bfb47f042c44011d591579f",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "l2–l7-networking-and-load-balancing"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-environment-setup"
+        },
+        {
+          "tag": "h2",
+          "id": "understanding-the-osi-layers"
+        },
+        {
+          "tag": "h3",
+          "id": "actual-layer-specific-features"
+        },
+        {
+          "tag": "h2",
+          "id": "http-policy-lab"
+        },
+        {
+          "tag": "h2",
+          "id": "service-mesh-integration"
+        },
+        {
+          "tag": "h3",
+          "id": "preserve-istio-s-traffic-interception"
+        },
+        {
+          "tag": "h3",
+          "id": "retain-mtls-and-assign-l7-responsibility"
+        },
+        {
+          "tag": "h2",
+          "id": "load-balancing-architecture"
+        },
+        {
+          "tag": "h3",
+          "id": "bpf-forwarding-modes-and-algorithms"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-and-kube-proxy"
+        },
+        {
+          "tag": "h2",
+          "id": "prepared-dsr-maglev-lab"
+        },
+        {
+          "tag": "h2",
+          "id": "masquerading"
+        },
+        {
+          "tag": "h2",
+          "id": "fragment-handling-and-mtu"
+        },
+        {
+          "tag": "h2",
+          "id": "observability-and-troubleshooting"
+        },
+        {
+          "tag": "h2",
+          "id": "validation-limits-and-sources"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "l2–l7-networking-and-load-balancing",
+        "lab-environment-setup",
+        "understanding-the-osi-layers",
+        "actual-layer-specific-features",
+        "http-policy-lab",
+        "service-mesh-integration",
+        "preserve-istio-s-traffic-interception",
+        "retain-mtls-and-assign-l7-responsibility",
+        "load-balancing-architecture",
+        "bpf-forwarding-modes-and-algorithms",
+        "cilium-and-kube-proxy",
+        "prepared-dsr-maglev-lab",
+        "masquerading",
+        "fragment-handling-and-mtu",
+        "observability-and-troubleshooting",
+        "validation-limits-and-sources",
+        "quiz"
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
+      "sha256": "1839b57d0d8f3815105f8804af186c9146a485a66b50e52c065698fcc94688c0",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-l2–l7-networking-and-load-balancing-quiz"
+        },
+        {
+          "tag": "h2",
+          "id": "multiple-choice-questions"
+        },
+        {
+          "tag": "h2",
+          "id": "short-answer-questions"
+        },
+        {
+          "tag": "h2",
+          "id": "hands-on-questions"
+        }
+      ],
+      "renderedIds": [
+        "cilium-l2–l7-networking-and-load-balancing-quiz",
+        "multiple-choice-questions",
+        "short-answer-questions",
+        "hands-on-questions"
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/05-l2-l7-networking.md",
+      "sha256": "ef7b0ced90094a8ad1921a46a87ef049024884c293b405fd5789213f3fc89096",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "l2–l7-네트워킹-및-로드-밸런싱"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-환경-설정"
+        },
+        {
+          "tag": "h2",
+          "id": "osi-계층-이해"
+        },
+        {
+          "tag": "h3",
+          "id": "실제-계층별-기능"
+        },
+        {
+          "tag": "h2",
+          "id": "http-정책-실습"
+        },
+        {
+          "tag": "h2",
+          "id": "서비스-메시-통합"
+        },
+        {
+          "tag": "h3",
+          "id": "istio-트래픽-경로-보존"
+        },
+        {
+          "tag": "h3",
+          "id": "mtls-유지와-l7-책임-분리"
+        },
+        {
+          "tag": "h2",
+          "id": "로드-밸런싱-아키텍처"
+        },
+        {
+          "tag": "h3",
+          "id": "bpf-전달-모드와-알고리즘"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium과-kube-proxy"
+        },
+        {
+          "tag": "h2",
+          "id": "준비된-dsr-maglev-실습"
+        },
+        {
+          "tag": "h2",
+          "id": "마스커레이딩"
+        },
+        {
+          "tag": "h2",
+          "id": "fragment-처리와-mtu"
+        },
+        {
+          "tag": "h2",
+          "id": "관측과-문제-해결"
+        },
+        {
+          "tag": "h2",
+          "id": "검증-한계와-참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "l2–l7-네트워킹-및-로드-밸런싱",
+        "실습-환경-설정",
+        "osi-계층-이해",
+        "실제-계층별-기능",
+        "http-정책-실습",
+        "서비스-메시-통합",
+        "istio-트래픽-경로-보존",
+        "mtls-유지와-l7-책임-분리",
+        "로드-밸런싱-아키텍처",
+        "bpf-전달-모드와-알고리즘",
+        "cilium과-kube-proxy",
+        "준비된-dsr-maglev-실습",
+        "마스커레이딩",
+        "fragment-처리와-mtu",
+        "관측과-문제-해결",
+        "검증-한계와-참고-자료",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
+      "sha256": "b91d6ef10c5f7cc2f87ba00896e38d62271ac77b395b37ec7a27f2ed27ea5204",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-l2–l7-네트워킹-및-로드-밸런싱-퀴즈"
+        },
+        {
+          "tag": "h2",
+          "id": "객관식-문제"
+        },
+        {
+          "tag": "h2",
+          "id": "단답형-문제"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-문제"
+        }
+      ],
+      "renderedIds": [
+        "cilium-l2–l7-네트워킹-및-로드-밸런싱-퀴즈",
+        "객관식-문제",
+        "단답형-문제",
+        "실습-문제"
+      ]
+    },
+    {
+      "path": "en/networking/cilium/06-security-visibility.md",
+      "sha256": "87652fc2340f9baf00248cafb9876d08b13d6a97208d145d2c9223dcfa350fd3",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "security-and-visibility"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-environment-setup"
+        },
+        {
+          "tag": "h3",
+          "id": "hubble-installation-and-setup"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium-s-security-features"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-security-architecture"
+        },
+        {
+          "tag": "h3",
+          "id": "network-and-application-security"
+        },
+        {
+          "tag": "h3",
+          "id": "identity-authentication-and-encryption"
+        },
+        {
+          "tag": "h3",
+          "id": "encryption-configuration"
+        },
+        {
+          "tag": "h2",
+          "id": "network-visibility-with-hubble"
+        },
+        {
+          "tag": "h3",
+          "id": "hubble-cli-usage-examples"
+        },
+        {
+          "tag": "h2",
+          "id": "network-visibility-and-monitoring"
+        },
+        {
+          "tag": "h3",
+          "id": "hubble-metrics"
+        },
+        {
+          "tag": "h3",
+          "id": "prometheus-integration"
+        },
+        {
+          "tag": "h3",
+          "id": "flow-export-and-retention"
+        },
+        {
+          "tag": "h2",
+          "id": "real-time-threat-detection"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-hubble-installation-and-usage"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-create-and-check-the-workloads"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-apply-and-observe-http-policy"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-verify-default-deny-separately"
+        },
+        {
+          "tag": "h3",
+          "id": "_4-inspect-json-and-export-a-local-summary"
+        },
+        {
+          "tag": "h3",
+          "id": "_5-clean-up-the-test-namespaces"
+        },
+        {
+          "tag": "h2",
+          "id": "primary-references"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "security-and-visibility",
+        "lab-environment-setup",
+        "hubble-installation-and-setup",
+        "cilium-s-security-features",
+        "cilium-security-architecture",
+        "network-and-application-security",
+        "identity-authentication-and-encryption",
+        "encryption-configuration",
+        "network-visibility-with-hubble",
+        "hubble-cli-usage-examples",
+        "network-visibility-and-monitoring",
+        "hubble-metrics",
+        "prometheus-integration",
+        "flow-export-and-retention",
+        "real-time-threat-detection",
+        "lab-hubble-installation-and-usage",
+        "_1-create-and-check-the-workloads",
+        "_2-apply-and-observe-http-policy",
+        "_3-verify-default-deny-separately",
+        "_4-inspect-json-and-export-a-local-summary",
+        "_5-clean-up-the-test-namespaces",
+        "primary-references",
+        "quiz"
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/06-security-visibility.md",
+      "sha256": "0e9975aa37a440f34f99a3f5f63c79790e557d49190a3f75e8954685b986f3db",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "보안-및-가시성"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-환경-설정"
+        },
+        {
+          "tag": "h3",
+          "id": "hubble-설치-및-설정"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium의-보안-기능"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-보안-아키텍처"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-및-애플리케이션-보안"
+        },
+        {
+          "tag": "h3",
+          "id": "id-인증과-암호화"
+        },
+        {
+          "tag": "h3",
+          "id": "암호화-구성"
+        },
+        {
+          "tag": "h2",
+          "id": "hubble을-통한-네트워크-가시성"
+        },
+        {
+          "tag": "h3",
+          "id": "hubble-cli-사용-예제"
+        },
+        {
+          "tag": "h2",
+          "id": "네트워크-가시성-및-모니터링"
+        },
+        {
+          "tag": "h3",
+          "id": "hubble-메트릭"
+        },
+        {
+          "tag": "h3",
+          "id": "prometheus-통합"
+        },
+        {
+          "tag": "h3",
+          "id": "흐름-내보내기와-보존"
+        },
+        {
+          "tag": "h2",
+          "id": "실시간-위협-탐지"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-hubble-설치-및-활용"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-워크로드-생성과-기준-상태-확인"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-http-정책-적용과-관찰"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-기본-거부를-별도로-검증"
+        },
+        {
+          "tag": "h3",
+          "id": "_4-json-확인과-로컬-요약"
+        },
+        {
+          "tag": "h3",
+          "id": "_5-테스트-네임스페이스-정리"
+        },
+        {
+          "tag": "h2",
+          "id": "공식-근거"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "보안-및-가시성",
+        "실습-환경-설정",
+        "hubble-설치-및-설정",
+        "cilium의-보안-기능",
+        "cilium-보안-아키텍처",
+        "네트워크-및-애플리케이션-보안",
+        "id-인증과-암호화",
+        "암호화-구성",
+        "hubble을-통한-네트워크-가시성",
+        "hubble-cli-사용-예제",
+        "네트워크-가시성-및-모니터링",
+        "hubble-메트릭",
+        "prometheus-통합",
+        "흐름-내보내기와-보존",
+        "실시간-위협-탐지",
+        "실습-hubble-설치-및-활용",
+        "_1-워크로드-생성과-기준-상태-확인",
+        "_2-http-정책-적용과-관찰",
+        "_3-기본-거부를-별도로-검증",
+        "_4-json-확인과-로컬-요약",
+        "_5-테스트-네임스페이스-정리",
+        "공식-근거",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/06-security-visibility-quiz.md",
+      "sha256": "ff8e9be1cf844a54113ee1d1d440bbb0148d779c235a976f7f21c5c9335343cd",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-security-and-visibility-quiz"
+        },
+        {
+          "tag": "h2",
+          "id": "network-policy-basics"
+        },
+        {
+          "tag": "h2",
+          "id": "l7-policies"
+        },
+        {
+          "tag": "h2",
+          "id": "encryption-and-security"
+        },
+        {
+          "tag": "h2",
+          "id": "visibility-and-monitoring"
+        }
+      ],
+      "renderedIds": [
+        "cilium-security-and-visibility-quiz",
+        "network-policy-basics",
+        "l7-policies",
+        "encryption-and-security",
+        "visibility-and-monitoring"
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/06-security-visibility-quiz.md",
+      "sha256": "3bda2babdef1e9170e819e6f5ce209183a589c96c8e5c7fbe7b4cecf0b35c414",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-보안-및-가시성-퀴즈"
+        },
+        {
+          "tag": "h2",
+          "id": "네트워크-정책-기본"
+        },
+        {
+          "tag": "h2",
+          "id": "l7-정책"
+        },
+        {
+          "tag": "h2",
+          "id": "암호화-및-보안"
+        },
+        {
+          "tag": "h2",
+          "id": "가시성-및-모니터링"
+        }
+      ],
+      "renderedIds": [
+        "cilium-보안-및-가시성-퀴즈",
+        "네트워크-정책-기본",
+        "l7-정책",
+        "암호화-및-보안",
+        "가시성-및-모니터링"
+      ]
+    },
+    {
+      "path": "en/networking/cilium/07-advanced-topics.md",
+      "sha256": "1893f4155f916c94372dd2f274a9980de18791fb7a1702737332fb3ee295fe79",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "advanced-topics-and-real-world-cases"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-environment-setup"
+        },
+        {
+          "tag": "h3",
+          "id": "performance-testing-environment-setup"
+        },
+        {
+          "tag": "h2",
+          "id": "performance-tuning-and-troubleshooting"
+        },
+        {
+          "tag": "h3",
+          "id": "performance-tuning-architecture"
+        },
+        {
+          "tag": "h3",
+          "id": "performance-tuning-areas"
+        },
+        {
+          "tag": "h3",
+          "id": "map-sizing"
+        },
+        {
+          "tag": "h3",
+          "id": "hubble-cost-and-event-loss"
+        },
+        {
+          "tag": "h3",
+          "id": "advanced-datapath-prerequisites"
+        },
+        {
+          "tag": "h3",
+          "id": "targeted-troubleshooting-commands"
+        },
+        {
+          "tag": "h3",
+          "id": "common-troubleshooting-scenarios"
+        },
+        {
+          "tag": "h2",
+          "id": "large-scale-deployment-strategies"
+        },
+        {
+          "tag": "h3",
+          "id": "large-scale-deployment-architecture"
+        },
+        {
+          "tag": "h3",
+          "id": "rollout-and-recovery"
+        },
+        {
+          "tag": "h2",
+          "id": "real-world-use-case-studies"
+        },
+        {
+          "tag": "h3",
+          "id": "a-documented-historical-scalability-experiment"
+        },
+        {
+          "tag": "h3",
+          "id": "design-scenario-1-large-scale-e-commerce"
+        },
+        {
+          "tag": "h3",
+          "id": "design-scenario-2-financial-services"
+        },
+        {
+          "tag": "h3",
+          "id": "design-scenario-3-telecommunications-and-edge"
+        },
+        {
+          "tag": "h2",
+          "id": "future-roadmap-and-development-direction"
+        },
+        {
+          "tag": "h2",
+          "id": "current-bgp-configuration"
+        },
+        {
+          "tag": "h2",
+          "id": "next-steps"
+        },
+        {
+          "tag": "h2",
+          "id": "primary-references"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "advanced-topics-and-real-world-cases",
+        "lab-environment-setup",
+        "performance-testing-environment-setup",
+        "performance-tuning-and-troubleshooting",
+        "performance-tuning-architecture",
+        "performance-tuning-areas",
+        "map-sizing",
+        "hubble-cost-and-event-loss",
+        "advanced-datapath-prerequisites",
+        "targeted-troubleshooting-commands",
+        "common-troubleshooting-scenarios",
+        "large-scale-deployment-strategies",
+        "large-scale-deployment-architecture",
+        "rollout-and-recovery",
+        "real-world-use-case-studies",
+        "a-documented-historical-scalability-experiment",
+        "design-scenario-1-large-scale-e-commerce",
+        "design-scenario-2-financial-services",
+        "design-scenario-3-telecommunications-and-edge",
+        "future-roadmap-and-development-direction",
+        "current-bgp-configuration",
+        "next-steps",
+        "primary-references",
+        "quiz"
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/07-advanced-topics.md",
+      "sha256": "7627550fc34ac2b6e0f4984f5fce86c488f82db43cff955516b1186990852357",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "고급-주제-및-실제-사례"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-환경-설정"
+        },
+        {
+          "tag": "h3",
+          "id": "성능-테스트-환경-설정"
+        },
+        {
+          "tag": "h2",
+          "id": "성능-튜닝-및-문제-해결"
+        },
+        {
+          "tag": "h3",
+          "id": "성능-튜닝-아키텍처"
+        },
+        {
+          "tag": "h3",
+          "id": "성능-튜닝-영역"
+        },
+        {
+          "tag": "h3",
+          "id": "맵-크기-조정"
+        },
+        {
+          "tag": "h3",
+          "id": "hubble-비용과-이벤트-손실"
+        },
+        {
+          "tag": "h3",
+          "id": "고급-데이터-경로-전제-조건"
+        },
+        {
+          "tag": "h3",
+          "id": "대상-노드를-지정한-문제-해결-명령"
+        },
+        {
+          "tag": "h3",
+          "id": "일반적인-문제-해결-시나리오"
+        },
+        {
+          "tag": "h2",
+          "id": "대규모-배포-전략"
+        },
+        {
+          "tag": "h3",
+          "id": "대규모-배포-아키텍처"
+        },
+        {
+          "tag": "h3",
+          "id": "롤아웃과-복구"
+        },
+        {
+          "tag": "h2",
+          "id": "실제-사용-사례-연구"
+        },
+        {
+          "tag": "h3",
+          "id": "문서화된-과거-확장성-실험"
+        },
+        {
+          "tag": "h3",
+          "id": "설계-시나리오-1-대규모-전자-상거래"
+        },
+        {
+          "tag": "h3",
+          "id": "설계-시나리오-2-금융-서비스"
+        },
+        {
+          "tag": "h3",
+          "id": "설계-시나리오-3-통신과-엣지"
+        },
+        {
+          "tag": "h2",
+          "id": "미래-로드맵-및-발전-방향"
+        },
+        {
+          "tag": "h2",
+          "id": "현재-bgp-구성"
+        },
+        {
+          "tag": "h2",
+          "id": "다음-단계"
+        },
+        {
+          "tag": "h2",
+          "id": "공식-근거"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "고급-주제-및-실제-사례",
+        "실습-환경-설정",
+        "성능-테스트-환경-설정",
+        "성능-튜닝-및-문제-해결",
+        "성능-튜닝-아키텍처",
+        "성능-튜닝-영역",
+        "맵-크기-조정",
+        "hubble-비용과-이벤트-손실",
+        "고급-데이터-경로-전제-조건",
+        "대상-노드를-지정한-문제-해결-명령",
+        "일반적인-문제-해결-시나리오",
+        "대규모-배포-전략",
+        "대규모-배포-아키텍처",
+        "롤아웃과-복구",
+        "실제-사용-사례-연구",
+        "문서화된-과거-확장성-실험",
+        "설계-시나리오-1-대규모-전자-상거래",
+        "설계-시나리오-2-금융-서비스",
+        "설계-시나리오-3-통신과-엣지",
+        "미래-로드맵-및-발전-방향",
+        "현재-bgp-구성",
+        "다음-단계",
+        "공식-근거",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+      "sha256": "9fcf57b0be16581e74bb4757695c31f5e5dfdb16c9c45420350ba057190de9e7",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-advanced-quiz"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-technology"
+        },
+        {
+          "tag": "h2",
+          "id": "networking-models"
+        },
+        {
+          "tag": "h2",
+          "id": "ipam-and-network-policies"
+        },
+        {
+          "tag": "h2",
+          "id": "l2–l7-networking"
+        },
+        {
+          "tag": "h2",
+          "id": "security-and-visibility"
+        },
+        {
+          "tag": "h2",
+          "id": "advanced-topics-and-use-cases"
+        },
+        {
+          "tag": "h2",
+          "id": "performance-and-troubleshooting"
+        }
+      ],
+      "renderedIds": [
+        "cilium-advanced-quiz",
+        "ebpf-technology",
+        "networking-models",
+        "ipam-and-network-policies",
+        "l2–l7-networking",
+        "security-and-visibility",
+        "advanced-topics-and-use-cases",
+        "performance-and-troubleshooting"
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+      "sha256": "0aa515492d979a57bc5e8fda94ff9e3bb8c14231808b9866676a5870e418a842",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-고급-퀴즈"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-기술"
+        },
+        {
+          "tag": "h2",
+          "id": "네트워킹-모델"
+        },
+        {
+          "tag": "h2",
+          "id": "ipam-및-네트워크-정책"
+        },
+        {
+          "tag": "h2",
+          "id": "l2–l7-네트워킹"
+        },
+        {
+          "tag": "h2",
+          "id": "보안-및-가시성"
+        },
+        {
+          "tag": "h2",
+          "id": "고급-주제-및-사용-사례"
+        },
+        {
+          "tag": "h2",
+          "id": "성능-및-문제-해결"
+        }
+      ],
+      "renderedIds": [
+        "cilium-고급-퀴즈",
+        "ebpf-기술",
+        "네트워킹-모델",
+        "ipam-및-네트워크-정책",
+        "l2–l7-네트워킹",
+        "보안-및-가시성",
+        "고급-주제-및-사용-사례",
+        "성능-및-문제-해결"
+      ]
+    },
+    {
+      "path": "en/networking/cilium/glossary.md",
+      "sha256": "622de8da7e521f03b874cb377403f1516725da0cadf97066df333d7dbf4671b0",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "glossary-and-abbreviations"
+        },
+        {
+          "tag": "h2",
+          "id": "a"
+        },
+        {
+          "tag": "h2",
+          "id": "b"
+        },
+        {
+          "tag": "h2",
+          "id": "c"
+        },
+        {
+          "tag": "h2",
+          "id": "d"
+        },
+        {
+          "tag": "h2",
+          "id": "e"
+        },
+        {
+          "tag": "h2",
+          "id": "f"
+        },
+        {
+          "tag": "h2",
+          "id": "g"
+        },
+        {
+          "tag": "h2",
+          "id": "h"
+        },
+        {
+          "tag": "h2",
+          "id": "i"
+        },
+        {
+          "tag": "h2",
+          "id": "k"
+        },
+        {
+          "tag": "h2",
+          "id": "l"
+        },
+        {
+          "tag": "h2",
+          "id": "m"
+        },
+        {
+          "tag": "h2",
+          "id": "n"
+        },
+        {
+          "tag": "h2",
+          "id": "o"
+        },
+        {
+          "tag": "h2",
+          "id": "p"
+        },
+        {
+          "tag": "h2",
+          "id": "r"
+        },
+        {
+          "tag": "h2",
+          "id": "s"
+        },
+        {
+          "tag": "h2",
+          "id": "t"
+        },
+        {
+          "tag": "h2",
+          "id": "u"
+        },
+        {
+          "tag": "h2",
+          "id": "v"
+        },
+        {
+          "tag": "h2",
+          "id": "w"
+        },
+        {
+          "tag": "h2",
+          "id": "x"
+        },
+        {
+          "tag": "h2",
+          "id": "primary-references"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "glossary-and-abbreviations",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "primary-references",
+        "quiz"
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/glossary.md",
+      "sha256": "21c120ff17280e60a87c5e12f878ced05dbba8928121d1f67d020e0b0a0f5de6",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "용어-및-약어"
+        },
+        {
+          "tag": "h2",
+          "id": "a"
+        },
+        {
+          "tag": "h2",
+          "id": "b"
+        },
+        {
+          "tag": "h2",
+          "id": "c"
+        },
+        {
+          "tag": "h2",
+          "id": "d"
+        },
+        {
+          "tag": "h2",
+          "id": "e"
+        },
+        {
+          "tag": "h2",
+          "id": "f"
+        },
+        {
+          "tag": "h2",
+          "id": "g"
+        },
+        {
+          "tag": "h2",
+          "id": "h"
+        },
+        {
+          "tag": "h2",
+          "id": "i"
+        },
+        {
+          "tag": "h2",
+          "id": "k"
+        },
+        {
+          "tag": "h2",
+          "id": "l"
+        },
+        {
+          "tag": "h2",
+          "id": "m"
+        },
+        {
+          "tag": "h2",
+          "id": "n"
+        },
+        {
+          "tag": "h2",
+          "id": "o"
+        },
+        {
+          "tag": "h2",
+          "id": "p"
+        },
+        {
+          "tag": "h2",
+          "id": "r"
+        },
+        {
+          "tag": "h2",
+          "id": "s"
+        },
+        {
+          "tag": "h2",
+          "id": "t"
+        },
+        {
+          "tag": "h2",
+          "id": "u"
+        },
+        {
+          "tag": "h2",
+          "id": "v"
+        },
+        {
+          "tag": "h2",
+          "id": "w"
+        },
+        {
+          "tag": "h2",
+          "id": "x"
+        },
+        {
+          "tag": "h2",
+          "id": "공식-근거"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "용어-및-약어",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "공식-근거",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/glossary-quiz.md",
+      "sha256": "ba73104a8886299431ff98852ac046dfac34c843d9bceab79462b944ceef76ef",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "glossary-quiz"
+        },
+        {
+          "tag": "h2",
+          "id": "multiple-choice-questions"
+        },
+        {
+          "tag": "h2",
+          "id": "short-answer-questions"
+        },
+        {
+          "tag": "h2",
+          "id": "hands-on-questions"
+        }
+      ],
+      "renderedIds": [
+        "glossary-quiz",
+        "multiple-choice-questions",
+        "short-answer-questions",
+        "hands-on-questions"
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/glossary-quiz.md",
+      "sha256": "e3b507d3eb77c162aaf70d8dc7a7dfcd5f86fc9480c0c74c31e04d0aa01768d7",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "용어집-퀴즈"
+        },
+        {
+          "tag": "h2",
+          "id": "객관식-문제"
+        },
+        {
+          "tag": "h2",
+          "id": "단답형-문제"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-문제"
+        }
+      ],
+      "renderedIds": [
+        "용어집-퀴즈",
+        "객관식-문제",
+        "단답형-문제",
+        "실습-문제"
+      ]
+    },
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "sha256": "0edf4130bc247959439feae05f72a539c95684ff97900862633279943b67469c",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "deep-dive-into-networking-concepts"
+        },
+        {
+          "tag": "h2",
+          "id": "learning-objectives"
+        },
+        {
+          "tag": "h2",
+          "id": "table-of-contents"
+        },
+        {
+          "tag": "h2",
+          "id": "osi-model-and-tcp-ip-stack"
+        },
+        {
+          "tag": "h3",
+          "id": "osi-model-and-tcp-ip-model-comparison"
+        },
+        {
+          "tag": "h3",
+          "id": "osi-7-layer-model"
+        },
+        {
+          "tag": "h3",
+          "id": "relationship-between-cilium-and-osi-model"
+        },
+        {
+          "tag": "h3",
+          "id": "tcp-ip-stack"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-features-by-layer"
+        },
+        {
+          "tag": "h2",
+          "id": "container-networking-basics"
+        },
+        {
+          "tag": "h3",
+          "id": "container-network-interface-cni"
+        },
+        {
+          "tag": "h4",
+          "id": "key-components-of-cni"
+        },
+        {
+          "tag": "h4",
+          "id": "main-responsibilities-of-cni-plugins"
+        },
+        {
+          "tag": "h3",
+          "id": "container-networking-models"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-bridge-networking"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-host-networking"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-overlay-networking"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-underlay-networking-direct-routing"
+        },
+        {
+          "tag": "h3",
+          "id": "kubernetes-networking-model"
+        },
+        {
+          "tag": "h4",
+          "id": "kubernetes-network-components"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-s-container-networking-approach"
+        },
+        {
+          "tag": "h2",
+          "id": "overlay-networks"
+        },
+        {
+          "tag": "h3",
+          "id": "how-overlay-networks-work"
+        },
+        {
+          "tag": "h3",
+          "id": "major-overlay-network-protocols"
+        },
+        {
+          "tag": "h4",
+          "id": "vxlan-virtual-extensible-lan"
+        },
+        {
+          "tag": "h4",
+          "id": "geneve-generic-network-virtualization-encapsulation"
+        },
+        {
+          "tag": "h4",
+          "id": "ipsec"
+        },
+        {
+          "tag": "h3",
+          "id": "advantages-and-disadvantages-of-overlay-networks"
+        },
+        {
+          "tag": "h4",
+          "id": "advantages"
+        },
+        {
+          "tag": "h4",
+          "id": "disadvantages"
+        },
+        {
+          "tag": "h3",
+          "id": "overlay-networks-in-cilium"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-vxlan-configuration-example"
+        },
+        {
+          "tag": "h2",
+          "id": "network-address-translation-nat"
+        },
+        {
+          "tag": "h3",
+          "id": "main-types-of-nat"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-source-nat-snat"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-destination-nat-dnat"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-port-address-translation-pat"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-twice-nat-and-bi-directional-nat"
+        },
+        {
+          "tag": "h3",
+          "id": "advantages-and-disadvantages-of-nat"
+        },
+        {
+          "tag": "h4",
+          "id": "advantages-1"
+        },
+        {
+          "tag": "h4",
+          "id": "disadvantages-1"
+        },
+        {
+          "tag": "h3",
+          "id": "nat-in-kubernetes-and-cilium"
+        },
+        {
+          "tag": "h4",
+          "id": "nat-in-kubernetes"
+        },
+        {
+          "tag": "h4",
+          "id": "nat-in-cilium"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-nat-configuration-example"
+        },
+        {
+          "tag": "h2",
+          "id": "routing-protocols"
+        },
+        {
+          "tag": "h3",
+          "id": "classification-of-routing-protocols"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-interior-gateway-protocols-igp"
+        },
+        {
+          "tag": "h5",
+          "id": "distance-vector-protocols"
+        },
+        {
+          "tag": "h5",
+          "id": "link-state-protocols"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-exterior-gateway-protocols-egp"
+        },
+        {
+          "tag": "h3",
+          "id": "routing-protocols-in-container-networking"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-container-networking-with-bgp"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-container-network-routing-mechanisms"
+        },
+        {
+          "tag": "h3",
+          "id": "routing-in-cilium"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-native-routing-direct-routing"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-bgp-routing"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-overlay-routing"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-hybrid-routing"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-routing-configuration-examples"
+        },
+        {
+          "tag": "h4",
+          "id": "native-routing-configuration"
+        },
+        {
+          "tag": "h4",
+          "id": "bgp-routing-configuration"
+        },
+        {
+          "tag": "h4",
+          "id": "overlay-routing-configuration"
+        },
+        {
+          "tag": "h2",
+          "id": "dns-and-service-discovery"
+        },
+        {
+          "tag": "h3",
+          "id": "dns-domain-name-system"
+        },
+        {
+          "tag": "h4",
+          "id": "how-dns-works"
+        },
+        {
+          "tag": "h4",
+          "id": "dns-record-types"
+        },
+        {
+          "tag": "h4",
+          "id": "dns-resolution-process"
+        },
+        {
+          "tag": "h3",
+          "id": "service-discovery-in-container-environments"
+        },
+        {
+          "tag": "h4",
+          "id": "service-discovery-approaches"
+        },
+        {
+          "tag": "h3",
+          "id": "dns-and-service-discovery-in-kubernetes"
+        },
+        {
+          "tag": "h4",
+          "id": "kubernetes-services"
+        },
+        {
+          "tag": "h4",
+          "id": "kubernetes-dns"
+        },
+        {
+          "tag": "h4",
+          "id": "kubernetes-service-discovery-mechanisms"
+        },
+        {
+          "tag": "h3",
+          "id": "dns-and-service-discovery-in-cilium"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-s-dns-based-policies"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-s-service-discovery-enhancements"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-service-configuration-example"
+        },
+        {
+          "tag": "h2",
+          "id": "load-balancing-concepts"
+        },
+        {
+          "tag": "h3",
+          "id": "types-of-load-balancing"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-l4-transport-layer-load-balancing"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-l7-application-layer-load-balancing"
+        },
+        {
+          "tag": "h3",
+          "id": "load-balancing-algorithms"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-round-robin"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-least-connections"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-ip-hash"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-least-response-time"
+        },
+        {
+          "tag": "h4",
+          "id": "_5-random-selection"
+        },
+        {
+          "tag": "h3",
+          "id": "load-balancer-deployment-models"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-hardware-load-balancers"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-software-load-balancers"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-cloud-load-balancers"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-container-native-load-balancers"
+        },
+        {
+          "tag": "h3",
+          "id": "load-balancing-in-kubernetes"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-service-load-balancing"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-ingress-controllers"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-service-mesh"
+        },
+        {
+          "tag": "h3",
+          "id": "load-balancing-in-cilium"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-ebpf-based-load-balancing"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-load-balancing-algorithms"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-l7-load-balancing"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-global-service-load-balancing"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-load-balancing-configuration-example"
+        },
+        {
+          "tag": "h2",
+          "id": "network-security-basics"
+        },
+        {
+          "tag": "h3",
+          "id": "core-network-security-concepts"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-defense-in-depth"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-principle-of-least-privilege"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-network-segmentation"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-encryption"
+        },
+        {
+          "tag": "h3",
+          "id": "container-networking-security-threats"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-network-based-attacks"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-application-layer-attacks"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-container-specific-threats"
+        },
+        {
+          "tag": "h3",
+          "id": "network-security-controls"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-firewalls"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-intrusion-detection-and-prevention-systems-ids-ips"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-network-policies"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-encryption-protocols"
+        },
+        {
+          "tag": "h3",
+          "id": "network-security-in-kubernetes"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-network-policies"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-service-mesh-security"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-security-contexts"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-s-network-security-features"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-identity-based-security"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-transparent-encryption"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-threat-detection-and-visibility"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-l3-l7-policy-enforcement"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-network-security-configuration-example"
+        },
+        {
+          "tag": "h3",
+          "id": "network-security-best-practices"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-default-deny-policy"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-defense-in-depth-approach"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-least-privilege-networking"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-continuous-monitoring-and-auditing"
+        },
+        {
+          "tag": "h2",
+          "id": "primary-references"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "deep-dive-into-networking-concepts",
+        "learning-objectives",
+        "table-of-contents",
+        "osi-model-and-tcp-ip-stack",
+        "osi-model-and-tcp-ip-model-comparison",
+        "osi-7-layer-model",
+        "relationship-between-cilium-and-osi-model",
+        "tcp-ip-stack",
+        "cilium-features-by-layer",
+        "container-networking-basics",
+        "container-network-interface-cni",
+        "key-components-of-cni",
+        "main-responsibilities-of-cni-plugins",
+        "container-networking-models",
+        "_1-bridge-networking",
+        "_2-host-networking",
+        "_3-overlay-networking",
+        "_4-underlay-networking-direct-routing",
+        "kubernetes-networking-model",
+        "kubernetes-network-components",
+        "cilium-s-container-networking-approach",
+        "overlay-networks",
+        "how-overlay-networks-work",
+        "major-overlay-network-protocols",
+        "vxlan-virtual-extensible-lan",
+        "geneve-generic-network-virtualization-encapsulation",
+        "ipsec",
+        "advantages-and-disadvantages-of-overlay-networks",
+        "advantages",
+        "disadvantages",
+        "overlay-networks-in-cilium",
+        "cilium-vxlan-configuration-example",
+        "network-address-translation-nat",
+        "main-types-of-nat",
+        "_1-source-nat-snat",
+        "_2-destination-nat-dnat",
+        "_3-port-address-translation-pat",
+        "_4-twice-nat-and-bi-directional-nat",
+        "advantages-and-disadvantages-of-nat",
+        "advantages-1",
+        "disadvantages-1",
+        "nat-in-kubernetes-and-cilium",
+        "nat-in-kubernetes",
+        "nat-in-cilium",
+        "cilium-nat-configuration-example",
+        "routing-protocols",
+        "classification-of-routing-protocols",
+        "_1-interior-gateway-protocols-igp",
+        "distance-vector-protocols",
+        "link-state-protocols",
+        "_2-exterior-gateway-protocols-egp",
+        "routing-protocols-in-container-networking",
+        "_1-container-networking-with-bgp",
+        "_2-container-network-routing-mechanisms",
+        "routing-in-cilium",
+        "_1-native-routing-direct-routing",
+        "_2-bgp-routing",
+        "_3-overlay-routing",
+        "_4-hybrid-routing",
+        "cilium-routing-configuration-examples",
+        "native-routing-configuration",
+        "bgp-routing-configuration",
+        "overlay-routing-configuration",
+        "dns-and-service-discovery",
+        "dns-domain-name-system",
+        "how-dns-works",
+        "dns-record-types",
+        "dns-resolution-process",
+        "service-discovery-in-container-environments",
+        "service-discovery-approaches",
+        "dns-and-service-discovery-in-kubernetes",
+        "kubernetes-services",
+        "kubernetes-dns",
+        "kubernetes-service-discovery-mechanisms",
+        "dns-and-service-discovery-in-cilium",
+        "cilium-s-dns-based-policies",
+        "cilium-s-service-discovery-enhancements",
+        "cilium-service-configuration-example",
+        "load-balancing-concepts",
+        "types-of-load-balancing",
+        "_1-l4-transport-layer-load-balancing",
+        "_2-l7-application-layer-load-balancing",
+        "load-balancing-algorithms",
+        "_1-round-robin",
+        "_2-least-connections",
+        "_3-ip-hash",
+        "_4-least-response-time",
+        "_5-random-selection",
+        "load-balancer-deployment-models",
+        "_1-hardware-load-balancers",
+        "_2-software-load-balancers",
+        "_3-cloud-load-balancers",
+        "_4-container-native-load-balancers",
+        "load-balancing-in-kubernetes",
+        "_1-service-load-balancing",
+        "_2-ingress-controllers",
+        "_3-service-mesh",
+        "load-balancing-in-cilium",
+        "_1-ebpf-based-load-balancing",
+        "_2-load-balancing-algorithms",
+        "_3-l7-load-balancing",
+        "_4-global-service-load-balancing",
+        "cilium-load-balancing-configuration-example",
+        "network-security-basics",
+        "core-network-security-concepts",
+        "_1-defense-in-depth",
+        "_2-principle-of-least-privilege",
+        "_3-network-segmentation",
+        "_4-encryption",
+        "container-networking-security-threats",
+        "_1-network-based-attacks",
+        "_2-application-layer-attacks",
+        "_3-container-specific-threats",
+        "network-security-controls",
+        "_1-firewalls",
+        "_2-intrusion-detection-and-prevention-systems-ids-ips",
+        "_3-network-policies",
+        "_4-encryption-protocols",
+        "network-security-in-kubernetes",
+        "_1-network-policies",
+        "_2-service-mesh-security",
+        "_3-security-contexts",
+        "cilium-s-network-security-features",
+        "_1-identity-based-security",
+        "_2-transparent-encryption",
+        "_3-threat-detection-and-visibility",
+        "_4-l3-l7-policy-enforcement",
+        "cilium-network-security-configuration-example",
+        "network-security-best-practices",
+        "_1-default-deny-policy",
+        "_2-defense-in-depth-approach",
+        "_3-least-privilege-networking",
+        "_4-continuous-monitoring-and-auditing",
+        "primary-references",
+        "quiz"
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "sha256": "af76770e756aa6c73f7ae7c51ea6666e7096a7a6dfc89375625d504880d4d984",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "네트워킹-개념-심층-분석"
+        },
+        {
+          "tag": "h2",
+          "id": "학습-목표"
+        },
+        {
+          "tag": "h2",
+          "id": "목차"
+        },
+        {
+          "tag": "h2",
+          "id": "osi-모델-및-tcp-ip-스택"
+        },
+        {
+          "tag": "h3",
+          "id": "osi-모델과-tcp-ip-모델-비교"
+        },
+        {
+          "tag": "h3",
+          "id": "osi-7계층-모델"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium과-osi-모델의-관계"
+        },
+        {
+          "tag": "h3",
+          "id": "tcp-ip-스택"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium과-계층별-기능"
+        },
+        {
+          "tag": "h2",
+          "id": "컨테이너-네트워킹-기초"
+        },
+        {
+          "tag": "h3",
+          "id": "컨테이너-네트워크-인터페이스-cni"
+        },
+        {
+          "tag": "h4",
+          "id": "cni의-주요-구성-요소"
+        },
+        {
+          "tag": "h4",
+          "id": "cni-플러그인의-주요-책임"
+        },
+        {
+          "tag": "h3",
+          "id": "컨테이너-네트워킹-모델"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-브리지-네트워킹"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-호스트-네트워킹"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-오버레이-네트워킹"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-언더레이-네트워킹-직접-라우팅"
+        },
+        {
+          "tag": "h3",
+          "id": "kubernetes-네트워킹-모델"
+        },
+        {
+          "tag": "h4",
+          "id": "kubernetes-네트워크-구성-요소"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium의-컨테이너-네트워킹-접근-방식"
+        },
+        {
+          "tag": "h2",
+          "id": "오버레이-네트워크"
+        },
+        {
+          "tag": "h3",
+          "id": "오버레이-네트워크의-작동-원리"
+        },
+        {
+          "tag": "h3",
+          "id": "주요-오버레이-네트워크-프로토콜"
+        },
+        {
+          "tag": "h4",
+          "id": "vxlan-virtual-extensible-lan"
+        },
+        {
+          "tag": "h4",
+          "id": "geneve-generic-network-virtualization-encapsulation"
+        },
+        {
+          "tag": "h4",
+          "id": "ipsec"
+        },
+        {
+          "tag": "h3",
+          "id": "오버레이-네트워크의-장단점"
+        },
+        {
+          "tag": "h4",
+          "id": "장점"
+        },
+        {
+          "tag": "h4",
+          "id": "단점"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium에서의-오버레이-네트워크"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-vxlan-구성-예제"
+        },
+        {
+          "tag": "h2",
+          "id": "네트워크-주소-변환-nat"
+        },
+        {
+          "tag": "h3",
+          "id": "nat의-주요-유형"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-소스-nat-snat"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-목적지-nat-dnat"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-포트-주소-변환-pat"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-twice-nat와-양방향-nat"
+        },
+        {
+          "tag": "h3",
+          "id": "nat의-장단점"
+        },
+        {
+          "tag": "h4",
+          "id": "장점-1"
+        },
+        {
+          "tag": "h4",
+          "id": "단점-1"
+        },
+        {
+          "tag": "h3",
+          "id": "kubernetes-및-cilium에서의-nat"
+        },
+        {
+          "tag": "h4",
+          "id": "kubernetes에서의-nat"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium에서의-nat"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-nat-구성-예제"
+        },
+        {
+          "tag": "h2",
+          "id": "라우팅-프로토콜"
+        },
+        {
+          "tag": "h3",
+          "id": "라우팅-프로토콜의-분류"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-내부-게이트웨이-프로토콜-igp"
+        },
+        {
+          "tag": "h5",
+          "id": "거리-벡터-프로토콜"
+        },
+        {
+          "tag": "h5",
+          "id": "링크-상태-프로토콜"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-외부-게이트웨이-프로토콜-egp"
+        },
+        {
+          "tag": "h3",
+          "id": "컨테이너-네트워킹에서의-라우팅-프로토콜"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-bgp를-활용한-컨테이너-네트워킹"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-컨테이너-네트워크-라우팅-메커니즘"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium에서의-라우팅"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-직접-라우팅-native-routing"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-bgp-라우팅"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-오버레이-라우팅"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-하이브리드-라우팅"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-라우팅-구성-예제"
+        },
+        {
+          "tag": "h4",
+          "id": "직접-라우팅-구성"
+        },
+        {
+          "tag": "h4",
+          "id": "bgp-라우팅-구성"
+        },
+        {
+          "tag": "h4",
+          "id": "오버레이-라우팅-구성"
+        },
+        {
+          "tag": "h2",
+          "id": "dns-및-서비스-디스커버리"
+        },
+        {
+          "tag": "h3",
+          "id": "dns-domain-name-system"
+        },
+        {
+          "tag": "h4",
+          "id": "dns-작동-원리"
+        },
+        {
+          "tag": "h4",
+          "id": "dns-레코드-유형"
+        },
+        {
+          "tag": "h4",
+          "id": "dns-해석-과정"
+        },
+        {
+          "tag": "h3",
+          "id": "컨테이너-환경에서의-서비스-디스커버리"
+        },
+        {
+          "tag": "h4",
+          "id": "서비스-디스커버리-접근-방식"
+        },
+        {
+          "tag": "h3",
+          "id": "kubernetes에서의-dns-및-서비스-디스커버리"
+        },
+        {
+          "tag": "h4",
+          "id": "kubernetes-서비스"
+        },
+        {
+          "tag": "h4",
+          "id": "kubernetes-dns"
+        },
+        {
+          "tag": "h4",
+          "id": "kubernetes-서비스-디스커버리-메커니즘"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium에서의-dns-및-서비스-디스커버리"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium의-dns-기반-정책"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium의-서비스-디스커버리-향상"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-서비스-구성-예제"
+        },
+        {
+          "tag": "h2",
+          "id": "로드-밸런싱-개념"
+        },
+        {
+          "tag": "h3",
+          "id": "로드-밸런싱-유형"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-l4-전송-계층-로드-밸런싱"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-l7-애플리케이션-계층-로드-밸런싱"
+        },
+        {
+          "tag": "h3",
+          "id": "로드-밸런싱-알고리즘"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-라운드-로빈-round-robin"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-최소-연결-least-connections"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-ip-해시-ip-hash"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-최소-응답-시간-least-response-time"
+        },
+        {
+          "tag": "h4",
+          "id": "_5-임의-선택-random"
+        },
+        {
+          "tag": "h3",
+          "id": "로드-밸런서-배포-모델"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-하드웨어-로드-밸런서"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-소프트웨어-로드-밸런서"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-클라우드-로드-밸런서"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-컨테이너-네이티브-로드-밸런서"
+        },
+        {
+          "tag": "h3",
+          "id": "kubernetes에서의-로드-밸런싱"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-서비스-로드-밸런싱"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-ingress-컨트롤러"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-서비스-메시"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium에서의-로드-밸런싱"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-ebpf-기반-로드-밸런싱"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-로드-밸런싱-알고리즘"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-l7-로드-밸런싱"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-글로벌-서비스-로드-밸런싱"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-로드-밸런싱-구성-예제"
+        },
+        {
+          "tag": "h2",
+          "id": "네트워크-보안-기초"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-보안의-핵심-개념"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-심층-방어-defense-in-depth"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-최소-권한-원칙"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-네트워크-세분화"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-암호화"
+        },
+        {
+          "tag": "h3",
+          "id": "컨테이너-네트워킹-보안-위협"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-네트워크-기반-공격"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-애플리케이션-계층-공격"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-컨테이너-특화-위협"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-보안-제어"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-방화벽"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-침입-탐지-및-방지-시스템-ids-ips"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-네트워크-정책"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-암호화-프로토콜"
+        },
+        {
+          "tag": "h3",
+          "id": "kubernetes에서의-네트워크-보안"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-네트워크-정책"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-서비스-메시-보안"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-보안-컨텍스트"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium의-네트워크-보안-기능"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-신원-기반-보안"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-투명한-암호화"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-위협-탐지-및-가시성"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-l3-l7-정책-시행"
+        },
+        {
+          "tag": "h4",
+          "id": "cilium-네트워크-보안-구성-예제"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-보안-모범-사례"
+        },
+        {
+          "tag": "h4",
+          "id": "_1-기본-거부-정책"
+        },
+        {
+          "tag": "h4",
+          "id": "_2-심층-방어-접근-방식"
+        },
+        {
+          "tag": "h4",
+          "id": "_3-최소-권한-네트워킹"
+        },
+        {
+          "tag": "h4",
+          "id": "_4-지속적인-모니터링-및-감사"
+        },
+        {
+          "tag": "h2",
+          "id": "공식-근거"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "네트워킹-개념-심층-분석",
+        "학습-목표",
+        "목차",
+        "osi-모델-및-tcp-ip-스택",
+        "osi-모델과-tcp-ip-모델-비교",
+        "osi-7계층-모델",
+        "cilium과-osi-모델의-관계",
+        "tcp-ip-스택",
+        "cilium과-계층별-기능",
+        "컨테이너-네트워킹-기초",
+        "컨테이너-네트워크-인터페이스-cni",
+        "cni의-주요-구성-요소",
+        "cni-플러그인의-주요-책임",
+        "컨테이너-네트워킹-모델",
+        "_1-브리지-네트워킹",
+        "_2-호스트-네트워킹",
+        "_3-오버레이-네트워킹",
+        "_4-언더레이-네트워킹-직접-라우팅",
+        "kubernetes-네트워킹-모델",
+        "kubernetes-네트워크-구성-요소",
+        "cilium의-컨테이너-네트워킹-접근-방식",
+        "오버레이-네트워크",
+        "오버레이-네트워크의-작동-원리",
+        "주요-오버레이-네트워크-프로토콜",
+        "vxlan-virtual-extensible-lan",
+        "geneve-generic-network-virtualization-encapsulation",
+        "ipsec",
+        "오버레이-네트워크의-장단점",
+        "장점",
+        "단점",
+        "cilium에서의-오버레이-네트워크",
+        "cilium-vxlan-구성-예제",
+        "네트워크-주소-변환-nat",
+        "nat의-주요-유형",
+        "_1-소스-nat-snat",
+        "_2-목적지-nat-dnat",
+        "_3-포트-주소-변환-pat",
+        "_4-twice-nat와-양방향-nat",
+        "nat의-장단점",
+        "장점-1",
+        "단점-1",
+        "kubernetes-및-cilium에서의-nat",
+        "kubernetes에서의-nat",
+        "cilium에서의-nat",
+        "cilium-nat-구성-예제",
+        "라우팅-프로토콜",
+        "라우팅-프로토콜의-분류",
+        "_1-내부-게이트웨이-프로토콜-igp",
+        "거리-벡터-프로토콜",
+        "링크-상태-프로토콜",
+        "_2-외부-게이트웨이-프로토콜-egp",
+        "컨테이너-네트워킹에서의-라우팅-프로토콜",
+        "_1-bgp를-활용한-컨테이너-네트워킹",
+        "_2-컨테이너-네트워크-라우팅-메커니즘",
+        "cilium에서의-라우팅",
+        "_1-직접-라우팅-native-routing",
+        "_2-bgp-라우팅",
+        "_3-오버레이-라우팅",
+        "_4-하이브리드-라우팅",
+        "cilium-라우팅-구성-예제",
+        "직접-라우팅-구성",
+        "bgp-라우팅-구성",
+        "오버레이-라우팅-구성",
+        "dns-및-서비스-디스커버리",
+        "dns-domain-name-system",
+        "dns-작동-원리",
+        "dns-레코드-유형",
+        "dns-해석-과정",
+        "컨테이너-환경에서의-서비스-디스커버리",
+        "서비스-디스커버리-접근-방식",
+        "kubernetes에서의-dns-및-서비스-디스커버리",
+        "kubernetes-서비스",
+        "kubernetes-dns",
+        "kubernetes-서비스-디스커버리-메커니즘",
+        "cilium에서의-dns-및-서비스-디스커버리",
+        "cilium의-dns-기반-정책",
+        "cilium의-서비스-디스커버리-향상",
+        "cilium-서비스-구성-예제",
+        "로드-밸런싱-개념",
+        "로드-밸런싱-유형",
+        "_1-l4-전송-계층-로드-밸런싱",
+        "_2-l7-애플리케이션-계층-로드-밸런싱",
+        "로드-밸런싱-알고리즘",
+        "_1-라운드-로빈-round-robin",
+        "_2-최소-연결-least-connections",
+        "_3-ip-해시-ip-hash",
+        "_4-최소-응답-시간-least-response-time",
+        "_5-임의-선택-random",
+        "로드-밸런서-배포-모델",
+        "_1-하드웨어-로드-밸런서",
+        "_2-소프트웨어-로드-밸런서",
+        "_3-클라우드-로드-밸런서",
+        "_4-컨테이너-네이티브-로드-밸런서",
+        "kubernetes에서의-로드-밸런싱",
+        "_1-서비스-로드-밸런싱",
+        "_2-ingress-컨트롤러",
+        "_3-서비스-메시",
+        "cilium에서의-로드-밸런싱",
+        "_1-ebpf-기반-로드-밸런싱",
+        "_2-로드-밸런싱-알고리즘",
+        "_3-l7-로드-밸런싱",
+        "_4-글로벌-서비스-로드-밸런싱",
+        "cilium-로드-밸런싱-구성-예제",
+        "네트워크-보안-기초",
+        "네트워크-보안의-핵심-개념",
+        "_1-심층-방어-defense-in-depth",
+        "_2-최소-권한-원칙",
+        "_3-네트워크-세분화",
+        "_4-암호화",
+        "컨테이너-네트워킹-보안-위협",
+        "_1-네트워크-기반-공격",
+        "_2-애플리케이션-계층-공격",
+        "_3-컨테이너-특화-위협",
+        "네트워크-보안-제어",
+        "_1-방화벽",
+        "_2-침입-탐지-및-방지-시스템-ids-ips",
+        "_3-네트워크-정책",
+        "_4-암호화-프로토콜",
+        "kubernetes에서의-네트워크-보안",
+        "_1-네트워크-정책",
+        "_2-서비스-메시-보안",
+        "_3-보안-컨텍스트",
+        "cilium의-네트워크-보안-기능",
+        "_1-신원-기반-보안",
+        "_2-투명한-암호화",
+        "_3-위협-탐지-및-가시성",
+        "_4-l3-l7-정책-시행",
+        "cilium-네트워크-보안-구성-예제",
+        "네트워크-보안-모범-사례",
+        "_1-기본-거부-정책",
+        "_2-심층-방어-접근-방식",
+        "_3-최소-권한-네트워킹",
+        "_4-지속적인-모니터링-및-감사",
+        "공식-근거",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/networking-concepts-quiz.md",
+      "sha256": "b32b11c91299e5b8b5c4690b6b323bfc3d6e601f28d213e2936b0a26e6104dcc",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-networking-concepts-quiz"
+        },
+        {
+          "tag": "h2",
+          "id": "osi-and-basic-concepts"
+        },
+        {
+          "tag": "h2",
+          "id": "container-networking"
+        },
+        {
+          "tag": "h2",
+          "id": "ipam"
+        },
+        {
+          "tag": "h2",
+          "id": "services-and-load-balancing"
+        },
+        {
+          "tag": "h2",
+          "id": "network-policies"
+        },
+        {
+          "tag": "h2",
+          "id": "advanced-concepts"
+        }
+      ],
+      "renderedIds": [
+        "cilium-networking-concepts-quiz",
+        "osi-and-basic-concepts",
+        "container-networking",
+        "ipam",
+        "services-and-load-balancing",
+        "network-policies",
+        "advanced-concepts"
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/networking-concepts-quiz.md",
+      "sha256": "40cf2200edc7857728f76165b49293e7ce486ba99f8c9c985604a530d82b8b6a",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-네트워킹-개념-퀴즈"
+        },
+        {
+          "tag": "h2",
+          "id": "osi-및-기본-개념"
+        },
+        {
+          "tag": "h2",
+          "id": "컨테이너-네트워킹"
+        },
+        {
+          "tag": "h2",
+          "id": "ipam"
+        },
+        {
+          "tag": "h2",
+          "id": "서비스-및-로드-밸런싱"
+        },
+        {
+          "tag": "h2",
+          "id": "네트워크-정책"
+        },
+        {
+          "tag": "h2",
+          "id": "고급-개념"
+        }
+      ],
+      "renderedIds": [
+        "cilium-네트워킹-개념-퀴즈",
+        "osi-및-기본-개념",
+        "컨테이너-네트워킹",
+        "ipam",
+        "서비스-및-로드-밸런싱",
+        "네트워크-정책",
+        "고급-개념"
+      ]
+    },
+    {
+      "path": "en/observability/README.md",
+      "sha256": "f71ca8863b869e757817ccf61c5991fbdff2b40fbced7729a2f58dc4001aa412",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "observability-overview"
+        },
+        {
+          "tag": "h2",
+          "id": "introduction"
+        },
+        {
+          "tag": "h2",
+          "id": "observability-vs-monitoring"
+        },
+        {
+          "tag": "h2",
+          "id": "the-three-pillars-of-observability"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-logs"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-metrics"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-traces"
+        },
+        {
+          "tag": "h2",
+          "id": "correlation-between-the-three-pillars"
+        },
+        {
+          "tag": "h3",
+          "id": "trace-to-log-correlation"
+        },
+        {
+          "tag": "h3",
+          "id": "metric-to-trace-correlation-exemplars"
+        },
+        {
+          "tag": "h2",
+          "id": "opentelemetry-and-standardization"
+        },
+        {
+          "tag": "h2",
+          "id": "observability-strategy-for-eks-environments"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-layer-based-observability"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-example-tool-choices"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-cost-optimization-strategies"
+        },
+        {
+          "tag": "h2",
+          "id": "observability-maturity-model"
+        },
+        {
+          "tag": "h2",
+          "id": "section-guide"
+        },
+        {
+          "tag": "h3",
+          "id": "logging"
+        },
+        {
+          "tag": "h3",
+          "id": "metrics"
+        },
+        {
+          "tag": "h3",
+          "id": "tracing"
+        },
+        {
+          "tag": "h3",
+          "id": "grafana-dashboards"
+        },
+        {
+          "tag": "h3",
+          "id": "alerting"
+        },
+        {
+          "tag": "h3",
+          "id": "observability-optimization"
+        },
+        {
+          "tag": "h3",
+          "id": "integrated-labs"
+        },
+        {
+          "tag": "h2",
+          "id": "getting-started"
+        },
+        {
+          "tag": "h2",
+          "id": "references"
+        }
+      ],
+      "renderedIds": [
+        "observability-overview",
+        "introduction",
+        "observability-vs-monitoring",
+        "the-three-pillars-of-observability",
+        "_1-logs",
+        "_2-metrics",
+        "_3-traces",
+        "correlation-between-the-three-pillars",
+        "trace-to-log-correlation",
+        "metric-to-trace-correlation-exemplars",
+        "opentelemetry-and-standardization",
+        "observability-strategy-for-eks-environments",
+        "_1-layer-based-observability",
+        "_2-example-tool-choices",
+        "_3-cost-optimization-strategies",
+        "observability-maturity-model",
+        "section-guide",
+        "logging",
+        "metrics",
+        "tracing",
+        "grafana-dashboards",
+        "alerting",
+        "observability-optimization",
+        "integrated-labs",
+        "getting-started",
+        "references"
+      ]
+    },
+    {
+      "path": "ko/observability/README.md",
+      "sha256": "bb40f9d01942e8a7c50c1b18f079cf2631b1db9598af8e84b6df838d9bab416e",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "observability-개요"
+        },
+        {
+          "tag": "h2",
+          "id": "소개"
+        },
+        {
+          "tag": "h2",
+          "id": "observability-vs-monitoring"
+        },
+        {
+          "tag": "h2",
+          "id": "관측성의-3가지-축-three-pillars"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-logs-로그"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-metrics-메트릭"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-traces-추적"
+        },
+        {
+          "tag": "h2",
+          "id": "_3가지-축의-상호-연관성"
+        },
+        {
+          "tag": "h3",
+          "id": "trace-to-log-상관분석"
+        },
+        {
+          "tag": "h3",
+          "id": "metric-to-trace-상관분석-exemplars"
+        },
+        {
+          "tag": "h2",
+          "id": "opentelemetry와-표준화"
+        },
+        {
+          "tag": "h2",
+          "id": "eks-환경에서의-관측성-전략"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-계층별-관측성"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-도구-선택-예시"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-비용-최적화-전략"
+        },
+        {
+          "tag": "h2",
+          "id": "관측성-성숙도-모델"
+        },
+        {
+          "tag": "h2",
+          "id": "섹션-가이드"
+        },
+        {
+          "tag": "h3",
+          "id": "logging-로깅"
+        },
+        {
+          "tag": "h3",
+          "id": "metrics-메트릭"
+        },
+        {
+          "tag": "h3",
+          "id": "tracing-추적"
+        },
+        {
+          "tag": "h3",
+          "id": "grafana-대시보드"
+        },
+        {
+          "tag": "h3",
+          "id": "alerting-알림"
+        },
+        {
+          "tag": "h3",
+          "id": "관측성-최적화"
+        },
+        {
+          "tag": "h3",
+          "id": "통합-실습"
+        },
+        {
+          "tag": "h2",
+          "id": "시작하기"
+        },
+        {
+          "tag": "h2",
+          "id": "참고-자료"
+        }
+      ],
+      "renderedIds": [
+        "observability-개요",
+        "소개",
+        "observability-vs-monitoring",
+        "관측성의-3가지-축-three-pillars",
+        "_1-logs-로그",
+        "_2-metrics-메트릭",
+        "_3-traces-추적",
+        "_3가지-축의-상호-연관성",
+        "trace-to-log-상관분석",
+        "metric-to-trace-상관분석-exemplars",
+        "opentelemetry와-표준화",
+        "eks-환경에서의-관측성-전략",
+        "_1-계층별-관측성",
+        "_2-도구-선택-예시",
+        "_3-비용-최적화-전략",
+        "관측성-성숙도-모델",
+        "섹션-가이드",
+        "logging-로깅",
+        "metrics-메트릭",
+        "tracing-추적",
+        "grafana-대시보드",
+        "alerting-알림",
+        "관측성-최적화",
+        "통합-실습",
+        "시작하기",
+        "참고-자료"
+      ]
+    },
+    {
+      "path": "en/observability/metrics/README.md",
+      "sha256": "5d7b0ed8700905276777c192047fbb86ee05b6ace7c5bd06d8ace3c25d546bd7",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "metrics-overview"
+        },
+        {
+          "tag": "h2",
+          "id": "table-of-contents"
+        },
+        {
+          "tag": "h2",
+          "id": "metrics-fundamentals"
+        },
+        {
+          "tag": "h3",
+          "id": "naming-and-units"
+        },
+        {
+          "tag": "h2",
+          "id": "metric-types"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-counter"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-gauge"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-histogram"
+        },
+        {
+          "tag": "h3",
+          "id": "_4-summary"
+        },
+        {
+          "tag": "h2",
+          "id": "pull-vs-push-model"
+        },
+        {
+          "tag": "h3",
+          "id": "pull-and-kubernetes-discovery"
+        },
+        {
+          "tag": "h3",
+          "id": "push-and-service-level-batch-jobs"
+        },
+        {
+          "tag": "h2",
+          "id": "cardinality-and-metric-design"
+        },
+        {
+          "tag": "h2",
+          "id": "long-term-storage-requirements"
+        },
+        {
+          "tag": "h3",
+          "id": "retention-planning"
+        },
+        {
+          "tag": "h3",
+          "id": "remote-write"
+        },
+        {
+          "tag": "h2",
+          "id": "solution-comparison"
+        },
+        {
+          "tag": "h3",
+          "id": "deployment-and-operational-boundaries"
+        },
+        {
+          "tag": "h3",
+          "id": "cost-inputs-not-unsupported-monthly-totals"
+        },
+        {
+          "tag": "h2",
+          "id": "metrics-collection-architecture"
+        },
+        {
+          "tag": "h2",
+          "id": "primary-references"
+        },
+        {
+          "tag": "h2",
+          "id": "next-steps"
+        }
+      ],
+      "renderedIds": [
+        "metrics-overview",
+        "table-of-contents",
+        "metrics-fundamentals",
+        "naming-and-units",
+        "metric-types",
+        "_1-counter",
+        "_2-gauge",
+        "_3-histogram",
+        "_4-summary",
+        "pull-vs-push-model",
+        "pull-and-kubernetes-discovery",
+        "push-and-service-level-batch-jobs",
+        "cardinality-and-metric-design",
+        "long-term-storage-requirements",
+        "retention-planning",
+        "remote-write",
+        "solution-comparison",
+        "deployment-and-operational-boundaries",
+        "cost-inputs-not-unsupported-monthly-totals",
+        "metrics-collection-architecture",
+        "primary-references",
+        "next-steps"
+      ]
+    },
+    {
+      "path": "ko/observability/metrics/README.md",
+      "sha256": "06f91edc45cc85be90eeecd6d1d4beaa902f05328b1d875d1550ab617d9b93ce",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "메트릭-개요"
+        },
+        {
+          "tag": "h2",
+          "id": "목차"
+        },
+        {
+          "tag": "h2",
+          "id": "메트릭-기본-개념"
+        },
+        {
+          "tag": "h3",
+          "id": "이름과-단위"
+        },
+        {
+          "tag": "h2",
+          "id": "메트릭-유형"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-counter"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-gauge"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-histogram"
+        },
+        {
+          "tag": "h3",
+          "id": "_4-summary"
+        },
+        {
+          "tag": "h2",
+          "id": "pull-vs-push-모델"
+        },
+        {
+          "tag": "h3",
+          "id": "pull과-kubernetes-discovery"
+        },
+        {
+          "tag": "h3",
+          "id": "push와-서비스-단위-배치"
+        },
+        {
+          "tag": "h2",
+          "id": "카디널리티와-메트릭-설계"
+        },
+        {
+          "tag": "h2",
+          "id": "장기-저장소-필요성"
+        },
+        {
+          "tag": "h3",
+          "id": "보존-계획"
+        },
+        {
+          "tag": "h3",
+          "id": "remote-write"
+        },
+        {
+          "tag": "h2",
+          "id": "솔루션-비교"
+        },
+        {
+          "tag": "h3",
+          "id": "배포와-운영-경계"
+        },
+        {
+          "tag": "h3",
+          "id": "근거-없는-월-비용-대신-입력-조건-계산"
+        },
+        {
+          "tag": "h2",
+          "id": "메트릭-수집-아키텍처"
+        },
+        {
+          "tag": "h2",
+          "id": "공식-참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "다음-단계"
+        }
+      ],
+      "renderedIds": [
+        "메트릭-개요",
+        "목차",
+        "메트릭-기본-개념",
+        "이름과-단위",
+        "메트릭-유형",
+        "_1-counter",
+        "_2-gauge",
+        "_3-histogram",
+        "_4-summary",
+        "pull-vs-push-모델",
+        "pull과-kubernetes-discovery",
+        "push와-서비스-단위-배치",
+        "카디널리티와-메트릭-설계",
+        "장기-저장소-필요성",
+        "보존-계획",
+        "remote-write",
+        "솔루션-비교",
+        "배포와-운영-경계",
+        "근거-없는-월-비용-대신-입력-조건-계산",
+        "메트릭-수집-아키텍처",
+        "공식-참고-자료",
+        "다음-단계"
+      ]
+    },
+    {
+      "path": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+      "sha256": "4e719e003d61f87329fda3917e20231a4111523a5f02e34b31129c067c1e4d4c",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "metrics-overview-quiz"
+        }
+      ],
+      "renderedIds": [
+        "metrics-overview-quiz"
+      ]
+    },
+    {
+      "path": "ko/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+      "sha256": "6d559f8aef9d9f979a62fd658aa5f86957a8d42f2ca19bc6ed048a1cf5488590",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "메트릭-개요-퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "메트릭-개요-퀴즈"
+      ]
+    },
+    {
+      "path": "en/observability/metrics/01-prometheus.md",
+      "sha256": "c1beff9799bbb4977edaca882f8baa32f7fdb46c42f2d4eb8c850d727383ac02",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "prometheus"
+        },
+        {
+          "tag": "h2",
+          "id": "contents"
+        },
+        {
+          "tag": "h2",
+          "id": "introduction-and-versions"
+        },
+        {
+          "tag": "h3",
+          "id": "historical-july-2026-updates"
+        },
+        {
+          "tag": "h2",
+          "id": "architecture-and-components"
+        },
+        {
+          "tag": "h3",
+          "id": "tsdb-and-configuration-layers"
+        },
+        {
+          "tag": "h2",
+          "id": "promql"
+        },
+        {
+          "tag": "h3",
+          "id": "selectors-ranges-and-rates"
+        },
+        {
+          "tag": "h3",
+          "id": "aggregation-gauges-and-time"
+        },
+        {
+          "tag": "h3",
+          "id": "distributions-and-forecasts"
+        },
+        {
+          "tag": "h3",
+          "id": "operational-examples"
+        },
+        {
+          "tag": "h2",
+          "id": "discovery-and-operator-selectors"
+        },
+        {
+          "tag": "h3",
+          "id": "a-coherent-application-scrape"
+        },
+        {
+          "tag": "h3",
+          "id": "other-discovery-paths"
+        },
+        {
+          "tag": "h2",
+          "id": "kube-prometheus-stack-installation"
+        },
+        {
+          "tag": "h2",
+          "id": "rules-and-alertmanager"
+        },
+        {
+          "tag": "h3",
+          "id": "alertmanagerconfig-and-namespace-boundaries"
+        },
+        {
+          "tag": "h2",
+          "id": "remote-write-and-amp"
+        },
+        {
+          "tag": "h3",
+          "id": "scoped-amp-ingestion"
+        },
+        {
+          "tag": "h3",
+          "id": "other-receivers"
+        },
+        {
+          "tag": "h2",
+          "id": "performance-ha-and-troubleshooting"
+        },
+        {
+          "tag": "h3",
+          "id": "tune-from-measurements"
+        },
+        {
+          "tag": "h3",
+          "id": "ha-boundaries"
+        },
+        {
+          "tag": "h3",
+          "id": "troubleshooting-from-an-owned-release"
+        },
+        {
+          "tag": "h2",
+          "id": "validation-and-references"
+        }
+      ],
+      "renderedIds": [
+        "prometheus",
+        "contents",
+        "introduction-and-versions",
+        "historical-july-2026-updates",
+        "architecture-and-components",
+        "tsdb-and-configuration-layers",
+        "promql",
+        "selectors-ranges-and-rates",
+        "aggregation-gauges-and-time",
+        "distributions-and-forecasts",
+        "operational-examples",
+        "discovery-and-operator-selectors",
+        "a-coherent-application-scrape",
+        "other-discovery-paths",
+        "kube-prometheus-stack-installation",
+        "rules-and-alertmanager",
+        "alertmanagerconfig-and-namespace-boundaries",
+        "remote-write-and-amp",
+        "scoped-amp-ingestion",
+        "other-receivers",
+        "performance-ha-and-troubleshooting",
+        "tune-from-measurements",
+        "ha-boundaries",
+        "troubleshooting-from-an-owned-release",
+        "validation-and-references"
+      ]
+    },
+    {
+      "path": "ko/observability/metrics/01-prometheus.md",
+      "sha256": "8ca8491950bd8b05501a7259e67468731ac4575c0a0a3903c443a322c35dc073",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "prometheus"
+        },
+        {
+          "tag": "h2",
+          "id": "목차"
+        },
+        {
+          "tag": "h2",
+          "id": "소개와-버전"
+        },
+        {
+          "tag": "h3",
+          "id": "_2026년-7월의-업데이트-기록"
+        },
+        {
+          "tag": "h2",
+          "id": "아키텍처와-구성-요소"
+        },
+        {
+          "tag": "h3",
+          "id": "tsdb와-설정-계층"
+        },
+        {
+          "tag": "h2",
+          "id": "promql"
+        },
+        {
+          "tag": "h3",
+          "id": "selector·구간·변화율"
+        },
+        {
+          "tag": "h3",
+          "id": "집계·gauge·시간"
+        },
+        {
+          "tag": "h3",
+          "id": "분포와-예측"
+        },
+        {
+          "tag": "h3",
+          "id": "운영-쿼리-예시"
+        },
+        {
+          "tag": "h2",
+          "id": "discovery와-operator-selector"
+        },
+        {
+          "tag": "h3",
+          "id": "일관된-애플리케이션-scrape"
+        },
+        {
+          "tag": "h3",
+          "id": "다른-discovery-경로"
+        },
+        {
+          "tag": "h2",
+          "id": "kube-prometheus-stack-설치"
+        },
+        {
+          "tag": "h2",
+          "id": "rule과-alertmanager"
+        },
+        {
+          "tag": "h3",
+          "id": "alertmanagerconfig와-namespace-경계"
+        },
+        {
+          "tag": "h2",
+          "id": "remote-write와-amp"
+        },
+        {
+          "tag": "h3",
+          "id": "범위를-제한한-amp-수집"
+        },
+        {
+          "tag": "h3",
+          "id": "다른-수신기"
+        },
+        {
+          "tag": "h2",
+          "id": "성능·ha·문제-해결"
+        },
+        {
+          "tag": "h3",
+          "id": "측정에-근거한-튜닝"
+        },
+        {
+          "tag": "h3",
+          "id": "ha-경계"
+        },
+        {
+          "tag": "h3",
+          "id": "소유한-release를-기준으로-문제-해결"
+        },
+        {
+          "tag": "h2",
+          "id": "검증과-참고-자료"
+        }
+      ],
+      "renderedIds": [
+        "prometheus",
+        "목차",
+        "소개와-버전",
+        "_2026년-7월의-업데이트-기록",
+        "아키텍처와-구성-요소",
+        "tsdb와-설정-계층",
+        "promql",
+        "selector·구간·변화율",
+        "집계·gauge·시간",
+        "분포와-예측",
+        "운영-쿼리-예시",
+        "discovery와-operator-selector",
+        "일관된-애플리케이션-scrape",
+        "다른-discovery-경로",
+        "kube-prometheus-stack-설치",
+        "rule과-alertmanager",
+        "alertmanagerconfig와-namespace-경계",
+        "remote-write와-amp",
+        "범위를-제한한-amp-수집",
+        "다른-수신기",
+        "성능·ha·문제-해결",
+        "측정에-근거한-튜닝",
+        "ha-경계",
+        "소유한-release를-기준으로-문제-해결",
+        "검증과-참고-자료"
+      ]
+    },
+    {
+      "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+      "sha256": "3bddcc9057c88c6e1b360e9b7a12611ee1916078daaba9493e51c7525313333c",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "prometheus-quiz"
+        }
+      ],
+      "renderedIds": [
+        "prometheus-quiz"
+      ]
+    },
+    {
+      "path": "ko/quizzes/observability/metrics/01-prometheus-quiz.md",
+      "sha256": "95ab7845e678c85eeeaef63d2407ed193a4315184530bb91e86e49db4a96c5d2",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "prometheus-퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "prometheus-퀴즈"
+      ]
+    },
+    {
+      "path": "en/observability/metrics/02-victoriametrics.md",
+      "sha256": "4fb03eb123c05f8c5f270d1949ea841fc8e623be9d675a08f44fcf47cf9cf077",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "victoriametrics"
+        },
+        {
+          "tag": "h2",
+          "id": "table-of-contents"
+        },
+        {
+          "tag": "h2",
+          "id": "introduction"
+        },
+        {
+          "tag": "h3",
+          "id": "comparison-and-measurement"
+        },
+        {
+          "tag": "h2",
+          "id": "architecture-options"
+        },
+        {
+          "tag": "h2",
+          "id": "single-node-mode"
+        },
+        {
+          "tag": "h3",
+          "id": "statefulset-deployment"
+        },
+        {
+          "tag": "h3",
+          "id": "key-endpoints"
+        },
+        {
+          "tag": "h2",
+          "id": "cluster-mode"
+        },
+        {
+          "tag": "h3",
+          "id": "architecture"
+        },
+        {
+          "tag": "h3",
+          "id": "components"
+        },
+        {
+          "tag": "h3",
+          "id": "vmstorage-deployment"
+        },
+        {
+          "tag": "h3",
+          "id": "vminsert-deployment"
+        },
+        {
+          "tag": "h3",
+          "id": "vmselect-deployment"
+        },
+        {
+          "tag": "h2",
+          "id": "vmagent"
+        },
+        {
+          "tag": "h3",
+          "id": "key-features"
+        },
+        {
+          "tag": "h3",
+          "id": "deployment"
+        },
+        {
+          "tag": "h3",
+          "id": "vmagent-sharding"
+        },
+        {
+          "tag": "h2",
+          "id": "vmalert"
+        },
+        {
+          "tag": "h3",
+          "id": "deployment-1"
+        },
+        {
+          "tag": "h2",
+          "id": "metricsql"
+        },
+        {
+          "tag": "h3",
+          "id": "promql-style-queries"
+        },
+        {
+          "tag": "h3",
+          "id": "metricsql-extensions"
+        },
+        {
+          "tag": "h3",
+          "id": "error-rates-missing-data-and-histograms"
+        },
+        {
+          "tag": "h2",
+          "id": "helm-installation"
+        },
+        {
+          "tag": "h3",
+          "id": "values-single-yaml"
+        },
+        {
+          "tag": "h3",
+          "id": "cluster-overlay"
+        },
+        {
+          "tag": "h2",
+          "id": "long-term-storage-configuration"
+        },
+        {
+          "tag": "h3",
+          "id": "retention-and-disk-capacity"
+        },
+        {
+          "tag": "h3",
+          "id": "snapshot-backup-and-restore"
+        },
+        {
+          "tag": "h2",
+          "id": "downsampling"
+        },
+        {
+          "tag": "h3",
+          "id": "recording-derived-series"
+        },
+        {
+          "tag": "h2",
+          "id": "performance-optimization"
+        },
+        {
+          "tag": "h2",
+          "id": "best-practices"
+        },
+        {
+          "tag": "h3",
+          "id": "migration-guide"
+        },
+        {
+          "tag": "h2",
+          "id": "troubleshooting"
+        },
+        {
+          "tag": "h2",
+          "id": "references"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "victoriametrics",
+        "table-of-contents",
+        "introduction",
+        "comparison-and-measurement",
+        "architecture-options",
+        "single-node-mode",
+        "statefulset-deployment",
+        "key-endpoints",
+        "cluster-mode",
+        "architecture",
+        "components",
+        "vmstorage-deployment",
+        "vminsert-deployment",
+        "vmselect-deployment",
+        "vmagent",
+        "key-features",
+        "deployment",
+        "vmagent-sharding",
+        "vmalert",
+        "deployment-1",
+        "metricsql",
+        "promql-style-queries",
+        "metricsql-extensions",
+        "error-rates-missing-data-and-histograms",
+        "helm-installation",
+        "values-single-yaml",
+        "cluster-overlay",
+        "long-term-storage-configuration",
+        "retention-and-disk-capacity",
+        "snapshot-backup-and-restore",
+        "downsampling",
+        "recording-derived-series",
+        "performance-optimization",
+        "best-practices",
+        "migration-guide",
+        "troubleshooting",
+        "references",
+        "quiz"
+      ]
+    },
+    {
+      "path": "en/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+      "sha256": "fe50d14966bd0b4b455557ab974e3c981fc5ee3c4c53bccba5a3bba892f052d2",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "victoriametrics-quiz"
+        }
+      ],
+      "renderedIds": [
+        "victoriametrics-quiz"
+      ]
+    },
+    {
+      "path": "ko/observability/metrics/02-victoriametrics.md",
+      "sha256": "b36fbea7a1325244796978d14294b0206733c6bfdbf63fbc6a2baed1d30284d1",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "victoriametrics"
+        },
+        {
+          "tag": "h2",
+          "id": "목차"
+        },
+        {
+          "tag": "h2",
+          "id": "소개"
+        },
+        {
+          "tag": "h3",
+          "id": "비교와-측정"
+        },
+        {
+          "tag": "h2",
+          "id": "아키텍처-옵션"
+        },
+        {
+          "tag": "h2",
+          "id": "단일-노드-모드"
+        },
+        {
+          "tag": "h3",
+          "id": "statefulset-배포"
+        },
+        {
+          "tag": "h3",
+          "id": "주요-엔드포인트"
+        },
+        {
+          "tag": "h2",
+          "id": "클러스터-모드"
+        },
+        {
+          "tag": "h3",
+          "id": "아키텍처"
+        },
+        {
+          "tag": "h3",
+          "id": "구성-요소"
+        },
+        {
+          "tag": "h3",
+          "id": "vmstorage-배포"
+        },
+        {
+          "tag": "h3",
+          "id": "vminsert-배포"
+        },
+        {
+          "tag": "h3",
+          "id": "vmselect-배포"
+        },
+        {
+          "tag": "h2",
+          "id": "vmagent"
+        },
+        {
+          "tag": "h3",
+          "id": "주요-기능"
+        },
+        {
+          "tag": "h3",
+          "id": "배포"
+        },
+        {
+          "tag": "h3",
+          "id": "vmagent-샤딩"
+        },
+        {
+          "tag": "h2",
+          "id": "vmalert"
+        },
+        {
+          "tag": "h3",
+          "id": "배포-1"
+        },
+        {
+          "tag": "h2",
+          "id": "metricsql"
+        },
+        {
+          "tag": "h3",
+          "id": "promql-형태의-쿼리"
+        },
+        {
+          "tag": "h3",
+          "id": "metricsql-확장-기능"
+        },
+        {
+          "tag": "h3",
+          "id": "오류율·누락-데이터·히스토그램"
+        },
+        {
+          "tag": "h2",
+          "id": "helm-설치"
+        },
+        {
+          "tag": "h3",
+          "id": "values-single-yaml"
+        },
+        {
+          "tag": "h3",
+          "id": "cluster-overlay"
+        },
+        {
+          "tag": "h2",
+          "id": "장기-저장소-구성"
+        },
+        {
+          "tag": "h3",
+          "id": "보존-기간과-디스크-용량"
+        },
+        {
+          "tag": "h3",
+          "id": "snapshot-백업과-복원"
+        },
+        {
+          "tag": "h2",
+          "id": "다운샘플링"
+        },
+        {
+          "tag": "h3",
+          "id": "파생-series-기록"
+        },
+        {
+          "tag": "h2",
+          "id": "성능-최적화"
+        },
+        {
+          "tag": "h2",
+          "id": "모범-사례"
+        },
+        {
+          "tag": "h3",
+          "id": "마이그레이션-가이드"
+        },
+        {
+          "tag": "h2",
+          "id": "문제-해결"
+        },
+        {
+          "tag": "h2",
+          "id": "참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "victoriametrics",
+        "목차",
+        "소개",
+        "비교와-측정",
+        "아키텍처-옵션",
+        "단일-노드-모드",
+        "statefulset-배포",
+        "주요-엔드포인트",
+        "클러스터-모드",
+        "아키텍처",
+        "구성-요소",
+        "vmstorage-배포",
+        "vminsert-배포",
+        "vmselect-배포",
+        "vmagent",
+        "주요-기능",
+        "배포",
+        "vmagent-샤딩",
+        "vmalert",
+        "배포-1",
+        "metricsql",
+        "promql-형태의-쿼리",
+        "metricsql-확장-기능",
+        "오류율·누락-데이터·히스토그램",
+        "helm-설치",
+        "values-single-yaml",
+        "cluster-overlay",
+        "장기-저장소-구성",
+        "보존-기간과-디스크-용량",
+        "snapshot-백업과-복원",
+        "다운샘플링",
+        "파생-series-기록",
+        "성능-최적화",
+        "모범-사례",
+        "마이그레이션-가이드",
+        "문제-해결",
+        "참고-자료",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "ko/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+      "sha256": "7f739fe872024eb3bc0a1920937fd97d2968dd95a0aa4f6eb1763c45d1efddd5",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "victoriametrics-퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "victoriametrics-퀴즈"
+      ]
+    },
+    {
+      "path": "en/observability/metrics/03-mimir.md",
+      "sha256": "2ea6302806b1d7f496e97d7c384e0ee7bf01a9e307015ee029faf832b73e68e7",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "grafana-mimir"
+        },
+        {
+          "tag": "h2",
+          "id": "mimir-cortex-and-thanos"
+        },
+        {
+          "tag": "h2",
+          "id": "core-architecture"
+        },
+        {
+          "tag": "h3",
+          "id": "ingest-storage-and-the-classic-write-path"
+        },
+        {
+          "tag": "h3",
+          "id": "query-path-and-components"
+        },
+        {
+          "tag": "h2",
+          "id": "multi-tenancy-and-authentication"
+        },
+        {
+          "tag": "h3",
+          "id": "tenant-limits-and-runtime-configuration"
+        },
+        {
+          "tag": "h2",
+          "id": "helm-configuration-on-eks"
+        },
+        {
+          "tag": "h3",
+          "id": "prepare-dependencies"
+        },
+        {
+          "tag": "h3",
+          "id": "values-and-local-rendering"
+        },
+        {
+          "tag": "h3",
+          "id": "existing-classic-installations"
+        },
+        {
+          "tag": "h2",
+          "id": "s3-and-workload-identity"
+        },
+        {
+          "tag": "h3",
+          "id": "buckets-and-irsa"
+        },
+        {
+          "tag": "h3",
+          "id": "lifecycle-and-retention"
+        },
+        {
+          "tag": "h2",
+          "id": "queries-caching-and-performance"
+        },
+        {
+          "tag": "h3",
+          "id": "current-configuration-keys"
+        },
+        {
+          "tag": "h3",
+          "id": "cache-roles"
+        },
+        {
+          "tag": "h3",
+          "id": "capacity-and-availability"
+        },
+        {
+          "tag": "h2",
+          "id": "comparison-with-victoriametrics"
+        },
+        {
+          "tag": "h2",
+          "id": "monitoring-and-troubleshooting"
+        },
+        {
+          "tag": "h2",
+          "id": "validation-and-references"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "grafana-mimir",
+        "mimir-cortex-and-thanos",
+        "core-architecture",
+        "ingest-storage-and-the-classic-write-path",
+        "mermaid-67",
+        "query-path-and-components",
+        "mermaid-80",
+        "multi-tenancy-and-authentication",
+        "tenant-limits-and-runtime-configuration",
+        "helm-configuration-on-eks",
+        "prepare-dependencies",
+        "values-and-local-rendering",
+        "existing-classic-installations",
+        "s3-and-workload-identity",
+        "buckets-and-irsa",
+        "lifecycle-and-retention",
+        "queries-caching-and-performance",
+        "current-configuration-keys",
+        "cache-roles",
+        "capacity-and-availability",
+        "comparison-with-victoriametrics",
+        "monitoring-and-troubleshooting",
+        "validation-and-references",
+        "quiz"
+      ]
+    },
+    {
+      "path": "en/quizzes/observability/metrics/03-mimir-quiz.md",
+      "sha256": "c26f6fbd8e7fedbd2c236c3de786df5cc36e2fde8d85f0b715b3d75a7ae76297",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "grafana-mimir-quiz"
+        },
+        {
+          "tag": "h2",
+          "id": "_1-which-backend-is-intended-for-production-mimir-block-storage"
+        },
+        {
+          "tag": "h2",
+          "id": "_2-what-does-the-distributor-do-in-ingest-storage-architecture"
+        },
+        {
+          "tag": "h2",
+          "id": "_3-how-should-tenant-selection-be-secured-for-untrusted-callers"
+        },
+        {
+          "tag": "h2",
+          "id": "_4-why-do-ingesters-upload-tsdb-blocks-to-object-storage"
+        },
+        {
+          "tag": "h2",
+          "id": "_5-which-responsibilities-belong-to-the-compactor"
+        },
+        {
+          "tag": "h2",
+          "id": "_6-which-is-not-a-query-frontend-responsibility"
+        },
+        {
+          "tag": "h2",
+          "id": "_7-which-comparison-with-victoriametrics-is-accurate"
+        },
+        {
+          "tag": "h2",
+          "id": "_8-what-does-the-store-gateway-provide"
+        },
+        {
+          "tag": "h2",
+          "id": "_9-what-does-compactor-blocks-retention-period-control"
+        },
+        {
+          "tag": "h2",
+          "id": "_10-which-is-not-a-sound-availability-assumption"
+        }
+      ],
+      "renderedIds": [
+        "grafana-mimir-quiz",
+        "_1-which-backend-is-intended-for-production-mimir-block-storage",
+        "_2-what-does-the-distributor-do-in-ingest-storage-architecture",
+        "_3-how-should-tenant-selection-be-secured-for-untrusted-callers",
+        "_4-why-do-ingesters-upload-tsdb-blocks-to-object-storage",
+        "_5-which-responsibilities-belong-to-the-compactor",
+        "_6-which-is-not-a-query-frontend-responsibility",
+        "_7-which-comparison-with-victoriametrics-is-accurate",
+        "_8-what-does-the-store-gateway-provide",
+        "_9-what-does-compactor-blocks-retention-period-control",
+        "_10-which-is-not-a-sound-availability-assumption"
+      ]
+    },
+    {
+      "path": "ko/observability/metrics/03-mimir.md",
+      "sha256": "6e1450873fb012c18c7225440e7b93967ee690a3cb3883ed8188a0be22a605ce",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "grafana-mimir"
+        },
+        {
+          "tag": "h2",
+          "id": "mimir-cortex-thanos-비교"
+        },
+        {
+          "tag": "h2",
+          "id": "핵심-아키텍처"
+        },
+        {
+          "tag": "h3",
+          "id": "ingest-storage와-classic-쓰기-경로"
+        },
+        {
+          "tag": "h3",
+          "id": "쿼리-경로와-컴포넌트"
+        },
+        {
+          "tag": "h2",
+          "id": "멀티테넌시와-인증"
+        },
+        {
+          "tag": "h3",
+          "id": "테넌트-제한과-runtime-configuration"
+        },
+        {
+          "tag": "h2",
+          "id": "eks의-helm-구성"
+        },
+        {
+          "tag": "h3",
+          "id": "의존성-준비"
+        },
+        {
+          "tag": "h3",
+          "id": "values와-로컬-렌더링"
+        },
+        {
+          "tag": "h3",
+          "id": "기존-classic-설치"
+        },
+        {
+          "tag": "h2",
+          "id": "s3와-workload-identity"
+        },
+        {
+          "tag": "h3",
+          "id": "버킷과-irsa"
+        },
+        {
+          "tag": "h3",
+          "id": "lifecycle과-보존"
+        },
+        {
+          "tag": "h2",
+          "id": "쿼리-캐시와-성능"
+        },
+        {
+          "tag": "h3",
+          "id": "현재-설정-키"
+        },
+        {
+          "tag": "h3",
+          "id": "캐시의-역할"
+        },
+        {
+          "tag": "h3",
+          "id": "용량과-가용성"
+        },
+        {
+          "tag": "h2",
+          "id": "victoriametrics와-비교"
+        },
+        {
+          "tag": "h2",
+          "id": "모니터링과-문제-해결"
+        },
+        {
+          "tag": "h2",
+          "id": "검증과-참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "grafana-mimir",
+        "mimir-cortex-thanos-비교",
+        "핵심-아키텍처",
+        "ingest-storage와-classic-쓰기-경로",
+        "mermaid-67",
+        "쿼리-경로와-컴포넌트",
+        "mermaid-80",
+        "멀티테넌시와-인증",
+        "테넌트-제한과-runtime-configuration",
+        "eks의-helm-구성",
+        "의존성-준비",
+        "values와-로컬-렌더링",
+        "기존-classic-설치",
+        "s3와-workload-identity",
+        "버킷과-irsa",
+        "lifecycle과-보존",
+        "쿼리-캐시와-성능",
+        "현재-설정-키",
+        "캐시의-역할",
+        "용량과-가용성",
+        "victoriametrics와-비교",
+        "모니터링과-문제-해결",
+        "검증과-참고-자료",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "ko/quizzes/observability/metrics/03-mimir-quiz.md",
+      "sha256": "b5c9037793a2e4dc0224578dc2306f1a0200afaafd5a667045f14e3ba0c5503e",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "grafana-mimir-퀴즈"
+        },
+        {
+          "tag": "h2",
+          "id": "_1-운영-mimir-블록-저장소로-사용하는-백엔드는-무엇인가요"
+        },
+        {
+          "tag": "h2",
+          "id": "_2-ingest-storage-아키텍처에서-distributor의-역할은-무엇인가요"
+        },
+        {
+          "tag": "h2",
+          "id": "_3-신뢰하지-않는-호출자의-테넌트-선택을-어떻게-보호해야-하나요"
+        },
+        {
+          "tag": "h2",
+          "id": "_4-ingester가-tsdb-블록을-객체-스토리지에-업로드하는-이유는-무엇인가요"
+        },
+        {
+          "tag": "h2",
+          "id": "_5-compactor가-담당하는-작업은-무엇인가요"
+        },
+        {
+          "tag": "h2",
+          "id": "_6-query-frontend의-역할이-아닌-것은-무엇인가요"
+        },
+        {
+          "tag": "h2",
+          "id": "_7-victoriametrics와의-비교로-올바른-것은-무엇인가요"
+        },
+        {
+          "tag": "h2",
+          "id": "_8-store-gateway가-제공하는-기능은-무엇인가요"
+        },
+        {
+          "tag": "h2",
+          "id": "_9-compactor-blocks-retention-period는-무엇을-제어하나요"
+        },
+        {
+          "tag": "h2",
+          "id": "_10-가용성-구성에서-타당하지-않은-가정은-무엇인가요"
+        }
+      ],
+      "renderedIds": [
+        "grafana-mimir-퀴즈",
+        "_1-운영-mimir-블록-저장소로-사용하는-백엔드는-무엇인가요",
+        "_2-ingest-storage-아키텍처에서-distributor의-역할은-무엇인가요",
+        "_3-신뢰하지-않는-호출자의-테넌트-선택을-어떻게-보호해야-하나요",
+        "_4-ingester가-tsdb-블록을-객체-스토리지에-업로드하는-이유는-무엇인가요",
+        "_5-compactor가-담당하는-작업은-무엇인가요",
+        "_6-query-frontend의-역할이-아닌-것은-무엇인가요",
+        "_7-victoriametrics와의-비교로-올바른-것은-무엇인가요",
+        "_8-store-gateway가-제공하는-기능은-무엇인가요",
+        "_9-compactor-blocks-retention-period는-무엇을-제어하나요",
+        "_10-가용성-구성에서-타당하지-않은-가정은-무엇인가요"
+      ]
+    },
+    {
+      "path": "en/observability/metrics/04-cloudwatch-metrics.md",
+      "sha256": "48ab5757987ee9f46289bf50c554145075e76589eac237a87255275bd7e9f35f",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cloudwatch-metrics"
+        },
+        {
+          "tag": "h2",
+          "id": "introduction"
+        },
+        {
+          "tag": "h2",
+          "id": "container-insights-choose-a-metric-model"
+        },
+        {
+          "tag": "h3",
+          "id": "installation-and-platform-scope"
+        },
+        {
+          "tag": "h3",
+          "id": "otel-migration-and-historical-announcements"
+        },
+        {
+          "tag": "h2",
+          "id": "cloudwatch-agent-configuration"
+        },
+        {
+          "tag": "h3",
+          "id": "correct-traditional-container-insights-json"
+        },
+        {
+          "tag": "h2",
+          "id": "custom-metric-collection"
+        },
+        {
+          "tag": "h3",
+          "id": "target-selection-and-dimension-labels"
+        },
+        {
+          "tag": "h3",
+          "id": "cloudwatch-agent-prometheus-configuration"
+        },
+        {
+          "tag": "h3",
+          "id": "aws-distro-for-opentelemetry-adot"
+        },
+        {
+          "tag": "h3",
+          "id": "send-custom-metrics-via-sdk"
+        },
+        {
+          "tag": "h2",
+          "id": "metric-math-and-anomaly-detection"
+        },
+        {
+          "tag": "h3",
+          "id": "metric-math"
+        },
+        {
+          "tag": "h3",
+          "id": "anomaly-detection"
+        },
+        {
+          "tag": "h3",
+          "id": "anomaly-detection-with-terraform"
+        },
+        {
+          "tag": "h2",
+          "id": "dashboard-creation"
+        },
+        {
+          "tag": "h3",
+          "id": "cloudformation"
+        },
+        {
+          "tag": "h3",
+          "id": "terraform"
+        },
+        {
+          "tag": "h2",
+          "id": "alert-configuration"
+        },
+        {
+          "tag": "h3",
+          "id": "terraform-alarms"
+        },
+        {
+          "tag": "h2",
+          "id": "cost-optimization"
+        },
+        {
+          "tag": "h3",
+          "id": "match-the-billing-model-to-collection"
+        },
+        {
+          "tag": "h3",
+          "id": "retention-is-a-data-deletion-decision"
+        },
+        {
+          "tag": "h3",
+          "id": "infrequent-access-has-feature-constraints"
+        },
+        {
+          "tag": "h3",
+          "id": "cost-visibility"
+        },
+        {
+          "tag": "h2",
+          "id": "best-practices"
+        },
+        {
+          "tag": "h2",
+          "id": "troubleshooting"
+        },
+        {
+          "tag": "h3",
+          "id": "no-metrics-or-unexpected-values"
+        },
+        {
+          "tag": "h3",
+          "id": "high-cost-or-inactive-alarms"
+        },
+        {
+          "tag": "h2",
+          "id": "validation-scope"
+        },
+        {
+          "tag": "h2",
+          "id": "references"
+        }
+      ],
+      "renderedIds": [
+        "cloudwatch-metrics",
+        "introduction",
+        "container-insights-choose-a-metric-model",
+        "mermaid-179",
+        "installation-and-platform-scope",
+        "otel-migration-and-historical-announcements",
+        "cloudwatch-agent-configuration",
+        "correct-traditional-container-insights-json",
+        "custom-metric-collection",
+        "target-selection-and-dimension-labels",
+        "cloudwatch-agent-prometheus-configuration",
+        "aws-distro-for-opentelemetry-adot",
+        "send-custom-metrics-via-sdk",
+        "metric-math-and-anomaly-detection",
+        "metric-math",
+        "anomaly-detection",
+        "anomaly-detection-with-terraform",
+        "dashboard-creation",
+        "cloudformation",
+        "terraform",
+        "alert-configuration",
+        "terraform-alarms",
+        "cost-optimization",
+        "match-the-billing-model-to-collection",
+        "retention-is-a-data-deletion-decision",
+        "infrequent-access-has-feature-constraints",
+        "cost-visibility",
+        "best-practices",
+        "troubleshooting",
+        "no-metrics-or-unexpected-values",
+        "high-cost-or-inactive-alarms",
+        "validation-scope",
+        "references"
+      ]
+    },
+    {
+      "path": "ko/observability/metrics/04-cloudwatch-metrics.md",
+      "sha256": "a79a1b1d336ad692e37ae691bed10b8f95abb7b975f5acf7bf3c75ad6b3c05b9",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cloudwatch-metrics"
+        },
+        {
+          "tag": "h2",
+          "id": "소개"
+        },
+        {
+          "tag": "h2",
+          "id": "container-insights-지표-모델-선택"
+        },
+        {
+          "tag": "h3",
+          "id": "설치와-플랫폼-범위"
+        },
+        {
+          "tag": "h3",
+          "id": "otel-전환과-과거-발표-기록"
+        },
+        {
+          "tag": "h2",
+          "id": "cloudwatch-agent-구성"
+        },
+        {
+          "tag": "h3",
+          "id": "올바른-기존-container-insights-json"
+        },
+        {
+          "tag": "h2",
+          "id": "커스텀-메트릭-수집"
+        },
+        {
+          "tag": "h3",
+          "id": "target-선택과-dimension-label"
+        },
+        {
+          "tag": "h3",
+          "id": "cloudwatch-agent-prometheus-설정"
+        },
+        {
+          "tag": "h3",
+          "id": "aws-distro-for-opentelemetry-adot"
+        },
+        {
+          "tag": "h3",
+          "id": "sdk를-통한-커스텀-메트릭-전송"
+        },
+        {
+          "tag": "h2",
+          "id": "metric-math-및-이상-탐지"
+        },
+        {
+          "tag": "h3",
+          "id": "metric-math"
+        },
+        {
+          "tag": "h3",
+          "id": "이상-탐지-anomaly-detection"
+        },
+        {
+          "tag": "h3",
+          "id": "terraform으로-이상-탐지-설정"
+        },
+        {
+          "tag": "h2",
+          "id": "대시보드-생성"
+        },
+        {
+          "tag": "h3",
+          "id": "cloudformation"
+        },
+        {
+          "tag": "h3",
+          "id": "terraform"
+        },
+        {
+          "tag": "h2",
+          "id": "알림-설정"
+        },
+        {
+          "tag": "h3",
+          "id": "terraform-알림"
+        },
+        {
+          "tag": "h2",
+          "id": "비용-최적화"
+        },
+        {
+          "tag": "h3",
+          "id": "수집-경로별-과금-모델"
+        },
+        {
+          "tag": "h3",
+          "id": "retention은-데이터-삭제-결정"
+        },
+        {
+          "tag": "h3",
+          "id": "infrequent-access의-기능-제약"
+        },
+        {
+          "tag": "h3",
+          "id": "비용-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "모범-사례"
+        },
+        {
+          "tag": "h2",
+          "id": "문제-해결"
+        },
+        {
+          "tag": "h3",
+          "id": "지표가-없거나-값이-예상과-다른-경우"
+        },
+        {
+          "tag": "h3",
+          "id": "비용이-높거나-alarm이-작동하지-않는-경우"
+        },
+        {
+          "tag": "h2",
+          "id": "검증-범위"
+        },
+        {
+          "tag": "h2",
+          "id": "참고-자료"
+        }
+      ],
+      "renderedIds": [
+        "cloudwatch-metrics",
+        "소개",
+        "container-insights-지표-모델-선택",
+        "mermaid-179",
+        "설치와-플랫폼-범위",
+        "otel-전환과-과거-발표-기록",
+        "cloudwatch-agent-구성",
+        "올바른-기존-container-insights-json",
+        "커스텀-메트릭-수집",
+        "target-선택과-dimension-label",
+        "cloudwatch-agent-prometheus-설정",
+        "aws-distro-for-opentelemetry-adot",
+        "sdk를-통한-커스텀-메트릭-전송",
+        "metric-math-및-이상-탐지",
+        "metric-math",
+        "이상-탐지-anomaly-detection",
+        "terraform으로-이상-탐지-설정",
+        "대시보드-생성",
+        "cloudformation",
+        "terraform",
+        "알림-설정",
+        "terraform-알림",
+        "비용-최적화",
+        "수집-경로별-과금-모델",
+        "retention은-데이터-삭제-결정",
+        "infrequent-access의-기능-제약",
+        "비용-확인",
+        "모범-사례",
+        "문제-해결",
+        "지표가-없거나-값이-예상과-다른-경우",
+        "비용이-높거나-alarm이-작동하지-않는-경우",
+        "검증-범위",
+        "참고-자료"
+      ]
+    },
+    {
+      "path": "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+      "sha256": "3de8d72ff5266c697407edeaadcf49a616c2cfa45f29fc4ee66706325dd80a3d",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cloudwatch-metrics-quiz"
+        }
+      ],
+      "renderedIds": [
+        "cloudwatch-metrics-quiz"
+      ]
+    },
+    {
+      "path": "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+      "sha256": "2beee9607e03e7ccd8fee72ea4415d7c99806d845b3f1fc029abd23067301026",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cloudwatch-metrics-퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "cloudwatch-metrics-퀴즈"
+      ]
+    }
+  ],
+  "followup": {
+    "originalFailures": [
+      {
+        "path": "en/quizzes/service-mesh/linkerd/multi-cluster.md",
+        "errors": [
+          "Element is missing end tag.",
+          "Element is missing end tag.",
+          "Element is missing end tag.",
+          "Element is missing end tag."
+        ]
+      },
+      {
+        "path": "ko/quizzes/service-mesh/linkerd/multi-cluster.md",
+        "errors": [
+          "Element is missing end tag.",
+          "Element is missing end tag.",
+          "Element is missing end tag.",
+          "Element is missing end tag."
+        ]
+      }
+    ],
+    "method": "Recompiled the only two changed files after the160-document pass; other158unchanged results retained."
+  },
+  "architectureOriginalErrors": [
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+      "errors": [
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag."
+      ]
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+      "errors": [
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag."
+      ]
+    }
+  ],
+  "fix": "Wrapped literal URI/Service-name placeholders in code spans in4previouslyreviewedquizzes; current Markdown/Vue compiler with actual repository markdown config now160/160passes.",
+  "observabilityFollowup": "Four new reviewed pages compiled after edits; earlier160 unchanged results retained.",
+  "ingressFollowup": {
+    "newDocuments": 4,
+    "report": "docs/reviews/2026-09-11/cilium-ingress-validation.json"
+  },
+  "bestPracticesFollowup": {
+    "newDocuments": 2,
+    "recheckedREADME": 2,
+    "report": "docs/reviews/2026-09-11/cilium-best-practices-validation.json"
+  },
+  "scope": "Completed worker service-mesh/networking/observability documents"
+}

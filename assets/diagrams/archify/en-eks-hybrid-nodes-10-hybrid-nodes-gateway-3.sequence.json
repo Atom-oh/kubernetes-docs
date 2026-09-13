@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pattern 1: VPC Pod to Hybrid Pod",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [1080, 700],
+    "views": [
+      { "id": "vpc-routing", "label": "VPC routing", "focus": ["cp", "rt", "eni"], "note": "VPC route table matches 10.100.0.0/24 and forwards to the gateway leader's ENI." },
+      { "id": "vxlan-encap", "label": "VXLAN encapsulation", "focus": ["eni", "vxlan", "net"], "note": "Gateway routes via hybrid_vxlan0 and encapsulates with VNI 2 on outer UDP 8472." },
+      { "id": "decap-deliver", "label": "Decap and deliver", "focus": ["net", "hn", "hp"], "note": "Cilium on the hybrid node decapsulates and delivers the inner packet to the Pod." }
+    ]
+  },
+  "participants": [
+    { "id": "cp", "type": "frontend", "label": "Cloud Pod", "sublabel": "10.0.64.15" },
+    { "id": "rt", "type": "cloud", "label": "VPC Route Table", "sublabel": "10.100.0.0/24 -> GW ENI" },
+    { "id": "eni", "type": "cloud", "label": "Gateway ENI", "sublabel": "10.0.1.100" },
+    { "id": "vxlan", "type": "backend", "label": "Gateway", "sublabel": "hybrid_vxlan0" },
+    { "id": "net", "type": "external", "label": "DX / VPN", "sublabel": "Direct Connect or VPN" },
+    { "id": "hn", "type": "backend", "label": "Hybrid Node", "sublabel": "cilium_vxlan" },
+    { "id": "hp", "type": "frontend", "label": "Hybrid Pod", "sublabel": "10.100.0.42" }
+  ],
+  "segments": [
+    { "from": 170, "to": 290, "label": "VPC routing" },
+    { "from": 305, "to": 430, "label": "VXLAN encapsulation" },
+    { "from": 445, "to": 570, "label": "Transit, decap, deliver" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "cp", "to": "rt", "y": 195, "label": "dst: 10.100.0.42", "variant": "default" },
+    { "id": "m2", "from": "rt", "to": "eni", "y": 265, "label": "Forward to gateway ENI", "variant": "default", "note": "Match: 10.100.0.0/24 -> eni (GW leader)" },
+    { "id": "m3", "from": "eni", "to": "vxlan", "y": 330, "label": "Route via hybrid_vxlan0", "variant": "default" },
+    { "id": "m4", "from": "vxlan", "to": "net", "y": 405, "label": "Encapsulated packet", "variant": "emphasis", "note": "VXLAN encap: VNI=2, dst=HN IP, outer UDP 8472" },
+    { "id": "m5", "from": "net", "to": "hn", "y": 470, "label": "Arrives at hybrid node", "variant": "emphasis" },
+    { "id": "m6", "from": "hn", "to": "hp", "y": 545, "label": "Deliver to Pod", "variant": "default", "note": "VXLAN decap: inner dst=10.100.0.42" }
+  ],
+  "activations": [
+    { "participant": "rt", "from": 190, "to": 272, "type": "cloud" },
+    { "participant": "vxlan", "from": 325, "to": 412, "type": "backend" },
+    { "participant": "hn", "from": 465, "to": 552, "type": "backend" }
+  ]
+}

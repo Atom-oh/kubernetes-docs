@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Kong Mesh Service Connection and Traffic Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      720
+    ],
+    "views": [
+      {
+        "id": "setup",
+        "label": "Initial setup",
+        "focus": [
+          "gcp",
+          "zcp1",
+          "zcp2",
+          "dp1",
+          "dp2"
+        ],
+        "note": "The Global CP syncs policy to both Zone CPs, and each Zone CP configures its Kuma DP over xDS."
+      },
+      {
+        "id": "traffic",
+        "label": "Service-to-service traffic",
+        "focus": [
+          "app",
+          "dp1",
+          "dp2",
+          "target"
+        ],
+        "note": "The local DP resolves the Zone 2 endpoint via service discovery, mTLS-encrypts the plaintext request, and relays it via DP 2 to the target."
+      },
+      {
+        "id": "metrics",
+        "label": "Metrics and tracing",
+        "focus": [
+          "dp1",
+          "dp2",
+          "zcp1",
+          "zcp2",
+          "gcp"
+        ],
+        "note": "Each DP's metrics flow to its Zone CP and are aggregated mesh-wide at the Global CP."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Zone 1"
+    },
+    {
+      "id": "dp1",
+      "type": "security",
+      "label": "Kuma DP 1",
+      "sublabel": "Zone 1 · Envoy"
+    },
+    {
+      "id": "zcp1",
+      "type": "backend",
+      "label": "Zone CP 1",
+      "sublabel": "Zone 1 control plane"
+    },
+    {
+      "id": "gcp",
+      "type": "cloud",
+      "label": "Global CP",
+      "sublabel": "Global policy management"
+    },
+    {
+      "id": "zcp2",
+      "type": "backend",
+      "label": "Zone CP 2",
+      "sublabel": "Zone 2 control plane"
+    },
+    {
+      "id": "dp2",
+      "type": "security",
+      "label": "Kuma DP 2",
+      "sublabel": "Zone 2 · Envoy"
+    },
+    {
+      "id": "target",
+      "type": "backend",
+      "label": "Target Service",
+      "sublabel": "Zone 2"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 270,
+      "label": "Initial Setup Phase"
+    },
+    {
+      "from": 312,
+      "to": 496,
+      "label": "Service-to-Service Communication"
+    },
+    {
+      "from": 534,
+      "to": 636,
+      "label": "Metrics and Tracing"
+    }
+  ],
+  "messages": [
+    {
+      "id": "sync1",
+      "from": "gcp",
+      "to": "zcp1",
+      "y": 180,
+      "label": "Policy sync (TrafficRoute, mTLS)",
+      "variant": "default"
+    },
+    {
+      "id": "sync2",
+      "from": "gcp",
+      "to": "zcp2",
+      "y": 206,
+      "label": "Policy sync (TrafficRoute, mTLS)",
+      "variant": "default"
+    },
+    {
+      "id": "xds1",
+      "from": "zcp1",
+      "to": "dp1",
+      "y": 232,
+      "label": "xDS configuration (service endpoints, policies)",
+      "variant": "default"
+    },
+    {
+      "id": "xds2",
+      "from": "zcp2",
+      "to": "dp2",
+      "y": 258,
+      "label": "xDS configuration (service endpoints, policies)",
+      "variant": "default"
+    },
+    {
+      "id": "req",
+      "from": "app",
+      "to": "dp1",
+      "y": 328,
+      "label": "HTTP request (localhost)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls-req",
+      "from": "dp1",
+      "to": "dp2",
+      "y": 360,
+      "label": "mTLS encrypted request after Zone 2 endpoint discovery (cross-zone)",
+      "variant": "security",
+      "note": "Sent after service discovery resolves the Zone 2 endpoint"
+    },
+    {
+      "id": "plain-req",
+      "from": "dp2",
+      "to": "target",
+      "y": 390,
+      "label": "Plaintext request (localhost)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "resp",
+      "from": "target",
+      "to": "dp2",
+      "y": 420,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "mtls-resp",
+      "from": "dp2",
+      "to": "dp1",
+      "y": 450,
+      "label": "mTLS encrypted response",
+      "variant": "return"
+    },
+    {
+      "id": "plain-resp",
+      "from": "dp1",
+      "to": "app",
+      "y": 480,
+      "label": "Plaintext response",
+      "variant": "return"
+    },
+    {
+      "id": "met1",
+      "from": "dp1",
+      "to": "zcp1",
+      "y": 550,
+      "label": "Send metrics",
+      "variant": "dashed"
+    },
+    {
+      "id": "met2",
+      "from": "dp2",
+      "to": "zcp2",
+      "y": 576,
+      "label": "Send metrics",
+      "variant": "dashed"
+    },
+    {
+      "id": "agg1",
+      "from": "zcp1",
+      "to": "gcp",
+      "y": 602,
+      "label": "Global metrics aggregation",
+      "variant": "dashed"
+    },
+    {
+      "id": "agg2",
+      "from": "zcp2",
+      "to": "gcp",
+      "y": 628,
+      "label": "Global metrics aggregation",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "dp1",
+      "from": 323,
+      "to": 485,
+      "type": "security"
+    },
+    {
+      "participant": "dp2",
+      "from": 355,
+      "to": 455,
+      "type": "security"
+    },
+    {
+      "participant": "target",
+      "from": 385,
+      "to": 425,
+      "type": "backend"
+    }
+  ]
+}

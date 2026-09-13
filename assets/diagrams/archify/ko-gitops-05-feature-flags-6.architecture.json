@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenFeature Operator · file 소스",
+    "output": "ko-gitops-05-feature-flags-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "crd-sync",
+        "label": "CR 감시와 ConfigMap 동기화",
+        "focus": [
+          "featureflag",
+          "ffsource",
+          "controller",
+          "reconciler",
+          "configmap",
+          "pod"
+        ],
+        "note": "file 소스 경로입니다. Operator가 CR 정의를 ConfigMap 볼륨으로 제공합니다."
+      },
+      {
+        "id": "sidecar-injection",
+        "label": "flagd 사이드카 자동 주입",
+        "focus": [
+          "deployment",
+          "webhook",
+          "pod"
+        ],
+        "note": "enabled와 featureflagsource Pod 어노테이션으로 구성하고 실제 주입 결과를 확인합니다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1240,
+      500
+    ]
+  },
+  "components": [
+    {
+      "id": "featureflag",
+      "type": "external",
+      "label": "FeatureFlag",
+      "sublabel": "플래그 정의",
+      "pos": [
+        30,
+        110
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ffsource",
+      "type": "external",
+      "label": "FeatureFlagSource",
+      "sublabel": "file 소스 구성",
+      "pos": [
+        30,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Controller Manager",
+      "sublabel": "CR 변경 감시",
+      "pos": [
+        340,
+        40
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "reconciler",
+      "type": "backend",
+      "label": "Reconciler",
+      "sublabel": "ConfigMap 관리",
+      "pos": [
+        340,
+        190
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Mutating Webhook",
+      "sublabel": "Pod 주입",
+      "pos": [
+        340,
+        340
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "configmap",
+      "type": "database",
+      "label": "ConfigMap",
+      "sublabel": "파일 소스",
+      "pos": [
+        700,
+        100
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod + flagd 사이드카",
+      "sublabel": "비동기 파일 읽기",
+      "pos": [
+        980,
+        230
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "deployment",
+      "type": "backend",
+      "label": "Deployment",
+      "sublabel": "Pod 템플릿 설정",
+      "pos": [
+        700,
+        360
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Custom Resources",
+      "wraps": [
+        "featureflag",
+        "ffsource"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "OpenFeature Operator",
+      "wraps": [
+        "controller",
+        "reconciler",
+        "webhook"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 리소스",
+      "wraps": [
+        "configmap",
+        "pod",
+        "deployment"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ff-to-controller",
+      "from": "featureflag",
+      "to": "controller",
+      "label": "감시",
+      "variant": "emphasis",
+      "labelAt": [
+        260,
+        155
+      ]
+    },
+    {
+      "id": "ffs-to-controller",
+      "from": "ffsource",
+      "to": "controller",
+      "label": "감시"
+    },
+    {
+      "id": "controller-to-reconciler",
+      "from": "controller",
+      "to": "reconciler",
+      "label": "조정 요청",
+      "variant": "emphasis",
+      "labelAt": [
+        445,
+        147
+      ]
+    },
+    {
+      "id": "reconciler-to-configmap",
+      "from": "reconciler",
+      "to": "configmap",
+      "label": "생성 / 갱신",
+      "variant": "emphasis"
+    },
+    {
+      "id": "configmap-to-pod",
+      "from": "configmap",
+      "to": "pod",
+      "label": "볼륨 마운트",
+      "variant": "dashed"
+    },
+    {
+      "id": "deployment-to-webhook",
+      "from": "deployment",
+      "to": "webhook",
+      "label": "Pod 생성 시",
+      "variant": "dashed"
+    },
+    {
+      "id": "webhook-to-pod",
+      "from": "webhook",
+      "to": "pod",
+      "label": "flagd 컨테이너 주입",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Operator가 도입하는 CRD",
+      "items": [
+        "FeatureFlag: 정의와 타겟팅",
+        "FeatureFlagSource: 소스와 flagd 설정",
+        "Flagd / InProcessConfiguration은 별도 배치 선택"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Pod 자동 Injection",
+      "items": [
+        "Namespace 라벨만으로 주입되지 않음",
+        "두 Pod 어노테이션과 참조 리소스 필요",
+        "볼륨 갱신은 비동기; 이미지 변경은 롤아웃 확인"
+      ]
+    }
+  ]
+}

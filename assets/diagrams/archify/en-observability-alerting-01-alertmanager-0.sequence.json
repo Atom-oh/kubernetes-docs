@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Prometheus Alert Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      560
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "evaluate",
+        "label": "Evaluate and fire",
+        "focus": [
+          "prometheus",
+          "alertmanager"
+        ],
+        "note": "When the expr condition holds for the for duration, the alert moves from Pending to Firing and is sent to Alertmanager."
+      },
+      {
+        "id": "pipeline",
+        "label": "Alertmanager pipeline",
+        "focus": [
+          "alertmanager"
+        ],
+        "note": "Alerts are processed in order: deduplication → grouping → routing decision → inhibition and silence checks."
+      },
+      {
+        "id": "notify",
+        "label": "Receiver notification",
+        "focus": [
+          "alertmanager",
+          "receiver"
+        ],
+        "note": "The notification goes to the routed receiver, which returns the delivery result."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "alert rule evaluation"
+    },
+    {
+      "id": "alertmanager",
+      "type": "messagebus",
+      "label": "Alertmanager",
+      "sublabel": "alert pipeline"
+    },
+    {
+      "id": "receiver",
+      "type": "external",
+      "label": "Receiver",
+      "sublabel": "Slack / PagerDuty"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 270,
+      "label": "Rule evaluation — Pending when expr matches, Firing after the for duration"
+    },
+    {
+      "from": 290,
+      "to": 360,
+      "label": "Pipeline — deduplication → grouping → routing decision → inhibition · silence check"
+    },
+    {
+      "from": 380,
+      "to": 465,
+      "label": "Receiver notification"
+    }
+  ],
+  "messages": [
+    {
+      "id": "post-alerts",
+      "from": "prometheus",
+      "to": "alertmanager",
+      "y": 230,
+      "label": "POST /api/v2/alerts",
+      "variant": "emphasis",
+      "note": "send firing alerts"
+    },
+    {
+      "id": "notify",
+      "from": "alertmanager",
+      "to": "receiver",
+      "y": 400,
+      "label": "send notification",
+      "variant": "emphasis",
+      "note": "to the routed receiver after the pipeline"
+    },
+    {
+      "id": "result",
+      "from": "receiver",
+      "to": "alertmanager",
+      "y": 445,
+      "label": "send result",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "prometheus",
+      "from": 175,
+      "to": 240,
+      "type": "backend"
+    },
+    {
+      "participant": "alertmanager",
+      "from": 230,
+      "to": 455,
+      "type": "messagebus"
+    },
+    {
+      "participant": "receiver",
+      "from": 395,
+      "to": 450,
+      "type": "external"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Prometheus Rule Evaluation",
+      "items": [
+        "When the alert rule's expr condition is met, the alert enters Pending",
+        "If the condition holds for the for duration, it becomes Firing and is sent to Alertmanager"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Alertmanager pipeline",
+      "items": [
+        "1. Deduplication",
+        "2. Grouping",
+        "3. Routing decision",
+        "4. Inhibition · silence check"
+      ]
+    }
+  ]
+}

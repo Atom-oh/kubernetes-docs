@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 보안 아키텍처 계층",
+    "output": "ko-service-mesh-istio-security-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Control Plane 배포",
+        "focus": [
+          "ca",
+          "config",
+          "envoy-a",
+          "envoy-b"
+        ],
+        "note": "istiod의 CA가 인증서를 발급하고 Configuration API가 보안 정책을 사이드카에 배포한다."
+      },
+      {
+        "id": "mtls-path",
+        "label": "mTLS 경로",
+        "focus": [
+          "app-a",
+          "envoy-a",
+          "envoy-b",
+          "app-b"
+        ],
+        "note": "애플리케이션은 평문으로 통신하고, 두 Envoy 사이드카 사이 구간만 mTLS로 암호화된다."
+      },
+      {
+        "id": "layers",
+        "label": "보안 계층 순서",
+        "focus": [
+          "l1",
+          "l2",
+          "l3",
+          "l4",
+          "l5"
+        ],
+        "note": "SPIFFE 신원부터 접근 제어까지 5단계 보안 계층이 순서대로 적용된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "ca",
+      "type": "security",
+      "label": "Certificate Authority",
+      "sublabel": "X.509 인증서 발급·관리",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "config",
+      "type": "backend",
+      "label": "Configuration API",
+      "sublabel": "보안 정책 배포",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "app-a",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "평문 트래픽",
+      "pos": [
+        330,
+        160
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "envoy-a",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "mTLS 종료 · 정책 적용",
+      "pos": [
+        530,
+        160
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "envoy-b",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "mTLS 종료 · 정책 적용",
+      "pos": [
+        800,
+        160
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "app-b",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "평문 트래픽",
+      "pos": [
+        1030,
+        160
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "l1",
+      "type": "security",
+      "label": "1. Identity",
+      "sublabel": "SPIFFE ID 기반",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l2",
+      "type": "security",
+      "label": "2. Cert Mgmt",
+      "sublabel": "자동 발급/갱신",
+      "pos": [
+        275,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l3",
+      "type": "security",
+      "label": "3. Peer Auth",
+      "sublabel": "서비스 간 mTLS",
+      "pos": [
+        510,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l4",
+      "type": "security",
+      "label": "4. Req Auth",
+      "sublabel": "최종 사용자 JWT",
+      "pos": [
+        745,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l5",
+      "type": "security",
+      "label": "5. Authorization",
+      "sublabel": "접근 제어",
+      "pos": [
+        980,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane (istiod)",
+      "wraps": [
+        "ca",
+        "config"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane (Envoy Proxy)",
+      "wraps": [
+        "app-a",
+        "envoy-a",
+        "envoy-b",
+        "app-b"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod A",
+      "wraps": [
+        "app-a",
+        "envoy-a"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod B",
+      "wraps": [
+        "envoy-b",
+        "app-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "보안 계층 적용 순서 (5단계)",
+      "wraps": [
+        "l1",
+        "l2",
+        "l3",
+        "l4",
+        "l5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ca-cert",
+      "from": "ca",
+      "to": "envoy-a",
+      "label": "인증서 발급",
+      "variant": "dashed"
+    },
+    {
+      "id": "config-policy",
+      "from": "config",
+      "to": "envoy-b",
+      "label": "정책 배포",
+      "variant": "dashed",
+      "labelDy": 17
+    },
+    {
+      "id": "app-a-envoy",
+      "from": "app-a",
+      "to": "envoy-a"
+    },
+    {
+      "id": "mtls",
+      "from": "envoy-a",
+      "to": "envoy-b",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-app-b",
+      "from": "envoy-b",
+      "to": "app-b"
+    },
+    {
+      "id": "l1-l2",
+      "from": "l1",
+      "to": "l2"
+    },
+    {
+      "id": "l2-l3",
+      "from": "l2",
+      "to": "l3"
+    },
+    {
+      "id": "l3-l4",
+      "from": "l3",
+      "to": "l4"
+    },
+    {
+      "id": "l4-l5",
+      "from": "l4",
+      "to": "l5"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Identity Management",
+      "items": [
+        "SPIFFE 표준 기반 워크로드 신원",
+        "Kubernetes ServiceAccount와 통합",
+        "자동 인증서 갱신 (기본 24시간)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Policy Engine",
+      "items": [
+        "CRD 기반 선언적 보안 정책",
+        "세밀한 접근 제어 (RBAC)",
+        "Audit Logging 지원"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "X-Forwarded-For 개요 — 홉마다 누적되는 XFF 헤더",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      520
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "XFF 처리 지점"
+        },
+        "default": {
+          "label": "홉 전달"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "IP 203.0.113.5"
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "로드 밸런서",
+      "sublabel": "IP 10.0.1.100"
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "Istio Gateway",
+      "sublabel": "IP 10.0.2.50"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "IP 10.244.1.10"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "최종 수신"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "client",
+      "to": "lb",
+      "y": 200,
+      "label": "HTTP 요청",
+      "note": "로드 밸런서가 XFF에 클라이언트 IP 203.0.113.5를 기록"
+    },
+    {
+      "id": "m2",
+      "from": "lb",
+      "to": "gateway",
+      "y": 270,
+      "label": "X-Forwarded-For: 203.0.113.5",
+      "note": "Gateway가 자신의 다운스트림 주소 10.0.1.100을 덧붙임"
+    },
+    {
+      "id": "m3",
+      "from": "gateway",
+      "to": "envoy",
+      "y": 340,
+      "label": "X-Forwarded-For: 203.0.113.5, 10.0.1.100",
+      "variant": "emphasis",
+      "note": "use_remote_address 설정에 따라 XFF 처리 방식 결정"
+    },
+    {
+      "id": "m4",
+      "from": "envoy",
+      "to": "app",
+      "y": 410,
+      "label": "X-Forwarded-For 헤더 전달"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "lb",
+      "from": 195,
+      "to": 275,
+      "type": "cloud"
+    },
+    {
+      "participant": "gateway",
+      "from": 265,
+      "to": 345,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 335,
+      "to": 415,
+      "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "use_remote_address",
+      "items": [
+        "Envoy Sidecar는 use_remote_address 설정에 따라 XFF 처리 방식을 결정"
+      ]
+    }
+  ]
+}

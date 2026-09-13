@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "처리량 비교 — 최대 RPS",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      760,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "baseline",
+      "type": "external",
+      "label": "Baseline",
+      "sublabel": "메시 없음 · 100% RPS",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "linkerd",
+      "type": "backend",
+      "label": "Linkerd",
+      "sublabel": "Baseline의 ~95-98%",
+      "pos": [
+        460,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "최고 처리량"
+    },
+    {
+      "id": "kong",
+      "type": "backend",
+      "label": "Kong Mesh",
+      "sublabel": "Baseline의 ~90-95%",
+      "pos": [
+        460,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "istio",
+      "type": "backend",
+      "label": "Istio",
+      "sublabel": "Baseline의 ~85-92%",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "consul",
+      "type": "backend",
+      "label": "Consul",
+      "sublabel": "Baseline의 ~85-92%",
+      "pos": [
+        460,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "처리량 비교 (Baseline 대비 최대 RPS)",
+      "wraps": [
+        "linkerd",
+        "kong",
+        "istio",
+        "consul"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "base-linkerd",
+      "from": "baseline",
+      "to": "linkerd",
+      "variant": "emphasis"
+    },
+    {
+      "id": "base-kong",
+      "from": "baseline",
+      "to": "kong"
+    },
+    {
+      "id": "base-istio",
+      "from": "baseline",
+      "to": "istio"
+    },
+    {
+      "id": "base-consul",
+      "from": "baseline",
+      "to": "consul"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "결론",
+      "items": [
+        "Linkerd: 가장 낮은 오버헤드, 경량 프록시",
+        "Istio/Consul: 더 많은 기능으로 인한 약간 높은 오버헤드",
+        "Kong Mesh: 중간 수준의 성능"
+      ]
+    }
+  ]
+}

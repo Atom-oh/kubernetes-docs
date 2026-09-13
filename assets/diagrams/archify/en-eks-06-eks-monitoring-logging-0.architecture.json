@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Monitoring and Logging Architecture",
+    "locale": "en",
+    "output": "en-eks-06-eks-monitoring-logging-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      720
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Cluster component"
+        },
+        "cloud": {
+          "label": "AWS managed service"
+        },
+        "frontend": {
+          "label": "Visualization"
+        },
+        "external": {
+          "label": "Notification channels"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "metrics-path",
+        "label": "Metrics path",
+        "focus": [
+          "nodes",
+          "prometheus",
+          "alertmanager",
+          "notify",
+          "grafana",
+          "cwm"
+        ],
+        "note": "Prometheus scrapes kubelet and Node Exporter metrics and feeds Alertmanager, Grafana, and CloudWatch Metrics."
+      },
+      {
+        "id": "container-logs",
+        "label": "Container log path",
+        "focus": [
+          "nodes",
+          "fluent",
+          "cwl",
+          "opensearch",
+          "dashboards"
+        ],
+        "note": "Fluent Bit/Fluentd ships pod logs to CloudWatch Logs and Amazon OpenSearch, visualized in OpenSearch Dashboards."
+      },
+      {
+        "id": "control-plane-logs",
+        "label": "Control plane logs",
+        "focus": [
+          "cp",
+          "cwl",
+          "opensearch"
+        ],
+        "note": "EKS control plane logs go straight to CloudWatch Logs and can optionally be exported to OpenSearch."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "Control Plane Logs",
+      "sublabel": "api · audit · authenticator ...",
+      "pos": [
+        40,
+        560
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "nodes",
+      "type": "backend",
+      "label": "Worker Nodes",
+      "sublabel": "Pods · kubelet · Node Exporter",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "alert routing",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "metrics scrape & store",
+      "pos": [
+        330,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "metrics dashboards",
+      "pos": [
+        330,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fluent",
+      "type": "backend",
+      "label": "Fluent Bit / Fluentd",
+      "sublabel": "log collection DaemonSet",
+      "pos": [
+        330,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cwm",
+      "type": "cloud",
+      "label": "CloudWatch Metrics",
+      "sublabel": "managed metrics store",
+      "pos": [
+        620,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cwl",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "managed log store",
+      "pos": [
+        620,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "opensearch",
+      "type": "cloud",
+      "label": "Amazon OpenSearch",
+      "sublabel": "log search & analytics",
+      "pos": [
+        620,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "notify",
+      "type": "external",
+      "label": "Notification channels",
+      "sublabel": "Slack · SNS · webhook",
+      "pos": [
+        900,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "dashboards",
+      "type": "frontend",
+      "label": "OpenSearch Dashboards",
+      "sublabel": "log visualization",
+      "pos": [
+        900,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS Cluster",
+      "wraps": [
+        "cp",
+        "nodes"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Monitoring Stack",
+      "wraps": [
+        "alertmanager",
+        "prometheus",
+        "grafana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Logging Stack",
+      "wraps": [
+        "fluent"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Services",
+      "wraps": [
+        "cwm",
+        "cwl",
+        "opensearch"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "nodes-to-prometheus",
+      "from": "nodes",
+      "to": "prometheus",
+      "label": "metrics scrape",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prometheus-to-alertmanager",
+      "from": "prometheus",
+      "to": "alertmanager",
+      "label": "alert rules",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alertmanager-to-notify",
+      "from": "alertmanager",
+      "to": "notify",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prometheus-to-grafana",
+      "from": "prometheus",
+      "to": "grafana"
+    },
+    {
+      "id": "prometheus-to-cwm",
+      "from": "prometheus",
+      "to": "cwm",
+      "label": "export metrics"
+    },
+    {
+      "id": "nodes-to-fluent",
+      "from": "nodes",
+      "to": "fluent"
+    },
+    {
+      "id": "fluent-to-cwl",
+      "from": "fluent",
+      "to": "cwl"
+    },
+    {
+      "id": "fluent-to-opensearch",
+      "from": "fluent",
+      "to": "opensearch"
+    },
+    {
+      "id": "cp-to-cwl",
+      "from": "cp",
+      "to": "cwl",
+      "label": "control plane logging"
+    },
+    {
+      "id": "cwl-to-opensearch",
+      "from": "cwl",
+      "to": "opensearch",
+      "variant": "dashed"
+    },
+    {
+      "id": "opensearch-to-dashboards",
+      "from": "opensearch",
+      "to": "dashboards"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control plane logging",
+      "items": [
+        "Five log types: api, audit, authenticator, controllerManager, scheduler",
+        "Enable with aws eks update-cluster-config or eksctl",
+        "Query with CloudWatch Logs Insights"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Collection stack",
+      "items": [
+        "Prometheus scrapes kubelet and Node Exporter metrics",
+        "Fluent Bit (aws-for-fluent-bit) DaemonSet collects container logs",
+        "Alertmanager routes alerts to Slack and other channels"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: postgresql-aws-reviewed
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.com/v1alpha1
+    kind: PostgreSQLDatabase
+  mode: Pipeline
+  pipeline:
+  - step: patch-and-transform
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: securityGroup
+        base:
+          apiVersion: ec2.aws.m.upbound.io/v1beta1
+          kind: SecurityGroup
+          spec:
+            managementPolicies:
+            - Observe
+            - Create
+            - Update
+            - LateInitialize
+            forProvider:
+              region: us-west-2
+              description: Application database security group
+            providerConfigRef:
+              kind: ProviderConfig
+              name: team-aws
+        patches:
+        - &id001
+          type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
+          policy:
+            fromFieldPath: Required
+        - &id002
+          type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.environment
+          toFieldPath: spec.forProvider.tags.Environment
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.vpcID
+          toFieldPath: spec.forProvider.vpcId
+          policy:
+            fromFieldPath: Required
+      - name: securityGroupRule
+        base:
+          apiVersion: ec2.aws.m.upbound.io/v1beta1
+          kind: SecurityGroupRule
+          spec:
+            managementPolicies:
+            - Observe
+            - Create
+            - Update
+            - LateInitialize
+            forProvider:
+              region: us-west-2
+              type: ingress
+              protocol: tcp
+              fromPort: 5432
+              toPort: 5432
+              securityGroupIdSelector:
+                matchControllerRef: true
+            providerConfigRef:
+              kind: ProviderConfig
+              name: team-aws
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.clientSecurityGroupID
+          toFieldPath: spec.forProvider.sourceSecurityGroupId
+          policy:
+            fromFieldPath: Required
+      - name: subnetGroup
+        base:
+          apiVersion: rds.aws.m.upbound.io/v1beta1
+          kind: SubnetGroup
+          spec:
+            managementPolicies:
+            - Observe
+            - Create
+            - Update
+            - LateInitialize
+            forProvider:
+              region: us-west-2
+              description: Approved private database subnets
+            providerConfigRef:
+              kind: ProviderConfig
+              name: team-aws
+        patches:
+        - *id001
+        - *id002
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.subnetIDs
+          toFieldPath: spec.forProvider.subnetIds
+          policy:
+            fromFieldPath: Required
+      - name: database
+        base:
+          apiVersion: rds.aws.m.upbound.io/v1beta1
+          kind: Instance
+          spec:
+            managementPolicies:
+            - Observe
+            - Create
+            - Update
+            - LateInitialize
+            forProvider:
+              region: us-west-2
+              engine: postgres
+              engineVersion: '17.10'
+              username: dbadmin
+              storageType: gp3
+              storageEncrypted: true
+              publiclyAccessible: false
+              skipFinalSnapshot: false
+              dbSubnetGroupNameSelector:
+                matchControllerRef: true
+              vpcSecurityGroupIdSelector:
+                matchControllerRef: true
+              passwordSecretRef:
+                name: replace-secret
+                key: password
+              port: 5432
+            providerConfigRef:
+              kind: ProviderConfig
+              name: team-aws
+        patches:
+        - *id001
+        - *id002
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.dbName
+          toFieldPath: spec.forProvider.dbName
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.storageGB
+          toFieldPath: spec.forProvider.allocatedStorage
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.passwordSecretName
+          toFieldPath: spec.forProvider.passwordSecretRef.name
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.environment
+          toFieldPath: spec.forProvider.instanceClass
+          policy:
+            fromFieldPath: Required
+          transforms:
+          - type: map
+            map:
+              dev: db.t4g.medium
+              production: db.r6g.large
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.environment
+          toFieldPath: spec.forProvider.multiAz
+          policy:
+            fromFieldPath: Required
+          transforms:
+          - type: map
+            map:
+              dev: false
+              production: true
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.environment
+          toFieldPath: spec.forProvider.deletionProtection
+          policy:
+            fromFieldPath: Required
+          transforms:
+          - type: map
+            map:
+              dev: false
+              production: true
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.environment
+          toFieldPath: spec.forProvider.backupRetentionPeriod
+          policy:
+            fromFieldPath: Required
+          transforms:
+          - type: map
+            map:
+              dev: 7
+              production: 30
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.finalSnapshotIdentifier
+          policy:
+            fromFieldPath: Required
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: '%s-final-review-before-delete'
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.writeConnectionSecretToRef.name
+          policy:
+            fromFieldPath: Required
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: '%s-mr-connection'
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.address
+          toFieldPath: status.endpoint
+          policy:
+            fromFieldPath: Optional
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.port
+          toFieldPath: status.port
+          policy:
+            fromFieldPath: Optional
+        connectionDetails:
+        - name: endpoint
+          type: FromFieldPath
+          fromFieldPath: status.atProvider.address
+        - name: username
+          type: FromFieldPath
+          fromFieldPath: spec.forProvider.username
+  - step: readiness
+    functionRef:
+      name: function-auto-ready

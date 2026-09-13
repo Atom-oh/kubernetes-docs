@@ -1,0 +1,154 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Token Bucket Algorithm",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Request"
+        },
+        "database": {
+          "label": "Token store"
+        },
+        "backend": {
+          "label": "Processing"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "external": {
+          "label": "Reject response"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "bucket",
+      "label": "Token Bucket · refill"
+    },
+    {
+      "id": "request",
+      "label": "Request handling"
+    },
+    {
+      "id": "reject",
+      "label": "Excess requests rejected",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "arrive",
+    "check",
+    "allow"
+  ],
+  "nodes": [
+    {
+      "id": "refill",
+      "lane": "bucket",
+      "col": 0,
+      "type": "backend",
+      "label": "Refill",
+      "sublabel": "10 tokens/sec",
+      "width": 128
+    },
+    {
+      "id": "tokens",
+      "lane": "bucket",
+      "col": 1,
+      "type": "database",
+      "label": "Token Bucket",
+      "sublabel": "Max 100 tokens",
+      "width": 136
+    },
+    {
+      "id": "arrive",
+      "lane": "request",
+      "col": 0,
+      "type": "frontend",
+      "label": "Request arrives",
+      "width": 148
+    },
+    {
+      "id": "check",
+      "lane": "request",
+      "col": 1,
+      "type": "security",
+      "label": "Token available?",
+      "sublabel": "Check bucket balance",
+      "width": 136
+    },
+    {
+      "id": "allow",
+      "lane": "request",
+      "col": 2,
+      "type": "backend",
+      "label": "Allow request",
+      "sublabel": "Consume 1 token",
+      "width": 136
+    },
+    {
+      "id": "deny",
+      "lane": "reject",
+      "col": 2,
+      "type": "external",
+      "label": "Reject request",
+      "sublabel": "Return 429",
+      "width": 136
+    }
+  ],
+  "edges": [
+    {
+      "id": "refill-tokens",
+      "from": "refill",
+      "to": "tokens",
+      "label": "Add 10 every second",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "id": "arrive-check",
+      "from": "arrive",
+      "to": "check",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tokens-check",
+      "from": "tokens",
+      "to": "check",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "check-allow",
+      "from": "check",
+      "to": "allow",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-deny",
+      "from": "check",
+      "to": "deny",
+      "label": "No",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "allow-tokens",
+      "from": "allow",
+      "to": "tokens",
+      "label": "Decrease tokens",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Locality Load Balancing 알고리즘",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "same-zone",
+        "label": "같은 Zone 우선",
+        "focus": [
+          "request",
+          "check_local",
+          "route_local"
+        ],
+        "note": "요청이 도착하면 먼저 같은 Zone에 정상 파드가 있는지 확인하고, 있으면 트래픽의 80~100%를 그 Zone으로 보낸다."
+      },
+      {
+        "id": "adjacent-zone",
+        "label": "인접 Zone 장애조치",
+        "focus": [
+          "check_local",
+          "check_nearby",
+          "route_nearby"
+        ],
+        "note": "같은 Zone에 정상 파드가 없으면 같은 Region의 인접 Zone을 확인하고, 있으면 그 Zone으로 라우팅한다(10~20%)."
+      },
+      {
+        "id": "other-region",
+        "label": "다른 Region 최종 대안",
+        "focus": [
+          "check_nearby",
+          "route_remote"
+        ],
+        "note": "같은 Region 어디에도 정상 파드가 없을 때만 다른 Region으로 라우팅한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "요청"
+        },
+        "backend": {
+          "label": "정상 파드 확인"
+        },
+        "cloud": {
+          "label": "같은 Region 내 라우팅"
+        },
+        "external": {
+          "label": "다른 Region 라우팅"
+        }
+      }
+    },
+    "viewBox": [
+      991,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "ingress",
+      "label": "요청"
+    },
+    {
+      "id": "decision",
+      "label": "Locality 판단 (정상 파드 확인)"
+    },
+    {
+      "id": "routing",
+      "label": "라우팅 결과"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "check_local",
+    "route_local"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "ingress",
+      "col": 0,
+      "width": 190,
+      "type": "frontend",
+      "label": "요청 도착",
+      "sublabel": "클라이언트 파드 → 서비스"
+    },
+    {
+      "id": "check_local",
+      "lane": "decision",
+      "col": 0,
+      "width": 190,
+      "type": "backend",
+      "label": "같은 Zone 정상 파드?",
+      "sublabel": "1순위 · Same Zone"
+    },
+    {
+      "id": "check_nearby",
+      "lane": "decision",
+      "col": 2,
+      "width": 190,
+      "type": "backend",
+      "label": "인접 Zone 정상 파드?",
+      "sublabel": "2순위 · Same Region"
+    },
+    {
+      "id": "route_local",
+      "lane": "routing",
+      "col": 0,
+      "width": 190,
+      "type": "cloud",
+      "label": "같은 Zone으로 라우팅",
+      "sublabel": "Yes · 80~100%"
+    },
+    {
+      "id": "route_nearby",
+      "lane": "routing",
+      "col": 2,
+      "width": 190,
+      "type": "cloud",
+      "label": "인접 Zone으로 라우팅",
+      "sublabel": "Yes · 10~20%"
+    },
+    {
+      "id": "route_remote",
+      "lane": "routing",
+      "col": 4,
+      "width": 190,
+      "type": "external",
+      "label": "다른 Region으로 라우팅",
+      "sublabel": "3순위 · Different Region"
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-check-local",
+      "from": "request",
+      "to": "check_local",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "local-yes",
+      "from": "check_local",
+      "to": "route_local",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "local-no",
+      "from": "check_local",
+      "to": "check_nearby",
+      "label": "No",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "nearby-yes",
+      "from": "check_nearby",
+      "to": "route_nearby",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop"
+    },
+    {
+      "id": "nearby-no",
+      "from": "check_nearby",
+      "to": "route_remote",
+      "label": "No",
+      "role": "branch",
+      "variant": "dashed"
+    }
+  ]
+}

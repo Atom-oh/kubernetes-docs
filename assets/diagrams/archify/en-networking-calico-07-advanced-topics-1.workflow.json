@@ -1,0 +1,238 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Calico IPAM Allocation Algorithm",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "affine-first",
+        "label": "Affine block first",
+        "focus": [
+          "start",
+          "check_affine",
+          "alloc_ip",
+          "done"
+        ],
+        "note": "Calico first tries a block with affinity to the scheduled node; if it still has a free IP, allocation ends right there."
+      },
+      {
+        "id": "new-block",
+        "label": "Claim a new block",
+        "focus": [
+          "check_affine",
+          "check_pool",
+          "claim_block",
+          "alloc_ip"
+        ],
+        "note": "Once affine blocks run out, Calico claims an unclaimed IPPool block (default blockSize /26 = 64 IPs) for the node and allocates from it."
+      },
+      {
+        "id": "borrow-exhaust",
+        "label": "Borrow and IP exhaustion",
+        "focus": [
+          "check_pool",
+          "check_other",
+          "borrow_ip",
+          "fail"
+        ],
+        "note": "With no unclaimed block left, Calico borrows a free IP from another node's block. It fails only when no free IP exists anywhere."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start / end"
+        },
+        "backend": {
+          "label": "Decision"
+        },
+        "cloud": {
+          "label": "Block / IP allocation"
+        },
+        "security": {
+          "label": "Allocation failed"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "request",
+      "label": "Pod creation"
+    },
+    {
+      "id": "affine",
+      "label": "Step 1 · Node affine block"
+    },
+    {
+      "id": "claim",
+      "label": "Step 2 · Claim new block"
+    },
+    {
+      "id": "borrow",
+      "label": "Step 3 · Borrow from other nodes"
+    },
+    {
+      "id": "exception",
+      "label": "IP exhaustion",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "check_affine",
+    "alloc_ip",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "request",
+      "col": 0,
+      "width": 190,
+      "type": "frontend",
+      "label": "Pod creation request",
+      "sublabel": "CNI ADD → Calico IPAM"
+    },
+    {
+      "id": "check_affine",
+      "lane": "affine",
+      "col": 1,
+      "width": 200,
+      "type": "backend",
+      "label": "Free IP in affine block?",
+      "sublabel": "blocks affine to this node"
+    },
+    {
+      "id": "alloc_ip",
+      "lane": "affine",
+      "col": 4,
+      "width": 160,
+      "type": "cloud",
+      "label": "Allocate IP",
+      "sublabel": "assign pod IP from the block"
+    },
+    {
+      "id": "done",
+      "lane": "affine",
+      "col": 5,
+      "width": 160,
+      "type": "frontend",
+      "label": "IP assigned",
+      "sublabel": "pod gets its IP"
+    },
+    {
+      "id": "check_pool",
+      "lane": "claim",
+      "col": 2,
+      "width": 190,
+      "type": "backend",
+      "label": "Free block in pool?",
+      "sublabel": "unclaimed blocks in IPPool CIDR"
+    },
+    {
+      "id": "claim_block",
+      "lane": "claim",
+      "col": 3,
+      "width": 160,
+      "type": "cloud",
+      "label": "Claim a new block",
+      "sublabel": "node affinity · blockSize /26"
+    },
+    {
+      "id": "check_other",
+      "lane": "borrow",
+      "col": 3,
+      "width": 200,
+      "type": "backend",
+      "label": "Free IP on other nodes?",
+      "sublabel": "scan non-affine blocks"
+    },
+    {
+      "id": "borrow_ip",
+      "lane": "borrow",
+      "col": 4,
+      "width": 160,
+      "type": "cloud",
+      "label": "Borrow IP",
+      "sublabel": "IP from a non-affine block"
+    },
+    {
+      "id": "fail",
+      "lane": "exception",
+      "col": 4,
+      "width": 160,
+      "type": "security",
+      "label": "Allocation failed",
+      "sublabel": "IP exhaustion · pod creation fails"
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-affine",
+      "from": "start",
+      "to": "check_affine"
+    },
+    {
+      "id": "affine-alloc",
+      "from": "check_affine",
+      "to": "alloc_ip",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "affine-pool",
+      "from": "check_affine",
+      "to": "check_pool",
+      "label": "no",
+      "role": "branch",
+      "toSide": "left"
+    },
+    {
+      "id": "pool-claim",
+      "from": "check_pool",
+      "to": "claim_block",
+      "label": "yes"
+    },
+    {
+      "id": "claim-alloc",
+      "from": "claim_block",
+      "to": "alloc_ip"
+    },
+    {
+      "id": "pool-other",
+      "from": "check_pool",
+      "to": "check_other",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "other-borrow",
+      "from": "check_other",
+      "to": "borrow_ip",
+      "label": "yes"
+    },
+    {
+      "id": "borrow-alloc",
+      "from": "borrow_ip",
+      "to": "alloc_ip"
+    },
+    {
+      "id": "other-fail",
+      "from": "check_other",
+      "to": "fail",
+      "label": "no",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "alloc-done",
+      "from": "alloc_ip",
+      "to": "done",
+      "variant": "emphasis"
+    }
+  ]
+}

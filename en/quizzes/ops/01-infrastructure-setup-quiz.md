@@ -4,172 +4,162 @@
 
 ## Multiple Choice Questions
 
-### 1. What is the primary purpose of the Terraform 3-Layer architecture?
+### 1. Which three operational layers does this guide use?
 
-- A) To reduce the number of Terraform files
-- B) To separate infrastructure by lifecycle and blast radius
-- C) To enable faster deployment times
-- D) To eliminate the need for state management
+- A) Network → Cluster → Platform
+- B) Foundation → Workload → Database
+- C) VPC → Pod → Container
+- D) Every resource in one state
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) To separate infrastructure by lifecycle and blast radius**
+**Answer: A) Network → Cluster → Platform**
 
-**Explanation:**
-The 3-Layer architecture separates infrastructure into Foundation (VPC, IAM), Platform (EKS cluster), and Workload (applications) layers. Each layer has different change frequencies and blast radii, allowing safer and more manageable infrastructure changes.
+00-shared is a separate bootstrap. Network owns the VPC, Cluster owns EKS, and Platform owns CoreDNS, Pod Identity, and team access. Separate state does not prevent VPC or DNS failures from affecting other layers.
 
 </details>
 
-### 2. In Terraform S3 backend configuration, what is the purpose of the DynamoDB table?
+### 2. Which setting enables native S3 backend locking in Terraform 1.10 or later?
 
-- A) To store Terraform state files
-- B) To provide state locking and consistency
-- C) To backup Terraform configurations
-- D) To log Terraform operations
+- A) use_lockfile = true
+- B) Always create a DynamoDB table
+- C) Enable bucket versioning only
+- D) Use the same key for every layer
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) To provide state locking and consistency**
+**Answer: A) use_lockfile = true**
 
-**Explanation:**
-The DynamoDB table enables state locking to prevent concurrent modifications to the same state file. This prevents race conditions when multiple users or CI/CD pipelines attempt to modify infrastructure simultaneously.
+Native locking uses S3 conditional writes. DynamoDB locking is relevant to existing configurations and transitions, but is not required for native S3 locking. Changing the lock mechanism alone does not move the state storage location.
 
 </details>
 
-### 3. What does `terraform_remote_state` data source allow you to do?
+### 3. Which statement about terraform_remote_state security is correct?
 
-- A) Store state files in a remote location
-- B) Reference outputs from another Terraform state
-- C) Migrate state between backends
-- D) Encrypt state files automatically
+- A) Readers can access only outputs
+- B) Backend access can expose the entire state snapshot, so consider trust boundaries
+- C) sensitive=true revokes IAM read access
+- D) State never contains sensitive values
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Reference outputs from another Terraform state**
+**Answer: B) Backend access can expose the entire state snapshot, so consider trust boundaries**
 
-**Explanation:**
-The `terraform_remote_state` data source allows one Terraform configuration to read output values from another state file. This enables cross-layer references, such as the Platform layer reading VPC ID from the Foundation layer.
+The expression exposes root outputs, but the underlying state contains more information. Consider separately publishing only required values across trust boundaries.
 
 </details>
 
-### 4. Which VPC CIDR block size is recommended for production EKS clusters?
+### 4. Which statement about a standard regional EKS cluster and built-in Auto Mode pools is correct?
 
-- A) /24 (256 addresses)
-- B) /20 (4,096 addresses)
-- C) /16 (65,536 addresses)
-- D) /8 (16 million addresses)
+- A) One control-plane subnet AZ is sufficient
+- B) A blue name pins workers to AZ-a
+- C) EKS subnets need at least two distinct AZs; worker placement constraints are separate
+- D) A Cluster=blue subnet tag pins nodes
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) /16 (65,536 addresses)**
+**Answer: C) EKS subnets need at least two distinct AZs; worker placement constraints are separate**
 
-**Explanation:**
-A /16 CIDR block provides 65,536 IP addresses, which is recommended for production EKS clusters. This accommodates pod IP allocation (especially with VPC CNI), future growth, and multi-AZ deployments without IP exhaustion concerns.
+Built-in pools can use multiple configured AZs. Single-AZ worker cells require NodePool/NodeClass placement design and recovery capacity in other cells.
 
 </details>
 
-### 5. What is the key characteristic of EKS Auto Mode compared to Managed Node Groups?
+### 5. What happens if gpu is added as a built-in compute_config.node_pools name?
 
-- A) Auto Mode requires manual node provisioning
-- B) Auto Mode automatically manages node lifecycle and scaling
-- C) Auto Mode only supports Spot instances
-- D) Auto Mode eliminates the need for pods
+- A) It creates an official built-in GPU pool
+- B) gpu is not a built-in pool name; configure a suitable custom NodePool
+- C) Existing nodes immediately become GPUs
+- D) All clusters become GPU-only
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Auto Mode automatically manages node lifecycle and scaling**
+**Answer: B) gpu is not a built-in pool name; configure a suitable custom NodePool**
 
-**Explanation:**
-EKS Auto Mode automatically handles node provisioning, scaling, and lifecycle management based on workload demands. Unlike Managed Node Groups, operators don't need to configure Auto Scaling Groups or manage node updates manually.
+The built-in names are general-purpose and system. The input is a list of names, not an arbitrary map defining GPU pools. Custom NodePools belong to the GitOps side of this guide.
 
 </details>
 
-### 6. How does Pod Identity differ from IRSA (IAM Roles for Service Accounts)?
+### 6. What is the correct purpose and requirement for EKS Pod Identity?
 
-- A) Pod Identity doesn't support IAM roles
-- B) Pod Identity uses EKS-managed credentials without OIDC provider setup
-- C) Pod Identity requires manual token rotation
-- D) Pod Identity only works with Fargate
+- A) It automatically fixes Pod image pulls from ECR
+- B) It always requires an OIDC provider
+- C) It provides role credentials for supported SDK calls, with association, trust, and node support
+- D) The association installs the ServiceAccount and ESO
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Pod Identity uses EKS-managed credentials without OIDC provider setup**
+**Answer: C) It provides role credentials for supported SDK calls, with association, trust, and node support**
 
-**Explanation:**
-Pod Identity simplifies IAM integration by eliminating the need to configure an OIDC provider. AWS manages the credential injection through the Pod Identity Agent, making it easier to set up and maintain compared to IRSA.
+Auto Mode includes agent functionality; ordinary EKS nodes may need the separate agent. Configure the matching namespace/SA and distinguish kubelet image-pull permissions from application SDK permissions.
 
 </details>
 
-### 7. In the 3-Layer architecture, which layer contains the EKS cluster resource?
+### 7. How should state be separated by environment and cluster color?
 
-- A) Foundation Layer
-- B) Platform Layer
-- C) Workload Layer
-- D) Network Layer
+- A) TF_DATA_DIR alone splits a shared S3 key
+- B) Select distinct backend bucket/key values and matching initialization directories
+- C) Changing the environment variable moves prod state to dev
+- D) Disable S3 versioning
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Platform Layer**
+**Answer: B) Select distinct backend bucket/key values and matching initialization directories**
 
-**Explanation:**
-The Platform Layer contains the EKS cluster, node groups, and cluster add-ons. It depends on the Foundation Layer (VPC, subnets) and provides the platform for the Workload Layer (applications, services).
+Backend configuration determines the actual state location. TF_DATA_DIR separates initialization metadata, modules, and provider caches; it does not replace the state key. Separate bootstrap local state by account/environment too.
 
 </details>
 
-### 8. What should be enabled on S3 buckets storing Terraform state?
+### 8. How does this Auto Mode example handle CoreDNS and StorageClasses?
 
-- A) Public access
-- B) Versioning and encryption
-- C) Static website hosting
-- D) Cross-region replication only
+- A) Both are always created without configuration
+- B) Pure Auto Mode uses node-local DNS; mixed nodes need a CoreDNS Deployment; create StorageClasses separately
+- C) Always install duplicate EBS CSI and Pod Identity agents
+- D) Pin the CoreDNS version to the word latest
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Versioning and encryption**
+**Answer: B) Pure Auto Mode uses node-local DNS; mixed nodes need a CoreDNS Deployment; create StorageClasses separately**
 
-**Explanation:**
-Terraform state files contain sensitive information and should be protected with versioning (to recover from corruption or accidental changes) and encryption (to protect secrets at rest). Public access should always be blocked.
+Pure Auto Mode uses CoreDNS as a node system service. Mixed clusters retain the Deployment; query Kubernetes/Region compatibility and pin that add-on version. Auto Mode StorageClasses use ebs.csi.eks.amazonaws.com.
 
 </details>
 
-### 9. When using Terraform workspaces for multi-environment management, what is a key limitation?
+### 9. Does an administrator access entry complete kubectl access on its own?
 
-- A) Workspaces cannot use variables
-- B) All environments share the same backend configuration
-- C) Workspaces don't support modules
-- D) Only two workspaces are allowed
+- A) It also grants IAM DescribeCluster and network access
+- B) No: authenticate as that principal and prepare IAM permissions and private API connectivity
+- C) Terraform’s caller is always automatically an admin
+- D) The same entry must be recreated in the Platform layer
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) All environments share the same backend configuration**
+**Answer: B) No: authenticate as that principal and prepare IAM permissions and private API connectivity**
 
-**Explanation:**
-Terraform workspaces share the same backend configuration and code, which can lead to accidental changes to production when working on development. Many teams prefer separate directories or repositories per environment for stronger isolation.
+This example disables automatic creator administration. EKS access policies govern Kubernetes permissions, separately from IAM. One layer should own each principal’s access entry.
 
 </details>
 
-### 10. What is the recommended approach for managing Terraform provider versions?
+### 10. Which smoke-test failure handling is correct?
 
-- A) Always use the latest version without constraints
-- B) Use exact version constraints in required_providers block
-- C) Let Terraform auto-update providers
-- D) Avoid specifying provider versions
+- A) Hide Pod creation errors with || true
+- B) Always delete a pre-existing smoke-test namespace
+- C) Return nonzero on failure and clean up only the verified temporary namespace
+- D) Treat every Running-phase Pod as healthy
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Use exact version constraints in required_providers block**
+**Answer: C) Return nonzero on failure and clean up only the verified temporary namespace**
 
-**Explanation:**
-Specifying exact or pessimistic version constraints (e.g., `~> 5.0`) in the `required_providers` block ensures reproducible deployments and prevents unexpected breaking changes from provider updates. This is especially important in production environments.
+The test covers workload scheduling and cluster DNS, not external LB traffic or every application dependency. Container READY counts and Pod Ready conditions are also distinct.
 
 </details>

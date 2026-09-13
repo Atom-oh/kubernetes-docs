@@ -129,7 +129,7 @@ AdmissionController는 Kubernetes API 서버에 대한 요청이 인증 및 권�
 OPA Gatekeeper는 Kubernetes 클러스터에 정책을 적용하기 위한 확장 가능한 솔루션입니다. 이는 OPA(Open Policy Agent)를 기반으로 하며, CustomResourceDefinition(CRD)을 사용하여 정책을 정의하고 적용합니다. Gatekeeper는 AdmissionWebhook으로 작동하여 클러스터에 생성되거나 수정되는 리소스가 정의된 정책을 준수하는지 확인합니다. 이를 통해 보안 정책, 리소스 제한, 네이밍 컨벤션 등 다양한 정책을 적용할 수 있습니다.
 </details>
 
-9. Kubernetes에서 ResourceQuota가 적용된 네임스페이스에서 리소스 요청(requests)과 제한(limits)을 지정하지 않은 포드를 생성하려고 할 때 어떤 일이 발생하나요?
+9. CPU·메모리 요청과 제한 쿼터가 있고 admission 기본값은 없는 네임스페이스에서 모든 리소스 값을 생략한 컨테이너의 파드를 생성하면 어떻게 되나요?
    - A) 포드가 기본 리소스 요청과 제한으로 생성됨
    - B) 포드 생성이 거부됨
    - C) 포드가 생성되지만 스케줄링되지 않음
@@ -141,7 +141,7 @@ OPA Gatekeeper는 Kubernetes 클러스터에 정책을 적용하기 위한 확�
 **정답: B) 포드 생성이 거부됨**
 
 **설명:**
-ResourceQuota가 네임스페이스에 적용되고 CPU 및 메모리와 같은 컴퓨팅 리소스에 대한 쿼터가 설정된 경우, 해당 네임스페이스의 모든 컨테이너는 리소스 요청(requests)과 제한(limits)을 명시적으로 지정해야 합니다. 그렇지 않으면 API 서버는 포드 생성 요청을 거부합니다. 이는 쿼터가 적용된 네임스페이스에서 리소스 사용량을 정확하게 추적하고 제한하기 위한 것입니다.
+ResourceQuota가 네임스페이스에 적용되고 CPU 및 메모리와 같은 컴퓨팅 리소스에 대한 쿼터가 설정된 경우, 기본값 적용 후 파드에 해당 쿼터가 요구하는 리소스 필드가 있어야 합니다. admission 기본값 적용 후에도 필요한 값이 없으면 생성이 거부됩니다. LimitRange가 기본값을 채울 수 있으며 오브젝트 수만 제한한 쿼터는 CPU·메모리 필드를 요구하지 않습니다. 이는 쿼터가 적용된 네임스페이스에서 리소스 사용량을 정확하게 추적하고 제한하기 위한 것입니다.
 </details>
 
 10. Kubernetes에서 PriorityClass의 주요 목적은 무엇인가요?
@@ -194,7 +194,7 @@ Pod Security Standards는 포드의 보안 설정에 대한 세 가지 정책 �
    - 중간 수준의 정책으로, 알려진 권한 상승 경로를 방지합니다.
    - 대부분의 워크로드에 적합한 기본 수준의 보안을 제공합니다.
    - 권한 있는 컨테이너, 호스트 네임스페이스 사용을 제한합니다.
-   - 그러나 일부 권한 있는 작업(예: 호스트 경로 마운트)은 여전히 허용됩니다.
+   - Baseline도 hostPath 볼륨을 금지합니다. Restricted는 비루트 실행, seccomp, capability 제한 같은 요구사항을 추가합니다.
 
 3. **Restricted (제한됨)**:
    - 가장 제한적인 정책으로, 강화된 보안 설정을 적용합니다.
@@ -259,7 +259,7 @@ kubectl label namespace source-namespace name=source-namespace
 kubectl label namespace destination-namespace name=destination-namespace
 ```
 
-NetworkPolicy는 기본적으로 허용(allow-list) 방식으로 작동하므로, 위의 정책이 적용되면 명시적으로 허용된 통신만 가능하고 나머지는 모두 차단됩니다.
+이 정책은 선택한 방향만 격리합니다. 다른 NetworkPolicy의 허용 규칙은 추가되므로 더 넓은 허용 정책을 좁히지는 못합니다. 이름을 사용하면 DNS egress를 별도 허용하고 출발지·목적지 양쪽 규칙을 테스트하세요.
 </details>
 
 4. Kubernetes에서 OPA Gatekeeper를 사용하여 구현할 수 있는 세 가지 정책 예시를 설명하세요.
@@ -269,6 +269,8 @@ NetworkPolicy는 기본적으로 허용(allow-list) 방식으로 작동하므로
 
 **정답:**
 OPA Gatekeeper를 사용하여 구현할 수 있는 정책 예시:
+
+공식 Gatekeeper 라이브러리의 해당 ConstraintTemplate을 먼저 설치하세요. 이 종류는 기본 API가 아니라 템플릿이 생성하며 라이브러리 K8sRequiredLabels 스키마는 본문의 단순화한 K8sRequiredLabelKeys와 다릅니다.
 
 1. **이미지 레지스트리 제한**:
    - 승인된 레지스트리에서만 이미지를 가져오도록 강제하는 정책
@@ -355,7 +357,9 @@ OPA Gatekeeper를 사용하여 구현할 수 있는 정책 예시:
      match:
        kinds:
          - apiGroups: [""]
-           kinds: ["Pod", "Service", "Deployment"]
+           kinds: ["Pod", "Service"]
+         - apiGroups: ["apps"]
+           kinds: ["Deployment"]
      parameters:
        labels:
          - key: "team"
@@ -403,11 +407,11 @@ PriorityClass를 사용하여 중요한 워크로드의 가용성을 보장하�
 
 3. **선점(Preemption) 활용**:
    - 리소스가 부족할 때 우선순위가 높은 포드는 우선순위가 낮은 포드를 선점(제거)하고 스케줄링됨
-   - 이를 통해 중요한 워크로드가 항상 실행될 수 있도록 보장
+   - 스케줄링 우선권을 높이지만 제약 조건이나 용량 부족이 남으면 배치를 보장하지 못함
 
 4. **시스템 우선순위 클래스 고려**:
    - Kubernetes는 system-cluster-critical(2000000000)과 system-node-critical(2000001000)과 같은 시스템 우선순위 클래스를 제공
-   - 사용자 정의 우선순위 클래스는 일반적으로 이보다 낮은 값을 사용해야 함
+   - 사용자 정의 PriorityClass 값은 최대 1,000,000,000이며 그보다 높은 값은 시스템용으로 예약됨
 
 5. **우선순위 계층 설계**:
    - 워크로드의 중요도에 따라 여러 우선순위 레벨 정의
@@ -665,7 +669,7 @@ kubectl label namespace restricted-ns \
 
 1. **아키텍처 및 접근 방식**:
    - **OPA Gatekeeper**: Open Policy Agent(OPA)를 기반으로 하며, Rego라는 정책 언어를 사용합니다. ConstraintTemplate과 Constraint라는 두 가지 CRD를 사용하여 정책을 정의합니다.
-   - **Kyverno**: 자체 정책 엔진을 사용하며, YAML/JSON 기반의 정책 정의를 제공합니다. 단일 Policy CRD를 사용하여 정책을 정의합니다.
+   - **Kyverno**: 자체 정책 엔진을 사용하며, YAML/JSON 기반의 정책 정의를 제공합니다. 버전에 따라 Policy/ClusterPolicy와 전용 cleanup·CEL 정책 API 등 여러 종류를 제공합니다.
 
 2. **정책 언어**:
    - **OPA Gatekeeper**: Rego 언어를 사용하며, 강력하지만 학습 곡선이 가파릅니다.
@@ -684,7 +688,7 @@ kubectl label namespace restricted-ns \
 
 4. **장점**:
    - **OPA Gatekeeper**:
-     - 더 성숙하고 널리 채택됨
+     - 축적된 Rego 정책 생태계와 재사용 가능한 템플릿
      - 복잡한 정책 표현에 더 적합
      - 다양한 사용 사례에 대한 광범위한 문서 및 예제
      - Kubernetes 외부에서도 사용 가능한 OPA 생태계
@@ -700,9 +704,9 @@ kubectl label namespace restricted-ns \
      - 복잡한 설정 및 구성
      - 리소스 변경을 위해 추가 구성 필요
    - **Kyverno**:
-     - 상대적으로 덜 성숙함
+     - 버전별 CRD·기능 호환성 검토 필요
      - 매우 복잡한 정책 표현에 제한이 있을 수 있음
-     - OPA에 비해 성능이 떨어질 수 있음
+     - 대표 정책과 admission 부하를 측정해야 하며 엔진 성능의 보편적인 순위는 없음
 
 6. **선택 기준**:
    - **OPA Gatekeeper 선택 시**:
@@ -713,7 +717,7 @@ kubectl label namespace restricted-ns \
      - 빠른 시작과 쉬운 학습 곡선이 중요한 경우
      - Kubernetes 리소스 구문에 익숙한 팀
      - 리소스 생성 및 변경 기능이 필요한 경우
-     - 간단한 정책만 필요한 경우
+     - Kubernetes 리소스 중심의 변경·생성·서명 검증·유효성 검사가 요구사항에 맞는 경우
 </details>
 
 2. Kubernetes에서 Pod Security Admission과 이전의 PodSecurityPolicy(PSP)의 주요 차이점을 설명하세요.
@@ -726,7 +730,7 @@ kubectl label namespace restricted-ns \
 **Pod Security Admission과 PodSecurityPolicy(PSP) 비교:**
 
 1. **구현 방식**:
-   - **PodSecurityPolicy**: API 리소스(CRD)로 구현되었으며, 어드미션 컨트롤러를 통해 적용됩니다.
+   - **PodSecurityPolicy**: 기본 API 리소스(CRD가 아님)로 구현되었으며, 어드미션 컨트롤러를 통해 적용됩니다.
    - **Pod Security Admission**: 내장 어드미션 컨트롤러로 구현되어 있으며, 네임스페이스 레이블을 통해 구성됩니다.
 
 2. **구성 방법**:
@@ -802,13 +806,14 @@ kubectl label namespace restricted-ns \
    ```
    --authorization-mode=Node,RBAC,Webhook
    --authorization-webhook-config-file=/path/to/webhook-config.yaml
+   --authorization-webhook-version=v1
    ```
 
    c. **외부 권한 부여 서비스 구현**:
    외부 서비스는 다음 형식의 요청을 처리해야 합니다:
    ```json
    {
-     "apiVersion": "authorization.k8s.io/v1beta1",
+     "apiVersion": "authorization.k8s.io/v1",
      "kind": "SubjectAccessReview",
      "spec": {
        "resourceAttributes": {
@@ -826,7 +831,7 @@ kubectl label namespace restricted-ns \
    그리고 다음과 같은 응답을 반환해야 합니다:
    ```json
    {
-     "apiVersion": "authorization.k8s.io/v1beta1",
+     "apiVersion": "authorization.k8s.io/v1",
      "kind": "SubjectAccessReview",
      "status": {
        "allowed": true,
@@ -838,7 +843,7 @@ kubectl label namespace restricted-ns \
 3. **RBAC와 External Authorization 통합**:
    - RBAC를 기본 권한 부여 메커니즘으로 사용
    - 복잡한 정책이나 외부 시스템과의 통합이 필요한 경우 External Authorization으로 위임
-   - 권한 부여 모드 체인에서 RBAC를 먼저 평가하고, 그 다음 Webhook 모드 평가
+   - `Node,RBAC,Webhook`은 앞선 인증기가 의견이 없을 때만 다음으로 진행합니다. RBAC가 허용하면 뒤의 Webhook은 호출되지 않으며 이를 거부할 수 없습니다. 반드시 거부권이 필요한 외부 정책은 Webhook 순서·명시적 deny·장애 정책을 설계하거나 적절한 admission 집행을 사용해야 합니다. EKS에서는 임의의 API 서버 인가 플래그를 설정할 수 없습니다.
 
 4. **이점**:
    - **세밀한 접근 제어**: 사용자 속성, 리소스 상태, 시간 기반 조건 등 복잡한 조건에 기반한 권한 부여 가능
@@ -851,6 +856,8 @@ kubectl label namespace restricted-ns \
 5. **구현 예시 - OPA 통합**:
    Open Policy Agent(OPA)를 사용한 External Authorization 구현:
    
+   다음은 OPA 1.x용 구조 예시이며 완전한 배포가 아닙니다. 검증한 이미지 버전, 정책 번들·마운트, Service/TLS, RBAC, 인증·타임아웃 구성이 필요합니다. `queryOPA` 함수도 별도로 구현해야 합니다.
+
    a. OPA 배포:
    ```yaml
    apiVersion: apps/v1
@@ -884,9 +891,9 @@ kubectl label namespace restricted-ns \
    ```rego
    package kubernetes.authz
 
-   default allow = false
+   default allow := false
 
-   allow {
+   allow if {
      input.spec.resourceAttributes.namespace == "default"
      input.spec.resourceAttributes.resource == "deployments"
      input.spec.resourceAttributes.verb == "get"
@@ -953,7 +960,7 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
    ```
 
    b. **테넌트 내부 통신 허용**:
-   동일한 테넌트 내의 포드 간 통신 허용:
+   동일 테넌트의 모든 파드 간 통신을 허용하는 선택지입니다. 아래 역할별 세분화와 함께 적용하면 넓은 허용이 우선하므로 둘 중 요구사항에 맞는 방식을 선택하세요:
    ```yaml
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
@@ -964,11 +971,13 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
      podSelector: {}
      policyTypes:
      - Ingress
+     - Egress
      ingress:
      - from:
-       - namespaceSelector:
-           matchLabels:
-             name: tenant-a
+       - podSelector: {}
+     egress:
+     - to:
+       - podSelector: {}
    ```
 
    c. **특정 서비스 노출**:
@@ -989,7 +998,7 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
      - from:
        - namespaceSelector:
            matchLabels:
-             name: tenant-b
+             kubernetes.io/metadata.name: tenant-b
        ports:
        - protocol: TCP
          port: 8080
@@ -1045,6 +1054,7 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
    모든 테넌트가 접근해야 하는 공유 서비스(모니터링, 로깅 등)를 위한 별도의 네임스페이스 생성
 
    b. **선택적 접근 허용**:
+   아래 예시는 테넌트가 Prometheus의 API/UI(9090)에 접근하도록 허용합니다. Prometheus가 테넌트 파드를 scrape하는 흐름은 반대 방향이며 별도 egress·ingress 허용이 필요합니다.
    ```yaml
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
@@ -1061,7 +1071,7 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
      - from:
        - namespaceSelector:
            matchExpressions:
-           - key: name
+           - key: kubernetes.io/metadata.name
              operator: In
              values: ["tenant-a", "tenant-b", "tenant-c"]
        ports:
@@ -1094,6 +1104,7 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
    ```
 
    b. **DNS 접근 허용**:
+   CoreDNS 레이블과 DNS 경로를 확인하고 NodeLocal DNS를 사용하면 대상 주소·정책을 조정하세요.
    ```yaml
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
@@ -1108,7 +1119,7 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
      - to:
        - namespaceSelector:
            matchLabels:
-             name: kube-system
+             kubernetes.io/metadata.name: kube-system
          podSelector:
            matchLabels:
              k8s-app: kube-dns
@@ -1129,7 +1140,7 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
    - 네트워크 정책 감사 및 모니터링 구현
 
 7. **제한 사항 및 고려 사항**:
-   - CNI 플러그인이 NetworkPolicy를 지원해야 함(Calico, Cilium, Weave Net 등)
+   - CNI 플러그인이 NetworkPolicy를 지원해야 함(Calico, Cilium 등)
    - 복잡한 정책은 성능에 영향을 미칠 수 있음
    - 일부 특수한 통신 패턴은 표준 NetworkPolicy로 구현하기 어려울 수 있음
    - 정책이 많아지면 관리 복잡성이 증가함
@@ -1162,7 +1173,7 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
 
    b. **네임스페이스 수준**:
    - ResourceQuota를 사용하여 네임스페이스별 리소스 제한
-   - 네임스페이스 우선순위 클래스 할당
+   - 파드의 priorityClassName과 PriorityClass 범위 쿼터 구성 (네임스페이스 자체에 우선순위 클래스를 할당하는 기본 필드는 없음)
 
    c. **워크로드 수준**:
    - LimitRange를 사용하여 개별 컨테이너 기본값 및 제한 설정
@@ -1217,8 +1228,8 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
        secrets: "20"
        configmaps: "20"
        replicationcontrollers: "10"
-       deployments.apps: "10"
-       statefulsets.apps: "5"
+       count/deployments.apps: "10"
+       count/statefulsets.apps: "5"
    ```
 
    d. **우선순위 기반 쿼터**:
@@ -1312,7 +1323,7 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
 
    c. **점진적 적용**:
    - 초기에는 큰 쿼터로 시작하여 점진적으로 조정
-   - 감사 모드로 시작하여 영향 평가
+   - ResourceQuota/LimitRange에는 기본 감사 모드가 없으므로 테스트 네임스페이스와 클라이언트·서버 dry-run으로 영향을 평가
    - 사용자 교육 및 피드백 수집
 
    d. **모니터링 및 알림**:
@@ -1332,8 +1343,8 @@ External Authorization은 Kubernetes의 RBAC 시스템을 보완하여 더 강�
    - 사용량 기반 비용 보고
 
    c. **버스팅 및 초과 할당**:
-   - 일시적인 쿼터 초과 허용 메커니즘
-   - 사용되지 않는 쿼터의 공유 풀 구현
+   - 기본 ResourceQuota는 hard 한도 초과를 허용하거나 다른 네임스페이스 쿼터를 빌려주지 않음
+   - 임시 한도 변경·공유 풀은 별도 컨트롤러와 명시적 정책으로 구현해야 함
 
 ResourceQuota와 LimitRange를 효과적으로 조합하여 사용하면 클러스터 리소스를 공정하게 분배하고, 리소스 고갈을 방지하며, 워크로드 성능을 보장할 수 있습니다. 이러한 전략은 특히 여러 팀이나 애플리케이션이 동일한 클러스터를 공유하는 멀티 테넌트 환경에서 중요합니다.
 </details>

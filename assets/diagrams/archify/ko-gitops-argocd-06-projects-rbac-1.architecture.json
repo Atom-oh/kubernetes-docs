@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "패턴 1: 팀별 프로젝트",
+    "output": "ko-gitops-argocd-06-projects-rbac-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "frontend-path",
+        "label": "Frontend 프로젝트 배포 경로",
+        "focus": [
+          "proj-frontend",
+          "dest-any",
+          "dev",
+          "staging",
+          "prod"
+        ],
+        "note": "Frontend 프로젝트의 허용 서버 목록에 세 클러스터를 명시하고 Namespace는 frontend-*로 제한합니다."
+      },
+      {
+        "id": "backend-path",
+        "label": "Backend 프로젝트 배포 경로",
+        "focus": [
+          "proj-backend",
+          "dest-any",
+          "dev",
+          "staging",
+          "prod"
+        ],
+        "note": "Backend도 서버 목록을 명시하며 backend-* Namespace만 허용합니다."
+      },
+      {
+        "id": "shared-clusters",
+        "label": "공유 클러스터",
+        "focus": [
+          "dev",
+          "staging",
+          "prod"
+        ],
+        "note": "배포하려면 대상별 Application 또는 ApplicationSet이 필요합니다. AppProject가 세 곳에 자동 배포하지 않습니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "허용 대상 목록"
+        },
+        "cloud": {
+          "label": "등록된 클러스터"
+        },
+        "security": {
+          "label": "AppProject"
+        }
+      }
+    },
+    "viewBox": [
+      1054.0,
+      588.0
+    ]
+  },
+  "components": [
+    {
+      "id": "proj-frontend",
+      "type": "security",
+      "label": "Project: Frontend",
+      "sublabel": "frontend-web · frontend-api",
+      "tag": "namespace: frontend-*",
+      "pos": [
+        160,
+        80
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "proj-backend",
+      "type": "security",
+      "label": "Project: Backend",
+      "sublabel": "user-service · order-service",
+      "tag": "namespace: backend-*",
+      "pos": [
+        660,
+        80
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "dest-any",
+      "type": "backend",
+      "label": "각 프로젝트의 destinations",
+      "sublabel": "Dev · Staging · Prod 서버를 명시",
+      "pos": [
+        390,
+        270
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "dev",
+      "type": "cloud",
+      "label": "Dev Cluster",
+      "sublabel": "개발 환경",
+      "pos": [
+        80,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "staging",
+      "type": "cloud",
+      "label": "Staging Cluster",
+      "sublabel": "스테이징 환경",
+      "pos": [
+        420,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "prod",
+      "type": "cloud",
+      "label": "Prod Cluster",
+      "sublabel": "프로덕션 환경",
+      "pos": [
+        760,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "ArgoCD · AppProject (팀별)",
+      "wraps": [
+        "proj-frontend",
+        "proj-backend"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Clusters · 모든 프로젝트가 공유하는 대상",
+      "wraps": [
+        "dev",
+        "staging",
+        "prod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fe-dest",
+      "from": "proj-frontend",
+      "to": "dest-any",
+      "label": "허용 범위",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          280,
+          302
+        ]
+      ]
+    },
+    {
+      "id": "be-dest",
+      "from": "proj-backend",
+      "to": "dest-any",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          780,
+          302
+        ]
+      ]
+    },
+    {
+      "id": "dest-dev",
+      "from": "dest-any",
+      "to": "dev",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dest-staging",
+      "from": "dest-any",
+      "to": "staging",
+      "label": "대상으로 선택 가능",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "dest-prod",
+      "from": "dest-any",
+      "to": "prod",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "팀별 Argo CD 배포 범위",
+      "items": [
+        "sourceRepos: https://github.com/myorg/frontend-* 처럼 팀 저장소만 허용",
+        "destinations.namespace: frontend-* 처럼 팀 네임스페이스만 허용"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "공유 클러스터",
+      "items": [
+        "세 서버 URL을 destinations에 명시한다",
+        "Namespace 패턴은 배포 허용 범위이며 런타임 격리는 별도",
+        "다중 클러스터 배포에는 대상별 Application이 필요하다"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "프로젝트 역할",
+      "items": [
+        "admin: applications * 허용, 그룹 frontend-leads",
+        "developer: get · sync 만 허용, 그룹 frontend-developers"
+      ]
+    }
+  ]
+}

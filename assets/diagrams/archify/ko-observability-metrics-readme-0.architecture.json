@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pull vs Push 모델",
+    "output": "ko-observability-metrics-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pull",
+        "label": "Pull 모델 (Prometheus)",
+        "focus": [
+          "prom",
+          "pull-app1",
+          "pull-app2",
+          "pull-app3"
+        ],
+        "note": "Prometheus 서버가 자체 주기에 따라 각 애플리케이션의 /metrics 엔드포인트를 HTTP GET으로 스크래핑한다."
+      },
+      {
+        "id": "push",
+        "label": "Push 모델 (Datadog, CloudWatch)",
+        "focus": [
+          "push-app1",
+          "push-app2",
+          "push-app3",
+          "collector"
+        ],
+        "note": "각 애플리케이션이 자신의 메트릭을 HTTP POST로 중앙 수집기(Collector/Gateway)에 전송한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "prom",
+      "type": "backend",
+      "label": "Prometheus Server",
+      "sublabel": "중앙 스크래퍼",
+      "tag": "SRV",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pull-app1",
+      "type": "frontend",
+      "label": "App 1",
+      "sublabel": "/metrics",
+      "pos": [
+        360,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pull-app2",
+      "type": "frontend",
+      "label": "App 2",
+      "sublabel": "/metrics",
+      "pos": [
+        360,
+        262
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pull-app3",
+      "type": "frontend",
+      "label": "App 3",
+      "sublabel": "/metrics",
+      "pos": [
+        360,
+        424
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "push-app1",
+      "type": "frontend",
+      "label": "App 1",
+      "sublabel": "메트릭 클라이언트",
+      "pos": [
+        680,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "push-app2",
+      "type": "frontend",
+      "label": "App 2",
+      "sublabel": "메트릭 클라이언트",
+      "pos": [
+        680,
+        262
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "push-app3",
+      "type": "frontend",
+      "label": "App 3",
+      "sublabel": "메트릭 클라이언트",
+      "pos": [
+        680,
+        424
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "collector",
+      "type": "cloud",
+      "label": "Collector / Gateway",
+      "sublabel": "Datadog · CloudWatch",
+      "tag": "GW",
+      "pos": [
+        960,
+        260
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pull 모델 · Prometheus",
+      "wraps": [
+        "prom",
+        "pull-app1",
+        "pull-app2",
+        "pull-app3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Push 모델 · Datadog, CloudWatch",
+      "wraps": [
+        "push-app1",
+        "push-app2",
+        "push-app3",
+        "collector"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "scrape-1",
+      "from": "prom",
+      "to": "pull-app1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "scrape-2",
+      "from": "prom",
+      "to": "pull-app2",
+      "label": "GET",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelDx": 33
+    },
+    {
+      "id": "scrape-3",
+      "from": "prom",
+      "to": "pull-app3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "push-1",
+      "from": "push-app1",
+      "to": "collector",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "push-2",
+      "from": "push-app2",
+      "to": "collector",
+      "label": "POST",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelDx": -33
+    },
+    {
+      "id": "push-3",
+      "from": "push-app3",
+      "to": "collector",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pull 모델",
+      "items": [
+        "Prometheus가 수집 대상과 주기를 중앙에서 제어",
+        "대상 가용성을 자동 감지하고, 엔드포인트를 직접 조회해 디버깅 가능",
+        "짧은 수명 작업과 NAT/방화벽 뒤의 대상은 수집이 어렵고 서비스 디스커버리 필요"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Push 모델",
+      "items": [
+        "Datadog, CloudWatch, Graphite가 클라이언트에서 메트릭을 전송",
+        "짧은 수명 작업과 방화벽/NAT 환경에 유리하며 이벤트 기반 전송 가능",
+        "수집 서버 과부하 가능, 가용성 자동 감지 어려움, 클라이언트에 전송 로직 필요"
+      ]
+    }
+  ]
+}

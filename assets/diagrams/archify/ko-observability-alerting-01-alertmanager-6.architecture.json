@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Alertmanager 클러스터링 아키텍처",
+    "output": "ko-observability-alerting-01-alertmanager-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "fan-out",
+        "label": "알림 전달",
+        "focus": [
+          "prometheus",
+          "am1",
+          "am2",
+          "am3"
+        ],
+        "note": "Prometheus는 같은 알림을 3개 복제본 모두에 보낸다 (alertmanager-0/1/2:9093)."
+      },
+      {
+        "id": "gossip",
+        "label": "Gossip 동기화",
+        "focus": [
+          "am1",
+          "am2",
+          "am3"
+        ],
+        "note": "복제본은 9094 포트의 Gossip으로 전송 기록(nflog)과 Silence를 서로 동기화한다."
+      },
+      {
+        "id": "notify",
+        "label": "최종 전송",
+        "focus": [
+          "am1",
+          "receivers"
+        ],
+        "note": "동기화된 nflog로 중복을 제거해 수신자에게는 알림이 한 번만 전달된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "알림 규칙 평가",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "am1",
+      "type": "backend",
+      "label": "Alertmanager 1",
+      "sublabel": "alertmanager-0 · 중복 제거 후 전송",
+      "pos": [
+        400,
+        100
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "am2",
+      "type": "backend",
+      "label": "Alertmanager 2",
+      "sublabel": "alertmanager-1",
+      "pos": [
+        400,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "am3",
+      "type": "backend",
+      "label": "Alertmanager 3",
+      "sublabel": "alertmanager-2",
+      "pos": [
+        400,
+        500
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "receivers",
+      "type": "external",
+      "label": "Receivers",
+      "sublabel": "Slack / PagerDuty / Email",
+      "pos": [
+        860,
+        100
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Alertmanager 클러스터 (StatefulSet, replicas: 3)",
+      "wraps": [
+        "am1",
+        "am2",
+        "am3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "alert-am1",
+      "from": "prometheus",
+      "to": "am1",
+      "label": "알림",
+      "labelAt": [
+        295,
+        225
+      ]
+    },
+    {
+      "id": "alert-am2",
+      "from": "prometheus",
+      "to": "am2",
+      "label": "알림",
+      "labelAt": [
+        350,
+        332
+      ]
+    },
+    {
+      "id": "alert-am3",
+      "from": "prometheus",
+      "to": "am3",
+      "label": "알림",
+      "labelAt": [
+        295,
+        425
+      ]
+    },
+    {
+      "id": "gossip-21",
+      "from": "am2",
+      "to": "am1",
+      "label": "Gossip :9094",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        510,
+        232
+      ]
+    },
+    {
+      "id": "gossip-32",
+      "from": "am3",
+      "to": "am2",
+      "label": "Gossip :9094",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        510,
+        432
+      ]
+    },
+    {
+      "id": "gossip-13",
+      "from": "am1",
+      "to": "am3",
+      "label": "Gossip :9094",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "labelAt": [
+        662,
+        332
+      ]
+    },
+    {
+      "id": "notify",
+      "from": "am1",
+      "to": "receivers",
+      "label": "최종 알림 전송",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "알림 수신",
+      "items": [
+        "Prometheus alerting.alertmanagers에 3개 복제본을 모두 등록한다",
+        "복제본마다 같은 알림을 중복 수신한다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Gossip 클러스터",
+      "items": [
+        "--cluster.listen-address=0.0.0.0:9094",
+        "--cluster.peer로 3개 복제본을 서로 연결한다",
+        "전송 기록(nflog)과 Silence를 동기화한다"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "중복 제거",
+      "items": [
+        "다른 복제본이 이미 보낸 알림은 nflog로 확인해 다시 보내지 않는다",
+        "복제본 하나가 장애가 나도 나머지가 전송을 이어간다"
+      ]
+    }
+  ]
+}

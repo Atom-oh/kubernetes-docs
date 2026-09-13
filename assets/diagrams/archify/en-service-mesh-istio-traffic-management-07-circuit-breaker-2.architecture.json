@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Circuit Breaker's Role and Limitations",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-07-circuit-breaker-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1060,
+      500
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "Circuit Breaker"
+        },
+        "backend": {
+          "label": "Role (does)"
+        },
+        "external": {
+          "label": "Limitation (does not)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "does",
+        "label": "What it does",
+        "focus": [
+          "cb",
+          "cb1",
+          "cb2",
+          "cb3",
+          "cb4"
+        ],
+        "note": "A failure-isolation tool: it ejects failing instances, stops cascading failures and resource exhaustion, then attempts auto recovery."
+      },
+      {
+        "id": "does-not",
+        "label": "What it does not do",
+        "focus": [
+          "cb",
+          "cb5",
+          "cb6",
+          "cb7",
+          "cb8"
+        ],
+        "note": "It does not prevent duplicates or guarantee consistency, transactions or idempotency; handle these in the app, e.g. with an Idempotency Key."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cb",
+      "type": "security",
+      "label": "Circuit Breaker",
+      "sublabel": "Failure isolation tool",
+      "pos": [
+        430,
+        190
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "cb1",
+      "type": "backend",
+      "label": "Isolate Failing Services",
+      "sublabel": "Ejection via Outlier Detection",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "cb2",
+      "type": "backend",
+      "label": "Prevent Cascading Failures",
+      "sublabel": "Stop failure propagation",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "cb3",
+      "type": "backend",
+      "label": "Protect System Resources",
+      "sublabel": "Connection Pool limits",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "cb4",
+      "type": "backend",
+      "label": "Attempt Auto Recovery",
+      "sublabel": "Retry after baseEjectionTime",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "cb5",
+      "type": "external",
+      "label": "Prevent Duplicate Requests",
+      "sublabel": "Cannot stop Retry duplicates",
+      "pos": [
+        780,
+        60
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "cb6",
+      "type": "external",
+      "label": "Guarantee Data Consistency",
+      "sublabel": "Not guaranteed",
+      "pos": [
+        780,
+        150
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "cb7",
+      "type": "external",
+      "label": "Transaction Management",
+      "sublabel": "Not guaranteed",
+      "pos": [
+        780,
+        240
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "cb8",
+      "type": "external",
+      "label": "Idempotency Guarantee",
+      "sublabel": "Application-level Idempotency Key",
+      "pos": [
+        780,
+        330
+      ],
+      "size": [
+        240,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "✅ What Circuit Breaker Does",
+      "wraps": [
+        "cb1",
+        "cb2",
+        "cb3",
+        "cb4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "❌ What Circuit Breaker Does NOT Do",
+      "wraps": [
+        "cb5",
+        "cb6",
+        "cb7",
+        "cb8"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cb-to-cb1",
+      "from": "cb",
+      "to": "cb1",
+      "label": "Responsible for",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cb-to-cb2",
+      "from": "cb",
+      "to": "cb2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cb-to-cb3",
+      "from": "cb",
+      "to": "cb3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cb-to-cb4",
+      "from": "cb",
+      "to": "cb4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cb-to-cb5",
+      "from": "cb",
+      "to": "cb5",
+      "label": "Not responsible for",
+      "variant": "dashed"
+    },
+    {
+      "id": "cb-to-cb6",
+      "from": "cb",
+      "to": "cb6",
+      "variant": "dashed"
+    },
+    {
+      "id": "cb-to-cb7",
+      "from": "cb",
+      "to": "cb7",
+      "variant": "dashed"
+    },
+    {
+      "id": "cb-to-cb8",
+      "from": "cb",
+      "to": "cb8",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Core Principle",
+      "items": [
+        "Circuit Breaker is a tool for failure isolation",
+        "It is not a tool for duplicate request prevention or data consistency"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Retry + Circuit Breaker Caution",
+      "items": [
+        "3 retries on POST + consecutiveErrors 5 allows up to 15 duplicates before it activates",
+        "Non-idempotent requests: attempts: 0 or retryOn: connect-failure",
+        "Implement an Idempotency Key for critical operations like payment and inventory"
+      ]
+    }
+  ]
+}

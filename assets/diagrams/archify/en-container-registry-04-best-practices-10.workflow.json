@@ -1,0 +1,152 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Promotion Workflow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "CI build step"
+        },
+        "database": {
+          "label": "Registry repository"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "build-once",
+        "label": "Build once",
+        "focus": [
+          "build",
+          "dev"
+        ],
+        "note": "CI builds the image a single time and pushes it to the dev repository with a SHA-based tag."
+      },
+      {
+        "id": "promote",
+        "label": "Promote by retag",
+        "focus": [
+          "dev",
+          "stage",
+          "prod"
+        ],
+        "note": "Each promotion pulls, retags and pushes the same digest; nothing is rebuilt."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "ci",
+      "label": "CI Pipeline"
+    },
+    {
+      "id": "registry",
+      "label": "Registry Repositories"
+    }
+  ],
+  "phases": [
+    {
+      "id": "build_phase",
+      "label": "Build once",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "promote_phase",
+      "label": "Promote by retag, not rebuild",
+      "fromCol": 1,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "build",
+    "dev",
+    "stage",
+    "prod"
+  ],
+  "nodes": [
+    {
+      "id": "build",
+      "lane": "ci",
+      "col": 0,
+      "type": "backend",
+      "label": "Build",
+      "sublabel": "abc123f-dev",
+      "tag": "CI"
+    },
+    {
+      "id": "dev",
+      "lane": "registry",
+      "col": 1,
+      "type": "database",
+      "label": "myapp-dev",
+      "sublabel": "abc123f-dev",
+      "tag": "mutable"
+    },
+    {
+      "id": "stage",
+      "lane": "registry",
+      "col": 2,
+      "type": "database",
+      "label": "myapp-stage",
+      "sublabel": "1.2.3-rc.1",
+      "tag": "immutable"
+    },
+    {
+      "id": "prod",
+      "lane": "registry",
+      "col": 3,
+      "type": "database",
+      "label": "myapp-prod",
+      "sublabel": "1.2.3",
+      "tag": "immutable"
+    }
+  ],
+  "edges": [
+    {
+      "from": "build",
+      "to": "dev",
+      "label": "push",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "dev",
+      "to": "stage",
+      "label": "retag + promote",
+      "variant": "emphasis"
+    },
+    {
+      "from": "stage",
+      "to": "prod",
+      "label": "retag + promote",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Promotion step",
+      "items": [
+        "docker pull SOURCE_REPO:SOURCE_TAG",
+        "docker tag to TARGET_REPO:TARGET_TAG",
+        "docker push the retagged image"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Why not rebuild",
+      "items": [
+        "The same image digest travels through every environment",
+        "What was tested in stage is bit-for-bit what runs in prod",
+        "Production and staging tags are immutable SemVer; dev tags are SHA-based"
+      ]
+    }
+  ]
+}

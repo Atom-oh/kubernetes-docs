@@ -1,0 +1,365 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Security Monitoring and Detection",
+    "locale": "en",
+    "output": "en-eks-05-eks-security-15.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      620
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "AWS Security Services"
+        },
+        "external": {
+          "label": "Kubernetes Security Tools"
+        },
+        "security": {
+          "label": "Detection Types"
+        },
+        "backend": {
+          "label": "Threat Detection Workflow"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "aws-signals",
+        "label": "AWS Security Services",
+        "focus": [
+          "guardduty",
+          "securityhub",
+          "cloudwatch",
+          "runtime-network-identity",
+          "config"
+        ],
+        "note": "GuardDuty EKS Protection covers runtime, network, and identity threats; Security Hub covers configuration and identity posture."
+      },
+      {
+        "id": "k8s-tools",
+        "label": "Kubernetes Security Tools",
+        "focus": [
+          "falco",
+          "kube-audit",
+          "runtime-network-identity",
+          "config"
+        ],
+        "note": "Falco handles container runtime anomaly detection; kube-audit checks cluster configuration."
+      },
+      {
+        "id": "workflow",
+        "label": "Threat Detection Workflow",
+        "focus": [
+          "collection",
+          "analysis",
+          "detection",
+          "response",
+          "remediation",
+          "securityhub"
+        ],
+        "note": "Collection → analysis → detection → response → remediation, with findings reported back into Security Hub."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "runtime-network-identity",
+      "type": "security",
+      "label": "Runtime · Network · Identity Security",
+      "sublabel": "includes identity and access",
+      "pos": [
+        345,
+        40
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "config",
+      "type": "security",
+      "label": "Configuration Security",
+      "sublabel": "cluster configuration checks",
+      "pos": [
+        845,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "Amazon CloudWatch",
+      "sublabel": "logs · metrics",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "guardduty",
+      "type": "cloud",
+      "label": "Amazon GuardDuty",
+      "sublabel": "EKS Protection",
+      "pos": [
+        270,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "falco",
+      "type": "external",
+      "label": "Falco",
+      "sublabel": "runtime anomaly detection",
+      "pos": [
+        500,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "securityhub",
+      "type": "cloud",
+      "label": "AWS Security Hub",
+      "sublabel": "central security posture",
+      "pos": [
+        730,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "kube-audit",
+      "type": "external",
+      "label": "kube-audit",
+      "sublabel": "configuration checks",
+      "pos": [
+        960,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "collection",
+      "type": "backend",
+      "label": "Data Collection",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        360,
+        60
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "backend",
+      "label": "Data Analysis",
+      "pos": [
+        430,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "detection",
+      "type": "backend",
+      "label": "Threat Detection",
+      "pos": [
+        660,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "response",
+      "type": "backend",
+      "label": "Response",
+      "pos": [
+        890,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "remediation",
+      "type": "backend",
+      "label": "Remediation",
+      "pos": [
+        1120,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Detection Types",
+      "wraps": [
+        "runtime-network-identity",
+        "config"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Threat Detection Workflow",
+      "wraps": [
+        "collection",
+        "analysis",
+        "detection",
+        "response",
+        "remediation"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gd-runtime",
+      "from": "guardduty",
+      "to": "runtime-network-identity",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "falco-runtime",
+      "from": "falco",
+      "to": "runtime-network-identity",
+      "label": "runtime",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sh-identity",
+      "from": "securityhub",
+      "to": "runtime-network-identity",
+      "label": "identity and access"
+    },
+    {
+      "id": "sh-config",
+      "from": "securityhub",
+      "to": "config",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "kubeaudit-config",
+      "from": "kube-audit",
+      "to": "config",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "cw-collect",
+      "from": "cloudwatch",
+      "to": "collection",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gd-collect",
+      "from": "guardduty",
+      "to": "collection",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "falco-collect",
+      "from": "falco",
+      "to": "collection",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "collect-analyze",
+      "from": "collection",
+      "to": "analysis",
+      "variant": "emphasis"
+    },
+    {
+      "id": "analyze-detect",
+      "from": "analysis",
+      "to": "detection",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect-respond",
+      "from": "detection",
+      "to": "response",
+      "variant": "emphasis"
+    },
+    {
+      "id": "respond-remediate",
+      "from": "response",
+      "to": "remediation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect-securityhub",
+      "from": "detection",
+      "to": "securityhub",
+      "label": "report findings",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS Security Services",
+      "items": [
+        "GuardDuty EKS Protection: runtime threat detection via the EKS_RUNTIME_MONITORING feature",
+        "Security Hub: central security posture management with the AWS Foundational Security Best Practices standard"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Kubernetes Security Tools",
+      "items": [
+        "Falco: installed via Helm for runtime security monitoring and anomaly detection",
+        "kube-audit: cluster configuration security checks"
+      ]
+    }
+  ]
+}

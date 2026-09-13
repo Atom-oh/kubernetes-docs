@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "VPA 제안과 담당자 검토를 거치는 리소스 변경",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      600
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "cronjob",
+      "type": "cloud",
+      "label": "수집 실행",
+      "sublabel": "조회 전용"
+    },
+    {
+      "id": "vpa",
+      "type": "backend",
+      "label": "VPA",
+      "sublabel": "추천 엔진"
+    },
+    {
+      "id": "script",
+      "type": "backend",
+      "label": "스크립트",
+      "sublabel": "제안 JSON 출력"
+    },
+    {
+      "id": "gitci",
+      "type": "external",
+      "label": "Git / CI",
+      "sublabel": "PR · 린트 검증"
+    },
+    {
+      "id": "lead",
+      "type": "external",
+      "label": "담당자",
+      "sublabel": "manifest·SLO 검토"
+    },
+    {
+      "id": "argocd",
+      "type": "cloud",
+      "label": "ArgoCD",
+      "sublabel": "GitOps 배포"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 260,
+      "label": "조회·계산"
+    },
+    {
+      "from": 275,
+      "to": 425,
+      "label": "담당자의 변경 준비와 리뷰"
+    },
+    {
+      "from": 440,
+      "to": 505,
+      "label": "승인 후 배포·관측"
+    }
+  ],
+  "messages": [
+    {
+      "id": "query",
+      "from": "cronjob",
+      "to": "vpa",
+      "y": 190,
+      "label": "권장값·workload 조회"
+    },
+    {
+      "id": "recs",
+      "from": "vpa",
+      "to": "script",
+      "y": 235,
+      "label": "이름으로 컨테이너 매칭",
+      "variant": "return"
+    },
+    {
+      "id": "proposal",
+      "from": "script",
+      "to": "lead",
+      "y": 295,
+      "label": "20% 이상 감소 후보 JSON",
+      "variant": "emphasis",
+      "note": "자동 PR 생성 없음"
+    },
+    {
+      "id": "prepare",
+      "from": "lead",
+      "to": "gitci",
+      "y": 355,
+      "label": "manifest 수정·PR·성능 검증"
+    },
+    {
+      "id": "approve",
+      "from": "lead",
+      "to": "gitci",
+      "y": 400,
+      "label": "리뷰 승인·merge",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync",
+      "from": "gitci",
+      "to": "argocd",
+      "y": 465,
+      "label": "동기화 후 SLO 관측"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "script",
+      "from": 230,
+      "to": 300,
+      "type": "backend"
+    },
+    {
+      "participant": "lead",
+      "from": 290,
+      "to": 405,
+      "type": "external"
+    },
+    {
+      "participant": "gitci",
+      "from": 350,
+      "to": 470,
+      "type": "external"
+    },
+    {
+      "participant": "argocd",
+      "from": 460,
+      "to": 500,
+      "type": "cloud"
+    }
+  ]
+}

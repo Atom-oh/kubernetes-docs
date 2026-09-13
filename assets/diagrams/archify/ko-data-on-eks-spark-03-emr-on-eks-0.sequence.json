@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "EMR on EKS: StartJobRun 실행과 관측",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      560
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "주요 호출"
+        },
+        "default": {
+          "label": "내부 호출"
+        },
+        "security": {
+          "label": "IAM role credentials"
+        },
+        "dashed": {
+          "label": "비동기 보고"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자 / SDK",
+      "sublabel": "AWS API caller"
+    },
+    {
+      "id": "emr",
+      "type": "cloud",
+      "label": "EMR control plane",
+      "sublabel": "VC → namespace"
+    },
+    {
+      "id": "kube",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "API / placement"
+    },
+    {
+      "id": "spark",
+      "type": "backend",
+      "label": "Spark workload",
+      "sublabel": "Submitter / driver / executors"
+    },
+    {
+      "id": "logs",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "Configured sink"
+    }
+  ],
+  "messages": [
+    {
+      "id": "start",
+      "from": "user",
+      "to": "emr",
+      "y": 165,
+      "label": "StartJobRun",
+      "variant": "emphasis",
+      "note": "VC ID · role ARN · release label"
+    },
+    {
+      "id": "accepted",
+      "from": "emr",
+      "to": "user",
+      "y": 204,
+      "label": "Job ID 반환",
+      "variant": "dashed",
+      "note": "접수 ≠ 완료"
+    },
+    {
+      "id": "submit",
+      "from": "emr",
+      "to": "kube",
+      "y": 243,
+      "label": "Submitter Pod 생성 요청",
+      "variant": "default"
+    },
+    {
+      "id": "place-submitter",
+      "from": "kube",
+      "to": "spark",
+      "y": 282,
+      "label": "Submitter 배치·시작",
+      "variant": "default"
+    },
+    {
+      "id": "pod-requests",
+      "from": "spark",
+      "to": "kube",
+      "y": 321,
+      "label": "Driver / executor Pod 요청",
+      "variant": "default",
+      "note": "Submitter → driver, driver → executors"
+    },
+    {
+      "id": "pod-starts",
+      "from": "kube",
+      "to": "spark",
+      "y": 360,
+      "label": "Pod 배치·시작",
+      "variant": "security",
+      "note": "IRSA / Pod Identity; driver가 Spark task 할당"
+    },
+    {
+      "id": "log-output",
+      "from": "spark",
+      "to": "logs",
+      "y": 399,
+      "label": "설정된 작업 로그 전송",
+      "variant": "dashed",
+      "note": "Submitter / driver / executors"
+    },
+    {
+      "id": "status",
+      "from": "kube",
+      "to": "emr",
+      "y": 438,
+      "label": "관찰된 Pod/job 상태",
+      "variant": "dashed"
+    },
+    {
+      "id": "describe",
+      "from": "user",
+      "to": "emr",
+      "y": 477,
+      "label": "DescribeJobRun",
+      "variant": "emphasis",
+      "note": "최종 상태와 출력 확인"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "emr",
+      "from": 159,
+      "to": 487,
+      "type": "cloud"
+    },
+    {
+      "participant": "spark",
+      "from": 276,
+      "to": 447,
+      "type": "backend"
+    }
+  ]
+}

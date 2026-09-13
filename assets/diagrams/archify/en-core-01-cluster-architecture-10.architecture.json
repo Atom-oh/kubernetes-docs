@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CSI Interface Structure",
+    "output": "en-core-01-cluster-architecture-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "kubernetes",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "kubelet · controller",
+      "pos": [
+        390,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "messagebus",
+      "label": "CSI",
+      "sublabel": "Container Storage Interface",
+      "pos": [
+        380,
+        170
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "CSI Driver",
+      "sublabel": "e.g. AWS EBS CSI Driver",
+      "pos": [
+        380,
+        300
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Storage System",
+      "sublabel": "e.g. Amazon EBS",
+      "pos": [
+        380,
+        430
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-csi",
+      "from": "kubernetes",
+      "to": "csi",
+      "label": "standard gRPC calls",
+      "variant": "emphasis",
+      "labelDy": 30
+    },
+    {
+      "id": "csi-driver",
+      "from": "csi",
+      "to": "driver",
+      "labelDy": 30
+    },
+    {
+      "id": "driver-storage",
+      "from": "driver",
+      "to": "storage",
+      "label": "create · attach · mount",
+      "labelDy": 34
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Standard interface",
+      "items": [
+        "Kubernetes only calls the CSI spec",
+        "Storage vendors implement the driver"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Swappability",
+      "items": [
+        "Same workflow across EBS, EFS, Ceph — swap the driver",
+        "Cloud in-tree volume plugins migrated to CSI (removed in 1.31)"
+      ]
+    }
+  ]
+}

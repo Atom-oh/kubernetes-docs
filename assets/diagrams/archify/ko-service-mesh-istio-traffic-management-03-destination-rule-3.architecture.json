@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Traffic Policy 계층 구조",
+    "output": "ko-service-mesh-istio-traffic-management-03-destination-rule-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inherit",
+        "label": "기본 정책 상속",
+        "focus": [
+          "dr",
+          "global",
+          "v1"
+        ],
+        "note": "subset에 trafficPolicy가 없으면 DestinationRule 최상위 정책을 그대로 물려받는다."
+      },
+      {
+        "id": "override",
+        "label": "Subset 오버라이드",
+        "focus": [
+          "dr",
+          "global",
+          "v2"
+        ],
+        "note": "subset 안의 trafficPolicy는 해당 subset에서만 기본 정책을 덮어쓴다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "정책 상속"
+        },
+        "security": {
+          "label": "자체 정책 정의"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "dr",
+      "type": "backend",
+      "label": "DestinationRule",
+      "sublabel": "host: reviews",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "global",
+      "type": "security",
+      "label": "전역 Traffic Policy",
+      "sublabel": "모든 subset에 적용",
+      "tag": "LEAST_REQUEST",
+      "pos": [
+        400,
+        190
+      ],
+      "size": [
+        220,
+        68
+      ]
+    },
+    {
+      "id": "v1",
+      "type": "backend",
+      "label": "Subset: v1",
+      "sublabel": "전역 정책 상속",
+      "pos": [
+        180,
+        370
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "security",
+      "label": "Subset: v2",
+      "sublabel": "v2 전용 정책 · 전역 정책 오버라이드",
+      "tag": "ROUND_ROBIN",
+      "pos": [
+        620,
+        370
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "subsets",
+      "wraps": [
+        "v1",
+        "v2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dr-global",
+      "from": "dr",
+      "to": "global",
+      "label": "trafficPolicy",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "global-v1",
+      "from": "global",
+      "to": "v1",
+      "label": "상속",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "global-v2",
+      "from": "global",
+      "to": "v2",
+      "label": "오버라이드",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "기본 정책",
+      "items": [
+        "spec.trafficPolicy는 모든 subset의 기본값이다",
+        "예시: loadBalancer.simple: LEAST_REQUEST"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Subset 오버라이드",
+      "items": [
+        "subsets[].trafficPolicy는 해당 subset에서 기본 정책을 덮어쓴다",
+        "예시 v2: ROUND_ROBIN + connectionPool.http1MaxPendingRequests: 10"
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # Extending Kubernetes
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: February 19, 2026
+> **Upstream Kubernetes versions reviewed**: Kubernetes 1.35, 1.36, 1.37
+> **Last Updated**: September 11, 2026
 
 Kubernetes is a platform designed with extensibility in mind, allowing you to extend its functionality in various ways. In this chapter, we will explore the various methods to extend Kubernetes and how to leverage extension features in Amazon EKS.
 
@@ -36,7 +36,9 @@ Kubernetes provides various extension points to extend and customize its base fu
 
 The following diagram shows the main extension points in Kubernetes:
 
-![Architecture diagram showing the API server as the hub for custom resources, admission controllers, API server extensions, operators, the cloud controller manager, and scheduler extensions, with node-level extension points (CSI, CNI, device plugins) attached to each cluster node.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-0.svg)
+![Architecture diagram showing the API server as the hub for custom resources, admission controllers, API server extensions, operators, the cloud controller manager, and scheduler extensions, with the node extended by CSI drivers, CNI plugins, and device plugins.](../.gitbook/assets/en-core-11-extending-kubernetes-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-0.html)
 
 ### Choosing an Extension Method
 
@@ -54,7 +56,9 @@ Custom resources are a way to extend the Kubernetes API to define new object typ
 
 The following diagram shows how custom resources work:
 
-![Architecture diagram showing a user creating a CustomResourceDefinition and a custom resource instance, where the CRD defines and registers the schema, and the API server validates and stores the resulting instance in etcd.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-1.svg)
+![Architecture diagram showing a user creating a CustomResourceDefinition and a custom resource instance, where the CRD defines and registers the schema, and the API server validates and stores the resulting instance in etcd.](../.gitbook/assets/en-core-11-extending-kubernetes-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-1.html)
 
 ### Custom Resource Definitions (CRD)
 
@@ -118,7 +122,7 @@ In the above example, we define a new resource type called `Backup` and specify 
 
 ### Creating Custom Resource Instances
 
-After defining a CRD, you can create resource instances of that type:
+After the CRD Established condition is true, create an instance. A CRD stores/validates data; it does not execute backups without a controller.
 
 ```yaml
 apiVersion: example.com/v1
@@ -148,13 +152,13 @@ openAPIV3Schema:
           maximum: 10
         image:
           type: string
-          pattern: '^[a-zA-Z0-9./:_-]+$'
+          minLength: 1
       required:
       - replicas
       - image
 ```
 
-In the above example, the `replicas` field must be an integer between 1 and 10, and the `image` field must match the specified pattern.
+In the above example, the `replicas` field must be an integer between 1 and 10, and the `image` field must be nonempty; image availability and signature checks require separate policy.
 
 ### Version Management
 
@@ -173,19 +177,15 @@ versions:
   storage: true
 ```
 
-In the above example, three versions `v1alpha1`, `v1beta1`, and `v1` are served, but data is stored in `v1` format.
+In the above example, three versions `v1alpha1`, `v1beta1`, and `v1` are served, but new writes use `v1`. This is a versions fragment: include a structural schema for every version. Existing objects are not automatically rewritten; migrate storage before removing an old storedVersions entry.
 
 ### Conversion Webhooks
 
 You can use conversion webhooks to handle conversions between different versions:
 
 ```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: backups.example.com
+# Merge this spec fragment into the complete CRD above.
 spec:
-  # ... other fields omitted ...
   conversion:
     strategy: Webhook
     webhook:
@@ -194,6 +194,7 @@ spec:
           namespace: default
           name: example-conversion-webhook
           path: /convert
+        caBundle: <base64-encoded-ca-cert>
       conversionReviewVersions:
       - v1
 ```
@@ -204,7 +205,9 @@ The operator pattern is a way to automate operational knowledge of complex appli
 
 The following diagram shows how the operator pattern works:
 
-![Architecture diagram showing a controller that watches a custom resource stored in etcd, checks and updates its status, determines an action, and executes that action against Kubernetes resources.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-2.svg)
+![Architecture diagram of the operator pattern: a user creates a custom resource stored in etcd via the Kubernetes API server, the operator's controller watches it and checks its status, determines an action, executes it against Kubernetes resources, and updates the custom resource status.](../.gitbook/assets/en-core-11-extending-kubernetes-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-2.html)
 
 ### Operator Concepts
 
@@ -280,7 +283,7 @@ metadata:
   name: my-db
 spec:
   engine: postgresql
-  version: "13.4"
+  version: "17"
   storageSize: 10Gi
   replicas: 3
 ```
@@ -299,10 +302,8 @@ Tools for developing operators:
 Creating an operator using Operator SDK:
 
 ```bash
-# Install Operator SDK
-curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.16.0/operator-sdk_linux_amd64
-chmod +x operator-sdk_linux_amd64
-mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk
+: "${OPERATOR_IMAGE:?Set a registry image tag or digest you control}"
+# Install a reviewed supported Operator SDK release and verify its checksum first.
 
 # Create new operator project
 operator-sdk init --domain example.com --repo github.com/example/database-operator
@@ -313,8 +314,8 @@ operator-sdk create api --group database --version v1 --kind Database --resource
 # Implement controller (main.go, controllers/database_controller.go, etc.)
 
 # Build and deploy operator
-make docker-build docker-push
-make deploy
+make docker-build docker-push IMG="$OPERATOR_IMAGE"
+make deploy IMG="$OPERATOR_IMAGE"
 ```
 
 ### Popular Operators
@@ -323,18 +324,20 @@ Popular open source operators:
 
 1. **Prometheus Operator**: Manages Prometheus monitoring stack
 2. **Elasticsearch Operator**: Manages Elasticsearch clusters
-3. **etcd Operator**: Manages etcd clusters
+3. **CoreOS etcd Operator (archived)**: Historical etcd automation example; not a current installation recommendation.
 4. **PostgreSQL Operator**: Manages PostgreSQL databases
-5. **Jaeger Operator**: Manages Jaeger distributed tracing system
+5. **OpenTelemetry Operator**: Deploys Jaeger v2; the former Jaeger Operator supports retired Jaeger v1 only.
 6. **Strimzi Kafka Operator**: Manages Apache Kafka clusters
-7. **Istio Operator**: Manages Istio service mesh
+7. **Istio in-cluster Operator (removed in 1.24)**: Historical example; use supported Helm/istioctl installation workflows.
 ## Admission Controllers
 
 Admission controllers are plugins that intercept requests to the Kubernetes API server and modify or validate them.
 
 The following diagram shows how admission controllers work:
 
-![Sequence diagram showing an API request passing through authentication and authorization, a mutating webhook, and a validating webhook before the API server persists the validated request to etcd.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-3.svg)
+![Sequence diagram showing an API request passing through authentication and authorization, a mutating webhook, and a validating webhook before the API server persists the validated request to etcd.](../.gitbook/assets/en-core-11-extending-kubernetes-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-3.html)
 
 ### Admission Controller Types
 
@@ -349,10 +352,10 @@ Kubernetes has several built-in admission controllers:
 
 1. **NamespaceLifecycle**: Prevents resource creation in namespaces being deleted
 2. **LimitRanger**: Sets default resource limits for pods and containers
-3. **ServiceAccount**: Auto-creates service accounts and adds tokens
+3. **ServiceAccount**: Defaults/validates the Pod service account and injects a projected token volume unless automount is disabled; separate controllers create default accounts.
 4. **DefaultStorageClass**: Assigns default storage class to PVCs
 5. **ResourceQuota**: Limits resource usage per namespace
-6. **PodSecurityPolicy**: Applies pod security policies
+6. **PodSecurity**: Enforces namespace Pod Security Standards; PodSecurityPolicy was removed in 1.25.
 7. **NodeRestriction**: Limits resources nodes can modify
 
 ### Webhook Admission Controllers
@@ -379,7 +382,7 @@ webhooks:
     resources: ["pods"]
     operations: ["CREATE"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
@@ -404,119 +407,120 @@ webhooks:
     resources: ["pods"]
     operations: ["CREATE", "UPDATE"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
 
 ### Webhook Server Implementation
 
-A webhook server must implement endpoints like the following:
+These Go snippets belong to one file and implement v1 AdmissionReview handlers. Wire /mutate and /validate to HTTPS with a Service-matching certificate and CA bundle. They perform no external side effects and are safe for dry-run; scope the webhook configuration to the intended namespaces. The tag check is a policy example, not full image-reference or signature validation.
 
 ```go
-// Mutating webhook example
-func mutateHandler(w http.ResponseWriter, r *http.Request) {
-    var body []byte
-    if r.Body != nil {
-        if data, err := ioutil.ReadAll(r.Body); err == nil {
-            body = data
-        }
-    }
+package main
 
-    // Convert to AdmissionReview object
-    admissionReview := v1.AdmissionReview{}
-    if err := json.Unmarshal(body, &admissionReview); err != nil {
-        http.Error(w, "Could not parse admission review request", http.StatusBadRequest)
+import (
+    "encoding/json"
+    "net/http"
+    "strings"
+    admissionv1 "k8s.io/api/admission/v1"
+    corev1 "k8s.io/api/core/v1"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func readPodReview(w http.ResponseWriter, r *http.Request) (*admissionv1.AdmissionRequest, *corev1.Pod, bool) {
+    if r.Method != http.MethodPost || r.Body == nil {
+        http.Error(w, "POST body required", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    var review admissionv1.AdmissionReview
+    if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 2<<20)).Decode(&review); err != nil {
+        http.Error(w, "Invalid AdmissionReview JSON", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    req := review.Request
+    if review.APIVersion != "admission.k8s.io/v1" || review.Kind != "AdmissionReview" || req == nil || req.UID == "" {
+        http.Error(w, "AdmissionReview v1 request and UID required", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    if req.Kind.Group != "" || req.Kind.Version != "v1" || req.Kind.Kind != "Pod" ||
+        (req.Operation != admissionv1.Create && req.Operation != admissionv1.Update) {
+        http.Error(w, "Only Pod CREATE/UPDATE is supported", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    var pod corev1.Pod
+    if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
+        http.Error(w, "Invalid Pod JSON", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    return req, &pod, true
+}
+
+func writeReview(w http.ResponseWriter, response admissionv1.AdmissionResponse) {
+    review := admissionv1.AdmissionReview{
+        TypeMeta: metav1.TypeMeta{APIVersion: "admission.k8s.io/v1", Kind: "AdmissionReview"},
+        Response: &response,
+    }
+    data, err := json.Marshal(review)
+    if err != nil {
+        http.Error(w, "Response encoding failed", http.StatusInternalServerError)
         return
     }
-
-    // Extract Pod object
-    pod := corev1.Pod{}
-    if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
-        http.Error(w, "Could not parse pod object", http.StatusBadRequest)
-        return
-    }
-
-    // Create patch
-    patches := []map[string]interface{}{
-        {
-            "op":    "add",
-            "path":  "/metadata/labels/injected-by",
-            "value": "mutating-webhook",
-        },
-    }
-
-    patchBytes, _ := json.Marshal(patches)
-
-    // Create response
-    admissionResponse := v1.AdmissionResponse{
-        UID:     admissionReview.Request.UID,
-        Allowed: true,
-        Patch:   patchBytes,
-        PatchType: func() *v1.PatchType {
-            pt := v1.PatchTypeJSONPatch
-            return &pt
-        }(),
-    }
-
-    admissionReview.Response = &admissionResponse
-    resp, _ := json.Marshal(admissionReview)
     w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
+    _, _ = w.Write(data)
+}
+
+func writePatch(w http.ResponseWriter, req *admissionv1.AdmissionRequest, patches []map[string]interface{}) {
+    response := admissionv1.AdmissionResponse{UID: req.UID, Allowed: true}
+    if len(patches) > 0 {
+        data, err := json.Marshal(patches)
+        if err != nil {
+            http.Error(w, "Patch encoding failed", http.StatusInternalServerError)
+            return
+        }
+        patchType := admissionv1.PatchTypeJSONPatch
+        response.PatchType, response.Patch = &patchType, data
+    }
+    writeReview(w, response)
+}
+
+func deny(w http.ResponseWriter, req *admissionv1.AdmissionRequest, message string) {
+    writeReview(w, admissionv1.AdmissionResponse{
+        UID: req.UID, Allowed: false,
+        Result: &metav1.Status{Status: "Failure", Reason: metav1.StatusReasonForbidden, Code: 403, Message: message},
+    })
+}
+func mutateHandler(w http.ResponseWriter, r *http.Request) {
+    req, pod, ok := readPodReview(w, r)
+    if !ok { return }
+    if pod.Labels["injected-by"] == "mutating-webhook" {
+        writePatch(w, req, nil)
+        return
+    }
+    if pod.Labels == nil { pod.Labels = map[string]string{} }
+    pod.Labels["injected-by"] = "mutating-webhook"
+    // Add the whole map, preserving existing labels. Works when labels was absent.
+    writePatch(w, req, []map[string]interface{}{{"op": "add", "path": "/metadata/labels", "value": pod.Labels}})
 }
 ```
 
 ```go
-// Validating webhook example
 func validateHandler(w http.ResponseWriter, r *http.Request) {
-    var body []byte
-    if r.Body != nil {
-        if data, err := ioutil.ReadAll(r.Body); err == nil {
-            body = data
+    req, pod, ok := readPodReview(w, r)
+    if !ok { return }
+    images := []string{}
+    for _, c := range pod.Spec.Containers { images = append(images, c.Image) }
+    for _, c := range pod.Spec.InitContainers { images = append(images, c.Image) }
+    for _, c := range pod.Spec.EphemeralContainers { images = append(images, c.Image) }
+    for _, image := range images {
+        if strings.Contains(image, "@") { continue } // Digest references have no implicit latest tag.
+        last := image[strings.LastIndex(image, "/")+1:]
+        if !strings.Contains(last, ":") || strings.HasSuffix(last, ":latest") {
+            deny(w, req, "Use an explicit non-latest tag or digest for every container")
+            return
         }
     }
-
-    // Convert to AdmissionReview object
-    admissionReview := v1.AdmissionReview{}
-    if err := json.Unmarshal(body, &admissionReview); err != nil {
-        http.Error(w, "Could not parse admission review request", http.StatusBadRequest)
-        return
-    }
-
-    // Extract Pod object
-    pod := corev1.Pod{}
-    if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
-        http.Error(w, "Could not parse pod object", http.StatusBadRequest)
-        return
-    }
-
-    // Validation logic
-    allowed := true
-    var message string
-    for _, container := range pod.Spec.Containers {
-        if container.Image == "nginx:latest" {
-            allowed = false
-            message = "Using 'latest' tag is not allowed. Please specify a version."
-            break
-        }
-    }
-
-    // Create response
-    admissionResponse := v1.AdmissionResponse{
-        UID:     admissionReview.Request.UID,
-        Allowed: allowed,
-    }
-
-    if !allowed {
-        admissionResponse.Result = &metav1.Status{
-            Message: message,
-        }
-    }
-
-    admissionReview.Response = &admissionResponse
-    resp, _ := json.Marshal(admissionReview)
-    w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
+    writeReview(w, admissionv1.AdmissionResponse{UID: req.UID, Allowed: true})
 }
 ```
 
@@ -560,6 +564,8 @@ An extension API server consists of the following components:
 2. **Resource Handlers**: Handles requests for specific resource types
 3. **Storage Backend**: Stores resource data
 
+This is an implementation outline, not a standalone program. Start from the official sample-apiserver version matching your k8s.io dependencies; configure secure serving, delegated authentication/authorization, the actual example.com/v1 types, storage and shutdown context. APIService group/version must match the server.
+
 ```go
 // Extension API Server Example
 func main() {
@@ -580,14 +586,14 @@ func main() {
 
     // Set API group info
     apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
-        samplev1alpha1.GroupName,
+        samplev1.GroupName,
         apiserver.Scheme,
         metav1.ParameterCodec,
         apiserver.Codecs,
     )
 
     // Set storage
-    apiGroupInfo.VersionedResourcesStorageMap["v1alpha1"] = map[string]rest.Storage{
+    apiGroupInfo.VersionedResourcesStorageMap["v1"] = map[string]rest.Storage{
         "widgets": NewWidgetStorage(),
     }
 
@@ -651,86 +657,27 @@ The scheduler framework introduced in Kubernetes 1.15 allows extending various s
 Scheduler configuration example:
 
 ```yaml
-apiVersion: kubescheduler.config.k8s.io/v1beta1
+apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 leaderElection:
   leaderElect: true
-clientConnection:
-  kubeconfig: /etc/kubernetes/scheduler.conf
 profiles:
-- schedulerName: default-scheduler
-  plugins:
-    queueSort:
-      enabled:
-      - name: PrioritySort
-    preFilter:
-      enabled:
-      - name: NodeResourcesFit
-      - name: NodePorts
-      - name: PodTopologySpread
-      - name: InterPodAffinity
-      - name: VolumeBinding
-      - name: NodeAffinity
-    filter:
-      enabled:
-      - name: NodeUnschedulable
-      - name: NodeName
-      - name: TaintToleration
-      - name: NodeAffinity
-      - name: NodePorts
-      - name: NodeResourcesFit
-      - name: VolumeRestrictions
-      - name: EBSLimits
-      - name: GCEPDLimits
-      - name: NodeVolumeLimits
-      - name: AzureDiskLimits
-      - name: VolumeBinding
-      - name: VolumeZone
-      - name: PodTopologySpread
-      - name: InterPodAffinity
-    postFilter:
-      enabled:
-      - name: DefaultPreemption
-    preScore:
-      enabled:
-      - name: InterPodAffinity
-      - name: PodTopologySpread
-      - name: TaintToleration
-      - name: NodeAffinity
-    score:
-      enabled:
-      - name: NodeResourcesBalancedAllocation
-        weight: 1
-      - name: ImageLocality
-        weight: 1
-      - name: InterPodAffinity
-        weight: 1
-      - name: NodeResourcesFit
-        weight: 1
-      - name: NodeAffinity
-        weight: 1
-      - name: PodTopologySpread
-        weight: 2
-      - name: TaintToleration
-        weight: 1
-    reserve:
-      enabled:
-      - name: VolumeBinding
-    permit:
-      enabled: []
-    preBind:
-      enabled:
-      - name: VolumeBinding
-    bind:
-      enabled:
-      - name: DefaultBinder
-    postBind:
-      enabled: []
+- schedulerName: custom-scheduler
+  pluginConfig:
+  - name: NodeResourcesFit
+    args:
+      scoringStrategy:
+        type: MostAllocated
+        resources:
+        - name: cpu
+          weight: 1
+        - name: memory
+          weight: 1
 ```
 
 ### Custom Scheduler
 
-You can also implement your own scheduler to run alongside Kubernetes:
+The following Deployment requires a built custom-scheduler image, a ConfigMap named custom-scheduler-config containing the preceding config.yaml, and a ServiceAccount with reviewed scheduling/Lease RBAC. Use in-cluster authentication; a worker cannot mount a managed control plane’s scheduler.conf. The schedulerName must match the Pod.
 
 ```yaml
 apiVersion: apps/v1
@@ -749,21 +696,20 @@ spec:
         app: custom-scheduler
     spec:
       serviceAccountName: custom-scheduler
+      nodeSelector:
+        kubernetes.io/os: linux
       containers:
       - name: custom-scheduler
-        image: example/custom-scheduler:v1.0.0
-        command:
-        - /custom-scheduler
-        - --kubeconfig=/etc/kubernetes/scheduler.conf
+        image: example/custom-scheduler:REPLACE_WITH_TESTED_RELEASE
+        command: [/custom-scheduler, --config=/etc/scheduler/config.yaml]
         volumeMounts:
-        - name: kubeconfig
-          mountPath: /etc/kubernetes/scheduler.conf
+        - name: config
+          mountPath: /etc/scheduler
           readOnly: true
       volumes:
-      - name: kubeconfig
-        hostPath:
-          path: /etc/kubernetes/scheduler.conf
-          type: File
+      - name: config
+        configMap:
+          name: custom-scheduler-config
 ```
 
 Specifying a custom scheduler for a pod:
@@ -777,7 +723,7 @@ spec:
   schedulerName: custom-scheduler
   containers:
   - name: container
-    image: nginx
+    image: nginx:1.30.4
 ```
 
 ## Cloud Controller Manager
@@ -794,71 +740,19 @@ The cloud controller manager consists of the following controllers:
 
 ### AWS Cloud Controller Manager
 
-AWS Cloud Controller Manager configuration example:
+The external AWS CCM is for **self-managed Kubernetes on AWS**. Choose a cloud-provider-aws release compatible with Kubernetes and follow its existing-cluster procedure for ServiceAccount/RBAC, IAM, cluster tags, node naming and `--cloud-provider=external` migration prerequisites. Its image repository is `registry.k8s.io/provider-aws/cloud-controller-manager`. Arbitrary cloud.conf entries cannot replace VPC/subnet tagging.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aws-cloud-controller-manager
-  namespace: kube-system
-data:
-  cloud.conf: |
-    [global]
-    zone = us-east-1a
-    vpc = vpc-xxx
-    subnet-id = subnet-xxx
-    role-arn = arn:aws:iam::xxx:role/xxx
-    kubernetes.io/cluster/my-cluster = owned
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: aws-cloud-controller-manager
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      k8s-app: aws-cloud-controller-manager
-  template:
-    metadata:
-      labels:
-        k8s-app: aws-cloud-controller-manager
-    spec:
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
-      tolerations:
-      - key: node.cloudprovider.kubernetes.io/uninitialized
-        value: "true"
-        effect: NoSchedule
-      - key: node-role.kubernetes.io/master
-        effect: NoSchedule
-      serviceAccountName: cloud-controller-manager
-      containers:
-      - name: aws-cloud-controller-manager
-        image: k8s.gcr.io/cloud-controller-manager:v1.21.0
-        command:
-        - /usr/local/bin/cloud-controller-manager
-        - --cloud-provider=aws
-        - --cloud-config=/etc/kubernetes/cloud.conf
-        - --use-service-account-credentials
-        - --allocate-node-cidrs=false
-        volumeMounts:
-        - name: cloud-config
-          mountPath: /etc/kubernetes/cloud.conf
-          readOnly: true
-      volumes:
-      - name: cloud-config
-        configMap:
-          name: aws-cloud-controller-manager
-```
+You cannot install this DaemonSet into the AWS-managed EKS control plane or mount its scheduler.conf. On EKS, use service-managed cloud integration and supported AWS Load Balancer Controller or Auto Mode capabilities, with one controller owner per resource.
+
 ## CSI (Container Storage Interface)
 
 CSI provides a standard interface between Kubernetes and storage systems.
 
 The following diagram shows the architecture and operation of CSI:
 
-![Architecture diagram showing a PersistentVolumeClaim referencing a StorageClass and external provisioner that requests a volume from the CSI driver, while the CSI driver's controller and node services manage and mount storage from the underlying storage system, and pods mount the resulting volume.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-4.svg)
+![Architecture diagram showing a user-created PersistentVolumeClaim referencing a StorageClass and CSI external provisioner that requests a volume from the CSI driver, whose controller and node services create and mount the volume on the storage system, bound as a PersistentVolume and mounted into the Pod.](../.gitbook/assets/en-core-11-extending-kubernetes-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-4.html)
 
 ### CSI Architecture
 
@@ -896,7 +790,7 @@ CSI consists of the following components:
 
 ### CSI Driver Deployment
 
-CSI driver deployment example:
+The following is a driver-author template, not a complete install. Supply the driver image/arguments, compatible sidecar releases, ServiceAccounts/RBAC and CSIDriver registration from the vendor. NodePlugin runs on Linux and requires the documented host paths and privileges.
 
 ```yaml
 # CSI Controller Service
@@ -915,9 +809,11 @@ spec:
         app: csi-controller
     spec:
       serviceAccountName: csi-controller
+      nodeSelector:
+        kubernetes.io/os: linux
       containers:
       - name: csi-provisioner
-        image: k8s.gcr.io/sig-storage/csi-provisioner:v2.1.0
+        image: registry.k8s.io/sig-storage/csi-provisioner:REPLACE_WITH_COMPATIBLE_RELEASE
         args:
         - "--csi-address=$(ADDRESS)"
         - "--v=5"
@@ -928,7 +824,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-attacher
-        image: k8s.gcr.io/sig-storage/csi-attacher:v3.1.0
+        image: registry.k8s.io/sig-storage/csi-attacher:REPLACE_WITH_COMPATIBLE_RELEASE
         args:
         - "--csi-address=$(ADDRESS)"
         - "--v=5"
@@ -957,6 +853,7 @@ spec:
       - name: socket-dir
         emptyDir: {}
 
+---
 # CSI Node Service
 apiVersion: apps/v1
 kind: DaemonSet
@@ -972,10 +869,12 @@ spec:
         app: csi-node
     spec:
       serviceAccountName: csi-node
+      nodeSelector:
+        kubernetes.io/os: linux
       hostNetwork: true
       containers:
       - name: csi-node-driver-registrar
-        image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.1.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:REPLACE_WITH_COMPATIBLE_RELEASE
         args:
         - "--csi-address=$(ADDRESS)"
         - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
@@ -1038,11 +937,12 @@ metadata:
 provisioner: example.csi.k8s.io
 parameters:
   type: ssd
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
 reclaimPolicy: Delete
 allowVolumeExpansion: true
-volumeBindingMode: Immediate
+volumeBindingMode: WaitForFirstConsumer
 
+---
 # PVC
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1072,7 +972,9 @@ CNI provides a standard interface between Kubernetes and networking solutions.
 
 The following diagram shows the architecture and operation of CNI:
 
-![Architecture diagram showing kubelet asking the container runtime to create a container, which requests network setup from the CNI plugin, which in turn allocates an IP from the IPAM plugin's pool and applies network configuration to the pod network.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-5.svg)
+![Architecture diagram showing kubelet asking the container runtime to create a container, which requests network setup from the CNI plugin, which in turn allocates an IP from the IPAM plugin's pool and applies network configuration to the pod network.](../.gitbook/assets/en-core-11-extending-kubernetes-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-5.html)
 
 ### CNI Architecture
 
@@ -1086,8 +988,8 @@ CNI consists of the following components:
 +-------------------+
 |                   |
 |  Kubernetes       |
-|  (kubelet)        |
-|                   |
+|  CRI runtime      |
+|  (via kubelet)    |
 +--------+----------+
          |
          | CNI Spec
@@ -1109,7 +1011,7 @@ CNI consists of the following components:
 
 ### CNI Plugin Configuration
 
-CNI plugin configuration example:
+This single-node bridge/host-local example illustrates the CNI contract; a cluster needs unique per-node subnets and cross-node routing. CNI is called by the CRI runtime, not directly by modern kubelet.
 
 ```json
 {
@@ -1134,7 +1036,7 @@ CNI plugin configuration example:
 1. **Calico**: CNI with enhanced network policy and security features
 2. **Flannel**: Provides simple overlay networking
 3. **Cilium**: eBPF-based networking and security solution
-4. **Weave Net**: Multi-host container networking solution
+4. **Weave Net (archived)**: Historical multi-host networking project; evaluate maintained alternatives.
 5. **AWS VPC CNI**: CNI integrated with AWS VPC
 6. **Azure CNI**: CNI integrated with Azure virtual networks
 7. **Antrea**: Open vSwitch-based networking solution
@@ -1144,7 +1046,11 @@ CNI plugin configuration example:
 Calico CNI plugin installation example:
 
 ```bash
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+# Use the official Calico installation guide for your distribution.
+# Select a supported release and inspect the operator/custom-resources manifests.
+# Do not install a second primary CNI over an existing cluster network.
+kubectl get nodes -o wide
+kubectl -n kube-system get daemonsets
 ```
 
 ## Device Plugins
@@ -1187,40 +1093,7 @@ Device plugins consist of the following components:
 
 NVIDIA GPU device plugin deployment example:
 
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: nvidia-device-plugin-daemonset
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      name: nvidia-device-plugin-ds
-  template:
-    metadata:
-      labels:
-        name: nvidia-device-plugin-ds
-    spec:
-      tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: nvidia-device-plugin-ctr
-        image: nvidia/k8s-device-plugin:v0.9.0
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
-        volumeMounts:
-        - name: device-plugin
-          mountPath: /var/lib/kubelet/device-plugins
-      volumes:
-      - name: device-plugin
-        hostPath:
-          path: /var/lib/kubelet/device-plugins
-```
+First configure compatible NVIDIA drivers, Container Toolkit and container runtime. Pin a tested official NVIDIA device-plugin Helm chart release and select Linux GPU nodes. Avoid a duplicate installation when GPU Operator or Auto Mode already owns the plugin.
 
 ### GPU Request Pod
 
@@ -1232,9 +1105,12 @@ kind: Pod
 metadata:
   name: gpu-pod
 spec:
+  restartPolicy: Never
+  nodeSelector:
+    kubernetes.io/os: linux
   containers:
   - name: cuda-container
-    image: nvidia/cuda:11.0-base
+    image: nvidia/cuda:REPLACE_WITH_DRIVER_COMPATIBLE_TAG
     command: ["nvidia-smi"]
     resources:
       limits:
@@ -1251,11 +1127,15 @@ spec:
 
 ## Extension Features in Amazon EKS
 
+EKS version support differs from upstream. As of 2026-09-11, EKS standard support covers 1.34–1.36; check each add-on/controller compatibility matrix too.
+
 Amazon EKS supports various extension features to extend Kubernetes cluster functionality.
 
 The following diagram shows the extension feature architecture in Amazon EKS:
 
-![Architecture diagram showing the Amazon EKS cluster managing its control plane and node groups, the control plane running managed add-ons (VPC CNI, CoreDNS, kube-proxy, EBS CSI driver, and the AWS Load Balancer Controller) that integrate with AWS VPC, EBS, and Elastic Load Balancing, plus IAM roles for service accounts and AWS Controllers for Kubernetes as additional AWS integration points.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-6.svg)
+![EKS manages the control plane; add-on workloads run on compatible worker compute. IRSA grants permissions to Pods using ServiceAccounts, while node IAM roles are separate. ACK reconciles AWS resources through AWS APIs.](../.gitbook/assets/en-core-11-extending-kubernetes-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-6.html)
 
 ### EKS Add-ons
 
@@ -1265,28 +1145,22 @@ Amazon EKS provides the following add-ons:
 2. **CoreDNS**: DNS service within the cluster
 3. **kube-proxy**: Network proxy
 4. **Amazon EBS CSI Driver**: EBS volume management
-5. **AWS Load Balancer Controller**: AWS load balancer management
+5. **AWS Load Balancer Controller**: Separately installed with supported Helm/manifests; do not assume every extension is an EKS managed add-on.
 
 ```bash
-# List EKS add-ons
-aws eks list-addons --cluster-name my-cluster
-
-# Install EKS add-on
-aws eks create-addon \
-  --cluster-name my-cluster \
-  --addon-name amazon-ebs-csi-driver \
-  --service-account-role-arn arn:aws:iam::123456789012:role/AmazonEKS_EBS_CSI_DriverRole
-
-# Update EKS add-on
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name amazon-ebs-csi-driver \
-  --addon-version v1.5.0-eksbuild.1
-
-# Delete EKS add-on
-aws eks delete-addon \
-  --cluster-name my-cluster \
-  --addon-name amazon-ebs-csi-driver
+set -euo pipefail
+: "${CLUSTER_NAME:?Set cluster name}"
+KUBERNETES_VERSION=$(aws eks describe-cluster --name "$CLUSTER_NAME" --query cluster.version --output text)
+aws eks list-addons --cluster-name "$CLUSTER_NAME"
+aws eks describe-addon-versions --addon-name amazon-ebs-csi-driver --kubernetes-version "$KUBERNETES_VERSION"
+# Choose a compatible version and prepare the controller's scoped IAM role first.
+: "${ADDON_VERSION:?Set reviewed compatible add-on version}"
+: "${EBS_ROLE_ARN:?Set EBS CSI IRSA role ARN}"
+aws eks create-addon --cluster-name "$CLUSTER_NAME" --addon-name amazon-ebs-csi-driver \
+  --addon-version "$ADDON_VERSION" --service-account-role-arn "$EBS_ROLE_ARN"
+# For an existing installation, use update-addon instead of create-addon.
+# To stop EKS management while retaining the workload (not uninstall it):
+# aws eks delete-addon --cluster-name "$CLUSTER_NAME" --addon-name amazon-ebs-csi-driver --preserve
 ```
 
 ### AWS Controllers for Kubernetes (ACK)
@@ -1294,19 +1168,26 @@ aws eks delete-addon \
 ACK is a collection of operators that allows managing AWS resources from Kubernetes:
 
 ```bash
-# Install ACK controller
-helm repo add ack-controller https://aws.github.io/aws-controllers-k8s
-helm install ack-s3-controller ack-controller/s3-chart
+set -euo pipefail
+: "${ACK_VERSION:?Set a reviewed S3 controller chart version}"
+: "${AWS_REGION:?Set target service region}"
+# First prepare ack-s3-controller ServiceAccount with scoped IRSA/Pod Identity permissions.
+helm upgrade --install ack-s3-controller oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --version "$ACK_VERSION" --namespace ack-system --create-namespace \
+  --set aws.region="$AWS_REGION" --set serviceAccount.create=false \
+  --set serviceAccount.name=ack-s3-controller
+# Creating a Bucket CR provisions a real AWS resource: review IAM, naming and retention first.
+```
 
-# Create S3 bucket
-cat <<EOF | kubectl apply -f -
+The following Bucket example provisions an actual AWS resource when the controller and IAM permissions are configured. Replace the name with a globally unique value and review lifecycle/retention settings. Deleting the Kubernetes object can delete the bucket; configure the controller deletion policy for your data-retention requirements.
+
+```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
-  name: my-bucket
+  name: example-bucket
 spec:
-  name: my-bucket-123456
-EOF
+  name: replace-with-your-globally-unique-bucket-name
 ```
 
 ### AWS Load Balancer Controller
@@ -1320,10 +1201,10 @@ kind: Ingress
 metadata:
   name: example-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - host: example.com
     http:
@@ -1343,6 +1224,7 @@ IRSA allows pods to securely access AWS services by associating AWS IAM roles wi
 
 ```bash
 # Create OIDC provider
+: "${S3_READ_POLICY_ARN:?Set a customer-managed policy restricted to your bucket/prefix}"
 eksctl utils associate-iam-oidc-provider \
   --cluster my-cluster \
   --approve
@@ -1352,7 +1234,7 @@ eksctl create iamserviceaccount \
   --cluster my-cluster \
   --namespace default \
   --name my-service-account \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+  --attach-policy-arn "$S3_READ_POLICY_ARN" \
   --approve
 
 # Pod using service account
@@ -1363,12 +1245,12 @@ metadata:
   name: s3-reader
 spec:
   serviceAccountName: my-service-account
+  restartPolicy: Never
   containers:
   - name: aws-cli
-    image: amazon/aws-cli:latest
-    command:
-    - sleep
-    - "3600"
+    image: public.ecr.aws/aws-cli/aws-cli:REPLACE_WITH_TESTED_RELEASE
+    command: [aws]
+    args: [sts, get-caller-identity]
 EOF
 ```
 
@@ -1427,3 +1309,26 @@ When implementing Kubernetes extension features, it's important to follow best p
 ## Quiz
 
 To test what you learned in this chapter, try the [Extending Kubernetes Quiz](../quizzes/core/11-extending-kubernetes-quiz.md).
+
+## Verification References
+
+- https://kubernetes.io/releases/
+- https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
+- https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+- https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/
+- https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/scheduler/apis/config/types.go
+- https://github.com/kubernetes/cloud-provider-aws/blob/master/docs/prerequisites.md
+- https://github.com/kubernetes/cloud-provider-aws/blob/master/examples/existing-cluster/base/aws-cloud-controller-manager-daemonset.yaml
+- https://github.com/kubernetes-sigs/kubebuilder/blob/master/README.md
+- https://github.com/operator-framework/operator-sdk/blob/master/README.md
+- https://github.com/NVIDIA/k8s-device-plugin/blob/main/README.md
+- https://github.com/jaegertracing/jaeger-operator/blob/main/README.md
+- https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/
+- https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html
+- https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+- https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html
+- https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/user-docs/install.md
+- https://github.com/aws-controllers-k8s/s3-controller/blob/main/helm/values.yaml

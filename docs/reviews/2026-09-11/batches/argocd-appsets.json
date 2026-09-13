@@ -1,0 +1,166 @@
+[
+  {
+    "path": "ko/gitops/argocd/04-applicationsets.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full source and quiz review against ArgoCD3.5.2; corrected generators, templates, progressive sync and deletion semantics, charts and matching diagrams.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Cluster.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Git.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Matrix.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Merge.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-SCM-Provider.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Pull-Request.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Cluster-Decision-Resource.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Plugin.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/GoTemplate.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Progressive-Syncs.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Template.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Application-Deletion.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/applicationset/controllers/template/patch.go",
+      "https://github.com/grafana-community/helm-charts/releases/tag/loki-18.12.1",
+      "https://github.com/envoyproxy/gateway/releases/tag/v1.9.1"
+    ],
+    "findings": [
+      "Old controller/support versions; Go/fasttemplate syntax mixed and YAML-level conditionals invalid; missing advanced Application spec",
+      "Wrong SCM filters nesting/OR logic, incomplete merge defaults, Git file path collision, unrestricted project input",
+      "ClusterDecision missing GVK/matchKey/cluster mapping and mutually exclusive selection fields; plugin configMapRef wrong type and connection prerequisites absent",
+      "RollingSync not enabled, generated labels absent, overlapping pause/production groups incorrectly imply approval and ordering; templatePatch lacked Go enablement",
+      "Deletion quiz confuses Application object retention with resource finalizer retention",
+      "Old kube-prometheus-stack/loki-stack/retired ingress-nginx charts; required per-cluster values and migration distinction absent",
+      "Diagrams use old template syntax, falsely promise atomic creation/prod internal ordering; template override diagram shows obsolete prune override and clips notes"
+    ],
+    "validation": [
+      "50fences classified;46YAML blocks/fragments strictly parsed and35fullApplicationSet CRD validations passed",
+      "90representative generated-template instances evaluated with actual Go text/template + Sprig3.3.0 with missingkey=error; all produced structurally valid Applications;4embeddedHelm values documents parsed",
+      "TemplatePatch strings rendered; documented object-only additions structurally inspected after merging. No live ApplicationSet/generator APIs executed; Argo normalize algorithm not reimplemented/tested (fixtures already valid DNS names)",
+      "Loki18.12.1 chart publisher SHA256 verified;EnvoyGatewayv1.9.1OCI pull succeeded with digest91bae9aedb91ab34731e987afe01a3ccf454393015abeca705eea8ee15553e86; private chart/values paths explicitly placeholders",
+      "All5updateddiagram specs passed9/9showcase checks; production-font-normalized copies passed4viewports/light-dark captures; final screenshots inspected; PNGs regenerated",
+      "Repository docs tests110/110passed at CJK-font checkpoint, before any traffic05 edits"
+    ],
+    "reviewedSha256": "802d4bc773068fc0d8572d93dc264088a69b0a2dafc50db1477dc3f8176ded3c"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/04-applicationsets-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full source and quiz review against ArgoCD3.5.2; corrected generators, templates, progressive sync and deletion semantics, charts and matching diagrams.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Cluster.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Git.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Matrix.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Merge.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-SCM-Provider.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Pull-Request.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Cluster-Decision-Resource.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Plugin.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/GoTemplate.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Progressive-Syncs.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Template.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Application-Deletion.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/applicationset/controllers/template/patch.go",
+      "https://github.com/grafana-community/helm-charts/releases/tag/loki-18.12.1",
+      "https://github.com/envoyproxy/gateway/releases/tag/v1.9.1"
+    ],
+    "findings": [
+      "Old controller/support versions; Go/fasttemplate syntax mixed and YAML-level conditionals invalid; missing advanced Application spec",
+      "Wrong SCM filters nesting/OR logic, incomplete merge defaults, Git file path collision, unrestricted project input",
+      "ClusterDecision missing GVK/matchKey/cluster mapping and mutually exclusive selection fields; plugin configMapRef wrong type and connection prerequisites absent",
+      "RollingSync not enabled, generated labels absent, overlapping pause/production groups incorrectly imply approval and ordering; templatePatch lacked Go enablement",
+      "Deletion quiz confuses Application object retention with resource finalizer retention",
+      "Old kube-prometheus-stack/loki-stack/retired ingress-nginx charts; required per-cluster values and migration distinction absent",
+      "Diagrams use old template syntax, falsely promise atomic creation/prod internal ordering; template override diagram shows obsolete prune override and clips notes"
+    ],
+    "validation": [
+      "50fences classified;46YAML blocks/fragments strictly parsed and35fullApplicationSet CRD validations passed",
+      "90representative generated-template instances evaluated with actual Go text/template + Sprig3.3.0 with missingkey=error; all produced structurally valid Applications;4embeddedHelm values documents parsed",
+      "TemplatePatch strings rendered; documented object-only additions structurally inspected after merging. No live ApplicationSet/generator APIs executed; Argo normalize algorithm not reimplemented/tested (fixtures already valid DNS names)",
+      "Loki18.12.1 chart publisher SHA256 verified;EnvoyGatewayv1.9.1OCI pull succeeded with digest91bae9aedb91ab34731e987afe01a3ccf454393015abeca705eea8ee15553e86; private chart/values paths explicitly placeholders",
+      "All5updateddiagram specs passed9/9showcase checks; production-font-normalized copies passed4viewports/light-dark captures; final screenshots inspected; PNGs regenerated",
+      "Repository docs tests110/110passed at CJK-font checkpoint, before any traffic05 edits"
+    ],
+    "reviewedSha256": "7efa59dd58bb1466b558e6286fb59714eaab8a4a53ddeac36c96ce9d5f2e989d"
+  },
+  {
+    "path": "en/gitops/argocd/04-applicationsets.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full source and quiz review against ArgoCD3.5.2; corrected generators, templates, progressive sync and deletion semantics, charts and matching diagrams.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Cluster.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Git.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Matrix.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Merge.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-SCM-Provider.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Pull-Request.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Cluster-Decision-Resource.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Plugin.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/GoTemplate.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Progressive-Syncs.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Template.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Application-Deletion.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/applicationset/controllers/template/patch.go",
+      "https://github.com/grafana-community/helm-charts/releases/tag/loki-18.12.1",
+      "https://github.com/envoyproxy/gateway/releases/tag/v1.9.1"
+    ],
+    "findings": [
+      "Old controller/support versions; Go/fasttemplate syntax mixed and YAML-level conditionals invalid; missing advanced Application spec",
+      "Wrong SCM filters nesting/OR logic, incomplete merge defaults, Git file path collision, unrestricted project input",
+      "ClusterDecision missing GVK/matchKey/cluster mapping and mutually exclusive selection fields; plugin configMapRef wrong type and connection prerequisites absent",
+      "RollingSync not enabled, generated labels absent, overlapping pause/production groups incorrectly imply approval and ordering; templatePatch lacked Go enablement",
+      "Deletion quiz confuses Application object retention with resource finalizer retention",
+      "Old kube-prometheus-stack/loki-stack/retired ingress-nginx charts; required per-cluster values and migration distinction absent",
+      "Diagrams use old template syntax, falsely promise atomic creation/prod internal ordering; template override diagram shows obsolete prune override and clips notes"
+    ],
+    "validation": [
+      "50fences classified;46YAML blocks/fragments strictly parsed and35fullApplicationSet CRD validations passed",
+      "90representative generated-template instances evaluated with actual Go text/template + Sprig3.3.0 with missingkey=error; all produced structurally valid Applications;4embeddedHelm values documents parsed",
+      "TemplatePatch strings rendered; documented object-only additions structurally inspected after merging. No live ApplicationSet/generator APIs executed; Argo normalize algorithm not reimplemented/tested (fixtures already valid DNS names)",
+      "Loki18.12.1 chart publisher SHA256 verified;EnvoyGatewayv1.9.1OCI pull succeeded with digest91bae9aedb91ab34731e987afe01a3ccf454393015abeca705eea8ee15553e86; private chart/values paths explicitly placeholders",
+      "All5updateddiagram specs passed9/9showcase checks; production-font-normalized copies passed4viewports/light-dark captures; final screenshots inspected; PNGs regenerated",
+      "Repository docs tests110/110passed at CJK-font checkpoint, before any traffic05 edits"
+    ],
+    "reviewedSha256": "8a279a3d794ef270cefa7c527c7f3a4fc64d41c06c1946aa5b5b949a9b3be177"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/04-applicationsets-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full source and quiz review against ArgoCD3.5.2; corrected generators, templates, progressive sync and deletion semantics, charts and matching diagrams.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Cluster.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Git.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Matrix.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Merge.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-SCM-Provider.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Pull-Request.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Cluster-Decision-Resource.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators-Plugin.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/GoTemplate.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Progressive-Syncs.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Template.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Application-Deletion.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/applicationset/controllers/template/patch.go",
+      "https://github.com/grafana-community/helm-charts/releases/tag/loki-18.12.1",
+      "https://github.com/envoyproxy/gateway/releases/tag/v1.9.1"
+    ],
+    "findings": [
+      "Old controller/support versions; Go/fasttemplate syntax mixed and YAML-level conditionals invalid; missing advanced Application spec",
+      "Wrong SCM filters nesting/OR logic, incomplete merge defaults, Git file path collision, unrestricted project input",
+      "ClusterDecision missing GVK/matchKey/cluster mapping and mutually exclusive selection fields; plugin configMapRef wrong type and connection prerequisites absent",
+      "RollingSync not enabled, generated labels absent, overlapping pause/production groups incorrectly imply approval and ordering; templatePatch lacked Go enablement",
+      "Deletion quiz confuses Application object retention with resource finalizer retention",
+      "Old kube-prometheus-stack/loki-stack/retired ingress-nginx charts; required per-cluster values and migration distinction absent",
+      "Diagrams use old template syntax, falsely promise atomic creation/prod internal ordering; template override diagram shows obsolete prune override and clips notes"
+    ],
+    "validation": [
+      "50fences classified;46YAML blocks/fragments strictly parsed and35fullApplicationSet CRD validations passed",
+      "90representative generated-template instances evaluated with actual Go text/template + Sprig3.3.0 with missingkey=error; all produced structurally valid Applications;4embeddedHelm values documents parsed",
+      "TemplatePatch strings rendered; documented object-only additions structurally inspected after merging. No live ApplicationSet/generator APIs executed; Argo normalize algorithm not reimplemented/tested (fixtures already valid DNS names)",
+      "Loki18.12.1 chart publisher SHA256 verified;EnvoyGatewayv1.9.1OCI pull succeeded with digest91bae9aedb91ab34731e987afe01a3ccf454393015abeca705eea8ee15553e86; private chart/values paths explicitly placeholders",
+      "All5updateddiagram specs passed9/9showcase checks; production-font-normalized copies passed4viewports/light-dark captures; final screenshots inspected; PNGs regenerated",
+      "Repository docs tests110/110passed at CJK-font checkpoint, before any traffic05 edits"
+    ],
+    "reviewedSha256": "344219b14f14f62275f8f157890cb035f0e35e5af7fe87c22f5282e762be57ac"
+  }
+]

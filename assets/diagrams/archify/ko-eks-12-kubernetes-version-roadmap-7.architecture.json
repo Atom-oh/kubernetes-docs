@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 1.30 Enhancement 분포",
+    "output": "ko-eks-12-kubernetes-version-roadmap-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1060,
+      640
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "릴리스"
+        },
+        "backend": {
+          "label": "Stable (GA)"
+        },
+        "frontend": {
+          "label": "Beta"
+        },
+        "external": {
+          "label": "Alpha"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "distribution",
+        "label": "성숙도 단계별 분포",
+        "focus": [
+          "release",
+          "stable",
+          "beta",
+          "alpha"
+        ],
+        "note": "58개 Enhancement가 Stable 17개, Beta 18개, Alpha 23개로 나뉩니다."
+      },
+      {
+        "id": "ga-features",
+        "label": "핵심 GA 기능",
+        "focus": [
+          "stable",
+          "vap",
+          "psr",
+          "hpa"
+        ],
+        "note": "보안과 스케줄링 영역의 기능들이 이번 릴리스에서 GA로 졸업했습니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "release",
+      "type": "cloud",
+      "label": "Kubernetes 1.30",
+      "sublabel": "Uwubernetes · 2024년 4월 · 58개",
+      "pos": [
+        20,
+        290
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable (GA)",
+      "sublabel": "프로덕션 사용 가능",
+      "pos": [
+        380,
+        100
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "beta",
+      "type": "frontend",
+      "label": "Beta",
+      "sublabel": "기본 활성화 (Feature Gate On)",
+      "pos": [
+        380,
+        320
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "alpha",
+      "type": "external",
+      "label": "Alpha",
+      "sublabel": "Feature Gate 필요",
+      "pos": [
+        380,
+        520
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "vap",
+      "type": "backend",
+      "label": "ValidatingAdmissionPolicy",
+      "sublabel": "CEL 기반 · KEP-3488",
+      "pos": [
+        740,
+        40
+      ],
+      "size": [
+        270,
+        60
+      ]
+    },
+    {
+      "id": "psr",
+      "type": "backend",
+      "label": "Pod Scheduling Readiness",
+      "sublabel": "KEP-3521",
+      "pos": [
+        740,
+        130
+      ],
+      "size": [
+        270,
+        60
+      ]
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA Container Resource Metrics",
+      "sublabel": "KEP-2702",
+      "pos": [
+        740,
+        220
+      ],
+      "size": [
+        270,
+        60
+      ]
+    },
+    {
+      "id": "ctxlog",
+      "type": "frontend",
+      "label": "Contextual Logging",
+      "sublabel": "구조화된 컨텍스트 로깅",
+      "pos": [
+        740,
+        322
+      ],
+      "size": [
+        270,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "핵심 GA 기능",
+      "wraps": [
+        "vap",
+        "psr",
+        "hpa"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "to-stable",
+      "from": "release",
+      "to": "stable",
+      "label": "17개",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-beta",
+      "from": "release",
+      "to": "beta",
+      "label": "18개"
+    },
+    {
+      "id": "to-alpha",
+      "from": "release",
+      "to": "alpha",
+      "label": "23개"
+    },
+    {
+      "id": "stable-vap",
+      "from": "stable",
+      "to": "vap",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stable-psr",
+      "from": "stable",
+      "to": "psr",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stable-hpa",
+      "from": "stable",
+      "to": "hpa",
+      "variant": "emphasis"
+    },
+    {
+      "id": "beta-ctxlog",
+      "from": "beta",
+      "to": "ctxlog",
+      "variant": "dashed"
+    }
+  ]
+}

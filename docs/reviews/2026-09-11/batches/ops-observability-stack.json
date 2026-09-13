@@ -1,0 +1,170 @@
+[
+  {
+    "path": "ko/ops/09-observability-stack.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete stack guides and quizzes corrected for current chart/native configurations, deployment modes, retention, identity, sampling and Grafana integration.",
+    "initialCandidates": [
+      "Loki deprecated SSD and legacy chart/native keys, retention/runtime overrides, per-tenant auth and API collector duplication need current validation.",
+      "Tempo 3 replaces distributed ingesters/compactor with Kafka consumers and backend workers; old monolithic chart mixed distributed values cannot work.",
+      "Collector old image/selfmetrics/receiver/processor keys, tail sampler OR-policy vs global rate cap, trace affinity/late spans and head sample loss.",
+      "AMP retention/HA/permissions and SA name, queue/WAL filtering, Grafana datasource UID/ports/macro/sidecar/exemplar contracts.",
+      "LogQL/TraceQL invalid syntax, missing parser/numeric errors, log line vs byte rate, automatic metrics generation and MDC exemplar claims; quizzes inherit errors."
+    ],
+    "sources": [
+      "https://grafana.com/docs/loki/latest/get-started/deployment-modes/",
+      "https://grafana.com/docs/loki/latest/operations/storage/retention/",
+      "https://github.com/grafana-community/helm-charts",
+      "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/",
+      "https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go",
+      "https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor",
+      "https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/batchprocessor",
+      "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html",
+      "https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html"
+    ],
+    "validation": [
+      "ops-stack-validation.json",
+      "6 pinned Helm renders;234 Kubernetes objects;5 native config checks;18 query parser cases;60 code fences;2 Terraform mock runs;20 quiz questions;rendered datasource UIDs and inline list assembly"
+    ],
+    "reviewedSha256": "5c27326ae4a9145b5ccf22c27e53d6a3c6f6fa0c1a6e1274db704d4465bf5ec5",
+    "findings": [
+      "LokiSSDdeprecatedand4.0removal;communitychart18.12.2;oldmixedchartvaluesremoved.",
+      "ActualPVCinspectioncaughtsilentlyignoredLoki20GiandmissingaccessModes;claimsnowrendergp3/20Gi/RWO.",
+      "Tempo3.0.3Kafka/microservicesversusmonolithicmigrationrewritten;removedingester/compactor/SSB/local_blocksconfigs;sharedstorecompactionandtenantoverrideboundaries.",
+      "Tempochart3.0.0Jaegernullparentbreaksrender;disablechildreninstead;legacyServiceportsremainbutnativeprotocolsdisabled.",
+      "Tempo-distributed3.5.1missingbackendWorkerPDBdefaultrequiresoverride;unsupportedblockbuilder/liveStorepersistencekeysremoved.",
+      "KafkaSASLPLAINdoesnotimplyTLS/MSKIAMsupport;exampleisexplicitisolatedvalidationstartingpoint.",
+      "AlloyAPIlogsnotCRIfiletail;singleRecreatewithnamespacedRBACavoidspernodealldiscoveryduplicatesbutdoesnotclaimHA.",
+      "Collector0.160actualnativepipelineandcurrenttelemetryreaders;singletracesampler/traceaffinity/late/headloss/ORpolicyandbatchtriggerlimitsemantics.",
+      "AMP1095dayretentionnot150hardmax;scopedwriterreaderIRSAroles,exactSAsub/aud,HAclusterand__replica__,noautomaticworkspacefederation/downsampling.",
+      "GrafanaKPSdefaultDatasourcekeyfoundunder sidecar.datasources;fixedduplicateprometheusUIDthroughactualrenderedConfigMapchecks;threebaseUIDsplusexplicitAMPoverlaylistassembly.",
+      "LogQLnumericerrorfilters/linevsbyterateandTraceQLintrinsics/hierarchy/spanaggregationcorrected;20matchingquizquestions."
+    ]
+  },
+  {
+    "path": "ko/quizzes/ops/09-observability-stack-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete stack guides and quizzes corrected for current chart/native configurations, deployment modes, retention, identity, sampling and Grafana integration.",
+    "initialCandidates": [
+      "Loki deprecated SSD and legacy chart/native keys, retention/runtime overrides, per-tenant auth and API collector duplication need current validation.",
+      "Tempo 3 replaces distributed ingesters/compactor with Kafka consumers and backend workers; old monolithic chart mixed distributed values cannot work.",
+      "Collector old image/selfmetrics/receiver/processor keys, tail sampler OR-policy vs global rate cap, trace affinity/late spans and head sample loss.",
+      "AMP retention/HA/permissions and SA name, queue/WAL filtering, Grafana datasource UID/ports/macro/sidecar/exemplar contracts.",
+      "LogQL/TraceQL invalid syntax, missing parser/numeric errors, log line vs byte rate, automatic metrics generation and MDC exemplar claims; quizzes inherit errors."
+    ],
+    "sources": [
+      "https://grafana.com/docs/loki/latest/get-started/deployment-modes/",
+      "https://grafana.com/docs/loki/latest/operations/storage/retention/",
+      "https://github.com/grafana-community/helm-charts",
+      "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/",
+      "https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go",
+      "https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor",
+      "https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/batchprocessor",
+      "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html",
+      "https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html"
+    ],
+    "validation": [
+      "ops-stack-validation.json",
+      "6 pinned Helm renders;234 Kubernetes objects;5 native config checks;18 query parser cases;60 code fences;2 Terraform mock runs;20 quiz questions;rendered datasource UIDs and inline list assembly"
+    ],
+    "reviewedSha256": "6b3927eb5e5944ae77a7bb3cdfda92ad920daa89e9c6882ecf06a3c4015bd462",
+    "findings": [
+      "LokiSSDdeprecatedand4.0removal;communitychart18.12.2;oldmixedchartvaluesremoved.",
+      "ActualPVCinspectioncaughtsilentlyignoredLoki20GiandmissingaccessModes;claimsnowrendergp3/20Gi/RWO.",
+      "Tempo3.0.3Kafka/microservicesversusmonolithicmigrationrewritten;removedingester/compactor/SSB/local_blocksconfigs;sharedstorecompactionandtenantoverrideboundaries.",
+      "Tempochart3.0.0Jaegernullparentbreaksrender;disablechildreninstead;legacyServiceportsremainbutnativeprotocolsdisabled.",
+      "Tempo-distributed3.5.1missingbackendWorkerPDBdefaultrequiresoverride;unsupportedblockbuilder/liveStorepersistencekeysremoved.",
+      "KafkaSASLPLAINdoesnotimplyTLS/MSKIAMsupport;exampleisexplicitisolatedvalidationstartingpoint.",
+      "AlloyAPIlogsnotCRIfiletail;singleRecreatewithnamespacedRBACavoidspernodealldiscoveryduplicatesbutdoesnotclaimHA.",
+      "Collector0.160actualnativepipelineandcurrenttelemetryreaders;singletracesampler/traceaffinity/late/headloss/ORpolicyandbatchtriggerlimitsemantics.",
+      "AMP1095dayretentionnot150hardmax;scopedwriterreaderIRSAroles,exactSAsub/aud,HAclusterand__replica__,noautomaticworkspacefederation/downsampling.",
+      "GrafanaKPSdefaultDatasourcekeyfoundunder sidecar.datasources;fixedduplicateprometheusUIDthroughactualrenderedConfigMapchecks;threebaseUIDsplusexplicitAMPoverlaylistassembly.",
+      "LogQLnumericerrorfilters/linevsbyterateandTraceQLintrinsics/hierarchy/spanaggregationcorrected;20matchingquizquestions."
+    ]
+  },
+  {
+    "path": "en/ops/09-observability-stack.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete stack guides and quizzes corrected for current chart/native configurations, deployment modes, retention, identity, sampling and Grafana integration.",
+    "initialCandidates": [
+      "Loki deprecated SSD and legacy chart/native keys, retention/runtime overrides, per-tenant auth and API collector duplication need current validation.",
+      "Tempo 3 replaces distributed ingesters/compactor with Kafka consumers and backend workers; old monolithic chart mixed distributed values cannot work.",
+      "Collector old image/selfmetrics/receiver/processor keys, tail sampler OR-policy vs global rate cap, trace affinity/late spans and head sample loss.",
+      "AMP retention/HA/permissions and SA name, queue/WAL filtering, Grafana datasource UID/ports/macro/sidecar/exemplar contracts.",
+      "LogQL/TraceQL invalid syntax, missing parser/numeric errors, log line vs byte rate, automatic metrics generation and MDC exemplar claims; quizzes inherit errors."
+    ],
+    "sources": [
+      "https://grafana.com/docs/loki/latest/get-started/deployment-modes/",
+      "https://grafana.com/docs/loki/latest/operations/storage/retention/",
+      "https://github.com/grafana-community/helm-charts",
+      "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/",
+      "https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go",
+      "https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor",
+      "https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/batchprocessor",
+      "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html",
+      "https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html"
+    ],
+    "validation": [
+      "ops-stack-validation.json",
+      "6 pinned Helm renders;234 Kubernetes objects;5 native config checks;18 query parser cases;60 code fences;2 Terraform mock runs;20 quiz questions;rendered datasource UIDs and inline list assembly"
+    ],
+    "reviewedSha256": "64c67413c58a6dee4b710c491c670a5a7c52f02fe9a18fcf254bcf8acb163bea",
+    "findings": [
+      "LokiSSDdeprecatedand4.0removal;communitychart18.12.2;oldmixedchartvaluesremoved.",
+      "ActualPVCinspectioncaughtsilentlyignoredLoki20GiandmissingaccessModes;claimsnowrendergp3/20Gi/RWO.",
+      "Tempo3.0.3Kafka/microservicesversusmonolithicmigrationrewritten;removedingester/compactor/SSB/local_blocksconfigs;sharedstorecompactionandtenantoverrideboundaries.",
+      "Tempochart3.0.0Jaegernullparentbreaksrender;disablechildreninstead;legacyServiceportsremainbutnativeprotocolsdisabled.",
+      "Tempo-distributed3.5.1missingbackendWorkerPDBdefaultrequiresoverride;unsupportedblockbuilder/liveStorepersistencekeysremoved.",
+      "KafkaSASLPLAINdoesnotimplyTLS/MSKIAMsupport;exampleisexplicitisolatedvalidationstartingpoint.",
+      "AlloyAPIlogsnotCRIfiletail;singleRecreatewithnamespacedRBACavoidspernodealldiscoveryduplicatesbutdoesnotclaimHA.",
+      "Collector0.160actualnativepipelineandcurrenttelemetryreaders;singletracesampler/traceaffinity/late/headloss/ORpolicyandbatchtriggerlimitsemantics.",
+      "AMP1095dayretentionnot150hardmax;scopedwriterreaderIRSAroles,exactSAsub/aud,HAclusterand__replica__,noautomaticworkspacefederation/downsampling.",
+      "GrafanaKPSdefaultDatasourcekeyfoundunder sidecar.datasources;fixedduplicateprometheusUIDthroughactualrenderedConfigMapchecks;threebaseUIDsplusexplicitAMPoverlaylistassembly.",
+      "LogQLnumericerrorfilters/linevsbyterateandTraceQLintrinsics/hierarchy/spanaggregationcorrected;20matchingquizquestions."
+    ]
+  },
+  {
+    "path": "en/quizzes/ops/09-observability-stack-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete stack guides and quizzes corrected for current chart/native configurations, deployment modes, retention, identity, sampling and Grafana integration.",
+    "initialCandidates": [
+      "Loki deprecated SSD and legacy chart/native keys, retention/runtime overrides, per-tenant auth and API collector duplication need current validation.",
+      "Tempo 3 replaces distributed ingesters/compactor with Kafka consumers and backend workers; old monolithic chart mixed distributed values cannot work.",
+      "Collector old image/selfmetrics/receiver/processor keys, tail sampler OR-policy vs global rate cap, trace affinity/late spans and head sample loss.",
+      "AMP retention/HA/permissions and SA name, queue/WAL filtering, Grafana datasource UID/ports/macro/sidecar/exemplar contracts.",
+      "LogQL/TraceQL invalid syntax, missing parser/numeric errors, log line vs byte rate, automatic metrics generation and MDC exemplar claims; quizzes inherit errors."
+    ],
+    "sources": [
+      "https://grafana.com/docs/loki/latest/get-started/deployment-modes/",
+      "https://grafana.com/docs/loki/latest/operations/storage/retention/",
+      "https://github.com/grafana-community/helm-charts",
+      "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/",
+      "https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go",
+      "https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor",
+      "https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/batchprocessor",
+      "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html",
+      "https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html"
+    ],
+    "validation": [
+      "ops-stack-validation.json",
+      "6 pinned Helm renders;234 Kubernetes objects;5 native config checks;18 query parser cases;60 code fences;2 Terraform mock runs;20 quiz questions;rendered datasource UIDs and inline list assembly"
+    ],
+    "reviewedSha256": "a40d0b653c4818a73834b90551c14b9947d7d84e45b5747338f07604d47e455c",
+    "findings": [
+      "LokiSSDdeprecatedand4.0removal;communitychart18.12.2;oldmixedchartvaluesremoved.",
+      "ActualPVCinspectioncaughtsilentlyignoredLoki20GiandmissingaccessModes;claimsnowrendergp3/20Gi/RWO.",
+      "Tempo3.0.3Kafka/microservicesversusmonolithicmigrationrewritten;removedingester/compactor/SSB/local_blocksconfigs;sharedstorecompactionandtenantoverrideboundaries.",
+      "Tempochart3.0.0Jaegernullparentbreaksrender;disablechildreninstead;legacyServiceportsremainbutnativeprotocolsdisabled.",
+      "Tempo-distributed3.5.1missingbackendWorkerPDBdefaultrequiresoverride;unsupportedblockbuilder/liveStorepersistencekeysremoved.",
+      "KafkaSASLPLAINdoesnotimplyTLS/MSKIAMsupport;exampleisexplicitisolatedvalidationstartingpoint.",
+      "AlloyAPIlogsnotCRIfiletail;singleRecreatewithnamespacedRBACavoidspernodealldiscoveryduplicatesbutdoesnotclaimHA.",
+      "Collector0.160actualnativepipelineandcurrenttelemetryreaders;singletracesampler/traceaffinity/late/headloss/ORpolicyandbatchtriggerlimitsemantics.",
+      "AMP1095dayretentionnot150hardmax;scopedwriterreaderIRSAroles,exactSAsub/aud,HAclusterand__replica__,noautomaticworkspacefederation/downsampling.",
+      "GrafanaKPSdefaultDatasourcekeyfoundunder sidecar.datasources;fixedduplicateprometheusUIDthroughactualrenderedConfigMapchecks;threebaseUIDsplusexplicitAMPoverlaylistassembly.",
+      "LogQLnumericerrorfilters/linevsbyterateandTraceQLintrinsics/hierarchy/spanaggregationcorrected;20matchingquizquestions."
+    ]
+  }
+]

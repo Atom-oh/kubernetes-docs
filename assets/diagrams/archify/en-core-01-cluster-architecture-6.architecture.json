@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Highly Available Control Plane",
+    "output": "en-core-01-cluster-architecture-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "apiserver endpoint",
+      "pos": [
+        400,
+        50
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "cp1",
+      "type": "backend",
+      "label": "Control Plane 1",
+      "sublabel": "apiserver · etcd · scheduler · CM",
+      "pos": [
+        70,
+        300
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "cp2",
+      "type": "backend",
+      "label": "Control Plane 2",
+      "sublabel": "apiserver · etcd · scheduler · CM",
+      "pos": [
+        380,
+        300
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "cp3",
+      "type": "backend",
+      "label": "Control Plane 3",
+      "sublabel": "apiserver · etcd · scheduler · CM",
+      "pos": [
+        690,
+        300
+      ],
+      "size": [
+        230,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "lb-cp1",
+      "from": "lb",
+      "to": "cp1",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "lb-cp2",
+      "from": "lb",
+      "to": "cp2",
+      "label": "distributes traffic",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "lb-cp3",
+      "from": "lb",
+      "to": "cp3",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "No single point of failure",
+      "items": [
+        "Three identically configured control plane nodes",
+        "If one node dies, the rest keep serving"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "How it works",
+      "items": [
+        "Stateless apiservers scale out behind the LB",
+        "scheduler/CM stay single-active via leader election"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "etcd quorum",
+      "items": [
+        "Run etcd with an odd count: 3 or 5",
+        "Writes require a live quorum"
+      ]
+    }
+  ]
+}

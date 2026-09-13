@@ -1,0 +1,252 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Pod Disruption Budget (PDB) Components and Operation",
+    "locale": "en",
+    "output": "public/archmaps/en-core-08-scheduling-preemption-eviction-7.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "PDB resource"
+        },
+        "backend": {
+          "label": "PDB setting field"
+        },
+        "cloud": {
+          "label": "Workload / disruption event"
+        },
+        "messagebus": {
+          "label": "PDB condition check"
+        },
+        "external": {
+          "label": "Eviction outcome"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "components",
+        "label": "PDB Components",
+        "focus": [
+          "pdb",
+          "minAvailable",
+          "maxUnavailable",
+          "selector"
+        ],
+        "note": "minAvailable or maxUnavailable sets the disruption limit, and selector picks the target pods."
+      },
+      {
+        "id": "operation",
+        "label": "PDB Operation",
+        "focus": [
+          "disruption",
+          "check",
+          "allow",
+          "deny"
+        ],
+        "note": "On a voluntary disruption such as node drain, the PDB condition is checked and eviction is allowed or denied."
+      },
+      {
+        "id": "example",
+        "label": "PDB Example",
+        "focus": [
+          "deployment",
+          "pdbMin",
+          "pdbMax"
+        ],
+        "note": "For a Deployment with 5 replicas, minAvailable 3 and maxUnavailable 2 have the same effect."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "components",
+      "label": "PDB Components"
+    },
+    {
+      "id": "operation",
+      "label": "PDB Operation"
+    },
+    {
+      "id": "example",
+      "label": "PDB Example"
+    }
+  ],
+  "mainPath": [
+    "disruption",
+    "check",
+    "allow"
+  ],
+  "nodes": [
+    {
+      "id": "pdb",
+      "lane": "components",
+      "col": 0,
+      "type": "security",
+      "label": "PodDisruptionBudget",
+      "sublabel": "policy/v1",
+      "width": 180
+    },
+    {
+      "id": "minAvailable",
+      "lane": "components",
+      "col": 1,
+      "type": "backend",
+      "label": "minAvailable",
+      "sublabel": "minimum available pods",
+      "width": 125
+    },
+    {
+      "id": "maxUnavailable",
+      "lane": "components",
+      "col": 2,
+      "type": "backend",
+      "label": "maxUnavailable",
+      "sublabel": "maximum unavailable pods",
+      "width": 135
+    },
+    {
+      "id": "selector",
+      "lane": "components",
+      "col": 3,
+      "type": "backend",
+      "label": "selector",
+      "sublabel": "target pod selection",
+      "width": 135
+    },
+    {
+      "id": "disruption",
+      "lane": "operation",
+      "col": 0,
+      "type": "cloud",
+      "label": "Voluntary Disruption",
+      "sublabel": "node drain, etc.",
+      "width": 175
+    },
+    {
+      "id": "check",
+      "lane": "operation",
+      "col": 1,
+      "type": "messagebus",
+      "label": "PDB condition met?",
+      "sublabel": "Kubernetes checks the PDB",
+      "tag": "decision",
+      "width": 165
+    },
+    {
+      "id": "allow",
+      "lane": "operation",
+      "col": 2,
+      "type": "external",
+      "label": "Allow Pod Eviction",
+      "sublabel": "eviction proceeds",
+      "width": 175
+    },
+    {
+      "id": "deny",
+      "lane": "operation",
+      "col": 3,
+      "type": "external",
+      "label": "Deny Pod Eviction",
+      "sublabel": "disruption held",
+      "width": 175
+    },
+    {
+      "id": "deployment",
+      "lane": "example",
+      "col": 0,
+      "type": "cloud",
+      "label": "Deployment",
+      "sublabel": "replicas: 5",
+      "width": 130
+    },
+    {
+      "id": "pdbMin",
+      "lane": "example",
+      "col": 1,
+      "type": "security",
+      "label": "PDB",
+      "sublabel": "minAvailable: 3"
+    },
+    {
+      "id": "pdbMax",
+      "lane": "example",
+      "col": 2,
+      "type": "security",
+      "label": "PDB",
+      "sublabel": "maxUnavailable: 2"
+    }
+  ],
+  "edges": [
+    {
+      "from": "pdb",
+      "to": "minAvailable",
+      "label": "setting",
+      "role": "branch"
+    },
+    {
+      "from": "pdb",
+      "to": "maxUnavailable",
+      "label": "setting",
+      "role": "branch"
+    },
+    {
+      "from": "pdb",
+      "to": "selector",
+      "label": "selects",
+      "role": "branch"
+    },
+    {
+      "from": "pdb",
+      "to": "check",
+      "label": "condition source",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "disruption",
+      "to": "check",
+      "label": "check",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "allow",
+      "label": "yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "deny",
+      "label": "no",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "deployment",
+      "to": "pdbMin",
+      "label": "applies",
+      "role": "branch",
+      "route": "straight"
+    },
+    {
+      "from": "deployment",
+      "to": "pdbMax",
+      "label": "applies",
+      "role": "branch"
+    },
+    {
+      "from": "pdbMin",
+      "to": "pdbMax",
+      "label": "same effect",
+      "variant": "dashed",
+      "role": "branch",
+      "route": "straight"
+    }
+  ]
+}

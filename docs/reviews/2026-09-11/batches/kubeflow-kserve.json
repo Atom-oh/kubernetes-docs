@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/kubeflow/06-kserve.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "8bea3586db52a65738d6d860c197bd9dec2427accdc622c018c436b5f022b351",
+    "summary": "ReviewedKServe0.18vs0.20; corrected modern modes/aliases, minReplicas1, HPAclamp vsKEDAzero, Knativecanaryroute,controlvsrequestpaths,TorchServeunmaintained,GPUruntimeconditionsandmatchingquiz."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/kubeflow/06-kserve-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "99006265a4d589929c383c9b83ed8b41c57fe2d764a64103bd8b250d6ed31f39",
+    "summary": "ReviewedKServe0.18vs0.20; corrected modern modes/aliases, minReplicas1, HPAclamp vsKEDAzero, Knativecanaryroute,controlvsrequestpaths,TorchServeunmaintained,GPUruntimeconditionsandmatchingquiz."
+  },
+  {
+    "path": "en/ai-ml/kubeflow/06-kserve.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "574c72a1888a979f035aa27ee6b39c807263b6db46e2a6f6bde95e6aa9d00fe4",
+    "summary": "ReviewedKServe0.18vs0.20; corrected modern modes/aliases, minReplicas1, HPAclamp vsKEDAzero, Knativecanaryroute,controlvsrequestpaths,TorchServeunmaintained,GPUruntimeconditionsandmatchingquiz."
+  },
+  {
+    "path": "en/quizzes/ai-ml/kubeflow/06-kserve-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f8158006b3f2716c9ca07930600abff23a37217a319aa44bf4eae696768eecaa",
+    "summary": "ReviewedKServe0.18vs0.20; corrected modern modes/aliases, minReplicas1, HPAclamp vsKEDAzero, Knativecanaryroute,controlvsrequestpaths,TorchServeunmaintained,GPUruntimeconditionsandmatchingquiz."
+  }
+]

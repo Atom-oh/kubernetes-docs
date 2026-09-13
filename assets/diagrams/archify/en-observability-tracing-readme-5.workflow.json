@@ -1,0 +1,184 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Tail-based Sampling Flow",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-tracing-readme-5.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "collect-all",
+        "label": "Collect every Span",
+        "focus": [
+          "receive",
+          "collect",
+          "analyze"
+        ],
+        "note": "Every Span is stored temporarily until the request completes, then judged on the actual result."
+      },
+      {
+        "id": "keep-or-drop",
+        "label": "Keep or drop",
+        "focus": [
+          "analyze",
+          "keep",
+          "drop"
+        ],
+        "note": "Traces with errors or high latency are kept; normal requests are dropped."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Request input"
+        },
+        "messagebus": {
+          "label": "Span buffer"
+        },
+        "security": {
+          "label": "Sampling decision"
+        },
+        "database": {
+          "label": "Trace storage"
+        },
+        "backend": {
+          "label": "Drop handling"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "trace",
+      "label": "Request handling · Trace collection"
+    },
+    {
+      "id": "discard",
+      "label": "Normal requests dropped",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "receive",
+    "collect",
+    "analyze",
+    "keep"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "receive"
+    ],
+    "allowedTerminals": [
+      "keep",
+      "drop"
+    ],
+    "requiredPaths": [
+      {
+        "from": "receive",
+        "to": "keep"
+      },
+      {
+        "from": "receive",
+        "to": "drop"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "receive",
+      "lane": "trace",
+      "col": 0,
+      "type": "frontend",
+      "label": "Request received",
+      "sublabel": "request starts",
+      "width": 168
+    },
+    {
+      "id": "collect",
+      "lane": "trace",
+      "col": 1,
+      "type": "messagebus",
+      "label": "Collect every Span",
+      "sublabel": "buffered in memory",
+      "tag": "decision_wait",
+      "width": 168
+    },
+    {
+      "id": "analyze",
+      "lane": "trace",
+      "col": 2,
+      "type": "security",
+      "label": "Analyze",
+      "sublabel": "error? latency?",
+      "tag": "after completion",
+      "width": 168
+    },
+    {
+      "id": "keep",
+      "lane": "trace",
+      "col": 3,
+      "type": "database",
+      "label": "Keep",
+      "sublabel": "trace stored",
+      "width": 168
+    },
+    {
+      "id": "drop",
+      "lane": "discard",
+      "col": 3,
+      "type": "backend",
+      "label": "Drop",
+      "sublabel": "spans discarded",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "from": "receive",
+      "to": "collect",
+      "role": "main"
+    },
+    {
+      "from": "collect",
+      "to": "analyze",
+      "label": "request complete",
+      "role": "main"
+    },
+    {
+      "from": "analyze",
+      "to": "keep",
+      "label": "error or latency",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "analyze",
+      "to": "drop",
+      "label": "normal",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Keep policies (OTEL Collector tail_sampling)",
+      "items": [
+        "Collect every request whose status_code is ERROR",
+        "Collect slow requests over latency threshold_ms 1000",
+        "Sample the rest probabilistically at 10%"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trade-offs",
+      "items": [
+        "Never misses important requests (errors, latency)",
+        "Higher memory usage: every Span must be stored temporarily",
+        "More complex to implement than head-based"
+      ]
+    }
+  ]
+}

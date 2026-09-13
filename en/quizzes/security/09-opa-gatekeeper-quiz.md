@@ -502,6 +502,6 @@ Calculate 1 point per question.
 
 ## Related Documentation
 
-* [OPA Gatekeeper](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/09-opa-gatekeeper.md)
-* [Kyverno Policy Management](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/01-kyverno-policy-management.md)
-* [Pod Security Standards](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/03-pod-security-standards.md)
+* [OPA Gatekeeper](09-opa-gatekeeper-quiz.md)
+* [Kyverno Policy Management](01-kyverno-policy-management-quiz.md)
+* [Pod Security Standards](03-pod-security-standards-quiz.md)

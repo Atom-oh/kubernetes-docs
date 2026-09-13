@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Knative Serving Architecture",
+    "output": "en-autoscaling-03-knative-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      740
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "External client"
+        },
+        "cloud": {
+          "label": "Ingress"
+        },
+        "backend": {
+          "label": "Knative components / pods"
+        },
+        "database": {
+          "label": "Knative resources (CRDs)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "hot-path",
+        "label": "Scale > 0",
+        "focus": [
+          "client",
+          "gateway",
+          "qp1",
+          "app1"
+        ],
+        "note": "While pods are running, the gateway forwards requests straight to the Queue Proxy sidecar and on to the user container."
+      },
+      {
+        "id": "scale-to-zero",
+        "label": "Scale-to-zero path",
+        "focus": [
+          "client",
+          "gateway",
+          "activator",
+          "autoscaler",
+          "qp1"
+        ],
+        "note": "At zero pods the Activator buffers the request, asks the Autoscaler to scale up, and forwards it once a pod is ready."
+      },
+      {
+        "id": "autoscale-loop",
+        "label": "Autoscaling loop",
+        "focus": [
+          "qp1",
+          "qp2",
+          "autoscaler",
+          "controller"
+        ],
+        "note": "The Autoscaler (KPA/HPA) turns concurrency metrics reported by Queue Proxies into a scale decision for the Controller."
+      },
+      {
+        "id": "resource-mgmt",
+        "label": "Resource management",
+        "focus": [
+          "controller",
+          "webhook",
+          "resources"
+        ],
+        "note": "The Webhook validates Knative resources; the Controller manages the Service/Configuration/Revision/Route lifecycle."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Request",
+      "sublabel": "HTTP",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "Kourier / Istio",
+      "pos": [
+        260,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "User Container",
+      "sublabel": "Revision v1",
+      "pos": [
+        740,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "User Container",
+      "sublabel": "Revision v2",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "qp1",
+      "type": "backend",
+      "label": "Queue Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        740,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "qp2",
+      "type": "backend",
+      "label": "Queue Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        960,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "activator",
+      "type": "backend",
+      "label": "Activator",
+      "sublabel": "Request buffering",
+      "pos": [
+        480,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "autoscaler",
+      "type": "backend",
+      "label": "Autoscaler",
+      "sublabel": "KPA / HPA",
+      "pos": [
+        740,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Controller",
+      "sublabel": "Resource lifecycle",
+      "pos": [
+        480,
+        490
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "backend",
+      "label": "Webhook",
+      "sublabel": "Validate / default",
+      "pos": [
+        480,
+        590
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "resources",
+      "type": "database",
+      "label": "Knative Resources",
+      "sublabel": "Service → Configuration → Revision / Route",
+      "pos": [
+        80,
+        540
+      ],
+      "size": [
+        270,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Ingress Layer",
+      "wraps": [
+        "gateway"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "knative-serving control plane",
+      "wraps": [
+        "activator",
+        "autoscaler",
+        "controller",
+        "webhook"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data plane",
+      "wraps": [
+        "app1",
+        "app2",
+        "qp1",
+        "qp2"
+      ],
+      "pad": 72
+    },
+    {
+      "kind": "region",
+      "label": "Pod (Revision v1)",
+      "wraps": [
+        "app1",
+        "qp1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod (Revision v2)",
+      "wraps": [
+        "app2",
+        "qp2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-gateway",
+      "from": "client",
+      "to": "gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-qp1",
+      "from": "gateway",
+      "to": "qp1",
+      "label": "Scale > 0",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-activator",
+      "from": "gateway",
+      "to": "activator",
+      "label": "Scale = 0"
+    },
+    {
+      "id": "activator-qp1",
+      "from": "activator",
+      "to": "qp1",
+      "label": "Forward after activation",
+      "variant": "dashed",
+      "fromSide": "top"
+    },
+    {
+      "id": "activator-autoscaler",
+      "from": "activator",
+      "to": "autoscaler",
+      "label": "Request scale-up"
+    },
+    {
+      "id": "qp1-app1",
+      "from": "qp1",
+      "to": "app1"
+    },
+    {
+      "id": "qp2-app2",
+      "from": "qp2",
+      "to": "app2"
+    },
+    {
+      "id": "qp1-autoscaler",
+      "from": "qp1",
+      "to": "autoscaler",
+      "label": "Concurrency metrics",
+      "labelDy": 24
+    },
+    {
+      "id": "qp2-autoscaler",
+      "from": "qp2",
+      "to": "autoscaler"
+    },
+    {
+      "id": "autoscaler-controller",
+      "from": "autoscaler",
+      "to": "controller",
+      "label": "Scale decision",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "controller-resources",
+      "from": "controller",
+      "to": "resources",
+      "label": "Manage"
+    },
+    {
+      "id": "webhook-resources",
+      "from": "webhook",
+      "to": "resources",
+      "label": "Validate"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Request path",
+      "items": [
+        "With traffic, the Gateway forwards directly to Queue Proxy → User Container",
+        "At scale-to-zero the first request is buffered by the Activator and forwarded once a pod is ready"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Autoscaling",
+      "items": [
+        "The Queue Proxy sidecar queues requests, enforces containerConcurrency, and reports real-time concurrency",
+        "KPA scales on concurrency/RPS and supports scale-to-zero; HPA scales on CPU/memory and does not"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Control plane",
+      "items": [
+        "The Controller reconciles Service, Configuration, Revision, Route into Deployments, Services, and Ingress objects",
+        "The Webhook validates and defaults Knative resource specs on admission"
+      ]
+    }
+  ]
+}

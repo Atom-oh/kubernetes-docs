@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "브리지 네트워킹",
+    "output": "ko-networking-cilium-networking-concepts-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1000, 520],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": { "label": "컨테이너" },
+        "messagebus": { "label": "가상 브리지" },
+        "external": { "label": "호스트 물리 네트워크" }
+      }
+    }
+  },
+  "components": [
+    { "id": "container-a", "type": "backend", "label": "컨테이너 A", "sublabel": "IP: 172.17.0.2", "pos": [60, 110], "size": [180, 64] },
+    { "id": "container-b", "type": "backend", "label": "컨테이너 B", "sublabel": "IP: 172.17.0.3", "pos": [60, 330], "size": [180, 64] },
+    { "id": "docker0", "type": "messagebus", "label": "docker0", "sublabel": "브리지 · 172.17.0.1/24", "pos": [420, 220], "size": [190, 64] },
+    { "id": "host-net", "type": "external", "label": "호스트 네트워크", "sublabel": "eth0 · 192.168.1.10", "pos": [770, 220], "size": [190, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Docker 호스트", "wraps": ["container-a", "container-b", "docker0", "host-net"] }
+  ],
+  "connections": [
+    { "id": "a-to-bridge", "from": "container-a", "to": "docker0", "label": "veth0", "variant": "emphasis" },
+    { "id": "b-to-bridge", "from": "container-b", "to": "docker0", "label": "veth1" },
+    { "id": "bridge-to-host", "from": "docker0", "to": "host-net", "label": "외부로 전달", "variant": "emphasis" }
+  ]
+}

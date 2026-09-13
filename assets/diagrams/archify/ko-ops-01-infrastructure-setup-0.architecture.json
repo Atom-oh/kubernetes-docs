@@ -2,119 +2,173 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Terraform 3계층 데이터 흐름",
+    "title": "Terraform bootstrap과 레이어별 state",
     "output": "ko-ops-01-infrastructure-setup-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1260,
-      580
-    ]
+      1120,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
     {
-      "id": "shared",
-      "type": "database",
-      "label": "00-shared",
-      "sublabel": "S3 백엔드 · use_lockfile = true",
+      "id": "bootstrap",
+      "type": "cloud",
+      "label": "00-shared bootstrap",
+      "sublabel": "계정·환경별 local state",
       "pos": [
         40,
-        280
+        60
       ],
       "size": [
-        260,
-        96
+        250,
+        84
+      ]
+    },
+    {
+      "id": "state",
+      "type": "database",
+      "label": "S3 backend",
+      "sublabel": "계정·환경별 버킷 · root별 key",
+      "pos": [
+        420,
+        60
+      ],
+      "size": [
+        280,
+        84
       ]
     },
     {
       "id": "network",
       "type": "cloud",
       "label": "01-network",
-      "sublabel": "network/terraform.tfstate",
+      "sublabel": "VPC · subnet · endpoint",
       "pos": [
-        350,
-        280
+        40,
+        300
       ],
       "size": [
-        260,
-        96
+        250,
+        84
       ]
     },
     {
       "id": "cluster",
       "type": "cloud",
       "label": "02-cluster",
-      "sublabel": "cluster/terraform.tfstate",
+      "sublabel": "EKS · Auto Mode · 관리자",
       "pos": [
-        660,
-        280
+        420,
+        300
       ],
       "size": [
-        260,
-        96
+        280,
+        84
       ]
     },
     {
       "id": "platform",
       "type": "cloud",
       "label": "03-platform",
-      "sublabel": "platform/terraform.tfstate",
+      "sublabel": "혼합 DNS 옵션 · ESO · 팀 접근",
       "pos": [
-        970,
-        280
+        820,
+        300
       ],
       "size": [
         260,
-        96
+        84
       ]
     }
   ],
   "connections": [
     {
-      "id": "s-n",
-      "from": "shared",
-      "to": "network",
-      "label": "백엔드"
+      "id": "bootstrap-state",
+      "from": "bootstrap",
+      "to": "state",
+      "label": "버킷 생성"
     },
     {
-      "id": "n-c",
+      "id": "network-cluster",
       "from": "network",
       "to": "cluster",
-      "label": "참조"
+      "label": "outputs"
     },
     {
-      "id": "c-p",
+      "id": "cluster-platform",
       "from": "cluster",
       "to": "platform",
-      "label": "참조"
+      "label": "outputs"
+    },
+    {
+      "id": "network-state",
+      "from": "network",
+      "to": "state",
+      "fromSide": "top",
+      "toSide": "left",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-state",
+      "from": "cluster",
+      "to": "state",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "dashed",
+      "label": "각 root의 state",
+      "labelAt": [
+        620,
+        230
+      ]
+    },
+    {
+      "id": "platform-state",
+      "from": "platform",
+      "to": "state",
+      "fromSide": "top",
+      "toSide": "right",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "01-network 출력",
+      "title": "State와 권한",
       "items": [
-        "vpc_id, private_subnet_ids, public_subnet_ids",
-        "blue_zone_subnets / green_zone_subnets",
-        "cluster_names — 아래 계층이 참조하는 이름 규칙"
+        "root마다 다른 key와 use_lockfile=true를 사용",
+        "TF_DATA_DIR만 바꿔서는 S3 state가 분리되지 않음",
+        "remote state 권한은 전체 snapshot 접근 권한이기도 함"
       ]
     },
     {
       "dot": "emerald",
-      "title": "02-cluster 입출력",
+      "title": "출력 계약",
       "items": [
-        "입력(01-network): vpc_id, subnet_ids, cluster_names",
-        "출력: blue_cluster_name, blue_cluster_endpoint, blue_oidc_provider_arn",
-        "출력: green_cluster_name, green_cluster_endpoint, green_oidc_provider_arn"
+        "Network의 VPC·subnet 정보로 Cluster를 구성",
+        "Platform은 활성 클러스터 이름을 읽어 자원을 구성",
+        "Pod Identity에 OIDC provider는 필수가 아님"
       ]
     },
     {
       "dot": "amber",
-      "title": "03-platform 입력과 생성물",
+      "title": "Bootstrap과 복구",
       "items": [
-        "입력(01-network + 02-cluster): vpc_id, cluster_names, oidc_provider_arns",
-        "생성: Pod Identity 연결, EKS 애드온, 액세스 엔트리",
-        "적용 순서는 00 → 01 → 02 → 03이고 삭제는 역순으로 진행한다"
+        "bootstrap의 local state도 계정·환경별로 보관",
+        "State 복구가 AWS 자원 롤백을 수행하지는 않음",
+        "네트워크·DNS·권한 변경의 실제 영향은 별도로 검토"
       ]
     }
   ]

@@ -1,0 +1,212 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "VictoriaMetrics Deployment Mode Selection Guide",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-metrics-02-victoriametrics-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "backend": {
+          "label": "Decision Criteria"
+        },
+        "database": {
+          "label": "vmsingle family"
+        },
+        "cloud": {
+          "label": "Cluster Mode"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ingestion",
+        "label": "Ingestion volume",
+        "focus": [
+          "start",
+          "ingest",
+          "cluster"
+        ],
+        "note": "Above 100M samples per day you go straight to Cluster Mode, regardless of the other conditions."
+      },
+      {
+        "id": "ha-branch",
+        "label": "High-availability branch",
+        "focus": [
+          "ingest",
+          "ha",
+          "vmsingle",
+          "complexity"
+        ],
+        "note": "With lower ingestion, needing high availability decides between a single-node vmsingle and the next question."
+      },
+      {
+        "id": "complexity",
+        "label": "Complexity tolerance",
+        "focus": [
+          "complexity",
+          "replicated",
+          "cluster"
+        ],
+        "note": "If you can accept the operational complexity, choose Cluster Mode; otherwise add replicated storage to vmsingle."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "Decision Criteria"
+    },
+    {
+      "id": "modes",
+      "label": "Deployment Mode"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "ingest",
+    "ha",
+    "complexity"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "vmsingle",
+      "replicated",
+      "cluster"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "vmsingle"
+      },
+      {
+        "from": "start",
+        "to": "replicated"
+      },
+      {
+        "from": "start",
+        "to": "cluster"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decide",
+      "col": 0,
+      "type": "frontend",
+      "label": "VictoriaMetrics",
+      "sublabel": "choose deployment mode",
+      "width": 150
+    },
+    {
+      "id": "ingest",
+      "lane": "decide",
+      "col": 1,
+      "type": "backend",
+      "label": "Daily ingestion?",
+      "sublabel": "samples / day",
+      "width": 152
+    },
+    {
+      "id": "ha",
+      "lane": "decide",
+      "col": 2,
+      "type": "backend",
+      "label": "High availability?",
+      "sublabel": "HA",
+      "width": 172
+    },
+    {
+      "id": "complexity",
+      "lane": "decide",
+      "col": 3,
+      "type": "backend",
+      "label": "Accept complexity?",
+      "sublabel": "operational load",
+      "width": 166
+    },
+    {
+      "id": "vmsingle",
+      "lane": "modes",
+      "col": 1,
+      "type": "database",
+      "label": "vmsingle",
+      "sublabel": "single node"
+    },
+    {
+      "id": "replicated",
+      "lane": "modes",
+      "col": 3,
+      "type": "database",
+      "label": "vmsingle + replicated storage",
+      "sublabel": "replicated storage",
+      "width": 244
+    },
+    {
+      "id": "cluster",
+      "lane": "modes",
+      "col": 4,
+      "type": "cloud",
+      "label": "Cluster Mode",
+      "sublabel": "vminsert / vmstorage / vmselect",
+      "width": 204
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "ingest",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "ingest",
+      "to": "ha",
+      "label": "< 100M samples/day",
+      "role": "main",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "ingest",
+      "to": "cluster",
+      "label": "> 100M samples/day",
+      "role": "branch",
+      "fromSide": "bottom"
+    },
+    {
+      "from": "ha",
+      "to": "vmsingle",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "ha",
+      "to": "complexity",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "complexity",
+      "to": "cluster",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "complexity",
+      "to": "replicated",
+      "label": "No",
+      "role": "branch"
+    }
+  ]
+}

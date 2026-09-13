@@ -16,14 +16,21 @@ Istio's traffic management capabilities allow fine-grained control over traffic 
 10. [Session Affinity](10-session-affinity.md)
 11. [Egress Control](11-egress-control.md)
 12. [ServiceEntry (External Service Management)](12-service-entry.md)
+13. [WorkloadEntry (VM Registration)](13-workload-entry.md)
 
 ## Overview
+
+These are sidecar-mode configuration examples for a supported Istio release. Gateway, VirtualService, and DestinationRule are API objects consumed by proxies, not separate network hops. A mirror is an additional copy of selected requests, not the remainder of a 90/10 split; mirrored responses are discarded. The diagrams show logical configuration relationships.
+
+The snippets are alternative examples, not one manifest to apply together. Create the referenced Services and DestinationRule subsets first. A VirtualService with no `gateways` list applies to the mesh; ingress routes require an explicit Gateway binding and matching hostname. For ambient, use supported Gateway API/waypoint routing.
 
 Traffic management is one of Istio's core features, enabling the following operations without code changes:
 
 ### Key Features
 
-![A client request enters through the Gateway, is routed by the VirtualService, has traffic policy applied by the DestinationRule, and is then split across three service versions: the main version, a canary, and a mirrored copy for shadow testing.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-README-0.png)
+![A client request enters through the Gateway, is routed by the VirtualService, has traffic policy applied by the DestinationRule, and is then split across three service versions: the main version, a canary, and a mirrored copy for shadow testing.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-0.html)
 
 ### 1. Intelligent Routing
 
@@ -198,6 +205,8 @@ spec:
         subset: v1
 ```
 
+The developer header is a routing hint supplied by the client, not authentication or an authorization boundary.
+
 ### Circuit Breaker + Retry
 
 ```yaml
@@ -217,7 +226,7 @@ spec:
         maxRequestsPerConnection: 2
     # Circuit Breaker
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ---
@@ -241,7 +250,9 @@ spec:
 
 ## Traffic Flow
 
-![A user request enters the ingress Gateway, passes through VirtualService routing (path, header, then weight matching), is shaped by DestinationRule policies (load balancing, circuit breaking, connection pooling), and is finally delivered to one of three backing pods.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-README-1.png)
+![A user request enters the ingress Gateway, passes through VirtualService routing (path, header, then weight matching), is shaped by DestinationRule policies (load balancing, circuit breaking, connection pooling), and is finally delivered to one of three backing pods.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-1.html)
 
 ## Learning Path
 
@@ -308,7 +319,7 @@ weight: 100
 # 5% → Monitor → 10% → Monitor → ...
 ```
 
-### 2. Always Set Timeout
+### 2. Set Workload-Appropriate Timeouts
 
 ```yaml
 # ✅ Always set timeout
@@ -318,6 +329,8 @@ http:
       host: reviews
   timeout: 10s
 ```
+
+Streaming requests may need different timeout settings. A short HTTP deadline is not suitable for every gRPC stream or long-lived response.
 
 ### 3. Use Retry Carefully
 
@@ -334,7 +347,7 @@ retries:
 ```yaml
 # ✅ Adjust according to service characteristics
 outlierDetection:
-  consecutiveErrors: 5      # Adjust per service
+  consecutive5xxErrors: 5      # Adjust per service
   interval: 30s
   baseEjectionTime: 30s
   maxEjectionPercent: 50    # Maximum 50% ejection

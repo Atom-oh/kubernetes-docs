@@ -1,0 +1,129 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "점진적 마이그레이션 전략",
+    "output": "public/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1212,
+      284
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "일반 마이그레이션 단계"
+        },
+        "security": {
+          "label": "핵심 전환 지점 (실제 트래픽 이전)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "migration",
+      "label": "WorkloadEntry 기반 VM → Kubernetes 마이그레이션"
+    }
+  ],
+  "mainPath": [
+    "phase1",
+    "phase2",
+    "phase3",
+    "phase4",
+    "phase5"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "phase1"
+    ],
+    "allowedTerminals": [
+      "phase5"
+    ],
+    "requiredPaths": [
+      {
+        "from": "phase1",
+        "to": "phase5"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "phase1",
+      "lane": "migration",
+      "col": 0,
+      "type": "backend",
+      "label": "VM 메시 등록",
+      "sublabel": "WorkloadEntry 생성",
+      "tag": "1단계",
+      "width": 170
+    },
+    {
+      "id": "phase2",
+      "lane": "migration",
+      "col": 1,
+      "type": "backend",
+      "label": "트래픽 분할",
+      "sublabel": "VirtualService · 100% VM",
+      "tag": "2단계",
+      "width": 170
+    },
+    {
+      "id": "phase3",
+      "lane": "migration",
+      "col": 2,
+      "type": "backend",
+      "label": "Kubernetes 배포",
+      "sublabel": "kubectl apply",
+      "tag": "3단계",
+      "width": 170
+    },
+    {
+      "id": "phase4",
+      "lane": "migration",
+      "col": 3,
+      "type": "security",
+      "label": "점진적 트래픽 전환",
+      "sublabel": "VM 90% → k8s 10%",
+      "tag": "4단계 · 핵심",
+      "width": 170
+    },
+    {
+      "id": "phase5",
+      "lane": "migration",
+      "col": 4,
+      "type": "backend",
+      "label": "VM 제거",
+      "sublabel": "WorkloadEntry 삭제",
+      "tag": "5단계",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "from": "phase1",
+      "to": "phase2",
+      "role": "main"
+    },
+    {
+      "from": "phase2",
+      "to": "phase3",
+      "role": "main"
+    },
+    {
+      "from": "phase3",
+      "to": "phase4",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "phase4",
+      "to": "phase5",
+      "label": "100% Kubernetes 후",
+      "role": "main",
+      "variant": "emphasis"
+    }
+  ]
+}

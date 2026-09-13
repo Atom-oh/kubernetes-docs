@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "로드 밸런싱 없이 vs 로드 밸런싱 사용",
+    "output": "ko-service-mesh-istio-traffic-management-06-load-balancing-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "without-lb",
+        "label": "로드 밸런싱 없이",
+        "focus": [
+          "c1",
+          "s1",
+          "s2",
+          "s3"
+        ],
+        "note": "모든 요청이 서비스 1로 몰려 100% 과부하가 나고, 서비스 2·3은 0% 부하로 놀고 있다."
+      },
+      {
+        "id": "with-lb",
+        "label": "로드 밸런싱 사용",
+        "focus": [
+          "c2",
+          "lb",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "note": "로드 밸런서가 같은 요청을 33%·33%·34%로 나눠 세 서비스가 비슷한 부하를 진다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "c1",
+      "type": "external",
+      "label": "모든 요청",
+      "sublabel": "클라이언트 트래픽",
+      "pos": [
+        115,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "서비스 1",
+      "sublabel": "100% 부하",
+      "tag": "과부하",
+      "pos": [
+        125,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "서비스 2",
+      "sublabel": "0% 부하",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "backend",
+      "label": "서비스 3",
+      "sublabel": "0% 부하",
+      "pos": [
+        210,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "external",
+      "label": "요청 분산",
+      "sublabel": "클라이언트 트래픽",
+      "pos": [
+        630,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "로드 밸런서",
+      "sublabel": "Envoy 프록시",
+      "pos": [
+        640,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "backend",
+      "label": "서비스 1",
+      "sublabel": "33% 부하",
+      "pos": [
+        460,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s5",
+      "type": "backend",
+      "label": "서비스 2",
+      "sublabel": "33% 부하",
+      "pos": [
+        640,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s6",
+      "type": "backend",
+      "label": "서비스 3",
+      "sublabel": "34% 부하",
+      "pos": [
+        820,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "로드 밸런싱 없이",
+      "wraps": [
+        "c1",
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로드 밸런싱 사용",
+      "wraps": [
+        "c2",
+        "lb",
+        "s4",
+        "s5",
+        "s6"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1-s1",
+      "from": "c1",
+      "to": "s1",
+      "label": "과부하",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "c2-lb",
+      "from": "c2",
+      "to": "lb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-s4",
+      "from": "lb",
+      "to": "s4",
+      "label": "33%"
+    },
+    {
+      "id": "lb-s5",
+      "from": "lb",
+      "to": "s5",
+      "label": "33%",
+      "labelDy": 24
+    },
+    {
+      "id": "lb-s6",
+      "from": "lb",
+      "to": "s6",
+      "label": "34%"
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "path": "ko/gitops/argocd/10-rollouts-experiment.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete Experiment article/quiz against1.10.0; corrected pause/abort, lifecycle, routing/isolation and demonstrator prerequisites.",
+    "sources": [
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/rollout/experiment.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/experiment.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/replicaset.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/utils/defaults/defaults.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/utils/evaluate/evaluate.go"
+    ],
+    "findings": [
+      "Inconclusive pauses via InconclusiveExperiment; Failed/Error abort. Required analyses may complete before duration; non-required analyses may terminate at duration; cleanup defaults30seconds and waits for available replicas0.",
+      "Separate ReplicaSets/hashes do not guarantee traffic isolation; explicit production/experiment traffic-class selectors and role labels; per-template weight with supporting ALB/Istio/SMI router prerequisites.",
+      "Fixed obsolete NGINX port mismatch using verifiedPodinfo6.15.0/9898+readiness; namespace and Service supplied. External metrics-mock clearly prerequisite and notrealbaselinequality evidence. Initial rollout skipssteps; subsequentannotationchange demonstrates controlflow.",
+      "Correct Experiment hash argument expressions, base naming/collision suffixes, finite-count required analysis withoutduration.",
+      "Both conditions handle missing/invalid/out-of-range results. Actualexprnilcompilefailure caught and fixed via let payload=default(result,{}).",
+      "Historical1.8.3/kwok output preserved as original un-reproduced report; not fresh1.10test/realtraffic proof.",
+      "Fourfiguresupdated,three-wayoutcomesandcleanup; related05paragraphs andquizzesaligned."
+    ],
+    "validation": [
+      "18fences10YAML2Bash4fullArgoCRDs pass;fourroutingfragmentwrappers schema-check;ko/enmanifestsexactlymatchtestedfixture.",
+      "18actualexpr1.17.7cases pass; numericbounds,nil/empty/missing/invalidtypes/NaN/Inf; no liveprovider/controller test.",
+      "Staticproductionselectorcheck matchesbase/excludesbothExperimentlabels. CLIstatustimeoutverifiedin1.10source.",
+      "4figures9/9composition+4viewportcontainment;all4light/darkscreenshotsinspected;PNGsgeneratedwithCJK/fullPagefix.",
+      "No realcluster/mockserverdeployment ortrafficmeasurement;pastKWOKrunnotreproduced."
+    ],
+    "reviewedSha256": "341160cbb8ae3e2b800620b549bf14711117a720182b24a28ca28cc714c88935"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/10-rollouts-experiment-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete Experiment article/quiz against1.10.0; corrected pause/abort, lifecycle, routing/isolation and demonstrator prerequisites.",
+    "sources": [
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/rollout/experiment.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/experiment.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/replicaset.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/utils/defaults/defaults.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/utils/evaluate/evaluate.go"
+    ],
+    "findings": [
+      "Inconclusive pauses via InconclusiveExperiment; Failed/Error abort. Required analyses may complete before duration; non-required analyses may terminate at duration; cleanup defaults30seconds and waits for available replicas0.",
+      "Separate ReplicaSets/hashes do not guarantee traffic isolation; explicit production/experiment traffic-class selectors and role labels; per-template weight with supporting ALB/Istio/SMI router prerequisites.",
+      "Fixed obsolete NGINX port mismatch using verifiedPodinfo6.15.0/9898+readiness; namespace and Service supplied. External metrics-mock clearly prerequisite and notrealbaselinequality evidence. Initial rollout skipssteps; subsequentannotationchange demonstrates controlflow.",
+      "Correct Experiment hash argument expressions, base naming/collision suffixes, finite-count required analysis withoutduration.",
+      "Both conditions handle missing/invalid/out-of-range results. Actualexprnilcompilefailure caught and fixed via let payload=default(result,{}).",
+      "Historical1.8.3/kwok output preserved as original un-reproduced report; not fresh1.10test/realtraffic proof.",
+      "Fourfiguresupdated,three-wayoutcomesandcleanup; related05paragraphs andquizzesaligned."
+    ],
+    "validation": [
+      "18fences10YAML2Bash4fullArgoCRDs pass;fourroutingfragmentwrappers schema-check;ko/enmanifestsexactlymatchtestedfixture.",
+      "18actualexpr1.17.7cases pass; numericbounds,nil/empty/missing/invalidtypes/NaN/Inf; no liveprovider/controller test.",
+      "Staticproductionselectorcheck matchesbase/excludesbothExperimentlabels. CLIstatustimeoutverifiedin1.10source.",
+      "4figures9/9composition+4viewportcontainment;all4light/darkscreenshotsinspected;PNGsgeneratedwithCJK/fullPagefix.",
+      "No realcluster/mockserverdeployment ortrafficmeasurement;pastKWOKrunnotreproduced."
+    ],
+    "reviewedSha256": "ba67ceecfabf9711278da4c48111b59b1afc87ce6a3b347bbefb9c0c0a4f7182"
+  },
+  {
+    "path": "en/gitops/argocd/10-rollouts-experiment.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete Experiment article/quiz against1.10.0; corrected pause/abort, lifecycle, routing/isolation and demonstrator prerequisites.",
+    "sources": [
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/rollout/experiment.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/experiment.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/replicaset.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/utils/defaults/defaults.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/utils/evaluate/evaluate.go"
+    ],
+    "findings": [
+      "Inconclusive pauses via InconclusiveExperiment; Failed/Error abort. Required analyses may complete before duration; non-required analyses may terminate at duration; cleanup defaults30seconds and waits for available replicas0.",
+      "Separate ReplicaSets/hashes do not guarantee traffic isolation; explicit production/experiment traffic-class selectors and role labels; per-template weight with supporting ALB/Istio/SMI router prerequisites.",
+      "Fixed obsolete NGINX port mismatch using verifiedPodinfo6.15.0/9898+readiness; namespace and Service supplied. External metrics-mock clearly prerequisite and notrealbaselinequality evidence. Initial rollout skipssteps; subsequentannotationchange demonstrates controlflow.",
+      "Correct Experiment hash argument expressions, base naming/collision suffixes, finite-count required analysis withoutduration.",
+      "Both conditions handle missing/invalid/out-of-range results. Actualexprnilcompilefailure caught and fixed via let payload=default(result,{}).",
+      "Historical1.8.3/kwok output preserved as original un-reproduced report; not fresh1.10test/realtraffic proof.",
+      "Fourfiguresupdated,three-wayoutcomesandcleanup; related05paragraphs andquizzesaligned."
+    ],
+    "validation": [
+      "18fences10YAML2Bash4fullArgoCRDs pass;fourroutingfragmentwrappers schema-check;ko/enmanifestsexactlymatchtestedfixture.",
+      "18actualexpr1.17.7cases pass; numericbounds,nil/empty/missing/invalidtypes/NaN/Inf; no liveprovider/controller test.",
+      "Staticproductionselectorcheck matchesbase/excludesbothExperimentlabels. CLIstatustimeoutverifiedin1.10source.",
+      "4figures9/9composition+4viewportcontainment;all4light/darkscreenshotsinspected;PNGsgeneratedwithCJK/fullPagefix.",
+      "No realcluster/mockserverdeployment ortrafficmeasurement;pastKWOKrunnotreproduced."
+    ],
+    "reviewedSha256": "6e85942bea868dc15abe345b84fb17e424794a4afd77c3ac2c52753a88739c09"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/10-rollouts-experiment-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete Experiment article/quiz against1.10.0; corrected pause/abort, lifecycle, routing/isolation and demonstrator prerequisites.",
+    "sources": [
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/rollout/experiment.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/experiment.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/replicaset.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/utils/defaults/defaults.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/utils/evaluate/evaluate.go"
+    ],
+    "findings": [
+      "Inconclusive pauses via InconclusiveExperiment; Failed/Error abort. Required analyses may complete before duration; non-required analyses may terminate at duration; cleanup defaults30seconds and waits for available replicas0.",
+      "Separate ReplicaSets/hashes do not guarantee traffic isolation; explicit production/experiment traffic-class selectors and role labels; per-template weight with supporting ALB/Istio/SMI router prerequisites.",
+      "Fixed obsolete NGINX port mismatch using verifiedPodinfo6.15.0/9898+readiness; namespace and Service supplied. External metrics-mock clearly prerequisite and notrealbaselinequality evidence. Initial rollout skipssteps; subsequentannotationchange demonstrates controlflow.",
+      "Correct Experiment hash argument expressions, base naming/collision suffixes, finite-count required analysis withoutduration.",
+      "Both conditions handle missing/invalid/out-of-range results. Actualexprnilcompilefailure caught and fixed via let payload=default(result,{}).",
+      "Historical1.8.3/kwok output preserved as original un-reproduced report; not fresh1.10test/realtraffic proof.",
+      "Fourfiguresupdated,three-wayoutcomesandcleanup; related05paragraphs andquizzesaligned."
+    ],
+    "validation": [
+      "18fences10YAML2Bash4fullArgoCRDs pass;fourroutingfragmentwrappers schema-check;ko/enmanifestsexactlymatchtestedfixture.",
+      "18actualexpr1.17.7cases pass; numericbounds,nil/empty/missing/invalidtypes/NaN/Inf; no liveprovider/controller test.",
+      "Staticproductionselectorcheck matchesbase/excludesbothExperimentlabels. CLIstatustimeoutverifiedin1.10source.",
+      "4figures9/9composition+4viewportcontainment;all4light/darkscreenshotsinspected;PNGsgeneratedwithCJK/fullPagefix.",
+      "No realcluster/mockserverdeployment ortrafficmeasurement;pastKWOKrunnotreproduced."
+    ],
+    "reviewedSha256": "0ed4d1a7b82b2ca562332763121db4dc01ca862752f49f972d85a9887811d581"
+  }
+]

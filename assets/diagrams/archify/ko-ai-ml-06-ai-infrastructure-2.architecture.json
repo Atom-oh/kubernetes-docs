@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Device Plugin과 DRA의 할당 경로",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1280,
+      630
+    ],
+    "output": "ko-ai-ml-06-ai-infrastructure-2.html"
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "external",
+      "label": "Pod workload",
+      "sublabel": "장치 요청과 실행",
+      "pos": [
+        30,
+        75
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "claim",
+      "type": "backend",
+      "label": "ResourceClaim",
+      "sublabel": "DeviceClass / exactly 요청",
+      "pos": [
+        495,
+        75
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Kubernetes scheduler",
+      "sublabel": "claim·Pod 배치 제약",
+      "pos": [
+        960,
+        75
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "plugin",
+      "type": "backend",
+      "label": "Device Plugin",
+      "sublabel": "nvidia.com/gpu / MIG resources",
+      "pos": [
+        30,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "slice",
+      "type": "database",
+      "label": "ResourceSlice",
+      "sublabel": "driver가 게시한 inventory",
+      "pos": [
+        495,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "NVIDIA DRA driver",
+      "sublabel": "할당 장치 준비 / CDI",
+      "pos": [
+        960,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-claim",
+      "from": "pod",
+      "to": "claim",
+      "label": "참조",
+      "variant": "emphasis"
+    },
+    {
+      "id": "claim-schedule",
+      "from": "claim",
+      "to": "scheduler",
+      "label": "요청 평가",
+      "variant": "emphasis"
+    },
+    {
+      "id": "slice-schedule",
+      "from": "slice",
+      "to": "scheduler",
+      "label": "속성·용량",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "schedule-driver",
+      "from": "scheduler",
+      "to": "driver",
+      "label": "할당 결과 준비",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1080,
+        245
+      ]
+    },
+    {
+      "id": "driver-slice",
+      "from": "driver",
+      "to": "slice",
+      "label": "inventory 게시",
+      "variant": "dashed"
+    },
+    {
+      "id": "pod-plugin",
+      "from": "pod",
+      "to": "plugin",
+      "label": "extended resource 경로",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        150,
+        245
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "공유와 기능 성숙도",
+      "items": [
+        "Device Plugin도 MIG·time-slicing 등 구성 경로가 있습니다.",
+        "DRA API와 MPS/DynamicMIG/TimeSlicing gate의 성숙도는 다릅니다.",
+        "ResourceSlice를 직접 만들어 실제 GPU를 추가하지 않습니다."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "배포 방식",
+      "items": [
+        "Operator26.7:GPUCluster와 ClusterPolicy는 동시에 둘 수 없습니다.",
+        "standalone0.5의 default GPU 경로는 명시적 opt-in 전 렌더링을 거부합니다.",
+        "동일 장치의 device-plugin/DRA 소유권을 중복 구성하지 않습니다."
+      ]
+    }
+  ]
+}

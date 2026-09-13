@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/platform-engineering/06-backstage-idp.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "3e4e28cb7652ead7dc096aaaddc9b6701504972eca0643944828288cd0ab55fa",
+    "summary": "Alloriginal4MD118blocks/8quiztopicsperlocalereviewed;chart/config5/catalog9/policy8/template2/TechDocsonelocalpage/4MD/8figures24responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-backstage-validation.json"
+  },
+  {
+    "path": "ko/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "0ec9af809a6f49bcf79bd81bb2727c9456b22beb2ed13d51b0aab4f79b483524",
+    "summary": "Alloriginal4MD118blocks/8quiztopicsperlocalereviewed;chart/config5/catalog9/policy8/template2/TechDocsonelocalpage/4MD/8figures24responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-backstage-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/06-backstage-idp.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "3b3a67e7d329593b668b221642855943741a3a9cb91f76e2a7e15296fe99fbc7",
+    "summary": "Alloriginal4MD118blocks/8quiztopicsperlocalereviewed;chart/config5/catalog9/policy8/template2/TechDocsonelocalpage/4MD/8figures24responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-backstage-validation.json"
+  },
+  {
+    "path": "en/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "595d83f4ea2bafefea9607697c5b1af10b2812fbf8f993b430f81b4027099355",
+    "summary": "Alloriginal4MD118blocks/8quiztopicsperlocalereviewed;chart/config5/catalog9/policy8/template2/TechDocsonelocalpage/4MD/8figures24responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-backstage-validation.json"
+  }
+]

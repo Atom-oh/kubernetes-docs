@@ -1,273 +1,148 @@
 # EKS 클러스터 생성 퀴즈 - Part 3
 
-이 퀴즈는 Amazon EKS 클러스터 생성과 관련된 고급 네트워킹, 스토리지 구성, 그리고 멀티 테넌시에 대한 이해를 테스트합니다. 클러스터 네트워킹, 스토리지 옵션, 멀티 테넌트 환경 구성 등의 주제를 다룹니다.
+> **마지막 업데이트**: 2026년 9월 11일
+
+이 퀴즈는 EKS 네트워킹, 노드 용량, 멀티테넌시, 오토스케일링과 노드 보안을 다룹니다. 명령과 매니페스트는 학습용 예제이며, 이번 검토에서 클라우드 배포와 종단 간 동작을 실행하지 않았습니다. 사용 전에 대상 계정·리전·kubeconfig, 호환 애드온 버전과 리소스 소유권을 확인하세요.
 
 ## 기본 개념 문제
 
-1. Amazon EKS 클러스터에서 포드당 IP 주소 수를 제한하는 주요 요소는 무엇인가요?
-   * A) VPC의 CIDR 블록 크기
-   * B) 노드의 인스턴스 유형
-   * C) 클러스터의 Kubernetes 버전
-   * D) 서브넷의 가용 IP 주소 수
+1. 일반적인 IPv4 보조 IP 계산에서 ENI 수와 ENI당 주소 한도를 결정하는 것은 무엇인가요?
+   * A) 네임스페이스 이름
+   * B) EC2 인스턴스 유형
+   * C) Service 이름
+   * D) Deployment 이름
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 노드의 인스턴스 유형**
+**정답: B) EC2 인스턴스 유형**
 
-**설명:** Amazon EKS 클러스터에서 포드당 IP 주소 수를 제한하는 주요 요소는 노드의 인스턴스 유형입니다. Amazon VPC CNI 플러그인은 각 노드의 탄력적 네트워크 인터페이스(ENI)와 보조 IP 주소를 사용하여 포드에 IP 주소를 할당합니다. 각 EC2 인스턴스 유형은 지원하는 최대 ENI 수와 ENI당 최대 IP 주소 수가 다르므로, 이것이 노드에서 실행할 수 있는 최대 포드 수를 결정합니다.
+Linux IPv4 **보조 IP 모드**에서 서브넷 주소가 충분하고 커스텀 네트워킹·Pod 보안 그룹을 사용하지 않는 경우, 인스턴스 유형이 ENI 수와 ENI당 주소 한도를 결정합니다. 이는 일반적인 노드당 Pod 한도 계산이며, “Pod당 IP 주소 수”를 계산하는 식이 아닙니다.
 
-**인스턴스 유형별 최대 포드 수 계산:**
+일반적인 계산식은 **각 ENI**의 기본 주소를 제외합니다:
 
-최대 포드 수는 다음 공식으로 계산됩니다:
-
+```text
+ENIs × (IPv4 addresses per ENI − 1) + 2
 ```
-(ENI 수 × ENI당 IP 주소 수 - 1) + 2
-```
+마지막 2는 `aws-node`와 `kube-proxy`의 호스트 네트워크 사용을 반영한 전통적인 여유분입니다. 아래 표는 보조 IP 방식의 계산 결과이며, 모든 AMI·CNI 모드·관리형 노드 그룹의 실제 `maxPods`를 뜻하지 않습니다.
 
-여기서:
+| Instance Type | Max ENIs | IPs per ENI | Max Pods |
+| ------------- | -------- | ----------- | -------- |
+| t3.small      | 3        | 4           | 11       |
+| t3.medium     | 3        | 6           | 17       |
+| m5.large      | 3        | 10          | 29       |
+| m5.xlarge     | 4        | 15          | 58       |
+| m5.2xlarge    | 4        | 15          | 58       |
+| m5.4xlarge    | 8        | 30          | 234      |
+| c5.large      | 3        | 10          | 29       |
+| c5.xlarge     | 4        | 15          | 58       |
+| r5.large      | 3        | 10          | 29       |
+| r5.xlarge     | 4        | 15          | 58       |
 
-* 1을 빼는 이유는 기본 ENI의 기본 IP 주소가 노드 자체에 사용되기 때문입니다.
-* 2를 더하는 이유는 kube-proxy와 aws-node 포드가 호스트 네트워킹을 사용하기 때문입니다.
-
-**일반적인 인스턴스 유형의 최대 포드 수:**
-
-| 인스턴스 유형    | 최대 ENI 수 | ENI당 IP 주소 수 | 최대 포드 수 |
-| ---------- | -------- | ------------ | ------- |
-| t3.small   | 3        | 4            | 11      |
-| t3.medium  | 3        | 6            | 17      |
-| m5.large   | 3        | 10           | 29      |
-| m5.xlarge  | 4        | 15           | 58      |
-| m5.2xlarge | 4        | 15           | 58      |
-| m5.4xlarge | 8        | 30           | 234     |
-| c5.large   | 3        | 10           | 29      |
-| c5.xlarge  | 4        | 15           | 58      |
-| r5.large   | 3        | 10           | 29      |
-| r5.xlarge  | 4        | 15           | 58      |
-
-**최대 포드 수 확인 방법:**
+**실제 용량과 EC2 한도 확인:**
 
 ```bash
-# 노드의 최대 포드 수 확인
-kubectl get nodes -o jsonpath='{.items[*].status.capacity.pods}'
-
-# 또는 max-pods 스크립트 사용
-curl -s https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/scripts/max-pods-calculator.sh | bash -s -- --instance-type m5.large
+kubectl get nodes -o custom-columns=NAME:.metadata.name,TYPE:.metadata.labels.node\\.kubernetes\\.io/instance-type,CAPACITY:.status.capacity.pods,ALLOCATABLE:.status.allocatable.pods
+aws ec2 describe-instance-types --region us-west-2 \
+  --instance-types m5.large m5.4xlarge \
+  --query 'InstanceTypes[].{Type:InstanceType,ENIs:NetworkInfo.MaximumNetworkInterfaces,IPv4PerENI:NetworkInfo.Ipv4AddressesPerInterface}'
 ```
+서브넷 IP가 부족하면 노드 한도에 도달하기 전에도 Pod 생성이 실패할 수 있습니다. CPU·메모리 요청, 다른 호스트 네트워크 Pod, 커스텀 네트워킹, Pod 보안 그룹과 kubelet 설정도 고려해야 합니다. 관리형 노드 그룹은 계산식 결과가 더 크더라도 30 vCPU 미만 인스턴스의 `maxPods`를 110, 그 외에는 250으로 제한합니다.
 
-**최대 포드 수 제한 요소:**
+IPv4 prefix delegation은 ENI의 보조 주소 **슬롯** 하나에 `/28`을 할당하며, ENI 하나에 여러 prefix가 들어갈 수 있습니다. 서브넷의 주소 공간 자체가 늘어나지는 않습니다. 선행조건과 전환 절차는 5번 문제를 참고하세요.
 
-1. **인스턴스 유형**:
-   * 각 인스턴스 유형은 지원하는 최대 ENI 수와 ENI당 IP 주소 수가 다릅니다.
-   * 더 큰 인스턴스 유형은 일반적으로 더 많은 ENI와 IP 주소를 지원합니다.
-2. **CNI 구성**:
-   * 기본 VPC CNI 구성은 각 포드에 전체 ENI를 할당하지 않고, 보조 IP 주소를 사용합니다.
-   * 사용자 지정 네트워킹을 사용하면 이 동작을 변경할 수 있습니다.
-3.  **접두사 위임**:
-
-    * VPC CNI 1.9.0 이상에서는 접두사 위임 기능을 사용하여 각 ENI에 /28 CIDR 블록(16개 IP)을 할당할 수 있습니다.
-    * 이를 통해 노드당 최대 포드 수를 크게 늘릴 수 있습니다.
-
-    ```bash
-    kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-    ```
-4.  **사용자 지정 max-pods 값**:
-
-    * kubelet의 `--max-pods` 플래그를 사용하여 노드당 최대 포드 수를 제한할 수 있습니다.
-    * 이는 인스턴스 유형이 지원하는 것보다 낮은 값으로 설정할 수 있습니다.
-
-    ```bash
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name my-nodegroup \
-      --node-type m5.large \
-      --nodes 3 \
-      --kubelet-extra-args "--max-pods=110"
-    ```
-
-**다른 옵션들의 문제점:**
-
-* **VPC의 CIDR 블록 크기**: VPC CIDR 블록 크기는 VPC에서 사용 가능한 총 IP 주소 수를 제한하지만, 개별 노드의 최대 포드 수를 직접적으로 제한하지는 않습니다.
-* **클러스터의 Kubernetes 버전**: Kubernetes 버전은 지원되는 기능에 영향을 미치지만, 노드당 최대 포드 수를 직접적으로 제한하지는 않습니다.
-* **서브넷의 가용 IP 주소 수**: 서브넷의 가용 IP 주소 수는 해당 서브넷에 배포할 수 있는 총 포드 수에 영향을 미치지만, 개별 노드의 최대 포드 수를 직접적으로 제한하지는 않습니다.
-
-노드의 인스턴스 유형은 지원하는 ENI 수와 ENI당 IP 주소 수를 통해 노드에서 실행할 수 있는 최대 포드 수를 결정하는 주요 요소입니다. 따라서 워크로드 요구 사항에 맞는 적절한 인스턴스 유형을 선택하는 것이 중요합니다.
+커스텀 AL2023 AMI는 적절한 값을 계산·검증한 후 NodeConfig의 `spec.kubelet.config.maxPods`를 설정합니다. 커스텀 AMI ID가 없는 관리형 노드 그룹은 EKS가 권장값을 계산합니다. kubelet 한도만 높여도 IP나 컴퓨팅 용량이 생기지는 않습니다. eksctl에 존재하지 않는 `--kubelet-extra-args` 옵션을 전달하면 안 됩니다.
 
 </details>
 
-2\. Amazon EKS 클러스터에서 포드 간 통신을 위한 기본 네트워크 정책은 무엇인가요? - A) 모든 포드 간 통신 허용 - B) 같은 네임스페이스 내 포드 간 통신만 허용 - C) 명시적으로 허용된 포드 간 통신만 허용 - D) 모든 포드 간 통신 차단
+2. Pod를 선택하는 NetworkPolicy가 없을 때 NetworkPolicy 기준 격리 상태는 무엇인가요?
+   * A) 다른 네트워크 제어를 따르되 격리되지 않음
+   * B) 동일 네임스페이스 통신만 허용
+   * C) 명시적 허용 규칙 필수
+   * D) 모든 트래픽 차단
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: A) 모든 포드 간 통신 허용**
+**정답: A) 다른 네트워크 제어를 따르되 격리되지 않음**
 
-**설명:** Amazon EKS 클러스터에서 포드 간 통신을 위한 기본 네트워크 정책은 모든 포드 간 통신을 허용하는 것입니다. 기본적으로 EKS는 네트워크 정책을 구현하지 않으며, 모든 포드는 클러스터 내의 다른 모든 포드와 자유롭게 통신할 수 있습니다. 이는 Kubernetes의 기본 동작으로, 포드 간 통신을 제한하려면 명시적으로 네트워크 정책을 구성해야 합니다.
+특정 방향에 대해 Pod를 선택하는 정책이 없으면 Kubernetes NetworkPolicy는 그 방향을 격리하지 않습니다. 그렇다고 보안 그룹·라우팅 테이블·NACL·다른 정책 API나 애플리케이션 리스너를 우회하는 것은 아닙니다.
 
-**EKS의 기본 네트워킹 동작:**
+Amazon VPC CNI는 지원되는 Linux EC2 노드에서 활성화하면 NetworkPolicy를 기본 기능으로 집행할 수 있습니다. 현재 표준·관리자 정책 안내는 VPC CNI 1.21 이상과 커널 5.10 이상을 요구하므로 선택한 애드온의 호환성을 확인하세요. Windows와 Fargate는 이 집행 경로의 대상이 아닙니다. Deployment처럼 컨트롤러가 관리하는 Pod를 사용하고 AWS의 인터페이스·Service 포트 제한을 확인하세요.
 
-1. **기본 허용 정책**:
-   * 기본적으로 모든 포드는 클러스터 내의 다른 모든 포드와 통신할 수 있습니다.
-   * 네임스페이스 간 통신도 제한 없이 허용됩니다.
-   * 이는 Kubernetes의 "평면 네트워크" 모델을 따릅니다.
-2. **Amazon VPC CNI**:
-   * EKS의 기본 CNI 플러그인은 Amazon VPC CNI입니다.
-   * 이 플러그인은 포드에 VPC IP 주소를 할당하여 VPC 내에서 직접 라우팅 가능하게 합니다.
-   * 기본적으로 네트워크 정책을 구현하지 않습니다.
+AWS VPC 네트워크 위의 Calico 정책과 Cilium AWS-CNI chaining도 대안이며 각각 별도 설치 조건이 있습니다. 구성 없이 두 번째 CNI를 설치하거나 정책 에이전트를 의도치 않게 중복 실행하면 안 됩니다. AWS Network Firewall은 라우팅되는 VPC 트래픽을 필터링하며 Kubernetes NetworkPolicy의 셀렉터를 구현하지 않습니다.
 
-**네트워크 정책 구현 방법:**
-
-EKS에서 포드 간 통신을 제한하려면 다음과 같은 네트워크 정책 솔루션을 구현해야 합니다:
-
-1.  **Calico**:
-
-    ```bash
-    # Calico 설치
-    kubectl create namespace tigera-operator
-    helm repo add projectcalico https://docs.projectcalico.org/charts
-    helm install calico projectcalico/tigera-operator --namespace tigera-operator
-    ```
-2.  **Cilium**:
-
-    ```bash
-    # Cilium 설치
-    helm repo add cilium https://helm.cilium.io/
-    helm install cilium cilium/cilium --namespace kube-system
-    ```
-3. **AWS Network Firewall** (VPC 수준):
-   * AWS Network Firewall을 사용하여 VPC 수준에서 트래픽을 필터링할 수 있습니다.
-   * 이는 포드 수준의 세분화된 제어가 아닌 서브넷 수준의 제어를 제공합니다.
-
-**네트워크 정책 예시:**
-
-1.  **기본 거부 정책**:
-
-    ```yaml
-    # 모든 인그레스 트래픽 차단
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: default-deny-ingress
-      namespace: default
-    spec:
-      podSelector: {}
-      policyTypes:
-      - Ingress
-    ```
-2.  **특정 포드 간 통신 허용**:
-
-    ```yaml
-    # frontend에서 backend로의 통신만 허용
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-frontend-to-backend
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: backend
-      ingress:
-      - from:
-        - podSelector:
-            matchLabels:
-              app: frontend
-        ports:
-        - protocol: TCP
-          port: 8080
-    ```
-3.  **네임스페이스 간 통신 제한**:
-
-    ```yaml
-    # prod 네임스페이스에서만 접근 허용
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-from-prod-namespace
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: database
-      ingress:
-      - from:
-        - namespaceSelector:
-            matchLabels:
-              name: prod
-        ports:
-        - protocol: TCP
-          port: 5432
-    ```
-
-**네트워크 정책 모범 사례:**
-
-1. **기본 거부 정책 적용**:
-   * 모든 네임스페이스에 기본 거부 정책을 적용하여 명시적으로 허용되지 않은 모든 트래픽을 차단합니다.
-   * 필요한 통신만 명시적으로 허용합니다.
-2. **최소 권한 원칙 적용**:
-   * 포드가 필요로 하는 최소한의 네트워크 접근만 허용합니다.
-   * 특정 포트와 프로토콜만 허용합니다.
-3. **네임스페이스 격리**:
-   * 네임스페이스를 사용하여 워크로드를 논리적으로 분리합니다.
-   * 네임스페이스 간 통신을 명시적으로 제어합니다.
-4. **레이블 기반 정책**:
-   * 포드 레이블을 사용하여 세분화된 네트워크 정책을 정의합니다.
-   * 레이블 체계를 일관되게 유지합니다.
-
-**다른 옵션들의 문제점:**
-
-* **같은 네임스페이스 내 포드 간 통신만 허용**: 기본적으로 EKS는 네임스페이스 간 통신을 포함한 모든 포드 간 통신을 허용합니다.
-* **명시적으로 허용된 포드 간 통신만 허용**: 이는 네트워크 정책을 구현한 후의 동작이지만, 기본 동작은 아닙니다.
-* **모든 포드 간 통신 차단**: 기본적으로 EKS는 포드 간 통신을 차단하지 않습니다.
-
-EKS의 기본 네트워크 정책은 모든 포드 간 통신을 허용하는 것입니다. 이는 개발 및 테스트 환경에서는 편리할 수 있지만, 프로덕션 환경에서는 보안을 강화하기 위해 적절한 네트워크 정책을 구현하는 것이 중요합니다.
-
-</details>
-
-3. Amazon EKS 클러스터에서 포드가 VPC 외부의 인터넷에 접근하기 위해 필요한 것은 무엇인가요?
-   * A) 포드가 위치한 서브넷에 인터넷 게이트웨이 연결
-   * B) 포드가 위치한 서브넷에 NAT 게이트웨이 또는 NAT 인스턴스 연결
-   * C) 포드에 퍼블릭 IP 주소 할당
-   * D) 포드에 탄력적 IP 주소 연결
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: B) 포드가 위치한 서브넷에 NAT 게이트웨이 또는 NAT 인스턴스 연결**
-
-**설명:** Amazon EKS 클러스터에서 포드가 VPC 외부의 인터넷에 접근하기 위해서는 포드가 위치한 서브넷에 NAT 게이트웨이 또는 NAT 인스턴스가 연결되어 있어야 합니다. 이는 프라이빗 서브넷에 위치한 포드가 인터넷에 접근할 수 있도록 하는 표준 방법입니다.
-
-**EKS 네트워킹 아키텍처:**
-
-1. **프라이빗 서브넷의 포드**:
-   * EKS 워커 노드는 일반적으로 보안을 위해 프라이빗 서브넷에 배치됩니다.
-   * 프라이빗 서브넷의 포드는 직접 인터넷에 접근할 수 없습니다.
-   * NAT 게이트웨이 또는 NAT 인스턴스를 통해 인터넷에 접근해야 합니다.
-2. **퍼블릭 서브넷의 포드**:
-   * 워커 노드가 퍼블릭 서브넷에 있더라도, 포드는 기본적으로 퍼블릭 IP 주소를 할당받지 않습니다.
-   * 포드는 노드의 네트워크 인터페이스를 통해 NAT되어 인터넷에 접근합니다.
-
-**NAT 게이트웨이 구성:**
-
-```bash
-# NAT 게이트웨이 생성
-aws ec2 create-nat-gateway \
-  --subnet-id subnet-public1 \
-  --allocation-id eipalloc-12345
-
-# 프라이빗 서브넷의 라우팅 테이블 업데이트
-aws ec2 create-route \
-  --route-table-id rtb-private \
-  --destination-cidr-block 0.0.0.0/0 \
-  --nat-gateway-id nat-12345
-```
-
-**CloudFormation을 사용한 VPC 구성 예시:**
+아래는 **새 전용** `network-policy-lab` 네임스페이스의 예제입니다. 첫 정책은 ingress만 격리합니다. 이어지는 두 정책은 특정 트래픽을 허용하며, `prod` 피어는 기본 네임스페이스 레이블과 backend Pod 레이블을 모두 만족해야 합니다.
 
 ```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: network-policy-lab
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: network-policy-lab
+spec:
+  podSelector:
+    matchLabels: {app: backend}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels: {app: frontend}
+    ports:
+    - {protocol: TCP, port: 8080}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prod-to-database
+  namespace: network-policy-lab
+spec:
+  podSelector:
+    matchLabels: {app: database}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: prod
+      podSelector:
+        matchLabels: {app: backend}
+    ports:
+    - {protocol: TCP, port: 5432}
+```
+egress도 격리하려면 실제 DNS 경로와 애플리케이션 의존성을 별도로 허용해야 합니다. 차단 결과는 기본 연결·DNS·준비 상태와 허용된 대조군이 정상임을 먼저 확인해야 의미가 있습니다. 간단한 테스트를 위해 `kube-system`이나 공유 `default` 네임스페이스 전체에 deny 정책을 적용하지 마세요.
+
+</details>
+
+3. 프라이빗 IPv4 서브넷의 일반적인 인터넷 egress 경로는 무엇인가요?
+   * A) 서브넷에 IGW 연결
+   * B) 퍼블릭 NAT Gateway를 거쳐 VPC의 IGW로 라우팅
+   * C) 각 Pod에 Elastic IP 할당
+   * D) 프라이빗 NAT Gateway에서 IGW로 직접 라우팅
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) 퍼블릭 NAT Gateway를 거쳐 VPC의 IGW로 라우팅**
+
+프라이빗 IPv4 노드와 Pod에서 퍼블릭 IPv4 인터넷으로 나가야 한다면, 프라이빗 서브넷의 기본 경로를 **퍼블릭 서브넷의 퍼블릭 NAT Gateway**로 연결하는 구성이 일반적입니다. 그 퍼블릭 서브넷은 **VPC**에 연결된 Internet Gateway로 라우팅하며 NAT Gateway에는 Elastic IP가 있어야 합니다. NAT 인스턴스도 가능하지만 라우팅·source/destination check와 운영 구성이 추가로 필요합니다.
+
+IPv4 VPC CNI의 기본 SNAT 동작에서는 VPC 외부로 향하는 Pod 트래픽이 먼저 노드의 기본 IPv4 주소를 사용합니다. 퍼블릭 IPv4와 IGW 경로가 있는 퍼블릭 노드는 다른 경로를 사용할 수 있습니다. 네이티브 IPv6 egress는 egress-only Internet Gateway를 사용할 수 있고, VPC Endpoint를 통한 AWS 서비스 접근에는 인터넷 NAT가 필요하지 않을 수 있습니다. NAT를 모든 Pod의 보편적인 필수조건으로 설명하면 안 됩니다.
+
+**단일 AZ CloudFormation 라우팅 예제:** 퍼블릭·프라이빗 라우팅 테이블 연결을 설명하며 완전한 EKS VPC가 아닙니다. EKS 클러스터 서브넷은 최소 두 AZ가 필요합니다. AZ 단위 NAT 설계는 다른 AZ 의존성을 피하도록 AZ별 NAT Gateway와 프라이빗 경로를 고려하세요. NAT Gateway와 퍼블릭 IPv4에는 요금이 발생합니다. 클러스터 배포에는 개념 문서의 완전한 EKS VPC 템플릿을 검토하세요.
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Description: One-AZ IPv4 NAT routing demonstration; not a complete EKS VPC
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -285,7 +160,7 @@ Resources:
       VpcId: !Ref VPC
       AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: 10.0.0.0/24
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
           Value: Public-Subnet-1
@@ -358,1110 +233,662 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway
+
+  PublicSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
 ```
+`SubnetRouteTableAssociation` 리소스가 반드시 필요합니다. 연결되지 않은 테이블에 경로를 만들어도 해당 서브넷의 라우팅은 바뀌지 않습니다.
 
-**eksctl을 사용한 VPC 구성:**
-
-```yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: my-cluster
-  region: us-west-2
-vpc:
-  cidr: 192.168.0.0/16
-  nat:
-    gateway: Single  # NAT 게이트웨이 구성
-  clusterEndpoints:
-    publicAccess: true
-    privateAccess: true
-```
-
-**다른 옵션들의 문제점:**
-
-* **포드가 위치한 서브넷에 인터넷 게이트웨이 연결**: 인터넷 게이트웨이는 퍼블릭 서브넷에 연결되며, 프라이빗 서브넷의 리소스가 인터넷에 접근하기 위해서는 NAT 게이트웨이가 필요합니다. 또한 인터넷 게이트웨이만으로는 포드가 인터넷에 접근할 수 없습니다.
-* **포드에 퍼블릭 IP 주소 할당**: Amazon VPC CNI 플러그인은 포드에 퍼블릭 IP 주소를 할당하는 기능을 지원하지 않습니다. 포드는 항상 프라이빗 IP 주소를 할당받습니다.
-* **포드에 탄력적 IP 주소 연결**: 포드에 직접 탄력적 IP 주소를 연결할 수 없습니다. 탄력적 IP 주소는 EC2 인스턴스 또는 네트워크 인터페이스에만 연결할 수 있습니다.
-
-NAT 게이트웨이 또는 NAT 인스턴스는 프라이빗 서브넷의 포드가 인터넷에 접근할 수 있도록 하는 표준 방법입니다. 이는 포드의 프라이빗 IP 주소를 NAT 게이트웨이의 퍼블릭 IP 주소로 변환하여 인터넷 통신을 가능하게 합니다. 프로덕션 환경에서는 고가용성을 위해 각 가용 영역에 NAT 게이트웨이를 배치하는 것이 좋습니다.
-
-</details>
-
-4. Amazon EKS 클러스터에서 SecurityGroupPolicy를 사용하여 포드에 보안 그룹을 적용하기 위한 요구 사항이 아닌 것은 무엇인가요?
-   * A) Amazon VPC CNI 플러그인 버전 1.7.7 이상
-   * B) ENIConfig 리소스 구성
-   * C) 포드에 hostNetwork: true 설정
-   * D) 보안 그룹을 적용할 포드에 대한 서비스 계정 지정
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: C) 포드에 hostNetwork: true 설정**
-
-**설명:** Amazon EKS 클러스터에서 SecurityGroupPolicy를 사용하여 포드에 보안 그룹을 적용하기 위한 요구 사항이 아닌 것은 "포드에 hostNetwork: true 설정"입니다. 실제로는 hostNetwork: true로 설정된 포드에는 보안 그룹을 적용할 수 없습니다. 포드에 보안 그룹을 적용하려면 포드가 자체 네트워크 네임스페이스를 사용해야 합니다.
-
-**포드 보안 그룹 기능 요구 사항:**
-
-1.  **Amazon VPC CNI 플러그인 버전 1.7.7 이상**:
-
-    * 포드 보안 그룹 기능은 Amazon VPC CNI 플러그인 버전 1.7.7 이상에서 지원됩니다.
-    * 최신 버전을 사용하는 것이 좋습니다.
-
-    ```bash
-    # CNI 버전 확인
-    kubectl describe daemonset aws-node -n kube-system | grep Image
-
-    # CNI 업데이트
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.10.0/config/master/aws-k8s-cni.yaml
-    ```
-2.  **포드 보안 그룹 기능 활성화**:
-
-    ```bash
-    # 포드 보안 그룹 기능 활성화
-    kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-
-    # 또는 eksctl 사용
-    eksctl utils update-cluster-config \
-      --name my-cluster \
-      --region us-west-2 \
-      --enable-pod-security-groups
-    ```
-3.  **보안 그룹을 적용할 포드에 대한 서비스 계정 지정**:
-
-    * SecurityGroupPolicy에서 포드 선택기 또는 서비스 계정 선택기를 사용하여 보안 그룹을 적용할 포드를 지정해야 합니다.
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: my-security-group-policy
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: my-app
-      securityGroups:
-        groupIds:
-          - sg-12345
-    ```
-
-**포드 보안 그룹 구성 예시:**
-
-1.  **SecurityGroupPolicy 생성**:
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: db-client-policy
-      namespace: default
-    spec:
-      serviceAccountSelector:
-        matchLabels:
-          role: db-client
-      securityGroups:
-        groupIds:
-          - sg-db-client
-    ```
-2.  **서비스 계정 생성**:
-
-    ```yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: db-client
-      namespace: default
-      labels:
-        role: db-client
-    ```
-3.  **포드 배포**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: db-client-pod
-    spec:
-      serviceAccountName: db-client
-      containers:
-      - name: db-client
-        image: mysql:5.7
-        command: ['sleep', '3600']
-    ```
-
-**hostNetwork: true의 문제점:**
-
-`hostNetwork: true`로 설정된 포드는 노드의 네트워크 네임스페이스를 사용하므로, 포드에 별도의 보안 그룹을 적용할 수 없습니다. 이러한 포드는 노드의 보안 그룹을 상속받습니다.
-
-```yaml
-# 이 포드에는 보안 그룹을 적용할 수 없음
-apiVersion: v1
-kind: Pod
-metadata:
-  name: host-network-pod
-spec:
-  hostNetwork: true  # 노드의 네트워크 네임스페이스 사용
-  containers:
-  - name: nginx
-    image: nginx
-```
-
-**ENIConfig 리소스 구성:**
-
-ENIConfig 리소스는 사용자 지정 네트워킹을 구성할 때 필요하지만, 포드 보안 그룹 기능만 사용하는 경우에는 필수 요구 사항이 아닙니다. 그러나 포드 보안 그룹 기능과 사용자 지정 네트워킹을 함께 사용하는 경우에는 ENIConfig 리소스를 구성해야 합니다.
-
-```yaml
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2a
-spec:
-  subnet: subnet-12345
-  securityGroups:
-  - sg-12345
-```
-
-**포드 보안 그룹 제한 사항:**
-
-1. **리소스 제한**:
-   * 각 노드에는 포드 보안 그룹을 위한 추가 ENI가 필요합니다.
-   * 인스턴스 유형에 따라 지원되는 최대 ENI 수가 제한됩니다.
-2. **호환성 제한**:
-   * hostNetwork: true로 설정된 포드에는 적용할 수 없습니다.
-   * hostPort를 사용하는 포드에는 적용할 수 없습니다.
-   * 일부 CNI 플러그인과 호환되지 않을 수 있습니다.
-3. **성능 영향**:
-   * 포드당 추가 ENI가 필요하므로, 포드 시작 시간이 길어질 수 있습니다.
-   * 노드당 최대 포드 수가 제한될 수 있습니다.
-
-포드 보안 그룹 기능은 포드 수준에서 세분화된 네트워크 보안을 제공하는 강력한 기능입니다. 그러나 hostNetwork: true로 설정된 포드에는 이 기능을 적용할 수 없으므로, 포드 보안 그룹을 사용하려면 포드가 자체 네트워크 네임스페이스를 사용해야 합니다.
-
-</details>
-
-4\. Amazon EKS 클러스터에서 SecurityGroupPolicy를 사용하여 포드에 보안 그룹을 적용하기 위한 요구 사항이 아닌 것은 무엇인가요? - A) Amazon VPC CNI 플러그인 버전 1.7.7 이상 - B) ENIConfig 리소스 구성 - C) 포드에 hostNetwork: true 설정 - D) 보안 그룹을 적용할 포드에 대한 서비스 계정 지정
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: C) 포드에 hostNetwork: true 설정**
-
-**설명:** Amazon EKS 클러스터에서 SecurityGroupPolicy를 사용하여 포드에 보안 그룹을 적용하기 위한 요구 사항이 아닌 것은 "포드에 hostNetwork: true 설정"입니다. 실제로는 hostNetwork: true로 설정된 포드에는 보안 그룹을 적용할 수 없습니다. 포드에 보안 그룹을 적용하려면 포드가 자체 네트워크 네임스페이스를 사용해야 합니다.
-
-**포드 보안 그룹 기능 요구 사항:**
-
-1.  **Amazon VPC CNI 플러그인 버전 1.7.7 이상**:
-
-    * 포드 보안 그룹 기능은 Amazon VPC CNI 플러그인 버전 1.7.7 이상에서 지원됩니다.
-    * 최신 버전을 사용하는 것이 좋습니다.
-
-    ```bash
-    # CNI 버전 확인
-    kubectl describe daemonset aws-node -n kube-system | grep Image
-
-    # CNI 업데이트
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.10.0/config/master/aws-k8s-cni.yaml
-    ```
-2.  **포드 보안 그룹 기능 활성화**:
-
-    ```bash
-    # 포드 보안 그룹 기능 활성화
-    kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-
-    # 또는 eksctl 사용
-    eksctl utils update-cluster-config \
-      --name my-cluster \
-      --region us-west-2 \
-      --enable-pod-security-groups
-    ```
-3.  **보안 그룹을 적용할 포드에 대한 서비스 계정 지정**:
-
-    * SecurityGroupPolicy에서 포드 선택기 또는 서비스 계정 선택기를 사용하여 보안 그룹을 적용할 포드를 지정해야 합니다.
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: my-security-group-policy
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: my-app
-      securityGroups:
-        groupIds:
-          - sg-12345
-    ```
-
-**포드 보안 그룹 구성 예시:**
-
-1.  **SecurityGroupPolicy 생성**:
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: db-client-policy
-      namespace: default
-    spec:
-      serviceAccountSelector:
-        matchLabels:
-          role: db-client
-      securityGroups:
-        groupIds:
-          - sg-db-client
-    ```
-2.  **서비스 계정 생성**:
-
-    ```yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: db-client
-      namespace: default
-      labels:
-        role: db-client
-    ```
-3.  **포드 배포**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: db-client-pod
-    spec:
-      serviceAccountName: db-client
-      containers:
-      - name: db-client
-        image: mysql:5.7
-        command: ['sleep', '3600']
-    ```
-
-**hostNetwork: true의 문제점:**
-
-`hostNetwork: true`로 설정된 포드는 노드의 네트워크 네임스페이스를 사용하므로, 포드에 별도의 보안 그룹을 적용할 수 없습니다. 이러한 포드는 노드의 보안 그룹을 상속받습니다.
-
-```yaml
-# 이 포드에는 보안 그룹을 적용할 수 없음
-apiVersion: v1
-kind: Pod
-metadata:
-  name: host-network-pod
-spec:
-  hostNetwork: true  # 노드의 네트워크 네임스페이스 사용
-  containers:
-  - name: nginx
-    image: nginx
-```
-
-**ENIConfig 리소스 구성:**
-
-ENIConfig 리소스는 사용자 지정 네트워킹을 구성할 때 필요하지만, 포드 보안 그룹 기능만 사용하는 경우에는 필수 요구 사항이 아닙니다. 그러나 포드 보안 그룹 기능과 사용자 지정 네트워킹을 함께 사용하는 경우에는 ENIConfig 리소스를 구성해야 합니다.
-
-```yaml
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2a
-spec:
-  subnet: subnet-12345
-  securityGroups:
-  - sg-12345
-```
-
-**포드 보안 그룹 제한 사항:**
-
-1. **리소스 제한**:
-   * 각 노드에는 포드 보안 그룹을 위한 추가 ENI가 필요합니다.
-   * 인스턴스 유형에 따라 지원되는 최대 ENI 수가 제한됩니다.
-2. **호환성 제한**:
-   * hostNetwork: true로 설정된 포드에는 적용할 수 없습니다.
-   * hostPort를 사용하는 포드에는 적용할 수 없습니다.
-   * 일부 CNI 플러그인과 호환되지 않을 수 있습니다.
-3. **성능 영향**:
-   * 포드당 추가 ENI가 필요하므로, 포드 시작 시간이 길어질 수 있습니다.
-   * 노드당 최대 포드 수가 제한될 수 있습니다.
-
-포드 보안 그룹 기능은 포드 수준에서 세분화된 네트워크 보안을 제공하는 강력한 기능입니다. 그러나 hostNetwork: true로 설정된 포드에는 이 기능을 적용할 수 없으므로, 포드 보안 그룹을 사용하려면 포드가 자체 네트워크 네임스페이스를 사용해야 합니다.
-
-</details>
-
-5. Amazon EKS 클러스터에서 접두사 위임(Prefix Delegation) 기능의 주요 이점은 무엇인가요?
-   * A) 포드 간 통신 속도 향상
-   * B) 노드당 최대 포드 수 증가
-   * C) 포드에 퍼블릭 IP 주소 할당 가능
-   * D) 포드 네트워크 격리 강화
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: B) 노드당 최대 포드 수 증가**
-
-**설명:** Amazon EKS 클러스터에서 접두사 위임(Prefix Delegation) 기능의 주요 이점은 노드당 최대 포드 수를 증가시키는 것입니다. 이 기능은 각 탄력적 네트워크 인터페이스(ENI)에 개별 IP 주소 대신 /28 CIDR 블록(16개 IP 주소)을 할당하여, 노드가 지원할 수 있는 최대 포드 수를 크게 늘립니다.
-
-**접두사 위임 작동 방식:**
-
-1. **기본 VPC CNI 동작**:
-   * 기본적으로 VPC CNI는 각 포드에 대해 ENI의 보조 IP 주소를 할당합니다.
-   * 각 EC2 인스턴스 유형은 지원하는 최대 ENI 수와 ENI당 IP 주소 수가 제한되어 있습니다.
-   * 이로 인해 노드당 최대 포드 수가 제한됩니다.
-2. **접두사 위임 동작**:
-   * 접두사 위임을 활성화하면, 각 ENI에 개별 IP 주소 대신 /28 CIDR 블록(16개 IP)이 할당됩니다.
-   * 이를 통해 각 ENI가 지원할 수 있는 IP 주소 수가 크게 증가합니다.
-   * 결과적으로 노드당 최대 포드 수가 증가합니다.
-
-**접두사 위임 활성화:**
+별도로 검토한 배포 후 실제 ID와 경로를 확인하세요. CLI로 NAT Gateway를 생성한다면 반환된 ID를 저장하고 `nat-gateway-available`을 기다린 다음 경로를 생성해야 합니다. NAT 생성이 실패하면 이후 작업을 중단해야 합니다.
 
 ```bash
-# 접두사 위임 활성화
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-# 접두사 위임 상태 확인
-kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
+set -euo pipefail
+: "${AWS_REGION:?Set the Region}"
+: "${VPC_ID:?Set the deployed VPC ID}"
+aws ec2 describe-route-tables --region "$AWS_REGION" \
+  --filters "Name=vpc-id,Values=$VPC_ID" \
+  --query 'RouteTables[].{Id:RouteTableId,Associations:Associations,Routes:Routes}'
+aws ec2 describe-nat-gateways --region "$AWS_REGION" \
+  --filter "Name=vpc-id,Values=$VPC_ID" \
+  --query 'NatGateways[].{Id:NatGatewayId,Subnet:SubnetId,State:State}'
 ```
+eksctl의 관리 VPC 생성에서 `vpc.nat.gateway: Single`은 유효하지만 단일 AZ 의존성을 만듭니다. `HighlyAvailable`은 AZ별 NAT를 생성합니다. 이 옵션들이 임의의 기존 서브넷 라우팅을 자동으로 복구하지는 않습니다. 실습 스택은 종속 워크로드·ENI를 제거한 뒤 직접 생성한 리소스만 삭제하고 NAT와 EIP 해제를 확인하세요.
 
-**접두사 위임의 이점:**
+</details>
 
-1. **노드당 최대 포드 수 증가**:
-   * 접두사 위임을 사용하면 노드당 최대 포드 수가 크게 증가합니다.
-   * 예를 들어, m5.large 인스턴스의 경우:
-     * 기본 구성: 최대 29개 포드
-     * 접두사 위임 활성화: 최대 110개 이상의 포드
-2. **IP 주소 효율성**:
-   * 대규모 클러스터에서 IP 주소 사용을 최적화합니다.
-   * VPC CIDR 범위가 제한된 환경에서 유용합니다.
-3. **노드 리소스 활용도 향상**:
-   * 더 많은 포드를 실행할 수 있어 노드 리소스 활용도가 향상됩니다.
-   * 클러스터 비용 최적화에 도움이 됩니다.
+4. Pod branch ENI 대신 노드 네트워크를 공유하게 하는 Pod 설정은 무엇인가요?
+   * A) 일치하는 Pod 레이블
+   * B) 일치하는 ServiceAccount 레이블
+   * C) hostNetwork: true
+   * D) 선택된 SecurityGroupPolicy
 
-**접두사 위임 제한 사항:**
+<details>
+<summary>정답 보기</summary>
 
-1. **EC2 인스턴스 지원**:
-   * Nitro 기반 인스턴스만 접두사 위임을 지원합니다.
-   * 이전 세대 인스턴스에서는 사용할 수 없습니다.
-2. **VPC CNI 버전 요구 사항**:
-   * VPC CNI 버전 1.9.0 이상이 필요합니다.
-   * 이전 버전에서는 이 기능을 사용할 수 없습니다.
-3. **서브넷 크기 요구 사항**:
-   * 충분한 IP 주소 공간이 있는 서브넷이 필요합니다.
-   * 작은 서브넷에서는 IP 주소가 빠르게 소진될 수 있습니다.
-4. **전환 시 고려 사항**:
-   * 기존 클러스터에서 활성화하면 새 포드만 접두사 위임을 사용합니다.
-   * 모든 포드에 적용하려면 기존 포드를 재시작해야 합니다.
+**정답: C) hostNetwork: true**
 
-**접두사 위임 구성 예시:**
+호스트 네트워크 Pod는 노드의 네트워크 네임스페이스와 보안 그룹을 공유합니다. Pod 보안 그룹은 자체 네트워크 네임스페이스를 사용하는 선택된 Pod에 branch ENI를 제공합니다.
+
+이 Linux EC2 예제에는 trunking을 지원하는 인스턴스 유형, 호환 VPC CNI, 클러스터 역할의 `AmazonEKSVPCResourceController` 권한과 `ENABLE_POD_ENI=true`가 필요합니다. EC2 `t` 계열과 EKS Auto Mode는 이 기능을 지원하지 않습니다. DNS·제어 플레인·애플리케이션 규칙, branch ENI 용량과 `POD_SECURITY_GROUP_ENFORCING_MODE`를 확인하세요. 모드에 따라 SNAT와 정책 동작이 다릅니다. 오래된 CNI 매니페스트를 적용하지 말고 애드온 소유자의 설정 경로를 사용하세요.
+
+SecurityGroupPolicy는 `podSelector` **또는** `serviceAccountSelector`로 Pod를 선택하므로 전용 ServiceAccount 생성은 필수가 아닙니다. `ENIConfig`는 커스텀 네트워킹 리소스이며 Pod 보안 그룹만 사용하는 데 필요하지 않습니다.
+
+아래 ServiceAccount 셀렉터 방식은 먼저 전용 `pod-sg-lab` 네임스페이스를 만들고 SG 자리표시자를 올바른 VPC의 검토된 기존 보안 그룹으로 바꾼 뒤 선행조건을 충족해야 합니다. 대기하는 클라이언트는 선택 관계를 보여 주며 DB 연결 성공을 입증하지 않습니다. 일치하는 ServiceAccount 레이블과 Pod의 `serviceAccountName`을 모두 지정했습니다.
 
 ```yaml
-# eksctl 구성 파일
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: db-client-policy
+  namespace: pod-sg-lab
+spec:
+  serviceAccountSelector:
+    matchLabels:
+      role: db-client
+  securityGroups:
+    groupIds:
+    - sg-REPLACE_WITH_REVIEWED_GROUP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: db-client
+  namespace: pod-sg-lab
+  labels:
+    role: db-client
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-client
+  namespace: pod-sg-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: db-client}
+  template:
+    metadata:
+      labels: {app: db-client}
+    spec:
+      serviceAccountName: db-client
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: client
+        image: public.ecr.aws/docker/library/busybox:1.37.0
+        command: [sleep, '3600']
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 32Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+```
+대신 `serviceAccountSelector`를 `podSelector: {matchLabels: {app: db-client}}`로 바꿀 수 있습니다. 정책과 선택되는 Pod는 같은 네임스페이스에 둡니다. **새로 생성된** Pod의 branch ENI와 실제 허용·차단 연결을 확인하세요. 정책을 생성해도 기존 실행 Pod에 소급 적용되지는 않습니다. 테스트 후 이 실습 네임스페이스와 정책만 정리하고 다른 리소스가 쓰는 SG를 삭제하지 마세요.
+
+</details>
+
+
+
+5. IPv4 prefix delegation이 제공하는 주요 용량 이점은 무엇인가요?
+   * A) Pod 간 통신 속도 향상 보장
+   * B) 노드당 Pod IP 용량 증가
+   * C) 모든 Pod에 퍼블릭 IPv4 할당
+   * D) 자동 네트워크 격리
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) 노드당 Pod IP 용량 증가**
+
+Linux IPv4 prefix 모드에서는 `/28` 하나(주소 16개)가 ENI 보조 주소 슬롯 하나를 사용합니다. ENI 하나에 여러 prefix를 연결할 수 있지만 ENI 수 한도 자체는 늘어나지 않습니다. kubelet과 리소스 한도 내에서 IP 기준 Pod 밀도를 높이고 주소 할당 API 작업을 줄일 수 있습니다.
+
+`m5.large`의 일반적인 보조 IP 계산 결과는 29 Pod입니다. 호환되는 prefix 모드 관리형 노드 그룹은 권장 `maxPods` 110을 사용할 수 있으며, 제한 없이 “110개 이상”을 실행한다는 뜻이 아닙니다. 이론적인 주소 슬롯 수는 애플리케이션 용량 보장이 아닙니다.
+
+**선행조건과 고려사항:**
+
+* 지원되는 Nitro 인스턴스와 호환 CNI를 사용합니다. Linux IPv4의 역사적 최소 버전은 1.9.0이며 실제 배포에는 현재 지원되는 빌드를 선택합니다.
+* 서브넷에는 연속된 `/28` 블록이 필요합니다. 개별 가용 IP가 많아도 단편화되면 `InsufficientCidrBlocks` 오류가 발생할 수 있습니다. Subnet CIDR reservation으로 prefix 공간을 확보할 수 있습니다.
+* prefix는 실제 서브넷 주소를 블록 단위로 소비합니다. CIDR 확장이나 IP 사용 감소·활용률 향상·비용 절감을 보장하지 않습니다.
+* `WARM_PREFIX_TARGET`은 여유 prefix 수, `WARM_IP_TARGET`은 여유 IP 수, `MINIMUM_IP_TARGET`은 최소 총 할당량입니다. 뒤의 두 설정을 사용하면 `WARM_PREFIX_TARGET`보다 우선합니다. 시작 지연과 미사용 주소 소비를 함께 고려하세요.
+* 교체 노드 그룹과 제어된 cordon/drain 마이그레이션을 계획합니다. 환경변수만 바꾸고 모든 Pod를 재시작하는 것으로 끝내면 안 됩니다. PDB·볼륨·여유 용량·롤백을 확인하고 새 노드를 검증한 후 기존 그룹을 제거하세요.
+
+아래는 **새 클러스터 구성 예제**이며 기존 클러스터의 업데이트 명령이 아닙니다. API는 프라이빗 접근만 허용하므로 관리자의 라우팅 경로가 필요합니다. 버전을 생략하면 EKS 호환 기본 CNI 빌드를 선택하므로, 배포 전 실제 선택 버전을 기록·검토하세요. `withOIDC`는 eksctl의 CNI IAM 통합에 사용되며 생성되는 역할을 확인해야 합니다. 크기 상한·하한은 오토스케일러를 설치하지 않습니다.
+
+```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: my-cluster
+  name: prefix-demo
   region: us-west-2
+  version: "1.36"
 vpc:
   clusterEndpoints:
-    publicAccess: true
+    publicAccess: false
     privateAccess: true
-managedNodeGroups:
-  - name: ng-1
-    instanceType: m5.large
-    minSize: 2
-    maxSize: 5
-    disableIMDSv1: true
 iam:
   withOIDC: true
 addons:
-  - name: vpc-cni
-    version: latest
-    configurationValues: |
-      {
-        "env": {
-          "ENABLE_PREFIX_DELEGATION": "true"
-        }
-      }
+- name: vpc-cni
+  configurationValues: |
+    {"env":{"ENABLE_PREFIX_DELEGATION":"true","WARM_PREFIX_TARGET":"1"}}
+managedNodeGroups:
+- name: prefix-linux
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+  privateNetworking: true
+  disableIMDSv1: true
 ```
-
-**다른 옵션들의 문제점:**
-
-* **포드 간 통신 속도 향상**: 접두사 위임은 포드 간 통신 속도에 직접적인 영향을 미치지 않습니다. 포드 간 통신 성능은 주로 네트워크 인프라와 CNI 구현에 의해 결정됩니다.
-* **포드에 퍼블릭 IP 주소 할당 가능**: 접두사 위임은 포드에 퍼블릭 IP 주소를 할당하는 기능을 제공하지 않습니다. VPC CNI는 포드에 항상 프라이빗 IP 주소를 할당합니다.
-* **포드 네트워크 격리 강화**: 접두사 위임은 포드 네트워크 격리와 관련이 없습니다. 네트워크 격리는 네트워크 정책이나 보안 그룹을 통해 구현됩니다.
-
-접두사 위임은 노드당 최대 포드 수를 증가시켜 클러스터의 밀도와 효율성을 향상시키는 강력한 기능입니다. 특히 대규모 클러스터나 고밀도 워크로드를 실행하는 환경에서 유용합니다.
 
 </details>
 
-6. Amazon EKS 클러스터에서 CoreDNS를 사용자 지정하는 올바른 방법은 무엇인가요?
-   * A) AWS Management Console에서 CoreDNS 설정 수정
-   * B) CoreDNS ConfigMap 수정
-   * C) EKS 클러스터 생성 시 CoreDNS 구성 지정
-   * D) AWS CLI를 사용하여 CoreDNS 애드온 파라미터 업데이트
+6. CoreDNS가 읽는 Corefile을 담고 있는 Kubernetes 객체는 무엇인가요?
+   * A) 노드 보안 그룹
+   * B) coredns ConfigMap
+   * C) StorageClass
+   * D) PodDisruptionBudget
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) CoreDNS ConfigMap 수정**
+**정답: B) coredns ConfigMap**
 
-**설명:** Amazon EKS 클러스터에서 CoreDNS를 사용자 지정하는 올바른 방법은 CoreDNS ConfigMap을 수정하는 것입니다. CoreDNS는 Kubernetes의 클러스터 DNS 서버로, ConfigMap을 통해 구성됩니다. EKS에서는 `coredns` ConfigMap을 수정하여 CoreDNS의 동작을 사용자 지정할 수 있습니다.
+`coredns` ConfigMap의 `data.Corefile`에 DNS 설정이 저장됩니다. 올바른 **설정 소유자**는 EKS 관리형 애드온인지 자체 관리 CoreDNS인지에 따라 다릅니다.
 
-**CoreDNS ConfigMap 수정 방법:**
+관리형 애드온은 AWS 콘솔과 `aws eks update-addon --configuration-values` 모두 지원 필드를 변경할 수 있습니다. ConfigMap 직접 수정은 애드온 업데이트에서 덮어써질 수 있으므로 전체 커스텀 Corefile을 애드온의 `corefile` 설정 키에 저장하세요. 기존 다른 설정 키를 보존하고 정확한 애드온 버전의 스키마를 검토합니다.
 
-1.  **현재 ConfigMap 확인**:
-
-    ```bash
-    kubectl get configmap coredns -n kube-system -o yaml
-    ```
-2.  **ConfigMap 편집**:
-
-    ```bash
-    kubectl edit configmap coredns -n kube-system
-    ```
-3.  **또는 패치 적용**:
-
-    ```bash
-    kubectl patch configmap coredns -n kube-system --type=merge -p '{"data":{"Corefile":".:53 {\n    errors\n    health {\n        lameduck 5s\n    }\n    ready\n    kubernetes cluster.local in-addr.arpa ip6.arpa {\n        pods insecure\n        fallthrough in-addr.arpa ip6.arpa\n        ttl 30\n    }\n    prometheus :9153\n    forward . /etc/resolv.conf\n    cache 30\n    loop\n    reload\n    loadbalance\n    # 사용자 지정 설정 추가\n    hosts {\n        10.0.0.1 example.com\n        fallthrough\n    }\n}"}}'
-    ```
-
-**일반적인 CoreDNS 사용자 지정 사례:**
-
-1.  **사용자 지정 DNS 레코드 추가**:
-
-    ```
-    hosts {
-        10.0.0.1 example.com
-        10.0.0.2 api.example.com
-        fallthrough
-    }
-    ```
-2.  **특정 도메인에 대한 전달 구성**:
-
-    ```
-    forward example.org 10.0.0.1:53
-    ```
-3.  **DNS 캐싱 조정**:
-
-    ```
-    cache {
-        success 10000
-        denial 5000
-        prefetch 10 10 10%
-    }
-    ```
-4.  **로깅 구성**:
-
-    ```
-    log {
-        class error
-    }
-    ```
-5.  **자동 완성 비활성화**:
-
-    ```
-    kubernetes cluster.local in-addr.arpa ip6.arpa {
-        pods insecure
-        fallthrough in-addr.arpa ip6.arpa
-        ttl 30
-        autopath off
-    }
-    ```
-
-**CoreDNS 변경 후 적용:**
-
-ConfigMap을 수정한 후에는 CoreDNS 포드를 재시작하여 변경 사항을 적용해야 합니다:
+새 로컬 작업 디렉터리에서 수정 전 현재 설정을 저장합니다:
 
 ```bash
-# CoreDNS 포드 확인
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-# CoreDNS 포드 재시작
-kubectl rollout restart deployment coredns -n kube-system
-
-# 변경 사항 적용 확인
-kubectl logs -n kube-system -l k8s-app=kube-dns
+set -euo pipefail
+: "${EXAMPLE_CLUSTER:?Set the cluster}"
+: "${EXAMPLE_REGION:?Set the Region}"
+: "${EXAMPLE_KUBECONFIG:?Set a private kubeconfig path}"
+aws eks describe-addon --cluster-name "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --addon-name coredns > coredns-addon-before.json
+COREDNS_VERSION=$(jq -er '.addon.addonVersion' coredns-addon-before.json)
+aws eks describe-addon-configuration --region "$EXAMPLE_REGION" \
+  --addon-name coredns --addon-version "$COREDNS_VERSION" \
+  --query configurationSchema --output text > coredns-schema.json
+jq -e '(.addon.configurationValues // "{}") | fromjson | select(type == "object")' \
+  coredns-addon-before.json > coredns-values-before.json
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system \
+  get configmap coredns -o json | jq -er '.data.Corefile' > Corefile.reviewed
 ```
+`Corefile.reviewed`를 수정할 때 설치 환경이 요구하는 Kubernetes 영역, 전달 설정, `ready`, 상태 확인·모니터링 플러그인을 보존하세요. 아래는 개별 수정 예제이며 전체 Corefile을 대체하지 않습니다:
 
-**CoreDNS 성능 최적화:**
+* 기존 서버 블록에 정적 레코드를 추가합니다. 실제 내부 주소로 바꾸세요:
 
-1.  **자동 확장 구성**:
+```text
+hosts {
+    10.0.0.1 example.com
+    10.0.0.2 api.example.com
+    fallthrough
+}
+```
+* 조건부 전달은 별도 서버 블록으로 구성합니다. 업스트림에 도달할 수 있어야 하며 이 CoreDNS 서비스로 되돌아오는 루프가 없어야 합니다:
 
-    ```yaml
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: coredns-autoscaler
-      namespace: kube-system
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: coredns
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 60
-    ```
-2.  **리소스 요청 및 제한 조정**:
+```text
+example.org:53 {
+    errors
+    forward . 10.0.0.53
+    cache 30
+}
+```
+* 기존 cache 구문을 대체하며 중복 추가하지 않습니다. `prefetch` 기간에는 단위가 필요합니다:
 
-    ```bash
-    kubectl patch deployment coredns -n kube-system --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {"requests": {"cpu": "100m", "memory": "70Mi"}, "limits": {"cpu": "200m", "memory": "170Mi"}}}]'
-    ```
+```text
+cache {
+    success 10000
+    denial 5000
+    prefetch 10 10m 10%
+}
+```
+* 선택적인 오류 클래스 쿼리 로깅입니다. 로그량과 민감한 이름 노출을 검토하세요:
 
-**다른 옵션들의 문제점:**
+```text
+log {
+    class error
+}
+```
+`autopath`는 서버 측 검색 경로 완성을 위한 별도 플러그인이며 `kubernetes` 하위 지시문이 아닙니다. Kubernetes 블록 내부의 `autopath off`는 잘못된 문법입니다. 기존 `autopath @kubernetes`를 비활성화하려면 해당 지시문을 제거하며, 사용하지 않던 설치에 새로 추가할 필요는 없습니다.
 
-* **AWS Management Console에서 CoreDNS 설정 수정**: AWS Management Console에서는 CoreDNS 설정을 직접 수정할 수 있는 인터페이스를 제공하지 않습니다.
-* **EKS 클러스터 생성 시 CoreDNS 구성 지정**: EKS 클러스터 생성 시 CoreDNS의 세부 구성을 지정할 수 없습니다. 클러스터 생성 후 ConfigMap을 수정해야 합니다.
-* **AWS CLI를 사용하여 CoreDNS 애드온 파라미터 업데이트**: AWS CLI를 사용하여 CoreDNS 애드온 버전을 업데이트할 수는 있지만, 세부 구성을 수정할 수는 없습니다. 구성 변경은 ConfigMap을 통해 이루어져야 합니다.
+스키마와 문법을 검토한 뒤 **같은** 애드온 버전의 설정을 업데이트합니다:
 
 ```bash
-# CoreDNS 애드온 버전 업데이트 (구성 변경이 아님)
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name coredns \
-  --addon-version v1.8.7-eksbuild.2 \
-  --resolve-conflicts PRESERVE
+# After reviewing the complete Corefile and existing configuration:
+jq --rawfile corefile Corefile.reviewed '.corefile = $corefile' \
+  coredns-values-before.json > coredns-values-reviewed.json
+COREDNS_UPDATE_ID=$(aws eks update-addon \
+  --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --addon-name coredns --addon-version "$COREDNS_VERSION" \
+  --resolve-conflicts PRESERVE \
+  --configuration-values file://coredns-values-reviewed.json \
+  --query update.id --output text)
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --addon-name coredns --update-id "$COREDNS_UPDATE_ID" \
+  --query 'update.{status:status,errors:errors}'
 ```
+응답이 아직 `InProgress`일 수 있습니다. 해당 업데이트 ID가 `Successful`이 될 때까지 확인하고, 실패하면 오류를 검토하기 전 다른 변경을 진행하지 마세요. 이후 Deployment 준비 상태·로그·내부 Service 조회와 커스텀 DNS 사례를 검증합니다. 복구가 필요하면 같은 설정 소유자를 통해 저장한 구성을 복원합니다.
 
-CoreDNS ConfigMap을 수정하는 것은 EKS 클러스터에서 DNS 설정을 사용자 지정하는 표준 방법입니다. 이를 통해 사용자 지정 DNS 레코드 추가, 특정 도메인에 대한 전달 구성, 캐싱 동작 조정 등 다양한 사용자 지정이 가능합니다.
+자체 관리 CoreDNS는 GitOps·매니페스트 소유자를 통해 검토한 ConfigMap을 수정합니다. `reload`를 사용하면 ConfigMap 반영과 reload 주기 후 Corefile 변경을 감지하므로 재시작이 항상 필요한 것은 아닙니다. reload 오류와 DNS 동작을 확인하세요. Deployment 설정 변경에는 롤아웃이 필요할 수 있습니다.
 
-</details>
-
-7\. Amazon EKS 클러스터에서 멀티 테넌시를 구현하는 가장 효과적인 방법은 무엇인가요? - A) 테넌트별로 별도의 EKS 클러스터 생성 - B) 테넌트별로 별도의 네임스페이스 사용 및 RBAC, 네트워크 정책, 리소스 쿼터 적용 - C) 테넌트별로 별도의 노드 그룹 생성 및 노드 선택기 사용 - D) 테넌트별로 별도의 VPC 사용
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: B) 테넌트별로 별도의 네임스페이스 사용 및 RBAC, 네트워크 정책, 리소스 쿼터 적용**
-
-**설명:** Amazon EKS 클러스터에서 멀티 테넌시를 구현하는 가장 효과적인 방법은 테넌트별로 별도의 네임스페이스를 사용하고, RBAC(역할 기반 접근 제어), 네트워크 정책, 리소스 쿼터를 적용하는 것입니다. 이 접근 방식은 단일 클러스터 내에서 여러 테넌트를 효율적으로 격리하면서도 리소스를 공유할 수 있게 해줍니다.
-
-**네임스페이스 기반 멀티 테넌시 구현:**
-
-1.  **테넌트별 네임스페이스 생성**:
-
-    ```bash
-    # 테넌트별 네임스페이스 생성
-    kubectl create namespace tenant-a
-    kubectl create namespace tenant-b
-    ```
-2.  **RBAC 구성**:
-
-    ```yaml
-    # 테넌트 역할 생성
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      name: tenant-full-access
-      namespace: tenant-a
-    rules:
-    - apiGroups: ["", "apps", "batch"]
-      resources: ["*"]
-      verbs: ["*"]
-    ---
-    # 테넌트 사용자에게 역할 바인딩
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      name: tenant-a-access
-      namespace: tenant-a
-    subjects:
-    - kind: Group
-      name: tenant-a-users
-      apiGroup: rbac.authorization.k8s.io
-    roleRef:
-      kind: Role
-      name: tenant-full-access
-      apiGroup: rbac.authorization.k8s.io
-    ```
-3.  **네트워크 정책 적용**:
-
-    ```yaml
-    # 테넌트 간 통신 제한
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: deny-cross-tenant-traffic
-      namespace: tenant-a
-    spec:
-      podSelector: {}
-      policyTypes:
-      - Ingress
-      - Egress
-      ingress:
-      - from:
-        - namespaceSelector:
-            matchLabels:
-              name: tenant-a
-      egress:
-      - to:
-        - namespaceSelector:
-            matchLabels:
-              name: tenant-a
-      - to:
-        - namespaceSelector:
-            matchLabels:
-              name: kube-system
-    ```
-4.  **리소스 쿼터 설정**:
-
-    ```yaml
-    # 테넌트 리소스 쿼터
-    apiVersion: v1
-    kind: ResourceQuota
-    metadata:
-      name: tenant-quota
-      namespace: tenant-a
-    spec:
-      hard:
-        requests.cpu: "10"
-        requests.memory: 20Gi
-        limits.cpu: "20"
-        limits.memory: 40Gi
-        pods: "50"
-        services: "20"
-        persistentvolumeclaims: "30"
-        secrets: "100"
-        configmaps: "100"
-    ```
-5.  **LimitRange 설정**:
-
-    ```yaml
-    # 기본 리소스 제한 설정
-    apiVersion: v1
-    kind: LimitRange
-    metadata:
-      name: tenant-limits
-      namespace: tenant-a
-    spec:
-      limits:
-      - default:
-          cpu: 500m
-          memory: 512Mi
-        defaultRequest:
-          cpu: 100m
-          memory: 256Mi
-        type: Container
-    ```
-
-**네임스페이스 기반 멀티 테넌시의 이점:**
-
-1. **리소스 효율성**:
-   * 단일 클러스터를 여러 테넌트가 공유하므로 리소스 활용도가 향상됩니다.
-   * 컨트롤 플레인 비용이 절감됩니다.
-2. **관리 용이성**:
-   * 단일 클러스터를 관리하므로 운영 오버헤드가 감소합니다.
-   * 중앙 집중식 모니터링 및 로깅이 가능합니다.
-3. **유연성**:
-   * 테넌트 추가 및 제거가 간단합니다.
-   * 테넌트별 정책을 쉽게 적용할 수 있습니다.
-4. **비용 효율성**:
-   * 클러스터 오버헤드를 여러 테넌트가 공유합니다.
-   * 리소스 활용도가 향상되어 비용이 절감됩니다.
-
-**네임스페이스 기반 멀티 테넌시의 단점:**
-
-1. **격리 수준 제한**:
-   * 네임스페이스는 논리적 격리만 제공하며, 완전한 물리적 격리는 제공하지 않습니다.
-   * 커널 수준 취약점에 노출될 수 있습니다.
-2. **리소스 경합**:
-   * 테넌트 간 리소스 경합이 발생할 수 있습니다.
-   * 노이지 네이버(Noisy Neighbor) 문제가 발생할 수 있습니다.
-3. **보안 위험**:
-   * 클러스터 수준 권한 상승 위험이 있습니다.
-   * 컨테이너 이스케이프 취약점에 노출될 수 있습니다.
-
-**다른 멀티 테넌시 접근 방식:**
-
-1. **클러스터 기반 멀티 테넌시 (테넌트별 별도의 EKS 클러스터)**:
-   * 가장 강력한 격리 제공
-   * 관리 오버헤드 증가
-   * 비용 증가
-   * 대규모 엔터프라이즈 환경이나 규제가 엄격한 산업에 적합
-2. **노드 기반 멀티 테넌시 (테넌트별 별도의 노드 그룹)**:
-   * 중간 수준의 격리 제공
-   * 테넌트별 노드 수준 사용자 지정 가능
-   * 리소스 활용도 감소
-   * 보안 요구 사항이 높지만 비용도 고려해야 하는 경우에 적합
-3. **하이브리드 접근 방식**:
-   * 중요한 테넌트에는 전용 클러스터 제공
-   * 덜 중요한 테넌트는 공유 클러스터에서 네임스페이스로 분리
-   * 유연성과 비용 효율성 균형
-
-**다른 옵션들의 문제점:**
-
-* **테넌트별로 별도의 EKS 클러스터 생성**: 가장 강력한 격리를 제공하지만, 관리 오버헤드와 비용이 크게 증가합니다. 테넌트 수가 많은 경우 확장성 문제가 발생할 수 있습니다.
-* **테넌트별로 별도의 노드 그룹 생성 및 노드 선택기 사용**: 노드 수준의 격리를 제공하지만, 리소스 활용도가 감소하고 관리가 복잡해질 수 있습니다. 또한 노드 그룹만으로는 완전한 격리를 제공하지 않습니다.
-* **테넌트별로 별도의 VPC 사용**: EKS 클러스터는 단일 VPC 내에서 생성되므로, 테넌트별로 별도의 VPC를 사용하려면 테넌트별로 별도의 클러스터를 생성해야 합니다. 이는 관리 오버헤드와 비용을 크게 증가시킵니다.
-
-네임스페이스 기반 멀티 테넌시는 대부분의 사용 사례에서 격리, 관리 용이성, 비용 효율성 간의 최적의 균형을 제공합니다. 그러나 보안 요구 사항이 매우 높은 경우에는 클러스터 기반 멀티 테넌시를 고려해야 할 수 있습니다.
-
-</details>
-
-8. Amazon EKS 클러스터에서 노드 그룹의 인스턴스 유형을 선택할 때 고려해야 할 요소가 아닌 것은 무엇인가요?
-   * A) 워크로드의 CPU 및 메모리 요구 사항
-   * B) 비용 최적화
-   * C) 클러스터의 Kubernetes 버전
-   * D) 필요한 포드 밀도
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: C) 클러스터의 Kubernetes 버전**
-
-**설명:** Amazon EKS 클러스터에서 노드 그룹의 인스턴스 유형을 선택할 때 고려해야 할 요소가 아닌 것은 "클러스터의 Kubernetes 버전"입니다. Kubernetes 버전은 지원되는 기능에 영향을 미치지만, 노드 그룹의 인스턴스 유형 선택에는 직접적인 영향을 미치지 않습니다. 인스턴스 유형은 주로 워크로드 요구 사항, 비용, 포드 밀도 등에 따라 결정됩니다.
-
-**노드 그룹 인스턴스 유형 선택 시 실제 고려 요소:**
-
-1. **워크로드의 CPU 및 메모리 요구 사항**:
-   * 워크로드의 리소스 요구 사항에 맞는 인스턴스 유형 선택
-   * CPU 집약적 워크로드: c5, c6g 등의 컴퓨팅 최적화 인스턴스
-   * 메모리 집약적 워크로드: r5, r6g 등의 메모리 최적화 인스턴스
-   * 균형 잡힌 워크로드: m5, m6g 등의 범용 인스턴스
-   * GPU 워크로드: p3, g4dn 등의 가속 컴퓨팅 인스턴스
-2. **비용 최적화**:
-   * 온디맨드 vs 스팟 인스턴스
-   * 예약 인스턴스 또는 Savings Plans
-   * ARM 기반 Graviton 인스턴스(예: m6g, c6g)를 통한 비용 절감
-   * 적절한 크기의 인스턴스 선택 (오버프로비저닝 방지)
-3. **필요한 포드 밀도**:
-   * 인스턴스 유형에 따라 지원되는 최대 포드 수가 다름
-   * 각 인스턴스 유형의 ENI 수와 ENI당 IP 주소 수 고려
-   * 고밀도 워크로드의 경우 더 많은 ENI와 IP 주소를 지원하는 인스턴스 유형 선택
-4. **네트워킹 요구 사항**:
-   * 네트워크 대역폭 요구 사항
-   * 향상된 네트워킹 지원 (ENA, EFA 등)
-   * 인스턴스 유형에 따라 네트워크 성능이 다름
-5. **스토리지 요구 사항**:
-   * 로컬 인스턴스 스토리지 필요 여부 (예: i3, d3 인스턴스)
-   * EBS 최적화 지원
-   * 스토리지 처리량 및 IOPS 요구 사항
-6. **가용성 요구 사항**:
-   * 인스턴스 유형의 리전별 가용성
-   * 스팟 인스턴스 사용 시 중단 가능성
-   * 가용 영역별 인스턴스 유형 가용성
-
-**인스턴스 유형 선택 예시:**
-
-1.  **웹 애플리케이션 서버**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: web-servers
-        instanceType: m5.large
-        minSize: 2
-        maxSize: 10
-        labels:
-          role: web
-    ```
-2.  **데이터베이스 워크로드**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: database-nodes
-        instanceType: r5.xlarge
-        minSize: 3
-        maxSize: 5
-        labels:
-          role: database
-    ```
-3.  **배치 처리 워크로드**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: batch-processors
-        instanceType: c5.2xlarge
-        minSize: 0
-        maxSize: 20
-        labels:
-          role: batch
-    ```
-4.  **비용 최적화 워크로드**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: spot-workers
-        instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
-        minSize: 2
-        maxSize: 10
-        spot: true
-        labels:
-          lifecycle: spot
-    ```
-
-**Kubernetes 버전과 인스턴스 유형의 관계:**
-
-Kubernetes 버전은 다음과 같은 측면에서 클러스터에 영향을 미치지만, 인스턴스 유형 선택에는 직접적인 영향을 미치지 않습니다:
-
-1. **지원되는 기능**:
-   * 새로운 Kubernetes 버전은 새로운 기능을 제공합니다.
-   * 일부 기능은 특정 버전에서만 사용 가능합니다.
-2. **API 호환성**:
-   * 새로운 버전에서는 일부 API가 변경되거나 제거될 수 있습니다.
-   * 애플리케이션이 특정 API에 의존하는 경우 버전 선택이 중요합니다.
-3. **보안 패치**:
-   * 최신 버전은 최신 보안 패치를 포함합니다.
-   * 오래된 버전은 보안 취약점에 노출될 수 있습니다.
-4. **지원 기간**:
-   * 각 Kubernetes 버전은 제한된 기간 동안만 지원됩니다.
-   * EKS는 각 버전을 약 14개월 동안 지원합니다.
-
-인스턴스 유형 선택은 주로 워크로드의 리소스 요구 사항, 비용 최적화, 포드 밀도 등에 따라 결정되며, Kubernetes 버전과는 직접적인 관련이 없습니다. 따라서 "클러스터의 Kubernetes 버전"은 노드 그룹의 인스턴스 유형을 선택할 때 고려해야 할 주요 요소가 아닙니다.
-
-</details>
-
-9\. Amazon EKS 클러스터에서 노드 그룹 업데이트 중 포드 중단을 최소화하기 위한 가장 효과적인 방법은 무엇인가요? - A) 롤링 업데이트 전략 사용 - B) PodDisruptionBudget 구성 - C) 노드 그룹 업데이트 전 모든 포드 수동 마이그레이션 - D) 블루/그린 배포 전략 사용
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: B) PodDisruptionBudget 구성**
-
-**설명:** Amazon EKS 클러스터에서 노드 그룹 업데이트 중 포드 중단을 최소화하기 위한 가장 효과적인 방법은 PodDisruptionBudget(PDB)을 구성하는 것입니다. PDB는 자발적 중단(voluntary disruption) 중에 동시에 중단될 수 있는 포드의 수를 제한하여 애플리케이션의 가용성을 보장합니다. 노드 그룹 업데이트는 자발적 중단으로 간주되므로, PDB를 통해 업데이트 중 애플리케이션의 가용성을 유지할 수 있습니다.
-
-**PodDisruptionBudget 작동 방식:**
-
-1. **PDB 정의**:
-   * `minAvailable`: 항상 사용 가능해야 하는 최소 포드 수 또는 비율 지정
-   * `maxUnavailable`: 동시에 사용할 수 없는 최대 포드 수 또는 비율 지정
-   * 두 옵션 중 하나만 지정해야 함
-2. **PDB 적용**:
-   * 노드 드레이닝(draining) 중 Kubernetes는 PDB를 준수
-   * PDB 위반 시 드레이닝 프로세스가 일시 중지됨
-   * 새 포드가 다른 노드에서 실행되면 드레이닝 계속 진행
-
-**PodDisruptionBudget 예시:**
+**스케일링과 리소스:** AWS 선행조건을 만족하는 EKS 관리형 CoreDNS 버전은 `autoScaling` 설정 객체를 지원합니다. 복제본 수를 제어하는 컨트롤러는 하나로 유지하세요. 아래 CPU HPA는 **자체 관리 CoreDNS의 대안**이며 Metrics Server와 CPU requests가 필요합니다. EKS CoreDNS 오토스케일링과 함께 실행하면 안 됩니다:
 
 ```yaml
-# 최소 2개의 포드가 항상 사용 가능하도록 보장
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: coredns-autoscaler
+  namespace: kube-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: coredns
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+```
+복제본 2–10개와 목표 60%는 실측에 따른 사이징이 아닌 예시입니다. 메모리·CPU throttling·캐시 증가·토폴로지·DNS 지연을 검토하고, 컨테이너 배열 인덱스로 resources 객체 전체를 덮어쓰지 말고 애드온 스키마 또는 자체 관리 워크로드 소유자를 통해 변경하세요.
+
+</details>
+
+7. 하나의 EKS 클러스터를 공유하는 신뢰 가능한 팀의 논리적 격리에 도움이 되는 조합은 무엇인가요?
+   * A) 네임스페이스만 사용
+   * B) 네임스페이스·RBAC·집행되는 정책·쿼터
+   * C) 노드 선택기만 사용
+   * D) 공유 cluster-admin 역할
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) 네임스페이스·RBAC·집행되는 정책·쿼터**
+
+서로 신뢰하는 팀이 클러스터를 공유할 때 네임스페이스·RBAC·실제로 집행되는 네트워크 정책·쿼터를 조합하면 논리적인 분리에 도움이 됩니다. 악의적인 테넌트까지 보편적으로 격리하는 해법은 아닙니다.
+
+플랫폼 관리자는 새 `tenant-a`·`tenant-b` 네임스페이스를 만들고 적절한 Pod Security Admission 정책을 적용합니다. 이 Linux EKS 1.36 예제는 Restricted와 버전 `v1.36`을 사용합니다. 아래는 `tenant-a` 정책이며, `tenant-b`에도 대응하는 정책을 검토해 적용하세요. `tenant-a-users`에 대한 인증된 그룹 매핑도 필요합니다.
+
+애플리케이션 권한을 명시적으로 나열했습니다. 이 Role로 테넌트가 ResourceQuota·LimitRange·NetworkPolicy·Role·RoleBinding을 직접 바꿀 수는 없습니다. 클러스터 범위 리소스는 플랫폼이 관리합니다.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-workloads
+  namespace: tenant-a
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "deployments/scale", "statefulsets/scale"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["services", "configmaps", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "events"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-a-access
+  namespace: tenant-a
+subjects:
+- kind: Group
+  name: tenant-a-users
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: tenant-workloads
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-boundary
+  namespace: tenant-a
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant-quota
+  namespace: tenant-a
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    pods: "50"
+    services: "20"
+    persistentvolumeclaims: "30"
+    secrets: "100"
+    configmaps: "100"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tenant-limits
+  namespace: tenant-a
+spec:
+  limits:
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 256Mi
+    type: Container
+```
+**한계와 검증:**
+
+* 워크로드 생성 권한으로 네임스페이스의 사용 가능한 ServiceAccount나 Secret 마운트를 이용할 수 있습니다. 이 Role은 테넌트 내부 Secret 기밀성 경계가 아닙니다. 허용된 신원·마운트·보안 설정을 admission 정책으로 제한하고 플랫폼 자격 증명은 테넌트 네임스페이스 밖에 둡니다.
+* DNS 규칙은 `kube-system`의 `k8s-app=kube-dns` 레이블을 가진 일반 CoreDNS Pod를 가정합니다. NodeLocal DNSCache 등 다른 DNS 경로는 수정·검증해야 합니다. 시스템 Pod로의 모든 egress가 아닌 DNS 쿼리만 허용하며, 다른 네임스페이스의 DNS 이름을 숨기지는 않습니다.
+* 쿼터는 승인되는 리소스 요청·개수를 제한하지만 물리 노드 예약·대역폭 보장·noisy neighbor 제거를 보장하지 않습니다. LimitRange 값은 예시 기본값입니다.
+* 온보딩 전에 테넌트 신원으로 실제 권한, 허용 연결, 테넌트 간 차단과 쿼터 거부 사례를 검증합니다.
+* 전용 노드 그룹은 일부 공유를 줄이지만 노드 선택기·테인트만으로 보안 경계를 만들지는 않습니다. 강한 격리가 필요하면 샌드박스 런타임·가상 제어 플레인·별도 클러스터·계정·네트워크를 공통 의존성과 운영 비용까지 포함해 평가하세요.
+
+네임스페이스 공유는 제어 플레인 부담을 줄이고 중앙 운영을 단순화할 수 있습니다. 보편적으로 “최적”이라는 주장 대신 필요한 격리 수준에 따라 설계를 선택해야 합니다.
+
+</details>
+
+8. EC2 인스턴스 유형의 기술적 용량 자체를 바꾸지 않는 항목은 무엇인가요?
+   * A) vCPU와 메모리 크기
+   * B) 네트워크·스토리지 한도
+   * C) 표시용 이름 태그
+   * D) ENI와 주소 한도
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 표시용 이름 태그**
+
+인스턴스 선택에는 CPU·메모리·가속기 요구, 아키텍처 호환 이미지·AMI·드라이버, Pod 밀도, 네트워크 대역폭, EBS·인스턴스 스토어 성능, AZ 가용성, 중단 허용 범위와 비용이 중요합니다. Kubernetes 버전도 지원 AMI·드라이버·기능을 통해 영향을 줄 수 있으므로 무관한 요소가 아닙니다.
+
+아래 기존 계열 예시는 워크로드 특성을 설명하며 현재 가격·성능 순위가 아닙니다. `m5`는 범용, `r5`는 메모리 최적화, `c5`는 컴퓨팅 최적화입니다. Graviton 대안은 Arm 호환 이미지와 의존성이 필요합니다. GPU 워크로드에는 적절한 가속기 AMI와 디바이스 플러그인도 필요합니다. 인스턴스 스토어 데이터는 임시적이며 레이블만으로 DB 내구성이나 배치를 제공하지 않습니다.
+
+아래는 검토된 기존 클러스터에 사용하는 **대안별 노드 그룹 구성 파일**입니다(`eksctl create nodegroup -f ...`). 미사용 그룹 이름과 필요한 egress·Endpoint가 있는 프라이빗 서브넷을 사용하고 실제 리전·AZ 제공 여부를 확인합니다. 상한·하한 설정은 Cluster Autoscaler를 설치하지 않습니다. 크기 0인 배치 그룹은 올바른 오토스케일러 또는 수동 확장이 필요합니다.
+
+**웹 서버**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: web-servers
+  instanceType: m5.large
+  minSize: 2
+  maxSize: 10
+  labels:
+    role: web
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+
+**데이터베이스 워크로드**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: database-nodes
+  instanceType: r5.xlarge
+  minSize: 3
+  maxSize: 5
+  labels:
+    role: database
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+
+**배치 처리**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: batch-processors
+  instanceType: c5.2xlarge
+  minSize: 0
+  maxSize: 20
+  labels:
+    role: batch
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+
+**중단을 허용하는 Spot 워커**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: spot-workers
+  instanceTypes:
+  - m5.large
+  - m5a.large
+  - m5d.large
+  - m5ad.large
+  minSize: 2
+  maxSize: 10
+  spot: true
+  labels:
+    lifecycle: spot
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+EKS는 버전별 표준 지원 14개월 후 연장 지원 12개월을 제공합니다. 업스트림 Kubernetes 릴리스와 별도로 EKS 지원 일정·업그레이드 조건·애드온 호환성을 확인하세요. 이 예제는 실측 비용 절감이나 용량을 주장하지 않습니다.
+
+</details>
+
+9. 드레인 중 자발적인 Pod 축출을 제한하는 Kubernetes 객체는 무엇인가요?
+   * A) StorageClass
+   * B) PodDisruptionBudget
+   * C) ConfigMap
+   * D) IngressClass
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) PodDisruptionBudget**
+
+PDB는 Eviction API를 통한 자발적 축출을 제한합니다. 업데이트 전략의 일부이며 가용성을 보장하지 않습니다. 노드 장애·직접 Pod 삭제·Deployment 자체 롤링 업데이트를 PDB가 막지는 않습니다.
+
+검토된 `update-lab` Deployment에 `app=my-app` 레이블의 복제본이 3개 있다고 가정하면, 다음 예제는 선택된 정상 Pod가 최소 2개 남을 때만 축출을 허용합니다:
+
+```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: app-pdb
-  namespace: default
+  namespace: update-lab
 spec:
   minAvailable: 2
   selector:
     matchLabels:
       app: my-app
 ```
+대안은 `maxUnavailable: "50%"`이며 두 예산 필드 중 하나만 지정합니다. 비율은 **올림**하므로 3개 중 2개 또는 1개 중 1개의 중단을 허용합니다. 절반 이상이 항상 남는다는 약속이 아닙니다. 쿼럼·준비 상태·워크로드 동작·스케줄 가능한 여유 용량에 맞춰 예산을 정하세요.
 
-```yaml
-# 최대 50%의 포드만 동시에 사용 불가능하도록 제한
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: app-pdb
-  namespace: default
-spec:
-  maxUnavailable: 50%
-  selector:
-    matchLabels:
-      app: my-app
-```
+관리형 노드 그룹의 `DEFAULT` 업데이트는 선택한 기존 노드를 드레인하기 전에 대체 용량을 시작합니다. `MINIMAL`은 선택한 기존 노드를 먼저 종료하여 일시적인 추가 용량 필요를 줄입니다. `maxUnavailable`은 동시에 사용할 수 없는 노드 수를 제어하며 PDB는 Pod 축출을 별도로 제한합니다. 축출 보호를 무시할 수 있는 `--force`를 드레인 정체의 일상적인 해결책으로 사용하지 마세요.
 
-**EKS 노드 그룹 업데이트 프로세스:**
-
-1. **업데이트 시작**:
-   * 새 노드 생성
-   * 새 노드가 클러스터에 조인
-2. **노드 드레이닝**:
-   * 기존 노드에 코드네이션(cordoning) 적용 (새 포드 스케줄링 방지)
-   * 기존 노드에서 포드 드레이닝 (포드 이전)
-   * PDB 준수하며 포드 이전
-3. **노드 종료**:
-   * 모든 포드가 이전되면 노드 종료
-   * 다음 노드에 대해 프로세스 반복
-
-**PDB 구성 모범 사례:**
-
-1. **적절한 복제본 수 설정**:
-   * PDB가 효과적으로 작동하려면 충분한 복제본이 필요
-   * 최소 3개 이상의 복제본 권장
-2. **적절한 PDB 값 선택**:
-   * 애플리케이션 특성에 맞는 값 선택
-   * 너무 제한적인 값은 업데이트를 지연시킬 수 있음
-   * 너무 느슨한 값은 가용성에 영향을 줄 수 있음
-3. **모든 중요 워크로드에 PDB 적용**:
-   * 상태 저장(stateful) 애플리케이션
-   * 사용자 대면(user-facing) 서비스
-   * 시스템 구성 요소
-4. **PDB 테스트**:
-   * 업데이트 전 PDB 동작 테스트
-   * 드레이닝 시뮬레이션으로 가용성 확인
-
-**노드 그룹 업데이트 구성:**
+노드 업데이트 정책을 먼저 설정하고 해당 업데이트가 성공한 **후에** 버전 업데이트를 시작합니다:
 
 ```bash
-# 관리형 노드 그룹 업데이트 구성 수정
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
-  --update-config '{"maxUnavailable": 1}'
-
-# 또는 eksctl 사용
-eksctl update nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
-  --max-unavailable 1
+set -euo pipefail
+NODEGROUP_UPDATE_ID=$(aws eks update-nodegroup-config \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --update-config '{"maxUnavailable":1,"updateStrategy":"DEFAULT"}' \
+  --query update.id --output text)
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --nodegroup-name "$EXAMPLE_NODEGROUP" --update-id "$NODEGROUP_UPDATE_ID" \
+  --query 'update.{status:status,errors:errors}'
 ```
-
-**다른 옵션들의 문제점:**
-
-* **롤링 업데이트 전략 사용**: EKS 관리형 노드 그룹은 이미 기본적으로 롤링 업데이트 전략을 사용합니다. 그러나 롤링 업데이트만으로는 포드 중단을 제어할 수 없으며, PDB와 함께 사용해야 효과적입니다.
-* **노드 그룹 업데이트 전 모든 포드 수동 마이그레이션**: 이는 시간이 많이 소요되고 오류가 발생하기 쉬운 수동 프로세스입니다. 또한 대규모 클러스터에서는 실용적이지 않습니다.
-* **블루/그린 배포 전략 사용**: 블루/그린 배포는 새 노드 그룹을 생성하고 워크로드를 마이그레이션한 후 기존 노드 그룹을 삭제하는 방식입니다. 이는 효과적인 전략이지만, 리소스 중복으로 인한 비용 증가와 복잡한 구현이 단점입니다. 또한 PDB와 함께 사용하는 것이 좋습니다.
-
-PodDisruptionBudget은 노드 그룹 업데이트 중 포드 중단을 제어하는 Kubernetes 네이티브 방식으로, 애플리케이션의 가용성을 보장하면서 노드 그룹을 안전하게 업데이트할 수 있게 해줍니다. 따라서 노드 그룹 업데이트 중 포드 중단을 최소화하기 위한 가장 효과적인 방법은 PodDisruptionBudget을 구성하는 것입니다.
+해당 ID의 `describe-update`가 `Successful`이 될 때까지 확인하고 `Failed`·`Cancelled`를 명시적으로 처리합니다. 기존의 eksctl `update nodegroup --max-unavailable`은 지원되는 대체 명령이 아닙니다. 실제 PDB의 `disruptionsAllowed`, 준비 상태, 애플리케이션 상태와 볼륨 이동을 확인하세요. 복제본 3개는 보편적인 최소 요구가 아닌 예제입니다.
 
 </details>
 
-10. Amazon EKS 클러스터에서 노드 그룹의 Auto Scaling 동작을 제어하는 데 사용되지 않는 것은 무엇인가요?
-    * A) Cluster Autoscaler
-    * B) Karpenter
-    * C) Horizontal Pod Autoscaler
-    * D) Vertical Pod Autoscaler
+10. Pod의 CPU·메모리 요청값을 권장하거나 변경하는 컨트롤러는 무엇인가요?
+   * A) Cluster Autoscaler
+   * B) Karpenter
+   * C) Horizontal Pod Autoscaler
+   * D) Vertical Pod Autoscaler
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: D) Vertical Pod Autoscaler**
 
-**설명:** Amazon EKS 클러스터에서 노드 그룹의 Auto Scaling 동작을 제어하는 데 사용되지 않는 것은 Vertical Pod Autoscaler(VPA)입니다. VPA는 포드의 CPU 및 메모리 요청을 자동으로 조정하는 데 사용되지만, 노드 그룹의 크기를 조정하는 데는 사용되지 않습니다. 노드 그룹의 Auto Scaling은 주로 Cluster Autoscaler, Karpenter, 그리고 간접적으로 Horizontal Pod Autoscaler(HPA)에 의해 제어됩니다.
+VPA는 Pod 리소스 요청을 권장하거나 갱신하며 HPA는 복제본 수를 바꿉니다. **둘 다** 노드 수요에 간접적으로 영향을 줄 수 있지만 관리형 노드 그룹의 ASG를 직접 관리하지는 않습니다.
 
-**노드 그룹 Auto Scaling 도구:**
+| 구성 요소 | 제어 대상 |
+| --- | --- |
+| Cluster Autoscaler | 스케줄 가능성과 안전한 제거 조건에 따라 검색된 기존 노드 그룹·ASG의 원하는 용량 |
+| Karpenter | NodePool·EC2NodeClass로 선택한 자체 NodeClaim·EC2 용량; 관리형 노드 그룹 ASG는 아님 |
+| HPA / KEDA | 리소스·사용자 정의·외부 메트릭이나 이벤트에 따른 워크로드 복제본 |
+| VPA | 업데이트 모드에 따른 Pod 리소스 권장값·요청값 |
 
-1.  **Cluster Autoscaler**:
+**Cluster Autoscaler:** 클러스터와 같은 Kubernetes 마이너 버전을 사용합니다. EKS 1.36 예제에서 차트 9.59.0은 이미지 `v1.36.1`을 명시해야 합니다(차트 기본 이미지는 1.35.0). 먼저 태그로 제한한 IAM 권한과 ASG 검색 태그를 검토하고 전용 `cluster-autoscaler` ServiceAccount를 구성하세요. 설치 전에 렌더링한 RBAC·이미지·인수를 확인합니다:
 
-    * 노드 그룹의 크기를 자동으로 조정하는 Kubernetes 구성 요소
-    * 포드가 스케줄링될 수 없을 때 노드 추가
-    * 노드가 충분히 활용되지 않을 때 노드 제거
-    * AWS Auto Scaling Group과 통합
+```bash
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm repo update autoscaler
+helm template cluster-autoscaler autoscaler/cluster-autoscaler \
+  --version 9.59.0 --namespace kube-system \
+  --set-string autoDiscovery.clusterName="${EXAMPLE_CLUSTER:?}" \
+  --set-string awsRegion="${EXAMPLE_REGION:?}" \
+  --set-string image.tag=v1.36.1 \
+  --set rbac.serviceAccount.create=false \
+  --set-string rbac.serviceAccount.name=cluster-autoscaler \
+  > cluster-autoscaler-reviewed.yaml
+```
+로컬 스토리지 보호를 임의로 비활성화하거나 ASG 대상 추적·예측 정책이 같은 desired capacity를 놓고 Cluster Autoscaler와 경쟁하게 하지 마세요.
 
-    ```yaml
-    # Cluster Autoscaler 배포
+**Karpenter 대안:** 호환 컨트롤러를 별도로 설치하고 권한을 구성합니다. AMI ID·노드 역할·검색 태그 값을 이 클러스터의 검토된 리소스로 바꾸세요. AMI는 AL2023·Kubernetes 버전·아키텍처와 일치해야 합니다. `al2023@latest`를 조용히 선택하는 대신 AMI ID 또는 검증한 버전 별칭을 고정합니다. 아래 상한과 통합 주기는 실측 사이징이나 프로비저닝 속도 보장이 아닌 예제입니다.
+
+```yaml
+# Karpenter NodePool (karpenter.sh/v1)
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default-class
+  limits:
+    cpu: 1000
+    memory: 1000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+---
+# Karpenter EC2NodeClass (karpenter.k8s.aws/v1)
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default-class
+spec:
+  amiFamily: AL2023
+  amiSelectorTerms:
+    - id: ami-REPLACE_WITH_VERIFIED_AL2023_AMI
+  role: KarpenterNodeRole-my-cluster
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+```
+**HPA:** 아래 예제에는 `autoscaling-lab`의 기존 `my-app` Deployment, Metrics Server와 CPU requests가 필요합니다:
+
+```yaml
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app-hpa
+  namespace: autoscaling-lab
+spec:
+  scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    metadata:
-      name: cluster-autoscaler
-      namespace: kube-system
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: cluster-autoscaler
-      template:
-        metadata:
-          labels:
-            app: cluster-autoscaler
-        spec:
-          serviceAccountName: cluster-autoscaler
-          containers:
-          - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
-            name: cluster-autoscaler
-            command:
-            - ./cluster-autoscaler
-            - --v=4
-            - --stderrthreshold=info
-            - --cloud-provider=aws
-            - --skip-nodes-with-local-storage=false
-            - --expander=least-waste
-            - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
-    ```
-2.  **Karpenter**:
-
-    * AWS의 오픈 소스 노드 프로비저닝 프로젝트
-    * 워크로드 요구 사항에 맞는 최적의 인스턴스 유형 선택
-    * 빠른 노드 프로비저닝 (초 단위)
-    * 비용 최적화 및 통합 수명 주기 관리
-
-    ```yaml
-    # Karpenter Provisioner
-    apiVersion: karpenter.sh/v1alpha5
-    kind: NodePool
-    metadata:
-      name: default
-    spec:
-      template:
-        spec:
-          requirements:
-            - key: karpenter.sh/capacity-type
-              operator: In
-              values: ["spot", "on-demand"]
-          nodeClassRef:
-            name: default-class
-      limits:
-        cpu: 1000
-          memory: 1000Gi
-      provider:
-        subnetSelector:
-          karpenter.sh/discovery: "true"
-        securityGroupSelector:
-          karpenter.sh/discovery: "true"
-      ttlSecondsAfterEmpty: 30
-    ```
-3.  **Horizontal Pod Autoscaler (HPA)**:
-
-    * 포드의 복제본 수를 자동으로 조정
-    * CPU, 메모리 또는 사용자 지정 메트릭에 기반
-    * 간접적으로 노드 그룹 Auto Scaling 트리거 가능
-    * Cluster Autoscaler 또는 Karpenter와 함께 작동
-
-    ```yaml
-    # Horizontal Pod Autoscaler
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: my-app-hpa
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: my-app
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 70
-    ```
-
-**Vertical Pod Autoscaler (VPA):**
-
-VPA는 포드의 CPU 및 메모리 요청을 자동으로 조정하는 데 사용되지만, 노드 그룹의 크기를 직접 조정하지는 않습니다:
+    name: my-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+```
+**VPA:** 먼저 VPA CRD·컨트롤러를 설치합니다. 권장값만 제공하는 모드로 시작하고 권장값을 검토한 후 지원되는 명시적 업데이트 모드를 선택하세요:
 
 ```yaml
 # Vertical Pod Autoscaler
@@ -1469,13 +896,14 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: my-app-vpa
+  namespace: autoscaling-lab
 spec:
   targetRef:
     apiVersion: "apps/v1"
     kind: Deployment
     name: my-app
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Off"
   resourcePolicy:
     containerPolicies:
     - containerName: '*'
@@ -1487,40 +915,7 @@ spec:
         memory: 500Mi
       controlledResources: ["cpu", "memory"]
 ```
-
-VPA는 다음과 같은 기능을 제공합니다:
-
-* 포드의 리소스 요청 자동 조정
-* 리소스 사용량 기반 권장 사항 제공
-* 포드 재시작을 통한 리소스 요청 업데이트
-
-그러나 VPA는 노드 그룹의 크기를 직접 조정하지 않으며, 포드 수준의 리소스 할당에만 영향을 미칩니다.
-
-**노드 그룹 Auto Scaling 전략:**
-
-1. **반응형 확장 (Reactive Scaling)**:
-   * Cluster Autoscaler 사용
-   * 포드가 스케줄링될 수 없을 때 노드 추가
-   * 리소스 활용도가 낮을 때 노드 제거
-   * 예측 가능한 워크로드에 적합
-2. **예측형 확장 (Predictive Scaling)**:
-   * AWS Auto Scaling 예측 조정 사용
-   * 과거 패턴을 기반으로 미래 수요 예측
-   * 수요 증가 전에 미리 용량 확보
-   * 주기적인 패턴이 있는 워크로드에 적합
-3. **이벤트 기반 확장 (Event-driven Scaling)**:
-   * KEDA(Kubernetes Event-driven Autoscaling) 사용
-   * 외부 이벤트 또는 메트릭에 기반한 확장
-   * 큐 길이, 이벤트 수 등에 따른 확장
-   * 배치 처리, 이벤트 처리 워크로드에 적합
-
-**다른 옵션들의 설명:**
-
-* **Cluster Autoscaler**: 노드 그룹의 Auto Scaling을 직접 제어하는 Kubernetes 구성 요소로, 포드 스케줄링 요구 사항에 따라 노드를 추가하거나 제거합니다.
-* **Karpenter**: AWS의 오픈 소스 노드 프로비저닝 프로젝트로, 워크로드 요구 사항에 맞는 최적의 인스턴스를 빠르게 프로비저닝합니다. Cluster Autoscaler의 대안으로 사용될 수 있습니다.
-* **Horizontal Pod Autoscaler**: 포드의 복제본 수를 자동으로 조정하며, 이로 인해 더 많은 포드가 생성되면 간접적으로 Cluster Autoscaler 또는 Karpenter를 트리거하여 노드 그룹의 크기를 조정할 수 있습니다.
-
-Vertical Pod Autoscaler는 포드의 리소스 요청을 조정하는 데 사용되지만, 노드 그룹의 크기를 직접 조정하지는 않습니다. 따라서 노드 그룹의 Auto Scaling 동작을 제어하는 데 사용되지 않는 것은 Vertical Pod Autoscaler입니다.
+`Off`는 Pod 리소스를 변경하지 않습니다. 권장값 적용은 VPA·Kubernetes 버전과 설정에 따라 재생성 또는 지원되는 in-place resizing을 사용할 수 있으므로 모든 모드가 재시작한다고 설명하면 안 됩니다. CPU 사용률 HPA가 같은 워크로드를 제어할 때 CPU requests를 변경하면 사용률 분모를 통해 피드백이 발생합니다. 이 권장 전용 예제는 통합 설계를 검토하기 전 충돌을 피합니다.
 
 </details>
 
@@ -1528,544 +923,562 @@ Vertical Pod Autoscaler는 포드의 리소스 요청을 조정하는 데 사용
 
 ### 실습 1: EKS 클러스터에서 네트워크 정책 구현
 
-**시나리오:** 당신은 회사의 보안 엔지니어로, EKS 클러스터에서 마이크로서비스 간의 네트워크 트래픽을 제한해야 합니다. 특히, 프론트엔드 서비스만 백엔드 API에 접근할 수 있도록 하고, 데이터베이스는 백엔드 API에서만 접근할 수 있도록 해야 합니다.
+**시나리오:** frontend → backend와 backend → database는 허용하고 frontend → database는 차단합니다. 원래의 Calico 학습 목표를 유지하며 IP 할당은 AWS VPC CNI가 담당합니다.
 
-**요구사항:**
+**범위:** 기존의 폐기 가능한 Linux IPv4 EKS 실습 클러스터, 충돌하는 전역·tier 정책 없음, 일반 CoreDNS와 관리자가 검토한 Calico 설치를 가정합니다. 연결 실습이며 프로덕션 마이크로서비스·DB 구성법이 아닙니다. 이번 감사에서 클라우드 설치나 트래픽 테스트를 실행하지 않았습니다.
 
-1. Calico 네트워크 정책 엔진 설치
-2. 기본 거부 정책 구현
-3. 프론트엔드에서 백엔드로의 트래픽 허용
-4. 백엔드에서 데이터베이스로의 트래픽 허용
-5. 정책 테스트
-
-**해결 방법:**
 
 <details>
+<summary>솔루션 보기</summary>
 
-<summary>해결 방법 보기</summary>
+**1. 정책 엔진 준비.** 공식 Calico EKS 안내의 **Amazon VPC networking** 경로를 따릅니다. 기본 AWS VPC CNI NetworkPolicy 집행은 Calico와 충돌하므로 설정 소유자를 통해 비활성화하되 `aws-node` 네트워킹은 유지합니다. `ANNOTATE_POD_IP=true`와 해당 ServiceAccount의 Pod patch 권한을 구성합니다. 아래 전용 RBAC는 애드온의 ClusterRole YAML에 잘못된 내용을 덧붙이지 않고 권한을 추가하는 예제입니다:
 
-**1. Calico 네트워크 정책 엔진 설치**
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: calico-vpc-cni-pod-annotation
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: calico-vpc-cni-pod-annotation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: calico-vpc-cni-pod-annotation
+subjects:
+- kind: ServiceAccount
+  name: aws-node
+  namespace: kube-system
+```
+RBAC를 저장·검토한 후 의도한 `aws-node` ServiceAccount에만 적용하고, 환경변수는 관리형 애드온 또는 자체 관리 매니페스트 소유자를 통해 설정합니다. 롤아웃과 IP annotation 동작이 정상임을 확인하기 전에는 진행하지 않습니다. 이미 Calico가 설치되어 있다면 아래 신규 설치 명령을 실행하지 말고 기존 구성을 검토해 사용하세요.
 
 ```bash
-# Tigera Operator 설치
-kubectl create namespace tigera-operator
-helm repo add projectcalico https://docs.projectcalico.org/charts
-helm install calico projectcalico/tigera-operator --namespace tigera-operator
+# Download pinned manifests for inspection; do not overwrite an existing installation.
+curl --fail --location --output calico-crds.yaml \
+  https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml
+curl --fail --location --output tigera-operator.yaml \
+  https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml
+# After review, on the intended new lab installation:
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" create -f calico-crds.yaml
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" create -f tigera-operator.yaml
+```
+오퍼레이터 CRD가 Established 상태가 되면 아래 검토된 `Installation`과 `APIServer`를 생성합니다. 오퍼레이터 설치만으로 AWS VPC 네트워킹 구성이 끝나지는 않습니다. `projectcalico.org/v3` 정책 예제에는 API 서버가 필요합니다:
 
-# 설치 확인
-kubectl get pods -n calico-system
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  kubernetesProvider: EKS
+  cni:
+    type: AmazonVPC
+  calicoNetwork:
+    bgp: Disabled
+---
+apiVersion: operator.tigera.io/v1
+kind: APIServer
+metadata:
+  name: default
+spec: {}
 ```
 
-**2. 네임스페이스 및 샘플 애플리케이션 생성**
+```bash
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" get tigerastatus
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" get apiservice v3.projectcalico.org
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n calico-system get pods
+```
+Calico 구성 요소와 집계 API가 사용 가능해야 하며, 실제 집행은 아래에서 검증합니다. Node의 `Ready`만으로는 충분하지 않습니다. 선택적인 Goldmane·Whisker UI는 이 실습에 필요하지 않습니다.
+
+**2. 소유권을 기록한 네임스페이스와 임시 DB 자격 증명 생성.** 이후 코드는 같은 Bash 세션에서 실행합니다. 정리 시 다른 네임스페이스를 대상으로 삼지 않도록 이름과 UID를 기록합니다:
 
 ```bash
-# 네임스페이스 생성
-kubectl create namespace microservices
+set -euo pipefail
+umask 077
+: "${EXAMPLE_KUBECONFIG:?Use the reviewed lab cluster kubeconfig}"
+NETWORK_LAB_DIR=$(mktemp -d /tmp/eks-calico-lab.XXXXXX)
+NETWORK_NAMESPACE="calico-quiz-$(date +%s)-$$"
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" create namespace "$NETWORK_NAMESPACE"
+NETWORK_NAMESPACE_UID=$(kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" \
+  get namespace "$NETWORK_NAMESPACE" -o jsonpath='{.metadata.uid}')
+: "${NETWORK_NAMESPACE_UID:?}"
+jq -n --arg name "$NETWORK_NAMESPACE" --arg uid "$NETWORK_NAMESPACE_UID" \
+  '{namespace:$name,namespaceUID:$uid}' > "$NETWORK_LAB_DIR/ownership.json"
+openssl rand -hex 32 > "$NETWORK_LAB_DIR/db-password"
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
+  create secret generic database-auth \
+  --from-file=password="$NETWORK_LAB_DIR/db-password"
+```
+**3. 세 계층 배포.** frontend·backend는 Python HTTP 서버로 대체하여 두 컨테이너 모두 진단용 TCP 클라이언트를 사용할 수 있게 합니다. PostgreSQL 17 이미지는 `POSTGRES_PASSWORD_FILE`과 같은 네임스페이스의 Secret을 사용하며 외부 DB를 조작하지 않습니다. DB의 `emptyDir`는 **Pod 교체 시 사라집니다**. 중요한 데이터를 넣지 마세요. DB 이미지의 초기화 동작을 유지한 학습용 구성이며 Restricted 프로파일의 프로덕션 DB 매니페스트가 아닙니다. 메이저 버전 이미지 태그는 바뀔 수 있으므로 재현 가능한 실행에는 해석된 digest를 기록하세요.
 
-# 프론트엔드 배포
-cat > frontend.yaml << EOF
+```bash
+# The HTTP layers are diagnostic stand-ins, not business applications.
+for tier in frontend backend; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
-  namespace: microservices
-  labels:
-    app: frontend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: frontend
-  template:
-    metadata:
-      labels:
-        app: frontend
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend
-  namespace: microservices
-spec:
-  selector:
-    app: frontend
-  ports:
-  - port: 80
-    targetPort: 80
-EOF
-
-kubectl apply -f frontend.yaml
-
-# 백엔드 배포
-cat > backend.yaml << EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-  namespace: microservices
-  labels:
-    app: backend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: backend
-  template:
-    metadata:
-      labels:
-        app: backend
-    spec:
-      containers:
-      - name: httpd
-        image: httpd:alpine
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend
-  namespace: microservices
-spec:
-  selector:
-    app: backend
-  ports:
-  - port: 80
-    targetPort: 80
-EOF
-
-kubectl apply -f backend.yaml
-
-# 데이터베이스 배포
-cat > database.yaml << EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: database
-  namespace: microservices
-  labels:
-    app: database
+  name: $tier
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: database
+    matchLabels: {app: $tier}
   template:
     metadata:
-      labels:
-        app: database
+      labels: {app: $tier}
     spec:
+      automountServiceAccountToken: false
+      nodeSelector: {kubernetes.io/os: linux}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
       containers:
-      - name: postgres
-        image: postgres:13-alpine
+      - name: diagnostic
+        image: python:3.13-alpine
+        command: [python, -m, http.server, "8080", --directory, /tmp]
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          tcpSocket: {port: 8080}
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 200m, memory: 128Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: $tier
+spec:
+  selector: {app: $tier}
+  ports:
+  - {port: 8080, targetPort: 8080, protocol: TCP}
+EOF
+done
+
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: database}
+  template:
+    metadata:
+      labels: {app: database}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector: {kubernetes.io/os: linux}
+      containers:
+      - name: database
+        image: postgres:17-alpine
         env:
-        - name: POSTGRES_PASSWORD
-          value: "password"
+        - name: POSTGRES_PASSWORD_FILE
+          value: /run/secrets/postgres/password
         ports:
         - containerPort: 5432
+        readinessProbe:
+          exec:
+            command: [pg_isready, -U, postgres]
+          initialDelaySeconds: 5
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: 500m, memory: 256Mi}
+        volumeMounts:
+        - {name: data, mountPath: /var/lib/postgresql/data}
+        - {name: auth, mountPath: /run/secrets/postgres, readOnly: true}
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: auth
+        secret: {secretName: database-auth}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: database
-  namespace: microservices
 spec:
-  selector:
-    app: database
+  selector: {app: database}
   ports:
-  - port: 5432
-    targetPort: 5432
+  - {port: 5432, targetPort: 5432, protocol: TCP}
 EOF
 
-kubectl apply -f database.yaml
-
-# 배포 확인
-kubectl get pods -n microservices
-kubectl get services -n microservices
+for tier in frontend backend database; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
+    rollout status "deployment/$tier" --timeout=180s
+done
 ```
-
-**3. 기본 거부 정책 구현**
+**4. 기본 연결 확인.** 정책 적용 전 세 TCP 경로와 DNS가 모두 정상이어야 합니다. 포트 5432 연결 성공은 TCP 연결만 입증하며 SQL 인증이나 애플리케이션 정확성을 검증하지 않습니다.
 
 ```bash
-# 기본 거부 정책 생성
-cat > default-deny.yaml << EOF
+# Distinguish DNS failure from TCP denial. Status 42 means a TCP failure.
+check_tcp() {
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
+    exec "deployment/$1" -c diagnostic -- python -c '
+import socket, sys
+host, port = sys.argv[1], int(sys.argv[2])
+try:
+    address = socket.gethostbyname(host)
+except OSError as error:
+    print("DNS failure:", error, file=sys.stderr)
+    sys.exit(43)
+try:
+    connection = socket.create_connection((address, port), timeout=3)
+    connection.close()
+except OSError as error:
+    print("TCP connection failed:", error, file=sys.stderr)
+    sys.exit(42)
+print("TCP connection succeeded")
+' "$2" "$3"
+}
+
+# Baseline: all three must succeed BEFORE the policy is applied.
+check_tcp frontend backend 8080
+check_tcp backend database 5432
+check_tcp frontend database 5432
+```
+**5. 정책 적용과 테스트.** 선택된 Pod의 양방향을 격리하며 일치하지 않는 트래픽은 차단합니다. 두 애플리케이션 경로와 UDP·TCP DNS를 명시적으로 허용합니다. 실습 밖의 CoreDNS에 도달하려면 네임스페이스 셀렉터가 필요합니다. NodeLocal DNSCache나 다른 레이블을 사용한다면 테스트 전에 DNS 규칙을 수정하세요.
+
+```bash
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<'EOF'
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
-  name: default-deny
-  namespace: microservices
+  name: tier-boundaries
 spec:
   selector: all()
-  types:
-  - Ingress
-  - Egress
-EOF
-
-kubectl apply -f default-deny.yaml
-```
-
-**4. 프론트엔드에서 백엔드로의 트래픽 허용**
-
-```bash
-# 프론트엔드에서 백엔드로의 트래픽 허용 정책
-cat > frontend-to-backend.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: frontend-to-backend
-  namespace: microservices
-spec:
-  selector: app == 'backend'
-  types:
-  - Ingress
+  types: [Ingress, Egress]
   ingress:
   - action: Allow
+    protocol: TCP
     source:
       selector: app == 'frontend'
     destination:
-      ports:
-      - 80
-EOF
-
-kubectl apply -f frontend-to-backend.yaml
-
-# 프론트엔드에서 외부 DNS 및 API 접근 허용
-cat > frontend-egress.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: frontend-egress
-  namespace: microservices
-spec:
-  selector: app == 'frontend'
-  types:
-  - Egress
-  egress:
-  - action: Allow
-    destination:
       selector: app == 'backend'
-      ports:
-      - 80
-  # DNS 접근 허용
+      ports: [8080]
   - action: Allow
-    destination:
-      selector: k8s-app == 'kube-dns'
-      ports:
-      - 53
-EOF
-
-kubectl apply -f frontend-egress.yaml
-```
-
-**5. 백엔드에서 데이터베이스로의 트래픽 허용**
-
-```bash
-# 백엔드에서 데이터베이스로의 트래픽 허용 정책
-cat > backend-to-database.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: backend-to-database
-  namespace: microservices
-spec:
-  selector: app == 'database'
-  types:
-  - Ingress
-  ingress:
-  - action: Allow
+    protocol: TCP
     source:
       selector: app == 'backend'
     destination:
-      ports:
-      - 5432
-EOF
-
-kubectl apply -f backend-to-database.yaml
-
-# 백엔드에서 외부 DNS 및 데이터베이스 접근 허용
-cat > backend-egress.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: backend-egress
-  namespace: microservices
-spec:
-  selector: app == 'backend'
-  types:
-  - Egress
+      selector: app == 'database'
+      ports: [5432]
   egress:
   - action: Allow
+    protocol: UDP
+    destination:
+      namespaceSelector: kubernetes.io/metadata.name == 'kube-system'
+      selector: k8s-app == 'kube-dns'
+      ports: [53]
+  - action: Allow
+    protocol: TCP
+    destination:
+      namespaceSelector: kubernetes.io/metadata.name == 'kube-system'
+      selector: k8s-app == 'kube-dns'
+      ports: [53]
+  - action: Allow
+    protocol: TCP
+    source:
+      selector: app == 'frontend'
+    destination:
+      selector: app == 'backend'
+      ports: [8080]
+  - action: Allow
+    protocol: TCP
+    source:
+      selector: app == 'backend'
     destination:
       selector: app == 'database'
-      ports:
-      - 5432
-  # DNS 접근 허용
-  - action: Allow
-    destination:
-      selector: k8s-app == 'kube-dns'
-      ports:
-      - 53
+      ports: [5432]
 EOF
 
-kubectl apply -f backend-egress.yaml
+# Allow policy propagation, then verify positive controls and the denied path.
+POLICY_VERIFIED=false
+for attempt in $(seq 1 30); do
+  check_tcp frontend backend 8080
+  check_tcp backend database 5432
+  if check_tcp frontend database 5432; then
+    sleep 2
+  else
+    result=$?
+    if [ "$result" -ne 42 ]; then
+      printf '%s\n' 'DNS/exec failure is not proof of policy denial.' >&2
+      exit 1
+    fi
+    # Database availability must still hold after the negative observation.
+    check_tcp backend database 5432
+    POLICY_VERIFIED=true
+    break
+  fi
+done
+[ "$POLICY_VERIFIED" = true ] || {
+  printf '%s\n' 'Expected denial was not observed; inspect policy enforcement.' >&2
+  exit 1
+}
 ```
+정책 전파는 비동기입니다. 타임아웃·DNS 실패·진단 도구 부재·DB 장애만으로 격리 성공을 판단하면 안 됩니다. 이 절차는 정상 기본 연결과 허용 대조군을 사용합니다. 관측이 다르면 다른 정책·경로를 조사하세요.
 
-**6. 정책 테스트**
+**6. 정리.** UID를 확인한 소유 네임스페이스만 삭제합니다. 테스트 워크로드·정책·Secret·임시 데이터가 삭제되며 클러스터 전체 Calico 설치는 제거하지 않습니다. 실습 후 로컬 비밀번호 파일도 정리하세요. 공유 CNI·RBAC 설정은 별도로 관리자가 검토한 롤백 대상이 아니라면 유지합니다.
 
 ```bash
-# 프론트엔드 포드 이름 가져오기
-FRONTEND_POD=$(kubectl get pods -n microservices -l app=frontend -o jsonpath='{.items[0].metadata.name}')
-
-# 백엔드 포드 이름 가져오기
-BACKEND_POD=$(kubectl get pods -n microservices -l app=backend -o jsonpath='{.items[0].metadata.name}')
-
-# 데이터베이스 포드 이름 가져오기
-DATABASE_POD=$(kubectl get pods -n microservices -l app=database -o jsonpath='{.items[0].metadata.name}')
-
-# 프론트엔드에서 백엔드로의 연결 테스트 (성공해야 함)
-kubectl exec -it $FRONTEND_POD -n microservices -- wget -O- --timeout=2 http://backend
-
-# 프론트엔드에서 데이터베이스로의 연결 테스트 (실패해야 함)
-kubectl exec -it $FRONTEND_POD -n microservices -- nc -zv database 5432
-
-# 백엔드에서 데이터베이스로의 연결 테스트 (성공해야 함)
-kubectl exec -it $BACKEND_POD -n microservices -- nc -zv database 5432
-
-# 백엔드에서 외부 사이트로의 연결 테스트 (실패해야 함)
-kubectl exec -it $BACKEND_POD -n microservices -- wget -O- --timeout=2 https://www.example.com
-```
-
-**7. 네트워크 정책 시각화 (선택 사항)**
-
-```bash
-# Calico 네트워크 정책 시각화 도구 설치
-kubectl apply -f https://raw.githubusercontent.com/tigera/ccol/master/manifests/tigera-policies-viewer/tigera-policies-viewer.yaml
-
-# 포트 포워딩 설정
-kubectl port-forward -n tigera-policies-viewer svc/tigera-policies-viewer 8080:8080
-
-# 브라우저에서 http://localhost:8080 접속하여 정책 시각화
-```
-
-이 실습을 통해 EKS 클러스터에서 Calico를 사용하여 마이크로서비스 간의 네트워크 트래픽을 제한하는 방법을 배웠습니다. 기본 거부 정책을 구현하고, 필요한 트래픽만 명시적으로 허용함으로써 최소 권한 원칙을 적용했습니다. 이러한 네트워크 정책은 클러스터 내 서비스 간의 통신을 제한하여 보안을 강화하고, 잠재적인 공격 표면을 줄이는 데 도움이 됩니다.
-
-</details>
-
-\### 실습 2: EKS 클러스터에서 IRSA 구성 및 S3 접근
-
-**시나리오:** 당신은 회사의 DevOps 엔지니어로, EKS 클러스터에서 실행되는 애플리케이션이 S3 버킷에 안전하게 접근해야 하는 상황에 있습니다. 보안 모범 사례에 따라 노드 IAM 역할을 공유하는 대신 IRSA(IAM Roles for Service Accounts)를 사용하여 특정 포드에만 필요한 권한을 부여하려고 합니다.
-
-**요구사항:**
-
-1. EKS 클러스터에 OIDC 제공자 연결
-2. S3 접근 권한이 있는 IAM 역할 생성
-3. Kubernetes 서비스 계정 생성 및 IAM 역할 연결
-4. 서비스 계정을 사용하는 포드 배포
-5. S3 접근 테스트
-
-**해결 방법:**
-
-<details>
-
-<summary>해결 방법 보기</summary>
-
-**1. EKS 클러스터에 OIDC 제공자 연결**
-
-```bash
-# 클러스터 이름 설정
-CLUSTER_NAME=my-cluster
-REGION=us-west-2
-
-# OIDC 제공자 URL 가져오기
-OIDC_PROVIDER=$(aws eks describe-cluster --name $CLUSTER_NAME --region $REGION --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///")
-
-# OIDC 제공자가 이미 존재하는지 확인
-aws iam list-open-id-connect-providers | grep $OIDC_PROVIDER
-
-# OIDC 제공자가 없는 경우 생성
-if [ $? -ne 0 ]; then
-  echo "Creating OIDC provider..."
-  eksctl utils associate-iam-oidc-provider --cluster $CLUSTER_NAME --region $REGION --approve
+CURRENT_NETWORK_UID=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  get namespace "${NETWORK_NAMESPACE:?}" --ignore-not-found \
+  -o jsonpath='{.metadata.uid}') || exit 1
+if [ -z "$CURRENT_NETWORK_UID" ]; then
+  printf '%s\n' 'Lab namespace is already absent.'
+elif [ "$CURRENT_NETWORK_UID" = "${NETWORK_NAMESPACE_UID:?Recorded UID required}" ]; then
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" \
+    delete namespace "$NETWORK_NAMESPACE" --wait=true || exit 1
 else
-  echo "OIDC provider already exists."
+  printf '%s\n' 'Namespace UID changed; no deletion attempted.' >&2
+  exit 1
 fi
 ```
 
-**2. S3 접근 권한이 있는 IAM 역할 생성**
+</details>
+
+### 실습 2: EKS 클러스터에서 IRSA 및 S3 접근 구성
+
+**시나리오:** 노드 역할 대신 IRSA로 한 워크로드에 기존 S3 버킷의 승인된 `training/` prefix 읽기 권한만 부여합니다. 실제 assumed-role 신원을 확인하고 의도적으로 자격 증명을 제공하지 않은 Pod와 비교합니다.
+
+**선행조건:** Bash·jq·AWS CLI·eksctl·kubectl, 승인된 기존 EKS 클러스터, 새 네임스페이스와 IAM 역할의 관리 권한, 민감하지 않은 승인된 기존 S3 객체가 필요합니다. 이 상용 파티션 예제는 별도 고객 KMS 권한이 필요하지 않은 객체를 가정합니다. 버킷·KMS 정책, SCP, DNS, STS·S3 네트워크 경로는 추가 조건을 부과할 수 있습니다. S3 객체를 생성·수정·삭제하지 않습니다.
+
+
+<details>
+<summary>솔루션 보기</summary>
+
+**1. 실습 범위와 OIDC 확인.** `EXAMPLE_CLUSTER`, `EXAMPLE_REGION`, `S3_BUCKET`, `S3_TEST_KEY`(`training/` 하위)를 설정합니다. OIDC provider는 공유 클러스터 인프라이므로 정리 시 삭제하지 않습니다. 네임스페이스 생성이나 provider 검증이 실패하면 중단하세요.
 
 ```bash
-# 계정 ID 가져오기
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+set -euo pipefail
+umask 077
+# Commercial AWS partition example; use an existing approved S3 training prefix.
+: "${EXAMPLE_CLUSTER:?}"
+: "${EXAMPLE_REGION:?}"
+: "${S3_BUCKET:?Existing bucket containing the approved training object}"
+: "${S3_TEST_KEY:?Existing non-sensitive object key under training/}"
+case "$S3_TEST_KEY" in training/*) ;; *) printf '%s\n' 'Use a training/ key.' >&2; exit 1 ;; esac
+IRSA_LAB_DIR=$(mktemp -d /tmp/eks-irsa-lab.XXXXXX)
+: "${IRSA_LAB_DIR:?}"
+IRSA_LAB_ID="irsa-quiz-$(date +%s)-$$"
+IRSA_NAMESPACE="$IRSA_LAB_ID"
+IRSA_ROLE_NAME="$IRSA_LAB_ID"
+IRSA_SERVICE_ACCOUNT=s3-reader
+IRSA_KUBECONFIG="$IRSA_LAB_DIR/kubeconfig"
 
-# 네임스페이스 및 서비스 계정 이름 설정
-NAMESPACE=default
-SERVICE_ACCOUNT_NAME=s3-access-sa
+aws sts get-caller-identity --output json > "$IRSA_LAB_DIR/caller.json" || exit 1
+IRSA_ACCOUNT_ID=$(jq -er '.Account' "$IRSA_LAB_DIR/caller.json") || exit 1
+jq -e '.Arn | startswith("arn:aws:")' "$IRSA_LAB_DIR/caller.json" >/dev/null || exit 1
+aws eks describe-cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query cluster --output json > "$IRSA_LAB_DIR/cluster.json" || exit 1
+IRSA_ISSUER=$(jq -er '.identity.oidc.issuer' "$IRSA_LAB_DIR/cluster.json") || exit 1
+case "$IRSA_ISSUER" in https://*) ;; *) printf '%s\n' 'Invalid OIDC issuer.' >&2; exit 1 ;; esac
+IRSA_ISSUER_HOST="${IRSA_ISSUER#https://}"
+IRSA_PROVIDER_ARN="arn:aws:iam::$IRSA_ACCOUNT_ID:oidc-provider/$IRSA_ISSUER_HOST"
 
-# 신뢰 정책 생성
-cat > trust-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::${ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+aws eks update-kubeconfig --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --kubeconfig "$IRSA_KUBECONFIG" --alias "$EXAMPLE_CLUSTER" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" create namespace "$IRSA_NAMESPACE" || exit 1
+IRSA_NAMESPACE_UID=$(kubectl --kubeconfig "$IRSA_KUBECONFIG" \
+  get namespace "$IRSA_NAMESPACE" -o jsonpath='{.metadata.uid}') || exit 1
+: "${IRSA_NAMESPACE_UID:?}"
+jq -n --arg namespace "$IRSA_NAMESPACE" --arg uid "$IRSA_NAMESPACE_UID" \
+  '{namespace:$namespace,namespaceUID:$uid}' > "$IRSA_LAB_DIR/ownership.json" || exit 1
+
+# The cluster's provider is shared infrastructure; eksctl checks/associates it.
+eksctl utils associate-iam-oidc-provider --cluster "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --approve || exit 1
+aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$IRSA_PROVIDER_ARN" \
+  --output json > "$IRSA_LAB_DIR/provider.json" || exit 1
+jq -e '.ClientIDList | index("sts.amazonaws.com") != null' \
+  "$IRSA_LAB_DIR/provider.json" >/dev/null || exit 1
+```
+**2. 고유한 제한 역할 생성.** 신뢰 정책에는 `aud=sts.amazonaws.com`과 정확한 네임스페이스·ServiceAccount의 `sub`가 모두 필요합니다. 역할 생성 실패 시 정책 연결을 중단하고 정리를 위해 불변 RoleId를 기록합니다.
+
+```bash
+jq -n --arg provider "${IRSA_PROVIDER_ARN:?}" --arg issuer "${IRSA_ISSUER_HOST:?}" \
+  --arg subject "system:serviceaccount:${IRSA_NAMESPACE:?}:${IRSA_SERVICE_ACCOUNT:?}" \
+  '{
+    Version:"2012-10-17",
+    Statement:[{
+      Effect:"Allow",
+      Principal:{Federated:$provider},
+      Action:"sts:AssumeRoleWithWebIdentity",
+      Condition:{StringEquals:{
+        ($issuer+":aud"):"sts.amazonaws.com",
+        ($issuer+":sub"):$subject
+      }}
+    }]
+  }' > "${IRSA_LAB_DIR:?}/trust.json" || exit 1
+
+jq -n --arg bucket "${S3_BUCKET:?}" \
+  '{
+    Version:"2012-10-17",
+    Statement:[
+      {
+        Effect:"Allow",Action:"s3:ListBucket",Resource:("arn:aws:s3:::"+$bucket),
+        Condition:{StringLike:{"s3:prefix":["training/","training/*"]}}
       },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${NAMESPACE}:${SERVICE_ACCOUNT_NAME}"
+      {
+        Effect:"Allow",Action:"s3:GetObject",
+        Resource:("arn:aws:s3:::"+$bucket+"/training/*")
+      }
+    ]
+  }' > "$IRSA_LAB_DIR/s3-policy.json" || exit 1
+
+# Stop on creation failure; never attach this policy to a pre-existing role.
+aws iam create-role --role-name "${IRSA_ROLE_NAME:?}" \
+  --assume-role-policy-document "file://$IRSA_LAB_DIR/trust.json" \
+  --tags "Key=TrainingLab,Value=${IRSA_LAB_ID:?}" \
+  --query Role --output json > "$IRSA_LAB_DIR/created-role.json" || exit 1
+IRSA_ROLE_ARN=$(jq -er '.Arn' "$IRSA_LAB_DIR/created-role.json") || exit 1
+IRSA_ROLE_ID=$(jq -er '.RoleId' "$IRSA_LAB_DIR/created-role.json") || exit 1
+jq -n --arg namespace "$IRSA_NAMESPACE" --arg uid "${IRSA_NAMESPACE_UID:?}" \
+  --arg roleName "$IRSA_ROLE_NAME" --arg roleArn "$IRSA_ROLE_ARN" --arg roleId "$IRSA_ROLE_ID" \
+  '{namespace:$namespace,namespaceUID:$uid,roleName:$roleName,roleARN:$roleArn,roleID:$roleId}' \
+  > "$IRSA_LAB_DIR/ownership.json" || exit 1
+aws iam put-role-policy --role-name "$IRSA_ROLE_NAME" \
+  --policy-name ScopedTrainingS3Read \
+  --policy-document "file://$IRSA_LAB_DIR/s3-policy.json" || exit 1
+```
+**3. 배포와 검증.** 테스트 실패 시 재시도 전에 IAM 전파를 고려하세요. 세 컨테이너는 객체 내용이나 자격 증명을 기록하지 않고 신원·prefix 목록 개수·객체 길이를 확인합니다. 신원은 새로 만든 역할과 일치해야 합니다. S3 성공만으로 판단하면 더 넓은 노드 역할의 권한을 오인할 수 있습니다.
+
+```bash
+# JSON construction preserves literal object keys and prevents YAML interpolation errors.
+jq -n --arg ns "${IRSA_NAMESPACE:?}" --arg sa "${IRSA_SERVICE_ACCOUNT:?}" \
+  --arg role "${IRSA_ROLE_ARN:?}" --arg region "${EXAMPLE_REGION:?}" \
+  --arg bucket "${S3_BUCKET:?}" --arg key "${S3_TEST_KEY:?}" '
+  {
+    apiVersion:"v1",kind:"List",items:[
+      {
+        apiVersion:"v1",kind:"ServiceAccount",
+        metadata:{name:$sa,namespace:$ns,annotations:{
+          "eks.amazonaws.com/role-arn":$role,
+          "eks.amazonaws.com/sts-regional-endpoints":"true"
+        }}
+      },
+      {
+        apiVersion:"v1",kind:"Pod",metadata:{name:"irsa-check",namespace:$ns},
+        spec:{
+          serviceAccountName:$sa,nodeSelector:{"kubernetes.io/os":"linux"},restartPolicy:"Never",
+          containers:[
+            {name:"identity",args:["--region",$region,"sts","get-caller-identity"]},
+            {name:"list-prefix",args:["--region",$region,"s3api","list-objects-v2","--bucket",$bucket,
+              "--prefix","training/","--max-keys","1","--query","KeyCount","--output","json"]},
+            {name:"object-metadata",args:["--region",$region,"s3api","head-object","--bucket",$bucket,
+              "--key",$key,"--query","ContentLength","--output","json"]}
+          ] | map(.+{
+            image:"public.ecr.aws/aws-cli/aws-cli:2.36.43",command:["aws"],
+            resources:{requests:{cpu:"100m",memory:"128Mi"},limits:{memory:"256Mi"}}
+          })
         }
       }
-    }
-  ]
+    ]
+  }' > "${IRSA_LAB_DIR:?}/workload.json" || exit 1
+kubectl --kubeconfig "${IRSA_KUBECONFIG:?}" create -f "$IRSA_LAB_DIR/workload.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  wait --for=jsonpath='{.status.phase}'=Succeeded pod/irsa-check --timeout=180s || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  logs irsa-check -c identity > "$IRSA_LAB_DIR/pod-identity.json" || exit 1
+jq -e --arg account "${IRSA_ACCOUNT_ID:?}" --arg role "${IRSA_ROLE_NAME:?}" \
+  '.Account == $account and (.Arn | startswith("arn:aws:sts::"+$account+":assumed-role/"+$role+"/"))' \
+  "$IRSA_LAB_DIR/pod-identity.json" >/dev/null || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c list-prefix
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c object-metadata
+```
+**4. 통제된 실패 대조군.** 새 네임스페이스의 기본 ServiceAccount에 IRSA annotation·EKS Pod Identity association이 없어야 하며 다른 자격 증명을 주입하지 않아야 합니다. 이 테스트 클라이언트의 IMDS fallback을 비활성화하고 정확히 자격 증명 부재 오류인지 확인합니다. 임의의 네트워크·인가 오류는 유효한 대조군 결과가 아닙니다.
+
+```bash
+# Controlled comparison: no IRSA, no Pod Identity association, no IMDS fallback.
+jq -n --arg ns "${IRSA_NAMESPACE:?}" --arg region "${EXAMPLE_REGION:?}" '
+{
+  apiVersion:"v1",kind:"Pod",
+  metadata:{name:"no-role-check",namespace:$ns},
+  spec:{
+    automountServiceAccountToken:false,
+    serviceAccountName:"default",
+    nodeSelector:{"kubernetes.io/os":"linux"},
+    restartPolicy:"Never",
+    containers:[{
+      name:"identity",image:"public.ecr.aws/aws-cli/aws-cli:2.36.43",
+      command:["aws"],args:["--region",$region,"sts","get-caller-identity"],
+      env:[{name:"AWS_EC2_METADATA_DISABLED",value:"true"}],
+      resources:{requests:{cpu:"100m",memory:"128Mi"},limits:{memory:"256Mi"}}
+    }]
+  }
+}' > "${IRSA_LAB_DIR:?}/negative-pod.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" create -f "$IRSA_LAB_DIR/negative-pod.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  wait --for=jsonpath='{.status.phase}'=Failed pod/no-role-check --timeout=180s || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  get pod no-role-check -o json > "$IRSA_LAB_DIR/negative-status.json" || exit 1
+jq -e '.status.containerStatuses[] | select(.name=="identity") |
+  .state.terminated.exitCode == 255' "$IRSA_LAB_DIR/negative-status.json" >/dev/null || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  logs no-role-check -c identity > "$IRSA_LAB_DIR/negative-log.txt" || exit 1
+grep -F 'Unable to locate credentials' "$IRSA_LAB_DIR/negative-log.txt" >/dev/null || {
+  printf '%s\n' 'Unexpected failure: inspect the saved log; do not claim isolation.' >&2
+  exit 1
 }
-EOF
-
-# IAM 역할 생성
-ROLE_NAME=eks-s3-access-role
-aws iam create-role --role-name $ROLE_NAME --assume-role-policy-document file://trust-policy.json
-
-# S3 읽기 전용 정책 연결
-aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-
-# 역할 ARN 가져오기
-ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query Role.Arn --output text)
-echo "Role ARN: $ROLE_ARN"
 ```
+이는 자격 증명 공급자 비교이며 임의의 Pod가 IMDS에 접근할 수 없거나 컨테이너가 보안 경계라는 증명이 아닙니다. 노드 자격 증명 접근은 별도로 제한하세요. IRSA는 projected web-identity token과 STS 임시 자격 증명을 사용하며 호환 SDK가 갱신합니다. 모든 `AWS_*` 환경변수나 토큰 파일을 출력하면 안 됩니다.
 
-**3. Kubernetes 서비스 계정 생성 및 IAM 역할 연결**
+**5. 소유 리소스만 정리.** 기록된 네임스페이스 UID와 IAM RoleId를 보존합니다. 아래 보호 절차는 실습 네임스페이스·inline 정책·고유 역할만 제거하며 S3 버킷·객체, 공유 OIDC provider와 클러스터는 유지합니다. 설정이 부분적으로만 성공했다면 `ownership.json`을 보고 실제 기록된 리소스만 정리하세요.
 
 ```bash
-# 서비스 계정 생성
-cat > service-account.yaml << EOF
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: ${SERVICE_ACCOUNT_NAME}
-  namespace: ${NAMESPACE}
-  annotations:
-    eks.amazonaws.com/role-arn: ${ROLE_ARN}
-EOF
+# Recover the recorded values from ownership.json if this is a later shell.
+IRSA_CLEANUP_NAMESPACE_OK=false
+if CURRENT_IRSA_UID=$(kubectl --kubeconfig "${IRSA_KUBECONFIG:?}" \
+  get namespace "${IRSA_NAMESPACE:?}" --ignore-not-found -o jsonpath='{.metadata.uid}'); then
+  if [ -z "$CURRENT_IRSA_UID" ]; then
+    IRSA_CLEANUP_NAMESPACE_OK=true
+  elif [ "$CURRENT_IRSA_UID" = "${IRSA_NAMESPACE_UID:?Recorded UID required}" ]; then
+    if kubectl --kubeconfig "$IRSA_KUBECONFIG" delete namespace "$IRSA_NAMESPACE" --wait=true; then
+      IRSA_CLEANUP_NAMESPACE_OK=true
+    else
+      exit 1
+    fi
+  else
+    printf '%s\n' 'Namespace UID mismatch; stop and inspect.' >&2
+    exit 1
+  fi
+else
+  printf '%s\n' 'Namespace lookup failed; stop and inspect.' >&2
+  exit 1
+fi
 
-kubectl apply -f service-account.yaml
-
-# 서비스 계정 확인
-kubectl get serviceaccount $SERVICE_ACCOUNT_NAME -o yaml
+if [ "$IRSA_CLEANUP_NAMESPACE_OK" = true ]; then
+  CURRENT_IRSA_ROLE_JSON=$(aws iam get-role --role-name "${IRSA_ROLE_NAME:?}" \
+    --query Role --output json) || exit 1
+  CURRENT_IRSA_ROLE_ID=$(printf '%s' "$CURRENT_IRSA_ROLE_JSON" | jq -er '.RoleId') || exit 1
+  if [ "$CURRENT_IRSA_ROLE_ID" = "${IRSA_ROLE_ID:?Recorded IAM RoleId required}" ]; then
+    IRSA_INLINE_POLICIES=$(aws iam list-role-policies --role-name "$IRSA_ROLE_NAME" \
+      --query PolicyNames --output json) || exit 1
+    printf '%s' "$IRSA_INLINE_POLICIES" |
+      jq -e 'all(.[]; . == "ScopedTrainingS3Read")' >/dev/null || exit 1
+    if printf '%s' "$IRSA_INLINE_POLICIES" | jq -e 'index("ScopedTrainingS3Read") != null' >/dev/null; then
+      aws iam delete-role-policy --role-name "$IRSA_ROLE_NAME" \
+        --policy-name ScopedTrainingS3Read || exit 1
+    fi
+    aws iam delete-role --role-name "$IRSA_ROLE_NAME"
+  else
+    printf '%s\n' 'IAM RoleId mismatch; no IAM deletion attempted.' >&2
+    exit 1
+  fi
+fi
 ```
-
-**4. 서비스 계정을 사용하는 포드 배포**
-
-```bash
-# 테스트 포드 배포
-cat > s3-test-pod.yaml << EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: s3-test-pod
-  namespace: ${NAMESPACE}
-spec:
-  serviceAccountName: ${SERVICE_ACCOUNT_NAME}
-  containers:
-  - name: aws-cli
-    image: amazon/aws-cli:latest
-    command:
-    - sleep
-    - "3600"
-  restartPolicy: Never
-EOF
-
-kubectl apply -f s3-test-pod.yaml
-
-# 포드 상태 확인
-kubectl get pod s3-test-pod
-kubectl describe pod s3-test-pod
-```
-
-**5. S3 접근 테스트**
-
-```bash
-# S3 버킷 목록 조회 테스트
-kubectl exec -it s3-test-pod -- aws s3 ls
-
-# 특정 S3 버킷의 객체 목록 조회 테스트 (버킷 이름 변경 필요)
-kubectl exec -it s3-test-pod -- aws s3 ls s3://my-bucket/
-
-# AWS 자격 증명 확인
-kubectl exec -it s3-test-pod -- aws sts get-caller-identity
-
-# 환경 변수 확인
-kubectl exec -it s3-test-pod -- env | grep AWS
-```
-
-**6. 비교를 위한 일반 포드 배포**
-
-```bash
-# 일반 서비스 계정을 사용하는 포드 배포
-cat > regular-pod.yaml << EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: regular-pod
-  namespace: ${NAMESPACE}
-spec:
-  containers:
-  - name: aws-cli
-    image: amazon/aws-cli:latest
-    command:
-    - sleep
-    - "3600"
-  restartPolicy: Never
-EOF
-
-kubectl apply -f regular-pod.yaml
-
-# 일반 포드에서 S3 접근 테스트 (노드 IAM 역할에 S3 접근 권한이 없다면 실패해야 함)
-kubectl exec -it regular-pod -- aws s3 ls
-```
-
-**7. 정리**
-
-```bash
-# 포드 삭제
-kubectl delete pod s3-test-pod regular-pod
-
-# 서비스 계정 삭제
-kubectl delete serviceaccount $SERVICE_ACCOUNT_NAME
-
-# IAM 역할 정리 (선택 사항)
-aws iam detach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-aws iam delete-role --role-name $ROLE_NAME
-```
-
-**IRSA 작동 원리 설명:**
-
-1. **OIDC 제공자 연결**:
-   * EKS 클러스터는 OIDC 제공자로 구성됩니다.
-   * 이를 통해 Kubernetes 서비스 계정 토큰이 AWS IAM에서 신뢰할 수 있는 인증 메커니즘이 됩니다.
-2. **IAM 역할 신뢰 정책**:
-   * IAM 역할의 신뢰 정책은 특정 Kubernetes 서비스 계정만 역할을 맡을 수 있도록 제한합니다.
-   * 조건문을 사용하여 특정 네임스페이스의 특정 서비스 계정으로 제한합니다.
-3. **서비스 계정 주석**:
-   * `eks.amazonaws.com/role-arn` 주석은 서비스 계정이 맡을 IAM 역할을 지정합니다.
-   * 이 주석은 EKS Pod Identity Webhook에 의해 처리됩니다.
-4. **환경 변수 주입**:
-   * EKS Pod Identity Webhook는 포드에 다음 환경 변수를 자동으로 주입합니다:
-     * `AWS_ROLE_ARN`
-     * `AWS_WEB_IDENTITY_TOKEN_FILE`
-     * `AWS_REGION`
-   * AWS SDK는 이러한 환경 변수를 사용하여 자격 증명을 획득합니다.
-5. **최소 권한 원칙**:
-   * 애플리케이션에 필요한 최소한의 권한만 부여합니다.
-   * 이 예제에서는 S3 읽기 전용 접근 권한만 부여했습니다.
-
-이 실습을 통해 IRSA를 구성하여 EKS 클러스터에서 실행되는 특정 포드에만 AWS 서비스에 대한 세분화된 권한을 부여하는 방법을 배웠습니다. 이 접근 방식은 노드 IAM 역할을 공유하는 것보다 더 안전하며, 최소 권한 원칙을 따릅니다.
 
 </details>
 
@@ -2073,817 +1486,408 @@ aws iam delete-role --role-name $ROLE_NAME
 
 다음은 Amazon EKS 클러스터 생성에 관한 고급 주제에 대한 질문입니다. 이 섹션은 EKS 클러스터 생성의 심화 개념과 모범 사례에 대한 이해를 테스트합니다.
 
-1. Amazon EKS 클러스터에서 접두사 위임(Prefix Delegation)을 활성화할 때 발생하는 변화가 아닌 것은 무엇인가요?
-   * A) 각 ENI에 /28 CIDR 블록(16개 IP)이 할당됨
-   * B) 노드당 최대 포드 수 증가
-   * C) 포드 시작 시간 단축
-   * D) IP 주소 사용 효율성 향상
+1. IPv4 prefix delegation이 보장하지 않는 주장은 무엇인가요?
+   * A) prefix가 ENI 주소 슬롯을 사용함
+   * B) 노드당 더 많은 IP 용량을 수용할 수 있음
+   * C) 모든 애플리케이션이 더 빨리 준비됨
+   * D) 연속된 서브넷 블록이 필요함
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: C) 포드 시작 시간 단축**
+**정답: C) 모든 애플리케이션이 더 빨리 준비됨**
 
-**설명:** Amazon EKS 클러스터에서 접두사 위임(Prefix Delegation)을 활성화할 때 발생하는 변화가 아닌 것은 "포드 시작 시간 단축"입니다. 실제로는 접두사 위임을 활성화하면 포드 시작 시간이 단축되지 않으며, 오히려 약간 증가할 수 있습니다. 접두사 위임의 주요 이점은 노드당 최대 포드 수 증가와 IP 주소 사용 효율성 향상입니다.
+Prefix delegation은 주소 할당 지연을 줄일 수 있습니다. 기존 ENI에 prefix를 추가하면 일부 ENI 생성·연결 작업을 피할 수 있으며 AWS도 이 이점을 설명합니다. 따라서 시작 시간을 줄일 수 없고 반드시 라우팅 오버헤드를 추가한다는 기존 설명은 잘못되었습니다.
 
-**접두사 위임 활성화 시 실제 변화:**
+종단 간 Pod 준비 시간은 스케줄링·노드 시작·이미지 pull·볼륨 연결·초기화·프로브·애플리케이션 시작에도 영향을 받습니다. 여기에는 전후 비교 벤치마크가 제공되지 않았고 이번 감사에서도 실행하지 않았습니다. 고정된 지연 개선을 추정하거나 느려진 원인을 만들어 내면 안 됩니다.
 
-1. **각 ENI에 /28 CIDR 블록(16개 IP)이 할당됨**:
-   * 기본적으로 VPC CNI는 각 포드에 대해 ENI의 보조 IP 주소를 할당합니다.
-   * 접두사 위임을 활성화하면, 각 ENI에 개별 IP 주소 대신 /28 CIDR 블록(16개 IP)이 할당됩니다.
-   * 이를 통해 각 ENI가 지원할 수 있는 IP 주소 수가 크게 증가합니다.
-2. **노드당 최대 포드 수 증가**:
-   * 접두사 위임을 사용하면 노드당 최대 포드 수가 크게 증가합니다.
-   * 예를 들어, m5.large 인스턴스의 경우:
-     * 기본 구성: 최대 29개 포드
-     * 접두사 위임 활성화: 최대 110개 이상의 포드
-3. **IP 주소 사용 효율성 향상**:
-   * 대규모 클러스터에서 IP 주소 사용을 최적화합니다.
-   * VPC CIDR 범위가 제한된 환경에서 유용합니다.
-   * 더 많은 포드를 동일한 IP 주소 공간 내에서 실행할 수 있습니다.
+IPv4 `/28` 하나는 보조 주소 슬롯 하나와 연속된 서브넷 주소 16개를 소비합니다. `maxPods`·컴퓨팅 리소스·서브넷 공간 내에서 노드별 IP 용량을 늘리며, CIDR 확장이나 할당 주소 감소를 보장하지는 않습니다. Warm pool 설정은 여유 주소 소비와 할당 준비 사이의 균형입니다.
 
-**접두사 위임이 포드 시작 시간에 미치는 영향:**
-
-접두사 위임은 포드 시작 시간을 단축하지 않으며, 오히려 다음과 같은 이유로 약간 증가할 수 있습니다:
-
-1. **추가 설정 오버헤드**:
-   * CIDR 블록 할당 및 관리에 추가 오버헤드가 발생할 수 있습니다.
-   * 라우팅 테이블 업데이트에 시간이 소요될 수 있습니다.
-2. **IP 주소 할당 복잡성**:
-   * 개별 IP 주소 할당보다 CIDR 블록 할당 및 관리가 더 복잡할 수 있습니다.
-   * 이로 인해 포드 시작 시 약간의 지연이 발생할 수 있습니다.
-3. **초기 설정 시간**:
-   * 새 ENI에 CIDR 블록을 할당하는 초기 설정 시간이 더 길 수 있습니다.
-   * 그러나 한 번 설정되면 해당 ENI에서 여러 포드를 빠르게 시작할 수 있습니다.
-
-**접두사 위임 활성화 방법:**
-
-```bash
-# 접두사 위임 활성화
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-# 접두사 위임 상태 확인
-kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
-```
-
-**접두사 위임 제한 사항:**
-
-1. **EC2 인스턴스 지원**:
-   * Nitro 기반 인스턴스만 접두사 위임을 지원합니다.
-   * 이전 세대 인스턴스에서는 사용할 수 없습니다.
-2. **VPC CNI 버전 요구 사항**:
-   * VPC CNI 버전 1.9.0 이상이 필요합니다.
-   * 이전 버전에서는 이 기능을 사용할 수 없습니다.
-3. **서브넷 크기 요구 사항**:
-   * 충분한 IP 주소 공간이 있는 서브넷이 필요합니다.
-   * 작은 서브넷에서는 IP 주소가 빠르게 소진될 수 있습니다.
-4. **전환 시 고려 사항**:
-   * 기존 클러스터에서 활성화하면 새 포드만 접두사 위임을 사용합니다.
-   * 모든 포드에 적용하려면 기존 포드를 재시작해야 합니다.
-
-접두사 위임은 노드당 최대 포드 수를 증가시키고 IP 주소 사용 효율성을 향상시키는 강력한 기능이지만, 포드 시작 시간을 단축하지는 않습니다. 따라서 "포드 시작 시간 단축"은 접두사 위임을 활성화할 때 발생하는 변화가 아닙니다.
+기본 문제 5의 선행조건과 새 노드 그룹 전환 절차를 사용하세요. 단편화를 확인하고 호환 CNI를 구성한 후 계산된 노드 용량을 검증하며, 여유 용량과 PDB를 고려한 드레인으로 이전합니다. 기존 Pod 전체 재시작만으로 전환 계획이 완성되지는 않습니다.
 
 </details>
 
-2\. Amazon EKS 클러스터에서 노드 그룹의 인스턴스 유형을 혼합하여 사용하는 주요 이점이 아닌 것은 무엇인가요? - A) 비용 최적화 - B) 가용성 향상 - C) 워크로드 특성에 맞는 인스턴스 유형 선택 - D) 클러스터 관리 단순화
+2. Cluster Autoscaler를 사용하는 혼합 인스턴스 관리형 노드 그룹에서 잘못된 방법은 무엇인가요?
+   * A) CPU·메모리·GPU 크기가 유사한 유형 사용
+   * B) 이미지와 AZ 호환성 확인
+   * C) Spot과 On-Demand 그룹 분리
+   * D) 오토스케일러가 모든 유형을 시뮬레이션하므로 임의 크기 혼합
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: D) 클러스터 관리 단순화**
+**정답: D) 오토스케일러가 모든 유형을 시뮬레이션하므로 임의 크기 혼합**
 
-**설명:** Amazon EKS 클러스터에서 노드 그룹의 인스턴스 유형을 혼합하여 사용하는 주요 이점이 아닌 것은 "클러스터 관리 단순화"입니다. 실제로는 다양한 인스턴스 유형을 혼합하여 사용하면 클러스터 관리가 더 복잡해질 수 있습니다. 인스턴스 유형을 혼합하여 사용하는 주요 이점은 비용 최적화, 가용성 향상, 워크로드 특성에 맞는 인스턴스 유형 선택입니다.
+다양한 인스턴스 후보는 특히 Spot의 용량 선택지를 늘릴 수 있지만 오토스케일러의 스케줄링 모델을 따라야 합니다. Cluster Autoscaler는 혼합 그룹의 첫 인스턴스 유형으로 시뮬레이션하므로 CPU·메모리·GPU 크기가 같은 후보를 사용해야 합니다. 작은 대안은 Pod를 Pending 상태로 남길 수 있고 큰 대안은 용량을 낭비할 수 있습니다. 이름이 비슷해도 크기가 같지는 않습니다. 예를 들어 `c5n.large`와 `c5.large`의 메모리는 다릅니다.
 
-**인스턴스 유형 혼합 사용의 실제 이점:**
+관리형 노드 그룹의 capacity type은 하나입니다. On-Demand 기본 용량과 Spot 확장은 **별도 그룹**으로 구성하세요. 여러 `instanceTypes`를 나열해도 한 관리형 그룹에 구매 옵션이 섞이지 않습니다. 관리형 Spot 할당 전략은 EKS가 선택하며 `spotAllocationStrategy`는 eksctl의 `managedNodeGroups` 지원 필드가 아닙니다.
 
-1. **비용 최적화**:
-   * 스팟 인스턴스와 온디맨드 인스턴스 혼합 사용
-   * 다양한 인스턴스 패밀리의 가격 차이 활용
-   * 워크로드 요구 사항에 맞는 최적의 가격 대비 성능 선택
-   *   예시:
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: mixed-spot-instances
-           instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m5n.large"]
-           spot: true
-           minSize: 2
-           maxSize: 10
-       ```
-2. **가용성 향상**:
-   * 특정 인스턴스 유형의 용량 부족 시 대체 인스턴스 유형 사용
-   * 스팟 인스턴스 중단 시 다른 유형으로 대체 가능
-   * 여러 인스턴스 패밀리에 걸친 다양화로 리스크 분산
-   *   예시:
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: mixed-instance-types
-           instanceTypes: ["c5.large", "c5a.large", "c5d.large", "c5n.large"]
-           minSize: 3
-           maxSize: 10
-           spotAllocationStrategy: capacity-optimized
-       ```
-3. **워크로드 특성에 맞는 인스턴스 유형 선택**:
-   * 다양한 워크로드 요구 사항에 맞는 인스턴스 유형 제공
-   * 컴퓨팅 집약적 워크로드를 위한 C 시리즈
-   * 메모리 집약적 워크로드를 위한 R 시리즈
-   * 균형 잡힌 워크로드를 위한 M 시리즈
-   * GPU 워크로드를 위한 G 또는 P 시리즈
-   *   예시:
-
-       ```yaml
-       # 컴퓨팅 최적화 노드 그룹
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: compute-optimized
-           instanceTypes: ["c5.2xlarge"]
-           minSize: 2
-           maxSize: 10
-           labels:
-             workload-type: compute
-           taints:
-             - key: workload-type
-               value: compute
-               effect: NoSchedule
-
-         # 메모리 최적화 노드 그룹
-         - name: memory-optimized
-           instanceTypes: ["r5.2xlarge"]
-           minSize: 2
-           maxSize: 10
-           labels:
-             workload-type: memory
-           taints:
-             - key: workload-type
-               value: memory
-               effect: NoSchedule
-       ```
-
-**인스턴스 유형 혼합 사용의 단점:**
-
-1. **클러스터 관리 복잡성 증가**:
-   * 다양한 인스턴스 유형에 대한 모니터링 및 관리 필요
-   * 성능 특성 차이로 인한 문제 해결 복잡성
-   * 다양한 인스턴스 유형에 맞는 리소스 요청 및 제한 조정 필요
-2. **워크로드 예측 가능성 감소**:
-   * 인스턴스 유형에 따라 성능 특성이 다를 수 있음
-   * 특히 스팟 인스턴스 사용 시 워크로드 성능 변동 가능성
-3. **리소스 할당 복잡성**:
-   * 다양한 인스턴스 유형에 맞는 포드 리소스 요청 및 제한 설정 어려움
-   * 노드 선택기 및 테인트를 사용한 복잡한 스케줄링 규칙 필요
-4. **테스트 및 검증 부담**:
-   * 다양한 인스턴스 유형에서 애플리케이션 테스트 필요
-   * 성능 및 호환성 문제 발견 가능성 증가
-
-**인스턴스 유형 혼합 사용 전략:**
-
-1.  **워크로드 기반 노드 그룹 분리**:
-
-    ```yaml
-    # 웹 서버용 노드 그룹
-    - name: web-servers
-      instanceTypes: ["c5.large", "c5a.large"]
-      labels:
-        role: web
-
-    # 데이터베이스용 노드 그룹
-    - name: databases
-      instanceTypes: ["r5.xlarge", "r5a.xlarge"]
-      labels:
-        role: database
-    ```
-2.  **비용 최적화 전략**:
-
-    ```yaml
-    # 기본 온디맨드 노드 그룹
-    - name: on-demand-base
-      instanceTypes: ["m5.large"]
-      minSize: 2
-      maxSize: 5
-      spot: false
-
-    # 스케일링을 위한 스팟 노드 그룹
-    - name: spot-scaling
-      instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
-      minSize: 0
-      maxSize: 20
-      spot: true
-    ```
-3.  **가용성 최적화 전략**:
-
-    ```yaml
-    # 여러 인스턴스 패밀리에 걸친 다양화
-    - name: high-availability
-      instanceTypes: ["m5.large", "m5a.large", "c5.large", "c5a.large", "r5.large", "r5a.large"]
-      minSize: 3
-      maxSize: 10
-      spotAllocationStrategy: capacity-optimized
-    ```
-
-인스턴스 유형을 혼합하여 사용하면 비용 최적화, 가용성 향상, 워크로드 특성에 맞는 인스턴스 유형 선택과 같은 이점이 있지만, 클러스터 관리는 단순화되지 않고 오히려 더 복잡해질 수 있습니다. 따라서 "클러스터 관리 단순화"는 인스턴스 유형을 혼합하여 사용하는 주요 이점이 아닙니다.
-
-</details>
-
-3. Amazon EKS 클러스터에서 노드 그룹 업데이트 전략으로 가장 안전한 것은 무엇인가요?
-   * A) 인플레이스 업데이트
-   * B) 블루/그린 배포
-   * C) 카나리아 배포
-   * D) 롤링 업데이트
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: B) 블루/그린 배포**
-
-**설명:** Amazon EKS 클러스터에서 노드 그룹 업데이트 전략으로 가장 안전한 것은 블루/그린 배포입니다. 블루/그린 배포는 새로운 노드 그룹(그린)을 생성하고 워크로드를 마이그레이션한 후, 기존 노드 그룹(블루)을 제거하는 방식으로, 업데이트 중 문제가 발생하면 즉시 이전 환경으로 롤백할 수 있어 가장 안전한 접근 방식입니다.
-
-**노드 그룹 업데이트 전략 비교:**
-
-1. **블루/그린 배포**:
-   * **작동 방식**: 새 노드 그룹 생성 → 워크로드 마이그레이션 → 기존 노드 그룹 제거
-   * **장점**:
-     * 즉각적인 롤백 가능
-     * 업데이트 중 워크로드 중단 최소화
-     * 업데이트 전후 환경 비교 가능
-     * 테스트 후 전환 가능
-   * **단점**:
-     * 일시적으로 두 배의 리소스 필요
-     * 구현 복잡성
-     * 비용 증가
-   *   **구현 예시**:
-
-       ```bash
-       # 1. 새 노드 그룹 생성
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name my-nodegroup-v2 \
-         --node-type m5.large \
-         --nodes 3 \
-         --node-ami-family AmazonLinux2 \
-         --node-labels "version=v2,color=green"
-
-       # 2. 워크로드 마이그레이션 (노드 선택기 업데이트)
-       kubectl patch deployment my-app -p '{"spec":{"template":{"spec":{"nodeSelector":{"color":"green"}}}}}'
-
-       # 3. 모든 워크로드가 새 노드로 이동했는지 확인
-       kubectl get pods -o wide
-
-       # 4. 기존 노드 그룹 제거
-       eksctl delete nodegroup --cluster my-cluster --name my-nodegroup-v1
-       ```
-2. **롤링 업데이트**:
-   * **작동 방식**: 노드를 하나씩 교체 (코드네이션 → 드레이닝 → 종료 → 새 노드 추가)
-   * **장점**:
-     * 추가 리소스 필요 없음
-     * EKS 관리형 노드 그룹의 기본 전략
-     * 구현 간단
-   * **단점**:
-     * 롤백이 어려움
-     * 업데이트 중 문제 발생 시 전체 클러스터에 영향
-     * 업데이트 시간이 길어질 수 있음
-   *   **구현 예시**:
-
-       ```bash
-       # 관리형 노드 그룹 업데이트
-       aws eks update-nodegroup-version \
-         --cluster-name my-cluster \
-         --nodegroup-name my-nodegroup
-
-       # 업데이트 구성 수정
-       aws eks update-nodegroup-config \
-         --cluster-name my-cluster \
-         --nodegroup-name my-nodegroup \
-         --update-config '{"maxUnavailable": 1}'
-       ```
-3. **카나리아 배포**:
-   * **작동 방식**: 소규모 새 노드 그룹 생성 → 일부 워크로드 마이그레이션 → 검증 → 완전 마이그레이션
-   * **장점**:
-     * 위험 최소화
-     * 점진적 검증 가능
-     * 문제 발생 시 영향 범위 제한
-   * **단점**:
-     * 구현 복잡성
-     * 추가 리소스 필요
-     * 완전한 마이그레이션까지 시간 소요
-   *   **구현 예시**:
-
-       ```bash
-       # 1. 소규모 카나리아 노드 그룹 생성
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name canary-nodegroup \
-         --node-type m5.large \
-         --nodes 1 \
-         --node-labels "deployment=canary"
-
-       # 2. 일부 워크로드 마이그레이션
-       kubectl patch deployment my-app -p '{"spec":{"template":{"spec":{"nodeSelector":{"deployment":"canary"}}}}}'
-
-       # 3. 검증 후 완전 마이그레이션 진행
-       ```
-4. **인플레이스 업데이트**:
-   * **작동 방식**: 기존 노드에서 직접 업데이트 수행
-   * **장점**:
-     * 추가 리소스 필요 없음
-     * 간단한 변경에 적합
-   * **단점**:
-     * 위험성 높음
-     * 롤백 어려움
-     * 업데이트 실패 시 노드 손상 가능성
-     * EKS에서는 권장되지 않음
-   *   **구현 예시**:
-
-       ```bash
-       # 노드에 SSH 접속하여 직접 업데이트 (권장되지 않음)
-       ssh ec2-user@node-ip
-       sudo yum update -y
-       ```
-
-**블루/그린 배포가 가장 안전한 이유:**
-
-1. **완전한 격리**:
-   * 새 환경이 기존 환경과 완전히 분리되어 있어 영향 최소화
-   * 업데이트 중 문제가 발생해도 기존 환경은 영향 받지 않음
-2. **즉각적인 롤백**:
-   * 문제 발생 시 트래픽을 기존 환경으로 즉시 되돌릴 수 있음
-   * 다운타임 없이 롤백 가능
-3. **검증 기회**:
-   * 새 환경을 프로덕션 트래픽으로 전환하기 전에 철저히 테스트 가능
-   * 실제 환경과 동일한 조건에서 검증 가능
-4. **점진적 전환**:
-   * 트래픽을 점진적으로 새 환경으로 전환할 수 있음
-   * 문제 발생 시 영향 범위 제한
-
-**블루/그린 배포 모범 사례:**
-
-1. **자동화**:
-   * 배포 프로세스 자동화로 인적 오류 최소화
-   * CI/CD 파이프라인 통합
-2. **모니터링 강화**:
-   * 새 환경의 성능 및 오류 지표 모니터링
-   * 기존 환경과 비교 분석
-3. **점진적 전환**:
-   * 트래픽을 점진적으로 새 환경으로 전환
-   * 문제 발생 시 즉시 롤백
-4. **리소스 최적화**:
-   * 전환 완료 후 불필요한 리소스 신속히 정리
-   * 비용 최적화
-
-블루/그린 배포는 추가 리소스와 구현 복잡성이라는 단점이 있지만, 안전성 측면에서는 가장 우수한 접근 방식입니다. 특히 중요한 프로덕션 환경이나 업데이트 실패 시 비즈니스 영향이 큰 경우에 권장됩니다.
-
-</details>
-
-4\. Amazon EKS 클러스터에서 노드 그룹의 Auto Scaling을 최적화하기 위한 방법이 아닌 것은 무엇인가요? - A) Cluster Autoscaler의 스캔 간격 조정 - B) 포드 우선순위 및 선점 구성 - C) 노드 그룹별 Auto Scaling 그룹 태그 지정 - D) 모든 노드에 동일한 인스턴스 유형 사용
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: D) 모든 노드에 동일한 인스턴스 유형 사용**
-
-**설명:** Amazon EKS 클러스터에서 노드 그룹의 Auto Scaling을 최적화하기 위한 방법이 아닌 것은 "모든 노드에 동일한 인스턴스 유형 사용"입니다. 실제로는 다양한 인스턴스 유형을 혼합하여 사용하는 것이 비용 최적화와 가용성 측면에서 더 효과적인 Auto Scaling 전략입니다. 특히 스팟 인스턴스를 사용할 때는 다양한 인스턴스 유형을 지정하여 용량 가용성을 높이고 중단 위험을 줄이는 것이 권장됩니다.
-
-**노드 그룹 Auto Scaling 최적화를 위한 실제 방법:**
-
-1. **Cluster Autoscaler의 스캔 간격 조정**:
-   * Cluster Autoscaler는 정기적으로 클러스터를 스캔하여 확장 또는 축소가 필요한지 확인합니다.
-   * 스캔 간격을 조정하여 반응 시간과 리소스 사용량 간의 균형을 맞출 수 있습니다.
-   *   예시:
-
-       ```yaml
-       # Cluster Autoscaler 배포 구성
-       apiVersion: apps/v1
-       kind: Deployment
-       metadata:
-         name: cluster-autoscaler
-         namespace: kube-system
-       spec:
-         template:
-           spec:
-             containers:
-             - name: cluster-autoscaler
-               image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
-               command:
-               - ./cluster-autoscaler
-               - --v=4
-               - --stderrthreshold=info
-               - --cloud-provider=aws
-               - --scan-interval=30s  # 스캔 간격 조정 (기본값: 10초)
-               - --max-node-provision-time=15m
-               - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
-       ```
-2. **포드 우선순위 및 선점 구성**:
-   * 포드 우선순위 및 선점(PriorityClass)을 사용하여 중요한 워크로드가 먼저 스케줄링되도록 합니다.
-   * 리소스가 부족할 때 우선순위가 낮은 포드를 선점하여 우선순위가 높은 포드를 위한 공간을 확보합니다.
-   *   예시:
-
-       ```yaml
-       # 우선순위 클래스 정의
-       apiVersion: scheduling.k8s.io/v1
-       kind: PriorityClass
-       metadata:
-         name: high-priority
-       value: 1000000
-       globalDefault: false
-       description: "High priority pods"
-       ---
-       # 우선순위가 높은 포드
-       apiVersion: v1
-       kind: Pod
-       metadata:
-         name: high-priority-pod
-       spec:
-         priorityClassName: high-priority
-         containers:
-         - name: nginx
-           image: nginx
-       ```
-3. **노드 그룹별 Auto Scaling 그룹 태그 지정**:
-   * Cluster Autoscaler가 특정 노드 그룹을 식별하고 관리할 수 있도록 태그를 지정합니다.
-   * 노드 그룹별로 다른 Auto Scaling 동작을 구성할 수 있습니다.
-   *   예시:
-
-       ```bash
-       # Auto Scaling 그룹 태그 지정
-       aws autoscaling create-or-update-tags \
-         --tags ResourceId=my-asg,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=true \
-                ResourceId=my-asg,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/my-cluster,Value=owned,PropagateAtLaunch=true
-
-       # 노드 그룹별 Auto Scaling 설정
-       aws autoscaling update-auto-scaling-group \
-         --auto-scaling-group-name my-asg \
-         --min-size 2 \
-         --max-size 10 \
-         --desired-capacity 2
-       ```
-
-**다양한 인스턴스 유형 혼합 사용의 이점:**
-
-1. **비용 최적화**:
-   * 다양한 인스턴스 유형의 가격 차이 활용
-   * 스팟 인스턴스 사용 시 가용성 향상
-   *   예시:
-
-       ```yaml
-       # 다양한 인스턴스 유형을 사용하는 노드 그룹
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: mixed-instances
-           instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
-           minSize: 2
-           maxSize: 10
-           spot: true
-       ```
-2. **가용성 향상**:
-   * 특정 인스턴스 유형의 용량 부족 시 대체 인스턴스 유형 사용
-   * 스팟 인스턴스 중단 시 다른 유형으로 대체 가능
-   *   예시:
-
-       ```yaml
-       # 용량 최적화 스팟 할당 전략
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: spot-nodes
-           instanceTypes: ["c5.large", "c5a.large", "c5d.large", "c5n.large"]
-           minSize: 2
-           maxSize: 10
-           spot: true
-           spotAllocationStrategy: capacity-optimized
-       ```
-3. **워크로드 특성에 맞는 인스턴스 유형 선택**:
-   * 다양한 워크로드 요구 사항에 맞는 인스턴스 유형 제공
-   * 노드 선택기와 테인트를 사용하여 워크로드 배치 제어
-   *   예시:
-
-       ```yaml
-       # 워크로드 특성별 노드 그룹
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: general-purpose
-           instanceTypes: ["m5.large"]
-           minSize: 2
-           maxSize: 10
-         
-         - name: compute-intensive
-           instanceTypes: ["c5.large"]
-           minSize: 0
-           maxSize: 10
-           labels:
-             workload-type: compute
-       ```
-
-**Auto Scaling 최적화를 위한 추가 전략:**
-
-1. **오버프로비저닝**:
-   * 일정량의 여유 리소스를 유지하여 급격한 확장 요청에 대비
-   *   예시:
-
-       ```yaml
-       # 오버프로비저닝 포드
-       apiVersion: apps/v1
-       kind: Deployment
-       metadata:
-         name: overprovisioning
-         namespace: kube-system
-       spec:
-         replicas: 1
-         selector:
-           matchLabels:
-             app: overprovisioning
-         template:
-           metadata:
-             labels:
-               app: overprovisioning
-           spec:
-             priorityClassName: overprovisioning
-             containers:
-             - name: reserve-resources
-               image: k8s.gcr.io/pause:3.2
-               resources:
-                 requests:
-                   cpu: 1000m
-                   memory: 1000Mi
-       ```
-2. **스케일링 정책 최적화**:
-   * 대상 추적 조정 정책 사용
-   * 단계 조정 정책 사용
-   * 예측 조정 활성화
-   *   예시:
-
-       ```bash
-       # 대상 추적 조정 정책 설정
-       aws autoscaling put-scaling-policy \
-         --auto-scaling-group-name my-asg \
-         --policy-name cpu70-target-tracking-scaling-policy \
-         --policy-type TargetTrackingScaling \
-         --target-tracking-configuration '{"PredefinedMetricSpecification":{"PredefinedMetricType":"ASGAverageCPUUtilization"},"TargetValue":70.0,"DisableScaleIn":false}'
-       ```
-3. **Karpenter 사용**:
-   * Cluster Autoscaler 대신 Karpenter 사용 고려
-   * 더 빠른 노드 프로비저닝 및 더 유연한 인스턴스 유형 선택
-   *   예시:
-
-       ```yaml
-       # Karpenter Provisioner
-       apiVersion: karpenter.sh/v1alpha5
-       kind: NodePool
-       metadata:
-         name: default
-       spec:
-         template:
-           spec:
-             requirements:
-               - key: karpenter.sh/capacity-type
-                 operator: In
-                 values: ["spot", "on-demand"]
-               - key: node.kubernetes.io/instance-type
-                 operator: In
-                 values: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
-         limits:
-           resources:
-             cpu: 1000
-             memory: 1000Gi
-       ```
-
-모든 노드에 동일한 인스턴스 유형을 사용하는 것은 Auto Scaling 최적화 전략이 아니며, 오히려 다양한 인스턴스 유형을 혼합하여 사용하는 것이 비용 최적화와 가용성 측면에서 더 효과적입니다. 따라서 "모든 노드에 동일한 인스턴스 유형 사용"은 노드 그룹의 Auto Scaling을 최적화하기 위한 방법이 아닙니다.
-
-</details>
-
-5. Amazon EKS 클러스터에서 노드 그룹 생성 시 고려해야 할 보안 모범 사례가 아닌 것은 무엇인가요?
-   * A) IMDSv2 필수 설정
-   * B) 최소 권한 IAM 정책 적용
-   * C) 모든 노드에 퍼블릭 IP 주소 할당
-   * D) 보안 그룹 규칙 제한
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: C) 모든 노드에 퍼블릭 IP 주소 할당**
-
-**설명:** Amazon EKS 클러스터에서 노드 그룹 생성 시 고려해야 할 보안 모범 사례가 아닌 것은 "모든 노드에 퍼블릭 IP 주소 할당"입니다. 보안 모범 사례는 오히려 그 반대로, 노드를 프라이빗 서브넷에 배치하고 퍼블릭 IP 주소를 할당하지 않는 것입니다. 이렇게 하면 노드가 인터넷에서 직접 접근할 수 없게 되어 공격 표면이 줄어듭니다.
-
-**EKS 노드 그룹 생성 시 실제 보안 모범 사례:**
-
-1. **IMDSv2 필수 설정**:
-   * 인스턴스 메타데이터 서비스 버전 2(IMDSv2)를 필수로 설정하여 SSRF(Server-Side Request Forgery) 공격으로부터 보호
-   * IMDSv2는 세션 기반 요청을 사용하여 보안 강화
-   *   예시:
-
-       ```yaml
-       # eksctl 구성 파일
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: secure-nodes
-           instanceType: m5.large
-           minSize: 2
-           maxSize: 5
-           disableIMDSv1: true  # IMDSv1 비활성화
-           metadataOptions:
-             httpTokens: required  # IMDSv2 필수 설정
-             httpPutResponseHopLimit: 1
-       ```
-2. **최소 권한 IAM 정책 적용**:
-   * 노드 IAM 역할에 필요한 최소한의 권한만 부여
-   * 기본 관리형 정책 외에 추가 권한이 필요한 경우 세분화된 정책 생성
-   *   예시:
-
-       ```yaml
-       # 노드 IAM 역할에 대한 최소 권한 정책
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: secure-nodes
-           instanceType: m5.large
-           minSize: 2
-           maxSize: 5
-           iam:
-             attachPolicyARNs:
-               - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-               - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-               - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-             withAddonPolicies:
-               imageBuilder: false
-               autoScaler: false
-               externalDNS: false
-               certManager: false
-               appMesh: false
-               ebs: true
-               fsx: false
-               efs: false
-               albIngress: false
-               xRay: false
-               cloudWatch: true
-       ```
-3. **보안 그룹 규칙 제한**:
-   * 노드 보안 그룹의 인바운드 및 아웃바운드 규칙 제한
-   * 필요한 최소한의 포트만 개방
-   *   예시:
-
-       ```bash
-       # 보안 그룹 생성
-       aws ec2 create-security-group \
-         --group-name eks-node-sg \
-         --description "Security group for EKS nodes" \
-         --vpc-id vpc-12345
-
-       # 클러스터 통신에 필요한 규칙만 추가
-       aws ec2 authorize-security-group-ingress \
-         --group-id sg-12345 \
-         --protocol tcp \
-         --port 443 \
-         --source-group sg-cluster
-
-       aws ec2 authorize-security-group-ingress \
-         --group-id sg-12345 \
-         --protocol tcp \
-         --port 10250 \
-         --source-group sg-cluster
-       ```
-
-**노드에 퍼블릭 IP 주소를 할당하지 않는 이유:**
-
-1. **공격 표면 감소**:
-   * 퍼블릭 IP가 없으면 인터넷에서 노드에 직접 접근할 수 없음
-   * SSH 접근 등의 관리 작업은 배스천 호스트나 AWS Systems Manager를 통해 수행
-2. **보안 아키텍처 개선**:
-   * 프라이빗 서브넷에 노드 배치
-   * NAT 게이트웨이를 통한 아웃바운드 통신만 허용
-   * 인바운드 트래픽은 로드 밸런서를 통해서만 허용
-3. **규정 준수**:
-   * 많은 보안 표준 및 규정은 직접적인 인터넷 노출 최소화 요구
-   * PCI DSS, HIPAA 등의 규정 준수에 도움
-
-**프라이빗 서브넷에 노드 배치 예시:**
+다음은 유사한 `m5` 계열 크기를 유지한 예제입니다. 미사용 그룹 이름을 사용하는 검토된 기존 클러스터의 노드 그룹 구성이며 가격·성능이나 용량 보장이 아닙니다. AZ별 제공 여부와 이미지·드라이버·스토리지 호환성을 확인하세요:
 
 ```yaml
-# eksctl 구성 파일
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
   name: my-cluster
   region: us-west-2
-vpc:
-  subnets:
-    private:
-      us-west-2a: { id: subnet-private-a }
-      us-west-2b: { id: subnet-private-b }
-    public:
-      us-west-2a: { id: subnet-public-a }
-      us-west-2b: { id: subnet-public-b }
 managedNodeGroups:
-  - name: secure-nodes
-    instanceType: m5.large
-    minSize: 2
-    maxSize: 5
-    privateNetworking: true  # 프라이빗 서브넷에 노드 배치
+- name: on-demand-base
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  spot: false
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+- name: spot-scaling
+  amiFamily: AmazonLinux2023
+  instanceTypes: [m5.large, m5a.large, m5d.large, m5ad.large, m5n.large]
+  privateNetworking: true
+  spot: true
+  desiredCapacity: 0
+  minSize: 0
+  maxSize: 20
 ```
+서로 다른 워크로드 크기는 메모리·컴퓨팅·범용 인스턴스를 하나의 자동 확장 그룹에 섞는 대신 분리합니다:
 
-**추가 EKS 보안 모범 사례:**
-
-1. **암호화 활성화**:
-   * EBS 볼륨 암호화
-   * Secrets 암호화
-   *   예시:
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       secretsEncryption:
-         keyARN: arn:aws:kms:us-west-2:123456789012:key/key-id
-       nodeGroups:
-         - name: secure-nodes
-           volumeEncrypted: true
-           volumeKmsKeyID: arn:aws:kms:us-west-2:123456789012:key/key-id
-       ```
-2. **컨테이너 보안**:
-   * 권한 있는 컨테이너 비활성화
-   * 읽기 전용 루트 파일 시스템 사용
-   *   예시:
-
-       ```yaml
-       apiVersion: v1
-       kind: Pod
-       metadata:
-         name: secure-pod
-       spec:
-         containers:
-         - name: secure-container
-           image: nginx
-           securityContext:
-             privileged: false
-             readOnlyRootFilesystem: true
-             allowPrivilegeEscalation: false
-       ```
-3. **네트워크 정책 구현**:
-   * 포드 간 통신 제한
-   * 기본 거부 정책 적용
-   *   예시:
-
-       ```yaml
-       apiVersion: networking.k8s.io/v1
-       kind: NetworkPolicy
-       metadata:
-         name: default-deny
-         namespace: default
-       spec:
-         podSelector: {}
-         policyTypes:
-         - Ingress
-         - Egress
-       ```
-4. **로깅 및 모니터링**:
-   * CloudWatch Logs 활성화
-   * GuardDuty EKS Protection 활성화
-   *   예시:
-
-       ```bash
-       # CloudWatch Logs 활성화
-       aws eks update-cluster-config \
-         --name my-cluster \
-         --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-       ```
-
-모든 노드에 퍼블릭 IP 주소를 할당하는 것은 보안 모범 사례가 아니며, 오히려 보안 위험을 증가시킵니다. 따라서 "모든 노드에 퍼블릭 IP 주소 할당"은 Amazon EKS 클러스터에서 노드 그룹 생성 시 고려해야 할 보안 모범 사례가 아닙니다.
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: compute-optimized
+  amiFamily: AmazonLinux2023
+  instanceTypes: [c5.2xlarge, c5a.2xlarge]
+  privateNetworking: true
+  minSize: 2
+  maxSize: 10
+  labels: {workload-type: compute}
+  taints:
+  - {key: workload-type, value: compute, effect: NoSchedule}
+- name: memory-optimized
+  amiFamily: AmazonLinux2023
+  instanceTypes: [r5.2xlarge, r5a.2xlarge]
+  privateNetworking: true
+  minSize: 2
+  maxSize: 10
+  labels: {workload-type: memory}
+  taints:
+  - {key: workload-type, value: memory, effect: NoSchedule}
+```
+전용 풀을 반드시 사용해야 하는 워크로드에는 일치하는 톨러레이션과 선택기·어피니티가 모두 필요합니다. 레이블만으로 배치되지 않으며 테인트는 테넌트 보안 경계가 아닙니다. 0에서 확장할 때의 검색 설정, 데몬 부담, 중단 처리, 스토리지 영속성과 모든 후보 유형의 테스트를 고려하세요. 다양성은 모니터링·문제 해결 작업을 늘릴 수 있으며 관리 단순화나 비용 감소가 자동으로 따라오지는 않습니다.
 
 </details>
+
+3. 기존 그룹을 제거하기 전에 별도의 교체 노드 그룹을 만드는 전략은 무엇인가요?
+   * A) 추적하지 않는 호스트 패키지 업데이트
+   * B) Blue/green 마이그레이션
+   * C) 모든 노드 동시 삭제
+   * D) 클러스터 표시 이름만 변경
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) Blue/green 마이그레이션**
+
+Blue/green은 별도의 교체 노드 그룹을 만들고 검증 후 워크로드를 이전합니다. 기존 그룹과 호환되는 애플리케이션·데이터 상태가 남아 있는 동안 롤백 선택지를 유지할 수 있습니다. 같은 클러스터의 두 그룹은 제어 플레인과 다른 의존성을 공유하므로 완전한 격리나 무중단 보장이 아닙니다.
+
+| 전략 | 이점 | 중요한 한계 |
+| --- | --- | --- |
+| Blue/green | 최종 제거 전 교체 용량 검증 | 추가 비용·용량 필요; 기존 노드와 호환 상태가 있어야 롤백 가능 |
+| 관리형 롤링 업데이트 | EKS가 점진적 노드 교체 조정 | `DEFAULT`는 일시적 추가 노드 사용; PDB·용량 오류로 정체 가능 |
+| Canary | 별도의 작은 워크로드·그룹부터 시험 | 실제 워크로드·트래픽 범위를 제한해야 하며 검증·라우팅 작업 추가 |
+| 호스트 패키지 직접 변경 | 개별 호스트 변경 | AMI와 drift 발생; 무조건적인 SSH·yum 명령 대신 검토한 교체 이미지 수명주기 사용 |
+
+**교체 그룹 예제:** 기존 클러스터와 미사용 그룹 이름을 확인한 뒤 파일을 검토하고 `eksctl create nodegroup -f green-nodegroup.yaml`을 사용합니다. 먼저 AL2023·아키텍처 호환성, 애드온, egress, IP 공간, 쿼터와 스토리지 토폴로지를 확인하세요.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: green-nodegroup
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  desiredCapacity: 3
+  minSize: 3
+  maxSize: 5
+  labels:
+    audit.example.com/pool: green
+```
+**실제 카나리아는 별도 Deployment를 사용합니다:** 아래는 전용 `update-lab` 네임스페이스의 최소 HTTP 확인용 워크로드이며 기존 Service에 실수로 포함되지 않도록 고유 레이블을 사용합니다. 애플리케이션 호환성을 주장하려면 실제 애플리케이션의 검토된 카나리아로 바꾸어야 합니다. 주 Deployment의 노드 선택기를 수정하면 **모든** 복제본이 롤아웃되므로 제한된 카나리아가 아닙니다.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-canary
+  namespace: update-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: my-app-canary}
+  template:
+    metadata:
+      labels: {app: my-app-canary}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        audit.example.com/pool: green
+      containers:
+      - name: web
+        image: nginx:1.30.4
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet: {path: /, port: 80}
+        resources:
+          requests: {cpu: 100m, memory: 64Mi}
+          limits: {cpu: 500m, memory: 128Mi}
+```
+검토한 관찰 기간 동안 준비 상태, API·CNI·DNS, 애플리케이션 오류, 리소스 압박, 영속 볼륨과 대표 트래픽을 검증합니다. 노드 레이블이 트래픽을 전환하는 것은 아니므로 라우팅을 명시적으로 관리하세요. 교체 용량과 워크로드·데이터 동작을 검증한 후 확인된 기존 노드를 하나씩 드레인합니다:
+
+```bash
+# One reviewed node at a time, after validating replacement capacity.
+OLD_NODE_JSON=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  get node "${OLD_NODE_NAME:?}" -o json) || exit 1
+OLD_NODE_GROUP=$(printf '%s' "$OLD_NODE_JSON" |
+  jq -er '.metadata.labels["eks.amazonaws.com/nodegroup"]') || exit 1
+if [ "$OLD_NODE_GROUP" != "${OLD_NODEGROUP_NAME:?}" ]; then
+  printf '%s\n' 'Node is not in the intended old managed node group.' >&2
+  exit 1
+fi
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" cordon "$OLD_NODE_NAME" &&
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" drain "$OLD_NODE_NAME" \
+  --ignore-daemonsets --timeout=15m
+```
+드레인이 막히면 `--force`나 emptyDir 자동 삭제 대신 원인을 조사합니다. 이전한 워크로드와 상태를 모두 확인한 후 별도의 최종 삭제를 수행합니다:
+
+```bash
+# Separate final step, after application/data validation and ownership review.
+if [ "${MIGRATION_VERIFIED:?Set yes only after workload and data checks}" = yes ]; then
+  eksctl delete nodegroup --cluster "${EXAMPLE_CLUSTER:?}" \
+    --region "${EXAMPLE_REGION:?}" --name "${OLD_NODEGROUP_NAME:?}" --approve --wait
+fi
+```
+관리형 롤링 방식은 기본 문제 9의 `update-nodegroup-config` 작업을 완료한 후 `update-nodegroup-version`을 제출하고 반환된 업데이트 ID를 추적합니다. 관리형 그룹 리소스는 유지되면서 EC2 노드는 교체될 수 있습니다. 기존 용량을 삭제했거나 데이터가 비호환 상태로 바뀌었다면 “즉각적인 롤백”은 더 이상 가능하지 않습니다.
+
+</details>
+
+4. 관리형 ASG를 제어하는 Cluster Autoscaler와 충돌할 수 있는 작업은 무엇인가요?
+   * A) 검색 태그 검토
+   * B) 관측에 따른 스캔 주기 조정
+   * C) 정확한 Pod 리소스 요청 사용
+   * D) 같은 desired capacity를 독립적으로 바꾸는 다른 정책 추가
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: D) 같은 desired capacity를 독립적으로 바꾸는 다른 정책 추가**
+
+Cluster Autoscaler는 평균 EC2 CPU만 보는 대신 스케줄링 요청에 따라 노드 그룹 용량을 제어합니다. 같은 desired capacity를 바꾸는 ASG 대상 추적·예측 정책은 제어 루프와 충돌하고 기대한 Kubernetes 드레인 절차를 우회할 수 있습니다. “최적화”를 위해 원하는 용량을 직접 2로 재설정하면 안 됩니다.
+
+**유용한 제어:**
+
+* 스캔 주기는 반응 시간과 API 부하를 함께 고려합니다. 공식 기본값은 10초이며 30초는 실측 최적값이 아닌 테스트 예시입니다. 프로비저닝 타임아웃도 실제 노드 시작 동작에 맞춰야 합니다.
+* 검토한 ASG 검색 태그와 태그로 제한한 IAM을 사용합니다. 태그는 대상 그룹을 식별하며 권한이나 확장 알고리즘을 제공하지는 않습니다.
+* requests·레이블·테인트를 실제 용량과 맞춥니다. 단일 인스턴스 유형도 적절할 수 있으며 가용성·Spot 요구가 있다면 같은 크기의 다양한 유형이 유용합니다(고급 문제 2).
+* 우선순위는 의도적으로 사용합니다. 선점은 가용성 보장이 아니며 낮은 우선순위 워크로드를 중단시킬 수 있습니다. admission·워크로드 정책을 평가한 후 필요한 Pod의 `priorityClassName`으로 다음 클래스를 지정하세요:
+
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: audit-high-priority
+value: 1000000
+globalDefault: false
+description: Reviewed priority for critical application Pods
+```
+**오버프로비저닝:** 선점 가능한 낮은 우선순위 Pod의 requests로 여유 용량을 확보합니다. 이 예제는 Cluster Autoscaler의 expendable-Pod cutoff가 `-5`보다 낮아야 하며(예: `-10`), 애플리케이션 Pod의 우선순위는 더 높아야 합니다. 그렇지 않으면 예약 Pod가 의도한 용량 보충을 유발하지 않을 수 있습니다. 전용 네임스페이스와 미사용 PriorityClass 이름을 사용하세요:
+
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: audit-overprovisioning
+value: -5
+globalDefault: false
+description: Temporary spare capacity for an autoscaling lab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overprovisioning
+  namespace: autoscaling-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: overprovisioning}
+  template:
+    metadata:
+      labels: {app: overprovisioning}
+    spec:
+      priorityClassName: audit-overprovisioning
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: reserve
+        image: public.ecr.aws/docker/library/busybox:1.37.0
+        command: [sleep, '86400']
+        resources:
+          requests: {cpu: 1000m, memory: 1000Mi}
+          limits: {cpu: 1000m, memory: 1000Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+```
+이는 요청 용량 1 CPU·1000Mi를 확보하며 미리 초기화된 애플리케이션 상태가 아니고 노드 비용이 발생합니다. 이미지 pull·볼륨 연결·애플리케이션 초기화를 없애지 않습니다. 관측한 수요에 맞춰 크기를 정하고 테스트 후 소유한 예약 Deployment·PriorityClass를 제거하세요.
+
+기존의 불완전한 v1.23 Deployment 대신 기본 문제 10의 완전하게 렌더링된 Cluster Autoscaler 구성을 사용합니다. Karpenter는 별도로 관리하는 용량의 대안이며 NodePool이 유효하고 권한이 구성된 EC2NodeClass를 참조해야 합니다. KEDA·HPA는 워크로드 복제본을 조절하여 두 노드 오토스케일러에 수요를 만들 수 있습니다. 같은 리소스에 모든 확장 기능을 켜기보다 제어 루프의 상호작용을 검증하세요.
+
+</details>
+
+5. EKS 노드 그룹의 일반적인 보안 모범 사례가 아닌 것은 무엇인가요?
+   * A) IMDSv2 요구와 메타데이터 접근 검토
+   * B) 최소 권한 IAM 사용
+   * C) 모든 노드에 퍼블릭 IP 할당
+   * D) 보안 그룹 규칙 검토
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 모든 노드에 퍼블릭 IP 할당**
+
+모든 노드에 퍼블릭 IP를 주는 것은 일반적인 보안 모범 사례가 아닙니다. 프라이빗 서브넷은 직접적인 인터넷 노출을 줄이지만 라우팅·보안 그룹·IAM·소프트웨어 유지 관리·워크로드 제어도 중요합니다.
+
+**노드 신원과 메타데이터:** eksctl의 지원 필드인 `disableIMDSv1`으로 IMDSv2를 요구합니다. 중첩된 `metadataOptions` 객체는 eksctl 관리형 노드 그룹 필드가 아니며, EC2 MetadataOptions의 커스텀 설정은 검토한 Launch Template에 둡니다. IMDSv2는 일부 SSRF 경로를 완화하지만 모든 Pod, 특히 hostNetwork Pod의 노드 자격 증명 접근을 막지는 않습니다. 워크로드 신원·호스트 의존성과 함께 메타데이터 접근을 별도 검토하세요.
+
+**최소 권한과 루트 볼륨 암호화:** 아래 기존 클러스터의 노드 그룹 예제는 CNI가 이미 자체 IRSA·Pod Identity 권한을 가진다고 가정합니다. EBS CSI·로그 수집기·애플리케이션에도 별도 검토한 역할이 필요합니다. 모든 노드에 그 권한을 넓게 붙이는 것은 최소 권한과 모순됩니다.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: secure-nodes
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+  disableIMDSv1: true
+  volumeEncrypted: true
+  iam:
+    attachPolicyARNs:
+    - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+    - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly
+```
+EBS 암호화는 Kubernetes API 데이터와 다른 계층을 보호합니다. EKS 1.28 이상은 모든 Kubernetes API 데이터를 기본 envelope encryption으로 암호화합니다. 고객 관리 KMS 키는 선택 사항이며 추가 grant·권한과 키 수명주기 책임이 따릅니다. 클러스터의 키 비활성화·삭제를 일상적인 정리 작업에 포함하지 마세요.
+
+**네트워크 설계:** 프라이빗 API 엔드포인트는 관리자·노드의 라우팅된 접근 경로가 필요합니다. 퍼블릭 API 접근 제한은 클러스터 SG ingress 규칙이 아닌 `publicAccessCidrs`로 설정합니다. TCP 443·TCP 10250·TCP/UDP 53과 워크로드별 경로에 대해 방향과 피어 그룹을 포함한 AWS의 전체 클러스터·노드 SG 요구를 검토하세요. ingress 포트 두 개만으로 노드 네트워킹 구성이 완성되지 않습니다.
+
+프라이빗 IPv4 인터넷 egress에는 NAT가 필요할 수 있지만 VPC Endpoint·네이티브 IPv6는 경로가 다릅니다. ingress는 로드 밸런서 또는 승인된 연결 네트워크에서 올 수 있습니다. 프라이빗 서브넷만으로 완전한 격리나 규제 준수를 입증하지는 않습니다.
+
+**컨테이너 제어:** non-root·읽기 전용 실행과 호환되는 워크로드를 사용합니다. 다음 컨트롤러 관리 진단 Pod는 **새 전용** `security-lab` 네임스페이스에서 실행되며 네트워크나 쓰기 가능한 루트가 필요하지 않습니다:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-pod
+  namespace: security-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &id001
+      app: secure-pod
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: secure-container
+        image: public.ecr.aws/docker/library/busybox:1.37.0
+        command:
+        - sh
+        - -c
+        - echo read-only-lab; sleep 3600
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+```
+실제로 집행되는 deny 정책은 전용 네임스페이스에서 시험할 수 있습니다. 실제 워크로드에는 필요한 DNS·애플리케이션 허용 규칙을 먼저 추가하세요:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: security-lab
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+```
+**로깅과 탐지:** 제어 플레인 CloudWatch 로그는 다섯 유형을 설정할 수 있습니다:
+
+```bash
+# Enable the reviewed set of log types; this example enables all five.
+if LOG_UPDATE_ID=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}' \
+  --query update.id --output text); then
+  aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+    --update-id "$LOG_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+fi
+```
+반환된 업데이트가 성공할 때까지 기다린 후 실제 로그 전달과 보존 설정을 확인합니다. 이 설정이 모든 컨테이너의 애플리케이션 로그를 수집하는 것은 아닙니다. GuardDuty의 EKS 감사 로그 보호와 Runtime Monitoring은 별도 설정·범위를 가진 기능이며, 제어 플레인 로그 활성화만으로 런타임 위협 탐지를 구성하는 것은 아닙니다.
+
+</details>
+
+
+## 참고 자료
+
+* [EKS prefix mode](https://docs.aws.amazon.com/eks/latest/best-practices/prefix-mode-linux.html)
+* [EKS maxPods and prefix procedure](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html)
+* [EKS network policy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+* [NAT gateways](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html)
+* [Subnet route table association](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-subnetroutetableassociation.html)
+* [Security groups for Pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+* [CoreDNS managed add-on](https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html)
+* [CoreDNS cache](https://coredns.io/plugins/cache/)
+* [CoreDNS reload](https://coredns.io/plugins/reload/)
+* [Kubernetes multi-tenancy](https://kubernetes.io/docs/concepts/security/multi-tenancy/)
+* [Kubernetes PDB](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)
+* [EKS Cluster Autoscaler](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html)
+* [EKS managed node updates](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html)
+* [Calico on EKS](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
+* [Calico NetworkPolicy](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
+* [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+* [EKS node IAM role](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html)

@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VictoriaMetrics Cluster Mode Architecture",
+    "locale": "en",
+    "output": "en-observability-metrics-02-victoriametrics-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1290,
+      470
+    ],
+    "views": [
+      {
+        "id": "write-path",
+        "label": "Write Path",
+        "focus": [
+          "vmagent",
+          "prometheus",
+          "vminsert",
+          "vmstorage"
+        ],
+        "note": "vmagent and Prometheus remote_write are written to vmstorage through vminsert."
+      },
+      {
+        "id": "read-path",
+        "label": "Read Path",
+        "focus": [
+          "grafana",
+          "vmalert",
+          "vmselect",
+          "vmstorage"
+        ],
+        "note": "Queries from Grafana and vmalert are received by vmselect and read from vmstorage."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "vmagent",
+      "type": "backend",
+      "label": "vmagent",
+      "sublabel": "Metric collection",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "remote_write",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vminsert",
+      "type": "backend",
+      "label": "vminsert",
+      "sublabel": "Write routing · ×3 Deployment",
+      "pos": [
+        270,
+        205
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "vmstorage",
+      "type": "database",
+      "label": "vmstorage",
+      "sublabel": "Data storage · ×3 StatefulSet",
+      "pos": [
+        540,
+        205
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "vmselect",
+      "type": "backend",
+      "label": "vmselect",
+      "sublabel": "Query serving · ×3 Deployment",
+      "pos": [
+        810,
+        205
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Dashboards",
+      "pos": [
+        1080,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vmalert",
+      "type": "backend",
+      "label": "vmalert",
+      "sublabel": "Alert rule evaluation",
+      "pos": [
+        1080,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Write Path",
+      "wraps": [
+        "vmagent",
+        "prometheus"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Read Path",
+      "wraps": [
+        "grafana",
+        "vmalert"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vmagent-to-vminsert",
+      "from": "vmagent",
+      "to": "vminsert"
+    },
+    {
+      "id": "prometheus-to-vminsert",
+      "from": "prometheus",
+      "to": "vminsert"
+    },
+    {
+      "id": "vminsert-to-vmstorage",
+      "from": "vminsert",
+      "to": "vmstorage",
+      "label": "write",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vmselect-to-vmstorage",
+      "from": "vmselect",
+      "to": "vmstorage",
+      "label": "query"
+    },
+    {
+      "id": "grafana-to-vmselect",
+      "from": "grafana",
+      "to": "vmselect"
+    },
+    {
+      "id": "vmalert-to-vmselect",
+      "from": "vmalert",
+      "to": "vmselect"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Components and Scaling",
+      "items": [
+        "vminsert — write request routing, horizontal scaling (Deployment)",
+        "vmstorage — data storage, horizontal scaling (StatefulSet)",
+        "vmselect — query processing, horizontal scaling (Deployment)"
+      ]
+    }
+  ]
+}

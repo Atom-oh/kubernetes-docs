@@ -2,20 +2,24 @@
 
 ## 개요
 
-Apache Kafka는 이벤트 기반 아키텍처와 실시간 스트리밍 파이프라인의 백본 역할을 하는 분산 이벤트 스트리밍 플랫폼입니다. 마이크로서비스 간 비동기 통신, 로그/메트릭 집계, CDC(Change Data Capture) 파이프라인 등 폭넓은 용도로 쓰이며, EKS 환경에서는 raw StatefulSet을 직접 관리하는 대신 **Strimzi Kubernetes Operator**를 사용하는 것이 표준적인 접근 방식입니다. Strimzi는 Kafka 클러스터의 생성, 스케일링, 롤링 업그레이드, 인증서 관리, 랙 인식(rack awareness) 배치 등 운영 전반을 CRD(Custom Resource Definition) 기반으로 선언적으로 관리할 수 있게 해줍니다.
+이 가이드는 Apache Kafka를 EKS에서 직접 운영하는 선택지로 Strimzi Operator를 사용합니다. Operator는 Pod, 스토리지, listener, 인증서와 업그레이드를 조정하지만 데이터·가용성·보안 정책의 운영 책임을 모두 대신하지 않습니다. Amazon MSK 같은 관리형 선택지는 Part 6에서 비교합니다.
 
-> **지원 버전**: Kafka 3.7-3.9 (KRaft), Strimzi Operator 0.45+
-> **마지막 업데이트**: 2026년 7월 9일
+> **검토 기준**: 2026-09-12. Strimzi 1.2.0 / Kafka 4.3.1.
+> **업그레이드 주의**: Strimzi 1.0 이상은 CRD API `v1`만 지원합니다. 기존 `v1beta2`/`v1beta1`/`v1alpha1` 리소스는 공식 전환 절차로 변환하고 CRD를 준비한 뒤 Operator를 업그레이드해야 합니다. 버전 번호만 교체하는 업그레이드가 아닙니다.
+
+Strimzi 1.2.0의 지원 Kafka 버전은 4.2.0, 4.2.1, 4.3.0, 4.3.1이며 기본값은 4.3.1입니다. 이 문서에서는 호환되는 조합을 고정하며, 설치 시 배포판·Kubernetes 버전과 업그레이드 경로를 함께 확인합니다.
 
 ## 핵심 아키텍처 개념
 
-Kafka 클러스터는 **브로커(Broker)** 라는 프로세스 집합으로 구성됩니다. 각 브로커는 하나 이상의 **토픽(Topic)** 을 저장하며, 토픽은 병렬 처리와 확장성을 위해 여러 **파티션(Partition)** 으로 나뉘고, 각 파티션은 내구성을 위해 다른 브로커에 복제본(replica)을 유지합니다. 프로듀서는 파티션에 메시지를 기록하고, **컨슈머 그룹(Consumer Group)** 은 파티션을 나눠 병렬로 메시지를 소비하면서 오프셋(offset)을 통해 처리 위치를 추적합니다.
+브로커는 토픽의 파티션 복제본을 저장합니다. KafkaConsumer 그룹은 파티션을 나누어 처리하며 소비자 하나가 여러 파티션을 맡을 수 있습니다. 별도의 controller quorum은 메타데이터 Raft 로그를 관리합니다.
 
-과거 Kafka는 클러스터 메타데이터(토픽, 파티션 할당, ACL 등)를 관리하기 위해 별도의 ZooKeeper 앙상블이 필요했습니다. Kafka 3.x부터 도입된 **KRaft(Kafka Raft)** 모드는 ZooKeeper 없이 Kafka 자체의 Raft 기반 컨트롤러 쿼럼(quorum)이 메타데이터를 관리하도록 하여, 운영해야 할 컴포넌트를 줄이고 컨트롤러 페일오버 속도를 크게 개선합니다. Kafka 4.0부터는 ZooKeeper 지원이 완전히 제거되어 KRaft가 유일한 메타데이터 관리 방식이 되었으므로, 신규로 EKS에 Kafka를 구축한다면 처음부터 KRaft 모드를 전제로 설계해야 합니다.
+KRaft는 2.8에서 early access로 도입되어 3.3에서 production-ready가 되었고 Kafka 4.0부터 ZooKeeper 모드가 제거되었습니다. 전용 controller와 broker를 분리할 수 있으며, ZooKeeper 제거가 controller·스토리지·장애 복구 운영까지 없애지는 않습니다.
 
-Strimzi는 이 모든 구성 요소를 Kubernetes 리소스로 감쌉니다. 사용자는 `Kafka`, `KafkaNodePool` 같은 CRD에 원하는 상태를 선언하고, Strimzi Operator가 이를 감지하여 브로커/컨트롤러 Pod, PVC, Service, Secret 등을 실제로 생성·조정합니다.
+사용자는 `Kafka`, `KafkaNodePool` 같은 커스텀 리소스를 선언하고 Strimzi가 실제 Pod·PVC·Service·Secret을 조정합니다. 다음 그림은 이 관계를 축약한 도식이며 실제 HA replica 수를 제안하는 배포 명세가 아닙니다.
 
-![운영자가 Kafka/KafkaNodePool 커스텀 리소스를 적용하면 Kubernetes API Server를 통해 Strimzi Operator가 이를 조정하여 브로커 파드 2개와 컨트롤러 파드 1개를 생성하고, 각 파드는 EBS gp3 PVC에 데이터를 저장하는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-kafka-README-0.png)
+![Kafka/KafkaNodePool 선언을 Strimzi가 Pod와 PVC로 조정하는 축약 관계도. 실제 broker 및 controller replica 수는 별도 설계한다.](../../.gitbook/assets/ko-data-on-eks-kafka-readme-0.png)
+
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-readme-0.html)
 
 ## 딥다이브 목차
 
@@ -34,7 +38,7 @@ Strimzi는 이 모든 구성 요소를 Kubernetes 리소스로 감쌉니다. 사
 - EBS/gp3 기반 스토리지 설계
 - 브로커 스케일링 전략
 - Cruise Control을 활용한 파티션 리밸런싱
-- 무중단 롤링 업그레이드
+- 호환성과 가용성을 고려한 롤링 업그레이드
 
 **[4. 스키마 레지스트리](04-schema-registry.md)**
 - Avro/Protobuf 스키마 설계
@@ -70,9 +74,11 @@ Strimzi는 이 모든 구성 요소를 Kubernetes 리소스로 감쌉니다. 사
 
 ## 참고 자료
 
-- [Strimzi 공식 문서](https://strimzi.io/docs/operators/latest/overview)
-- [Apache Kafka 공식 문서](https://kafka.apache.org/documentation/)
-- [KIP-500: ZooKeeper를 대체하는 KRaft](https://cwiki.apache.org/confluence/display/KAFKA/KIP-500)
+- [Strimzi 1.2.0 release](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+
+- [Strimzi 공식 문서](https://strimzi.io/docs/operators/1.2.0/overview.html)
+- [Apache Kafka 공식 문서](https://kafka.apache.org/43/design/design/)
+- [KRaft 운영 가이드](https://kafka.apache.org/43/operations/kraft/)
 - [AWS Data on EKS 프로젝트](https://awslabs.github.io/data-on-eks/)
 
 ## 퀴즈

@@ -1,0 +1,364 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "NotReady 노드 의사결정 트리",
+    "output": "public/archmaps/ko-eks-11-eks-advanced-debugging-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "점검 단계 (오른쪽 = 계속 점검)"
+        },
+        "security": {
+          "label": "원인 확정 · 즉시 조치"
+        },
+        "external": {
+          "label": "심층 분석"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "instance-and-kubelet",
+        "label": "인스턴스 · kubelet",
+        "focus": [
+          "ec2",
+          "ec2Issue",
+          "kubelet",
+          "startKubelet"
+        ],
+        "note": "EC2 인스턴스가 Running인지, kubelet이 실행 중인지부터 확인합니다."
+      },
+      {
+        "id": "network-and-pressure",
+        "label": "네트워크 · 리소스 압력",
+        "focus": [
+          "network",
+          "networkIssue",
+          "disk",
+          "cleanDisk",
+          "memory",
+          "memoryIssue"
+        ],
+        "note": "보안그룹/라우팅, DiskPressure, MemoryPressure 순으로 좁혀갑니다."
+      },
+      {
+        "id": "runtime-and-logs",
+        "label": "런타임 · 로그",
+        "focus": [
+          "runtime",
+          "restartContainerd",
+          "kubeletLogs"
+        ],
+        "note": "containerd 이상이면 재시작, 정상이면 journalctl -u kubelet 로그를 상세 분석합니다."
+      }
+    ],
+    "viewBox": [
+      1221,
+      534
+    ]
+  },
+  "lanes": [
+    {
+      "id": "check",
+      "label": "노드 NotReady · 점검 순서"
+    },
+    {
+      "id": "fix",
+      "label": "원인 확정 · 조치",
+      "variant": "exception"
+    },
+    {
+      "id": "analyze",
+      "label": "심층 분석"
+    }
+  ],
+  "mainPath": [
+    "ec2",
+    "kubelet",
+    "network",
+    "disk",
+    "memory",
+    "runtime",
+    "kubeletLogs"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "ec2"
+    ],
+    "allowedTerminals": [
+      "ec2Issue",
+      "startKubelet",
+      "networkIssue",
+      "cleanDisk",
+      "memoryIssue",
+      "restartContainerd",
+      "kubeletLogs"
+    ],
+    "requiredPaths": [
+      {
+        "from": "ec2",
+        "to": "kubeletLogs"
+      },
+      {
+        "from": "ec2",
+        "to": "restartContainerd"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "ec2",
+      "lane": "check",
+      "col": 0,
+      "type": "backend",
+      "label": "EC2 상태?",
+      "sublabel": "인스턴스 상태 확인",
+      "tag": "TRIGGER",
+      "width": 140
+    },
+    {
+      "id": "kubelet",
+      "lane": "check",
+      "col": 1,
+      "type": "backend",
+      "label": "kubelet 실행 중?",
+      "sublabel": "systemctl status kubelet",
+      "width": 140
+    },
+    {
+      "id": "network",
+      "lane": "check",
+      "col": 2,
+      "type": "backend",
+      "label": "네트워크 연결?",
+      "sublabel": "컨트롤플레인 통신",
+      "width": 140
+    },
+    {
+      "id": "disk",
+      "lane": "check",
+      "col": 3,
+      "type": "backend",
+      "label": "디스크 압력?",
+      "sublabel": "DiskPressure 조건",
+      "width": 140
+    },
+    {
+      "id": "memory",
+      "lane": "check",
+      "col": 4,
+      "type": "backend",
+      "label": "메모리 압력?",
+      "sublabel": "MemoryPressure 조건",
+      "width": 140
+    },
+    {
+      "id": "runtime",
+      "lane": "check",
+      "col": 5,
+      "type": "backend",
+      "label": "컨테이너 런타임?",
+      "sublabel": "systemctl status containerd",
+      "width": 150
+    },
+    {
+      "id": "ec2Issue",
+      "lane": "fix",
+      "col": 0,
+      "type": "security",
+      "label": "EC2 인스턴스 문제",
+      "sublabel": "ASG/인스턴스 확인",
+      "width": 140
+    },
+    {
+      "id": "startKubelet",
+      "lane": "fix",
+      "col": 1,
+      "type": "security",
+      "label": "kubelet 시작",
+      "sublabel": "systemctl start kubelet",
+      "width": 140
+    },
+    {
+      "id": "networkIssue",
+      "lane": "fix",
+      "col": 2,
+      "type": "security",
+      "label": "네트워크 문제",
+      "sublabel": "보안그룹/라우팅 확인",
+      "width": 140
+    },
+    {
+      "id": "cleanDisk",
+      "lane": "fix",
+      "col": 3,
+      "type": "security",
+      "label": "디스크 정리",
+      "sublabel": "crictl rmi --prune",
+      "width": 140
+    },
+    {
+      "id": "memoryIssue",
+      "lane": "fix",
+      "col": 4,
+      "type": "security",
+      "label": "메모리 부족",
+      "sublabel": "파드 eviction 또는 스케일업",
+      "width": 140
+    },
+    {
+      "id": "restartContainerd",
+      "lane": "fix",
+      "col": 5,
+      "type": "security",
+      "label": "containerd 재시작",
+      "sublabel": "systemctl restart containerd",
+      "width": 150
+    },
+    {
+      "id": "kubeletLogs",
+      "lane": "analyze",
+      "col": 5,
+      "type": "external",
+      "label": "kubelet 로그 상세 분석",
+      "sublabel": "journalctl -u kubelet",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "ec2",
+      "to": "kubelet",
+      "label": "Running",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "kubelet",
+      "to": "network",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "network",
+      "to": "disk",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "disk",
+      "to": "memory",
+      "label": "No",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "memory",
+      "to": "runtime",
+      "label": "No",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "ec2",
+      "to": "ec2Issue",
+      "label": "Stopped/Terminated",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        261,
+        168
+      ]
+    },
+    {
+      "from": "kubelet",
+      "to": "startKubelet",
+      "label": "No",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        401,
+        168
+      ]
+    },
+    {
+      "from": "network",
+      "to": "networkIssue",
+      "label": "No",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        579,
+        168
+      ]
+    },
+    {
+      "from": "disk",
+      "to": "cleanDisk",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        760,
+        168
+      ]
+    },
+    {
+      "from": "memory",
+      "to": "memoryIssue",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        938,
+        168
+      ]
+    },
+    {
+      "from": "runtime",
+      "to": "restartContainerd",
+      "label": "문제 있음",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1138,
+        168
+      ]
+    },
+    {
+      "from": "runtime",
+      "to": "kubeletLogs",
+      "label": "정상",
+      "variant": "emphasis",
+      "role": "main",
+      "labelAt": [
+        1160,
+        294
+      ]
+    }
+  ]
+}

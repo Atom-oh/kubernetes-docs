@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "External Access Paths",
+    "output": "en-core-01-cluster-architecture-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "External client",
+      "sublabel": "kubectl / browser",
+      "pos": [
+        60,
+        220
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "cluster control",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "cloud",
+      "label": "Service / Ingress",
+      "sublabel": "L4 / L7 entry point",
+      "pos": [
+        480,
+        370
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "Application",
+      "pos": [
+        800,
+        370
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-api",
+      "from": "client",
+      "to": "apiserver",
+      "label": "Admin traffic (HTTPS :6443)",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          145,
+          100
+        ]
+      ]
+    },
+    {
+      "id": "client-to-ingress",
+      "from": "client",
+      "to": "ingress",
+      "label": "Application traffic",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          145,
+          400
+        ]
+      ]
+    },
+    {
+      "id": "ingress-to-pod",
+      "from": "ingress",
+      "to": "pod",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Two entry paths",
+      "items": [
+        "Operators control the cluster via kube-apiserver",
+        "Users reach apps via Service/Ingress"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Minimal exposure",
+      "items": [
+        "Pods are never exposed directly",
+        "All external traffic passes a defined entry point"
+      ]
+    }
+  ]
+}

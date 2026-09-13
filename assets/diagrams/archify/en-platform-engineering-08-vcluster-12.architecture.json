@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Team APIs and shared capacity",
+    "output": "en-platform-engineering-08-vcluster-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto"
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "fe-team",
+      "type": "external",
+      "label": "Frontend team",
+      "sublabel": "Developers",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "be-team",
+      "type": "external",
+      "label": "Backend team",
+      "sublabel": "Developers",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "data-team",
+      "type": "external",
+      "label": "Data team",
+      "sublabel": "Developers",
+      "pos": [
+        40,
+        410
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vc-frontend",
+      "type": "backend",
+      "label": "vCluster: frontend",
+      "sublabel": "Reviewed version/policy profile",
+      "pos": [
+        330,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "vc-backend",
+      "type": "backend",
+      "label": "vCluster: backend",
+      "sublabel": "Reviewed version/policy profile",
+      "pos": [
+        330,
+        250
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "vc-data",
+      "type": "backend",
+      "label": "vCluster: data",
+      "sublabel": "Reviewed version/policy profile",
+      "pos": [
+        330,
+        410
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Load balancer controller",
+      "sublabel": "Shared approved ingress",
+      "pos": [
+        690,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "cloud",
+      "label": "EBS CSI",
+      "sublabel": "Shared storage",
+      "pos": [
+        690,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "mon",
+      "type": "cloud",
+      "label": "Monitoring",
+      "sublabel": "Host and tenant visibility",
+      "pos": [
+        690,
+        410
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Host cluster / tenant boundary",
+      "wraps": [
+        "vc-frontend",
+        "vc-backend",
+        "vc-data",
+        "alb",
+        "ebs",
+        "mon"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Host cluster / tenant boundary",
+      "wraps": [
+        "vc-frontend"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Host cluster / tenant boundary",
+      "wraps": [
+        "vc-backend"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Host cluster / tenant boundary",
+      "wraps": [
+        "vc-data"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Host cluster / tenant boundary",
+      "wraps": [
+        "alb",
+        "ebs",
+        "mon"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fe-owns",
+      "from": "fe-team",
+      "to": "vc-frontend",
+      "label": "team access",
+      "variant": "emphasis"
+    },
+    {
+      "id": "be-owns",
+      "from": "be-team",
+      "to": "vc-backend",
+      "label": "team access"
+    },
+    {
+      "id": "data-owns",
+      "from": "data-team",
+      "to": "vc-data",
+      "label": "team access"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Teams, CI and SaaS",
+      "items": [
+        "Manage per-team APIs and quotas",
+        "Plan aggregate host performance, IPs and storage",
+        "Shared Nodes alone may not satisfy tenant security needs"
+      ]
+    }
+  ]
+}

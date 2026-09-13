@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kagent0.10.1: declaration and execution",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1250,
+      570
+    ],
+    "output": "en-ai-ml-03-agentic-ai-platform-4.html",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "agent",
+      "type": "cloud",
+      "label": "Agent custom resource",
+      "sublabel": "kagent.dev/v1alpha2",
+      "pos": [
+        40,
+        75
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Kagent Controller",
+      "sublabel": "resolve references / reconcile",
+      "pos": [
+        490,
+        75
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Go / Python ADK",
+      "sublabel": "example runtime:go",
+      "pos": [
+        940,
+        75
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "model",
+      "type": "external",
+      "label": "ModelConfig",
+      "sublabel": "approved model backend",
+      "pos": [
+        40,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "mcp",
+      "type": "external",
+      "label": "RemoteMCPServer",
+      "sublabel": "server enforces tool permissions",
+      "pos": [
+        490,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Session / memory store",
+      "sublabel": "verify configuration / tenant scope",
+      "pos": [
+        940,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "watch",
+      "from": "agent",
+      "to": "controller",
+      "label": "watch / reconcile"
+    },
+    {
+      "id": "deploy",
+      "from": "controller",
+      "to": "runtime",
+      "label": "reconcile Deployment",
+      "variant": "emphasis"
+    },
+    {
+      "id": "model-ref",
+      "from": "model",
+      "to": "controller",
+      "label": "modelConfig",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "mcp-call",
+      "from": "runtime",
+      "to": "mcp",
+      "label": "authorized tool calls",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "state",
+      "from": "runtime",
+      "to": "storage",
+      "label": "configured persistence",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1060,
+        250
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CRD versus Agent instance",
+      "items": [
+        "A CRD defines the API; the controller reconciles Agent resources.",
+        "LangGraph is a separate framework requiring explicit integration."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Credentials and tool authorization",
+      "items": [
+        "The default OpenAI apiKeySecret translator creates a secret environment variable.",
+        "A file-credential policy needs a verified BYO/runtime/gateway path.",
+        "Tool names and replica counts do not establish authorization or HA."
+      ]
+    }
+  ]
+}

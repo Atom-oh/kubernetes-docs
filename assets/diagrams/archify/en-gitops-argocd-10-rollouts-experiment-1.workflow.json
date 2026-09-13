@@ -1,0 +1,217 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Result Propagation and Rollout State Transitions",
+    "locale": "en",
+    "output": "public/archmaps/en-gitops-argocd-10-rollouts-experiment-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "success-path",
+        "label": "Successful",
+        "focus": [
+          "verdict",
+          "expSuccess",
+          "nextStep"
+        ],
+        "note": "A Successful Experiment advances the Rollout."
+      },
+      {
+        "id": "pause-path",
+        "label": "Inconclusive",
+        "focus": [
+          "verdict",
+          "expInconclusive",
+          "paused"
+        ],
+        "note": "Inconclusive pauses for investigation; it is not an abort."
+      },
+      {
+        "id": "failure-path",
+        "label": "Failed / Error",
+        "focus": [
+          "verdict",
+          "expFailed",
+          "degraded"
+        ],
+        "note": "Failed/Error aborts the Rollout into Degraded."
+      }
+    ],
+    "viewBox": [
+      960,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "proceed",
+      "label": "Proceed"
+    },
+    {
+      "id": "pause",
+      "label": "Decision / pause"
+    },
+    {
+      "id": "abort",
+      "label": "Failure/error",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "verdict",
+    "expSuccess",
+    "nextStep"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "verdict"
+    ],
+    "allowedTerminals": [
+      "nextStep",
+      "paused",
+      "degraded"
+    ],
+    "requiredPaths": [
+      {
+        "from": "verdict",
+        "to": "nextStep"
+      },
+      {
+        "from": "verdict",
+        "to": "paused"
+      },
+      {
+        "from": "verdict",
+        "to": "degraded"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "verdict",
+      "lane": "pause",
+      "col": 0,
+      "type": "backend",
+      "label": "Experiment result",
+      "sublabel": "templates and analysis policy",
+      "width": 212
+    },
+    {
+      "id": "expSuccess",
+      "lane": "proceed",
+      "col": 3,
+      "type": "backend",
+      "label": "Successful",
+      "sublabel": "completion policy satisfied",
+      "width": 196
+    },
+    {
+      "id": "nextStep",
+      "lane": "proceed",
+      "col": 5,
+      "type": "cloud",
+      "label": "Proceed to next step",
+      "sublabel": "e.g. setWeight 20",
+      "width": 224
+    },
+    {
+      "id": "expInconclusive",
+      "lane": "pause",
+      "col": 3,
+      "type": "cloud",
+      "label": "Inconclusive",
+      "sublabel": "insufficient verdict",
+      "width": 196
+    },
+    {
+      "id": "paused",
+      "lane": "pause",
+      "col": 5,
+      "type": "cloud",
+      "label": "Rollout Paused",
+      "sublabel": "InconclusiveExperiment",
+      "width": 224
+    },
+    {
+      "id": "expFailed",
+      "lane": "abort",
+      "col": 3,
+      "type": "security",
+      "label": "Failed / Error",
+      "sublabel": "failed or errored",
+      "width": 196
+    },
+    {
+      "id": "degraded",
+      "lane": "abort",
+      "col": 5,
+      "type": "security",
+      "label": "Rollout Degraded",
+      "sublabel": "abort",
+      "width": 224
+    }
+  ],
+  "edges": [
+    {
+      "from": "verdict",
+      "to": "expSuccess",
+      "label": "Successful",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "expSuccess",
+      "to": "nextStep",
+      "label": "proceed",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "verdict",
+      "to": "expInconclusive",
+      "label": "Inconclusive"
+    },
+    {
+      "from": "expInconclusive",
+      "to": "paused",
+      "label": "pause"
+    },
+    {
+      "from": "verdict",
+      "to": "expFailed",
+      "label": "Failed / Error",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "expFailed",
+      "to": "degraded",
+      "label": "abort",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Completion policy (1.10.0)",
+      "items": [
+        "Required analysis success can finish before duration",
+        "Non-required analysis can stop when duration ends"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Cleanup",
+      "items": [
+        "Default thirty-second delay before scaling down",
+        "Generated Service removed after available replicas reach zero"
+      ]
+    }
+  ]
+}

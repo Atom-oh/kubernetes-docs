@@ -1,0 +1,154 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "관측 방식 비교: 에이전트 vs eBPF",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "애플리케이션"
+        },
+        "backend": {
+          "label": "수집 경로"
+        },
+        "security": {
+          "label": "eBPF 계측"
+        },
+        "database": {
+          "label": "백엔드 저장소"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "ebpf",
+      "label": "eBPF 방식"
+    },
+    {
+      "id": "legacy",
+      "label": "기존 방식 · SDK/에이전트",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "app2",
+    "probe",
+    "backend2"
+  ],
+  "nodes": [
+    {
+      "id": "app1",
+      "lane": "legacy",
+      "col": 0,
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "코드 수정 필요",
+      "width": 112
+    },
+    {
+      "id": "sdk",
+      "lane": "legacy",
+      "col": 1,
+      "type": "backend",
+      "label": "SDK / 에이전트",
+      "sublabel": "언어별 계측",
+      "width": 112
+    },
+    {
+      "id": "collect",
+      "lane": "legacy",
+      "col": 2,
+      "type": "backend",
+      "label": "메트릭 수집",
+      "width": 104
+    },
+    {
+      "id": "backend1",
+      "lane": "legacy",
+      "col": 3,
+      "type": "database",
+      "label": "모니터링 백엔드",
+      "width": 132
+    },
+    {
+      "id": "app2",
+      "lane": "ebpf",
+      "col": 0,
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "수정 불필요",
+      "width": 112
+    },
+    {
+      "id": "probe",
+      "lane": "ebpf",
+      "col": 1,
+      "type": "security",
+      "label": "커널 eBPF 프로그램",
+      "sublabel": "자동 계측",
+      "width": 152
+    },
+    {
+      "id": "backend2",
+      "lane": "ebpf",
+      "col": 3,
+      "type": "database",
+      "label": "모니터링 백엔드",
+      "width": 132
+    }
+  ],
+  "edges": [
+    {
+      "id": "app1-sdk",
+      "from": "app1",
+      "to": "sdk",
+      "variant": "dashed"
+    },
+    {
+      "id": "sdk-collect",
+      "from": "sdk",
+      "to": "collect",
+      "variant": "dashed"
+    },
+    {
+      "id": "collect-backend1",
+      "from": "collect",
+      "to": "backend1",
+      "variant": "dashed"
+    },
+    {
+      "id": "app2-probe",
+      "from": "app2",
+      "to": "probe",
+      "label": "시스템 콜 관찰",
+      "variant": "emphasis"
+    },
+    {
+      "id": "probe-backend2",
+      "from": "probe",
+      "to": "backend2",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "에이전트 방식의 비용",
+      "items": [
+        "언어·프레임워크마다 SDK 통합",
+        "배포마다 계측 코드 유지보수"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "eBPF 방식의 이점",
+      "items": [
+        "커널에서 모든 프로세스를 한 번에 관찰",
+        "애플리케이션 재배포 없이 적용"
+      ]
+    }
+  ]
+}

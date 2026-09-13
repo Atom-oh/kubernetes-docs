@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Scenario 4: Client → ALB → Gateway (Direct Connection)",
+    "output": "en-service-mesh-istio-advanced-03-envoy-filter-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      360
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "203.0.113.5",
+      "pos": [
+        20,
+        150
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "AWS ALB",
+      "sublabel": "10.0.1.100",
+      "pos": [
+        300,
+        150
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "10.0.2.50",
+      "pos": [
+        590,
+        150
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "xff_num_trusted_hops: 1"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "backend pod",
+      "pos": [
+        990,
+        150
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-alb",
+      "from": "client",
+      "to": "alb",
+      "label": "XFF: (none)"
+    },
+    {
+      "id": "alb-to-gateway",
+      "from": "alb",
+      "to": "gateway",
+      "label": "XFF: 203.0.113.5"
+    },
+    {
+      "id": "gateway-to-app",
+      "from": "gateway",
+      "to": "app",
+      "label": "XFF: 203.0.113.5, 10.0.1.100",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "XFF Calculation",
+      "items": [
+        "X-Forwarded-For: 203.0.113.5, 10.0.1.100 → [Actual IP] [ALB IP]",
+        "xff_num_trusted_hops: 1 → trust only the last 1 (ALB)",
+        "Actual client IP: 203.0.113.5"
+      ]
+    }
+  ]
+}

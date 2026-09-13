@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The Three Pillars of Observability",
+    "locale": "en",
+    "output": "en-observability-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Logs data"
+        },
+        "backend": {
+          "label": "Metrics data"
+        },
+        "messagebus": {
+          "label": "Traces data"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "log-events",
+      "type": "database",
+      "label": "Event Records",
+      "sublabel": "Immutable records of discrete events",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "log-structured",
+      "type": "database",
+      "label": "Structured Data",
+      "sublabel": "JSON or unstructured format",
+      "pos": [
+        60,
+        186
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "log-context",
+      "type": "database",
+      "label": "Context Information",
+      "sublabel": "Timestamp, service, TraceID",
+      "pos": [
+        60,
+        282
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "metric-numeric",
+      "type": "backend",
+      "label": "Numeric Measurements",
+      "sublabel": "Counter, Gauge, Histogram",
+      "pos": [
+        480,
+        90
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "metric-timeseries",
+      "type": "backend",
+      "label": "Time Series Data",
+      "sublabel": "Stored over time",
+      "pos": [
+        480,
+        186
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "metric-aggregate",
+      "type": "backend",
+      "label": "Aggregatable",
+      "sublabel": "Math operations and trend analysis",
+      "pos": [
+        480,
+        282
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "trace-path",
+      "type": "messagebus",
+      "label": "Request Path",
+      "sublabel": "Complete journey of one request",
+      "pos": [
+        900,
+        90
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "trace-flow",
+      "type": "messagebus",
+      "label": "Inter-service Flow",
+      "sublabel": "Span and SpanContext propagation",
+      "pos": [
+        900,
+        186
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "trace-latency",
+      "type": "messagebus",
+      "label": "Latency Analysis",
+      "sublabel": "Per-step latency and bottlenecks",
+      "pos": [
+        900,
+        282
+      ],
+      "size": [
+        190,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Logs",
+      "wraps": [
+        "log-events",
+        "log-structured",
+        "log-context"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Metrics",
+      "wraps": [
+        "metric-numeric",
+        "metric-timeseries",
+        "metric-aggregate"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Traces",
+      "wraps": [
+        "trace-path",
+        "trace-flow",
+        "trace-latency"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "logs-metrics-labels",
+      "from": "log-structured",
+      "to": "metric-timeseries",
+      "label": "Label matching"
+    },
+    {
+      "id": "metrics-traces-exemplar",
+      "from": "metric-numeric",
+      "to": "trace-path",
+      "label": "Exemplar"
+    },
+    {
+      "id": "logs-traces-traceid",
+      "from": "log-context",
+      "to": "trace-latency",
+      "label": "TraceID",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "labelDy": 22
+    }
+  ]
+}

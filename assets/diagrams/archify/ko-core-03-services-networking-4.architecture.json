@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eBPF 기반 CNI 구현",
+    "output": "ko-core-03-services-networking-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kubernetes / Cilium"
+        },
+        "external": {
+          "label": "인터페이스 / 커널"
+        },
+        "frontend": {
+          "label": "관찰 가능성"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cni-path",
+        "label": "CNI 호출 경로",
+        "focus": [
+          "kubernetes",
+          "cni",
+          "cilium"
+        ],
+        "note": "Kubernetes는 CNI 표준을 통해 Cilium을 CNI 플러그인으로 호출한다."
+      },
+      {
+        "id": "kernel-datapath",
+        "label": "커널 데이터 경로",
+        "focus": [
+          "cilium",
+          "ebpf",
+          "kernel"
+        ],
+        "note": "Cilium은 eBPF 프로그램을 Linux 커널에 로드해 커널 내 데이터 경로를 구현한다."
+      },
+      {
+        "id": "observability",
+        "label": "네트워크 가시성",
+        "focus": [
+          "cilium",
+          "hubble"
+        ],
+        "note": "Hubble이 Cilium의 네트워크 흐름을 모니터링하고 문제 해결을 돕는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "kubernetes",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "컨테이너 오케스트레이션",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "external",
+      "label": "Container Network Interface",
+      "sublabel": "CNI 표준",
+      "pos": [
+        310,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cilium",
+      "type": "backend",
+      "label": "Cilium",
+      "sublabel": "CNI 플러그인",
+      "pos": [
+        640,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF",
+      "sublabel": "커널 프로그램",
+      "pos": [
+        920,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kernel",
+      "type": "external",
+      "label": "Linux Kernel",
+      "sublabel": "데이터 경로",
+      "pos": [
+        1200,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "hubble",
+      "type": "frontend",
+      "label": "Hubble",
+      "sublabel": "네트워크 흐름 관찰",
+      "pos": [
+        640,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-to-cni",
+      "from": "kubernetes",
+      "to": "cni",
+      "label": "CNI 호출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cni-to-cilium",
+      "from": "cni",
+      "to": "cilium",
+      "label": "플러그인 구현",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cilium-to-ebpf",
+      "from": "cilium",
+      "to": "ebpf",
+      "label": "eBPF 프로그램 로드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebpf-to-kernel",
+      "from": "ebpf",
+      "to": "kernel",
+      "label": "커널 내 실행",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cilium-to-hubble",
+      "from": "cilium",
+      "to": "hubble",
+      "label": "네트워크 흐름",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Cilium의 eBPF 활용",
+      "items": [
+        "네트워크 데이터 경로: 패킷 처리와 라우팅",
+        "정책 시행: 네트워크 정책 적용",
+        "로드 밸런싱: 서비스 로드 밸런싱 수행",
+        "관찰 가능성: 네트워크 흐름 메트릭 수집"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "eBPF의 주요 특징",
+      "items": [
+        "커널 내 실행으로 높은 성능",
+        "검증기가 커널 손상을 방지",
+        "재부팅 없이 동적 로딩",
+        "맵으로 사용자 공간과 커널 공간 간 데이터 공유"
+      ]
+    }
+  ]
+}

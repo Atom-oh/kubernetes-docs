@@ -18,19 +18,19 @@ ArgoCD includes a built-in, feature-rich Web UI for managing applications. FluxC
 
 </details>
 
-2. Which tool has better native support for OCI artifacts as deployment sources?
-   - A) ArgoCD
-   - B) FluxCD
-   - C) Both have equal support
+2. Which statement describes current OCI-based deployment-source support?
+   - A) Only ArgoCD supports OCI
+   - B) Only FluxCD supports OCI
+   - C) Both support OCI, with different source/layer/verification settings
    - D) Neither supports OCI
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) FluxCD**
+**Answer: C) Both support OCI, with different source/layer/verification settings**
 
 **Explanation:**
-FluxCD has first-class support for OCI artifacts through its OCIRepository source type, allowing you to store and deploy from OCI-compliant registries. ArgoCD's OCI support is limited to Helm charts.
+FluxCD has first-class support for OCI artifacts through its OCIRepository source type, allowing you to store and deploy from OCI-compliant registries. Current Argo CD also supports general OCI Application sources. Compare version, media type, authentication and verification requirements.
 
 </details>
 
@@ -46,7 +46,7 @@ FluxCD has first-class support for OCI artifacts through its OCIRepository sourc
 **Answer: B) FluxCD (native)**
 
 **Explanation:**
-FluxCD has built-in Image Automation through its Image Reflector and Image Automation controllers. ArgoCD requires the separate Argo Image Updater project for similar functionality.
+Flux provides optional Image Reflector and Image Automation controllers. They are not always installed by the default bootstrap. ArgoCD requires the separate Argo Image Updater project for similar functionality.
 
 </details>
 
@@ -78,6 +78,6 @@ ArgoCD excels in environments where teams need visual feedback through its Web U
 **Answer: B) Yes, they can complement each other**
 
 **Explanation:**
-ArgoCD and FluxCD can be used together. A common pattern is using FluxCD for infrastructure management and image automation while using ArgoCD for application deployments with its UI.
+ArgoCD and FluxCD can coexist with separate resource ownership; do not let both reconcile/prune the same objects. A common pattern is using FluxCD for infrastructure management and image automation while using ArgoCD for application deployments with its UI.
 
 </details>

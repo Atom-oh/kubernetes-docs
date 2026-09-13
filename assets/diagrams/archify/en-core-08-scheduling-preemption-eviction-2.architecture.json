@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Node Selection Mechanisms Compared",
+    "locale": "en",
+    "output": "en-core-08-scheduling-preemption-eviction-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Selection mechanism"
+        },
+        "frontend": {
+          "label": "Pod spec"
+        },
+        "cloud": {
+          "label": "Candidate node"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "selector",
+        "label": "nodeSelector",
+        "focus": [
+          "ns",
+          "pod1",
+          "node1",
+          "node2"
+        ],
+        "note": "The simplest method. The pod is placed only on nodes carrying the gpu=true label."
+      },
+      {
+        "id": "nodename",
+        "label": "nodeName",
+        "focus": [
+          "nn",
+          "direct"
+        ],
+        "note": "Pins the pod directly to a specific node, bypassing the scheduler. Generally not recommended."
+      },
+      {
+        "id": "affinity",
+        "label": "nodeAffinity",
+        "focus": [
+          "na",
+          "pod2",
+          "node3",
+          "node4",
+          "node5"
+        ],
+        "note": "Evaluates an expression over several values at once. Only nodes whose zone is us-east-1a or us-east-1b qualify."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ns",
+      "type": "backend",
+      "label": "Node Selector",
+      "sublabel": "nodeSelector",
+      "pos": [
+        115,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "nodeSelector: gpu=\"true\"",
+      "pos": [
+        95,
+        190
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "cloud",
+      "label": "Node 1",
+      "sublabel": "gpu=true",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "cloud",
+      "label": "Node 2",
+      "sublabel": "gpu=false",
+      "pos": [
+        210,
+        350
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "nn",
+      "type": "backend",
+      "label": "Node Name",
+      "sublabel": "nodeName",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "direct",
+      "type": "cloud",
+      "label": "Specific Node",
+      "sublabel": "worker-node-1",
+      "pos": [
+        430,
+        350
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "na",
+      "type": "backend",
+      "label": "Node Affinity",
+      "sublabel": "nodeAffinity",
+      "pos": [
+        811,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "zone in (us-east-1a, us-east-1b)",
+      "pos": [
+        756,
+        190
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "cloud",
+      "label": "Node 3",
+      "sublabel": "zone=us-east-1a",
+      "pos": [
+        670,
+        350
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "node4",
+      "type": "cloud",
+      "label": "Node 4",
+      "sublabel": "zone=us-east-1b",
+      "pos": [
+        826,
+        350
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "node5",
+      "type": "cloud",
+      "label": "Node 5",
+      "sublabel": "zone=us-west-1a",
+      "pos": [
+        982,
+        350
+      ],
+      "size": [
+        140,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node Selector Example",
+      "wraps": [
+        "ns",
+        "pod1",
+        "node1",
+        "node2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "nodeName Example",
+      "wraps": [
+        "nn",
+        "direct"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node Affinity Example",
+      "wraps": [
+        "na",
+        "pod2",
+        "node3",
+        "node4",
+        "node5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ns-pod1",
+      "from": "ns",
+      "to": "pod1",
+      "label": "simple label matching",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "pod1-node1",
+      "from": "pod1",
+      "to": "node1",
+      "label": "match",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod1-node2",
+      "from": "pod1",
+      "to": "node2",
+      "label": "no match",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "nn-direct",
+      "from": "nn",
+      "to": "direct",
+      "label": "direct node specification",
+      "labelDy": 24
+    },
+    {
+      "id": "na-pod2",
+      "from": "na",
+      "to": "pod2",
+      "label": "complex expression",
+      "labelDy": 24
+    },
+    {
+      "id": "pod2-node3",
+      "from": "pod2",
+      "to": "node3",
+      "label": "match",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod2-node4",
+      "from": "pod2",
+      "to": "node4",
+      "label": "match",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80
+    },
+    {
+      "id": "pod2-node5",
+      "from": "pod2",
+      "to": "node5",
+      "label": "no match",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

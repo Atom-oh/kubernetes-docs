@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-Account Architecture",
+    "output": "en-gitops-readme-13.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "source-sync",
+        "label": "Source of truth",
+        "focus": [
+          "git",
+          "argocd"
+        ],
+        "note": "ArgoCD in the management account reads the desired state from the Git repository."
+      },
+      {
+        "id": "cross-account",
+        "label": "Cross-account reconcile",
+        "focus": [
+          "argocd",
+          "eks-dev",
+          "eks-staging",
+          "eks-prod"
+        ],
+        "note": "One ArgoCD reconciles EKS clusters that live in separate dev, staging, and production accounts."
+      }
+    ],
+    "viewBox": [
+      1280,
+      420
+    ]
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "database",
+      "label": "Git Repo",
+      "sublabel": "desired state",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "argocd",
+      "type": "backend",
+      "label": "ArgoCD",
+      "sublabel": "GitOps controller",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "focal"
+    },
+    {
+      "id": "eks-dev",
+      "type": "cloud",
+      "label": "EKS Dev",
+      "sublabel": "target cluster",
+      "pos": [
+        440,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "eks-staging",
+      "type": "cloud",
+      "label": "EKS Staging",
+      "sublabel": "target cluster",
+      "pos": [
+        740,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "eks-prod",
+      "type": "cloud",
+      "label": "EKS Production",
+      "sublabel": "target cluster",
+      "pos": [
+        1040,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Management Account",
+      "wraps": [
+        "git",
+        "argocd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Dev Account",
+      "wraps": [
+        "eks-dev"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Staging Account",
+      "wraps": [
+        "eks-staging"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Prod Account",
+      "wraps": [
+        "eks-prod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-to-argocd",
+      "from": "git",
+      "to": "argocd",
+      "label": "pull manifests",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        145,
+        200
+      ]
+    },
+    {
+      "id": "argocd-to-dev",
+      "from": "argocd",
+      "to": "eks-dev",
+      "label": "cross-account",
+      "variant": "emphasis"
+    },
+    {
+      "id": "argocd-to-staging",
+      "from": "argocd",
+      "to": "eks-staging",
+      "label": "cross-account",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "argocd-to-prod",
+      "from": "argocd",
+      "to": "eks-prod",
+      "label": "cross-account",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Management account",
+      "items": [
+        "ArgoCD runs once, centrally",
+        "Git repository is the single source of desired state"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Workload accounts",
+      "items": [
+        "Dev, staging, and production each in a separate AWS account",
+        "ArgoCD reconciles each EKS cluster over a cross-account connection"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "IAM integration",
+      "items": [
+        "Use IAM Roles for Service Accounts (IRSA) for secure AWS API access"
+      ]
+    }
+  ]
+}

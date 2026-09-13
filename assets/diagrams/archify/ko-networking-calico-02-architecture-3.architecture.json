@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Felix iptables 규칙 체인 구조",
+    "output": "ko-networking-calico-02-architecture-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "filter-input",
+        "label": "INPUT 체인 경로",
+        "focus": [
+          "input",
+          "cali-input",
+          "from-host-ep",
+          "from-wl-dispatch"
+        ],
+        "note": "호스트로 들어오는 트래픽은 cali-INPUT에서 호스트 엔드포인트 체인과 워크로드 디스패치 체인으로 분기된다."
+      },
+      {
+        "id": "filter-forward",
+        "label": "FORWARD 체인 경로",
+        "focus": [
+          "forward",
+          "cali-forward",
+          "wl-policy"
+        ],
+        "note": "워크로드 간 전달 트래픽은 cali-FORWARD를 거쳐 엔드포인트별 정책 체인(cali-policy-xxx/yyy)으로 이어진다."
+      },
+      {
+        "id": "nat-outgoing",
+        "label": "NAT 아웃고잉",
+        "focus": [
+          "postrouting",
+          "nat-outgoing"
+        ],
+        "note": "NAT 테이블의 POSTROUTING은 cali-POSTROUTING을 거쳐 cali-nat-outgoing 규칙으로 연결된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "input",
+      "type": "external",
+      "label": "INPUT",
+      "sublabel": "filter 내장 체인",
+      "pos": [
+        60,
+        85
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "cali-input",
+      "type": "backend",
+      "label": "cali-INPUT",
+      "sublabel": "Felix 최상위 체인",
+      "pos": [
+        320,
+        85
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "from-host-ep",
+      "type": "security",
+      "label": "cali-from-host-endpoint",
+      "sublabel": "호스트 엔드포인트 정책",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "from-wl-dispatch",
+      "type": "security",
+      "label": "cali-from-wl-dispatch",
+      "sublabel": "워크로드 발신 디스패치",
+      "pos": [
+        600,
+        130
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "forward",
+      "type": "external",
+      "label": "FORWARD",
+      "sublabel": "filter 내장 체인",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "cali-forward",
+      "type": "backend",
+      "label": "cali-FORWARD",
+      "sublabel": "Felix 최상위 체인",
+      "pos": [
+        320,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "wl-policy",
+      "type": "security",
+      "label": "워크로드 엔드포인트 체인",
+      "sublabel": "cali-policy-xxx/yyy",
+      "pos": [
+        600,
+        230
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "output",
+      "type": "external",
+      "label": "OUTPUT → cali-OUTPUT",
+      "sublabel": "단순 통과 체인",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "prerouting",
+      "type": "external",
+      "label": "PREROUTING → cali-PREROUTING",
+      "sublabel": "nat 내장 체인",
+      "pos": [
+        60,
+        500
+      ],
+      "size": [
+        290,
+        64
+      ]
+    },
+    {
+      "id": "postrouting",
+      "type": "backend",
+      "label": "POSTROUTING → cali-POSTROUTING",
+      "sublabel": "nat 내장 체인",
+      "pos": [
+        420,
+        500
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "nat-outgoing",
+      "type": "cloud",
+      "label": "cali-nat-outgoing",
+      "sublabel": "아웃고잉 NAT 규칙",
+      "pos": [
+        800,
+        500
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Filter 테이블",
+      "wraps": [
+        "input",
+        "cali-input",
+        "from-host-ep",
+        "from-wl-dispatch",
+        "forward",
+        "cali-forward",
+        "wl-policy",
+        "output"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "NAT 테이블",
+      "wraps": [
+        "prerouting",
+        "postrouting",
+        "nat-outgoing"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "input-to-cali-input",
+      "from": "input",
+      "to": "cali-input",
+      "label": "jump",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cali-input-to-host-ep",
+      "from": "cali-input",
+      "to": "from-host-ep"
+    },
+    {
+      "id": "cali-input-to-wl-dispatch",
+      "from": "cali-input",
+      "to": "from-wl-dispatch"
+    },
+    {
+      "id": "forward-to-cali-forward",
+      "from": "forward",
+      "to": "cali-forward",
+      "label": "jump",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cali-forward-to-wl-policy",
+      "from": "cali-forward",
+      "to": "wl-policy"
+    },
+    {
+      "id": "postrouting-to-nat-outgoing",
+      "from": "postrouting",
+      "to": "nat-outgoing",
+      "label": "jump"
+    }
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Network Policy Enforcement Structure",
+    "locale": "en",
+    "output": "en-eks-03-eks-networking-part2-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "namespace-isolation",
+        "label": "Namespace isolation",
+        "focus": [
+          "np-namespace",
+          "backend",
+          "database"
+        ],
+        "note": "podSelector: {} applies to every pod in the namespace, blocking traffic across namespaces."
+      },
+      {
+        "id": "pod-communication",
+        "label": "Pod-to-pod allow",
+        "focus": [
+          "np-pod",
+          "frontend",
+          "backend"
+        ],
+        "note": "Only TCP 80 traffic from app: frontend pods to app: backend pods is allowed."
+      },
+      {
+        "id": "external-egress",
+        "label": "External and egress limits",
+        "focus": [
+          "np-external",
+          "np-egress",
+          "external",
+          "frontend",
+          "backend",
+          "database"
+        ],
+        "note": "Inbound only from the allowed IP range; outbound only to the DB (5432) and external HTTPS (443)."
+      }
+    ],
+    "viewBox": [
+      1140,
+      600
+    ]
+  },
+  "components": [
+    {
+      "id": "np-external",
+      "type": "security",
+      "label": "External Traffic Policy",
+      "sublabel": "ipBlock allow",
+      "pos": [
+        210,
+        100
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "np-pod",
+      "type": "security",
+      "label": "Pod Communication Policy",
+      "sublabel": "allow-frontend-to-backend",
+      "pos": [
+        410,
+        100
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "np-egress",
+      "type": "security",
+      "label": "Egress Restriction Policy",
+      "sublabel": "Egress restriction",
+      "pos": [
+        610,
+        100
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "np-namespace",
+      "type": "security",
+      "label": "Namespace Isolation Policy",
+      "sublabel": "namespace-isolation",
+      "pos": [
+        810,
+        100
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "external",
+      "type": "external",
+      "label": "External Services",
+      "sublabel": "outside the cluster",
+      "pos": [
+        20,
+        400
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend Pod",
+      "sublabel": "app: frontend",
+      "pos": [
+        220,
+        400
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend Pod",
+      "sublabel": "app: backend",
+      "pos": [
+        620,
+        400
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "database",
+      "type": "database",
+      "label": "Database Pod",
+      "sublabel": "app: db",
+      "pos": [
+        930,
+        400
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Network Policies",
+      "wraps": [
+        "np-external",
+        "np-pod",
+        "np-egress",
+        "np-namespace"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Namespace 1 (my-namespace)",
+      "wraps": [
+        "frontend",
+        "backend"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Namespace 2",
+      "wraps": [
+        "database"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "np-namespace-ns1",
+      "from": "np-namespace",
+      "to": "backend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-namespace-ns2",
+      "from": "np-namespace",
+      "to": "database",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-pod-frontend",
+      "from": "np-pod",
+      "to": "frontend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-pod-backend",
+      "from": "np-pod",
+      "to": "backend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-external-frontend",
+      "from": "np-external",
+      "to": "frontend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-egress-backend",
+      "from": "np-egress",
+      "to": "backend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "external-to-frontend",
+      "from": "external",
+      "to": "frontend",
+      "label": "allowed IPs only",
+      "variant": "emphasis",
+      "labelDy": 78
+    },
+    {
+      "id": "frontend-to-backend",
+      "from": "frontend",
+      "to": "backend",
+      "label": "TCP 80",
+      "variant": "emphasis"
+    },
+    {
+      "id": "backend-to-database",
+      "from": "backend",
+      "to": "database",
+      "label": "TCP 5432",
+      "variant": "emphasis"
+    },
+    {
+      "id": "backend-to-external",
+      "from": "backend",
+      "to": "external",
+      "label": "HTTPS 443 egress",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          700,
+          530
+        ],
+        [
+          95,
+          530
+        ]
+      ],
+      "labelAt": [
+        400,
+        546
+      ]
+    }
+  ]
+}

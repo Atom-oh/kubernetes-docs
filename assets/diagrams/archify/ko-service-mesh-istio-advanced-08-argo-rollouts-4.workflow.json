@@ -1,0 +1,178 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "기본 Canary 트래픽 전환 그래프",
+    "output": "public/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Canary 시작"
+        },
+        "backend": {
+          "label": "setWeight 단계"
+        },
+        "cloud": {
+          "label": "100% 자동 전환"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "short-pause",
+        "label": "5분 대기 구간",
+        "focus": [
+          "w0",
+          "w10",
+          "w30"
+        ],
+        "note": "10%와 30% 단계는 각각 5분 pause 후 다음 가중치로 넘어갑니다."
+      },
+      {
+        "id": "long-pause",
+        "label": "10분 대기 구간",
+        "focus": [
+          "w50",
+          "w80",
+          "w100"
+        ],
+        "note": "50%와 80% 단계는 10분 pause를 두고, 마지막 step 이후 100%로 자동 전환됩니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "canary",
+      "label": "Rollout canary steps · Canary 트래픽 비중"
+    }
+  ],
+  "phases": [
+    {
+      "id": "start",
+      "label": "시작",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "pause5",
+      "label": "pause: 5m",
+      "fromCol": 1,
+      "toCol": 2
+    },
+    {
+      "id": "pause10",
+      "label": "pause: 10m",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "done",
+      "label": "완료",
+      "fromCol": 5,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "w0",
+    "w10",
+    "w30",
+    "w50",
+    "w80",
+    "w100"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "w0"
+    ],
+    "allowedTerminals": [
+      "w100"
+    ],
+    "requiredPaths": [
+      {
+        "from": "w0",
+        "to": "w100"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "w0",
+      "lane": "canary",
+      "col": 0,
+      "type": "frontend",
+      "label": "0%",
+      "sublabel": "Canary 시작"
+    },
+    {
+      "id": "w10",
+      "lane": "canary",
+      "col": 1,
+      "type": "backend",
+      "label": "10%",
+      "sublabel": "5분 대기"
+    },
+    {
+      "id": "w30",
+      "lane": "canary",
+      "col": 2,
+      "type": "backend",
+      "label": "30%",
+      "sublabel": "5분 대기"
+    },
+    {
+      "id": "w50",
+      "lane": "canary",
+      "col": 3,
+      "type": "backend",
+      "label": "50%",
+      "sublabel": "10분 대기 · 현재"
+    },
+    {
+      "id": "w80",
+      "lane": "canary",
+      "col": 4,
+      "type": "backend",
+      "label": "80%",
+      "sublabel": "10분 대기"
+    },
+    {
+      "id": "w100",
+      "lane": "canary",
+      "col": 5,
+      "type": "cloud",
+      "label": "100%",
+      "sublabel": "완료"
+    }
+  ],
+  "edges": [
+    {
+      "from": "w0",
+      "to": "w10",
+      "role": "main"
+    },
+    {
+      "from": "w10",
+      "to": "w30",
+      "role": "main"
+    },
+    {
+      "from": "w30",
+      "to": "w50",
+      "role": "main"
+    },
+    {
+      "from": "w50",
+      "to": "w80",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "w80",
+      "to": "w100",
+      "role": "main"
+    }
+  ]
+}

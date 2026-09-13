@@ -1,0 +1,1099 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T15:14:19.700614+00:00",
+  "scope": [
+    "en/networking/cilium/04-ipam-policy.md",
+    "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+    "ko/networking/cilium/04-ipam-policy.md",
+    "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/networking/cilium/04-ipam-policy.md": {
+      "lines": 608,
+      "sha256": "71f860169d7a875e8a9a223162f968faf123f3ee4939cd60300a40c2b1945389"
+    },
+    "en/quizzes/networking/cilium/04-ipam-policy-quiz.md": {
+      "lines": 252,
+      "sha256": "4b68e65e9210eb34a7c3567afbb1b37c57d2a196f944b25615ba08210f841add"
+    },
+    "ko/networking/cilium/04-ipam-policy.md": {
+      "lines": 608,
+      "sha256": "318b69b925accb428544c21fc44557b3bd66a3f98944d98b3f5d5d723df73763"
+    },
+    "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md": {
+      "lines": 252,
+      "sha256": "8908a6a520331e04d45eb4935316061c76bb0ece9cedf78edd349688dd341d35"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/networking/cilium/04-ipam-policy.md",
+        "sha256": "ea90361a7e86ac25935aafb382527b2cc593402f88b27661c7f176a20c811154",
+        "localTargets": [
+          "README.md",
+          "03-networking.md",
+          "../../eks-hybrid-nodes/02-network-configuration.md",
+          "README.md",
+          "../../quizzes/networking/cilium/04-ipam-policy-quiz.md"
+        ],
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+        "sha256": "f81f263006770e0d70f4d0dd42d4a973b7160c5c6e02e5ad3888a58ebf614866",
+        "localTargets": [
+          "../../../networking/cilium/04-ipam-policy.md"
+        ],
+        "passed": true
+      },
+      {
+        "path": "ko/networking/cilium/04-ipam-policy.md",
+        "sha256": "d4117c9f827d0952e9a326a0722f4325d516485c8753b8ee391d6307c650e1ef",
+        "localTargets": [
+          "README.md",
+          "03-networking.md",
+          "../../eks-hybrid-nodes/02-network-configuration.md",
+          "README.md",
+          "../../quizzes/networking/cilium/04-ipam-policy-quiz.md"
+        ],
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+        "sha256": "5d58e7ec9bbd80c4ceb362644b2a0dca5e421e77fdd6bb6708eb1d2e2b51c27d",
+        "localTargets": [
+          "../../../networking/cilium/04-ipam-policy.md"
+        ],
+        "passed": true
+      }
+    ],
+    "schemaObjects": 28,
+    "helmFragments": 8,
+    "bashBlocks": 14,
+    "quizQuestions": 40,
+    "oldSchemaRegressions": [
+      {
+        "language": "en",
+        "case": "obsolete PodIPPool fields",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "spec",
+              "ipv4"
+            ],
+            "message": "'cidrs' is a required property"
+          },
+          {
+            "path": [
+              "spec",
+              "ipv4"
+            ],
+            "message": "'maskSize' is a required property"
+          },
+          {
+            "path": [
+              "spec",
+              "ipv4"
+            ],
+            "message": "Additional properties are not allowed ('blockSize', 'cidr' were unexpected)"
+          }
+        ]
+      },
+      {
+        "language": "en",
+        "case": "removed Kafka L7 API",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "spec",
+              "ingress",
+              0,
+              "toPorts",
+              0,
+              "rules"
+            ],
+            "message": "{'kafka': [{'apiKey': 'Produce', 'topic': 'allowed-topic-1'}, {'apiKey': 'Fetch', 'topic': 'allowed-topic-1'}, {'apiKey': 'CreateTopics', 'topic': 'allowed-topic-.*', 'apiVersions': ['0', '1']}]} is not valid under any of the given schemas"
+          },
+          {
+            "path": [
+              "spec",
+              "ingress",
+              0,
+              "toPorts",
+              0,
+              "rules"
+            ],
+            "message": "Additional properties are not allowed ('kafka' was unexpected)"
+          }
+        ]
+      },
+      {
+        "language": "ko",
+        "case": "obsolete PodIPPool fields",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "spec",
+              "ipv4"
+            ],
+            "message": "'cidrs' is a required property"
+          },
+          {
+            "path": [
+              "spec",
+              "ipv4"
+            ],
+            "message": "'maskSize' is a required property"
+          },
+          {
+            "path": [
+              "spec",
+              "ipv4"
+            ],
+            "message": "Additional properties are not allowed ('blockSize', 'cidr' were unexpected)"
+          }
+        ]
+      },
+      {
+        "language": "ko",
+        "case": "removed Kafka L7 API",
+        "rejected": true,
+        "errors": [
+          {
+            "path": [
+              "spec",
+              "ingress",
+              0,
+              "toPorts",
+              0,
+              "rules"
+            ],
+            "message": "{'kafka': [{'apiKey': 'Produce', 'topic': 'allowed-topic-1'}, {'apiKey': 'Fetch', 'topic': 'allowed-topic-1'}, {'apiKey': 'CreateTopics', 'topic': 'allowed-topic-.*', 'apiVersions': ['0', '1']}]} is not valid under any of the given schemas"
+          },
+          {
+            "path": [
+              "spec",
+              "ingress",
+              0,
+              "toPorts",
+              0,
+              "rules"
+            ],
+            "message": "Additional properties are not allowed ('kafka' was unexpected)"
+          }
+        ]
+      }
+    ],
+    "jqCiliumNodeCases": 9,
+    "jqKubernetesNodeCases": 4,
+    "jqOutputs": {
+      "cilium": [
+        {
+          "name": "first-is-not-underlay",
+          "internalNodeIPs": [
+            "10.80.1.10"
+          ],
+          "clusterPoolPodCIDRs": [
+            "10.85.0.0/25"
+          ],
+          "multiPoolAllocations": [],
+          "eniInterfaceIDs": [],
+          "operatorStatus": {}
+        },
+        {
+          "name": "dual",
+          "internalNodeIPs": [
+            "10.80.1.11",
+            "2001:db8::2"
+          ],
+          "clusterPoolPodCIDRs": [
+            "10.85.0.128/25",
+            "fd00:85::/120"
+          ],
+          "multiPoolAllocations": [],
+          "eniInterfaceIDs": [],
+          "operatorStatus": {}
+        },
+        {
+          "name": "missing",
+          "internalNodeIPs": [],
+          "clusterPoolPodCIDRs": [],
+          "multiPoolAllocations": [],
+          "eniInterfaceIDs": [],
+          "operatorStatus": {}
+        },
+        {
+          "name": "null",
+          "internalNodeIPs": [],
+          "clusterPoolPodCIDRs": [],
+          "multiPoolAllocations": [],
+          "eniInterfaceIDs": [],
+          "operatorStatus": {}
+        },
+        {
+          "name": "duplicates",
+          "internalNodeIPs": [
+            "10.80.1.12"
+          ],
+          "clusterPoolPodCIDRs": [],
+          "multiPoolAllocations": [],
+          "eniInterfaceIDs": [],
+          "operatorStatus": {}
+        },
+        {
+          "name": "multi",
+          "internalNodeIPs": [],
+          "clusterPoolPodCIDRs": [],
+          "multiPoolAllocations": [
+            {
+              "pool": "blue-pool",
+              "cidrs": [
+                "10.245.1.0/24",
+                "10.245.2.0/24"
+              ]
+            }
+          ],
+          "eniInterfaceIDs": [],
+          "operatorStatus": {}
+        },
+        {
+          "name": "eni",
+          "internalNodeIPs": [],
+          "clusterPoolPodCIDRs": [],
+          "multiPoolAllocations": [],
+          "eniInterfaceIDs": [
+            "eni-a",
+            "eni-b"
+          ],
+          "operatorStatus": {}
+        },
+        {
+          "name": "allocator-error",
+          "internalNodeIPs": [],
+          "clusterPoolPodCIDRs": [],
+          "multiPoolAllocations": [],
+          "eniInterfaceIDs": [],
+          "operatorStatus": {
+            "error": "capacity unavailable"
+          }
+        }
+      ],
+      "kubernetes": [
+        {
+          "name": "dual",
+          "internalNodeIPs": [
+            "192.0.2.10"
+          ],
+          "podCIDRs": [
+            "10.1.0.0/24",
+            "fd00:1::/120"
+          ],
+          "legacyPodCIDR": "10.1.0.0/24"
+        },
+        {
+          "name": "legacy",
+          "internalNodeIPs": [],
+          "podCIDRs": [],
+          "legacyPodCIDR": "10.2.0.0/24"
+        },
+        {
+          "name": "none",
+          "internalNodeIPs": [],
+          "podCIDRs": [],
+          "legacyPodCIDR": null
+        }
+      ]
+    },
+    "dnsCases": [
+      {
+        "pattern": "*.example.com",
+        "name": "a.example.com",
+        "matched": true
+      },
+      {
+        "pattern": "*.example.com",
+        "name": "example.com",
+        "matched": false
+      },
+      {
+        "pattern": "*.example.com",
+        "name": "a.b.example.com",
+        "matched": false
+      },
+      {
+        "pattern": "*.example.com",
+        "name": "a.example.com.attacker.test",
+        "matched": false
+      },
+      {
+        "pattern": "**.example.com",
+        "name": "a.example.com",
+        "matched": true
+      },
+      {
+        "pattern": "**.example.com",
+        "name": "a.b.example.com",
+        "matched": true
+      },
+      {
+        "pattern": "**.example.com",
+        "name": "a.b.c.example.com",
+        "matched": true
+      },
+      {
+        "pattern": "**.example.com",
+        "name": "example.com",
+        "matched": false
+      },
+      {
+        "pattern": "api.example.com",
+        "name": "api.example.com",
+        "matched": true
+      },
+      {
+        "pattern": "api.example.com",
+        "name": "not-api.example.com",
+        "matched": false
+      },
+      {
+        "pattern": "*.googleapis.com",
+        "name": "storage.googleapis.com",
+        "matched": true
+      },
+      {
+        "pattern": "*.googleapis.com",
+        "name": "googleapis.com",
+        "matched": false
+      },
+      {
+        "pattern": "*.googleapis.com",
+        "name": "a.storage.googleapis.com",
+        "matched": false
+      },
+      {
+        "pattern": "*.example.com",
+        "name": "A.EXAMPLE.COM.",
+        "matched": true
+      },
+      {
+        "pattern": "*",
+        "name": "arbitrary.example.net",
+        "matched": true
+      },
+      {
+        "pattern": "*example.com",
+        "name": "a.example.com",
+        "matched": false
+      }
+    ],
+    "httpConditionCases": 8,
+    "poolSelectorCases": 5,
+    "policyAlternativesSameIdentity": true,
+    "dnsProxyRulePresent": true,
+    "gitDiffCheck": "passed",
+    "schemaAdapters": [
+      "Kubernetes int-or-string interpreted as integer|string using apimachinery v0.36.0 contract; a numeric targetPort is valid."
+    ],
+    "limitations": [
+      "Structural schemas; admission/CEL/controller behavior not emulated.",
+      "DNS/HTTP/pool fixtures model reviewed source semantics on normalized inputs; no Cilium/Envoy/Go runtime execution.",
+      "No live cluster/cloud mutation, IPAM allocation, database test, Helm render or network benchmark."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 1024,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/networking/cilium/04-ipam-policy.md",
+        "sha256": "ea90361a7e86ac25935aafb382527b2cc593402f88b27661c7f176a20c811154",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ipam-and-network-policies"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "ip-address-management-strategies"
+          },
+          {
+            "tag": "h3",
+            "id": "allocators-and-authoritative-state"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-cni-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "ipam-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "cluster-pool"
+          },
+          {
+            "tag": "h3",
+            "id": "multi-pool-and-ciliumpodippool"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-eni"
+          },
+          {
+            "tag": "h2",
+            "id": "querying-per-node-allocation-state"
+          },
+          {
+            "tag": "h3",
+            "id": "ciliumnode-example"
+          },
+          {
+            "tag": "h3",
+            "id": "mode-specific-inventory"
+          },
+          {
+            "tag": "h2",
+            "id": "network-policy-design-and-implementation"
+          },
+          {
+            "tag": "h3",
+            "id": "resource-and-rule-semantics"
+          },
+          {
+            "tag": "h3",
+            "id": "matched-policy-lab"
+          },
+          {
+            "tag": "h3",
+            "id": "l3-l4-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "l7-http-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "kafka-policy-boundary"
+          },
+          {
+            "tag": "h3",
+            "id": "dns-fqdn-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "cidrs-services-and-entities"
+          },
+          {
+            "tag": "h2",
+            "id": "multi-cluster-scenarios"
+          },
+          {
+            "tag": "h3",
+            "id": "setup-prerequisites-and-partial-sequence"
+          },
+          {
+            "tag": "h3",
+            "id": "global-services-and-cross-cluster-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-cleanup"
+          },
+          {
+            "tag": "h2",
+            "id": "sources"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "ipam-and-network-policies",
+          "lab-environment-setup",
+          "ip-address-management-strategies",
+          "allocators-and-authoritative-state",
+          "kubernetes-cni-integration",
+          "ipam-configuration",
+          "cluster-pool",
+          "multi-pool-and-ciliumpodippool",
+          "aws-eni",
+          "querying-per-node-podcidrs-via-ciliumnode-cr",
+          "querying-per-node-allocation-state",
+          "ciliumnode-example",
+          "mode-specific-inventory",
+          "network-policy-design-and-implementation",
+          "resource-and-rule-semantics",
+          "matched-policy-lab",
+          "l3-l4-policy",
+          "l7-http-policy",
+          "kafka-policy-boundary",
+          "dns-fqdn-policy",
+          "cidrs-services-and-entities",
+          "multi-cluster-scenarios",
+          "setup-prerequisites-and-partial-sequence",
+          "global-services-and-cross-cluster-policy",
+          "validation-and-cleanup",
+          "sources",
+          "quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+        "sha256": "f81f263006770e0d70f4d0dd42d4a973b7160c5c6e02e5ad3888a58ebf614866",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-ipam-and-network-policy-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "ipam"
+          },
+          {
+            "tag": "h2",
+            "id": "policy-basics"
+          },
+          {
+            "tag": "h2",
+            "id": "peer-selection"
+          },
+          {
+            "tag": "h2",
+            "id": "l7-policy"
+          }
+        ],
+        "renderedIds": [
+          "cilium-ipam-and-network-policy-quiz",
+          "ipam",
+          "policy-basics",
+          "peer-selection",
+          "l7-policy"
+        ]
+      },
+      {
+        "path": "ko/networking/cilium/04-ipam-policy.md",
+        "sha256": "d4117c9f827d0952e9a326a0722f4325d516485c8753b8ee391d6307c650e1ef",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ipam-및-네트워크-정책"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "ip-주소-관리-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "할당-주체와-기준-데이터"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-cni-통합"
+          },
+          {
+            "tag": "h2",
+            "id": "ipam-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "클러스터-풀"
+          },
+          {
+            "tag": "h3",
+            "id": "multi-pool과-ciliumpodippool"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-eni"
+          },
+          {
+            "tag": "h2",
+            "id": "노드별-할당-상태-조회"
+          },
+          {
+            "tag": "h3",
+            "id": "ciliumnode-예제"
+          },
+          {
+            "tag": "h3",
+            "id": "모드별-인벤토리"
+          },
+          {
+            "tag": "h2",
+            "id": "네트워크-정책-설계-및-구현"
+          },
+          {
+            "tag": "h3",
+            "id": "리소스와-규칙-의미"
+          },
+          {
+            "tag": "h3",
+            "id": "label이-일치하는-정책-실습"
+          },
+          {
+            "tag": "h3",
+            "id": "l3-l4-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "l7-http-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "kafka-정책의-경계"
+          },
+          {
+            "tag": "h3",
+            "id": "dns-fqdn-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "cidr·service·entity"
+          },
+          {
+            "tag": "h2",
+            "id": "멀티-클러스터-시나리오"
+          },
+          {
+            "tag": "h3",
+            "id": "설정-조건과-부분-절차"
+          },
+          {
+            "tag": "h3",
+            "id": "global-service와-클러스터-간-정책"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-정리"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "ipam-및-네트워크-정책",
+          "실습-환경-설정",
+          "ip-주소-관리-전략",
+          "할당-주체와-기준-데이터",
+          "kubernetes-cni-통합",
+          "ipam-구성",
+          "클러스터-풀",
+          "multi-pool과-ciliumpodippool",
+          "aws-eni",
+          "ciliumnode-cr을-활용한-노드별-podcidr-조회",
+          "ciliumnode-cr을-활용한-노드별-podcidr-조회",
+          "노드별-할당-상태-조회",
+          "ciliumnode-예제",
+          "모드별-인벤토리",
+          "네트워크-정책-설계-및-구현",
+          "리소스와-규칙-의미",
+          "label이-일치하는-정책-실습",
+          "l3-l4-정책",
+          "l7-http-정책",
+          "kafka-정책의-경계",
+          "dns-fqdn-정책",
+          "cidr·service·entity",
+          "멀티-클러스터-시나리오",
+          "설정-조건과-부분-절차",
+          "global-service와-클러스터-간-정책",
+          "검증과-정리",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+        "sha256": "5d58e7ec9bbd80c4ceb362644b2a0dca5e421e77fdd6bb6708eb1d2e2b51c27d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-ipam-및-네트워크-정책-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "ipam"
+          },
+          {
+            "tag": "h2",
+            "id": "정책-기본"
+          },
+          {
+            "tag": "h2",
+            "id": "통신-대상-선택"
+          },
+          {
+            "tag": "h2",
+            "id": "l7-정책"
+          }
+        ],
+        "renderedIds": [
+          "cilium-ipam-및-네트워크-정책-퀴즈",
+          "ipam",
+          "정책-기본",
+          "통신-대상-선택",
+          "l7-정책"
+        ]
+      }
+    ]
+  },
+  "findings": [
+    "Corrected allocator ownership:clusterpoolOperatorassignsnodeCIDRs/localagentsPodIPs;hostscopeusesKubernetesNodeprefixcoordination;CiliumNodeisnotuniversalforallmodes.",
+    "SeparatedPodIPAM,KubernetesServiceClusterIPallocationandCiliumLoadBalancerIPAM;correctedCRIruntimeCNIinvocation.",
+    "CurrentCiliumPodIPPoolv2alpha1usescidrs/maskSize,podSelector/namespaceSelector;genericselector,cidr,blockSizewereinvalid. Defaultpool,selectorAND/ambiguity,require-pool-match,new-allocationtiming,immutablefieldsanddocumentedmigrationlimitsareexplicit.",
+    "ReleasedgenericCRDbackedstateispool/used,notstaleavailable/inuseprose. ENI1.20usesstatus.eni.enisandmulti-poolallocationviews;mode-specificdiagnosticresourcesdocumented.",
+    "ReplacedobsoleteAgentConfigMapfragmentswithcurrentHelmfields,eni.eniTags/awsEnablePrefixDelegation andIPv4-onlyexample;IAM/subnet/prefix/platformrequirementsarenotclaimedconfigured.",
+    "Replacedfirst-address/first-CIDRroutegenerationwithnativejqinventorycoveringtypedInternalIPs,allCIDRs,multi-pool/ENIstateandKuberneteshostscope;noautomaticnexthopclaim.",
+    "L4/L7examplesnowalternativesofthesamebackend-accessresource,preventingaccidentalcoexistingunrestrictedL4allowfromthetwofiles;otherapplicablepolicyallowancesremainexplicit.",
+    "Replacedmismatchedv1.14StarWarssetupwithmatchingcurrentCLItest-imageworkloads;readiness,baselineanddatabase-not-providedlimitationsstated.",
+    "RemovedKafkaL7APIrecipe;HTTP/gRPCusesEnvoy/path/headersemantics,DNShasitsownproxy.DefaultDNSpolicynowincludesTCP+UDP53andrules.dnsfornamelearning;DNSqueryallowanceversusIP/HTTPSallowanceexplicit.",
+    "Verifiedsingle-level*.suffixversusmulti-level**.suffixbehavioragainstsource;allwildcardformsarequotedcorrectlyinquizzes.",
+    "Clarifiedspec.labelsrulemetadata,CCNP-onlynodeSelector,defaultCIDRmatchinglimitsandbetaopt-inpods/nodes,ServiceEndpointSliceselectorbehavior,world/cluster/cluster-meshdistinctions.",
+    "CorrectedClusterMeshcontrol-versus-data-plane,uniqueIDs/names,routability/same-datapath/minorversion/CAtrustrequirements,partialNodePortsequence,canonicalGlobalServiceannotationandmatchingname/namespace.",
+    "Removedautomaticfailoverguarantee:cacheTTLdefault0sretainsstaleremotestate;positiveTTLrevocationisnotapplicationhealthchecking.",
+    "Reviewedall40MCQanswersandpreserved20perlanguage;legacyincomingEN/KOqueryanchorspreservedincludingNFC/NFDvariants."
+  ],
+  "primarySources": [
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/index.rst",
+      "cacheKey": "c523289105ab",
+      "fetchedAt": "2026-09-12T14:32:53.865224+00:00",
+      "status": 200,
+      "sha256": "9de62b63bf22f0cfbb998216aca97491251090fc3ec861764c1c1944d598d361"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/ipam/option/option.go",
+      "cacheKey": "e2c0bb74b097",
+      "fetchedAt": "2026-09-12T14:32:54.582290+00:00",
+      "status": 200,
+      "sha256": "ded5b09702bc193f5dab2efaa2945f829b71c730164fce68bde7aae6c022fa0f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/cluster-pool.rst",
+      "cacheKey": "a6dc7012cfb0",
+      "fetchedAt": "2026-09-12T14:32:53.868357+00:00",
+      "status": 200,
+      "sha256": "f5f3bd8f0a0b9c64d59a44cd73f8e494a7366f2661c5d81bba5dc38e71864e1e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/kubernetes.rst",
+      "cacheKey": "bb33a2274fc9",
+      "fetchedAt": "2026-09-12T14:32:54.107541+00:00",
+      "status": 200,
+      "sha256": "76cc0f17b6ccff98e9fe28fddc1d73354fefb2e159c657ea236cd51ec9feeb3e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/multi-pool.rst",
+      "cacheKey": "a71eb5e31e95",
+      "fetchedAt": "2026-09-12T14:32:54.104279+00:00",
+      "status": 200,
+      "sha256": "50484184880f9748627d5c99573a63351387c125d5f5afc672484d61f6168cb8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/crd.rst",
+      "cacheKey": "3b76a272c82f",
+      "fetchedAt": "2026-09-12T14:32:54.352910+00:00",
+      "status": 200,
+      "sha256": "58ff26bf4c705c2972cc1d25150841ae16518775a60bc24353ead1f7c97cebc5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/azure-delegated-ipam.rst",
+      "cacheKey": "ba8867d7aa47",
+      "fetchedAt": "2026-09-12T14:32:54.341213+00:00",
+      "status": 200,
+      "sha256": "faef6a4b3470b8fa26d930f1bde8d6c827547f281af14fd593281b390419eac0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml",
+      "cacheKey": "65e7a7987f73",
+      "fetchedAt": "2026-09-12T14:32:54.576660+00:00",
+      "status": 200,
+      "sha256": "34dd4b4a6a6f588b1936e1b01acb72fb9cb2c9cf7c3fefead7b5b253a356a9e8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnodes.yaml",
+      "cacheKey": "16916aac2f62",
+      "fetchedAt": "2026-09-12T14:34:46.521046+00:00",
+      "status": 200,
+      "sha256": "cc3e57ace385353b237b04f466fb99fd9c75c96682044063daae3e0150d2247f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/ipam/types/types.go",
+      "cacheKey": "e766f4c6d609",
+      "fetchedAt": "2026-09-12T14:34:46.508059+00:00",
+      "status": 200,
+      "sha256": "bf462c628a21879a3a10c1f8ca994b6a1b8c0c9693a4d50a17d359fd65b4a979"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/eni.rst",
+      "cacheKey": "33e43f7a4651",
+      "fetchedAt": "2026-09-12T14:02:08.088850+00:00",
+      "status": 200,
+      "sha256": "f12cb835749bbf7468c79a4a1d06b7c9aa57224c8f3540769eb09f165c7529e9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml",
+      "cacheKey": "ab96902e3fca",
+      "fetchedAt": "2026-09-12T14:02:08.604636+00:00",
+      "status": 200,
+      "sha256": "48e57492486c8672b85c7fca96b3d9ae48025f1913beea12f3d3dd11b7500ae1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.schema.json",
+      "cacheKey": "f8f20476ed28",
+      "fetchedAt": "2026-09-12T14:02:08.816699+00:00",
+      "status": 200,
+      "sha256": "5e0d378b3748df1dea5704cf5cc985c5709f88123f8300694e56267891036abd"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+      "cacheKey": "f8ab97c61343",
+      "fetchedAt": "2026-09-12T14:02:09.863620+00:00",
+      "status": 200,
+      "sha256": "11af91669e9aa0579305000f96034ab7fbd45b65131b0ea791ff578a8675da0c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/lb-ipam.rst",
+      "cacheKey": "077691298278",
+      "fetchedAt": "2026-09-12T14:47:03.187176+00:00",
+      "status": 200,
+      "sha256": "9d0ca1265f94b30b0683ef2825cbd9c37125c12d5d56f5b0f7108a665cff35b0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst",
+      "cacheKey": "46e8184d152f",
+      "fetchedAt": "2026-09-12T14:32:54.821365+00:00",
+      "status": 200,
+      "sha256": "1c12754bd76b392f4f8b661ddcb7f7b02cd3397eddf232d0f74f86a4dea9f2c0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer3.rst",
+      "cacheKey": "f6af22ee3d55",
+      "fetchedAt": "2026-09-12T14:32:54.893101+00:00",
+      "status": 200,
+      "sha256": "3ddff4658197f40b19b9b45570a0aa07fb25aa45f21a90d487c2532acd719ece"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/host-firewall.rst",
+      "cacheKey": "211b709e5a9a",
+      "fetchedAt": "2026-09-12T14:32:55.067844+00:00",
+      "status": 200,
+      "sha256": "81ae0f18f036c3414ca6c909ec69f88fa50b43260b4cf9a2f17283781e844a35"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/clustermesh/setup.rst",
+      "cacheKey": "c5bd4d61682b",
+      "fetchedAt": "2026-09-12T14:32:55.144890+00:00",
+      "status": 200,
+      "sha256": "dcef737dcc70a3d101349c881e687c00282765dbb894a088f4b16f33c3ebfdac"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/clustermesh/global-services.rst",
+      "cacheKey": "bfc6a216b89d",
+      "fetchedAt": "2026-09-12T14:32:55.301848+00:00",
+      "status": 200,
+      "sha256": "b4fea52506307a3d11c2f239a9d6679958707e8db73749efc02a2930b5d46b8f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/clustermesh/policy.rst",
+      "cacheKey": "78215d86ae0e",
+      "fetchedAt": "2026-09-12T14:32:55.381112+00:00",
+      "status": 200,
+      "sha256": "c1caae066b3413376c76615fdf933c24f3c8cd16c23f6e21133ee75b5dc5ecdd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/policy/api/rule.go",
+      "cacheKey": "8f0d098abb54",
+      "fetchedAt": "2026-09-12T14:34:46.747241+00:00",
+      "status": 200,
+      "sha256": "1c90156c8c0c9f5187cd445903913ff11826ac623d43ddfa2204523161ac60c3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/policy/api/fqdn.go",
+      "cacheKey": "5744839a7096",
+      "fetchedAt": "2026-09-12T14:34:46.754130+00:00",
+      "status": 200,
+      "sha256": "09d3e1c97eeb6c4f270b6cb868ffe9afeb49b6a94441da8b53e2f462adecdba0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/cluster-pool-to-multi-pool.rst",
+      "cacheKey": "ff33a8d7cc98",
+      "fetchedAt": "2026-09-12T14:34:46.988346+00:00",
+      "status": 200,
+      "sha256": "c48d5788a514c04b3833733782ad0b8d938318043dafe77f3d35ef41c824c2bf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/fqdn/matchpattern/matchpattern.go",
+      "cacheKey": "edaa77dc1888",
+      "fetchedAt": "2026-09-12T14:39:04.272451+00:00",
+      "status": 200,
+      "sha256": "84577fba9a2665597d4f073b41f1ac217a4d20b98c26a3b498d4dbedb4ad0a3b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/fqdn/matchpattern/matchpattern_test.go",
+      "cacheKey": "db573ecc25e3",
+      "fetchedAt": "2026-09-12T14:39:04.238093+00:00",
+      "status": 200,
+      "sha256": "7df9900edb94085f0079da88c0c79b8a4d732ae469be6f9b1227815c5c5e646c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/policy/api/http.go",
+      "cacheKey": "68e6cce9c7b7",
+      "fetchedAt": "2026-09-12T14:39:04.484885+00:00",
+      "status": 200,
+      "sha256": "72bce74c4933e4d592b2cc0a652e8294dad4c0f4fd5041fcb084af4d9aaa3b58"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/clustermesh/intro.rst",
+      "cacheKey": "f150d9bc04fd",
+      "fetchedAt": "2026-09-12T14:39:04.508621+00:00",
+      "status": 200,
+      "sha256": "57e2ae89038ce2174ec082cb990a9dc005349f47fc6a818a7b293b95124f4fbb"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/policy/api/entity.go",
+      "cacheKey": "3ce5257f5ad6",
+      "fetchedAt": "2026-09-12T14:47:02.898775+00:00",
+      "status": 200,
+      "sha256": "5f7cd422387aec2a1b64093a9ee1429fc6b9429776ca67cd93f6565fb7413521"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/option/config.go",
+      "cacheKey": "d9c0dfea2c70",
+      "fetchedAt": "2026-09-12T14:47:02.830164+00:00",
+      "status": 200,
+      "sha256": "b9029d6153a25710aa5c487d8a376bbe03058b9756f3c4eb79ee437c2454de13"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/clustermesh.go",
+      "cacheKey": "7479033332a1",
+      "fetchedAt": "2026-09-12T14:54:06.959885+00:00",
+      "status": 200,
+      "sha256": "c7160f521fadf4bd8ddf21ad8069ec4c7e01e29887bc8b9f1de718f87f8e553c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "cacheKey": "b0fb38bb7c6c",
+      "fetchedAt": "2026-09-12T14:09:04.173705+00:00",
+      "status": 200,
+      "sha256": "dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml",
+      "cacheKey": "0fe7c551ccb3",
+      "fetchedAt": "2026-09-12T14:09:04.314427+00:00",
+      "status": 200,
+      "sha256": "62c6de8f358da125b94468d39187edb1cea157d79503fdc50ccec8a6aaa79a76"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/apimachinery/v0.36.0/pkg/util/intstr/intstr.go",
+      "cacheKey": "e9622202fe84",
+      "fetchedAt": "2026-09-12T15:07:56.849981+00:00",
+      "status": 200,
+      "sha256": "4910c37eb257acedfb28310c788a6be3ece18fe8fa1f7b1b6856ab34eecce1bf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "cacheKey": "f79fc9587de7",
+      "fetchedAt": "2026-09-12T13:56:49.524401+00:00",
+      "status": 200,
+      "sha256": "65c36cebf69b753e96c14193632a9fc964cff434d4cc1e18dbf41f8414ac4797"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/defaults/defaults.go",
+      "cacheKey": "cba013385c98",
+      "fetchedAt": "2026-09-12T14:04:52.287412+00:00",
+      "status": 200,
+      "sha256": "47a15dceeb90ce400faa57c8842138c8d69f6c2080f88046fe9f92a6b1479146"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/connectivity/check/deployment.go",
+      "cacheKey": "e2e880278f01",
+      "fetchedAt": "2026-09-12T14:04:52.313849+00:00",
+      "status": 200,
+      "sha256": "5d858fdbf408b1040a15edfa138c9a87b2b6186ce151f90492babfac3d784d3e"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+      "cacheKey": "08a066cf82b7",
+      "fetchedAt": "2026-09-12T14:54:08.418478+00:00",
+      "status": 200,
+      "sha256": "f4c09257d5b5775267842e5657300738f773f4ba4755d4d56081d21d2957d27c"
+    }
+  ],
+  "artifactDirectory": ".vitepress/cache/networking-cilium-ipam-audit",
+  "figures": {
+    "actuallyViewed": 2,
+    "removedReferences": [
+      "en-networking-cilium-04-ipam-policy-0",
+      "ko-networking-cilium-04-ipam-policy-0"
+    ],
+    "reason": "WrongseparationofCiliumPodIPPoolasgenericCRDcustomIPAMandcentralindividualIPallocation;accuratemode/authoritytablereplacesredundantfigure.",
+    "asciiDiagram": "ReplacedmisleadingClusterMeshstate/datapathsequencewithseparatemTLSstateandnode-to-nodepacketpaths.",
+    "externalRepair": "Parentregeneration/source-syncifoldfiguresorforeigntranslationsarereused;noassets/foreignproseedited."
+  },
+  "scopeExternalFindings": [
+    {
+      "path": "en/eks-hybrid-nodes/02-network-configuration.md",
+      "lines": [
+        1057,
+        1058,
+        1156
+      ],
+      "finding": "Existing snippets still select spec.addresses[0]/podCIDRs[0] and generate ip route add. Parent should review typed address/family and actual next-hop prerequisites; worker did not fully audit or edit this outside-scope file.",
+      "basis": "Exactsnippetsearch+currentCiliumNodeAPIsemantics;currentchapter'snativejqfixtureprovesfirstaddresscanbeCiliumInternalIP."
+    },
+    {
+      "path": "ko/eks-hybrid-nodes/02-network-configuration.md",
+      "lines": [
+        1057,
+        1058,
+        1156
+      ],
+      "finding": "Existing snippets still select spec.addresses[0]/podCIDRs[0] and generate ip route add. Parent should review typed address/family and actual next-hop prerequisites; worker did not fully audit or edit this outside-scope file.",
+      "basis": "Exactsnippetsearch+currentCiliumNodeAPIsemantics;currentchapter'snativejqfixtureprovesfirstaddresscanbeCiliumInternalIP."
+    }
+  ],
+  "limitations": [
+    "Structural schemas; admission/CEL/controller behavior not emulated.",
+    "DNS/HTTP/pool fixtures model reviewed source semantics on normalized inputs; no Cilium/Envoy/Go runtime execution.",
+    "No live cluster/cloud mutation, IPAM allocation, database test, Helm render or network benchmark.",
+    "Noactualpoolallocation,migration,cloudIAM/ENIsetup,databaseexecutionorcross-clusterreachabilitytest.",
+    "TestimagecontractscomefromofficialCLIdefaults/deploymentcode;imageswerenotpulled/executed.",
+    "LocalMarkdown/Vuecompilationonly,Nodeheap1GiB;nofulllocalbuild/devserver.",
+    "KubernetesSwaggerint-or-stringmarkerrequiresconsumerinterpretation;adaptervalidatedlegitimatenumerictargetPortwithoutchangingthecorrectmanifest.",
+    "jqcodefencesuseplaintextbecausecurrentShikidoesnotloadjqlanguage;publishedqueriesstillruninactualjqfixtures."
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "워크로드 인증서 발급과 갱신",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      720
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "bootstrap",
+        "label": "토큰과 CSR 준비",
+        "focus": [
+          "proxy",
+          "sa"
+        ],
+        "note": "Pod 시작 시 프록시가 ServiceAccount 토큰을 읽고 SPIFFE ID를 담은 CSR을 만든다."
+      },
+      {
+        "id": "issue",
+        "label": "검증과 서명",
+        "focus": [
+          "proxy",
+          "identity"
+        ],
+        "note": "Identity Controller가 SA 토큰과 SPIFFE ID를 검증한 뒤 Issuer 키로 24시간짜리 인증서를 서명한다."
+      },
+      {
+        "id": "renew",
+        "label": "자동 갱신",
+        "focus": [
+          "proxy",
+          "identity"
+        ],
+        "note": "프록시는 만료 전(기본값: 수명의 70% 시점)에 새 CSR을 보내 인증서를 갱신한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "최초 발급 인증서 (핵심)"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "proxy",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "사이드카"
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity Controller",
+      "sublabel": "Issuer 키 보유"
+    },
+    {
+      "id": "sa",
+      "type": "external",
+      "label": "ServiceAccount",
+      "sublabel": "Pod에 마운트된 토큰"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 400,
+      "label": "최초 발급 — Pod 시작 시"
+    },
+    {
+      "from": 425,
+      "to": 555,
+      "label": "갱신 — 만료 전 자동 (기본값: 수명의 70% 시점)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "get-token",
+      "from": "proxy",
+      "to": "sa",
+      "y": 200,
+      "label": "SA 토큰 획득"
+    },
+    {
+      "id": "send-csr",
+      "from": "proxy",
+      "to": "identity",
+      "y": 265,
+      "label": "CSR + SA 토큰",
+      "variant": "security",
+      "note": "프록시가 SPIFFE ID를 담은 CSR을 생성해 함께 전송"
+    },
+    {
+      "id": "cert",
+      "from": "identity",
+      "to": "proxy",
+      "y": 360,
+      "label": "서명된 인증서 (24시간)",
+      "variant": "emphasis",
+      "note": "SA 토큰 검증 → SPIFFE ID 검증 → Issuer 키로 서명"
+    },
+    {
+      "id": "renew-csr",
+      "from": "proxy",
+      "to": "identity",
+      "y": 470,
+      "label": "갱신 CSR",
+      "variant": "security"
+    },
+    {
+      "id": "new-cert",
+      "from": "identity",
+      "to": "proxy",
+      "y": 530,
+      "label": "새 인증서",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "identity",
+      "from": 260,
+      "to": 366,
+      "type": "security"
+    },
+    {
+      "participant": "identity",
+      "from": 465,
+      "to": 536,
+      "type": "security"
+    }
+  ]
+}

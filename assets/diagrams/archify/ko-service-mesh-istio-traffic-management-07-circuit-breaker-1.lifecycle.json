@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Circuit Breaker 개요",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      980,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "start": {
+          "label": "시작"
+        },
+        "active": {
+          "label": "정상 (Closed)"
+        },
+        "waiting": {
+          "label": "테스트 (HalfOpen)"
+        },
+        "failure": {
+          "label": "차단 (Open)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "요청 처리 상태"
+    },
+    {
+      "id": "probe",
+      "label": "복구 테스트"
+    }
+  ],
+  "states": [
+    {
+      "id": "start",
+      "type": "start",
+      "label": "시작",
+      "sublabel": "초기 상태",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "closed",
+      "type": "active",
+      "label": "Closed",
+      "sublabel": "정상 상태 · 모든 요청 통과",
+      "lane": "main",
+      "col": 1,
+      "tag": "정상"
+    },
+    {
+      "id": "open",
+      "type": "failure",
+      "label": "Open",
+      "sublabel": "차단 상태 · 요청 즉시 실패",
+      "lane": "main",
+      "col": 3,
+      "tag": "차단"
+    },
+    {
+      "id": "halfopen",
+      "type": "waiting",
+      "label": "HalfOpen",
+      "sublabel": "테스트 상태 · 제한된 요청 허용",
+      "lane": "probe",
+      "col": 1,
+      "tag": "테스트"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-init",
+      "from": "start",
+      "to": "closed"
+    },
+    {
+      "id": "t-trip",
+      "from": "closed",
+      "to": "open",
+      "label": "연속 에러 임계값 초과",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "t-wait",
+      "from": "open",
+      "to": "halfopen",
+      "label": "대기 시간 경과",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "t-recover",
+      "from": "halfopen",
+      "to": "closed",
+      "label": "요청 성공",
+      "variant": "emphasis",
+      "toSide": "bottom"
+    },
+    {
+      "id": "t-retrip",
+      "from": "halfopen",
+      "to": "open",
+      "label": "요청 실패",
+      "variant": "security",
+      "route": "right-channel",
+      "fromSide": "right",
+      "toSide": "right"
+    }
+  ]
+}

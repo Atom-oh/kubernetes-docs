@@ -5,7 +5,7 @@ This quiz tests your conceptual and practical knowledge about managing Windows n
 ## Multiple Choice Questions
 
 1. What container runtimes are supported for Windows nodes in Kubernetes?
-   - A) Docker and containerd
+   - A) containerd with Windows CRI support
    - B) CRI-O and Docker
    - C) containerd and CRI-O
    - D) Docker, containerd, and gVisor
@@ -13,12 +13,11 @@ This quiz tests your conceptual and practical knowledge about managing Windows n
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) Docker and containerd**
+**Answer: A) containerd with Windows CRI support**
 
 **Explanation:**
-The officially supported container runtimes for Windows nodes in Kubernetes are Docker and containerd.
+The officially supported container runtimes for Windows nodes in Kubernetes are containerd with Windows CRI support.
 
-- **Docker**: Docker was the traditional option for running Windows containers on Windows. However, Docker support in Kubernetes is gradually decreasing, and transitioning to containerd is recommended.
 
 - **containerd**: This is the currently recommended container runtime for Windows nodes. containerd is a lightweight and stable runtime that has official support for Windows nodes in Kubernetes 1.20 and later.
 
@@ -49,17 +48,17 @@ The main CNI plugins that support Windows nodes are:
 - **Calico**: Provides support for Windows nodes, supporting both BGP mode and VXLAN mode.
 - **Antrea**: Provides support for Windows nodes, using OVS (Open vSwitch).
 
-Additionally, Azure CNI, OVN-Kubernetes, and others support Windows nodes.
+Azure CNI and AWS VPC CNI support Windows in their respective environments.
 
 Considerations when setting up CNI plugins on Windows nodes:
 - Windows nodes have a different networking stack than Linux nodes.
 - Some networking features may be limited on Windows.
 - You should verify the Windows support version and configuration requirements of the CNI plugin.
 
-kubenet is not supported on Windows nodes, and Windows nodes cannot use host network mode (HostNetwork=true is not supported for Windows pods).
+kubenet is unsupported. Regular Windows Pods cannot use hostNetwork; HostProcess Pods require hostNetwork: true.
 </details>
 
-3. What is the default isolation mode for Windows containers?
+3. Which isolation mode does Kubernetes support for Windows application containers?
    - A) Hyper-V isolation
    - B) Process isolation
    - C) Virtual machine isolation
@@ -71,7 +70,7 @@ kubenet is not supported on Windows nodes, and Windows nodes cannot use host net
 **Answer: B) Process isolation**
 
 **Explanation:**
-The default isolation mode for Windows containers is Process Isolation. In this mode, Windows containers share the host operating system's kernel, and each container runs as an isolated process group.
+Kubernetes supports process isolation for Windows application containers. In this mode, Windows containers share the host operating system's kernel, and each container runs as an isolated process group.
 
 Characteristics of process isolation mode:
 - Must use the same kernel version as the host OS.
@@ -83,11 +82,7 @@ Windows also provides an alternative isolation mode called Hyper-V Isolation:
 - Can use different kernel versions than the host OS.
 - Provides a higher level of isolation but has more overhead.
 
-To use Hyper-V isolation in Kubernetes, add the following annotation to the pod spec:
-```yaml
-annotations:
-  io.kubernetes.cri-containerd.isolation: hyperv
-```
+**Kubernetes does not support Hyper-V isolation, and no Pod annotation enables it.** This discussion is Windows OS background knowledge.
 
 Virtual machine isolation is not an official isolation mode for Windows containers, and sandbox isolation is not a term used for Windows containers.
 </details>
@@ -96,7 +91,7 @@ Virtual machine isolation is not an official isolation mode for Windows containe
    - A) Cannot use privileged containers
    - B) Cannot use HostPath volumes
    - C) Only some SecurityContext features are supported for pods
-   - D) Cannot share pod network namespace
+   - D) Cannot share process namespaces between Windows containers
 
 <details>
 <summary>Show Answer</summary>
@@ -111,16 +106,16 @@ When using HostPath volumes on Windows nodes, you must follow the Windows path f
 volumes:
 - name: data
   hostPath:
-    path: C:\\data
+    path: 'C:\data'
 ```
 
 The actual limitations when using Windows nodes in Kubernetes are:
 
-- **Privileged containers**: Privileged containers cannot be used on Windows nodes. This is because there is no equivalent concept to Linux's privileged mode on Windows.
+- **Privileged mode**: The privileged flag is unsupported. Trusted node agents that need host access can use HostProcess.
 
 - **SecurityContext limitations**: Only some SecurityContext features are supported on Windows nodes. For example, runAsUser, runAsGroup, fsGroup, seccomp, SELinux, etc. are not supported.
 
-- **Pod network namespace sharing**: Network namespaces cannot be shared between pods on Windows nodes. This affects hostNetwork: true, dnsPolicy: ClusterFirstWithHostNet, localhost communication between containers in a pod, etc.
+- **Namespace sharing**: Containers in one Pod share networking and localhost, but not process namespaces or root filesystems.
 
 Other limitations of Windows nodes:
 - If you want DaemonSets to run on all nodes (Linux and Windows), you must use nodeSelector.
@@ -168,7 +163,7 @@ affinity:
 Note: Linux nodes have the `kubernetes.io/os=linux` label.
 </details>
 
-6. What is the default base image used when pulling container images on Windows nodes?
+6. Which Microsoft base image offers broader Windows API support than Nano Server for traditional Windows applications?
    - A) mcr.microsoft.com/windows/servercore
    - B) mcr.microsoft.com/windows/nanoserver
    - C) mcr.microsoft.com/dotnet/framework/runtime
@@ -180,18 +175,18 @@ Note: Linux nodes have the `kubernetes.io/os=linux` label.
 **Answer: A) mcr.microsoft.com/windows/servercore**
 
 **Explanation:**
-The most common base image for Windows containers is `mcr.microsoft.com/windows/servercore`. This image is based on a Windows Server Core installation and includes the core components needed to run most Windows applications.
+Kubernetes does not choose a default base image. A suitable choice for traditional Windows applications is `mcr.microsoft.com/windows/servercore`. This image is based on a Windows Server Core installation and includes the core components needed to run most Windows applications.
 
 The main base images available for Windows containers are:
 
 1. **Windows Server Core** (`mcr.microsoft.com/windows/servercore`):
-   - Medium-sized image (approximately 2-4GB)
+   - Image size varies with release, layers and compression.
    - Supports most Windows applications
-   - Includes .NET Framework, PowerShell, etc.
+   - Includes Windows PowerShell; select the required .NET Framework runtime image separately.
    - Most widely used Windows base image
 
 2. **Nano Server** (`mcr.microsoft.com/windows/nanoserver`):
-   - Very small image (approximately 100-200MB)
+   - Image size varies with release, layers and compression.
    - Limited Windows API support
    - Suitable for .NET Core applications
    - Minimal attack surface
@@ -248,6 +243,8 @@ spec:
       labels:
         app: monitoring-agent
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
@@ -287,19 +284,19 @@ Adding tolerations to all DaemonSets can help schedule pods on tainted nodes, bu
 8. Which statement about DNS configuration for pods on Windows nodes is correct?
    - A) DNS configuration is not supported on Windows nodes
    - B) Windows nodes must use Windows DNS Server instead of CoreDNS
-   - C) Windows nodes can use the same DNS configuration as Linux nodes
+   - C) Windows Pods can use CoreDNS with Windows DNS suffix limitations
    - D) Windows nodes require separate DNS server configuration for each pod
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Windows nodes can use the same DNS configuration as Linux nodes**
+**Answer: C) Windows Pods can use CoreDNS with Windows DNS suffix limitations**
 
 **Explanation:**
-Windows nodes can use the same DNS configuration as Linux nodes. Kubernetes DNS service (typically CoreDNS) works the same way for Windows pods.
+Windows Pods can use CoreDNS with Windows DNS suffix limitations. Use a bare Service name in the same namespace or its full FQDN; dotted partial names do not use the Linux search list.
 
 DNS configuration for Windows pods:
-- Configuration equivalent to `/etc/resolv.conf` is automatically created inside Windows pods.
+- Windows uses HNS/DNS settings and a single namespace suffix, not /etc/resolv.conf.
 - Pods can use the cluster's DNS service (CoreDNS) to resolve service names.
 - The `dnsPolicy` and `dnsConfig` fields can be used to configure DNS settings.
 
@@ -310,24 +307,18 @@ kind: Pod
 metadata:
   name: windows-pod
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     command:
     - powershell.exe
     - -Command
     - "Start-Sleep -Seconds 3600"
   dnsPolicy: ClusterFirst
-  dnsConfig:
-    nameservers:
-    - 8.8.8.8
-    searches:
-    - example.com
-    options:
-    - name: ndots
-      value: "5"
 ```
 
 Considerations when using DNS on Windows nodes:
@@ -362,7 +353,7 @@ CNI plugins that support pod-to-pod communication on Windows nodes:
 - Calico
 - Antrea
 - Azure CNI
-- OVN-Kubernetes
+- AWS VPC CNI
 
 For example, when using Flannel:
 - Pods on Windows nodes communicate with pods on other nodes through VXLAN encapsulation.
@@ -398,11 +389,13 @@ kind: Pod
 metadata:
   name: windows-resource-demo
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     resources:
       requests:
         memory: "128Mi"
@@ -414,14 +407,14 @@ spec:
 
 Characteristics of resource management for Windows containers:
 - **CPU limits**: Windows implements CPU sharing and limits to manage CPU resource allocation between containers.
-- **Memory limits**: Windows limits memory usage of containers and performs OOM (Out of Memory) termination when exceeded.
+- Windows has no Linux OOM killer; exceeding available memory can cause allocation failures or paging and degraded performance.
 - **Resource monitoring**: kubelet monitors resource usage of Windows containers and reports to the Kubernetes API.
 
 Considerations for resource management of Windows containers:
 - Default resource overhead for Windows containers may be greater than Linux containers.
 - The exact implementation of resource limits may vary depending on the Windows version.
 - Setting memory limits too low may prevent Windows containers from working properly.
-- Additional resource overhead occurs when using Hyper-V isolation mode.
+- Hyper-V isolation is unsupported by Kubernetes.
 
 You can monitor resource usage on Windows nodes using `kubectl top pods` and `kubectl top nodes` commands.
 </details>
@@ -437,15 +430,15 @@ You can monitor resource usage on Windows nodes using `kubectl top pods` and `ku
 **Steps for Adding Windows Nodes to a Kubernetes Cluster:**
 
 1. **Verify Prerequisites:**
-   - Kubernetes version 1.14 or later (latest version recommended)
+   - A supported Kubernetes/Windows combination; upstream v1.37 supports Windows Server 2022/2025
    - Control plane must run on Linux nodes
-   - Windows Server 2019 or later (Windows Server 2022 recommended)
+   - Windows Server 2022 for these ltsc2022 examples
    - Compatible CNI plugin (Flannel, Calico, Antrea, etc.)
 
 2. **Configure Networking:**
    - Install CNI plugin that supports Windows nodes
    - Configure cluster CIDR and service CIDR
-   - Example (Flannel configuration):
+   - Example (Linux-side Flannel configuration; install the Windows CNI separately):
      ```yaml
      kind: ConfigMap
      apiVersion: v1
@@ -492,38 +485,29 @@ You can monitor resource usage on Windows nodes using `kubectl top pods` and `ku
      ```
    - Install container runtime (containerd recommended):
      ```powershell
-     # Download and install containerd
-     curl.exe -L https://github.com/containerd/containerd/releases/download/v1.6.8/containerd-1.6.8-windows-amd64.tar.gz -o containerd.tar.gz
-     tar.exe xvf containerd.tar.gz
-     mkdir -p $env:ProgramFiles\containerd
-     Copy-Item -Path ".\bin\*" -Destination "$env:ProgramFiles\containerd" -Recurse -Force
-
-     # Register containerd service
-     & $env:ProgramFiles\containerd\containerd.exe config default | Out-File $env:ProgramFiles\containerd\config.toml -Encoding ascii
-     # Edit configuration file (add Windows-related settings)
-
-     # Register and start service
-     & $env:ProgramFiles\containerd\containerd.exe --register-service
-     Start-Service containerd
+     # Use the reviewed sig-windows-tools installation procedure in the chapter.
+     # Install-Containerd.ps1: supported runtime; PrepareNode.ps1: matching kubeadm/kubelet.
+     # Do not start kubelet with an empty configuration.
      ```
 
 4. **Install kubelet and kube-proxy:**
    - Download Kubernetes binaries:
      ```powershell
-     curl.exe -L https://dl.k8s.io/v1.26.0/kubernetes-node-windows-amd64.tar.gz -o kubernetes-node-windows-amd64.tar.gz
-     tar.exe xvf kubernetes-node-windows-amd64.tar.gz
-     mkdir -p $env:ProgramFiles\Kubernetes\bin
-     Copy-Item -Path "kubernetes\node\bin\*" -Destination "$env:ProgramFiles\Kubernetes\bin" -Recurse -Force
+     # Use the reviewed sig-windows-tools installation procedure in the chapter.
+     # Install-Containerd.ps1: supported runtime; PrepareNode.ps1: matching kubeadm/kubelet.
+     # Do not start kubelet with an empty configuration.
      ```
    - Create kubelet configuration file:
      ```powershell
-     New-Item -Path "$env:ProgramFiles\Kubernetes\kubelet-config.yaml" -ItemType File -Force
-     # Add configuration file contents
+     # Use the reviewed sig-windows-tools installation procedure in the chapter.
+     # Install-Containerd.ps1: supported runtime; PrepareNode.ps1: matching kubeadm/kubelet.
+     # Do not start kubelet with an empty configuration.
      ```
    - Register and start kubelet service:
      ```powershell
-     & $env:ProgramFiles\Kubernetes\bin\kubelet.exe --windows-service --config=$env:ProgramFiles\Kubernetes\kubelet-config.yaml
-     Start-Service kubelet
+     # Use the reviewed sig-windows-tools installation procedure in the chapter.
+     # Install-Containerd.ps1: supported runtime; PrepareNode.ps1: matching kubeadm/kubelet.
+     # Do not start kubelet with an empty configuration.
      ```
    - Configure and start kube-proxy (typically deployed as DaemonSet)
 
@@ -548,11 +532,13 @@ You can monitor resource usage on Windows nodes using `kubectl top pods` and `ku
      metadata:
        name: windows-test-pod
      spec:
+       os:
+         name: windows
        nodeSelector:
          kubernetes.io/os: windows
        containers:
        - name: windows-server
-         image: mcr.microsoft.com/windows/servercore:ltsc2019
+         image: mcr.microsoft.com/windows/servercore:ltsc2022
          command:
          - powershell.exe
          - -Command
@@ -606,8 +592,8 @@ You can monitor resource usage on Windows nodes using `kubectl top pods` and `ku
    - **Windows containers**: Generally larger size (several GB), base images are larger
 
 3. **Isolation Modes:**
-   - **Linux containers**: Single isolation mode (namespace-based)
-   - **Windows containers**: Two modes supported: process isolation and Hyper-V isolation
+   - **Linux containers**: Typically namespace-based; alternative sandbox runtimes also exist
+   - **Windows containers**: Kubernetes supports process isolation; Hyper-V is outside Kubernetes support
 
 4. **File System:**
    - **Linux containers**: Layered file system (OverlayFS, etc.)
@@ -635,6 +621,8 @@ You can monitor resource usage on Windows nodes using `kubectl top pods` and `ku
    - **Use node labels**: `kubernetes.io/os=windows` or `kubernetes.io/os=linux`
    - **Use nodeSelector**:
      ```yaml
+     os:
+       name: windows
      nodeSelector:
        kubernetes.io/os: windows
      ```
@@ -670,12 +658,15 @@ You can monitor resource usage on Windows nodes using `kubectl top pods` and `ku
              app: myapp
              os: windows
          spec:
+           os:
+             name: windows
            nodeSelector:
              kubernetes.io/os: windows
            containers:
            - name: windows-app
              image: myregistry/windows-app:latest
 
+     ---
      # Deployment for Linux workloads
      apiVersion: apps/v1
      kind: Deployment
@@ -716,6 +707,8 @@ You can monitor resource usage on Windows nodes using `kubectl top pods` and `ku
            labels:
              app: monitoring-agent
          spec:
+           os:
+             name: windows
            nodeSelector:
              kubernetes.io/os: windows
            containers:
@@ -784,7 +777,7 @@ You can monitor resource usage on Windows nodes using `kubectl top pods` and `ku
        runAsGroup: 3000
        fsGroup: 2000
 
-     # Windows pods ignore the above settings and use different security mechanisms
+     # These Linux-only fields are rejected with spec.os.name: windows.
      ```
 
 9. **Monitoring and Logging:**
@@ -814,77 +807,14 @@ Group Managed Service Accounts (gMSA) are a special type of Active Directory acc
 
 **How to Use gMSA in Windows Containers:**
 
-1. **Prerequisites:**
-   - Active Directory domain controller
-   - Windows nodes must be joined to the domain
-   - Kubernetes version 1.14 or later
-   - containerd or Docker container runtime
+1. Prepare AD/DNS connectivity and a supported credential retrieval method: domain-joined hosts or a separately configured portable identity provider. Containers themselves cannot join the domain.
+2. Check `Get-KdsRootKey`. An AD administrator creates a key only when needed and allows replication time (up to 10 hours). Backdating ten hours is only for a single-DC test environment.
+3. Grant password retrieval to a dedicated authorized-host group, not all Domain Computers. Generate real SID/GUID/DNS/NetBIOS values with the CredentialSpec module’s `New-CredentialSpec`.
+4. Install the GMSACredentialSpec CRD and mutating/validating webhooks. Put generated JSON into `GMSACredentialSpec.credspec` using `windows.k8s.io/v1`. It is not a Secret and contains no gMSA password.
+5. Grant the ServiceAccount `use` on the named resource and set the Pod’s `serviceAccountName` and `windowsOptions.gmsaCredentialSpecName`.
+6. Validate real application Kerberos authentication and `klist`. `whoami` reports the local process user, not the gMSA network identity.
 
-2. **Set up gMSA in Active Directory:**
-   ```powershell
-   # 1. Create KDS root key (run on domain controller)
-   Add-KdsRootKey -EffectiveTime (Get-Date).AddHours(-10)
-
-   # 2. Create gMSA account
-   New-ADServiceAccount -Name "gmsa-k8s" -DnsHostName "gmsa-k8s.example.com" -ServicePrincipalNames "host/gmsa-k8s", "host/gmsa-k8s.example.com" -PrincipalsAllowedToRetrieveManagedPassword "Domain Computers"
-   ```
-
-3. **Create gMSA Credential Spec:**
-   ```yaml
-   apiVersion: windows.k8s.io/v1
-   kind: GMSACredentialSpec
-   metadata:
-     name: gmsa-k8s-credspec
-   credspec:
-     ActiveDirectoryConfig:
-       GroupManagedServiceAccounts:
-       - Name: gmsa-k8s
-         Scope: EXAMPLE
-     CmsPlugins:
-     - ActiveDirectory
-     DomainJoinConfig:
-       DnsName: example.com
-       DnsTreeName: example.com
-       Guid: 12345678-1234-1234-1234-123456789012
-       MachineAccountName: gmsa-k8s
-       NetBiosName: EXAMPLE
-   ```
-
-4. **Store Credential Spec as Kubernetes Secret:**
-   ```bash
-   kubectl create secret generic gmsa-k8s-secret --from-file=credspec.json=/path/to/gmsa-credspec.json
-   ```
-
-5. **Add gMSA Configuration to Pod Definition:**
-   ```yaml
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: iis-gmsa
-     labels:
-       app: iis-gmsa
-   spec:
-     securityContext:
-       windowsOptions:
-         gmsaCredentialSpecName: gmsa-k8s-credspec
-     nodeSelector:
-       kubernetes.io/os: windows
-     containers:
-     - name: iis
-       image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-       ports:
-       - containerPort: 80
-   ```
-
-6. **Verify gMSA Usage:**
-   ```powershell
-   # Run inside container
-   whoami
-   # Output: EXAMPLE\gmsa-k8s$
-
-   nltest /sc_verify:example.com
-   # Output: Trusted DC connections... Passed
-   ```
+See the [chapter’s gMSA procedure](../../core/10-windows-in-kubernetes.md) for the complete generated-resource and RBAC example.
 
 **Benefits of Using gMSA:**
 
@@ -955,40 +885,7 @@ Group Managed Service Accounts (gMSA) are a special type of Active Directory acc
 **Methods for Configuring Windows Node Logging:**
 
 1. **Fluent Bit or Fluentd Setup:**
-   ```yaml
-   apiVersion: apps/v1
-   kind: DaemonSet
-   metadata:
-     name: fluent-bit-windows
-     namespace: logging
-   spec:
-     selector:
-       matchLabels:
-         app: fluent-bit-windows
-     template:
-       metadata:
-         labels:
-           app: fluent-bit-windows
-       spec:
-         nodeSelector:
-           kubernetes.io/os: windows
-         containers:
-         - name: fluent-bit
-           image: fluent/fluent-bit:windows-latest
-           volumeMounts:
-           - name: config
-             mountPath: C:/fluent-bit/conf/
-           - name: windows-logs
-             mountPath: C:/Windows/System32/winevt/Logs
-             readOnly: true
-         volumes:
-         - name: config
-           configMap:
-             name: fluent-bit-windows-config
-         - name: windows-logs
-           hostPath:
-             path: C:/Windows/System32/winevt/Logs
-   ```
+   Read host event logs using the chapter’s Fluent Bit Windows service or a reviewed HostProcess collector. Mounting .evtx files into a regular container does not make winlog read the host API. The input below requires permission to read Security and a persistent checkpoint directory.
 
 2. **Windows Event Log Collection Configuration:**
    ```ini
@@ -997,19 +894,21 @@ Group Managed Service Accounts (gMSA) are a special type of Active Directory acc
        Name            winlog
        Channels        System,Application,Security
        Interval_Sec    1
-       DB              C:\\fluent-bit\\winlog.db
+       DB              C:\fluent-bit\winlog.db
 
    [OUTPUT]
-       Name            elasticsearch
+       Name            es
        Match           *
        Host            elasticsearch-master
        Port            9200
        Index           windows_logs
-       Type            _doc
+       Suppress_Type_Name On
+       tls             On
+       tls.verify      On
    ```
 
 3. **Container Log Collection:**
-   - containerd log path: `C:\ProgramData\containerd\root\containers`
+   - containerd log path: `C:\var\log\containers`
    - kubelet log path: `C:\k\logs` or Windows Event Log
 
 **2. Monitoring Configuration:**
@@ -1039,21 +938,43 @@ Group Managed Service Accounts (gMSA) are a special type of Active Directory acc
          labels:
            app: windows-exporter
        spec:
+         os:
+           name: windows
          nodeSelector:
            kubernetes.io/os: windows
          containers:
          - name: windows-exporter
-           image: prometheuscommunity/windows-exporter:latest
+           image: ghcr.io/prometheus-community/windows-exporter:REPLACE_WITH_TESTED_RELEASE
            args:
-           - --collectors.enabled=cpu,memory,disk,net,service,os,system,container
+           - --collectors.enabled=cpu,memory,logical_disk,net,service,os,system,container
            ports:
            - containerPort: 9182
              name: metrics
              protocol: TCP
+         hostNetwork: true
+         securityContext:
+           windowsOptions:
+             hostProcess: true
+             runAsUserName: NT AUTHORITY\SYSTEM
    ```
 
 2. **Prometheus Scraping Configuration:**
    ```yaml
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: windows-exporter
+     namespace: monitoring
+     labels:
+       app: windows-exporter
+   spec:
+     selector:
+       app: windows-exporter
+     ports:
+     - name: metrics
+       port: 9182
+       targetPort: metrics
+   ---
    apiVersion: monitoring.coreos.com/v1
    kind: ServiceMonitor
    metadata:
@@ -1108,7 +1029,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 
 4. **Container Logs:**
    - **Linux**: Standard output/error redirected to files
-   - **Windows**: ETW or file-based logging, different path structure
+   - **Windows**: stdout/stderr use CRI logs too; ETW/file logs require an application/host collector
 
 5. **Resource Monitoring:**
    - **Linux**: Container resource usage monitoring through cgroups
@@ -1143,6 +1064,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 5. **Security Monitoring:**
    - Collect and analyze Windows security event logs
    - Monitor permission changes and login attempts
+Provide the monitoring namespace, Prometheus Operator/ServiceMonitor discovery configuration and a tested release tag. Restrict HostProcess PSS exceptions and port 9182 firewall sources. Confirm host log paths/channels per distribution; EKS records kubelet/kube-proxy in EKS Windows. The Elasticsearch example also requires trusted CA and authentication configuration.
 </details>
 
 5. Explain the storage options and volume mount configuration methods for Windows containers in Kubernetes.
@@ -1169,14 +1091,14 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 
 2. **hostPath:**
    - Direct access to Windows node's file system
-   - Must use Windows path format (escape backslashes)
+   - Escape backslashes only in double-quoted YAML strings; plain/single-quoted paths use single backslashes.
    - Data cannot be shared across nodes
 
    ```yaml
    volumes:
    - name: logs
      hostPath:
-       path: C:\\Logs
+       path: 'C:\Logs'
        type: DirectoryOrCreate
    ```
 
@@ -1248,7 +1170,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 
 3. **SMB/CIFS Volumes:**
    - Network file system suitable for Windows environments
-   - Requires FlexVolume or CSI driver
+   - Requires a Windows-compatible SMB CSI driver
    - Supports ReadWriteMany access across multiple pods
 
    ```yaml
@@ -1267,41 +1189,19 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    ```
 
 4. **iSCSI:**
-   - Requires iSCSI initiator configuration on Windows node
-   - Provides block storage access
-   - Suitable for high-performance requirements
-
-   ```yaml
-   # iSCSI PV example
-   apiVersion: v1
-   kind: PersistentVolume
-   metadata:
-     name: iscsi-windows-pv
-   spec:
-     capacity:
-       storage: 100Gi
-     accessModes:
-     - ReadWriteOnce
-     persistentVolumeReclaimPolicy: Retain
-     iscsi:
-       targetPortal: 192.168.1.10:3260
-       iqn: iqn.2000-01.com.example:storage.kube.sys1.xyz
-       lun: 0
-       fsType: ntfs
-       readOnly: false
-   ```
+   - Windows iSCSI capability does not imply support for the Kubernetes in-tree iscsi volume plugin. Use a storage vendor CSI driver that explicitly supports Windows filesystem volumes. Windows Pods do not support raw block volumeDevices.
 
 **3. Volume Mount Configuration for Windows Containers:**
 
 1. **Volume Mount Paths:**
    - Windows containers use Windows path format
    - Typically use paths within the `C:\` drive
-   - Backslashes in paths need escaping in YAML
+   - Escape backslashes only in double-quoted YAML strings; plain/single-quoted paths use single backslashes.
 
    ```yaml
    volumeMounts:
    - name: data
-     mountPath: C:\\data
+     mountPath: 'C:\data'
    ```
 
 2. **Read-Only Mounts:**
@@ -1311,7 +1211,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    ```yaml
    volumeMounts:
    - name: config
-     mountPath: C:\\config
+     mountPath: 'C:\config'
      readOnly: true
    ```
 
@@ -1322,7 +1222,7 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    ```yaml
    volumeMounts:
    - name: shared-data
-     mountPath: C:\\app\\logs
+     mountPath: 'C:\app\logs'
      subPath: logs
    ```
 
@@ -1335,18 +1235,20 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    metadata:
      name: windows-web-app
    spec:
+     os:
+       name: windows
      nodeSelector:
        kubernetes.io/os: windows
      containers:
      - name: web
-       image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+       image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
        volumeMounts:
        - name: website
-         mountPath: C:\\inetpub\\wwwroot
+         mountPath: 'C:\inetpub\wwwroot'
        - name: logs
-         mountPath: C:\\inetpub\\logs
+         mountPath: 'C:\inetpub\logs'
        - name: config
-         mountPath: C:\\config
+         mountPath: 'C:\config'
          readOnly: true
      volumes:
      - name: website
@@ -1364,26 +1266,27 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
    apiVersion: v1
    kind: Pod
    metadata:
-     name: windows-sql
+     name: linux-sql-for-windows-apps
    spec:
      nodeSelector:
-       kubernetes.io/os: windows
+       kubernetes.io/os: linux
+       kubernetes.io/arch: amd64
      containers:
      - name: sql
-       image: mcr.microsoft.com/mssql/server:2019-latest
+       image: mcr.microsoft.com/mssql/server:2022-latest
        env:
        - name: ACCEPT_EULA
          value: "Y"
-       - name: SA_PASSWORD
+       - name: MSSQL_SA_PASSWORD
          valueFrom:
            secretKeyRef:
              name: sql-credentials
              key: sa-password
        volumeMounts:
        - name: data
-         mountPath: C:\\var\\opt\\mssql\\data
+         mountPath: /var/opt/mssql/data
        - name: backup
-         mountPath: C:\\var\\opt\\mssql\\backup
+         mountPath: /var/opt/mssql/backup
      volumes:
      - name: data
        persistentVolumeClaim:
@@ -1391,12 +1294,14 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
      - name: backup
        persistentVolumeClaim:
          claimName: sql-backup-pvc
+     os:
+       name: linux
    ```
 
 **5. Considerations When Using Windows Container Storage:**
 
 1. **Path Separators:**
-   - Windows uses backslashes (`\`) but escaping is needed in YAML
+   - Escape backslashes only in double-quoted YAML strings; plain/single-quoted paths use single backslashes.
    - Alternatively, forward slashes (`/`) can be used but verify application compatibility
 
 2. **File Permissions:**
@@ -1415,13 +1320,15 @@ Test-NetConnection -ComputerName api.kubernetes.cluster -Port 443
 5. **Backup and Recovery:**
    - Consider Windows Volume Shadow Copy Service (VSS) integration
    - Implement application-consistent backup mechanisms
+The SQL Server container image runs on Linux; Windows applications connect over the network. Prepare Linux-compatible PVCs, SQL process write permissions and the existing sql-credentials Secret.
+Create the example StorageClasses first. A Windows EBS class needs NTFS and WaitForFirstConsumer; the name alone does not install a driver or class.
 </details>
 
 ## Hands-on Questions
 
 1. Write a Deployment manifest that meets the following requirements for a mixed Windows and Linux node Kubernetes cluster:
    - Application name: web-app
-   - Windows container image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+   - Windows container image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
    - Replicas: 2
    - Port: 80
    - Environment variable: WEBSITE_NAME=MyWindowsApp
@@ -1449,11 +1356,13 @@ spec:
       labels:
         app: web-app
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: iis
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         ports:
         - containerPort: 80
         env:
@@ -1461,7 +1370,7 @@ spec:
           value: "MyWindowsApp"
         volumeMounts:
         - name: config-volume
-          mountPath: C:\inetpub\wwwroot\web.config
+          mountPath: 'C:\inetpub\wwwroot\web.config'
           subPath: web.config
       volumes:
       - name: config-volume
@@ -1502,8 +1411,9 @@ spec:
    - Accessible through port 80
 
 **Notes**:
-- In Windows paths, backslashes (`\`) are treated as escape characters in YAML, so be careful. This example uses regular backslashes, but for more complex paths, double backslashes (`\\`) or forward slashes (`/`) can be used.
+- Escape backslashes only in double-quoted YAML strings; plain/single-quoted paths use single backslashes.
 - Windows containers may have higher resource requirements than Linux containers, so it's good practice to set appropriate resource requests and limits in production environments.
+Setting WEBSITE_NAME alone does not rename an IIS site. Provide the web.config key in the existing web-config ConfigMap; subPath mounts do not update automatically.
 </details>
 
 2. Write DaemonSet manifests for deploying monitoring agents that run on both Windows and Linux nodes. Each OS should use appropriate images and configurations.
@@ -1514,7 +1424,6 @@ spec:
 **Answer:**
 
 ```yaml
-# DaemonSet for Linux nodes
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -1569,8 +1478,10 @@ spec:
       - name: root
         hostPath:
           path: /
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
 ---
-# DaemonSet for Windows nodes
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -1590,18 +1501,24 @@ spec:
         app: monitoring-agent
         os: windows
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: agent
-        image: prometheuscommunity/windows-exporter:latest
+        image: ghcr.io/prometheus-community/windows-exporter:REPLACE_WITH_TESTED_RELEASE
         ports:
         - containerPort: 9182
           name: metrics
         args:
-        - --collectors.enabled=cpu,memory,disk,net,service,os,system,container
+        - --collectors.enabled=cpu,memory,logical_disk,net,service,os,system,container
+      hostNetwork: true
+      securityContext:
+        windowsOptions:
+          hostProcess: true
+          runAsUserName: NT AUTHORITY\SYSTEM
 ---
-# Service for monitoring agents
 apiVersion: v1
 kind: Service
 metadata:
@@ -1612,13 +1529,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: linux-metrics
+  - name: metrics
     port: 9100
-    targetPort: 9100
-    protocol: TCP
-  - name: windows-metrics
-    port: 9182
-    targetPort: 9182
+    targetPort: metrics
     protocol: TCP
   selector:
     app: monitoring-agent
@@ -1640,7 +1553,7 @@ spec:
 
 3. **Common Service**:
    - Creates service selecting pods from both DaemonSets
-   - Exposes both Linux and Windows metrics ports
+   - Uses named targetPort metrics to resolve Linux port 9100 and Windows port 9182 per endpoint
    - Prometheus can scrape metrics through this service
 
 **Notes**:
@@ -1648,6 +1561,7 @@ spec:
 - Since metric collection methods differ between Linux and Windows nodes, they are separated into different DaemonSets.
 - Using labels to distinguish OS types is useful for filtering and visualizing metrics in the monitoring system.
 - In production environments, additional configuration of resource requests and limits, security contexts, service accounts, etc. is needed.
+Create the monitoring namespace and replace the exporter tag with a tested release. HostProcess runs with host privileges; scope its PSS exception and port 9182 firewall access to Prometheus sources. Prometheus must discover/scrape each Service endpoint to collect every node.
 </details>
 
 3. Write a pod manifest for deploying a .NET application that uses Active Directory authentication in a Windows container. Group Managed Service Accounts (gMSA) must be used.
@@ -1658,17 +1572,6 @@ spec:
 **Answer:**
 
 ```yaml
-# Secret for gMSA credential spec
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gmsa-credential-spec
-  namespace: default
-type: Opaque
-data:
-  credspec.json: BASE64_ENCODED_CREDENTIAL_SPEC_HERE
----
-# Windows pod using gMSA
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1676,11 +1579,13 @@ metadata:
   labels:
     app: ad-auth-app
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   securityContext:
     windowsOptions:
-      gmsaCredentialSpecName: gmsa-credential-spec
+      gmsaCredentialSpecName: gmsa-cred-spec
   containers:
   - name: dotnet-app
     image: myregistry/ad-auth-app:latest
@@ -1688,47 +1593,35 @@ spec:
     - containerPort: 80
     env:
     - name: ASPNETCORE_ENVIRONMENT
-      value: "Production"
+      value: Production
     volumeMounts:
     - name: app-config
       mountPath: C:\app\appsettings.json
       subPath: appsettings.json
     resources:
       requests:
-        memory: "2Gi"
-        cpu: "500m"
+        memory: 2Gi
+        cpu: 500m
       limits:
-        memory: "4Gi"
-        cpu: "1000m"
+        memory: 4Gi
+        cpu: 1000m
   volumes:
   - name: app-config
     configMap:
       name: ad-auth-app-config
+  serviceAccountName: windows-app
 ---
-# ConfigMap for application configuration
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ad-auth-app-config
 data:
-  appsettings.json: |
-    {
-      "Logging": {
-        "LogLevel": {
-          "Default": "Information",
-          "Microsoft": "Warning"
-        }
-      },
-      "ConnectionStrings": {
-        "DefaultConnection": "Server=sql-server;Database=AppDB;Integrated Security=True;"
-      },
-      "ActiveDirectory": {
-        "Domain": "example.com",
-        "UseWindowsAuthentication": true
-      }
-    }
+  appsettings.json: "{\n  \"Logging\": {\n    \"LogLevel\": {\n      \"Default\":\
+    \ \"Information\",\n      \"Microsoft\": \"Warning\"\n    }\n  },\n  \"ConnectionStrings\"\
+    : {\n    \"DefaultConnection\": \"Server=sql-server;Database=AppDB;Integrated\
+    \ Security=True;\"\n  },\n  \"ActiveDirectory\": {\n    \"Domain\": \"example.com\"\
+    ,\n    \"UseWindowsAuthentication\": true\n  }\n}\n"
 ---
-# Service definition
 apiVersion: v1
 kind: Service
 metadata:
@@ -1744,9 +1637,9 @@ spec:
 
 **Explanation:**
 
-1. **gMSA Credential Spec Secret**:
-   - Active Directory gMSA credential spec is Base64 encoded and stored as a secret
-   - This secret is used by pods for domain authentication
+1. **gMSACredentialSpec and authorization**:
+   - The prerequisite GMSACredentialSpec contains generated credential metadata, not the password
+   - The webhook expands the named spec after checking the ServiceAccount use permission
 
 2. **Windows Pod Configuration**:
    - Uses `nodeSelector` to schedule to Windows nodes
@@ -1764,38 +1657,7 @@ spec:
 
 **Prerequisites for gMSA Setup:**
 
-1. **Active Directory Domain Controller Setup:**
-   ```powershell
-   # Create KDS root key (run on domain controller)
-   Add-KdsRootKey -EffectiveTime (Get-Date).AddHours(-10)
-
-   # Create gMSA account
-   New-ADServiceAccount -Name "k8s-gmsa" -DnsHostName "k8s-gmsa.example.com" -ServicePrincipalNames "host/k8s-gmsa", "host/k8s-gmsa.example.com" -PrincipalsAllowedToRetrieveManagedPassword "Domain Computers"
-   ```
-
-2. **Create Credential Spec:**
-   ```powershell
-   # Run on Windows node
-   Import-Module ActiveDirectory
-   $CredSpec = New-CimInstance -Namespace root/Microsoft/Windows/CredentialSpecification -ClassName Win32_CredentialSpecification -Property @{Name = "k8s-gmsa"; ActiveDirectoryCredentialSpec = Get-CredentialSpec -Name k8s-gmsa -Json}
-
-   # Verify credential spec contents
-   Get-CredentialSpec -Name k8s-gmsa -Json
-   ```
-
-3. **Convert Credential Spec to Kubernetes Secret:**
-   ```bash
-   # Base64 encode credential spec JSON
-   cat credspec.json | base64 -w 0
-
-   # Add encoded value to secret YAML
-   ```
-
-**Notes**:
-- Windows nodes must be joined to the Active Directory domain.
-- containerd or Docker must be configured to support gMSA.
-- In real environments, credential spec contents must be managed securely.
-- The application must be configured to correctly use Windows authentication.
+First create the chapter’s `gmsa-cred-spec` resource, `windows-app` ServiceAccount and resource-name-scoped use RBAC grant. The CRD and both webhooks are required. Build and validate the custom application image and configuration for Windows Server 2022. gMSA supplies network credentials; the application must also use Windows authentication. ConfigMap subPath mounts do not update automatically; recreate the Pod after configuration changes.
 </details>
 
 4. Write NetworkPolicy manifests that meet the following requirements in a cluster with mixed Windows and Linux nodes:
@@ -1892,11 +1754,13 @@ spec:
       labels:
         app: windows-web
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: web
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         ports:
         - containerPort: 80
 ```
@@ -1931,6 +1795,7 @@ spec:
               name: mysql-secret
               key: password
 ```
+NetworkPolicy allows are additive; another policy can grant additional access. A policy does not create an external LoadBalancer/Ingress. Applications using DNS also need UDP/TCP 53 egress to cluster DNS. The database example below is nonpersistent teaching material; a real service needs persistent storage and backups.
 </details>
 
 5. Write a Deployment manifest for a .NET Framework application running on Windows nodes. The application requires a connection string as an environment variable to access Azure Blob Storage. Also configure a persistent volume for logs.
@@ -1941,29 +1806,18 @@ spec:
 **Answer:**
 
 ```yaml
-# Secret for Azure Storage connection string
-apiVersion: v1
-kind: Secret
-metadata:
-  name: azure-storage-secret
-type: Opaque
-data:
-  connection-string: QWNjb3VudE5hbWU9bXlzdG9yYWdlYWNjb3VudDtBY2NvdW50S2V5PW15YWNjb3VudGtleTtFbmRwb2ludFN1ZmZpeD1jb3JlLndpbmRvd3MubmV0
----
-# PersistentVolumeClaim for logs
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: windows-logs-pvc
 spec:
   accessModes:
-    - ReadWriteOnce
-  storageClassName: managed-premium  # Azure Disk storage class example
+  - ReadWriteMany
+  storageClassName: azurefile-csi
   resources:
     requests:
       storage: 10Gi
 ---
-# .NET Framework application Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1980,6 +1834,8 @@ spec:
       labels:
         app: dotnet-framework-app
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
@@ -1994,9 +1850,9 @@ spec:
               name: azure-storage-secret
               key: connection-string
         - name: LOG_LEVEL
-          value: "Information"
+          value: Information
         - name: ASPNET_ENVIRONMENT
-          value: "Production"
+          value: Production
         volumeMounts:
         - name: logs-volume
           mountPath: C:\app\logs
@@ -2005,11 +1861,11 @@ spec:
           subPath: web.config
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "500m"
+            memory: 2Gi
+            cpu: 500m
           limits:
-            memory: "4Gi"
-            cpu: "1000m"
+            memory: 4Gi
+            cpu: 1000m
         readinessProbe:
           httpGet:
             path: /health
@@ -2030,32 +1886,21 @@ spec:
         configMap:
           name: dotnet-app-config
 ---
-# ConfigMap for application configuration
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: dotnet-app-config
 data:
-  web.config: |
-    <?xml version="1.0" encoding="utf-8"?>
-    <configuration>
-      <system.web>
-        <compilation debug="false" targetFramework="4.8" />
-        <httpRuntime targetFramework="4.8" />
-      </system.web>
-      <system.webServer>
-        <handlers>
-          <remove name="ExtensionlessUrlHandler-Integrated-4.0" />
-          <add name="ExtensionlessUrlHandler-Integrated-4.0" path="*." verb="*" type="System.Web.Handlers.TransferRequestHandler" preCondition="integratedMode,runtimeVersionv4.0" />
-        </handlers>
-      </system.webServer>
-      <appSettings>
-        <add key="BlobContainerName" value="appdata" />
-        <add key="LogDirectory" value="C:\app\logs" />
-      </appSettings>
-    </configuration>
+  web.config: "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<configuration>\n  <system.web>\n\
+    \    <compilation debug=\"false\" targetFramework=\"4.8\" />\n    <httpRuntime\
+    \ targetFramework=\"4.8\" />\n  </system.web>\n  <system.webServer>\n    <handlers>\n\
+    \      <remove name=\"ExtensionlessUrlHandler-Integrated-4.0\" />\n      <add\
+    \ name=\"ExtensionlessUrlHandler-Integrated-4.0\" path=\"*.\" verb=\"*\" type=\"\
+    System.Web.Handlers.TransferRequestHandler\" preCondition=\"integratedMode,runtimeVersionv4.0\"\
+    \ />\n    </handlers>\n  </system.webServer>\n  <appSettings>\n    <add key=\"\
+    BlobContainerName\" value=\"appdata\" />\n    <add key=\"LogDirectory\" value=\"\
+    C:\\app\\logs\" />\n  </appSettings>\n</configuration>\n"
 ---
-# Service definition
 apiVersion: v1
 kind: Service
 metadata:
@@ -2072,13 +1917,13 @@ spec:
 **Explanation:**
 
 1. **Secret Configuration**:
-   - Azure Storage connection string is Base64 encoded and stored as secret
+   - Create azure-storage-secret from a protected source or external secret manager before deployment; no sample account key is provided
    - Accessible securely from application as environment variable
 
 2. **PersistentVolumeClaim**:
    - Requests 10GB persistent storage for log files
-   - Uses Azure Disk storage class (adjust for your environment)
-   - Uses ReadWriteOnce access mode
+   - Uses a Windows-compatible Azure Files SMB CSI storage class
+   - Uses ReadWriteMany so replicas on different nodes can mount the share
 
 3. **Deployment Configuration**:
    - Uses `nodeSelector` to schedule only to Windows nodes
@@ -2101,11 +1946,12 @@ spec:
 - .NET Framework applications must use Windows Server Core based images.
 - In production environments, external access can be configured through ingress controllers or load balancers.
 - Sensitive information like Azure Storage connection strings should be integrated with external secret management systems like Azure Key Vault.
+Configure replicas to write distinct filenames or Pod-specific subdirectories. The application must consume the environment variables and implement /health. ConfigMap subPath mounts do not update automatically.
 </details>
 
 ## Advanced Topics
 
-1. What is the most important setting when configuring containerd as the container runtime for Windows nodes in Kubernetes?
+1. Which containerd 1.x setting selects the Windows Pod sandbox image?
    - A) sandbox_image setting
    - B) Log level and log path
    - C) Memory limits and CPU sharing
@@ -2117,36 +1963,10 @@ spec:
 **Answer: A) sandbox_image setting**
 
 **Explanation:**
-The most important setting when configuring containerd as the container runtime for Windows nodes in Kubernetes is the `sandbox_image` setting. This setting specifies the image to use as the pod infrastructure container (pause container) on Windows nodes.
 
-Why the `sandbox_image` setting is important for Windows nodes in containerd configuration:
+containerd 1.x uses `plugins."io.containerd.grpc.v1.cri".sandbox_image`. In containerd 2.x configuration v3, the setting is `plugins."io.containerd.cri.v1.images".pinned_images.sandbox`. Start from the installed runtime’s `containerd config default` and its Windows installation procedure; do not mix configuration-version tables.
 
-1. **Pod Networking**: The pause container sets up and maintains the network namespace for pods. Since Windows uses a different networking stack than Linux, a Windows-specific pause image is required.
-
-2. **OS Compatibility**: Linux pause images do not work on Windows nodes, and Windows pause images do not work on Linux nodes.
-
-3. **Version Compatibility**: You must select an appropriate pause image compatible with the Windows version (e.g., Windows Server 2019, Windows Server 2022).
-
-Example containerd configuration for Windows nodes:
-```toml
-[plugins."io.containerd.grpc.v1.cri".containerd]
-  default_runtime_name = "microsoft/windows"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."microsoft/windows"]
-  runtime_type = "io.containerd.runhcs.v1"
-
-[plugins."io.containerd.grpc.v1.cri"]
-  sandbox_image = "mcr.microsoft.com/oss/kubernetes/pause:3.6-windows-ltsc2019"
-```
-
-Commonly used Windows pause images:
-- Windows Server 2019 LTSC: `mcr.microsoft.com/oss/kubernetes/pause:3.6-windows-ltsc2019`
-- Windows Server 2022: `mcr.microsoft.com/oss/kubernetes/pause:3.6-windows-ltsc2022`
-
-Other options are also important, but `sandbox_image` is the most critical:
-- Log level and log path are useful for debugging but are not functionally essential.
-- Memory limits and CPU sharing are important for performance tuning but do not affect basic functionality.
-- Image pull policy and registry configuration are important for image management but do not affect basic operation of the container runtime.
+The sandbox image must support the host Windows build. A Linux-only pause image cannot run on Windows. CNI/HNS configures networking, and the sandbox maintains the Pod network lifetime. Registry/image-pull configuration, the runhcs runtime, CNI paths and logging are also operationally important. Use the distribution’s tested Windows sandbox image rather than copying an old 3.6 tag.
 </details>
 
 2. What is the main benefit of using Hyper-V isolation mode in Windows containers?
@@ -2179,21 +1999,7 @@ Main benefits of Hyper-V isolation mode:
    - Each container has its own Windows kernel instance.
    - This provides kernel-level isolation so that kernel issues in one container do not affect other containers or the host.
 
-To use Hyper-V isolation mode in Kubernetes, add the following annotation to the pod spec:
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: iis-hyper-v
-  annotations:
-    io.kubernetes.cri-containerd.isolation: "hyperv"
-spec:
-  nodeSelector:
-    kubernetes.io/os: windows
-  containers:
-  - name: iis
-    image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-```
+**Kubernetes does not support Hyper-V isolation, and no Pod annotation enables it.** This discussion is Windows OS background knowledge.
 
 Disadvantages of Hyper-V isolation mode:
 - Uses more resources (memory, CPU).
@@ -2239,7 +2045,7 @@ Pod networking characteristics on Windows nodes:
 
 Example - Flannel CNI configuration:
 ```yaml
-# Flannel ConfigMap for both Linux and Windows nodes
+# Linux-side Flannel ConfigMap; Windows uses separate HNS/CNI configuration.
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -2287,7 +2093,7 @@ $networkMode = "overlay"
 
 Issues with other options:
 - Windows nodes use CNI plugins and do not use only their own networking stack (A is incorrect).
-- Windows nodes do not support host network mode. `hostNetwork: true` does not work for Windows pods (C is incorrect).
+- Regular Windows Pods cannot use hostNetwork; HostProcess is the exception (C is incorrect).
 - Windows nodes support overlay networks (VXLAN, etc.) (D is incorrect).
 </details>
 
@@ -2309,17 +2115,17 @@ Resource management characteristics on Windows nodes:
 
 1. **Job Objects**:
    - Windows uses Job Objects to limit resource usage of process groups.
-   - Container runtimes (containerd or Docker) use the Job Objects API to apply CPU and memory limits.
+   - Container runtimes (Windows-compatible containerd) use the Job Objects API to apply CPU and memory limits.
    - Job Objects can limit CPU time, memory usage, work time, etc. for process groups.
 
 2. **CPU Limits**:
-   - CPU limits on Windows are implemented through a CPU sharing (weights) mechanism.
+   - CPU limits cap CPU time; do not confuse limits with relative CPU sharing weights.
    - This is similar to Linux CPU sharing but implemented differently.
    - Windows adjusts CPU sharing based on the number of CPU cores.
 
 3. **Memory Limits**:
-   - Memory limits for Windows containers are implemented through Job Objects' memory limiting feature.
-   - When containers exceed memory limits, OOM (Out of Memory) termination occurs.
+   - Windows container memory limits use Job Objects.
+   - Windows has no Linux OOM killer; exceeding available memory can cause allocation failures or paging and degraded performance.
    - Windows memory management works differently from Linux, so the actual behavior may differ even with the same memory limit value.
 
 4. **Resource Request and Limit Configuration**:
@@ -2347,7 +2153,7 @@ Considerations for resource management on Windows nodes:
 
 Issues with other options:
 - Windows nodes support resource limits (A is incorrect).
-- Windows nodes generally provide less accurate resource limits than Linux nodes (B is incorrect).
+- Neither OS universally provides more accurate resource limits; the mechanisms differ (B is incorrect).
 - Windows nodes use Job Objects, not cgroups (D is incorrect).
 </details>
 
@@ -2369,7 +2175,7 @@ Reasons why this option is inappropriate:
 
 1. **Privileged Mode Not Supported**:
    - Windows containers do not support the concept of privileged mode like Linux containers.
-   - Windows has a different security model from Linux and has no mechanism to grant host-level privileges to containers.
+   - Windows uses HostProcess for trusted host-level agents; it is distinct from the privileged flag.
 
 2. **Violates Principle of Least Privilege**:
    - Even if it were supported, enabling privileged mode for all pods violates the principle of least privilege.
@@ -2404,3 +2210,17 @@ Additional best practices for strengthening Windows node security:
 - Remove unnecessary tools and components from container images
 - Implement runtime security monitoring
 </details>
+
+## Verification References
+
+- https://kubernetes.io/docs/concepts/windows/intro/
+- https://kubernetes.io/docs/concepts/configuration/windows-resource-management/
+- https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#dns-windows
+- https://kubernetes.io/docs/tasks/configure-pod-container/configure-gmsa/
+- https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/
+- https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/manage-serviceaccounts
+- https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/gmsa-run-container
+- https://github.com/prometheus-community/windows_exporter/blob/master/kubernetes/windows-exporter-daemonset.yaml
+- https://github.com/fluent/fluent-bit-docs/blob/master/installation/downloads/windows.md
+- https://github.com/containerd/containerd/blob/main/docs/cri/config.md
+- https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker?view=sql-server-ver17&tabs=cli

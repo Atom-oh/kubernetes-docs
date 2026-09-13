@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Control Plane Components and Interactions",
+    "output": "en-core-09-cluster-administration-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Control Plane",
+        "focus": [
+          "apiserver",
+          "etcd",
+          "scheduler",
+          "controller-manager",
+          "cloud-controller-manager"
+        ],
+        "note": "etcd, the scheduler, and the controller managers communicate bidirectionally with the kube-apiserver; arrows show who initiates the call."
+      },
+      {
+        "id": "node",
+        "label": "Node Components",
+        "focus": [
+          "apiserver",
+          "kubelet",
+          "kube-proxy",
+          "runtime"
+        ],
+        "note": "The kubelet communicates bidirectionally with the kube-apiserver and manages kube-proxy and the container runtime."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "Exposes the Kubernetes API",
+      "pos": [
+        480,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "Key-value store",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "Schedules pods to nodes",
+      "pos": [
+        200,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "controller-manager",
+      "type": "backend",
+      "label": "kube-controller-manager",
+      "sublabel": "Runs controllers",
+      "pos": [
+        760,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cloud-controller-manager",
+      "type": "cloud",
+      "label": "cloud-controller-manager",
+      "sublabel": "Cloud provider integration",
+      "pos": [
+        920,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "Node agent",
+      "pos": [
+        480,
+        420
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kube-proxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "Network rules / connection forwarding",
+      "pos": [
+        240,
+        560
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Container Runtime",
+      "sublabel": "Docker / containerd / CRI-O",
+      "pos": [
+        700,
+        560
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "scheduler",
+        "controller-manager",
+        "cloud-controller-manager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Worker Node",
+      "wraps": [
+        "kubelet",
+        "kube-proxy",
+        "runtime"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-etcd",
+      "from": "apiserver",
+      "to": "etcd",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-scheduler",
+      "from": "scheduler",
+      "to": "apiserver"
+    },
+    {
+      "id": "api-controller-manager",
+      "from": "controller-manager",
+      "to": "apiserver"
+    },
+    {
+      "id": "api-cloud-controller-manager",
+      "from": "cloud-controller-manager",
+      "to": "apiserver"
+    },
+    {
+      "id": "api-kubelet",
+      "from": "kubelet",
+      "to": "apiserver",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kubelet-proxy",
+      "from": "kubelet",
+      "to": "kube-proxy"
+    },
+    {
+      "id": "kubelet-runtime",
+      "from": "kubelet",
+      "to": "runtime"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control Plane Components",
+      "items": [
+        "kube-apiserver: exposes the Kubernetes API",
+        "etcd: key-value store holding cluster data",
+        "kube-scheduler: schedules pods to nodes",
+        "kube-controller-manager: runs controllers",
+        "cloud-controller-manager: interacts with cloud providers"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Node Components",
+      "items": [
+        "kubelet: agent on each node that ensures pods and containers are running",
+        "kube-proxy: maintains network rules and handles connection forwarding",
+        "Container Runtime: runs containers (Docker, containerd, CRI-O, etc.)"
+      ]
+    }
+  ]
+}

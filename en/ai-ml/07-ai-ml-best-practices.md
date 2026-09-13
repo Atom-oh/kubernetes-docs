@@ -1,1919 +1,279 @@
 # AI/ML Best Practices on EKS
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 12, 2026
+> **Baselines**: inference-perf0.6.1 / SOCI0.15.0 / Karpenter1.14.1 / External Secrets2.10.0
 
-This guide covers comprehensive best practices for running AI/ML workloads on Amazon EKS, including benchmarking, container optimization, GPU selection, networking, storage, observability, cost optimization, and security.
+Evaluate improvements using latency, success rate, throughput, cost and recovery for the same workload. A GPU, snapshotter or sharing feature does not guarantee a fixed speedup or savings percentage.
 
-## Overview
+![Benchmarking, startup optimization, devices, networking/storage, observability, cost and security evaluated with measurements and recovery checks.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-0.png)
 
-Running AI/ML workloads efficiently on Kubernetes requires careful consideration across multiple dimensions:
-
-![A flowchart mapping eight AI/ML best-practice areas on EKS — benchmarking, container optimization, GPU selection, networking, storage, observability, cost optimization, and security — to four outcomes, showing that most practices converge on high performance while a smaller set drives resource efficiency, reliability, and cost savings.](../../assets/diagrams/rendered/en-ai-ml-07-ai-ml-best-practices-0.svg)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-07-ai-ml-best-practices-0.html)
 
 ## Benchmarking LLM Inference
 
-Benchmarking is essential for understanding the performance characteristics of your LLM inference service. Proper benchmarking helps you make informed decisions about scaling, resource allocation, and optimization.
+![Distinct measurement windows for first output, token intervals, end-to-end latency and aggregate throughput/goodput.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-1.png)
 
-### Key Performance Metrics
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-07-ai-ml-best-practices-1.html)
 
-Understanding the key metrics is crucial for evaluating LLM inference performance:
+| Metric | Definition and caveats |
+| --- | --- |
+| TTFT | Send-to-first **nonempty output** received; the first HTTP/SSE frame need not contain a token |
+| ITL | Inter-token/chunk intervals; a network chunk may contain multiple tokens |
+| TPOT | Tool-defined average after the first token; undefined for one or fewer output tokens |
+| E2E | Request-to-completion time; record queue, network and postprocessing boundaries |
+| Request throughput | Successful completed requests / specified measurement window |
+| Token throughput | Sum of output tokens in the window / time, not an unweighted mean of request TPS |
+| Goodput | Rate of requests satisfying success and latency SLO criteria |
 
-![A flowchart mapping five LLM inference metrics — time to first token, inter-token latency, tokens per second, end-to-end latency, and throughput — to the three user-experience outcomes they drive, with perceived responsiveness highlighted as the metric pair to optimize first.](../../assets/diagrams/rendered/en-ai-ml-07-ai-ml-best-practices-1.svg)
+With actual token timestamps, mean ITL is(last-first token time)/(tokens-1). Nonstreaming responses cannot measure actual TTFT/ITL. Specify tokenizer, empty/single-token output, failures and warmup exclusions.500ms/50ms are not universal SLOs.
 
-| Metric | Description | Formula | Target Range |
-|--------|-------------|---------|--------------|
-| **TTFT** | Time from request to first token generated | `t_first_token - t_request` | < 500ms for interactive apps |
-| **ITL** | Average time between consecutive tokens | `(t_last_token - t_first_token) / (n_tokens - 1)` | < 50ms for smooth streaming |
-| **TPS** | Tokens generated per second per request | `n_tokens / total_generation_time` | > 20 TPS for good UX |
-| **E2E Latency** | Total time from request to complete response | `t_complete - t_request` | Depends on output length |
-| **Throughput** | Requests processed per second | `total_requests / time_window` | Maximize within latency SLOs |
+### inference-perf and GenAI-Perf
 
-### Benchmarking Tools
+inference-perf is a Kubernetes SIGs/wg-serving benchmark tool. The inspected PyPI package is0.6.1, while its Git tag's pyproject still says0.5.0; this metadata discrepancy is recorded. The actual CLI uses --config_file or structured options such as --server.type, not the former benchmark --endpoint --prompt-length interface.
 
-#### inference-perf Tool
-
-The `inference-perf` tool from AI on EKS provides comprehensive benchmarking capabilities:
-
-```bash
-# Install inference-perf
-pip install inference-perf
-
-# Basic benchmark against vLLM endpoint
-inference-perf benchmark \
-  --endpoint http://vllm-service:8000/v1/completions \
-  --model meta-llama/Llama-3.1-8B-Instruct \
-  --num-requests 1000 \
-  --concurrency 10 \
-  --prompt-length 128 \
-  --max-tokens 256
-```
-
-Configuration for different test scenarios:
+This **internal mock** configuration does not call a model server. The actual0.6.1 CLI completed three requests with one worker. Mock token counts are zero and TTFT/TPOT are null, so these are not model-performance results.
 
 ```yaml
-# benchmark-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: inference-perf-config
+api:
+  type: chat
+  streaming: false
 data:
-  config.yaml: |
-    endpoint:
-      url: http://vllm-service:8000/v1/completions
-      model: meta-llama/Llama-3.1-8B-Instruct
-
-    scenarios:
-      baseline:
-        description: "Single request baseline"
-        concurrency: 1
-        num_requests: 100
-        prompt_length: 128
-        max_tokens: 256
-
-      saturation:
-        description: "Find maximum throughput"
-        concurrency: [1, 5, 10, 20, 50, 100]
-        num_requests: 500
-        prompt_length: 256
-        max_tokens: 512
-
-      production:
-        description: "Simulate production traffic"
-        concurrency: 20
-        num_requests: 10000
-        prompt_distribution: "zipf"
-        prompt_length_range: [64, 2048]
-        max_tokens_range: [128, 1024]
-
-      real_dataset:
-        description: "Use real conversation data"
-        dataset: "ShareGPT"
-        num_requests: 5000
-        concurrency: 15
+  type: mock
+load:
+  type: concurrent
+  stages:
+    - concurrency_level: 1
+      num_requests: 3
+  num_workers: 1
+  worker_max_concurrency: 1
+  base_seed: 17
+server:
+  type: mock
+  base_url: http://127.0.0.1:8000
+report:
+  request_lifecycle:
+    summary: true
+    per_stage: true
+    per_request: true
+storage:
+  local_storage:
+    path: ./benchmark-fixture-results
 ```
-
-#### NVIDIA GenAI-Perf Tool
-
-For detailed GPU-level metrics, use NVIDIA's GenAI-Perf:
 
 ```bash
-# Install GenAI-Perf (part of Triton Inference Server)
-pip install genai-perf
-
-# Run benchmark with detailed GPU metrics
-genai-perf profile \
-  --model llama-3-8b \
-  --backend vllm \
-  --endpoint localhost:8000 \
-  --concurrency 10 \
-  --request-count 1000 \
-  --streaming \
-  --output-format json \
-  --profile-export-file results.json
+inference-perf --config_file benchmark-fixture.yaml
 ```
 
-### Test Scenarios
+Before switching to a real endpoint, verify server/API types, model aliases, streaming, tokenizer and authentication. Configuration may contain secret headers and merged configuration is logged, so validate credential delivery/redaction. Preserve output files, raw requests/responses and failures, respecting dataset privacy and usage permissions.
 
-| Scenario | Purpose | Configuration | Key Metrics to Watch |
-|----------|---------|---------------|----------------------|
-| **Baseline** | Establish single-request performance | Concurrency=1, 100 requests | TTFT, ITL, E2E latency |
-| **Saturation** | Find throughput limits | Increasing concurrency until latency degrades | Throughput vs latency curve |
-| **Production Simulation** | Validate real-world performance | Variable prompts, realistic concurrency | P50/P95/P99 latencies |
-| **Real Dataset** | Test with actual conversation patterns | ShareGPT or domain-specific data | Token distribution analysis |
-| **Long Context** | Test context window handling | 4K-128K token prompts | Memory usage, TTFT scaling |
-| **Burst Traffic** | Test autoscaling response | Spike from 10 to 100 concurrency | Scale-up time, error rate |
+Constant/Poisson rate measures arrivals per second; concurrent load controls concurrency. Equal numeric settings are not equivalent. Test a single-request baseline, bounded load ramps, bursts and realistic distributions. A saturation curve alone does not prove a CPU/GPU/memory bottleneck; inspect profiling, queues, networking and client capacity.
 
-### Kubernetes Job for Benchmarking
-
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: llm-benchmark
-  namespace: ai-ml
-spec:
-  template:
-    spec:
-      containers:
-      - name: benchmark
-        image: public.ecr.aws/ai-on-eks/inference-perf:latest
-        command:
-        - inference-perf
-        - benchmark
-        - --config
-        - /config/benchmark-config.yaml
-        - --output
-        - /results/benchmark-results.json
-        volumeMounts:
-        - name: config
-          mountPath: /config
-        - name: results
-          mountPath: /results
-        resources:
-          requests:
-            cpu: "2"
-            memory: 4Gi
-          limits:
-            cpu: "4"
-            memory: 8Gi
-      volumes:
-      - name: config
-        configMap:
-          name: inference-perf-config
-      - name: results
-        persistentVolumeClaim:
-          claimName: benchmark-results-pvc
-      restartPolicy: Never
-  backoffLimit: 3
-```
-
-### Interpreting Results
-
-```bash
-# Sample benchmark output analysis
-{
-  "summary": {
-    "total_requests": 1000,
-    "successful_requests": 998,
-    "failed_requests": 2,
-    "total_duration_sec": 120.5,
-    "requests_per_second": 8.3
-  },
-  "latency": {
-    "ttft_ms": {
-      "p50": 245,
-      "p95": 512,
-      "p99": 890,
-      "mean": 298
-    },
-    "itl_ms": {
-      "p50": 32,
-      "p95": 48,
-      "p99": 72,
-      "mean": 35
-    },
-    "e2e_ms": {
-      "p50": 2450,
-      "p95": 4200,
-      "p99": 6800,
-      "mean": 2780
-    }
-  },
-  "throughput": {
-    "tokens_per_second": 1245,
-    "tokens_per_request_mean": 150
-  }
-}
-```
-
-**Performance Guidelines**:
-- TTFT P95 > 1s: Consider prefill optimization or batch size tuning
-- ITL P95 > 100ms: Check GPU memory pressure, consider smaller batch sizes
-- Throughput dropping at higher concurrency: GPU memory or compute bound
-- High variance in latencies: Check for noisy neighbors or thermal throttling
+Use GenAI-Perf0.0.16's audited [profile/endpoint/service/token options](04-inference-frameworks.md), not invented --backend vllm combinations. GPU metrics need separate collection; check load-generator CPU/network limits. Benchmark Jobs need verified images, configuration keys, PVCs, deadlines and retry semantics that account for duplicate load.
 
 ## Container Startup Optimization
 
-AI/ML containers face unique cold start challenges due to large image sizes and model loading requirements.
+![Measure Pod placement, image fetch/unpack, container startup, model loading and readiness separately.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-2.png)
 
-### Cold Start Timeline Analysis
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-07-ai-ml-best-practices-2.html)
 
-![Sequence diagram showing why a large AI/ML pod takes 5 to 15 minutes to become ready: the scheduler places the pod, the kubelet pulls a 10 to 50 GB image over 2 to 10 minutes, the container is created, and the application spends 1 to 5 minutes loading model weights into GPU memory before passing its health check.](../../assets/diagrams/rendered/en-ai-ml-07-ai-ml-best-practices-2.svg)
+Measure image transfer, unpacking, model download/loading and readiness separately. Unsourced“always5–15minutes” and“80–95%savings” tables were removed.45GB/1Gbps≈360seconds is only idealized transfer arithmetic, excluding compressed size, protocol, disk and concurrency overhead—not a measured pull time.
 
-### Image Size Breakdown
+External model artifacts may reduce image changes/pulls but add download and cache-management costs. Prepared images can be appropriate in some environments. Initialization must propagate failures and verify revision, checksums and completion. The former S3 sync followed by a successful echo could mask download failure and was removed.
 
-Typical AI/ML container image composition:
+Multi-stage builds must align Python interpreter/ABI and CUDA/runtime libraries, including executables/shared libraries. Do not assume Ubuntu22.04 python3.11 and pip3 use the same interpreter or copy only site-packages. Use supported distribution packages/wheels and test imports/entrypoints inside the image. Prefer read-only root filesystems with explicit writable cache/tmp/model mounts.
 
-| Component | Size Range | Optimization Potential |
-|-----------|------------|------------------------|
-| Base OS (Ubuntu/Debian) | 100-500MB | Use slim/distroless |
-| CUDA Runtime | 2-4GB | Use runtime-only images |
-| Python + Dependencies | 1-3GB | Multi-stage builds |
-| ML Framework (PyTorch/TensorFlow) | 2-5GB | Use optimized builds |
-| Model Weights | 5-100GB+ | Decouple from image |
-| **Total** | **10-115GB** | **Target: 5-10GB** |
+### SOCI0.15
 
-### Strategy 1: Decouple Model Artifacts
+SOCI supports lazy image loading, but benefits may shrink when startup immediately reads all weights/libraries. Having an index does not configure CRI to use the SOCI snapshotter. Verify containerd/CRI integration, image/index digests and registry compatibility. The unverified privileged DaemonSet exposing host containerd sockets was removed.
 
-Separate model weights from the container image:
-
-```yaml
-# Pod with model loaded from S3 at startup
-apiVersion: v1
-kind: Pod
-metadata:
-  name: llm-inference
-spec:
-  initContainers:
-  # Download model from S3 before main container starts
-  - name: model-downloader
-    image: amazon/aws-cli:latest
-    command:
-    - sh
-    - -c
-    - |
-      aws s3 sync s3://models-bucket/llama-3-8b /models/llama-3-8b \
-        --only-show-errors
-      echo "Model download complete"
-    volumeMounts:
-    - name: model-storage
-      mountPath: /models
-    env:
-    - name: AWS_REGION
-      value: us-west-2
-    resources:
-      requests:
-        cpu: "2"
-        memory: 4Gi
-
-  containers:
-  - name: vllm
-    image: vllm/vllm-openai:v0.6.0  # Slim image without models
-    args:
-    - --model
-    - /models/llama-3-8b
-    - --tensor-parallel-size
-    - "1"
-    volumeMounts:
-    - name: model-storage
-      mountPath: /models
-    resources:
-      limits:
-        nvidia.com/gpu: 1
-
-  volumes:
-  - name: model-storage
-    emptyDir:
-      sizeLimit: 50Gi
-
-  # Use EFS for shared model caching across nodes
-  # - name: model-storage
-  #   persistentVolumeClaim:
-  #     claimName: models-efs-pvc
-```
-
-### Strategy 2: Multi-Stage Builds
-
-Optimize Dockerfile for minimal runtime image:
-
-```dockerfile
-# Build stage - includes all build dependencies
-FROM nvidia/cuda:12.4.0-devel-ubuntu22.04 AS builder
-
-RUN apt-get update && apt-get install -y \
-    python3.11 python3.11-dev python3-pip git \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /build
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir --target=/install \
-    -r requirements.txt
-
-# Runtime stage - minimal dependencies only
-FROM nvidia/cuda:12.4.0-runtime-ubuntu22.04 AS runtime
-
-# Install only runtime Python (no dev packages)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.11 python3.11-distutils \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/python3.11 /usr/bin/python
-
-# Copy installed packages from builder
-COPY --from=builder /install /usr/local/lib/python3.11/dist-packages
-
-# Copy application code only
-COPY src/ /app/
-WORKDIR /app
-
-# Non-root user for security
-RUN useradd -m -u 1000 appuser
-USER appuser
-
-ENTRYPOINT ["python", "serve.py"]
-```
-
-Image size comparison:
-
-| Approach | Image Size | Pull Time (1Gbps) |
-|----------|------------|-------------------|
-| Naive (everything in one image) | 45GB | ~6 minutes |
-| Multi-stage build | 12GB | ~1.5 minutes |
-| Multi-stage + external models | 5GB | ~40 seconds |
-
-### Strategy 3: containerd Snapshotter
-
-Use SOCI (Seekable OCI) snapshotter for lazy pulling:
-
-```yaml
-# Install SOCI snapshotter on EKS nodes
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: soci-snapshotter-installer
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      app: soci-snapshotter
-  template:
-    metadata:
-      labels:
-        app: soci-snapshotter
-    spec:
-      hostPID: true
-      hostNetwork: true
-      containers:
-      - name: installer
-        image: public.ecr.aws/soci-workshop/soci-snapshotter:latest
-        securityContext:
-          privileged: true
-        volumeMounts:
-        - name: containerd-config
-          mountPath: /etc/containerd
-        - name: containerd-socket
-          mountPath: /run/containerd
-      volumes:
-      - name: containerd-config
-        hostPath:
-          path: /etc/containerd
-      - name: containerd-socket
-        hostPath:
-          path: /run/containerd
-```
-
-Generate SOCI index for your images:
+Version0.15 create/push take positional image references, not --ref. Current getting-started uses convert to create SOCI-enabled images. Standalone mode processes local OCI layouts without containerd or sudo.
 
 ```bash
-# Create SOCI index for faster lazy loading
-soci create \
-  --ref public.ecr.aws/myrepo/vllm:latest \
-  --platform linux/amd64
-
-# Push the index to ECR
-soci push \
-  --ref public.ecr.aws/myrepo/vllm:latest
+soci convert --standalone --format oci-dir input-oci-layout output-soci-layout
 ```
 
-### Strategy 4: Image Prefetching on Bottlerocket
+Inputs must be OCI layouts, not ordinary docker-save tarballs. Conversion may fail if every layer is smaller than min-layer-size. This audit converted one synthetic layer with explicit min-layer-size=0 and verified eight blob digests. No container startup benchmark was run. Preserve the converted image/index together when publishing.
 
-Configure Bottlerocket for image prefetching:
+### Bottlerocket Bootstrap
 
-```toml
-# bottlerocket-settings.toml
-[settings.container-registry]
-# Pre-pull images on node startup
-[settings.container-registry.credentials]
-[settings.container-registry.credentials."public.ecr.aws"]
+In1.64, `bootstrap-containers.<name>.user-data` is **base64 data**, consumed as a file by the bootstrap container. Plain shell text in settings is not automatically executed. The source image must be real and correctly use host image stores/namespaces. A static images-prefetched=true label is not evidence of success.
 
-# Configure image pre-caching
-[settings.kubernetes]
-# Allow privileged containers for GPU workloads
-allowed-unsafe-sysctls = ["net.core.*"]
+mode=once becomes off after execution. Failure of essential=true stops boot; false permits failure, so align the setting with readiness needs. allowed-unsafe-sysctls is not a privileged-container switch. Include prefetch's effect on node preparation time in measurements.
 
-[settings.bootstrap-containers.prefetch-images]
-source = "public.ecr.aws/bottlerocket/bottlerocket-bootstrap-prefetch:latest"
-mode = "once"
-essential = false
-user-data = """
-#!/bin/bash
-# Pre-fetch AI/ML images during node bootstrap
-ctr images pull public.ecr.aws/myrepo/vllm:v0.6.0
-ctr images pull public.ecr.aws/nvidia/cuda:12.4.0-runtime-ubuntu22.04
-"""
-```
+## GPU, Neuron and Storage Selection
 
-Karpenter NodePool with prefetching:
+Parameters×bytes is only the weight lower bound. Include architecture-aware KV cache, activations, workspace, communication buffers, fragmentation and sharding constraints.13B FP16 weights≈26GB do not fit24GB;70B FP16≈140GB exceeds four24GB GPUs combined. More host CPUs do not enlarge unchanged GPU VRAM.
 
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-inference
-spec:
-  template:
-    spec:
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-bottlerocket
-      requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values: ["g5.xlarge", "g5.2xlarge", "g5.4xlarge"]
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values: ["on-demand", "spot"]
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: gpu-bottlerocket
-spec:
-  amiSelectorTerms:
-  - alias: bottlerocket@latest
+Distinguish p4d.24xlarge8×40GB from p4de8×80GB A100s. G5g uses Arm/T4G; verify image/kernel architecture. See the [audited Inf2 table](04-inference-frameworks.md) for inf2.48xlarge192vCPUs/768GiB host RAM,12chips/24NeuronCores/384GiB HBM. A family name such as P5 does not fix GPU counts across every size. Recheck available generations, regions, quotas and prices when choosing.
 
-  # Custom user data for image prefetching
-  userData: |
-    [settings.bootstrap-containers.prefetch]
-    source = "public.ecr.aws/myrepo/image-prefetcher:latest"
-    mode = "once"
-    essential = false
+LoRA reduces trainable adapter state but retains base weights/activations and differs from QLoRA. Do not use a function that assumes most LoRA models fit24GB. Measure peak memory, latency, throughput and restarts.
 
-    [settings.kubernetes.node-labels]
-    "ai-ml/images-prefetched" = "true"
-```
+Do not select storage solely by a10TB dataset cutoff. Compare access patterns, concurrency, metadata, latency, semantics, durability and cost. Current general gp3 documentation lists baseline3000IOPS/125MiB/s and maximum80000IOPS/2000MiB/s, subject to size/IOPS/instance constraints; Outposts differs. Historical16000IOPS/1GB/s limits are not universally current.
 
-### Cold Start Optimization Summary
+Use the [infrastructure guide](06-ai-infrastructure.md) for EFS Elastic throughput, FSx/CSI/S3 associations and Mountpoint POSIX limits. S3 has neither infinite throughput nor fixed latency; EFS is not universally slower than FSx. Instance store/tmpfs are ephemeral. GPU KV cache normally resides in GPU memory, not automatically in SSD/tmpfs.
 
-| Technique | Startup Reduction | Implementation Effort |
-|-----------|-------------------|----------------------|
-| Model decoupling | 50-70% | Medium |
-| Multi-stage builds | 30-50% | Low |
-| SOCI snapshotter | 60-80% | Medium |
-| Image prefetching | 70-90% | Low |
-| Combined approach | 80-95% | High |
+### Model Cache Verification
 
-## GPU Instance Selection Guide
+A config.json file does not prove weights finished downloading. Verify **all files** against a trusted release manifest/revision before exposing immutable read-only storage. Prevent concurrent downloader races and partially written files.
 
-Choosing the right GPU instance type is critical for cost-effective AI/ML workloads.
-
-### GPU Instance Comparison
-
-| Instance Family | GPU Type | GPU Memory | GPUs | vCPU | Memory | Network | Use Cases | Cost Tier |
-|-----------------|----------|------------|------|------|--------|---------|-----------|-----------|
-| **G5** | NVIDIA A10G | 24GB | 1-8 | 4-192 | 16-768GB | Up to 100 Gbps | Inference, fine-tuning | $$ |
-| **G5g** | NVIDIA T4G | 16GB | 1-2 | 4-64 | 8-256GB | Up to 25 Gbps | Cost-efficient inference | $ |
-| **G6** | NVIDIA L4 | 24GB | 1-8 | 4-192 | 16-768GB | Up to 100 Gbps | Inference, video | $$ |
-| **G6e** | NVIDIA L40S | 48GB | 1-8 | 8-384 | 32-1536GB | Up to 100 Gbps | Large model inference | $$$ |
-| **P4d** | NVIDIA A100 | 40GB | 8 | 96 | 1152GB | 400 Gbps EFA | Large-scale training | $$$$ |
-| **P4de** | NVIDIA A100 | 80GB | 8 | 96 | 1152GB | 400 Gbps EFA | LLM training | $$$$ |
-| **P5** | NVIDIA H100 | 80GB | 8 | 192 | 2048GB | 3200 Gbps EFA | Frontier model training | $$$$$ |
-| **P5e** | NVIDIA H200 | 141GB | 8 | 192 | 2048GB | 3200 Gbps EFA | Largest models | $$$$$ |
-| **Trn1** | AWS Trainium | 32GB | 1-16 | 8-128 | 32-512GB | Up to 800 Gbps | Training (optimized) | $$$ |
-| **Inf2** | AWS Inferentia2 | 32GB | 1-12 | 4-96 | 16-384GB | Up to 100 Gbps | Inference (optimized) | $$ |
-
-### Workload-Based Selection Guide
-
-```yaml
-# Workload requirements to instance mapping
-workload_selection:
-
-  small_model_inference:  # Models < 7B parameters
-    recommended:
-      - g5.xlarge       # 1x A10G, cost-effective
-      - g6.xlarge       # 1x L4, newer generation
-      - inf2.xlarge     # 1x Inferentia2, best price/perf
-    requirements:
-      gpu_memory: "8-16GB"
-      throughput: "10-50 req/s"
-      latency: "< 500ms P95"
-
-  medium_model_inference:  # Models 7B-30B parameters
-    recommended:
-      - g5.4xlarge      # 1x A10G 24GB
-      - g6e.2xlarge     # 1x L40S 48GB
-      - inf2.8xlarge    # 1x Inferentia2
-    requirements:
-      gpu_memory: "24-48GB"
-      throughput: "5-20 req/s"
-      latency: "< 1s P95"
-
-  large_model_inference:  # Models 30B-70B parameters
-    recommended:
-      - g5.12xlarge     # 4x A10G (tensor parallel)
-      - g6e.12xlarge    # 4x L40S
-      - p4d.24xlarge    # 8x A100 (for 70B+)
-    requirements:
-      gpu_memory: "80-320GB"
-      throughput: "1-10 req/s"
-      latency: "< 3s P95"
-
-  distributed_training:  # Multi-node training
-    recommended:
-      - p4d.24xlarge    # 8x A100, EFA
-      - p5.48xlarge     # 8x H100, EFA
-      - trn1.32xlarge   # 16x Trainium
-    requirements:
-      interconnect: "EFA required"
-      gpu_memory: "320GB+ per node"
-      scaling: "2-64+ nodes"
-
-  fine_tuning:  # LoRA, QLoRA, full fine-tuning
-    recommended:
-      - g5.4xlarge      # Small models, LoRA
-      - g5.12xlarge     # Medium models
-      - p4d.24xlarge    # Large models, full fine-tune
-    requirements:
-      gpu_memory: "24-640GB"
-      training_time: "hours to days"
-```
-
-### Instance Selection Decision Tree
+This local validator performs no downloads/deletion. Tests cover complete files, wrong revisions, partial/missing weights, traversal and external symlinks. Manifest trust and post-verification immutability remain separate requirements.
 
 ```python
-def select_gpu_instance(model_size_b, workload_type, budget):
-    """
-    Select optimal GPU instance based on requirements.
+from pathlib import Path
+import hashlib
+import re
 
-    Args:
-        model_size_b: Model size in billions of parameters
-        workload_type: 'inference', 'training', 'fine_tuning'
-        budget: 'low', 'medium', 'high'
-    """
 
-    # Memory estimation (rough): 2 bytes per param for FP16
-    required_memory_gb = model_size_b * 2
-
-    if workload_type == 'inference':
-        if model_size_b <= 7:
-            return 'g5.xlarge' if budget == 'low' else 'g6.xlarge'
-        elif model_size_b <= 13:
-            return 'g5.2xlarge' if budget == 'low' else 'g6e.2xlarge'
-        elif model_size_b <= 30:
-            return 'g5.4xlarge' if budget != 'high' else 'g6e.4xlarge'
-        elif model_size_b <= 70:
-            return 'g5.12xlarge'  # 4-way tensor parallel
-        else:
-            return 'p4d.24xlarge'  # 8-way tensor parallel
-
-    elif workload_type == 'training':
-        if model_size_b <= 7:
-            return 'g5.12xlarge'
-        elif model_size_b <= 30:
-            return 'p4d.24xlarge'
-        else:
-            return 'p5.48xlarge'  # Multi-node required
-
-    elif workload_type == 'fine_tuning':
-        # LoRA reduces memory by ~10x
-        if budget == 'low':
-            return 'g5.xlarge'  # LoRA on most models
-        else:
-            return 'g5.4xlarge'  # Full fine-tune small models
+def verify_model_cache(root, manifest, expected_revision):
+    """Verify files against a separately trusted release manifest; no downloads/deletion."""
+    root = Path(root).resolve(strict=True)
+    if manifest.get("revision") != expected_revision:
+        raise ValueError("Model revision mismatch")
+    files = manifest.get("files")
+    if not isinstance(files, dict) or not files:
+        raise ValueError("Empty or invalid release manifest")
+    for relative, expected_hash in files.items():
+        name = Path(relative)
+        if name.is_absolute() or ".." in name.parts or not name.parts:
+            raise ValueError("Unsafe manifest path")
+        if not isinstance(expected_hash, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_hash):
+            raise ValueError("Invalid SHA256")
+        target = (root / name).resolve(strict=True)
+        if not target.is_relative_to(root) or not target.is_file():
+            raise ValueError("File escapes the cache or is not a regular file")
+        digest = hashlib.sha256()
+        with target.open("rb") as source:
+            for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                digest.update(chunk)
+        if digest.hexdigest() != expected_hash:
+            raise ValueError("Incomplete or corrupt model file: " + relative)
+    return root
 ```
 
-## Networking Best Practices
+Checkpoints need optimizer/RNG/data-cursor and shard state as in the [training/recovery example](05-model-training.md). Do not delete prior valid copies before transfer, checksums and completion manifests succeed. The old ls/xargs rm -rf loop confused directory contents with checkpoint paths and attempted deletion through a read-only mount; it was removed. Delaying the first sync30minutes or omitting termination flushing increases lost-work exposure.
 
-High-performance networking is critical for distributed AI/ML workloads.
+## Networking and Scheduling
 
-### EFA Setup for Distributed Training
+EFA improves communication for suitable workloads; it is not required for every DDP execution. Verify interfaces, same-AZ placement, driver/libfabric/aws-ofi-nccl, Pod resources, security groups and actual transport. RAID0/subnet tags do not enable it. Avoid unverified NCCL_TIMEOUT and blindly copied Ring/Simple/IB_DISABLE settings. torchrun --nnodes counts nodes, not total-process WORLD_SIZE.
 
-Elastic Fabric Adapter (EFA) provides low-latency, high-bandwidth networking essential for multi-node training:
+Use Karpenter1.14.1's actual placementGroupSelector. An aws:ec2:placement-group tag is not the placement API, and aws: is not a user-tag namespace. This **schema example** requires approved AMI/subnet/SG/role identifiers and an existing placement group. The example specifies amiFamily AL2023, so the replacement must be a validated EKS AL2023 AMI, not an AMI for another OS. It does not complete EFA networkInterfaces configuration.
 
 ```yaml
-# EFA-enabled node configuration
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
-  name: efa-training-nodes
+  name: prepared-gpu-class
 spec:
+  role: REPLACE_WITH_APPROVED_NODE_ROLE
   amiSelectorTerms:
-  - alias: al2023@latest
-
-  # EFA requires placement groups for optimal performance
+  - id: ami-0123456789abcdef0
   subnetSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: my-cluster
-      network/efa-enabled: "true"
+  - id: subnet-0123456789abcdef0
+  securityGroupSelectorTerms:
+  - id: sg-0123456789abcdef0
+  placementGroupSelector:
+    name: prepared-training-placement-group
+  amiFamily: AL2023
+```
 
-  # Instance store for fast local scratch
-  instanceStorePolicy: RAID0
+### Disruption Budgets and Spot
 
-  blockDeviceMappings:
-  - deviceName: /dev/xvda
-    ebs:
-      volumeSize: 200Gi
-      volumeType: gp3
-      iops: 10000
-      throughput: 500
+This budget applies Monday–Friday **09:00–17:00UTC**. The old0 9-17 * * 1-5 started an eight-hour window every hour through17:00, extending protection until01:00the next day. Concurrent budgets use the stricter restriction and do not automatically follow local timezones.
 
-  userData: |
-    #!/bin/bash
-    # Install EFA driver
-    curl -O https://efa-installer.amazonaws.com/aws-efa-installer-latest.tar.gz
-    tar -xf aws-efa-installer-latest.tar.gz
-    cd aws-efa-installer && ./efa_installer.sh -y
-
-    # Verify EFA installation
-    fi_info -p efa
----
+```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: efa-training
+  name: reviewed-gpu-pool
 spec:
   template:
     spec:
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass
-        name: efa-training-nodes
+        name: prepared-gpu-class
       requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values: ["p4d.24xlarge", "p5.48xlarge"]
       - key: karpenter.sh/capacity-type
-        operator: In
-        values: ["on-demand"]
-      taints:
-      - key: nvidia.com/gpu
-        value: "true"
-        effect: NoSchedule
-```
-
-### NCCL Configuration
-
-NVIDIA Collective Communication Library (NCCL) optimization for EFA:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nccl-config
-  namespace: ai-ml
-data:
-  nccl-env.sh: |
-    # EFA-optimized NCCL settings
-    export NCCL_DEBUG=INFO
-    export NCCL_DEBUG_SUBSYS=ALL
-
-    # Use EFA for inter-node communication
-    export FI_PROVIDER=efa
-    export FI_EFA_USE_DEVICE_RDMA=1
-    export FI_EFA_FORK_SAFE=1
-
-    # Optimize for P4d/P5 instances
-    export NCCL_ALGO=Ring,Tree
-    export NCCL_PROTO=Simple
-
-    # Network interface selection
-    export NCCL_SOCKET_IFNAME=eth0
-    export NCCL_IB_DISABLE=1
-
-    # Buffer sizes for large models
-    export NCCL_BUFFSIZE=8388608
-    export NCCL_P2P_NET_CHUNKSIZE=524288
-
-    # Timeout settings
-    export NCCL_TIMEOUT=1800
-
-    # AWS OFI NCCL plugin
-    export LD_LIBRARY_PATH=/opt/amazon/efa/lib:$LD_LIBRARY_PATH
-    export FI_EFA_ENABLE_SHM_TRANSFER=1
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: distributed-training
-spec:
-  containers:
-  - name: trainer
-    image: my-training-image:latest
-    command: ["/bin/bash", "-c"]
-    args:
-    - |
-      source /config/nccl-env.sh
-      torchrun --nproc_per_node=8 \
-               --nnodes=$WORLD_SIZE \
-               --node_rank=$RANK \
-               --master_addr=$MASTER_ADDR \
-               --master_port=29500 \
-               train.py
-    volumeMounts:
-    - name: nccl-config
-      mountPath: /config
-    - name: shm
-      mountPath: /dev/shm
-    resources:
-      limits:
-        nvidia.com/gpu: 8
-        vpc.amazonaws.com/efa: 4  # Request EFA devices
-  volumes:
-  - name: nccl-config
-    configMap:
-      name: nccl-config
-  - name: shm
-    emptyDir:
-      medium: Memory
-      sizeLimit: 64Gi
-```
-
-### Placement Groups
-
-Configure placement groups for optimal network performance:
-
-```yaml
-# Cluster placement group for distributed training
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: training-cluster-pg
-spec:
-  # ... other config ...
-
-  # Use cluster placement group for lowest latency
-  tags:
-    aws:ec2:placement-group: training-cluster-pg
----
-# Create placement group via AWS CLI
-# aws ec2 create-placement-group \
-#   --group-name training-cluster-pg \
-#   --strategy cluster \
-#   --tag-specifications 'ResourceType=placement-group,Tags=[{Key=Purpose,Value=ai-training}]'
-```
-
-### Security Group Rules for GPU Traffic
-
-```yaml
-# Security group configuration for distributed training
-# Apply via Terraform or CloudFormation
-
-security_group_rules:
-  # Allow all traffic within placement group
-  - type: ingress
-    from_port: 0
-    to_port: 65535
-    protocol: tcp
-    self: true
-    description: "Intra-cluster communication"
-
-  # NCCL communication ports
-  - type: ingress
-    from_port: 29500
-    to_port: 29600
-    protocol: tcp
-    self: true
-    description: "PyTorch distributed training"
-
-  # EFA traffic (requires specific rules)
-  - type: ingress
-    from_port: 0
-    to_port: 0
-    protocol: "-1"  # All protocols
-    self: true
-    description: "EFA traffic"
-```
-
-### Network Policy for Inference Endpoints
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: llm-inference-policy
-  namespace: ai-ml
-spec:
-  podSelector:
-    matchLabels:
-      app: llm-inference
-  policyTypes:
-  - Ingress
-  - Egress
-
-  ingress:
-  # Allow traffic from API gateway
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: api-gateway
-    ports:
-    - protocol: TCP
-      port: 8000
-
-  # Allow health checks from kubelet
-  - from:
-    - ipBlock:
-        cidr: 10.0.0.0/8
-    ports:
-    - protocol: TCP
-      port: 8000
-
-  egress:
-  # Allow DNS
-  - to:
-    - namespaceSelector: {}
-    ports:
-    - protocol: UDP
-      port: 53
-
-  # Allow S3 access for model downloads
-  - to:
-    - ipBlock:
-        cidr: 0.0.0.0/0
-    ports:
-    - protocol: TCP
-      port: 443
-```
-
-## Storage Best Practices
-
-Choosing the right storage solution significantly impacts AI/ML workload performance.
-
-### Storage Selection Guide
-
-| Storage Type | Throughput | Latency | Capacity | Use Cases | Cost |
-|--------------|------------|---------|----------|-----------|------|
-| **Instance Store** | Up to 7.5 GB/s | < 1ms | Up to 7.6TB | Scratch space, checkpoints | Included |
-| **EBS gp3** | Up to 1 GB/s | 1-2ms | Up to 16TB | Boot, small datasets | $ |
-| **EBS io2** | Up to 4 GB/s | < 1ms | Up to 64TB | High-IOPS requirements | $$$ |
-| **EFS** | Bursting/Provisioned | 2-5ms | Unlimited | Shared models, datasets | $$ |
-| **FSx Lustre** | Up to 1+ TB/s | < 1ms | Petabytes | Large training datasets | $$$ |
-| **S3** | Virtually unlimited | 50-100ms | Unlimited | Model artifacts, archives | $ |
-
-### When to Use Each Storage Type
-
-```yaml
-# Storage decision matrix
-storage_recommendations:
-
-  model_weights:
-    primary: EFS  # Shared across pods
-    alternative: S3 + init container download
-    reasoning: |
-      - Models need to be accessible from multiple pods
-      - EFS provides shared access with caching
-      - S3 is cheaper but requires download time
-
-  training_datasets:
-    small: EBS gp3  # < 500GB, single node
-    medium: EFS  # 500GB-10TB, multi-node read
-    large: FSx Lustre  # > 10TB, high throughput
-    reasoning: |
-      - FSx Lustre provides parallel filesystem
-      - Can link directly to S3 for data loading
-
-  checkpoints:
-    training: Instance store  # Fast, temporary
-    persistent: S3  # Long-term storage
-    reasoning: |
-      - Checkpoints are written frequently during training
-      - Instance store provides lowest latency
-      - Periodic sync to S3 for durability
-
-  inference_cache:
-    kv_cache: Instance store or tmpfs
-    model_cache: EFS or local EBS
-    reasoning: |
-      - KV cache is ephemeral, needs lowest latency
-      - Model cache benefits from persistence
-```
-
-### Model Caching Strategy
-
-```yaml
-# PVC for shared model cache
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: model-cache-efs
-  namespace: ai-ml
-spec:
-  accessModes:
-  - ReadWriteMany  # Shared across all inference pods
-  storageClassName: efs-sc
-  resources:
-    requests:
-      storage: 500Gi
----
-# Model cache sidecar
-apiVersion: v1
-kind: Pod
-metadata:
-  name: llm-inference
-spec:
-  initContainers:
-  # Check cache, download if missing
-  - name: model-cache-check
-    image: amazon/aws-cli:latest
-    command:
-    - sh
-    - -c
-    - |
-      MODEL_PATH="/models/llama-3-8b"
-      if [ ! -f "$MODEL_PATH/config.json" ]; then
-        echo "Model not in cache, downloading..."
-        aws s3 sync s3://models/llama-3-8b $MODEL_PATH
-      else
-        echo "Model found in cache"
-      fi
-    volumeMounts:
-    - name: model-cache
-      mountPath: /models
-
-  containers:
-  - name: vllm
-    image: vllm/vllm-openai:latest
-    args:
-    - --model
-    - /models/llama-3-8b
-    volumeMounts:
-    - name: model-cache
-      mountPath: /models
-      readOnly: true  # Read-only for inference
-    resources:
-      limits:
-        nvidia.com/gpu: 1
-
-  volumes:
-  - name: model-cache
-    persistentVolumeClaim:
-      claimName: model-cache-efs
-```
-
-### Checkpoint Management for Training
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: checkpoint-manager
-data:
-  checkpoint-sync.sh: |
-    #!/bin/bash
-    # Sync checkpoints to S3 periodically
-
-    LOCAL_CKPT_DIR="/scratch/checkpoints"
-    S3_CKPT_PATH="s3://training-checkpoints/${JOB_NAME}"
-    SYNC_INTERVAL=1800  # 30 minutes
-
-    while true; do
-      sleep $SYNC_INTERVAL
-
-      # Find newest checkpoint
-      LATEST=$(ls -t $LOCAL_CKPT_DIR/checkpoint-* 2>/dev/null | head -1)
-
-      if [ -n "$LATEST" ]; then
-        echo "Syncing $LATEST to S3..."
-        aws s3 cp --recursive $LATEST $S3_CKPT_PATH/$(basename $LATEST)
-
-        # Keep only last 3 local checkpoints
-        ls -t $LOCAL_CKPT_DIR/checkpoint-* | tail -n +4 | xargs rm -rf
-      fi
-    done
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: training-job
-spec:
-  containers:
-  - name: trainer
-    image: training-image:latest
-    volumeMounts:
-    - name: scratch
-      mountPath: /scratch
-    env:
-    - name: CHECKPOINT_DIR
-      value: /scratch/checkpoints
-
-  - name: checkpoint-sync
-    image: amazon/aws-cli:latest
-    command: ["/scripts/checkpoint-sync.sh"]
-    volumeMounts:
-    - name: scratch
-      mountPath: /scratch
-      readOnly: true
-    - name: scripts
-      mountPath: /scripts
-    env:
-    - name: JOB_NAME
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.name
-
-  volumes:
-  - name: scratch
-    emptyDir:
-      medium: Memory  # Or use instance store
-      sizeLimit: 100Gi
-  - name: scripts
-    configMap:
-      name: checkpoint-manager
-      defaultMode: 0755
-```
-
-### FSx for Lustre Setup
-
-```yaml
-# StorageClass for FSx Lustre
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fsx-lustre-sc
-provisioner: fsx.csi.aws.com
-parameters:
-  subnetId: subnet-0123456789abcdef0
-  securityGroupIds: sg-0123456789abcdef0
-  deploymentType: PERSISTENT_2
-  perUnitStorageThroughput: "250"  # MB/s per TiB
-  dataCompressionType: LZ4
-
-  # Link to S3 for transparent data access
-  s3ImportPath: s3://training-data
-  s3ExportPath: s3://training-data
-  autoImportPolicy: NEW_CHANGED_DELETED
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: training-data-fsx
-spec:
-  accessModes:
-  - ReadWriteMany
-  storageClassName: fsx-lustre-sc
-  resources:
-    requests:
-      storage: 2400Gi  # Minimum 1.2TiB, increments of 2.4TiB
-```
-
-## Observability for AI/ML
-
-Comprehensive observability is essential for operating AI/ML workloads at scale.
-
-### NVIDIA DCGM Exporter Setup
-
-Deploy DCGM exporter for GPU metrics:
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: dcgm-exporter
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: dcgm-exporter
-  template:
-    metadata:
-      labels:
-        app: dcgm-exporter
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9400"
-    spec:
-      nodeSelector:
-        nvidia.com/gpu.present: "true"
-      tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
-
-      containers:
-      - name: dcgm-exporter
-        image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.5-3.4.0-ubuntu22.04
-        ports:
-        - containerPort: 9400
-          name: metrics
-        env:
-        - name: DCGM_EXPORTER_LISTEN
-          value: ":9400"
-        - name: DCGM_EXPORTER_KUBERNETES
-          value: "true"
-        - name: DCGM_EXPORTER_COLLECTORS
-          value: "/etc/dcgm-exporter/dcp-metrics-included.csv"
-        securityContext:
-          runAsNonRoot: false
-          runAsUser: 0
-          capabilities:
-            add: ["SYS_ADMIN"]
-        volumeMounts:
-        - name: pod-resources
-          mountPath: /var/lib/kubelet/pod-resources
-          readOnly: true
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-
-      volumes:
-      - name: pod-resources
-        hostPath:
-          path: /var/lib/kubelet/pod-resources
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dcgm-exporter
-  namespace: monitoring
-  labels:
-    app: dcgm-exporter
-spec:
-  type: ClusterIP
-  ports:
-  - port: 9400
-    targetPort: 9400
-    name: metrics
-  selector:
-    app: dcgm-exporter
-```
-
-### GPU Metrics Collection
-
-Key GPU metrics to monitor:
-
-```yaml
-# ServiceMonitor for Prometheus Operator
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: dcgm-exporter
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: dcgm-exporter
-  endpoints:
-  - port: metrics
-    interval: 15s
-    path: /metrics
----
-# PrometheusRule for GPU alerts
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: gpu-alerts
-  namespace: monitoring
-spec:
-  groups:
-  - name: gpu.rules
-    rules:
-    # GPU utilization alerts
-    - alert: GPUHighUtilization
-      expr: DCGM_FI_DEV_GPU_UTIL > 95
-      for: 10m
-      labels:
-        severity: warning
-      annotations:
-        summary: "GPU {{ $labels.gpu }} utilization above 95%"
-        description: "GPU utilization has been above 95% for 10 minutes"
-
-    # GPU memory alerts
-    - alert: GPUMemoryAlmostFull
-      expr: (DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL) > 0.95
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "GPU {{ $labels.gpu }} memory usage above 95%"
-
-    # GPU temperature alerts
-    - alert: GPUHighTemperature
-      expr: DCGM_FI_DEV_GPU_TEMP > 80
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "GPU {{ $labels.gpu }} temperature above 80C"
-
-    - alert: GPUCriticalTemperature
-      expr: DCGM_FI_DEV_GPU_TEMP > 90
-      for: 1m
-      labels:
-        severity: critical
-      annotations:
-        summary: "GPU {{ $labels.gpu }} temperature critical (>90C)"
-
-    # GPU errors
-    - alert: GPUXidErrors
-      expr: increase(DCGM_FI_DEV_XID_ERRORS[5m]) > 0
-      labels:
-        severity: critical
-      annotations:
-        summary: "GPU {{ $labels.gpu }} XID errors detected"
-```
-
-### Key GPU Metrics Reference
-
-| Metric | Description | Alert Threshold |
-|--------|-------------|-----------------|
-| `DCGM_FI_DEV_GPU_UTIL` | GPU compute utilization % | > 95% sustained |
-| `DCGM_FI_DEV_MEM_COPY_UTIL` | Memory copy utilization % | > 90% sustained |
-| `DCGM_FI_DEV_FB_USED` | Frame buffer memory used (bytes) | > 95% of total |
-| `DCGM_FI_DEV_GPU_TEMP` | GPU temperature (Celsius) | > 80C warning, > 90C critical |
-| `DCGM_FI_DEV_POWER_USAGE` | Power consumption (Watts) | Near TDP limit |
-| `DCGM_FI_DEV_SM_CLOCK` | SM clock frequency (MHz) | Throttling detection |
-| `DCGM_FI_DEV_XID_ERRORS` | XID error count | Any increase |
-| `DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL` | NVLink bandwidth | Below expected |
-
-### Model Serving Metrics
-
-```yaml
-# vLLM metrics configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vllm-metrics-config
-data:
-  prometheus.yaml: |
-    # vLLM exposes metrics at /metrics endpoint
-    # Key metrics to monitor:
-
-    # Request metrics
-    # - vllm:num_requests_running - Current running requests
-    # - vllm:num_requests_waiting - Queued requests
-    # - vllm:request_success_total - Successful requests
-    # - vllm:request_prompt_tokens_total - Input tokens processed
-    # - vllm:request_generation_tokens_total - Output tokens generated
-
-    # Latency metrics
-    # - vllm:time_to_first_token_seconds - TTFT histogram
-    # - vllm:time_per_output_token_seconds - ITL histogram
-    # - vllm:e2e_request_latency_seconds - End-to-end latency
-
-    # GPU metrics
-    # - vllm:gpu_cache_usage_perc - KV cache utilization
-    # - vllm:gpu_prefix_cache_hit_rate - Prefix caching efficiency
-
-    # Batch metrics
-    # - vllm:num_preemptions_total - Request preemptions
-    # - vllm:iteration_tokens_total - Tokens per iteration
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: vllm-alerts
-  namespace: ai-ml
-spec:
-  groups:
-  - name: vllm.rules
-    rules:
-    - alert: vLLMHighQueueDepth
-      expr: vllm:num_requests_waiting > 50
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "vLLM request queue depth high"
-        description: "More than 50 requests waiting for processing"
-
-    - alert: vLLMHighTTFT
-      expr: histogram_quantile(0.95, rate(vllm:time_to_first_token_seconds_bucket[5m])) > 2
-      for: 10m
-      labels:
-        severity: warning
-      annotations:
-        summary: "vLLM TTFT P95 exceeds 2 seconds"
-
-    - alert: vLLMKVCacheFull
-      expr: vllm:gpu_cache_usage_perc > 0.95
-      for: 5m
-      labels:
-        severity: critical
-      annotations:
-        summary: "vLLM KV cache nearly full"
-        description: "KV cache usage above 95%, requests may be rejected"
-```
-
-### Grafana Dashboard Configuration
-
-```json
-{
-  "dashboard": {
-    "title": "AI/ML Workloads Overview",
-    "panels": [
-      {
-        "title": "GPU Utilization by Node",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "DCGM_FI_DEV_GPU_UTIL",
-            "legendFormat": "{{node}}-GPU{{gpu}}"
-          }
-        ]
-      },
-      {
-        "title": "GPU Memory Usage",
-        "type": "gauge",
-        "targets": [
-          {
-            "expr": "DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL * 100",
-            "legendFormat": "{{node}}-GPU{{gpu}}"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "thresholds": {
-              "steps": [
-                {"color": "green", "value": 0},
-                {"color": "yellow", "value": 70},
-                {"color": "red", "value": 90}
-              ]
-            }
-          }
-        }
-      },
-      {
-        "title": "Inference Latency (TTFT P95)",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, rate(vllm:time_to_first_token_seconds_bucket[5m]))",
-            "legendFormat": "{{pod}}"
-          }
-        ]
-      },
-      {
-        "title": "Requests Per Second",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "sum(rate(vllm:request_success_total[5m]))",
-            "legendFormat": "Total RPS"
-          }
-        ]
-      },
-      {
-        "title": "Tokens Per Second",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "sum(rate(vllm:request_generation_tokens_total[5m]))",
-            "legendFormat": "Generation TPS"
-          }
-        ]
-      },
-      {
-        "title": "GPU Temperature",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "DCGM_FI_DEV_GPU_TEMP",
-            "legendFormat": "{{node}}-GPU{{gpu}}"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "custom": {
-              "thresholdsStyle": {
-                "mode": "line"
-              }
-            },
-            "thresholds": {
-              "steps": [
-                {"color": "green", "value": 0},
-                {"color": "yellow", "value": 75},
-                {"color": "red", "value": 85}
-              ]
-            }
-          }
-        }
-      }
-    ]
-  }
-}
-```
-
-## Cost Optimization
-
-Implementing cost optimization strategies can significantly reduce AI/ML infrastructure costs.
-
-### Spot Instances for Inference
-
-```yaml
-# Karpenter NodePool with Spot for inference
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: inference-spot
-spec:
-  template:
-    spec:
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: inference-ec2
-      requirements:
-      - key: node.kubernetes.io/instance-type
         operator: In
         values:
-        - g5.xlarge
-        - g5.2xlarge
-        - g6.xlarge
-        - g6.2xlarge
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values: ["spot"]  # Prefer Spot
-      - key: kubernetes.io/arch
-        operator: In
-        values: ["amd64"]
-
-      taints:
-      - key: nvidia.com/gpu
-        value: "true"
-        effect: NoSchedule
-
-  # Disruption settings for Spot
+        - on-demand
+        - spot
   disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 1m
-    budgets:
-    - nodes: "20%"  # Allow 20% of nodes to be disrupted
-
-  limits:
-    cpu: 1000
-    memory: 4000Gi
-    nvidia.com/gpu: 100
----
-# Pod configuration for graceful Spot termination
-apiVersion: v1
-kind: Pod
-metadata:
-  name: inference-pod
-spec:
-  terminationGracePeriodSeconds: 120  # Handle Spot interruption
-  containers:
-  - name: inference
-    image: vllm/vllm-openai:latest
-    lifecycle:
-      preStop:
-        exec:
-          command:
-          - /bin/sh
-          - -c
-          - |
-            # Drain requests gracefully
-            curl -X POST localhost:8000/drain
-            sleep 30
-```
-
-### Karpenter Consolidation Policies
-
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-workloads
-spec:
-  template:
-    spec:
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-nodes
-      requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        - g5.xlarge
-        - g5.2xlarge
-        - g5.4xlarge
-        - g5.8xlarge
-        - g5.12xlarge
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values: ["spot", "on-demand"]
-
-  disruption:
-    # Consolidate underutilized nodes
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 5m
-
-    # Budget to prevent disruption during peak hours
     budgets:
-    - nodes: "0"
-      schedule: "0 9-17 * * 1-5"  # No consolidation during business hours
+    - nodes: '0'
+      schedule: 0 9 * * 1-5
       duration: 8h
-    - nodes: "30%"  # Allow 30% during off-peak
-
-  # Weight for cost optimization
-  weight: 100  # Higher weight = preferred for scheduling
+    - nodes: 30%
 ```
 
-### Right-Sizing Recommendations
+budgets.nodes=0 limits voluntary disruption, not Spot interruptions, node failures or forceful expiration. Spot-only requirements are mandatory, not a preference with on-demand fallback. ScheduleAnyway topology spread is soft; verify actual replicas, capacity and AZ distribution.
+
+terminationGracePeriodSeconds=120 does not guarantee EC2 grants120seconds. Test gateway readiness/draining, endpoint propagation, SIGTERM, active streams, retries and duplicates through real termination. Do not invent a vLLM /drain API. Inference caches, sessions and TP groups carry state/restart costs.
+
+## Observability and Cost
+
+Use [current vLLM metrics](02-vllm-deployment.md) and [DCGM rules](06-ai-infrastructure.md). KV occupancy is vllm:kv_cache_usage_perc, not the old gpu_cache_usage_perc. Observe queues/preemption and backend behavior rather than assuming full cache immediately rejects requests. Derive prefix-hit ratios from current hit/query counters with zero-denominator handling.
+
+DCGM FB_USED/FREE are MiB gauges; XID_ERRORS is the last code. Avoid nonexistent FB_TOTAL or increase() on gauges. Temperature alone does not prove thermal throttling; compare clocks, power, throttle reasons and workload. Match Prometheus labels/histogram aggregation, and use valid subquery syntax for avg_over_time over expressions.
+
+VPA Off provides CPU/memory recommendations, not automatic GPU-instance selection. The former rightsizing script inspected only the first series and compared0–1ratios with50/90; it was removed. Inspect peaks, queues, SLOs and recovery after removal across workloads.
+
+Record savings using actual region/OS/purchase terms, utilization, idle/failure time, storage, transfer and operations. Spot/Savings Plans/RI differ in discounts and capacity guarantees. Avoid fixed60–90% tables or adding optimization savings percentages. Make commitment-purchase decisions separately using measured baselines and variability.
+
+## Model Access and Secret Management
+
+S3 ListBucket and GetObject use bucket/object ARNs and supported condition keys respectively. General-purpose buckets can use bucket-tag conditions such as aws:ResourceTag/Environment after ABAC is explicitly enabled. ABAC is disabled by default: verify bucket status, trusted tag-administration permissions, identity/bucket policies and action/resource pairing rather than copying the tag condition alone. Enablement does not create the required Allow or override other Deny policies. Verify trust-bound ServiceAccount namespace/name, SDK credential chains and actual request identity. vLLM does not automatically download every S3 model URI.
+
+The inspected ESO2.10.0 CRD **serves v1**, with v1beta1 served=false. This example references an already approved same-namespace SecretStore. Prepare remote keys, permissions, rotation and target lifecycle separately.
 
 ```yaml
-# VPA for inference workloads
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: llm-inference-vpa
-  namespace: ai-ml
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: llm-inference
-  updatePolicy:
-    updateMode: "Off"  # Recommendation only
-  resourcePolicy:
-    containerPolicies:
-    - containerName: inference
-      minAllowed:
-        cpu: "2"
-        memory: 8Gi
-      maxAllowed:
-        cpu: "16"
-        memory: 64Gi
-      controlledResources: ["cpu", "memory"]
-      controlledValues: RequestsAndLimits
----
-# Script to analyze GPU utilization and recommend right-sizing
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: rightsizing-analysis
-data:
-  analyze.sh: |
-    #!/bin/bash
-    # Query Prometheus for GPU utilization
-
-    echo "=== GPU Right-Sizing Analysis ==="
-
-    # Average GPU utilization over last 7 days
-    GPU_UTIL=$(curl -s "http://prometheus:9090/api/v1/query" \
-      --data-urlencode 'query=avg_over_time(DCGM_FI_DEV_GPU_UTIL[7d])' \
-      | jq -r '.data.result[0].value[1]')
-
-    # Average GPU memory utilization
-    GPU_MEM=$(curl -s "http://prometheus:9090/api/v1/query" \
-      --data-urlencode 'query=avg_over_time((DCGM_FI_DEV_FB_USED/DCGM_FI_DEV_FB_TOTAL)[7d])' \
-      | jq -r '.data.result[0].value[1]')
-
-    echo "Average GPU Utilization: ${GPU_UTIL}%"
-    echo "Average GPU Memory: ${GPU_MEM}%"
-
-    # Recommendations
-    if (( $(echo "$GPU_UTIL < 30" | bc -l) )); then
-      echo "RECOMMENDATION: Consider smaller GPU instance or GPU sharing"
-    elif (( $(echo "$GPU_UTIL > 90" | bc -l) )); then
-      echo "RECOMMENDATION: Consider larger GPU instance or scale out"
-    fi
-
-    if (( $(echo "$GPU_MEM < 50" | bc -l) )); then
-      echo "RECOMMENDATION: Consider instance with less GPU memory"
-    elif (( $(echo "$GPU_MEM > 90" | bc -l) )); then
-      echo "RECOMMENDATION: Consider instance with more GPU memory"
-    fi
-```
-
-### Cost Comparison and Savings Plans
-
-| Strategy | Typical Savings | Implementation Complexity | Best For |
-|----------|-----------------|---------------------------|----------|
-| Spot Instances | 60-90% | Medium | Stateless inference |
-| Savings Plans (1yr) | 30-40% | Low | Baseline capacity |
-| Savings Plans (3yr) | 50-60% | Low | Stable workloads |
-| Reserved Instances | 40-70% | Medium | Predictable usage |
-| Karpenter Consolidation | 20-40% | Low | Variable workloads |
-| GPU Sharing (MIG/MPS) | 30-50% | High | Small models |
-| Right-sizing | 20-50% | Medium | Overprovisioned |
-
-```yaml
-# Example cost optimization deployment strategy
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: llm-inference-cost-optimized
-spec:
-  replicas: 10
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 2
-      maxUnavailable: 1
-  template:
-    spec:
-      # Topology spread for availability
-      topologySpreadConstraints:
-      - maxSkew: 2
-        topologyKey: topology.kubernetes.io/zone
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            app: llm-inference
-
-      # Prefer Spot, fallback to On-Demand
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
-              - key: karpenter.sh/capacity-type
-                operator: In
-                values: ["spot"]
-          - weight: 50
-            preference:
-              matchExpressions:
-              - key: karpenter.sh/capacity-type
-                operator: In
-                values: ["on-demand"]
-
-      containers:
-      - name: inference
-        resources:
-          requests:
-            nvidia.com/gpu: 1
-            cpu: "4"
-            memory: 16Gi
-          limits:
-            nvidia.com/gpu: 1
-            cpu: "8"
-            memory: 32Gi
-```
-
-## Security Considerations
-
-Security is critical when deploying AI/ML workloads, especially those handling sensitive data or valuable models.
-
-### Model Access Control
-
-```yaml
-# IRSA for S3 model access
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: model-loader
-  namespace: ai-ml
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ModelLoaderRole
----
-# IAM policy for model access (apply via Terraform)
-# {
-#   "Version": "2012-10-17",
-#   "Statement": [
-#     {
-#       "Effect": "Allow",
-#       "Action": [
-#         "s3:GetObject",
-#         "s3:ListBucket"
-#       ],
-#       "Resource": [
-#         "arn:aws:s3:::models-bucket",
-#         "arn:aws:s3:::models-bucket/*"
-#       ],
-#       "Condition": {
-#         "StringEquals": {
-#           "aws:ResourceTag/Environment": "production"
-#         }
-#       }
-#     }
-#   ]
-# }
----
-# Pod with IRSA
-apiVersion: v1
-kind: Pod
-metadata:
-  name: inference-pod
-spec:
-  serviceAccountName: model-loader
-  containers:
-  - name: inference
-    image: vllm/vllm-openai:latest
-    # AWS SDK will automatically use IRSA credentials
-```
-
-### Secrets Management for API Keys
-
-```yaml
-# External Secrets Operator for HuggingFace/NGC tokens
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: model-registry-secrets
+  name: model-download-token
   namespace: ai-ml
 spec:
+  refreshPolicy: Periodic
   refreshInterval: 1h
   secretStoreRef:
-    name: aws-secretsmanager
-    kind: ClusterSecretStore
+    name: approved-secrets-manager
+    kind: SecretStore
   target:
-    name: model-registry-credentials
+    name: model-download-credential
     creationPolicy: Owner
   data:
-  - secretKey: HUGGING_FACE_HUB_TOKEN
+  - secretKey: token
     remoteRef:
-      key: ai-ml/huggingface-token
+      key: approved/model-download
       property: token
-  - secretKey: NGC_API_KEY
-    remoteRef:
-      key: ai-ml/ngc-api-key
-      property: key
----
-# Pod using external secrets
-apiVersion: v1
-kind: Pod
-metadata:
-  name: model-downloader
-spec:
-  containers:
-  - name: downloader
-    image: python:3.11-slim
-    command: ["python", "download_model.py"]
-    env:
-    - name: HUGGING_FACE_HUB_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: model-registry-credentials
-          key: HUGGING_FACE_HUB_TOKEN
-    - name: NGC_API_KEY
-      valueFrom:
-        secretKeyRef:
-          name: model-registry-credentials
-          key: NGC_API_KEY
-    securityContext:
-      readOnlyRootFilesystem: true
-      runAsNonRoot: true
-      runAsUser: 1000
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop: ["ALL"]
 ```
 
-### Network Policies for Inference Endpoints
+Mount Kubernetes Secrets as volumes and have applications reread files when needed. subPath mounts do not receive automatic updates; environment variables or values read only at startup do not reload automatically. ESO refresh is not upstream credential issuance/rotation itself. Verify provider rotation, Secret access and application reload separately.
 
-```yaml
-# Strict network policy for LLM inference
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: llm-inference-strict
-  namespace: ai-ml
-spec:
-  podSelector:
-    matchLabels:
-      app: llm-inference
-  policyTypes:
-  - Ingress
-  - Egress
+CloudTrail Secrets Manager API records do not capture every application read of a local Secret file. Do not claim kubectl describe generally prints SecretKeyRef values, but environment delivery still exposes process/debugging surfaces and differs from a file-credential policy. Never print real secrets in examples/logs.
 
-  ingress:
-  # Only allow from API gateway namespace
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: api-gateway
-      podSelector:
-        matchLabels:
-          app: gateway
-    ports:
-    - protocol: TCP
-      port: 8000
+NetworkPolicy requires CNI enforcement. Verify selector AND/OR semantics, default namespace-name labels and both TCP/UDP DNS. The10.0.0.0/8 health-check opening and“internet443means S3-only” rule were removed. With prepared models, restrict runtime egress to necessary paths and distinguish inference/management APIs at the gateway.
 
-  # Allow Prometheus scraping
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: monitoring
-      podSelector:
-        matchLabels:
-          app: prometheus
-    ports:
-    - protocol: TCP
-      port: 8000
+Audit logs should capture user/workload identity, model revision, action, outcome and request ID, redacting prompts/secrets as appropriate. Parsing containerd CRI logs as Docker or retaining only lines containing request can lose audit events. Verify actual collectors, parsers, IAM, buffers, retention and delivery failures—not just a ConfigMap.
 
-  egress:
-  # DNS resolution
-  - to:
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          k8s-app: kube-dns
-    ports:
-    - protocol: UDP
-      port: 53
+## Verification Scope
 
-  # Block all other egress (models should be pre-loaded)
-  # Add specific rules if external API calls are needed
----
-# Pod Security Standards
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-inference
-spec:
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
-    runAsGroup: 1000
-    fsGroup: 1000
-    seccompProfile:
-      type: RuntimeDefault
-
-  containers:
-  - name: inference
-    image: vllm/vllm-openai:latest
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: false  # vLLM needs write access
-      capabilities:
-        drop: ["ALL"]
-
-    volumeMounts:
-    - name: model-cache
-      mountPath: /models
-      readOnly: true
-    - name: tmp
-      mountPath: /tmp
-    - name: cache
-      mountPath: /.cache
-
-  volumes:
-  - name: model-cache
-    persistentVolumeClaim:
-      claimName: models-pvc
-      readOnly: true
-  - name: tmp
-    emptyDir:
-      sizeLimit: 10Gi
-  - name: cache
-    emptyDir:
-      sizeLimit: 5Gi
-```
-
-### Audit Logging for Model Access
-
-```yaml
-# CloudWatch logging for model access audit
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: logging
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Parsers_File parsers.conf
-
-    [INPUT]
-        Name              tail
-        Tag               inference.access
-        Path              /var/log/containers/llm-inference*.log
-        Parser            docker
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-
-    [FILTER]
-        Name              grep
-        Match             inference.access
-        Regex             log .*"request".*
-
-    [OUTPUT]
-        Name              cloudwatch_logs
-        Match             inference.access
-        region            us-west-2
-        log_group_name    /eks/ai-ml/inference-audit
-        log_stream_prefix inference-
-        auto_create_group true
-```
+All original guide/quiz prose and87unique code blocks were reviewed. Validation includes three native inference-perf mock requests, SOCI local OCI conversion, six cache cases, three Karpenter/ESO schemas and cron arithmetic. No GPU/real-model benchmark, container-startup measurement, host SOCI installation, cloud resource or secret provider was executed.
 
 ## References
 
-- [AI on EKS - Best Practices and Blueprints](https://awslabs.github.io/ai-on-eks/)
-- [NVIDIA GPU Operator Documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/overview.html)
-- [Amazon EKS Best Practices Guide - AI/ML](https://aws.github.io/aws-eks-best-practices/machine-learning/)
-- [vLLM Documentation](https://docs.vllm.ai/)
-- [NVIDIA DCGM Documentation](https://docs.nvidia.com/datacenter/dcgm/latest/)
-- [Karpenter Documentation](https://karpenter.sh/)
-- [EFA User Guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html)
-- [FSx for Lustre User Guide](https://docs.aws.amazon.com/fsx/latest/LustreGuide/)
+- [inference-perf0.6.1](https://github.com/kubernetes-sigs/inference-perf/tree/v0.6.1)
+- [SOCI0.15 CLI](https://github.com/awslabs/soci-snapshotter/blob/v0.15.0/docs/cli-usage.md)
+- [Bottlerocket1.64 bootstrap settings](https://bottlerocket.dev/en/os/1.64.x/api/settings/bootstrap-containers/)
+- [Karpenter1.14.1 CRDs](https://github.com/aws/karpenter-provider-aws/tree/v1.14.1/pkg/apis/crds)
+- [Karpenter disruption](https://karpenter.sh/docs/concepts/disruption/)
+- [ESO2.10 ExternalSecret CRD](https://github.com/external-secrets/external-secrets/blob/helm-chart-2.10.0/config/crds/bases/external-secrets.io_externalsecrets.yaml)
+- [Kubernetes Secret updates](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [S3 general-purpose bucket ABAC enablement](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html)
+- [EBS gp3 performance](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)
 
----
+## Quiz
 
-**Quiz**: Test your understanding with the [AI/ML Best Practices Quiz](../quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+[AI/ML Best Practices Quiz](../quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)

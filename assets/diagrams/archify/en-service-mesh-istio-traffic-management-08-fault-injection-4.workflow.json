@@ -1,0 +1,175 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Progressive Chaos Engineering Stages",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1040,
+      410
+    ],
+    "views": [
+      {
+        "id": "escalation",
+        "label": "Escalating fault rate",
+        "focus": [
+          "stage1",
+          "stage2",
+          "stage3",
+          "stage4"
+        ],
+        "note": "Monitor each stage for 15 minutes; if nothing breaks, raise the fault rate to the next stage."
+      },
+      {
+        "id": "issue-path",
+        "label": "When an issue is found",
+        "focus": [
+          "stage1",
+          "stage2",
+          "stage3",
+          "stage4",
+          "fix"
+        ],
+        "note": "At any stage, an issue stops the progression and sends the team back to fix and improve."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "stages",
+      "label": "Fault Injection Stages"
+    },
+    {
+      "id": "recovery",
+      "label": "When an issue is found",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "stage1"
+    ],
+    "allowedTerminals": [
+      "stage4",
+      "fix"
+    ],
+    "requiredPaths": [
+      {
+        "from": "stage1",
+        "to": "stage4"
+      },
+      {
+        "from": "stage1",
+        "to": "fix"
+      },
+      {
+        "from": "stage4",
+        "to": "fix"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "stage1",
+      "lane": "stages",
+      "col": 0,
+      "type": "backend",
+      "label": "Stage 1",
+      "sublabel": "1–5% faults",
+      "tag": "15 min monitoring"
+    },
+    {
+      "id": "stage2",
+      "lane": "stages",
+      "col": 1,
+      "type": "backend",
+      "label": "Stage 2",
+      "sublabel": "5–10% faults",
+      "tag": "15 min monitoring"
+    },
+    {
+      "id": "stage3",
+      "lane": "stages",
+      "col": 2,
+      "type": "backend",
+      "label": "Stage 3",
+      "sublabel": "10–20% faults",
+      "tag": "15 min monitoring"
+    },
+    {
+      "id": "stage4",
+      "lane": "stages",
+      "col": 3,
+      "type": "backend",
+      "label": "Stage 4",
+      "sublabel": "20–50% faults",
+      "tag": "15 min monitoring"
+    },
+    {
+      "id": "fix",
+      "lane": "recovery",
+      "col": 3,
+      "type": "security",
+      "label": "Fix and Improve",
+      "tag": "issue found",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "stage1",
+      "to": "stage2",
+      "label": "Monitoring OK",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "stage2",
+      "to": "stage3",
+      "label": "Monitoring OK",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "stage3",
+      "to": "stage4",
+      "label": "Monitoring OK",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "stage1",
+      "to": "fix",
+      "label": "Issue found",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "from": "stage2",
+      "to": "fix",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "from": "stage3",
+      "to": "fix",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "from": "stage4",
+      "to": "fix",
+      "variant": "dashed",
+      "role": "error"
+    }
+  ]
+}

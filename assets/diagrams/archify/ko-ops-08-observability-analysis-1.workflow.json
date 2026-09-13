@@ -1,0 +1,190 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "상관 분석 워크플로우",
+    "output": "ko-ops-08-observability-analysis-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "messagebus": {
+          "label": "알림 발생(시작)"
+        },
+        "frontend": {
+          "label": "대시보드 확인"
+        },
+        "security": {
+          "label": "판단 분기"
+        },
+        "backend": {
+          "label": "트레이스 · 원인 분석 단계"
+        },
+        "database": {
+          "label": "로그 조회"
+        },
+        "external": {
+          "label": "해결 조치(종료)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "observations",
+        "label": "관측 자료",
+        "focus": [
+          "metric",
+          "trace",
+          "logs"
+        ],
+        "note": "알림·메트릭·트레이스·로그의 시간과 식별자를 맞춰 조사한다."
+      },
+      {
+        "id": "validation",
+        "label": "가설 검증",
+        "focus": [
+          "verify",
+          "fix"
+        ],
+        "note": "원인 가설을 검증하고 승인한 조치의 효과와 회복을 확인한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "observe",
+      "label": "조사"
+    },
+    {
+      "id": "verify",
+      "label": "검증"
+    }
+  ],
+  "mainPath": [
+    "metric",
+    "trace",
+    "logs",
+    "verify",
+    "fix"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "metric"
+    ],
+    "allowedTerminals": [
+      "fix"
+    ],
+    "requiredPaths": [
+      {
+        "from": "metric",
+        "to": "fix"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "metric",
+      "lane": "observe",
+      "col": 0,
+      "type": "frontend",
+      "label": "알림·메트릭 확인",
+      "sublabel": "대상·시간·단위",
+      "width": 170
+    },
+    {
+      "id": "trace",
+      "lane": "observe",
+      "col": 1,
+      "type": "backend",
+      "label": "Trace·Span 분석",
+      "sublabel": "ID·검색·부모 자식",
+      "width": 180
+    },
+    {
+      "id": "logs",
+      "lane": "observe",
+      "col": 2,
+      "type": "database",
+      "label": "관련 로그 조회",
+      "sublabel": "동일 trace_id",
+      "width": 170
+    },
+    {
+      "id": "verify",
+      "lane": "verify",
+      "col": 2,
+      "type": "security",
+      "label": "원인 가설 검증",
+      "sublabel": "독립 근거·재현",
+      "width": 170
+    },
+    {
+      "id": "fix",
+      "lane": "verify",
+      "col": 3,
+      "type": "external",
+      "label": "승인 조치·회복",
+      "sublabel": "효과·부작용 확인",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "from": "metric",
+      "to": "trace",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e1",
+      "from": "trace",
+      "to": "logs",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e2",
+      "from": "logs",
+      "to": "verify",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e3",
+      "from": "verify",
+      "to": "fix",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "id": "more-evidence",
+      "from": "verify",
+      "to": "metric",
+      "role": "return",
+      "variant": "dashed",
+      "label": "추가 근거"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "연결 키와 대안",
+      "items": [
+        "Exemplar의 trace_id로 조회하거나 시간·서비스로 검색한다",
+        "트레이스가 없으면 샘플링·수집·보존 상태도 확인한다",
+        "로그 ID가 있어도 backend에 trace가 저장됐다는 보장은 없다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "상관관계와 원인",
+      "items": [
+        "같은 시간의 오류만으로 root cause를 확정하지 않는다",
+        "span 관계와 로그를 근거로 가설을 만들고 검증한다",
+        "승인한 조치의 효과·부작용·회복을 확인한다"
+      ]
+    }
+  ]
+}

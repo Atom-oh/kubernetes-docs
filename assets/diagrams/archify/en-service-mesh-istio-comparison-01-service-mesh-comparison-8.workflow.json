@@ -1,0 +1,268 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Data Plane Lifecycle",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kuma DP internal step"
+        },
+        "messagebus": {
+          "label": "Zone CP interaction"
+        },
+        "security": {
+          "label": "mTLS traffic handling"
+        },
+        "external": {
+          "label": "External signal"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "bootstrap",
+        "label": "Bootstrap and config",
+        "focus": [
+          "start",
+          "register",
+          "connect",
+          "receive"
+        ],
+        "note": "Kuma DP registers with the Zone CP using its token and receives xDS configuration over a gRPC stream."
+      },
+      {
+        "id": "runtime",
+        "label": "Runtime",
+        "focus": [
+          "receive",
+          "proxy",
+          "traffic",
+          "metrics"
+        ],
+        "note": "It configures Envoy from that configuration, proxies mTLS traffic, and collects metrics."
+      },
+      {
+        "id": "update",
+        "label": "Dynamic update",
+        "focus": [
+          "metrics",
+          "watch",
+          "hotreload",
+          "traffic"
+        ],
+        "note": "When a Zone CP change is detected, the new config is hot-reloaded with zero downtime and traffic proxying continues."
+      },
+      {
+        "id": "shutdown",
+        "label": "Shutdown",
+        "focus": [
+          "metrics",
+          "signal",
+          "drain",
+          "deregister"
+        ],
+        "note": "On SIGTERM it drains existing connections, deregisters from the Zone CP, and exits the process."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "bootstrap",
+      "label": "Initialization · Config reception"
+    },
+    {
+      "id": "runtime",
+      "label": "Runtime"
+    },
+    {
+      "id": "update",
+      "label": "Dynamic update"
+    },
+    {
+      "id": "shutdown",
+      "label": "Termination",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "register",
+    "connect",
+    "receive",
+    "proxy",
+    "traffic",
+    "metrics"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "bootstrap",
+      "col": 0,
+      "type": "backend",
+      "label": "Kuma DP start",
+      "sublabel": "Acquire Data Plane Token",
+      "width": 160
+    },
+    {
+      "id": "register",
+      "lane": "bootstrap",
+      "col": 1,
+      "type": "messagebus",
+      "label": "Register",
+      "sublabel": "Zone CP · DP token",
+      "width": 158
+    },
+    {
+      "id": "connect",
+      "lane": "bootstrap",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Open gRPC stream",
+      "sublabel": "connect to Zone CP",
+      "width": 150
+    },
+    {
+      "id": "receive",
+      "lane": "bootstrap",
+      "col": 3,
+      "type": "messagebus",
+      "label": "Receive xDS Configuration",
+      "sublabel": "Listeners · Routes · Clusters · Endpoints",
+      "width": 220
+    },
+    {
+      "id": "proxy",
+      "lane": "runtime",
+      "col": 3,
+      "type": "backend",
+      "label": "Configure Envoy",
+      "width": 144
+    },
+    {
+      "id": "traffic",
+      "lane": "runtime",
+      "col": 4,
+      "type": "security",
+      "label": "Traffic proxy",
+      "sublabel": "mTLS · LB · health check",
+      "width": 150
+    },
+    {
+      "id": "metrics",
+      "lane": "runtime",
+      "col": 5,
+      "type": "backend",
+      "label": "Collect metrics",
+      "sublabel": "requests · latency · errors",
+      "width": 150
+    },
+    {
+      "id": "watch",
+      "lane": "update",
+      "col": 5,
+      "type": "messagebus",
+      "label": "Detect Zone CP change",
+      "sublabel": "receive config update",
+      "width": 182
+    },
+    {
+      "id": "hotreload",
+      "lane": "update",
+      "col": 4,
+      "type": "backend",
+      "label": "Hot Reload",
+      "sublabel": "zero-downtime apply",
+      "width": 116
+    },
+    {
+      "id": "signal",
+      "lane": "shutdown",
+      "col": 0,
+      "type": "external",
+      "label": "SIGTERM received",
+      "width": 160
+    },
+    {
+      "id": "drain",
+      "lane": "shutdown",
+      "col": 2,
+      "type": "backend",
+      "label": "Connection Draining",
+      "sublabel": "finish existing connections",
+      "width": 180
+    },
+    {
+      "id": "deregister",
+      "lane": "shutdown",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Deregister from Zone CP",
+      "sublabel": "process exit",
+      "width": 204
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "register"
+    },
+    {
+      "from": "register",
+      "to": "connect"
+    },
+    {
+      "from": "connect",
+      "to": "receive"
+    },
+    {
+      "from": "receive",
+      "to": "proxy"
+    },
+    {
+      "from": "proxy",
+      "to": "traffic"
+    },
+    {
+      "from": "traffic",
+      "to": "metrics"
+    },
+    {
+      "from": "metrics",
+      "to": "watch"
+    },
+    {
+      "from": "watch",
+      "to": "hotreload",
+      "role": "return"
+    },
+    {
+      "from": "hotreload",
+      "to": "traffic",
+      "role": "return",
+      "label": "re-apply"
+    },
+    {
+      "from": "metrics",
+      "to": "signal",
+      "role": "async",
+      "variant": "dashed",
+      "label": "SIGTERM",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "from": "signal",
+      "to": "drain",
+      "role": "error"
+    },
+    {
+      "from": "drain",
+      "to": "deregister",
+      "role": "error"
+    }
+  ]
+}

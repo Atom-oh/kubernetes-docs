@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Spine-Leaf 아키텍처 통합",
+    "output": "ko-networking-calico-04-bgp-deep-dive-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      640
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Spine 스위치"
+        },
+        "cloud": {
+          "label": "Leaf 스위치 (ToR)"
+        },
+        "backend": {
+          "label": "Kubernetes 노드 (Calico)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "spine-leaf",
+        "label": "Spine-Leaf 피어링",
+        "focus": [
+          "spines",
+          "leaf1",
+          "leaf2",
+          "leaf3"
+        ],
+        "note": "각 Leaf는 Spine 1과 Spine 2 모두와 eBGP 세션을 맺어 이중화한다 (총 6세션)."
+      },
+      {
+        "id": "rack-peering",
+        "label": "랙 내 노드 피어링",
+        "focus": [
+          "leaf1",
+          "leaf2",
+          "leaf3",
+          "nodes1",
+          "nodes2",
+          "nodes3"
+        ],
+        "note": "노드는 자기 랙의 Leaf와만 eBGP 피어링하며 Pod CIDR을 Leaf로 광고한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "spines",
+      "type": "external",
+      "label": "Spine 1 · Spine 2",
+      "sublabel": "10.0.0.1 · 10.0.0.2",
+      "tag": "AS 64510 · 2대 이중화",
+      "pos": [
+        450,
+        50
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "leaf1",
+      "type": "cloud",
+      "label": "Leaf 1",
+      "sublabel": "10.0.10.1 · Rack 1",
+      "tag": "AS 64520",
+      "pos": [
+        110,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "leaf2",
+      "type": "cloud",
+      "label": "Leaf 2",
+      "sublabel": "10.0.20.1 · Rack 2",
+      "tag": "AS 64521",
+      "pos": [
+        490,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "leaf3",
+      "type": "cloud",
+      "label": "Leaf 3",
+      "sublabel": "10.0.30.1 · Rack 3",
+      "tag": "AS 64522",
+      "pos": [
+        870,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "nodes1",
+      "type": "backend",
+      "label": "Node 1, 2",
+      "sublabel": "10.0.10.10 / .11",
+      "tag": "rack1",
+      "pos": [
+        110,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "nodes2",
+      "type": "backend",
+      "label": "Node 3, 4",
+      "sublabel": "10.0.20.10 / .11",
+      "tag": "rack2",
+      "pos": [
+        490,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "nodes3",
+      "type": "backend",
+      "label": "Node 5, 6",
+      "sublabel": "10.0.30.10 / .11",
+      "tag": "rack3",
+      "pos": [
+        870,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Spine Layer (AS 64510)",
+      "wraps": [
+        "spines"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Leaf Layer (랙별 AS)",
+      "wraps": [
+        "leaf1",
+        "leaf2",
+        "leaf3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터 (AS 64512)",
+      "wraps": [
+        "nodes1",
+        "nodes2",
+        "nodes3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "leaf1-spines",
+      "from": "leaf1",
+      "to": "spines",
+      "label": "eBGP × 2"
+    },
+    {
+      "id": "leaf2-spines",
+      "from": "leaf2",
+      "to": "spines",
+      "label": "eBGP × 2 (Spine 1, 2 각각)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "leaf3-spines",
+      "from": "leaf3",
+      "to": "spines",
+      "label": "eBGP × 2"
+    },
+    {
+      "id": "nodes1-leaf1",
+      "from": "nodes1",
+      "to": "leaf1",
+      "label": "eBGP",
+      "labelDy": -40
+    },
+    {
+      "id": "nodes2-leaf2",
+      "from": "nodes2",
+      "to": "leaf2",
+      "label": "eBGP · Pod CIDR 광고",
+      "variant": "emphasis",
+      "labelDy": -40
+    },
+    {
+      "id": "nodes3-leaf3",
+      "from": "nodes3",
+      "to": "leaf3",
+      "label": "eBGP",
+      "labelDy": -40
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Spine Layer",
+      "items": [
+        "Spine 2대(10.0.0.1, 10.0.0.2)가 Leaf 3대 모두와 eBGP 피어링 (6세션)",
+        "Spine 하나가 장애여도 다른 Spine 경로로 우회 (이중화)"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Leaf Layer (ToR)",
+      "items": [
+        "랙마다 고유 AS: 64520 / 64521 / 64522",
+        "자기 랙 노드에서 받은 Pod CIDR을 Spine으로 전달"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Calico BGPPeer (랙별)",
+      "items": [
+        "nodeSelector: rack == 'rack1' 로 랙 노드만 선택",
+        "peerIP = 해당 랙 Leaf, asNumber = Leaf의 AS",
+        "MD5 password는 bgp-secrets Secret에서 참조"
+      ]
+    }
+  ]
+}

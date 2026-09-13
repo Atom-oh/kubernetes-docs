@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Automatic Allocation Behavior",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      660
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "prealloc",
+        "label": "Virtual IP pre-allocation",
+        "focus": [
+          "istiod",
+          "envoy"
+        ],
+        "note": "When a ServiceEntry is registered, Istiod pushes the virtual IP configuration to Envoy ahead of time via xDS."
+      },
+      {
+        "id": "dns",
+        "label": "DNS query response",
+        "focus": [
+          "app",
+          "envoy"
+        ],
+        "note": "Envoy DNS Proxy answers immediately with a virtual IP from the 240.240.0.0/16 range, with no external lookup."
+      },
+      {
+        "id": "http",
+        "label": "Forward to the real host",
+        "focus": [
+          "app",
+          "envoy",
+          "external"
+        ],
+        "note": "HTTP requests sent to the virtual IP are mapped to the real host, forwarded to its real IP, and the response is returned."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "app container"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy DNS Proxy",
+      "sublabel": "sidecar · :15053"
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "Istiod",
+      "sublabel": "control plane"
+    },
+    {
+      "id": "external",
+      "type": "external",
+      "label": "api.example.com",
+      "sublabel": "actual server"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 222,
+      "label": "Pre-allocation on ServiceEntry registration"
+    },
+    {
+      "from": 240,
+      "to": 325,
+      "label": "DNS query → virtual IP response"
+    },
+    {
+      "from": 343,
+      "to": 595,
+      "label": "HTTP request → forwarded to the real host"
+    }
+  ],
+  "messages": [
+    {
+      "id": "xds-push",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 195,
+      "label": "xDS config push (virtual IP allocated)",
+      "variant": "dashed"
+    },
+    {
+      "id": "dns-query",
+      "from": "app",
+      "to": "envoy",
+      "y": 262,
+      "label": "DNS query · api.example.com",
+      "note": "Envoy looks up virtual IP 240.240.0.1"
+    },
+    {
+      "id": "dns-reply",
+      "from": "envoy",
+      "to": "app",
+      "y": 305,
+      "label": "DNS response · 240.240.0.1",
+      "variant": "return"
+    },
+    {
+      "id": "http-req",
+      "from": "app",
+      "to": "envoy",
+      "y": 365,
+      "label": "HTTP request · 240.240.0.1:443",
+      "variant": "emphasis",
+      "note": "Maps virtual IP → real host api.example.com"
+    },
+    {
+      "id": "real-dns",
+      "from": "envoy",
+      "to": "external",
+      "y": 410,
+      "label": "DNS lookup (actual IP)"
+    },
+    {
+      "id": "real-ip",
+      "from": "external",
+      "to": "envoy",
+      "y": 450,
+      "label": "203.0.113.10",
+      "variant": "return"
+    },
+    {
+      "id": "http-fwd",
+      "from": "envoy",
+      "to": "external",
+      "y": 495,
+      "label": "HTTP request · 203.0.113.10:443",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ext-resp",
+      "from": "external",
+      "to": "envoy",
+      "y": 532,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "app-resp",
+      "from": "envoy",
+      "to": "app",
+      "y": 570,
+      "label": "Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 190,
+      "to": 205,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 257,
+      "to": 310,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 360,
+      "to": 575,
+      "type": "backend"
+    },
+    {
+      "participant": "external",
+      "from": 405,
+      "to": 538,
+      "type": "external"
+    }
+  ]
+}

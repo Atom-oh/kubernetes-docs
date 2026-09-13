@@ -1,33 +1,99 @@
 # Part 3: Amazon EMR on EKS
 
-> **마지막 업데이트**: 2026년 7월 15일
+> **최종 검토**: 2026년 9월 12일 · API 예제는 `emr-spark-8.0.0-20260421` 기준
 
-## 실습 환경 설정
+## EMR 런타임과 제출 경로
 
-이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+EMR on EKS는 기존 EKS에 AWS가 관리하는 Spark 런타임과 제출 기능을 제공합니다.
+EKS control plane·노드·용량·네트워크·스토리지는 계속 운영해야 합니다.
+다음 경로는 구분해야 합니다.
 
-### 필수 도구
+| 경로 | 제출·수명주기 | 필요한 관리 |
+| --- | --- | --- |
+| StartJobRun | EMR virtual cluster ID와 실행 역할로 AWS API 호출 | EMR job 상태·권한·로그 설정 |
+| EMR 런타임 + Spark Operator | 설치한 EMR용 Operator에 SparkApplication CR 제출 | Helm/CRD·controller·Kubernetes RBAC·작업 상태 |
+| 직접 spark-submit | Spark가 Kubernetes API에 제출 | 제출자·Spark 설정·상태·재실행 |
 
-* AWS CLI v2 (가상 클러스터 등록 및 `emr-containers` API 호출용)
-* 작동하는 Amazon EKS 클러스터 (v1.30 이상 권장)
-* EMR 가상 클러스터의 IAM 역할과 각 작업의 실행 역할을 생성할 수 있는 IAM 권한
-* kubectl v1.30 이상 (EMR on EKS가 대상으로 하는 네임스페이스 확인용)
+EMR 6.10.0+의 Spark Operator 지원은 **StartJobRun이 내부적으로 Operator에
+위임하는 옵션이라는 뜻이 아닙니다**. 공식 Operator 경로는 별도로 설치하고
+kubectl apply로 CR을 생성합니다. 같은 작업이 자동으로 StartJobRun job ID나
+EMR job API의 관리 대상이 된다고 가정하지 않습니다. EMR 런타임과 CR 기반 운영을
+함께 사용할 수 있지만 제출·관측·재시도 방식은 각 경로에 맞게 설계합니다.
+EMR용 chart를 Part 2의 최신 Kubeflow/Apache chart와 동일하다고 가정하지 않습니다.
 
-Part 1에서는 Kubernetes에 직접 `spark-submit`을 호출하는 방식을 다뤘고, Part 2에서는 동일한 제출 모델을 오픈소스 Spark Operator의 CRD 기반 워크플로로 감싸는 방식을 다룹니다. 이번 Part에서는 세 번째 선택지인 Amazon EMR on EKS를 다룹니다 — 기존 EKS 클러스터를 대체하지 않고 그 위에서 동작하는 AWS의 관리형 Spark 런타임입니다.
+## 현재 릴리스와 재현성
 
-## EMR on EKS가 실제로 바꾸는 것
+| EMR on EKS 릴리스 | Spark 런타임 |
+| --- | --- |
+| emr-7.13.0 | 3.5.6-amzn-2 |
+| emr-spark-8.0.0 | 4.0.2-amzn-0; Spark 4.x GA, 2026년 4월 출시 |
 
-EMR on EKS는 별도의 클러스터를 제공하는 것이 아닙니다. 드라이버와 Executor Pod는 여전히 나머지 워크로드와 동일한 EKS 노드 위에서 실행됩니다. EMR on EKS가 바꾸는 것은 **작업 제출 방식과 Spark 런타임**입니다. `SparkApplication` 커스텀 리소스에 `kubectl apply`를 실행하거나(Part 2 방식) 직접 `spark-submit`을 호출하는 대신(Part 1 방식), **StartJobRun API**를 호출하면 AWS 컨트롤 플레인이 이를 AWS가 최적화한 Spark 빌드를 실행하는 작업으로 변환합니다.
+Spark 4는 예정 기능이 아닙니다. 8.0.0은 EMR 런타임 릴리스 이름이며 Apache Spark
+버전 8을 뜻하지 않습니다. 다른 EMR 배포 방식의 세부 버전·기능도 각각 확인합니다.
+`-latest`는 보안 업데이트를 따라가는 별칭이므로 동일한 이미지 바이트를 고정하지
+않습니다. 날짜 suffix는 선택한 릴리스를 재현하는 데 유용하지만 업데이트 검토는
+계속 필요합니다. 아래 예제의 날짜 릴리스는 최신 보안 상태를 보장하는 권장이 아닙니다.
 
-### 가상 클러스터: 핵심 추상화
+## 실습 전 준비
 
-**가상 클러스터(virtual cluster)**는 EMR 개념과 실제 Kubernetes 객체 사이의 매핑입니다 — 하나의 EKS 네임스페이스를 EMR 컨트롤 플레인에 등록하는 것입니다. 등록 시점에 네임스페이스 안에 무언가가 새로 프로비저닝되는 것은 아닙니다. 가상 클러스터는 새로운 인프라가 아니라 포인터에 가깝습니다. 이후 해당 가상 클러스터 ID로 제출하는 모든 작업은 그 네임스페이스 안에 드라이버/Executor Pod로 생성되며, 그 네임스페이스에 이미 적용된 `ResourceQuota`, `LimitRange`, RBAC의 제약을 그대로 따릅니다.
+지원 중인 EKS 버전과 호환 kubectl, 최신 AWS CLI v2를 사용합니다. 오래된 1.30을
+일괄 권장하지 않습니다. Pod Identity CLI helper는 2.24.0 이상이 필요합니다.
+관리자가 다음 항목을 준비한 뒤 아래 API 예제를 실행합니다.
+
+1. 작업 namespace `emr-spark`, 노드 용량·네트워크, namespace quota/admission 정책.
+2. EMR service-linked role과 EKS API 접근. 새 virtual cluster에는 EKS Access Entry
+   연동을 사용합니다. 공식 CAM 절차는 API_AND_CONFIG_MAP을 예시로 설명하므로
+   현재 인증 모드를 확인하며 이미 API-only인 cluster를 되돌리려 하지 않습니다.
+   기존 virtual cluster가 자동 마이그레이션된다고 가정하지 않습니다.
+3. 작업 실행 역할 `docs-emr-job`: 아래 script object 읽기, 필요한 데이터·KMS 권한,
+   CloudWatch log group/stream 접근만 허용합니다.
+4. 기존 S3 artifact bucket과 `/emr-containers/docs-spark` log group, 보존 기간.
+   업로더 권한과 job 실행 역할 권한을 구분합니다.
+5. 제출자의 StartJobRun·조회/취소 권한과 허용 실행 역할.
+   `emr-containers:ExecutionRoleArn` 조건으로 사용 가능한 역할을 제한합니다.
+   Pod Identity 경로의 PassRole은 지정 역할과 `pods.eks.amazonaws.com`으로 제한합니다.
+
+Virtual cluster는 EKS namespace 등록이며 새 compute cluster가 아닙니다.
+하지만 “등록은 어떤 리소스·권한도 바꾸지 않는다”는 설명은 부정확합니다.
+최초 service-linked role 생성 및 CAM access entry/policy 설정이 발생할 수 있습니다.
+Namespace는 단독 보안 경계가 아니므로 RBAC·네트워크·Pod 보안도 필요합니다.
+
+## 실행 역할: IRSA 또는 Pod Identity
+
+IRSA는 cluster OIDC provider·audience·namespace·EMR 관리 service account 이름에
+맞는 trust가 필요합니다. update-role-trust-policy는 이 IAM trust를 수정하는 관리
+명령이며 데이터를 읽는 권한이나 제출자 권한을 자동으로 추가하지 않습니다.
+
+StartJobRun은 EMR **7.3.0부터 EKS Pod Identity도 지원**합니다. 이 경로는
+Agent/노드 EKS Auth 권한, `pods.eks.amazonaws.com`에 대한
+sts:AssumeRole·sts:TagSession trust, 그리고 실행 역할과 EMR service account의
+association이 필요합니다. Helper는 submitter·driver·executor의 세 association을
+준비합니다. IRSA role annotation만으로 대신할 수 없습니다.
+
+아래의 cluster/role 이름과 namespace를 실제 준비한 값으로 바꾸고 **선택한 경로만**
+실행합니다. 해당 helper는 IAM/EKS 설정을 변경합니다.
 
 ```bash
-# 기존 EKS 네임스페이스를 EMR 가상 클러스터로 등록
-aws emr-containers create-virtual-cluster \
-  --name my-spark-vc \
-  --container-provider '{
+# Option A: IRSA, after creating the cluster IAM OIDC provider and job role.
+aws emr-containers update-role-trust-policy \
+  --region "$AWS_REGION" \
+  --cluster-name my-eks-cluster --namespace emr-spark --role-name docs-emr-job
+
+# Option B: Pod Identity, after configuring the agent/node permissions and job-role trust.
+# Choose the appropriate path; these are not two mandatory consecutive steps.
+aws emr-containers create-role-associations \
+  --region "$AWS_REGION" \
+  --cluster-name my-eks-cluster --namespace emr-spark --role-name docs-emr-job
+```
+
+## Virtual cluster 등록
+
+create-virtual-cluster.json으로 저장하고 예시 이름을 바꿉니다.
+
+```json
+{
+  "name": "docs-spark-vc",
+  "containerProvider": {
     "id": "my-eks-cluster",
     "type": "EKS",
     "info": {
@@ -35,120 +101,174 @@ aws emr-containers create-virtual-cluster \
         "namespace": "emr-spark"
       }
     }
-  }'
+  }
+}
 ```
 
-이 호출은 `virtualClusterId`를 반환하며, 이후 모든 `start-job-run` 호출에 이 값을 전달합니다. 가상 클러스터를 삭제해도 등록 정보만 삭제될 뿐, 네임스페이스나 그 안에서 실행 중인 리소스에는 영향이 없습니다.
-
-### 작업 실행 IAM 역할
-
-모든 작업 실행에는 **작업 실행 역할(job execution role)**이 필요합니다 — 해당 작업이 접근할 수 있는 대상(S3 버킷, Glue 데이터 카탈로그, KMS 키 등)으로 범위를 좁힌 IAM 역할로, 클러스터에 한 번 붙여두는 것이 아니라 매 `start-job-run` 호출마다 명시적으로 전달합니다. 이 역할은 먼저 가상 클러스터에 **온보딩**되어야 합니다 — 신뢰 정책이 해당 네임스페이스에서 실행되는 Pod를 위해 EMR on EKS 서비스가 이 역할을 위임(assume)할 수 있도록 허용해야 하며, IRSA 방식과 유사한 OIDC 신뢰 관계를 통해 Kubernetes 서비스 어카운트에 바인딩됩니다. 이는 Part 2에서 다룬 IRSA의 동작 방식과 원리는 같지만, 직접 만들고 관리하는 서비스 어카운트가 아니라 EMR이 관리하는 Pod와 실행 역할 사이의 바인딩이라는 점이 다릅니다.
+최신 서비스 문서에는 schedulerConfiguration의 maxConcurrentJobRuns와
+maxInQueueJobRuns가 있습니다. 다만 검증 환경의 AWS CLI 2.35.11 서비스 모델에는
+이 필드가 아직 없어 위 기본 예제에는 넣지 않았습니다. 사용 전 CLI/SDK 지원을
+확인합니다. 작업 수 제한은 CPU·메모리 quota나 executor 상한을 대신하지 않습니다.
 
 ```bash
-# EMR on EKS 서비스가 작업 실행 역할을 위임할 수 있도록 권한 부여
-aws emr-containers update-role-trust-policy \
-  --cluster-name my-eks-cluster \
-  --namespace emr-spark \
-  --role-name my-job-execution-role
+# Replace the cluster/name/namespace in create-virtual-cluster.json first.
+: "${AWS_REGION:?Set the region of the EKS cluster}"
+aws emr-containers create-virtual-cluster \
+  --region "$AWS_REGION" \
+  --cli-input-json file://create-virtual-cluster.json \
+  --query id --output text
+# Copy the returned id into start-job-run.json; verify state before submitting.
+: "${EMR_VIRTUAL_CLUSTER_ID:?Set the returned virtual cluster ID}"
+aws emr-containers describe-virtual-cluster \
+  --region "$AWS_REGION" --id "$EMR_VIRTUAL_CLUSTER_ID" \
+  --query 'virtualCluster.{state:state,provider:containerProvider}'
 ```
 
-## 작업 제출 방식: StartJobRun vs kubectl apply
+CreateVirtualCluster 응답 필드는 **id**입니다. StartJobRun 요청의 virtualClusterId에
+그 값을 사용하며 RUNNING 상태와 대상 namespace를 확인합니다.
 
-이것이 Part 2와의 근본적인 UX 차이입니다. Spark Operator 방식은 `SparkApplication` YAML 매니페스트를 작성해 `kubectl`로(또는 Git에서 동기화하는 GitOps 도구로) 적용하는 방식이며, 작업의 전체 정의가 하나의 Kubernetes 객체로 존재하고 해당 CRD를 감시하는 컨트롤러가 이를 조정(reconcile)합니다. EMR on EKS는 대신 작업 제출을 **일반적인 AWS API 호출**로 노출합니다 — CLI, 어떤 AWS SDK, 콘솔, 심지어 Step Functions 상태 머신에서도 호출할 수 있으며, 작업을 실행하기 위해 클러스터에 대한 `kubectl` 접근 권한이 전혀 필요하지 않습니다.
+## 실행 가능한 smoke job
 
-```bash
-aws emr-containers start-job-run \
-  --virtual-cluster-id abcd1234efgh5678ijkl9012mnop \
-  --name my-etl-job \
-  --execution-role-arn arn:aws:iam::111122223333:role/my-job-execution-role \
-  --release-label emr-7.6.0-latest \
-  --job-driver '{
+smoke.py로 저장합니다. 외부 데이터를 변경하지 않고 rows=10, total=45를 검증합니다.
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+spark = SparkSession.builder.appName("docs-emr-smoke").getOrCreate()
+try:
+    result = spark.range(10).agg(F.count("*").alias("rows"), F.sum("id").alias("total")).first()
+    if result.rows != 10 or result.total != 45:
+        raise RuntimeError(f"Unexpected result: {result}")
+    print("SMOKE_OK rows=10 total=45")
+finally:
+    spark.stop()
+```
+
+start-job-run.json으로 저장하고 virtualClusterId·계정·역할·bucket을 실제 값으로
+바꿉니다. S3 script와 log group 접근 권한을 준비한 상태여야 합니다.
+
+```json
+{
+  "name": "docs-spark-smoke",
+  "virtualClusterId": "abcd1234efgh5678ijkl9012mnop",
+  "executionRoleArn": "arn:aws:iam::111122223333:role/docs-emr-job",
+  "releaseLabel": "emr-spark-8.0.0-20260421",
+  "jobDriver": {
     "sparkSubmitJobDriver": {
-      "entryPoint": "s3://my-bucket/jobs/etl-job.py",
-      "sparkSubmitParameters": "--conf spark.executor.instances=4 --conf spark.executor.memory=4G"
+      "entryPoint": "s3://my-existing-artifact-bucket/docs-emr/smoke.py",
+      "sparkSubmitParameters": "--conf spark.executor.instances=2 --conf spark.executor.cores=1 --conf spark.executor.memory=1g --conf spark.driver.cores=1 --conf spark.driver.memory=1g"
     }
-  }' \
-  --configuration-overrides '{
+  },
+  "configurationOverrides": {
     "monitoringConfiguration": {
       "cloudWatchMonitoringConfiguration": {
-        "logGroupName": "/emr-containers/my-spark-vc",
-        "logStreamNamePrefix": "etl-job"
+        "logGroupName": "/emr-containers/docs-spark",
+        "logStreamNamePrefix": "smoke"
       }
     }
-  }'
+  }
+}
 ```
 
-![사용자가 StartJobRun을 호출하면 EMR 컨트롤 플레인이 가상 클러스터에 매핑된 EKS 네임스페이스로 요청을 라우팅하고, 해당 네임스페이스가 작업 실행 역할(IRSA)로 드라이버 Pod를 생성하며, 드라이버가 Executor Pod를 요청한 뒤 상태·로그·메트릭이 다시 EMR로 비동기 보고되는 시퀀스를 보여준다.](../../../assets/diagrams/rendered/ko-data-on-eks-spark-03-emr-on-eks-0.svg)
+```bash
+# Replace the bucket in this command and start-job-run.json with the same existing bucket.
+aws s3 cp smoke.py s3://my-existing-artifact-bucket/docs-emr/smoke.py \
+  --region "$AWS_REGION"
 
-결과적으로 실행되는 Pod는 평범한 EKS Pod입니다 — `kubectl get pods -n emr-spark`로 다른 워크로드처럼 그대로 조회할 수 있지만, 그 스펙을 직접 작성하는 일은 없습니다. 전달한 `release-label`(예: `emr-7.6.0-latest`)이 드라이버/Executor Pod에 사용할 Spark 버전과 컨테이너 이미지를 함께 결정하므로, 직접 빌드하고 푸시할 Dockerfile이 필요 없습니다.
+# Keep this token for retries of the same request. Use a new token for a new intended run.
+EMR_REQUEST_TOKEN="$(python3 -c 'import uuid; print(uuid.uuid4())')"
+aws emr-containers start-job-run \
+  --region "$AWS_REGION" \
+  --cli-input-json file://start-job-run.json \
+  --client-token "$EMR_REQUEST_TOKEN" --query id --output text
 
-### EMR 릴리스 레이블
+: "${EMR_JOB_ID:?Set the returned job ID}"
+aws emr-containers describe-job-run \
+  --region "$AWS_REGION" --virtual-cluster-id "$EMR_VIRTUAL_CLUSTER_ID" \
+  --id "$EMR_JOB_ID" --query 'jobRun.{state:state,details:stateDetails,reason:failureReason}'
+```
 
-EMR on EKS는 **릴리스 레이블**로 Spark 런타임 버전을 관리하며, `emr-x.x.x-latest` 형식을 따릅니다. 각 릴리스 레이블은 AWS가 패치한 특정 Spark 빌드를 고정합니다.
+API의 성공 응답은 접수 성공입니다. 최종 COMPLETED 상태와 driver 로그의
+SMOKE_OK rows=10 total=45를 확인합니다. Request token은 같은 API 요청 중복을
+제어하며 애플리케이션 재시도의 외부 부작용까지 exactly-once로 만들지 않습니다.
+환경 장애 시 stateDetails·failureReason·submitter/driver/executor 로그를 함께 봅니다.
 
-| 릴리스 레이블 | Spark 버전 |
-| --- | --- |
-| `emr-7.0.0-latest` | Spark 3.5.0-amzn-0 |
-| `emr-7.6.0-latest` | Spark 3.5.3-amzn-0 |
+![StartJobRun, Kubernetes pod placement, execution-role credentials and separate job/log observation.](../../.gitbook/assets/ko-data-on-eks-spark-03-emr-on-eks-0.png)
 
-`-amzn-N` 접미사는 이것이 순정 업스트림 Spark가 아니라, 오픈소스 릴리스에 AWS 자체 패치(S3 커넥터 튜닝, AQE·셔플 개선, 기타 성능 백포트)를 얹은 빌드임을 나타냅니다. **Spark 4.0**을 GA로 가져오는 것은 `emr-spark-8.0` 릴리스 라인이며, EMR on EC2·EMR Serverless·EMR on EKS 전체에 동일하게 적용됩니다.
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-spark-03-emr-on-eks-0.html)
 
-### EMR Studio
+## Pod 설정·관측·대화형 개발
 
-**EMR Studio**는 매번 CLI로 작업을 패키징해 `start-job-run`을 호출하는 대신, 가상 클러스터를 대상으로 대화형으로 Spark 코드를 개발하고 실행할 수 있는 노트북/IDE 스타일 인터페이스입니다. 내부적으로는 동일한 가상 클러스터/실행 역할 모델을 그대로 사용합니다 — Studio도 결국 같은 API로 제출합니다 — 다만 작업이 정식으로 예약된 `start-job-run` 파이프라인으로 넘어가기 전, 탐색적으로 개발할 수 있는 Jupyter 스타일의 워크플로를 제공합니다.
+EMR Pod도 namespace에서 kubectl로 볼 수 있습니다. Pod template과 지원되는 custom
+image 경로로 설정을 바꿀 수 있으므로 “Pod spec을 작성할 수 없다”는 설명은 틀립니다.
+하지만 StartJobRun이 관리하는 namespace·service account·이름 등은 임의로 덮어쓰지
+않습니다. 릴리스·제출 방식별 지원 필드와 custom image 검증 절차를 따릅니다.
 
-## EMR on EKS와 Spark Operator는 서로 배타적이지 않다
+CloudWatch 로그는 monitoringConfiguration과 실행 역할 권한이 필요합니다.
+Job 상태 메트릭과 전체 Spark executor 메트릭은 구분합니다. Step Functions에는
+StartJobRun의 요청/응답 및 .sync 통합이 있지만 state machine·역할을 구성해야 합니다.
+EventBridge의 작업 이벤트도 rule·target과 실패 처리를 구성해야 합니다.
+서비스 통합이 있다는 이유로 모든 수집과 자동화가 기본 활성화되는 것은 아닙니다.
 
-EMR on EKS와 Part 2의 셀프 매니지드 Spark Operator를 서로 경쟁하는 양자택일 관계로 보기 쉽지만, **EMR 6.10**부터는 반드시 그렇지 않습니다. EMR on EKS는 자체적인 드라이버/Executor Pod 생성 방식뿐 아니라, 작업 제출 모델의 한 선택지로서 오픈소스 Spark Operator를 *통해서도* 작업을 제출할 수 있습니다. 이 모드에서도 EMR의 AWS 최적화 Spark 런타임과 릴리스 레이블 기반 버전 관리는 그대로 유지되지만, 내부 조정 로직은 EMR 자체의 Pod 관리 대신 Spark Operator의 CRD 기반 라이프사이클을 따릅니다. 이미 GitOps 파이프라인을 `SparkApplication` 매니페스트 중심으로 표준화해 두었고, EMR의 관리형 런타임과 작업 실행 API를 얻기 위해 이를 포기하고 싶지 않은 경우에 특히 유용합니다.
+EMR Studio는 **CreateManagedEndpoint로 만든 interactive endpoint**와 연결합니다.
+Jupyter Enterprise Gateway가 kernel 수명주기를 관리하며 private subnet·ALB
+controller·네트워크·역할 구성이 필요합니다. 노트북 cell이 일반 StartJobRun batch
+호출로 그대로 변환된다고 설명하지 않습니다. Endpoint에 연결하는 사용자/kernel이
+해당 endpoint 실행 역할을 공유하므로 접근 경계와 별도 endpoint 구성을 검토합니다.
+Endpoint·kernel은 비용을 발생시키며 virtual cluster 등록만 무료라는 설명과 구분합니다.
 
-## EMR on EKS vs 셀프 매니지드 Spark Operator 비교
+## 운영 선택과 정리
 
-| 항목 | Amazon EMR on EKS | 셀프 매니지드 Spark Operator (Part 2) |
-| --- | --- | --- |
-| **Spark 런타임** | AWS 최적화 빌드(`-amzn-N`), 성능/AQE 개선이 백포트됨 | 순정 업스트림 Spark 또는 원하는 커스텀 빌드 |
-| **작업 제출** | `StartJobRun` API (CLI/SDK/콘솔/Step Functions) | `SparkApplication` CR에 `kubectl apply`, 대개 GitOps로 |
-| **버전 관리** | `release-label`을 선택하면 AWS가 Spark/런타임 조합을 큐레이션 | Spark와 Kubernetes 버전을 직접 선택, 원하는 시점에 업그레이드 |
-| **운영 부담** | 런타임 이미지와 제출 관련 배관을 대부분 AWS가 관리 | Operator의 라이프사이클, CRD 버전, 업그레이드 시점을 직접 소유 |
-| **AWS 서비스 통합** | CloudWatch Logs/Metrics, Step Functions, EventBridge 통합이 기본 제공 | Prometheus/Grafana/EventBridge 연동을 직접 구성해야 함 |
-| **GitOps 적합성** | 작업이 매니페스트가 아니라 API 호출이므로 GitOps 파이프라인에 넣으려면 래퍼(Lambda, Step Functions)가 필요 | `SparkApplication`이 네이티브 Kubernetes 객체이므로 Argo CD/Flux에 다른 매니페스트처럼 바로 편입 |
-| **이식성** | AWS 전용 컨트롤 플레인과 API | Operator가 실행되는 어떤 Kubernetes 클러스터로도 이식 가능 |
-| **대화형 개발** | 가상 클러스터를 대상으로 하는 EMR Studio 노트북 | 노트북/IDE 통합을 직접 구성 |
-| **제출 모델 유연성** | EMR 6.10+부터 내부적으로 Spark Operator에 위임해 CRD 기반 조정을 쓰면서 관리형 런타임도 유지 가능 | 해당 없음 — 이 자체가 CRD 기반 모델 |
+AWS API 중심 제출·EMR 런타임을 원하면 StartJobRun을, Kubernetes CR 중심 운영을
+원하면 적합한 Operator 경로를 검토합니다. 원하는 upstream 버전·plugin·이식성,
+실제 성능과 총비용을 비교합니다. EMR 런타임을 쓰더라도 EKS/compute·스토리지·로그
+비용과 운영 책임이 사라지지 않습니다.
 
-### EMR on EKS를 선택하는 이유
+Virtual cluster 삭제를 모든 작업·데이터·역할 정리 명령으로 사용하지 않습니다.
+실행 중 작업과 endpoint를 먼저 점검하고 의도한 리소스를 각각 정리합니다.
 
-* AWS가 최적화한 Spark 런타임을 쓰고 싶고, 업스트림 성능 패치를 직접 추적하고 싶지 않은 경우
-* 직접 제출 도구를 만드는 대신, 관리형 API/콘솔을 통해 작업을 제출·모니터링하고 Step Functions나 EventBridge로 오케스트레이션하고 싶은 경우
-* 직접 구축하지 않고도 CloudWatch Logs/Metrics로 작업 관측성을 확보하고 싶은 경우
-* 프로덕션 작업이 실행되는 것과 동일한 EKS 인프라 위에서 팀이 대화형 노트북 경험(EMR Studio)을 원하는 경우
+```bash
+# Inspect active work/endpoints before cleanup.
+aws emr-containers list-job-runs \
+  --region "$AWS_REGION" --virtual-cluster-id "$EMR_VIRTUAL_CLUSTER_ID"
+aws emr-containers list-managed-endpoints \
+  --region "$AWS_REGION" --virtual-cluster-id "$EMR_VIRTUAL_CLUSTER_ID"
+# If this demo job is still active and should stop:
+aws emr-containers cancel-job-run \
+  --region "$AWS_REGION" --virtual-cluster-id "$EMR_VIRTUAL_CLUSTER_ID" --id "$EMR_JOB_ID"
+# After reviewing/cleaning the relevant jobs and any managed endpoints:
+aws emr-containers delete-virtual-cluster \
+  --region "$AWS_REGION" --id "$EMR_VIRTUAL_CLUSTER_ID"
+aws emr-containers describe-virtual-cluster \
+  --region "$AWS_REGION" --id "$EMR_VIRTUAL_CLUSTER_ID" --query virtualCluster.state
+```
 
-### 그래도 셀프 매니지드 Spark Operator를 유지하는 이유
+삭제는 비동기 상태를 확인합니다. 권한 문제는 ARRESTED로 나타날 수 있습니다.
+Namespace·EKS cluster·S3 artifact·log group·IAM role과 Pod Identity association을
+각각 검토합니다. Association은 namespace/SA가 없어도 남을 수 있으므로 사용이 끝난
+연결만 별도로 정리합니다. 공유 리소스는 이 실습 때문에 삭제하지 않습니다.
 
-* EMR 릴리스 레이블에 아직 반영되지 않은 특정 Spark 빌드(최신 업스트림 릴리스, 커스텀 포크, AWS 패치가 없는 버전)를 실행해야 하는 경우
-* 플랫폼이 이미 Kubernetes 매니페스트 중심의 GitOps로 완전히 운영되고 있어, AWS API 제출 경로를 추가하면 파이프라인이 분리되는 경우
-* Kubernetes와 Spark 버전 조합을 AWS의 릴리스 레이블 주기가 아니라 원하는 시점에 직접 통제하고 싶은 경우
-* EKS가 아닌 다른 Kubernetes 클러스터로의 이식성이 필요한 경우
+예제는 로컬 CLI 입력·문법을 검증했으며 실제 AWS 배포나 EMR 런타임 실행을 완료했다는
+의미는 아닙니다. 계정 권한·quota·네트워크·릴리스 사용 가능성은 실제 환경에서 검증합니다.
 
-실제로는 EMR 6.10+에서 EMR on EKS 작업을 Spark Operator를 통해 실행할 수 있게 되면서, 이것이 항상 양자택일은 아닙니다 — GitOps 파이프라인이 이미 감시하고 있는 동일한 `SparkApplication` CRD로 조정하면서도, AWS의 관리형 런타임과 작업 실행 API를 함께 얻을 수 있습니다.
 
-## 의사결정 가이드
-
-아래 체크리스트로 EMR on EKS와 셀프 매니지드 Spark Operator 중 무엇을 선택할지 좁혀갑니다.
-
-* **Spark 빌드와 패치 주기를 AWS가 큐레이션해주길 원하는가?** → 예: EMR on EKS / 아니오: 셀프 매니지드 Spark Operator로 원하는 버전을 직접 선택
-* **Step Functions, EventBridge 등 AWS 오케스트레이션 서비스에서 별도 연동 코드 없이 작업을 트리거해야 하는가?** → 예: EMR on EKS의 `StartJobRun` API / 아니오: 둘 다 가능
-* **플랫폼이 이미 Kubernetes 매니페스트 중심의 GitOps로 완전히 운영되고 있는가?** → 예: Spark Operator(또는 EMR 6.10부터는 이를 통해 실행하는 EMR on EKS) / 아니오: EMR on EKS의 API 기반 제출이 도입하기 더 단순함
-* **EMR이 아직 릴리스 레이블로 제공하지 않은 Spark 빌드(최신 업스트림 버전이나 커스텀 포크)가 필요한가?** → 예: 셀프 매니지드 Spark Operator / 아니오: EMR on EKS의 릴리스 레이블로 충분
-* **프로덕션 작업을 실행하는 것과 동일한 인프라 위에서 대화형 노트북 경험을 원하는가?** → 예: EMR Studio(EMR on EKS) / 아니오: 노트북 통합을 직접 구성
-
-Kafka 시리즈의 MSK vs Strimzi와 마찬가지로 두 방식이 항상 배타적인 것은 아닙니다 — EMR 6.10부터는 EMR on EKS를 선택하더라도 Spark Operator의 CRD 기반 워크플로를 포기할 필요가 없습니다.
+- [EMR on EKS release labels](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-releases.html)
+- [EMR Spark 8.0.0 on EKS release notes](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-spark-8.0.0.html)
+- [EKS cluster access setup](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/setting-up-cluster-access.html)
+- [Job execution role and execution-role condition](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/iam-execution-role.html)
+- [Pod Identity setup for StartJobRun](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/setting-up-enable-IAM.html)
+- [Virtual clusters and scheduler limits](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/virtual-cluster.html)
+- [StartJobRun API](https://docs.aws.amazon.com/emr-on-eks/latest/APIReference/API_StartJobRun.html)
+- [EMR Spark Operator installation and CR submission](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/spark-operator-gs.html)
+- [Interactive endpoint architecture](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/how-it-works.html)
+- [Custom images](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/docker-custom-images.html)
+- [CloudWatch logging configuration](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-jobs-cloudwatch.html)
 
 ## 다음 단계
 
-Part 1과 Part 2에서는 `spark-submit`을 직접 호출하거나 Spark Operator로 선언적으로 관리하며 EKS 위에서 Spark를 직접 운영하는 방법을 다뤘습니다. 이번 Part에서는 동일한 EKS 인프라 위에 작업 실행 API, 최적화된 런타임, AWS 서비스 네이티브 통합을 얹은 관리형 대안인 EMR on EKS를 다뤘습니다. 이 시리즈의 다음 Part에서는 세 가지 제출 모델 모두에 적용되는 성능 튜닝과 비용 최적화를 다룹니다.
+[Part 4: Performance tuning](./04-performance-tuning.md)
 
-[메인 페이지로 돌아가기](./README.md)
+[README](./README.md)
 
-## 퀴즈
-
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)를 풀어보세요.
+[Quiz](../../quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)

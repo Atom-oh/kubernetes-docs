@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "응답 시간이 표시된 X-Ray 서비스 맵",
+    "output": "ko-observability-tracing-02-xray-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "main-path",
+        "label": "주 요청 경로",
+        "focus": [
+          "client",
+          "apigw",
+          "order",
+          "payment"
+        ],
+        "note": "클라이언트 요청이 API Gateway와 Order Service를 거쳐 Payment Service까지 이어지는 핵심 경로다."
+      },
+      {
+        "id": "auth-path",
+        "label": "인증 경로",
+        "focus": [
+          "apigw",
+          "auth"
+        ],
+        "note": "API Gateway가 Auth Service를 호출해 요청을 인증한다."
+      },
+      {
+        "id": "data-path",
+        "label": "데이터 저장소 호출",
+        "focus": [
+          "order",
+          "payment",
+          "cache",
+          "dynamodb"
+        ],
+        "note": "Order Service와 Payment Service가 ElastiCache와 DynamoDB에 접근하는 경로다."
+      }
+    ],
+    "viewBox": [
+      900,
+      500
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "응답 250ms",
+      "pos": [
+        30,
+        210
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "apigw",
+      "type": "cloud",
+      "label": "API Gateway",
+      "sublabel": "응답 50ms",
+      "pos": [
+        240,
+        210
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Auth Service",
+      "sublabel": "응답 30ms",
+      "pos": [
+        470,
+        30
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "응답 100ms",
+      "tag": "최다 호출",
+      "pos": [
+        470,
+        210
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "응답 150ms · 오류율 2%",
+      "pos": [
+        700,
+        210
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "ElastiCache",
+      "sublabel": "응답 5ms",
+      "pos": [
+        470,
+        390
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "dynamodb",
+      "type": "database",
+      "label": "DynamoDB",
+      "sublabel": "응답 20ms",
+      "pos": [
+        700,
+        390
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-apigw",
+      "from": "client",
+      "to": "apigw",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apigw-auth",
+      "from": "apigw",
+      "to": "auth",
+      "variant": "security"
+    },
+    {
+      "id": "apigw-order",
+      "from": "apigw",
+      "to": "order",
+      "variant": "emphasis"
+    },
+    {
+      "id": "order-payment",
+      "from": "order",
+      "to": "payment",
+      "variant": "emphasis"
+    },
+    {
+      "id": "order-cache",
+      "from": "order",
+      "to": "cache"
+    },
+    {
+      "id": "order-dynamodb",
+      "from": "order",
+      "to": "dynamodb"
+    },
+    {
+      "id": "payment-dynamodb",
+      "from": "payment",
+      "to": "dynamodb"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "가장 많은 호출을 처리하는 서비스",
+      "items": [
+        "Order Service가 Payment Service, ElastiCache, DynamoDB를 모두 호출하는 중심 노드다",
+        "노드별 평균 응답 시간이 함께 표시된다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "오류율 표시",
+      "items": [
+        "Payment Service의 오류율 2%가 서비스 맵에 드러난다",
+        "오류율이 높은 노드를 골라 트레이스를 추적한다"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "데이터 저장소",
+      "items": [
+        "ElastiCache와 DynamoDB는 데이터 저장소 노드로 표시된다",
+        "aws xray get-service-graph로 같은 맵 데이터를 조회할 수 있다"
+      ]
+    }
+  ]
+}

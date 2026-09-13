@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM System Requirements",
+    "locale": "en",
+    "output": "en-ai-ml-02-vllm-deployment-1.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Hardware"
+        },
+        "external": {
+          "label": "Requirements by Model Size"
+        },
+        "backend": {
+          "label": "Software"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "memory-tiers",
+        "label": "GPU memory and model size",
+        "focus": [
+          "gpu",
+          "gpu-memory",
+          "model-7b",
+          "model-13b",
+          "model-70b"
+        ],
+        "note": "Add architecture-aware KV cache, workspace and communication buffers beyond weights."
+      },
+      {
+        "id": "software-stack",
+        "label": "Software stack",
+        "focus": [
+          "cuda",
+          "python",
+          "pytorch"
+        ],
+        "note": "0.29 default artifacts use CUDA13.0; cu129 is separate. Verify image-specific compatibility."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gpu",
+      "type": "cloud",
+      "label": "NVIDIA GPU",
+      "sublabel": "compute capability ≥7.5",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "gpu-memory",
+      "type": "cloud",
+      "label": "GPU Memory",
+      "sublabel": "Varies by model size",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "Key requirement"
+    },
+    {
+      "id": "cpu",
+      "type": "cloud",
+      "label": "CPU Cores",
+      "sublabel": "vCPU count",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "model-7b",
+      "type": "external",
+      "label": "7B Model",
+      "sublabel": "FP16 weights ≈14GB + extras",
+      "pos": [
+        400,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "model-13b",
+      "type": "external",
+      "label": "13B Model",
+      "sublabel": "FP16 weights ≈26GB + extras",
+      "pos": [
+        400,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "model-70b",
+      "type": "external",
+      "label": "70B Model",
+      "sublabel": "FP16 weights ≈140GB + extras",
+      "pos": [
+        400,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cuda",
+      "type": "backend",
+      "label": "CUDA",
+      "sublabel": "explicit cu129 / cu130 variant",
+      "pos": [
+        760,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "python",
+      "type": "backend",
+      "label": "Python",
+      "sublabel": "package / image version bounds",
+      "pos": [
+        760,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pytorch",
+      "type": "backend",
+      "label": "PyTorch",
+      "sublabel": "pin with the image",
+      "pos": [
+        760,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Hardware",
+      "wraps": [
+        "gpu",
+        "gpu-memory",
+        "cpu"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Requirements by Model Size",
+      "wraps": [
+        "model-7b",
+        "model-13b",
+        "model-70b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Software",
+      "wraps": [
+        "cuda",
+        "python",
+        "pytorch"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gpu-to-memory",
+      "from": "gpu",
+      "to": "gpu-memory",
+      "label": "VRAM capacity",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "memory-to-7b",
+      "from": "gpu-memory",
+      "to": "model-7b",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "memory-to-13b",
+      "from": "gpu-memory",
+      "to": "model-13b",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "memory-to-70b",
+      "from": "gpu-memory",
+      "to": "model-70b",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Memory estimate",
+      "items": [
+        "parameter count × stored bytes + KV / activation / workspace",
+        "Qwen2.5-7B GQA: FP16 KV ≈56KiB/token aggregate estimate"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Device and artifact",
+      "items": [
+        "p4d uses40GB A100s; distinguish80GB p4de.",
+        "V1007.0 is below the current NVIDIA7.5 minimum."
+      ]
+    }
+  ]
+}

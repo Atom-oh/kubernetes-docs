@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Architecture",
+    "output": "en-basics-05-ebpf-fundamentals-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "k8sapi",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "NetworkPolicy · Service",
+      "pos": [
+        50,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "per-node DaemonSet",
+      "pos": [
+        50,
+        320
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "xdp",
+      "type": "security",
+      "label": "XDP programs",
+      "sublabel": "DDoS defense",
+      "pos": [
+        600,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "tc",
+      "type": "security",
+      "label": "TC programs",
+      "sublabel": "Network policy · load balancing",
+      "pos": [
+        600,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "sock",
+      "type": "security",
+      "label": "Socket programs",
+      "sublabel": "Socket-level routing",
+      "pos": [
+        600,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "eBPF dataplane",
+      "wraps": [
+        "xdp",
+        "tc",
+        "sock"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-agent",
+      "from": "k8sapi",
+      "to": "agent",
+      "label": "watches policies · endpoints",
+      "labelDy": 70
+    },
+    {
+      "id": "agent-xdp",
+      "from": "agent",
+      "to": "xdp",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          470,
+          352
+        ],
+        [
+          470,
+          90
+        ]
+      ]
+    },
+    {
+      "id": "agent-tc",
+      "from": "agent",
+      "to": "tc",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          430,
+          352
+        ],
+        [
+          430,
+          250
+        ]
+      ]
+    },
+    {
+      "id": "agent-sock",
+      "from": "agent",
+      "to": "sock",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          155,
+          410
+        ]
+      ],
+      "label": "Load eBPF programs"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "How it works",
+      "items": [
+        "The agent turns Kubernetes state into eBPF programs",
+        "All packet processing happens inside the kernel"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Key functions",
+      "items": [
+        "Load balancing that replaces kube-proxy",
+        "Identity-based network policy · DDoS defense"
+      ]
+    }
+  ]
+}

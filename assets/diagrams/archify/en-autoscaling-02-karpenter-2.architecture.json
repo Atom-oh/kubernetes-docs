@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Karpenter Node Consolidation Process",
+    "locale": "en",
+    "output": "en-autoscaling-02-karpenter-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      520
+    ],
+    "views": [
+      {
+        "id": "analyze",
+        "label": "Analyze and evaluate",
+        "focus": [
+          "node1",
+          "node2",
+          "node3",
+          "analyze",
+          "evaluate"
+        ],
+        "note": "Analyze the three underutilized existing nodes and evaluate whether they can be consolidated."
+      },
+      {
+        "id": "consolidate",
+        "label": "Consolidate onto a new node",
+        "focus": [
+          "provision",
+          "newnode",
+          "migrate"
+        ],
+        "note": "Provision a single new node and migrate the pods onto it."
+      },
+      {
+        "id": "cleanup",
+        "label": "Clean up existing nodes",
+        "focus": [
+          "migrate",
+          "drain",
+          "terminate",
+          "node1",
+          "node2",
+          "node3"
+        ],
+        "note": "Drain the emptied existing nodes, then terminate them to reduce the node count."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "cloud",
+      "label": "Node 1",
+      "sublabel": "50% utilization",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "cloud",
+      "label": "Node 2",
+      "sublabel": "30% utilization",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "cloud",
+      "label": "Node 3",
+      "sublabel": "20% utilization",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "analyze",
+      "type": "backend",
+      "label": "Analyze node utilization",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "evaluate",
+      "type": "backend",
+      "label": "Evaluate consolidation",
+      "pos": [
+        530,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "provision",
+      "type": "backend",
+      "label": "Provision new node",
+      "pos": [
+        760,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "newnode",
+      "type": "cloud",
+      "label": "New Node",
+      "sublabel": "100% utilization",
+      "pos": [
+        990,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "migrate",
+      "type": "backend",
+      "label": "Migrate pods",
+      "pos": [
+        760,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "drain",
+      "type": "backend",
+      "label": "Drain existing nodes",
+      "pos": [
+        530,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "terminate",
+      "type": "backend",
+      "label": "Terminate existing nodes",
+      "pos": [
+        300,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Existing nodes (consolidation candidates)",
+      "wraps": [
+        "node1",
+        "node2",
+        "node3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "node1-analyze",
+      "from": "node1",
+      "to": "analyze",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "node2-analyze",
+      "from": "node2",
+      "to": "analyze",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "node3-analyze",
+      "from": "node3",
+      "to": "analyze",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "analyze-evaluate",
+      "from": "analyze",
+      "to": "evaluate",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "evaluate-provision",
+      "from": "evaluate",
+      "to": "provision",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "provision-newnode",
+      "from": "provision",
+      "to": "newnode",
+      "label": "provision",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "provision-migrate",
+      "from": "provision",
+      "to": "migrate",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "migrate-newnode",
+      "from": "migrate",
+      "to": "newnode",
+      "label": "move pods",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "migrate-drain",
+      "from": "migrate",
+      "to": "drain",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "drain-terminate",
+      "from": "drain",
+      "to": "terminate",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "terminate-nodes",
+      "from": "terminate",
+      "to": "node3",
+      "label": "drain, then terminate",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    }
+  ]
+}

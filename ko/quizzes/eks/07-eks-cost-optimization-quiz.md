@@ -1,5 +1,9 @@
 # Amazon EKS 비용 최적화 퀴즈
 
+> **마지막 업데이트**: 2026년 9월 12일
+
+예시는 독립적인 구성 대안이며 실제 실행한 배포나 실측 절감 결과가 아닙니다. 기존 리소스 소유 구성에 변경을 병합하고 같은 워크로드에 모든 예시를 차례로 덮어쓰지 않습니다. 자리표시자 이미지와 애플리케이션 소유 hook을 바꾸고 계정·context·리전·컨트롤러 호환성을 확인한 뒤 운영 전에 동작을 검증합니다.
+
 이 퀴즈는 Amazon EKS 클러스터의 비용을 최적화하기 위한 전략, 도구 및 모범 사례에 대한 이해를 테스트합니다.
 
 ## 퀴즈 개요
@@ -14,18 +18,17 @@
 
 ### 1. Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 전략은 무엇인가요?
 
-A. 항상 가장 큰 인스턴스 유형 사용  
-B. 모든 워크로드에 온디맨드 인스턴스만 사용  
-C. 스팟 인스턴스, 적절한 인스턴스 크기 조정 및 자동 스케일링 결합  
-D. 모든 워크로드를 단일 노드 그룹에 통합  
-
+- A. 항상 가장 큰 인스턴스 유형 사용
+- B. 모든 워크로드에 온디맨드 인스턴스만 사용
+- C. 스팟 인스턴스, 적절한 인스턴스 크기 조정 및 자동 스케일링 결합
+- D. 모든 워크로드를 단일 노드 그룹에 통합
 <details>
 <summary>정답 및 설명</summary>
 
 **정답: C. 스팟 인스턴스, 적절한 인스턴스 크기 조정 및 자동 스케일링 결합**
 
 **설명:**
-Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 전략은 스팟 인스턴스, 적절한 인스턴스 크기 조정 및 자동 스케일링을 결합하는 것입니다. 이 통합 접근 방식은 워크로드 특성에 맞게 비용 효율적인 컴퓨팅 리소스를 제공하면서 성능 요구 사항을 충족합니다.
+Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 전략은 스팟 인스턴스, 적절한 인스턴스 크기 조정 및 자동 스케일링을 결합하는 것입니다. 중단 허용성과 가용 용량이 허용하는 워크로드에 Spot을 사용하고 SLO에 대조해 절감 결과를 검증합니다. 이 조합이나 광고된 최대 할인율이 비용 절감과 성능 유지를 보장하지는 않습니다.
 
 **주요 컴퓨팅 최적화 전략:**
 
@@ -44,6 +47,10 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
    - Horizontal Pod Autoscaler를 통한 파드 수준 스케일링
    - 수요에 따른 리소스 조정
 
+NodePool/EC2NodeClass에는 설치된 호환 Karpenter 컨트롤러/CRD, 범위가 제한된 컨트롤러 IAM, 노드 역할, 검색 대상 리소스, 중단 처리 큐가 필요합니다. 현재 호환성 표에서 EKS 1.36은 Karpenter >=1.13이 필요합니다. `al2023@latest`는 변하는 선택자이므로 실제 AMI를 검토하고 통제된 변경에는 검증한 별칭/AMI를 고정합니다. 인스턴스 목록과 용량 limits는 예시이며 금액 상한이 아닙니다. 관리형 노드 그룹은 자체 중단 경로를 처리하며 Karpenter 노드에 두 번째 처리기를 중복 적용하지 않습니다.
+
+HPA에는 resource metrics와 requests가 필요하고 CPU/메모리 목표 중 가장 큰 희망 복제본 수를 선택합니다. 아래 VPA는 분모를 변경하지 않고 권고만 제공하도록 **Off**입니다. `Auto`는 deprecated되어 `Recreate` 같은 명시적 모드로 대체하며, CPU/메모리 자동 변경은 HPA와 조율해야 합니다. preStop hook도 종료 유예 시간을 소비하며 Spot 기한이나 cleanup 성공을 보장하지 않습니다.
+
 **구현 방법:**
 
 1. **스팟 인스턴스를 사용한 노드 그룹 생성**:
@@ -51,12 +58,13 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
    # eksctl을 사용한 스팟 인스턴스 노드 그룹 생성
    eksctl create nodegroup \
      --cluster my-cluster \
+     --region us-west-2 \
+     --managed \
      --name spot-ng \
      --node-type m5.large \
      --nodes-min 2 \
      --nodes-max 10 \
-     --spot \
-     --asg-access
+     --spot
    ```
 
 2. **Karpenter 배포 및 구성**:
@@ -83,11 +91,12 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
              operator: In
              values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m4.large"]
          nodeClassRef:
+           group: karpenter.k8s.aws
+           kind: EC2NodeClass
            name: default
      limits:
-       resources:
-         cpu: 1000
-         memory: 1000Gi
+       cpu: 1000
+       memory: 1000Gi
      disruption:
        consolidationPolicy: WhenEmpty
        consolidateAfter: 30s
@@ -98,12 +107,15 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
    metadata:
      name: default
    spec:
-     amiFamily: AL2
+     amiSelectorTerms:
+       - alias: al2023@latest
      role: KarpenterNodeRole
-     subnetSelector:
-       karpenter.sh/discovery: my-cluster
-     securityGroupSelector:
-       karpenter.sh/discovery: my-cluster
+     subnetSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
+     securityGroupSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
      tags:
        karpenter.sh/discovery: my-cluster
    ```
@@ -148,7 +160,7 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
        kind: Deployment
        name: web-app
      updatePolicy:
-       updateMode: "Auto"
+       updateMode: "Off"
      resourcePolicy:
        containerPolicies:
        - containerName: '*'
@@ -176,13 +188,12 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
 3. **배치 작업**:
    - 스팟 인스턴스 최대한 활용
    - 작업 재시도 메커니즘 구현
-   - 비용 효율적인 시간대에 실행
+   - 작업 기한/가용 용량에 맞춰 예약하며 일반 온디맨드 시간대 할인을 가정하지 않음
 
 **모범 사례:**
 
 1. **리소스 요청 및 제한 최적화**:
    ```yaml
-   # 리소스 요청 및 제한 예시
    apiVersion: apps/v1
    kind: Deployment
    metadata:
@@ -201,11 +212,16 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
              limits:
                cpu: 500m
                memory: 512Mi
+       metadata:
+         labels:
+           app: web-app
+     selector:
+       matchLabels:
+         app: web-app
    ```
 
 2. **노드 선호도 및 파드 분배 최적화**:
    ```yaml
-   # 노드 선호도 및 파드 분배 예시
    apiVersion: apps/v1
    kind: Deployment
    metadata:
@@ -235,12 +251,20 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
                      operator: In
                      values:
                      - web-app
-                 topologyKey: "kubernetes.io/hostname"
+                 topologyKey: kubernetes.io/hostname
+         containers:
+         - name: web-app
+           image: registry.example.com/team/web-app:REVIEWED_TAG
+       metadata:
+         labels:
+           app: web-app
+     selector:
+       matchLabels:
+         app: web-app
    ```
 
 3. **스팟 인스턴스 중단 처리**:
    ```yaml
-   # 스팟 인스턴스 중단 처리 예시
    apiVersion: apps/v1
    kind: Deployment
    metadata:
@@ -256,47 +280,50 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
            lifecycle:
              preStop:
                exec:
-                 command: ["/bin/sh", "-c", "sleep 10; /app/cleanup.sh"]
+                 command:
+                 - /bin/sh
+                 - -c
+                 - sleep 10; /app/cleanup.sh
+       metadata:
+         labels:
+           app: web-app
+     selector:
+       matchLabels:
+         app: web-app
    ```
 
-**실제 구현 예시:**
+**기존 구성에 적용하는 추가 예시:**
 
 1. **비용 효율적인 노드 그룹 구성**:
+   기존 클러스터에 노드 그룹을 추가하는 구성 fragment입니다. 소유자의 private subnet, 노드 IAM 정책, 기존 그룹/ASG 태그를 확인한 뒤 사용하며, 클러스터 전체를 새로 만드는 독립 예제로 취급하지 않습니다.
    ```yaml
-   # eksctl 구성 파일
    apiVersion: eksctl.io/v1alpha5
    kind: ClusterConfig
    metadata:
      name: my-cluster
      region: us-west-2
-   
    managedNodeGroups:
-     # 시스템 워크로드용 온디맨드 노드 그룹
-     - name: system-ng
-       instanceType: m5.large
-       desiredCapacity: 2
-       minSize: 2
-       maxSize: 4
-       labels:
-         workload-type: system
-       taints:
-         dedicated: system:NoSchedule
-       iam:
-         withAddonPolicies:
-           autoScaler: true
-   
-     # 애플리케이션 워크로드용 스팟 노드 그룹
-     - name: app-spot-ng
-       instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m4.large"]
-       spot: true
-       desiredCapacity: 3
-       minSize: 1
-       maxSize: 10
-       labels:
-         workload-type: application
-       iam:
-         withAddonPolicies:
-           autoScaler: true
+   - name: system-ng
+     instanceType: m5.large
+     desiredCapacity: 2
+     minSize: 2
+     maxSize: 4
+     labels:
+       workload-type: system
+     privateNetworking: true
+   - name: app-spot-ng
+     instanceTypes:
+     - m5.large
+     - m5a.large
+     - m5d.large
+     - m4.large
+     spot: true
+     desiredCapacity: 3
+     minSize: 1
+     maxSize: 10
+     labels:
+       workload-type: application
+     privateNetworking: true
    ```
 
 2. **Terraform을 사용한 비용 최적화 인프라 구성**:
@@ -307,31 +334,31 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
      node_group_name = "spot-ng"
      node_role_arn   = aws_iam_role.node_role.arn
      subnet_ids      = var.private_subnet_ids
-     
+
      capacity_type  = "SPOT"
      instance_types = ["m5.large", "m5a.large", "m5d.large", "m4.large"]
-     
+
      scaling_config {
        desired_size = 3
        min_size     = 1
        max_size     = 10
      }
-     
+
      labels = {
        "workload-type" = "application"
      }
-     
+
      tags = {
-       "k8s.io/cluster-autoscaler/enabled" = "true"
-       "k8s.io/cluster-autoscaler/${aws_eks_cluster.main.name}" = "owned"
+       Team        = "platform"
+       Environment = "development"
      }
    }
-   
+
    # Cluster Autoscaler IAM 정책
    resource "aws_iam_policy" "cluster_autoscaler" {
      name        = "EKSClusterAutoscalerPolicy"
      description = "Policy for Cluster Autoscaler"
-     
+
      policy = jsonencode({
        Version = "2012-10-17",
        Statement = [
@@ -342,16 +369,35 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
              "autoscaling:DescribeAutoScalingInstances",
              "autoscaling:DescribeLaunchConfigurations",
              "autoscaling:DescribeTags",
-             "autoscaling:SetDesiredCapacity",
-             "autoscaling:TerminateInstanceInAutoScalingGroup",
+             "autoscaling:DescribeScalingActivities",
+             "ec2:DescribeImages",
+             "ec2:DescribeInstanceTypes",
+             "ec2:GetInstanceTypesFromInstanceRequirements",
+             "eks:DescribeNodegroup",
              "ec2:DescribeLaunchTemplateVersions"
            ],
            Resource = "*"
+         },
+         {
+           Effect = "Allow",
+           Action = [
+             "autoscaling:SetDesiredCapacity",
+             "autoscaling:TerminateInstanceInAutoScalingGroup"
+           ],
+           Resource = "*",
+           Condition = {
+             StringEquals = {
+               "aws:ResourceTag/k8s.io/cluster-autoscaler/enabled"                      = "true",
+               "aws:ResourceTag/k8s.io/cluster-autoscaler/${aws_eks_cluster.main.name}" = "owned"
+             }
+           }
          }
        ]
      })
    }
    ```
+
+추가 예시는 기존 Terraform 모듈의 fragment로 `aws_eks_cluster.main`, 노드 역할/정책, private subnet 변수와 provider가 이미 정의되었다고 가정하며 독립 실행 파일이 아닙니다. autoscaler와 `desired_size` 소유권도 조율합니다. 노드 그룹 태그는 실제 ASG 검색 태그를 대체하지 않으므로 ASG와 기존 태그 소유자를 조회해 확인합니다. 정책은 노드 역할이 아닌 전용 컨트롤러 identity에 연결합니다. 쓰기 동작 두 개는 enabled/cluster 태그 조건으로 제한하고 조회 권한과 분리합니다. 전체 IAM/검색 설정은 [공식 EKS 가이드](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html)를 따릅니다. system/application 레이블만으로 격리되지는 않으며 bootstrap 컨트롤러가 실행되기 전에 유일한 온디맨드 노드를 taint하지 않습니다.
 
 다른 옵션들의 문제점:
 - **A. 항상 가장 큰 인스턴스 유형 사용**: 이는 과도한 프로비저닝으로 이어져 불필요한 비용이 발생하며, 워크로드 요구 사항에 맞지 않을 수 있습니다.
@@ -360,11 +406,10 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
 </details>
 ### 2. Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적인 접근 방식은 무엇인가요?
 
-A. 모든 워크로드에 대해 가장 저렴한 스토리지 유형 사용  
-B. 모든 데이터를 S3로 마이그레이션  
-C. 워크로드 요구 사항에 맞는 스토리지 유형 선택 및 수명 주기 관리 구현  
-D. 모든 볼륨 크기를 최소화  
-
+- A. 모든 워크로드에 대해 가장 저렴한 스토리지 유형 사용
+- B. 모든 데이터를 S3로 마이그레이션
+- C. 워크로드 요구 사항에 맞는 스토리지 유형 선택 및 수명 주기 관리 구현
+- D. 모든 볼륨 크기를 최소화
 <details>
 <summary>정답 및 설명</summary>
 
@@ -391,11 +436,14 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
    - 사용하지 않는 볼륨 식별 및 제거
    - 스냅샷 수명 주기 관리
 
+StorageClass 예시에는 설치된 CSI 드라이버와 올바른 IAM/KMS·토폴로지 설정이 필요합니다. `WaitForFirstConsumer`는 EBS 프로비저닝을 스케줄링과 맞추며 `Retain`으로 남은 볼륨은 소유자가 처리할 때까지 과금됩니다. 바인딩된 PVC의 클래스 변경이나 제자리 축소는 불가능합니다. 스냅샷/복원 또는 지원되는 볼륨 유형 변경은 소유자가 검토한 이전 절차와 복원 테스트가 필요합니다. Auto Mode의 EBS provisioner는 다르므로 표준 CSI 예시에 조용히 대입하지 않습니다.
+
+`create-file-system`에는 `--lifecycle-policies` 옵션이 없습니다. 아래처럼 기존 파일 시스템의 전체 원하는 정책 배열을 보존하며 `put-lifecycle-configuration`을 사용합니다. S3 전환도 최소 기간/크기, 요청 비용, 버전 관리, 복구 지연을 검토하고 lifecycle 전체 교체 시 관련 없는 규칙을 보존해야 합니다.
+
 **구현 방법:**
 
 1. **EBS 볼륨 최적화**:
    ```yaml
-   # gp3 StorageClass 구성
    apiVersion: storage.k8s.io/v1
    kind: StorageClass
    metadata:
@@ -403,19 +451,27 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
    provisioner: ebs.csi.aws.com
    parameters:
      type: gp3
-     iops: "3000"
-     throughput: "125"
+     iops: '3000'
+     throughput: '125'
+     encrypted: 'true'
    allowVolumeExpansion: true
+   volumeBindingMode: WaitForFirstConsumer
+   reclaimPolicy: Retain
    ```
 
 2. **EFS 수명 주기 관리**:
    ```bash
-   # EFS 파일 시스템 생성 시 수명 주기 정책 설정
-   aws efs create-file-system \
-     --creation-token eks-efs \
-     --performance-mode generalPurpose \
-     --throughput-mode bursting \
-     --lifecycle-policies '[{"TransitionToIA":"AFTER_30_DAYS"}]'
+   set -euo pipefail
+   : "${AWS_REGION:?Set the reviewed Region}"
+   : "${FILE_SYSTEM_ID:?Set the existing reviewed EFS filesystem ID}"
+   aws efs describe-lifecycle-configuration --region "$AWS_REGION" \
+     --file-system-id "$FILE_SYSTEM_ID" --query LifecyclePolicies --output json \
+     > efs-lifecycle-policies.json
+   # Edit the exported array; an IA entry is {"TransitionToIA":"AFTER_30_DAYS"}.
+   # Preserve required Archive/return-to-primary entries before submitting the whole policy.
+   aws efs put-lifecycle-configuration --region "$AWS_REGION" \
+     --file-system-id "$FILE_SYSTEM_ID" \
+     --lifecycle-policies file://efs-lifecycle-policies.json
    ```
 
 3. **S3 수명 주기 정책**:
@@ -425,7 +481,6 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
        {
          "ID": "Move to IA after 30 days, Glacier after 90 days",
          "Status": "Enabled",
-         "Prefix": "eks-backups/",
          "Transitions": [
            {
              "Days": 30,
@@ -438,6 +493,9 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
          ],
          "Expiration": {
            "Days": 365
+         },
+         "Filter": {
+           "Prefix": "eks-backups/"
          }
        }
      ]
@@ -446,43 +504,121 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
 
 4. **EBS 스냅샷 수명 주기 관리**:
    ```yaml
-   # VolumeSnapshotClass 구성
    apiVersion: snapshot.storage.k8s.io/v1
    kind: VolumeSnapshotClass
    metadata:
      name: ebs-snapshot
-     annotations:
-       snapshot.storage.kubernetes.io/is-default-class: "true"
    driver: ebs.csi.aws.com
    deletionPolicy: Delete
    ```
 
+아래 스냅샷 일정은 소유자가 기존 `team-a/database-data` PVC, 표준 EBS CSI 드라이버, snapshot controller/CRD, `ebs-snapshot` 클래스를 확인할 때까지 suspend 상태입니다. 마운트한 template은 고정 이름 충돌을 피하도록 `generateName`을 사용합니다. Role은 이 namespace의 스냅샷 생성을 허용하며 source PVC 필드까지 제한하지는 않습니다. 애플리케이션 일관성/quiescing과 복원 검증은 별도 책임입니다. Job 성공은 API 생성 성공이며 snapshot 준비 완료가 아니므로 `readyToUse`와 오류를 별도로 감시합니다. Job 이력 제한은 VolumeSnapshot/EBS snapshot을 만료시키지 않습니다. 일정 활성화 전에 보존·복구 소유자를 정해야 하며 `deletionPolicy: Delete`이면 Kubernetes snapshot 삭제 시 원본 EBS snapshot도 삭제됩니다.
+
    ```yaml
-   # 정기적인 스냅샷 생성을 위한 CronJob
+   apiVersion: v1
+   kind: ServiceAccount
+   metadata:
+     name: snapshot-creator
+     namespace: team-a
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: Role
+   metadata:
+     name: snapshot-creator
+     namespace: team-a
+   rules:
+   - apiGroups: ["snapshot.storage.k8s.io"]
+     resources: ["volumesnapshots"]
+     verbs: ["create"]
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: RoleBinding
+   metadata:
+     name: snapshot-creator
+     namespace: team-a
+   subjects:
+   - kind: ServiceAccount
+     name: snapshot-creator
+     namespace: team-a
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: Role
+     name: snapshot-creator
+   ---
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: snapshot-templates
+     namespace: team-a
+   data:
+     snapshot.yaml: |
+       apiVersion: snapshot.storage.k8s.io/v1
+       kind: VolumeSnapshot
+       metadata:
+         generateName: database-data-
+         namespace: team-a
+       spec:
+         volumeSnapshotClassName: ebs-snapshot
+         source:
+           persistentVolumeClaimName: database-data
+   ---
    apiVersion: batch/v1
    kind: CronJob
    metadata:
      name: volume-snapshot
+     namespace: team-a
    spec:
-     schedule: "0 1 * * *"  # 매일 오전 1시
+     suspend: true
+     schedule: "0 1 * * *"
+     timeZone: Etc/UTC
+     concurrencyPolicy: Forbid
+     startingDeadlineSeconds: 1800
+     successfulJobsHistoryLimit: 1
+     failedJobsHistoryLimit: 2
      jobTemplate:
        spec:
+         backoffLimit: 0
+         activeDeadlineSeconds: 120
          template:
            spec:
              serviceAccountName: snapshot-creator
+             restartPolicy: Never
+             securityContext:
+               runAsNonRoot: true
+               runAsUser: 65532
+               seccompProfile:
+                 type: RuntimeDefault
              containers:
              - name: snapshot-creator
-               image: bitnami/kubectl:latest
-               command:
-               - /bin/sh
-               - -c
-               - |
-                 kubectl create -f /snapshots/snapshot.yaml
-             restartPolicy: OnFailure
+               image: registry.k8s.io/kubectl:v1.36.2
+               command: ["kubectl"]
+               args: ["create", "-f", "/snapshots/snapshot.yaml", "--namespace=team-a"]
+               env:
+               - name: HOME
+                 value: /tmp
+               securityContext:
+                 allowPrivilegeEscalation: false
+                 readOnlyRootFilesystem: true
+                 capabilities:
+                   drop: ["ALL"]
+               resources:
+                 requests:
+                   cpu: 10m
+                   memory: 32Mi
+                 limits:
+                   memory: 128Mi
+               volumeMounts:
+               - name: snapshots
+                 mountPath: /snapshots
+                 readOnly: true
+               - name: tmp
+                 mountPath: /tmp
              volumes:
              - name: snapshots
                configMap:
                  name: snapshot-templates
+             - name: tmp
+               emptyDir: {}
    ```
 
 **워크로드 유형별 스토리지 최적화:**
@@ -511,14 +647,14 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
 
 1. **데이터 계층화 구현**:
    ```yaml
-   # 다중 스토리지 클래스 사용 예시
    apiVersion: v1
    kind: PersistentVolumeClaim
    metadata:
      name: hot-data
+     namespace: team-a
    spec:
      accessModes:
-       - ReadWriteOnce
+     - ReadWriteOnce
      storageClassName: ebs-gp3
      resources:
        requests:
@@ -528,9 +664,10 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
    kind: PersistentVolumeClaim
    metadata:
      name: warm-data
+     namespace: team-a
    spec:
      accessModes:
-       - ReadWriteMany
+     - ReadWriteMany
      storageClassName: efs-standard
      resources:
        requests:
@@ -539,13 +676,14 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
 
 2. **스토리지 사용량 모니터링 및 최적화**:
    ```bash
-   # 사용되지 않는 PVC 식별
-   kubectl get pvc --all-namespaces -o json | jq -r '.items[] | select(.status.phase == "Bound") | select(.metadata.annotations.pv_used == "false") | .metadata.name'
-   
-   # 사용되지 않는 EBS 볼륨 식별
-   aws ec2 describe-volumes \
-     --filters Name=status,Values=available \
-     --query 'Volumes[*].{ID:VolumeId,Size:Size,Type:VolumeType,State:State,CreateTime:CreateTime}'
+   set -euo pipefail
+   : "${KUBE_CONTEXT:?Select the reviewed cluster context}"
+   : "${KUBE_NAMESPACE:?Select the reviewed namespace}"
+   kubectl --context "$KUBE_CONTEXT" --namespace "$KUBE_NAMESPACE" \
+     get pvc --chunk-size=500 -o json > pvcs.json
+   kubectl --context "$KUBE_CONTEXT" --namespace "$KUBE_NAMESPACE" \
+     get pods --chunk-size=500 -o json > pods.json
+   python3 unreferenced_pvcs.py
    ```
 
 3. **데이터 압축 및 중복 제거**:
@@ -555,7 +693,6 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
 
 4. **비용 할당 및 태깅**:
    ```yaml
-   # 스토리지 리소스에 비용 할당 태그 적용
    apiVersion: v1
    kind: PersistentVolumeClaim
    metadata:
@@ -564,16 +701,17 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
        app: database
        environment: production
        cost-center: cc-123
+     namespace: team-a
    spec:
      accessModes:
-       - ReadWriteOnce
+     - ReadWriteOnce
      storageClassName: ebs-io2
      resources:
        requests:
          storage: 100Gi
    ```
 
-**실제 구현 예시:**
+**추가 구성과 읽기 전용 분석 예시:**
 
 1. **스토리지 비용 최적화 아키텍처**:
    ```
@@ -603,7 +741,7 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
 2. **Terraform을 사용한 스토리지 최적화 인프라 구성**:
    ```hcl
    # EBS gp3 스토리지 클래스
-   resource "kubernetes_storage_class" "ebs_gp3" {
+   resource "kubernetes_storage_class_v1" "ebs_gp3" {
      metadata {
        name = "ebs-gp3"
      }
@@ -612,53 +750,57 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
        type       = "gp3"
        iops       = "3000"
        throughput = "125"
+       encrypted  = "true"
      }
      allow_volume_expansion = true
+     volume_binding_mode    = "WaitForFirstConsumer"
+     reclaim_policy         = "Retain"
    }
-   
+
    # EFS 파일 시스템
    resource "aws_efs_file_system" "eks_efs" {
      creation_token = "eks-efs"
-     
+     encrypted      = true
+
      lifecycle_policy {
        transition_to_ia = "AFTER_30_DAYS"
      }
-     
+
      tags = {
        Name = "eks-efs"
      }
    }
-   
+
    # S3 버킷 및 수명 주기 정책
    resource "aws_s3_bucket" "eks_data" {
      bucket = "eks-data-${data.aws_caller_identity.current.account_id}"
-     
+
      tags = {
        Name = "eks-data"
      }
    }
-   
+
    resource "aws_s3_bucket_lifecycle_configuration" "eks_data_lifecycle" {
      bucket = aws_s3_bucket.eks_data.id
-     
+
      rule {
        id     = "archive-rule"
        status = "Enabled"
-       
+
        filter {
          prefix = "eks-backups/"
        }
-       
+
        transition {
          days          = 30
          storage_class = "STANDARD_IA"
        }
-       
+
        transition {
          days          = 90
          storage_class = "GLACIER"
        }
-       
+
        expiration {
          days = 365
        }
@@ -668,70 +810,44 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
 
 3. **스토리지 비용 모니터링 및 최적화 스크립트**:
    ```python
-   import boto3
-   import kubernetes
-   from kubernetes import client, config
-   
-   # Kubernetes 클라이언트 설정
-   config.load_kube_config()
-   v1 = client.CoreV1Api()
-   
-   # AWS 클라이언트 설정
-   ec2 = boto3.client('ec2')
-   
-   def find_unused_pvcs():
-       """사용되지 않는 PVC 식별"""
-       pvcs = v1.list_persistent_volume_claim_for_all_namespaces(watch=False)
-       unused_pvcs = []
-       
-       for pvc in pvcs.items:
-           # PVC가 바인딩되었지만 사용 중인 파드가 없는지 확인
-           pod_list = v1.list_pod_for_all_namespaces(watch=False)
-           is_used = False
-           
-           for pod in pod_list.items:
-               for volume in pod.spec.volumes if pod.spec.volumes else []:
-                   if hasattr(volume, 'persistent_volume_claim') and volume.persistent_volume_claim.claim_name == pvc.metadata.name:
-                       is_used = True
-                       break
-           
-           if not is_used and pvc.status.phase == "Bound":
-               unused_pvcs.append({
-                   'name': pvc.metadata.name,
-                   'namespace': pvc.metadata.namespace,
-                   'storage_class': pvc.spec.storage_class_name,
-                   'size': pvc.spec.resources.requests.get('storage', 'Unknown')
-               })
-       
-       return unused_pvcs
-   
-   def find_unused_ebs_volumes():
-       """사용되지 않는 EBS 볼륨 식별"""
-       volumes = ec2.describe_volumes(
-           Filters=[
-               {'Name': 'status', 'Values': ['available']},
-               {'Name': 'tag:kubernetes.io/created-for/pvc/name', 'Values': ['*']}
-           ]
-       )
-       
-       return volumes['Volumes']
-   
-   # 메인 함수
-   def main():
-       unused_pvcs = find_unused_pvcs()
-       unused_volumes = find_unused_ebs_volumes()
-       
-       print(f"Found {len(unused_pvcs)} unused PVCs")
-       for pvc in unused_pvcs:
-           print(f"  - {pvc['namespace']}/{pvc['name']} ({pvc['size']})")
-       
-       print(f"Found {len(unused_volumes)} unused EBS volumes")
-       for volume in unused_volumes:
-           print(f"  - {volume['VolumeId']} ({volume['Size']} GB, {volume['VolumeType']})")
-   
+   import json
+   from pathlib import Path
+
+
+   def unreferenced_claims(claims, pods):
+       referenced = set()
+       for pod in pods["items"]:
+           namespace = pod["metadata"]["namespace"]
+           for volume in pod.get("spec", {}).get("volumes") or []:
+               claim = volume.get("persistentVolumeClaim")
+               if claim:
+                   referenced.add((namespace, claim["claimName"]))
+       result = []
+       for claim in claims["items"]:
+           metadata = claim["metadata"]
+           identity = (metadata["namespace"], metadata["name"])
+           if claim.get("status", {}).get("phase") != "Bound" or identity in referenced:
+               continue
+           spec = claim.get("spec", {})
+           result.append({
+               "namespace": identity[0],
+               "name": identity[1],
+               "storageClass": spec.get("storageClassName"),
+               "requested": ((spec.get("resources") or {}).get("requests") or {}).get("storage"),
+               "meaning": "not referenced by the supplied current Pod snapshot; review required",
+           })
+       return result
+
+
    if __name__ == "__main__":
-       main()
+       claims = json.loads(Path("pvcs.json").read_text())
+       pods = json.loads(Path("pods.json").read_text())
+       print(json.dumps(unreferenced_claims(claims, pods), indent=2))
    ```
+
+위 Python을 `unreferenced_pvcs.py`로 저장하고 앞의 읽기 전용 명령과 사용합니다. 현재 Pod snapshot에서 참조되지 않는 Bound PVC 후보만 출력합니다. `(namespace, name)`으로 비교하고 PVC가 아닌 볼륨의 `persistentVolumeClaim: null`도 처리합니다. 기본 Kubernetes에는 `pv_used` 어노테이션이 없으며 이를 미사용 판정으로 사용하지 않습니다. 서로 다른 시점의 목록, 축소된 StatefulSet, 대기 작업, 컨트롤러 template, 백업/복구 요구는 이 목록으로 확인되지 않습니다. 삭제를 자동화하지 마세요. EBS `available`도 미사용을 의미하지 않으며, [EKS06 비용 문항](06-eks-monitoring-logging-quiz.md)의 계정·태그 범위 조회를 사용합니다.
+
+hot/warm/cold 도식은 접근 패턴별 선택 예시이며 EBS→EFS→S3 자동 이전 파이프라인이 아닙니다. `efs-standard`/`ebs-io2` 클래스는 별도로 준비해야 하고, EFS PVC의 `100Gi` 요청은 파일 시스템 사용량 quota나 선결제 용량을 설정하지 않습니다. PVC 레이블도 AWS 청구 태그로 자동 전달되지 않습니다. Terraform은 기존 provider·caller identity 등을 요구하는 구성 fragment로, 기존 StorageClass 소유권과 파일 시스템 mount target/접근 권한, 백업·보존 요구를 별도 구성해야 합니다.
 
 다른 옵션들의 문제점:
 - **A. 모든 워크로드에 대해 가장 저렴한 스토리지 유형 사용**: 가장 저렴한 스토리지는 성능 요구 사항을 충족하지 못할 수 있으며, 이로 인해 애플리케이션 성능 저하 및 비즈니스 영향이 발생할 수 있습니다.
@@ -740,11 +856,10 @@ Amazon EKS에서 스토리지 비용을 최적화하기 위한 가장 효과적�
 </details>
 ### 3. Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적인 전략은 무엇인가요?
 
-A. 모든 트래픽에 대해 가장 비싼 네트워크 대역폭 사용  
-B. 모든 서비스를 단일 가용 영역에 배치  
-C. 트래픽 패턴 최적화, 데이터 전송 비용 최소화 및 VPC 엔드포인트 활용  
-D. 모든 네트워크 트래픽 차단  
-
+- A. 모든 트래픽에 대해 가장 비싼 네트워크 대역폭 사용
+- B. 모든 서비스를 단일 가용 영역에 배치
+- C. 트래픽 패턴 최적화, 데이터 전송 비용 최소화 및 VPC 엔드포인트 활용
+- D. 모든 네트워크 트래픽 차단
 <details>
 <summary>정답 및 설명</summary>
 
@@ -770,11 +885,14 @@ Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적�
    - 인터넷 게이트웨이 우회
    - 데이터 전송 비용 절감
 
+Topology spread는 배치를 제어하며 Service 트래픽의 엔드포인트를 선택하지 않습니다. `spec.topologyKeys`는 제거되었습니다. 예시는 Kubernetes 1.35+에서 stable인 `trafficDistribution: PreferSameZone`을 사용하며 fallback이 가능하므로 AZ 간 트래픽 0을 보장하지 않습니다. 실제 proxy/CNI 동작과 가용성 제약을 검증합니다.
+
+S3/DynamoDB gateway endpoint와 interface endpoint의 가격 모델은 다릅니다. ECR 이미지 pull에는 `ecr.api`, `ecr.dkr`, S3 연결과 private DNS, 대상 노드/Pod에서 endpoint로의 TCP 443 보안 그룹 규칙이 필요합니다. CLI는 interface endpoint 하나를 보여주며 아래 Terraform처럼 DKR 상대 endpoint도 준비합니다. endpoint policy와 실제 리전 트래픽/비용을 검토해야 하며 프라이빗 연결이 무료를 의미하지는 않습니다.
+
 **구현 방법:**
 
 1. **가용 영역 인식 파드 배치**:
    ```yaml
-   # 토폴로지 분산 제약 조건을 사용한 배포
    apiVersion: apps/v1
    kind: Deployment
    metadata:
@@ -790,11 +908,25 @@ Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적�
            labelSelector:
              matchLabels:
                app: web-app
+         containers:
+         - name: web-app
+           image: registry.example.com/team/web-app:REVIEWED_TAG
+       metadata:
+         labels:
+           app: web-app
+     selector:
+       matchLabels:
+         app: web-app
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-2. **서비스 토폴로지 라우팅**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```yaml
-   # 토폴로지 인식 서비스 구성
    apiVersion: v1
    kind: Service
    metadata:
@@ -805,39 +937,48 @@ Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적�
      ports:
      - port: 80
        targetPort: 8080
-     topologyKeys:
-     - "kubernetes.io/hostname"
-     - "topology.kubernetes.io/zone"
-     - "*"
+     trafficDistribution: PreferSameZone
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-3. **VPC 엔드포인트 구성**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```bash
    # S3 VPC 엔드포인트 생성
    aws ec2 create-vpc-endpoint \
      --vpc-id vpc-12345678 \
      --service-name com.amazonaws.us-west-2.s3 \
      --route-table-ids rtb-12345678
-   
+
    # DynamoDB VPC 엔드포인트 생성
    aws ec2 create-vpc-endpoint \
      --vpc-id vpc-12345678 \
      --service-name com.amazonaws.us-west-2.dynamodb \
      --route-table-ids rtb-12345678
-   
+
    # ECR API VPC 엔드포인트 생성
    aws ec2 create-vpc-endpoint \
      --vpc-id vpc-12345678 \
      --service-name com.amazonaws.us-west-2.ecr.api \
      --vpc-endpoint-type Interface \
      --subnet-ids subnet-12345678 subnet-87654321 \
-     --security-group-ids sg-12345678
+     --security-group-ids sg-12345678 \
+     --private-dns-enabled
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-4. **Istio를 사용한 로컬리티 라우팅**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```yaml
-   # Istio 로컬리티 라우팅 구성
-   apiVersion: networking.istio.io/v1alpha3
+   apiVersion: networking.istio.io/v1
    kind: DestinationRule
    metadata:
      name: web-app
@@ -845,40 +986,23 @@ Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적�
      host: web-app
      trafficPolicy:
        loadBalancer:
+         simple: LEAST_REQUEST
          localityLbSetting:
            enabled: true
-           failover:
-           - from: us-west-2a
-             to: us-west-2b
-           - from: us-west-2b
-             to: us-west-2c
-           - from: us-west-2c
-             to: us-west-2a
+       outlierDetection:
+         consecutive5xxErrors: 5
+         interval: 5s
+         baseEjectionTime: 30s
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-**네트워크 비용 구성 요소 및 최적화:**
-
-1. **가용 영역 간 데이터 전송**:
-   - 비용: GB당 요금 부과
-   - 최적화: 동일 가용 영역 내 통신 우선, 필요한 경우에만 가용 영역 간 통신
-
-2. **리전 간 데이터 전송**:
-   - 비용: 더 높은 GB당 요금
-   - 최적화: 리전 간 트래픽 최소화, 필요한 경우 데이터 복제
-
-3. **인터넷 아웃바운드 트래픽**:
-   - 비용: 가장 높은 GB당 요금
-   - 최적화: CloudFront 사용, 압축, 캐싱
-
-4. **NAT 게이트웨이 비용**:
-   - 비용: 시간당 요금 + 데이터 처리 요금
-   - 최적화: VPC 엔드포인트 사용, NAT 게이트웨이 공유
-
-**모범 사례:**
-
-1. **네트워크 토폴로지 최적화**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```yaml
-   # 노드 선호도를 사용한 파드 배치
    apiVersion: apps/v1
    kind: Deployment
    metadata:
@@ -899,11 +1023,25 @@ Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적�
                      values:
                      - api-server
                  topologyKey: topology.kubernetes.io/zone
+         containers:
+         - name: database
+           image: registry.example.com/team/database:REVIEWED_TAG
+       metadata:
+         labels:
+           app: database
+     selector:
+       matchLabels:
+         app: database
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-2. **네트워크 정책을 통한 불필요한 트래픽 제한**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```yaml
-   # 네트워크 정책 예시
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
    metadata:
@@ -931,12 +1069,29 @@ Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적�
        ports:
        - protocol: TCP
          port: 5432
+     - to:
+       - namespaceSelector:
+           matchLabels:
+             kubernetes.io/metadata.name: kube-system
+         podSelector:
+           matchLabels:
+             k8s-app: kube-dns
+       ports:
+       - protocol: UDP
+         port: 53
+       - protocol: TCP
+         port: 53
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-3. **서비스 메시를 통한 트래픽 최적화**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```yaml
-   # Istio 가상 서비스 구성
-   apiVersion: networking.istio.io/v1alpha3
+   apiVersion: networking.istio.io/v1
    kind: VirtualService
    metadata:
      name: api-service
@@ -944,6 +1099,14 @@ Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적�
      hosts:
      - api-service
      http:
+     - match:
+       - headers:
+           end-user:
+             exact: premium-user
+       route:
+       - destination:
+           host: api-service
+           subset: premium
      - route:
        - destination:
            host: api-service
@@ -953,55 +1116,81 @@ Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적�
            host: api-service
            subset: v2
          weight: 10
-     - match:
-       - headers:
-           end-user:
-             exact: premium-user
-       route:
-       - destination:
-           host: api-service
-           subset: premium
+   ---
+   apiVersion: networking.istio.io/v1
+   kind: DestinationRule
+   metadata:
+     name: api-service-subsets
+   spec:
+     host: api-service
+     subsets:
+     - name: v1
+       labels:
+         version: v1
+     - name: v2
+       labels:
+         version: v2
+     - name: premium
+       labels:
+         version: premium
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-4. **데이터 압축 및 효율적인 프로토콜 사용**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```yaml
-   # 데이터 압축을 위한 Envoy 필터
    apiVersion: networking.istio.io/v1alpha3
    kind: EnvoyFilter
    metadata:
      name: compression-filter
+     namespace: istio-system
    spec:
+     workloadSelector:
+       labels:
+         istio: ingressgateway
      configPatches:
      - applyTo: HTTP_FILTER
        match:
-         context: SIDECAR_OUTBOUND
+         context: GATEWAY
          listener:
            filterChain:
              filter:
-               name: envoy.http_connection_manager
+               name: envoy.filters.network.http_connection_manager
+               subFilter:
+                 name: envoy.filters.http.router
        patch:
          operation: INSERT_BEFORE
          value:
            name: envoy.filters.http.compressor
            typed_config:
-             "@type": type.googleapis.com/envoy.extensions.filters.http.compressor.v3.Compressor
-             content_length: 100
-             content_type:
-             - application/json
-             - text/html
+             '@type': type.googleapis.com/envoy.extensions.filters.http.compressor.v3.Compressor
+             response_direction_config:
+               common_config:
+                 min_content_length: 100
+                 content_type:
+                 - application/json
+                 - text/html
              compressor_library:
                name: gzip
                typed_config:
-                 "@type": type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip
+                 '@type': type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip
                  memory_level: 3
                  window_bits: 10
                  compression_level: BEST_COMPRESSION
                  compression_strategy: DEFAULT_STRATEGY
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-**실제 구현 예시:**
-
-1. **비용 효율적인 네트워크 아키텍처**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```
    +-------------------+    +-------------------+    +-------------------+
    |                   |    |                   |    |                   |
@@ -1032,205 +1221,187 @@ Amazon EKS에서 네트워킹 비용을 최적화하기 위한 가장 효과적�
    |                                                               |
    +---------------------------------------------------------------+
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-2. **Terraform을 사용한 네트워크 최적화 인프라 구성**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```hcl
    # VPC 엔드포인트 구성
    resource "aws_vpc_endpoint" "s3" {
-     vpc_id       = aws_vpc.main.id
-     service_name = "com.amazonaws.${var.region}.s3"
-     route_table_ids = [aws_route_table.private.id]
+     vpc_id            = aws_vpc.main.id
+     service_name      = "com.amazonaws.${var.region}.s3"
+     route_table_ids   = [aws_route_table.private.id]
      vpc_endpoint_type = "Gateway"
-     
+
      tags = {
        Name = "s3-endpoint"
      }
    }
-   
+
    resource "aws_vpc_endpoint" "dynamodb" {
-     vpc_id       = aws_vpc.main.id
-     service_name = "com.amazonaws.${var.region}.dynamodb"
-     route_table_ids = [aws_route_table.private.id]
+     vpc_id            = aws_vpc.main.id
+     service_name      = "com.amazonaws.${var.region}.dynamodb"
+     route_table_ids   = [aws_route_table.private.id]
      vpc_endpoint_type = "Gateway"
-     
+
      tags = {
        Name = "dynamodb-endpoint"
      }
    }
-   
+
    # 인터페이스 VPC 엔드포인트
    resource "aws_vpc_endpoint" "ecr_api" {
-     vpc_id            = aws_vpc.main.id
-     service_name      = "com.amazonaws.${var.region}.ecr.api"
-     vpc_endpoint_type = "Interface"
-     subnet_ids        = aws_subnet.private[*].id
-     security_group_ids = [aws_security_group.vpc_endpoints.id]
+     vpc_id              = aws_vpc.main.id
+     service_name        = "com.amazonaws.${var.region}.ecr.api"
+     vpc_endpoint_type   = "Interface"
+     subnet_ids          = aws_subnet.private[*].id
+     security_group_ids  = [aws_security_group.vpc_endpoints.id]
      private_dns_enabled = true
-     
+
      tags = {
        Name = "ecr-api-endpoint"
      }
    }
-   
+
    resource "aws_vpc_endpoint" "ecr_dkr" {
-     vpc_id            = aws_vpc.main.id
-     service_name      = "com.amazonaws.${var.region}.ecr.dkr"
-     vpc_endpoint_type = "Interface"
-     subnet_ids        = aws_subnet.private[*].id
-     security_group_ids = [aws_security_group.vpc_endpoints.id]
+     vpc_id              = aws_vpc.main.id
+     service_name        = "com.amazonaws.${var.region}.ecr.dkr"
+     vpc_endpoint_type   = "Interface"
+     subnet_ids          = aws_subnet.private[*].id
+     security_group_ids  = [aws_security_group.vpc_endpoints.id]
      private_dns_enabled = true
-     
+
      tags = {
        Name = "ecr-dkr-endpoint"
      }
    }
-   
-   # NAT 게이트웨이 최적화 (단일 NAT 게이트웨이 사용)
-   resource "aws_nat_gateway" "main" {
-     allocation_id = aws_eip.nat.id
-     subnet_id     = aws_subnet.public[0].id
-     
-     tags = {
-       Name = "main-nat-gateway"
-     }
-   }
-   
-   # 모든 프라이빗 서브넷이 단일 NAT 게이트웨이 사용
-   resource "aws_route_table" "private" {
-     vpc_id = aws_vpc.main.id
-     
-     route {
-       cidr_block     = "0.0.0.0/0"
-       nat_gateway_id = aws_nat_gateway.main.id
-     }
-     
-     tags = {
-       Name = "private-route-table"
-     }
-   }
    ```
+   Private Pod in AZ-a
+     -> S3/DynamoDB gateway endpoint route -> regional service
+     -> private DNS -> interface endpoint ENI:443 -> ECR API/DKR
+        (ECR layer downloads also require S3 access)
+     -> zonal NAT in AZ-a public subnet -> internet gateway -> external API
 
-3. **네트워크 비용 모니터링 및 최적화 스크립트**:
+   Locality-aware Service/mesh routing selects workload endpoints.
+   It does not replace VPC routes, endpoint permissions, or NAT.
    ```python
+   import json
+   import os
+   import re
+   from datetime import date
+   from decimal import Decimal
+   from pathlib import Path
+
    import boto3
-   import datetime
-   
-   # AWS 클라이언트 설정
-   ce = boto3.client('ce')  # Cost Explorer
-   
-   def get_network_costs(start_date, end_date):
-       """네트워크 관련 비용 조회"""
-       response = ce.get_cost_and_usage(
-           TimePeriod={
-               'Start': start_date,
-               'End': end_date
-           },
-           Granularity='DAILY',
-           Metrics=['UnblendedCost'],
-           GroupBy=[
-               {
-                   'Type': 'DIMENSION',
-                   'Key': 'SERVICE'
-               },
-               {
-                   'Type': 'DIMENSION',
-                   'Key': 'USAGE_TYPE'
-               }
+   from botocore.config import Config
+
+
+   def network_cost_rows(client, start, end, linked_account, usage_types):
+       for value in [start, end]:
+           if date.fromisoformat(value).isoformat() != value:
+               raise ValueError("Use YYYY-MM-DD dates")
+       if start >= end:
+           raise ValueError("Start must precede exclusive End")
+       if not re.fullmatch(r"[0-9]{12}", linked_account):
+           raise ValueError("A reviewed linked account ID is required")
+       if not isinstance(usage_types, list) or not usage_types or any(
+           not isinstance(value, str) or not value.strip() for value in usage_types
+       ):
+           raise ValueError("Provide exact reviewed USAGE_TYPE values")
+       request = {
+           "TimePeriod": {"Start": start, "End": end},
+           "Granularity": "DAILY",
+           "Metrics": ["UnblendedCost"],
+           "GroupBy": [
+               {"Type": "DIMENSION", "Key": "SERVICE"},
+               {"Type": "DIMENSION", "Key": "USAGE_TYPE"},
            ],
-           Filter={
-               'And': [
-                   {
-                       'Dimensions': {
-                           'Key': 'SERVICE',
-                           'Values': [
-                               'Amazon Virtual Private Cloud',
-                               'Amazon Elastic Compute Cloud',
-                               'Amazon CloudFront'
-                           ]
-                       }
-                   },
-                   {
-                       'Dimensions': {
-                           'Key': 'USAGE_TYPE',
-                           'Values': [
-                               'DataTransfer-Out-Bytes',
-                               'DataTransfer-Regional-Bytes',
-                               'NatGateway-Bytes',
-                               'VpcEndpoint-Hours'
-                           ],
-                           'MatchOptions': ['CONTAINS']
-                       }
-                   }
+           "Filter": {
+               "And": [
+                   {"Dimensions": {"Key": "LINKED_ACCOUNT", "Values": [linked_account],
+                                   "MatchOptions": ["EQUALS"]}},
+                   {"Dimensions": {"Key": "USAGE_TYPE", "Values": usage_types,
+                                   "MatchOptions": ["EQUALS"]}},
                ]
-           }
-       )
-       
-       return response['ResultsByTime']
-   
-   # 메인 함수
+           },
+       }
+       rows = []
+       seen_tokens = set()
+       for _ in range(100):
+           response = client.get_cost_and_usage(**request)
+           for period in response["ResultsByTime"]:
+               for group in period["Groups"]:
+                   service, usage_type = group["Keys"]
+                   metric = group["Metrics"]["UnblendedCost"]
+                   amount = Decimal(metric["Amount"])
+                   if not amount.is_finite() or not metric["Unit"]:
+                       raise ValueError("Invalid monetary amount/unit")
+                   rows.append({
+                       "start": period["TimePeriod"]["Start"],
+                       "endExclusive": period["TimePeriod"]["End"],
+                       "service": service,
+                       "usageType": usage_type,
+                       "amount": str(amount),
+                       "unit": metric["Unit"],
+                       "estimated": period.get("Estimated"),
+                   })
+           token = response.get("NextPageToken")
+           if not token:
+               return rows
+           if token in seen_tokens:
+               raise RuntimeError("Repeated pagination token")
+           seen_tokens.add(token)
+           request["NextPageToken"] = token
+       raise RuntimeError("Page limit exceeded; narrow the query")
+
+
    def main():
-       # 지난 30일 데이터 조회
-       end_date = datetime.datetime.now().strftime('%Y-%m-%d')
-       start_date = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
-       
-       network_costs = get_network_costs(start_date, end_date)
-       
-       # 비용 분석 및 최적화 권장 사항
-       analyze_costs(network_costs)
-   
-   def analyze_costs(network_costs):
-       """네트워크 비용 분석 및 최적화 권장 사항 제공"""
-       nat_gateway_costs = 0
-       data_transfer_az_costs = 0
-       data_transfer_region_costs = 0
-       data_transfer_internet_costs = 0
-       
-       for day in network_costs:
-           for group in day['Groups']:
-               service = group['Keys'][0]
-               usage_type = group['Keys'][1]
-               cost = float(group['Metrics']['UnblendedCost']['Amount'])
-               
-               if 'NatGateway' in usage_type:
-                   nat_gateway_costs += cost
-               elif 'DataTransfer' in usage_type and 'Regional' in usage_type:
-                   data_transfer_az_costs += cost
-               elif 'DataTransfer' in usage_type and 'Region' in usage_type:
-                   data_transfer_region_costs += cost
-               elif 'DataTransfer-Out' in usage_type:
-                   data_transfer_internet_costs += cost
-       
-       print(f"NAT Gateway costs: ${nat_gateway_costs:.2f}")
-       print(f"AZ data transfer costs: ${data_transfer_az_costs:.2f}")
-       print(f"Region data transfer costs: ${data_transfer_region_costs:.2f}")
-       print(f"Internet data transfer costs: ${data_transfer_internet_costs:.2f}")
-       
-       # 최적화 권장 사항
-       if nat_gateway_costs > 100:
-           print("Consider using VPC endpoints to reduce NAT Gateway costs")
-       
-       if data_transfer_az_costs > 50:
-           print("Consider optimizing pod placement to reduce cross-AZ traffic")
-       
-       if data_transfer_internet_costs > 200:
-           print("Consider using CloudFront or implementing compression to reduce internet data transfer costs")
-   
+       expected_caller = os.environ["EXPECTED_CALLER_ACCOUNT"]
+       if not re.fullmatch(r"[0-9]{12}", expected_caller):
+           raise ValueError("Set the reviewed calling account")
+       # Commercial AWS partition example; verify the billing endpoint/permissions.
+       session = boto3.Session(region_name="us-east-1")
+       config = Config(connect_timeout=5, read_timeout=30,
+                       retries={"mode": "standard", "total_max_attempts": 4})
+       identity = session.client("sts", config=config).get_caller_identity()
+       if identity["Account"] != expected_caller:
+           raise RuntimeError("Calling account mismatch")
+       usage_types = json.loads(Path("reviewed-usage-types.json").read_text())
+       rows = network_cost_rows(
+           session.client("ce", config=config),
+           os.environ["START_DATE"], os.environ["END_DATE"],
+           os.environ["LINKED_ACCOUNT_ID"], usage_types,
+       )
+       print(json.dumps({"basis": "UnblendedCost", "rows": rows}, indent=2))
+
+
    if __name__ == "__main__":
        main()
    ```
 
+추가 NetworkPolicy는 같은 namespace의 frontend→API→database와 표준 CoreDNS Deployment 경로를 예시로 허용합니다. 다른 필수 의존성은 별도 허용해야 하고 CNI의 NetworkPolicy 집행을 확인합니다. Auto Mode의 node-local DNS나 다른 DNS 경로에는 해당 환경의 허용 규칙이 필요합니다. namespace/pod selector를 실제 관리 레이블과 대조하세요.
+
+VirtualService는 첫 일치 규칙을 사용하므로 premium match를 catch-all보다 먼저 두고 대응 DestinationRule subset을 정의했습니다. 실제 Pod에 version 레이블이 있어야 합니다. 클라이언트가 보낸 end-user 헤더는 인증된 자격을 증명하지 않으므로 권한 검증은 서버에서 수행합니다. EnvoyFilter는 실제 ingress gateway 레이블/namespace와 설치된 Istio·Envoy 버전을 확인한 후에만 사용합니다. gateway의 HTTP 응답 압축 예시이며, outbound sidecar에 필터를 넣는 것만으로 업로드 요청을 압축하는 것은 아닙니다. 기존 content_length/content_type 필드는 제거된 것이 아니라 deprecated입니다. 이 예시는 response_direction_config의 common_config를 사용하며 CPU·지연·보안 및 프로토콜별 영향을 테스트해야 합니다.
+
+Terraform은 VPC·private subnet·endpoint SG·라우팅 테이블이 이미 정의된 모듈 fragment입니다. 기존 VPC 소유자가 NAT와 route association을 관리해야 하며 단일 zonal NAT를 모든 AZ에 공유하는 구성을 기본 고가용성/절감 해법으로 적용하지 않습니다. cross-AZ 전송과 장애 의존성을 비교하거나 별도의 regional NAT 모델을 평가합니다.
+
+Python을 network_costs.py로 저장하고 EXPECTED_CALLER_ACCOUNT, LINKED_ACCOUNT_ID, START_DATE, END_DATE를 명시합니다. reviewed-usage-types.json은 Cost Explorer/GetDimensionValues에서 선택한 실제 USAGE_TYPE 문자열의 JSON 배열이어야 합니다. 이 코드는 상업 AWS 파티션의 us-east-1 청구 endpoint를 사용하며 읽기 권한과 호출 계정을 확인해야 합니다. API 쿼리 비용이 발생할 수 있습니다. GetCostAndUsage Dimensions는 CONTAINS를 지원하지 않으므로 정확한 값과 EQUALS를 사용합니다. NextPageToken을 끝까지 처리하고 금액은 Decimal, 단위와 estimated 상태는 원본대로 보존합니다. 빈 결과/실패를 전체 네트워크 비용 0으로 해석하지 않습니다. 특정 EKS 클러스터에 귀속하려면 계정 수준 결과에 검증된 태그/리소스 매핑이 추가로 필요합니다. 선택한 usage type만 포함하므로 전체 비용을 보장하지 않으며 서비스명/Regional/Region 같은 부분 문자열로 인터넷·AZ·리전 비용을 추정 분류하지 않습니다. 기간은 UTC이며 End는 미포함이고 조회 가능 이력과 최종 정산 상태를 확인합니다. 원래의 100/50/200 USD 임계값은 설명용 조사 기준일 뿐 범용 최적화 판정이 아닙니다.
+
 다른 옵션들의 문제점:
 - **A. 모든 트래픽에 대해 가장 비싼 네트워크 대역폭 사용**: 이는 불필요한 비용을 발생시키며, 모든 워크로드가 고대역폭을 필요로 하지는 않습니다.
-- **B. 모든 서비스를 단일 가용 영역에 배치**: 이는 가용성과 내결함성을 크게 저하시키며, AWS의 고가용성 설계 원칙에 위배됩니다.
+- **B. 모든 서비스를 단일 가용 영역에 배치**: 중요 워크로드의 다중 AZ 가용성 요구를 충족하지 못할 수 있습니다. 비중요 환경의 단일 AZ 선택도 명시적인 장애 허용 결정이 필요합니다.
 - **D. 모든 네트워크 트래픽 차단**: 이는 실용적이지 않으며, 애플리케이션 기능을 심각하게 제한합니다.
 </details>
 ### 4. Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적인 접근 방식은 무엇인가요?
 
-A. 가능한 한 많은 클러스터 생성  
-B. 모든 워크로드를 단일 클러스터에 통합  
-C. 워크로드 요구 사항에 따라 클러스터 수를 최적화하고 관리 오버헤드 최소화  
-D. 클러스터를 수동으로 관리  
-
+- A. 가능한 한 많은 클러스터 생성
+- B. 모든 워크로드를 단일 클러스터에 통합
+- C. 워크로드 요구 사항에 따라 클러스터 수를 최적화하고 관리 오버헤드 최소화
+- D. 클러스터를 수동으로 관리
 <details>
 <summary>정답 및 설명</summary>
 
@@ -1256,76 +1427,71 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
    - 효율적인 노드 그룹 관리
    - 공유 서비스 활용
 
+짧은 eksctl 명령은 생성 예시이며 운영 네트워크/IAM 기본 구성이 아닙니다. AWS 카탈로그에서 EKS 버전을 선택하고 [생성 가이드](../../eks/02-eks-cluster-creation.md)에 따라 VPC와 API endpoint 노출을 검토하며 컨트롤러 권한은 전용 identity에 둡니다. 노드 그룹 크기 범위는 autoscaler를 설치하거나 지출 상한을 만들지 않습니다. 표준/확장 지원 요금, 선택적인 Provisioned Control Plane 용량, 공유 관리 구성 요소의 의존성도 비교에 포함합니다.
+
+Terraform은 확인한 모듈 **21.25.0**을 사용하며 최소 AWS provider는 **6.59**, 예시 고정 버전은 6.64.0입니다. 환경 기본값을 추측하지 않도록 입력값을 필수로 두었습니다. 소유한 private 네트워크/API 연결 경로, 검토한 access entry, 호환·고정 애드온과 IAM 연결, 관리형 노드 그룹을 제공해야 합니다. 표준 EC2 노드에 맞는 CNI/DNS/proxy 경로가 필요하며 Auto Mode 예시는 아닙니다. autoscaler와 desired-size 소유권을 조율하고 격리 모델에 따라 state/provider identity를 분리합니다. plan/apply 실행이나 운영 준비 완료를 주장하지 않습니다.
+
 **구현 방법:**
 
 1. **EKS 클러스터 최적화 구성**:
    ```bash
+   : "${EKS_VERSION:?Select a version offered by the AWS EKS support catalog}"
    # eksctl을 사용한 최적화된 클러스터 생성
    eksctl create cluster \
      --name optimized-cluster \
      --region us-west-2 \
-     --version 1.28 \
+     --version "$EKS_VERSION" \
      --nodegroup-name standard-workers \
      --node-type m5.large \
      --nodes-min 2 \
      --nodes-max 10 \
-     --managed \
-     --asg-access \
-     --external-dns-access \
-     --full-ecr-access \
-     --appmesh-access \
-     --alb-ingress-access
+     --managed
    ```
 
 2. **Terraform을 사용한 클러스터 관리 자동화**:
    ```hcl
+   terraform {
+     required_version = ">= 1.5.7"
+     required_providers {
+       aws = {
+         source  = "hashicorp/aws"
+         version = "= 6.64.0"
+       }
+     }
+   }
+
+   variable "region" { type = string }
+   variable "account_id" { type = string }
+   variable "cluster_name" { type = string }
+   variable "environment" { type = string }
+   variable "kubernetes_version" { type = string }
+   variable "vpc_id" { type = string }
+   variable "private_subnet_ids" { type = list(string) }
+   variable "reviewed_addons" { type = any }
+   variable "reviewed_access_entries" { type = any }
+   variable "managed_groups" { type = any }
+
+   provider "aws" {
+     region              = var.region
+     allowed_account_ids = [var.account_id]
+   }
+
    module "eks" {
      source  = "terraform-aws-modules/eks/aws"
-     version = "~> 19.0"
-     
-     cluster_name    = "optimized-cluster"
-     cluster_version = "1.28"
-     
-     cluster_endpoint_public_access  = true
-     cluster_endpoint_private_access = true
-     
-     cluster_addons = {
-       coredns = {
-         most_recent = true
-       }
-       kube-proxy = {
-         most_recent = true
-       }
-       vpc-cni = {
-         most_recent = true
-       }
-     }
-     
-     vpc_id     = module.vpc.vpc_id
-     subnet_ids = module.vpc.private_subnets
-     
-     eks_managed_node_groups = {
-       general = {
-         min_size     = 1
-         max_size     = 10
-         desired_size = 2
-         
-         instance_types = ["m5.large"]
-         capacity_type  = "ON_DEMAND"
-       }
-       
-       spot = {
-         min_size     = 1
-         max_size     = 10
-         desired_size = 2
-         
-         instance_types = ["m5.large", "m5a.large", "m5d.large", "m4.large"]
-         capacity_type  = "SPOT"
-       }
-     }
-     
+     version = "21.25.0"
+
+     name                    = var.cluster_name
+     kubernetes_version      = var.kubernetes_version
+     endpoint_private_access = true
+     endpoint_public_access  = false
+     vpc_id                  = var.vpc_id
+     subnet_ids              = var.private_subnet_ids
+
+     addons                  = var.reviewed_addons
+     access_entries          = var.reviewed_access_entries
+     eks_managed_node_groups = var.managed_groups
      tags = {
-       Environment = "production"
+       Environment = var.environment
        Terraform   = "true"
      }
    }
@@ -1333,32 +1499,29 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
 
 3. **GitOps를 사용한 클러스터 구성 관리**:
    ```yaml
-   # ArgoCD Application 예시
    apiVersion: argoproj.io/v1alpha1
    kind: Application
    metadata:
      name: cluster-config
      namespace: argocd
    spec:
-     project: default
+     project: cluster-config
      source:
        repoURL: https://github.com/myorg/cluster-config.git
-       targetRevision: HEAD
+       targetRevision: REPLACE_WITH_REVIEWED_COMMIT_SHA
        path: configs
      destination:
        server: https://kubernetes.default.svc
        namespace: default
      syncPolicy:
        automated:
-         prune: true
-         selfHeal: true
-       syncOptions:
-       - CreateNamespace=true
+         enabled: false
+         prune: false
+         selfHeal: false
    ```
 
 4. **다중 테넌트 클러스터 구성**:
    ```yaml
-   # 네임스페이스 리소스 할당량
    apiVersion: v1
    kind: ResourceQuota
    metadata:
@@ -1366,15 +1529,14 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
      namespace: team-a
    spec:
      hard:
-       requests.cpu: "10"
+       requests.cpu: '10'
        requests.memory: 20Gi
-       limits.cpu: "20"
+       limits.cpu: '20'
        limits.memory: 40Gi
-       pods: "50"
-       services: "20"
-       persistentvolumeclaims: "30"
-       
-   # 네임스페이스 네트워크 정책
+       pods: '50'
+       services: '20'
+       persistentvolumeclaims: '30'
+   ---
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
    metadata:
@@ -1387,15 +1549,28 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
      - Egress
      ingress:
      - from:
+       - podSelector: {}
        - namespaceSelector:
            matchLabels:
-             name: team-a
-       - namespaceSelector:
-           matchLabels:
-             name: shared-services
+             kubernetes.io/metadata.name: shared-services
      egress:
      - to:
-       - namespaceSelector: {}
+       - podSelector: {}
+       - namespaceSelector:
+           matchLabels:
+             kubernetes.io/metadata.name: shared-services
+     - to:
+       - namespaceSelector:
+           matchLabels:
+             kubernetes.io/metadata.name: kube-system
+         podSelector:
+           matchLabels:
+             k8s-app: kube-dns
+       ports:
+       - protocol: UDP
+         port: 53
+       - protocol: TCP
+         port: 53
    ```
 
 **클러스터 전략별 비용 영향:**
@@ -1432,14 +1607,7 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
 **모범 사례:**
 
 1. **클러스터 비용 분석 및 최적화**:
-   ```bash
-   # AWS Cost Explorer를 사용한 클러스터별 비용 분석
-   aws ce get-cost-and-usage \
-     --time-period Start=2023-01-01,End=2023-01-31 \
-     --granularity MONTHLY \
-     --metrics "BlendedCost" "UnblendedCost" "UsageQuantity" \
-     --group-by Type=TAG,Key=kubernetes.io/cluster/cluster-name
-   ```
+계정 전체 청구를 필터 없이 그룹화한 첫 행을 클러스터 총액으로 표시하지 말고 아래 context·계정·태그 범위 수집 예시를 사용합니다.
 
 2. **클러스터 자동화 및 IaC 구현**:
    - 모든 클러스터 구성을 코드로 관리
@@ -1448,7 +1616,6 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
 
 3. **공유 서비스 모델 구현**:
    ```yaml
-   # 공유 서비스 네임스페이스 구성
    apiVersion: v1
    kind: Namespace
    metadata:
@@ -1456,20 +1623,26 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
      labels:
        name: shared-services
        access: global
-   
-   # 공유 서비스에 대한 네트워크 정책
+   ---
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
    metadata:
-     name: allow-from-all-namespaces
+     name: allow-team-a
      namespace: shared-services
    spec:
-     podSelector: {}
+     podSelector:
+       matchLabels:
+         app: shared-api
      policyTypes:
      - Ingress
      ingress:
      - from:
-       - namespaceSelector: {}
+       - namespaceSelector:
+           matchLabels:
+             kubernetes.io/metadata.name: team-a
+       ports:
+       - protocol: TCP
+         port: 8080
    ```
 
 4. **클러스터 수명 주기 관리**:
@@ -1477,7 +1650,7 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
    - 사용하지 않는 클러스터 식별 및 제거
    - 클러스터 통합 기회 모색
 
-**실제 구현 예시:**
+**추가 환경 구성과 읽기 전용 수집 예시:**
 
 1. **비용 효율적인 다중 클러스터 아키텍처**:
    ```
@@ -1507,151 +1680,132 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
 
 2. **Terraform을 사용한 다중 클러스터 관리**:
    ```hcl
-   # 환경별 클러스터 모듈
-   module "eks_prod" {
-     source = "./modules/eks-cluster"
-     
-     cluster_name    = "production"
-     cluster_version = "1.28"
-     vpc_id          = module.vpc.vpc_id
-     subnet_ids      = module.vpc.private_subnets
-     
-     node_groups = {
-       critical = {
-         instance_types = ["m5.large"]
-         capacity_type  = "ON_DEMAND"
-         min_size       = 3
-         max_size       = 10
-       },
-       general = {
-         instance_types = ["m5.large", "m5a.large"]
-         capacity_type  = "SPOT"
-         min_size       = 3
-         max_size       = 20
-       }
+   # production.tfvars: merge with the production account/network/add-on/access inputs.
+   cluster_name = "production"
+   environment  = "production"
+   managed_groups = {
+     critical = {
+       instance_types = ["m5.large"]
+       capacity_type  = "ON_DEMAND"
+       min_size       = 3
+       max_size       = 10
+       desired_size   = 3
      }
-     
-     tags = {
-       Environment = "production"
+     general = {
+       instance_types = ["m5.large", "m5a.large"]
+       capacity_type  = "SPOT"
+       min_size       = 3
+       max_size       = 20
+       desired_size   = 3
      }
    }
-   
-   module "eks_dev" {
-     source = "./modules/eks-cluster"
-     
-     cluster_name    = "development"
-     cluster_version = "1.28"
-     vpc_id          = module.vpc.vpc_id
-     subnet_ids      = module.vpc.private_subnets
-     
-     node_groups = {
-       default = {
-         instance_types = ["m5.large"]
-         capacity_type  = "SPOT"
-         min_size       = 1
-         max_size       = 5
-       }
-     }
-     
-     tags = {
-       Environment = "development"
+   ```
+
+   ```hcl
+   # development.tfvars: use a separate state/backend and the development identity.
+   cluster_name = "development"
+   environment  = "development"
+   managed_groups = {
+     default = {
+       instance_types = ["m5.large", "m5a.large"]
+       capacity_type  = "SPOT"
+       min_size       = 1
+       max_size       = 5
+       desired_size   = 1
      }
    }
    ```
 
 3. **클러스터 비용 모니터링 및 최적화 스크립트**:
    ```python
-   import boto3
-   import kubernetes
-   from kubernetes import client, config
-   
-   # Kubernetes 클라이언트 설정
-   config.load_kube_config()
-   v1 = client.CoreV1Api()
-   
-   # AWS 클라이언트 설정
-   ce = boto3.client('ce')
-   
-   def get_cluster_costs(cluster_name, start_date, end_date):
-       """클러스터별 비용 조회"""
-       response = ce.get_cost_and_usage(
-           TimePeriod={
-               'Start': start_date,
-               'End': end_date
-           },
-           Granularity='MONTHLY',
-           Metrics=['UnblendedCost'],
-           GroupBy=[
-               {
-                   'Type': 'TAG',
-                   'Key': f'kubernetes.io/cluster/{cluster_name}'
+   import json
+   import os
+   import re
+   import subprocess
+   from datetime import date
+   from pathlib import Path
+
+
+   def read_json(command):
+       completed = subprocess.run(command, check=True, capture_output=True, text=True, timeout=60)
+       return json.loads(completed.stdout)
+
+
+   def collect(context, expected_server, caller_account, linked_account, tag_key, tag_value, start, end,
+               run=subprocess.run, query=read_json):
+       if not all([context, expected_server, tag_key, tag_value]):
+           raise ValueError("Explicit context, API server, and billing tag mapping are required")
+       if not all(re.fullmatch(r"[0-9]{12}", account) for account in [caller_account, linked_account]):
+           raise ValueError("Use reviewed 12-digit account IDs")
+       if any(date.fromisoformat(value).isoformat() != value for value in [start, end]) or start >= end:
+           raise ValueError("Use YYYY-MM-DD with Start before exclusive End")
+       server = run(
+           ["kubectl", "--context", context, "config", "view", "--minify",
+            "--output", "jsonpath={.clusters[0].cluster.server}"],
+           check=True, capture_output=True, text=True, timeout=30,
+       ).stdout.strip()
+       if server != expected_server:
+           raise RuntimeError("Kubernetes context/API-server mismatch")
+       identity = query(["aws", "sts", "get-caller-identity", "--region", "us-east-1",
+                         "--output", "json", "--no-cli-pager"])
+       if identity["Account"] != caller_account:
+           raise RuntimeError("Calling AWS account mismatch")
+       # Preserve actual metrics samples, timestamps, windows, and units.
+       usage = query(["kubectl", "--context", context, "get", "--raw",
+                      "/apis/metrics.k8s.io/v1beta1/nodes"])
+       if usage.get("kind") != "NodeMetricsList" or not isinstance(usage.get("items"), list):
+           raise ValueError("Unexpected node metrics response")
+       expression = {"And": [
+           {"Dimensions": {"Key": "LINKED_ACCOUNT", "Values": [linked_account], "MatchOptions": ["EQUALS"]}},
+           {"Tags": {"Key": tag_key, "Values": [tag_value], "MatchOptions": ["EQUALS"]}},
+       ]}
+       base = [
+           "aws", "ce", "get-cost-and-usage", "--region", "us-east-1",
+           "--time-period", json.dumps({"Start": start, "End": end}),
+           "--granularity", "MONTHLY", "--metrics", "UnblendedCost",
+           "--group-by", "Type=DIMENSION,Key=SERVICE",
+           "--filter", json.dumps(expression), "--output", "json", "--no-cli-pager",
+       ]
+       pages = []
+       token = None
+       seen = set()
+       for _ in range(100):
+           page = query(base + (["--next-page-token", token] if token else []))
+           if not isinstance(page.get("ResultsByTime"), list):
+               raise ValueError("Unexpected cost response")
+           pages.append(page)
+           token = page.get("NextPageToken")
+           if not token:
+               return {
+                   "context": context, "apiServer": server, "nodeUsage": usage,
+                   "billingScope": expression, "basis": "UnblendedCost", "costPages": pages,
                }
-           ]
-       )
-       
-       return response['ResultsByTime']
-   
-   def get_cluster_utilization(cluster_name):
-       """클러스터 리소스 활용도 분석"""
-       # 노드 리소스 사용량 조회
-       nodes = v1.list_node().items
-       total_cpu_capacity = 0
-       total_memory_capacity = 0
-       total_cpu_requests = 0
-       total_memory_requests = 0
-       
-       for node in nodes:
-           cpu_capacity = kubernetes.utils.parse_quantity(node.status.capacity['cpu'])
-           memory_capacity = kubernetes.utils.parse_quantity(node.status.capacity['memory'])
-           total_cpu_capacity += cpu_capacity
-           total_memory_capacity += memory_capacity
-       
-       # 파드 리소스 요청 조회
-       pods = v1.list_pod_for_all_namespaces().items
-       for pod in pods:
-           for container in pod.spec.containers:
-               if container.resources.requests:
-                   if 'cpu' in container.resources.requests:
-                       total_cpu_requests += kubernetes.utils.parse_quantity(container.resources.requests['cpu'])
-                   if 'memory' in container.resources.requests:
-                       total_memory_requests += kubernetes.utils.parse_quantity(container.resources.requests['memory'])
-       
-       # 활용도 계산
-       cpu_utilization = (total_cpu_requests / total_cpu_capacity) * 100 if total_cpu_capacity > 0 else 0
-       memory_utilization = (total_memory_requests / total_memory_capacity) * 100 if total_memory_capacity > 0 else 0
-       
-       return {
-           'cpu_utilization': cpu_utilization,
-           'memory_utilization': memory_utilization
-       }
-   
-   # 메인 함수
-   def main():
-       clusters = ['production', 'development', 'staging']
-       start_date = '2023-01-01'
-       end_date = '2023-01-31'
-       
-       for cluster in clusters:
-           # 비용 분석
-           costs = get_cluster_costs(cluster, start_date, end_date)
-           
-           # 활용도 분석
-           utilization = get_cluster_utilization(cluster)
-           
-           # 최적화 권장 사항
-           print(f"Cluster: {cluster}")
-           print(f"Cost: ${costs[0]['Groups'][0]['Metrics']['UnblendedCost']['Amount']}")
-           print(f"CPU Utilization: {utilization['cpu_utilization']:.2f}%")
-           print(f"Memory Utilization: {utilization['memory_utilization']:.2f}%")
-           
-           if utilization['cpu_utilization'] < 30 or utilization['memory_utilization'] < 30:
-               print("Recommendation: Consider downsizing cluster or consolidating workloads")
-           
-           print("---")
-   
+           if token in seen:
+               raise RuntimeError("Repeated cost pagination token")
+           seen.add(token)
+       raise RuntimeError("Page limit exceeded; narrow the query")
+
+
    if __name__ == "__main__":
-       main()
+       result = collect(
+           os.environ["KUBE_CONTEXT"], os.environ["EXPECTED_API_SERVER"],
+           os.environ["EXPECTED_CALLER_ACCOUNT"], os.environ["LINKED_ACCOUNT_ID"],
+           os.environ["BILLING_TAG_KEY"], os.environ["BILLING_TAG_VALUE"],
+           os.environ["START_DATE"], os.environ["END_DATE"],
+       )
+       Path("cluster-cost-and-usage.json").write_text(json.dumps(result, indent=2) + "\n")
+       print("Saved raw metrics and tag-scoped billing pages; no resizing recommendation was made.")
    ```
+
+Argo CD Application에는 설치된 컨트롤러, 검토한 저장소/commit, 저장소·대상·리소스 종류를 제한하는 기존 `cluster-config` AppProject가 필요합니다. 자리표시자 SHA와 저장소를 바꾼 후 사용합니다. 초기 검토를 위해 자동 동기화/pruning을 끈 상태이며 소유자가 의도한 조정 동작만 활성화합니다. 공유 관리 자격 증명/컨트롤러는 별도 클러스터 사이에도 장애·보안 영향 범위를 넓힐 수 있습니다.
+
+ResourceQuota는 admission과 객체 수를 제한하며 청구액이나 테넌트 인가를 제어하지 않습니다. NetworkPolicy는 여러 정책의 허용이 합쳐지고 CNI 집행이 필요합니다. namespace 예시는 `team-a` 내부, 지정한 공유 namespace와의 통신, 표준 CoreDNS Deployment로의 DNS를 허용합니다. node-local/Auto Mode DNS 및 다른 의존성은 명시적으로 조정합니다. shared API 예시는 `app: shared-api` Pod의 TCP 8080에 `team-a`만 허용합니다. 기존의 광범위한 allow-all 정책을 남기지 말고 함께 조정하세요. RBAC·admission·IAM·신뢰 경계는 별도 제어입니다.
+
+환경별 tfvars는 위 검토한 모듈의 override이며 제공되지 않은 `./modules/eks-cluster` 호출이 아닙니다. 각 환경의 계정·네트워크·버전·애드온·접근 설정과 병합하고 별도 state/backend 및 identity를 사용합니다. 인스턴스 목록/수량은 예시이므로 중단 허용성과 현재 리전 선택지를 검토합니다.
+
+수집 스크립트는 실행마다 **명시적인 context 하나**를 사용합니다. `KUBE_CONTEXT`, `EXPECTED_API_SERVER`, `EXPECTED_CALLER_ACCOUNT`, `LINKED_ACCOUNT_ID`, `BILLING_TAG_KEY`, `BILLING_TAG_VALUE`, `START_DATE`, `END_DATE`를 설정하고 클러스터마다 의도적으로 반복합니다. API server URL은 검토한 EKS 클러스터와 일치해야 합니다. 같은 context의 requests를 모든 클러스터의 사용률로 재표시하지 않고, 실제 Metrics API 표본의 timestamp/window/단위와 태그 범위 Cost Explorer 전체 페이지를 저장합니다. Metrics Server와 읽기 권한이 필요합니다. 노드 표본 누락은 사용량 0이 아니며 짧은 표본은 피크 수요 이력이 아닙니다.
+
+상업 AWS 청구 endpoint와 미포함 종료일을 사용하며 조회 가능한 청구 기간을 선택합니다. 기존 2023년 날짜는 설정 예시였고 실측 결과가 아닙니다. 청구 데이터에 태그 매핑이 있어야 하며 태그 없는 비용/공유 비용은 누락될 수 있습니다. 금액 단위·비용 기준·estimated 상태를 원본대로 보존하고 첫 그룹에서 총액을 추정하거나 requests/capacity 임계값으로 축소를 권고하지 않습니다.
 
 다른 옵션들의 문제점:
 - **A. 가능한 한 많은 클러스터 생성**: 이는 각 클러스터에 대한 컨트롤 플레인 비용과 관리 오버헤드를 증가시키며, 리소스 활용도를 저하시킵니다.
@@ -1660,11 +1814,10 @@ Amazon EKS 클러스터 관리 비용을 최적화하기 위한 가장 효과적
 </details>
 ### 5. Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 접근 방식은 무엇인가요?
 
-A. AWS 청구서만 검토  
-B. 태그 지정 전략, 비용 할당 도구 및 지속적인 모니터링 구현  
-C. 모든 리소스에 동일한 비용 할당  
-D. 비용 모니터링 없이 리소스 사용  
-
+- A. AWS 청구서만 검토
+- B. 태그 지정 전략, 비용 할당 도구 및 지속적인 모니터링 구현
+- C. 모든 리소스에 동일한 비용 할당
+- D. 비용 모니터링 없이 리소스 사용
 <details>
 <summary>정답 및 설명</summary>
 
@@ -1690,11 +1843,14 @@ Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 �
    - 이상 탐지 및 알림
    - 최적화 권장 사항 구현
 
+Kubernetes 레이블, AWS 리소스 태그, 활성화한 청구 태그는 서로 다릅니다. Namespace 레이블은 Pod나 AWS 리소스에 자동 전파되지 않으므로 워크로드 레이블은 Pod template에 넣습니다. 아래 Organizations 태그 정책은 EKS 클러스터를 포함한 지원 리소스의 지정 태그 키/값을 검증하며, 태그를 생성하거나 필수 태그 존재 검사를 설정하지 않습니다. 상속 정책과 별도 누락 태그 제어를 검토합니다. 청구 활성화/backfill은 별도 작업이며 최대 12개월 backfill도 과거에 실제 태그가 존재했어야 합니다.
+
+아래 CUR 명령은 Cost Explorer 대시보드나 CUR 2.0이 아닌 **legacy CUR**를 만듭니다. AWS는 legacy CUR를 계속 지원합니다. 새 설계는 [FinOps 가이드](../../ops/13-finops-cost-platform.md)의 Data Exports/CUR 2.0을 평가합니다. legacy 예시에는 지정 리전의 기존 버킷, 검토한 CUR 전달 정책, 보고 권한이 필요하며 버킷·Glue 스키마·Athena 통합·대시보드를 생성하지 않습니다. 전달 서비스별 정책을 따르고 CUR 2.0의 `bcm-data-exports` 정책을 legacy 서비스에 대입하지 않습니다.
+
 **구현 방법:**
 
 1. **태그 지정 전략 구현**:
    ```yaml
-   # 네임스페이스 태그 지정
    apiVersion: v1
    kind: Namespace
    metadata:
@@ -1704,8 +1860,7 @@ Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 �
        cost-center: cc-123
        environment: production
        project: project-x
-   
-   # 배포에 태그 지정
+   ---
    apiVersion: apps/v1
    kind: Deployment
    metadata:
@@ -1717,6 +1872,22 @@ Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 �
        cost-center: cc-123
        environment: production
        project: project-x
+   spec:
+     selector:
+       matchLabels:
+         app: web-app
+     template:
+       metadata:
+         labels:
+           app: web-app
+           team: team-a
+           cost-center: cc-123
+           environment: production
+           project: project-x
+       spec:
+         containers:
+         - name: web-app
+           image: registry.example.com/team/web-app:REVIEWED_TAG
    ```
 
 2. **AWS 태그 정책 구성**:
@@ -1778,19 +1949,9 @@ Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 �
    ```
 
 3. **Kubecost 설치 및 구성**:
-   ```bash
-   # Helm을 사용하여 Kubecost 설치
-   helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-   helm install kubecost kubecost/cost-analyzer \
-     --namespace kubecost \
-     --create-namespace \
-     --set kubecostToken="<YOUR_KUBECOST_TOKEN>" \
-     --set prometheus.server.persistentVolume.size=100Gi \
-     --set prometheus.nodeExporter.enabled=true \
-     --set serviceMonitor.enabled=true
-   ```
+[본문](../../eks/07-eks-cost-optimization.md)의 검증한 Kubecost 3.2.4 설치 또는 [EKS06 6번 문항](06-eks-monitoring-logging-quiz.md)의 OpenCost 1.121.2/chart 2.5.31을 사용합니다. Kubecost 3.x는 ClickHouse/finops-agent 직접 수집을 사용하므로 2.x Prometheus values나 명령행 라이선스 토큰을 사용하지 않습니다. 소유 배포 하나를 재사용하고 마이그레이션·라이선스·스토리지 요구를 검토합니다.
 
-4. **AWS Cost Explorer 보고서 설정**:
+4. **Legacy CUR 전달 설정**:
    ```bash
    # 비용 및 사용 보고서 생성
    aws cur put-report-definition \
@@ -1836,7 +1997,7 @@ Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 �
 1. **일관된 태그 지정 정책 적용**:
    ```bash
    # AWS 리소스 태그 지정 자동화
-   aws resourcegroupstaggingapi tag-resources \
+   aws resourcegroupstaggingapi tag-resources --region us-west-2 \
      --resource-arn-list arn:aws:eks:us-west-2:123456789012:cluster/my-cluster \
      --tags team=platform,cost-center=cc-100,environment=production
    ```
@@ -1865,7 +2026,6 @@ Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 �
 
 3. **리소스 요청 및 제한 최적화**:
    ```yaml
-   # 리소스 요청 및 제한 설정
    apiVersion: apps/v1
    kind: Deployment
    metadata:
@@ -1882,6 +2042,13 @@ Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 �
              limits:
                cpu: 500m
                memory: 512Mi
+           image: registry.example.com/team/web-app:REVIEWED_TAG
+       metadata:
+         labels:
+           app: web-app
+     selector:
+       matchLabels:
+         app: web-app
    ```
 
 4. **정기적인 비용 검토 및 최적화**:
@@ -1889,46 +2056,88 @@ Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 �
    - 비용 추세 및 이상 분석
    - 최적화 조치 추적 및 영향 측정
 
-**실제 구현 예시:**
+**추가 구성과 데이터 검증 예시:**
 
 1. **비용 모니터링 대시보드**:
-   ```yaml
-   # Grafana 대시보드 구성
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: cost-dashboard
-     namespace: monitoring
-   data:
-     cost-dashboard.json: |
-       {
-         "title": "EKS Cost Dashboard",
-         "panels": [
-           {
-             "title": "Cost by Namespace",
-             "type": "bar",
-             "datasource": "Prometheus",
-             "targets": [
-               {
-                 "expr": "sum(kube_pod_container_resource_requests_cpu_cores * on(node) group_left() node_cpu_hourly_cost) by (namespace)",
-                 "legendFormat": "{{namespace}}"
-               }
-             ]
-           },
-           {
-             "title": "Cost by Team",
-             "type": "pie",
-             "datasource": "Prometheus",
-             "targets": [
-               {
-                 "expr": "sum(kube_pod_container_resource_requests_cpu_cores * on(node) group_left() node_cpu_hourly_cost) by (label_team)",
-                 "legendFormat": "{{label_team}}"
-               }
-             ]
-           }
-         ]
-       }
-   ```
+리전별 TagResources 호출은 대상 리전을 확인하고 `FailedResourcesMap`을 검사합니다. CLI 종료 성공만으로 모든 요청 리소스의 태그 성공이 입증되지는 않으므로 청구 할당에 사용하기 전에 실제 태그를 확인합니다.
+
+**할당 비용률 추정 대시보드**
+
+이 예시는 한 클러스터 Prometheus의 순간 **CPU+메모리 할당 비용률 추정치(USD/hour)**이며 청구서나 namespace 전체 비용이 아닙니다. 입력은 OpenCost 할당/가격 메트릭(예시 `job="opencost"`)과 kube-state-metrics의 Pod 레이블(`job="kube-state-metrics"`)입니다. 실제 job 레이블과 CPU·메모리·가격 데이터 수집 범위를 확인합니다. 적절한 ServiceMonitor honor-label 설정으로 exporter의 워크로드 namespace 레이블을 유지하세요. 공유 백엔드에서는 모든 집계/join에 일치하는 cluster 식별자가 필요합니다.
+
+첫 values fragment는 소유한 kube-prometheus-stack 릴리스에 병합합니다. team 레이블 값은 제한하고 Pod template에 실제로 넣어야 하며 namespace 레이블만으로 생성되지 않습니다. team 누락은 `unassigned`로 집계합니다. 동일 수집본은 중복 제거하지만 상충하는 가격/소유권 소스는 별도로 해결해야 합니다. GPU·스토리지·네트워크·컨트롤 플레인·유휴/공유 할당·할인·크레딧·세금은 이 두 구성 요소에 포함되지 않습니다. 누락은 비용 0이 아니며 시간당 비용률은 월별 금액이 아닙니다.
+
+PrometheusRule의 namespace/release 레이블은 본문의 selector와 맞춰야 합니다. 대시보드 적용 전에 `REPLACE_WITH_PROMETHEUS_UID`를 검토한 단일 클러스터 데이터 소스로 바꾸세요. ConfigMap의 `grafana_dashboard: "1"`은 본문의 sidecar 레이블이며 실제 JSON도 아래에 제공합니다. rule 상태·데이터 범위·대시보드 쿼리를 검증해야 합니다. 실제 청구/Grafana 배포에 연결해 실행한 예시는 아닙니다.
+
+```yaml
+kube-state-metrics:
+  metricLabelsAllowlist:
+  - pods=[team]
+```
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: eks-allocation-rate
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+  - name: eks-allocation-rate
+    rules:
+    - record: eks_review:pod_cpu_memory_cost_per_hour:sum
+      expr: "sum by (namespace, pod) (\n  (\n    max by (namespace, pod, container,\
+        \ node) (\n      container_cpu_allocation{job=\"opencost\"}\n    )\n    *\
+        \ on (node) group_left\n    max by (node) (node_cpu_hourly_cost{job=\"opencost\"\
+        })\n  )\n  +\n  (\n    max by (namespace, pod, container, node) (\n      container_memory_allocation_bytes{job=\"\
+        opencost\"}\n    ) / 1073741824\n    * on (node) group_left\n    max by (node)\
+        \ (node_ram_hourly_cost{job=\"opencost\"})\n  )\n)"
+    - record: eks_review:team_cpu_memory_cost_per_hour:sum
+      expr: "sum by (team) (\n  label_replace(\n    eks_review:pod_cpu_memory_cost_per_hour:sum\n\
+        \    * on (namespace, pod) group_left (label_team)\n    max by (namespace,\
+        \ pod, label_team) (kube_pod_labels{job=\"kube-state-metrics\",label_team!=\"\
+        \"}),\n    \"team\", \"$1\", \"label_team\", \"(.+)\"\n  )\n  or\n  label_replace(\n\
+        \    eks_review:pod_cpu_memory_cost_per_hour:sum\n    unless on (namespace,\
+        \ pod) max by (namespace, pod, label_team) (kube_pod_labels{job=\"kube-state-metrics\"\
+        ,label_team!=\"\"}),\n    \"team\", \"unassigned\", \"namespace\", \".*\"\n\
+        \  )\n)"
+```
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cost-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: '1'
+data:
+  cost-dashboard.json: "{\n  \"title\": \"Estimated CPU and memory allocation rate\"\
+    ,\n  \"uid\": \"eks-allocation-rate\",\n  \"schemaVersion\": 39,\n  \"version\"\
+    : 1,\n  \"refresh\": \"1m\",\n  \"time\": {\n    \"from\": \"now-6h\",\n    \"\
+    to\": \"now\"\n  },\n  \"panels\": [\n    {\n      \"id\": 1,\n      \"title\"\
+    : \"CPU + memory allocation by namespace (USD/hour)\",\n      \"type\": \"timeseries\"\
+    ,\n      \"gridPos\": {\n        \"x\": 0,\n        \"y\": 0,\n        \"w\":\
+    \ 12,\n        \"h\": 8\n      },\n      \"datasource\": {\n        \"type\":\
+    \ \"prometheus\",\n        \"uid\": \"REPLACE_WITH_PROMETHEUS_UID\"\n      },\n\
+    \      \"fieldConfig\": {\n        \"defaults\": {\n          \"unit\": \"currencyUSD\"\
+    \n        },\n        \"overrides\": []\n      },\n      \"targets\": [\n    \
+    \    {\n          \"refId\": \"A\",\n          \"expr\": \"sum by (namespace)\
+    \ (eks_review:pod_cpu_memory_cost_per_hour:sum)\",\n          \"legendFormat\"\
+    : \"{{namespace}}\"\n        }\n      ]\n    },\n    {\n      \"id\": 2,\n   \
+    \   \"title\": \"CPU + memory allocation by team (USD/hour)\",\n      \"type\"\
+    : \"timeseries\",\n      \"gridPos\": {\n        \"x\": 12,\n        \"y\": 0,\n\
+    \        \"w\": 12,\n        \"h\": 8\n      },\n      \"datasource\": {\n   \
+    \     \"type\": \"prometheus\",\n        \"uid\": \"REPLACE_WITH_PROMETHEUS_UID\"\
+    \n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"unit\"\
+    : \"currencyUSD\"\n        },\n        \"overrides\": []\n      },\n      \"targets\"\
+    : [\n        {\n          \"refId\": \"A\",\n          \"expr\": \"eks_review:team_cpu_memory_cost_per_hour:sum\"\
+    ,\n          \"legendFormat\": \"{{team}}\"\n        }\n      ]\n    }\n  ]\n}"
+```
+
+
 
 2. **AWS 예산 및 알림 설정**:
    ```bash
@@ -1983,163 +2192,55 @@ Amazon EKS에서 비용 모니터링 및 할당을 위한 가장 효과적인 �
      refresh_closed_reports     = true
      report_versioning          = "OVERWRITE_REPORT"
    }
-   
+
    # Athena 쿼리 결과를 위한 S3 버킷
    resource "aws_s3_bucket" "athena_results" {
-     bucket = "eks-cost-athena-results"
-     
+     bucket = "eks-cost-athena-results-${data.aws_caller_identity.current.account_id}-${var.region}"
+
      tags = {
        Name = "EKS Cost Athena Results"
      }
    }
-   
+
    # Athena 워크그룹
    resource "aws_athena_workgroup" "eks_cost" {
      name = "eks-cost-analysis"
-     
+
      configuration {
        result_configuration {
          output_location = "s3://${aws_s3_bucket.athena_results.bucket}/output/"
        }
      }
    }
-   
-   # QuickSight 대시보드 (Terraform에서 직접 지원하지 않음)
-   # AWS CLI 또는 콘솔을 통해 구성
+
+   # Terraform supports aws_quicksight_dashboard.
+   # Account edition, datasets/templates, and permissions still require an owned setup.
    ```
 
 4. **비용 최적화 자동화 스크립트**:
-   ```python
-   import boto3
-   import kubernetes
-   from kubernetes import client, config
-   import pandas as pd
-   from datetime import datetime, timedelta
-   
-   # Kubernetes 클라이언트 설정
-   config.load_kube_config()
-   v1 = client.CoreV1Api()
-   
-   # AWS 클라이언트 설정
-   ce = boto3.client('ce')
-   
-   def get_cost_by_tag(tag_key, start_date, end_date):
-       """태그별 비용 조회"""
-       response = ce.get_cost_and_usage(
-           TimePeriod={
-               'Start': start_date,
-               'End': end_date
-           },
-           Granularity='MONTHLY',
-           Metrics=['UnblendedCost'],
-           GroupBy=[
-               {
-                   'Type': 'TAG',
-                   'Key': tag_key
-               }
-           ]
-       )
-       
-       return response['ResultsByTime']
-   
-   def get_namespace_resource_usage():
-       """네임스페이스별 리소스 사용량 조회"""
-       namespaces = v1.list_namespace().items
-       namespace_usage = []
-       
-       for ns in namespaces:
-           ns_name = ns.metadata.name
-           pods = v1.list_namespaced_pod(ns_name).items
-           
-           cpu_requests = 0
-           memory_requests = 0
-           cpu_limits = 0
-           memory_limits = 0
-           
-           for pod in pods:
-               for container in pod.spec.containers:
-                   if container.resources.requests:
-                       if 'cpu' in container.resources.requests:
-                           cpu_requests += kubernetes.utils.parse_quantity(container.resources.requests['cpu'])
-                       if 'memory' in container.resources.requests:
-                           memory_requests += kubernetes.utils.parse_quantity(container.resources.requests['memory'])
-                   
-                   if container.resources.limits:
-                       if 'cpu' in container.resources.limits:
-                           cpu_limits += kubernetes.utils.parse_quantity(container.resources.limits['cpu'])
-                       if 'memory' in container.resources.limits:
-                           memory_limits += kubernetes.utils.parse_quantity(container.resources.limits['memory'])
-           
-           namespace_usage.append({
-               'namespace': ns_name,
-               'cpu_requests': cpu_requests,
-               'memory_requests': memory_requests,
-               'cpu_limits': cpu_limits,
-               'memory_limits': memory_limits,
-               'team': ns.metadata.labels.get('team', 'unknown') if ns.metadata.labels else 'unknown',
-               'cost_center': ns.metadata.labels.get('cost-center', 'unknown') if ns.metadata.labels else 'unknown'
-           })
-       
-       return namespace_usage
-   
-   # 메인 함수
-   def main():
-       # 날짜 범위 설정
-       end_date = datetime.now().strftime('%Y-%m-%d')
-       start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
-       
-       # 태그별 비용 조회
-       team_costs = get_cost_by_tag('team', start_date, end_date)
-       env_costs = get_cost_by_tag('environment', start_date, end_date)
-       
-       # 네임스페이스별 리소스 사용량 조회
-       namespace_usage = get_namespace_resource_usage()
-       
-       # 데이터 분석 및 보고서 생성
-       df = pd.DataFrame(namespace_usage)
-       team_summary = df.groupby('team').sum()
-       cost_center_summary = df.groupby('cost_center').sum()
-       
-       print("Resource Usage by Team:")
-       print(team_summary)
-       print("\nResource Usage by Cost Center:")
-       print(cost_center_summary)
-       
-       # 최적화 권장 사항
-       print("\nOptimization Recommendations:")
-       for ns in namespace_usage:
-           cpu_ratio = ns['cpu_requests'] / ns['cpu_limits'] if ns['cpu_limits'] > 0 else 0
-           memory_ratio = ns['memory_requests'] / ns['memory_limits'] if ns['memory_limits'] > 0 else 0
-           
-           if cpu_ratio < 0.5:
-               print(f"Namespace {ns['namespace']} has low CPU request to limit ratio ({cpu_ratio:.2f}). Consider adjusting requests.")
-           
-           if memory_ratio < 0.5:
-               print(f"Namespace {ns['namespace']} has low memory request to limit ratio ({memory_ratio:.2f}). Consider adjusting requests.")
-   
-   if __name__ == "__main__":
-       main()
-   ```
+Q4의 검증한 context·계정·태그 범위 수집 스크립트를 재사용하여 실제 Metrics API 표본과 청구 페이지를 확보합니다. requests/limits는 선언된 구성이지 실제 사용량이 아닙니다. 따라서 requests/limits 비율이 0.5보다 작다는 이유만으로 requests 축소를 권고하지 않습니다. 현재 replica 수로 계산한 요청량을 과거 기간 사용량과 직접 비교하지 말고 같은 워크로드·기간·단위·수집 범위를 맞춥니다. 팀/비용 센터별 표는 태그 없는 비용과 공유 비용 정책까지 대조해야 합니다. 운영용 보고·알림은 [FinOps 가이드](../../ops/13-finops-cost-platform.md)의 명시적인 수집/검증 절차를 참고하며 실패나 누락을 0으로 바꾸지 않습니다.
+
+추가 예산의 1,000 USD/80%는 설정 예시입니다. 활성화한 실제 Budgets 태그 필터 형식과 범위를 확인하고 태그 없는/공유 요금을 별도로 다룹니다. Budgets는 처리된 청구 데이터에 의존하며 지출을 강제로 막지 않습니다. Terraform은 기존 CUR 버킷·caller identity·provider·region 입력을 요구하는 구성 fragment입니다. Athena 결과 버킷의 접근·보존·암호화와 Glue 테이블/쿼리 권한도 소유자가 구성해야 합니다. QuickSight 대시보드는 Terraform의 `aws_quicksight_dashboard`로 관리할 수 있으나 계정 에디션·데이터셋·템플릿·권한 설정을 대신하지 않습니다.
 
 다른 옵션들의 문제점:
 - **A. AWS 청구서만 검토**: AWS 청구서는 높은 수준의 비용 정보만 제공하며, 세부적인 비용 할당이나 최적화 기회를 식별하기 어렵습니다.
 - **C. 모든 리소스에 동일한 비용 할당**: 이는 실제 리소스 사용량과 비용 발생을 정확하게 반영하지 않으며, 팀이나 프로젝트별 비용 책임을 명확히 하지 못합니다.
 - **D. 비용 모니터링 없이 리소스 사용**: 비용 모니터링 없이는 비용 증가를 조기에 감지하거나 최적화 기회를 식별할 수 없으며, 예산 관리가 어렵습니다.
 </details>
-### 6. Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은 무엇인가요?
+### 6. 확장 가능한 EKS 비용 최적화 워크플로우를 가장 잘 지원하는 접근은 무엇인가요?
 
-A. 수동 리소스 관리만 사용  
-B. AWS Cost Explorer만 사용  
-C. Kubecost, Karpenter, AWS Cost Explorer 및 Kubernetes 자동 스케일링 도구 통합  
-D. 타사 비용 관리 도구만 사용  
+- A. 결과 측정 없이 리소스를 수동 변경
+- B. 워크로드 텔레메트리를 무시하고 청구 데이터만 고려
+- C. 명확한 소유권 아래 비용 가시성·리소스 텔레메트리·적절한 자동 확장을 결합
+- D. 같은 리소스에 조율되지 않은 최적화 도구를 중복 실행
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. Kubecost, Karpenter, AWS Cost Explorer 및 Kubernetes 자동 스케일링 도구 통합**
+**정답: C. 명확한 소유권 아래 비용 가시성·리소스 텔레메트리·적절한 자동 확장을 결합**
 
 **설명:**
-Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은 Kubecost, Karpenter, AWS Cost Explorer 및 Kubernetes 자동 스케일링 도구를 통합하는 것입니다. 이 통합 접근 방식은 클러스터 수준, 워크로드 수준 및 인프라 수준에서 비용을 최적화하고, 가시성을 제공하며, 자동화된 최적화를 가능하게 합니다.
+아래 도구는 상호 보완적인 역할의 예시이며 모두 설치해야 한다는 뜻이 아닙니다. 소유자가 명확한 비용/텔레메트리 경로와 워크로드에 적합한 확장을 선택합니다. EKS Auto Mode, 자체 Karpenter, Cluster Autoscaler가 이미 노드 용량을 관리할 수 있으므로 소유 범위를 분리하고 컨트롤러 충돌을 피합니다. 절감과 SLO 유지 여부는 측정해야 하며 비용 도구 설치만으로 청구 데이터가 HPA/Karpenter 정책에 자동 연결되지는 않습니다.
 
 **주요 비용 최적화 도구 및 기능:**
 
@@ -2151,8 +2252,8 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
 
 2. **Karpenter**:
    - 지능적인 노드 프로비저닝 및 관리
-   - 워크로드 요구 사항에 맞는 최적의 인스턴스 선택
-   - 빠른 스케일링 및 효율적인 리소스 활용
+   - 워크로드·가용 용량·가격 제약 내 인스턴스 선택
+   - 실제 환경에서 검증해야 하는 프로비저닝/확장 동작
    - 스팟 인스턴스 활용 최적화
 
 3. **AWS Cost Explorer**:
@@ -2170,31 +2271,35 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
 **구현 방법:**
 
 1. **Kubecost 설치 및 구성**:
-   ```bash
-   # Helm을 사용하여 Kubecost 설치
-   helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-   helm install kubecost kubecost/cost-analyzer \
-     --namespace kubecost \
-     --create-namespace \
-     --set kubecostToken="<YOUR_KUBECOST_TOKEN>" \
-     --set prometheus.server.persistentVolume.size=100Gi \
-     --set prometheus.nodeExporter.enabled=true \
-     --set serviceMonitor.enabled=true
-   ```
+Q5와 [본문](../../eks/07-eks-cost-optimization.md)의 검증한 설치/할당 데이터 전제 조건을 재사용합니다. Kubecost 3.2.4는 현재 `kubecost/kubecost` chart와 ClickHouse/직접 agent 구조를 사용하며 기능은 에디션/설정에 따릅니다. OpenCost는 별도 선택지입니다. 기존 소유 구성에 두 번째 수집기를 중복 배포하지 않습니다.
 
 2. **Karpenter 설치 및 구성**:
-   ```bash
-   # Karpenter 설치
-   helm repo add karpenter https://charts.karpenter.sh
-   helm upgrade --install karpenter karpenter/karpenter \
-     --namespace karpenter \
-     --create-namespace \
-     --set serviceAccount.create=true \
-     --set serviceAccount.name=karpenter \
-     --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::123456789012:role/KarpenterControllerRole" \
-     --set controller.clusterName=my-cluster \
-     --set controller.clusterEndpoint=$(aws eks describe-cluster --name my-cluster --query "cluster.endpoint" --output text)
-   ```
+다음을 `karpenter-values.yaml`로 저장하고 계정/역할/클러스터/endpoint/queue를 검토한 기존 값으로 바꾼 뒤 [Karpenter 가이드](../../autoscaling/02-karpenter.md)를 따릅니다. 확인한 예시는 1.14.1이며 호환성 표에서 EKS 1.36은 최소 1.13이 필요합니다. 적용되는 키는 `settings.*`이며 무시되는 `controller.clusterName/clusterEndpoint`가 아닙니다. IRSA trust는 `system:serviceaccount:karpenter:karpenter`와 audience에 맞춰야 하고 상충하는 IRSA/Pod Identity를 혼합하지 않습니다. 컨트롤러/노드 IAM, 노드 접근, 서브넷/보안 그룹, 중단 queue/이벤트 연결, 안정적인 bootstrap 용량을 먼저 준비합니다. 새 Helm 설치와 CRD 업그레이드는 소유권/수명 주기가 다르며 컨트롤러 업그레이드만으로 기존 CRD가 갱신되지 않습니다.
+
+```yaml
+serviceAccount:
+  create: true
+  name: karpenter
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/KarpenterControllerRole-my-cluster
+settings:
+  clusterName: my-cluster
+  clusterEndpoint: https://REPLACE_WITH_REVIEWED_EKS_ENDPOINT
+  interruptionQueue: my-cluster
+```
+
+```bash
+: "${KUBE_CONTEXT:?Select the reviewed context matching the values file}"
+KARPENTER_VERSION="1.14.1"
+helm template karpenter oci://public.ecr.aws/karpenter/karpenter \
+  --version "$KARPENTER_VERSION" --namespace karpenter \
+  -f karpenter-values.yaml > karpenter-rendered.yaml
+# Fresh installation only after the owned IAM, node access, queue, CRDs, and bootstrap capacity are ready.
+helm install karpenter oci://public.ecr.aws/karpenter/karpenter \
+  --kube-context "$KUBE_CONTEXT" \
+  --version "$KARPENTER_VERSION" --namespace karpenter --create-namespace \
+  -f karpenter-values.yaml --wait --timeout 5m
+```
 
    ```yaml
    # Karpenter NodePool 및 NodeClass 구성
@@ -2219,11 +2324,12 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
              operator: In
              values: ["m5.large", "m5a.large", "m5d.large", "m4.large", "t3.large", "t3a.large"]
          nodeClassRef:
+           group: karpenter.k8s.aws
+           kind: EC2NodeClass
            name: default
      limits:
-       resources:
-         cpu: 1000
-         memory: 1000Gi
+       cpu: 1000
+       memory: 1000Gi
      disruption:
        consolidationPolicy: WhenEmpty
        consolidateAfter: 30s
@@ -2233,12 +2339,15 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
    metadata:
      name: default
    spec:
-     amiFamily: AL2
+     amiSelectorTerms:
+       - alias: al2023@latest
      role: KarpenterNodeRole
-     subnetSelector:
-       karpenter.sh/discovery: my-cluster
-     securityGroupSelector:
-       karpenter.sh/discovery: my-cluster
+     subnetSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
+     securityGroupSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
      tags:
        karpenter.sh/discovery: my-cluster
    ```
@@ -2283,7 +2392,7 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
        kind: Deployment
        name: web-app
      updatePolicy:
-       updateMode: "Auto"
+       updateMode: "Off"
      resourcePolicy:
        containerPolicies:
        - containerName: '*'
@@ -2322,7 +2431,6 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
 
 1. **리소스 요청 및 제한 최적화**:
    ```yaml
-   # VPA 권장 사항 기반 리소스 설정
    apiVersion: apps/v1
    kind: Deployment
    metadata:
@@ -2339,6 +2447,13 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
              limits:
                cpu: 500m
                memory: 512Mi
+           image: registry.example.com/team/web-app:REVIEWED_TAG
+       metadata:
+         labels:
+           app: web-app
+     selector:
+       matchLabels:
+         app: web-app
    ```
 
 2. **비용 효율적인 노드 전략**:
@@ -2359,23 +2474,23 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
              operator: In
              values: ["m5.large", "m5a.large", "m5d.large", "m4.large", "t3.large", "t3a.large"]
          nodeClassRef:
+           group: karpenter.k8s.aws
+           kind: EC2NodeClass
            name: default
      limits:
-       resources:
-         cpu: 1000
-         memory: 1000Gi
+       cpu: 1000
+       memory: 1000Gi
    ```
 
 3. **워크로드 우선순위 및 선점**:
    ```yaml
-   # 우선순위 클래스 정의
    apiVersion: scheduling.k8s.io/v1
    kind: PriorityClass
    metadata:
      name: high-priority
    value: 1000000
    globalDefault: false
-   description: "High priority pods"
+   description: High priority pods
    ---
    apiVersion: scheduling.k8s.io/v1
    kind: PriorityClass
@@ -2383,9 +2498,8 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
      name: low-priority
    value: 10000
    globalDefault: false
-   description: "Low priority pods"
-   
-   # 우선순위 클래스 적용
+   description: Low priority pods
+   ---
    apiVersion: apps/v1
    kind: Deployment
    metadata:
@@ -2394,6 +2508,15 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
      template:
        spec:
          priorityClassName: high-priority
+         containers:
+         - name: critical-app
+           image: registry.example.com/team/critical-app:REVIEWED_TAG
+       metadata:
+         labels:
+           app: critical-app
+     selector:
+       matchLabels:
+         app: critical-app
    ```
 
 4. **비용 알림 및 예산 관리**:
@@ -2433,7 +2556,7 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
      ]'
    ```
 
-**실제 구현 예시:**
+**추가 구성과 읽기 전용 데이터 예시:**
 
 1. **통합 비용 최적화 아키텍처**:
    ```
@@ -2469,238 +2592,132 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
 
 2. **Terraform을 사용한 비용 최적화 인프라 구성**:
    ```hcl
-   # Kubecost 설치
+   terraform {
+     required_version = ">= 1.5"
+     required_providers {
+       aws = {
+         source  = "hashicorp/aws"
+         version = "= 6.64.0"
+       }
+       helm = {
+         source  = "hashicorp/helm"
+         version = "= 3.3.0"
+       }
+     }
+   }
+
+   variable "region" { type = string }
+   variable "account_id" { type = string }
+   variable "kubeconfig_path" { type = string }
+   variable "kube_context" { type = string }
+   variable "reviewed_kubecost_values_path" { type = string }
+   variable "reviewed_karpenter_values_path" { type = string }
+   variable "budget_name" { type = string }
+   variable "budget_tag_filter" {
+     type        = string
+     description = "Actual activated Budgets TagKeyValue, for example user:cluster$production."
+   }
+   variable "notification_email" {
+     type        = string
+     description = "Approved recipient; applying this configures real notifications."
+   }
+
+   provider "aws" {
+     region              = var.region
+     allowed_account_ids = [var.account_id]
+   }
+
+   provider "helm" {
+     kubernetes = {
+       config_path    = var.kubeconfig_path
+       config_context = var.kube_context
+     }
+   }
+
    resource "helm_release" "kubecost" {
-     name       = "kubecost"
-     repository = "https://kubecost.github.io/cost-analyzer/"
-     chart      = "cost-analyzer"
-     namespace  = "kubecost"
+     name             = "kubecost"
+     repository       = "https://kubecost.github.io/kubecost/"
+     chart            = "kubecost"
+     version          = "3.2.4"
+     namespace        = "kubecost"
      create_namespace = true
-     
-     set {
-       name  = "kubecostToken"
-       value = var.kubecost_token
-     }
-     
-     set {
-       name  = "prometheus.server.persistentVolume.size"
-       value = "100Gi"
-     }
-     
-     set {
-       name  = "prometheus.nodeExporter.enabled"
-       value = "true"
-     }
+     values           = [file(var.reviewed_kubecost_values_path)]
+     wait             = true
+     timeout          = 300
    }
-   
-   # Karpenter 설치
+
    resource "helm_release" "karpenter" {
-     name       = "karpenter"
-     repository = "https://charts.karpenter.sh"
-     chart      = "karpenter"
-     namespace  = "karpenter"
+     name             = "karpenter"
+     repository       = "oci://public.ecr.aws/karpenter"
+     chart            = "karpenter"
+     version          = "1.14.1"
+     namespace        = "karpenter"
      create_namespace = true
-     
-     set {
-       name  = "serviceAccount.create"
-       value = "true"
-     }
-     
-     set {
-       name  = "serviceAccount.name"
-       value = "karpenter"
-     }
-     
-     set {
-       name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-       value = aws_iam_role.karpenter_controller.arn
-     }
-     
-     set {
-       name  = "controller.clusterName"
-       value = var.cluster_name
-     }
-     
-     set {
-       name  = "controller.clusterEndpoint"
-       value = data.aws_eks_cluster.cluster.endpoint
-     }
+     values           = [file(var.reviewed_karpenter_values_path)]
+     wait             = true
+     timeout          = 300
    }
-   
-   # AWS 예산 설정
+
    resource "aws_budgets_budget" "eks" {
-     name              = "eks-monthly-budget"
-     budget_type       = "COST"
-     limit_amount      = "1000"
-     limit_unit        = "USD"
-     time_unit         = "MONTHLY"
-     time_period_start = "2023-01-01_00:00"
-     
+     account_id   = var.account_id
+     name         = var.budget_name
+     budget_type  = "COST"
+     limit_amount = "1000"
+     limit_unit   = "USD"
+     time_unit    = "MONTHLY"
+
      cost_filter {
-       name = "TagKeyValue"
-       values = [
-         "kubernetes.io/cluster/${var.cluster_name}$owned"
-       ]
+       name   = "TagKeyValue"
+       values = [var.budget_tag_filter]
      }
-     
      notification {
        comparison_operator        = "GREATER_THAN"
        threshold                  = 80
        threshold_type             = "PERCENTAGE"
        notification_type          = "ACTUAL"
-       subscriber_email_addresses = ["team@example.com"]
+       subscriber_email_addresses = [var.notification_email]
      }
    }
    ```
 
 3. **비용 최적화 자동화 스크립트**:
-   ```python
-   import boto3
-   import kubernetes
-   import requests
-   import json
-   from kubernetes import client, config
-   
-   # Kubernetes 클라이언트 설정
-   config.load_kube_config()
-   v1 = client.CoreV1Api()
-   apps_v1 = client.AppsV1Api()
-   
-   # AWS 클라이언트 설정
-   ec2 = boto3.client('ec2')
-   ce = boto3.client('ce')
-   
-   def get_underutilized_nodes():
-       """활용도가 낮은 노드 식별"""
-       nodes = v1.list_node().items
-       underutilized = []
-       
-       for node in nodes:
-           # 노드 리소스 용량 및 할당 가능 리소스 조회
-           capacity_cpu = kubernetes.utils.parse_quantity(node.status.capacity['cpu'])
-           capacity_memory = kubernetes.utils.parse_quantity(node.status.capacity['memory'])
-           allocatable_cpu = kubernetes.utils.parse_quantity(node.status.allocatable['cpu'])
-           allocatable_memory = kubernetes.utils.parse_quantity(node.status.allocatable['memory'])
-           
-           # 노드에 스케줄된 파드 조회
-           field_selector = f'spec.nodeName={node.metadata.name}'
-           pods = v1.list_pod_for_all_namespaces(field_selector=field_selector).items
-           
-           # 파드 리소스 요청 합계 계산
-           total_cpu_requests = 0
-           total_memory_requests = 0
-           
-           for pod in pods:
-               for container in pod.spec.containers:
-                   if container.resources.requests:
-                       if 'cpu' in container.resources.requests:
-                           total_cpu_requests += kubernetes.utils.parse_quantity(container.resources.requests['cpu'])
-                       if 'memory' in container.resources.requests:
-                           total_memory_requests += kubernetes.utils.parse_quantity(container.resources.requests['memory'])
-           
-           # 활용도 계산
-           cpu_utilization = (total_cpu_requests / capacity_cpu) * 100 if capacity_cpu > 0 else 0
-           memory_utilization = (total_memory_requests / capacity_memory) * 100 if capacity_memory > 0 else 0
-           
-           # 활용도가 낮은 노드 식별
-           if cpu_utilization < 30 and memory_utilization < 30:
-               underutilized.append({
-                   'name': node.metadata.name,
-                   'cpu_utilization': cpu_utilization,
-                   'memory_utilization': memory_utilization,
-                   'instance_type': node.metadata.labels.get('node.kubernetes.io/instance-type', 'unknown')
-               })
-       
-       return underutilized
-   
-   def get_overprovisioned_deployments():
-       """과도하게 프로비저닝된 배포 식별"""
-       deployments = apps_v1.list_deployment_for_all_namespaces().items
-       overprovisioned = []
-       
-       for deployment in deployments:
-           # Kubecost API에서 실제 리소스 사용량 조회 (예시)
-           kubecost_url = "http://kubecost-cost-analyzer.kubecost:9090/model/allocation"
-           params = {
-               "window": "1d",
-               "aggregate": "deployment",
-               "namespace": deployment.metadata.namespace,
-               "name": deployment.metadata.name
-           }
-           
-           try:
-               response = requests.get(kubecost_url, params=params)
-               data = response.json()
-               
-               # 실제 사용량 데이터 추출 (Kubecost API에 따라 다를 수 있음)
-               actual_cpu = data.get('data', {}).get(f"{deployment.metadata.namespace}/{deployment.metadata.name}", {}).get('cpuCores', 0)
-               actual_memory = data.get('data', {}).get(f"{deployment.metadata.namespace}/{deployment.metadata.name}", {}).get('ramBytes', 0)
-               
-               # 요청된 리소스 계산
-               requested_cpu = 0
-               requested_memory = 0
-               
-               for container in deployment.spec.template.spec.containers:
-                   if container.resources.requests:
-                       if 'cpu' in container.resources.requests:
-                           requested_cpu += kubernetes.utils.parse_quantity(container.resources.requests['cpu']) * deployment.spec.replicas
-                       if 'memory' in container.resources.requests:
-                           requested_memory += kubernetes.utils.parse_quantity(container.resources.requests['memory']) * deployment.spec.replicas
-               
-               # 과도하게 프로비저닝된 배포 식별
-               if requested_cpu > 0 and actual_cpu > 0:
-                   cpu_ratio = actual_cpu / requested_cpu
-                   if cpu_ratio < 0.5:
-                       overprovisioned.append({
-                           'name': deployment.metadata.name,
-                           'namespace': deployment.metadata.namespace,
-                           'requested_cpu': requested_cpu,
-                           'actual_cpu': actual_cpu,
-                           'cpu_ratio': cpu_ratio,
-                           'requested_memory': requested_memory,
-                           'actual_memory': actual_memory,
-                           'memory_ratio': actual_memory / requested_memory if requested_memory > 0 else 0
-                       })
-           except Exception as e:
-               print(f"Error fetching data for {deployment.metadata.namespace}/{deployment.metadata.name}: {e}")
-       
-       return overprovisioned
-   
-   # 메인 함수
-   def main():
-       # 활용도가 낮은 노드 식별
-       underutilized_nodes = get_underutilized_nodes()
-       print(f"Found {len(underutilized_nodes)} underutilized nodes")
-       for node in underutilized_nodes:
-           print(f"  - {node['name']} ({node['instance_type']}): CPU {node['cpu_utilization']:.2f}%, Memory {node['memory_utilization']:.2f}%")
-       
-       # 과도하게 프로비저닝된 배포 식별
-       overprovisioned_deployments = get_overprovisioned_deployments()
-       print(f"Found {len(overprovisioned_deployments)} overprovisioned deployments")
-       for deployment in overprovisioned_deployments:
-           print(f"  - {deployment['namespace']}/{deployment['name']}: CPU ratio {deployment['cpu_ratio']:.2f}, Memory ratio {deployment['memory_ratio']:.2f}")
-       
-       # 최적화 권장 사항
-       print("\nOptimization Recommendations:")
-       
-       # 노드 최적화 권장 사항
-       if underutilized_nodes:
-           print("Node Optimization:")
-           print("  - Consider enabling Karpenter for more efficient node provisioning")
-           print("  - Consolidate workloads to reduce the number of nodes")
-       
-       # 배포 최적화 권장 사항
-       if overprovisioned_deployments:
-           print("Deployment Optimization:")
-           print("  - Enable Vertical Pod Autoscaler in recommendation mode")
-           print("  - Adjust resource requests based on actual usage")
-   
-   if __name__ == "__main__":
-       main()
-   ```
+```bash
+: "${KUBE_CONTEXT:?Select the reviewed OpenCost cluster context}"
+# Terminal 1: authorized local access to the OpenCost 1.121.2 service from EKS06.
+kubectl --context "$KUBE_CONTEXT" -n opencost port-forward --address 127.0.0.1 svc/opencost 9003:9003
+```
 
-다른 옵션들의 문제점:
-- **A. 수동 리소스 관리만 사용**: 수동 관리는 확장성이 떨어지고, 오류 가능성이 높으며, 최적화 기회를 놓칠 수 있습니다.
-- **B. AWS Cost Explorer만 사용**: AWS Cost Explorer는 AWS 서비스 수준의 비용 분석에 유용하지만, Kubernetes 리소스 수준의 세부적인 비용 분석이나 자동화된 최적화 기능을 제공하지 않습니다.
-- **D. 타사 비용 관리 도구만 사용**: 타사 도구는 유용할 수 있지만, AWS 네이티브 서비스 및 Kubernetes 자동 스케일링 도구와의 통합이 제한적일 수 있으며, 추가 비용이 발생할 수 있습니다.
+```bash
+# Terminal 2: preserve the API response; this reads allocation estimates.
+curl --fail --silent --show-error --max-time 30 --get \
+  http://127.0.0.1:9003/allocation \
+  --data-urlencode 'window=1d' \
+  --data-urlencode 'aggregate=namespace,controllerKind,controller' \
+  --data-urlencode 'accumulate=true' > allocation.json
+```
+
+```python
+import json
+from pathlib import Path
+
+response = json.loads(Path("allocation.json").read_text())
+if response.get("code") != 200 or not isinstance(response.get("data"), list):
+    raise ValueError("Unexpected allocation API response; do not replace failure with zero")
+if not all(isinstance(allocation_set, dict) for allocation_set in response["data"]):
+    raise ValueError("Expected an array of allocation-set maps")
+if not response["data"] or not any(response["data"]):
+    raise SystemExit("No allocation data for the selected window; investigate coverage")
+else:
+    print("Allocation response shape accepted; review units, window, and coverage before analysis")
+```
+
+VPA 예시는 HPA가 CPU/메모리 utilization 분모를 사용하는 동안 Off로 둡니다. 자동 requests 변경은 해당 제어 루프와 조율한 후 활성화합니다. Cluster Proportional Autoscaler는 클러스터 크기 신호로 구성 요소 복제본을 조정하며 노드 프로비저너와 같은 역할이 아닙니다. Karpenter limits·인스턴스 선호·consolidation 지연은 금액 상한이나 종료 시각 보장이 아닙니다. `al2023@latest`를 불변으로 취급하지 말고 실제 AMI를 확인한 뒤 통제된 변경에는 검증한 버전/ID를 고정합니다.
+
+PriorityClass는 스케줄링/선점 우선순위이며 비용 할당이나 가용성을 보장하지 않습니다. priority 지정 권한을 관리하고, 스케줄러 선점의 PDB 준수는 best effort임을 고려하여 disruption·복구를 검토합니다. 비용 관측/권고에서 컨트롤러 동작으로 이어지려면 명시적인 정책/변경 검토 경로가 필요하며 도식 자체가 통합을 구현하지는 않습니다.
+
+Terraform 대안은 Helm provider 3.3.0의 values-file 설정과 AWS provider 6.64.0을 사용합니다. 명시적인 Kubernetes context와 호환 identity·스토리지·라이선스 Secret 참조를 포함한 검토한 values를 제공해야 하며 이런 전제 조건을 생성하지 않습니다. 원문 라이선스/클라우드 자격 증명을 values/state에 넣지 않습니다. 기존 릴리스는 다른 관리자로 중복 설치하지 말고 소유자와 조정합니다. 1,000 USD/80% 예산은 실제 청구 태그 필터를 사용하는 설명용 설정이며 강제 지출 상한이 아닙니다. 이 감사에서는 클러스터/Helm 프로비저닝이나 알림을 실행하지 않았습니다.
+
+아래 API 예시는 추측한 Kubecost 3.x URL이 아닌 앞에서 구성한 OpenCost 1.121.2를 대상으로 합니다. `/allocation`은 `namespace,controllerKind,controller` 집계를 지원하며 `deployment`는 문서화된 일반 집계 키가 아닙니다. 응답 data는 namespace/Deployment를 직접 키로 갖는 객체가 아닌 allocation-set map의 배열입니다. HTTP/API 오류와 수집 범위를 확인하고 빈 결과를 비용 0이나 과다 프로비저닝 증거로 해석하지 않습니다. 할당량·사용량·requests·byte-hours/core-hours·현재 replica 수는 의미와 기간이 다릅니다. 버전별 스키마와 비교 가능한 워크로드 메트릭을 검토한 후 적정 크기를 판단하며 할당 추정치는 청구 및 유휴/공유 비용 정책과 대조해야 합니다.
+
+나머지 선택지는 측정·워크로드 신호 또는 조정 주체를 놓칩니다. 같은 리소스를 여러 컨트롤러가 경쟁해서 변경하면 안정성과 비용 예측을 해칠 수 있습니다.
 </details>

@@ -1,29 +1,31 @@
-# Parte 2: Storage Classes
+# Parte 2: Clases de almacenamiento
 
-Este documento es la segunda parte de la serie de almacenamiento de Amazon EKS, y cubre FSx for Lustre, Amazon S3, snapshots, expansión de volúmenes y optimización de rendimiento.
+Este documento es la segunda parte de la serie sobre almacenamiento de Amazon EKS y cubre FSx for Lustre, Amazon S3, snapshots, expansión de volúmenes y optimización del rendimiento.
 
 ## Tabla de contenidos
 
 1. [Amazon FSx for Lustre](04-eks-storage-part2.md#amazon-fsx-for-lustre)
 2. [Integración de almacenamiento de Amazon S3](04-eks-storage-part2.md#amazon-s3-storage-integration)
-3. [Snapshots y backups](04-eks-storage-part2.md#snapshots-and-backups)
+3. [Snapshots y copias de seguridad](04-eks-storage-part2.md#snapshots-and-backups)
 4. [Expansión y redimensionamiento de volúmenes](04-eks-storage-part2.md#volume-expansion-and-resizing)
 5. [Clonación de volúmenes](04-eks-storage-part2.md#volume-cloning)
-6. [Multi-Attach EBS](04-eks-storage-part2.md#multi-attach-ebs)
-7. [Análisis profundo de Mountpoint for S3 CSI](04-eks-storage-part2.md#mountpoint-for-s3-csi-deep-dive)
+6. [Multi-Attach de EBS](04-eks-storage-part2.md#multi-attach-ebs)
+7. [Análisis detallado de Mountpoint for S3 CSI](04-eks-storage-part2.md#mountpoint-for-s3-csi-deep-dive)
 8. [Optimización del rendimiento de almacenamiento](04-eks-storage-part2.md#storage-performance-optimization)
 
 ## Amazon FSx for Lustre
 
-Amazon FSx for Lustre es un file system de alto rendimiento para workloads intensivos en cómputo, como high-performance computing (HPC), machine learning y procesamiento de big data. Lustre es un file system distribuido paralelo que proporciona alto throughput y baja latencia, accesible simultáneamente desde miles de clientes.
+Amazon FSx for Lustre es un sistema de archivos de alto rendimiento para cargas de trabajo de cómputo intensivo, como computación de alto rendimiento (HPC), machine learning y procesamiento de big data. Lustre es un sistema de archivos distribuido en paralelo que proporciona alto rendimiento y baja latencia, accesible simultáneamente desde miles de clientes.
 
-![Arquitectura CSI de FSx for Lustre](../.gitbook/assets/fsx_lustre_csi_architecture.png)
+![Diagrama de arquitectura de Pods de entrenamiento e inferencia de ML que montan FSx for Lustre mediante el driver FSx CSI, con FSx sincronizando datos con S3.](../.gitbook/assets/en-eks-04-eks-storage-part2-0.png)
 
-### Instalación del FSx for Lustre CSI Driver
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-0.html)
 
-Sigue estos pasos para instalar el FSx for Lustre CSI driver:
+### Instalación del driver FSx for Lustre CSI
 
-1. Crea un rol de IAM:
+Siga estos pasos para instalar el driver FSx for Lustre CSI:
+
+1. Cree un rol de IAM:
 
 ```bash
 eksctl create iamserviceaccount \
@@ -36,7 +38,7 @@ eksctl create iamserviceaccount \
   --role-name AmazonEKS_FSx_Lustre_CSI_DriverRole
 ```
 
-2. Instala el driver usando Helm:
+2. Instale el driver con Helm:
 
 ```bash
 helm repo add aws-fsx-csi-driver https://kubernetes-sigs.github.io/aws-fsx-csi-driver/
@@ -47,9 +49,9 @@ helm upgrade -i aws-fsx-csi-driver aws-fsx-csi-driver/aws-fsx-csi-driver \
   --set controller.serviceAccount.name=fsx-csi-controller-sa
 ```
 
-### Creación de un file system FSx for Lustre
+### Creación de un sistema de archivos FSx for Lustre
 
-Puedes usar AWS CLI para crear un file system FSx for Lustre:
+Puede usar AWS CLI para crear un sistema de archivos FSx for Lustre:
 
 ```bash
 # Get VPC ID and subnet ID of EKS cluster
@@ -89,9 +91,9 @@ FILE_SYSTEM_ID=$(aws fsx create-file-system \
   --output text)
 ```
 
-### Creación de una Storage Class de FSx for Lustre
+### Creación de una StorageClass de FSx for Lustre
 
-Crea una storage class que use FSx for Lustre:
+Cree una clase de almacenamiento que use FSx for Lustre:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -114,7 +116,7 @@ parameters:
 
 ### Creación de PVC y montaje en un Pod
 
-1. Crea el PVC:
+1. Cree un PVC:
 
 ```yaml
 apiVersion: v1
@@ -130,7 +132,7 @@ spec:
       storage: 1200Gi
 ```
 
-2. Monta el PVC en el pod:
+2. Monte el PVC en el Pod:
 
 ```yaml
 apiVersion: v1
@@ -151,9 +153,9 @@ spec:
       claimName: fsx-claim
 ```
 
-### Aprovisionamiento estático para montaje de FSx for Lustre
+### Aprovisionamiento estático para el montaje de FSx for Lustre
 
-También puedes montar estáticamente un file system FSx for Lustre ya creado:
+También puede montar de forma estática un sistema de archivos FSx for Lustre ya creado:
 
 ```yaml
 apiVersion: v1
@@ -176,20 +178,20 @@ spec:
       mountname: fsx
 ```
 
-### Tipos de Deployment de FSx for Lustre
+### Tipos de implementación de FSx for Lustre
 
-FSx for Lustre ofrece varios tipos de deployment para cumplir diferentes requisitos de workload:
+FSx for Lustre ofrece varios tipos de implementación para satisfacer diferentes requisitos de carga de trabajo:
 
-1. **Scratch File Systems**:
-   * **Scratch 1**: File system optimizado para costos para almacenamiento y procesamiento a corto plazo
-   * **Scratch 2**: Proporciona mayor burst throughput y mejor durabilidad de datos que Scratch 1
-2. **Persistent File Systems**:
-   * **Persistent 1**: File system para almacenamiento a largo plazo y workloads críticos para el throughput
-   * **Persistent 2**: Proporciona mayor throughput que Persistent 1
+1. **Sistemas de archivos Scratch**:
+   * **Scratch 1**: Sistema de archivos optimizado en costos para almacenamiento y procesamiento a corto plazo
+   * **Scratch 2**: Proporciona mayor rendimiento de ráfaga y mejor durabilidad de los datos que Scratch 1
+2. **Sistemas de archivos persistentes**:
+   * **Persistent 1**: Sistema de archivos para almacenamiento a largo plazo y cargas de trabajo críticas para el rendimiento
+   * **Persistent 2**: Proporciona mayor rendimiento que Persistent 1
 
 ### Configuración de FSx for Lustre para vLLM
 
-Considera la siguiente configuración para optimizar FSx for Lustre para workloads de AI a gran escala como vLLM (Vector Language Model):
+Considere la siguiente configuración para optimizar FSx for Lustre para cargas de trabajo de IA a gran escala como vLLM (Vector Language Model):
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -207,19 +209,21 @@ parameters:
 
 Esta configuración proporciona los siguientes beneficios:
 
-* El alto throughput reduce el tiempo de carga del modelo
+* El alto rendimiento reduce el tiempo de carga del modelo
 * La compresión de datos mejora la eficiencia de almacenamiento
-* Acceso simultáneo a los mismos archivos de modelo desde múltiples nodes
+* Acceso simultáneo a los mismos archivos de modelo desde varios nodos
 
 ## Integración de almacenamiento de Amazon S3
 
-Amazon S3 es un servicio de almacenamiento de objetos que puede almacenar y recuperar cantidades ilimitadas de datos. En Kubernetes, S3 no se puede montar directamente como un Volume, pero hay varias formas de integrarlo con S3.
+Amazon S3 es un servicio de almacenamiento de objetos que puede almacenar y recuperar cantidades ilimitadas de datos. En Kubernetes, S3 no se puede montar directamente como volumen, pero hay varias formas de integrarlo con S3.
 
-![Métodos de integración de S3](../.gitbook/assets/s3_integration_methods.png)
+![Diagrama de métodos de integración con S3: los Pods de aplicación obtienen credenciales mediante IRSA y llegan a S3 a través del driver Mountpoint S3 CSI o del AWS SDK.](../.gitbook/assets/en-eks-04-eks-storage-part2-1.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-1.html)
 
 ### Configuración de IRSA para acceso a S3
 
-Configura IAM Roles for Service Accounts (IRSA) para que los pods accedan a S3:
+Configure IAM Roles for Service Accounts (IRSA) para que los Pods accedan a S3:
 
 ```bash
 eksctl create iamserviceaccount \
@@ -232,7 +236,7 @@ eksctl create iamserviceaccount \
 
 ### Configuración de Pod para acceso a S3
 
-Pod que usa service account para acceder a S3:
+Pod que usa una cuenta de servicio para acceder a S3:
 
 ```yaml
 apiVersion: v1
@@ -247,9 +251,9 @@ spec:
     command: ["sleep", "infinity"]
 ```
 
-### Montaje de S3A File System
+### Montaje de sistema de archivos S3A
 
-Puedes usar el file system Hadoop S3A para acceder a S3 de una manera similar a HDFS:
+Puede usar el sistema de archivos Hadoop S3A para acceder a S3 de una manera similar a HDFS:
 
 ```yaml
 apiVersion: v1
@@ -296,11 +300,11 @@ data:
     </configuration>
 ```
 
-### Montaje de S3 Bucket con CSI Driver
+### Montaje de un bucket de S3 con el driver CSI
 
-Puedes montar S3 buckets como volúmenes de Kubernetes usando el [AWS S3 CSI driver](https://github.com/awslabs/mountpoint-s3-csi-driver):
+Puede montar buckets de S3 como volúmenes de Kubernetes mediante el [driver AWS S3 CSI](https://github.com/awslabs/mountpoint-s3-csi-driver):
 
-1. Instala el driver:
+1. Instale el driver:
 
 ```bash
 helm repo add aws-mountpoint-s3-csi-driver https://awslabs.github.io/mountpoint-s3-csi-driver
@@ -311,7 +315,7 @@ helm upgrade --install aws-mountpoint-s3-csi-driver aws-mountpoint-s3-csi-driver
   --set controller.serviceAccount.name=s3-csi-controller-sa
 ```
 
-2. Crea la storage class:
+2. Cree una clase de almacenamiento:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -324,7 +328,7 @@ parameters:
   mountOptions: "--cache-control-max-ttl 0"
 ```
 
-3. Crea el PVC y el pod:
+3. Cree un PVC y un Pod:
 
 ```yaml
 apiVersion: v1
@@ -361,21 +365,23 @@ spec:
 
 Amazon S3 es adecuado para los siguientes casos de uso:
 
-1. **Data Lake**: Repositorio central para analítica de datos a gran escala
-2. **Backup y Archive**: Retención de datos a largo plazo
-3. **Static Web Content**: Servir contenido estático como imágenes, videos y documentos
-4. **ML Model Repository**: Almacenamiento de archivos de modelos entrenados
-5. **Logs y Audit Data**: Almacenamiento de archivos de log y datos de auditoría
+1. **Data Lake**: Repositorio central para análisis de datos a gran escala
+2. **Copia de seguridad y archivo**: Retención de datos a largo plazo
+3. **Contenido web estático**: Entrega de contenido estático como imágenes, videos y documentos
+4. **Repositorio de modelos de ML**: Almacenamiento de archivos de modelos entrenados
+5. **Logs y datos de auditoría**: Almacenamiento de archivos de logs y datos de auditoría
 
-## Snapshots y backups
+## Snapshots y copias de seguridad
 
-En Kubernetes, puedes usar volume snapshots para hacer backup y restaurar datos de PV.
+En Kubernetes, puede usar snapshots de volúmenes para realizar copias de seguridad y restaurar datos de PV.
 
-![Sistema de Volume Snapshot](../.gitbook/assets/volume_snapshot_system.png)
+![Diagrama del flujo de snapshot desde el PVC de origen a través de VolumeSnapshot y SnapshotContent hasta un snapshot de EBS, y luego su restauración en un nuevo PVC.](../.gitbook/assets/en-eks-04-eks-storage-part2-2.png)
 
-### Instalación del Volume Snapshot Controller
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-2.html)
 
-Instala el snapshot controller para usar la funcionalidad de volume snapshot:
+### Instalación del controlador de snapshots de volúmenes
+
+Instale el controlador de snapshots para usar la funcionalidad de snapshots de volúmenes:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
@@ -386,9 +392,9 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snaps
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
 ```
 
-### Creación de una Volume Snapshot Class
+### Creación de una clase de snapshot de volumen
 
-Crea una snapshot class para volúmenes EBS:
+Cree una clase de snapshot para volúmenes EBS:
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -402,9 +408,9 @@ parameters:
   csi.storage.k8s.io/snapshotter-secret-namespace: ""
 ```
 
-### Creación de Volume Snapshot
+### Creación de un snapshot de volumen
 
-Crea un snapshot del PVC:
+Cree un snapshot del PVC:
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -417,9 +423,9 @@ spec:
     persistentVolumeClaimName: ebs-claim
 ```
 
-### Restauración de PVC desde Snapshot
+### Restauración de PVC desde un snapshot
 
-Crea un nuevo PVC desde un snapshot:
+Cree un nuevo PVC desde un snapshot:
 
 ```yaml
 apiVersion: v1
@@ -439,11 +445,11 @@ spec:
     apiGroup: snapshot.storage.k8s.io
 ```
 
-### Automatización de snapshots regulares
+### Automatización de snapshots periódicos
 
-Puedes automatizar backups y restauraciones regulares usando [Velero](https://velero.io/):
+Puede automatizar las copias de seguridad y restauraciones periódicas con [Velero](https://velero.io/):
 
-1. Instala Velero:
+1. Instale Velero:
 
 ```bash
 # Install Velero CLI
@@ -459,7 +465,7 @@ velero install \
   --secret-file ./credentials-velero
 ```
 
-2. Crea un schedule de backup:
+2. Cree un calendario de copias de seguridad:
 
 ```bash
 velero schedule create daily-backup \
@@ -467,7 +473,7 @@ velero schedule create daily-backup \
   --include-namespaces=default,app-namespace
 ```
 
-3. Restaura a un punto específico en el tiempo:
+3. Restaure a un punto específico en el tiempo:
 
 ```bash
 velero restore create --from-backup daily-backup-20250710010000
@@ -475,13 +481,15 @@ velero restore create --from-backup daily-backup-20250710010000
 
 ## Expansión y redimensionamiento de volúmenes
 
-En Kubernetes, puedes expandir el tamaño de un PVC para aumentar la capacidad de almacenamiento.
+En Kubernetes, puede ampliar el tamaño de un PVC para aumentar la capacidad de almacenamiento.
 
-![Proceso de expansión de volúmenes](../.gitbook/assets/volume_expansion_process.png)
+![Diagrama del proceso de expansión de volumen desde la StorageClass que permite la expansión, pasando por la edición del PVC y la llamada CSI, hasta el crecimiento de EBS y el redimensionamiento del sistema de archivos.](../.gitbook/assets/en-eks-04-eks-storage-part2-3.png)
 
-### Habilitación de expansión de volúmenes
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-3.html)
 
-Habilita la expansión de volúmenes en la storage class:
+### Habilitación de la expansión de volúmenes
+
+Habilite la expansión de volúmenes en la clase de almacenamiento:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -494,9 +502,9 @@ parameters:
 allowVolumeExpansion: true
 ```
 
-### Expansión del tamaño del PVC
+### Ampliación del tamaño de PVC
 
-Expande el tamaño del PVC:
+Amplíe el tamaño del PVC:
 
 ```yaml
 apiVersion: v1
@@ -512,14 +520,14 @@ spec:
       storage: 20Gi  # Expanded from original 10Gi to 20Gi
 ```
 
-### Expansión del file system
+### Expansión del sistema de archivos
 
-Después de la expansión del volumen, es posible que debas expandir el file system:
+Después de la expansión del volumen, quizá deba ampliar el sistema de archivos:
 
-1. Expansión online (cuando el pod está en ejecución):
-   * El EBS CSI driver expande automáticamente el file system.
-2. Expansión offline (cuando se requiere expansión manual):
-   * Conéctate al pod y ejecuta el comando de expansión del file system:
+1. Expansión en línea (cuando el Pod está en ejecución):
+   * El driver EBS CSI amplía automáticamente el sistema de archivos.
+2. Expansión sin conexión (cuando se requiere una expansión manual):
+   * Conéctese al Pod y ejecute el comando de expansión del sistema de archivos:
 
 ```bash
 # For ext4 file system
@@ -529,32 +537,32 @@ resize2fs /dev/xvdf
 xfs_growfs /data
 ```
 
-### Mejores prácticas de redimensionamiento de volúmenes
+### Prácticas recomendadas para el redimensionamiento de volúmenes
 
-1. **Establece un tamaño inicial adecuado**: Establece un tamaño inicial del volumen ligeramente mayor que lo necesario
-2. **Configura monitoreo**: Monitorea el uso del volumen y configura alertas
-3. **Expansión gradual**: Expande gradualmente el tamaño del volumen según sea necesario
-4. **Planifica el downtime**: Algunas expansiones del file system pueden requerir downtime
-5. **Considera la automatización**: Implementa políticas de expansión automática
+1. **Establezca un tamaño inicial adecuado**: Establezca el tamaño inicial del volumen ligeramente por encima de lo necesario
+2. **Configure la monitorización**: Supervise el uso del volumen y configure alertas
+3. **Expansión gradual**: Amplíe gradualmente el tamaño del volumen según sea necesario
+4. **Planifique el tiempo de inactividad**: Algunas expansiones del sistema de archivos pueden requerir tiempo de inactividad
+5. **Considere la automatización**: Implemente políticas de expansión automática
 
 ## Clonación de volúmenes
 
-La clonación de volúmenes permite crear un nuevo PVC desde un PVC existente sin pasar por el proceso de snapshot. Esto es útil para crear entornos de prueba, depurar problemas de datos de producción o aprovisionar rápidamente nuevos workloads con datos existentes.
+La clonación de volúmenes permite crear un nuevo PVC a partir de un PVC existente sin pasar por el proceso de snapshot. Esto es útil para crear entornos de prueba, depurar problemas con datos de producción o aprovisionar rápidamente nuevas cargas de trabajo con datos existentes.
 
 ### Concepto de clonación de volúmenes EBS CSI
 
-El EBS CSI driver admite la clonación de PVC usando el campo `dataSource`. Cuando clonas un volumen, el CSI driver crea un nuevo volumen EBS desde un snapshot del volumen de origen, pero este proceso se abstrae del usuario.
+El driver EBS CSI admite la clonación de PVC mediante el campo `dataSource`. Al clonar un volumen, el driver CSI crea un nuevo volumen EBS a partir de un snapshot del volumen de origen, pero este proceso queda abstraído para el usuario.
 
 Características clave de la clonación de volúmenes:
 
 * El clon es independiente del PVC de origen
 * Los cambios en el clon no afectan al origen
-* El clon hereda la storage class del origen, salvo que se especifique lo contrario
+* El clon hereda la clase de almacenamiento del origen, a menos que se especifique lo contrario
 * Tanto el origen como el clon deben estar en el mismo namespace
 
 ### Uso del campo dataSource
 
-Para crear un clon, especifica el PVC de origen en el campo `dataSource`:
+Para crear un clon, especifique el PVC de origen en el campo `dataSource`:
 
 ```yaml
 apiVersion: v1
@@ -575,17 +583,17 @@ spec:
 
 ### Comparación entre clon y snapshot
 
-| Característica        | Clon de volumen       | Volume Snapshot                              |
-| --------------------- | --------------------- | -------------------------------------------- |
-| Velocidad de creación | Rápida (un solo paso) | Dos pasos (crear snapshot y luego restaurar) |
-| Overhead de almacenamiento | Copia completa inmediata | Almacenamiento incremental                   |
-| Cross-Namespace       | No                    | Sí (con VolumeSnapshotContent)               |
-| Point-in-Time         | Al crear el clon      | Cualquier snapshot guardado                  |
-| Caso de uso           | Duplicación rápida    | Backup y recuperación                        |
+| Característica          | Clon de volumen        | Snapshot de volumen                         |
+| ---------------- | ------------------- | ----------------------------------------- |
+| Velocidad de creación   | Rápida (un solo paso)  | Dos pasos (crear snapshot y luego restaurar) |
+| Sobrecarga de almacenamiento | Copia completa inmediata | Almacenamiento incremental                       |
+| Entre namespaces  | No                  | Sí (con VolumeSnapshotContent)          |
+| Punto en el tiempo    | En la creación del clon   | Cualquier snapshot guardado                        |
+| Caso de uso         | Duplicación rápida   | Copia de seguridad y recuperación                       |
 
 ### Ejemplo YAML de clon de volumen
 
-Ejemplo completo para clonar un volumen de database:
+Ejemplo completo para clonar un volumen de base de datos:
 
 ```yaml
 # Source PVC (existing)
@@ -641,46 +649,46 @@ spec:
       claimName: postgres-data-test
 ```
 
-## Multi-Attach EBS
+## Multi-Attach de EBS
 
-Multi-Attach permite adjuntar un único volumen EBS a múltiples instancias EC2 simultáneamente. Esta característica está disponible para volúmenes io1 e io2 Block Express y es útil para aplicaciones clustered que requieren almacenamiento compartido de alto rendimiento.
+Multi-Attach permite conectar un único volumen EBS a varias instancias EC2 simultáneamente. Esta característica está disponible para volúmenes io1 e io2 Block Express y es útil para aplicaciones en clúster que requieren almacenamiento compartido con alto rendimiento.
 
-### Multi-Attachment io1/io2 Block Express
+### Multi-Attachment de io1/io2 Block Express
 
-Multi-Attach solo es compatible con volúmenes Provisioned IOPS SSD:
+Multi-Attach solo se admite en volúmenes Provisioned IOPS SSD:
 
-* **io1**: Hasta 16 adjuntos simultáneos
-* **io2 Block Express**: Hasta 16 adjuntos simultáneos con mayor rendimiento
+* **io1**: Hasta 16 conexiones simultáneas
+* **io2 Block Express**: Hasta 16 conexiones simultáneas con mayor rendimiento
 
 Requisitos:
 
 * Las instancias deben estar en la misma Availability Zone que el volumen
 * Las instancias deben ser instancias EC2 basadas en Nitro
-* El volumen debe usar modo Block device (no modo Filesystem)
+* El volumen debe usar el modo de dispositivo Block (no el modo Filesystem)
 
 ### ¿Por qué no ReadWriteMany?
 
 EBS Multi-Attach no admite el modo de acceso `ReadWriteMany` en el sentido tradicional porque:
 
-1. **Modo Block requerido**: Multi-Attach funciona solo con dispositivos de bloque sin procesar, no con filesystems montados
-2. **Sin coordinación de filesystem**: EBS no proporciona coordinación a nivel de filesystem
+1. **Se requiere modo Block**: Multi-Attach funciona solo con dispositivos de bloque sin procesar, no con sistemas de archivos montados
+2. **Sin coordinación del sistema de archivos**: EBS no proporciona coordinación a nivel de sistema de archivos
 3. **Responsabilidad de la aplicación**: La aplicación debe manejar el acceso concurrente y la integridad de los datos
 
-El modo de acceso de Kubernetes para Multi-Attach EBS es `ReadWriteOncePod` o mediante Block volumeMode con coordinación a nivel de aplicación (como databases clustered u OCFS2/GFS2).
+El modo de acceso de Kubernetes para EBS Multi-Attach es `ReadWriteOncePod` o mediante volumeMode Block con coordinación a nivel de aplicación (como bases de datos en clúster u OCFS2/GFS2).
 
 ### Limitaciones
 
-* **Solo la misma AZ**: Todas las instancias adjuntas deben estar en la misma Availability Zone
-* **Solo modo Block**: No se puede usar como filesystem compartido sin un filesystem consciente de cluster
-* **Instancias Nitro**: Solo compatible con tipos de instancia basados en Nitro
-* **Sin resize online**: No se puede redimensionar mientras está adjunto a múltiples instancias
+* **Solo la misma AZ**: Todas las instancias conectadas deben estar en la misma Availability Zone
+* **Solo modo Block**: No se puede usar como un sistema de archivos compartido sin un sistema de archivos compatible con clústeres
+* **Instancias Nitro**: Solo se admite en tipos de instancia basados en Nitro
+* **Sin redimensionamiento en línea**: No se puede redimensionar mientras está conectado a varias instancias
 * **Coordinación de la aplicación**: Las aplicaciones deben implementar su propio bloqueo/coordinación
 
 ### Casos de uso de Multi-Attach y ejemplo YAML
 
 Casos de uso comunes:
 
-* Databases clustered (Oracle RAC, SQL Server FCI)
+* Bases de datos en clúster (Oracle RAC, SQL Server FCI)
 * Aplicaciones de alta disponibilidad con estado compartido
 * Sistemas de almacenamiento distribuido
 
@@ -743,9 +751,9 @@ spec:
           claimName: shared-block-pvc
 ```
 
-## Análisis profundo de Mountpoint for S3 CSI
+## Análisis detallado de Mountpoint for S3 CSI
 
-Mountpoint for Amazon S3 es un cliente de archivos que traduce operaciones de file system en llamadas a la S3 object API, lo que permite que las aplicaciones accedan a S3 buckets mediante una interfaz similar a POSIX. El Mountpoint for S3 CSI driver integra esta capacidad con Kubernetes.
+Mountpoint for Amazon S3 es un cliente de archivos que traduce operaciones de sistema de archivos en llamadas a la API de objetos de S3, lo que permite a las aplicaciones acceder a buckets de S3 mediante una interfaz similar a POSIX. El driver Mountpoint for S3 CSI integra esta capacidad con Kubernetes.
 
 ### Características de rendimiento
 
@@ -753,53 +761,53 @@ Mountpoint for S3 está optimizado para patrones de acceso específicos:
 
 **Optimización de lectura secuencial**:
 
-* Rendimiento excelente para lecturas secuenciales grandes
+* Excelente rendimiento para lecturas secuenciales grandes
 * Prefetching automático para patrones de acceso predecibles
-* El throughput escala con el tamaño del objeto
-* Ideal para workloads de analítica de datos y entrenamiento de ML
+* El rendimiento escala con el tamaño del objeto
+* Ideal para análisis de datos y cargas de trabajo de entrenamiento de ML
 
 **Limitaciones de escritura aleatoria**:
 
-* S3 es un object store, no un block store
+* S3 es un almacén de objetos, no un almacén de bloques
 * Las escrituras aleatorias requieren reescribir objetos completos
-* Las operaciones append crean nuevas versiones de objetos
-* No es adecuado para workloads de database ni aplicaciones que requieren I/O aleatorio
+* Las operaciones de append crean nuevas versiones de objetos
+* No es adecuado para cargas de trabajo de bases de datos o aplicaciones que requieren I/O aleatoria
 
 Benchmarks de rendimiento (aproximados):
 
-| Operación                      | Rendimiento                         |
-| ------------------------------ | ----------------------------------- |
-| Lectura secuencial (archivos grandes) | Hasta 100 Gbps agregado             |
-| Escritura secuencial (archivos nuevos) | Hasta 50 Gbps agregado              |
-| Lectura aleatoria (archivos pequeños) | Mayor latencia, menor throughput    |
-| Escritura aleatoria            | No recomendado                      |
+| Operación                     | Rendimiento                      |
+| ----------------------------- | -------------------------------- |
+| Lectura secuencial (archivos grandes) | Hasta 100 Gbps agregados         |
+| Escritura secuencial (archivos nuevos)  | Hasta 50 Gbps agregados          |
+| Lectura aleatoria (archivos pequeños)     | Mayor latencia, menor rendimiento |
+| Escritura aleatoria                  | No recomendada                  |
 
 ### Limitaciones
 
-Mountpoint for S3 tiene varias limitaciones de compatibilidad POSIX:
+Mountpoint for S3 tiene varias limitaciones de compatibilidad con POSIX:
 
-* **Sin hard links**: No se admiten hard links
-* **Sin symbolic links**: No se admiten symbolic links
-* **Sin chmod/chown**: Los permisos de archivos no se pueden cambiar después de la creación
-* **Sin file locking**: Los locks advisory y mandatory no están disponibles
-* **Sin sparse files**: No se admiten operaciones de sparse file
-* **Sin extended attributes**: No se admiten operaciones xattr
-* **Consistencia eventual**: Las operaciones de listado pueden no reflejar inmediatamente escrituras recientes
-* **Sin rename entre directorios**: Rename solo se admite dentro del mismo directorio
-* **Sin append a archivos existentes**: Debe reescribirse todo el objeto
+* **Sin hard links**: Los hard links no son compatibles
+* **Sin enlaces simbólicos**: Los enlaces simbólicos no son compatibles
+* **Sin chmod/chown**: Los permisos de archivo no se pueden cambiar después de la creación
+* **Sin bloqueo de archivos**: Los bloqueos consultivos y obligatorios no están disponibles
+* **Sin archivos dispersos**: Las operaciones con archivos dispersos no son compatibles
+* **Sin atributos extendidos**: Las operaciones xattr no son compatibles
+* **Consistencia eventual**: Las operaciones de listado pueden no reflejar inmediatamente las escrituras recientes
+* **Sin cambio de nombre entre directorios**: El cambio de nombre solo se admite dentro del mismo directorio
+* **Sin append a archivos existentes**: Debe reescribir el objeto completo
 
 ### Configuración de caché
 
 Mountpoint for S3 proporciona opciones de caché para mejorar el rendimiento:
 
-**Metadata Cache**:
+**Caché de metadatos**:
 
 ```yaml
 parameters:
   mountOptions: "--metadata-ttl 60"  # Cache metadata for 60 seconds
 ```
 
-**Data Cache** (para workloads con muchas lecturas):
+**Caché de datos** (para cargas de trabajo con muchas lecturas):
 
 ```yaml
 parameters:
@@ -824,9 +832,9 @@ parameters:
     --prefetch-bytes 20971520
 ```
 
-### Ejemplo de escenario de entrenamiento con dataset grande
+### Ejemplo de escenario de entrenamiento con conjuntos de datos grandes
 
-Mountpoint for S3 es ideal para workloads de entrenamiento de ML que leen datasets grandes:
+Mountpoint for S3 es ideal para cargas de trabajo de entrenamiento de ML que leen conjuntos de datos grandes:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -896,26 +904,28 @@ spec:
         node.kubernetes.io/instance-type: p4d.24xlarge
 ```
 
-Optimizaciones clave en este ejemplo:
+Optimizaciones clave de este ejemplo:
 
-* **Acceso ReadOnlyMany**: Múltiples training pods pueden leer simultáneamente
+* **Acceso ReadOnlyMany**: Varios Pods de entrenamiento pueden leer simultáneamente
 * **Prefetch grande**: El prefetch de 50 MB reduce la latencia de lectura
-* **Caché local**: Caché de 100 GB para datos accedidos frecuentemente
+* **Caché local**: Caché de 100 GB para datos a los que se accede con frecuencia
 * **Tipo de instancia adecuado**: Instancia GPU con alto ancho de banda de red
 
 ## Optimización del rendimiento de almacenamiento
 
 Exploremos varias estrategias para optimizar el rendimiento de almacenamiento en EKS.
 
-![Optimización del rendimiento de almacenamiento](../.gitbook/assets/storage_performance_optimization.png)
+![Diagrama de ajuste del rendimiento de almacenamiento que asigna cargas de trabajo de bases de datos, servidores web, análisis y machine learning a EBS, EFS y FSx for Lustre.](../.gitbook/assets/en-eks-04-eks-storage-part2-4.png)
 
-### Optimización de rendimiento de EBS
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-4.html)
 
-1. **Selecciona el tipo de volumen adecuado**:
-   * Workloads generales: gp3
-   * Databases de alto rendimiento: io2
-   * Workloads centrados en throughput: st1
-2. **Ajuste de rendimiento de volúmenes gp3**:
+### Optimización del rendimiento de EBS
+
+1. **Seleccione el tipo de volumen adecuado**:
+   * Cargas de trabajo generales: gp3
+   * Bases de datos de alto rendimiento: io2
+   * Cargas de trabajo centradas en rendimiento: st1
+2. **Ajuste del rendimiento del volumen gp3**:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -929,28 +939,28 @@ parameters:
   throughput: "1000"  # Up to 1,000 MiB/s
 ```
 
-3. **Considera el tipo de instancia**:
-   * Usa instancias optimizadas para EBS
-   * Selecciona instancias con suficiente ancho de banda de red
-4. **Inicialización de volúmenes**:
-   * Considera inicializar volúmenes nuevos antes de usarlos:
+3. **Considere el tipo de instancia**:
+   * Use instancias optimizadas para EBS
+   * Seleccione instancias con ancho de banda de red suficiente
+4. **Inicialización de volumen**:
+   * Considere inicializar volúmenes nuevos antes de usarlos:
 
 ```bash
 dd if=/dev/zero of=/dev/xvdf bs=1M count=1000 oflag=direct
 ```
 
-### Optimización de rendimiento de EFS
+### Optimización del rendimiento de EFS
 
-1. **Selecciona el modo de rendimiento adecuado**:
-   * La mayoría de workloads: modo General Purpose
-   * Workloads de alta concurrencia: modo Max I/O
-2. **Selecciona el modo de throughput**:
-   * Workloads predecibles: Provisioned throughput
-   * Workloads variables: Bursting o Elastic throughput
-3. **Optimiza los patrones de acceso**:
-   * Operaciones con archivos grandes: usa tamaños de I/O grandes
-   * Acceso paralelo: usa múltiples threads o procesos
-4. **Optimiza las opciones de montaje**:
+1. **Seleccione el modo de rendimiento adecuado**:
+   * La mayoría de las cargas de trabajo: modo General Purpose
+   * Cargas de trabajo de alta concurrencia: modo Max I/O
+2. **Seleccione el modo de rendimiento**:
+   * Cargas de trabajo predecibles: rendimiento aprovisionado
+   * Cargas de trabajo variables: rendimiento Bursting o Elastic
+3. **Optimice los patrones de acceso**:
+   * Operaciones con archivos grandes: use tamaños de I/O grandes
+   * Acceso paralelo: use varios hilos o procesos
+4. **Optimice las opciones de montaje**:
 
 ```yaml
 apiVersion: v1
@@ -977,14 +987,14 @@ spec:
       - noresvport
 ```
 
-### Optimización de rendimiento de FSx for Lustre
+### Optimización del rendimiento de FSx for Lustre
 
-1. **Selecciona el tipo de deployment y throughput adecuados**:
-   * Requisitos de alto throughput: PERSISTENT\_2 + alto throughput
-   * Workloads temporales rentables: SCRATCH\_2
-2. **Optimiza el striping**:
-   * Archivos grandes: stripe en múltiples OSTs (Object Storage Targets)
-   * Archivos pequeños: almacenar en un solo OST
+1. **Seleccione el tipo de implementación y el rendimiento adecuados**:
+   * Requisitos de alto rendimiento: PERSISTENT\_2 + alto rendimiento
+   * Cargas de trabajo temporales rentables: SCRATCH\_2
+2. **Optimice el striping**:
+   * Archivos grandes: distribuya en bandas entre varios OST (Object Storage Targets)
+   * Archivos pequeños: almacene en un único OST
 3. **Opciones de montaje del cliente**:
 
 ```yaml
@@ -994,20 +1004,20 @@ mountOptions:
   - relatime
 ```
 
-4. **Habilita la compresión de datos**:
+4. **Habilite la compresión de datos**:
 
 ```yaml
 parameters:
   dataCompressionType: "LZ4"
 ```
 
-### Optimización de almacenamiento para workloads de vLLM
+### Optimización de almacenamiento para cargas de trabajo de vLLM
 
-Optimización de almacenamiento para workloads de large language model como vLLM:
+Optimización de almacenamiento para cargas de trabajo de modelos de lenguaje grandes como vLLM:
 
-1. **Usa FSx for Lustre**:
-   * El alto throughput reduce el tiempo de carga del modelo
-   * Acceso simultáneo a los mismos archivos de modelo desde múltiples nodes
+1. **Use FSx for Lustre**:
+   * El alto rendimiento reduce el tiempo de carga del modelo
+   * Acceso simultáneo a los mismos archivos de modelo desde varios nodos
 2. **Configuración óptima**:
 
 ```yaml
@@ -1024,18 +1034,18 @@ parameters:
 ```
 
 3. **Optimización de archivos de modelo**:
-   * Precarga los archivos de modelo en memoria
-   * Considera la cuantización del modelo
-   * Implementa model sharding
-4. **Selección del tipo de instancia de node**:
-   * Selecciona instancias con suficiente memoria y ancho de banda de red
-   * Considera soporte de EFA (Elastic Fabric Adapter) para instancias GPU
+   * Precargue los archivos de modelo en memoria
+   * Considere la cuantización de modelos
+   * Implemente sharding de modelos
+4. **Selección del tipo de instancia de nodo**:
+   * Seleccione instancias con memoria y ancho de banda de red suficientes
+   * Considere la compatibilidad con EFA (Elastic Fabric Adapter) para instancias GPU
 
 ## Conclusión
 
-Este documento cubrió FSx for Lustre, S3, snapshots, expansión de volúmenes y optimización de rendimiento en Amazon EKS. Cada opción de almacenamiento tiene diferentes características y casos de uso, por lo que es importante seleccionar y optimizar la solución de almacenamiento adecuada para los requisitos de tu aplicación.
+Este documento cubrió FSx for Lustre, S3, snapshots, expansión de volúmenes y optimización del rendimiento en Amazon EKS. Cada opción de almacenamiento tiene distintas características y casos de uso, por lo que es importante seleccionar y optimizar la solución de almacenamiento adecuada para los requisitos de su aplicación.
 
-La siguiente parte cubrirá monitoreo, troubleshooting, optimización de costos y seguridad para el almacenamiento de EKS.
+La siguiente parte cubrirá monitorización, solución de problemas, optimización de costos y seguridad para el almacenamiento de EKS.
 
 ## Referencias
 
@@ -1045,6 +1055,6 @@ La siguiente parte cubrirá monitoreo, troubleshooting, optimización de costos 
 * [Velero Backup and Restore](https://velero.io/docs/)
 * [Amazon EKS Storage Best Practices](https://aws.github.io/aws-eks-best-practices/storage/)
 
-## Quiz
+## Cuestionario
 
-Para probar lo que has aprendido en este capítulo, intenta el [quiz del tema](../quizzes/eks/04-eks-storage-part2-quiz.md).
+Para comprobar lo que ha aprendido en este capítulo, pruebe el [cuestionario del tema](../quizzes/eks/04-eks-storage-part2-quiz.md).

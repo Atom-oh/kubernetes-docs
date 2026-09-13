@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Istio + VPC Lattice Traffic Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      920,
+      660
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Cluster 1",
+      "sublabel": "Service A"
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Istio sidecar · collects metrics locally"
+    },
+    {
+      "id": "lattice",
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "AWS managed service discovery"
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Cluster 2",
+      "sublabel": "Service B · Istio collects metrics"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 360,
+      "label": "Cross-cluster call — request"
+    },
+    {
+      "from": 380,
+      "to": 540,
+      "label": "Cross-cluster call — response"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "app1",
+      "to": "envoy1",
+      "y": 190,
+      "label": "1. HTTP request",
+      "variant": "default",
+      "note": "Istio collects metrics locally"
+    },
+    {
+      "id": "m2",
+      "from": "envoy1",
+      "to": "lattice",
+      "y": 255,
+      "label": "2. Route to VPC Lattice DNS",
+      "variant": "emphasis",
+      "note": "AWS managed service discovery"
+    },
+    {
+      "id": "m3",
+      "from": "lattice",
+      "to": "app2",
+      "y": 320,
+      "label": "3. Forward to Cluster 2 service",
+      "variant": "emphasis",
+      "note": "Istio collects metrics in Cluster 2"
+    },
+    {
+      "id": "m4",
+      "from": "app2",
+      "to": "lattice",
+      "y": 410,
+      "label": "4. Response",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "lattice",
+      "to": "envoy1",
+      "y": 465,
+      "label": "5. Forward response",
+      "variant": "return"
+    },
+    {
+      "id": "m6",
+      "from": "envoy1",
+      "to": "app1",
+      "y": 520,
+      "label": "6. Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy1",
+      "from": 185,
+      "to": 528,
+      "type": "security"
+    },
+    {
+      "participant": "lattice",
+      "from": 250,
+      "to": 472,
+      "type": "cloud"
+    },
+    {
+      "participant": "app2",
+      "from": 315,
+      "to": 418,
+      "type": "backend"
+    }
+  ]
+}

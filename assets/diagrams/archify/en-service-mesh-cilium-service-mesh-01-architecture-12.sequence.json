@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "When L7 Processing is Required — Round Trip via Node Envoy",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "ebpf-client",
+          "envoy",
+          "ebpf-server",
+          "server"
+        ],
+        "note": "Only requests matching an L7 policy are redirected by eBPF to the node Envoy before reaching the server Pod."
+      },
+      {
+        "id": "response-path",
+        "label": "Response path",
+        "focus": [
+          "server",
+          "ebpf-server",
+          "envoy",
+          "ebpf-client",
+          "client"
+        ],
+        "note": "The response takes the same detour through Envoy, updating metrics before reaching the client Pod."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Internal proxy hop"
+        },
+        "emphasis": {
+          "label": "Client-facing HTTP"
+        },
+        "return": {
+          "label": "Response"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client Pod",
+      "sublabel": "originates request"
+    },
+    {
+      "id": "ebpf-client",
+      "type": "security",
+      "label": "eBPF (Client)",
+      "sublabel": "client-side hook"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Node Envoy",
+      "sublabel": "L7 proxy · HTTP parsing · policy"
+    },
+    {
+      "id": "ebpf-server",
+      "type": "security",
+      "label": "eBPF (Server)",
+      "sublabel": "server-side hook"
+    },
+    {
+      "id": "server",
+      "type": "frontend",
+      "label": "Server Pod",
+      "sublabel": "produces response"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 335,
+      "label": "Request — redirected to Envoy"
+    },
+    {
+      "from": 350,
+      "to": 515,
+      "label": "Response — same path back"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "ebpf-client",
+      "y": 190,
+      "label": "HTTP request — L7 policy detected",
+      "variant": "emphasis",
+      "note": "L7 policy detected"
+    },
+    {
+      "id": "redirect-proxy",
+      "from": "ebpf-client",
+      "to": "envoy",
+      "y": 230,
+      "label": "redirect to proxy — metrics · tracing",
+      "note": "HTTP parsing · L7 policy enforcement · metrics · tracing"
+    },
+    {
+      "id": "forward-request",
+      "from": "envoy",
+      "to": "ebpf-server",
+      "y": 270,
+      "label": "forward request"
+    },
+    {
+      "id": "deliver-request",
+      "from": "ebpf-server",
+      "to": "server",
+      "y": 310,
+      "label": "deliver packet"
+    },
+    {
+      "id": "http-response",
+      "from": "server",
+      "to": "ebpf-server",
+      "y": 380,
+      "label": "HTTP response",
+      "variant": "return"
+    },
+    {
+      "id": "forward-response",
+      "from": "ebpf-server",
+      "to": "envoy",
+      "y": 420,
+      "label": "forward response · update metrics",
+      "variant": "return",
+      "note": "process response · update metrics"
+    },
+    {
+      "id": "return-response",
+      "from": "envoy",
+      "to": "ebpf-client",
+      "y": 460,
+      "label": "forward response",
+      "variant": "return"
+    },
+    {
+      "id": "deliver-response",
+      "from": "ebpf-client",
+      "to": "client",
+      "y": 500,
+      "label": "deliver packet",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ebpf-client",
+      "from": 185,
+      "to": 236,
+      "type": "security"
+    },
+    {
+      "participant": "envoy",
+      "from": 225,
+      "to": 276,
+      "type": "backend"
+    },
+    {
+      "participant": "ebpf-server",
+      "from": 265,
+      "to": 316,
+      "type": "security"
+    },
+    {
+      "participant": "server",
+      "from": 305,
+      "to": 386,
+      "type": "frontend"
+    },
+    {
+      "participant": "ebpf-server",
+      "from": 375,
+      "to": 426,
+      "type": "security"
+    },
+    {
+      "participant": "envoy",
+      "from": 415,
+      "to": 466,
+      "type": "backend"
+    },
+    {
+      "participant": "ebpf-client",
+      "from": 455,
+      "to": 506,
+      "type": "security"
+    }
+  ]
+}

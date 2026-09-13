@@ -1,0 +1,372 @@
+[
+  {
+    "path": "en/labs/basics/01-linux-basics-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and paired fixed: owned-PID termination, private scratch files, creation-guarded namespace cleanup, actual bounded cgroupv2/systemd example and precise memory/permission explanations.",
+    "sources": [
+      "https://www.freedesktop.org/software/systemd/man/latest/systemd-run.html",
+      "https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html",
+      "https://docs.kernel.org/admin-guide/cgroup-v2.html",
+      "https://man7.org/linux/man-pages/man1/unshare.1.html",
+      "https://man7.org/linux/man-pages/man8/ip-netns.8.html",
+      "https://man7.org/linux/man-pages/man1/mktemp.1.html"
+    ],
+    "findings": [
+      "Captured$!andBashjob membership replacebroadpgrep/pkill;waitreapschildandclearsPID. Processlistingcommentcorrected.",
+      "Unique/private mktempdirectory,guardedfilepaths,andknown-file+rmdircleanupreplacepredictablepath/rm-rf. Ownershipchangeisconfinedtoownfileandrestored;executablebitdoesnotcontrolchown.",
+      "Networknamespacecleanupinstalledonlyaftercreation succeeds;namehandleverificationdoesnotclaimnamespace/processdestruction. mount+PIDnamespace/procviewprerequisitesexplicit.",
+      "cgroupv2detectedbyfilesystemtype;unreadablecontrollersnotcalledv1. systemd-runMemoryMax128M/MemorySwapMax0setsareallimitfortheuserlabwithoutdeliberateOOM;16MiBtouchedallocationisillustrativeexpectedarithmetic.",
+      "OOM/reclaim/allocationfailure/containertermination distinctionscorrected;KubernetesYAMLprintdoesnotcreatePod. MaintainedVM/tool/cgroupv2prerequisitesreplaceUbuntu20.04recommendation;dnfpackagenamesandSecret0644contextcorrected."
+    ],
+    "validation": [
+      "Original273linesfullyreadinbothlanguagesbeforeedits;final329linesperlanguage.",
+      "36Bashblocksyntaxchecks,2embeddedPythonASTchecks,2embeddedKubernetesYAMLparsespassed;scopedgitdiff--checkpassed.",
+      "Executedonlyownunprivilegedsleepjobs/privatefilefixture:targetSIGTERMstatus143,independentsame-nameddecoysurvived,filemodes640/644checkedandprivatefile/directoryremoved.",
+      "No sudo,namespace,cgroup,systemd,ownershipchange,container/Kubernetesorcloudcommands executed. Officialsystemd/kernel/manpagesverifiedprivilegedinstructions;expectedoutputisnotclaimedasarerun.",
+      "login:false env-i OTeloff;artifacts /tmp/labs-foundations-audit/linux-basics-validation.json andlinux-basics-safe-check.log."
+    ]
+  },
+  {
+    "path": "ko/labs/basics/01-linux-basics-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and paired fixed: owned-PID termination, private scratch files, creation-guarded namespace cleanup, actual bounded cgroupv2/systemd example and precise memory/permission explanations.",
+    "sources": [
+      "https://www.freedesktop.org/software/systemd/man/latest/systemd-run.html",
+      "https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html",
+      "https://docs.kernel.org/admin-guide/cgroup-v2.html",
+      "https://man7.org/linux/man-pages/man1/unshare.1.html",
+      "https://man7.org/linux/man-pages/man8/ip-netns.8.html",
+      "https://man7.org/linux/man-pages/man1/mktemp.1.html"
+    ],
+    "findings": [
+      "Captured$!andBashjob membership replacebroadpgrep/pkill;waitreapschildandclearsPID. Processlistingcommentcorrected.",
+      "Unique/private mktempdirectory,guardedfilepaths,andknown-file+rmdircleanupreplacepredictablepath/rm-rf. Ownershipchangeisconfinedtoownfileandrestored;executablebitdoesnotcontrolchown.",
+      "Networknamespacecleanupinstalledonlyaftercreation succeeds;namehandleverificationdoesnotclaimnamespace/processdestruction. mount+PIDnamespace/procviewprerequisitesexplicit.",
+      "cgroupv2detectedbyfilesystemtype;unreadablecontrollersnotcalledv1. systemd-runMemoryMax128M/MemorySwapMax0setsareallimitfortheuserlabwithoutdeliberateOOM;16MiBtouchedallocationisillustrativeexpectedarithmetic.",
+      "OOM/reclaim/allocationfailure/containertermination distinctionscorrected;KubernetesYAMLprintdoesnotcreatePod. MaintainedVM/tool/cgroupv2prerequisitesreplaceUbuntu20.04recommendation;dnfpackagenamesandSecret0644contextcorrected."
+    ],
+    "validation": [
+      "Original273linesfullyreadinbothlanguagesbeforeedits;final329linesperlanguage.",
+      "36Bashblocksyntaxchecks,2embeddedPythonASTchecks,2embeddedKubernetesYAMLparsespassed;scopedgitdiff--checkpassed.",
+      "Executedonlyownunprivilegedsleepjobs/privatefilefixture:targetSIGTERMstatus143,independentsame-nameddecoysurvived,filemodes640/644checkedandprivatefile/directoryremoved.",
+      "No sudo,namespace,cgroup,systemd,ownershipchange,container/Kubernetesorcloudcommands executed. Officialsystemd/kernel/manpagesverifiedprivilegedinstructions;expectedoutputisnotclaimedasarerun.",
+      "login:false env-i OTeloff;artifacts /tmp/labs-foundations-audit/linux-basics-validation.json andlinux-basics-safe-check.log."
+    ]
+  },
+  {
+    "path": "en/labs/basics/02-linux-advanced-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread andpairedfixed: privatefileworkspace, timeout/transport-awarehealthcheck, readonlyfield-awareanalyzer, explicit syntheticfixtures andaccuratepipelineclaims.",
+    "sources": [
+      "https://jqlang.org/manual/",
+      "https://curl.se/docs/manpage.html",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "https://man7.org/linux/man-pages/man1/mktemp.1.html"
+    ],
+    "findings": [
+      "Replacedglobal/tmpfilenames withguardedprivate directoryandknown-filecleanup. ReducedPodList explicitlyaJSONfixture,notanAPIcreationmanifest;RunningisnotReady.",
+      "Healthscriptvalidates1–60stimeoutandHTTP(S),quotesarguments,disablescurlrc/proxiesfordirectcheck,andchecksCurlexitstatusbeforeHTTP200. NativeKubernetesHTTPprobe200–399andexecdependencies/timebudget clarified.",
+      "Analyzerrequiresreadableexistingregularfileandneverfabricatesmissinginput. Six-linesyntheticfixtureseparate;levelcolumnmatchingdoesnotcountERRORinsideINFOmessage.",
+      "EREtimewindowandfield-preservingsed/awkreplaceunnecessaryPCRE/globalwordchanges. Replica-fieldtextreplacementisnotConfigMap/APIupdate. jq/curl/Bashprerequisitesanddnfupdated."
+    ],
+    "validation": [
+      "All233original lines fullyreadinbothlanguagesbeforeedits;new266-linepair.",
+      "26Bashblocks+4embeddedShellscripts+2JSONfixtures parsed;actualjqRunningcount2,actualawkINFO3/WARN1/ERROR2andfield-preservingsedverified.",
+      "Eightmockcurlstatus/exit/inputcasespassed,includingHTTP200withtransporttimeoutfailure;missinginputreturns2withoutcreatingafile. Nohealthendpoint,productionlogorclusterAPIaccess.",
+      "Scopeddiff--checkpassed. Initialsedbash-cvalidationloadedstartupfile;affectedchecksrepeatedusingabsolute/bin/bash --noprofile --norcwithstdin,no startupoutput;homeconfigunchanged. Futurecheckshellsusenorc/noprofile.",
+      "login:false env-i OTeloff. Evidence /tmp/labs-foundations-audit/linux-advanced-validation.json."
+    ]
+  },
+  {
+    "path": "ko/labs/basics/02-linux-advanced-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread andpairedfixed: privatefileworkspace, timeout/transport-awarehealthcheck, readonlyfield-awareanalyzer, explicit syntheticfixtures andaccuratepipelineclaims.",
+    "sources": [
+      "https://jqlang.org/manual/",
+      "https://curl.se/docs/manpage.html",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "https://man7.org/linux/man-pages/man1/mktemp.1.html"
+    ],
+    "findings": [
+      "Replacedglobal/tmpfilenames withguardedprivate directoryandknown-filecleanup. ReducedPodList explicitlyaJSONfixture,notanAPIcreationmanifest;RunningisnotReady.",
+      "Healthscriptvalidates1–60stimeoutandHTTP(S),quotesarguments,disablescurlrc/proxiesfordirectcheck,andchecksCurlexitstatusbeforeHTTP200. NativeKubernetesHTTPprobe200–399andexecdependencies/timebudget clarified.",
+      "Analyzerrequiresreadableexistingregularfileandneverfabricatesmissinginput. Six-linesyntheticfixtureseparate;levelcolumnmatchingdoesnotcountERRORinsideINFOmessage.",
+      "EREtimewindowandfield-preservingsed/awkreplaceunnecessaryPCRE/globalwordchanges. Replica-fieldtextreplacementisnotConfigMap/APIupdate. jq/curl/Bashprerequisitesanddnfupdated."
+    ],
+    "validation": [
+      "All233original lines fullyreadinbothlanguagesbeforeedits;new266-linepair.",
+      "26Bashblocks+4embeddedShellscripts+2JSONfixtures parsed;actualjqRunningcount2,actualawkINFO3/WARN1/ERROR2andfield-preservingsedverified.",
+      "Eightmockcurlstatus/exit/inputcasespassed,includingHTTP200withtransporttimeoutfailure;missinginputreturns2withoutcreatingafile. Nohealthendpoint,productionlogorclusterAPIaccess.",
+      "Scopeddiff--checkpassed. Initialsedbash-cvalidationloadedstartupfile;affectedchecksrepeatedusingabsolute/bin/bash --noprofile --norcwithstdin,no startupoutput;homeconfigunchanged. Futurecheckshellsusenorc/noprofile.",
+      "login:false env-i OTeloff. Evidence /tmp/labs-foundations-audit/linux-advanced-validation.json."
+    ]
+  },
+  {
+    "path": "en/labs/basics/03-container-technology-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread andpairedfixed: localdaemon/context, uniqueprivateimage/containerownership, loopbackephemeralports, verifiedSSI/baseimages, staticGoandmeaningfulsame-appstagecomparison.",
+    "sources": [
+      "https://docs.docker.com/build/building/multi-stage/",
+      "https://docs.docker.com/engine/network/port-publishing/",
+      "https://docs.docker.com/reference/cli/docker/container/run/",
+      "https://nginx.org/en/docs/http/ngx_http_ssi_module.html",
+      "https://nginx.org/en/docs/http/ngx_http_core_module.html",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/golang"
+    ],
+    "findings": [
+      "Client-onlyversioncheck replacedwithlocaldisposableEngine/context/serverprerequisites;28.0.0minimumforpublishedlocalhostbehavior qualifiedasfunctionalminimum,notallsuchversionssupported. Contextpinnedbyhelper.",
+      "Privateprojectdirectory/uniqueimageTags/CIDfiles/lablabels replacefixedglobalnamesandbroadcleanup. Cleanupcheckslabelsandonlystops/removesownedIDs/tags;no baseimages/prune.",
+      "Only127.0.0.1dynamicports published;failedstartupcannotfallthroughwithmissingport. curltransfererrorschecked,boundedstartupretry,andcorrectnginxhostnameSSIvariable.",
+      "Officialnginx1.30.4-alpine andgolang1.27.1tagsverified. OldGo1.21/Alpine3.19 replacedwithCGO0staticGo+scratchnonroot;ListenAndServeerrorhandled. Scratchtool/CA/runtimeassumptionsstated.",
+      "Old~40MBoutputexplicitlyunverifiedillustration. SameGoappbuild-stageandruntimeimagescompared;platform/store/sharedlayersandunmeasuredsize limitationsclear. Goimagecanberunviaexplicitlabstepbutwasnotexecutedinaudit."
+    ],
+    "validation": [
+      "All215originallinesfullyreadinbothlanguagesbeforeedits;final324-linepair.",
+      "28Bashblocksparsed;4embeddedDockerfiles/2Goextractschecked,JSONCMD/ENTRYPOINTformsvalid. OfficialDocker/NGINXdocsandimagelibrarytagsread.",
+      "Go1.27.1handlerunit testpassed;CGO0strippedbinarybuiltandfileidentifiedstaticARM64ELF. NoHTTPsocketorDockerdaemonaccess.",
+      "MockcleanupacceptedonlyownedCID/image,ignoredforeign/missinglabelsandremovedownfixturefiles;3expectedmutationcallsrecorded. No realDockerresourceswerechanged.",
+      "Scopeddiff--checkpassed. login:false env-i OTeloff,Gotelemetryoff,alltestBashsubprocesses--noprofile--norc. Evidence /tmp/labs-foundations-audit/container-static-validation.json andcontainer-go-validation.log."
+    ]
+  },
+  {
+    "path": "ko/labs/basics/03-container-technology-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread andpairedfixed: localdaemon/context, uniqueprivateimage/containerownership, loopbackephemeralports, verifiedSSI/baseimages, staticGoandmeaningfulsame-appstagecomparison.",
+    "sources": [
+      "https://docs.docker.com/build/building/multi-stage/",
+      "https://docs.docker.com/engine/network/port-publishing/",
+      "https://docs.docker.com/reference/cli/docker/container/run/",
+      "https://nginx.org/en/docs/http/ngx_http_ssi_module.html",
+      "https://nginx.org/en/docs/http/ngx_http_core_module.html",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/golang"
+    ],
+    "findings": [
+      "Client-onlyversioncheck replacedwithlocaldisposableEngine/context/serverprerequisites;28.0.0minimumforpublishedlocalhostbehavior qualifiedasfunctionalminimum,notallsuchversionssupported. Contextpinnedbyhelper.",
+      "Privateprojectdirectory/uniqueimageTags/CIDfiles/lablabels replacefixedglobalnamesandbroadcleanup. Cleanupcheckslabelsandonlystops/removesownedIDs/tags;no baseimages/prune.",
+      "Only127.0.0.1dynamicports published;failedstartupcannotfallthroughwithmissingport. curltransfererrorschecked,boundedstartupretry,andcorrectnginxhostnameSSIvariable.",
+      "Officialnginx1.30.4-alpine andgolang1.27.1tagsverified. OldGo1.21/Alpine3.19 replacedwithCGO0staticGo+scratchnonroot;ListenAndServeerrorhandled. Scratchtool/CA/runtimeassumptionsstated.",
+      "Old~40MBoutputexplicitlyunverifiedillustration. SameGoappbuild-stageandruntimeimagescompared;platform/store/sharedlayersandunmeasuredsize limitationsclear. Goimagecanberunviaexplicitlabstepbutwasnotexecutedinaudit."
+    ],
+    "validation": [
+      "All215originallinesfullyreadinbothlanguagesbeforeedits;final324-linepair.",
+      "28Bashblocksparsed;4embeddedDockerfiles/2Goextractschecked,JSONCMD/ENTRYPOINTformsvalid. OfficialDocker/NGINXdocsandimagelibrarytagsread.",
+      "Go1.27.1handlerunit testpassed;CGO0strippedbinarybuiltandfileidentifiedstaticARM64ELF. NoHTTPsocketorDockerdaemonaccess.",
+      "MockcleanupacceptedonlyownedCID/image,ignoredforeign/missinglabelsandremovedownfixturefiles;3expectedmutationcallsrecorded. No realDockerresourceswerechanged.",
+      "Scopeddiff--checkpassed. login:false env-i OTeloff,Gotelemetryoff,alltestBashsubprocesses--noprofile--norc. Evidence /tmp/labs-foundations-audit/container-static-validation.json andcontainer-go-validation.log."
+    ]
+  },
+  {
+    "path": "en/labs/core/02-pods-and-workloads-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread/pairedfixed withownednamespace/context/privatefiles,readiness/resource-awarecontrolledrolloutandexplicitcompletedrevisionrollback.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+      "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_undo/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "https://github.com/kubernetes/kubernetes/blob/v1.35.8/staging/src/k8s.io/kubectl/pkg/cmd/set/set_image.go",
+      "https://github.com/docker-library/official-images/blob/master/library/nginx"
+    ],
+    "findings": [
+      "CreatedprivatefileworkspaceanduniqueNamespaceonlysetaftercreation;contextpinnedandcleanupchecksrecordedNamespaceUID. No unscopeddefaultnamespace deletions.",
+      "AddedHTTPreadiness,resources,rollouttimeouts,maxUnavailable0/maxSurge1andcapacitycaveats. Runningphasealoneisnotreadiness.",
+      "Verifiednginx1.30.4Debian->Alpinevariantupdatekeepsmaintainedrelease;knownnginx/shcommandsreplaceassumedcurl/bashdependencies.",
+      "Deprecated--record replacedexplicitchange-cause. Goodrevisioncapturedonlyaftersuccessfulimageupdate+completedrollout;rollbackusesonlyrolloutundoexplicitrevision,notunsupportedkubectlrollback/errorhiding.",
+      "Reserved.invalidimagefailureandtimeoutarescenariosnotobservedresults;inspectPodstatus/eventsforactualcause. RollbackisPodtemplate-only,nodata/configurationmigrationrollback."
+    ],
+    "validation": [
+      "All193originallinesreadinbothlanguagesbeforeedits.",
+      "32Bashblockparsesand4strictnativeKubernetes1.35Pod/DeploymentYAMLvalidationspassed;scopeddiff--checkpassed.",
+      "NamespacecleanupmocktestsverifiedmatchingUIDdeleteandforeignUIDskip;goodrevisionisguardedbyrolloutsuccess.",
+      "No actualKubernetescluster/namespace/imagepull/scale/rollout/deleteoperations. login:false env-iOTELoffandBashnoprofile/norc. Evidence /tmp/labs-foundations-audit/workloads-validation.json."
+    ]
+  },
+  {
+    "path": "ko/labs/core/02-pods-and-workloads-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread/pairedfixed withownednamespace/context/privatefiles,readiness/resource-awarecontrolledrolloutandexplicitcompletedrevisionrollback.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+      "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_undo/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      "https://github.com/kubernetes/kubernetes/blob/v1.35.8/staging/src/k8s.io/kubectl/pkg/cmd/set/set_image.go",
+      "https://github.com/docker-library/official-images/blob/master/library/nginx"
+    ],
+    "findings": [
+      "CreatedprivatefileworkspaceanduniqueNamespaceonlysetaftercreation;contextpinnedandcleanupchecksrecordedNamespaceUID. No unscopeddefaultnamespace deletions.",
+      "AddedHTTPreadiness,resources,rollouttimeouts,maxUnavailable0/maxSurge1andcapacitycaveats. Runningphasealoneisnotreadiness.",
+      "Verifiednginx1.30.4Debian->Alpinevariantupdatekeepsmaintainedrelease;knownnginx/shcommandsreplaceassumedcurl/bashdependencies.",
+      "Deprecated--record replacedexplicitchange-cause. Goodrevisioncapturedonlyaftersuccessfulimageupdate+completedrollout;rollbackusesonlyrolloutundoexplicitrevision,notunsupportedkubectlrollback/errorhiding.",
+      "Reserved.invalidimagefailureandtimeoutarescenariosnotobservedresults;inspectPodstatus/eventsforactualcause. RollbackisPodtemplate-only,nodata/configurationmigrationrollback."
+    ],
+    "validation": [
+      "All193originallinesreadinbothlanguagesbeforeedits.",
+      "32Bashblockparsesand4strictnativeKubernetes1.35Pod/DeploymentYAMLvalidationspassed;scopeddiff--checkpassed.",
+      "NamespacecleanupmocktestsverifiedmatchingUIDdeleteandforeignUIDskip;goodrevisionisguardedbyrolloutsuccess.",
+      "No actualKubernetescluster/namespace/imagepull/scale/rollout/deleteoperations. login:false env-iOTELoffandBashnoprofile/norc. Evidence /tmp/labs-foundations-audit/workloads-validation.json."
+    ]
+  },
+  {
+    "path": "en/labs/core/03-services-networking-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread/pairedfixed: scopedcontext/namespaces,readybackends/EndpointSlices,explicittemporaryclientcommands,configurableDNSandhonestNodePortaccess.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/",
+      "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/",
+      "https://minikube.sigs.k8s.io/docs/handbook/accessing/",
+      "https://kind.sigs.k8s.io/docs/user/configuration/#extra-port-mappings"
+    ],
+    "findings": [
+      "Ownedmain/clientNamespaceUIDs andpinnedcontext/privatefiles preventunscopedcleanup;clientnamespaceonlyusedaftercreation.",
+      "Backendreadiness/resources,verifiednginx1.30.4andbusybox1.37explicit--command replacefloatingcurlimage/entrypointambiguity. NoTTYorAPItokenneededfortemporaryHTTP/DNSclients.",
+      "DeprecatedEndpoints replacedEndpointSlice readiness/addressfamilyawareinspection. ClusterIPinternalVIPnotsecurityboundary;DNSdomainnotfixedcluster.local andservice.namespaceworksacrossnamespaces.",
+      "NodePortallocatedbyAPI,notfixed30080;minikubeprofile/tunnel andkindmatchingportmappingconditions explicit. Port/typeoutputisnotreachabilitytest;port-forwardfallbackcorrectlyscopedandnotcalledNodePortdataplanevalidation.",
+      "RemovedassumedDNSIPsandfixednamespaceexpectedoutput;ClusterIPDNSanswerdistinguishedfrombackendPodIPs."
+    ],
+    "validation": [
+      "All157original lines readinbothlanguagesbeforeedits.",
+      "24Bashblocks,6strictnativeKubernetes1.35objects,6token-disableJSONoverrides validated;pairedYAMLmatches.",
+      "MocknamespacecleanupdeletedmatchingUIDandskippedchangedUID;no actualcluster/networkrequests.",
+      "Threeaccidentalduplicatefenceopeningsperlocalecorrected;strictclosing-fencevalidationpassedforall10reviewedlabs.Scopeddiff--checkpassed.",
+      "login:false env-iOTELoff,Bashnoprofile/norc. Evidence /tmp/labs-foundations-audit/services-validation.json."
+    ]
+  },
+  {
+    "path": "ko/labs/core/03-services-networking-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread/pairedfixed: scopedcontext/namespaces,readybackends/EndpointSlices,explicittemporaryclientcommands,configurableDNSandhonestNodePortaccess.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/",
+      "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/",
+      "https://minikube.sigs.k8s.io/docs/handbook/accessing/",
+      "https://kind.sigs.k8s.io/docs/user/configuration/#extra-port-mappings"
+    ],
+    "findings": [
+      "Ownedmain/clientNamespaceUIDs andpinnedcontext/privatefiles preventunscopedcleanup;clientnamespaceonlyusedaftercreation.",
+      "Backendreadiness/resources,verifiednginx1.30.4andbusybox1.37explicit--command replacefloatingcurlimage/entrypointambiguity. NoTTYorAPItokenneededfortemporaryHTTP/DNSclients.",
+      "DeprecatedEndpoints replacedEndpointSlice readiness/addressfamilyawareinspection. ClusterIPinternalVIPnotsecurityboundary;DNSdomainnotfixedcluster.local andservice.namespaceworksacrossnamespaces.",
+      "NodePortallocatedbyAPI,notfixed30080;minikubeprofile/tunnel andkindmatchingportmappingconditions explicit. Port/typeoutputisnotreachabilitytest;port-forwardfallbackcorrectlyscopedandnotcalledNodePortdataplanevalidation.",
+      "RemovedassumedDNSIPsandfixednamespaceexpectedoutput;ClusterIPDNSanswerdistinguishedfrombackendPodIPs."
+    ],
+    "validation": [
+      "All157original lines readinbothlanguagesbeforeedits.",
+      "24Bashblocks,6strictnativeKubernetes1.35objects,6token-disableJSONoverrides validated;pairedYAMLmatches.",
+      "MocknamespacecleanupdeletedmatchingUIDandskippedchangedUID;no actualcluster/networkrequests.",
+      "Threeaccidentalduplicatefenceopeningsperlocalecorrected;strictclosing-fencevalidationpassedforall10reviewedlabs.Scopeddiff--checkpassed.",
+      "login:false env-iOTELoff,Bashnoprofile/norc. Evidence /tmp/labs-foundations-audit/services-validation.json."
+    ]
+  },
+  {
+    "path": "en/labs/core/04-storage-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread/pairedfixed: initializedemptyDir,uniqueownedstaticPV/PVC,emptyStorageClass/prebinding/nodeaffinity,accurateretentionandnode-localdatalimits.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/concepts/storage/volumes/",
+      "https://kubernetes.io/docs/concepts/storage/storage-classes/"
+    ],
+    "findings": [
+      "Initcontainercreateslogbeforetail;finitewriterandreadinessremovefilestartuprace. emptyDircontainerrestartvsPod/node lifetimeexplained.",
+      "Single-disposablenodeprerequisite,privatefilesandNamespace/PVUIDs,uniquehostPathDirectoryOrCreateandPVnodeAffinityreplaceunscopednames/paths/multinodeassumptions.",
+      "BothPV/PVCstorageClassNameempty,explicitPVCvolumeNameandPVclaimRefpreventdefaultdynamicprovisioning/unintendedPVbinding. NoStorageClassorcloudprovisionercreated.",
+      "PVcapacitynotfilesystemquota;RWOdoesnotmeanonePod. SamePVC/PV/nodepathretainedduringPodrecreationonly.",
+      "Retain/manualreclaim/Releasedsemanticscorrected;PVobjectdeletiondoesnoterasenodedata. CleanupwaitsforPod/PVCprotection,checksPV/NamespaceUIDsandexplicitlyleavesrecordednodepathforseparatenodecleanup;nofinalizerforcing."
+    ],
+    "validation": [
+      "All209original lines readperlanguage;final312-linepair.",
+      "22Bashblocksand8strictKubernetes1.35YAMLobjectsvalidated;pairedYAMLidenticalaftercontrolledvariable substitution.",
+      "Staticbindinginvariantsverified:emptyclass,matchingvolumeName/claimRef,DirectoryOrCreate,metadata.name nodeaffinity,initfilebeforetail.",
+      "StrictMarkdownfencesandscopeddiff--checkpassed. No cluster/PV/PVC/Pod/nodefilesystem/cloud-diskoperations executed.",
+      "login:false env-iOTELoff,Bashnoprofile/norc. Evidence /tmp/labs-foundations-audit/storage-validation.json."
+    ]
+  },
+  {
+    "path": "ko/labs/core/04-storage-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullyread/pairedfixed: initializedemptyDir,uniqueownedstaticPV/PVC,emptyStorageClass/prebinding/nodeaffinity,accurateretentionandnode-localdatalimits.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/concepts/storage/volumes/",
+      "https://kubernetes.io/docs/concepts/storage/storage-classes/"
+    ],
+    "findings": [
+      "Initcontainercreateslogbeforetail;finitewriterandreadinessremovefilestartuprace. emptyDircontainerrestartvsPod/node lifetimeexplained.",
+      "Single-disposablenodeprerequisite,privatefilesandNamespace/PVUIDs,uniquehostPathDirectoryOrCreateandPVnodeAffinityreplaceunscopednames/paths/multinodeassumptions.",
+      "BothPV/PVCstorageClassNameempty,explicitPVCvolumeNameandPVclaimRefpreventdefaultdynamicprovisioning/unintendedPVbinding. NoStorageClassorcloudprovisionercreated.",
+      "PVcapacitynotfilesystemquota;RWOdoesnotmeanonePod. SamePVC/PV/nodepathretainedduringPodrecreationonly.",
+      "Retain/manualreclaim/Releasedsemanticscorrected;PVobjectdeletiondoesnoterasenodedata. CleanupwaitsforPod/PVCprotection,checksPV/NamespaceUIDsandexplicitlyleavesrecordednodepathforseparatenodecleanup;nofinalizerforcing."
+    ],
+    "validation": [
+      "All209original lines readperlanguage;final312-linepair.",
+      "22Bashblocksand8strictKubernetes1.35YAMLobjectsvalidated;pairedYAMLidenticalaftercontrolledvariable substitution.",
+      "Staticbindinginvariantsverified:emptyclass,matchingvolumeName/claimRef,DirectoryOrCreate,metadata.name nodeaffinity,initfilebeforetail.",
+      "StrictMarkdownfencesandscopeddiff--checkpassed. No cluster/PV/PVC/Pod/nodefilesystem/cloud-diskoperations executed.",
+      "login:false env-iOTELoff,Bashnoprofile/norc. Evidence /tmp/labs-foundations-audit/storage-validation.json."
+    ]
+  },
+  {
+    "path": "en/labs/core/05-configuration-secrets-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Replaced secret disclosure with dummy-file input and presence-only checks; added explicit ConfigMap projection/environment comparison and isolated cleanup.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/configmap/",
+      "https://kubernetes.io/docs/concepts/configuration/secret/",
+      "https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/"
+    ],
+    "findings": [
+      "Fully read original201lines in each locale and reviewed complete edited content.",
+      "Fixed live Secret data/YAML decoding, credentials in command arguments, floating BusyBox tag and misleading base64 storage wording.",
+      "Added private files/namespaceUID guard, non-root read-only Secret volume0440 and explicit fail-fast presence checks.",
+      "Compared existing environment snapshot, eventual mounted-file projection, subPath limitation and explicit Pod replacement; no implied automatic app reload.",
+      "Sample MySQL settings do not create or verify a database; production auth/encryption/rotation remain separate prerequisites."
+    ],
+    "validation": [
+      "/tmp/labs-foundations-audit/config-validation.json",
+      "20Bash blocks,6nativePod manifests,4JSON patches and6container shell commands validated across locales.",
+      "Four local presence-check cases and three mocked namespaceUID cleanup cases passed.",
+      "Executable sections match across locales; scoped git diff --check passed.",
+      "No Kubernetes/cloud calls or runtime projection/permissions test performed."
+    ]
+  },
+  {
+    "path": "ko/labs/core/05-configuration-secrets-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Replaced secret disclosure with dummy-file input and presence-only checks; added explicit ConfigMap projection/environment comparison and isolated cleanup.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/configmap/",
+      "https://kubernetes.io/docs/concepts/configuration/secret/",
+      "https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/"
+    ],
+    "findings": [
+      "Fully read original201lines in each locale and reviewed complete edited content.",
+      "Fixed live Secret data/YAML decoding, credentials in command arguments, floating BusyBox tag and misleading base64 storage wording.",
+      "Added private files/namespaceUID guard, non-root read-only Secret volume0440 and explicit fail-fast presence checks.",
+      "Compared existing environment snapshot, eventual mounted-file projection, subPath limitation and explicit Pod replacement; no implied automatic app reload.",
+      "Sample MySQL settings do not create or verify a database; production auth/encryption/rotation remain separate prerequisites."
+    ],
+    "validation": [
+      "/tmp/labs-foundations-audit/config-validation.json",
+      "20Bash blocks,6nativePod manifests,4JSON patches and6container shell commands validated across locales.",
+      "Four local presence-check cases and three mocked namespaceUID cleanup cases passed.",
+      "Executable sections match across locales; scoped git diff --check passed.",
+      "No Kubernetes/cloud calls or runtime projection/permissions test performed."
+    ]
+  }
+]

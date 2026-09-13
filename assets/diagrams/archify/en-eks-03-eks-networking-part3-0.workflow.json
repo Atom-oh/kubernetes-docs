@@ -10,13 +10,13 @@
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "노드·커널 튜닝"
+          "label": "Node & kernel tuning"
         },
         "cloud": {
-          "label": "AWS 리소스"
+          "label": "AWS resource"
         },
         "security": {
-          "label": "정책"
+          "label": "Policy"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "infra",
-      "label": "인프라 · 커널 최적화"
+      "label": "Infrastructure & kernel optimization"
     },
     {
       "id": "sched",
-      "label": "배치 · 정책 최적화"
+      "label": "Placement & policy optimization"
     }
   ],
   "mainPath": [

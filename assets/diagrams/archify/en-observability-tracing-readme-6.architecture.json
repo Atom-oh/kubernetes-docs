@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Correlation in Grafana",
+    "output": "en-observability-tracing-readme-6.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      600
+    ]
+  },
+  "components": [
+    {
+      "id": "dashboard",
+      "type": "frontend",
+      "label": "Metrics dashboard",
+      "sublabel": "Response-time spike",
+      "pos": [
+        360,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "exemplar",
+      "type": "backend",
+      "label": "Exemplar",
+      "sublabel": "TraceID: abc123",
+      "pos": [
+        660,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo",
+      "sublabel": "Trace detail",
+      "pos": [
+        360,
+        440
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "Related logs",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Grafana",
+      "wraps": [
+        "dashboard",
+        "exemplar",
+        "tempo",
+        "loki"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dashboard-to-exemplar",
+      "from": "dashboard",
+      "to": "exemplar",
+      "label": "click exemplar",
+      "variant": "emphasis"
+    },
+    {
+      "id": "exemplar-to-tempo",
+      "from": "exemplar",
+      "to": "tempo",
+      "label": "open trace",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tempo-to-loki",
+      "from": "tempo",
+      "to": "loki",
+      "label": "logs link",
+      "variant": "emphasis"
+    },
+    {
+      "id": "loki-to-dashboard",
+      "from": "loki",
+      "to": "dashboard",
+      "label": "back to metric",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "The links",
+      "items": [
+        "The exemplar on the Prometheus metric carries the TraceID (abc123) that opens the trace in Tempo",
+        "The traceId field written to logs via MDC takes you from Tempo to the related logs in Loki",
+        "From the logs you return to the metric, closing the investigation loop"
+      ]
+    }
+  ]
+}

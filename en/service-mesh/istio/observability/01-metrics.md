@@ -1,9 +1,11 @@
 # Istio Metrics
 
-> **Supported Versions**: Istio 1.28
-> **Last Updated**: February 19, 2026
+> **Supported Versions**: Istio 1.31
+> **Last Updated**: September 11, 2026
 
-Istio automatically collects metrics for all traffic in the service mesh and integrates with various backends like Prometheus and OpenTelemetry to provide comprehensive observability.
+> **Validation scope**: These lab configurations were checked against official references and offline validators, without deploying a cluster. Namespace, identity, storage, backend and load assumptions are stated with each example and must be verified for the target environment.
+
+Istio proxies generate metrics for observed traffic. This guide covers sidecar/Envoy HTTP and TCP metrics and scraping through Prometheus or the OpenTelemetry Collector. Ambient ztunnel has different L4 metrics; HTTP metrics require a waypoint.
 
 ## Table of Contents
 
@@ -22,22 +24,22 @@ Istio automatically collects metrics for all traffic in the service mesh and int
 
 ### Golden Signals
 
-Istio automatically collects Golden Signals following Google's SRE principles:
+Combine proxy telemetry with node/container exporters to measure the Golden Signals:
 
 1. **Latency**: Request processing time
 2. **Traffic**: System throughput (RPS, Bandwidth)
 3. **Errors**: Failure rate and error types
-4. **Saturation**: Resource utilization
+4. **Saturation**: Queue/connection pressure plus CPU/memory from Kubernetes exporters
 
 ### Metrics Collection Architecture
 
-![Diagram showing an application pod's Envoy sidecar exporting metrics that istiod's control plane configures, which flow into Prometheus and an OpenTelemetry Collector, and from there into Grafana and Kiali for visualization.](../../../../assets/diagrams/rendered/en-service-mesh-istio-observability-01-metrics-0.svg)
+Envoy exposes Prometheus metrics → either Prometheus scrapes directly, or an OpenTelemetry Collector Prometheus receiver scrapes them → a configured metrics backend → Grafana/Kiali. The Istio OpenTelemetry extension provider configures tracing; it is not an OTLP metrics sender.
 
 ## Istio Standard Metrics
 
 ### HTTP/gRPC Metrics
 
-Istio generates the following metrics for all HTTP/gRPC traffic:
+Envoy generates these metrics for recognized HTTP/gRPC traffic. A metric is emitted per reporting proxy, so choose one reporter for a given question. Destination reporting avoids duplicate observations of a hop, while source reporting is needed for upstream failures that never reach the destination. Group service names with namespaces (and clusters where relevant).
 
 #### istio_requests_total
 
@@ -46,7 +48,7 @@ Istio generates the following metrics for all HTTP/gRPC traffic:
 
 ```promql
 istio_requests_total{
-  reporter="source",  # or "destination"
+  reporter="destination",  # Peer security policy populated at destination
   source_workload="productpage-v1",
   source_workload_namespace="default",
   source_principal="spiffe://cluster.local/ns/default/sa/bookinfo-productpage",
@@ -77,13 +79,13 @@ istio_requests_total{
 **Key Labels**:
 - `response_code`: HTTP status code (200, 404, 500, etc.)
 - `response_flags`: Envoy response flags
-  - `UH`: Upstream connection failure
+  - `UH`: No healthy upstream
   - `UF`: Upstream connection failure
-  - `UR`: Upstream request timeout
+  - `UR`: Upstream remote reset; `UT`: upstream request timeout
   - `DC`: Downstream connection termination
   - `LR`: Local reset
-  - `URX`: Rejected by circuit breaker
-- `connection_security_policy`: mTLS status (`mutual_tls`, `none`)
+  - `URX`: Upstream retry limit exceeded (or TCP maximum connect attempts)
+- `connection_security_policy`: mTLS status (`mutual_tls`, `none`; source reports can be `unknown`)
 
 #### istio_request_duration_milliseconds
 
@@ -105,8 +107,8 @@ istio_request_duration_milliseconds_count          # Total request count
 **Description**: Request body size (bytes)
 
 ```promql
-istio_request_bytes_bucket{le="1024"}   # 1KB or less
-istio_request_bytes_bucket{le="10240"}  # 10KB or less
+istio_request_bytes_bucket  # Inspect actual le bounds
+istio_request_bytes_bucket{le="+Inf"}  # All body sizes
 istio_request_bytes_sum
 istio_request_bytes_count
 ```
@@ -117,8 +119,8 @@ istio_request_bytes_count
 **Description**: Response body size (bytes)
 
 ```promql
-istio_response_bytes_bucket{le="1024"}
-istio_response_bytes_bucket{le="10240"}
+istio_response_bytes_bucket
+istio_response_bytes_bucket{le="+Inf"}
 istio_response_bytes_sum
 istio_response_bytes_count
 ```
@@ -155,7 +157,7 @@ istio_tcp_connections_opened_total{
 
 ## Circuit Breaker Metrics
 
-Key metrics for monitoring Circuit Breaker and Outlier Detection behavior.
+Enable required Envoy statistics with `proxyStatsMatcher` before scraping. The default Istio bootstrap extracts `cluster_name`; custom bootstraps may change labels. Circuit-breaker `_open` metrics are 0/1 gauges, not event counters. Some counters appear only after traffic.
 
 ### Key Circuit Breaker Metrics
 
@@ -163,17 +165,17 @@ Key metrics for monitoring Circuit Breaker and Outlier Detection behavior.
 
 ```promql
 # Requests rejected due to connection pool overflow
-envoy_cluster_upstream_rq_pending_overflow{
+envoy_cluster_upstream_cx_overflow{
   cluster_name="outbound|80||httpbin.default.svc.cluster.local"
 }
 ```
 
 **Meaning**: `maxConnections` limit exceeded
 
-#### 2. Circuit Breaker Open (Upstream Request Rejected)
+#### 2. Circuit Breaker Open (Gauge)
 
 ```promql
-# Requests rejected by circuit breaker
+# Gauge: 1 at capacity, 0 below limit
 envoy_cluster_circuit_breakers_default_rq_open{
   cluster_name="outbound|80||httpbin.default.svc.cluster.local"
 }
@@ -188,7 +190,7 @@ envoy_cluster_upstream_rq_pending_overflow{
 }
 ```
 
-**Meaning**: `http1MaxPendingRequests` or `http2MaxRequests` exceeded
+**Meaning**: pending/active request circuit-breaking rejection. Inspect `rq_pending_open`, `rq_open` and the generated thresholds to distinguish queue pressure from the active-request limit.
 
 #### 4. Retry Budget Exhausted
 
@@ -203,7 +205,7 @@ envoy_cluster_upstream_rq_retry_overflow{
 
 ```promql
 # Requests rejected by circuit breaker (response_flags="UO")
-sum(rate(istio_requests_total{
+sum(rate(istio_requests_total{reporter="source",
   response_flags=~".*UO.*",
   destination_service="httpbin.default.svc.cluster.local"
 }[5m]))
@@ -211,73 +213,55 @@ sum(rate(istio_requests_total{
 
 **Response Flags Details**:
 - `UO`: Upstream overflow (circuit breaker open)
-- `URX`: Rejected by circuit breaker
+- `URX`: Upstream retry limit exceeded (or TCP maximum connect attempts)
 - `UF`: Upstream connection failure
 - `UH`: No healthy upstream
 
 ### Circuit Breaker Monitoring Dashboard Queries
 
 ```promql
-# 1. Circuit breaker trigger rate
-sum(rate(envoy_cluster_circuit_breakers_default_rq_open[5m])) by (cluster_name)
-/
-sum(rate(envoy_cluster_upstream_rq_total[5m])) by (cluster_name)
-* 100
+# Fraction of observed samples at capacity over five minutes (%).
+100 * avg_over_time(envoy_cluster_circuit_breakers_default_rq_open[5m])
 
-# 2. Connection pool utilization
-envoy_cluster_upstream_cx_active{cluster_name="outbound|80||httpbin.default.svc.cluster.local"}
-/
-envoy_cluster_circuit_breakers_default_cx_max{cluster_name="outbound|80||httpbin.default.svc.cluster.local"}
-* 100
+# Active connections and pending requests (per proxy/cluster).
+envoy_cluster_upstream_cx_active
+envoy_cluster_upstream_rq_pending_active
 
-# 3. Pending request utilization
-envoy_cluster_upstream_rq_pending_active{cluster_name="outbound|80||httpbin.default.svc.cluster.local"}
-/
-envoy_cluster_circuit_breakers_default_rq_pending_max{cluster_name="outbound|80||httpbin.default.svc.cluster.local"}
-* 100
-
-# 4. Requests rejected by circuit breaker
-sum(increase(envoy_cluster_upstream_rq_pending_overflow[5m])) by (cluster_name)
+# Rejected request events over five minutes.
+sum by (namespace, pod, cluster_name) (
+  increase(envoy_cluster_upstream_rq_pending_overflow[5m])
+)
 ```
+
+There are no standard `circuit_breakers_default_cx_max` or `rq_pending_max` gauges. Read limits from generated cluster configuration. Optional `remaining_cx`/`remaining_pending` gauges require Envoy `track_remaining`; merely including a metric name does not enable them. A utilization denominator must come from a known matching configured limit.
 
 ### Circuit Breaker Alert Rules
 
 ```yaml
 groups:
 - name: istio_circuit_breaker
-  interval: 30s
   rules:
-  - alert: CircuitBreakerOpen
-    expr: |
-      rate(envoy_cluster_circuit_breakers_default_rq_open[1m]) > 0
+  - alert: CircuitBreakerAtCapacity
+    expr: envoy_cluster_circuit_breakers_default_rq_open == 1
     for: 1m
     labels:
       severity: warning
     annotations:
-      summary: "Circuit breaker opened for {{ $labels.cluster_name }}"
-      description: "Circuit breaker has opened for cluster {{ $labels.cluster_name }}"
-
-  - alert: HighConnectionPoolUsage
-    expr: |
-      (envoy_cluster_upstream_cx_active
-      /
-      envoy_cluster_circuit_breakers_default_cx_max) > 0.8
-    for: 5m
+      summary: Request breaker remains at capacity for {{ $labels.cluster_name }}
+  - alert: ConnectionPoolOverflow
+    expr: rate(envoy_cluster_upstream_cx_overflow[5m]) > 0
+    for: 2m
     labels:
       severity: warning
     annotations:
-      summary: "High connection pool usage for {{ $labels.cluster_name }}"
-      description: "Connection pool usage is above 80% for {{ $labels.cluster_name }}"
-
+      summary: Connection limit exceeded for {{ $labels.cluster_name }}
   - alert: PendingRequestsOverflow
-    expr: |
-      rate(envoy_cluster_upstream_rq_pending_overflow[5m]) > 0
+    expr: rate(envoy_cluster_upstream_rq_pending_overflow[5m]) > 0
     for: 2m
     labels:
-      severity: critical
+      severity: warning
     annotations:
-      summary: "Pending requests overflow for {{ $labels.cluster_name }}"
-      description: "Requests are being rejected due to pending queue overflow"
+      summary: Request circuit-breaking rejection for {{ $labels.cluster_name }}
 ```
 
 ## Resilience Metrics
@@ -297,20 +281,22 @@ envoy_cluster_outlier_detection_ejections_active{
 
 ```promql
 # Ejection event rate
-rate(envoy_cluster_outlier_detection_ejections_total[5m])
+rate(envoy_cluster_outlier_detection_ejections_enforced_total[5m])
 ```
 
 **By Ejection Type**:
 ```promql
 # Consecutive 5xx errors
-envoy_cluster_outlier_detection_ejections_consecutive_5xx
+envoy_cluster_outlier_detection_ejections_enforced_consecutive_5xx
 
 # Success rate based
-envoy_cluster_outlier_detection_ejections_success_rate
+envoy_cluster_outlier_detection_ejections_enforced_success_rate
 
 # Failure percentage based
-envoy_cluster_outlier_detection_ejections_failure_percentage
+envoy_cluster_outlier_detection_ejections_enforced_failure_percentage
 ```
+
+Detected and enforced ejections differ: a detected outlier can remain in service because enforcement probability or the maximum ejection percentage prevents ejection. Some Envoy algorithms are not exposed by Istio DestinationRule; a missing series is not evidence that a configured algorithm is healthy.
 
 ### Retry Metrics
 
@@ -331,226 +317,237 @@ rate(envoy_cluster_upstream_rq_retry_overflow[5m])
 
 ```promql
 # Requests that timed out
-sum(rate(istio_requests_total{
+sum(rate(istio_requests_total{reporter="source",
   response_flags=~".*UT.*"
 }[5m])) by (destination_service)
 
 # Timeout rate
-sum(rate(istio_requests_total{response_flags=~".*UT.*"}[5m]))
+sum(rate(istio_requests_total{reporter="source",response_flags=~".*UT.*"}[5m]))
 /
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="source"}[5m]))
 * 100
 ```
 
 ## OpenTelemetry Integration
 
-### OpenTelemetry Collector Configuration
+### Prometheus Receiver for Istio Metrics
 
-Istio can export metrics through the OpenTelemetry protocol.
+The Istio `opentelemetry` extension provider exports **traces**. To collect standard mesh metrics, keep the Prometheus metrics provider and let an OpenTelemetry Collector **Prometheus receiver scrape** the exposed endpoints. A collector can then export metrics over OTLP to a metrics-capable backend; Tempo is a trace backend, not a metrics destination.
 
-#### 1. MeshConfig Configuration
+This example uses Collector Contrib 0.160.0 with a Prometheus exporter for a visible demonstration path. Create namespace `observability` first. Use one replica because replicas with identical scrape configurations duplicate every target; production scaling needs target allocation/sharding. The ServiceAccount can only read pods, as required by the pod discovery jobs. Configure network access to cleartext proxy metrics 15090 and istiod 15014; this example does not scrape application metrics or ambient ztunnel.
 
 ```yaml
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing: {} # Tracing configuration
-    extensionProviders:
-    - name: otel
-      opentelemetry:
-        service: opentelemetry-collector.observability.svc.cluster.local
-        port: 4317
-    - name: otel-tracing
-      opentelemetry:
-        service: opentelemetry-collector.observability.svc.cluster.local
-        port: 4317
-        resource_detectors:
-          environment: {}
-```
-
-#### 2. Enable OpenTelemetry with Telemetry API
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
+kind: ServiceAccount
 metadata:
   name: otel-metrics
-  namespace: istio-system
-spec:
-  metrics:
-  - providers:
-    - name: otel
-    overrides:
-    - match:
-        metric: ALL_METRICS
-      mode: CLIENT_AND_SERVER
-```
-
-#### 3. Deploy OpenTelemetry Collector
-
-```yaml
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-metrics-pod-reader
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-metrics-pod-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-metrics-pod-reader
+subjects:
+- kind: ServiceAccount
+  name: otel-metrics
+  namespace: observability
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: otel-collector-config
+  name: otel-metrics-config
   namespace: observability
 data:
   config.yaml: |
     receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-
+      prometheus:
+        config:
+          global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+          scrape_configs:
+          - job_name: envoy-stats
+            metrics_path: /stats/prometheus
+            kubernetes_sd_configs:
+            - role: pod
+            relabel_configs:
+            - source_labels:
+              - __meta_kubernetes_pod_phase
+              action: keep
+              regex: Running
+            - source_labels:
+              - __meta_kubernetes_pod_container_name
+              - __meta_kubernetes_pod_container_port_name
+              action: keep
+              regex: istio-proxy;.*-envoy-prom
+            - source_labels:
+              - __meta_kubernetes_namespace
+              target_label: namespace
+            - source_labels:
+              - __meta_kubernetes_pod_name
+              target_label: pod
+          - job_name: istiod
+            metrics_path: /metrics
+            kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                - istio-system
+            relabel_configs:
+            - source_labels:
+              - __meta_kubernetes_pod_label_app
+              - __meta_kubernetes_pod_container_port_name
+              action: keep
+              regex: istiod;http-monitoring
+            - source_labels:
+              - __meta_kubernetes_namespace
+              target_label: namespace
+            - source_labels:
+              - __meta_kubernetes_pod_name
+              target_label: pod
     processors:
-      batch:
-        timeout: 10s
-        send_batch_size: 1024
-
       memory_limiter:
         check_interval: 1s
         limit_mib: 512
-
-      # Add additional attributes to Istio metrics
-      attributes:
-        actions:
-        - key: cluster.name
-          value: production
-          action: insert
-
+      batch:
+        timeout: 10s
+        send_batch_size: 1024
     exporters:
       prometheus:
-        endpoint: "0.0.0.0:8889"
-        namespace: istio
+        endpoint: 0.0.0.0:8889
         const_labels:
           environment: production
-
-      otlp:
-        endpoint: tempo:4317
-        tls:
-          insecure: true
-
-      logging:
-        loglevel: debug
-
+      debug:
+        verbosity: basic
     service:
       pipelines:
         metrics:
-          receivers: [otlp]
-          processors: [memory_limiter, batch, attributes]
-          exporters: [prometheus, logging]
-        traces:
-          receivers: [otlp]
-          processors: [memory_limiter, batch]
-          exporters: [otlp, logging]
+          receivers:
+          - prometheus
+          processors:
+          - memory_limiter
+          - batch
+          exporters:
+          - prometheus
+          - debug
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: otel-collector
+  name: otel-metrics
   namespace: observability
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: otel-collector
+      app: otel-metrics
   template:
     metadata:
       labels:
-        app: otel-collector
+        app: otel-metrics
+      annotations:
+        sidecar.istio.io/inject: 'false'
     spec:
+      serviceAccountName: otel-metrics
       containers:
       - name: otel-collector
-        image: otel/opentelemetry-collector-contrib:0.96.0
+        image: otel/opentelemetry-collector-contrib:0.160.0
         args:
         - --config=/etc/otel/config.yaml
         ports:
-        - containerPort: 4317  # OTLP gRPC
-          name: otlp-grpc
-        - containerPort: 4318  # OTLP HTTP
-          name: otlp-http
-        - containerPort: 8889  # Prometheus metrics
+        - containerPort: 8889
           name: prometheus
         volumeMounts:
         - name: config
           mountPath: /etc/otel
+          readOnly: true
         resources:
           requests:
             cpu: 200m
             memory: 512Mi
           limits:
             cpu: 1000m
-            memory: 2Gi
+            memory: 1Gi
       volumes:
       - name: config
         configMap:
-          name: otel-collector-config
+          name: otel-metrics-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: opentelemetry-collector
+  name: otel-metrics
   namespace: observability
+  labels:
+    app: otel-metrics
 spec:
   selector:
-    app: otel-collector
+    app: otel-metrics
   ports:
-  - name: otlp-grpc
-    port: 4317
-    targetPort: 4317
-  - name: otlp-http
-    port: 4318
-    targetPort: 4318
   - name: prometheus
     port: 8889
-    targetPort: 8889
+    targetPort: prometheus
 ```
 
-#### 4. Prometheus ServiceMonitor Configuration
+The retired `logging` exporter is replaced by `debug`. Remove diagnostic exporting after validation. No `namespace: istio` prefix is added, avoiding a second `istio_` prefix on existing metric names. Inspect the collector's emitted labels/names before reusing Kiali dashboards. With a Prometheus Operator, select the labelled Service:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: otel-collector
+  name: otel-metrics
   namespace: observability
 spec:
   selector:
     matchLabels:
-      app: otel-collector
+      app: otel-metrics
   endpoints:
   - port: prometheus
     interval: 15s
     path: /metrics
+    honorLabels: true
 ```
 
-### OpenTelemetry Metrics Verification
+The Prometheus resource must select this ServiceMonitor and its namespace. `honorLabels` retains the original target `job`/`instance`; the collector must be a trusted source. Use either this collector path or direct proxy scraping below for the same series, not both. This ServiceMonitor does not install Prometheus.
+
+### Verify Collection
 
 ```bash
-# 1. Check OpenTelemetry Collector logs
-kubectl logs -n observability deployment/otel-collector
-
-# 2. Check Collector metrics
-kubectl port-forward -n observability svc/opentelemetry-collector 8889:8889
-curl http://localhost:8889/metrics
-
-# 3. Verify Envoy is sending metrics
-istioctl proxy-config log deploy/productpage-v1 --level debug
-kubectl logs -n default deploy/productpage-v1 -c istio-proxy | grep -i otel
+kubectl logs -n observability deployment/otel-metrics
+# Keep this running in one terminal.
+kubectl port-forward -n observability svc/otel-metrics 8889:8889
 ```
+
+```bash
+# In a second terminal, after generating test mesh traffic:
+curl -fsS http://localhost:8889/metrics | rg '^istio_'
+```
+
+Trace OTLP receivers and exporters are configured separately in the [tracing chapter](02-tracing.md); proxy debug logs do not prove metric delivery.
 
 ## Prometheus Integration
 
 ### Prometheus Configuration
 
-#### 1. Prometheus ConfigMap
+Use the following config in an installed Prometheus server with pod list/watch permission. A ConfigMap alone does not deploy or reload Prometheus. These pod discovery jobs preserve Kubernetes-discovered addresses (including IPv6) and select exactly the Envoy metrics port or istiod monitoring port. They include sidecars and gateways, so a separate gateway job would duplicate series. The removed Mixer `istio-telemetry` Service is not a scrape target.
 
 ```yaml
 apiVersion: v1
@@ -563,71 +560,53 @@ data:
     global:
       scrape_interval: 15s
       evaluation_interval: 15s
-
     scrape_configs:
-    # Istio mesh metrics
-    - job_name: 'istio-mesh'
-      kubernetes_sd_configs:
-      - role: endpoints
-        namespaces:
-          names:
-          - istio-system
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-        action: keep
-        regex: istio-telemetry;prometheus
-
-    # Envoy sidecar metrics
-    - job_name: 'envoy-stats'
+    - job_name: envoy-stats
       metrics_path: /stats/prometheus
       kubernetes_sd_configs:
       - role: pod
       relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_container_port_name]
+      - source_labels:
+        - __meta_kubernetes_pod_phase
         action: keep
-        regex: '.*-envoy-prom'
-      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-        action: replace
-        regex: ([^:]+)(?::\d+)?;(\d+)
-        replacement: $1:15020
-        target_label: __address__
-      - action: labeldrop
-        regex: __meta_kubernetes_pod_label_(.+)
-      - source_labels: [__meta_kubernetes_namespace]
-        action: replace
+        regex: Running
+      - source_labels:
+        - __meta_kubernetes_pod_container_name
+        - __meta_kubernetes_pod_container_port_name
+        action: keep
+        regex: istio-proxy;.*-envoy-prom
+      - source_labels:
+        - __meta_kubernetes_namespace
         target_label: namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        action: replace
-        target_label: pod_name
-
-    # Istiod metrics
-    - job_name: 'istiod'
+      - source_labels:
+        - __meta_kubernetes_pod_name
+        target_label: pod
+    - job_name: istiod
+      metrics_path: /metrics
       kubernetes_sd_configs:
-      - role: endpoints
+      - role: pod
         namespaces:
           names:
           - istio-system
       relabel_configs:
-      - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+      - source_labels:
+        - __meta_kubernetes_pod_label_app
+        - __meta_kubernetes_pod_container_port_name
         action: keep
         regex: istiod;http-monitoring
-
-    # Istio gateways
-    - job_name: 'istio-gateway'
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_istio]
-        action: keep
-        regex: ingressgateway|egressgateway
-      - source_labels: [__address__]
-        action: replace
-        regex: ([^:]+)(?::\d+)?
-        replacement: $1:15020
-        target_label: __address__
+      - source_labels:
+        - __meta_kubernetes_namespace
+        target_label: namespace
+      - source_labels:
+        - __meta_kubernetes_pod_name
+        target_label: pod
 ```
 
-#### 2. Auto-Scraping with ServiceMonitor
+Proxy-only scraping uses 15090 `/stats/prometheus`. Default merged agent/application metrics use 15020 `/stats/prometheus` with `prometheus.io` annotations and require a different, non-duplicating scrape job. Agent certificate metrics require that agent endpoint. These metrics listeners are cleartext even when application traffic uses STRICT mTLS; restrict their network exposure. Scraping a separate application endpoint follows its own authentication policy.
+
+### Prometheus Operator Alternative
+
+Use these instead of the manual jobs. Ensure the Prometheus resource selects their labels/namespaces. `namespaceSelector.any: true` makes PodMonitor inspect application namespaces; `port: http-envoy-prom` picks the actual metrics container port. Adapt a custom gateway's port name. ServiceMonitor selects Services, not Deployment labels.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -635,43 +614,41 @@ kind: ServiceMonitor
 metadata:
   name: istio-component-monitor
   namespace: istio-system
-  labels:
-    monitoring: istio-components
 spec:
   selector:
-    matchExpressions:
-    - key: istio
-      operator: In
-      values:
-      - pilot
+    matchLabels:
+      app: istiod
   endpoints:
   - port: http-monitoring
     interval: 15s
+    path: /metrics
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
   name: envoy-stats-monitor
   namespace: istio-system
-  labels:
-    monitoring: istio-proxies
 spec:
+  namespaceSelector:
+    any: true
   selector:
     matchExpressions:
     - key: istio-prometheus-ignore
       operator: DoesNotExist
   podMetricsEndpoints:
-  - path: /stats/prometheus
+  - port: http-envoy-prom
+    path: /stats/prometheus
     interval: 15s
     relabelings:
-    - sourceLabels: [__meta_kubernetes_pod_container_port_name]
+    - sourceLabels:
+      - __meta_kubernetes_pod_container_name
       action: keep
-      regex: '.*-envoy-prom'
+      regex: istio-proxy
 ```
 
 ### Prometheus Query Optimization
 
-```promql
+```yaml
 # Recording Rules to pre-compute frequently used queries
 groups:
 - name: istio_recording_rules
@@ -680,27 +657,27 @@ groups:
   # Request rate by service
   - record: istio:service:request_rate:5m
     expr: |
-      sum(rate(istio_requests_total[5m])) by (destination_service_name, destination_service_namespace)
+      sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 
   # Error rate by service
   - record: istio:service:error_rate:5m
     expr: |
-      sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (destination_service_name)
+      sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m])) by (destination_service_name, destination_service_namespace)
       /
-      sum(rate(istio_requests_total[5m])) by (destination_service_name)
+      sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 
   # P95 latency by service
   - record: istio:service:latency_p95:5m
     expr: |
       histogram_quantile(0.95,
-        sum(rate(istio_request_duration_milliseconds_bucket[5m]))
-        by (destination_service_name, le)
+        sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m]))
+        by (destination_service_name, destination_service_namespace, le)
       )
 
-  # Circuit breaker trigger rate
-  - record: istio:circuit_breaker:open_rate:1m
+  # Circuit breaker state gauge
+  - record: istio:circuit_breaker:at_capacity
     expr: |
-      rate(envoy_cluster_circuit_breakers_default_rq_open[1m])
+      envoy_cluster_circuit_breakers_default_rq_open
 ```
 
 ## Customization with Telemetry API
@@ -709,8 +686,10 @@ groups:
 
 #### 1. Enable Only Specific Metrics
 
+Overrides are evaluated in order. Disable ALL_METRICS first, then re-enable the two required HTTP metrics. `mode` belongs inside `match`. Merge related settings into a single Telemetry per selection scope rather than applying all independent examples together.
+
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: custom-metrics
@@ -720,26 +699,26 @@ spec:
   - providers:
     - name: prometheus
     overrides:
-    # Enable only request metrics
+    - match:
+        metric: ALL_METRICS
+        mode: CLIENT_AND_SERVER
+      disabled: true
     - match:
         metric: REQUEST_COUNT
-      mode: CLIENT_AND_SERVER
+        mode: CLIENT_AND_SERVER
+      disabled: false
     - match:
         metric: REQUEST_DURATION
-      mode: CLIENT_AND_SERVER
-    # Disable TCP metrics
-    - match:
-        metric: TCP_OPENED_CONNECTIONS
-      disabled: true
-    - match:
-        metric: TCP_CLOSED_CONNECTIONS
-      disabled: true
+        mode: CLIENT_AND_SERVER
+      disabled: false
 ```
 
 #### 2. Add Custom Labels
 
+Use bounded CEL expressions on HTTP metrics. Request IDs, arbitrary User-Agent values and timing headers create unbounded labels. `x-envoy-upstream-service-time` is a duration, not an upstream cluster identity. CEL does not use the example shell-style `| split()` syntax.
+
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: custom-tags
@@ -750,25 +729,20 @@ spec:
     - name: prometheus
     overrides:
     - match:
-        metric: ALL_METRICS
+        metric: REQUEST_COUNT
       tagOverrides:
-        # Add request headers as labels
-        request_id:
-          value: "request.headers['x-request-id']"
-        user_agent:
-          value: "request.headers['user-agent']"
-        # Add response headers as labels
-        upstream_cluster:
-          value: "response.headers['x-envoy-upstream-service-time']"
-        # Custom attributes
         api_version:
-          value: "request.path | split('/')[2]"
+          value: 'request.url_path.startsWith("/api/v1/") ? "v1" : (request.url_path.startsWith("/api/v2/")
+            ? "v2" : "other")'
+        request_method:
+          value: 'request.method in ["GET", "POST", "PUT", "DELETE"] ? request.method
+            : "OTHER"'
 ```
 
 #### 3. Namespace-Specific Metrics Configuration
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: namespace-metrics
@@ -783,13 +757,13 @@ spec:
         mode: CLIENT_AND_SERVER
       tagOverrides:
         environment:
-          value: "production"
+          value: '"production"'
 ```
 
 #### 4. Improve Performance by Disabling Metrics
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: disable-tcp-metrics
@@ -816,6 +790,8 @@ spec:
 
 ## Practical Metric Queries
 
+HTTP status-based error ratios do not catch every gRPC failure. For gRPC, examine `grpc_response_status` and the application's definition of failure; HTTP 200 can carry a nonzero gRPC status.
+
 ### Golden Signals Dashboard
 
 #### 1. Latency
@@ -823,84 +799,83 @@ spec:
 ```promql
 # P50 latency
 histogram_quantile(0.50,
-  sum(rate(istio_request_duration_milliseconds_bucket{
-    destination_service_name="reviews"
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m])) by (le)
 )
 
 # P95 latency
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket{
-    destination_service_name="reviews"
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m])) by (le)
 )
 
 # P99 latency
 histogram_quantile(0.99,
-  sum(rate(istio_request_duration_milliseconds_bucket{
-    destination_service_name="reviews"
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m])) by (le)
 )
 
 # Average latency by service
-sum(rate(istio_request_duration_milliseconds_sum{reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_request_duration_milliseconds_sum{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 /
-sum(rate(istio_request_duration_milliseconds_count{reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_request_duration_milliseconds_count{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 ```
 
 #### 2. Traffic
 
 ```promql
 # Request rate by service (RPS)
-sum(rate(istio_requests_total{reporter="destination"}[1m])) by (destination_service_name)
+sum(rate(istio_requests_total{reporter="destination"}[1m])) by (destination_service_name, destination_service_namespace)
 
 # Total request rate
 sum(rate(istio_requests_total{reporter="destination"}[1m]))
 
 # Inbound traffic by service (bytes/sec)
-sum(rate(istio_request_bytes_sum{reporter="destination"}[1m])) by (destination_service_name)
+sum(rate(istio_request_bytes_sum{reporter="destination"}[1m])) by (destination_service_name, destination_service_namespace)
 
 # Outbound traffic by service (bytes/sec)
-sum(rate(istio_response_bytes_sum{reporter="destination"}[1m])) by (destination_service_name)
+sum(rate(istio_response_bytes_sum{reporter="destination"}[1m])) by (destination_service_name, destination_service_namespace)
 
-# Request distribution by HTTP method
-sum(rate(istio_requests_total{reporter="destination"}[5m])) by (request_protocol, destination_service_name)
+# Request distribution by protocol (not HTTP method)
+sum(rate(istio_requests_total{reporter="destination"}[5m])) by (request_protocol, destination_service_name, destination_service_namespace)
 ```
 
 #### 3. Errors
 
 ```promql
 # Error rate (5xx errors)
-sum(rate(istio_requests_total{response_code=~"5..", reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_requests_total{response_code=~"5..", reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 /
-sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 * 100
 
 # Separate 4xx vs 5xx
-sum(rate(istio_requests_total{response_code=~"4..", reporter="destination"}[5m])) by (destination_service_name)
-sum(rate(istio_requests_total{response_code=~"5..", reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_requests_total{response_code=~"4..", reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
+sum(rate(istio_requests_total{response_code=~"5..", reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 
 # Track specific error codes
-sum(rate(istio_requests_total{response_code="503", reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_requests_total{response_code="503", reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 
 # Analyze error types via response flags
-sum(rate(istio_requests_total{response_flags!~"-", reporter="destination"}[5m])) by (response_flags, destination_service_name)
+sum(rate(istio_requests_total{response_flags!~"-", reporter="destination"}[5m])) by (response_flags, destination_service_name, destination_service_namespace)
 ```
 
 #### 4. Saturation
 
 ```promql
-# Connection pool utilization
-(envoy_cluster_upstream_cx_active / envoy_cluster_circuit_breakers_default_cx_max) * 100
+# Connection count and breaker state (not a utilization percentage).
+envoy_cluster_upstream_cx_active
+envoy_cluster_circuit_breakers_default_cx_open
 
-# Active request count
+# Active and pending requests.
 envoy_cluster_upstream_rq_active
-
-# Pending request count
 envoy_cluster_upstream_rq_pending_active
 
-# Envoy memory usage
-envoy_server_memory_allocated / envoy_server_memory_heap_size * 100
+# Allocated proxy memory in bytes; compare with the container memory limit separately.
+envoy_server_memory_allocated
 ```
 
 ### mTLS Monitoring
@@ -921,31 +896,31 @@ sum(rate(istio_requests_total{
   reporter="destination"
 }[5m])) by (source_workload, destination_workload)
 
-# mTLS authentication failures
-sum(rate(istio_requests_total{
-  response_code="401",
-  connection_security_policy="mutual_tls"
-}[5m])) by (destination_service_name)
+# HTTP 401 observed on authenticated mesh traffic; this is not a TLS handshake failure.
+sum by (destination_service_name, destination_service_namespace) (
+  rate(istio_requests_total{reporter="destination",response_code="401",connection_security_policy="mutual_tls"}[5m])
+)
 ```
 
 ### Service Mesh Health Dashboard
 
 ```promql
-# 1. Control plane status
+# Scrape health, not a complete control-plane health check.
 up{job="istiod"}
 
-# 2. Pilot push errors
-rate(pilot_xds_push_errors[5m])
+# Istiod xDS build/send error rate, by type.
+sum by (type) (rate(pilot_xds_pushes{type=~".*(builderr|senderr)"}[5m]))
 
-# 3. Envoy configuration update delays
-rate(pilot_xds_pushes[5m])
+# Configuration convergence time, seconds (not push count).
+histogram_quantile(0.95,
+  sum by (le) (rate(pilot_proxy_convergence_time_bucket[5m]))
+)
 
-# 4. Envoy proxy version distribution
-count(envoy_server_version) by (envoy_server_version)
-
-# 5. Detect stale proxies (older than 24 hours)
-(time() - envoy_server_uptime) > 86400
+# Recently started Envoy process; uptime is elapsed seconds, not a timestamp.
+envoy_server_uptime < 300
 ```
+
+Use `istioctl version` to inspect actual proxy versions and `istioctl proxy-status` for synchronization/NACK diagnosis. Process age does not measure configuration freshness, and an Envoy numeric version gauge is not a version-label distribution. For mTLS failures inspect TLS verification counters and certificates as described in the [mTLS guide](../security/01-mtls.md).
 
 ## Metrics Optimization
 
@@ -954,7 +929,7 @@ count(envoy_server_version) by (envoy_server_version)
 #### 1. Remove Unnecessary Labels
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: reduce-cardinality
@@ -977,7 +952,7 @@ spec:
 #### 2. Normalize Label Values
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: normalize-labels
@@ -991,16 +966,13 @@ spec:
         metric: REQUEST_COUNT
       tagOverrides:
         # Normalize HTTP methods (GET, POST, PUT, DELETE, OTHER)
-        request_protocol:
-          value: |
-            request.protocol == "http" ?
-              (request.method in ["GET", "POST", "PUT", "DELETE"] ? request.method : "OTHER")
-              : request.protocol
+        request_method:
+          value: 'request.method in ["GET", "POST", "PUT", "DELETE"] ? request.method : "OTHER"'
 ```
 
-### Metrics Sampling
+### Selecting Envoy Statistics
 
-Reduce memory and CPU usage with Envoy statistics sampling:
+`proxyStatsMatcher` selects which Envoy statistics to create; it does not sample requests. Include only needed families, preserve required existing matches, and roll selected proxies after changing bootstrap settings. This example enables statistics needed by the preceding queries:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -1016,16 +988,18 @@ spec:
         - ".*upstream_rq_pending_overflow.*"
         - ".*circuit_breakers.*"
         - ".*outlier_detection.*"
+        - ".*upstream_cx_(active|overflow).*"
+        - ".*upstream_rq_(active|retry|pending).*"
 ```
 
 ### Prometheus Performance Tuning
 
+Prometheus defaults to a 1-minute scrape interval; 15s/30s are deliberate choices. This is a configuration fragment to merge with existing scrape jobs. `metric_relabel_configs` belongs inside each scrape job and drops samples, not just labels. Remote-write endpoint, authentication/TLS and persistence must be configured for the chosen backend.
+
 ```yaml
 global:
-  scrape_interval: 30s  # Default: 15s
+  scrape_interval: 30s
   evaluation_interval: 30s
-
-# Separate long-term storage with remote write
 remote_write:
 - url: http://victoria-metrics:8428/api/v1/write
   queue_config:
@@ -1033,15 +1007,37 @@ remote_write:
     max_shards: 5
     min_shards: 1
     max_samples_per_send: 5000
-
-# Remove unnecessary labels with metric relabeling
-metric_relabel_configs:
-- source_labels: [__name__]
-  regex: 'istio_tcp_.*'
-  action: drop  # Remove TCP metrics
+scrape_configs:
+- job_name: envoy-stats
+  metrics_path: /stats/prometheus
+  kubernetes_sd_configs:
+  - role: pod
+  relabel_configs:
+  - source_labels:
+    - __meta_kubernetes_pod_phase
+    action: keep
+    regex: Running
+  - source_labels:
+    - __meta_kubernetes_pod_container_name
+    - __meta_kubernetes_pod_container_port_name
+    action: keep
+    regex: istio-proxy;.*-envoy-prom
+  - source_labels:
+    - __meta_kubernetes_namespace
+    target_label: namespace
+  - source_labels:
+    - __meta_kubernetes_pod_name
+    target_label: pod
+  metric_relabel_configs:
+  - source_labels:
+    - __name__
+    regex: istio_tcp_.*
+    action: drop
 ```
 
 ## Troubleshooting
+
+The exec/curl examples require a proxy image containing curl. Otherwise use `kubectl port-forward pod/<pod-name> 15090:15090` (or 15020 for the agent) and query from a second terminal. Telemetry examples here are for Envoy; use waypoint attachment for ambient L7 policy and separate ztunnel L4 collection.
 
 ### When Metrics Are Not Being Collected
 
@@ -1074,7 +1070,7 @@ kubectl get telemetry -A
 kubectl describe telemetry <name> -n <namespace>
 
 # Check if reflected in Envoy config
-istioctl proxy-config log <pod-name> -o json | jq '.stats'
+istioctl proxy-config listeners <pod-name> -n <namespace> -o json
 ```
 
 ### When Metric Labels Are Missing
@@ -1092,17 +1088,14 @@ kubectl get servicemonitor,podmonitor -n istio-system
 
 ### Metric Cardinality Explosion
 
+After port-forwarding Prometheus in another terminal, query active series and TSDB statistics. Counting metric names is not counting time series. The TSDB status endpoint also reports per-label/value cardinality.
+
 ```bash
-# 1. Check metric cardinality
-kubectl exec -it -n istio-system <prometheus-pod> -- sh -c \
-  'wget -O- "http://localhost:9090/api/v1/label/__name__/values" 2>/dev/null' | \
-  jq '.data | length'
-
-# 2. Check time series count for specific metrics
-curl http://localhost:9090/api/v1/query?query='count(istio_requests_total)%20by%20(__name__)'
-
-# 3. Check cardinality by label
-count by (__name__, le) (istio_request_duration_milliseconds_bucket)
+curl -fsS http://localhost:9090/api/v1/status/tsdb | jq '.data'
+curl -fsSG http://localhost:9090/api/v1/query \
+  --data-urlencode 'query=count(istio_requests_total)' | jq '.data.result'
+curl -fsSG http://localhost:9090/api/v1/query \
+  --data-urlencode 'query=topk(10, count by (__name__) ({__name__=~"istio_.*"}))' | jq '.data.result'
 ```
 
 ### When Circuit Breaker Metrics Are Not Visible

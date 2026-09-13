@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "STS AssumeRoleWithWebIdentity Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      690
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "token-issue",
+        "label": "1. Token issuance",
+        "focus": [
+          "pod",
+          "k8s"
+        ],
+        "note": "The Kubernetes API server issues the service account JWT and the pod reads it from a projected volume."
+      },
+      {
+        "id": "token-verify",
+        "label": "2. Role assumption and validation",
+        "focus": [
+          "pod",
+          "sts",
+          "oidc",
+          "iam"
+        ],
+        "note": "STS verifies the signature with the OIDC provider's JWKS and checks the OIDC condition in the IAM role trust policy."
+      },
+      {
+        "id": "use-creds",
+        "label": "3. Use temporary credentials",
+        "focus": [
+          "sts",
+          "pod",
+          "aws"
+        ],
+        "note": "The pod calls the AWS API with the temporary credentials (Access Key, Secret Key, Session Token)."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "AWS SDK application"
+    },
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "API server issues SA tokens"
+    },
+    {
+      "id": "oidc",
+      "type": "security",
+      "label": "OIDC Provider",
+      "sublabel": "per-cluster EKS issuer URL"
+    },
+    {
+      "id": "sts",
+      "type": "security",
+      "label": "AWS STS",
+      "sublabel": "token exchange"
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM Role",
+      "sublabel": "trust policy"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS Service",
+      "sublabel": "e.g. S3"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 244,
+      "label": "Token issuance"
+    },
+    {
+      "from": 260,
+      "to": 460,
+      "label": "Role assumption · token validation · policy evaluation"
+    },
+    {
+      "from": 476,
+      "to": 584,
+      "label": "Credentials returned · AWS API call"
+    }
+  ],
+  "messages": [
+    {
+      "id": "token-request",
+      "from": "pod",
+      "to": "k8s",
+      "y": 184,
+      "label": "1. Request service account token",
+      "variant": "default"
+    },
+    {
+      "id": "token-issue",
+      "from": "k8s",
+      "to": "pod",
+      "y": 224,
+      "label": "2. JWT token (projected volume)",
+      "variant": "return"
+    },
+    {
+      "id": "assume-role",
+      "from": "pod",
+      "to": "sts",
+      "y": 284,
+      "label": "3. AssumeRoleWithWebIdentity (JWT + role ARN)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jwks-fetch",
+      "from": "sts",
+      "to": "oidc",
+      "y": 324,
+      "label": "4. Fetch JWKS public keys",
+      "variant": "security"
+    },
+    {
+      "id": "jwks-return",
+      "from": "oidc",
+      "to": "sts",
+      "y": 360,
+      "label": "5. Public keys → verify signature · iss/aud/sub claims",
+      "variant": "return"
+    },
+    {
+      "id": "trust-check",
+      "from": "sts",
+      "to": "iam",
+      "y": 400,
+      "label": "6. Check trust policy (OIDC condition)",
+      "variant": "security"
+    },
+    {
+      "id": "trust-ok",
+      "from": "iam",
+      "to": "sts",
+      "y": 436,
+      "label": "7. Policy approved",
+      "variant": "return"
+    },
+    {
+      "id": "creds",
+      "from": "sts",
+      "to": "pod",
+      "y": 496,
+      "label": "8. Temporary credentials (Access Key · Secret Key · Session Token)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-call",
+      "from": "pod",
+      "to": "aws",
+      "y": 536,
+      "label": "9. AWS API call with temporary credentials",
+      "variant": "default"
+    },
+    {
+      "id": "api-response",
+      "from": "aws",
+      "to": "pod",
+      "y": 568,
+      "label": "10. Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "k8s",
+      "from": 180,
+      "to": 229,
+      "type": "backend"
+    },
+    {
+      "participant": "sts",
+      "from": 280,
+      "to": 501,
+      "type": "security"
+    },
+    {
+      "participant": "oidc",
+      "from": 320,
+      "to": 365,
+      "type": "security"
+    },
+    {
+      "participant": "iam",
+      "from": 396,
+      "to": 441,
+      "type": "security"
+    },
+    {
+      "participant": "aws",
+      "from": 532,
+      "to": 573,
+      "type": "cloud"
+    }
+  ]
+}

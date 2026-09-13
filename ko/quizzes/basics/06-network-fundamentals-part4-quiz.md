@@ -1,28 +1,28 @@
 # 네트워크 기초 Part 4 퀴즈 — 요청의 여정과 클라우드
 
-> **마지막 업데이트**: 2026년 8월 28일
+> **마지막 업데이트**: 2026년 9월 11일
 
 한 요청의 전체 여정과 클라우드·쿠버네티스 매핑에 대한 이해도를 테스트합니다.
 
 ## 객관식 문제
 
-1. `https://example.com` 접속 시 프로토콜이 동작하는 순서로 올바른 것은 무엇인가요?
+1. 캐시와 기존 연결을 제외한 새로운 HTTPS 연결의 개념적 의존 순서로 옳은 것은 무엇인가요?
    - A) TLS → DNS → ARP → TCP → HTTP
-   - B) DNS 조회 → 게이트웨이 ARP → IP 라우팅/NAT → TCP/QUIC+TLS 연결 → HTTP 요청
+   - B) 서버 주소 확인 → 링크·IP 연결 사용 → TCP+TLS 또는 QUIC 핸드셰이크 → HTTP 요청
    - C) ARP → TLS → DNS → NAT → HTTP
    - D) TCP 연결 → DNS 조회 → TLS → 라우팅 → HTTP
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) DNS 조회 → 게이트웨이 ARP → IP 라우팅/NAT → TCP/QUIC+TLS 연결 → HTTP 요청**
+**정답: B) 서버 주소 확인 → 링크·IP 연결 사용 → TCP+TLS 또는 QUIC 핸드셰이크 → HTTP 요청**
 
 **설명:**
-목적지 IP를 알아야 패킷을 만들 수 있고(DNS), 게이트웨이 MAC을 알아야 프레임을 보낼 수 있으며(ARP), 라우팅과 NAT를 거쳐 상대에 도달한 뒤에야 전송 연결과 암호화(TCP/QUIC+TLS)가 성립하고, 그 위에서 HTTP 요청이 오갑니다. 하위 계층이 먼저 동작해야 상위 계층이 성립하는 구조입니다.
+실제 패킷 추적이 아닌 의존 관계 요약입니다. DNS 메시지도 링크·IP 연결을 사용하며 DNS 통신 중이나 이후에 ARP·IPv6 Neighbor Discovery가 수행될 수 있습니다. NAT는 선택 사항이고 라우팅은 각 관련 패킷에 적용됩니다. HTTP/3은 TLS1.3이 통합된 QUIC을 사용하며 HTTP/1.1·HTTP/2의 HTTPS는 보통 TCP에 별도 TLS 핸드셰이크를 사용합니다.
 
 </details>
 
-2. 쿠버네티스에서 Service의 ClusterIP를 실제 파드 IP로 변환하는 컴포넌트와, 그것이 대응되는 전통적 네트워크 개념의 짝으로 올바른 것은 무엇인가요?
+2. kube-proxy를 사용하는 클러스터에서 일반적인 ClusterIP Service 전달을 설명하는 짝은 무엇인가요?
    - A) CoreDNS — DHCP
    - B) kube-proxy — NAT + L4 분산
    - C) CNI 플러그인 — TLS 종료
@@ -34,23 +34,23 @@
 **정답: B) kube-proxy — NAT + L4 분산**
 
 **설명:**
-kube-proxy는 iptables/IPVS(또는 CNI에 따라 eBPF) 규칙으로 ClusterIP라는 가상 IP를 실제 파드 IP로 변환하고 여러 파드에 분산합니다 — 전통적 개념으로는 NAT와 L4 로드밸런싱의 조합입니다. CoreDNS는 DNS, CNI의 IPAM은 DHCP/IP 할당, NetworkPolicy는 방화벽 규칙에 대응합니다.
+Linux kube-proxy는 iptables·nftables를 설정하며 IPVS 모드는 Kubernetes1.35부터 deprecated입니다. eBPF 기반 Service 구현은 kube-proxy를 대체할 수 있지만 kube-proxy의 eBPF 모드는 아닙니다. Service·EndpointSlice 상태가 적합한 엔드포인트를 제공합니다. Headless Service에는 ClusterIP가 없고 NetworkPolicy에는 지원 구현이 필요합니다.
 
 </details>
 
-3. 아웃바운드 트래픽이 매우 많은 EKS 워크로드에서 NAT Gateway 비용을 줄이는 대표적인 설계는 무엇인가요?
+3. 엔드포인트 의존성과 총비용을 확인한 뒤 지원되는 AWS 서비스 트래픽의 NAT Gateway 처리를 줄일 수 있는 방법은 무엇인가요?
    - A) NAT Gateway를 리전마다 하나로 통합한다
-   - B) S3·ECR 등 AWS 서비스 트래픽을 VPC 엔드포인트로 우회시켜 NAT Gateway를 거치지 않게 한다
+   - B) 지원 서비스에 적절한 VPC 엔드포인트를 사용하고 필요한 DNS·경로·접근 정책을 구성한다
    - C) 모든 파드에 공인 IP를 부여한다
    - D) IPv6를 비활성화한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) S3·ECR 등 AWS 서비스 트래픽을 VPC 엔드포인트로 우회시켜 NAT Gateway를 거치지 않게 한다**
+**정답: B) 지원 서비스에 적절한 VPC 엔드포인트를 사용하고 필요한 DNS·경로·접근 정책을 구성한다**
 
 **설명:**
-NAT Gateway는 처리 데이터량 기준으로 과금되므로, S3·ECR처럼 트래픽이 큰 AWS 서비스 경로를 VPC 엔드포인트(게이트웨이/인터페이스)로 돌리면 비용이 크게 줄고 포트 고갈 위험도 낮아집니다. IP 주소 계획, 아웃바운드 경로, 암호화 종료 지점은 설계 초기에 결정할 3대 항목입니다.
+엔드포인트는 해당 서비스 트래픽을 NAT 경로에서 제외할 수 있지만 인터페이스 엔드포인트에는 시간·데이터 요금이 있으며 구성에 따라 비용이 달라집니다. S3·DynamoDB 게이트웨이 엔드포인트는 추가 엔드포인트 요금이 없습니다. 사설 ECR 이미지 다운로드에는 보통 ecr.api·ecr.dkr 인터페이스 엔드포인트, S3 경로, 사설 DNS와 적절한 접근 권한이 필요합니다. 풀스루 캐시의 첫 다운로드나 외부 Windows 레이어에는 인터넷 접근이 남을 수 있습니다. 총비용과 필요한 송신 경로를 검토해야 하며 비용 절감이나 포트 고갈 제거가 항상 보장되지는 않습니다.
 
 </details>
 

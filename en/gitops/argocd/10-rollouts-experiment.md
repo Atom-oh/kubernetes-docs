@@ -1,7 +1,7 @@
 # Argo Rollouts Experiments Deep Dive
 
-> **Supported Versions**: Argo Rollouts v1.8+ (verified on v1.8.3 / Kubernetes v1.33)
-> **Last Updated**: July 17, 2026
+> **Supported Versions**: Argo Rollouts 1.10.0 (historical 1.8.3/Kubernetes 1.33 report identified separately)
+> **Last Updated**: September 11, 2026
 
 ## Table of Contents
 
@@ -20,31 +20,29 @@
 
 ## What is an Experiment?
 
-An Experiment is an Argo Rollouts CRD that **launches one or more ephemeral ReplicaSets and scales them back down** when it finishes. Its core purpose is to **validate a new version in isolation from production traffic**. Whereas a canary deployment verifies a new version by sending it a share of real user traffic, an Experiment by default creates a separate set of Pods that receive no service traffic at all, and compares metrics on top of them.
+An Experiment is an Argo Rollouts CRD that creates ephemeral ReplicaSets and runs analyses. It supports baseline/canary comparisons, pre-deployment checks, and experiments with real traffic. **Creating separate ReplicaSets does not itself isolate production traffic.** Explicitly design Service selectors, routers, and test traffic.
 
 | Aspect | Canary step | Experiment step |
-|--------|-------------|-----------------|
-| Pods under test | Canary ReplicaSet managed by the Rollout | **Ephemeral ReplicaSets** created by the Experiment |
-| Production traffic | Receives it (per setWeight) | None by default |
-| Lifetime | Promoted to stable | **Scaled down to 0** when `duration` elapses or analysis completes |
-| Typical scenario | Gradual traffic shifting | Baseline vs. canary A/B comparison, pre-canary validation |
+|---|---|---|
+| Pods | Rollout canary ReplicaSet | Temporary Experiment ReplicaSets |
+| Traffic | Pod-ratio approximation for basic canary; weighted routing when configured | Isolated or real traffic, according to Service/router configuration |
+| Completion | Can become the new stable version | Replicas scale to zero under the cleanup-delay policy |
+| Analysis | Version-specific quality metrics | Separate baseline/canary metrics and test traffic |
 
-An Experiment can be created as a standalone resource, but in practice it is almost always used as an **experiment step** inside a Rollout's canary strategy.
+Both standalone Experiments and Rollout experiment steps are supported. `specRef` and `weight` belong to **Rollout step templates**. Standalone Experiments define selectors and Pod templates directly.
 
 ## Resource Hierarchy and Creation Chain
 
 When a Rollout reaches an experiment step, resources are created along this chain:
 
-![A Rollout creates an Experiment, the central resource that spins up baseline and canary ReplicaSets from its spec.templates and starts an AnalysisRun from its spec.analyses, with an AnalysisTemplate supplying the AnalysisRun's definition by reference.](../../../assets/diagrams/rendered/en-gitops-argocd-10-rollouts-experiment-0.svg)
+![A Rollout creates an Experiment that spins up baseline and canary ReplicaSets from spec.templates and an AnalysisRun from spec.analyses, with an AnalysisTemplate referenced by templateName supplying the AnalysisRun's metric definitions.](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-0.png)
 
-The sequence is:
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-10-rollouts-experiment-0.html)
 
-1. The Rollout controller **creates an Experiment resource** at the experiment step. The experiment step is a **blocking step** — the Rollout only proceeds to the next step when the Experiment finishes Successful, and the Rollout is **aborted** if it fails.
-2. The Experiment controller **creates one ReplicaSet per entry in `spec.templates`** (conventionally baseline/canary) and waits until every ReplicaSet's Pods are **healthy (available)**. The `duration` timer does not start until then.
-3. Once all templates are healthy, it **creates one AnalysisRun per entry in `spec.analyses`**. An AnalysisRun is a run instance created by copying the metric definitions of the referenced **AnalysisTemplate**.
-4. When `duration` elapses or the analysis finishes, the ReplicaSets are **scaled down to 0** and the result is reported back to the Rollout.
-
-> A standalone Experiment created without a Rollout follows the same chain from step 2 onward.
+1. An update reaching the experiment step creates an Experiment. Initial creation establishes stable and skips normal canary steps; observe the experiment on a **subsequent Pod-template change**.
+2. The controller creates a ReplicaSet per template and waits for its requested replicas to become available. Readiness/minReadySeconds matter; exceeding the progress deadline fails the experiment.
+3. When all are available, it records `status.availableAt` and starts analysis. A configured `duration` is measured from that point.
+4. The completion result propagates: Successful advances, Failed/Error aborts, and **Inconclusive pauses**. ReplicaSet/Service cleanup is a separate reconciliation process.
 
 ## Name Generation Rules
 
@@ -58,74 +56,121 @@ Experiment-family resources are named systematically so the owning Rollout, revi
 
 The examples above come from the experiment at step index 0 of the `demo-app` Rollout's revision 2 update. The tree output in [Verification Results](#verification-results) shows the actual hierarchy.
 
+These are base names. Experiment/AnalysisRun name collisions can add numeric suffixes; use ownerReferences and status to find actual resources.
+
 ## Traffic Routing Behavior
 
-The default behavior is **label-based isolation**. The Experiment's ReplicaSet Pods carry a different `rollouts-pod-template-hash` label value than the stable Pods, so they are naturally excluded from Services whose selectors target specific ReplicaSets. In other words, with no extra configuration, experiment Pods receive no production traffic.
+A production Service selecting only `app: demo-app` can also select experiment Pods. Inspect actual hash-specific selectors too; do not assume a separate hash always guarantees sufficient isolation. The example requires `traffic-class: production` on the production Service and overrides it to `experiment` on Experiment templates. Check other Services and mesh routes as well.
 
-There are two ways to intentionally route traffic to them:
+These are **two alternatives** for an entry in Rollout `spec.strategy.canary.steps`. Creating a Service does not automatically wire external traffic to it.
 
 ```yaml
-templates:
-  - name: canary
-    specRef: canary
-    # Option 1: create an experiment-scoped Service (routing is up to you)
-    service: {}          # creates a Service named <experiment-name>-<template-name>
-  - name: baseline
-    specRef: stable
-weight: 5                # Option 2: route 5% of real traffic to the experiment Pods
+- experiment:
+    duration: 1m
+    templates:
+    - name: baseline
+      specRef: stable
+      service: {}
+    - name: canary
+      specRef: canary
+      service: {}
 ```
 
-- **`service` attribute**: creates a Service pointing only at that template's Pods for the lifetime of the Experiment (measured: a `demo-app-74d8d8b4fb-2-0-canary` Service was created and deleted when the experiment ended). A custom name can be set via `service.name`.
-- **`weight`**: sends the given percentage of real traffic to the experiment Pods. This **only works on Rollouts with trafficRouting configured** — weighted distribution requires a traffic provider such as Istio or ALB. See [Traffic Management](05-traffic-management.md#ingress-integration) for provider setup.
+```yaml
+- experiment:
+    duration: 1m
+    templates:
+    - name: baseline
+      specRef: stable
+      weight: 5
+    - name: canary
+      specRef: canary
+      weight: 5
+```
+
+- `service: {}` creates a Service for that template. Its default name matches the ReplicaSet; `service.name` can override it. Declared container ports must match the application’s actual listeners.
+- `weight` is per template. Five means 5% with the default total weight of 100; check units when using a custom `maxTrafficWeight`. A weight also creates a Service.
+- Weighted Experiments require a supporting router. Version 1.10 documentation lists ALB/Istio/SMI. Ordinary canary weighting does not imply NGINX or every plugin supports Experiment traffic splitting.
 
 ## Measurement and Verdict: AnalysisRun
 
-An AnalysisRun collects data through a **provider** and judges it with **condition expressions**. Major providers include Prometheus, Datadog, CloudWatch, New Relic, **Web** (arbitrary HTTP endpoint), and **Job** (arbitrary Kubernetes Job). See the [Analysis section of Traffic Management](05-traffic-management.md#analysis-and-verification) for provider details.
-
-### Verdict Conditions (boolean evaluation)
+AnalysisRuns evaluate provider results with conditions. This is an **AnalysisTemplate spec fragment**; the full provider is in the example below. Missing or out-of-range success rates make both conditions false and are Inconclusive. Invalid types, HTTP/collection failures, and expression errors follow the Error path.
 
 ```yaml
 metrics:
-  - name: success-rate
-    interval: 15s          # measurement interval
-    count: 3               # total number of measurements (omit to repeat indefinitely)
-    # boolean expression over the measurement (result) — true marks it Successful
-    successCondition: result.status == 'ok' && result.success_rate >= 0.95
-    # failureCondition can be used alongside to define failure explicitly
-    failureLimit: 1        # allowed Failed measurements — exceeding fails the whole AnalysisRun
-    inconclusiveLimit: 2   # allowed Inconclusive measurements — exceeding marks it Inconclusive
-    consecutiveErrorLimit: 2  # allowed consecutive collection errors — exceeding marks it Error
+- name: success-rate
+  interval: 15s
+  count: 3
+  successCondition: let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil &&
+    asFloat(payload.success_rate) >= 0.95 && asFloat(payload.success_rate) <= 1
+  failureCondition: let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil &&
+    asFloat(payload.success_rate) >= 0 && asFloat(payload.success_rate) < 0.95
+  failureLimit: 1
+  inconclusiveLimit: 1
+  consecutiveErrorLimit: 2
 ```
 
-Each measurement becomes Successful/Failed/Inconclusive through the boolean evaluation of `successCondition`/`failureCondition`, and the limit fields decide the verdict of the AnalysisRun as a whole.
+| Condition | Measurement result |
+|---|---|
+| failureCondition=true | Failed, taking precedence over success |
+| successCondition=true, failureCondition=false | Successful |
+| Both false | Inconclusive |
+| Provider or expression error | Error |
 
-| Field | Meaning | AnalysisRun status when exceeded |
-|-------|---------|----------------------------------|
-| `failureLimit` | Allowed number of Failed measurements | Failed |
-| `inconclusiveLimit` | Allowed number of Inconclusive measurements | Inconclusive |
-| `consecutiveErrorLimit` | Allowed consecutive measurement errors (default 4) | Error |
+With only a success condition, false means Failed. With only a failure condition, false means Successful. With neither condition, a measurement without a collection error is Successful.
 
-In our test, a metric with `failureLimit: 1` failed twice and the AnalysisRun was marked Failed with exactly this message:
+| Field | Meaning | Result when exceeded |
+|---|---|---|
+| failureLimit | Allowed Failed measurements | Failed |
+| inconclusiveLimit | Allowed Inconclusive measurements | Inconclusive |
+| consecutiveErrorLimit | Allowed consecutive Errors, default 4 | Error |
 
-```
-Metric "success-rate" assessed Failed due to failed (2) > failureLimit (1)
-```
+`failureLimit: 1` is exceeded by the second failed measurement. `count` counts measurements, not HTTP requests. Interval without count repeats indefinitely; omitting both means one measurement. Three overlapping metric windows are not three independent samples.
 
 ## Result Propagation and Rollout State Transitions
 
-The AnalysisRun's final status propagates through the Experiment up to the Rollout.
+![Experiment Successful advances, Failed/Error aborts, and Inconclusive pauses; cleanup follows its delay policy.](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-1.png)
 
-![The AnalysisRun status decides the Experiment's outcome: a Successful result lets the Rollout proceed to its next canary step, while a Failed, Inconclusive, or Error result fails the Experiment and aborts the Rollout into a Degraded state.](../../../assets/diagrams/rendered/en-gitops-argocd-10-rollouts-experiment-1.svg)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-10-rollouts-experiment-1.html)
 
-- **Successful**: once both the `duration` has elapsed and the analysis succeeded, the Experiment becomes Successful and the Rollout proceeds to the next step.
-- **Failed / Inconclusive**: the Experiment ends as failed and the Rollout is aborted. The Rollout status becomes `Degraded` and the stable version stays in place.
-- Either way, on completion the Experiment's ReplicaSets are **scaled down to 0**, and any Service created via the `service` attribute is cleaned up with them.
+| Experiment result | Rollout behavior |
+|---|---|
+| Successful | Advance to the next step |
+| Failed / Error | Abort/Degraded; restore stable under configured routing/replica policies |
+| Inconclusive | Pause with `InconclusiveExperiment`; investigate and make an operator decision |
+
+Version 1.10 does not unconditionally wait for duration AND analysis. All required analyses succeeding can finish the Experiment before duration elapses. Remaining required analyses can keep it running past duration; non-required analyses may be terminated when duration ends. With neither duration nor required analysis, it runs until explicitly terminated. The example omits duration and uses finite-count required analysis for completion.
+
+`scaleDownDelaySeconds` defaults to thirty seconds. Terminal status, zero Pods, and Service deletion are not simultaneous guarantees. The controller scales down after the delay and removes generated Services once available replicas reach zero. ReplicaSet/AnalysisRun objects can remain under history/GC policies. Abort does not undo database changes or external side effects.
 
 ## Working Example
 
-The manifests below are the ones used for the [verification](#verification-results) and work as-is. The first step of the canary strategy runs one baseline and one canary Pod for 60 seconds, compares success rates, and only proceeds to a 20% canary if the experiment passes.
+This is an **educational control-flow example**. Install Rollouts 1.10.0/CRDs and the plugin, and separately provide an HTTP Service named `metrics-mock` in namespace `demo` returning the JSON below. Its server implementation is not included, so applying these manifests alone does not guarantee success. Fixed mock values do not measure baseline/canary quality or real traffic ratios.
+
+```json
+{"status":"ok","success_rate":0.99}
+```
 
 ```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-production
+  namespace: demo
+spec:
+  selector:
+    app: demo-app
+    traffic-class: production
+  ports:
+  - name: http
+    port: 9898
+    targetPort: http
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -133,18 +178,20 @@ metadata:
   namespace: demo
 spec:
   metrics:
-    - name: success-rate
-      interval: 15s
-      count: 3
-      successCondition: result.status == 'ok' && result.success_rate >= 0.95
-      failureLimit: 1
-      inconclusiveLimit: 2
-      consecutiveErrorLimit: 2
-      provider:
-        web:
-          # demo web provider — use Prometheus or similar in production
-          url: "http://metrics-mock.demo.svc.cluster.local/metrics.json"
-          jsonPath: "{$}"
+  - name: success-rate
+    interval: 15s
+    count: 3
+    successCondition: let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil
+      && asFloat(payload.success_rate) >= 0.95 && asFloat(payload.success_rate) <= 1
+    failureCondition: let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil
+      && asFloat(payload.success_rate) >= 0 && asFloat(payload.success_rate) < 0.95
+    failureLimit: 1
+    inconclusiveLimit: 1
+    consecutiveErrorLimit: 2
+    provider:
+      web:
+        url: http://metrics-mock.demo.svc.cluster.local/metrics.json
+        jsonPath: '{$}'
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -154,44 +201,91 @@ metadata:
 spec:
   replicas: 3
   revisionHistoryLimit: 3
+  progressDeadlineSeconds: 180
   selector:
     matchLabels:
       app: demo-app
   strategy:
     canary:
       steps:
-        # step 0: experiment isolated from production traffic (blocking — aborts on failure)
-        - experiment:
-            duration: 60s
-            templates:
-              - name: baseline
-                specRef: stable    # use the current stable Pod spec
-              - name: canary
-                specRef: canary    # use the new version's Pod spec
-                service: {}        # create an experiment-scoped Service
-            analyses:
-              - name: success-rate
-                templateName: success-rate-check
-        # steps 1-2: canary only runs after the experiment passes
-        - setWeight: 20
-        - pause: { duration: 10s }
+      - experiment:
+          scaleDownDelaySeconds: 30
+          templates:
+          - name: baseline
+            specRef: stable
+            replicas: 1
+            metadata:
+              labels:
+                traffic-class: experiment
+                experiment-role: baseline
+            service: {}
+          - name: canary
+            specRef: canary
+            replicas: 1
+            metadata:
+              labels:
+                traffic-class: experiment
+                experiment-role: canary
+            service: {}
+          analyses:
+          - name: success-rate
+            templateName: success-rate-check
+            requiredForCompletion: true
+      - setWeight: 20
+      - pause:
+          duration: 10s
   template:
     metadata:
       labels:
         app: demo-app
+        traffic-class: production
+      annotations:
+        demo-revision: v1
     spec:
       containers:
-        - name: app
-          image: public.ecr.aws/nginx/nginx:1.27
-          ports:
-            - containerPort: 8080
+      - name: app
+        image: ghcr.io/stefanprodan/podinfo:6.15.0
+        ports:
+        - name: http
+          containerPort: 9898
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: http
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 128Mi
 ```
 
-In production, the common pattern is to replace the web provider with a Prometheus provider that queries baseline and canary metrics separately and compares them. Pass each ReplicaSet's hash into the analysis as arguments via `podTemplateHashValue: Baseline`/`Canary` and use them in label selectors — see the [Experiments section of Traffic Management](05-traffic-management.md#experiments) for a full example.
+After applying the file and establishing the first stable revision in a dedicated lab cluster, change the Pod-template annotation to exercise the experiment step. This demonstrates controller flow, not a new image’s quality. For Argo CD-managed resources, make the change in Git instead of patching live state. A mock rate of 0.99 exercises success, 0.50 exceeds failureLimit and aborts, and a missing rate exercises Inconclusive pause. Review the lab resource cleanup scope afterward.
+
+```bash
+kubectl argo rollouts status demo-app -n demo --timeout=180s
+# A second Pod-template revision exercises the steps; the image stays unchanged in this demo.
+kubectl patch rollout demo-app -n demo --type merge \
+  -p '{"spec":{"template":{"metadata":{"annotations":{"demo-revision":"v2"}}}}}'
+kubectl argo rollouts get rollout demo-app -n demo --watch
+```
+
+`setWeight: 20` is a Pod-ratio approximation without trafficRouting. Three replicas cannot guarantee exactly 20% of user requests. Real comparisons require test traffic, instrumentation/scraping, sufficient samples, and the following **Experiment ReplicaSet** hash arguments. These are not `podTemplateHashValue: Baseline/Canary` fields.
+
+```yaml
+args:
+- name: baseline-hash
+  value: '{{templates.baseline.podTemplateHash}}'
+- name: canary-hash
+  value: '{{templates.canary.podTemplateHash}}'
+```
+
+See the [metric comparison example](05-traffic-management.md#experiments).
 
 ## Observing with the kubectl Plugin
 
-`kubectl argo rollouts get rollout <name> --watch` shows the entire Experiment hierarchy (Experiment → ReplicaSets → Pods, plus the AnalysisRun) live. Below is actual output captured while the experiment step of the manifest above was running.
+`kubectl argo rollouts get rollout <name> --watch` shows the entire Experiment hierarchy (Experiment → ReplicaSets → Pods, plus the AnalysisRun) live. The output below is the original document’s historical 1.8.3 record, not a fresh run of the current example. Do not interpret its names, times, or cleanup timing as new 1.10.0 results.
 
 ```
 $ kubectl argo rollouts get rollout demo-app -n demo
@@ -217,7 +311,7 @@ NAME                                                  KIND         STATUS       
    └──⧉ demo-app-779c8779bf                           ReplicaSet   ✔ Healthy      51s  stable
 ```
 
-Note that during the experiment step, revision 2's main ReplicaSet (`demo-app-74d8d8b4fb`) is still `ScaledDown` — the new version is never placed on the production path before validation completes. The AnalysisRun keeps its measurement history in its status for post-hoc analysis:
+The historical trace shows revision 2’s main ReplicaSet scaled down. That does not prove there is no production exposure under other step orders or Service/router configurations. The AnalysisRun keeps its measurement history in its status for post-hoc analysis:
 
 ```
 $ kubectl get analysisrun demo-app-74d8d8b4fb-2-0-success-rate -n demo \
@@ -241,16 +335,16 @@ $ kubectl get analysisrun demo-app-74d8d8b4fb-2-0-success-rate -n demo \
 
 ## Verification Results
 
-Verified with the manifests above on a test cluster built from the Argo Rollouts v1.8.3 controller (official source build) and a Kubernetes v1.33 control plane (kwok-based — the API server, controller manager, and scheduler are real binaries; node and Pod lifecycles are simulated). The resource creation chain, naming rules, analysis verdicts, and status propagation are all real controller behavior; **verifying actual traffic split ratios is out of scope for this environment** (for measured traffic behavior, see the [EKS verification in Traffic Management](05-traffic-management.md#verification-results-on-eks)).
+The original document reported these results from a 1.8.3 source build and Kubernetes 1.33/kwok (real control-plane binaries, simulated node/Pod lifecycles). Complete executed manifests, raw API dumps, and logs are not attached, so this review could not reproduce the report. These are historical observations, not fresh 1.10.0 results or evidence of real traffic, Pod readiness, or application quality.
 
-| Verified item | Result |
+| Historical item | Original report |
 |---------------|--------|
-| Experiment auto-created at the experiment step, name = `<rollout>-<PodHash>-<revision>-<step>` | ✅ `demo-app-74d8d8b4fb-2-0` (revision 2, step 0) |
-| ReplicaSets created from templates, name = `<experiment>-<template>` | ✅ `...-2-0-baseline`, `...-2-0-canary`, 1 replica each |
-| Experiment-scoped Service for the template with `service: {}` created and cleaned up | ✅ `...-2-0-canary` Service created, confirmed deleted after the experiment |
-| AnalysisRun created after all templates healthy; repeated measurements at `interval: 15s`/`count: 3` | ✅ 3 measurements recorded 15s apart, `successCondition` evaluated Successful |
-| Success path: 60s duration elapsed → Experiment Successful → experiment RSes scaled to 0 → next step (setWeight 20) → Rollout Healthy | ✅ Works |
-| Failure path: degraded metrics → AnalysisRun Failed with `failed (2) > failureLimit (1)` → Experiment Failed → Rollout aborted (Degraded), stable preserved | ✅ Works — the abort message names the offending metric verbatim |
+| Experiment auto-created at the experiment step, name = `<rollout>-<PodHash>-<revision>-<step>` | Reported: `demo-app-74d8d8b4fb-2-0` (revision 2, step 0) |
+| ReplicaSets created from templates, name = `<experiment>-<template>` | Reported: `...-2-0-baseline`, `...-2-0-canary`, 1 replica each |
+| Experiment-scoped Service for the template with `service: {}` created and cleaned up | Reported: `...-2-0-canary` Service created, confirmed deleted after the experiment |
+| AnalysisRun created after all templates healthy; repeated measurements at `interval: 15s`/`count: 3` | Reported: 3 measurements recorded 15s apart, `successCondition` evaluated Successful |
+| Success path: 60s duration elapsed → Experiment Successful → experiment RSes scaled to 0 → next step (setWeight 20) → Rollout Healthy | Reported: Works |
+| Failure path: degraded metrics → AnalysisRun Failed with `failed (2) > failureLimit (1)` → Experiment Failed → Rollout aborted (Degraded), stable preserved | Reported: Works — the abort message names the offending metric verbatim |
 
 ## Next Steps
 
@@ -263,6 +357,11 @@ Verified with the manifests above on a test cluster built from the Argo Rollouts
 - [Experiment official documentation](https://argoproj.github.io/argo-rollouts/features/experiment/)
 - [Analysis official documentation](https://argoproj.github.io/argo-rollouts/features/analysis/)
 - [Experiment CRD specification](https://argoproj.github.io/argo-rollouts/features/specification/)
+
+
+- [1.10.0 Experiment state machine](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/experiment.go)
+- [1.10.0 Rollout pause/abort handling](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/rollout/experiment.go)
+- [1.10.0 ReplicaSet cleanup](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/experiments/replicaset.go)
 
 ## Quiz
 

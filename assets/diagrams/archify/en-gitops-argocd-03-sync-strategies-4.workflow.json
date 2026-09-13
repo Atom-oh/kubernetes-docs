@@ -1,0 +1,204 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Windows for a New Automated Sync",
+    "locale": "en",
+    "output": "public/archmaps/en-gitops-argocd-03-sync-strategies-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "deny-path",
+        "label": "Deny path",
+        "focus": [
+          "request",
+          "check",
+          "deny_q",
+          "sync_block"
+        ],
+        "note": "An active deny window takes precedence over allow windows and blocks the sync."
+      },
+      {
+        "id": "allow-path",
+        "label": "Allow path",
+        "focus": [
+          "deny_q",
+          "allow_q",
+          "has_allow",
+          "sync_run"
+        ],
+        "note": "Without an active deny, an active allow or no matching allow rule permits the request."
+      }
+    ],
+    "viewBox": [
+      1120,
+      660
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Processing stage"
+        },
+        "frontend": {
+          "label": "Sync request"
+        },
+        "security": {
+          "label": "Window policy"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "app",
+      "label": "Application sync request"
+    },
+    {
+      "id": "windows",
+      "label": "AppProject syncWindows evaluation"
+    },
+    {
+      "id": "result",
+      "label": "Outcome"
+    },
+    {
+      "id": "blocked",
+      "label": "Blocked",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "check",
+    "deny_q",
+    "allow_q",
+    "has_allow",
+    "sync_run"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "app",
+      "col": 0,
+      "type": "frontend",
+      "label": "Sync request",
+      "sublabel": "new automated sync",
+      "width": 120
+    },
+    {
+      "id": "check",
+      "lane": "app",
+      "col": 1,
+      "type": "backend",
+      "label": "Check windows",
+      "sublabel": "select matching rules",
+      "width": 130
+    },
+    {
+      "id": "deny_q",
+      "lane": "windows",
+      "col": 2,
+      "type": "security",
+      "label": "Deny window active?",
+      "sublabel": "kind: deny",
+      "tag": "takes precedence",
+      "width": 180
+    },
+    {
+      "id": "allow_q",
+      "lane": "windows",
+      "col": 3,
+      "type": "security",
+      "label": "Allow window active?",
+      "sublabel": "kind: allow",
+      "width": 180
+    },
+    {
+      "id": "has_allow",
+      "lane": "windows",
+      "col": 4,
+      "type": "security",
+      "label": "Matching allow exists?",
+      "sublabel": "currently inactive",
+      "width": 180
+    },
+    {
+      "id": "sync_run",
+      "lane": "result",
+      "col": 5,
+      "type": "backend",
+      "label": "Window permits",
+      "sublabel": "other checks still apply",
+      "width": 150
+    },
+    {
+      "id": "sync_block",
+      "lane": "blocked",
+      "col": 2,
+      "type": "security",
+      "label": "Sync blocked",
+      "sublabel": "active deny / inactive allow",
+      "width": 180
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "deny_q",
+      "toSide": "top"
+    },
+    {
+      "from": "deny_q",
+      "to": "sync_block",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "deny_q",
+      "to": "allow_q",
+      "label": "No"
+    },
+    {
+      "from": "allow_q",
+      "to": "sync_run",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "allow_q",
+      "to": "has_allow",
+      "label": "No"
+    },
+    {
+      "from": "has_allow",
+      "to": "sync_run",
+      "variant": "emphasis",
+      "label": "No"
+    },
+    {
+      "from": "has_allow",
+      "to": "sync_block",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Scope and matching",
+      "items": [
+        "An active deny wins; matching inactive allow rules block the request",
+        "Application, namespace and cluster selectors use OR; andOperator: true uses AND",
+        "No specificity ranking. See the text for manual exceptions, ongoing syncs and time zones"
+      ]
+    }
+  ]
+}

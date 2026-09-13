@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 1.34 Enhancement 분포",
+    "output": "ko-eks-12-kubernetes-version-roadmap-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      400
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "release",
+      "type": "external",
+      "label": "Kubernetes 1.34 \"Of Wind & Will\"",
+      "sublabel": "2025년 8월 · Enhancement 58개",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable (GA)",
+      "sublabel": "23개",
+      "pos": [
+        360,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "프로덕션 준비"
+    },
+    {
+      "id": "beta",
+      "type": "backend",
+      "label": "Beta",
+      "sublabel": "22개",
+      "pos": [
+        360,
+        180
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "alpha",
+      "type": "backend",
+      "label": "Alpha",
+      "sublabel": "13개",
+      "pos": [
+        360,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dra",
+      "type": "backend",
+      "label": "DRA Core APIs",
+      "sublabel": "Alpha 1.26 → Beta 1.31 → GA 1.34",
+      "pos": [
+        660,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "vac",
+      "type": "database",
+      "label": "VolumeAttributesClass",
+      "sublabel": "Beta 1.32 → GA 1.34",
+      "pos": [
+        660,
+        180
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "성숙도 단계",
+      "wraps": [
+        "stable",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "핵심 GA 기능",
+      "wraps": [
+        "dra",
+        "vac"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "release-stable",
+      "from": "release",
+      "to": "stable",
+      "label": "GA 졸업",
+      "variant": "emphasis"
+    },
+    {
+      "id": "release-beta",
+      "from": "release",
+      "to": "beta"
+    },
+    {
+      "id": "release-alpha",
+      "from": "release",
+      "to": "alpha",
+      "variant": "dashed"
+    },
+    {
+      "id": "stable-dra",
+      "from": "stable",
+      "to": "dra",
+      "label": "KEP-4381",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stable-vac",
+      "from": "stable",
+      "to": "vac",
+      "label": "KEP-3751"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "핵심 GA 기능",
+      "items": [
+        "DRA Core APIs: GPU·FPGA 등 특수 하드웨어를 CEL 셀렉터로 요청·할당",
+        "VolumeAttributesClass: PVC 재생성 없이 IOPS/처리량 티어 변경"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "기타 GA 졸업",
+      "items": [
+        "nftables kube-proxy 모드",
+        "User Namespaces 격리",
+        "Traffic Distribution (preferClose)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "scope": "Local Helm rendering/wiring checks only; custom AVP image must be built by the operator; no controller/backend was deployed.",
+  "results": [
+    {
+      "component": "avp",
+      "resources": 59,
+      "ok": true
+    },
+    {
+      "component": "ksops",
+      "resources": 59,
+      "ok": true
+    },
+    {
+      "component": "sealed",
+      "resources": 10,
+      "ok": true
+    },
+    {
+      "component": "eso",
+      "resources": 44,
+      "ok": true
+    }
+  ]
+}

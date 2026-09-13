@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-11",
+  "path": "scripts/__tests__/service-mesh-mtls-retry-guidance.test.mjs",
+  "authorization": "User explicitly authorized this shared test file earlier in this session.",
+  "before": "117/118:KOsecurityrewritefailedliteral /고르는 경우/ whiledecisionguidancepresent.",
+  "change": "RequirelocalizedCilium/IstiodecisionsectionandWireGuard/IPsec,ztunnel,STRICT,identity,authorizationconcepts;stockphrasingnotrequired. Existingwrite-retryguardstestsunchanged.",
+  "after": "Targetedfileandfull118/118pass.",
+  "logs": [
+    "/tmp/kubernetes-docs-full-review/docs-test-cilium-security-clean.log",
+    "/tmp/kubernetes-docs-full-review/docs-test-cilium-security-final-clean.log"
+  ]
+}

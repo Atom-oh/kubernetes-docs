@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "NetworkPolicy Fundamentals",
+    "locale": "en",
+    "output": "en-networking-calico-05-network-policy-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "without-policy",
+        "label": "Without NetworkPolicy",
+        "focus": [
+          "a1",
+          "b1",
+          "c1"
+        ],
+        "note": "No policy selects these pods, so every pod can reach every other pod in both directions."
+      },
+      {
+        "id": "with-policy",
+        "label": "With NetworkPolicy",
+        "focus": [
+          "a2",
+          "b2",
+          "c2"
+        ],
+        "note": "The policy keeps only the explicitly allowed Pod A to Pod B path; every other connection is denied."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "a1",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "no policy",
+      "pos": [
+        60,
+        130
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "no policy",
+      "pos": [
+        330,
+        130
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "Pod C",
+      "sublabel": "no policy",
+      "pos": [
+        195,
+        320
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "policy applied",
+      "pos": [
+        660,
+        130
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "allowed peer",
+      "pos": [
+        930,
+        130
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "Pod C",
+      "sublabel": "no allowed path",
+      "pos": [
+        795,
+        320
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Without NetworkPolicy",
+      "wraps": [
+        "a1",
+        "b1",
+        "c1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "With NetworkPolicy",
+      "wraps": [
+        "a2",
+        "b2",
+        "c2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a1-b1",
+      "from": "a1",
+      "to": "b1",
+      "label": "open"
+    },
+    {
+      "id": "a1-c1",
+      "from": "a1",
+      "to": "c1",
+      "label": "open",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b1-c1",
+      "from": "b1",
+      "to": "c1",
+      "label": "open",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "a2-b2",
+      "from": "a2",
+      "to": "b2",
+      "label": "allowed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a2-c2",
+      "from": "a2",
+      "to": "c2",
+      "label": "blocked",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b2-a2",
+      "from": "b2",
+      "to": "a2",
+      "label": "blocked",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Without NetworkPolicy",
+      "items": [
+        "With no policy in place, all pod-to-pod traffic is accepted",
+        "Pod A, Pod B and Pod C reach each other freely in both directions"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "With NetworkPolicy",
+      "items": [
+        "Namespace-scoped resource matching pods by labels, namespaces and IP blocks",
+        "policyTypes Ingress and Egress list what is allowed; everything else is implicitly denied",
+        "Only Pod A to Pod B remains open"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-cluster Topology",
+    "output": "en-service-mesh-istio-advanced-readme-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "control plane",
+      "pos": [
+        380,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "primary cluster",
+      "pos": [
+        380,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "entrypoint"
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "remote cluster 1",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "remote cluster 2",
+      "pos": [
+        720,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Primary cluster · us-east-1",
+      "wraps": [
+        "istiod",
+        "svc-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Remote cluster 1 · us-west-2",
+      "wraps": [
+        "svc-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Remote cluster 2 · eu-west-1",
+      "wraps": [
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "push-b",
+      "from": "istiod",
+      "to": "svc-b",
+      "label": "config push",
+      "variant": "dashed"
+    },
+    {
+      "id": "push-c",
+      "from": "istiod",
+      "to": "svc-c",
+      "label": "config push",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-to-b",
+      "from": "svc-a",
+      "to": "svc-b",
+      "label": "cross-cluster two-way traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a-to-c",
+      "from": "svc-a",
+      "to": "svc-c",
+      "label": "cross-cluster two-way traffic",
+      "variant": "emphasis"
+    }
+  ]
+}

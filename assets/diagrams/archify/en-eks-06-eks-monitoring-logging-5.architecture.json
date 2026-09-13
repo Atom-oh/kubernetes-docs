@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Troubleshooting and Debugging",
+    "locale": "en",
+    "output": "en-eks-06-eks-monitoring-logging-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Problem areas"
+        },
+        "backend": {
+          "label": "Kubernetes tools"
+        },
+        "cloud": {
+          "label": "AWS tools"
+        },
+        "frontend": {
+          "label": "Network tools"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "k8s-path",
+        "label": "kubectl tool path",
+        "focus": [
+          "cluster",
+          "workload",
+          "common",
+          "k8s"
+        ],
+        "note": "kubectl, debug, events and logs are the central tools used across all three problem areas."
+      },
+      {
+        "id": "aws-path",
+        "label": "AWS tool path",
+        "focus": [
+          "cluster",
+          "common",
+          "aws"
+        ],
+        "note": "Control plane and node issues, plus Node NotReady, are checked with the AWS CLI and CloudWatch."
+      },
+      {
+        "id": "net-path",
+        "label": "Network tool path",
+        "focus": [
+          "cluster",
+          "workload",
+          "common",
+          "net"
+        ],
+        "note": "Networking, service and service-connection issues are diagnosed with Netshoot, tcpdump, dig and curl."
+      }
+    ],
+    "viewBox": [
+      1120,
+      680
+    ]
+  },
+  "components": [
+    {
+      "id": "cluster",
+      "type": "external",
+      "label": "Cluster Issues",
+      "sublabel": "Control plane · Nodes · Networking · AuthN/AuthZ",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "workload",
+      "type": "external",
+      "label": "Workload Issues",
+      "sublabel": "Pods · Services · Deployments · Resources",
+      "pos": [
+        400,
+        440
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "common",
+      "type": "external",
+      "label": "Common Problems",
+      "sublabel": "ImagePullBackOff · CrashLoopBackOff · more",
+      "pos": [
+        800,
+        250
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes Tools",
+      "sublabel": "kubectl · debug · events · logs",
+      "pos": [
+        400,
+        250
+      ],
+      "size": [
+        270,
+        64
+      ],
+      "tag": "Core tools"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS Tools",
+      "sublabel": "AWS CLI · CloudWatch · CloudTrail · X-Ray",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "net",
+      "type": "frontend",
+      "label": "Network Tools",
+      "sublabel": "Netshoot · tcpdump · dig · curl",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        250,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cluster-k8s",
+      "from": "cluster",
+      "to": "k8s",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-aws",
+      "from": "cluster",
+      "to": "aws",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "cluster-net",
+      "from": "cluster",
+      "to": "net",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "workload-k8s",
+      "from": "workload",
+      "to": "k8s",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "workload-net",
+      "from": "workload",
+      "to": "net"
+    },
+    {
+      "id": "common-k8s",
+      "from": "common",
+      "to": "k8s",
+      "variant": "emphasis"
+    },
+    {
+      "id": "common-aws",
+      "from": "common",
+      "to": "aws",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "common-net",
+      "from": "common",
+      "to": "net",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          935,
+          560
+        ],
+        [
+          165,
+          560
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Cluster Issues",
+      "items": [
+        "Control plane issues → kubectl, AWS CLI, CloudWatch",
+        "Node issues → kubectl debug, AWS CLI",
+        "Networking issues → Netshoot, tcpdump"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Workload Issues",
+      "items": [
+        "Pod issues → kubectl logs, kubectl debug",
+        "Service issues → kubectl events, dig/nslookup, curl/wget"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Common Problems",
+      "items": [
+        "ImagePullBackOff → kubectl events, kubectl logs",
+        "CrashLoopBackOff → kubectl logs, kubectl debug",
+        "Node NotReady → AWS CLI, kubectl events",
+        "Service connection issues → Netshoot, tcpdump"
+      ]
+    }
+  ]
+}

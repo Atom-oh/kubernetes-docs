@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Alertmanager 내부 구조",
+    "output": "ko-observability-alerting-01-alertmanager-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1350,
+      620
+    ],
+    "views": [
+      {
+        "id": "pipeline",
+        "label": "알림 파이프라인",
+        "focus": [
+          "prometheus",
+          "api",
+          "dispatcher",
+          "inhibitor",
+          "silencer",
+          "aggregation",
+          "notification",
+          "receivers"
+        ],
+        "note": "Prometheus 알림이 API로 들어와 라우팅·억제·무음·그룹화를 거쳐 수신자에게 전송되는 주 경로."
+      },
+      {
+        "id": "state",
+        "label": "상태 저장과 동기화",
+        "focus": [
+          "silencer",
+          "notification",
+          "silences",
+          "nflog",
+          "gossip"
+        ],
+        "note": "Silencer는 무음 규칙을 조회하고 Notification Pipeline은 전송 기록을 nflog에 남기며, Gossip Protocol이 두 저장소를 클러스터 노드 간에 동기화한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "prometheus",
+      "type": "external",
+      "label": "Prometheus",
+      "sublabel": "알림 규칙 평가",
+      "pos": [
+        30,
+        120
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "/api/v2/alerts",
+      "pos": [
+        186,
+        120
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "dispatcher",
+      "type": "backend",
+      "label": "Dispatcher",
+      "sublabel": "라우팅 트리",
+      "pos": [
+        342,
+        120
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "inhibitor",
+      "type": "backend",
+      "label": "Inhibitor",
+      "sublabel": "억제 규칙",
+      "pos": [
+        498,
+        120
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "silencer",
+      "type": "backend",
+      "label": "Silencer",
+      "sublabel": "무음 필터",
+      "pos": [
+        654,
+        120
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "aggregation",
+      "type": "backend",
+      "label": "Aggregation Group",
+      "sublabel": "그룹화",
+      "pos": [
+        810,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification Pipeline",
+      "sublabel": "알림 전송",
+      "pos": [
+        996,
+        160
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "receivers",
+      "type": "external",
+      "label": "Receivers",
+      "sublabel": "Slack / PagerDuty",
+      "pos": [
+        1196,
+        120
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "silences",
+      "type": "database",
+      "label": "Silences",
+      "sublabel": "무음 규칙",
+      "pos": [
+        654,
+        330
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "nflog",
+      "type": "database",
+      "label": "nflog",
+      "sublabel": "전송 기록",
+      "pos": [
+        1016,
+        330
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "gossip",
+      "type": "messagebus",
+      "label": "Gossip Protocol",
+      "sublabel": "클러스터 상태 동기화",
+      "pos": [
+        820,
+        490
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Alertmanager",
+      "wraps": [
+        "api",
+        "dispatcher",
+        "inhibitor",
+        "silencer",
+        "aggregation",
+        "notification",
+        "silences",
+        "nflog",
+        "gossip"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "상태 저장소",
+      "wraps": [
+        "silences",
+        "nflog"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "prom-to-api",
+      "from": "prometheus",
+      "to": "api",
+      "label": "알림",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-dispatcher",
+      "from": "api",
+      "to": "dispatcher"
+    },
+    {
+      "id": "dispatcher-to-inhibitor",
+      "from": "dispatcher",
+      "to": "inhibitor"
+    },
+    {
+      "id": "inhibitor-to-silencer",
+      "from": "inhibitor",
+      "to": "silencer"
+    },
+    {
+      "id": "silencer-to-aggregation",
+      "from": "silencer",
+      "to": "aggregation"
+    },
+    {
+      "id": "aggregation-to-notification",
+      "from": "aggregation",
+      "to": "notification"
+    },
+    {
+      "id": "notification-to-receivers",
+      "from": "notification",
+      "to": "receivers",
+      "label": "전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "silencer-to-silences",
+      "from": "silencer",
+      "to": "silences",
+      "label": "조회",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80
+    },
+    {
+      "id": "notification-to-nflog",
+      "from": "notification",
+      "to": "nflog",
+      "label": "기록",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80
+    },
+    {
+      "id": "gossip-to-silences",
+      "from": "gossip",
+      "to": "silences",
+      "label": "동기화",
+      "variant": "dashed"
+    },
+    {
+      "id": "gossip-to-nflog",
+      "from": "gossip",
+      "to": "nflog",
+      "label": "동기화",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "알림 파이프라인",
+      "items": [
+        "Dispatcher는 라우팅 트리를 기반으로 알림을 적절한 수신자로 라우팅한다",
+        "Inhibitor는 억제 규칙에 따라 관련 알림을 억제한다",
+        "Silencer는 무음 규칙에 해당하는 알림을 필터링한다",
+        "Aggregation Group은 동일 그룹의 알림을 묶어서 처리한다",
+        "Notification Pipeline이 실제 알림 전송을 처리한다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "상태와 고가용성",
+      "items": [
+        "nflog는 전송된 알림을 기록해 중복 전송을 방지한다",
+        "Silences는 무음 규칙을 보관한다",
+        "Gossip Protocol이 nflog와 Silences를 클러스터 노드 간에 동기화한다"
+      ]
+    }
+  ]
+}

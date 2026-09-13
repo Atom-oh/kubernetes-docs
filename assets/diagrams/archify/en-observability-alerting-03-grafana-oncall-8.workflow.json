@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Migration Decision Flow from PagerDuty/OpsGenie to Grafana OnCall",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-alerting-03-grafana-oncall-8.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Decision gate"
+        },
+        "cloud": {
+          "label": "Migration outcome"
+        },
+        "external": {
+          "label": "Existing on-call tool"
+        }
+      }
+    },
+    "viewBox": [
+      1230,
+      652
+    ]
+  },
+  "lanes": [
+    {
+      "id": "current",
+      "label": "Currently Using"
+    },
+    {
+      "id": "consider",
+      "label": "Consider Grafana OnCall When"
+    },
+    {
+      "id": "keep",
+      "label": "Decision · Keep Current",
+      "variant": "exception"
+    },
+    {
+      "id": "decision",
+      "label": "Decision · Migrate"
+    }
+  ],
+  "mainPath": [
+    "current_tool",
+    "cost",
+    "stack",
+    "selfhost",
+    "features",
+    "migrate"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "current_tool"
+    ],
+    "allowedTerminals": [
+      "migrate",
+      "keep_current"
+    ],
+    "requiredPaths": [
+      {
+        "from": "current_tool",
+        "to": "migrate"
+      },
+      {
+        "from": "current_tool",
+        "to": "keep_current"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "current_tool",
+      "lane": "current",
+      "col": 0,
+      "type": "external",
+      "label": "PagerDuty / OpsGenie",
+      "sublabel": "current on-call tool",
+      "width": 150
+    },
+    {
+      "id": "cost",
+      "lane": "consider",
+      "col": 1,
+      "type": "backend",
+      "label": "Need cost reduction?",
+      "width": 224
+    },
+    {
+      "id": "stack",
+      "lane": "consider",
+      "col": 2,
+      "type": "backend",
+      "label": "Using Grafana Stack?",
+      "width": 184
+    },
+    {
+      "id": "selfhost",
+      "lane": "consider",
+      "col": 3,
+      "type": "backend",
+      "label": "Prefer self-hosting?",
+      "width": 180
+    },
+    {
+      "id": "features",
+      "lane": "consider",
+      "col": 4,
+      "type": "backend",
+      "label": "Basic features sufficient?",
+      "width": 214
+    },
+    {
+      "id": "migrate",
+      "lane": "decision",
+      "col": 5,
+      "type": "cloud",
+      "label": "Migrate to OnCall",
+      "sublabel": "adopt Grafana OnCall",
+      "width": 156
+    },
+    {
+      "id": "keep_current",
+      "lane": "keep",
+      "col": 3,
+      "type": "external",
+      "label": "Keep Current",
+      "sublabel": "stay on PagerDuty / OpsGenie",
+      "width": 156
+    }
+  ],
+  "edges": [
+    {
+      "from": "current_tool",
+      "to": "cost",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "cost",
+      "to": "stack",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "stack",
+      "to": "selfhost",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "selfhost",
+      "to": "features",
+      "label": "Yes / No",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "features",
+      "to": "migrate",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "cost",
+      "to": "keep_current",
+      "label": "No",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "stack",
+      "to": "keep_current",
+      "label": "No",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "features",
+      "to": "keep_current",
+      "label": "No",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ]
+}

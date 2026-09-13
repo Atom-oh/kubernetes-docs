@@ -1,0 +1,249 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "VPC Lattice 문제 발생 시 확인 레이어 (3단계)",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "layers",
+        "label": "3단계 확인 순서",
+        "focus": [
+          "err",
+          "q_target",
+          "q_service",
+          "q_network"
+        ],
+        "note": "503 발생 시 Target 헬스 → Service 설정 → 네트워크 순으로 세 레이어만 확인한다."
+      },
+      {
+        "id": "fixes",
+        "label": "레이어별 해결 조치",
+        "focus": [
+          "q_target",
+          "fix_target",
+          "q_service",
+          "fix_service",
+          "q_network",
+          "fix_network"
+        ],
+        "note": "각 레이어에서 원인이 확인되면 AWS Console에서 바로 수정하거나 Auto Healing에 맡긴다."
+      },
+      {
+        "id": "escalate",
+        "label": "원인 미확인 시",
+        "focus": [
+          "q_network",
+          "support"
+        ],
+        "note": "세 레이어 모두 정상이면 AWS Support 티켓으로 넘긴다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "장애 신호"
+        },
+        "backend": {
+          "label": "확인 레이어"
+        },
+        "cloud": {
+          "label": "해결 조치"
+        },
+        "external": {
+          "label": "에스컬레이션"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "signal",
+      "label": "장애 신호"
+    },
+    {
+      "id": "check",
+      "label": "확인 레이어"
+    },
+    {
+      "id": "fix",
+      "label": "해결 조치"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p_detect",
+      "label": "감지",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p_check",
+      "label": "3단계 확인",
+      "fromCol": 1,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p_escalate",
+      "label": "미해결",
+      "fromCol": 4,
+      "toCol": 4,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "err",
+    "q_target",
+    "q_service",
+    "q_network"
+  ],
+  "nodes": [
+    {
+      "id": "err",
+      "lane": "signal",
+      "col": 0,
+      "type": "security",
+      "label": "트래픽 실패",
+      "sublabel": "503 Service Unavailable",
+      "tag": "ERROR",
+      "width": 140
+    },
+    {
+      "id": "q_target",
+      "lane": "check",
+      "col": 1,
+      "type": "backend",
+      "label": "1. Target 헬스?",
+      "sublabel": "Target Group 상태",
+      "width": 140
+    },
+    {
+      "id": "q_service",
+      "lane": "check",
+      "col": 2,
+      "type": "backend",
+      "label": "2. Service 설정?",
+      "sublabel": "Listener·규칙",
+      "width": 140
+    },
+    {
+      "id": "q_network",
+      "lane": "check",
+      "col": 3,
+      "type": "backend",
+      "label": "3. 네트워크?",
+      "sublabel": "SG·VPC 연결",
+      "width": 140
+    },
+    {
+      "id": "fix_target",
+      "lane": "fix",
+      "col": 1,
+      "type": "cloud",
+      "label": "Target 상태 확인",
+      "sublabel": "Auto Healing",
+      "width": 140,
+      "tag": "YES"
+    },
+    {
+      "id": "fix_service",
+      "lane": "fix",
+      "col": 2,
+      "type": "cloud",
+      "label": "Listener 규칙 확인",
+      "sublabel": "AWS Console에서 수정",
+      "width": 140,
+      "tag": "YES"
+    },
+    {
+      "id": "fix_network",
+      "lane": "fix",
+      "col": 3,
+      "type": "cloud",
+      "label": "Security Group 확인",
+      "sublabel": "VPC Association 확인",
+      "width": 150,
+      "tag": "YES"
+    },
+    {
+      "id": "support",
+      "lane": "check",
+      "col": 4,
+      "type": "external",
+      "label": "AWS Support 티켓",
+      "sublabel": "3단계 모두 정상일 때",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "from": "err",
+      "to": "q_target"
+    },
+    {
+      "from": "q_target",
+      "to": "fix_target",
+      "role": "branch",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "q_target",
+      "to": "q_service"
+    },
+    {
+      "from": "q_service",
+      "to": "fix_service",
+      "role": "branch",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "q_service",
+      "to": "q_network"
+    },
+    {
+      "from": "q_network",
+      "to": "fix_network",
+      "role": "branch",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "q_network",
+      "to": "support",
+      "label": "NO",
+      "role": "error",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "간편한 도구",
+      "items": [
+        "CloudWatch Dashboard — Target 헬스·에러 메트릭 확인",
+        "AWS Console — Listener 규칙·Health Check 즉시 수정",
+        "VPC Reachability Analyzer — 네트워크 경로 자동 진단"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Istio 대비 단순함",
+      "items": [
+        "확인 레이어 5개 → 2-3개 (Target, Service, Network)",
+        "필요 도구 10+ → 2개 (AWS Console, CloudWatch)",
+        "평균 해결 시간 30-60분 → 5-15분"
+      ]
+    }
+  ]
+}

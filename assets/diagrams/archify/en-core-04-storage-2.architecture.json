@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "StorageClass and Dynamic Provisioning",
+    "output": "en-core-04-storage-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "admin-setup",
+        "label": "Administrator prepares the StorageClass",
+        "focus": [
+          "admin",
+          "sc"
+        ],
+        "note": "The cluster administrator first creates a StorageClass carrying the provisioner and its parameters."
+      },
+      {
+        "id": "dynamic-provisioning",
+        "label": "PVC request and dynamic provisioning",
+        "focus": [
+          "user",
+          "pvc",
+          "sc",
+          "pv"
+        ],
+        "note": "When a user's PVC references the StorageClass, a PV is created automatically and bound to the PVC."
+      },
+      {
+        "id": "pod-usage",
+        "label": "Pod uses the volume",
+        "focus": [
+          "pod",
+          "pvc",
+          "pv",
+          "storage"
+        ],
+        "note": "The Pod mounts the PVC as a volume, and the bound PV connects to the physical storage."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "Requests storage",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "Cluster Administrator",
+      "sublabel": "Provides storage",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "PVC · user's storage request",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "Provisioner · parameters",
+      "pos": [
+        600,
+        230
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "Mounts the PVC as a volume",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "backend",
+      "label": "PersistentVolume",
+      "sublabel": "PV · created dynamically",
+      "pos": [
+        600,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Physical Storage",
+      "sublabel": "EBS, NFS and other backends",
+      "pos": [
+        880,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "pvc",
+        "sc",
+        "pod",
+        "pv"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "admin-creates-sc",
+      "from": "admin",
+      "to": "sc",
+      "label": "Creates",
+      "labelDy": 24
+    },
+    {
+      "id": "user-creates-pvc",
+      "from": "user",
+      "to": "pvc",
+      "label": "Creates",
+      "labelDy": 24
+    },
+    {
+      "id": "pvc-refs-sc",
+      "from": "pvc",
+      "to": "sc",
+      "label": "References",
+      "variant": "dashed"
+    },
+    {
+      "id": "sc-provisions-pv",
+      "from": "sc",
+      "to": "pv",
+      "label": "Dynamic provisioning",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "pvc-binds-pv",
+      "from": "pvc",
+      "to": "pv",
+      "label": "Binds",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-uses-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "label": "Uses"
+    },
+    {
+      "id": "pv-connects-storage",
+      "from": "pv",
+      "to": "storage",
+      "label": "Connects"
+    }
+  ]
+}

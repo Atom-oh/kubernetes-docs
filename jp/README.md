@@ -168,6 +168,8 @@
 5. [VPC Lattice](./networking/02-vpc-lattice.md) | [クイズ](./quizzes/networking/02-vpc-lattice-quiz.md)
 6. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [クイズ](./quizzes/networking/03-aws-lb-controller-quiz.md)
 7. [Gateway API](./networking/04-gateway-api.md) | [クイズ](./quizzes/networking/04-gateway-api-quiz.md)
+8. [組織間 VPC 接続](./networking/05-cross-org-vpc-connectivity.md) | [クイズ](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+9. [Pod ネットワークのベンチマーク](./networking/06-pod-network-benchmark.md) | [クイズ](./quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [クイズ](./quizzes/service-mesh/02-istio-quiz.md)
@@ -284,6 +286,10 @@
    - [Grafana OnCall](./observability/alerting/03-grafana-oncall.md) | [クイズ](./quizzes/observability/alerting/03-grafana-oncall-quiz.md)
 6. [Grafana](./observability/grafana/README.md) | [クイズ](./quizzes/observability/grafana/grafana-quiz.md)
 7. [Observability Optimization Guide](./observability/09-observability-optimization.md) | [クイズ](./quizzes/observability/09-observability-optimization-quiz.md)
+
+### ストレージ
+1. [ストレージの概要](./storage/README.md)
+2. [EBS gp2 と gp3 の実測ベンチマーク比較](./storage/01-ebs-gp2-gp3-benchmark.md) | [Quiz](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
 
 ## ラボガイド
 

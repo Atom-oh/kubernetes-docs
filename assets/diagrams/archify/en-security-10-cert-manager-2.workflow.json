@@ -1,0 +1,293 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ACME Certificate Issuance Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "Certificate request",
+        "focus": [
+          "create",
+          "certreq"
+        ],
+        "note": "When a user creates a Certificate CR, the cert-manager controller detects it and creates a CertificateRequest."
+      },
+      {
+        "id": "acme",
+        "label": "ACME Order & Authorization",
+        "focus": [
+          "certreq",
+          "order",
+          "authz",
+          "challenge"
+        ],
+        "note": "An Order is created for the domain list; each domain goes through an Authorization that issues a Challenge to prove ownership."
+      },
+      {
+        "id": "solvers",
+        "label": "Challenge solvers",
+        "focus": [
+          "challenge",
+          "http01",
+          "dns01",
+          "verify"
+        ],
+        "note": "HTTP-01 proves ownership via /.well-known/acme-challenge/, DNS-01 via an _acme-challenge TXT record. Wildcards require DNS-01."
+      },
+      {
+        "id": "issue",
+        "label": "Issue and store",
+        "focus": [
+          "verify",
+          "finalize",
+          "issue",
+          "secret"
+        ],
+        "note": "After Let's Encrypt verifies ownership, the Order is finalized and the certificate issued; cert-manager stores it as tls.crt + tls.key."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "User"
+        },
+        "backend": {
+          "label": "cert-manager"
+        },
+        "cloud": {
+          "label": "ACME resources"
+        },
+        "security": {
+          "label": "Challenge solvers"
+        },
+        "external": {
+          "label": "Let's Encrypt"
+        },
+        "database": {
+          "label": "Secret"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "req",
+      "label": "1. User · cert-manager"
+    },
+    {
+      "id": "acme",
+      "label": "2. ACME protocol"
+    },
+    {
+      "id": "solvers",
+      "label": "3. Challenge solvers"
+    },
+    {
+      "id": "le",
+      "label": "4. Let's Encrypt"
+    },
+    {
+      "id": "output",
+      "label": "5. Result"
+    }
+  ],
+  "mainPath": [
+    "create",
+    "certreq",
+    "order",
+    "authz",
+    "challenge",
+    "http01",
+    "verify",
+    "finalize",
+    "issue",
+    "secret"
+  ],
+  "nodes": [
+    {
+      "id": "create",
+      "lane": "req",
+      "col": 0,
+      "width": 200,
+      "type": "frontend",
+      "label": "Create Certificate CR",
+      "sublabel": "kubectl apply"
+    },
+    {
+      "id": "certreq",
+      "lane": "req",
+      "col": 1,
+      "width": 200,
+      "type": "backend",
+      "label": "Create CertificateRequest",
+      "sublabel": "Controller detects Certificate"
+    },
+    {
+      "id": "order",
+      "lane": "acme",
+      "col": 1,
+      "width": 160,
+      "type": "cloud",
+      "label": "Create Order",
+      "sublabel": "domain list"
+    },
+    {
+      "id": "authz",
+      "lane": "acme",
+      "col": 2,
+      "width": 160,
+      "type": "cloud",
+      "label": "Authorization",
+      "sublabel": "per-domain authorization"
+    },
+    {
+      "id": "challenge",
+      "lane": "acme",
+      "col": 3,
+      "width": 160,
+      "type": "cloud",
+      "label": "Challenge",
+      "sublabel": "prove ownership"
+    },
+    {
+      "id": "finalize",
+      "lane": "acme",
+      "col": 5,
+      "width": 160,
+      "type": "cloud",
+      "label": "Finalize",
+      "sublabel": "request issuance"
+    },
+    {
+      "id": "http01",
+      "lane": "solvers",
+      "col": 3,
+      "width": 160,
+      "type": "security",
+      "label": "HTTP-01",
+      "sublabel": "/.well-known/acme-challenge/"
+    },
+    {
+      "id": "dns01",
+      "lane": "solvers",
+      "col": 4,
+      "width": 160,
+      "type": "security",
+      "label": "DNS-01",
+      "sublabel": "_acme-challenge TXT record"
+    },
+    {
+      "id": "verify",
+      "lane": "le",
+      "col": 4,
+      "width": 200,
+      "type": "external",
+      "label": "Verify domain ownership",
+      "sublabel": "HTTP request or DNS query"
+    },
+    {
+      "id": "issue",
+      "lane": "le",
+      "col": 5,
+      "width": 160,
+      "type": "external",
+      "label": "Issue certificate",
+      "sublabel": "returns signed certificate"
+    },
+    {
+      "id": "secret",
+      "lane": "output",
+      "col": 5,
+      "width": 160,
+      "type": "database",
+      "label": "Store in Secret",
+      "sublabel": "tls.crt + tls.key"
+    }
+  ],
+  "edges": [
+    {
+      "id": "create-certreq",
+      "from": "create",
+      "to": "certreq"
+    },
+    {
+      "id": "certreq-order",
+      "from": "certreq",
+      "to": "order"
+    },
+    {
+      "id": "order-authz",
+      "from": "order",
+      "to": "authz"
+    },
+    {
+      "id": "authz-challenge",
+      "from": "authz",
+      "to": "challenge"
+    },
+    {
+      "id": "challenge-http01",
+      "from": "challenge",
+      "to": "http01",
+      "role": "branch"
+    },
+    {
+      "id": "challenge-dns01",
+      "from": "challenge",
+      "to": "dns01",
+      "role": "branch"
+    },
+    {
+      "id": "http01-verify",
+      "from": "http01",
+      "to": "verify"
+    },
+    {
+      "id": "dns01-verify",
+      "from": "dns01",
+      "to": "verify"
+    },
+    {
+      "id": "verify-finalize",
+      "from": "verify",
+      "to": "finalize",
+      "label": "success",
+      "variant": "emphasis"
+    },
+    {
+      "id": "finalize-issue",
+      "from": "finalize",
+      "to": "issue",
+      "variant": "emphasis"
+    },
+    {
+      "id": "issue-secret",
+      "from": "issue",
+      "to": "secret",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "HTTP-01 solver",
+      "items": [
+        "Proves domain ownership through a web server (Ingress controller)",
+        "The /.well-known/acme-challenge/ token path must be reachable on port 80"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "DNS-01 solver",
+      "items": [
+        "Proves domain ownership with a DNS TXT record",
+        "Required for wildcard certificates",
+        "On EKS, Route53 + IRSA manages records without static credentials"
+      ]
+    }
+  ]
+}

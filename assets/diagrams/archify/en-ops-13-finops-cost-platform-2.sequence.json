@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Resource changes through VPA proposals and owner review",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      600
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "cronjob",
+      "type": "cloud",
+      "label": "Collection",
+      "sublabel": "read-only"
+    },
+    {
+      "id": "vpa",
+      "type": "backend",
+      "label": "VPA",
+      "sublabel": "recommender"
+    },
+    {
+      "id": "script",
+      "type": "backend",
+      "label": "Script",
+      "sublabel": "proposal JSON"
+    },
+    {
+      "id": "gitci",
+      "type": "external",
+      "label": "Git / CI",
+      "sublabel": "PR · lint checks"
+    },
+    {
+      "id": "lead",
+      "type": "external",
+      "label": "Owner",
+      "sublabel": "manifests and SLOs"
+    },
+    {
+      "id": "argocd",
+      "type": "cloud",
+      "label": "ArgoCD",
+      "sublabel": "GitOps deploy"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 260,
+      "label": "Read and calculate"
+    },
+    {
+      "from": 275,
+      "to": 425,
+      "label": "Owner prepares and reviews changes"
+    },
+    {
+      "from": 440,
+      "to": 505,
+      "label": "Approved rollout and observation"
+    }
+  ],
+  "messages": [
+    {
+      "id": "query",
+      "from": "cronjob",
+      "to": "vpa",
+      "y": 190,
+      "label": "read recommendations and workloads"
+    },
+    {
+      "id": "recs",
+      "from": "vpa",
+      "to": "script",
+      "y": 235,
+      "label": "match containers by name",
+      "variant": "return"
+    },
+    {
+      "id": "proposal",
+      "from": "script",
+      "to": "lead",
+      "y": 295,
+      "label": "JSON: request reduction at least 20%",
+      "variant": "emphasis",
+      "note": "No automatic PR creation"
+    },
+    {
+      "id": "prepare",
+      "from": "lead",
+      "to": "gitci",
+      "y": 355,
+      "label": "edit manifests, PR and performance tests"
+    },
+    {
+      "id": "approve",
+      "from": "lead",
+      "to": "gitci",
+      "y": 400,
+      "label": "review, approve and merge",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync",
+      "from": "gitci",
+      "to": "argocd",
+      "y": 465,
+      "label": "sync, then observe SLOs"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "script",
+      "from": 230,
+      "to": 300,
+      "type": "backend"
+    },
+    {
+      "participant": "lead",
+      "from": 290,
+      "to": 405,
+      "type": "external"
+    },
+    {
+      "participant": "gitci",
+      "from": 350,
+      "to": 470,
+      "type": "external"
+    },
+    {
+      "participant": "argocd",
+      "from": 460,
+      "to": 500,
+      "type": "cloud"
+    }
+  ]
+}

@@ -4,160 +4,146 @@
 
 ## 객관식 문제
 
-### 1. `Pending` 파드의 `FailedScheduling` 이벤트가 다음과 같습니다. 이 메시지를 올바르게 해석한 것은?
+### 1. FailedScheduling에 CPU 부족 1개, 메모리 부족 1개, affinity 불일치 6개, taint 불일치 8개가 기록됐습니다. 올바른 해석은?
 
-```
-0/15 nodes are available: 1 Insufficient cpu, 1 Insufficient memory,
-6 node(s) didn't match Pod's node affinity/selector, 8 node(s) had untolerated taint(s).
-```
-
-- A) 15개 노드 모두 CPU와 메모리가 부족하다
-- B) 이 파드가 갈 수 있는 노드는 1개뿐이고, 그 노드의 CPU·메모리가 부족하다
-- C) 스케줄러가 고장나서 아무 노드도 평가하지 못했다
-- D) 8개 노드에 파드가 너무 많아(`Too many pods`) 스케줄이 실패했다
+- A) 실패 이유별 집계이므로 중복 가능성을 고려하고 노드별 상태를 대조한다
+- B) 반드시 동일한 노드 하나만 CPU와 메모리가 부족하다
+- C) 15개 노드 모두 CPU가 부족하다
+- D) 스케줄러가 노드를 평가하지 않았다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 이 파드가 갈 수 있는 노드는 1개뿐이고, 그 노드의 CPU·메모리가 부족하다**
+**정답: A) 실패 이유별 집계이므로 중복 가능성을 고려하고 노드별 상태를 대조한다**
 
-**설명:**
-스케줄러는 노드별 탈락 이유를 합산해서 보여줍니다. 8개는 toleration이 없는 taint 때문에, 6개는 nodeSelector/affinity 라벨 불일치 때문에 탈락했고, 남은 1개 노드는 CPU와 메모리가 모자랐습니다. 즉 스케줄 제약을 만족하는 노드가 1개뿐인데 그 노드가 꽉 찬 상황이므로, toleration/라벨을 넓히거나 해당 조건의 노드를 늘려야(Karpenter라면 NodePool requirements에 라벨 키가 있어야) 합니다.
+스케줄러는 각 노드의 여러 실패 reason을 집계할 수 있습니다. 요약 숫자만으로 노드 집합을 서로 배타적으로 나누거나 특정 노드를 확정하지 않습니다. nodeName과 PodScheduled를 확인해 이미지·CNI 초기화 대기도 구분합니다.
 
 </details>
 
-### 2. 프라이빗 ECR 이미지를 쓰는 파드가 `ImagePullBackOff`이고, `describe` 이벤트에 `Failed to pull image "...dkr.ecr...": ... 401 Unauthorized` 가 보입니다. 가장 먼저 의심할 원인은?
+### 2. 일반 EC2 워커에서 ECR pull이 401 Unauthorized로 실패합니다. 먼저 확인할 것은?
 
-- A) 이미지 태그 오타
-- B) 노드 IAM 역할에 ECR pull 권한(`AmazonEC2ContainerRegistryPullOnly` 또는 `ReadOnly`)이 없음
-- C) Docker Hub rate limit(`toomanyrequests`)
-- D) 프라이빗 서브넷에 NAT/VPC 엔드포인트가 없음
+- A) Docker Hub rate limit
+- B) kubelet 이미지 인증 경로와 노드 역할의 ECR 권한
+- C) 컨테이너의 liveness 경로
+- D) 애플리케이션의 S3 버킷 이름
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 노드 IAM 역할에 ECR pull 권한(`AmazonEC2ContainerRegistryPullOnly` 또는 `ReadOnly`)이 없음**
+**정답: B) kubelet 이미지 인증 경로와 노드 역할의 ECR 권한**
 
-**설명:**
-`Failed to pull image` 뒤에 붙는 문구가 곧 진단입니다. `401 Unauthorized` / `no basic auth credentials`는 레지스트리 인증 실패이며, ECR은 kubelet이 노드 IAM 역할로 인증하므로 노드 역할의 ECR pull 권한을 확인해야 합니다. 태그 오타는 `not found` / `manifest unknown`, 네트워크 경로 문제는 `dial tcp ... i/o timeout`, Docker Hub 제한은 `toomanyrequests`로 나타납니다.
+애플리케이션의 IRSA 역할을 이미지 pull 주체와 혼동하지 않습니다. Fargate는 Pod 실행 역할을 확인합니다. crictl pull은 kubelet credential provider나 imagePullSecrets를 자동 재사용하지 않으므로 인증 경로가 같은 테스트가 아닙니다.
 
 </details>
 
-### 3. `CrashLoopBackOff` 파드의 `lastState.terminated`가 `Reason: OOMKilled`, `Exit Code: 137`입니다. 다음 설명 중 옳은 것은?
+### 3. 컨테이너 종료 reason이 OOMKilled, exit code가 137일 때 올바른 조치는?
 
-- A) 앱이 스스로 오류를 감지해 exit 1로 종료했다
-- B) 메모리 limit을 초과해 커널이 SIGKILL로 컨테이너를 죽였으며, limit 상향 또는 메모리 누수 수정이 필요하다
-- C) SIGTERM을 받아 정상 종료(graceful shutdown)된 것이므로 조치가 필요 없다
-- D) 이미지의 아키텍처(arm64/amd64)가 노드와 맞지 않는다
+- A) 시간이 오래 지났으면 반드시 메모리 누수다
+- B) 컨테이너 limit·노드 메모리 압박·사용량 시계열과 커널 이벤트를 확인한다
+- C) 항상 limit을 무조건 두 배로 늘린다
+- D) SIGTERM 정상 종료이므로 무시한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 메모리 limit을 초과해 커널이 SIGKILL로 컨테이너를 죽였으며, limit 상향 또는 메모리 누수 수정이 필요하다**
+**정답: B) 컨테이너 limit·노드 메모리 압박·사용량 시계열과 커널 이벤트를 확인한다**
 
-**설명:**
-exit code 137은 SIGKILL(128+9)입니다. Reason이 `OOMKilled`이면 메모리 limit 초과로 커널 OOM killer가 죽인 것이고, 같은 137이라도 Reason이 `Error`라면 liveness 실패 후 `terminationGracePeriodSeconds` 안에 종료되지 않아 강제 종료된 경우처럼 다른 이유의 SIGKILL입니다. SIGTERM 정상 종료는 143으로, 아키텍처 불일치는 셸 엔트리포인트라면 126(`cannot execute binary file: Exec format error`), 바이너리를 직접 실행하는 이미지라면 Reason `StartError`로 나타납니다. 죽기 직전 로그는 `kubectl logs <pod> -c <container> --previous`로 봅니다.
+137은 보통 SIGKILL(128+9)을 나타내며 OOMKilled가 OOM 판단의 단서입니다. 이것만으로 누수나 컨테이너 limit 초과만을 확정하지 않습니다. 137이라도 다른 reason이면 별도 강제 종료 원인을 확인하고, SIGTERM 처리는 앱에 따라 143 외 코드로 종료할 수도 있습니다.
 
 </details>
 
-### 4. 파드가 모두 `1/1 Running`인데 Service로 요청이 가지 않습니다. `kubectl get endpointslices -l kubernetes.io/service-name=<svc>`의 ENDPOINTS 열이 비어 있습니다. 가장 가능성 높은 원인은?
+### 4. EndpointSlice의 ENDPOINTS 열에 IP가 보이면 어떤 결론을 낼 수 있나요?
 
-- A) CoreDNS 파드가 죽어 이름 풀이가 안 된다
-- B) Service의 `selector`가 파드 라벨과 일치하지 않는다
-- C) `targetPort`가 컨테이너가 listen하는 포트와 다르다
-- D) NetworkPolicy가 ingress를 차단한다
+- A) 모든 파드가 Ready다
+- B) Service 요청은 반드시 성공한다
+- C) 주소가 존재하며 ready·serving·terminating 조건은 별도로 확인해야 한다
+- D) NetworkPolicy가 모두 허용되어 있다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Service의 `selector`가 파드 라벨과 일치하지 않는다**
+**정답: C) 주소가 존재하며 ready·serving·terminating 조건은 별도로 확인해야 한다**
 
-**설명:**
-EndpointSlice는 Service 셀렉터에 매칭되는 **Ready 파드**의 IP 목록입니다. 파드가 모두 Ready인데도 비어 있다면 셀렉터와 파드 라벨이 다르다는 뜻입니다(Helm 차트에서 `selectorLabels`와 `podLabels`가 갈라진 경우가 흔함). `targetPort` 오류는 IP는 있는데 `connection refused`, NetworkPolicy 차단은 IP는 있는데 타임아웃, CoreDNS 장애는 `NXDOMAIN`/이름 풀이 실패로 나타납니다. Kubernetes 1.33+에서는 `kubectl get endpoints`가 deprecated 경고를 내므로 EndpointSlice로 확인합니다.
+not-ready 파드도 ready=false인 주소로 포함될 수 있습니다. Pod의 컨테이너 READY 개수와 Pod Ready 조건도 구분합니다. 주소가 없다면 selector·네임스페이스·수동 관리 여부를 확인하며, selector가 없는 Service에는 별도 EndpointSlice 관리가 필요할 수 있습니다.
 
 </details>
 
-### 5. 노드 컨디션에 `DiskPressure=True (KubeletHasDiskPressure)`가 보입니다. 이때 노드 컨트롤러(kube-controller-manager)가 노드에 자동으로 추가하는 taint는?
+### 5. DiskPressure=True에 대응하는 자동 taint는?
 
-- A) `node.kubernetes.io/unreachable`
-- B) `node.kubernetes.io/not-ready`
-- C) `node.kubernetes.io/disk-pressure`
-- D) `node.kubernetes.io/memory-pressure`
+- A) node.kubernetes.io/unreachable
+- B) node.kubernetes.io/not-ready
+- C) node.kubernetes.io/disk-pressure
+- D) node.kubernetes.io/memory-pressure
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) `node.kubernetes.io/disk-pressure`**
+**정답: C) node.kubernetes.io/disk-pressure**
 
-**설명:**
-노드 컨디션마다 대응하는 자동 taint가 있습니다. `DiskPressure` → `node.kubernetes.io/disk-pressure`, `MemoryPressure` → `node.kubernetes.io/memory-pressure`, `PIDPressure` → `node.kubernetes.io/pid-pressure`, `Ready=False` → `node.kubernetes.io/not-ready`, `Ready=Unknown`(kubelet이 상태 보고를 멈춤, reason `NodeStatusUnknown`) → `node.kubernetes.io/unreachable`. 그래서 노드는 `Ready`인데 새 파드가 `node(s) had untolerated taint(s)`로 그 노드를 피하는 증상이 생깁니다. DiskPressure의 흔한 원인은 이미지 캐시·컨테이너 로그가 루트 볼륨을 채운 것이며, 파드는 `The node was low on resource: ephemeral-storage`로 `Evicted`됩니다.
+노드가 Ready여도 별도의 압박 조건 때문에 새 파드가 스케줄되지 않을 수 있습니다. 디스크 바이트뿐 아니라 inode와 실제 파일시스템 구성을 확인합니다. Ready=Unknown은 unreachable, Ready=False는 not-ready와 관련됩니다.
 
 </details>
 
-### 6. PVC가 `Pending`이고 `describe pvc` 이벤트에 `WaitForFirstConsumer: waiting for first consumer to be created before binding` 만 보입니다. 아직 이 PVC를 쓰는 파드는 배포하지 않았습니다. 올바른 판단은?
+### 6. WaitForFirstConsumer StorageClass를 사용하는 PVC가 Pending이며 아직 소비 파드를 만들지 않았습니다. 올바른 판단은?
 
-- A) StorageClass 이름 오타이므로 `kubectl get sc`로 이름을 확인해야 한다
-- B) EBS CSI 컨트롤러의 IAM 권한이 부족하다
-- C) 정상 동작이다 — `volumeBindingMode: WaitForFirstConsumer`는 파드가 스케줄될 때까지 볼륨을 만들지 않는다
-- D) PV가 다른 AZ에 있어 `volume node affinity conflict`가 난 것이다
+- A) 반드시 CSI IAM 권한 오류다
+- B) StorageClass 이름이 gp3이면 무조건 잘못됐다
+- C) 정상 대기일 수 있다. 소비 파드의 스케줄링 조건에 맞춰 바인딩·프로비저닝한다
+- D) PV를 즉시 삭제한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 정상 동작이다 — `volumeBindingMode: WaitForFirstConsumer`는 파드가 스케줄될 때까지 볼륨을 만들지 않는다**
+**정답: C) 정상 대기일 수 있다. 소비 파드의 스케줄링 조건에 맞춰 바인딩·프로비저닝한다**
 
-**설명:**
-EKS가 기본 제공하는 `gp2` StorageClass는 `WaitForFirstConsumer` 바인딩 모드를 씁니다. EBS CSI 드라이버용으로 직접 만드는 `gp3` StorageClass는 `volumeBindingMode: WaitForFirstConsumer`를 명시했을 때만 그렇게 동작합니다 — API 기본값은 `Immediate`입니다 — 검증 클러스터의 `gp3`는 플레이북의 `kubectl get storageclass` 출력처럼 명시되어 있습니다. 파드가 어느 AZ에 스케줄될지 정해진 뒤 그 AZ에 EBS 볼륨을 만들기 위한 의도된 지연이므로, 파드가 없는 동안 PVC가 `Pending`인 것은 문제가 아닙니다. StorageClass 오타는 `storageclass.storage.k8s.io "<name>" not found`, IAM 권한 부족은 `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied`, AZ 불일치는 파드 쪽 `FailedScheduling`에 `volume node affinity conflict`로 각각 다르게 나타납니다.
+동작은 StorageClass 이름이 아니라 volumeBindingMode로 결정됩니다. API 기본값은 Immediate이며, 실제 값을 확인해야 합니다. 소비 파드도 Pending이면 FailedScheduling과 토폴로지 제약을 함께 확인합니다. PVC 삭제는 진단의 기본 조치가 아닙니다.
 
 </details>
 
-### 7. 파드 안에서 AWS API 호출이 `AccessDenied`인데, 거부된 주체가 서비스 계정 역할이 아니라 노드 IAM 역할입니다. `kubectl get sa`에는 `eks.amazonaws.com/role-arn` 어노테이션이 있지만, 파드 env에 `AWS_ROLE_ARN`/`AWS_WEB_IDENTITY_TOKEN_FILE`이 없습니다. 원인과 조치는?
+### 7. 파드 생성 후 서비스 계정에 IRSA 어노테이션을 추가했고 기존 파드에 주입 필드가 없습니다. 올바른 다음 단계는?
 
-- A) IAM 역할의 권한 정책이 부족하다 → 정책에 액션 추가
-- B) 어노테이션이 파드 생성 **이후**에 붙어 webhook이 자격 증명을 주입하지 못했다 → `kubectl rollout restart`
-- C) OIDC provider가 없다 → 클러스터 재생성
-- D) EKS Pod Identity 에이전트가 죽었다 → 에이전트 재시작
+- A) 클러스터 재생성
+- B) 대상 serviceAccountName과 webhook 설정을 확인하고 영향 범위를 검토해 파드를 재생성한다
+- C) 노드 IAM 역할에 AdministratorAccess 추가
+- D) 서비스 계정 이름과 관계없이 기다리면 기존 env가 바뀐다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 어노테이션이 파드 생성 이후에 붙어 webhook이 자격 증명을 주입하지 못했다 → `kubectl rollout restart`**
+**정답: B) 대상 serviceAccountName과 webhook 설정을 확인하고 영향 범위를 검토해 파드를 재생성한다**
 
-**설명:**
-IRSA는 pod-identity-webhook이 **파드 생성 시점**에 `AWS_ROLE_ARN`과 `AWS_WEB_IDENTITY_TOKEN_FILE` env(및 토큰 볼륨)를 주입하는 방식입니다. 주입 흔적이 전혀 없으면 파드가 어노테이션보다 먼저 만들어졌거나 SA 이름이 다른 경우이며, SDK는 자격 증명을 찾지 못해 노드 역할로 폴백합니다. 파드를 다시 만들면 해결됩니다. 권한 정책 부족(A)은 env는 정상인데 특정 API만 거부되는 패턴이고, Pod Identity(D)는 `AWS_CONTAINER_CREDENTIALS_FULL_URI` env로 구분됩니다.
+주입은 파드 생성 시 이루어지므로 기존 파드가 자동 변경되지는 않습니다. 재생성 후 주입과 실제 사용 주체를 확인합니다. SDK의 다른 자격 증명 공급자가 우선할 수 있고 IMDS 접근이 차단되면 노드 역할 폴백도 불가능합니다.
 
 </details>
 
-### 8. 파드가 `Pending`인데 새 NodeClaim이 생기지 않고, Karpenter 이벤트에 `all available instance types exceed limits for nodepool "graviton"` 이 있습니다. 원인은?
+### 8. Karpenter가 all available instance types exceed limits for nodepool을 보고했습니다. 무엇을 뜻하나요?
 
-- A) 파드의 nodeSelector 라벨 키가 NodePool requirements에 없다
-- B) NodePool의 taint에 대한 toleration이 없다
-- C) NodePool `spec.limits`(cpu/memory)에 이미 도달했다
-- D) 해당 AZ에 EC2 용량이 없다(`InsufficientInstanceCapacity`)
+- A) 현재 사용량이 limit과 정확히 같아야만 발생한다
+- B) 후보 인스턴스 추가 시 남은 NodePool 한도를 초과한다
+- C) 어떤 EC2 타입도 해당 리전에 존재하지 않는다
+- D) Pod에 toleration이 반드시 없다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) NodePool `spec.limits`(cpu/memory)에 이미 도달했다**
+**정답: B) 후보 인스턴스 추가 시 남은 NodePool 한도를 초과한다**
 
-**설명:**
-Karpenter는 파드 하나에 대해 모든 NodePool을 순회하며 탈락 이유를 이벤트로 남깁니다. `exceed limits`는 어떤 인스턴스를 추가해도 NodePool의 `spec.limits`를 넘게 된다는 뜻이며, `kubectl get nodepool -o custom-columns=...spec.limits.cpu,...status.resources.cpu`로 보면 limit과 사용량이 같습니다. 라벨 키 누락은 `label "<key>" does not have known values`, toleration 누락은 `did not tolerate <key>=<value>:NoSchedule`, EC2 용량 부족은 Karpenter 컨트롤러 로그의 `InsufficientInstanceCapacity`로 각각 나타납니다.
+현재 CPU 7, limit 8이고 최소 후보가 2 CPU라면 사용량이 한도보다 작아도 발생할 수 있습니다. 다른 리소스 한도·DaemonSet 오버헤드·requirements도 함께 확인합니다. Nominated 이벤트만으로 노드 또는 파드 준비 완료를 판단하지 않습니다.
 
 </details>
 
-### 9. EKS 노드의 파드들이 `ContainerCreating`에서 멈추고 이벤트에 `FailedCreatePodSandBox ... plugin type="aws-cni" ... failed to assign an IP address to container` 가 찍힙니다. 서브넷의 `AvailableIpAddressCount`는 한 자릿수이고, `aws-node`는 VPC CNI 기본값(`WARM_ENI_TARGET=1`, `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` 미설정)으로 돌고 있습니다. 옳은 설명은?
+### 9. secondary-IP 모드에서 WARM_IP_TARGET=3, MINIMUM_IP_TARGET=6이고 사용 중 IP가 1개입니다. 목표를 올바르게 해석한 것은?
 
-- A) 기본값 `WARM_ENI_TARGET=1`은 노드마다 여분 ENI 한 장 분량의 IP를 통째로 미리 붙여 두므로, 파드 수보다 훨씬 일찍 서브넷이 고갈된다. `WARM_IP_TARGET`/`MINIMUM_IP_TARGET`을 설정하면 warm-ENI 규칙보다 우선 적용되어 그 여유 풀이 줄어든다
-- B) `WARM_ENI_TARGET`이 설정되어 있는 동안에는 `WARM_IP_TARGET`이 무시되므로, `WARM_ENI_TARGET=0`만 넣으면 충분하다
-- C) `ENABLE_PREFIX_DELEGATION=true`는 ENI를 더 붙여서 IP를 늘리므로 어떤 인스턴스 패밀리에서도 동작한다
-- D) `FailedCreatePodSandBox`는 스케줄러가 노드를 못 찾았다는 뜻이므로 `Too many pods`와 같은 실패다
+- A) 총 IP는 반드시 4개다
+- B) 두 조건을 만족하려면 총 6개, 여분 5개가 필요할 수 있다
+- C) MINIMUM_IP_TARGET은 여분 IP가 최소 6개라는 뜻이다
+- D) Too many pods는 서브넷 고갈을 확정한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: A) 기본값 `WARM_ENI_TARGET=1`은 노드마다 여분 ENI 한 장 분량의 IP를 통째로 미리 붙여 두므로, 파드 수보다 훨씬 일찍 서브넷이 고갈된다. `WARM_IP_TARGET`/`MINIMUM_IP_TARGET`을 설정하면 warm-ENI 규칙보다 우선 적용되어 그 여유 풀이 줄어든다**
+**정답: B) 두 조건을 만족하려면 총 6개, 여분 5개가 필요할 수 있다**
 
-**설명:**
-기본값 `WARM_ENI_TARGET=1`만 있으면 ipamd는 노드마다 여분 ENI 한 장을 통째로 붙여 둡니다(m5.xlarge는 ENI당 IP 15개). 작은 서브넷에서는 파드보다 이렇게 선점된 IP가 먼저 바닥납니다. `WARM_IP_TARGET`/`MINIMUM_IP_TARGET`을 설정하면 warm-ENI 규칙을 덮어쓰는데, 플레이북의 검증 클러스터는 `WARM_IP_TARGET=3`, `MINIMUM_IP_TARGET=6`으로, 노드는 파드가 쓰는 것 외에 여분 IP를 3개만 쥐고 전체 할당 IP는 6개 아래로 내려가지 않습니다(`MINIMUM_IP_TARGET`은 사용 중 + 여분을 합친 전체 개수의 하한이며, 여분 개수의 하한이 아닙니다). B는 우선순위가 거꾸로입니다. 프리픽스 위임(C)은 ENI를 추가하는 것이 아니라 기존 ENI 슬롯에 /28 프리픽스를 할당하는 방식이고, Nitro 기반 인스턴스와 max-pods 재계산이 필요합니다. D는 두 증상을 혼동한 것입니다. `FailedCreatePodSandBox`는 스케줄링이 끝난 뒤 kubelet이 CNI에 IP를 요청했는데 노드에 남은 IP가 없을 때 발생하고, `Too many pods`는 `allocatable.pods`에 이미 도달해 스케줄러가 노드를 탈락시키는 것입니다. 근본 원인(내줄 IP가 없음)은 같지만 발생 단계가 다릅니다.
+warm은 여분 목표, minimum은 사용 중과 여분을 합한 전체 하한입니다. 값은 IPAM 조정·ENI 한계·prefix 할당 단위에 따라 달라집니다. WARM_ENI_TARGET보다 양수 IP 목표가 우선하며, prefix 모드는 연속된 /28 블록과 지원 인스턴스를 확인합니다. max-pods 상한과 실제 IP 고갈은 별도 진단합니다.
 
 </details>

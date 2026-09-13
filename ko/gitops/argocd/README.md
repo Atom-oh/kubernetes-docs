@@ -1,7 +1,7 @@
 # ArgoCD
 
-> **지원 버전**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **마지막 업데이트**: 2026년 8월 31일
+> **지원 버전**: Argo CD 3.5.2, Argo Rollouts 1.10.0 (검토 기준)
+> **마지막 업데이트**: 2026년 9월 11일
 
 ## 목차
 
@@ -15,7 +15,7 @@
 
 ## ArgoCD란?
 
-ArgoCD는 Kubernetes를 위한 선언적 GitOps 지속적 배포(Continuous Delivery) 도구입니다. CNCF(Cloud Native Computing Foundation) Graduated 프로젝트로, Git 저장소에 정의된 애플리케이션 상태를 Kubernetes 클러스터에 자동으로 동기화합니다.
+ArgoCD는 Kubernetes를 위한 선언적 GitOps 지속적 배포(Continuous Delivery) 도구입니다. CNCF Graduated 프로젝트인 Argo의 구성 요소로, Git 저장소에 정의된 애플리케이션 상태를 Kubernetes 클러스터에 자동으로 동기화합니다.
 
 ArgoCD는 Git 저장소를 "진실의 원천(Single Source of Truth)"으로 사용하여:
 - 애플리케이션 배포를 자동화
@@ -33,9 +33,12 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: my-app
+  namespace: argocd
 spec:
+  project: default
   source:
     repoURL: https://github.com/myorg/myapp
+    targetRevision: main
     path: manifests
   destination:
     server: https://kubernetes.default.svc
@@ -44,9 +47,9 @@ spec:
 
 ### 2. 자동화된 동기화
 
-- Git 변경 시 자동 배포
+- 자동 sync 정책을 활성화한 경우 Git 변경을 적용
 - 드리프트(Drift) 감지 및 자체 치유
-- 수동 변경 자동 복구
+- selfHeal을 활성화한 경우 비교 대상의 수동 변경을 조정
 
 ### 3. 멀티 클러스터 관리
 
@@ -71,7 +74,9 @@ spec:
 
 ArgoCD는 Kubernetes 컨트롤러 패턴을 따르며, 여러 구성 요소로 이루어져 있습니다:
 
-![외부 Git·Helm·OCI 저장소와 인증 시스템이 ArgoCD의 리포 서버·애플리케이션 컨트롤러·API 서버를 거쳐 여러 Kubernetes 클러스터로 동기화되는 아키텍처를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-0.png)
+![외부 Git·Helm·OCI 저장소와 Identity Provider가 ArgoCD의 Repo Server·Application Controller·API Server·Dex·Redis·ApplicationSet/Notifications 컨트롤러를 거쳐 여러 Kubernetes 클러스터로 동기화되는 아키텍처를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-overview-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-overview-0.html)
 
 ### 핵심 컴포넌트
 
@@ -80,14 +85,16 @@ ArgoCD는 Kubernetes 컨트롤러 패턴을 따르며, 여러 구성 요소로 �
 | **API Server** | 인터페이스 | gRPC/REST API 제공, 인증/인가 처리 |
 | **Application Controller** | 핵심 로직 | 애플리케이션 상태 모니터링 및 동기화 |
 | **Repo Server** | 매니페스트 생성 | Git 저장소에서 매니페스트 렌더링 |
-| **Redis** | 캐싱 | 매니페스트 캐시, 세션 저장 |
-| **Dex** | SSO | OIDC/SAML/LDAP 인증 브로커 |
+| **Redis** | 캐싱 | 매니페스트·상태 캐시 |
+| **Dex** | SSO | OIDC 브로커; 지원 커넥터로 다른 IdP 연동 |
 | **ApplicationSet Controller** | 대규모 배포 | 템플릿 기반 Application 생성 |
 | **Notifications Controller** | 알림 | Slack, Email 등 알림 발송 |
 
 ### 데이터 흐름
 
-![사용자의 Application 생성/수정 요청이 API 서버와 애플리케이션 컨트롤러를 거쳐 리포 서버에서 Git 소스를 렌더링하고, Kubernetes의 현재 상태와 비교한 뒤 동기화를 적용하고 결과가 사용자에게 돌아오는 과정을 시간 순으로 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-1.png)
+![사용자의 Application 생성/수정 요청이 API 서버와 애플리케이션 컨트롤러를 거쳐 리포 서버에서 Git 소스를 렌더링하고, Kubernetes의 현재 상태와 비교한 뒤 동기화를 적용하고 결과가 사용자에게 돌아오는 과정을 시간 순으로 보여준다.](../../.gitbook/assets/ko-gitops-argocd-overview-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-overview-1.html)
 
 ## 핵심 개념
 
@@ -114,6 +121,8 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
 ```
 
 ### AppProject
@@ -131,7 +140,7 @@ spec:
   sourceRepos:
     - 'https://github.com/myorg/*'
   destinations:
-    - namespace: '*'
+    - namespace: production
       server: https://prod-cluster.example.com
   clusterResourceWhitelist:
     - group: ''
@@ -140,25 +149,36 @@ spec:
 
 ### ApplicationSet
 
-템플릿을 사용하여 여러 Application을 자동 생성합니다.
+템플릿을 사용하여 여러 Application을 자동 생성합니다. 아래 selector는 등록된 cluster Secret의 `environment: demo` 라벨에만 일치합니다. 생성된 Application은 별도 자동 sync 정책이 없으면 수동으로 동기화합니다.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: cluster-apps
+  name: demo-cluster-apps
+  namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
-    - clusters: {}
+  - clusters:
+      selector:
+        matchLabels:
+          environment: demo
   template:
     metadata:
-      name: '{{name}}-app'
+      name: '{{.nameNormalized}}-guestbook'
     spec:
+      project: default
       source:
-        repoURL: https://github.com/myorg/apps
-        path: '{{metadata.labels.env}}'
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: HEAD
+        path: guestbook
       destination:
-        server: '{{server}}'
+        server: '{{.server}}'
+        namespace: guestbook
+      syncPolicy:
+        syncOptions: [CreateNamespace=true]
 ```
 
 ### 동기화 상태
@@ -173,7 +193,7 @@ spec:
 
 | 상태 | 설명 |
 |------|------|
-| **Healthy** | 모든 리소스 정상 |
+| **Healthy** | 설정된 헬스 체크가 정상으로 판정한 상태 (미정의 CR의 정상 보장은 아님) |
 | **Progressing** | 배포 진행 중 |
 | **Degraded** | 일부 리소스 비정상 |
 | **Suspended** | 일시 중지됨 |
@@ -181,58 +201,31 @@ spec:
 
 ## 버전 지원 정보
 
-### 2026년 8월 업데이트: ArgoCD v3.5.2 / v3.4.8 패치 릴리스
+검토 기준은 **Argo CD 3.5.2 / Helm Chart 10.8.4**입니다. 앱 버전과 설치 Chart 버전은 다릅니다. Argo CD는 최근 세 minor 라인에 패치를 제공하며, 이보다 오래된 라인은 EOL입니다.
 
-2026년 8월 27일 유지 관리 중인 릴리스 라인의 패치인 v3.5.2와 v3.4.8이 공개되었습니다. v3.5.2에는 동기화 진행 중 새 커밋이 도착하면 auto-sync가 건너뛰어지던 문제, ApplicationSet 정규화 이후 `ignoreApplicationDifferences`가 복원되지 않던 문제, notification 컨트롤러가 공유 캐시의 객체를 복사 없이 변형(mutate)하던 문제 등에 대한 버그 수정이 담겼습니다. 자세한 내용은 [v3.5.2 릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2)를 참고하세요.
+### 테스트된 Kubernetes 조합
 
-### 2026년 8월 업데이트: EKS 관리형 Argo CD 기능의 사용자 지정 구성 지원
+| Argo CD | Kubernetes |
+|---|---|
+| 3.5 | 1.36, 1.35, 1.34, 1.33 |
+| 3.4 | 1.35, 1.34, 1.33, 1.32 |
+| 3.3 | 1.35, 1.34, 1.33, 1.32 |
 
-2026년 8월 21일, Amazon EKS의 Argo CD 관리형 기능(EKS Capability for Argo CD)이 클러스터 내 표준 `argocd-cm` ConfigMap을 통한 사용자 지정 구성을 지원한다고 발표했습니다. 커스텀 리소스(CR)에 대한 커스텀 헬스 체크 정의, Argo CD UI 배너 내용 변경, 관리 대상 리소스의 감시(watch)·비교(diff) 방식 조정 등을 업스트림 Argo CD와 동일한 방식으로 설정하면 AWS가 이를 관리형 기능에 적용합니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-argo-cd-configuration)와 [설정 가이드](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html)를 참고하세요.
+위 표는 3.5.2 저장소에 기록된 업스트림 테스트 조합입니다. Helm Chart의 최소 `kubeVersion` 조건, Kubernetes 자체 지원 기간, EKS 지원 기간 및 관리형 Argo CD 버전 정책과는 별개입니다. EKS 버전 하나를 특정 Argo CD minor에 일대일로 대응시키지 않습니다.
 
-### 2026년 8월 업데이트: ArgoCD 3.5 정식 릴리스 및 패치
+### 최근 릴리스
 
-2026년 8월 7일 ArgoCD v3.5.0이 정식 릴리스되어 3.5가 최신 안정(stable) 릴리스 라인이 되었습니다. 이어 8월 12일에는 유지 관리 중인 세 릴리스 라인의 패치인 v3.5.1 / v3.4.7 / v3.3.14가 함께 공개되었습니다. v3.5.1에는 ApplicationSet progressive sync가 루프를 돌며 반복 재조정되던 문제 수정, server-side diff에서 Secret 데이터 마스킹 관련 수정(`last-applied-configuration` 어노테이션의 시크릿 노출 방지 포함) 등 버그 수정이 담겼습니다. 자세한 내용은 [v3.5.1 릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.5.1)를 참고하세요.
+- 3.5.0: **2026-08-04** 공개. 서버가 사용하는 Helm 렌더러의 4.x 전환 등은 업그레이드 가이드를 확인합니다.
+- 3.5.1: 2026-08-12 공개.
+- 3.5.2: 2026-08-27 공개. 패치 내용과 최신 지원 라인은 공식 릴리스 기록으로 확인합니다.
 
-### 2026년 7월 업데이트: ArgoCD 3.x 패치 릴리스
+### Argo Rollouts
 
-2026년 7월 9일 ArgoCD v3.4.5 패치 릴리스가 공개되었습니다. 아래 표는 2.x 시절 기준으로 작성된 것이므로, 최신 버전별 지원 정보는 [ArgoCD 릴리스 페이지](https://github.com/argoproj/argo-cd/releases)를 함께 확인하세요.
+Rollouts는 별도 컨트롤러이며 Argo CD 없이도 사용할 수 있습니다. 여기서는 1.10.0 문서를 기준으로 확인했습니다. Argo CD·Rollouts의 버전 숫자를 대응시킨 호환성 표 대신 Rollouts CRD/컨트롤러, 트래픽 관리 플러그인, Kubernetes 버전과 Argo CD 헬스 체크의 실제 조합을 검증합니다.
 
-2026년 7월 28일 요코하마에서 KubeCon + CloudNativeCon Japan 병행 행사로 열린 ArgoCon Japan에서는 Argo CD 리드 메인테이너가 차기 버전(3.5) 제안을 공유했습니다 ([CNCF 블로그](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)).
+### EKS 관리형 Argo CD 기능
 
-### 2026년 8월 업데이트: ArgoCD v3.5.0 정식 릴리스
-
-2026년 8월 4일 [ArgoCD v3.5.0](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0)이 GA로 공개되며 3.5가 최신 안정(stable) 릴리스 라인이 되었습니다. 주요 변경 사항:
-
-- **Helm 3 → Helm 4 마이그레이션**: 매니페스트 렌더링에 Helm 4 사용
-- **소스 무결성 검증(Alpha)**: 소스 하이드레이터의 dry source에 대한 옵트인 서명 검증 및 Source Integrity 설정 CLI 지원
-- **ApplicationSet 개선**: 애플리케이션 동시(concurrent) 관리, 아카이브 상태 기준 저장소 필터링
-- **웹훅 지터(jitter)**: 웹훅 트리거 애플리케이션 새로고침에 지터를 설정해 새로고침 폭주 완화
-- **UI**: New App 패널의 멀티 소스 애플리케이션 생성, ApplicationSet Preview Apps 탭, 리소스 트리의 AppSet 노드 표시
-- **신규 헬스 체크**: GatewayClass, `BackendTLSPolicy`(Gateway API), VictoriaMetrics, Gardener Shoot 등
-
-이전 라인에도 2026년 7월 31일 v3.4.6, v3.3.13 패치 릴리스가 함께 공개되었습니다.
-
-### ArgoCD 버전
-
-| 버전 | Kubernetes 지원 | 주요 기능 |
-|------|-----------------|-----------|
-| **v2.13** | 1.27 - 1.31 | 최신 안정 버전 |
-| **v2.12** | 1.26 - 1.30 | ApplicationSet Progressive Syncs |
-| **v2.11** | 1.26 - 1.30 | Server-side Apply |
-| **v2.10** | 1.25 - 1.29 | Multiple Sources |
-| **v2.9** | 1.24 - 1.28 | ApplicationSet Matrix/Merge |
-
-### Argo Rollouts 버전
-
-| 버전 | 주요 기능 |
-|------|-----------|
-| **v1.7** | 최신 안정 버전, ALB 개선 |
-| **v1.6** | Istio Gateway API 지원 |
-| **v1.5** | Analysis improvements |
-
-### Kubernetes 호환성
-
-![ArgoCD 2.11, 2.12, 2.13 세 버전의 Kubernetes 지원 기간이 2024년 하반기에 세 버전 모두 겹치는 구간을 두고 순차적으로 이어지는 것을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-2.png)
+EKS Capability for Argo CD는 자체 설치와 다른 운영 경로입니다. 2026-08 발표된 사용자 지정 구성은 **지원 목록에 있는** `argocd-cm` 키에만 적용됩니다. capability에 설정한 namespace와 `app.kubernetes.io/part-of: argocd` 라벨이 필요합니다. 지원되지 않는 키·플래그는 무시되며, Lua 표준 라이브러리나 임의 실행 플러그인을 사용할 수 있다고 가정하지 않습니다. 자세한 범위는 [관리형 구성 가이드](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html)를 확인하세요.
 
 ## 하위 가이드
 
@@ -253,18 +246,22 @@ spec:
 
 ### 학습 경로
 
-![초급 설치 문서에서 시작해 중급 단계인 Applications·동기화 전략·RBAC·보안·알림을 거쳐, 고급 단계인 ApplicationSets·트래픽 관리·모범 사례로 이어지는 ArgoCD 문서 학습 순서를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-3.png)
+![초급 01 설치 및 구성에서 시작해 중급 02 Application·03 동기화 전략·06 RBAC·07 보안·08 알림을 순서대로 거치고, 고급 04 ApplicationSets·05 트래픽 관리·10 Rollouts Experiment 분기를 지나 09 모범 사례로 모이는 ArgoCD 하위 가이드 학습 경로를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-readme-3.html)
 
 ## 빠른 시작
 
 ### 1. ArgoCD 설치
+
+자체 설치의 비HA 평가 예제입니다. 호환되는 클러스터·CRD/RBAC 권한과 빈 전용 namespace를 준비하고, 프로덕션은 [설치 가이드](01-installation.md)의 HA·인증·업그레이드 절차를 따릅니다.
 
 ```bash
 # 네임스페이스 생성
 kubectl create namespace argocd
 
 # ArgoCD 설치
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
 
 # 설치 확인
 kubectl get pods -n argocd
@@ -272,28 +269,30 @@ kubectl get pods -n argocd
 
 ### 2. CLI 설치
 
-```bash
-# macOS
-brew install argocd
+[설치 가이드](01-installation.md)의 OS·CPU 아키텍처별 설치와 릴리스 체크섬 검증을 따릅니다. macOS는 Homebrew도 사용할 수 있습니다. 서버와 맞는 버전인지 확인합니다.
 
-# Linux
-curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
-rm argocd-linux-amd64
+```bash
+argocd version --client
 ```
 
 ### 3. 초기 접근
 
 ```bash
-# 포트 포워딩
-kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+# 별도 터미널에서 유지
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
 
+다른 터미널에서:
+
+```bash
 # 초기 비밀번호 가져오기
 argocd admin initial-password -n argocd
 
 # 로그인
 argocd login localhost:8080
 ```
+
+초기 비밀번호를 바꾼 뒤 `argocd-initial-admin-secret`을 삭제합니다. 포트 포워딩은 별도 터미널에서 유지합니다.
 
 ### 4. 첫 번째 Application 배포
 
@@ -303,7 +302,8 @@ argocd app create guestbook \
   --repo https://github.com/argoproj/argocd-example-apps.git \
   --path guestbook \
   --dest-server https://kubernetes.default.svc \
-  --dest-namespace guestbook
+  --dest-namespace guestbook \
+  --sync-option CreateNamespace=true
 
 # 동기화
 argocd app sync guestbook
@@ -321,44 +321,9 @@ argocd app get guestbook
 
 ## Amazon EKS 통합
 
-ArgoCD는 Amazon EKS와 원활하게 통합됩니다:
+AWS API를 호출하는 컴포넌트의 IAM 역할과 대상 EKS Kubernetes API의 인증·RBAC를 구분합니다. ServiceAccount annotation만으로 IRSA 신뢰 정책이나 클러스터 접근이 생기지는 않습니다. 노드의 이미지 풀 역할, Repo Server의 OCI 인증, Image Updater, External Secrets의 권한도 사용하는 기능에 맞춰 분리합니다.
 
-```yaml
-# IRSA 설정
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: argocd-application-controller
-  namespace: argocd
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ArgoCD
----
-# ALB Ingress
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: argocd-server
-  namespace: argocd
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/backend-protocol: HTTPS
-spec:
-  rules:
-    - host: argocd.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 443
-```
-
-자세한 EKS 통합 가이드는 [설치 및 구성](01-installation.md)을 참조하세요.
+UI 접근은 TLS와 접근 범위를 구성한 Ingress 또는 로컬 포트 포워딩을 사용합니다. [설치 및 구성](01-installation.md)에 AWS Load Balancer Controller·인증서·백엔드 프로토콜을 포함한 예제를 제공합니다.
 
 ## 다음 단계
 
@@ -378,3 +343,11 @@ spec:
 ## 퀴즈
 
 이 장에서 배운 내용을 테스트하려면 [ArgoCD 설치 퀴즈](../../quizzes/gitops/argocd/01-installation-quiz.md)를 풀어보세요.
+
+### 버전별 검토 근거
+
+- [Argo CD 3.5.2 tested Kubernetes versions](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/tested-kubernetes-versions.md)
+- [Release support policy](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/developer-guide/release-process-and-cadence.md)
+- [3.5.0 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0)
+- [3.5.2 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2)
+- [HA component behavior](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md)

@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray 규모 · Pod 조정 · EC2 공급",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1360,
+      550
+    ]
+  },
+  "components": [
+    {
+      "id": "rc",
+      "type": "database",
+      "label": "RayCluster CR",
+      "sublabel": "desired worker groups",
+      "pos": [
+        37,
+        60
+      ],
+      "size": [
+        214,
+        80
+      ]
+    },
+    {
+      "id": "head",
+      "type": "backend",
+      "label": "Ray head Pod",
+      "sublabel": "autoscaler sidecar if enabled",
+      "pos": [
+        381,
+        60
+      ],
+      "size": [
+        232,
+        80
+      ]
+    },
+    {
+      "id": "op",
+      "type": "backend",
+      "label": "KubeRay operator",
+      "sublabel": "reconcile Pods / Services",
+      "pos": [
+        37,
+        320
+      ],
+      "size": [
+        214,
+        80
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Ray worker Pods",
+      "sublabel": "CPU / GPU / multi-host groups",
+      "pos": [
+        381,
+        320
+      ],
+      "size": [
+        232,
+        80
+      ]
+    },
+    {
+      "id": "pending",
+      "type": "backend",
+      "label": "Unschedulable Pods",
+      "sublabel": "capacity / placement demand",
+      "pos": [
+        735,
+        320
+      ],
+      "size": [
+        223,
+        80
+      ]
+    },
+    {
+      "id": "kp",
+      "type": "cloud",
+      "label": "Karpenter / CA",
+      "sublabel": "node provisioning layer",
+      "pos": [
+        735,
+        60
+      ],
+      "size": [
+        223,
+        80
+      ]
+    },
+    {
+      "id": "nodes",
+      "type": "cloud",
+      "label": "EC2 nodes",
+      "sublabel": "actual capacity",
+      "pos": [
+        1079,
+        60
+      ],
+      "size": [
+        214,
+        80
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Kubernetes scheduler",
+      "sublabel": "Pod placement",
+      "pos": [
+        1079,
+        320
+      ],
+      "size": [
+        214,
+        80
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "desired",
+      "from": "head",
+      "to": "rc",
+      "label": "desired workers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "rc",
+      "to": "op",
+      "label": "watch spec",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        144,
+        220
+      ]
+    },
+    {
+      "id": "pods",
+      "from": "op",
+      "to": "workers",
+      "label": "create / reconcile",
+      "variant": "emphasis"
+    },
+    {
+      "id": "demand",
+      "from": "workers",
+      "to": "head",
+      "label": "Ray demand",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        498,
+        230
+      ],
+      "variant": "dashed"
+    },
+    {
+      "id": "pending",
+      "from": "workers",
+      "to": "pending",
+      "label": "no fitting node"
+    },
+    {
+      "id": "provision",
+      "from": "pending",
+      "to": "kp",
+      "label": "capacity demand",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        846,
+        230
+      ],
+      "variant": "dashed"
+    },
+    {
+      "id": "nodes",
+      "from": "kp",
+      "to": "nodes",
+      "label": "provision nodes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "capacity",
+      "from": "nodes",
+      "to": "scheduler",
+      "label": "capacity",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1186,
+        230
+      ]
+    },
+    {
+      "id": "place",
+      "from": "scheduler",
+      "to": "workers",
+      "label": "place Pods",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          1186.0,
+          480
+        ],
+        [
+          497.0,
+          480
+        ]
+      ],
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "계층별 책임",
+      "items": [
+        "Ray autoscaler가 Karpenter에 직접 Pod를 보내지 않음",
+        "KubeRay가 Pod를 조정하고 Kubernetes가 node에 배치"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "조건과 한계",
+      "items": [
+        "Pending의 원인 확인: image/PVC/권한 문제는 증설만으로 해결되지 않음",
+        "group replica와 Pod 수는 numOfHosts에 따라 다를 수 있음"
+      ]
+    }
+  ]
+}

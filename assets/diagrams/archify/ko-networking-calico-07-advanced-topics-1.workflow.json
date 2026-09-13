@@ -1,0 +1,237 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Calico IPAM IP 할당 알고리즘",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "affine-first",
+        "label": "친화 블록 우선",
+        "focus": [
+          "start",
+          "check_affine",
+          "alloc_ip",
+          "done"
+        ],
+        "note": "Pod가 노드에 스케줄링되면 그 노드에 친화성(affinity)이 있는 블록에서 먼저 IP를 할당한다. 여유 IP가 있으면 다른 단계 없이 바로 끝난다."
+      },
+      {
+        "id": "new-block",
+        "label": "새 블록 할당",
+        "focus": [
+          "check_affine",
+          "check_pool",
+          "claim_block",
+          "alloc_ip"
+        ],
+        "note": "친화 블록이 소진되면 IPPool에서 미할당 블록(기본 blockSize /26 = 64 IP)을 노드에 새로 할당하고 그 블록에서 IP를 배정한다."
+      },
+      {
+        "id": "borrow-exhaust",
+        "label": "차용과 IP 소진",
+        "focus": [
+          "check_pool",
+          "check_other",
+          "borrow_ip",
+          "fail"
+        ],
+        "note": "풀에 미할당 블록도 없으면 다른 노드의 블록에서 여유 IP를 차용한다. 어디에도 여유 IP가 없을 때만 할당이 실패한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작 / 종료"
+        },
+        "backend": {
+          "label": "판단"
+        },
+        "cloud": {
+          "label": "블록·IP 할당"
+        },
+        "security": {
+          "label": "할당 실패"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "request",
+      "label": "Pod 생성"
+    },
+    {
+      "id": "affine",
+      "label": "1단계 · 노드 친화 블록"
+    },
+    {
+      "id": "claim",
+      "label": "2단계 · 새 블록 할당"
+    },
+    {
+      "id": "borrow",
+      "label": "3단계 · 다른 노드 블록 차용"
+    },
+    {
+      "id": "exception",
+      "label": "IP 소진",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "check_affine",
+    "alloc_ip",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "request",
+      "col": 0,
+      "width": 190,
+      "type": "frontend",
+      "label": "Pod 생성 요청",
+      "sublabel": "CNI ADD → Calico IPAM"
+    },
+    {
+      "id": "check_affine",
+      "lane": "affine",
+      "col": 1,
+      "width": 200,
+      "type": "backend",
+      "label": "친화 블록에 여유 IP?",
+      "sublabel": "노드에 친화성 있는 블록 확인"
+    },
+    {
+      "id": "alloc_ip",
+      "lane": "affine",
+      "col": 4,
+      "width": 160,
+      "type": "cloud",
+      "label": "IP 할당",
+      "sublabel": "블록에서 Pod IP 배정"
+    },
+    {
+      "id": "done",
+      "lane": "affine",
+      "col": 5,
+      "width": 160,
+      "type": "frontend",
+      "label": "완료",
+      "sublabel": "Pod IP 확정"
+    },
+    {
+      "id": "check_pool",
+      "lane": "claim",
+      "col": 2,
+      "width": 190,
+      "type": "backend",
+      "label": "풀에 미할당 블록?",
+      "sublabel": "IPPool CIDR 잔여 블록 확인"
+    },
+    {
+      "id": "claim_block",
+      "lane": "claim",
+      "col": 3,
+      "width": 160,
+      "type": "cloud",
+      "label": "새 블록 할당",
+      "sublabel": "노드에 친화성 부여 · blockSize /26"
+    },
+    {
+      "id": "check_other",
+      "lane": "borrow",
+      "col": 3,
+      "width": 200,
+      "type": "backend",
+      "label": "다른 노드 블록에 여유 IP?",
+      "sublabel": "비친화 블록 탐색"
+    },
+    {
+      "id": "borrow_ip",
+      "lane": "borrow",
+      "col": 4,
+      "width": 160,
+      "type": "cloud",
+      "label": "다른 블록 사용",
+      "sublabel": "비친화 블록에서 IP 차용"
+    },
+    {
+      "id": "fail",
+      "lane": "exception",
+      "col": 4,
+      "width": 160,
+      "type": "security",
+      "label": "할당 실패",
+      "sublabel": "IP 소진 · Pod 생성 실패"
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-affine",
+      "from": "start",
+      "to": "check_affine"
+    },
+    {
+      "id": "affine-alloc",
+      "from": "check_affine",
+      "to": "alloc_ip",
+      "label": "있음",
+      "variant": "emphasis"
+    },
+    {
+      "id": "affine-pool",
+      "from": "check_affine",
+      "to": "check_pool",
+      "label": "없음",
+      "role": "branch",
+      "toSide": "left"
+    },
+    {
+      "id": "pool-claim",
+      "from": "check_pool",
+      "to": "claim_block",
+      "label": "있음"
+    },
+    {
+      "id": "claim-alloc",
+      "from": "claim_block",
+      "to": "alloc_ip"
+    },
+    {
+      "id": "pool-other",
+      "from": "check_pool",
+      "to": "check_other",
+      "label": "없음",
+      "role": "branch"
+    },
+    {
+      "id": "other-borrow",
+      "from": "check_other",
+      "to": "borrow_ip",
+      "label": "있음"
+    },
+    {
+      "id": "borrow-alloc",
+      "from": "borrow_ip",
+      "to": "alloc_ip"
+    },
+    {
+      "id": "other-fail",
+      "from": "check_other",
+      "to": "fail",
+      "label": "없음",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "alloc-done",
+      "from": "alloc_ip",
+      "to": "done",
+      "variant": "emphasis"
+    }
+  ]
+}

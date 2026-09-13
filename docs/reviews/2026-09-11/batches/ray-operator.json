@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/ray/02-kuberay-operator.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "fbc08d7f392f953af5207f375ff250d78b8fc6b13fcba3b1b9886575070a0c5d",
+    "summary": "Fullreviewof1.7/2.58sources;nativechart4CRDs/schema and5autoscalerconfigcases;GPUprecedence/Jobcleanup/Serviceupgrade/PodNodescaling/featuregatescorrected;4MD/2figures/6responsive."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/ray/02-kuberay-operator-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "c7d9aac875299633869c19fbad3bce9c7434885c140cb67cf2a2609ad69d2e6b",
+    "summary": "Fullreviewof1.7/2.58sources;nativechart4CRDs/schema and5autoscalerconfigcases;GPUprecedence/Jobcleanup/Serviceupgrade/PodNodescaling/featuregatescorrected;4MD/2figures/6responsive."
+  },
+  {
+    "path": "en/ai-ml/ray/02-kuberay-operator.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "fe12855851eb8df70e4f028eb59c0132eabede7d36b16b221c5e92ab8d8e0aa1",
+    "summary": "Fullreviewof1.7/2.58sources;nativechart4CRDs/schema and5autoscalerconfigcases;GPUprecedence/Jobcleanup/Serviceupgrade/PodNodescaling/featuregatescorrected;4MD/2figures/6responsive."
+  },
+  {
+    "path": "en/quizzes/ai-ml/ray/02-kuberay-operator-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "cbb6499c86af98edf7c1b7c4a5e0bbb499cf4a927b473a666cb6eb8eb7243464",
+    "summary": "Fullreviewof1.7/2.58sources;nativechart4CRDs/schema and5autoscalerconfigcases;GPUprecedence/Jobcleanup/Serviceupgrade/PodNodescaling/featuregatescorrected;4MD/2figures/6responsive."
+  }
+]

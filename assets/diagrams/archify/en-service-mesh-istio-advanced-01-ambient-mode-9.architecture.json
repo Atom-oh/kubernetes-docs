@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Resource Usage Visualization",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-01-ambient-mode-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Data plane mode"
+        },
+        "cloud": {
+          "label": "Savings"
+        }
+      }
+    },
+    "viewBox": [
+      1220,
+      340
+    ]
+  },
+  "components": [
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "Sidecar Mode",
+      "sublabel": "Memory 5GB · CPU 10 vCPU · per pod 50MB + 0.1 CPU",
+      "pos": [
+        70,
+        90
+      ],
+      "size": [
+        320,
+        72
+      ]
+    },
+    {
+      "id": "ambient",
+      "type": "backend",
+      "label": "Ambient Mode",
+      "sublabel": "Memory 700MB · CPU 1.5 vCPU · 10 ztunnels + 1 waypoint",
+      "pos": [
+        450,
+        90
+      ],
+      "size": [
+        320,
+        72
+      ]
+    },
+    {
+      "id": "savings",
+      "type": "cloud",
+      "label": "Savings",
+      "sublabel": "Memory 86% · CPU 85% · cost ~80% savings",
+      "pos": [
+        830,
+        90
+      ],
+      "size": [
+        320,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "100 Pods Cluster",
+      "wraps": [
+        "sidecar",
+        "ambient",
+        "savings"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sidecar-to-ambient",
+      "from": "sidecar",
+      "to": "ambient",
+      "label": "Comparison",
+      "variant": "dashed"
+    },
+    {
+      "id": "ambient-to-savings",
+      "from": "ambient",
+      "to": "savings",
+      "label": "Result",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Sidecar Mode calculation",
+      "items": [
+        "Memory: 100 pods × 50MB = 5,000MB (5GB)",
+        "CPU: 100 pods × 0.1 vCPU = 10 vCPU"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ambient Mode calculation (10 nodes)",
+      "items": [
+        "Memory: 10 ztunnels × 50MB + waypoint 200MB = 700MB",
+        "CPU: 10 ztunnels × 0.1 + waypoint 0.5 = 1.5 vCPU",
+        "Savings: memory 4,300MB (~86%), CPU 8.5 vCPU (~85%)"
+      ]
+    }
+  ]
+}

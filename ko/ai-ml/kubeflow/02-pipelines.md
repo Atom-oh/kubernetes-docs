@@ -1,53 +1,50 @@
 # Part 2: Kubeflow Pipelines
 
-> **지원 버전**: Kubeflow Pipelines 2.16.0, Kubeflow Community Distribution 26.03
-> **마지막 업데이트**: 2026년 8월 19일
+> **지원 버전**: Kubeflow Pipelines 2.16.1, Kubeflow Community Distribution 26.03.1
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 실습 환경 준비
 
-이 문서의 예제를 따라 하려면 다음 도구와 환경이 필요합니다.
-
-### 필수 도구
-
-* 로컬에서 파이프라인을 컴파일하기 위한 Python 3.10 이상과 `kfp` SDK (`pip install kfp`)
-* Kubeflow Pipelines가 설치된 클러스터를 가리키는 kubectl v1.34 이상 (설치 과정은 Part 1 참고)
-* KFP의 아티팩트 저장소를 S3로 연결하려는 경우, S3 접근 권한을 부여하는 IRSA 역할 또는 EKS Pod Identity 연결 (아래 "EKS에서의 아티팩트 저장소" 참고)
+로컬 컴파일에는 Python과 `kfp==2.16.1`이 필요합니다. 이 장은 Python 3.12로 검증했습니다. 컴파일은 클러스터에 접속하지 않으며, 원격 실행에는 호환되는 KFP 백엔드, 인증된 클라이언트와 네임스페이스 권한이 필요합니다. S3를 사용한다면 실제 실행 ServiceAccount와 아티팩트 접근 컴포넌트의 AWS 신원도 구성해야 합니다.
 
 ## Kubeflow Pipelines란
 
-Kubeflow Pipelines(KFP)는 Kubeflow 플랫폼 안에서 ML 파이프라인 — 각각 타입이 지정된 입력/출력을 가진 컨테이너화된 단계들의 DAG — 를 만들고 실행하고 추적하는 워크플로 오케스트레이션 엔진입니다. Python으로 KFP SDK를 이용해 파이프라인을 작성하고 컴파일한 뒤 KFP 백엔드에 제출하면, 백엔드가 각 단계를 Pod로 스케줄링하고 실행(Run)의 상태와 아티팩트를 추적합니다.
+KFP는 타입이 있는 파라미터·아티팩트로 컴포넌트를 연결하고 실행 이력을 관리합니다. 이 장의 오픈소스 KFP 2.16.1 백엔드는 IR을 Argo Workflow로 변환합니다. Argo 컨트롤러가 실행 순서와 Pod 생성을 관리하고 Kubernetes 스케줄러가 Pod를 노드에 배치합니다. 캐시 적중, importer, 중첩 DAG 같은 경우를 포함하면 모든 논리적 태스크가 별도 사용자 컨테이너 실행과 일대일로 대응하지는 않습니다.
 
-내부적으로 KFP의 백엔드는 [Argo Workflows](https://argoproj.github.io/workflows/) 위에 구축되어 있습니다. 컴파일된 파이프라인이 KFP API 서버에 도달하면 Argo `Workflow` 리소스로 변환되고, 실제로 Pod를 생성하고 순서를 조율하는 것은 Argo의 컨트롤러입니다. KFP는 Argo 혼자서는 제공하지 않는 계층 — 파이프라인을 작성하기 위한 Python SDK, 실행(Run)과 아티팩트를 조회하는 UI, Experiment/Run 추적 모델, 리니지를 위한 ML Metadata(MLMD) 저장소 — 를 그 위에 얹습니다.
+## KFP v2 아키텍처: IR YAML과 백엔드 실행
 
-## KFP v2 아키텍처: Argo YAML 직접 생성 대신 IR YAML
+Community Distribution 26.03.1은 KFP 2.16.1을 포함합니다. 레거시 v1의 기본 컴파일 경로는 Argo Workflow YAML을 만들었고, v2의 `Compiler().compile(...)`은 PipelineSpec 기반 IR YAML을 만듭니다. 파이프라인 업로드·저장과 Run 생성은 별도이며, 업로드만으로 실행되지는 않습니다.
 
-Kubeflow Pipelines 2.16.0은 Kubeflow Community Distribution 26.03에 포함된 버전입니다. 이 버전은 KFP v2 SDK와 백엔드를 기반으로 하는데, Python으로 작성한 파이프라인 정의가 실행 가능한 워크플로로 바뀌는 방식이 기존 v1 SDK와 달라졌습니다.
-
-* **v1 SDK**: `dsl-compile`이 Python 파이프라인 함수를 Argo `Workflow` YAML 매니페스트로 직접 컴파일했습니다. 컴파일된 산출물은 Argo에 특화되어 있어서, 다른 백엔드를 쓰고 싶다면 다른 컴파일러가 필요했습니다.
-* **v2 SDK**: 파이프라인은 **중간 표현(Intermediate Representation, IR) YAML** — DAG, 컴포넌트, 타입이 지정된 아티팩트와 파라미터를 기술하는 백엔드에 종속되지 않는 `PipelineSpec` — 로 컴파일됩니다. KFP 백엔드는 제출 시점에 이 IR을 Argo `Workflow`로 변환합니다.
-
-실질적인 이점은 Argo의 객체 모델에 종속되지 않는 안정적이고 문서화된 파이프라인 스펙을 갖게 된다는 점입니다. 즉 `kfp.compiler.Compiler().compile(...)`로 얻는 산출물 — IR YAML — 은 KFP와 호환되는 어떤 백엔드에도 넘길 수 있고, KFP API 서버가 저장해두고 그 파이프라인이 실행될 때마다 다시 제출하는 대상이 됩니다. 매번 새로 생성되는 일회성 Argo 매니페스트가 아닙니다.
+IR은 Argo 객체를 직접 작성하는 부담을 줄이지만 모든 백엔드로의 무조건적인 이식성을 보장하지 않습니다. IR·SDK 버전, 지원 기능, Kubernetes 플랫폼 확장과 인증·저장소 설정이 대상 백엔드와 맞아야 합니다. `kfp` 패키지는 컴파일뿐 아니라 클라이언트 API와 Python 컴포넌트 실행 지원 코드도 제공합니다.
 
 ## 핵심 개념
 
-* **Pipeline(파이프라인)** — `@dsl.pipeline` 데코레이터로 Python에 작성하고 IR YAML로 컴파일되는 컴포넌트들의 DAG.
-* **Component(컴포넌트)** — 타입이 지정된 입력/출력을 가진 하나의 컨테이너화된 단계. `@dsl.component`로 작성하며, 자체 컨테이너 스펙으로 컴파일되어 실행 시 하나의 Pod(또는 실행기 설정에 따라 Pod 내 한 스텝)가 됩니다.
-* **Run(실행)** — 특정 입력 파라미터 값으로 파이프라인(또는 단일 컴포넌트)을 한 번 실행한 것.
-* **Experiment(실험)** — 관련된 Run들을 모아놓은 이름 있는 그룹으로, 결과를 조직하고 비교하는 데 사용합니다(예: 같은 파이프라인의 서로 다른 하이퍼파라미터 실행들).
-* **Artifact(아티팩트)** — 컴포넌트 사이를 흐르는, 오브젝트 스토어에 저장된 파일을 기반으로 하는 타입이 지정된 출력물입니다. KFP v2는 아티팩트에 `Dataset`, `Model`, `Metrics`, `ClassificationMetrics`, `HTML`, `Markdown` 같은 1급 타입을 부여하므로, 컴포넌트의 시그니처만 봐도 출력물이 있다는 사실뿐 아니라 어떤 종류인지까지 알 수 있습니다.
-* **ML Metadata(MLMD) 저장소** — 대부분의 KFP 설치에서 MySQL 기반으로 동작하며, 모든 컴포넌트 실행과 그 입출력, 관련된 아티팩트를 기록하는 백엔드 저장소입니다. 이 덕분에 KFP UI에서 학습된 모델을 거꾸로 추적해 어떤 데이터셋과 코드로 만들어졌는지, 여러 실행에 걸친 아티팩트 리니지를 확인할 수 있습니다.
+| 개념 | 역할과 범위 |
+| --- | --- |
+| Pipeline | `@dsl.pipeline`으로 정의하는 그래프. 업로드된 정의·버전과 실행은 별도 |
+| Component / Task | 재사용할 컴포넌트 정의와 그래프 안의 호출. lightweight Python 외에도 container/importer/graph 형식이 있음 |
+| Run / Experiment | 입력을 가진 실행과 관련 실행의 그룹. Katib Experiment CRD와는 다름 |
+| Parameter | 문자열·수치·작은 구조화 값 등의 입력·출력 |
+| Artifact | URI, 타입, 메타데이터를 가진 Dataset/Model/Metrics 등의 객체. 모두 단일 파일이라는 뜻은 아님 |
+| MLMD | 등록된 실행·아티팩트·연결 관계를 저장. 모든 외부 부작용이나 파일 무결성을 자동 기록하지는 않음 |
+
+MLMD 기록과 실제 아티팩트 바이트는 구분됩니다. 코드·이미지·데이터 리비전과 해시를 함께 기록해야 재현성과 내용 검증의 근거가 됩니다.
 
 ## 파이프라인 실행이 시스템을 거치는 흐름
 
-![Kubeflow Pipelines 실행 흐름: Python SDK 파이프라인이 IR YAML로 컴파일되어 API 서버에 제출되고, 백엔드가 이를 Argo Workflow로 변환·실행하며, 실행된 컴포넌트 Pod가 아티팩트는 오브젝트 스토어에, 실행 및 아티팩트 메타데이터는 MLMD에 기록하는 8단계 과정을 보여준다.](../../../assets/diagrams/rendered/ko-ai-ml-kubeflow-02-pipelines-0.svg)
+![Kubeflow Pipelines 실행 흐름: Python SDK 파이프라인이 IR YAML로 컴파일되어 API 서버에 제출되고, 백엔드가 이를 Argo Workflow로 변환·실행하며, 실행된 컴포넌트 Pod가 아티팩트는 오브젝트 스토어에, 실행 및 아티팩트 메타데이터는 MLMD에 기록하는 8단계 과정을 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-02-pipelines-0.png)
 
-KFP SDK의 역할은 IR YAML을 만드는 데서 끝나며, API 서버 이후의 모든 과정은 백엔드의 책임입니다. 이 분리 구조가 "백엔드에 종속되지 않는 스펙"이라는 주장을 실질적으로 보여줍니다 — SDK는 그 아래에서 실제로 스케줄링을 담당하는 것이 Argo Workflows라는 사실을 알 필요도, 신경 쓸 필요도 없습니다.
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-kubeflow-02-pipelines-0.html)
+
+컴파일은 로컬에서 끝나지만 Run 생성 후에는 API 서버, Argo, KFP driver/launcher, 사용자 컨테이너가 협력합니다. launcher/runtime은 아티팩트 경로와 전송을 처리하고 메타데이터를 기록합니다. Kubernetes 스케줄러의 노드 배치는 Argo의 워크플로 순서 관리와 구분됩니다.
 
 ## EKS에서의 아티팩트 저장소
 
-KFP는 기본 아티팩트 저장소로 클러스터 내부에 배포되는 MinIO를 함께 제공합니다. 별도로 재구성하지 않으면 컴포넌트가 생성하는 모든 아티팩트(`Dataset`, 학습된 `Model`, 메트릭 파일 등)가 실제 S3 버킷이 아니라 MinIO 버킷에 기록됩니다. 자체 완결형 데모에는 문제가 없지만, EKS 환경에서는 S3가 이미 무료로 제공하는 내구성, 클러스터 외부 접근, IAM 기반 접근 제어를 중복으로 구현하는 스테이트풀 서비스를 추가로 운영해야 한다는 부담이 남습니다.
+검토한 배포판의 기본 설치에는 MinIO가 포함되지만, 모든 KFP 배포나 아티팩트 URI가 MinIO를 사용하는 것은 아닙니다. 파이프라인 루트, import된 URI, 저장소 provider 설정을 확인하세요. `Metrics` 등 메타데이터 중심 아티팩트를 모두 메트릭 파일로 설명해서도 안 됩니다.
 
-`awslabs/kubeflow-manifests` 프로젝트는 KFP의 아티팩트 저장소를 클러스터 내부 MinIO 대신 S3로 연결하는 패턴을 문서화하고 있습니다 — 파이프라인 루트와 아티팩트 오브젝트 스토어 자격 증명을 재구성해서 컴포넌트가 S3 버킷을 직접 읽고 쓰게 만드는 방식입니다. 바로 이 지점에서 [Part 1](./01-architecture-installation.md)에서 다룬 신원(identity) 메커니즘이 직접적으로 연관됩니다 — KFP 파이프라인 Pod(특히 `pipeline-runner` ServiceAccount)가 사용하는 ServiceAccount는 해당 S3 버킷에 대한 권한을 가진 IRSA 역할이나 EKS Pod Identity 연결이 있어야 합니다. 아티팩트를 읽고 쓸 때 발생하는 오브젝트 스토어 호출이 클러스터 내부 MinIO 엔드포인트가 아니라 곧바로 AWS로 향하기 때문입니다. IRSA/Pod Identity 설정 자체는 Part 1에서 자세히 다루므로, 이 절에서는 파이프라인 라이프사이클의 어느 지점에서 그 신원이 실제로 쓰이는지만 짚습니다.
+S3를 사용하려면 [현재 오브젝트 저장소 가이드](https://www.kubeflow.org/docs/components/pipelines/operator-guides/configure-object-store/)에 맞게 `pipeline_root`, provider와 자격 증명 체인을 구성해야 합니다. S3는 저장·요청·전송 등에 요금이 발생하는 서비스이며 무료 기본 저장소가 아닙니다.
+
+`pipeline-runner`라는 ServiceAccount가 모든 환경의 실행 계정인 것은 아닙니다. Run에 선택된 ServiceAccount와 실제 Pod를 확인하고, 저장소에 접근하는 API 서버·launcher 등의 권한도 검토하세요. IRSA는 현재 가이드에 문서화되어 있습니다. Pod Identity는 실제 SDK, 에이전트, association과 실행 환경의 지원을 검증해야 하며, 이 장에서는 AWS 연동을 실행하지 않았습니다. [Part 1](01-architecture-installation.md)은 이 경계와 기존 AWS 배포판의 설치 제약을 설명합니다.
 
 ## 간단한 2단계 파이프라인
 
@@ -57,7 +54,7 @@ KFP는 기본 아티팩트 저장소로 클러스터 내부에 배포되는 MinI
 from kfp import dsl, compiler
 from kfp.dsl import Dataset, Model, Output, Input
 
-@dsl.component(base_image="python:3.11-slim")
+@dsl.component(base_image="python:3.12-slim", packages_to_install=["pandas==2.3.3"])
 def prepare_data(output_dataset: Output[Dataset]):
     import pandas as pd
 
@@ -65,7 +62,7 @@ def prepare_data(output_dataset: Output[Dataset]):
     df = pd.DataFrame({"feature": [1, 2, 3, 4], "label": [0, 1, 0, 1]})
     df.to_csv(output_dataset.path, index=False)
 
-@dsl.component(base_image="python:3.11-slim", packages_to_install=["scikit-learn", "pandas"])
+@dsl.component(base_image="python:3.12-slim", packages_to_install=["scikit-learn==1.7.2", "pandas==2.3.3"])
 def train_model(input_dataset: Input[Dataset], output_model: Output[Model]):
     import pandas as pd
     from sklearn.linear_model import LogisticRegression
@@ -87,20 +84,33 @@ compiler.Compiler().compile(
 )
 ```
 
-이 예제에서 눈여겨볼 부분입니다.
+`Output[Dataset]`에서 `Input[Dataset]`으로 연결하면 그래프 의존성과 아티팩트 타입이 기록됩니다. 실제 `.path` 준비와 전송은 실행 환경의 역할입니다. 컴파일만으로 저장소나 학습이 검증되지는 않습니다.
 
-* `output_dataset: Output[Dataset]`과 `input_dataset: Input[Dataset]`은 KFP v2에서 타입이 지정된 아티팩트 파라미터를 선언하는 방식입니다 — SDK가 `prep_task.outputs["output_dataset"]`을 `train_model`의 입력으로 연결하는 배선을 처리하며, 각 컴포넌트가 쓰고 읽을 저장 경로도 자동으로 준비합니다.
-* `@dsl.component`는 각각 독립된 컨테이너 이미지 빌드 컨텍스트로 컴파일되거나(또는 `packages_to_install`로 지정한 Python 패키지가 설치된 `base_image`를 재사용), `prepare_data`와 `train_model`은 서로 독립된 Pod로 실행되고 선언된 아티팩트를 통해서만 연결됩니다.
-* `compiler.Compiler().compile(...)`은 앞서 설명한 IR YAML을 생성합니다 — 이 파일이 KFP UI에 업로드하거나 KFP Python 클라이언트로 제출해 Run을 생성할 때 사용하는 대상입니다.
+이 코드는 lightweight Python 컴포넌트입니다. `@dsl.component`가 이미지를 자동 빌드하지 않으며, 함수 코드를 추출하고 지정한 base image에서 `packages_to_install`을 실행 시 설치합니다. 예전 예제는 prepare_data의 pandas 의존성을 누락했습니다. 두 컴포넌트에 필요한 패키지를 명시했고 로컬에서 함수 본문을 확인했습니다. 운영에서는 의존성을 미리 설치한 컨테이너와 이미지 digest를 사용하고 컨테이너 실행도 별도로 검증하세요. 이 예제의 Python 이미지 태그와 전이 의존성은 완전히 고정된 빌드가 아닙니다.
+
+생성된 pickle은 같은 실습에서 만든 신뢰할 수 있는 파일만 읽으세요. 외부 pickle 로드는 임의 코드 실행 위험이 있습니다. 작은 데이터로 만든 모델은 API 예제이며 모델 품질 검증 결과가 아닙니다.
 
 ## 캐싱 동작
 
-KFP는 컴포넌트의 입력(파라미터 값, 입력 아티팩트 내용, 컴포넌트 자체의 정의)을 해시로 만들어 실행을 캐싱합니다. 이후 실행에서 이전에 성공한 실행과 동일한 입력 해시를 가진 컴포넌트를 제출하면 KFP는 재실행을 건너뛰고 캐시된 출력을 재사용합니다 — 그래서 `train_model` 단계만 수정한 뒤 파이프라인을 다시 실행해도, `prepare_data`의 입력과 코드가 바뀌지 않았다면 그 단계를 다시 실행하느라 시간을 낭비하지 않습니다.
+2.16.1의 캐시 키에는 입력 파라미터 값, 입력 아티팩트의 **이름/ID**, 출력 스펙, 컨테이너 이미지 문자열, 명령·인자, PVC 이름 등이 포함됩니다. 파이프라인 이름과 네임스페이스로 캐시 조회를 제한합니다. 입력 아티팩트의 파일 바이트를 매번 읽어 해시하는 방식이 아닙니다.
 
-이 동작은 반복적인 개발 과정에는 편리하지만, 실제로는 다시 실행되길 원했던 상황을 조용히 가려버릴 수도 있습니다(예: 선언된 입력에는 반영되지 않은 외부 상태에 의존하는 컴포넌트가 있는 경우). 캐싱은 다음과 같이 비활성화할 수 있습니다.
+같은 아티팩트 ID가 가리키는 파일, 이미지 태그, 외부 DB나 API가 바뀌어도 변경이 키에 반영되지 않으면 기존 결과가 재사용될 수 있습니다. 캐시된 메타데이터가 존재해도 실제 오브젝트를 지웠다면 downstream 읽기가 실패할 수 있습니다. 입력 데이터 버전·해시를 명시적 파라미터로 전달하고 변경 가능한 외부 상태나 부작용을 가진 태스크는 캐싱을 끄는 방법을 고려하세요.
 
-* 컴포넌트 단위로는, 파이프라인 함수 안의 태스크에 `set_caching_options(enable_caching=False)`를 호출합니다. 예: `prep_task.set_caching_options(enable_caching=False)`.
-* Run 단위로는, 컴포넌트별로가 아니라 파이프라인 제출 전체에 대해 캐싱을 끌 수 있습니다 — KFP UI의 "Run" 제출 화면에는 제출 시점에 캐싱을 켜고 끌 수 있는 토글이 있습니다.
+```python
+# 파이프라인 함수 안에서 특정 태스크의 캐싱 비활성화
+prep_task.set_caching_options(enable_caching=False)
+```
+
+인증된 클라이언트의 `create_run_from_pipeline_package(..., enable_caching=False)`는 Run의 전체 태스크 설정을 덮어씁니다. `None`은 컴파일된 태스크 설정을 유지합니다. 컴파일 기본값을 바꾸는 CLI 옵션과 `KFP_DISABLE_EXECUTION_CACHING_BY_DEFAULT`도 있지만, 환경 변수는 KFP를 import하기 전에 설정해야 합니다.
+
+## 검증과 근거
+
+Python 3.12 / KFP 2.16.1로 IR을 컴파일하고 의존성, 타입, 캐싱 설정을 검사했습니다. pandas 2.3.3 / scikit-learn 1.7.2로 함수 본문을 로컬 CPU에서 실행했습니다. Docker, Argo, 클러스터 캐시, S3, Pod Identity 실행을 검증한 것은 아닙니다.
+
+- [2.16.1 캐시 키 구현](https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/cacheutils/cache.go)
+- [2.16.1 캐시 조회와 재사용](https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/driver/cache.go)
+- [공식 캐싱 가이드](https://www.kubeflow.org/docs/components/pipelines/user-guides/core-functions/caching/)
+- [Lightweight Python 컴포넌트](https://www.kubeflow.org/docs/components/pipelines/user-guides/components/lightweight-python-components/)
 
 ## 다음 단계
 

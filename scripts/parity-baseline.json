@@ -30,10 +30,8 @@
     "ko/training/eks-auto-mode-2h-curriculum.md"
   ],
   "summary-missing": [
-    "en/quizzes/gitops/argocd/10-rollouts-experiment-quiz.md",
     "en/service-mesh/02-istio.md",
     "en/training/eks-auto-mode-2h-curriculum.md",
-    "ko/quizzes/gitops/argocd/10-rollouts-experiment-quiz.md",
     "ko/service-mesh/02-istio.md",
     "ko/training/eks-auto-mode-2h-curriculum.md"
   ]

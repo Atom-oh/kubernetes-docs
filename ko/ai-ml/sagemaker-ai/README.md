@@ -1,45 +1,56 @@
 # SageMaker AI로 Qwen PII 파인튜닝하기
 
-> **마지막 업데이트**: 2026년 9월 2일
+> 문서 검토: 2026-09-12. AWS provisioning 결과는 2026-09-01의 과거 실험 기록입니다.
 
-## 개요
+이 가이드북은 Qwen/Qwen3-30B-A3B-Instruct-2507의 QLoRA 실험을 위한 설계와
+component-tested 예제 패키지를 설명합니다. 관리형 SageMaker Training Job과
+임시 EKS GPU Job이 같은 소스·합성 데이터·평가 코드를 사용하도록 구성되어 있습니다.
+**두 GPU 경로의 end-to-end 학습 성공을 검증한 가이드가 아닙니다.**
 
-이 가이드북은 `Qwen/Qwen3-30B-A3B-Instruct-2507`에 QLoRA를 적용해 문서에서 PII 엔터티를 추출하고, 결정론적 코드가 원문을 `[PERSON_1]`, `[EMAIL_1]` 같은 토큰으로 치환하는 과정을 다룹니다.
+현재 고정한 PyTorch 2.8 DLC는 2026-08-06에 패치 지원이 종료되어 **자원 생성·GPU 실행을 차단**합니다. 지원되는 이미지·의존성 조합으로 갱신해야 하며, [실행 장](03-sagemaker-mlflow-execution.md)에서 로컬 검증과 재개 조건을 설명합니다.
 
-동일한 소스 코드와 합성 데이터셋을 두 실행 경로에서 사용합니다.
-
-- **관리형 경로**: SageMaker AI Training Job + SageMaker MLflow App
-- **Kubernetes 경로**: 임시 Amazon EKS GPU Job + MLflow on EKS
-
-모델은 최종 마스킹 문서를 생성하지 않습니다. 모델의 책임은 한 줄에 하나씩 `TYPE<TAB>ORIGINAL`을 추출하는 데 한정되고, 검증·정렬·치환·복원은 테스트 가능한 Python 코드가 담당합니다.
+모델은 `TYPE<TAB>ORIGINAL` 후보를 출력하고 Python 코드가 검증·치환·복원을 담당합니다.
+결정론적 치환이나 round-trip 성공이 모든 PII 탐지, 완전한 마스킹 또는 익명성을
+보장하지는 않습니다. 놓친 엔터티와 잘못 분류한 값은 별도로 평가합니다.
 
 ## 5부 학습 경로
 
-| Part | 주제 | 핵심 질문 |
-|---|---|---|
-| [Part 1](01-platform-architecture.md) | 플랫폼 아키텍처 | SageMaker AI, EKS, MLflow, Unified Studio의 책임을 어떻게 나누는가? |
-| [Part 2](02-pii-data-tokenization.md) | PII 데이터와 토큰화 | 실제 PII 없이 학습 데이터를 만들고 누출을 어떻게 측정하는가? |
-| [Part 3](03-sagemaker-mlflow-execution.md) | SageMaker AI와 MLflow 실행 | 동일한 학습 계약을 관리형·EKS 경로에서 어떻게 실행하는가? |
-| [Part 4](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | Unified Studio 거버넌스 | domain, project profile, project, membership을 어떻게 운영하는가? |
-| [Part 5](04-validation-results.md) | 실제 검증 결과 | 무엇을 실행했고, 어디서 중단했으며, 무엇을 측정하지 않았는가? |
+| Part | 주제 |
+| --- | --- |
+| [1](01-platform-architecture.md) | 플랫폼 책임과 목표 아키텍처 |
+| [2](02-pii-data-tokenization.md) | 합성 데이터·토큰 치환·평가 한계 |
+| [3](03-sagemaker-mlflow-execution.md) | SageMaker/EKS 실행 계약과 MLflow |
+| [4](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | Unified Studio domain/project/membership |
+| [5](04-validation-results.md) | 실행한 것과 측정하지 않은 것 |
 
-## 현재 검증 상태
+## 검증 기록
 
-| 상태 | 확인된 범위 |
-|---|---|
-| **로컬 검증 완료** | 합성 데이터 생성, 토크나이저, 집계 메트릭, SageMaker/EKS 요청 계약 |
-| **AWS에서 관찰** | 쿼터, SageMaker MLflow App, Unified Studio 프로젝트 생성 실패 경로 |
-| **미실행** | SageMaker Training Job, EKS GPU Job |
-| **차단 상태** | Unified Studio 프로젝트 1개 정리 대기 |
+| 구분 | 범위 |
+| --- | --- |
+| 2026-09-12 로컬 재검사 | 초기 30개 검사 이후 토큰화·평가·실행·정리 회귀 검사 추가; GPU와 AWS API 실행 없음 |
+| 2026-09-01 AWS 기록 | 쿼터·MLflow App과 project provisioning 실패 경로 |
+| 그 기록에서 미실행 | SageMaker Training Job / EKS GPU Job |
+| 당시 정리 결과 | App/S3/IAM 실험 자원 정리, Unified Studio project 1개 잔존 |
 
-AWS 검증은 2026년 9월 1일 GPU 학습 시작 전에 중단됐습니다. 따라서 이 가이드북은 파인튜닝 후 F1, 학습 시간, GPU 메모리, GPU 비용을 결과값으로 제시하지 않습니다.
+현재 AWS 계정을 조회하지 않았으므로 잔존 project가 지금도 존재한다고 주장하지 않습니다.
+다시 실행하기 전 최신 ownership·inventory를 확인합니다. 측정하지 않은 fine-tuned F1,
+GPU peak memory·학습 시간·비용을 결과값으로 제시하지 않습니다.
 
-## 안전 원칙
+## 실험 정책과 한계
 
-1. 데이터는 seed `42`로 생성한 완전 합성 데이터만 사용합니다.
-2. 원문, 추출값, 토큰 매핑, raw completion을 stdout, CloudWatch, MLflow parameter/tag에 기록하지 않습니다.
-3. MLflow에는 설정, 버전, 데이터 해시, 집계 메트릭과 비민감 아티팩트만 남깁니다.
-4. smoke run이 통과하기 전에는 full run을 시작하지 않습니다.
-5. 실행 후 inventory 기반 teardown과 잔존 자원 확인을 완료합니다.
+- Seed 42의 합성 데이터만 사용하고 split/hash를 기록합니다.
+- 일반 로그와 MLflow에는 원문·추출값·token mapping·raw completion을 보내지 않도록 설계합니다.
+  Autolog/tracing과 artifact 내용도 실제 실행에서 검증해야 합니다.
+- Private inventory에는 정리에 필요한 resource ID/ARN을 보관할 수 있지만 공개 보고서는 요약합니다.
+  Presigned URL은 접근 권한이 포함된 임시 URL로 취급합니다.
+- Smoke/full 전환은 검토한 실행 결과에 근거하고, 정리는 이번 실행의 소유 자원에 한정합니다.
+- Model ID/seed/direct dependency pin만으로 완전한 재현성이나 두 환경의 동등한 보안을 보장하지 않습니다.
 
-실행 가능한 예제 패키지는 `examples/ai-ml/qwen-pii-finetuning/`에 있습니다.
+예제 패키지: `examples/ai-ml/qwen-pii-finetuning/`.
+
+## 참고 자료
+
+- [Qwen model card](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507)
+- [QLoRA paper](https://arxiv.org/abs/2305.14314)
+- [Experiment configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/config/experiment.yaml)
+- [Recorded provisioning result](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json)

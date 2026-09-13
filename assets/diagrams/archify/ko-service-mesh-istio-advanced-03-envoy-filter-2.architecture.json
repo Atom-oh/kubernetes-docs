@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "시나리오 2: Client → CloudFront → ALB → Gateway",
+    "output": "ko-service-mesh-istio-advanced-03-envoy-filter-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      250
+    ],
+    "views": [
+      {
+        "id": "xff-chain",
+        "label": "XFF 누적 경로",
+        "focus": [
+          "client",
+          "cf",
+          "alb",
+          "gateway"
+        ],
+        "note": "CloudFront와 ALB가 각각 한 hop씩 X-Forwarded-For에 IP를 추가한다."
+      },
+      {
+        "id": "trusted-hops",
+        "label": "신뢰 hop 판정",
+        "focus": [
+          "gateway",
+          "app"
+        ],
+        "note": "Istio Gateway가 xff_num_trusted_hops: 2로 마지막 2개 hop을 신뢰해 실제 클라이언트 IP를 추출한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "203.0.113.5",
+      "pos": [
+        24,
+        100
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "cf",
+      "type": "cloud",
+      "label": "CloudFront",
+      "sublabel": "172.64.0.1",
+      "pos": [
+        300,
+        100
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "AWS ALB",
+      "sublabel": "10.0.1.100",
+      "pos": [
+        586,
+        100
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "10.0.2.50",
+      "pos": [
+        872,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "tag": "xff_num_trusted_hops: 2"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "메시 내부 워크로드",
+      "pos": [
+        1178,
+        100
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 엣지 프록시",
+      "wraps": [
+        "cf",
+        "alb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio 메시",
+      "wraps": [
+        "gateway",
+        "app"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-cf",
+      "from": "client",
+      "to": "cf",
+      "label": "XFF: (없음)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cf-to-alb",
+      "from": "cf",
+      "to": "alb",
+      "label": "XFF: 203.0.113.5",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alb-to-gateway",
+      "from": "alb",
+      "to": "gateway",
+      "label": "XFF: + 172.64.0.1 (2 hop)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-app",
+      "from": "gateway",
+      "to": "app",
+      "label": "XFF: + 10.0.1.100 (3 hop)",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "XFF 계산",
+      "items": [
+        "X-Forwarded-For: 203.0.113.5, 172.64.0.1, 10.0.1.100",
+        "xff_num_trusted_hops: 2 → 마지막 2개(CloudFront, ALB) 신뢰",
+        "실제 클라이언트 IP: 203.0.113.5"
+      ]
+    }
+  ]
+}

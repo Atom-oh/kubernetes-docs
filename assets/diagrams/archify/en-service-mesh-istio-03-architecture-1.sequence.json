@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "mTLS Certificate Issuance and Renewal Flow (Citadel Functionality)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      700
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "issue",
+        "label": "Initial issuance",
+        "focus": [
+          "envoy",
+          "istiod",
+          "spiffe"
+        ],
+        "note": "Istiod receives Envoy's CSR, verifies the SPIFFE identity, signs it, and issues an X.509 certificate."
+      },
+      {
+        "id": "renew",
+        "label": "Renewal before expiry (in use for mTLS)",
+        "focus": [
+          "envoy",
+          "istiod"
+        ],
+        "note": "Before the certificate used for mTLS expires, the same procedure yields a new one."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "sidecar proxy"
+    },
+    {
+      "id": "istiod",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Certificate Authority"
+    },
+    {
+      "id": "spiffe",
+      "type": "external",
+      "label": "SPIFFE",
+      "sublabel": "ServiceAccount identity"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 370,
+      "label": "Initial issuance"
+    },
+    {
+      "from": 395,
+      "to": 545,
+      "label": "Renewal before expiry (in use for mTLS)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "csr",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 195,
+      "label": "CSR request",
+      "variant": "default"
+    },
+    {
+      "id": "verify",
+      "from": "istiod",
+      "to": "spiffe",
+      "y": 240,
+      "label": "Verify identity (ServiceAccount)",
+      "variant": "security"
+    },
+    {
+      "id": "verified",
+      "from": "spiffe",
+      "to": "istiod",
+      "y": 285,
+      "label": "Verified",
+      "variant": "return"
+    },
+    {
+      "id": "issue-cert",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 340,
+      "label": "Issue signed X.509 certificate (TTL 24h)",
+      "variant": "emphasis",
+      "note": "Signed by Istiod before issuance"
+    },
+    {
+      "id": "renew-req",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 440,
+      "label": "Renewal request (before expiry)",
+      "variant": "default",
+      "note": "mTLS traffic uses the issued certificate"
+    },
+    {
+      "id": "renew-cert",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 510,
+      "label": "Issue new X.509 certificate",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "istiod",
+      "from": 190,
+      "to": 345,
+      "type": "security"
+    },
+    {
+      "participant": "spiffe",
+      "from": 235,
+      "to": 290,
+      "type": "external"
+    },
+    {
+      "participant": "istiod",
+      "from": 435,
+      "to": 515,
+      "type": "security"
+    }
+  ]
+}

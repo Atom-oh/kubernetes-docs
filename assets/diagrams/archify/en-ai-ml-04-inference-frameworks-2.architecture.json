@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Dynamo: execution and control",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1280,
+      580
+    ],
+    "output": "en-ai-ml-04-inference-frameworks-2.html",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "authorized request",
+      "pos": [
+        35,
+        65
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "backend",
+      "label": "Dynamo Frontend",
+      "sublabel": "selected routing policy",
+      "pos": [
+        490,
+        65
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "decode",
+      "type": "backend",
+      "label": "Decode worker",
+      "sublabel": "compatible model / backend",
+      "pos": [
+        945,
+        65
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "control",
+      "type": "cloud",
+      "label": "Controller / Planner",
+      "sublabel": "DGD / DGDR",
+      "pos": [
+        35,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "prefill",
+      "type": "backend",
+      "label": "Prefill worker",
+      "sublabel": "optional disaggregated path",
+      "pos": [
+        490,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "transfer",
+      "type": "messagebus",
+      "label": "KV transfer",
+      "sublabel": "validated connector / transport",
+      "pos": [
+        945,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request",
+      "from": "client",
+      "to": "frontend",
+      "label": "API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "decode-route",
+      "from": "frontend",
+      "to": "decode",
+      "label": "backend execution",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prefill-route",
+      "from": "frontend",
+      "to": "prefill",
+      "label": "disaggregated path",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        610,
+        255
+      ]
+    },
+    {
+      "id": "kv",
+      "from": "prefill",
+      "to": "transfer",
+      "label": "KV",
+      "variant": "emphasis"
+    },
+    {
+      "id": "handoff",
+      "from": "transfer",
+      "to": "decode",
+      "label": "compatible KV handoff",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        1070,
+        255
+      ]
+    },
+    {
+      "id": "reconcile",
+      "from": "control",
+      "to": "prefill",
+      "label": "deployment / capacity",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Configuration requirements",
+      "items": [
+        "Aggregated serving does not require a separate prefill worker.",
+        "Validate KV compatibility before mixing backends or GPUs.",
+        "Redis is not the mandatory store for all KV tensors."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Control layer",
+      "items": [
+        "DGD configures deployment; DGDR requests profiling/deployment generation.",
+        "Inspect planner/controller permissions, dependencies and cost."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Alertmanager Routing Flow",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-alerting-01-alertmanager-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Alert entry"
+        },
+        "security": {
+          "label": "Matcher decision"
+        },
+        "external": {
+          "label": "Receiver"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "critical-first",
+        "label": "Critical-first route",
+        "focus": [
+          "alert",
+          "crit",
+          "criticalRecv"
+        ],
+        "note": "Alerts with severity=critical match the first child route and go straight to critical-receiver (group_wait 10s)."
+      },
+      {
+        "id": "nested-route",
+        "label": "Nested service → owner route",
+        "focus": [
+          "svc",
+          "owner",
+          "teamA",
+          "serviceTeam"
+        ],
+        "note": "If service is foo|bar, the child route checks owner; on no match the alert falls back to the parent route's service-team."
+      },
+      {
+        "id": "fallback",
+        "label": "Default receiver",
+        "focus": [
+          "crit",
+          "svc",
+          "defaultRecv"
+        ],
+        "note": "Alerts that match no child route are delivered to the root route's default-receiver."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "match",
+      "label": "Routing tree · matcher evaluation"
+    },
+    {
+      "id": "recv",
+      "label": "Receivers"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "crit",
+    "svc",
+    "owner",
+    "teamA"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "alert"
+    ],
+    "allowedTerminals": [
+      "criticalRecv",
+      "defaultRecv",
+      "teamA",
+      "serviceTeam"
+    ],
+    "requiredPaths": [
+      {
+        "from": "alert",
+        "to": "criticalRecv"
+      },
+      {
+        "from": "alert",
+        "to": "defaultRecv"
+      },
+      {
+        "from": "alert",
+        "to": "teamA"
+      },
+      {
+        "from": "alert",
+        "to": "serviceTeam"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "match",
+      "col": 0,
+      "type": "backend",
+      "label": "Alert received",
+      "sublabel": "enters root route",
+      "width": 134
+    },
+    {
+      "id": "crit",
+      "lane": "match",
+      "col": 1,
+      "type": "security",
+      "label": "severity=critical?",
+      "sublabel": "match",
+      "width": 150
+    },
+    {
+      "id": "svc",
+      "lane": "match",
+      "col": 2,
+      "type": "security",
+      "label": "service=foo|bar?",
+      "sublabel": "match_re",
+      "width": 150
+    },
+    {
+      "id": "owner",
+      "lane": "match",
+      "col": 3,
+      "type": "security",
+      "label": "owner=team-a?",
+      "sublabel": "child route · match",
+      "width": 150
+    },
+    {
+      "id": "criticalRecv",
+      "lane": "recv",
+      "col": 1,
+      "type": "external",
+      "label": "critical-receiver",
+      "sublabel": "group_wait 10s",
+      "width": 150
+    },
+    {
+      "id": "defaultRecv",
+      "lane": "recv",
+      "col": 2,
+      "type": "external",
+      "label": "default-receiver",
+      "sublabel": "root route default",
+      "width": 150
+    },
+    {
+      "id": "teamA",
+      "lane": "recv",
+      "col": 3,
+      "type": "external",
+      "label": "team-a",
+      "sublabel": "child route receiver",
+      "width": 150
+    },
+    {
+      "id": "serviceTeam",
+      "lane": "recv",
+      "col": 4,
+      "type": "external",
+      "label": "service-team",
+      "sublabel": "parent route receiver",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "alert",
+      "to": "crit",
+      "role": "main"
+    },
+    {
+      "from": "crit",
+      "to": "criticalRecv",
+      "label": "match",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "crit",
+      "to": "svc",
+      "label": "no match",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "svc",
+      "to": "defaultRecv",
+      "label": "no match",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "svc",
+      "to": "owner",
+      "label": "match",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "owner",
+      "to": "teamA",
+      "label": "match",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "owner",
+      "to": "serviceTeam",
+      "label": "no match",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Example route config on this page",
+      "items": [
+        "Root route: receiver default-receiver, group_wait 30s, group_interval 5m, repeat_interval 4h",
+        "Critical route: match severity=critical, group_wait shortened to 10s",
+        "Service route: match_re ^(foo|bar)$ → service-team, nested owner=team-a → team-a"
+      ]
+    }
+  ]
+}

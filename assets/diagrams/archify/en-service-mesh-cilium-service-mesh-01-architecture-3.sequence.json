@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "eBPF L3/L4 Processing Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      600
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ingress",
+        "label": "Enter the TC hook",
+        "focus": [
+          "src",
+          "tc",
+          "ct"
+        ],
+        "note": "A packet from the source pod hits the TC eBPF hook, which first checks the CT map for an existing connection."
+      },
+      {
+        "id": "new-conn",
+        "label": "New connection",
+        "focus": [
+          "ct",
+          "policy"
+        ],
+        "note": "Only the first packet missing from the CT map goes through the policy map (Policy Engine) to decide whether it is allowed."
+      },
+      {
+        "id": "cached",
+        "label": "Existing connection and delivery",
+        "focus": [
+          "ct",
+          "tc",
+          "dst"
+        ],
+        "note": "A tracked connection returns its cached decision immediately, and TC eBPF forwards the packet to the destination pod."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "src",
+      "type": "frontend",
+      "label": "Source Pod",
+      "sublabel": "sending pod"
+    },
+    {
+      "id": "tc",
+      "type": "backend",
+      "label": "TC eBPF",
+      "sublabel": "kernel TC hook"
+    },
+    {
+      "id": "ct",
+      "type": "database",
+      "label": "CT + LB Map",
+      "sublabel": "conntrack · service map"
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Policy Engine",
+      "sublabel": "policy map"
+    },
+    {
+      "id": "dst",
+      "type": "frontend",
+      "label": "Dest Pod",
+      "sublabel": "receiving pod"
+    }
+  ],
+  "segments": [
+    {
+      "from": 275,
+      "to": 375,
+      "label": "New connection — policy evaluation"
+    },
+    {
+      "from": 395,
+      "to": 455,
+      "label": "Existing connection — cached decision"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send",
+      "from": "src",
+      "to": "tc",
+      "y": 190,
+      "label": "send packet",
+      "variant": "default"
+    },
+    {
+      "id": "lookup",
+      "from": "tc",
+      "to": "ct",
+      "y": 235,
+      "label": "look up connection state",
+      "variant": "default"
+    },
+    {
+      "id": "evaluate",
+      "from": "ct",
+      "to": "policy",
+      "y": 305,
+      "label": "evaluate policy",
+      "variant": "security",
+      "note": "only the first packet not in the CT map"
+    },
+    {
+      "id": "allow",
+      "from": "policy",
+      "to": "ct",
+      "y": 350,
+      "label": "allow",
+      "variant": "return"
+    },
+    {
+      "id": "cached",
+      "from": "ct",
+      "to": "tc",
+      "y": 425,
+      "label": "return cached decision",
+      "variant": "return",
+      "note": "no policy re-evaluation"
+    },
+    {
+      "id": "deliver",
+      "from": "tc",
+      "to": "dst",
+      "y": 500,
+      "label": "deliver packet",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "tc",
+      "from": 185,
+      "to": 508,
+      "type": "backend"
+    },
+    {
+      "participant": "ct",
+      "from": 230,
+      "to": 432,
+      "type": "database"
+    },
+    {
+      "participant": "policy",
+      "from": 300,
+      "to": 356,
+      "type": "security"
+    }
+  ]
+}

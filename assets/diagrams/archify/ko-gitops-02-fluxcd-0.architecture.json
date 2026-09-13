@@ -1,0 +1,384 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FluxCD 아키텍처 개요",
+    "output": "ko-gitops-02-fluxcd-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      660
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "sources",
+        "label": "소스 가져오기",
+        "focus": [
+          "git",
+          "helm",
+          "oci",
+          "bucket",
+          "source"
+        ],
+        "note": "Source Controller가 Git, Helm, OCI, S3 호환 버킷에서 아티팩트를 가져온다."
+      },
+      {
+        "id": "reconcile",
+        "label": "클러스터 반영",
+        "focus": [
+          "source",
+          "kustomize",
+          "helmctl",
+          "cluster"
+        ],
+        "note": "Kustomize Controller와 Helm Controller가 아티팩트를 클러스터 리소스로 조정한다."
+      },
+      {
+        "id": "automation",
+        "label": "알림과 이미지 자동화",
+        "focus": [
+          "image-registry",
+          "reflector",
+          "image",
+          "git",
+          "notification",
+          "source",
+          "kustomize",
+          "helmctl"
+        ],
+        "note": "Controller 이벤트는 Notification으로 간다. Reflector가 태그/정책을 평가하고 Automation이 표시된 YAML을 push 브랜치에 기록한다. PR 병합은 별도다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git repository",
+      "sublabel": "GitRepository source",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "helm",
+      "type": "external",
+      "label": "Helm repository",
+      "sublabel": "HelmRepository source",
+      "pos": [
+        340,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "oci",
+      "type": "external",
+      "label": "OCI artifacts",
+      "sublabel": "OCIRepository source",
+      "pos": [
+        600,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "bucket",
+      "type": "external",
+      "label": "Object storage",
+      "sublabel": "Bucket source",
+      "pos": [
+        860,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "image",
+      "type": "backend",
+      "label": "Image Automation Controller",
+      "sublabel": "선택 설치 · marker 필드 갱신",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "source",
+      "type": "backend",
+      "label": "Source Controller",
+      "sublabel": "아티팩트 가져오기",
+      "pos": [
+        560,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "kustomize",
+      "type": "backend",
+      "label": "Kustomize Controller",
+      "sublabel": "Kustomization 적용",
+      "pos": [
+        290,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "helmctl",
+      "type": "backend",
+      "label": "Helm Controller",
+      "sublabel": "HelmRelease 관리",
+      "pos": [
+        830,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification Controller",
+      "sublabel": "이벤트 알림 / Receiver",
+      "pos": [
+        560,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "클러스터 리소스",
+      "sublabel": "Namespaces · Deployments · Services · ConfigMaps",
+      "pos": [
+        545,
+        560
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "reflector",
+      "type": "backend",
+      "label": "Image Reflector Controller",
+      "sublabel": "선택 설치 · 태그/정책 평가",
+      "pos": [
+        70,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "image-registry",
+      "type": "external",
+      "label": "Image registry",
+      "sublabel": "ImageRepository",
+      "pos": [
+        70,
+        560
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "외부 소스",
+      "wraps": [
+        "git",
+        "helm",
+        "oci",
+        "bucket"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "FluxCD 컨트롤러",
+      "wraps": [
+        "image",
+        "source",
+        "kustomize",
+        "helmctl",
+        "notification",
+        "reflector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "대상 클러스터 리소스",
+      "wraps": [
+        "cluster"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-source",
+      "from": "git",
+      "to": "source",
+      "label": "소스 가져오기",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "helm-source",
+      "from": "helm",
+      "to": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "oci-source",
+      "from": "oci",
+      "to": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "bucket-source",
+      "from": "bucket",
+      "to": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "source-kustomize",
+      "from": "source",
+      "to": "kustomize",
+      "label": "매니페스트",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "source-helmctl",
+      "from": "source",
+      "to": "helmctl",
+      "label": "Helm 차트",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kustomize-cluster",
+      "from": "kustomize",
+      "to": "cluster",
+      "label": "apply",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "helmctl-cluster",
+      "from": "helmctl",
+      "to": "cluster",
+      "label": "release",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "source-events",
+      "from": "source",
+      "to": "notification",
+      "label": "events",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        660,
+        380
+      ]
+    },
+    {
+      "id": "kustomize-events",
+      "from": "kustomize",
+      "to": "notification",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "helmctl-events",
+      "from": "helmctl",
+      "to": "notification",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "image-git",
+      "from": "image",
+      "to": "git",
+      "label": "push branch",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        170,
+        188
+      ]
+    },
+    {
+      "id": "registry-reflector",
+      "from": "image-registry",
+      "to": "reflector",
+      "label": "tags / digest",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "reflector-automation",
+      "from": "reflector",
+      "to": "image",
+      "label": "ImagePolicy",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

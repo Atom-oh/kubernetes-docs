@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage Options on Windows Nodes",
+    "locale": "en",
+    "output": "en-core-10-windows-in-kubernetes-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      720
+    ],
+    "views": [
+      {
+        "id": "local",
+        "label": "Node-local volumes",
+        "focus": [
+          "wc",
+          "ed",
+          "hp",
+          "nd"
+        ],
+        "note": "emptyDir is temporary storage (memory-backed emptyDir is not supported); hostPath mounts the host node's filesystem."
+      },
+      {
+        "id": "api",
+        "label": "API-delivered volumes",
+        "focus": [
+          "wc",
+          "cm",
+          "sc"
+        ],
+        "note": "ConfigMap delivers configuration data and Secret delivers sensitive data from the Kubernetes API as volumes."
+      },
+      {
+        "id": "persistent",
+        "label": "PersistentVolume path",
+        "focus": [
+          "wc",
+          "pv",
+          "csi",
+          "az",
+          "aws",
+          "smb"
+        ],
+        "note": "A PersistentVolume reaches external storage such as Azure Disk/File, AWS EBS, or an SMB share through a CSI driver."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Windows workload"
+        },
+        "database": {
+          "label": "Volume / storage"
+        },
+        "backend": {
+          "label": "Storage driver"
+        },
+        "cloud": {
+          "label": "Cloud storage"
+        },
+        "external": {
+          "label": "External share"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "wc",
+      "type": "frontend",
+      "label": "Windows Container",
+      "sublabel": "volume mounts",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ed",
+      "type": "database",
+      "label": "emptyDir Volume",
+      "sublabel": "temporary storage",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "hp",
+      "type": "database",
+      "label": "hostPath Volume",
+      "sublabel": "host filesystem",
+      "pos": [
+        230,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "nd",
+      "type": "database",
+      "label": "Node Disk",
+      "sublabel": "e.g. C:\\k\\logs",
+      "pos": [
+        230,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cm",
+      "type": "database",
+      "label": "ConfigMap Volume",
+      "sublabel": "configuration data",
+      "pos": [
+        450,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "database",
+      "label": "Secret Volume",
+      "sublabel": "sensitive data",
+      "pos": [
+        640,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "persistent storage",
+      "pos": [
+        880,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "backend",
+      "label": "CSI Driver",
+      "sublabel": "Container Storage Interface",
+      "pos": [
+        880,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "az",
+      "type": "cloud",
+      "label": "Azure Disk/File",
+      "sublabel": "azureDisk · azureFile",
+      "pos": [
+        690,
+        560
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS EBS",
+      "sublabel": "awsElasticBlockStore",
+      "pos": [
+        885,
+        560
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "smb",
+      "type": "external",
+      "label": "SMB Share",
+      "sublabel": "file share",
+      "pos": [
+        1080,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Windows Pod",
+      "wraps": [
+        "wc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Windows Node",
+      "wraps": [
+        "ed",
+        "hp",
+        "nd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes API",
+      "wraps": [
+        "cm",
+        "sc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "wc-ed",
+      "from": "wc",
+      "to": "ed"
+    },
+    {
+      "id": "wc-hp",
+      "from": "wc",
+      "to": "hp",
+      "toSide": "top"
+    },
+    {
+      "id": "wc-cm",
+      "from": "wc",
+      "to": "cm",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "wc-sc",
+      "from": "wc",
+      "to": "sc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "wc-pv",
+      "from": "wc",
+      "to": "pv",
+      "label": "PVC mount",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hp-nd",
+      "from": "hp",
+      "to": "nd",
+      "label": "node path",
+      "labelDy": 24
+    },
+    {
+      "id": "pv-csi",
+      "from": "pv",
+      "to": "csi",
+      "label": "provision / attach",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "csi-az",
+      "from": "csi",
+      "to": "az"
+    },
+    {
+      "id": "csi-aws",
+      "from": "csi",
+      "to": "aws",
+      "variant": "emphasis"
+    },
+    {
+      "id": "csi-smb",
+      "from": "csi",
+      "to": "smb"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Supported volume types",
+      "items": [
+        "emptyDir: temporary storage (memory-based emptyDir not supported)",
+        "hostPath: host node filesystem",
+        "configMap / secret: configuration data and sensitive data",
+        "azureFile · azureDisk · awsElasticBlockStore · CSI driver"
+      ]
+    }
+  ]
+}

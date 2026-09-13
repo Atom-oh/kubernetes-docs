@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Four Golden Signals",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-04-observability-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      300
+    ]
+  },
+  "components": [
+    {
+      "id": "latency",
+      "type": "backend",
+      "label": "Latency",
+      "sublabel": "Response Time",
+      "tag": "hubble_http_request_duration_seconds",
+      "pos": [
+        60,
+        110
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "traffic",
+      "type": "backend",
+      "label": "Traffic",
+      "sublabel": "Throughput",
+      "tag": "hubble_http_requests_total",
+      "pos": [
+        290,
+        110
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "errors",
+      "type": "backend",
+      "label": "Errors",
+      "sublabel": "Error Rate",
+      "tag": "hubble_http_responses_total 5xx",
+      "pos": [
+        520,
+        110
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "saturation",
+      "type": "backend",
+      "label": "Saturation",
+      "sublabel": "Resource Usage",
+      "tag": "hubble_tcp_connections_total",
+      "pos": [
+        750,
+        110
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Golden Signals",
+      "wraps": [
+        "latency",
+        "traffic",
+        "errors",
+        "saturation"
+      ]
+    }
+  ],
+  "connections": []
+}

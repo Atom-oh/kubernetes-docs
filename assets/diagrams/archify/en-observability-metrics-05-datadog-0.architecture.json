@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Datadog vs Open Source vs CloudWatch",
+    "locale": "en",
+    "output": "en-observability-metrics-05-datadog-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "dd-platform",
+      "type": "external",
+      "label": "Unified Platform",
+      "sublabel": "Metrics, logs, traces, profiling",
+      "pos": [
+        70,
+        90
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "dd-ai",
+      "type": "external",
+      "label": "AI Analysis",
+      "sublabel": "Watchdog AI anomaly detection",
+      "pos": [
+        70,
+        190
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "dd-integrations",
+      "type": "external",
+      "label": "750+ Integrations",
+      "sublabel": "AWS, Kubernetes, databases",
+      "pos": [
+        70,
+        290
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "dd-pricing",
+      "type": "external",
+      "label": "Per-host Pricing",
+      "sublabel": "High cost predictability",
+      "pos": [
+        70,
+        390
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "cw-native",
+      "type": "cloud",
+      "label": "AWS Native",
+      "sublabel": "Managed service",
+      "pos": [
+        450,
+        90
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "cw-pricing",
+      "type": "cloud",
+      "label": "Usage Pricing",
+      "sublabel": "Low cost predictability",
+      "pos": [
+        450,
+        190
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "cw-integrations",
+      "type": "cloud",
+      "label": "AWS Integration",
+      "sublabel": "AWS services first",
+      "pos": [
+        450,
+        290
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "cw-apm",
+      "type": "cloud",
+      "label": "Limited APM",
+      "sublabel": "Separate X-Ray",
+      "pos": [
+        450,
+        390
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "os-control",
+      "type": "backend",
+      "label": "Full Control",
+      "sublabel": "Prometheus + Grafana",
+      "pos": [
+        830,
+        90
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "os-cost",
+      "type": "backend",
+      "label": "Infrastructure Cost",
+      "sublabel": "High cost predictability",
+      "pos": [
+        830,
+        190
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "os-flexibility",
+      "type": "backend",
+      "label": "High Flexibility",
+      "sublabel": "Freedom to configure",
+      "pos": [
+        830,
+        290
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "os-overhead",
+      "type": "backend",
+      "label": "Operational Overhead",
+      "sublabel": "High operational burden",
+      "pos": [
+        830,
+        390
+      ],
+      "size": [
+        260,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Datadog · SaaS",
+      "wraps": [
+        "dd-platform",
+        "dd-ai",
+        "dd-integrations",
+        "dd-pricing"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CloudWatch · Managed",
+      "wraps": [
+        "cw-native",
+        "cw-pricing",
+        "cw-integrations",
+        "cw-apm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Open Source · Self-hosted",
+      "wraps": [
+        "os-control",
+        "os-cost",
+        "os-flexibility",
+        "os-overhead"
+      ]
+    }
+  ],
+  "connections": []
+}

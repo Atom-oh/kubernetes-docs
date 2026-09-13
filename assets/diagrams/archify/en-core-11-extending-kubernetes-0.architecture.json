@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Main Extension Points in Kubernetes",
+    "locale": "en",
+    "output": "en-core-11-extending-kubernetes-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Client"
+        },
+        "backend": {
+          "label": "Kubernetes component"
+        },
+        "cloud": {
+          "label": "Cloud integration"
+        },
+        "external": {
+          "label": "Node plugin"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "api-extension",
+        "label": "API extensions",
+        "focus": [
+          "user",
+          "api",
+          "cr",
+          "ac",
+          "ae"
+        ],
+        "note": "The API server receives requests and grows its surface through custom resources, admission controllers, and API server extensions."
+      },
+      {
+        "id": "controller-scheduling",
+        "label": "Controller / scheduling",
+        "focus": [
+          "api",
+          "cr",
+          "op",
+          "ccm",
+          "sch"
+        ],
+        "note": "Operators watch custom resources, while the cloud controller manager and scheduler extensions integrate with the API server."
+      },
+      {
+        "id": "node-extension",
+        "label": "Node extensions",
+        "focus": [
+          "api",
+          "node",
+          "csi",
+          "cni",
+          "dp"
+        ],
+        "note": "Nodes integrate storage, networking, and hardware through CSI drivers, CNI plugins, and device plugins."
+      }
+    ],
+    "viewBox": [
+      1380,
+      760
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "frontend",
+      "label": "User / Client",
+      "sublabel": "kubectl, controllers",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        980,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cr",
+      "type": "backend",
+      "label": "Custom Resources",
+      "sublabel": "CRD",
+      "pos": [
+        470,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ac",
+      "type": "backend",
+      "label": "Admission Controllers",
+      "sublabel": "Webhook validate / mutate",
+      "pos": [
+        630,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ae",
+      "type": "backend",
+      "label": "API Server Extensions",
+      "sublabel": "Aggregation Layer",
+      "pos": [
+        810,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "op",
+      "type": "backend",
+      "label": "Operators",
+      "sublabel": "Custom controllers",
+      "pos": [
+        255,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ccm",
+      "type": "cloud",
+      "label": "Cloud Controller Manager",
+      "sublabel": "Cloud provider integration",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "sch",
+      "type": "backend",
+      "label": "Scheduler Extensions",
+      "sublabel": "Custom scheduling logic",
+      "pos": [
+        1160,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "Node",
+      "sublabel": "kubelet",
+      "pos": [
+        980,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "external",
+      "label": "CSI Drivers",
+      "sublabel": "Storage integration",
+      "pos": [
+        770,
+        570
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "external",
+      "label": "CNI Plugins",
+      "sublabel": "Networking integration",
+      "pos": [
+        985,
+        570
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "dp",
+      "type": "external",
+      "label": "Device Plugins",
+      "sublabel": "Hardware integration",
+      "pos": [
+        1200,
+        570
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "API Extensions",
+      "wraps": [
+        "cr",
+        "ac",
+        "ae"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Controller Extensions",
+      "wraps": [
+        "op",
+        "ccm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Scheduling Extensions",
+      "wraps": [
+        "sch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node Extensions",
+      "wraps": [
+        "node",
+        "csi",
+        "cni",
+        "dp"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "api",
+      "label": "API request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-cr",
+      "from": "api",
+      "to": "cr",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-ac",
+      "from": "api",
+      "to": "ac",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-ae",
+      "from": "api",
+      "to": "ae",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cr-to-op",
+      "from": "cr",
+      "to": "op",
+      "label": "reconcile"
+    },
+    {
+      "id": "api-to-ccm",
+      "from": "api",
+      "to": "ccm",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-sch",
+      "from": "api",
+      "to": "sch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-node",
+      "from": "api",
+      "to": "node"
+    },
+    {
+      "id": "node-to-csi",
+      "from": "node",
+      "to": "csi"
+    },
+    {
+      "id": "node-to-cni",
+      "from": "node",
+      "to": "cni"
+    },
+    {
+      "id": "node-to-dp",
+      "from": "node",
+      "to": "dp"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "API extensions",
+      "items": [
+        "Custom Resources: define new API object types",
+        "Admission Controllers: intercept, modify, or validate API requests",
+        "API Server Extensions: add new endpoints to the API server"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Controller and scheduling extensions",
+      "items": [
+        "Operators: combine custom resources and controllers to manage complex applications",
+        "Cloud Controller Manager: integrate cloud provider-specific features",
+        "Scheduler Extensions: customize pod scheduling logic"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Node extensions",
+      "items": [
+        "CSI: integrate storage systems",
+        "CNI: integrate networking solutions",
+        "Device Plugins: integrate special hardware"
+      ]
+    }
+  ]
+}

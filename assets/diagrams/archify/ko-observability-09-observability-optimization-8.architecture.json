@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "관측성 단계별 도입 전략",
+    "output": "ko-observability-09-observability-optimization-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "phase1", "label": "1단계: 기본", "focus": ["cw-logs", "cw-metrics", "container-insights"], "note": "CloudWatch 기반. 소요 1-2일, 비용과 운영 복잡도 모두 낮음." },
+      { "id": "phase2", "label": "2단계: 중급", "focus": ["prom-grafana", "fluentbit-loki", "xray"], "note": "Grafana 스택. 소요 1-2주, 비용과 운영 복잡도는 중간." },
+      { "id": "phase3", "label": "3단계: 고급", "focus": ["vm-amp", "otel", "ebpf", "cost"], "note": "OpenTelemetry + eBPF. 소요 2-4주, 비용과 운영 복잡도 모두 높음." }
+    ]
+  },
+  "components": [
+    { "id": "cw-metrics", "type": "cloud", "label": "CloudWatch Metrics", "sublabel": "기본 메트릭", "pos": [40, 80], "size": [170, 60] },
+    { "id": "cw-logs", "type": "cloud", "label": "CloudWatch Logs", "sublabel": "기본 로그 수집", "pos": [40, 220], "size": [170, 60] },
+    { "id": "container-insights", "type": "cloud", "label": "Container Insights", "sublabel": "컨테이너 메트릭", "pos": [40, 360], "size": [170, 60] },
+    { "id": "prom-grafana", "type": "backend", "label": "Prometheus + Grafana", "sublabel": "메트릭 + 대시보드", "pos": [310, 80], "size": [180, 60] },
+    { "id": "fluentbit-loki", "type": "backend", "label": "Fluent Bit + Loki", "sublabel": "로그 파이프라인", "pos": [310, 220], "size": [180, 60] },
+    { "id": "xray", "type": "cloud", "label": "X-Ray 트레이싱", "sublabel": "분산 트레이싱", "pos": [310, 360], "size": [180, 60] },
+    { "id": "vm-amp", "type": "database", "label": "VictoriaMetrics / AMP", "sublabel": "장기 메트릭 저장", "pos": [590, 80], "size": [180, 60] },
+    { "id": "otel", "type": "backend", "label": "OpenTelemetry", "sublabel": "통합 텔레메트리 수집", "pos": [590, 220], "size": [180, 60] },
+    { "id": "cost", "type": "backend", "label": "비용 모니터링", "sublabel": "OpenCost / KubeCost", "pos": [850, 80], "size": [180, 60] },
+    { "id": "ebpf", "type": "backend", "label": "eBPF 모니터링", "sublabel": "코드 수정 없는 계측", "pos": [850, 220], "size": [180, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "1단계: 기본", "wraps": ["cw-metrics", "cw-logs", "container-insights"] },
+    { "kind": "region", "label": "2단계: 중급", "wraps": ["prom-grafana", "fluentbit-loki", "xray"] },
+    { "kind": "region", "label": "3단계: 고급", "wraps": ["vm-amp", "otel", "cost", "ebpf"] }
+  ],
+  "connections": [
+    { "id": "metrics-to-prom", "from": "cw-metrics", "to": "prom-grafana" },
+    { "id": "logs-to-loki", "from": "cw-logs", "to": "fluentbit-loki" },
+    { "id": "insights-to-xray", "from": "container-insights", "to": "xray" },
+    { "id": "prom-to-vm", "from": "prom-grafana", "to": "vm-amp", "label": "remoteWrite" },
+    { "id": "loki-to-otel", "from": "fluentbit-loki", "to": "otel" },
+    { "id": "xray-to-otel", "from": "xray", "to": "otel" },
+    { "id": "vm-to-cost", "from": "vm-amp", "to": "cost" },
+    { "id": "otel-to-ebpf", "from": "otel", "to": "ebpf" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "1단계 (기본)", "items": ["CloudWatch 기반 구성", "소요 1-2일 · 비용 낮음 · 운영 복잡도 낮음"] },
+    { "dot": "emerald", "title": "2단계 (중급)", "items": ["Grafana 스택 도입", "소요 1-2주 · 비용 중간 · 운영 복잡도 중간"] },
+    { "dot": "amber", "title": "3단계 (고급)", "items": ["OpenTelemetry + eBPF", "소요 2-4주 · 비용 높음 · 운영 복잡도 높음"] }
+  ]
+}

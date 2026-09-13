@@ -1,0 +1,280 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Cluster Backup and Recovery Process",
+    "locale": "en",
+    "output": "en-core-09-cluster-administration-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "backup",
+        "label": "Backup Process",
+        "focus": [
+          "schedule",
+          "etcd-backup",
+          "resource-backup",
+          "store"
+        ],
+        "note": "A scheduled job creates etcd snapshots and resource YAMLs and collects them in backup storage."
+      },
+      {
+        "id": "recovery",
+        "label": "Recovery Process",
+        "focus": [
+          "disaster",
+          "restore-etcd",
+          "restart-services",
+          "validate-cluster",
+          "restore-resources"
+        ],
+        "note": "After a disaster, restore etcd, restart services, validate the cluster, then restore resources."
+      },
+      {
+        "id": "handoff",
+        "label": "Storage to recovery",
+        "focus": [
+          "store",
+          "restore-etcd",
+          "restore-resources"
+        ],
+        "note": "The etcd snapshot in backup storage feeds the etcd restore; the resource YAMLs feed the resource restore."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "schedule",
+      "type": "backend",
+      "label": "Set Backup Schedule",
+      "sublabel": "CronJob",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "etcd-backup",
+      "type": "backend",
+      "label": "Create etcd Snapshot",
+      "sublabel": "etcdctl snapshot save",
+      "pos": [
+        290,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "resource-backup",
+      "type": "backend",
+      "label": "Backup Resource YAMLs",
+      "sublabel": "kubectl get -o yaml",
+      "pos": [
+        290,
+        240
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "Backup Storage",
+      "sublabel": "/backup",
+      "pos": [
+        580,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "disaster",
+      "type": "external",
+      "label": "Disaster Occurs",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "restore-etcd",
+      "type": "backend",
+      "label": "Restore etcd",
+      "sublabel": "etcdctl snapshot restore",
+      "pos": [
+        270,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "restart-services",
+      "type": "backend",
+      "label": "Restart Kubernetes Services",
+      "sublabel": "systemctl start",
+      "pos": [
+        530,
+        440
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "validate-cluster",
+      "type": "backend",
+      "label": "Validate Cluster",
+      "sublabel": "check kubectl get nodes / pods",
+      "pos": [
+        790,
+        440
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "restore-resources",
+      "type": "backend",
+      "label": "Restore Resources",
+      "pos": [
+        1030,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Backup Process",
+      "wraps": [
+        "schedule",
+        "etcd-backup",
+        "resource-backup",
+        "store"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Recovery Process",
+      "wraps": [
+        "disaster",
+        "restore-etcd",
+        "restart-services",
+        "validate-cluster",
+        "restore-resources"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "schedule-to-etcd-backup",
+      "from": "schedule",
+      "to": "etcd-backup"
+    },
+    {
+      "id": "schedule-to-resource-backup",
+      "from": "schedule",
+      "to": "resource-backup"
+    },
+    {
+      "id": "etcd-backup-to-store",
+      "from": "etcd-backup",
+      "to": "store"
+    },
+    {
+      "id": "resource-backup-to-store",
+      "from": "resource-backup",
+      "to": "store"
+    },
+    {
+      "id": "disaster-to-restore-etcd",
+      "from": "disaster",
+      "to": "restore-etcd",
+      "variant": "emphasis"
+    },
+    {
+      "id": "restore-etcd-to-restart",
+      "from": "restore-etcd",
+      "to": "restart-services",
+      "variant": "emphasis"
+    },
+    {
+      "id": "restart-to-validate",
+      "from": "restart-services",
+      "to": "validate-cluster",
+      "variant": "emphasis"
+    },
+    {
+      "id": "validate-to-restore-resources",
+      "from": "validate-cluster",
+      "to": "restore-resources",
+      "variant": "emphasis"
+    },
+    {
+      "id": "store-to-restore-etcd",
+      "from": "store",
+      "to": "restore-etcd",
+      "label": "etcd snapshot",
+      "variant": "dashed",
+      "labelAt": [
+        515,
+        365
+      ]
+    },
+    {
+      "id": "store-to-restore-resources",
+      "from": "store",
+      "to": "restore-resources",
+      "label": "resource YAMLs",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Backup",
+      "items": [
+        "etcd holds all cluster state, so regular backups are essential",
+        "Create snapshots with etcdctl snapshot save; verify with snapshot status",
+        "Save every namespace and cluster-scoped resource as YAML",
+        "Automated daily at midnight with a CronJob"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Recovery",
+      "items": [
+        "Stop kubelet, kube-apiserver and the other services first",
+        "Back up the existing /var/lib/etcd, then run snapshot restore",
+        "Restart etcd and the Kubernetes services, then verify cluster status"
+      ]
+    }
+  ]
+}

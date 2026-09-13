@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM scaling and capacity boundaries",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1190,
+      430
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "metrics",
+      "type": "external",
+      "label": "Validated metrics",
+      "sublabel": "queue / request / utilization",
+      "pos": [
+        30,
+        80
+      ],
+      "size": [
+        250,
+        75
+      ]
+    },
+    {
+      "id": "scaler",
+      "type": "backend",
+      "label": "One Pod scaling owner",
+      "sublabel": "HPA or KEDA / adapter",
+      "pos": [
+        465,
+        80
+      ],
+      "size": [
+        250,
+        75
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Independent model replicas",
+      "sublabel": "readiness / load / drain",
+      "pos": [
+        900,
+        80
+      ],
+      "size": [
+        250,
+        75
+      ]
+    },
+    {
+      "id": "capacity",
+      "type": "cloud",
+      "label": "Node capacity owner",
+      "sublabel": "Karpenter or Cluster Autoscaler",
+      "pos": [
+        900,
+        300
+      ],
+      "size": [
+        250,
+        75
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "metrics-scaler",
+      "from": "metrics",
+      "to": "scaler",
+      "label": "observed signal"
+    },
+    {
+      "id": "scaler-pods",
+      "from": "scaler",
+      "to": "pods",
+      "label": "desired replica count"
+    },
+    {
+      "id": "pods-capacity",
+      "from": "pods",
+      "to": "capacity",
+      "label": "scheduling demand",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1055,
+        245
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Scaling unit",
+      "items": [
+        "A TP/PP worker group has a different lifecycle from independent replicas.",
+        "Avoid competing scalers or node owners for the same target."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Capacity and cost",
+      "items": [
+        "Check available GPUs, quotas, AMI/policy and model load time.",
+        "EC2 charges can remain after Pod reduction until node termination."
+      ]
+    }
+  ]
+}

@@ -5045,15 +5045,15 @@
         <path data-edge-from="tor" data-edge-to="bgp-n2" data-edge-label="Native L3 라우팅" data-edge-key="5" data-edge-id="c-bgp-in" data-composition-points="810,512;1020,512" d="M 810 512 L 1020 512" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
-        <g id="node-ipip-n1" data-node-id="ipip-n1" data-node-label="Node 1" tabindex="0" role="button" aria-label="Focus Node 1, Pod A 10.0.1.10 · eth0 192.168.1.10, IPIP 모드 — IP-in-IP 캡슐화" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod A 10.0.1.10 · eth0 192.168.1.10" data-node-context="IPIP 모드 — IP-in-IP 캡슐화">
-          <title>Node 1 · Pod A 10.0.1.10 · eth0 192.168.1.10 · IPIP 모드 — IP-in-IP 캡슐화</title>
+        <g id="node-ipip-n1" data-node-id="ipip-n1" data-node-label="Node 1" tabindex="0" role="button" aria-label="Focus Node 1, Pod A 10.244.1.5 · eth0 10.0.1.10, IPIP 모드 — IP-in-IP 캡슐화" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod A 10.244.1.5 · eth0 10.0.1.10" data-node-context="IPIP 모드 — IP-in-IP 캡슐화">
+          <title>Node 1 · Pod A 10.244.1.5 · eth0 10.0.1.10 · IPIP 모드 — IP-in-IP 캡슐화</title>
           <rect x="80" y="100" width="260" height="64" rx="6" class="c-mask"/>
           <rect x="80" y="100" width="260" height="64" rx="6" class="c-backend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(86 106) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="210" y="130" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node 1</text>
-        <text data-detail="context" x="210" y="146" class="t-muted" font-size="9" text-anchor="middle">Pod A 10.0.1.10 · eth0 192.168.1.10</text>
+        <text data-detail="context" x="210" y="146" class="t-muted" font-size="9" text-anchor="middle">Pod A 10.244.1.5 · eth0 10.0.1.10</text>
         </g>
 
         <g id="node-ipip-tunnel" data-node-id="ipip-tunnel" data-node-label="IPIP 터널" tabindex="0" role="button" aria-label="Focus IPIP 터널, tunl0 · IP Protocol 4, IPIP 모드 — IP-in-IP 캡슐화" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="tunl0 · IP Protocol 4" data-node-tag="MTU 1480" data-node-context="IPIP 모드 — IP-in-IP 캡슐화">
@@ -5071,26 +5071,26 @@
         <text data-detail="fine" x="680" y="156" class="t-messagebus" font-size="7" text-anchor="middle">MTU 1480</text>
         </g>
 
-        <g id="node-ipip-n2" data-node-id="ipip-n2" data-node-label="Node 2" tabindex="0" role="button" aria-label="Focus Node 2, Pod C 10.0.2.10 · eth0 192.168.1.20, IPIP 모드 — IP-in-IP 캡슐화" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod C 10.0.2.10 · eth0 192.168.1.20" data-node-context="IPIP 모드 — IP-in-IP 캡슐화">
-          <title>Node 2 · Pod C 10.0.2.10 · eth0 192.168.1.20 · IPIP 모드 — IP-in-IP 캡슐화</title>
+        <g id="node-ipip-n2" data-node-id="ipip-n2" data-node-label="Node 2" tabindex="0" role="button" aria-label="Focus Node 2, Pod B 10.244.2.8 · eth0 10.0.1.11, IPIP 모드 — IP-in-IP 캡슐화" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod B 10.244.2.8 · eth0 10.0.1.11" data-node-context="IPIP 모드 — IP-in-IP 캡슐화">
+          <title>Node 2 · Pod B 10.244.2.8 · eth0 10.0.1.11 · IPIP 모드 — IP-in-IP 캡슐화</title>
           <rect x="1020" y="100" width="260" height="64" rx="6" class="c-mask"/>
           <rect x="1020" y="100" width="260" height="64" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(1026 106) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1150" y="130" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node 2</text>
-        <text data-detail="context" x="1150" y="146" class="t-muted" font-size="9" text-anchor="middle">Pod C 10.0.2.10 · eth0 192.168.1.20</text>
+        <text data-detail="context" x="1150" y="146" class="t-muted" font-size="9" text-anchor="middle">Pod B 10.244.2.8 · eth0 10.0.1.11</text>
         </g>
 
-        <g id="node-vxlan-n1" data-node-id="vxlan-n1" data-node-label="Node 1" tabindex="0" role="button" aria-label="Focus Node 1, Pod A 10.0.1.10 · eth0 192.168.1.10, VXLAN 모드 — VXLAN 캡슐화" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod A 10.0.1.10 · eth0 192.168.1.10" data-node-context="VXLAN 모드 — VXLAN 캡슐화">
-          <title>Node 1 · Pod A 10.0.1.10 · eth0 192.168.1.10 · VXLAN 모드 — VXLAN 캡슐화</title>
+        <g id="node-vxlan-n1" data-node-id="vxlan-n1" data-node-label="Node 1" tabindex="0" role="button" aria-label="Focus Node 1, Pod A 10.244.1.5 · eth0 10.0.1.10, VXLAN 모드 — VXLAN 캡슐화" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod A 10.244.1.5 · eth0 10.0.1.10" data-node-context="VXLAN 모드 — VXLAN 캡슐화">
+          <title>Node 1 · Pod A 10.244.1.5 · eth0 10.0.1.10 · VXLAN 모드 — VXLAN 캡슐화</title>
           <rect x="80" y="290" width="260" height="64" rx="6" class="c-mask"/>
           <rect x="80" y="290" width="260" height="64" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(86 296) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="210" y="320" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node 1</text>
-        <text data-detail="context" x="210" y="336" class="t-muted" font-size="9" text-anchor="middle">Pod A 10.0.1.10 · eth0 192.168.1.10</text>
+        <text data-detail="context" x="210" y="336" class="t-muted" font-size="9" text-anchor="middle">Pod A 10.244.1.5 · eth0 10.0.1.10</text>
         </g>
 
         <g id="node-vxlan-tunnel" data-node-id="vxlan-tunnel" data-node-label="VXLAN 터널" tabindex="0" role="button" aria-label="Focus VXLAN 터널, vxlan.calico · UDP 4789, VXLAN 모드 — VXLAN 캡슐화" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="vxlan.calico · UDP 4789" data-node-tag="MTU 1450" data-node-context="VXLAN 모드 — VXLAN 캡슐화">
@@ -5108,26 +5108,26 @@
         <text data-detail="fine" x="680" y="346" class="t-messagebus" font-size="7" text-anchor="middle">MTU 1450</text>
         </g>
 
-        <g id="node-vxlan-n2" data-node-id="vxlan-n2" data-node-label="Node 2" tabindex="0" role="button" aria-label="Focus Node 2, Pod C 10.0.2.10 · eth0 192.168.1.20, VXLAN 모드 — VXLAN 캡슐화" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod C 10.0.2.10 · eth0 192.168.1.20" data-node-context="VXLAN 모드 — VXLAN 캡슐화">
-          <title>Node 2 · Pod C 10.0.2.10 · eth0 192.168.1.20 · VXLAN 모드 — VXLAN 캡슐화</title>
+        <g id="node-vxlan-n2" data-node-id="vxlan-n2" data-node-label="Node 2" tabindex="0" role="button" aria-label="Focus Node 2, Pod B 10.244.2.8 · eth0 10.0.1.11, VXLAN 모드 — VXLAN 캡슐화" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod B 10.244.2.8 · eth0 10.0.1.11" data-node-context="VXLAN 모드 — VXLAN 캡슐화">
+          <title>Node 2 · Pod B 10.244.2.8 · eth0 10.0.1.11 · VXLAN 모드 — VXLAN 캡슐화</title>
           <rect x="1020" y="290" width="260" height="64" rx="6" class="c-mask"/>
           <rect x="1020" y="290" width="260" height="64" rx="6" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(1026 296) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1150" y="320" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node 2</text>
-        <text data-detail="context" x="1150" y="336" class="t-muted" font-size="9" text-anchor="middle">Pod C 10.0.2.10 · eth0 192.168.1.20</text>
+        <text data-detail="context" x="1150" y="336" class="t-muted" font-size="9" text-anchor="middle">Pod B 10.244.2.8 · eth0 10.0.1.11</text>
         </g>
 
-        <g id="node-bgp-n1" data-node-id="bgp-n1" data-node-label="Node 1" tabindex="0" role="button" aria-label="Focus Node 1, Pod A 10.0.1.10 · eth0 192.168.1.10, Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod A 10.0.1.10 · eth0 192.168.1.10" data-node-context="Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능">
-          <title>Node 1 · Pod A 10.0.1.10 · eth0 192.168.1.10 · Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능</title>
+        <g id="node-bgp-n1" data-node-id="bgp-n1" data-node-label="Node 1" tabindex="0" role="button" aria-label="Focus Node 1, Pod A 10.244.1.5 · eth0 10.0.1.10, Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod A 10.244.1.5 · eth0 10.0.1.10" data-node-context="Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능">
+          <title>Node 1 · Pod A 10.244.1.5 · eth0 10.0.1.10 · Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능</title>
           <rect x="80" y="480" width="260" height="64" rx="6" class="c-mask"/>
           <rect x="80" y="480" width="260" height="64" rx="6" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(86 486) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="210" y="510" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node 1</text>
-        <text data-detail="context" x="210" y="526" class="t-muted" font-size="9" text-anchor="middle">Pod A 10.0.1.10 · eth0 192.168.1.10</text>
+        <text data-detail="context" x="210" y="526" class="t-muted" font-size="9" text-anchor="middle">Pod A 10.244.1.5 · eth0 10.0.1.10</text>
         </g>
 
         <g id="node-tor" data-node-id="tor" data-node-label="ToR 스위치 / L3 라우터" tabindex="0" role="button" aria-label="Focus ToR 스위치 / L3 라우터, BGP 피어링 · 캡슐화 없음, Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="BGP 피어링 · 캡슐화 없음" data-node-tag="MTU 1500 · 최고 성능" data-node-context="Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능">
@@ -5142,15 +5142,15 @@
         <text data-detail="fine" x="680" y="536" class="t-cloud" font-size="7" text-anchor="middle">MTU 1500 · 최고 성능</text>
         </g>
 
-        <g id="node-bgp-n2" data-node-id="bgp-n2" data-node-label="Node 2" tabindex="0" role="button" aria-label="Focus Node 2, Pod C 10.0.2.10 · eth0 192.168.1.20, Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod C 10.0.2.10 · eth0 192.168.1.20" data-node-context="Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능">
-          <title>Node 2 · Pod C 10.0.2.10 · eth0 192.168.1.20 · Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능</title>
+        <g id="node-bgp-n2" data-node-id="bgp-n2" data-node-label="Node 2" tabindex="0" role="button" aria-label="Focus Node 2, Pod B 10.244.2.8 · eth0 10.0.1.11, Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod B 10.244.2.8 · eth0 10.0.1.11" data-node-context="Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능">
+          <title>Node 2 · Pod B 10.244.2.8 · eth0 10.0.1.11 · Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능</title>
           <rect x="1020" y="480" width="260" height="64" rx="6" class="c-mask"/>
           <rect x="1020" y="480" width="260" height="64" rx="6" class="c-backend" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(1026 486) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1150" y="510" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node 2</text>
-        <text data-detail="context" x="1150" y="526" class="t-muted" font-size="9" text-anchor="middle">Pod C 10.0.2.10 · eth0 192.168.1.20</text>
+        <text data-detail="context" x="1150" y="526" class="t-muted" font-size="9" text-anchor="middle">Pod B 10.244.2.8 · eth0 10.0.1.11</text>
         </g>
 
         <!-- Connection labels -->
@@ -5198,17 +5198,17 @@
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
           <text x="40" y="604" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="워커 노드" data-legend-x="40" data-legend-baseline="624" data-legend-width="88">
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="노드" data-legend-x="40" data-legend-baseline="624" data-legend-width="63">
             <rect x="40" y="615" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
-            <text x="62" y="624" class="t-muted" font-size="10" font-weight="500">워커 노드</text>
+            <text x="62" y="624" class="t-muted" font-size="10" font-weight="500">노드</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="물리 네트워크 장비" data-legend-x="150" data-legend-baseline="624" data-legend-width="133">
-            <rect x="150" y="615" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
-            <text x="172" y="624" class="t-muted" font-size="10" font-weight="500">물리 네트워크 장비</text>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="라우터" data-legend-x="125" data-legend-baseline="624" data-legend-width="73">
+            <rect x="125" y="615" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
+            <text x="147" y="624" class="t-muted" font-size="10" font-weight="500">라우터</text>
           </g>
-          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="캡슐화 터널" data-legend-x="305" data-legend-baseline="624" data-legend-width="98">
-            <rect x="305" y="615" width="16" height="10" rx="2.5" class="c-messagebus" stroke-width="1"/>
-            <text x="327" y="624" class="t-muted" font-size="10" font-weight="500">캡슐화 터널</text>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="터널" data-legend-x="220" data-legend-baseline="624" data-legend-width="63">
+            <rect x="220" y="615" width="16" height="10" rx="2.5" class="c-messagebus" stroke-width="1"/>
+            <text x="242" y="624" class="t-muted" font-size="10" font-weight="500">터널</text>
           </g>
         </g>
       </svg>
@@ -5403,7 +5403,7 @@
           <h3>IPIP — MTU 1480</h3>
         </div>
         <ul>
-          <li>&bull; 패킷: Outer IP 헤더(192.168.1.10 → .20) + Inner IP 헤더(10.0.1.10 → 10.0.2.10) + 원본 페이로드</li>
+          <li>&bull; 패킷: Outer IP 헤더(10.0.1.10 → 10.0.1.11) + Inner IP 헤더(10.244.1.5 → 10.244.2.8) + 원본 페이로드</li>
           <li>&bull; 오버헤드 20 bytes (IP 헤더 1개)</li>
           <li>&bull; 용도: BGP를 쓸 수 없는 환경의 서브넷 간 라우팅</li>
         </ul>
@@ -5427,7 +5427,7 @@
           <h3>Direct / BGP — MTU 1500</h3>
         </div>
         <ul>
-          <li>&bull; 패킷: IP 헤더(10.0.1.10 → 10.0.2.10) + 원본 페이로드, 캡슐화 없음</li>
+          <li>&bull; 패킷: IP 헤더(10.244.1.5 → 10.244.2.8) + 원본 페이로드, 캡슐화 없음</li>
           <li>&bull; 오버헤드 0 bytes</li>
           <li>&bull; 용도: 최고 성능, BGP 지원 네트워크 필요</li>
         </ul>

@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Gateway XFF Extraction + Per-App AuthorizationPolicy Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "extract",
+        "label": "Original IP extracted at Gateway",
+        "focus": [
+          "client",
+          "alb",
+          "gateway"
+        ],
+        "note": "EnvoyFilter with xff_num_trusted_hops: 1 extracts the original IP 1.2.3.4 from the XFF behind the ALB, once."
+      },
+      {
+        "id": "app-a",
+        "label": "App A — no policy",
+        "focus": [
+          "gateway",
+          "appa"
+        ],
+        "note": "App A has no AuthorizationPolicy, so every client IP is allowed and it returns 200 OK."
+      },
+      {
+        "id": "app-f",
+        "label": "App F — IP restricted",
+        "focus": [
+          "gateway",
+          "appf"
+        ],
+        "note": "A DENY policy with notRemoteIpBlocks 203.0.113.0/24 rejects original IP 1.2.3.4 and returns 403 Forbidden."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "1.2.3.4"
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB",
+      "sublabel": "adds XFF"
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "EnvoyFilter · XFF extraction"
+    },
+    {
+      "id": "appa",
+      "type": "backend",
+      "label": "App A",
+      "sublabel": "No restriction"
+    },
+    {
+      "id": "appf",
+      "type": "backend",
+      "label": "App F",
+      "sublabel": "IP restricted"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 300,
+      "label": "Original IP extraction — once at the Gateway"
+    },
+    {
+      "from": 320,
+      "to": 425,
+      "label": "App A — no AuthorizationPolicy"
+    },
+    {
+      "from": 445,
+      "to": 585,
+      "label": "App F — AuthorizationPolicy DENY"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req",
+      "from": "client",
+      "to": "alb",
+      "y": 200,
+      "label": "HTTP request",
+      "note": "ALB adds XFF: 1.2.3.4"
+    },
+    {
+      "id": "fwd",
+      "from": "alb",
+      "to": "gateway",
+      "y": 262,
+      "label": "XFF: 1.2.3.4, ALB_IP",
+      "variant": "emphasis",
+      "note": "xff_num_trusted_hops: 1 → original IP: 1.2.3.4"
+    },
+    {
+      "id": "to-a",
+      "from": "gateway",
+      "to": "appa",
+      "y": 350,
+      "label": "Original IP: 1.2.3.4",
+      "note": "No policy → all IPs allowed"
+    },
+    {
+      "id": "ok-a",
+      "from": "appa",
+      "to": "gateway",
+      "y": 405,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "to-f",
+      "from": "gateway",
+      "to": "appf",
+      "y": 480,
+      "label": "Original IP: 1.2.3.4",
+      "variant": "security",
+      "note": "notRemoteIpBlocks 203.0.113.0/24 → 1.2.3.4 denied"
+    },
+    {
+      "id": "deny-f",
+      "from": "appf",
+      "to": "gateway",
+      "y": 560,
+      "label": "403 Forbidden",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "gateway",
+      "from": 257,
+      "to": 568,
+      "type": "security"
+    },
+    {
+      "participant": "appa",
+      "from": 345,
+      "to": 410,
+      "type": "backend"
+    },
+    {
+      "participant": "appf",
+      "from": 475,
+      "to": 565,
+      "type": "backend"
+    }
+  ]
+}

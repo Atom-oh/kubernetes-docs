@@ -1,5 +1,9 @@
 # Amazon EKS Advanced Debugging Quiz
 
+> **Last Updated**: September 12, 2026
+
+The [source chapter](../../eks/11-eks-advanced-debugging.md) defines the current API, scope and safety assumptions. Examples are not live cluster/benchmark results. No cloud or cluster actions were run in this audit.
+
 This quiz tests your understanding of advanced debugging techniques in Amazon EKS, including incident response, control plane debugging, node troubleshooting, kubectl debug, PromQL queries, and observability.
 
 ## Quiz Overview
@@ -12,45 +16,37 @@ This quiz tests your understanding of advanced debugging techniques in Amazon EK
 
 ## Multiple Choice Questions
 
-### 1. Where should you check EKS API server audit logs?
+### 1. Where are enabled EKS control-plane audit logs normally queried?
 
-A. /var/log/kubernetes/ directory
+A. A customer-managed /var/log/kubernetes directory
 B. Amazon CloudWatch Logs
-C. etcd database
-D. kubectl logs command
+C. Direct access to managed etcd
+D. kubectl logs on an AWS control-plane Pod
 
 <details>
 <summary>View Answer</summary>
 
 **Answer: B. Amazon CloudWatch Logs**
 
-**Explanation:**
-EKS control plane logs are managed by AWS and sent to CloudWatch Logs. Audit logs can be found in the `/aws/eks/<cluster-name>/cluster` log group.
-
-**Log Types:**
-- `api`: API server logs
-- `audit`: Audit logs
-- `authenticator`: Authentication logs
-- `controllerManager`: Controller manager logs
-- `scheduler`: Scheduler logs
+Use `/aws/eks/<cluster-name>/cluster` in the correct Region/account. The five available types are api, audit, authenticator, controllerManager and scheduler; they are opt-in and enabling them does not reconstruct old logs. A 403 is authorization evidence, not automatically failed IAM authentication. Run the query separately as Logs Insights QL with an explicit time window.
 
 ```bash
-# Enable control plane logging
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-
-# CloudWatch Logs Insights Query
-fields @timestamp, @message
+# Read-only: confirm logging is enabled before searching the owned group.
+: "${AWS_REGION:?}"; : "${CLUSTER_NAME:?}"
+aws eks describe-cluster --region "$AWS_REGION" --name "$CLUSTER_NAME" \
+  --query cluster.logging
+```
+```text
+fields @timestamp, user.username, verb, objectRef.resource, responseStatus.code
 | filter @logStream like /kube-apiserver-audit/
-| filter @message like "403"
+| filter responseStatus.code = 403
 | sort @timestamp desc
 | limit 100
 ```
 
 </details>
 
-### 2. What flag is used to add a debugging container to a running Pod with kubectl debug?
+### 2. Which kubectl debug flag requests a separate copy of a Pod?
 
 A. --attach
 B. --copy-to
@@ -62,185 +58,146 @@ D. --sidecar
 
 **Answer: B. --copy-to**
 
-**Explanation:**
-The `--copy-to` flag creates a copy of an existing Pod and allows you to add debugging containers or modified settings. Using it with `--share-processes` enables process namespace sharing.
+The previous question incorrectly described adding a container to the original Pod. --copy-to creates another Pod; debugging the existing Pod with an ephemeral container does not use that flag or a --ephemeral flag. --target requests a process namespace when supported by the runtime. A copy can retain ServiceAccount, environment/Secret references, volumes and other regular containers; disabling init containers and changing one command does not make it an isolated data clone.
 
 ```bash
-# Add debug container to Pod copy
-kubectl debug myapp-pod --copy-to=myapp-debug --container=debugger --image=busybox -- sh
-
-# Share process namespace
-kubectl debug myapp-pod --copy-to=myapp-debug --share-processes --container=debugger --image=busybox
-
-# Direct debugging with Ephemeral container (no Pod copy)
-kubectl debug -it myapp-pod --image=busybox --target=myapp-container
+# MUTATION: separate reviewed reproduction Pod, not an ephemeral container in the original.
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+: "${DEBUG_POD_NAME:?Choose a new owned name}"; : "${DEBUG_IMAGE:?Reviewed image providing sleep}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" debug "$POD_NAME" \
+  --copy-to="$DEBUG_POD_NAME" --container="$CONTAINER_NAME" --image="$DEBUG_IMAGE" \
+  --keep-init-containers=false --share-processes=true --profile=general -- sleep 3600
 ```
-
-**Key Options:**
-- `--copy-to`: Create Pod copy
-- `--share-processes`: Share process namespace
-- `--target`: Specify target container (for ephemeral containers)
 
 </details>
 
-### 3. What should you check first when a node is in NotReady state?
+### 3. Which evidence is useful after checking the node condition and heartbeat for a NotReady node?
 
-A. Pod logs
-B. kubelet status and logs
-C. etcd status
-D. CoreDNS logs
+A. Unrelated application logs only
+B. Applicable kubelet/runtime status and logs, correlated with network/EC2 evidence
+C. Direct manipulation of AWS-managed etcd
+D. CoreDNS logs as the sole proof
 
 <details>
 <summary>View Answer</summary>
 
-**Answer: B. kubelet status and logs**
+**Answer: B. Applicable kubelet/runtime status and logs, correlated with network/EC2 evidence**
 
-**Explanation:**
-The most common cause of a node becoming NotReady is kubelet issues. When kubelet cannot communicate with the API server, the node status changes to NotReady.
+No measured frequency supports the old “most common cause” assertion. Ready=False, heartbeat loss/Unknown, resource pressure and an instance outage are different signals. Use approved host access on compatible nodes or NodeDiagnostic/documented Auto Mode debug access; SSH/systemctl is not universal. Collect bounded logs before any separately reviewed restart or replacement.
 
 ```bash
-# Check node status
-kubectl describe node <node-name>
-
-# SSH to node and check kubelet status
-systemctl status kubelet
-
-# Check kubelet logs
-journalctl -u kubelet -f
-
-# Restart kubelet
-sudo systemctl restart kubelet
+# Read-only Kubernetes evidence first; no automatic kubelet restart.
+: "${KUBE_CONTEXT:?}"; : "${NODE_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" get node "$NODE_NAME" -o json | jq '{
+  uid:.metadata.uid,providerID:.spec.providerID,nodeInfo:.status.nodeInfo,conditions:.status.conditions
+}'
 ```
-
-**NotReady Checklist:**
-1. kubelet process status
-2. Network connectivity (API server access)
-3. Disk space
-4. Memory (OOM)
-5. Container runtime status
 
 </details>
 
-### 4. What PromQL query finds Pods with CPU utilization above 80% over the last 5 minutes?
+### 4. Which calculation measures container CPU use relative to a positive configured CPU limit?
 
-A. `cpu_usage > 80`
-B. `rate(container_cpu_usage_seconds_total[5m]) > 0.8`
-C. `sum(rate(container_cpu_usage_seconds_total[5m])) by (pod) / sum(kube_pod_container_resource_limits{resource="cpu"}) by (pod) > 0.8`
-D. `container_cpu_percent > 80`
+A. An assumed cpu_usage metric >80
+B. CPU seconds per second >0.8 without a denominator
+C. CPU usage in cores / the matching positive CPU limit in cores
+D. An assumed container_cpu_percent metric
 
 <details>
 <summary>View Answer</summary>
 
-**Answer: C. `sum(rate(container_cpu_usage_seconds_total[5m])) by (pod) / sum(kube_pod_container_resource_limits{resource="cpu"}) by (pod) > 0.8`**
+**Answer: C. CPU usage in cores / the matching positive CPU limit in cores**
 
-**Explanation:**
-CPU utilization is the ratio of actual usage to the limit. The `rate()` function calculates CPU usage per second, which is then divided by the limit to get the percentage.
+rate(cpu_usage_seconds_total) is CPU cores, not a percentage on its own. Join by cluster scope, namespace, Pod and container and use matching positive limits; an unlimited/missing-limit container is not 0% utilization. HPA utilization is normally relative to requests, which is a different calculation. These queries assume the source chapter’s single-cluster/label/scrape contract and show a fraction above0.8.
 
 ```promql
-# CPU utilization (against limit)
-sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (pod, namespace)
-/
-sum(kube_pod_container_resource_limits{resource="cpu"}) by (pod, namespace)
-* 100 > 80
-
-# Memory utilization
-sum(container_memory_working_set_bytes{container!=""}) by (pod, namespace)
-/
-sum(kube_pod_container_resource_limits{resource="memory"}) by (pod, namespace)
-* 100 > 80
-
-# Top 10 CPU usage in specific namespace
-topk(10, sum(rate(container_cpu_usage_seconds_total{namespace="production"}[5m])) by (pod))
+(sum by (namespace,pod,container) (
+  rate(container_cpu_usage_seconds_total{namespace="diagnostics-example",container!="",container!="POD"}[5m])
+)
+/ on (namespace,pod,container)
+max by (namespace,pod,container) (
+  kube_pod_container_resource_limits{namespace="diagnostics-example",resource="cpu",unit="core"} > 0
+)) > 0.8
+```
+```promql
+(max by (namespace,pod,container) (container_memory_working_set_bytes{namespace="diagnostics-example",container!="",container!="POD"})
+/ on (namespace,pod,container)
+max by (namespace,pod,container) (kube_pod_container_resource_limits{namespace="diagnostics-example",resource="memory",unit="byte"} > 0)) > 0.8
 ```
 
 </details>
 
-### 5. Which tool is NOT suitable for debugging network issues between nodes in EKS?
+### 5. Which is not the normal tool for customer diagnosis of inter-node networking in managed EKS?
 
-A. tcpdump
-B. wireshark
-C. ping/curl tests via kubectl exec
-D. etcdctl
+A. tcpdump with authorized capture
+B. Wireshark for an authorized saved capture
+C. Scoped curl/DNS tests from a workload
+D. etcdctl against the AWS-managed etcd endpoint
 
 <details>
 <summary>View Answer</summary>
 
-**Answer: D. etcdctl**
+**Answer: D. etcdctl against the AWS-managed etcd endpoint**
 
-**Explanation:**
-etcdctl is a tool for managing the etcd database and is unrelated to network debugging. In EKS, etcd is managed by AWS so you cannot access it directly anyway.
+Customers do not receive a direct managed-etcd endpoint. This does not mean etcdctl can never help diagnose networking in a self-managed etcd system. Packet capture needs appropriate capabilities/host context, bounds and private handling; a new debug Pod can follow a different policy/DNS path from the failing workload. A throughput counter is not a latency measurement.
 
-**Network Debugging Tools:**
 ```bash
-# Capture packets with tcpdump
-kubectl debug node/<node-name> -it --image=nicolaka/netshoot -- tcpdump -i eth0
-
-# Test connectivity between nodes
-kubectl debug node/<node-name> -it --image=nicolaka/netshoot -- ping <other-node-ip>
-
-# Test network from within Pod
-kubectl exec -it <pod-name> -- curl -v http://service-name
-
-# DNS test
-kubectl exec -it <pod-name> -- nslookup kubernetes.default.svc.cluster.local
+# Deliberate bounded request from an owned workload with curl installed.
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+: "${HEALTH_URL:?Set a reviewed safe health URL}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" -c "$CONTAINER_NAME" \
+  -- curl --silent --show-error --connect-timeout 5 --max-time 10 \
+  --output /dev/null --write-out 'HTTP status: %{http_code}\n' "$HEALTH_URL"
 ```
 
 </details>
 
-### 6. What is the most effective way to reduce MTTD (Mean Time To Detect) in incident response?
+### 6. Which approach can reduce detection delay without simply lowering every threshold?
 
-A. Enhanced manual monitoring
-B. Set alert thresholds very low
-C. Build appropriate alerting rules and automated monitoring systems
-D. Extend log retention period
+A. Only more manual observation
+B. The lowest possible thresholds for every metric
+C. Appropriate measured alerts, coverage checks and escalation
+D. Longer retention alone
 
 <details>
 <summary>View Answer</summary>
 
-**Answer: C. Build appropriate alerting rules and automated monitoring systems**
+**Answer: C. Appropriate measured alerts, coverage checks and escalation**
 
-**Explanation:**
-To reduce MTTD, you need appropriate alert thresholds and automated monitoring. Overly sensitive alerts cause alert fatigue.
+Tune against actual SLOs and failure modes; low thresholds can create alert fatigue. The HTTP counter and status labels below require application instrumentation, and a zero/missing request denominator is not proof of success. Use the waiting reason for CrashLoopBackOff rather than treating every restart as a crash loop. Prometheus must select the rule/namespace, and notification delivery is a separate check. No MTTD result was measured here.
 
 ```yaml
-# Prometheus AlertRule Example
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: eks-alerts
+  name: reviewed-quiz-alerts
+  namespace: monitoring
+  labels:
+    release: REPLACE_WITH_SELECTED_PROMETHEUS_RELEASE
 spec:
   groups:
-  - name: eks.rules
+  - name: reviewed-quiz-alerts
     rules:
     - alert: HighErrorRate
-      expr: |
-        sum(rate(http_requests_total{status=~"5.."}[5m]))
-        / sum(rate(http_requests_total[5m])) > 0.05
+      expr: "(\n  sum(rate(http_requests_total{namespace=\"diagnostics-example\",job=\"\
+        owned-app\",status=~\"5..\"}[5m]))\n  / sum(rate(http_requests_total{namespace=\"\
+        diagnostics-example\",job=\"owned-app\"}[5m]))\n) > 0.05\nand on() (sum(rate(http_requests_total{namespace=\"\
+        diagnostics-example\",job=\"owned-app\"}[5m])) > 0)"
       for: 2m
       labels:
         severity: critical
-      annotations:
-        summary: "High error rate detected"
-
     - alert: PodCrashLooping
-      expr: |
-        rate(kube_pod_container_status_restarts_total[15m]) > 0
+      expr: max by (namespace,pod,container) (kube_pod_container_status_waiting_reason{namespace="diagnostics-example",reason="CrashLoopBackOff"}
+        == 1)
       for: 5m
       labels:
         severity: warning
 ```
 
-**MTTD Optimization Strategies:**
-- SLO-based alerting
-- Multi-window burn rate alerts
-- Alert priority classification
-- On-call rotation and escalation
-
 </details>
 
-### 7. What is the command to create a debugging Pod directly on a node with kubectl debug?
+### 7. Which command form creates a diagnostic Pod on a node?
 
-A. `kubectl debug node/<node-name> -it --image=busybox`
+A. `kubectl debug node/<node-name> --image=<reviewed-image>`
 B. `kubectl exec node/<node-name> -- sh`
 C. `kubectl attach node/<node-name>`
 D. `kubectl run debug --node=<node-name>`
@@ -248,730 +205,577 @@ D. `kubectl run debug --node=<node-name>`
 <details>
 <summary>View Answer</summary>
 
-**Answer: A. `kubectl debug node/<node-name> -it --image=busybox`**
+**Answer: A. `kubectl debug node/<node-name> --image=<reviewed-image>`**
 
-**Explanation:**
-In Kubernetes 1.20+, the `kubectl debug node/` command creates a privileged Pod on the node with access to the host filesystem and network.
+The tested general profile mounts /host and uses host namespaces, but privileged is false. An explicit sysadmin profile grants broader privilege; chroot/nsenter/tool/SELinux behavior depends on the platform and permissions. Creating the Pod is a mutation, not passive inspection, and a failed kubelet/runtime may prevent it from starting. Record the created name/UID and use the reviewed cleanup procedure.
 
 ```bash
-# Node debugging
-kubectl debug node/ip-10-0-1-100.us-west-2.compute.internal -it --image=busybox
-
-# Access host filesystem (mounted at /host)
-# Inside the Pod:
-chroot /host
-
-# Use image with more tools
-kubectl debug node/<node-name> -it --image=nicolaka/netshoot
-
-# Check node's kubelet logs (inside Pod)
-journalctl -u kubelet --no-pager | tail -100
-```
-
-**Important Notes:**
-- Node debugging Pods run in privileged mode
-- Have access to host namespaces
-- Restrict access with RBAC in production environments
-
-</details>
-
-### 8. What does "Span" mean in distributed tracing?
-
-A. Total processing time of a request
-B. Time measurement of a single unit of work
-C. Network latency between services
-D. Timestamp of log messages
-
-<details>
-<summary>View Answer</summary>
-
-**Answer: B. Time measurement of a single unit of work**
-
-**Explanation:**
-A Span represents a single unit of work in a distributed system, including start time, end time, and metadata. Multiple Spans together form a Trace.
-
-**Distributed Tracing Concepts:**
-- **Trace**: Collection of Spans representing the entire request flow
-- **Span**: Single unit of work (e.g., HTTP request, DB query)
-- **Parent-Child relationship**: Call relationships between Spans
-- **Baggage**: Context information propagated between Spans
-
-```yaml
-# OpenTelemetry Collector Configuration
-apiVersion: opentelemetry.io/v1alpha1
-kind: OpenTelemetryCollector
-metadata:
-  name: otel-collector
-spec:
-  config: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-          http:
-    processors:
-      batch:
-    exporters:
-      jaeger:
-        endpoint: jaeger-collector:14250
-    service:
-      pipelines:
-        traces:
-          receivers: [otlp]
-          processors: [batch]
-          exporters: [jaeger]
+# MUTATION: creates a node diagnostic Pod; general is not automatically privileged.
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${NODE_NAME:?}"; : "${NODE_DEBUG_IMAGE:?Reviewed image}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" debug "node/$NODE_NAME" \
+  --image="$NODE_DEBUG_IMAGE" --profile=general --attach=false -- true
 ```
 
 </details>
 
-### 9. What is the most useful command for debugging CoreDNS issues in EKS?
+### 8. What does a Span represent in distributed tracing?
 
-A. `kubectl logs -n kube-system -l k8s-app=kube-dns`
-B. `kubectl describe service kubernetes`
-C. `aws eks describe-cluster`
-D. `kubectl get endpoints`
+A. Only the total end-to-end request duration
+B. One unit of work with timing and associated metadata
+C. Only network latency
+D. A log timestamp
 
 <details>
 <summary>View Answer</summary>
 
-**Answer: A. `kubectl logs -n kube-system -l k8s-app=kube-dns`**
+**Answer: B. One unit of work with timing and associated metadata**
 
-**Explanation:**
-Checking CoreDNS Pod logs reveals DNS query processing status, errors, and timeouts.
+A span can describe an HTTP call, database operation or another unit of work. Trace IDs associate spans; parent/child relationships and links express related work. Propagation and sampling determine what is actually visible. Baggage is propagated context, not automatically a span attribute, and must not contain secrets. The JSON below is an illustrative human-readable record, not an OTLP wire payload or measured request. For Collector configuration use the current v1beta1 object-shaped source example and a supported backend/OTLP path; the old jaeger exporter/14250 recipe is not current guidance.
 
-```bash
-# Check CoreDNS logs
-kubectl logs -n kube-system -l k8s-app=kube-dns -f
-
-# Check CoreDNS Pod status
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-# Check CoreDNS ConfigMap
-kubectl get configmap coredns -n kube-system -o yaml
-
-# Create DNS test Pod
-kubectl run dns-test --image=busybox:1.28 --rm -it --restart=Never -- nslookup kubernetes.default
-
-# Debug DNS queries
-kubectl exec -it <pod-name> -- nslookup -debug kubernetes.default.svc.cluster.local
+```json
+{
+  "exampleOnly": true,
+  "trace_id": "0123456789abcdef0123456789abcdef",
+  "span_id": "0123456789abcdef",
+  "parent_span_id": "fedcba9876543210",
+  "name": "GET /api/products",
+  "kind": "SERVER",
+  "duration_ms": 85
+}
 ```
-
-**Common CoreDNS Issues:**
-- Pod resource constraints (CPU/Memory)
-- ConfigMap configuration errors
-- Upstream DNS connection issues
-- Cluster IP service connectivity problems
 
 </details>
 
-### 10. What kubectl command shows real-time Pod resource usage?
+### 9. For Deployment-based CoreDNS, which evidence is useful when investigating DNS errors?
 
-A. `kubectl describe pod`
-B. `kubectl top pods`
-C. `kubectl get pods -o wide`
-D. `kubectl logs`
+A. Scoped CoreDNS Pod logs/status and workload resolver checks
+B. Only describe service kubernetes
+C. Only AWS cluster metadata
+D. Only the old Endpoints list
 
 <details>
 <summary>View Answer</summary>
 
-**Answer: B. `kubectl top pods`**
+**Answer: A. Scoped CoreDNS Pod logs/status and workload resolver checks**
 
-**Explanation:**
-The `kubectl top` command displays resource usage data collected by Metrics Server. You can check CPU and memory usage in real-time.
+Not all DNS queries are logged by default. Correlate resolver configuration, Pod/Service health and upstream errors. Pure Auto Mode uses node-system DNS; mixed clusters retain the Deployment for non-Auto nodes. Test from the relevant Pod/container when tools exist, not an unrelated default-namespace Pod with an ancient image. Tool-specific nslookup debug flags are not universal.
 
 ```bash
-# Pod resource usage across all namespaces
-kubectl top pods -A
-
-# Pods in specific namespace
-kubectl top pods -n production
-
-# Resource usage by container
-kubectl top pods --containers
-
-# Node resource usage
-kubectl top nodes
-
-# Sort by CPU
-kubectl top pods --sort-by=cpu
-
-# Sort by memory
-kubectl top pods --sort-by=memory
+# Deployment-based CoreDNS only; use the Auto Mode path when applicable.
+kubectl --context "$KUBE_CONTEXT" -n kube-system get pods -l k8s-app=kube-dns -o wide
+kubectl --context "$KUBE_CONTEXT" -n kube-system logs -l k8s-app=kube-dns --since=15m --tail=100
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" -c "$CONTAINER_NAME" \
+  -- nslookup kubernetes.default.svc.cluster.local.
 ```
 
-**Prerequisites:**
-- Metrics Server must be installed
-- `kubectl top` only provides real-time snapshots (no history)
-- Use Prometheus + Grafana for long-term monitoring
+</details>
+
+### 10. Which command displays recent Pod resource samples from the resource-metrics API?
+
+A. kubectl describe pod
+B. kubectl top pods
+C. kubectl get pods -o wide
+D. kubectl logs
+
+<details>
+<summary>View Answer</summary>
+
+**Answer: B. kubectl top pods**
+
+kubectl top needs a working metrics.k8s.io provider, commonly Metrics Server. It reports recent sampled CPU/memory data, not an instantaneous measurement or history. Missing metrics are not zero usage. Compare the appropriate requests/limits separately and use a monitoring backend for historical analysis.
+
+```bash
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --sort-by=memory
+kubectl --context "$KUBE_CONTEXT" top nodes
+```
 
 </details>
 
 ## Short Answer Questions
 
-### 1. What is the log group name pattern for viewing EKS control plane logs in CloudWatch Logs?
+### 1. What is the CloudWatch Logs group pattern for enabled EKS control-plane logs?
 
 <details>
 <summary>View Answer</summary>
 
-**Answer:** `/aws/eks/<cluster-name>/cluster`
+**Answer:** `/aws/eks/<cluster-name>/cluster`. Log types must be enabled for the cluster; enabling them does not reconstruct earlier events. Select the correct account, Region, group and time window. Run the following Logs Insights QL queries separately. Audit usernames are recorded identities, not necessarily the short IAM role name.
 
-**Explanation:**
-EKS control plane logs are automatically sent to this log group.
-
-```bash
-# CloudWatch Logs Insights Query Example
-# Log group: /aws/eks/my-cluster/cluster
-
-# Search API server error logs
+```sql
 fields @timestamp, @message
 | filter @logStream like /kube-apiserver/
+| filter @logStream not like /kube-apiserver-audit/
 | filter @message like /error|Error|ERROR/
 | sort @timestamp desc
 | limit 50
+```
 
-# Search specific user activity in audit logs
-fields @timestamp, @message
+```sql
+fields @timestamp, user.username, verb, objectRef.resource, responseStatus.code
 | filter @logStream like /kube-apiserver-audit/
-| filter @message like /"user":.*"admin"/
+| filter user.username = "REPLACE_WITH_EXACT_AUDIT_USERNAME"
 | sort @timestamp desc
+| limit 100
 ```
 
 </details>
 
-### 2. What feature gate name is needed to enable Ephemeral Containers in Kubernetes?
+### 2. Does current Kubernetes require enabling the old EphemeralContainers feature gate?
 
 <details>
 <summary>View Answer</summary>
 
-**Answer:** `EphemeralContainers` (enabled by default in Kubernetes 1.25+)
-
-**Explanation:**
-This feature became beta in Kubernetes 1.23 and GA (Generally Available) in 1.25, enabled by default. No additional configuration needed in EKS 1.25+.
+**Answer:** No. `EphemeralContainers` was the historical gate; the feature became beta in 1.23 and stable in 1.25. On current versions, check RBAC for `pods/ephemeralcontainers`, admission policies, image access and runtime support instead. Adding one changes the Pod, and its entry cannot be changed or removed afterward. `--target` process visibility depends on runtime support. Reuse the source chapter’s explicitly reviewed creation procedure; this command only lists metadata.
 
 ```bash
-# Add Ephemeral Container
-kubectl debug -it <pod-name> --image=busybox --target=<container-name>
-
-# Check Ephemeral Containers
-kubectl get pod <pod-name> -o jsonpath='{.spec.ephemeralContainers}'
-
-# List Ephemeral Containers added to Pod
-kubectl describe pod <pod-name> | grep -A 10 "Ephemeral Containers"
+# Read-only inventory; adding an ephemeral container is a separate mutation.
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE" \
+  get pod "$POD_NAME" -o json | jq '{
+    uid:.metadata.uid,
+    ephemeralContainers:[.spec.ephemeralContainers[]? | {name,image,targetContainerName}],
+    ephemeralStatuses:.status.ephemeralContainerStatuses
+  }'
 ```
 
 </details>
 
-### 3. What is the difference between rate() and irate() functions in PromQL?
+### 3. How do rate() and irate() differ in PromQL?
 
 <details>
 <summary>View Answer</summary>
 
-**Answer:**
-- `rate()`: Calculates average rate of change over the entire specified time range (smooth)
-- `irate()`: Calculates instant rate of change using only the last two data points (volatile)
+`rate()` estimates the per-second counter increase over the selected range, adjusts resets and extrapolates to the range boundaries. `irate()` uses only the last two samples in that range and adjusts resets. Both need enough samples; neither sees an unsampled spike. Apply the function before aggregation so each series reset remains detectable. Usually use `rate()` for alerts; `irate()` can help inspect volatile counters but does not guarantee better incident detection. These are counter functions, not generic gauge derivatives. The first two examples use an instrumented application counter; the last returns CPU cores, not a percentage. Use one cluster and the source chapter’s label/scrape contract.
 
-**Usage Examples:**
 ```promql
-# rate() - Average request rate over 5 minutes (good for alerts, dashboards)
-rate(http_requests_total[5m])
-
-# irate() - Instant request rate (good for detecting sudden changes)
-irate(http_requests_total[5m])
-
-# CPU utilization - rate() recommended
-rate(container_cpu_usage_seconds_total[5m])
-
-# Spike detection - irate() recommended
-irate(http_requests_total[1m]) > 1000
+sum by (namespace,service) (
+  rate(http_requests_total{namespace="diagnostics-example",service="api-gateway"}[5m])
+)
 ```
 
-**Selection Guide:**
-- Alert rules: Use `rate()` (reduces noise)
-- Debugging/sudden change detection: Use `irate()`
-- Long-term trend analysis: Use `rate()`
+```promql
+sum by (namespace,service) (
+  irate(http_requests_total{namespace="diagnostics-example",service="api-gateway"}[5m])
+)
+```
 
-</details>
-
-### 4. What path is the host filesystem mounted to when connecting to a node with kubectl debug?
-
-<details>
-<summary>View Answer</summary>
-
-**Answer:** `/host`
-
-**Explanation:**
-When a Pod is created with `kubectl debug node/`, the host's root filesystem is mounted at `/host`.
-
-```bash
-# Create node debugging Pod
-kubectl debug node/<node-name> -it --image=busybox
-
-# Access host filesystem inside Pod
-ls /host
-cat /host/etc/kubernetes/kubelet/kubelet-config.json
-
-# chroot to host environment
-chroot /host
-
-# After chroot, run host commands
-systemctl status kubelet
-journalctl -u kubelet -n 100
+```promql
+rate(container_cpu_usage_seconds_total{namespace="diagnostics-example",container!="",container!="POD"}[5m])
 ```
 
 </details>
 
-### 5. What are the two main components of MTTR (Mean Time To Resolve) in incident response?
+### 4. Where does kubectl debug node mount the host filesystem, and what does that permit?
 
 <details>
 <summary>View Answer</summary>
 
-**Answer:**
-1. **MTTD (Mean Time To Detect)**: Time from issue occurrence to detection
-2. **MTTI (Mean Time To Investigate/Identify)**: Time from detection to root cause identification and resolution
+**Answer:** `/host`. The `general` profile is not automatically privileged. A host mount does not guarantee that `chroot`, `systemctl` or reading protected host files will work. The image must contain the tools, and admission, capabilities, SELinux, OS and node health matter. The explicitly privileged `sysadmin` profile needs a separately authorized diagnostic procedure. Auto Mode supports documented node-debug procedures; direct SSH and ordinary host paths are not universal. Use MCQ 7 and the source chapter for creation and cleanup, and never print kubeconfig or credential files.
 
-Or:
-- MTTD + MTTI + MTTFix (actual fix time)
 
-**MTTR Improvement Strategies:**
-```
-MTTR = MTTD + MTTI + MTTFix
+</details>
 
-MTTD Improvement:
-- Effective monitoring and alerting
-- SLO-based alerting
+### 5. How can incident recovery time be decomposed without double counting?
 
-MTTI Improvement:
-- Create runbooks
-- Automated diagnostic tools
+<details>
+<summary>View Answer</summary>
 
-MTTFix Improvement:
-- Auto-recovery mechanisms
-- Rollback automation
-- GitOps-based deployment
-```
+Define the convention before using “MTTR”: some teams measure from detection, others from incident start, and resolve/repair/recover have different meanings. Here use `t0 = service impact starts`, `t1 = detected`, `t2 = actionable diagnosis`, `t3 = service restored`. The non-overlapping intervals are detection `t1−t0`, investigation `t2−t1`, and restoration `t3−t2`; their sum is `t3−t0`. Averaging the same incidents with these definitions preserves the sum. One 45-minute incident is a duration, not a demonstrated mean. Root-cause confirmation and follow-up work can occur after restoration, so do not force every incident into this sequence. Improve monitoring coverage, runbooks and tested recovery procedures, and measure their actual outcomes.
+
 
 </details>
 
 ## Hands-on Exercises
 
-### 1. Write a PromQL query that meets the following requirements:
-- Find containers that have restarted in the production namespace over the last 5 minutes
-- Filter for restart count of 2 or more
+### 1. Find production containers with an estimated restart increase of at least two in five minutes.
 
 <details>
 <summary>View Answer</summary>
 
-```promql
-# Containers with restart count >= 2 over last 5 minutes
-increase(kube_pod_container_status_restarts_total{namespace="production"}[5m]) >= 2
-```
+Use one cluster and kube-state-metrics with `namespace`, `pod`, `uid` and `container` labels. `increase()` handles counter resets and extrapolates, so the result may be fractional and is not a complete event ledger. `max` avoids adding identical exporter replicas together but is not a universal HA deduplication solution; verify scrape health and backend deduplication. Preserve Pod UID so replacements with the same name remain distinct. The variants below show lifetime count >5, the top ten **Pods** by summed container increases over one hour, and restart rate per second for a graph. Missing series are not zero restarts.
 
-**Variant Queries:**
 ```promql
-# Show Pod name with restart count
-sum by (pod, container) (
+max by (namespace,pod,uid,container) (
   increase(kube_pod_container_status_restarts_total{namespace="production"}[5m])
 ) >= 2
+```
 
-# Total restart count (cumulative)
-kube_pod_container_status_restarts_total{namespace="production"} > 5
+```promql
+max by (namespace,pod,uid,container) (
+  kube_pod_container_status_restarts_total{namespace="production"}
+) > 5
+```
 
-# Top 10 most restarted Pods over last hour
+```promql
 topk(10,
-  increase(kube_pod_container_status_restarts_total{namespace="production"}[1h])
+  sum by (namespace,pod,uid) (
+    max by (namespace,pod,uid,container) (
+      increase(kube_pod_container_status_restarts_total{namespace="production"}[1h])
+    )
+  )
 )
 ```
 
-**For Grafana Dashboard:**
 ```promql
-# Time series graph
-rate(kube_pod_container_status_restarts_total{namespace="production"}[5m])
-
-# Table (current status)
-kube_pod_container_status_restarts_total{namespace="production"}
+max by (namespace,pod,uid,container) (
+  rate(kube_pod_container_status_restarts_total{namespace="production"}[5m])
+)
 ```
 
 </details>
 
-### 2. Write step-by-step commands for debugging a Pod in CrashLoopBackOff state.
+### 2. Collect scoped evidence for a container in CrashLoopBackOff before changing the workload.
 
 <details>
 <summary>View Answer</summary>
+
+`CrashLoopBackOff` is a container waiting reason; the Pod can still have phase `Running`. Select the actual context, namespace, Pod and failing container. Check its current UID before collecting logs; name-based log calls are not atomic with the UID check. Start with the following bounded inspection. Investigate exit code/reason, application errors, configuration references, node pressure and dependency failures. Startup/liveness probe failures can restart a container; readiness failure alone does not. Missing Secret/configuration data can also prevent creation rather than produce a crash loop. Do not print all environment variables, Secret values or configuration files.
 
 ```bash
-# 1. Check Pod status
-kubectl get pods -n <namespace> | grep CrashLoopBackOff
-
-# 2. Check Pod detailed info (including events)
-kubectl describe pod <pod-name> -n <namespace>
-
-# 3. Check previous container logs (pre-crash logs)
-kubectl logs <pod-name> -n <namespace> --previous
-
-# 4. Check current container logs
-kubectl logs <pod-name> -n <namespace>
-
-# 5. Override container start command for debugging
-kubectl debug <pod-name> -n <namespace> --copy-to=debug-pod \
-  --container=<container-name> -- sleep infinity
-
-# 6. Connect to debug Pod
-kubectl exec -it debug-pod -n <namespace> -- sh
-
-# 7. Check environment variables
-kubectl exec -it debug-pod -n <namespace> -- env
-
-# 8. Check filesystem and configuration
-kubectl exec -it debug-pod -n <namespace> -- ls -la /app
-kubectl exec -it debug-pod -n <namespace> -- cat /app/config.yaml
-
-# 9. Cleanup after debugging
-kubectl delete pod debug-pod -n <namespace>
+# Read-only, bounded evidence for one owned Pod and container.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+k=(kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n "$NAMESPACE")
+pod_state=$("${k[@]}" get pod "$POD_NAME" -o json | jq '{
+  uid:.metadata.uid, phase:.status.phase, conditions:.status.conditions,
+  containers:[.status.containerStatuses[]? | {name,ready,restartCount,state,lastState}],
+  initContainers:[.status.initContainerStatuses[]? | {name,ready,restartCount,state,lastState}]
+}')
+printf '%s\n' "$pod_state"
+pod_uid=$(jq -er '.uid' <<<"$pod_state")
+"${k[@]}" get events --field-selector "involvedObject.uid=$pod_uid" \
+  --sort-by='.metadata.creationTimestamp'
+# These logs can contain sensitive application data; keep the terminal/evidence private.
+# A missing previous instance/log is an evidence gap, not an empty successful result.
+if ! "${k[@]}" logs "$POD_NAME" -c "$CONTAINER_NAME" --previous \
+  --tail=100 --limit-bytes=65536 --timestamps; then
+  printf '%s\n' 'Previous container log unavailable; retain this limitation.' >&2
+fi
+"${k[@]}" logs "$POD_NAME" -c "$CONTAINER_NAME" \
+  --since=15m --tail=100 --limit-bytes=65536 --timestamps
 ```
 
-**Common CrashLoopBackOff Causes:**
-- Invalid configuration files
-- Missing environment variables or secrets
-- Resource constraints (OOM Kill)
-- Health check failures
-- Dependency service connection failures
+If reproduction is necessary, use MCQ 2/source instructions only after reviewing the copy’s identity, Secret references, volumes, other containers and external side effects. Replacing one image/command and disabling init containers does not isolate those resources. Prefer a sanitized reproduction in an appropriate environment; record the new name/UID and review cleanup separately. A sleeping debug container is not proof the application is fixed.
 
 </details>
 
-### 3. Write a CloudWatch Logs Insights query to search for permission denied (403) events in EKS audit logs over the last hour.
+### 3. Query EKS audit 403 events for the last hour and wait for complete results.
 
 <details>
 <summary>View Answer</summary>
+
+Audit logging must already be enabled. Select the owned account/Region and `/aws/eks/<cluster-name>/cluster`; in the console choose the last-hour window. Each block is a separate Logs Insights QL query. Use discovered JSON fields rather than parsing a fixed key order. These count audit events, not necessarily unique requests: audit stages can repeat an audit ID. A 403 is authorization denial, not by itself proof of the responsible IAM/RBAC policy. The CLI example needs AWS CLI, Bash, jq and Python; it queries at most 100 records and stores results privately. Only `Complete` is final, even when a running query has rows. A polling timeout does not cancel the service-side query.
 
 ```sql
-# CloudWatch Logs Insights Query
-# Log group: /aws/eks/<cluster-name>/cluster
-
-# Basic 403 error search
-fields @timestamp, @message
+fields @timestamp, user.username, verb, objectRef.namespace, objectRef.resource, responseStatus.code
 | filter @logStream like /kube-apiserver-audit/
-| filter @message like /"responseStatus":\s*\{\s*"code":\s*403/
+| filter responseStatus.code = 403
 | sort @timestamp desc
 | limit 100
-
-# Parse detailed information
-fields @timestamp, @message
-| filter @logStream like /kube-apiserver-audit/
-| parse @message '"user":{"username":"*"}' as username
-| parse @message '"verb":"*"' as verb
-| parse @message '"resource":"*"' as resource
-| parse @message '"responseStatus":{"code":*}' as statusCode
-| filter statusCode = 403
-| display @timestamp, username, verb, resource
-| sort @timestamp desc
-| limit 100
-
-# Aggregate 403 errors by user
-fields @timestamp, @message
-| filter @logStream like /kube-apiserver-audit/
-| parse @message '"user":{"username":"*"}' as username
-| parse @message '"responseStatus":{"code":*}' as statusCode
-| filter statusCode = 403
-| stats count(*) as errorCount by username
-| sort errorCount desc
 ```
 
-**Execute via AWS CLI:**
+```sql
+filter @logStream like /kube-apiserver-audit/
+| filter responseStatus.code = 403
+| stats count(*) as deniedEvents by user.username, verb, objectRef.resource
+| sort deniedEvents desc
+| limit 100
+```
+
 ```bash
-aws logs start-query \
-  --log-group-name "/aws/eks/my-cluster/cluster" \
-  --start-time $(date -d '1 hour ago' +%s) \
-  --end-time $(date +%s) \
-  --query-string 'fields @timestamp, @message | filter @logStream like /kube-apiserver-audit/ | filter @message like /"code":403/ | sort @timestamp desc | limit 50'
+# Read-only query with possible CloudWatch scan charges; no log configuration changes.
+set -euo pipefail
+umask 077
+: "${AWS_REGION:?}"; : "${CLUSTER_NAME:?}"
+evidence_dir=$(mktemp -d "$PWD/eks-audit403.XXXXXX")
+printf 'Private evidence directory: %s\n' "$evidence_dir"
+read -r start_epoch end_epoch < <(python3 - <<'PY'
+import time
+end = int(time.time())
+print(end - 3600, end)
+PY
+)
+query_string='fields @timestamp, user.username, verb, objectRef.namespace, objectRef.resource, responseStatus.code
+| filter @logStream like /kube-apiserver-audit/
+| filter responseStatus.code = 403
+| sort @timestamp desc
+| limit 100'
+query_id=$(aws logs start-query --region "$AWS_REGION" --no-cli-pager \
+  --log-group-name "/aws/eks/$CLUSTER_NAME/cluster" \
+  --start-time "$start_epoch" --end-time "$end_epoch" \
+  --query-string "$query_string" --query queryId --output text)
+if [[ ! "$query_id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+  printf '%s\n' 'No valid query ID returned.' >&2
+  exit 1
+fi
+printf '%s\n' "$query_id" > "$evidence_dir/query-id.txt"
+for attempt in {1..15}; do
+  aws logs get-query-results --region "$AWS_REGION" --no-cli-pager \
+    --query-id "$query_id" --output json > "$evidence_dir/result.json"
+  status=$(jq -er '.status' "$evidence_dir/result.json")
+  case "$status" in
+    Complete)
+      printf 'Query complete; inspect private file %s/result.json\n' "$evidence_dir"
+      exit 0
+      ;;
+    Scheduled|Running) sleep 2 ;;
+    *)
+      printf 'Query ended without complete results: %s\n' "$status" >&2
+      exit 1
+      ;;
+  esac
+done
+printf 'Polling limit reached; query %s may still run. Partial results are not final.\n' "$query_id" >&2
+exit 2
 ```
 
 </details>
 
 ## Advanced Questions
 
-### 1. In a microservices architecture, a specific API is experiencing intermittent slow response times. Develop a comprehensive debugging strategy using distributed tracing, metrics, and logs.
+### 1. Develop a tracing, metrics and logs strategy for intermittent API latency.
 
 <details>
 <summary>View Answer</summary>
 
-**Comprehensive Debugging Strategy: Intermittent Latency Analysis**
-
-**Step 1: Define Problem Scope (Metrics)**
+**1. Define the measurement contract.** Use one cluster, an instrumented `api-gateway` in `diagnostics-example`, and a classic histogram in seconds with bounded `endpoint` labels and a `le="0.5"` bucket. Confirm identical series scope for the bucket and count. Kubernetes does not supply these application metrics automatically. Compare affected routes, traffic volume and time ranges. The following queries show p99, cumulative bucket rates for a heatmap, and the fraction slower than 0.5 seconds; subtracting rates alone gives requests/second, not a ratio. Zero traffic has no defined ratio.
 
 ```promql
-# Check P99 response time
-histogram_quantile(0.99,
-  sum(rate(http_request_duration_seconds_bucket{service="api-gateway"}[5m])) by (le, endpoint)
+histogram_quantile(0.99, sum by (le,namespace,service,endpoint) (
+  rate(http_request_duration_seconds_bucket{namespace="diagnostics-example",service="api-gateway"}[5m])
+))
+```
+
+```promql
+sum by (le,namespace,service,endpoint) (rate(http_request_duration_seconds_bucket{namespace="diagnostics-example",service="api-gateway"}[1m]))
+```
+
+```promql
+(
+  (sum by (namespace,service,endpoint) (rate(http_request_duration_seconds_count{namespace="diagnostics-example",service="api-gateway"}[5m])) - sum by (namespace,service,endpoint) (rate(http_request_duration_seconds_bucket{namespace="diagnostics-example",service="api-gateway",le="0.5"}[5m])))
+  / sum by (namespace,service,endpoint) (rate(http_request_duration_seconds_count{namespace="diagnostics-example",service="api-gateway"}[5m]))
 )
-
-# Check response time distribution (for heatmap)
-sum(rate(http_request_duration_seconds_bucket{service="api-gateway"}[1m])) by (le)
-
-# Slow request ratio
-sum(rate(http_request_duration_seconds_count{service="api-gateway"}[5m]))
--
-sum(rate(http_request_duration_seconds_bucket{service="api-gateway",le="0.5"}[5m]))
+and on (namespace,service,endpoint) (sum by (namespace,service,endpoint) (rate(http_request_duration_seconds_count{namespace="diagnostics-example",service="api-gateway"}[5m])) > 0)
 ```
 
-**Step 2: Identify Bottlenecks with Distributed Tracing**
+**2. Inspect traces.** In the backend UI, select service `api-gateway`, the affected time range, duration >2 seconds, and the relevant operation such as `GET /api/products`. Inspect error spans and downstream calls with the backend’s actual attribute names. These are UI search criteria, not an importable Jaeger YAML configuration. Verify propagation and sampling first; absence of a span does not prove that no call occurred. Parallel spans must not simply be summed as request duration.
 
-```yaml
-# Jaeger Query Strategy
-# 1. Search slow traces (>2s)
-service=api-gateway minDuration=2s
+**3. Correlate logs.** If structured logs contain `trace_id`, replace the placeholder with an actual trace ID and run this separate Logs Insights QL query in the owned application log group/time range. This requires application instrumentation; avoid logging tokens, request bodies or propagated secrets. Correlation narrows a hypothesis but does not establish causation.
 
-# 2. Traces with errors
-service=api-gateway tags={"error":"true"}
-
-# 3. Traces for specific endpoint
-service=api-gateway operation="GET /api/products"
-```
-
-**Step 3: Log Correlation Analysis**
-
-```bash
-# Search related logs by Trace ID
-kubectl logs -l app=api-gateway | grep "trace_id=abc123"
-
-# CloudWatch Logs Insights
+```sql
 fields @timestamp, @message
-| filter @message like /trace_id=abc123/
+| filter trace_id = "REPLACE_WITH_ACTUAL_TRACE_ID"
 | sort @timestamp asc
+| limit 100
 ```
 
-**Step 4: Infrastructure Level Analysis**
+**4. Compare infrastructure evidence.** In order, these queries return throttled CPU seconds/second, received bytes/second and JVM GC pause seconds/second. Network throughput is **not network latency**; use correctly scoped client/server spans or an authorized bounded RTT test for latency. GC pause rate is not the delay of each request. Metric names/labels depend on the exporters and runtime. Compare the actual node/Pod and time interval, not unrelated cluster totals.
 
 ```promql
-# Check Pod CPU Throttling
-rate(container_cpu_cfs_throttled_seconds_total[5m])
-
-# Network latency
-rate(container_network_receive_bytes_total[5m])
-
-# GC impact analysis (Java)
-rate(jvm_gc_pause_seconds_sum[5m])
+rate(container_cpu_cfs_throttled_seconds_total{namespace="diagnostics-example",container!="",container!="POD"}[5m])
 ```
 
-**Step 5: Integrated Dashboard**
-
-```yaml
-# Grafana Dashboard Configuration
-panels:
-  - title: "Request Latency (P50, P95, P99)"
-    query: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
-
-  - title: "Request Rate by Status"
-    query: sum(rate(http_requests_total[5m])) by (status_code)
-
-  - title: "Slow Requests Heatmap"
-    query: sum(increase(http_request_duration_seconds_bucket[1m])) by (le)
-
-  - title: "Downstream Service Latency"
-    query: histogram_quantile(0.99, sum(rate(downstream_request_duration_seconds_bucket[5m])) by (le, service))
-
-  - title: "Pod Resource Usage"
-    queries:
-      - container_cpu_usage_seconds_total
-      - container_memory_working_set_bytes
+```promql
+rate(container_network_receive_bytes_total{namespace="diagnostics-example",pod!=""}[5m])
 ```
 
-**Step 6: Automated Anomaly Detection**
+```promql
+rate(jvm_gc_pause_seconds_sum{namespace="diagnostics-example",service="api-gateway"}[5m])
+```
+
+**5. Design a dashboard.** This table is a panel design, not a Grafana dashboard import file. Use the installed Grafana version’s editor/export format and actual datasource UID.
+
+| Panel | Measurement |
+|---|---|
+| p50/p95/p99 latency | Three separate histogram-quantile queries with 0.50, 0.95 and 0.99 |
+| Request rate by status | Rate of the instrumented request counter, grouped by the actual status label |
+| Heatmap | Matching classic histogram bucket rates, preserving `le` and route scope |
+| Downstream latency | The downstream service’s own histogram and label contract |
+| Pod resources | CPU counter rate in cores; memory working-set gauge in bytes |
+
+```promql
+rate(container_cpu_usage_seconds_total{namespace="diagnostics-example",container!="",container!="POD"}[5m])
+```
+
+```promql
+container_memory_working_set_bytes{namespace="diagnostics-example",container!="",container!="POD"}
+```
+
+**6. Evaluate a comparison alert.** Select this rule/namespace in Prometheus and replace the release label. The 50% threshold and five-minute hold are examples requiring traffic/SLO tuning. The longer-window p99 is **not a one-hour average latency** and includes the recent five minutes. This is a comparison rule, not a predictive model. A positive baseline is required; missing/NaN data does not prove health. Check collection and low traffic separately, and test notification delivery.
 
 ```yaml
-# Prometheus AlertRule
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: latency-anomaly-detection
+  name: latency-comparison-example
+  namespace: monitoring
+  labels:
+    release: REPLACE_WITH_SELECTED_PROMETHEUS_RELEASE
 spec:
   groups:
-  - name: latency.rules
+  - name: latency-comparison-example
     rules:
-    - alert: LatencyAnomaly
-      expr: |
-        (
-          histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))
-          -
-          histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1h])) by (le, service))
-        )
-        /
-        histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1h])) by (le, service))
-        > 0.5
+    - record: diagnostics:http_duration_seconds:p99_5m
+      expr: "histogram_quantile(0.99, sum by (le,namespace,service,endpoint) (\n \
+        \ rate(http_request_duration_seconds_bucket{namespace=\"diagnostics-example\"\
+        ,service=\"api-gateway\"}[5m])\n))"
+    - record: diagnostics:http_duration_seconds:p99_1h
+      expr: "histogram_quantile(0.99, sum by (le,namespace,service,endpoint) (\n \
+        \ rate(http_request_duration_seconds_bucket{namespace=\"diagnostics-example\"\
+        ,service=\"api-gateway\"}[1h])\n))"
+    - alert: LatencyComparedWithLongerWindow
+      expr: "(\n  diagnostics:http_duration_seconds:p99_5m\n  / diagnostics:http_duration_seconds:p99_1h\
+        \ > 1.5\n)\nand on (namespace,service,endpoint) (diagnostics:http_duration_seconds:p99_1h\
+        \ > 0)"
       for: 5m
+      labels:
+        severity: warning
       annotations:
-        summary: "Latency increased by 50% compared to 1h average"
+        summary: Five-minute p99 exceeds one-hour p99 by over 50%; investigate.
 ```
 
-**Analysis Checklist:**
-- [ ] Is it occurring only on specific endpoints?
-- [ ] Is it concentrated at specific times?
-- [ ] Is a specific downstream service the cause?
-- [ ] Is resource limitation (CPU throttling) affecting it?
-- [ ] Is it a GC or JVM related issue?
-- [ ] Is it a network level issue?
+Keep hypotheses separate: endpoint-specific behavior, downstream calls, CPU throttling, GC, network path and traffic changes each require supporting evidence. No latency reduction or benchmark was measured here.
 
 </details>
 
-### 2. Nodes in an EKS cluster are intermittently becoming NotReady. Establish a systematic Root Cause Analysis (RCA) process and preventive measures.
+### 2. Establish an evidence-based RCA process for intermittent NotReady nodes.
 
 <details>
 <summary>View Answer</summary>
 
-**Root Cause Analysis (RCA) Process**
-
-**Phase 1: Data Collection**
+**1. Collect identity and timing.** Distinguish `Ready=False` from heartbeat loss/`Unknown`. Record node UID, provider ID, OS/runtime versions, condition transition times and lease renewal. Events have limited retention; an empty list does not rule out an earlier failure. A stopped node may not support node-debug at all.
 
 ```bash
-# 1. Check node event history
-kubectl get events --field-selector involvedObject.kind=Node --sort-by='.lastTimestamp'
-
-# 2. Check detailed node status
-kubectl describe node <node-name> | grep -A 20 "Conditions:"
-
-# 3. Check node metrics in CloudWatch
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/EC2 \
-  --metric-name StatusCheckFailed \
-  --dimensions Name=InstanceId,Value=<instance-id> \
-  --start-time $(date -d '24 hours ago' -u +%Y-%m-%dT%H:%M:%SZ) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  --period 300 \
-  --statistics Sum
+# Read-only scoped node evidence; confirm account/cluster/Region first.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NODE_NAME:?}"
+k=(kubectl --context "$KUBE_CONTEXT" --request-timeout=15s)
+node_state=$("${k[@]}" get node "$NODE_NAME" -o json | jq '{
+  uid:.metadata.uid,providerID:.spec.providerID,
+  nodeInfo:.status.nodeInfo,conditions:.status.conditions
+}')
+printf '%s\n' "$node_state"
+node_uid=$(jq -er '.uid' <<<"$node_state")
+"${k[@]}" get events --all-namespaces \
+  --field-selector "involvedObject.uid=$node_uid" --sort-by='.metadata.creationTimestamp'
+"${k[@]}" -n kube-node-lease get lease "$NODE_NAME" \
+  -o jsonpath='{.spec.renewTime}{"\n"}'
 ```
 
-**Phase 2: System Log Analysis**
+For the corresponding EC2 instance, `Maximum=1` means at least one failed status-check sample in that bucket. `Sum` is not outage duration, and missing datapoints are not success. Fargate and Hybrid Nodes need their own infrastructure evidence.
 
 ```bash
-# Deploy debugging Pod on node
-kubectl debug node/<node-name> -it --image=amazonlinux:2 -- bash
+# EC2-backed nodes only: resolve the actual instance from providerID, not a guessed name.
+: "${AWS_REGION:?}"; : "${INSTANCE_ID:?Verified EC2 instance ID}"
+read -r start_time end_time < <(python3 - <<'PY'
+from datetime import datetime, timedelta, timezone
+end = datetime.now(timezone.utc)
+print((end-timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+      end.strftime("%Y-%m-%dT%H:%M:%SZ"))
+PY
+)
+aws cloudwatch get-metric-statistics --region "$AWS_REGION" --no-cli-pager \
+  --namespace AWS/EC2 --metric-name StatusCheckFailed \
+  --dimensions "Name=InstanceId,Value=$INSTANCE_ID" \
+  --start-time "$start_time" --end-time "$end_time" --period 300 \
+  --statistics Maximum --query 'sort_by(Datapoints,&Timestamp)'
+```
 
-# Access host environment with chroot
-chroot /host
+**2. Collect applicable host evidence.** Use approved host access, NodeDiagnostic or the documented Auto Mode diagnostic path from the source chapter. `general` is not a privileged chroot shortcut. The following reads apply to a compatible systemd Linux host, not every debug image or Bottlerocket/Auto Mode path. Logs may be sensitive; collect privately before a separately reviewed repair.
 
-# Check system logs
-journalctl -u kubelet --since "24 hours ago" | grep -i "error\|fail\|timeout"
-dmesg | tail -100
-
-# Check memory/CPU status
+```bash
+# Only inside an already authorized, compatible systemd Linux host context.
+# These are bounded reads, not instructions to restart or prune the node.
+journalctl -u kubelet --since '24 hours ago' -n 200 --no-pager
+journalctl -u containerd --since '24 hours ago' -n 200 --no-pager
+dmesg | tail -n 100
 free -h
 vmstat 1 5
-cat /proc/pressure/memory
-cat /proc/pressure/cpu
+cat /proc/pressure/memory /proc/pressure/cpu
 ```
 
-**Phase 3: Network Analysis**
+**3. Check the relevant network path.** This request validates TLS using the selected kubeconfig and needs authorization to `/readyz`. It tests the caller’s path, not necessarily the failing node’s path. A 401/403 proves an HTTP response but does not establish readiness; DNS, timeout and certificate errors need separate diagnosis. Do not use `curl -k` to hide trust failures.
 
 ```bash
-# Check API server connectivity
-curl -k https://kubernetes.default.svc.cluster.local/healthz
-
-# Check VPC CNI status
-kubectl logs -n kube-system -l k8s-app=aws-node --tail=100
-
-# Check ENI and IP allocation status
-aws ec2 describe-network-interfaces \
-  --filters Name=attachment.instance-id,Values=<instance-id>
+# Uses the selected kubeconfig CA and authentication; do not disable TLS verification.
+: "${KUBE_CONTEXT:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=10s get --raw='/readyz'
 ```
 
-**Phase 4: Resource Pressure Analysis**
+For standard VPC CNI only, inspect the actual aws-node Pod and the affected instance’s ENIs. Auto Mode uses its managed networking path; do not infer a missing DaemonSet means failure.
+
+```bash
+# Standard VPC CNI on an EC2 node; choose the aws-node Pod on the affected node.
+: "${KUBE_CONTEXT:?}"; : "${AWS_NODE_POD:?}"; : "${AWS_REGION:?}"; : "${INSTANCE_ID:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
+  logs "$AWS_NODE_POD" -c aws-node --since=15m --tail=100 --limit-bytes=65536
+aws ec2 describe-network-interfaces --region "$AWS_REGION" --no-cli-pager \
+  --filters "Name=attachment.instance-id,Values=$INSTANCE_ID" \
+  --query 'NetworkInterfaces[].{ENI:NetworkInterfaceId,Subnet:SubnetId,Status:Status,IPv4Prefixes:Ipv4Prefixes,PrivateIPs:PrivateIpAddresses[].PrivateIpAddress}'
+```
+
+**4. Interpret resource signals.** These single-cluster queries show memory headroom, root-filesystem capacity, system thread-limit utilization, and an actual kubelet pressure condition. They require the corresponding Node Exporter/kube-state-metrics series and correct host mounts/labels. `processes` is disabled by default in Node Exporter; `node_processes_max_threads` is Linux `threads-max`. That ratio is not the kubelet’s PIDPressure decision or a container’s `pids.max`. Filesystem/inode/imagefs/cgroup limits and scrape failures require separate checks. Thresholds here are examples, not defaults.
 
 ```promql
-# Node memory pressure
-(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
-
-# Node disk pressure
-(1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 85
-
-# Node PID pressure
-node_processes_threads / node_processes_max_threads * 100 > 80
+(1 - node_memory_MemAvailable_bytes / (node_memory_MemTotal_bytes > 0)) * 100 > 90
 ```
 
-**Phase 5: Root Cause Classification**
-
-| Category | Possible Cause | Verification Method |
-|---------|------------|----------|
-| Resource | OOM Kill | `dmesg \| grep -i oom` |
-| Resource | Disk full | `df -h` |
-| Network | CNI issue | aws-node logs |
-| Network | API server connection | curl healthz |
-| System | kubelet crash | `journalctl -u kubelet` |
-| Infrastructure | EC2 instance issue | CloudWatch metrics |
-
-**Phase 6: Preventive Measures**
-
-```yaml
-# 1. Deploy Node Problem Detector
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: node-problem-detector
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      app: node-problem-detector
-  template:
-    spec:
-      containers:
-      - name: node-problem-detector
-        image: registry.k8s.io/node-problem-detector/node-problem-detector:v0.8.13
-        securityContext:
-          privileged: true
-        volumeMounts:
-        - name: log
-          mountPath: /var/log
-          readOnly: true
-        - name: kmsg
-          mountPath: /dev/kmsg
-          readOnly: true
-      volumes:
-      - name: log
-        hostPath:
-          path: /var/log/
-      - name: kmsg
-        hostPath:
-          path: /dev/kmsg
+```promql
+(1 - node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / (node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} > 0)) * 100 > 85
 ```
 
+```promql
+node_processes_threads / (node_processes_max_threads > 0) * 100 > 80
+```
+
+```promql
+max by (node) (kube_node_status_condition{condition=~"MemoryPressure|DiskPressure|PIDPressure",status="true"}) == 1
+```
+
+**5. Test hypotheses.** Correlate kernel OOM records with the killed process, workload memory and limits; correlate disk/inode exhaustion with the affected filesystem. Compare kubelet/runtime logs, node-to-API reachability, CNI/IP evidence and EC2 health at matching timestamps. High memory or a failed probe alone does not prove a memory leak or infrastructure fault.
+
+**6. Prevent recurrence using the actual compute model.** Auto Mode includes node monitoring and repair. Managed node groups require their repair configuration to be checked. Self-managed Karpenter repair requires a compatible release, `NodeRepair=true` and the applicable condition/repair policy; diagnostic agents supply additional conditions. The current Karpenter policy allows 30 minutes for `Ready=False/Unknown`, blocks repairs when more than 20% of a NodePool is unhealthy, and repair can force termination instead of ordinary graceful drain. Do not treat voluntary disruption budgets/PDBs as a universal repair guarantee. EKS repair does not by default repair `MemoryPressure`, `DiskPressure` or `PIDPressure`; address workload pressure. These EKS monitoring/repair features are Linux-only and the monitoring agent is unavailable on Fargate. Use the source chapter and current provider configuration rather than deploying an incomplete privileged Node Problem Detector DaemonSet or duplicating an existing agent.
+
 ```yaml
-# 2. Resource-based Alerts
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: node-health-rules
+  name: node-health-example
+  namespace: monitoring
+  labels:
+    release: REPLACE_WITH_SELECTED_PROMETHEUS_RELEASE
 spec:
   groups:
-  - name: node.health
+  - name: node-health-example
     rules:
-    - alert: NodeMemoryPressure
-      expr: |
-        (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.85
+    - alert: NodeHighMemoryUse
+      expr: (1 - node_memory_MemAvailable_bytes / (node_memory_MemTotal_bytes > 0))
+        * 100 > 90
       for: 5m
       labels:
         severity: warning
-
-    - alert: NodeDiskPressure
-      expr: |
-        (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes) > 0.85
+    - alert: NodeRootFilesystemLowSpace
+      expr: (1 - node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}
+        / (node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} > 0))
+        * 100 > 85
       for: 5m
       labels:
         severity: warning
-
     - alert: NodeNotReady
-      expr: |
-        kube_node_status_condition{condition="Ready",status="true"} == 0
+      expr: max by (node) (kube_node_status_condition{condition="Ready",status="true"})
+        == 0
       for: 2m
       labels:
         severity: critical
 ```
 
-```bash
-# 3. Node auto-recovery setup (Karpenter)
-# Karpenter automatically replaces NotReady nodes
+Prometheus must select these rules; missing condition/exporter series need independent collection/inventory alerts. The capacity alerts are not named as kubelet pressure conditions because they measure different signals.
 
-# 4. kubelet configuration optimization
-# /etc/kubernetes/kubelet/kubelet-config.json
+If you own a configurable Linux kubelet, the following is a **fragment to review and merge into its existing configuration**, not a complete config or a command to overwrite an EKS node file. Use the OS/provisioner’s supported bootstrap mechanism. `mergeDefaultEvictionSettings` retains unspecified hard defaults; otherwise a partial override can set omitted thresholds to zero. Soft thresholds need matching grace periods, and `evictionMaxPodGracePeriod` limits termination grace. The sample values require workload/capacity validation and are not Auto Mode customization instructions.
+
+```json
 {
+  "mergeDefaultEvictionSettings": true,
   "evictionHard": {
     "memory.available": "500Mi",
     "nodefs.available": "10%",
@@ -984,31 +788,41 @@ spec:
   "evictionSoftGracePeriod": {
     "memory.available": "1m",
     "nodefs.available": "1m"
-  }
+  },
+  "evictionMaxPodGracePeriod": 60
 }
 ```
 
-**RCA Report Template:**
+**Historical RCA template — unverified example, not an incident report.** Original dates, quantities and the original locale-specific timezone are retained; the PST and KST examples do not claim to describe the same instant. There is no source evidence for the asserted memory leak, actual remediation or completion status. Replace the placeholders with evidence before operational use.
+
 ```markdown
-## Incident Summary
-- Occurrence time: 2024-01-15 14:30 PST
-- Impact scope: 3 nodes, 45 Pods affected
-- Resolution time: 2024-01-15 15:15 PST (MTTR: 45min)
+## Incident summary (illustrative)
+- Start: 2024-01-15 14:30 PST
+- Example impact: 3 nodes, 45 Pods
+- Example restoration: 2024-01-15 15:15 PST (duration 45 minutes, not a measured mean)
 
-## Timeline
-- 14:30 - Alert triggered: NodeNotReady
-- 14:35 - Initial analysis started
-- 14:50 - Root cause identified: kubelet OOM due to memory pressure
-- 15:00 - Node drain and restart
-- 15:15 - Normalization confirmed
+## Example timeline — evidence required for every entry
+- 14:30 — NodeNotReady alert
+- 14:35 — Investigation starts
+- 14:50 — Hypothesis: memory pressure killed kubelet; confirm with kernel/process evidence
+- 15:00 — Proposed drain/restart; record actual authorization, effects and data safety checks
+- 15:15 — Proposed restoration point; supply workload/SLO verification
 
-## Root Cause
-Application with memory leak caused node memory exhaustion
+## Root-cause hypothesis
+A memory leak could exhaust node memory; not established by this template.
 
-## Preventive Measures
-1. [Complete] Set memory limit on problematic application
-2. [In Progress] Adjust node memory pressure alert threshold (90% -> 80%)
-3. [Planned] Deploy Node Problem Detector
+## Follow-up proposals — no completion asserted
+1. Validate application memory behavior and appropriate requests/limits.
+2. Evaluate alert threshold change from 90% to 80% against noise and capacity.
+3. Review existing node monitoring before considering Node Problem Detector.
 ```
 
 </details>
+
+**Primary references for these exercises:**
+
+- [Prometheus functions](https://prometheus.io/docs/prometheus/latest/querying/functions/)
+- [Karpenter disruption and node repair](https://karpenter.sh/docs/concepts/disruption/)
+- [EKS node monitoring and repair](https://docs.aws.amazon.com/eks/latest/userguide/node-health.html)
+- [Kubelet node-pressure eviction](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)
+- [Node Exporter collectors](https://github.com/prometheus/node_exporter#disabled-by-default)

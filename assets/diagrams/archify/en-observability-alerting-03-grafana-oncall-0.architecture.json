@@ -1,0 +1,345 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana OnCall Components",
+    "locale": "en",
+    "output": "en-observability-alerting-03-grafana-oncall-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "alert-path",
+        "label": "Alert processing path",
+        "focus": [
+          "sources",
+          "api",
+          "engine",
+          "routes",
+          "escalation",
+          "schedules",
+          "groups",
+          "channels"
+        ],
+        "note": "An alert passes through the API Server and Alert Engine, then routing, escalation, and schedules before reaching a notification channel."
+      },
+      {
+        "id": "state",
+        "label": "Data storage",
+        "focus": [
+          "engine",
+          "postgres",
+          "redis",
+          "celery"
+        ],
+        "note": "The Alert Engine persists state in PostgreSQL and Redis, and Celery Workers process background jobs through Redis."
+      },
+      {
+        "id": "features",
+        "label": "Features",
+        "focus": [
+          "routes",
+          "escalation",
+          "schedules",
+          "groups"
+        ],
+        "note": "Routes, Escalation Chains, Schedules, and Alert Groups are the core on-call management features."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "sources",
+      "type": "external",
+      "label": "Alert Sources",
+      "sublabel": "Alertmanager · Grafana · CloudWatch · Webhook",
+      "pos": [
+        20,
+        210
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "Receives alerts",
+      "pos": [
+        320,
+        210
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "Alert Engine",
+      "sublabel": "Processes alerts",
+      "pos": [
+        520,
+        210
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "Persistent store",
+      "pos": [
+        770,
+        130
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "Cache · job queue",
+      "pos": [
+        770,
+        290
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "celery",
+      "type": "backend",
+      "label": "Celery Workers",
+      "sublabel": "Background jobs",
+      "pos": [
+        970,
+        290
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "routes",
+      "type": "backend",
+      "label": "Routes",
+      "sublabel": "Alert routing",
+      "pos": [
+        320,
+        470
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "escalation",
+      "type": "backend",
+      "label": "Escalation Chains",
+      "sublabel": "Escalation policy",
+      "pos": [
+        520,
+        470
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "schedules",
+      "type": "backend",
+      "label": "Schedules",
+      "sublabel": "On-call schedules",
+      "pos": [
+        740,
+        470
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "groups",
+      "type": "backend",
+      "label": "Alert Groups",
+      "sublabel": "Alert grouping",
+      "pos": [
+        940,
+        470
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "channels",
+      "type": "external",
+      "label": "Notification Channels",
+      "sublabel": "Slack · Teams · Phone · SMS · Email · Mobile",
+      "pos": [
+        890,
+        650
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Grafana OnCall",
+      "wraps": [
+        "api",
+        "engine",
+        "postgres",
+        "redis",
+        "celery",
+        "routes",
+        "escalation",
+        "schedules",
+        "groups"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Core Components",
+      "wraps": [
+        "api",
+        "engine"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Data storage",
+      "wraps": [
+        "postgres",
+        "redis",
+        "celery"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Features",
+      "wraps": [
+        "routes",
+        "escalation",
+        "schedules",
+        "groups"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sources-to-api",
+      "from": "sources",
+      "to": "api",
+      "label": "send alerts",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-engine",
+      "from": "api",
+      "to": "engine",
+      "variant": "emphasis"
+    },
+    {
+      "id": "engine-to-routes",
+      "from": "engine",
+      "to": "routes",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "routes-to-escalation",
+      "from": "routes",
+      "to": "escalation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "escalation-to-schedules",
+      "from": "escalation",
+      "to": "schedules",
+      "variant": "emphasis"
+    },
+    {
+      "id": "schedules-to-groups",
+      "from": "schedules",
+      "to": "groups",
+      "variant": "emphasis"
+    },
+    {
+      "id": "groups-to-channels",
+      "from": "groups",
+      "to": "channels",
+      "label": "notify",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "engine-to-postgres",
+      "from": "engine",
+      "to": "postgres"
+    },
+    {
+      "id": "engine-to-redis",
+      "from": "engine",
+      "to": "redis"
+    },
+    {
+      "id": "celery-to-redis",
+      "from": "celery",
+      "to": "redis",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Alert intake",
+      "items": [
+        "Receives alerts via Alertmanager, Grafana Alerting, CloudWatch, and Webhook integrations",
+        "The API Server receives them and the Alert Engine processes them"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "On-call management features",
+      "items": [
+        "Routes direct alerts to the right place",
+        "Escalation Chains provide time-based automatic escalation",
+        "Schedules manage rotations, overrides, and holidays",
+        "Alert Groups consolidate related alerts"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Notification Channels",
+      "items": [
+        "ChatOps integration with Slack and MS Teams",
+        "Phone call, SMS, and email notifications",
+        "iOS/Android mobile app push notifications"
+      ]
+    }
+  ]
+}

@@ -11,6 +11,8 @@ Gateway and VirtualService are core resources for managing traffic in Istio.
 5. [Advanced Patterns](#advanced-patterns)
 6. [Troubleshooting](#troubleshooting)
 
+This chapter uses `networking.istio.io/v1` Gateway, distinct from Kubernetes Gateway API. These examples assume an existing gateway workload/Service labeled `istio=ingressgateway` in `istio-system`, application Services in `default`, and matching service ports. An Istio Gateway configures an existing proxy; it does not provision one. Create each TLS Secret in the gateway **workload namespace** and bind a VirtualService to the Gateway being tested. Examples with overlapping hosts are alternatives.
+
 ## Gateway Overview
 
 Gateway defines the entry point for external traffic into the mesh.
@@ -37,14 +39,14 @@ spec:
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      credentialName: myapp-tls-secret
+      credentialName: myapp-tls
     hosts:
     - "myapp.example.com"
 ```
 
 ## VirtualService Overview
 
-VirtualService defines how to route traffic that enters through the Gateway.
+VirtualService defines routing for mesh sidecars and/or explicitly referenced gateways.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -82,6 +84,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: http-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -101,7 +104,7 @@ spec:
   hosts:
   - "*"
   gateways:
-  - http-gateway
+  - istio-system/http-gateway
   http:
   - route:
     - destination:
@@ -112,7 +115,7 @@ spec:
 
 ### HTTPS Traffic
 
-```yaml
+```bash
 # Create TLS certificate Secret
 kubectl create secret tls myapp-tls \
   --cert=myapp.crt \
@@ -154,7 +157,7 @@ spec:
   hosts:
   - "myapp.example.com"
   gateways:
-  - my-gateway
+  - istio-system/my-gateway
   http:
   # API traffic
   - match:
@@ -218,6 +221,8 @@ spec:
         subset: v1
 ```
 
+Create `mobile-v2`, `v3`, and `v1` DestinationRule subsets with matching pod labels before using the header example. Client-provided routing headers are not authorization. Static response headers below are examples, not measured latency.
+
 ### Multi-domain Configuration
 
 ```yaml
@@ -225,6 +230,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: multi-domain-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -256,7 +262,7 @@ spec:
   hosts:
   - "api.example.com"
   gateways:
-  - multi-domain-gateway
+  - istio-system/multi-domain-gateway
   http:
   - route:
     - destination:
@@ -270,7 +276,7 @@ spec:
   hosts:
   - "admin.example.com"
   gateways:
-  - multi-domain-gateway
+  - istio-system/multi-domain-gateway
   http:
   - route:
     - destination:
@@ -286,6 +292,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: secure-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -322,7 +329,7 @@ spec:
   hosts:
   - "myapp.example.com"
   gateways:
-  - my-gateway
+  - istio-system/my-gateway
   http:
   - match:
     - uri:
@@ -352,14 +359,14 @@ spec:
       request:
         add:
           x-custom-header: "custom-value"
-          x-forwarded-proto: "https"
+          x-demo-stage: "gateway"
         set:
           x-api-version: "v2"
         remove:
           - x-internal-header
       response:
         add:
-          x-response-time: "100ms"
+          x-demo-response: "configured-value"
 ```
 
 ### Redirect
@@ -373,7 +380,7 @@ spec:
   hosts:
   - "myapp.example.com"
   gateways:
-  - my-gateway
+  - istio-system/my-gateway
   http:
   - match:
     - uri:
@@ -389,13 +396,13 @@ spec:
 
 ```bash
 # 1. Check Gateway status
-kubectl get gateway -n istio-system
+kubectl get gateways.networking.istio.io -n istio-system
 
 # 2. Check Ingress Gateway pods
 kubectl get pods -n istio-system -l istio=ingressgateway
 
 # 3. Check Gateway configuration
-kubectl describe gateway my-gateway -n istio-system
+kubectl describe gateways.networking.istio.io my-gateway -n istio-system
 
 # 4. Check Envoy configuration
 istioctl proxy-config listeners -n istio-system istio-ingressgateway-xxx

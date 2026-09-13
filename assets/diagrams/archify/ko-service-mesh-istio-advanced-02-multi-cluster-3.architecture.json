@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "단일 리전, 소규모 서비스 — Single-cluster 구성",
+    "output": "ko-service-mesh-istio-advanced-02-multi-cluster-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      720,
+      480
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "Istio Control Plane",
+      "sublabel": "istiod 하나",
+      "pos": [
+        70,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ns-prod",
+      "type": "cloud",
+      "label": "Namespace: prod",
+      "sublabel": "운영 환경",
+      "pos": [
+        420,
+        90
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ns-staging",
+      "type": "cloud",
+      "label": "Namespace: staging",
+      "sublabel": "스테이징 환경",
+      "pos": [
+        420,
+        222
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ns-dev",
+      "type": "cloud",
+      "label": "Namespace: dev",
+      "sublabel": "개발 환경",
+      "pos": [
+        420,
+        354
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "단일 EKS 클러스터",
+      "wraps": [
+        "istiod",
+        "ns-prod",
+        "ns-staging",
+        "ns-dev"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "manage-prod",
+      "from": "istiod",
+      "to": "ns-prod",
+      "variant": "dashed"
+    },
+    {
+      "id": "manage-staging",
+      "from": "istiod",
+      "to": "ns-staging",
+      "label": "관리",
+      "variant": "dashed",
+      "labelDx": 45,
+      "labelDy": -10
+    },
+    {
+      "id": "manage-dev",
+      "from": "istiod",
+      "to": "ns-dev",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Multi-cluster 불필요 — 대신 사용",
+      "items": [
+        "Kubernetes Namespace 분리로 환경 구분",
+        "NetworkPolicy로 네트워크 격리",
+        "RBAC로 접근 제어",
+        "Control Plane 하나로 단순한 관리"
+      ]
+    }
+  ]
+}

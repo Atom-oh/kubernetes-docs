@@ -1,34 +1,46 @@
 # Kubeflow on EKS 딥다이브
 
-> **지원 버전**: Kubeflow Community Distribution 26.03
-> **마지막 업데이트**: 2026년 9월 2일
+> **검토 기준**: Kubeflow Community Distribution 26.03.1
+> **마지막 검토**: 2026년 9월 12일
 
 ## 개요
 
-Kubeflow는 파이프라인 오케스트레이션, 노트북, 하이퍼파라미터 튜닝, 분산 학습, 모델 서빙까지 ML 워크로드를 처음부터 끝까지 운영하는 데 필요한 요소들을 하나의 거대한 애플리케이션이 아니라 여러 개의 Kubernetes 네이티브 컨트롤러/CRD 묶음으로 제공하는 오픈소스 머신러닝 플랫폼입니다. 2026년 8월 17일 CNCF는 Kubeflow의 졸업(Graduation)을 발표했습니다. 2023년 인큐베이팅 프로젝트로 합류한 이후, 독립 보안 감사를 통과하고 정식 운영위원회(Steering Committee)를 구성한 결과로, 프로젝트의 프로덕션 성숙도를 보여주는 강력한 신호입니다.
+Kubeflow는 ML 파이프라인, 노트북, 튜닝, 학습, 서빙을 위한 Kubernetes 기반 도구를 제공합니다. Community Distribution은 컴포넌트 리비전, 공통 서비스, 대시보드를 묶으며, 개별 프로젝트에도 자체 릴리스와 설치 조건이 있습니다.
+
+CNCF는 [2026년 8월 17일 Kubeflow의 졸업을 발표했습니다](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/). 이는 독립 보안 감사를 포함한 프로젝트 성숙도와 거버넌스를 인정한 것입니다. 특정 EKS 배포의 보안이나 규제 준수를 인증하는 것은 아닙니다.
 
 ## 컴포넌트 맵
 
-| 컴포넌트 | 해결하는 문제 | 핵심 CRD/개념 | 심화 가이드 |
-|-----------|--------------------|---------------------|-----------|
-| **Central Dashboard & Profiles** | 멀티테넌트 접근 제어, 사용자별 네임스페이스 격리 | Profile(네임스페이스) | [Part 1](01-architecture-installation.md) |
-| **Kubeflow Pipelines** | 여러 단계로 구성된 ML 워크플로우를 DAG로 오케스트레이션 | `Pipeline`, `Run`, `Experiment` | [Part 2](02-pipelines.md) |
-| **Kubeflow Notebooks** | 사용자별 관리형 Jupyter/RStudio/VS Code 환경 | `Notebook` | [Part 3](03-notebooks.md) |
-| **Katib** | 하이퍼파라미터 튜닝과 AutoML | `Experiment`, `Trial`, `Suggestion` | [Part 4](04-katib.md) |
-| **Kubeflow Trainer** | 여러 프레임워크에 걸친 분산 모델 학습 | `TrainJob`, `ClusterTrainingRuntime` | [Part 5](05-training-operator.md) |
-| **KServe** | 모델 서빙과 추론 | `InferenceService` | [Part 6](06-kserve.md) |
+| 컴포넌트 | 목적 | API 또는 개념 | 가이드 |
+| --- | --- | --- | --- |
+| Dashboard, Profiles, 접근 관리 | UI 탐색, 네임스페이스 소유권과 구성원 관리 | 클러스터 범위 `Profile`; 선택적 쿼터 | [Part 1](01-architecture-installation.md) |
+| Pipelines | 워크플로 컴파일·실행, 이력과 아티팩트 관리 | Pipeline/Run/Experiment API; 선택적 Kubernetes Native API 모드의 `Pipeline`/`PipelineVersion` CRD | [Part 2](02-pipelines.md) |
+| Notebooks | 사용자 노트북 워크로드 | `Notebook`; 이미지와 PVC 설정 | [Part 3](03-notebooks.md) |
+| Katib | 하이퍼파라미터 탐색과 시험 실행 | `Experiment`, `Trial`, `Suggestion` CRD | [Part 4](04-katib.md) |
+| Trainer | 설정된 런타임을 이용한 분산 학습 | `TrainJob`, `TrainingRuntime`, `ClusterTrainingRuntime` | [Part 5](05-training-operator.md) |
+| KServe | 모델 추론 서비스 | `InferenceService`; 배포 모드별 의존성 | [Part 6](06-kserve.md) |
 
-![중앙 대시보드가 노트북, 파이프라인, Katib를 연결하며, 파이프라인과 Katib의 결과물이 Kubeflow Trainer로 모여 학습을 수행하고 학습된 모델이 KServe로 전달되어 서빙되는 흐름을 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-README-0.png)
+이 표는 가이드의 범위이며 전체 배포판 목록은 아닙니다. 26.03.1에는 Hub/모델 레지스트리와 Spark Operator도 포함됩니다. KFP Experiment는 Katib Experiment CRD와 다릅니다.
+
+![대시보드의 UI 탐색과 명시적으로 구성하는 파이프라인·튜닝·학습·모델 배포 연동을 구분한 Kubeflow 컴포넌트 맵.](../../.gitbook/assets/ko-ai-ml-kubeflow-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-kubeflow-readme-0.html)
+
+대시보드는 각 컴포넌트 UI의 진입점을 제공합니다. 파이프라인이나 Katib이 Trainer를 사용하려면 구현에서 지원되는 학습 리소스를 명시적으로 제출해야 합니다. 학습 아티팩트를 KServe에 연결하는 과정도 별도 배포 단계이며, 그림이 자동 모델 승격을 뜻하지는 않습니다.
 
 ## 왜 EKS에서 운영하는가
 
-Kubeflow의 각 컴포넌트는 표준을 준수하는 모든 Kubernetes 클러스터에서 동작하도록 설계되어 있습니다. 즉, 이 문서 사이트가 이미 다루고 있는 EKS 운영 방식 — Karpenter 기반 오토스케일링(GPU 노드 풀 포함), AWS 서비스 접근을 위한 IRSA/Pod Identity, EBS/S3 스토리지 연동, Prometheus/Grafana 기반 관측성 — 을 별도의 ML 전용 플랫폼 없이 ML 워크로드에도 그대로 적용할 수 있습니다. [Amazon SageMaker AI 관리형 경로](../sagemaker-ai/README.md) 같은 완전관리형 서비스 대비 트레이드오프는 [Data on EKS](../../data-on-eks/README.md)에서 다룬 것과 동일합니다: 운영 부담(Operator 업그레이드, 스토리지/자격증명 연동)은 더 크지만, 클러스터의 모든 워크로드에 걸쳐 동일한 배포/관측 모델을 유지할 수 있고, 플랫폼 전체를 한 번에 도입하지 않고도 Kubeflow의 각 컴포넌트를 독립적으로 사용할 수 있습니다.
+기존 EKS 플랫폼의 용량 관리, 스토리지 연동, 워크로드 신원, 모니터링을 ML에도 적용할 수 있습니다. 다만 Kubernetes 버전, CPU 아키텍처, 이미지, 네트워크, 스토리지 드라이버, 인증 설정의 호환성을 확인해야 합니다. Kubernetes 표준 준수만으로 충분하지 않으며, 릴리스 문서도 ARM64 이미지 지원이 완전하지 않음을 명시합니다.
+
+컴포넌트·CRD 업그레이드, 테넌트 인가, 영속 데이터, 자격 증명, 복구는 운영팀의 책임입니다. [Amazon SageMaker AI](../sagemaker-ai/README.md)는 일부 인프라 운영을 줄여주지만 데이터 접근, 애플리케이션 동작, 모델 품질, 비용 관리는 여전히 필요합니다. 필요한 인터페이스, 운영 역량, 워크로드 조건을 기준으로 선택하세요.
 
 ## 현재 제공 중인 문서
 
-1. [Part 1: Kubeflow 아키텍처와 EKS 설치](01-architecture-installation.md) — 컴포넌트 아키텍처, CNCF 졸업 배경, `awslabs/kubeflow-manifests`를 통한 EKS 설치
-2. [Part 2: Kubeflow Pipelines](02-pipelines.md) — KFP SDK v2, IR 기반 파이프라인 컴파일, S3 기반 아티팩트 저장소
-3. [Part 3: Kubeflow Notebooks](03-notebooks.md) — 사용자별 노트북 서버, Profile 기반 멀티테넌시, GPU 스케줄링
-4. [Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML](04-katib.md) — Experiment/Trial/Suggestion 모델, 탐색 알고리즘, 조기 종료
-5. [Part 5: Kubeflow Trainer와 분산 학습](05-training-operator.md) — v1 Training Operator에서 Kubeflow Trainer v2로의 전환, TrainJob/TrainingRuntime
-6. [Part 6: KServe — Kubernetes 기반 모델 서빙](06-kserve.md) — InferenceService, Serverless vs. Raw Deployment 모드, 캐너리 롤아웃
+1. [Part 1: EKS 아키텍처와 설치](01-architecture-installation.md) — Community 릴리스, 기존 AWS 배포판의 제약, Profile, 신원, 매니페스트 렌더링.
+2. [Part 2: Pipelines](02-pipelines.md) — SDK v2, 컴파일, 실행, 아티팩트 저장.
+3. [Part 3: Notebooks](03-notebooks.md) — 워크로드, Profile, 스토리지, GPU 배치.
+4. [Part 4: Katib](04-katib.md) — Experiment, Trial, 탐색, 조기 종료.
+5. [Part 5: Trainer](05-training-operator.md) — 레거시 Training Operator와 Trainer v2 API.
+6. [Part 6: KServe](06-kserve.md) — 추론 리소스, 배포 모드, 롤아웃.
+
+각 장의 컴포넌트 기준 버전을 확인하세요. 설치를 선택하기 전 [26.03.1 릴리스](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1)와 [고정된 목록](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md)을 확인해야 합니다.

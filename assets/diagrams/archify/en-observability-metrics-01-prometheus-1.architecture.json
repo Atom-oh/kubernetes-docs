@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Prometheus Operator Custom Resource Hierarchy",
+    "locale": "en",
+    "output": "en-observability-metrics-01-prometheus-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1140,
+      500
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "Controller (Operator)"
+        },
+        "backend": {
+          "label": "Operand resources"
+        },
+        "frontend": {
+          "label": "Configuration CRDs"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "operands",
+        "label": "Operand creation",
+        "focus": [
+          "operator",
+          "prometheus",
+          "alertmanager",
+          "thanosruler"
+        ],
+        "note": "The Operator watches Prometheus, Alertmanager, and ThanosRuler resources and creates the actual workloads."
+      },
+      {
+        "id": "scrape-rules",
+        "label": "Scrape and rule config",
+        "focus": [
+          "prometheus",
+          "servicemonitor",
+          "podmonitor",
+          "prometheusrule",
+          "scrapeconfig",
+          "probe"
+        ],
+        "note": "Selectors on the Prometheus resource decide which monitor and rule CRDs are applied."
+      },
+      {
+        "id": "alerting",
+        "label": "Alerting config",
+        "focus": [
+          "alertmanager",
+          "alertmanagerconfig"
+        ],
+        "note": "AlertmanagerConfig manages Alertmanager routing and receiver settings separately."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "operator",
+      "type": "security",
+      "label": "Prometheus Operator",
+      "sublabel": "Controller",
+      "pos": [
+        510,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "thanosruler",
+      "type": "backend",
+      "label": "ThanosRuler",
+      "sublabel": "Long-term rule evaluation",
+      "pos": [
+        140,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "Creates StatefulSet",
+      "pos": [
+        380,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "Creates StatefulSet",
+      "pos": [
+        930,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "servicemonitor",
+      "type": "frontend",
+      "label": "ServiceMonitor",
+      "pos": [
+        60,
+        370
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "podmonitor",
+      "type": "frontend",
+      "label": "PodMonitor",
+      "pos": [
+        280,
+        370
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "prometheusrule",
+      "type": "frontend",
+      "label": "PrometheusRule",
+      "pos": [
+        440,
+        370
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "scrapeconfig",
+      "type": "frontend",
+      "label": "ScrapeConfig",
+      "pos": [
+        600,
+        370
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "probe",
+      "type": "frontend",
+      "label": "Probe",
+      "pos": [
+        760,
+        370
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "alertmanagerconfig",
+      "type": "frontend",
+      "label": "AlertmanagerConfig",
+      "pos": [
+        930,
+        370
+      ],
+      "size": [
+        170,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Configuration CRDs",
+      "wraps": [
+        "servicemonitor",
+        "podmonitor",
+        "prometheusrule",
+        "scrapeconfig",
+        "probe",
+        "alertmanagerconfig"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "op-prom",
+      "from": "operator",
+      "to": "prometheus",
+      "label": "create / reconcile",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "op-am",
+      "from": "operator",
+      "to": "alertmanager",
+      "label": "create / reconcile",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "op-thanos",
+      "from": "operator",
+      "to": "thanosruler",
+      "label": "create / reconcile",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-sm",
+      "from": "prometheus",
+      "to": "servicemonitor",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-pm",
+      "from": "prometheus",
+      "to": "podmonitor",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-pr",
+      "from": "prometheus",
+      "to": "prometheusrule",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-sc",
+      "from": "prometheus",
+      "to": "scrapeconfig",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-pb",
+      "from": "prometheus",
+      "to": "probe",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "am-amc",
+      "from": "alertmanager",
+      "to": "alertmanagerconfig",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Prometheus Operator",
+      "items": [
+        "Controller for declaratively managing Prometheus in Kubernetes",
+        "Watches Prometheus, Alertmanager, and ThanosRuler resources and creates the actual workloads"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Selectors on the Prometheus resource",
+      "items": [
+        "serviceMonitorSelector / podMonitorSelector pick the monitors",
+        "ruleSelector picks PrometheusRule objects",
+        "alerting.alertmanagers wires up the Alertmanager"
+      ]
+    }
+  ]
+}

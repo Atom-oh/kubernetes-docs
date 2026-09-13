@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Network Bridge and NAT",
+    "locale": "en",
+    "output": "en-basics-01-linux-basics-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "container-a",
+      "type": "backend",
+      "label": "Container A",
+      "sublabel": "eth0 · 172.17.0.2",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "container-b",
+      "type": "backend",
+      "label": "Container B",
+      "sublabel": "eth0 · 172.17.0.3",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "docker0",
+      "type": "cloud",
+      "label": "docker0 bridge",
+      "sublabel": "172.17.0.1/16",
+      "pos": [
+        320,
+        150
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "iptables",
+      "type": "security",
+      "label": "iptables",
+      "sublabel": "NAT rules",
+      "pos": [
+        580,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "host-eth0",
+      "type": "backend",
+      "label": "Host eth0",
+      "sublabel": "192.168.1.10",
+      "pos": [
+        820,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet",
+      "sublabel": "external network",
+      "pos": [
+        1080,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Host",
+      "wraps": [
+        "container-a",
+        "container-b",
+        "docker0",
+        "iptables",
+        "host-eth0"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-bridge",
+      "from": "container-a",
+      "to": "docker0",
+      "label": "veth pair"
+    },
+    {
+      "id": "b-to-bridge",
+      "from": "container-b",
+      "to": "docker0",
+      "label": "veth pair"
+    },
+    {
+      "id": "bridge-to-iptables",
+      "from": "docker0",
+      "to": "iptables",
+      "label": "NAT",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iptables-to-eth0",
+      "from": "iptables",
+      "to": "host-eth0",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eth0-to-internet",
+      "from": "host-eth0",
+      "to": "internet",
+      "label": "external traffic",
+      "variant": "emphasis"
+    }
+  ]
+}

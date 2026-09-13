@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM API 접근 경계",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1180,
+      450
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "served-model-name / timeout",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        250,
+        75
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "인증된 gateway",
+      "sublabel": "경로·method·한도 허용 목록",
+      "pos": [
+        455,
+        80
+      ],
+      "size": [
+        250,
+        75
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "내부 vLLM Service",
+      "sublabel": "API / metrics / 운영 endpoint",
+      "pos": [
+        860,
+        80
+      ],
+      "size": [
+        250,
+        75
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "운영자",
+      "sublabel": "별도 권한과 신뢰 경로",
+      "pos": [
+        455,
+        280
+      ],
+      "size": [
+        250,
+        75
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "HTTPS"
+    },
+    {
+      "id": "gateway-service",
+      "from": "gateway",
+      "to": "service",
+      "label": "허용된 요청"
+    },
+    {
+      "id": "operator-service",
+      "from": "operator",
+      "to": "service",
+      "label": "운영 기능",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "API key의 범위",
+      "items": [
+        "접두사별 인증은 모든 endpoint의 보호가 아닙니다.",
+        "CORS는 인증이 아니며 JSON model과 HTTP header는 다릅니다."
+      ]
+    }
+  ]
+}

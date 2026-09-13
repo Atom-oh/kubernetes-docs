@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Upgrade Automation",
+    "locale": "en",
+    "output": "en-eks-08-eks-upgrades-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "eksctl / CI/CD steps"
+        },
+        "database": {
+          "label": "Git repository"
+        },
+        "cloud": {
+          "label": "AWS CLI steps"
+        },
+        "security": {
+          "label": "Best practices"
+        },
+        "external": {
+          "label": "GitOps tooling"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "eksctl-path",
+        "label": "eksctl automation",
+        "focus": [
+          "root",
+          "eksctl",
+          "eksctl-cluster",
+          "eksctl-nodegroup"
+        ],
+        "note": "The simplest path: eksctl upgrade cluster followed by eksctl upgrade nodegroup."
+      },
+      {
+        "id": "cli-path",
+        "label": "AWS CLI script",
+        "focus": [
+          "root",
+          "cli",
+          "cli-cluster",
+          "cli-addon",
+          "cli-nodegroup"
+        ],
+        "note": "A shell script that sets variables, then upgrades cluster → add-ons → managed node groups, waiting for each step to finish."
+      },
+      {
+        "id": "gitops-path",
+        "label": "GitOps automation",
+        "focus": [
+          "root",
+          "gitops",
+          "git-config",
+          "cicd"
+        ],
+        "note": "cluster.yaml lives in Git; a push to it triggers the CI/CD pipeline, which runs eksctl upgrade cluster -f."
+      },
+      {
+        "id": "best-practices",
+        "label": "Automation Best Practices",
+        "focus": [
+          "root",
+          "best-practices"
+        ],
+        "note": "Gradual approach, rollback plan, validation steps, notifications and documentation apply to all three paths."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "backend",
+      "label": "Upgrade Automation",
+      "sublabel": "Large-scale EKS environments",
+      "pos": [
+        475,
+        24
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "eksctl",
+      "type": "backend",
+      "label": "Automation Using eksctl",
+      "sublabel": "EKS management CLI",
+      "pos": [
+        40,
+        152
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "eksctl-cluster",
+      "type": "backend",
+      "label": "Cluster Upgrade",
+      "sublabel": "eksctl upgrade cluster",
+      "pos": [
+        40,
+        258
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "eksctl-nodegroup",
+      "type": "backend",
+      "label": "Node Group Upgrade",
+      "sublabel": "eksctl upgrade nodegroup",
+      "pos": [
+        40,
+        358
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "cloud",
+      "label": "AWS CLI and Scripts",
+      "sublabel": "Variable setup, then sequential script",
+      "pos": [
+        330,
+        152
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "cli-cluster",
+      "type": "cloud",
+      "label": "Cluster Upgrade Script",
+      "sublabel": "aws eks update-cluster-version",
+      "pos": [
+        330,
+        258
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cli-addon",
+      "type": "cloud",
+      "label": "Add-on Upgrade Script",
+      "sublabel": "vpc-cni · coredns · kube-proxy",
+      "pos": [
+        330,
+        358
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cli-nodegroup",
+      "type": "cloud",
+      "label": "Node Group Upgrade Script",
+      "sublabel": "aws eks update-nodegroup-version",
+      "pos": [
+        330,
+        458
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "gitops",
+      "type": "external",
+      "label": "Automation Using GitOps",
+      "sublabel": "e.g. Flux, ArgoCD",
+      "pos": [
+        620,
+        152
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "git-config",
+      "type": "database",
+      "label": "Cluster Configuration in Git",
+      "sublabel": "cluster.yaml (ClusterConfig)",
+      "pos": [
+        620,
+        258
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cicd",
+      "type": "backend",
+      "label": "Configure CI/CD Pipeline",
+      "sublabel": "eksctl upgrade cluster -f cluster.yaml",
+      "pos": [
+        620,
+        358
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "best-practices",
+      "type": "security",
+      "label": "Automation Best Practices",
+      "sublabel": "Apply to all three paths",
+      "pos": [
+        910,
+        152
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "eksctl",
+      "wraps": [
+        "eksctl",
+        "eksctl-cluster",
+        "eksctl-nodegroup"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS CLI + shell script",
+      "wraps": [
+        "cli",
+        "cli-cluster",
+        "cli-addon",
+        "cli-nodegroup"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "GitOps",
+      "wraps": [
+        "gitops",
+        "git-config",
+        "cicd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-eksctl",
+      "from": "root",
+      "to": "eksctl",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-cli",
+      "from": "root",
+      "to": "cli",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-gitops",
+      "from": "root",
+      "to": "gitops",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-bp",
+      "from": "root",
+      "to": "best-practices",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eksctl-1",
+      "from": "eksctl",
+      "to": "eksctl-cluster"
+    },
+    {
+      "id": "eksctl-2",
+      "from": "eksctl-cluster",
+      "to": "eksctl-nodegroup"
+    },
+    {
+      "id": "cli-1",
+      "from": "cli",
+      "to": "cli-cluster"
+    },
+    {
+      "id": "cli-2",
+      "from": "cli-cluster",
+      "to": "cli-addon",
+      "label": "wait update-successful",
+      "labelDy": 24
+    },
+    {
+      "id": "cli-3",
+      "from": "cli-addon",
+      "to": "cli-nodegroup"
+    },
+    {
+      "id": "gitops-1",
+      "from": "gitops",
+      "to": "git-config"
+    },
+    {
+      "id": "gitops-2",
+      "from": "git-config",
+      "to": "cicd",
+      "label": "runs on push to cluster.yaml",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Automation Best Practices",
+      "items": [
+        "Gradual approach: start with non-production, then progress to production",
+        "Rollback plan: implement an automated rollback mechanism",
+        "Validation steps: include automated validation after the upgrade",
+        "Notifications: notify on upgrade success or failure",
+        "Documentation: document the automation process and steps"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,250 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Alerting Solution Selection",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "no-oncall",
+        "label": "No on-call management",
+        "focus": [
+          "start",
+          "q_oncall",
+          "q_aws",
+          "cloudwatch",
+          "alertmanager"
+        ],
+        "note": "Without on-call needs the choice is AWS-native CloudWatch Alarms or open source Alertmanager."
+      },
+      {
+        "id": "oncall",
+        "label": "On-call management needed",
+        "focus": [
+          "q_oncall",
+          "q_budget",
+          "grafana_oncall",
+          "q_tools",
+          "pagerduty",
+          "opsgenie"
+        ],
+        "note": "Budget decides between Grafana OnCall and an enterprise SaaS; existing Atlassian tooling points to OpsGenie."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "backend": {
+          "label": "Open source tool"
+        },
+        "cloud": {
+          "label": "AWS native service"
+        },
+        "external": {
+          "label": "Commercial SaaS"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "Start"
+    },
+    {
+      "id": "self",
+      "label": "No on-call management"
+    },
+    {
+      "id": "oss",
+      "label": "Open source"
+    },
+    {
+      "id": "oncall",
+      "label": "On-call management needed"
+    },
+    {
+      "id": "atlassian",
+      "label": "Atlassian ecosystem"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_oncall",
+    "q_budget",
+    "grafana_oncall"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "entry",
+      "col": 0,
+      "type": "frontend",
+      "label": "Select Alerting Solution",
+      "sublabel": "EKS environment",
+      "width": 200
+    },
+    {
+      "id": "q_oncall",
+      "lane": "entry",
+      "col": 1,
+      "type": "security",
+      "label": "Need on-call mgmt?",
+      "sublabel": "schedules, escalation",
+      "width": 160
+    },
+    {
+      "id": "q_aws",
+      "lane": "self",
+      "col": 2,
+      "type": "security",
+      "label": "Prefer AWS native?",
+      "width": 160
+    },
+    {
+      "id": "cloudwatch",
+      "lane": "self",
+      "col": 3,
+      "type": "cloud",
+      "label": "CloudWatch Alarms",
+      "sublabel": "all-in AWS environment",
+      "width": 160
+    },
+    {
+      "id": "alertmanager",
+      "lane": "oss",
+      "col": 3,
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "small team, cost-conscious",
+      "width": 160
+    },
+    {
+      "id": "grafana_oncall",
+      "lane": "oss",
+      "col": 2,
+      "type": "backend",
+      "label": "Grafana OnCall",
+      "sublabel": "mid-size, need on-call",
+      "width": 160
+    },
+    {
+      "id": "q_budget",
+      "lane": "oncall",
+      "col": 1,
+      "type": "security",
+      "label": "Budget?",
+      "sublabel": "open source or enterprise",
+      "width": 160
+    },
+    {
+      "id": "q_tools",
+      "lane": "oncall",
+      "col": 2,
+      "type": "security",
+      "label": "Existing tools?",
+      "width": 160
+    },
+    {
+      "id": "pagerduty",
+      "lane": "oncall",
+      "col": 3,
+      "type": "external",
+      "label": "PagerDuty",
+      "sublabel": "large org, complex escalation",
+      "width": 160
+    },
+    {
+      "id": "opsgenie",
+      "lane": "atlassian",
+      "col": 3,
+      "type": "external",
+      "label": "OpsGenie",
+      "sublabel": "Atlassian ecosystem",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q_oncall"
+    },
+    {
+      "from": "q_oncall",
+      "to": "q_aws",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "from": "q_oncall",
+      "to": "q_budget",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q_aws",
+      "to": "cloudwatch",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "from": "q_aws",
+      "to": "alertmanager",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "from": "q_budget",
+      "to": "grafana_oncall",
+      "label": "open source",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q_budget",
+      "to": "q_tools",
+      "label": "enterprise",
+      "role": "branch"
+    },
+    {
+      "from": "q_tools",
+      "to": "pagerduty",
+      "label": "none",
+      "role": "branch"
+    },
+    {
+      "from": "q_tools",
+      "to": "opsgenie",
+      "label": "Atlassian",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Recommended by situation",
+      "items": [
+        "Small team, cost-conscious: Alertmanager + Slack",
+        "All-in AWS environment: CloudWatch Alarms + SNS + Lambda",
+        "Mid-size, need on-call: Grafana OnCall",
+        "Large organization, complex escalation: PagerDuty",
+        "Atlassian ecosystem: OpsGenie"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "On-call management support",
+      "items": [
+        "Alertmanager and CloudWatch Alarms: none built in",
+        "Grafana OnCall, PagerDuty, OpsGenie: schedules, escalation, mobile app",
+        "Grafana OnCall is free/paid open source; PagerDuty and OpsGenie are paid SaaS"
+      ]
+    }
+  ]
+}

@@ -1,317 +1,245 @@
 # Cilium Deep Dive: The Future of Cloud Native Networking
 
-## Overview
+## Overview and Reviewed Baseline
 
-This section provides a comprehensive understanding of Cilium's core concepts and technologies. We will explore Cilium's architecture, eBPF technology, networking models, security features, and more in depth.
+This section covers Cilium networking, policy and observability. Examples are reviewed against **Cilium/Helm chart 1.20.1**, Cilium CLI **0.20.0** and Hubble CLI **1.19.4**. The Cilium 1.20 Kubernetes compatibility page lists **1.33–1.36** as tested; an upstream 1.37 release does not extend that matrix automatically. Supported hosts are AMD64/AArch64 Linux with kernel **5.10+**, or the documented distribution equivalent such as RHEL 8.10's backported 4.18 kernel. Individual features have additional requirements.
 
-> **Supported Versions**: Cilium 1.17, 1.18
-> **Kubernetes Compatibility**: 1.32 and above
-> **Last Updated**: August 24, 2026
+> **Last Updated**: September 12, 2026
 
-### July 2026 Update: Patch Releases and a NetworkPolicy Security Issue
+### Historical Release Notes
 
-On July 16, 2026, the Cilium 1.19.6, 1.18.12, and 1.17.18 patch releases were published. Alongside new support for configuring Gateway API access logs (`spec.telemetry.accessLogs` in `CiliumGatewayClassConfig`), they fix a regression that could briefly drop established connections during agent restart/upgrade and a ClusterMesh bug where the `service.cilium.io/affinity: "none"` annotation caused a traffic blackhole.
+The dates below are GitHub publication dates in UTC and describe those releases, not current installation pins. Feature backports differ between release lines.
 
-Also note the **CVE-2026-56743** security issue: in Cilium 1.19.0-1.19.4 with a non-default `clusterName`, a Kubernetes NetworkPolicy using only `ipBlock` rules (no pod/namespace selectors) could unintentionally allow traffic from other workloads in the same namespace. Upgrade to 1.19.5 or later. See the [security advisory](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r) for details.
+| Date | Release | Verified highlights |
+| --- | --- | --- |
+| July 14, 2026 | [1.20.0-rc.0](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.0) | First 1.20 release candidate |
+| July 16, 2026 | [1.19.6](https://github.com/cilium/cilium/releases/tag/v1.19.6), [1.18.12](https://github.com/cilium/cilium/releases/tag/v1.18.12), [1.17.18](https://github.com/cilium/cilium/releases/tag/v1.17.18) | Gateway access-log configuration is listed for 1.19.6/1.18.12; the restart-policy and ClusterMesh affinity fixes cited here are listed in 1.19.6, not all three releases |
+| July 21, 2026 | [1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1) | Second 1.20 release candidate |
+| July 29, 2026 | [1.20.0](https://github.com/cilium/cilium/releases/tag/v1.20.0) | GA release; selected changes below |
+| August 3, 2026 | [1.21.0-pre.0](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.0) | Next-cycle prerelease, not this guide's deployment baseline |
+| August 18, 2026 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMesh documentation and bug fixes, including restart/CIDR-policy handling |
+| August 18, 2026 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | Includes ENI interface timing, Service/LB and other fixes |
+| August 18, 2026 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP host-firewall support and related fixes |
 
-On July 21, 2026, [Cilium 1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1) was published — the second release candidate for the upcoming 1.20 minor release, following rc.0 on July 14.
+The 1.20.0 announcement reports **2,660+ new commits**, supported by a **community of 1,100+ contributors**. The latter is community size, not a count of authors in this release. Highlights include:
 
-### August 2026 Update: Cilium 1.20.0 GA
+- Gateway API **1.6.1**, TCPRoute/UDPRoute, BackendTLSPolicy, ListenerSets, ExternalAuth and CORS support, subject to each feature's configuration and API maturity.
+- Datapath plugins and opt-in `bpf.datapathMode=auto`; the announced default remains veth. Dual-stack clusters can configure an IPv6 egress gateway address.
+- **Beta** IPv6 ENI IPAM and migration from cluster-pool to multi-pool without rebuilding the cluster. In-place migration does not guarantee no interruption.
+- Traffic distribution hints, weighted Maglev backends and stable MCS integration; Kubernetes ClusterNetworkPolicy support and **beta** ztunnel-based workload identity.
+- A reported `cilium-cni` binary reduction from roughly **77 MB to 16 MB**. ADS/Delta xDS improvements are in the 1.20 announcement; do not attribute them to the 1.18.13 patch notes. These are upstream release claims, not measurements repeated in this audit.
 
-On July 29, 2026, [Cilium 1.20.0](https://github.com/cilium/cilium/releases/tag/v1.20.0) was released — over 2,660 new commits from 1,100+ contributors. Highlights:
+Review the [1.20 upgrade notes](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes) for removed/replaced legacy Mutual Authentication, Envoy Go extensions, Kafka-aware policies, the old CiliumNodeConfig API, libnetwork integration and custom CNI configuration changes.
 
-- **Gateway API v1.6.1**: support for the newly GA'd TCPRoute/UDPRoute, `BackendTLSPolicy` for TLS to backends, ListenerSets for delegated listener management, an `ExternalAuth` filter (GEP-1494), and native CORS support
-- **Networking**: datapath plugins for extending the eBPF datapath without forking, automatic netkit selection (`bpf.datapathMode=auto`), and IPv6 egress gateway IPs for dual-stack clusters
-- **IPAM**: IPv6 for AWS ENI IPAM (Beta), and in-place migration from cluster-pool to multi-pool IPAM
-- **Services/ClusterMesh**: `PreferSameZone`/`PreferSameNode` traffic distribution, weighted Maglev backends via the `service.cilium.io/weight` annotation, and stable Multi-Cluster Services (MCS) API support
-- **Security**: Kubernetes ClusterNetworkPolicy (KCNP) support with Admin/Baseline tiers, ztunnel identity via internal CA or SPIRE, and a new `cluster-mesh` policy entity
-- **Performance**: the `cilium-cni` binary shrank from ~77 MB to 16 MB, plus aggregated load-balancer state and optimized BPF policy-map encoding for large clusters
+### NetworkPolicy Security Advisory
 
-Take action during upgrade if you use legacy Mutual Authentication, Envoy Go extensions, Kafka-aware policies, the `cilium.io/v2alpha1` `CiliumNodeConfig` API, the libnetwork integration, or a custom CNI configuration — see the [upgrade guide](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes). The first pre-release of the next cycle, 1.21.0-pre.0, followed on August 3.
-
-### August 2026 Update: 1.20.1 / 1.19.7 / 1.18.13 Patch Releases
-
-On August 18, 2026, coordinated patch releases went out for the three maintained lines. [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1), the first patch on the 1.20 line, carries a Cluster Mesh documentation overhaul and backported bug fixes since 1.20.0; [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) backports VRRP and IGMP protocol support in the host firewall; and [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) adds incremental synchronization of Envoy resources (listeners, network policies, etc.), reducing CPU load and policy update latency. Updating to the latest patch on your line is recommended.
-
-## Key Improvements in Cilium 1.18
-
-Cilium 1.18 delivers the following major feature improvements and new capabilities:
-
-### Networking Improvements
-- **Enhanced BGP Control Plane**: More flexible and scalable BGP configuration
-- **Improved Multi-cluster Routing**: Optimized inter-cluster communication performance
-- **Enhanced Service Mesh Integration**: Better integration with Envoy proxy
-
-### Security Enhancements
-- **Enhanced Network Policies**: Finer-grained policy control and performance improvements
-- **Improved Encryption Options**: Optimized WireGuard and IPsec encryption performance
-
-### Observability Improvements
-- **Hubble Improvements**: Richer metrics and tracing information
-- **Enhanced Prometheus Integration**: New metrics and dashboards
-- **Improved Flow Logging**: More detailed network flow information
-
-### Performance Optimizations
-- **eBPF Program Optimization**: Faster packet processing
-- **Memory Usage Improvements**: Better resource efficiency in large-scale clusters
-- **CPU Usage Optimization**: Lower overhead
+[GHSA-fm8w-2m5w-9j7r / CVE-2026-56743](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r) has a project advisory publication date of **July 6, 2026**. The project API and GitHub global advisory API expose different dates: the latter records September 3. Use the project disclosure date for this release chronology; the global record date is not a later fix release. It affects **1.19.0–1.19.4** under the advisory's custom-cluster-name conditions: a standard Kubernetes NetworkPolicy peer containing only `ipBlock` can unintentionally permit ingress from workloads in the selected Pod's namespace. **1.19.5** fixes this issue; use an appropriate current patched release for the deployment. The advisory says CiliumNetworkPolicy/ClusterwideNetworkPolicy and releases below 1.19.0 are not affected by this particular bug.
 
 ## Introduction
 
-Cilium is an open source networking, security, and observability solution for Linux container management platforms such as Kubernetes, Docker, and Mesos. Cilium is based on eBPF (extended Berkeley Packet Filter) technology, providing more powerful and efficient networking and security features than traditional Linux networking approaches.
+Cilium provides networking, security and observability for supported Linux Kubernetes environments. Routing, IPAM, encryption and Service handling are separate choices; selecting eBPF alone does not establish every feature or a performance guarantee. The old Docker libnetwork integration was removed in 1.20, so Docker/Mesos should not be listed here as interchangeable current installation targets.
 
-### What is eBPF?
+### eBPF and Key Capabilities
 
-eBPF is a technology that acts like a sandboxed virtual machine within the Linux kernel, allowing programs to be safely executed within the kernel without modifying kernel code. This enables efficient execution of various tasks such as network packet processing, system call monitoring, and performance analysis.
+The kernel verifies eBPF programs before loading them and can JIT-compile them for execution at supported hooks. This enables packet processing and observability without a custom kernel module; the verifier does not prove application or policy correctness. Actual throughput, latency and memory depend on the programs, platform and workload.
 
-Key characteristics of eBPF:
-- High performance through kernel space execution
-- Native performance through JIT (Just-In-Time) compilation
-- Safe execution environment (program verification through verifier)
-- Dynamic loading and unloading possible
+Cilium offers L3/L4 policy, L7 policy through Envoy/DNS proxy integration, optional WireGuard/IPsec, Service load balancing, Hubble flow visibility, ClusterMesh and BGP advertisement. XDP acceleration is optional and device/configuration dependent. L7 features may use per-node Envoy; workload identity through ztunnel has separate beta configuration. Installing the agent alone does not enable all mesh, encryption or multi-cluster behavior.
 
-### Key Benefits of Cilium
+### Comparison with Other Networking Projects
 
-1. **High-Performance Networking**: Efficient packet processing using eBPF
-2. **Granular Network Policies**: L3-L7 level network policy support
-3. **Transparent Encryption**: Transparent IPsec or WireGuard encryption between nodes
-4. **Load Balancing**: XDP (eXpress Data Path) based high-performance load balancing
-5. **Observability**: Network flow visibility through Hubble
-6. **Service Mesh**: L7 traffic management without existing sidecars
-7. **Multi-Cluster Networking**: Transparent connectivity between clusters
-8. **BGP Support**: Integration with external networks
+| Project | Connectivity / IPAM | Policy and related capabilities |
+| --- | --- | --- |
+| Cilium | Native or overlay routing; IPAM modes including cloud ENI | eBPF dataplane, Cilium/Kubernetes policies, L7 integration, Hubble and optional encryption |
+| Calico | Native/IPIP/VXLAN profiles with Calico or external IPAM | Linux Iptables/Nftables/BPF, supported Windows HNS; OSS WireGuard, staged policy and separate L7 integration |
+| Flannel | Pod connectivity through selected backends such as VXLAN/host-gw/WireGuard | The routing daemon does not enforce NetworkPolicy; its chart can deploy the SIGs network-policy controller with `netpol.enabled`, or it can pair with another policy implementation |
+| AWS VPC CNI | VPC ENI address allocation/networking | Native network policy on supported EC2 Linux nodes and separate SG-for-Pods functionality; EKS Auto Mode is a different managed implementation |
 
-### Comparison with Existing CNIs
-
-| Feature | Cilium | Calico | Flannel | AWS VPC CNI |
-|---------|--------|--------|---------|-------------|
-| Network Model | eBPF | iptables/IPVS | VXLAN/host-gw | AWS ENI |
-| Network Policies | L3-L7 | L3-L4 | Limited | AWS Security Groups |
-| Encryption | IPsec/WireGuard | IPsec | None | None |
-| Observability | Hubble | Flow Logs | Limited | VPC Flow Logs |
-| Service Mesh | Built-in | Requires Istio | Requires Istio | Requires Istio/AppMesh |
-| Performance | Very High | High | Medium | High |
-| Multi-Cluster | Built-in | Limited | None | Requires Transit Gateway |
+A routing mode is not the same category as a packet-processing implementation. Calico is not limited to iptables/IPVS, Flannel can use an encrypted backend, and AWS policy is not synonymous with security groups. Service meshes are optional layers, and cross-cluster VPC connectivity is not restricted to Transit Gateway. Use a measured workload and an explicit support matrix instead of universal performance rankings.
 
 ## Architecture
 
-Cilium consists of a data plane based on eBPF and a control plane integrated with Kubernetes.
+The **Kubernetes API server** stores Kubernetes/Cilium resources. Cilium agents watch the relevant state and program each node's dataplane; the Cilium Operator handles cluster-level responsibilities such as the selected IPAM and identity/controller work. There is no separate mandatory cluster-wide “Cilium API Server” deployment in this basic architecture. Agents have local APIs, and the optional ClusterMesh API server serves a different purpose.
 
-![The Cilium Agent runs on every node and is managed by the Cilium Operator (fronted by the Cilium API Server); the Agent loads eBPF programs into the kernel and reports metrics to the Hubble Server, which the Hubble Relay aggregates cluster-wide for the Hubble UI to visualize.](../../.gitbook/assets/en-networking-cilium-README-0.png)
+| Component | Role |
+| --- | --- |
+| Cilium Agent | Node-local endpoint, policy, routing/Service state and eBPF management |
+| Cilium Operator | Cluster-level reconciliation and mode-dependent allocation/controller work |
+| Envoy | Userspace proxy for enabled L7 policy, ingress/Gateway and related features |
+| Hubble server | Node-local flow API integrated with the agent |
+| Hubble Relay / UI | Aggregate flow streams / display service maps and flows |
+| Prometheus metrics endpoints | Separate statistics collection; Relay/UI is not the metrics scraping pipeline |
+| cilium / cilium-dbg / hubble | Cluster management CLI / agent diagnostics / flow client respectively |
 
-### Key Components
+### Networking and Packet Paths
 
-1. **Cilium Agent**: Runs on each node, loads and manages eBPF programs
-2. **Cilium Operator**: Manages cluster-level resources and operations
-3. **eBPF Programs**: Loaded into kernel for packet processing and policy enforcement
-4. **Hubble**: Provides network flow monitoring and observability
-5. **Cilium CLI**: Command-line tool for Cilium and Hubble management
+Native routing needs a reachable underlay; tunneling uses VXLAN or Geneve. AWS ENI and Azure IPAM are allocation/integration choices with their own platform requirements. Cilium's BGP Control Plane advertises reachability to routers and **does not program the datapath or provide internal cluster routing**.
 
-### Networking Models
-
-Cilium supports multiple networking modes:
-
-1. **Direct Routing**: Direct routing between nodes (BGP or static routing)
-2. **Tunneling**: Overlay networking through VXLAN or Geneve tunnels
-3. **AWS ENI**: Utilizing Elastic Network Interface (ENI) on Amazon EKS
-4. **Azure IPAM**: Utilizing Azure IPAM on Azure AKS
-
-### Packet Flow
-
-How packets are processed in Cilium:
-
-1. Packet arrives at network interface
-2. eBPF XDP program performs initial processing (DDoS defense, load balancing)
-3. eBPF TC (Traffic Control) program applies network policies
-4. Packet is delivered to container network namespace
-5. Response packets are processed through similar path
+There is no universal XDP→TC→Pod sequence. Socket load balancing can act before packets exist, TC/netkit hooks depend on the datapath, optional XDP accelerates selected traffic, and L7 traffic may pass through Envoy. Return traffic also depends on NAT, conntrack and DSR choices. See the networking and eBPF chapters for the chosen profile.
 
 ## Integration with Amazon EKS
 
-There are two main ways to use Cilium on Amazon EKS:
+Choose the actual networking and compute profile before installing anything. The example addon name/version `cilium` / `v1.17.0-eksbuild.1` was not a verified AWS distribution and is not an installation command here. Inspect the Region's actual add-on catalog, publisher, license and supported compute types if considering a packaged vendor add-on.
 
-1. **Install as Amazon EKS Add-on**: Amazon EKS provides Cilium as a managed add-on.
-2. **Manual Installation**: Install directly using Helm chart.
+| EKS profile | What to verify |
+| --- | --- |
+| Ordinary EC2 nodes, Cilium ENI replaces VPC CNI | Upstream/partner-managed CNI; AWS's supported EC2 CNI is VPC CNI. Plan CNI ownership, IAM, addressing, routes, bootstrap and node migration |
+| Ordinary EC2 nodes, AWS VPC CNI chaining | VPC CNI owns interfaces/IPAM; Cilium attaches its dataplane afterwards. Existing Pods need recreation, and L7/IPsec have documented limitations |
+| Hybrid Nodes | Follow AWS's specialized CNI guide and AWS-maintained Cilium build matrix; upstream 1.20.1 is not automatically the supported AWS build |
+| Auto Mode | Alternate CNI/policy plugins are unsupported; use the managed NodeClass/networking features |
+| Fargate | Alternate CNI/DaemonSet installation is unsupported |
+| Windows | The Cilium agent requirements are Linux; do not apply this recipe to Windows workers |
 
-### Installing as Amazon EKS Add-on
+AWS's general alternate-CNI page and specialized Hybrid guide differ in their Calico support wording; an example moving repositories does not establish support termination. For Hybrid Nodes, confirm the exact distribution, capability set and support owner. For Auto Mode, node-local CoreDNS/system networking is also different from the ordinary EC2 setup in this guide; mixed non-Auto nodes still need the traditional DNS Deployment.
 
-```bash
-# Install Cilium add-on
-aws eks create-addon \
-  --cluster-name my-cluster \
-  --addon-name cilium \
-  --addon-version v1.17.0-eksbuild.1 \
-  --service-account-role-arn arn:aws:iam::123456789012:role/AmazonEKSCiliumAddonRole
+### Prepared EC2 Cluster with Cilium ENI
 
-# Check add-on status
-aws eks describe-addon \
-  --cluster-name my-cluster \
-  --addon-name cilium
-```
+These are **Cilium Helm values for a prepared IPv4 EC2 cluster**, not a complete cluster-creation or in-place migration recipe. Before using them:
 
-### Manual Installation with Helm
+1. Choose a supported EKS/Kubernetes version and Linux AMI, and establish one CNI owner. Do not delete `aws-node` from an existing workload cluster as a shortcut.
+2. Prepare node taints/scheduling so workloads wait until Cilium manages the node. Upstream EKS guidance uses `node.cilium.io/agent-not-ready=true:NoExecute`; assess eviction and bootstrap effects in the actual node lifecycle.
+3. Prepare subnet capacity, ENI quotas/security groups, node metadata access and the operator's required EC2 permissions. The role ARN below is a placeholder for a correctly trusted **cilium-operator ServiceAccount** role, not a role created by the values file.
+4. Retain working kube-proxy and DNS for this `kubeProxyReplacement: false` example. For replacement mode, follow the separate direct API/bootstrap-DNS requirements. Select max-Pods from the actual instance/IPAM capacity, not a universal 110.
 
-```bash
-# Add Cilium Helm repository
-helm repo add cilium https://helm.cilium.io/
-
-# Update Helm repository
-helm repo update
-
-# Install Cilium
-helm install cilium cilium/cilium \
-  --version 1.17.0 \
-  --namespace kube-system \
-  --set eni.enabled=true \
-  --set ipam.mode=eni \
-  --set egressMasqueradeInterfaces=eth0 \
-  --set tunnel=disabled
-```
-
-### EKS-Specific Configuration Options
-
-Key configuration options to consider when using Cilium with EKS:
-
-1. **ENI Mode**: Leverage native AWS networking performance using AWS Elastic Network Interface
-2. **IPAM Mode**: Integration with AWS VPC IP address management
-3. **Encryption**: Inter-node traffic encryption (WireGuard or IPsec)
-4. **NodeLocal DNSCache**: DNS performance improvement
-5. **Hubble**: Enable network observability
-
-### ENI Mode Configuration
+Save as `cilium-eni-values.yaml` and replace the role/interface choices with reviewed values:
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  enable-endpoint-routes: "true"
-  auto-create-cilium-node-resource: "true"
-  ipam: "eni"
-  eni-tags: "{\"Owner\": \"Cilium\"}"
-  tunnel: "disabled"
-  enable-ipv4: "true"
-  enable-ipv6: "false"
-  egress-masquerade-interfaces: "eth0"
+eni:
+  enabled: true
+ipam:
+  mode: eni
+routingMode: native
+kubeProxyReplacement: false
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+egressMasqueradeInterfaces: eth0
+serviceAccounts:
+  operator:
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/CiliumOperatorENI
 ```
-
-### Installing Cilium on EKS Cluster
-
-#### Installing Cilium on Existing EKS Cluster
 
 ```bash
-# Remove AWS CNI
-kubectl delete daemonset -n kube-system aws-node
+helm repo add cilium https://helm.cilium.io/
+helm repo update cilium
+helm template cilium cilium/cilium --version 1.20.1 \
+  --namespace kube-system -f cilium-eni-values.yaml > cilium-eni-rendered.yaml
 
-# Install Cilium
-cilium install --set eni.enabled=true \
-  --set ipam.mode=eni \
-  --set egressMasqueradeInterfaces=eth0 \
-  --set tunnel=disabled
+# After preparing the cluster and reviewing the rendered configuration:
+helm install cilium cilium/cilium --version 1.20.1 \
+  --namespace kube-system -f cilium-eni-values.yaml
 ```
 
-#### Creating New EKS Cluster with Cilium CNI
+Manage these settings through the installation owner. A replacement `cilium-config` containing only a few keys can remove other required settings; the old `tunnel=disabled` value is replaced by `routingMode: native`. ENI allocation/permissions and SNAT behavior still require runtime validation; a successful render is not proof of usable EC2 networking.
 
-```bash
-eksctl create cluster --name cilium-cluster \
-  --without-nodegroup
+**IPv6 qualification:** the 1.20.1 ENI IPAM reference describes IPv6 as beta, while its EKS prerequisites page still states IPv4-only ENI integration. This guide keeps an IPv4 example and records that documentation inconsistency rather than treating either statement as proof of production EKS IPv6 compatibility. Review the current ENI/dual-stack subnet requirements before a separate IPv6 design.
 
-eksctl create nodegroup --cluster cilium-cluster \
-  --node-ami-family AmazonLinux2 \
-  --node-type m5.large \
-  --nodes 3 \
-  --max-pods-per-node 110
+### VPC CNI Chaining Alternative
 
-# Install Cilium
-cilium install --set eni.enabled=true \
-  --set ipam.mode=eni \
-  --set egressMasqueradeInterfaces=eth0 \
-  --set tunnel=disabled
+The upstream chaining guide requires VPC CNI 1.11.2+ and documents this profile:
+
+```yaml
+cni:
+  chainingMode: aws-cni
+  exclusive: false
+enableIPv4Masquerade: false
+routingMode: native
+kubeProxyReplacement: false
 ```
 
-### EKS Cluster Interconnection
+Use it as a **different configuration**, not an overlay on the ENI-replacement values. VPC CNI remains the allocator. Upgrade the actual managed add-on through its owner rather than applying a historical upstream DaemonSet. Avoid competing policy engines on the same endpoints. Existing Pods are not retroactively attached to Cilium when the CNI chain changes; recreate them under a planned rollout and verify endpoint management. Chaining has documented L7 policy/IPsec limitations, so do not assume every example later in this page works in that profile.
 
-EKS cluster interconnection using Cilium Cluster Mesh:
+### ClusterMesh
 
-```bash
-# On cluster 1
-cilium clustermesh enable --service-type LoadBalancer
-
-# On cluster 2
-cilium clustermesh enable --service-type LoadBalancer
-
-# Connect clusters
-cilium clustermesh connect --context cluster1 --destination-context cluster2
-```
+ClusterMesh needs unique cluster identities, compatible versions, reachable/nonoverlapping Pod networks, authenticated API connectivity and an appropriate exposure model. A LoadBalancer Service can create cloud resources and needs a deliberate network/security design. Creating two public endpoints is not sufficient to connect clusters safely. Follow the maintained [ClusterMesh guide](../../service-mesh/cilium-service-mesh/01-architecture.md) and the advanced chapter for the chosen topology.
 
 ## Installation and Configuration
 
-### Prerequisites
+### Client Tools
 
-- Kubernetes cluster (v1.16 or higher)
-- Linux kernel 4.9 or higher (recommended: 5.4 or higher)
-- kubectl configured
-- Helm (optional)
-
-### Install Cilium CLI
+Use the appropriate official Cilium CLI 0.20.0 and Hubble CLI 1.19.4 assets for the workstation OS/architecture, and verify the supplied checksums before extraction. Linux ARM64 and AMD64 differ; macOS uses the corresponding Darwin assets. CLI versions are separate from the Cilium agent/chart version. See the [verified CLI installation guidance](../../service-mesh/cilium-service-mesh/README.md).
 
 ```bash
-curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
-sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
-rm cilium-linux-amd64.tar.gz
+cilium version --client
+hubble version
 ```
 
-### Configuration Options
+### Non-Cloud Cluster-Pool Example
 
-#### Networking Mode Configuration
+The following **alternative** is for a prepared ordinary Linux cluster with kube-proxy and DNS already working. Ensure the example `10.244.0.0/16` Pod range is compatible with the cluster and does not overlap Service, node, VPC or connected-network ranges. Do not use this pool configuration for ENI mode.
 
-Direct routing mode:
+```yaml
+routingMode: tunnel
+tunnelProtocol: vxlan
+kubeProxyReplacement: false
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.244.0.0/16
+    clusterPoolIPv4MaskSize: 24
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+  metrics:
+    enabled:
+    - dns
+    - drop
+    - tcp
+    - flow
+    - icmp
+    - httpV2
+```
+
+Save as `cilium-values.yaml`, render the pinned chart, then install only on the prepared cluster:
+
 ```bash
-cilium install --set tunnel=disabled --set autoDirectNodeRoutes=true
+helm template cilium cilium/cilium --version 1.20.1 \
+  --namespace kube-system -f cilium-values.yaml > cilium-rendered.yaml
+helm install cilium cilium/cilium --version 1.20.1 \
+  --namespace kube-system -f cilium-values.yaml
+cilium status --wait
 ```
 
-VXLAN mode:
-```bash
-cilium install --set tunnel=vxlan
-```
+For an existing release, use its upgrade/GitOps process, preserve owned values and follow the version-specific upgrade procedure. Repeated `cilium install` examples are not a general way to change individual settings.
 
-#### kube-proxy Replacement Configuration
-
-Full replacement mode:
-```bash
-cilium install --set kubeProxyReplacement=strict
-```
-
-#### Encryption Configuration
-
-WireGuard encryption:
-```bash
-cilium install --set encryption.enabled=true --set encryption.type=wireguard
-```
-
-IPsec encryption:
-```bash
-cilium install --set encryption.enabled=true --set encryption.type=ipsec
-```
+| Choice | Current configuration and prerequisite |
+| --- | --- |
+| VXLAN/Geneve | `routingMode: tunnel` plus `tunnelProtocol`; permit the chosen encapsulation and set MTU for the path |
+| Native routing | `routingMode: native`; underlay must route the Pod addresses. `autoDirectNodeRoutes` needs suitable direct connectivity, not arbitrary multi-subnet routing |
+| kube-proxy replacement | `kubeProxyReplacement: true` or `false`, not legacy `strict`; replacement requires reachable `k8sServiceHost`/`k8sServicePort` and the documented bootstrap plan |
+| WireGuard | Enable supported encryption mode after checking kernel/platform and peer paths; it does not encrypt every possible traffic path automatically |
+| IPsec | Requires the documented key Secret, key distribution/rotation and compatible mode; the Helm enable flag alone is incomplete |
+| XDP/DSR/BBR | Separate device/kernel/topology-dependent choices, not a universal install preset |
 
 ## Network Policies
 
-Cilium extends the Kubernetes NetworkPolicy API to provide granular network policies at L3-L7 levels.
+Kubernetes `networking.k8s.io/v1` NetworkPolicy and Cilium `cilium.io/v2` policies are distinct APIs. Multiple allow policies can combine. These examples use **separate prepared test namespaces** so the L4 allow does not silently bypass the L7 restriction. Inspect all policies selecting the actual endpoints before drawing conclusions.
 
-### Basic Network Policy
+### L4 Example
+
+In `cilium-l4-demo`, this selects backend Pods and permits ingress from same-namespace frontend Pods on TCP 8080:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-frontend-to-backend
-  namespace: app
+  namespace: cilium-l4-demo
 spec:
   podSelector:
     matchLabels:
       app: backend
+  policyTypes:
+  - Ingress
   ingress:
   - from:
     - podSelector:
@@ -322,171 +250,129 @@ spec:
       protocol: TCP
 ```
 
-### Cilium Network Policy
+### HTTP Example
+
+In a separate `cilium-l7-demo`, this selects backend Pods and restricts plaintext HTTP on TCP 8080 to the stated method/path from frontend Pods in that namespace. L7 proxy support must be available in the chosen CNI mode; encrypted HTTP is not automatically inspected without a supported termination configuration.
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-specific-http-methods
-  namespace: app
+  name: allow-product-read
+  namespace: cilium-l7-demo
 spec:
   endpointSelector:
     matchLabels:
-      app: backend
+      k8s:app: backend
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:app: frontend
+        k8s:io.kubernetes.pod.namespace: cilium-l7-demo
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: "GET"
-          path: "/api/v1/products"
+        - method: GET
+          path: ^/api/v1/products$
 ```
 
-### FQDN-Based Policy
+Do not add a matching unrestricted L4 allow for the same peers/port: Cilium documents that such an allow removes the effect of the narrower L7 restrictions. L7 denial can return an HTTP 403 rather than a packet drop. Test allowed GET requests and denied methods/paths with real endpoint identities.
+
+### DNS/FQDN Example
+
+In `cilium-dns-demo`, this permits DNS queries to ordinary CoreDNS Pods and TCP 443 to addresses learned for `api.example.com`. The domain is an example; replace it with an approved destination. The broad `*.amazonaws.com` wildcard is not an account/resource boundary and is omitted.
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-specific-domains
-  namespace: app
+  name: allow-api-domain
+  namespace: cilium-dns-demo
 spec:
   endpointSelector:
     matchLabels:
-      app: web
+      k8s:app: web
   egress:
-  - toFQDNs:
-    - matchName: "api.example.com"
-    - matchPattern: "*.amazonaws.com"
+  - toEndpoints:
+    - matchLabels:
+        k8s:k8s-app: kube-dns
+        k8s:io.kubernetes.pod.namespace: kube-system
     toPorts:
     - ports:
-      - port: "443"
+      - port: '53'
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: '*'
+  - toFQDNs:
+    - matchName: api.example.com
+    toPorts:
+    - ports:
+      - port: '443'
         protocol: TCP
 ```
 
+The DNS wildcard permits queries to the selected resolver, not connections to every returned address. It can still carry arbitrary DNS names; restrict query names where required, accounting for DNS search suffixes. NodeLocal DNS or a different resolver needs the correct destination selection. FQDN policy is DNS-derived IP authorization, not TLS hostname verification or HTTP URL authorization; shared IPs and application TLS/authentication still matter.
+
 ## Observability with Hubble
 
-Hubble is Cilium's observability layer, enabling visualization and analysis of network flow data collected through eBPF.
+The cluster-pool values above enable Relay/UI and component metrics. For an existing installation, apply the intended Hubble values through its configuration owner; `cilium hubble enable --ui` is a supported convenience command, but `cilium hubble enable --metrics=...` is not a supported 0.20.0 CLI flag. Configure `hubble.metrics.enabled` in Helm values instead. Do not enable legacy `http` and `httpV2` handlers together.
 
-### Installing Hubble
+Keep the Relay port-forward running in one terminal:
 
 ```bash
-cilium hubble enable --ui
+cilium hubble port-forward --port-forward 4245
 ```
 
-### Observing Network Flows
+In another terminal with Hubble CLI installed:
 
 ```bash
-# Observe all flows
-hubble observe
-
-# Observe flows in specific namespace
-hubble observe --namespace app
-
-# Observe HTTP requests
-hubble observe --protocol http
-
-# Observe flows between pods with specific labels
-hubble observe --from-label app=frontend --to-label app=backend
-
-# Observe failed connections
-hubble observe --verdict DROPPED
+hubble observe --server 127.0.0.1:4245 --namespace cilium-l7-demo
+hubble observe --server 127.0.0.1:4245 --protocol http
+hubble observe --server 127.0.0.1:4245 --from-label k8s:app=frontend --to-label k8s:app=backend
+hubble observe --server 127.0.0.1:4245 --verdict DROPPED
+hubble observe --server 127.0.0.1:4245 --http-status 403
 ```
 
-### Prometheus Integration
+This local example assumes the default Relay server configuration; a TLS-enabled Relay needs the corresponding client trust/authentication. HTTP events require the traffic to traverse the configured L7 proxy. `DROPPED` is a datapath verdict, not every failed application request. Use `cilium hubble ui` for the UI port-forward, and configure Prometheus target discovery separately for metrics. Hubble flow streaming is not distributed application tracing by itself.
+
+## Testing and Operations
+
+Connectivity/performance commands create test workloads and may change policy or generate substantial traffic. Use a reviewed test namespace/environment and permissions; this audit did not execute them against a cluster.
 
 ```bash
-cilium hubble enable --metrics="{dns:query;ignoreAAAA,drop:sourceContext=pod;destinationContext=pod,tcp,flow,icmp,http}"
+cilium connectivity test --help
+cilium connectivity perf --help
 ```
 
-## Cilium Testing
+The performance subcommand is `cilium connectivity perf`; `connectivity test --test=performance` merely supplies a test-name filter and is not the performance runner. Record software versions, topology, traffic and raw results before comparing throughput/latency.
+
+For inspection, distinguish the management CLI from **agent-side `cilium-dbg`**:
 
 ```bash
-# Basic connectivity test
-cilium connectivity test
-
-# Run specific test
-cilium connectivity test --test=client-to-echo-service
-
-# Network performance test
-cilium connectivity test --test=performance
-```
-
-## Best Practices
-
-### Performance Optimization
-
-1. **Kernel Version Optimization**: Use Linux kernel 5.4 or higher
-2. **Enable BBR Congestion Control**: Improve network throughput
-3. **Enable XDP Acceleration**: Improve packet processing performance
-4. **MTU Optimization**: Set MTU appropriate for network environment
-
-```bash
-cilium install --set bpf.preallocateMaps=true \
-  --set bpf.masquerade=true \
-  --set devices=eth0 \
-  --set loadBalancer.acceleration=native \
-  --set loadBalancer.mode=dsr
-```
-
-### Security Hardening
-
-1. **Apply Default Deny Policy**: Only allow explicitly permitted traffic
-2. **Enable Encryption**: Encrypt inter-node traffic
-3. **Apply Least Privilege Principle**: Design policies to allow only necessary communication
-
-### Improved Observability
-
-```bash
-cilium hubble enable --metrics="{dns,drop,tcp,flow,http}"
-```
-
-## Troubleshooting
-
-### Connectivity Issues
-
-```bash
-# Check Cilium status
-cilium status
-
-# Check endpoint status
-cilium endpoint list
-
-# Review network policies
-kubectl get cnp,ccnp -A
-
-# Analyze flows
-hubble observe --verdict DROPPED
-```
-
-### Performance Issues
-
-```bash
-# Check eBPF map status
-cilium bpf maps list
-
-# Monitor system resources
-cilium metrics list
-```
-
-### Debugging Tools
-
-```bash
-# Check status
 cilium status --verbose
+kubectl get cnp,ccnp -A
+kubectl get pods -n kube-system -l k8s-app=cilium -o wide
 
-# Collect environment information
-cilium sysdump
-
-# Cilium agent logs
-kubectl logs -n kube-system -l k8s-app=cilium
+# Choose the agent Pod on the affected node.
+CILIUM_POD=replace-with-actual-cilium-pod
+kubectl exec -n kube-system "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint list
+kubectl exec -n kube-system "$CILIUM_POD" -c cilium-agent -- cilium-dbg map list
+kubectl exec -n kube-system "$CILIUM_POD" -c cilium-agent -- cilium-dbg metrics list
+kubectl logs -n kube-system "$CILIUM_POD" -c cilium-agent --since=15m --tail=200 --timestamps
 ```
+
+`cilium endpoint list`, `cilium bpf maps list` and `cilium metrics list` are not equivalent commands in the management CLI. `cilium sysdump` can collect diagnostic material; protect the resulting infrastructure/log data. A Ready agent or successful scrape is not a substitute for application and negative policy tests.
+
+### Operational Priorities
+
+- Measure before enabling map preallocation, XDP, DSR, BBR or a fixed device pattern. These consume resources or change packet paths and require feature-specific checks.
+- Introduce default-deny in a selected scope with DNS, API, identity and application dependencies explicitly allowed. Check new Pods and upgrade transitions as well as established connections.
+- Keep encryption, certificate/key rotation, policy enforcement and observability as separate acceptance checks. Preserve a usable management/recovery path.
+- Review the current platform matrix and supported upgrade path. Historical release announcements do not establish current deployment compatibility.
 
 ## Deep Dive Table of Contents
 
@@ -546,12 +432,16 @@ kubectl logs -n kube-system -l k8s-app=cilium
 
 ## References
 
-- [Cilium Official Documentation](https://docs.cilium.io/)
-- [Cilium GitHub Repository](https://github.com/cilium/cilium)
-- [eBPF Documentation](https://ebpf.io/)
-- [Hubble Documentation](https://github.com/cilium/hubble)
-- [Cilium Network Policy Editor](https://editor.cilium.io/)
-- [AWS EKS Workshop - Cilium](https://www.eksworkshop.com/beginner/115_cilium/)
+- [Cilium 1.20 Kubernetes compatibility](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/compatibility.rst)
+- [Cilium system requirements](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst)
+- [EKS prerequisites](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst)
+- [Cilium ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst)
+- [AWS alternate CNI support](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
+- [AWS Hybrid Nodes CNI](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Cilium L7 policy semantics](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst)
+- [Hubble project](https://github.com/cilium/hubble)
+- [Flannel networking and policy integration](https://github.com/flannel-io/flannel)
+- [Calico comparison terminology](../calico/glossary.md)
 
 ## Quiz
 

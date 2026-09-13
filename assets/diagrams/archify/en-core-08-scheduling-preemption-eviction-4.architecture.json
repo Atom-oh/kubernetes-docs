@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Taints and Tolerations",
+    "locale": "en",
+    "output": "en-core-08-scheduling-preemption-eviction-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Taint / Toleration"
+        },
+        "backend": {
+          "label": "Pod"
+        },
+        "external": {
+          "label": "Taint Effect"
+        },
+        "cloud": {
+          "label": "Node"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "mechanism",
+        "label": "Reject and admit mechanism",
+        "focus": [
+          "taint",
+          "pod",
+          "toleration"
+        ],
+        "note": "A node taint rejects pods without a matching toleration and admits only pods that carry one."
+      },
+      {
+        "id": "effects",
+        "label": "The three taint effects",
+        "focus": [
+          "taint",
+          "noschedule",
+          "prefernoschedule",
+          "noexecute"
+        ],
+        "note": "NoSchedule blocks scheduling, PreferNoSchedule avoids it when possible, and NoExecute also evicts running pods."
+      },
+      {
+        "id": "gpu-example",
+        "label": "GPU node example",
+        "focus": [
+          "gpunode",
+          "regularpod",
+          "gpupod"
+        ],
+        "note": "A GPU node tainted key=gpu:NoSchedule rejects a regular pod and accepts only the GPU pod carrying the toleration."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "taint",
+      "type": "security",
+      "label": "Taint",
+      "sublabel": "applied to node",
+      "pos": [
+        100,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "to be scheduled",
+      "pos": [
+        100,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "toleration",
+      "type": "security",
+      "label": "Toleration",
+      "sublabel": "applied to pod",
+      "pos": [
+        100,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "noschedule",
+      "type": "external",
+      "label": "NoSchedule",
+      "sublabel": "prevent scheduling",
+      "pos": [
+        420,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "prefernoschedule",
+      "type": "external",
+      "label": "PreferNoSchedule",
+      "sublabel": "prefer not to schedule",
+      "pos": [
+        420,
+        220
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "noexecute",
+      "type": "external",
+      "label": "NoExecute",
+      "sublabel": "evict running pods",
+      "pos": [
+        420,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "regularpod",
+      "type": "backend",
+      "label": "Regular Pod",
+      "sublabel": "no toleration",
+      "pos": [
+        760,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "gpunode",
+      "type": "cloud",
+      "label": "GPU Node",
+      "sublabel": "key=gpu:NoSchedule",
+      "pos": [
+        760,
+        220
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "gpupod",
+      "type": "backend",
+      "label": "GPU Pod",
+      "sublabel": "toleration key=gpu, effect=NoSchedule",
+      "pos": [
+        760,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Taints and Tolerations Mechanism",
+      "wraps": [
+        "taint",
+        "pod",
+        "toleration"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Taint Effects",
+      "wraps": [
+        "noschedule",
+        "prefernoschedule",
+        "noexecute"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Example: GPU-dedicated Node",
+      "wraps": [
+        "regularpod",
+        "gpunode",
+        "gpupod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "taint-rejects-pod",
+      "from": "taint",
+      "to": "pod",
+      "label": "reject without toleration",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "pod-allowed-with-toleration",
+      "from": "pod",
+      "to": "toleration",
+      "label": "allow with toleration",
+      "labelDy": 24
+    },
+    {
+      "id": "toleration-matches-taint",
+      "from": "toleration",
+      "to": "taint",
+      "label": "matches",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "taint-effect-noschedule",
+      "from": "taint",
+      "to": "noschedule",
+      "label": "effect type"
+    },
+    {
+      "id": "taint-effect-prefernoschedule",
+      "from": "taint",
+      "to": "prefernoschedule"
+    },
+    {
+      "id": "taint-effect-noexecute",
+      "from": "taint",
+      "to": "noexecute"
+    },
+    {
+      "id": "gpunode-rejects-regularpod",
+      "from": "gpunode",
+      "to": "regularpod",
+      "label": "rejects",
+      "variant": "dashed"
+    },
+    {
+      "id": "gpunode-allows-gpupod",
+      "from": "gpunode",
+      "to": "gpupod",
+      "label": "allows",
+      "variant": "emphasis",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Taint Effects",
+      "items": [
+        "NoSchedule: pods without a toleration are not scheduled on the node",
+        "PreferNoSchedule: prefer not to schedule pods without a toleration on the node",
+        "NoExecute: pods without a toleration are evicted from the node"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Use Cases",
+      "items": [
+        "Dedicated nodes: designate nodes that run only specific workloads",
+        "Special hardware: manage nodes with special hardware such as GPUs",
+        "Node maintenance: prevent new pods from being scheduled on nodes under maintenance",
+        "Node issues: evict pods from nodes with problems"
+      ]
+    }
+  ]
+}

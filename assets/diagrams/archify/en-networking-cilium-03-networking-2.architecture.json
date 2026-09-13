@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Overlay Network Architecture",
+    "locale": "en",
+    "output": "en-networking-cilium-03-networking-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      470
+    ],
+    "views": [
+      {
+        "id": "egress",
+        "label": "Sending host",
+        "focus": [
+          "container-a",
+          "ebpf-a",
+          "vtep-a"
+        ],
+        "note": "eBPF intercepts Container A's packet and applies policy, then the VTEP encapsulates it with a VXLAN header."
+      },
+      {
+        "id": "transit",
+        "label": "Physical network transit",
+        "focus": [
+          "vtep-a",
+          "network",
+          "vtep-b"
+        ],
+        "note": "Encapsulated packets travel between the VTEP underlay IPs (192.168.1.x) over the physical network."
+      },
+      {
+        "id": "ingress",
+        "label": "Receiving host",
+        "focus": [
+          "vtep-b",
+          "ebpf-b",
+          "container-b"
+        ],
+        "note": "Host B's VTEP strips the VXLAN header, eBPF processes the packet, and it is delivered to Container B."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "container-a",
+      "type": "backend",
+      "label": "Container A",
+      "sublabel": "10.0.0.1",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "ebpf-a",
+      "type": "security",
+      "label": "eBPF",
+      "sublabel": "intercept + policy",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "vtep-a",
+      "type": "cloud",
+      "label": "VTEP",
+      "sublabel": "192.168.1.1",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "network",
+      "type": "external",
+      "label": "Physical Network",
+      "sublabel": "VXLAN tunnel (bidirectional)",
+      "pos": [
+        400,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "vtep-b",
+      "type": "cloud",
+      "label": "VTEP",
+      "sublabel": "192.168.1.2",
+      "pos": [
+        770,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "ebpf-b",
+      "type": "security",
+      "label": "eBPF",
+      "sublabel": "packet processing",
+      "pos": [
+        770,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "container-b",
+      "type": "backend",
+      "label": "Container B",
+      "sublabel": "10.0.0.2",
+      "pos": [
+        770,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Host A",
+      "wraps": [
+        "container-a",
+        "ebpf-a",
+        "vtep-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Host B",
+      "wraps": [
+        "container-b",
+        "ebpf-b",
+        "vtep-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-ebpf",
+      "from": "container-a",
+      "to": "ebpf-a",
+      "label": "packet sent",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        145,
+        162
+      ]
+    },
+    {
+      "id": "ebpf-to-vtep-a",
+      "from": "ebpf-a",
+      "to": "vtep-a",
+      "label": "policy applied",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        145,
+        302
+      ]
+    },
+    {
+      "id": "vtep-a-to-network",
+      "from": "vtep-a",
+      "to": "network",
+      "label": "VXLAN encapsulation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "network-to-vtep-b",
+      "from": "network",
+      "to": "vtep-b",
+      "label": "transmission",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vtep-b-to-ebpf",
+      "from": "vtep-b",
+      "to": "ebpf-b",
+      "label": "decapsulation",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "ebpf-to-b",
+      "from": "ebpf-b",
+      "to": "container-b",
+      "label": "delivery",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Sending Host A",
+      "items": [
+        "Container A sends a packet to Container B",
+        "eBPF program intercepts the packet and applies policies",
+        "Identifies the destination VTEP and encapsulates with a VXLAN header"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Physical Network",
+      "items": [
+        "Carries the encapsulated packet to the destination host over underlay IPs",
+        "Cilium uses VXLAN by default and also supports Geneve encapsulation"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Receiving Host B",
+      "items": [
+        "Removes the VXLAN header at the destination host",
+        "eBPF program on the destination host processes the packet",
+        "Delivers the packet to destination Container B"
+      ]
+    }
+  ]
+}

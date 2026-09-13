@@ -51,11 +51,15 @@ Grafana OnCall is an open-source on-call management tool that provides alert rou
 
 ### Grafana OnCall Components
 
-![Architecture diagram showing alert sources feeding a central Alert Engine that reads and writes PostgreSQL and Redis/Celery state, drives routing, escalation chains, and schedules to build alert groups, which fan out to notification channels.](../../../assets/diagrams/rendered/en-observability-alerting-03-grafana-oncall-0.svg)
+![Architecture diagram showing alert sources feeding a central Alert Engine that reads and writes PostgreSQL and Redis/Celery state, drives routing, escalation chains, and schedules to build alert groups, which fan out to notification channels.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-0.html)
 
 ### Alert Processing Flow
 
-![Sequence diagram of an alert moving from source through OnCall routing and an escalation chain to a notified responder, with an optional re-escalation to the next responder when the first does not respond in time, ending in acknowledgement and a status update back to the source.](../../../assets/diagrams/rendered/en-observability-alerting-03-grafana-oncall-1.svg)
+![Sequence of an alert flowing from its source through OnCall routing and an escalation chain to the on-call responder, escalating to the next responder when nobody responds, then ending with acknowledgement and a status update back to the source.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-1.html)
 
 ---
 
@@ -373,7 +377,9 @@ response = requests.post(
 
 ### Schedule Concept
 
-![Diagram showing how day and night rotations feed layered responders (primary, secondary, backup), and temporary overrides, all resolving into one final on-call schedule.](../../../assets/diagrams/rendered/en-observability-alerting-03-grafana-oncall-2.svg)
+![Diagram showing how day and night rotations feed layered responders (primary, secondary, backup), and temporary overrides, all resolving into one final on-call schedule.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-2.html)
 
 ### Creating Schedule (API)
 
@@ -476,7 +482,9 @@ curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides
 
 ### Escalation Chain Structure
 
-![Flowchart showing a four-step escalation chain: each step waits 15 minutes for a response before escalating to the next responder tier, from the current on-call through secondary, team lead, and finally the entire team, with any timely response resolving the alert.](../../../assets/diagrams/rendered/en-observability-alerting-03-grafana-oncall-3.svg)
+![Four-step escalation chain in which each step waits 15 minutes for a response before escalating from the current on-call to the secondary on-call, the team lead and finally the entire team, with any timely response resolving the alert.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-3.html)
 
 ### Creating Escalation Chain
 
@@ -618,7 +626,9 @@ warning-chain:
 
 ### Route Settings
 
-![Flowchart showing how routing decisions branch on the integration type — Alertmanager labels, Grafana folders, or CloudWatch namespaces — to select a critical, infra, default, low-priority, or DBA escalation chain.](../../../assets/diagrams/rendered/en-observability-alerting-03-grafana-oncall-4.svg)
+![Flowchart showing how routing decisions branch on the integration type — Alertmanager labels, Grafana folders, or CloudWatch namespaces — to select a critical, infra, default, low-priority, or DBA escalation chain.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-4.html)
 
 ### Creating Routes
 
@@ -716,7 +726,9 @@ curl -X POST https://oncall.example.com/api/v1/slack_channels/ \
 
 ### Slack Workflow
 
-![Sequence diagram of a Slack-based ChatOps workflow: an alert posts to a channel with action buttons, and a user's Acknowledge or Resolve click round-trips through Slack to update OnCall's alert status, with a resolve also notifying the alert source.](../../../assets/diagrams/rendered/en-observability-alerting-03-grafana-oncall-5.svg)
+![Sequence diagram of a Slack-based ChatOps workflow: an alert posts to a channel with action buttons, and a user's Acknowledge or Resolve click round-trips through Slack to update OnCall's alert status, with a resolve also notifying the alert source.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-5.html)
 
 ### MS Teams Integration
 
@@ -776,7 +788,9 @@ telegram:
 
 Grafana IRM (formerly Grafana Incident) is an incident management tool that integrates with OnCall to manage the entire workflow from alerts to incidents.
 
-![Architecture diagram showing an alert escalating within Grafana OnCall and, on high severity, handing off to Grafana IRM, which carries it through incident creation, investigation, resolution, and post-mortem.](../../../assets/diagrams/rendered/en-observability-alerting-03-grafana-oncall-6.svg)
+![Architecture diagram showing an alert escalating within Grafana OnCall and, on high severity, handing off to Grafana IRM, which carries it through incident creation, investigation, resolution, and post-mortem.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-6.html)
 
 ### Automatic Incident Creation
 
@@ -836,7 +850,9 @@ user-preferences:
 
 ### Notification Channel Priority
 
-![Flowchart showing that an important alert fans out to every notification channel — push, phone, SMS, Slack, and email — while a default-priority alert reaches only Slack and email.](../../../assets/diagrams/rendered/en-observability-alerting-03-grafana-oncall-7.svg)
+![Flowchart showing that an important alert fans out to every notification channel — push, phone, SMS, Slack, and email — while a default-priority alert reaches only Slack and email.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-7.html)
 
 ---
 
@@ -860,7 +876,9 @@ user-preferences:
 
 ### Migration Considerations
 
-![Flowchart of the migration decision from PagerDuty or OpsGenie: cost reduction, Grafana Stack usage, self-hosting preference, and feature sufficiency each gate whether a team migrates to Grafana OnCall or keeps its current tool.](../../../assets/diagrams/rendered/en-observability-alerting-03-grafana-oncall-8.svg)
+![Flowchart of the migration decision from PagerDuty or OpsGenie: cost reduction, Grafana Stack usage, self-hosting preference, and feature sufficiency each gate whether a team migrates to Grafana OnCall or keeps its current tool.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-8.html)
 
 ### Migration Checklist
 

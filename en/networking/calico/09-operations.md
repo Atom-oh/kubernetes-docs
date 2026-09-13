@@ -1,1205 +1,704 @@
 # Part 9: Calico Operations Guide
 
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 22, 2026
+> **Reviewed baseline**: Calico 3.32.2 / Operator 1.42.6 / Kubernetes 1.34–1.36 tested by Calico.
+> **Last Updated**: September 12, 2026
 
 ## Overview
 
 This chapter provides comprehensive operational guidance for Calico deployments, covering installation, monitoring, troubleshooting, upgrades, and best practices for production environments.
 
-![Flowchart of the Calico operations lifecycle showing installation leading into configuration, which drives monitoring, troubleshooting, upgrades, and backup, with troubleshooting and upgrades both feeding fixes back into configuration as the shared hub.](../../../assets/diagrams/rendered/en-networking-calico-09-operations-0.svg)
+Operations form a feedback loop: validate the installation, observe its behavior, diagnose changes, and retain recoverable configuration/state before upgrades. A configuration export and a tested datastore recovery serve different purposes.
 
 ## Installation Guide
 
-### Method 1: Operator Installation (Recommended)
+Use one installation owner and a profile that matches the platform. The following example is for a **fresh self-managed Linux cluster with full Calico CNI**, Iptables and VXLAN. Prepare a nonoverlapping Pod CIDR, compatible node OS/kernel, Kubernetes API connectivity and underlay UDP 4789 connectivity between eligible nodes. It is not the VPC CNI policy-only configuration; use [Part 8](08-eks-integration.md) for EKS. Review [networking modes](03-networking-modes.md) before choosing a different overlay/BGP design.
 
-The Tigera Operator is the recommended installation method for production.
+### Tigera Operator Manifests
+
+Calico 3.32 requires the separate Calico CRDs as well as the operator manifest:
 
 ```bash
-# Download and install the Tigera Operator
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/tigera-operator.yaml
-
-# Wait for operator to be ready
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml
 kubectl wait --for=condition=Available deployment/tigera-operator \
-  -n tigera-operator --timeout=120s
+  -n tigera-operator --timeout=300s
 ```
 
+Save the following as `installation.yaml`, replacing the example Pod CIDR to match the prepared cluster. Omit MTU to use the operator's detection; do not substitute a guessed MTU for measurement of the actual path.
+
 ```yaml
-# Installation resource - production configuration
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
   name: default
 spec:
-  # Variant: Calico, TigeraSecureEnterprise
   variant: Calico
-
-  # Registry (for air-gapped environments)
-  # registry: my-registry.example.com
-  # imagePath: calico
-  # imagePrefix: ""
-
+  cni:
+    type: Calico
   calicoNetwork:
-    # BGP configuration
-    bgp: Enabled
-
-    # IP pools
+    bgp: Disabled
+    linuxDataplane: Iptables
     ipPools:
-      - cidr: 10.244.0.0/16
-        blockSize: 26
-        encapsulation: VXLANCrossSubnet
-        natOutgoing: Enabled
-        nodeSelector: all()
-
-    # MTU auto-detection
-    mtu: 0  # 0 = auto-detect
-
-    # Node address auto-detection
+    - cidr: 10.244.0.0/16
+      blockSize: 26
+      encapsulation: VXLAN
+      natOutgoing: Enabled
+      nodeSelector: all()
     nodeAddressAutodetectionV4:
       kubernetes: NodeInternalIP
-
-    # Linux dataplane
-    linuxDataplane: Iptables  # or BPF
-
-  # Component resources
-  componentResources:
-    - componentName: Node
-      resourceRequirements:
-        requests:
-          cpu: 200m
-          memory: 256Mi
-        limits:
-          cpu: 1000m
-          memory: 512Mi
-
-    - componentName: Typha
-      resourceRequirements:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-        limits:
-          cpu: 500m
-          memory: 256Mi
-
-    - componentName: KubeControllers
-      resourceRequirements:
-        requests:
-          cpu: 50m
-          memory: 64Mi
-        limits:
-          cpu: 200m
-          memory: 128Mi
-
-  # Node update strategy
   nodeUpdateStrategy:
+    type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
-    type: RollingUpdate
-
-  # Typha deployment
-  typhaDeployment:
-    spec:
-      minReadySeconds: 10
-      template:
-        spec:
-          tolerations:
-            - key: CriticalAddonsOnly
-              operator: Exists
-          affinity:
-            podAntiAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                - labelSelector:
-                    matchLabels:
-                      k8s-app: calico-typha
-                  topologyKey: kubernetes.io/hostname
 ---
-# API Server (optional, for calicoctl access)
 apiVersion: operator.tigera.io/v1
 kind: APIServer
+metadata:
+  name: default
+spec: {}
+---
+apiVersion: operator.tigera.io/v1
+kind: Goldmane
+metadata:
+  name: default
+spec: {}
+---
+apiVersion: operator.tigera.io/v1
+kind: Whisker
 metadata:
   name: default
 spec: {}
 ```
 
 ```bash
-# Apply installation
 kubectl apply -f installation.yaml
-
-# Verify installation status
-kubectl get tigerastatus
-watch kubectl get pods -n calico-system
 ```
 
-### Method 2: Manifest Installation
+BGP is disabled in this VXLAN example; BGP diagnostics are relevant only if your chosen profile enables it. Calico API server and Goldmane/Whisker are OSS components. The current OSS flow-logs guide marks the observability feature as tech preview; assess that status before relying on it operationally.
 
-For simpler deployments or specific customization needs:
+Leave component resource sizing and Typha scaling with the operator until measurements justify supported overrides. Arbitrary fixed memory limits, unsupported `typhaDeployment.spec.replicas`/`minReadySeconds` overrides, or a `KubeControllers` entry in the legacy `componentResources` list are not a production configuration. Use the versioned Installation API; see [architecture](02-architecture.md) and [scaling](07-advanced-topics.md).
 
-```bash
-# Download Calico manifest
-curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/calico.yaml
+### Helm Alternative
 
-# Customize the manifest
-# Edit CALICO_IPV4POOL_CIDR to match your pod CIDR
-sed -i 's/192.168.0.0\/16/10.244.0.0\/16/g' calico.yaml
-
-# Apply manifest
-kubectl apply -f calico.yaml
-
-# Verify installation
-kubectl get pods -n kube-system -l k8s-app=calico-node
-kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers
-```
-
-### Method 3: Helm Installation
-
-```bash
-# Add Helm repository
-helm repo add projectcalico https://docs.tigera.io/calico/charts
-helm repo update
-
-# Install with custom values
-helm install calico projectcalico/tigera-operator \
-  --namespace tigera-operator \
-  --create-namespace \
-  --version v3.29.0 \
-  -f values.yaml
-```
+The Helm chart installs the same operator. Save this as `calico-values.yaml`; use this path instead of installing a second operator with manifests.
 
 ```yaml
-# values.yaml - Production configuration
 installation:
+  enabled: true
+  variant: Calico
+  cni:
+    type: Calico
   calicoNetwork:
-    bgp: Enabled
+    bgp: Disabled
+    linuxDataplane: Iptables
     ipPools:
-      - cidr: 10.244.0.0/16
-        blockSize: 26
-        encapsulation: VXLANCrossSubnet
-        natOutgoing: Enabled
+    - cidr: 10.244.0.0/16
+      blockSize: 26
+      encapsulation: VXLAN
+      natOutgoing: Enabled
+      nodeSelector: all()
     nodeAddressAutodetectionV4:
       kubernetes: NodeInternalIP
-    linuxDataplane: Iptables
-
-  componentResources:
-    - componentName: Node
-      resourceRequirements:
-        requests:
-          cpu: 200m
-          memory: 256Mi
-        limits:
-          cpu: 1000m
-          memory: 512Mi
-
-typhaDeployment:
-  replicas: 3
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 256Mi
-
-# Prometheus metrics
-monitoring:
+  nodeUpdateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+apiServer:
   enabled: true
-
-# Custom annotations
-podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "9091"
+goldmane:
+  enabled: true
+whisker:
+  enabled: true
+manageCRDs: true
 ```
+
+```bash
+helm repo add projectcalico https://docs.tigera.io/calico/charts
+helm repo update projectcalico
+helm template calico projectcalico/tigera-operator \
+  --namespace tigera-operator --version v3.32.2 \
+  -f calico-values.yaml > calico-rendered.yaml
+
+# Apply only after reviewing the prepared cluster and rendered resources.
+helm install calico projectcalico/tigera-operator \
+  --namespace tigera-operator --create-namespace --version v3.32.2 \
+  -f calico-values.yaml
+```
+
+Top-level `podAnnotations` applies to the operator Pod. It does not enable Felix metrics or set up Prometheus scraping for every component. Configure metrics explicitly in the monitoring section below. `manageCRDs: true` lets the operator manage CRDs after startup; upgrade ordering for new fields is covered later.
+
+### Direct Manifest Alternative
+
+For an installation already managed by direct manifests, use the matching release/profile and preserve its customization. Review the downloaded file before applying it:
+
+```bash
+curl -fL https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/calico.yaml \
+  -o calico.yaml
+```
+
+Edit the relevant configuration, including the Pod CIDR and enabled networking mode. A global `sed` replacement can change an example or commented value without configuring the actual IP pool. Do not mix direct-manifest resources in `kube-system` with an operator installation in `calico-system`.
+
+### Validate Installation
+
+```bash
+kubectl get tigerastatus
+kubectl get installation default -o yaml
+kubectl rollout status daemonset/calico-node -n calico-system --timeout=300s
+kubectl get pods -n calico-system -o wide
+kubectl get nodes -o wide
+```
+
+For direct manifests, inspect the actual namespace and resource names. Ready components do not prove policy enforcement or application reachability. Test required Service/DNS paths and both allowed and denied application connections with controller-managed workloads. Use the actual API server HTTPS endpoint and appropriate authentication when checking API access; an HTTP request to `kubernetes.default` is not an authenticated API health test.
 
 ## calicoctl Command Reference
 
-### Installation
+Install the matching **3.32.2** binary from the official release and verify its checksum as described in [the installation chapter](01-introduction.md). Release assets include Linux AMD64/ARM64, macOS AMD64/ARM64 and Windows AMD64; select the actual host architecture. Do not execute PowerShell download commands inside Bash or use an older client after an upgrade without investigating the compatibility warning.
+
+For Kubernetes datastore access, a typical Unix shell configuration is:
 
 ```bash
-# Linux (x86_64)
-curl -L https://github.com/projectcalico/calico/releases/download/v3.29.0/calicoctl-linux-amd64 -o calicoctl
-chmod +x calicoctl
-sudo mv calicoctl /usr/local/bin/
-
-# Linux (ARM64)
-curl -L https://github.com/projectcalico/calico/releases/download/v3.29.0/calicoctl-linux-arm64 -o calicoctl
-
-# macOS (Intel)
-curl -L https://github.com/projectcalico/calico/releases/download/v3.29.0/calicoctl-darwin-amd64 -o calicoctl
-
-# macOS (Apple Silicon)
-curl -L https://github.com/projectcalico/calico/releases/download/v3.29.0/calicoctl-darwin-arm64 -o calicoctl
-
-# Windows
-Invoke-WebRequest -Uri "https://github.com/projectcalico/calico/releases/download/v3.29.0/calicoctl-windows-amd64.exe" -OutFile "calicoctl.exe"
-
-# Configuration (Kubernetes datastore)
 export DATASTORE_TYPE=kubernetes
-export KUBECONFIG=~/.kube/config
-```
-
-### Node Commands
-
-```bash
-# View node status (BGP peering, routes)
-calicoctl node status
-
-# List all Calico nodes
+export KUBECONFIG="$HOME/.kube/config"
+calicoctl version
 calicoctl get nodes -o wide
-
-# Get specific node details
-calicoctl get node node-1 -o yaml
-
-# Check node health
-calicoctl node diags
-
-# Run node diagnostics and save to file
-calicoctl node diags --output-dir=/tmp/calico-diags
-```
-
-### IPAM Commands
-
-```bash
-# Show IPAM summary
-calicoctl ipam show
-
-# Show detailed block allocation
-calicoctl ipam show --show-blocks
-
-# Show configuration
-calicoctl ipam show --show-configuration
-
-# Check for IPAM issues
-calicoctl ipam check
-
-# Release a specific IP
-calicoctl ipam release --ip=10.244.1.5
-
-# Release all IPs for a specific handle
-calicoctl ipam release --handle=k8s-pod-network.abc123
-
-# Split IPAM blocks (advanced)
-calicoctl ipam split --cidr=10.244.0.0/26
-```
-
-### Policy Commands
-
-```bash
-# List all network policies
 calicoctl get networkpolicy -A
-
-# List policies in specific namespace
-calicoctl get networkpolicy -n production
-
-# List global network policies
 calicoctl get globalnetworkpolicy
-
-# Get policy details
-calicoctl get networkpolicy my-policy -n production -o yaml
-
-# Apply policy from file
-calicoctl apply -f policy.yaml
-
-# Delete policy
-calicoctl delete networkpolicy my-policy -n production
-
-# List policy tiers
 calicoctl get tier
-
-# List network sets
 calicoctl get networkset -A
 calicoctl get globalnetworkset
+calicoctl get workloadendpoint -A
+calicoctl get hostendpoint
+calicoctl get ippool -o yaml
+calicoctl get bgpconfiguration default -o yaml
+calicoctl get bgppeer -o wide
+calicoctl get felixconfiguration default -o yaml
 ```
 
-### Resource Commands
+The kubeconfig must select the intended cluster and have appropriate RBAC. You can supply a Calico API configuration file explicitly with `--config`; do not assume an arbitrary path under `~/.config` is auto-discovered. For direct etcdv3 datastore access, use its supported configuration and certificate validation. This is a different deployment profile, not permission to access an EKS-managed etcd service.
+
+### Local Node Diagnostics
+
+`calicoctl node status` reports the **local node's BGP status**. It is not a remote, cluster-wide readiness check merely because a kubeconfig is set. Run it on the intended node with the documented access, or inspect that node's BIRD socket as shown below.
+
+`calicoctl node diags` collects a diagnostic archive on the selected node. Its supported `--log-dir` flag selects the **input log directory**; there is no `--output-dir` flag in 3.32.2. The implementation requires root and can invoke a privileged diagnostic container and signal Felix to dump state. Treat it as deliberate evidence collection, not a passive health probe. Protect the resulting archive and use the output path printed by the command.
+
+### Calico IPAM
+
+Run these only when **Calico IPAM** allocates the addresses. With VPC CNI, host-local or another IPAM, troubleshoot the actual allocator.
 
 ```bash
-# List all Calico resources
-calicoctl get all
-
-# Get IP pools
-calicoctl get ippool -o wide
-
-# Get BGP configuration
-calicoctl get bgpconfig default -o yaml
-
-# Get BGP peers
-calicoctl get bgppeer -o wide
-
-# Get workload endpoints
-calicoctl get workloadendpoint -A
-
-# Get host endpoints
-calicoctl get hostendpoint
-
-# Get Felix configuration
-calicoctl get felixconfig default -o yaml
-
-# Create/Update resource
-calicoctl apply -f resource.yaml
-
-# Create resource (fail if exists)
-calicoctl create -f resource.yaml
-
-# Replace resource
-calicoctl replace -f resource.yaml
-
-# Patch resource
-calicoctl patch felixconfiguration default -p '{"spec":{"logSeverityScreen":"Warning"}}'
-
-# Delete resource
-calicoctl delete -f resource.yaml
-
-# Export all resources (backup)
-calicoctl get all -o yaml > calico-backup.yaml
+calicoctl ipam show
+calicoctl ipam show --show-blocks
+calicoctl ipam show --show-borrowed
+calicoctl ipam show --show-configuration
+calicoctl ipam show --ip=10.244.0.15
+calicoctl ipam check --show-problem-ips -o ipam-report.json
 ```
+
+`--show-blocks` reports block utilization. Use BlockAffinity records for the block-to-node association; it is not the same as the Kubernetes Node PodCIDR. `--ip` is a read-only allocation lookup. A report can identify candidates for investigation; a missing Pod alone is not proof that an allocation is safe to release.
+
+There is no `ipam release --block` or `--handle` flag in the reviewed CLI. Report-based release has allocation sequence checks and still requires the cleanup procedure in [advanced IPAM](07-advanced-topics.md). `ipam split NUMBER --cidr=...` is a real command, but splits an **IP pool**, not an allocation block; it requires a locked datastore and a power-of-two split count. It is a planned migration operation, not a routine fix for a stuck Pod.
+
+### Resource Changes and Exports
+
+`get`, `create`, `apply`, `replace`, `patch` and `delete` operate on supported resource types. Prefer an explicit type/namespace, review the complete policy set and preserve unrelated fields when patching. For example, a change to logging belongs in the existing FelixConfiguration or its GitOps owner, not a replacement object containing only the new field.
+
+`calicoctl get all` is not an all-resource backup. Enumerate the required resource types and include Kubernetes policies and operator resources separately. `calicoctl get ... --export` exists, but the reviewed CLI ignores it when no resource name is supplied. It does not turn a list export into a complete portable disaster-recovery backup. See the backup section below.
 
 ## Prometheus Metrics
 
-### Felix Metrics
+Confirm names, types and labels from the **installed version's `/metrics` output**. Dataplane-specific series are not guaranteed to exist in every profile, and a missing series is not a zero. The names below were checked against Calico 3.32.2 source and the official metric references.
 
-Felix exposes metrics on port 9091 by default.
+### Enable Component Metrics
 
-```yaml
-# Enable Prometheus metrics in FelixConfiguration
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  prometheusMetricsEnabled: true
-  prometheusMetricsPort: 9091
-  prometheusGoMetricsEnabled: true
-  prometheusProcessMetricsEnabled: true
+Felix metrics are disabled by default; its default port is **9091**. Typha metrics are also disabled by default; the Typha binary's default metrics port is **9091**, while this operator example explicitly selects **9093**. kube-controllers metrics are enabled by default on **9094**.
+
+For an existing operator installation, merge these settings through its configuration owner:
+
+```bash
+kubectl patch felixconfiguration default --type=merge \
+  -p '{"spec":{"prometheusMetricsEnabled":true,"prometheusMetricsPort":9091}}'
+kubectl patch installation default --type=merge \
+  -p '{"spec":{"typhaMetricsPort":9093}}'
+kubectl get service calico-typha-metrics -n calico-system
+kubectl get service calico-kube-controllers-metrics -n calico-system
 ```
 
-**Key Felix Metrics:**
+The operator creates the Typha metrics Service when `typhaMetricsPort` is configured. Do not replace it with a conflicting Service. A direct-manifest installation needs its own Typha environment configuration and Service. Restrict metrics access appropriately; host-network endpoints can require host/network security controls beyond workload NetworkPolicy.
 
-| Metric | Description |
-|--------|-------------|
-| `felix_active_local_endpoints` | Number of active endpoints on this host |
-| `felix_active_local_policies` | Number of active policies |
-| `felix_active_local_selectors` | Number of active selectors |
-| `felix_iptables_save_time_seconds` | Time to save iptables rules |
-| `felix_iptables_restore_time_seconds` | Time to restore iptables rules |
-| `felix_int_dataplane_apply_time_seconds` | Time to apply dataplane updates |
-| `felix_route_table_list_seconds` | Time to list routing table |
-| `felix_ipset_calls` | Number of ipset operations |
-| `felix_log_errors_total` | Total number of errors logged |
+### Metric Names and Meaning
 
-### BIRD Metrics
+| Metric | Type / meaning |
+| --- | --- |
+| `felix_active_local_endpoints` | Gauge; local workload **and host** endpoints. Zero can be legitimate and is not a readiness test |
+| `felix_active_local_policies` | Gauge; policies active on this node. Summing it counts local policy instances, not unique cluster policies |
+| `felix_cluster_num_hosts`, `felix_cluster_num_policies` | Cluster-wide gauges observed by each Felix; do not sum identical copies across nodes |
+| `felix_int_dataplane_failures` | Counter; failed dataplane updates that will be retried; no `_total` suffix in the reviewed metric name |
+| `felix_int_dataplane_apply_time_seconds` | **Summary** of incremental dataplane update time; exports quantiles, `_sum` and `_count`, not histogram buckets |
+| `felix_iptables_restore_calls`, `felix_iptables_restore_errors` | Counters for iptables-restore calls/errors in the iptables dataplane |
+| `felix_log_errors`, `felix_logs_dropped` | Errors writing process logs / logs dropped by blocked output; not ERROR-level entry counts or denied packets |
+| `typha_connections_active` | Gauge; open connections, including handshakes |
+| `typha_connections_streaming{syncer="..."}` | Gauge; clients that completed the handshake and are streaming |
+| `typha_connections_accepted` | Counter; accepted connections |
+| `typha_connections_dropped` | Counter; connections dropped **for rebalancing**, not a general network-failure count |
+| `typha_cache_size{syncer="..."}` | Gauge; key/value entries in the cache |
+| `typha_updates_total{syncer="..."}` | Counter; updates **received from** the datastore syncer |
+| `ipam_allocations_in_use{ippool="...",node="..."}` | kube-controllers gauge; Calico IPAM addresses allocated to workloads/interfaces |
+| `ipam_ippool_size{ippool="..."}` | kube-controllers gauge; total addresses in the pool CIDR |
+| `ipam_allocations_gc_candidates` | Potential leaks under investigation, not permission to release addresses |
 
-BIRD (BGP daemon) metrics are available when BGP is enabled:
+BIRD's control socket is not a Prometheus exporter. Names such as `bird_protocol_up` or `calico_bgp_peer_status` require a separately selected exporter/collector with verified labels and semantics; this installation does not produce those series. Use the BGP diagnostics below or the [CalicoNodeStatus approach](04-bgp-deep-dive.md) and only add exporter alerts after checking actual output.
 
-| Metric | Description |
-|--------|-------------|
-| `bird_protocol_up` | Whether BGP protocol is up |
-| `bird_protocol_prefix_import_count` | Number of imported prefixes |
-| `bird_protocol_prefix_export_count` | Number of exported prefixes |
+### ServiceMonitor Wiring
 
-### Typha Metrics
+This example assumes Prometheus Operator CRDs and the `monitoring` namespace already exist. Match the ServiceMonitor labels to your Prometheus resource's `serviceMonitorSelector`, and ensure its `serviceMonitorNamespaceSelector` includes this namespace. Match PrometheusRule labels to its `ruleSelector` as well. A valid custom resource that is not selected produces no scrape/rule.
 
-Typha exposes metrics on port 9093:
-
-| Metric | Description |
-|--------|-------------|
-| `typha_connections_active` | Number of active client connections |
-| `typha_connections_streaming` | Number of streaming connections |
-| `typha_cache_size` | Number of items in cache |
-| `typha_snapshots_generated_total` | Total snapshots generated |
-| `typha_updates_received_total` | Updates received from datastore |
-
-### ServiceMonitor Configuration
+The following **separate Services** avoid changing operator-owned Services and give all three a named `http-metrics` port. If your installation already scrapes these endpoints, reuse that setup instead of adding duplicate scrapes. The ServiceMonitor's `jobLabel` produces the `calico-felix`, `calico-typha` and `calico-kube-controllers` jobs used below.
 
 ```yaml
-# ServiceMonitor for Prometheus Operator
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: calico-felix
-  namespace: monitoring
-  labels:
-    app: calico-felix
-spec:
-  selector:
-    matchLabels:
-      k8s-app: calico-node
-  namespaceSelector:
-    matchNames:
-      - calico-system
-  endpoints:
-    - port: felix-metrics
-      interval: 30s
-      path: /metrics
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: calico-typha
-  namespace: monitoring
-  labels:
-    app: calico-typha
-spec:
-  selector:
-    matchLabels:
-      k8s-app: calico-typha
-  namespaceSelector:
-    matchNames:
-      - calico-system
-  endpoints:
-    - port: typha-metrics
-      interval: 30s
-      path: /metrics
-```
-
-```yaml
-# Service for metrics (if not automatically created)
 apiVersion: v1
 kind: Service
 metadata:
-  name: calico-node-metrics
+  name: calico-audit-felix-metrics
   namespace: calico-system
   labels:
-    k8s-app: calico-node
+    audit.calico/component: calico-felix
 spec:
+  clusterIP: None
   selector:
     k8s-app: calico-node
   ports:
-    - name: felix-metrics
-      port: 9091
-      targetPort: 9091
+  - name: http-metrics
+    port: 9091
+    targetPort: 9091
+    protocol: TCP
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: calico-typha-metrics
+  name: calico-audit-typha-metrics
   namespace: calico-system
   labels:
-    k8s-app: calico-typha
+    audit.calico/component: calico-typha
 spec:
+  clusterIP: None
   selector:
     k8s-app: calico-typha
   ports:
-    - name: typha-metrics
-      port: 9093
-      targetPort: 9093
+  - name: http-metrics
+    port: 9093
+    targetPort: 9093
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: calico-audit-kube-controllers-metrics
+  namespace: calico-system
+  labels:
+    audit.calico/component: calico-kube-controllers
+spec:
+  clusterIP: None
+  selector:
+    k8s-app: calico-kube-controllers
+  ports:
+  - name: http-metrics
+    port: 9094
+    targetPort: 9094
+    protocol: TCP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: calico-components
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: calico-monitoring
+spec:
+  jobLabel: audit.calico/component
+  selector:
+    matchExpressions:
+    - key: audit.calico/component
+      operator: Exists
+  namespaceSelector:
+    matchNames:
+    - calico-system
+  endpoints:
+  - port: http-metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    path: /metrics
 ```
+
+Check endpoint discovery/RBAC, network access and the Prometheus Targets page. A ServiceMonitor `endpoints.port` selects the **Service port name**; it does not mean container port number. Confirm each discovered target, rather than scraping a load-balanced Service address and assuming every node is represented.
 
 ## Grafana Dashboard
 
-### Dashboard JSON Template
+Use the configured Prometheus datasource and current time-series/stat panels. The following are panel queries, not a complete importable dashboard. Select one cluster's metrics; a central multi-cluster datasource needs the cluster label preserved in selectors and aggregations.
 
-```json
-{
-  "title": "Calico Monitoring",
-  "uid": "calico-monitoring",
-  "panels": [
-    {
-      "title": "Active Endpoints per Node",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "felix_active_local_endpoints",
-          "legendFormat": "{{instance}}"
-        }
-      ]
-    },
-    {
-      "title": "Policy Count",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(felix_active_local_policies)"
-        }
-      ]
-    },
-    {
-      "title": "iptables Apply Time",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "rate(felix_iptables_restore_time_seconds_sum[5m]) / rate(felix_iptables_restore_time_seconds_count[5m])",
-          "legendFormat": "{{instance}}"
-        }
-      ]
-    },
-    {
-      "title": "Typha Connections",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "typha_connections_active",
-          "legendFormat": "{{instance}}"
-        }
-      ]
-    },
-    {
-      "title": "BGP Peers Status",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(bird_protocol_up{protocol_type=\"BGP\"})"
-        }
-      ]
-    },
-    {
-      "title": "Felix Errors",
-      "type": "graph",
-      "targets": [
-        {
-          "expr": "rate(felix_log_errors_total[5m])",
-          "legendFormat": "{{instance}}"
-        }
-      ]
-    }
-  ]
-}
+| Panel | PromQL |
+| --- | --- |
+| Endpoints per node | `felix_active_local_endpoints{job="calico-felix"}` |
+| Active policies per node | `felix_active_local_policies{job="calico-felix"}` |
+| Observed cluster policy count | `max(felix_cluster_num_policies{job="calico-felix"})` |
+| Dataplane retries per second | `rate(felix_int_dataplane_failures{job="calico-felix"}[5m])` |
+| Typha streaming connections | `typha_connections_streaming{job="calico-typha"}` |
+| Local summary p99 | `felix_int_dataplane_apply_time_seconds{job="calico-felix",quantile="0.99"}` |
+
+A per-process summary quantile is not a cluster-wide p99 and cannot be combined by `histogram_quantile`. For mean incremental apply duration while updates are occurring:
+
+```promql
+rate(felix_int_dataplane_apply_time_seconds_sum{job="calico-felix"}[5m])
+/ rate(felix_int_dataplane_apply_time_seconds_count{job="calico-felix"}[5m])
 ```
+
+With no observations, the mean is undefined (`0/0`), not proof of zero latency. Do not invent `_bucket` series for this Summary or retain unverified `felix_iptables_restore_time_seconds` queries. Use the available operation counters and dataplane timing metric.
+
+Calico IPAM address utilization can be inspected with:
+
+```promql
+sum by (ippool) (
+  max by (ippool, node) (ipam_allocations_in_use{job="calico-kube-controllers",ippool!="no_ippool"})
+)
+/ max by (ippool) (ipam_ippool_size{job="calico-kube-controllers",ippool!="no_ippool"})
+```
+
+The `max` per pool/node avoids double-counting identical controller observations, then the sum totals allocations across nodes. This is **address utilization**, not blocks consumed or a guarantee of allocatable capacity for a particular node. Pool selectors, strict affinity, block caps, reserved/tunnel addresses and other constraints still matter. It does not describe VPC CNI allocation; empty/missing/zero-capacity metrics need separate investigation.
 
 ## Alert Rules
 
+These example rules assume the jobs above, a single selected cluster and kube-state-metrics for the DaemonSet metric. Enable missing-target rules only for components you expect to run. Adapt selectors if reusing existing monitoring, and tune thresholds/durations to your workload.
+
 ```yaml
-# PrometheusRule for Calico alerts
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: calico-alerts
   namespace: monitoring
   labels:
-    prometheus: k8s
-    role: alert-rules
+    app.kubernetes.io/part-of: calico-monitoring
 spec:
   groups:
-    - name: calico.rules
-      rules:
-        # Felix not ready
-        - alert: CalicoFelixNotReady
-          expr: felix_active_local_endpoints == 0
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Calico Felix has no endpoints on {{ $labels.instance }}"
-            description: "Felix on {{ $labels.instance }} reports 0 endpoints for more than 5 minutes"
-
-        # Felix errors
-        - alert: CalicoFelixErrors
-          expr: rate(felix_log_errors_total[5m]) > 0.1
-          for: 10m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Calico Felix is logging errors on {{ $labels.instance }}"
-            description: "Felix error rate is {{ $value }} errors/sec"
-
-        # iptables slow
-        - alert: CalicoIptablesSlow
-          expr: |
-            rate(felix_iptables_restore_time_seconds_sum[5m])
-            / rate(felix_iptables_restore_time_seconds_count[5m]) > 1
-          for: 15m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Calico iptables restore is slow on {{ $labels.instance }}"
-            description: "Average iptables restore time is {{ $value }}s"
-
-        # Typha connection issues
-        - alert: CalicoTyphaConnectionsDrop
-          expr: |
-            (typha_connections_active - typha_connections_active offset 5m)
-            / typha_connections_active offset 5m < -0.2
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Calico Typha connections dropping on {{ $labels.instance }}"
-            description: "Typha connections dropped by more than 20%"
-
-        # BGP peer down
-        - alert: CalicoBGPPeerDown
-          expr: bird_protocol_up{protocol_type="BGP"} == 0
-          for: 5m
-          labels:
-            severity: critical
-          annotations:
-            summary: "Calico BGP peer is down on {{ $labels.instance }}"
-            description: "BGP peer {{ $labels.protocol_name }} is down"
-
-        # IPAM exhaustion warning
-        - alert: CalicoIPAMExhaustion
-          expr: |
-            sum(felix_ipam_blocks_used) / sum(felix_ipam_blocks_total) > 0.8
-          for: 30m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Calico IPAM is running low on IP blocks"
-            description: "IPAM usage is at {{ $value | humanizePercentage }}"
-
-        # Dataplane programming latency
-        - alert: CalicoDataplaneLatency
-          expr: |
-            histogram_quantile(0.99, rate(felix_int_dataplane_apply_time_seconds_bucket[5m])) > 5
-          for: 15m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Calico dataplane programming is slow"
-            description: "P99 dataplane apply time is {{ $value }}s"
-
-        # Node not reporting
-        - alert: CalicoNodeNotReporting
-          expr: |
-            up{job="calico-node"} == 0
-          for: 10m
-          labels:
-            severity: critical
-          annotations:
-            summary: "Calico node {{ $labels.instance }} is not reporting"
-            description: "Calico node has been down for more than 10 minutes"
+  - name: calico.rules
+    rules:
+    - alert: CalicoDaemonSetUnavailable
+      expr: kube_daemonset_status_number_unavailable{namespace="calico-system",daemonset="calico-node"}
+        > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Calico DaemonSet has unavailable Pods
+        description: Inspect the affected node, rollout and kube-state-metrics data.
+    - alert: CalicoMetricsScrapeFailed
+      expr: up{job=~"calico-(felix|typha|kube-controllers)"} == 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Calico scrape failed for {{ $labels.job }} on {{ $labels.instance
+          }}
+    - alert: CalicoMetricsTargetsMissing
+      expr: |-
+        absent(up{job="calico-felix"})
+        or absent(up{job="calico-typha"})
+        or absent(up{job="calico-kube-controllers"})
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: No discovered metrics targets for {{ $labels.job }}
+    - alert: CalicoDataplaneRetries
+      expr: rate(felix_int_dataplane_failures{job="calico-felix"}[5m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Dataplane updates are being retried on {{ $labels.instance }}
+    - alert: CalicoDataplaneMeanSlow
+      expr: |-
+        (rate(felix_int_dataplane_apply_time_seconds_sum{job="calico-felix"}[5m])
+        / rate(felix_int_dataplane_apply_time_seconds_count{job="calico-felix"}[5m])) > 0.5
+        and (rate(felix_int_dataplane_apply_time_seconds_count{job="calico-felix"}[5m]) > 0)
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Mean dataplane update time exceeds 0.5s on {{ $labels.instance }}
+    - alert: CalicoIPAMHighAddressUsage
+      expr: |-
+        (sum by (ippool) (
+          max by (ippool, node) (ipam_allocations_in_use{job="calico-kube-controllers",ippool!="no_ippool"})
+        )
+        / max by (ippool) (ipam_ippool_size{job="calico-kube-controllers",ippool!="no_ippool"})) > 0.8
+        and on (ippool)
+        (max by (ippool) (ipam_ippool_size{job="calico-kube-controllers",ippool!="no_ippool"}) > 0)
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: High address utilization in Calico IP pool {{ $labels.ippool }}
+        description: Address utilization is {{ $value | humanizePercentage }}; inspect
+          per-node eligibility and block constraints.
 ```
 
-## Log Analysis Patterns
+`up == 0` detects a discovered target whose scrape failed. It does not detect a target that disappeared entirely; the `absent` rules detect loss of **all** targets for an expected component. Detecting one missing node among healthy nodes needs comparison with the expected node/DaemonSet inventory. An alert missing from the UI is not proof of health if its metric or rule was never loaded.
 
-### Felix Logs
+A Typha connection decrease or rebalance counter increase can be expected during scaling. Correlate persistent streaming/client lag and component availability before calling it an incident. Likewise, zero local endpoints does not mean Felix is unready. Use actual readiness/rollout status and separate synthetic allow/deny tests.
+
+## Log Analysis and Troubleshooting
+
+### Start with the Affected Workload and Node
+
+A Pending Pod may be unschedulable before any CNI is called. Inspect events and `spec.nodeName` first. For a CNI/IP allocation error, identify the allocator and inspect the affected node's kubelet/CNI logs; Felix's process log is not the source of every Pod IPAM error.
 
 ```bash
-# View Felix logs
-kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node
+CALICO_NAMESPACE=calico-system
+WORKLOAD_NAMESPACE=calico-demo
+WORKLOAD_POD=replace-with-actual-pod
 
-# Filter by log level
-kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node | grep -E "ERROR|WARN"
+kubectl describe pod "$WORKLOAD_POD" -n "$WORKLOAD_NAMESPACE"
+CALICO_NODE=$(kubectl get pod "$WORKLOAD_POD" -n "$WORKLOAD_NAMESPACE" \
+  -o jsonpath='{.spec.nodeName}')
+test -n "$CALICO_NODE" || { echo "Pod is not scheduled to a node" >&2; exit 1; }
+kubectl get pods -n "$CALICO_NAMESPACE" -l k8s-app=calico-node \
+  --field-selector "spec.nodeName=$CALICO_NODE" -o wide
 
-# Follow logs in real-time
-kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node -f
-
-# Common log patterns to watch for:
-# "Failed to connect to Typha" - Typha connectivity issues
-# "dataplane: Apply failed" - Dataplane programming errors
-# "Route table list failed" - Routing issues
-# "ipset save failed" - ipset errors
+# Select the actual agent Pod on this node, including during a rollout.
+CALICO_POD=replace-with-actual-calico-node-pod
+kubectl logs -n "$CALICO_NAMESPACE" "$CALICO_POD" -c calico-node \
+  --since=15m --tail=200 --timestamps
 ```
 
-### Log Analysis Commands
+Use explicit time and tail limits. With selectors, `kubectl logs` can default to a short tail; a requested time window is not proof that all lines in that window were returned. For a restarted container, inspect its previous log where available. Preserve retrieval errors rather than converting them into “no errors.”
+
+Felix process logs describe programming and component activity. Turning `logSeverityScreen` to Debug does not create a per-packet policy decision log. Record the original field and its configuration owner before a temporary change, then restore the exact prior value or absence rather than assuming Info was the previous setting. File/syslog output also depends on its configured path and runtime.
+
+### Address Allocation and Connectivity
+
+| Symptom | Check before changing state |
+| --- | --- |
+| No scheduled node | Scheduler events, capacity, affinity and taints; this is not yet an IPAM diagnosis |
+| CNI allocation failure | The actual allocator's logs, pool/address capacity, selector eligibility, block/affinity limits and API access |
+| Pod IP reachable but Service fails | Endpoints/EndpointSlices, Service ports, kube-proxy or BPF Service handling, DNS and policy |
+| Small packets work, larger ones fail | Underlay/overlay MTU, fragmentation/PMTUD and return path |
+| Intended policy does not block | Actual endpoint identity/labels, direction, namespace selectors, tier/order, prior allow rules, host-network/other-interface limitations and established connections |
 
 ```bash
-# Count errors by type
-kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node --since=1h | \
-  grep ERROR | awk '{print $NF}' | sort | uniq -c | sort -rn
-
-# Check for policy sync issues
-kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node | \
-  grep -i "policy" | grep -E "ERROR|failed"
-
-# Check BGP/BIRD logs
-kubectl exec -n calico-system $(kubectl get pods -n calico-system -l k8s-app=calico-node -o name | head -1) \
-  -c calico-node -- cat /var/log/calico/bird/current
-
-# Check for connection tracking issues
-kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node | \
-  grep -i "conntrack"
-```
-
-## Troubleshooting
-
-### Pod IP Issues
-
-```bash
-# Symptom: Pod stuck in ContainerCreating, no IP assigned
-
-# 1. Check IPAM status
-calicoctl ipam show
-calicoctl ipam show --show-blocks
-
-# 2. Check for IP exhaustion
-calicoctl ipam check
-
-# 3. Check IP pool configuration
-calicoctl get ippool -o yaml
-
-# 4. Check if node has block affinity
-calicoctl get blockaffinity -o yaml | grep -A5 "$(hostname)"
-
-# 5. Check calico-node logs
-kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node | grep -i ipam
-
-# 6. Release orphaned IPs
-calicoctl ipam release --ip=<orphaned-ip>
-
-# 7. Restart calico-node on affected node
-kubectl delete pod -n calico-system -l k8s-app=calico-node --field-selector spec.nodeName=<node-name>
-```
-
-### Communication Failures
-
-```bash
-# Symptom: Pods cannot communicate with each other
-
-# 1. Check endpoints
-calicoctl get workloadendpoint -A
-
-# 2. Verify routes on source node
-kubectl exec -n calico-system $(kubectl get pods -n calico-system -l k8s-app=calico-node -o name | head -1) \
-  -- ip route show
-
-# 3. Check if encapsulation is working
-kubectl exec -n calico-system $(kubectl get pods -n calico-system -l k8s-app=calico-node -o name | head -1) \
-  -- ip link show | grep -E "tunl0|vxlan"
-
-# 4. Test connectivity with network tools
-kubectl run test-pod --image=nicolaka/netshoot --rm -it -- \
-  ping <destination-pod-ip>
-
-# 5. Check MTU issues
-kubectl exec -n calico-system $(kubectl get pods -n calico-system -l k8s-app=calico-node -o name | head -1) \
-  -- ip link show | grep mtu
-
-# 6. Verify BGP peering (if using BGP)
-calicoctl node status
-```
-
-### Policy Issues
-
-```bash
-# Symptom: Network policy not working as expected
-
-# 1. List all policies affecting a pod
-calicoctl get networkpolicy -n <namespace> -o yaml
+kubectl exec -n "$CALICO_NAMESPACE" "$CALICO_POD" -c calico-node -- ip route show
+kubectl exec -n "$CALICO_NAMESPACE" "$CALICO_POD" -c calico-node -- ip -d link show
+calicoctl get networkpolicy -n "$WORKLOAD_NAMESPACE" -o yaml
 calicoctl get globalnetworkpolicy -o yaml
-
-# 2. Check workload endpoint for the pod
-POD_NAME=<pod-name>
-NAMESPACE=<namespace>
-calicoctl get workloadendpoint -n $NAMESPACE -o yaml | grep -A20 $POD_NAME
-
-# 3. Check policy order/tiers
 calicoctl get tier -o yaml
-calicoctl get networkpolicy -n $NAMESPACE -o yaml | grep -E "tier:|order:"
-
-# 4. Enable Felix debug logging temporarily
-calicoctl patch felixconfiguration default -p '{"spec":{"logSeverityScreen":"Debug"}}'
-
-# 5. Check Felix logs for policy decisions
-kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node | \
-  grep -i "policy" | tail -100
-
-# 6. Verify labels on pods
-kubectl get pod $POD_NAME -n $NAMESPACE --show-labels
-
-# 7. Reset to normal logging
-calicoctl patch felixconfiguration default -p '{"spec":{"logSeverityScreen":"Info"}}'
+calicoctl get workloadendpoint -n "$WORKLOAD_NAMESPACE" -o yaml
+kubectl get pod "$WORKLOAD_POD" -n "$WORKLOAD_NAMESPACE" --show-labels
 ```
 
-### BGP Failures
+Do not select the first `calico-node` Pod in the cluster and assume it is on the failing workload's node. ICMP success/failure alone does not validate TCP or HTTP policy. Use an approved diagnostic workload with known tools and the application's real protocol/port.
+
+For Calico IPAM, use the read-only commands above and the [IPAM cleanup procedure](07-advanced-topics.md). Pool CIDR and blockSize are immutable; adding a nonoverlapping eligible pool is a planned capacity change, not an in-place CIDR expansion. Do not release an address or restart an agent before proving the cause.
+
+For operator installations, MTU and address autodetection belong to `Installation.spec.calicoNetwork`, with tunnel-specific Felix fields where documented. `FelixConfiguration.spec.mtu` and `ipAutoDetectionMethod` are not the reviewed APIs. Follow [MTU/networking guidance](03-networking-modes.md), preserve other settings and validate new/existing Pods separately.
+
+### BGP Diagnostics
+
+Run BGP checks only for a profile that uses BGP. On the selected `calico-node` Pod, use the actual BIRD socket:
 
 ```bash
-# Symptom: BGP peering not establishing
-
-# 1. Check node status
-calicoctl node status
-
-# 2. Check BGP configuration
-calicoctl get bgpconfig default -o yaml
+kubectl exec -n "$CALICO_NAMESPACE" "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show protocols all
+kubectl exec -n "$CALICO_NAMESPACE" "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show route
+calicoctl get bgpconfiguration -o yaml
 calicoctl get bgppeer -o yaml
-
-# 3. Check BIRD logs
-kubectl exec -n calico-system $(kubectl get pods -n calico-system -l k8s-app=calico-node -o name | head -1) \
-  -c calico-node -- birdcl show protocols
-
-kubectl exec -n calico-system $(kubectl get pods -n calico-system -l k8s-app=calico-node -o name | head -1) \
-  -c calico-node -- birdcl show route
-
-# 4. Check for network connectivity to BGP peer
-kubectl exec -n calico-system $(kubectl get pods -n calico-system -l k8s-app=calico-node -o name | head -1) \
-  -- nc -zv <peer-ip> 179
-
-# 5. Verify ASN configuration
-calicoctl get node -o yaml | grep -A5 bgp
-
-# 6. Check firewall rules (port 179)
-kubectl exec -n calico-system $(kubectl get pods -n calico-system -l k8s-app=calico-node -o name | head -1) \
-  -- iptables -L -n | grep 179
+calicoctl get bgpfilter -o yaml
 ```
+
+Use `bird6.ctl` for the corresponding IPv6 daemon when deployed. Verify local/peer ASNs, chosen source address, TCP 179 in both directions, authentication/TTL settings, route filters and the expected route advertisements. A successful TCP connection is not proof that the session established or the required prefixes were accepted. Check the packaged log configuration before assuming a log file exists; the released container's BIRD run/log scripts determine where it writes. See [BGP deep dive](04-bgp-deep-dive.md).
 
 ## Health Check Automation
 
-```yaml
-# Health check script as ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: calico-health-check
-  namespace: calico-system
-data:
-  health-check.sh: |
-    #!/bin/bash
-    set -e
-
-    echo "=== Calico Health Check ==="
-    echo "Time: $(date)"
-    echo
-
-    echo "--- Node Status ---"
-    calicoctl node status
-    echo
-
-    echo "--- IPAM Status ---"
-    calicoctl ipam show
-    echo
-
-    echo "--- Component Pods ---"
-    kubectl get pods -n calico-system -o wide
-    echo
-
-    echo "--- Recent Errors ---"
-    kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node --since=1h 2>/dev/null | \
-      grep -E "ERROR|WARN" | tail -20 || echo "No recent errors"
-    echo
-
-    echo "--- BGP Peers ---"
-    calicoctl get bgppeer -o wide 2>/dev/null || echo "No BGP peers configured"
-    echo
-
-    echo "=== Health Check Complete ==="
----
-# CronJob to run health checks
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: calico-health-check
-  namespace: calico-system
-spec:
-  schedule: "*/15 * * * *"  # Every 15 minutes
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: calico-node
-          containers:
-            - name: health-check
-              image: calico/ctl:v3.29.0
-              command: ["/bin/bash", "/scripts/health-check.sh"]
-              volumeMounts:
-                - name: scripts
-                  mountPath: /scripts
-          volumes:
-            - name: scripts
-              configMap:
-                name: calico-health-check
-          restartPolicy: OnFailure
-```
-
-## Version Upgrade Procedure
-
-### Pre-Upgrade Checklist
+The following **operator-installation status check** runs from a management environment with Bash, jq and a compatible kubectl. It performs read-only API/log requests, checks the observed DaemonSet generation and replica availability, and fails if a request fails. It does not inspect BGP sockets, validate packet forwarding or prove every policy is correct.
 
 ```bash
-# 1. Check current version
-calicoctl version
-kubectl get deployment -n calico-system calico-typha -o jsonpath='{.spec.template.spec.containers[0].image}'
+#!/usr/bin/env bash
+# calico-status-check.sh: operator component status and bounded log collection.
+set -euo pipefail
+CALICO_NAMESPACE=${CALICO_NAMESPACE:-calico-system}
 
-# 2. Review release notes
-# https://docs.tigera.io/calico/latest/release-notes/
+if ! calico_ds_json=$(kubectl get daemonset calico-node -n "$CALICO_NAMESPACE" \
+  --request-timeout=20s -o json); then
+  echo "Unable to read calico-node DaemonSet status" >&2
+  exit 2
+fi
+if ! jq -e '
+  .status.desiredNumberScheduled as $desired
+  | ($desired > 0)
+    and (.status.observedGeneration >= .metadata.generation)
+    and (.status.updatedNumberScheduled == $desired)
+    and (.status.numberReady == $desired)
+    and (.status.numberAvailable == $desired)
+    and ((.status.numberUnavailable // 0) == 0)
+' <<<"$calico_ds_json" >/dev/null; then
+  echo "Calico DaemonSet is not fully observed, updated and available" >&2
+  exit 1
+fi
 
-# 3. Check cluster health
-calicoctl node status
-kubectl get pods -n calico-system
+if ! calico_status_json=$(kubectl get tigerastatus --request-timeout=20s -o json); then
+  echo "Unable to read operator component status" >&2
+  exit 2
+fi
+if ! jq -e '
+  (.items | length) > 0 and all(.items[];
+    any(.status.conditions[]?; .type == "Available" and .status == "True")
+    and any(.status.conditions[]?; .type == "Progressing" and .status == "False")
+    and any(.status.conditions[]?; .type == "Degraded" and .status == "False")
+  )
+' <<<"$calico_status_json" >/dev/null; then
+  echo "Operator components are unavailable, progressing, degraded or missing conditions" >&2
+  exit 1
+fi
 
-# 4. Backup current configuration
-calicoctl get all -o yaml > calico-backup-$(date +%Y%m%d).yaml
-kubectl get installation default -o yaml > installation-backup.yaml
-
-# 5. Check Kubernetes version compatibility
-kubectl version --short
+if ! calico_logs=$(kubectl logs -n "$CALICO_NAMESPACE" -l k8s-app=calico-node \
+  -c calico-node --since=15m --tail=200 --timestamps --prefix \
+  --request-timeout=20s); then
+  echo "Unable to retrieve selected Calico logs; do not report no errors" >&2
+  exit 2
+fi
+printf '%s\n' "$calico_logs"
+echo "Component status checks passed; review these bounded logs and test application policy separately."
 ```
 
-### Upgrade Steps (Operator)
+An empty/unscheduled DaemonSet, stale status or missing component conditions is not a successful check. Logs are limited to the selected window/tail and still need interpretation. A counter or ERROR word alone is not equivalent to a live outage.
+
+To schedule this in a CronJob, first package and validate those tools and the script in an approved image. Use a dedicated ServiceAccount with read access to the DaemonSet, Pods/Pod logs and TigeraStatus; do not reuse the privileged `calico-node` identity. Configure concurrency, deadlines and failure reporting. The `calico/ctl` image is not a general-purpose Bash/kubectl diagnostic environment, and a normal Job cannot inspect another node's BIRD socket without additional deliberate access. No working in-cluster CronJob is implied by this local script.
+
+## Version Upgrade and Recovery
+
+### Prepare the Transition
 
 ```bash
-# 1. Update the operator
-kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/tigera-operator.yaml
-
-# 2. Wait for operator to update
-kubectl rollout status deployment/tigera-operator -n tigera-operator
-
-# 3. The operator will automatically upgrade Calico components
-# Monitor the upgrade
-watch kubectl get pods -n calico-system
-
-# 4. Verify upgrade
 calicoctl version
+kubectl version --output=yaml
+kubectl get deployment tigera-operator -n tigera-operator \
+  -o jsonpath='{.spec.template.spec.containers[*].image}'
 kubectl get tigerastatus
-
-# 5. Test connectivity
-kubectl run test-pod --image=busybox --rm -it -- wget -qO- http://<test-service>
+kubectl get daemonset calico-node -n calico-system -o wide
+helm get values calico -n tigera-operator -o yaml
 ```
 
-### Upgrade Steps (Helm)
+The Helm command applies only to a Helm-managed installation. Inventory the actual installed images, CRDs, datastore, node OS/kernel, dataplane and Kubernetes compatibility. Preserve owned manifests/values, policies and a tested recovery plan. `kubectl version --short` is not a current command option.
 
-```bash
-# 1. Update Helm repo
-helm repo update
+Follow the [3.32 upgrade procedure](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade) for the actual source version and installation method. Review the OwnerReference/UID migration notes when crossing the relevant releases. Pin the target version and update calicoctl as well.
 
-# 2. Check available versions
-helm search repo projectcalico/tigera-operator --versions
+For Helm, either apply the matching Calico CRDs through their owner before the new operator, or use `manageCRDs: true` and wait until the operator has installed them before using new fields. Updating the operator is not a reason to blindly overwrite field ownership with `--force-conflicts`. After the reviewed change, monitor operator, calico-node and the other configured components, then test allow/deny paths during and after rollout.
 
-# 3. Upgrade
-helm upgrade calico projectcalico/tigera-operator \
-  --namespace tigera-operator \
-  --version v3.29.0 \
-  -f values.yaml
+An operator reconciles its managed DaemonSet. Removing the agent from “canary” nodes with an affinity patch does not deploy a safe canary and can leave those nodes without enforcement. Test the version/configuration in a representative isolated environment and follow supported rollout controls. Do not improvise a second competing node DaemonSet.
 
-# 4. Monitor upgrade
-kubectl rollout status deployment/calico-typha -n calico-system
-kubectl rollout status daemonset/calico-node -n calico-system
+### Recovery Limits
 
-# 5. Verify
-calicoctl version
-```
+`helm rollback`, applying an older operator, or applying a configuration export does not automatically undo CRD/data migration or restore packet-processing state. Check the source/target release's supported downgrade path and stored data before choosing recovery. An Installation resource remaining present is not proof of no data loss.
 
-### Rollback Procedure
-
-```bash
-# Helm rollback
-helm rollback calico 1 -n tigera-operator
-
-# Or restore from backup
-kubectl apply -f calico-backup-$(date +%Y%m%d).yaml
-```
+For EKS control-plane recovery, use the current eligibility and seven-day rollback limits described in [Part 8](08-eks-integration.md). Calico/add-ons and application compatibility remain separate responsibilities.
 
 ## Backup and Disaster Recovery
 
-### Backup Strategy
+### Separate Configuration Inventory from State Recovery
+
+| Material | Purpose and limitation |
+| --- | --- |
+| Git-managed manifests/Helm values and version records | Desired configuration and ownership; preserve matching CRD definitions and images |
+| Calico policies, tiers, sets, pools, BGP/filter and controller configuration | Configuration inventory; include namespaced, staged and global resources actually used |
+| Kubernetes NetworkPolicy, namespace/ServiceAccount labels and related RBAC | Policy identity/dependencies that a Calico-only export omits |
+| Host/node/endpoints and IPAM state | Runtime/topology-dependent data; do not replay old node addresses or allocations into another cluster blindly |
+| Datastore backup and application data | A consistent recovery mechanism and separately protected credentials/data; YAML lists are not an atomic datastore snapshot |
+
+There is no `kubectl export` command. `calicoctl get TYPE -o yaml` creates a resource export; the `--export` flag has the named-resource limitation described above. For self-managed Kubernetes/etcd, follow the [Kubernetes etcd backup/recovery procedure](https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/) with matching versions and restore testing. Managed services require their supported recovery approach; this does not provide EKS etcd access.
+
+### Protected Configuration Inventory Example
+
+This script exports a **declared subset** for a 3.32 operator installation using Calico IPAM. It requires Bash, calicoctl, kubectl and sha256sum. The target directory must not exist; partial exports retain `STATE=incomplete`. It does not collect Secrets, external IAM/network devices, all operator custom resources or complete IPAM allocation state. Extend the inventory deliberately for the installed features and secure the separate credential backup.
 
 ```bash
-#!/bin/bash
-# calico-backup.sh
+#!/usr/bin/env bash
+# calico-config-inventory.sh: protected configuration inventory, not a datastore snapshot.
+set -euo pipefail
+umask 077
+CALICO_EXPORT_DIR=${1:?Usage: calico-config-inventory.sh NEW_EXPORT_DIRECTORY}
+mkdir -m 700 -- "$CALICO_EXPORT_DIR"
+printf '%s\n' incomplete > "$CALICO_EXPORT_DIR/STATE"
 
-BACKUP_DIR="/backup/calico/$(date +%Y%m%d-%H%M%S)"
-mkdir -p $BACKUP_DIR
-
-echo "Backing up Calico configuration..."
-
-# Export all Calico resources
-calicoctl get nodes -o yaml > $BACKUP_DIR/nodes.yaml
-calicoctl get ippool -o yaml > $BACKUP_DIR/ippools.yaml
-calicoctl get bgpconfig -o yaml > $BACKUP_DIR/bgpconfig.yaml
-calicoctl get bgppeer -o yaml > $BACKUP_DIR/bgppeers.yaml
-calicoctl get networkpolicy -A -o yaml > $BACKUP_DIR/networkpolicies.yaml
-calicoctl get globalnetworkpolicy -o yaml > $BACKUP_DIR/globalnetworkpolicies.yaml
-calicoctl get networkset -A -o yaml > $BACKUP_DIR/networksets.yaml
-calicoctl get globalnetworkset -o yaml > $BACKUP_DIR/globalnetworksets.yaml
-calicoctl get felixconfig -o yaml > $BACKUP_DIR/felixconfig.yaml
-calicoctl get tier -o yaml > $BACKUP_DIR/tiers.yaml
-
-# Export Kubernetes resources
-kubectl get installation default -o yaml > $BACKUP_DIR/installation.yaml
-
-echo "Backup complete: $BACKUP_DIR"
-ls -la $BACKUP_DIR
+for calico_kind in node ippool ipreservation bgpconfiguration bgppeer bgpfilter \
+  globalnetworkpolicy stagedglobalnetworkpolicy globalnetworkset \
+  felixconfiguration kubecontrollersconfiguration ipamconfiguration \
+  tier hostendpoint profile; do
+  calicoctl get "$calico_kind" -o yaml > "$CALICO_EXPORT_DIR/$calico_kind.yaml"
+done
+for calico_kind in networkpolicy stagednetworkpolicy stagedkubernetesnetworkpolicy \
+  networkset workloadendpoint; do
+  calicoctl get "$calico_kind" -A -o yaml > "$CALICO_EXPORT_DIR/$calico_kind.yaml"
+done
+kubectl get installation default -o yaml > "$CALICO_EXPORT_DIR/installation.yaml"
+kubectl get networkpolicies.networking.k8s.io -A -o yaml \
+  > "$CALICO_EXPORT_DIR/kubernetes-networkpolicies.yaml"
+kubectl get namespaces -o yaml > "$CALICO_EXPORT_DIR/namespaces.yaml"
+kubectl get serviceaccounts -A -o yaml > "$CALICO_EXPORT_DIR/serviceaccounts.yaml"
+(
+  cd -- "$CALICO_EXPORT_DIR"
+  sha256sum ./*.yaml > SHA256SUMS
+)
+printf '%s\n' complete > "$CALICO_EXPORT_DIR/STATE"
+echo "Configuration inventory completed: $CALICO_EXPORT_DIR"
 ```
 
-### Restore Procedure
+A `complete` marker means the declared queries and checksums completed, not that the snapshot is transactionally consistent or disaster recovery was tested. Treat exports as sensitive infrastructure data. Verify checksums, retain copies outside the failure domain and rehearse recovery with the actual datastore/versions.
+
+### Restore Planning
+
+1. Restore a compatible control plane/datastore and the required CRDs/operator through the chosen recovery method. A new cluster and a same-cluster recovery have different identity/IPAM requirements.
+2. Review namespace/ServiceAccount identity, labels and RBAC, then restore owned declarative configuration in dependency order, including tiers and sets before dependent policies.
+3. Review cluster-specific metadata, generated/controller-owned objects, old node addresses and allocations. Do not replay a raw dump as a portable desired-state manifest.
+4. Verify IP allocation uniqueness, routes, encryption, Service/DNS behavior and both allowed and denied traffic before resuming normal change activity.
+
+`calicoctl datastore migrate export/import` is a real **etcd-to-Kubernetes migration** workflow with datastore locking and rollback boundaries. It is not a generic backup shortcut for an existing Kubernetes datastore. Locking affects new Pods, and the documented migration cannot be rolled back after the Kubernetes datastore is unlocked. See the [migration procedure](https://docs.tigera.io/calico/latest/operations/datastore-migration).
+
+## Operational Best Practices
+
+### Policy and Access
+
+Start default-deny validation in a selected test namespace with the required DNS, API, identity, monitoring and application dependencies. A blank global `all()` policy or an invented API-server/node label selector can cut off essential traffic. Pod and host endpoints have different policy paths; use [Part 5](05-network-policy.md) for scoped examples, tier semantics and host endpoint controls. Preserve an independently usable recovery path and test negative cases before widening scope.
+
+### Flow Observability
+
+Current OSS operator/Helm installations can use Goldmane and Whisker. The [OSS flow logs guide](https://docs.tigera.io/calico/latest/observability/view-flow-logs) marks this feature as tech preview and describes aggregated flows rather than one record per packet/connection. The old file/DNS logger fields and invented `FlowLogsFileReporter` names are not a valid OSS configuration.
 
 ```bash
-#!/bin/bash
-# calico-restore.sh
-
-BACKUP_DIR=$1
-
-if [ -z "$BACKUP_DIR" ]; then
-    echo "Usage: $0 <backup-directory>"
-    exit 1
-fi
-
-echo "Restoring Calico configuration from $BACKUP_DIR..."
-
-# Restore in order of dependency
-calicoctl apply -f $BACKUP_DIR/ippools.yaml
-calicoctl apply -f $BACKUP_DIR/bgpconfig.yaml
-calicoctl apply -f $BACKUP_DIR/bgppeers.yaml
-calicoctl apply -f $BACKUP_DIR/tiers.yaml
-calicoctl apply -f $BACKUP_DIR/globalnetworksets.yaml
-calicoctl apply -f $BACKUP_DIR/networksets.yaml
-calicoctl apply -f $BACKUP_DIR/globalnetworkpolicies.yaml
-calicoctl apply -f $BACKUP_DIR/networkpolicies.yaml
-calicoctl apply -f $BACKUP_DIR/felixconfig.yaml
-
-echo "Restore complete"
+kubectl get goldmane,whisker
+kubectl port-forward -n calico-system service/whisker 8081:8081
 ```
 
-## Best Practices
+The port-forward binds locally by default. Whisker/Goldmane contain sensitive workload/network data; configure authentication and access controls before exposing them elsewhere. For an upgrade from before these components existed, enable the relevant custom resources intentionally. Process debug logs, policy Log actions, aggregated flow logs and Prometheus metrics answer different questions.
 
-### Security Hardening
+### Performance and Resources
 
-```yaml
-# 1. Default deny policy
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
-metadata:
-  name: default-deny
-spec:
-  selector: all()
-  types:
-    - Ingress
-    - Egress
----
-# 2. Allow only essential traffic
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
-metadata:
-  name: allow-essential
-spec:
-  selector: all()
-  order: 100
-  egress:
-    # DNS
-    - action: Allow
-      protocol: UDP
-      destination:
-        selector: k8s-app == 'kube-dns'
-        ports: [53]
-    - action: Allow
-      protocol: TCP
-      destination:
-        selector: k8s-app == 'kube-dns'
-        ports: [53]
-    # Kubernetes API
-    - action: Allow
-      protocol: TCP
-      destination:
-        nets: ["10.96.0.1/32"]
-        ports: [443]
----
-# 3. Protect system namespaces
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
-metadata:
-  name: protect-system-namespaces
-spec:
-  selector: "projectcalico.org/namespace in {'kube-system', 'calico-system'}"
-  order: 50
-  ingress:
-    - action: Allow
-      source:
-        selector: "projectcalico.org/namespace in {'kube-system', 'calico-system', 'monitoring'}"
-    - action: Deny
-  types:
-    - Ingress
-```
+Measure endpoint/policy churn, dataplane programming time, queueing, memory and actual application traffic. Resync/refresh intervals are not Kubernetes API polling intervals; increasing them is not a universal API-load optimization. Use the actual `iptablesPostWriteCheckInterval` duration field, not the removed `...Secs` spelling. Preserve the installation owner's supported resource overrides and operator scaling.
 
-### Observability
+Do not enable BPF, DSR or a guessed interface pattern as a generic tuning preset. [Part 6](06-ebpf-dataplane.md) covers kernel/platform requirements, Service handling, kube-proxy conflicts and rollback. Larger conntrack maps cost memory and do not remove all bottlenecks. Re-run the relevant workload and failure tests when a dataplane or resource change is justified.
 
-```yaml
-# Enable comprehensive observability
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  # Prometheus metrics
-  prometheusMetricsEnabled: true
-  prometheusMetricsPort: 9091
-  prometheusGoMetricsEnabled: true
-  prometheusProcessMetricsEnabled: true
-
-  # Flow logs
-  flowLogsFlushInterval: "15s"
-  flowLogsFileEnabled: true
-  flowLogsFileDirectory: "/var/log/calico/flowlogs"
-  flowLogsFileMaxFiles: 5
-  flowLogsFileMaxFileSizeMb: 100
-  flowLogsFileAggregationKindForAllowed: 1
-  flowLogsFileAggregationKindForDenied: 0
-
-  # DNS logs
-  dnsLogsFlushInterval: "15s"
-  dnsLogsFileEnabled: true
-
-  # Logging
-  logSeverityScreen: Info
-  logSeverityFile: Info
-```
-
-### Performance
-
-```yaml
-# Performance-optimized configuration
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  # Use eBPF if available
-  bpfEnabled: true
-  bpfDataIfacePattern: "^(en.*|eth.*|bond.*)"
-
-  # Optimize refresh intervals
-  routeRefreshInterval: "90s"
-  iptablesRefreshInterval: "90s"
-  ipSetsRefreshInterval: "90s"
-
-  # Batch updates
-  iptablesPostWriteCheckIntervalSecs: 5
-
-  # Connection tracking (for eBPF)
-  bpfMapSizeConntrack: 512000
-
-  # Reduce logging overhead in production
-  logSeverityScreen: Warning
-  logSeverityFile: Warning
-```
-
-### Resource Management
-
-```yaml
-# Resource allocation guidelines
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  componentResources:
-    # calico-node (per node)
-    - componentName: Node
-      resourceRequirements:
-        requests:
-          cpu: 200m
-          memory: 256Mi
-        limits:
-          cpu: 1000m
-          memory: 512Mi
-
-    # Typha (cluster-wide)
-    - componentName: Typha
-      resourceRequirements:
-        requests:
-          cpu: 200m
-          memory: 256Mi
-        limits:
-          cpu: 1000m
-          memory: 512Mi
-
-    # kube-controllers
-    - componentName: KubeControllers
-      resourceRequirements:
-        requests:
-          cpu: 50m
-          memory: 64Mi
-        limits:
-          cpu: 200m
-          memory: 256Mi
-```
-
----
+The checks accompanying this guide are offline schema, query and script-fixture validation. They do not establish production capacity, successful cluster upgrade or disaster recovery.
 
 ## References
 
-- [Calico Installation Guide](https://docs.tigera.io/calico/latest/getting-started/)
-- [calicoctl Reference](https://docs.tigera.io/calico/latest/reference/calicoctl/)
-- [Calico Metrics](https://docs.tigera.io/calico/latest/operations/monitor/prometheus)
-- [Troubleshooting Guide](https://docs.tigera.io/calico/latest/operations/troubleshoot/)
-- [Upgrade Guide](https://docs.tigera.io/calico/latest/operations/upgrading/)
+- [Calico requirements](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)
+- [Calico Installation API](https://docs.tigera.io/calico/latest/reference/installation/api)
+- [Monitor component metrics](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)
+- [Felix metrics](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
+- [Typha metrics](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
+- [kube-controllers metrics](https://docs.tigera.io/calico/latest/reference/kube-controllers/prometheus)
+- [Calico troubleshooting](https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting)
+- [Calico upgrade procedure](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade)
+- [Prometheus Operator API](https://prometheus-operator.dev/docs/api-reference/api/)
 
-## Quiz
+## Next Steps and Quiz
 
-To test what you learned in this chapter, try the [Operations Quiz](../../quizzes/networking/calico/09-operations-quiz.md).
+Review the [glossary](glossary.md), [advanced topics](07-advanced-topics.md), [EKS integration](08-eks-integration.md), and the [Operations Quiz](../../quizzes/networking/calico/09-operations-quiz.md).

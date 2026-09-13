@@ -1,91 +1,120 @@
 # Part 1: MLflow Tracking
 
-> **지원 버전**: MLflow 3.15.1
-> **마지막 업데이트**: 2026년 8월 19일
+> **검토 기준**: MLflow 3.16.0 · 2026-09-12
 
 ## 실습 환경 준비
 
-이 문서의 예제를 따라 하려면 다음 도구와 환경이 필요합니다.
-
-### 필수 도구
-
-* Python 3.10 이상
-* `pip install mlflow` (이 문서는 MLflow 3.x를 기준으로 작성되었습니다. 예제와 정확히 동일한 환경을 원한다면 `mlflow==3.15.1`처럼 특정 버전을 고정해서 설치하세요)
-* 실행 중인 MLflow tracking 서버, 또는 예제 실행을 위해 로컬에서 `mlflow server`로 직접 띄운 서버 — 프로덕션용 tracking 서버를 EKS에 구축하는 방법은 [Part 3: EKS 배포](./03-eks-deployment.md)에서 다룹니다
-* 로깅 코드를 몇 줄 추가할 수 있는 학습 스크립트나 노트북 (scikit-learn, PyTorch 등 어떤 예제든 무방합니다)
+Python 3.10 이상 환경에 `mlflow==3.16.0`을 설치합니다. 아래 예제는 Python 3.12에서 SQLite와 로컬 artifact 저장소로 확인했으며 GPU·학습 모델·원격 서버가 필요하지 않습니다. 팀용 HTTP 서버와 EKS 운영은 [Part 3](03-eks-deployment.md)에서 다룹니다.
 
 ## MLflow Tracking이란 무엇인가?
 
-MLflow Tracking은 머신러닝 학습 실행(run)에 대한 정보를 기록하고 조회하는 MLflow의 구성 요소입니다. 데이터를 기록하는 Python(및 REST) API와, 기록된 데이터를 조회하는 UI를 함께 제공합니다. 기록 대상은 크게 몇 가지로 나뉩니다: 파라미터(학습률, 배치 크기 등 run에 대한 입력값), 메트릭(정확도, 손실값처럼 학습 중 또는 학습 후에 측정되는 출력값), 아티팩트(플롯, 데이터셋, 직렬화된 모델 등 run이 만들어내는 임의의 파일), 그리고 MLflow 3부터는 모델 자체도 단순 파일이 아니라 독립적인 엔티티로 기록됩니다.
+Tracking은 experiment, run, parameter, metric, artifact, logged model과 trace를 기록·검색하는 API와 UI를 제공합니다. SDK는 HTTP tracking 서버뿐 아니라 로컬 파일 또는 SQL backend에 직접 연결할 수도 있습니다. 따라서 모든 사용에 별도 서버 프로세스가 필요한 것은 아닙니다.
 
-이 모든 기록은 **tracking 서버**를 통해 이루어지는데, 실제로는 하나의 API 뒤에서 함께 동작하는 두 개의 저장소로 구성됩니다: 구조화된 메타데이터를 담는 backend store와, 크고 무거운 바이너리 파일을 담는 artifact store입니다. 이 문서에서는 Tracking을 일상적으로 사용하는 데 필요한 개념을 다루고, backend store와 artifact store의 구분은 직접 tracking 서버를 배포할 때 더 중요해지므로 Part 3에서 더 깊이 다시 살펴봅니다.
+원격 서버 구성에서도 metadata와 artifact 전송 경로는 같지 않을 수 있습니다. metadata는 tracking API로 보내지만 artifact는 서버가 프록시하거나 클라이언트가 S3 등에 직접 전송할 수 있습니다. 뒤에서 두 구성을 구분합니다.
 
 ## 핵심 개념: Experiment와 Run
 
-**Experiment**는 이름이 붙은 Run들의 모음으로, 보통 프로젝트 하나 또는 반복 실험 중인 모델 하나에 하나씩 대응합니다. **Run**은 학습 코드를 한 번 실행한 결과입니다 — 모델을 한 번 학습시키거나, 평가하거나, 그 외에 기록할 가치가 있는 결과를 만들어내는 한 번의 실행입니다. 각 run은 자신만의 파라미터, 메트릭, 태그, 아티팩트를 가지므로, 같은 experiment 안에서 여러 run을 서로 비교해 어떤 설정이 가장 좋은 성능을 냈는지 확인할 수 있습니다.
+**Experiment**는 run과 관련 결과를 묶는 이름 있는 단위입니다. **Run**은 학습뿐 아니라 평가·전처리·비교 실험도 표현할 수 있습니다. 같은 parameter key는 한 run에서 다른 값으로 바꾸지 않으며, metric은 timestamp·step을 가진 여러 관측값으로 기록할 수 있습니다. 현재 metric 요약과 전체 이력을 구분합니다.
 
-가장 기본적인 tracking 코드는 다음과 같습니다.
+다음은 실제 정확도 측정이 아닌 **Tracking API 연습용 값**입니다. 존재하지 않는 이미지 파일을 요구하지 않도록 JSON artifact를 직접 생성합니다.
 
 ```python
+from pathlib import Path
 import mlflow
+from mlflow import MlflowClient
 
-with mlflow.start_run():
+root = Path(".mlflow-demo").resolve()
+root.mkdir(exist_ok=True)
+mlflow.set_tracking_uri(f"sqlite:///{root / 'mlflow.db'}")
+client = MlflowClient()
+experiment = client.get_experiment_by_name("tracking-demo")
+experiment_id = (
+    experiment.experiment_id if experiment else
+    client.create_experiment(
+        "tracking-demo", artifact_location=(root / "artifacts").as_uri()
+    )
+)
+mlflow.set_experiment(experiment_id=experiment_id)
+
+with mlflow.start_run(run_name="demo") as run:
     mlflow.log_param("learning_rate", 0.01)
-    mlflow.log_metric("accuracy", 0.92)
-    mlflow.log_artifact("confusion_matrix.png")
+    mlflow.log_metric("demo_score", 0.92, step=0)
+    mlflow.log_metric("demo_score", 0.95, step=1)
+    mlflow.log_dict({"synthetic_example": True}, "summary.json")
+    run_id = run.info.run_id
+
+assert client.get_run(run_id).info.status == "FINISHED"
+assert len(client.get_metric_history(run_id, "demo_score")) == 2
 ```
 
-`with mlflow.start_run()` 컨텍스트 매니저는 run을 하나 열고, 블록 내부의 모든 로깅 호출을 그 run과 연결한 뒤, 블록이 끝나면 자동으로 run을 종료합니다.
+context가 정상 종료되면 run이 `FINISHED`, 블록 안에서 예외가 발생하면 `FAILED`로 종료됩니다. Run 종료는 artifact 백업이나 학습 프로세스 전체의 성공 검증을 대신하지 않습니다. 재실행하면 동일 experiment에 새 run을 추가합니다. 기존 experiment의 artifact location은 위 조건문으로 바뀌지 않습니다.
 
 ### 오토로깅(Autologging)
 
-관심 있는 값마다 `log_param`, `log_metric`을 일일이 호출하는 것은 금방 번거로워집니다. MLflow의 **오토로깅** 기능은 주요 ML 라이브러리를 계측하여, 학습 코드를 바꾸지 않아도 파라미터, 메트릭, 아티팩트가 자동으로 기록되게 해줍니다. 다음 한 줄로 활성화할 수 있습니다.
+`mlflow.autolog()`는 지원되는 integration을 설정합니다. 기록되는 값, framework version 범위, 모델 저장 및 입력 예제 수집은 integration마다 다릅니다. 일반 PyTorch 학습 루프와 Lightning 경로가 똑같이 자동 계측된다고 가정하지 않습니다. 필요한 framework 전용 API와 지원 버전을 확인하고, 추가 metric은 수동 기록합니다.
 
-```python
-mlflow.autolog()
-```
-
-이 호출은 현재 프로세스에서 사용 중인, 지원되는 프레임워크에 대해 오토로깅을 활성화합니다. MLflow는 scikit-learn용, PyTorch용처럼 프레임워크별 오토로그 함수도 별도로 제공하므로, MLflow가 감지할 수 있는 모든 프레임워크가 아니라 특정 라이브러리 하나에만 오토로깅을 적용하고 싶을 때 사용할 수 있습니다. 일상적인 학습 run에는 오토로깅을 기본값으로 쓰는 것이 좋고, 오토로깅이 알지 못하는 값 — 커스텀 평가 메트릭이나 도메인 특화 아티팩트 등 — 을 기록해야 할 때는 수동 로깅이 여전히 유용합니다.
+Autologging을 무조건 기본값으로 켜기보다 원문·입출력·모델·데이터 샘플이 어디에 저장되는지 검토합니다. 기능을 켠 것만으로 PII가 제거되거나 모든 custom code가 관측되는 것은 아닙니다.
 
 ## MLflow 3의 전환점: 1급 엔티티가 된 모델
 
-MLflow 1.x나 2.x를 사용해봤다면, 모델 추적 방식이 지금과 달랐다는 것을 알 것입니다. 과거의 run 중심 모델에서는 기록된 모델이 **Run 아래에 종속된 하나의 아티팩트**일 뿐이었습니다. 활성화된 `mlflow.start_run()` 블록 안에서 `mlflow.sklearn.log_model(...)`을 호출하면, 모델 파일은 다른 플롯이나 데이터셋과 함께 그 run의 아티팩트 디렉터리에 저장되었습니다. 모델을 찾으려면 먼저 그 모델을 만들어낸 run을 찾아야 했습니다.
+`LoggedModel`에는 run과 별개의 `model_id`, 상태, artifact location과 metadata가 있습니다. `source_run_id`로 학습 run과 연결하고 다른 평가 run·metric·trace와도 관계를 기록할 수 있습니다. Registered Model/Model Version과는 별도 엔티티입니다.
 
-MLflow 3는 **`LoggedModel`**을 그 모델을 만든 run과는 별개인, 독립적인 1급 엔티티로 도입하면서 이 구조를 바꿨습니다. 여기서 몇 가지 변화가 따라옵니다.
+**활성 `start_run()` 블록 없이 `log_model()`을 호출할 수 있다는 점 자체는 3.x의 새 기능이 아닙니다.** 2.22.0의 `Model.log()`도 필요하면 `_get_or_start_run()`으로 run을 시작했고, 3.16.0의 모델 로깅 경로에도 이 동작이 있습니다. 달라진 핵심은 독립적인 모델 식별과 관계 추적입니다.
 
-* 활성화된 `mlflow.start_run()` 컨텍스트 없이도 `mlflow.sklearn.log_model(...)`을 직접 호출할 수 있습니다 — 모델을 추적하기 위해 반드시 어떤 run 아래에 종속되어야 할 필요가 없어졌습니다.
-* Tracking UI에는 Experiments/Runs 화면과 구분되는 전용 **Logged Models** 화면이 생겨, 관심 있는 모델을 만든 run을 일일이 뒤지는 대신 모델을 직접 조회하고 비교할 수 있습니다.
-* 모델이 더 이상 특정 run 하나에 속한 파일이 아니게 되면서, MLflow 3는 모델과 그에 연관된 run, trace, 프롬프트, 평가 메트릭 사이의 계보(lineage)를 더 풍부하게 추적할 수 있습니다. 모델을 학습시킨 run, 그 모델을 평가한 run들, 그 모델을 서빙하며 생성된 trace들을 하나의 실행에 영구히 묶이지 않고 서로 연결할 수 있습니다.
+다음은 모델 metadata만 만드는 예제입니다. 앞의 tracking 설정 이후, 활성 run이 없는 상태에서 실행합니다.
 
-이 변화로 모델의 버저닝과 비교가 특정 학습 run 하나에 묶이지 않게 됩니다. 같은 모델을 여러 run에 걸쳐 반복 개선하거나, 전통적인 학습 루프 밖에서 모델을 만들어내는 경우(예: 기존 LLM을 커스텀 로직으로 감싸는 경우)에 특히 중요해지는 부분입니다.
+```python
+model = mlflow.initialize_logged_model(
+    name="metadata-only", model_type="demo"
+)
+assert mlflow.active_run() is None
+assert model.source_run_id is None
+print(model.model_id, model.status)  # PENDING
+```
+
+이 시점에는 사용할 수 있는 학습 가중치나 model flavor가 없습니다. 실제 모델 로깅·artifact 보존·finalization을 마쳐야 합니다. `READY`도 배포·성능·보안 검토를 통과했다는 의미가 아닙니다.
 
 ## GenAI와 LLM 관찰성: 트레이싱(Tracing)
 
-MLflow는 원래 학습 run에 대한 파라미터, 메트릭, 아티팩트를 기록하는 전통적인 ML 실험 추적을 목표로 했습니다. MLflow 3는 이 동일한 tracking 시스템을 확장해 **GenAI와 에이전트 관찰성**을 별도의 도구가 아니라 핵심 기능으로 포함시켰습니다. 이를 가능하게 하는 메커니즘이 **트레이싱**입니다.
+MLflow Tracing은 **2.14.0(2024-06-17)**에 이미 도입됐습니다. 3.x에서 모델·평가·GenAI UI 연계를 확장했으며, 3.16.0에는 span link와 새 trace UI가 추가됐습니다. “3부터 처음 tracing이 가능하다”는 설명은 정확하지 않습니다.
 
-트레이싱은 LLM 또는 에이전트 호출의 내부 단계를 **span**들의 트리 구조로 기록합니다. 각 span은 검색(retrieval) 호출, 도구 호출, 기반 모델 호출 등 한 단계를 나타내며, 각 단계별 토큰 사용량과 비용도 함께 기록됩니다. MLflow는 LangChain을 비롯한 널리 쓰이는 LLM·에이전트 프레임워크에 대한 자동 계측을 제공하며, PydanticAI, smolagents 같은 프레임워크를 위한 새로운 자동 트레이싱 연동도 추가되고 있어, 많은 경우 애플리케이션 코드를 거의 또는 전혀 수정하지 않고도 트레이싱을 활성화할 수 있습니다. Trace는 experiment·run을 조회하던 동일한 tracking UI에서 확인할 수 있으며, MLflow 3가 추적하는 계보에 따라 그 trace를 만들어낸 모델, 프롬프트, 평가 run으로 다시 연결될 수 있습니다.
+Trace는 요청의 retrieval·tool·LLM 호출 같은 작업을 span으로 표현합니다. parent/child 구조와 span link를 구분합니다. 토큰 수집은 integration과 provider 응답에 의존하며, 검색·도구 span에 항상 LLM 토큰/비용이 있는 것은 아닙니다. 비용 추정은 모델 식별·사용량·가격 정보가 있어야 하며 실제 청구 총액과 동일하지 않습니다.
 
-실무적으로 이는, 전통적인 ML 학습과 LLM·에이전트 개발을 함께 하는 팀이 GenAI 쪽을 위한 별도의 관찰성 도구를 따로 구축하지 않고, 하나의 MLflow Tracking 배포로 두 영역을 모두 다룰 수 있다는 뜻입니다.
+자동 계측과 수동 span을 함께 사용할 수 있습니다. 입력·출력·예외·tool argument·reasoning에 민감정보가 포함될 수 있으므로 수집 범위, 접근 권한, redaction, 보존 기간을 정합니다. integration을 설치한 것만으로 모든 경로가 연결되거나 비용이 완전 집계되지는 않습니다.
 
 ## Backend Store와 Artifact Store
 
-Tracking 서버는 저장하는 데이터를 두 범주로 나누고, 이를 각각 다른 종류의 저장소로 처리합니다.
+| 구분 | 저장 내용과 구성 |
+|---|---|
+| Backend | experiment/run/parameter/metric/model 등의 metadata; SQLite, PostgreSQL, MySQL 등 |
+| Artifact | 모델 파일·플롯·JSON 등의 파일; 로컬 경로, S3 등의 저장소 |
+| 기본값 | 새 3.16.0 환경은 `sqlite:///mlflow.db`; 기존 `./mlruns`가 있는 경우 호환 동작을 확인 |
+| 기존 file backend | maintenance mode; 새 운영 환경은 명시적 SQL backend와 migration 계획 사용 |
 
-* **Backend store**: 파라미터, 메트릭, 태그, 그리고 experiment·run·(MLflow 3부터는) logged model을 설명하는 레코드 같은 구조화된 메타데이터를 저장합니다. 간단한 로컬 실험 수준을 넘어서는 팀 규모에서는 기본으로 제공되는 로컬 파일 기반 저장소 대신 PostgreSQL, MySQL 같은 실제 관계형 데이터베이스가 필요합니다.
-* **Artifact store**: 모델 파일, 플롯, 데이터셋 등 run이 만들어내는 대용량 바이너리 객체를 저장합니다. 데이터베이스보다는 S3 호환 버킷 같은 객체 스토리지가 일반적입니다.
+SQLite도 관계형 데이터베이스입니다. 작은 로컬 실습에 적합하지만 팀의 동시 쓰기·여러 server replica·백업·고가용성 요구는 별도로 평가해야 합니다. artifact 파일을 SQL metadata와 함께 백업한 것으로 착각하면 안 됩니다.
 
-이 구분이 중요한 이유는 두 저장소의 내구성, 확장성, 접근 패턴 요구사항이 서로 다르기 때문입니다. 데이터베이스는 작고 구조화된 쓰기·조회가 많은 상황에 적합하고, 객체 스토리지는 크기가 큰 파일을 저장하고 조회하는 데 적합합니다. 직접 EKS에서 tracking 서버를 운영할 때 이 구분이 어떤 인프라 선택으로 이어지는지는 [Part 3: EKS 배포](./03-eks-deployment.md)에서 자세히 다룹니다. 지금은 두 저장소가 존재하며 서로 다른 목적을 담당한다는 점만 알아두면 충분합니다.
+### 원격 서버의 두 artifact 경로
 
-![학습 스크립트가 MLflow Tracking API를 통해 Tracking 서버에 실험 데이터를 기록하고, 서버는 메타데이터를 Backend Store에, 파일을 Artifact Store에 저장하며, Tracking UI는 두 저장소를 조회하여 결과를 보여주는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-ai-ml-mlflow-01-tracking-0.svg)
+- **프록시 모드**: 클라이언트가 `mlflow-artifacts:` 경로를 통해 서버로 보내고 서버가 artifact store 권한을 사용합니다. 클라이언트별 S3 권한이 불필요할 수 있으나 tracking 서버의 인증·인가가 중요합니다.
+- **직접 모드**: `--no-serve-artifacts`와 직접 `s3://...` artifact root를 사용하는 구성에서는 클라이언트가 저장소에 접근합니다. 클라이언트의 AWS 권한·네트워크·라이브러리가 필요합니다.
 
-학습 스크립트는 두 저장소와 직접 통신하지 않고 항상 Tracking API를 통해서만 접근합니다. Tracking 서버는 이 API를 통해 들어온 요청 중 메타데이터 쓰기는 backend store로, 파일 쓰기는 artifact store로 각각 라우팅합니다. UI는 experiment, run, logged model, trace를 화면에 표시하기 위해 두 저장소를 모두 조회합니다.
+기존 experiment의 artifact URI는 서버 flag를 바꾼 것만으로 소급 변경되지 않습니다. 실제 experiment/run URI를 확인해야 합니다. 웹 UI는 서버 HTTP API를 통해 조회하며 브라우저가 PostgreSQL에 직접 연결하는 구조가 아닙니다.
+
+![클라이언트와 웹 UI가 Tracking 서버 API에 연결하고, 서버가 SQL backend와 artifact store에 접근하는 구조. 직접 artifact 모드에서는 권한을 가진 클라이언트가 저장소로 파일을 전송하는 별도 경로가 있다.](../../.gitbook/assets/ko-ai-ml-mlflow-01-tracking-0.png)
+
+[인터랙티브 다이어그램](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-mlflow-01-tracking-0.html)
 
 ## 다음 단계
 
-이 문서에서는 MLflow Tracking이 무엇을 기록하는지, Experiment와 Run이 그 데이터를 어떻게 구조화하는지, MLflow 3의 `LoggedModel` 엔티티가 이전의 run 종속형 모델 추적 방식을 어떻게 바꿨는지, 그리고 트레이싱이 동일한 시스템을 GenAI·에이전트 관찰성으로 어떻게 확장하는지를 살펴봤습니다. run이 남길 가치가 있는 모델을 만들어낸 이후에 무엇을 해야 하는지 — 모델을 등록하고, 버전을 관리하고, `champion` 같은 별칭(alias)으로 프로덕션으로 승격시키는 방법 — 은 [Part 2: Model Registry](./02-model-registry.md)에서 다룹니다. 직접 tracking 서버를 EKS에서 운영하는 방법과, 위에서 소개한 backend store·artifact store 선택은 [Part 3: EKS 배포](./03-eks-deployment.md)에서 다룹니다.
+모델을 등록·버전화하고 alias를 관리하는 방법은 [Part 2](02-model-registry.md), EKS 서버의 저장소·접근 제어는 [Part 3](03-eks-deployment.md)를 참고합니다. Alias 변경만으로 모든 serving 프로세스가 자동 재배포되지는 않습니다.
 
-[메인 페이지로 돌아가기](./README.md)
+## 공식 근거
 
-## 퀴즈
+- [MLflow 3.16.0 릴리스](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
+- [Backend store](https://mlflow.org/docs/3.16.0/self-hosting/architecture/backend-store/)
+- [Artifact store](https://mlflow.org/docs/3.16.0/self-hosting/architecture/artifact-store/)
+- [2.22.0 모델 로깅 구현](https://github.com/mlflow/mlflow/blob/v2.22.0/mlflow/models/model.py)
+- [3.16.0 Tracking API 구현](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/tracking/fluent.py)
+- [Tracing 도입: 2.14.0](https://github.com/mlflow/mlflow/releases/tag/v2.14.0)
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/ai-ml/mlflow/01-tracking-quiz.md)를 풀어보세요.
+[메인 페이지로 돌아가기](README.md) · [퀴즈](../../quizzes/ai-ml/mlflow/01-tracking-quiz.md)

@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eBPF-based CNI Implementation",
+    "locale": "en",
+    "output": "en-core-03-services-networking-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kubernetes / Cilium"
+        },
+        "external": {
+          "label": "Interface / kernel"
+        },
+        "frontend": {
+          "label": "Observability"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cni-path",
+        "label": "CNI call path",
+        "focus": [
+          "kubernetes",
+          "cni",
+          "cilium"
+        ],
+        "note": "Kubernetes invokes Cilium as its CNI plugin through the CNI standard."
+      },
+      {
+        "id": "kernel-datapath",
+        "label": "Kernel data path",
+        "focus": [
+          "cilium",
+          "ebpf",
+          "kernel"
+        ],
+        "note": "Cilium loads eBPF programs into the Linux kernel to implement an in-kernel data path."
+      },
+      {
+        "id": "observability",
+        "label": "Network visibility",
+        "focus": [
+          "cilium",
+          "hubble"
+        ],
+        "note": "Hubble monitors Cilium's network flows and supports troubleshooting."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "kubernetes",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "container orchestration",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "external",
+      "label": "Container Network Interface",
+      "sublabel": "CNI spec",
+      "pos": [
+        310,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cilium",
+      "type": "backend",
+      "label": "Cilium",
+      "sublabel": "CNI plugin",
+      "pos": [
+        640,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF",
+      "sublabel": "kernel programs",
+      "pos": [
+        920,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kernel",
+      "type": "external",
+      "label": "Linux Kernel",
+      "sublabel": "data path",
+      "pos": [
+        1200,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "hubble",
+      "type": "frontend",
+      "label": "Hubble",
+      "sublabel": "flow observability",
+      "pos": [
+        640,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-to-cni",
+      "from": "kubernetes",
+      "to": "cni",
+      "label": "invokes CNI",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cni-to-cilium",
+      "from": "cni",
+      "to": "cilium",
+      "label": "plugin implementation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cilium-to-ebpf",
+      "from": "cilium",
+      "to": "ebpf",
+      "label": "loads eBPF programs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebpf-to-kernel",
+      "from": "ebpf",
+      "to": "kernel",
+      "label": "runs in kernel",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cilium-to-hubble",
+      "from": "cilium",
+      "to": "hubble",
+      "label": "network flows",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "How Cilium Uses eBPF",
+      "items": [
+        "Network data path: processes and routes packets",
+        "Policy enforcement: enforces network policies",
+        "Load balancing: balances traffic for Services",
+        "Observability: collects metrics on network flows"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Key Features of eBPF",
+      "items": [
+        "In-kernel execution for high performance",
+        "The verifier keeps programs from damaging the kernel",
+        "Dynamic loading without a reboot",
+        "Maps share data between user space and kernel space"
+      ]
+    }
+  ]
+}

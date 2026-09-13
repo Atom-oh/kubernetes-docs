@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Argo CD 지원 기간 흐름 (2.x 예시)",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "neutral": {
+          "label": "이전 릴리스 · 순차 종료"
+        },
+        "active": {
+          "label": "표의 마지막 릴리스"
+        },
+        "waiting": {
+          "label": "3개 릴리스 동시 지원 구간"
+        },
+        "success": {
+          "label": "지원 유지 구간"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "succession",
+        "label": "릴리스 계승",
+        "focus": [
+          "v211",
+          "v212",
+          "v213",
+          "v213_live"
+        ],
+        "note": "2.11 → 2.12 → 2.13 순으로 릴리스가 이어지며, 표의 마지막 항목인 2.13이 지원 유지 구간으로 넘어간다."
+      },
+      {
+        "id": "overlap",
+        "label": "동시 지원 구간",
+        "focus": [
+          "v213",
+          "overlap_win",
+          "v211_end",
+          "v212_end"
+        ],
+        "note": "새 릴리스가 나오면 한동안 세 릴리스의 지원 기간이 겹치고, 이후 가장 오래된 2.11부터 2.12 순으로 지원이 종료된다. 구체적 종료 시점은 릴리스 페이지에서 확인한다."
+      }
+    ],
+    "viewBox": [
+      980,
+      640
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "릴리스 계승 (2.11 → 2.13)"
+    },
+    {
+      "id": "overlap",
+      "label": "동시 지원 구간"
+    },
+    {
+      "id": "terminal",
+      "label": "순차 지원 종료"
+    }
+  ],
+  "states": [
+    {
+      "id": "v211",
+      "type": "neutral",
+      "label": "Argo CD 2.11",
+      "sublabel": "K8s 1.26–1.30",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "Server-side Apply"
+    },
+    {
+      "id": "v212",
+      "type": "neutral",
+      "label": "Argo CD 2.12",
+      "sublabel": "K8s 1.26–1.30",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "Progressive Syncs"
+    },
+    {
+      "id": "v213",
+      "type": "active",
+      "label": "Argo CD 2.13",
+      "sublabel": "K8s 1.27–1.31",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "표의 마지막 항목"
+    },
+    {
+      "id": "overlap_win",
+      "type": "waiting",
+      "label": "3개 릴리스 중첩",
+      "sublabel": "2.11 · 2.12 · 2.13 동시 지원",
+      "lane": "overlap",
+      "col": 0,
+      "tag": "예시 구간"
+    },
+    {
+      "id": "v213_live",
+      "type": "success",
+      "label": "2.13 지원 유지",
+      "sublabel": "표의 마지막 항목",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "2.x 예시"
+    },
+    {
+      "id": "v211_end",
+      "type": "neutral",
+      "label": "2.11 지원 종료",
+      "sublabel": "가장 오래된 릴리스부터",
+      "lane": "terminal",
+      "col": 0
+    },
+    {
+      "id": "v212_end",
+      "type": "neutral",
+      "label": "2.12 지원 종료",
+      "sublabel": "이어서 종료",
+      "lane": "terminal",
+      "col": 1
+    }
+  ],
+  "transitions": [
+    {
+      "from": "v211",
+      "to": "v212",
+      "label": "다음 릴리스",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "v212",
+      "to": "v213",
+      "label": "다음 릴리스",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "v213",
+      "to": "v213_live",
+      "label": "2.13만 지원 유지",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "v213",
+      "to": "overlap_win",
+      "label": "2.11·2.12와 동시 지원",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "overlap_win",
+      "to": "v211_end",
+      "label": "먼저 종료",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -44
+    },
+    {
+      "from": "overlap_win",
+      "to": "v212_end",
+      "label": "이어서 종료",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "릴리스별 Kubernetes 지원 (표 기준)",
+      "items": [
+        "v2.13: K8s 1.27–1.31, 표의 마지막 항목",
+        "v2.12: K8s 1.26–1.30, ApplicationSet Progressive Syncs",
+        "v2.11: K8s 1.26–1.30, Server-side Apply"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "참고",
+      "items": [
+        "이 그림은 2.x 시절 표를 바탕으로 지원 창의 흐름만 예시로 보여준다",
+        "실제 지원 종료 시점과 3.x 이후 정보는 Argo CD 릴리스 페이지에서 확인"
+      ]
+    }
+  ]
+}

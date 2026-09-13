@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "AI/ML 파드 콜드 스타트 타임라인",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      650
+    ],
+    "animation": "none",
+    "views": [
+      {
+        "id": "schedule",
+        "label": "스케줄링",
+        "focus": [
+          "scheduler",
+          "kubelet"
+        ],
+        "note": "Pending 시간에는 capacity·PVC·quota·taint 등의 제약이 포함될 수 있습니다."
+      },
+      {
+        "id": "pull",
+        "label": "이미지 풀",
+        "focus": [
+          "kubelet",
+          "registry"
+        ],
+        "note": "fetch·unpack·cache hit와 lazy-load를 구분해 측정합니다."
+      },
+      {
+        "id": "load",
+        "label": "모델 로딩",
+        "focus": [
+          "runtime",
+          "app"
+        ],
+        "note": "model 준비·로드·probe를 측정하며 고정 소요 시간을 가정하지 않습니다."
+      }
+    ],
+    "output": "ko-ai-ml-07-ai-ml-best-practices-2.html"
+  },
+  "participants": [
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "K8s 스케줄러",
+      "sublabel": "kube-scheduler"
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "워커 노드"
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "컨테이너 레지스트리",
+      "sublabel": "예: Amazon ECR"
+    },
+    {
+      "id": "runtime",
+      "type": "cloud",
+      "label": "컨테이너 런타임",
+      "sublabel": "containerd"
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "AI/ML 애플리케이션",
+      "sublabel": "모델 서빙 프로세스"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 220,
+      "label": "Pod 배치: 실제 대기 시간"
+    },
+    {
+      "from": 235,
+      "to": 345,
+      "label": "Image fetch / unpack: cache와 network 영향"
+    },
+    {
+      "from": 360,
+      "to": 420,
+      "label": "Container 생성: runtime 설정"
+    },
+    {
+      "from": 435,
+      "to": 565,
+      "label": "모델 로딩과 readiness: workload별 측정"
+    }
+  ],
+  "messages": [
+    {
+      "id": "scheduled",
+      "from": "scheduler",
+      "to": "kubelet",
+      "y": 190,
+      "label": "파드 스케줄링됨"
+    },
+    {
+      "id": "pull-request",
+      "from": "kubelet",
+      "to": "registry",
+      "y": 267,
+      "label": "CRI image 준비 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "image-layers",
+      "from": "registry",
+      "to": "kubelet",
+      "y": 327,
+      "label": "이미지 레이어",
+      "variant": "return"
+    },
+    {
+      "id": "create",
+      "from": "kubelet",
+      "to": "runtime",
+      "y": 393,
+      "label": "컨테이너 생성"
+    },
+    {
+      "id": "start",
+      "from": "runtime",
+      "to": "app",
+      "y": 475,
+      "label": "프로세스 시작",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ready",
+      "from": "app",
+      "to": "kubelet",
+      "y": 550,
+      "label": "readiness 검사 결과",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kubelet",
+      "from": 185,
+      "to": 400,
+      "type": "backend"
+    },
+    {
+      "participant": "registry",
+      "from": 262,
+      "to": 333,
+      "type": "database"
+    },
+    {
+      "participant": "runtime",
+      "from": 388,
+      "to": 556,
+      "type": "cloud"
+    },
+    {
+      "participant": "app",
+      "from": 470,
+      "to": 556,
+      "type": "frontend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "시작 시간 측정",
+      "items": [
+        "그림은 논리 단계이며 실제 image pull은 runtime이 수행합니다.",
+        "SOCI index·prefetch만으로 고정80–95% 개선이 보장되지 않습니다.",
+        "전체 가중치를 즉시 읽으면 lazy loading 이점이 제한될 수 있습니다."
+      ]
+    }
+  ]
+}

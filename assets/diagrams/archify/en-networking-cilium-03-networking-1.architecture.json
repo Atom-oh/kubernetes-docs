@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VXLAN Packet Structure",
+    "locale": "en",
+    "output": "en-networking-cilium-03-networking-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      360
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Outer L2 header"
+        },
+        "cloud": {
+          "label": "Outer L3/L4 header"
+        },
+        "backend": {
+          "label": "VXLAN header"
+        },
+        "frontend": {
+          "label": "Original L2 frame"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "outer",
+        "label": "Outer headers",
+        "focus": [
+          "outer-eth",
+          "outer-ip"
+        ],
+        "note": "Outer Ethernet and IP headers added so the packet can cross the physical underlay network between VTEPs."
+      },
+      {
+        "id": "vxlan",
+        "label": "VXLAN header",
+        "focus": [
+          "vxlan-hdr"
+        ],
+        "note": "The VNI distinguishes up to 16,777,216 (2^24) logical L2 segments."
+      },
+      {
+        "id": "inner",
+        "label": "Original frame",
+        "focus": [
+          "vxlan-hdr",
+          "inner-frame"
+        ],
+        "note": "Carries the inner Ethernet header and payload intact; the destination VTEP restores it."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "outer-eth",
+      "type": "external",
+      "label": "Outer Ethernet Header",
+      "sublabel": "Outer MAC · underlay L2",
+      "pos": [
+        30,
+        100
+      ],
+      "size": [
+        245,
+        72
+      ]
+    },
+    {
+      "id": "outer-ip",
+      "type": "cloud",
+      "label": "Outer IP Header (usually IPv4)",
+      "sublabel": "Carried over UDP port 8472",
+      "pos": [
+        320,
+        100
+      ],
+      "size": [
+        245,
+        72
+      ]
+    },
+    {
+      "id": "vxlan-hdr",
+      "type": "backend",
+      "label": "VXLAN Header (contains VNI)",
+      "sublabel": "VNI · up to 2^24 segments",
+      "pos": [
+        610,
+        100
+      ],
+      "size": [
+        245,
+        72
+      ],
+      "tag": "Key layer"
+    },
+    {
+      "id": "inner-frame",
+      "type": "frontend",
+      "label": "Original Ethernet Frame",
+      "sublabel": "Inner Ethernet header + payload",
+      "pos": [
+        900,
+        100
+      ],
+      "size": [
+        245,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VXLAN Packet Structure",
+      "wraps": [
+        "outer-eth",
+        "outer-ip",
+        "vxlan-hdr",
+        "inner-frame"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eth-to-ip",
+      "from": "outer-eth",
+      "to": "outer-ip"
+    },
+    {
+      "id": "ip-to-vxlan",
+      "from": "outer-ip",
+      "to": "vxlan-hdr"
+    },
+    {
+      "id": "vxlan-to-inner",
+      "from": "vxlan-hdr",
+      "to": "inner-frame",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Encapsulation",
+      "items": [
+        "Source VTEP wraps the original L2 frame with a VXLAN header and sends it as a UDP packet",
+        "Each Cilium node acts as a VTEP (tunnel: vxlan)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "VNI",
+      "items": [
+        "VXLAN Network Identifier identifies the logical L2 segment",
+        "Up to 16,777,216 (2^24) segments"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Decapsulation",
+      "items": [
+        "Destination VTEP strips the outer headers and the VXLAN header",
+        "Original L2 frame is delivered to the destination endpoint"
+      ]
+    }
+  ]
+}

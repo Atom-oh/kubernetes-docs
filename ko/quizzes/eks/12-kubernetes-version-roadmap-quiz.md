@@ -1,43 +1,48 @@
 # Kubernetes 버전별 신규 기능과 로드맵 퀴즈
 
-1. Kubernetes의 릴리스 주기는?
-   - A) 연 1회 대규모 기능 릴리스
-   - B) 연 약 3회, 약 4개월 간격으로 마이너 버전 릴리스
-   - C) 월간 패치 릴리스와 분기별 기능 릴리스
-   - D) AWS re:Invent와 Summit에 맞춘 연 2회 릴리스
+> **마지막 업데이트**: 2026년 9월 12일
+
+버전별 전제와 감사 근거의 한계는 [본문](../../eks/12-kubernetes-version-roadmap.md)을 참고하세요.
+
+1. Kubernetes minor release 주기는?
+
+   - A) 연 1회 feature release
+   - B) 연 약 3회, 약 4개월 간격
+   - C) 매월 minor release
+   - D) AWS 행사에 고정된 일정
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 연 약 3회, 약 4개월 간격으로 마이너 버전 릴리스**
+**정답: B) 연 약 3회, 약 4개월 간격**
 
-**설명:**
-Kubernetes는 약 4개월 주기로 연 3회 마이너 버전을 릴리스합니다. 각 릴리스는 enhancement freeze, code freeze, release candidate 단계를 거칩니다. 최근 릴리스: 1.33 (2025년 4월), 1.34 (2025년 8월), 1.35 (2025년 12월), 1.36 (2026년 4월). 각 버전은 약 14개월간 패치 릴리스를 통해 유지보수됩니다.
+Upstream minor release는 보통 연 3회이며 patch release 주기는 별개입니다. Upstream patch 지원은 약14개월(일반12+maintenance2)입니다. EKS standard support도14개월이지만 EKS 출시일부터 계산하므로 두 일정을 혼동하지 않습니다.
 
 </details>
 
 ---
 
-2. EKS Standard Support와 Extended Support의 차이점은?
-   - A) Standard는 무료, Extended는 Enterprise 라이선스 필요
-   - B) Standard는 14개월 ($0.10/클러스터/시간), Extended는 추가 12개월 ($0.60/클러스터/시간)
-   - C) Standard는 3개 버전 지원, Extended는 모든 버전 지원
-   - D) Standard는 월간 패치, Extended는 주간 패치 제공
+2. EKS standard·extended 버전 지원 요금은 어떻게 다른가요?
+
+   - A) Standard는 무료
+   - B) Standard14개월·시간당$0.10, extended추가12개월·총시간당$0.60
+   - C) Extended면 모든 과거 버전을 영구 지원
+   - D) Extended에는 보안 patch가 없음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Standard는 14개월 ($0.10/클러스터/시간), Extended는 추가 12개월 ($0.60/클러스터/시간)**
+**정답: B) Standard14개월·시간당$0.10, extended추가12개월·총시간당$0.60**
 
-**설명:**
-EKS의 각 Kubernetes 버전은 14개월의 Standard Support($0.10/클러스터/시간)를 받고, 이후 12개월의 Extended Support($0.60/클러스터/시간 — 6배 비용)에 진입합니다. 총 26개월 지원됩니다. Extended Support는 기본 활성화되어 있습니다. Extended Support도 종료되면 클러스터가 자동 업그레이드됩니다. 이 가격 차이는 지원 버전을 유지하는 인센티브가 됩니다.
+전체 compute/storage/network 비용이 아닌 버전 지원 요금입니다. 기본 upgrade policy는 EXTENDED이며 STANDARD는 standard 종료 후 자동 upgrade될 수 있습니다. Extended에도 관련 보안 patch가 제공됩니다. 현재 release 일정·실제 지원 종료일·workload 위험을 함께 확인합니다.
 
 </details>
 
 ---
 
-3. Sidecar Containers가 GA로 졸업한 Kubernetes 버전은?
-   - A) 1.28 (alpha로 최초 도입)
+3. Native sidecar container의 stable 도달 버전은?
+
+   - A) 1.28
    - B) 1.31
    - C) 1.33
    - D) 1.35
@@ -47,97 +52,98 @@ EKS의 각 Kubernetes 버전은 14개월의 Standard Support($0.10/클러스터/
 
 **정답: C) 1.33**
 
-**설명:**
-Native Sidecar Containers(KEP-753)의 졸업 경로: alpha v1.28 (2023년 8월), beta v1.29 (2023년 12월), GA v1.33 (2025년 4월). 사이드카는 `restartPolicy: Always`를 가진 init 컨테이너로 정의되며, 애플리케이션 컨테이너 전에 시작되고, Pod 수명 동안 계속 실행되며, 메인 컨테이너 후에 종료됩니다. 이를 통해 Job에서 "좀비 사이드카" 문제가 해결되었습니다.
+Alpha1.28 → beta 1.29 → stable 1.33입니다. 재시작 가능한 init container는 restartPolicy:Always를 사용합니다. 시작 순서는 started/startupProbe 상태에 따르고 정상 종료는 Pod의 공통 termination budget을 사용합니다. GA가 모든 helper의 정상 종료나 proxy image 설정의 정확성을 보장하지는 않습니다.
 
 </details>
 
 ---
 
-4. In-Place Pod Resize 기능과 GA 도달 시점은?
-   - A) Pod 레플리카를 재배포 없이 변경; 1.30에서 GA
-   - B) 실행 중인 Pod의 CPU/메모리 요청과 한도를 재시작 없이 수정; 1.35에서 GA
-   - C) PersistentVolume 온라인 크기 조정; 1.31에서 GA
-   - D) 실행 중인 Pod의 컨테이너 이미지 변경; 1.34에서 GA
+4. Container in-place resize의 기능과 stable 버전은?
+
+   - A) Replica scaling;1.30
+   - B) 기존 Pod의 CPU/memory 할당 변경;1.35, 재시작/runtime 제약 존재
+   - C) PVC 확장;1.31
+   - D) 프로세스 재시작 없는 image 변경;1.34
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 실행 중인 Pod의 CPU/메모리 요청과 한도를 재시작 없이 수정; 1.35에서 GA**
+**정답: B) 기존 Pod의 CPU/memory 할당 변경;1.35, 재시작/runtime 제약 존재**
 
-**설명:**
-In-Place Pod Resize(KEP-1287)는 실행 중인 Pod의 CPU와 메모리 요청/한도를 변경 가능하게 합니다. 졸업: alpha v1.27, beta v1.33, GA v1.35 (2025년 12월). v1.33부터 `/resize` 서브리소스를 통해 수정합니다. `resizePolicy` 필드로 리소스 유형별 컨테이너 재시작 필요 여부를 제어합니다. VPA 통합에 혁신적인 기능으로, Pod 중단 없이 리소스 최적화가 가능합니다.
+Alpha1.27·beta 1.33·stable 1.35입니다. Container resizePolicy가 재시작 동작을 제어하고 resource 변경이 pending/infeasible 상태에 머물 수 있습니다. PATCH 수락·containerID 유지만으로 cgroup 적용 완료나 무중단을 증명하지 않습니다. Desired/reported resource·generation·condition을 비교하며 VPA mode의 버전·gate도 별도로 확인합니다.
 
 </details>
 
 ---
 
-5. Kubernetes 1.31에서 Dynamic Resource Allocation(DRA)에 발생한 주요 변화는?
-   - A) DRA가 Deprecated되고 Device Plugins v2로 대체
-   - B) Classic DRA가 제거되고 Structured Parameters DRA만 남음 (이후 1.34에서 GA)
-   - C) DRA가 alpha에서 바로 GA로 졸업
-   - D) DRA가 GPU 외에 네트워크 장치 지원 추가
+5. Kubernetes 1.31의 DRA에 대한 올바른 설명은?
+
+   - A) Classic DRA가 Device Plugins v2로 대체됨
+   - B) DRA는 아직 alpha였고 structured API가 발전하는 동안 classic 할당은 별도 gate로 남음
+   - C) DRA가 이미 GA
+   - D) Stable v1 request 구문이 모든 과거 alpha API와 같음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Classic DRA가 제거되고 Structured Parameters DRA만 남음 (이후 1.34에서 GA)**
+**정답: B) DRA는 아직 alpha였고 structured API가 발전하는 동안 classic 할당은 별도 gate로 남음**
 
-**설명:**
-DRA는 대규모 재설계를 거쳤습니다. Classic DRA(KEP-3063, v1.26부터 alpha)는 스케줄러와 클러스터 오토스케일러가 이해할 수 없는 불투명한 벤더 파라미터를 사용했습니다. Structured Parameters DRA(KEP-4381)가 `ResourceSlice` 객체를 사용한 Kubernetes 네이티브 형식으로 대체했습니다. v1.31에서 Classic DRA가 완전히 제거되었고, Structured DRA는 beta v1.32, GA v1.34로 진행했습니다. AI/ML 워크로드의 GPU/가속기 스케줄링에 핵심적입니다.
+1.31 릴리스·소스에는 DRAControlPlaneController가 기본 비활성 alpha gate로 남아 있습니다. 1.32에서 제거되며 DRA core는1.32 beta·1.34 stable입니다. 기존 퀴즈의 “1.31에서 제거” 답은 잘못되었습니다. 현재 v1 request는 exactly를 사용하고 실제 driver·ResourceSlice·attribute를 확인해야 합니다.
 
 </details>
 
 ---
 
-6. Kubernetes 1.30에서 웹훅 없이 선언적 Admission Control을 가능하게 한 GA 기능은?
+6. 1.30에서 native CEL admission validation으로 stable이 된 기능은?
+
    - A) OPA Gatekeeper v4
-   - B) Kyverno Native Policies
-   - C) CEL 표현식을 사용하는 ValidatingAdmissionPolicy
-   - D) Pod Security Standards 적용
+   - B) 필수 parameter CRD
+   - C) ValidatingAdmissionPolicy
+   - D) 모든 mutating admission 기능
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) CEL 표현식을 사용하는 ValidatingAdmissionPolicy**
+**정답: C) ValidatingAdmissionPolicy**
 
-**설명:**
-ValidatingAdmissionPolicy(KEP-3488)는 CEL(Common Expression Language) 표현식을 사용한 인프로세스 검증을 제공하여 외부 웹훅 서버가 불필요합니다. 졸업: alpha v1.26, beta v1.28, GA v1.30 (2024년 4월). ValidatingAdmissionPolicy(규칙), ValidatingAdmissionPolicyBinding(리소스 바인딩), 선택적 파라미터 CRD의 세 가지 리소스 타입을 사용합니다. 웹훅 기반 대비 레이턴시, 복잡성, 장애 도메인이 감소합니다.
+ValidatingAdmissionPolicy는 policy·binding과 선택적인 parameter object를 사용하며 parameter가 반드시 CRD일 필요는 없습니다. 적합한 로직에는 외부 validation webhook이 필요 없지만 오류·failurePolicy가 요청에 영향을 줄 수 있습니다. Binding 범위를 제한하고 Audit와 Deny를 구분합니다. MAP mutation은 별도 기능이며1.36에서 stable이 되었습니다.
 
 </details>
 
 ---
 
-7. KYAML이란 무엇이며 현재 상태는?
-   - A) Kubernetes YAML 린터; 1.35에서 GA
-   - B) 엄격한 형식을 사용하는 Kubernetes 전용 안전한 YAML 하위 집합; 1.35에서 beta (기본 활성화)
-   - C) YAML-to-JSON 변환 도구; 1.34에서 alpha
-   - D) Kubernetes 매니페스트 유효성 검사 스키마; 1.30부터 stable
+7. 확인한 릴리스 이력에서 KYAML은 무엇인가요?
+
+   - A) 일반 YAML anchor를 모두 거부하는 API server validator
+   - B) Kubectl 출력 형식: alpha 1.34, beta 1.35~1.36, stable 1.37
+   - C) 지원 티켓으로 켜는 새 EKS 서버 기능
+   - D) 모든 입력 manifest를 YAML1.2로 변환해야 하는 요구사항
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 엄격한 형식을 사용하는 Kubernetes 전용 안전한 YAML 하위 집합; 1.35에서 beta (기본 활성화)**
+**정답: B) Kubectl 출력 형식: alpha 1.34, beta 1.35~1.36, stable 1.37**
 
-**설명:**
-KYAML은 YAML의 악명 높은 모호성을 제거하는 Kubernetes 전용 엄격한 YAML 하위 집합입니다. 맵에는 중괄호({}), 리스트에는 대괄호([]), 모든 문자열에는 쌍따옴표를 사용합니다. v1.34에서 alpha로 도입되고, v1.35 (2025년 12월)에서 beta로 졸업하여 기본 활성화되었습니다. `KUBECTL_KYAML=false`로 비활성화 가능합니다. YAML의 "노르웨이 문제"(NO가 boolean false로 해석) 같은 오래된 문제를 해결합니다.
+KYAML은 KEP-5295입니다. 실제 kubectl 1.36.2 검사는 일반 YAML anchor를 읽어 KYAML로 출력했습니다. KUBECTL_KYAML=false는 출력 printer를 끄지만 KYAML input을 JSON으로 출력하는 것은 가능했습니다. Formatting은 schema/admission 검증과 별개입니다. 검토일에는 upstream1.37이 이미 출시되었지만 EKS 1.37 제공을 뜻하지는 않습니다.
 
 </details>
 
 ---
 
-8. EKS 클러스터의 권장 버전 업그레이드 계획 전략은?
-   - A) 업그레이드 빈도를 줄이기 위해 버전 건너뛰기 (예: 1.29 → 1.33)
-   - B) 한 번에 하나의 마이너 버전씩 업그레이드하고, 스테이징에서 feature gate 테스트, API 호환성 및 애드온 정렬 확인 후 프로덕션 적용
-   - C) 항상 최신 버전을 사용하고 롤백을 위해 Extended Support에 의존
-   - D) 안정성을 보장하기 위해 버전이 Extended Support에 진입한 후 업그레이드
+8. 적절한 EKS upgrade 계획은?
+
+   - A) 시간 절약을 위해 minor version 건너뛰기
+   - B) Minor 단계별 연습·실제 호환성/소유권 확인·복구 준비
+   - C) Scanner exit0을 완전한 증거로 취급
+   - D) 컨트롤 플레인 이후 모든 add-on을 항상 같은 순서로 변경
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 한 번에 하나의 마이너 버전씩 업그레이드하고, 스테이징에서 feature gate 테스트, API 호환성 및 애드온 정렬 확인 후 프로덕션 적용**
+**정답: B) Minor 단계별 연습·실제 호환성/소유권 확인·복구 준비**
 
-**설명:**
-EKS는 순차적 마이너 버전 업그레이드를 요구합니다 (1.33 → 1.34 → 1.35; 건너뛰기 불가). 모범 사례: (1) 스테이징에서 새 feature gate와 API 변경 사항을 먼저 테스트, (2) 대상 버전과의 애드온 호환성 확인, (3) `kubectl convert`로 Deprecated API 확인, (4) 컨트롤 플레인 → 애드온 → 노드 그룹 순서로 업그레이드. Standard Support 유지 시 Extended Support의 6배 비용 증가를 피하고 최신 보안 패치에 접근할 수 있습니다.
+현재 지원 일정·manifest/client 사용 근거·정확한 add-on 호환성과 compute별 순서를 확인합니다. 일부 사전 작업은 컨트롤 플레인 이전에 필요합니다. 실제 update ID·readiness·data를 검증하고 Pod resize·node 교체·scaling을 구분합니다. EKS native rollback은 완료된 in-place upgrade 후7일 안의 조건부 기능이지 DB rollback이나 모든 제어 우회 허가가 아닙니다.
 
 </details>
+
+---

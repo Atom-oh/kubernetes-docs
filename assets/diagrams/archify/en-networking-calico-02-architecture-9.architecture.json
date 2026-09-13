@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes API Datastore",
+    "locale": "en",
+    "output": "en-networking-calico-02-architecture-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "calico-side", "label": "Calico components", "focus": ["felix", "typha", "kubecontrollers"], "note": "Felix, Typha, and kube-controllers all talk to one datastore: the Kubernetes API." },
+      { "id": "datastore", "label": "Datastore path", "focus": ["typha", "kubecontrollers", "apiserver", "etcd"], "note": "Calico state is stored as Kubernetes resources; the API server persists them to the cluster's own etcd." }
+    ]
+  },
+  "components": [
+    { "id": "felix", "type": "backend", "label": "Felix", "sublabel": "per-node agent", "pos": [40, 80], "size": [160, 60] },
+    { "id": "typha", "type": "backend", "label": "Typha", "sublabel": "fan-out cache", "pos": [40, 230], "size": [160, 60] },
+    { "id": "kubecontrollers", "type": "backend", "label": "kube-controllers", "sublabel": "reconcilers", "pos": [40, 380], "size": [160, 60] },
+    { "id": "apiserver", "type": "backend", "label": "API Server", "sublabel": "Calico CRDs", "pos": [430, 230], "size": [160, 60] },
+    { "id": "etcd", "type": "database", "label": "etcd", "sublabel": "cluster datastore", "pos": [700, 230], "size": [160, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Calico components", "wraps": ["felix", "typha", "kubecontrollers"] },
+    { "kind": "region", "label": "Kubernetes", "wraps": ["apiserver", "etcd"] }
+  ],
+  "connections": [
+    { "id": "felix-typha", "from": "felix", "to": "typha", "label": "sync", "fromSide": "bottom", "toSide": "top", "labelAt": [150, 185] },
+    { "id": "typha-apiserver", "from": "typha", "to": "apiserver", "label": "watch / write", "variant": "emphasis" },
+    { "id": "kubecontrollers-apiserver", "from": "kubecontrollers", "to": "apiserver", "label": "reconcile" },
+    { "id": "apiserver-etcd", "from": "apiserver", "to": "etcd", "label": "persist" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Recommended", "items": ["No separate etcd cluster to manage", "Uses Kubernetes RBAC for access control"] },
+    { "dot": "emerald", "title": "Operations", "items": ["Simpler operational model", "Works with any Kubernetes distribution"] }
+  ]
+}

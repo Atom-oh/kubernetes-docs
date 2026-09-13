@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Experiment의 전체 실행 흐름",
+    "output": "ko-ai-ml-kubeflow-04-katib-0.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1200,
+      740
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Experiment 입력"
+        },
+        "backend": {
+          "label": "Katib 컴포넌트"
+        },
+        "cloud": {
+          "label": "Trial 학습 잡"
+        },
+        "messagebus": {
+          "label": "메트릭 보고"
+        },
+        "database": {
+          "label": "Experiment status"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "submit",
+        "label": "Experiment 제출과 Suggestion 시작",
+        "focus": [
+          "experiment",
+          "controller",
+          "suggestion"
+        ],
+        "note": "컨트롤러가 Experiment를 리컨사일하고 요청된 알고리즘용 Suggestion 서비스를 시작한다."
+      },
+      {
+        "id": "loop",
+        "label": "탐색 루프",
+        "focus": [
+          "suggestion",
+          "propose",
+          "trial1",
+          "trial2",
+          "trialn",
+          "sidecar"
+        ],
+        "note": "Trial Job은 pull collector 또는 Push로 DB manager에 메트릭을 보고합니다."
+      },
+      {
+        "id": "finish",
+        "label": "종료와 결과 기록",
+        "focus": [
+          "suggestion",
+          "succeeded",
+          "record"
+        ],
+        "note": "컨트롤러가 목표·완료 수·실패·Suggestion 종료를 판단합니다. Succeeded는 품질 인증이 아닙니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "experiment",
+      "type": "frontend",
+      "label": "Experiment 객체 생성",
+      "sublabel": "objective · parameters · trialTemplate",
+      "pos": [
+        40,
+        30
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Katib 컨트롤러",
+      "sublabel": "Experiment 리컨사일",
+      "pos": [
+        300,
+        30
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "suggestion",
+      "type": "backend",
+      "label": "Suggestion 서비스 생성",
+      "sublabel": "선택된 알고리즘용",
+      "pos": [
+        500,
+        150
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "propose",
+      "type": "backend",
+      "label": "하이퍼파라미터 조합 제안",
+      "sublabel": "Trial 동시성, GPU 수 아님",
+      "pos": [
+        500,
+        300
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "trial1",
+      "type": "cloud",
+      "label": "Trial 1",
+      "sublabel": "학습 잡",
+      "pos": [
+        300,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "trial2",
+      "type": "cloud",
+      "label": "Trial 2",
+      "sublabel": "학습 잡",
+      "pos": [
+        530,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "trialn",
+      "type": "cloud",
+      "label": "Trial N",
+      "sublabel": "학습 잡",
+      "pos": [
+        760,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "messagebus",
+      "label": "DB manager 메트릭",
+      "sublabel": "pull collector / Push",
+      "pos": [
+        500,
+        580
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "succeeded",
+      "type": "database",
+      "label": "컨트롤러 종료 판정",
+      "sublabel": "Succeeded / Failed",
+      "pos": [
+        960,
+        150
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "record",
+      "type": "database",
+      "label": "현재 최적 관측값",
+      "sublabel": "currentOptimalTrial / 조건",
+      "pos": [
+        960,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "exp-ctrl",
+      "from": "experiment",
+      "to": "controller",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-sugg",
+      "from": "controller",
+      "to": "suggestion",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sugg-propose",
+      "from": "suggestion",
+      "to": "propose",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "propose-t1",
+      "from": "propose",
+      "to": "trial1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "propose-t2",
+      "from": "propose",
+      "to": "trial2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "propose-tn",
+      "from": "propose",
+      "to": "trialn",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t1-sidecar",
+      "from": "trial1",
+      "to": "sidecar",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t2-sidecar",
+      "from": "trial2",
+      "to": "sidecar",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tn-sidecar",
+      "from": "trialn",
+      "to": "sidecar",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sidecar-sugg",
+      "from": "sidecar",
+      "to": "suggestion",
+      "label": "결과 피드백",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          230,
+          612
+        ],
+        [
+          230,
+          182
+        ]
+      ]
+    },
+    {
+      "id": "sugg-succeeded",
+      "from": "controller",
+      "to": "succeeded",
+      "label": "종료 조건",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          800,
+          62
+        ],
+        [
+          800,
+          182
+        ]
+      ],
+      "labelAt": [
+        850,
+        110
+      ]
+    },
+    {
+      "id": "succeeded-record",
+      "from": "succeeded",
+      "to": "record",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "자원 규모",
+      "items": [
+        "동시 Trial × Trial당 Pod × Pod당 자원 + 오버헤드",
+        "maxTrialCount는 성공한 학습 수나 비용 한도가 아닙니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "0.19.0 medianstop",
+      "items": [
+        "공식 중앙값 설명과 달리 저장된 평균값의 산술평균을 계산합니다.",
+        "기본값: min_trials_required=3 / start_step=4"
+      ]
+    }
+  ]
+}

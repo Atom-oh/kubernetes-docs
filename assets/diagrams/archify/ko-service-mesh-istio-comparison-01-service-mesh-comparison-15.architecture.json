@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kong Mesh Multi-zone",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-15.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "kong-global",
+      "type": "backend",
+      "label": "Kong Mesh Global",
+      "sublabel": "Global Control Plane",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "zone1-cp",
+      "type": "backend",
+      "label": "Zone CP",
+      "sublabel": "Zone 컨트롤 플레인",
+      "pos": [
+        80,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone1-svc",
+      "type": "frontend",
+      "label": "Services",
+      "sublabel": "Zone 내 서비스",
+      "pos": [
+        80,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone2-cp",
+      "type": "backend",
+      "label": "Zone CP",
+      "sublabel": "Zone 컨트롤 플레인",
+      "pos": [
+        510,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone2-svc",
+      "type": "frontend",
+      "label": "Services",
+      "sublabel": "Zone 내 서비스",
+      "pos": [
+        510,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone3-cp",
+      "type": "backend",
+      "label": "Zone CP",
+      "sublabel": "Zone 컨트롤 플레인",
+      "pos": [
+        940,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone3-svc",
+      "type": "frontend",
+      "label": "Services",
+      "sublabel": "Zone 내 서비스",
+      "pos": [
+        940,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Zone 1 (AWS)",
+      "wraps": [
+        "zone1-cp",
+        "zone1-svc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 2 (Azure)",
+      "wraps": [
+        "zone2-cp",
+        "zone2-svc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 3 (On-prem)",
+      "wraps": [
+        "zone3-cp",
+        "zone3-svc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sync-zone1",
+      "from": "kong-global",
+      "to": "zone1-cp",
+      "label": "정책 동기화",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync-zone2",
+      "from": "kong-global",
+      "to": "zone2-cp",
+      "label": "정책 동기화",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "sync-zone3",
+      "from": "kong-global",
+      "to": "zone3-cp",
+      "label": "정책 동기화",
+      "variant": "emphasis"
+    },
+    {
+      "id": "zone1-cp-svc",
+      "from": "zone1-cp",
+      "to": "zone1-svc",
+      "variant": "dashed"
+    },
+    {
+      "id": "zone2-cp-svc",
+      "from": "zone2-cp",
+      "to": "zone2-svc",
+      "variant": "dashed"
+    },
+    {
+      "id": "zone3-cp-svc",
+      "from": "zone3-cp",
+      "to": "zone3-svc",
+      "variant": "dashed"
+    },
+    {
+      "id": "cross-zone-1-2",
+      "from": "zone1-svc",
+      "to": "zone2-svc",
+      "label": "Cross-zone 통신"
+    },
+    {
+      "id": "cross-zone-1-3",
+      "from": "zone1-svc",
+      "to": "zone3-svc",
+      "label": "Cross-zone 통신",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          160,
+          545
+        ],
+        [
+          1020,
+          545
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Global Control Plane",
+      "items": [
+        "Kong Mesh Global이 정책을 모든 Zone CP에 동기화한다",
+        "Zone CP가 자기 Zone의 서비스에 정책을 적용한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Zone 간 통신",
+      "items": [
+        "AWS, Azure, On-prem Zone의 서비스가 Zone 경계를 넘어 통신한다",
+        "Service Discovery, Traffic Failover, mTLS가 자동으로 동작한다"
+      ]
+    }
+  ]
+}

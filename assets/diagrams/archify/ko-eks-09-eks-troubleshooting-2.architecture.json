@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 네트워킹 문제 분류",
+    "output": "ko-eks-09-eks-troubleshooting-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "AWS 계층 (VPC / ELB)"
+        },
+        "backend": {
+          "label": "Kubernetes 계층"
+        },
+        "security": {
+          "label": "일반적인 원인"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pod-branch",
+        "label": "파드 간 통신",
+        "focus": [
+          "root",
+          "pod",
+          "pod-causes"
+        ],
+        "note": "네트워크 정책, 보안 그룹, CNI 플러그인, 파드 CIDR, MTU 다섯 가지 원인을 점검합니다."
+      },
+      {
+        "id": "service-branch",
+        "label": "서비스 접근",
+        "focus": [
+          "root",
+          "service",
+          "service-causes"
+        ],
+        "note": "선택자·포트 불일치, 엔드포인트, 파드 상태, kube-proxy 순으로 확인합니다."
+      },
+      {
+        "id": "lb-branch",
+        "label": "로드 밸런서",
+        "focus": [
+          "root",
+          "lb",
+          "lb-causes"
+        ],
+        "note": "서브넷 태그, 보안 그룹 규칙, 상태 확인, 서비스 주석, 할당량을 확인합니다."
+      },
+      {
+        "id": "dns-cni",
+        "label": "DNS · VPC CNI",
+        "focus": [
+          "root",
+          "dns",
+          "cni"
+        ],
+        "note": "CoreDNS와 VPC CNI(IP 부족, ENI 한도) 문제는 별도 절에서 다룹니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "네트워킹 문제",
+      "sublabel": "EKS 클러스터",
+      "pos": [
+        490,
+        40
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "파드 간 통신 문제",
+      "sublabel": "원인 · 해결 단계 · 해결 방법",
+      "pos": [
+        30,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "서비스 접근 문제",
+      "sublabel": "원인 · 해결 단계 · 해결 방법",
+      "pos": [
+        260,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "로드 밸런서 문제",
+      "sublabel": "원인 · 해결 단계 · 해결 방법",
+      "pos": [
+        490,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "dns",
+      "type": "backend",
+      "label": "DNS 문제",
+      "sublabel": "CoreDNS / kube-dns",
+      "pos": [
+        720,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "cloud",
+      "label": "VPC CNI 문제",
+      "sublabel": "IP 부족 / ENI 한도",
+      "pos": [
+        950,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "pod-causes",
+      "type": "security",
+      "label": "일반적인 원인",
+      "sublabel": "정책 · SG · CNI · CIDR · MTU",
+      "pos": [
+        30,
+        330
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "service-causes",
+      "type": "security",
+      "label": "일반적인 원인",
+      "sublabel": "선택자 · 엔드포인트 · kube-proxy",
+      "pos": [
+        260,
+        330
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "lb-causes",
+      "type": "security",
+      "label": "일반적인 원인",
+      "sublabel": "서브넷 태그 · SG · 상태 확인",
+      "pos": [
+        490,
+        330
+      ],
+      "size": [
+        210,
+        62
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-pod",
+      "from": "root",
+      "to": "pod",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-service",
+      "from": "root",
+      "to": "service",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-lb",
+      "from": "root",
+      "to": "lb",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-dns",
+      "from": "root",
+      "to": "dns",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-cni",
+      "from": "root",
+      "to": "cni",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-to-causes",
+      "from": "pod",
+      "to": "pod-causes"
+    },
+    {
+      "id": "service-to-causes",
+      "from": "service",
+      "to": "service-causes"
+    },
+    {
+      "id": "lb-to-causes",
+      "from": "lb",
+      "to": "lb-causes"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "파드 간 통신 · 일반적인 원인",
+      "items": [
+        "네트워크 정책이 파드 간 통신을 차단",
+        "보안 그룹 규칙이 파드 간 통신을 차단",
+        "CNI 플러그인 구성 또는 버전 문제",
+        "파드 CIDR 범위 충돌",
+        "네트워크 인터페이스 간 MTU 불일치"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "서비스 접근 · 일반적인 원인",
+      "items": [
+        "서비스 선택자가 파드 레이블과 불일치",
+        "서비스 엔드포인트가 생성되지 않음",
+        "파드가 준비되지 않음",
+        "서비스 포트가 파드 포트와 불일치",
+        "kube-proxy 문제"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "로드 밸런서 · 일반적인 원인",
+      "items": [
+        "로드 밸런서 서브넷 태그 누락",
+        "제한적인 보안 그룹 규칙",
+        "로드 밸런서 상태 확인 실패",
+        "잘못된 서비스 주석",
+        "할당량 초과"
+      ]
+    }
+  ]
+}

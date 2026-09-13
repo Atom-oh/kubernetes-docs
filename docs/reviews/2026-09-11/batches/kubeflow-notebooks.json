@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/kubeflow/03-notebooks.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "57af6ffcf3af3de73511f4f1c52aa4b52ac26bd9a09c572922f191af668cec7c",
+    "summary": "Verified Notebooks1.11.0 stop annotation, disabled culling defaults and kernel API caveats, namespace/Profile boundaries, volume scope and RWO semantics, image digest/runtime drift; corrected Workspaces beta wording vs actual alpha.3 images."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/kubeflow/03-notebooks-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f73d996232beae493662ee819b554a8c2b5350c9b9a2e2c463e2074e7fe55bcb",
+    "summary": "Verified Notebooks1.11.0 stop annotation, disabled culling defaults and kernel API caveats, namespace/Profile boundaries, volume scope and RWO semantics, image digest/runtime drift; corrected Workspaces beta wording vs actual alpha.3 images."
+  },
+  {
+    "path": "en/ai-ml/kubeflow/03-notebooks.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "3f8c1410ba27dd481289586e696598028124459c1e3149dadfc8b8c31e66121e",
+    "summary": "Verified Notebooks1.11.0 stop annotation, disabled culling defaults and kernel API caveats, namespace/Profile boundaries, volume scope and RWO semantics, image digest/runtime drift; corrected Workspaces beta wording vs actual alpha.3 images."
+  },
+  {
+    "path": "en/quizzes/ai-ml/kubeflow/03-notebooks-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "170f4eab75334114d50de17a56ba491032218b517c9bcecc57644e461c410925",
+    "summary": "Verified Notebooks1.11.0 stop annotation, disabled culling defaults and kernel API caveats, namespace/Profile boundaries, volume scope and RWO semantics, image digest/runtime drift; corrected Workspaces beta wording vs actual alpha.3 images."
+  }
+]

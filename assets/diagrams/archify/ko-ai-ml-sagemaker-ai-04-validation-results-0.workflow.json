@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "SageMaker Qwen PII 검증 워크플로와 중단 지점",
+    "title": "SageMaker Qwen PII · 2026-09-01–02 검증 기록",
     "output": "public/archmaps/ko-ai-ml-sagemaker-ai-04-validation-results-0.html",
     "animation": "none",
     "quality_profile": "showcase",
@@ -35,15 +35,32 @@
       },
       {
         "id": "stop-before-spend",
-        "label": "비용 전 중단",
+        "label": "GPU 실행 전 중단",
         "focus": [
           "partialCleanup",
           "blocked",
           "trainingNotRun"
         ],
-        "note": "프로젝트 1개가 남은 상태를 기록하고 GPU 학습을 시작하지 않았습니다."
+        "note": "9월 2일 프로젝트 1개 잔존 기록입니다. 현재 상태나 전체 비용 0원을 뜻하지 않습니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "database": {
+          "label": "데이터"
+        },
+        "external": {
+          "label": "외부 · 참조"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
     {
@@ -160,7 +177,7 @@
       "col": 1,
       "type": "database",
       "label": "부분 정리",
-      "tag": "VERIFIED",
+      "tag": "RECORDED",
       "width": 110
     },
     {
@@ -178,7 +195,7 @@
       "col": 5,
       "type": "external",
       "label": "GPU 학습 미실행",
-      "tag": "NO SPEND",
+      "tag": "NO GPU RUN",
       "width": 142
     }
   ],
@@ -239,7 +256,7 @@
     {
       "from": "blocked",
       "to": "trainingNotRun",
-      "label": "stop before spend",
+      "label": "before GPU run",
       "variant": "security",
       "role": "main"
     }
@@ -247,7 +264,7 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "실제 관측",
+      "title": "당시 관측 · 9월 1–2일",
       "items": [
         "합성 데이터 2,200건 · Python 테스트 30개 · read-only preflight 통과",
         "SageMaker MLflow App 3.10.1 · App 상태 계약 불일치 확인",
@@ -261,7 +278,8 @@
       "items": [
         "SageMaker Training Job은 실행하지 않음",
         "EKS GPU Job도 실행하지 않음",
-        "파인튜닝 F1·학습 시간·GPU 비용은 측정값이 없음"
+        "파인튜닝 F1·학습 시간·GPU 비용은 측정값이 없음",
+        "현재 AWS 잔존 상태·전체 청구 금액은 재확인하지 않음"
       ]
     }
   ]

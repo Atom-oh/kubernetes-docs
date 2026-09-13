@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LLM 추론 핵심 성능 지표",
+    "output": "ko-ai-ml-07-ai-ml-best-practices-1.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "LLM 추론 지표"
+        },
+        "frontend": {
+          "label": "사용자 경험 영향"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "responsiveness",
+        "label": "인지된 응답성",
+        "focus": [
+          "ttft",
+          "e2e",
+          "responsiveness"
+        ],
+        "note": "first-byte와 first-token을 구분하고 workload별 SLO를 정합니다."
+      },
+      {
+        "id": "streaming",
+        "label": "스트리밍 품질",
+        "focus": [
+          "itl",
+          "tps",
+          "streaming"
+        ],
+        "note": "한 chunk가 여러 token일 수 있으며 nonstreaming은 실제 ITL을 측정하지 못합니다."
+      },
+      {
+        "id": "capacity",
+        "label": "시스템 용량",
+        "focus": [
+          "throughput",
+          "capacity"
+        ],
+        "note": "처리량(초당 요청 수)은 지연 시간 SLO를 지키는 범위 안에서 최대화한다."
+      }
+    ],
+    "viewBox": [
+      1040,
+      612
+    ]
+  },
+  "components": [
+    {
+      "id": "ttft",
+      "type": "backend",
+      "label": "TTFT",
+      "sublabel": "첫 nonempty 출력 수신",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "e2e",
+      "type": "backend",
+      "label": "E2E 지연 시간",
+      "sublabel": "요청부터 완료까지 총 시간",
+      "pos": [
+        60,
+        160
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "itl",
+      "type": "backend",
+      "label": "ITL",
+      "sublabel": "token / chunk 간격",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "tps",
+      "type": "backend",
+      "label": "TPOT / TPS",
+      "sublabel": "측정 구간·token 수 명시",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "backend",
+      "label": "처리량",
+      "sublabel": "성공 완료 요청 / 시간",
+      "pos": [
+        60,
+        460
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "responsiveness",
+      "type": "frontend",
+      "label": "인지된 응답성",
+      "sublabel": "첫 반응과 전체 대기 시간",
+      "pos": [
+        720,
+        110
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "streaming",
+      "type": "frontend",
+      "label": "스트리밍 품질",
+      "sublabel": "토큰 출력의 부드러움",
+      "pos": [
+        720,
+        310
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "capacity",
+      "type": "frontend",
+      "label": "시스템 용량",
+      "sublabel": "SLO를 만족하는 goodput",
+      "pos": [
+        720,
+        460
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "LLM 추론 지표",
+      "wraps": [
+        "ttft",
+        "e2e",
+        "itl",
+        "tps",
+        "throughput"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "사용자 경험 영향",
+      "wraps": [
+        "responsiveness",
+        "streaming",
+        "capacity"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ttft-responsiveness",
+      "from": "ttft",
+      "to": "responsiveness",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e2e-responsiveness",
+      "from": "e2e",
+      "to": "responsiveness"
+    },
+    {
+      "id": "itl-streaming",
+      "from": "itl",
+      "to": "streaming"
+    },
+    {
+      "id": "tps-streaming",
+      "from": "tps",
+      "to": "streaming"
+    },
+    {
+      "id": "throughput-capacity",
+      "from": "throughput",
+      "to": "capacity"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "집계의 경계",
+      "items": [
+        "token1개 이하는 TPOT/ITL 평균이 정의되지 않습니다.",
+        "집계 TPS는 요청별 TPS의 단순 평균과 다릅니다."
+      ]
+    }
+  ]
+}

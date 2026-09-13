@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      640
+    ],
+    "title": "메트릭에서 준비된 Pod까지"
+  },
+  "participants": [
+    {
+      "id": "keda",
+      "type": "messagebus",
+      "label": "KEDA",
+      "sublabel": "메트릭 어댑터"
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA",
+      "sublabel": "권고 · 정책"
+    },
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "컨트롤러 · 스케줄러"
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter"
+    },
+    {
+      "id": "nodes",
+      "type": "external",
+      "label": "EC2 / 노드",
+      "sublabel": "부팅 · kubelet"
+    }
+  ],
+  "segments": [
+    {
+      "from": 155,
+      "to": 295,
+      "label": "수요와 배치 요구"
+    },
+    {
+      "from": 310,
+      "to": 520,
+      "label": "노드와 앱 준비 · 소요 시간 측정"
+    }
+  ],
+  "messages": [
+    {
+      "id": "metrics",
+      "from": "keda",
+      "to": "hpa",
+      "y": 185,
+      "label": "메트릭 제공"
+    },
+    {
+      "id": "replicas",
+      "from": "hpa",
+      "to": "k8s",
+      "y": 230,
+      "label": "scale 대상 변경",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "karpenter",
+      "to": "k8s",
+      "y": 275,
+      "label": "미배치 Pod 관찰"
+    },
+    {
+      "id": "launch",
+      "from": "karpenter",
+      "to": "nodes",
+      "y": 340,
+      "label": "인스턴스 기동",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-ready",
+      "from": "nodes",
+      "to": "k8s",
+      "y": 390,
+      "label": "등록 · Node Ready",
+      "variant": "return"
+    },
+    {
+      "id": "schedule",
+      "from": "k8s",
+      "to": "nodes",
+      "y": 440,
+      "label": "Pod 배치 · 시작"
+    },
+    {
+      "id": "pod-ready",
+      "from": "nodes",
+      "to": "k8s",
+      "y": 490,
+      "label": "Pod readiness 보고",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "hpa",
+      "from": 180,
+      "to": 235,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 225,
+      "to": 505,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 270,
+      "to": 345,
+      "type": "cloud"
+    },
+    {
+      "participant": "nodes",
+      "from": 335,
+      "to": 505,
+      "type": "external"
+    }
+  ]
+}

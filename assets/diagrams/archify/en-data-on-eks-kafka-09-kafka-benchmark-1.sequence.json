@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "acks=1 vs acks=all — the path of a produce request to commit",
+    "title": "Acknowledgements: append, replication and writeback",
     "quality_profile": "showcase",
     "locale": "en",
     "animation": "trace",
@@ -20,7 +20,7 @@
           "leader",
           "pagecache"
         ],
-        "note": "Responds as soon as the leader's local log (page cache) has the record. Measured p99 17 ms at 20k rec/s (B2)."
+        "note": "Respond after leader append, without waiting for followers. B2's p99 of 17 ms is a single-run report."
       },
       {
         "id": "acksall",
@@ -31,7 +31,7 @@
           "follower1",
           "follower2"
         ],
-        "note": "Both followers replicate by pulling and the HW must advance before the response. Same p50 (3 ms) but p99 126 ms (B1)."
+        "note": "This trace assumes a stable three-member ISR. A batch ending at offset r requires next offset r+1."
       },
       {
         "id": "flush",
@@ -40,7 +40,7 @@
           "pagecache",
           "ebs"
         ],
-        "note": "No fsync by default — the OS flushes in the background. At saturation the RF3 ceiling ≈130–135 MiB/s = one gp3 volume's write cap (F1)."
+        "note": "OS writeback can overlap other stages. An ack is not a per-record fsync guarantee on each replica."
       }
     ]
   },
@@ -80,17 +80,17 @@
     {
       "from": 165,
       "to": 312,
-      "label": "acks=1 — respond as soon as the leader's local log has it · measured at 20k rec/s: p50 3 ms · p99 17 ms (B2)"
+      "label": "acks=1 · respond after leader append · B2 is a single-run observation"
     },
     {
       "from": 332,
       "to": 735,
-      "label": "acks=all + min.insync.replicas=2 — commit only after the followers have pulled the records · measured at 20k rec/s: p50 3 ms · p99 126 ms (B1) — the cost is in the tail, not p50"
+      "label": "acks=all · stable ISR of three shown · HW ≥ last offset + 1 and ISR condition"
     },
     {
       "from": 755,
       "to": 825,
-      "label": "Durability comes from replication — disk flush is asynchronous · at saturation the RF3 ingest ceiling ≈130–135 MiB/s = one gp3 volume's write cap (F1)"
+      "label": "Background writeback · can overlap the stages above"
     }
   ],
   "messages": [
@@ -107,7 +107,7 @@
       "from": "leader",
       "to": "pagecache",
       "y": 238,
-      "label": "Local log append — written to page cache, no disk flush"
+      "label": "Local append · no per-record fsync guarantee"
     },
     {
       "id": "ack-acks1",
@@ -130,22 +130,22 @@
       "from": "leader",
       "to": "pagecache",
       "y": 402,
-      "label": "Local log append — response held until HW reaches this offset"
+      "label": "Local append · required offset = last offset + 1"
     },
     {
       "id": "fetch1",
       "from": "follower1",
       "to": "leader",
       "y": 447,
-      "label": "FetchRequest (replicaId=1)",
-      "note": "Followers pull from the leader — the leader never pushes"
+      "label": "FetchRequest · follower 1",
+      "note": "The follower initiates the fetch."
     },
     {
       "id": "fetch2",
       "from": "follower2",
       "to": "leader",
       "y": 482,
-      "label": "FetchRequest (replicaId=2)"
+      "label": "FetchRequest · follower 2"
     },
     {
       "id": "fetch-resp1",
@@ -178,14 +178,14 @@
       "to": "leader",
       "y": 645,
       "label": "Next FetchRequest — new LEO → leader advances HW",
-      "note": "HW = min LEO across the ISR · if ISR < min.insync.replicas, acks=all writes are rejected (NotEnoughReplicas)"
+      "note": "Tracks progress for the stable ISR. ISR changes and minISR also affect acknowledgement."
     },
     {
       "id": "ack-acksall",
       "from": "leader",
       "to": "producer",
       "y": 700,
-      "label": "ProduceResponse — committed (HW ≥ offset)",
+      "label": "ProduceResponse · HW ≥ last offset + 1",
       "variant": "return"
     },
     {
@@ -193,7 +193,7 @@
       "from": "pagecache",
       "to": "ebs",
       "y": 785,
-      "label": "OS background flush (default: no application fsync)",
+      "label": "OS writeback · placement is schematic",
       "variant": "dashed"
     }
   ],

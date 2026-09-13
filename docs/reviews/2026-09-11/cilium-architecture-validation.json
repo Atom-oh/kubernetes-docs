@@ -1,0 +1,247 @@
+{
+  "original": {
+    "path": "/tmp/mesh-cilium-architecture-original-en.md",
+    "yamlBlocks": 11,
+    "schema": [
+      {
+        "block": 2,
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "block": 3,
+        "kind": "CiliumClusterwideEnvoyConfig",
+        "errors": []
+      },
+      {
+        "block": 4,
+        "kind": "CiliumNetworkPolicy",
+        "errors": [
+          "{'name': 'X-Request-ID', 'value': '.*'} is not of type 'string'"
+        ]
+      }
+    ],
+    "references": [
+      {
+        "block": 2,
+        "issues": [
+          "Missing inline route Cluster"
+        ]
+      },
+      {
+        "block": 3,
+        "issues": [
+          "Service reference is a literal nonexistent wildcard",
+          "filter_enabled is not100%",
+          "filter_enforced is not100%"
+        ]
+      }
+    ],
+    "envoy": [
+      {
+        "path": "/tmp/mesh-cilium-architecture-original-en.md:block2:my-service-listener"
+      },
+      {
+        "path": "/tmp/mesh-cilium-architecture-original-en.md:block3:global-listener",
+        "error": "invalid HttpConnectionManager.RouteSpecifier: value is required"
+      }
+    ],
+    "envoyExit": 1
+  },
+  "originalIgnoredHelmKeys": {
+    "identicalConfigMap": true,
+    "identicalEnvoyContainer": true,
+    "baselineObjects": 25,
+    "ignoredObjects": 25
+  },
+  "corrected": [
+    {
+      "path": "en/service-mesh/cilium-service-mesh/01-architecture.md",
+      "yamlBlocks": 8,
+      "schema": [
+        {
+          "block": 2,
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "block": 3,
+          "kind": "CiliumClusterwideEnvoyConfig",
+          "errors": []
+        },
+        {
+          "block": 4,
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        }
+      ],
+      "references": [
+        {
+          "block": 2,
+          "issues": []
+        },
+        {
+          "block": 3,
+          "issues": []
+        }
+      ],
+      "envoy": [
+        {
+          "path": "en/service-mesh/cilium-service-mesh/01-architecture.md:block2:http-listener"
+        },
+        {
+          "path": "en/service-mesh/cilium-service-mesh/01-architecture.md:block2:http-route"
+        },
+        {
+          "path": "en/service-mesh/cilium-service-mesh/01-architecture.md:block2:default/my-service"
+        },
+        {
+          "path": "en/service-mesh/cilium-service-mesh/01-architecture.md:block3:http-listener"
+        },
+        {
+          "path": "en/service-mesh/cilium-service-mesh/01-architecture.md:block3:http-route"
+        },
+        {
+          "path": "en/service-mesh/cilium-service-mesh/01-architecture.md:block3:default/rate-limited-service"
+        }
+      ],
+      "envoyExit": 0
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/01-architecture.md",
+      "yamlBlocks": 8,
+      "schema": [
+        {
+          "block": 2,
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "block": 3,
+          "kind": "CiliumClusterwideEnvoyConfig",
+          "errors": []
+        },
+        {
+          "block": 4,
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        }
+      ],
+      "references": [
+        {
+          "block": 2,
+          "issues": []
+        },
+        {
+          "block": 3,
+          "issues": []
+        }
+      ],
+      "envoy": [
+        {
+          "path": "ko/service-mesh/cilium-service-mesh/01-architecture.md:block2:http-listener"
+        },
+        {
+          "path": "ko/service-mesh/cilium-service-mesh/01-architecture.md:block2:http-route"
+        },
+        {
+          "path": "ko/service-mesh/cilium-service-mesh/01-architecture.md:block2:default/my-service"
+        },
+        {
+          "path": "ko/service-mesh/cilium-service-mesh/01-architecture.md:block3:http-listener"
+        },
+        {
+          "path": "ko/service-mesh/cilium-service-mesh/01-architecture.md:block3:http-route"
+        },
+        {
+          "path": "ko/service-mesh/cilium-service-mesh/01-architecture.md:block3:default/rate-limited-service"
+        }
+      ],
+      "envoyExit": 0
+    }
+  ],
+  "helmCorrected": {
+    "feature": {
+      "objects": 27
+    },
+    "kpr": {
+      "objects": 25
+    },
+    "auth": {
+      "objects": 41
+    },
+    "maps": {
+      "objects": 25
+    },
+    "scaling": {
+      "objects": 25
+    }
+  },
+  "codeParity": true,
+  "quizQuestionsPerLocale": {
+    "en": 12,
+    "ko": 12
+  },
+  "limits": [
+    "No live Cilium/Envoy deployment or policy/load test. Exact Cilium-pinned Envoy1.37.0 protobuf validation is not the full Cilium resource parser or xDS acceptance; service/reference checks are separate static checks.",
+    "Helm output and CRD schemas do not validate infrastructure readiness, runtime CNI migration or end-to-end security.",
+    "Resources and charts checked offline; no cluster/AWS changes."
+  ],
+  "date": "2026-09-11",
+  "sources": [
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/proxy/envoy.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/bpf/bpf_lxc.c",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/routing.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/performance/tuning.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/ebpf/maps.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/internals/cilium_operator.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes/servicemesh/envoy/envoy-traffic-management-test.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ciliumenvoyconfig/cec_resource_parser.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumenvoyconfigs.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/identity.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/auth/spire/certificate_provider.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+    "https://github.com/envoyproxy/envoy/blob/v1.37.5/api/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumclusterwideenvoyconfigs.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/datapath/types/types_generated.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/go.mod"
+  ],
+  "docsTest": "118/118",
+  "files": [
+    "en/service-mesh/cilium-service-mesh/01-architecture.md",
+    "ko/service-mesh/cilium-service-mesh/01-architecture.md",
+    "en/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+    "ko/quizzes/service-mesh/cilium-service-mesh/architecture.md"
+  ],
+  "figureReview": {
+    "retainedPerLocale": [
+      0,
+      1,
+      7,
+      10,
+      12
+    ],
+    "removedPerLocale": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      11,
+      13,
+      14
+    ]
+  },
+  "nativeApiModule": {
+    "url": "https://proxy.golang.org/github.com/envoyproxy/go-control-plane/envoy/@v/v1.37.0.zip",
+    "sha256": "dea96dd46aa4480f6f5dad6b52b9059d088d06a090968557dafa8cd633f629a2",
+    "files": 1881,
+    "apiVersion": "Cilium1.20.1 go.mod pins go-control-plane/envoy v1.37.0",
+    "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/mesh-cilium-envoy"
+  }
+}

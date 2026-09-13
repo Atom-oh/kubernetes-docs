@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-Cluster Flagger",
+    "locale": "en",
+    "output": "en-gitops-04-flagger-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "gitops-source",
+        "label": "Single Git source",
+        "focus": [
+          "git",
+          "flux"
+        ],
+        "note": "Central Flux needs per-target kubeConfig/workload identity; sharing Git does not grant remote access."
+      },
+      {
+        "id": "per-cluster-canary",
+        "label": "Per-cluster canary",
+        "focus": [
+          "flagger-a",
+          "app-a",
+          "flagger-b",
+          "app-b",
+          "flagger-s",
+          "app-s"
+        ],
+        "note": "Each cluster's Flagger manages only local resources and promotes or rolls back independently."
+      }
+    ],
+    "viewBox": [
+      960,
+      592
+    ]
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repository",
+      "sublabel": "single source of truth",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "flux",
+      "type": "backend",
+      "label": "Flux remote sync",
+      "sublabel": "explicit remote identity",
+      "pos": [
+        60,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "flagger-a",
+      "type": "backend",
+      "label": "Flagger A",
+      "sublabel": "canary analysis",
+      "pos": [
+        440,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app-a",
+      "type": "frontend",
+      "label": "App Primary / Canary",
+      "sublabel": "interval 2m · stepWeight 5",
+      "pos": [
+        680,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "flagger-b",
+      "type": "backend",
+      "label": "Flagger B",
+      "sublabel": "canary analysis",
+      "pos": [
+        440,
+        260
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app-b",
+      "type": "frontend",
+      "label": "App Primary / Canary",
+      "sublabel": "per-cluster overlay",
+      "pos": [
+        680,
+        260
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "flagger-s",
+      "type": "backend",
+      "label": "Flagger S",
+      "sublabel": "canary analysis",
+      "pos": [
+        440,
+        460
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app-s",
+      "type": "frontend",
+      "label": "App Primary / Canary",
+      "sublabel": "staging settings",
+      "pos": [
+        680,
+        460
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Management Cluster",
+      "wraps": [
+        "flux"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Production A · ap-northeast-2",
+      "wraps": [
+        "flagger-a",
+        "app-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Production B · us-west-2",
+      "wraps": [
+        "flagger-b",
+        "app-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Staging",
+      "wraps": [
+        "flagger-s",
+        "app-s"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-to-flux",
+      "from": "git",
+      "to": "flux",
+      "label": "Git sync",
+      "variant": "emphasis",
+      "labelAt": [
+        205,
+        210
+      ]
+    },
+    {
+      "id": "flux-to-a",
+      "from": "flux",
+      "to": "flagger-a",
+      "label": "via Kubernetes API"
+    },
+    {
+      "id": "flux-to-b",
+      "from": "flux",
+      "to": "flagger-b"
+    },
+    {
+      "id": "flux-to-s",
+      "from": "flux",
+      "to": "flagger-s"
+    },
+    {
+      "id": "a-canary",
+      "from": "flagger-a",
+      "to": "app-a",
+      "label": "promote / rollback",
+      "labelDy": -24
+    },
+    {
+      "id": "b-canary",
+      "from": "flagger-b",
+      "to": "app-b"
+    },
+    {
+      "id": "s-canary",
+      "from": "flagger-s",
+      "to": "app-s"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Central pattern prerequisites",
+      "items": [
+        "Per-target remote identity and Kustomization",
+        "Self-dependency is not a staging approval gate"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Environment promotion",
+      "items": [
+        "Flagger reconciles local workloads in each cluster",
+        "Approve the next Git change after checking current-revision results"
+      ]
+    }
+  ]
+}

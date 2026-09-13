@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Metrics and HPA recommendations",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      420
+    ]
+  },
+  "components": [
+    {
+      "id": "cron",
+      "type": "external",
+      "label": "Cron",
+      "sublabel": "Scheduled demand floor",
+      "pos": [
+        40,
+        85
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "demand",
+      "type": "external",
+      "label": "Prometheus",
+      "sublabel": "Incoming request demand",
+      "pos": [
+        40,
+        245
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "keda",
+      "type": "messagebus",
+      "label": "KEDA",
+      "sublabel": "Expose external metrics",
+      "pos": [
+        310,
+        165
+      ],
+      "size": [
+        170,
+        80
+      ]
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA",
+      "sublabel": "Max recommendation / bounds",
+      "pos": [
+        550,
+        165
+      ],
+      "size": [
+        210,
+        80
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Deployment",
+      "sublabel": "desired replicas",
+      "pos": [
+        835,
+        165
+      ],
+      "size": [
+        170,
+        80
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Triggers for one API workload",
+      "wraps": [
+        "cron",
+        "demand"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cron-metric",
+      "from": "cron",
+      "to": "keda"
+    },
+    {
+      "id": "demand-metric",
+      "from": "demand",
+      "to": "keda"
+    },
+    {
+      "id": "metrics",
+      "from": "keda",
+      "to": "hpa",
+      "label": "metrics",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scale",
+      "from": "hpa",
+      "to": "app",
+      "label": "scale",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Desired is not Ready",
+      "items": [
+        "HPA combines recommendations and applies behavior/min/max.",
+        "A separate queue consumer uses its own ScaledObject."
+      ]
+    }
+  ]
+}

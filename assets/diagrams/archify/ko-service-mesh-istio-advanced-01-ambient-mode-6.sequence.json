@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Ambient Mode 전체 트래픽 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      704
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "l4-path",
+        "label": "L4 전용 경로",
+        "focus": [
+          "client_app",
+          "client_ztunnel",
+          "server_ztunnel",
+          "server_app"
+        ],
+        "note": "ztunnel만 거치며 mTLS와 L4 메트릭을 자동 적용하는 기본 시나리오."
+      },
+      {
+        "id": "l7-path",
+        "label": "L7 경로",
+        "focus": [
+          "client_app",
+          "client_ztunnel",
+          "waypoint",
+          "server_ztunnel",
+          "server_app"
+        ],
+        "note": "HBONE 터널로 Waypoint를 추가로 거쳐 L7 라우팅을 적용하는 시나리오."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client_app",
+      "type": "frontend",
+      "label": "Client App",
+      "sublabel": "Sidecar 없음"
+    },
+    {
+      "id": "client_ztunnel",
+      "type": "security",
+      "label": "Client ztunnel",
+      "sublabel": "클라이언트 노드 · L4 프록시"
+    },
+    {
+      "id": "waypoint",
+      "type": "backend",
+      "label": "Waypoint Proxy",
+      "sublabel": "L7 · 선택적"
+    },
+    {
+      "id": "server_ztunnel",
+      "type": "security",
+      "label": "Server ztunnel",
+      "sublabel": "서버 노드 · L4 프록시"
+    },
+    {
+      "id": "server_app",
+      "type": "backend",
+      "label": "Server App",
+      "sublabel": "Sidecar 없음"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 350,
+      "label": "L4 전용 경로 (기본 시나리오)"
+    },
+    {
+      "from": 370,
+      "to": 616,
+      "label": "L7 경로 (고급 라우팅)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "l4_tcp",
+      "from": "client_app",
+      "to": "client_ztunnel",
+      "y": 185,
+      "label": "1. TCP 요청"
+    },
+    {
+      "id": "l4_mtls",
+      "from": "client_ztunnel",
+      "to": "server_ztunnel",
+      "y": 213,
+      "label": "2. mTLS 연결",
+      "variant": "security",
+      "note": "mTLS 암호화 · L4 메트릭"
+    },
+    {
+      "id": "l4_plain",
+      "from": "server_ztunnel",
+      "to": "server_app",
+      "y": 241,
+      "label": "3. 평문 TCP",
+      "note": "mTLS 복호화 · L4 메트릭"
+    },
+    {
+      "id": "l4_resp",
+      "from": "server_app",
+      "to": "server_ztunnel",
+      "y": 269,
+      "label": "4. 응답",
+      "variant": "return"
+    },
+    {
+      "id": "l4_mtls_resp",
+      "from": "server_ztunnel",
+      "to": "client_ztunnel",
+      "y": 297,
+      "label": "5. mTLS 응답",
+      "variant": "return"
+    },
+    {
+      "id": "l4_plain_resp",
+      "from": "client_ztunnel",
+      "to": "client_app",
+      "y": 325,
+      "label": "6. 평문 응답",
+      "variant": "return"
+    },
+    {
+      "id": "l7_http",
+      "from": "client_app",
+      "to": "client_ztunnel",
+      "y": 395,
+      "label": "1. HTTP 요청"
+    },
+    {
+      "id": "l7_hbone",
+      "from": "client_ztunnel",
+      "to": "waypoint",
+      "y": 423,
+      "label": "2. HBONE 터널",
+      "variant": "emphasis",
+      "note": "L7 라우팅 · 헤더 매칭 · Circuit Breaker · Retry"
+    },
+    {
+      "id": "l7_mtls",
+      "from": "waypoint",
+      "to": "server_ztunnel",
+      "y": 451,
+      "label": "3. 대상으로 mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "l7_plain",
+      "from": "server_ztunnel",
+      "to": "server_app",
+      "y": 479,
+      "label": "4. 평문 HTTP"
+    },
+    {
+      "id": "l7_resp",
+      "from": "server_app",
+      "to": "server_ztunnel",
+      "y": 507,
+      "label": "5. 응답",
+      "variant": "return"
+    },
+    {
+      "id": "l7_mtls_resp",
+      "from": "server_ztunnel",
+      "to": "waypoint",
+      "y": 535,
+      "label": "6. mTLS 응답",
+      "variant": "return"
+    },
+    {
+      "id": "l7_hbone_resp",
+      "from": "waypoint",
+      "to": "client_ztunnel",
+      "y": 563,
+      "label": "7. HBONE 터널",
+      "variant": "return"
+    },
+    {
+      "id": "l7_final_resp",
+      "from": "client_ztunnel",
+      "to": "client_app",
+      "y": 591,
+      "label": "8. 응답",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "client_ztunnel",
+      "from": 180,
+      "to": 331,
+      "type": "security"
+    },
+    {
+      "participant": "server_ztunnel",
+      "from": 208,
+      "to": 303,
+      "type": "security"
+    },
+    {
+      "participant": "server_app",
+      "from": 236,
+      "to": 275,
+      "type": "backend"
+    },
+    {
+      "participant": "client_ztunnel",
+      "from": 390,
+      "to": 597,
+      "type": "security"
+    },
+    {
+      "participant": "waypoint",
+      "from": 418,
+      "to": 569,
+      "type": "backend"
+    },
+    {
+      "participant": "server_ztunnel",
+      "from": 446,
+      "to": 541,
+      "type": "security"
+    },
+    {
+      "participant": "server_app",
+      "from": 474,
+      "to": 513,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "L4 Only Path (ztunnel만 사용)",
+      "items": [
+        "최소 지연 (~1ms)",
+        "mTLS 자동 적용 · 기본 텔레메트리",
+        "80-90% 워크로드에 충분"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "L7 Path (ztunnel + Waypoint)",
+      "items": [
+        "Header 기반 라우팅",
+        "Circuit Breaking · Retry/Timeout",
+        "복잡한 트래픽 정책 필요 시"
+      ]
+    }
+  ]
+}

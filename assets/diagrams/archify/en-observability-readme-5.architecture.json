@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Observability Maturity Model",
+    "locale": "en",
+    "output": "en-observability-readme-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      300
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Progression stage"
+        },
+        "cloud": {
+          "label": "Target maturity stage"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "level1",
+      "type": "backend",
+      "label": "Level 1",
+      "sublabel": "Basic log/metric collection",
+      "tag": "kubectl logs · CloudWatch",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "level2",
+      "type": "backend",
+      "label": "Level 2",
+      "sublabel": "Centralized observability",
+      "tag": "Loki · Prometheus · Grafana",
+      "pos": [
+        330,
+        90
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "level3",
+      "type": "backend",
+      "label": "Level 3",
+      "sublabel": "Three-pillar correlation",
+      "tag": "Tempo · Exemplars · TraceID",
+      "pos": [
+        620,
+        90
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "level4",
+      "type": "cloud",
+      "label": "Level 4",
+      "sublabel": "AIOps · automatic anomaly detection",
+      "tag": "Datadog Watchdog · Dynatrace Davis",
+      "pos": [
+        910,
+        90
+      ],
+      "size": [
+        220,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "l1-l2",
+      "from": "level1",
+      "to": "level2",
+      "label": "collect"
+    },
+    {
+      "id": "l2-l3",
+      "from": "level2",
+      "to": "level3",
+      "label": "link"
+    },
+    {
+      "id": "l3-l4",
+      "from": "level3",
+      "to": "level4",
+      "label": "AI analysis",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Characteristics by level",
+      "items": [
+        "Level 1: basic log/metric collection with kubectl logs and CloudWatch",
+        "Level 2: observability data centralized in Loki, Prometheus, and Grafana",
+        "Level 3: logs, metrics, and traces correlated via Tempo, Exemplars, and TraceID",
+        "Level 4: AIOps such as Datadog Watchdog or Dynatrace Davis detects anomalies automatically"
+      ]
+    }
+  ]
+}

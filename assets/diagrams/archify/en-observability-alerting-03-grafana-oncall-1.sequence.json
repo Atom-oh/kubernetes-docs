@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Alert Processing Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "routing",
+        "label": "Receive and route",
+        "focus": [
+          "src",
+          "oncall",
+          "route",
+          "esc"
+        ],
+        "note": "Related alerts are grouped, then routing rules pick an escalation chain."
+      },
+      {
+        "id": "first-notify",
+        "label": "First notification",
+        "focus": [
+          "esc",
+          "sched",
+          "notif"
+        ],
+        "note": "The current on-call responder is looked up in the schedule and notified."
+      },
+      {
+        "id": "escalate",
+        "label": "No-response escalation",
+        "focus": [
+          "esc",
+          "sched",
+          "notif"
+        ],
+        "note": "When the wait time elapses, the alert escalates automatically to the next responder."
+      },
+      {
+        "id": "ack",
+        "label": "Ack and status update",
+        "focus": [
+          "notif",
+          "oncall",
+          "src"
+        ],
+        "note": "Once a responder acknowledges, the status is pushed back to the source."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "src",
+      "type": "external",
+      "label": "Alert Source",
+      "sublabel": "Alertmanager · Grafana etc."
+    },
+    {
+      "id": "oncall",
+      "type": "backend",
+      "label": "OnCall",
+      "sublabel": "Alert Engine"
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "Route",
+      "sublabel": "routing rules"
+    },
+    {
+      "id": "esc",
+      "type": "backend",
+      "label": "Escalation Chain",
+      "sublabel": "escalation policy"
+    },
+    {
+      "id": "sched",
+      "type": "database",
+      "label": "Schedule",
+      "sublabel": "on-call schedule"
+    },
+    {
+      "id": "notif",
+      "type": "messagebus",
+      "label": "Notification",
+      "sublabel": "Slack · mobile · phone"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 275,
+      "label": "Receive · route"
+    },
+    {
+      "from": 288,
+      "to": 395,
+      "label": "First notification"
+    },
+    {
+      "from": 408,
+      "to": 515,
+      "label": "No response → escalation"
+    },
+    {
+      "from": 528,
+      "to": 612,
+      "label": "Acknowledge · status update"
+    }
+  ],
+  "messages": [
+    {
+      "id": "receive",
+      "from": "src",
+      "to": "oncall",
+      "y": 185,
+      "label": "Alert received",
+      "note": "Related alerts grouped"
+    },
+    {
+      "id": "evaluate",
+      "from": "oncall",
+      "to": "route",
+      "y": 222,
+      "label": "Evaluate routing rules"
+    },
+    {
+      "id": "select-chain",
+      "from": "route",
+      "to": "esc",
+      "y": 258,
+      "label": "Select escalation chain"
+    },
+    {
+      "id": "query-current",
+      "from": "esc",
+      "to": "sched",
+      "y": 305,
+      "label": "Query current on-call responder"
+    },
+    {
+      "id": "current-info",
+      "from": "sched",
+      "to": "esc",
+      "y": 340,
+      "label": "Responder info",
+      "variant": "return"
+    },
+    {
+      "id": "notify",
+      "from": "esc",
+      "to": "notif",
+      "y": 378,
+      "label": "Send notification",
+      "variant": "emphasis"
+    },
+    {
+      "id": "query-next",
+      "from": "esc",
+      "to": "sched",
+      "y": 425,
+      "label": "Query next responder",
+      "note": "After wait time elapsed"
+    },
+    {
+      "id": "next-info",
+      "from": "sched",
+      "to": "esc",
+      "y": 460,
+      "label": "Next responder",
+      "variant": "return"
+    },
+    {
+      "id": "escalate-notify",
+      "from": "esc",
+      "to": "notif",
+      "y": 498,
+      "label": "Escalation notification",
+      "variant": "emphasis"
+    },
+    {
+      "id": "acknowledge",
+      "from": "notif",
+      "to": "oncall",
+      "y": 548,
+      "label": "Responder acknowledges"
+    },
+    {
+      "id": "status",
+      "from": "oncall",
+      "to": "src",
+      "y": 590,
+      "label": "Status update",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "oncall",
+      "from": 180,
+      "to": 596,
+      "type": "backend"
+    },
+    {
+      "participant": "esc",
+      "from": 253,
+      "to": 505,
+      "type": "backend"
+    },
+    {
+      "participant": "sched",
+      "from": 300,
+      "to": 345,
+      "type": "database"
+    },
+    {
+      "participant": "sched",
+      "from": 420,
+      "to": 465,
+      "type": "database"
+    },
+    {
+      "participant": "notif",
+      "from": 373,
+      "to": 552,
+      "type": "messagebus"
+    }
+  ]
+}

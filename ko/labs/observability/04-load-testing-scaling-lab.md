@@ -2,7 +2,7 @@
 
 > **난이도**: 중급 (Intermediate)
 > **예상 소요 시간**: 45분
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 9월 9일
 
 ## 학습 목표
 
@@ -13,7 +13,9 @@
 
 ## 부하 테스트 및 스케일링 타임라인
 
-![k6 부하 테스트가 램프업, 지속, 스파이크, 쿨다운 4단계를 거치며 API Gateway 트래픽이 변할 때 KEDA가 파드를 스케일하고 Karpenter가 노드를 프로비저닝·정리하는 오토스케일링 시퀀스를 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-04-load-testing-scaling-lab-0.svg)
+![k6 부하 테스트가 램프업, 지속, 스파이크, 쿨다운 4단계를 거치며 API Gateway 트래픽을 바꿀 때 KEDA가 SQS depth에 따라 MSA Pod를 스케일하고 Pending Pod를 본 Karpenter가 노드를 프로비저닝·정리하는 오토스케일링 시퀀스를 보여준다.](../../.gitbook/assets/ko-labs-observability-04-load-testing-scaling-lab-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-04-load-testing-scaling-lab-0.html)
 
 ---
 
@@ -418,7 +420,7 @@ watch -n 5 "kubectl --context service get pods -n msa -l 'app in (order-service,
 watch -n 5 "kubectl --context service get scaledobject,hpa -n msa"
 
 # Terminal 3: Karpenter 노드 스케일링
-watch -n 10 "kubectl --context service get nodes -l karpenter.sh/provisioner-name=default"
+watch -n 10 "kubectl --context service get nodes -l karpenter.sh/nodepool=default"
 
 # Terminal 4: SQS 메트릭
 watch -n 10 "aws sqs get-queue-attributes \
@@ -532,7 +534,7 @@ kubectl --context service get events -n default --field-selector reason=Terminat
         "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
         "targets": [
           {
-            "expr": "count(kube_node_labels{label_karpenter_sh_provisioner_name!=\"\"})",
+            "expr": "count(kube_node_labels{label_karpenter_sh_nodepool!=\"\"})",
             "legendFormat": "Karpenter Nodes"
           }
         ]

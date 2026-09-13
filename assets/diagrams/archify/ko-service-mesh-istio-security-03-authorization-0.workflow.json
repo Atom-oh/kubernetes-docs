@@ -1,0 +1,202 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "AuthorizationPolicy 조건 평가 흐름",
+    "output": "public/archmaps/ko-service-mesh-istio-security-03-authorization-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "요청 출처"
+        },
+        "backend": {
+          "label": "대상 서비스"
+        },
+        "security": {
+          "label": "정책 판정"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "allow-path",
+        "label": "허용 경로",
+        "focus": [
+          "request",
+          "saCheck",
+          "nsCheck",
+          "methodCheck",
+          "allow"
+        ],
+        "note": "Source(Service Account, Namespace)와 Operation(HTTP Method) 조건이 모두 일치할 때만 요청이 허용됩니다."
+      },
+      {
+        "id": "deny-path",
+        "label": "거부 경로",
+        "focus": [
+          "saCheck",
+          "nsCheck",
+          "methodCheck",
+          "deny"
+        ],
+        "note": "어느 조건이든 불일치하면 남은 검사를 건너뛰고 즉시 거부됩니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "evaluation",
+      "label": "요청 평가"
+    },
+    {
+      "id": "rejected",
+      "label": "거부",
+      "variant": "exception"
+    }
+  ],
+  "groups": [
+    {
+      "id": "authzPolicy",
+      "label": "Authorization Policy",
+      "lane": "evaluation",
+      "fromCol": 1,
+      "toCol": 3,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "saCheck",
+    "nsCheck",
+    "methodCheck",
+    "allow"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "request"
+    ],
+    "allowedTerminals": [
+      "allow",
+      "deny"
+    ],
+    "requiredPaths": [
+      {
+        "from": "request",
+        "to": "allow"
+      },
+      {
+        "from": "request",
+        "to": "deny"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "evaluation",
+      "col": 0,
+      "type": "frontend",
+      "label": "요청",
+      "sublabel": "인바운드 요청",
+      "width": 150
+    },
+    {
+      "id": "saCheck",
+      "lane": "evaluation",
+      "col": 1,
+      "type": "security",
+      "label": "Service Account 확인",
+      "tag": "CHECK 1",
+      "width": 200
+    },
+    {
+      "id": "nsCheck",
+      "lane": "evaluation",
+      "col": 2,
+      "type": "security",
+      "label": "Namespace 확인",
+      "tag": "CHECK 2",
+      "width": 180
+    },
+    {
+      "id": "methodCheck",
+      "lane": "evaluation",
+      "col": 3,
+      "type": "security",
+      "label": "HTTP Method 확인",
+      "tag": "CHECK 3",
+      "width": 200
+    },
+    {
+      "id": "allow",
+      "lane": "evaluation",
+      "col": 4,
+      "type": "backend",
+      "label": "허용",
+      "sublabel": "서비스로 전달",
+      "width": 150
+    },
+    {
+      "id": "deny",
+      "lane": "rejected",
+      "col": 2,
+      "type": "security",
+      "label": "거부",
+      "sublabel": "즉시 차단",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "saCheck",
+      "role": "main"
+    },
+    {
+      "from": "saCheck",
+      "to": "nsCheck",
+      "label": "일치",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "nsCheck",
+      "to": "methodCheck",
+      "label": "일치",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "methodCheck",
+      "to": "allow",
+      "label": "일치",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "saCheck",
+      "to": "deny",
+      "label": "불일치",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "nsCheck",
+      "to": "deny",
+      "label": "불일치",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "methodCheck",
+      "to": "deny",
+      "label": "불일치",
+      "variant": "security",
+      "role": "error"
+    }
+  ]
+}

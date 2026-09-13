@@ -1,0 +1,372 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Crossplane 컨트롤 플레인 아키텍처",
+    "output": "ko-platform-engineering-07-crossplane-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "resource-chain",
+        "label": "리소스 체인",
+        "focus": [
+          "claim",
+          "xr",
+          "comp",
+          "mr"
+        ],
+        "note": "v2 namespaced XR와 MR의 흐름. v1 LegacyCluster Claims는 별도 호환 경로입니다."
+      },
+      {
+        "id": "provider-path",
+        "label": "Provider 경로",
+        "focus": [
+          "mr",
+          "pctrl",
+          "pcrd",
+          "aws"
+        ],
+        "note": "v2 namespaced XR와 MR의 흐름. v1 LegacyCluster Claims는 별도 호환 경로입니다."
+      },
+      {
+        "id": "core-plane",
+        "label": "Crossplane 코어",
+        "focus": [
+          "core",
+          "pkg",
+          "api",
+          "etcd",
+          "pctrl"
+        ],
+        "note": "v2 namespaced XR와 MR의 흐름. v1 LegacyCluster Claims는 별도 호환 경로입니다."
+      }
+    ],
+    "viewBox": [
+      1380,
+      700
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Crossplane Core",
+      "sublabel": "Controller",
+      "pos": [
+        490,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pkg",
+      "type": "backend",
+      "label": "Package Manager",
+      "sublabel": "Provider 패키지 설치",
+      "pos": [
+        270,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "모든 리소스의 진입점",
+      "pos": [
+        710,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "상태 저장소",
+      "pos": [
+        950,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "claim",
+      "type": "external",
+      "label": "개발자",
+      "sublabel": "namespace XR 요청",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "xr",
+      "type": "backend",
+      "label": "Composite Resource",
+      "sublabel": "v2: Namespaced XR",
+      "pos": [
+        270,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "comp",
+      "type": "backend",
+      "label": "Composition",
+      "sublabel": "MR 조합 레시피",
+      "pos": [
+        490,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "mr",
+      "type": "backend",
+      "label": "Managed Resources",
+      "sublabel": "v2: Namespaced MR",
+      "pos": [
+        710,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pctrl",
+      "type": "backend",
+      "label": "Provider-AWS Controller",
+      "sublabel": "MR 변경 감지",
+      "pos": [
+        950,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pcrd",
+      "type": "database",
+      "label": "AWS CRDs",
+      "sublabel": "선택한 서비스 API",
+      "pos": [
+        950,
+        530
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS API",
+      "sublabel": "실제 클라우드 리소스",
+      "pos": [
+        1200,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "core",
+        "pkg",
+        "api",
+        "etcd",
+        "xr",
+        "comp",
+        "mr",
+        "pctrl",
+        "pcrd"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "region",
+      "label": "crossplane-system Namespace",
+      "wraps": [
+        "core",
+        "pkg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Namespace 범위",
+      "wraps": [
+        "xr"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "Cluster 범위",
+      "wraps": [
+        "comp"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "Namespace 범위",
+      "wraps": [
+        "mr"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "Provider 연동",
+      "wraps": [
+        "pctrl",
+        "pcrd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "core-api",
+      "from": "core",
+      "to": "api"
+    },
+    {
+      "id": "api-etcd",
+      "from": "api",
+      "to": "etcd"
+    },
+    {
+      "id": "pkg-pctrl",
+      "from": "pkg",
+      "to": "pctrl",
+      "label": "Provider 설치",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pctrl-pcrd",
+      "from": "pctrl",
+      "to": "pcrd",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "claim-xr",
+      "from": "claim",
+      "to": "xr",
+      "label": "XR 생성",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "xr-comp",
+      "from": "xr",
+      "to": "comp",
+      "label": "Composition 참조",
+      "variant": "emphasis",
+      "labelDy": 64
+    },
+    {
+      "id": "comp-mr",
+      "from": "comp",
+      "to": "mr",
+      "label": "MR 생성",
+      "variant": "emphasis",
+      "labelDy": 64
+    },
+    {
+      "id": "mr-pctrl",
+      "from": "mr",
+      "to": "pctrl",
+      "label": "Provider가 관리",
+      "variant": "emphasis",
+      "labelAt": [
+        920,
+        414
+      ]
+    },
+    {
+      "id": "pctrl-aws",
+      "from": "pctrl",
+      "to": "aws",
+      "label": "AWS API 호출",
+      "variant": "emphasis",
+      "labelDy": -24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "v2 범위",
+      "items": [
+        "XRD v2 기본 scope는 Namespaced",
+        "예제 MR은 *.aws.m.upbound.io/v1beta1",
+        "v1 LegacyCluster XRD에서만 기존 Claim 경로 사용"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "조정과 권한",
+      "items": [
+        "Composition Functions가 원하는 리소스를 계산",
+        "Provider controller가 AWS API를 호출",
+        "namespace / ProviderConfig만으로 IAM 격리가 완성되지 않음"
+      ]
+    }
+  ]
+}

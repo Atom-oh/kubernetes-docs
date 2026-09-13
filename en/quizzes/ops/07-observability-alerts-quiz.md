@@ -17,7 +17,7 @@
 **Answer: B) `rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0`**
 
 **Explanation:**
-CPU throttling occurs when a container exceeds its CPU limit. The `container_cpu_cfs_throttled_seconds_total` metric tracks time spent throttled. A positive rate indicates active throttling that may impact application performance.
+CPU throttling can occur when available CFS quota is exhausted; interpret it with the workload's quota and performance context. The `container_cpu_cfs_throttled_seconds_total` metric tracks time spent throttled. A positive rate indicates active throttling that may impact application performance.
 
 </details>
 
@@ -38,7 +38,7 @@ CPU throttling occurs when a container exceeds its CPU limit. The `container_cpu
 
 </details>
 
-### 3. Which metric is most important for detecting EKS Auto Mode node termination?
+### 3. Which metric helps observe a Kubernetes Node's readiness?
 
 - A) `node_cpu_seconds_total`
 - B) `kube_node_status_condition` with condition="Ready"
@@ -51,7 +51,7 @@ CPU throttling occurs when a container exceeds its CPU limit. The `container_cpu
 **Answer: B) `kube_node_status_condition` with condition="Ready"**
 
 **Explanation:**
-Monitoring `kube_node_status_condition` for Ready=false detects nodes becoming unavailable. In Auto Mode, this indicates node termination or replacement. Combined with labels, you can track node lifecycle and replacement patterns.
+The Ready condition reports readiness of an observed Node. False or unknown can have several causes and does not prove termination or replacement. Correlate inventory, Node/NodeClaim conditions and actual events/audit logs.
 
 </details>
 
@@ -136,24 +136,24 @@ Occasional packet drops are normal in networks. Alerts should trigger on sustain
 **Answer: B) Allows the alert to match additional routes after the current one**
 
 **Explanation:**
-By default, Alertmanager stops at the first matching route. Setting `continue: true` allows an alert to match multiple routes, enabling scenarios like sending critical alerts to both PagerDuty and Slack simultaneously.
+continue: true allows matching subsequent sibling routes. If a child already matched, the root receiver is not automatically a fallback. Test the complete tree, including critical alerts without a matching team route.
 
 </details>
 
-### 9. What metric indicates network bandwidth exceeded on EKS nodes?
+### 9. Which expression helps measure network transmit throughput?
 
 - A) `container_cpu_usage_seconds_total`
-- B) `node_network_transmit_bytes_total` approaching instance network limits
+- B) `rate(node_network_transmit_bytes_total[5m])` with units matched to the actual capacity contract
 - C) `kube_pod_container_status_running`
 - D) `container_fs_writes_bytes_total`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) `node_network_transmit_bytes_total` approaching instance network limits**
+**Answer: B) `rate(node_network_transmit_bytes_total[5m])` with units matched to the actual capacity contract**
 
 **Explanation:**
-`node_network_transmit_bytes_total` and `node_network_receive_bytes_total` track network I/O. Comparing the rate to EC2 instance network bandwidth limits helps identify when workloads are hitting network constraints.
+`node_network_transmit_bytes_total` and `node_network_receive_bytes_total` track network I/O. The rate is bytes/s; multiply by eight for bits/s and compare with verified baseline/burst and path limits. The cumulative counter alone, an advertised virtual-NIC speed, or an assumed universal 10Gbps limit does not establish saturation.
 
 </details>
 
@@ -170,6 +170,6 @@ By default, Alertmanager stops at the first matching route. Setting `continue: t
 **Answer: B) To suppress dependent alerts when a parent alert is firing**
 
 **Explanation:**
-Inhibition rules prevent alert storms by silencing downstream alerts when a root cause alert fires. For example, when "NodeDown" fires, inhibit all "PodNotReady" alerts for pods on that node since they're symptoms of the same issue.
+Inhibition suppresses matching notifications according to configured source/target matchers and equal labels. It does not automatically establish root cause. Require nonempty cluster/entity identifiers so missing labels do not suppress unrelated alerts; Prometheus evaluation continues.
 
 </details>

@@ -1,0 +1,44 @@
+[
+  {
+    "path": "ko/data-on-eks/airflow/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Current3.3.1/chart1.22.0default3.2.2,correct2.xsubprocess/HA/multi-executorhistory,optionaltriggerertrigger-vsworker,ExecutionAPI,metadata/brokeralternatives,workerDAGbundleaccess/versioning/git-syncretained,executorcost/scale/replica-kindlimits.18questions85schemaobjects3chartrenders4figures9of9desktop8mobile;noAirflow/EKSdeployment.",
+    "reviewedSha256": "c8ba9de1c58ff70e8f7b4c05222d53107a6c512557cce20d1a794973c245a4a6"
+  },
+  {
+    "path": "ko/data-on-eks/airflow/01-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Current3.3.1/chart1.22.0default3.2.2,correct2.xsubprocess/HA/multi-executorhistory,optionaltriggerertrigger-vsworker,ExecutionAPI,metadata/brokeralternatives,workerDAGbundleaccess/versioning/git-syncretained,executorcost/scale/replica-kindlimits.18questions85schemaobjects3chartrenders4figures9of9desktop8mobile;noAirflow/EKSdeployment.",
+    "reviewedSha256": "dc5c9f3268306ed8c0388970109a39822b81f4b2c86ed6f883a192c55bfe5110"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/airflow/01-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Current3.3.1/chart1.22.0default3.2.2,correct2.xsubprocess/HA/multi-executorhistory,optionaltriggerertrigger-vsworker,ExecutionAPI,metadata/brokeralternatives,workerDAGbundleaccess/versioning/git-syncretained,executorcost/scale/replica-kindlimits.18questions85schemaobjects3chartrenders4figures9of9desktop8mobile;noAirflow/EKSdeployment.",
+    "reviewedSha256": "aa91d8eef360b2fa49e2c91131f814223fd2b13fa3d1cedc8a9285d1beecf146"
+  },
+  {
+    "path": "en/data-on-eks/airflow/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Current3.3.1/chart1.22.0default3.2.2,correct2.xsubprocess/HA/multi-executorhistory,optionaltriggerertrigger-vsworker,ExecutionAPI,metadata/brokeralternatives,workerDAGbundleaccess/versioning/git-syncretained,executorcost/scale/replica-kindlimits.18questions85schemaobjects3chartrenders4figures9of9desktop8mobile;noAirflow/EKSdeployment.",
+    "reviewedSha256": "900aef30bb69c2767244fe2c27aaa4923da147b8d31250d1bb83370f541de4f4"
+  },
+  {
+    "path": "en/data-on-eks/airflow/01-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Current3.3.1/chart1.22.0default3.2.2,correct2.xsubprocess/HA/multi-executorhistory,optionaltriggerertrigger-vsworker,ExecutionAPI,metadata/brokeralternatives,workerDAGbundleaccess/versioning/git-syncretained,executorcost/scale/replica-kindlimits.18questions85schemaobjects3chartrenders4figures9of9desktop8mobile;noAirflow/EKSdeployment.",
+    "reviewedSha256": "35836ca09798ae0d0133f5e975f0633e2e7ad773defc9a18f2dd681ed44d7307"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/airflow/01-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Current3.3.1/chart1.22.0default3.2.2,correct2.xsubprocess/HA/multi-executorhistory,optionaltriggerertrigger-vsworker,ExecutionAPI,metadata/brokeralternatives,workerDAGbundleaccess/versioning/git-syncretained,executorcost/scale/replica-kindlimits.18questions85schemaobjects3chartrenders4figures9of9desktop8mobile;noAirflow/EKSdeployment.",
+    "reviewedSha256": "a8424f79c0a4542d253a36d867610c63a01214ffd5b622aa2c4ea9efaf8d0c48"
+  }
+]

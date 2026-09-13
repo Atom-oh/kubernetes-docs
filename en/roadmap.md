@@ -1,6 +1,6 @@
 # Guidebook Roadmap
 
-> **Last Updated**: September 2, 2026
+> **Last Updated**: September 11, 2026
 
 This guidebook tells one continuous story: from the Linux kernel through containers, Kubernetes, Amazon EKS, networking, service mesh, storage, databases, data pipelines, and AI/ML — plus the cross-cutting disciplines of security, GitOps, platform engineering, container registries, observability, and operations. This page is the map, and the recommended paths through it.
 
@@ -30,7 +30,7 @@ This guidebook tells one continuous story: from the Linux kernel through contain
 
 ## The measured-benchmark series
 
-Documents built on numbers measured on real AWS resources, not spec sheets:
+Documents reporting prior runs on AWS resources. Check environment, repetitions, cache state, raw-record availability and limitations, then remeasure for current capacity planning:
 
 - [Istio sidecar vs ambient, measured](service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — P50/P99 latency per mTLS data plane and 503 rates during rollouts
 - [EBS gp2 vs gp3 Measured Benchmark](storage/01-ebs-gp2-gp3-benchmark.md) — a 10x IOPS gap at the same 100 GiB capacity, and the gp2 burst-credit cliff
@@ -40,7 +40,7 @@ Documents built on numbers measured on real AWS resources, not spec sheets:
 
 ## Share a diagram — exports for LinkedIn and talks
 
-Every interactive diagram in this guidebook opens at `https://www.atomai.click/kubernetes-docs/archmaps/<name>.html`, and the **Export** button in the viewer toolbar (shortcut `E`) produces share-ready files on the spot. No screenshot tooling — the diagram page is all you need.
+Interactive diagrams in this guidebook open at `https://www.atomai.click/kubernetes-docs/archmaps/<name>.html`, and the **Export** button in the viewer toolbar (shortcut `E`) produces share-ready files on the spot. Available export items depend on the viewer version, browser capabilities and selection state.
 
 ### What the Export menu offers
 
@@ -61,7 +61,7 @@ Exports strip all viewer state — the Guide panel, Lens, finder, focus, route, 
 1. **Open the diagram** — click the "Open full screen ↗" link under any embedded diagram (on GitBook, "🔍 View interactive diagram").
 2. **Check the trace is playing** — the toolbar **Live/Still** toggle should read Live. The motion flowing along the arrows is what the recording captures. Rehearsing a talk? **Presentation stage** (`F`) gives the diagram the whole viewport.
 3. **Export → WebM** for a moving post, or **Export → Share Card** for a static 1200×630 preview — WebM shows "Recording 6 seconds of motion…" and then the file downloads.
-4. **Post** — upload the WebM as a video or the Share Card as an image, and add the source document's URL. To point at a specific node, path, or story moment, use **Copy link** in the Semantic Passport or Route Probe, or **Copy moment** on a Story Beat (shown only on diagrams that define story chapters), and drop the deep link into a comment or slide.
+4. **Post** — check the destination platform's current accepted formats and convert WebM if needed. Upload the Share Card as an image and include the source document URL. To point at a specific node, path, or story moment, use **Copy link** in the Semantic Passport or Route Probe, or **Copy moment** on a Story Beat (shown only on diagrams that define story chapters), and drop the deep link into a comment or slide.
 
 ### The truth boundary
 
@@ -85,4 +85,4 @@ Storage → Database → Data Pipeline (Kafka → Spark → Airflow → Flink) �
 
 ## Reading with LLMs
 
-The entire guidebook is also served under the llms.txt convention — hand an LLM a single URL and it can read the whole book. See [Reading with LLMs](llm-guide.md) for the endpoints and usage examples.
+The guidebook provides an index and source text under the proposed llms.txt format. The AI tool still needs web retrieval or an MCP connection; supplying one URL does not guarantee automatic whole-book reading or indexing. See [Reading with LLMs](llm-guide.md) for the endpoints and usage examples.

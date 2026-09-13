@@ -1,0 +1,291 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kiali 문제 해결 워크플로우",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "시작 · 종료"
+        },
+        "frontend": {
+          "label": "Kiali 대시보드"
+        },
+        "backend": {
+          "label": "진단 · 수정 단계"
+        },
+        "security": {
+          "label": "보안 점검"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "triage",
+        "label": "Kiali에서 문제 분류",
+        "focus": [
+          "start",
+          "kiali",
+          "issue"
+        ],
+        "note": "문제가 생기면 Kiali Graph 뷰에서 증상을 네 가지 유형으로 나눈다."
+      },
+      {
+        "id": "investigate",
+        "label": "유형별 원인 조사",
+        "focus": [
+          "issue",
+          "config",
+          "logs",
+          "traces",
+          "security"
+        ],
+        "note": "트래픽 없음·에러·느린 응답·보안 거부에 따라 Config, Logs, Traces, Security를 확인한다."
+      },
+      {
+        "id": "fix-loop",
+        "label": "수정 · 검증 · 재진단",
+        "focus": [
+          "fix",
+          "test",
+          "verify",
+          "done",
+          "start"
+        ],
+        "note": "구성을 수정해 테스트하고, 해결되지 않으면 처음부터 다시 진단한다."
+      }
+    ],
+    "viewBox": [
+      938,
+      652
+    ]
+  },
+  "lanes": [
+    {
+      "id": "triage",
+      "label": "문제 감지 · 분류"
+    },
+    {
+      "id": "investigate",
+      "label": "원인 조사"
+    },
+    {
+      "id": "resolve",
+      "label": "구성 수정"
+    },
+    {
+      "id": "verify",
+      "label": "테스트 · 검증"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "kiali",
+    "issue",
+    "config",
+    "fix",
+    "test",
+    "verify",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "triage",
+      "col": 1,
+      "type": "external",
+      "label": "문제 발생",
+      "width": 124
+    },
+    {
+      "id": "kiali",
+      "lane": "triage",
+      "col": 2,
+      "type": "frontend",
+      "label": "Kiali 대시보드",
+      "sublabel": "Graph 뷰로 이동",
+      "width": 140
+    },
+    {
+      "id": "issue",
+      "lane": "triage",
+      "col": 3,
+      "type": "backend",
+      "label": "문제 유형?",
+      "sublabel": "증상 분류",
+      "width": 132
+    },
+    {
+      "id": "config",
+      "lane": "investigate",
+      "col": 3,
+      "type": "backend",
+      "label": "Istio Config 확인",
+      "sublabel": "구성 검증",
+      "width": 152
+    },
+    {
+      "id": "logs",
+      "lane": "investigate",
+      "col": 2,
+      "type": "backend",
+      "label": "Logs 확인",
+      "sublabel": "로그 분석",
+      "width": 124
+    },
+    {
+      "id": "traces",
+      "lane": "investigate",
+      "col": 4,
+      "type": "backend",
+      "label": "Traces 확인",
+      "sublabel": "Jaeger 연동",
+      "width": 132
+    },
+    {
+      "id": "security",
+      "lane": "investigate",
+      "col": 5,
+      "type": "security",
+      "label": "Security 확인",
+      "sublabel": "정책 확인",
+      "width": 140
+    },
+    {
+      "id": "fix",
+      "lane": "resolve",
+      "col": 3,
+      "type": "backend",
+      "label": "구성 수정",
+      "width": 152
+    },
+    {
+      "id": "test",
+      "lane": "verify",
+      "col": 3,
+      "type": "backend",
+      "label": "테스트",
+      "width": 112
+    },
+    {
+      "id": "verify",
+      "lane": "verify",
+      "col": 4,
+      "type": "backend",
+      "label": "해결됨?",
+      "sublabel": "결과 확인",
+      "width": 124
+    },
+    {
+      "id": "done",
+      "lane": "verify",
+      "col": 5,
+      "type": "external",
+      "label": "완료",
+      "width": 112
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "kiali"
+    },
+    {
+      "from": "kiali",
+      "to": "issue"
+    },
+    {
+      "from": "issue",
+      "to": "config",
+      "label": "트래픽 없음",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        594,
+        194
+      ]
+    },
+    {
+      "from": "issue",
+      "to": "security",
+      "label": "보안 거부",
+      "role": "branch",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "from": "issue",
+      "to": "traces",
+      "label": "느린 응답",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "issue",
+      "to": "logs",
+      "label": "에러 발생",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "config",
+      "to": "fix",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "security",
+      "to": "fix",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          844,
+          367
+        ]
+      ]
+    },
+    {
+      "from": "traces",
+      "to": "fix",
+      "role": "branch"
+    },
+    {
+      "from": "logs",
+      "to": "fix",
+      "role": "branch"
+    },
+    {
+      "from": "fix",
+      "to": "test"
+    },
+    {
+      "from": "test",
+      "to": "verify"
+    },
+    {
+      "from": "verify",
+      "to": "done",
+      "label": "예",
+      "variant": "emphasis"
+    },
+    {
+      "from": "verify",
+      "to": "start",
+      "label": "아니오",
+      "role": "return",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
+  ]
+}

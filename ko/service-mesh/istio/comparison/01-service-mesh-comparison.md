@@ -1,398 +1,216 @@
 # Service Mesh 솔루션 비교
 
-> **마지막 업데이트**: 2026년 2월 19일 **비교 대상**: Istio 1.24, Linkerd 2.15, Kong Mesh 2.8, Consul Connect 1.19
+> **마지막 검토**: 2026년 9월 11일
+> **API/artifact 검증**: Istio 1.31.0; Linkerd edge-26.9.1; Kong Mesh/Kuma 2.14.4; Consul/chart 2.0.4
 
-이 문서는 Kubernetes 환경에서 사용 가능한 주요 Service Mesh 솔루션을 다각도로 비교합니다.
+버전은 예제 검증에 사용한 출처를 식별하며 **공통 Kubernetes 호환성 표**나 운영 배포 검증을 뜻하지 않습니다. 원래 Istio 1.24/Linkerd 2.15/Kong Mesh 2.8/Consul 1.19 성능 수치는 아래에 과거 미검증 자료로 구분해 보존합니다.
 
 ## 목차
 
-1. [개요 및 아키텍처](01-service-mesh-comparison.md#개요-및-아키텍처)
-2. [성능 비교](01-service-mesh-comparison.md#성능-비교)
-3. [기능 비교](01-service-mesh-comparison.md#기능-비교)
-4. [운영 복잡도](01-service-mesh-comparison.md#운영-복잡도)
-5. [보안 기능](01-service-mesh-comparison.md#보안-기능)
-6. [관찰성 기능](01-service-mesh-comparison.md#관찰성-기능)
-7. [멀티 클러스터 지원](01-service-mesh-comparison.md#멀티-클러스터-지원)
-8. [비용 분석](01-service-mesh-comparison.md#비용-분석)
-9. [사용 사례별 권장](01-service-mesh-comparison.md#사용-사례별-권장)
+1. [아키텍처](#아키텍처)
+2. [성능 근거](#성능-근거)
+3. [트래픽 관리](#트래픽-관리)
+4. [보안](#보안)
+5. [관측성](#관측성)
+6. [멀티 클러스터](#멀티-클러스터)
+7. [설치와 운영](#설치와-운영)
+8. [비용과 라이선스](#비용과-라이선스)
+9. [선택과 검증](#선택과-검증)
 
-## 개요 및 아키텍처
+## 아키텍처
 
-### Service Mesh란?
+Service mesh는 통신 기능 일부를 infrastructure component로 옮깁니다. 앱 코드에 투명하게 트래픽을 가로챌 수 있지만 protocol, traffic ownership, workload identity와 policy는 구성해야 합니다. 분산 추적에는 context 전파/instrumentation도 필요합니다. Mesh가 임의의 앱 retry를 안전하게 만들지는 않습니다.
 
-Service Mesh는 마이크로서비스 간의 통신을 관리하는 인프라 계층입니다. 애플리케이션 코드를 수정하지 않고도 트래픽 관리, 보안, 관찰성 기능을 제공합니다.
+![Control plane이 서비스 사이의 proxy를 구성하는 개념적인 sidecar 구조입니다. 필요한 정책과 telemetry 설정은 본문에서 설명합니다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-0.png)
 
-#### Service Mesh의 기본 개념
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-0.html)
 
-![Service Mesh 도입 전에는 서비스가 직접 통신하며 재시도·암호화·메트릭을 각자 구현하지만, 도입 후에는 사이드카 프록시와 컨트롤 플레인이 mTLS와 정책을 자동으로 처리한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-0.svg)
+설정된 sidecar 배포의 개념도입니다. 모든 기능이 기본 활성화되거나 ambient/Cilium도 같은 Pod별 토폴로지를 사용한다는 뜻은 아닙니다.
 
-#### 아키텍처 패턴 비교
+### Istio
 
-![Istio, Linkerd, Consul, Kong Mesh 네 솔루션의 컨트롤 플레인과 데이터 플레인 구조를 한 화면에서 비교한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-1.svg)
+![Istiod가 설정을 읽어 Envoy sidecar에 xDS 설정을 제공하고 등록된 workload 사이의 트래픽을 처리하는 구조입니다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-2.png)
 
-### 상세 아키텍처
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-2.html)
 
-#### Istio
+Istiod는 과거 Pilot, Citadel, Galley에 연결되던 설정/discovery·identity 기능을 통합합니다. 현재 세 deployment가 별도로 더 필요하다는 뜻은 아닙니다. Sidecar data plane은 Envoy를 사용하고 ambient는 L4용 노드별 ztunnel과 지원되는 L7 처리용 Envoy waypoint를 사용합니다. Ingress/egress gateway는 명시적으로 선택한 경계 경로를 구현합니다.
 
-![Istiod 단일 컨트롤 플레인이 두 파드의 Envoy 사이드카에 xDS 설정을 배포하고, 두 Envoy는 mTLS로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-2.svg)
-
-**특징**:
-
-* **프록시**: Envoy (C++)
-* **아키텍처**: 통합 컨트롤 플레인 (Istiod)
-* **설정**: Kubernetes CRD (VirtualService, DestinationRule 등)
-* **강점**: 가장 풍부한 기능, 대규모 엔터프라이즈 지원
-* **약점**: 높은 학습 곡선, 리소스 오버헤드
-
-**핵심 구성 요소**:
-
-* **Istiod**: Pilot + Citadel + Galley 통합
-* **Envoy Proxy**: 데이터 플레인
-* **Ingress/Egress Gateway**: 클러스터 경계 트래픽 제어
+Kubernetes와 문서화된 VM 통합을 지원하며 network/trust 전제조건이 있습니다. Ambient 핵심 기능의 GA가 sidecar와의 전체 기능 동등성을 뜻하지 않습니다. Waypoint 정책 연결, EnvoyFilter 지원과 multicluster 성숙도가 다릅니다. Resource·복잡도를 추정하기 전에 모드와 필요한 API 동작을 선택하세요.
 
 ### Linkerd
 
-![Destination, Identity, Proxy Injector 세 컨트롤 플레인 컴포넌트가 각 파드의 Rust 프록시에 서비스 정보·인증서를 제공하고, 프록시끼리 mTLS로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-3.svg)
+![Destination, Identity, Proxy Injector가 Rust linkerd2-proxy sidecar에 discovery, workload certificate와 injection을 제공하는 구조입니다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-3.png)
 
-**특징**:
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-3.html)
 
-* **프록시**: Linkerd2-proxy (Rust, 맞춤 제작)
-* **아키텍처**: 마이크로서비스 컨트롤 플레인
-* **설정**: Kubernetes 네이티브 리소스 + 간단한 Annotation
-* **강점**: 초경량, 쉬운 설치 및 운영, 빠른 성능
-* **약점**: 기능 제한적, VM 지원 없음
+Linkerd는 전용 Rust proxy와 Kubernetes resource, annotation, CRD를 사용합니다. 현재 Gateway API request routing, timeout/retry, per-route authorization과 local rate limiting을 제공합니다. Annotation만 사용하거나 “기본 기능만 있는 mesh”라는 설명은 부정확합니다.
 
-**핵심 구성 요소**:
+Non-Kubernetes mesh expansion은 ExternalWorkload, 외부 머신의 proxy, 호환 SPIFFE/SPIRE identity, DNS·network 접근을 사용하도록 문서화되어 있습니다. “VM 미지원”이 아니며 외부 IP를 등록하기만 하면 proxy가 설치·인증되는 것도 아닙니다.
 
-* **Destination**: Service Discovery 및 라우팅 정책
-* **Identity**: 자동 mTLS 인증서 발급
-* **Proxy Injector**: 자동 Sidecar 주입
+### Kong Mesh와 Kuma
 
-### Kong Mesh
+![Kong Mesh control plane이 Kubernetes·VM의 Envoy data-plane proxy를 구성합니다. Multi-zone 모델에는 global control plane을 사용합니다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-4.png)
 
-![Zone Control Plane이 Kubernetes 파드와 VM 위의 Kuma DP(Envoy)에 동일하게 설정을 배포하며, 모든 데이터 플레인이 mTLS로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-4.svg)
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-4.html)
 
-**특징**:
+Kong Mesh는 Kuma를 기반으로 합니다. Kubernetes mode는 Kubernetes resource/storage를, Universal mode는 VM/bare-metal 환경과 설정된 database를 사용합니다. 자체 운영 또는 관리형 global control plane을 선택할 수 있으며 edition 기능·지원 조건은 upstream Kuma와 구분해야 합니다.
 
-* **프록시**: Envoy (Kuma 데이터 플레인)
-* **아키텍처**: Universal Control Plane (K8s + VM)
-* **설정**: Kuma CRD + Kong Mesh UI
-* **강점**: VM 지원 우수, 멀티 존/멀티 클라우드, 엔터프라이즈 기능
-* **약점**: 상용 기능은 유료, 상대적으로 작은 커뮤니티
+Multi-zone에서는 global·zone control plane이 KDS로 resource를 교환하고 각 zone이 local proxy에 xDS를 제공합니다. Cross-zone data traffic은 목적지 zone ingress와, 구성한 경우 출발지 zone egress를 거칩니다. Global control plane이 Prometheus/tracing metric을 자동 집계하는 backend는 아닙니다.
 
-**핵심 구성 요소**:
+서비스 discovery 자체가 local 80%/remote 20% 분할을 정하지 않습니다. Legacy endpoint weighting과 현재 MeshLoadBalancingStrategy locality 설정은 기본 동작이 다릅니다. 그림의 weight를 내장 동작으로 해석하지 말고 선택한 policy, eligible endpoint와 cross-zone/failover 설정을 확인하세요.
 
-* **Global Control Plane**: 멀티 존 정책 동기화
-* **Zone Control Plane**: 로컬 데이터 플레인 관리
-* **Kuma DP**: Kubernetes 및 VM용 데이터 플레인
+목적에 맞게 MeshHTTPRoute, MeshTrafficPermission, MeshRetry, MeshTimeout, MeshMetric, MeshTrace, MeshAccessLog 같은 현재 policy를 사용합니다. TrafficRoute와 TrafficPermission은 legacy/deprecated interface이며 검증한 release에서 반드시 제거된 API라는 뜻은 아닙니다. 의존 policy를 함께 migration하고 구 TrafficPermission과 MeshTrafficPermission은 혼합하지 마세요. Policy type만으로 “global” 또는 “zone-only” ownership/전파가 결정되지 않습니다.
 
-#### Kong Mesh 상세 아키텍처
+Global control plane 장애에서는 기존 data traffic이 동작해도 policy와 remote-service 변경 전파가 멈출 수 있습니다. Zone control plane 장애는 새 proxy, 설정 갱신과 certificate refresh를 막을 수 있습니다. 보관된 설정이 무기한 가용성을 보장하지 않습니다. 실제 실패 조건에서 등록, 갱신, drain과 만료를 검증하세요.
 
-Kong Mesh는 Kuma를 기반으로 하는 Universal Service Mesh로, 멀티 존 아키텍처를 통해 여러 클러스터와 환경을 하나의 메시로 통합합니다.
+### Consul Service Mesh
 
-**Multi-Zone 배포 아키텍처**
+Consul은 discovery, configuration과 identity 기능 및 Envoy 지원을 제공합니다. 현재 Kubernetes 통합은 일반적으로 consul-dataplane이 sidecar를 관리하므로 과거 client-agent-per-node 그림이 유일하거나 기본인 Kubernetes 구조는 아닙니다.
 
-![Global Control Plane이 두 Zone Control Plane에 정책을 동기화하고, 각 Zone의 Kuma DP는 로컬 트래픽을 처리하며 Zone 간 mTLS로 연결된다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-5.svg)
+공식 proxy 개요에는 개발/시험용 built-in L4 proxy도 설명되어 있으며 운영 사용을 권장하지 않습니다. 이를 Envoy의 운영 L7 기능과 동등하게 표현하거나 release 근거 없이 제거되었다고 쓰면 안 됩니다. Consul은 Kubernetes 외에 VM과 다른 runtime 통합도 문서화합니다.
 
-**주요 특징**:
+### 함께 평가할 Cilium
 
-* **Global Control Plane**: 모든 존의 정책을 중앙에서 관리
-* **Zone Control Plane**: 각 존에서 독립적으로 데이터 플레인 관리
-* **자동 서비스 디스커버리**: 존 간 서비스 자동 검색
-* **통합 mTLS**: 존 간 통신도 자동으로 암호화
+Cilium은 eBPF network datapath와 Envoy 같은 L7 proxy를 조합합니다. L7 전체가 proxy 없이 동작하는 networking은 아닙니다. Cilium 1.20.1 out-of-band mutual authentication은 Beta이며 out-of-band handshake를 사용합니다. WireGuard/IPsec 암호화는 별도 요구사항입니다. 실제 기능과 Cluster Mesh 제약은 [Cilium mesh 가이드](../../cilium-service-mesh/README.md)를 참고하세요.
 
-**서비스 연결 및 트래픽 흐름**
+Cilium 1.20.1에는 `encryption.type: ztunnel`로 선택하는 별도의 [ztunnel 투명 암호화 베타](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)도 있습니다. Namespace 등록으로 TCP 워크로드 mTLS를 제공하며 양쪽 엔드포인트가 모두 등록되어야 합니다. ClusterMesh와 hostNetwork Pod는 지원하지 않고, 릴리스 문서는 이 경로에서 HBONE 포트 15008을 대상으로 하는 경우 외에는 일반 L4 정책이 동작하지 않는다고 명시합니다. 별도의 CA·bootstrap 요건을 가진 배포 선택지입니다.
 
-![애플리케이션의 요청이 로컬 Kuma DP를 거쳐 상대 Zone의 DP와 mTLS로 암호화 통신한 뒤 대상 서비스에 도달하고, 응답과 메트릭이 같은 경로로 되돌아온다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-6.svg)
+## 성능 근거
 
-**정책 전파 메커니즘**
+### 원래 수치: 과거 미검증 자료
 
-![정책을 적용하면 스코프에 따라 Global CP 또는 Zone CP에 저장되고, 두 경로 모두 최종적으로 Data Plane의 xDS 설정을 갱신해 Envoy에 실시간으로 반영된다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-7.svg)
+기존 문서는 **노드 3개, EKS 1.28, m5.xlarge, 서비스 100개, 1,000 RPS** 시험과 Istio 1.24, Linkerd 2.15, Kong Mesh 2.8, Consul 1.19를 명시했습니다. 하지만 raw sample, 재현 가능한 harness, 정확한 patch/proxy version이나 원본 benchmark가 없습니다. 현재 제품 순위를 뒷받침하지 못하는 수치입니다.
 
-**정책 유형별 전파 범위**:
+| 원래 항목 | p50 | p95 | p99 | CPU 주장 | 메모리 주장 |
+|---|---:|---:|---:|---:|---:|
+| Baseline |0.1 ms|0.2 ms|0.3 ms|—|—|
+| Linkerd |+0.5 ms|+0.8 ms|+1.2 ms|+3–8%|+20–50 MB|
+| Istio |+1.0 ms|+2.5 ms|+3.5 ms|+5–15%|+50–150 MB|
+| Kong Mesh |+0.8 ms|+2.0 ms|+3.0 ms|+5–12%|+40–120 MB|
+| Consul |+1.0 ms|+2.5 ms|+3.5 ms|+6–14%|+50–140 MB|
 
-| 정책 타입                 | Scope  | 전파 방식    | 사용 예           |
-| --------------------- | ------ | -------- | -------------- |
-| **Mesh**              | Global | 모든 Zone  | 전역 mTLS 설정     |
-| **TrafficRoute**      | Global | 모든 Zone  | 글로벌 라우팅 규칙     |
-| **TrafficPermission** | Global | 모든 Zone  | 서비스 간 접근 제어    |
-| **HealthCheck**       | Zone   | 로컬 Zone만 | Zone별 헬스체크     |
-| **ProxyTemplate**     | Zone   | 로컬 Zone만 | Zone별 Envoy 설정 |
+기존 control-plane 추정값은 Istio 0.5–1 CPU/1–2 GB, Linkerd 0.1–0.3 CPU/200–500 MB, Kong 0.2–0.5 CPU/500 MB–1 GB, Consul 0.5–1 CPU/1–2 GB였습니다. Proxy CPU 추정값도 Linkerd 20–100m에서 Istio/Consul 100–500m까지였습니다. 기본값·실측·용량 권장값이 아닌 미검증 입력입니다. Linkerd의 서로 다른 component 개수를 한 component의 replica 수와 비교해서도 안 됩니다.
 
-**데이터 플레인 라이프사이클**
+제거한 처리량 그림은 근거 없이 baseline 대비 Linkerd 95–98%, Kong 90–95%, Istio/Consul 85–92%라고 주장했습니다. “Linkerd가 가장 빠르다”거나 고정 resource 비율·최소 fleet 크기를 정하는 근거가 될 수 없습니다.
 
-![데이터 플레인은 초기화와 설정 수신을 거쳐 런타임에서 트래픽을 처리하고, 변경 감지 시 무중단으로 업데이트를 반복하며 SIGTERM 수신 시에만 드레이닝 후 종료한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-8.svg)
+### 재현 가능한 비교
 
-**Zone 간 서비스 디스커버리**
+실제 product/proxy/Kubernetes 버전, hardware와 전체 설정을 결과에 붙입니다. Protocol/payload/concurrency, TLS/authentication, policy, telemetry와 resource limit을 맞추세요. Baseline·mesh의 절대 latency 분포, 정한 error/SLO 한도에서의 throughput, component별 CPU/메모리와 반복 시험 변동성을 기록합니다.
 
-![각 Zone Control Plane이 등록한 서비스 정보가 Global Control Plane의 통합 레지스트리에 모이고, 클라이언트는 이 레지스트리를 통해 로컬 Zone을 우선 라우팅한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-9.svg)
+Rollout, drain, connection reuse, telemetry 누락과 control-plane 장애를 포함해 동등한 HA·실패 동작을 비교합니다. 원시 오류와 retry 후 client-visible 결과를 분리해 측정하세요. 실험을 다시 실행하고 보존하지 않은 채 과거 version label만 새 버전으로 바꾸면 안 됩니다.
 
-**서비스 디스커버리 특징**:
+## 트래픽 관리
 
-* **자동 등록**: 각 Zone의 서비스가 Zone CP에 자동 등록
-* **글로벌 뷰**: Global CP가 모든 Zone의 서비스 통합
-* **로컬 우선**: 같은 Zone 내 서비스를 우선 라우팅
-* **자동 페일오버**: 로컬 서비스 실패 시 다른 Zone으로 자동 전환
-* **태그 기반 라우팅**: 서비스 태그를 사용한 세밀한 라우팅 제어
+| 기능 | 구체적으로 비교할 항목 |
+|---|---|
+| Weight/header routing | Istio VirtualService, Linkerd HTTPRoute, Kong MeshHTTPRoute, Consul router/splitter/resolver 동작 |
+| Blue/Green·canary | Route는 일부일 뿐이며 rollout controller/배포 절차가 revision, 분석과 복구를 관리해야 함 |
+| Retry/timeout | 지원 request/protocol 범위, default policy, budget과 앱 멱등성 |
+| Rate limiting | Local/shared counter, identity, 실패 정책과 실제 replica 범위 |
+| Fault·mirroring | 지원 API/filter와 생성된 설정; write mirroring은 부작용 가능 |
 
-**Kong Mesh 설정 예제**
+Linkerd는 HTTPLocalRateLimitPolicy의 identity별 제한 등을 포함한 local rate limiting과 요청 속성 기반 dynamic routing을 지원합니다. Proxy별 local limit은 global service quota가 아닙니다. Consul·Kong 기능도 edition/API에 따라 다를 수 있어 단순 “기본/enterprise/없음” 표로 판단할 수 없습니다.
 
-**Mesh 리소스 (전역 mTLS 설정)**:
+### 독립적인 Read-only Routing 예제
+
+적절한 mesh에서 **대안으로** 사용하는 예제이며 동일 workload를 controller 여러 개가 겹쳐 관리하지 않습니다. `mesh-demo`에 기존 reviews Pod, 실제 version label, HTTP 9080 listener와 mesh 등록이 있다고 가정합니다. 다음 Service는 port를 명시하지만 앱을 생성하지 않습니다.
 
 ```yaml
-apiVersion: kuma.io/v1alpha1
-kind: Mesh
+apiVersion: v1
+kind: Service
 metadata:
-  name: default
+  name: reviews
+  namespace: mesh-demo
 spec:
-  # 전역 mTLS 활성화
-  mtls:
-    enabledBackend: ca-1
-    backends:
-    - name: ca-1
-      type: builtin
-      dpCert:
-        rotation:
-          expiration: 24h
-      conf:
-        caCert:
-          RSAbits: 2048
-          expiration: 10y
-  # 전역 메트릭 수집
-  metrics:
-    enabledBackend: prometheus-1
-    backends:
-    - name: prometheus-1
-      type: prometheus
-      conf:
-        port: 5670
-        path: /metrics
+  selector:
+    app: reviews
+  ports:
+  - name: http
+    port: 9080
+    targetPort: 9080
+    appProtocol: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reviews-v1
+  namespace: mesh-demo
+spec:
+  selector:
+    app: reviews
+    version: v1
+  ports:
+  - name: http
+    port: 9080
+    targetPort: 9080
+    appProtocol: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reviews-v2
+  namespace: mesh-demo
+spec:
+  selector:
+    app: reviews
+    version: v2
+  ports:
+  - name: http
+    port: 9080
+    targetPort: 9080
+    appProtocol: http
 ```
 
-**TrafficRoute (Zone 간 라우팅)**:
+Read-only review 요청을 비교합니다. Write를 routing하기 전에 상속한 mesh/client retry와 멱등성을 별도로 감사해야 합니다. Routing header는 client가 제어하는 입력이며 인증이 아닙니다.
 
-```yaml
-apiVersion: kuma.io/v1alpha1
-kind: TrafficRoute
-metadata:
-  name: api-route
-  namespace: kuma-system
-spec:
-  sources:
-  - match:
-      kuma.io/service: '*'
-  destinations:
-  - match:
-      kuma.io/service: api
-  conf:
-    # 로컬 Zone 우선 (80%)
-    loadBalancer:
-      roundRobin: {}
-    split:
-    - weight: 80
-      destination:
-        kuma.io/service: api
-        kuma.io/zone: zone-1
-    - weight: 20
-      destination:
-        kuma.io/service: api
-        kuma.io/zone: zone-2
-```
-
-**TrafficPermission (서비스 간 접근 제어)**:
-
-```yaml
-apiVersion: kuma.io/v1alpha1
-kind: TrafficPermission
-metadata:
-  name: api-to-database
-  namespace: kuma-system
-spec:
-  sources:
-  - match:
-      kuma.io/service: api
-      kuma.io/zone: '*'  # 모든 Zone의 api 서비스
-  destinations:
-  - match:
-      kuma.io/service: database
-      kuma.io/zone: zone-3  # Zone 3의 database만
-```
-
-**Kong Mesh 아키텍처 장점**
-
-**멀티 존 아키텍처**:
-
-* ✅ **글로벌 서비스 메시**: 여러 클러스터와 환경을 하나의 메시로 통합
-* ✅ **독립적 Zone 관리**: 각 Zone이 독립적으로 동작, Global CP 장애 시에도 로컬 트래픽 정상 동작
-* ✅ **자동 페일오버**: Zone 장애 시 다른 Zone으로 자동 전환
-* ✅ **정책 일관성**: 모든 Zone에 동일한 정책 자동 적용
-
-**Universal 지원**:
-
-* ✅ **Kubernetes + VM**: K8s와 VM을 동등하게 지원
-* ✅ **멀티 클라우드**: AWS, GCP, Azure, On-Premises 통합
-* ✅ **레거시 통합**: 기존 VM 워크로드를 점진적으로 메시에 추가
-
-**운영 편의성**:
-
-* ✅ **GUI 제공**: Kong Mesh GUI로 시각적 관리
-* ✅ **정책 템플릿**: 사전 정의된 정책 템플릿 제공
-* ✅ **자동 서비스 디스커버리**: 수동 설정 없이 서비스 자동 검색
-
-**엔터프라이즈 기능** (유료):
-
-* ✅ **RBAC**: 세밀한 역할 기반 접근 제어
-* ✅ **멀티 테넌시**: Zone별 격리 및 관리
-* ✅ **24/7 지원**: 프로덕션 환경 전문 지원
-* ✅ **고급 관찰성**: 상세한 메트릭 및 추적
-
-### Consul Connect
-
-![Consul 서버 클러스터가 Kubernetes 파드 두 개와 VM 위의 Envoy 프록시에 서비스 디스커버리 정보를 제공하고, 모든 데이터 플레인이 mTLS로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-10.svg)
-
-**특징**:
-
-* **프록시**: Envoy 또는 Built-in Proxy
-* **아키텍처**: Consul 서버 클러스터 + Consul 클라이언트
-* **설정**: HCL 또는 Kubernetes CRD
-* **강점**: 강력한 Service Discovery, VM 우선 설계, 멀티 데이터센터
-* **약점**: Consul 인프라 관리 필요, Kubernetes 통합이 Istio보다 복잡
-
-**핵심 구성 요소**:
-
-* **Consul Server**: Service Catalog, KV Store, 인증서 관리
-* **Consul Client**: 각 노드에서 실행, 서비스 등록
-* **Envoy Sidecar**: 트래픽 프록시
-
-## 성능 비교
-
-### Latency 오버헤드
-
-![Baseline 대비 각 Service Mesh 프록시가 추가하는 지연 시간을 비교하면 Linkerd가 가장 낮고 Istio·Consul이 가장 높다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-11.svg)
-
-**벤치마크 결과** (P99 Latency 증가, 1000 RPS):
-
-| Service Mesh       | P50    | P95    | P99    | CPU 사용량 | 메모리 사용량   |
-| ------------------ | ------ | ------ | ------ | ------- | --------- |
-| **Baseline**       | 0.1ms  | 0.2ms  | 0.3ms  | -       | -         |
-| **Linkerd**        | +0.5ms | +0.8ms | +1.2ms | +3-8%   | +20-50MB  |
-| **Istio**          | +1.0ms | +2.5ms | +3.5ms | +5-15%  | +50-150MB |
-| **Kong Mesh**      | +0.8ms | +2.0ms | +3.0ms | +5-12%  | +40-120MB |
-| **Consul Connect** | +1.0ms | +2.5ms | +3.5ms | +6-14%  | +50-140MB |
-
-**테스트 환경**: 3-node EKS 1.28, m5.xlarge, 100 services, 1000 RPS
-
-### 리소스 사용량 비교
-
-#### Control Plane 리소스
-
-| 구성 요소        | Istio      | Linkerd       | Kong Mesh     | Consul Connect       |
-| ------------ | ---------- | ------------- | ------------- | -------------------- |
-| **CPU**      | 500m-1     | 100m-300m     | 200m-500m     | 500m-1               |
-| **Memory**   | 1-2GB      | 200-500MB     | 500MB-1GB     | 1-2GB                |
-| **Replicas** | 1 (Istiod) | 3-5 (마이크로서비스) | 1-2 (Zone CP) | 3-5 (Consul Servers) |
-
-#### Data Plane 리소스 (파드당)
-
-| 프록시        | Istio Envoy | Linkerd2-proxy | Kuma DP  | Consul Envoy |
-| ---------- | ----------- | -------------- | -------- | ------------ |
-| **CPU**    | 100-500m    | 20-100m        | 100-400m | 100-500m     |
-| **Memory** | 50-150MB    | 20-50MB        | 40-120MB | 50-140MB     |
-
-### 처리량 비교
-
-**최대 RPS (Requests Per Second)**:
-
-![Baseline 대비 처리 가능한 최대 RPS 비율을 랭킹으로 보여주며 Linkerd가 가장 높고 Istio·Consul이 가장 낮다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-12.svg)
-
-**결론**:
-
-* **Linkerd**: 가장 낮은 오버헤드, 경량 프록시
-* **Istio/Consul**: 더 많은 기능으로 인한 약간 높은 오버헤드
-* **Kong Mesh**: 중간 수준의 성능
-
-## 기능 비교
-
-### 종합 기능 비교표
-
-| 기능 영역                  | Istio         | Linkerd     | Kong Mesh   | Consul Connect  |
-| ---------------------- | ------------- | ----------- | ----------- | --------------- |
-| **트래픽 관리**             |               |             |             |                 |
-| 트래픽 분할 (Canary)        | ✅ 세밀함         | ✅ 기본        | ✅ 세밀함       | ✅ 기본            |
-| A/B 테스팅                | ✅ Header 기반   | ⚠️ 제한적      | ✅ Header 기반 | ⚠️ 제한적          |
-| Blue-Green             | ✅             | ✅           | ✅           | ✅               |
-| Traffic Mirroring      | ✅             | ❌           | ✅           | ⚠️ Enterprise   |
-| Circuit Breaking       | ✅             | ✅ 기본        | ✅           | ✅               |
-| Retry                  | ✅ 세밀함         | ✅ 기본        | ✅ 세밀함       | ✅ 기본            |
-| Timeout                | ✅             | ✅           | ✅           | ✅               |
-| Fault Injection        | ✅             | ⚠️ 제한적      | ✅           | ⚠️ 제한적          |
-| **보안**                 |               |             |             |                 |
-| mTLS 자동화               | ✅             | ✅           | ✅           | ✅               |
-| Authorization Policies | ✅ 매우 세밀함      | ✅ 기본        | ✅ 세밀함       | ✅ Intentions    |
-| External CA 통합         | ✅             | ✅           | ✅           | ✅               |
-| JWT 인증                 | ✅             | ⚠️ 제한적      | ✅           | ✅               |
-| Rate Limiting          | ✅ EnvoyFilter | ❌           | ✅           | ⚠️ Enterprise   |
-| **관찰성**                |               |             |             |                 |
-| Metrics (Prometheus)   | ✅ 풍부함         | ✅ 기본        | ✅ 풍부함       | ✅ 기본            |
-| Distributed Tracing    | ✅ 모든 백엔드      | ✅ Jaeger    | ✅ 모든 백엔드    | ✅ Jaeger/Zipkin |
-| Access Logs            | ✅ 매우 상세함      | ✅ 기본        | ✅ 상세함       | ✅ 기본            |
-| Topology 시각화           | ✅ Kiali       | ✅ Dashboard | ✅ GUI       | ✅ UI            |
-| OpenTelemetry          | ✅             | ✅           | ✅           | ✅               |
-| **플랫폼 지원**             |               |             |             |                 |
-| Kubernetes             | ✅             | ✅           | ✅           | ✅               |
-| Virtual Machines       | ⚠️ 제한적        | ❌           | ✅ 우수        | ✅ 우수            |
-| Multi-cluster          | ✅ 우수          | ✅ 지원        | ✅ 우수        | ✅ 우수            |
-| Service Discovery      | ✅             | ✅           | ✅           | ✅ 매우 강력         |
-| **운영**                 |               |             |             |                 |
-| 설치 복잡도                 | 높음            | 낮음          | 중간          | 중간              |
-| 업그레이드                  | 중간            | 쉬움          | 중간          | 중간              |
-| 트러블슈팅                  | 어려움           | 쉬움          | 중간          | 중간              |
-| CLI 도구                 | istioctl      | linkerd     | kumactl     | consul          |
-
-**범례**:
-
-* ✅ 완전 지원
-* ⚠️ 제한적 지원 또는 Enterprise 기능
-* ❌ 미지원
-
-### 트래픽 관리 상세 비교
-
-#### Canary 배포 예제
-
-**Istio**:
+#### Istio
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
+  namespace: mesh-demo
 spec:
   hosts:
   - reviews
   http:
-  - match:
+  - name: canary-header
+    match:
     - headers:
-        user-agent:
-          regex: ".*Mobile.*"
+        x-release:
+          exact: canary
     route:
     - destination:
         host: reviews
         subset: v2
+        port:
+          number: 9080
       weight: 100
-  - route:
+    retries:
+      attempts: 0
+  - name: weighted
+    route:
     - destination:
         host: reviews
         subset: v1
+        port:
+          number: 9080
       weight: 90
     - destination:
         host: reviews
         subset: v2
+        port:
+          number: 9080
       weight: 10
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
+  namespace: mesh-demo
 spec:
   host: reviews
   subsets:
@@ -404,130 +222,232 @@ spec:
       version: v2
 ```
 
-**Linkerd**:
+두 route 모두 mesh retry를 명시적으로 비활성화합니다. Subset label이 실제 endpoint와 일치해야 하며 weight는 version 생성·확장을 수행하지 않습니다. Gateway 노출에는 별도 host/TLS binding이 필요합니다.
+
+#### Linkerd
 
 ```yaml
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: reviews-split
+  name: reviews-outbound
+  namespace: mesh-demo
 spec:
-  service: reviews
-  backends:
-  - service: reviews-v1
-    weight: 90
-  - service: reviews-v2
-    weight: 10
----
-# 별도의 Service 생성 필요
-apiVersion: v1
-kind: Service
-metadata:
-  name: reviews-v1
-spec:
-  selector:
-    app: reviews
-    version: v1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: reviews-v2
-spec:
-  selector:
-    app: reviews
-    version: v2
+  parentRefs:
+  - group: ''
+    kind: Service
+    name: reviews
+    port: 9080
+  rules:
+  - matches:
+    - headers:
+      - name: x-release
+        type: Exact
+        value: canary
+    backendRefs:
+    - group: ''
+      kind: Service
+      name: reviews-v2
+      port: 9080
+      weight: 100
+  - backendRefs:
+    - group: ''
+      kind: Service
+      name: reviews-v1
+      port: 9080
+      weight: 90
+    - group: ''
+      kind: Service
+      name: reviews-v2
+      port: 9080
+      weight: 10
 ```
 
-**Kong Mesh**:
+Gateway API producer route가 Service에 연결되어 meshed **client**를 구성합니다. Core Service의 group은 빈 문자열입니다. Deprecated SMI TrafficSplit extension을 필요로 하지 않습니다. 같은 Service에 ServiceProfile이 있으면 outbound HTTPRoute보다 우선하므로 ownership을 조율해야 합니다. Accepted/ResolvedRefs와 실제 routing을 확인하세요.
+
+#### Kong Mesh
 
 ```yaml
 apiVersion: kuma.io/v1alpha1
-kind: TrafficRoute
+kind: MeshHTTPRoute
 metadata:
-  name: reviews-route
+  name: reviews-weighted
+  namespace: mesh-demo
+  labels:
+    kuma.io/mesh: default
 spec:
-  sources:
-  - match:
-      kuma.io/service: '*'
-  destinations:
-  - match:
-      kuma.io/service: reviews
-  conf:
-    split:
-    - weight: 90
-      destination:
-        kuma.io/service: reviews
-        version: v1
-    - weight: 10
-      destination:
-        kuma.io/service: reviews
-        version: v2
+  targetRef:
+    kind: Dataplane
+    labels:
+      app: productpage
+  to:
+  - targetRef:
+      kind: MeshService
+      name: reviews
+      sectionName: http
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: /
+      default:
+        backendRefs:
+        - kind: MeshService
+          name: reviews-v1
+          port: 9080
+          weight: 90
+        - kind: MeshService
+          name: reviews-v2
+          port: 9080
+          weight: 10
 ```
 
-**Consul Connect**:
+여기서 reviews, reviews-v1, reviews-v2는 **실제 MeshService resource 이름**입니다. 생성된 이름이 항상 Kubernetes Service 이름과 같다고 가정하면 안 됩니다. 설치 환경의 이름, namespace/port section과 backend readiness를 확인하세요. Caller Dataplane에 app label이 있어야 하며 HTTP Service port에는 지원 protocol을 선언해야 합니다. 이 예제는 weight를 바꾸며 locality priority나 용량을 바꾸지 않습니다.
 
-```hcl
-Kind = "service-splitter"
-Name = "reviews"
-Splits = [
-  {
-    Weight        = 90
-    ServiceSubset = "v1"
-  },
-  {
-    Weight        = 10
-    ServiceSubset = "v2"
-  },
-]
+#### Consul
+
+```yaml
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: reviews
+  namespace: mesh-demo
+spec:
+  protocol: http
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceResolver
+metadata:
+  name: reviews
+  namespace: mesh-demo
+spec:
+  subsets:
+    v1:
+      filter: Service.Meta.version == v1
+      onlyPassing: true
+    v2:
+      filter: Service.Meta.version == v2
+      onlyPassing: true
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceSplitter
+metadata:
+  name: reviews
+  namespace: mesh-demo
+spec:
+  splits:
+  - weight: 90
+    service: reviews
+    serviceSubset: v1
+  - weight: 10
+    service: reviews
+    serviceSubset: v2
 ```
 
-**비교**:
+Consul config entry의 Kubernetes CRD 형식이며 controller/RBAC 설정이 필요합니다. Consul catalog의 Service metadata에 실제로 version=v1/v2가 있어야 합니다. Kubernetes Pod label만으로 catalog metadata가 증명되지는 않습니다. HTTP protocol과 resolver subset이 split 정의를 완성합니다. 같은 config entry에 여러 owner를 적용하지 말고 Kubernetes↔Consul namespace/service mapping과 정상 endpoint를 확인하세요.
 
-* **Istio**: 가장 세밀한 제어 (Header 기반 라우팅, 다양한 match 조건)
-* **Linkerd**: 간단하지만 별도 Service 필요
-* **Kong Mesh**: Kuma CRD, 직관적
-* **Consul**: HCL 구성, Service Discovery와 통합
 
-## 보안 기능
+## 보안
 
-### mTLS 구성 비교
+암호화, peer identity, caller 인가와 앱 인증은 별도 제어입니다. 등록된 proxy 사이의 자동 mTLS가 모든 unmeshed traffic 거부나 모든 caller 인가를 뜻하지 않습니다.
 
-**Istio**:
+### Istio: Inbound mTLS와 요청 인가
 
 ```yaml
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: default
-  namespace: istio-system
+  name: reviews-strict
+  namespace: mesh-demo
 spec:
+  selector:
+    matchLabels:
+      app: reviews
   mtls:
     mode: STRICT
 ---
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
 metadata:
-  name: default
-  namespace: istio-system
+  name: reviews-read
+  namespace: mesh-demo
 spec:
-  host: "*.local"
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL
+  selector:
+    matchLabels:
+      app: reviews
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/mesh-demo/sa/productpage
+    to:
+    - operation:
+        methods:
+        - GET
+        paths:
+        - /reviews/*
 ```
 
-**Linkerd**:
+Sidecar 예제로 실제 productpage ServiceAccount identity와 reviews workload가 필요합니다. Auto mTLS가 적절한 outbound transport를 선택할 수 있으므로 광범위한 `*.local` ISTIO_MUTUAL DestinationRule은 필요하지 않으며 무관한 plaintext destination을 깨뜨릴 수 있습니다. STRICT는 inbound 강제이고 ALLOW는 표시한 identity/method/path를 제어합니다.
 
-```bash
-# 자동으로 mTLS 활성화 (설정 불필요)
-linkerd install | kubectl apply -f -
+AuthorizationPolicy의 문자열은 exact, prefix, suffix, presence matching입니다. `*Mobile*`는 일반 substring regex가 아니며 User-Agent도 workload identity가 아닙니다. Ambient L7에서는 sidecar selector를 그대로 복사하지 말고 지원되는 waypoint 정책 연결 방식을 사용해야 합니다.
 
-# 네임스페이스에 annotation 추가
-kubectl annotate namespace default linkerd.io/inject=enabled
+### Linkerd: 명시적 Inbound 정책
+
+```yaml
+apiVersion: policy.linkerd.io/v1beta3
+kind: Server
+metadata:
+  name: reviews-http
+  namespace: mesh-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: reviews
+  port: 9080
+  proxyProtocol: HTTP/1
+  accessPolicy: deny
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: reviews-read
+  namespace: mesh-demo
+spec:
+  parentRefs:
+  - group: policy.linkerd.io
+    kind: Server
+    name: reviews-http
+  rules:
+  - matches:
+    - method: GET
+      path:
+        type: PathPrefix
+        value: /reviews/
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: reviews-read
+  namespace: mesh-demo
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: reviews-read
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: productpage
 ```
 
-**Kong Mesh**:
+Server는 실제 선언된 Pod port를 선택하고 여기서는 기본 deny를 사용합니다. Inbound HTTPRoute는 `/reviews/` 아래 GET을 선택하며 AuthorizationPolicy는 productpage ServiceAccount를 요구합니다. Target API group을 명시합니다. Group 생략은 core group이며 Linkerd Server를 자동 추론하지 않습니다. 누락되거나 잘못된 참조는 인가를 만들지 않습니다.
+
+검증한 edge CRD는 Server v1beta3와 v1beta1 등 구버전을 serve합니다. 구 API가 제거되었다는 뜻은 아닙니다. 선택한 artifact가 지원하는 API를 사용하세요. Namespace/Pod의 기본 all-unauthenticated 정책은 meshed peer 사이의 자동 암호화나 이 명시적 Server 정책과 별개입니다.
+
+### Kong Mesh: 권한과 함께 mTLS 구성
+
+기본 설치만으로 모든 service traffic이 암호화되지는 않습니다. 기존 workload에 mTLS를 켜기 전에 권한을 계획해야 하며 일치하는 권한이 없으면 통신이 차단될 수 있습니다. 최소 Mesh 설정은 다음과 같습니다.
 
 ```yaml
 apiVersion: kuma.io/v1alpha1
@@ -540,431 +460,124 @@ spec:
     backends:
     - name: ca-1
       type: builtin
-      dpCert:
-        rotation:
-          expiration: 24h
-      conf:
-        caCert:
-          RSAbits: 2048
-          expiration: 10y
 ```
 
-**Consul Connect**:
-
-```hcl
-Kind = "mesh"
-Meta = {
-  "consul.hashicorp.com/gateway-kind" = "mesh-gateway"
-}
-TLS {
-  Incoming {
-    TLSMinVersion = "TLSv1_2"
-  }
-}
-```
-
-### Authorization 정책 비교
-
-**Istio** (가장 세밀함):
-
-```yaml
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: reviews-policy
-spec:
-  selector:
-    matchLabels:
-      app: reviews
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/productpage"]
-    to:
-    - operation:
-        methods: ["GET"]
-        paths: ["/reviews/*"]
-    when:
-    - key: request.headers[user-agent]
-      values: ["*Mobile*"]
-```
-
-**Linkerd**:
-
-```yaml
-apiVersion: policy.linkerd.io/v1beta1
-kind: Server
-metadata:
-  name: reviews-server
-spec:
-  podSelector:
-    matchLabels:
-      app: reviews
-  port: 9080
-  proxyProtocol: HTTP/1
----
-apiVersion: policy.linkerd.io/v1alpha1
-kind: AuthorizationPolicy
-metadata:
-  name: reviews-policy
-spec:
-  targetRef:
-    kind: Server
-    name: reviews-server
-  requiredAuthenticationRefs:
-  - kind: ServiceAccount
-    name: productpage
-```
-
-**Kong Mesh**:
+제한된 service-level 권한 예제입니다.
 
 ```yaml
 apiVersion: kuma.io/v1alpha1
-kind: TrafficPermission
+kind: MeshTrafficPermission
 metadata:
-  name: reviews-permission
+  name: productpage-to-reviews
+  namespace: mesh-demo
+  labels:
+    kuma.io/mesh: default
 spec:
-  sources:
-  - match:
-      kuma.io/service: productpage
-  destinations:
-  - match:
-      kuma.io/service: reviews
+  targetRef:
+    kind: Dataplane
+    labels:
+      app: reviews
+  from:
+  - targetRef:
+      kind: MeshSubset
+      tags:
+        kuma.io/service: productpage
+    default:
+      action: Allow
 ```
 
-**Consul Connect** (Intentions):
+productpage를 실제 출발지 `kuma.io/service` identity tag로 바꾸고 target Dataplane label/namespace를 확인하세요. 이 tag가 단순 Kubernetes Service 이름과 같다는 보장은 없습니다. Service-level 인가이며 위 Istio/Linkerd의 GET/path 규칙과 동등하지 않습니다. 구 TrafficPermission과 혼합하지 마세요. 운영 강제를 바꾸기 전에 필요한 transport, identity와 policy resource를 준비해야 합니다.
 
-```hcl
-Kind = "service-intentions"
-Name = "reviews"
-Sources = [
-  {
-    Name   = "productpage"
-    Action = "allow"
-  }
-]
-```
-
-**비교**:
-
-* **Istio**: L7 수준의 매우 세밀한 제어 (Method, Path, Header)
-* **Linkerd**: Service Account 기반, 간단함
-* **Kong Mesh**: Service 레벨 권한
-* **Consul**: Intentions 기반, 직관적
-
-## 관찰성 기능
-
-### Metrics 수집
-
-**Istio**:
-
-* **메트릭 수**: 50+ 기본 메트릭
-* **커스터마이징**: EnvoyFilter로 무제한 확장
-* **통합**: Prometheus, Grafana, Kiali
-
-**Linkerd**:
-
-* **메트릭 수**: 20+ 기본 메트릭 (골든 시그널 중심)
-* **커스터마이징**: 제한적
-* **통합**: Prometheus, Grafana, Linkerd Dashboard
-
-**Kong Mesh**:
-
-* **메트릭 수**: 40+ 기본 메트릭
-* **커스터마이징**: Datadog, Prometheus
-* **통합**: Kong Mesh GUI, Grafana
-
-**Consul Connect**:
-
-* **메트릭 수**: 30+ 기본 메트릭
-* **커스터마이징**: Telegraf 통합
-* **통합**: Consul UI, Prometheus, Grafana
-
-### Distributed Tracing
-
-**지원 백엔드**:
-
-| Service Mesh  | Jaeger | Zipkin | Tempo | Datadog | AWS X-Ray |
-| ------------- | ------ | ------ | ----- | ------- | --------- |
-| **Istio**     | ✅      | ✅      | ✅     | ✅       | ✅         |
-| **Linkerd**   | ✅      | ✅      | ✅     | ⚠️      | ⚠️        |
-| **Kong Mesh** | ✅      | ✅      | ✅     | ✅       | ✅         |
-| **Consul**    | ✅      | ✅      | ⚠️    | ⚠️      | ⚠️        |
-
-### 시각화 도구
-
-**Istio + Kiali**:
+### Consul: L7 Intentions
 
 ```yaml
-apiVersion: kiali.io/v1alpha1
-kind: Kiali
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
 metadata:
-  name: kiali
+  name: reviews
+  namespace: mesh-demo
 spec:
-  deployment:
-    accessible_namespaces: ["**"]
-  external_services:
-    prometheus:
-      url: http://prometheus:9090
-    grafana:
-      url: http://grafana:3000
-    tracing:
-      url: http://jaeger-query:16686
+  destination:
+    name: reviews
+  sources:
+  - name: productpage
+    permissions:
+    - action: allow
+      http:
+        methods:
+        - GET
+        pathPrefix: /reviews/
 ```
 
-**Linkerd Dashboard**:
+Consul service identity와 HTTP protocol 설정이 catalog·실제 proxy와 일치해야 합니다. L7 permission이 있으므로 Consul은 기본 service-level 인가만 한다는 설명은 부정확합니다. 한 source의 L4 action과 L7 permissions를 독립적으로 함께 적용하는 것처럼 혼합하면 안 됩니다. 다른 intentions/default policy, namespace/partition과 controller mapping도 확인하세요.
+
+Mesh config entry의 TLS minimum은 TLS 설정을 바꿀 뿐 앱 등록, proxy 설치나 전체 CA/ACL 구성을 수행하지 않습니다. Envoy extension과 escape-hatch API에도 해당 Consul release의 권한이 필요하며 2.0.4는 코드 실행 extension에 대한 mesh:write 요구를 강화했습니다.
+
+## 관측성
+
+Metric 개수는 고정 순위를 정할 근거가 아닙니다. 활성화한 stat, dimension, policy, scraping과 앱 instrumentation이 신호·overhead를 바꿉니다. EnvoyFilter는 무제한 telemetry 확장 API가 아니며 protocol/exporter 호환성 없이 모든 tracing backend를 서로 바꿀 수는 없습니다.
+
+| Mesh | 구성·확인할 항목 |
+|---|---|
+| Istio | Telemetry API, 실제 proxy/control-plane metric, access log 형식, tracing provider/backend, 선택적 Kiali/Grafana |
+| Linkerd | Proxy golden/per-route metric, 선택한 viz/외부 monitoring, 설정된 proxy·앱 tracing |
+| Kong Mesh | MeshMetric, MeshTrace, MeshAccessLog와 지원 backend; GUI/control-plane 접근 별도 구성 |
+| Consul | Proxy/agent metric, tracing과 실제 endpoint/authentication을 사용하는 UI metrics provider |
+
+End-to-end trace에는 앱 호출 간 context 전파, 필요한 trace 시작·sampling, collector/backend 전달이 필요합니다. Linkerd도 이를 명시하며 proxy span 하나가 전체 앱 trace는 아닙니다. OpenTelemetry collector가 지원 protocol을 연결할 수는 있지만 모든 product/backend 조합이 검증되는 것은 아닙니다.
+
+관련 component가 설치되고 접근 권한이 있다면 다음을 확인할 수 있습니다.
 
 ```bash
-linkerd viz install | kubectl apply -f -
+istioctl dashboard kiali -n istio-system
+linkerd viz check
+linkerd viz stat deploy -n mesh-demo
 linkerd viz dashboard
 ```
 
-**Kong Mesh GUI**:
+Dashboard나 backend를 설치하는 명령은 아닙니다. Kiali 현재 설정·호환성도 별도 확인해야 하며 구 accessible_namespaces와 legacy Istio bundled-addon 값은 현재 설치법이 아닙니다. 유지보수되는 설정과 검증 한계는 [관측성 가이드](../observability/README.md)를 참고하세요. 빈 Mesh metrics backend만으로 Kong GUI가 활성화되지 않으며 Consul UI metric URL은 실제 server 환경에서 해석되어야 합니다.
 
-```yaml
-apiVersion: kuma.io/v1alpha1
-kind: Mesh
-metadata:
-  name: default
-spec:
-  metrics:
-    enabledBackend: prometheus-1
-    backends:
-    - name: prometheus-1
-      type: prometheus
-```
+## 멀티 클러스터
 
-**Consul UI**:
+| 시스템 | Discovery/data 경로 | 주요 경계 |
+|---|---|---|
+| Istio | 각 primary가 허용된 Kubernetes API를 조회; 다른 network에는 구성된 east-west gateway 사용 | Remote secret은 CRD 복사나 network/trust 구성이 아님. Sidecar·ambient 지원 토폴로지 구분 |
+| Linkerd | Local mirror Service가 remote를 표현; hierarchical은 **목적지** gateway, flat은 직접 Pod 경로 | Mirror는 출발지 cluster에 있음. Source gateway가 필수는 아님. Federated Service는 flat이며 headless member 미지원 |
+| Kong Mesh | KDS로 zone/service 교환; 목적지 zone ingress와 선택적 출발지 zone egress 사용 | 적용 policy·eligible endpoint가 locality/failover 결정; 내장 80/20이나 무조건적 failover가 아님 |
+| Consul | 선택한 cluster peering 또는 WAN federation의 discovery·mesh-gateway 경로 | 실제 토폴로지에 맞는 trust, export service, authorization/routing 필요; 이름만으로 연결되지 않음 |
 
-```hcl
-ui_config {
-  enabled = true
-  metrics_provider = "prometheus"
-  metrics_proxy {
-    base_url = "http://prometheus:9090"
-  }
-}
-```
+![Consul server와 mesh gateway를 사용하는 WAN federation datacenter 개념도입니다. Cluster peering은 별도 구성 모델입니다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-16.png)
 
-## 멀티 클러스터 지원
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-16.html)
 
-### 아키텍처 비교
+기존 “Linkerd 최대 약 10개 cluster”나 일반적인 “수십 개” 제한에는 quota/부하 시험 근거가 없습니다. 용량은 control/data-plane 토폴로지, service/endpoint 수, update 빈도와 resource에 따릅니다. 자동 discovery가 정책 복제나 앱/데이터 재해 복구를 자동으로 수행하지는 않습니다.
 
-**Istio Multi-Primary**:
+Remote API/gateway 접근, certificate trust, DNS, namespace/service identity, exported service와 양방향 실패 동작을 확인합니다. 기존 meshID label 설치 명령 두 개와 secret 하나는 전체 mesh 구성이 아니므로 [유지보수되는 Istio multicluster 가이드](../advanced/02-multi-cluster.md)를 따르세요.
 
-![두 클러스터가 각자 Istiod를 운영하며 서로 서비스 디스커버리를 교환하고, 애플리케이션 간에는 클러스터 경계를 넘어 mTLS로 직접 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-13.svg)
+## 설치와 운영
 
-**Linkerd Multi-cluster**:
+### 버전은 각각 검증해야 합니다
 
-![소스 클러스터의 서비스가 자신의 Gateway를 거쳐 타깃 클러스터 Gateway로 mTLS 연결되고, 그 뒤에서 미러링된 서비스로 라우팅된다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-14.svg)
+| 검증한 출처/artifact | 호환성 근거와 한계 |
+|---|---|
+| Istio 1.31.0 | Kubernetes 1.32–1.36 지원; 실제 upgrade/skew 규칙과 platform 요구사항 준수 |
+| Linkerd edge-26.9.1 CLI/CRD | 해당 edge의 권고 확인. 별도 **2.20** 표는 Kubernetes 1.31–1.35, Gateway API 1.2.1–1.5.1이며 모든 후속 edge/vendor build의 범위로 자동 대입하지 않음 |
+| Kong Mesh/chart 2.14.4 | 9월 3일 Kuma 2.14.4와 공개됨. 공개 Kubernetes 검증 표는 현재 2.13까지만 있어 render로 2.14 호환성을 인증하지 않음. Support 표는 별도로 2.13 LTS를 명시 |
+| Consul/chart 2.0.4 | 앱과 Helm artifact 별도 확인. Chart 최소 Kubernetes metadata가 전체 지원 표나 upgrade 검토를 대체하지 않음 |
 
-**Kong Mesh Multi-zone**:
+Gateway API CRD는 여러 controller가 공유하는 cluster 전체 의존성입니다. 모든 consumer를 확인하지 않고 catalog 최신값을 설치하거나 기존 bundle을 downgrade하면 안 됩니다.
 
-![Global Control Plane이 세 Zone에 정책을 동기화하고, 각 Zone의 서비스는 Zone 경계를 넘어 서로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-15.svg)
+### Istio Revision 전환
 
-**Consul Multi-datacenter**:
+같은 버전 CLI와 설치된 버전에서 지원되는 upgrade 경로를 사용합니다. 이 문서의 과거 1.24 label은 1.31로 직접 건너뛰라는 뜻이 아닙니다. 검토된 설치값, gateway/CNI와 revision ownership을 보존하세요.
 
-![두 데이터센터가 각자 Consul 서버를 두고 WAN Gossip으로 서로를 인지하며, Mesh Gateway를 통해 데이터센터 간 트래픽이 오간다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-16.svg)
-
-### 멀티 클러스터 기능 비교
-
-| 기능                    | Istio           | Linkerd      | Kong Mesh       | Consul  |
-| --------------------- | --------------- | ------------ | --------------- | ------- |
-| **설정 복잡도**            | 중간              | 낮음           | 중간              | 중간      |
-| **Service Discovery** | ✅ 자동            | ✅ Mirror 서비스 | ✅ 자동            | ✅ 강력함   |
-| **Traffic Failover**  | ✅ 자동            | ⚠️ 수동        | ✅ 자동            | ✅ 자동    |
-| **mTLS**              | ✅ 자동            | ✅ Gateway 통해 | ✅ 자동            | ✅ 자동    |
-| **네트워크 요구사항**         | Flat 또는 Gateway | Gateway      | Flat 또는 Gateway | Gateway |
-| **정책 동기화**            | ✅               | ⚠️ 제한적       | ✅ Global CP     | ✅       |
-| **최대 클러스터 수**         | 수십 개            | \~10개        | 수십 개            | 수십 개    |
-
-## 운영 복잡도
-
-### 설치 및 업그레이드
-
-**Istio**:
-
-```bash
-# 설치
-istioctl install --set profile=default
-
-# 업그레이드 (Canary)
-istioctl install --set profile=default --revision=1-24-0
-
-# 네임스페이스별로 순차 전환
-kubectl label namespace default istio.io/rev=1-24-0 --overwrite
-kubectl rollout restart deployment -n default
-```
-
-**Linkerd**:
-
-```bash
-# 설치
-linkerd install | kubectl apply -f -
-
-# 업그레이드 (In-place)
-linkerd upgrade | kubectl apply -f -
-
-# 자동 rollout
-```
-
-**Kong Mesh**:
-
-```bash
-# Helm 설치
-helm install kong-mesh kong-mesh/kong-mesh
-
-# 업그레이드
-helm upgrade kong-mesh kong-mesh/kong-mesh
-```
-
-**Consul**:
-
-```bash
-# Helm 설치
-helm install consul hashicorp/consul -f values.yaml
-
-# 업그레이드
-helm upgrade consul hashicorp/consul -f values.yaml
-```
-
-**비교**:
-
-* **Linkerd**: 가장 간단한 설치 및 업그레이드
-* **Istio**: Canary 업그레이드로 zero-downtime 가능하지만 복잡함
-* **Kong/Consul**: Helm 기반, 중간 복잡도
-
-### 트러블슈팅 도구
-
-**Istio**:
-
-```bash
-# 프록시 상태 확인
-istioctl proxy-status
-
-# 설정 검증
-istioctl analyze
-
-# 프록시 설정 확인
-istioctl proxy-config cluster <pod> -n <namespace>
-
-# 로그 레벨 변경
-istioctl proxy-config log <pod> --level debug
-```
-
-**Linkerd**:
-
-```bash
-# 상태 확인
-linkerd check
-
-# 통계 확인
-linkerd stat deploy
-
-# Tap (실시간 트래픽 관찰)
-linkerd tap deploy/webapp
-
-# 프로필 확인
-linkerd profile --template deploy/webapp
-```
-
-**Kong Mesh**:
-
-```bash
-# 상태 확인
-kumactl inspect dataplanes
-
-# 메트릭 확인
-kumactl inspect meshes
-
-# 로그 확인
-kubectl logs -n kong-mesh-system deployment/kong-mesh-control-plane
-```
-
-**Consul**:
-
-```bash
-# 상태 확인
-consul members
-
-# 서비스 확인
-consul catalog services
-
-# Intentions 확인
-consul intention list
-
-# 프록시 로그
-kubectl logs <pod> -c consul-connect-envoy-sidecar
-```
-
-### 학습 곡선
-
-![Linkerd는 쉬운 학습 곡선으로 빠른 시작에, Kong Mesh와 Consul은 중간 난이도로 중간 규모에, Istio는 가장 높은 난이도로 대규모 엔터프라이즈에 적합하다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-17.svg)
-
-## 비용 분석
-
-### 인프라 비용
-
-**리소스 기반 비용 계산** (100 파드 환경, EKS m5.xlarge):
-
-| Service Mesh  | Control Plane CPU | Control Plane Memory | Data Plane CPU (총) | Data Plane Memory (총) | 월 비용 (추정)      |
-| ------------- | ----------------- | -------------------- | ------------------ | --------------------- | -------------- |
-| **Baseline**  | -                 | -                    | -                  | -                     | $300           |
-| **Linkerd**   | 300m              | 500MB                | 2 vCPU             | 5GB                   | +$50 (\~$350)  |
-| **Istio**     | 1 vCPU            | 2GB                  | 10 vCPU            | 15GB                  | +$150 (\~$450) |
-| **Kong Mesh** | 500m              | 1GB                  | 8 vCPU             | 12GB                  | +$120 (\~$420) |
-| **Consul**    | 1 vCPU            | 2GB                  | 10 vCPU            | 14GB                  | +$145 (\~$445) |
-
-**참고**: 실제 비용은 워크로드 패턴, 트래픽 양, 설정에 따라 크게 달라질 수 있습니다.
-
-### 운영 비용
-
-**엔지니어 시간 (월 기준)**:
-
-| 작업        | Istio | Linkerd | Kong Mesh | Consul |
-| --------- | ----- | ------- | --------- | ------ |
-| **초기 설정** | 40h   | 8h      | 20h       | 24h    |
-| **일상 운영** | 20h/월 | 5h/월    | 10h/월     | 12h/월  |
-| **트러블슈팅** | 15h/월 | 3h/월    | 8h/월      | 10h/월  |
-| **업그레이드** | 8h/분기 | 2h/분기   | 4h/분기     | 5h/분기  |
-
-### 라이선스 비용
-
-| 제품            | 오픈소스              | 엔터프라이즈                             |
-| ------------- | ----------------- | ---------------------------------- |
-| **Istio**     | ✅ 무료 (Apache 2.0) | Google Cloud Service Mesh (사용량 기반) |
-| **Linkerd**   | ✅ 무료 (Apache 2.0) | Buoyant Enterprise (\$$$)          |
-| **Kong Mesh** | ✅ Kuma 오픈소스       | Kong Mesh Enterprise (문의 필요)       |
-| **Consul**    | ✅ 무료 (MPL 2.0)    | Consul Enterprise (\$$$)           |
-
-**엔터프라이즈 기능 예시**:
-
-* **Kong Mesh Enterprise**: Multi-zone GUI, RBAC, 24/7 support
-* **Consul Enterprise**: Audit logging, Namespaces, Redundancy zones
-* **Buoyant Enterprise**: HA control plane, 24/7 support, SLA
-
-## 사용 사례별 권장
-
-### 1. 대규모 엔터프라이즈 (1000+ 서비스)
-
-**권장: Istio**
-
-**이유**:
-
-* 가장 풍부한 기능 세트
-* 세밀한 트래픽 제어 (A/B 테스팅, Canary)
-* 강력한 보안 (L7 Authorization)
-* 멀티 클러스터 페더레이션
-* 광범위한 커뮤니티 및 도구 생태계
-
-**설정 예시**:
+Default profile에서 control-plane resource/HPA를 조정하는 입력 예제입니다.
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
-  profile: production
+  profile: default
   components:
     pilot:
       k8s:
@@ -977,198 +590,121 @@ spec:
             memory: 4Gi
 ```
 
-### 2. 중소 규모 스타트업 (10-100 서비스)
-
-**권장: Linkerd**
-
-**이유**:
-
-* 빠른 설치 (5분 이내)
-* 낮은 리소스 오버헤드
-* 간단한 운영
-* 자동 mTLS 및 메트릭
-
-**설정 예시**:
+내장 production profile은 없습니다. CPU/메모리/replica는 sizing 입력값이며 운영 용량 보장이 아닙니다. 다른 revision을 설치하는 것만으로 기존 proxy가 갱신되지 않습니다.
 
 ```bash
-linkerd install | kubectl apply -f -
-linkerd viz install | kubectl apply -f -
-
-# 네임스페이스별 활성화
-kubectl annotate namespace default linkerd.io/inject=enabled
+istioctl install -f reviewed-istio.yaml --revision 1-31-0
+kubectl label namespace mesh-demo istio-injection-
+kubectl label namespace mesh-demo istio.io/rev=1-31-0 --overwrite
+: "${DEPLOYMENT:?Set the actual staged Deployment name}"
+kubectl rollout restart deployment/"$DEPLOYMENT" -n mesh-demo
+kubectl rollout status deployment/"$DEPLOYMENT" -n mesh-demo
 ```
 
-### 3. 하이브리드 클라우드 (K8s + VM)
+전환 전에 기존 namespace/Pod override를 검토합니다. Legacy injection label이 revision 선택보다 우선할 수 있습니다. 의도한 workload 집합만 restart하며 gateway·ambient component는 각각의 upgrade 절차를 따릅니다. Canary revision이 모든 앱 rollout의 오류 0을 보장하지 않습니다.
 
-**권장: Consul Connect 또는 Kong Mesh**
+### Linkerd 설치·업그레이드
 
-**이유**:
-
-* VM 워크로드 우선 지원
-* 강력한 Service Discovery
-* 멀티 플랫폼 일관성
-
-**Consul 설정 예시**:
-
-```hcl
-# Kubernetes에서
-service {
-  name = "web"
-  port = 8080
-  connect {
-    sidecar_service {}
-  }
-}
-
-# VM에서
-service {
-  name = "database"
-  port = 5432
-  connect {
-    sidecar_service {
-      proxy {
-        upstreams = [
-          {
-            destination_name = "web"
-            local_bind_port  = 8080
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-### 4. 멀티 클라우드 전략
-
-**권장: Istio 또는 Kong Mesh**
-
-**이유**:
-
-* 클라우드 중립적
-* 일관된 정책 및 관찰성
-* 멀티 클러스터 페더레이션
-
-**Istio 멀티 클러스터**:
+명시적인 edge/vendor artifact와 호환 Gateway API를 먼저 선택합니다. 현재 upstream CLI 절차는 다음과 같습니다.
 
 ```bash
-# Cluster 1 (AWS)
-istioctl install --set values.global.meshID=mesh1 \
-  --set values.global.multiCluster.clusterName=aws-cluster \
-  --set values.global.network=aws-network
-
-# Cluster 2 (GCP)
-istioctl install --set values.global.meshID=mesh1 \
-  --set values.global.multiCluster.clusterName=gcp-cluster \
-  --set values.global.network=gcp-network
-
-# Service Discovery 공유
-istioctl create-remote-secret \
-  --context=aws-cluster --name=aws-cluster | \
-  kubectl apply -f - --context=gcp-cluster
+linkerd check --pre
+linkerd install --crds > linkerd-crds.yaml
+kubectl apply -f linkerd-crds.yaml
+linkerd install > linkerd-control-plane.yaml
+kubectl apply -f linkerd-control-plane.yaml
+linkerd check
 ```
 
-### 5. 레거시 마이그레이션
+Lab용 CLI 흐름이며 운영 설치 지침은 재현성과 검토된 identity 설정을 위한 Helm을 권장합니다. Namespace annotation은 새 Pod의 injection을 활성화하며 실행 중인 Pod에 즉시 proxy를 넣지 않습니다. 선택한 release 절차로 CRD/control plane을 갱신한 뒤 workload를 명시적으로 rollout해 data-plane proxy를 바꿉니다. 자동 workload rollout을 뜻하지 않습니다.
 
-**권장: Kong Mesh 또는 Consul**
+### Kong·Consul Chart 검토
 
-**이유**:
+검증한 정확한 chart를 받아 검토용으로 render하는 명령이며 운영 시스템을 배포하지 않습니다.
 
-* VM 및 컨테이너 동시 지원
-* 점진적 마이그레이션
-* 기존 Service Discovery 통합
-
-**Kong Mesh 하이브리드**:
-
-```yaml
-# Kubernetes Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: legacy-db
-  annotations:
-    kuma.io/mesh: default
-spec:
-  type: ExternalName
-  externalName: legacy-db.vm.local
----
-# VM에서 Kuma DP 실행
-kuma-dp run \
-  --cp-address=https://kong-mesh-cp:5678 \
-  --dataplane-token-file=/tmp/token \
-  --dataplane-file=/etc/kuma/dataplane.yaml
+```bash
+helm repo add kong-mesh https://kong.github.io/kong-mesh-charts
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm repo update kong-mesh hashicorp
+helm show values kong-mesh/kong-mesh --version 2.14.4 > kong-values.reference.yaml
+helm show values hashicorp/consul --version 2.0.4 > consul-values.reference.yaml
+helm template kong-mesh kong-mesh/kong-mesh --version 2.14.4   --namespace kong-mesh-system --include-crds --values reviewed-kong-values.yaml
+helm template consul hashicorp/consul --version 2.0.4   --namespace consul --include-crds --values reviewed-consul-values.yaml
 ```
 
-### 6. 강력한 관찰성 요구
+Reviewed values 파일은 환경별 입력이며 이 비교 문서가 제공하는 파일이 아닙니다. Kubernetes 지원, edition/license, CA/ACL/bootstrap identity, storage, HA, injector/controller와 upgrade note를 확인한 뒤 제품별 설치 가이드를 따르세요. Render 성공은 runtime readiness나 안전한 in-place upgrade의 증명이 아닙니다.
 
-**권장: Istio**
+### 트러블슈팅
 
-**이유**:
-
-* 50+ 기본 메트릭
-* 상세한 액세스 로그
-* 모든 트레이싱 백엔드 지원
-* Kiali 통합
-
-**관찰성 스택**:
-
-```yaml
-# Prometheus + Grafana + Jaeger + Kiali
-istioctl install --set profile=demo \
-  --set values.prometheus.enabled=true \
-  --set values.grafana.enabled=true \
-  --set values.tracing.enabled=true \
-  --set values.kiali.enabled=true
+```bash
+istioctl proxy-status
+istioctl analyze -n mesh-demo
+istioctl proxy-config clusters "$POD" -n mesh-demo
+linkerd check
+linkerd viz stat deploy -n mesh-demo
+kubectl get meshhttproutes,meshtrafficpermissions -n mesh-demo
+kubectl get servicedefaults,serviceresolvers,servicesplitters -n mesh-demo
 ```
 
-## 최종 결론 및 추천
+제품별 명령은 의도한 설치 환경에서만 사용합니다. 모든 Consul sidecar의 이름을 과거 container 이름으로 가정하지 말고 실제 component와 log를 확인하세요. Tap/debug log에는 요청 정보가 포함될 수 있으므로 범위를 정하고 일시적 진단 설정은 복구합니다. 모든 조직에 8시간 또는 5분 설치를 주장하지 말고 실제 절차에 드는 팀의 노력을 측정하세요.
 
-### 의사 결정 트리
 
-![팀의 경험 수준, 리소스 제약, 플랫폼 요구(K8s 전용 또는 K8s+VM)를 따라가면 Linkerd, Kong Mesh/Consul, Istio 중 적합한 Service Mesh로 귀결된다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-18.svg)
+## 비용과 라이선스
 
-### 빠른 추천 가이드
+### 원래 비용 입력은 견적이 아닙니다
 
-| 상황             | 1순위     | 2순위       | 피해야 할 것         |
-| -------------- | ------- | --------- | --------------- |
-| **처음 시작**      | Linkerd | Kong Mesh | Istio (복잡함)     |
-| **대규모 엔터프라이즈** | Istio   | Kong Mesh | Linkerd (기능 제한) |
-| **리소스 제약**     | Linkerd | -         | Istio (오버헤드)    |
-| **VM 워크로드**    | Consul  | Kong Mesh | Linkerd (지원 없음) |
-| **멀티 클라우드**    | Istio   | Consul    | 단일 클라우드 솔루션     |
-| **빠른 ROI**     | Linkerd | -         | Istio (학습 곡선)   |
-| **세밀한 제어**     | Istio   | Kong Mesh | Linkerd (제한적)   |
+기존 100-Pod/m5.xlarge 표는 baseline $300에 다음 월 비용을 더했습니다.
 
-### 최종 추천
+| 원래 제품 입력 | Control-plane CPU/메모리 | Proxy 전체 CPU/메모리 | 과거 추가 월 비용 |
+|---|---|---|---:|
+| Linkerd |300m / 500 MB|2 vCPU / 5 GB|$50|
+| Istio |1 vCPU / 2 GB|10 vCPU / 15 GB|$150|
+| Kong Mesh |500m / 1 GB|8 vCPU / 12 GB|$120|
+| Consul |1 vCPU / 2 GB|10 vCPU / 14 GB|$145|
 
-**🥇 Istio**:
+Region, 노드 수, 운영 시간, 구매 방식, 할당 공식과 billing data가 제시되지 않은 가격입니다. Resource request가 자동으로 EC2 노드의 일부를 구매하는 것은 아니며 여유 용량이 생겨도 청구액은 줄지 않을 수 있습니다. 과거 가정 입력으로만 보존하며 가장 저렴한 제품을 선택하는 근거로 사용하지 않습니다.
 
-* **언제**: 대규모 엔터프라이즈, 풍부한 기능 필요, 팀에 Service Mesh 경험 있음
-* **장점**: 최고 수준의 기능, 강력한 커뮤니티, 미래 지향적
-* **단점**: 가파른 학습 곡선, 높은 리소스 사용
+기존 staffing 가정은 Istio/Linkerd/Kong/Consul 순서로 초기 설정 40/8/20/24시간, 월 운영 20/5/10/12시간, 월 troubleshooting 15/3/8/10시간, 분기 upgrade 8/2/4/5시간이었습니다. 팀 생산성 실측이 아니며 초기 설정은 매월 반복하는 비용도 아닙니다.
 
-**🥈 Linkerd**:
+의미 있는 비용 모델에는 실제 유지할 용량, HA·autoscaling 제약, LB/전송, storage/telemetry, platform 비용, support subscription과 관측한 엔지니어링 노력을 사용합니다. 같은 workload·보안·가용성 요구를 비교하고 단위·가격·날짜를 명시하세요. 근거가 있는 차이와 migration 비용으로만 ROI를 계산합니다.
 
-* **언제**: 간단함 우선, 소규모 팀, 빠른 시작, 리소스 효율성
-* **장점**: 설치/운영 간단, 낮은 오버헤드, 자동 mTLS
-* **단점**: 기능 제한적, VM 미지원
+### Artifact와 제품 License
 
-**🥉 Kong Mesh / Consul Connect**:
+| Component | 구분할 내용 |
+|---|---|
+| Istio | Apache license의 upstream project; hosted/상용 배포는 별도 조건·비용 |
+| Linkerd | Apache license의 upstream project; upstream edge와 vendor stable은 별도 release/support 선택 |
+| Kuma / Kong Mesh | Upstream Kuma와 상용 Kong Mesh는 다른 제품이며 선택한 edition·지원 계약 확인 |
+| Consul | 검증한 **Consul 2.0.4 앱**은 use grant와 이후 MPL 전환 조건이 있는 Business Source License 1.1이며 현재 MPL-2.0으로만 표시하면 안 됨 |
 
-* **언제**: 하이브리드 환경 (K8s + VM), 멀티 플랫폼, 레거시 통합
-* **장점**: VM 우선 지원, 유연한 아키텍처, 강력한 Service Discovery
-* **단점**: 상용 기능 유료, 커뮤니티 크기
+Consul Helm chart의 MPL 표시는 해당 artifact의 metadata이며 앱 binary license를 덮어쓰지 않습니다. 정확한 artifact/version 조건을 확인하세요. Linkerd HA control-plane 구성이 반드시 enterprise 전용인 것도 아닙니다. 유료 support/SLA·제품 기능과 upstream 기능을 구분하고 vendor 하나의 이름이나 달러 기호 등급으로 지원을 추론하지 마세요.
 
-***
+## 선택과 검증
 
-**다음 단계**:
+| 상황 | 선택을 결정할 질문 |
+|---|---|
+| 대규모 배포 | 필요한 routing/security API, endpoint/update 규모와 HA 동작은 무엇인가? |
+| 작은 팀·빠른 시작 | Identity와 upgrade를 포함해 운영 가능한 lifecycle/troubleshooting 절차는 무엇인가? |
+| Resource 제약 | 동일 policy의 실제 workload가 proxy, waypoint, gateway, telemetry까지 포함해 얼마나 쓰는가? |
+| VM·legacy workload | 문서화된 identity/network/runtime 통합이 맞는가? Istio와 Linkerd에도 VM 통합 경로가 있음 |
+| Multicloud·multicluster | 필요한 trust, API, data plane, policy 배포와 재해 복구 경계는 무엇인가? |
+| 상세 관측성 | 필요한 앱/proxy 신호, collector/exporter, retention과 접근 제어는 무엇인가? |
 
-1. PoC 환경에서 2-3개 솔루션 테스트
-2. 실제 워크로드 패턴으로 성능 벤치마크
-3. 팀 피드백 수집
-4. 프로덕션 롤아웃 계획 수립
+Service ExternalName 하나가 VM을 mesh에 등록하거나 proxy identity를 만들지는 않습니다. Data-plane binary에도 지원되는 등록 절차, credential, network redirection과 실제 control-plane 연결이 필요합니다. Istio 설치 두 개에 meshID/network 문자열을 지정하는 것도 완전한 multicluster 설계가 아닙니다.
 
-**관련 문서**:
+실제 workload와 필요한 정책으로 bounded PoC를 수행하고 재현 가능한 측정값을 보관하며 실패·복구를 시험합니다. 관련 기준은 [비교 인덱스](README.md)와 [Istio vs VPC Lattice](02-istio-vs-lattice.md)를 참고하세요. Service 수, 일반적인 “가장 많은 기능” 또는 근거 없는 빠른 ROI 주장만으로 제품을 선택할 수 없습니다.
 
-* [Istio vs VPC Lattice 비교](02-istio-vs-lattice.md)
-* [Istio 아키텍처](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/istio/architecture/README.md)
+
+## 공식 근거
+
+- [Istio architecture](https://istio.io/latest/docs/ops/deployment/architecture/) and [supported releases](https://istio.io/latest/docs/releases/supported-releases/)
+- [Istio VM integration](https://istio.io/latest/docs/setup/install/virtual-machine/) and [multicluster](https://istio.io/latest/docs/setup/install/multicluster/)
+- [Linkerd releases](https://linkerd.io/releases/), [Kubernetes compatibility](https://linkerd.io/docs/reference/k8s-versions/) and [Gateway API compatibility](https://linkerd.io/docs/features/gateway-api/)
+- [Linkerd request routing](https://linkerd.io/docs/features/request-routing/), [HTTPRoute](https://linkerd.io/docs/reference/httproute/), [authorization](https://linkerd.io/docs/reference/authorization-policy/) and [rate limiting](https://linkerd.io/docs/features/rate-limiting/)
+- [Linkerd multicluster](https://linkerd.io/docs/features/multicluster/), [VM expansion](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/) and [tracing](https://linkerd.io/docs/features/distributed-tracing/)
+- [Kong Mesh changelog](https://developer.konghq.com/mesh/changelog/), [support](https://developer.konghq.com/mesh/support-policy/) and [validated versions](https://developer.konghq.com/mesh/version-compatibility/)
+- [Kong MeshHTTPRoute](https://developer.konghq.com/mesh/policies/meshhttproute/), [MeshTrafficPermission](https://developer.konghq.com/mesh/policies/meshtrafficpermission/) and [load-balancing policy](https://developer.konghq.com/mesh/policies/meshloadbalancingstrategy/)
+- [Kong multi-zone deployment](https://developer.konghq.com/mesh/mesh-multizone-service-deployment/) and [installation](https://developer.konghq.com/mesh/deploy-mesh-self-managed/)
+- [Consul proxies](https://developer.hashicorp.com/consul/docs/connect/proxy), [service defaults](https://developer.hashicorp.com/consul/docs/reference/config-entry/service-defaults), [resolver](https://developer.hashicorp.com/consul/docs/reference/config-entry/service-resolver), [splitter](https://developer.hashicorp.com/consul/docs/reference/config-entry/service-splitter) and [intentions](https://developer.hashicorp.com/consul/docs/reference/config-entry/service-intentions)
+- [Consul 2.0.4 application license](https://raw.githubusercontent.com/hashicorp/consul/v2.0.4/LICENSE)
+- [Istio architecture in this guide](../03-architecture.md)

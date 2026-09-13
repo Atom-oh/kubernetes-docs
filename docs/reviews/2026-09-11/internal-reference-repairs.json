@@ -1,0 +1,122 @@
+[
+  {
+    "file": "ko/networking/calico/04-bgp-deep-dive.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/networking/calico/03-ipam-ip-pools.md",
+    "to": "03-networking-modes.md"
+  },
+  {
+    "file": "ko/networking/calico/06-ebpf-dataplane.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/networking/calico/07-operations.md",
+    "to": "09-operations.md"
+  },
+  {
+    "file": "ko/ops/06-scaling-strategies.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/scheduling/README.md",
+    "to": "../scheduling/01-custom-scheduler-part1.md"
+  },
+  {
+    "file": "ko/ops/06-scaling-strategies.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/scheduling/README.md",
+    "to": "../scheduling/01-custom-scheduler-part1.md"
+  },
+  {
+    "file": "ko/quizzes/networking/cilium/glossary-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/networking/cilium/README.md",
+    "to": "../../README.md#cilium"
+  },
+  {
+    "file": "ko/quizzes/security/06-eks-security-best-practices-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/security/06-eks-security-best-practices.md",
+    "to": "06-eks-security-best-practices-quiz.md"
+  },
+  {
+    "file": "ko/quizzes/security/06-eks-security-best-practices-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/security/03-pod-security-standards.md",
+    "to": "03-pod-security-standards-quiz.md"
+  },
+  {
+    "file": "ko/quizzes/security/06-eks-security-best-practices-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/security/05-secrets-management.md",
+    "to": "05-secrets-management-quiz.md"
+  },
+  {
+    "file": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/security/09-opa-gatekeeper.md",
+    "to": "09-opa-gatekeeper-quiz.md"
+  },
+  {
+    "file": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/security/01-kyverno-policy-management.md",
+    "to": "01-kyverno-policy-management-quiz.md"
+  },
+  {
+    "file": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/security/03-pod-security-standards.md",
+    "to": "03-pod-security-standards-quiz.md"
+  },
+  {
+    "file": "ko/eks-hybrid-nodes/README.md",
+    "from": "missing hybrid quiz index",
+    "to": "explicit links to existing quiz pages"
+  },
+  {
+    "file": "en/ops/01-infrastructure-setup.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+    "to": "04-gitops-multi-cluster.md"
+  },
+  {
+    "file": "en/ops/01-infrastructure-setup.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+    "to": "04-gitops-multi-cluster.md"
+  },
+  {
+    "file": "en/ops/02-infrastructure-advanced.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+    "to": "04-gitops-multi-cluster.md"
+  },
+  {
+    "file": "en/ops/02-infrastructure-advanced.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+    "to": "04-gitops-multi-cluster.md"
+  },
+  {
+    "file": "en/quizzes/networking/cilium/glossary-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/networking/cilium/README.md",
+    "to": "../../README.md#cilium"
+  },
+  {
+    "file": "en/quizzes/security/06-eks-security-best-practices-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/06-eks-security-best-practices.md",
+    "to": "06-eks-security-best-practices-quiz.md"
+  },
+  {
+    "file": "en/quizzes/security/06-eks-security-best-practices-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/03-pod-security-standards.md",
+    "to": "03-pod-security-standards-quiz.md"
+  },
+  {
+    "file": "en/quizzes/security/06-eks-security-best-practices-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/05-secrets-management.md",
+    "to": "05-secrets-management-quiz.md"
+  },
+  {
+    "file": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/09-opa-gatekeeper.md",
+    "to": "09-opa-gatekeeper-quiz.md"
+  },
+  {
+    "file": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/01-kyverno-policy-management.md",
+    "to": "01-kyverno-policy-management-quiz.md"
+  },
+  {
+    "file": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "from": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/03-pod-security-standards.md",
+    "to": "03-pod-security-standards-quiz.md"
+  },
+  {
+    "file": "en/eks-hybrid-nodes/README.md",
+    "from": "missing hybrid quiz index",
+    "to": "explicit links to existing quiz pages"
+  }
+]

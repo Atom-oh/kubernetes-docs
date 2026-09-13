@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Networking Layers",
+    "output": "en-networking-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      560
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "pod-networking",
+      "type": "backend",
+      "label": "Pod Networking",
+      "sublabel": "Pod-to-Pod communication",
+      "tag": "L1",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "service-networking",
+      "type": "backend",
+      "label": "Service Networking",
+      "sublabel": "Service discovery & load balancing",
+      "tag": "L2",
+      "pos": [
+        330,
+        170
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "ingress-networking",
+      "type": "cloud",
+      "label": "Ingress Networking",
+      "sublabel": "External HTTP/HTTPS traffic routing",
+      "tag": "L3",
+      "pos": [
+        330,
+        300
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "network-policy",
+      "type": "security",
+      "label": "Network Policy",
+      "sublabel": "Network security",
+      "tag": "L4",
+      "pos": [
+        330,
+        430
+      ],
+      "size": [
+        320,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-to-service",
+      "from": "pod-networking",
+      "to": "service-networking",
+      "label": "Stable endpoint for a set of Pods",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "service-to-ingress",
+      "from": "service-networking",
+      "to": "ingress-networking",
+      "label": "Routes external requests to Services",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "ingress-to-policy",
+      "from": "ingress-networking",
+      "to": "network-policy",
+      "label": "Enforces allowed-traffic rules",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Networking Model Requirements",
+      "items": [
+        "Every Pod can communicate with every other Pod without NAT",
+        "Every Node can communicate with every Pod without NAT",
+        "The IP a Pod sees itself as is the same IP others see it as"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Role of Each Layer",
+      "items": [
+        "Pod Networking: each Pod has a unique IP and talks directly to every other Pod in the cluster",
+        "Service Networking: provides a stable network endpoint for a set of Pods",
+        "Ingress Networking: defines rules for routing HTTP/HTTPS traffic to internal cluster Services",
+        "Network Policy: restricts allowed traffic between Pods to secure the network"
+      ]
+    }
+  ]
+}

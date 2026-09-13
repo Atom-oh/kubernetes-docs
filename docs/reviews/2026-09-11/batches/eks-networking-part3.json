@@ -1,0 +1,166 @@
+[
+  {
+    "path": "en/eks/03-eks-networking-part3.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected performance/MTU/TCP/locality and evidence-led diagnostics; completed missing-container examples and validated real chart environment placement.",
+    "sources": [
+      "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/network_mtu.html",
+      "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html",
+      "https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/",
+      "https://docs.kernel.org/networking/ip-sysctl.html",
+      "https://kubernetes.io/docs/reference/networking/virtual-ips/",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/pkg/apis/core/types.go"
+    ],
+    "findings": [
+      "Qualified instance performance and ENA limits; official M5 baseline/burst0.75/10Gbps versus25Gbps retained as specifications, not workload measurements.",
+      "Replaced ENI_MTU with AWS_VPC_ENI_MTU/POD_MTU; explained path MTU, SG/subnet distinction, ICMP and rollout ownership.",
+      "Moved early-demux setting to init.env for strict Pod-SG mode; no blanket main-container change.",
+      "Replaced context-free global sysctl writes with inspection and scoped safe Pod fragment; keepalive versus connection reuse and buffer auto-tuning/BDP clarified. Original tuning numbers retained explicitly unmeasured.",
+      "Completed two affinity Deployments with actual HTTP workload; preferences not placement/migration guarantees and locality trades off failure-domain resilience.",
+      "Updated Service traffic preference to supported PreferSameZone; fallback, capacity, topology-mode precedence and strict Local policy behavior clarified.",
+      "Removed fictitious NetworkPolicy evaluation-order optimization and unsafe policy-count heuristics.",
+      "ContainerCreating not uniquely IP exhaustion; warm-pool growth can worsen exhaustion; differentiate fragmentation/ENI/subnet/API failures. Added guarded namespace-specific diagnostics and EndpointSlice/app-protocol checks.",
+      "Documented CoreDNS/AutoMode ownership, actual load-balancer target-health paths and evidence before restarts. Parent diagram0/4 prose/recipe repair pending; embeds commented, no image files edited."
+    ],
+    "validation": [
+      "Full original293 lines read in each locale; SHA/ranges stored.",
+      "Reproduced both original Deployment schema failures: containers is required. Corrected paired native objects validate against Kubernetes1.36.",
+      "12Bash blocks,6native objects,4Helm fragments,2Pod sysctl fragments merged into complete Deployment,2local links,Python syntax and scoped diff check pass.",
+      "VPC CNI1.23.0 Helm render validates5native objects and actual main AWS_VPC_ENI_MTU/POD_MTU versus init DISABLE_TCP_EARLY_DEMUX placement. PreferSameZone confirmed in tagged Kubernetes1.36 core source.",
+      "No host sysctl changes, EKS execution or performance measurement. Evidence:/tmp/eks-networking-part3-audit/source-validation.json."
+    ]
+  },
+  {
+    "path": "ko/eks/03-eks-networking-part3.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected performance/MTU/TCP/locality and evidence-led diagnostics; completed missing-container examples and validated real chart environment placement.",
+    "sources": [
+      "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/network_mtu.html",
+      "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html",
+      "https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/",
+      "https://docs.kernel.org/networking/ip-sysctl.html",
+      "https://kubernetes.io/docs/reference/networking/virtual-ips/",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/pkg/apis/core/types.go"
+    ],
+    "findings": [
+      "Qualified instance performance and ENA limits; official M5 baseline/burst0.75/10Gbps versus25Gbps retained as specifications, not workload measurements.",
+      "Replaced ENI_MTU with AWS_VPC_ENI_MTU/POD_MTU; explained path MTU, SG/subnet distinction, ICMP and rollout ownership.",
+      "Moved early-demux setting to init.env for strict Pod-SG mode; no blanket main-container change.",
+      "Replaced context-free global sysctl writes with inspection and scoped safe Pod fragment; keepalive versus connection reuse and buffer auto-tuning/BDP clarified. Original tuning numbers retained explicitly unmeasured.",
+      "Completed two affinity Deployments with actual HTTP workload; preferences not placement/migration guarantees and locality trades off failure-domain resilience.",
+      "Updated Service traffic preference to supported PreferSameZone; fallback, capacity, topology-mode precedence and strict Local policy behavior clarified.",
+      "Removed fictitious NetworkPolicy evaluation-order optimization and unsafe policy-count heuristics.",
+      "ContainerCreating not uniquely IP exhaustion; warm-pool growth can worsen exhaustion; differentiate fragmentation/ENI/subnet/API failures. Added guarded namespace-specific diagnostics and EndpointSlice/app-protocol checks.",
+      "Documented CoreDNS/AutoMode ownership, actual load-balancer target-health paths and evidence before restarts. Parent diagram0/4 prose/recipe repair pending; embeds commented, no image files edited."
+    ],
+    "validation": [
+      "Full original293 lines read in each locale; SHA/ranges stored.",
+      "Reproduced both original Deployment schema failures: containers is required. Corrected paired native objects validate against Kubernetes1.36.",
+      "12Bash blocks,6native objects,4Helm fragments,2Pod sysctl fragments merged into complete Deployment,2local links,Python syntax and scoped diff check pass.",
+      "VPC CNI1.23.0 Helm render validates5native objects and actual main AWS_VPC_ENI_MTU/POD_MTU versus init DISABLE_TCP_EARLY_DEMUX placement. PreferSameZone confirmed in tagged Kubernetes1.36 core source.",
+      "No host sysctl changes, EKS execution or performance measurement. Evidence:/tmp/eks-networking-part3-audit/source-validation.json."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks/03-eks-networking-part3-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected all seven original topics, normalized numbering and added eight source-aligned checks; paired schemas, CLI options, CloudFormation and local proxy/DNS behavior validated.",
+    "sources": [
+      "https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/",
+      "https://kubernetes.io/docs/reference/networking/virtual-ips/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-vpc-attachments.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/envoy-config.html",
+      "https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v1.13.1/config/crd/bases/appmesh.k8s.aws_virtualnodes.yaml",
+      "https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v1.13.1/config/crd/bases/appmesh.k8s.aws_virtualrouters.yaml",
+      "https://api.github.com/repos/envoyproxy/envoy/releases/latest",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRetryPolicy.html",
+      "https://coredns.io/plugins/cache/",
+      "https://coredns.io/plugins/loop/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html",
+      "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html"
+    ],
+    "findings": [
+      "Preserved seven original topics numbered1,2,3,5,7,8,10, normalized them to1–7 and added eight performance/diagnostic questions;15questions/10MC per locale. No missing-text recovery claim from numbering gaps.",
+      "Qualified sidecar versus ambient and shared Pod IP; removed automatic-all-interception assumptions and obsolete AppMesh new-installation recommendation.",
+      "Corrected private endpoint dependencies, charges/latency/IAM/compliance claims; complete parameterized ECRapi/dkr+S3 CloudFormation example; real eksctl --subnet-ids flag.",
+      "Scoped TGW architecture choice, full return/attachment routing, reachable exported endpoints, separate DNS and actual SG referencing; no TGW-attached SG or remoteVPC+2asCoreDNS. Replaced destructive/incomplete creation fragments with read-only route inspection.",
+      "Corrected prefix density versus packet performance/subnetcapacity, warm prefix semantics/precedence, fictitious ConfigMap, small-instance maxPods250 errors and contiguousprefix planning. ExactMNG boundary is fewer than30vCPUs110, otherwise250.",
+      "Replaced invalid Envoy Deployment/image example with current validated standalone loopback reverse-proxy bootstrap; mesh injector/build ownership and actual adminport distinguished.",
+      "CoreDNS owner/AutoMode, Corefile preservation, loop-plugin limits, real conditional DNS paths, single autoscaling owner and cache argument order/capacity clarified; legacyupstreamdirective removed.",
+      "Reframed AppMesh as existing-system migration beforeSeptember30,2026. Corrected serverTLSversusmTLS, explicitclientcert/trust and case-sensitiveARNfields; removed CA-create/listallACTIVE and accountwideIAMoverride recipes.",
+      "Corrected Mesh versus VirtualNode logging/tracing fields; real Envoy XRay environment prerequisites and actualcollector-based metrics; removed floating collector installs/publicGrafana/hardcodedpassword/nonexistentautomaticmetric claims.",
+      "All four original HTTP retry events are valid (early suspicion disproven); client-error means409 and stream-error refusedstream. Retained weightedrouting and explicitretry/outlier semantics with bounded assumptions.",
+      "Historical100–200mCPU/128–256Mi and DNS resource/tuning examples preserved as unverified estimates, not benchmarks or production guarantees. No foreignprose, service-meshdirectory or cloud changes."
+    ],
+    "validation": [
+      "Fully read every original1–1262line before edits; three ranges and originalSHA stored.",
+      "Paired static validation:18Bash,4nativeKubernetes1.36objects,4AppMeshcontroller1.13.1vendorobjects,2CloudFormation,2Envoy,2Grafana,2containerEnvfragments,2JSON,10textblocks,4local links;15Q/10MC each.",
+      "Four realAWSCLIinput-skeleton option checks and eksctlnodegrouphelp confirm arguments withoutAWSrequests. CloudFormation cfn-lint returnedzero diagnostics.",
+      "Official Envoy1.39.1ARM64 binary SHAverified; --modevalidate passes. Initial sandboxIPv4socketcapabilitycheck failed; same loopback-only config passed with permittedlocalnetworking.",
+      "Real localruntime:Envoy forwarded3HTTPpaths, returned503afterbackendstop and exposedexpectedadminconfiguration. CoreDNS1.14.7 rejectedoriginalprefetchduration10% and removedupstreamproperty; correctedcacheansweredlocalaudit.test query. Onlyloopbackports changed inproxyfixture; noEKS/meshdeployment/performancebenchmark.",
+      "AppMesh examples validated againstreleasedCRDs only; mTLSfiles/CA/realidentityrotation notexecuted. Evidence:/tmp/eks-networking-part3-audit/{quiz-static-validation,endpoints-cfn-lint,envoy-config-validation,proxy-dns-runtime-validation}.json."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks/03-eks-networking-part3-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected all seven original topics, normalized numbering and added eight source-aligned checks; paired schemas, CLI options, CloudFormation and local proxy/DNS behavior validated.",
+    "sources": [
+      "https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/",
+      "https://kubernetes.io/docs/reference/networking/virtual-ips/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-vpc-attachments.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/envoy-config.html",
+      "https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v1.13.1/config/crd/bases/appmesh.k8s.aws_virtualnodes.yaml",
+      "https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v1.13.1/config/crd/bases/appmesh.k8s.aws_virtualrouters.yaml",
+      "https://api.github.com/repos/envoyproxy/envoy/releases/latest",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRetryPolicy.html",
+      "https://coredns.io/plugins/cache/",
+      "https://coredns.io/plugins/loop/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html",
+      "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html"
+    ],
+    "findings": [
+      "Preserved seven original topics numbered1,2,3,5,7,8,10, normalized them to1–7 and added eight performance/diagnostic questions;15questions/10MC per locale. No missing-text recovery claim from numbering gaps.",
+      "Qualified sidecar versus ambient and shared Pod IP; removed automatic-all-interception assumptions and obsolete AppMesh new-installation recommendation.",
+      "Corrected private endpoint dependencies, charges/latency/IAM/compliance claims; complete parameterized ECRapi/dkr+S3 CloudFormation example; real eksctl --subnet-ids flag.",
+      "Scoped TGW architecture choice, full return/attachment routing, reachable exported endpoints, separate DNS and actual SG referencing; no TGW-attached SG or remoteVPC+2asCoreDNS. Replaced destructive/incomplete creation fragments with read-only route inspection.",
+      "Corrected prefix density versus packet performance/subnetcapacity, warm prefix semantics/precedence, fictitious ConfigMap, small-instance maxPods250 errors and contiguousprefix planning. ExactMNG boundary is fewer than30vCPUs110, otherwise250.",
+      "Replaced invalid Envoy Deployment/image example with current validated standalone loopback reverse-proxy bootstrap; mesh injector/build ownership and actual adminport distinguished.",
+      "CoreDNS owner/AutoMode, Corefile preservation, loop-plugin limits, real conditional DNS paths, single autoscaling owner and cache argument order/capacity clarified; legacyupstreamdirective removed.",
+      "Reframed AppMesh as existing-system migration beforeSeptember30,2026. Corrected serverTLSversusmTLS, explicitclientcert/trust and case-sensitiveARNfields; removed CA-create/listallACTIVE and accountwideIAMoverride recipes.",
+      "Corrected Mesh versus VirtualNode logging/tracing fields; real Envoy XRay environment prerequisites and actualcollector-based metrics; removed floating collector installs/publicGrafana/hardcodedpassword/nonexistentautomaticmetric claims.",
+      "All four original HTTP retry events are valid (early suspicion disproven); client-error means409 and stream-error refusedstream. Retained weightedrouting and explicitretry/outlier semantics with bounded assumptions.",
+      "Historical100–200mCPU/128–256Mi and DNS resource/tuning examples preserved as unverified estimates, not benchmarks or production guarantees. No foreignprose, service-meshdirectory or cloud changes."
+    ],
+    "validation": [
+      "Fully read every original1–1274line before edits; three ranges and originalSHA stored.",
+      "Paired static validation:18Bash,4nativeKubernetes1.36objects,4AppMeshcontroller1.13.1vendorobjects,2CloudFormation,2Envoy,2Grafana,2containerEnvfragments,2JSON,10textblocks,4local links;15Q/10MC each.",
+      "Four realAWSCLIinput-skeleton option checks and eksctlnodegrouphelp confirm arguments withoutAWSrequests. CloudFormation cfn-lint returnedzero diagnostics.",
+      "Official Envoy1.39.1ARM64 binary SHAverified; --modevalidate passes. Initial sandboxIPv4socketcapabilitycheck failed; same loopback-only config passed with permittedlocalnetworking.",
+      "Real localruntime:Envoy forwarded3HTTPpaths, returned503afterbackendstop and exposedexpectedadminconfiguration. CoreDNS1.14.7 rejectedoriginalprefetchduration10% and removedupstreamproperty; correctedcacheansweredlocalaudit.test query. Onlyloopbackports changed inproxyfixture; noEKS/meshdeployment/performancebenchmark.",
+      "AppMesh examples validated againstreleasedCRDs only; mTLSfiles/CA/realidentityrotation notexecuted. Evidence:/tmp/eks-networking-part3-audit/{quiz-static-validation,endpoints-cfn-lint,envoy-config-validation,proxy-dns-runtime-validation}.json."
+    ]
+  }
+]

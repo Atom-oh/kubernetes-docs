@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana OnCall 라우트 설정",
+    "output": "public/archmaps/ko-observability-alerting-03-grafana-oncall-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      500
+    ],
+    "views": [
+      {
+        "id": "alertmanager-route",
+        "label": "Alertmanager 레이블 라우팅",
+        "focus": [
+          "received",
+          "integration",
+          "labels",
+          "critical",
+          "infra",
+          "default"
+        ],
+        "note": "severity·team 레이블을 routing_regex로 매칭해 Critical, Infra, Default 체인으로 나눕니다."
+      },
+      {
+        "id": "grafana-route",
+        "label": "Grafana 폴더 라우팅",
+        "focus": [
+          "integration",
+          "folder",
+          "critical",
+          "lowpri"
+        ],
+        "note": "Production 폴더 알림은 Critical 체인, Staging 폴더 알림은 Low Priority 체인으로 보냅니다."
+      },
+      {
+        "id": "cloudwatch-route",
+        "label": "CloudWatch 네임스페이스 라우팅",
+        "focus": [
+          "integration",
+          "namespace",
+          "infra",
+          "dba"
+        ],
+        "note": "AWS/EKS 네임스페이스는 Infra 체인, AWS/RDS 네임스페이스는 DBA 체인으로 보냅니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "received",
+      "type": "external",
+      "label": "알림 수신",
+      "sublabel": "Integration으로 유입",
+      "pos": [
+        450,
+        20
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "integration",
+      "type": "backend",
+      "label": "Integration Type?",
+      "sublabel": "어느 소스에서 왔나",
+      "pos": [
+        440,
+        150
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "folder",
+      "type": "backend",
+      "label": "Folder?",
+      "sublabel": "Grafana 알림 폴더",
+      "pos": [
+        135,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "labels",
+      "type": "backend",
+      "label": "Labels?",
+      "sublabel": "Alertmanager 레이블",
+      "pos": [
+        450,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "tag": "routing_regex"
+    },
+    {
+      "id": "namespace",
+      "type": "backend",
+      "label": "Namespace?",
+      "sublabel": "CloudWatch 네임스페이스",
+      "pos": [
+        765,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lowpri",
+      "type": "messagebus",
+      "label": "Low Priority Chain",
+      "sublabel": "낮은 우선순위",
+      "pos": [
+        30,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "critical",
+      "type": "security",
+      "label": "Critical Chain",
+      "sublabel": "critical-chain",
+      "pos": [
+        240,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "tag": "position 0"
+    },
+    {
+      "id": "default",
+      "type": "messagebus",
+      "label": "Default Chain",
+      "sublabel": "기본 체인",
+      "pos": [
+        450,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "infra",
+      "type": "messagebus",
+      "label": "Infra Chain",
+      "sublabel": "infra-chain",
+      "pos": [
+        660,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "tag": "position 1"
+    },
+    {
+      "id": "dba",
+      "type": "messagebus",
+      "label": "DBA Chain",
+      "sublabel": "DB 담당 팀",
+      "pos": [
+        870,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "received-integration",
+      "from": "received",
+      "to": "integration",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "integration-labels",
+      "from": "integration",
+      "to": "labels",
+      "label": "Alertmanager",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "integration-folder",
+      "from": "integration",
+      "to": "folder",
+      "label": "Grafana",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "integration-namespace",
+      "from": "integration",
+      "to": "namespace",
+      "label": "CloudWatch",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "labels-critical",
+      "from": "labels",
+      "to": "critical",
+      "label": "severity=critical",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "labels-default",
+      "from": "labels",
+      "to": "default",
+      "label": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "labels-infra",
+      "from": "labels",
+      "to": "infra",
+      "label": "team=infra",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "folder-lowpri",
+      "from": "folder",
+      "to": "lowpri",
+      "label": "Staging",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "folder-critical",
+      "from": "folder",
+      "to": "critical",
+      "label": "Production",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          205,
+          440
+        ]
+      ],
+      "labelAt": [
+        205,
+        378
+      ]
+    },
+    {
+      "id": "namespace-infra",
+      "from": "namespace",
+      "to": "infra",
+      "label": "AWS/EKS",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          835,
+          440
+        ]
+      ],
+      "labelAt": [
+        835,
+        378
+      ]
+    },
+    {
+      "id": "namespace-dba",
+      "from": "namespace",
+      "to": "dba",
+      "label": "AWS/RDS",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "라우트 생성 규칙",
+      "items": [
+        "routing_regex \"severity\": \"critical\" → critical-chain (position 0)",
+        "routing_regex \"team\": \"infra\" → infra-chain (position 1)",
+        "라우트마다 escalation_chain_id와 slack_channel_id를 함께 지정"
+      ]
+    }
+  ]
+}

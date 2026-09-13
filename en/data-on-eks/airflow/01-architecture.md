@@ -1,102 +1,159 @@
 # Part 1: Airflow Architecture on Kubernetes
 
-> **Supported Versions**: Apache Airflow 3.2+, Kubernetes 1.30+\
-> **Last Updated**: July 15, 2026
+> **Review baseline**: Airflow 3.3.1 / Helm chart 1.22.0 · September 12, 2026
 
-## What is Apache Airflow?
+## 1. Components and task execution
 
-Apache Airflow is a platform for authoring, scheduling, and monitoring workflows defined as directed acyclic graphs (DAGs) of tasks. It is the de facto standard orchestrator for data pipelines — ETL/ELT jobs, ML training pipelines, and cross-system batch workflows — and is commonly deployed on Kubernetes so that individual tasks can scale out as pods rather than compete for capacity on a fixed worker fleet.
+Airflow schedules and observes task instances according to DAG dependencies.
+Work can execute in an executor's worker, an external pod or a service the task
+invokes. Kubernetes API servers handle requests/state; the scheduler and kubelet
+place and start pods.
 
-Airflow 2 reached end-of-life on April 22, 2026 and no longer receives fixes, so any new deployment should target the **Airflow 3.x** line (3.0 reached general availability in April 2025; the latest stable release as of this writing is 3.3.0). This document covers Airflow 3's component architecture on Kubernetes. Part 2 walks through deploying it on EKS with the official Helm chart and compares the available executors in depth.
+| Component | Responsibility and scope |
+| --- | --- |
+| Scheduler + executor | Evaluate DAG/task readiness, submit work, manage state/heartbeats; read and write metadata |
+| DAG processor | Access bundles, parse/serialize DAGs and update version-related metadata; a required separate role in Airflow 3 |
+| API server | UI, REST API v2 and Execution API; authentication/authorization via the auth manager and deployment configuration |
+| Task runtime / worker | Execute operator/Task SDK code and communicate with execution APIs and required services |
+| Triggerer | Run deferred tasks' triggers in an async loop; optional without deferral |
+| Metadata database | Shared DAG/task state, serialized structures and related metadata |
 
-## 1. Why Airflow 3 Split the Monolith
+### Airflow 3's Execution API
 
-In Airflow 2, a single **webserver** process served the UI, the REST API, and authentication, while the **scheduler** process was responsible for both scheduling task instances *and* parsing DAG files to keep its in-memory DAG representation current. Under load — many DAGs, deeply nested DAGs, or expensive top-level code in DAG files — file parsing could starve the scheduler's actual scheduling loop, directly hurting the platform's core reliability guarantee: getting ready tasks queued on time.
+In a normal supervised Python Task SDK execution, the worker starts a supervisor
+process that runs a task-runner subprocess. User task code communicates with the
+supervisor over a socket; the supervisor calls the **Execution API** using a
+short-lived task JWT. Public SDK access to Connections, Variables, XComs and state
+replaces direct metadata-database access by task code.
 
-Airflow 3 addresses this by decomposing the deployment into four independently scalable services, each with a single responsibility:
+Worker-to-API-server addressing, authentication and networking are real
+dependencies. A scheduler-to-worker arrow alone does not explain Airflow 3.
+Separately inspect executor internals, system workers and stores such as Celery's
+result backend; do not generalize this into a claim that no backend process ever
+connects to any database. In-process execution such as local dag.test also need
+not use the same subprocess/HTTP path as a supervised deployment.
 
-* **`airflow api-server`**: A new FastAPI-based service that serves the UI and REST API v2, and owns authentication. It replaces the Flask-based webserver from Airflow 2.
-* **`airflow scheduler`**: Now does **only** scheduling — evaluating task dependencies, triggering runs, and queuing task instances. It no longer parses DAG files itself.
-* **`airflow dag-processor`**: A **mandatory** new service (it was an optional, opt-in process in 2.x) whose sole job is parsing DAG files and writing the result to the metadata database's `serialized_dag` table. The scheduler reads DAG structure from that table instead of re-parsing files on every loop iteration.
-* **`airflow triggerer`**: Runs deferrable operators (unchanged in role from Airflow 2) — tasks that can release their worker slot while waiting on an external event (an API call, a file arriving, another job finishing) and resume asynchronously when that event fires.
+### Triggerer versus worker
 
-Making the dag-processor mandatory and moving parsing fully out of the scheduler's loop is Airflow 3's headline high-availability improvement: a spike in DAG count or a slow, poorly written DAG file can no longer degrade scheduling latency for every other DAG in the deployment. The two concerns scale independently — you can run more dag-processor replicas to absorb a large DAG bag without touching scheduler capacity at all.
+An operator starts on a worker and can register a trigger and defer while waiting.
+The triggerer runs that trigger; after an event, the task is rescheduled and
+resumes on a worker. It does not run the entire operator in the triggerer.
+Deferred tasks release worker slots and, by default, pool slots; pool behavior
+is configurable. Ordinary async tasks can retain worker slots and are distinct.
 
-### Airflow 2 vs. Airflow 3: What Changed
+## 2. What actually changed between Airflow 2 and 3
 
-| Aspect | Airflow 2 | Airflow 3 |
+Airflow 2 reached EOL on April 22, 2026. The comparison below is migration context.
+
+| Aspect | Airflow 2.x | Airflow 3.x |
 | --- | --- | --- |
-| UI/API process | Flask-based `webserver` | FastAPI-based `api-server` (UI + REST API v2 + auth) |
-| DAG parsing | Done by the scheduler process itself | Done by the `dag-processor`, a separate mandatory service |
-| DAG processor | Optional, opt-in (`--subdir` parsing inside the scheduler by default) | Mandatory — every deployment runs it |
-| Scheduler responsibility | Scheduling + DAG file parsing | Scheduling only; reads `serialized_dag` from Postgres |
-| Hybrid executors | `CeleryKubernetesExecutor`, `LocalKubernetesExecutor` | Removed — replaced by per-task/per-DAG executor assignment |
+| UI/API | Flask-based webserver | FastAPI-based api-server and task Execution API paths |
+| DAG parsing | Manager and file-processing subprocesses; optional standalone dag-processor | Separate DAG processor is a required role |
+| DAG structure | Serialized-DAG scheduling already existed | Continued serialized structures and version metadata |
+| Scheduler HA | Database-based multi-scheduler support already existed | HA, capacity and database load still need validation |
+| Concurrent executors | Supported from 2.10.0 | Retained and generalized configuration |
+| Fixed hybrid executors | LocalKubernetesExecutor and CeleryKubernetesExecutor were available | Unsupported from 3.0 |
 
-### Backing Services
+It is inaccurate to say Airflow 2 parsed all files in the scheduler's same Python
+loop or that scheduler HA only became possible in Airflow 3. Separation helps
+independent tuning, but slow fresh-DAG parsing, shared CPU/memory/database
+contention and excessive parser concurrency can still affect scheduling latency.
+Adding replicas alone does not establish reliability.
 
-* **PostgreSQL** (metadata database): always required. It stores DAG/task state, the `serialized_dag` table the scheduler reads, connections, variables, and XComs.
-* **Redis**: only required if you use `CeleryExecutor` (or `CeleryKubernetesExecutor` in Airflow 2 — see below for why that option no longer exists in 3.x). It backs the Celery task broker between the scheduler and the Celery worker pool.
+## 3. Metadata, brokers and DAG code
 
-## 2. Component Diagram on Kubernetes
+Airflow 3.3.1 lists tested PostgreSQL 14–18, MySQL 8.0/8.4/Innovation and SQLite
+3.15.0+. **SQLite is for development/testing, not production.** MariaDB is not
+supported. PostgreSQL examples in this series do not imply MySQL is unsupported.
+Managed databases still need actual HA, backup retention and deletion-policy configuration.
 
-![Diagram of Airflow's API server, scheduler, DAG processor, and triggerer deployments all reading and writing shared state to a PostgreSQL StatefulSet on Kubernetes, with the scheduler optionally queuing tasks to Celery workers through a Redis broker, or creating a dedicated task pod directly under the KubernetesExecutor.](../../../assets/diagrams/rendered/en-data-on-eks-airflow-01-architecture-0.svg)
+CeleryExecutor needs a compatible broker, with choices such as Redis or RabbitMQ.
+KubernetesExecutor and LocalExecutor do not inherently require Redis. Distinguish
+metadata storage, the broker and the selected Celery result backend. Connections/
+Variables can use a secrets backend; XCom payload storage can also use another backend.
 
-The dag-processor writes to Postgres; the scheduler only ever reads DAG structure from Postgres. Neither the scheduler nor the api-server ever parses a DAG file directly — DAG file access is isolated to the dag-processor pod(s), which also means DAG authors' code only needs to be readable from that one component's filesystem or mounted volume.
+Workers **as well as the DAG processor** need executable DAG/task code and its
+packages. Normal task execution does not require the API server to parse DAG
+files, but plugins, auth managers and triggers still need appropriate code/
+dependency distribution.
 
-## 3. Executors: The Landscape
+| DAG bundle | Current versioning support |
+| --- | --- |
+| GitDagBundle | Supported |
+| LocalDagBundle | Not supported; uses current local code |
+| S3DagBundle / GCSDagBundle | Not supported; distinct from object-store versioning |
 
-Choosing and tuning an executor is Part 2's focus; here we just introduce the options so the component diagram above makes sense in context.
+git-sync remains in chart 1.22.0. Rendering confirms processor/triggerer sidecars
+and init containers, plus an init container in the Kubernetes task pod template.
+Choose git-sync, image-baked DAGs, a shared volume or remote bundles as appropriate.
+Verify whether the bundle preserves the run's code version and which code a retry reads.
 
-* **`KubernetesExecutor`**: Each task instance is launched as its own pod, scheduled directly by the Kubernetes API. Pods are created on demand and torn down on completion, so idle capacity is close to zero, at the cost of per-task pod startup latency.
-* **`CeleryExecutor`**: A pool of warm Celery worker pods stays running and pulls queued tasks from a broker (Redis, as covered above, or RabbitMQ). Task startup is fast since there's no per-task pod to schedule, at the cost of paying for idle worker capacity between bursts.
+![Airflow metadata and executor paths with task Execution API communication.](../../.gitbook/assets/en-data-on-eks-airflow-01-architecture-0.png)
 
-### Executor Characteristics at a Glance
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-airflow-01-architecture-0.html)
 
-| Aspect | `KubernetesExecutor` | `CeleryExecutor` |
+## 4. Executor choices and concurrent executors
+
+| Choice | Execution unit | Cost, latency and isolation considerations |
 | --- | --- | --- |
-| Task startup unit | A fresh pod per task instance | A task picked up by an already-running worker |
-| Idle resource cost | Near zero — no pods when there's nothing to run | Non-zero — the warm worker pool runs whether or not tasks are queued |
-| Task startup latency | Higher — pays pod scheduling/image-pull cost per task | Lower — worker is already running |
-| Broker dependency | None | Requires Redis (or RabbitMQ) |
-| Isolation between tasks | Strong — each task gets its own pod, its own resource limits | Weaker — tasks share a worker pod's resources |
+| LocalExecutor | Local task processes on the scheduler side | No separate broker; shares scheduler resources/boundary |
+| KubernetesExecutor | Worker pod per task instance | Pod/image startup latency; limits and identity depend on the actual pod spec |
+| CeleryExecutor | Worker pool consuming broker messages | Warm workers can start quickly; scaling to zero introduces cold starts |
 
-### Hybrid Executors Are Gone in Airflow 3
+Even without idle KubernetesExecutor worker pods, control-plane, database, node
+and logging costs remain. A separate pod does not automatically establish a strong
+security boundary. KubernetesPodOperator is an **operator** that launches another
+pod; it is distinct from KubernetesExecutor.
 
-Airflow 2 offered two hybrid executors, `CeleryKubernetesExecutor` and `LocalKubernetesExecutor`, which let a single Airflow deployment route some tasks to Celery workers and others to Kubernetes pods based on a task-level queue name. Airflow 3.0 **removed both hybrid executor classes**.
+With concurrent executors, the first configured entry is the default. A task's
+executor field selects one; a DAG can set task defaults using
+`default_args={"executor": "KubernetesExecutor"}`, with per-task overrides.
+The executor/alias must actually be configured with compatible providers, versions
+and permissions. This feature dates to 2.10.0, distinct from hybrid removal in 3.0.
 
-The replacement is a more general capability: Airflow 3 lets you configure **multiple executors concurrently** and assign an executor to a task or a whole DAG explicitly (for example, `executor="KubernetesExecutor"` on a single task, while the rest of the DAG uses the deployment's default executor). This is a deliberate simplification — the hybrid executor classes existed only to hard-code one specific two-way split, and each new combination needed its own dedicated hybrid class. Multi-executor configuration generalizes that idea: any of Airflow's executors (not just two) can be assigned per task or per DAG, without a special-cased class for every pairing.
+## 5. Prepare for Part 2 and understand validation limits
 
-## Lab Environment Setup
+Chart 1.22.0 targets Helm **3.19.0+** and Airflow **3.1.0+**.
+Airflow 3.3.1's tested Kubernetes list is **1.30–1.35**. This is not a blanket
+promise for future versions or a recommendation to choose old EKS 1.30.
+Also check EKS support periods and the selected provider/chart compatibility.
 
-Part 2 deploys a working Airflow 3 cluster, so set up these prerequisites now:
-
-* **`kubectl`** configured against an EKS cluster (1.30+) you have admin access to.
-* **Helm 3** installed locally.
-* **An EKS cluster** with at least one managed node group sized for a handful of small-to-medium pods (the api-server, scheduler, dag-processor, and triggerer are all lightweight; task pods size depends on your workload).
-* **A PostgreSQL instance for the metadata database.** You have two options, both covered in Part 2:
-  * The official Helm chart's bundled Postgres (a single in-cluster pod backed by a PVC) — fastest to stand up, fine for learning and development.
-  * An external Amazon RDS for PostgreSQL instance — the recommended path for anything beyond a lab, since it survives cluster teardown and gets you managed backups/HA.
-
-No Redis setup is needed yet — only provision it if Part 2's executor comparison leads you to `CeleryExecutor`.
+Part 2 prepares images, database/broker connections, DAG delivery, permissions
+and storage. Do not assume the API server, scheduler, processor and triggerer
+are always lightweight; measure DAG count, parse cost, API load and task concurrency.
 
 ```bash
-# Add the official Airflow Helm chart repo (used in Part 2)
+helm version --short
 helm repo add apache-airflow https://airflow.apache.org
-helm repo update
-
-# Sanity-check kubectl access before Part 2
-kubectl get nodes
+helm repo update apache-airflow
+helm show chart apache-airflow/airflow --version 1.22.0
+kubectl config current-context
+# Prints the namespace manifest; does not create it.
 kubectl create namespace airflow --dry-run=client -o yaml
 ```
 
-After Part 2's install, expect to see four separate Deployments (`airflow-api-server`, `airflow-scheduler`, `airflow-dag-processor`, `airflow-triggerer`) plus a Postgres pod or StatefulSet — this is the architecture from the diagram above, running for real.
+Do not expect exactly four Deployments. In rendered chart variants the triggerer
+is a StatefulSet or Deployment depending on persistence, with additional StatsD,
+database, broker or worker resources depending on values. External databases need
+no PostgreSQL pod in the cluster.
 
-## Next Steps
+This chapter renders KubernetesExecutor, CeleryExecutor and git-sync variants with
+a 3.3.1 override. Rendering is not a live database, task, image-pull or HA-recovery
+test; the environment checks in Part 2 remain necessary.
 
-This document covered Airflow 3's four-service architecture — api-server, scheduler, dag-processor, and triggerer — why DAG parsing was pulled out of the scheduler and made its own mandatory service, and why the 2.x hybrid executors were replaced by per-task/per-DAG executor assignment. Part 2 deploys this architecture on EKS with the official Helm chart, sets up the metadata database, and does a deeper comparison of `KubernetesExecutor` versus `CeleryExecutor` to help you pick one for your workload.
 
-[Return to Main Page](./README.md)
+- [Airflow 3.3.1 architecture](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/overview.html)
+- [Supported versions and lifecycle](https://airflow.apache.org/docs/apache-airflow/3.3.1/installation/supported-versions.html)
+- [Airflow prerequisites](https://airflow.apache.org/docs/apache-airflow/3.3.1/installation/prerequisites.html)
+- [Executor configuration and history](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/executor/index.html)
+- [DAG bundles](https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/dag-bundles.html)
+- [Deferrable operators and triggers](https://airflow.apache.org/docs/apache-airflow/3.3.1/authoring-and-scheduling/deferring.html)
+- [Airflow 2.11 DAG processing](https://airflow.apache.org/docs/apache-airflow/2.11.0/authoring-and-scheduling/dagfile-processing.html)
+- [Airflow 2.11 scheduler HA](https://airflow.apache.org/docs/apache-airflow/2.11.0/administration-and-deployment/scheduler.html)
+- [Official Helm chart](https://airflow.apache.org/docs/helm-chart/1.22.0/index.html)
 
-## Quiz
+[Part 2: Helm deployment](02-helm-deployment.md)
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/airflow/01-architecture-quiz.md).
+[README](README.md)
+
+[Quiz](../../quizzes/data-on-eks/airflow/01-architecture-quiz.md)

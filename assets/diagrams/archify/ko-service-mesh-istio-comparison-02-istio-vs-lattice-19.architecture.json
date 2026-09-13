@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "핵심 요약: Istio vs VPC Lattice 강점",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-19.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "istio",
+        "label": "Istio 강점",
+        "focus": [
+          "istio-features",
+          "istio-control",
+          "istio-observability",
+          "istio-multicloud"
+        ],
+        "note": "멀티 클라우드, 세밀한 트래픽 제어, 강력한 관찰성이 필요할 때 Istio를 선택한다."
+      },
+      {
+        "id": "lattice",
+        "label": "VPC Lattice 강점",
+        "focus": [
+          "lattice-ops",
+          "lattice-cost",
+          "lattice-start",
+          "lattice-aws"
+        ],
+        "note": "AWS 중심 아키텍처에서 운영 간편성과 빠른 time-to-market이 우선일 때 VPC Lattice를 선택한다."
+      }
+    ],
+    "viewBox": [
+      820,
+      540
+    ]
+  },
+  "components": [
+    {
+      "id": "istio-features",
+      "type": "backend",
+      "label": "풍부한 기능",
+      "sublabel": "고급 트래픽 제어 (Canary, A/B)",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "istio-control",
+      "type": "backend",
+      "label": "세밀한 제어",
+      "sublabel": "L7 Authorization",
+      "pos": [
+        60,
+        190
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "istio-observability",
+      "type": "backend",
+      "label": "강력한 관찰성",
+      "sublabel": "Metrics / Tracing",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "istio-multicloud",
+      "type": "backend",
+      "label": "멀티 클라우드",
+      "sublabel": "클라우드 중립성",
+      "pos": [
+        60,
+        410
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "lattice-ops",
+      "type": "cloud",
+      "label": "운영 간편성",
+      "sublabel": "완전 관리형",
+      "pos": [
+        520,
+        80
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "lattice-cost",
+      "type": "cloud",
+      "label": "낮은 비용",
+      "sublabel": "운영 비용 포함",
+      "pos": [
+        520,
+        190
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "lattice-start",
+      "type": "cloud",
+      "label": "빠른 시작",
+      "sublabel": "설정 10-20분, 낮은 학습 곡선",
+      "pos": [
+        520,
+        300
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "lattice-aws",
+      "type": "cloud",
+      "label": "AWS 통합",
+      "sublabel": "EKS + ECS + Lambda",
+      "pos": [
+        520,
+        410
+      ],
+      "size": [
+        240,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio 강점",
+      "wraps": [
+        "istio-features",
+        "istio-control",
+        "istio-observability",
+        "istio-multicloud"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC Lattice 강점",
+      "wraps": [
+        "lattice-ops",
+        "lattice-cost",
+        "lattice-start",
+        "lattice-aws"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Istio를 선택하세요",
+      "items": [
+        "멀티 클라우드 환경",
+        "세밀한 트래픽 제어 필요",
+        "강력한 관찰성 요구",
+        "팀에 Service Mesh 경험"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "VPC Lattice를 선택하세요",
+      "items": [
+        "AWS 중심 아키텍처",
+        "운영 간편성 우선",
+        "EKS + ECS + Lambda 혼합",
+        "빠른 time-to-market, 낮은 운영 비용"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "하이브리드 (Istio + VPC Lattice)",
+      "items": [
+        "클러스터 내부는 Istio",
+        "클러스터 간/외부는 VPC Lattice",
+        "최고의 기능 + 간편한 외부 연결"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,355 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Block 기반 IPAM 아키텍처",
+    "output": "ko-networking-calico-07-advanced-topics-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      620
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "database": {
+          "label": "데이터스토어"
+        },
+        "backend": {
+          "label": "노드"
+        },
+        "cloud": {
+          "label": "IP 블록"
+        },
+        "frontend": {
+          "label": "Pod"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "block-assign",
+        "label": "블록 할당",
+        "focus": [
+          "ds",
+          "n1",
+          "n2",
+          "n3"
+        ],
+        "note": "데이터스토어가 IPPool에서 /26 블록을 노드 단위로 나눠 준다."
+      },
+      {
+        "id": "affinity",
+        "label": "블록 친화성",
+        "focus": [
+          "n1",
+          "b1",
+          "b2",
+          "n2",
+          "b3",
+          "b4",
+          "n3",
+          "b5"
+        ],
+        "note": "각 노드는 자신에게 할당된 블록에 친화성을 가지며, 소진되면 새 블록을 추가로 받는다."
+      },
+      {
+        "id": "pod-ip",
+        "label": "Pod IP 할당",
+        "focus": [
+          "b1",
+          "p1",
+          "b3",
+          "p2",
+          "b5",
+          "p3"
+        ],
+        "note": "Pod IP는 노드의 친화성 블록 안에서 개별적으로 배정된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ds",
+      "type": "database",
+      "label": "Datastore",
+      "sublabel": "etcd / Kubernetes API",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "calico-node",
+      "pos": [
+        120,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "tag": "블록 2개로 확장"
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "calico-node",
+      "pos": [
+        520,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "tag": "블록 2개로 확장"
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "Node 3",
+      "sublabel": "calico-node",
+      "pos": [
+        920,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "cloud",
+      "label": "10.244.0.0/26",
+      "sublabel": "64 IPs",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        155,
+        60
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "cloud",
+      "label": "10.244.0.64/26",
+      "sublabel": "64 IPs",
+      "pos": [
+        205,
+        340
+      ],
+      "size": [
+        155,
+        60
+      ]
+    },
+    {
+      "id": "b3",
+      "type": "cloud",
+      "label": "10.244.1.0/26",
+      "sublabel": "64 IPs",
+      "pos": [
+        440,
+        340
+      ],
+      "size": [
+        155,
+        60
+      ]
+    },
+    {
+      "id": "b4",
+      "type": "cloud",
+      "label": "10.244.1.64/26",
+      "sublabel": "64 IPs",
+      "pos": [
+        605,
+        340
+      ],
+      "size": [
+        155,
+        60
+      ]
+    },
+    {
+      "id": "b5",
+      "type": "cloud",
+      "label": "10.244.2.0/26",
+      "sublabel": "64 IPs",
+      "pos": [
+        920,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "frontend",
+      "label": "Pod 10.244.0.5",
+      "sublabel": "Node 1 워크로드",
+      "pos": [
+        120,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "frontend",
+      "label": "Pod 10.244.1.5",
+      "sublabel": "Node 2 워크로드",
+      "pos": [
+        520,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "p3",
+      "type": "frontend",
+      "label": "Pod 10.244.2.20",
+      "sublabel": "Node 3 워크로드",
+      "pos": [
+        920,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "IPPool 10.244.0.0/16 (blockSize 26)",
+      "wraps": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ds-n1",
+      "from": "ds",
+      "to": "n1",
+      "label": "블록 할당",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ds-n2",
+      "from": "ds",
+      "to": "n2"
+    },
+    {
+      "id": "ds-n3",
+      "from": "ds",
+      "to": "n3"
+    },
+    {
+      "id": "n1-b1",
+      "from": "n1",
+      "to": "b1",
+      "label": "친화성",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n1-b2",
+      "from": "n1",
+      "to": "b2",
+      "label": "확장",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n2-b3",
+      "from": "n2",
+      "to": "b3",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n2-b4",
+      "from": "n2",
+      "to": "b4",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n3-b5",
+      "from": "n3",
+      "to": "b5"
+    },
+    {
+      "id": "b1-p1",
+      "from": "b1",
+      "to": "p1",
+      "label": "Pod IP 할당",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b3-p2",
+      "from": "b3",
+      "to": "p2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b5-p3",
+      "from": "b5",
+      "to": "p3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "IP Block Affinity 동작",
+      "items": [
+        "블록 할당: Pod가 스케줄링되면 노드에 친화성이 있는 블록에서 IP 할당",
+        "블록 확장: 기존 블록이 소진되면 새 블록을 노드에 추가 할당",
+        "블록 해제: 노드의 모든 Pod가 삭제되면 블록 친화성 해제"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "blockSize 선택",
+      "items": [
+        "/26 = 64 IPs (기본값)",
+        "/28 = 16 IPs (노드가 많은 경우)",
+        "/24 = 256 IPs (Pod 밀도가 높은 경우)"
+      ]
+    }
+  ]
+}

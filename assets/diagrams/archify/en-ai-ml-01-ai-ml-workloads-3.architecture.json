@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Distributed Training Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-01-ai-ml-workloads-3.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "views": [
+      {
+        "id": "launch",
+        "label": "MPI Job launch",
+        "focus": [
+          "launcher",
+          "workers"
+        ],
+        "note": "Job controllers create Pods; the launcher starts processes inside workers."
+      },
+      {
+        "id": "collective",
+        "label": "Collective communication",
+        "focus": [
+          "workers",
+          "nccl",
+          "mpi",
+          "efa"
+        ],
+        "note": "NCCL → AWS OFI NCCL → libfabric → EFA; MPI is not a required transport layer."
+      },
+      {
+        "id": "checkpoint",
+        "label": "Checkpoint storage",
+        "focus": [
+          "workers",
+          "fsx",
+          "s3",
+          "ckpt"
+        ],
+        "note": "Checkpoint writes, S3 export and recovery require explicit configuration/testing."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "launcher",
+      "type": "backend",
+      "label": "Launcher Pod",
+      "sublabel": "mpirun",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Worker Pods ×4",
+      "sublabel": "nvidia.com/gpu",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "nccl",
+      "type": "messagebus",
+      "label": "NVIDIA NCCL",
+      "sublabel": "Collective communication",
+      "pos": [
+        380,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "mpi",
+      "type": "messagebus",
+      "label": "AWS OFI NCCL",
+      "sublabel": "libfabric integration",
+      "pos": [
+        610,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "efa",
+      "type": "cloud",
+      "label": "Elastic Fabric Adapter",
+      "sublabel": "EFA",
+      "pos": [
+        840,
+        240
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "high-performance parallel FS",
+      "pos": [
+        380,
+        450
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "training data · model artifacts",
+      "pos": [
+        640,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ckpt",
+      "type": "database",
+      "label": "Checkpoint Storage",
+      "sublabel": "model checkpoints",
+      "pos": [
+        640,
+        510
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "MPI Job",
+      "wraps": [
+        "launcher",
+        "workers"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Communication Layer",
+      "wraps": [
+        "nccl",
+        "mpi",
+        "efa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Shared Storage",
+      "wraps": [
+        "fsx",
+        "s3",
+        "ckpt"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "launch-workers",
+      "from": "launcher",
+      "to": "workers",
+      "label": "launch processes",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "workers-nccl",
+      "from": "workers",
+      "to": "nccl",
+      "label": "gradient exchange",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nccl-mpi",
+      "from": "nccl",
+      "to": "mpi"
+    },
+    {
+      "id": "mpi-efa",
+      "from": "mpi",
+      "to": "efa"
+    },
+    {
+      "id": "workers-fsx",
+      "from": "workers",
+      "to": "fsx",
+      "label": "write checkpoints",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "fsx-s3",
+      "from": "fsx",
+      "to": "s3",
+      "label": "configured import/export",
+      "labelAt": [
+        600,
+        380
+      ]
+    },
+    {
+      "id": "fsx-ckpt",
+      "from": "fsx",
+      "to": "ckpt"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Communication path",
+      "items": [
+        "NCCL can use EFA through AWS OFI NCCL and libfabric.",
+        "Validate devices, drivers, plugins, networking and framework configuration."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Recovery",
+      "items": [
+        "FSx attachment alone does not guarantee checkpoint retention or S3 export."
+      ]
+    }
+  ]
+}

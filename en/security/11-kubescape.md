@@ -56,7 +56,9 @@ Kubescape joined the CNCF Sandbox in 2022, demonstrating its commitment to open-
 
 ### Kubescape Architecture
 
-![Diagram showing Kubescape input sources and security frameworks feeding control evaluation and vulnerability scanning, which converge on a risk calculator before producing reports and metrics.](../../assets/diagrams/rendered/en-security-11-kubescape-0.svg)
+![Kubescape architecture: CLI, Operator, and CI/CD scan requests pass through framework-based control evaluation, vulnerability scanning, and RBAC analysis into a Risk Calculator, whose report goes to JSON/SARIF, Kubescape Cloud, and alerts.](../.gitbook/assets/en-security-11-kubescape-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-0.html)
 
 ---
 
@@ -304,7 +306,9 @@ kubescape list controls
 
 ### Scanning Pipeline Flow
 
-![Sequential workflow diagram showing a Kubescape scan traveling from the CLI through framework selection, resource collection, control checks, and severity assessment to risk scoring and report generation.](../../assets/diagrams/rendered/en-security-11-kubescape-1.svg)
+![Sequential workflow diagram showing a Kubescape scan traveling from the CLI through framework selection, resource collection, control checks, and severity assessment to risk scoring and report generation.](../.gitbook/assets/en-security-11-kubescape-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-1.html)
 
 ### Cluster Scanning
 
@@ -477,7 +481,9 @@ RBAC analysis capabilities:
 
 ### Continuous Scanning Architecture
 
-![Architecture diagram showing a scheduled scanner pod inside a Kubernetes cluster collecting workload resources and runtime events into results storage, which feeds Prometheus, a dashboard, and the Kubescape API outside the cluster.](../../assets/diagrams/rendered/en-security-11-kubescape-2.svg)
+![A CronJob triggers the Kubescape Operator Controller to run the configuration, vulnerability and RBAC scanners plus node-agent eBPF events, store results as CRDs, compare them with the baseline and publish to Kubescape Cloud, alerting and SIEM/SOAR.](../.gitbook/assets/en-security-11-kubescape-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-2.html)
 
 ### Operator Components
 
@@ -724,7 +730,9 @@ kubescape scan framework nsa --format json | \
 
 ### CI/CD Integration Workflow
 
-![Flowchart showing a CI pipeline checking out code, running a Kubescape scan, and evaluating the risk score against a threshold to either deploy to the cluster or block the deployment.](../../assets/diagrams/rendered/en-security-11-kubescape-3.svg)
+![Kubescape CI/CD integration workflow: a code change and Git commit fire the CI trigger, then the image build and a Kubescape scan (framework nsa, mitre); the security gate's gate check compares the risk score with the threshold — at or below it the run passes and deploys to the cluster, above it the run fails, deployment is blocked (exit 1), and a PR comment or alert is sent.](../.gitbook/assets/en-security-11-kubescape-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-3.html)
 
 ### GitHub Actions Workflow
 

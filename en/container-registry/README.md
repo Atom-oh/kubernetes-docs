@@ -1,6 +1,6 @@
 # Container Registry
 
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 11, 2026
 
 ## Introduction
 
@@ -14,26 +14,30 @@ A container registry provides:
 - **Distribution**: Efficient image layer caching and distribution to container runtimes
 - **Lifecycle Management**: Automated cleanup and retention policies for storage optimization
 
-![Flowchart showing a container image moving from the CI/CD pipeline (build, test, push) through a container registry (store, version, scan) into a Kubernetes cluster (pull, run, scale).](../.gitbook/assets/en-container-registry-README-0.png)
+![Flowchart showing a container image moving from the CI/CD pipeline (build, test, push) through a container registry (store, version, scan) into a Kubernetes cluster (pull, run, scale).](../.gitbook/assets/en-container-registry-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-readme-0.html)
 
 ## Registry Comparison
 
 | Feature | Docker Hub | Amazon ECR | Harbor |
 |---------|------------|------------|--------|
 | **Type** | SaaS (Public Cloud) | AWS Managed Service | Self-Hosted (CNCF) |
-| **Pricing Model** | Free tier + Paid plans | Pay-per-use (storage + transfer) | Infrastructure cost only |
-| **Private Repositories** | Limited (Free: 1, Pro: unlimited) | Unlimited | Unlimited |
-| **Public Repositories** | Unlimited | ECR Public (free) | Supported |
-| **Storage Pricing** | Included in plan | $0.10/GB-month | Self-managed |
-| **Data Transfer** | Rate limited | $0.09/GB (to internet) | Self-managed |
-| **Vulnerability Scanning** | Paid plans only | Basic (free) / Enhanced (Inspector) | Trivy (built-in, free) |
-| **Image Signing** | Docker Content Trust | Signer (preview) | Cosign/Notation |
+| **Pricing Model** | Personal + paid subscriptions | Usage-based | Infrastructure, operations and backups |
+| **Private Repositories** | Personal: 1; paid-plan allowances | Service quotas apply | Operator-configured quotas |
+| **Public Repositories** | Available under plan policies | ECR Public with free allowances and usage charges | Supported |
+| **Storage Pricing** | Plan-dependent | Region/storage-class pricing | Self-managed |
+| **Data Transfer** | Usage and fair-use policies | Destination/region-dependent charges | Self-managed |
+| **Vulnerability Scanning** | Docker Scout plan allowances | Basic / Enhanced (Inspector) | Trivy integration |
+| **Image Signing** | DCT or separate OCI signing tools | AWS Signer managed/manual signing | Cosign/Notation |
 | **Replication** | Not available | Cross-region replication | Pull/Push replication |
 | **RBAC** | Organization-level | IAM policies | Project-level roles |
-| **Air-Gap Support** | No | VPC endpoints | Full offline support |
-| **Rate Limits** | Yes (100-5000 pulls/day) | No hard limits | No limits |
+| **Fully Disconnected Operation** | Requires access to Hub | Requires AWS connectivity; VPC endpoints provide private access | Import images, scanner databases and installation dependencies |
+| **Rate Limits** | Account-specific pull and fair-use policies | Per-API service quotas | Operator limits and infrastructure capacity |
 | **Integration** | Universal | AWS native (EKS, IAM) | Kubernetes native |
-| **Compliance** | SOC 2, ISO 27001 | SOC, PCI, HIPAA, FedRAMP | Self-managed compliance |
+| **Compliance** | Check the service's current attestations and scope | Check AWS service/region eligibility and your controls | Operator is responsible for controls and evidence |
+
+ECR has [service quotas](https://docs.aws.amazon.com/AmazonECR/latest/userguide/service-quotas.html), including request-rate and repository limits. [AWS Signer integration](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html) is supported; storing signatures and enforcing verification during deployment are separate configurations. Check Docker Hub's [current usage policy](https://docs.docker.com/docker-hub/usage/) and response headers rather than treating a historical pull limit as universal.
 
 ## Detailed Comparison
 
@@ -45,32 +49,26 @@ A container registry provides:
 - Largest public image library (Official Images, Verified Publishers)
 - Zero infrastructure management
 - Simple Docker CLI integration
-- Automated builds from GitHub/GitLab
+- Build-and-push automation through external CI such as GitHub Actions/GitLab CI; native Hub Automated Builds is deprecated
 
 **Cons**:
-- Rate limits on free tier (100 pulls/6 hours for anonymous, 200 for authenticated)
+- Account-specific pull limits and fair-use/abuse controls
 - Limited private repository storage on free plans
 - No native AWS/Kubernetes integration
 - Potential supply chain security concerns with public images
 
-**Pricing**:
-| Plan | Price | Private Repos | Parallel Builds | Rate Limit |
-|------|-------|---------------|-----------------|------------|
-| Free | $0 | 1 | 1 | 200 pulls/6h |
-| Pro | $5/month | Unlimited | 5 | 5,000 pulls/day |
-| Team | $9/user/month | Unlimited | 15 | 50,000 pulls/day |
-| Business | $24/user/month | Unlimited | Unlimited | Unlimited |
+**Pricing**: Compare users, monthly versus annual billing, and included Scout/build usage using the [current pricing page](https://www.docker.com/pricing/). Historical $5 Pro/$9 Team prices and daily pull allowances are not a current pricing baseline.
 
 ### Amazon ECR
 
 **Best For**: AWS-native workloads, EKS clusters, enterprises requiring compliance
 
 **Pros**:
-- Seamless EKS integration (IAM, IRSA, Pod Identity)
-- No rate limits within AWS
+- EKS node and Fargate execution-role integration; workload IRSA/Pod Identity permissions are separate from image-pull credentials
+- IAM-based access and adjustable API service quotas
 - Cross-region replication
 - Enhanced scanning with Amazon Inspector
-- VPC endpoints for air-gap scenarios
+- VPC endpoints for private AWS connectivity, which is not a fully disconnected air gap
 - Pay-per-use pricing (no upfront commitment)
 
 **Cons**:
@@ -79,10 +77,7 @@ A container registry provides:
 - Complex lifecycle policy syntax
 - Cross-account access requires careful IAM configuration
 
-**Pricing**:
-- Storage: $0.10 per GB-month
-- Data Transfer: Free within same region, $0.09/GB to internet
-- Enhanced Scanning: Amazon Inspector pricing applies
+**Pricing**: Multiply stored data by the applicable regional/storage-class rate, then account for transfer, Inspector, AWS Signer and VPC endpoint charges. At the official example's $0.10/GB-month rate, 100GB costs $10/month **for storage alone**. Same-region transfers to supported AWS compute services differ from internet or cross-region traffic; consult [ECR pricing](https://aws.amazon.com/ecr/pricing/) for the actual path.
 
 ### Harbor
 
@@ -122,9 +117,11 @@ Choose your container registry based on these factors:
 
 ### 2. Security and Compliance Requirements
 
-- **FedRAMP / HIPAA / PCI-DSS with AWS**: Amazon ECR
-- **Data Sovereignty / On-premises mandate**: Harbor
-- **Basic security with minimal overhead**: Docker Hub (Business plan)
+Compare access control, credential lifetime, vulnerability scanning, digest pinning, signature verification, network boundaries and recovery procedures. A product is not automatically more secure because it is self-hosted or uses a higher subscription tier. Service compliance eligibility also does not make a workload compliant without its required controls.
+
+- **AWS requirements**: Check ECR eligibility for the specific region and compliance scope.
+- **Data sovereignty or disconnected operation**: Harbor provides deployment control, with patching, backup and evidence collection owned by the operator.
+- **Managed collaboration**: Compare Docker Hub's actual plan capabilities against the team's required controls.
 
 ### 3. Team Size and Budget
 
@@ -148,7 +145,9 @@ This section covers container registry concepts and implementation in depth:
 
 ## Quick Start Decision Tree
 
-![Decision tree for choosing a container registry: air-gapped environments route to Harbor; connected AWS/EKS workloads route to Amazon ECR; other production workloads with compliance needs route to Harbor or Docker Hub Business; everything else uses Docker Hub Free/Pro.](../.gitbook/assets/en-container-registry-README-1.png)
+![Decision tree for choosing a container registry: air-gapped environments route to self-hosted Harbor; connected AWS/EKS workloads route to Amazon ECR; other production workloads with compliance needs route to Harbor or Docker Hub Business; everything else uses Docker Hub Free/Pro.](../.gitbook/assets/en-container-registry-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-readme-1.html)
 
 ## Summary
 

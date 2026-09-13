@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Alert States",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "firing-path",
+        "label": "Firing path",
+        "focus": [
+          "eval",
+          "inactive",
+          "pending",
+          "firing"
+        ],
+        "note": "Once expr is met the alert enters Pending; if it stays true for the whole 'for' duration it turns Firing and is sent to Alertmanager."
+      },
+      {
+        "id": "resolve-path",
+        "label": "Return path",
+        "focus": [
+          "inactive",
+          "pending",
+          "firing"
+        ],
+        "note": "Clearing within the 'for' duration leaves Pending; clearing while Firing leaves Firing — both paths return to Inactive."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "start": {
+          "label": "Rule evaluation start"
+        },
+        "neutral": {
+          "label": "Inactive"
+        },
+        "waiting": {
+          "label": "Waiting for 'for'"
+        },
+        "failure": {
+          "label": "Firing (sent to Alertmanager)"
+        }
+      }
+    },
+    "viewBox": [
+      980,
+      640
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Rule evaluation"
+    },
+    {
+      "id": "wait",
+      "label": "'for' wait"
+    },
+    {
+      "id": "terminal",
+      "label": "Sent to Alertmanager"
+    }
+  ],
+  "states": [
+    {
+      "id": "eval",
+      "type": "start",
+      "label": "Rule evaluation",
+      "sublabel": "expr runs every interval",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "inactive",
+      "type": "neutral",
+      "label": "Inactive",
+      "sublabel": "Alert has not fired",
+      "lane": "main",
+      "col": 1
+    },
+    {
+      "id": "pending",
+      "type": "waiting",
+      "label": "Pending",
+      "sublabel": "Waiting for 'for' duration",
+      "lane": "wait",
+      "col": 1,
+      "tag": "for"
+    },
+    {
+      "id": "firing",
+      "type": "failure",
+      "label": "Firing",
+      "sublabel": "Sent to Alertmanager",
+      "lane": "terminal",
+      "col": 2,
+      "tag": "active"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "eval",
+      "to": "inactive",
+      "label": "condition not met",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "inactive",
+      "to": "pending",
+      "label": "expr condition met",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          248,
+          307
+        ]
+      ],
+      "labelSegment": 1
+    },
+    {
+      "from": "pending",
+      "to": "firing",
+      "label": "'for' duration elapsed",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "firing",
+      "to": "inactive",
+      "label": "condition not met",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          830,
+          479
+        ],
+        [
+          830,
+          98
+        ],
+        [
+          248,
+          98
+        ]
+      ],
+      "labelSegment": 2
+    },
+    {
+      "from": "pending",
+      "to": "inactive",
+      "label": "not met within 'for'",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [
+        [
+          556,
+          157
+        ]
+      ],
+      "labelSegment": 1
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Alert rule components",
+      "items": [
+        "expr: PromQL expression that defines the alert condition (required)",
+        "for: how long the condition must persist (optional, default 0)",
+        "labels / annotations: extra metadata such as severity, summary, runbook_url"
+      ]
+    }
+  ]
+}

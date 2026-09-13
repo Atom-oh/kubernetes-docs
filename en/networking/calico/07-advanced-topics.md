@@ -1,131 +1,82 @@
 # Part 7: Advanced Calico Topics
 
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 23, 2026
+> **Supported Versions**: Calico 3.32.2 / Kubernetes 1.34–1.36 (tested range)
+> **Last Updated**: September 12, 2026
 
 ## Overview
 
 This chapter covers advanced Calico topics for production environments, including IPAM deep dive, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows container support, and large-scale cluster design patterns.
 
-![A sequential overview flow of six advanced Calico topics covered in this chapter: IPAM internals, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows support, and large-scale cluster design.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-0.svg)
-
 ## IPAM Deep Dive
 
-Calico's IP Address Management (IPAM) system is designed for high performance and scalability. Understanding its architecture is crucial for optimizing large deployments.
+This section describes **Calico IPAM**. Host-local and cloud-provider IPAM are different allocators; creating a Calico IPPool does not switch another CNI to Calico IPAM.
 
-### Block-Based IPAM Architecture
+### Blocks, Affinity and Allocation Limits
 
-Calico uses a block-based IPAM system where IP addresses are allocated in blocks (default /26 = 64 IPs) to nodes. This approach minimizes datastore interactions and improves allocation speed.
+Calico allocates addresses from blocks associated with nodes. An IPv4 `/26` contains 64 addresses and an IPv6 `/122` also contains 64; that is not a guarantee of 64 usable Pod addresses in every platform. Windows reserves four addresses per Calico-owned block.
 
-![A central datastore hands out fixed-size IP blocks to each node, and each node allocates individual pod IPs out of its own affine blocks.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-1.svg)
+![The datastore hands out fixed-size /26 blocks from the IPPool 10.244.0.0/16 to each node, and each node allocates individual pod IPs out of its own affine blocks, receiving another block when one is exhausted.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-0.png)
 
-### IP Block Affinity
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-0.html)
 
-Block affinity ensures that IP blocks are preferentially allocated to specific nodes, improving routing efficiency and reducing route table size.
+> The diagram shows an allocation model, not a node-local cache that eliminates all datastore writes. A block's affinity is not necessarily released immediately when its last Pod disappears: allocations for tunnels/VMs and reconciliation/lifecycle state also matter.
 
-```yaml
-# View block affinities
-# calicoctl get blockaffinity -o yaml
+With normal automatic allocation, Calico can use an existing affine block, claim another eligible block, or borrow where permitted. `strictAffinity`, `autoAllocateBlocks`, global/per-request block limits, pool selection and platform constraints can make allocation fail even when another pool still has free addresses.
 
-apiVersion: projectcalico.org/v3
-kind: BlockAffinity
-metadata:
-  name: node1-10-244-0-0-26
-spec:
-  cidr: 10.244.0.0/26
-  node: node1
-  state: confirmed
-  # States: pending, confirmed, pendingDeletion
----
-apiVersion: projectcalico.org/v3
-kind: BlockAffinity
-metadata:
-  name: node1-10-244-0-64-26
-spec:
-  cidr: 10.244.0.64/26
-  node: node1
-  state: confirmed
-```
+![On pod creation, Calico tries the node's own affine block first, then claims an unclaimed block from the pool, then borrows from another node's block, and only fails when no free IP exists anywhere.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-1.png)
 
-### Allocation Algorithm
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-1.html)
 
-The IPAM allocation follows this process:
+> The simplified flow assumes eligible pools, automatic block allocation, permitted borrowing and no limiting cap. Windows does not support borrowing; do not use the figure as an unconditional guarantee that only total address exhaustion can fail.
 
-![On pod creation, Calico tries the node's own affine block first, then an unclaimed block, then borrows from another node's block, and only fails when no free IP exists anywhere.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-2.svg)
+Use `IPAMConfiguration/default` to inspect global settings. The reference web page lists a default block cap of 20, but the released **3.32.2 implementation and public CRD initialize `maxBlocksPerHost` to 0** when no configuration exists. Zero means no global block cap; per-request/platform limits still apply, and existing clusters retain their configured value. A positive global cap must be paired with `strictAffinity: true` in the reviewed IPAM configuration path.
 
-### Block Size Configuration
+### Choose Block Size before Pool Creation
 
-The default block size is /26 (64 IPs). Adjust based on your cluster characteristics:
+The default is `/26` for IPv4 and `/122` for IPv6. Supported ranges are IPv4 `/20`–`/32` and IPv6 `/116`–`/128`. Choose by expected address demand, node count, routing aggregation and allocation overhead, not GPU bandwidth or a fixed “200 nodes means /28” rule.
 
 ```yaml
-# IPPool with custom block size
+# Fresh-pool example; do not apply over an existing pool or overlapping pools.
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
-  name: default-ipv4-ippool
+  name: demo-ipv4-pool
 spec:
   cidr: 10.244.0.0/16
-  blockSize: 26  # Default: /26 (64 IPs per block)
-  # Options:
-  # /24 = 256 IPs (large pods per node)
-  # /26 = 64 IPs (default, balanced)
-  # /28 = 16 IPs (many nodes, few pods each)
-  # /29 = 8 IPs (minimum recommended)
-  # /30 = 4 IPs (not recommended)
-  ipipMode: CrossSubnet
-  vxlanMode: Never
+  blockSize: 26
+  ipipMode: Never
+  vxlanMode: Always
   natOutgoing: true
   nodeSelector: all()
 ```
 
-**Block Size Selection Guidelines:**
-
-| Block Size | IPs per Block | Recommended Scenario |
-|------------|---------------|---------------------|
-| /24 | 256 | High pod density (50+ pods/node) |
-| /25 | 128 | Medium-high density |
-| /26 | 64 | Default, balanced |
-| /27 | 32 | Many nodes, moderate pods |
-| /28 | 16 | Large cluster, low density |
-| /29 | 8 | Very large cluster, minimal pods |
+`blockSize` and pool CIDR cannot be changed in place. A new pool/migration must preserve the actual cluster's routing, Service/node CIDR boundaries and workload allocation plan; see [networking modes](03-networking-modes.md). Do not overlap this aggregate pool with the sub-pool example below.
 
 ### Host-Local IPAM
 
-For simpler deployments or specific use cases, Calico supports host-local IPAM mode:
+Host-local uses node-local allocation state and the Kubernetes-provided per-node PodCIDR configuration. The operator selects it under **`spec.cni.ipam.type: HostLocal`**:
 
 ```yaml
-# Installation with host-local IPAM
+# Installation fragment: preserve other settings through the configuration owner.
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
   name: default
 spec:
-  calicoNetwork:
-    ipPools:
-      - cidr: 10.244.0.0/16
-        encapsulation: VXLANCrossSubnet
-        natOutgoing: Enabled
-    # Use host-local IPAM instead of Calico IPAM
-    hostLocalIPAMEnabled: true
+  cni:
+    type: Calico
+    ipam:
+      type: HostLocal
 ```
 
-**Calico IPAM vs Host-Local IPAM:**
+There is no `calicoNetwork.hostLocalIPAMEnabled` switch. The Kubernetes controller/networking setup must already provide valid distinct node PodCIDRs; manually patching existing nodes is not an IPAM migration procedure. Do not assume a universal immediate/delayed release or scale ranking between the two allocators.
 
-| Feature | Calico IPAM | Host-Local IPAM |
-|---------|-------------|-----------------|
-| IP Reuse | Cluster-wide | Node-local |
-| Block Management | Dynamic | Static |
-| Route Aggregation | Yes | Limited |
-| IP Release | Immediate | Delayed |
-| Complexity | Higher | Lower |
-| Scalability | Better | Limited |
+### Multiple Pools and Explicit Requests
 
-### Multi-Pool Strategy
-
-Configure multiple IP pools for different workload types:
+Use disjoint pools with a documented purpose. The third example is manual-only so general workloads do not automatically consume the non-SNAT range:
 
 ```yaml
-# Production workloads pool
+# Alternative to demo-ipv4-pool; these sub-pools must not overlap another pool.
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
@@ -133,728 +84,468 @@ metadata:
 spec:
   cidr: 10.244.0.0/18
   blockSize: 26
-  ipipMode: CrossSubnet
+  vxlanMode: Always
   natOutgoing: true
-  nodeSelector: "node-type == 'production'"
+  nodeSelector: node-type == 'production'
 ---
-# Development workloads pool
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
   name: development-pool
 spec:
   cidr: 10.244.64.0/18
-  blockSize: 28  # Smaller blocks for dev
-  ipipMode: CrossSubnet
+  blockSize: 28
+  vxlanMode: Always
   natOutgoing: true
-  nodeSelector: "node-type == 'development'"
+  nodeSelector: node-type == 'development'
 ---
-# High-performance pool (no encapsulation)
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
-  name: highperf-pool
+  name: routed-workloads-pool
 spec:
   cidr: 10.244.128.0/18
   blockSize: 26
   ipipMode: Never
   vxlanMode: Never
   natOutgoing: false
-  nodeSelector: "network == 'direct'"
+  assignmentMode: Manual
+  allowedUses: [Workload]
 ```
 
-**Assigning Pods to Specific Pools:**
+`natOutgoing: false` needs a working external return route and may still be followed by upstream NAT. It does not create an egress gateway or stable per-namespace SNAT address. For LoadBalancer allocation, use the separate `allowedUses: [LoadBalancer]` workflow in the [BGP guide](04-bgp-deep-dive.md).
+
+The following Pod needs a prepared namespace, matching node labels and a reviewed workload image replacing the placeholder:
 
 ```yaml
-# Pod annotation to select IP pool
 apiVersion: v1
 kind: Pod
 metadata:
   name: production-app
+  namespace: calico-demo
   annotations:
     cni.projectcalico.org/ipv4pools: '["production-pool"]'
 spec:
+  nodeSelector:
+    node-type: production
   containers:
     - name: app
-      image: nginx
----
-# Namespace-level pool assignment
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: production
-  annotations:
-    cni.projectcalico.org/ipv4pools: '["production-pool"]'
+      image: registry.example.com/team/app:approved
 ```
 
-### IPv6 and Dual-Stack Configuration
+The annotation requests an IP pool; `nodeSelector` schedules the Pod. In the reviewed Calico IPAM code, an explicit pool request bypasses pool node/namespace selectors for compatibility, so those selectors are **not an authorization boundary**. Disabled or nonexistent pools still fail. Namespace annotations can supply defaults for Pods, but this does not turn pool selection into a network policy.
 
-Calico supports IPv6-only and dual-stack deployments:
+### IPv6 and Dual Stack
+
+The Kubernetes cluster, CNI/IPAM, node addresses and underlay must already support the chosen IP families. Adding pools or a Felix flag alone does not convert a cluster's IP-family configuration.
 
 ```yaml
-# Dual-stack IPPool configuration
+# A separate fresh dual-stack example.
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
-  name: default-ipv4-pool
+  name: dual-ipv4-pool
 spec:
   cidr: 10.244.0.0/16
   blockSize: 26
-  ipipMode: CrossSubnet
+  vxlanMode: Always
   natOutgoing: true
-  nodeSelector: all()
 ---
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
-  name: default-ipv6-pool
+  name: dual-ipv6-pool
 spec:
   cidr: fd00:10:244::/48
-  blockSize: 122  # /122 = 64 IPv6 addresses
-  ipipMode: Never  # IPIP not supported for IPv6
-  vxlanMode: CrossSubnet
-  natOutgoing: true
-  nodeSelector: all()
+  blockSize: 122
+  ipipMode: Never
+  vxlanMode: Always
+  natOutgoing: false
 ```
 
+IPv6 VXLAN is supported on the compatible Linux dataplane; IPv6 IP-in-IP is not. The ULA range above is not globally routable simply because it is IPv6. `natOutgoing: false` requires suitable return routing or another explicitly designed egress path.
+
+Node address autodetection belongs to operator configuration (or the corresponding installation environment), not invented Felix fields:
+
 ```yaml
-# FelixConfiguration for dual-stack
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
+# Operator configuration fragment, not a replacement for the existing Installation.
+apiVersion: operator.tigera.io/v1
+kind: Installation
 metadata:
   name: default
 spec:
-  ipv6Support: true
-  # IPv6 auto-detection
-  ipAutoDetectionMethod: "kubernetes-internal-ip"
-  ip6AutoDetectionMethod: "kubernetes-internal-ip"
+  calicoNetwork:
+    nodeAddressAutodetectionV4:
+      kubernetes: NodeInternalIP
+    nodeAddressAutodetectionV6:
+      kubernetes: NodeInternalIP
 ```
 
-### IP Exhaustion Strategies
+The Felix `ipv6Support` field is a boolean, not `Enabled`. It controls Felix processing and is not a replacement for the full dual-stack prerequisites.
 
-When IP addresses become scarce, implement these strategies:
-
-```yaml
-# 1. Enable strict block affinity release
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  # Release unused blocks faster
-  ipamAutoGC: true
-  # Garbage collection interval
-  # ipamAutoGCInterval: "5m"
----
-# 2. Configure node-specific IP limits
-apiVersion: projectcalico.org/v3
-kind: IPPool
-metadata:
-  name: limited-pool
-spec:
-  cidr: 10.244.0.0/16
-  blockSize: 26
-  # Limit blocks per node
-  allowedUses:
-    - Workload
-  # Disable tunnel addresses from this pool
-  disableBGPExport: false
-```
+### Investigate Exhaustion before Releasing Addresses
 
 ```bash
-# Monitor IP usage
+kubectl get ipamconfigurations.projectcalico.org default -o yaml
 calicoctl ipam show
-
-# Show detailed block allocation
 calicoctl ipam show --show-blocks
-
-# Check for leaked IPs
-calicoctl ipam check
-
-# Release orphaned IPs
-calicoctl ipam release --ip=10.244.1.5
-
-# Show IP usage per node
-calicoctl ipam show --show-blocks | grep -E "Node|Block"
+calicoctl ipam check --show-problem-ips -o ipam-report.json
 ```
 
-## Querying Per-Node PodCIDRs via BlockAffinity
+Review pool eligibility, reservations, affinity, per-host limits and actual workload/tunnel/VM ownership. Do not release an address solely because a sample command calls it orphaned. `calicoctl ipam release --block` is not a supported reviewed CLI option.
 
-In Calico's block-based IPAM, the CIDR block allocated to each node is tracked via **BlockAffinity CRs**. These CRs are used to identify per-node pod CIDRs for static route configuration or IPAM debugging.
+The release tool supports `--from-report` and can intersect multiple reports; at least one must be fresh, and report-based cleanup carries allocation sequence information. Follow the versioned recovery procedure after verifying the reported allocations. Avoid `--force`, direct IPAMBlock/BlockAffinity deletion or arbitrary single-IP release as a general exhaustion fix.
 
-> **⚠ EKS Hybrid Nodes Note**: Calico is **no longer officially supported** on EKS Hybrid Nodes. Use [Cilium](../cilium/04-ipam-policy.md) for new deployments. The information below is provided for reference in existing Calico environments.
+## Inspect Node-Affine CIDR Blocks
 
-### Querying BlockAffinity CRs
+`BlockAffinity` is managed by Calico IPAM and exposes state, node, CIDR, deletion and affinity type. It is not the same thing as `Node.spec.podCIDR`, and it is not a complete snapshot of every host route when borrowed or migrating addresses exist.
 
 ```bash
-# Query IPAM blocks using calicoctl
-calicoctl ipam show --show-blocks
+kubectl get blockaffinities.projectcalico.org \
+  -o custom-columns='NAME:.metadata.name,CIDR:.spec.cidr,NODE:.spec.node,STATE:.spec.state,DELETED:.spec.deleted,TYPE:.spec.type'
+kubectl get ippools.projectcalico.org \
+  -o custom-columns='NAME:.metadata.name,CIDR:.spec.cidr,BLOCK_SIZE:.spec.blockSize'
 
-# Check per-node CIDRs via BlockAffinity CRs
-kubectl get blockaffinities
-
-# Table format query
-kubectl get blockaffinities -o custom-columns='\
-NAME:.metadata.name,\
-CIDR:.spec.cidr,\
-NODE:.spec.node'
+# Review active host affinities; exclude deletion states and virtual affinities.
+kubectl get blockaffinities.projectcalico.org -o json | jq -r \
+  '.items[] | select(.spec.state == "confirmed" and .spec.deleted != true and ((.spec.type // "") == "" or .spec.type == "host")) | [.spec.cidr, .spec.node] | @tsv'
 ```
 
-Example output:
+These are inventory outputs, not ready-to-execute `ip route add` commands. Routing also needs actual node next hops, current allocation state, pool export/encapsulation rules and any more-specific routes. Do not assume a placeholder node IP or all affinity records form a valid static routing plan.
 
-```
-NAME                                    CIDR               NODE
-hybrid-node-001-10-85-0-0-25            10.85.0.0/25       hybrid-node-001
-hybrid-node-002-10-85-0-128-25          10.85.0.128/25     hybrid-node-002
-hybrid-node-003-10-85-1-0-25            10.85.1.0/25       hybrid-node-003
-```
-
-### Checking the Overall IPPool
-
-```bash
-kubectl get ippools -o custom-columns='\
-NAME:.metadata.name,\
-CIDR:.spec.cidr,\
-BLOCK_SIZE:.spec.blockSize'
-```
-
-### Auto-Generating Static Routes
-
-Example of generating static route commands from BlockAffinity:
-
-```bash
-# Generate ip route commands from BlockAffinity
-kubectl get blockaffinities -o json | jq -r \
-  '.items[] | "ip route add \(.spec.cidr) via <NODE_IP_FOR_\(.spec.node)>"'
-```
-
-> **Use Case**: This information is used to configure static routes without BGP in EKS Hybrid Nodes environments. For details, see [EKS Hybrid Nodes - Network Configuration](../../eks-hybrid-nodes/02-network-configuration.md).
+For **EKS Hybrid Nodes**, the [specialized CNI guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html) documents AWS-maintained Cilium builds and moves Calico examples to the Hybrid Examples repository. AWS's [general alternate-CNI page](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html) still describes core Cilium/Calico support for Hybrid Nodes. These pages do not supply a consistent versioned Calico support matrix; moving examples alone does not establish that support ended. Confirm the exact distribution, capabilities and support owner for the planned deployment. This section covers Calico IPAM inventory, not a Hybrid installation recipe.
 
 ## WireGuard Encryption
 
-WireGuard provides efficient encryption for pod-to-pod traffic across nodes.
+WireGuard protects supported traffic **between capable, configured nodes**. It is not application-to-application TLS, and same-node Pod traffic does not traverse that inter-node tunnel. Traffic involving a node without WireGuard support may remain unencrypted. Check the actual CNI, IP family and workload/host traffic path before treating encryption as a requirement that has been met.
 
-### WireGuard Architecture
+![Traffic leaves Pod A in plaintext, is encrypted by Node 1's WireGuard interface (wireguard.cali), crosses the underlay from eth0 to eth0 as an encrypted UDP 51820 WireGuard tunnel, and is decrypted by Node 2's WireGuard interface back to plaintext before reaching Pod B.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-2.png)
 
-![Traffic leaves a pod in plaintext, is encrypted by the node's WireGuard interface, crosses the underlay as an encrypted UDP tunnel between the two nodes, and is decrypted back to plaintext before reaching the destination pod.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-3.svg)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-2.html)
 
-### Configuration
+> “Plaintext” in this diagram means not protected by the WireGuard tunnel on the local leg; the application may independently use TLS. The example shows the default IPv4 WireGuard port 51820. IPv6 has separate interface/port settings.
+
+### Enable Only the Required IP Families
 
 ```yaml
-# Enable WireGuard encryption
+# Example for an already compatible dual-stack Linux deployment.
 apiVersion: projectcalico.org/v3
 kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  # Enable WireGuard for IPv4
   wireguardEnabled: true
-
-  # Enable WireGuard for IPv6 (if using dual-stack)
   wireguardEnabledV6: true
-
-  # WireGuard interface MTU (default: auto)
-  wireguardMTU: 1440
-
-  # WireGuard listen port
-  wireguardListeningPort: 51820
-
-  # Keep-alive interval for NAT traversal
-  wireguardPersistentKeepAlive: "25s"
-
-  # Host encryption (encrypt host-networked pod traffic)
-  wireguardHostEncryptionEnabled: true
 ```
 
-```yaml
-# Operator-based installation with WireGuard
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  calicoNetwork:
-    ipPools:
-      - cidr: 10.244.0.0/16
-        encapsulation: WireguardCrossSubnet
-        natOutgoing: Enabled
-```
+Use `wireguardEnabled` for IPv4 and `wireguardEnabledV6` for an enabled IPv6 path; do not enable IPv6 merely because the field exists. Preserve other Felix settings through the configuration owner and verify kernel support at both peers. There is no `WireguardCrossSubnet` operator IPPool encapsulation value.
 
-### Verify WireGuard Status
+Leave MTU auto-detection in place unless the actual underlay/encapsulation path requires an override. A 1500-byte IPv4 underlay with WireGuard's 60-byte overhead suggests 1440; IPv6 overhead and platform-specific paths differ. The [MTU discussion](03-networking-modes.md) explains why alternative encapsulation paths must not be blindly added together.
+
+`wireguardHostEncryptionEnabled` concerns supported **inter-node host-originated/host-network** traffic, not encrypting a local host-to-Pod hop. Consult the platform's supported traffic matrix rather than applying it as a universal switch.
+
+### Keys, Keepalives and Verification
+
+Calico manages node keys and publishes public-key information for peers. WireGuard's protocol derives fresh session keys during handshakes; that is distinct from an administrator's node-identity rotation policy.
+
+Persistent keepalives keep NAT/firewall state alive during idle periods. The familiar WireGuard example interval of 25 **seconds** is not a key-rotation interval. Neither `wireguardPersistentKeepAlive` nor `wireguardPersistentKeepalive` is a supported Felix field in the reviewed Open Source schema.
 
 ```bash
-# Check WireGuard status on nodes
-kubectl exec -n calico-system -it $(kubectl get pods -n calico-system -l k8s-app=calico-node -o name | head -1) -- wg show
-
-# Sample output:
-# interface: wireguard.cali
-#   public key: ABC123...
-#   private key: (hidden)
-#   listening port: 51820
-#
-# peer: DEF456...
-#   endpoint: 192.168.1.11:51820
-#   allowed ips: 10.244.1.0/26
-#   latest handshake: 5 seconds ago
-#   transfer: 1.5 MiB received, 2.3 MiB sent
-
-# Check Felix WireGuard statistics
-calicoctl node status
-
-# View WireGuard public keys
-kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}: {.metadata.annotations.projectcalico\.org/WireguardPublicKey}{"\n"}{end}'
+# On the intended node with wireguard-tools available:
+WIREGUARD_INTERFACE=wireguard.cali
+wg show "$WIREGUARD_INTERFACE" public-key
+wg show "$WIREGUARD_INTERFACE" latest-handshakes
+wg show "$WIREGUARD_INTERFACE" endpoints
+wg show "$WIREGUARD_INTERFACE" transfer
 ```
 
-### Performance Impact
+```bash
+# Kubernetes datastore: public identity information only.
+kubectl get nodes -o json | jq -r \
+  '.items[] | [.metadata.name, (.metadata.annotations["projectcalico.org/WireguardPublicKey"] // "-"), (.metadata.annotations["projectcalico.org/WireguardPublicKeyV6"] // "-")] | @tsv'
+```
 
-| Metric | Without Encryption | WireGuard | IPsec (AES-GCM) |
-|--------|-------------------|-----------|-----------------|
-| Throughput | Baseline | -5 to -10% | -15 to -25% |
-| Latency | Baseline | +0.1-0.3ms | +0.5-1.0ms |
-| CPU Usage | Baseline | +10-15% | +30-50% |
-| Setup Complexity | N/A | Low | Medium |
-| Key Management | N/A | Automatic | Manual/IKE |
+Choose the actual interface for the desired IP family. Public keys, handshakes and byte counters aid diagnosis but do not prove that every application flow uses encryption. Verify the intended traffic path and expected encrypted transport. `calicoctl node status` is not a WireGuard status table, and there is no need to print private keys for this check.
 
-### WireGuard vs IPsec Comparison
+### Preserved Performance Records
 
-![Side-by-side comparison of WireGuard and IPsec encryption on four traits: cryptography, code complexity, key exchange, and per-packet overhead.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-4.svg)
+The earlier locales provided different, unverified figures. No test date, hardware, acceleration configuration, software versions or raw results were supplied. Preserve them as historical reported values, not current Calico/WireGuard performance guarantees.
 
-| Feature | WireGuard | IPsec |
-|---------|-----------|-------|
-| Cryptography | ChaCha20-Poly1305, Curve25519 | AES-GCM, SHA-256, DH |
-| Code Complexity | ~4,000 lines | 100,000+ lines |
-| Attack Surface | Minimal | Large |
-| Key Rotation | Automatic | Manual or IKE |
-| NAT Traversal | Built-in | Requires NAT-T |
-| Roaming | Seamless | Session re-establishment |
-| Kernel Support | 5.6+ (mainline) | All versions |
-| Hardware Offload | Limited | Widely supported |
+**Record A — earlier English guide:**
+
+| Metric | WireGuard | IPsec (AES-GCM) |
+| --- | --- | --- |
+| Throughput change from baseline | −5 to −10% | −15 to −25% |
+| Added latency | 0.1–0.3 ms | 0.5–1.0 ms |
+| CPU usage change | +10–15% | +30–50% |
+
+
+**Record B — earlier Korean guide:**
+
+| Metric | WireGuard | IPsec (AES-GCM) |
+| --- | --- | --- |
+| Throughput as percentage of baseline | 95–98% | 85–90% |
+| Latency change from baseline | +5–10% | +15–25% |
+| Qualitative CPU description | Medium | High |
+
+
+Record B used an unencrypted baseline of 100% and described unencrypted CPU usage as low. The percentage changes do not specify percentage points versus relative CPU change. These records must not be combined into one experiment.
+
+### WireGuard and IPsec Trade-offs
+
+WireGuard uses a deliberately constrained cryptographic design; IPsec is a framework with multiple implementations, algorithms and key-management choices. CPU cost, packet overhead, hardware offload, roaming and configuration complexity depend on those choices and the measured path. Unversioned source-line counts are not a security metric, and the reviewed Open Source Felix schema has no `ipsecEnabled` field.
+
+For FIPS requirements, compare the selected product's current certification record, version and operating conditions.
 
 ## Egress Gateway
 
-Egress Gateway provides controlled, predictable egress for pods requiring specific source IPs.
+Calico Enterprise's egress gateway is a **transit Pod** that performs SNAT for selected clients. It has its own product/platform requirements; the Open Source baseline at the top of this chapter is not an Enterprise compatibility matrix.
 
-### Architecture
+The path is client egress policy → tunnel to gateway Pod → gateway SNAT → gateway egress policy → external network. NetworkPolicy Allow does not redirect packets or perform SNAT. `BGPConfiguration.serviceExternalIPs` advertises Service routes, rather than allocating workload egress identities.
 
-![Pods in the production namespace route outbound traffic through a dedicated Egress Gateway pod, which source-NATs it to a fixed external IP before it reaches partner services.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-5.svg)
+### Current Commercial Configuration Shape
 
-### Configuration
+The documented on-premises Calico-CNI path requires a supported Enterprise installation, prepared namespaces/Pod-security permissions, routed egress addresses and UDP 4790 connectivity. GKE and Windows are excluded. AWS and Azure have separate procedures; do not transplant this pool into a cloud-provider CNI setup.
+
+Through the existing default Felix configuration owner, enable `egressIPSupport` uniformly as `EnabledPerNamespace` or, where authorized, `EnabledPerNamespaceOrPerPod`. The gateway resource is **`operator.tigera.io/v1` EgressGateway**. The operator manages its image and configuration; do not invent a `calico/egress-gateway` Deployment.
 
 ```yaml
-# 1. Label egress gateway nodes
-# kubectl label node egress-node-1 egress-gateway=true
-# kubectl label node egress-node-2 egress-gateway=true
-
-# 2. Create Egress Gateway IP Pool
+# Calico Enterprise example, not an Open Source gateway installation.
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
-  name: egress-gateway-pool
+  name: egress-demo-pool
 spec:
   cidr: 203.0.113.0/28
   blockSize: 32
-  nodeSelector: "!all()"  # Don't auto-assign
-  allowedUses:
-    - Workload
+  nodeSelector: "!all()"
   natOutgoing: false
 ---
-# 3. Create Egress Gateway deployment
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: operator.tigera.io/v1
+kind: EgressGateway
 metadata:
-  name: egress-gateway
-  namespace: calico-system
+  name: approved-egress
+  namespace: calico-egress
 spec:
   replicas: 2
-  selector:
-    matchLabels:
-      app: egress-gateway
+  ipPools:
+    - cidr: 203.0.113.0/28
   template:
     metadata:
       labels:
-        app: egress-gateway
-      annotations:
-        cni.projectcalico.org/ipv4pools: '["egress-gateway-pool"]'
+        egress-code: approved
     spec:
       nodeSelector:
-        egress-gateway: "true"
-      tolerations:
-        - key: "egress-gateway"
-          operator: "Equal"
-          value: "true"
-          effect: "NoSchedule"
-      containers:
-        - name: egress-gateway
-          image: calico/egress-gateway:v3.29.0
-          env:
-            - name: EGRESS_POD_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-          securityContext:
-            privileged: true
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 256Mi
+        kubernetes.io/os: linux
 ---
-# 4. Configure egress gateway selector
-apiVersion: projectcalico.org/v3
-kind: EgressGateway
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: production-egress
-  namespace: production
-spec:
-  # Select egress gateway pods
-  selector: app == 'egress-gateway'
-  # Maximum gateways per client (for HA)
-  maxGatewaysPerClient: 2
+  name: calico-demo
+  annotations:
+    egress.projectcalico.org/selector: egress-code == 'approved'
+    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == 'calico-egress'
 ```
 
-### SNAT Policy Configuration
+Replace the documentation CIDR with addresses you control and configure encapsulation/routing for the actual network. `/32` blocks avoid reserving a larger block for each gateway. `!all()` prevents automatic general allocation; explicitly requesting the pool can still use it, so annotation permissions must be controlled.
+
+Two replicas require two available IPs and appropriate node/failure-domain placement; replicas alone do not guarantee availability. The namespace selector is necessary because gateway selection otherwise defaults to the client's namespace.
+
+With `natOutgoing: false`, the gateway Pod IP survives that Calico NAT stage, but upstream NAT can still change it. Enabling gateway-pool NAT can instead expose the gateway node IP. Verify the source observed by the external receiver and allow the intended address set. Gateway replacement or upgrade can break existing connections.
+
+### Policy and Identity Boundaries
+
+Client egress policy sees the **external destination**. Allowing a client to contact the gateway Pod IP does not route or authorize its original external flow. At gateway egress, original client identity/source-port information has been translated. Destination CIDR/port policy remains useful, but domain-based policy at that hook is not supported.
+
+Advanced `EgressGatewayPolicy` routing has its own destination/gateway selection and `maxNextHops` field. It is not the former invented `maxGatewaysPerClient` field on a `projectcalico.org/v3 EgressGateway`.
+
+For Open Source, use an independently configured application proxy or underlay/cloud NAT solution where appropriate, and control allowed traffic separately. An Envoy Pod without bootstrap/listener/upstream configuration is not a functioning egress proxy. A stable source address supports an external allowlist; it does not by itself establish PCI DSS/HIPAA compliance or application authorization.
+
+## Multi-Cluster Connectivity and Federation
+
+Separate routed reachability, endpoint identity and Service discovery. BGP exchanges routes but does not distribute Kubernetes policies or DNS records. Typha distributes state within its deployment; it is not a lead instance reporting to the invented shared Federation Controller in the earlier diagram.
+
+### Open Source Routed Connectivity
+
+Prepare non-overlapping addresses, bidirectional routing, reachable next hops and policy in each cluster. Account for NAT: a remote Pod CIDR outside local Calico pools can be masqueraded by `natOutgoing`, changing the receiver's observed source. Plan appropriate exclusions and routing instead of assuming Pod identity survives.
 
 ```yaml
-# Egress IP policy for specific namespaces
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  serviceExternalIPs:
-    - cidr: 203.0.113.0/28
----
-# Network policy to route through egress gateway
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: use-egress-gateway
-  namespace: production
-spec:
-  selector: requires-egress == 'true'
-  egress:
-    - action: Allow
-      destination:
-        notNets:
-          - 10.0.0.0/8
-          - 172.16.0.0/12
-          - 192.168.0.0/16
-      # Route through egress gateway
-```
-
-### Compliance Use Case
-
-Organizations with compliance requirements (PCI-DSS, HIPAA) often need predictable egress IPs:
-
-```yaml
-# Compliance-focused egress configuration
+# Receiving cluster only, after routing/source preservation is verified.
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
-  name: compliance-egress
+  name: default.remote-client-access
 spec:
-  selector: "compliance-level in {'pci', 'hipaa'}"
   order: 100
-  egress:
-    # Allow only through egress gateway
-    - action: Allow
-      destination:
-        selector: app == 'egress-gateway'
-    # Block direct external access
-    - action: Deny
-      destination:
-        notNets:
-          - 10.0.0.0/8
-```
-
-## Multi-Cluster Federation
-
-Calico supports multi-cluster deployments for cross-cluster communication and policy.
-
-### Federation Architecture
-
-![Three clusters each peer their API server with a shared Federation Controller for policy sync, while their pod workloads mesh directly with each other over BGP or overlay.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-6.svg)
-
-### Cross-Cluster Connectivity Setup
-
-```yaml
-# Cluster A configuration
-apiVersion: projectcalico.org/v3
-kind: IPPool
-metadata:
-  name: cluster-a-pool
-spec:
-  cidr: 10.244.0.0/16
-  ipipMode: CrossSubnet
-  natOutgoing: true
----
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  asNumber: 64512
-  nodeToNodeMeshEnabled: false
----
-# BGP peer to Cluster B
-apiVersion: projectcalico.org/v3
-kind: BGPPeer
-metadata:
-  name: cluster-b-peer
-spec:
-  peerIP: 192.168.2.1  # Cluster B border router
-  asNumber: 64513
-  password:
-    secretKeyRef:
-      name: bgp-secrets
-      key: cluster-b-password
-```
-
-```yaml
-# Cluster B configuration
-apiVersion: projectcalico.org/v3
-kind: IPPool
-metadata:
-  name: cluster-b-pool
-spec:
-  cidr: 10.245.0.0/16
-  ipipMode: CrossSubnet
-  natOutgoing: true
----
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  asNumber: 64513
-  nodeToNodeMeshEnabled: false
----
-# BGP peer to Cluster A
-apiVersion: projectcalico.org/v3
-kind: BGPPeer
-metadata:
-  name: cluster-a-peer
-spec:
-  peerIP: 192.168.1.1  # Cluster A border router
-  asNumber: 64512
-  password:
-    secretKeyRef:
-      name: bgp-secrets
-      key: cluster-a-password
-```
-
-### Cross-Cluster Network Policy
-
-```yaml
-# Global policy that applies across clusters
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
-metadata:
-  name: cross-cluster-allow
-spec:
-  selector: all()
-  order: 500
+  namespaceSelector: kubernetes.io/metadata.name == 'calico-demo'
+  selector: app == 'shared-service'
+  types: [Ingress]
   ingress:
-    # Allow from other clusters' pod CIDRs
     - action: Allow
-      source:
-        nets:
-          - 10.244.0.0/16  # Cluster A
-          - 10.245.0.0/16  # Cluster B
-          - 10.246.0.0/16  # Cluster C
       protocol: TCP
+      source:
+        nets: [10.245.0.0/16]
       destination:
-        ports:
-          - 80
-          - 443
-          - 8080
-  egress:
-    - action: Allow
-      destination:
-        nets:
-          - 10.244.0.0/16
-          - 10.245.0.0/16
-          - 10.246.0.0/16
+        ports: [8080]
 ```
+
+This policy selects local receiving endpoints only. `GlobalNetworkPolicy` means cluster/datastore-wide scope, not automatic application to remote clusters. Verify sender egress, receiver ingress and actual source addresses. Policy distribution requires an explicitly managed workflow; it is not a BGP or Typha side effect.
+
+### Enterprise Federation
+
+The current Enterprise guide separates:
+
+| Capability | What it does |
+| --- | --- |
+| Federated endpoint identity | Uses remote workload/host endpoint information as input to local policy calculation |
+| Federated Services Controller | Reads Service/endpoint information through remote Kubernetes APIs and maintains selected local federated Services |
+| Multi-cluster networking | Provides a supported overlay or works with separately configured routable Pod networks |
+
+Federated endpoint identity **does not replicate network policies**. Remote policies are not automatically enforced locally; each cluster's policies remain locally applied. Routable Pod IPs and source preservation are prerequisites for identity and useful remote Service endpoints.
+
+A commercial federated Service uses an annotation that selects **backing Services by labels**, not Pods:
+
+```yaml
+# Commercial controller integration; backing Services already exist.
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-federated
+  namespace: calico-demo
+  annotations:
+    federation.tigera.io/serviceSelector: app == 'catalog'
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+```
+
+Backing Services must be in the same namespace name across the selected clusters and expose matching port **names and protocols**. The federated Service omits `spec.selector`; its `targetPort` is not the backing-port selector. Do not manually manage its endpoint records.
+
+Remote API credentials, controller installation, Kubernetes-version/EndpointSlice compatibility and network reachability are separate prerequisites. This example does not establish them or prove cross-cluster failover. Follow the product's current federation procedure and test the real paths; do not copy the guide's historical 2018 Endpoints output as a current deployment manifest.
 
 ## Windows Container Support
 
-Calico provides networking and policy for Windows containers in Kubernetes.
+Calico supports Windows through **HNS**, with substantial feature/platform constraints. Linux nodes are still needed for the control components and Typha. A mixed cluster is not a way to combine the Calico eBPF dataplane with Windows.
 
-### Features and Limitations
+### Version and Platform Intersection
 
-| Feature | Linux | Windows |
-|---------|-------|---------|
-| Overlay (VXLAN) | Yes | Yes |
-| Direct Routing | Yes | Limited |
-| BGP | Yes | Yes |
-| Network Policy L3-L4 | Yes | Yes |
-| Network Policy L7 | Yes | No |
-| eBPF Dataplane | Yes | No |
-| WireGuard | Yes | No |
-| IPsec | Yes | Yes |
-| Host Endpoint Policy | Yes | Limited |
-| IPAM | Full | Full |
+For a Kubernetes 1.36 example within Calico 3.32's tested range, Windows Server 2022 is listed by both Kubernetes and Calico. Kubernetes 1.36 also lists Server 2025, while the Calico requirements page still includes older Server 1809 and Server 2022 entries. Do not assume either the old OS or every newly supported Kubernetes OS is validated by the selected Calico/provider combination. Match the host and container base-image OS/build and use compatible maintained runtime/kubelet/kube-proxy versions.
 
-### Windows Installation
+Kubernetes Windows Pods use process isolation, not Hyper-V container isolation. Calico's current documented installation uses operator-managed HostProcess containers. The old 3.29 ZIP/manual-service example and old runtime/kubelet versions in legacy instructions are not a current installation recipe.
+
+| Area | Current Calico Windows constraints |
+| --- | --- |
+| Network | IPv4 VXLAN without CrossSubnet, or supported non-overlay BGP; not IPIP |
+| VXLAN | UDP 4789; no Windows CrossSubnet/custom VXLAN MTU support in this guide |
+| IPAM | No borrowing; four addresses reserved per Calico-owned block, so `/26` gives 60 Pod addresses; account for the Windows kube-proxy single-block constraint |
+| Routing | Windows can use supported BGP peering but cannot be a route reflector or advertise Service IPs |
+| Unsupported here | IPv6/dual stack, eBPF, WireGuard, host-endpoint policy, Istio application-layer policy |
+| Managed platforms | EKS Windows uses VPC CNI; AKS uses Azure CNI; GKE is not interchangeable with a self-managed GCE cluster |
+
+### Operator Configuration
+
+Provision compatible Windows nodes first and verify Linux capacity for the controller/Typha HA profile. The Windows guide calls for three Linux workers for that profile. Prepare a stable direct API endpoint using `kubernetes-services-endpoint` in the operator namespace and use the actual Service CIDR, not an assumed kubeadm default.
+
+This is the configuration shape for the **self-managed Calico-CNI VXLAN alternative**. Do not replace an existing installation's pool list with the example or apply it as the EKS/Azure CNI profile:
 
 ```yaml
-# Installation resource for Windows support
+# Self-managed Calico-CNI IPv4 VXLAN target configuration; preserve existing pools/settings.
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
   name: default
 spec:
-  # Kubernetes provider
-  kubernetesProvider: AKS  # or EKS, GKE, etc.
-
-  # Windows dataplane
-  windowsDataplane: HNS
-
+  serviceCIDRs:
+    - 10.96.0.0/12
+  cni:
+    type: Calico
   calicoNetwork:
-    bgp: Enabled
+    linuxDataplane: Iptables
+    windowsDataplane: HNS
+    bgp: Disabled
     ipPools:
       - cidr: 10.244.0.0/16
+        blockSize: 26
         encapsulation: VXLAN
         natOutgoing: Enabled
-
-    # Windows-specific settings
-    windowsIPAM: Calico
 ```
 
-### HNS (Host Networking Service) Integration
+The valid field is `spec.calicoNetwork.windowsDataplane`, not root `spec.windowsDataplane` or `windowsIPAM`. VXLAN uses `VXLAN`, not `VXLANCrossSubnet`, with BGP disabled for this profile. A non-overlay BGP alternative uses different configuration; do not mix Linux IPIP pools with Windows peers.
 
-![A packet from a Windows container crosses its virtual NIC into the Hyper-V virtual switch, through the Host Networking Service and Virtual Filtering Platform for policy enforcement, while the Calico Windows agent programs both HNS and the VFP directly.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-7.svg)
+```bash
+kubectl get ipamconfigurations.projectcalico.org default -o yaml
+# Required for the documented mixed Windows/Calico-IPAM installation:
+kubectl patch ipamconfigurations.projectcalico.org default --type=merge \
+  -p '{"spec":{"strictAffinity":true}}'
+```
 
-### Windows Network Policy
+Strict affinity is required for the documented Calico-IPAM Windows setup. Plan block size before networking Pods: changing it later is not supported. Ensure kube-proxy is present on Windows with the appropriate version/owner. Migrating a legacy manual installation to HostProcess can remove old Calico services and replace files, so inventory and preserve its configuration first.
+
+```bash
+kubectl get nodes -l kubernetes.io/os=windows -o wide
+kubectl get pods -n calico-system -l k8s-app=calico-node-windows -o wide
+kubectl logs -n calico-system -l k8s-app=calico-node-windows -c felix --tail=100
+```
+
+This is configuration review, not a Windows provisioning or failover test. Test Pod/Service traffic and policy on both operating systems; Windows NAT changes may apply only to newly networked Pods and some HNS policy updates can reset connections.
+
+### HNS and the Packet Path
+
+![On a Windows node, traffic from the Windows containers converges on the Host Networking Service (HNS), which the Calico Node Windows Service programs with networking and policy, then passes through the Virtual Filtering Platform (VFP) for packet filtering before leaving via the physical NIC.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-7.html)
+
+> HNS/HCS manage networks and endpoints; virtual-switch/VFP mechanisms enforce the data path. Packets do not pass through a Calico userspace service as a forwarding proxy. The “Windows Service” box is a logical agent: current operator installations run these components in HostProcess containers.
+
+## Calico Product Editions
+
+Use the current edition and feature requirements rather than treating all observability/policy capabilities as Enterprise-only.
+
+| Capability | Open Source 3.32 baseline | Commercial distinction |
+| --- | --- | --- |
+| Networking and policy | Calico networking, global/namespaced policy, multiple supported dataplanes | Additional product/platform integrations |
+| Policy tiers/RBAC | Available, including Calico tier-aware authorization | Product management workflows and additional controls |
+| HTTP policy | Available through configured Istio/Dikastes integration | Check the product-specific enforcement path |
+| Flow visibility/UI | Goldmane/Whisker and staged-policy workflow are available | Additional analytics, reporting and management features |
+| DNS domain policy | `domains` is absent from the reviewed OSS CRD | Documented commercial DNS policy |
+| Egress/federation | Independent routing/proxy designs are possible; no invented OSS gateway/federation CR | Supported egress gateways, remote identity and federated Services |
+| Support | Community/project support | Terms depend on the purchased support offering |
+
+Calico Cloud is the managed SaaS product and Calico Enterprise is self-managed. The Cloud documentation also describes a Free Tier for single-cluster observability/policy management. Review current feature/retention/support terms; do not infer a universal 24/7 SLA, per-node price, identical dataplane feature set or internal SaaS dataflow from an unsourced comparison table.
+
+## Large-Scale Cluster Design
+
+Use measured endpoint count, policy complexity, update churn, client connections, CPU/RSS and convergence targets. A node-count table alone cannot establish production capacity.
+
+### Operator Typha Scaling
+
+The reviewed Tigera Operator **1.42.6** uses this calculation for its counted nodes:
+
+```text
+N <= 2: 1 replica
+N <= 4: 2 replicas
+otherwise: max(3, floor(N / 200) + 2)
+
+100 nodes -> 3
+500 nodes -> 4
+1,000 nodes -> 7
+2,000 nodes -> 12
+5,000 nodes -> 27
+```
+
+This is the implementation's automatic replica target, not a benchmark proving “200 nodes per Typha.” Its node-count logic excludes explicitly unschedulable nodes and the relevant AKS virtual-node case; actual Linux placement/capacity must also accommodate the result.
+
+Typha fans datastore updates out to Felix; it does not aggregate datastore writes or act as a cross-cluster federation controller. Preserve the operator's service account, RBAC, TLS mounts, placement and lifecycle behavior.
+
+### Supported Overrides
+
+The current `typhaDeployment` override does not expose `spec.replicas` or arbitrary container `env`. Do not replace the owned Deployment with the incomplete manual example merely to change the replica count. Use allowed override fields through the configuration owner:
 
 ```yaml
-# Network policy for Windows workloads
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: windows-web-policy
-  namespace: windows-apps
-spec:
-  selector: app == 'iis-web'
-  ingress:
-    - action: Allow
-      protocol: TCP
-      source:
-        selector: app == 'load-balancer'
-      destination:
-        ports:
-          - 80
-          - 443
-  egress:
-    - action: Allow
-      protocol: TCP
-      destination:
-        selector: app == 'sql-server'
-        ports:
-          - 1433
-```
-
-### Hybrid Linux/Windows Cluster
-
-```yaml
-# Separate IP pools for Linux and Windows
-apiVersion: projectcalico.org/v3
-kind: IPPool
-metadata:
-  name: linux-pool
-spec:
-  cidr: 10.244.0.0/17
-  ipipMode: CrossSubnet
-  natOutgoing: true
-  nodeSelector: "kubernetes.io/os == 'linux'"
----
-apiVersion: projectcalico.org/v3
-kind: IPPool
-metadata:
-  name: windows-pool
-spec:
-  cidr: 10.244.128.0/17
-  vxlanMode: Always  # Windows requires VXLAN
-  natOutgoing: true
-  nodeSelector: "kubernetes.io/os == 'windows'"
-```
-
-## Calico Enterprise / Tigera
-
-Tigera offers Calico Enterprise with additional features for enterprise deployments.
-
-### OSS vs Enterprise Comparison
-
-| Feature | Calico OSS | Calico Enterprise |
-|---------|-----------|-------------------|
-| **Networking** | | |
-| CNI Plugin | Yes | Yes |
-| BGP Routing | Yes | Yes |
-| VXLAN/IPIP Overlay | Yes | Yes |
-| eBPF Dataplane | Yes | Yes |
-| WireGuard Encryption | Yes | Yes |
-| Egress Gateway | Basic | Advanced |
-| **Network Policy** | | |
-| Kubernetes NetworkPolicy | Yes | Yes |
-| Calico NetworkPolicy | Yes | Yes |
-| GlobalNetworkPolicy | Yes | Yes |
-| Policy Tiers | Yes | Yes |
-| DNS Policy | Yes | Yes |
-| L7 Policy (HTTP) | Basic | Full |
-| Policy Preview | No | Yes |
-| Policy Recommendations | No | Yes |
-| **Security** | | |
-| Threat Detection | No | Yes |
-| Anomaly Detection | No | Yes |
-| Compliance Reports | No | Yes |
-| Security Alerts | No | Yes |
-| Workload Identity | Basic | SPIFFE/SPIRE |
-| **Observability** | | |
-| Flow Logs | Basic | Full |
-| Service Graph | No | Yes |
-| Kibana Dashboards | No | Yes |
-| DNS Logs | Basic | Full |
-| L7 Logs | No | Yes |
-| **Operations** | | |
-| Web UI | No | Yes |
-| Multi-Cluster Management | Manual | Unified |
-| RBAC | Kubernetes | Extended |
-| Audit Logs | Basic | Full |
-| **Support** | | |
-| Community Support | Yes | Yes |
-| Enterprise Support | No | 24/7 SLA |
-| Professional Services | No | Yes |
-
-### Calico Cloud
-
-Calico Cloud is a SaaS offering that provides:
-
-![Each customer cluster's Calico agent reports to a shared Management UI, which feeds an Analytics Engine that in turn drives threat intelligence and compliance reporting.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-8.svg)
-
-## Large-Scale Cluster Design (1000+ Nodes)
-
-Designing Calico for large clusters requires careful planning of components and resources.
-
-### Typha Sizing Formula
-
-Typha reduces API server load by aggregating datastore connections:
-
-```
-Typha Replicas = max(3, ceil(Node Count / 200))
-
-Examples:
-- 100 nodes: 3 Typha replicas (minimum)
-- 500 nodes: 3 Typha replicas
-- 1000 nodes: 5 Typha replicas
-- 2000 nodes: 10 Typha replicas
-- 5000 nodes: 25 Typha replicas
-```
-
-```yaml
-# Large cluster Typha configuration
+# Override shape only: these illustrative requests are not a capacity recommendation.
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
@@ -862,7 +553,6 @@ metadata:
 spec:
   typhaDeployment:
     spec:
-      replicas: 10  # For ~2000 nodes
       template:
         spec:
           containers:
@@ -871,296 +561,85 @@ spec:
                 requests:
                   cpu: 500m
                   memory: 512Mi
-                limits:
-                  cpu: 2000m
-                  memory: 1Gi
-          affinity:
-            podAntiAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                - labelSelector:
-                    matchLabels:
-                      k8s-app: calico-typha
-                  topologyKey: kubernetes.io/hostname
-          topologySpreadConstraints:
-            - maxSkew: 1
-              topologyKey: topology.kubernetes.io/zone
-              whenUnsatisfiable: DoNotSchedule
-              labelSelector:
-                matchLabels:
-                  k8s-app: calico-typha
 ```
 
-### Route Reflector Topology
+Choose actual requests from observed usage and failure-domain capacity; the values above only demonstrate the field shape. Review limits, anti-affinity and topology constraints together, since an impossible placement rule can leave replicas Pending.
 
-For large BGP deployments, use Route Reflectors instead of full mesh:
-
-![Instead of a full BGP mesh, one route reflector per zone peers with the other reflectors, and every regular node in its zone peers only with its own zone's reflector.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-9.svg)
-
-```yaml
-# Route Reflector node configuration
-apiVersion: projectcalico.org/v3
-kind: Node
-metadata:
-  name: rr-node-1
-  labels:
-    route-reflector: "true"
-    topology.kubernetes.io/zone: "zone-a"
-spec:
-  bgp:
-    routeReflectorClusterID: 244.0.0.1
-    ipv4Address: 192.168.1.10/24
----
-# Regular nodes peer with zone-local RR
-apiVersion: projectcalico.org/v3
-kind: BGPPeer
-metadata:
-  name: node-to-rr-zone-a
-spec:
-  nodeSelector: "topology.kubernetes.io/zone == 'zone-a' && !has(route-reflector)"
-  peerSelector: "route-reflector == 'true' && topology.kubernetes.io/zone == 'zone-a'"
----
-# RR mesh between zones
-apiVersion: projectcalico.org/v3
-kind: BGPPeer
-metadata:
-  name: rr-full-mesh
-spec:
-  nodeSelector: "has(route-reflector)"
-  peerSelector: "has(route-reflector)"
+```bash
+kubectl get installation.operator.tigera.io default -o yaml
+kubectl -n calico-system get deployment calico-typha -o yaml
+# Requires a working resource-metrics API:
+kubectl -n calico-system top pods -l k8s-app=calico-typha
 ```
 
-### Felix Tuning for Large Clusters
+### Route Reflectors
 
-```yaml
-# Optimized Felix configuration for large clusters
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  # Reduce datastore polling
-  datastoreType: kubernetes
+![Route Reflector hierarchy for 1000+ nodes: three Tier 1 Route Reflectors peer with each other in an iBGP full mesh, and each reflects routes down to its own rack RR and worker node group instead of a full node-to-node mesh.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-6.png)
 
-  # Increase refresh intervals (reduce API load)
-  routeRefreshInterval: "90s"
-  iptablesRefreshInterval: "180s"
-  ipSetsRefreshInterval: "90s"
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-6.html)
 
-  # Optimize iptables
-  iptablesBackend: NFT  # Use nftables if available
-  iptablesMarkMask: 0xffff0000
+> The drawing illustrates a hierarchy, not a complete resilient deployment: each rack has only one shown RR/uplink, and the labels are not a capacity guarantee. Cluster IDs and reflection relationships must match the intended hierarchy.
 
-  # Reduce logging overhead
-  logSeverityScreen: Warning
-  logSeverityFile: Warning
+Follow the maintained [BGP transition procedure](04-bgp-deep-dive.md): prepare suitable RR nodes, use field-preserving node annotations, establish explicit sessions/routes, verify real traffic and only then remove the old mesh. The figure alone does not supply the required redundancy, next hops or policy.
 
-  # Flow logs (if enabled, optimize)
-  flowLogsFlushInterval: "60s"
-  flowLogsFileAggregationKindForAllowed: 2
-  flowLogsFileAggregationKindForDenied: 1
+### Felix Tuning Has Specific Effects
 
-  # Health check optimization
-  healthEnabled: true
-  healthPort: 9099
-  healthTimeoutOverrides:
-    - name: "InternalDataplaneMainLoop"
-      timeout: "120s"
+| Setting area | Meaning |
+| --- | --- |
+| Route/iptables refresh intervals | Re-check local dataplane state; not a generic Kubernetes API polling interval |
+| `iptablesBackend: NFT` | Selects the iptables-nft frontend; not the same as Calico's native `Nftables` dataplane |
+| Logging/flow logs | Observe the supported log pipeline and cost; do not add commercial-only file aggregation fields to OSS |
+| Health timeouts | Control failure/readiness detection; longer values do not make programming faster |
+| Marks, route-table ranges, failsafes | Affect shared host networking/control reachability; not generic memory/CPU tuning knobs |
+| eBPF/DSR | A separate dataplane/network-path change with platform prerequisites, not a capacity preset |
 
-  # BPF mode optimization (if using eBPF)
-  bpfEnabled: true
-  bpfConnectTimeLoadBalancingEnabled: true
-  bpfExternalServiceMode: "DSR"
-  bpfMapSizeConntrack: 512000
-  bpfMapSizeNATFrontend: 65536
-  bpfMapSizeNATBackend: 262144
-  bpfMapSizeNATAffinity: 65536
-```
+`datastoreType`, `typhaAddr` and `typhaK8sServiceName` are not fields to add to the reviewed FelixConfiguration API. Old `...Secs`/`...Millis` field names in the earlier recipe were also not current API fields. Read the current resource and reference before changing its owner-managed settings.
 
-### Datastore at Scale
+### Datastore Choice
 
-```yaml
-# etcd optimization for large Calico deployments
-# (if using etcd datastore instead of Kubernetes)
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: etcd-config
-  namespace: kube-system
-data:
-  etcd.conf.yaml: |
-    name: etcd-0
-    data-dir: /var/lib/etcd
+Kubernetes datastore avoids operating a separate Calico etcd service and is required by the current eBPF dataplane. Direct etcd can be appropriate for supported non-Kubernetes or separately designed installations, but “over 5,000 nodes requires etcd” and “etcd is always faster” are not supported conclusions.
 
-    # Increase quota for large deployments
-    quota-backend-bytes: 8589934592  # 8GB
+A ConfigMap named `etcd-config` does not tune an etcd process unless the deployment consumes it. It also cannot tune the managed control-plane datastore of a cloud service. Direct etcd requires its own topology, TLS/authentication, backup, recovery and capacity plan.
 
-    # Snapshot tuning
-    snapshot-count: 50000
-    auto-compaction-mode: periodic
-    auto-compaction-retention: "1h"
+The etcd tuning guide relates heartbeat/election settings to network and disk latency. Do not transplant a quota/snapshot/timeout preset without measuring the actual cluster. Keep control-plane configuration separate from Calico dataplane refresh intervals.
 
-    # Performance tuning
-    heartbeat-interval: 250
-    election-timeout: 2500
+## Validation before Scaling Changes
 
-    # Enable gRPC gateway
-    enable-grpc-gateway: true
-```
+1. Establish current allocation, route, policy and client-connection baselines.
+2. Change the intended setting through its owner and preserve unrelated fields.
+3. Observe resource usage, reconciliation lag, readiness and real positive/negative traffic paths.
+4. Test the planned component/node/failure-domain loss and a rollback.
 
-## Performance Tuning
-
-### Felix Parameters
-
-```yaml
-# Comprehensive Felix performance tuning
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  # === CPU Optimization ===
-  # Use eBPF for better CPU efficiency
-  bpfEnabled: true
-  bpfDisableUnprivileged: true
-
-  # Batch iptables updates
-  iptablesPostWriteCheckIntervalSecs: 5
-  iptablesLockFilePath: "/run/xtables.lock"
-  iptablesLockTimeoutSecs: 30
-  iptablesLockProbeIntervalMillis: 50
-
-  # === Memory Optimization ===
-  # Limit in-memory caches
-  routeTableRanges:
-    - min: 1
-      max: 250
-
-  # === Network Optimization ===
-  # MTU configuration
-  mtuIfacePattern: "^(en.*|eth.*|bond.*)"
-
-  # Failsafe inbound/outbound ports
-  failsafeInboundHostPorts:
-    - protocol: tcp
-      port: 22
-    - protocol: udp
-      port: 68
-  failsafeOutboundHostPorts:
-    - protocol: tcp
-      port: 443
-    - protocol: udp
-      port: 53
-
-  # === Logging Optimization ===
-  logFilePath: "/var/log/calico/felix.log"
-  logSeverityFile: Warning
-  logSeverityScreen: Warning
-  logSeveritySys: Warning
-
-  # === Health Check Optimization ===
-  healthEnabled: true
-  healthPort: 9099
-  healthHost: "0.0.0.0"
-```
-
-### Typha Ratio and Configuration
-
-```yaml
-# Typha deployment for optimal performance
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: calico-typha
-  namespace: calico-system
-spec:
-  replicas: 5  # Adjust based on cluster size
-  selector:
-    matchLabels:
-      k8s-app: calico-typha
-  template:
-    metadata:
-      labels:
-        k8s-app: calico-typha
-    spec:
-      priorityClassName: system-cluster-critical
-      tolerations:
-        - key: CriticalAddonsOnly
-          operator: Exists
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  k8s-app: calico-typha
-              topologyKey: kubernetes.io/hostname
-      containers:
-        - name: calico-typha
-          image: calico/typha:v3.29.0
-          ports:
-            - containerPort: 5473
-              name: calico-typha
-            - containerPort: 9093
-              name: metrics
-          env:
-            - name: TYPHA_LOGSEVERITYSCREEN
-              value: "warning"
-            - name: TYPHA_DATASTORETYPE
-              value: "kubernetes"
-            # Max connections per Typha
-            - name: TYPHA_MAXCONNECTIONSLOWERLIMIT
-              value: "200"
-            - name: TYPHA_MAXCONNECTIONSUPPERLIMIT
-              value: "400"
-            # Connection rebalancing
-            - name: TYPHA_CONNECTIONREBALANCINGMODE
-              value: "kubernetes"
-            # Reduce sync interval
-            - name: TYPHA_SNAPSHOTSYNCSINTERVAL
-              value: "300s"
-          resources:
-            requests:
-              cpu: 250m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 512Mi
-          livenessProbe:
-            httpGet:
-              path: /liveness
-              port: 9098
-            periodSeconds: 30
-            initialDelaySeconds: 30
-            failureThreshold: 5
-          readinessProbe:
-            httpGet:
-              path: /readiness
-              port: 9098
-            periodSeconds: 10
-            failureThreshold: 3
-```
-
-### Resource Allocation Guidelines
-
-| Cluster Size | Felix CPU | Felix Memory | Typha CPU | Typha Memory | Typha Replicas |
-|--------------|-----------|--------------|-----------|--------------|----------------|
-| < 50 nodes | 100m-250m | 128Mi-256Mi | N/A | N/A | 0 |
-| 50-200 | 250m-500m | 256Mi-512Mi | 100m-250m | 128Mi-256Mi | 3 |
-| 200-500 | 500m-1000m | 512Mi-1Gi | 250m-500m | 256Mi-512Mi | 3 |
-| 500-1000 | 500m-1000m | 512Mi-1Gi | 500m-1000m | 512Mi-1Gi | 5 |
-| 1000-2000 | 1000m-2000m | 1Gi-2Gi | 500m-1000m | 512Mi-1Gi | 10 |
-| 2000+ | 1000m-2000m | 1Gi-2Gi | 1000m-2000m | 1Gi-2Gi | Node/200 |
-
----
+The previous CPU/memory/node-count ranges were unvalidated planning guesses, not measured capacity results. No large-cluster, Windows, gateway or datastore deployment was executed during this review.
 
 ## References
 
-- [Calico IPAM Documentation](https://docs.tigera.io/calico/latest/networking/ipam/)
-- [WireGuard Encryption](https://docs.tigera.io/calico/latest/network-policy/encrypt-cluster-pod-traffic)
-- [Egress Gateway](https://docs.tigera.io/calico/latest/networking/egress/egress-gateway/)
-- [Windows Containers](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/)
-- [Calico Enterprise](https://docs.tigera.io/calico-enterprise/)
-- [Performance Tuning](https://docs.tigera.io/calico/latest/operations/monitor/component-performance)
+- [Calico IPPool API](https://docs.tigera.io/calico/latest/reference/resources/ippool)
+- [IPAMConfiguration API](https://docs.tigera.io/calico/latest/reference/resources/ipamconfig)
+- [BlockAffinity API](https://docs.tigera.io/calico/latest/reference/resources/blockaffinity)
+- [Released IPAM defaults and allocation logic](https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/libcalico-go/lib/ipam/ipam.go)
+- [Current AWS Hybrid Nodes CNI support](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [WireGuard protocol](https://www.wireguard.com/protocol/)
+- [WireGuard keepalive semantics](https://www.wireguard.com/quickstart/)
+- [Calico encryption](https://docs.tigera.io/calico/latest/network-policy/encrypt-cluster-pod-traffic)
+- [Enterprise Egress Gateway on premises](https://docs.tigera.io/calico-enterprise/latest/networking/egress/egress-gateway-on-prem)
+- [Enterprise Egress Gateway on AWS](https://docs.tigera.io/calico-enterprise/latest/networking/egress/egress-gateway-aws)
+- [Enterprise federation scope](https://docs.tigera.io/calico-enterprise/latest/multicluster/federation/overview)
+- [Federated Services Controller](https://docs.tigera.io/calico-enterprise/latest/multicluster/federation/services-controller)
+- [Calico Windows requirements](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/requirements)
+- [Calico Windows operator workflow](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/operator)
+- [Calico Windows limitations](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)
+- [Windows networking architecture](https://learn.microsoft.com/en-us/virtualization/windowscontainers/container-networking/architecture)
+- [Kubernetes 1.36 Windows documentation source](https://raw.githubusercontent.com/kubernetes/website/release-1.36/content/en/docs/concepts/windows/intro.md)
+- [Current Calico product overview](https://docs.tigera.io/calico-cloud/about)
+- [Operator 1.42.6 scaling function](https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/common/autoscale.go)
+- [Operator 1.42.6 Typha autoscaler](https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/controller/installation/typha_autoscaler.go)
+- [Operator API](https://docs.tigera.io/calico/latest/reference/installation/api)
+- [Felix API](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
+- [Component metrics](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)
+- [etcd tuning](https://etcd.io/docs/v3.6/tuning/)
+- [etcd configuration](https://etcd.io/docs/v3.6/op-guide/configuration/)
 
 ## Quiz
 
-To test what you learned in this chapter, try the [Advanced Topics Quiz](../../quizzes/networking/calico/07-advanced-topics-quiz.md).
+[Advanced Topics Quiz](../../quizzes/networking/calico/07-advanced-topics-quiz.md)

@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flink state와 sink commit의 경계",
+    "output": "ko-data-on-eks-flink-03-state-checkpointing-streaming-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      640
+    ],
+    "views": [
+      {
+        "id": "processing",
+        "label": "소스와 상태 처리",
+        "focus": [
+          "source",
+          "flink",
+          "rocksdb"
+        ],
+        "note": "State와 source 재생·sink 전달 조건을 함께 검증합니다."
+      },
+      {
+        "id": "checkpoint",
+        "label": "주기적 체크포인트",
+        "focus": [
+          "flink",
+          "rocksdb",
+          "s3ckpt"
+        ],
+        "note": "Shared SST 참조·compaction·retention과 복구 가능한 저장소를 확인합니다."
+      },
+      {
+        "id": "sinks",
+        "label": "두 갈래 싱크",
+        "focus": [
+          "flink",
+          "kafkaout",
+          "iceberg"
+        ],
+        "note": "각 sink에 맞는 runtime/connector를 선택하며 sink 간 전역 atomic commit은 보장되지 않습니다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "source",
+      "type": "messagebus",
+      "label": "MSK / Kafka",
+      "sublabel": "소스 토픽",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "flink",
+      "type": "backend",
+      "label": "Flink runtime",
+      "sublabel": "Connector별 version profile",
+      "pos": [
+        445,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "rocksdb",
+      "type": "database",
+      "label": "RocksDB keyed state",
+      "sublabel": "Memory / local SST",
+      "pos": [
+        435,
+        100
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "s3ckpt",
+      "type": "cloud",
+      "label": "S3 checkpoint storage",
+      "sublabel": "Shared SST + metadata",
+      "pos": [
+        435,
+        500
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "kafkaout",
+      "type": "messagebus",
+      "label": "Kafka 출력 토픽",
+      "sublabel": "read_committed 컨슈머",
+      "pos": [
+        1000,
+        180
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "iceberg",
+      "type": "cloud",
+      "label": "S3 / Iceberg",
+      "sublabel": "Catalog / table commits",
+      "pos": [
+        1000,
+        420
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "TaskManagers",
+      "wraps": [
+        "rocksdb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "source-to-flink",
+      "from": "source",
+      "to": "flink",
+      "label": "소비",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flink-state",
+      "from": "flink",
+      "to": "rocksdb",
+      "label": "Keyed state",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "checkpoint",
+      "from": "flink",
+      "to": "s3ckpt",
+      "label": "Checkpoint / restore",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "kafka-sink",
+      "from": "flink",
+      "to": "kafkaout",
+      "label": "Checkpoint → transaction commit"
+    },
+    {
+      "id": "iceberg-sink",
+      "from": "flink",
+      "to": "iceberg",
+      "label": "DynamicRecord → table commit"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Checkpoint state",
+      "items": [
+        "Shared SST 참조와 compaction 영향",
+        "Storage·retention·restore 조건"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Sink commit",
+      "items": [
+        "Kafka: checkpoint + transaction + read_committed",
+        "Sink / table 간 전역 transaction 아님"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "검증한 version profile",
+      "items": [
+        "Kafka 5.0.0-2.2 / Flink 2.2.1",
+        "Iceberg 1.11.0 / Flink 2.1.3"
+      ]
+    }
+  ]
+}

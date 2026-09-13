@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Map Example",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-04-observability-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request entry path",
+        "focus": [
+          "ingress",
+          "frontend",
+          "api"
+        ],
+        "note": "Requests accepted by the Ingress Controller pass through the Frontend to the API Gateway."
+      },
+      {
+        "id": "user-deps",
+        "label": "User Service dependencies",
+        "focus": [
+          "api",
+          "users",
+          "db",
+          "redis"
+        ],
+        "note": "User Service uses both PostgreSQL and Redis."
+      },
+      {
+        "id": "order-fanout",
+        "label": "Order Service fan-out",
+        "focus": [
+          "api",
+          "orders",
+          "db",
+          "kafka",
+          "payments"
+        ],
+        "note": "Order Service is the widest fan-out point, branching into PostgreSQL, Kafka, and the Payment Service."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ingress",
+      "type": "frontend",
+      "label": "Ingress Controller",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "RPS 1000 · P99 50ms",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Gateway",
+      "sublabel": "RPS 800 · P99 100ms",
+      "pos": [
+        470,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "users",
+      "type": "backend",
+      "label": "User Service",
+      "sublabel": "RPS 500 · P99 80ms",
+      "pos": [
+        690,
+        180
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "orders",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "RPS 300 · P99 120ms",
+      "pos": [
+        690,
+        430
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "pos": [
+        920,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "shared database",
+      "pos": [
+        920,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "payments",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "RPS 100 · P99 200ms",
+      "pos": [
+        920,
+        430
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka",
+      "pos": [
+        920,
+        560
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Production namespace",
+      "wraps": [
+        "ingress",
+        "frontend",
+        "api",
+        "users",
+        "orders",
+        "redis",
+        "db",
+        "payments",
+        "kafka"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ingress-frontend",
+      "from": "ingress",
+      "to": "frontend",
+      "label": "HTTP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-users",
+      "from": "api",
+      "to": "users"
+    },
+    {
+      "id": "api-orders",
+      "from": "api",
+      "to": "orders",
+      "variant": "emphasis"
+    },
+    {
+      "id": "users-db",
+      "from": "users",
+      "to": "db"
+    },
+    {
+      "id": "users-redis",
+      "from": "users",
+      "to": "redis"
+    },
+    {
+      "id": "orders-db",
+      "from": "orders",
+      "to": "db"
+    },
+    {
+      "id": "orders-kafka",
+      "from": "orders",
+      "to": "kafka"
+    },
+    {
+      "id": "orders-payments",
+      "from": "orders",
+      "to": "payments",
+      "variant": "emphasis"
+    },
+    {
+      "id": "payments-kafka",
+      "from": "payments",
+      "to": "kafka",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "How the dependencies are extracted",
+      "items": [
+        "Collect flows with hubble observe --namespace production -o json",
+        "Aggregate source/destination k8s:app= label pairs with sort | uniq -c to build the dependency graph"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Reading the figures",
+      "items": [
+        "RPS comes from hubble_http_requests_total and P99 from hubble_http_request_duration_seconds_bucket",
+        "Order Service is the widest fan-out point, branching into PostgreSQL, Kafka, and the Payment Service"
+      ]
+    }
+  ]
+}

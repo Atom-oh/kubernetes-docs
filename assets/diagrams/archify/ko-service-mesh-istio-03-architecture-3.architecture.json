@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "HTTP 요청의 필터 체인 처리",
+    "output": "ko-service-mesh-istio-03-architecture-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "authn-authz",
+        "label": "인증과 인가",
+        "focus": [
+          "request",
+          "jwt",
+          "ratelimit",
+          "rbac"
+        ],
+        "note": "요청은 먼저 JWT 인증과 Rate Limiting을 지나고, RBAC 검증에서 허용 여부가 결정된다."
+      },
+      {
+        "id": "route",
+        "label": "관측과 라우팅",
+        "focus": [
+          "stats",
+          "router",
+          "response"
+        ],
+        "note": "검증을 통과한 요청은 Stats 수집을 거쳐 Router가 업스트림으로 전달하고, 응답이 되돌아온다."
+      }
+    ],
+    "viewBox": [
+      1380,
+      320
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "request",
+      "type": "external",
+      "label": "HTTP 요청",
+      "sublabel": "요청 수신",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "jwt",
+      "type": "security",
+      "label": "JWT 인증",
+      "sublabel": "authn",
+      "pos": [
+        260,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ratelimit",
+      "type": "backend",
+      "label": "Rate Limiting",
+      "sublabel": "throttle",
+      "pos": [
+        440,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC 검증",
+      "sublabel": "authz",
+      "pos": [
+        620,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "stats",
+      "type": "backend",
+      "label": "Stats 수집",
+      "sublabel": "metrics",
+      "pos": [
+        800,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Router",
+      "sublabel": "업스트림 전달",
+      "pos": [
+        980,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "response",
+      "type": "external",
+      "label": "HTTP 응답",
+      "sublabel": "응답 반환",
+      "pos": [
+        1200,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Envoy 필터 체인",
+      "wraps": [
+        "jwt",
+        "ratelimit",
+        "rbac",
+        "stats",
+        "router"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request-to-jwt",
+      "from": "request",
+      "to": "jwt",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jwt-to-ratelimit",
+      "from": "jwt",
+      "to": "ratelimit"
+    },
+    {
+      "id": "ratelimit-to-rbac",
+      "from": "ratelimit",
+      "to": "rbac"
+    },
+    {
+      "id": "rbac-to-stats",
+      "from": "rbac",
+      "to": "stats"
+    },
+    {
+      "id": "stats-to-router",
+      "from": "stats",
+      "to": "router"
+    },
+    {
+      "id": "router-to-response",
+      "from": "router",
+      "to": "response",
+      "variant": "emphasis"
+    }
+  ]
+}

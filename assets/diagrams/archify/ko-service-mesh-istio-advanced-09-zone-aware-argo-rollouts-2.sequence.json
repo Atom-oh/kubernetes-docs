@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "정상 상태 — Zone-local 트래픽",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      620
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "clientA",
+      "type": "external",
+      "label": "Client A",
+      "sublabel": "Zone A · us-east-1a"
+    },
+    {
+      "id": "envoyA",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "Zone A · distribute 100% local"
+    },
+    {
+      "id": "podA",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "zone=a · us-east-1a"
+    },
+    {
+      "id": "podB",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "zone=b · us-east-1b · 사용되지 않음"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 480,
+      "label": "정상 상태: Locality-aware routing으로 Zone-local 트래픽만"
+    }
+  ],
+  "messages": [
+    {
+      "id": "get-api",
+      "from": "clientA",
+      "to": "envoyA",
+      "y": 210,
+      "label": "GET /api",
+      "variant": "default",
+      "note": "Locality-aware routing · distribute: 100% local"
+    },
+    {
+      "id": "zone-local-request",
+      "from": "envoyA",
+      "to": "podA",
+      "y": 290,
+      "label": "Request (zone-local)",
+      "variant": "emphasis",
+      "note": "같은 zone 내에서 처리"
+    },
+    {
+      "id": "pod-response",
+      "from": "podA",
+      "to": "envoyA",
+      "y": 375,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "client-response",
+      "from": "envoyA",
+      "to": "clientA",
+      "y": 440,
+      "label": "Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoyA",
+      "from": 205,
+      "to": 447,
+      "type": "security"
+    },
+    {
+      "participant": "podA",
+      "from": 285,
+      "to": 382,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Zone B Pod",
+      "items": [
+        "정상 상태에서는 요청을 받지 않는다",
+        "distribute 설정이 100% local이므로 cross-zone 트래픽이 발생하지 않는다"
+      ]
+    }
+  ]
+}

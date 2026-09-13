@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Throughput Comparison — Maximum RPS",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      760,
+      520
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "baseline",
+      "type": "external",
+      "label": "Baseline",
+      "sublabel": "No mesh · 100% RPS",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "linkerd",
+      "type": "backend",
+      "label": "Linkerd",
+      "sublabel": "~95-98% of baseline",
+      "pos": [
+        460,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "Highest throughput"
+    },
+    {
+      "id": "kong",
+      "type": "backend",
+      "label": "Kong Mesh",
+      "sublabel": "~90-95% of baseline",
+      "pos": [
+        460,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "istio",
+      "type": "backend",
+      "label": "Istio",
+      "sublabel": "~85-92% of baseline",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "consul",
+      "type": "backend",
+      "label": "Consul",
+      "sublabel": "~85-92% of baseline",
+      "pos": [
+        460,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Throughput comparison (max RPS vs. baseline)",
+      "wraps": [
+        "linkerd",
+        "kong",
+        "istio",
+        "consul"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "base-linkerd",
+      "from": "baseline",
+      "to": "linkerd",
+      "variant": "emphasis"
+    },
+    {
+      "id": "base-kong",
+      "from": "baseline",
+      "to": "kong"
+    },
+    {
+      "id": "base-istio",
+      "from": "baseline",
+      "to": "istio"
+    },
+    {
+      "id": "base-consul",
+      "from": "baseline",
+      "to": "consul"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Conclusion",
+      "items": [
+        "Linkerd: lowest overhead, lightweight proxy",
+        "Istio/Consul: slightly higher overhead due to more features",
+        "Kong Mesh: medium performance level"
+      ]
+    }
+  ]
+}

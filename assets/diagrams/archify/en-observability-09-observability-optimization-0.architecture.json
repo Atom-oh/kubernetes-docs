@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Relationship Between Logging, Metrics, and Tracing",
+    "locale": "en",
+    "output": "en-observability-09-observability-optimization-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Observability pillar"
+        },
+        "database": {
+          "label": "Data shape"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "logging",
+      "type": "backend",
+      "label": "Logging",
+      "sublabel": "\"What happened?\"",
+      "pos": [
+        80,
+        180
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metrics",
+      "sublabel": "\"Is the system healthy?\"",
+      "pos": [
+        440,
+        180
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "tracing",
+      "type": "backend",
+      "label": "Tracing",
+      "sublabel": "\"Why is it slow?\"",
+      "pos": [
+        800,
+        180
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "logging-data",
+      "type": "database",
+      "label": "Event-based · unstructured data",
+      "sublabel": "Optimal for debugging",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "metrics-data",
+      "type": "database",
+      "label": "Time-series · aggregated values",
+      "sublabel": "Optimal for alerting",
+      "pos": [
+        440,
+        400
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "tracing-data",
+      "type": "database",
+      "label": "Request flow · causality analysis",
+      "sublabel": "Optimal for performance analysis",
+      "pos": [
+        800,
+        400
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Three Pillars",
+      "wraps": [
+        "logging",
+        "metrics",
+        "tracing"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data shape",
+      "wraps": [
+        "logging-data",
+        "metrics-data",
+        "tracing-data"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "logging-to-data",
+      "from": "logging",
+      "to": "logging-data"
+    },
+    {
+      "id": "metrics-to-data",
+      "from": "metrics",
+      "to": "metrics-data"
+    },
+    {
+      "id": "tracing-to-data",
+      "from": "tracing",
+      "to": "tracing-data"
+    },
+    {
+      "id": "exemplars",
+      "from": "logging",
+      "to": "metrics",
+      "label": "Exemplars",
+      "variant": "dashed"
+    },
+    {
+      "id": "context",
+      "from": "metrics",
+      "to": "tracing",
+      "label": "Context",
+      "variant": "dashed"
+    },
+    {
+      "id": "correlation-id",
+      "from": "tracing",
+      "to": "logging",
+      "label": "Correlation ID",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          910,
+          80
+        ],
+        [
+          190,
+          80
+        ]
+      ],
+      "labelAt": [
+        550,
+        68
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Logging",
+      "items": [
+        "Event recording, auditing, debugging",
+        "High data volume, high storage cost"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Metrics",
+      "items": [
+        "System state monitoring, alerting",
+        "Medium data volume, sensitive to cardinality"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Tracing",
+      "items": [
+        "Request flow tracking, bottleneck analysis",
+        "High volume needs sampling; cost scales with sampling rate"
+      ]
+    }
+  ]
+}

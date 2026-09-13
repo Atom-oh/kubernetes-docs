@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "일반적인 오류 메시지",
+    "output": "ko-eks-09-eks-troubleshooting-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      530
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "오류 메시지 분류 기준"
+        },
+        "cloud": {
+          "label": "AWS 리소스 / API 영역"
+        },
+        "backend": {
+          "label": "Kubernetes 워크로드 영역"
+        },
+        "security": {
+          "label": "IAM / 인증 영역"
+        },
+        "database": {
+          "label": "스토리지 영역"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cluster",
+        "label": "클러스터 생성/관리 오류",
+        "focus": [
+          "root",
+          "cluster"
+        ],
+        "note": "UnsupportedAvailabilityZoneException, ResourceLimitExceeded, InvalidParameterException(Error in role params), ClusterUnreachable"
+      },
+      {
+        "id": "node-pod",
+        "label": "노드/파드 오류",
+        "focus": [
+          "root",
+          "node-pod"
+        ],
+        "note": "FailedScheduling(Insufficient memory), CrashLoopBackOff, ImagePullBackOff, Evicted"
+      },
+      {
+        "id": "network",
+        "label": "네트워킹 오류",
+        "focus": [
+          "root",
+          "network"
+        ],
+        "note": "FailedCreateServiceEndpoints, EniLimitExceeded, FailedLoadBalancerCreation"
+      },
+      {
+        "id": "iam",
+        "label": "IAM/인증 오류",
+        "focus": [
+          "root",
+          "iam"
+        ],
+        "note": "Unauthorized, the server has asked for the client to provide credentials, .kube/config permission denied"
+      },
+      {
+        "id": "storage",
+        "label": "스토리지 오류",
+        "focus": [
+          "root",
+          "storage"
+        ],
+        "note": "FailedAttachVolume(Multi-Attach error), FailedMount(timeout expired), PersistentVolumeClaim is not bound"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "external",
+      "label": "일반적인 오류 메시지",
+      "sublabel": "다섯 영역별 대표 오류",
+      "pos": [
+        30,
+        225
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "클러스터 생성/관리 오류",
+      "sublabel": "UnsupportedAZ · ResourceLimit · InvalidParameter · ClusterUnreachable",
+      "pos": [
+        380,
+        40
+      ],
+      "size": [
+        440,
+        60
+      ]
+    },
+    {
+      "id": "node-pod",
+      "type": "backend",
+      "label": "노드/파드 오류",
+      "sublabel": "FailedScheduling · CrashLoopBackOff · ImagePullBackOff · Evicted",
+      "pos": [
+        380,
+        125
+      ],
+      "size": [
+        440,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "네트워킹 오류",
+      "sublabel": "FailedSvcEndpoint · EniLimitExceeded · FailedLBCreation",
+      "pos": [
+        380,
+        210
+      ],
+      "size": [
+        440,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM/인증 오류",
+      "sublabel": "Unauthorized · 자격증명 필요 · PermissionDenied",
+      "pos": [
+        380,
+        295
+      ],
+      "size": [
+        440,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "스토리지 오류",
+      "sublabel": "Multi-Attach 오류 · FailedMount · PVC NotBound",
+      "pos": [
+        380,
+        380
+      ],
+      "size": [
+        440,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-cluster",
+      "from": "root",
+      "to": "cluster"
+    },
+    {
+      "id": "root-node-pod",
+      "from": "root",
+      "to": "node-pod"
+    },
+    {
+      "id": "root-network",
+      "from": "root",
+      "to": "network"
+    },
+    {
+      "id": "root-iam",
+      "from": "root",
+      "to": "iam"
+    },
+    {
+      "id": "root-storage",
+      "from": "root",
+      "to": "storage"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "클러스터 · 네트워킹 (AWS 리소스)",
+      "items": [
+        "UnsupportedAvailabilityZoneException, ResourceLimitExceeded, InvalidParameterException, ClusterUnreachable",
+        "FailedCreateServiceEndpoints, EniLimitExceeded, FailedLoadBalancerCreation"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "노드/파드 · 스토리지 (워크로드)",
+      "items": [
+        "FailedScheduling(Insufficient memory), CrashLoopBackOff, ImagePullBackOff, Evicted",
+        "FailedAttachVolume(Multi-Attach), FailedMount(timeout), PersistentVolumeClaim is not bound"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "IAM/인증 · 그 외",
+      "items": [
+        "Unauthorized, 자격 증명 요구(the server has asked for the client to provide credentials), kubeconfig permission denied",
+        "본문은 추가로 로깅/모니터링 오류(Failed to list *v1.Pod, Failed to scrape node)도 다룬다"
+      ]
+    }
+  ]
+}

@@ -5032,9 +5032,9 @@
         <!-- Boundaries (behind everything) -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Kubernetes API" x="270" y="10" width="520" height="110" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="Policy Engines" x="90" y="170" width="1100" height="122" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="Policy engines" x="90" y="170" width="1100" height="122" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Policy Definitions" x="10" y="330" width="1180" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Policy definitions" x="10" y="330" width="1180" height="110" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="api" data-edge-to="webhook" data-edge-label="calls" data-edge-key="0" data-edge-id="api-webhook" data-composition-points="460,63;540,63" d="M 460 63 L 540 63" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -5058,19 +5058,19 @@
         <text data-detail="context" x="380" y="84" class="t-muted" font-size="9" text-anchor="middle">kube-apiserver</text>
         </g>
 
-        <g id="node-webhook" data-node-id="webhook" data-node-label="Admission Webhook" tabindex="0" role="button" aria-label="Focus Admission Webhook, admission control, Kubernetes API" aria-pressed="false" data-node-kind="backend" data-node-sublabel="admission control" data-node-context="Kubernetes API">
-          <title>Admission Webhook · admission control · Kubernetes API</title>
+        <g id="node-webhook" data-node-id="webhook" data-node-label="Admission Webhook" tabindex="0" role="button" aria-label="Focus Admission Webhook, Dynamic Admission Control, Kubernetes API" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Dynamic Admission Control" data-node-context="Kubernetes API">
+          <title>Admission Webhook · Dynamic Admission Control · Kubernetes API</title>
           <rect x="540" y="40" width="220" height="60" rx="6" class="c-mask"/>
           <rect x="540" y="40" width="220" height="60" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(546 46) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="650" y="68" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Admission Webhook</text>
-        <text data-detail="context" x="650" y="84" class="t-muted" font-size="9" text-anchor="middle">admission control</text>
+        <text data-detail="context" x="650" y="84" class="t-muted" font-size="9" text-anchor="middle">Dynamic Admission Control</text>
         </g>
 
-        <g id="node-opa" data-node-id="opa" data-node-label="OPA Gatekeeper" tabindex="0" role="button" aria-label="Focus OPA Gatekeeper, Validate · Mutate, Policy Engines" aria-pressed="false" data-node-kind="security" data-node-sublabel="Validate · Mutate" data-node-tag="Open Policy Agent" data-node-context="Policy Engines">
-          <title>OPA Gatekeeper · Validate · Mutate · Policy Engines · Open Policy Agent</title>
+        <g id="node-opa" data-node-id="opa" data-node-label="OPA Gatekeeper" tabindex="0" role="button" aria-label="Focus OPA Gatekeeper, supports Validate · Mutate, Policy engines" aria-pressed="false" data-node-kind="security" data-node-sublabel="supports Validate · Mutate" data-node-tag="Open Policy Agent" data-node-context="Policy engines">
+          <title>OPA Gatekeeper · supports Validate · Mutate · Policy engines · Open Policy Agent</title>
           <rect x="120" y="200" width="260" height="72" rx="6" class="c-mask"/>
           <rect x="120" y="200" width="260" height="72" rx="6" class="c-security" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(126 206) scale(0.6875)">
@@ -5078,12 +5078,12 @@
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="250" y="234" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">OPA Gatekeeper</text>
-        <text data-detail="context" x="250" y="250" class="t-muted" font-size="9" text-anchor="middle">Validate · Mutate</text>
+        <text data-detail="context" x="250" y="250" class="t-muted" font-size="9" text-anchor="middle">supports Validate · Mutate</text>
         <text data-detail="fine" x="250" y="264" class="t-security" font-size="7" text-anchor="middle">Open Policy Agent</text>
         </g>
 
-        <g id="node-kyverno" data-node-id="kyverno" data-node-label="Kyverno" tabindex="0" role="button" aria-label="Focus Kyverno, Validate · Mutate · Generate, Policy Engines" aria-pressed="false" data-node-kind="security" data-node-sublabel="Validate · Mutate · Generate" data-node-tag="Kubernetes-native" data-node-context="Policy Engines">
-          <title>Kyverno · Validate · Mutate · Generate · Policy Engines · Kubernetes-native</title>
+        <g id="node-kyverno" data-node-id="kyverno" data-node-label="Kyverno" tabindex="0" role="button" aria-label="Focus Kyverno, supports Validate · Mutate · Generate, Policy engines" aria-pressed="false" data-node-kind="security" data-node-sublabel="supports Validate · Mutate · Generate" data-node-tag="Kubernetes-native" data-node-context="Policy engines">
+          <title>Kyverno · supports Validate · Mutate · Generate · Policy engines · Kubernetes-native</title>
           <rect x="540" y="200" width="220" height="72" rx="6" class="c-mask"/>
           <rect x="540" y="200" width="220" height="72" rx="6" class="c-security" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(546 206) scale(0.6875)">
@@ -5091,12 +5091,12 @@
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="650" y="234" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Kyverno</text>
-        <text data-detail="context" x="650" y="250" class="t-muted" font-size="9" text-anchor="middle">Validate · Mutate · Generate</text>
+        <text data-detail="context" x="650" y="250" class="t-muted" font-size="9" text-anchor="middle">supports Validate · Mutate · Generate</text>
         <text data-detail="fine" x="650" y="264" class="t-security" font-size="7" text-anchor="middle">Kubernetes-native</text>
         </g>
 
-        <g id="node-kubewarden" data-node-id="kubewarden" data-node-label="Kubewarden" tabindex="0" role="button" aria-label="Focus Kubewarden, Validate · Mutate, Policy Engines" aria-pressed="false" data-node-kind="security" data-node-sublabel="Validate · Mutate" data-node-tag="WebAssembly-based" data-node-context="Policy Engines">
-          <title>Kubewarden · Validate · Mutate · Policy Engines · WebAssembly-based</title>
+        <g id="node-kubewarden" data-node-id="kubewarden" data-node-label="Kubewarden" tabindex="0" role="button" aria-label="Focus Kubewarden, supports Validate · Mutate, Policy engines" aria-pressed="false" data-node-kind="security" data-node-sublabel="supports Validate · Mutate" data-node-tag="WebAssembly-based" data-node-context="Policy engines">
+          <title>Kubewarden · supports Validate · Mutate · Policy engines · WebAssembly-based</title>
           <rect x="940" y="200" width="220" height="72" rx="6" class="c-mask"/>
           <rect x="940" y="200" width="220" height="72" rx="6" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(946 206) scale(0.6875)">
@@ -5104,12 +5104,12 @@
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1050" y="234" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Kubewarden</text>
-        <text data-detail="context" x="1050" y="250" class="t-muted" font-size="9" text-anchor="middle">Validate · Mutate</text>
+        <text data-detail="context" x="1050" y="250" class="t-muted" font-size="9" text-anchor="middle">supports Validate · Mutate</text>
         <text data-detail="fine" x="1050" y="264" class="t-security" font-size="7" text-anchor="middle">WebAssembly-based</text>
         </g>
 
-        <g id="node-ct" data-node-id="ct" data-node-label="ConstraintTemplate" tabindex="0" role="button" aria-label="Focus ConstraintTemplate, Rego language, Policy Definitions" aria-pressed="false" data-node-kind="database" data-node-sublabel="Rego language" data-node-context="Policy Definitions">
-          <title>ConstraintTemplate · Rego language · Policy Definitions</title>
+        <g id="node-ct" data-node-id="ct" data-node-label="ConstraintTemplate" tabindex="0" role="button" aria-label="Focus ConstraintTemplate, Rego language, Policy definitions" aria-pressed="false" data-node-kind="database" data-node-sublabel="Rego language" data-node-context="Policy definitions">
+          <title>ConstraintTemplate · Rego language · Policy definitions</title>
           <rect x="40" y="360" width="200" height="60" rx="6" class="c-mask"/>
           <rect x="40" y="360" width="200" height="60" rx="6" class="c-database" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(46 366) scale(0.6875)">
@@ -5120,8 +5120,8 @@
         <text data-detail="context" x="140" y="404" class="t-muted" font-size="9" text-anchor="middle">Rego language</text>
         </g>
 
-        <g id="node-constraint" data-node-id="constraint" data-node-label="Constraint" tabindex="0" role="button" aria-label="Focus Constraint, policy instance, Policy Definitions" aria-pressed="false" data-node-kind="database" data-node-sublabel="policy instance" data-node-context="Policy Definitions">
-          <title>Constraint · policy instance · Policy Definitions</title>
+        <g id="node-constraint" data-node-id="constraint" data-node-label="Constraint" tabindex="0" role="button" aria-label="Focus Constraint, policy instance, Policy definitions" aria-pressed="false" data-node-kind="database" data-node-sublabel="policy instance" data-node-context="Policy definitions">
+          <title>Constraint · policy instance · Policy definitions</title>
           <rect x="260" y="360" width="200" height="60" rx="6" class="c-mask"/>
           <rect x="260" y="360" width="200" height="60" rx="6" class="c-database" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(266 366) scale(0.6875)">
@@ -5132,8 +5132,8 @@
         <text data-detail="context" x="360" y="404" class="t-muted" font-size="9" text-anchor="middle">policy instance</text>
         </g>
 
-        <g id="node-clusterpolicy" data-node-id="clusterpolicy" data-node-label="ClusterPolicy / Policy" tabindex="0" role="button" aria-label="Focus ClusterPolicy / Policy, YAML-based, Policy Definitions" aria-pressed="false" data-node-kind="database" data-node-sublabel="YAML-based" data-node-context="Policy Definitions">
-          <title>ClusterPolicy / Policy · YAML-based · Policy Definitions</title>
+        <g id="node-clusterpolicy" data-node-id="clusterpolicy" data-node-label="ClusterPolicy / Policy" tabindex="0" role="button" aria-label="Focus ClusterPolicy / Policy, YAML-based, Policy definitions" aria-pressed="false" data-node-kind="database" data-node-sublabel="YAML-based" data-node-context="Policy definitions">
+          <title>ClusterPolicy / Policy · YAML-based · Policy definitions</title>
           <rect x="540" y="360" width="220" height="60" rx="6" class="c-mask"/>
           <rect x="540" y="360" width="220" height="60" rx="6" class="c-database" data-animate="node" style="--step:7" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(546 366) scale(0.6875)">
@@ -5144,8 +5144,8 @@
         <text data-detail="context" x="650" y="404" class="t-muted" font-size="9" text-anchor="middle">YAML-based</text>
         </g>
 
-        <g id="node-cap" data-node-id="cap" data-node-label="ClusterAdmissionPolicy" tabindex="0" role="button" aria-label="Focus ClusterAdmissionPolicy, WebAssembly, Policy Definitions" aria-pressed="false" data-node-kind="database" data-node-sublabel="WebAssembly" data-node-context="Policy Definitions">
-          <title>ClusterAdmissionPolicy · WebAssembly · Policy Definitions</title>
+        <g id="node-cap" data-node-id="cap" data-node-label="ClusterAdmissionPolicy" tabindex="0" role="button" aria-label="Focus ClusterAdmissionPolicy, WebAssembly, Policy definitions" aria-pressed="false" data-node-kind="database" data-node-sublabel="WebAssembly" data-node-context="Policy definitions">
+          <title>ClusterAdmissionPolicy · WebAssembly · Policy definitions</title>
           <rect x="940" y="360" width="220" height="60" rx="6" class="c-mask"/>
           <rect x="940" y="360" width="220" height="60" rx="6" class="c-database" data-animate="node" style="--step:8" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(946 366) scale(0.6875)">
@@ -5196,14 +5196,14 @@
           <text data-boundary-label="" x="278" y="33" class="t-cloud" font-size="9" font-weight="600">Kubernetes API</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="Policy Engines">
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="Policy engines">
           <rect data-graph-role="structural-frame-label-mask" x="94" y="180" width="85.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="98" y="193" class="t-cloud" font-size="9" font-weight="600">Policy Engines</text>
+          <text data-boundary-label="" x="98" y="193" class="t-cloud" font-size="9" font-weight="600">Policy engines</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="Policy Definitions">
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="Policy definitions">
           <rect data-graph-role="structural-frame-label-mask" x="14" y="340" width="107.2" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="18" y="353" class="t-cloud" font-size="9" font-weight="600">Policy Definitions</text>
+          <text data-boundary-label="" x="18" y="353" class="t-cloud" font-size="9" font-weight="600">Policy definitions</text>
         </g>
 
         <!-- Legend -->

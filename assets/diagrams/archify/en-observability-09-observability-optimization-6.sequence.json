@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Cross-Tool Data Correlation via traceID",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      920,
+      700
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "metrics",
+        "label": "Metrics → Exemplar",
+        "focus": [
+          "user",
+          "grafana",
+          "prometheus"
+        ],
+        "note": "The Exemplar attached to the P99 latency query result supplies the traceID."
+      },
+      {
+        "id": "trace",
+        "label": "Trace lookup",
+        "focus": [
+          "grafana",
+          "tempo"
+        ],
+        "note": "Fetch the full request flow from Tempo by traceID and identify the bottleneck service."
+      },
+      {
+        "id": "logs",
+        "label": "Logs → unified result",
+        "focus": [
+          "grafana",
+          "loki",
+          "user"
+        ],
+        "note": "Filter Loki logs by the same traceID and return one unified analysis result."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "operator"
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "unified query"
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "metrics"
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "logs"
+    },
+    {
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo",
+      "sublabel": "traces"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 275,
+      "label": "1. Get traceID from metrics"
+    },
+    {
+      "from": 295,
+      "to": 395,
+      "label": "2. Find bottleneck via trace"
+    },
+    {
+      "from": 415,
+      "to": 555,
+      "label": "3. Filter logs → unified result"
+    }
+  ],
+  "messages": [
+    {
+      "id": "investigate",
+      "from": "user",
+      "to": "grafana",
+      "y": 190,
+      "label": "Investigate slow API response",
+      "variant": "emphasis"
+    },
+    {
+      "id": "query-p99",
+      "from": "grafana",
+      "to": "prometheus",
+      "y": 228,
+      "label": "Query P99 latency"
+    },
+    {
+      "id": "exemplar",
+      "from": "prometheus",
+      "to": "grafana",
+      "y": 264,
+      "label": "Metrics + Exemplar (traceID)",
+      "variant": "return"
+    },
+    {
+      "id": "query-trace",
+      "from": "grafana",
+      "to": "tempo",
+      "y": 320,
+      "label": "Lookup trace by traceID"
+    },
+    {
+      "id": "request-flow",
+      "from": "tempo",
+      "to": "grafana",
+      "y": 358,
+      "label": "Full request flow",
+      "variant": "return",
+      "note": "Identify bottleneck service"
+    },
+    {
+      "id": "query-logs",
+      "from": "grafana",
+      "to": "loki",
+      "y": 440,
+      "label": "Query service logs (traceID filter)"
+    },
+    {
+      "id": "related-logs",
+      "from": "loki",
+      "to": "grafana",
+      "y": 478,
+      "label": "Related logs",
+      "variant": "return"
+    },
+    {
+      "id": "result",
+      "from": "grafana",
+      "to": "user",
+      "y": 530,
+      "label": "Unified analysis result",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "grafana",
+      "from": 185,
+      "to": 536,
+      "type": "frontend"
+    },
+    {
+      "participant": "prometheus",
+      "from": 223,
+      "to": 270,
+      "type": "database"
+    },
+    {
+      "participant": "tempo",
+      "from": 315,
+      "to": 364,
+      "type": "database"
+    },
+    {
+      "participant": "loki",
+      "from": 435,
+      "to": 484,
+      "type": "database"
+    }
+  ]
+}

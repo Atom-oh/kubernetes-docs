@@ -1,219 +1,390 @@
 # Part 4: 성능 및 비용 튜닝
 
-> **마지막 업데이트**: 2026년 7월 15일
+> **검토 기준**: 2026년 9월 12일 · upstream Spark 4.2.0 · Karpenter 1.14 계열
 
-Part 1에서는 `spark-submit`이 드라이버/Executor 파드를 Kubernetes API에 직접 스케줄링하는 과정과, 파드가 중간에 사라져도 잡이 버틸 수 있게 해주는 두 가지 장치인 Dynamic Resource Allocation(DRA)과 Graceful Decommission을 다뤘습니다. 이번 문서는 그 위에서, 셔플이 많은 Spark 워크로드가 실제로 견뎌내는 노드 타입과 로컬 스토리지는 무엇인지, Spot 인스턴스와 Decommission을 결합해도 잡 진행 상황을 잃지 않는 방법은 무엇인지, 그리고 Karpenter의 노드 단위 오토스케일링과 Spark의 파드 단위 DRA를 하나가 아니라 서로 영향을 주는 **두 개의 독립적인 제어 루프**로 봐야 하는 이유를 다룹니다.
+## 실습 범위와 측정
 
-## 실습 환경 준비
+이 장은 Part 1의 직접 spark-submit 경로를 사용합니다. Spark 4.2는 Kubernetes
+1.34+를 요구하며, EKS·kubectl·Karpenter의 호환 버전도 확인합니다.
+Part 2의 Operator 및 Part 3의 EMR은 제출·Pod 변경 경로가 다르므로 설정을
+무조건 복사하지 않습니다. 아래 수치는 성능 최적값이 아닌 작은 시작 설정입니다.
 
-이 문서의 예제를 따라 하려면 다음이 필요합니다.
+**Karpenter의 Pending Pod 기반 용량 공급에 metrics-server가 필수인 것은 아닙니다.**
+Pod 요청·스케줄링 조건으로 동작합니다. metrics-server는 kubectl top·HPA 등의
+사용량 관찰에 유용하지만 Spark task backlog를 수집하거나 EC2를 직접 늘리지 않습니다.
 
-### 필수 도구
+Event log와 Spark UI에서 stage/task 시간, spill 크기, shuffle fetch wait, skew,
+GC와 executor 손실을 보고, 노드의 CPU·메모리·디스크/네트워크 한계와 함께 판단합니다.
+실제 I/O 병목인지 확인하기 전에는 R 계열이나 NVMe가 항상 빠르다고 단정하지 않습니다.
+AQE·partition 수·join 전략·데이터 포맷을 함께 검토하고 한 번에 한 요인을 바꿉니다.
 
-* kubectl v1.30 이상
-* [Karpenter](../../autoscaling/02-karpenter.md)가 설치되고 `EC2NodeClass`/`NodePool` 쌍이 최소 하나 이상 구성된 EKS 클러스터
-* 로컬에 배포된 Apache Spark 4.2 (클러스터로 `spark-submit`을 실행하기 위함)
-* metrics-server 또는 Kubernetes Metrics API 활성화 — Pending 파드 기반 스케일링이 문서 설명대로 동작하려면 필요
+## 1. 노드와 인스턴스 스토어 선택
 
-## 1. 셔플이 많은 잡을 위한 노드 타입 선택
+R5d/R5ad/R5dn 같은 과거 예시는 선택 가능한 조합의 일부입니다. CPU 중심,
+메모리 중심, 디스크/네트워크 중심 작업에 따라 M/C/R/I 계열을 비교하며 현재
+리전·AZ의 용량과 총비용으로 결정합니다. R 계열이 모든 셔플 작업에 우월하거나
+C 계열이 Spark에 부적합한 것은 아닙니다.
 
-Spark on EKS에 대한 AWS 자체 모범 사례 가이드는 셔플이 많은 워크로드에는 **로컬 NVMe 인스턴스 스토어를 갖춘 R 계열 인스턴스** — 구체적으로 R5d, R5ad, R5dn — 를 권장합니다. 이유는 단순합니다. 셔플 스테이지는 대체로 CPU가 아니라 메모리와 디스크 I/O에 의해 성능이 좌우되므로, vCPU당 메모리 비율이 넉넉하고 로컬 디스크가 빠른 인스턴스 패밀리가 범용이나 컴퓨팅 최적화 패밀리보다 이 워크로드에 더 적합합니다.
+Graviton은 Spark에서 평가할 수 있는 정상적인 선택지입니다. 검증한 multi-arch
+이미지를 사용할 수 있으며 직접 이미지 빌드가 항상 필요한 것은 아닙니다.
+JNI·압축 codec·BLAS·Python wheel 및 custom plugin의 arm64 지원을 확인합니다.
+아래 NodePool은 하나의 검증 경로를 위해 amd64를 선택하며 성능 우위를 주장하지 않습니다.
+
+**Nitro 또는 NVMe라는 이름만으로 instance store를 판별하지 않습니다.**
+EBS도 Nitro 인스턴스에서 NVMe로 노출됩니다. 마운트되지 않았다는 사실도 비어 있거나
+포맷해도 된다는 뜻이 아닙니다. 기존 nvme 디스크 순회·mkfs 예제는 EBS나 루트
+디스크를 오인할 수 있어 제거했습니다.
+
+## 2. AL2023에서 관리되는 scratch 저장소
+
+실습 전 관리자가 두 EC2NodeClass를 준비합니다.
+
+- `spark-general`: driver용으로 검증한 일반 노드 설정.
+- `spark-nvme`: 선택한 Kubernetes/아키텍처에 맞는 **AL2023 AMI를 고정**하고
+  IAM·subnet·security group을 설정한, executor 전용 새 NodeClass.
+
+spark-nvme 전체 설정에 다음 필드를 포함합니다. 이것은 **부분 설정**이며 단독
+kubectl apply 리소스가 아닙니다. 기존 NodeClass 변경은 drift와 노드 교체를
+유발할 수 있으므로 운영 중 노드에 즉석 포맷 스크립트를 실행하지 않습니다.
+
+```yaml
+spec:
+  instanceStorePolicy: RAID0
+```
+
+AL2023에서는 Karpenter가 NodeConfig로 instance-store RAID0 초기화를 구성하고
+kubelet/containerd의 ephemeral storage로 사용하도록 합니다. Allocatable도 해당
+용량을 반영합니다. 직접 /dev/nvme1n1을 고정하거나 hostPath를 사용할 필요가 없습니다.
+다른 AMI 계열·custom bootstrap은 해당 지원 절차를 따릅니다.
+
+Instance store는 transient scratch에 적합하며 정지·종료·장애 시 데이터가 사라질
+수 있습니다. RAID0은 복제나 백업이 아닙니다. 별도 EBS volume 과금 항목은 없더라도
+디스크가 포함된 인스턴스 가격·유휴 용량·재계산 비용은 있습니다.
+EBS도 용량·IOPS·처리량·instance 한계를 맞춰 사용 가능한 선택지입니다.
+루트 EBS 크기나 backing filesystem을 모든 EKS에서 20GB로 가정하지 않습니다.
+
+## 3. Driver On-Demand / executor Spot 배치
+
+On-Demand driver는 Spot 회수 위험을 줄이지만 장애·유지보수·Karpenter drift/expiry를
+없애지는 않습니다. Driver의 SparkContext와 coordination 상태는 cluster/client
+모드 모두 중요합니다. Driver 재시작·작업 재실행과 데이터 복구는 별도로 설계합니다.
+
+아래 nodepools.yaml은 준비한 두 NodeClass를 참조합니다. Executor는 instance store
+용량이 있는 타입만 허용합니다. Spot-only이므로 용량이 부족하면 Pending일 수 있으며
+On-Demand로 자동 fallback하지 않습니다. Fallback이 필요하면 별도 정책·비용 한도로 설계합니다.
 
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: spark-shuffle-heavy
+  name: spark-driver
 spec:
   template:
+    metadata:
+      labels:
+        workload-pool: spark-driver
     spec:
       requirements:
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values: ["r5d.2xlarge", "r5d.4xlarge", "r5ad.2xlarge", "r5dn.2xlarge"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot", "on-demand"]
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: spark-nvme
-```
-
-**Graviton에 대한 참고 사항:** 이 섹션이 근거로 삼은 AWS 가이드는 Graviton(arm64) 인스턴스 타입 — R5d/R5ad/R5dn과 동일하게 R 계열 메모리 비율에 NVMe 인스턴스 스토어를 갖춘 R6gd, R7gd 등 — 을 Spark 셔플 워크로드에 대해 별도로 언급하지 않습니다. 문서화되지 않은 Graviton 동등성을 단정하기보다는, 별도로 검증해야 할 대상으로 다루는 것이 맞습니다. arm64용 Spark 컨테이너 이미지를 빌드하고, 대표적인 셔플 워크로드로 동급 x86 NVMe 인스턴스와 벤치마크를 비교하고, 잡에서 쓰는 네이티브/JNI 의존성(압축 코덱, 네이티브 BLAS 라이브러리 등)이 실제로 arm64 빌드를 제공하는지 확인한 뒤에 도입을 결정하세요.
-
-## 2. 셔플 스필 스토리지: EBS보다 NVMe 인스턴스 스토어
-
-Spark는 셔플 블록과 RDD 스필 데이터를 `spark.local.dir`에 지정된 디렉터리에 씁니다. 새로 프로비저닝된 EKS 워커 노드에서 이 경로는 기본적으로 **루트 EBS 볼륨** 위의 공간으로 잡히는데, 루트 볼륨은 보통 20GB 안팎으로 OS와 컨테이너 이미지를 위해 잡힌 크기이지 수백 GB~TB 단위의 셔플 스크래치 공간을 감당할 크기가 아닙니다. 실제 셔플 부하가 걸리면 이 공간은 금방 가득 차고, Spark 레벨 오류가 아니라 `No space left on device`로 잡이 죽습니다.
-
-해법은 R5d/R5ad/R5dn(그리고 Nitro 인스턴스 전반)에 딸려 오는 NVMe 인스턴스 스토어 디스크를 마운트하고 `spark.local.dir`이 그쪽을 가리키게 만드는 것입니다. 인스턴스 스토어는 물리 호스트에 직접 붙은 임시 로컬 디스크이므로, 네트워크로 붙는 EBS보다 훨씬 높은 처리량과 IOPS를 제공하면서도 GB당·IOPS당 별도 과금이 없습니다.
-
-```bash
-# EC2NodeClass userData (일부): 부트스트랩 시점에 NVMe 인스턴스 스토어를 포맷/마운트
-#!/bin/bash
-for disk in $(lsblk -d -o NAME,TYPE | awk '$2=="disk" && $1 ~ /^nvme/ {print $1}'); do
-  # 루트/EBS 기반 디바이스는 건너뛰고, 실제 인스턴스 스토어 NVMe 디스크만 처리
-  if ! mount | grep -q "/dev/$disk"; then
-    mkfs.xfs "/dev/$disk"
-    mkdir -p "/mnt/k8s-disks/$disk"
-    mount "/dev/$disk" "/mnt/k8s-disks/$disk"
-    chmod 777 "/mnt/k8s-disks/$disk"
-  fi
-done
-```
-
-```yaml
-# Executor 파드 템플릿: 호스트의 NVMe 경로를 spark.local.dir로 마운트
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-    - name: spark-kubernetes-executor
-      volumeMounts:
-        - name: spark-local-dir
-          mountPath: /data/spark-local
-  volumes:
-    - name: spark-local-dir
-      hostPath:
-        path: /mnt/k8s-disks/nvme1n1
-        type: Directory
-```
-
-```properties
-# spark-submit conf
-spark.local.dir=/data/spark-local
-```
-
-인스턴스 스토어는 인스턴스가 정지되거나 종료되면 그대로 사라지므로, 이 방식은 셔플/스필처럼 일시적인 스크래치 데이터에만 적합합니다. 파드가 재시작돼도 살아있어야 하는 데이터에는 절대 사용하지 마세요.
-
-## 3. Spot 인스턴스 전략: 드라이버는 On-Demand, Executor는 Spot
-
-드라이버는 잡의 코디네이션 상태 — DAG 스케줄러, 태스크 북키핑, (client에 가까운 구성에서는) SparkContext 자체 — 를 쥐고 있습니다. 드라이버를 잃으면 일부 태스크가 아니라 잡 전체를 잃습니다. 반대로 Executor는 언제든 대체 가능한 컴퓨트로, 하나를 잃어도 그 Executor가 처리 중이던 태스크와 아직 마이그레이션하지 못한 셔플 데이터 정도만 손실됩니다. 이 비대칭성 때문에 다음과 같이 나누는 것이 권장됩니다.
-
-* **드라이버 파드 → On-Demand** 용량 — AWS가 짧은 통보로 회수하지 않는 자원
-* **Executor 파드 → Spot** 용량 — 개별 Executor가 중단될 수 있음을 감수
-
-### 분리를 강제하기
-
-노드 그룹 단위 Taint와 파드 단위 Toleration/노드 셀렉터를 함께 쓰면 드라이버 파드는 Spot 노드에 발을 들이지 못하고, Executor 파드는 On-Demand 노드를 (엄격하게 막지는 않더라도) 피하도록 만들 수 있습니다.
-
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: spark-driver-on-demand
-spec:
-  template:
-    spec:
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: kubernetes.io/os
+        operator: In
+        values:
+        - linux
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+      - key: karpenter.k8s.aws/instance-category
+        operator: In
+        values:
+        - m
+        - r
+      - key: karpenter.k8s.aws/instance-generation
+        operator: Gt
+        values:
+        - '5'
       taints:
-        - key: spark-role
-          value: driver
-          effect: NoSchedule
+      - key: spark-role
+        value: driver
+        effect: NoSchedule
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass
-        name: spark-nvme
+        name: spark-general
+  limits:
+    cpu: '64'
+    memory: 512Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 120s
 ---
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: spark-executor-spot
+  name: spark-executor
 spec:
   template:
+    metadata:
+      labels:
+        workload-pool: spark-executor
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: kubernetes.io/os
+        operator: In
+        values:
+        - linux
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+      - key: karpenter.k8s.aws/instance-category
+        operator: In
+        values:
+        - m
+        - r
+        - i
+      - key: karpenter.k8s.aws/instance-generation
+        operator: Gt
+        values:
+        - '5'
+      - key: karpenter.k8s.aws/instance-local-nvme
+        operator: Gt
+        values:
+        - '0'
+      taints:
+      - key: spark-role
+        value: executor
+        effect: NoSchedule
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass
         name: spark-nvme
+  limits:
+    cpu: '256'
+    memory: 2048Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 120s
 ```
 
-Spark에는 `spark.kubernetes.*.tolerations.*` 설정 항목이 존재하지 않습니다 — Toleration은 평범한 `spark-submit` conf 키로 노출되지 않고, Pod 템플릿 필드로만(또는 Part 2에서 다룬 Spark Operator를 쓴다면 `SparkApplication` CRD의 `spec.driver.tolerations`로) 설정할 수 있습니다. 일반 `spark-submit`에서는 드라이버 Pod 템플릿을 통해 Toleration을 추가합니다.
+Pool label과 node selector는 대상을 선택하고 toleration은 해당 taint를 허용합니다.
+Toleration만으로 그 노드에 강제 배치되는 것은 아니며, 다른 Pod도 같은 toleration을
+가질 수 있습니다. NoSchedule은 이미 실행 중인 Pod를 퇴거시키지 않습니다.
+NodePool limits는 용량 가드레일이며 동시 scale-out에서 일시 초과할 수 있는
+eventually consistent 제한입니다. 정확한 비용 상한으로 해석하지 않습니다.
+
+driver-template.yaml로 저장합니다. 이것은 Spark가 완성하는 **Pod template**이며
+단독 Pod 배포 파일이 아닙니다.
 
 ```yaml
-# driver-pod-template.yaml
 apiVersion: v1
 kind: Pod
 spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 185
+    fsGroup: 185
   tolerations:
-    - key: spark-role
-      operator: Equal
-      value: driver
-      effect: NoSchedule
+  - key: spark-role
+    operator: Equal
+    value: driver
+    effect: NoSchedule
+  containers:
+  - name: spark-kubernetes-driver
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        ephemeral-storage: 2Gi
+      limits:
+        ephemeral-storage: 4Gi
 ```
 
+executor-template.yaml로 저장합니다.
+
+```yaml
+apiVersion: v1
+kind: Pod
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 185
+    fsGroup: 185
+  tolerations:
+  - key: spark-role
+    operator: Equal
+    value: executor
+    effect: NoSchedule
+  containers:
+  - name: spark-kubernetes-executor
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        ephemeral-storage: 10Gi
+      limits:
+        ephemeral-storage: 20Gi
+    volumeMounts:
+    - name: spark-local-dir-scratch
+      mountPath: /var/data/spark-local
+  automountServiceAccountToken: false
+  volumes:
+  - name: spark-local-dir-scratch
+    emptyDir:
+      sizeLimit: 16Gi
+```
+
+이 emptyDir은 준비한 NVMe-backed kubelet filesystem을 사용합니다. 다른 노드에
+배치하면 backing store도 달라집니다. `spark-local-dir-` 접두사 뒤에 이름이 있어야
+Spark가 scratch mount로 인식합니다. 이전 `spark-local-dir` 이름은 이 접두사와
+일치하지 않아 같은 경로에 추가 emptyDir mount를 생성할 수 있습니다.
+
+spark.local.dir만 지정해도 Kubernetes용 Spark는 그 경로에 emptyDir을 만들 수
+있으며 hostPath가 필수는 아닙니다. 인식된 scratch mount가 있으면 해당 경로로
+SPARK_LOCAL_DIRS를 구성합니다. sizeLimit은 공간 예약이 아니며 노드 디스크가 먼저
+차면 실패할 수 있습니다. requests/limits·로그·writable layer와 disk pressure를
+함께 관찰합니다. tmpfs를 선택하면 RAM을 사용하므로 memory 예산에 포함합니다.
+
+## 4. 두 scaling loop와 종료 설정
+
+performance.properties로 저장합니다. Part 1의 namespace·RBAC를 재사용합니다.
+
 ```properties
-# spark-submit conf: 드라이버는 위 템플릿을 사용하고 On-Demand 풀을 타겟팅
-spark.kubernetes.driver.podTemplateFile=driver-pod-template.yaml
+spark.kubernetes.namespace=spark-jobs
+spark.kubernetes.container.image=spark:4.2.0-scala2.13-java21-ubuntu
+spark.kubernetes.authenticate.driver.serviceAccountName=spark-driver
+spark.kubernetes.authenticate.executor.serviceAccountName=spark-executor
+spark.kubernetes.driver.podTemplateFile=driver-template.yaml
+spark.kubernetes.executor.podTemplateFile=executor-template.yaml
+spark.kubernetes.driver.node.selector.workload-pool=spark-driver
+spark.kubernetes.executor.node.selector.workload-pool=spark-executor
 spark.kubernetes.driver.node.selector.karpenter.sh/capacity-type=on-demand
-
-# Executor는 드라이버 Taint에 대한 Toleration이 없으므로 해당 노드에 절대 스케줄되지 않고,
-# 대신 Spot 풀을 명시적으로 타겟팅
 spark.kubernetes.executor.node.selector.karpenter.sh/capacity-type=spot
-```
-
-`spark-role=driver` Toleration은 드라이버 Pod에만 붙어 있으므로, On-Demand `NodePool`의 `NoSchedule` Taint는 Executor를 포함한 다른 모든 Pod를 그 노드에서 막아줍니다. Executor는 별도로 노드 셀렉터를 통해 Spot `NodePool` 쪽으로 보내집니다.
-
-### 중단을 버텨내게 만들기
-
-Taint와 Toleration은 파드가 **어디에 배치되는지**만 제어할 뿐, 그것만으로 Spot 중단이 무해해지지는 않습니다. 이를 위한 것이 Part 1에서 다룬 Graceful Decommission 설정입니다.
-
-```properties
+spark.driver.cores=1
+spark.driver.memory=1g
+spark.kubernetes.driver.limit.cores=1
+spark.executor.cores=2
+spark.executor.memory=4g
+spark.kubernetes.executor.limit.cores=2
+spark.executor.instances=2
+spark.dynamicAllocation.enabled=true
+spark.dynamicAllocation.shuffleTracking.enabled=true
+spark.dynamicAllocation.minExecutors=1
+spark.dynamicAllocation.initialExecutors=2
+spark.dynamicAllocation.maxExecutors=10
+spark.dynamicAllocation.executorIdleTimeout=60s
+spark.kubernetes.allocation.batch.size=5
+spark.kubernetes.allocation.batch.delay=1s
 spark.decommission.enabled=true
 spark.storage.decommission.enabled=true
+spark.kubernetes.executor.terminationGracePeriodSeconds=120s
 ```
 
-AWS는 Spot 인스턴스를 회수하기 전에 대략 **2분의 중단 통보 시간**을 줍니다. Decommission이 활성화되어 있으면 Spark는 이 시간 동안 곧 사라질 Executor가 들고 있던 셔플 블록과 캐시된 RDD 파티션을 정상 상태의 다른 Executor로 마이그레이션합니다. 만약 여유 공간을 가진 피어 Executor가 없다면, Spark는 설정되어 있는 durable/원격 셔플 스토리지로 폴백하거나(설정이 없다면 해당 태스크를 그냥 재계산하게 둡니다) — 성능은 저하되지만 잡 실패로 이어지지는 않습니다. 결과적으로 Spot 중단은 "잡이 처음부터 다시 시작"되는 사건이 아니라 "몇몇 태스크가 다른 Executor에서 재실행"되는 수준으로 줄어듭니다.
+```bash
+# Prerequisite: Part 1's spark-jobs namespace and driver/executor RBAC.
+# All template/property files below must be present in the submitter's working directory.
+K8S_API_SERVER="$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')"
+: "${K8S_API_SERVER:?Select the intended Kubernetes context first}"
+spark-submit \
+  --master "k8s://${K8S_API_SERVER}" --deploy-mode cluster \
+  --name spark-performance-smoke \
+  --properties-file performance.properties \
+  --class org.apache.spark.examples.SparkPi \
+  local:///opt/spark/examples/jars/spark-examples.jar 10
+```
 
-## 4. 두 개의 독립적인 스케일링 루프: Karpenter와 Dynamic Resource Allocation
+Spark DRA는 task backlog와 executor 유휴·cache/shuffle 상태를 기반으로 수량을
+조정합니다. `spark.kubernetes.allocation.batch.size`/batch.delay는 요청된 executor를
+Pod로 만드는 속도를 조절하는 Kubernetes allocator 설정이며 DRA 전용 설정은 아닙니다.
+Karpenter는 스케줄되지 못한 Pod의 요청·제약을 보고 적합한 노드 용량을 공급합니다.
+Image pull, 부족한 IP·quota·AZ 용량·taint 불일치도 Pending 원인이 될 수 있습니다.
 
-DRA와 Karpenter를 함께 쓰기 시작하면, 이 둘이 서로 다른 신호에 반응하면서도 서로에게 영향을 주는 **두 개의 별도 제어 루프**라는 점을 분명히 인식해 두는 것이 좋습니다.
+WhenEmpty와 120s는 실행 중 Spark Pod의 불필요한 통합을 줄이는 시작 정책입니다.
+Karpenter에서 ‘empty’는 disruption cost가 없는 DaemonSet 등의 Pod가 남아 있는
+경우도 포함할 수 있습니다. Driver가 없는 executor-only 노드가 비었다고 판단하려면
+다른 일반 workload도 확인합니다.
 
-* **Spark의 DRA**는 자신이 파악하고 있는 대기 중인 **태스크** 물량을 보고 Executor **파드**를 몇 개나 요청/해제할지 결정합니다 — 이는 Spark 내부 판단으로, 밑단의 노드 상태는 전혀 모릅니다.
-* **Karpenter**는 스케줄되지 못한 **파드**(또는 비어버린 노드)를 감시하며 EC2 용량을 늘릴지 줄일지 결정합니다 — 이는 노드 단위 판단으로, Spark의 태스크 백로그는 전혀 모르고 DRA가 이미 만들어 놓은 파드만 봅니다.
+`consolidateAfter > executorIdleTimeout`이 DRA 선행 종료를 보장하지 않습니다.
+두 타이머는 시작 조건이 다르고 cache/shuffle tracking이 executor를 더 오래 유지할
+수 있습니다. Drift·expiration·Spot interruption도 consolidation 정책과 별개입니다.
+PDB·do-not-disrupt·disruption budget을 Spot 회수 방지책으로 해석하지 않습니다.
 
-![대기 중인 Spark 태스크가 Executor 추가 요청을 유발하면 Karpenter가 새 노드를 프로비저닝해 파드를 스케줄·실행하고, 태스크가 끝나면 DRA가 유휴 Executor를 해제하고 Karpenter가 빈 노드를 회수하여 다시 대기 상태로 돌아오는 자동 스케일링 순환을 보여준다.](../../../assets/diagrams/rendered/ko-data-on-eks-spark-04-performance-tuning-0.svg)
+![Spark executor allocation and Karpenter node provisioning are separate control loops.](../../.gitbook/assets/ko-data-on-eks-spark-04-performance-tuning-0.png)
 
-이 관계를 알고 있어야 하는 실질적인 이유는, 한쪽 루프만 튜닝하면 두 루프의 동작이 서로 어긋난다는 점입니다. DRA의 `spark.kubernetes.allocation.batch.size`가 Karpenter의 `NodePool`이 맞춰줄 수 있는 속도보다 빠르게 Executor를 요청하면, 새 Executor 파드는 예상보다 오래 `Pending` 상태로 남습니다. 반대로 Karpenter의 `consolidateAfter`([NodePool 설정](../../autoscaling/02-karpenter.md#nodepool) 참고)를 너무 짧게 잡고 DRA의 `spark.dynamicAllocation.executorIdleTimeout`은 상대적으로 길게 두면, DRA가 아직 해제하지 않은 Executor가 남아 있는 노드를 Karpenter가 통합(consolidate)하려다 3절의 PodDisruptionBudget/Decommission 경로와 충돌할 수 있습니다. 기본 원칙으로는 Karpenter의 통합 지연 시간을 DRA의 Executor 유휴 타임아웃보다 다소 길게 잡아, DRA가 노드를 먼저 비워둔 뒤에 Karpenter가 회수를 시도하도록 순서를 맞추는 것이 안전합니다.
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-spark-04-performance-tuning-0.html)
 
-## 5. 드라이버·Executor 리소스 요청/제한 크기 설계
+### Decommission의 실제 한계
 
-드라이버와 Executor는 역할이 다르고, 최소한 개념적으로는 이 차이가 리소스 크기에도 반영되어야 합니다.
+Spot stop/terminate 경고는 통상 2분 전이며 best effort입니다. Hibernation은 즉시
+시작되어 2분 경고를 받지 않습니다. Karpenter의 Spot 대응에는 EventBridge→SQS와
+interruption queue·권한이 필요합니다. Spark 설정만 켜면 AWS 경고를 자동 수신하는
+것은 아닙니다.
 
-* **드라이버**: 실제 필요량보다 여유 있고 안정적으로 크게 잡습니다. 잡 전체의 단일 장애점이기 때문에 메모리 한계에 바짝 붙어 있다가 일시적인 스파이크로 OOM-kill을 당하면 안 되고, (3절에서 본 대로) 대체 가능한 Executor처럼 가볍게 축출되어서도 안 됩니다.
-* **Executor**: 작게 잡고 수를 늘립니다. 데이터를 여러 조각으로 나눠 많은 Executor가 병렬로 처리하는 것 자체가 수평 확장의 목적이며, 4절의 DRA는 Executor 하나하나가 자유롭게 추가·제거될 만큼 개별적으로 가벼워야 성립합니다.
+Part 1에서 확인했듯 Spark 4.2의 decommission flag는 공식 이미지의 /opt/decom.sh
+preStop을 주입합니다. Script·signal·Pod grace·노드 drain이 실제로 연결되는지
+확인합니다. `spark.kubernetes.executor.terminationGracePeriodSeconds=120s`는
+요청 grace이며 클라우드 종료까지 남은 시간이나 데이터 이동 완료를 보장하지 않습니다.
+커스텀 hook을 별도로 덮어쓰면 이 동작이 달라질 수 있습니다.
 
-Spark 자체의 리소스 설정은 Kubernetes 파드 리소스 필드에 그대로 대응됩니다.
+Migration은 peer 공간·네트워크·남은 시간에 좌우됩니다. Shuffle fallback은
+`spark.storage.decommission.fallbackStorage.path`와 파일시스템·권한을 명시적으로
+구성해야 하며 모든 원격 storage/History Server가 자동 fallback이 되지는 않습니다.
+RDD cache와 shuffle 복구 방식도 다릅니다. 재계산·반복 손실·fetch/task 재시도 한도·
+source 재읽기 실패가 잡 실패로 이어질 수 있으므로 “executor 손실은 절대 잡 실패가
+아니다”라는 설명은 틀립니다.
 
-| Spark 설정 | Kubernetes에 미치는 영향 |
+## 5. 리소스와 비용 검증
+
+| 설정 | Kubernetes 효과 |
 | --- | --- |
-| `spark.driver.memory`, `spark.driver.cores` | 드라이버 컨테이너의 `resources.requests`/`.limits` (메모리 오버헤드가 더해짐) |
-| `spark.executor.memory`, `spark.executor.cores` | 각 Executor 컨테이너의 `resources.requests`/`.limits` |
-| `spark.driver.memoryOverheadFactor` | `spark.driver.memory` 위에 오프힙/JVM 오버헤드용으로 추가되는 여유분 |
+| driver/executor memory | Heap에 overhead 등 해당 항목을 더한 memory request/limit |
+| driver/executor cores | 기본 CPU request 및 Spark 역할별 병렬성; 자동 CPU limit 아님 |
+| spark.kubernetes.*.request.cores | CPU request를 별도 지정; task slot 수와 구분 |
+| spark.kubernetes.*.limit.cores | 명시적인 CPU limit |
+| template ephemeral-storage | Scratch·로그 등 로컬 임시 저장소 예산; 실제 backing store는 노드 구성에 따름 |
 
-여기에는 모든 잡에 들어맞는 수치 기본값이 없습니다. 드라이버가 필요로 하는 메모리는 얼마나 많은 상태(파티션 수, 브로드캐스트 변수 크기, 어큐뮬레이터)를 추적하느냐에 달려 있고, Executor가 필요로 하는 메모리는 태스크당 작업셋 크기와 셔플 버퍼 설정에 달려 있습니다. 다른 파이프라인에서 쓰던 값을 그대로 가져오지 말고, 실제 잡과 데이터셋 크기로 부하 테스트를 해서 값을 찾아가는 대상으로 다루세요.
+JVM executor 4g에서 기본 overhead 10%를 정수 MiB로 계산하면 409MiB가 더해져
+4505MiB입니다. PySpark·off-heap·명시적 overhead는 별도 계산하며 4g를 Pod 전체
+메모리로 해석하지 않습니다. Driver가 반드시 executor보다 커야 하거나 executor를
+무조건 작게 많이 만들어야 하는 것은 아닙니다.
 
-## 6. 비용 최적화: 일반 EKS 기법 위에 쌓기
+시간당 인스턴스 가격뿐 아니라 성공한 작업당 비용과 p95 완료 시간, 재시도·유휴 용량·
+storage/network·로그 비용을 비교합니다. EMR runtime의 executor preallocation 등은
+upstream과 다를 수 있으므로 해당 릴리스 설정을 따로 확인합니다.
 
-Spot 인스턴스 활용, Karpenter 통합을 통한 빈 패킹, 인스턴스 타입 라이트사이징 같은 EKS 전반의 비용 절감 기법 대부분은 클러스터의 다른 워크로드에 적용되는 것과 똑같이 Spark에도 적용됩니다. [Amazon EKS 비용 최적화](../../eks/07-eks-cost-optimization.md) 문서가 이런 일반 기법을 다루고 있으니, 이 절에서는 그 기법들을 **Spark의 드라이버/Executor 파드 모델**에 어떻게 구체적으로 적용하는지에 집중합니다.
+예제는 CRD·native Spark feature-step으로 확인했으며 실제 EC2 노드 생성,
+디스크 초기화, Spot 중단 또는 대규모 shuffle 성능을 시험한 결과는 아닙니다.
 
-* 해당 문서의 [스팟 인스턴스 활용](../../eks/07-eks-cost-optimization.md#스팟-인스턴스-활용) 절은 드라이버가 아니라 Executor에 적용됩니다 — 왜 이 구분이 중요한지는 3절에서 다룬 Spark 고유의 이유 때문입니다.
-* [Karpenter의 통합(consolidation) 동작](../../autoscaling/02-karpenter.md#nodepool)은 DRA가 Executor를 줄여 비게 된 노드를 회수하는데, 이는 4절에서 본 피드백 루프의 뒷부분 그 자체입니다 — 통합이 실제로 이득을 보려면 DRA가 유휴 Executor를 제때 해제해 줘야 합니다.
-* 1절의 인스턴스 타입 선택과 2절의 NVMe 기반 로컬 스토리지는 비용 최적화 문서의 "적절한 인스턴스 패밀리를 고르라"는 일반 지침을 Spark에 맞게 구체화한 내용입니다.
 
-## 다음 단계
+- [Karpenter instanceStorePolicy and AMI behavior](https://karpenter.sh/docs/concepts/nodeclasses/#specinstancestorepolicy)
+- [Karpenter disruption and interruption handling](https://karpenter.sh/docs/concepts/disruption/)
+- [Karpenter scheduling](https://karpenter.sh/docs/concepts/scheduling/)
+- [EKS AL2023 instance-store setup implementation](https://github.com/awslabs/amazon-eks-ami/blob/main/templates/al2023/runtime/bin/setup-local-disks)
+- [Spark 4.2 Kubernetes configuration](https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html)
+- [Spark local-directory feature implementation](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/LocalDirsFeatureStep.scala)
+- [Spark 4.2 configuration](https://spark.apache.org/docs/4.2.0/configuration.html)
+- [Spot interruption notice limitations](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html)
+- [EMR-specific performance and storage guidance](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/best-practices.html)
 
-이 문서에서는 셔플이 많은 잡을 위한 노드 타입 선택, EBS보다 NVMe 인스턴스 스토어가 셔플 스필에 유리한 이유, On-Demand 드라이버/Spot Executor 분리와 Graceful Decommission이 Spot 중단을 버텨내게 해주는 방식, Karpenter와 DRA라는 두 개의 독립적인 스케일링 루프가 서로 어긋나지 않게 맞추는 법, 그리고 드라이버·Executor 리소스 크기를 설계하는 사고방식을 다뤘습니다. 이 문서가 기반으로 삼은 일반 EKS 비용 기법과 함께, 이는 Spark on EKS의 성능·비용 측면을 마무리하는 내용입니다. 모니터링, 보안, Spark on EKS의 운영(Day-2) 모범 사례는 다음 [Part 5: 모범 사례와 보안](./05-best-practices.md)에서 다룹니다.
+[Part 5: Best practices](./05-best-practices.md)
 
-[메인 페이지로 돌아가기](./README.md)
+[README](./README.md)
 
-## 퀴즈
-
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)를 풀어보세요.
+[Quiz](../../quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)

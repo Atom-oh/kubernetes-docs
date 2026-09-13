@@ -19,7 +19,9 @@ Dynatrace is an AI-powered full-stack observability platform. Through OneAgent t
 
 ## Architecture
 
-![OneAgent runs as a DaemonSet on EKS worker nodes and auto-instruments applications; telemetry flows through the in-cluster ActiveGate to Dynatrace SaaS, which feeds the Davis AI engine and Grail data lakehouse, while a Dynatrace Operator manages the in-cluster components via a mutating webhook.](../../../assets/diagrams/rendered/en-observability-tracing-04-dynatrace-0.svg)
+![OneAgent runs as a DaemonSet on EKS nodes and auto-instruments Service A/B/C under Dynatrace Operator management; telemetry flows via the in-cluster ActiveGate over an encrypted link to Dynatrace SaaS, feeding Davis AI and the Grail data lakehouse.](../../.gitbook/assets/en-observability-tracing-04-dynatrace-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-04-dynatrace-0.html)
 
 ## EKS Deployment with Helm
 
@@ -265,7 +267,9 @@ spec:
 
 ### How Davis AI Works
 
-![Five telemetry signal types feed a baseline-learning stage in the Davis AI engine, which detects anomalies, correlates them, and identifies a root cause; the root cause then produces a problem card, an impact analysis, and remediation suggestions.](../../../assets/diagrams/rendered/en-observability-tracing-04-dynatrace-1.svg)
+![Five telemetry signal types feed a baseline-learning stage in the Davis AI engine, which detects anomalies, correlates them, and identifies a root cause; the root cause then produces a problem card, an impact analysis, and remediation suggestions.](../../.gitbook/assets/en-observability-tracing-04-dynatrace-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-04-dynatrace-1.html)
 
 ### Problem Alert Configuration
 

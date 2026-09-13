@@ -1,0 +1,412 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS에서의 NVIDIA NIM 배포",
+    "output": "ko-ai-ml-04-inference-frameworks-1.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "alb",
+          "nginx",
+          "container",
+          "engine",
+          "cache"
+        ],
+        "note": "인증된 route에서 선택한 NIM backend로 요청을 전달합니다."
+      },
+      {
+        "id": "gpu-nodes",
+        "label": "GPU 노드 풀",
+        "focus": [
+          "container",
+          "node1",
+          "node2"
+        ],
+        "note": "NIM 파드는 Karpenter가 프로비저닝한 GPU 노드 풀에 스케줄된다."
+      },
+      {
+        "id": "model-storage",
+        "label": "모델 스토리지",
+        "focus": [
+          "cache",
+          "fsx",
+          "s3",
+          "ngc"
+        ],
+        "note": "모델 다운로드·공유·S3 연동은 준비한 저장소 경로에 따라 다릅니다."
+      },
+      {
+        "id": "monitoring",
+        "label": "모니터링",
+        "focus": [
+          "container",
+          "exporter",
+          "prometheus",
+          "grafana"
+        ],
+        "note": "2.0.12의 /v1/metrics와 backend 이름·단위를 실제로 확인합니다."
+      }
+    ],
+    "viewBox": [
+      1390,
+      730
+    ]
+  },
+  "components": [
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "승인된 진입 경로",
+      "sublabel": "인증·TLS·요청 한도",
+      "pos": [
+        30,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nginx",
+      "type": "cloud",
+      "label": "지원 gateway controller",
+      "sublabel": "검증한 route 설정",
+      "pos": [
+        240,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "container",
+      "type": "backend",
+      "label": "NIM 컨테이너",
+      "sublabel": "OpenAI 호환 API :8000",
+      "pos": [
+        490,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "선택된 NIM backend",
+      "sublabel": "2.0.12: vLLM0.27.1",
+      "pos": [
+        720,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "모델 캐시",
+      "sublabel": "/opt/nim/.cache",
+      "pos": [
+        950,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "cloud",
+      "label": "p4d.24xlarge",
+      "sublabel": "8x A100",
+      "pos": [
+        490,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "cloud",
+      "label": "g5.48xlarge",
+      "sublabel": "8x A10G",
+      "pos": [
+        720,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "선택한 cache 저장소",
+      "sublabel": "local / EBS / shared FS",
+      "pos": [
+        950,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "모델 아카이브",
+      "pos": [
+        1180,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ngc",
+      "type": "external",
+      "label": "NGC Catalog",
+      "sublabel": "승인된 이미지·모델 원본",
+      "pos": [
+        950,
+        600
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "exporter",
+      "type": "backend",
+      "label": "NIM 메트릭 endpoint",
+      "sublabel": ":8000/v1/metrics",
+      "pos": [
+        490,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭 수집",
+      "pos": [
+        720,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana 대시보드",
+      "sublabel": "시각화",
+      "pos": [
+        950,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "인그레스 레이어",
+      "wraps": [
+        "alb",
+        "nginx"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "검증할 NIM 구성",
+      "wraps": [
+        "container",
+        "engine",
+        "cache"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "GPU 노드 풀",
+      "wraps": [
+        "node1",
+        "node2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "모델 스토리지",
+      "wraps": [
+        "fsx",
+        "s3",
+        "ngc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "모니터링 스택",
+      "wraps": [
+        "exporter",
+        "prometheus",
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "alb-to-nginx",
+      "from": "alb",
+      "to": "nginx",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nginx-to-container",
+      "from": "nginx",
+      "to": "container",
+      "label": "요청 전달",
+      "variant": "emphasis"
+    },
+    {
+      "id": "container-to-engine",
+      "from": "container",
+      "to": "engine",
+      "label": "추론",
+      "variant": "emphasis"
+    },
+    {
+      "id": "engine-to-cache",
+      "from": "engine",
+      "to": "cache",
+      "label": "모델 로드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "container-to-node1",
+      "from": "container",
+      "to": "node1",
+      "label": "스케줄",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        570,
+        420
+      ]
+    },
+    {
+      "id": "container-to-node2",
+      "from": "container",
+      "to": "node2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cache-to-fsx",
+      "from": "cache",
+      "to": "fsx",
+      "label": "캐시 백엔드",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1030,
+        385
+      ]
+    },
+    {
+      "id": "fsx-to-s3",
+      "from": "fsx",
+      "to": "s3",
+      "label": "설정된 연동",
+      "variant": "dashed",
+      "labelAt": [
+        1145,
+        430
+      ]
+    },
+    {
+      "id": "ngc-to-fsx",
+      "from": "ngc",
+      "to": "fsx",
+      "label": "모델 다운로드",
+      "variant": "dashed",
+      "labelAt": [
+        1030,
+        555
+      ],
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "container-to-exporter",
+      "from": "container",
+      "to": "exporter",
+      "label": "메트릭 노출",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        570,
+        190
+      ]
+    },
+    {
+      "id": "exporter-to-prometheus",
+      "from": "exporter",
+      "to": "prometheus",
+      "label": "메트릭 샘플",
+      "variant": "dashed",
+      "labelDy": -24
+    },
+    {
+      "id": "prometheus-to-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "쿼리 결과",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "배포 경계",
+      "items": [
+        "profile·revision·GPU·cache·probe를 함께 검증합니다.",
+        "공유 EBS RWO 볼륨은 여러 노드의 replica에 맞지 않습니다.",
+        "NGC secret 환경 전달은 파일 전용 credential 정책과 다릅니다."
+      ]
+    }
+  ]
+}

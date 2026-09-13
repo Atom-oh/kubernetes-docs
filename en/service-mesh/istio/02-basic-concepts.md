@@ -23,7 +23,9 @@ This document explains Istio's core concepts and architecture. Understanding the
 
 In the early 2010s, companies began breaking down monolithic applications into microservices.
 
-![Diagram contrasting a single monolithic application with a microservices era where several small services call one another, converging on a shared downstream service.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-0.svg)
+![Diagram contrasting a single monolithic application with a microservices era where several small services call one another, converging on a shared downstream service.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-0.html)
 
 **New Problems**:
 
@@ -44,7 +46,9 @@ In the early 2010s, companies began breaking down monolithic applications into m
 * Requires redeployment of all services for updates
 * Complex version management
 
-![Diagram showing three services in different languages, each tightly bundling its application code with its own networking library — Hystrix for Java, a Go library, and Requests for Python.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-1.svg)
+![Diagram showing three services in different languages, each tightly bundling its application code with its own networking library — Hystrix for Java, a Go library, and Requests for Python.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-1.html)
 
 **Service Mesh Idea**: Move networking logic out of the application to an infrastructure layer
 
@@ -67,7 +71,9 @@ In the early 2010s, companies began breaking down monolithic applications into m
 
 **Problems Envoy Solved**:
 
-![Diagram pairing four limitations of pre-Envoy proxies — static file-based configuration, limited metrics, complex restarts, simple routing — with the Envoy capability that solved each one.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-2.svg)
+![Diagram pairing four limitations of pre-Envoy proxies — static file-based configuration, limited metrics, complex restarts, simple routing — with the Envoy capability that solved each one.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-2.html)
 
 **Key Features of Envoy**:
 
@@ -91,7 +97,9 @@ In the early 2010s, companies began breaking down monolithic applications into m
 
 **In May 2017**, Google, IBM, and Lyft collaborated to announce Istio.
 
-![Diagram showing Google and IBM contributing to Istio's control plane and Lyft contributing its Envoy proxy as the data plane, announced jointly in May 2017.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-3.svg)
+![Diagram showing Google and IBM contributing to Istio's control plane and Lyft contributing its Envoy proxy as the data plane, announced jointly in May 2017.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-3.html)
 
 **Contributions from Each Company**:
 
@@ -105,7 +113,9 @@ In the early 2010s, companies began breaking down monolithic applications into m
 
 **Major Milestones**:
 
-![Timeline of Istio's major releases from the 0.1 announcement in May 2017 through version 1.28 in January 2025, marking the 1.0 production-ready release, the 1.5 istiod consolidation, and the 1.20 introduction of Ambient Mode as major milestones.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-4.svg)
+![Timeline of Istio's major releases from the 0.1 announcement in May 2017 through version 1.28 in November 2025, marking the 1.0 production-ready release, the 1.5 istiod consolidation, and the 1.18 alpha introduction of Ambient Mode as major milestones.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-4.html)
 
 **Version 1.5 (March 2020) - Important Turning Point**:
 
@@ -119,7 +129,7 @@ Separated into individual components:
 - Galley (configuration validation)
 ```
 
-New architecture (Istio 1.5+, current 1.28):
+New architecture (Istio 1.5+):
 
 ```
 Istiod (consolidated into single binary)
@@ -127,13 +137,13 @@ Istiod (consolidated into single binary)
 ├── Citadel functionality (Certificate Authority, Identity)
 └── Galley functionality (Configuration Validation)
 
-Mixer completely removed (functionality moved to Envoy)
+Mixer was deprecated during this transition; telemetry moved into the proxies
 ```
 
 **Reasons for Change**:
 
 * Reduced complexity (4 components → 1)
-* Improved performance (50% latency reduction with Mixer removal)
+* Reduced telemetry-path overhead (actual improvement depends on workload)
 * Simplified operations (single process management)
 * Resource efficiency (reduced memory, CPU usage)
 
@@ -143,7 +153,9 @@ Kubernetes provides container orchestration, but has limitations in managing com
 
 ### Microservices Challenges
 
-![Diagram showing four microservices challenges — traffic management, security, observability, resilience — leading either to a traditional chain of duplicated, inconsistent, hard-to-maintain application code, or to Istio's infrastructure-level automatic handling with central, consistent, code-free policy.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-5.svg)
+![Four shared microservices challenges — traffic management, security, observability, resilience — are met without Istio by duplicated, inconsistent code in every service, and with Istio by consistent, declarative policy at the infrastructure level.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-5.html)
 
 ### Core Values Provided by Istio
 
@@ -178,7 +190,7 @@ spec:
 
 * No application code modification required
 * Real-time traffic split adjustment
-* Automatic rollback possible
+* Rollback can be automated by a rollout controller; Istio applies the routing weights
 * A/B testing, Blue/Green deployment support
 
 #### 2. Security
@@ -196,7 +208,7 @@ metadata:
   namespace: istio-system
 spec:
   mtls:
-    mode: STRICT  # Automatic encryption for all inter-service communication
+    mode: STRICT  # Require mTLS on enrolled inbound workloads
 ```
 
 **Benefits**:
@@ -238,7 +250,7 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -251,6 +263,8 @@ spec:
 * Traffic limiting (Rate Limiting)
 
 ### When to Use Istio
+
+Service counts below are illustrative; security and operational requirements decide suitability.
 
 **✅ When Istio is Suitable:**
 
@@ -306,7 +320,7 @@ For detailed comparison, refer to the [AWS Integration](04-aws-integration.md#is
 **Quick Summary:**
 
 * **VPC Lattice**: AWS managed, simple, cross-VPC/account communication
-* **Istio**: Open source, powerful features, Kubernetes-only, fine-grained control
+* **Istio**: Open source, powerful features, Kubernetes and VM workloads, fine-grained control
 
 #### Linkerd vs Istio
 
@@ -331,12 +345,14 @@ Istio supports two deployment modes: **Sidecar Mode** and **Ambient Mode**.
 
 Injects an Envoy proxy as a sidecar container into each application pod.
 
-![Diagram showing an external request entering an Envoy sidecar proxy inside a pod, which forwards traffic locally to the application container; the application's outbound calls return through the same sidecar out to a target service.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-6.svg)
+![Diagram showing an external request entering an Envoy sidecar proxy inside a pod, which forwards traffic locally to the application container; the application's outbound calls return through the same sidecar out to a target service.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-6.html)
 
 **Advantages:**
 
 * Mature and stable
-* All Istio features supported
+* Mature L4/L7 feature set; support differs by data-plane mode
 * Fine-grained control per pod
 
 **Disadvantages:**
@@ -345,11 +361,13 @@ Injects an Envoy proxy as a sidecar container into each application pod.
 * Increased startup time (Init Container)
 * Complex permission setup (iptables)
 
-### Ambient Mode (New Approach)
+### Ambient Mode (GA since Istio 1.24)
 
 Handles traffic at the node level without sidecars.
 
-![Diagram showing two sidecar-less pods on a worker node transparently redirected to a shared per-node ztunnel L4 proxy, which forwards to an optional Waypoint L7 proxy only when L7 features are needed.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-7.svg)
+![Diagram showing two sidecar-less pods on a worker node transparently redirected to a shared per-node ztunnel L4 proxy, which forwards to an optional Waypoint L7 proxy only when L7 features are needed.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-7.html)
 
 **Advantages:**
 
@@ -360,7 +378,7 @@ Handles traffic at the node level without sidecars.
 
 **Disadvantages:**
 
-* Relatively new technology (less mature)
+* Feature parity must be checked for the chosen release and topology
 * Some advanced features limited
 * Difficult fine-grained control per pod
 
@@ -373,7 +391,7 @@ Handles traffic at the node level without sidecars.
 | **Operational Complexity** | High                        | Low                            |
 | **L4 Features**            | Supported                   | Supported                      |
 | **L7 Features**            | Full support                | Optional (Waypoint)            |
-| **Maturity**               | High                        | Medium                         |
+| **Maturity**               | Stable                      | Core features GA since 1.24                         |
 | **Migration**              | -                           | Possible from existing sidecar |
 | **Recommended Use**        | Advanced L7 features needed | Resource efficiency priority   |
 
@@ -381,7 +399,7 @@ Handles traffic at the node level without sidecars.
 
 **Choose Sidecar Mode:**
 
-* Need to utilize all Istio features
+* Need features specific to sidecars, such as VM integration
 * Need fine-grained policy control per pod
 * Need production-proven stability
 
@@ -400,11 +418,13 @@ Istio consists of two main components: **Control Plane** and **Data Plane**.
 | Component                    | Description                                                                                                  |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Control Plane (istiod)**   | Central control system responsible for service discovery, configuration distribution, certificate management |
-| **Data Plane (Envoy Proxy)** | Deployed as sidecar in each pod, handles actual traffic (routing, mTLS, metrics)                             |
+| **Data Plane (Envoy Proxy)** | Envoy sidecars, or ambient ztunnel plus optional waypoints; handles mesh traffic                             |
 
 **For detailed architecture structure, internal operation principles, and traffic interception mechanisms**, refer to the [Architecture document](03-architecture.md).
 
 ## Core Resources
+
+The examples below use sidecar APIs. Do not apply all overlapping routing/policy examples together. Gateway requires matching gateway pods and a TLS Secret in their namespace. Ambient uses Gateway API routing and waypoint-targeted L7 policies; a Sidecar resource does not configure ztunnel.
 
 Istio uses Kubernetes Custom Resource Definitions (CRDs) to manage configuration.
 
@@ -463,7 +483,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
   subsets:
@@ -483,7 +503,7 @@ spec:
 * Service version (subset) definition
 * Load balancing algorithm
 * Connection Pool settings
-* Circuit Breaker (Outlier Detection)
+* Connection-pool circuit breaking and Outlier Detection
 * TLS settings
 
 ### 3. Gateway
@@ -592,7 +612,11 @@ spec:
 
 ### Traffic Routing Flow
 
-![Diagram showing a client request passing through the Istio Gateway, VirtualService routing rules, and DestinationRule subset selection before the Kubernetes Service distributes it across the v1 and v2 pod endpoints.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-8.svg)
+The diagram shows configuration relationships. Gateway, VirtualService, and DestinationRule are API objects, not sequential network hops; Envoy normally selects pod endpoints from EDS.
+
+![Diagram showing a client HTTP request entering through the Istio Gateway, passing VirtualService routing rules and DestinationRule subset selection, then reaching the v1 and v2 pods through the Kubernetes Service.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-8.html)
 
 ### Traffic Splitting (Canary Deployment)
 
@@ -633,7 +657,7 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -643,15 +667,19 @@ spec:
 
 ### mTLS (Mutual TLS)
 
-Istio automatically encrypts inter-service communication.
+Auto mTLS encrypts traffic between enrolled mesh workloads. Enforce STRICT to reject plaintext inbound traffic; traffic outside the mesh is not automatically protected.
 
-![Diagram showing plaintext traffic from an application flowing to its Envoy sidecar, which exchanges mutually-encrypted mTLS traffic with the peer pod's Envoy sidecar, while istiod's Citadel component issues certificates to both sidecars.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-9.svg)
+![Diagram showing each app in Pod A and Pod B talking in plaintext to its own Envoy sidecar, the two sidecars exchanging mTLS-encrypted traffic, and istiod Citadel issuing certificates to both sidecars.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-9.html)
 
 **mTLS Modes**:
 
 * **STRICT**: mTLS only allowed
 * **PERMISSIVE**: Both mTLS and plaintext allowed (for migration)
 * **DISABLE**: mTLS disabled
+
+Ambient does not support PeerAuthentication `DISABLE`; STRICT also blocks traffic bypassing the mesh.
 
 ### Authentication and Authorization
 
@@ -681,11 +709,13 @@ spec:
 
 ## Observability Concepts
 
-Istio automatically generates metrics, logs, and traces.
+Istio exposes proxy metrics; access logs, tracing providers, and collectors require configuration. Applications must propagate trace context. Ambient L7 metrics and tracing require a waypoint.
 
 ### Automatically Generated Metrics
 
-![Diagram showing an application's traffic passing through its Envoy sidecar, which emits metrics to Prometheus, traces to Jaeger, and entries to a logging system, feeding Grafana dashboards, the Jaeger UI, and Kiali's service mesh dashboard.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-10.svg)
+![Diagram showing an application's traffic passing through its Envoy sidecar, which emits metrics to Prometheus, traces to Jaeger, and entries to a logging system, feeding Grafana dashboards, the Jaeger UI, and Kiali's service mesh dashboard.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-10.html)
 
 ### Key Metrics
 
@@ -700,22 +730,39 @@ Istio automatically generates metrics, logs, and traces.
 ### Distributed Tracing
 
 ```yaml
-# Enable tracing in Envoy
+# tracing-install.yaml: merge into the existing istioctl installation file
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
     enableTracing: true
-    defaultConfig:
-      tracing:
-        sampling: 100.0  # 100% sampling
-        zipkin:
-          address: jaeger-collector.istio-system:9411
+    extensionProviders:
+    - name: otel-tracing
+      opentelemetry:
+        service: opentelemetry-collector.observability.svc.cluster.local
+        port: 4317
+```
+
+Apply installation settings with `istioctl install -f <merged-install-file>`, or equivalent Helm values. Deploy the named OTLP collector separately. Apply the following Telemetry resource with kubectl; 1% is illustrative and should be tuned.
+
+```yaml
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-tracing
+  namespace: istio-system
+spec:
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 1
 ```
 
 ## Namespaces and Service Mesh
 
 ### Namespace Isolation
+
+This DENY-all policy is an intentional complete block. For a default-deny baseline with selected ALLOW exceptions, use an ALLOW policy with no rules instead: DENY takes precedence over every ALLOW.
 
 ```yaml
 # Per-namespace mTLS policy
@@ -753,6 +800,8 @@ kubectl label namespace kube-system istio-injection=disabled
 
 ### Multi-tenancy
 
+`Sidecar.egress.hosts` limits imported proxy configuration, not network access. Use AuthorizationPolicy and an enforcing NetworkPolicy implementation for tenant isolation.
+
 ```yaml
 # Restrict mesh scope with Sidecar resource
 apiVersion: networking.istio.io/v1
@@ -763,7 +812,7 @@ metadata:
 spec:
   egress:
   - hosts:
-    - "production/*"  # Only production namespace accessible
+    - "production/*"  # Import production configuration; not an access-control boundary
     - "istio-system/*"
 ```
 
@@ -773,7 +822,9 @@ Istio can register not only Kubernetes pods but also **Virtual Machine (VM) work
 
 ### Why VM Workloads Are Needed
 
-![Diagram showing a legacy virtual machine linked to a new Kubernetes application as it migrates into the mesh, while istiod delivers configuration and certificates to sidecars and to the registered VM.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-11.svg)
+![Diagram showing a legacy VM that first talks directly to a new Kubernetes app and, once registered in the mesh, gets mTLS and policy applied, while istiod delivers configuration to the pod Envoy sidecars and to the registered VM.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-11.html)
 
 **Usage Scenarios**:
 
@@ -784,9 +835,13 @@ Istio can register not only Kubernetes pods but also **Virtual Machine (VM) work
 
 ### VM Registration Architecture
 
-![Diagram showing a manually installed Envoy sidecar on a virtual machine exchanging mTLS traffic with a pod's Envoy sidecar in the Kubernetes cluster, with istiod delivering xDS configuration and certificates to both sidecars.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-12.svg)
+![Diagram showing a manually installed Envoy sidecar on a virtual machine exchanging mTLS traffic with a pod's Envoy sidecar in the Kubernetes cluster, with istiod delivering xDS configuration and certificates to both sidecars.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-12.html)
 
 ### WorkloadEntry Resource
+
+These are registration excerpts. A WorkloadEntry alone does not install a proxy or enable mTLS: first follow the [VM installation guide](https://istio.io/latest/docs/setup/install/virtual-machine/) for WorkloadGroup, service account, bootstrap token/CA, agent, and network reachability. Configure DNS capture or DNS records for ServiceEntry hostnames; a ServiceEntry does not create CoreDNS records.
 
 VM workloads are registered with the **WorkloadEntry** resource.
 
@@ -856,7 +911,7 @@ spec:
 | -------------------------- | ------------------------ | ------------------------------ | ------------------- |
 | **Workload Location**      | VM outside cluster       | Different Kubernetes cluster   | Inside cluster      |
 | **Envoy Installation**     | Manual installation      | Automatic (sidecar)            | Automatic (sidecar) |
-| **Registration Method**    | WorkloadEntry            | ServiceEntry + EndpointSlice   | Service + Pod       |
+| **Registration Method**    | WorkloadEntry            | Remote Kubernetes service discovery   | Service + Pod       |
 | **mTLS**                   | Supported                | Supported                      | Supported           |
 | **Service Discovery**      | Manual (IP specified)    | Automatic                      | Automatic           |
 | **Usage Scenario**         | Legacy apps, DB          | Multi-cloud, disaster recovery | Cloud-native apps   |
@@ -866,7 +921,9 @@ spec:
 
 #### 1. Gradual Migration
 
-![Diagram showing a four-phase migration: a standalone legacy VM, the same VM registered into the mesh with Envoy, a hybrid phase where the remaining legacy VM module talks over mTLS to new Kubernetes microservices, and a final phase fully migrated to Kubernetes.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-13.svg)
+![Four-phase gradual migration: a standalone legacy VM monolith, the same VM registered into the mesh with Envoy, a hybrid phase where the remaining VM module talks over mTLS to new Kubernetes microservices, and a final phase fully on Kubernetes.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-13.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-13.html)
 
 **Benefits**:
 
@@ -904,28 +961,26 @@ spec:
         principals: ["cluster.local/ns/default/sa/app-sa"]
     to:
     - operation:
-        methods: ["*"]
+        ports: ["3306"]
 ```
 
 #### 3. Consistent Observability
 
-VM workloads provide the same metrics, logs, and distributed tracing as Kubernetes pods.
+VM telemetry depends on the protocol, just as for pods. The MySQL example is TCP and has no HTTP response codes or HTTP request spans.
 
 ```promql
-# Unified metric query for VMs and pods
-sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
+# TCP bytes received per second; verify the actual workload label in your metrics
+sum(rate(istio_tcp_received_bytes_total{destination_workload="mysql-vm-1"}[5m]))
 
-# Error rate from VM
-sum(rate(istio_requests_total{destination_workload="mysql-vm-1",response_code="500"}[5m]))
-/
-sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
+# TCP connections opened per second
+sum(rate(istio_tcp_connections_opened_total{destination_workload="mysql-vm-1"}[5m]))
 ```
 
 ### VM Registration Limitations
 
 1. **Manual Envoy Installation**: Must manually install and configure Envoy proxy on VM
 2. **Network Connectivity**: Network connection between VM and Kubernetes cluster required
-3. **Certificate Management**: Service account certificates must be deployed to VM
+3. **Bootstrap Identity**: Provision the root CA and service-account token securely; the Istio agent obtains and rotates workload certificates
 4. **Operational Burden**: VM Envoy version management and updates required
 5. **Auto-scaling Limitation**: No auto-scaling like Kubernetes HPA
 
@@ -998,11 +1053,13 @@ spec:
 * Kubernetes pods access database via `postgres.production.svc.cluster.local`
 * Automatic mTLS encryption between VM and pods
 * Access control policy applied
-* Metrics and distributed tracing automatically collected
+* TCP metrics for this database; HTTP tracing requires an HTTP workload and trace-context propagation
 
 ### Workload Registration Comparison Summary
 
-![Diagram showing three workload types — Kubernetes pods, multi-cluster workloads, and virtual machines — all connecting into the same set of common mesh features: mTLS encryption, traffic management, security policy, and metrics and tracing.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-14.svg)
+![Diagram showing three workload types — Kubernetes pods, multi-cluster workloads, and virtual machines — all registered into the Istio service mesh and receiving the same common features: mTLS encryption, traffic management, security policy, and metrics and tracing.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-14.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-14.html)
 
 Through Istio's flexible workload registration capabilities:
 
@@ -1060,3 +1117,13 @@ You now understand Istio's basic concepts. Learn how to use them in practice thr
 * [Istio Official Documentation - Security](https://istio.io/latest/docs/concepts/security/)
 * [Istio Official Documentation - Observability](https://istio.io/latest/docs/concepts/observability/)
 * [Envoy Proxy Official Documentation](https://www.envoyproxy.io/docs/envoy/latest/)
+
+* [Destination Rule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+* [Sidecar](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+* [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/)
+* [PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
+* [Virtual Machine Installation](https://istio.io/latest/docs/setup/install/virtual-machine/)
+* [OpenTelemetry](https://istio.io/latest/docs/tasks/observability/distributed-tracing/opentelemetry/)
+* [Sidecar or ambient?](https://istio.io/latest/docs/overview/dataplane-modes/)
+* [Introducing istiod: simplifying the control plane](https://istio.io/latest/blog/2020/istiod/)
+* [Cloud-native high-performance edge/middle/service proxy](https://www.cncf.io/projects/envoy/)

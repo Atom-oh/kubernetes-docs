@@ -60,7 +60,9 @@ OpenSearch is an open-source project created by AWS in 2021 by forking Elasticse
 
 ### OpenSearch Cluster Architecture
 
-![Application, FluentBit, and Kinesis Data Firehose feed logs into the data nodes of a multi-AZ OpenSearch cluster coordinated by dedicated master nodes; data nodes write hot data to EBS and roll aging data into UltraWarm, which migrates it on to S3-backed cold storage.](../../../assets/diagrams/rendered/en-observability-logging-02-opensearch-0.svg)
+![Application, FluentBit, and Kinesis Data Firehose feed logs into the data nodes of a multi-AZ OpenSearch cluster managed by dedicated master nodes; data nodes write hot data to EBS and roll aging data into UltraWarm, which migrates it on to S3-backed cold storage.](../../.gitbook/assets/en-observability-logging-02-opensearch-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-0.html)
 
 ### Node Types
 
@@ -75,7 +77,9 @@ OpenSearch is an open-source project created by AWS in 2021 by forking Elasticse
 
 ### Data Flow
 
-![An application sends logs through FluentBit into OpenSearch, which indexes them to EBS as hot data, then an ISM policy moves data older than 7 days to UltraWarm and data older than 30 days on to S3-backed cold storage.](../../../assets/diagrams/rendered/en-observability-logging-02-opensearch-1.svg)
+![An application sends logs through FluentBit into OpenSearch, which indexes them to EBS as hot data, then an ISM policy moves data older than 7 days to UltraWarm and data older than 30 days on to S3-backed cold storage.](../../.gitbook/assets/en-observability-logging-02-opensearch-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-1.html)
 
 ---
 

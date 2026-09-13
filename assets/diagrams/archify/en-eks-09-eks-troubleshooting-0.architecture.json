@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Troubleshooting Basics",
+    "locale": "en",
+    "output": "en-eks-09-eks-troubleshooting-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Troubleshooting step"
+        },
+        "cloud": {
+          "label": "Information source"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "approach",
+        "label": "Six-step approach",
+        "focus": [
+          "identify",
+          "collect",
+          "analyze",
+          "resolve",
+          "verify",
+          "document"
+        ],
+        "note": "The systematic six-step troubleshooting flow from identifying the problem through documenting it."
+      },
+      {
+        "id": "sources",
+        "label": "Information source",
+        "focus": [
+          "tools",
+          "logs",
+          "diag",
+          "collect"
+        ],
+        "note": "Essential tools, logs, and diagnostic info supply the logs, events, and metrics gathered in step 2."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "identify",
+      "type": "backend",
+      "label": "1. Identify Problem",
+      "sublabel": "symptoms and impact",
+      "pos": [
+        170,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "collect",
+      "type": "backend",
+      "label": "2. Collect Information",
+      "sublabel": "logs, events, metrics",
+      "pos": [
+        340,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "analyze",
+      "type": "backend",
+      "label": "3. Analyze",
+      "sublabel": "find the root cause",
+      "pos": [
+        510,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "resolve",
+      "type": "backend",
+      "label": "4. Resolve",
+      "sublabel": "apply the solution",
+      "pos": [
+        680,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "verify",
+      "type": "backend",
+      "label": "5. Verify",
+      "sublabel": "confirm it is fixed",
+      "pos": [
+        850,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "document",
+      "type": "backend",
+      "label": "6. Document",
+      "sublabel": "record for future reference",
+      "pos": [
+        1020,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "cloud",
+      "label": "Essential Tools and Commands",
+      "sublabel": "AWS CLI · kubectl · eksctl · CloudWatch",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "cloud",
+      "label": "Log Collection and Analysis",
+      "sublabel": "control plane · node · pod logs",
+      "pos": [
+        300,
+        300
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "diag",
+      "type": "cloud",
+      "label": "Diagnostic Information Collection",
+      "sublabel": "cluster · system resources · network",
+      "pos": [
+        560,
+        300
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Troubleshooting Approach",
+      "wraps": [
+        "identify",
+        "collect",
+        "analyze",
+        "resolve",
+        "verify",
+        "document"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tools · Logs · Diagnostic Info",
+      "wraps": [
+        "tools",
+        "logs",
+        "diag"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "s1",
+      "from": "identify",
+      "to": "collect",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s2",
+      "from": "collect",
+      "to": "analyze",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s3",
+      "from": "analyze",
+      "to": "resolve",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s4",
+      "from": "resolve",
+      "to": "verify",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s5",
+      "from": "verify",
+      "to": "document",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tools-collect",
+      "from": "tools",
+      "to": "collect",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "logs-collect",
+      "from": "logs",
+      "to": "collect",
+      "label": "logs · events · metrics",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "diag-collect",
+      "from": "diag",
+      "to": "collect",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Essential Tools and Commands",
+      "items": [
+        "AWS CLI — check cluster and node group details",
+        "kubectl — check nodes, pods, services, events, logs",
+        "eksctl — manage clusters and enable logging",
+        "AWS CloudWatch — check logs and metrics"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Log Collection and Analysis",
+      "items": [
+        "EKS Control Plane Logs",
+        "Node Logs",
+        "Pod Logs"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Diagnostic Information Collection",
+      "items": [
+        "Cluster Diagnostic Information",
+        "System Resource Information",
+        "Network Diagnostics"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,803 @@
+[
+  {
+    "path": "en/core/07-policies.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected policy API/schema errors, quota/QoS/security semantics and AWS scope; retained Korean advanced material and restored English coverage.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/policy/resource-quotas/",
+      "https://kubernetes.io/docs/concepts/policy/limit-range/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/authorization/",
+      "https://kyverno.io/docs/policy-types/cluster-policy/validate/",
+      "https://raw.githubusercontent.com/kubewarden/policies/main/policies/safe-labels-policy/README.md",
+      "https://raw.githubusercontent.com/kubewarden/kubewarden-controller/main/examples/policies_v1_clusteradmissionpolicy.yaml",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html",
+      "https://www.openpolicyagent.org/docs/v0-upgrade",
+      "https://open-policy-agent.github.io/gatekeeper/website/docs/howto/"
+    ],
+    "findings": [
+      "Replaced nonexistent per-priority quota keys with separate scoped quotas; corrected arbitrary object-count keys and container-only defaulting.",
+      "Fixed Gatekeeper v1 structural schema with a distinct custom kind; modernized Kyverno failureAction and Kubewarden API/module settings.",
+      "Corrected Baseline hostPath restriction, quota-defaulting conditions, preemption guarantees, authorization-chain short-circuiting, and Rego 1.x syntax.",
+      "Clarified additive network policies/DNS and fixed intra-tenant egress; identified shared Prometheus access vs scraping direction.",
+      "Scoped AWS IAM example and distinguished AWS Config/SCP and Firewall Manager from Kubernetes policy enforcement.",
+      "Preserved extended Korean exercises and added corresponding English policy, authorization, tenant-isolation and resource-management coverage.",
+      "Parent asset followup: policy diagram 1 must not imply QoS alone fixes eviction order; priority and usage relative to requests also matter. Diagram 6 must not imply Firewall Manager manages Kubernetes NetworkPolicy objects."
+    ],
+    "validation": [
+      "Read all 670 lines in full; no cluster actions.",
+      "All assigned original lines fully read; 82 YAML/JSON blocks across the four policy files parse without duplicate keys; scoped git diff --check clean. No infrastructure commands executed."
+    ]
+  },
+  {
+    "path": "ko/core/07-policies.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected policy API/schema errors, quota/QoS/security semantics and AWS scope; retained Korean advanced material and restored English coverage.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/policy/resource-quotas/",
+      "https://kubernetes.io/docs/concepts/policy/limit-range/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/authorization/",
+      "https://kyverno.io/docs/policy-types/cluster-policy/validate/",
+      "https://raw.githubusercontent.com/kubewarden/policies/main/policies/safe-labels-policy/README.md",
+      "https://raw.githubusercontent.com/kubewarden/kubewarden-controller/main/examples/policies_v1_clusteradmissionpolicy.yaml",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html",
+      "https://www.openpolicyagent.org/docs/v0-upgrade",
+      "https://open-policy-agent.github.io/gatekeeper/website/docs/howto/"
+    ],
+    "findings": [
+      "Replaced nonexistent per-priority quota keys with separate scoped quotas; corrected arbitrary object-count keys and container-only defaulting.",
+      "Fixed Gatekeeper v1 structural schema with a distinct custom kind; modernized Kyverno failureAction and Kubewarden API/module settings.",
+      "Corrected Baseline hostPath restriction, quota-defaulting conditions, preemption guarantees, authorization-chain short-circuiting, and Rego 1.x syntax.",
+      "Clarified additive network policies/DNS and fixed intra-tenant egress; identified shared Prometheus access vs scraping direction.",
+      "Scoped AWS IAM example and distinguished AWS Config/SCP and Firewall Manager from Kubernetes policy enforcement.",
+      "Preserved extended Korean exercises and added corresponding English policy, authorization, tenant-isolation and resource-management coverage.",
+      "Parent asset followup: policy diagram 1 must not imply QoS alone fixes eviction order; priority and usage relative to requests also matter. Diagram 6 must not imply Firewall Manager manages Kubernetes NetworkPolicy objects."
+    ],
+    "validation": [
+      "Read all 670 lines in full.",
+      "All assigned original lines fully read; 82 YAML/JSON blocks across the four policy files parse without duplicate keys; scoped git diff --check clean. No infrastructure commands executed."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/07-policies-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected policy API/schema errors, quota/QoS/security semantics and AWS scope; retained Korean advanced material and restored English coverage.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/policy/resource-quotas/",
+      "https://kubernetes.io/docs/concepts/policy/limit-range/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/authorization/",
+      "https://kyverno.io/docs/policy-types/cluster-policy/validate/",
+      "https://raw.githubusercontent.com/kubewarden/policies/main/policies/safe-labels-policy/README.md",
+      "https://raw.githubusercontent.com/kubewarden/kubewarden-controller/main/examples/policies_v1_clusteradmissionpolicy.yaml",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html",
+      "https://www.openpolicyagent.org/docs/v0-upgrade",
+      "https://open-policy-agent.github.io/gatekeeper/website/docs/howto/"
+    ],
+    "findings": [
+      "Replaced nonexistent per-priority quota keys with separate scoped quotas; corrected arbitrary object-count keys and container-only defaulting.",
+      "Fixed Gatekeeper v1 structural schema with a distinct custom kind; modernized Kyverno failureAction and Kubewarden API/module settings.",
+      "Corrected Baseline hostPath restriction, quota-defaulting conditions, preemption guarantees, authorization-chain short-circuiting, and Rego 1.x syntax.",
+      "Clarified additive network policies/DNS and fixed intra-tenant egress; identified shared Prometheus access vs scraping direction.",
+      "Scoped AWS IAM example and distinguished AWS Config/SCP and Firewall Manager from Kubernetes policy enforcement.",
+      "Preserved extended Korean exercises and added corresponding English policy, authorization, tenant-isolation and resource-management coverage."
+    ],
+    "validation": [
+      "Read all 724 lines in full.",
+      "All assigned original lines fully read; 82 YAML/JSON blocks across the four policy files parse without duplicate keys; scoped git diff --check clean. No infrastructure commands executed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/07-policies-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected policy API/schema errors, quota/QoS/security semantics and AWS scope; retained Korean advanced material and restored English coverage.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/policy/resource-quotas/",
+      "https://kubernetes.io/docs/concepts/policy/limit-range/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/authorization/",
+      "https://kyverno.io/docs/policy-types/cluster-policy/validate/",
+      "https://raw.githubusercontent.com/kubewarden/policies/main/policies/safe-labels-policy/README.md",
+      "https://raw.githubusercontent.com/kubewarden/kubewarden-controller/main/examples/policies_v1_clusteradmissionpolicy.yaml",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html",
+      "https://www.openpolicyagent.org/docs/v0-upgrade",
+      "https://open-policy-agent.github.io/gatekeeper/website/docs/howto/"
+    ],
+    "findings": [
+      "Replaced nonexistent per-priority quota keys with separate scoped quotas; corrected arbitrary object-count keys and container-only defaulting.",
+      "Fixed Gatekeeper v1 structural schema with a distinct custom kind; modernized Kyverno failureAction and Kubewarden API/module settings.",
+      "Corrected Baseline hostPath restriction, quota-defaulting conditions, preemption guarantees, authorization-chain short-circuiting, and Rego 1.x syntax.",
+      "Clarified additive network policies/DNS and fixed intra-tenant egress; identified shared Prometheus access vs scraping direction.",
+      "Scoped AWS IAM example and distinguished AWS Config/SCP and Firewall Manager from Kubernetes policy enforcement.",
+      "Preserved extended Korean exercises and added corresponding English policy, authorization, tenant-isolation and resource-management coverage."
+    ],
+    "validation": [
+      "Read all 1339 lines in full.",
+      "All assigned original lines fully read; 82 YAML/JSON blocks across the four policy files parse without duplicate keys; scoped git diff --check clean. No infrastructure commands executed."
+    ]
+  },
+  {
+    "path": "en/core/08-scheduling-preemption-eviction.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected scheduling/eviction semantics and examples; restored the English scheduling quiz from intended Korean topic coverage.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
+      "https://kubernetes.io/docs/reference/scheduling/config/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/descheduler/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/descheduler/master/charts/descheduler/values.yaml",
+      "https://kubernetes-sigs.github.io/descheduler/index.yaml",
+      "https://github.com/kubernetes-sigs/descheduler/releases/tag/v0.36.0",
+      "https://raw.githubusercontent.com/kubernetes/autoscaler/master/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go",
+      "https://www.postgresql.org/support/versioning/",
+      "https://nginx.org/en/CHANGES-1.30"
+    ],
+    "findings": [
+      "Eviction incorrectly described as safe movement; obsolete pod-eviction-timeout; preemption/PDB and QoS overstatements; minDomains interpretation wrong.",
+      "Cache deletion-cost updater lacks redis-cli/RBAC and parses DBSIZE incorrectly; scope of deletion cost overstated; descheduler old Helm strategy flags and wrong plugin extension points.",
+      "Lab PDB selects no Pod label; GPU selector/image does not reserve GPU; deprecated zone label and VPA Auto.",
+      "Corrected best-effort preemption/PDB behavior, controller recreation vs movement, taint-eviction timing, current scheduler plugin names, and node-pressure ranking/defaults.",
+      "Fixed minDomains/global-minimum behavior, optional labelSelector and self-matching labels, GPU resource requests, and current topology labels.",
+      "Replaced broken cache updaters with an explicitly scoped ReplicaSet deletion-cost example; removed ineffective Job protection, supplied HPA CPU requests.",
+      "Corrected Descheduler balance/deschedule extension points and chart setup, pinned verified v0.36.0 example with explicit compatibility range, added prerequisites, changed deprecated VPA Auto to Recreate.",
+      "Parent asset followup: diagrams must show replacement Pods rather than moving evicted Pods; ReplicaSet (not HPA) uses deletion cost, and topology labelSelector is not API-required. Captions corrected; image files untouched."
+    ],
+    "validation": [
+      "Read all 1207 lines fully. H1 currently present; no source truncation assumed.",
+      "80 YAML blocks across scheduling chapter/quiz pairs parse without duplicate keys; both quizzes contain 25 answers and restored English H1. Scoped git diff --check clean. No cloud or cluster execution."
+    ]
+  },
+  {
+    "path": "ko/core/08-scheduling-preemption-eviction.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected scheduling/eviction semantics and examples; restored the English scheduling quiz from intended Korean topic coverage.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
+      "https://kubernetes.io/docs/reference/scheduling/config/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/descheduler/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/descheduler/master/charts/descheduler/values.yaml",
+      "https://kubernetes-sigs.github.io/descheduler/index.yaml",
+      "https://github.com/kubernetes-sigs/descheduler/releases/tag/v0.36.0",
+      "https://raw.githubusercontent.com/kubernetes/autoscaler/master/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go",
+      "https://www.postgresql.org/support/versioning/",
+      "https://nginx.org/en/CHANGES-1.30"
+    ],
+    "findings": [
+      "Shares eviction/PDB/priority/minDomains errors; additionally claims Job deletion cost protects work and HPA itself selects victims; low-node-utilization comment reverses direction.",
+      "Cache updater lacks tools/RBAC and uses elapsed time as cache warmth; HPA lacks CPU requests; descheduler system namespace protection overclaimed.",
+      "Corrected best-effort preemption/PDB behavior, controller recreation vs movement, taint-eviction timing, current scheduler plugin names, and node-pressure ranking/defaults.",
+      "Fixed minDomains/global-minimum behavior, optional labelSelector and self-matching labels, GPU resource requests, and current topology labels.",
+      "Replaced broken cache updaters with an explicitly scoped ReplicaSet deletion-cost example; removed ineffective Job protection, supplied HPA CPU requests.",
+      "Corrected Descheduler balance/deschedule extension points and chart setup, pinned verified v0.36.0 example with explicit compatibility range, added prerequisites, changed deprecated VPA Auto to Recreate.",
+      "Parent asset followup: diagrams must show replacement Pods rather than moving evicted Pods; ReplicaSet (not HPA) uses deletion cost, and topology labelSelector is not API-required. Captions corrected; image files untouched."
+    ],
+    "validation": [
+      "Read all 1286 lines fully.",
+      "80 YAML blocks across scheduling chapter/quiz pairs parse without duplicate keys; both quizzes contain 25 answers and restored English H1. Scoped git diff --check clean. No cloud or cluster execution."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/08-scheduling-preemption-eviction-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected scheduling/eviction semantics and examples; restored the English scheduling quiz from intended Korean topic coverage.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
+      "https://kubernetes.io/docs/reference/scheduling/config/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/descheduler/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/descheduler/master/charts/descheduler/values.yaml",
+      "https://kubernetes-sigs.github.io/descheduler/index.yaml",
+      "https://github.com/kubernetes-sigs/descheduler/releases/tag/v0.36.0",
+      "https://raw.githubusercontent.com/kubernetes/autoscaler/master/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go",
+      "https://www.postgresql.org/support/versioning/",
+      "https://nginx.org/en/CHANGES-1.30"
+    ],
+    "findings": [
+      "No H1; all 1490 lines describe cluster administration rather than the intended scheduling quiz.",
+      "Byte-identical to en/quizzes/core/09-cluster-administration-quiz.md: False. Administration material can remain in its proper file for separate correction.",
+      "Copied material contains unsafe/invalid backup, node-update and metrics scripts, stale etcd APIs and Secret-body audit logging; address in core09 review.",
+      "Corrected best-effort preemption/PDB behavior, controller recreation vs movement, taint-eviction timing, current scheduler plugin names, and node-pressure ranking/defaults.",
+      "Fixed minDomains/global-minimum behavior, optional labelSelector and self-matching labels, GPU resource requests, and current topology labels.",
+      "Replaced broken cache updaters with an explicitly scoped ReplicaSet deletion-cost example; removed ineffective Job protection, supplied HPA CPU requests.",
+      "Corrected Descheduler balance/deschedule extension points and chart setup, pinned verified v0.36.0 example with explicit compatibility range, added prerequisites, changed deprecated VPA Auto to Recreate.",
+      "English scheduling quiz was wrong-topic administration translation since its sole history entry. Reconstructed 25 scheduling questions aligned to fully read/corrected Korean counterpart; administration topic coverage remains in core09 for separate full audit, not merely a title insertion."
+    ],
+    "validation": [
+      "Read all 1490 lines fully; compared full byte content with administration quiz.",
+      "80 YAML blocks across scheduling chapter/quiz pairs parse without duplicate keys; both quizzes contain 25 answers and restored English H1. Scoped git diff --check clean. No cloud or cluster execution."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/08-scheduling-preemption-eviction-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected scheduling/eviction semantics and examples; restored the English scheduling quiz from intended Korean topic coverage.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
+      "https://kubernetes.io/docs/reference/scheduling/config/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/descheduler/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/descheduler/master/charts/descheduler/values.yaml",
+      "https://kubernetes-sigs.github.io/descheduler/index.yaml",
+      "https://github.com/kubernetes-sigs/descheduler/releases/tag/v0.36.0",
+      "https://raw.githubusercontent.com/kubernetes/autoscaler/master/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go",
+      "https://www.postgresql.org/support/versioning/",
+      "https://nginx.org/en/CHANGES-1.30"
+    ],
+    "findings": [
+      "Contradictory DaemonSet scheduling explanations; invented/removed scheduler plugin names; obsolete master/out-of-disk taints; false fixed QoS eviction order.",
+      "PDB bypass/eviction API conflated, hard/soft/PID default thresholds invented; topology spread example lacks selected label.",
+      "English 08 has separately translated administration content, not identical bytes to English 09; preserve administration coverage in core09 and restore correct scheduling subject matter here.",
+      "Corrected best-effort preemption/PDB behavior, controller recreation vs movement, taint-eviction timing, current scheduler plugin names, and node-pressure ranking/defaults.",
+      "Fixed minDomains/global-minimum behavior, optional labelSelector and self-matching labels, GPU resource requests, and current topology labels.",
+      "Replaced broken cache updaters with an explicitly scoped ReplicaSet deletion-cost example; removed ineffective Job protection, supplied HPA CPU requests.",
+      "Corrected Descheduler balance/deschedule extension points and chart setup, pinned verified v0.36.0 example with explicit compatibility range, added prerequisites, changed deprecated VPA Auto to Recreate."
+    ],
+    "validation": [
+      "Read all 913 original lines fully; no cluster commands.",
+      "80 YAML blocks across scheduling chapter/quiz pairs parse without duplicate keys; both quizzes contain 25 answers and restored English H1. Scoped git diff --check clean. No cloud or cluster execution."
+    ]
+  },
+  {
+    "path": "en/core/09-cluster-administration.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected administration runbooks and dangerous/invalid scripts; restored original missing quiz titles while preserving 15 exercises.",
+    "sources": [
+      "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/",
+      "https://kubernetes.io/docs/reference/using-api/health-checks/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/",
+      "https://etcd.io/docs/v3.6/op-guide/recovery/",
+      "https://etcd.io/docs/v3.6/op-guide/configuration/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html",
+      "https://raw.githubusercontent.com/kubernetes-sigs/metrics-server/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes/node-problem-detector/master/README.md",
+      "https://raw.githubusercontent.com/elastic/helm-charts/main/README.md",
+      "https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart",
+      "https://raw.githubusercontent.com/vmware-tanzu/velero-plugin-for-aws/main/README.md",
+      "https://raw.githubusercontent.com/prometheus-community/helm-charts/main/charts/kube-prometheus-stack/values.yaml"
+    ],
+    "findings": [
+      "Incorrect Kubernetes 1.34 release date; obsolete packages/registries/componentstatuses/healthz and unsupported upgrade commands.",
+      "Multiple missing YAML document separators; nonfunctional non-root nginx; unsafe etcd recovery and backup CronJob missing correct placement/endpoint assumptions.",
+      "Resource dumps include Secrets and are not full portable backups; old Velero plugin/EFK charts; CRI log parser mismatch; exposed monitoring service/default credentials and unconsumed Slack ConfigMap.",
+      "EKS API updates target obsolete 1.22/1.33 and CNI add-ons; endpoint public access widened; CNI removal unsafe; nodegroup CLI update/max-pods invalid; aws-auth admin mapping outdated.",
+      "CloudWatch control-plane logging incorrectly called Container Insights; CloudWatch observability add-on incorrectly called Prometheus/Grafana; VPC CNI network policy falsely unsupported.",
+      "Duplicate sections retain useful additional examples; preserve useful material while correcting every occurrence.",
+      "Replaced stale package/upgrade targets and componentstatuses/healthz; repaired multi-resource YAML separators, non-root example, CSR key/wait workflow, and supported EKS version selection.",
+      "Replaced unsafe etcd directory/whole-Docker stop recipes with offline recovery steps; clarified self-managed versus EKS access, snapshot/PV/PKI scope, protected resource exports, and backup CronJob prerequisites with narrowed certificate mounts.",
+      "Corrected CNI alternatives/network-policy support, maintained ECK deployment guidance, CRI parsing, private monitoring access and Secret-backed Alertmanager Helm configuration.",
+      "Corrected EKS endpoint CIDR scoping, add-on discovery/removal preserve behavior, node-group updates, scoped access entries, and control-plane logging versus Container Insights/CloudWatch add-on.",
+      "Quizzes: original Korean creation commit c9efef95 already lacked an H1 and was byte-identical at audit start; added titles after full content inspection, retaining 15 exercises rather than inventing missing sections.",
+      "Replaced broken SSH comparisons and unsafe all-node updates with explicit self-managed worker scope, fail-closed drain/maintenance, bounded boot/lease/readiness checks, and health checks.",
+      "Rebuilt backup failure handling/retention and numeric textfile metrics; rebuilt read-only resource reporting with unit conversion, multi-container and Pod-level requests, correct namespace aggregation, and escaped HTML.",
+      "Parent asset followup: diagrams 2/4/7 should show kube-proxy watching API independently, auth/admission inside the API server, and correct metrics exporters versus alerts. EKS shared responsibility varies by compute mode. Captions partially corrected; image files untouched."
+    ],
+    "validation": [
+      "Read original lines 1–2026 fully in four contiguous chunks. No commands from the document executed.",
+      "64 administration YAML/JSON blocks parse; 64 built-in manifests passed official Kubernetes OpenAPI structural validation; replacement Bash syntax and Python compilation passed.",
+      "Synthetic resource fixtures passed: millicores/nanocores/decimal CPU, binary memory, multi-container sums, namespace separation, Pod-level requests, missing requests.",
+      "Mocked backup snapshot/validation/copy failures prevent retention; success publishes numeric metrics. Mocked failed drain prevents maintenance/uncordon. No live cloud, cluster or SSH operations executed.",
+      "Both quizzes have one H1 and 15 answers; replacement scripts identical in ko/en; scoped git diff --check clean."
+    ]
+  },
+  {
+    "path": "ko/core/09-cluster-administration.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected administration runbooks and dangerous/invalid scripts; restored original missing quiz titles while preserving 15 exercises.",
+    "sources": [
+      "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/",
+      "https://kubernetes.io/docs/reference/using-api/health-checks/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/",
+      "https://etcd.io/docs/v3.6/op-guide/recovery/",
+      "https://etcd.io/docs/v3.6/op-guide/configuration/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html",
+      "https://raw.githubusercontent.com/kubernetes-sigs/metrics-server/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes/node-problem-detector/master/README.md",
+      "https://raw.githubusercontent.com/elastic/helm-charts/main/README.md",
+      "https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart",
+      "https://raw.githubusercontent.com/vmware-tanzu/velero-plugin-for-aws/main/README.md",
+      "https://raw.githubusercontent.com/prometheus-community/helm-charts/main/charts/kube-prometheus-stack/values.yaml"
+    ],
+    "findings": [
+      "Repeated legacy upgrade/backup blocks and AWS logging/add-on/auth mistakes require corrections in every occurrence.",
+      "Korean-only namespace deletion example targets production; preserve management lesson using a disposable namespace and explicit cleanup scope.",
+      "Wrong release date; unsafe Docker-wide stop; missing YAML separators; obsolete CA signing/default-token and monitoring assumptions.",
+      "Replaced stale package/upgrade targets and componentstatuses/healthz; repaired multi-resource YAML separators, non-root example, CSR key/wait workflow, and supported EKS version selection.",
+      "Replaced unsafe etcd directory/whole-Docker stop recipes with offline recovery steps; clarified self-managed versus EKS access, snapshot/PV/PKI scope, protected resource exports, and backup CronJob prerequisites with narrowed certificate mounts.",
+      "Corrected CNI alternatives/network-policy support, maintained ECK deployment guidance, CRI parsing, private monitoring access and Secret-backed Alertmanager Helm configuration.",
+      "Corrected EKS endpoint CIDR scoping, add-on discovery/removal preserve behavior, node-group updates, scoped access entries, and control-plane logging versus Container Insights/CloudWatch add-on.",
+      "Quizzes: original Korean creation commit c9efef95 already lacked an H1 and was byte-identical at audit start; added titles after full content inspection, retaining 15 exercises rather than inventing missing sections.",
+      "Replaced broken SSH comparisons and unsafe all-node updates with explicit self-managed worker scope, fail-closed drain/maintenance, bounded boot/lease/readiness checks, and health checks.",
+      "Rebuilt backup failure handling/retention and numeric textfile metrics; rebuilt read-only resource reporting with unit conversion, multi-container and Pod-level requests, correct namespace aggregation, and escaped HTML.",
+      "Parent asset followup: diagrams 2/4/7 should show kube-proxy watching API independently, auth/admission inside the API server, and correct metrics exporters versus alerts. EKS shared responsibility varies by compute mode. Captions partially corrected; image files untouched."
+    ],
+    "validation": [
+      "Read original lines 1–2115 in contiguous chunks. No document commands executed.",
+      "64 administration YAML/JSON blocks parse; 64 built-in manifests passed official Kubernetes OpenAPI structural validation; replacement Bash syntax and Python compilation passed.",
+      "Synthetic resource fixtures passed: millicores/nanocores/decimal CPU, binary memory, multi-container sums, namespace separation, Pod-level requests, missing requests.",
+      "Mocked backup snapshot/validation/copy failures prevent retention; success publishes numeric metrics. Mocked failed drain prevents maintenance/uncordon. No live cloud, cluster or SSH operations executed.",
+      "Both quizzes have one H1 and 15 answers; replacement scripts identical in ko/en; scoped git diff --check clean."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/09-cluster-administration-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected administration runbooks and dangerous/invalid scripts; restored original missing quiz titles while preserving 15 exercises.",
+    "sources": [
+      "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/",
+      "https://kubernetes.io/docs/reference/using-api/health-checks/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/",
+      "https://etcd.io/docs/v3.6/op-guide/recovery/",
+      "https://etcd.io/docs/v3.6/op-guide/configuration/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html",
+      "https://raw.githubusercontent.com/kubernetes-sigs/metrics-server/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes/node-problem-detector/master/README.md",
+      "https://raw.githubusercontent.com/elastic/helm-charts/main/README.md",
+      "https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart",
+      "https://raw.githubusercontent.com/vmware-tanzu/velero-plugin-for-aws/main/README.md",
+      "https://raw.githubusercontent.com/prometheus-community/helm-charts/main/charts/kube-prometheus-stack/values.yaml"
+    ],
+    "findings": [
+      "Full 1490-line administration coverage retained: etcd restore, node maintenance, monitoring, upgrades, networking, operational scripts and HA/security questions.",
+      "Broken SSH if comparisons, unsafe all-node upgrade after failed drain, readiness-before-reboot race, unbounded waits and forced local-data deletion.",
+      "Backup retention can run after validation/copy failures; exporter output is not Prometheus format; resource report groups by Pod instead of namespace and mishandles units/multi-container requests.",
+      "Old etcd snapshot commands/defaults, invalid deprecated-API detection, incomplete get-all backups, Secret-body audit logs, and universal NPD auto-repair claims.",
+      "Replaced stale package/upgrade targets and componentstatuses/healthz; repaired multi-resource YAML separators, non-root example, CSR key/wait workflow, and supported EKS version selection.",
+      "Replaced unsafe etcd directory/whole-Docker stop recipes with offline recovery steps; clarified self-managed versus EKS access, snapshot/PV/PKI scope, protected resource exports, and backup CronJob prerequisites with narrowed certificate mounts.",
+      "Corrected CNI alternatives/network-policy support, maintained ECK deployment guidance, CRI parsing, private monitoring access and Secret-backed Alertmanager Helm configuration.",
+      "Corrected EKS endpoint CIDR scoping, add-on discovery/removal preserve behavior, node-group updates, scoped access entries, and control-plane logging versus Container Insights/CloudWatch add-on.",
+      "Quizzes: original Korean creation commit c9efef95 already lacked an H1 and was byte-identical at audit start; added titles after full content inspection, retaining 15 exercises rather than inventing missing sections.",
+      "Replaced broken SSH comparisons and unsafe all-node updates with explicit self-managed worker scope, fail-closed drain/maintenance, bounded boot/lease/readiness checks, and health checks.",
+      "Rebuilt backup failure handling/retention and numeric textfile metrics; rebuilt read-only resource reporting with unit conversion, multi-container and Pod-level requests, correct namespace aggregation, and escaped HTML."
+    ],
+    "validation": [
+      "Read all 1490 lines fully; do not repair by title alone.",
+      "64 administration YAML/JSON blocks parse; 64 built-in manifests passed official Kubernetes OpenAPI structural validation; replacement Bash syntax and Python compilation passed.",
+      "Synthetic resource fixtures passed: millicores/nanocores/decimal CPU, binary memory, multi-container sums, namespace separation, Pod-level requests, missing requests.",
+      "Mocked backup snapshot/validation/copy failures prevent retention; success publishes numeric metrics. Mocked failed drain prevents maintenance/uncordon. No live cloud, cluster or SSH operations executed.",
+      "Both quizzes have one H1 and 15 answers; replacement scripts identical in ko/en; scoped git diff --check clean."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/09-cluster-administration-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected administration runbooks and dangerous/invalid scripts; restored original missing quiz titles while preserving 15 exercises.",
+    "sources": [
+      "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/",
+      "https://kubernetes.io/docs/reference/using-api/health-checks/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/",
+      "https://etcd.io/docs/v3.6/op-guide/recovery/",
+      "https://etcd.io/docs/v3.6/op-guide/configuration/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html",
+      "https://raw.githubusercontent.com/kubernetes-sigs/metrics-server/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes/node-problem-detector/master/README.md",
+      "https://raw.githubusercontent.com/elastic/helm-charts/main/README.md",
+      "https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart",
+      "https://raw.githubusercontent.com/vmware-tanzu/velero-plugin-for-aws/main/README.md",
+      "https://raw.githubusercontent.com/prometheus-community/helm-charts/main/charts/kube-prometheus-stack/values.yaml"
+    ],
+    "findings": [
+      "Same backup/SSH/rolling-update/metrics/audit issues as English; preserve all 15 existing administration exercises while repairing functionality.",
+      "Earliest history commit c9efef95 creates the quiz; inspect its opening to distinguish original omission from later truncation before adding title.",
+      "Replaced stale package/upgrade targets and componentstatuses/healthz; repaired multi-resource YAML separators, non-root example, CSR key/wait workflow, and supported EKS version selection.",
+      "Replaced unsafe etcd directory/whole-Docker stop recipes with offline recovery steps; clarified self-managed versus EKS access, snapshot/PV/PKI scope, protected resource exports, and backup CronJob prerequisites with narrowed certificate mounts.",
+      "Corrected CNI alternatives/network-policy support, maintained ECK deployment guidance, CRI parsing, private monitoring access and Secret-backed Alertmanager Helm configuration.",
+      "Corrected EKS endpoint CIDR scoping, add-on discovery/removal preserve behavior, node-group updates, scoped access entries, and control-plane logging versus Container Insights/CloudWatch add-on.",
+      "Quizzes: original Korean creation commit c9efef95 already lacked an H1 and was byte-identical at audit start; added titles after full content inspection, retaining 15 exercises rather than inventing missing sections.",
+      "Replaced broken SSH comparisons and unsafe all-node updates with explicit self-managed worker scope, fail-closed drain/maintenance, bounded boot/lease/readiness checks, and health checks.",
+      "Rebuilt backup failure handling/retention and numeric textfile metrics; rebuilt read-only resource reporting with unit conversion, multi-container and Pod-level requests, correct namespace aggregation, and escaped HTML."
+    ],
+    "validation": [
+      "Read every original line in contiguous chunks; no cloud/cluster execution.",
+      "64 administration YAML/JSON blocks parse; 64 built-in manifests passed official Kubernetes OpenAPI structural validation; replacement Bash syntax and Python compilation passed.",
+      "Synthetic resource fixtures passed: millicores/nanocores/decimal CPU, binary memory, multi-container sums, namespace separation, Pod-level requests, missing requests.",
+      "Mocked backup snapshot/validation/copy failures prevent retention; success publishes numeric metrics. Mocked failed drain prevents maintenance/uncordon. No live cloud, cluster or SSH operations executed.",
+      "Both quizzes have one H1 and 15 answers; replacement scripts identical in ko/en; scoped git diff --check clean."
+    ]
+  },
+  {
+    "path": "en/core/10-windows-in-kubernetes.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected Windows support, host access, runtime setup, storage, gMSA, monitoring and EKS guidance; paired chapter/25-question quizzes remain consistent.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/windows/intro/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/adding-windows-nodes/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/",
+      "https://kubernetes.io/docs/concepts/configuration/windows-resource-management/",
+      "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#dns-windows",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/configure-gmsa/",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/manage-serviceaccounts",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/gmsa-run-container",
+      "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/group-managed-service-accounts/group-managed-service-accounts/create-the-key-distribution-services-kds-root-key",
+      "https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "https://github.com/prometheus-community/windows_exporter/blob/master/kubernetes/windows-exporter-daemonset.yaml",
+      "https://github.com/fluent/fluent-bit-docs/blob/master/installation/downloads/windows.md",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/windows/README.md",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/windows/manifests/windows.yaml",
+      "https://github.com/containerd/containerd/blob/main/docs/cri/config.md",
+      "https://github.com/microsoft/windows-container-tools/tree/main/LogMonitor",
+      "https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker?view=sql-server-ver17&tabs=cli"
+    ],
+    "findings": [
+      "Hyper-V is Windows background only, not supported Kubernetes isolation; HostProcess is the host-access exception. Updated instructional target to supported Windows Server 2022/ltsc2022 and removed obsolete Docker/dockershim and incomplete kubelet installers.",
+      "Corrected Windows shared networking, DNS suffixes, Linux-only security fields, CPU limits, memory/OOM behavior and YAML paths.",
+      "Replaced wrong gMSA Secret/CIM examples with current windows.k8s.io/v1 GMSACredentialSpec generation, webhook prerequisites and resource-scoped use RBAC; removed broad host authorization, unsafe KDS backdating and fabricated whoami identity.",
+      "Fixed node exporter HostProcess permissions, invalid disk collector, missing Service and common-Service targetPort; clarified event API versus mounted evtx, CRI logs, TLS and checkpoint requirements.",
+      "Moved SQL Server Linux image to Linux scheduling/paths/MSSQL_SA_PASSWORD; changed shared replica log PVC to Windows SMB RWX; removed unsupported in-tree Windows iSCSI copy/paste and clarified CSI prerequisites.",
+      "Removed obsolete EKS Windows resource-controller/webhook manifests; verified managed node groups, Windows IPAM/access entry prerequisites and CloudWatch Windows support boundaries.",
+      "Parent-owned asset followup: core10 diagram0 must identify Hyper-V as outside Kubernetes support; diagram2 should show Service data-plane endpoint selection and CNI connectivity, not an API-object packet hop. Captions/prose qualify these limitations."
+    ],
+    "validation": [
+      "Every original line of both chapters and both quizzes read before fullyRead=true; all 25 exercises retained per quiz.",
+      "106 YAML/JSON fenced blocks parsed with duplicate-key detection; 108 native manifests passed official Kubernetes v1.37 OpenAPI structural schema validation.",
+      "Reviewed Windows-specific Pod constraints, gMSA references, OS/image pairing and Service targetPort behavior manually.",
+      "No Windows, AD, Kubernetes or AWS provisioning commands executed; custom images, external services and environment-specific prerequisites require deployment validation."
+    ]
+  },
+  {
+    "path": "ko/core/10-windows-in-kubernetes.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected Windows support, host access, runtime setup, storage, gMSA, monitoring and EKS guidance; paired chapter/25-question quizzes remain consistent.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/windows/intro/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/adding-windows-nodes/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/",
+      "https://kubernetes.io/docs/concepts/configuration/windows-resource-management/",
+      "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#dns-windows",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/configure-gmsa/",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/manage-serviceaccounts",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/gmsa-run-container",
+      "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/group-managed-service-accounts/group-managed-service-accounts/create-the-key-distribution-services-kds-root-key",
+      "https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "https://github.com/prometheus-community/windows_exporter/blob/master/kubernetes/windows-exporter-daemonset.yaml",
+      "https://github.com/fluent/fluent-bit-docs/blob/master/installation/downloads/windows.md",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/windows/README.md",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/windows/manifests/windows.yaml",
+      "https://github.com/containerd/containerd/blob/main/docs/cri/config.md",
+      "https://github.com/microsoft/windows-container-tools/tree/main/LogMonitor",
+      "https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker?view=sql-server-ver17&tabs=cli"
+    ],
+    "findings": [
+      "Hyper-V is Windows background only, not supported Kubernetes isolation; HostProcess is the host-access exception. Updated instructional target to supported Windows Server 2022/ltsc2022 and removed obsolete Docker/dockershim and incomplete kubelet installers.",
+      "Corrected Windows shared networking, DNS suffixes, Linux-only security fields, CPU limits, memory/OOM behavior and YAML paths.",
+      "Replaced wrong gMSA Secret/CIM examples with current windows.k8s.io/v1 GMSACredentialSpec generation, webhook prerequisites and resource-scoped use RBAC; removed broad host authorization, unsafe KDS backdating and fabricated whoami identity.",
+      "Fixed node exporter HostProcess permissions, invalid disk collector, missing Service and common-Service targetPort; clarified event API versus mounted evtx, CRI logs, TLS and checkpoint requirements.",
+      "Moved SQL Server Linux image to Linux scheduling/paths/MSSQL_SA_PASSWORD; changed shared replica log PVC to Windows SMB RWX; removed unsupported in-tree Windows iSCSI copy/paste and clarified CSI prerequisites.",
+      "Removed obsolete EKS Windows resource-controller/webhook manifests; verified managed node groups, Windows IPAM/access entry prerequisites and CloudWatch Windows support boundaries.",
+      "Parent-owned asset followup: core10 diagram0 must identify Hyper-V as outside Kubernetes support; diagram2 should show Service data-plane endpoint selection and CNI connectivity, not an API-object packet hop. Captions/prose qualify these limitations."
+    ],
+    "validation": [
+      "Every original line of both chapters and both quizzes read before fullyRead=true; all 25 exercises retained per quiz.",
+      "106 YAML/JSON fenced blocks parsed with duplicate-key detection; 108 native manifests passed official Kubernetes v1.37 OpenAPI structural schema validation.",
+      "Reviewed Windows-specific Pod constraints, gMSA references, OS/image pairing and Service targetPort behavior manually.",
+      "No Windows, AD, Kubernetes or AWS provisioning commands executed; custom images, external services and environment-specific prerequisites require deployment validation."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/10-windows-in-kubernetes-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected Windows support, host access, runtime setup, storage, gMSA, monitoring and EKS guidance; paired chapter/25-question quizzes remain consistent.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/windows/intro/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/adding-windows-nodes/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/",
+      "https://kubernetes.io/docs/concepts/configuration/windows-resource-management/",
+      "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#dns-windows",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/configure-gmsa/",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/manage-serviceaccounts",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/gmsa-run-container",
+      "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/group-managed-service-accounts/group-managed-service-accounts/create-the-key-distribution-services-kds-root-key",
+      "https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "https://github.com/prometheus-community/windows_exporter/blob/master/kubernetes/windows-exporter-daemonset.yaml",
+      "https://github.com/fluent/fluent-bit-docs/blob/master/installation/downloads/windows.md",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/windows/README.md",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/windows/manifests/windows.yaml",
+      "https://github.com/containerd/containerd/blob/main/docs/cri/config.md",
+      "https://github.com/microsoft/windows-container-tools/tree/main/LogMonitor",
+      "https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker?view=sql-server-ver17&tabs=cli"
+    ],
+    "findings": [
+      "Hyper-V is Windows background only, not supported Kubernetes isolation; HostProcess is the host-access exception. Updated instructional target to supported Windows Server 2022/ltsc2022 and removed obsolete Docker/dockershim and incomplete kubelet installers.",
+      "Corrected Windows shared networking, DNS suffixes, Linux-only security fields, CPU limits, memory/OOM behavior and YAML paths.",
+      "Replaced wrong gMSA Secret/CIM examples with current windows.k8s.io/v1 GMSACredentialSpec generation, webhook prerequisites and resource-scoped use RBAC; removed broad host authorization, unsafe KDS backdating and fabricated whoami identity.",
+      "Fixed node exporter HostProcess permissions, invalid disk collector, missing Service and common-Service targetPort; clarified event API versus mounted evtx, CRI logs, TLS and checkpoint requirements.",
+      "Moved SQL Server Linux image to Linux scheduling/paths/MSSQL_SA_PASSWORD; changed shared replica log PVC to Windows SMB RWX; removed unsupported in-tree Windows iSCSI copy/paste and clarified CSI prerequisites.",
+      "Removed obsolete EKS Windows resource-controller/webhook manifests; verified managed node groups, Windows IPAM/access entry prerequisites and CloudWatch Windows support boundaries.",
+      "Parent-owned asset followup: core10 diagram0 must identify Hyper-V as outside Kubernetes support; diagram2 should show Service data-plane endpoint selection and CNI connectivity, not an API-object packet hop. Captions/prose qualify these limitations."
+    ],
+    "validation": [
+      "Every original line of both chapters and both quizzes read before fullyRead=true; all 25 exercises retained per quiz.",
+      "106 YAML/JSON fenced blocks parsed with duplicate-key detection; 108 native manifests passed official Kubernetes v1.37 OpenAPI structural schema validation.",
+      "Reviewed Windows-specific Pod constraints, gMSA references, OS/image pairing and Service targetPort behavior manually.",
+      "No Windows, AD, Kubernetes or AWS provisioning commands executed; custom images, external services and environment-specific prerequisites require deployment validation."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/10-windows-in-kubernetes-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected Windows support, host access, runtime setup, storage, gMSA, monitoring and EKS guidance; paired chapter/25-question quizzes remain consistent.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/windows/intro/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/adding-windows-nodes/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/",
+      "https://kubernetes.io/docs/concepts/configuration/windows-resource-management/",
+      "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#dns-windows",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/configure-gmsa/",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/manage-serviceaccounts",
+      "https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/gmsa-run-container",
+      "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/group-managed-service-accounts/group-managed-service-accounts/create-the-key-distribution-services-kds-root-key",
+      "https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "https://github.com/prometheus-community/windows_exporter/blob/master/kubernetes/windows-exporter-daemonset.yaml",
+      "https://github.com/fluent/fluent-bit-docs/blob/master/installation/downloads/windows.md",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/windows/README.md",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/windows/manifests/windows.yaml",
+      "https://github.com/containerd/containerd/blob/main/docs/cri/config.md",
+      "https://github.com/microsoft/windows-container-tools/tree/main/LogMonitor",
+      "https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker?view=sql-server-ver17&tabs=cli"
+    ],
+    "findings": [
+      "Hyper-V is Windows background only, not supported Kubernetes isolation; HostProcess is the host-access exception. Updated instructional target to supported Windows Server 2022/ltsc2022 and removed obsolete Docker/dockershim and incomplete kubelet installers.",
+      "Corrected Windows shared networking, DNS suffixes, Linux-only security fields, CPU limits, memory/OOM behavior and YAML paths.",
+      "Replaced wrong gMSA Secret/CIM examples with current windows.k8s.io/v1 GMSACredentialSpec generation, webhook prerequisites and resource-scoped use RBAC; removed broad host authorization, unsafe KDS backdating and fabricated whoami identity.",
+      "Fixed node exporter HostProcess permissions, invalid disk collector, missing Service and common-Service targetPort; clarified event API versus mounted evtx, CRI logs, TLS and checkpoint requirements.",
+      "Moved SQL Server Linux image to Linux scheduling/paths/MSSQL_SA_PASSWORD; changed shared replica log PVC to Windows SMB RWX; removed unsupported in-tree Windows iSCSI copy/paste and clarified CSI prerequisites.",
+      "Removed obsolete EKS Windows resource-controller/webhook manifests; verified managed node groups, Windows IPAM/access entry prerequisites and CloudWatch Windows support boundaries.",
+      "Parent-owned asset followup: core10 diagram0 must identify Hyper-V as outside Kubernetes support; diagram2 should show Service data-plane endpoint selection and CNI connectivity, not an API-object packet hop. Captions/prose qualify these limitations."
+    ],
+    "validation": [
+      "Every original line of both chapters and both quizzes read before fullyRead=true; all 25 exercises retained per quiz.",
+      "106 YAML/JSON fenced blocks parsed with duplicate-key detection; 108 native manifests passed official Kubernetes v1.37 OpenAPI structural schema validation.",
+      "Reviewed Windows-specific Pod constraints, gMSA references, OS/image pairing and Service targetPort behavior manually.",
+      "No Windows, AD, Kubernetes or AWS provisioning commands executed; custom images, external services and environment-specific prerequisites require deployment validation."
+    ]
+  },
+  {
+    "path": "en/core/11-extending-kubernetes.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected current extension APIs, CRD schema/status/conversion behavior, robust admission examples and EKS extension ownership/install prerequisites.",
+    "sources": [
+      "https://kubernetes.io/releases/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/",
+      "https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/scheduler/apis/config/types.go",
+      "https://github.com/kubernetes/cloud-provider-aws/blob/master/docs/prerequisites.md",
+      "https://github.com/kubernetes/cloud-provider-aws/blob/master/examples/existing-cluster/base/aws-cloud-controller-manager-daemonset.yaml",
+      "https://github.com/kubernetes-sigs/kubebuilder/blob/master/README.md",
+      "https://github.com/operator-framework/operator-sdk/blob/master/README.md",
+      "https://github.com/NVIDIA/k8s-device-plugin/blob/main/README.md",
+      "https://github.com/jaegertracing/jaeger-operator/blob/main/README.md",
+      "https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html",
+      "https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/user-docs/install.md",
+      "https://github.com/aws-controllers-k8s/s3-controller/blob/main/helm/values.yaml"
+    ],
+    "findings": [
+      "Replaced removed PodSecurityPolicy and scheduler v1beta1/legacy provider plugins; corrected ServiceAccount admission responsibilities and in-cluster custom-scheduler authentication prerequisites.",
+      "Fixed nil request/response handling, AdmissionReview v1 envelopes/UIDs, missing-label/volume JSON Patch parents, idempotent sidecar injection, reserved-name conflicts, TLS certificate paths and init/ephemeral container validation.",
+      "Conversion handler now supports both served versions, preserves metadata/status, validates versions, initializes response, preserves object order and returns a failure on any conversion error.",
+      "CRD status updates retain resourceVersion and can still conflict; scale is independent. Replaced forbidden uniqueItems:true and additionalProperties:false; made empty schemas concrete and qualified limited cron regex validation.",
+      "Controller example checks ownership before updates, reconciles image/replicas/environment settings, handles owner-reference errors and watches owned Deployments; external cleanup requires finalizers before deletion.",
+      "Removed obsolete SDK, CCM, Calico, NVIDIA and ACK installation recipes; retained instructional templates with explicit compatible-version/runtime/RBAC/IAM prerequisites. ACK uses OCI charts; IRSA policy is bucket/prefix-scoped.",
+      "Corrected archived/retired operator guidance, EKS worker add-on placement, IRSA Pod identity vs node roles, managed-add-on lifecycle/version discovery and reviewed upstream/EKS version boundaries.",
+      "Parent-owned asset followup: core11 diagram6 must move add-on workloads off the managed control plane and associate IRSA with Pods/ServiceAccounts, not node groups; diagram5 must retain CRI runtime between kubelet and CNI. Captions and inline CNI diagram corrected."
+    ],
+    "validation": [
+      "All original 1,443-line chapters and 1,904/1,901-line quizzes read in full before marking fullyRead; both quizzes retain all 15 exercises.",
+      "88 YAML/JSON fenced blocks parsed with duplicate-key detection; 58 native manifests (including heredocs) and 18 CRDs passed official Kubernetes v1.37 structural schema checks; intentionally partial snippets remain labeled.",
+      "Ten local Go tests passed for chapter admission handlers, complete quiz webhook server and conversion handler, compiled with Go 1.25 and Kubernetes Go modules v0.35.0: malformed requests, missing-map/array patches, idempotency, reserved-volume conflict, image tags, privileged init containers and metadata-preserving conversion round trip.",
+      "One H1 per document, paired question counts/fence balance and scoped git diff --check passed.",
+      "No cluster, AWS, Windows or AD operations executed. Generated operator scaffold integration and deployment-specific images/TLS/IAM still require environment validation."
+    ]
+  },
+  {
+    "path": "ko/core/11-extending-kubernetes.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected current extension APIs, CRD schema/status/conversion behavior, robust admission examples and EKS extension ownership/install prerequisites.",
+    "sources": [
+      "https://kubernetes.io/releases/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/",
+      "https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/scheduler/apis/config/types.go",
+      "https://github.com/kubernetes/cloud-provider-aws/blob/master/docs/prerequisites.md",
+      "https://github.com/kubernetes/cloud-provider-aws/blob/master/examples/existing-cluster/base/aws-cloud-controller-manager-daemonset.yaml",
+      "https://github.com/kubernetes-sigs/kubebuilder/blob/master/README.md",
+      "https://github.com/operator-framework/operator-sdk/blob/master/README.md",
+      "https://github.com/NVIDIA/k8s-device-plugin/blob/main/README.md",
+      "https://github.com/jaegertracing/jaeger-operator/blob/main/README.md",
+      "https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html",
+      "https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/user-docs/install.md",
+      "https://github.com/aws-controllers-k8s/s3-controller/blob/main/helm/values.yaml"
+    ],
+    "findings": [
+      "Replaced removed PodSecurityPolicy and scheduler v1beta1/legacy provider plugins; corrected ServiceAccount admission responsibilities and in-cluster custom-scheduler authentication prerequisites.",
+      "Fixed nil request/response handling, AdmissionReview v1 envelopes/UIDs, missing-label/volume JSON Patch parents, idempotent sidecar injection, reserved-name conflicts, TLS certificate paths and init/ephemeral container validation.",
+      "Conversion handler now supports both served versions, preserves metadata/status, validates versions, initializes response, preserves object order and returns a failure on any conversion error.",
+      "CRD status updates retain resourceVersion and can still conflict; scale is independent. Replaced forbidden uniqueItems:true and additionalProperties:false; made empty schemas concrete and qualified limited cron regex validation.",
+      "Controller example checks ownership before updates, reconciles image/replicas/environment settings, handles owner-reference errors and watches owned Deployments; external cleanup requires finalizers before deletion.",
+      "Removed obsolete SDK, CCM, Calico, NVIDIA and ACK installation recipes; retained instructional templates with explicit compatible-version/runtime/RBAC/IAM prerequisites. ACK uses OCI charts; IRSA policy is bucket/prefix-scoped.",
+      "Corrected archived/retired operator guidance, EKS worker add-on placement, IRSA Pod identity vs node roles, managed-add-on lifecycle/version discovery and reviewed upstream/EKS version boundaries.",
+      "Parent-owned asset followup: core11 diagram6 must move add-on workloads off the managed control plane and associate IRSA with Pods/ServiceAccounts, not node groups; diagram5 must retain CRI runtime between kubelet and CNI. Captions and inline CNI diagram corrected."
+    ],
+    "validation": [
+      "All original 1,443-line chapters and 1,904/1,901-line quizzes read in full before marking fullyRead; both quizzes retain all 15 exercises.",
+      "88 YAML/JSON fenced blocks parsed with duplicate-key detection; 58 native manifests (including heredocs) and 18 CRDs passed official Kubernetes v1.37 structural schema checks; intentionally partial snippets remain labeled.",
+      "Ten local Go tests passed for chapter admission handlers, complete quiz webhook server and conversion handler, compiled with Go 1.25 and Kubernetes Go modules v0.35.0: malformed requests, missing-map/array patches, idempotency, reserved-volume conflict, image tags, privileged init containers and metadata-preserving conversion round trip.",
+      "One H1 per document, paired question counts/fence balance and scoped git diff --check passed.",
+      "No cluster, AWS, Windows or AD operations executed. Generated operator scaffold integration and deployment-specific images/TLS/IAM still require environment validation."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/11-extending-kubernetes-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected current extension APIs, CRD schema/status/conversion behavior, robust admission examples and EKS extension ownership/install prerequisites.",
+    "sources": [
+      "https://kubernetes.io/releases/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/",
+      "https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/scheduler/apis/config/types.go",
+      "https://github.com/kubernetes/cloud-provider-aws/blob/master/docs/prerequisites.md",
+      "https://github.com/kubernetes/cloud-provider-aws/blob/master/examples/existing-cluster/base/aws-cloud-controller-manager-daemonset.yaml",
+      "https://github.com/kubernetes-sigs/kubebuilder/blob/master/README.md",
+      "https://github.com/operator-framework/operator-sdk/blob/master/README.md",
+      "https://github.com/NVIDIA/k8s-device-plugin/blob/main/README.md",
+      "https://github.com/jaegertracing/jaeger-operator/blob/main/README.md",
+      "https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html",
+      "https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/user-docs/install.md",
+      "https://github.com/aws-controllers-k8s/s3-controller/blob/main/helm/values.yaml"
+    ],
+    "findings": [
+      "Replaced removed PodSecurityPolicy and scheduler v1beta1/legacy provider plugins; corrected ServiceAccount admission responsibilities and in-cluster custom-scheduler authentication prerequisites.",
+      "Fixed nil request/response handling, AdmissionReview v1 envelopes/UIDs, missing-label/volume JSON Patch parents, idempotent sidecar injection, reserved-name conflicts, TLS certificate paths and init/ephemeral container validation.",
+      "Conversion handler now supports both served versions, preserves metadata/status, validates versions, initializes response, preserves object order and returns a failure on any conversion error.",
+      "CRD status updates retain resourceVersion and can still conflict; scale is independent. Replaced forbidden uniqueItems:true and additionalProperties:false; made empty schemas concrete and qualified limited cron regex validation.",
+      "Controller example checks ownership before updates, reconciles image/replicas/environment settings, handles owner-reference errors and watches owned Deployments; external cleanup requires finalizers before deletion.",
+      "Removed obsolete SDK, CCM, Calico, NVIDIA and ACK installation recipes; retained instructional templates with explicit compatible-version/runtime/RBAC/IAM prerequisites. ACK uses OCI charts; IRSA policy is bucket/prefix-scoped.",
+      "Corrected archived/retired operator guidance, EKS worker add-on placement, IRSA Pod identity vs node roles, managed-add-on lifecycle/version discovery and reviewed upstream/EKS version boundaries.",
+      "Parent-owned asset followup: core11 diagram6 must move add-on workloads off the managed control plane and associate IRSA with Pods/ServiceAccounts, not node groups; diagram5 must retain CRI runtime between kubelet and CNI. Captions and inline CNI diagram corrected."
+    ],
+    "validation": [
+      "All original 1,443-line chapters and 1,904/1,901-line quizzes read in full before marking fullyRead; both quizzes retain all 15 exercises.",
+      "88 YAML/JSON fenced blocks parsed with duplicate-key detection; 58 native manifests (including heredocs) and 18 CRDs passed official Kubernetes v1.37 structural schema checks; intentionally partial snippets remain labeled.",
+      "Ten local Go tests passed for chapter admission handlers, complete quiz webhook server and conversion handler, compiled with Go 1.25 and Kubernetes Go modules v0.35.0: malformed requests, missing-map/array patches, idempotency, reserved-volume conflict, image tags, privileged init containers and metadata-preserving conversion round trip.",
+      "One H1 per document, paired question counts/fence balance and scoped git diff --check passed.",
+      "No cluster, AWS, Windows or AD operations executed. Generated operator scaffold integration and deployment-specific images/TLS/IAM still require environment validation."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/11-extending-kubernetes-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected current extension APIs, CRD schema/status/conversion behavior, robust admission examples and EKS extension ownership/install prerequisites.",
+    "sources": [
+      "https://kubernetes.io/releases/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/",
+      "https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/",
+      "https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/scheduler/apis/config/types.go",
+      "https://github.com/kubernetes/cloud-provider-aws/blob/master/docs/prerequisites.md",
+      "https://github.com/kubernetes/cloud-provider-aws/blob/master/examples/existing-cluster/base/aws-cloud-controller-manager-daemonset.yaml",
+      "https://github.com/kubernetes-sigs/kubebuilder/blob/master/README.md",
+      "https://github.com/operator-framework/operator-sdk/blob/master/README.md",
+      "https://github.com/NVIDIA/k8s-device-plugin/blob/main/README.md",
+      "https://github.com/jaegertracing/jaeger-operator/blob/main/README.md",
+      "https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html",
+      "https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/user-docs/install.md",
+      "https://github.com/aws-controllers-k8s/s3-controller/blob/main/helm/values.yaml"
+    ],
+    "findings": [
+      "Replaced removed PodSecurityPolicy and scheduler v1beta1/legacy provider plugins; corrected ServiceAccount admission responsibilities and in-cluster custom-scheduler authentication prerequisites.",
+      "Fixed nil request/response handling, AdmissionReview v1 envelopes/UIDs, missing-label/volume JSON Patch parents, idempotent sidecar injection, reserved-name conflicts, TLS certificate paths and init/ephemeral container validation.",
+      "Conversion handler now supports both served versions, preserves metadata/status, validates versions, initializes response, preserves object order and returns a failure on any conversion error.",
+      "CRD status updates retain resourceVersion and can still conflict; scale is independent. Replaced forbidden uniqueItems:true and additionalProperties:false; made empty schemas concrete and qualified limited cron regex validation.",
+      "Controller example checks ownership before updates, reconciles image/replicas/environment settings, handles owner-reference errors and watches owned Deployments; external cleanup requires finalizers before deletion.",
+      "Removed obsolete SDK, CCM, Calico, NVIDIA and ACK installation recipes; retained instructional templates with explicit compatible-version/runtime/RBAC/IAM prerequisites. ACK uses OCI charts; IRSA policy is bucket/prefix-scoped.",
+      "Corrected archived/retired operator guidance, EKS worker add-on placement, IRSA Pod identity vs node roles, managed-add-on lifecycle/version discovery and reviewed upstream/EKS version boundaries.",
+      "Parent-owned asset followup: core11 diagram6 must move add-on workloads off the managed control plane and associate IRSA with Pods/ServiceAccounts, not node groups; diagram5 must retain CRI runtime between kubelet and CNI. Captions and inline CNI diagram corrected."
+    ],
+    "validation": [
+      "All original 1,443-line chapters and 1,904/1,901-line quizzes read in full before marking fullyRead; both quizzes retain all 15 exercises.",
+      "88 YAML/JSON fenced blocks parsed with duplicate-key detection; 58 native manifests (including heredocs) and 18 CRDs passed official Kubernetes v1.37 structural schema checks; intentionally partial snippets remain labeled.",
+      "Ten local Go tests passed for chapter admission handlers, complete quiz webhook server and conversion handler, compiled with Go 1.25 and Kubernetes Go modules v0.35.0: malformed requests, missing-map/array patches, idempotency, reserved-volume conflict, image tags, privileged init containers and metadata-preserving conversion round trip.",
+      "One H1 per document, paired question counts/fence balance and scoped git diff --check passed.",
+      "No cluster, AWS, Windows or AD operations executed. Generated operator scaffold integration and deployment-specific images/TLS/IAM still require environment validation."
+    ]
+  }
+]

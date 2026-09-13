@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Notebook Reconciliation Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1070,
+      625
+    ],
+    "animation": "none",
+    "views": [
+      {
+        "id": "spawn",
+        "label": "Spawn request",
+        "focus": [
+          "user",
+          "dash",
+          "crd"
+        ],
+        "note": "Web app creates the Notebook CR in the selected namespace."
+      },
+      {
+        "id": "reconcile",
+        "label": "Controller reconcile",
+        "focus": [
+          "crd",
+          "ctrl",
+          "k8s"
+        ],
+        "note": "Notebook controller reconciles StatefulSet/Service; Kubernetes creates and places Pods."
+      },
+      {
+        "id": "expose",
+        "label": "Notebook UI exposure",
+        "focus": [
+          "k8s",
+          "istio",
+          "user"
+        ],
+        "note": "Access uses configured gateway/routing/authorization, not the dashboard as a proxy."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "data scientist"
+    },
+    {
+      "id": "dash",
+      "type": "frontend",
+      "label": "Notebooks web app",
+      "sublabel": "dashboard entry point"
+    },
+    {
+      "id": "crd",
+      "type": "database",
+      "label": "Notebook CR",
+      "sublabel": "selected namespace"
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Notebook Controller",
+      "sublabel": "reconcile loop"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes workloads",
+      "sublabel": "StatefulSet / Pod"
+    },
+    {
+      "id": "istio",
+      "type": "security",
+      "label": "Istio access path",
+      "sublabel": "gateway / routing / authz"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 275,
+      "label": "Spawn"
+    },
+    {
+      "from": 295,
+      "to": 405,
+      "label": "Reconcile"
+    },
+    {
+      "from": 425,
+      "to": 535,
+      "label": "Expose"
+    }
+  ],
+  "messages": [
+    {
+      "id": "choose",
+      "from": "user",
+      "to": "dash",
+      "y": 195,
+      "label": "Choose image, CPU/mem, GPU count, PVC"
+    },
+    {
+      "id": "create-cr",
+      "from": "dash",
+      "to": "crd",
+      "y": 245,
+      "label": "Create Notebook CR",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "ctrl",
+      "to": "crd",
+      "y": 320,
+      "label": "Watch create/update events",
+      "variant": "dashed"
+    },
+    {
+      "id": "reconcile",
+      "from": "ctrl",
+      "to": "k8s",
+      "y": 365,
+      "label": "Reconcile StatefulSet / Service",
+      "variant": "emphasis",
+      "note": "volumes/resources in PodSpec"
+    },
+    {
+      "id": "inject",
+      "from": "k8s",
+      "to": "istio",
+      "y": 445,
+      "label": "Configured admission / routing",
+      "variant": "security",
+      "note": "injection belongs to webhook"
+    },
+    {
+      "id": "expose",
+      "from": "istio",
+      "to": "user",
+      "y": 505,
+      "label": "Authenticated notebook HTTP access",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "dash",
+      "from": 190,
+      "to": 252,
+      "type": "frontend"
+    },
+    {
+      "participant": "ctrl",
+      "from": 315,
+      "to": 372,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 360,
+      "to": 452,
+      "type": "cloud"
+    },
+    {
+      "participant": "istio",
+      "from": 440,
+      "to": 512,
+      "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Stop and resume",
+      "items": [
+        "Stop annotation present → StatefulSet 0; removed → 1",
+        "Notebook spec has no replicas field."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Persistence and culling",
+      "items": [
+        "PVC data persists; kernel memory is lost.",
+        "Culling defaults off and uses Jupyter kernel API activity."
+      ]
+    }
+  ]
+}

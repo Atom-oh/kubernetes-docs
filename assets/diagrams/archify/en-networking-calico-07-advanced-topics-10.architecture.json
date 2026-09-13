@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "WireGuard vs IPsec Comparison",
+    "locale": "en",
+    "output": "en-networking-calico-07-advanced-topics-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "crypto", "label": "Cryptography", "focus": ["wg-crypto", "ipsec-crypto"], "note": "WireGuard fixes one modern cipher suite; IPsec negotiates from a traditional set." },
+      { "id": "code", "label": "Code complexity", "focus": ["wg-code", "ipsec-code"], "note": "~4,000 lines vs 100,000+ lines: a far smaller attack surface for WireGuard." },
+      { "id": "keys", "label": "Key exchange", "focus": ["wg-keys", "ipsec-keys"], "note": "Noise protocol handshake with automatic rotation vs IKEv1/v2 negotiation." },
+      { "id": "overhead", "label": "Per-packet overhead", "focus": ["wg-overhead", "ipsec-overhead"], "note": "About 60 bytes per packet for WireGuard vs roughly 80-100 bytes for IPsec." }
+    ]
+  },
+  "components": [
+    { "id": "wg-crypto", "type": "security", "label": "Modern Crypto", "sublabel": "ChaCha20-Poly1305, Curve25519", "pos": [60, 70], "size": [280, 60] },
+    { "id": "wg-code", "type": "security", "label": "Simple Code", "sublabel": "~4,000 lines", "pos": [60, 170], "size": [280, 60] },
+    { "id": "wg-keys", "type": "security", "label": "Fast Key Exchange", "sublabel": "Noise Protocol", "pos": [60, 270], "size": [280, 60] },
+    { "id": "wg-overhead", "type": "security", "label": "Low Overhead", "sublabel": "~60 bytes / packet", "pos": [60, 370], "size": [280, 60] },
+    { "id": "ipsec-crypto", "type": "security", "label": "Traditional Crypto", "sublabel": "AES-GCM, SHA-256, DH", "pos": [520, 70], "size": [280, 60] },
+    { "id": "ipsec-code", "type": "security", "label": "Complex Code", "sublabel": "100,000+ lines", "pos": [520, 170], "size": [280, 60] },
+    { "id": "ipsec-keys", "type": "security", "label": "IKE Key Exchange", "sublabel": "IKEv1 / IKEv2", "pos": [520, 270], "size": [280, 60] },
+    { "id": "ipsec-overhead", "type": "security", "label": "Higher Overhead", "sublabel": "~80-100 bytes / packet", "pos": [520, 370], "size": [280, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "WireGuard", "wraps": ["wg-crypto", "wg-code", "wg-keys", "wg-overhead"] },
+    { "kind": "region", "label": "IPsec", "wraps": ["ipsec-crypto", "ipsec-code", "ipsec-keys", "ipsec-overhead"] }
+  ],
+  "connections": [
+    { "id": "vs-crypto", "from": "wg-crypto", "to": "ipsec-crypto", "label": "vs", "variant": "dashed" },
+    { "id": "vs-code", "from": "wg-code", "to": "ipsec-code", "label": "vs", "variant": "dashed" },
+    { "id": "vs-keys", "from": "wg-keys", "to": "ipsec-keys", "label": "vs", "variant": "dashed" },
+    { "id": "vs-overhead", "from": "wg-overhead", "to": "ipsec-overhead", "label": "vs", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Performance impact", "items": ["Throughput: WireGuard -5 to -10%, IPsec (AES-GCM) -15 to -25%", "Latency: +0.1-0.3 ms vs +0.5-1.0 ms", "CPU usage: +10-15% vs +30-50%"] },
+    { "dot": "cyan", "title": "Operations", "items": ["Key rotation: automatic vs manual or IKE", "NAT traversal: built-in vs requires NAT-T", "Roaming: seamless vs session re-establishment"] },
+    { "dot": "amber", "title": "Platform support", "items": ["Kernel: WireGuard needs 5.6+ (mainline), IPsec works on all versions", "Hardware offload: limited for WireGuard, widely supported for IPsec"] }
+  ]
+}

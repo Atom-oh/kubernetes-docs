@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "WireGuard 노드 간 암호화 경로",
+    "output": "ko-networking-calico-07-advanced-topics-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Pod"
+        },
+        "security": {
+          "label": "WireGuard"
+        },
+        "cloud": {
+          "label": "노드 NIC"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "encrypt",
+        "label": "송신 노드: 암호화",
+        "focus": [
+          "pod-a",
+          "wg1",
+          "eth1"
+        ],
+        "note": "Pod A의 평문 패킷이 wireguard.cali 인터페이스에서 암호화된 뒤 eth0으로 나갑니다."
+      },
+      {
+        "id": "tunnel",
+        "label": "노드 간 WireGuard 터널",
+        "focus": [
+          "eth1",
+          "eth2"
+        ],
+        "note": "암호화된 패킷만 UDP 51820 터널로 언더레이 네트워크를 지납니다."
+      },
+      {
+        "id": "decrypt",
+        "label": "수신 노드: 복호화",
+        "focus": [
+          "eth2",
+          "wg2",
+          "pod-b"
+        ],
+        "note": "Node 2의 wireguard.cali 인터페이스가 복호화한 평문 패킷이 Pod B에 도달합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "10.244.0.5",
+      "pos": [
+        110,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wg1",
+      "type": "security",
+      "label": "WireGuard Interface",
+      "sublabel": "wireguard.cali",
+      "pos": [
+        110,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "eth1",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "192.168.1.10",
+      "pos": [
+        110,
+        390
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "10.244.1.10",
+      "pos": [
+        640,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wg2",
+      "type": "security",
+      "label": "WireGuard Interface",
+      "sublabel": "wireguard.cali",
+      "pos": [
+        640,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "eth2",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "192.168.1.11",
+      "pos": [
+        640,
+        390
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node 1",
+      "wraps": [
+        "pod-a",
+        "wg1",
+        "eth1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2",
+      "wraps": [
+        "pod-b",
+        "wg2",
+        "eth2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-plain",
+      "from": "pod-a",
+      "to": "wg1",
+      "label": "평문",
+      "labelDy": 24
+    },
+    {
+      "id": "a-encrypt",
+      "from": "wg1",
+      "to": "eth1",
+      "label": "암호화",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "tunnel",
+      "from": "eth1",
+      "to": "eth2",
+      "label": "WireGuard 터널 · UDP 51820",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-decrypt",
+      "from": "eth2",
+      "to": "wg2",
+      "label": "복호화",
+      "variant": "security"
+    },
+    {
+      "id": "b-plain",
+      "from": "wg2",
+      "to": "pod-b",
+      "label": "평문"
+    }
+  ]
+}

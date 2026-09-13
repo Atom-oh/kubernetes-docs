@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ServiceEntry Integration Operation Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      600
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "resolve",
+        "label": "Virtual IP lookup",
+        "focus": [
+          "pod",
+          "dns"
+        ],
+        "note": "The Pod looks up api.legacy.internal and Istio DNS returns the virtual IP from the ServiceEntry's addresses field."
+      },
+      {
+        "id": "match",
+        "label": "WorkloadEntry matching",
+        "focus": [
+          "pod",
+          "envoy"
+        ],
+        "note": "Envoy finds the registered WorkloadEntry via the ServiceEntry's workloadSelector label (app: legacy-api)."
+      },
+      {
+        "id": "connect",
+        "label": "mTLS connection to the VM",
+        "focus": [
+          "envoy",
+          "vm",
+          "pod"
+        ],
+        "note": "Envoy opens an mTLS connection to the discovered WorkloadEntry at 192.168.1.100:8080 and returns the response to the Pod."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Kubernetes Pod",
+      "sublabel": "calling workload"
+    },
+    {
+      "id": "dns",
+      "type": "cloud",
+      "label": "Istio DNS",
+      "sublabel": "DNS proxy"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar"
+    },
+    {
+      "id": "vm",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "WorkloadEntry · 192.168.1.100"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 250,
+      "label": "1. DNS lookup"
+    },
+    {
+      "from": 270,
+      "to": 365,
+      "label": "2. ServiceEntry workloadSelector → WorkloadEntry match"
+    },
+    {
+      "from": 380,
+      "to": 525,
+      "label": "3. mTLS connection and response"
+    }
+  ],
+  "messages": [
+    {
+      "id": "lookup",
+      "from": "pod",
+      "to": "dns",
+      "y": 190,
+      "label": "Lookup api.legacy.internal"
+    },
+    {
+      "id": "vip",
+      "from": "dns",
+      "to": "pod",
+      "y": 232,
+      "label": "240.240.1.1 (virtual IP)",
+      "variant": "return"
+    },
+    {
+      "id": "http",
+      "from": "pod",
+      "to": "envoy",
+      "y": 292,
+      "label": "HTTP request 240.240.1.1:8080 → workloadSelector match",
+      "variant": "emphasis",
+      "note": "Envoy: lookup ServiceEntry · match workloadSelector"
+    },
+    {
+      "id": "mtls",
+      "from": "envoy",
+      "to": "vm",
+      "y": 400,
+      "label": "mTLS connection 192.168.1.100:8080",
+      "variant": "security",
+      "note": "WorkloadEntry found · 192.168.1.100"
+    },
+    {
+      "id": "vmres",
+      "from": "vm",
+      "to": "envoy",
+      "y": 450,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "podres",
+      "from": "envoy",
+      "to": "pod",
+      "y": 500,
+      "label": "Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "pod",
+      "from": 185,
+      "to": 507,
+      "type": "backend"
+    },
+    {
+      "participant": "dns",
+      "from": 185,
+      "to": 238,
+      "type": "cloud"
+    },
+    {
+      "participant": "envoy",
+      "from": 287,
+      "to": 507,
+      "type": "security"
+    },
+    {
+      "participant": "vm",
+      "from": 395,
+      "to": 457,
+      "type": "external"
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istiod 내부 구조",
+    "output": "ko-service-mesh-istio-03-architecture-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "validate",
+        "label": "구성 검증",
+        "focus": [
+          "k8s-api",
+          "galley"
+        ],
+        "note": "Kubernetes API의 Istio CRD가 Galley 기능에서 먼저 검증·처리된다."
+      },
+      {
+        "id": "xds-push",
+        "label": "xDS 구성 푸시",
+        "focus": [
+          "galley",
+          "pilot",
+          "envoy"
+        ],
+        "note": "검증된 구성이 Pilot 기능에서 Envoy 구성으로 변환되어 xDS API로 사이드카에 푸시된다."
+      },
+      {
+        "id": "certs",
+        "label": "인증서 발급",
+        "focus": [
+          "galley",
+          "citadel",
+          "envoy"
+        ],
+        "note": "Citadel 기능이 CA로서 SPIFFE Identity를 검증하고 X.509 인증서를 SDS API로 전달한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "k8s-api",
+      "type": "external",
+      "label": "Kubernetes API",
+      "sublabel": "API Server + Istio CRDs",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "citadel",
+      "type": "security",
+      "label": "Citadel 기능",
+      "sublabel": "CA · Identity (SPIFFE)",
+      "pos": [
+        80,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "galley",
+      "type": "backend",
+      "label": "Galley 기능",
+      "sublabel": "구성 검증 · 처리",
+      "pos": [
+        430,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pilot",
+      "type": "backend",
+      "label": "Pilot 기능",
+      "sublabel": "Service Discovery · xDS",
+      "pos": [
+        780,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "frontend",
+      "label": "Envoy Proxies",
+      "sublabel": "사이드카 1..N",
+      "pos": [
+        430,
+        470
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istiod · 단일 프로세스",
+      "wraps": [
+        "citadel",
+        "galley",
+        "pilot"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-to-galley",
+      "from": "k8s-api",
+      "to": "galley",
+      "label": "구성 검증 요청",
+      "labelDy": 40
+    },
+    {
+      "id": "galley-to-citadel",
+      "from": "galley",
+      "to": "citadel",
+      "label": "검증됨"
+    },
+    {
+      "id": "galley-to-pilot",
+      "from": "galley",
+      "to": "pilot",
+      "label": "검증됨"
+    },
+    {
+      "id": "citadel-to-envoy",
+      "from": "citadel",
+      "to": "envoy",
+      "label": "X.509 · SDS API",
+      "variant": "security"
+    },
+    {
+      "id": "pilot-to-envoy",
+      "from": "pilot",
+      "to": "envoy",
+      "label": "xDS API · 구성 푸시",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istiod 단일 바이너리",
+      "items": [
+        "Istio 1.5+에서 Pilot·Citadel·Galley는 별도 컴포넌트가 아니라 Istiod(pilot-discovery) 내부 기능이다",
+        "Pilot/Citadel/Galley는 기능을 설명하기 위한 역사적 명칭이다"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Data Plane 전달",
+      "items": [
+        "Pilot 기능: Istio CRD를 Envoy 구성으로 변환해 xDS API로 푸시",
+        "Citadel 기능: SPIFFE Identity 검증 후 X.509 인증서 발급"
+      ]
+    }
+  ]
+}

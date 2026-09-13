@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "트래픽 흐름 (iptables 적용 후)",
+    "output": "ko-service-mesh-istio-03-architecture-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "outbound",
+        "label": "아웃바운드 경로",
+        "focus": [
+          "app",
+          "output",
+          "l15001",
+          "ext"
+        ],
+        "note": "애플리케이션의 요청은 OUTPUT 체인에서 15001로 REDIRECT되고, Envoy(UID 1337)의 요청은 가로채기 규칙을 우회해 외부 서비스로 나간다."
+      },
+      {
+        "id": "inbound",
+        "label": "인바운드 경로",
+        "focus": [
+          "ext",
+          "prerouting",
+          "l15006",
+          "app"
+        ],
+        "note": "파드로 들어오는 트래픽은 PREROUTING 체인에서 15006으로 REDIRECT되고, Envoy가 mTLS를 검증한 뒤 localhost:8080으로 전달한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "localhost:8080",
+      "tag": "APP 컨테이너",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "output",
+      "type": "security",
+      "label": "OUTPUT 체인",
+      "sublabel": "iptables nat · 아웃바운드",
+      "tag": "! --uid-owner 1337",
+      "pos": [
+        280,
+        120
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l15001",
+      "type": "backend",
+      "label": "Listener 15001",
+      "sublabel": "Envoy 아웃바운드 · 라우팅",
+      "tag": "UID 1337",
+      "pos": [
+        640,
+        120
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ext",
+      "type": "external",
+      "label": "외부 서비스",
+      "sublabel": "reviews:9080",
+      "pos": [
+        960,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "prerouting",
+      "type": "security",
+      "label": "PREROUTING 체인",
+      "sublabel": "iptables nat · 인바운드",
+      "tag": "REDIRECT 15006",
+      "pos": [
+        640,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "l15006",
+      "type": "backend",
+      "label": "Listener 15006",
+      "sublabel": "Envoy 인바운드 · mTLS 검증",
+      "tag": "UID 1337",
+      "pos": [
+        280,
+        380
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "파드 네트워크 네임스페이스",
+      "wraps": [
+        "app",
+        "output",
+        "l15001",
+        "prerouting",
+        "l15006"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "app",
+      "to": "output",
+      "label": "1. curl reviews:9080",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2",
+      "from": "output",
+      "to": "l15001",
+      "label": "2. REDIRECT :15001",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c3",
+      "from": "l15001",
+      "to": "ext",
+      "label": "3. 라우팅 · UID 1337 우회",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c4",
+      "from": "ext",
+      "to": "prerouting",
+      "label": "4. 인바운드 요청"
+    },
+    {
+      "id": "c5",
+      "from": "prerouting",
+      "to": "l15006",
+      "label": "5. REDIRECT :15006"
+    },
+    {
+      "id": "c6",
+      "from": "l15006",
+      "to": "app",
+      "label": "6. mTLS 검증 후 localhost:8080",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "iptables nat 규칙",
+      "items": [
+        "OUTPUT: UID 1337(Envoy) 제외 TCP → REDIRECT 15001",
+        "PREROUTING: 인바운드 TCP → REDIRECT 15006"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "가로채기 제외",
+      "items": [
+        "localhost(127.0.0.1) 트래픽",
+        "Istiod 통신 15012",
+        "DNS(UDP 53)"
+      ]
+    }
+  ]
+}

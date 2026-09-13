@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Fault Injection 개요",
+    "output": "ko-service-mesh-istio-traffic-management-08-fault-injection-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      420
+    ],
+    "views": [
+      {
+        "id": "delay-path",
+        "label": "Delay 주입",
+        "focus": [
+          "client",
+          "delay",
+          "service"
+        ],
+        "note": "지연이 주입된 요청은 3초 뒤 서비스에 느리게 전달된다."
+      },
+      {
+        "id": "abort-path",
+        "label": "Abort 주입",
+        "focus": [
+          "client",
+          "abort"
+        ],
+        "note": "중단된 요청은 서비스에 도달하지 않고 HTTP 503 에러가 클라이언트로 바로 반환된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "요청 발신",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "delay",
+      "type": "security",
+      "label": "지연 (Delay)",
+      "sublabel": "fixedDelay 3s",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "abort",
+      "type": "security",
+      "label": "중단 (Abort)",
+      "sublabel": "httpStatus 503",
+      "pos": [
+        330,
+        290
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "서비스",
+      "sublabel": "목적지 워크로드",
+      "pos": [
+        660,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Fault Injection",
+      "wraps": [
+        "delay",
+        "abort"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-delay",
+      "from": "client",
+      "to": "delay",
+      "label": "요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "client-to-abort",
+      "from": "client",
+      "to": "abort",
+      "label": "요청"
+    },
+    {
+      "id": "delay-to-service",
+      "from": "delay",
+      "to": "service",
+      "label": "느린 응답",
+      "variant": "dashed"
+    },
+    {
+      "id": "abort-to-client",
+      "from": "abort",
+      "to": "client",
+      "label": "에러 (HTTP 503)",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ]
+}

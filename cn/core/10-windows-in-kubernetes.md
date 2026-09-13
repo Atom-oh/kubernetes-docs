@@ -1,80 +1,51 @@
-# Windows in Kubernetes
+# Kubernetes 中的 Windows
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
+> **支持的版本**: Kubernetes 1.32, 1.33, 1.34
 > **最后更新**: February 11, 2026
 
-Kubernetes 最初是为 Linux containers 设计的，但从 1.14 版本开始增加了对 Windows containers（Windows 容器）的生产级支持。在本章中，我们将探讨如何在 Kubernetes 中运行 Windows workloads、其架构、限制，以及 Amazon EKS 中的 Windows 支持。
+Kubernetes 最初是为 Linux 容器设计的，但从 1.14 版本开始增加了对 Windows 容器的生产支持。本章将探讨如何在 Kubernetes 中运行 Windows 工作负载、相关架构、限制，以及 Amazon EKS 中的 Windows 支持。
 
-## Table of Contents
-1. [Windows Container Overview](#windows-container-overview)
-2. [Kubernetes Windows Support Architecture](#kubernetes-windows-support-architecture)
-3. [Windows Node Limitations](#windows-node-limitations)
-4. [Windows Node Setup](#windows-node-setup)
-5. [Deploying Windows Containers](#deploying-windows-containers)
-6. [Networking](#networking)
-7. [Storage](#storage)
-8. [Monitoring and Logging](#monitoring-and-logging)
-9. [Security](#security)
-10. [Windows Support in Amazon EKS](#windows-support-in-amazon-eks)
-11. [Best Practices](#best-practices)
-12. [Conclusion](#conclusion)
+## 目录
+1. [Windows 容器概述](#windows-container-overview)
+2. [Kubernetes Windows 支持架构](#kubernetes-windows-support-architecture)
+3. [Windows 节点限制](#windows-node-limitations)
+4. [Windows 节点设置](#windows-node-setup)
+5. [部署 Windows 容器](#deploying-windows-containers)
+6. [网络](#networking)
+7. [存储](#storage)
+8. [监控和日志记录](#monitoring-and-logging)
+9. [安全性](#security)
+10. [Amazon EKS 中的 Windows 支持](#windows-support-in-amazon-eks)
+11. [最佳实践](#best-practices)
+12. [结论](#conclusion)
 
-## Windows Container Overview
+## Windows 容器概述
 
-Windows containers 是运行在 Windows 操作系统上的 containers，可用于将 Windows 应用程序容器化并进行部署。
+Windows 容器是在 Windows 操作系统上运行的容器，可让您将 Windows 应用程序容器化并进行部署。
 
-### Windows Container Types
+### Windows 容器类型
 
-Windows containers 有两种类型：
+Windows 容器有两种类型：
 
-1. **Windows Server Containers**：与 Linux containers 类似，它们共享宿主机 OS kernel。它们轻量且启动速度快，但要求与宿主机使用相同的 Windows 版本。
+1. **Windows Server Containers**：与 Linux 容器类似，它们共享主机 OS 内核。它们轻量且启动迅速，但要求与主机使用相同的 Windows 版本。
 
-2. **Hyper-V Isolation Containers**：每个 container 都运行在一个轻量级 VM 中，提供更高级别的隔离。它们可以运行与宿主机不同的 Windows 版本，但会使用更多资源。
+2. **Hyper-V Isolation Containers**：每个容器都在轻量级 VM 中运行，提供更高级别的隔离。它们可以运行与主机不同的 Windows 版本，但会使用更多资源。
 
-下图展示了两种 Windows container 类型之间的架构差异：
+下图展示了两种 Windows 容器类型之间的架构差异：
 
-```mermaid
-flowchart TD
-    subgraph "Windows Server Containers"
-        WSC1[Windows App 1] --- WSC2[Windows App 2] --- WSC3[Windows App 3]
-        WSC1 --- WSCR[Container Runtime]
-        WSC2 --- WSCR
-        WSC3 --- WSCR
-        WSCR --- WSOS[Windows Server OS]
-        WSOS --- WSHW[Physical Hardware]
-    end
+![Windows Server Containers 的对比图，其中多个 Windows 应用共享一个容器运行时和主机 OS 内核；Hyper-V Isolation Containers 中，每个应用在各自的轻量级 VM 中运行，在通过 Hyper-V hypervisor 到达相同的 Windows Server OS 和物理硬件之前，各自拥有专用的 Windows OS 内核。](../.gitbook/assets/en-core-10-windows-in-kubernetes-0.png)
 
-    subgraph "Hyper-V Isolation Containers"
-        HVC1[Windows App 1] --- HVCR1[Container Runtime]
-        HVCR1 --- HVOS1[Windows OS Kernel]
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-0.html)
 
-        HVC2[Windows App 2] --- HVCR2[Container Runtime]
-        HVCR2 --- HVOS2[Windows OS Kernel]
+### Windows 容器镜像
 
-        HVOS1 --- HV[Hyper-V Hypervisor]
-        HVOS2 --- HV
-        HV --- HVHOS[Windows Server OS]
-        HVHOS --- HVHW[Physical Hardware]
-    end
+Windows 容器镜像基于 Microsoft 提供的基础镜像：
 
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+1. **Windows Server Core**：提供最小 Windows Server 环境的轻量级镜像
+2. **Nano Server**：占用空间更小的超轻量级镜像
+3. **Windows**：提供完整 Windows Server 环境的镜像
 
-    class WSC1,WSC2,WSC3,HVC1,HVC2 userApp;
-    class WSCR,HVCR1,HVCR2,HVOS1,HVOS2,HV k8sComponent;
-    class WSOS,WSHW,HVHOS,HVHW default;
-```
-
-### Windows Container Images
-
-Windows container images 基于 Microsoft 提供的 base images：
-
-1. **Windows Server Core**：提供最小化 Windows Server 环境的轻量级 image
-2. **Nano Server**：占用空间更小的超轻量级 image
-3. **Windows**：提供完整 Windows Server 环境的 image
-
-示例 Dockerfile：
+Dockerfile 示例：
 
 ```dockerfile
 FROM mcr.microsoft.com/windows/servercore:ltsc2019
@@ -85,120 +56,86 @@ EXPOSE 80
 CMD ["powershell", "-Command", "Start-Service W3SVC; Get-Content -Path 'C:\\inetpub\\logs\\LogFiles\\W3SVC1\\u_ex*' -Wait"]
 ```
 
-## Kubernetes Windows Support Architecture
+## Kubernetes Windows 支持架构
 
-Kubernetes 中的 Windows 支持基于混合环境。Control plane components 始终运行在 Linux 上，而 worker nodes 可以是 Linux 或 Windows。
+Kubernetes 中的 Windows 支持基于混合环境。控制平面组件始终在 Linux 上运行，而工作节点可以是 Linux 或 Windows。
 
-### Architecture Overview
+### 架构概述
 
 Kubernetes 中的 Windows 支持架构如下：
 
-1. **Linux Control Plane**：kube-apiserver、kube-controller-manager、kube-scheduler 和 etcd 始终运行在 Linux 上。
-2. **Linux Worker Nodes**：运行 system components（CoreDNS、metrics-server 等）。
-3. **Windows Worker Nodes**：运行 Windows application workloads。
+1. **Linux 控制平面**：kube-apiserver、kube-controller-manager、kube-scheduler 和 etcd 始终在 Linux 上运行。
+2. **Linux 工作节点**：运行系统组件（CoreDNS、metrics-server 等）。
+3. **Windows 工作节点**：运行 Windows 应用程序工作负载。
 
-```mermaid
-flowchart TD
-    subgraph "Linux Control Plane"
-        API[kube-apiserver] --> CM[kube-controller-manager]
-        API --> SCH[kube-scheduler]
-        API --> ETCD[(etcd)]
-    end
+![仅 Linux 的控制平面（kube-apiserver、kube-controller-manager、kube-scheduler、etcd）管理一个混合集群，该集群包含一个运行 CoreDNS 和 metrics-server 等系统 Pod 的 Linux 工作节点，以及两个各自运行 kubelet、kube-proxy 和 Windows 容器的 Windows 工作节点。](../.gitbook/assets/en-core-10-windows-in-kubernetes-1.png)
 
-    API --> LN[Linux Node]
-    API --> WN1[Windows Node 1]
-    API --> WN2[Windows Node 2]
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-1.html)
 
-    subgraph "Linux Worker Node"
-        LN --> CoreDNS[CoreDNS]
-        LN --> Metrics[metrics-server]
-        LN --> Other[Other System Pods]
-    end
+### Windows 节点组件
 
-    subgraph "Windows Worker Nodes"
-        WN1 --> WK1[kubelet]
-        WN1 --> WP1[kube-proxy]
-        WN1 --> WC1[Windows Containers]
+在 Windows 节点上运行的 Kubernetes 组件：
 
-        WN2 --> WK2[kubelet]
-        WN2 --> WP2[kube-proxy]
-        WN2 --> WC2[Windows Containers]
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class API,CM,SCH,LN,WN1,WN2,WK1,WK2,WP1,WP2,CoreDNS,Metrics,Other k8sComponent;
-    class ETCD dataStore;
-    class WC1,WC2 userApp;
-```
-
-### Windows Node Components
-
-运行在 Windows nodes 上的 Kubernetes components：
-
-1. **kubelet**：管理 node 上的 pods 和 containers
+1. **kubelet**：管理节点上的 Pod 和容器
 2. **kube-proxy**：管理网络规则
 3. **CNI Plugin**：网络配置
 4. **CSI Plugin**：存储管理
 
-## Windows Node Limitations
+## Windows 节点限制
 
-在 Kubernetes 中使用 Windows nodes 时，需要注意若干限制。
+在 Kubernetes 中使用 Windows 节点时，需要注意若干限制。
 
-### Feature Limitations
+### 功能限制
 
-1. **Privileged Containers**：Windows 不支持 privileged containers。
-2. **Host Network Mode**：Windows pods 不能使用 host network mode。
-3. **Pod Security Context**：不支持部分 security context 功能（runAsUser、fsGroup 等）。
-4. **DaemonSet**：运行在 Windows nodes 上的 DaemonSets 需要特殊考虑。
-5. **emptyDir Volumes**：Windows 不支持基于内存的 emptyDir volumes。
-6. **Resource Limits**：CPU limits 在 Windows 上的应用方式不同。
+1. **特权容器**：Windows 不支持特权容器。
+2. **主机网络模式**：Windows Pod 无法使用主机网络模式。
+3. **Pod 安全上下文**：不支持部分安全上下文功能（runAsUser、fsGroup 等）。
+4. **DaemonSet**：在 Windows 节点上运行的 DaemonSet 需要特殊考虑。
+5. **emptyDir 卷**：Windows 不支持基于内存的 emptyDir 卷。
+6. **资源限制**：CPU 限制在 Windows 上的应用方式不同。
 
-### Networking Limitations
+### 网络限制
 
-1. **Network Mode**：Windows 仅支持 L3 networking。
-2. **Service Types**：Windows nodes 对某些 service types 存在限制。
-3. **Load Balancing**：部分 load balancing 功能可能受限。
+1. **网络模式**：Windows 仅支持 L3 网络。
+2. **Service 类型**：Windows 节点对某些 Service 类型存在限制。
+3. **负载均衡**：某些负载均衡功能可能受限。
 
-### Operating System Version Compatibility
+### 操作系统版本兼容性
 
-Windows containers 与宿主机 OS 版本之间存在重要的兼容性注意事项：
+Windows 容器与主机 OS 版本之间存在重要的兼容性注意事项：
 
-| Container Base Image | Compatible Host OS Versions |
+| 容器基础镜像 | 兼容的主机 OS 版本 |
 |---------------------|---------------------------|
 | Windows Server 2019 | Windows Server 2019 |
 | Windows Server 2022 | Windows Server 2022 |
 
-Hyper-V isolation 可以放宽这些限制，但需要额外资源。
-## Windows Node Setup
+Hyper-V 隔离可以放宽这些限制，但需要额外资源。
+## Windows 节点设置
 
-我们来了解向 Kubernetes cluster 添加 Windows nodes 的流程。
+让我们了解将 Windows 节点添加到 Kubernetes 集群的过程。
 
-### Prerequisites
+### 前提条件
 
-在设置 Windows nodes 之前，请验证以下内容：
+在设置 Windows 节点之前，请确认以下条件：
 
-1. **Kubernetes Version**：1.14 或更高版本
-2. **Windows Version**：Windows Server 2019 或更高版本
-3. **Network Plugin**：支持 Windows 的 CNI plugin（Calico、Flannel 等）
-4. **Container Runtime**：Docker、containerd 等
+1. **Kubernetes 版本**：1.14 或更高版本
+2. **Windows 版本**：Windows Server 2019 或更高版本
+3. **网络插件**：支持 Windows 的 CNI 插件（Calico、Flannel 等）
+4. **容器运行时**：Docker、containerd 等
 
-### Preparing Windows Nodes
+### 准备 Windows 节点
 
-准备 Windows node 的步骤：
+准备 Windows 节点的步骤：
 
-1. **Install Windows Server**：安装 Windows Server 2019 或更高版本
-2. **Enable Container Feature**：
+1. **安装 Windows Server**：安装 Windows Server 2019 或更高版本
+2. **启用容器功能**：
 
 ```powershell
 Install-WindowsFeature -Name Containers
 Restart-Computer -Force
 ```
 
-3. **Install Docker**：
+3. **安装 Docker**：
 
 ```powershell
 Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
@@ -206,7 +143,7 @@ Install-Package -Name Docker -ProviderName DockerMsftProvider -Force
 Restart-Computer -Force
 ```
 
-4. **Install Kubernetes Components**：
+4. **安装 Kubernetes 组件**：
 
 ```powershell
 # Create directory
@@ -225,7 +162,7 @@ mv kube-proxy.exe C:\k
 mv wins.exe C:\k
 ```
 
-5. **Configure Network**：
+5. **配置网络**：
 
 ```powershell
 # Set firewall rules
@@ -234,15 +171,15 @@ New-NetFirewallRule -Name https -DisplayName 'https' -Enabled True -Direction In
 New-NetFirewallRule -Name http -DisplayName 'http' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 80
 ```
 
-### Joining Windows Node Using kubeadm
+### 使用 kubeadm 加入 Windows 节点
 
-在 Linux control plane 上生成 join token：
+在 Linux 控制平面上生成加入令牌：
 
 ```bash
 kubeadm token create --print-join-command
 ```
 
-在 Windows node 上运行 join command：
+在 Windows 节点上运行加入命令：
 
 ```powershell
 # Run kubeadm join command
@@ -253,22 +190,22 @@ sc.exe create kubelet binPath= "C:\k\kubelet.exe --windows-service --kubeconfig=
 Start-Service kubelet
 ```
 
-### Setting Windows Node Labels
+### 设置 Windows 节点标签
 
-在 Windows nodes 上设置适当的 labels，以控制 workload scheduling：
+在 Windows 节点上设置适当的标签以控制工作负载调度：
 
 ```bash
 kubectl label node <windows-node-name> kubernetes.io/os=windows
 kubectl label node <windows-node-name> kubernetes.io/arch=amd64
 ```
 
-## Deploying Windows Containers
+## 部署 Windows 容器
 
-我们来了解如何将 Windows containers 部署到 Kubernetes。
+让我们了解如何将 Windows 容器部署到 Kubernetes。
 
-### Using Node Selector
+### 使用节点选择器
 
-部署 Windows workloads 时，请使用 node selector，以确保它们被调度到 Windows nodes：
+部署 Windows 工作负载时，使用节点选择器以确保它们被调度到 Windows 节点：
 
 ```yaml
 apiVersion: apps/v1
@@ -301,16 +238,16 @@ spec:
         - containerPort: 80
 ```
 
-### Resource Requests and Limits
+### 资源请求和限制
 
-Windows containers 的 resource requests 和 limits 与 Linux containers 的处理方式不同：
+Windows 容器的资源请求和限制与 Linux 容器的处理方式不同：
 
-1. **CPU Limits**：CPU limits 在 Windows 上的应用方式不同。例如，CPU limit 为 1 表示可以使用单个 CPU core 的 100%。
-2. **Memory Limits**：Windows containers 会遵守 memory limits，但某些 system processes 可能会导致额外开销。
+1. **CPU 限制**：CPU 限制在 Windows 上的应用方式不同。例如，CPU 限制为 1 表示可以使用单个 CPU 核心的 100%。
+2. **内存限制**：Windows 容器会遵守内存限制，但某些系统进程可能会导致额外开销。
 
-### Container Customization
+### 容器自定义
 
-在 Windows containers 中运行自定义 scripts：
+在 Windows 容器中运行自定义脚本：
 
 ```yaml
 apiVersion: v1
@@ -333,9 +270,9 @@ spec:
       }
 ```
 
-### Multi-Container Pods
+### 多容器 Pod
 
-Windows 也支持 multi-container pods，但存在一些限制：
+Windows 也支持多容器 Pod，但存在一些限制：
 
 ```yaml
 apiVersion: v1
@@ -361,64 +298,29 @@ spec:
       }
 ```
 
-## Networking
+## 网络
 
-Windows nodes 上的 networking 与 Linux nodes 具有不同特性。
+Windows 节点上的网络与 Linux 节点具有不同的特性。
 
-下图展示了混合 Windows 和 Linux nodes 的 Kubernetes cluster 的 networking 架构：
+下图展示了具有混合 Windows 和 Linux 节点的 Kubernetes 集群的网络架构：
 
-```mermaid
-flowchart TD
-    subgraph "External Network"
-        Client[Client] --> LB[Load Balancer]
-    end
+![客户端请求到达 Kubernetes Service，它会在 Linux 和 Windows Pod 之间进行负载均衡，而无论节点 OS 如何，Pod 本身都构成一个扁平的网状网络。](../.gitbook/assets/en-core-10-windows-in-kubernetes-2.png)
 
-    LB --> SVC[Kubernetes Service]
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-2.html)
 
-    subgraph "Kubernetes Cluster"
-        SVC --> LP1[Linux Pod]
-        SVC --> LP2[Linux Pod]
-        SVC --> WP1[Windows Pod]
-        SVC --> WP2[Windows Pod]
+### 支持的网络插件
 
-        subgraph "Linux Node"
-            LP1
-            LP2
-        end
+Windows 节点支持的网络插件：
 
-        subgraph "Windows Node"
-            WP1
-            WP2
-        end
+1. **Flannel**：VXLAN 或 host-gw 模式
+2. **Calico**：VXLAN 模式
+3. **Antrea**：基于 OVS 的网络
+4. **Azure CNI**：用于 Azure 环境
+5. **AWS VPC CNI**：用于 AWS 环境
 
-        LP1 <--> LP2
-        LP1 <--> WP1
-        LP2 <--> WP2
-        WP1 <--> WP2
-    end
+### Flannel 设置示例
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class SVC k8sComponent;
-    class LP1,LP2,WP1,WP2 userApp;
-    class Client,LB default;
-```
-
-### Supported Network Plugins
-
-Windows nodes 支持的 network plugins：
-
-1. **Flannel**：VXLAN 或 host-gw mode
-2. **Calico**：VXLAN mode
-3. **Antrea**：基于 OVS 的 networking
-4. **Azure CNI**：用于 Azure environments
-5. **AWS VPC CNI**：用于 AWS environments
-
-### Flannel Setup Example
-
-使用 Flannel 的 Windows networking 设置：
+使用 Flannel 设置 Windows 网络：
 
 ```yaml
 apiVersion: apps/v1
@@ -485,9 +387,9 @@ spec:
           name: kube-flannel-cfg
 ```
 
-### Exposing Services
+### 暴露 Service
 
-如何在 Windows nodes 上暴露 services：
+如何在 Windows 节点上暴露 Service：
 
 ```yaml
 apiVersion: v1
@@ -503,9 +405,9 @@ spec:
   type: LoadBalancer
 ```
 
-### Network Policies
+### 网络策略
 
-若要在 Windows nodes 上使用 network policies，需要使用支持 network policies 的 CNI plugin（例如 Calico）：
+要在 Windows 节点上使用网络策略，您需要支持网络策略的 CNI 插件（例如 Calico）：
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -528,66 +430,30 @@ spec:
       port: 80
 ```
 
-## Storage
+## 存储
 
-我们来了解 Windows nodes 上可用的 storage options。
+让我们了解 Windows 节点上可用的存储选项。
 
-下图展示了 Windows nodes 上可用的各种 storage options：
+下图展示了 Windows 节点上可用的各种存储选项：
 
-```mermaid
-flowchart TD
-    subgraph "Windows Pod"
-        WC[Windows Container]
-    end
+![Windows Pod 中的 Windows 容器挂载 Windows 节点上的 emptyDir 和 hostPath 卷（hostPath 由节点磁盘支持）、由 Kubernetes API 提供的 ConfigMap 和 Secret 卷，以及通过 CSI 驱动程序连接至 Azure Disk/File、AWS EBS 或 SMB 共享的 PersistentVolume。](../.gitbook/assets/en-core-10-windows-in-kubernetes-3.png)
 
-    WC --> ED[emptyDir Volume]
-    WC --> HP[hostPath Volume]
-    WC --> CM[ConfigMap Volume]
-    WC --> SC[Secret Volume]
-    WC --> PV[PersistentVolume]
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-3.html)
 
-    subgraph "Windows Node"
-        ED
-        HP --> ND[Node Disk]
-    end
+### 支持的卷类型
 
-    subgraph "Kubernetes API"
-        CM
-        SC
-    end
+Windows 节点支持的卷类型：
 
-    PV --> CSI[CSI Driver]
-    CSI --> AZ[Azure Disk/File]
-    CSI --> AWS[AWS EBS]
-    CSI --> SMB[SMB Share]
+1. **emptyDir**：临时存储（不支持基于内存的 emptyDir）
+2. **hostPath**：主机节点文件系统
+3. **configMap**：配置数据
+4. **secret**：敏感数据
+5. **azureFile**：Azure File 存储
+6. **awsElasticBlockStore**：AWS EBS 卷
+7. **azureDisk**：Azure Disk 存储
+8. **CSI**：Container Storage Interface 驱动程序
 
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class WC userApp;
-    class ED,HP,CM,SC,PV,CSI k8sComponent;
-    class ND,SMB dataStore;
-    class AWS awsService;
-    class AZ default;
-```
-
-### Supported Volume Types
-
-Windows nodes 支持的 volume types：
-
-1. **emptyDir**：临时 storage（不支持基于内存的 emptyDir）
-2. **hostPath**：Host node filesystem
-3. **configMap**：Configuration data
-4. **secret**：Sensitive data
-5. **azureFile**：Azure File storage
-6. **awsElasticBlockStore**：AWS EBS volumes
-7. **azureDisk**：Azure Disk storage
-8. **CSI**：Container Storage Interface drivers
-
-### emptyDir Volume Example
+### emptyDir 卷示例
 
 ```yaml
 apiVersion: v1
@@ -617,7 +483,7 @@ spec:
     emptyDir: {}
 ```
 
-### hostPath Volume Example
+### hostPath 卷示例
 
 ```yaml
 apiVersion: v1
@@ -649,7 +515,7 @@ spec:
       type: DirectoryOrCreate
 ```
 
-### ConfigMap and Secret Volume Example
+### ConfigMap 和 Secret 卷示例
 
 ```yaml
 apiVersion: v1
@@ -704,9 +570,9 @@ spec:
       secretName: windows-secret
 ```
 
-### Using CSI Drivers
+### 使用 CSI 驱动程序
 
-在 Windows 上使用 CSI drivers 的示例：
+在 Windows 上使用 CSI 驱动程序的示例：
 
 ```yaml
 apiVersion: v1
@@ -745,19 +611,19 @@ spec:
     persistentVolumeClaim:
       claimName: windows-pvc
 ```
-## Monitoring and Logging
+## 监控和日志记录
 
-我们来了解 Windows nodes 和 containers 的 monitoring 与 logging 方法。
+让我们了解 Windows 节点和容器的监控与日志记录方法。
 
-### Monitoring
+### 监控
 
-用于 monitoring Windows nodes 的工具：
+用于监控 Windows 节点的工具：
 
-1. **Prometheus Windows Exporter**：收集 Windows node metrics
-2. **metrics-server**：提供基础 resource usage metrics
-3. **Datadog, Dynatrace, New Relic**：商业 monitoring solutions
+1. **Prometheus Windows Exporter**：收集 Windows 节点指标
+2. **metrics-server**：提供基本资源使用指标
+3. **Datadog、Dynatrace、New Relic**：商业监控解决方案
 
-在 Windows nodes 上安装 Prometheus Windows Exporter：
+在 Windows 节点上安装 Prometheus Windows Exporter：
 
 ```powershell
 # Download Windows Exporter
@@ -776,17 +642,17 @@ scrape_configs:
       - targets: ['windows-node-1:9182', 'windows-node-2:9182']
 ```
 
-### Logging
+### 日志记录
 
-用于收集 Windows container logs 的工具：
+用于收集 Windows 容器日志的工具：
 
-1. **Fluent Bit**：轻量级 log collector
-2. **Fluentd**：Log collection and forwarding
-3. **Elasticsearch**：Log storage and search
-4. **Azure Monitor**：用于 Azure environments
-5. **CloudWatch Logs**：用于 AWS environments
+1. **Fluent Bit**：轻量级日志收集器
+2. **Fluentd**：日志收集和转发
+3. **Elasticsearch**：日志存储和搜索
+4. **Azure Monitor**：用于 Azure 环境
+5. **CloudWatch Logs**：用于 AWS 环境
 
-在 Windows nodes 上安装 Fluent Bit：
+在 Windows 节点上安装 Fluent Bit：
 
 ```powershell
 # Download Fluent Bit
@@ -819,9 +685,9 @@ sc.exe create fluent-bit binPath= "C:\fluent-bit\bin\fluent-bit.exe -c C:\fluent
 Start-Service fluent-bit
 ```
 
-### Application Log Collection
+### 应用程序日志收集
 
-收集 Windows container application logs：
+收集 Windows 容器应用程序日志：
 
 ```yaml
 apiVersion: v1
@@ -854,33 +720,33 @@ spec:
     emptyDir: {}
 ```
 
-## Security
+## 安全性
 
-我们来了解 Windows nodes 和 containers 的 security considerations。
+让我们了解 Windows 节点和容器的安全注意事项。
 
-### Windows Node Security
+### Windows 节点安全性
 
-Windows node security 建议：
+Windows 节点安全性建议：
 
-1. **Apply Latest Updates**：定期应用 Windows security updates
-2. **Firewall Configuration**：正确配置 Windows Defender Firewall
-3. **Least Privilege Principle**：仅授予必要的最低权限
-4. **Antivirus Software**：安装适当的 antivirus software
-5. **Group Policy**：应用 group policies 以进行 security hardening
+1. **应用最新更新**：定期应用 Windows 安全更新
+2. **防火墙配置**：正确配置 Windows Defender Firewall
+3. **最小权限原则**：仅授予必要的最小权限
+4. **防病毒软件**：安装适当的防病毒软件
+5. **组策略**：应用组策略以强化安全性
 
-### Windows Container Security
+### Windows 容器安全性
 
-Windows container security 建议：
+Windows 容器安全性建议：
 
-1. **Minimal Base Image**：使用尽可能小的 base image（Nano Server 等）
-2. **Image Scanning**：扫描 container images 中的漏洞
-3. **ReadOnlyRootFilesystem**：尽可能使用 read-only root filesystem
-4. **Non-Privileged User**：以 non-privileged users 运行应用程序
-5. **Network Policies**：应用适当的 network policies
+1. **最小基础镜像**：使用尽可能小的基础镜像（Nano Server 等）
+2. **镜像扫描**：扫描容器镜像中的漏洞
+3. **ReadOnlyRootFilesystem**：尽可能使用只读根文件系统
+4. **非特权用户**：以非特权用户身份运行应用程序
+5. **网络策略**：应用适当的网络策略
 
 ### RunAsUsername
 
-在 Windows containers 中，可以使用 `runAsUsername` 而不是 `runAsUser` 来指定在 container 内运行的用户：
+在 Windows 容器中，您可以使用 `runAsUsername` 而非 `runAsUser` 来指定在容器内运行的用户：
 
 ```yaml
 apiVersion: v1
@@ -904,18 +770,18 @@ spec:
       while ($true) { Start-Sleep -Seconds 10 }
 ```
 
-### Group Managed Service Accounts (gMSA)
+### 组托管服务帐户 (gMSA)
 
-用于 Windows containers 中 Active Directory authentication 的 gMSA 配置：
+gMSA 用于 Windows 容器中 Active Directory 身份验证的配置：
 
-1. **Create gMSA in Active Directory**：
+1. **在 Active Directory 中创建 gMSA**：
 
 ```powershell
 # Create gMSA
 New-ADServiceAccount -Name WebApp1 -DNSHostName WebApp1.contoso.com -ServicePrincipalNames http/WebApp1.contoso.com -PrincipalsAllowedToRetrieveManagedPassword "Domain Controllers", "Domain Computers"
 ```
 
-2. **Store gMSA Credentials in Kubernetes**：
+2. **在 Kubernetes 中存储 gMSA 凭证**：
 
 ```yaml
 apiVersion: v1
@@ -927,7 +793,7 @@ data:
   credspec.json: <base64-encoded-credential-spec>
 ```
 
-3. **Apply gMSA Configuration to Pod**：
+3. **将 gMSA 配置应用于 Pod**：
 
 ```yaml
 apiVersion: v1
@@ -951,77 +817,35 @@ spec:
       while ($true) { Start-Sleep -Seconds 10 }
 ```
 
-## Windows Support in Amazon EKS
+## Amazon EKS 中的 Windows 支持
 
-我们来了解如何在 Amazon EKS 中运行 Windows workloads。
+让我们了解如何在 Amazon EKS 中运行 Windows 工作负载。
 
 下图展示了 Amazon EKS 中的 Windows 支持架构：
 
-```mermaid
-flowchart TD
-    subgraph "AWS Cloud"
-        subgraph "Amazon EKS"
-            CP[EKS Control Plane] --> LNG[Linux Node Group]
-            CP --> WNG[Windows Node Group]
+![托管 EKS 控制平面同时管理一个 Linux 节点组（运行 CoreDNS、VPC CNI 和 kube-proxy 系统 Pod）和一个 Windows 节点组（运行 Windows 应用程序 Pod），并与 AWS IAM、Amazon VPC 和 CloudWatch 集成；Windows 应用程序 Pod 通过 Elastic Load Balancer 连接最终用户。](../.gitbook/assets/en-core-10-windows-in-kubernetes-4.png)
 
-            subgraph "Linux Node Group"
-                LNG --> LN1[Linux Node 1]
-                LNG --> LN2[Linux Node 2]
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-4.html)
 
-                LN1 --> LP1[CoreDNS]
-                LN1 --> LP2[VPC CNI]
-                LN2 --> LP3[kube-proxy]
-                LN2 --> LP4[Other System Pods]
-            end
-
-            subgraph "Windows Node Group"
-                WNG --> WN1[Windows Node 1]
-                WNG --> WN2[Windows Node 2]
-
-                WN1 --> WP1[Windows Application Pods]
-                WN2 --> WP2[Windows Application Pods]
-            end
-        end
-
-        CP --> IAM[AWS IAM]
-        CP --> VPC[Amazon VPC]
-        CP --> CW[CloudWatch]
-
-        WP1 --> ELB[Elastic Load Balancer]
-        WP2 --> ELB
-        ELB --> User[User]
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class CP,LNG,WNG,LN1,LN2,WN1,WN2,LP1,LP2,LP3,LP4 k8sComponent;
-    class WP1,WP2 userApp;
-    class IAM,VPC,CW,ELB awsService;
-    class User default;
-```
-
-### Enabling Windows Support in EKS
+### 在 EKS 中启用 Windows 支持
 
 在 Amazon EKS 中启用 Windows 支持的步骤：
 
-1. **Update VPC CNI Plugin**：
+1. **更新 VPC CNI Plugin**：
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.11/config/master/vpc-resource-controller.yaml
 ```
 
-2. **Install Windows VPC Admission Webhook**：
+2. **安装 Windows VPC Admission Webhook**：
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.11/config/master/vpc-admission-webhook.yaml
 ```
 
-### Creating Windows Node Groups
+### 创建 Windows 节点组
 
-使用 eksctl 创建 Windows node group：
+使用 eksctl 创建 Windows 节点组：
 
 ```bash
 eksctl create nodegroup \
@@ -1036,18 +860,18 @@ eksctl create nodegroup \
   --node-ami-family WindowsServer2019FullContainer
 ```
 
-使用 AWS Management Console 创建 Windows node group：
+使用 AWS Management Console 创建 Windows 节点组：
 
-1. 在 EKS console 中选择 cluster
-2. 选择 "Compute" tab
-3. 点击 "Add node group"
-4. 输入 node group details
-5. 选择 "Windows" 作为 AMI type
+1. 在 EKS 控制台中选择集群
+2. 选择“Compute”选项卡
+3. 单击“Add node group”
+4. 输入节点组详细信息
+5. 选择“Windows”作为 AMI 类型
 6. 配置其余设置并创建
 
-### Deploying Windows Applications in EKS
+### 在 EKS 中部署 Windows 应用程序
 
-在 EKS 中部署 Windows applications 的示例：
+在 EKS 中部署 Windows 应用程序的示例：
 
 ```yaml
 apiVersion: apps/v1
@@ -1099,9 +923,9 @@ spec:
   type: LoadBalancer
 ```
 
-### Windows Container Logging in EKS
+### EKS 中的 Windows 容器日志记录
 
-使用 CloudWatch Logs 收集 Windows container logs：
+使用 CloudWatch Logs 收集 Windows 容器日志：
 
 ```yaml
 apiVersion: v1
@@ -1139,52 +963,52 @@ data:
         auto_create_group true
 ```
 
-## Best Practices
+## 最佳实践
 
-我们来了解在 Kubernetes 中运行 Windows workloads 的 best practices。
+让我们了解在 Kubernetes 中运行 Windows 工作负载的最佳实践。
 
-### Cluster Design Best Practices
+### 集群设计最佳实践
 
-1. **Mixed Node Pools**：使用适当组合的 Linux 和 Windows nodes
-2. **Node Labels and Taints**：使用适当的 node labels 和 taints 来隔离 workloads
-3. **Version Compatibility**：验证 Kubernetes version 和 Windows version 之间的兼容性
-4. **Network Plugin Selection**：选择支持 Windows 的合适 network plugin
-5. **High Availability**：为关键 workloads 配置 high availability
+1. **混合节点池**：适当混合使用 Linux 和 Windows 节点
+2. **节点标签和 Taint**：使用适当的节点标签和 Taint 分隔工作负载
+3. **版本兼容性**：验证 Kubernetes 版本与 Windows 版本之间的兼容性
+4. **网络插件选择**：选择支持 Windows 的适当网络插件
+5. **高可用性**：为关键工作负载配置高可用性
 
-### Application Design Best Practices
+### 应用程序设计最佳实践
 
-1. **Container Image Optimization**：使用小而高效的 container images
-2. **Resource Requests and Limits**：设置适当的 resource requests 和 limits
-3. **Stateless Design**：尽可能设计 stateless applications
-4. **Logging and Monitoring**：配置有效的 logging 和 monitoring
-5. **Security Hardening**：应用适当的 security contexts 和 network policies
+1. **容器镜像优化**：使用小巧高效的容器镜像
+2. **资源请求和限制**：设置适当的资源请求和限制
+3. **无状态设计**：尽可能设计无状态应用程序
+4. **日志记录和监控**：配置有效的日志记录和监控
+5. **安全强化**：应用适当的安全上下文和网络策略
 
-### Operations Best Practices
+### 运维最佳实践
 
-1. **Regular Updates**：定期更新 Windows nodes 和 container images
-2. **Automation**：自动化 deployment 和 management tasks
-3. **Backup and Recovery**：定期备份重要数据
-4. **Troubleshooting Tools**：构建适当的 troubleshooting tools 和流程
-5. **Documentation**：记录配置和流程
+1. **定期更新**：定期更新 Windows 节点和容器镜像
+2. **自动化**：自动化部署和管理任务
+3. **备份和恢复**：定期备份重要数据
+4. **故障排除工具**：构建适当的故障排除工具和流程
+5. **文档**：记录配置和流程
 
-### EKS-Specific Best Practices
+### EKS 特定最佳实践
 
-1. **Managed Node Groups**：尽可能使用 managed node groups
-2. **IAM Roles for Service Accounts (IRSA)**：按 pod 管理 IAM permissions
-3. **VPC CNI Configuration**：根据 networking requirements 配置 VPC CNI
-4. **Security Groups**：配置适当的 security groups
-5. **Cost Optimization**：选择适当的 instance types 和 sizes
+1. **托管节点组**：尽可能使用托管节点组
+2. **IAM Roles for Service Accounts (IRSA)**：按 Pod 管理 IAM 权限
+3. **VPC CNI 配置**：根据网络需求配置 VPC CNI
+4. **安全组**：配置适当的安全组
+5. **成本优化**：选择适当的实例类型和大小
 
-## Conclusion
+## 结论
 
-Kubernetes 中的 Windows 支持持续演进，现在你可以在生产环境中运行 Windows workloads。Windows nodes 可以与 Linux nodes 在同一个 cluster 中并行运行，使你能够在单个 Kubernetes cluster 中管理多样化 workloads。
+Kubernetes 中的 Windows 支持不断演进，现在您可以在生产环境中运行 Windows 工作负载。Windows 节点可以与 Linux 节点在同一集群中并行运行，使您能够在单个 Kubernetes 集群中管理多样化的工作负载。
 
-Windows containers 支持将 .NET Framework 应用程序、Windows services 以及其他 Windows-specific workloads 容器化，从而利用 Kubernetes orchestration capabilities。不过，与 Linux containers 相比仍存在一些限制，因此理解并妥善处理这些限制非常重要。
+Windows 容器使 .NET Framework 应用程序、Windows 服务和其他 Windows 特定工作负载能够容器化，从而利用 Kubernetes 编排功能。然而，与 Linux 容器相比仍存在一些限制，因此务必适当地了解并解决这些限制。
 
-Amazon EKS 为 Windows nodes 提供 managed services，使部署和管理 Windows workloads 变得简单。利用 EKS 的 Windows 支持，可以简化将 Windows applications 迁移到现代 container environments 的过程。
+Amazon EKS 为 Windows 节点提供托管服务，可轻松部署和管理 Windows 工作负载。利用 EKS 的 Windows 支持，可以简化将 Windows 应用程序迁移到现代容器环境的过程。
 
-要在 Kubernetes 中成功实现 Windows，遵循适当的规划、设计和运维 best practices 非常重要。这样可以高效管理 Windows 和 Linux workloads，并充分利用 Kubernetes 的所有优势。
+要在 Kubernetes 中成功实施 Windows，遵循适当的规划、设计和运维最佳实践至关重要。这使您能够高效地管理 Windows 和 Linux 工作负载，并充分利用 Kubernetes 的所有优势。
 
-## Quiz
+## 测验
 
-要测试你在本章中学到的内容，请尝试 [Windows in Kubernetes Quiz](../quizzes/core/10-windows-in-kubernetes-quiz.md)。
+要测试您在本章中学到的内容，请尝试 [Kubernetes 中的 Windows 测验](../quizzes/core/10-windows-in-kubernetes-quiz.md)。

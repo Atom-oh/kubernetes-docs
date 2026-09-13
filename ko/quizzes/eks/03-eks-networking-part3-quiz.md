@@ -1,817 +1,397 @@
 # EKS 네트워킹 퀴즈 - Part 3
 
-이 퀴즈는 Amazon EKS의 고급 네트워킹 개념, 서비스 메시, VPC 엔드포인트, 멀티 클러스터 네트워킹 및 네트워크 보안에 대한 이해를 테스트합니다.
+> **마지막 업데이트**: 2026년 9월 11일
 
-## 객관식 문제
+퀴즈는 [Part 3 문제 해결 개념](../../eks/03-eks-networking-part3.md), 프라이빗 연결, 멀티클러스터 설계와 메시 운영을 다룹니다. 현재 예제는 EKS Kubernetes 1.36, VPC CNI 1.23.0을 기준으로 하며 과거 App Mesh 구성은 별도로 표시합니다. 리소스 생성 예제에는 검토한 IAM·네트워크·소유권 전제가 필요합니다. 이 감사는 로컬 검증이며 EKS 배포 검증이 아닙니다.
 
-### 1. Amazon EKS에서 서비스 메시(예: AWS App Mesh, Istio)를 구현할 때 발생하는 네트워킹 아키텍처의 주요 변화는 무엇인가요?
+### 1. 사이드카 기반 서비스 메시에 애플리케이션을 등록하면 무엇이 바뀌나요?
 
-A. 모든 파드 간 통신이 VPC 외부로 라우팅됩니다\
-B. 각 파드에 사이드카 프록시가 추가되어 서비스 간 통신을 중재합니다\
-C. Kubernetes Service 객체가 더 이상 사용되지 않습니다\
-D. 모든 네트워크 트래픽이 AWS Transit Gateway를 통해 라우팅됩니다
+- A. All Pod traffic leaves the VPC
+- B. A proxy handles enrolled service traffic
+- C. Service discovery is removed
+- D. All traffic requires Transit Gateway
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: B. 주입된 프록시가 등록된 서비스 트래픽을 처리합니다.**
 
-**정답: B. 각 파드에 사이드카 프록시가 추가되어 서비스 간 통신을 중재합니다**
-
-**설명:** 서비스 메시를 구현할 때 가장 중요한 아키텍처 변화는 각 파드에 사이드카 프록시(일반적으로 Envoy)가 추가된다는 것입니다. 이 사이드카 프록시는 파드의 모든 인바운드 및 아웃바운드 트래픽을 가로채고 처리하여 서비스 간 통신을 중재합니다.
-
-**주요 특징:**
-
-1. **사이드카 패턴**: 각 애플리케이션 컨테이너 옆에 프록시 컨테이너가 배포됩니다. 이 프록시는 모든 네트워크 통신을 처리합니다.
-2. **트래픽 흐름 변화**:
-   * 기존: 클라이언트 → 서비스 → 대상 파드
-   * 서비스 메시: 클라이언트 → 클라이언트 사이드카 → 서비스 → 대상 사이드카 → 대상 파드
-3. **데이터 플레인과 컨트롤 플레인**:
-   * 데이터 플레인: 사이드카 프록시의 집합
-   * 컨트롤 플레인: 프록시 구성을 관리하고 정책을 적용하는 중앙 구성 요소
-4. **애플리케이션 코드 변경 없음**: 서비스 메시의 주요 이점 중 하나는 애플리케이션 코드를 변경하지 않고도 고급 네트워킹 기능을 추가할 수 있다는 것입니다.
-
-**서비스 메시 구현 예시 (AWS App Mesh):**
-
-```yaml
-# App Mesh 사이드카 주입 예시
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-app
-  labels:
-    app: example
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: example
-  template:
-    metadata:
-      labels:
-        app: example
-      annotations:
-        appmesh.k8s.aws/mesh: my-mesh  # App Mesh 메시 이름
-        appmesh.k8s.aws/virtualNode: example-vn  # 가상 노드 이름
-    spec:
-      containers:
-      - name: example
-        image: example:latest
-        ports:
-        - containerPort: 8080
+사이드카 모드에서는 애플리케이션과 프록시가 하나의 Pod 네트워크 네임스페이스와 IP를 공유합니다. 프록시는 데이터 플레인이며 컨트롤 플레인은 라우팅·보안·신원 구성을 배포합니다. NetworkPolicy, VPC 라우팅과 Service 디스커버리는 계속 중요합니다. 논리적 경로는 다음과 같습니다:
+```text
+Application → client proxy → Pod network → destination proxy → application
 ```
+가로채는 범위는 등록 여부·제외 포트·프로토콜·모드에 따라 달라지며 모든 패킷이 Service VIP를 통과해야 하는 것은 아닙니다. Ambient 메시는 노드 프록시·waypoint 방식이므로 이 문제는 사이드카 모드를 명시합니다. 메시는 주 서비스 구현을 크게 바꾸지 않고 재시도·라우팅·mTLS·텔레메트리를 제공할 수 있지만 애플리케이션의 추적 컨텍스트 전달·프로토콜 호환성·타임아웃 처리는 여전히 필요할 수 있습니다.
 
-**서비스 메시가 제공하는 기능:**
-
-* 트래픽 관리 (라우팅, 로드 밸런싱, 서킷 브레이킹)
-* 보안 (mTLS, 인증, 권한 부여)
-* 관찰 가능성 (메트릭, 로그, 분산 추적)
-* 정책 적용
-
-다른 옵션들의 문제점:
-
-* **A. 모든 파드 간 통신이 VPC 외부로 라우팅됩니다**: 서비스 메시는 일반적으로 클러스터 내부에서 작동하며, 트래픽을 VPC 외부로 라우팅하지 않습니다.
-* **C. Kubernetes Service 객체가 더 이상 사용되지 않습니다**: 서비스 메시는 Kubernetes Service 객체를 대체하지 않고 보완합니다.
-* **D. 모든 네트워크 트래픽이 AWS Transit Gateway를 통해 라우팅됩니다**: 서비스 메시는 AWS Transit Gateway와 관련이 없으며, 클러스터 내부의 서비스 간 통신을 관리합니다.
+이전 Envoy 이미지를 임의 추가하거나 injector를 중복 사용하지 말고 선택한 메시가 지원하는 injector/revision을 사용합니다. AWS App Mesh는 과거 사례이며 2026년 9월 30일 지원·접근이 종료됩니다. 기존 배포는 이전 계획이 필요하고 새 설치의 기본 예제가 아닙니다. 유지 관리되는 구현 절차는 [Istio 설치](../../service-mesh/istio/01-installation.md)를 참고하세요.
 
 </details>
 
-### 2. Amazon EKS에서 VPC 엔드포인트를 사용하여 AWS 서비스에 비공개로 액세스할 때의 주요 이점은 무엇인가요?
+### 2. VPC 엔드포인트는 프라이빗 EKS 워크로드에 무엇을 제공하나요?
 
-A. 모든 AWS 서비스에 대한 무제한 대역폭 제공\
-B. 인터넷 게이트웨이 없이도 AWS 서비스에 비공개로 액세스 가능\
-C. AWS 서비스 사용 비용 50% 절감\
-D. 모든 AWS 서비스에 대한 자동 인증 제공
+- A. Unlimited bandwidth
+- B. Private connectivity to supported services
+- C. An automatic 50% discount
+- D. Automatic AWS authentication
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: B. 해당 요청에 인터넷/NAT 없이 지원 AWS 서비스로 연결하는 프라이빗 경로.**
 
-**정답: B. 인터넷 게이트웨이 없이도 AWS 서비스에 비공개로 액세스 가능**
+인터페이스 엔드포인트는 선택한 서브넷/AZ에 ENI를 만들며 일반적으로 시간·데이터 처리 요금이 발생합니다. S3/DynamoDB 게이트웨이 엔드포인트는 라우팅 테이블 항목을 추가하고 엔드포인트 자체 요금은 없지만 서비스·저장·요청 요금은 별개입니다. 엔드포인트는 IAM 권한이나 비용·지연 개선·규정 준수를 자동 보장하지 않습니다.
 
-**설명:** Amazon EKS에서 VPC 엔드포인트를 사용하는 주요 이점은 인터넷 게이트웨이 없이도 AWS 서비스에 비공개로 액세스할 수 있다는 것입니다. 이를 통해 보안을 강화하고 데이터 전송 비용을 절감할 수 있습니다.
+프라이빗 ECR 이미지 pull에는 `ecr.api`, `ecr.dkr`, S3 레이어 다운로드 경로와 엔드포인트 SG HTTPS 규칙, DNS 지원·private DNS, 라우팅·엔드포인트/IAM 정책을 계획합니다. 다른 서비스는 실제 부하에 따라 IRSA용 regional STS, Pod Identity용 `eks-auth`, CNI의 EC2 API, Logs·모니터링 등이 필요합니다. EKS 서비스 엔드포인트가 프라이빗 Kubernetes API 엔드포인트를 대체하지는 않습니다. ECR Public, 최초 pull-through-cache 요청이나 Windows foreign layer는 추가 외부 연결 또는 준비한 이미지 미러가 필요할 수 있습니다.
 
-**VPC 엔드포인트 유형:**
-
-1. **인터페이스 엔드포인트 (AWS PrivateLink)**:
-   * 대부분의 AWS 서비스에 대한 비공개 연결 제공
-   * 각 서브넷에 엔드포인트 네트워크 인터페이스(ENI) 생성
-   * 예: ECR, CloudWatch, SNS, SQS 등
-2. **게이트웨이 엔드포인트**:
-   * S3 및 DynamoDB에 대한 비공개 연결 제공
-   * 라우팅 테이블에 경로 추가
-   * 추가 비용 없음
-
-**EKS에서 VPC 엔드포인트 구성 예시:**
-
+다음 매개변수화 CloudFormation 예제는 **기존** VPC에 엔드포인트 세 개만 추가합니다. 생성 전 기존 엔드포인트·private DNS 소유권을 검토합니다. 서비스별 엔드포인트 정책은 보안 소유자가 정의해야 하며 기본 접근 설정이 IAM을 우회하지 않습니다. 완성된 격리 클러스터 배포로 가정하지 말고 변경 세트를 준비하세요:
 ```yaml
-# CloudFormation 예시
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECR API/DKR and S3 endpoints in an existing VPC; not a complete private EKS stack
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Existing subnets in distinct Availability Zones
+  PrivateRouteTableIds:
+    Type: CommaDelimitedList
+    Description: Route tables used by the image-pulling workloads
+  EndpointSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Existing same-VPC SG permitting HTTPS from the intended nodes/Pods
 Resources:
   S3GatewayEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-      VpcId: !Ref VPC
-      RouteTableIds:
-        - !Ref PrivateRouteTable
+      VpcId: !Ref VpcId
+      RouteTableIds: !Ref PrivateRouteTableIds
       VpcEndpointType: Gateway
-      
   ECRApiEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
-      VpcId: !Ref VPC
-      SubnetIds:
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
-      SecurityGroupIds:
-        - !Ref EndpointSecurityGroup
+      VpcId: !Ref VpcId
+      SubnetIds: !Ref PrivateSubnetIds
+      SecurityGroupIds: [!Ref EndpointSecurityGroupId]
+      PrivateDnsEnabled: true
+      VpcEndpointType: Interface
+  ECRDkrEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcId: !Ref VpcId
+      SubnetIds: !Ref PrivateSubnetIds
+      SecurityGroupIds: [!Ref EndpointSecurityGroupId]
       PrivateDnsEnabled: true
       VpcEndpointType: Interface
 ```
-
-**EKS에서 VPC 엔드포인트를 사용해야 하는 주요 AWS 서비스:**
-
-* Amazon ECR (컨테이너 이미지 가져오기)
-* Amazon S3 (구성 파일, 백업 등)
-* AWS KMS (암호화 키)
-* Amazon CloudWatch (로깅 및 모니터링)
-* AWS STS (IAM 역할 수임)
-
-**VPC 엔드포인트 사용의 이점:**
-
-1. **보안 강화**: 트래픽이 공용 인터넷을 통과하지 않음
-2. **네트워크 비용 절감**: AWS 서비스로의 데이터 전송 비용 감소
-3. **지연 시간 감소**: AWS 네트워크 내에서 직접 라우팅
-4. **규정 준수**: 데이터 주권 및 규정 준수 요구 사항 충족
-
-**프라이빗 서브넷의 EKS 노드 구성:**
-
+새 노드 그룹이 필요할 때 `eksctl create nodegroup`은 **`--subnet-ids`**를 사용하며 이전 `--vpc-private-subnets`는 이 명령의 올바른 플래그가 아닙니다. 아래는 프라이빗 API·서비스 경로가 준비된 후 과금되는 관리형 노드를 생성합니다. eksctl이 의도한 소유자이고 기존 `private-ng`가 없을 때만 사용합니다. 인스턴스 크기는 용량 권장값이 아닌 예시입니다.
 ```bash
-# eksctl로 프라이빗 서브넷에 노드 그룹 생성
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name private-ng \
-  --node-private-networking \
-  --vpc-private-subnets subnet-0123456789abcdef0,subnet-0123456789abcdef1
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the existing cluster name}"
+: "${AWS_REGION:?Set its Region}"
+: "${PRIVATE_SUBNET_A:?Set an existing private subnet}"
+: "${PRIVATE_SUBNET_B:?Set another private subnet}"
+eksctl create nodegroup --cluster "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --name private-ng --managed --version auto --node-type m5.large \
+  --nodes 2 --nodes-min 2 --nodes-max 3 --node-private-networking \
+  --subnet-ids "$PRIVATE_SUBNET_A,$PRIVATE_SUBNET_B"
 ```
 
-다른 옵션들의 문제점:
-
-* **A. 모든 AWS 서비스에 대한 무제한 대역폭 제공**: VPC 엔드포인트는 무제한 대역폭을 제공하지 않으며, 서비스 및 리전에 따라 대역폭 제한이 있을 수 있습니다.
-* **C. AWS 서비스 사용 비용 50% 절감**: VPC 엔드포인트는 데이터 전송 비용을 절감할 수 있지만, AWS 서비스 사용 비용 자체를 50% 절감하지는 않습니다.
-* **D. 모든 AWS 서비스에 대한 자동 인증 제공**: VPC 엔드포인트는 인증을 자동화하지 않으며, 여전히 적절한 IAM 권한이 필요합니다.
-
 </details>
 
-### 3. Amazon EKS에서 멀티 클러스터 네트워킹을 구현하기 위한 가장 효과적인 방법은 무엇인가요?
+### 3. 겹치지 않는 여러 VPC 사이에 허브 라우팅을 제공하는 선택지는 무엇인가요?
 
-A. 각 클러스터에 퍼블릭 로드 밸런서를 사용하여 클러스터 간 통신 구현\
-B. AWS Transit Gateway를 사용하여 여러 VPC를 연결하고 클러스터 간 라우팅 구성\
-C. 모든 클러스터를 단일 VPC에 배포하여 네트워크 복잡성 감소\
-D. 각 클러스터에 NAT 게이트웨이를 사용하여 클러스터 간 통신 구현
-
-<details>
-
-<summary>정답 및 설명</summary>
-
-**정답: B. AWS Transit Gateway를 사용하여 여러 VPC를 연결하고 클러스터 간 라우팅 구성**
-
-**설명:** Amazon EKS에서 멀티 클러스터 네트워킹을 구현하기 위한 가장 효과적인 방법은 AWS Transit Gateway를 사용하여 여러 VPC를 연결하고 클러스터 간 라우팅을 구성하는 것입니다. 이 접근 방식은 확장성, 보안 및 관리 용이성을 제공합니다.
-
-**AWS Transit Gateway를 사용한 멀티 클러스터 네트워킹:**
-
-1. **아키텍처 개요**:
-   * 각 EKS 클러스터는 별도의 VPC에 배포
-   * Transit Gateway가 모든 VPC를 연결
-   * 클러스터 간 통신은 Transit Gateway를 통해 라우팅
-2.  **구성 단계**:
-
-    ```bash
-    # 1. Transit Gateway 생성
-    aws ec2 create-transit-gateway --description "EKS Multi-Cluster TGW"
-
-    # 2. VPC를 Transit Gateway에 연결
-    aws ec2 create-transit-gateway-vpc-attachment \
-      --transit-gateway-id tgw-0123456789abcdef0 \
-      --vpc-id vpc-0123456789abcdef0 \
-      --subnet-ids subnet-0123456789abcdef0 subnet-0123456789abcdef1
-
-    # 3. 라우팅 테이블 업데이트
-    aws ec2 create-route \
-      --route-table-id rtb-0123456789abcdef0 \
-      --destination-cidr-block 10.1.0.0/16 \
-      --transit-gateway-id tgw-0123456789abcdef0
-    ```
-3. **CIDR 계획**:
-   * 각 클러스터/VPC에 겹치지 않는 CIDR 블록 할당
-   * 예: Cluster1: 10.0.0.0/16, Cluster2: 10.1.0.0/16, Cluster3: 10.2.0.0/16
-
-**멀티 클러스터 서비스 디스커버리 옵션:**
-
-1.  **AWS Cloud Map**:
-
-    ```bash
-    # 네임스페이스 생성
-    aws servicediscovery create-private-dns-namespace \
-      --name multi-cluster.local \
-      --vpc vpc-0123456789abcdef0
-
-    # 서비스 등록
-    aws servicediscovery register-instance \
-      --service-id srv-0123456789abcdef0 \
-      --instance-id api-service-cluster1 \
-      --attributes AWS_INSTANCE_IPV4=10.0.1.123
-    ```
-2.  **CoreDNS 사용자 지정 구성**:
-
-    ```yaml
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: coredns
-      namespace: kube-system
-    data:
-      Corefile: |
-        .:53 {
-            errors
-            health
-            kubernetes cluster.local in-addr.arpa ip6.arpa {
-               pods insecure
-               upstream
-               fallthrough in-addr.arpa ip6.arpa
-            }
-            forward . /etc/resolv.conf
-            cache 30
-            loop
-            reload
-            loadbalance
-        }
-        cluster2.svc.local:53 {
-            errors
-            cache 30
-            forward . 10.1.0.2
-        }
-    ```
-
-**멀티 클러스터 네트워킹 보안 고려 사항:**
-
-1. **VPC 간 트래픽 제어**:
-   * Transit Gateway 보안 그룹 및 라우팅 테이블을 사용하여 트래픽 제한
-   * 필요한 포트 및 프로토콜만 허용
-2.  **네트워크 정책**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-cross-cluster
-    spec:
-      podSelector:
-        matchLabels:
-          app: api-service
-      ingress:
-      - from:
-        - ipBlock:
-            cidr: 10.1.0.0/16  # Cluster2의 CIDR
-      egress:
-      - to:
-        - ipBlock:
-            cidr: 10.1.0.0/16  # Cluster2의 CIDR
-    ```
-
-**멀티 클러스터 서비스 메시 옵션:**
-
-1. **Istio 멀티 클러스터**:
-   * 단일 컨트롤 플레인으로 여러 클러스터 관리
-   * 클러스터 간 서비스 디스커버리 및 로드 밸런싱
-2. **AWS App Mesh**:
-   * 여러 클러스터에 걸쳐 있는 메시 생성
-   * AWS Cloud Map을 통한 서비스 디스커버리
-
-**비용 최적화 고려 사항:**
-
-* Transit Gateway 시간당 요금 및 데이터 처리 요금 고려
-* 클러스터 간 데이터 전송 최소화
-* 가능한 경우 동일한 가용 영역 내에서 통신
-
-다른 옵션들의 문제점:
-
-* **A. 각 클러스터에 퍼블릭 로드 밸런서를 사용하여 클러스터 간 통신 구현**: 이 방법은 보안 위험을 증가시키고, 인터넷 데이터 전송 비용이 발생하며, 지연 시간이 증가합니다.
-* **C. 모든 클러스터를 단일 VPC에 배포하여 네트워크 복잡성 감소**: 단일 VPC에 여러 클러스터를 배포하면 IP 주소 공간 제한, 보안 경계 부족, 확장성 문제가 발생할 수 있습니다.
-* **D. 각 클러스터에 NAT 게이트웨이를 사용하여 클러스터 간 통신 구현**: NAT 게이트웨이는 아웃바운드 인터넷 트래픽을 위한 것이며, 클러스터 간 통신에는 적합하지 않습니다.
-
-</details>
-
-### 5. Amazon EKS에서 파드 네트워킹 성능을 최적화하기 위한 가장 효과적인 방법은 무엇인가요?
-
-A. 모든 파드에 호스트 네트워크 모드 사용\
-B. Amazon VPC CNI의 프리픽스 위임 기능 활성화\
-C. 모든 파드에 대해 NodePort 서비스 사용\
-D. 클러스터 내 모든 통신에 AWS Global Accelerator 사용
+- A. A public load balancer is mandatory
+- B. Transit Gateway with complete routing
+- C. Every cluster must share a VPC
+- D. A NAT gateway provides Kubernetes discovery
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: B. AWS Transit Gateway**
 
-**정답: B. Amazon VPC CNI의 프리픽스 위임 기능 활성화**
+Transit Gateway는 여러 VPC를 연결하는 설계 중 하나이며 모든 멀티클러스터의 최적 구조는 아닙니다. 신뢰 경계·규모·DNS·주소 중복·비용에 따라 VPC peering, 공유 VPC, PrivateLink 서비스 노출, VPC Lattice와 메시 게이트웨이를 비교합니다. NAT도 프라이빗 연결 용도가 있지만 서비스 디스커버리를 제공하지는 않습니다.
 
-**설명:** Amazon EKS에서 파드 네트워킹 성능을 최적화하기 위한 가장 효과적인 방법은 Amazon VPC CNI의 프리픽스 위임 기능을 활성화하는 것입니다. 이 기능은 각 노드에 할당되는 보조 IP 주소의 수를 크게 늘리고, ENI(Elastic Network Interface) 생성 빈도를 줄여 네트워킹 성능과 확장성을 향상시킵니다.
+TGW 설계에는 라우팅할 Pod/VPC CIDR의 비중복, 참여 AZ별 연결, TGW 라우팅 테이블 연결·전파, 워크로드 서브넷 및 반환 경로가 필요합니다. TGW 경로 하나만으로 충분하지 않습니다. Kubernetes ClusterIP는 가상 서비스 주소이며 원격에서 자동 라우팅되지 않습니다. 명시적인 디스커버리 설계로 접근 가능한 Pod 또는 게이트웨이·로드 밸런서 주소를 게시하세요. 변경 전에 실제 경로 상태를 읽습니다:
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the transit gateway Region}"
+: "${TGW_ROUTE_TABLE_ID:?Set the intended TGW route table}"
+: "${VPC_ROUTE_TABLE_ID:?Set a workload-subnet route table}"
+aws ec2 search-transit-gateway-routes --region "$AWS_REGION" \
+  --transit-gateway-route-table-id "$TGW_ROUTE_TABLE_ID" \
+  --filters Name=state,Values=active
+aws ec2 describe-route-tables --region "$AWS_REGION" \
+  --route-table-ids "$VPC_ROUTE_TABLE_ID"
+```
+TGW 자체에 방화벽 SG를 붙이는 구조는 아닙니다. 필요에 따라 엔드포인트·노드·Pod SG, NACL, NetworkPolicy와 검사 경로를 사용합니다. VPC 간 SG 참조는 문서화된 연결·리전 조건에서 지원되는 TGW 기능이지만 TGW에 SG를 붙이거나 라우팅을 대신하는 것은 아닙니다.
 
-**프리픽스 위임 작동 방식:**
-
-1. **기본 VPC CNI vs 프리픽스 위임**:
-   * 기본 VPC CNI: 각 ENI에 개별 보조 IP 주소 할당
-   * 프리픽스 위임: 각 ENI에 /28 CIDR 블록(16개 IP) 할당
-2.  **활성화 방법**:
-
-    ```bash
-    # 프리픽스 위임 활성화
-    kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-    # 프리픽스 위임 확인
-    kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
-    ```
-3.  **추가 구성 옵션**:
-
-    ```bash
-    # 프리픽스 할당 크기 설정 (기본값: /28)
-    kubectl set env daemonset aws-node -n kube-system WARM_PREFIX_TARGET=1
-
-    # 사용 가능한 IP 주소가 부족할 때 새 프리픽스를 요청하는 임계값
-    kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=5
-    ```
-
-**프리픽스 위임의 이점:**
-
-1. **향상된 확장성**:
-   * 노드당 최대 파드 수 증가 (일반적으로 110개에서 250개 이상으로)
-   * ENI 생성 빈도 감소로 인한 API 제한 감소
-2. **빠른 파드 시작 시간**:
-   * 새 파드에 IP 주소를 할당하는 데 필요한 API 호출 감소
-   * 대규모 파드 배포 시 성능 향상
-3. **IP 주소 효율성**:
-   * 더 많은 파드를 동일한 수의 ENI로 지원
-   * IP 주소 고갈 문제 완화
-
-**인스턴스 유형별 최대 파드 수 비교:**
-
-| 인스턴스 유형    | 기본 VPC CNI | 프리픽스 위임 활성화 |
-| ---------- | ---------- | ----------- |
-| t3.medium  | 17         | 110         |
-| m5.large   | 29         | 110         |
-| c5.xlarge  | 58         | 250         |
-| r5.2xlarge | 58         | 250         |
-
-**구성 예시 (ConfigMap):**
-
+Cloud Map에는 네임스페이스 준비, Service 생성, 등록과 상태·등록 해제 관리가 필요합니다. TGW가 프라이빗 호스팅 존 DNS를 자동 공유하지는 않습니다. 승인된 프라이빗 존 연결 또는 Route 53 Resolver 엔드포인트·규칙을 사용합니다. 다른 VPC의 `base+2` 리졸버를 해당 클러스터 CoreDNS처럼 지정하지 마세요. 아래 **Corefile 조각**은 내보낸 `cluster2.example.internal` 레코드를 해석하는 실제 접근 가능 인바운드 리졸버 두 개를 전제로 합니다. DNS 소유 관리 도구로 병합하고 클러스터 로컬 존은 보존합니다:
+```text
+cluster2.example.internal:53 {
+    errors
+    cache 30
+    forward . 10.1.20.10 10.1.21.10
+}
+```
+아래 ingress 정책은 NAT·프록시 이후 실제 보이는 소스 주소 기준으로 원격 CIDR의 API 포트 하나를 허용합니다. 다른 일치 정책이 허용을 넓힐 수 있습니다. Egress·DNS 요구는 별도 설계하며 클러스터 간 네임스페이스·Pod 레이블이 자동 공유되지는 않습니다.
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
 metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-prefix-delegation: "true"
-  warm-prefix-target: "1"
-  warm-ip-target: "5"
+  name: remote-api-ingress
+  namespace: multicluster-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api-service
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 10.1.0.0/16
+    ports:
+    - protocol: TCP
+      port: 8080
 ```
-
-**고려 사항 및 제한 사항:**
-
-1. **서브넷 크기**:
-   * 프리픽스 위임을 사용하려면 충분히 큰 서브넷이 필요합니다
-   * 최소 /24 CIDR 블록 권장
-2. **보안 그룹 규칙**:
-   * 프리픽스 위임을 사용하면 보안 그룹 규칙이 더 간단해질 수 있음
-   * 개별 IP 대신 CIDR 블록을 참조할 수 있음
-3. **호환성**:
-   * 일부 레거시 EC2 인스턴스 유형은 프리픽스 위임을 지원하지 않음
-   * Nitro 기반 인스턴스 권장
-4. **IP 주소 관리**:
-   * 프리픽스 위임은 IP 주소를 더 효율적으로 사용하지만, 여전히 적절한 CIDR 계획 필요
-
-**모니터링 및 문제 해결:**
-
-```bash
-# 노드별 IP 주소 할당 확인
-kubectl exec -n kube-system aws-node-xxxxx -- curl -s http://localhost:61679/v1/enis | jq
-
-# 프리픽스 위임 상태 확인
-kubectl logs -n kube-system aws-node-xxxxx | grep -i prefix
-```
-
-다른 옵션들의 문제점:
-
-* **A. 모든 파드에 호스트 네트워크 모드 사용**: 호스트 네트워크 모드는 파드가 노드의 네트워크 네임스페이스를 공유하게 하여 포트 충돌 문제를 일으키고 네트워크 격리를 제거합니다.
-* **C. 모든 파드에 대해 NodePort 서비스 사용**: NodePort는 서비스 노출 메커니즘이며, 파드 네트워킹 성능 최적화와는 관련이 없습니다.
-* **D. 클러스터 내 모든 통신에 AWS Global Accelerator 사용**: AWS Global Accelerator는 글로벌 트래픽 관리를 위한 것이며, 클러스터 내부 통신 최적화에는 적합하지 않습니다.
+Istio multi-primary와 primary-remote는 다른 컨트롤 플레인 배치입니다. 지원 모델을 선택하고 east-west 게이트웨이, 신원 신뢰와 대상 상태를 검증합니다. 기존 App Mesh 멀티클러스터 사용은 2026년 9월 종료를 반영해야 합니다. 실제 경로의 시간·처리·AZ 간 요금을 비교하세요. 같은 VPC나 퍼블릭 로드 밸런서 설계도 본질적으로 틀린 것은 아니며 별도 보안·비용 분석이 필요합니다.
 
 </details>
 
-## 단답형 문제
+### 4. IPv4 주소를 /28 블록으로 할당하여 주소 슬롯 밀도를 높이는 VPC CNI 기능은 무엇인가요?
 
-### 7. Amazon EKS에서 서비스 메시를 구현할 때 사이드카 프록시로 가장 일반적으로 사용되는 오픈 소스 프록시는 무엇인가요?
+- A. hostNetwork for all Pods
+- B. Prefix delegation
+- C. NodePort for every Service
+- D. Global Accelerator for Pod-to-Pod traffic
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: B. Prefix delegation**
 
-**정답:** Envoy
+위임된 IPv4 /28은 ENI 주소 슬롯 하나로 Pod 주소 16개를 제공합니다. 할당 API 작업과 Pod 시작·밀도에 도움이 될 수 있지만 보편적인 패킷 처리량 개선이나 전체 서브넷 고갈 해결책은 아닙니다. IPv6는 prefix 크기가 다릅니다. 지원 Nitro 하드웨어, 연속된 여유 prefix, kubelet maxPods와 자원 용량이 밀도를 제한합니다.
 
-**상세 설명:**
+스키마·소유권 검토 후 아래 JSON 조각을 해당 EKS add-on 구성에 병합하거나 대응하는 Helm `env` 값을 사용합니다. 이전 `amazon-vpc-cni` ConfigMap의 소문자 키는 Linux CNI를 구성하지 않습니다:
+```json
+{
+  "env": {
+    "ENABLE_PREFIX_DELEGATION": "true",
+    "WARM_PREFIX_TARGET": "1"
+  }
+}
+```
+`WARM_PREFIX_TARGET=1`은 prefix 크기가 아니라 여유 prefix 하나를 뜻합니다. 양수 `WARM_IP_TARGET`/`MINIMUM_IP_TARGET`이 warm-prefix 목표보다 우선하며 큰 warm pool은 서브넷 공간을 더 예약합니다. 노드 그룹 전환과 maxPods를 함께 계획하세요. DaemonSet 토글만으로 기존 노드가 임의의 밀도를 지원하지 않습니다.
 
-Amazon EKS에서 서비스 메시를 구현할 때 가장 일반적으로 사용되는 사이드카 프록시는 Envoy입니다. Envoy는 고성능 C++ 기반 프록시로, 대부분의 주요 서비스 메시 구현(Istio, AWS App Mesh, Consul Connect 등)에서 데이터 플레인 프록시로 사용됩니다.
+| 인스턴스 | 일반 보조 IPv4 maxPods 계산식 | 해당 소형 인스턴스의 prefix 모드 예시 상한 |
+|---|---:|---:|
+| t3.medium | 17 | 110 |
+| m5.large | 29 | 110 |
+| c5.xlarge | 58 | 110 |
+| r5.2xlarge | 58 | 110 |
 
-**Envoy의 주요 특징:**
+이는 벤치마크나 모든 Pod 수용 보장이 아닌 구성 제한입니다. 이전 c5.xlarge/r5.2xlarge의 250은 틀렸으며 EKS 권장 상한은 vCPU 30개 미만 110, 30개 이상 250입니다. Pod SG의 branch 인터페이스 제한은 별도입니다. Prefix 할당에는 연속된 /28이 필요하며 보편적인 최소 /24 서브넷 조건이나 SG 정책 자동 단순화는 아닙니다.
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the node Region}"
+kubectl get nodes -o 'custom-columns=NAME:.metadata.name,TYPE:.metadata.labels.node\.kubernetes\.io/instance-type,PODS:.status.allocatable.pods'
+kubectl -n kube-system get daemonset aws-node -o yaml
+kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=true
+aws ec2 describe-instance-types --region "$AWS_REGION" \
+  --instance-types t3.medium m5.large c5.xlarge r5.2xlarge \
+  --query 'InstanceTypes[].{Type:InstanceType,vCPUs:VCpuInfo.DefaultVCpus,ENIs:NetworkInfo.MaximumNetworkInterfaces,IPv4Slots:NetworkInfo.Ipv4AddressesPerInterface}'
+```
 
-1. **고성능 아키텍처**:
-   * C++로 작성되어 낮은 지연 시간과 높은 처리량 제공
-   * 이벤트 기반, 비동기 네트워킹 모델
-2. **풍부한 트래픽 관리 기능**:
-   * 로드 밸런싱 (라운드 로빈, 가중치 기반, 최소 요청 등)
-   * 서킷 브레이킹 및 이상치 감지
-   * 재시도 및 타임아웃 정책
-   * 트래픽 분할 및 미러링
-3. **관찰 가능성**:
-   * 상세한 메트릭 및 통계
-   * 분산 추적 통합 (Zipkin, Jaeger 등)
-   * 액세스 로깅
-4. **보안 기능**:
-   * TLS/mTLS 종료
-   * 인증 및 권한 부여
-   * 속도 제한
+</details>
 
-**서비스 메시에서의 Envoy 배포:**
+### 5. Istio 사이드카 모드의 프록시는 무엇이며 어떻게 진단하나요?
 
-1.  **사이드카 패턴**:
+<details>
+<summary>정답 보기</summary>
 
-    ```yaml
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: example-app
-    spec:
-      template:
-        spec:
-          containers:
-          - name: app
-            image: app:latest
-          - name: envoy-proxy
-            image: envoyproxy/envoy:v1.20.0
-            ports:
-            - containerPort: 15001
-            volumeMounts:
-            - name: envoy-config
-              mountPath: /etc/envoy
-          volumes:
-          - name: envoy-config
-            configMap:
-              name: envoy-config
-    ```
-2. **자동 주입**:
-   * Istio: `sidecar.istio.io/inject: "true"` 어노테이션
-   * AWS App Mesh: `appmesh.k8s.aws/sidecarInjectorWebhook: enabled` 레이블
+**정답: Envoy**
 
-**Envoy 구성 예시:**
+Istio 사이드카 모드는 Envoy를 사용하고 istiod가 디스커버리·라우팅·인증서 구성을 제공합니다. 이전 Pilot/Citadel 기능은 istiod로 통합되었으며 Mixer는 현재 필수 구성 요소가 아닙니다. 다른 메시는 다른 프록시를 사용할 수 있고 Envoy가 Kubernetes나 모든 메시의 필수 요건은 아닙니다.
 
+Envoy는 구성에 따라 연결 풀, HTTP/TCP 라우팅, 재시도, outlier detection, TLS와 텔레메트리를 제공합니다. 컨테이너 추가만으로 투명한 트래픽 가로채기, 워크로드 신원, xDS나 mTLS가 설정되지는 않습니다. 실제 메시는 지원 injector와 proxy 빌드를 사용합니다. 이전 Envoy1.20 이미지와 불완전한 Deployment는 현재 설치 예제로 적합하지 않았습니다.
+
+아래 **독립 reverse-proxy bootstrap**은 기존 listener/route/cluster 개념을 설명하며 upstream Envoy1.39.1로 로컬 검증했습니다. 같은 네트워크 네임스페이스의 `127.0.0.1:8080`에 별도 HTTP 애플리케이션이 있어야 합니다. 프록시와 관리 리스너는 loopback에만 바인딩하며 프로덕션이나 Kubernetes 메시 배포가 아닙니다:
 ```yaml
+admin:
+  address:
+    socket_address:
+      address: 127.0.0.1
+      port_value: 9901
 static_resources:
   listeners:
-  - address:
+  - name: local-proxy
+    address:
       socket_address:
-        address: 0.0.0.0
+        address: 127.0.0.1
         port_value: 15001
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          stat_prefix: ingress_http
+          stat_prefix: demo_http
           route_config:
-            name: local_route
+            name: local-route
             virtual_hosts:
             - name: backend
               domains: ["*"]
               routes:
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
-                  cluster: service_backend
+                  cluster: local-app
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
   clusters:
-  - name: service_backend
+  - name: local-app
     connect_timeout: 0.25s
-    type: STRICT_DNS
+    type: STATIC
     lb_policy: ROUND_ROBIN
     load_assignment:
-      cluster_name: service_backend
+      cluster_name: local-app
       endpoints:
       - lb_endpoints:
         - endpoint:
             address:
               socket_address:
-                address: backend-service
-                port_value: 80
+                address: 127.0.0.1
+                port_value: 8080
 ```
-
-**서비스 메시별 Envoy 통합:**
-
-1. **Istio**:
-   * Envoy를 사이드카 프록시로 사용
-   * istiod가 Envoy 구성을 동적으로 관리
-   * Pilot, Mixer, Citadel 등의 컴포넌트가 Envoy와 통합
-2. **AWS App Mesh**:
-   * AWS App Mesh 컨트롤러가 Envoy 사이드카 주입
-   * AWS Cloud Map과 통합하여 서비스 디스커버리 제공
-   * Envoy 관리 서비스(EMS)가 Envoy 구성 관리
-3. **Consul Connect**:
-   * Envoy를 데이터 플레인 프록시로 사용
-   * Consul이 서비스 디스커버리 및 구성 관리 제공
-
-**Envoy 모니터링 및 디버깅:**
-
+`envoy-config.yaml`로 저장하고 일치하는 upstream 바이너리로 검증합니다. 구문 검증이 백엔드 연결이나 워크로드 신원 동작을 증명하지는 않습니다.
 ```bash
-# Envoy 관리 인터페이스 포트 포워딩
-kubectl port-forward <pod-name> 19000:19000
-
-# 구성 및 통계 확인
-curl localhost:19000/config_dump
-curl localhost:19000/stats
-
-# 클러스터 상태 확인
-curl localhost:19000/clusters
+envoy --mode validate --concurrency 1 --config-path envoy-config.yaml
 ```
-
-**성능 최적화 고려 사항:**
-
-* 리소스 할당: Envoy에 충분한 CPU 및 메모리 할당
-* 연결 풀링: 업스트림 연결 풀링 구성으로 성능 향상
-* 버퍼 크기: 적절한 버퍼 크기 설정으로 메모리 사용량 최적화
-* 필터 체인: 필요한 필터만 활성화하여 오버헤드 최소화
-
-Envoy는 현대적인 서비스 메시 아키텍처의 핵심 구성 요소로, 마이크로서비스 간의 통신을 안전하고 신뢰할 수 있으며 관찰 가능하게 만드는 데 중요한 역할을 합니다.
+기존 Kubernetes 메시 프록시는 19000을 가정하지 말고 실제 관리 포트·컨테이너 이름을 확인합니다. App Mesh 기본 관리 포트는9901, Istio는 보통15000이며 배포 설정은 다를 수 있습니다. 한 터미널에서 다음 port-forward를 실행합니다:
+```bash
+set -euo pipefail
+: "${MESH_NAMESPACE:?Set the existing mesh workload namespace}"
+: "${MESH_POD:?Set the existing proxy Pod}"
+: "${ENVOY_ADMIN_PORT:?Use the admin port actually configured by that mesh}"
+kubectl -n "$MESH_NAMESPACE" port-forward --address 127.0.0.1 \
+  "pod/$MESH_POD" "19000:$ENVOY_ADMIN_PORT"
+```
+다른 터미널에서 시간 제한이 있는 읽기 전용 쿼리를 실행합니다. Config dump는 내부 토폴로지나 민감한 구성을 포함할 수 있으므로 게시하거나 관리 리스너를 외부에 노출하지 않습니다.
+```bash
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/config_dump
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/stats
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/clusters
+```
+업스트림 상태, 연결 풀 제한, 재시도, 필터 비용, 메모리와 요청 지연을 함께 봅니다. 측정한 부하에 맞춰 조정하며 오버헤드를 줄이려고 보안 필터만 제거하면 보안 모델이 바뀝니다.
 
 </details>
 
-### 8. Amazon EKS에서 클러스터 내부 DNS 확인을 담당하는 Kubernetes 애드온의 이름은 무엇인가요?
+### 6. 일반 EKS 노드의 DNS는 무엇이 제공하며 어떻게 구성하나요?
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: CoreDNS (실제 DNS/add-on 소유자부터 확인).**
 
-**정답:** CoreDNS
+CoreDNS는 일반적인 EKS 컴퓨팅의 DNS add-on입니다. 생성 방식·소유권은 다를 수 있으며 EKS Auto Mode에는 관리형 클러스터 DNS가 포함되어 기존 CoreDNS Deployment가 반드시 필요하지 않습니다. 아래 일반 add-on 점검 전에 컴퓨팅·DNS 소유자를 확인합니다. ResourceNotFound가 나오면 소유권을 조사하며 자동 재설치하지 않습니다:
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the existing cluster}"
+: "${AWS_REGION:?Set the cluster Region}"
+aws eks describe-addon --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME" \
+  --addon-name coredns
+kubectl -n kube-system get deployment coredns -o yaml
+kubectl -n kube-system get configmap coredns -o yaml
+kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=kube-dns
+```
+Service DNS는 보통 `<service>.<namespace>.svc.<cluster-domain>`이며 `cluster.local`은 흔한 값이지 불변값은 아닙니다. Headless/ExternalName은 일반 ClusterIP 레코드와 다릅니다. 임의 Pod IP마다 유용한 역방향 DNS 레코드가 있다고 가정하지 않습니다.
 
-**상세 설명:**
+아래는 설명용 **Corefile**이며 ConfigMap을 무조건 덮어쓰는 예제가 아닙니다. 관리형 구성, 실제 클러스터 도메인·프로브·DNS Service를 보존합니다. `pods insecure`는 Pod 존재를 검증하지 않는 구문 기반 Pod-IP DNS 응답을 허용하므로 의도한 Kubernetes 플러그인 모드를 선택합니다.
+```text
+.:53 {
+    errors
+    health {
+        lameduck 5s
+    }
+    ready
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+        pods insecure
+        fallthrough in-addr.arpa ip6.arpa
+        ttl 30
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf
+    cache 30
+    loop
+    reload
+    loadbalance
+}
+```
+`errors`는 오류, `health`와 `ready`는 서로 다른 프로브, `kubernetes`는 클러스터 레코드, `forward`는 외부 도메인, `prometheus`는 메트릭을 담당합니다. `cache`·`reload`·`loadbalance`는 캐시·설정 재로드·레코드 순서에 영향을 줍니다. `loop`는 시작 시 일부 단순 전달 루프를 탐지하며 모든 동적 루프를 영구 차단하는 기능은 아닙니다. `loadbalance`는 DNS 응답 순서를 바꾸며 Service 패킷을 전달하지 않습니다.
 
-Amazon EKS에서 클러스터 내부 DNS 확인을 담당하는 Kubernetes 애드온은 CoreDNS입니다. CoreDNS는 Kubernetes 클러스터 내에서 서비스 디스커버리를 위한 DNS 서버 역할을 하며, 파드와 서비스의 이름 확인을 처리합니다.
+조건부 전달에는 승인한 접근 가능 DNS 서버와 UDP/TCP53 경로가 필요합니다. VPC 서브넷의10.0.0.1 같은 첫 주소를 기업 DNS 예제로 사용하지 마세요. `file` 플러그인은 유효한 SOA·레코드를 가진 권한 있는 존 파일을 생성·마운트·관리해야 하며 stub-domain forward의 대체가 아닙니다. 퍼블릭 리졸버는 의도한 외부 경로·정보 전달 정책이 필요하고 프라이빗 존을 자동 해석하지 않습니다.
 
-**CoreDNS의 주요 기능:**
+아래 캐시 조각은 `prefetch AMOUNT DURATION PERCENTAGE` 순서로 수정했습니다. cache 지시문을 중복 추가하지 말고 기존 것을 교체합니다:
+```text
+cache 30 {
+    success 10000
+    denial 1024
+    prefetch 10 2m 10%
+}
+```
+Upstream CoreDNS1.14.7은 `denial1000`을 허용하되1024로 보정하고 `success10000`은9984로 보정합니다. 명시적인1024는 기존 유효 denial 용량을 유지합니다. 이 값은 구현 동작이며 실측 DNS 용량 권장값이 아닙니다.
 
-1. **서비스 디스커버리**:
-   * `<service-name>.<namespace>.svc.cluster.local` 형식의 DNS 이름 확인
-   * 파드 IP 주소에 대한 역방향 DNS 조회 지원
-2. **플러그인 아키텍처**:
-   * 다양한 플러그인을 통해 기능 확장
-   * 캐싱, 메트릭, 로깅, 오류 처리 등
-3. **구성 유연성**:
-   * Corefile을 통한 선언적 구성
-   * 동적 리로드 지원
-
-**EKS에서의 CoreDNS 배포:**
-
-1. **기본 배포 구성**:
-   * EKS 클러스터 생성 시 자동으로 배포됨
-   * kube-system 네임스페이스에서 실행
-   * 일반적으로 2개 이상의 복제본으로 배포
-2.  **확인 방법**:
-
-    ```bash
-    # CoreDNS 파드 확인
-    kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-    # CoreDNS 버전 확인
-    kubectl describe deployment coredns -n kube-system | grep Image
-    ```
-
-**CoreDNS 구성 (Corefile):**
-
+**스케일링 소유자 하나**를 선택합니다. 정확한 add-on 버전·스키마가 지원하면 EKS 관리형 CoreDNS 자동 확장을 사용하거나 별도 HPA/cluster-proportional autoscaler를 사용합니다. 아래 HPA는 metrics-server·CPU requests가 있는 의도적으로 자체 관리하는 Deployment용이며 다른 복제본 관리자와 함께 적용하지 않습니다.
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
 metadata:
   name: coredns
   namespace: kube-system
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-            lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-            pods insecure
-            fallthrough in-addr.arpa ip6.arpa
-            ttl 30
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: coredns
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
 ```
-
-**주요 플러그인 설명:**
-
-1. **errors**: 오류를 로그에 기록
-2. **health**: 상태 확인 엔드포인트 제공
-3. **ready**: 준비 상태 확인 엔드포인트 제공
-4. **kubernetes**: Kubernetes 서비스 디스커버리 처리
-5. **prometheus**: Prometheus 메트릭 노출
-6. **forward**: 외부 DNS 쿼리를 상위 DNS 서버로 전달
-7. **cache**: DNS 응답 캐싱
-8. **loop**: DNS 루프 감지 및 방지
-9. **reload**: Corefile 변경 시 자동 리로드
-10. **loadbalance**: 다중 A/AAAA 레코드에 대한 로드 밸런싱
-
-**사용자 지정 구성 예시:**
-
-1.  **외부 도메인에 대한 특정 DNS 서버 사용**:
-
-    ```
-    example.com {
-        forward . 10.0.0.1
-    }
-    ```
-2.  **스텁 도메인 구성**:
-
-    ```
-    internal.corp {
-        file /etc/coredns/internal.db
-    }
-    ```
-3.  **조건부 전달**:
-
-    ```
-    . {
-        forward . 8.8.8.8 8.8.4.4 {
-            policy sequential
-        }
-    }
-    ```
-
-**성능 최적화 및 확장:**
-
-1.  **자동 스케일링**:
-
-    ```yaml
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: coredns
-      namespace: kube-system
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: coredns
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 60
-    ```
-2.  **리소스 할당 최적화**:
-
-    ```yaml
-    resources:
-      limits:
-        memory: 170Mi
-      requests:
-        cpu: 100m
-        memory: 70Mi
-    ```
-3.  **캐시 튜닝**:
-
-    ```
-    cache {
-        success 10000
-        denial 1000
-        prefetch 10 10% 2m
-    }
-    ```
-
-**문제 해결:**
-
-1.  **DNS 해결 테스트**:
-
-    ```bash
-    # 테스트 파드 생성
-    kubectl run dnsutils --image=gcr.io/kubernetes-e2e-test-images/dnsutils:1.3 -- sleep 3600
-
-    # DNS 조회 테스트
-    kubectl exec -it dnsutils -- nslookup kubernetes.default
-    ```
-2.  **CoreDNS 로그 확인**:
-
-    ```bash
-    kubectl logs -n kube-system -l k8s-app=kube-dns
-    ```
-3.  **DNS 정책 확인**:
-
-    ```bash
-    kubectl get pods <pod-name> -o jsonpath='{.spec.dnsPolicy}'
-    ```
-
-CoreDNS는 EKS 클러스터의 중요한 구성 요소로, 서비스 디스커버리를 통해 마이크로서비스 아키텍처의 핵심 기능을 제공합니다. 적절한 구성과 모니터링을 통해 안정적인 DNS 서비스를 보장하는 것이 중요합니다.
+기존 자원 예시(CPU 요청100m, 메모리 요청70Mi·제한170Mi)는 부하 검증값이 아닙니다. 쿼리율·오류·캐시 hit/miss·메모리/OOM·응답 지연을 보고 산정합니다. DNS 도구가 있는 기존 승인 진단 워크로드에서 dnsPolicy/dnsConfig/resolv.conf, kube-dns EndpointSlice와 정책·SG·업스트림 경로를 확인하세요. 클러스터 Service와 승인된 외부·프라이빗 이름을 나눠 테스트합니다. 이전 dnsutils 이미지나 소유자 없는 bare Pod 생성은 DNS 진단의 필수 조건이 아닙니다.
 
 </details>
 
-## 실습 문제
-
-### 10. Amazon EKS 클러스터에서 서비스 메시(예: AWS App Mesh)를 구현하여 마이크로서비스 간 통신을 보호하고 모니터링하는 방법을 설명하세요. 구현 단계, 주요 구성 요소 및 모니터링 방법을 포함하세요.
+### 7. 기존 App Mesh 배포를 어떻게 보호·관찰하고 이전해야 하나요?
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: 기존 관계·신원·텔레메트리를 검토하고 지원되는 대체 구성을 검증합니다.**
 
-**정답:**
-
-Amazon EKS 클러스터에서 AWS App Mesh를 구현하여 마이크로서비스 간 통신을 보호하고 모니터링하는 방법은 다음과 같습니다:
-
-### 1. AWS App Mesh 구현 단계
-
-#### 1.1. 사전 요구 사항 설정
-
+**기존 운영·이전 실습:** AWS App Mesh의 지원과 리소스 접근은 **2026년9월30일** 종료됩니다. 이전 절차로 새 메시·Private CA·퍼블릭 Grafana를 생성하지 마세요. 기존 배포는 관계를 파악하고 종료 전에 이전합니다. ECS Service Connect는 EKS 설치 대상이 아니므로 실제 사용 기능에 맞는 지원 Kubernetes 메시·게이트웨이 구조를 평가합니다.
 ```bash
-# 필요한 IAM 권한 설정
-eksctl create iamserviceaccount \
-  --cluster=my-cluster \
-  --namespace=appmesh-system \
-  --name=appmesh-controller \
-  --attach-policy-arn=arn:aws:iam::aws:policy/AWSCloudMapFullAccess,arn:aws:iam::aws:policy/AWSAppMeshFullAccess \
-  --override-existing-serviceaccounts \
-  --approve
-
-# Helm 리포지토리 추가
-helm repo add eks https://aws.github.io/eks-charts
-helm repo update
+set -euo pipefail
+: "${MESH_NAMESPACE:?Set the namespace of the existing mesh workloads}"
+kubectl get meshes.appmesh.k8s.aws
+kubectl -n "$MESH_NAMESPACE" get virtualnodes.appmesh.k8s.aws,virtualservices.appmesh.k8s.aws,virtualrouters.appmesh.k8s.aws
+kubectl -n "$MESH_NAMESPACE" get deployments,services
 ```
+**1. 기존 관계를 정리합니다.** Mesh의 namespace selector는 참여 네임스페이스를, VirtualNode의 pod selector는 워크로드·리스너·디스커버리를 선택합니다. VirtualService는 VirtualNode 또는 VirtualRouter를 가리키며 router의 경로가 가중치 대상 노드를 선택합니다. 백엔드 참조, 엔드포인트 DNS, 헬스체크, IAM/IRSA, injector와 실제 리스닝 포트를 확인합니다. 이전 `service-a:latest` 자리표시자와 누락된 service-b 워크로드는 동작하는 애플리케이션이 아니었습니다. 진단을 위해 기존 ServiceAccount를 덮어쓰거나 full-access 정책을 붙이지 마세요.
 
-#### 1.2. App Mesh 컨트롤러 설치
+**2. TLS와 상호 인증을 구분합니다.** 서버 인증서만 가진 STRICT 리스너는 암호화 연결을 요구하지만 그 자체로 클라이언트를 인증하지는 않습니다. App Mesh mTLS에는 클라이언트 인증서와 서버 측 클라이언트 신뢰, 클라이언트 측 서버 신뢰·SAN 검사가 필요합니다. 클라이언트 인증서와 리스너 검증 신뢰는 ACM 클라이언트 인증서 참조가 아닌 파일 또는 SDS를 사용합니다. 프록시 간 mTLS가 워크로드 내부 app-to-Envoy 구간도 자동 암호화하지는 않습니다.
 
-```bash
-# App Mesh 컨트롤러 네임스페이스 생성
-kubectl create ns appmesh-system
-
-# App Mesh 컨트롤러 설치
-helm install appmesh-controller eks/appmesh-controller \
-  --namespace appmesh-system \
-  --set region=${AWS_REGION} \
-  --set serviceAccount.create=false \
-  --set serviceAccount.name=appmesh-controller
-```
-
-#### 1.3. 메시 생성
-
+다음은 새 설치가 아닌 **기존 구성 검토 예제**입니다. 파일이 프록시에 안전하게 마운트되어 있고 인증서의 신원·용도가 맞으며 service-b와 의도한 Mesh에 속한 네임스페이스가 있어야 합니다. 신뢰 설계에 따라 승인된 클라이언트 SAN도 제한합니다. CA만 신뢰하면 그 CA가 발급한 적격 클라이언트 인증서를 허용합니다:
 ```yaml
-# mesh.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-```
-
-```bash
-kubectl apply -f mesh.yaml
-```
-
-#### 1.4. 애플리케이션 네임스페이스 설정
-
-```bash
-# 애플리케이션 네임스페이스 생성 및 레이블 지정
-kubectl create ns app-namespace
-kubectl label namespace app-namespace mesh=my-mesh
-kubectl label namespace app-namespace appmesh.k8s.aws/sidecarInjectorWebhook=enabled
-```
-
-#### 1.5. 가상 노드 및 서비스 정의
-
-```yaml
-# virtual-node.yaml
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualNode
 metadata:
@@ -822,268 +402,79 @@ spec:
     matchLabels:
       app: service-a
   listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      healthCheck:
-        protocol: http
-        path: "/health"
-        port: 8080
-        healthyThreshold: 2
-        unhealthyThreshold: 2
-        timeoutMillis: 2000
-        intervalMillis: 5000
+  - portMapping:
+      port: 8080
+      protocol: http
+    tls:
+      mode: STRICT
+      certificate:
+        file:
+          certificateChain: /certs/server.crt
+          privateKey: /certs/server.key
+      validation:
+        trust:
+          file:
+            certificateChain: /certs/trusted-client-ca.pem
+    outlierDetection:
+      baseEjectionDuration:
+        unit: s
+        value: 30
+      interval:
+        unit: s
+        value: 10
+      maxEjectionPercent: 50
+      maxServerErrors: 5
   backends:
-    - virtualService:
-        virtualServiceRef:
-          name: service-b
+  - virtualService:
+      virtualServiceRef:
+        name: service-b
+      clientPolicy:
+        tls:
+          enforce: true
+          ports: [8080]
+          certificate:
+            file:
+              certificateChain: /certs/client.crt
+              privateKey: /certs/client.key
+          validation:
+            trust:
+              file:
+                certificateChain: /certs/trusted-server-ca.pem
+            subjectAlternativeNames:
+              match:
+                exact: [service-b.app-namespace.svc.cluster.local]
   serviceDiscovery:
     dns:
       hostname: service-a.app-namespace.svc.cluster.local
-```
-
-```yaml
-# virtual-service.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualService
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  awsName: service-a.app-namespace.svc.cluster.local
-  provider:
-    virtualRouter:
-      virtualRouterRef:
-        name: service-a-router
-```
-
-```yaml
-# virtual-router.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: service-a-router
-  namespace: app-namespace
-spec:
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-  routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a
-              weight: 1
-```
-
-#### 1.6. 애플리케이션 배포
-
-```yaml
-# deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: service-a
-  template:
-    metadata:
-      labels:
-        app: service-a
-    spec:
-      containers:
-      - name: service-a
-        image: service-a:latest
-        ports:
-        - containerPort: 8080
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-```
-
-### 2. mTLS 구성으로 통신 보호
-
-#### 2.1. AWS Certificate Manager Private CA 설정
-
-```bash
-# 프라이빗 CA 생성
-aws acm-pca create-certificate-authority \
-  --certificate-authority-configuration file://ca-config.json \
-  --certificate-authority-type "ROOT" \
-  --idempotency-token 1234567890 \
-  --tags Key=Name,Value=AppMeshCA
-
-# CA ARN 저장
-export CA_ARN=$(aws acm-pca list-certificate-authorities --query 'CertificateAuthorities[?Status==`ACTIVE`].Arn' --output text)
-```
-
-#### 2.2. TLS 구성 추가
-
-```yaml
-# virtual-node-with-tls.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualNode
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  podSelector:
-    matchLabels:
-      app: service-a
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      tls:
-        mode: STRICT  # mTLS 활성화
-        certificate:
-          acm:
-            certificateArn: arn:aws:acm:region:account-id:certificate/certificate-id
-  backends:
-    - virtualService:
-        virtualServiceRef:
-          name: service-b
-        clientPolicy:
-          tls:
-            enforce: true
-            ports:
-              - 8080
-            validation:
-              trust:
-                acm:
-                  certificateAuthorityArns:
-                    - ${CA_ARN}
-  serviceDiscovery:
-    dns:
-      hostname: service-a.app-namespace.svc.cluster.local
-```
-
-### 3. 모니터링 및 관찰 가능성 설정
-
-#### 3.1. AWS X-Ray 통합
-
-```yaml
-# mesh-with-xray.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-  egressFilter:
-    type: ALLOW_ALL
-  tracing:
-    awsXRay:
-      logLevel: INFO
-```
-
-```bash
-# X-Ray 데몬 배포
-kubectl apply -f https://github.com/aws/aws-app-mesh-controller-for-k8s/raw/master/config/samples/xray-daemon.yaml
-```
-
-#### 3.2. Amazon CloudWatch 통합
-
-```yaml
-# envoy-config.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-  egressFilter:
-    type: ALLOW_ALL
-  serviceDiscovery:
-    ipPreference: IPv4_PREFERRED
   logging:
     accessLog:
       file:
         path: /dev/stdout
-        format:
-          json:
-            - key: "source"
-              value: "%DOWNSTREAM_REMOTE_ADDRESS%"
-            - key: "destination"
-              value: "%UPSTREAM_REMOTE_ADDRESS%"
-            - key: "protocol"
-              value: "%PROTOCOL%"
 ```
+계정의 ACTIVE CA 전체를 변수 하나에 넣지 마세요. 루트 CA 생성에는 명시적인 구성과 활성화·인증서 단계가 필요하고 요금이 발생하며 즉시 사용 가능한 인증서가 생기는 것은 아닙니다. 의도한 ARN을 정확히 보존합니다. App Mesh Kubernetes CRD 필드는 대소문자를 구분하며 `certificateARN`, `certificateAuthorityARNs`를 사용합니다. 일반 YAML 파일의 `${CA_ARN}`은 셸 변수로 치환되지 않습니다. 파일 기반 예제는 누락된 CA 절차를 실행했다고 가정하지 않습니다.
 
-```bash
-# CloudWatch 에이전트 배포
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cloudwatch-namespace.yaml
+기존 평문 피어는 문서화된 PERMISSIVE 전환, 클라이언트·서버 신원과 신뢰 준비, 허용·거부 피어 테스트를 거쳐 STRICT로 바꿉니다. `ssl.handshake`, `ssl.no_certificate`, `ssl.fail_verify_no_cert`, `ssl.fail_verify_san`과 실제 요청을 확인하며 서버 TLS 성공만으로 mTLS를 증명하지 않습니다.
 
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-serviceaccount.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-configmap.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-daemonset.yaml
-```
-
-#### 3.3. Prometheus 및 Grafana 설정
-
-```bash
-# Prometheus 네임스페이스 생성
-kubectl create namespace prometheus
-
-# Prometheus 설치
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-helm install prometheus prometheus-community/prometheus \
-  --namespace prometheus \
-  --set alertmanager.persistentVolume.storageClass="gp2" \
-  --set server.persistentVolume.storageClass="gp2"
-
-# Grafana 설치
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-helm install grafana grafana/grafana \
-  --namespace prometheus \
-  --set persistence.storageClassName="gp2" \
-  --set persistence.enabled=true \
-  --set adminPassword='EKS!sAWSome' \
-  --values grafana.yaml \
-  --set service.type=LoadBalancer
-```
-
+**3. 이전 중 관찰 가능성을 보존합니다.** 이전 절차의 `Mesh.spec.tracing`, `Mesh.spec.logging`, `Mesh.spec.serviceDiscovery`는 검토한 controller1.13.1 CRD 필드가 아닙니다. 접근 로그는 위처럼 VirtualNode에 구성합니다. App Mesh Envoy 이미지의 tracing 설정은 별도이며 다음 **컨테이너 환경 조각**에는 로컬2000 포트의 X-Ray daemon/collector, 권한·엔드포인트 접근과 trace-context 전달이 필요합니다:
 ```yaml
-# grafana.yaml
+env:
+- name: ENABLE_ENVOY_XRAY_TRACING
+  value: "1"
+- name: XRAY_DAEMON_PORT
+  value: "2000"
+```
+승인된 수집기로 실제 프록시 `/stats` 또는 Prometheus 엔드포인트를 수집합니다. CloudWatch에는 scrape·export·EMF 구성이 필요하며 `AWS/AppMesh` RequestCount/Latency가 자동 생성된다고 가정하지 않습니다. 대시보드 전에 실제 네임스페이스·메트릭 이름·차원·단위를 조사합니다. 기존 CloudWatch·Prometheus·Grafana 소유권과 자격 증명·지원 StorageClass를 유지하세요. floating 매니페스트, 고정 Grafana 관리자 암호와 검토하지 않은 public LoadBalancer는 피합니다. 선택적인 아래 Grafana provisioning 조각은 기존 Prometheus datasource만 식별하며 설치나 보안 구성이 아닙니다:
+```yaml
+apiVersion: 1
 datasources:
-  datasources.yaml:
-    apiVersion: 1
-    datasources:
-    - name: Prometheus
-      type: prometheus
-      url: http://prometheus-server.prometheus.svc.cluster.local
-      access: proxy
-      isDefault: true
+- name: Prometheus
+  type: prometheus
+  url: http://prometheus-server.prometheus.svc.cluster.local
+  access: proxy
+  isDefault: true
 ```
-
-### 4. 트래픽 관리 및 고급 기능 구성
-
-#### 4.1. 카나리 배포 구성
-
+**4. 트래픽 동작을 명시적으로 대응합니다.** 아래 기존 router 예제는 두 버전의 VirtualNode와 정상 엔드포인트가 이미 있음을 전제로 하며 가중치가 정확한 요청 수를 보장하지 않습니다. Outlier detection은 엔드포인트 배제이며 연결 풀 circuit-breaking 제한과 다릅니다. 이전 HTTP 재시도 이벤트 네 문자열은 유효합니다. `client-error`는409, `stream-error`는 refused stream을 뜻합니다. 전체 타임아웃 예산 안에서 멱등 작업의 재시도를 선택하며 실패 부하 증폭을 주의합니다.
 ```yaml
-# virtual-router-canary.yaml
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualRouter
 metadata:
@@ -1091,184 +482,167 @@ metadata:
   namespace: app-namespace
 spec:
   listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
+  - portMapping:
+      port: 8080
+      protocol: http
   routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a-v1
-              weight: 90
-            - virtualNodeRef:
-                name: service-a-v2
-              weight: 10
+  - name: service-a-route
+    httpRoute:
+      match:
+        prefix: /
+      action:
+        weightedTargets:
+        - virtualNodeRef:
+            name: service-a-v1
+          weight: 90
+        - virtualNodeRef:
+            name: service-a-v2
+          weight: 10
+      retryPolicy:
+        maxRetries: 3
+        perRetryTimeout:
+          unit: ms
+          value: 2000
+        httpRetryEvents:
+        - gateway-error
 ```
-
-#### 4.2. 서킷 브레이커 구성
-
-```yaml
-# virtual-node-circuit-breaker.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualNode
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  # ... 기존 구성 ...
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      outlierDetection:
-        baseEjectionDuration:
-          unit: s
-          value: 30
-        interval:
-          unit: s
-          value: 10
-        maxEjectionPercent: 50
-        maxServerErrors: 5
-```
-
-#### 4.3. 재시도 정책 구성
-
-```yaml
-# virtual-router-retry.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: service-a-router
-  namespace: app-namespace
-spec:
-  # ... 기존 구성 ...
-  routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a
-              weight: 1
-        retryPolicy:
-          maxRetries: 3
-          perRetryTimeout:
-            unit: ms
-            value: 2000
-          httpRetryEvents:
-            - server-error
-            - gateway-error
-            - client-error
-            - stream-error
-```
-
-### 5. 모니터링 및 문제 해결
-
-#### 5.1. Envoy 프록시 로그 확인
-
-```bash
-# 특정 파드의 Envoy 사이드카 로그 확인
-kubectl logs <pod-name> -c envoy -n app-namespace
-
-# 모든 Envoy 로그 스트리밍
-kubectl logs -f -l app=service-a -c envoy -n app-namespace
-```
-
-#### 5.2. Envoy 관리 인터페이스 접근
-
-```bash
-# 포트 포워딩 설정
-kubectl port-forward <pod-name> -n app-namespace 9901:9901
-
-# 브라우저에서 접근
-# http://localhost:9901/
-```
-
-#### 5.3. X-Ray 추적 확인
-
-AWS Management Console에서 X-Ray 서비스로 이동하여 서비스 맵과 트레이스를 확인합니다.
-
-#### 5.4. CloudWatch 대시보드 생성
-
-```bash
-# CloudWatch 대시보드 생성을 위한 JSON 파일 준비
-cat > appmesh-dashboard.json << EOF
-{
-  "widgets": [
-    {
-      "type": "metric",
-      "x": 0,
-      "y": 0,
-      "width": 12,
-      "height": 6,
-      "properties": {
-        "metrics": [
-          [ "AWS/AppMesh", "RequestCount", "MeshName", "my-mesh", "VirtualNodeName", "service-a", { "stat": "Sum" } ]
-        ],
-        "period": 60,
-        "region": "${AWS_REGION}",
-        "title": "Request Count"
-      }
-    },
-    {
-      "type": "metric",
-      "x": 12,
-      "y": 0,
-      "width": 12,
-      "height": 6,
-      "properties": {
-        "metrics": [
-          [ "AWS/AppMesh", "Latency", "MeshName", "my-mesh", "VirtualNodeName", "service-a", { "stat": "Average" } ]
-        ],
-        "period": 60,
-        "region": "${AWS_REGION}",
-        "title": "Latency"
-      }
-    }
-  ]
-}
-EOF
-
-# AWS CLI를 사용하여 대시보드 생성
-aws cloudwatch put-dashboard --dashboard-name AppMeshDashboard --dashboard-body file://appmesh-dashboard.json
-```
-
-### 6. 모범 사례 및 고려 사항
-
-#### 6.1. 리소스 요구 사항
-
-* 각 파드에 Envoy 사이드카가 추가되므로 노드 리소스 계획 필요
-* 일반적으로 각 Envoy 프록시에 100-200m CPU 및 128-256Mi 메모리 할당
-
-#### 6.2. 점진적 구현 전략
-
-1. **단계적 접근**:
-   * 비즈니스에 중요하지 않은 서비스부터 시작
-   * 트래픽 미러링으로 영향 평가
-   * 성공적인 검증 후 점진적으로 확장
-2. **mTLS 구현**:
-   * PERMISSIVE 모드로 시작
-   * 모든 서비스가 호환되는지 확인
-   * STRICT 모드로 전환
-
-#### 6.3. 성능 최적화
-
-* Envoy 리소스 제한 조정
-* 적절한 상태 확인 간격 설정
-* 불필요한 로깅 및 추적 최소화
-
-#### 6.4. 보안 강화
-
-* 최소 권한 IAM 정책 사용
-* 정기적인 인증서 순환
-* 네트워크 정책과 함께 심층 방어 구현
-
-AWS App Mesh는 EKS 클러스터에서 마이크로서비스 간 통신을 보호하고 모니터링하기 위한 강력한 서비스 메시 솔루션을 제공합니다. 적절한 구성과 모니터링을 통해 애플리케이션의 안정성, 보안 및 관찰 가능성을 크게 향상시킬 수 있습니다.
+**5. 검증 후 점진적으로 전환합니다.** 트래픽 이동 전 라우팅, 허용·거부 피어, DNS, TLS 회전, 재시도, 장애 복구, 추적·메트릭 연속성을 비교합니다. 남은 제품 지원 기간 안에서 되돌릴 경로를 보존합니다. 기존 프록시 CPU100–200m·메모리128–256Mi는 **검증되지 않은 예시 추정값**이며 실측·용량 보장이 아닙니다. 실제 포화도·메모리·지연·오류율을 측정하세요. 이 감사에서는 메시·CA·수집기·클라우드 대시보드를 생성하지 않았습니다.
 
 </details>
+
+### 8. VPC CNI1.23.0에서 연결 ENI의 MTU를 구성하는 변수는 무엇인가요?
+
+- A. `ENI_MTU`
+- B. `AWS_VPC_ENI_MTU`
+- C. `VPC_MTU_SIZE`
+- D. `MAX_ENI`
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B. `AWS_VPC_ENI_MTU`**
+
+`POD_MTU`는 Pod 가상 인터페이스를 구성하며 미설정 시 ENI MTU에서 값을 가져옵니다. 이전 `ENI_MTU`는 잘못된 이름입니다. 실제 경로 MTU와 노드·Pod 롤아웃을 맞추며 숫자가 허용된다고 게이트웨이·터널·원격 엔드포인트가 패킷 크기를 수용한다는 보장은 없습니다. SG는 MTU 설정 장치가 아닙니다.
+
+</details>
+
+### 9. Strict Pod-SG의 TCP early-demux 우회 설정은 어디에 적용하나요?
+
+- A. Application Deployment
+- B. CoreDNS ConfigMap
+- C. CNI init container
+- D. LoadBalancer annotation
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C. `aws-vpc-cni-init`**
+
+공식 안내의 `DISABLE_TCP_EARLY_DEMUX=true`는 init 컨테이너에 적용하며 Helm의 `init.env`로 표현합니다. main `aws-node` 컨테이너에만 설정하면 init 단계 변경이 적용되지 않습니다. Strict 모드의 kubelet 프로브 문제를 확인해야 하며 standard Pod-SG 모드에는 이 우회가 필요하지 않습니다.
+
+</details>
+
+### 10. Kubernetes NetworkPolicy가 보장하는 규칙 순서 최적화는 무엇인가요?
+
+- A. Put the hottest rule first
+- B. Sort names alphabetically
+- C. Create restrictive policies last
+- D. No order guarantee
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: D. 없음. 일치하는 허용은 합집합입니다.**
+
+이식 가능한 “첫 일치 우선”이나 최신 정책 우선 규칙은 없습니다. 선택자·방향과 허용 합집합이 격리를 정하며 vendor의 tier/order API는 별개입니다. 필요한 제한을 보존하고 개수만 보고 정책을 지우지 말고 반영·실행 비용을 측정합니다.
+
+</details>
+
+### 11. 서브넷이 고갈됐을 때 WARM_IP_TARGET 증가로 주소 용량이 늘어나나요?
+
+- A. Yes, it expands the subnet
+- B. No, it increases spare-address demand
+- C. Yes, it bypasses ENI limits
+- D. Yes, it repairs every ContainerCreating Pod
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B. 아니요. 여유 주소를 더 요청할 뿐입니다.**
+
+용량이 있을 때 큰 warm target이 할당 지연을 줄일 수 있지만 주소 예약을 늘려 고갈을 악화시킬 수도 있습니다. 서브넷 공간, ENI 슬롯, maxPods, API 제한과 prefix 단편화를 각각 확인합니다. Prefix delegation도 전체 IPv4 주소를 늘리지는 않습니다.
+
+</details>
+
+### 12. 현재 Service 백엔드 주소·조건은 어느 API로 확인하나요?
+
+- A. Only Node events
+- B. Ingress annotations
+- C. EndpointSlice
+- D. Only the Service ClusterIP
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C. EndpointSlice**
+
+Service 네임스페이스에서 `kubernetes.io/service-name=<service>` 레이블로 EndpointSlice를 조회합니다. 주소·포트·ready/serving/terminating 조건과 Service 선택자·targetPort를 함께 확인합니다. 기존 Endpoints 객체는 큰 대상 집합이 잘릴 수 있으며 빈 결과는 로드 밸런서보다 선택자·readiness 문제일 수 있습니다.
+
+</details>
+
+### 13. trafficDistribution: PreferSameZone은 무엇을 뜻하나요?
+
+- A. Never cross an AZ boundary
+- B. Prefer same zone with fallback
+- C. Move existing Pods to one AZ
+- D. Override all Local traffic policies
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B. 사용 가능한 같은 영역의 엔드포인트를 선호하며 대체 경로가 있습니다.**
+
+호환 서비스 프록시의 라우팅 선호이며 AZ 격리 정책은 아닙니다. 지역 용량을 확보하세요. 기존 topology-mode Auto 어노테이션이 우선하며 internal/external의 Local 정책은 각각 더 엄격한 노드 지역성을 적용하여 로컬 엔드포인트가 없으면 트래픽이 중단될 수 있습니다.
+
+</details>
+
+### 14. 가정한10Gbps 흐름과 RTT20ms의 대역폭·지연 곱을 계산하세요.
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: 25,000,000바이트, 약23.84MiB.**
+
+```text
+10,000,000,000 bits/s × 0.020 s / 8 = 25,000,000 bytes
+```
+산술 예제이지 EKS 벤치마크나 모든 소켓 버퍼를 이 값으로 설정하라는 권장은 아닙니다. 실제 EC2 단일 흐름·버스트 제한, TCP 자동 튜닝, window scaling, 동시 연결과 메모리 압력을 고려합니다. 이전16MiB 상한도 측정 없이 최적값이라고 할 수 없습니다. Keepalive는 활성화된 유휴 소켓에 동작하며 HTTP 풀링·버퍼 산정과 별개입니다.
+
+</details>
+
+### 15. DNS, Service 선택과 애플리케이션 연결 실패를 어떻게 구분하나요?
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: 증거를 수집하고 실제 프로토콜과 정상 대조 경로를 테스트합니다.**
+
+ContainerCreating을 네트워크 문제로 분류하기 전에 영향 Pod의 이벤트를 확인합니다. 알려진 클러스터 Service와 목적지 이름을 해석하고 Service/EndpointSlice의 선택자·포트·readiness를 확인한 뒤 같은 소스에서 Pod IP와 Service URL 접근을 비교합니다. 도구 부재·DNS 실패·죽은 백엔드를 정책 거부로 오인하지 않도록 알려진 정상 경로도 테스트하세요. 본문의 범위가 지정된 진단을 사용합니다:
+```bash
+set -euo pipefail
+: "${APP_NAMESPACE:?Set the affected namespace}"
+: "${APP_POD:?Set the affected Pod}"
+: "${APP_SERVICE:?Set the affected Service}"
+kubectl -n "$APP_NAMESPACE" describe pod "$APP_POD"
+kubectl -n "$APP_NAMESPACE" get events --field-selector "involvedObject.name=$APP_POD" --sort-by=.metadata.creationTimestamp
+kubectl -n "$APP_NAMESPACE" get service "$APP_SERVICE" -o yaml
+kubectl -n "$APP_NAMESPACE" get endpointslices \
+  -l "kubernetes.io/service-name=$APP_SERVICE" -o yaml
+kubectl -n "$APP_NAMESPACE" get networkpolicy
+kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=true
+```
+로드 밸런서는 컨트롤러·클래스·scheme·대상 유형과 상태 사유를 식별합니다. 실제 애플리케이션·헬스 포트, SG·경로, TLS/SNI와 Host 라우팅을 확인합니다. ICMP만으로 TCP/UDP NetworkPolicy 적용을 증명할 수 없습니다. 확인한 원인 하나를 변경하고 소유자의 되돌릴 경로를 보존하며 같은 검증을 반복하세요. 예제는 프로덕션 네트워크 테스트 결과를 주장하지 않습니다.
+
+</details>
+
+공식 참고: [Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [VPC CNI1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md), [CoreDNS cache](https://coredns.io/plugins/cache/), [App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html), [App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html), [Envoy1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1).

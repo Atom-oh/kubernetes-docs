@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS Alerting Areas",
+    "locale": "en",
+    "output": "en-observability-alerting-readme-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      430
+    ],
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Control plane",
+        "focus": [
+          "apiserver",
+          "etcd",
+          "sched-cm"
+        ],
+        "note": "Managed EKS control plane components: API server, etcd, scheduler and controller manager."
+      },
+      {
+        "id": "data-plane",
+        "label": "Data plane",
+        "focus": [
+          "node",
+          "pod",
+          "container"
+        ],
+        "note": "Worker node, pod and container status - the workload-level alert targets."
+      },
+      {
+        "id": "networking",
+        "label": "Networking",
+        "focus": [
+          "vpc-cni",
+          "svc-ingress",
+          "coredns"
+        ],
+        "note": "VPC CNI, Service/Ingress and CoreDNS health."
+      },
+      {
+        "id": "storage",
+        "label": "Storage",
+        "focus": [
+          "csi",
+          "pv-pvc"
+        ],
+        "note": "EBS/EFS CSI drivers and PersistentVolume / PersistentVolumeClaim state."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        50,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "cluster state",
+      "pos": [
+        210,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sched-cm",
+      "type": "backend",
+      "label": "Scheduler / Ctrl Mgr",
+      "sublabel": "scheduling + controllers",
+      "pos": [
+        370,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "Node Status",
+      "sublabel": "worker nodes",
+      "pos": [
+        610,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod Status",
+      "sublabel": "phase / restarts",
+      "pos": [
+        770,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "container",
+      "type": "backend",
+      "label": "Container Status",
+      "sublabel": "restarts / OOM",
+      "pos": [
+        930,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "vpc-cni",
+      "type": "cloud",
+      "label": "VPC CNI",
+      "sublabel": "pod networking",
+      "pos": [
+        50,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-ingress",
+      "type": "cloud",
+      "label": "Service / Ingress",
+      "sublabel": "traffic entry",
+      "pos": [
+        210,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "coredns",
+      "type": "backend",
+      "label": "CoreDNS",
+      "sublabel": "cluster DNS",
+      "pos": [
+        370,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "cloud",
+      "label": "EBS CSI / EFS CSI",
+      "sublabel": "storage drivers",
+      "pos": [
+        610,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pv-pvc",
+      "type": "database",
+      "label": "PV / PVC",
+      "sublabel": "volume binding",
+      "pos": [
+        800,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "sched-cm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "node",
+        "pod",
+        "container"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Networking",
+      "wraps": [
+        "vpc-cni",
+        "svc-ingress",
+        "coredns"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage",
+      "wraps": [
+        "csi",
+        "pv-pvc"
+      ]
+    }
+  ],
+  "connections": [],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Cluster-level alerts",
+      "items": [
+        "EKSAPIServerDown - API server target down for 1m (critical)",
+        "EKSNodeNotReady - node Ready condition false for 5m (critical)",
+        "EKSClusterAutoscalerError - autoscaler errors for 5m (warning)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Workload-level alerts",
+      "items": [
+        "PodCrashLooping - more than 3 restarts in 15m",
+        "PodNotReady - Pending/Unknown for 15m",
+        "DeploymentReplicasMismatch - available != desired for 10m"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Reading the map",
+      "items": [
+        "Four alerting areas: control plane, data plane, networking, storage",
+        "Each box is an alert target, not a traffic path"
+      ]
+    }
+  ]
+}

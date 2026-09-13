@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eBPF Program Types in Calico",
+    "locale": "en",
+    "output": "en-networking-calico-06-ebpf-dataplane-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Packet hook program (XDP / TC)"
+        },
+        "backend": {
+          "label": "Socket-level program"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "packet-hooks",
+        "label": "Packet hooks",
+        "focus": [
+          "xdp",
+          "tc_in",
+          "tc_out"
+        ],
+        "note": "XDP drops early; TC ingress and egress are Calico's primary policy, routing and NAT hooks."
+      },
+      {
+        "id": "socket-hooks",
+        "label": "Socket level",
+        "focus": [
+          "sockops",
+          "sk_msg",
+          "cgroup"
+        ],
+        "note": "sockops handles connection setup, sk_msg processes socket data; cgroup scopes programs to a container."
+      }
+    ],
+    "viewBox": [
+      1110,
+      330
+    ]
+  },
+  "components": [
+    {
+      "id": "xdp",
+      "type": "security",
+      "label": "XDP",
+      "sublabel": "Early drop",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tc_in",
+      "type": "security",
+      "label": "TC Ingress",
+      "sublabel": "Policy / Route",
+      "pos": [
+        230,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sockops",
+      "type": "backend",
+      "label": "sockops",
+      "sublabel": "Connection setup",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sk_msg",
+      "type": "backend",
+      "label": "sk_msg",
+      "sublabel": "Socket data",
+      "pos": [
+        670,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cgroup",
+      "type": "backend",
+      "label": "cgroup",
+      "sublabel": "Container scope",
+      "pos": [
+        570,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "tc_out",
+      "type": "security",
+      "label": "TC Egress",
+      "sublabel": "Policy / NAT",
+      "pos": [
+        910,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Ingress Path",
+      "wraps": [
+        "xdp",
+        "tc_in"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Socket Level",
+      "wraps": [
+        "sockops",
+        "sk_msg",
+        "cgroup"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Egress Path",
+      "wraps": [
+        "tc_out"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "xdp-to-tc-in",
+      "from": "xdp",
+      "to": "tc_in",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tc-in-to-sockops",
+      "from": "tc_in",
+      "to": "sockops",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sockops-to-sk-msg",
+      "from": "sockops",
+      "to": "sk_msg",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sk-msg-to-tc-out",
+      "from": "sk_msg",
+      "to": "tc_out",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "TC programs (primary hook)",
+      "items": [
+        "Ingress: policy enforcement, conntrack lookup, service DNAT, tunnel decap, metrics",
+        "Egress: egress policy, SNAT for masquerade, tunnel encap, DSR return path"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "XDP",
+      "items": [
+        "Earliest packet hook, right off the NIC",
+        "Verdicts: drop (DDoS protection), pass to TC, TX, redirect"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Socket programs",
+      "items": [
+        "sockops: connect() / accept() / close() interception",
+        "sk_msg: sendmsg() / recvmsg() L7 policy and inspection",
+        "cgroup: attaches programs at container scope"
+      ]
+    }
+  ]
+}

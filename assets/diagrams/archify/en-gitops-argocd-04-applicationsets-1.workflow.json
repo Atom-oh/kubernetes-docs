@@ -1,0 +1,143 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Progressive Sync Flow",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "pre_prod",
+        "label": "Dev → Staging",
+        "focus": [
+          "dev",
+          "staging"
+        ],
+        "note": "Staging starts after the dev Application becomes Healthy."
+      },
+      {
+        "id": "prod_rolling",
+        "label": "Sequential prod rollout",
+        "focus": [
+          "staging",
+          "prod_first",
+          "prod_remaining"
+        ],
+        "note": "Either prod Application may go first. maxUpdate: 1 waits for each to become Healthy, one at a time."
+      }
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Argo CD Application"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "env_dev",
+      "label": "env: dev"
+    },
+    {
+      "id": "env_staging",
+      "label": "env: staging"
+    },
+    {
+      "id": "env_prod",
+      "label": "env: prod"
+    }
+  ],
+  "phases": [
+    {
+      "id": "step1",
+      "label": "Step 1: Dev",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "step2",
+      "label": "Step 2: Staging",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "step3",
+      "label": "Step 3: Prod (maxUpdate: 1)",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [
+    {
+      "id": "prod_one_at_a_time",
+      "label": "maxUpdate: 1 · one at a time",
+      "lane": "env_prod",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "dev",
+    "staging",
+    "prod_first",
+    "prod_remaining"
+  ],
+  "nodes": [
+    {
+      "id": "dev",
+      "lane": "env_dev",
+      "col": 0,
+      "type": "backend",
+      "label": "myapp-dev",
+      "sublabel": "ns myapp-dev"
+    },
+    {
+      "id": "staging",
+      "lane": "env_staging",
+      "col": 1,
+      "type": "backend",
+      "label": "myapp-staging",
+      "sublabel": "ns myapp-staging"
+    },
+    {
+      "id": "prod_first",
+      "lane": "env_prod",
+      "col": 2,
+      "type": "backend",
+      "label": "First prod Application",
+      "sublabel": "prod-ap or prod-us",
+      "width": 164
+    },
+    {
+      "id": "prod_remaining",
+      "lane": "env_prod",
+      "col": 3,
+      "type": "backend",
+      "label": "Remaining prod Application",
+      "sublabel": "no ordering guarantee",
+      "width": 180
+    }
+  ],
+  "edges": [
+    {
+      "from": "dev",
+      "to": "staging",
+      "label": "after Healthy"
+    },
+    {
+      "from": "staging",
+      "to": "prod_first",
+      "label": "after Healthy"
+    },
+    {
+      "from": "prod_first",
+      "to": "prod_remaining",
+      "label": "after Healthy",
+      "variant": "emphasis"
+    }
+  ]
+}

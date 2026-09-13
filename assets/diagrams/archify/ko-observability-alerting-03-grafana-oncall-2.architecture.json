@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "온콜 스케줄 구성 요소",
+    "output": "ko-observability-alerting-03-grafana-oncall-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": { "label": "로테이션" },
+        "backend": { "label": "레이어" },
+        "security": { "label": "오버라이드" },
+        "database": { "label": "최종 스케줄" }
+      }
+    },
+    "views": [
+      { "id": "rotation-to-primary", "label": "로테이션 → 1차 담당자", "focus": ["day-rotation", "night-rotation", "primary"], "note": "주간·야간 로테이션이 돌아가며 1차 담당자를 채운다." },
+      { "id": "layers-to-final", "label": "레이어 합성", "focus": ["primary", "secondary", "backup", "final"], "note": "1차·2차·백업 레이어가 겹쳐져 최종 스케줄이 된다." },
+      { "id": "override", "label": "오버라이드", "focus": ["vacation", "temporary", "final"], "note": "휴가 대체와 임시 변경은 특정 기간만 최종 스케줄을 덮어쓴다." }
+    ]
+  },
+  "components": [
+    { "id": "day-rotation", "type": "cloud", "label": "주간 로테이션", "sublabel": "rolling_users", "pos": [40, 60], "size": [160, 60] },
+    { "id": "night-rotation", "type": "cloud", "label": "야간 로테이션", "sublabel": "rolling_users", "pos": [40, 200], "size": [160, 60] },
+    { "id": "primary", "type": "backend", "label": "1차 담당자", "sublabel": "Primary", "pos": [320, 60], "size": [160, 60] },
+    { "id": "secondary", "type": "backend", "label": "2차 담당자", "sublabel": "Secondary", "pos": [320, 200], "size": [160, 60] },
+    { "id": "backup", "type": "backend", "label": "백업 담당자", "sublabel": "Backup", "pos": [320, 340], "size": [160, 60] },
+    { "id": "final", "type": "database", "label": "최종 스케줄", "sublabel": "누가 온콜인지 확정", "pos": [640, 200], "size": [170, 60] },
+    { "id": "vacation", "type": "security", "label": "휴가 대체", "sublabel": "overrides", "pos": [560, 460], "size": [150, 60] },
+    { "id": "temporary", "type": "security", "label": "임시 변경", "sublabel": "overrides", "pos": [760, 460], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "로테이션", "wraps": ["day-rotation", "night-rotation"] },
+    { "kind": "region", "label": "레이어", "wraps": ["primary", "secondary", "backup"] },
+    { "kind": "region", "label": "오버라이드", "wraps": ["vacation", "temporary"] }
+  ],
+  "connections": [
+    { "id": "day-to-primary", "from": "day-rotation", "to": "primary", "variant": "emphasis" },
+    { "id": "night-to-primary", "from": "night-rotation", "to": "primary", "variant": "emphasis" },
+    { "id": "primary-to-final", "from": "primary", "to": "final", "variant": "emphasis" },
+    { "id": "secondary-to-final", "from": "secondary", "to": "final" },
+    { "id": "backup-to-final", "from": "backup", "to": "final" },
+    { "id": "vacation-to-final", "from": "vacation", "to": "final", "variant": "dashed", "label": "기간 한정 덮어쓰기", "fromSide": "top", "toSide": "bottom" },
+    { "id": "temporary-to-final", "from": "temporary", "to": "final", "variant": "dashed", "fromSide": "top", "toSide": "bottom" }
+  ]
+}

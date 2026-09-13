@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LEAST_REQUEST Load Balancing",
+    "output": "en-service-mesh-istio-traffic-management-06-load-balancing-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "New request",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "backend",
+      "label": "Load Balancer",
+      "sublabel": "Envoy · LEAST_REQUEST",
+      "pos": [
+        300,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "Active requests: 5",
+      "pos": [
+        720,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "Active requests: 2 (fewest)",
+      "pos": [
+        720,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "Selected"
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "Active requests: 8",
+      "pos": [
+        720,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod status",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pod3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "New request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-pod1",
+      "from": "lb",
+      "to": "pod1",
+      "label": "Check",
+      "variant": "dashed"
+    },
+    {
+      "id": "check-pod3",
+      "from": "lb",
+      "to": "pod3",
+      "label": "Check",
+      "variant": "dashed"
+    },
+    {
+      "id": "route-pod2",
+      "from": "lb",
+      "to": "pod2",
+      "label": "Route to least loaded",
+      "variant": "emphasis",
+      "labelAt": [
+        658,
+        266
+      ]
+    }
+  ]
+}

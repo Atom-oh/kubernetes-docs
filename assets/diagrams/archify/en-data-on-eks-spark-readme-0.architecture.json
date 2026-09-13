@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Spark cluster mode: requests, pod placement and tasks",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "submit",
+        "label": "Driver pod creation",
+        "focus": [
+          "submit",
+          "apiserver",
+          "driver",
+          "placement"
+        ],
+        "note": "In cluster mode the submitter requests a driver pod. Kubernetes scheduler chooses its node; kubelet starts its containers."
+      },
+      {
+        "id": "executors",
+        "label": "Executor pod request and scheduling",
+        "focus": [
+          "driver",
+          "apiserver",
+          "exec1",
+          "exec2",
+          "exec3",
+          "placement"
+        ],
+        "note": "The driver requests executor pods and coordinates Spark tasks; Kubernetes still places the pods."
+      },
+      {
+        "id": "report",
+        "label": "Registration and status reporting",
+        "focus": [
+          "exec1",
+          "exec2",
+          "exec3",
+          "driver"
+        ],
+        "note": "Executors register with the driver, execute tasks and report. This drawing shows cluster mode; client mode is also supported."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "submit",
+      "type": "external",
+      "label": "spark-submit",
+      "sublabel": "local client",
+      "pos": [
+        490,
+        40
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "auth · admission · API state",
+      "pos": [
+        460,
+        170
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "cloud",
+      "label": "Driver Pod",
+      "sublabel": "Spark stage/task coordination",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "exec1",
+      "type": "backend",
+      "label": "Executor Pod 1",
+      "sublabel": "runs tasks",
+      "pos": [
+        330,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "exec2",
+      "type": "backend",
+      "label": "Executor Pod 2",
+      "sublabel": "runs tasks",
+      "pos": [
+        495,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "exec3",
+      "type": "backend",
+      "label": "Executor Pod 3",
+      "sublabel": "runs tasks",
+      "pos": [
+        660,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "placement",
+      "type": "backend",
+      "label": "Pod placement and start",
+      "sublabel": "scheduler + node kubelets",
+      "pos": [
+        460,
+        270
+      ],
+      "size": [
+        220,
+        54
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS cluster",
+      "wraps": [
+        "apiserver",
+        "driver",
+        "exec1",
+        "exec2",
+        "exec3",
+        "placement"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "submit-to-api",
+      "from": "submit",
+      "to": "apiserver",
+      "label": "create driver pod",
+      "variant": "emphasis",
+      "labelAt": [
+        650,
+        133
+      ]
+    },
+    {
+      "id": "api-to-driver",
+      "from": "placement",
+      "to": "driver",
+      "label": "place · start",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          570,
+          350
+        ],
+        [
+          175,
+          350
+        ]
+      ]
+    },
+    {
+      "id": "driver-to-api",
+      "from": "driver",
+      "to": "apiserver",
+      "label": "request executor pods",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          40,
+          430
+        ],
+        [
+          40,
+          200
+        ]
+      ],
+      "labelAt": [
+        250,
+        188
+      ]
+    },
+    {
+      "id": "api-to-exec1",
+      "from": "placement",
+      "to": "exec1",
+      "label": "place · start",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          570,
+          350
+        ],
+        [
+          405,
+          350
+        ]
+      ]
+    },
+    {
+      "id": "api-to-exec2",
+      "from": "placement",
+      "to": "exec2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-exec3",
+      "from": "placement",
+      "to": "exec3",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          570,
+          350
+        ],
+        [
+          735,
+          350
+        ]
+      ]
+    },
+    {
+      "id": "exec1-to-driver",
+      "from": "exec1",
+      "to": "driver",
+      "variant": "dashed"
+    },
+    {
+      "id": "exec2-to-driver",
+      "from": "exec2",
+      "to": "driver",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          570,
+          505
+        ],
+        [
+          175,
+          505
+        ]
+      ],
+      "label": "register · report status",
+      "labelAt": [
+        372,
+        525
+      ]
+    },
+    {
+      "id": "exec3-to-driver",
+      "from": "exec3",
+      "to": "driver",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          735,
+          545
+        ],
+        [
+          175,
+          545
+        ]
+      ]
+    },
+    {
+      "id": "api-to-placement",
+      "from": "apiserver",
+      "to": "placement",
+      "label": "Pod specs / bindings",
+      "labelAt": [
+        705,
+        250
+      ]
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "카나리 배포 트래픽 분배",
+    "output": "ko-gitops-argocd-05-traffic-management-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "클라이언트 요청"
+        },
+        "cloud": {
+          "label": "트래픽 라우터"
+        },
+        "frontend": {
+          "label": "Service"
+        },
+        "backend": {
+          "label": "ReplicaSet 용량"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "stable-path",
+        "label": "Stable 경로 80%",
+        "focus": [
+          "client",
+          "lb",
+          "svc-stable",
+          "s1"
+        ],
+        "note": "기본 stable 용량은 spec.replicas(10)이며, 라우터의 상대 가중치는 80/100입니다."
+      },
+      {
+        "id": "canary-path",
+        "label": "Canary 경로 20%",
+        "focus": [
+          "client",
+          "lb",
+          "svc-canary",
+          "c1"
+        ],
+        "note": "setWeight20에서 기본 canary 용량은10개 중2개입니다. 실제 요청 비율은 표본과 연결에 따라 달라집니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트 요청",
+      "sublabel": "전체 트래픽 100%",
+      "pos": [
+        30,
+        270
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Traffic Router",
+      "sublabel": "Gateway API / ALB / Istio",
+      "pos": [
+        240,
+        270
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-stable",
+      "type": "frontend",
+      "label": "my-app-stable",
+      "sublabel": "stableService",
+      "pos": [
+        490,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-canary",
+      "type": "frontend",
+      "label": "my-app-canary",
+      "sublabel": "canaryService",
+      "pos": [
+        490,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "Stable ReplicaSet",
+      "sublabel": "v1.0.0 · 10 Pods",
+      "pos": [
+        740,
+        120
+      ],
+      "size": [
+        230,
+        66
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "Canary ReplicaSet",
+      "sublabel": "v2.0.0 · 2 Pods",
+      "tag": "canary",
+      "pos": [
+        740,
+        430
+      ],
+      "size": [
+        230,
+        66
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Stable (v1.0.0)",
+      "wraps": [
+        "s1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Canary (v2.0.0)",
+      "wraps": [
+        "c1"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "HTTP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-stable",
+      "from": "lb",
+      "to": "svc-stable",
+      "label": "80%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-canary",
+      "from": "lb",
+      "to": "svc-canary",
+      "label": "20%",
+      "variant": "dashed"
+    },
+    {
+      "id": "stable-s1",
+      "from": "svc-stable",
+      "to": "s1"
+    },
+    {
+      "id": "canary-c1",
+      "from": "svc-canary",
+      "to": "c1",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "카나리 단계 (steps)",
+      "items": [
+        "setWeight: 5 → 30초 대기 → Analysis(success-rate)",
+        "setWeight: 20 → 수동 승격 대기 (pause: {})",
+        "setWeight: 50 → 1분 대기 → setWeight: 80 → 최종 Analysis → 100%"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "용량과 트래픽은 별개",
+      "items": [
+        "예제: replicas10, dynamicStableScale=false",
+        "기본 stable10 + canary2; 별도 scale 설정 시 달라짐",
+        "maxTrafficWeight 기본100; 요청 비율의 확정값이 아님"
+      ]
+    }
+  ]
+}

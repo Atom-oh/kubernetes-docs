@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio vs VPC Lattice 아키텍처 비교",
+    "output": "ko-service-mesh-istio-04-aws-integration-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      440
+    ],
+    "views": [
+      {
+        "id": "istio-side",
+        "label": "Istio 아키텍처",
+        "focus": [
+          "istiod",
+          "istio-app-a",
+          "istio-app-b"
+        ],
+        "note": "istiod가 각 파드의 Envoy 사이드카를 구성하고, 파드 간 통신은 사이드카끼리 mTLS로 직접 맺는다."
+      },
+      {
+        "id": "lattice-side",
+        "label": "VPC Lattice 아키텍처",
+        "focus": [
+          "lattice-sn",
+          "lattice-app-a",
+          "lattice-app-b"
+        ],
+        "note": "사이드카 없이 애플리케이션이 HTTP로 관리형 Service Network에 보내면 Service Network가 대상 애플리케이션으로 라우팅한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        190,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "istio-app-a",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "+ Envoy 사이드카",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "istio-app-b",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "+ Envoy 사이드카",
+      "pos": [
+        320,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lattice-sn",
+      "type": "cloud",
+      "label": "Service Network",
+      "sublabel": "AWS 관리형 서비스",
+      "pos": [
+        790,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "lattice-app-a",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "사이드카 없음",
+      "pos": [
+        670,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lattice-app-b",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "사이드카 없음",
+      "pos": [
+        930,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio 아키텍처",
+      "wraps": [
+        "istiod",
+        "istio-app-a",
+        "istio-app-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC Lattice 아키텍처",
+      "wraps": [
+        "lattice-sn",
+        "lattice-app-a",
+        "lattice-app-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istiod-config-a",
+      "from": "istiod",
+      "to": "istio-app-a",
+      "label": "구성",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istiod-config-b",
+      "from": "istiod",
+      "to": "istio-app-b",
+      "label": "구성",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istio-mtls",
+      "from": "istio-app-a",
+      "to": "istio-app-b",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "lattice-http",
+      "from": "lattice-app-a",
+      "to": "lattice-sn",
+      "label": "HTTP",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "lattice-routing",
+      "from": "lattice-sn",
+      "to": "lattice-app-b",
+      "label": "라우팅",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istio",
+      "items": [
+        "자체 관리 (Self-managed), 사이드카 필요 (Sidecar 또는 Ambient)",
+        "각 파드에 Envoy가 붙어 리소스 오버헤드가 높음",
+        "mTLS 자동 적용, 세밀한 트래픽 제어"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "VPC Lattice",
+      "items": [
+        "AWS 관리형 (Fully-managed), 사이드카 불필요",
+        "리소스 오버헤드 낮음, 기본적인 트래픽 관리",
+        "Kubernetes 전용이 아님 (EC2, Lambda 등)"
+      ]
+    }
+  ]
+}

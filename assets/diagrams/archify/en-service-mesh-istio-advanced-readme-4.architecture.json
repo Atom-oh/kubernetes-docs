@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KEDA Architecture",
+    "output": "en-service-mesh-istio-advanced-readme-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [
+      1290,
+      575
+    ]
+  },
+  "components": [
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "scale target workload",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar, exposes metrics",
+      "pos": [
+        300,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "metrics collection",
+      "pos": [
+        640,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "AWS CloudWatch",
+      "sublabel": "via ADOT Collector",
+      "pos": [
+        640,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "keda",
+      "type": "backend",
+      "label": "KEDA",
+      "sublabel": "Operator",
+      "pos": [
+        980,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "scaling decision"
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA",
+      "sublabel": "Controller",
+      "pos": [
+        980,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "scaledobject",
+      "type": "backend",
+      "label": "ScaledObject",
+      "sublabel": "scaling policy",
+      "pos": [
+        980,
+        420
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Service Mesh",
+      "wraps": [
+        "service",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Observability Stack",
+      "wraps": [
+        "prometheus",
+        "cloudwatch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Autoscaling",
+      "wraps": [
+        "keda",
+        "hpa",
+        "scaledobject"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "service-envoy",
+      "from": "service",
+      "to": "envoy",
+      "label": "traffic"
+    },
+    {
+      "id": "envoy-prometheus",
+      "from": "envoy",
+      "to": "prometheus",
+      "label": "metrics",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-cloudwatch",
+      "from": "envoy",
+      "to": "cloudwatch",
+      "label": "metrics",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "prometheus-keda",
+      "from": "prometheus",
+      "to": "keda",
+      "label": "PromQL query",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cloudwatch-keda",
+      "from": "cloudwatch",
+      "to": "keda",
+      "label": "query",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "scaledobject-keda",
+      "from": "scaledobject",
+      "to": "keda",
+      "label": "defines policy",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "labelDx": 48
+    },
+    {
+      "id": "keda-hpa",
+      "from": "keda",
+      "to": "hpa",
+      "label": "create / manage",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "hpa-service",
+      "from": "hpa",
+      "to": "service",
+      "label": "scale",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          1065,
+          370
+        ],
+        [
+          125,
+          370
+        ]
+      ],
+      "labelSegment": 1
+    }
+  ]
+}

@@ -1,0 +1,730 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T02:34:48.025805+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/01-introduction.md",
+      "sha256": "a74dd8af3f6afb1f00b06b22102223f1b1463f99115c4b78f1a2436ed690a980"
+    },
+    {
+      "path": "en/quizzes/networking/calico/01-introduction-quiz.md",
+      "sha256": "219f5ae9fd05f45c52d31e91e0ee7e0dbb6bd009814d1ebc066e52b7d35f9153"
+    },
+    {
+      "path": "ko/networking/calico/01-introduction.md",
+      "sha256": "74719018a8bd776bb23c5e79a6f4d0ebb6e18645581f605610a93bd5aeb129a1"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/01-introduction-quiz.md",
+      "sha256": "a073d323290ca323c916a74051da49e34c0ec7328e634626cb6d23e03c8ec21f"
+    }
+  ],
+  "sources": {
+    "release": {
+      "url": "https://api.github.com/repos/projectcalico/calico/releases/latest",
+      "key": "7bc4068c9f42"
+    },
+    "requirements": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements",
+      "key": "6f94a8862c24"
+    },
+    "EKS": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "key": "8b9a045ccc34"
+    },
+    "helm": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm",
+      "key": "11cf4ba2419c"
+    },
+    "editions": {
+      "url": "https://docs.tigera.io/calico/latest/about/calico-product-editions",
+      "key": "4115652e6e42"
+    },
+    "architecture": {
+      "url": "https://docs.tigera.io/calico/latest/reference/architecture/overview",
+      "key": "13138c565fbe"
+    },
+    "Windows": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations",
+      "key": "d784db9e78d6"
+    },
+    "MTU": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/mtu",
+      "key": "dca46d8d81f4"
+    },
+    "overlays": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip",
+      "key": "db51c23ce2ae"
+    },
+    "ebpf": {
+      "url": "https://docs.tigera.io/calico/latest/operations/ebpf/install",
+      "key": "e0b3156ff702"
+    },
+    "FelixMetrics": {
+      "url": "https://docs.tigera.io/calico/latest/reference/felix/prometheus",
+      "key": "b299dee33cd8"
+    },
+    "TyphaMetrics": {
+      "url": "https://docs.tigera.io/calico/latest/reference/typha/prometheus",
+      "key": "e9c383f722b2"
+    },
+    "metricsSetup": {
+      "url": "https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics",
+      "key": "84f7a45d1395"
+    },
+    "FelixConfiguration": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/felixconfig",
+      "key": "43fe47250f7c"
+    },
+    "NetworkPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/networkpolicy",
+      "key": "72c09bf8ede0"
+    },
+    "GlobalNetworkPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy",
+      "key": "7b7de74c5e4b"
+    },
+    "installationAPI": {
+      "url": "https://docs.tigera.io/calico/latest/reference/installation/api",
+      "key": "71a9d6b0ffba"
+    },
+    "releasedCRDs": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml",
+      "key": "366be3352d5d"
+    },
+    "releasedOperator": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml",
+      "key": "cdde707b47cc"
+    },
+    "VMAnnouncement": {
+      "url": "https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/",
+      "key": "9ba868c99ef1"
+    },
+    "VMDate": {
+      "url": "https://www.tigera.io/wp-json/wp/v2/news/69357",
+      "key": "ce253d32794c"
+    },
+    "EnterpriseRelease": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/release-notes/",
+      "key": "b3bf237be7e9"
+    },
+    "CiliumRequirements": {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "key": "47d0fa2d6ec0"
+    },
+    "onprem": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises",
+      "key": "02568f8010ac"
+    },
+    "VPCPolicyDisable": {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html",
+      "key": "434a09656a49"
+    },
+    "flowlogs": {
+      "url": "https://docs.tigera.io/calico/latest/observability/view-flow-logs",
+      "key": "6fac19fcc17d"
+    },
+    "domainPolicy": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy",
+      "key": "eb4790c977ec"
+    },
+    "vpcAnnotation": {
+      "url": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+      "key": "79a74010bf7d"
+    },
+    "kubernetesSchemas": {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "key": "b0fb38bb7c6c"
+    },
+    "kindRelease": {
+      "url": "https://api.github.com/repos/kubernetes-sigs/kind/releases/latest",
+      "key": "019cdbf01009"
+    },
+    "kindConfig": {
+      "url": "https://kind.sigs.k8s.io/docs/user/configuration/",
+      "key": "b50644ecbf61"
+    },
+    "calicoctlVersion": {
+      "url": "https://docs.tigera.io/calico/latest/reference/calicoctl/version",
+      "key": "4666062c5878"
+    },
+    "GKEV2": {
+      "url": "https://cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2",
+      "key": "cf7a046b13c2"
+    },
+    "kubectlSkew": {
+      "url": "https://kubernetes.io/releases/version-skew-policy/",
+      "key": "8a9bd073895e"
+    },
+    "Calico329": {
+      "url": "https://api.github.com/repos/projectcalico/calico/releases/tags/v3.29.0",
+      "key": "460d3bffdd3c"
+    },
+    "Calico300": {
+      "url": "https://api.github.com/repos/projectcalico/calico/releases/tags/v3.0.0",
+      "key": "8b038c702595"
+    },
+    "eBPFIntro": {
+      "url": "https://www.tigera.io/blog/introducing-the-calico-ebpf-dataplane/",
+      "key": "ca9d4edeeb9d"
+    },
+    "eBPFIntroREST": {
+      "url": "https://www.tigera.io/wp-json/wp/v2/posts/23226",
+      "key": "bbfdfa582470"
+    },
+    "Contributing": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/CONTRIBUTING.md",
+      "key": "d4416d0d7367"
+    },
+    "Makefile": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/Makefile",
+      "key": "e5405ef21f06"
+    },
+    "Community": {
+      "url": "https://www.tigera.io/project-calico/community/",
+      "key": "0dff09e6f134"
+    },
+    "BGPPeer": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/bgppeer",
+      "key": "94e016aa537b"
+    },
+    "IPPool": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/ippool",
+      "key": "785bcc7771cb"
+    },
+    "developerGuide": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/DEVELOPER_GUIDE.md",
+      "key": "2cfb6cd5bc13"
+    },
+    "license": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/LICENSE.md",
+      "key": "eda59ff181a0"
+    },
+    "calicoctlMakefile": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/Makefile",
+      "key": "74ffdf376d5d"
+    },
+    "sharedMakefile": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/lib.Makefile",
+      "key": "783182880812"
+    }
+  },
+  "findings": [
+    "PinnedCalico3.32.2/kind0.33.0/Kubernetes1.36.4insidetested1.34–1.36;verifiedkindnodeOCIindexdigestandamd64/arm64withoutimagelayers.",
+    "ReplacedsequentialOSbinaryoverwriteswithsingleOS/archselectionandGitHubpublishedSHAverification;separatekubeconfig;noinvalidcalicoctlversion--clientflag.",
+    "FreshkindCNIexplicitlyIptables/VXLAN/BGPDisabled;separatev1CRDsandAPIServer,matchedPodCIDR,readinesscriteria;BIRDnotrequiredinthismode.",
+    "Corrected3.0releaseDec21,2017/3.29Oct29,2024/eBPFFeb25,2020techpreview;removedfalseWindowsBPF/fullparityclaimsandfixedquizhistory/editions.",
+    "GKEV2isCilium;qualifiedWindows/platformlimits;OSSsupportsTiers/Whisker/WireGuardasapplicable;CalicoctlnotmandatoryforallAPIoperations.",
+    "Scopedpolicyexamplestocalico-demo;clarifiedGlobalNetworkPolicyscopevsTierorderandHostEndpointresource;BGP/IPPoolseparateroutedlabnonoverlap/prerequisites.",
+    "SeparatedCalicoCNI/policyfromkube-proxyServiceforwarding;removedunsourcedscale/performanceguarantees,unlimitedscaling,kernel-bypassandautomaticfederationclaims.",
+    "All11figuresviewed;retainedEN4/KO0/KO1withexplicitCNCF/featurecaptions,removed8wrongredundantrefs;parent-ownedassetsunchanged.",
+    "Verifiedsourcecontributiontargetmake-Ccalicoctltestviareleasedlib.Makefile(test:ut fv st);sourcebuildnotrun. 2014/2016originaccountretainedbutcurrentfoundingarchivesnotrecovered."
+  ],
+  "checks": {
+    "schemaObjects": 16,
+    "bashBlocks": 10,
+    "kindConfigs": [
+      {
+        "language": "en",
+        "fieldsCheckedAgainstPublishedConfig": true,
+        "nodes": 3,
+        "image": "kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed",
+        "liveClusterCreated": false
+      },
+      {
+        "language": "ko",
+        "fieldsCheckedAgainstPublishedConfig": true,
+        "nodes": 3,
+        "image": "kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed",
+        "liveClusterCreated": false
+      }
+    ],
+    "platformSelection": [
+      {
+        "language": "en",
+        "OS": "Linux",
+        "arch": "x86_64",
+        "selected": "calicoctl-linux-amd64",
+        "unsupportedRejected": false
+      },
+      {
+        "language": "en",
+        "OS": "Linux",
+        "arch": "aarch64",
+        "selected": "calicoctl-linux-arm64",
+        "unsupportedRejected": false
+      },
+      {
+        "language": "en",
+        "OS": "Darwin",
+        "arch": "x86_64",
+        "selected": "calicoctl-darwin-amd64",
+        "unsupportedRejected": false
+      },
+      {
+        "language": "en",
+        "OS": "Darwin",
+        "arch": "arm64",
+        "selected": "calicoctl-darwin-arm64",
+        "unsupportedRejected": false
+      },
+      {
+        "language": "en",
+        "OS": "OtherOS",
+        "arch": "x86_64",
+        "selected": null,
+        "unsupportedRejected": true
+      },
+      {
+        "language": "en",
+        "OS": "Linux",
+        "arch": "mips",
+        "selected": null,
+        "unsupportedRejected": true
+      },
+      {
+        "language": "ko",
+        "OS": "Linux",
+        "arch": "x86_64",
+        "selected": "calicoctl-linux-amd64",
+        "unsupportedRejected": false
+      },
+      {
+        "language": "ko",
+        "OS": "Linux",
+        "arch": "aarch64",
+        "selected": "calicoctl-linux-arm64",
+        "unsupportedRejected": false
+      },
+      {
+        "language": "ko",
+        "OS": "Darwin",
+        "arch": "x86_64",
+        "selected": "calicoctl-darwin-amd64",
+        "unsupportedRejected": false
+      },
+      {
+        "language": "ko",
+        "OS": "Darwin",
+        "arch": "arm64",
+        "selected": "calicoctl-darwin-arm64",
+        "unsupportedRejected": false
+      },
+      {
+        "language": "ko",
+        "OS": "OtherOS",
+        "arch": "x86_64",
+        "selected": null,
+        "unsupportedRejected": true
+      },
+      {
+        "language": "ko",
+        "OS": "Linux",
+        "arch": "mips",
+        "selected": null,
+        "unsupportedRejected": true
+      }
+    ],
+    "digestVerifierCases": [
+      {
+        "language": "en",
+        "case": "matching",
+        "accepted": true,
+        "syntheticFixture": true
+      },
+      {
+        "language": "en",
+        "case": "wrong-content",
+        "accepted": false,
+        "syntheticFixture": true
+      },
+      {
+        "language": "en",
+        "case": "missing-digest",
+        "accepted": false,
+        "syntheticFixture": true
+      },
+      {
+        "language": "en",
+        "case": "wrong-release",
+        "accepted": false,
+        "syntheticFixture": true
+      },
+      {
+        "language": "ko",
+        "case": "matching",
+        "accepted": true,
+        "syntheticFixture": true
+      },
+      {
+        "language": "ko",
+        "case": "wrong-content",
+        "accepted": false,
+        "syntheticFixture": true
+      },
+      {
+        "language": "ko",
+        "case": "missing-digest",
+        "accepted": false,
+        "syntheticFixture": true
+      },
+      {
+        "language": "ko",
+        "case": "wrong-release",
+        "accepted": false,
+        "syntheticFixture": true
+      }
+    ],
+    "policyModelCases": [
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "Allow",
+        "isolatedModel": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "other",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "Deny",
+        "isolatedModel": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {},
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "Deny",
+        "isolatedModel": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "UDP",
+        "port": 8080,
+        "result": "Deny",
+        "isolatedModel": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 80,
+        "result": "Deny",
+        "isolatedModel": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "unselected",
+        "isolatedModel": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "frontend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "unselected",
+        "isolatedModel": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "unselected",
+        "isolatedModel": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "Allow",
+        "isolatedModel": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "other",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "Deny",
+        "isolatedModel": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {},
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "Deny",
+        "isolatedModel": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "UDP",
+        "port": 8080,
+        "result": "Deny",
+        "isolatedModel": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 80,
+        "result": "Deny",
+        "isolatedModel": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "unselected",
+        "isolatedModel": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "calico-demo",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "frontend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "unselected",
+        "isolatedModel": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "",
+        "sourceLabels": {
+          "trusted": "true"
+        },
+        "destinationLabels": {
+          "app": "backend"
+        },
+        "protocol": "TCP",
+        "port": 8080,
+        "result": "unselected",
+        "isolatedModel": true
+      }
+    ],
+    "quizAnswers": 20,
+    "releaseAssets": [
+      {
+        "name": "calicoctl-linux-amd64",
+        "digest": "sha256:fd2ebfc94e63ed34e924cbb8dcdcf3ffc8b264098e58d87069abd46ada2e103a",
+        "url": "https://github.com/projectcalico/calico/releases/download/v3.32.2/calicoctl-linux-amd64",
+        "binaryDownloaded": false
+      },
+      {
+        "name": "calicoctl-linux-arm64",
+        "digest": "sha256:9235f55386cfd96e2f55393e997efec7768049cf2379a8dffa07e724890a4691",
+        "url": "https://github.com/projectcalico/calico/releases/download/v3.32.2/calicoctl-linux-arm64",
+        "binaryDownloaded": false
+      },
+      {
+        "name": "calicoctl-darwin-amd64",
+        "digest": "sha256:185aad9fb321aa359e5e82c874f7348aeed8317c0d1d77f1b6fbc21ac89c1471",
+        "url": "https://github.com/projectcalico/calico/releases/download/v3.32.2/calicoctl-darwin-amd64",
+        "binaryDownloaded": false
+      },
+      {
+        "name": "calicoctl-darwin-arm64",
+        "digest": "sha256:5c5b75cdd936d950b37059a7b93b44839c700e9ad6d0bdb7a67434465115e506",
+        "url": "https://github.com/projectcalico/calico/releases/download/v3.32.2/calicoctl-darwin-arm64",
+        "binaryDownloaded": false
+      }
+    ],
+    "limits": [
+      "No kind cluster, Calico dataplane, BGP session, source build or AWS resource was created.",
+      "Kind config fields and relationships checked against official documentation; no native kind config validator installed.",
+      "Checksum and policy cases are isolated synthetic/model checks, not a live cluster security proof.",
+      "Calico public v3 field shapes checked against released equivalent internal CRDs; API aggregation not executed.",
+      "The existing 2014 Metaswitch/2016 Tigera origin account was retained; current public WordPress searches did not recover the founding archives. Release dates and 2020 preview wording were independently verified."
+    ]
+  },
+  "kindArtifact": {
+    "kindRelease": "v0.33.0",
+    "nodeImage": "kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed",
+    "digest": "sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed",
+    "registryDigestVerified": true,
+    "platforms": [
+      {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      {
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    ],
+    "layersDownloaded": false,
+    "releaseBodyNote": "Introlineclaimsdefault1.36.1whilebreakingchangesclaim1.37.0;guidepinslisted1.36.4imageexplicitly."
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/calico/01-introduction.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/calico/01-introduction.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/calico/01-introduction-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/calico/01-introduction-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "batchValidation": {
+    "documents": 6,
+    "yamlBlocks": 18,
+    "shellBlocks": 18,
+    "errors": []
+  },
+  "docsTest": {
+    "tests": 118,
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-calico-intro-validation/docs-test.log",
+    "environment": "login:false env-i OTELoff"
+  },
+  "scopeDiffCheck": "passed",
+  "images": {
+    "viewed": 11,
+    "retained": [
+      "en-networking-calico-01-introduction-4",
+      "ko-networking-calico-01-introduction-0",
+      "ko-networking-calico-01-introduction-1"
+    ],
+    "removedReferences": [
+      "en-networking-calico-01-introduction-0",
+      "en-networking-calico-01-introduction-1",
+      "en-networking-calico-01-introduction-2",
+      "en-networking-calico-01-introduction-3",
+      "ko-networking-calico-01-introduction-2",
+      "ko-networking-calico-01-introduction-3",
+      "ko-networking-calico-01-introduction-4",
+      "ko-networking-calico-01-introduction-5"
+    ],
+    "underlyingAssetsEdited": false,
+    "externalRepair": "Regeneratewrongtimeline,kernelbypass/scale/Federation/policyhierarchy/unlimited/VLANfiguresbeforetheycanbereintroduced;CNCFgroupingshouldshowlistingratherthangovernance."
+  },
+  "artifacts": "/tmp/networking-calico-intro-validation"
+}

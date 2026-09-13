@@ -1,0 +1,380 @@
+[
+  {
+    "path": "ko/storage/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "c40cb4b70ee7f65c1114380dc446af33255d0389c88cd2d761ad674b85293ab9",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html",
+      "https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/modify-volume.md",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://github.com/axboe/fio/blob/master/HOWTO.rst",
+      "https://alpinelinux.org/releases/"
+    ],
+    "findings": [
+      "qd1/qd32 do not isolate physical SSD service time; Little law includes queueing and service",
+      "m5 EBS burst is not a fixed 137 MiB/s ceiling; 1000 GiB differs from 1 TiB",
+      "Namespace/StorageClasses were missing, volume topology/reclaim policy implicit",
+      "Alpine3.20 left normal support; separate current rerun example from recorded old environment",
+      "VAC requires compatible CSI/sidecars and does not rename storageClassName",
+      "Karpenter do-not-disrupt/PDB do not prevent all failures"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "ko/storage/01-ebs-gp2-gp3-benchmark.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "58d8432b48d66f2edf377f2ba4bb64b5509d57201375b5533bc6274b7ae09c0f",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html",
+      "https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/modify-volume.md",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://github.com/axboe/fio/blob/master/HOWTO.rst",
+      "https://alpinelinux.org/releases/"
+    ],
+    "findings": [
+      "qd1/qd32 do not isolate physical SSD service time; Little law includes queueing and service",
+      "m5 EBS burst is not a fixed 137 MiB/s ceiling; 1000 GiB differs from 1 TiB",
+      "Namespace/StorageClasses were missing, volume topology/reclaim policy implicit",
+      "Alpine3.20 left normal support; separate current rerun example from recorded old environment",
+      "VAC requires compatible CSI/sidecars and does not rename storageClassName",
+      "Karpenter do-not-disrupt/PDB do not prevent all failures"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "ko/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "388b692d240aeb300389f534d437a2191fd30e20a6ae43f721b31b5c6f29ee8d",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html",
+      "https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/modify-volume.md",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://github.com/axboe/fio/blob/master/HOWTO.rst",
+      "https://alpinelinux.org/releases/"
+    ],
+    "findings": [
+      "qd1/qd32 do not isolate physical SSD service time; Little law includes queueing and service",
+      "m5 EBS burst is not a fixed 137 MiB/s ceiling; 1000 GiB differs from 1 TiB",
+      "Namespace/StorageClasses were missing, volume topology/reclaim policy implicit",
+      "Alpine3.20 left normal support; separate current rerun example from recorded old environment",
+      "VAC requires compatible CSI/sidecars and does not rename storageClassName",
+      "Karpenter do-not-disrupt/PDB do not prevent all failures"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "ko/database/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "099277432220ffcf829e830c6983d5b5ba2b0300c882dc3f301133b7af8c4ce7",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md",
+      "https://github.com/ClickHouse/ClickHouse/blob/master/docker/server/README.md",
+      "https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/quantile",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/i18n/ko/docusaurus-plugin-content-docs/current/sql-reference/aggregate-functions/reference/quantile.md",
+      "https://github.com/ClickHouse/ClickHouse/pull/60463",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/docs/guides/best-practices/skipping-indexes.md",
+      "https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md",
+      "https://aws.amazon.com/ebs/pricing/"
+    ],
+    "findings": [
+      "Raw query_log/exact historic windows were not supplied; identical results cannot be promised",
+      "100 GiB EBS bills $9.12 even when used bytes imply $0.71/$0.38",
+      "LZ4 result does not prove hex IDs cannot compress under any codec",
+      "quantile uses reservoir sampling; bloom filters permit false positives, not false negatives",
+      "In-server data generation is not a mathematical upper bound for external ingestion",
+      "Current rerun uses supported LTS and default-user network restriction; add Namespace/SC/readiness",
+      "MongoDB Community Operator deprecated; operator/Guaranteed QoS choices were overly absolute"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "ko/database/01-clickhouse-on-eks.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "0fa3ccc5519c7d64f25c878f1ac0844e4e044f8e22251d1ffc070bb47c9250cc",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md",
+      "https://github.com/ClickHouse/ClickHouse/blob/master/docker/server/README.md",
+      "https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/quantile",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/i18n/ko/docusaurus-plugin-content-docs/current/sql-reference/aggregate-functions/reference/quantile.md",
+      "https://github.com/ClickHouse/ClickHouse/pull/60463",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/docs/guides/best-practices/skipping-indexes.md",
+      "https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md",
+      "https://aws.amazon.com/ebs/pricing/"
+    ],
+    "findings": [
+      "Raw query_log/exact historic windows were not supplied; identical results cannot be promised",
+      "100 GiB EBS bills $9.12 even when used bytes imply $0.71/$0.38",
+      "LZ4 result does not prove hex IDs cannot compress under any codec",
+      "quantile uses reservoir sampling; bloom filters permit false positives, not false negatives",
+      "In-server data generation is not a mathematical upper bound for external ingestion",
+      "Current rerun uses supported LTS and default-user network restriction; add Namespace/SC/readiness",
+      "MongoDB Community Operator deprecated; operator/Guaranteed QoS choices were overly absolute"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "ko/quizzes/database/01-clickhouse-on-eks-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "3e35b87daf1f722b2dfcadb5fe2c9fedcaad74a3d4884b238be0611a4935ae1e",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md",
+      "https://github.com/ClickHouse/ClickHouse/blob/master/docker/server/README.md",
+      "https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/quantile",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/i18n/ko/docusaurus-plugin-content-docs/current/sql-reference/aggregate-functions/reference/quantile.md",
+      "https://github.com/ClickHouse/ClickHouse/pull/60463",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/docs/guides/best-practices/skipping-indexes.md",
+      "https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md",
+      "https://aws.amazon.com/ebs/pricing/"
+    ],
+    "findings": [
+      "Raw query_log/exact historic windows were not supplied; identical results cannot be promised",
+      "100 GiB EBS bills $9.12 even when used bytes imply $0.71/$0.38",
+      "LZ4 result does not prove hex IDs cannot compress under any codec",
+      "quantile uses reservoir sampling; bloom filters permit false positives, not false negatives",
+      "In-server data generation is not a mathematical upper bound for external ingestion",
+      "Current rerun uses supported LTS and default-user network restriction; add Namespace/SC/readiness",
+      "MongoDB Community Operator deprecated; operator/Guaranteed QoS choices were overly absolute"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "en/storage/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "4f7d38fd3c00111344ef098ba3ab55a2e8d687ff17fb7eb273382dfb5c8adac8",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html",
+      "https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/modify-volume.md",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://github.com/axboe/fio/blob/master/HOWTO.rst",
+      "https://alpinelinux.org/releases/"
+    ],
+    "findings": [
+      "qd1/qd32 do not isolate physical SSD service time; Little law includes queueing and service",
+      "m5 EBS burst is not a fixed 137 MiB/s ceiling; 1000 GiB differs from 1 TiB",
+      "Namespace/StorageClasses were missing, volume topology/reclaim policy implicit",
+      "Alpine3.20 left normal support; separate current rerun example from recorded old environment",
+      "VAC requires compatible CSI/sidecars and does not rename storageClassName",
+      "Karpenter do-not-disrupt/PDB do not prevent all failures"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "en/storage/01-ebs-gp2-gp3-benchmark.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "3fc7d227f1da20661dd277948875f748f030836ab0d9e8c4b75d8d09cec0e0ab",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html",
+      "https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/modify-volume.md",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://github.com/axboe/fio/blob/master/HOWTO.rst",
+      "https://alpinelinux.org/releases/"
+    ],
+    "findings": [
+      "qd1/qd32 do not isolate physical SSD service time; Little law includes queueing and service",
+      "m5 EBS burst is not a fixed 137 MiB/s ceiling; 1000 GiB differs from 1 TiB",
+      "Namespace/StorageClasses were missing, volume topology/reclaim policy implicit",
+      "Alpine3.20 left normal support; separate current rerun example from recorded old environment",
+      "VAC requires compatible CSI/sidecars and does not rename storageClassName",
+      "Karpenter do-not-disrupt/PDB do not prevent all failures"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "en/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "0a8da140b9ca70c9891ac5e6bfff9e94848a762f601ad6269ecc10ac5cb065e3",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html",
+      "https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/modify-volume.md",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://github.com/axboe/fio/blob/master/HOWTO.rst",
+      "https://alpinelinux.org/releases/"
+    ],
+    "findings": [
+      "qd1/qd32 do not isolate physical SSD service time; Little law includes queueing and service",
+      "m5 EBS burst is not a fixed 137 MiB/s ceiling; 1000 GiB differs from 1 TiB",
+      "Namespace/StorageClasses were missing, volume topology/reclaim policy implicit",
+      "Alpine3.20 left normal support; separate current rerun example from recorded old environment",
+      "VAC requires compatible CSI/sidecars and does not rename storageClassName",
+      "Karpenter do-not-disrupt/PDB do not prevent all failures"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "en/database/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "4e2a1a85e2165b7c4584684197d457ce4837e195c137cb02e04c05cbc2e583a1",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md",
+      "https://github.com/ClickHouse/ClickHouse/blob/master/docker/server/README.md",
+      "https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/quantile",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/i18n/ko/docusaurus-plugin-content-docs/current/sql-reference/aggregate-functions/reference/quantile.md",
+      "https://github.com/ClickHouse/ClickHouse/pull/60463",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/docs/guides/best-practices/skipping-indexes.md",
+      "https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md",
+      "https://aws.amazon.com/ebs/pricing/"
+    ],
+    "findings": [
+      "Raw query_log/exact historic windows were not supplied; identical results cannot be promised",
+      "100 GiB EBS bills $9.12 even when used bytes imply $0.71/$0.38",
+      "LZ4 result does not prove hex IDs cannot compress under any codec",
+      "quantile uses reservoir sampling; bloom filters permit false positives, not false negatives",
+      "In-server data generation is not a mathematical upper bound for external ingestion",
+      "Current rerun uses supported LTS and default-user network restriction; add Namespace/SC/readiness",
+      "MongoDB Community Operator deprecated; operator/Guaranteed QoS choices were overly absolute"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "en/database/01-clickhouse-on-eks.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "92d1e1ccd0ad5d3eee7dcfc2476a1a3755f336f09594b5456cebdfaae57053d6",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md",
+      "https://github.com/ClickHouse/ClickHouse/blob/master/docker/server/README.md",
+      "https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/quantile",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/i18n/ko/docusaurus-plugin-content-docs/current/sql-reference/aggregate-functions/reference/quantile.md",
+      "https://github.com/ClickHouse/ClickHouse/pull/60463",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/docs/guides/best-practices/skipping-indexes.md",
+      "https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md",
+      "https://aws.amazon.com/ebs/pricing/"
+    ],
+    "findings": [
+      "Raw query_log/exact historic windows were not supplied; identical results cannot be promised",
+      "100 GiB EBS bills $9.12 even when used bytes imply $0.71/$0.38",
+      "LZ4 result does not prove hex IDs cannot compress under any codec",
+      "quantile uses reservoir sampling; bloom filters permit false positives, not false negatives",
+      "In-server data generation is not a mathematical upper bound for external ingestion",
+      "Current rerun uses supported LTS and default-user network restriction; add Namespace/SC/readiness",
+      "MongoDB Community Operator deprecated; operator/Guaranteed QoS choices were overly absolute"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  },
+  {
+    "path": "en/quizzes/database/01-clickhouse-on-eks-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "ccebcabaec6c418146e992483ce8499d1d69c49d86475bb39140801416b1a654",
+    "summary": "Preserved historical reported benchmark results while correcting reproducibility, deployment prerequisites, current support status, measurement interpretation, pricing and matching quiz explanations.",
+    "sources": [
+      "https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md",
+      "https://github.com/ClickHouse/ClickHouse/blob/master/docker/server/README.md",
+      "https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/quantile",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/i18n/ko/docusaurus-plugin-content-docs/current/sql-reference/aggregate-functions/reference/quantile.md",
+      "https://github.com/ClickHouse/ClickHouse/pull/60463",
+      "https://github.com/ClickHouse/clickhouse-docs/blob/main/docs/guides/best-practices/skipping-indexes.md",
+      "https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md",
+      "https://aws.amazon.com/ebs/pricing/"
+    ],
+    "findings": [
+      "Raw query_log/exact historic windows were not supplied; identical results cannot be promised",
+      "100 GiB EBS bills $9.12 even when used bytes imply $0.71/$0.38",
+      "LZ4 result does not prove hex IDs cannot compress under any codec",
+      "quantile uses reservoir sampling; bloom filters permit false positives, not false negatives",
+      "In-server data generation is not a mathematical upper bound for external ingestion",
+      "Current rerun uses supported LTS and default-user network restriction; add Namespace/SC/readiness",
+      "MongoDB Community Operator deprecated; operator/Guaranteed QoS choices were overly absolute"
+    ],
+    "validation": [
+      "All 28 storage/database code fences classified; Bash/YAML syntax checks passed",
+      "Read-only AWS Pricing API reconfirmed Seoul gp2/gp3 and Linux m5.xlarge on 2026-09-11",
+      "Original measured values/plots retained; no cloud benchmark was rerun",
+      "ClickHouse SQL was reviewed statically; new query examples explicitly do not claim exact historical reproduction"
+    ]
+  }
+]

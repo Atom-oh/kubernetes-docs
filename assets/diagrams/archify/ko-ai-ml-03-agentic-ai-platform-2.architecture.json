@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM 기능과 검증할 효과",
+    "output": "ko-ai-ml-03-agentic-ai-platform-2.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      900,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "vLLM 핵심 기술"
+        },
+        "external": {
+          "label": "측정 항목"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "paged-attention",
+      "type": "backend",
+      "label": "PagedAttention",
+      "sublabel": "KV 캐시 블록 단위 관리",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "continuous-batching",
+      "type": "backend",
+      "label": "연속 배치 처리",
+      "pos": [
+        60,
+        160
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "prefix-caching",
+      "type": "backend",
+      "label": "Prefix 캐싱",
+      "sublabel": "--enable-prefix-caching",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "chunked-prefill",
+      "type": "backend",
+      "label": "Chunked Prefill",
+      "sublabel": "--enable-chunked-prefill",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "external",
+      "label": "KV 파편화 관리",
+      "sublabel": "weights / KV / workspace 구분",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "external",
+      "label": "처리량과 대기시간",
+      "pos": [
+        620,
+        160
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sublabel": "동시성·token 예산 영향"
+    },
+    {
+      "id": "latency",
+      "type": "external",
+      "label": "재사용 가능한 prefix",
+      "sublabel": "조건별 TTFT 측정",
+      "pos": [
+        620,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "context",
+      "type": "external",
+      "label": "Prefill / decode 조율",
+      "sublabel": "긴 문맥의 메모리 예산",
+      "pos": [
+        620,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "vLLM 핵심 기술",
+      "wraps": [
+        "paged-attention",
+        "continuous-batching",
+        "prefix-caching",
+        "chunked-prefill"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "측정으로 확인",
+      "wraps": [
+        "memory",
+        "throughput",
+        "latency",
+        "context"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "paged-to-memory",
+      "from": "paged-attention",
+      "to": "memory",
+      "label": "블록 단위 관리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "batching-to-throughput",
+      "from": "continuous-batching",
+      "to": "throughput",
+      "label": "요청 조합에 따라 달라짐"
+    },
+    {
+      "id": "prefix-to-latency",
+      "from": "prefix-caching",
+      "to": "latency",
+      "label": "KV 재사용 조건"
+    },
+    {
+      "id": "chunked-to-context",
+      "from": "chunked-prefill",
+      "to": "context",
+      "label": "scheduler 예산"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "고정 성능 보장 없음",
+      "items": [
+        "gpu-memory-utilization은 KV만의 비율이 아닙니다.",
+        "prefix KV cache와 전체 응답 cache는 다릅니다.",
+        "이미지·모델·driver를 고정하고 latency/throughput을 측정합니다."
+      ]
+    }
+  ]
+}

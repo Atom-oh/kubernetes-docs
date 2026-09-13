@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Traffic Flow During Canary Deployment — setWeight: 10",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "Request entry",
+        "focus": [
+          "client",
+          "vs"
+        ],
+        "note": "A client request from Zone A reaches the zone-a-route of the shared VirtualService."
+      },
+      {
+        "id": "stable-path",
+        "label": "Stable 90%",
+        "focus": [
+          "vs",
+          "stable"
+        ],
+        "note": "90% of requests are routed to the stable-a subset (v1)."
+      },
+      {
+        "id": "canary-path",
+        "label": "Canary 10%",
+        "focus": [
+          "vs",
+          "canary"
+        ],
+        "note": "10% of requests go to the canary-a subset (v2). Argo Rollouts raises the weight 10 → 20 → 50 → 80 → 100."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "Zone A"
+    },
+    {
+      "id": "vs",
+      "type": "backend",
+      "label": "VirtualService",
+      "sublabel": "zone-a-route"
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable Pod",
+      "sublabel": "stable-a · weight 90"
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "Canary Pod",
+      "sublabel": "canary-a · weight 10"
+    }
+  ],
+  "segments": [
+    {
+      "from": 240,
+      "to": 330,
+      "label": "90% of traffic"
+    },
+    {
+      "from": 350,
+      "to": 440,
+      "label": "10% of traffic"
+    },
+    {
+      "from": 462,
+      "to": 505,
+      "label": "Argo Rollouts gradually raises the weight 10 → 20 → 50 → 80 → 100"
+    }
+  ],
+  "messages": [
+    {
+      "id": "get-api",
+      "from": "client",
+      "to": "vs",
+      "y": 200,
+      "label": "GET /api",
+      "variant": "emphasis",
+      "note": "Canary deployment in progress · setWeight: 10"
+    },
+    {
+      "id": "to-stable",
+      "from": "vs",
+      "to": "stable",
+      "y": 265,
+      "label": "subset: stable-a · weight: 90",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stable-resp",
+      "from": "stable",
+      "to": "vs",
+      "y": 310,
+      "label": "Response (v1)",
+      "variant": "return"
+    },
+    {
+      "id": "to-canary",
+      "from": "vs",
+      "to": "canary",
+      "y": 375,
+      "label": "subset: canary-a · weight: 10",
+      "variant": "default"
+    },
+    {
+      "id": "canary-resp",
+      "from": "canary",
+      "to": "vs",
+      "y": 420,
+      "label": "Response (v2)",
+      "variant": "return"
+    },
+    {
+      "id": "resp",
+      "from": "vs",
+      "to": "client",
+      "y": 485,
+      "label": "Response",
+      "variant": "return",
+      "note": "Argo Rollouts gradually changes weight 10 → 20 → 50 → 80 → 100"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "vs",
+      "from": 200,
+      "to": 492,
+      "type": "backend"
+    },
+    {
+      "participant": "stable",
+      "from": 260,
+      "to": 317,
+      "type": "backend"
+    },
+    {
+      "participant": "canary",
+      "from": 370,
+      "to": 427,
+      "type": "backend"
+    }
+  ]
+}

@@ -21,7 +21,9 @@ Istio는 Envoy를 통해 다양한 로드 밸런싱 알고리즘을 제공하여
 
 로드 밸런싱은 트래픽을 여러 인스턴스에 분산시켜 시스템 전체의 처리량과 안정성을 향상시킵니다.
 
-![로드 밸런싱 없이 단일 서비스에 요청이 몰려 100% 과부하가 발생하는 상황과, 로드 밸런서가 요청을 세 서비스에 33%씩 균등하게 분산하는 상황을 나란히 비교한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-0.svg)
+![로드 밸런싱 없이 모든 요청이 서비스 1에 몰려 100% 과부하가 나고 서비스 2·3은 0% 부하로 노는 상황과, 로드 밸런서가 같은 요청을 세 서비스에 33%·33%·34%로 나눠 균등하게 분산하는 상황을 나란히 비교해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-0.html)
 
 ### 주요 이점
 
@@ -35,9 +37,13 @@ Istio는 Envoy를 통해 다양한 로드 밸런싱 알고리즘을 제공하여
 
 ## 로드 밸런싱 개요
 
-![클라이언트 요청이 로드 밸런서의 알고리즘을 거쳐 서로 다른 부하를 가진 세 파드 중 하나로 라우팅되는 개요를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-1.svg)
+![클라이언트 요청이 로드 밸런서의 알고리즘을 거쳐 서로 다른 부하를 가진 세 파드 중 하나로 라우팅되는 개요를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-1.html)
 
 ## 로드 밸런싱 알고리즘
+
+Istio 1.31.0 릴리스의 기본값은 LEAST_REQUEST입니다. 각 예제는 독립적인 DestinationRule이며 같은 호스트에 모두 적용할 구성이 아닙니다. 엔드포인트 상태, 요청 비용, 연결 재사용, 프록시 locality에 따라 결과가 달라지며 동일 CPU 부하나 일정한 지연을 보장하지 않습니다. consistentHash는 별도 구성 분기이며 simple: CONSISTENT_HASH라는 enum 값은 없습니다.
 
 Istio는 다음과 같은 로드 밸런싱 알고리즘을 제공합니다.
 
@@ -45,17 +51,19 @@ Istio는 다음과 같은 로드 밸런싱 알고리즘을 제공합니다.
 
 | 알고리즘 | 설명 | 사용 시나리오 | 장점 | 단점 |
 |---------|------|-------------|------|-----|
-| **ROUND_ROBIN** | 순차적 분배 (기본값) | 스테이트리스 서비스 | 간단, 공평 | 부하 불균형 가능 |
+| **ROUND_ROBIN** | 순차적 분배 (명시적 옵션) | 스테이트리스 서비스 | 간단, 공평 | 부하 불균형 가능 |
 | **LEAST_REQUEST** | 최소 활성 요청 | 고성능 API, DB 연결 | 부하 균등화 | 약간의 오버헤드 |
 | **RANDOM** | 무작위 분배 | 대량 트래픽 | 간단, 빠름 | 단기 불균형 가능 |
 | **PASSTHROUGH** | 원본 목적지 | TCP 프록시, SNI 라우팅 | 유연성 | 제한적 제어 |
 | **CONSISTENT_HASH** | 해시 기반 고정 | 세션 유지, 캐시 | Sticky 세션 | 불균형 가능 |
 
-### 1. ROUND_ROBIN (기본값)
+### 1. ROUND_ROBIN
 
 요청을 순차적으로 각 엔드포인트에 분배합니다.
 
-![클라이언트가 보낸 4번의 요청을 로드 밸런서가 Pod 1, Pod 2, Pod 3에 순서대로 라우팅하고 네 번째 요청에서 다시 Pod 1로 순환하는 ROUND_ROBIN 동작을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-2.svg)
+![클라이언트가 보낸 4번의 요청을 로드 밸런서가 파드 1, 파드 2, 파드 3에 순서대로 라우팅하고 네 번째 요청에서 다시 파드 1로 순환하는 ROUND_ROBIN 동작을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-2.html)
 
 **설정 예제:**
 
@@ -84,11 +92,11 @@ spec:
 - 파드별 부하 차이를 고려하지 않음
 - 긴 요청이 있으면 불균형 발생 가능
 
-### 2. LEAST_REQUEST
+### 2. LEAST_REQUEST (기본값)
 
-가장 적은 활성 요청을 처리 중인 엔드포인트로 라우팅합니다.
+가중치가 같은 엔드포인트에서는 Envoy가 보통 사용 가능한 호스트 두 개를 뽑아 활성 요청이 적은 쪽을 선택합니다. 모든 파드를 순회하거나 CPU/DB 쿼리 부하를 측정하지 않습니다. 가중치가 다르면 별도의 가중 알고리즘을 사용합니다.
 
-![로드 밸런서가 세 파드의 활성 요청 수를 확인한 뒤 활성 요청이 가장 적은 Pod 2로 새 요청을 라우팅하는 LEAST_REQUEST 동작을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-3.svg)
+동일 가중치의 기본 LEAST_REQUEST는 무작위 후보 두 개 중 활성 요청이 적은 엔드포인트를 선택합니다.
 
 **설정 예제:**
 
@@ -102,7 +110,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # 60초 워밍업 (선택)
+      warmup:
+        duration: 60s  # 60초 워밍업 (선택)
 ```
 
 **고급 설정:**
@@ -117,7 +126,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 120  # 새 파드 워밍업
+      warmup:
+        duration: 120s  # 새 파드 워밍업
     connectionPool:
       http:
         http2MaxRequests: 100
@@ -197,6 +207,8 @@ spec:
 **단점:**
 - 로드 밸런싱 제어 제한적
 
+DestinationRule PASSTHROUGH는 원래 목적지 기반 로드 밸런싱입니다. Gateway tls.mode: PASSTHROUGH는 TLS 종료에 관한 별도 설정이며 SNI 라우팅에는 TLS VirtualService 규칙이 필요합니다.
+
 ### 5. LEAST_CONN (Deprecated → LEAST_REQUEST)
 
 **주의**: `LEAST_CONN`은 **deprecated**되었으며, `LEAST_REQUEST`로 대체되었습니다.
@@ -207,7 +219,9 @@ spec:
 trafficPolicy:
   loadBalancer:
     simple: LEAST_CONN
+```
 
+```yaml
 # ✅ 신규 버전
 trafficPolicy:
   loadBalancer:
@@ -216,11 +230,13 @@ trafficPolicy:
 
 ## Consistent Hash 상세
 
-Consistent Hash는 특정 속성을 기반으로 항상 같은 엔드포인트로 라우팅하여 세션 유지를 보장합니다.
+Consistent Hash는 엔드포인트 정보가 안정적일 때 같은 키에 느슨한 친화성을 제공합니다. 엔드포인트 추가·삭제, 상태 변화, locality 차이에 따라 대상이 바뀔 수 있으며 영구 세션 저장소가 아닙니다.
 
 ### Consistent Hash 동작 원리
 
-![동일한 쿠키를 가진 User A의 두 요청이 항상 같은 해시 값을 거쳐 같은 Pod 1로 라우팅되어 세션이 유지되는 Consistent Hash 동작 원리를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-4.svg)
+![동일한 쿠키를 가진 User A의 두 요청이 항상 같은 해시 값을 거쳐 같은 파드 1로 라우팅되어 세션이 유지되는 Consistent Hash 동작 원리를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-4.html)
 
 ### 1. HTTP Header 기반
 
@@ -242,7 +258,7 @@ spec:
 **사용 사례:**
 - 사용자별 세션 유지
 - API 키 기반 라우팅
-- 테넌트별 격리
+- 테넌트 키 친화성; 격리는 별도 집행
 
 ### 2. HTTP Cookie 기반
 
@@ -287,7 +303,7 @@ spec:
 
 **사용 사례:**
 - IP 기반 세션 유지
-- Rate limiting (IP별)
+- 외부 IP별 제한기의 친화성; 해싱 자체가 속도 제한을 집행하지 않음
 - 지역별 캐시
 
 **주의사항:**
@@ -318,7 +334,7 @@ spec:
 
 ### 5. Minimum Ring Size 설정
 
-Consistent Hash Ring의 최소 크기를 설정하여 재분배를 최소화합니다.
+링의 가상 노드 수를 조정해 서로 다른 키의 분포를 개선합니다. 재매핑이나 hot key를 없애지는 않습니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -331,15 +347,16 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 1024  # 기본값: 1024
+        ringHash:
+          minimumRingSize: 1024  # 기본값: 1024
 ```
 
 **설명:**
 - Ring size가 클수록 더 균등한 분배
-- 파드 추가/제거 시 재분배되는 키의 비율 감소
+- 엔드포인트 변경 시 재매핑 비율 감소를 보장하지 않음
 - 메모리 사용량 약간 증가
 
-**권장값:**
+**벤치마크할 예시 값 (공통 용량 기준이 아님):**
 - 소규모 (< 10 파드): 1024 (기본값)
 - 중규모 (10-50 파드): 2048
 - 대규모 (50+ 파드): 4096
@@ -360,7 +377,8 @@ spec:
           name: "session-id"
           path: "/api"
           ttl: 7200s  # 2시간
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       http:
         maxRequestsPerConnection: 100
@@ -371,14 +389,16 @@ spec:
 
 #### 1. 불균형 위험
 
-![1000명의 사용자 중 80%가 같은 해시 값으로 몰려 Pod 1이 과부하 상태가 되는 Consistent Hash의 불균형 위험을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-5.svg)
+![1000명의 사용자 중 80%가 같은 해시 값으로 몰려 파드 1이 과부하 상태가 되는 Consistent Hash의 불균형 위험을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-5.html)
 
 **원인**: 특정 해시 값에 트래픽이 집중되는 경우
 
 **해결책:**
-- `minimumRingSize` 증가
+- 서로 다른 키의 분포 문제일 때 ringHash.minimumRingSize 조정; 단일 hot key는 여전히 한 호스트로 감
 - 여러 해시 키 조합 사용
-- Bounded Load 알고리즘 고려 (Envoy 미지원)
+- Envoy는 hash_balance_factor로 bounded-load hashing 지원; Istio DestinationRule에는 직접 노출되지 않음
 
 #### 2. 파드 추가/제거 시 재분배
 
@@ -395,6 +415,8 @@ spec:
 - 서서히 스케일 조정
 
 ## Locality 기반 로드 밸런싱
+
+같은 locality 설정에서 distribute 비율과 명시적 failover 중 하나를 사용하며 둘을 함께 넣지 마세요. 장애 조치에는 상태 감지와 연결 가능한 정상 엔드포인트가 필요합니다. 리전/존 레이블은 토폴로지이며 실측 거리가 아닙니다. DestinationRule이 리전 간 네트워크나 서비스 디스커버리를 생성하지는 않으므로 EKS의 실제 노드 topology 값을 사용하세요.
 
 Locality-based Load Balancing은 지리적으로 가까운 엔드포인트를 우선적으로 사용합니다.
 
@@ -451,6 +473,10 @@ spec:
         failover:
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 ### Multi-Region 예제
@@ -478,13 +504,8 @@ spec:
           to:
             "us-east/*": 90
             "us-west/*": 10
-        failover:
-        - from: us-west
-          to: us-east
-        - from: us-east
-          to: us-west
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -557,7 +578,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # 새 파드 워밍업
+      warmup:
+        duration: 60s  # 새 파드 워밍업
     connectionPool:
       tcp:
         maxConnections: 200
@@ -567,7 +589,7 @@ spec:
         maxRequestsPerConnection: 100
         idleTimeout: 300s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -593,7 +615,8 @@ spec:
         httpCookie:
           name: "session-id"
           ttl: 7200s  # 2시간
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       tcp:
         maxConnections: 500
@@ -639,18 +662,13 @@ spec:
           to:
             "eu-central-1/*": 90
             "eu-west-1/*": 10
-        failover:
-        - from: us-west-1
-          to: us-west-2
-        - from: us-east-1
-          to: us-east-2
     connectionPool:
       tcp:
         maxConnections: 1000
       http:
         http2MaxRequests: 2000
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 60s
 ```
@@ -663,18 +681,21 @@ spec:
 
 ### 예제 4: 캐시 서비스 최적화
 
+x-cache-key를 받는 HTTP 캐시 서비스를 가정합니다. 일반 Redis 트래픽에는 HTTP 헤더가 없으므로 Redis 키 분산은 Redis 프로토콜을 이해하는 클라이언트/클러스터 기능을 사용하세요.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: cache-service-optimized
 spec:
-  host: redis-cache
+  host: http-cache
   trafficPolicy:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 4096  # 큰 링 사이즈로 재분배 최소화
+        ringHash:
+          minimumRingSize: 4096  # 큰 링 사이즈로 재분배 최소화
     connectionPool:
       tcp:
         maxConnections: 100
@@ -684,7 +705,7 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 600s
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 10s
       baseEjectionTime: 30s
 ```
@@ -705,23 +726,20 @@ spec:
   host: postgres-primary
   trafficPolicy:
     loadBalancer:
-      simple: LEAST_REQUEST
+      simple: ROUND_ROBIN
     connectionPool:
       tcp:
         maxConnections: 50  # DB 연결 제한
         connectTimeout: 5s
-      http:
-        http1MaxPendingRequests: 10
-        maxRequestsPerConnection: 100
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 60s
       baseEjectionTime: 120s
 ```
 
 **사용 시나리오:**
 - 데이터베이스 연결 풀 관리
-- 느린 쿼리 분산
+- 연결 대상 선택만 수행; 이미 실행 중인 SQL 쿼리를 재분배하지 않음
 - 연결 수 제한
 
 ### 예제 6: 대규모 트래픽 처리
@@ -745,7 +763,7 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 60s
     outlierDetection:
-      consecutiveErrors: 10
+      consecutive5xxErrors: 10
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 20  # 대규모에서는 제한적 ejection
@@ -760,7 +778,7 @@ spec:
 
 ### 결정 트리
 
-![세션 유지, 트래픽 규모, 지리적 분산 여부를 차례로 물어 CONSISTENT_HASH, RANDOM, LEAST_REQUEST+Locality, PASSTHROUGH/ROUND_ROBIN 중 알맞은 알고리즘으로 안내하는 결정 트리를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-6.svg)
+HTTP 트래픽은 LEAST_REQUEST로 시작하고 느슨한 친화성이 필요할 때 consistent hashing을 선택하세요. 다른 알고리즘도 실제 부하에서 비교합니다.
 
 ### 서비스 유형별 권장 알고리즘
 
@@ -770,12 +788,12 @@ spec:
 | **GraphQL API** | LEAST_REQUEST | 복잡한 쿼리 분산 |
 | **gRPC** | LEAST_REQUEST | 스트리밍 부하 균형 |
 | **웹 프론트엔드** | CONSISTENT_HASH (cookie) | 세션 유지 |
-| **WebSocket** | CONSISTENT_HASH (header) | 연결 유지 |
+| **WebSocket** | 선택적 재연결 친화성 | 수립된 연결은 기존 업스트림 유지 |
 | **캐시 서비스** | CONSISTENT_HASH (header) | 캐시 히트율 |
 | **분석/로그 수집** | RANDOM | 대규모 처리 |
-| **데이터베이스** | LEAST_REQUEST | 연결 풀 관리 |
+| **데이터베이스** | DB 전용 클라이언트/풀 및 필요한 TCP 정책 | Primary/replica 의미 보존 |
 | **Static Content** | ROUND_ROBIN | 간단하고 충분 |
-| **Message Queue** | LEAST_REQUEST | 큐 부하 균형 |
+| **Message Queue** | 브로커/클라이언트 소비자 할당 | HTTP 활성 요청 수는 큐 부하가 아님 |
 | **배치 처리** | LEAST_REQUEST | 작업 분산 |
 
 ### 트래픽 패턴별 선택
@@ -785,17 +803,23 @@ spec:
 trafficPolicy:
   loadBalancer:
     simple: ROUND_ROBIN  # 간단하고 효율적
+```
 
+```yaml
 # 2. 불균일한 요청 (10ms ~ 1s+)
 trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST  # 부하 적응
+```
 
+```yaml
 # 3. 매우 큰 트래픽 (10,000+ RPS)
 trafficPolicy:
   loadBalancer:
     simple: RANDOM  # 오버헤드 최소화
+```
 
+```yaml
 # 4. 세션 기반 (사용자 상태)
 trafficPolicy:
   loadBalancer:
@@ -803,7 +827,9 @@ trafficPolicy:
       httpCookie:
         name: "session-id"
         ttl: 3600s
+```
 
+```yaml
 # 5. Multi-region
 trafficPolicy:
   loadBalancer:
@@ -828,7 +854,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST  # 부하 적응
-      warmupDurationSecs: 60  # 새 파드 워밍업
+      warmup:
+        duration: 60s  # 새 파드 워밍업
 ```
 
 **❌ 나쁜 예:**
@@ -845,9 +872,9 @@ spec:
       simple: ROUND_ROBIN  # 부하 불균형 발생
 ```
 
-### 2. Connection Pool 필수 설정
+### 2. Connection Pool 조정
 
-로드 밸런싱과 함께 항상 Connection Pool을 설정하세요:
+측정한 부하에 맞춰 선택적 Connection Pool 제한을 조정하세요. 프록시별 제한이며 서비스 전체 연결 예산이 아닙니다:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -859,7 +886,7 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    connectionPool:  # 필수
+    connectionPool:  # 선택적 조정
       tcp:
         maxConnections: 100
       http:
@@ -881,8 +908,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    outlierDetection:  # 필수
-      consecutiveErrors: 5
+    outlierDetection:  # 상태 기반 제외
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -943,56 +970,41 @@ spec:
       simple: LEAST_REQUEST
       localityLbSetting:
         enabled: true
-        distribute:
-        - from: us-west/*
-          to:
-            "us-west/*": 80
-            "us-east/*": 20
         failover:  # 필수
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 ### 6. 모니터링 및 메트릭
 
 로드 밸런싱 효과를 모니터링하세요:
 
-```yaml
-# Prometheus 쿼리
-# 파드별 요청 분포
-sum by (destination_workload) (rate(istio_requests_total[5m]))
+```promql
+# Per-pod inbound request distribution (assumes scrape labels retain namespace/pod)
+sum by (namespace, pod) (rate(istio_requests_total{reporter="destination"}[5m]))
 
-# 파드별 응답 시간
+# Per-pod inbound P95 latency
 histogram_quantile(0.95,
-  sum by (destination_workload, le) (
-    rate(istio_request_duration_milliseconds_bucket[5m])
+  sum by (namespace, pod, le) (
+    rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])
   )
 )
 
-# 활성 연결 수
-sum by (destination_workload) (envoy_cluster_upstream_cx_active)
+# Raw Envoy connection statistics do not have Istio destination_workload labels
+sum by (namespace, pod) (envoy_cluster_upstream_cx_active)
 ```
 
 ### 7. 점진적 적용
 
-```yaml
-# 1단계: 기본 ROUND_ROBIN
-simple: ROUND_ROBIN
-
-# 2단계: 모니터링 후 LEAST_REQUEST
-simple: LEAST_REQUEST
-
-# 3단계: Connection Pool 추가
-simple: LEAST_REQUEST
-connectionPool: ...
-
-# 4단계: Outlier Detection 추가
-simple: LEAST_REQUEST
-connectionPool: ...
-outlierDetection: ...
-```
+현재 기본값 LEAST_REQUEST로 시작하고 대표 트래픽을 측정한 뒤 알고리즘, 연결 풀, warmup, outlier detection을 각각 조정하세요. 예제 값은 시작점이며 성능 보장 기준이 아닙니다.
 
 ### 8. 문서화
+
+아래 annotation 값은 예시입니다. 지연/부하 수치는 직접 측정한 값으로 바꾸세요. 이번 검토의 벤치마크 결과가 아닙니다. Redis 세션 저장소도 DestinationRule annotation이 아닌 앱 통합이 필요합니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1006,7 +1018,7 @@ metadata:
     # 알고리즘 선택 근거
     algorithm-rationale: |
       - LEAST_REQUEST: Response times vary 10ms-500ms
-      - warmupDurationSecs: New pods need 60s to warm up cache
+      - warmup.duration: New pods need 60s to warm up cache
 
     # 테스트 결과
     test-results: |
@@ -1018,6 +1030,8 @@ metadata:
     monitoring: |
       - Dashboard: grafana.example.com/d/istio-workload
       - Alert: High P95 latency > 500ms
+spec:
+  host: api-service
 ```
 
 ## 문제 해결
@@ -1031,9 +1045,9 @@ kubectl top pods -n production
 
 # 출력:
 # NAME                CPU    MEMORY
-# api-pod-1           80%    2Gi
-# api-pod-2           20%    1Gi
-# api-pod-3           15%    1Gi
+# api-pod-1           800m   2048Mi
+# api-pod-2           200m   1024Mi
+# api-pod-3           150m   1024Mi
 ```
 
 **원인 및 해결:**
@@ -1051,11 +1065,12 @@ spec:
       simple: LEAST_REQUEST  # 변경
 
 # 2. Warmup 추가
-      warmupDurationSecs: 60
+      warmup:
+        duration: 60s
 
 # 3. Outlier Detection 추가
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -1084,34 +1099,19 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-user-id"
-        minimumRingSize: 4096  # 2048 → 4096 증가
+        ringHash:
+          minimumRingSize: 4096  # 2048 → 4096 증가
 ```
 
 ### Locality 기반 라우팅이 작동하지 않음
 
-**확인 사항:**
+워크로드가 배치된 노드 topology와 Envoy 엔드포인트 구성의 locality를 확인하세요. Kubernetes/EKS의 region/zone 레이블은 보통 앱 Pod가 아닌 Node에 있습니다. 실제 노드/프로비저너 설정을 수정하고 라우팅을 강제하려고 클라우드 리전/존 레이블을 꾸며 넣지 마세요.
 
 ```bash
-# 1. 파드의 Locality 레이블 확인
-kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.labels.topology\.kubernetes\.io/region}{"\t"}{.metadata.labels.topology\.kubernetes\.io/zone}{"\n"}{end}'
-
-# 2. Istio Proxy 설정 확인
-istioctl proxy-config endpoints pod-name | grep locality
-
-# 3. DestinationRule 적용 확인
-istioctl proxy-config clusters pod-name --fqdn api-service.default.svc.cluster.local -o json | jq '.[] | .localityLbEndpoints'
-```
-
-**수정:**
-
-```yaml
-# 노드 레이블 확인 및 추가
-apiVersion: v1
-kind: Node
-metadata:
-  labels:
-    topology.kubernetes.io/region: us-west
-    topology.kubernetes.io/zone: us-west-1
+kubectl get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
+istioctl proxy-config endpoints <pod-name> -o json
+istioctl proxy-config clusters <pod-name> --fqdn api-service.default.svc.cluster.local -o json
 ```
 
 ## 참고 자료
@@ -1120,3 +1120,10 @@ metadata:
 - [Envoy Load Balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancing)
 - [Consistent Hashing](https://www.toptal.com/big-data/consistent-hashing)
 - [Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+
+- [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Primary reference 2](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go)
+- [Primary reference 3](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)
+- [Primary reference 4](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto)
+- [Primary reference 5](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [Primary reference 6](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/kubectl_top_pod/)

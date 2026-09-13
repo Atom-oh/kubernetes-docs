@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "XDP Processing Levels",
+    "locale": "en",
+    "output": "en-networking-calico-06-ebpf-dataplane-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "offload", "label": "Offload: fastest", "focus": ["packet", "nic", "offload"], "note": "The XDP program runs on SmartNIC hardware before the packet ever reaches the host CPU." },
+      { "id": "native", "label": "Native: fast", "focus": ["nic", "driver", "native"], "note": "The program runs inside the NIC driver's receive path; the driver must support XDP." },
+      { "id": "generic", "label": "Generic: baseline", "focus": ["driver", "skb", "generic"], "note": "The program runs after the kernel builds the SKB, so it works on any NIC but is the slowest." }
+    ]
+  },
+  "components": [
+    { "id": "packet", "type": "external", "label": "Incoming Packet", "sublabel": "from the wire", "pos": [30, 90], "size": [150, 60] },
+    { "id": "nic", "type": "cloud", "label": "Network Card", "sublabel": "NIC hardware", "pos": [270, 90], "size": [170, 60] },
+    { "id": "driver", "type": "backend", "label": "Driver", "sublabel": "NIC driver", "pos": [270, 250], "size": [170, 60] },
+    { "id": "skb", "type": "backend", "label": "Generic / SKB", "sublabel": "network stack", "pos": [270, 410], "size": [170, 60] },
+    { "id": "offload", "type": "security", "label": "XDP Offload", "sublabel": "fastest · needs SmartNIC", "pos": [620, 90], "size": [220, 60], "tag": "focal" },
+    { "id": "native", "type": "security", "label": "XDP Native", "sublabel": "fast · needs driver support", "pos": [620, 250], "size": [220, 60] },
+    { "id": "generic", "type": "security", "label": "XDP Generic", "sublabel": "slowest · works on any NIC", "pos": [620, 410], "size": [220, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Processing location", "wraps": ["nic", "driver", "skb"] }
+  ],
+  "connections": [
+    { "id": "wire-to-nic", "from": "packet", "to": "nic", "label": "rx", "variant": "emphasis" },
+    { "id": "nic-to-driver", "from": "nic", "to": "driver", "fromSide": "bottom", "toSide": "top" },
+    { "id": "driver-to-skb", "from": "driver", "to": "skb", "fromSide": "bottom", "toSide": "top" },
+    { "id": "nic-offload", "from": "nic", "to": "offload", "label": "XDP hook", "variant": "emphasis" },
+    { "id": "driver-native", "from": "driver", "to": "native", "label": "XDP hook" },
+    { "id": "skb-generic", "from": "skb", "to": "generic", "label": "XDP hook", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "XDP modes", "items": ["Offload: NIC hardware, fastest, requires a SmartNIC", "Native: NIC driver, fast, requires driver support", "Generic: network stack, baseline, any NIC"] },
+    { "dot": "cyan", "title": "Enabling in Calico", "items": ["FelixConfiguration spec.bpfEnabled: true", "xdpEnabled: Disabled, Enabled, or Offload", "Interfaces detected like the BPF dataplane"] },
+    { "dot": "slate", "title": "Use cases", "items": ["DDoS protection: drop malicious traffic at the NIC", "Blocklist enforcement and rate limiting before the stack", "Wire-speed packet counting for metrics"] }
+  ]
+}

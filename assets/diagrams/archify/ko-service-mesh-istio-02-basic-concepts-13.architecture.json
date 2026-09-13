@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VM 등록을 통한 점진적 마이그레이션",
+    "output": "ko-service-mesh-istio-02-basic-concepts-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      320
+    ],
+    "views": [
+      {
+        "id": "phase1",
+        "label": "1단계: 레거시 환경",
+        "focus": [
+          "vm1"
+        ],
+        "note": "메시 밖에서 단독으로 동작하는 VM 모놀리스 앱에서 출발한다."
+      },
+      {
+        "id": "phase2",
+        "label": "2단계: VM 메시 등록",
+        "focus": [
+          "vm1",
+          "vm2"
+        ],
+        "note": "앱을 수정하지 않고 VM에 Envoy를 설치해 WorkloadEntry로 메시에 등록한다."
+      },
+      {
+        "id": "phase3",
+        "label": "3단계: 하이브리드",
+        "focus": [
+          "vm2",
+          "vm3",
+          "k8s1"
+        ],
+        "note": "일부 기능만 Kubernetes로 옮기고, 남은 VM 모듈과 신규 마이크로서비스가 mTLS로 통신한다."
+      },
+      {
+        "id": "phase4",
+        "label": "4단계: 완전 마이그레이션",
+        "focus": [
+          "k8s1",
+          "k8s2"
+        ],
+        "note": "모든 기능이 Kubernetes 마이크로서비스로 이전되어 마이그레이션이 완료된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "vm1",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "모놀리스 앱",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "vm2",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "모놀리스 앱 + Envoy",
+      "pos": [
+        290,
+        100
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "vm3",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "레거시 모듈",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "k8s1",
+      "type": "backend",
+      "label": "K8s",
+      "sublabel": "신규 마이크로서비스",
+      "pos": [
+        770,
+        100
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "k8s2",
+      "type": "backend",
+      "label": "K8s",
+      "sublabel": "전체 마이크로서비스",
+      "pos": [
+        1040,
+        100
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1단계: 레거시 환경",
+      "wraps": [
+        "vm1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2단계: VM 메시 등록",
+      "wraps": [
+        "vm2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "3단계: 하이브리드",
+      "wraps": [
+        "vm3",
+        "k8s1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "4단계: 완전 마이그레이션",
+      "wraps": [
+        "k8s2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "register",
+      "from": "vm1",
+      "to": "vm2",
+      "label": "VM 등록",
+      "variant": "emphasis"
+    },
+    {
+      "id": "partial",
+      "from": "vm2",
+      "to": "vm3",
+      "label": "일부 마이그레이션",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls",
+      "from": "vm3",
+      "to": "k8s1",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "complete",
+      "from": "k8s1",
+      "to": "k8s2",
+      "label": "완료",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "VM 등록의 이점",
+      "items": [
+        "기존 VM 애플리케이션을 수정하지 않고 메시에 통합",
+        "단계적으로 Kubernetes로 마이그레이션",
+        "마이그레이션 중에도 일관된 보안 및 관찰성 유지"
+      ]
+    }
+  ]
+}

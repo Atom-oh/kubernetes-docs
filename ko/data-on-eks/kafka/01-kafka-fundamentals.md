@@ -1,159 +1,181 @@
 # Part 1: Kafka 핵심 개념
 
-> **지원 버전**: Apache Kafka 3.9 (KRaft)\
-> **마지막 업데이트**: 2026년 7월 9일
+> **검토 기준**: 2026-09-12. Apache Kafka 4.3.1 / Strimzi 1.2.0 지원 조합.
+> **검증**: Kafka 4.3.1 실제 설정 클래스로 19개 유효성·기본값·충돌 조건을 확인했습니다. 브로커나 EKS 클러스터를 실행한 결과는 아닙니다.
 
-## Apache Kafka란 무엇인가?
+## 1. 브로커·토픽·파티션
 
-Apache Kafka는 대용량의 실시간 데이터 스트림을 처리하기 위한 분산 이벤트 스트리밍 플랫폼입니다. 원래 LinkedIn에서 개발되어 Apache 프로젝트로 오픈소스화되었으며, 로그 수집, 메트릭 파이프라인, 이벤트 기반 마이크로서비스, CDC(Change Data Capture) 파이프라인 등 다양한 용도로 사용됩니다.
+Kafka는 이벤트를 파티션 로그에 저장하고 생산자와 소비자가 독립적으로 접근하게 하는 분산 이벤트 스트리밍 플랫폼입니다. 브로커는 토픽 전체가 아니라 여러 토픽의 파티션 복제본을 보관할 수 있습니다.
 
-이 문서는 EKS에서 Kafka를 운영하기 전에 반드시 이해해야 하는 핵심 개념(브로커, 토픽, 파티션, 컨슈머 그룹, 복제, KRaft)을 다룹니다. Part 2에서는 Strimzi Operator를 이용해 이 개념들을 실제 EKS 클러스터에 배포하는 방법을 설명합니다.
+| 용어 | 의미 |
+| --- | --- |
+| Broker | 데이터 복제본을 저장하고 요청을 처리하는 서버 역할 |
+| Topic | 이벤트를 구분하는 논리적 이름 |
+| Partition | 기록 순서를 가진 append log. 보존·compaction으로 레코드가 삭제될 수 있음 |
+| Offset | 파티션 안의 위치. 클러스터 전체 ID가 아니며 삭제·트랜잭션 등으로 보이는 offset에 빈틈이 생길 수 있음 |
+| Replication factor | 파티션 복제본 수. 토픽 생성·재할당으로 관리하는 메타데이터 |
+| Leader / follower | 쓰기는 리더가 처리하고 팔로워가 복제. 설정된 follower fetching에서는 소비자가 팔로워에서 읽을 수도 있음 |
+| ISR | 리더와 충분히 동기화된 복제본 집합. 리더도 포함 |
 
-## 1. Kafka 아키텍처 기초
+![3개 파티션을 3개 소비자가 나눠 읽는 KafkaConsumer 그룹의 예시. 일반적으로 한 소비자가 여러 파티션을 맡을 수 있다.](../../.gitbook/assets/ko-data-on-eks-kafka-01-kafka-fundamentals-0.png)
 
-### 핵심 용어
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-01-kafka-fundamentals-0.html)
 
-* **브로커(Broker)**: 메시지를 저장하고 클라이언트 요청을 처리하는 Kafka 서버 프로세스. 하나의 Kafka 클러스터는 보통 여러 개의 브로커로 구성됩니다.
-* **토픽(Topic)**: 메시지를 분류하는 논리적 채널. 예를 들어 `orders`, `payments` 같은 이름으로 구분합니다.
-* **파티션(Partition)**: 토픽을 물리적으로 나눈 단위. 각 파티션은 순서가 보장된 불변(append-only) 로그입니다.
-* **오프셋(Offset)**: 파티션 내에서 각 메시지에 순차적으로 부여되는 고유 번호. 컨슈머는 오프셋을 기준으로 "어디까지 읽었는지"를 추적합니다.
-* **복제 팩터(Replication Factor)**: 파티션의 데이터를 몇 개의 브로커에 복제할지를 나타내는 값. 브로커 장애 시 데이터 손실을 막기 위한 설정입니다.
-* **리더/팔로워 레플리카(Leader/Follower Replica)**: 각 파티션의 복제본 중 하나는 리더로 지정되어 모든 읽기/쓰기 요청을 처리하고, 나머지 팔로워는 리더의 데이터를 복제합니다.
-* **ISR(In-Sync Replicas)**: 리더와 충분히 동기화된 복제본 집합. `acks=all`로 쓰기를 요청하면 ISR에 속한 모든 레플리카가 메시지를 받아야 쓰기가 성공한 것으로 간주됩니다.
+그림의 3:3 배치는 하나의 예시입니다. `subscribe()`를 사용하는 `KafkaConsumer` 자동 그룹 할당에서는 한 파티션이 한 시점에 그룹 내 한 소비자에 할당되고, 한 소비자는 여러 파티션을 맡을 수 있습니다. 수동 `assign()` 사용은 별도로 관리합니다. 동일 토픽을 여러 그룹이 독립적으로 읽을 수도 있습니다. Kafka 4.x의 Share Groups/KafkaShareConsumer는 다른 공유·확인 모델이므로 이 설명과 구분합니다.
 
-### 프로듀서 → 파티션 → 컨슈머 그룹 흐름
+## 2. 순서와 파티션 키
 
-![프로듀서가 orders 토픽의 파티션 3개를 각각 다른 브로커의 리더에 분산 기록하고, order-processor 컨슈머 그룹에 속한 컨슈머 3개가 파티션마다 하나씩 전담으로 읽어가는 Kafka 파티셔닝-컨슈머 그룹 매핑 구조.](../../../assets/diagrams/rendered/ko-data-on-eks-kafka-01-kafka-fundamentals-0.svg)
+Kafka의 로그 순서는 **파티션 안**에서 정의됩니다. 토픽 전체의 전역 순서나 업무 이벤트 발생 시각 순서를 자동 보장하지 않습니다.
 
-프로듀서는 토픽에 메시지를 쓰고, Kafka는 파티션 단위로 메시지를 여러 브로커에 분산 저장합니다. 같은 컨슈머 그룹에 속한 컨슈머들은 파티션을 나눠 가지며(1:1에 가깝게 매핑) 병렬로 메시지를 소비합니다.
+기본적인 키 기반 라우팅에서 같은 키가 같은 파티션으로 가려면 키 serialization·partitioner·파티션 수가 일관되어야 합니다. 파티션 수를 늘리면 hash 기반 매핑이 달라질 수 있으며, 커스텀 partitioner나 명시적 파티션 지정도 결과를 바꿉니다. 여러 프로듀서와 재시도·소비자 병렬 처리의 순서도 별도 계약입니다.
 
-## 2. 파티션과 순서 보장
+키가 없는 레코드의 라우팅은 클라이언트/partitioner에 따라 다릅니다. 높은 키 cardinality만으로 균등 부하가 보장되지도 않습니다. 특정 키의 높은 빈도는 hot partition을 만들 수 있습니다.
 
-파티션 수는 클러스터의 병렬 처리량을 결정하는 가장 중요한 요소입니다. 파티션이 많을수록 더 많은 컨슈머가 동시에 작업할 수 있지만, 파티션이 지나치게 많으면 브로커의 메타데이터 부담과 파일 핸들 수가 증가합니다.
-
-> **핵심 개념**: Kafka는 **토픽 전체의 순서**를 보장하지 않습니다. 순서는 오직 **동일한 파티션 내**에서만 보장됩니다.
-
-### 파티션 키 선택 전략
-
-프로듀서가 메시지를 보낼 때 키(key)를 지정하면, Kafka는 키의 해시값을 기준으로 파티션을 결정합니다. 동일한 키는 항상 동일한 파티션으로 라우팅되므로, 같은 키를 가진 이벤트들 사이의 순서를 보장할 수 있습니다.
-
-| 전략 | 설명 | 사용 예 |
-| --- | --- | --- |
-| 키 없음(null key) | 라운드 로빈 또는 sticky partitioner로 파티션 분산 | 순서가 중요하지 않은 로그 수집 |
-| 엔티티 ID를 키로 사용 | 동일 엔티티의 이벤트를 같은 파티션에 고정 | 주문 ID별 주문 상태 이벤트 순서 보장 |
-| 커스텀 파티셔너 | 비즈니스 규칙에 따라 파티션을 직접 지정 | 특정 고객 트래픽을 전용 파티션으로 분리 |
+다음 명령은 **이미 접근 가능한 3개 이상 브로커의 클러스터**에서 새 토픽을 만듭니다. 인증이 필요한 listener에서는 `--command-config client.properties`를 추가합니다. 이 명령을 아래의 단일 노드 학습 설정에 그대로 적용하지 않습니다.
 
 ```bash
-# 토픽 생성 예시 - 파티션 6개, 복제 팩터 3
-kafka-topics.sh --create \
-  --bootstrap-server localhost:9092 \
-  --topic orders \
-  --partitions 6 \
-  --replication-factor 3 \
+: "${DOCS_BOOTSTRAP:?Set the existing Kafka bootstrap host:port}"
+kafka-topics.sh --create --bootstrap-server "$DOCS_BOOTSTRAP" \
+  --topic orders --partitions 6 --replication-factor 3 \
   --config min.insync.replicas=2
 ```
 
-키 선택을 잘못하면 특정 파티션에 트래픽이 몰리는 "핫 파티션(hot partition)" 문제가 생길 수 있으므로, 키의 카디널리티(고유값 개수)가 충분히 큰지 확인해야 합니다.
+## 3. Consumer 그룹과 오프셋
 
-## 3. 컨슈머 그룹과 리밸런싱
+파티션 기반 그룹에서 소비자를 파티션 수보다 많이 늘리면 일부가 할당 없이 대기할 수 있습니다. 생산자 처리량·디스크·네트워크·consumer 처리 시간도 병렬성에 영향을 주므로 파티션 수만으로 처리량을 예측하지 않습니다.
 
-### 컨슈머 그룹 동작 방식
+### 그룹 프로토콜을 구분
 
-같은 `group.id`를 가진 컨슈머들은 하나의 **컨슈머 그룹**을 이룹니다. Kafka는 그룹 내에서 토픽의 파티션들을 컨슈머 인스턴스에 자동으로 배분하며, 한 파티션은 그룹 내 오직 하나의 컨슈머만 읽습니다(파티션 수보다 컨슈머가 많으면 일부 컨슈머는 유휴 상태가 됩니다).
+Kafka 4.3 Java consumer의 `group.protocol` 기본값은 `classic`입니다.
 
-### 리밸런싱이 발생하는 경우
+| 선택 | 할당과 timeout |
+| --- | --- |
+| `classic` | 클라이언트 assignor와 `session.timeout.ms` / `heartbeat.interval.ms` 사용 |
+| `consumer` | 서버 측 assignor와 broker의 `group.consumer.session.timeout.ms` / `group.consumer.heartbeat.interval.ms` 사용 |
 
-* 새 컨슈머가 그룹에 참여할 때
-* 기존 컨슈머가 그룹을 떠나거나(정상 종료) 하트비트 타임아웃으로 이탈이 감지될 때
-* 토픽의 파티션 수가 변경될 때
-* 컨슈머가 `session.timeout.ms` 내에 하트비트를 보내지 못하거나, `max.poll.interval.ms`를 초과해 처리 시간이 길어질 때
+Classic의 eager rebalance는 파티션을 반납하는 범위가 넓습니다. `CooperativeStickyAssignor`는 이동이 필요한 파티션을 점진적으로 재할당합니다. 새 consumer 프로토콜도 서버 측 증분 재조정을 사용하므로 모든 rebalance가 그룹 전체를 항상 멈춘다고 설명하지 않습니다. 새 프로토콜의 설정에 기존 client assignor/timeout을 그대로 적용하지 않습니다.
 
-리밸런싱이 진행되는 동안에는 해당 그룹의 소비가 잠시 멈추므로, 너무 빈번한 리밸런싱은 처리량 저하의 원인이 됩니다. `CooperativeStickyAssignor`를 사용하면 파티션 재배치를 최소화해 리밸런싱 비용을 줄일 수 있습니다.
+`max.poll.interval.ms` 기본값은 300000 ms입니다. 정적 멤버십(`group.instance.id`)을 사용하면 이 간격을 넘었다고 파티션이 즉시 다른 멤버에게 재할당되는 것은 아니며, heartbeat 중단 후 해당 프로토콜의 session timeout도 관여합니다.
 
-### 오프셋 커밋 전략
+### 오프셋과 업무 완료
 
-| 전략 | 설정 | 특징 |
-| --- | --- | --- |
-| 자동 커밋 | `enable.auto.commit=true` (기본값) | 주기적으로 자동 커밋되어 편리하지만, 처리 완료 전에 커밋되어 메시지 손실 위험이 있음 |
-| 수동 커밋 (동기) | `enable.auto.commit=false` + `commitSync()` | 메시지 처리 완료 후 명시적으로 커밋, 안전하지만 처리량이 낮음 |
-| 수동 커밋 (비동기) | `enable.auto.commit=false` + `commitAsync()` | 처리량은 높지만 커밋 실패 처리를 애플리케이션에서 관리해야 함 |
+커밋한 offset은 일반적으로 다음에 읽을 위치를 나타냅니다. 클라이언트의 읽기 위치와 외부 업무 처리가 끝났다는 사실은 다릅니다. 비동기·병렬 처리에서는 아직 끝나지 않은 레코드 뒤의 offset을 커밋하지 않도록 관리합니다.
 
-### 전달 보장(Delivery Semantics)
+| 방식 | 의미와 주의점 |
+| --- | --- |
+| Auto commit | `enable.auto.commit=true`, 간격 기본 5000 ms. 업무 완료를 자동 판별하지 않음 |
+| `commitSync()` | 호출 완료를 기다림. 배치 크기·호출 빈도에 따라 지연 영향이 다름 |
+| `commitAsync()` | callback으로 실패·진행 상태 관리. 실패한 옛 offset을 무조건 재시도해 진행 위치를 되돌리지 않음 |
 
-* **최대 한 번(At-most-once)**: 메시지 처리 전에 오프셋을 커밋. 장애 시 메시지가 누락될 수 있음.
-* **최소 한 번(At-least-once)**: 메시지 처리 후에 오프셋을 커밋(일반적으로 권장되는 기본값). 장애 시 메시지가 중복 처리될 수 있어, 컨슈머 로직이 멱등성을 갖도록 설계해야 함.
-* **정확히 한 번(Exactly-once)**: 프로듀서의 아이돔포턴트(idempotent) 옵션과 트랜잭션 API(`transactional.id`)를 함께 사용하면 Kafka 내부(토픽 간)에서 정확히 한 번 처리를 달성할 수 있음. 외부 시스템과의 정확히 한 번 처리는 별도의 설계(예: Kafka Connect의 exactly-once sink)가 필요합니다.
+처리 전에 커밋하면 장애 시 누락될 수 있고, 처리 뒤 커밋하면 재처리로 중복 효과가 생길 수 있습니다. 어떤 방식을 쓰든 실패·재시작·rebalance 시나리오를 애플리케이션 출력과 함께 검증합니다.
 
-## 4. KRaft: ZooKeeper 없는 Kafka
+## 4. Exactly-once의 범위
 
-전통적으로 Kafka는 클러스터 메타데이터(토픽/파티션 정보, ACL, 컨트롤러 선출 등)를 관리하기 위해 별도의 ZooKeeper 앙상블에 의존했습니다. Kafka 3.3부터 **KRaft(Kafka Raft metadata mode)**가 프로덕션 준비(GA) 상태가 되었고, **Kafka 4.0(2025년 3월 출시)**에서는 ZooKeeper 모드가 완전히 제거되어 KRaft가 유일한 메타데이터 관리 방식이 되었습니다.
+`enable.idempotence`는 프로듀서 재시도로 같은 전송이 중복 기록되는 것을 방지합니다. 애플리케이션이 같은 업무 이벤트를 새 전송으로 다시 보내는 것까지 일반적인 중복 제거 키로 처리하지는 않습니다.
 
-### KRaft 아키텍처
+Kafka 토픽을 읽어 다른 Kafka 토픽에 결과를 쓸 때는 출력과 **다음 입력 offset**을 같은 트랜잭션에 넣고, 소비자는 `read_committed`로 읽어야 합니다. `transactional.id` 문자열만 설정하는 것으로 이 처리 로직이 생기지는 않습니다. 외부 DB/API의 부작용은 sink의 트랜잭션·멱등성·복구 계약이 별도로 필요합니다.
 
-KRaft에서는 별도의 ZooKeeper 클러스터 대신, Kafka 브로커 프로세스 중 일부가 **컨트롤러 쿼럼(Controller Quorum)** 역할을 수행합니다.
-
-* **컨트롤러 보터(Controller Voter)**: Raft 합의 프로토콜에 참여해 메타데이터 로그를 복제하는 노드들(보통 3개 또는 5개로 홀수 구성).
-* **액티브 컨트롤러(Active Controller)**: 보터 중 리더로 선출되어 실제로 클러스터 메타데이터 변경(파티션 리더 선출, 토픽 생성 등)을 처리하는 단일 노드.
-* 컨트롤러 역할과 브로커 역할은 같은 프로세스에서 결합(`process.roles=broker,controller`)하거나, 대규모 클러스터에서는 전용 컨트롤러 노드로 분리(`process.roles=controller`)할 수 있습니다.
-
-### Before / After 비교
-
-| 항목 | ZooKeeper 기반 (Kafka 3.x 이하 기본) | KRaft 기반 (Kafka 3.3+ GA, 4.0+ 유일 모드) |
-| --- | --- | --- |
-| 메타데이터 저장소 | 별도의 ZooKeeper 앙상블 | Kafka 자체 내부 메타데이터 토픽(`__cluster_metadata`) |
-| 필요한 클러스터 수 | Kafka 클러스터 + ZooKeeper 클러스터, 2개 | Kafka 클러스터 1개 |
-| 컨트롤러 선출 | ZooKeeper의 임시 znode 기반 리더 선출 | Raft 합의 기반 액티브 컨트롤러 선출 |
-| 메타데이터 확장성 | 파티션 수가 많아질수록 ZooKeeper 부하 증가 | 로그 기반 복제로 대규모 파티션 환경에 더 강함 |
-| Kubernetes 운영 복잡도 | ZooKeeper StatefulSet, 별도 PVC, 별도 모니터링 필요 | 관리할 별도 컴포넌트 없이 Kafka 브로커/컨트롤러 Pod만 운영 |
-
-Kubernetes/EKS 환경에서는 이 차이가 특히 중요합니다. ZooKeeper 기반 배포는 Kafka StatefulSet과 ZooKeeper StatefulSet을 각각 운영하고, 두 컴포넌트 간의 네트워크 정책·PDB·모니터링을 이중으로 관리해야 했습니다. KRaft는 이러한 운영 부담을 없애고, Strimzi Operator 같은 오퍼레이터가 관리해야 하는 리소스 종류를 줄여줍니다. Part 2에서 다룰 Strimzi 기반 배포는 기본적으로 KRaft 모드를 사용합니다.
-
-### KRaft 노드 설정 예시 (server.properties)
+**`producer.properties`**
 
 ```properties
-# 이 노드가 브로커와 컨트롤러 역할을 모두 수행 (소규모 클러스터에 적합)
-process.roles=broker,controller
-node.id=1
-
-# 컨트롤러 쿼럼 보터 목록 (node.id@host:port)
-controller.quorum.voters=1@kafka-0.kafka-headless:9093,2@kafka-1.kafka-headless:9093,3@kafka-2.kafka-headless:9093
-
-listeners=BROKER://:9092,CONTROLLER://:9093
-controller.listener.names=CONTROLLER
-inter.broker.listener.name=BROKER
-
-log.dirs=/var/lib/kafka/data
+bootstrap.servers=127.0.0.1:19092
+key.serializer=org.apache.kafka.common.serialization.StringSerializer
+value.serializer=org.apache.kafka.common.serialization.StringSerializer
+acks=all
+enable.idempotence=true
+transactional.id=orders-writer-1
+max.in.flight.requests.per.connection=5
+delivery.timeout.ms=120000
 ```
 
-## 5. 레플리케이션과 내구성 설정
+**`consumer.properties`**
 
-프로듀서가 메시지를 보낸 뒤 "안전하게 저장되었다"고 확신할 수 있는 정도는 다음 세 가지 설정의 조합으로 결정됩니다.
+```properties
+bootstrap.servers=127.0.0.1:19092
+key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+group.id=order-processor
+group.protocol=consumer
+enable.auto.commit=false
+isolation.level=read_committed
+max.poll.interval.ms=300000
+```
 
-* **`replication.factor`** (토픽 단위 설정): 파티션 데이터를 몇 개의 브로커에 복제할지 결정합니다. 최소 3을 권장하며, 이렇게 하면 동시에 최대 2개 브로커가 장애를 겪어도 데이터가 남아 있습니다.
-* **`min.insync.replicas`** (토픽 단위 설정): `acks=all`로 쓰기를 요청했을 때, 쓰기가 성공으로 인정되기 위해 ISR에 최소 몇 개의 레플리카가 포함되어야 하는지를 지정합니다. 흔히 `replication.factor=3`, `min.insync.replicas=2`로 설정해 1개 브로커 장애까지는 쓰기 가용성을 유지합니다.
-* **`acks`** (프로듀서 단위 설정): 프로듀서가 쓰기 완료를 확인받기까지 기다리는 수준을 결정합니다.
+트랜잭션 처리에는 `initTransactions()`, `beginTransaction()`, 결과 전송, `sendOffsetsToTransaction(...)`, `commitTransaction()`과 오류 시 abort/복구가 포함됩니다. 동시 실행 producer는 서로 다른 transactional ID를 사용해야 하며, 같은 논리적 writer의 재시작 정책과 fencing 처리를 설계합니다.
 
-| `acks` 값 | 동작 | 내구성 | 지연시간/처리량 |
-| --- | --- | --- | --- |
-| `0` | 응답을 기다리지 않음 | 가장 낮음(전송 후 즉시 손실 가능) | 가장 빠름 |
-| `1` | 리더에만 기록되면 성공으로 간주 | 중간(리더 장애 시 미복제 데이터 손실 가능) | 빠름 |
-| `all` (`-1`) | ISR의 모든 레플리카에 기록되어야 성공으로 간주 | 가장 높음 | 상대적으로 느림 |
+Idempotence를 명시적으로 켜면 `acks=all`, `retries>0`, `max.in.flight.requests.per.connection<=5`가 필요합니다. 충돌하면 ConfigException이 발생합니다. 명시하지 않은 기본 idempotence는 충돌 설정에서 꺼질 수 있습니다. `retries`가 커도 `delivery.timeout.ms` 등 기한을 넘겨 무한 재시도하지 않습니다.
+
+## 5. KRaft 메타데이터
+
+KRaft는 Kafka 2.8에서 early access로 도입되어 3.3에서 production-ready가 되었으며, Kafka 4.0부터 ZooKeeper 모드는 제거되었습니다. 전용 controller 프로세스는 데이터 broker 역할을 하지 않을 수 있으므로 “broker 중 일부가 controller”라고만 정의하지 않습니다.
+
+Controller voter가 메타데이터 Raft 로그를 복제하고 그중 하나가 active controller가 됩니다. 운영에서는 보통 3개 또는 5개의 controller voter를 사용합니다. 과반수는 짝수에서도 계산되지만, 홀수는 같은 장애 허용 수준에서 자원을 효율적으로 사용합니다.
+
+`__cluster_metadata`는 내부 메타데이터 로그 이름입니다. 애플리케이션이 일반 KafkaProducer/KafkaConsumer로 관리하는 토픽처럼 다루지 않습니다. ZooKeeper가 없어져도 controller quorum, 스토리지, 업그레이드와 모니터링 책임은 남습니다.
+
+### 동적 quorum과 정적 quorum
+
+현재 동적 quorum은 `controller.quorum.bootstrap.servers`를 discovery seed로 사용합니다. 이 목록은 voter 멤버십 정의가 아닙니다. 초기 저장소 format과 quorum bootstrap 절차에서 cluster ID·directory ID·초기 voter를 맞추고, 변경에는 지원되는 controller 추가/제거 절차를 사용합니다.
+
+기존 정적 quorum의 `controller.quorum.voters`도 Kafka 4.3.1에서 지원됩니다. 동적 quorum에서는 이 값을 설정하지 않습니다. 파일의 seed 주소만 바꾸면 정적 quorum이 자동 변환된다고 가정하지 않습니다.
+
+다음 파일은 **로컬 단일 노드 학습용**이며 HA 배포가 아닙니다. loopback listener와 PLAINTEXT를 사용하며, broker를 시작하기 전에 새 데이터 디렉터리에 맞는 storage format/bootstrap이 필요합니다. 기존 Kafka 데이터에 임의 format을 실행하지 않습니다.
+
+**`combined-lab.properties`**
+
+```properties
+# Local, single-node configuration for learning; not an HA deployment.
+process.roles=broker,controller
+node.id=1
+controller.quorum.bootstrap.servers=127.0.0.1:19093
+listeners=BROKER://127.0.0.1:19092,CONTROLLER://127.0.0.1:19093
+advertised.listeners=BROKER://127.0.0.1:19092,CONTROLLER://127.0.0.1:19093
+listener.security.protocol.map=BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+controller.listener.names=CONTROLLER
+inter.broker.listener.name=BROKER
+log.dirs=./kafka-lab-data
+# Single-node internal-topic settings are for this lab only.
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+share.coordinator.state.topic.replication.factor=1
+share.coordinator.state.topic.min.isr=1
+```
+
+커스텀 `BROKER` listener에는 명시적 protocol mapping이 필요합니다. 반면 Kafka 4.3.1의 controller 전용 기본 `CONTROLLER` mapping은 일부 경우 PLAINTEXT로 보완되므로, mapping 줄이 없다는 이유만으로 모든 controller 설정이 잘못되었다고 단정하지 않습니다.
+
+EKS에서는 Part 2의 Strimzi가 생성하는 설정·인증서·저장소를 사용합니다. Operator가 관리하는 Pod의 server.properties를 직접 수정하지 않습니다. 운영 listener에는 요구되는 TLS·인증·권한을 설정합니다.
+
+## 6. 복제·쓰기 가용성과 내구성
+
+RF=3만으로 임의의 두 broker 장애에서 모든 데이터가 보존된다고 보장할 수 없습니다. 실제 복제 진행 상태, 승인 시점의 ISR, 유효한 leader 선출, 저장소·네트워크와 controller quorum을 고려해야 합니다.
+
+처음에 세 복제본이 정상 ISR이고 `min.insync.replicas=2`, `acks=all`인 파티션은 다른 조건이 유지되면 한 broker 장애 후 두 ISR로 쓰기를 계속할 수 있습니다. Leader 전환 중 오류·재시도는 발생할 수 있습니다. ISR이 최소값보다 줄면 쓰기가 거부되거나 실패하며 오류는 장애 시점에 따라 다를 수 있습니다.
+
+| acks | 승인 의미 | 해석 |
+| --- | --- | --- |
+| `0` | broker 응답을 기다리지 않음 | 저장 여부를 확인하지 못함. 응답 offset은 -1 |
+| `1` | leader가 기록한 뒤 응답 | follower 복제 전 leader 손실 위험 |
+| `all` / `-1` | 현재 ISR 전체의 승인을 기다림 | min ISR·복제·leader 선출 정책과 함께 평가 |
+
+`acks=all`이 매번 모든 디스크의 fsync 완료를 뜻하는 것은 아닙니다. 또한 acks 값만으로 처리량·p99 순위를 보장하지 않습니다. 확인 비용과 부하·batching·네트워크를 같은 조건에서 측정합니다.
+
+토픽의 최소 ISR은 다음처럼 변경할 수 있습니다. 복제 팩터 자체의 변경에는 replica reassignment가 필요하며, 일반 토픽 config에 `replication.factor`를 추가하는 방식과 다릅니다.
 
 ```bash
-# 토픽 생성 후 min.insync.replicas 동적으로 변경
-kafka-configs.sh --bootstrap-server localhost:9092 \
+kafka-configs.sh --bootstrap-server "$DOCS_BOOTSTRAP" \
   --alter --entity-type topics --entity-name orders \
   --add-config min.insync.replicas=2
 ```
 
-일반적인 프로덕션 권장 조합은 `replication.factor=3`, `min.insync.replicas=2`, 프로듀서의 `acks=all`, `enable.idempotence=true`입니다. 이 조합은 브로커 1대 장애까지 데이터 손실 없이 견딜 수 있으며, 아이돔포턴트 프로듀서 옵션은 네트워크 재시도로 인한 중복 쓰기를 방지합니다. 단, `acks=all`은 `acks=1`보다 지연시간이 늘어나므로, 지연시간에 극도로 민감하면서 일부 데이터 손실을 감내할 수 있는 워크로드(예: 메트릭 수집)에서는 `acks=1`을 선택하는 트레이드오프도 존재합니다.
 
-## 다음 단계
+## 다음 단계와 참고
 
-이번 문서에서는 Kafka의 핵심 개념 — 브로커/토픽/파티션 구조, 순서 보장의 범위, 컨슈머 그룹의 리밸런싱, KRaft로의 전환, 복제/내구성 설정 — 을 살펴봤습니다. Part 2에서는 **Strimzi Operator**를 사용해 이 모든 개념을 실제 Amazon EKS 클러스터 위에 KRaft 기반 Kafka 클러스터로 배포하는 과정을 다룹니다.
-
-[메인 페이지로 돌아가기](./README.md)
-
-## 퀴즈
-
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)를 풀어보세요.
+- [Strimzi Operator](./02-strimzi-operator.md)
+- [Kafka overview](./README.md)
+- [Quiz](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+- [Kafka design](https://kafka.apache.org/43/design/design/)
+- [Consumer configurations](https://kafka.apache.org/43/configuration/consumer-configs/)
+- [Producer configurations](https://kafka.apache.org/43/configuration/producer-configs/)
+- [KRaft operations](https://kafka.apache.org/43/operations/kraft/)
+- [Strimzi 1.2.0 release and migration notice](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)

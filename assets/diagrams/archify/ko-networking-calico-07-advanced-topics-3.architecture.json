@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Egress Gateway 개요",
+    "output": "ko-networking-calico-07-advanced-topics-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": { "label": "Pod" },
+        "security": { "label": "Egress Gateway" },
+        "external": { "label": "외부 서비스" }
+      }
+    },
+    "views": [
+      { "id": "egress-path", "label": "Egress Gateway 경로", "focus": ["pod-a", "pod-b", "eg1", "eg2", "external"], "note": "secure 네임스페이스 Pod의 외부 트래픽은 지정된 Egress Gateway 노드를 거쳐 고정 소스 IP로 나간다." },
+      { "id": "direct-path", "label": "직접 경로", "focus": ["pod-c", "external"], "note": "default 네임스페이스 Pod는 게이트웨이를 거치지 않고 직접 외부로 나간다." }
+    ]
+  },
+  "components": [
+    { "id": "pod-a", "type": "backend", "label": "Pod A", "sublabel": "ns: secure", "pos": [80, 100], "size": [150, 60] },
+    { "id": "pod-b", "type": "backend", "label": "Pod B", "sublabel": "ns: secure", "pos": [80, 240], "size": [150, 60] },
+    { "id": "pod-c", "type": "backend", "label": "Pod C", "sublabel": "ns: default", "pos": [80, 420], "size": [150, 60] },
+    { "id": "eg1", "type": "security", "label": "Egress GW 1", "sublabel": "IP: 203.0.113.10", "pos": [400, 100], "size": [170, 60] },
+    { "id": "eg2", "type": "security", "label": "Egress GW 2", "sublabel": "IP: 203.0.113.11", "pos": [400, 240], "size": [170, 60] },
+    { "id": "external", "type": "external", "label": "외부 서비스", "sublabel": "방화벽: 203.0.113.10-11 허용", "pos": [760, 240], "size": [200, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Kubernetes Cluster", "wraps": ["pod-a", "pod-b", "pod-c", "eg1", "eg2"], "pad": 64 },
+    { "kind": "region", "label": "Worker Nodes", "wraps": ["pod-a", "pod-b", "pod-c"] },
+    { "kind": "region", "label": "Egress Gateway Nodes", "wraps": ["eg1", "eg2"] }
+  ],
+  "connections": [
+    { "id": "pod-a-eg1", "from": "pod-a", "to": "eg1", "label": "EG 경유", "variant": "emphasis" },
+    { "id": "pod-b-eg2", "from": "pod-b", "to": "eg2", "label": "EG 경유", "variant": "emphasis" },
+    { "id": "eg1-external", "from": "eg1", "to": "external", "label": "고정 소스 IP" },
+    { "id": "eg2-external", "from": "eg2", "to": "external" },
+    { "id": "pod-c-external", "from": "pod-c", "to": "external", "label": "직접", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "Egress Gateway", "items": ["특정 워크로드의 외부 트래픽을 지정된 게이트웨이 노드로 내보내 고정된 소스 IP를 제공한다", "Egress IPPool 203.0.113.0/28, nodeSelector: egress-gateway == 'true'"] },
+    { "dot": "slate", "title": "구현 방식", "items": ["EgressGateway 리소스는 Calico Enterprise 기능", "OSS에서는 BGP serviceExternalIPs 광고 + 네임스페이스별 SNAT 정책으로 유사 구현"] }
+  ]
+}

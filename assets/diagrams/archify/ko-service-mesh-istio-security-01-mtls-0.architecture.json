@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio mTLS 통신과 인증서 발급",
+    "output": "ko-service-mesh-istio-security-01-mtls-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1140, 470],
+    "legend": {
+      "entries": {
+        "backend": { "label": "애플리케이션 컨테이너" },
+        "security": { "label": "Envoy 사이드카 (mTLS 종단)" },
+        "cloud": { "label": "Istio 컨트롤 플레인" }
+      }
+    },
+    "views": [
+      { "id": "cert-issuance", "label": "인증서 발급", "focus": ["istiod", "envoy1", "envoy2"], "note": "istiod가 SPIFFE ID 기반 X.509 인증서를 발급하고, Istio Agent가 SDS로 각 Envoy에 전달한다." },
+      { "id": "mtls-path", "label": "mTLS 통신 경로", "focus": ["app1", "envoy1", "envoy2", "app2"], "note": "파드 내부는 평문, 파드 사이는 Envoy가 mTLS로 암호화한다." }
+    ]
+  },
+  "components": [
+    { "id": "app1", "type": "backend", "label": "애플리케이션", "sublabel": "App 컨테이너", "pos": [60, 300], "size": [150, 60] },
+    { "id": "envoy1", "type": "security", "label": "Envoy Proxy", "sublabel": "사이드카", "pos": [280, 300], "size": [150, 60] },
+    { "id": "istiod", "type": "cloud", "label": "istiod", "sublabel": "인증서 발급", "tag": "CA", "pos": [490, 100], "size": [160, 64] },
+    { "id": "envoy2", "type": "security", "label": "Envoy Proxy", "sublabel": "사이드카", "pos": [710, 300], "size": [150, 60] },
+    { "id": "app2", "type": "backend", "label": "애플리케이션", "sublabel": "App 컨테이너", "pos": [930, 300], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Pod A", "wraps": ["app1", "envoy1"] },
+    { "kind": "region", "label": "Pod B", "wraps": ["envoy2", "app2"] }
+  ],
+  "connections": [
+    { "id": "app1-to-envoy1", "from": "app1", "to": "envoy1", "label": "평문" },
+    { "id": "envoy1-to-envoy2", "from": "envoy1", "to": "envoy2", "label": "mTLS 암호화 (양방향)", "variant": "emphasis" },
+    { "id": "envoy2-to-app2", "from": "envoy2", "to": "app2", "label": "평문" },
+    { "id": "istiod-to-envoy1", "from": "istiod", "to": "envoy1", "label": "인증서", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "istiod-to-envoy2", "from": "istiod", "to": "envoy2", "label": "인증서", "variant": "dashed", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Identity 프로비저닝", "items": ["Istio Agent가 istiod에 CSR 전송", "istiod가 SPIFFE ID 기반 X.509 인증서 발급", "Agent가 SDS 프로토콜로 Envoy에 인증서 전달", "인증서 자동 갱신 (기본 TTL: 24시간)"] },
+    { "dot": "rose", "title": "통신 경로", "items": ["애플리케이션 ↔ 사이드카 구간은 파드 내부 평문 통신", "Envoy 사이드카 사이는 mTLS로 자동 암호화·인증", "SPIFFE ID: spiffe://cluster.local/ns/<ns>/sa/<sa>"] }
+  ]
+}

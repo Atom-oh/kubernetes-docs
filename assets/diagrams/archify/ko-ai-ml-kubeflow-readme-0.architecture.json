@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubeflow 컴포넌트와 명시적 연동",
+    "output": "ko-ai-ml-kubeflow-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1080,
+      560
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "dashboard",
+      "type": "frontend",
+      "label": "Central Dashboard",
+      "sublabel": "컴포넌트 UI 탐색",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "notebooks",
+      "type": "backend",
+      "label": "Kubeflow Notebooks",
+      "sublabel": "Jupyter / RStudio / VS Code",
+      "pos": [
+        320,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pipelines",
+      "type": "backend",
+      "label": "Kubeflow Pipelines",
+      "sublabel": "ML 워크플로우 DAG",
+      "pos": [
+        320,
+        250
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "katib",
+      "type": "backend",
+      "label": "Katib",
+      "sublabel": "하이퍼파라미터 튜닝 / AutoML",
+      "pos": [
+        320,
+        440
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "trainer",
+      "type": "backend",
+      "label": "Kubeflow Trainer",
+      "sublabel": "분산 학습 · TrainJob",
+      "pos": [
+        620,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "kserve",
+      "type": "cloud",
+      "label": "KServe",
+      "sublabel": "InferenceService 서빙",
+      "pos": [
+        890,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dash-notebooks",
+      "from": "dashboard",
+      "to": "notebooks",
+      "label": "UI 링크"
+    },
+    {
+      "id": "dash-pipelines",
+      "from": "dashboard",
+      "to": "pipelines",
+      "variant": "emphasis",
+      "label": "UI 링크",
+      "labelAt": [
+        300,
+        335
+      ]
+    },
+    {
+      "id": "dash-katib",
+      "from": "dashboard",
+      "to": "katib",
+      "label": "UI 링크"
+    },
+    {
+      "id": "pipelines-trainer",
+      "from": "pipelines",
+      "to": "trainer",
+      "label": "구현 시 제출",
+      "variant": "dashed"
+    },
+    {
+      "id": "katib-trainer",
+      "from": "katib",
+      "to": "trainer",
+      "label": "Trial 템플릿",
+      "variant": "dashed"
+    },
+    {
+      "id": "trainer-kserve",
+      "from": "trainer",
+      "to": "kserve",
+      "label": "별도 모델 배포",
+      "variant": "dashed",
+      "labelAt": [
+        845,
+        335
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "UI와 워크로드",
+      "items": [
+        "대시보드는 학습 실행기나 모든 API의 인가 계층이 아닙니다.",
+        "Pipelines와 Katib이 Trainer를 사용하려면 명시적 연동이 필요합니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "모델 수명 주기",
+      "items": [
+        "학습 결과의 KServe 배포·승격은 별도 단계입니다.",
+        "26.03.1의 Hub와 Spark Operator는 이 그림 범위 밖입니다."
+      ]
+    }
+  ]
+}

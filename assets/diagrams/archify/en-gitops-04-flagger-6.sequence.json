@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Image Automation + Canary Automation Pipeline",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      660
+    ],
+    "views": [
+      {
+        "id": "image-automation",
+        "label": "Image automation",
+        "focus": [
+          "cicd",
+          "ecr",
+          "flux",
+          "git"
+        ],
+        "note": "Reflector selects by policy; Automation edits marked fields on a branch. Merging to main is separate."
+      },
+      {
+        "id": "gitops-sync",
+        "label": "GitOps sync",
+        "focus": [
+          "git",
+          "flux",
+          "k8s"
+        ],
+        "note": "Flux detects the Git change and the Kustomize Controller applies the Deployment"
+      },
+      {
+        "id": "canary-rollout",
+        "label": "Canary rollout",
+        "focus": [
+          "k8s",
+          "flagger"
+        ],
+        "note": "Flagger detects the Deployment change, shifts traffic step by step, then promotes or rolls back"
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "cicd",
+      "type": "external",
+      "label": "CI / Review",
+      "sublabel": "build / approve"
+    },
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Image registry",
+      "sublabel": "GHCR / ECR"
+    },
+    {
+      "id": "flux",
+      "type": "backend",
+      "label": "Flux controllers",
+      "sublabel": "reflect / update / apply"
+    },
+    {
+      "id": "git",
+      "type": "database",
+      "label": "Git Repository",
+      "sublabel": "source branch: main"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "Deployment"
+    },
+    {
+      "id": "flagger",
+      "type": "security",
+      "label": "Flagger",
+      "sublabel": "Canary controller"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 330,
+      "label": "Image selection / PR"
+    },
+    {
+      "from": 338,
+      "to": 418,
+      "label": "GitOps apply"
+    },
+    {
+      "from": 426,
+      "to": 565,
+      "label": "Canary analysis"
+    }
+  ],
+  "messages": [
+    {
+      "id": "push-image",
+      "from": "cicd",
+      "to": "ecr",
+      "y": 185,
+      "label": "new candidate image",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scan-tags",
+      "from": "flux",
+      "to": "ecr",
+      "y": 228,
+      "label": "Reflector selects tags",
+      "note": "ImageRepository interval 5m · provider aws · ImagePolicy semver >=1.0.0"
+    },
+    {
+      "id": "commit-tag",
+      "from": "flux",
+      "to": "git",
+      "y": 270,
+      "label": "Automation pushes branch",
+      "variant": "emphasis",
+      "note": "ImageUpdateAutomation · Setters strategy · deployment.yaml"
+    },
+    {
+      "id": "review-merge",
+      "from": "cicd",
+      "to": "git",
+      "y": 312,
+      "label": "PR review / merge",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect-git",
+      "from": "flux",
+      "to": "git",
+      "y": 354,
+      "label": "fetch merged revision",
+      "variant": "return"
+    },
+    {
+      "id": "update-deploy",
+      "from": "flux",
+      "to": "k8s",
+      "y": 396,
+      "label": "apply Pod template",
+      "variant": "emphasis",
+      "note": "Kustomize Controller · Kustomization web-app"
+    },
+    {
+      "id": "detect-pod",
+      "from": "k8s",
+      "to": "flagger",
+      "y": 440,
+      "label": "workload change"
+    },
+    {
+      "id": "start-canary",
+      "from": "flagger",
+      "to": "k8s",
+      "y": 483,
+      "label": "analysis / routing",
+      "variant": "emphasis",
+      "note": "canary Deployment · stepWeight 10 → maxWeight 50 · interval 1m"
+    },
+    {
+      "id": "finish-or-rollback",
+      "from": "flagger",
+      "to": "k8s",
+      "y": 533,
+      "label": "promote / analysis recovery",
+      "variant": "return",
+      "note": "metrics analysis · request-success-rate ≥ 99%"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "flux",
+      "from": 222,
+      "to": 402,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 390,
+      "to": 541,
+      "type": "cloud"
+    },
+    {
+      "participant": "flagger",
+      "from": 434,
+      "to": 541,
+      "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Image automation",
+      "items": [
+        "image.toolkit v1 · policy >=6.15.0 <7.0.0",
+        "Current .Changed template; reviewed branch merge"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Flagger",
+      "items": [
+        "Target Pod template update starts analysis",
+        "Cumulative failures; no competing Service/replica owner"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Observability vs Monitoring",
+    "locale": "en",
+    "output": "en-observability-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "monitoring",
+        "label": "Monitoring",
+        "focus": [
+          "predefined-metrics",
+          "threshold-alerts",
+          "dashboards"
+        ],
+        "note": "Predefined metrics flow one way into threshold alerts and fixed dashboards."
+      },
+      {
+        "id": "evolution",
+        "label": "Evolution",
+        "focus": [
+          "threshold-alerts",
+          "metrics"
+        ],
+        "note": "Monitoring that detects known issues grows into observability that explores unknown ones."
+      },
+      {
+        "id": "observability",
+        "label": "Observability",
+        "focus": [
+          "logs",
+          "metrics",
+          "traces"
+        ],
+        "note": "Logs, metrics, and traces cross-reference each other to infer internal state."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "predefined-metrics",
+      "type": "external",
+      "label": "Predefined Metrics",
+      "sublabel": "known indicators",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "threshold-alerts",
+      "type": "external",
+      "label": "Threshold Alerts",
+      "sublabel": "What went wrong?",
+      "pos": [
+        80,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "dashboards",
+      "type": "external",
+      "label": "Dashboards",
+      "sublabel": "predefined views",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "database",
+      "label": "Logs",
+      "sublabel": "event records",
+      "pos": [
+        600,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Metrics",
+      "sublabel": "time series",
+      "pos": [
+        600,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "traces",
+      "type": "database",
+      "label": "Traces",
+      "sublabel": "request paths",
+      "pos": [
+        880,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Monitoring",
+      "wraps": [
+        "predefined-metrics",
+        "threshold-alerts",
+        "dashboards"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Observability",
+      "wraps": [
+        "logs",
+        "metrics",
+        "traces"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "metrics-to-alerts",
+      "from": "predefined-metrics",
+      "to": "threshold-alerts",
+      "label": "threshold check",
+      "labelDy": 24
+    },
+    {
+      "id": "alerts-to-dashboards",
+      "from": "threshold-alerts",
+      "to": "dashboards",
+      "label": "display",
+      "labelDy": 24
+    },
+    {
+      "id": "evolution",
+      "from": "threshold-alerts",
+      "to": "metrics",
+      "label": "Evolution",
+      "variant": "emphasis"
+    },
+    {
+      "id": "logs-to-metrics",
+      "from": "logs",
+      "to": "metrics",
+      "label": "label matching",
+      "labelDy": 24
+    },
+    {
+      "id": "metrics-to-traces",
+      "from": "metrics",
+      "to": "traces",
+      "label": "Exemplar"
+    },
+    {
+      "id": "traces-to-logs",
+      "from": "traces",
+      "to": "logs",
+      "label": "TraceID",
+      "fromSide": "top",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Monitoring",
+      "items": [
+        "Based on predefined metrics and thresholds",
+        "\"What went wrong?\" (What)",
+        "Detects known issues, predefined dashboards"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Observability",
+      "items": [
+        "Infers internal state from system outputs",
+        "\"Why did it go wrong?\" (Why)",
+        "Explores unknown issues, dynamic queries"
+      ]
+    }
+  ]
+}

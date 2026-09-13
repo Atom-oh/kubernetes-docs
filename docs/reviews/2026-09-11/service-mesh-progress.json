@@ -1,0 +1,61 @@
+{
+  "date": "2026-09-11",
+  "scope": [
+    "ko/service-mesh/**",
+    "en/service-mesh/**",
+    "ko/quizzes/service-mesh/**",
+    "en/quizzes/service-mesh/**"
+  ],
+  "completedBatches": [
+    "istio-foundation",
+    "istio-traffic",
+    "istio-security",
+    "istio-observability",
+    "istio-resilience",
+    "istio-advanced",
+    "istio-comparison",
+    "istio-troubleshooting",
+    "mesh-other-istio-overview",
+    "mesh-linkerd",
+    "mesh-cilium"
+  ],
+  "reviewedDocuments": 170,
+  "totalDocuments": 170,
+  "activeBatch": null,
+  "pendingGroups": {},
+  "instructions": "Sequential batches, full-file reads; source-backed fixes; no delegation/commits/provisioning; update each per-document evidence array incrementally.",
+  "lastReviewed": "ko/service-mesh/cilium-service-mesh/06-best-practices.md",
+  "parentLinkReports": [
+    "/tmp/kubernetes-docs-full-review/internal-main-links.log",
+    "docs/reviews/2026-09-11/external-links.json",
+    "/tmp/kubernetes-docs-full-review/image-validation.json"
+  ],
+  "linkPolicy": "Resolve own GitHub/blob/main and raw/main URLs as repository paths; prefer valid relative links. Verify replacements for official 404/410 URLs. Parent owns outside-domain failures and Korean NFC/NFD slug normalization.",
+  "lastBatchCheckpoint": {
+    "batch": "mesh-cilium complete",
+    "documents": 24,
+    "fixed": 24,
+    "docsTest": "118/118",
+    "MarkdownVueCompile": "170/170",
+    "liveClusterTested": false
+  },
+  "nextDomainQueue": "docs/reviews/2026-09-11/worker-domain-queue.json",
+  "validationPolicy": "Offline syntax/schema/compiled examples are not production or live-cluster tests; document complex lab prerequisites explicitly.",
+  "checkpointFile": "docs/reviews/2026-09-11/service-mesh-worker-checkpoint.json",
+  "currentPendingValidation": [],
+  "retryTestRegression": "resolved; latestdocs:test118/118",
+  "currentFile": null,
+  "fixedAndValidated": 170,
+  "latestWorkerCheckpoint": {
+    "date": "2026-09-11",
+    "fullyRead": 170,
+    "fixedAndValidated": 170,
+    "current": "networking foundation overview4 next",
+    "remaining": {
+      "mesh": 0,
+      "networking": 108,
+      "observability": 116
+    },
+    "blockers": []
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "file 소스 · 비동기 반영",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      520
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "file-source",
+        "label": "file 소스 경로",
+        "focus": [
+          "user",
+          "apiserver",
+          "operator",
+          "configmap",
+          "flagd"
+        ],
+        "note": "API 변경, ConfigMap 투영, flagd 읽기는 별도 단계입니다. 즉시 반영이나 지속적인 신선도를 가정하지 않습니다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자 / GitOps",
+      "sublabel": "kubectl · Argo CD"
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "kube-apiserver"
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Operator",
+      "sublabel": "OpenFeature Operator"
+    },
+    {
+      "id": "configmap",
+      "type": "database",
+      "label": "Kubelet / 볼륨",
+      "sublabel": "ConfigMap 투영"
+    },
+    {
+      "id": "flagd",
+      "type": "backend",
+      "label": "flagd",
+      "sublabel": "사이드카"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 275,
+      "label": "CR 변경 감지"
+    },
+    {
+      "from": 295,
+      "to": 452,
+      "label": "ConfigMap 갱신 · 비동기 투영"
+    }
+  ],
+  "messages": [
+    {
+      "id": "apply-cr",
+      "from": "user",
+      "to": "apiserver",
+      "y": 195,
+      "label": "FeatureFlag CR 생성/수정",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch-event",
+      "from": "apiserver",
+      "to": "operator",
+      "y": 250,
+      "label": "Watch 이벤트 수신"
+    },
+    {
+      "id": "write-cm",
+      "from": "operator",
+      "to": "apiserver",
+      "y": 315,
+      "label": "ConfigMap 갱신",
+      "variant": "emphasis",
+      "note": "검증된 정의를 API에 기록"
+    },
+    {
+      "id": "project",
+      "from": "apiserver",
+      "to": "configmap",
+      "y": 370,
+      "label": "변경 감지 / 투영",
+      "variant": "dashed"
+    },
+    {
+      "id": "file-change",
+      "from": "configmap",
+      "to": "flagd",
+      "y": 425,
+      "label": "파일 재읽기",
+      "variant": "dashed",
+      "note": "비동기 반영 후 소비자 리비전 확인"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "operator",
+      "from": 245,
+      "to": 322,
+      "type": "backend"
+    },
+    {
+      "participant": "flagd",
+      "from": 420,
+      "to": 442,
+      "type": "backend"
+    }
+  ]
+}

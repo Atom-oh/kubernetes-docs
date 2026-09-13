@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kagent0.10.1: 선언과 실행 경계",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1250,
+      570
+    ],
+    "output": "ko-ai-ml-03-agentic-ai-platform-4.html"
+  },
+  "components": [
+    {
+      "id": "agent",
+      "type": "cloud",
+      "label": "Agent custom resource",
+      "sublabel": "kagent.dev/v1alpha2",
+      "pos": [
+        40,
+        75
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Kagent Controller",
+      "sublabel": "참조 해석·workload 조정",
+      "pos": [
+        490,
+        75
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Go / Python ADK",
+      "sublabel": "예제 runtime:go",
+      "pos": [
+        940,
+        75
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "model",
+      "type": "external",
+      "label": "ModelConfig",
+      "sublabel": "승인된 model backend",
+      "pos": [
+        40,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "mcp",
+      "type": "external",
+      "label": "RemoteMCPServer",
+      "sublabel": "서버가 도구 권한 적용",
+      "pos": [
+        490,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "세션·메모리 저장",
+      "sublabel": "설정·tenant 경계 확인",
+      "pos": [
+        940,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "watch",
+      "from": "agent",
+      "to": "controller",
+      "label": "감시 / reconcile"
+    },
+    {
+      "id": "deploy",
+      "from": "controller",
+      "to": "runtime",
+      "label": "Deployment 조정",
+      "variant": "emphasis"
+    },
+    {
+      "id": "model-ref",
+      "from": "model",
+      "to": "controller",
+      "label": "modelConfig",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "mcp-call",
+      "from": "runtime",
+      "to": "mcp",
+      "label": "허용된 도구 호출",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "state",
+      "from": "runtime",
+      "to": "storage",
+      "label": "구성된 저장 경로",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1060,
+        250
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CRD와 Agent 인스턴스",
+      "items": [
+        "CRD가 API를 정의하고 controller가 Agent 리소스를 조정합니다.",
+        "LangGraph는 별도 프레임워크이며 연결 시 명시적 통합이 필요합니다."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "credential과 도구 권한",
+      "items": [
+        "OpenAI apiKeySecret의 기본 translator는 secret 환경 변수를 만듭니다.",
+        "파일 credential 정책은 검증한 BYO/runtime/gateway 경로가 필요합니다.",
+        "도구 이름이나 replicas만으로 권한·HA가 보장되지 않습니다."
+      ]
+    }
+  ]
+}

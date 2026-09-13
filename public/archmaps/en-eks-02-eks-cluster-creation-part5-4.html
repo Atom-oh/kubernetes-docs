@@ -5031,10 +5031,10 @@
 
         <!-- Swimlanes -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="1131" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / 선행 정리</text>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / Pre-cleanup</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="1131" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / 클러스터 삭제</text>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Cluster deletion</text>
 
         <!-- Phase headers -->
 
@@ -5050,8 +5050,8 @@
         <path data-edge-from="cluster" data-edge-to="verify" data-edge-label="5 verify" data-edge-key="4" data-edge-id="e5" data-composition-points="956.4,243;1012.8,243" d="M 956.4 243 L 1012.8 243" class="a-default" data-animate="edge" style="--step:8" stroke-width="1.4" marker-end="url(#arrowhead)"/>
 
         <!-- Nodes -->
-        <g id="node-lb" data-node-id="lb" data-node-label="Remove LBs" tabindex="0" role="button" aria-label="Focus Remove LBs, Service · Ingress, 선행 정리" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Service · Ingress" data-node-context="선행 정리">
-          <title>Remove LBs · Service · Ingress · 선행 정리</title>
+        <g id="node-lb" data-node-id="lb" data-node-label="Remove LBs" tabindex="0" role="button" aria-label="Focus Remove LBs, Service · Ingress, Pre-cleanup" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Service · Ingress" data-node-context="Pre-cleanup">
+          <title>Remove LBs · Service · Ingress · Pre-cleanup</title>
           <rect x="48" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="48" y="93" width="150" height="52" rx="6" class="c-frontend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(54 99) scale(0.6875)">
@@ -5064,8 +5064,8 @@
           <text data-detail="context" x="123" y="131" class="t-muted" font-size="8" text-anchor="middle">Service · Ingress</text>
         </g>
 
-        <g id="node-pvc" data-node-id="pvc" data-node-label="Delete PVCs" tabindex="0" role="button" aria-label="Focus Delete PVCs, Reclaim volumes, 선행 정리" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Reclaim volumes" data-node-context="선행 정리">
-          <title>Delete PVCs · Reclaim volumes · 선행 정리</title>
+        <g id="node-pvc" data-node-id="pvc" data-node-label="Delete PVCs" tabindex="0" role="button" aria-label="Focus Delete PVCs, Reclaim volumes, Pre-cleanup" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Reclaim volumes" data-node-context="Pre-cleanup">
+          <title>Delete PVCs · Reclaim volumes · Pre-cleanup</title>
           <rect x="259.2" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="259.2" y="93" width="150" height="52" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(265.2 99) scale(0.6875)">
@@ -5078,8 +5078,8 @@
           <text data-detail="context" x="334.2" y="131" class="t-muted" font-size="8" text-anchor="middle">Reclaim volumes</text>
         </g>
 
-        <g id="node-ng" data-node-id="ng" data-node-label="Delete node groups" tabindex="0" role="button" aria-label="Focus Delete node groups, EC2 terminated, 선행 정리" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="EC2 terminated" data-node-context="선행 정리">
-          <title>Delete node groups · EC2 terminated · 선행 정리</title>
+        <g id="node-ng" data-node-id="ng" data-node-label="Delete node groups" tabindex="0" role="button" aria-label="Focus Delete node groups, EC2 terminated, Pre-cleanup" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="EC2 terminated" data-node-context="Pre-cleanup">
+          <title>Delete node groups · EC2 terminated · Pre-cleanup</title>
           <rect x="460.79999999999995" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="460.79999999999995" y="93" width="150" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(466.79999999999995 99) scale(0.6875)">
@@ -5089,8 +5089,8 @@
           <text data-detail="context" x="535.8" y="131" class="t-muted" font-size="8" text-anchor="middle">EC2 terminated</text>
         </g>
 
-        <g id="node-fargate" data-node-id="fargate" data-node-label="Fargate profile" tabindex="0" role="button" aria-label="Focus Fargate profile, Delete profile, 선행 정리" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Delete profile" data-node-context="선행 정리">
-          <title>Fargate profile · Delete profile · 선행 정리</title>
+        <g id="node-fargate" data-node-id="fargate" data-node-label="Fargate profile" tabindex="0" role="button" aria-label="Focus Fargate profile, Delete profile, Pre-cleanup" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Delete profile" data-node-context="Pre-cleanup">
+          <title>Fargate profile · Delete profile · Pre-cleanup</title>
           <rect x="686.4" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="686.4" y="93" width="150" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(692.4 99) scale(0.6875)">
@@ -5100,8 +5100,8 @@
           <text data-detail="context" x="761.4" y="131" class="t-muted" font-size="8" text-anchor="middle">Delete profile</text>
         </g>
 
-        <g id="node-cluster" data-node-id="cluster" data-node-label="Delete cluster" tabindex="0" role="button" aria-label="Focus Delete cluster, delete-cluster, 클러스터 삭제" aria-pressed="false" data-node-kind="security" data-node-sublabel="delete-cluster" data-node-context="클러스터 삭제">
-          <title>Delete cluster · delete-cluster · 클러스터 삭제</title>
+        <g id="node-cluster" data-node-id="cluster" data-node-label="Delete cluster" tabindex="0" role="button" aria-label="Focus Delete cluster, delete-cluster, Cluster deletion" aria-pressed="false" data-node-kind="security" data-node-sublabel="delete-cluster" data-node-context="Cluster deletion">
+          <title>Delete cluster · delete-cluster · Cluster deletion</title>
           <rect x="806.4" y="217" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="806.4" y="217" width="150" height="52" rx="6" class="c-security" data-animate="node" style="--step:8" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(812.4 223) scale(0.6875)">
@@ -5112,8 +5112,8 @@
           <text data-detail="context" x="881.4" y="255" class="t-muted" font-size="8" text-anchor="middle">delete-cluster</text>
         </g>
 
-        <g id="node-verify" data-node-id="verify" data-node-label="Leftovers" tabindex="0" role="button" aria-label="Focus Leftovers, VPC · IAM, 클러스터 삭제" aria-pressed="false" data-node-kind="security" data-node-sublabel="VPC · IAM" data-node-context="클러스터 삭제">
-          <title>Leftovers · VPC · IAM · 클러스터 삭제</title>
+        <g id="node-verify" data-node-id="verify" data-node-label="Leftovers" tabindex="0" role="button" aria-label="Focus Leftovers, VPC · IAM, Cluster deletion" aria-pressed="false" data-node-kind="security" data-node-sublabel="VPC · IAM" data-node-context="Cluster deletion">
+          <title>Leftovers · VPC · IAM · Cluster deletion</title>
           <rect x="1012.8" y="217" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="1012.8" y="217" width="150" height="52" rx="6" class="c-security" data-animate="node" style="--step:9" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(1018.8 223) scale(0.6875)">
@@ -5149,17 +5149,17 @@
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
           <text x="20" y="304" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="워크로드 정리" data-legend-x="20" data-legend-baseline="324" data-legend-width="100">
+          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="Workload cleanup" data-legend-x="20" data-legend-baseline="324" data-legend-width="113">
             <rect x="20" y="316" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
-            <text x="42" y="324" class="t-muted" font-size="7.5" font-weight="500">워크로드 정리</text>
+            <text x="42" y="324" class="t-muted" font-size="7.5" font-weight="500">Workload cleanup</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="최종 삭제" data-legend-x="127" data-legend-baseline="324" data-legend-width="83">
-            <rect x="127" y="316" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="149" y="324" class="t-muted" font-size="7.5" font-weight="500">최종 삭제</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Final deletion" data-legend-x="140" data-legend-baseline="324" data-legend-width="104">
+            <rect x="140" y="316" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="162" y="324" class="t-muted" font-size="7.5" font-weight="500">Final deletion</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="AWS 리소스" data-legend-x="217" data-legend-baseline="324" data-legend-width="87">
-            <rect x="217" y="316" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
-            <text x="239" y="324" class="t-muted" font-size="7.5" font-weight="500">AWS 리소스</text>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="AWS resources" data-legend-x="251" data-legend-baseline="324" data-legend-width="100">
+            <rect x="251" y="316" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="273" y="324" class="t-muted" font-size="7.5" font-weight="500">AWS resources</text>
           </g>
         </g>
       </svg>

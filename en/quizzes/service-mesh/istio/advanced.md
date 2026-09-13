@@ -1,186 +1,106 @@
 # Istio Advanced Topics Quiz
 
-> **Supported Version**: Istio 1.28.0
-> **EKS Version**: 1.34 (Kubernetes 1.28+)
-> **Last Updated**: February 19, 2026
+> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.36, Argo Rollouts 1.10.0
+> **Last reviewed**: September 11, 2026
 
-This quiz tests your understanding of Istio's advanced features.
+The questions distinguish configuration, runtime behavior and evidence. Examples are independent; select the relevant topology and retain the prerequisites in the linked guide. Historical arithmetic inputs below are not current pricing or new benchmark results.
 
-## Multiple Choice Questions (1-5)
+## Multiple Choice Questions (1–5)
 
-### Question 1: Ambient Mode vs Sidecar Mode
+### Question 1: Ambient and Sidecar Modes
 
-What is the **greatest advantage** of Istio Ambient Mode?
+Which architectural change can reduce per-workload proxy overhead in ambient mode?
 
-A. Provides more features
-B. Significantly reduced resource usage
-C. Faster installation speed
-D. Better security
+- A. Ambient always provides more features than sidecars.
+- B. A per-node ztunnel handles L4 traffic, with separately deployed waypoints for required L7 processing.
+- C. Installation is guaranteed to be ten times faster.
+- D. Every policy becomes stronger without configuration changes.
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B**
 
-The greatest advantage of Ambient Mode is that **resource usage is reduced by more than 98%**.
+Ambient removes the requirement for one sidecar proxy in every enrolled workload Pod. ztunnel supplies the L4 secure overlay; destination waypoint enrollment and the supported L7 policies determine the additional processing path. A waypoint is not simply a universal shared hop that either ztunnel may choose arbitrarily.
 
-**Explanation:**
+| Aspect | Correct comparison |
+|---|---|
+| CPU/memory | Measure equivalent traffic, policy, telemetry, node count and waypoint replicas. No universal 98% saving. |
+| Enrollment | Ambient can enroll existing sidecar-free Pods without an application restart; removing an existing sidecar requires workload replacement. |
+| Features | Support differs. Waypoint EnvoyFilter is unsupported; ambient multicluster has its own Beta topology limits. |
+| Maturity | Ambient core became GA in Istio 1.24; that does not make every later capability GA. |
+| Security | mTLS and policy depend on the actual traffic path and supported policy attachment; require waypoint traversal where L7 enforcement is mandatory. |
 
-**Sidecar Mode vs Ambient Mode Comparison:**
+For example, **assumed** 1,000 sidecars at 50 MB/0.1 vCPU total 50,000 MB/100 vCPU. Ten assumed ztunnels at 50 MB/0.1 vCPU plus one 200 MB/0.5 vCPU waypoint total 700 MB/1.5 vCPU. The arithmetic reductions are 98.6%/98.5%; these arbitrary inputs are neither benchmarks nor capacity guarantees.
 
-| Item | Sidecar Mode | Ambient Mode | Improvement |
-|------|-------------|-------------|------|
-| **Memory** | 50MB × Pod count | ztunnel + waypoint only | 98%+ reduction |
-| **CPU** | 0.1 vCPU × Pod count | ztunnel + waypoint only | 98%+ reduction |
-| **Pod restart** | Required | Not required | Simplified operations |
-| **Deployment speed** | Slow (Sidecar injection) | Fast | 5-10x improvement |
-
-**Resource comparison at 1000 Pod scale:**
-
-```
-Sidecar Mode:
-- Memory: 1000 × 50MB = 50GB
-- CPU: 1000 × 0.1 vCPU = 100 vCPU
-
-Ambient Mode (10 nodes):
-- Memory: (10 × 50MB) + 200MB = 700MB
-- CPU: (10 × 0.1 vCPU) + 0.5 vCPU = 1.5 vCPU
-
-Savings rate: 98.6% (memory), 98.5% (CPU)
-```
-
-**Ambient Mode Architecture:**
-
-![Diagram showing pods on two nodes routing through a per-node ztunnel L4 proxy that carries mTLS to its peer node, with both ztunnels optionally forwarding to a shared waypoint proxy when L7 policy is needed.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-0.svg)
-
-**Enabling Ambient Mode:**
+Enrollment after installing the supported ambient components and reviewing any existing revision/injection labels:
 
 ```bash
-# Install Istio with Ambient Mode
-istioctl install --set profile=ambient -y
-
-# Add Namespace to Ambient Mode
-kubectl label namespace default istio.io/dataplane-mode=ambient
-
-# Verify
-kubectl get pods -n istio-system | grep ztunnel
+kubectl label namespace ambient-demo istio.io/dataplane-mode=ambient --overwrite
+kubectl get daemonset ztunnel -n istio-system
+istioctl ztunnel-config workloads --workload-namespace ambient-demo
 ```
 
-**Option Analysis:**
-- A (X): Features are the same as Sidecar (some advanced features require waypoint)
-- B (O): Resource usage reduced by more than 98%
-- C (X): Installation speed is a secondary benefit
-- D (X): Security level is the same (mTLS, AuthorizationPolicy both supported)
+The namespace must already exist, be intended for ambient, and have compatible workloads. These commands do not install the CNI/ztunnel, configure waypoints or safely migrate injected Pods by themselves.
 
-**Reference:**
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+[Ambient guide](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+
 </details>
 
----
+### Question 2: Multicluster Discovery
 
-### Question 2: Multi-cluster Mesh
+Which component reads the authorized Kubernetes service registries and generates proxy discovery configuration in an Istio sidecar multicluster mesh?
 
-In Istio Multi-cluster Mesh, what is responsible for **service discovery across clusters**?
-
-A. Istiod
-B. CoreDNS
-C. East-West Gateway
-D. Service Entry
+- A. Istiod
+- B. CoreDNS alone
+- C. An east-west gateway alone
+- D. A ServiceEntry object alone
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: A**
 
-**Istiod** collects and distributes service information from all clusters in a multi-cluster environment.
+Each primary Istiod reads the Kubernetes APIs it is authorized to access. In primary-remote, remote workloads use the primary control plane; the remote installation is not a second full Istiod managed by a “super-primary.” In multi-primary, primaries have their own control planes and authorized remote discovery.
 
-**Explanation:**
+Istiod generates/distributes proxy configuration; it does not copy VirtualService/DestinationRule Kubernetes objects or application data into every cluster. Distribute configuration separately. Shared trust must be deliberately configured; equal meshID values do not create a common CA.
 
-**Multi-cluster Mesh Architecture:**
+CoreDNS can use forwarding and other configurations but is not Istio's cross-cluster registry. Gateways transport cross-network traffic. ServiceEntry adds registry entries, including external or otherwise explicitly registered services.
 
-![Diagram showing a shared primary Istiod distributing configuration to each cluster's local Istiod, which discovers its own services, while pods in the two clusters communicate directly across the cluster boundary.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-1.svg)
+Generate the actual remote secret instead of inventing a `data.kubeconfig` field:
 
-**Istiod's Roles:**
-
-1. **Service Discovery**:
-   - Collects Kubernetes Services from all clusters
-   - Maintains unified service registry
-   - Distributes endpoint information to Envoy
-
-2. **Configuration Distribution**:
-   - Deploys VirtualService, DestinationRule to all clusters
-   - Manages cross-cluster routing rules
-
-3. **Certificate Management**:
-   - Issues mTLS certificates for all clusters
-   - Builds trust chain by sharing Root CA
-
-**Multi-cluster Configuration Example:**
-
-```yaml
-# Primary cluster configuration
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  values:
-    global:
-      meshID: mesh1
-      multiCluster:
-        clusterName: cluster1
-      network: network1
-
----
-# Remote cluster access from Primary
-apiVersion: v1
-kind: Secret
-metadata:
-  name: istio-remote-secret-cluster2
-  namespace: istio-system
-  annotations:
-    networking.istio.io/cluster: cluster2
-type: Opaque
-data:
-  kubeconfig: <base64-encoded-kubeconfig>
+```bash
+# After the remote installation; contexts must identify the intended clusters.
+istioctl create-remote-secret --context="$CTX_CLUSTER2" --name=cluster2   | kubectl --context="$CTX_CLUSTER1" apply -f -
 ```
 
-**Option Analysis:**
-- A (O): Istiod collects and distributes service information from all clusters
-- B (X): CoreDNS only handles cluster-internal DNS
-- C (X): East-West Gateway only handles traffic routing (not service discovery)
-- D (X): ServiceEntry is a resource for manually registering external services
+The secret grants the primary access to the **remote API**. Protect its credentials and review the generated RBAC. It neither joins networks nor replicates policy objects.
 
-**Reference:**
-- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+[Multicluster guide](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+
 </details>
-
----
 
 ### Question 3: EnvoyFilter Purpose
 
-What is the **main purpose** of using EnvoyFilter?
+What is EnvoyFilter's main purpose?
 
-A. Create Kubernetes Service
-B. Auto-generate VirtualService
-C. Customize Envoy proxy behavior
-D. Change Istiod configuration
+- A. Create Kubernetes Services.
+- B. Automatically generate every VirtualService.
+- C. Customize selected generated Envoy proxy configuration.
+- D. Replace all Istiod installation settings.
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: C**
 
-**EnvoyFilter** is an advanced resource for fine-grained customization of Envoy proxy behavior.
+Prefer supported routing, telemetry, security or extension APIs for the task. EnvoyFilter is appropriate when those APIs do not provide a needed supported behavior and the generated configuration is understood. For example, this sidecar-only Lua filter changes an illustrative outbound request header:
 
-**Explanation:**
-
-**EnvoyFilter Use Cases:**
-
-1. **Add Custom Headers**:
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: add-custom-header
+  name: quiz-header
   namespace: default
 spec:
   workloadSelector:
@@ -193,1012 +113,310 @@ spec:
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
-        name: envoy.lua
+        name: envoy.filters.http.lua
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              request_handle:headers():add("x-custom-header", "my-value")
-            end
+          '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+          default_source_code:
+            inline_string: |
+              function envoy_on_request(handle)
+                handle:headers():replace("x-quiz-example", "yes")
+              end
 ```
 
-2. **Wasm Extension Integration**:
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: wasm-filter
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.wasm
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-          config:
-            vm_config:
-              runtime: "envoy.wasm.runtime.v8"
-              code:
-                local:
-                  filename: "/etc/istio/extensions/auth_filter.wasm"
-```
+The namespace and selector must match the intended proxies. No selector generally covers proxies in the resource's namespace; a root-namespace resource can have mesh-wide scope. Do not write two `workloadSelector` keys in one YAML object. A header inserted by Lua is not authenticated identity.
 
-3. **Rate Limiting Integration**:
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: rate-limit-filter
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.ratelimit
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
-          domain: productpage-ratelimit
-          rate_limit_service:
-            grpc_service:
-              envoy_grpc:
-                cluster_name: rate_limit_cluster
-```
+Other use cases require complete dependencies: a Wasm module needs a verified artifact/runtime and mounting or a supported WasmPlugin delivery path; global rate limiting needs a reachable service, matching descriptors and failure policy. Merely inserting a filter name does not provide those systems. EnvoyFilter is not supported on ambient waypoints.
 
-**EnvoyFilter Scope:**
+Validate the exact Istio/Envoy version, effective scope, filter order, typed payload and generated proxy configuration during upgrades. Installation values for Istiod remain Helm/istioctl configuration; IstioOperator YAML is still an istioctl input, although the in-cluster operator was removed.
 
-```yaml
-spec:
-  # Apply to entire mesh
-  workloadSelector: {}
+[EnvoyFilter guide](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 
-  # Apply to specific workload only
-  workloadSelector:
-    labels:
-      app: reviews
-      version: v2
-
-  # Apply to specific namespace only
-  # (controlled by metadata.namespace)
-```
-
-**Cautions:**
-
-Warning: **EnvoyFilter is very powerful but risky:**
-- Requires deep understanding of Envoy internals
-- Potential compatibility issues during Istio version upgrades
-- Incorrect configuration can cause entire mesh failure
-
-**Best Practices:**
-1. Use VirtualService, DestinationRule when possible
-2. Use EnvoyFilter only as a last resort
-3. Thoroughly test in test environment
-4. Limit scope with workloadSelector
-
-**Option Analysis:**
-- A (X): Kubernetes Service creation is done with kubectl
-- B (X): VirtualService is created manually
-- C (O): Fine-grained customization of Envoy proxy behavior
-- D (X): Istiod configuration is changed with IstioOperator
-
-**Reference:**
-- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 </details>
-
----
 
 ### Question 4: Sidecar Injection
 
-How do you **disable automatic Sidecar injection** in Istio?
+Which controls can disable automatic sidecar injection for newly created Pods?
 
-A. Remove `istio-injection=enabled` label from Namespace
-B. Add `sidecar.istio.io/inject="false"` annotation to Pod
-C. Restart Istiod
-D. Both A and B are possible
+- A. Explicitly set the namespace label `istio-injection=disabled`.
+- B. Set the workload Pod-template label `sidecar.istio.io/inject: "false"`.
+- C. Restart Istiod without changing configuration.
+- D. Both A and B.
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: D**
 
-Sidecar injection can be controlled at both the Namespace level and Pod level.
-
-**Explanation:**
-
-**Sidecar Injection Control Methods:**
-
-**1. Namespace Level (A - O):**
-
 ```bash
-# Enable Sidecar injection
-kubectl label namespace default istio-injection=enabled
-
-# Disable Sidecar injection
-kubectl label namespace default istio-injection-
-
-# Or change label
-kubectl label namespace default istio-injection=disabled --overwrite
+kubectl label namespace example istio-injection=disabled --overwrite
+kubectl get namespace example -L istio-injection,istio.io/rev
 ```
 
-**2. Pod Level (B - O):**
+This fragment belongs under the existing Deployment's spec; retain its image, selectors and other fields:
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
 spec:
   template:
     metadata:
-      annotations:
-        sidecar.istio.io/inject: "false"  # Disable Sidecar injection
-    spec:
-      containers:
-      - name: myapp
-        image: myapp:latest
+      labels:
+        sidecar.istio.io/inject: 'false'
 ```
 
-**Sidecar Injection Priority:**
+A disabling namespace or Pod label wins. In particular, a Pod opt-in does **not** override `istio-injection=disabled`. Removing only `istio-injection=enabled` is not universal disablement: revision labels, Pod opt-in and injector defaults must also be inspected. The old inject annotation is deprecated in favor of the label; avoid conflicting old/new settings.
 
-```
-Pod annotation > Namespace label > Default
-
-Examples:
-1. Namespace: istio-injection=enabled
-   Pod: sidecar.istio.io/inject="false"
-   Result: Sidecar not injected (Pod annotation takes priority)
-
-2. Namespace: istio-injection=disabled
-   Pod: sidecar.istio.io/inject="true"
-   Result: Sidecar injected (Pod annotation takes priority)
-
-3. Namespace: no label
-   Pod: no annotation
-   Result: Sidecar not injected (default)
-```
-
-**Verifying Sidecar Injection:**
+Changes affect new Pods, not proxies already injected. Use the workload's reviewed rollout to change existing Pods. A mixed namespace can enable injection while selected workload templates opt out; that opt-out also changes the workload's mesh/security participation.
 
 ```bash
-# Check if Sidecar was injected into Pod
-kubectl get pods <pod-name> -o jsonpath='{.spec.containers[*].name}'
-# Example output: myapp istio-proxy (2 = Sidecar present)
-
-# Check Sidecar injection logs
-kubectl logs -n istio-system -l app=istiod --tail=100 | grep injection
-
-# Check Namespace settings
-kubectl get namespace -L istio-injection
+kubectl get pod "$POD" -n "$NAMESPACE" -o json   | jq '{containers: [.spec.containers[].name],
+         initContainers: [.spec.initContainers[]? | {name, restartPolicy}]}'
 ```
 
-**Mixed Environment Example:**
+A native sidecar can appear in initContainers with `restartPolicy: Always`; checking only ordinary containers or expecting exactly `2/2` Ready is insufficient. Ambient enrollment is a separate mechanism.
 
-```yaml
-# Inject Sidecar for entire Namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: production
-  labels:
-    istio-injection: enabled
+[Injection guide](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 
----
-# Exclude specific Pod only (e.g., legacy system)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: legacy-app
-  namespace: production
-spec:
-  template:
-    metadata:
-      annotations:
-        sidecar.istio.io/inject: "false"
-    spec:
-      containers:
-      - name: legacy
-        image: legacy:v1
-
----
-# Most Pods automatically get Sidecar injected
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: modern-app
-  namespace: production
-spec:
-  template:
-    spec:
-      containers:
-      - name: modern
-        image: modern:v2
-```
-
-**Option Analysis:**
-- A (O): Sidecar injection can be controlled at Namespace level
-- B (O): Sidecar injection can be controlled at Pod level
-- C (X): Restarting Istiod is not necessary
-- D (O): Both A and B are valid methods
-
-**Reference:**
-- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 </details>
 
----
+### Question 5: Argo Rollouts Traffic Splitting
 
-### Question 5: Argo Rollouts Integration
+Which Istio **declarative resource** contains the HTTP route weights updated by Argo Rollouts?
 
-When using Argo Rollouts with Istio, what is responsible for **traffic splitting**?
-
-A. Argo Rollouts Controller
-B. Istio VirtualService
-C. Kubernetes Service
-D. Istio Gateway
+- A. The Rollouts controller process
+- B. VirtualService
+- C. A Kubernetes Service alone
+- D. Gateway alone
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B**
 
-**Istio VirtualService** performs the actual traffic splitting, and Argo Rollouts automatically updates the weight values in VirtualService.
+Rollouts updates the named route weights, Istiod translates the configuration, and **Envoy executes** routing. VirtualService is not a process handling packets. Ten percent is a probabilistic routing weight, not a guarantee that exactly ten of every hundred requests reach the canary. Retries and long-lived connections affect observations.
 
-**Explanation:**
-
-**Argo Rollouts + Istio Integration Architecture:**
-
-![Diagram showing user traffic entering through an Istio Gateway and VirtualService that splits weight between a stable and canary pod, while an Argo Rollouts controller updates that weight and manages the pods based on success or failure verdicts from an AnalysisTemplate fed by Prometheus metrics.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-2.svg)
-
-**VirtualService Role:**
+A subset-based alternative requires one Service selecting the application, both subsets, and Rollouts ownership of their revision labels:
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: test-subsets
+  namespace: rollouts-demo
+spec:
+  host: test
+  subsets:
+  - name: stable
+    labels:
+      app: test
+  - name: canary
+    labels:
+      app: test
+---
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: reviews
+  name: test-subsets
+  namespace: rollouts-demo
 spec:
   hosts:
-  - reviews
+  - test
+  - test.rollouts-demo.svc.cluster.local
   http:
-  - name: primary  # route name referenced by Argo Rollouts
+  - name: primary
     route:
     - destination:
-        host: reviews
+        host: test
+        port:
+          number: 8080
         subset: stable
-      weight: 100  # Automatically changed by Argo Rollouts
+      weight: 100
     - destination:
-        host: reviews
+        host: test
+        port:
+          number: 8080
         subset: canary
-      weight: 0    # Automatically changed by Argo Rollouts
+      weight: 0
+    retries:
+      attempts: 0
 ```
 
-**Argo Rollouts Configuration:**
+Merge this strategy fragment into the complete matching Rollout from the guide; do not apply it as an incomplete resource or combine it with a different host-level splitting strategy:
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: reviews
 spec:
   strategy:
     canary:
-      # Istio integration settings
       trafficRouting:
         istio:
           virtualService:
-            name: reviews        # VirtualService name
+            name: test-subsets
             routes:
-            - primary            # route name
+            - primary
           destinationRule:
-            name: reviews        # DestinationRule name
+            name: test-subsets
             canarySubsetName: canary
             stableSubsetName: stable
-
-      # Canary steps
       steps:
-      - setWeight: 10   # Change VirtualService weight to 10
-      - pause: {duration: 2m}
-      - setWeight: 25   # Change VirtualService weight to 25
-      - pause: {duration: 2m}
-      - setWeight: 50
-      - pause: {duration: 2m}
+      - setWeight: 10
+      - pause: {}
 ```
 
-**Deployment Process:**
+The named Service `test`, full Rollout selector/template, controller/RBAC and namespace `rollouts-demo` must exist. Rollouts updates the subset revision labels. `retries.attempts: 0` prevents mesh retries on this route; application retry behavior is separate.
 
-```
-1. Argo Rollouts creates new version (v2) Pods
-   |
-2. Argo Rollouts sets VirtualService canary weight to 10
-   |
-3. Istio Envoy routes actual 10% traffic to v2
-   |
-4. AnalysisTemplate checks metrics (error rate, latency)
-   |
-5. On success, Argo Rollouts increases weight to 25
-   |
-6. Repeat...
-   |
-7. Finally weight 100 (complete transition)
-```
+Traffic analysis happens only when configured. Automatic analysis failure can abort a rollout, but does not reverse application/database side effects. Use the guide's complete host-level or subset example, one strategy at a time.
 
-**Responsibility Division:**
+[Argo Rollouts guide](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
-| Component | Role |
-|---------|------|
-| **Argo Rollouts** | - Pod creation/deletion<br/>- VirtualService weight update<br/>- Deployment strategy execution<br/>- Automatic rollback |
-| **Istio VirtualService** | - Actual traffic splitting<br/>- Routing rule application<br/>- Envoy configuration generation |
-| **Envoy Proxy** | - Traffic routing execution<br/>- Metrics collection |
-| **Prometheus** | - Metrics storage<br/>- Provide data to AnalysisTemplate |
-
-**Actual Traffic Flow:**
-
-```bash
-# 100 user requests
-100 requests -> Istio Gateway
-              |
-         VirtualService
-         (weight: stable=90, canary=10)
-              |
-         +----+----+
-         |         |
-        90        10
-    Stable v1   Canary v2
-```
-
-**Option Analysis:**
-- A (X): Argo Rollouts only updates VirtualService (doesn't directly split traffic)
-- B (O): VirtualService performs actual traffic splitting
-- C (X): Kubernetes Service only handles load balancing (not traffic splitting)
-- D (X): Gateway is external traffic entry point (not traffic splitting)
-
-**Reference:**
-- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
----
+## Short Answer Questions (6–10)
 
-## Short Answer Questions (6-10)
+### Question 6: Ambient Resource and Cost Analysis
 
-### Question 6: Ambient Mode Cost Savings Analysis
-
-Calculate the **cost savings** when switching from Sidecar Mode to Ambient Mode in an AWS EKS cluster. (Assumptions: 500 Pods, 5 nodes, r5.xlarge instances, 730 hours/month operation)
+Using the original assumed inputs—500 Pods, five r5.xlarge nodes, 730 hours/month and $0.252/node-hour—calculate proxy resources and explain whether bill savings follow. Each sidecar uses 50 MB/0.1 vCPU; each ztunnel uses 50 MB/0.1 vCPU; the assumed waypoint uses 200 MB/0.5 vCPU.
 
 <details>
 <summary>Sample Answer</summary>
 
-**Answer:**
+The price and resource figures are **exercise inputs**, not current AWS quotes or measured Istio usage. MB/GB arithmetic below is decimal.
 
-**Cost Savings Analysis:**
+| Resource | Sidecars | Ambient on the assumed five nodes | Arithmetic reduction |
+|---|---|---|---|
+| Memory | 500 × 50 = 25,000 MB | 5 × 50 + 200 = 450 MB | 24,550 MB, 98.2% |
+| CPU | 500 × 0.1 = 50 vCPU | 5 × 0.1 + 0.5 = 1 vCPU | 49 vCPU, 98% |
 
----
+An r5.xlarge has four vCPUs and 32 GiB of memory. Five nodes provide only 20 vCPUs before system/application needs, so the assumed 50-vCPU sidecars already make this fixed five-node scenario infeasible. A proxy-only CPU lower bound is ceil(50/4) = 13 nodes; this excludes application CPU, system reservations, memory, IP limits, placement and resilience requirements.
 
-**1. Assumptions**
+Do not compare that 13-node lower bound with “one ambient node” while still charging ztunnel resources for five nodes. Recalculate ztunnel resource demand for the **actual retained node count**, and include waypoint HA/traffic capacity and all other workloads.
 
-```
-Cluster scale:
-- Pod count: 500
-- Node count: 5
-- Instance type: r5.xlarge (4 vCPU, 32GB RAM)
-- Instance cost: $0.252/hour
-- Operating hours: 730 hours/month
+At the assumed rate:
 
-Resource usage:
-- Sidecar memory: 50MB/Pod
-- Sidecar CPU: 0.1 vCPU/Pod
-- ztunnel memory: 50MB/Node
-- ztunnel CPU: 0.1 vCPU/Node
-- waypoint memory: 200MB
-- waypoint CPU: 0.5 vCPU
-```
+- One node-month costs `0.252 × 730 = $183.96`.
+- Five unchanged nodes cost `$919.80/month` in either mode: measured proxy headroom alone does not reduce this bill.
+- Thirteen node-months would cost `$2,391.48`, correcting the earlier arithmetic; this is not a proven required production fleet.
+- If validated fleets contain Nₛ and Nₐ nodes, the compute difference is `(Nₛ − Nₐ) × $183.96/month`, before other costs or commitments.
 
----
+Include EKS/control-plane charges, load balancers, cross-AZ/Region transfer, storage, telemetry and actual purchase commitments in a full comparison. Sidecars do use local communication; ambient does not automatically eliminate network charges or OOMs.
 
-**2. Sidecar Mode Resource Calculation**
+For the exercise's $6,000 migration effort, payback is `6000 / S` months only if measured net monthly savings S are positive. With unchanged billed capacity, S may be zero and that payback calculation has no finite result. Do not assert the former 92% bill saving or 2.7-month ROI from proxy arithmetic alone.
 
-```
-Memory usage:
-= 500 Pods × 50MB
-= 25,000MB
-= 25GB
+[Ambient guide](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 
-CPU usage:
-= 500 Pods × 0.1 vCPU
-= 50 vCPU
-```
-
-**Required instance count (r5.xlarge: 4 vCPU, 32GB RAM):**
-
-```
-CPU basis:
-= 50 vCPU ÷ 4 vCPU/instance
-= 12.5 instances
-≈ 13 instances needed
-
-Memory basis:
-= 25GB ÷ 32GB/instance
-= 0.78 instances
-≈ 1 instance needed
-
-Actual needed: max(13, 1) = 13 instances
-```
-
-**Sidecar Mode Monthly Cost:**
-
-```
-= 13 instances × $0.252/hour × 730 hours
-= $2,395.56/month
-```
-
----
-
-**3. Ambient Mode Resource Calculation**
-
-```
-Memory usage:
-= (5 nodes × 50MB) + 200MB
-= 250MB + 200MB
-= 450MB
-
-CPU usage:
-= (5 nodes × 0.1 vCPU) + 0.5 vCPU
-= 0.5 vCPU + 0.5 vCPU
-= 1.0 vCPU
-```
-
-**Required instance count:**
-
-```
-CPU basis:
-= 1.0 vCPU ÷ 4 vCPU/instance
-= 0.25 instances
-≈ 1 instance needed
-
-Memory basis:
-= 0.45GB ÷ 32GB/instance
-= 0.01 instances
-≈ 1 instance needed
-
-Actual needed: max(1, 1) = 1 instance
-```
-
-**Ambient Mode Monthly Cost:**
-
-```
-= 1 instance × $0.252/hour × 730 hours
-= $183.96/month
-```
-
----
-
-**4. Cost Savings**
-
-```
-Monthly savings:
-= $2,395.56 - $183.96
-= $2,211.60/month
-
-Savings rate:
-= ($2,211.60 ÷ $2,395.56) × 100
-= 92.3%
-
-Annual savings:
-= $2,211.60 × 12
-= $26,539.20/year
-```
-
----
-
-**5. Resource Savings Summary**
-
-| Item | Sidecar Mode | Ambient Mode | Savings |
-|------|-------------|-------------|------|
-| **Memory** | 25GB | 0.45GB | 24.55GB (98.2%) |
-| **CPU** | 50 vCPU | 1.0 vCPU | 49 vCPU (98.0%) |
-| **Instances** | 13 | 1 | 12 (92.3%) |
-| **Monthly Cost** | $2,395.56 | $183.96 | $2,211.60 (92.3%) |
-| **Annual Cost** | $28,746.72 | $2,207.52 | $26,539.20 (92.3%) |
-
----
-
-**6. Additional Cost Savings Factors**
-
-**Network costs:**
-- Sidecar Mode: No localhost communication (all traffic passes through network)
-- Ambient Mode: Improved efficiency with direct communication between ztunnels
-
-**Operational costs:**
-- No Pod restarts required (reduced deployment time)
-- No Sidecar injection errors
-- Reduced management complexity
-
-**Performance improvements:**
-- Improved Pod performance due to reduced memory pressure
-- Reduced OOMKilled frequency
-- Node resource headroom
-
----
-
-**7. ROI (Return on Investment)**
-
-```
-Ambient Mode transition cost (one-time):
-- Learning time: 40 hours × $100/hour = $4,000
-- Testing and validation: 20 hours × $100/hour = $2,000
-- Total transition cost: $6,000
-
-Payback period:
-= $6,000 ÷ $2,211.60/month
-= 2.7 months
-
-3-year total savings:
-= ($26,539.20 × 3) - $6,000
-= $73,617.60
-```
-
----
-
-**8. Practical Considerations**
-
-**Advantages:**
-- 92%+ cost savings
-- Simplified operations
-- Improved deployment speed
-- Maximized resource efficiency
-
-**Cautions:**
-- Istio 1.28+ beta feature
-- Additional waypoint deployment needed for L7 features
-- Some advanced features require Sidecar mode
-- Thorough testing required
-
-**Reference:**
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 </details>
 
----
 
-### Question 7: Multi-cluster Service Mesh Configuration
+### Question 7: Primary-Remote EKS Mesh
 
-Explain how to integrate 2 EKS clusters (us-east-1, us-west-2) into **a single Istio Mesh**. Use the **Primary-Remote model** and include examples of cross-cluster service calls.
+Describe the primary-remote design for two existing EKS clusters in us-east-1 and us-west-2, including discovery, trust, network prerequisites and a cross-cluster verification example.
 
 <details>
 <summary>Sample Answer</summary>
 
-**Answer:**
+This is a **sidecar** design. Ambient's current multicluster Beta supports multi-primary/multi-network, not this primary-remote model. The primary Istiod serves remote proxies; there is no full remote Istiod that must receive configuration from a superior primary.
 
-**Multi-cluster Istio Mesh Configuration:**
+Before installation, establish reviewed common trust, API access, DNS, security groups/firewalls and the required L4 control/data paths. Different network IDs identify separate networks; they do not create connectivity. For multiple networks, both sides need the appropriate east-west gateways for reachable remote endpoints. Cross-Region network cost and failure recovery remain separate responsibilities.
 
----
+The essential primary configuration is istioctl input:
 
-**1. Architecture Overview**
-
-![Diagram showing a primary Istiod in one region distributing configuration and service discovery to a remote cluster's Istiod, while workload pods in each cluster reach each other only through mutually authenticated east-west gateways.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-3.svg)
-
----
-
-**2. Prerequisites**
-
-```bash
-# Set up kubeconfig with access to both clusters
-export CTX_CLUSTER1=eks-us-east-1
-export CTX_CLUSTER2=eks-us-west-2
-
-# Verify contexts
-kubectl config get-contexts
-
-# Generate CA certificates (shared Root CA)
-mkdir -p certs
-cd certs
-
-# Generate Root CA
-make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk root-ca
-
-# Generate intermediate certificates for each cluster
-make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk cluster1-cacerts
-make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk cluster2-cacerts
-```
-
----
-
-**3. Cluster 1 (Primary) Setup**
-
-```bash
-# Create CA certificate Secret
-kubectl create namespace istio-system --context="${CTX_CLUSTER1}"
-kubectl create secret generic cacerts -n istio-system \
-  --from-file=cluster1/ca-cert.pem \
-  --from-file=cluster1/ca-key.pem \
-  --from-file=cluster1/root-cert.pem \
-  --from-file=cluster1/cert-chain.pem \
-  --context="${CTX_CLUSTER1}"
-
-# Install Primary Istio
-istioctl install --context="${CTX_CLUSTER1}" -f - <<EOF
+```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   values:
     global:
       meshID: mesh1
+      externalIstiod: true
       multiCluster:
         clusterName: cluster1
       network: network1
-
-  components:
-    ingressGateways:
-    - name: istio-eastwestgateway
-      label:
-        istio: eastwestgateway
-        app: istio-eastwestgateway
-        topology.istio.io/network: network1
-      enabled: true
-      k8s:
-        env:
-        - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-          value: network1
-        service:
-          type: LoadBalancer
-          ports:
-          - name: status-port
-            port: 15021
-            targetPort: 15021
-          - name: tls
-            port: 15443
-            targetPort: 15443
-          - name: tls-istiod
-            port: 15012
-            targetPort: 15012
-          - name: tls-webhook
-            port: 15017
-            targetPort: 15017
-EOF
-
-# Expose East-West Gateway
-kubectl apply --context="${CTX_CLUSTER1}" -n istio-system -f \
-  samples/multicluster/expose-services.yaml
 ```
 
----
+For the remote, **198.51.100.10 is a documentation placeholder**, not an EKS endpoint:
 
-**4. Cluster 2 (Remote) Setup**
-
-```bash
-# Create CA certificate Secret
-kubectl create namespace istio-system --context="${CTX_CLUSTER2}"
-kubectl create secret generic cacerts -n istio-system \
-  --from-file=cluster2/ca-cert.pem \
-  --from-file=cluster2/ca-key.pem \
-  --from-file=cluster2/root-cert.pem \
-  --from-file=cluster2/cert-chain.pem \
-  --context="${CTX_CLUSTER2}"
-
-# Create Remote Secret (access cluster2 from cluster1)
-istioctl create-remote-secret \
-  --context="${CTX_CLUSTER2}" \
-  --name=cluster2 | \
-  kubectl apply -f - --context="${CTX_CLUSTER1}"
-
-# Install Remote Istio
-istioctl install --context="${CTX_CLUSTER2}" -f - <<EOF
+```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
+  profile: remote
   values:
+    istiodRemote:
+      injectionPath: /inject/cluster/cluster2/net/network2
     global:
       meshID: mesh1
       multiCluster:
         clusterName: cluster2
       network: network2
-      remotePilotAddress: <CLUSTER1_EAST_WEST_GATEWAY_IP>
-
-  components:
-    ingressGateways:
-    - name: istio-eastwestgateway
-      label:
-        istio: eastwestgateway
-        app: istio-eastwestgateway
-        topology.istio.io/network: network2
-      enabled: true
-      k8s:
-        env:
-        - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-          value: network2
-        service:
-          type: LoadBalancer
-          ports:
-          - name: status-port
-            port: 15021
-          - name: tls
-            port: 15443
-          - name: tls-istiod
-            port: 15012
-          - name: tls-webhook
-            port: 15017
-EOF
+      remotePilotAddress: 198.51.100.10
 ```
 
----
+The remote namespace also identifies its managing primary:
 
-**5. Service Deployment and Verification**
+```bash
+kubectl --context="$CTX_CLUSTER2" annotate namespace istio-system   topology.istio.io/controlPlaneClusters=cluster1 --overwrite
+```
 
-**Deploy Service A to Cluster 1:**
+Follow the maintained guide to prepare trust, generate gateways from the same Istio release, expose primary discovery/injection and install the remote profile before creating the remote-access secret shown in Question 2. In this two-network example, the remote injection path ends in `net/network2`.
+
+An EKS NLB commonly supplies a DNS name. The release can represent DNS-valued remotePilotAddress, but a chart render alone does not prove discovery/injection connectivity or certificate names. Complete the official external-control-plane DNS/certificate/injection-URL design; do not replace a missing load-balancer IP with an arbitrary address.
+
+For verification, use the released `helloworld` and `curl` samples from the same Istio distribution. Create the same namespace/Service identity in both clusters, with versioned workloads as documented. A Service with no local endpoints can still supply local Kubernetes DNS while Istio discovers remote endpoints:
 
 ```yaml
-# cluster1: service-a.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-a
-  labels:
-    app: service-a
+  name: helloworld
+  namespace: sample
 spec:
+  selector:
+    app: helloworld
   ports:
-  - port: 8080
-    name: http
-  selector:
-    app: service-a
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-a
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: service-a
-  template:
-    metadata:
-      labels:
-        app: service-a
-    spec:
-      containers:
-      - name: service-a
-        image: nginx:latest
-        ports:
-        - containerPort: 8080
+  - name: http
+    port: 5000
+    targetPort: 5000
 ```
+
+This Service alone deploys no application. The sample's actual backend listens on port 5000; merely declaring containerPort 8080 does not make a stock nginx process listen there. After the complete sample deployment, select the known curl Pod/container and inspect both data-plane configuration and responses:
 
 ```bash
-kubectl apply --context="${CTX_CLUSTER1}" -f service-a.yaml
+kubectl --context="$CTX_CLUSTER1" get service,endpointslice -n sample
+kubectl --context="$CTX_CLUSTER2" get service,endpointslice -n sample
+istioctl --context="$CTX_CLUSTER1" proxy-status
+istioctl --context="$CTX_CLUSTER1" proxy-config endpoints "$CURL_POD" -n sample   --cluster 'outbound|5000||helloworld.sample.svc.cluster.local'
+kubectl --context="$CTX_CLUSTER1" exec -n sample "$CURL_POD" -c curl --   curl --fail --max-time 5 http://helloworld.sample.svc.cluster.local:5000/hello
 ```
 
-**Deploy Service B to Cluster 2:**
+For multiple networks, the client may see an east-west gateway endpoint rather than a directly reachable remote Pod IP. One response proves only that call; exercise both directions, endpoint versions, trust, policies and failure scenarios.
 
-```yaml
-# cluster2: service-b.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-b
-  labels:
-    app: service-b
-spec:
-  ports:
-  - port: 8080
-    name: http
-  selector:
-    app: service-b
+Two weighted destinations with the **same host/subset/port** do not mean local 80%/remote 20%. Use a deliberate supported locality or explicit destination model with eligible endpoints. Choose one telemetry reporter and real source_cluster/destination_cluster labels when observing cross-cluster traffic.
 
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-b
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: service-b
-  template:
-    metadata:
-      labels:
-        app: service-b
-    spec:
-      containers:
-      - name: service-b
-        image: nginx:latest
-        ports:
-        - containerPort: 8080
-```
+[Multicluster guide](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 
-```bash
-kubectl apply --context="${CTX_CLUSTER2}" -f service-b.yaml
-```
-
----
-
-**6. Cross-cluster Service Call Test**
-
-```bash
-# Call cluster 2 service from cluster 1
-kubectl exec --context="${CTX_CLUSTER1}" -it \
-  $(kubectl get pod --context="${CTX_CLUSTER1}" -l app=service-a -o jsonpath='{.items[0].metadata.name}') \
-  -- curl http://service-b.default.svc.cluster.local:8080
-
-# Call cluster 1 service from cluster 2
-kubectl exec --context="${CTX_CLUSTER2}" -it \
-  $(kubectl get pod --context="${CTX_CLUSTER2}" -l app=service-b -o jsonpath='{.items[0].metadata.name}') \
-  -- curl http://service-a.default.svc.cluster.local:8080
-```
-
----
-
-**7. Verify Service Discovery**
-
-```bash
-# Check Envoy configuration from cluster 1
-istioctl --context="${CTX_CLUSTER1}" proxy-config endpoints \
-  $(kubectl get pod --context="${CTX_CLUSTER1}" -l app=service-a -o jsonpath='{.items[0].metadata.name}') | \
-  grep service-b
-
-# Example output:
-# service-b.default.svc.cluster.local:8080  HEALTHY  <cluster2-pod-ip>:8080
-```
-
----
-
-**8. Apply Traffic Policies**
-
-```yaml
-# Cross-cluster traffic routing
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: service-b
-spec:
-  hosts:
-  - service-b.default.svc.cluster.local
-  http:
-  - match:
-    - sourceLabels:
-        app: service-a
-    route:
-    - destination:
-        host: service-b.default.svc.cluster.local
-        port:
-          number: 8080
-      weight: 80  # 80% to local cluster
-    - destination:
-        host: service-b.default.svc.cluster.local
-        port:
-          number: 8080
-      weight: 20  # 20% to remote cluster
-
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: service-b
-spec:
-  host: service-b.default.svc.cluster.local
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true  # Locality-aware routing
-```
-
----
-
-**9. Monitoring and Verification**
-
-```bash
-# Check cross-cluster traffic in Prometheus
-kubectl port-forward --context="${CTX_CLUSTER1}" -n istio-system \
-  svc/prometheus 9090:9090
-
-# Prometheus query:
-# sum(rate(istio_requests_total{source_cluster="cluster1", destination_cluster="cluster2"}[5m]))
-
-# Visualize with Kiali
-istioctl dashboard kiali --context="${CTX_CLUSTER1}"
-```
-
----
-
-**10. Cautions and Best Practices**
-
-**Cautions:**
-- Shared Root CA is required
-- Consider network latency
-- Strengthen East-West Gateway security
-- Properly configure DNS resolution
-
-**Best Practices:**
-- Enable locality-aware routing
-- Configure Circuit Breaker
-- Maintain replicas per cluster
-- Monitor cross-cluster traffic
-
-**Reference:**
-- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 </details>
 
----
+### Question 8: Shared Per-user Rate Limiting
 
-### Question 8: Custom Rate Limiting with EnvoyFilter
-
-Implement **per-user Rate Limiting** (100 requests per minute) using EnvoyFilter for a specific path (`/api/premium/*`) only.
+Implement a shared 100-request/minute user quota for `/api/premium/*`. Explain the identity, descriptor and failure contracts.
 
 <details>
 <summary>Sample Answer</summary>
 
-**Answer:**
+The request path is: **authenticated entry → dedicated Envoy gateway → shared rate-limit service/Redis decision → backend or rejection**. A local proxy bucket is not a quota shared across gateway replicas.
 
-**EnvoyFilter-based Rate Limiting Implementation:**
+This conditional example assumes:
 
----
+- A dedicated gateway in `istio-system` with actual label `app: premium-gateway`, matching TLS/route configuration and existing backend Services.
+- A trusted authentication layer strips caller-supplied x-user-id and supplies one nonempty canonical user identity. Only that authenticated path may reach the gateway/backend. A raw caller-controlled header is not user identity.
+- The existing isolated-lab Redis endpoint shown below is reachable. Production Redis authentication/TLS, persistence, HA, failover and suitable connection settings must be designed separately; a replica count alone does not supply them.
 
-**1. Architecture Overview**
-
-![Diagram showing a client request passing through the Envoy proxy, which checks a Redis-backed rate-limit store before forwarding an allowed request to the backend service or rejecting it with a 429 response.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-4.svg)
-
----
-
-**2. Deploy Redis Rate Limit Server**
+The matching descriptor is a **two-entry sequence**: `(header_match=premium, user_id=<trusted user>)`. The server config must nest the dynamic user entry under the premium entry. A top-level user_id-only descriptor would not match it.
 
 ```yaml
-# redis-ratelimit.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-ratelimit
-  namespace: istio-system
-spec:
-  ports:
-  - port: 6379
-    name: redis
-  selector:
-    app: redis-ratelimit
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-ratelimit
-  namespace: istio-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: redis-ratelimit
-  template:
-    metadata:
-      labels:
-        app: redis-ratelimit
-    spec:
-      containers:
-      - name: redis
-        image: redis:7-alpine
-        ports:
-        - containerPort: 6379
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-
----
-# Envoy Rate Limit Service
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -1208,12 +426,88 @@ data:
   config.yaml: |
     domain: premium-ratelimit
     descriptors:
-      # Per-user Rate Limit: 100 requests per minute
+    - key: header_match
+      value: premium
+      descriptors:
       - key: user_id
         rate_limit:
           unit: minute
           requests_per_unit: 100
-
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratelimit
+  namespace: istio-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratelimit
+  template:
+    metadata:
+      labels:
+        app: ratelimit
+        sidecar.istio.io/inject: 'true'
+    spec:
+      containers:
+      - name: ratelimit
+        image: docker.io/envoyproxy/ratelimit:8fe6ea42@sha256:a61547259607d40aff153050c2a87873ca1676d1d9f5f06937d412000dcc2df1
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 8081
+          name: grpc
+        env:
+        - name: LOG_LEVEL
+          value: info
+        - name: CONFIG_TYPE
+          value: FILE
+        - name: RUNTIME_ROOT
+          value: /data
+        - name: RUNTIME_SUBDIRECTORY
+          value: ratelimit
+        - name: RUNTIME_APPDIRECTORY
+          value: config
+        - name: RUNTIME_WATCH_ROOT
+          value: 'false'
+        - name: RUNTIME_IGNOREDOTFILES
+          value: 'true'
+        - name: USE_STATSD
+          value: 'false'
+        - name: REDIS_SOCKET_TYPE
+          value: tcp
+        - name: REDIS_URL
+          value: redis-ratelimit.istio-system.svc.cluster.local:6379
+        - name: HOST
+          value: '::'
+        - name: GRPC_HOST
+          value: '::'
+        - name: HEALTHY_WITH_AT_LEAST_ONE_CONFIG_LOADED
+          value: 'true'
+        volumeMounts:
+        - name: config-volume
+          mountPath: /data/ratelimit/config
+          readOnly: true
+        command:
+        - /bin/ratelimit
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config-volume
+        configMap:
+          name: ratelimit-config
 ---
 apiVersion: v1
 kind: Service
@@ -1222,72 +516,21 @@ metadata:
   namespace: istio-system
 spec:
   ports:
-  - port: 8081
+  - port: 8080
     name: http
-  - port: 9091
+    targetPort: 8080
+  - port: 8081
     name: grpc
+    targetPort: 8081
   selector:
     app: ratelimit
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ratelimit
-  namespace: istio-system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: ratelimit
-  template:
-    metadata:
-      labels:
-        app: ratelimit
-    spec:
-      containers:
-      - name: ratelimit
-        image: envoyproxy/ratelimit:master
-        ports:
-        - containerPort: 8081
-        - containerPort: 9091
-        env:
-        - name: REDIS_URL
-          value: redis-ratelimit.istio-system.svc.cluster.local:6379
-        - name: USE_STATSD
-          value: "false"
-        - name: LOG_LEVEL
-          value: debug
-        - name: RUNTIME_ROOT
-          value: /data
-        - name: RUNTIME_SUBDIRECTORY
-          value: ratelimit
-        volumeMounts:
-        - name: config-volume
-          mountPath: /data/ratelimit/config
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-      volumes:
-      - name: config-volume
-        configMap:
-          name: ratelimit-config
 ```
 
-```bash
-kubectl apply -f redis-ratelimit.yaml
-```
+The image is the verified upstream commit 8fe6ea42 with a digest, not a moving master tag. The gRPC port is **8081**, HTTP health is **8080**. This workload needs a matching injector and actual mesh/network access. Configure protected Redis credentials via appropriate Secret/mount mechanisms. Ensure the new configuration is loaded; the shown file-mode setup is not proof of hot reload.
 
----
-
-**3. EnvoyFilter Configuration**
+Use the generated Istio gRPC cluster so the established service discovery/TLS policy applies:
 
 ```yaml
-# envoyfilter-ratelimit.yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
@@ -1296,592 +539,424 @@ metadata:
 spec:
   workloadSelector:
     labels:
-      app: api-gateway
-
+      app: premium-gateway
   configPatches:
-  # Add Rate Limit filter to HTTP filter chain
   - applyTo: HTTP_FILTER
     match:
-      context: SIDECAR_INBOUND
+      context: GATEWAY
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
           domain: premium-ratelimit
-          failure_mode_deny: true  # Deny on Rate Limit server failure
-          enable_x_ratelimit_headers: DRAFT_VERSION_03
+          failure_mode_deny: true
+          timeout: 0.1s
           rate_limit_service:
             grpc_service:
               envoy_grpc:
-                cluster_name: rate_limit_cluster
+                cluster_name: outbound|8081||ratelimit.istio-system.svc.cluster.local
+                authority: ratelimit.istio-system.svc.cluster.local
             transport_api_version: V3
-
-  # Define Rate Limit cluster
-  - applyTo: CLUSTER
-    patch:
-      operation: ADD
-      value:
-        name: rate_limit_cluster
-        type: STRICT_DNS
-        connect_timeout: 1s
-        lb_policy: ROUND_ROBIN
-        http2_protocol_options: {}
-        load_assignment:
-          cluster_name: rate_limit_cluster
-          endpoints:
-          - lb_endpoints:
-            - endpoint:
-                address:
-                  socket_address:
-                    address: ratelimit.istio-system.svc.cluster.local
-                    port_value: 9091
-
-  # Add Rate Limit action to HTTP route
-  - applyTo: HTTP_ROUTE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: premium-ratelimit-actions
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      app: premium-gateway
+  configPatches:
+  - applyTo: VIRTUAL_HOST
     match:
-      context: SIDECAR_INBOUND
-      routeConfiguration:
-        vhost:
-          route:
-            action: ANY
+      context: GATEWAY
     patch:
       operation: MERGE
       value:
-        route:
-          rate_limits:
-          # Apply Rate Limit only to /api/premium/* path
-          - actions:
-            - header_value_match:
-                descriptor_value: "premium"
-                headers:
-                - name: ":path"
-                  prefix_match: "/api/premium/"
-            - request_headers:
-                header_name: "x-user-id"
-                descriptor_key: "user_id"
+        rate_limits:
+        - actions:
+          - header_value_match:
+              descriptor_value: premium
+              headers:
+              - name: :path
+                string_match:
+                  prefix: /api/premium/
+          - request_headers:
+              header_name: x-user-id
+              descriptor_key: user_id
+              skip_if_absent: false
 ```
 
-```bash
-kubectl apply -f envoyfilter-ratelimit.yaml
+The action set is deliberately scoped to the dedicated gateway; narrow actual generated vhosts for a shared gateway. Requests outside the prefix generate no premium descriptor. Keep route/path normalization and authentication policy consistent, including encoded paths and alternate backend access.
+
+Reject missing/empty identity on the premium path before it can bypass descriptor generation:
+
+```yaml
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: premium-requires-identity
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: premium-gateway
+  action: DENY
+  rules:
+  - to:
+    - operation:
+        paths:
+        - /api/premium/*
+    when:
+    - key: request.headers[x-user-id]
+      notValues:
+      - '*'
 ```
 
----
+This DENY policy is only a missing-header guard. It does not authenticate a supplied value or replace the mandatory trusted-entry/bypass controls, existing ALLOW policies, TLS or application authorization.
 
-**4. Testing**
+With `failure_mode_deny: true`, a rate-limit service error normally causes HTTP 500, while an over-limit decision causes 429. The 100 ms RPC budget is an example to test against Redis and network latency. No header/stat counter alone proves the quota is enforced.
 
-```bash
-# Normal requests (under 100 requests/minute per user)
-for i in {1..50}; do
-  curl -H "x-user-id: user123" \
-       -H "Host: api.example.com" \
-       http://<INGRESS_GATEWAY>/api/premium/data
-  sleep 0.1
-done
+| Verification case | Expected contract to test |
+|---|---|
+| One authenticated identity across two gateway replicas | One shared descriptor/window budget |
+| A second identity | A separate user descriptor |
+| Missing or forged identity | Rejected by the guard/authentication boundary; not a free quota bypass |
+| A path outside the premium prefix | No premium descriptor; other security/rate policies still apply |
+| Redis/RLS unavailable | Deliberate fail-closed behavior and observed status/latency |
+| Window boundary or Redis restart | Measure counter/window behavior; do not promise exactly request 101 is denied across separate test runs |
 
-# Output: 200 OK (all successful)
+Use bounded requests against an authorized read-only endpoint and fresh test identities/windows. Fifty requests followed by another 150 do not start two independent clean budgets. Response rate-limit headers require supported service responses and filter configuration; do not fabricate remaining/reset values.
 
-# Rate Limit exceeded (over 100 requests/minute)
-for i in {1..150}; do
-  curl -H "x-user-id: user123" \
-       -H "Host: api.example.com" \
-       http://<INGRESS_GATEWAY>/api/premium/data
-done
+Inspect RLS health, loaded config and actual Envoy stats (`ratelimit.ok`, `ratelimit.over_limit`, `ratelimit.error` under the HTTP stat prefix). Verify emitted Prometheus names/labels rather than inventing `rejected_total`. Do not run Redis `KEYS *` in a large production keyspace or interpret implementation-specific counters as remaining quota. The pinned distroless RLS image is not a redis-cli shell.
 
-# Output:
-# 1-100: 200 OK
-# 101-150: 429 Too Many Requests
+[Rate-limiting guide](../../../service-mesh/istio/resilience/02-rate-limiting.md) · [EnvoyFilter guide](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 
-# Other users unaffected
-curl -H "x-user-id: user456" \
-     -H "Host: api.example.com" \
-     http://<INGRESS_GATEWAY>/api/premium/data
-
-# Output: 200 OK
-```
-
----
-
-**5. Check Rate Limit Headers**
-
-```bash
-curl -I -H "x-user-id: user123" \
-     -H "Host: api.example.com" \
-     http://<INGRESS_GATEWAY>/api/premium/data
-
-# Output:
-# X-RateLimit-Limit: 100
-# X-RateLimit-Remaining: 73
-# X-RateLimit-Reset: 1735689600
-```
-
----
-
-**6. Cautions and Best Practices**
-
-**Cautions:**
-- Redis high availability configuration needed (production)
-- Define behavior on Rate Limit server failure (`failure_mode_deny`)
-- Ensure reliability of user identification header (`x-user-id`)
-- EnvoyFilter requires compatibility check during Istio version upgrades
-
-**Best Practices:**
-- Use Redis Sentinel or Cluster
-- Rate Limit server replicas >= 2
-- Proper monitoring and alerting
-- Per-user exception handling (VIP users, etc.)
-
-**Reference:**
-- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
 </details>
 
----
 
-### Question 9: Argo Rollouts Blue/Green Deployment
+### Question 9: Blue/Green with Analysis
 
-Implement **Blue/Green deployment** using Argo Rollouts and Istio. Include **automated analysis** (AnalysisTemplate) and configure automatic rollback on failure.
+Configure a Blue/Green Rollout with preview and post-promotion analysis. Explain the traffic switch and failure behavior without treating missing metrics as success.
 
 <details>
 <summary>Sample Answer</summary>
 
-**Answer:**
+This is an **alternative** to Question 5's canary strategy. It assumes the Argo Rollouts 1.10 controller/CRDs, Istio-injected demo workloads and callers, Prometheus collecting the matching source-reporter metrics, and Linux amd64 capacity for the verified demo image. It is a lab example, not a tested production deployment.
 
-**Argo Rollouts Blue/Green Deployment Implementation:**
-
----
-
-**1. Blue/Green Deployment Concept**
-
-![Diagram showing an Istio Gateway sending production traffic to an active service backed by the current blue version, and preview traffic to a preview service backed by the new green version, while an AnalysisTemplate gates whether the rollout promotes to a traffic switch that swaps active and preview, or rolls back.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-5.svg)
-
----
-
-**2. Create Kubernetes Services**
+Create the Services and complete Rollout in the existing `rollouts-demo` namespace. Rollouts owns the Service revision-hash selectors; GitOps must not overwrite those dynamic fields.
 
 ```yaml
-# services.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp-active
+  name: test-active
+  namespace: rollouts-demo
 spec:
-  ports:
-  - port: 8080
-    name: http
   selector:
-    app: myapp
-    # Argo Rollouts automatically manages selector
-
+    app: test
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp-preview
+  name: test-preview
+  namespace: rollouts-demo
 spec:
+  selector:
+    app: test
   ports:
-  - port: 8080
-    name: http
-  selector:
-    app: myapp
-    # Argo Rollouts automatically manages selector
-```
-
-```bash
-kubectl apply -f services.yaml
-```
-
+  - name: http
+    port: 8080
+    targetPort: http
 ---
-
-**3. Istio Gateway and VirtualService**
-
-```yaml
-# gateway.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: myapp-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - myapp.example.com
-
----
-# virtualservice.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: myapp
-spec:
-  hosts:
-  - myapp.example.com
-  gateways:
-  - myapp-gateway
-  http:
-  # Production traffic (Active)
-  - match:
-    - uri:
-        prefix: /
-    route:
-    - destination:
-        host: myapp-active
-        port:
-          number: 8080
-
----
-# preview-virtualservice.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: myapp-preview
-spec:
-  hosts:
-  - myapp-preview.example.com
-  gateways:
-  - myapp-gateway
-  http:
-  # Preview traffic (Preview)
-  - match:
-    - uri:
-        prefix: /
-    route:
-    - destination:
-        host: myapp-preview
-        port:
-          number: 8080
-```
-
-```bash
-kubectl apply -f gateway.yaml
-```
-
----
-
-**4. AnalysisTemplate Definition**
-
-```yaml
-# analysis-template.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: success-rate
-spec:
-  args:
-  - name: service-name
-
-  metrics:
-  # Metric 1: Success rate (95% or higher)
-  - name: success-rate
-    interval: 30s
-    count: 5
-    successCondition: result >= 0.95
-    failureLimit: 2
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              response_code!~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}"
-            }[2m]
-          ))
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: latency
-spec:
-  args:
-  - name: service-name
-
-  metrics:
-  # Metric 2: P95 latency (500ms or less)
-  - name: latency-p95
-    interval: 30s
-    count: 5
-    successCondition: result <= 500
-    failureLimit: 2
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          histogram_quantile(0.95,
-            sum(rate(
-              istio_request_duration_milliseconds_bucket{
-                destination_service_name="{{args.service-name}}"
-              }[2m]
-            )) by (le)
-          )
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: error-rate
-spec:
-  args:
-  - name: service-name
-
-  metrics:
-  # Metric 3: Error rate (1% or less)
-  - name: error-rate
-    interval: 30s
-    count: 5
-    successCondition: result <= 0.01
-    failureLimit: 2
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              response_code=~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}"
-            }[2m]
-          ))
-```
-
-```bash
-kubectl apply -f analysis-template.yaml
-```
-
----
-
-**5. Rollout Resource Definition**
-
-```yaml
-# rollout.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: myapp
+  name: test
+  namespace: rollouts-demo
 spec:
-  replicas: 5
+  replicas: 3
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: myapp
-
+      app: test
   template:
     metadata:
       labels:
-        app: myapp
+        app: test
     spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
       containers:
-      - name: myapp
-        image: myapp:v1
+      - name: app
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
         resources:
           requests:
             cpu: 100m
             memory: 128Mi
           limits:
-            cpu: 500m
-            memory: 512Mi
-
-  # Blue/Green deployment strategy
+            cpu: 200m
+            memory: 256Mi
   strategy:
     blueGreen:
-      # Active Service (production)
-      activeService: myapp-active
-
-      # Preview Service (test)
-      previewService: myapp-preview
-
-      # Disable auto promotion (manual promotion or Analysis-based)
-      autoPromotionEnabled: false
-
-      # Wait time after Green deployment
-      scaleDownDelaySeconds: 30
-
-      # Pre-promotion analysis (Green environment verification)
+      activeService: test-active
+      previewService: test-preview
+      autoPromotionEnabled: true
       prePromotionAnalysis:
         templates:
-        - templateName: success-rate
-        - templateName: latency
-        - templateName: error-rate
+        - templateName: preview-analysis
         args:
         - name: service-name
-          value: myapp-preview
-
-      # Post-promotion analysis (verification after Active switch)
+          value: test-preview
+        - name: namespace
+          value: rollouts-demo
       postPromotionAnalysis:
         templates:
-        - templateName: success-rate
-        - templateName: latency
-        - templateName: error-rate
+        - templateName: active-analysis
         args:
         - name: service-name
-          value: myapp-active
+          value: test-active
+        - name: namespace
+          value: rollouts-demo
+      scaleDownDelaySeconds: 600
 ```
 
-```bash
-kubectl apply -f rollout.yaml
-```
+The initial image is the verified blue demo digest; the guide supplies the corresponding green digest for an update. On a new revision, preview points at the candidate. After successful pre-analysis, `autoPromotionEnabled: true` permits automatic promotion. Set it false when deliberate manual promotion is required; that is a separate policy choice.
 
+Here traffic comes from meshed clients to internal Services. Production edge exposure requires a real Gateway, TLS, matching host bindings and authorization. Merely creating a second VirtualService hostname does not add it to a Gateway or protect preview access.
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: test-bluegreen
+  namespace: rollouts-demo
+spec:
+  hosts:
+  - test-active
+  - test-active.rollouts-demo.svc.cluster.local
+  http:
+  - name: active
+    route:
+    - destination:
+        host: test-active
+        port:
+          number: 8080
+      weight: 100
+    retries:
+      attempts: 0
 ---
-
-**6. Deploy New Version**
-
-```bash
-# Update to new version image
-kubectl argo rollouts set image myapp \
-  myapp=myapp:v2
-
-# Monitor deployment status
-kubectl argo rollouts get rollout myapp --watch
-
-# Output:
-# Name:            myapp
-# Namespace:       default
-# Status:          Paused
-# Strategy:        BlueGreen
-# Images:          myapp:v1 (stable, active)
-#                  myapp:v2 (preview)
-# Replicas:
-#   Desired:       5
-#   Current:       10
-#   Updated:       5
-#   Ready:         5
-#   Available:     5
-# Analysis:        Running
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: test-preview-route
+  namespace: rollouts-demo
+spec:
+  hosts:
+  - test-preview
+  - test-preview.rollouts-demo.svc.cluster.local
+  http:
+  - name: preview
+    route:
+    - destination:
+        host: test-preview
+        port:
+          number: 8080
+      weight: 100
+    retries:
+      attempts: 0
 ```
 
+Both routes explicitly disable mesh retries. The preview Service does not automatically swap to the old stable version at promotion. The active Service selector changes to the new revision; old ReplicaSets are eventually **scaled down**, not necessarily deleted. Existing connections and application/database side effects are not reversed by a selector change.
+
+Before/during preview analysis, generate representative, authorized traffic through the preview Service. Prometheus queries do not generate traffic. This example requires an estimated 20 requests per two-minute window, finite 2xx success ≥95%, p95 ≤0.5 seconds and 5xx/zero-status errors ≤1%:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: preview-analysis
+  namespace: rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: http-2xx-success
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: latency-p95
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.5
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          histogram_quantile(0.95,
+            sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+          ) / 1000
+    count: 5
+    initialDelay: 5m
+  - name: http-error-rate
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.01
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
 ---
-
-**7. Automatic Rollback Scenarios**
-
-**Scenario 1: prePromotionAnalysis Failure**
-
-```bash
-# Error rate exceeds 1% in Green environment
-# Analysis log:
-# error-rate: FAILED (0.03 > 0.01)
-# failureLimit: 2/2
-
-# Automatic rollback executed
-# Green Pods deleted
-# Blue continues as Active
-
-kubectl argo rollouts get rollout myapp
-# Status: Degraded
-# Message: PrePromotionAnalysis Failed
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: active-analysis
+  namespace: rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: http-2xx-success
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: latency-p95
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.5
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          histogram_quantile(0.95,
+            sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+          ) / 1000
+    count: 5
+    initialDelay: 5m
+  - name: http-error-rate
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.01
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
 ```
 
-**Scenario 2: postPromotionAnalysis Failure**
+The two templates intentionally use the same gate definitions with different Service arguments. `initialDelay: 5m` gives the two-minute window time to move beyond the transition, but source freshness and actual traffic still need verification. Avoid reading old active-version samples as candidate evidence.
+
+Prometheus returns a vector, so conditions inspect `result[0]` only after length and finite-value checks. The numerator's `or vector(0)` handles no-2xx/all-5xx and no-5xx/healthy cases; the denominator and volume check prevent absent or idle telemetry from passing. The success metric counts only 2xx; 4xx lowers success even though it is not in the 5xx/zero-status error numerator.
+
+`failureLimit: 0` aborts on the first failed measurement. If set to 2, the third failure exceeds the limit; five samples with tolerated failures do not require five successes. Five samples at a 30-second interval are not an exact guaranteed 2.5-minute wall-clock phase, especially with initial delays and provider errors.
+
+Failure before promotion leaves the old active target in place. Post-promotion failure aborts and restores the prior active selection while the old ReplicaSet is available under the controller's rules. This is not an instantaneous universal rollback guarantee. Keep adequate old-version capacity and verify propagation, sessions, drains and database compatibility.
 
 ```bash
-# Success rate below 95% after Active switch
-# Analysis log:
-# success-rate: FAILED (0.92 < 0.95)
-# failureLimit: 2/2
-
-# Automatic rollback executed
-# Immediately restore Active Service to Blue
-# Green moves to Preview
-
-kubectl argo rollouts get rollout myapp
-# Status: Degraded
-# Message: PostPromotionAnalysis Failed
+kubectl argo rollouts get rollout test -n rollouts-demo --watch
+kubectl get analysisrun -n rollouts-demo
+kubectl get service test-active test-preview -n rollouts-demo -o yaml
 ```
 
----
+Inspect the actual AnalysisRun conditions and revision tree rather than copied status output or nonexistent metric names. Rollout scale-down, endpoint propagation and application recovery must be tested in the intended environment.
 
-**8. Best Practices**
+[Argo Rollouts guide](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
-**Advantages:**
-- Immediate rollback possible (switch transition)
-- Minimal production impact
-- Sufficient testing time secured
-- Automated analysis and rollback
-
-**Cautions:**
-- 2x resources required (Blue + Green)
-- Verify database schema compatibility
-- Session management (if Sticky Session needed)
-
-**Reference:**
-- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
----
+### Question 10: DNS Behavior and Measurement
 
-### Question 10: DNS Caching Performance Optimization
-
-Explain how to enable **DNS Caching** in Istio to improve external service call performance. Include **benchmark results**.
+Explain Istio DNS capture versus Envoy upstream DNS resolution, show valid configuration, and design a reproducible performance comparison. Assess the original unverified benchmark figures without presenting them as new measurements.
 
 <details>
 <summary>Sample Answer</summary>
 
-**Answer:**
+Application DNS, Istio DNS capture, CoreDNS/cache behavior and Envoy upstream resolution are distinct. A new HTTP request does not necessarily perform a fresh DNS query or connection. DNS capture is not a universal cache for arbitrary upstream responses.
 
-**Istio DNS Caching Implementation and Performance Measurement:**
+In sidecar mode, istio-agent handles captured DNS requests; ambient uses its own documented DNS path and enables capture by default from Istio 1.25. Known mesh names can be answered from the name table; unknown names are forwarded. Envoy independently resolves DNS-backed upstream endpoints.
 
----
-
-**1. Need for DNS Caching**
-
-**Problem: DNS Lookup Overhead**
-
-```
-DNS lookup occurs for each external API call:
-1. Application -> Envoy: HTTP request
-2. Envoy -> CoreDNS: DNS lookup (50-100ms)
-3. CoreDNS -> Response: IP address
-4. Envoy -> External API: HTTP request (100-200ms)
-
-Total latency: 150-300ms
-```
-
-**Solution: Enable DNS Caching**
-
-```
-After DNS Caching:
-1. Application -> Envoy: HTTP request
-2. Envoy: Use cached IP (0ms)
-3. Envoy -> External API: HTTP request (100-200ms)
-
-Total latency: 100-200ms (33-50% improvement)
-```
-
----
-
-**2. Register External Service with ServiceEntry**
+Register an application-originated HTTPS external service with a valid ServiceEntry:
 
 ```yaml
-# external-api-serviceentry.yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api
+  namespace: default
 spec:
   hosts:
   - api.github.com
@@ -1890,161 +965,75 @@ spec:
     name: https
     protocol: HTTPS
   location: MESH_EXTERNAL
-  resolution: DNS  # Use DNS resolution
+  resolution: DNS
 ```
 
-```bash
-kubectl apply -f external-api-serviceentry.yaml
-```
+This does not originate a second TLS layer, create an egress firewall, or make encrypted HTTP request paths visible to the sidecar. Appropriate network policy and application TLS validation remain necessary.
 
----
-
-**3. Enable DNS Caching with DestinationRule**
+For sidecar capture, merge this istioctl input into the existing installation values and roll affected workloads using the normal change process:
 
 ```yaml
-# destinationrule-dns-cache.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: external-api
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 spec:
-  host: api.github.com
-  trafficPolicy:
-    # DNS refresh interval: 5 minutes
-    # (DNS re-lookup every 5 minutes even if TTL is 0)
-    dnsRefreshRate: 5m
-
-    # Connection Pool settings
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
-        http2MaxRequests: 100
-        maxRequestsPerConnection: 10
-
-    # Outlier Detection
-    outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
-      baseEjectionTime: 30s
+  meshConfig:
+    defaultConfig:
+      proxyMetadata:
+        ISTIO_META_DNS_CAPTURE: 'true'
 ```
+
+There is **no** DestinationRule `trafficPolicy.dnsRefreshRate`, and `consecutiveErrors` is not the current outlier field. Istio 1.31's generated DNS clusters respect DNS TTL; mesh `dnsRefreshRate` defaults to 60 seconds for the relevant fallback behavior. A five-minute setting is not a universal fixed refresh interval overriding positive TTLs.
+
+Do not insert the invented `envoy.filters.network.dns_cache` filter/type. Dynamic forward proxy and the current DYNAMIC_DNS ServiceEntry mode are separate supported designs with their own requirements, not a generic cache toggle. Use the DNS guide for an explicitly scoped, version-validated cluster customization if required.
+
+For a bounded test, use a caller container known to contain curl and an **owned/authorized** HTTPS test endpoint with controllable DNS/TTL. Set BENCH_URL explicitly. This samples process-level timings, not Envoy-only DNS latency:
 
 ```bash
-kubectl apply -f destinationrule-dns-cache.yaml
+: "${BENCH_URL:?Set an authorized HTTPS benchmark endpoint}"
+for i in $(seq 1 20); do
+  curl --silent --show-error --fail --max-time 5 --output /dev/null     --write-out '%{http_code},%{time_namelookup},%{time_connect},%{time_appconnect},%{time_starttransfer},%{time_total}
+'     "$BENCH_URL" || break
+  sleep 0.2
+done
 ```
 
----
+Record the client/image, Istio/Kubernetes versions, proxy mode, TTL/answer changes, DNS path, connection reuse, concurrency, payload, TLS and warm/cold procedure. Each new curl process resets its process-local state; control connection reuse separately. Do not load-test a public GitHub API or assume a curl image also contains ApacheBench. Failed samples need explicit handling before statistics are calculated.
 
-**4. Performance Benchmark**
+The original Korean text claimed EKS 1.34, Istio 1.28.0, r5.xlarge/us-east-1 and api.github.com, but supplied no raw samples or reproducible benchmark artifact. Preserve that **historical context**, not a relabeled Istio 1.31 result:
 
-**DNS Caching Disabled (Before):**
+| Original unverified figure | Before | After | Arithmetic only |
+|---|---:|---:|---:|
+| Mean response time |287 ms|152 ms|47.04% lower|
+| p95 |350 ms|180 ms|48.57% lower|
+| p99 |420 ms|210 ms|50% lower|
+| Throughput |12.34 RPS|23.15 RPS|87.60% higher|
+| Claimed cache hit rate |0%|99%|No valid hit/miss evidence supplied|
+| Claimed connection reuse |0%|95%|No valid reuse measurement supplied|
 
-```bash
-# 100 consecutive call test
-kubectl exec -it test-app -- sh -c '
-for i in $(seq 1 100); do
-  time curl -s -o /dev/null -w "%{time_total}\n" https://api.github.com/users/octocat
-done' | awk '{sum+=$1; count++} END {print "Average response time:", sum/count, "seconds"}'
+The difference in total response time cannot be attributed entirely to DNS. For concurrency 10, ApacheBench's mean time per request is approximately `1000 × 10 / RPS` ms, while its “across all concurrent requests” figure is `1000 / RPS` ms; the original labels were reversed. These corrections do not authenticate the benchmark.
 
-# Output:
-# Average response time: 0.287 seconds
-```
+Useful capture metrics include `istio_agent_dns_requests_total`, `istio_agent_dns_upstream_requests_total`, `istio_agent_dns_upstream_failures_total` and the upstream-duration histogram when actually exported. Upstream success/(success+failure) is query success, not cache hit rate. `envoy_cluster_upstream_cx_active` is a gauge; applying rate() to it does not measure connection reuse.
 
-**DNS Caching Enabled (After):**
+Inspect generated cluster DNS configuration, verified exported counters and actual resolver/connection traces. Test DNS changes and failure recovery as well as mean latency; do not recommend 5–15 minute refreshes or a fixed performance improvement without workload evidence.
 
-```bash
-# Same test after applying DestinationRule
-kubectl exec -it test-app -- sh -c '
-for i in $(seq 1 100); do
-  time curl -s -o /dev/null -w "%{time_total}\n" https://api.github.com/users/octocat
-done' | awk '{sum+=$1; count++} END {print "Average response time:", sum/count, "seconds"}'
+[DNS guide](../../../service-mesh/istio/advanced/04-dns-cache.md)
 
-# Output:
-# Average response time: 0.152 seconds
-```
-
-**Performance Improvement:**
-
-```
-Before: 287ms
-After: 152ms
-Improvement: (287 - 152) / 287 = 47%
-
-DNS lookup time saved: ~135ms
-```
-
----
-
-**5. Verify Envoy Statistics**
-
-```bash
-# Envoy DNS cache statistics
-kubectl exec -it test-app -c istio-proxy -- \
-  curl localhost:15000/stats | grep dns_cache
-
-# Output:
-# cluster.outbound|443||api.github.com.dns_cache_hits: 99
-# cluster.outbound|443||api.github.com.dns_cache_misses: 1
-# cluster.outbound|443||api.github.com.dns_refresh: 0
-
-# Cache hit rate: 99 / (99 + 1) = 99%
-```
-
----
-
-**6. Comparison Table**
-
-| Item | DNS Caching Disabled | DNS Caching Enabled | Improvement |
-|------|---------------------|-------------------|------|
-| **Average Response Time** | 287ms | 152ms | 47% reduction |
-| **P95 Response Time** | 350ms | 180ms | 49% reduction |
-| **P99 Response Time** | 420ms | 210ms | 50% reduction |
-| **Throughput (RPS)** | 12.34 | 23.15 | 88% increase |
-| **DNS Cache Hit Rate** | 0% | 99% | - |
-| **Connection Reuse Rate** | 0% | 95% | - |
-
----
-
-**7. Best Practices**
-
-**Recommended Settings:**
-- DNS refresh interval: 5-15 minutes (consider external service TTL)
-- Enable Connection Pool (connection reuse)
-- Use HTTP/2 (multiplexing)
-- Enable Keep-Alive
-
-**Cautions:**
-- Reduce refresh interval for services with short TTL
-- Consider cache invalidation time during DNS changes
-- Test failover scenarios
-
-**Reference:**
-- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
 </details>
-
----
 
 ## Scoring
 
-- Multiple Choice 1-5: 10 points each (Total 50 points)
-- Short Answer 6-10: 10 points each (Total 50 points)
-- **Total: 100 points**
-
-**Evaluation Criteria:**
-- 90-100 points: Excellent (Istio Advanced Features Expert)
-- 80-89 points: Good (Advanced feature utilization possible)
-- 70-79 points: Average (Additional study recommended)
-- 60-69 points: Below Average (Basic concept review needed)
-- 0-59 points: Re-study required
+- Questions 1–5: 10 points each, 50 total. Keys: **B, A, C, D, B**.
+- Questions 6–10: 10 points each, 50 total. Award credit for correct mechanics, complete prerequisites, valid configuration, meaningful verification and honest measurement limits.
+- Total: 100 points. A quiz score indicates understanding of these questions; it does not certify operational expertise.
 
 ## Study Materials
 
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
-- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+- [Ambient](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+- [Multicluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 - [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
-- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
+- [DNS](../../../service-mesh/istio/advanced/04-dns-cache.md)
 - [gRPC](../../../service-mesh/istio/advanced/05-grpc.md)
 - [WebSocket](../../../service-mesh/istio/advanced/06-websocket.md)
-- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+- [Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 - [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+- [KEDA](../../../service-mesh/istio/advanced/10-keda-autoscaling.md)

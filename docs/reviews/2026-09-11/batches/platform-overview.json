@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/platform-engineering/00-platform-engineering-overview.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "09e327d3c74d16ec5e182caf42b45d0f9c76156b53058d99c25797ae5a38bf11",
+    "summary": "Reviewedalloverviewprose4blocksand8quiztopics;CAF7capabilities/engineeringmaturityscope,DORA5metrics,RGD/ACKprerequisitesandguardrailsupdated;4MDpassed.Primarysourcesaccessible;optionalIDPsite403notdeclareddead.",
+    "validationReport": "docs/reviews/2026-09-11/platform-overview-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/00-platform-engineering-overview.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "5657b605c1686268f77169cee48021326d1bde87e74969e23027fc9d9607f6c7",
+    "summary": "Reviewedalloverviewprose4blocksand8quiztopics;CAF7capabilities/engineeringmaturityscope,DORA5metrics,RGD/ACKprerequisitesandguardrailsupdated;4MDpassed.Primarysourcesaccessible;optionalIDPsite403notdeclareddead.",
+    "validationReport": "docs/reviews/2026-09-11/platform-overview-validation.json"
+  },
+  {
+    "path": "ko/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "a9d0c3a94e31421869abab8074b4ffd8fa28ec0eb35571838c9297c64eac7dd5",
+    "summary": "Reviewedalloverviewprose4blocksand8quiztopics;CAF7capabilities/engineeringmaturityscope,DORA5metrics,RGD/ACKprerequisitesandguardrailsupdated;4MDpassed.Primarysourcesaccessible;optionalIDPsite403notdeclareddead.",
+    "validationReport": "docs/reviews/2026-09-11/platform-overview-validation.json"
+  },
+  {
+    "path": "en/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "dc5631cbace275aeabe564ff0bae91f17369fa9b0b8a66b09eb64dbb913ffe22",
+    "summary": "Reviewedalloverviewprose4blocksand8quiztopics;CAF7capabilities/engineeringmaturityscope,DORA5metrics,RGD/ACKprerequisitesandguardrailsupdated;4MDpassed.Primarysourcesaccessible;optionalIDPsite403notdeclareddead.",
+    "validationReport": "docs/reviews/2026-09-11/platform-overview-validation.json"
+  }
+]

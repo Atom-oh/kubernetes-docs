@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Problem Scenario: Retry + Circuit Breaker",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      660
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "response lost"
+        },
+        "emphasis": {
+          "label": "payment writes"
+        },
+        "return": {
+          "label": "success response"
+        },
+        "default": {
+          "label": "regular call"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "attempt1",
+        "label": "First attempt",
+        "focus": [
+          "client",
+          "proxy",
+          "service",
+          "db"
+        ],
+        "note": "The payment is written to the DB, but the response is lost, so the proxy treats it as a failure."
+      },
+      {
+        "id": "retries",
+        "label": "Two retries",
+        "focus": [
+          "proxy",
+          "service",
+          "db"
+        ],
+        "note": "The same POST is forwarded twice more, and the payment is INSERTed again each time."
+      },
+      {
+        "id": "result",
+        "label": "Result",
+        "focus": [
+          "db",
+          "proxy",
+          "client"
+        ],
+        "note": "The client receives a single 200 OK, but three payment rows remain in the DB."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client"
+    },
+    {
+      "id": "proxy",
+      "type": "cloud",
+      "label": "Istio Proxy",
+      "sublabel": "VirtualService Retry"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Payment Service"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database"
+    }
+  ],
+  "segments": [
+    {
+      "from": 162,
+      "to": 312,
+      "label": "Attempt 1"
+    },
+    {
+      "from": 322,
+      "to": 420,
+      "label": "Retry 1/3"
+    },
+    {
+      "from": 432,
+      "to": 568,
+      "label": "Retry 2/3"
+    }
+  ],
+  "messages": [
+    {
+      "id": "post",
+      "from": "client",
+      "to": "proxy",
+      "y": 185,
+      "label": "POST /payment (Payment Request)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "try1",
+      "from": "proxy",
+      "to": "service",
+      "y": 222,
+      "label": "Attempt 1"
+    },
+    {
+      "id": "ins1",
+      "from": "service",
+      "to": "db",
+      "y": 258,
+      "label": "INSERT payment (Success)"
+    },
+    {
+      "id": "to1",
+      "from": "service",
+      "to": "proxy",
+      "y": 294,
+      "label": "Timeout (Response Lost)",
+      "variant": "dashed",
+      "note": "Retry 1/3"
+    },
+    {
+      "id": "try2",
+      "from": "proxy",
+      "to": "service",
+      "y": 336,
+      "label": "Attempt 2 (Same Request)"
+    },
+    {
+      "id": "ins2",
+      "from": "service",
+      "to": "db",
+      "y": 372,
+      "label": "INSERT payment (Duplicate!)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to2",
+      "from": "service",
+      "to": "proxy",
+      "y": 405,
+      "label": "Timeout (Response Lost)",
+      "variant": "dashed",
+      "note": "Retry 2/3"
+    },
+    {
+      "id": "try3",
+      "from": "proxy",
+      "to": "service",
+      "y": 447,
+      "label": "Attempt 3 (Same Request)"
+    },
+    {
+      "id": "ins3",
+      "from": "service",
+      "to": "db",
+      "y": 483,
+      "label": "INSERT payment (Duplicate!)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ok1",
+      "from": "service",
+      "to": "proxy",
+      "y": 520,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "ok2",
+      "from": "proxy",
+      "to": "client",
+      "y": 558,
+      "label": "200 OK",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "proxy",
+      "from": 180,
+      "to": 563,
+      "type": "cloud"
+    },
+    {
+      "participant": "service",
+      "from": 217,
+      "to": 299,
+      "type": "backend"
+    },
+    {
+      "participant": "service",
+      "from": 331,
+      "to": 410,
+      "type": "backend"
+    },
+    {
+      "participant": "service",
+      "from": 442,
+      "to": 525,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Configuration",
+      "items": [
+        "VirtualService retries.attempts: 3",
+        "DestinationRule outlierDetection.consecutiveErrors: 5"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Result",
+      "items": [
+        "Payment recorded 3 times (duplicated)",
+        "Circuit Breaker only activates after 5 consecutive errors, so it cannot prevent duplicates during retries"
+      ]
+    }
+  ]
+}

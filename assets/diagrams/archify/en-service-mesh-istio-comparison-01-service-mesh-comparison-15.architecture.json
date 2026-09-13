@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kong Mesh Multi-zone",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-15.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      600
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "kong-global",
+      "type": "backend",
+      "label": "Kong Mesh Global",
+      "sublabel": "Global Control Plane",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "zone1-cp",
+      "type": "backend",
+      "label": "Zone CP",
+      "sublabel": "Zone control plane",
+      "pos": [
+        80,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone1-svc",
+      "type": "frontend",
+      "label": "Services",
+      "sublabel": "In-zone services",
+      "pos": [
+        80,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone2-cp",
+      "type": "backend",
+      "label": "Zone CP",
+      "sublabel": "Zone control plane",
+      "pos": [
+        510,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone2-svc",
+      "type": "frontend",
+      "label": "Services",
+      "sublabel": "In-zone services",
+      "pos": [
+        510,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone3-cp",
+      "type": "backend",
+      "label": "Zone CP",
+      "sublabel": "Zone control plane",
+      "pos": [
+        940,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zone3-svc",
+      "type": "frontend",
+      "label": "Services",
+      "sublabel": "In-zone services",
+      "pos": [
+        940,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Zone 1 (AWS)",
+      "wraps": [
+        "zone1-cp",
+        "zone1-svc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 2 (Azure)",
+      "wraps": [
+        "zone2-cp",
+        "zone2-svc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 3 (On-prem)",
+      "wraps": [
+        "zone3-cp",
+        "zone3-svc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sync-zone1",
+      "from": "kong-global",
+      "to": "zone1-cp",
+      "label": "Sync policies",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync-zone2",
+      "from": "kong-global",
+      "to": "zone2-cp",
+      "label": "Sync policies",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "sync-zone3",
+      "from": "kong-global",
+      "to": "zone3-cp",
+      "label": "Sync policies",
+      "variant": "emphasis"
+    },
+    {
+      "id": "zone1-cp-svc",
+      "from": "zone1-cp",
+      "to": "zone1-svc",
+      "variant": "dashed"
+    },
+    {
+      "id": "zone2-cp-svc",
+      "from": "zone2-cp",
+      "to": "zone2-svc",
+      "variant": "dashed"
+    },
+    {
+      "id": "zone3-cp-svc",
+      "from": "zone3-cp",
+      "to": "zone3-svc",
+      "variant": "dashed"
+    },
+    {
+      "id": "cross-zone-1-2",
+      "from": "zone1-svc",
+      "to": "zone2-svc",
+      "label": "Cross-zone traffic"
+    },
+    {
+      "id": "cross-zone-1-3",
+      "from": "zone1-svc",
+      "to": "zone3-svc",
+      "label": "Cross-zone traffic",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          160,
+          545
+        ],
+        [
+          1020,
+          545
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Global Control Plane",
+      "items": [
+        "Kong Mesh Global synchronizes policies to every Zone CP",
+        "Each Zone CP applies the policies to the services in its zone"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Cross-zone communication",
+      "items": [
+        "Services in the AWS, Azure and on-prem zones talk across zone boundaries",
+        "Service discovery, traffic failover and mTLS work automatically"
+      ]
+    }
+  ]
+}

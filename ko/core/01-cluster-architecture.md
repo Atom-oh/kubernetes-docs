@@ -1,14 +1,16 @@
 # 클러스터 아키텍처
 
-> **지원 버전**: Kubernetes 1.32, 1.33, 1.34  
-> **마지막 업데이트**: 2026년 8월 31일
+> **지원 버전**: Kubernetes 1.35, 1.36, 1.37
+> **마지막 업데이트**: 2026년 9월 9일
+
+버전 헤더는 업스트림 Kubernetes 기준입니다. 2026년 9월 11일 기준 EKS 표준 지원 버전은 1.34–1.36이므로 버전 선택 전 [EKS 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 확인하세요. 아래 구성 요소 명령은 자체 관리형 클러스터 예시이며 EKS 컨트롤 플레인은 AWS가 관리합니다. 이미지 태그와 인프라 ID는 예시이므로 호환되고 유지 관리되는 이미지와 실제 값으로 바꿔 사용하세요.
 
 ## 실습 환경 설정
 
 이 문서의 개념을 실습하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구
-- kubectl v1.34 이상
+- API 서버와 마이너 버전 차이가 1 이내인 kubectl
 - 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
 
 ### 로컬 개발 환경 설정
@@ -42,7 +44,7 @@ Kubernetes 클러스터는 컨테이너화된 애플리케이션을 실행하기
 
 **컨트롤 플레인 구성 요소**:
 - **kube-apiserver**: Kubernetes API를 노출하는 프론트엔드
-- **etcd**: 모든 클러스터 데이터를 저장하는 키-값 저장소
+- **etcd**: Kubernetes API 상태를 저장하는 키-값 저장소
 - **kube-scheduler**: 새로 생성된 파드를 실행할 노드 선택
 - **kube-controller-manager**: 클러스터 상태를 관리하는 컨트롤러 실행
 - **cloud-controller-manager**: 클라우드 제공업체 API와 상호 작용
@@ -92,12 +94,18 @@ kube-apiserver \
   --advertise-address=192.168.1.10 \
   --allow-privileged=true \
   --authorization-mode=Node,RBAC \
+  --client-ca-file=/etc/kubernetes/pki/ca.crt \
   --enable-admission-plugins=NodeRestriction \
   --enable-bootstrap-token-auth=true \
   --etcd-servers=https://127.0.0.1:2379 \
+  --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt \
+  --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt \
+  --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key \
   --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \
   --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \
   --service-account-key-file=/etc/kubernetes/pki/sa.pub \
+  --service-account-signing-key-file=/etc/kubernetes/pki/sa.key \
+  --service-account-issuer=https://kubernetes.default.svc.cluster.local \
   --service-cluster-ip-range=10.96.0.0/12 \
   --tls-cert-file=/etc/kubernetes/pki/apiserver.crt \
   --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
@@ -111,7 +119,7 @@ kube-apiserver \
 
 ### etcd
 
-etcd는 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소입니다. Kubernetes의 "소스 오브 트루스(source of truth)"로 작동합니다.
+etcd는 Kubernetes API 상태를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소입니다. Kubernetes의 "소스 오브 트루스(source of truth)"로 작동합니다.
 
 **주요 특징**:
 - 분산 시스템
@@ -132,7 +140,15 @@ etcd \
   --initial-cluster-token etcd-cluster \
   --initial-cluster etcd-1=https://192.168.1.11:2380,etcd-2=https://192.168.1.12:2380,etcd-3=https://192.168.1.13:2380 \
   --initial-cluster-state new \
-  --data-dir=/var/lib/etcd
+  --data-dir=/var/lib/etcd \
+  --cert-file=/etc/kubernetes/pki/etcd/server.crt \
+  --key-file=/etc/kubernetes/pki/etcd/server.key \
+  --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+  --client-cert-auth=true \
+  --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt \
+  --peer-key-file=/etc/kubernetes/pki/etcd/peer.key \
+  --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+  --peer-client-cert-auth=true
 ```
 
 **etcd 백업 및 복구**:
@@ -145,7 +161,8 @@ ETCDCTL_API=3 etcdctl snapshot save snapshot.db \
   --key=/etc/kubernetes/pki/etcd/server.key
 
 # etcd 복구
-ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
+etcdutl snapshot restore snapshot.db \
+  --bump-revision=1000000000 --mark-compacted \
   --data-dir=/var/lib/etcd-restore \
   --name=etcd-1 \
   --initial-cluster=etcd-1=https://192.168.1.11:2380 \
@@ -211,13 +228,16 @@ apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 profiles:
 - schedulerName: default-scheduler
-  plugins:
-    score:
-      disabled:
-      - name: NodeResourcesLeastAllocated
-      enabled:
-      - name: NodeResourcesMostAllocated
-        weight: 1
+  pluginConfig:
+  - name: NodeResourcesFit
+    args:
+      scoringStrategy:
+        type: MostAllocated
+        resources:
+        - name: cpu
+          weight: 1
+        - name: memory
+          weight: 1
 ```
 
 ### kube-controller-manager
@@ -227,8 +247,8 @@ kube-controller-manager는 여러 컨트롤러 프로세스를 실행하는 컨�
 **주요 컨트롤러**:
 - **노드 컨트롤러**: 노드 상태 모니터링 및 대응
 - **레플리케이션 컨트롤러**: 파드 복제본 수 유지
-- **엔드포인트 컨트롤러**: 서비스와 파드 연결
-- **서비스 어카운트 & 토큰 컨트롤러**: 네임스페이스에 대한 기본 계정 및 API 토큰 생성
+- **EndpointSlice 컨트롤러**: EndpointSlice에 Service 백엔드 기록
+- **서비스 어카운트 & 토큰 컨트롤러**: 기본 ServiceAccount를 생성하고 명시적으로 요청한 레거시 토큰 Secret을 관리하며, 현재 파드는 단기 TokenRequest 토큰 사용
 - **잡 컨트롤러**: 일회성 작업 관리
 - **크론잡 컨트롤러**: 예약된 작업 관리
 - **데몬셋 컨트롤러**: 모든 노드에 특정 파드 실행 보장
@@ -265,7 +285,8 @@ cloud-controller-manager는 클라우드별 컨트롤 로직을 포함하는 컨
 - **노드 컨트롤러**: 클라우드 제공자 API를 통해 노드 상태 확인
 - **라우트 컨트롤러**: 클라우드 환경에서 라우트 설정
 - **서비스 컨트롤러**: 클라우드 로드 밸런서 생성, 업데이트, 삭제
-- **볼륨 컨트롤러**: 클라우드 스토리지 볼륨 생성, 연결, 마운트
+
+클라우드 스토리지 프로비저닝·연결은 CSI 컨트롤러가, 마운트는 kubelet과 CSI 노드 플러그인이 담당합니다. 이는 cloud-controller-manager의 역할이 아닙니다.
 
 **클라우드 제공업체별 구현**:
 - AWS Cloud Controller Manager
@@ -310,9 +331,7 @@ kubelet은 각 노드에서 실행되는 에이전트로, 파드 내 컨테이�
 kubelet \
   --kubeconfig=/etc/kubernetes/kubelet.conf \
   --config=/var/lib/kubelet/config.yaml \
-  --container-runtime=remote \
-  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \
-  --pod-infra-container-image=k8s.gcr.io/pause:3.6
+  --container-runtime-endpoint=unix:///run/containerd/containerd.sock
 ```
 
 **kubelet 구성 파일 예시**:
@@ -346,7 +365,7 @@ healthzBindAddress: 127.0.0.1
 healthzPort: 10248
 ```
 
-**정적 파드**:
+**정적 파드**: 아래 매니페스트는 구성 일부이며 완전한 컨트롤 플레인 설치가 아닙니다. 호스트 네트워크, 인증서, 마운트, 전체 API 서버 구성이 추가로 필요합니다.
 kubelet은 API 서버를 통하지 않고 직접 관리하는 정적 파드를 실행할 수 있습니다. 이는 주로 컨트롤 플레인 구성 요소를 실행하는 데 사용됩니다.
 
 ```yaml
@@ -359,7 +378,7 @@ metadata:
 spec:
   containers:
   - name: kube-apiserver
-    image: k8s.gcr.io/kube-apiserver:v1.24.0
+    image: registry.k8s.io/kube-apiserver:v1.37.0
     command:
     - kube-apiserver
     - --advertise-address=192.168.1.10
@@ -377,9 +396,12 @@ kube-proxy는 각 노드에서 실행되는 네트워크 프록시로, Kubernete
 - 서비스 디스커버리 지원
 
 **작동 모드**:
-1. **userspace 모드**: 사용자 공간에서 프록시 실행 (레거시)
-2. **iptables 모드**: 리눅스 iptables를 사용한 NAT 구현 (기본)
-3. **IPVS 모드**: 리눅스 커널의 IP Virtual Server 사용 (고성능)
+1. **iptables**: Linux 기본 모드로 커널 패킷 처리 규칙 설정
+2. **nftables**: v1.33부터 Stable이며 커널·CNI 호환성 확인 필요
+3. **IPVS**: v1.35부터 사용 중단된 레거시 Linux 모드로 지원되는 대안으로 전환 필요
+4. **kernelspace**: Windows 모드
+
+기존 `userspace` 모드는 제거되었습니다. 일부 네트워크 구현은 kube-proxy를 완전히 대체합니다.
 
 **kube-proxy 구성**:
 ```bash
@@ -429,7 +451,7 @@ mode: "iptables"
 | 특성 | iptables 모드 | IPVS 모드 |
 |------|--------------|-----------|
 | 성능 | 서비스 수가 많을 때 성능 저하 | 대규모 클러스터에서 더 나은 성능 |
-| 로드 밸런싱 알고리즘 | 라운드 로빈만 지원 | 다양한 알고리즘 지원 (rr, lc, dh, sh, sed, nq) |
+| 로드 밸런싱 알고리즘 | 기본적으로 백엔드를 무작위 선택 | 다양한 알고리즘 지원 (rr, lc, dh, sh, sed, nq) |
 | 구현 | 네트워크 패킷 필터링 체인 | 해시 테이블 기반 |
 | 커널 요구사항 | 기본 커널 모듈 | IPVS 커널 모듈 필요 |
 
@@ -440,20 +462,22 @@ mode: "iptables"
 **주요 컨테이너 런타임**:
 1. **containerd**: 경량 컨테이너 런타임 (현재 가장 널리 사용됨)
 2. **CRI-O**: Kubernetes를 위해 특별히 설계된 경량 런타임
-3. **Docker Engine**: Docker shim을 통해 지원 (Kubernetes 1.24부터 지원 중단)
+3. **Docker Engine**: cri-dockerd 같은 외부 CRI 어댑터가 필요하며 내장 dockershim은 v1.24에서 제거되었습니다. Docker로 빌드한 OCI 이미지는 containerd/CRI-O에서도 실행됩니다.
 
 **컨테이너 런타임 계층 구조**:
 
-![Kubernetes가 CRI(Container Runtime Interface)를 통해 containerd와 CRI-O 같은 컨테이너 런타임을 호출하고, 이들이 각각 runc와 crun을 사용해 컨테이너를 실행하는 계층 구조를 보여준다.](../../assets/diagrams/rendered/cri-hierarchy.svg)
+![Kubernetes가 CRI(Container Runtime Interface)를 통해 containerd와 CRI-O 같은 컨테이너 런타임을 호출하고, 이들이 각각 runc와 crun을 사용해 컨테이너를 실행하는 계층 구조를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-1.png)
 
-**containerd 구성 예시**:
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-1.html)
+
+**containerd 1.x 구성 예시** (2.x는 플러그인 ID가 다르므로 설치 버전에 맞는 기본 구성을 생성하세요):
 ```toml
 # /etc/containerd/config.toml
 version = 2
 
 [plugins]
   [plugins."io.containerd.grpc.v1.cri"]
-    sandbox_image = "k8s.gcr.io/pause:3.6"
+    sandbox_image = "registry.k8s.io/pause:3.10"
     [plugins."io.containerd.grpc.v1.cri".containerd]
       default_runtime_name = "runc"
       [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
@@ -479,7 +503,7 @@ conmon_cgroup = "pod"
 cgroup_manager = "systemd"
 
 [crio.image]
-pause_image = "k8s.gcr.io/pause:3.6"
+pause_image = "registry.k8s.io/pause:3.10"
 ```
 
 ### 애드온 구성 요소
@@ -487,16 +511,16 @@ pause_image = "k8s.gcr.io/pause:3.6"
 애드온은 Kubernetes 클러스터의 기능을 확장하는 추가 구성 요소입니다. 일부 중요한 애드온은 다음과 같습니다:
 
 1. **CNI 네트워크 플러그인**: 파드 네트워킹 구현
-   - Calico, Cilium, Flannel, Weave Net 등
+   - Calico, Cilium, Flannel 등
 
 2. **DNS**: 클러스터 내 DNS 서비스 제공
    - CoreDNS (기본)
 
 3. **대시보드**: 웹 기반 UI 제공
-   - Kubernetes Dashboard
+   - Headlamp (Kubernetes Dashboard는 보관 상태로 유지 관리 종료)
 
 4. **인그레스 컨트롤러**: HTTP/HTTPS 라우팅 관리
-   - NGINX Ingress Controller, Traefik, HAProxy 등
+   - Traefik, HAProxy 등
 
 5. **메트릭 서버**: 리소스 사용량 메트릭 수집
    - Metrics Server
@@ -579,7 +603,9 @@ Kubernetes 클러스터 내에서는 여러 구성 요소 간의 통신이 이�
 
 ### 컨트롤 플레인 내부 통신
 
-![kube-scheduler, kube-controller-manager, cloud-controller-manager가 모두 kube-apiserver를 통해 클러스터 상태를 읽고 쓰며, kube-apiserver만이 etcd와 직접 통신하는 구조를 보여준다.](../../assets/diagrams/rendered/control-plane-internal-comm.svg)
+![kube-scheduler, kube-controller-manager, cloud-controller-manager가 모두 kube-apiserver를 통해 클러스터 상태를 읽고 쓰며, kube-apiserver만이 etcd와 직접 통신하는 구조를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-2.html)
 
 컨트롤 플레인 구성 요소 간의 통신은 다음과 같습니다:
 
@@ -605,16 +631,18 @@ Kubernetes 클러스터 내에서는 여러 구성 요소 간의 통신이 이�
 
 ### 컨트롤 플레인과 노드 간 통신
 
-![kube-apiserver가 각 노드의 kubelet 및 kube-proxy와 양방향 HTTPS 통신을 유지하며 노드 상태와 서비스 정보를 주고받는 구조를 보여준다.](../../assets/diagrams/rendered/control-plane-node-comm.svg)
+![kubelet·kube-proxy가 API 서버를 감시하고, API 서버는 별도로 kubelet에 로그·exec·포트 포워딩을 요청하는 통신 구조를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-3.html)
 
 컨트롤 플레인과 노드 간의 통신은 다음과 같습니다:
 
-1. **kube-apiserver와 kubelet**: kube-apiserver는 파드 스펙을 전달하고 노드 상태를 수집하기 위해 kubelet과 통신합니다.
+1. **kube-apiserver → kubelet**: API 서버는 로그, exec/attach, 포트 포워딩을 위해 kubelet API를 호출합니다.
    - 프로토콜: HTTPS
    - 포트: 10250/TCP (kubelet)
    - 보안: TLS 인증서 기반 인증
 
-2. **kubelet과 kube-apiserver**: kubelet은 노드 등록, 파드 상태 보고, 이벤트 전송을 위해 kube-apiserver와 통신합니다.
+2. **kubelet과 kube-apiserver**: kubelet은 할당된 PodSpec 감시, 노드 등록, 노드·파드 상태 및 이벤트 보고를 위해 kube-apiserver와 통신합니다.
    - 프로토콜: HTTPS
    - 포트: 6443/TCP (kube-apiserver)
    - 보안: TLS 인증서 기반 인증
@@ -626,7 +654,9 @@ Kubernetes 클러스터 내에서는 여러 구성 요소 간의 통신이 이�
 
 ### 노드 간 통신
 
-![서로 다른 노드에 배치된 파드들이 CNI 네트워크 플러그인을 통해 NAT 없이 서로 통신하는 구조를 보여준다.](../../assets/diagrams/rendered/inter-node-pod-comm.svg)
+![서로 다른 노드에 배치된 파드들이 CNI 네트워크 플러그인을 통해 NAT 없이 서로 통신하는 구조를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-4.html)
 
 노드 간의 통신은 다음과 같습니다:
 
@@ -642,7 +672,9 @@ Kubernetes 클러스터 내에서는 여러 구성 요소 간의 통신이 이�
 
 ### 외부 통신
 
-![클러스터 외부의 클라이언트가 kube-apiserver를 통해 클러스터를 제어하거나, Service/Ingress를 거쳐 파드에 도달하는 두 가지 외부 접근 경로를 보여준다.](../../assets/diagrams/rendered/external-comm.svg)
+![클러스터 외부의 클라이언트가 kube-apiserver를 통해 클러스터를 제어하거나, Service/Ingress를 거쳐 파드에 도달하는 두 가지 외부 접근 경로를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-5.html)
 
 클러스터 외부와의 통신은 다음과 같습니다:
 
@@ -665,7 +697,7 @@ Kubernetes 클러스터 내 통신의 보안은 다음과 같은 방법으로 �
 3. **네트워크 정책**: 파드 간 통신은 네트워크 정책을 통해 제한할 수 있습니다.
 4. **암호화된 시크릿**: etcd에 저장되는 시크릿은 암호화할 수 있습니다.
 
-**API 서버 통신 보안 구성 예시**:
+**API 데이터 저장 시 암호화 예시** (API 서버에 `--encryption-provider-config`를 설정하고 기존 Secret도 다시 저장해야 암호화됨):
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
@@ -694,11 +726,15 @@ resources:
 
 **고가용성 컨트롤 플레인 아키텍처**:
 
-![로드 밸런서가 3개의 컨트롤 플레인 노드로 트래픽을 분산하고, 각 노드가 kube-apiserver, etcd, kube-scheduler, kube-controller-manager를 동일하게 갖춰 단일 장애점을 없애는 구조를 보여준다.](../../assets/diagrams/rendered/ha-control-plane.svg)
+![로드 밸런서가 3개의 컨트롤 플레인 노드로 트래픽을 분산하고, 각 노드가 kube-apiserver, etcd, kube-scheduler, kube-controller-manager를 동일하게 갖춰 단일 장애점을 없애는 구조를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-6.html)
 
 **etcd 클러스터 구성**:
 
-![3개의 etcd 노드가 서로 완전 연결(mesh)되어 Raft 합의로 데이터 일관성을 유지하는 etcd 클러스터 구성을 보여준다.](../../assets/diagrams/rendered/etcd-cluster-mesh.svg)
+![3개의 etcd 노드가 서로 완전 연결(mesh)되어 Raft 합의로 데이터 일관성을 유지하는 etcd 클러스터 구성을 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-7.html)
 
 ### 워커 노드 고가용성
 
@@ -711,7 +747,9 @@ resources:
 
 **워커 노드 분산 배포**:
 
-![여러 워커 노드를 3개의 가용 영역에 나누어 배치함으로써 하나의 가용 영역 장애가 전체 클러스터에 영향을 주지 않도록 하는 구조를 보여준다.](../../assets/diagrams/rendered/worker-node-az-distribution.svg)
+![여러 워커 노드를 3개의 가용 영역에 나누어 배치함으로써 하나의 가용 영역 장애가 전체 클러스터에 영향을 주지 않도록 하는 구조를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-8.html)
 
 ### 애플리케이션 고가용성
 
@@ -730,6 +768,9 @@ metadata:
   name: web-server
 spec:
   replicas: 3
+  selector:
+    matchLabels:
+      app: web-server
   template:
     metadata:
       labels:
@@ -747,7 +788,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: web-server
-        image: nginx:1.21
+        image: nginx:1.30.4
 ```
 
 **PodDisruptionBudget 예시**:
@@ -782,28 +823,16 @@ ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot-$(date +%Y%m%d-%H%M%S)
   --key=/etc/kubernetes/pki/etcd/server.key
 ```
 
-**etcd 복구 스크립트 예시**:
-```bash
-#!/bin/bash
-# 클러스터 중지
-systemctl stop kubelet
-docker stop $(docker ps -q)
+**etcd 복구 절차 (자체 관리형 클러스터)**:
 
-# etcd 데이터 복구
-ETCDCTL_API=3 etcdctl snapshot restore /backup/etcd-snapshot.db \
-  --data-dir=/var/lib/etcd-restore \
-  --name=master \
-  --initial-cluster=master=https://127.0.0.1:2380 \
-  --initial-cluster-token=etcd-cluster \
-  --initial-advertise-peer-urls=https://127.0.0.1:2380
+1. `etcdutl snapshot status`로 스냅샷을 확인하고 위 예시처럼 호환되는 `etcdutl`로 새 데이터 디렉토리에 복원합니다.
+2. 데이터 디렉토리 전환 전에 클러스터 운영 절차에 따라 모든 API 서버와 해당 etcd 프로세스를 중지합니다. kubelet만 중지해도 기존 정적 파드 컨테이너는 종료되지 않습니다.
+3. 여러 멤버를 복구할 때는 같은 스냅샷을 각 멤버의 고유 이름·피어 URL과 동일한 전체 `--initial-cluster` 목록으로 복원합니다. 위 단일 멤버 예시는 HA 복구 절차가 아닙니다.
+4. Kubernetes watch 캐시를 위해 `--bump-revision`과 `--mark-compacted`를 사용합니다. 증가량은 스냅샷 이후 리비전을 초과하도록 정하며 위 값은 예시입니다.
+5. etcd 정적 파드의 hostPath를 복원 디렉토리로 변경하고 etcd를 재시작합니다. 쿼럼·상태 확인 후 API 서버와 컨트롤러를 재시작하고 검증 완료까지 원본 데이터와 백업을 보관합니다.
 
-# 복구된 데이터로 etcd 디렉토리 교체
-mv /var/lib/etcd /var/lib/etcd.old
-mv /var/lib/etcd-restore /var/lib/etcd
+[etcd 복구 문서](https://etcd.io/docs/v3.6/op-guide/recovery/)를 따르세요. EKS 사용자는 관리형 컨트롤 플레인의 etcd를 직접 운영하거나 복구하지 않습니다.
 
-# 클러스터 재시작
-systemctl start kubelet
-```
 ## 클러스터 네트워킹
 
 Kubernetes 네트워킹은 파드, 서비스, 외부 세계 간의 통신을 가능하게 하는 핵심 구성 요소입니다. Kubernetes 네트워킹 모델은 모든 파드가 고유한 IP 주소를 가지며, NAT 없이 서로 통신할 수 있다는 것을 기본 전제로 합니다.
@@ -813,8 +842,8 @@ Kubernetes 네트워킹은 파드, 서비스, 외부 세계 간의 통신을 가
 Kubernetes 네트워킹 모델은 다음과 같은 요구사항을 가집니다:
 
 1. **파드 간 통신**: 모든 파드는 NAT 없이 다른 모든 파드와 통신할 수 있어야 함
-2. **노드와 파드 간 통신**: 노드는 NAT 없이 모든 파드와 통신할 수 있어야 함
-3. **파드와 외부 간 통신**: 파드는 외부 세계와 통신할 수 있어야 함 (일반적으로 NAT 사용)
+2. **노드와 파드 간 통신**: 노드 에이전트는 해당 노드의 파드와 통신할 수 있어야 함
+3. **파드와 외부 간 통신**: 외부 연결은 라우팅, 필요한 NAT, 보안·egress 정책에 따라 달라지며 모든 파드의 인터넷 접근이 필수인 것은 아님
 
 ### CNI (Container Network Interface)
 
@@ -834,9 +863,7 @@ CNI는 Kubernetes에서 네트워킹을 구현하기 위한 표준 인터페이�
    - 특징: 설정 간단, 가벼움
    - 사용 사례: 소규모 클러스터, 개발 환경
 
-4. **Weave Net**: 멀티 호스트 컨테이너 네트워킹
-   - 특징: 암호화, 네트워크 정책, 멀티클라우드
-   - 사용 사례: 하이브리드 클라우드, 멀티클라우드
+4. **Weave Net (역사적 예시)**: 2024년 6월에 프로젝트가 보관 상태로 전환되었으므로 새 배포에는 유지 관리되는 대안을 검토하세요.
 
 **CNI 구성 예시 (Calico)**:
 ```yaml
@@ -889,7 +916,7 @@ Kubernetes 서비스는 파드 집합에 대한 안정적인 엔드포인트를 
 
 **서비스 네트워킹 흐름**:
 ```
-클라이언트 -> 서비스 (ClusterIP) -> kube-proxy -> 파드
+클라이언트 -> kube-proxy가 설정한 커널 규칙 (ClusterIP DNAT) -> 파드
 ```
 
 **서비스 예시**:
@@ -912,8 +939,8 @@ spec:
 인그레스는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP 및 HTTPS 라우팅을 관리합니다. 인그레스 컨트롤러는 인그레스 리소스를 구현하는 역할을 합니다.
 
 **주요 인그레스 컨트롤러**:
-1. **NGINX Ingress Controller**: NGINX 기반 인그레스 컨트롤러
-2. **AWS ALB Ingress Controller**: AWS Application Load Balancer 기반
+1. **유지 관리되는 Ingress/Gateway 컨트롤러**: 수명 주기와 Gateway API 지원 확인
+2. **AWS Load Balancer Controller**: Ingress용 ALB 프로비저닝
 3. **Traefik**: 클라우드 네이티브 엣지 라우터
 4. **HAProxy Ingress**: HAProxy 기반 인그레스 컨트롤러
 
@@ -922,16 +949,16 @@ spec:
 클라이언트 -> 인그레스 컨트롤러 -> 서비스 -> 파드
 ```
 
+커뮤니티 ingress-nginx는 2026년 3월에 유지 관리가 종료되었습니다([공지](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)). 이 예시는 `traefik` IngressClass를 가진 Traefik 컨트롤러 설치가 필요하며 `/app` 경로를 그대로 전달합니다.
+
 **인그레스 예시**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: my-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: example.com
     http:
@@ -1002,7 +1029,7 @@ kubectl exec -it <pod-name> -- nslookup <service-name>
 kubectl exec -it <pod-name> -- tcpdump -i eth0 -n
 
 # 서비스 엔드포인트 확인
-kubectl get endpoints <service-name>
+kubectl get endpointslices -l kubernetes.io/service-name=<service-name>
 ```
 
 ## 클러스터 스토리지
@@ -1021,7 +1048,9 @@ Kubernetes 스토리지 아키텍처는 다음과 같은 구성 요소로 이루
 
 **스토리지 아키텍처 흐름**:
 
-![파드가 볼륨 마운트, PVC, PV를 거쳐 실제 CSI 스토리지 드라이버에 도달하는 쿠버네티스 스토리지 추상화 흐름을 보여준다.](../../assets/diagrams/rendered/storage-architecture-flow.svg)
+![파드가 볼륨 마운트, PVC, PV를 거쳐 실제 CSI 스토리지 드라이버에 도달하는 쿠버네티스 스토리지 추상화 흐름을 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-9.html)
 
 ### 볼륨 유형
 
@@ -1034,9 +1063,7 @@ Kubernetes는 다양한 유형의 볼륨을 지원합니다:
    - **downwardAPI**: 파드 및 컨테이너 정보를 파일로 노출
 
 2. **영구 볼륨**:
-   - **awsElasticBlockStore**: AWS EBS 볼륨
-   - **azureDisk**: Azure Disk
-   - **gcePersistentDisk**: GCE 영구 디스크
+   - **CSI 기반 클라우드 블록 스토리지**: AWS EBS, Azure Disk, GCE Persistent Disk (레거시 인트리 구현은 제거됨)
    - **nfs**: NFS 볼륨
    - **csi**: CSI 드라이버를 통한 볼륨
 
@@ -1063,6 +1090,8 @@ spec:
 
 영구 볼륨(PV)은 관리자가 프로비저닝하거나 스토리지 클래스를 통해 동적으로 프로비저닝되는 클러스터의 스토리지 리소스입니다. 영구 볼륨 클레임(PVC)은 사용자의 스토리지 요청입니다.
 
+먼저 IAM 권한을 갖춘 EBS CSI 드라이버를 설치하세요. 아래 정적 PV의 볼륨 ID와 가용 영역은 실제 기존 EBS 볼륨에 맞게 변경합니다. EBS는 Fargate에서 마운트할 수 없으며 EKS Auto Mode는 `ebs.csi.eks.amazonaws.com`을 사용합니다.
+
 **영구 볼륨 예시**:
 ```yaml
 apiVersion: v1
@@ -1076,9 +1105,17 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   storageClassName: standard
-  awsElasticBlockStore:
-    volumeID: vol-0123456789abcdef0
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0123456789abcdef0
     fsType: ext4
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: [ap-northeast-2a]
 ```
 
 **영구 볼륨 클레임 예시**:
@@ -1106,12 +1143,14 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: standard
-provisioner: kubernetes.io/aws-ebs
+provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
+  encrypted: "true"
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
 ```
 
 ### CSI (Container Storage Interface)
@@ -1120,7 +1159,9 @@ CSI는 Kubernetes와 스토리지 시스템 간의 표준 인터페이스를 제
 
 **CSI 아키텍처**:
 
-![Kubernetes가 표준 인터페이스인 CSI를 통해 CSI 드라이버를 호출하고, 드라이버가 실제 스토리지 시스템과 통신하는 구조를 보여준다.](../../assets/diagrams/rendered/csi-architecture.svg)
+![Kubernetes가 표준 인터페이스인 CSI를 통해 CSI 드라이버를 호출하고, 드라이버가 실제 스토리지 시스템과 통신하는 구조를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-10.html)
 
 **CSI 드라이버 배포 예시**:
 ```yaml
@@ -1131,7 +1172,7 @@ metadata:
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
   encrypted: "true"
 volumeBindingMode: WaitForFirstConsumer
 ```
@@ -1152,15 +1193,7 @@ Kubernetes 클러스터의 확장성은 클러스터가 증가하는 부하와 �
 
 ### 클러스터 규모 제한
 
-Kubernetes 클러스터는 다음과 같은 규모 제한을 가집니다:
-
-1. **노드 수**: 최대 5,000개 노드
-2. **파드 수**: 클러스터당 최대 150,000개 파드
-3. **노드당 파드 수**: 노드당 최대 110개 파드 (기본값)
-4. **서비스 수**: 클러스터당 최대 10,000개 서비스
-5. **컨테이너 수**: 파드당 최대 20개 컨테이너
-
-이러한 제한은 Kubernetes 버전과 클러스터 구성에 따라 다를 수 있습니다.
+업스트림 [대규모 클러스터 지침](https://kubernetes.io/docs/setup/best-practices/cluster-large/)은 노드 5,000개, 전체 파드 150,000개, 전체 컨테이너 300,000개, 노드당 파드 110개를 검증된 지원 범위로 설명합니다. 이 기준은 동시에 적용되며 보편적인 API 하드 리밋이 아닙니다. 일반적인 파드당 컨테이너 20개 제한은 없습니다. Service 용량은 주소 범위와 데이터 플레인에 따라 달라지고 클라우드 네트워킹 한도·할당량은 더 낮을 수 있습니다.
 
 ### 수평적 확장
 
@@ -1176,7 +1209,7 @@ tags:
   k8s.io/cluster-autoscaler/my-cluster: "owned"
 ```
 
-**클러스터 자동 확장기 배포 예시**:
+**Cluster Autoscaler Deployment 일부 (v1.36 클러스터 예시)**: 클러스터 마이너 버전과 일치하는 패치 릴리스를 선택하세요. ServiceAccount, Kubernetes RBAC, 전용 IAM 역할이 추가로 필요하며 완전한 설치 매니페스트가 아닙니다.
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -1195,7 +1228,7 @@ spec:
     spec:
       containers:
       - name: cluster-autoscaler
-        image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.24.0
+        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.36.0
         command:
         - ./cluster-autoscaler
         - --cloud-provider=aws
@@ -1219,6 +1252,8 @@ spec:
           operator: In
           values: ["spot", "on-demand"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default-class
   limits:
     cpu: 1000
@@ -1229,15 +1264,20 @@ kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: my-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
 ```
 
 ### 수직적 확장
 
-수직적 확장은 기존 노드의 리소스(CPU, 메모리)를 늘리는 방식입니다.
+워크로드 수직 확장은 파드 CPU·메모리 요청량을 조정합니다. VPA는 기반 노드 크기를 변경하지 않으며 노드 용량은 별도로 확보해야 합니다.
 
 **Vertical Pod Autoscaler (VPA)**:
 VPA는 파드의 CPU 및 메모리 요청을 자동으로 조정합니다.
@@ -1253,7 +1293,7 @@ spec:
     kind: Deployment
     name: my-app
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Recreate"
   resourcePolicy:
     containerPolicies:
     - containerName: '*'
@@ -1383,7 +1423,7 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
-
+---
 # 역할 바인딩
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -1489,22 +1529,6 @@ Kubernetes 클러스터 보안을 위한 모범 사례:
 
 Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버그 수정을 적용하기 위해 필요합니다. 업그레이드는 신중하게 계획하고 실행해야 합니다.
 
-### 2026년 7월 업데이트: Kubernetes v1.37 베타 진행 중
-
-2026년 7월 20일 v1.37.0-beta.0이 공개되며 차기 마이너 릴리스 v1.37의 릴리스 사이클이 후반부에 접어들었습니다. 코드 프리즈는 예정대로 2026년 7월 22-23일에 발효되었고, 정식 릴리스(v1.37.0)는 2026년 8월 26일로 예정되어 있습니다. 세부 일정은 [v1.37 릴리스 정보](https://www.kubernetes.dev/resources/release/)를 참고하세요.
-
-같은 주(2026년 7월 22-23일)에 유지 관리 중인 모든 라인의 패치 릴리스도 함께 공개되었습니다: [v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3), [v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7), [v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10). 사용 중인 마이너 버전의 최신 패치를 적용하는 것을 권장합니다.
-
-### 2026년 8월 업데이트: v1.37 스니크 픽(Sneak Peek)
-
-2026년 7월 31일 릴리스 팀이 [Kubernetes v1.37 스니크 픽](https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/)을 공개해, 8월 26일로 예정된 v1.37.0 정식 릴리스에 앞서 계획된 사용 중단(deprecation)·제거·기능 변경 사항을 정리했습니다. 문서 프리즈(Docs Freeze)는 2026년 8월 5-6일에 발효되었습니다. 한편 다음 사이클의 첫 태그인 v1.38.0-alpha.0이 2026년 8월 6일에 생성되었습니다.
-
-### 2026년 8월 업데이트: 패치 릴리스 및 v1.37.0-rc.1
-
-2026년 8월 20일 유지 관리 중인 모든 라인의 패치 릴리스가 공개되었습니다: [v1.36.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.4), [v1.35.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.8), [v1.34.11](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.11). 사용 중인 마이너 버전의 최신 패치를 적용하는 것을 권장합니다.
-
-같은 날 v1.37의 두 번째 릴리스 후보인 [v1.37.0-rc.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-rc.1)도 태그되어(rc.0은 8월 6일), 2026년 8월 26일로 예정된 v1.37.0 정식 릴리스가 일정대로 진행 중입니다.
-
 ### 2026년 8월 업데이트: Kubernetes v1.37 "Garhwal" 정식 릴리스
 
 2026년 8월 26일 [Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)이 예정대로 정식 릴리스되었습니다. 이번 릴리스에는 총 67개의 개선 사항이 포함되었으며, 그중 16개가 Stable, 23개가 Beta로 승격되었고 나머지는 Alpha로 도입되었습니다. 주요 내용:
@@ -1512,7 +1536,7 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 - **파드 인증서와 ClusterTrustBundle의 Stable 승격**: 서비스 어카운트 토큰 대신 워크로드에 X.509 인증서를 자동 발급·로테이션하는 PodCertificate 기능과 신뢰 앵커(trust anchor) 배포용 ClusterTrustBundle이 표준 기능이 되었습니다 ([상세 글](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/))
 - **Metrics API(metrics.k8s.io) GA**: `kubectl top`과 HPA가 사용하는 리소스 메트릭 API가 정식(stable) 버전으로 졸업했습니다 ([상세 글](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/))
 - 그 외 **Stable**: DRA(Dynamic Resource Allocation) 기능 다수, watchcache 초기화 복원력 개선 등 / **Beta**: HPA scale-to-zero, 매니페스트 기반 어드미션 컨트롤 구성 등 / **Alpha**: 파드 수준 체크포인트·복원 등
-- **사용 중단(deprecation)**: kube-dns, kube-proxy의 `ipvs` 모드, `kubectl run --filename/-f`가 사용 중단되었고, 정적(static) 파드의 Secret/ConfigMap 참조가 금지되었습니다. cgroup v1 지원 제거도 계속 진행 중입니다.
+- **사용 중단(deprecation)**: kube-dns와 `kubectl run --filename/-f`가 사용 중단되었고(`ipvs` 모드는 이미 v1.35부터 사용 중단),, 정적(static) 파드의 Secret/ConfigMap 참조가 금지되었습니다. cgroup v1 지원 제거도 계속 진행 중입니다.
 
 업그레이드 전에는 [공식 릴리스 노트](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md)에서 사용 중단·제거 항목을 반드시 확인하세요.
 
@@ -1532,20 +1556,14 @@ Kubernetes 클러스터 업그레이드의 일반적인 순서:
 2. **DNS 및 CNI 업그레이드**: CoreDNS, CNI 플러그인 등 주요 애드온 업그레이드
 3. **워커 노드 업그레이드**: 워커 노드 순차적 업그레이드
 
-**kubeadm 업그레이드 예시**:
-```bash
-# 컨트롤 플레인 업그레이드
-kubeadm upgrade plan
-kubeadm upgrade apply v1.24.0
+**kubeadm 업그레이드 순서**:
 
-# 워커 노드 업그레이드
-kubectl drain <node-name> --ignore-daemonsets
-# 노드에서 kubelet 및 kubeadm 업그레이드
-apt-get update && apt-get install -y kubelet=1.24.0-00 kubeadm=1.24.0-00
-kubeadm upgrade node
-systemctl restart kubelet
-kubectl uncordon <node-name>
-```
+[해당 버전의 kubeadm 업그레이드 문서](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)에 따라 대상 마이너 버전의 `pkgs.k8s.io` 패키지 저장소를 설정합니다. 한 번에 한 마이너 버전만 업그레이드하세요.
+
+1. etcd 백업과 애드온 호환성을 확인합니다. 첫 컨트롤 플레인 노드에서 `kubeadm`을 먼저 업그레이드하고 `kubeadm upgrade plan`, `kubeadm upgrade apply <target-version>`을 실행합니다.
+2. 추가 컨트롤 플레인 노드는 `kubeadm` 업그레이드 후 `kubeadm upgrade node`를 실행합니다.
+3. 각 노드는 kubelet 업그레이드 전에 drain하고 선택한 패치로 kubelet/kubectl 패키지를 업데이트합니다. systemd 구성을 다시 읽고 kubelet을 재시작한 뒤 Ready 확인 후 uncordon합니다.
+4. 워커는 `kubeadm` 업그레이드와 `kubeadm upgrade node` 후 drain/kubelet/uncordon 순서를 수행합니다. kubelet 버전은 API 서버보다 높으면 안 됩니다.
 
 ### 업그레이드 고려사항
 
@@ -1584,7 +1602,9 @@ EKS 클러스터는 다음과 같은 구성 요소로 이루어져 있습니다:
 
 **EKS 아키텍처 다이어그램**:
 
-![AWS가 관리하는 EKS 컨트롤 플레인(kube-apiserver, etcd, 스케줄러)과 사용자가 운영하는 워커 노드, 그리고 IAM/ECR/CloudWatch 등 AWS 서비스 및 VPC 네트워킹이 연동되는 구조를 보여준다.](../../assets/diagrams/rendered/eks-aws-architecture.svg)
+![AWS가 관리하는 EKS 컨트롤 플레인(kube-apiserver, etcd, 스케줄러)과 사용자가 운영하는 워커 노드, 그리고 IAM/ECR/CloudWatch 등 AWS 서비스 및 VPC 네트워킹이 연동되는 구조를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-11.html)
 
 ### EKS 컨트롤 플레인
 
@@ -1603,7 +1623,10 @@ EKS는 다양한 유형의 노드를 지원합니다:
 1. **자체 관리형 노드**: 사용자가 직접 EC2 인스턴스 관리
 2. **관리형 노드 그룹**: AWS에서 노드 수명 주기 관리
 3. **Fargate**: 서버리스 컨테이너 실행 환경
-4. **Bottlerocket 노드**: 컨테이너 워크로드에 최적화된 OS
+4. **EKS Auto Mode**: AWS가 컴퓨팅과 통합 인프라 관리
+5. **EKS Hybrid Nodes**: 고객이 관리하는 온프레미스 노드
+
+Bottlerocket은 별도 컴퓨팅 관리 유형이 아니라 노드 운영체제입니다.
 
 **관리형 노드 그룹 예시**:
 ```yaml
@@ -1624,10 +1647,6 @@ managedNodeGroups:
       role: worker
     tags:
       nodegroup-role: worker
-    iam:
-      withAddonPolicies:
-        autoScaler: true
-        albIngress: true
 ```
 
 ### EKS 네트워킹
@@ -1639,19 +1658,19 @@ EKS 네트워킹은 Amazon VPC를 기반으로 하며, 다음과 같은 구성 �
 3. **로드 밸런서 통합**: ELB, ALB, NLB와의 통합
 4. **VPC 엔드포인트**: AWS 서비스와의 프라이빗 통신
 
-**VPC CNI 구성 예시**:
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-network-policy: "true"
-  enable-pod-eni: "true"
-  warm-ip-target: "5"
-  minimum-ip-target: "10"
+**VPC CNI 애드온 구성 예시** (ConfigMap이 아닌 JSON 구성 값):
+
+```json
+{
+  "enableNetworkPolicy": "true",
+  "env": {
+    "WARM_IP_TARGET": "5",
+    "MINIMUM_IP_TARGET": "10"
+  }
+}
 ```
+
+설치된 애드온의 기존 설정과 병합하고 해당 버전의 스키마를 확인한 후 업데이트하세요. Pod ENI는 `ENABLE_POD_ENI` 환경 변수와 호환 노드, IAM 권한, SecurityGroupPolicy가 추가로 필요하며 ConfigMap 키만으로 활성화되지 않습니다. [네트워크 정책 구성 문서](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)를 참고하세요.
 
 ### EKS 스토리지
 

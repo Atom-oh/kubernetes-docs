@@ -1,0 +1,248 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Canary CRD와 배포 프로세스",
+    "output": "public/archmaps/ko-gitops-04-flagger-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "crd-fields",
+        "label": "CRD 필드",
+        "focus": [
+          "targetRef",
+          "service",
+          "provider",
+          "analysis",
+          "init"
+        ],
+        "note": "Canary CRD의 targetRef·service·provider·analysis가 각 배포 단계에 어떻게 반영되는지 확인합니다."
+      },
+      {
+        "id": "traffic-steps",
+        "label": "트래픽 전환과 분석",
+        "focus": [
+          "scale",
+          "route",
+          "metric"
+        ],
+        "note": "stepWeight 10씩 maxWeight 50까지 올리며 단계마다 1분 간격으로 메트릭을 분석합니다."
+      },
+      {
+        "id": "promote-or-rollback",
+        "label": "승격 또는 롤백",
+        "focus": [
+          "metric",
+          "promote",
+          "init"
+        ],
+        "note": "최종 단계 성공 시 승격한다. 누적 실패 한도 도달 시 분석 중 복구 후 다음 revision을 기다린다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "crd",
+      "label": "Canary CRD"
+    },
+    {
+      "id": "process",
+      "label": "배포 프로세스"
+    }
+  ],
+  "mainPath": [
+    "init",
+    "detect",
+    "scale",
+    "route",
+    "metric",
+    "promote"
+  ],
+  "nodes": [
+    {
+      "id": "targetRef",
+      "lane": "crd",
+      "col": 0,
+      "type": "database",
+      "label": "targetRef",
+      "sublabel": "Deployment",
+      "width": 150
+    },
+    {
+      "id": "service",
+      "lane": "crd",
+      "col": 1,
+      "type": "database",
+      "label": "service",
+      "sublabel": "포트 · 프로토콜",
+      "width": 150
+    },
+    {
+      "id": "provider",
+      "lane": "crd",
+      "col": 3,
+      "type": "database",
+      "label": "provider",
+      "sublabel": "mesh / ingress",
+      "width": 150
+    },
+    {
+      "id": "analysis",
+      "lane": "crd",
+      "col": 4,
+      "type": "database",
+      "label": "analysis",
+      "sublabel": "메트릭 · 임계값 · webhooks",
+      "width": 170
+    },
+    {
+      "id": "init",
+      "lane": "process",
+      "col": 0,
+      "type": "backend",
+      "label": "Primary 준비",
+      "sublabel": "초기 생성 / 복구 후 대기",
+      "width": 150
+    },
+    {
+      "id": "detect",
+      "lane": "process",
+      "col": 1,
+      "type": "backend",
+      "label": "변경 감지",
+      "sublabel": "Pod spec / 추적 설정",
+      "width": 150
+    },
+    {
+      "id": "scale",
+      "lane": "process",
+      "col": 2,
+      "type": "backend",
+      "label": "Canary 스케일 업",
+      "sublabel": "Canary Pod 시작",
+      "width": 150
+    },
+    {
+      "id": "route",
+      "lane": "process",
+      "col": 3,
+      "type": "messagebus",
+      "label": "트래픽 전환",
+      "sublabel": "10% → 50% · stepWeight 10",
+      "width": 170
+    },
+    {
+      "id": "metric",
+      "lane": "process",
+      "col": 4,
+      "type": "security",
+      "label": "반복 분석",
+      "sublabel": "성공률 ≥ 99% · P99 ≤ 500ms",
+      "tag": "1분마다",
+      "width": 190
+    },
+    {
+      "id": "promote",
+      "lane": "process",
+      "col": 5,
+      "type": "cloud",
+      "label": "승격",
+      "sublabel": "갱신 · Ready · 전환",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "targetRef",
+      "to": "init",
+      "label": "대상 참조",
+      "role": "branch"
+    },
+    {
+      "from": "service",
+      "to": "init",
+      "label": "Service 생성",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "provider",
+      "to": "route",
+      "label": "라우팅 제어",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "analysis",
+      "to": "metric",
+      "label": "분석 조건",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "init",
+      "to": "detect",
+      "role": "main"
+    },
+    {
+      "from": "detect",
+      "to": "scale",
+      "role": "main"
+    },
+    {
+      "from": "scale",
+      "to": "route",
+      "role": "main"
+    },
+    {
+      "from": "route",
+      "to": "metric",
+      "label": "단계마다",
+      "role": "main"
+    },
+    {
+      "from": "metric",
+      "to": "promote",
+      "label": "최종 통과",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "metric",
+      "to": "init",
+      "label": "누적 한도 · 복귀",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "가중치 단계",
+      "items": [
+        "분석: 10 → 20 → 30 → 40 → 50%",
+        "승격에는 primary 갱신과 readiness 대기가 포함"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "지표와 시간",
+      "items": [
+        "analysis.interval은 주기; metric.interval은 조회 창",
+        "99% / 500ms는 설명용 SLO 기준"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "실패 판단",
+      "items": [
+        "failedChecks >= threshold (성공 시 리셋되지 않음)",
+        "readiness deadline과 승격 장애는 별도 확인"
+      ]
+    }
+  ]
+}

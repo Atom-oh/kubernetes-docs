@@ -1,0 +1,338 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Mesh Architecture Pattern Comparison",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Control plane"
+        },
+        "frontend": {
+          "label": "Data plane (Pod / VM)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "istio",
+        "label": "Istio - Sidecar",
+        "focus": [
+          "istiod",
+          "istio-pod"
+        ],
+        "note": "Most feature-rich with fine-grained L7 control, but high resource usage and complex operations."
+      },
+      {
+        "id": "linkerd",
+        "label": "Linkerd - Micro-proxy",
+        "focus": [
+          "linkerd-cp",
+          "linkerd-pod"
+        ],
+        "note": "Most lightweight and easy to operate, but limited features and no VM support."
+      },
+      {
+        "id": "consul",
+        "label": "Consul - Universal",
+        "focus": [
+          "consul-servers",
+          "consul-pod",
+          "consul-vm"
+        ],
+        "note": "VM-first support and strong Service Discovery, but requires Consul infrastructure and has a learning curve."
+      },
+      {
+        "id": "kong",
+        "label": "Kong Mesh - Multi-zone",
+        "focus": [
+          "kong-global",
+          "kong-zone1",
+          "kong-zone2",
+          "kong-pod",
+          "kong-vm"
+        ],
+        "note": "Multi-cloud with equal K8s + VM support, but enterprise features are paid and the community is small."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Unified control plane (1 process)",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "istio-pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "App + Envoy Sidecar",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "linkerd-cp",
+      "type": "backend",
+      "label": "Destination · Identity",
+      "sublabel": "Proxy Injector · mTLS certs",
+      "pos": [
+        270,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "linkerd-pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "App + Linkerd2 Rust Proxy",
+      "pos": [
+        270,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "consul-servers",
+      "type": "backend",
+      "label": "Consul Servers",
+      "sublabel": "Service Catalog (distributed)",
+      "pos": [
+        568,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "consul-pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "App + Client + Envoy",
+      "pos": [
+        500,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "consul-vm",
+      "type": "frontend",
+      "label": "VM",
+      "sublabel": "Legacy App + Client + Envoy",
+      "pos": [
+        666,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kong-global",
+      "type": "backend",
+      "label": "Global CP",
+      "sublabel": "Policy sync",
+      "pos": [
+        934,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kong-zone1",
+      "type": "backend",
+      "label": "Zone CP 1",
+      "sublabel": "Local management",
+      "pos": [
+        866,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kong-zone2",
+      "type": "backend",
+      "label": "Zone CP 2",
+      "sublabel": "Local management",
+      "pos": [
+        1032,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kong-pod",
+      "type": "frontend",
+      "label": "K8s Pod",
+      "sublabel": "App + Kuma DP (Envoy)",
+      "pos": [
+        866,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kong-vm",
+      "type": "frontend",
+      "label": "VM",
+      "sublabel": "App + Kuma DP (Envoy)",
+      "pos": [
+        1032,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio - Sidecar Pattern",
+      "wraps": [
+        "istiod",
+        "istio-pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Linkerd - Micro-proxy Pattern",
+      "wraps": [
+        "linkerd-cp",
+        "linkerd-pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Consul - Universal Pattern",
+      "wraps": [
+        "consul-servers",
+        "consul-pod",
+        "consul-vm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kong Mesh - Multi-zone Pattern",
+      "wraps": [
+        "kong-global",
+        "kong-zone1",
+        "kong-zone2",
+        "kong-pod",
+        "kong-vm"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istio-xds",
+      "from": "istiod",
+      "to": "istio-pod",
+      "label": "xDS API",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "linkerd-config",
+      "from": "linkerd-cp",
+      "to": "linkerd-pod",
+      "label": "service info · certificates",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "consul-sd-pod",
+      "from": "consul-servers",
+      "to": "consul-pod",
+      "label": "Service Discovery",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "consul-sd-vm",
+      "from": "consul-servers",
+      "to": "consul-vm",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kong-sync-zone1",
+      "from": "kong-global",
+      "to": "kong-zone1",
+      "label": "Policy sync",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "kong-sync-zone2",
+      "from": "kong-global",
+      "to": "kong-zone2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kong-zone1-pod",
+      "from": "kong-zone1",
+      "to": "kong-pod",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kong-zone2-vm",
+      "from": "kong-zone2",
+      "to": "kong-vm",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

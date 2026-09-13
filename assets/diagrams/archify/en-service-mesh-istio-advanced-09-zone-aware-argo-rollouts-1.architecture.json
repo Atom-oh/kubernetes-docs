@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zone-aware Argo Rollouts Overall Structure",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      680
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Clients"
+        },
+        "cloud": {
+          "label": "Istio traffic policy"
+        },
+        "backend": {
+          "label": "Argo Rollout (per zone)"
+        },
+        "frontend": {
+          "label": "Stable / Canary Pods"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Unified call path",
+        "focus": [
+          "clients",
+          "vs",
+          "pods-a",
+          "pods-b",
+          "pods-c"
+        ],
+        "note": "Clients call only test.default; the VirtualService splits stable/canary weights through per-zone routes."
+      },
+      {
+        "id": "locality",
+        "label": "Locality-aware routing",
+        "focus": [
+          "dr",
+          "vs"
+        ],
+        "note": "The DestinationRule's localityLbSetting prefers same-zone endpoints and fails over only on failure."
+      },
+      {
+        "id": "independent-rollouts",
+        "label": "Independent per-zone Rollouts",
+        "focus": [
+          "rollout-a",
+          "rollout-b",
+          "rollout-c",
+          "vs"
+        ],
+        "note": "Each Rollout manages only its own zone's route and subset pair (stable-a/canary-a, etc.), so they never conflict."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clients",
+      "type": "external",
+      "label": "Clients (Zone A/B/C)",
+      "sublabel": "Call a single service name",
+      "pos": [
+        460,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "cloud",
+      "label": "VirtualService: test",
+      "sublabel": "Single VirtualService · per-zone routes",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "dr",
+      "type": "cloud",
+      "label": "DestinationRule: test",
+      "sublabel": "locality-aware routing",
+      "pos": [
+        460,
+        500
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rollout-a",
+      "type": "backend",
+      "label": "Rollout: test-a",
+      "sublabel": "subset: stable-a / canary-a",
+      "pos": [
+        40,
+        155
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "rollout-b",
+      "type": "backend",
+      "label": "Rollout: test-b",
+      "sublabel": "subset: stable-b / canary-b",
+      "pos": [
+        40,
+        305
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "rollout-c",
+      "type": "backend",
+      "label": "Rollout: test-c",
+      "sublabel": "subset: stable-c / canary-c",
+      "pos": [
+        40,
+        455
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pods-a",
+      "type": "frontend",
+      "label": "Pods (zone=a)",
+      "sublabel": "stable-a 90% · canary-a 10%",
+      "pos": [
+        920,
+        155
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pods-b",
+      "type": "frontend",
+      "label": "Pods (zone=b)",
+      "sublabel": "stable-b 90% · canary-b 10%",
+      "pos": [
+        920,
+        305
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pods-c",
+      "type": "frontend",
+      "label": "Pods (zone=c)",
+      "sublabel": "stable-c 90% · canary-c 10%",
+      "pos": [
+        920,
+        455
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Control Plane",
+      "wraps": [
+        "vs",
+        "dr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Argo Rollouts (independent per zone)",
+      "wraps": [
+        "rollout-a",
+        "rollout-b",
+        "rollout-c"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone A (us-east-1a)",
+      "wraps": [
+        "pods-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone B (us-east-1b)",
+      "wraps": [
+        "pods-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone C (us-east-1c)",
+      "wraps": [
+        "pods-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clients-to-vs",
+      "from": "clients",
+      "to": "vs",
+      "label": "test.default",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "dr-to-vs",
+      "from": "dr",
+      "to": "vs",
+      "label": "localityLbSetting",
+      "variant": "dashed"
+    },
+    {
+      "id": "vs-to-pods-a",
+      "from": "vs",
+      "to": "pods-a"
+    },
+    {
+      "id": "vs-to-pods-b",
+      "from": "vs",
+      "to": "pods-b",
+      "label": "Per-zone route · 90/10",
+      "labelDx": -68,
+      "labelDy": -14
+    },
+    {
+      "id": "vs-to-pods-c",
+      "from": "vs",
+      "to": "pods-c"
+    },
+    {
+      "id": "rollout-a-to-vs",
+      "from": "rollout-a",
+      "to": "vs",
+      "variant": "dashed"
+    },
+    {
+      "id": "rollout-b-to-vs",
+      "from": "rollout-b",
+      "to": "vs",
+      "label": "manages weights",
+      "variant": "dashed",
+      "labelDx": -55
+    },
+    {
+      "id": "rollout-c-to-vs",
+      "from": "rollout-c",
+      "to": "vs",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Key Components",
+      "items": [
+        "A single VirtualService defines the routing rules for all zones",
+        "A per-zone Rollout manages each zone's canary deployment independently",
+        "Each Rollout touches only its own subset pair (stable-a/canary-a, etc.)",
+        "The locality-aware DestinationRule handles zone-local routing and failover automatically"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Why This Avoids Conflicts",
+      "items": [
+        "Argo Rollouts overwrites the entire destinations array of the named route",
+        "So each Rollout references a different route name: zone-a-route, zone-b-route, zone-c-route"
+      ]
+    }
+  ]
+}

@@ -13,10 +13,10 @@
           "label": "IAM"
         },
         "cloud": {
-          "label": "AWS 리소스"
+          "label": "AWS resources"
         },
         "backend": {
-          "label": "접근 설정"
+          "label": "Access setup"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "prep",
-      "label": "사전 리소스"
+      "label": "Prerequisites"
     },
     {
       "id": "cluster",
-      "label": "클러스터와 노드"
+      "label": "Cluster & nodes"
     }
   ],
   "mainPath": [

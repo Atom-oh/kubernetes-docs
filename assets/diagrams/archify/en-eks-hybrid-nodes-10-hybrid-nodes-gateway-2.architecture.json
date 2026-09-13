@@ -1,0 +1,282 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Hybrid Nodes Gateway Component Interaction",
+    "locale": "en",
+    "output": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "leader-duties",
+        "label": "Leader duties",
+        "focus": [
+          "gateway",
+          "lease",
+          "nodes",
+          "vtepconfig",
+          "routetable",
+          "vxlan"
+        ],
+        "note": "The leader holds the Lease, watches Node objects, and writes CiliumVTEPConfig, VPC routes, and hybrid_vxlan0 entries."
+      },
+      {
+        "id": "vtep-path",
+        "label": "VTEP config path",
+        "focus": [
+          "gateway",
+          "vtepconfig",
+          "cilium",
+          "vxlan"
+        ],
+        "note": "CiliumVTEPConfig points hybrid-node Cilium agents at the leader's IP over VXLAN VNI 2 / UDP 8472."
+      },
+      {
+        "id": "vpc-return-path",
+        "label": "VPC return path",
+        "focus": [
+          "gateway",
+          "routetable",
+          "eni",
+          "vxlan",
+          "cilium"
+        ],
+        "note": "VPC routes send hybrid Pod CIDRs to the leader's ENI, which forwards into the VXLAN tunnel."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "Gateway Pod",
+      "sublabel": "leader controller",
+      "tag": "leader",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "lease",
+      "type": "database",
+      "label": "Lease",
+      "sublabel": "leader election",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "nodes",
+      "type": "database",
+      "label": "Node Resources",
+      "sublabel": "watched objects",
+      "pos": [
+        310,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "vtepconfig",
+      "type": "database",
+      "label": "CiliumVTEPConfig",
+      "sublabel": "vtepIPs",
+      "pos": [
+        560,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "vxlan",
+      "type": "backend",
+      "label": "hybrid_vxlan0",
+      "sublabel": "tunnel endpoint",
+      "pos": [
+        1130,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "cilium",
+      "type": "external",
+      "label": "Cilium Agent",
+      "sublabel": "hybrid node",
+      "pos": [
+        1130,
+        440
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "routetable",
+      "type": "cloud",
+      "label": "VPC Route Table",
+      "sublabel": "pod CIDR routes",
+      "pos": [
+        860,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "eni",
+      "type": "cloud",
+      "label": "Gateway ENI",
+      "sublabel": "EC2 network iface",
+      "pos": [
+        1130,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control plane",
+      "wraps": [
+        "gateway",
+        "lease",
+        "nodes",
+        "vtepconfig"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data plane",
+      "wraps": [
+        "vxlan",
+        "cilium",
+        "routetable",
+        "eni"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "election",
+      "from": "gateway",
+      "to": "lease",
+      "label": "election"
+    },
+    {
+      "id": "watch",
+      "from": "gateway",
+      "to": "nodes",
+      "label": "watch",
+      "labelDy": 24
+    },
+    {
+      "id": "update-vtep",
+      "from": "gateway",
+      "to": "vtepconfig",
+      "label": "update vtepIPs"
+    },
+    {
+      "id": "manage-vxlan",
+      "from": "gateway",
+      "to": "vxlan",
+      "label": "FDB / ARP / routes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ec2-api",
+      "from": "gateway",
+      "to": "routetable",
+      "label": "EC2 API",
+      "variant": "security"
+    },
+    {
+      "id": "read-by",
+      "from": "vtepconfig",
+      "to": "cilium",
+      "label": "read by",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "vxlan-tunnel",
+      "from": "vxlan",
+      "to": "cilium",
+      "label": "VXLAN VNI 2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "routes-to",
+      "from": "routetable",
+      "to": "eni",
+      "label": "routes to"
+    },
+    {
+      "id": "forwards",
+      "from": "eni",
+      "to": "vxlan",
+      "label": "forwards",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Leader only",
+      "items": [
+        "Creates/updates VPC routes pointing hybrid Pod CIDRs to its ENI",
+        "Creates/updates CiliumVTEPConfig with its EC2 private IP",
+        "Watches Node objects for hybrid nodes joining or leaving"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Tunnel",
+      "items": [
+        "hybrid_vxlan0: VNI 2, UDP 8472, learning disabled",
+        "Cilium VTEP encapsulates VPC-bound Pod traffic toward the leader"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Standby",
+      "items": [
+        "Keeps hybrid_vxlan0 programmed",
+        "Does not touch VPC routes or CiliumVTEPConfig",
+        "Retries the Lease every 2s"
+      ]
+    }
+  ]
+}

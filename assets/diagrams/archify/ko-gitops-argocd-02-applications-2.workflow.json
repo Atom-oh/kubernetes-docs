@@ -1,0 +1,182 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ArgoCD 리소스 훅 실행 흐름",
+    "output": "public/archmaps/ko-gitops-argocd-02-applications-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "hook-order",
+        "label": "훅 실행 순서",
+        "focus": [
+          "presync",
+          "sync",
+          "postsync"
+        ],
+        "note": "PreSync 성공 후 Sync를 적용하고, Sync 성공 및 리소스 Healthy 확인 후 PostSync를 실행한다."
+      },
+      {
+        "id": "failure-path",
+        "label": "실패 시 전환",
+        "focus": [
+          "presync",
+          "sync",
+          "postsync",
+          "syncfail"
+        ],
+        "note": "실행 가능한 동기화 작업이 실패하면 SyncFail 처리를 시도한다. 사전 manifest 해석 오류 등 모든 오류의 정리를 보장하지는 않는다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "hooks",
+      "label": "동기화 훅 실행"
+    },
+    {
+      "id": "failure",
+      "label": "실패 처리",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "presync",
+    "sync",
+    "postsync"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "presync"
+    ],
+    "allowedTerminals": [
+      "postsync",
+      "syncfail"
+    ],
+    "requiredPaths": [
+      {
+        "from": "presync",
+        "to": "postsync"
+      },
+      {
+        "from": "sync",
+        "to": "syncfail"
+      },
+      {
+        "from": "presync",
+        "to": "syncfail"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "presync",
+      "lane": "hooks",
+      "col": 0,
+      "type": "backend",
+      "label": "PreSync Hook",
+      "sublabel": "동기화 전",
+      "tag": "pre-sync"
+    },
+    {
+      "id": "sync",
+      "lane": "hooks",
+      "col": 1,
+      "type": "backend",
+      "label": "Sync",
+      "sublabel": "매니페스트 · Sync 훅 적용",
+      "tag": "sync",
+      "width": 144
+    },
+    {
+      "id": "postsync",
+      "lane": "hooks",
+      "col": 2,
+      "type": "backend",
+      "label": "PostSync Hook",
+      "sublabel": "Sync 성공 · Healthy 이후",
+      "tag": "post-sync",
+      "width": 144
+    },
+    {
+      "id": "syncfail",
+      "lane": "failure",
+      "col": 3,
+      "type": "backend",
+      "label": "SyncFail Hook",
+      "sublabel": "동기화 실패 시",
+      "tag": "sync-fail"
+    }
+  ],
+  "edges": [
+    {
+      "from": "presync",
+      "to": "sync",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "sync",
+      "to": "postsync",
+      "variant": "emphasis",
+      "role": "main",
+      "label": "성공 · Healthy"
+    },
+    {
+      "from": "sync",
+      "to": "syncfail",
+      "label": "실패 시",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "postsync",
+      "to": "syncfail",
+      "label": "실패 시",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "presync",
+      "to": "syncfail",
+      "label": "실패 시",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "동기화 훅",
+      "items": [
+        "PreSync → Sync → Healthy 확인 → PostSync",
+        "명시적 selective sync에서는 훅을 실행하지 않는다",
+        "3.5.2 ApplyOutOfSyncOnly는 훅과 이력을 유지한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "삭제와 실패 처리",
+      "items": [
+        "PreDelete/PostDelete는 Application 삭제용이며 이 동기화 흐름과 별개다",
+        "고정 이름 훅에는 BeforeHookCreation 등 재실행·정리 정책을 지정한다",
+        "훅 실패는 데이터베이스나 Git을 자동 rollback하지 않는다"
+      ]
+    }
+  ]
+}

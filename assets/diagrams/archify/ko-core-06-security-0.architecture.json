@@ -1,0 +1,392 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 보안 아키텍처",
+    "output": "ko-core-06-security-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "인프라 계층"
+        },
+        "backend": {
+          "label": "API 서버"
+        },
+        "security": {
+          "label": "보안 통제"
+        },
+        "database": {
+          "label": "저장 데이터 보호"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "infra-to-api",
+        "label": "인프라에서 API 서버로",
+        "focus": [
+          "host",
+          "container",
+          "network",
+          "api"
+        ],
+        "note": "호스트, 컨테이너 런타임, 네트워크 보안이 API 서버 보안의 기반이 됩니다."
+      },
+      {
+        "id": "request-pipeline",
+        "label": "API 요청 처리 파이프라인",
+        "focus": [
+          "api",
+          "auth",
+          "authz",
+          "admission",
+          "audit"
+        ],
+        "note": "모든 API 요청은 인증, 권한 부여, 어드미션 컨트롤을 거치며, 감사 정책에 따라 감사 로그에 기록됩니다."
+      },
+      {
+        "id": "workload-controls",
+        "label": "워크로드 보안 통제",
+        "focus": [
+          "authz",
+          "admission",
+          "network",
+          "container",
+          "rbac",
+          "podsec",
+          "netpol",
+          "imgsec"
+        ],
+        "note": "RBAC, Pod 보안 표준, 네트워크 정책, 이미지 보안이 클러스터와 인프라 계층에서 파생됩니다."
+      }
+    ],
+    "viewBox": [
+      1240,
+      720
+    ]
+  },
+  "components": [
+    {
+      "id": "host",
+      "type": "cloud",
+      "label": "호스트 보안",
+      "sublabel": "OS 강화",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "container",
+      "type": "cloud",
+      "label": "컨테이너 런타임 보안",
+      "pos": [
+        250,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "네트워크 보안",
+      "sublabel": "방화벽",
+      "pos": [
+        480,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 서버 보안",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        250,
+        170
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "encrypt",
+      "type": "database",
+      "label": "데이터 암호화",
+      "sublabel": "etcd · 시크릿 관리",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "인증 (Authentication)",
+      "sublabel": "신원 확인",
+      "pos": [
+        250,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "authz",
+      "type": "security",
+      "label": "권한 부여 (Authorization)",
+      "sublabel": "RBAC · ABAC · Node · Webhook",
+      "pos": [
+        250,
+        370
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "admission",
+      "type": "security",
+      "label": "어드미션 컨트롤",
+      "pos": [
+        250,
+        470
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "audit",
+      "type": "security",
+      "label": "감사 로깅",
+      "sublabel": "이벤트 기록",
+      "pos": [
+        250,
+        570
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "netpol",
+      "type": "security",
+      "label": "네트워크 정책",
+      "sublabel": "NetworkPolicy",
+      "pos": [
+        1010,
+        170
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "imgsec",
+      "type": "security",
+      "label": "이미지 보안",
+      "sublabel": "이미지 스캔 · 서명",
+      "pos": [
+        1010,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC",
+      "sublabel": "Role · RoleBinding",
+      "pos": [
+        1010,
+        370
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "podsec",
+      "type": "security",
+      "label": "Pod 보안 표준",
+      "sublabel": "보안 컨텍스트 (securityContext)",
+      "pos": [
+        1010,
+        470
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "인프라 보안",
+      "wraps": [
+        "host",
+        "container",
+        "network"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클러스터 보안",
+      "wraps": [
+        "api",
+        "encrypt",
+        "auth",
+        "authz",
+        "admission",
+        "audit"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워크로드 보안",
+      "wraps": [
+        "netpol",
+        "imgsec",
+        "rbac",
+        "podsec"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "host-api",
+      "from": "host",
+      "to": "api"
+    },
+    {
+      "id": "container-api",
+      "from": "container",
+      "to": "api"
+    },
+    {
+      "id": "network-api",
+      "from": "network",
+      "to": "api"
+    },
+    {
+      "id": "api-auth",
+      "from": "api",
+      "to": "auth",
+      "variant": "emphasis"
+    },
+    {
+      "id": "auth-authz",
+      "from": "auth",
+      "to": "authz",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authz-admission",
+      "from": "authz",
+      "to": "admission",
+      "variant": "emphasis"
+    },
+    {
+      "id": "admission-audit",
+      "from": "admission",
+      "to": "audit",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-encrypt",
+      "from": "api",
+      "to": "encrypt"
+    },
+    {
+      "id": "authz-rbac",
+      "from": "authz",
+      "to": "rbac"
+    },
+    {
+      "id": "admission-podsec",
+      "from": "admission",
+      "to": "podsec"
+    },
+    {
+      "id": "network-netpol",
+      "from": "network",
+      "to": "netpol"
+    },
+    {
+      "id": "container-imgsec",
+      "from": "container",
+      "to": "imgsec",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          345,
+          20
+        ],
+        [
+          1105,
+          20
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "인프라 보안",
+      "items": [
+        "호스트 OS, 컨테이너 런타임, 네트워크가 대상",
+        "클러스터 관리자가 책임",
+        "방화벽, OS 강화, 컨테이너 런타임 보안으로 방어"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "클러스터 보안",
+      "items": [
+        "API 서버, etcd, kubelet이 대상",
+        "인증, 권한 부여, 어드미션 컨트롤, 암호화로 방어",
+        "감사 정책에 따라 API 요청 이벤트를 기록"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "워크로드 보안",
+      "items": [
+        "파드, 컨테이너, 서비스가 대상",
+        "애플리케이션 개발자가 책임",
+        "보안 컨텍스트, 네트워크 정책, RBAC로 방어"
+      ]
+    }
+  ]
+}

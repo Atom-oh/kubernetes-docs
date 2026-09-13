@@ -2,15 +2,15 @@
 
 > **支持的版本**: Istio 1.28+ **API 版本**: `networking.istio.io/v1`, `security.istio.io/v1` **最后更新**: February 19, 2026
 
-本文档深入介绍 Istio 的内部架构和网络机制。
+本文深入介绍 Istio 的内部架构和网络机制。
 
-**有关背景和历史**，请参阅 [基本概念](02-basic-concepts.md#background-and-history) 文档。
+**如需了解背景和历史**，请参阅 [基本概念](02-basic-concepts.md#background-and-history) 文档。
 
 **重要变更（Istio 1.5+）**：
 
 * Pilot、Citadel、Galley **不再是独立组件**
 * 它们已整合为名为 Istiod（`pilot-discovery`）的**单个二进制文件**
-* Pilot/Citadel/Galley 术语指的是**描述功能的历史名称**
+* Pilot/Citadel/Galley 术语是**描述功能的历史名称**
 
 ## 目录
 
@@ -25,14 +25,18 @@
 
 ## Istio 架构概览
 
-### 总体结构
+### 整体结构
+
+![Istio 架构概览：Istiod 监视 Kubernetes API server，并将 xDS 配置推送到 Ingress Gateway 和 sidecar，同时 Pod 通过 mTLS 相互通信。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-0.html)
 
 ### 控制平面与数据平面
 
 | 类别        | 控制平面（Istiod）                        | 数据平面（Envoy）        |
 | --------------- | --------------------------------------------- | ------------------------- |
 | **角色**        | 策略管理、配置分发 | 实际流量处理 |
-| **位置**    | 独立的 Pod（通常为 1-3 个）                 | 所有应用程序 Pod      |
+| **位置**    | 独立的 Pod（通常为 1-3 个）                 | 所有应用 Pod      |
 | **语言**    | Go                                            | C++                       |
 | **负载**        | 低                                           | 高（所有流量）        |
 | **可扩展性** | 水平扩缩容（HA）                       | 自动（每个 Pod 1 个）     |
@@ -41,72 +45,15 @@
 
 ### Istiod 内部结构
 
-**重要提示**：自 Istio 1.5 起，Pilot、Citadel 和 Galley 是 Istiod 的**内部功能，而非独立组件**。
+**重要**：自 Istio 1.5 起，Pilot、Citadel 和 Galley 是 **Istiod 的内部功能，而非独立组件**。
 
-```mermaid
-flowchart TB
-    subgraph Istiod[Istiod Single Process]
-        subgraph PilotFunc[Pilot Functionality]
-            SD[Service Discovery<br/>Service Detection]
-            TR[Traffic Management<br/>Traffic Rules]
-            xDS[xDS Server<br/>Configuration Distribution]
-        end
-
-        subgraph CitadelFunc[Citadel Functionality]
-            CA[Certificate Authority<br/>CA Management]
-            ID[Identity Management<br/>SPIFFE ID]
-        end
-
-        subgraph GalleyFunc[Galley Functionality]
-            Val[Configuration Validation<br/>Config Validation]
-            Proc[Configuration Processing<br/>Config Processing]
-        end
-    end
-
-    subgraph K8S[Kubernetes API]
-        API[API Server]
-        CRD[Istio CRDs<br/>VirtualService, DestinationRule, etc.]
-    end
-
-    subgraph Envoys[Envoy Proxies]
-        E1[Envoy 1]
-        E2[Envoy 2]
-        E3[Envoy N]
-    end
-
-    API --> Val
-    CRD --> Val
-    Val --> SD
-    Val --> CA
-
-    SD --> xDS
-    TR --> xDS
-    CA --> xDS
-
-    xDS -->|xDS API<br/>Config Push| E1
-    xDS -->|xDS API<br/>Config Push| E2
-    xDS -->|xDS API<br/>Config Push| E3
-
-    CA -->|X.509 Certificates<br/>SDS API| E1
-    CA -->|X.509 Certificates<br/>SDS API| E2
-    CA -->|X.509 Certificates<br/>SDS API| E3
-
-    %% Style definitions
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class SD,TR,xDS,CA,ID,Val,Proc istiod;
-    class API,CRD k8s;
-    class E1,E2,E3 envoy;
-```
+![架构图展示了 Istiod 的单个进程整合 Pilot、Citadel 和 Galley 功能，验证来自 Kubernetes API 的配置，并向 Envoy sidecar proxy 推送 xDS 配置和 X.509 证书。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-0.svg)
 
 ### Istiod 主要功能
 
-**注意**：在 Istio 1.28 中，以下功能已集成在 Istiod 内部。使用历史名称（Pilot、Citadel、Galley）来描述功能。
+**注意**：在 Istio 1.28 中，下列功能已集成于 Istiod。使用历史名称（Pilot、Citadel、Galley）来描述相应功能。
 
-#### 1. 服务发现（Pilot 功能）
+#### 1. Service Discovery（Pilot 功能）
 
 ```yaml
 # Kubernetes Service detection
@@ -121,14 +68,14 @@ spec:
   - port: 9080
 ```
 
-Istiod 会跟踪：
+Istiod 跟踪：
 
 * Kubernetes Service
-* Endpoints（Pod IP）
+* Endpoint（Pod IP）
 * Pod 状态变更
 * 外部服务（ServiceEntry）
 
-#### 2. 流量管理（Pilot 功能）
+#### 2. Traffic Management（Pilot 功能）
 
 将 Istio CRD 转换为 Envoy 配置：
 
@@ -168,26 +115,9 @@ spec:
 }
 ```
 
-#### 3. 证书管理（Citadel 功能）
+#### 3. Certificate Management（Citadel 功能）
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Envoy
-    participant Istiod
-    participant SPIFFE
-
-    Envoy->>Istiod: CSR Request<br/>(Certificate Signing Request)
-    Istiod->>SPIFFE: Identity Verification<br/>(ServiceAccount)
-    SPIFFE->>Istiod: Verification Complete
-    Istiod->>Istiod: Sign Certificate
-    Istiod->>Envoy: Issue X.509 Certificate<br/>(TTL: 24 hours)
-
-    Note over Envoy: Use Certificate<br/>mTLS Communication
-
-    Envoy->>Istiod: Certificate Renewal Request<br/>(Before Expiry)
-    Istiod->>Envoy: Issue New Certificate
-```
+![时序图展示 Envoy 向 Istiod 请求证书，Istiod 使用 SPIFFE 验证 workload identity，为 mTLS 签名并签发 X.509 证书，以及在证书到期前续订。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-1.svg)
 
 **SPIFFE ID 格式**：
 
@@ -195,7 +125,7 @@ sequenceDiagram
 spiffe://cluster.local/ns/default/sa/reviews
 ```
 
-#### 4. 配置验证（Galley 功能）
+#### 4. Configuration Validation（Galley 功能）
 
 ```yaml
 # Invalid configuration
@@ -212,7 +142,7 @@ spec:
         host: non-existent-service  # ❌ Non-existent service
 ```
 
-Istiod 会在应用前进行验证：
+Istiod 在应用前进行验证：
 
 ```bash
 $ kubectl apply -f invalid-vs.yaml
@@ -233,11 +163,11 @@ istio-p+     1  /usr/local/bin/pilot-discovery discovery
 # Single binary 'pilot-discovery' performs all functions
 ```
 
-**关键要点**：
+**要点**：
 
-* Istiod 作为名为 `pilot-discovery` 的**单个 Go 二进制文件**运行
-* Pilot、Citadel、Galley 以**代码级 package/module**的形式存在，但不是独立进程
-* 所有功能都作为 goroutine 在单个进程中运行
+* Istiod 以名为 `pilot-discovery` 的**单个 Go 二进制文件**运行
+* Pilot、Citadel、Galley 以**代码级 package/module**存在，但不是独立进程
+* 所有功能均作为 goroutine 在单个进程中运行
 
 **Istiod 提供的主要端口**：
 
@@ -245,7 +175,7 @@ istio-p+     1  /usr/local/bin/pilot-discovery discovery
 | --------- | -------- | ------------------------ | ------------------------- |
 | **15010** | gRPC     | xDS（旧版）             | 向后兼容    |
 | **15012** | gRPC     | TLS 上的 xDS             | 主要 xDS API 端点  |
-| **15014** | HTTP     | 控制平面监控 | 指标与健康检查 |
+| **15014** | HTTP     | 控制平面监控 | 指标和健康检查 |
 | **15017** | HTTPS    | Webhook                  | Sidecar 注入         |
 | **8080**  | HTTP     | 调试                    | 调试接口       |
 
@@ -278,9 +208,9 @@ spec:
             memory: 2Gi
 ```
 
-**典型资源用量**：
+**典型资源使用情况**：
 
-* CPU：0.5 - 2 核
+* CPU：0.5 - 2 个核心
 * 内存：2 - 4 GB
 * 可处理数千个 Service 和 Pod
 
@@ -288,41 +218,15 @@ spec:
 
 ### Envoy 架构
 
-```mermaid
-flowchart TB
-    subgraph EnvoyProxy[Envoy Proxy]
-        Listener[Listeners<br/>Port Reception]
-        Filter[Filters<br/>Request Processing]
-        Router[Routers<br/>Routing Decision]
-        Cluster[Clusters<br/>Upstream Services]
+![架构图展示入站请求经过 Envoy 的 listener、filter chain 和 router，进入上游服务 cluster，然后作为出站请求离开。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-2.png)
 
-        Listener --> Filter
-        Filter --> Router
-        Router --> Cluster
-    end
-
-    subgraph External[External]
-        Incoming[Incoming Requests]
-        Outgoing[Outgoing Requests]
-    end
-
-    Incoming -->|Inbound| Listener
-    Cluster -->|Outbound| Outgoing
-
-    %% Style definitions
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Listener,Filter,Router,Cluster envoy;
-    class Incoming,Outgoing external;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-2.html)
 
 ### Envoy 主要组件
 
-#### 1. Listeners
+#### 1. Listener
 
-**接收端口上的连接**：
+**在端口上接收连接**：
 
 ```json
 {
@@ -337,43 +241,20 @@ flowchart TB
 }
 ```
 
-**默认 Istio Listeners**：
+**默认 Istio Listener**：
 
 * `0.0.0.0:15001`：所有出站 TCP 流量
 * `0.0.0.0:15006`：所有入站 TCP 流量
 * `0.0.0.0:15021`：健康检查
 * `0.0.0.0:15090`：Prometheus 指标
 
-#### 2. Filters
+#### 2. Filter
 
 **处理请求/响应的插件**：
 
-```mermaid
-flowchart LR
-    Request[HTTP Request]
+![流程图展示 HTTP 请求依次通过 Envoy 的 JWT 身份验证、限流、RBAC 验证、统计信息收集和 router filter，随后成为 HTTP 响应。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-3.svg)
 
-    subgraph Filters[Filter Chain]
-        F1[JWT Auth]
-        F2[Rate Limiting]
-        F3[RBAC Validation]
-        F4[Stats Collection]
-        F5[Router]
-    end
-
-    Response[HTTP Response]
-
-    Request --> F1 --> F2 --> F3 --> F4 --> F5 --> Response
-
-    %% Style definitions
-    classDef req fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef filter fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Request,Response req;
-    class F1,F2,F3,F4,F5 filter;
-```
-
-#### 3. Clusters
+#### 3. Cluster
 
 **上游服务的逻辑分组**：
 
@@ -389,7 +270,7 @@ flowchart LR
 }
 ```
 
-#### 4. Endpoints
+#### 4. Endpoint
 
 **实际 Pod IP 列表**：
 
@@ -411,57 +292,16 @@ flowchart LR
 
 **基准测试**（典型环境）：
 
-* 吞吐量：每核 10,000+ RPS
+* 吞吐量：每个核心 10,000+ RPS
 * 新增延迟：< 1ms（P99）
 * 内存：50-100 MB（默认配置）
-* CPU：0.1-0.5 核（典型负载）
+* CPU：0.1-0.5 个核心（典型负载）
 
 ## Sidecar 注入机制
 
 ### 注入流程
 
-```mermaid
-flowchart TB
-    subgraph User[User]
-        Deploy[Create Deployment]
-    end
-
-    subgraph K8S[Kubernetes]
-        API[API Server]
-        Webhook[Mutating Webhook]
-    end
-
-    subgraph Istio[Istio]
-        Injector[Sidecar Injector]
-    end
-
-    subgraph Pod[Created Pod]
-        Init[istio-init<br/>init container]
-        App[Application<br/>container]
-        Proxy[istio-proxy<br/>sidecar container]
-    end
-
-    Deploy -->|1\. POST| API
-    API -->|2\. Call Webhook| Webhook
-    Webhook -->|3\. Injection Request| Injector
-    Injector -->|4\. Modified Pod Spec| Webhook
-    Webhook -->|5\. Return| API
-    API -->|6\. Create Pod| Init
-    Init -->|7\. Complete| App
-    Init -->|7\. Complete| Proxy
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istio fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Deploy user;
-    class API,Webhook k8s;
-    class Injector istio;
-    class Init,App,Proxy container;
-```
+![流程图展示 Deployment 的 Pod 创建调用 Kubernetes API 后触发 mutating webhook，该 webhook 请求 Istio 的 sidecar injector 修改 Pod spec，最终得到一个同时包含应用 container、istio-init container 和 istio-proxy sidecar 的 Pod。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-4.svg)
 
 ### 原始配置与注入后配置
 
@@ -538,7 +378,7 @@ spec:
 
 #### 手动注入
 
-使用 `istioctl kube-inject` 命令将 Sidecar 直接注入 YAML 文件。
+使用 `istioctl kube-inject` 命令将 sidecar 直接注入 YAML 文件。
 
 ```bash
 # Inject sidecar into YAML file and deploy
@@ -549,45 +389,23 @@ istioctl kube-inject -f deployment.yaml -o deployment-injected.yaml
 kubectl apply -f deployment-injected.yaml
 ```
 
-**手动注入场景**：
+**手动注入的适用场景**：
 
 * 无法使用自动注入的环境
-* CI/CD pipeline 中需要显式控制时
+* 在 CI/CD pipeline 中需要显式控制时
 * 希望检查注入后的 YAML 以进行调试时
 
 ## iptables 与流量拦截
 
 ### istio-init Container
 
-**角色**：设置 iptables 规则，将 Pod 网络流量重定向到 Envoy Proxy
+**作用**：设置 iptables 规则，将 Pod 网络流量重定向到 Envoy Proxy
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8S as Kubernetes
-    participant Init as istio-init
-    participant IPTables as iptables
-    participant App as Application
-    participant Envoy as Envoy Proxy
-
-    K8S->>Init: Start Init Container
-    Init->>IPTables: Set iptables rules
-    Note over IPTables: Redirect all traffic<br/>to Envoy
-
-    Init->>K8S: Complete (Exit 0)
-    K8S->>App: Start Application
-    K8S->>Envoy: Start Envoy
-
-    App->>IPTables: Outbound request<br/>(e.g., curl reviews:9080)
-    IPTables->>Envoy: Redirect (15001)
-    Envoy->>Envoy: Routing decision
-    Envoy->>IPTables: Send actual request
-    Note over IPTables: Envoy UID<br/>bypasses iptables
-```
+![时序图展示 istio-init container 在应用和 Envoy proxy 启动前配置 iptables，将 Pod 流量重定向到 Envoy，因此之后的出站请求会被透明拦截并重定向到 Envoy 的 listener。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-5.svg)
 
 ### iptables 规则详情
 
-**由 istio-init 执行的命令**：
+**istio-init 执行的命令**：
 
 ```bash
 #!/bin/bash
@@ -615,48 +433,7 @@ iptables -t nat -I OUTPUT -p udp --dport 53 -j RETURN
 
 ### 流量流向（应用 iptables 后）
 
-```mermaid
-flowchart TB
-    subgraph Pod[Pod Network Namespace]
-        App[Application<br/>localhost:8080]
-
-        subgraph IPTables[iptables NAT]
-            Output[OUTPUT Chain]
-            PreRouting[PREROUTING Chain]
-        end
-
-        subgraph Envoy[Envoy Proxy<br/>UID: 1337]
-            L15001[Listener<br/>15001<br/>Outbound]
-            L15006[Listener<br/>15006<br/>Inbound]
-        end
-    end
-
-    External[External Service<br/>reviews:9080]
-
-    %% Outbound flow
-    App -->|1\. curl reviews:9080| Output
-    Output -->|2\. REDIRECT| L15001
-    L15001 -->|3\. Routing| L15001
-    L15001 -->|4\. UID 1337<br/>bypass iptables| External
-
-    %% Inbound flow
-    External -->|5\. Incoming request| PreRouting
-    PreRouting -->|6\. REDIRECT| L15006
-    L15006 -->|7\. mTLS verification| L15006
-    L15006 -->|8\. localhost| App
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef iptables fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class Output,PreRouting iptables;
-    class L15001,L15006 envoy;
-    class External external;
-```
+![架构图展示应用的出站请求被 iptables OUTPUT chain 规则重定向到 Envoy 的出站 listener，并使用 proxy 自身的 UID 转发到外部服务以绕过进一步拦截；镜像的入站路径则在 mTLS 验证后，经由 PREROUTING chain 进入 Envoy 的入站 listener，再抵达应用。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-6.svg)
 
 ### 检查 iptables 规则
 
@@ -691,44 +468,20 @@ REDIRECT   tcp  --  0.0.0.0/0  0.0.0.0/0           redir ports 15006
 
 ### iptables 与 eBPF（CNI Plugin）
 
-Istio 支持两种流量拦截方法：
+Istio 支持两种流量拦截方式：
 
 | 方法         | 优点           | 缺点           | 使用场景                   |
 | -------------- | -------------------- | ----------------------- | ------------------------------ |
 | **iptables**   | 简单、通用    | 需要 Init Container | 默认设置                  |
-| **eBPF（CNI）** | 无需 Init，速度快 | 需要现代内核  | 高性能、Ambient Mode |
+| **eBPF（CNI）** | 无需 Init、速度快 | 需要现代内核  | 高性能、Ambient Mode |
 
 ## DNS 处理机制
 
-### Kubernetes DNS 基本操作
+### Kubernetes DNS 基本工作方式
 
-```mermaid
-flowchart LR
-    App[Application]
+![流程图展示应用的默认 DNS 查询路径：名称解析请求经由 Pod 的 resolv.conf 到达 CoreDNS，CoreDNS 将 Service 的 ClusterIP 返回给应用。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-7.svg)
 
-    subgraph Pod[Pod Network]
-        Resolve["/etc/resolv.conf<br/>nameserver 10.96.0.10"]
-    end
-
-    subgraph K8S[Kubernetes]
-        CoreDNS["CoreDNS<br/>Service: kube-dns<br/>ClusterIP: 10.96.0.10"]
-    end
-
-    App -->|"1\. Name resolution request<br/>(reviews)"| Resolve
-    Resolve -->|"2\. DNS query<br/>(UDP 53 → 10.96.0.10)"| CoreDNS
-    CoreDNS -->|"3\. Return ClusterIP<br/>(reviews = 10.100.1.5)"| Resolve
-    Resolve -->|"4\. Return IP<br/>(10.100.1.5)"| App
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dns fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App app;
-    class Resolve,CoreDNS dns;
-```
-
-**/etc/resolv.conf**（Pod 内部）：
+**/etc/resolv.conf**（Pod 内）：
 
 ```bash
 nameserver 10.96.0.10  # kube-dns ClusterIP
@@ -740,49 +493,17 @@ options ndots:5
 
 **在 Istio 中，Envoy 处理 DNS**：
 
-```mermaid
-flowchart TB
-    App[Application<br/>curl reviews:9080]
-
-    subgraph Envoy[Envoy Proxy]
-        Listener[Listener<br/>15001]
-        DNS[DNS Filter]
-        Route[Route Match]
-        Cluster["Cluster<br/>outbound:9080::reviews"]
-        EDS[Endpoint Discovery]
-    end
-
-    subgraph Istiod[Istiod]
-        XDS[xDS Server]
-    end
-
-    App -->|1\. TCP connection| Listener
-    Listener -->|2\. Inspect Host header| DNS
-    DNS -->|3\. Name resolution| Route
-    Route -->|4\. Select Cluster| Cluster
-    Cluster -->|5\. Query Endpoints| EDS
-    EDS <-->|6\. EDS API| XDS
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App app;
-    class Listener,DNS,Route,Cluster,EDS envoy;
-    class XDS istiod;
-```
+![流程图展示 Envoy 拦截应用的 TCP 连接，检查 Host header，解析 route，选择 cluster，并通过 Istiod 的 xDS server 查询 endpoint，而不是调用 CoreDNS。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-8.svg)
 
 **优点**：
 
 * 无需调用 CoreDNS（性能提升）
-* 动态更新 Endpoint
+* 动态 Endpoint 更新
 * 高级路由（版本、权重等）
 
 ### DNS Proxy（可选）
 
-**Istio 1.8+ 中新增的 DNS Proxy 功能**：
+**DNS Proxy 功能在 Istio 1.8+ 中添加**：
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -796,28 +517,7 @@ spec:
 
 **工作方式**：
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application
-    participant IPT as iptables
-    participant Envoy as Envoy<br/>DNS Proxy
-    participant CoreDNS as CoreDNS
-    participant Istiod as Istiod
-
-    App->>IPT: DNS query<br/>reviews (UDP 53)
-    IPT->>Envoy: Redirect (15053)
-
-    alt Istio Service
-        Envoy->>Istiod: Query service info<br/>(xDS)
-        Istiod->>Envoy: Return ClusterIP
-        Envoy->>App: 10.96.0.10
-    else External DNS
-        Envoy->>CoreDNS: DNS query
-        CoreDNS->>Envoy: Return IP
-        Envoy->>App: Return IP
-    end
-```
+![时序图展示 Envoy 的 DNS proxy 拦截被重定向的 DNS 查询并进行分支：对于 mesh 内的 Istio Service，它向 Istiod 的 xDS server 查询 ClusterIP；否则回退到查询 CoreDNS，最后无论哪种方式都将 IP 返回给应用。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-9.svg)
 
 **DNS Proxy iptables 规则**：
 
@@ -832,81 +532,23 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 ### xDS 协议概览
 
-**xDS**：代表 Discovery Service，是 Envoy 的动态配置协议。
+**xDS**：Discovery Service 的缩写，是 Envoy 的动态配置协议。
 
-```mermaid
-flowchart LR
-    subgraph Istiod[Istiod]
-        Pilot[Pilot<br/>xDS Server]
-    end
-
-    subgraph Envoy[Envoy Proxy]
-        LDS[Listener DS]
-        RDS[Route DS]
-        CDS[Cluster DS]
-        EDS[Endpoint DS]
-        SDS[Secret DS]
-    end
-
-    Pilot <-->|gRPC<br/>Stream| LDS
-    Pilot <-->|gRPC<br/>Stream| RDS
-    Pilot <-->|gRPC<br/>Stream| CDS
-    Pilot <-->|gRPC<br/>Stream| EDS
-    Pilot <-->|gRPC<br/>Stream| SDS
-
-    %% Style definitions
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef xds fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pilot istiod;
-    class LDS,RDS,CDS,EDS,SDS xds;
-```
+![架构图展示 Istiod 的 Pilot component 与 Envoy 维护五条双向 gRPC stream：Listener、Route、Cluster、Endpoint 和 Secret Discovery Service。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-10.svg)
 
 ### xDS API 类型
 
-| API     | 名称               | 角色                       | 示例           |
+| API     | 名称               | 作用                       | 示例           |
 | ------- | ------------------ | -------------------------- | ----------------- |
 | **LDS** | Listener Discovery | 接收端口配置 | 15001、15006      |
 | **RDS** | Route Discovery    | HTTP 路由规则         | VirtualService    |
 | **CDS** | Cluster Discovery  | 上游服务          | DestinationRule   |
-| **EDS** | Endpoint Discovery | Pod IP 列表                | Service Endpoints |
+| **EDS** | Endpoint Discovery | Pod IP 列表                | Service Endpoint |
 | **SDS** | Secret Discovery   | TLS 证书           | mTLS 证书 |
 
 ### xDS 通信流程
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Envoy as Envoy Proxy
-    participant Istiod as Istiod<br/>(xDS Server)
-    participant K8S as Kubernetes API
-
-    Note over Envoy: Pod starts
-
-    Envoy->>Istiod: 1. Connect (gRPC :15012)
-    Istiod->>Envoy: 2. mTLS authentication
-
-    Envoy->>Istiod: 3. LDS request
-    Istiod->>Envoy: 4. Return Listeners
-
-    Envoy->>Istiod: 5. CDS request
-    Istiod->>Envoy: 6. Return Clusters
-
-    Envoy->>Istiod: 7. EDS request
-    Istiod->>Envoy: 8. Return Endpoints
-
-    Envoy->>Istiod: 9. RDS request
-    Istiod->>Envoy: 10. Return Routes
-
-    Envoy->>Istiod: 11. SDS request
-    Istiod->>Envoy: 12. Return Certificates
-
-    Note over Envoy: Configuration complete<br/>Ready to process traffic
-
-    K8S->>Istiod: 13. Service change detected
-    Istiod->>Envoy: 14. EDS push (new Endpoint)
-```
+![时序图展示新启动的 Envoy proxy 通过 mTLS 连接到 Istiod，为每种 discovery resource 类型循环进行 xDS 请求/响应往返，直至完成配置；之后 Istiod 检测到 Kubernetes Service 变更时，会推送 endpoint 更新。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-11.svg)
 
 ### 验证 xDS 通信
 
@@ -955,30 +597,7 @@ istioctl proxy-config routes <pod-name> -n default
 
 默认情况下，每个 Envoy 都会接收**整个 mesh 中所有 Service 的信息**：
 
-```mermaid
-flowchart TB
-    subgraph Mesh[Service Mesh - 1000 services]
-        S1[Service 1]
-        S2[Service 2]
-        S3[Service 3]
-        Sn[Service 1000]
-    end
-
-    subgraph Pod[Single Pod]
-        App[Application<br/>Uses: Service 1, 2 only]
-        Envoy[Envoy Proxy<br/>Receives: All 1000]
-    end
-
-    Mesh -.->|Push all info| Envoy
-
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class S1,S2,S3,Sn service;
-    class Envoy envoy;
-```
+![架构图展示默认情况下，1000 个 Service 的 mesh 中，每个 Envoy sidecar 都会收到所有 Service 的配置，尽管其 Pod 中的应用仅与其中两个通信。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-12.svg)
 
 **问题**：
 
@@ -989,7 +608,7 @@ flowchart TB
 
 ### 解决方案：Sidecar 资源
 
-使用 **Sidecar 资源**限制为仅接收必要的 Service：
+使用 **Sidecar 资源**限制只接收必要的 Service：
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1066,7 +685,7 @@ spec:
     mode: REGISTRY_ONLY  # Only those registered in ServiceEntry
 ```
 
-### Sidecar 资源效果
+### Sidecar 资源的效果
 
 **之前（无 Sidecar）**：
 
@@ -1100,7 +719,7 @@ spec:
 **结果**：
 
 * Envoy 仅解析 `reviews`、`ratings`
-* `google.com` 等外部域名转发给 CoreDNS
+* 如 `google.com` 等外部域名转发到 CoreDNS
 * 节省内存和 CPU
 
 ## 参考资料
@@ -1112,14 +731,14 @@ spec:
 * [xDS 协议](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol)
 * [SPIFFE](https://spiffe.io/)
 
-### 历史和背景
+### 历史与背景
 
 * [Envoy 起源故事 - Matt Klein](https://blog.envoyproxy.io/the-universal-data-plane-api-d15cec7a)
-* [Istio 公告 - Google Cloud Blog](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
+* [Istio 公告 - Google Cloud 博客](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
 * [Service Mesh 历史](https://www.nginx.com/blog/what-is-a-service-mesh/)
 
 ### 进阶学习
 
 * [Envoy 架构概览](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview)
-* [Istio 性能与可扩展性](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+* [Istio 性能和可扩展性](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
 * [iptables 教程](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html)

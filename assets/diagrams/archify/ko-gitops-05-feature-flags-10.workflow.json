@@ -1,0 +1,186 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Progressive Delivery 파이프라인",
+    "output": "ko-gitops-05-feature-flags-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "deploy-dark",
+        "label": "배포와 릴리스 분리",
+        "focus": [
+          "deploy",
+          "canary"
+        ],
+        "note": "코드 배포와 제한된 트래픽 검증을 수행합니다. 기능 노출은 별도 결정입니다."
+      },
+      {
+        "id": "ring-rollout",
+        "label": "링 기반 단계적 노출",
+        "focus": [
+          "ring1",
+          "ring2",
+          "ring3"
+        ],
+        "note": "내부·제한된 코호트·전체 노출 순서는 예시이며 각 단계에 관측과 승인이 필요합니다."
+      },
+      {
+        "id": "cleanup",
+        "label": "Flag 제거",
+        "focus": [
+          "ring3",
+          "cleanup"
+        ],
+        "note": "전체 노출 뒤에도 남은 소비자와 롤백 기간을 확인한 후 임시 Flag를 정리합니다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "배포와 별도 노출 결정"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p-deploy",
+      "label": "배포 (Flag OFF)",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "p-release",
+      "label": "릴리스 (Flag ON)",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p-cleanup",
+      "label": "정리",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "deploy",
+    "canary",
+    "ring1",
+    "ring2",
+    "ring3",
+    "cleanup"
+  ],
+  "nodes": [
+    {
+      "id": "deploy",
+      "lane": "main",
+      "col": 0,
+      "type": "backend",
+      "label": "코드 배포",
+      "sublabel": "Feature Flag OFF"
+    },
+    {
+      "id": "canary",
+      "lane": "main",
+      "col": 1,
+      "type": "cloud",
+      "label": "카나리",
+      "sublabel": "소량 트래픽 검증"
+    },
+    {
+      "id": "ring1",
+      "lane": "main",
+      "col": 2,
+      "width": 128,
+      "type": "frontend",
+      "label": "내부 사용자",
+      "sublabel": "Feature Flag ON"
+    },
+    {
+      "id": "ring2",
+      "lane": "main",
+      "col": 3,
+      "width": 128,
+      "type": "frontend",
+      "label": "제한 코호트",
+      "sublabel": "승인된 범위 확대"
+    },
+    {
+      "id": "ring3",
+      "lane": "main",
+      "col": 4,
+      "width": 128,
+      "type": "frontend",
+      "label": "전체 사용자",
+      "sublabel": "100% 롤아웃",
+      "tag": "전체 노출"
+    },
+    {
+      "id": "cleanup",
+      "lane": "main",
+      "col": 5,
+      "type": "security",
+      "label": "Flag 제거",
+      "sublabel": "기술 부채 해소"
+    }
+  ],
+  "edges": [
+    {
+      "from": "deploy",
+      "to": "canary"
+    },
+    {
+      "from": "canary",
+      "to": "ring1",
+      "label": "Flag ON"
+    },
+    {
+      "from": "ring1",
+      "to": "ring2"
+    },
+    {
+      "from": "ring2",
+      "to": "ring3"
+    },
+    {
+      "from": "ring3",
+      "to": "cleanup",
+      "label": "소비자 검토 후"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "배포와 릴리스 분리",
+      "items": [
+        "새 코드와 기존 동작의 호환성 확인",
+        "트래픽 범위는 관측과 SLO에 맞게 선택",
+        "기능 노출은 별도 규칙으로 제어"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "링 기반 롤아웃",
+      "items": [
+        "내부 대상부터 검증",
+        "표본과 비즈니스 결과를 확인해 확대",
+        "비율은 정확한 사용자 수를 보장하지 않음"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Flag 정리",
+      "items": [
+        "임시 릴리스 Flag와 영구 운영 Flag를 구분",
+        "구버전 소비자와 롤백 기간 확인",
+        "선택한 최종 동작을 유지하며 정리"
+      ]
+    }
+  ]
+}

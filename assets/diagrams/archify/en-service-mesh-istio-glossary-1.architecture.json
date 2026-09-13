@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ingress Gateway - External Request",
+    "output": "en-service-mesh-istio-glossary-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      320
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "External Client",
+      "sublabel": "Downstream (sends the request)",
+      "tag": "Downstream",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Ingress Gateway",
+      "sublabel": "Envoy Proxy",
+      "tag": "Envoy",
+      "pos": [
+        450,
+        120
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Internal Service",
+      "sublabel": "Upstream (receives the request)",
+      "tag": "Upstream",
+      "pos": [
+        860,
+        120
+      ],
+      "size": [
+        200,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio mesh (inside the cluster)",
+      "wraps": [
+        "gateway",
+        "service"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "HTTP request (Downstream -> Envoy)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-service",
+      "from": "gateway",
+      "to": "service",
+      "label": "Routing (Envoy -> Upstream)",
+      "variant": "emphasis"
+    }
+  ]
+}

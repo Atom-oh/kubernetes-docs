@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 메트릭 수집 아키텍처",
+    "output": "ko-service-mesh-istio-observability-01-metrics-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "configure", "label": "메트릭 설정", "focus": ["telemetry", "istiod", "envoy"], "note": "Telemetry 리소스가 istiod에 적용되고, istiod가 Envoy 사이드카의 메트릭 생성을 설정한다." },
+      { "id": "collect", "label": "메트릭 수집", "focus": ["app", "envoy", "prometheus", "otel"], "note": "Envoy가 낸 메트릭을 Prometheus가 스크레이프하거나 OpenTelemetry Collector로 푸시한다." },
+      { "id": "visualize", "label": "시각화", "focus": ["prometheus", "grafana", "kiali"], "note": "Prometheus에 쌓인 메트릭을 Grafana 대시보드와 Kiali 서비스 그래프로 본다." }
+    ],
+    "legend": {
+      "entries": {
+        "backend": { "label": "워크로드 / 컨트롤 플레인" },
+        "cloud": { "label": "Istio 설정 리소스" },
+        "messagebus": { "label": "수집 파이프라인" },
+        "database": { "label": "시계열 저장소" },
+        "frontend": { "label": "시각화 도구" }
+      }
+    }
+  },
+  "components": [
+    { "id": "telemetry", "type": "cloud", "label": "Telemetry Config", "sublabel": "Telemetry 리소스", "pos": [40, 60], "size": [170, 60] },
+    { "id": "istiod", "type": "backend", "label": "istiod", "sublabel": "컨트롤 플레인", "pos": [280, 60], "size": [160, 60] },
+    { "id": "app", "type": "backend", "label": "App Container", "sublabel": "애플리케이션", "pos": [40, 300], "size": [170, 60] },
+    { "id": "envoy", "type": "backend", "label": "Envoy Sidecar", "sublabel": ":15020/stats/prometheus", "pos": [280, 300], "size": [160, 60] },
+    { "id": "otel", "type": "messagebus", "label": "OpenTelemetry Collector", "sublabel": "OTLP :4317", "pos": [540, 160], "size": [190, 60] },
+    { "id": "prometheus", "type": "database", "label": "Prometheus", "sublabel": "메트릭 저장 / 쿼리", "pos": [540, 300], "size": [190, 60] },
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "대시보드", "pos": [820, 230], "size": [150, 60] },
+    { "id": "kiali", "type": "frontend", "label": "Kiali", "sublabel": "서비스 그래프", "pos": [820, 370], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Istio 컨트롤 플레인", "wraps": ["telemetry", "istiod"] },
+    { "kind": "region", "label": "애플리케이션 파드", "wraps": ["app", "envoy"] },
+    { "kind": "region", "label": "메트릭 백엔드", "wraps": ["otel", "prometheus"] },
+    { "kind": "region", "label": "시각화", "wraps": ["grafana", "kiali"] }
+  ],
+  "connections": [
+    { "id": "telemetry-istiod", "from": "telemetry", "to": "istiod", "label": "적용", "variant": "dashed" },
+    { "id": "istiod-envoy", "from": "istiod", "to": "envoy", "label": "메트릭 설정", "fromSide": "bottom", "toSide": "top", "labelDy": 90 },
+    { "id": "app-envoy", "from": "app", "to": "envoy", "label": "트래픽", "variant": "dashed" },
+    { "id": "envoy-prometheus", "from": "envoy", "to": "prometheus", "label": "스크레이프", "variant": "emphasis" },
+    { "id": "envoy-otel", "from": "envoy", "to": "otel", "label": "메트릭 푸시", "fromSide": "top", "toSide": "left" },
+    { "id": "otel-prometheus", "from": "otel", "to": "prometheus", "fromSide": "bottom", "toSide": "top" },
+    { "id": "prometheus-grafana", "from": "prometheus", "to": "grafana", "label": "쿼리" },
+    { "id": "prometheus-kiali", "from": "prometheus", "to": "kiali", "label": "쿼리" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Golden Signals", "items": ["Latency: 요청 처리 시간", "Traffic: 처리량 (RPS, Bandwidth)", "Errors: 실패율과 에러 유형", "Saturation: 리소스 사용률"] },
+    { "dot": "cyan", "title": "두 가지 수집 경로", "items": ["Prometheus가 사이드카의 :15020 /stats/prometheus 를 스크레이프", "Telemetry API로 OpenTelemetry Collector(OTLP :4317)에 푸시"] }
+  ]
+}

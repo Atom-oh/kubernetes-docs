@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 모니터링 및 로깅 아키텍처",
+    "output": "ko-eks-06-eks-monitoring-logging-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      720
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "클러스터 구성 요소"
+        },
+        "cloud": {
+          "label": "AWS 관리형 서비스"
+        },
+        "frontend": {
+          "label": "시각화"
+        },
+        "external": {
+          "label": "알림 채널"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "metrics-path",
+        "label": "메트릭 경로",
+        "focus": [
+          "nodes",
+          "prometheus",
+          "alertmanager",
+          "notify",
+          "grafana",
+          "cwm"
+        ],
+        "note": "kubelet과 Node Exporter 메트릭을 Prometheus가 스크레이프해 Alertmanager, Grafana, CloudWatch Metrics로 보낸다."
+      },
+      {
+        "id": "container-logs",
+        "label": "컨테이너 로그 경로",
+        "focus": [
+          "nodes",
+          "fluent",
+          "cwl",
+          "opensearch",
+          "dashboards"
+        ],
+        "note": "Fluent Bit/Fluentd가 파드 로그를 CloudWatch Logs와 Amazon OpenSearch로 전달하고 OpenSearch Dashboards에서 시각화한다."
+      },
+      {
+        "id": "control-plane-logs",
+        "label": "컨트롤 플레인 로그",
+        "focus": [
+          "cp",
+          "cwl",
+          "opensearch"
+        ],
+        "note": "EKS 컨트롤 플레인 로그는 CloudWatch Logs로 직접 전송되며, 필요하면 OpenSearch로 내보낼 수 있다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "컨트롤 플레인 로그",
+      "sublabel": "api · audit · authenticator ...",
+      "pos": [
+        40,
+        560
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "nodes",
+      "type": "backend",
+      "label": "워커 노드",
+      "sublabel": "파드 · kubelet · Node Exporter",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "알림 라우팅",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "메트릭 수집·저장",
+      "pos": [
+        330,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "메트릭 대시보드",
+      "pos": [
+        330,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fluent",
+      "type": "backend",
+      "label": "Fluent Bit / Fluentd",
+      "sublabel": "로그 수집 DaemonSet",
+      "pos": [
+        330,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cwm",
+      "type": "cloud",
+      "label": "CloudWatch Metrics",
+      "sublabel": "관리형 메트릭 저장소",
+      "pos": [
+        620,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cwl",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "관리형 로그 저장소",
+      "pos": [
+        620,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "opensearch",
+      "type": "cloud",
+      "label": "Amazon OpenSearch",
+      "sublabel": "로그 검색·분석",
+      "pos": [
+        620,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "notify",
+      "type": "external",
+      "label": "알림 채널",
+      "sublabel": "Slack · SNS · 웹훅",
+      "pos": [
+        900,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "dashboards",
+      "type": "frontend",
+      "label": "OpenSearch Dashboards",
+      "sublabel": "로그 시각화",
+      "pos": [
+        900,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS 클러스터",
+      "wraps": [
+        "cp",
+        "nodes"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "모니터링 스택",
+      "wraps": [
+        "alertmanager",
+        "prometheus",
+        "grafana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로깅 스택",
+      "wraps": [
+        "fluent"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 서비스",
+      "wraps": [
+        "cwm",
+        "cwl",
+        "opensearch"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "nodes-to-prometheus",
+      "from": "nodes",
+      "to": "prometheus",
+      "label": "메트릭 스크레이프",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prometheus-to-alertmanager",
+      "from": "prometheus",
+      "to": "alertmanager",
+      "label": "알림 규칙",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alertmanager-to-notify",
+      "from": "alertmanager",
+      "to": "notify",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prometheus-to-grafana",
+      "from": "prometheus",
+      "to": "grafana"
+    },
+    {
+      "id": "prometheus-to-cwm",
+      "from": "prometheus",
+      "to": "cwm",
+      "label": "메트릭 내보내기"
+    },
+    {
+      "id": "nodes-to-fluent",
+      "from": "nodes",
+      "to": "fluent"
+    },
+    {
+      "id": "fluent-to-cwl",
+      "from": "fluent",
+      "to": "cwl"
+    },
+    {
+      "id": "fluent-to-opensearch",
+      "from": "fluent",
+      "to": "opensearch"
+    },
+    {
+      "id": "cp-to-cwl",
+      "from": "cp",
+      "to": "cwl",
+      "label": "컨트롤 플레인 로깅"
+    },
+    {
+      "id": "cwl-to-opensearch",
+      "from": "cwl",
+      "to": "opensearch",
+      "variant": "dashed"
+    },
+    {
+      "id": "opensearch-to-dashboards",
+      "from": "opensearch",
+      "to": "dashboards"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인 로깅",
+      "items": [
+        "api, audit, authenticator, controllerManager, scheduler 5종 로그",
+        "aws eks update-cluster-config 또는 eksctl로 활성화",
+        "CloudWatch Logs Insights로 쿼리"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "수집 스택",
+      "items": [
+        "Prometheus가 kubelet·Node Exporter 메트릭을 스크레이프",
+        "Fluent Bit(aws-for-fluent-bit) DaemonSet이 컨테이너 로그 수집",
+        "Alertmanager가 알림을 Slack 등 채널로 라우팅"
+      ]
+    }
+  ]
+}

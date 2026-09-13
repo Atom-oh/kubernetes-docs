@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flink Native 모드의 제어 흐름",
+    "output": "ko-data-on-eks-flink-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "declare-reconcile",
+        "label": "선언과 조정",
+        "focus": [
+          "user",
+          "apiserver",
+          "operator",
+          "jobmanager"
+        ],
+        "note": "FlinkDeployment로 cluster를 관리하고 FlinkSessionJob으로 기존 Session cluster에 job을 제출합니다."
+      },
+      {
+        "id": "resource-manager",
+        "label": "동적 TaskManager 요청",
+        "focus": [
+          "jobmanager",
+          "apiserver",
+          "tm1",
+          "tm2"
+        ],
+        "note": "JobManager 내부의 Kubernetes ResourceManager가 API Server에 TaskManager Pod를 요청하고 필요 없으면 반납한다."
+      },
+      {
+        "id": "job-execution",
+        "label": "잡 실행",
+        "focus": [
+          "jobmanager",
+          "tm1",
+          "tm2"
+        ],
+        "note": "JobManager는 서브태스크를 스케줄링하고 체크포인트를 조율하며, 실제 레코드 처리는 TaskManager의 태스크 슬롯에서 이루어진다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "운영자",
+      "sublabel": "kubectl apply",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "cloud",
+      "label": "Kubernetes API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Flink Kubernetes Operator",
+      "sublabel": "CR 감시 · 조정 루프",
+      "pos": [
+        600,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "jobmanager",
+      "type": "backend",
+      "label": "JobManager Pod",
+      "sublabel": "ResourceManager 내장",
+      "pos": [
+        600,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "tm1",
+      "type": "backend",
+      "label": "TaskManager Pod 1",
+      "sublabel": "태스크 슬롯 · 서브태스크 실행",
+      "pos": [
+        1000,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "tm2",
+      "type": "backend",
+      "label": "TaskManager Pod 2",
+      "sublabel": "태스크 슬롯 · 서브태스크 실행",
+      "pos": [
+        1000,
+        400
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "apiserver",
+        "operator",
+        "jobmanager",
+        "tm1",
+        "tm2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Flink 클러스터 (FlinkDeployment)",
+      "wraps": [
+        "jobmanager",
+        "tm1",
+        "tm2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "apply-cr",
+      "from": "user",
+      "to": "apiserver",
+      "label": "FlinkDeployment / FlinkSessionJob CR 적용",
+      "variant": "emphasis",
+      "labelDy": 56
+    },
+    {
+      "id": "watch-cr",
+      "from": "apiserver",
+      "to": "operator",
+      "label": "CR 변경 감시",
+      "variant": "emphasis"
+    },
+    {
+      "id": "reconcile-jm",
+      "from": "operator",
+      "to": "jobmanager",
+      "label": "생성 / 조정",
+      "variant": "emphasis",
+      "labelDy": 40
+    },
+    {
+      "id": "request-tm",
+      "from": "jobmanager",
+      "to": "apiserver",
+      "label": "ResourceManager: TaskManager Pod 요청 · 반납",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    },
+    {
+      "id": "schedule-tm1",
+      "from": "jobmanager",
+      "to": "tm1",
+      "label": "서브태스크 · 체크포인트"
+    },
+    {
+      "id": "schedule-tm2",
+      "from": "jobmanager",
+      "to": "tm2",
+      "label": "서브태스크 · 체크포인트"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Flink Kubernetes Operator",
+      "items": [
+        "Native와 Standalone 모두 지원",
+        "Cluster/job lifecycle과 upgrade 조건 관리"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "JobManager",
+      "items": [
+        "Graph 생성 위치는 제출 모드에 따름",
+        "Native ResourceManager는 Kubernetes API 사용"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "TaskManager",
+      "items": [
+        "Slot sharing과 operator chaining",
+        "Pod 용량과 node capacity는 별도 계층"
+      ]
+    }
+  ]
+}

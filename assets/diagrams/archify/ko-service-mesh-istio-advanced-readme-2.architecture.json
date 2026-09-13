@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-cluster 토폴로지",
+    "output": "ko-service-mesh-istio-advanced-readme-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "컨트롤 플레인",
+      "pos": [
+        380,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Primary 클러스터",
+      "pos": [
+        380,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "엔트리포인트"
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "Remote 클러스터 1",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "Remote 클러스터 2",
+      "pos": [
+        720,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Primary 클러스터 · us-east-1",
+      "wraps": [
+        "istiod",
+        "svc-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Remote 클러스터 1 · us-west-2",
+      "wraps": [
+        "svc-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Remote 클러스터 2 · eu-west-1",
+      "wraps": [
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "push-b",
+      "from": "istiod",
+      "to": "svc-b",
+      "label": "구성 푸시",
+      "variant": "dashed"
+    },
+    {
+      "id": "push-c",
+      "from": "istiod",
+      "to": "svc-c",
+      "label": "구성 푸시",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-to-b",
+      "from": "svc-a",
+      "to": "svc-b",
+      "label": "크로스클러스터 양방향 통신",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a-to-c",
+      "from": "svc-a",
+      "to": "svc-c",
+      "label": "크로스클러스터 양방향 통신",
+      "variant": "emphasis"
+    }
+  ]
+}

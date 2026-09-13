@@ -11,10 +11,10 @@
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "Cluster node (BIRD)"
+          "label": "BIRD node"
         },
         "messagebus": {
-          "label": "Route Reflector node"
+          "label": "RR node"
         }
       }
     },
@@ -60,11 +60,11 @@
       "type": "backend",
       "label": "Node 1",
       "pos": [
-        250,
+        230,
         100
       ],
       "size": [
-        120,
+        160,
         52
       ]
     },
@@ -73,11 +73,11 @@
       "type": "backend",
       "label": "Node 4",
       "pos": [
-        250,
+        270,
         250
       ],
       "size": [
-        120,
+        80,
         52
       ]
     },
@@ -228,7 +228,7 @@
       "from": "fm2",
       "to": "fm3",
       "variant": "dashed",
-      "label": "iBGP session (every node pair)"
+      "label": "iBGP session (all pairs)"
     },
     {
       "id": "fm4-fm2",

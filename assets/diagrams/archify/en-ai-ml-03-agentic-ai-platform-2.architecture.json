@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM capabilities and measurement",
+    "locale": "en",
+    "output": "en-ai-ml-03-agentic-ai-platform-2.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      900,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "vLLM Core Technologies"
+        },
+        "external": {
+          "label": "Measure per workload"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "paged-attention",
+      "type": "backend",
+      "label": "PagedAttention",
+      "sublabel": "Block-level KV cache management",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "continuous-batching",
+      "type": "backend",
+      "label": "Continuous Batching",
+      "pos": [
+        60,
+        160
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "prefix-caching",
+      "type": "backend",
+      "label": "Prefix Caching",
+      "sublabel": "--enable-prefix-caching",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "chunked-prefill",
+      "type": "backend",
+      "label": "Chunked Prefill",
+      "sublabel": "--enable-chunked-prefill",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "external",
+      "label": "KV fragmentation",
+      "sublabel": "separate weights / KV / workspace",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "external",
+      "label": "Throughput and queues",
+      "pos": [
+        620,
+        160
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sublabel": "concurrency / token budgets"
+    },
+    {
+      "id": "latency",
+      "type": "external",
+      "label": "Reusable prefixes",
+      "sublabel": "measure conditional TTFT",
+      "pos": [
+        620,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "context",
+      "type": "external",
+      "label": "Prefill / decode scheduling",
+      "sublabel": "long-context memory budget",
+      "pos": [
+        620,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "vLLM Core Technologies",
+      "wraps": [
+        "paged-attention",
+        "continuous-batching",
+        "prefix-caching",
+        "chunked-prefill"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Validate by measurement",
+      "wraps": [
+        "memory",
+        "throughput",
+        "latency",
+        "context"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "paged-to-memory",
+      "from": "paged-attention",
+      "to": "memory",
+      "label": "block allocation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "batching-to-throughput",
+      "from": "continuous-batching",
+      "to": "throughput",
+      "label": "workload dependent"
+    },
+    {
+      "id": "prefix-to-latency",
+      "from": "prefix-caching",
+      "to": "latency",
+      "label": "KV reuse conditions"
+    },
+    {
+      "id": "chunked-to-context",
+      "from": "chunked-prefill",
+      "to": "context",
+      "label": "scheduler budget"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "No fixed speedup guarantee",
+      "items": [
+        "gpu-memory-utilization is not a KV-only fraction.",
+        "Prefix KV caching differs from full-response caching.",
+        "Pin image, model and drivers; measure latency and throughput."
+      ]
+    }
+  ]
+}

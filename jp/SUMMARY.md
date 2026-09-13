@@ -175,6 +175,8 @@
 * [VPC Lattice](networking/02-vpc-lattice.md)
 * [AWS Load Balancer Controller](networking/03-aws-lb-controller.md)
 * [Gateway API](networking/04-gateway-api.md)
+* [組織間 VPC 接続](networking/05-cross-org-vpc-connectivity.md)
+* [Pod ネットワークのベンチマーク](networking/06-pod-network-benchmark.md)
 
 ## Service Mesh
 
@@ -243,6 +245,11 @@
   * [オブザーバビリティ](service-mesh/cilium-service-mesh/04-observability.md)
   * [Ingress と Gateway](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [ベストプラクティス](service-mesh/cilium-service-mesh/06-best-practices.md)
+
+## ストレージ
+
+* [ストレージの概要](storage/README.md)
+* [EBS gp2 と gp3 の実測ベンチマーク比較](storage/01-ebs-gp2-gp3-benchmark.md)
 
 ## セキュリティとポリシー
 
@@ -319,6 +326,7 @@
   * [FinOps コスト可視化プラットフォーム](ops/13-finops-cost-platform.md)
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [ゾーンクラスター運用](ops/15-zonal-operations-guide.md)
+  * [トラブルシューティング手順書](ops/16-troubleshooting-playbook.md)
 
 ## オブザーバビリティ
 
@@ -508,6 +516,8 @@
   * [VPC Lattice クイズ](quizzes/networking/02-vpc-lattice-quiz.md)
   * [AWS Load Balancer Controller クイズ](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Gateway API クイズ](quizzes/networking/04-gateway-api-quiz.md)
+  * [組織間 VPC 接続クイズ](quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+  * [Pod ネットワークのベンチマーククイズ](quizzes/networking/06-pod-network-benchmark-quiz.md)
 * Service Mesh
   * [Istio クイズ](quizzes/service-mesh/02-istio-quiz.md)
   * Istio 詳細クイズ
@@ -623,3 +633,6 @@
   * [FinOps コスト可視化プラットフォームクイズ](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines クイズ](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [ゾーンクラスター運用クイズ](quizzes/ops/15-zonal-operations-guide-quiz.md)
+  * [トラブルシューティング手順書クイズ](quizzes/ops/16-troubleshooting-playbook-quiz.md)
+* Storage
+  * [EBS gp2 と gp3 の実測ベンチマーク比較クイズ](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)

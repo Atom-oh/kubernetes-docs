@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Problem: Receiving All Service Information",
+    "locale": "en",
+    "output": "en-service-mesh-istio-03-architecture-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Service in the mesh"
+        },
+        "frontend": {
+          "label": "Application container"
+        },
+        "cloud": {
+          "label": "Envoy sidecar · overload point"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Service 1",
+      "sublabel": "used by the app",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Service 2",
+      "sublabel": "used by the app",
+      "pos": [
+        260,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "backend",
+      "label": "Service 3",
+      "sublabel": "not used",
+      "pos": [
+        460,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc1000",
+      "type": "backend",
+      "label": "Service 1000",
+      "sublabel": "not used",
+      "pos": [
+        660,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "actually uses only Service 1 and 2",
+      "pos": [
+        160,
+        320
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "cloud",
+      "label": "Envoy Proxy",
+      "sublabel": "receives all 1000",
+      "tag": "overloaded",
+      "pos": [
+        520,
+        320
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Mesh · 1000 services",
+      "wraps": [
+        "svc1",
+        "svc2",
+        "svc3",
+        "svc1000"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Single Pod",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "push-1",
+      "from": "svc1",
+      "to": "envoy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "push-2",
+      "from": "svc2",
+      "to": "envoy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "push-3",
+      "from": "svc3",
+      "to": "envoy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "push-1000",
+      "from": "svc1000",
+      "to": "envoy",
+      "label": "all service config pushed",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app-uses",
+      "from": "app",
+      "to": "envoy",
+      "label": "real traffic: only 2 services",
+      "labelDy": 40
+    }
+  ]
+}

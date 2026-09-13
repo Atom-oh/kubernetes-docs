@@ -1,0 +1,191 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PR 기반 Flag 변경 워크플로우",
+    "output": "ko-gitops-05-feature-flags-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "change-and-ci",
+        "label": "PR 생성과 CI 검증",
+        "focus": [
+          "pr_create",
+          "schema"
+        ],
+        "note": "렌더링된 정의의 문법·스키마·이름과 기본 변형을 검사합니다."
+      },
+      {
+        "id": "review-gate",
+        "label": "리뷰와 승인",
+        "focus": [
+          "approve",
+          "merge",
+          "pr_create"
+        ],
+        "note": "CODEOWNERS와 필수 리뷰는 저장소에서 별도 구성합니다."
+      },
+      {
+        "id": "deploy-verify",
+        "label": "GitOps 배포와 검증",
+        "focus": [
+          "sync",
+          "verify",
+          "notify"
+        ],
+        "note": "초기 배포와 실제 SDK 반영을 확인합니다. 알림 서비스는 별도 구성입니다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1180,
+      430
+    ]
+  },
+  "lanes": [
+    {
+      "id": "change",
+      "label": "변경 · CI · 리뷰"
+    },
+    {
+      "id": "delivery",
+      "label": "배포 · 소비자 확인"
+    }
+  ],
+  "mainPath": [
+    "pr_create",
+    "schema",
+    "approve",
+    "merge",
+    "sync",
+    "verify",
+    "notify"
+  ],
+  "nodes": [
+    {
+      "id": "pr_create",
+      "lane": "change",
+      "col": 0,
+      "type": "frontend",
+      "width": 160,
+      "label": "변경 PR",
+      "sublabel": "플래그 정의"
+    },
+    {
+      "id": "schema",
+      "lane": "change",
+      "col": 1,
+      "type": "backend",
+      "width": 160,
+      "label": "CI 검사",
+      "sublabel": "렌더 · 스키마 · 정책"
+    },
+    {
+      "id": "approve",
+      "lane": "change",
+      "col": 2,
+      "type": "security",
+      "width": 160,
+      "label": "리뷰 승인",
+      "sublabel": "저장소 보호 규칙"
+    },
+    {
+      "id": "merge",
+      "lane": "change",
+      "col": 3,
+      "type": "backend",
+      "width": 160,
+      "label": "머지",
+      "sublabel": "main 브랜치"
+    },
+    {
+      "id": "sync",
+      "lane": "delivery",
+      "col": 3,
+      "type": "cloud",
+      "width": 160,
+      "label": "Sync · 적용",
+      "sublabel": "ArgoCD / Flux"
+    },
+    {
+      "id": "verify",
+      "lane": "delivery",
+      "col": 4,
+      "type": "backend",
+      "width": 160,
+      "label": "소비자 확인",
+      "sublabel": "Deployment + SDK"
+    },
+    {
+      "id": "notify",
+      "lane": "delivery",
+      "col": 5,
+      "type": "external",
+      "width": 160,
+      "label": "알림 (선택)",
+      "sublabel": "별도 구성"
+    }
+  ],
+  "edges": [
+    {
+      "from": "pr_create",
+      "to": "schema",
+      "variant": "emphasis"
+    },
+    {
+      "from": "schema",
+      "to": "approve",
+      "variant": "emphasis"
+    },
+    {
+      "from": "approve",
+      "to": "merge",
+      "variant": "emphasis"
+    },
+    {
+      "from": "merge",
+      "to": "sync",
+      "variant": "emphasis"
+    },
+    {
+      "from": "sync",
+      "to": "verify",
+      "variant": "emphasis"
+    },
+    {
+      "from": "verify",
+      "to": "notify",
+      "variant": "dashed"
+    },
+    {
+      "from": "approve",
+      "to": "pr_create",
+      "label": "수정",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CI 검증 단계",
+      "items": [
+        "고정 버전 Kustomize로 overlay 렌더링",
+        "JSON Schema + 중복/기본 변형 검사",
+        "비즈니스 규칙 SDK 테스트는 별도 추가"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "GitOps 배포 설정",
+      "items": [
+        "ArgoCD/Flux 조정과 정책 확인",
+        "Flux: flagd Deployment 초기 준비 확인",
+        "캐시·규칙 리비전과 실제 소비자 확인"
+      ]
+    }
+  ]
+}

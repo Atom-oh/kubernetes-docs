@@ -1,7 +1,7 @@
 # ArgoCD Installation
 
-> **Supported Versions**: ArgoCD v2.9+
-> **Last Updated**: February 22, 2026
+> **Supported Versions**: Argo CD 3.5.2 / Helm Chart 10.8.4
+> **Last Updated**: September 11, 2026
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
@@ -15,30 +15,21 @@
 
 ## Prerequisites
 
-Before installing ArgoCD, ensure you have:
+This is a self-managed installation guide. EKS managed Argo CD uses separate capability creation, authorization and configuration; do not overlay a self-managed installation there. Check the [overview compatibility table](README.md) and EKS support windows. A chart's minimum kubeVersion is not a tested/support guarantee.
 
-| Requirement | Minimum Version | Notes |
-|-------------|-----------------|-------|
-| Kubernetes | 1.24+ | Check ArgoCD version compatibility |
-| kubectl | 1.24+ | Configured with cluster access |
-| Helm | 3.8+ | Required for Helm installation method |
-| RAM | 2GB | For non-HA installation |
-| RAM | 8GB+ | For HA installation |
-
-### Verify Prerequisites
+Permission to create a namespace does not prove permissions for CRDs, ClusterRoles and bindings. Check the actual context/authorization. The HA bundle requires at least three nodes for anti-affinity. Measure CPU/memory for application, cluster and repository scale; a fixed 10/50GB Redis PVC is not universally required.
 
 ```bash
-# Check Kubernetes version
-kubectl version --short
-
-# Check kubectl context
+kubectl version --client
 kubectl config current-context
-
-# Verify cluster access
-kubectl auth can-i create namespace --all-namespaces
+kubectl cluster-info
+kubectl auth can-i create customresourcedefinitions.apiextensions.k8s.io
+kubectl auth can-i create clusterrolebindings.rbac.authorization.k8s.io
 ```
 
 ## Installation Methods
+
+Choose one installation owner: manifests, Helm or Kustomize. The non-HA/HA commands below are alternatives, not sequential steps. A custom namespace also requires updating ServiceAccount subjects in ClusterRoleBindings.
 
 ### Method 1: Plain Manifests (Recommended for Getting Started)
 
@@ -49,17 +40,15 @@ The simplest installation method using official manifests:
 kubectl create namespace argocd
 
 # Install ArgoCD (non-HA)
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
 
-# Or install specific version
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.0/manifests/install.yaml
 ```
 
 For high availability:
 
 ```bash
 # Install HA manifests
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/ha/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/ha/install.yaml
 ```
 
 ### Method 2: Helm Chart (Recommended for Production)
@@ -72,12 +61,12 @@ helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 
 # Install with default values
-helm install argocd argo/argo-cd \
+helm install argocd argo/argo-cd --version 10.8.4 \
   --namespace argocd \
   --create-namespace
 
 # Install with custom values
-helm install argocd argo/argo-cd \
+helm install argocd argo/argo-cd --version 10.8.4 \
   --namespace argocd \
   --create-namespace \
   --values values.yaml
@@ -85,54 +74,76 @@ helm install argocd argo/argo-cd \
 
 Example `values.yaml` for production:
 
+These are HA starting values to tune under real load. The chart configures controller shard count and ApplicationSet leader election; Dex remains at one replica. Choose either default or custom installation. Review `helm template` output first; enable ServiceMonitor only if Operator CRDs are installed.
+
 ```yaml
+fullnameOverride: argocd
 global:
-  image:
-    tag: v2.13.0
-
-controller:
-  replicas: 2
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-
-server:
-  replicas: 2
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 5
-  ingress:
-    enabled: true
-    ingressClassName: alb
-    annotations:
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/target-type: ip
-      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:...
-    hosts:
-      - argocd.example.com
-    tls:
-      - hosts:
-          - argocd.example.com
-        secretName: argocd-tls
-
-repoServer:
-  replicas: 2
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 5
-
-redis-ha:
-  enabled: true
-
+  domain: argocd.example.com
 configs:
   params:
-    server.insecure: true  # When using ALB TLS termination
-
+    server.insecure: false
+  cm:
+    url: https://argocd.example.com
+    users.anonymous.enabled: 'false'
+    exec.enabled: 'false'
+controller:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: '1'
+      memory: 2Gi
+  pdb:
+    enabled: true
+    minAvailable: 1
+server:
+  replicas: 2
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  pdb:
+    enabled: true
+    minAvailable: 1
+repoServer:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: '1'
+      memory: 1Gi
+  pdb:
+    enabled: true
+    minAvailable: 1
+applicationSet:
+  replicas: 2
+  pdb:
+    enabled: true
+    minAvailable: 1
 notifications:
   enabled: true
+redis:
+  enabled: false
+redis-ha:
+  enabled: true
+  replicas: 3
+  persistentVolume:
+    enabled: false
+  haproxy:
+    enabled: true
+    replicas: 3
 ```
 
 ### Method 3: Kustomize
@@ -147,7 +158,7 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  - https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.0/manifests/install.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
 
 patches:
   - patch: |-
@@ -174,45 +185,60 @@ configMapGenerator:
 Apply with:
 
 ```bash
-kubectl apply -k .
+kubectl apply --server-side -k .
 ```
 
 ## CLI Installation
 
-### macOS
+### Linux / macOS
+
+Save the following as a script and run it. Match CPU architecture/server version and verify official release checksums. Homebrew is an alternative on macOS; check its installed version.
 
 ```bash
-# Using Homebrew
-brew install argocd
-
-# Or download binary
-curl -sSL -o argocd-darwin-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-darwin-amd64
-sudo install -m 555 argocd-darwin-amd64 /usr/local/bin/argocd
-rm argocd-darwin-amd64
-```
-
-### Linux
-
-```bash
-# Download latest version
-curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-
-# Install binary
-sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
-rm argocd-linux-amd64
-
-# Verify installation
+#!/usr/bin/env bash
+set -euo pipefail
+ARGOCD_VERSION=v3.5.2
+case "$(uname -s)" in
+  Linux) ARGOCD_OS=linux ;;
+  Darwin) ARGOCD_OS=darwin ;;
+  *) echo 'Select the release package for your OS' >&2; exit 1 ;;
+esac
+case "$(uname -m)" in
+  x86_64) ARGOCD_ARCH=amd64 ;;
+  arm64|aarch64) ARGOCD_ARCH=arm64 ;;
+  *) echo 'Select a supported release architecture' >&2; exit 1 ;;
+esac
+ARGOCD_BINARY="argocd-${ARGOCD_OS}-${ARGOCD_ARCH}"
+ARGOCD_INSTALL_TMP=$(mktemp -d)
+trap 'rm -rf -- "$ARGOCD_INSTALL_TMP"' EXIT
+cd "$ARGOCD_INSTALL_TMP"
+curl --fail --location --remote-name \
+  "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/${ARGOCD_BINARY}"
+curl --fail --location --remote-name \
+  "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/cli_checksums.txt"
+EXPECTED=$(awk -v name="$ARGOCD_BINARY" '$2 == name || $2 == "*" name {print $1}' cli_checksums.txt)
+[[ "$EXPECTED" =~ ^[a-f0-9]{64}$ ]]
+if command -v sha256sum >/dev/null; then
+  ACTUAL=$(sha256sum "$ARGOCD_BINARY" | awk '{print $1}')
+else
+  ACTUAL=$(shasum -a 256 "$ARGOCD_BINARY" | awk '{print $1}')
+fi
+[[ "$ACTUAL" == "$EXPECTED" ]]
+sudo install -m 0755 "$ARGOCD_BINARY" /usr/local/bin/argocd
 argocd version --client
 ```
 
 ### Windows
 
-```powershell
-# Using Chocolatey
-choco install argocd-cli
+Download `argocd-windows-amd64.exe` and `cli_checksums.txt` from the v3.5.2 release. Compare `Get-FileHash -Algorithm SHA256` with the matching checksum entry. Install in a user-owned directory and add it to the user PATH instead of using System32 as the default.
 
-# Or download from releases
-# https://github.com/argoproj/argo-cd/releases
+### Completion
+
+```bash
+# Bash session
+source <(argocd completion bash)
+# Zsh alternative:
+# source <(argocd completion zsh)
 ```
 
 ## Initial Access
@@ -226,45 +252,9 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 # Access at https://localhost:8080
 ```
 
-### Option 2: LoadBalancer Service
+### Ingress Access
 
-```bash
-# Patch service type
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-
-# Get external IP/hostname
-kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
-```
-
-### Option 3: Ingress (Production)
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: argocd-server-ingress
-  namespace: argocd
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: argocd.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 443
-  tls:
-    - hosts:
-        - argocd.example.com
-      secretName: argocd-tls
-```
+Use a maintained controller, a valid certificate and an intentional access boundary. Community ingress-nginx retired in March 2026 and is not the new default here. The EKS section below gives a consistent internal ALB/HTTPS-backend example; follow another controller's documentation for passthrough/gRPC.
 
 ### Retrieve Initial Password
 
@@ -283,8 +273,8 @@ argocd login argocd.example.com
 # Or with port-forwarding
 argocd login localhost:8080
 
-# Login with password flag (for scripting)
-argocd login localhost:8080 --username admin --password <password>
+# Use the interactive password prompt
+argocd login localhost:8080 --username admin
 ```
 
 ### Change Admin Password
@@ -301,72 +291,24 @@ kubectl -n argocd delete secret argocd-initial-admin-secret
 
 ### HA Architecture
 
-![Diagram showing an Argo CD high-availability control plane: a load balancer fans traffic into redundant API server, application controller, and repo server tiers, all of which share state through a three-node Redis HA cluster at the center of the topology.](../../../assets/diagrams/rendered/en-gitops-argocd-01-installation-0.svg)
+![API/Repo replicas and Application Controller shards use Redis HA cache, with Sentinels supporting Redis failover.](../../.gitbook/assets/en-gitops-argocd-01-installation-0.png)
 
-### Controller Sharding
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-01-installation-0.html)
 
-For large deployments (100+ applications), enable controller sharding:
+Check the following in the rendered Helm example.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cmd-params-cm
-  namespace: argocd
-data:
-  # Enable sharding with 2 replicas
-  controller.sharding.algorithm: round-robin
-  controller.replicas: "2"
-```
-
-Or configure via Helm:
-
-```yaml
-controller:
-  replicas: 2
-  env:
-    - name: ARGOCD_CONTROLLER_REPLICAS
-      value: "2"
-```
-
-### Repo Server Scaling
-
-```yaml
-repoServer:
-  replicas: 2
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 10
-    targetCPUUtilizationPercentage: 80
-    targetMemoryUtilizationPercentage: 80
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: 2000m
-      memory: 2Gi
-```
-
-### Redis HA Configuration
-
-```yaml
-# Using Redis HA subchart
-redis-ha:
-  enabled: true
-  exporter:
-    enabled: true
-  haproxy:
-    enabled: true
-    replicas: 3
-  redis:
-    replicas: 3
-```
+- Application Controller distributes clusters among shards rather than using one global leader and standbys. The chart aligns replica count with `ARGOCD_CONTROLLER_REPLICAS`. Validate algorithm, redistribution and recovery; dynamic distribution is a separate feature.
+- ApplicationSet leader election differs from Application Controller sharding. This chart enables leader election for multiple ApplicationSet replicas.
+- Bundled Dex uses in-memory storage; adding replicas can create inconsistent data. Keep its default single replica and validate a supported design for additional HA requirements.
+- Redis is a disposable cache; Kubernetes objects persist Argo configuration. Redis HA replica count is `redis-ha.replicas`, not `redis-ha.redis.replicas`. The bundle uses three Redis/Sentinel instances.
+- PDBs limit voluntary eviction, not node failures or every rollout. Test distribution, readiness, dependencies and reconciliation recovery.
+- Tune Repo Server concurrency, HPA and CPU limits from real manifest-generation/memory load. There is no universal “100 apps means two shards” threshold.
 
 ## ArgoCD on Amazon EKS
 
-### ALB Ingress Configuration
+### ALB and TLS
+
+This example uses an internal ALB. Prepare AWS Load Balancer Controller, subnets/tags/security groups, DNS and a valid same-region ACM certificate. Replace the certificate placeholder/hostname and provide the management client with network access to the ALB.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -375,133 +317,83 @@ metadata:
   name: argocd-server
   namespace: argocd
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/backend-protocol: HTTPS
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
     alb.ingress.kubernetes.io/healthcheck-path: /healthz
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:123456789012:certificate/xxx
-    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
-    alb.ingress.kubernetes.io/group.name: argocd
+    alb.ingress.kubernetes.io/certificate-arn: REPLACE_WITH_ACM_CERTIFICATE_ARN
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
 spec:
   ingressClassName: alb
   rules:
-    - host: argocd.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 443
+  - host: argocd.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 443
 ```
 
-When using ALB with TLS termination, configure ArgoCD to run in insecure mode:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cmd-params-cm
-  namespace: argocd
-data:
-  server.insecure: "true"
-```
-
-### IRSA Configuration
-
-Create IAM role for ArgoCD components:
+Keep `server.insecure=false` because the backend uses HTTPS. Use `--grpc-web` for CLI traffic through this single HTTP target group. Native gRPC requires a separate gRPC target group and routing conditions as documented upstream.
 
 ```bash
-# Create IAM policy
-cat > argocd-policy.json << 'EOF'
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchGetImage"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "secretsmanager:GetSecretValue",
-        "secretsmanager:DescribeSecret"
-      ],
-      "Resource": "arn:aws:secretsmanager:*:*:secret:argocd/*"
-    }
-  ]
-}
-EOF
-
-aws iam create-policy \
-  --policy-name ArgoCD-Policy \
-  --policy-document file://argocd-policy.json
+argocd login argocd.example.com --grpc-web
 ```
 
-Create IRSA:
+### IRSA and Function-Specific Permissions
+
+An IAM annotation alone does not configure AWS integrations or token renewal. Distinguish the actual identity for each function.
+
+| Function | Identity |
+|---|---|
+| Deploy to another EKS API | Controller and required ApplicationSet/Server management role → target AssumeRole → EKS Access Entry/RBAC |
+| Read OCI/Helm sources | Actual Repo Server registry authentication, credential provider and token renewal |
+| Discover images/update Git | Separate Image Updater |
+| Read Secrets Manager | Role of the actual AWS caller, such as External Secrets |
+| Pull Pod images | Node role or Fargate execution role |
+
+IRSA needs an OIDC provider and aud/sub-constrained trust; Pod Identity needs the agent, association and supported SDK. Limit target trust and management-role AssumeRole permissions to intended ARNs. Separately configure target EKS access entries, namespace authorization and API connectivity. Recreate affected Pods after changing workload identity where required.
+
+### Declarative EKS Cluster Registration
+
+After establishing roles and permissions, register using the real endpoint and CA. Explicitly select the management-cluster kubeconfig context.
 
 ```bash
-eksctl create iamserviceaccount \
-  --cluster=my-cluster \
-  --namespace=argocd \
-  --name=argocd-repo-server \
-  --attach-policy-arn=arn:aws:iam::123456789012:policy/ArgoCD-Policy \
-  --override-existing-serviceaccounts \
-  --approve
+# IAM roles, trust relationships and target EKS access/RBAC must already exist.
+set -euo pipefail
+: "${ARGOCD_CONTEXT:?Set the management cluster kubeconfig context}"
+: "${TARGET_EKS_NAME:?Set the target EKS cluster name}"
+: "${TARGET_AWS_REGION:?Set the target region}"
+: "${TARGET_ROLE_ARN:?Set the authorized target-cluster IAM role}"
+umask 077
+aws eks describe-cluster --name "$TARGET_EKS_NAME" --region "$TARGET_AWS_REGION" \
+  --query 'cluster.{name:name,server:endpoint,ca:certificateAuthority.data}' \
+  --output json > target-eks.json
+jq --arg role "$TARGET_ROLE_ARN" '{
+  apiVersion:"v1", kind:"Secret",
+  metadata:{name:"target-eks",namespace:"argocd",
+    labels:{"argocd.argoproj.io/secret-type":"cluster"}},
+  type:"Opaque",
+  data:{name:(.name|@base64),server:(.server|@base64),config:({
+    awsAuthConfig:{clusterName:.name,roleARN:$role},
+    tlsClientConfig:{insecure:false,caData:.ca}
+  }|tojson|@base64)}
+}' target-eks.json > target-cluster-secret.json
+kubectl --context "$ARGOCD_CONTEXT" apply -f target-cluster-secret.json
+argocd cluster list
 ```
 
-Or via Helm:
-
-```yaml
-repoServer:
-  serviceAccount:
-    create: true
-    name: argocd-repo-server
-    annotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ArgoCD-RepoServer
-```
-
-### Cross-Account Cluster Access
-
-For managing clusters in other AWS accounts:
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: production-cluster
-  namespace: argocd
-  labels:
-    argocd.argoproj.io/secret-type: cluster
-type: Opaque
-stringData:
-  name: production
-  server: https://xxx.eks.amazonaws.com
-  config: |
-    {
-      "awsAuthConfig": {
-        "clusterName": "production-cluster",
-        "roleARN": "arn:aws:iam::999999999999:role/ArgoCD-CrossAccount"
-      }
-    }
-```
+Imperative `argocd cluster add` accepts a kubeconfig context name. An EKS default context may be an ARN, but this is not an AWS API accepting arbitrary ARNs. It may create target ServiceAccount/RBAC objects; scope them to the required namespaces and permissions.
 
 ## Declarative Setup
 
-### argocd-cm ConfigMap
-
-Core configuration for ArgoCD:
+For Helm, manage `configs.cm`/`configs.params` in values. For manifests, merge required keys below with existing settings. Avoid Helm and a separate kubectl owner competing over the same fields.
 
 ```yaml
 apiVersion: v1
@@ -509,118 +401,101 @@ kind: ConfigMap
 metadata:
   name: argocd-cm
   namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
 data:
-  # ArgoCD URL (required for SSO and notifications)
   url: https://argocd.example.com
-
-  # Enable anonymous access (not recommended for production)
   users.anonymous.enabled: "false"
-
-  # Admin account enabled
-  admin.enabled: "true"
-
-  # Exec enabled for debugging
-  exec.enabled: "true"
-
-  # Status badge enabled
-  statusbadge.enabled: "true"
-
-  # Resource tracking method
-  application.resourceTrackingMethod: annotation
-
-  # Repositories (prefer secrets for credentials)
-  repositories: |
-    - url: https://github.com/myorg/myrepo.git
-      name: myrepo
-    - url: https://charts.helm.sh/stable
-      name: helm-stable
-      type: helm
-
-  # Resource exclusions
-  resource.exclusions: |
-    - apiGroups:
-        - cilium.io
-      kinds:
-        - CiliumIdentity
-      clusters:
-        - "*"
-
-  # Resource custom health checks
-  resource.customizations.health.argoproj.io_Application: |
-    hs = {}
-    hs.status = "Progressing"
-    hs.message = ""
-    if obj.status ~= nil then
-      if obj.status.health ~= nil then
-        hs.status = obj.status.health.status
-        if obj.status.health.message ~= nil then
-          hs.message = obj.status.health.message
-        end
-      end
-    end
-    return hs
+  exec.enabled: "false"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
+data:
+  server.insecure: "false"
 ```
+
+Set admin.enabled=false only after testing SSO authorization and recovery access. Design any /argocd subpath together with ingress routes and server.rootpath/basehref; it is not a default requirement. Command-line/environment settings may require a component rollout.
+
+Prefer built-in health checks for supported resources such as Rollouts. Custom Lua must return a valid state even when status is absent; do not equate unknown with Healthy. Custom Kustomize versions require `kustomize.path.<version>` plus the actual executable. Use repository Secrets below instead of legacy repositories/repository.credentials ConfigMap fields.
 
 ### Repository Credentials
 
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: repo-creds-github
-  namespace: argocd
-  labels:
-    argocd.argoproj.io/secret-type: repo-creds
-type: Opaque
-stringData:
-  url: https://github.com/myorg
-  password: ghp_xxxxxxxxxxxx
-  username: git
+These examples bootstrap Secrets from protected files. Supply actual users/repositories/App IDs and only the required read permissions. Do not commit tokens, private keys or base64 Secrets to Git. Use one owner, such as External Secrets, for ongoing rotation.
+
+#### HTTPS credential template
+
+```bash
+set -euo pipefail
+# Bootstrap one credential method; use an external secret manager for rotation.
+# Credential files must contain only their value, without an accidental trailing newline.
+kubectl -n argocd create secret generic github-repo-creds \
+  --from-literal=url=https://github.com/myorg/ \
+  --from-file=username=/secure/path/github-user \
+  --from-file=password=/secure/path/github-token
+kubectl -n argocd label secret github-repo-creds \
+  argocd.argoproj.io/secret-type=repo-creds
 ```
 
-For SSH authentication:
+repo-creds is a URL-prefix credential template; repository registers one repository. Check precedence when a repository already has explicit credentials.
 
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: private-repo-ssh
-  namespace: argocd
-  labels:
-    argocd.argoproj.io/secret-type: repository
-type: Opaque
-stringData:
-  type: git
-  url: git@github.com:myorg/private-repo.git
-  sshPrivateKey: |
-    -----BEGIN OPENSSH PRIVATE KEY-----
-    ...
-    -----END OPENSSH PRIVATE KEY-----
+#### SSH
+
+```bash
+set -euo pipefail
+kubectl -n argocd create secret generic private-repo-ssh \
+  --from-literal=type=git \
+  --from-literal=url=git@github.com:myorg/private-repo.git \
+  --from-file=sshPrivateKey=/secure/path/id_ed25519
+kubectl -n argocd label secret private-repo-ssh \
+  argocd.argoproj.io/secret-type=repository
+```
+
+Verify the SSH server host key through a trusted channel before adding it to known hosts; do not trust an unverified key scan.
+
+#### GitHub App
+
+```bash
+set -euo pipefail
+kubectl -n argocd create secret generic github-app-creds \
+  --from-literal=url=https://github.com/myorg/ \
+  --from-literal=githubAppID=123456 \
+  --from-literal=githubAppInstallationID=12345678 \
+  --from-file=githubAppPrivateKey=/secure/path/github-app.pem
+kubectl -n argocd label secret github-app-creds \
+  argocd.argoproj.io/secret-type=repo-creds
 ```
 
 ## Upgrading ArgoCD
 
 ### Pre-Upgrade Checklist
 
+Review every relevant breaking-change guide from the installed version to the target, and test in staging. Do not assume a direct 2.x-to-3.5 version substitution is sufficient. Keep the same installation owner. Encrypt and restrict access to Secret backups; they are not safe to commit to Git.
+
 1. **Review release notes** for breaking changes
 2. **Backup current installation**:
    ```bash
-   kubectl get applications -n argocd -o yaml > applications-backup.yaml
+   umask 077
+   kubectl get applications,applicationsets -n argocd -o yaml > applications-backup.yaml
    kubectl get appprojects -n argocd -o yaml > projects-backup.yaml
    kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type -o yaml > secrets-backup.yaml
    ```
-3. **Check cluster compatibility**
+3. **Check cluster compatibility**, chart values, target-cluster permissions and rollback/restore procedures. Configuration backup does not back up application databases.
 
 ### Upgrade via Manifests
 
 ```bash
 # Apply new version manifests
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.0/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
 
 # Wait for rollout
 kubectl rollout status deployment argocd-server -n argocd
 kubectl rollout status deployment argocd-repo-server -n argocd
-kubectl rollout status deployment argocd-application-controller -n argocd
+kubectl rollout status statefulset/argocd-application-controller -n argocd
 ```
 
 ### Upgrade via Helm
@@ -636,7 +511,7 @@ helm search repo argo/argo-cd --versions
 helm upgrade argocd argo/argo-cd \
   --namespace argocd \
   --values values.yaml \
-  --version 5.55.0
+  --version 10.8.4
 ```
 
 ### Post-Upgrade Verification
@@ -675,9 +550,22 @@ argocd repo get https://github.com/myorg/myrepo.git
 **Certificate issues:**
 ```bash
 # Check TLS certificates
-kubectl get secret -n argocd argocd-secret -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -text -noout
+# Select the Secret actually used by the server (argocd-server-tls or its configured fallback).
+: "${ARGOCD_TLS_SECRET:?Set the actual TLS Secret name}"
+kubectl get secret -n argocd "$ARGOCD_TLS_SECRET" -o jsonpath='{.data.tls\.crt}' \
+  | base64 -d | openssl x509 -noout -dates -subject -issuer
+# An ALB frontend ACM certificate is a separate TLS layer.
 ```
 
 ## Quiz
 
 To test what you've learned, try the [ArgoCD installation quiz](../../quizzes/gitops/argocd/01-installation-quiz.md).
+
+### Review Sources
+
+- [Argo CD 3.5.2 installation](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/installation.md)
+- [Argo CD HA](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md)
+- [EKS and repository setup](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/declarative-setup.md)
+- [Ingress and gRPC](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/ingress.md)
+- [Chart 10.8.4](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.8.4)
+- [Ingress NGINX retirement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)

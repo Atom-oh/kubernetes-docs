@@ -1,0 +1,479 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T20:55:21.867774+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 18,
+    "figures": 2
+  },
+  "baseline": "Notebooks1.11.0/Community26.03.1",
+  "native": {
+    "status": "passed",
+    "distribution": "26.03.1",
+    "notebooks": "1.11.0",
+    "renderedResources": {
+      "CustomResourceDefinition": 1,
+      "ServiceAccount": 1,
+      "Role": 1,
+      "ClusterRole": 4,
+      "RoleBinding": 1,
+      "ClusterRoleBinding": 1,
+      "ConfigMap": 1,
+      "Service": 1,
+      "Deployment": 1
+    },
+    "renderedCulling": {
+      "ENABLE_CULLING": "false",
+      "CULL_IDLE_TIME": "1440",
+      "IDLENESS_CHECK_PERIOD": "1"
+    },
+    "NotebookScope": "Namespaced",
+    "NotebookSpecHasNoReplicas": true,
+    "localAnnotationStopResumePassed": true,
+    "schemaCases": 3,
+    "limitations": [
+      "Native Kustomize and kubectl --local only; no API server/controller/webhook, Pod, PVC, culler endpoint or cloud interaction.",
+      "Image appears in tagged spawner defaults; runtime availability/pull was not checked."
+    ]
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/kubeflow/03-notebooks.md",
+        "sha256": "57af6ffcf3af3de73511f4f1c52aa4b52ac26bd9a09c572922f191af668cec7c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-kubeflow-notebooks"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "kubeflow-notebooks란-무엇인가"
+          },
+          {
+            "tag": "h2",
+            "id": "버전-맥락-notebooks-v1과-workspaces"
+          },
+          {
+            "tag": "h2",
+            "id": "멀티테넌시-모델-profile과-별도-격리-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "영구-스토리지"
+          },
+          {
+            "tag": "h3",
+            "id": "유휴-컬링-idle-culling"
+          },
+          {
+            "tag": "h2",
+            "id": "노트북-조정-reconciliation-흐름"
+          },
+          {
+            "tag": "h2",
+            "id": "eks에서의-노트북-gpu-스케줄링"
+          },
+          {
+            "tag": "h2",
+            "id": "커스텀-노트북-이미지"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-근거"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "part-3-kubeflow-notebooks",
+          "실습-환경-준비",
+          "kubeflow-notebooks란-무엇인가",
+          "버전-맥락-notebooks-v1과-workspaces",
+          "멀티테넌시-모델-profile과-별도-격리-정책",
+          "영구-스토리지",
+          "유휴-컬링-idle-culling",
+          "노트북-조정-reconciliation-흐름",
+          "eks에서의-노트북-gpu-스케줄링",
+          "커스텀-노트북-이미지",
+          "검증과-근거",
+          "다음-단계",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/kubeflow/03-notebooks.md",
+        "sha256": "3f8c1410ba27dd481289586e696598028124459c1e3149dadfc8b8c31e66121e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-kubeflow-notebooks"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "what-is-kubeflow-notebooks"
+          },
+          {
+            "tag": "h2",
+            "id": "version-context-notebooks-v1-and-workspaces"
+          },
+          {
+            "tag": "h2",
+            "id": "multi-tenancy-model-profiles-and-separate-isolation-policies"
+          },
+          {
+            "tag": "h3",
+            "id": "persistent-storage"
+          },
+          {
+            "tag": "h3",
+            "id": "idle-culling"
+          },
+          {
+            "tag": "h2",
+            "id": "notebook-reconciliation-flow"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu-scheduling-for-notebooks-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "custom-notebook-images"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-sources"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "part-3-kubeflow-notebooks",
+          "lab-environment-setup",
+          "what-is-kubeflow-notebooks",
+          "version-context-notebooks-v1-and-workspaces",
+          "multi-tenancy-model-profiles-and-separate-isolation-policies",
+          "persistent-storage",
+          "idle-culling",
+          "notebook-reconciliation-flow",
+          "gpu-scheduling-for-notebooks-on-eks",
+          "custom-notebook-images",
+          "validation-and-sources",
+          "next-steps",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/kubeflow/03-notebooks-quiz.md",
+        "sha256": "f73d996232beae493662ee819b554a8c2b5350c9b9a2e2c463e2074e7fe55bcb",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-notebooks-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형-문제"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-notebooks-퀴즈",
+          "객관식-문제",
+          "단답형-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/kubeflow/03-notebooks-quiz.md",
+        "sha256": "170f4eab75334114d50de17a56ba491032218b517c9bcecc57644e461c410925",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-notebooks-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-notebooks-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "843f273ec2a0cfa30b7fd0f9bcfd8ca7e8cfe58da3a8c44e41992dced85322c0"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "843f273ec2a0cfa30b7fd0f9bcfd8ca7e8cfe58da3a8c44e41992dced85322c0"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "843f273ec2a0cfa30b7fd0f9bcfd8ca7e8cfe58da3a8c44e41992dced85322c0"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "f2e5afe4042184245b3c3fe7a7bea1eebae1c5a87612dcbfbc5ebd794f125d45"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "f2e5afe4042184245b3c3fe7a7bea1eebae1c5a87612dcbfbc5ebd794f125d45"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "f2e5afe4042184245b3c3fe7a7bea1eebae1c5a87612dcbfbc5ebd794f125d45"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "sources": [
+    {
+      "path": "components/notebook-controller/controllers/notebook_controller.go",
+      "file": "components_notebook-controller_controllers_notebook_controller.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/controllers/notebook_controller.go",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/controllers/culling_controller.go",
+      "file": "components_notebook-controller_controllers_culling_controller.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/controllers/culling_controller.go",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/api/v1/notebook_types.go",
+      "file": "components_notebook-controller_api_v1_notebook_types.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/api/v1/notebook_types.go",
+      "status": 200
+    },
+    {
+      "path": "components/crud-web-apps/jupyter/backend/apps/default/routes/post.py",
+      "file": "components_crud-web-apps_jupyter_backend_apps_default_routes_post.py",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/crud-web-apps/jupyter/backend/apps/default/routes/post.py",
+      "status": 200
+    },
+    {
+      "path": "components/crud-web-apps/jupyter/manifests/base/configs/spawner_ui_config.yaml",
+      "file": "components_crud-web-apps_jupyter_manifests_base_configs_spawner_ui_config.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/crud-web-apps/jupyter/manifests/base/configs/spawner_ui_config.yaml",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/crd/bases/kubeflow.org_notebooks.yaml",
+      "file": "components_notebook-controller_config_crd_bases_kubeflow.org_notebooks.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/crd/bases/kubeflow.org_notebooks.yaml",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/default/manager_auth_proxy_patch.yaml",
+      "file": "components_notebook-controller_config_default_manager_auth_proxy_patch.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/default/manager_auth_proxy_patch.yaml",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/default/manager_image_patch.yaml",
+      "file": "components_notebook-controller_config_default_manager_image_patch.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/default/manager_image_patch.yaml",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/default/manager_prometheus_metrics_patch.yaml",
+      "file": "components_notebook-controller_config_default_manager_prometheus_metrics_patch.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/default/manager_prometheus_metrics_patch.yaml",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/default/manager_webhook_patch.yaml",
+      "file": "components_notebook-controller_config_default_manager_webhook_patch.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/default/manager_webhook_patch.yaml",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/manager/kustomization.yaml",
+      "file": "components_notebook-controller_config_manager_kustomization.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/manager/kustomization.yaml",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/manager/manager.yaml",
+      "file": "components_notebook-controller_config_manager_manager.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/manager/manager.yaml",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/manager/params.env",
+      "file": "components_notebook-controller_config_manager_params.env",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/manager/params.env",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/manager/service-account.yaml",
+      "file": "components_notebook-controller_config_manager_service-account.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/manager/service-account.yaml",
+      "status": 200
+    },
+    {
+      "path": "components/notebook-controller/config/manager/service.yaml",
+      "file": "components_notebook-controller_config_manager_service.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/notebooks/v1.11.0/components/notebook-controller/config/manager/service.yaml",
+      "status": 200
+    }
+  ],
+  "diagrams": [
+    {
+      "name": "ko-ai-ml-kubeflow-03-notebooks-0",
+      "layoutPassed": true,
+      "pngSha256": "947446ed6e388fa0ae25d5e68e8ae558492328498f6cdfb9413dbc76e20a097a",
+      "htmlSha256": "843f273ec2a0cfa30b7fd0f9bcfd8ca7e8cfe58da3a8c44e41992dced85322c0"
+    },
+    {
+      "name": "en-ai-ml-kubeflow-03-notebooks-0",
+      "layoutPassed": true,
+      "pngSha256": "4806a253dde42c5f1ef3e2406068563ca6f7738b87f198128a31883605486e77",
+      "htmlSha256": "f2e5afe4042184245b3c3fe7a7bea1eebae1c5a87612dcbfbc5ebd794f125d45"
+    }
+  ],
+  "limitations": [
+    "No notebook/cloud/GPU execution, culling endpoint integration, PVC recovery or Kubernetes admission.",
+    "Workspaces release description beta differs from tagged image alpha.3; no unsupported GA/v1EOL inference."
+  ]
+}

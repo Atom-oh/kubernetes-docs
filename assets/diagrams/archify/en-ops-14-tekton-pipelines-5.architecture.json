@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CI and verified GitOps promotion",
+    "locale": "en",
+    "output": "en-ops-14-tekton-pipelines-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      520
+    ],
+    "views": [
+      {
+        "id": "ci",
+        "label": "Tekton CI pipeline",
+        "focus": [
+          "src",
+          "trigger",
+          "clone",
+          "test",
+          "build",
+          "push"
+        ],
+        "note": "Tekton tests approved source and publishes/scans a candidate image."
+      },
+      {
+        "id": "handoff",
+        "label": "GitOps handoff",
+        "focus": [
+          "update",
+          "gitops",
+          "sync"
+        ],
+        "note": "After successful CI and signature/provenance checks, an owner or separate workflow reviews the digest change."
+      },
+      {
+        "id": "cd",
+        "label": "ArgoCD CD deployment",
+        "focus": [
+          "ecr",
+          "sync",
+          "deploy"
+        ],
+        "note": "ArgoCD syncs manifests; kubelets/runtimes pull images from ECR."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src",
+      "type": "external",
+      "label": "app-source",
+      "sublabel": "Source repository",
+      "pos": [
+        30,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "trigger",
+      "type": "messagebus",
+      "label": "Trigger",
+      "sublabel": "Webhook receiver",
+      "pos": [
+        198,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "clone",
+      "type": "backend",
+      "label": "git-clone",
+      "sublabel": "Clone source",
+      "pos": [
+        366,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "test",
+      "type": "backend",
+      "label": "Test / Lint",
+      "sublabel": "Unit tests + lint",
+      "pos": [
+        534,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "Image Build",
+      "sublabel": "Container image",
+      "pos": [
+        702,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "push",
+      "type": "backend",
+      "label": "ECR Push",
+      "sublabel": "Push image",
+      "pos": [
+        870,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "update",
+      "type": "backend",
+      "label": "Promotion checks",
+      "sublabel": "CI / scan / signatures",
+      "pos": [
+        1038,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Container Registry",
+      "sublabel": "Amazon ECR",
+      "pos": [
+        534,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gitops",
+      "type": "external",
+      "label": "app-manifests",
+      "sublabel": "reviewed digest change",
+      "pos": [
+        1038,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sync",
+      "type": "backend",
+      "label": "ArgoCD Sync",
+      "sublabel": "Sync manifests",
+      "pos": [
+        786,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "backend",
+      "label": "kubelet / runtime",
+      "sublabel": "pull image / run Pod",
+      "pos": [
+        534,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Tekton (CI)",
+      "wraps": [
+        "trigger",
+        "clone",
+        "test",
+        "build",
+        "push"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "ArgoCD (CD)",
+      "wraps": [
+        "sync"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Separate promotion",
+      "wraps": [
+        "update",
+        "gitops"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes runtime",
+      "wraps": [
+        "deploy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "src-trigger",
+      "from": "src",
+      "to": "trigger",
+      "label": "push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trigger-clone",
+      "from": "trigger",
+      "to": "clone"
+    },
+    {
+      "id": "clone-test",
+      "from": "clone",
+      "to": "test"
+    },
+    {
+      "id": "test-build",
+      "from": "test",
+      "to": "build"
+    },
+    {
+      "id": "build-push",
+      "from": "build",
+      "to": "push"
+    },
+    {
+      "id": "push-ecr",
+      "from": "push",
+      "to": "ecr",
+      "label": "image"
+    },
+    {
+      "id": "push-update",
+      "from": "push",
+      "to": "update"
+    },
+    {
+      "id": "update-gitops",
+      "from": "update",
+      "to": "gitops",
+      "label": "review / merge",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gitops-sync",
+      "from": "gitops",
+      "to": "sync",
+      "label": "detect",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync-deploy",
+      "from": "sync",
+      "to": "deploy",
+      "label": "manifests"
+    },
+    {
+      "id": "ecr-deploy",
+      "from": "ecr",
+      "to": "deploy",
+      "label": "pull",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CI / promotion",
+      "items": [
+        "Check build/scan success and signatures separately",
+        "Commit a reviewed digest change to Git"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "CD",
+      "items": [
+        "ArgoCD synchronizes manifests",
+        "Kubelets pull images; verify actual application health"
+      ]
+    }
+  ]
+}

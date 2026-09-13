@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "파이프라인 실행이 시스템을 거치는 흐름",
+    "output": "ko-ai-ml-kubeflow-02-pipelines-0.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "KFP SDK (로컬)"
+        },
+        "backend": {
+          "label": "KFP 백엔드"
+        },
+        "cloud": {
+          "label": "컴포넌트 실행"
+        },
+        "database": {
+          "label": "저장소"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "sdk",
+        "label": "SDK 컴파일",
+        "focus": [
+          "pipeline",
+          "compiler"
+        ],
+        "note": "컴파일은 IR을 생성하며 SDK에는 클라이언트·런타임 지원도 있습니다."
+      },
+      {
+        "id": "backend",
+        "label": "백엔드 실행",
+        "focus": [
+          "apiserver",
+          "translate",
+          "argo",
+          "pods"
+        ],
+        "note": "Argo는 실행 순서와 Pod 생성을 관리하며 Kubernetes가 노드에 배치합니다."
+      },
+      {
+        "id": "storage",
+        "label": "아티팩트 · 메타데이터",
+        "focus": [
+          "pods",
+          "objectstore",
+          "mlmd"
+        ],
+        "note": "launcher/runtime이 아티팩트 전송과 메타데이터를 처리합니다. 파일과 MLMD는 별도입니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pipeline",
+      "type": "frontend",
+      "label": "Python 파이프라인",
+      "sublabel": "@dsl.pipeline / @dsl.component",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "compiler",
+      "type": "frontend",
+      "label": "KFP SDK 컴파일러",
+      "sublabel": "IR YAML 생성",
+      "pos": [
+        320,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "KFP API 서버",
+      "sublabel": "파이프라인 저장 · Run 접수",
+      "pos": [
+        660,
+        80
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "translate",
+      "type": "backend",
+      "label": "IR YAML → Argo Workflow 변환",
+      "sublabel": "백엔드",
+      "pos": [
+        950,
+        80
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "argo",
+      "type": "backend",
+      "label": "Argo Workflow 컨트롤러",
+      "sublabel": "순서 관리 / Pod 생성",
+      "pos": [
+        950,
+        280
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "cloud",
+      "label": "driver / launcher / 작업",
+      "sublabel": "K8s가 노드 배치",
+      "pos": [
+        660,
+        280
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "objectstore",
+      "type": "database",
+      "label": "오브젝트 스토어",
+      "sublabel": "S3 / MinIO · 아티팩트",
+      "pos": [
+        660,
+        480
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "mlmd",
+      "type": "database",
+      "label": "ML Metadata (MLMD)",
+      "sublabel": "실행 · 아티팩트 메타데이터",
+      "pos": [
+        950,
+        480
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "로컬 · KFP SDK",
+      "wraps": [
+        "pipeline",
+        "compiler"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "KFP 백엔드 (Argo Workflows 기반)",
+      "wraps": [
+        "apiserver",
+        "translate",
+        "argo",
+        "pods"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pipeline-compiler",
+      "from": "pipeline",
+      "to": "compiler",
+      "label": "컴파일"
+    },
+    {
+      "id": "compiler-apiserver",
+      "from": "compiler",
+      "to": "apiserver",
+      "label": "업로드 / Run 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apiserver-translate",
+      "from": "apiserver",
+      "to": "translate"
+    },
+    {
+      "id": "translate-argo",
+      "from": "translate",
+      "to": "argo",
+      "label": "Workflow 리소스",
+      "labelDy": 60
+    },
+    {
+      "id": "argo-pods",
+      "from": "argo",
+      "to": "pods"
+    },
+    {
+      "id": "pods-objectstore",
+      "from": "pods",
+      "to": "objectstore",
+      "label": "아티팩트 읽기·쓰기",
+      "labelDy": 60
+    },
+    {
+      "id": "pods-mlmd",
+      "from": "pods",
+      "to": "mlmd",
+      "label": "메타데이터 기록"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "IR과 실행",
+      "items": [
+        "업로드만으로 실행되지 않으며 백엔드 호환성을 확인해야 합니다.",
+        "캐시는 파일 바이트가 아닌 아티팩트 ID 등을 키로 사용합니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "스토리지와 신원",
+      "items": [
+        "S3는 유료 서비스이며 루트·provider·권한 구성이 필요합니다.",
+        "실제 실행 SA와 API 서버 등의 신원을 확인합니다."
+      ]
+    }
+  ]
+}

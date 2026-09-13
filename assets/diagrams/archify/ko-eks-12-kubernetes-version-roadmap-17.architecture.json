@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "단계별 업그레이드 프로세스",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": { "label": "사전 준비" },
+        "backend": { "label": "테스트 / 검증" },
+        "cloud": { "label": "프로덕션 업그레이드" }
+      }
+    },
+    "views": [
+      { "id": "prepare", "label": "1단계 사전 준비", "focus": ["release_notes", "addon_compat", "runbook"], "note": "릴리스 노트와 Deprecated API를 검토하고 애드온 호환성을 확인한 뒤, 런북과 롤백 계획을 마련합니다." },
+      { "id": "nonprod", "label": "2단계 비프로덕션 테스트", "focus": ["runbook", "dev_upgrade", "func_perf_test", "staging_upgrade"], "note": "개발 환경부터 업그레이드해 기능·성능·카오스 테스트를 거친 뒤 스테이징으로 확장합니다." },
+      { "id": "production", "label": "3단계 프로덕션 업그레이드", "focus": ["staging_upgrade", "control_plane", "managed_addons", "node_groups", "self_managed_addons"], "note": "컨트롤 플레인 → 매니지드 애드온 → 노드 그룹 → 자체 관리 애드온 순서로 1~2일 안에 진행합니다." },
+      { "id": "stabilize", "label": "4단계 검증 및 안정화", "focus": ["self_managed_addons", "workload_check", "feedback_docs"], "note": "워크로드 상태와 메트릭·알림을 모니터링하고 사용자 피드백을 반영해 문서를 갱신합니다." }
+    ]
+  },
+  "components": [
+    { "id": "release_notes", "type": "security", "label": "릴리스 노트 검토", "sublabel": "Deprecated API 스캔", "pos": [40, 100], "size": [200, 56] },
+    { "id": "addon_compat", "type": "security", "label": "애드온 호환성 확인", "sublabel": "매니지드 + 자체 설치", "pos": [40, 196], "size": [200, 56] },
+    { "id": "runbook", "type": "security", "label": "업그레이드 런북 작성", "sublabel": "롤백 계획 수립", "pos": [40, 292], "size": [200, 56] },
+    { "id": "dev_upgrade", "type": "backend", "label": "개발 환경 업그레이드", "pos": [330, 100], "size": [200, 56] },
+    { "id": "func_perf_test", "type": "backend", "label": "기능/성능 테스트", "sublabel": "카오스 테스트", "pos": [330, 196], "size": [200, 56] },
+    { "id": "staging_upgrade", "type": "backend", "label": "스테이징 환경 업그레이드", "pos": [330, 292], "size": [200, 56] },
+    { "id": "control_plane", "type": "cloud", "label": "컨트롤 플레인 업그레이드", "pos": [620, 100], "size": [200, 56] },
+    { "id": "managed_addons", "type": "cloud", "label": "매니지드 애드온 업데이트", "pos": [620, 196], "size": [200, 56] },
+    { "id": "node_groups", "type": "cloud", "label": "노드 그룹 업그레이드", "pos": [620, 292], "size": [200, 56] },
+    { "id": "self_managed_addons", "type": "cloud", "label": "자체 관리 애드온 업데이트", "pos": [620, 388], "size": [200, 56] },
+    { "id": "workload_check", "type": "backend", "label": "워크로드 상태 확인", "sublabel": "메트릭/알림 모니터링", "pos": [910, 100], "size": [200, 56] },
+    { "id": "feedback_docs", "type": "backend", "label": "사용자 피드백 수집", "sublabel": "문서 업데이트", "pos": [910, 196], "size": [200, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "1단계: 사전 준비 (1~2주)", "wraps": ["release_notes", "addon_compat", "runbook"] },
+    { "kind": "region", "label": "2단계: 비프로덕션 테스트 (1~2주)", "wraps": ["dev_upgrade", "func_perf_test", "staging_upgrade"] },
+    { "kind": "region", "label": "3단계: 프로덕션 업그레이드 (1~2일)", "wraps": ["control_plane", "managed_addons", "node_groups", "self_managed_addons"] },
+    { "kind": "region", "label": "4단계: 검증 및 안정화 (1주)", "wraps": ["workload_check", "feedback_docs"] }
+  ],
+  "connections": [
+    { "id": "p1a", "from": "release_notes", "to": "addon_compat" },
+    { "id": "p1b", "from": "addon_compat", "to": "runbook" },
+    { "id": "p1_to_p2", "from": "runbook", "to": "dev_upgrade", "label": "준비 완료", "variant": "emphasis" },
+    { "id": "p2a", "from": "dev_upgrade", "to": "func_perf_test" },
+    { "id": "p2b", "from": "func_perf_test", "to": "staging_upgrade" },
+    { "id": "p2_to_p3", "from": "staging_upgrade", "to": "control_plane", "label": "테스트 통과", "variant": "emphasis" },
+    { "id": "p3a", "from": "control_plane", "to": "managed_addons" },
+    { "id": "p3b", "from": "managed_addons", "to": "node_groups" },
+    { "id": "p3c", "from": "node_groups", "to": "self_managed_addons" },
+    { "id": "p3_to_p4", "from": "self_managed_addons", "to": "workload_check", "label": "업그레이드 완료", "variant": "emphasis" },
+    { "id": "p4a", "from": "workload_check", "to": "feedback_docs" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "사전 준비 핵심 점검", "items": ["pluto로 Deprecated API 스캔 (클러스터 + Helm 차트)", "aws eks describe-addon-versions로 매니지드 애드온 호환 버전 확인", "PodDisruptionBudget과 노드 그룹 AMI 호환성 점검"] },
+    { "dot": "orange", "title": "프로덕션 업그레이드 순서", "items": ["컨트롤 플레인 → 매니지드 애드온 → 노드 그룹 → 자체 관리 애드온", "매니지드 애드온은 kube-proxy → CoreDNS → VPC CNI → CSI 드라이버 순서", "프로덕션 단계는 1~2일 안에 마무리"] },
+    { "dot": "emerald", "title": "롤백 대비", "items": ["1단계에서 롤백 계획을 먼저 수립", "업그레이드 후 7일 이내에는 EKS 네이티브 버전 롤백 사용 가능", "7일 초과 시 Blue/Green 클러스터 전략으로 대체"] }
+  ]
+}

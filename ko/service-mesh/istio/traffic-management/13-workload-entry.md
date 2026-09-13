@@ -1,7 +1,7 @@
 # WorkloadEntry
 
-> **지원 버전**: Istio 1.28+
-> **마지막 업데이트**: 2026년 2월 19일
+> **검토 버전**: Istio 1.31.0
+> **마지막 업데이트**: 2026년 9월 11일
 
 WorkloadEntry는 Virtual Machine (VM)이나 베어메탈 서버를 Istio 서비스 메시에 등록하기 위한 리소스입니다. 이를 통해 Kubernetes 외부의 워크로드도 메시의 트래픽 관리, 보안, 관찰성 기능을 활용할 수 있습니다.
 
@@ -21,13 +21,17 @@ WorkloadEntry는 Virtual Machine (VM)이나 베어메탈 서버를 Istio 서비�
 
 ## 개요
 
+WorkloadEntry는 워크로드를 기술합니다. 생성만으로 Envoy 설치, ID 초기화, 네트워크 연결, DNS 레코드가 만들어지지는 않습니다. 이 장은 Sidecar 모드 VM 통합을 사용합니다. 각 예제는 독립적이며 ServiceEntry, 선택할 WorkloadEntry, ServiceAccount의 네임스페이스를 맞추세요. 그림은 등록/구성 관계이며 추가 네트워크 홉이 아닙니다.
+
 ### WorkloadEntry란?
 
 WorkloadEntry는 Istio Custom Resource Definition (CRD)으로, 메시 외부에 있는 워크로드(VM, 베어메탈)를 Istio 서비스 메시에 등록합니다.
 
 ### 사용 시나리오
 
-![레거시 VM과 베어메탈 서버가 WorkloadEntry로 istiod에 등록되고, istiod가 Kubernetes 파드의 Envoy에 구성을 전달하여 VM과 파드가 mTLS로 통신하는 하이브리드 아키텍처를 보여주는 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-0.svg)
+![레거시 VM과 베어메탈 서버가 WorkloadEntry로 istiod에 등록되고, istiod가 Kubernetes 파드의 Envoy 사이드카에 구성을 전달하여 VM과 파드 워크로드가 mTLS로 통신하는 하이브리드 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-0.html)
 
 **주요 사용 사례**:
 1. **점진적 마이그레이션**: 레거시 애플리케이션을 단계적으로 Kubernetes로 이전
@@ -53,13 +57,17 @@ WorkloadEntry는 Istio Custom Resource Definition (CRD)으로, 메시 외부에 
 
 ### 트래픽 흐름 비교
 
-![Kubernetes 파드 경로는 Service가 자동으로 디스커버리·라우팅을 처리하는 반면, WorkloadEntry 경로는 ServiceEntry로 수동 등록해야 함을 나란히 비교하는 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-1.svg)
+![클라이언트 요청이 Kubernetes 파드 경로에서는 Service의 자동 디스커버리로 Pod에 도달하고, WorkloadEntry 경로에서는 수동 등록한 ServiceEntry를 거쳐 VM의 WorkloadEntry에 도달하는 두 흐름을 나란히 비교해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-1.html)
 
 ## 아키텍처
 
 ### VM 워크로드 아키텍처
 
-![VM에 수동 설치된 Envoy와 파드에 자동 주입된 Envoy가 mTLS로 통신하고, istiod가 양쪽에 xDS 구성을 배포하며 VM 측에는 인증서까지 별도로 발급하는 아키텍처를 보여주는 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-2.svg)
+![VM에 수동 설치된 Envoy와 파드에 자동 주입된 Envoy가 mTLS로 통신하고, istiod가 양쪽에 xDS 구성을 배포하며 VM 측에는 인증서까지 별도로 발급하는 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-2.html)
 
 ### 주요 구성 요소
 
@@ -112,7 +120,7 @@ spec:
 
 | 필드 | 설명 | 예시 |
 |------|------|------|
-| **address** | VM의 IP 주소 (필수) | `192.168.1.100` |
+| **address** | 엔드포인트 주소 (IP 또는 DNS resolution의 DNS명; 구성된 원격 network는 생략 가능) | `192.168.1.100` |
 | **labels** | ServiceEntry 매칭용 레이블 | `app: legacy-api` |
 | **serviceAccount** | mTLS 인증용 SA | `legacy-api-sa` |
 | **ports** | 노출할 포트 맵 | `http: 8080` |
@@ -212,7 +220,9 @@ spec:
 
 ### 동작 흐름
 
-![Kubernetes 파드가 DNS로 가상 IP를 조회한 뒤 Envoy가 ServiceEntry의 workloadSelector로 WorkloadEntry를 찾아 VM으로 mTLS 연결을 맺고 응답을 돌려주는 순서를 보여주는 시퀀스 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-3.svg)
+![Kubernetes 파드가 Istio DNS로 가상 IP를 조회한 뒤 Envoy가 ServiceEntry의 workloadSelector로 WorkloadEntry를 찾아 VM으로 mTLS 연결을 맺고 응답을 돌려주는 순서를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-3.html)
 
 ### 로드 밸런싱
 
@@ -223,6 +233,7 @@ apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: database-cluster
+  namespace: vm-workloads
 spec:
   hosts:
   - db.cluster.internal
@@ -236,13 +247,37 @@ spec:
     labels:
       app: postgres
       tier: database
+      role: primary
+---
+# Separate read-only replica service
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: database-replicas
+  namespace: vm-workloads
+spec:
+  hosts:
+  - db-replicas.cluster.internal
+  ports:
+  - number: 5432
+    name: postgresql
+    protocol: TCP
+  location: MESH_INTERNAL
+  resolution: STATIC
+  workloadSelector:
+    labels:
+      app: postgres
+      tier: database
+      role: replica
 ---
 # Primary DB
 apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: postgres-primary
+  namespace: vm-workloads
 spec:
+  serviceAccount: vm-postgres-sa
   address: 10.0.1.100
   labels:
     app: postgres
@@ -255,7 +290,9 @@ apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: postgres-replica-1
+  namespace: vm-workloads
 spec:
+  serviceAccount: vm-postgres-sa
   address: 10.0.1.101
   labels:
     app: postgres
@@ -268,7 +305,9 @@ apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: postgres-replica-2
+  namespace: vm-workloads
 spec:
+  serviceAccount: vm-postgres-sa
   address: 10.0.1.102
   labels:
     app: postgres
@@ -277,19 +316,23 @@ spec:
   weight: 50
 ```
 
+쓰기는 primary 서비스로 보내고 복제 의미를 허용하는 읽기만 replica 서비스로 보내세요. 일반 엔드포인트 가중치는 PostgreSQL 역할을 이해하지 않습니다. 같은 포트의 서비스에는 DNS 캡처/고유 VIP를 준비하고 각 VM을 해당 ServiceAccount로 초기화하세요.
+
 ## VM 등록 실전 가이드
 
 ### 사전 요구사항
 
 1. **VM 요구사항**:
    - 네트워크: Kubernetes 클러스터와 통신 가능
-   - OS: Linux (Ubuntu 20.04+ 권장)
-   - 포트: Envoy 포트 개방 (15012, 15017 등)
+   - OS/CPU: 선택한 sidecar 패키지가 지원하는 Linux 배포판/아키텍처; 아래는 Debian 패키지 예제
+   - 연결: 노출한 VM 게이트웨이를 통해 istiod xDS/CA(일반적으로 15012)에 접근하고 선택한 토폴로지로 워크로드 트래픽을 라우팅. 15017은 Kubernetes webhook 포트이며 VM 앱 요구사항이 아님.
 
 2. **Kubernetes 준비**:
    - Istio 설치 완료
    - VM이 사용할 네임스페이스 생성
    - ServiceAccount 생성
+
+초기 파일 생성 전에 [공식 VM 설치 절차](https://istio.io/latest/docs/setup/install/virtual-machine/)로 기존 Control Plane을 VM에 노출하세요. 클러스터 전용 istiod Service만으로는 부족합니다. 아래는 하나의 논리 네트워크에서 Pod와 VM의 라우팅이 가능한 구성이며 분리된 네트워크는 문서의 east-west/network 설정을 적용해야 합니다. 생성할 cluster ID는 istiod 구성과 일치해야 합니다.
 
 ### 1단계: ServiceAccount 생성
 
@@ -300,19 +343,10 @@ kubectl create namespace vm-workloads
 # ServiceAccount 생성
 kubectl create serviceaccount vm-postgres-sa -n vm-workloads
 
-# (선택) RBAC 설정
-kubectl create role vm-postgres-role \
-  --verb=get,list,watch \
-  --resource=configmaps,secrets \
-  -n vm-workloads
-
-kubectl create rolebinding vm-postgres-binding \
-  --role=vm-postgres-role \
-  --serviceaccount=vm-workloads:vm-postgres-sa \
-  -n vm-workloads
+# VM ID 초기화에 Kubernetes Secret 목록 조회 권한은 필요하지 않습니다.
 ```
 
-### 2단계: WorkloadGroup 생성 (선택적)
+### 2단계: WorkloadGroup 초기 입력 준비
 
 WorkloadGroup은 여러 WorkloadEntry의 템플릿 역할을 합니다:
 
@@ -329,9 +363,10 @@ spec:
       version: v14
   template:
     serviceAccount: vm-postgres-sa
-    network: vm-network
+    network: ""  # Same logical network in this walkthrough
     ports:
       postgresql: 5432
+      metrics: 9187
 ```
 
 ### 3단계: VM에 Envoy 설치
@@ -340,11 +375,11 @@ spec:
 
 ```bash
 # istioctl로 VM 등록 파일 생성
+umask 077
 istioctl x workload entry configure \
   -f workloadgroup.yaml \
   -o vm-postgres-1 \
-  --clusterID Kubernetes \
-  --autoregister
+  --clusterID Kubernetes
 
 # 생성된 파일들:
 # - cluster.env: 클러스터 정보
@@ -357,38 +392,33 @@ istioctl x workload entry configure \
 #### VM에서 설치 실행
 
 ```bash
-# VM에 접속
+# Run on the administration workstation before entering the VM shell
+ssh user@192.168.1.100 'install -d -m 700 "$HOME/istio-bootstrap"'
+scp vm-postgres-1/* user@192.168.1.100:istio-bootstrap/
 ssh user@192.168.1.100
 
-# 파일 복사 (SCP 사용)
-scp -r vm-postgres-1/* user@192.168.1.100:/tmp/
-
-# VM에서 Envoy 설치
-sudo apt-get update
-sudo apt-get install -y curl
-
-# Istio sidecar 설치
-curl -LO https://storage.googleapis.com/istio-release/releases/1.28.0/deb/istio-sidecar.deb
+# From this point, run on the VM
+VM_BOOTSTRAP_DIR="$HOME/istio-bootstrap"
+curl -fsSLo istio-sidecar.deb \
+  https://blob.istio.io/istio-release/releases/1.31.0/deb/istio-sidecar.deb
 sudo dpkg -i istio-sidecar.deb
-
-# 구성 파일 배치
-sudo mkdir -p /etc/certs
-sudo cp /tmp/root-cert.pem /etc/certs/
-sudo cp /tmp/istio-token /var/run/secrets/tokens/
-sudo cp /tmp/cluster.env /var/lib/istio/envoy/
-sudo cp /tmp/mesh.yaml /etc/istio/config/mesh
-
-# Envoy 시작
-sudo systemctl start istio
-sudo systemctl enable istio
-
-# 상태 확인
+sudo install -d -o istio-proxy -m 0750 \
+  /etc/certs /var/run/secrets/tokens /var/lib/istio/envoy /etc/istio/config /etc/istio/proxy
+sudo install -o istio-proxy -m 0644 "$VM_BOOTSTRAP_DIR/root-cert.pem" /etc/certs/root-cert.pem
+sudo install -o istio-proxy -m 0600 "$VM_BOOTSTRAP_DIR/istio-token" /var/run/secrets/tokens/istio-token
+sudo install -o istio-proxy -m 0600 "$VM_BOOTSTRAP_DIR/cluster.env" /var/lib/istio/envoy/cluster.env
+sudo install -o istio-proxy -m 0600 "$VM_BOOTSTRAP_DIR/mesh.yaml" /etc/istio/config/mesh
+# Review/merge once; replace stale istiod entries rather than appending duplicates
+cat "$VM_BOOTSTRAP_DIR/hosts" | sudo tee -a /etc/hosts >/dev/null
+sudo systemctl enable --now istio
 sudo systemctl status istio
 ```
 
+
+
 ### 4단계: WorkloadEntry 등록
 
-자동 등록이 활성화되어 있으면 Envoy 시작 시 자동 생성됩니다. 수동 등록:
+위 명령은 수동 등록 방식입니다. VM 에이전트 초기화 후 아래 WorkloadEntry를 적용하세요. 자동 등록된 VM에 같은 주소의 수동 항목을 중복 생성하지 마세요:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -404,6 +434,7 @@ spec:
   serviceAccount: vm-postgres-sa
   ports:
     postgresql: 5432
+    metrics: 9187
 ```
 
 ```bash
@@ -427,6 +458,9 @@ spec:
   - number: 5432
     name: postgresql
     protocol: TCP
+  - number: 9187
+    name: metrics
+    protocol: HTTP
   location: MESH_INTERNAL
   resolution: STATIC
   workloadSelector:
@@ -440,26 +474,39 @@ kubectl apply -f serviceentry.yaml
 
 ### 6단계: 연결 테스트
 
-```bash
-# 테스트 파드 생성
-kubectl run -it --rm debug \
-  --image=postgres:14 \
-  --restart=Never \
-  --namespace=vm-workloads \
-  -- psql -h postgres.vm.internal -U dbuser -d mydb
-
-# 연결 성공 시:
-# Password for user dbuser:
-# psql (14.x)
-# Type "help" for help.
-# mydb=#
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pg-client
+  namespace: vm-workloads
+  labels:
+    sidecar.istio.io/inject: "true"
+  annotations:
+    proxy.istio.io/config: |
+      proxyMetadata:
+        ISTIO_META_DNS_CAPTURE: "true"
+spec:
+  containers:
+  - name: postgres
+    image: postgres:14
+    command: ["sleep", "infinity"]
 ```
+
+```bash
+kubectl apply -f pg-client.yaml
+kubectl wait -n vm-workloads --for=condition=Ready pod/pg-client --timeout=120s
+kubectl exec -it pg-client -n vm-workloads -c postgres -- \
+  psql -h postgres.vm.internal -U dbuser -d mydb
+```
+
+Pod 매니페스트를 pg-client.yaml로 저장하세요. PostgreSQL 클라이언트 버전은 Istio 버전과 별개인 앱 예시입니다. DB 자격 증명은 대화형으로 제공하세요. 아래 제한 정책 적용 후에는 허용된 ServiceAccount로 검사해야 하며 기본 테스트 ID는 거부됩니다. 완료 후 테스트 Pod를 제거하세요.
 
 ## 보안 설정 (mTLS)
 
 ### mTLS 자동 활성화
 
-WorkloadEntry는 자동으로 mTLS를 지원합니다:
+선언한 ServiceAccount로 VM 에이전트를 초기화하면 메시 프록시가 자동 mTLS를 사용할 수 있습니다. WorkloadEntry만으로 일반 VM이 메시 참여자가 되지는 않습니다:
 
 ```yaml
 # PeerAuthentication으로 mTLS 강제
@@ -474,6 +521,8 @@ spec:
 ```
 
 ### VM 신원 확인
+
+Pod Sidecar 초기화와 달리 VM 통합은 발급한 인증서/키를 /etc/certs에 보존하고 기존 mTLS ID로 갱신합니다. 성공적인 초기화 후 파일이 생성됩니다. 키를 보호하고 원인을 확인한 복구 절차에서 초기 자료를 재생성하며 자격 증명을 로그에 출력하지 마세요.
 
 ```bash
 # VM에서 인증서 확인
@@ -512,7 +561,6 @@ spec:
     to:
     - operation:
         ports: ["5432"]
-        methods: ["*"]
 
   # 모니터링 서비스 접근 허용
   - from:
@@ -527,27 +575,23 @@ spec:
 ### mTLS 검증
 
 ```bash
-# 파드에서 VM으로 연결 테스트
-kubectl exec -it <pod-name> -n production -- \
-  curl -v --cacert /etc/certs/root-cert.pem \
-  --cert /etc/certs/cert-chain.pem \
-  --key /etc/certs/key.pem \
-  https://postgres.vm.internal:5432
-
-# Envoy 통계로 mTLS 확인
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats | grep ssl
-
-# 출력 예시:
-# listener.0.0.0.0_15006.ssl.connection_error: 0
-# listener.0.0.0.0_15006.ssl.handshake: 1234
+# Use a PostgreSQL client in an authorized mesh workload; PostgreSQL is not HTTPS
+kubectl exec -it <authorized-client-pod> -n production -c <app-container> -- \
+  psql -h postgres.vm.internal -U dbuser -d mydb
+# Inspect the client proxy's TLS transport and certificates separately
+istioctl proxy-config clusters <authorized-client-pod> -n production --fqdn postgres.vm.internal -o json
+istioctl proxy-config secret <authorized-client-pod> -n production
+# On the VM, inspect public certificate information through its local admin interface
+curl -fsS http://127.0.0.1:15000/certs
 ```
 
 ## 헬스체크 및 모니터링
 
 ### 헬스체크 구성
 
-WorkloadEntry는 자동 헬스체크를 지원하지 않으므로 수동 구성이 필요합니다:
+선택적 자동화 방식의 Control Plane 플래그는 `PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRATION`, `PILOT_ENABLE_WORKLOAD_ENTRY_HEALTHCHECKS`입니다. 문서에 따라 기존 설치 설정에 병합하세요.
+
+WorkloadGroup은 readiness probe를 지원합니다. 문서의 자동 등록/상태 점검 방식은 istiod 플래그 활성화, WorkloadGroup 적용, --autoregister를 사용한 초기 파일 생성이 필요하며 위 수동 경로와 구분되는 선택적 방식입니다. 아래 DestinationRule은 능동 probe가 아닌 연결 실패의 수동 관찰입니다:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -561,14 +605,24 @@ spec:
     connectionPool:
       tcp:
         maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
     outlierDetection:
-      consecutiveErrors: 5  # 5회 연속 실패 시
+      consecutive5xxErrors: 5  # 5회 연속 실패 시
       interval: 30s         # 30초마다 확인
       baseEjectionTime: 30s # 30초 동안 제외
       maxEjectionPercent: 50 # 최대 50%까지 제외
-      minHealthPercent: 50   # 최소 50% 유지
+      minHealthPercent: 0    # Panic fail-open 임계값 해제
+```
+
+```yaml
+# Optional WorkloadGroup probe fragment for the documented auto-registration workflow
+spec:
+  probe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    tcpSocket:
+      host: 127.0.0.1
+      port: 5432
 ```
 
 ### VM 헬스체크 엔드포인트
@@ -586,56 +640,46 @@ app = Flask(__name__)
 def health():
     try:
         # 데이터베이스 연결 확인
-        conn = psycopg2.connect("dbname=mydb user=dbuser")
+        conn = psycopg2.connect("dbname=mydb user=dbuser", connect_timeout=3)
         conn.close()
         return jsonify({"status": "healthy"}), 200
-    except Exception as e:
-        return jsonify({"status": "unhealthy", "error": str(e)}), 503
+    except psycopg2.Error:
+        return jsonify({"status": "unhealthy"}), 503
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='127.0.0.1', port=8080)
 ```
 
 ### Prometheus 메트릭 수집
 
+ServiceMonitor는 WorkloadEntry/ServiceEntry가 아닌 Kubernetes Service/엔드포인트를 찾습니다. 이 VM에는 9187의 postgres_exporter를 설치하고 WorkloadEntry/ServiceEntry에 같은 포트를 등록한 뒤 기존 수집기 설정에 명시적 scrape job을 추가하세요. 수집기는 가상 호스트 DNS 조회, 메시 mTLS, exporter AuthorizationPolicy에서 허용한 ID가 필요합니다.
+
 ```yaml
-# ServiceMonitor로 VM 메트릭 수집
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: postgres-vm-metrics
-  namespace: vm-workloads
-spec:
-  selector:
-    matchLabels:
-      app: postgres
-  endpoints:
-  - port: metrics
-    interval: 30s
-    path: /metrics
+# Fragment for the existing Prometheus scrape_configs
+- job_name: workloadentry-postgres
+  scrape_interval: 30s
+  metrics_path: /metrics
+  static_configs:
+  - targets: ["postgres.vm.internal:9187"]
 ```
 
 ### Grafana 대시보드 쿼리
 
 ```promql
-# VM 워크로드 요청 수
-sum(rate(istio_requests_total{destination_workload="postgres-vm-1"}[5m]))
+# Native PostgreSQL traffic has TCP counters, not HTTP status/latency metrics
+sum(rate(istio_tcp_connections_opened_total{reporter="source",destination_service="postgres.vm.internal"}[5m]))
+sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service="postgres.vm.internal"}[5m]))
 
-# VM 워크로드 에러율
-sum(rate(istio_requests_total{destination_workload="postgres-vm-1",response_code="500"}[5m]))
-/
-sum(rate(istio_requests_total{destination_workload="postgres-vm-1"}[5m]))
-* 100
-
-# VM 워크로드 지연시간 (P99)
-histogram_quantile(0.99,
-  sum(rate(istio_request_duration_milliseconds_bucket{destination_workload="postgres-vm-1"}[5m])) by (le)
-)
+# Collector/exporter health; inspect the actual emitted labels
+up{job="workloadentry-postgres"}
+pg_up{job="workloadentry-postgres"}
 ```
 
 ## 고급 구성
 
 ### 멀티 네트워크 환경
+
+network 이름은 토폴로지 식별자입니다. 연결성과 east-west 게이트웨이, 일치하는 mesh network 데이터를 별도 구성해야 하며 VPC 라우트·피어링·게이트웨이를 생성하지 않습니다. Locality는 region/zone/subzone이며 클라이언트 프록시와 맞는 실제 값을 사용하세요.
 
 서로 다른 네트워크에 있는 VM 등록:
 
@@ -680,7 +724,7 @@ spec:
   address: 192.168.1.100
   labels:
     app: api-service
-  locality: us-west/us-west-2/us-west-2a
+  locality: us-west-2/us-west-2a
   weight: 100
 ---
 apiVersion: networking.istio.io/v1
@@ -691,7 +735,7 @@ spec:
   address: 10.0.1.100
   labels:
     app: api-service
-  locality: us-east/us-east-1/us-east-1a
+  locality: us-east-1/us-east-1a
   weight: 100
 ---
 # DestinationRule로 locality-aware 라우팅
@@ -706,14 +750,14 @@ spec:
       localityLbSetting:
         enabled: true
         distribute:
-        - from: us-west/*
+        - from: us-west-2/*
           to:
-            "us-west/*": 80
-            "us-east/*": 20
-        - from: us-east/*
+            "us-west-2/*": 80
+            "us-east-1/*": 20
+        - from: us-east-1/*
           to:
-            "us-east/*": 80
-            "us-west/*": 20
+            "us-east-1/*": 80
+            "us-west-2/*": 20
 ```
 
 ### Canary 배포
@@ -818,7 +862,10 @@ apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: postgres-vm-1
+  namespace: vm-workloads
 spec:
+  address: 192.168.1.100
+  serviceAccount: vm-postgres-sa
   labels:
     app: postgres  # ServiceEntry와 동일해야 함
     version: v14
@@ -843,22 +890,23 @@ sudo openssl x509 -in /etc/certs/cert-chain.pem -noout -dates
 
 # ServiceAccount 토큰 확인
 sudo ls -la /var/run/secrets/tokens/
-sudo cat /var/run/secrets/tokens/istio-token
+sudo stat /var/run/secrets/tokens/istio-token
 ```
 
 **해결 방법**:
 
 ```bash
-# 인증서 재발급
+# 관리 워크스테이션에서 초기 입력 재생성; 이 명령 자체가 인증서를 발급하지 않음
+umask 077
 istioctl x workload entry configure \
   -f workloadgroup.yaml \
   -o vm-postgres-1 \
-  --clusterID Kubernetes \
-  --autoregister
+  --clusterID Kubernetes
 
 # VM에 복사 및 Envoy 재시작
-scp -r vm-postgres-1/* user@192.168.1.100:/tmp/
-ssh user@192.168.1.100 "sudo cp /tmp/root-cert.pem /etc/certs/ && sudo systemctl restart istio"
+scp vm-postgres-1/* user@192.168.1.100:istio-bootstrap/
+# Reapply all reviewed runtime files and permissions using the VM installation steps,
+# including the token and mesh configuration; then restart istio. Do not replace only the root CA.
 ```
 
 ### 헬스체크 실패로 트래픽이 가지 않음
@@ -886,17 +934,20 @@ apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: postgres-healthcheck
+  namespace: vm-workloads
 spec:
   host: postgres.vm.internal
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 10     # 더 관대하게
+      consecutive5xxErrors: 10     # 더 관대하게
       interval: 60s             # 체크 간격 늘림
       baseEjectionTime: 60s
-      maxEjectionPercent: 100   # 모두 제외되지 않도록
+      maxEjectionPercent: 50    # 제외 비율 제한; 100이면 전체 제외 허용
 ```
 
 ### DNS 조회 실패
+
+ServiceEntry VIP만으로 CoreDNS 레코드가 생성되지 않습니다. 호출하는 Sidecar의 DNS 캡처를 활성화하고 Pod를 재생성하거나 실제 DNS 레코드를 제공하세요. VM 초기화의 DNS 프록시가 모든 Kubernetes 클라이언트의 캡처를 자동으로 켜지는 않습니다.
 
 **증상**: 파드에서 `postgres.vm.internal` 조회 실패
 
@@ -907,8 +958,7 @@ spec:
 kubectl get serviceentry -n vm-workloads
 
 # DNS 조회 테스트
-kubectl run -it --rm debug --image=busybox --restart=Never -- \
-  nslookup postgres.vm.internal
+kubectl exec pg-client -n vm-workloads -c postgres -- getent hosts postgres.vm.internal
 
 # Istio DNS Proxy 활성화 확인
 kubectl get pod <pod-name> -o yaml | grep ISTIO_META_DNS_CAPTURE
@@ -922,6 +972,7 @@ apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: postgres-service
+  namespace: vm-workloads
 spec:
   hosts:
   - postgres.vm.internal
@@ -942,7 +993,7 @@ spec:
 
 ### 1. 네이밍 규칙
 
-```yaml
+```text
 # WorkloadEntry 이름: <app>-<role>-<id>
 name: postgres-primary-1
 name: postgres-replica-2
@@ -991,33 +1042,30 @@ kubectl create role db-limited \
 ### 4. 모니터링 및 알림
 
 ```yaml
-# PrometheusRule로 알림 설정
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: workloadentry-alerts
+  namespace: vm-workloads
 spec:
   groups:
   - name: workloadentry
     rules:
-    - alert: WorkloadEntryDown
-      expr: up{job="workloadentry-postgres"} == 0
+    - alert: VMExporterScrapeDown
+      expr: up{job="workloadentry-postgres"} == 0 or absent(up{job="workloadentry-postgres"})
       for: 5m
       labels:
         severity: critical
       annotations:
-        summary: "WorkloadEntry {{ $labels.instance }} is down"
-
-    - alert: WorkloadEntryHighErrorRate
-      expr: |
-        rate(istio_requests_total{
-          destination_workload=~".*-vm-.*",
-          response_code="500"
-        }[5m]) > 0.05
-      for: 10m
+        summary: "VM exporter scrape target is unavailable"
+    - alert: PostgresExporterReportsDown
+      expr: pg_up{job="workloadentry-postgres"} == 0
+      for: 5m
       labels:
         severity: warning
 ```
+
+
 
 ### 5. 문서화
 
@@ -1044,6 +1092,8 @@ spec:
 
 ### 6. 백업 및 재해 복구
 
+진단용 export와 별도로 원본 WorkloadGroup/ServiceEntry/수동 WorkloadEntry 파일과 메시 버전을 보존하세요. VM의 보존된 ID 자료는 필요한 보안 백업 절차를 따릅니다. Export에는 서버 metadata/status가 있어 복구 전 검토해야 하며 자동 등록 항목은 컨트롤러가 재생성하도록 하고 수동 중복을 만들지 마세요. 네임스페이스·계정·Control Plane 연결성을 먼저 복구합니다.
+
 ```bash
 # WorkloadEntry 백업
 kubectl get workloadentry -n vm-workloads -o yaml > workloadentries-backup.yaml
@@ -1052,13 +1102,53 @@ kubectl get workloadentry -n vm-workloads -o yaml > workloadentries-backup.yaml
 kubectl get serviceentry -n vm-workloads -o yaml > serviceentries-backup.yaml
 
 # 복원
-kubectl apply -f workloadentries-backup.yaml
-kubectl apply -f serviceentries-backup.yaml
+kubectl apply -f serviceentry.yaml
+# Manual-registration path only: use the reviewed declarative source, not raw status snapshots
+kubectl apply -f workloadentry.yaml
 ```
 
 ### 7. 점진적 마이그레이션 전략
 
-![VM 메시 등록부터 VM 제거까지, WorkloadEntry를 이용한 5단계 점진적 마이그레이션 흐름을 보여주며 4단계 트래픽 전환이 핵심 지점으로 강조되어 있다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-4.svg)
+![WorkloadEntry로 메시에 등록한 VM 워크로드를 5단계에 걸쳐 Kubernetes로 옮기는 점진적 마이그레이션 흐름을, 4단계 트래픽 전환을 핵심 지점으로 강조해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-4.html)
+
+단계 시작 전에 레거시 VM ID를 초기화하고 아래 공유 ServiceEntry/subset을 생성하세요. Kubernetes 배포도 vm-workloads에 app=api, version=k8s 레이블로 만들고 프록시/DNS를 준비한 뒤 트래픽을 옮깁니다.
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: api-migration-service
+  namespace: vm-workloads
+spec:
+  hosts: [api.internal]
+  addresses: [240.240.4.1]
+  ports:
+  - number: 8080
+    name: http
+    protocol: HTTP
+  location: MESH_INTERNAL
+  resolution: STATIC
+  workloadSelector:
+    labels:
+      app: api
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: api-migration-subsets
+  namespace: vm-workloads
+spec:
+  host: api.internal
+  subsets:
+  - name: legacy
+    labels:
+      version: legacy
+  - name: k8s
+    labels:
+      version: k8s
+```
 
 **1단계: VM 메시 등록**
 ```yaml
@@ -1067,7 +1157,9 @@ apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: legacy-api-vm
+  namespace: vm-workloads
 spec:
+  serviceAccount: api-sa
   address: 192.168.1.100
   labels:
     app: api
@@ -1080,6 +1172,7 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-migration
+  namespace: vm-workloads
 spec:
   hosts:
   - api.internal
@@ -1093,7 +1186,7 @@ spec:
 
 **3단계: Kubernetes 배포**
 ```bash
-kubectl apply -f kubernetes-deployment.yaml
+kubectl apply -n vm-workloads -f kubernetes-deployment.yaml
 ```
 
 **4단계: 점진적 트래픽 전환**
@@ -1103,13 +1196,18 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-migration
+  namespace: vm-workloads
 spec:
+  hosts:
+  - api.internal
   http:
   - route:
     - destination:
+        host: api.internal
         subset: legacy  # VM
       weight: 90
     - destination:
+        host: api.internal
         subset: k8s     # Kubernetes
       weight: 10
 ```
@@ -1136,3 +1234,12 @@ kubectl delete workloadentry legacy-api-vm -n vm-workloads
 ### 추가 자료
 - [Istio VM Integration Guide](https://istio.io/latest/blog/2020/workload-entry/)
 - [Envoy Proxy Documentation](https://www.envoyproxy.io/docs/envoy/latest/)
+
+- [Primary reference 1](https://istio.io/latest/docs/setup/install/virtual-machine/)
+- [Primary reference 2](https://istio.io/latest/docs/ops/diagnostic-tools/virtual-machines/)
+- [Primary reference 3](https://istio.io/latest/docs/reference/config/networking/workload-entry/)
+- [Primary reference 4](https://istio.io/latest/docs/reference/config/networking/workload-group/)
+- [Primary reference 5](https://istio.io/latest/docs/reference/config/security/authorization-policy/)
+- [Primary reference 6](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [Primary reference 7](https://prometheus-operator.dev/docs/api-reference/api/)
+- [Primary reference 8](https://istio.io/latest/docs/reference/config/networking/destination-rule/)

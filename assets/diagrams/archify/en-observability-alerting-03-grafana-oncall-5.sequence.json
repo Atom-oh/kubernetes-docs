@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Slack Workflow — Alert Posting and Acknowledge/Resolve Handling",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      640
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "post",
+        "label": "Alert posting",
+        "focus": [
+          "alert",
+          "oncall",
+          "slack",
+          "user"
+        ],
+        "note": "The alert passes through OnCall and is posted to the Slack channel as a message with action buttons."
+      },
+      {
+        "id": "ack",
+        "label": "Acknowledge",
+        "focus": [
+          "user",
+          "slack",
+          "oncall"
+        ],
+        "note": "An Acknowledge click round-trips through Slack to update OnCall's status and the channel message."
+      },
+      {
+        "id": "resolve",
+        "label": "Resolve",
+        "focus": [
+          "user",
+          "slack",
+          "oncall",
+          "alert"
+        ],
+        "note": "Resolve also updates status and message, and additionally notifies the alert source."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "alert",
+      "type": "messagebus",
+      "label": "Alert",
+      "sublabel": "alert source"
+    },
+    {
+      "id": "oncall",
+      "type": "backend",
+      "label": "OnCall",
+      "sublabel": "Grafana OnCall"
+    },
+    {
+      "id": "slack",
+      "type": "external",
+      "label": "Slack",
+      "sublabel": "channel · Slack App"
+    },
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "on-call responder"
+    }
+  ],
+  "segments": [
+    {
+      "from": 290,
+      "to": 402,
+      "label": "Acknowledge"
+    },
+    {
+      "from": 418,
+      "to": 570,
+      "label": "Resolve"
+    }
+  ],
+  "messages": [
+    {
+      "id": "fire",
+      "from": "alert",
+      "to": "oncall",
+      "y": 185,
+      "label": "Alert fired",
+      "variant": "emphasis"
+    },
+    {
+      "id": "post",
+      "from": "oncall",
+      "to": "slack",
+      "y": 222,
+      "label": "Send message to channel",
+      "variant": "emphasis"
+    },
+    {
+      "id": "show",
+      "from": "slack",
+      "to": "user",
+      "y": 259,
+      "label": "Display alert (with buttons)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ack-click",
+      "from": "user",
+      "to": "slack",
+      "y": 312,
+      "label": "Click \"Acknowledge\" button"
+    },
+    {
+      "id": "ack-req",
+      "from": "slack",
+      "to": "oncall",
+      "y": 349,
+      "label": "Acknowledge request",
+      "note": "OnCall updates alert status"
+    },
+    {
+      "id": "ack-msg",
+      "from": "oncall",
+      "to": "slack",
+      "y": 386,
+      "label": "Update message",
+      "variant": "return"
+    },
+    {
+      "id": "res-click",
+      "from": "user",
+      "to": "slack",
+      "y": 440,
+      "label": "Click \"Resolve\" button"
+    },
+    {
+      "id": "res-req",
+      "from": "slack",
+      "to": "oncall",
+      "y": 477,
+      "label": "Resolve request",
+      "note": "OnCall updates alert status"
+    },
+    {
+      "id": "res-msg",
+      "from": "oncall",
+      "to": "slack",
+      "y": 514,
+      "label": "Update message",
+      "variant": "return"
+    },
+    {
+      "id": "res-notify",
+      "from": "oncall",
+      "to": "alert",
+      "y": 551,
+      "label": "Resolution notification",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "oncall",
+      "from": 180,
+      "to": 229,
+      "type": "backend"
+    },
+    {
+      "participant": "oncall",
+      "from": 344,
+      "to": 393,
+      "type": "backend"
+    },
+    {
+      "participant": "oncall",
+      "from": 472,
+      "to": 558,
+      "type": "backend"
+    }
+  ]
+}

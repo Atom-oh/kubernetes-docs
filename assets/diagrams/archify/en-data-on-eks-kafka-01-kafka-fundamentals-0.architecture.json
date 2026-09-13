@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KafkaConsumer partition-assignment example",
+    "locale": "en",
+    "output": "en-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "produce",
+        "label": "Producer writes",
+        "focus": [
+          "producer",
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "note": "Messages the producer writes to the orders topic are spread partition by partition across leader replicas on different brokers."
+      },
+      {
+        "id": "consume",
+        "label": "Consumer group reads",
+        "focus": [
+          "p0",
+          "p1",
+          "p2",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "An automatic group-assignment example. One consumer can own several partitions; Share Groups are a different model."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "producer",
+      "type": "external",
+      "label": "Producer",
+      "sublabel": "topic: orders",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "p0",
+      "type": "messagebus",
+      "label": "orders · Partition 0",
+      "sublabel": "Leader replica",
+      "pos": [
+        360,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "messagebus",
+      "label": "orders · Partition 1",
+      "sublabel": "Leader replica",
+      "pos": [
+        360,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "messagebus",
+      "label": "orders · Partition 2",
+      "sublabel": "Leader replica",
+      "pos": [
+        360,
+        460
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "Consumer 1",
+      "sublabel": "assigned Partition 0",
+      "pos": [
+        780,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "Consumer 2",
+      "sublabel": "assigned Partition 1",
+      "pos": [
+        780,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "backend",
+      "label": "Consumer 3",
+      "sublabel": "assigned Partition 2",
+      "pos": [
+        780,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Broker 1",
+      "wraps": [
+        "p0"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Broker 2",
+      "wraps": [
+        "p1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Broker 3",
+      "wraps": [
+        "p2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Logical consumer group: order-processor",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "produce-p0",
+      "from": "producer",
+      "to": "p0",
+      "variant": "emphasis",
+      "label": "write messages",
+      "labelAt": [
+        274,
+        220
+      ]
+    },
+    {
+      "id": "produce-p1",
+      "from": "producer",
+      "to": "p1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "produce-p2",
+      "from": "producer",
+      "to": "p2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fetch-p0",
+      "from": "p0",
+      "to": "c1"
+    },
+    {
+      "id": "fetch-p1",
+      "from": "p1",
+      "to": "c2",
+      "label": "example 3:3 assignment"
+    },
+    {
+      "id": "fetch-p2",
+      "from": "p2",
+      "to": "c3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Partitions",
+      "items": [
+        "Writes go to partition leaders",
+        "Configured follower fetching is also possible"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "KafkaConsumer",
+      "items": [
+        "Three partitions and three consumers are one example",
+        "One consumer can own multiple partitions"
+      ]
+    }
+  ]
+}

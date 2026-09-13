@@ -1,0 +1,246 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "DNS Proxy Gradual Rollout",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-advanced-04-dns-cache-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start · Complete"
+        },
+        "backend": {
+          "label": "Apply step"
+        },
+        "security": {
+          "label": "Validation gate"
+        },
+        "cloud": {
+          "label": "Apply to production"
+        },
+        "messagebus": {
+          "label": "Rollback"
+        },
+        "external": {
+          "label": "Troubleshoot"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "test-gate",
+        "label": "Test validation",
+        "focus": [
+          "start",
+          "enable",
+          "validate",
+          "debug"
+        ],
+        "note": "Enable DNS Proxy in the test environment; if validation fails, troubleshoot and enable it again."
+      },
+      {
+        "id": "staging-gate",
+        "label": "Staging monitoring",
+        "focus": [
+          "validate",
+          "stage",
+          "monitor",
+          "rollback"
+        ],
+        "note": "Once validation passes, apply to staging and roll back if monitoring shows a problem."
+      },
+      {
+        "id": "prod-rollout",
+        "label": "Production rollout",
+        "focus": [
+          "monitor",
+          "prod",
+          "complete"
+        ],
+        "note": "When monitoring is normal, apply gradually to production to complete the rollout."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "test",
+      "label": "Test environment"
+    },
+    {
+      "id": "staging",
+      "label": "Staging environment"
+    },
+    {
+      "id": "prod",
+      "label": "Production"
+    },
+    {
+      "id": "exceptions",
+      "label": "Troubleshoot · Rollback",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "enable",
+    "validate",
+    "stage",
+    "monitor",
+    "prod",
+    "complete"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "complete"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "complete"
+      },
+      {
+        "from": "rollback",
+        "to": "enable"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "test",
+      "col": 0,
+      "type": "frontend",
+      "label": "Start"
+    },
+    {
+      "id": "enable",
+      "lane": "test",
+      "col": 1,
+      "type": "backend",
+      "label": "Enable DNS Proxy",
+      "sublabel": "Test environment",
+      "width": 160
+    },
+    {
+      "id": "validate",
+      "lane": "test",
+      "col": 2,
+      "type": "security",
+      "label": "Validation",
+      "sublabel": "successful?",
+      "width": 124
+    },
+    {
+      "id": "stage",
+      "lane": "staging",
+      "col": 3,
+      "type": "backend",
+      "label": "Apply to staging",
+      "width": 160
+    },
+    {
+      "id": "monitor",
+      "lane": "staging",
+      "col": 4,
+      "type": "security",
+      "label": "Monitoring",
+      "sublabel": "normal?",
+      "width": 180
+    },
+    {
+      "id": "prod",
+      "lane": "prod",
+      "col": 4,
+      "type": "cloud",
+      "label": "Apply to production",
+      "sublabel": "gradual application",
+      "width": 180
+    },
+    {
+      "id": "complete",
+      "lane": "prod",
+      "col": 5,
+      "type": "frontend",
+      "label": "Complete"
+    },
+    {
+      "id": "debug",
+      "lane": "exceptions",
+      "col": 2,
+      "type": "external",
+      "label": "Troubleshoot",
+      "width": 134
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Rollback",
+      "width": 110
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "enable"
+    },
+    {
+      "from": "enable",
+      "to": "validate"
+    },
+    {
+      "from": "validate",
+      "to": "stage",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "from": "stage",
+      "to": "monitor"
+    },
+    {
+      "from": "monitor",
+      "to": "prod",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "from": "prod",
+      "to": "complete"
+    },
+    {
+      "from": "validate",
+      "to": "debug",
+      "label": "No",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "debug",
+      "to": "enable",
+      "label": "retry",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "monitor",
+      "to": "rollback",
+      "label": "No",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "rollback",
+      "to": "debug",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ]
+}

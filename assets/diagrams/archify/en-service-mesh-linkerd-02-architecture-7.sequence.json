@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Workload Certificate Issuance and Renewal",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      720
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "bootstrap",
+        "label": "Token and CSR",
+        "focus": [
+          "proxy",
+          "sa"
+        ],
+        "note": "At Pod startup the proxy reads its ServiceAccount token and builds a CSR carrying its SPIFFE ID."
+      },
+      {
+        "id": "issue",
+        "label": "Validate and sign",
+        "focus": [
+          "proxy",
+          "identity"
+        ],
+        "note": "The Identity Controller validates the SA token and SPIFFE ID, then signs a 24-hour certificate with the Issuer key."
+      },
+      {
+        "id": "renew",
+        "label": "Automatic renewal",
+        "focus": [
+          "proxy",
+          "identity"
+        ],
+        "note": "Before expiry (by default at 70% of the lifetime) the proxy sends a new CSR to renew its certificate."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "initial issuance"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "proxy",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "sidecar"
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity Controller",
+      "sublabel": "holds the Issuer key"
+    },
+    {
+      "id": "sa",
+      "type": "external",
+      "label": "ServiceAccount",
+      "sublabel": "token mounted in the Pod"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 400,
+      "label": "Initial issuance — at Pod startup"
+    },
+    {
+      "from": 425,
+      "to": 555,
+      "label": "Renewal — automatic before expiry (default: at 70% of lifetime)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "get-token",
+      "from": "proxy",
+      "to": "sa",
+      "y": 200,
+      "label": "get SA token"
+    },
+    {
+      "id": "send-csr",
+      "from": "proxy",
+      "to": "identity",
+      "y": 265,
+      "label": "CSR + SA token",
+      "variant": "security",
+      "note": "Proxy generates a CSR carrying its SPIFFE ID and sends both"
+    },
+    {
+      "id": "cert",
+      "from": "identity",
+      "to": "proxy",
+      "y": 360,
+      "label": "signed certificate (24h)",
+      "variant": "emphasis",
+      "note": "Validate SA token → validate SPIFFE ID → sign with Issuer key"
+    },
+    {
+      "id": "renew-csr",
+      "from": "proxy",
+      "to": "identity",
+      "y": 470,
+      "label": "renewal CSR",
+      "variant": "security"
+    },
+    {
+      "id": "new-cert",
+      "from": "identity",
+      "to": "proxy",
+      "y": 530,
+      "label": "new certificate",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "identity",
+      "from": 260,
+      "to": 366,
+      "type": "security"
+    },
+    {
+      "participant": "identity",
+      "from": 465,
+      "to": 536,
+      "type": "security"
+    }
+  ]
+}

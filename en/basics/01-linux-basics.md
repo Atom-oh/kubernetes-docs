@@ -1,6 +1,6 @@
 # Linux Basics
 
-> **Supported Versions**: All major Linux distributions (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+) **Last Updated**: February 11, 2026
+> **Supported Versions**: Reviewed examples: Ubuntu 24.04 LTS, Debian 13, Amazon Linux 2023; package/service names vary by distribution **Last Updated**: September 11, 2026
 
 Understanding Linux fundamentals is essential for comprehending Kubernetes and container technology. This document covers the core Linux concepts that are particularly important in Kubernetes environments.
 
@@ -10,22 +10,19 @@ To follow along with the examples in this document, you'll need the following en
 
 ### Required Environment
 
-* Linux operating system (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+ recommended)
+* Linux operating system (Ubuntu 24.04 LTS, Debian 13, or Amazon Linux 2023 recommended)
 * Terminal access
 * sudo privileges
 
 ### Cloud Environment Setup (Optional)
 
-If using an AWS EC2 instance:
+Use an isolated training VM. For AWS, select AL2023 with the correct architecture and Region; the old hard-coded AMI is not portable. AWS lists AL2 standard support as ended on June 30, 2026. The following only looks up an AMI; arrange instance creation and scoped access separately, then connect to the existing instance.
 
 ```bash
-# Start an Amazon Linux 2 instance
-aws ec2 run-instances \
-  --image-id ami-0c55b159cbfafe1f0 \
-  --instance-type t3.micro \
-  --key-name your-key-pair \
-  --security-group-ids sg-12345678 \
-  --subnet-id subnet-12345678
+# Read-only AMI discovery; select a kernel-specific parameter when reproducibility is required.
+aws ssm get-parameter --region us-east-1 \
+  --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 \
+  --query Parameter.Value --output text
 
 # SSH connection
 ssh -i your-key.pem ec2-user@your-instance-public-ip
@@ -37,7 +34,7 @@ For local practice, you can use one of the following:
 
 * **VirtualBox + Vagrant**: Set up a virtual machine environment
 * **WSL2**: Use Linux environment on Windows
-* **Docker**: Practice in a container environment
+* **Docker**: Suitable for basic shell exercises; ordinary containers do not provide a full systemd host or permission for host networking/kernel exercises.
 
 ## Table of Contents
 
@@ -75,7 +72,7 @@ The Linux kernel is the core of the operating system, acting as an intermediary 
 
 User space is the memory region where regular applications run. User space programs access kernel services through system calls.
 
-![Shows the Linux user space, kernel space, and hardware layers: applications and the shell call through system libraries and the system call interface into the kernel subsystems (process and memory management, file system, networking, security), which reach the CPU, memory, storage, and network card through device drivers.](../.gitbook/assets/en-basics-01-linux-basics-0.png)
+![Linux user space, kernel space, and hardware layers: applications and the shell reach the kernel subsystems through system libraries and the system call interface, and device drivers reach the CPU, memory, storage, and network card.](../.gitbook/assets/en-basics-01-linux-basics-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-0.html)
 
@@ -93,7 +90,7 @@ User space is the memory region where regular applications run. User space progr
 
 ### Linux Kernel Architecture
 
-![Layered Linux kernel architecture showing user-space applications and the shell reaching the kernel through system libraries and the system call interface, the process, memory, file system, networking, and security subsystems beneath it, and device drivers communicating with the CPU, memory, storage, and network card hardware.](../.gitbook/assets/en-basics-01-linux-basics-1.png)
+![Linux kernel architecture in layers: applications and the shell enter the kernel through system libraries and the system call interface, and the kernel subsystems drive the hardware through device drivers.](../.gitbook/assets/en-basics-01-linux-basics-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
 
@@ -145,12 +142,12 @@ Namespaces are a Linux kernel feature that isolates process groups so that each 
 
 * **PID Namespace**: Process ID isolation, allows containers to have their own PID 1 (init)
 * **Network Namespace**: Network stack isolation (interfaces, IP addresses, routing tables, firewalls, etc.), foundation for container networking
-* **Mount Namespace**: File system mount point isolation, provides independent file system per container
-* **UTS Namespace**: Hostname and domain name isolation, gives each container a unique host identifier
+* **Mount Namespace**: Isolates mount tables; filesystem content and container root isolation require suitable mounts/root configuration
+* **UTS Namespace**: Hostname and NIS domain-name isolation (not DNS domains), gives each container a unique host identifier
 * **IPC Namespace**: Inter-process communication resource isolation (shared memory, semaphores, message queues, etc.), important for service isolation in microservices architecture
 * **User Namespace**: User and group ID isolation, supports rootless container execution for enhanced security
 * **cgroup Namespace**: cgroup root directory isolation, provides resource limit visibility inside containers
-* **Time Namespace**: System clock isolation, allows independent time settings per container (Linux 5.6+)
+* **Time Namespace**: Virtualizes CLOCK_MONOTONIC/CLOCK_BOOTTIME offsets (Linux 5.6+), not the realtime wall clock
 
 ### Namespace-Related Commands
 
@@ -159,10 +156,10 @@ Namespaces are a Linux kernel feature that isolates process groups so that each 
 ls -la /proc/<PID>/ns/
 
 # Execute command in new namespace
-unshare --net --pid --fork --mount-proc bash
+sudo unshare --mount --net --pid --fork --mount-proc bash
 
 # Enter existing process's namespace
-nsenter --target <PID> --net --pid bash
+sudo nsenter --target <PID> --net --pid bash
 
 # Create and manage network namespaces
 ip netns add <name>
@@ -172,7 +169,7 @@ ip netns exec <name> <command>
 unshare --user --map-root-user --mount --net bash
 
 # Using time namespace (Linux 5.6+)
-unshare --time bash
+sudo unshare --time --fork bash
 ```
 
 ## cgroups (Control Groups)
@@ -184,7 +181,7 @@ cgroups is a Linux kernel feature that limits and isolates resource usage of pro
 * **CPU Time Limiting**: Limit CPU time available to process groups and allocate CPU cores
 * **Memory Limiting**: Limit memory available to process groups and control OOM (Out of Memory) behavior
 * **Block I/O Limiting**: Disk I/O bandwidth limiting and priority settings
-* **Network Bandwidth Limiting**: Network traffic limiting (combined with tc)
+* **Network traffic control**: Combine tc/eBPF with cgroup classification; cgroup v2 has no standalone network-bandwidth knob
 * **Device Access Control**: Access control and permission management for specific devices
 * **PIDs Control**: Limit process creation count to prevent fork bombs
 * **Freezer**: Pause and resume process groups (used for container pausing)
@@ -204,17 +201,17 @@ ls -la /sys/fs/cgroup/                     # cgroups v2
 ls -la /sys/fs/cgroup/cpu /sys/fs/cgroup/memory  # cgroups v1
 
 # cgroups management through systemd (modern approach)
-systemctl set-property <service-name> CPUQuota=20%
-systemctl set-property <service-name> MemoryLimit=1G
-systemctl set-property <service-name> IOWeight=500
+sudo systemctl set-property --runtime <service-name> CPUQuota=20%
+sudo systemctl set-property --runtime <service-name> MemoryMax=1G
+sudo systemctl set-property --runtime <service-name> IOWeight=500
 
 # Check process cgroup
 cat /proc/<PID>/cgroup
 
-# Direct cgroups v2 manipulation (advanced)
-echo $$ > /sys/fs/cgroup/user.slice/cgroup.procs
-echo "max 100000" > /sys/fs/cgroup/user.slice/memory.max
-echo "100000 500000" > /sys/fs/cgroup/user.slice/memory.high
+# Run only the example command inside a transient cgroup managed by systemd.
+sudo systemd-run --scope -p CPUQuota=20% -p MemoryHigh=768M -p MemoryMax=1G sleep 60
+# memory.max/high take one byte count or "max"; cpu.max takes quota and period.
+# Do not move your shell into systemd-owned user.slice or edit its control files.
 
 # Container runtime and cgroups
 podman stats  # Monitor container resource usage
@@ -241,11 +238,11 @@ Key directories:
 
 ### File System Types
 
-* **ext4**: Default Linux file system
+* **ext4**: A common Linux filesystem; defaults vary by distribution
 * **XFS**: Suitable for large file systems
 * **Btrfs**: Provides advanced features like snapshots and compression
 * **OverlayFS**: Represents multiple directories as a single directory (commonly used in containers)
-* **tmpfs**: Memory-based temporary file system
+* **tmpfs**: Memory-backed temporary filesystem; pages may be swapped unless swap is disabled for it
 
 ### Mount and Volumes
 
@@ -313,7 +310,7 @@ ip link set <veth2> netns <namespace-name>
 
 Linux file permissions consist of read (r), write (w), and execute (x) permissions for owner, group, and other users.
 
-![Shows how the 10-character permission string from ls -l splits into a 1-character file type plus three r w x triplets for owner, group, and other users, and how the example drwxr-xr-- decodes to a directory with full owner permissions, read/execute for the group, and read-only for others.](../.gitbook/assets/en-basics-01-linux-basics-2.png)
+![How the 10-character ls -l permission string splits into a file-type character plus r w x triplets for owner, group, and others, decoding drwxr-xr-- as a directory with full owner, read/execute group, and read-only other access.](../.gitbook/assets/en-basics-01-linux-basics-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-2.html)
 
@@ -342,9 +339,9 @@ chmod 1755 <filename>  # Set sticky bit
 # Check SELinux status
 getenforce
 
-# Change SELinux mode
-setenforce 0  # Permissive mode
-setenforce 1  # Enforcing mode
+# Only in a reviewed isolated lab: permissive disables enforcement system-wide.
+# sudo setenforce 0
+# Restore the original mode after investigation; do not use permissive as a generic fix.
 
 # Check AppArmor status
 aa-status
@@ -410,20 +407,19 @@ systemctl daemon-reload
 
 ### Writing systemd Unit Files
 
-Example systemd unit file for Kubernetes-related services:
+A small training service illustrates unit structure. Inspect kubelet with systemctl cat kubelet; retain the distribution/kubeadm-managed unit and drop-ins instead of replacing them.
 
 ```ini
-# /etc/systemd/system/kubelet.service
+# /etc/systemd/system/linux-basics-demo.service
 [Unit]
-Description=kubelet: The Kubernetes Node Agent
-Documentation=https://kubernetes.io/docs/
+Description=Linux basics training service
+Documentation=man:systemd.service(5)
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/kubelet
-Restart=always
-StartLimitInterval=0
+ExecStart=/usr/bin/sleep infinity
+Restart=on-failure
 RestartSec=10
 
 [Install]
@@ -432,18 +428,20 @@ WantedBy=multi-user.target
 
 ### systemd Resource Limits
 
+The commands below assume the training unit above was saved and daemon-reload completed in the lab VM. Do not apply these teaching limits to production kubelet/containerd.
+
 ```bash
 # CPU limit (20%)
-systemctl set-property kubelet CPUQuota=20%
+sudo systemctl set-property --runtime linux-basics-demo.service CPUQuota=20%
 
 # Memory limit (1GB)
-systemctl set-property kubelet MemoryLimit=1G
+sudo systemctl set-property --runtime linux-basics-demo.service MemoryMax=1G
 
-# I/O weight setting (100-1000, default 100)
-systemctl set-property kubelet IOWeight=500
+# I/O weight setting (1-10000, default 100)
+sudo systemctl set-property --runtime linux-basics-demo.service IOWeight=500
 
 # Check settings
-systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
+systemctl show linux-basics-demo.service | grep -E 'CPUQuota|MemoryMax|IOWeight'
 ```
 
 ## Kernel Parameters and Modules
@@ -452,29 +450,31 @@ systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
 
 sysctl is a tool for querying and modifying running kernel parameters. It's essential for network and system parameter tuning when configuring Kubernetes clusters.
 
-#### Key sysctl Settings Required for Kubernetes
+#### CNI-specific sysctl Settings and Tuning Examples
+
+These are not mandatory defaults for every Kubernetes node. Check the chosen IP family, CNI and Service proxy requirements. Bridge-netfilter settings apply only to configurations using br_netfilter. Do not apply performance/ARP/conntrack values to production without measurements; record existing values and use an isolated training VM.
 
 ```bash
 # Enable IP forwarding (required for container networking)
-sysctl -w net.ipv4.ip_forward=1
-sysctl -w net.ipv6.conf.all.forwarding=1
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo sysctl -w net.ipv6.conf.all.forwarding=1
 
-# Enable bridge traffic to pass through iptables (required for CNI plugins)
-sysctl -w net.bridge.bridge-nf-call-iptables=1
-sysctl -w net.bridge.bridge-nf-call-ip6tables=1
+# Enable bridge traffic to pass through iptables (only for CNI configurations requiring bridge netfilter)
+sudo sysctl -w net.bridge.bridge-nf-call-iptables=1
+sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=1
 
 # Increase maximum file descriptor count
-sysctl -w fs.file-max=2097152
+sudo sysctl -w fs.file-max=2097152
 
 # Network performance tuning
-sysctl -w net.core.somaxconn=32768
-sysctl -w net.ipv4.tcp_max_syn_backlog=8192
-sysctl -w net.core.netdev_max_backlog=16384
+sudo sysctl -w net.core.somaxconn=32768
+sudo sysctl -w net.ipv4.tcp_max_syn_backlog=8192
+sudo sysctl -w net.core.netdev_max_backlog=16384
 
 # ARP cache settings (for large clusters)
-sysctl -w net.ipv4.neigh.default.gc_thresh1=80000
-sysctl -w net.ipv4.neigh.default.gc_thresh2=90000
-sysctl -w net.ipv4.neigh.default.gc_thresh3=100000
+sudo sysctl -w net.ipv4.neigh.default.gc_thresh1=80000
+sudo sysctl -w net.ipv4.neigh.default.gc_thresh2=90000
+sudo sysctl -w net.ipv4.neigh.default.gc_thresh3=100000
 
 # Check current settings
 sysctl net.ipv4.ip_forward
@@ -488,21 +488,21 @@ net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 
 # Apply settings
-sysctl --system
+sudo sysctl --system
 ```
 
 ### Kernel Module Management
 
-Many CNI plugins and storage drivers require specific kernel modules.
+Modules depend on the runtime/CNI/storage choice. IPVS mode is deprecated since Kubernetes 1.35; the IPVS commands below are for existing IPVS clusters only. Do not preload every listed module on new clusters.
 
 ```bash
 # Load modules
-modprobe overlay  # OverlayFS (container storage)
-modprobe br_netfilter  # Bridge networking
-modprobe ip_vs  # IPVS load balancing (kube-proxy IPVS mode)
-modprobe ip_vs_rr  # Round Robin algorithm
-modprobe ip_vs_wrr  # Weighted Round Robin
-modprobe ip_vs_sh  # Source Hashing
+sudo modprobe overlay  # OverlayFS (container storage)
+sudo modprobe br_netfilter  # Bridge networking
+sudo modprobe ip_vs  # IPVS load balancing (kube-proxy IPVS mode)
+sudo modprobe ip_vs_rr  # Round Robin algorithm
+sudo modprobe ip_vs_wrr  # Weighted Round Robin
+sudo modprobe ip_vs_sh  # Source Hashing
 
 # Check loaded modules
 lsmod | grep overlay
@@ -514,15 +514,11 @@ modinfo overlay
 # Set auto-load at boot
 cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
 overlay
-br_netfilter
-ip_vs
-ip_vs_rr
-ip_vs_wrr
-ip_vs_sh
+# Add br_netfilter only if required by the chosen CNI.
 EOF
 
 # Unload module
-modprobe -r <module-name>
+sudo modprobe -r <module-name>
 ```
 
 ### Kernel Version and Feature Check
@@ -553,7 +549,7 @@ ulimit -a
 # Key limit items
 ulimit -n      # Number of open file descriptors
 ulimit -u      # Maximum number of processes
-ulimit -m      # Maximum memory size
+ulimit -m      # RSS limit; not enforced on modern Linux
 ulimit -v      # Virtual memory size
 
 # Change limits (current session)
@@ -578,13 +574,12 @@ EOF
 
 ### PAM Limit Settings
 
-```bash
-# Check PAM settings
-cat /etc/pam.d/common-session
-cat /etc/pam.d/common-session-noninteractive
+limits.conf applies to new login sessions that use pam_limits. Ordinary systemd system services do not automatically inherit it; use service drop-ins such as LimitNOFILE/TasksMax. Existing sessions/processes are unchanged. Inspect the distribution’s PAM chain rather than blindly appending duplicate common-session entries.
 
-# Add to PAM settings to apply limits.conf
-echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
+```bash
+# Inspect the active configuration; PAM file names differ by distribution.
+grep -R pam_limits.so /etc/pam.d
+systemctl show kubelet -p LimitNOFILE -p TasksMax
 ```
 
 ### Per-Process Resource Checking
@@ -594,7 +589,7 @@ echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
 cat /proc/<PID>/limits
 
 # Check file descriptors for a specific process
-ls -l /proc/<PID>/fd | wc -l
+find /proc/<PID>/fd -mindepth 1 -maxdepth 1 -printf '%f\n' | wc -l
 ```
 
 ## Log Management
@@ -622,7 +617,7 @@ journalctl --since yesterday
 journalctl --until "2025-11-24 12:00:00"
 
 # Filter by priority
-journalctl -p err        # Errors only
+journalctl -p err        # Error and higher severity (0-3)
 journalctl -p warning    # Warnings and above
 journalctl -p debug      # All including debug
 
@@ -640,8 +635,8 @@ journalctl --list-boots # Boot list
 journalctl --disk-usage
 
 # Clean logs
-journalctl --vacuum-time=7d   # Delete logs older than 7 days
-journalctl --vacuum-size=1G   # Delete logs over 1GB
+journalctl --vacuum-time=7d   # Remove archived journal files older than 7 days
+journalctl --vacuum-size=1G   # Remove oldest archived journals toward 1GiB total
 ```
 
 ### journald Configuration
@@ -666,8 +661,8 @@ Some systems still use syslog.
 
 ```bash
 # syslog file locations
-/var/log/syslog         # Debian/Ubuntu
-/var/log/messages       # RHEL/CentOS
+# /var/log/syslog         # Debian/Ubuntu
+# /var/log/messages       # RHEL/CentOS
 
 # Real-time log viewing
 tail -f /var/log/syslog
@@ -679,14 +674,17 @@ grep -i "error" /var/log/syslog
 
 ### Log Rotation
 
-Configure log rotation to prevent log files from growing indefinitely.
+Use logrotate for ordinary application files. copytruncate has a copy/truncate race that can lose records; prefer reopening logs when the application supports it. Kubelet manages CRI container-log rotation itself.
 
 ```bash
 # logrotate configuration
-sudo vi /etc/logrotate.d/kubernetes
+sudo vi /etc/logrotate.d/linux-basics-demo
 
-# Example configuration
-/var/log/kubernetes/*.log {
+# File content (only application text logs not managed by kubelet):
+```
+
+```text
+/var/log/linux-basics-demo/*.log {
     daily
     rotate 7
     missingok
@@ -695,33 +693,35 @@ sudo vi /etc/logrotate.d/kubernetes
     delaycompress
     copytruncate
 }
+```
 
+```bash
 # Run rotation manually
-sudo logrotate -f /etc/logrotate.d/kubernetes
+sudo logrotate -f /etc/logrotate.d/linux-basics-demo
 ```
 
 ## DNS and Network Configuration
 
 ### DNS Configuration
 
-DNS is core to service discovery within Kubernetes clusters.
+NetworkManager/systemd-resolved may own the host resolv.conf, so inspect it first. Public resolvers such as 8.8.8.8 cannot resolve cluster.local Services. ClusterFirst Pods use cluster DNS configured by kubelet; adding cluster search suffixes to a host resolver does not provide cluster DNS connectivity.
 
 ```bash
-# DNS configuration file
+# On the Linux host
 cat /etc/resolv.conf
-
-# Example configuration
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-search cluster.local svc.cluster.local
-options ndots:5
-
-# DNS lookup test
-nslookup kubernetes.default.svc.cluster.local
-dig kubernetes.default.svc.cluster.local
-
-# hosts file
 cat /etc/hosts
+# If a cluster is available, inspect its actual DNS Service address.
+kubectl -n kube-system get service kube-dns
+# Run inside an existing Pod with DNS utilities and ClusterFirst policy:
+# nslookup kubernetes.default.svc.cluster.local
+```
+
+The following illustrates a **Pod resolver file format**. Replace the IP, namespace and cluster domain with actual values; do not copy it into the host configuration.
+
+```text
+nameserver <cluster-dns-service-ip>
+search <namespace>.svc.cluster.local svc.cluster.local cluster.local
+options ndots:5
 ```
 
 ### systemd-resolved
@@ -744,25 +744,27 @@ resolvectl flush-caches
 
 ### Network Configuration Files
 
+Identify whether the distribution uses NetworkManager or netplan. Netplan YAML is file content under /etc/netplan, not shell commands. Prepare a recovery path before changing remote addressing/routing and validate with netplan try.
+
 ```bash
-# NetworkManager (RHEL/CentOS 8+, Ubuntu 18.04+)
 nmcli connection show
 nmcli device status
+# On a netplan-based installation:
+ls /etc/netplan
+```
 
-# netplan (Ubuntu 18.04+)
-cat /etc/netplan/*.yaml
-
-# Example netplan configuration
+```yaml
+# Example netplan file: replace eth0 with the actual interface name.
 network:
   version: 2
   ethernets:
     eth0:
       dhcp4: true
-      nameservers:
-        addresses: [8.8.8.8, 8.8.4.4]
+```
 
-# Apply configuration
-sudo netplan apply
+```bash
+sudo netplan generate
+sudo netplan try
 ```
 
 ## Time Synchronization
@@ -771,7 +773,7 @@ Time synchronization is very important in distributed systems. All nodes in a Ku
 
 ### chronyd (Recommended)
 
-chronyd is a modern NTP client that synchronizes time faster than ntpd.
+chronyd is an NTP client/server suited to varying network conditions. Synchronization performance depends on the clock, sources and configuration.
 
 ```bash
 # Install chronyd (RHEL/CentOS)
@@ -780,7 +782,7 @@ sudo yum install chrony
 # Install chronyd (Ubuntu/Debian)
 sudo apt install chrony
 
-# Check service status
+# Check the installed unit: chronyd on RHEL/Amazon Linux, chrony on Debian/Ubuntu.
 systemctl status chronyd
 
 # Check time synchronization status
@@ -793,49 +795,48 @@ chronyc sources
 chronyc sourcestats
 
 # Manual time synchronization
-sudo chronyc makestep
+# Only during a reviewed maintenance window; stepping can disrupt time-sensitive workloads.
+# sudo chronyc makestep
 ```
 
 ### chronyd Configuration
 
-```bash
-# Configuration file
-sudo vi /etc/chrony.conf
+RHEL-family systems commonly use /etc/chrony.conf; Debian/Ubuntu use /etc/chrony/chrony.conf. Inspect distribution/provider settings (including Amazon Time Sync Service on EC2) before replacing them with public servers. The following is configuration-file content.
 
-# Key settings
-# NTP server configuration
-server 0.pool.ntp.org iburst
-server 1.pool.ntp.org iburst
-server 2.pool.ntp.org iburst
-server 3.pool.ntp.org iburst
-
-# Fast synchronization
+```text
+# Choose an approved reachable time source.
+server <approved-ntp-server> iburst
+# Permit stepping only during the first three clock updates.
 makestep 1.0 3
-
-# Apply configuration
-sudo systemctl restart chronyd
 ```
 
-### timesyncd (Ubuntu Default)
+```bash
+# Choose the unit actually installed on your distribution:
+systemctl status chronyd.service  # RHEL/Amazon Linux
+systemctl status chrony.service   # Debian/Ubuntu
+chronyc tracking
+chronyc sources
+```
 
-Ubuntu uses systemd-timesyncd by default.
+### timesyncd (Distribution-specific Choice)
+
+Ubuntu switched its default time service to chrony in 25.10; earlier releases/images may use systemd-timesyncd. Use one active time service. show-timesync is specific to timesyncd; inspect chrony with chronyc.
 
 ```bash
-# Check status
 timedatectl status
-
-# NTP synchronization status
+# Only for installations using systemd-timesyncd:
 timedatectl show-timesync --all
+systemctl status systemd-timesyncd
+```
 
-# Configuration file
-sudo vi /etc/systemd/timesyncd.conf
-
-# Example configuration
+```ini
+# /etc/systemd/timesyncd.conf: use approved servers for this environment.
 [Time]
-NTP=0.pool.ntp.org 1.pool.ntp.org
-FallbackNTP=time.google.com
+NTP=<approved-ntp-server>
+```
 
-# Restart service
+```bash
+# After editing a timesyncd installation:
 sudo systemctl restart systemd-timesyncd
 ```
 
@@ -852,7 +853,8 @@ timedatectl list-timezones
 sudo timedatectl set-timezone Asia/Seoul
 
 # Manually set time (when NTP is disabled)
-sudo timedatectl set-time "2025-11-24 12:00:00"
+: "${LAB_TIME:?Set an intentional time for an isolated VM with NTP disabled}"
+# sudo timedatectl set-time "$LAB_TIME"
 
 # Enable/disable NTP
 sudo timedatectl set-ntp true
@@ -888,11 +890,13 @@ apt show <package-name>
 apt list --installed
 
 # Add repository (Kubernetes example)
-sudo apt install -y apt-transport-https ca-certificates curl
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | \
+set -o pipefail
+: "${KUBERNETES_MINOR:?Choose a supported cluster-compatible minor, for example v1.37}"
+sudo apt install -y ca-certificates curl gnupg
+sudo mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/deb/Release.key" | \
   sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
-  https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | \
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/deb/ /" | \
   sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 # Clean unnecessary packages
@@ -928,13 +932,15 @@ yum list installed
 dnf list installed
 
 # Add repository (Kubernetes example)
+: "${KUBERNETES_MINOR:?Choose a supported cluster-compatible minor, for example v1.37}"
 cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+baseurl=https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/rpm/
 enabled=1
 gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+gpgkey=https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/rpm/repodata/repomd.xml.key
+exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
 # Clean cache
@@ -953,12 +959,12 @@ sudo apt-mark hold kubelet kubeadm kubectl
 # Remove apt hold
 sudo apt-mark unhold kubelet kubeadm kubectl
 
-# yum (RHEL/CentOS)
-sudo yum install yum-plugin-versionlock
-sudo yum versionlock add kubelet kubeadm kubectl
+# DNF: install the distribution-supported versionlock plugin first.
+# Alternatively, use the Kubernetes repository exclusions shown above.
+sudo dnf versionlock add kubelet kubeadm kubectl
 
-# Remove yum versionlock
-sudo yum versionlock delete kubelet kubeadm kubectl
+# Remove the versionlock entry
+sudo dnf versionlock delete kubelet kubeadm kubectl
 ```
 
 ## Essential Linux Commands
@@ -1000,7 +1006,7 @@ du -sh <path>    # Directory size
 
 ```bash
 systemctl status <service> # Check service status
-systemctl start/stop/restart <service> # Service control
+systemctl restart <service> # Or use start/stop as separate subcommands
 journalctl -u <service> # View service logs
 ```
 
@@ -1012,9 +1018,11 @@ OverlayFS is a union mount file system that represents multiple directories as a
 
 ### Network Bridge and NAT
 
-Container networking is primarily implemented using bridge interfaces and NAT (Network Address Translation).
+Docker’s default bridge network uses bridges and NAT for external traffic. Kubernetes CNI implementations may use routing, overlays or VPC-native networking; Pod-to-Pod traffic is not universally NATed.
 
-![Docker bridge networking on a single host](../../assets/diagrams/rendered/docker-bridge-networking.svg)
+![Docker bridge networking on a single host: two containers attach to the docker0 bridge via veth pairs, and traffic passes through iptables NAT rules and the host eth0 interface to reach the external Internet.](../.gitbook/assets/en-basics-01-linux-basics-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-10.html)
 
 ### System Call Filtering (seccomp)
 
@@ -1066,3 +1074,24 @@ To test what you've learned in this chapter, take the [Linux Basics Quiz](../qui
 * [Linux Kernel Documentation](https://www.kernel.org/doc/)
 * [Linux Namespaces](https://man7.org/linux/man-pages/man7/namespaces.7.html)
 * [Control Groups v2](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html)
+
+## Verification References
+
+- https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+- https://kubernetes.io/docs/concepts/architecture/cgroups/
+- https://man7.org/linux/man-pages/man7/time_namespaces.7.html
+- https://man7.org/linux/man-pages/man2/getrlimit.2.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
+- https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
+- https://kubernetes.io/docs/concepts/cluster-administration/logging/
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+- https://ubuntu.com/about/release-cycle
+- https://www.debian.org/releases/
+- https://www.centos.org/centos-linux-eol/
+- https://documentation.ubuntu.com/server/how-to/networking/timedatectl-and-timesyncd/
+- https://aws.amazon.com/amazon-linux-2/faqs/
+- https://docs.aws.amazon.com/linux/al2023/ug/ec2.html
+- https://github.com/logrotate/logrotate/blob/main/logrotate.8.in
+- https://github.com/linux-pam/linux-pam/blob/master/modules/pam_limits/limits.conf.5.xml

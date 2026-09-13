@@ -1,0 +1,163 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Background Analysis Behavior",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-5.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1200,
+      440
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Rollout step"
+        },
+        "cloud": {
+          "label": "Analysis start"
+        },
+        "database": {
+          "label": "Metric measurement"
+        },
+        "security": {
+          "label": "Rollback"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "canary",
+      "label": "Canary steps (Rollout steps)"
+    },
+    {
+      "id": "analysis",
+      "label": "Background Analysis"
+    }
+  ],
+  "mainPath": [
+    "step1",
+    "step2",
+    "step3"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "step1"
+    ],
+    "allowedTerminals": [
+      "step3",
+      "rollback"
+    ],
+    "requiredEdges": [
+      {
+        "from": "step2",
+        "to": "analysisStart"
+      }
+    ],
+    "requiredPaths": [
+      {
+        "from": "step1",
+        "to": "step3"
+      },
+      {
+        "from": "step2",
+        "to": "rollback"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "step1",
+      "lane": "canary",
+      "col": 0,
+      "type": "backend",
+      "label": "Step 1",
+      "sublabel": "setWeight 10 · wait 2m",
+      "width": 150
+    },
+    {
+      "id": "step2",
+      "lane": "canary",
+      "col": 1,
+      "type": "backend",
+      "label": "Step 2",
+      "sublabel": "setWeight 30 · wait 2m",
+      "tag": "startingStep: 2",
+      "width": 150
+    },
+    {
+      "id": "step3",
+      "lane": "canary",
+      "col": 2,
+      "type": "backend",
+      "label": "Step 3",
+      "sublabel": "setWeight 50",
+      "width": 150
+    },
+    {
+      "id": "analysisStart",
+      "lane": "analysis",
+      "col": 2,
+      "type": "cloud",
+      "label": "Analysis start",
+      "sublabel": "AnalysisRun created",
+      "width": 150
+    },
+    {
+      "id": "measure",
+      "lane": "analysis",
+      "col": 3,
+      "type": "database",
+      "label": "Measure every 30s",
+      "sublabel": "success-rate template",
+      "width": 180
+    },
+    {
+      "id": "rollback",
+      "lane": "analysis",
+      "col": 4,
+      "type": "security",
+      "label": "Immediate rollback on failure",
+      "sublabel": "Canary aborted",
+      "width": 250
+    }
+  ],
+  "edges": [
+    {
+      "from": "step1",
+      "to": "step2",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step2",
+      "to": "step3",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step2",
+      "to": "analysisStart",
+      "label": "start in background",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "analysisStart",
+      "to": "measure",
+      "label": "runs in parallel",
+      "role": "async"
+    },
+    {
+      "from": "measure",
+      "to": "rollback",
+      "label": "failure",
+      "variant": "security",
+      "role": "error"
+    }
+  ]
+}

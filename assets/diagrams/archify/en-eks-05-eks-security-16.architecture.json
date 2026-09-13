@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Security Architecture Example for Financial Services",
+    "locale": "en",
+    "output": "en-eks-05-eks-security-16.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "traffic-path",
+        "label": "Traffic path",
+        "focus": [
+          "internet",
+          "waf",
+          "alb",
+          "apppods",
+          "secpods"
+        ],
+        "note": "Internet traffic passes through AWS WAF and the ALB before reaching application pods in the private subnets."
+      },
+      {
+        "id": "monitoring",
+        "label": "Security monitoring",
+        "focus": [
+          "sectools",
+          "eks"
+        ],
+        "note": "GuardDuty, Security Hub, AWS Config, and CloudTrail continuously monitor the EKS cluster."
+      },
+      {
+        "id": "data-protection",
+        "label": "Data protection",
+        "focus": [
+          "apppods",
+          "data",
+          "kms"
+        ],
+        "note": "Data at rest lives in RDS, S3, and DynamoDB, encrypted with AWS KMS keys."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet",
+      "sublabel": "External users",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "waf",
+      "type": "security",
+      "label": "AWS WAF",
+      "sublabel": "Web request filtering",
+      "pos": [
+        220,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "TLS termination",
+      "pos": [
+        410,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sectools",
+      "type": "security",
+      "label": "Security monitoring",
+      "sublabel": "GuardDuty · Security Hub · Config · CloudTrail",
+      "pos": [
+        340,
+        140
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "backend",
+      "label": "EKS Cluster",
+      "sublabel": "Control plane / nodes",
+      "pos": [
+        670,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "apppods",
+      "type": "backend",
+      "label": "Application Pods",
+      "sublabel": "Business workloads",
+      "pos": [
+        670,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "secpods",
+      "type": "security",
+      "label": "Security Sidecars",
+      "sublabel": "In-pod security agents",
+      "pos": [
+        670,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "data",
+      "type": "database",
+      "label": "Data Services",
+      "sublabel": "Amazon RDS · S3 · DynamoDB (encrypted)",
+      "pos": [
+        900,
+        280
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "kms",
+      "type": "security",
+      "label": "AWS KMS",
+      "sublabel": "Encryption keys for data at rest",
+      "pos": [
+        900,
+        440
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Financial Services VPC",
+      "wraps": [
+        "waf",
+        "alb",
+        "sectools",
+        "eks",
+        "apppods",
+        "secpods",
+        "data",
+        "kms"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Private Subnets",
+      "wraps": [
+        "eks",
+        "apppods",
+        "secpods"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "internet-to-waf",
+      "from": "internet",
+      "to": "waf",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "waf-to-alb",
+      "from": "waf",
+      "to": "alb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alb-to-pods",
+      "from": "alb",
+      "to": "apppods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eks-to-pods",
+      "from": "eks",
+      "to": "apppods",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pods-to-sidecar",
+      "from": "apppods",
+      "to": "secpods",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "monitoring",
+      "from": "sectools",
+      "to": "eks",
+      "label": "Monitoring",
+      "variant": "dashed"
+    },
+    {
+      "id": "pods-to-data",
+      "from": "apppods",
+      "to": "data",
+      "label": "Data access"
+    },
+    {
+      "id": "kms-to-data",
+      "from": "kms",
+      "to": "data",
+      "label": "Encryption key management",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

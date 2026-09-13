@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Viz Dashboard View Navigation",
+    "locale": "en",
+    "output": "en-service-mesh-linkerd-05-observability-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      560
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Entry point (Namespace)"
+        },
+        "backend": {
+          "label": "Dashboard view"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "drilldown",
+        "label": "Namespace → Deployments drill-down",
+        "focus": [
+          "ns",
+          "deploy"
+        ],
+        "note": "Check mesh status in the Namespace Overview, then narrow down into the Deployments view."
+      },
+      {
+        "id": "detail",
+        "label": "Per-deployment detail views",
+        "focus": [
+          "deploy",
+          "pods",
+          "routes",
+          "tap"
+        ],
+        "note": "Deployments branches into Pod status, per-ServiceProfile-route metrics, and the live Tap request stream."
+      },
+      {
+        "id": "topology",
+        "label": "Topology view",
+        "focus": [
+          "ns",
+          "topo"
+        ],
+        "note": "From the namespace level, jump straight to the Topology view that visualizes service-to-service communication."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ns",
+      "type": "external",
+      "label": "Namespace Overview",
+      "sublabel": "Mesh status per namespace",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "topo",
+      "type": "backend",
+      "label": "Topology",
+      "sublabel": "Service-to-service communication",
+      "pos": [
+        90,
+        210
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "backend",
+      "label": "Deployments",
+      "sublabel": "Success rate, RPS, latency per deployment",
+      "pos": [
+        400,
+        210
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Pods",
+      "sublabel": "Detailed metrics per Pod",
+      "pos": [
+        160,
+        390
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "routes",
+      "type": "backend",
+      "label": "Routes",
+      "sublabel": "Metrics per ServiceProfile route",
+      "pos": [
+        400,
+        390
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "tap",
+      "type": "backend",
+      "label": "Tap",
+      "sublabel": "Real-time request stream",
+      "pos": [
+        680,
+        390
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Dashboard Views",
+      "wraps": [
+        "ns",
+        "topo",
+        "deploy",
+        "pods",
+        "routes",
+        "tap"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ns-deploy",
+      "from": "ns",
+      "to": "deploy",
+      "label": "drill down",
+      "variant": "emphasis",
+      "labelAt": [
+        505,
+        157
+      ]
+    },
+    {
+      "id": "ns-topo",
+      "from": "ns",
+      "to": "topo"
+    },
+    {
+      "id": "deploy-pods",
+      "from": "deploy",
+      "to": "pods"
+    },
+    {
+      "id": "deploy-routes",
+      "from": "deploy",
+      "to": "routes"
+    },
+    {
+      "id": "deploy-tap",
+      "from": "deploy",
+      "to": "tap"
+    }
+  ]
+}

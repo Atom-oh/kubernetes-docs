@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Rate Limiting 개요",
+    "output": "ko-service-mesh-istio-resilience-02-rate-limiting-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      540
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "클라이언트"
+        },
+        "security": {
+          "label": "Rate Limiter"
+        },
+        "backend": {
+          "label": "서비스 Pod"
+        },
+        "external": {
+          "label": "차단 응답"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client1",
+      "type": "frontend",
+      "label": "클라이언트 1",
+      "sublabel": "100 req/s",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "client2",
+      "type": "frontend",
+      "label": "클라이언트 2",
+      "sublabel": "50 req/s",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "client3",
+      "type": "frontend",
+      "label": "클라이언트 3",
+      "sublabel": "200 req/s",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rl",
+      "type": "security",
+      "label": "Token Bucket",
+      "sublabel": "100 req/s 제한",
+      "pos": [
+        440,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "처리 가능 50 req/s",
+      "pos": [
+        860,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "처리 가능 50 req/s",
+      "pos": [
+        860,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "reject",
+      "type": "external",
+      "label": "429 Too Many Requests",
+      "sublabel": "초과 요청 차단",
+      "pos": [
+        860,
+        390
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Rate Limiter",
+      "wraps": [
+        "rl"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "서비스",
+      "wraps": [
+        "pod1",
+        "pod2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1-rl",
+      "from": "client1",
+      "to": "rl",
+      "label": "100 req/s"
+    },
+    {
+      "id": "c2-rl",
+      "from": "client2",
+      "to": "rl",
+      "label": "50 req/s",
+      "variant": "emphasis",
+      "labelDx": -80
+    },
+    {
+      "id": "c3-rl",
+      "from": "client3",
+      "to": "rl",
+      "label": "200 req/s"
+    },
+    {
+      "id": "rl-pod1",
+      "from": "rl",
+      "to": "pod1",
+      "label": "허용"
+    },
+    {
+      "id": "rl-pod2",
+      "from": "rl",
+      "to": "pod2",
+      "label": "허용",
+      "variant": "emphasis",
+      "labelDx": 70
+    },
+    {
+      "id": "rl-reject",
+      "from": "rl",
+      "to": "reject",
+      "label": "250 req/s 차단",
+      "variant": "dashed"
+    }
+  ]
+}

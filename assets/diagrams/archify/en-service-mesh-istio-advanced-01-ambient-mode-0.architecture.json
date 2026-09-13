@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar Mode vs Ambient Mode: Core Concepts",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-01-ambient-mode-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "sidecar",
+        "label": "Sidecar Mode (Traditional)",
+        "focus": [
+          "app1",
+          "sidecar1"
+        ],
+        "note": "Every pod gets an Envoy proxy injected next to its application container."
+      },
+      {
+        "id": "ambient-l4",
+        "label": "Ambient L4 path",
+        "focus": [
+          "app2",
+          "ztunnel"
+        ],
+        "note": "A node-level ztunnel transparently handles traffic from pods that hold only the application container."
+      },
+      {
+        "id": "ambient-l7",
+        "label": "Ambient L7 extension",
+        "focus": [
+          "ztunnel",
+          "waypoint"
+        ],
+        "note": "ztunnel routes through a Waypoint Proxy only when L7 features are needed."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Application Container",
+      "sublabel": "application code",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "sidecar1",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "one per pod",
+      "pos": [
+        290,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Application Container Only",
+      "sublabel": "no sidecar",
+      "pos": [
+        600,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "Node-level ztunnel",
+      "sublabel": "L4 Proxy",
+      "pos": [
+        600,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "waypoint",
+      "type": "security",
+      "label": "Waypoint Proxy",
+      "sublabel": "L7 Features",
+      "pos": [
+        880,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Sidecar Mode (Traditional)",
+      "wraps": [
+        "app1",
+        "sidecar1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Ambient Mode (New)",
+      "wraps": [
+        "app2",
+        "ztunnel",
+        "waypoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-sidecar1",
+      "from": "app1",
+      "to": "sidecar1",
+      "label": "bidirectional"
+    },
+    {
+      "id": "app2-ztunnel",
+      "from": "app2",
+      "to": "ztunnel",
+      "label": "Transparent",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        700,
+        220
+      ]
+    },
+    {
+      "id": "ztunnel-waypoint",
+      "from": "ztunnel",
+      "to": "waypoint",
+      "label": "When L7 needed",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Sidecar Mode (Traditional)",
+      "items": [
+        "Each pod needs its own Envoy proxy (50-100MB memory)",
+        "Sidecar initialization increases pod startup time",
+        "Sidecar injection requires a pod restart"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ambient Mode (New)",
+      "items": [
+        "One ztunnel per node handles L4 (mTLS, basic telemetry)",
+        "Waypoint is used only when L7 features are needed",
+        "Adopted with no pod restart and no application changes"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Scheduling Architecture",
+    "locale": "en",
+    "output": "en-core-08-scheduling-preemption-eviction-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      540
+    ],
+    "views": [
+      {
+        "id": "pipeline",
+        "label": "Scheduling pipeline",
+        "focus": [
+          "api",
+          "queue",
+          "scheduler",
+          "cache",
+          "filter",
+          "score",
+          "bind"
+        ],
+        "note": "Main path: unscheduled pods watched on the API server flow through the queue into filtering, scoring, and binding"
+      },
+      {
+        "id": "constraints",
+        "label": "Constraints",
+        "focus": [
+          "constraints",
+          "filter",
+          "score"
+        ],
+        "note": "Node selector, affinity, and taints/tolerations gate filtering; topology spread shapes both filtering and scoring"
+      },
+      {
+        "id": "disruption",
+        "label": "Preemption and eviction",
+        "focus": [
+          "priority",
+          "scheduler",
+          "pdb",
+          "descheduler",
+          "api"
+        ],
+        "note": "Priority preemption acts on the scheduler, the PDB bounds Descheduler evictions, and evicted pods return to the API server"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "external",
+      "label": "API Server",
+      "sublabel": "unscheduled pods",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Scheduling Queue",
+      "sublabel": "QueueSort",
+      "pos": [
+        220,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "plugin framework",
+      "pos": [
+        410,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Node & Pod Cache",
+      "sublabel": "node and pod state",
+      "pos": [
+        410,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "backend",
+      "label": "Filtering",
+      "sublabel": "PreFilter · Filter",
+      "pos": [
+        610,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "score",
+      "type": "backend",
+      "label": "Scoring",
+      "sublabel": "PreScore · Score",
+      "pos": [
+        800,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "bind",
+      "type": "backend",
+      "label": "Binding",
+      "sublabel": "Reserve · Permit · Bind",
+      "pos": [
+        990,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "descheduler",
+      "type": "security",
+      "label": "Descheduler",
+      "sublabel": "rebalances running pods",
+      "pos": [
+        30,
+        420
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pdb",
+      "type": "security",
+      "label": "Pod Disruption Budget",
+      "sublabel": "PodDisruptionBudget",
+      "pos": [
+        220,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "priority",
+      "type": "security",
+      "label": "Priority & Preemption",
+      "sublabel": "PriorityClass",
+      "pos": [
+        410,
+        420
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "constraints",
+      "type": "security",
+      "label": "Scheduling Constraints",
+      "sublabel": "selector · affinity · taints · spread",
+      "pos": [
+        585,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Scheduling components and phases",
+      "wraps": [
+        "queue",
+        "scheduler",
+        "cache",
+        "filter",
+        "score",
+        "bind"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Constraints, preemption and eviction",
+      "wraps": [
+        "descheduler",
+        "pdb",
+        "priority",
+        "constraints"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-queue",
+      "from": "api",
+      "to": "queue",
+      "label": "watch pods",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "queue-scheduler",
+      "from": "queue",
+      "to": "scheduler",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scheduler-cache",
+      "from": "scheduler",
+      "to": "cache",
+      "label": "read node/pod state",
+      "variant": "dashed"
+    },
+    {
+      "id": "scheduler-filter",
+      "from": "scheduler",
+      "to": "filter",
+      "label": "run plugins",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "filter-score",
+      "from": "filter",
+      "to": "score",
+      "variant": "emphasis"
+    },
+    {
+      "id": "score-bind",
+      "from": "score",
+      "to": "bind",
+      "variant": "emphasis"
+    },
+    {
+      "id": "priority-scheduler",
+      "from": "priority",
+      "to": "scheduler",
+      "label": "preempt",
+      "variant": "security"
+    },
+    {
+      "id": "constraints-filter",
+      "from": "constraints",
+      "to": "filter",
+      "label": "filter rules",
+      "variant": "security"
+    },
+    {
+      "id": "constraints-score",
+      "from": "constraints",
+      "to": "score",
+      "label": "spread preference",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          875,
+          450
+        ]
+      ]
+    },
+    {
+      "id": "pdb-descheduler",
+      "from": "pdb",
+      "to": "descheduler",
+      "label": "respects PDB",
+      "variant": "security",
+      "labelDy": 54
+    },
+    {
+      "id": "descheduler-api",
+      "from": "descheduler",
+      "to": "api",
+      "label": "evict → reschedule",
+      "variant": "dashed",
+      "labelDy": -30
+    }
+  ]
+}

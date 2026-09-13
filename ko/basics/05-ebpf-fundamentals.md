@@ -1,7 +1,7 @@
 # eBPF 기초와 Kubernetes 활용
 
-> **지원 버전**: Linux Kernel 4.18+, Kubernetes 1.25+
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: 프로그램별 커널/BTF/헬퍼 요구사항 및 도구/Kubernetes 호환성 표 확인
+> **마지막 업데이트**: 2026년 9월 11일
 
 eBPF는 Linux 커널 내에서 샌드박스화된 프로그램을 실행할 수 있게 해주는 혁신적인 기술입니다. 이 문서에서는 eBPF의 기본 개념부터 Kubernetes 환경에서의 활용까지 전반적인 내용을 다룹니다.
 
@@ -23,22 +23,26 @@ eBPF는 Linux 커널 내에서 샌드박스화된 프로그램을 실행할 수 
 이 문서의 예제를 따라하기 위해서는 다음과 같은 환경이 필요합니다.
 
 ### 필수 환경
-- Linux 커널 4.18 이상 (5.10+ 권장)
+- 각 예제에 필요한 BTF/헬퍼/연결 유형을 지원하는 유지 관리 중인 배포판 커널
 - bpftool, bcc-tools
 - Kubernetes 클러스터 (선택 사항)
+
+bpftrace 예제는 공식 0.27 언어 문법(args.field)을 기준으로 검토했습니다. 배포판 패키지가 더 오래되면 설치된 버전의 문법/기능을 확인합니다. tracepoint 필드는 `bpftrace -lv` 또는 tracefs의 format 파일로 검증하며 함수 kprobe/uprobes는 커널/라이브러리 버전과 아키텍처에 종속됩니다. 실제 trace/attach는 수행하지 않았습니다.
 
 ### 환경 설정
 
 ```bash
 # Ubuntu/Debian에서 필요한 패키지 설치
 sudo apt-get update
-sudo apt-get install -y linux-tools-common linux-tools-generic bpfcc-tools
+sudo apt-get install -y bpfcc-tools python3-bpfcc bpftrace
+# Install bpftool for this distribution/kernel separately:
+# Debian provides the bpftool package; Ubuntu uses matching linux-tools packages.
 
 # 커널 버전 확인
 uname -r
 
 # eBPF 기능 지원 확인
-sudo bpftool feature
+sudo bpftool feature probe kernel
 ```
 
 ---
@@ -51,7 +55,9 @@ sudo bpftool feature
 
 > **핵심 개념**: eBPF를 사용하면 커널 소스 코드를 수정하거나 커널 모듈을 로드하지 않고도 커널의 동작을 확장하고 관찰할 수 있습니다.
 
-![사용자 공간에서 작성된 eBPF 프로그램이 컴파일과 커널 로드를 거쳐, 커널 공간에서 검증기와 JIT 컴파일을 통과한 뒤 네트워크 패킷·시스템 콜·함수 호출·트레이스포인트 등 다양한 이벤트 훅 포인트에서 실행되는 흐름을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-0.svg)
+![사용자 공간에서 작성된 eBPF 프로그램이 컴파일과 커널 로드를 거쳐, 커널 공간에서 검증기와 JIT 컴파일을 통과한 뒤 네트워크 패킷·시스템 콜·함수 호출·트레이스포인트 등 다양한 이벤트 훅 포인트에서 실행되는 흐름을 보여주는 워크플로 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-0.html)
 
 ### 1.2 전통적인 BPF에서 eBPF로의 진화
 
@@ -59,7 +65,7 @@ sudo bpftool feature
 - UC 버클리에서 개발
 - 네트워크 패킷 캡처 및 필터링 전용
 - 2개의 32비트 레지스터
-- 최대 4,096개 명령어 제한
+- Linux classic BPF의 일반적 한도는4096개이며 모든 역사적 BPF 구현의 규격은 아님
 
 **eBPF (2014년~)**:
 - 64비트 아키텍처 지원
@@ -71,32 +77,34 @@ sudo bpftool feature
 | 특성 | 전통적 BPF | eBPF |
 |------|-----------|------|
 | 레지스터 | 2개 (32비트) | 11개 (64비트) |
-| 명령어 수 | 4,096개 | 100만+ |
+| 명령어 제한 | 일반적 Linux 한도4096 | 커널/권한별 상이; 프로그램 크기와 검증 복잡도는 별개 |
 | 맵 지원 | 없음 | 다양한 맵 유형 |
 | 용도 | 패킷 필터링 | 범용 커널 프로그래밍 |
 | 호출 기능 | 없음 | 헬퍼 함수, BPF-to-BPF 호출 |
-| 상태 저장 | 불가능 | 맵을 통해 가능 |
+| 영속 상태 | 영속 맵 없음(한 실행 내 scratch 저장소는 존재) | 맵을 통해 가능 |
 
 ### 1.3 eBPF가 혁신적인 이유
 
 eBPF는 다음과 같은 이유로 혁신적입니다:
 
 1. **커널 수정 없는 기능 확장**: 커널 소스 코드를 변경하지 않고도 커널 기능을 확장
-2. **안전한 실행**: 검증기가 프로그램의 안전성을 보장
+2. **안전한 실행**: 검증기가 정의된 메모리/제어 흐름 안전 속성을 검사
 3. **높은 성능**: JIT 컴파일로 네이티브 코드 수준의 성능
 4. **동적 로딩**: 재부팅 없이 프로그램 로드/언로드 가능
-5. **프로덕션 안정성**: 크래시나 무한 루프 없이 안전하게 실행
+5. **프로덕션 안정성**: 실행 경계 검사가 위험을 줄이지만 정책 정확성, 커널/JIT 버그 및 운영 영향은 별도 검증 필요
 
-![기존 커널 모듈 개발 방식은 재부팅과 시스템 불안정 위험을 동반하지만 eBPF 방식은 런타임 로드와 검증을 거쳐 안전한 실행을 보장한다는 것을 비교하는 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-1.svg)
+![기존 커널 모듈 개발 방식은 커널 버전별 재컴파일과 시스템 불안정 위험을 동반하지만 eBPF 방식은 런타임 로드와 검증을 거쳐 검증을 수행하지만 정책 정확성과 호스트 안정성을 별도로 검증해야 함을 설명하는 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-1.html)
 
 ### 1.4 eBPF vs 커널 모듈 비교
 
 | 측면 | eBPF | 커널 모듈 |
 |------|------|----------|
-| **안전성** | 검증기가 안전성 보장 | 커널 크래시 가능 |
-| **이식성** | CO-RE로 커널 버전 독립적 | 커널 버전별 재컴파일 필요 |
+| **안전성** | 검증 모델 범위의 안전성 검사 | 커널 크래시 가능 |
+| **이식성** | CO-RE는 호환되는 커널 타입을 재배치하며 헬퍼/훅/의미/BTF 제약은 남음 | 커널 버전별 재컴파일 필요 |
 | **로딩** | 동적 로드/언로드 | insmod/rmmod 필요 |
-| **권한** | CAP_BPF 또는 CAP_SYS_ADMIN | root 권한 필요 |
+| **권한** | CAP_BPF/CAP_SYS_ADMIN 및 훅별 추가 권한 | root 권한 필요 |
 | **디버깅** | 제한적 | 전체 커널 디버깅 가능 |
 | **성능** | JIT 컴파일로 최적화 | 네이티브 성능 |
 | **기능 범위** | 정해진 훅 포인트만 | 무제한 |
@@ -108,36 +116,37 @@ eBPF는 다음과 같은 이유로 혁신적입니다:
 
 ### 2.1 eBPF 실행 흐름
 
-![C/Rust로 작성된 eBPF 프로그램이 컴파일과 커널 로드, 검증기 통과를 거쳐 JIT 컴파일되고 이벤트 훅에 연결되어 실행된 뒤 맵에 데이터를 저장하고 사용자 공간에서 읽히는 절차를, 검증 실패 시 로드가 거부되는 분기와 함께 보여주는 순서도.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-2.svg)
+![C/Rust로 작성된 eBPF 프로그램이 컴파일과 커널 로드, 검증기 통과를 거쳐 JIT 컴파일되고 이벤트 훅에 연결되어 실행된 뒤 맵에 데이터를 저장하고 사용자 공간에서 읽히는 절차를, 검증 실패 시 로드가 거부되는 분기와 함께 보여주는 순서도.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-2.html)
 
 ### 2.2 검증기 (Verifier)
 
 검증기는 eBPF의 핵심 보안 메커니즘입니다. 프로그램이 커널에서 실행되기 전에 다음 사항을 검증합니다:
 
 **검증 항목**:
-- 무한 루프 없음 (DAG 구조 확인)
+- 종료/제한된 제어 흐름 검사; 지원 커널에서는 bounded loop 사용 가능
 - 범위를 벗어난 메모리 접근 없음
 - 초기화되지 않은 변수 사용 없음
 - 올바른 헬퍼 함수 호출
 - 프로그램 종료 보장
 
 ```c
-// 검증기가 거부하는 예제
-int bad_example(void *ctx) {
-    int i;
-    for (i = 0; i < 1000000; i++) {  // 무한 루프 가능성
-        // ...
-    }
-    return 0;
+// XDP fragments; compile as separate programs with linux/bpf.h and bpf_helpers.h.
+SEC("xdp")
+int bad_example(struct xdp_md *ctx) {
+    unsigned char *data = (void *)(long)ctx->data;
+    // No data_end check: the verifier cannot prove this packet byte exists.
+    return data[0] == 0 ? XDP_DROP : XDP_PASS;
 }
 
-// 검증기가 허용하는 예제
-int good_example(void *ctx) {
-    #pragma unroll
-    for (int i = 0; i < 10; i++) {  // 컴파일 시 언롤링
-        // ...
-    }
-    return 0;
+SEC("xdp")
+int good_example(struct xdp_md *ctx) {
+    unsigned char *data = (void *)(long)ctx->data;
+    void *data_end = (void *)(long)ctx->data_end;
+    if ((void *)(data + 1) > data_end)
+        return XDP_PASS;
+    return data[0] == 0 ? XDP_DROP : XDP_PASS;
 }
 ```
 
@@ -153,8 +162,10 @@ cat /proc/sys/net/core/bpf_jit_enable
 echo 1 | sudo tee /proc/sys/net/core/bpf_jit_enable
 ```
 
+CONFIG_BPF_JIT_ALWAYS_ON을 사용하는 커널에서는 이 sysctl의 존재/변경 가능 여부가 다릅니다. 디버그 모드2는 커널 로그를 출력하므로 프로덕션 기본값으로 사용하지 않습니다.
+
 **JIT 컴파일 이점**:
-- 인터프리터 대비 4~5배 성능 향상
+- 원문의 4~5배 향상 수치는 출처가 제시되지 않았으며 실제 차이는 프로그램/아키텍처/커널에 따라 다름
 - 네이티브 CPU 명령어로 직접 실행
 - 아키텍처별 최적화 적용
 
@@ -171,7 +182,7 @@ eBPF 맵은 커널과 사용자 공간 간 데이터를 공유하고 상태를 �
 | `BPF_MAP_TYPE_PERF_EVENT_ARRAY` | 이벤트 배열 | 사용자 공간으로 이벤트 전송 |
 | `BPF_MAP_TYPE_RINGBUF` | 링 버퍼 | 고성능 이벤트 스트리밍 |
 | `BPF_MAP_TYPE_LRU_HASH` | LRU 해시 | 캐시, 자동 항목 제거 |
-| `BPF_MAP_TYPE_PERCPU_ARRAY` | CPU별 배열 | 락 없는 통계 수집 |
+| `BPF_MAP_TYPE_PERCPU_ARRAY` | CPU별 배열 | 통계 수집의 CPU 간 경합 감소 |
 | `BPF_MAP_TYPE_LPM_TRIE` | LPM 트라이 | IP 주소 매칭, 라우팅 |
 
 ```c
@@ -190,34 +201,41 @@ eBPF 프로그램은 커널이 제공하는 헬퍼 함수를 통해 커널 기�
 
 **주요 헬퍼 함수**:
 
-```c
+아래는 API 역할을 설명하는 축약 표기입니다. 실제 프로그램에서는 libbpf의 bpf_helpers.h를 포함하며 이 선언들을 재정의하지 않습니다. 헬퍼 사용 가능 여부는 프로그램 유형/커널에 따라 다릅니다.
+
+```text
 // 맵 조작
-void *bpf_map_lookup_elem(struct bpf_map *map, const void *key);
-int bpf_map_update_elem(struct bpf_map *map, const void *key, const void *value, u64 flags);
-int bpf_map_delete_elem(struct bpf_map *map, const void *key);
+void *bpf_map_lookup_elem(void *map, const void *key);
+long bpf_map_update_elem(void *map, const void *key, const void *value, u64 flags);
+long bpf_map_delete_elem(void *map, const void *key);
 
 // 시간 관련
-u64 bpf_ktime_get_ns(void);  // 나노초 단위 현재 시간
+u64 bpf_ktime_get_ns(void);  // 부팅 후 단조 시간(ns), suspend 제외; 실제 날짜/시각이 아님
 
 // 패킷 조작
-int bpf_skb_load_bytes(const struct sk_buff *skb, u32 offset, void *to, u32 len);
-int bpf_xdp_adjust_head(struct xdp_md *xdp_md, int delta);
+long bpf_skb_load_bytes(const void *skb, u32 offset, void *to, u32 len);
+long bpf_xdp_adjust_head(struct xdp_md *xdp_md, int delta);
 
 // 추적
-int bpf_probe_read(void *dst, u32 size, const void *src);
-int bpf_trace_printk(const char *fmt, u32 fmt_size, ...);
+long bpf_probe_read_kernel(void *dst, u32 size, const void *src);
+long bpf_probe_read_user(void *dst, u32 size, const void *src);
+long bpf_trace_printk(const char *fmt, u32 fmt_size, ...);
 
 // 프로세스 정보
 u64 bpf_get_current_pid_tgid(void);    // PID/TGID 획득
 u64 bpf_get_current_uid_gid(void);     // UID/GID 획득
-int bpf_get_current_comm(void *buf, u32 size);  // 프로세스 이름
+long bpf_get_current_comm(void *buf, u32 size);  // 프로세스 이름
 ```
 
 ### 2.6 프로그램 라이프사이클
 
-![코드 작성부터 컴파일, 로드, 검증을 거쳐 JIT 컴파일과 훅 연결, 반복 실행에 이르는 eBPF 프로그램의 생명주기를, 검증 실패와 명시적 분리 후 언로드로 종료되는 두 경로와 함께 보여주는 상태 머신.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-3.svg)
+![bpf()로 로드된 프로그램이 검증을 통과해 이벤트 훅에 연결되고 이벤트마다 반복 실행되다가 명시적 분리와 언로드로 종료되는 eBPF 프로그램의 생명주기를, 검증 실패 경로와 함께 보여주는 워크플로 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-3.html)
 
 ---
+
+C 예제는 별도 프로그램/조각입니다. vmlinux.h 또는 필요한 UAPI 타입과 libbpf의 bpf_helpers.h, bpf_endian.h, bpf_tracing.h, bpf_core_read.h를 용도에 맞게 포함합니다. BPF_KPROBE/BPF_UPROBE는 올바른 대상 아키텍처 정의와 실제 attach 지점/ABI가 필요합니다. 로드/attach는 격리된 테스트 환경에서 검증해야 하며 이 감사에서는 수행하지 않았습니다. 경로 기반 LSM 예제는 읽기 오류에 fail-open하고 별칭/하드링크/다른 프로토콜까지 방어하지 않는 교육용입니다.
 
 ## 3. eBPF 프로그램 유형
 
@@ -225,46 +243,57 @@ int bpf_get_current_comm(void *buf, u32 size);  // 프로세스 이름
 
 XDP는 네트워크 드라이버 레벨에서 패킷을 처리하는 가장 빠른 방법입니다.
 
-![NIC에 도착한 패킷이 XDP 프로그램의 판정에 따라 드롭, 커널 스택 전달, 같은 인터페이스로 반환, 다른 인터페이스로 리다이렉트, 에러 처리 중 하나의 경로로 분기하는 것을 보여주는 흐름도.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-4.svg)
+![NIC에 도착한 패킷이 XDP 프로그램의 판정에 따라 드롭, 커널 스택 전달, 같은 인터페이스로 반환, 다른 인터페이스로 리다이렉트, 에러 처리 중 하나의 경로로 분기하는 것을 보여주는 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-4.html)
 
 **XDP 동작 모드**:
 | 모드 | 설명 | 성능 |
 |------|------|------|
-| Native XDP | NIC 드라이버에서 직접 실행 | 최고 |
-| Offloaded XDP | 스마트 NIC에서 실행 | 최고+ |
-| Generic XDP | 소프트웨어 에뮬레이션 | 테스트용 |
+| Native XDP | 지원 드라이버 수신 경로에서 실행 | 드라이버/워크로드에 따라 다름 |
+| Offloaded XDP | 지원 NIC 하드웨어에서 실행 | 하드웨어/명령 제한 및 실제 측정 필요 |
+| Generic XDP | 스택의 skb 기반 대체 경로 | 일반적으로 native보다 오버헤드 증가 |
 
 ```c
-// XDP 프로그램 예제: 특정 포트 트래픽 드롭
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/in.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
+
+// Demonstration only: untagged, non-fragmented IPv4 TCP.
+// VLAN, IPv6 and fragments pass through; this is not a complete firewall.
+static __always_inline int packet_action(void *data, void *data_end) {
+    struct ethhdr *eth = data;
+    if ((void *)(eth + 1) > data_end || eth->h_proto != bpf_htons(ETH_P_IP))
+        return XDP_PASS;
+    struct iphdr *ip = (void *)(eth + 1);
+    if ((void *)(ip + 1) > data_end || ip->version != 4 || ip->ihl < 5)
+        return XDP_PASS;
+    __u32 ihl = (__u32)ip->ihl * 4;
+    __u32 ip_len = bpf_ntohs(ip->tot_len);
+    if ((void *)ip + ihl > data_end || ip_len < ihl || (void *)ip + ip_len > data_end)
+        return XDP_PASS;
+    if (ip->protocol != IPPROTO_TCP || (bpf_ntohs(ip->frag_off) & 0x3fffU))
+        return XDP_PASS;
+    if (ip_len < ihl + sizeof(struct tcphdr))
+        return XDP_PASS;
+    struct tcphdr *tcp = (void *)ip + ihl;
+    if ((void *)(tcp + 1) > data_end || tcp->doff < 5)
+        return XDP_PASS;
+    __u32 tcp_len = (__u32)tcp->doff * 4;
+    if (ihl + tcp_len > ip_len || (void *)tcp + tcp_len > data_end)
+        return XDP_PASS;
+    return tcp->dest == bpf_htons(8080) ? XDP_DROP : XDP_PASS;
+}
+
 SEC("xdp")
 int xdp_drop_port(struct xdp_md *ctx) {
-    void *data = (void *)(long)ctx->data;
-    void *data_end = (void *)(long)ctx->data_end;
-
-    struct ethhdr *eth = data;
-    if ((void *)(eth + 1) > data_end)
-        return XDP_PASS;
-
-    if (eth->h_proto != htons(ETH_P_IP))
-        return XDP_PASS;
-
-    struct iphdr *ip = (void *)(eth + 1);
-    if ((void *)(ip + 1) > data_end)
-        return XDP_PASS;
-
-    if (ip->protocol != IPPROTO_TCP)
-        return XDP_PASS;
-
-    struct tcphdr *tcp = (void *)ip + (ip->ihl * 4);
-    if ((void *)(tcp + 1) > data_end)
-        return XDP_PASS;
-
-    // 포트 8080 트래픽 드롭
-    if (tcp->dest == htons(8080))
-        return XDP_DROP;
-
-    return XDP_PASS;
+    return packet_action((void *)(long)ctx->data, (void *)(long)ctx->data_end);
 }
+char LICENSE[] SEC("license") = "GPL";
 ```
 
 ### 3.2 TC (Traffic Control)
@@ -273,9 +302,16 @@ TC 프로그램은 네트워크 스택의 트래픽 제어 계층에서 실행�
 
 ```bash
 # TC 프로그램 연결 예제
-tc qdisc add dev eth0 clsact
-tc filter add dev eth0 ingress bpf da obj tc_prog.o sec classifier
-tc filter add dev eth0 egress bpf da obj tc_prog.o sec classifier
+set -e
+: "${LAB_IFACE:?Select an isolated test veth interface, never a production interface}"
+tc qdisc show dev "$LAB_IFACE"
+# This assumes a fresh lab interface with no clsact qdisc.
+sudo tc qdisc add dev "$LAB_IFACE" clsact
+sudo tc filter add dev "$LAB_IFACE" ingress pref 49152 bpf da obj tc_prog.o sec classifier
+sudo tc filter add dev "$LAB_IFACE" egress pref 49152 bpf da obj tc_prog.o sec classifier
+# Cleanup only the filters created by this example, after the exercise:
+# sudo tc filter del dev "$LAB_IFACE" ingress pref 49152
+# sudo tc filter del dev "$LAB_IFACE" egress pref 49152
 ```
 
 **TC vs XDP 비교**:
@@ -301,12 +337,13 @@ int BPF_KPROBE(trace_tcp_connect, struct sock *sk) {
     u32 daddr = BPF_CORE_READ(sk, __sk_common.skc_daddr);
     u16 dport = BPF_CORE_READ(sk, __sk_common.skc_dport);
 
-    bpf_printk("PID %d connecting to %pI4:%d\n", pid, &daddr, ntohs(dport));
+    bpf_printk("PID %d connecting to %pI4:%d\n", pid, &daddr, bpf_ntohs(dport));
     return 0;
 }
 
 // Uprobe 예제: malloc 함수 추적
-SEC("uprobe/libc.so.6:malloc")
+// The userspace loader must select the real libc path, PID and malloc symbol.
+SEC("uprobe")
 int BPF_UPROBE(trace_malloc, size_t size) {
     u32 pid = bpf_get_current_pid_tgid() >> 32;
     bpf_printk("PID %d malloc(%zu)\n", pid, size);
@@ -320,11 +357,11 @@ Tracepoints는 커널에 미리 정의된 정적 추적점입니다.
 
 ```bash
 # 사용 가능한 tracepoints 확인
-sudo ls /sys/kernel/debug/tracing/events/
+sudo ls /sys/kernel/tracing/events/
 
 # 특정 카테고리의 tracepoints
-sudo ls /sys/kernel/debug/tracing/events/sched/
-sudo ls /sys/kernel/debug/tracing/events/syscalls/
+sudo ls /sys/kernel/tracing/events/sched/
+sudo ls /sys/kernel/tracing/events/syscalls/
 ```
 
 ```c
@@ -353,7 +390,8 @@ int BPF_PROG(restrict_file_open, struct file *file, int ret) {
         return ret;
 
     char path[256];
-    bpf_d_path(&file->f_path, path, sizeof(path));
+    if (bpf_d_path(&file->f_path, path, sizeof(path)) < 0)
+        return 0;  // Demo fails open on unresolved paths; not a complete access policy.
 
     // /etc/shadow 접근 차단
     if (bpf_strncmp(path, 11, "/etc/shadow") == 0)
@@ -372,7 +410,7 @@ int BPF_PROG(restrict_file_open, struct file *file, int ret) {
 SEC("socket")
 int socket_filter(struct __sk_buff *skb) {
     // IPv4 패킷만 허용
-    if (skb->protocol != htons(ETH_P_IP))
+    if (skb->protocol != bpf_htons(ETH_P_IP))
         return 0;  // 드롭
 
     return skb->len;  // 패킷 길이 반환 (허용)
@@ -388,10 +426,10 @@ int socket_filter(struct __sk_buff *skb) {
 SEC("cgroup/connect4")
 int restrict_connect(struct bpf_sock_addr *ctx) {
     // 로컬 네트워크가 아닌 연결 차단
-    __u32 dst = ctx->user_ip4;
+    __u32 dst = bpf_ntohl(ctx->user_ip4);
 
     // 10.0.0.0/8 대역만 허용
-    if ((dst & 0xFF) != 10)
+    if ((dst & 0xff000000U) != 0x0a000000U)
         return 0;  // 연결 거부
 
     return 1;  // 연결 허용
@@ -404,7 +442,7 @@ int restrict_connect(struct bpf_sock_addr *ctx) {
 
 ### 4.1 bpftool
 
-bpftool은 eBPF 프로그램과 맵을 관리하는 공식 도구입니다.
+bpftool은 BPF 프로그램/맵을 관리합니다. 실습에서 만든 맵만 수정하며 실제 CNI/보안 맵 변경은 실행 중인 워크로드에 영향을 줍니다. 아래 hex 예제는 앞의 맵과 일치하는 little-endian u32 키/u64 값을 가정합니다.
 
 ```bash
 # 로드된 eBPF 프로그램 목록
@@ -426,10 +464,10 @@ sudo bpftool map list
 sudo bpftool map dump id <MAP_ID>
 
 # 맵에 값 추가
-sudo bpftool map update id <MAP_ID> key 0x01 0x00 0x00 0x00 value 0xFF 0x00 0x00 0x00
+sudo bpftool map update id <MAP_ID> key hex 01 00 00 00 value hex ff 00 00 00 00 00 00 00
 
 # 커널의 eBPF 기능 확인
-sudo bpftool feature
+sudo bpftool feature probe kernel
 
 # BTF (BPF Type Format) 정보
 sudo bpftool btf list
@@ -447,10 +485,10 @@ sudo apt-get install -y bpftrace
 sudo bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'
 
 # 프로세스별 읽기 바이트 수
-sudo bpftrace -e 'tracepoint:syscalls:sys_exit_read /args->ret > 0/ { @bytes[comm] = sum(args->ret); }'
+sudo bpftrace -e 'tracepoint:syscalls:sys_exit_read /args.ret > 0/ { @bytes[comm] = sum(args.ret); }'
 
 # 파일 열기 추적
-sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat { printf("%s opened %s\n", comm, str(args->filename)); }'
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat { printf("%s opened %s\n", comm, str(args.filename)); }'
 
 # TCP 연결 추적
 sudo bpftrace -e 'kprobe:tcp_connect { printf("%s -> %s\n", ntop(((struct sock *)arg0)->__sk_common.skc_rcv_saddr), ntop(((struct sock *)arg0)->__sk_common.skc_daddr)); }'
@@ -466,25 +504,25 @@ sudo bpftrace -e 'kprobe:vfs_read { @start[tid] = nsecs; } kretprobe:vfs_read /@
 sudo bpftrace -e 'profile:hz:99 { @[comm] = count(); }'
 
 # 블록 I/O 지연 시간
-sudo bpftrace -e 'tracepoint:block:block_rq_issue { @start[args->dev, args->sector] = nsecs; } tracepoint:block:block_rq_complete /@start[args->dev, args->sector]/ { @usecs = hist((nsecs - @start[args->dev, args->sector]) / 1000); delete(@start[args->dev, args->sector]); }'
+sudo biolatency-bpfcc 1 10  # Maintained request correlation; avoids dev/sector collisions
 
 # 새 프로세스 추적
 sudo bpftrace -e 'tracepoint:sched:sched_process_exec { printf("%-10d %-16s\n", pid, comm); }'
 
 # 메모리 할당 추적
-sudo bpftrace -e 'tracepoint:kmem:kmalloc { @bytes = hist(args->bytes_alloc); }'
+sudo bpftrace -e 'tracepoint:kmem:kmalloc { @bytes = hist(args.bytes_alloc); }'
 ```
 
 ### 4.3 BCC (BPF Compiler Collection)
 
-BCC는 Python과 Lua를 통해 eBPF 프로그램을 작성할 수 있게 해주는 도구입니다.
+BCC는 BPF C 컴파일/로딩을 제공하며 일반적으로 Python 추적 도구에 BPF C를 포함하여 사용합니다.
 
 ```bash
 # 설치
 sudo apt-get install -y bpfcc-tools python3-bpfcc
 
 # 포함된 도구들
-ls /usr/share/bcc/tools/
+dpkg -L bpfcc-tools | head -40
 ```
 
 **주요 BCC 도구**:
@@ -504,10 +542,10 @@ ls /usr/share/bcc/tools/
 
 ```bash
 # 사용 예제
-sudo /usr/share/bcc/tools/execsnoop    # 프로세스 실행 추적
-sudo /usr/share/bcc/tools/tcpconnect   # TCP 연결 추적
-sudo /usr/share/bcc/tools/biolatency   # 디스크 I/O 지연 시간
-sudo /usr/share/bcc/tools/profile -F 99 10  # 10초간 CPU 프로파일링
+sudo execsnoop-bpfcc    # 프로세스 실행 추적
+sudo tcpconnect-bpfcc   # TCP 연결 추적
+sudo biolatency-bpfcc   # 디스크 I/O 지연 시간
+sudo profile-bpfcc -F 99 10  # 10초간 CPU 프로파일링
 ```
 
 ### 4.4 libbpf와 CO-RE
@@ -520,22 +558,21 @@ libbpf는 eBPF 프로그램 로딩을 위한 C 라이브러리이며, CO-RE(Comp
 - 커널 헤더 의존성 감소
 
 ```c
-// CO-RE를 사용한 예제
+// Independent tracing program. Generate vmlinux.h from the target kernel's BTF.
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 
-SEC("kprobe/do_sys_open")
-int BPF_KPROBE(do_sys_open, int dfd, const char *filename) {
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-
+SEC("tracepoint/syscalls/sys_enter_openat")
+int trace_openat(struct trace_event_raw_sys_enter *ctx) {
+    const char *filename = (const char *)BPF_CORE_READ(ctx, args[1]);
     char fname[256];
-    bpf_probe_read_user_str(fname, sizeof(fname), filename);
-
-    bpf_printk("PID %d opened: %s\n", pid, fname);
+    if (bpf_probe_read_user_str(fname, sizeof(fname), filename) < 0)
+        return 0;
+    __u32 tgid = bpf_get_current_pid_tgid() >> 32;
+    bpf_printk("TGID %u opened: %s", tgid, fname);
     return 0;
 }
-
 char LICENSE[] SEC("license") = "GPL";
 ```
 
@@ -560,11 +597,13 @@ bpftool prog show id <ID> --pretty
 
 Cilium은 eBPF를 활용한 가장 대표적인 Kubernetes CNI(Container Network Interface)입니다.
 
-![Cilium Agent가 Kubernetes API로부터 받은 설정을 eBPF 데이터플레인으로 내려보내고, XDP·TC·소켓 프로그램이 각각 DDoS 방어, 네트워크 정책, 로드 밸런싱, 소켓 레벨 라우팅 기능을 구현하는 과정을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-5.svg)
+![Cilium Agent가 Kubernetes API로부터 받은 설정을 eBPF 데이터플레인으로 내려보내고, XDP·TC·소켓 프로그램이 각각 DDoS 방어, 네트워크 정책, 로드 밸런싱, 소켓 레벨 라우팅 기능을 구현하는 과정을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-5.html)
 
 #### kube-proxy 대체
 
-Cilium은 eBPF를 사용하여 kube-proxy를 완전히 대체할 수 있습니다.
+Cilium은 지원되는 구성에서 kube-proxy를 대체할 수 있습니다. 아래는 새 흐름의 백엔드 선택을 단순화한 그림이며 기존 흐름은 연결 추적을 사용할 수 있습니다. 실제 라우팅/터널링/NAT는 데이터 경로 설정에 따릅니다.
 
 **기존 kube-proxy (iptables 모드)**:
 ```
@@ -573,25 +612,30 @@ Cilium은 eBPF를 사용하여 kube-proxy를 완전히 대체할 수 있습니�
 
 **Cilium eBPF 모드**:
 ```
-패킷 → eBPF 맵 조회 → 직접 라우팅
+새 흐름 → eBPF 백엔드 조회 → 구성된 라우팅/터널링/NAT
 ```
 
 ```bash
-# Cilium 설치 (kube-proxy 대체 모드)
-helm install cilium cilium/cilium --version 1.14.0 \
-  --namespace kube-system \
-  --set kubeProxyReplacement=strict \
-  --set k8sServiceHost=${API_SERVER_IP} \
-  --set k8sServicePort=${API_SERVER_PORT}
+# New, isolated self-managed lab only: configure the cluster for the selected
+# CNI/proxy mode before bootstrap. Do not delete kube-proxy on a live cluster.
+helm repo add cilium https://helm.cilium.io
+helm repo update cilium
+: "${CILIUM_CHART_VERSION:?Select a chart compatible with this Kubernetes/kernel}"
+: "${CILIUM_VALUES_FILE:?Provide reviewed IPAM/routing/platform values}"
+: "${API_SERVER_IP:?Set a directly reachable API endpoint, not the Service IP}"
+: "${API_SERVER_PORT:?Set the API endpoint port}"
+helm install cilium cilium/cilium --version "$CILIUM_CHART_VERSION" \
+  --namespace kube-system -f "$CILIUM_VALUES_FILE" \
+  --set kubeProxyReplacement=true \
+  --set k8sServiceHost="$API_SERVER_IP" --set k8sServicePort="$API_SERVER_PORT"
+cilium status --wait
+# Existing clusters require the Cilium migration procedure and a tested rollback plan.
 
-# kube-proxy 제거
-kubectl -n kube-system delete ds kube-proxy
-kubectl -n kube-system delete cm kube-proxy
 ```
 
 #### 네트워크 정책
 
-Cilium은 eBPF를 사용하여 L3/L4/L7 네트워크 정책을 적용합니다.
+Cilium은 L3/L4에 eBPF를 사용하며 HTTP/L7 정책에는 Envoy 등 지원되는 프록시 처리가 필요합니다. DNS 관찰에는 DNS 프록시가 사용됩니다. Hubble의 HTTP/DNS 레코드는 해당 관찰 설정이 필요합니다.
 
 ```yaml
 # Cilium 네트워크 정책 예제
@@ -626,7 +670,7 @@ kind: Service
 metadata:
   name: my-service
   annotations:
-    io.cilium/lb-ipam-ips: "192.168.1.100"
+    lbipam.cilium.io/ips: "192.168.1.100"
 spec:
   type: LoadBalancer
   selector:
@@ -636,9 +680,11 @@ spec:
       targetPort: 8080
 ```
 
+위 요청 IP는 관리자가 소유한 CiliumLoadBalancerIPPool에 포함되어야 합니다. LB IPAM은 주소 할당만 담당하며 외부 도달성에는 BGP/L2 광고 또는 별도 로드 밸런서 구성이 필요합니다.
+
 ### 5.2 Calico eBPF 모드
 
-Calico도 eBPF 데이터플레인을 지원합니다.
+Calico는 eBPF 데이터플레인을 지원합니다. 아래 패치는 호환되는 기존 Calico Operator 설치를 전제로 한 전환 절차의 일부입니다. 직접 API 접근을 구성하고 라우팅/복구를 검증한 뒤 Service 프록시를 변경합니다.
 
 ```bash
 # Calico eBPF 모드 활성화
@@ -649,20 +695,22 @@ kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{
 - 소스 IP 보존
 - 직접 서버 리턴 (DSR) 지원
 - 호스트 엔드포인트 정책
-- 암호화된 노드 간 통신
+- 별도로 구성하고 지원되는 경우 WireGuard 암호화; eBPF 선택만으로 자동 활성화되지 않음
 
 ### 5.3 성능 비교: iptables vs eBPF
 
 | 측면 | iptables | eBPF |
 |------|----------|------|
-| **확장성** | O(n) - 서비스 수에 비례 | O(1) - 맵 조회 |
-| **지연 시간** | 규칙 수에 따라 증가 | 일정 |
-| **CPU 사용량** | 높음 | 낮음 |
-| **업데이트** | 전체 테이블 재작성 | 맵 항목 업데이트 |
+| **확장성** | O(n) - 서비스 수에 비례 | 해시 조회 평균 O(1); 맵 종류에 따라 다름 |
+| **지연 시간** | 규칙 구조/워크로드에 따라 다름 | 맵 종류/워크로드/데이터 경로에 따라 다름 |
+| **CPU 사용량** | 워크로드/설정에 따라 다름 | 워크로드/설정에 따라 다름 |
+| **업데이트** | 현대 kube-proxy는 변경된 Service/엔드포인트 규칙 갱신 가능 | 구현에 따른 맵 갱신 |
 | **관찰성** | 제한적 | Hubble 통합 |
-| **메모리** | 규칙당 메모리 사용 | 최적화된 맵 구조 |
+| **메모리** | 규칙/엔드포인트/연결 추적 상태 | 맵/엔드포인트/연결 추적 상태 |
 
 **벤치마크 결과** (1000개 서비스 기준):
+
+원문에서 제시한 아래 수치는 테스트 출처, 하드웨어, 커널/CNI 버전 및 측정 방법이 제공되지 않았습니다. 재실행하지 않았으며 현재 성능이나 일반적 개선율로 사용할 수 없습니다. 비교를 재현하려면 원본 방법과 환경이 필요합니다.
 
 ```
 | 지표              | iptables    | eBPF      | 개선율    |
@@ -678,11 +726,11 @@ kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{
 cilium status
 
 # eBPF 맵 확인
-cilium bpf lb list
-cilium bpf ct list global
+kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg bpf lb list
+kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg bpf ct list global
 
 # 네트워크 정책 상태
-cilium policy get
+kubectl get ciliumnetworkpolicies,ciliumclusterwidenetworkpolicies -A
 ```
 
 ---
@@ -693,18 +741,24 @@ eBPF는 시스템과 애플리케이션의 동작을 심층적으로 관찰할 �
 
 ### 6.1 Hubble: Cilium 네트워크 관찰성
 
-Hubble은 Cilium에 내장된 네트워크 관찰성 플랫폼입니다.
+Hubble은 Cilium 네트워크 관찰성을 제공합니다. 호환되는 Hubble CLI와 Relay를 준비하고 CLI 예제 전에 port-forward를 연결합니다. L7 관찰에는 해당 프록시 구성이 필요합니다.
 
-![Cilium Agent의 eBPF 데이터플레인에서 Hubble Observer가 네트워크 플로우, DNS 쿼리, HTTP 요청, 정책 결정 데이터를 수집하고 Hubble Relay를 거쳐 UI와 CLI로 제공하는 과정을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-6.svg)
+![Cilium Agent가 eBPF 네트워크/정책 이벤트와 지원되는 DNS/HTTP 프록시 관찰을 결합하고 Hubble Observer가 이를 수집하여 Hubble Relay를 거쳐 UI와 CLI로 제공하는 과정을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-6.html)
 
 ```bash
+# Use the installed, reviewed chart version; this is not a chart-version upgrade.
+: "${CILIUM_CHART_VERSION:?Set the installed compatible chart version}"
 # Hubble 설치
-helm upgrade cilium cilium/cilium --version 1.14.0 \
+helm upgrade cilium cilium/cilium --version "$CILIUM_CHART_VERSION" \
   --namespace kube-system \
   --reuse-values \
+  --set hubble.enabled=true \
   --set hubble.relay.enabled=true \
   --set hubble.ui.enabled=true
 
+# 먼저 별도 터미널에서 cilium hubble port-forward를 실행합니다.
 # Hubble CLI 사용
 hubble observe --pod my-pod
 hubble observe --namespace default
@@ -718,7 +772,7 @@ hubble observe --from-pod default/frontend --to-pod default/backend
 hubble observe -f --type trace
 
 # 서비스 맵 생성
-hubble observe --namespace default -o jsonpb | hubble relay --serviceMap
+# Service maps are provided by Hubble UI; use the UI port-forward below.
 ```
 
 **Hubble UI 접속**:
@@ -747,16 +801,17 @@ px deploy
 
 # Pixie CLI 쿼리 예제
 # HTTP 요청 지연 시간
-px script run px/http_data
+px run px/http_data
 
 # 서비스 간 트래픽
-px script run px/service_stats
+px run px/service_stats
 
 # 느린 요청 분석
-px script run px/slow_requests -- start_time=-5m latency_ns=100000000
+px run px/slow_http_requests --help
+# Use the parameters advertised by the installed script bundle.
 
 # Pod 리소스 사용량
-px script run px/pod_stats
+px run px/pods
 ```
 
 **PxL (Pixie Query Language) 예제**:
@@ -766,23 +821,31 @@ px script run px/pod_stats
 import px
 
 df = px.DataFrame(table='http_events', start_time='-5m')
+df.namespace = df.ctx['namespace']
+df.pod = df.ctx['pod']
 df = df[df.latency > 100000000]  # 100ms 이상
-df = df.groupby(['service', 'req_path']).agg(
+df = df.groupby(['namespace', 'pod', 'req_path']).agg(
     count=('latency', px.count),
     avg_latency=('latency', px.mean),
-    p99_latency=('latency', px.quantiles, 0.99)
+    latency_quantiles=('latency', px.quantiles)
 )
+df.p99_latency_ns = px.pluck_float64(df.latency_quantiles, 'p99')
 px.display(df)
 ```
 
 ### 6.3 Coroot: "No-Code" 모니터링
 
-Coroot는 eBPF를 사용하여 추가 설정 없이 자동으로 시스템을 모니터링합니다.
+Coroot는 eBPF를 사용하여 에이전트/저장소/권한/데이터 소스를 구성한 후 지원하는 애플리케이션을 자동 관찰합니다.
 
 ```bash
 # Helm으로 Coroot 설치
 helm repo add coroot https://coroot.github.io/helm-charts
-helm install coroot coroot/coroot -n coroot --create-namespace
+# The old coroot/coroot chart is deprecated; use the operator and CE resource chart.
+: "${COROOT_OPERATOR_VERSION:?Select a reviewed operator chart version}"
+: "${COROOT_CE_VERSION:?Select a compatible CE chart version}"
+helm install coroot-operator coroot/coroot-operator -n coroot --create-namespace \
+  --version "$COROOT_OPERATOR_VERSION"
+helm install coroot coroot/coroot-ce -n coroot --version "$COROOT_CE_VERSION"
 ```
 
 **Coroot 기능**:
@@ -794,34 +857,39 @@ helm install coroot coroot/coroot -n coroot --create-namespace
 
 ### 6.4 Kepler: 에너지 소비 모니터링
 
-Kepler(Kubernetes-based Efficient Power Level Exporter)는 eBPF를 사용하여 컨테이너의 에너지 소비를 모니터링합니다.
+Kepler의 초기 버전은 eBPF를 사용했지만 **0.10.0부터 전면 재작성**되어 호스트 /proc·/sys 읽기와 RAPL/powercap 및 CPU 사용량 기반 전력 배분을 사용합니다. CAP_BPF가 더 이상 필요하지 않습니다. 따라서 현재 Kepler를 eBPF 계측의 필수 사례로 설명하면 부정확합니다. 0.9 이하 코드는 frozen legacy이며 현재 메트릭/배포 방법과 구분합니다.
+
+하드웨어/VM에서 전력 센서가 제공되는지 먼저 확인합니다. 컨테이너/Pod 값은 직접 전력계를 달아 측정한 값이 아니라 노드 에너지의 추정 배분이며 중첩 RAPL zone을 합산하면 중복 계산할 수 있습니다. GPU/HWMon/플랫폼 전력 지원은 버전별 실험 기능 범위를 확인합니다.
 
 ```bash
-# Kepler 설치
-kubectl apply -f https://raw.githubusercontent.com/sustainable-computing-io/kepler/main/manifests/kubernetes/deployment.yaml
-
-# Prometheus 메트릭 확인
-curl localhost:9103/metrics | grep kepler
+: "${KEPLER_CHART_VERSION:?Select a reviewed current Kepler chart}"
+helm install kepler oci://quay.io/sustainable_computing_io/charts/kepler \
+  --version "$KEPLER_CHART_VERSION" --namespace kepler --create-namespace
+kubectl get pods -n kepler
+# Run port-forward in a separate terminal; then query metrics from this machine.
+kubectl port-forward -n kepler service/kepler 28282:28282
+# curl --fail http://localhost:28282/metrics | grep kepler_node_cpu_watts
 ```
 
-**Kepler 메트릭**:
-- `kepler_container_joules_total`: 컨테이너별 에너지 소비
-- `kepler_container_gpu_joules_total`: GPU 에너지 소비
-- `kepler_node_core_joules_total`: 노드 CPU 에너지
+현재 CPU 메트릭 예: `kepler_node_cpu_joules_total`, `kepler_container_cpu_joules_total`, `kepler_pod_cpu_watts`. 실제 수집 가능 범위와 zone 레이블을 확인합니다.
 
 ### 6.5 기존 에이전트 vs eBPF 계측 비교
+
+5–15%와 <1%는 원문의 출처 없는 수치를 보존한 것입니다. 검증한 오버헤드 범위가 아니며 eBPF도 사용자 공간 에이전트/버퍼/프로토콜 파서가 필요합니다. 모든 기존 에이전트가 코드 수정을 요구하거나 모든 eBPF 도구가 전체 시스템을 완전히 관찰하는 것은 아닙니다.
 
 | 측면 | 기존 에이전트 | eBPF 계측 |
 |------|-------------|-----------|
 | **오버헤드** | 높음 (5-15%) | 낮음 (<1%) |
-| **코드 수정** | 필요 (SDK/라이브러리) | 불필요 |
-| **커버리지** | 계측된 부분만 | 전체 시스템 |
-| **배포** | 애플리케이션별 | 노드별 |
-| **권한** | 일반 권한 | CAP_BPF 필요 |
-| **데이터 깊이** | 애플리케이션 레벨 | 커널 레벨 |
-| **프로토콜 지원** | 명시적 지원 필요 | 자동 파싱 |
+| **코드 수정** | SDK/에이전트 모델에 따라 다름 | 지원 데이터 소스에서는 대체로 불필요 |
+| **커버리지** | 계측/에이전트에 따라 다름 | 지원 훅/프로토콜/가시성 범위; 자동으로 전체를 보장하지 않음 |
+| **배포** | 앱/노드/수집기 형태에 따라 다름 | 보통 노드 에이전트; 앱 호환성은 여전히 필요 |
+| **권한** | 에이전트별로 다름 | 프로그램/훅별 capability와 호스트 접근 필요 |
+| **데이터 깊이** | 앱/호스트 계측에 따라 다름 | 커널 및 지원되는 사용자 공간 probe |
+| **프로토콜 지원** | 도구별로 다름 | 지원되는 파서/라이브러리/가시성에서만 자동 파싱 |
 
-![기존 방식은 애플리케이션에 SDK나 에이전트를 심어 메트릭을 수집하지만, eBPF 방식은 애플리케이션 코드 변경 없이 커널에서 eBPF 프로그램으로 직접 관측 데이터를 모니터링 백엔드로 전달한다는 것을 비교하는 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-7.svg)
+![기존 방식은 애플리케이션에 SDK나 에이전트를 심어 메트릭을 수집하지만, eBPF 방식은 애플리케이션 코드 변경 없이 커널에서 eBPF 프로그램으로 직접 관측 데이터를 모니터링 백엔드로 전달한다는 것을 비교하는 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-7.html)
 
 ---
 
@@ -831,65 +899,76 @@ curl localhost:9103/metrics | grep kepler
 
 Tetragon은 Cilium 프로젝트에서 제공하는 eBPF 기반 런타임 보안 솔루션입니다.
 
-![TracingPolicy CRD로 정의된 정책에 따라 Tetragon Agent의 eBPF 센서가 프로세스, 네트워크, 파일 활동을 추적하고 위반 시 프로세스 킬, 네트워크 차단, 파일 접근 거부로 정책을 즉시 적용하는 과정을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-8.svg)
+![TracingPolicy CRD로 정의된 정책에 따라 Tetragon Agent의 eBPF 센서가 프로세스, 네트워크, 파일 활동을 추적하고 위반 시 프로세스 킬, 네트워크 차단, 파일 접근 거부로 Post 관찰, Signal 프로세스 종료, 지원되는 Override 작업 거부를 구분하여 적용하는 과정을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-8.html)
 
 ```bash
 # Tetragon 설치
 helm repo add cilium https://helm.cilium.io
-helm install tetragon cilium/tetragon -n kube-system
+: "${TETRAGON_CHART_VERSION:?Select a compatible reviewed chart version}"
+helm install tetragon cilium/tetragon -n kube-system --version "$TETRAGON_CHART_VERSION"
 
 # 이벤트 관찰
 kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | tetra getevents -o compact
 ```
 
+ebpf-lab 네임스페이스와 app=ebpf-demo 테스트 Pod를 준비합니다. 아래 정책은 호스트 전체에 SIGKILL을 적용하지 않는 관찰 전용 Post 예제입니다. 예방적 차단은 지원되는 LSM/Override 동작을 별도 테스트해야 합니다.
+
 **TracingPolicy 예제**:
 
 ```yaml
-# 민감한 파일 접근 모니터링
 apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
+kind: TracingPolicyNamespaced
 metadata:
   name: sensitive-file-access
+  namespace: ebpf-lab
 spec:
   kprobes:
-    - call: security_file_open
-      syscall: false
-      args:
-        - index: 0
-          type: file
-      selectors:
-        - matchArgs:
-            - index: 0
-              operator: Prefix
-              values:
-                - /etc/shadow
-                - /etc/passwd
-                - /etc/sudoers
-          matchActions:
-            - action: Sigkill  # 프로세스 종료
+  - call: security_file_open
+    syscall: false
+    args:
+    - index: 0
+      type: file
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: Prefix
+        values:
+        - /etc/shadow
+        - /etc/passwd
+        - /etc/sudoers
+      matchActions:
+      - action: Post
+  podSelector:
+    matchLabels:
+      app: ebpf-demo
 ```
 
 ```yaml
-# 네트워크 연결 제어
 apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
+kind: TracingPolicyNamespaced
 metadata:
-  name: restrict-outbound
+  name: observe-outbound
+  namespace: ebpf-lab
 spec:
   kprobes:
-    - call: tcp_connect
-      syscall: false
-      args:
-        - index: 0
-          type: sock
-      selectors:
-        - matchArgs:
-            - index: 0
-              operator: NotEqual
-              values:
-                - "10.0.0.0/8"  # 내부 네트워크
-          matchActions:
-            - action: Sigkill
+  - call: tcp_connect
+    syscall: false
+    args:
+    - index: 0
+      type: sock
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: NotDAddr
+        values:
+        - 10.0.0.0/8
+      matchActions:
+      - action: Post
+  podSelector:
+    matchLabels:
+      app: ebpf-demo
 ```
 
 ### 7.2 Falco: eBPF 기반 이상 탐지
@@ -899,16 +978,19 @@ Falco는 CNCF 프로젝트로, eBPF를 사용하여 런타임 이상 동작을 �
 ```bash
 # Falco 설치 (eBPF 드라이버)
 helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm install falco falcosecurity/falco \
+# Save the following Falco rule examples as ./ebpf-lab-rules.yaml before installation.
+: "${FALCO_CHART_VERSION:?Select a compatible reviewed chart version}"
+helm install falco falcosecurity/falco --version "$FALCO_CHART_VERSION" \
   --namespace falco --create-namespace \
-  --set driver.kind=modern_ebpf
+  --set driver.kind=modern_ebpf \
+  --set-file 'customRules.ebpf-lab-rules\.yaml=./ebpf-lab-rules.yaml'
 ```
 
 **Falco 규칙 예제**:
 
 ```yaml
 # /etc/shadow 읽기 탐지
-- rule: Read sensitive file
+- rule: eBPF lab read sensitive file
   desc: Detect reading of sensitive files
   condition: >
     open_read and
@@ -920,7 +1002,7 @@ helm install falco falcosecurity/falco \
   priority: WARNING
 
 # 컨테이너에서 셸 실행 탐지
-- rule: Shell in container
+- rule: eBPF lab shell in container
   desc: Detect shell execution in container
   condition: >
     spawned_process and
@@ -933,7 +1015,7 @@ helm install falco falcosecurity/falco \
   priority: NOTICE
 
 # 권한 상승 탐지
-- rule: Privilege escalation
+- rule: eBPF lab privilege escalation
   desc: Detect privilege escalation attempts
   condition: >
     spawned_process and
@@ -947,7 +1029,7 @@ helm install falco falcosecurity/falco \
 
 ### 7.3 seccomp-bpf: 시스템 콜 필터링
 
-seccomp-bpf는 BPF를 사용하여 프로세스가 호출할 수 있는 시스템 콜을 제한합니다.
+seccomp 필터는 일반 eBPF 프로그램 헬퍼/맵이 아닌 classic BPF 사용자 API를 사용합니다. 컨테이너 런타임이 OCI JSON 프로필을 해석하여 syscall 필터를 구성합니다.
 
 ```yaml
 # Kubernetes Pod에서 seccomp 프로필 적용
@@ -961,18 +1043,28 @@ spec:
       type: RuntimeDefault  # 또는 Localhost
   containers:
     - name: app
-      image: nginx
+      image: nginx:1.30.4
 ```
 
 **커스텀 seccomp 프로필**:
 
+아래는 x86-64 최소 예제의 **형식 설명**이며 NGINX/일반 애플리케이션에 적용할 수 있는 프로필이 아닙니다. 기본 RuntimeDefault를 사용하고, custom allowlist는 실제 아키텍처/런타임/워크로드의 syscall을 관찰하여 회귀 테스트한 후 배포합니다. 광범위한 mount/reboot/module/BPF 허용 목록을 안전한 기본값으로 사용하지 않습니다.
+
 ```json
 {
   "defaultAction": "SCMP_ACT_ERRNO",
-  "architectures": ["SCMP_ARCH_X86_64"],
+  "architectures": [
+    "SCMP_ARCH_X86_64"
+  ],
   "syscalls": [
     {
-      "names": ["read", "write", "open", "close", "stat", "fstat", "mmap", "mprotect", "munmap", "brk", "rt_sigaction", "rt_sigprocmask", "ioctl", "access", "pipe", "select", "sched_yield", "mremap", "msync", "mincore", "madvise", "shmget", "shmat", "shmctl", "dup", "dup2", "pause", "nanosleep", "getitimer", "alarm", "setitimer", "getpid", "socket", "connect", "accept", "sendto", "recvfrom", "bind", "listen", "getsockname", "getpeername", "socketpair", "setsockopt", "getsockopt", "clone", "fork", "vfork", "execve", "exit", "wait4", "kill", "uname", "fcntl", "flock", "fsync", "fdatasync", "truncate", "ftruncate", "getdents", "getcwd", "chdir", "rename", "mkdir", "rmdir", "creat", "link", "unlink", "symlink", "readlink", "chmod", "fchmod", "chown", "fchown", "lchown", "umask", "gettimeofday", "getrlimit", "getrusage", "sysinfo", "times", "ptrace", "getuid", "syslog", "getgid", "setuid", "setgid", "geteuid", "getegid", "setpgid", "getppid", "getpgrp", "setsid", "setreuid", "setregid", "getgroups", "setgroups", "setresuid", "getresuid", "setresgid", "getresgid", "getpgid", "setfsuid", "setfsgid", "getsid", "capget", "capset", "rt_sigpending", "rt_sigtimedwait", "rt_sigqueueinfo", "rt_sigsuspend", "sigaltstack", "utime", "mknod", "personality", "ustat", "statfs", "fstatfs", "sysfs", "getpriority", "setpriority", "sched_setparam", "sched_getparam", "sched_setscheduler", "sched_getscheduler", "sched_get_priority_max", "sched_get_priority_min", "sched_rr_get_interval", "mlock", "munlock", "mlockall", "munlockall", "vhangup", "pivot_root", "prctl", "arch_prctl", "adjtimex", "setrlimit", "chroot", "sync", "acct", "settimeofday", "mount", "umount2", "swapon", "swapoff", "reboot", "sethostname", "setdomainname", "ioperm", "iopl", "create_module", "init_module", "delete_module", "get_kernel_syms", "query_module", "quotactl", "nfsservctl", "getpmsg", "putpmsg", "afs_syscall", "tuxcall", "security", "gettid", "readahead", "setxattr", "lsetxattr", "fsetxattr", "getxattr", "lgetxattr", "fgetxattr", "listxattr", "llistxattr", "flistxattr", "removexattr", "lremovexattr", "fremovexattr", "tkill", "time", "futex", "sched_setaffinity", "sched_getaffinity", "set_thread_area", "io_setup", "io_destroy", "io_getevents", "io_submit", "io_cancel", "get_thread_area", "lookup_dcookie", "epoll_create", "epoll_ctl_old", "epoll_wait_old", "remap_file_pages", "getdents64", "set_tid_address", "restart_syscall", "semtimedop", "fadvise64", "timer_create", "timer_settime", "timer_gettime", "timer_getoverrun", "timer_delete", "clock_settime", "clock_gettime", "clock_getres", "clock_nanosleep", "exit_group", "epoll_wait", "epoll_ctl", "tgkill", "utimes", "vserver", "mbind", "set_mempolicy", "get_mempolicy", "mq_open", "mq_unlink", "mq_timedsend", "mq_timedreceive", "mq_notify", "mq_getsetattr", "kexec_load", "waitid", "add_key", "request_key", "keyctl", "ioprio_set", "ioprio_get", "inotify_init", "inotify_add_watch", "inotify_rm_watch", "migrate_pages", "openat", "mkdirat", "mknodat", "fchownat", "futimesat", "newfstatat", "unlinkat", "renameat", "linkat", "symlinkat", "readlinkat", "fchmodat", "faccessat", "pselect6", "ppoll", "unshare", "set_robust_list", "get_robust_list", "splice", "tee", "sync_file_range", "vmsplice", "move_pages", "utimensat", "epoll_pwait", "signalfd", "timerfd_create", "eventfd", "fallocate", "timerfd_settime", "timerfd_gettime", "accept4", "signalfd4", "eventfd2", "epoll_create1", "dup3", "pipe2", "inotify_init1", "preadv", "pwritev", "rt_tgsigqueueinfo", "perf_event_open", "recvmmsg", "fanotify_init", "fanotify_mark", "prlimit64", "name_to_handle_at", "open_by_handle_at", "clock_adjtime", "syncfs", "sendmmsg", "setns", "getcpu", "process_vm_readv", "process_vm_writev", "kcmp", "finit_module", "sched_setattr", "sched_getattr", "renameat2", "seccomp", "getrandom", "memfd_create", "kexec_file_load", "bpf"],
+      "names": [
+        "read",
+        "write",
+        "exit",
+        "exit_group",
+        "rt_sigreturn"
+      ],
       "action": "SCMP_ACT_ALLOW"
     }
   ]
@@ -987,8 +1079,11 @@ LSM BPF는 Linux Security Module과 eBPF를 결합하여 동적으로 보안 정
 // LSM BPF 예제: 실행 파일 제한
 SEC("lsm/bprm_check_security")
 int BPF_PROG(restrict_exec, struct linux_binprm *bprm, int ret) {
+    if (ret != 0)
+        return ret;
     char filename[256];
-    bpf_probe_read_kernel_str(filename, sizeof(filename), bprm->filename);
+    if (bpf_probe_read_kernel_str(filename, sizeof(filename), bprm->filename) < 0)
+        return 0;  // Demo fails open on read error; define a real policy explicitly.
 
     // /tmp에서 실행 차단
     if (bpf_strncmp(filename, 5, "/tmp/") == 0)
@@ -1003,10 +1098,12 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
     if (ret != 0)
         return ret;
 
+    if (addrlen < sizeof(struct sockaddr_in) || address->sa_family != AF_INET)
+        return 0;  // This example handles IPv4 only.
     struct sockaddr_in *addr = (struct sockaddr_in *)address;
 
     // 특정 포트 연결 차단
-    if (ntohs(addr->sin_port) == 6666)
+    if (bpf_ntohs(addr->sin_port) == 6666)
         return -EACCES;
 
     return 0;
@@ -1024,11 +1121,12 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
 ```bash
 # TCP 연결 추적
 sudo bpftrace -e '
-tracepoint:tcp:tcp_connect {
-    printf("%s -> %s:%d\n",
-        ntop(args->saddr),
-        ntop(args->daddr),
-        args->dport);
+tracepoint:sock:inet_sock_set_state /args.protocol == 6 && args.newstate == 1/ {
+    if (args.family == 2) {
+        printf("IPv4 %s:%d -> %s:%d established\n", ntop(args.saddr), args.sport, ntop(args.daddr), args.dport);
+    } else if (args.family == 10) {
+        printf("IPv6 %s:%d -> %s:%d established\n", ntop(args.saddr_v6), args.sport, ntop(args.daddr_v6), args.dport);
+    }
 }'
 ```
 
@@ -1052,17 +1150,12 @@ sudo bpftrace -e '
 tracepoint:block:block_rq_issue {
     printf("%s %s %d\n",
         comm,
-        args->rwbs,
-        args->bytes / 1024);
+        str(args.rwbs),
+        args.nr_sector / 2);
 }'
 
 # I/O 지연 시간 히스토그램
-sudo bpftrace -e '
-tracepoint:block:block_rq_issue { @start[args->dev, args->sector] = nsecs; }
-tracepoint:block:block_rq_complete /@start[args->dev, args->sector]/ {
-    @us = hist((nsecs - @start[args->dev, args->sector]) / 1000);
-    delete(@start[args->dev, args->sector]);
-}'
+sudo biolatency-bpfcc 1 10
 ```
 
 ### 8.2 Cilium Hubble로 네트워크 흐름 관찰
@@ -1089,8 +1182,9 @@ hubble observe --from-pod default/frontend --to-pod default/backend
 # JSON 출력으로 상세 분석
 hubble observe --namespace default -o json | jq '.flow.destination.pod_name'
 
-# 플로우 통계
-hubble observe --namespace default -o jsonpb | \
+# 보관된 흐름 관찰 이벤트 수이며 고유 연결 수나 전체 트래픽 통계가 아닙니다.
+# Relay는 Hubble 인스턴스별로 지정 수만큼 반환합니다.
+hubble observe --namespace default --last 1000 -o jsonpb | \
   jq -r '.flow | "\(.source.pod_name // .source.identity) -> \(.destination.pod_name // .destination.identity)"' | \
   sort | uniq -c | sort -rn | head -20
 ```
@@ -1104,7 +1198,7 @@ kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout 
 
 # 프로세스 실행 이벤트만 필터링
 kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | \
-  tetra getevents -o compact --process-filter
+  tetra getevents -o compact --event-types PROCESS_EXEC
 
 # 특정 네임스페이스 이벤트
 kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | \
@@ -1115,54 +1209,48 @@ kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout 
 
 ```yaml
 apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
+kind: TracingPolicyNamespaced
 metadata:
   name: file-access-monitor
+  namespace: ebpf-lab
 spec:
   kprobes:
-    - call: security_file_open
-      syscall: false
-      return: false
-      args:
-        - index: 0
-          type: file
-      selectors:
-        - matchArgs:
-            - index: 0
-              operator: Prefix
-              values:
-                - /etc/
-                - /var/run/secrets/
-          matchActions:
-            - action: Post
+  - call: security_file_open
+    syscall: false
+    return: false
+    args:
+    - index: 0
+      type: file
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: Prefix
+        values:
+        - /etc/
+        - /var/run/secrets/
+      matchActions:
+      - action: Post
+  podSelector:
+    matchLabels:
+      app: ebpf-demo
 ```
 
 ### 8.4 eBPF를 사용한 지연 시간 분석
 
-**서비스 응답 시간 측정**:
+**함수, 연결 수립 및 이름 해석 지연 시간**:
 
 ```bash
-# HTTP 요청 지연 시간 추적 (BCC)
-sudo /usr/share/bcc/tools/funclatency 'c:read' -i 1
+# libc read() 함수 실행 시간이며 HTTP 요청 지연 시간 메트릭이 아님
+sudo funclatency-bpfcc 'c:read' -i 1
 
 # TCP 핸드셰이크 지연 시간
-sudo bpftrace -e '
-kprobe:tcp_v4_connect { @start[tid] = nsecs; }
-kretprobe:tcp_v4_connect /@start[tid]/ {
-    @connect_latency_us = hist((nsecs - @start[tid]) / 1000);
-    delete(@start[tid]);
-}'
+sudo tcpconnlat-bpfcc  # Active TCP connection establishment latency
 
 # DNS 조회 지연 시간
-sudo bpftrace -e '
-tracepoint:net:net_dev_xmit /args->protocol == 0x0800/ {
-    @dns_start[args->skbaddr] = nsecs;
-}
-tracepoint:net:netif_receive_skb /args->protocol == 0x0800 && @dns_start[args->skbaddr]/ {
-    @dns_latency = hist((nsecs - @dns_start[args->skbaddr]) / 1000);
-    delete(@dns_start[args->skbaddr]);
-}'
+sudo gethostlatency-bpfcc  # libc name-resolution latency; includes cache/NSS work
 ```
+
+아래는 x86-64 glibc 경로 예시입니다. 대상 프로세스/라이브러리 경로를 먼저 확인하며 컨테이너 마운트 네임스페이스는 다를 수 있습니다. malloc/tcp_sendmsg 실행 시간은 함수 지연이며 전체 요청 지연이 아닙니다.
 
 **애플리케이션 성능 분석 스크립트**:
 
@@ -1211,18 +1299,19 @@ END {
 | 제한 사항 | 값 | 설명 |
 |----------|-----|------|
 | **스택 크기** | 512 bytes | 로컬 변수 저장 공간 제한 |
-| **최대 명령어** | 100만 개 | 프로그램 복잡도 제한 |
+| **명령어 제한** | 권한/커널별 상이 | 프로그램 길이와 검증 중 처리 명령 수 한도는 별개이며 upstream 복잡도 한도는100만 |
 | **최대 중첩 호출** | 8 레벨 | BPF-to-BPF 함수 호출 깊이 |
 | **맵 항목 수** | 맵 유형별 상이 | 메모리 제한에 따름 |
-| **프로그램 크기** | 맵 유형별 상이 | JIT 컴파일 후 제한 |
+| **프로그램 크기** | 커널/검증기/JIT 한도 | 맵 종류로 결정되지 않음 |
 
 **스택 크기 제한 우회**:
 
 ```c
 // 잘못된 예: 스택 크기 초과
 int bad_function(void *ctx) {
-    char buffer[1024];  // 스택 크기 초과!
-    return 0;
+    volatile char buffer[1024] = {};  // 스택 크기 초과!
+    buffer[0] = 1;
+    return buffer[1023];
 }
 
 // 올바른 예: 맵 사용
@@ -1248,8 +1337,8 @@ int good_function(void *ctx) {
 eBPF 검증기는 프로그램 종료를 보장하기 위해 루프를 제한합니다.
 
 ```c
-// 검증기가 거부: 무제한 루프
-for (int i = 0; i < n; i++) {  // n이 런타임에 결정됨
+// n의 작은 상한을 증명할 수 없다면 검증 복잡도 문제가 될 수 있음.
+for (int i = 0; i < n; i++) {  // 런타임 값도 증명 가능한 상한이 있을 수 있음
     // ...
 }
 
@@ -1284,7 +1373,7 @@ int main_prog(void *ctx) {
 | 기본 eBPF | 3.18 |
 | XDP | 4.8 |
 | BTF | 4.18 |
-| CO-RE | 5.2 |
+| CO-RE | BTF와 호환 libbpf/기능 필요; 단일 최소 버전으로 보장 불가 |
 | BPF 링 버퍼 | 5.8 |
 | BPF 루프 | 5.3 |
 | LSM BPF | 5.7 |
@@ -1311,8 +1400,11 @@ eBPF 프로그램 디버깅은 전통적인 방법과 다릅니다:
 // bpf_printk (디버그용, 성능 영향)
 bpf_printk("value = %d\n", value);
 
-// 디버그 메시지 확인
-sudo cat /sys/kernel/debug/tracing/trace_pipe
+```
+
+```bash
+# tracefs 마운트/위치는 배포판별로 확인합니다.
+sudo cat /sys/kernel/tracing/trace_pipe
 ```
 
 ```bash
@@ -1320,7 +1412,8 @@ sudo cat /sys/kernel/debug/tracing/trace_pipe
 sudo bpftool prog load my_prog.o /sys/fs/bpf/my_prog -d
 
 # 프로그램 통계 확인
-sudo bpftool prog show id <ID> --json | jq '.run_time_ns, .run_cnt'
+sudo bpftool -j prog show id <ID> | jq '.run_time_ns, .run_cnt'
+# Runtime statistics require kernel.bpf_stats_enabled or a BPF stats FD; disabled by default and adds overhead.
 
 # 맵 내용 덤프
 sudo bpftool map dump id <MAP_ID>
@@ -1342,6 +1435,8 @@ capsh --print
 # 특정 권한으로 프로그램 실행
 sudo setcap cap_bpf,cap_perfmon+ep ./my_bpf_loader
 ```
+
+아래 Pod는 capability 필드 예시이며 실행 검증한 완성 에이전트가 아닙니다. 커널/BTF/프로그램 유형, seccomp의 bpf/perf_event_open 허용, LSM/lockdown, hostPath 마운트와 소유권, PSS 및 필요한 RBAC를 따로 확인합니다. capability만 추가해도 모든 프로그램이 로드되는 것은 아닙니다.
 
 **Kubernetes에서의 권한 설정**:
 
@@ -1386,12 +1481,14 @@ eBPF는 강력한 도구이지만 보안 위험도 존재합니다:
 **보안 모범 사례**:
 
 ```bash
-# 비권한 eBPF 비활성화
-echo 0 | sudo tee /proc/sys/kernel/unprivileged_bpf_disabled
-
-# BPF 보안 잠금
-echo 1 | sudo tee /proc/sys/kernel/bpf_spec_v1
-echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
+# Inspect first. 0 enables unprivileged bpf(); 1 disables until reboot; 2 disables reversibly.
+sysctl kernel.unprivileged_bpf_disabled
+# On a kernel supporting value 2, disable only if currently enabled.
+if [ "$(sysctl -n kernel.unprivileged_bpf_disabled)" = 0 ]; then
+  sudo sysctl -w kernel.unprivileged_bpf_disabled=2
+fi
+# Inspect the real JIT-hardening setting; choose changes through host configuration management.
+sysctl net.core.bpf_jit_harden
 ```
 
 ---
@@ -1417,8 +1514,8 @@ echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
 - [bpftrace Tutorial](https://github.com/iovisor/bpftrace/blob/master/docs/tutorial_one_liners.md) - bpftrace 원라이너 튜토리얼
 
 **커뮤니티**:
-- [eBPF Summit](https://ebpf.io/summit/) - 연례 eBPF 컨퍼런스
-- [Cilium Slack](https://cilium.io/slack) - Cilium 커뮤니티
+- [eBPF Summit](https://ebpf.io/events/?conference=eBPF%20Summit) - 연례 eBPF 컨퍼런스
+- [Cilium Slack](https://slack.cilium.io/) - Cilium 커뮤니티
 
 ### 10.3 관련 문서
 
@@ -1461,3 +1558,45 @@ eBPF는 Linux 커널의 동작을 안전하게 확장하고 관찰할 수 있게
 8. **제한 사항**: 스택 크기, 루프, 커널 버전 호환성 고려 필요
 
 eBPF는 클라우드 네이티브 환경에서 네트워킹, 보안, 관찰성의 미래를 이끌어가는 핵심 기술입니다.
+
+> Falco 규칙은 기본 ruleset의 open_read/open_write/spawned_process/container 매크로를 먼저 로드해야 합니다. 추가 규칙 파일을 배포하는 방법은 설치한 Helm 차트의 customRules/falco.rules_files 설정으로 확인합니다. Falco는 탐지/알림 엔진이며 규칙만으로 접근을 차단하지 않습니다. container/Kubernetes 메타데이터는 조회 지연으로 없을 수 있고 정상적인 서비스 계정 토큰 읽기도 탐지되므로 허용 조건을 테스트합니다.
+
+## 검증 참고 자료
+
+- https://www.kernel.org/doc/html/latest/admin-guide/sysctl/kernel.html
+- https://www.kernel.org/doc/html/latest/admin-guide/sysctl/net.html
+- https://github.com/torvalds/linux/blob/master/include/linux/bpf.h
+- https://github.com/torvalds/linux/blob/master/include/linux/filter.h
+- https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h
+- https://github.com/torvalds/linux/blob/master/kernel/bpf/syscall.c
+- https://docs.kernel.org/bpf/prog_lsm.html
+- https://docs.kernel.org/userspace-api/seccomp_filter.html
+- https://github.com/torvalds/linux/blob/master/include/trace/events/sock.h
+- https://github.com/bpftrace/bpftrace/blob/v0.27.0/docs/language.md
+- https://github.com/bpftrace/bpftrace/blob/v0.27.0/docs/stdlib.md
+- https://packages.debian.org/trixie/arm64/bpfcc-tools/filelist
+- https://github.com/iovisor/bcc/blob/master/tools/tcpconnlat.py
+- https://github.com/iovisor/bcc/blob/master/tools/gethostlatency.py
+- https://github.com/libbpf/bpftool/blob/main/docs/bpftool-map.rst
+- https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst
+- https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/lb-ipam.rst
+- https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml
+- https://github.com/cilium/cilium/blob/v1.20.1/hubble/cmd/observe/observe.go
+- https://github.com/cilium/cilium/blob/v1.20.1/hubble/pkg/printer/printer_test.go
+- https://github.com/cilium/tetragon/blob/main/docs/content/en/docs/concepts/enforcement/_index.md
+- https://github.com/cilium/tetragon/blob/main/docs/content/en/docs/concepts/tracing-policy/selectors.md
+- https://github.com/cilium/tetragon/blob/main/pkg/k8s/apis/cilium.io/v1alpha1/tracing_policy_types.go
+- https://github.com/cilium/tetragon/blob/main/cmd/tetra/getevents/getevents.go
+- https://github.com/cilium/tetragon/blob/main/examples/tracingpolicy/lsm_file_open.yaml
+- https://github.com/cilium/tetragon/blob/main/install/kubernetes/tetragon/crds-yaml/cilium.io_tracingpoliciesnamespaced.yaml
+- https://github.com/sustainable-computing-io/kepler/blob/main/README.md
+- https://github.com/sustainable-computing-io/kepler/blob/main/docs/user/metrics.md
+- https://github.com/coroot/helm-charts/blob/main/charts/coroot/Chart.yaml
+- https://github.com/coroot/helm-charts/blob/main/charts/operator/Chart.yaml
+- https://github.com/coroot/helm-charts/blob/main/charts/coroot-ce/Chart.yaml
+- https://docs.px.dev/reference/pxl/udf/quantiles/
+- https://github.com/pixie-io/pixie/blob/main/src/pixie_cli/pkg/cmd/run.go
+- https://github.com/pixie-io/pixie/blob/main/src/pxl_scripts/px/http_data/data.pxl
+- https://falco.org/docs/reference/rules/supported-fields/
+- https://github.com/falcosecurity/charts/blob/master/charts/falco/values.yaml
+- https://github.com/falcosecurity/rules/blob/main/rules/falco_rules.yaml

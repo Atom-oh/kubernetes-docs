@@ -7,7 +7,9 @@
 
 OPA (Open Policy Agent) Gatekeeper is a policy management tool for Kubernetes that uses the Rego language to write declarative policies and enforces cluster policies through an Admission Controller.
 
-![A Kubernetes API request flows through a validating webhook to the Gatekeeper controller, which invokes the OPA engine to evaluate policy against constraint templates and constraints, records periodic audit results, and separately shows how constraint templates define Rego policy that constraints apply to matching target resources.](../../assets/diagrams/rendered/en-security-09-opa-gatekeeper-0.svg)
+![An API Server admission webhook request is evaluated through the Gatekeeper Controller and OPA Engine, ConstraintTemplates define Rego policy that Constraints apply to target resources, and periodic audit results are recorded.](../.gitbook/assets/en-security-09-opa-gatekeeper-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-09-opa-gatekeeper-0.html)
 
 ## Gatekeeper vs Kyverno Comparison
 

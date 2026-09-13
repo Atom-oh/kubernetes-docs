@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "업그레이드 계획",
+    "output": "ko-core-09-cluster-administration-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "업그레이드 계획"
+        },
+        "backend": {
+          "label": "계획 항목"
+        },
+        "external": {
+          "label": "세부 조치"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "tasks",
+        "label": "네 가지 계획 항목",
+        "focus": [
+          "plan",
+          "compat",
+          "backup",
+          "strategy",
+          "downtime"
+        ],
+        "note": "업그레이드 계획은 버전 호환성, 백업, 전략, 다운타임 네 항목으로 나뉩니다."
+      },
+      {
+        "id": "safety",
+        "label": "안전장치: 호환성과 백업",
+        "focus": [
+          "compat",
+          "api-review",
+          "backup",
+          "etcd-backup"
+        ],
+        "note": "API 변경 사항을 검토하고 etcd 스냅샷을 확보한 뒤 진행합니다."
+      },
+      {
+        "id": "rollout",
+        "label": "전략과 다운타임",
+        "focus": [
+          "strategy",
+          "inplace-bluegreen",
+          "downtime",
+          "user-comm"
+        ],
+        "note": "인플레이스와 블루/그린 중 전략을 정하고 다운타임을 사용자에게 사전 공지합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "plan",
+      "type": "cloud",
+      "label": "업그레이드 계획",
+      "sublabel": "클러스터 업그레이드 준비",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "compat",
+      "type": "backend",
+      "label": "버전 호환성 확인",
+      "sublabel": "현재 → 목표 버전",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "backup",
+      "type": "backend",
+      "label": "백업 생성",
+      "sublabel": "업그레이드 전",
+      "pos": [
+        280,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "strategy",
+      "type": "backend",
+      "label": "업그레이드 전략 선택",
+      "sublabel": "롤백 경로 포함",
+      "pos": [
+        520,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "downtime",
+      "type": "backend",
+      "label": "다운타임 계획",
+      "sublabel": "영향 범위 산정",
+      "pos": [
+        760,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "api-review",
+      "type": "external",
+      "label": "API 변경 사항 검토",
+      "sublabel": "버전 간 API 변경 확인",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "etcd-backup",
+      "type": "external",
+      "label": "etcd 백업",
+      "sublabel": "snapshot save",
+      "pos": [
+        280,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "inplace-bluegreen",
+      "type": "external",
+      "label": "인플레이스 vs 블루/그린",
+      "sublabel": "전략 비교표 참고",
+      "pos": [
+        520,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "user-comm",
+      "type": "external",
+      "label": "사용자 커뮤니케이션",
+      "sublabel": "일정·영향 사전 공지",
+      "pos": [
+        760,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "계획 항목",
+      "wraps": [
+        "compat",
+        "backup",
+        "strategy",
+        "downtime"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "세부 조치",
+      "wraps": [
+        "api-review",
+        "etcd-backup",
+        "inplace-bluegreen",
+        "user-comm"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "plan-compat",
+      "from": "plan",
+      "to": "compat",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "plan-backup",
+      "from": "plan",
+      "to": "backup",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "plan-strategy",
+      "from": "plan",
+      "to": "strategy",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "plan-downtime",
+      "from": "plan",
+      "to": "downtime",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "compat-api-review",
+      "from": "compat",
+      "to": "api-review",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "backup-etcd-backup",
+      "from": "backup",
+      "to": "etcd-backup",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "strategy-inplace-bluegreen",
+      "from": "strategy",
+      "to": "inplace-bluegreen",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "downtime-user-comm",
+      "from": "downtime",
+      "to": "user-comm",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "업그레이드 전략 비교",
+      "items": [
+        "인플레이스 업그레이드: 기존 클러스터를 직접 업그레이드 — 리소스 효율적이지만 롤백이 복잡 (개발·테스트 환경)",
+        "블루/그린 배포: 새 버전 클러스터 생성 후 전환 — 안전한 롤백, 리소스 중복 (프로덕션 환경)",
+        "카나리 배포: 일부 워크로드만 새 클러스터로 이동 — 점진적 검증, 이중 운영 (중요 프로덕션 환경)"
+      ]
+    }
+  ]
+}

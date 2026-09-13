@@ -1,183 +1,165 @@
 # Grafana Mimir Quiz
 
-A quiz to test your understanding of Grafana Mimir.
+Baseline: Mimir 3.2.1 / chart 6.2.0. Review current architecture, identity, storage and validation limits.
 
----
+## 1. Which backend is intended for production Mimir block storage?
 
-1. What is Grafana Mimir's primary storage backend?
-   - A) Local SSD only
-   - B) Object storage (S3, GCS, Azure Blob)
-   - C) NFS shared storage
-   - D) Block storage only
+- A. Only local SSD
+- B. Object storage such as S3, GCS, Azure Blob or Swift
+- C. Only NFS
+- D. Only an in-memory cache
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Object storage (S3, GCS, Azure Blob)**
+**Answer: B. Object storage such as S3, GCS, Azure Blob or Swift**
 
-**Explanation:**
-Grafana Mimir requires object storage. It supports S3, Google Cloud Storage, Azure Blob Storage, etc., providing unlimited scalability and cost-effective long-term storage. Local storage is only used for Ingester's WAL and temporary data.
+Production deployments use appropriate external object storage. A filesystem backend exists for local development; this does not make it a shared production object store. Local ingester TSDB/WAL and Kafka storage have separate persistence and recovery requirements.
 
 </details>
 
----
+## 2. What does the distributor do in ingest-storage architecture?
 
-2. What is the role of Distributor in Mimir architecture?
-   - A) Long-term data storage
-   - B) First entry point for write requests, tenant validation and sample distribution
-   - C) Query result caching
-   - D) Block compaction
+- A. Store all long-term blocks itself
+- B. Validate writes and append records to Kafka
+- C. Return every query from a result cache
+- D. Compact TSDB blocks
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) First entry point for write requests, tenant validation and sample distribution**
+**Answer: B. Validate writes and append records to Kafka**
 
-**Explanation:**
-Distributor is the first entry point for write requests, responsible for tenant ID validation, time series validation, hash ring-based Ingester distribution, and replication based on replication factor. It's a stateless component that scales horizontally easily.
+Distributors validate and limit writes, then shard them to Kafka partitions. Write acknowledgement depends on Kafka write success under configured durability conditions. It does not wait for an S3 block upload. Direct writes to an ingester quorum describe classic architecture.
 
 </details>
 
----
+## 3. How should tenant selection be secured for untrusted callers?
 
-3. How is multi-tenancy implemented in Mimir?
-   - A) Operate separate clusters per tenant
-   - B) Identify tenants via X-Scope-OrgID header
-   - C) IP address-based tenant separation
-   - D) Namespace-based tenant separation
+- A. Let clients choose any X-Scope-OrgID value
+- B. Authenticate and authorize at a trusted gateway that sets the tenant header
+- C. Use only an object key prefix
+- D. Treat a namespace name as automatic HTTP authentication
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Identify tenants via X-Scope-OrgID header**
+**Answer: B. Authenticate and authorize at a trusted gateway that sets the tenant header**
 
-**Explanation:**
-Mimir identifies tenants via the HTTP header `X-Scope-OrgID`. Adding this header to Prometheus's remote_write configuration isolates each tenant's data. Per-tenant limits can be configured, and data is separated by tenant paths in object storage.
+X-Scope-OrgID identifies a tenant; it is not a credential. The trusted gateway must replace untrusted headers and enforce the caller-to-tenant mapping. A basic-auth username maps to a tenant only when the proxy implements that policy. Backend bypass must also be restricted.
 
 </details>
 
----
+## 4. Why do ingesters upload TSDB blocks to object storage?
 
-4. Why does Mimir's Ingester upload blocks to object storage?
-   - A) Improve real-time query performance
-   - B) Persist data from memory to disk
-   - C) Store alerting rules
-   - D) Back up dashboard settings
+- A. To avoid all local persistence
+- B. To provide long-term block storage and block-query access
+- C. To back up Grafana dashboards
+- D. To guarantee every acknowledged sample survives every possible failure
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Persist data from memory to disk**
+**Answer: B. To provide long-term block storage and block-query access**
 
-**Explanation:**
-Ingester first stores received time series data in memory, then periodically (default 2 hours) creates TSDB blocks and uploads them to object storage. This ensures data is permanently stored and minimizes data loss even if an Ingester fails.
+Ingesters maintain local TSDB/WAL and periodically upload blocks. Local retention overlaps the handoff to store-gateways. Kafka acknowledgement, ingester consumption and object upload are separate stages; recovery still depends on persistence, retention and failure conditions.
 
 </details>
 
----
+## 5. Which responsibilities belong to the compactor?
 
-5. What is the correct role of Mimir's Compactor?
-   - A) Real-time query processing
-   - B) Merge small blocks into large blocks and deduplicate
-   - C) Metrics collection
-   - D) Alert transmission
+- A. Scrape every application endpoint
+- B. Merge blocks, deduplicate replicated samples and perform retention cleanup
+- C. Authenticate all tenants
+- D. Automatically downsample all raw series with downsampling_enabled
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Merge small blocks into large blocks and deduplicate**
+**Answer: B. Merge blocks, deduplicate replicated samples and perform retention cleanup**
 
-**Explanation:**
-Compactor merges (compacts) small blocks in object storage into larger blocks, removes duplicate data, and deletes old data according to retention policies. This improves query performance and reduces storage costs.
+Compaction merges blocks and removes duplicated samples from replicas. Retention cleanup is asynchronous. The invented compactor.downsampling_enabled option is not valid; recording rules create derived series without automatically deleting raw data.
 
 </details>
 
----
+## 6. Which is not a query-frontend responsibility?
 
-6. Which is NOT a function provided by Mimir's Query-frontend?
-   - A) Large query splitting
-   - B) Result caching
-   - C) Data storage
-   - D) Query retries
+- A. Split and shard supported queries
+- B. Use a query result cache
+- C. Persist the authoritative long-term TSDB blocks
+- D. Combine query responses
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Data storage**
+**Answer: C. Persist the authoritative long-term TSDB blocks**
 
-**Explanation:**
-Query-frontend is a stateless component responsible for query optimization and caching. It splits large queries into smaller queries, caches results, and retries failed queries. Data storage is handled by Ingester (short-term) and object storage (long-term).
+The frontend plans/caches work and returns combined responses. The scheduler queues work and queriers fetch required data. Metadata or chunk-cache hits are not automatically complete query answers. Step alignment can change requested timestamps and PromQL conformance.
 
 </details>
 
----
+## 7. Which comparison with VictoriaMetrics is accurate?
 
-7. When comparing Mimir with VictoriaMetrics, which is a correct characteristic of Mimir?
-   - A) Only local disk available
-   - B) Lower operational complexity
-   - C) Object storage required, enterprise-grade multi-tenancy
-   - D) Uses MetricsQL query language
+- A. Mimir never has a filesystem backend
+- B. Grafana use makes Mimir universally faster
+- C. Compare storage architecture, query semantics, tenancy enforcement, recovery and measured cost
+- D. VictoriaMetrics cannot support tenants
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Object storage required, enterprise-grade multi-tenancy**
+**Answer: C. Compare storage architecture, query semantics, tenancy enforcement, recovery and measured cost**
 
-**Explanation:**
-Mimir requires object storage and provides native multi-tenancy, making it suitable for enterprise environments. VictoriaMetrics also supports local disk and is simpler to operate, but Mimir has excellent integration with the Grafana ecosystem.
+Both products require an authentication/authorization boundary. Mimir production block storage and the reviewed VictoriaMetrics local-storage architecture have different operational requirements. Neither unsupported compression rankings nor ecosystem preference establish a performance or cost winner.
 
 </details>
 
----
+## 8. What does the store-gateway provide?
 
-8. What is the role of Store-gateway in Mimir?
-   - A) Metrics collection
-   - B) Cache object storage blocks and process historical data queries
-   - C) Alert rule evaluation
-   - D) Tenant authentication
+- A. Application metric collection
+- B. Block-query access using object storage, index headers and configured caches
+- C. Automatic tenant authentication
+- D. Kafka broker replication
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Cache object storage blocks and process historical data queries**
+**Answer: B. Block-query access using object storage, index headers and configured caches**
 
-**Explanation:**
-Store-gateway caches indexes and chunks of blocks stored in object storage and processes queries for historical data. Querier retrieves recent data from Ingester and historical data from Store-gateway, then merges them.
+Queriers request block data from store-gateways and recent data from ingesters; ranges may overlap during block handoff. Cache/index metadata reuse avoids some work but does not imply every query is answered without chunk reads.
 
 </details>
 
----
+## 9. What does compactor_blocks_retention_period control?
 
-9. What is the role of the `compactor_blocks_retention_period` setting in Mimir?
-   - A) Memory cache retention period
-   - B) Set block data retention period
-   - C) Log retention period
-   - D) Alert history retention period
+- A. In-memory cache expiration only
+- B. The long-term block retention policy used by the compactor
+- C. Kafka topic retention
+- D. An exact physical deletion/compliance deadline
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Set block data retention period**
+**Answer: B. The long-term block retention policy used by the compactor**
 
-**Explanation:**
-`compactor_blocks_retention_period` sets the period that Compactor retains blocks. For example, setting it to `365d` deletes blocks older than 1 year. This setting helps manage storage costs and meet compliance requirements.
+Block time ranges, scans, deletion markers and deletion_delay affect actual removal. Local TSDB retention and Kafka retention are separate. S3 versioning, Object Lock and backups also affect complete deletion; a 365d setting alone is not a regulatory guarantee.
 
 </details>
 
----
+## 10. Which is not a sound availability assumption?
 
-10. Which is NOT a recommendation for Mimir high availability configuration?
-    - A) Minimum 3 Ingester replicas, zone-aware replication
-    - B) Minimum 2 Store-gateway replicas
-    - C) Deploy all components in a single availability zone
-    - D) Enable caching with memcached
+- A. Validate Kafka durability and recovery independently
+- B. Match zone selectors to real schedulable nodes
+- C. Place everything in one AZ and claim zone-failure tolerance
+- D. Review ingester partition coverage, store-gateway replicas and rollout dependencies
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Deploy all components in a single availability zone**
+**Answer: C. Place everything in one AZ and claim zone-failure tolerance**
 
-**Explanation:**
-For high availability, components should be distributed across multiple availability zones (AZ). Mimir supports zone-aware replication to distribute Ingesters across multiple AZs. Deploying in a single AZ causes complete service disruption if that AZ fails.
+Logical zones are not physical placement. The example renders three ingesters/store-gateways in three selected zones, but broker topology, PVCs, capacity, queues, rollouts and other components still require validation. Cache redundancy and a single compactor do not establish end-to-end HA.
 
 </details>
+
+[Return to the chapter](../../../observability/metrics/03-mimir.md)

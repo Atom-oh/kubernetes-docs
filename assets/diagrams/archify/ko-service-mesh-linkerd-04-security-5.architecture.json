@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "인증서 계층 구조",
+    "output": "ko-service-mesh-linkerd-04-security-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "CA 인증서 (발급자)"
+        },
+        "backend": {
+          "label": "프록시 워크로드 인증서"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "trust-anchor",
+      "type": "security",
+      "label": "Trust Anchor · Root CA",
+      "sublabel": "유효기간 1–10년",
+      "tag": "Secret: linkerd-identity-trust-roots",
+      "pos": [
+        330,
+        50
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "identity-issuer",
+      "type": "security",
+      "label": "Identity Issuer · Intermediate CA",
+      "sublabel": "유효기간 1년",
+      "tag": "Secret: linkerd-identity-issuer",
+      "pos": [
+        320,
+        210
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "workload-cert-1",
+      "type": "backend",
+      "label": "Workload Cert (Proxy 1)",
+      "sublabel": "유효기간 24시간",
+      "tag": "만료 전 자동 갱신",
+      "pos": [
+        110,
+        380
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "workload-cert-2",
+      "type": "backend",
+      "label": "Workload Cert (Proxy 2)",
+      "sublabel": "유효기간 24시간",
+      "tag": "만료 전 자동 갱신",
+      "pos": [
+        560,
+        380
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "인증서 계층 (Certificate Hierarchy)",
+      "wraps": [
+        "trust-anchor",
+        "identity-issuer",
+        "workload-cert-1",
+        "workload-cert-2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "anchor-signs-issuer",
+      "from": "trust-anchor",
+      "to": "identity-issuer",
+      "label": "서명 (intermediate-ca)",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        450,
+        162
+      ]
+    },
+    {
+      "id": "issuer-signs-cert-1",
+      "from": "identity-issuer",
+      "to": "workload-cert-1",
+      "label": "발급",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "issuer-signs-cert-2",
+      "from": "identity-issuer",
+      "to": "workload-cert-2",
+      "label": "발급",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "로테이션 주기와 방법",
+      "items": [
+        "Trust Anchor: 기존 + 신규 인증서를 ca-bundle.crt로 묶어 다운타임 없이 교체",
+        "Identity Issuer: 새 Trust Anchor로 재발급한 뒤 linkerd-identity를 재시작",
+        "워크로드 인증서: 24시간마다 만료 전에 프록시가 자동 갱신"
+      ]
+    }
+  ]
+}

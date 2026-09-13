@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Backstage Software Catalog Entity 모델",
+    "output": "ko-platform-engineering-06-backstage-idp-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      610
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "views": [
+      {
+        "id": "structure",
+        "label": "구조",
+        "focus": [
+          "domain",
+          "order-system",
+          "order-api",
+          "order-rest-api",
+          "order-db"
+        ],
+        "note": "본문의 commerce/order-system/order-api 카탈로그 예제 관계"
+      },
+      {
+        "id": "ownership",
+        "label": "소유권",
+        "focus": [
+          "platform-team",
+          "backend-team",
+          "alice",
+          "domain",
+          "order-system"
+        ],
+        "note": "소유권 metadata와 실제 Permission Policy는 별도"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "platform-team",
+      "type": "security",
+      "label": "platform-team",
+      "sublabel": "Group",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "domain",
+      "type": "cloud",
+      "label": "commerce",
+      "sublabel": "Domain",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "backend-team",
+      "type": "security",
+      "label": "backend-team",
+      "sublabel": "Group",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "order-system",
+      "type": "cloud",
+      "label": "order-system",
+      "sublabel": "System",
+      "pos": [
+        400,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alice",
+      "type": "frontend",
+      "label": "alice",
+      "sublabel": "User",
+      "pos": [
+        60,
+        460
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "order-api",
+      "type": "backend",
+      "label": "order-api",
+      "sublabel": "Component",
+      "pos": [
+        730,
+        260
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "order-rest-api",
+      "type": "external",
+      "label": "order-rest-api",
+      "sublabel": "API",
+      "pos": [
+        1040,
+        160
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "order-db",
+      "type": "database",
+      "label": "order-db",
+      "sublabel": "Resource",
+      "pos": [
+        1040,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "owns-domain",
+      "from": "platform-team",
+      "to": "domain",
+      "label": "owns",
+      "variant": "dashed"
+    },
+    {
+      "id": "domain-system",
+      "from": "domain",
+      "to": "order-system",
+      "label": "contains",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        490,
+        190
+      ]
+    },
+    {
+      "id": "owns-system",
+      "from": "backend-team",
+      "to": "order-system",
+      "label": "owns",
+      "variant": "dashed"
+    },
+    {
+      "id": "member",
+      "from": "alice",
+      "to": "backend-team",
+      "label": "memberOf",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        155,
+        400
+      ]
+    },
+    {
+      "id": "system-component",
+      "from": "order-system",
+      "to": "order-api",
+      "label": "contains",
+      "variant": "emphasis"
+    },
+    {
+      "id": "provides",
+      "from": "order-api",
+      "to": "order-rest-api",
+      "label": "providesApi",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dependency",
+      "from": "order-api",
+      "to": "order-db",
+      "label": "dependsOn",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "카탈로그 관계",
+      "items": [
+        "Resource entity 등록은 AWS 인프라 생성이 아님",
+        "owner/system/domain 참조를 fixture 내부에서 검증",
+        "소유권 metadata만으로 backend 권한이 설정되지 않음"
+      ]
+    }
+  ]
+}

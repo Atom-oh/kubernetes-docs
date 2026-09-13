@@ -1,0 +1,337 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch 비용 최적화 전략",
+    "output": "ko-observability-metrics-04-cloudwatch-metrics-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1030,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "최적화 목표"
+        },
+        "backend": {
+          "label": "최적화 영역"
+        },
+        "frontend": {
+          "label": "실행 항목"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "metrics",
+        "label": "메트릭 최적화",
+        "focus": [
+          "root",
+          "metrics",
+          "m1",
+          "m2",
+          "m3"
+        ],
+        "note": "커스텀 메트릭은 개당 월 $0.30 — 수집 간격을 60초로 늘리고 불필요한 차원 조합을 제거해 비용을 줄인다."
+      },
+      {
+        "id": "logs",
+        "label": "로그 최적화",
+        "focus": [
+          "root",
+          "logs",
+          "l1",
+          "l2",
+          "l3"
+        ],
+        "note": "로그는 수집($0.76/GB)과 저장 비용이 따로 붙으므로 보존 기간과 로그 클래스로 줄인다."
+      },
+      {
+        "id": "dashboards",
+        "label": "대시보드 최적화",
+        "focus": [
+          "root",
+          "dash",
+          "d1",
+          "d2"
+        ],
+        "note": "대시보드는 3개까지 무료, 이후 개당 월 $3.00 — 통합하고 GetMetricData 호출을 줄인다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "CloudWatch 비용 최적화",
+      "sublabel": "메트릭 · 로그 · 대시보드",
+      "pos": [
+        30,
+        234
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "메트릭 최적화",
+      "sublabel": "커스텀 메트릭 개수 절감",
+      "pos": [
+        390,
+        84
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "backend",
+      "label": "로그 최적화",
+      "sublabel": "수집 · 저장 비용 절감",
+      "pos": [
+        390,
+        264
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "dash",
+      "type": "backend",
+      "label": "대시보드 최적화",
+      "sublabel": "대시보드 · 쿼리 비용 절감",
+      "pos": [
+        390,
+        414
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "m1",
+      "type": "frontend",
+      "label": "고해상도 메트릭 최소화",
+      "pos": [
+        750,
+        30
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "m2",
+      "type": "frontend",
+      "label": "불필요한 차원 제거",
+      "pos": [
+        750,
+        90
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "m3",
+      "type": "frontend",
+      "label": "수집 간격 조정",
+      "pos": [
+        750,
+        150
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "l1",
+      "type": "frontend",
+      "label": "로그 보존 기간 설정",
+      "pos": [
+        750,
+        210
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "l2",
+      "type": "frontend",
+      "label": "로그 필터링",
+      "pos": [
+        750,
+        270
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "l3",
+      "type": "frontend",
+      "label": "로그 클래스 활용",
+      "pos": [
+        750,
+        330
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "d1",
+      "type": "frontend",
+      "label": "대시보드 통합",
+      "pos": [
+        750,
+        390
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "d2",
+      "type": "frontend",
+      "label": "쿼리 최적화",
+      "pos": [
+        750,
+        450
+      ],
+      "size": [
+        240,
+        48
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-metrics",
+      "from": "root",
+      "to": "metrics",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "root-logs",
+      "from": "root",
+      "to": "logs",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "root-dash",
+      "from": "root",
+      "to": "dash",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "metrics-m1",
+      "from": "metrics",
+      "to": "m1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "metrics-m2",
+      "from": "metrics",
+      "to": "m2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "metrics-m3",
+      "from": "metrics",
+      "to": "m3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "logs-l1",
+      "from": "logs",
+      "to": "l1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "logs-l2",
+      "from": "logs",
+      "to": "l2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "logs-l3",
+      "from": "logs",
+      "to": "l3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "dash-d1",
+      "from": "dash",
+      "to": "d1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "dash-d2",
+      "from": "dash",
+      "to": "d2",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "메트릭",
+      "items": [
+        "metrics_collection_interval를 30초 대신 60초로 조정",
+        "aggregation_dimensions에서 불필요한 차원 조합 제거",
+        "enhanced_container_insights는 필요할 때만 활성화"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "로그",
+      "items": [
+        "put-retention-policy로 로그 그룹별 보존 기간(7·14·30일) 설정",
+        "보존 기간이 없는 로그 그룹을 찾아 일괄 정리",
+        "INFREQUENT_ACCESS 로그 클래스로 약 50% 절감"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "대시보드",
+      "items": [
+        "대시보드는 처음 3개 무료, 이후 $3.00/개/월",
+        "GetMetricData API는 1,000 요청당 $0.01 — 쿼리 수를 줄인다"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Executor 선택: KubernetesExecutor vs. CeleryExecutor",
+    "output": "ko-data-on-eks-airflow-02-helm-deployment-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "sched-k8s",
+      "type": "backend",
+      "label": "Scheduler",
+      "sublabel": "Kubernetes API로 Pod 생성",
+      "pos": [
+        230,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "task-a",
+      "type": "backend",
+      "label": "Pod: task A",
+      "sublabel": "Airflow task runtime",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "task-b",
+      "type": "backend",
+      "label": "Pod: task B",
+      "sublabel": "Airflow task runtime",
+      "pos": [
+        240,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "task-c",
+      "type": "backend",
+      "label": "Pod: task C",
+      "sublabel": "Airflow task runtime",
+      "pos": [
+        440,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "sched-celery",
+      "type": "backend",
+      "label": "Scheduler",
+      "sublabel": "브로커에 태스크 큐잉",
+      "pos": [
+        830,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "broker",
+      "type": "messagebus",
+      "label": "Celery broker",
+      "sublabel": "Redis / RabbitMQ 등",
+      "pos": [
+        830,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "worker-1",
+      "type": "backend",
+      "label": "Pod: celery worker 1",
+      "sublabel": "확장 가능한 worker pool",
+      "pos": [
+        720,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "worker-2",
+      "type": "backend",
+      "label": "Pod: celery worker 2",
+      "sublabel": "확장 가능한 worker pool",
+      "pos": [
+        940,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "KubernetesExecutor",
+      "wraps": [
+        "sched-k8s",
+        "task-a",
+        "task-b",
+        "task-c"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CeleryExecutor",
+      "wraps": [
+        "sched-celery",
+        "broker",
+        "worker-1",
+        "worker-2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-task-a",
+      "from": "sched-k8s",
+      "to": "task-a",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "k8s-task-b",
+      "from": "sched-k8s",
+      "to": "task-b",
+      "label": "태스크마다 Pod 1개 생성",
+      "variant": "emphasis",
+      "labelAt": [
+        320,
+        262
+      ],
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "k8s-task-c",
+      "from": "sched-k8s",
+      "to": "task-c",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "celery-enqueue",
+      "from": "sched-celery",
+      "to": "broker",
+      "label": "태스크 큐잉",
+      "variant": "emphasis",
+      "labelDy": 50,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "broker-worker-1",
+      "from": "broker",
+      "to": "worker-1",
+      "label": "worker가 소비",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "broker-worker-2",
+      "from": "broker",
+      "to": "worker-2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "KubernetesExecutor",
+      "items": [
+        "Task마다 worker Pod; 실패 시 보존 설정 확인",
+        "시작 지연은 image·API·node 여유에 따라 측정",
+        "Control plane·DB·node 비용은 남음"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "CeleryExecutor",
+      "items": [
+        "Warm worker 또는 KEDA scale-to-zero",
+        "Broker·result backend·실제 concurrency 구성",
+        "Deployment 또는 StatefulSet; 자원·의존성 공유"
+      ]
+    }
+  ]
+}

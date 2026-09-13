@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "관측성의 3가지 축",
+    "output": "ko-observability-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Logs 데이터"
+        },
+        "backend": {
+          "label": "Metrics 데이터"
+        },
+        "messagebus": {
+          "label": "Traces 데이터"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "log-events",
+      "type": "database",
+      "label": "이벤트 기록",
+      "sublabel": "개별 이벤트의 불변 기록",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "log-structured",
+      "type": "database",
+      "label": "구조화 데이터",
+      "sublabel": "JSON 또는 비구조화 형식",
+      "pos": [
+        60,
+        186
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "log-context",
+      "type": "database",
+      "label": "컨텍스트 정보",
+      "sublabel": "타임스탬프, 서비스, TraceID",
+      "pos": [
+        60,
+        282
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "metric-numeric",
+      "type": "backend",
+      "label": "수치 측정값",
+      "sublabel": "Counter, Gauge, Histogram",
+      "pos": [
+        480,
+        90
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "metric-timeseries",
+      "type": "backend",
+      "label": "시계열 데이터",
+      "sublabel": "시간에 따른 저장",
+      "pos": [
+        480,
+        186
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "metric-aggregate",
+      "type": "backend",
+      "label": "집계 가능",
+      "sublabel": "수학적 연산과 트렌드 분석",
+      "pos": [
+        480,
+        282
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "trace-path",
+      "type": "messagebus",
+      "label": "요청 경로",
+      "sublabel": "단일 요청의 전체 여정",
+      "pos": [
+        900,
+        90
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "trace-flow",
+      "type": "messagebus",
+      "label": "서비스 간 흐름",
+      "sublabel": "Span과 SpanContext 전파",
+      "pos": [
+        900,
+        186
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "trace-latency",
+      "type": "messagebus",
+      "label": "지연 시간 분석",
+      "sublabel": "단계별 지연과 병목 식별",
+      "pos": [
+        900,
+        282
+      ],
+      "size": [
+        190,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Logs (로그)",
+      "wraps": [
+        "log-events",
+        "log-structured",
+        "log-context"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Metrics (메트릭)",
+      "wraps": [
+        "metric-numeric",
+        "metric-timeseries",
+        "metric-aggregate"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Traces (추적)",
+      "wraps": [
+        "trace-path",
+        "trace-flow",
+        "trace-latency"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "logs-metrics-labels",
+      "from": "log-structured",
+      "to": "metric-timeseries",
+      "label": "레이블 매칭"
+    },
+    {
+      "id": "metrics-traces-exemplar",
+      "from": "metric-numeric",
+      "to": "trace-path",
+      "label": "Exemplar"
+    },
+    {
+      "id": "logs-traces-traceid",
+      "from": "log-context",
+      "to": "trace-latency",
+      "label": "TraceID",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "labelDy": 22
+    }
+  ]
+}

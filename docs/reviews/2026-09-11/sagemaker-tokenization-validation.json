@@ -1,0 +1,228 @@
+{
+  "status": "passed",
+  "documents": [
+    "ko/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
+    "ko/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
+    "en/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
+    "en/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md"
+  ],
+  "quizQuestions": 10,
+  "relativeLinks": 8,
+  "redBeforeFix": {
+    "mainCases": "12failed16passed",
+    "numericVariants": "4failed",
+    "logs": [
+      "red-tests.log",
+      "numeric-red.log"
+    ]
+  },
+  "localTests": {
+    "passed": 50,
+    "logSha256": "807f47a38441ef8d4b90fd6e4f534a62ca40080bf77bba52a3f955b47a398d2b"
+  },
+  "oracle": {
+    "status": "passed",
+    "records": 2200,
+    "splits": [
+      {
+        "split": "train",
+        "records": 1600,
+        "roundTripAllPassed": true,
+        "deterministicAllPassed": true,
+        "leakageFalsePositives": 0,
+        "scope": "Ground-truth oracle sanity check, not model output or model F1"
+      },
+      {
+        "split": "validation",
+        "records": 200,
+        "roundTripAllPassed": true,
+        "deterministicAllPassed": true,
+        "leakageFalsePositives": 0,
+        "scope": "Ground-truth oracle sanity check, not model output or model F1"
+      },
+      {
+        "split": "test",
+        "records": 400,
+        "roundTripAllPassed": true,
+        "deterministicAllPassed": true,
+        "leakageFalsePositives": 0,
+        "scope": "Ground-truth oracle sanity check, not model output or model F1"
+      }
+    ],
+    "datasetHashesUnchanged": {
+      "test": "6f6ef9a6b42297738b292d5149f2e6e323f7bcd6f2325b6bfbc04ae6d9d0ec21",
+      "train": "b98429fef0b103f24e8eaded069cbd2f6def5fbf8c083a5c7baf366c9fc1d21a",
+      "validation": "25ca38198d38e04be181e15b4e21a3c96d672f46f775ae1bc6c422ee4514f820"
+    },
+    "modelsExecuted": false
+  },
+  "publishedExample": "Combinedvariantandpreexistingplaceholderexampleexecuted;exactNFCroundtrippassed",
+  "codeSha256": {
+    "examples/ai-ml/qwen-pii-finetuning/src/pii_tokens.py": "7611c569d581b812ecf129413d1c2a7cd5052ce1340ab3b2dc65a3f673ff3d6b",
+    "examples/ai-ml/qwen-pii-finetuning/src/metrics.py": "52ad5177f7ca037c8aa282e2b26dd959c76ce628df9b9bb641ad6d23b6922a63",
+    "examples/ai-ml/qwen-pii-finetuning/tests/test_pii_tokens.py": "fc8be0987d60c49f85c1eba18888c8b649e13adc363fbce9bdd11aa5b0332e4f",
+    "examples/ai-ml/qwen-pii-finetuning/tests/test_metrics.py": "e5668ced28d2a799250d3ee388f987bd5f5043f50ed7ff4daff9c6e078b48935"
+  },
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
+        "sha256": "5f80f5be24ad667afccfc7b4ebe47195d49d5a48b21b1f076b5384889dbe9b04",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-합성-pii-데이터와-결정론적-토큰화"
+          },
+          {
+            "tag": "h2",
+            "id": "추출-후보와-치환을-분리"
+          },
+          {
+            "tag": "h2",
+            "id": "데이터와-평가-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "원문-표기를-복원하는-치환-파이프라인"
+          },
+          {
+            "tag": "h2",
+            "id": "placeholder-내용-대신-source-구간으로-누출-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "평가-지표의-정확한-의미"
+          },
+          {
+            "tag": "h2",
+            "id": "학습-레코드와-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-2-합성-pii-데이터와-결정론적-토큰화",
+          "추출-후보와-치환을-분리",
+          "데이터와-평가-범위",
+          "원문-표기를-복원하는-치환-파이프라인",
+          "placeholder-내용-대신-source-구간으로-누출-확인",
+          "평가-지표의-정확한-의미",
+          "학습-레코드와-검증-범위",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
+        "sha256": "d8080a4dbd26a8d6ca8f55ce3a3f060ab71f42e91f456fe4029f6ade58ff23c1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-synthetic-pii-data-and-deterministic-tokenization"
+          },
+          {
+            "tag": "h2",
+            "id": "extraction-is-separate-from-replacement"
+          },
+          {
+            "tag": "h2",
+            "id": "dataset-and-evaluation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "reversible-source-spelling-replacement"
+          },
+          {
+            "tag": "h2",
+            "id": "measure-remaining-source-spans-not-placeholder-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "exact-meanings-of-the-metrics"
+          },
+          {
+            "tag": "h2",
+            "id": "training-records-and-validation"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "part-2-synthetic-pii-data-and-deterministic-tokenization",
+          "extraction-is-separate-from-replacement",
+          "dataset-and-evaluation-scope",
+          "reversible-source-spelling-replacement",
+          "measure-remaining-source-spans-not-placeholder-contents",
+          "exact-meanings-of-the-metrics",
+          "training-records-and-validation",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
+        "sha256": "fa71999141f2103d2ffcb615c72e9a8cdef1180965dc0f505e886f32301002b1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "합성-pii-데이터와-토큰화-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          }
+        ],
+        "renderedIds": [
+          "합성-pii-데이터와-토큰화-퀴즈",
+          "객관식-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
+        "sha256": "8f763c7408bdcc6aa5d0b40cb9a334930ea9dd32e7a3107b73e13204e2d02e6c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "synthetic-pii-data-and-tokenization-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          }
+        ],
+        "renderedIds": [
+          "synthetic-pii-data-and-tokenization-quiz",
+          "multiple-choice-questions"
+        ]
+      }
+    ]
+  },
+  "behaviorChange": "Distinctsource spellingsnowreceive distincttokens to preserve exactNFC restoration;identicalspellingsreuse;newspansareNFCsource half-open offsets.Leakage measuresfullsource-spancoverage,notmasked-stringcontainment.InputID/goldvalidationnowraisesValueError.",
+  "integrationPending": [
+    "LatestHEADAIreview+requiredCI+merge stillrequired",
+    "Refreshsource-backedfoundationdiagramrevisionaftercodecommit;synccurrenttestcountafterremainingSageMakercodereview"
+  ],
+  "limits": "CPU-onlysyntheticdataandgroundtruthoracle;noactualmodelpredictions/training/GPU/AWS/realcustomerPII.ThisisnotaspanNERbenchmarkorprivacyguarantee.",
+  "prReviewFollowup": {
+    "fixRecord": "sagemaker-review-fixes.json",
+    "codeCommit": "2ad43f6a0ee602874fc788c22fe0a225a68dc092",
+    "pythonTestsPassed": 125,
+    "newHeadReview": "pending"
+  }
+}

@@ -3,17 +3,21 @@
 > **Versiones compatibles**: Prometheus 2.50+, Alertmanager 0.27+, Karpenter 0.35+
 > **Última actualización**: February 23, 2026
 
-< [Anterior: Estrategias de escalado](./06-scaling-strategies.md) | [Tabla de contenidos](./README.md) | [Siguiente: Análisis de observabilidad](./08-observability-analysis.md) >
+< [Anterior: Estrategias de escalado](./06-scaling-strategies.md) | [Tabla de contenido](./README.md) | [Siguiente: Análisis de observabilidad](./08-observability-analysis.md) >
 
 ---
 
 ## 1. Arquitectura de alertas
 
-Las alertas efectivas en Kubernetes requieren un pipeline bien diseñado que minimice el ruido y, al mismo tiempo, garantice que los problemas críticos lleguen rápidamente a los operadores. Esta sección cubre la arquitectura fundamental para las alertas operativas de EKS.
+Las alertas eficaces en Kubernetes requieren un flujo de trabajo bien diseñado que minimice el ruido y, al mismo tiempo, garantice que los problemas críticos lleguen rápidamente a los operadores. Esta sección abarca la arquitectura fundamental de las alertas operativas de EKS.
 
 ### Flujo de Prometheus a Alertmanager
 
-El pipeline de alertas sigue un flujo estructurado desde la recopilación de métricas hasta la entrega de notificaciones:
+El flujo de alertas sigue una estructura desde la recopilación de métricas hasta la entrega de notificaciones:
+
+![Diagrama de arquitectura de alertas: Prometheus evalúa PrometheusRule CRD y envía alertas activadas a Alertmanager, que las enruta a Slack, PagerDuty, correo electrónico y webhooks.](../.gitbook/assets/en-ops-07-observability-alerts-0.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-0.html)
 
 ```
 ┌─────────────┐    ┌──────────────────┐    ┌───────────────┐    ┌──────────────┐
@@ -26,19 +30,23 @@ El pipeline de alertas sigue un flujo estructurado desde la recopilación de mé
    every 15-30s      every 30-60s          Group by labels     Based on routing
 ```
 
-### Niveles de severidad
+### Niveles de gravedad
 
-Los niveles de severidad estandarizados garantizan procedimientos de respuesta coherentes:
+Los niveles de gravedad estandarizados garantizan procedimientos de respuesta coherentes:
 
-| Severidad | Tiempo de respuesta | Ejemplos | Notificación |
+| Gravedad | Tiempo de respuesta | Ejemplos | Notificación |
 |----------|---------------|----------|--------------|
-| **critical** | Inmediato (< 5 min) | Node caído, API server inaccesible, riesgo de pérdida de datos | PagerDuty + Slack |
-| **warning** | En un plazo de 1 hora | Alto uso de recursos, rendimiento degradado | Canal de Slack |
+| **critical** | Inmediata (< 5 min) | Node caído, API server inaccesible, riesgo de pérdida de datos | PagerDuty + Slack |
+| **warning** | En 1 hora | Alto uso de recursos, rendimiento degradado | Canal de Slack |
 | **info** | Siguiente día hábil | Eventos de escalado, avisos de mantenimiento | Slack (opcional) |
 
-### Ciclo de vida de una alerta
+### Ciclo de vida de las alertas
 
-Comprender el ciclo de vida de una alerta ayuda a configurar tiempos adecuados:
+Comprender el ciclo de vida de las alertas ayuda a configurar una temporización adecuada:
+
+![Diagrama de transición de estado de alerta que pasa de Inactive a Pending y Firing hasta Resolved, y vuelve a Inactive cuando la condición se resuelve antes.](../.gitbook/assets/en-ops-07-observability-alerts-1.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-1.html)
 
 ```yaml
 # Alert state transitions
@@ -50,9 +58,9 @@ Inactive → Pending → Firing → Resolved
     └── Condition false, no alert
 ```
 
-### Descripción general del CRD PrometheusRule
+### Resumen de PrometheusRule CRD
 
-El CRD PrometheusRule define reglas de alertas y de registro:
+El PrometheusRule CRD define reglas de alertas y de registro:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -80,20 +88,20 @@ spec:
 ```
 
 Campos clave:
-- **expr**: expresión PromQL que dispara la alerta cuando es verdadera
-- **for**: duración durante la cual la condición debe ser verdadera antes de dispararse
-- **labels**: etiquetas adicionales para enrutamiento y agrupación
-- **annotations**: información legible por humanos y enlaces a runbooks
+- **expr**: expresión PromQL que activa la alerta cuando es verdadera
+- **for**: duración durante la cual la condición debe ser verdadera antes de activarse
+- **labels**: etiquetas adicionales para el enrutamiento y la agrupación
+- **annotations**: información legible por personas y enlaces a runbooks
 
 ---
 
 ## 2. Alertas de red
 
-Los problemas de red en EKS pueden manifestarse como drops de paquetes, saturación de ancho de banda, fallos de CNI y problemas de DNS. Estas alertas proporcionan advertencia temprana sobre problemas de conectividad.
+Los problemas de red en EKS pueden manifestarse como pérdida de paquetes, saturación de ancho de banda, fallos de CNI y problemas de DNS. Estas alertas proporcionan una advertencia temprana de problemas de conectividad.
 
-### Tasa de drops de paquetes
+### Tasa de pérdida de paquetes
 
-Monitorea drops de paquetes tanto a nivel de Node como de Pod:
+Monitorea la pérdida de paquetes tanto a nivel de Node como de Pod:
 
 ```promql
 # Node-level packet drops (received)
@@ -108,7 +116,7 @@ rate(pod_network_receive_packets_dropped_total[5m]) > 50
 
 ### Saturación de ancho de banda
 
-Detecta la saturación de la interfaz de red antes de que impacte a las aplicaciones:
+Detecta la saturación de la interfaz de red antes de que afecte a las aplicaciones:
 
 ```promql
 # Network interface utilization (assuming 10Gbps NICs)
@@ -141,7 +149,7 @@ awscni_ip_pool_available_addresses < 5
 
 ### Alertas de fallos de DNS
 
-Los fallos de CoreDNS pueden causar problemas generalizados en las aplicaciones:
+Los fallos de CoreDNS pueden provocar problemas generalizados en las aplicaciones:
 
 ```promql
 # DNS query failures
@@ -158,9 +166,9 @@ increase(kube_pod_container_status_restarts_total{
 }[1h]) > 2
 ```
 
-### Denegaciones de Network Policy
+### Denegaciones de políticas de red
 
-Si usas Cilium o Calico con métricas de políticas:
+Si utilizas Cilium o Calico con métricas de políticas:
 
 ```promql
 # Cilium policy denials
@@ -171,7 +179,7 @@ sum(rate(cilium_policy_verdict_total{verdict="denied"}[5m]))
   / sum(rate(cilium_policy_verdict_total[5m])) > 0.1
 ```
 
-### PrometheusRule completa para alertas de red
+### PrometheusRule completo de alertas de red
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -336,11 +344,11 @@ spec:
 
 ## 3. Alertas de CPU
 
-Las alertas relacionadas con CPU ayudan a identificar throttling, contención de recursos y problemas de capacidad antes de que impacten el rendimiento de las aplicaciones.
+Las alertas relacionadas con CPU ayudan a identificar limitación, contención de recursos y problemas de capacidad antes de que afecten al rendimiento de las aplicaciones.
 
-### Throttling de CPU
+### Limitación de CPU
 
-El throttling de CPU de contenedores indica límites de CPU insuficientes:
+La limitación de CPU de los contenedores indica límites de CPU insuficientes:
 
 ```promql
 # Container CPU throttling percentage
@@ -360,9 +368,9 @@ and
 )
 ```
 
-### Agotamiento de cuotas CFS
+### Agotamiento de cuota CFS
 
-Rastrea cuándo los contenedores alcanzan de forma consistente sus cuotas de CPU:
+Controla cuándo los contenedores alcanzan de forma constante sus cuotas de CPU:
 
 ```promql
 # Containers hitting CFS quota
@@ -374,7 +382,7 @@ sum(rate(container_cpu_cfs_throttled_seconds_total{container!=""}[5m])) by (name
 > 0.5
 ```
 
-### Presión de CPU en Node
+### Presión de CPU del Node
 
 Detecta Nodes bajo presión de CPU:
 
@@ -391,9 +399,9 @@ avg_over_time(
 avg by(instance) (rate(node_cpu_seconds_total{mode="steal"}[5m])) * 100 > 10
 ```
 
-### Relación entre CPU de contenedor y request
+### Relación entre CPU del contenedor y solicitud
 
-Identifica contenedores que necesitan ajustes de requests:
+Identifica los contenedores que necesitan ajustes de solicitudes:
 
 ```promql
 # CPU usage significantly higher than requests
@@ -409,7 +417,7 @@ sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace, p
 
 ### CPU de procesos del sistema
 
-Monitorea consumidores de CPU a nivel del sistema:
+Monitorea los consumidores de CPU a nivel de sistema:
 
 ```promql
 # Kubelet CPU usage
@@ -422,7 +430,7 @@ rate(process_cpu_seconds_total{job=~"containerd|docker"}[5m]) > 2
 sum(rate(container_cpu_usage_seconds_total{namespace="kube-system", container="kube-proxy"}[5m])) > 0.5
 ```
 
-### PrometheusRule completa para alertas de CPU
+### PrometheusRule completo de alertas de CPU
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -576,7 +584,7 @@ spec:
 
 ## 4. Alertas de disco
 
-Las alertas de almacenamiento son críticas para prevenir la pérdida de datos y garantizar la estabilidad de las aplicaciones. Las cargas de trabajo de EKS suelen usar volúmenes EBS, EFS y almacenamiento efímero.
+Las alertas de almacenamiento son fundamentales para prevenir la pérdida de datos y garantizar la estabilidad de las aplicaciones. Las cargas de trabajo de EKS usan normalmente volúmenes EBS, EFS y almacenamiento efímero.
 
 ### Saturación de volúmenes EBS
 
@@ -601,9 +609,9 @@ and
 )
 ```
 
-### Agotamiento de inodes
+### Agotamiento de inodos
 
-El agotamiento de inodes puede impedir la creación de archivos incluso cuando hay espacio disponible:
+El agotamiento de inodos puede impedir la creación de archivos incluso con espacio disponible:
 
 ```promql
 # Inode usage percentage
@@ -617,7 +625,7 @@ node_filesystem_files_free{fstype!~"tmpfs|overlay"}
 < 0.1
 ```
 
-### Tendencias de uso de PVC
+### Tendencia de uso de PVC
 
 Predice cuándo se llenarán los volúmenes:
 
@@ -631,9 +639,9 @@ predict_linear(kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}[6h], 2
 > kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
 ```
 
-### Presión de disco en Node
+### Presión de disco del Node
 
-Monitorea condiciones de disco a nivel de Node:
+Monitorea las condiciones de disco a nivel de Node:
 
 ```promql
 # Node root filesystem usage
@@ -661,7 +669,7 @@ container_fs_usage_bytes{container!=""}
 > 0.8
 ```
 
-### PrometheusRule completa para alertas de disco
+### PrometheusRule completo de alertas de disco
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -816,13 +824,13 @@ spec:
 
 ---
 
-## 5. Alertas de terminación de Nodes en Auto Mode
+## 5. Alertas de terminación de Nodes de Auto Mode
 
-EKS Auto Mode con Karpenter aprovisiona y termina Nodes dinámicamente. Monitorear estos eventos es crucial para comprender el comportamiento del clúster y detectar problemas.
+EKS Auto Mode con Karpenter aprovisiona y termina Nodes dinámicamente. Monitorear estos eventos es fundamental para comprender el comportamiento del clúster y detectar problemas.
 
-### Eventos de disrupción de Karpenter
+### Eventos de interrupción de Karpenter
 
-Monitorea disrupciones planificadas de Nodes por Karpenter:
+Monitorea las interrupciones planificadas de Nodes realizadas por Karpenter:
 
 ```promql
 # Node termination rate
@@ -835,9 +843,9 @@ sum by (reason) (increase(karpenter_nodes_terminated_total[1h])) > 5
 increase(karpenter_voluntary_disruption_blocked_total[1h]) > 0
 ```
 
-### Manejo de interrupciones de Spot
+### Gestión de interrupciones de Spot
 
-Rastrea eventos de interrupción de instancias Spot:
+Rastrea los eventos de interrupción de instancias Spot:
 
 ```promql
 # Spot interruption warnings received
@@ -853,9 +861,9 @@ increase(karpenter_interruption_received_messages_total{message_type="StateChang
 histogram_quantile(0.99, rate(karpenter_interruption_actions_performed_bucket[5m]))
 ```
 
-### Terminaciones inesperadas de Node
+### Terminaciones inesperadas de Nodes
 
-Detecta Nodes que terminan inesperadamente (no por Karpenter):
+Detecta Nodes que terminan de forma inesperada (no por Karpenter):
 
 ```promql
 # Nodes terminated not by Karpenter
@@ -873,7 +881,7 @@ unless
 
 ### Detección de Node NotReady
 
-Monitorea la readiness de Node para obtener advertencias tempranas:
+Monitorea la disponibilidad de los Nodes para una advertencia temprana:
 
 ```promql
 # Nodes in NotReady state
@@ -886,9 +894,9 @@ changes(kube_node_status_condition{condition="Ready", status="true"}[1h]) > 3
 kube_node_status_condition{condition="Ready", status="unknown"} == 1
 ```
 
-### Seguimiento de desalojos de Pod
+### Seguimiento de expulsión de Pods
 
-Rastrea desalojos de Pod debidos a problemas de Node:
+Rastrea las expulsiones de Pods debido a problemas de Node:
 
 ```promql
 # Pod eviction rate
@@ -924,7 +932,7 @@ sum(karpenter_nodepools_usage{resource_type="cpu"})
 > 0.8
 ```
 
-### PrometheusRule completa para alertas de Auto Mode
+### PrometheusRule completo de alertas de Auto Mode
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1143,7 +1151,7 @@ spec:
 
 ## 6. Configuración de Alertmanager
 
-Alertmanager maneja el enrutamiento, la agrupación, la deduplicación y la entrega de notificaciones de alertas. Un Alertmanager bien configurado garantiza que las alertas lleguen a los equipos correctos en el momento correcto.
+Alertmanager gestiona el enrutamiento, la agrupación, la deduplicación y la entrega de notificaciones de alertas. Un Alertmanager bien configurado garantiza que las alertas lleguen a los equipos adecuados en el momento adecuado.
 
 ### Configuración completa de Alertmanager
 
@@ -1410,7 +1418,7 @@ Crea `/etc/alertmanager/templates/pagerduty.tmpl`:
 
 ### Estrategia de agrupación de alertas
 
-Una agrupación efectiva reduce el ruido de notificaciones:
+Una agrupación eficaz reduce el ruido de notificaciones:
 
 ```yaml
 # Group by alertname to see all instances of the same issue
@@ -1455,9 +1463,9 @@ amtool silence query
 amtool silence expire <silence-id>
 ```
 
-### Configuración de mute timings
+### Configuración de horarios de silenciamiento
 
-Usa mute timings para suprimir alertas no críticas durante períodos específicos:
+Usa horarios de silenciamiento para suprimir alertas no críticas durante periodos específicos:
 
 ```yaml
 route:
@@ -1482,10 +1490,10 @@ route:
 
 ## Recursos relacionados
 
-- [Stack de monitoreo](../observability/README.md) - Configuración de Prometheus y Grafana
-- [Gestión del ciclo de vida de Nodes](../eks-auto-mode/07-node-lifecycle.md) - Gestión de Nodes con Karpenter
-- [Análisis de observabilidad](./08-observability-analysis.md) - Correlación de logs, métricas y trazas
+- [Stack de monitoreo](../observability/README.md) - configuración de Prometheus y Grafana
+- [Gestión del ciclo de vida de Nodes](../eks-auto-mode/07-node-lifecycle.md) - gestión de Nodes de Karpenter
+- [Análisis de observabilidad](./08-observability-analysis.md) - correlación de logs, métricas y traces
 
 ---
 
-< [Anterior: Estrategias de escalado](./06-scaling-strategies.md) | [Tabla de contenidos](./README.md) | [Siguiente: Análisis de observabilidad](./08-observability-analysis.md) >
+< [Anterior: Estrategias de escalado](./06-scaling-strategies.md) | [Tabla de contenido](./README.md) | [Siguiente: Análisis de observabilidad](./08-observability-analysis.md) >

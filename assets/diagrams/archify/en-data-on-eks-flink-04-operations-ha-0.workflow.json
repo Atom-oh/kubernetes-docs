@@ -1,0 +1,216 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Parallelism and node capacity: paths and feedback",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "job-loop",
+        "label": "Job-level decision",
+        "focus": [
+          "metrics",
+          "autoscaler"
+        ],
+        "note": "Evaluate rates, pressure, quotas and recovery constraints, rather than directly choosing node types."
+      },
+      {
+        "id": "scale-up",
+        "label": "Scale-up path",
+        "focus": [
+          "autoscaler",
+          "pods-add",
+          "provision"
+        ],
+        "note": "New capacity may be needed when existing nodes cannot place pods and NodePool constraints can be met."
+      },
+      {
+        "id": "scale-down",
+        "label": "Scale-down path",
+        "focus": [
+          "autoscaler",
+          "pods-remove",
+          "consolidate",
+          "feedback"
+        ],
+        "note": "Evaluate eligible empty/underutilized nodes. Node changes can also happen first and alter lag/recovery."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "flink",
+      "label": "Flink autoscaler"
+    },
+    {
+      "id": "up",
+      "label": "Scale up"
+    },
+    {
+      "id": "down",
+      "label": "Scale down"
+    }
+  ],
+  "phases": [
+    {
+      "id": "job-level",
+      "label": "Job decision",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "pod-level",
+      "label": "TM placement",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "dashed"
+    },
+    {
+      "id": "node-level",
+      "label": "Node capacity",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "metrics",
+    "autoscaler",
+    "pods-add",
+    "provision"
+  ],
+  "nodes": [
+    {
+      "id": "metrics",
+      "lane": "flink",
+      "col": 0,
+      "type": "external",
+      "label": "Vertex metrics",
+      "sublabel": "Rates / lag / pressure",
+      "width": 150
+    },
+    {
+      "id": "autoscaler",
+      "lane": "flink",
+      "col": 1,
+      "type": "backend",
+      "label": "Adjust parallelism",
+      "sublabel": "Recommendations + constraints",
+      "width": 196
+    },
+    {
+      "id": "pods-add",
+      "lane": "up",
+      "col": 2,
+      "type": "backend",
+      "label": "Request TaskManager pods",
+      "sublabel": "Check scheduling feasibility",
+      "width": 196
+    },
+    {
+      "id": "provision",
+      "lane": "up",
+      "col": 3,
+      "type": "cloud",
+      "label": "Evaluate EC2 capacity",
+      "sublabel": "NodePool / quota / availability",
+      "width": 192
+    },
+    {
+      "id": "pods-remove",
+      "lane": "down",
+      "col": 2,
+      "type": "backend",
+      "label": "TM demand decreases",
+      "sublabel": "Idle / allocation policy",
+      "width": 196
+    },
+    {
+      "id": "consolidate",
+      "lane": "down",
+      "col": 3,
+      "type": "cloud",
+      "label": "Evaluate disruption",
+      "sublabel": "Empty / underutilized nodes",
+      "width": 192
+    },
+    {
+      "id": "feedback",
+      "lane": "flink",
+      "col": 3,
+      "type": "external",
+      "label": "Recovery / lag changes",
+      "sublabel": "Next Flink evaluation",
+      "width": 192
+    }
+  ],
+  "edges": [
+    {
+      "id": "metrics-autoscaler",
+      "from": "metrics",
+      "to": "autoscaler",
+      "label": "Evaluate"
+    },
+    {
+      "id": "autoscaler-pods-add",
+      "from": "autoscaler",
+      "to": "pods-add",
+      "label": "Scale up",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pods-add-provision",
+      "from": "pods-add",
+      "to": "provision",
+      "label": "unschedulable"
+    },
+    {
+      "id": "autoscaler-pods-remove",
+      "from": "autoscaler",
+      "to": "pods-remove",
+      "label": "Scale down",
+      "role": "branch"
+    },
+    {
+      "id": "pods-remove-consolidate",
+      "from": "pods-remove",
+      "to": "consolidate",
+      "label": "Policy permits",
+      "role": "branch"
+    },
+    {
+      "id": "capacity-feedback",
+      "from": "consolidate",
+      "to": "feedback",
+      "label": "Affects workload",
+      "role": "return",
+      "route": "outside-right",
+      "fromSide": "right",
+      "toSide": "right",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Coupled effects",
+      "items": [
+        "Flink: parallelism, state recovery and pressure",
+        "Node changes can precede job-level decisions"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Timings and constraints",
+      "items": [
+        "Provisioning + restore + backlog catch-up",
+        "One timer inequality does not prevent interruptions"
+      ]
+    }
+  ]
+}

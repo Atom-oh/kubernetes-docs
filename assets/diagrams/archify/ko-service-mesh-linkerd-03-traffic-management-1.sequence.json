@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "재시도 동작 방식 — linkerd-proxy의 투명한 재시도",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      660
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "호출 측 애플리케이션"
+    },
+    {
+      "id": "proxy",
+      "type": "security",
+      "label": "linkerd-proxy",
+      "sublabel": "sidecar proxy"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Backend Service",
+      "sublabel": "대상 서비스"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 330,
+      "label": "1차 시도 — 503 실패"
+    },
+    {
+      "from": 355,
+      "to": 545,
+      "label": "재시도 — isRetryable: true · 예산 여유 확인 후 재전송, Client는 200 OK만 본다"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "proxy",
+      "y": 190,
+      "label": "HTTP Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "request-1",
+      "from": "proxy",
+      "to": "service",
+      "y": 240,
+      "label": "Request #1"
+    },
+    {
+      "id": "resp-503",
+      "from": "service",
+      "to": "proxy",
+      "y": 300,
+      "label": "503 Service Unavailable",
+      "variant": "return"
+    },
+    {
+      "id": "request-2",
+      "from": "proxy",
+      "to": "service",
+      "y": 400,
+      "label": "Request #2 (재시도)",
+      "variant": "emphasis",
+      "note": "재시도 조건 확인: isRetryable: true · 5xx 응답 · 재시도 예산 여유 있음"
+    },
+    {
+      "id": "resp-200",
+      "from": "service",
+      "to": "proxy",
+      "y": 460,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "client-200",
+      "from": "proxy",
+      "to": "client",
+      "y": 520,
+      "label": "200 OK",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "proxy",
+      "from": 185,
+      "to": 528,
+      "type": "security"
+    },
+    {
+      "participant": "service",
+      "from": 235,
+      "to": 306,
+      "type": "backend"
+    },
+    {
+      "participant": "service",
+      "from": 395,
+      "to": 466,
+      "type": "backend"
+    }
+  ]
+}

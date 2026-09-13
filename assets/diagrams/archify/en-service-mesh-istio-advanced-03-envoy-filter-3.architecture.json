@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Scenario 3: Client → CloudFront → NLB → ALB → Gateway",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-03-envoy-filter-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      320
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "203.0.113.5",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "cloudfront",
+      "type": "cloud",
+      "label": "CloudFront",
+      "sublabel": "172.64.0.1",
+      "pos": [
+        270,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "AWS NLB",
+      "sublabel": "10.0.1.50",
+      "pos": [
+        500,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "L4 · XFF untouched"
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "AWS ALB",
+      "sublabel": "10.0.1.100",
+      "pos": [
+        730,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "10.0.2.50",
+      "pos": [
+        960,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "xff_num_trusted_hops: 2"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "in-mesh workload",
+      "pos": [
+        1190,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-cloudfront",
+      "from": "client",
+      "to": "cloudfront",
+      "label": "XFF: (none)"
+    },
+    {
+      "id": "cloudfront-to-nlb",
+      "from": "cloudfront",
+      "to": "nlb",
+      "label": "XFF: 203.0.113.5",
+      "labelDy": -26
+    },
+    {
+      "id": "nlb-to-alb",
+      "from": "nlb",
+      "to": "alb",
+      "label": "XFF: 203.0.113.5 (L4, no modification)",
+      "variant": "dashed",
+      "labelDy": 56
+    },
+    {
+      "id": "alb-to-gateway",
+      "from": "alb",
+      "to": "gateway",
+      "label": "XFF: 203.0.113.5, 172.64.0.1",
+      "labelDy": -26
+    },
+    {
+      "id": "gateway-to-app",
+      "from": "gateway",
+      "to": "app",
+      "label": "XFF: 203.0.113.5, 172.64.0.1, 10.0.1.100",
+      "variant": "emphasis",
+      "labelDy": 56
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "EnvoyFilter configuration",
+      "items": [
+        "use_remote_address: true — Gateway acts as the edge proxy",
+        "xff_num_trusted_hops: 2 — trust CloudFront + ALB (NLB is L4, so it is not counted)",
+        "Result: the actual client IP 203.0.113.5 is extracted correctly"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "NLB has no effect on the XFF chain",
+      "items": [
+        "NLB is an L4 load balancer, so it neither reads nor modifies the XFF header",
+        "Only the CloudFront IP and the ALB IP accumulate in the XFF chain"
+      ]
+    }
+  ]
+}

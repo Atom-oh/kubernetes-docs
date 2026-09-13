@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Traditional vs eBPF Instrumentation",
+    "output": "en-observability-09-observability-optimization-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "app-a",
+      "type": "backend",
+      "label": "Application Code",
+      "sublabel": "service source",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "sdk",
+      "type": "backend",
+      "label": "Add SDK",
+      "sublabel": "per-language library",
+      "pos": [
+        270,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "redeploy",
+      "type": "cloud",
+      "label": "Modify / Redeploy Code",
+      "sublabel": "build · rollout",
+      "pos": [
+        500,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "collect-a",
+      "type": "database",
+      "label": "Data Collection",
+      "sublabel": "instrumented parts only",
+      "pos": [
+        730,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "app-b",
+      "type": "backend",
+      "label": "Application Code",
+      "sublabel": "service source",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "nochange",
+      "type": "backend",
+      "label": "No Changes",
+      "sublabel": "no redeploy needed",
+      "pos": [
+        270,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "no-code"
+    },
+    {
+      "id": "ebpf",
+      "type": "security",
+      "label": "eBPF Program",
+      "sublabel": "safe in-kernel execution",
+      "pos": [
+        500,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "hook",
+      "type": "backend",
+      "label": "Kernel-level Hooks",
+      "sublabel": "language agnostic",
+      "pos": [
+        500,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "collect-b",
+      "type": "database",
+      "label": "Data Collection",
+      "sublabel": "entire system",
+      "pos": [
+        730,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Traditional Instrumentation",
+      "wraps": [
+        "app-a",
+        "sdk",
+        "redeploy",
+        "collect-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "eBPF Instrumentation",
+      "wraps": [
+        "app-b",
+        "nochange",
+        "ebpf",
+        "hook",
+        "collect-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-sdk",
+      "from": "app-a",
+      "to": "sdk"
+    },
+    {
+      "id": "sdk-to-redeploy",
+      "from": "sdk",
+      "to": "redeploy"
+    },
+    {
+      "id": "redeploy-to-collect",
+      "from": "redeploy",
+      "to": "collect-a"
+    },
+    {
+      "id": "app-to-nochange",
+      "from": "app-b",
+      "to": "nochange"
+    },
+    {
+      "id": "ebpf-to-hook",
+      "from": "ebpf",
+      "to": "hook",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hook-to-collect",
+      "from": "hook",
+      "to": "collect-b",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nochange-to-hook",
+      "from": "nochange",
+      "to": "hook",
+      "label": "observed without code changes",
+      "variant": "dashed",
+      "labelDy": -26
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Traditional instrumentation",
+      "items": [
+        "Code modification required, redeployment required",
+        "Overhead at the application level",
+        "SDK support needed per language, covers only instrumented parts"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "eBPF instrumentation",
+      "items": [
+        "No code modification, deployed separately",
+        "Kernel-level overhead (very low)",
+        "Language agnostic, covers the entire system"
+      ]
+    }
+  ]
+}

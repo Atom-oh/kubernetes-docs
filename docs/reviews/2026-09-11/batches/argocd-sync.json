@@ -1,0 +1,134 @@
+[
+  {
+    "path": "ko/gitops/argocd/03-sync-strategies.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full sync strategy and quiz review against3.5.2: windows algorithm, apply/delete semantics, waves/hooks, retry and diff behavior corrected; broken full-stack/backup examples replaced with bounded, scoped examples.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync_windows.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/auto_sync.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/selective_sync.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go"
+    ],
+    "findings": [
+      "Inactive matching allow windows deny; no specificity ranking; selectors OR by default or andOperator:true",
+      "--force does not bypass windows; manualSync exceptions require all relevant blocking windows; syncOverrun affects ongoing operations",
+      "KST rule lacked timeZone; always-active emergency allow defeats schedule; --active windows CLI flag absent",
+      "Replace uses replace/create, Force delete/create; immutable PVC edits cannot be made safe by Replace",
+      "Argo SSA uses --force-conflicts; Validate=false is not missing-CRD handling",
+      "Wave sorting is phase thenwave/kind/name; minimal fullstack brokenPostgres/noPVC/password/service, noCPUrequestsHPA",
+      "Backup hook onlywritespg_dumpstdout; false backup claim, unbounded dependencycheck",
+      "Auto-sync notunconditionalselfHeal; retry5meansinitial+5; maxDurationisbackoffcap",
+      "Explicitresource-selective sync differs fromApplyOutOfSyncOnly; IgnoreExtraneousnotdelete/health exemption",
+      "Bad broadignore rules; incomplete fullApplicationexamples andmultiplecontradictorysyncOptions",
+      "KO/ENwindowsdiagramwrongdefaultallow, ENretrysectionshowswindowsdiagram"
+    ],
+    "validation": [
+      "50fences classified;41YAML documents/fragments strictly parsed,8Bash syntax checks,10fullApplication/AppProject CRD validations passed",
+      "Window flow ko/en and retry ko specs/HTML/PNG updated;9/9composition and4viewport visual checks passed for all3; smallestKO/light,largestEN/dark,largestretry/light screenshots inspected",
+      "Wave example inspected for matching labels,service targetPort,readiness andresource requests; no cluster or database jobs executed"
+    ],
+    "reviewedSha256": "e97565c3412263675f77665e99eca952a96ab7d3d829145233397d43c8cf0f2e"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/03-sync-strategies-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full sync strategy and quiz review against3.5.2: windows algorithm, apply/delete semantics, waves/hooks, retry and diff behavior corrected; broken full-stack/backup examples replaced with bounded, scoped examples.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync_windows.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/auto_sync.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/selective_sync.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go"
+    ],
+    "findings": [
+      "Inactive matching allow windows deny; no specificity ranking; selectors OR by default or andOperator:true",
+      "--force does not bypass windows; manualSync exceptions require all relevant blocking windows; syncOverrun affects ongoing operations",
+      "KST rule lacked timeZone; always-active emergency allow defeats schedule; --active windows CLI flag absent",
+      "Replace uses replace/create, Force delete/create; immutable PVC edits cannot be made safe by Replace",
+      "Argo SSA uses --force-conflicts; Validate=false is not missing-CRD handling",
+      "Wave sorting is phase thenwave/kind/name; minimal fullstack brokenPostgres/noPVC/password/service, noCPUrequestsHPA",
+      "Backup hook onlywritespg_dumpstdout; false backup claim, unbounded dependencycheck",
+      "Auto-sync notunconditionalselfHeal; retry5meansinitial+5; maxDurationisbackoffcap",
+      "Explicitresource-selective sync differs fromApplyOutOfSyncOnly; IgnoreExtraneousnotdelete/health exemption",
+      "Bad broadignore rules; incomplete fullApplicationexamples andmultiplecontradictorysyncOptions",
+      "KO/ENwindowsdiagramwrongdefaultallow, ENretrysectionshowswindowsdiagram"
+    ],
+    "validation": [
+      "50fences classified;41YAML documents/fragments strictly parsed,8Bash syntax checks,10fullApplication/AppProject CRD validations passed",
+      "Window flow ko/en and retry ko specs/HTML/PNG updated;9/9composition and4viewport visual checks passed for all3; smallestKO/light,largestEN/dark,largestretry/light screenshots inspected",
+      "Wave example inspected for matching labels,service targetPort,readiness andresource requests; no cluster or database jobs executed"
+    ],
+    "reviewedSha256": "7b4be7e6c545f3dffb06062c8502035f57a2290941d76cbb31b4b72d48b7a996"
+  },
+  {
+    "path": "en/gitops/argocd/03-sync-strategies.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full sync strategy and quiz review against3.5.2: windows algorithm, apply/delete semantics, waves/hooks, retry and diff behavior corrected; broken full-stack/backup examples replaced with bounded, scoped examples.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync_windows.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/auto_sync.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/selective_sync.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go"
+    ],
+    "findings": [
+      "Inactive matching allow windows deny; no specificity ranking; selectors OR by default or andOperator:true",
+      "--force does not bypass windows; manualSync exceptions require all relevant blocking windows; syncOverrun affects ongoing operations",
+      "KST rule lacked timeZone; always-active emergency allow defeats schedule; --active windows CLI flag absent",
+      "Replace uses replace/create, Force delete/create; immutable PVC edits cannot be made safe by Replace",
+      "Argo SSA uses --force-conflicts; Validate=false is not missing-CRD handling",
+      "Wave sorting is phase thenwave/kind/name; minimal fullstack brokenPostgres/noPVC/password/service, noCPUrequestsHPA",
+      "Backup hook onlywritespg_dumpstdout; false backup claim, unbounded dependencycheck",
+      "Auto-sync notunconditionalselfHeal; retry5meansinitial+5; maxDurationisbackoffcap",
+      "Explicitresource-selective sync differs fromApplyOutOfSyncOnly; IgnoreExtraneousnotdelete/health exemption",
+      "Bad broadignore rules; incomplete fullApplicationexamples andmultiplecontradictorysyncOptions",
+      "KO/ENwindowsdiagramwrongdefaultallow, ENretrysectionshowswindowsdiagram"
+    ],
+    "validation": [
+      "50fences classified;41YAML documents/fragments strictly parsed,8Bash syntax checks,10fullApplication/AppProject CRD validations passed",
+      "Window flow ko/en and retry ko specs/HTML/PNG updated;9/9composition and4viewport visual checks passed for all3; smallestKO/light,largestEN/dark,largestretry/light screenshots inspected",
+      "Wave example inspected for matching labels,service targetPort,readiness andresource requests; no cluster or database jobs executed"
+    ],
+    "reviewedSha256": "f36b2471624c882a8592160eb05ca01d42e78f21604369678dc9e41e7325b99d"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/03-sync-strategies-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full sync strategy and quiz review against3.5.2: windows algorithm, apply/delete semantics, waves/hooks, retry and diff behavior corrected; broken full-stack/backup examples replaced with bounded, scoped examples.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync_windows.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/auto_sync.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/selective_sync.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go"
+    ],
+    "findings": [
+      "Inactive matching allow windows deny; no specificity ranking; selectors OR by default or andOperator:true",
+      "--force does not bypass windows; manualSync exceptions require all relevant blocking windows; syncOverrun affects ongoing operations",
+      "KST rule lacked timeZone; always-active emergency allow defeats schedule; --active windows CLI flag absent",
+      "Replace uses replace/create, Force delete/create; immutable PVC edits cannot be made safe by Replace",
+      "Argo SSA uses --force-conflicts; Validate=false is not missing-CRD handling",
+      "Wave sorting is phase thenwave/kind/name; minimal fullstack brokenPostgres/noPVC/password/service, noCPUrequestsHPA",
+      "Backup hook onlywritespg_dumpstdout; false backup claim, unbounded dependencycheck",
+      "Auto-sync notunconditionalselfHeal; retry5meansinitial+5; maxDurationisbackoffcap",
+      "Explicitresource-selective sync differs fromApplyOutOfSyncOnly; IgnoreExtraneousnotdelete/health exemption",
+      "Bad broadignore rules; incomplete fullApplicationexamples andmultiplecontradictorysyncOptions",
+      "KO/ENwindowsdiagramwrongdefaultallow, ENretrysectionshowswindowsdiagram"
+    ],
+    "validation": [
+      "50fences classified;41YAML documents/fragments strictly parsed,8Bash syntax checks,10fullApplication/AppProject CRD validations passed",
+      "Window flow ko/en and retry ko specs/HTML/PNG updated;9/9composition and4viewport visual checks passed for all3; smallestKO/light,largestEN/dark,largestretry/light screenshots inspected",
+      "Wave example inspected for matching labels,service targetPort,readiness andresource requests; no cluster or database jobs executed"
+    ],
+    "reviewedSha256": "7142b2aeb76d1398d8f601a30df80f8d8e6d3fa1d51f80c90e9f84be92b230bd"
+  }
+]

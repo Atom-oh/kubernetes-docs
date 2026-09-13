@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Namespaced XR reconciliation",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      724
+    ],
+    "animation": "trace",
+    "views": [],
+    "legend": {
+      "mode": "auto"
+    },
+    "output": "en-platform-engineering-07-crossplane-3.html",
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "kubectl"
+    },
+    {
+      "id": "ns",
+      "type": "frontend",
+      "label": "Team namespace",
+      "sublabel": "XR and Secret"
+    },
+    {
+      "id": "xp",
+      "type": "backend",
+      "label": "Crossplane",
+      "sublabel": "Core reconciler"
+    },
+    {
+      "id": "comp",
+      "type": "database",
+      "label": "Functions / Providers",
+      "sublabel": "Render and cloud reconcile"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS",
+      "sublabel": "Cloud resources"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 548,
+      "label": "Claim 프로비저닝"
+    },
+    {
+      "from": 560,
+      "to": 630,
+      "label": "지속적 조정 (Continuous Reconciliation)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "apply",
+      "from": "dev",
+      "to": "ns",
+      "y": 182,
+      "label": "Apply XR",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect",
+      "from": "ns",
+      "to": "xp",
+      "y": 216,
+      "label": "Namespaced XR event"
+    },
+    {
+      "id": "lookup",
+      "from": "xp",
+      "to": "comp",
+      "y": 256,
+      "label": "Run Function pipeline"
+    },
+    {
+      "id": "mrlist",
+      "from": "comp",
+      "to": "xp",
+      "y": 288,
+      "label": "Desired MRs",
+      "variant": "return"
+    },
+    {
+      "id": "sg",
+      "from": "comp",
+      "to": "aws",
+      "y": 324,
+      "label": "SG / ingress rule calls"
+    },
+    {
+      "id": "subnet",
+      "from": "comp",
+      "to": "aws",
+      "y": 358,
+      "label": "Subnet group calls"
+    },
+    {
+      "id": "rds",
+      "from": "comp",
+      "to": "aws",
+      "y": 392,
+      "label": "RDS create / observe",
+      "variant": "emphasis"
+    },
+    {
+      "id": "done",
+      "from": "aws",
+      "to": "comp",
+      "y": 426,
+      "label": "Observed resource state",
+      "variant": "return"
+    },
+    {
+      "id": "secret",
+      "from": "xp",
+      "to": "ns",
+      "y": 462,
+      "label": "Apply composed Secret",
+      "variant": "security"
+    },
+    {
+      "id": "ready",
+      "from": "xp",
+      "to": "ns",
+      "y": 496,
+      "label": "Update Ready condition",
+      "variant": "return"
+    },
+    {
+      "id": "get",
+      "from": "dev",
+      "to": "ns",
+      "y": 530,
+      "label": "Read XR status"
+    },
+    {
+      "id": "drift",
+      "from": "comp",
+      "to": "aws",
+      "y": 582,
+      "label": "Poll cloud state",
+      "variant": "dashed"
+    },
+    {
+      "id": "correct",
+      "from": "comp",
+      "to": "aws",
+      "y": 616,
+      "label": "Allowed reconciliation",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "xp",
+      "from": 211,
+      "to": 502,
+      "type": "backend"
+    },
+    {
+      "participant": "comp",
+      "from": 251,
+      "to": 294,
+      "type": "database"
+    },
+    {
+      "participant": "aws",
+      "from": 319,
+      "to": 432,
+      "type": "cloud"
+    },
+    {
+      "participant": "xp",
+      "from": 577,
+      "to": 622,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Connection data",
+      "items": [
+        "v2 XR native connection publication was removed",
+        "P&T composes endpoint/username Secret in this example",
+        "Passwords stay in separately prepared credential files"
+      ]
+    }
+  ]
+}

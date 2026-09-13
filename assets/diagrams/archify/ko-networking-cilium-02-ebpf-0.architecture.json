@@ -1,0 +1,338 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eBPF 아키텍처 상세 다이어그램",
+    "output": "ko-networking-cilium-02-ebpf-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "사용자 애플리케이션"
+        },
+        "frontend": {
+          "label": "사용자 공간 도구"
+        },
+        "security": {
+          "label": "안전성 검증"
+        },
+        "backend": {
+          "label": "eBPF 런타임"
+        },
+        "database": {
+          "label": "eBPF 맵"
+        },
+        "messagebus": {
+          "label": "커널 훅 포인트"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "load-path",
+        "label": "프로그램 로드 경로",
+        "focus": [
+          "app",
+          "loader",
+          "verifier",
+          "jit",
+          "vm"
+        ],
+        "note": "로더가 넘긴 프로그램은 검증기와 JIT 컴파일러를 거쳐야만 가상 머신에서 실행된다."
+      },
+      {
+        "id": "hooks",
+        "label": "훅 포인트 연결",
+        "focus": [
+          "vm",
+          "hooks-net",
+          "hooks-trace"
+        ],
+        "note": "가상 머신은 네트워크·추적·보안 훅 포인트에 연결되어 이벤트 발생 시 프로그램을 실행한다."
+      },
+      {
+        "id": "data-exchange",
+        "label": "맵을 통한 데이터 교환",
+        "focus": [
+          "app",
+          "vm",
+          "maps"
+        ],
+        "note": "eBPF 맵은 커널 공간과 사용자 공간이 데이터를 공유하는 키-값 저장소다."
+      },
+      {
+        "id": "toolchain",
+        "label": "컴파일 도구체인",
+        "focus": [
+          "toolchain",
+          "loader"
+        ],
+        "note": "Clang/LLVM이 C 소스를 eBPF 바이트코드로 컴파일하고, BTF 정보가 CO-RE 이식성을 제공한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "애플리케이션",
+      "sublabel": "사용자 공간 프로그램",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "loader",
+      "type": "frontend",
+      "label": "로더 라이브러리",
+      "sublabel": "libbpf · BCC · bpftrace",
+      "pos": [
+        250,
+        70
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "toolchain",
+      "type": "frontend",
+      "label": "컴파일 도구체인",
+      "sublabel": "Clang → LLVM → BTF",
+      "pos": [
+        570,
+        70
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "verifier",
+      "type": "security",
+      "label": "eBPF 검증기",
+      "sublabel": "안전성 보장",
+      "pos": [
+        250,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "jit",
+      "type": "backend",
+      "label": "JIT 컴파일러",
+      "sublabel": "성능 최적화",
+      "pos": [
+        520,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "vm",
+      "type": "backend",
+      "label": "eBPF 가상 머신",
+      "sublabel": "프로그램 실행",
+      "pos": [
+        790,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "maps",
+      "type": "database",
+      "label": "eBPF 맵",
+      "sublabel": "데이터 저장소",
+      "pos": [
+        60,
+        440
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "hooks-net",
+      "type": "messagebus",
+      "label": "네트워크 훅",
+      "sublabel": "XDP · TC · Socket · Cgroups",
+      "pos": [
+        1020,
+        270
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "hooks-trace",
+      "type": "messagebus",
+      "label": "추적·보안 훅",
+      "sublabel": "Kprobes · Tracepoints · Perf · LSM",
+      "pos": [
+        1020,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "사용자 공간 (User Space)",
+      "wraps": [
+        "app",
+        "loader",
+        "toolchain"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "커널 공간 (Kernel Space)",
+      "wraps": [
+        "verifier",
+        "jit",
+        "vm",
+        "maps",
+        "hooks-net",
+        "hooks-trace"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-loader",
+      "from": "app",
+      "to": "loader"
+    },
+    {
+      "id": "toolchain-to-loader",
+      "from": "toolchain",
+      "to": "loader",
+      "label": "eBPF 바이트코드",
+      "variant": "dashed"
+    },
+    {
+      "id": "loader-to-verifier",
+      "from": "loader",
+      "to": "verifier",
+      "label": "프로그램 로드",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "verifier-to-jit",
+      "from": "verifier",
+      "to": "jit",
+      "label": "검증 통과",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jit-to-vm",
+      "from": "jit",
+      "to": "vm",
+      "label": "최적화된 코드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vm-to-hooks-net",
+      "from": "vm",
+      "to": "hooks-net",
+      "label": "훅 연결",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "vm-to-hooks-trace",
+      "from": "vm",
+      "to": "hooks-trace",
+      "label": "훅 연결",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "vm-to-maps",
+      "from": "vm",
+      "to": "maps",
+      "label": "데이터 교환",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "app-to-maps",
+      "from": "app",
+      "to": "maps",
+      "label": "데이터 교환",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        135,
+        300
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "훅 포인트 (Hook Points)",
+      "items": [
+        "XDP — 네트워크 드라이버 레벨",
+        "Traffic Control — 네트워크 스택",
+        "Socket 필터 — 소켓 레벨",
+        "Cgroups — 리소스 제어",
+        "Kprobes/Uprobes — 동적 추적",
+        "Tracepoints — 정적 추적점",
+        "Perf Events — 성능 이벤트",
+        "LSM — 보안 모듈"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "eBPF 맵 유형",
+      "items": [
+        "해시맵 (HASH)",
+        "배열 (ARRAY)",
+        "LRU 해시 (LRU_HASH)",
+        "링버퍼 (RINGBUF)",
+        "스택트레이스 (STACK_TRACE)",
+        "소켓맵 (SOCKHASH)",
+        "기타 (DEVMAP, PROG_ARRAY …)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "eBPF 런타임",
+      "items": [
+        "검증기 — 무한 루프·잘못된 메모리 접근 차단",
+        "JIT 컴파일러 — 바이트코드를 네이티브 코드로 변환",
+        "가상 머신 — 11개 레지스터, 512바이트 스택, 헬퍼 함수"
+      ]
+    }
+  ]
+}

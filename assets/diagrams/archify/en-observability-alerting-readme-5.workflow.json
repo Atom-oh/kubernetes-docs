@@ -1,0 +1,288 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Alert Routing by Severity and Team",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "severity-routing",
+        "label": "Route by severity",
+        "focus": [
+          "alert",
+          "severity",
+          "phone",
+          "slack_pd",
+          "slack",
+          "email"
+        ],
+        "note": "The first match decides the channel: critical pages a phone, high and warning land in Slack, info goes to email only."
+      },
+      {
+        "id": "team-routing",
+        "label": "Route by owning team",
+        "focus": [
+          "phone",
+          "slack_pd",
+          "slack",
+          "team",
+          "sre",
+          "dev",
+          "dba",
+          "security"
+        ],
+        "note": "Critical, high, and warning alerts are routed a second time to the team that owns the failing component."
+      },
+      {
+        "id": "critical-path",
+        "label": "Critical infra alert",
+        "focus": [
+          "alert",
+          "severity",
+          "phone",
+          "team",
+          "sre"
+        ],
+        "note": "A critical infrastructure alert reaches the SRE on-call by phone within the first routing pass."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "messagebus": {
+          "label": "Fired alert"
+        },
+        "backend": {
+          "label": "Routing decision"
+        },
+        "external": {
+          "label": "Notification channel"
+        },
+        "frontend": {
+          "label": "Owning team"
+        }
+      }
+    },
+    "viewBox": [
+      1010,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "router",
+      "label": "Alertmanager: severity match"
+    },
+    {
+      "id": "channels",
+      "label": "Notification channels"
+    },
+    {
+      "id": "teamrouter",
+      "label": "Alertmanager: team match"
+    },
+    {
+      "id": "teams",
+      "label": "Owning teams"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "severity",
+    "phone",
+    "team",
+    "sre"
+  ],
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "router",
+      "col": 0,
+      "type": "messagebus",
+      "label": "Alert Fired",
+      "sublabel": "severity + team labels",
+      "width": 124
+    },
+    {
+      "id": "severity",
+      "lane": "router",
+      "col": 1,
+      "type": "backend",
+      "label": "Severity?",
+      "sublabel": "first match",
+      "tag": "decision"
+    },
+    {
+      "id": "phone",
+      "lane": "channels",
+      "col": 2,
+      "type": "external",
+      "label": "Phone / SMS",
+      "sublabel": "critical, immediate",
+      "width": 116
+    },
+    {
+      "id": "slack_pd",
+      "lane": "channels",
+      "col": 3,
+      "type": "external",
+      "label": "Slack + PagerDuty",
+      "sublabel": "high",
+      "width": 124
+    },
+    {
+      "id": "slack",
+      "lane": "channels",
+      "col": 4,
+      "type": "external",
+      "label": "Slack Channel",
+      "sublabel": "warning"
+    },
+    {
+      "id": "email",
+      "lane": "channels",
+      "col": 5,
+      "type": "external",
+      "label": "Email",
+      "sublabel": "info, terminal"
+    },
+    {
+      "id": "team",
+      "lane": "teamrouter",
+      "col": 3,
+      "type": "backend",
+      "label": "Team?",
+      "sublabel": "second match",
+      "tag": "decision"
+    },
+    {
+      "id": "sre",
+      "lane": "teams",
+      "col": 3,
+      "type": "frontend",
+      "label": "SRE Team",
+      "sublabel": "infra"
+    },
+    {
+      "id": "dev",
+      "lane": "teams",
+      "col": 2,
+      "type": "frontend",
+      "label": "Dev Team",
+      "sublabel": "app"
+    },
+    {
+      "id": "dba",
+      "lane": "teams",
+      "col": 4,
+      "type": "frontend",
+      "label": "DBA Team",
+      "sublabel": "database"
+    },
+    {
+      "id": "security",
+      "lane": "teams",
+      "col": 5,
+      "type": "frontend",
+      "label": "Security Team",
+      "sublabel": "security",
+      "width": 104
+    }
+  ],
+  "edges": [
+    {
+      "from": "alert",
+      "to": "severity"
+    },
+    {
+      "from": "severity",
+      "to": "phone",
+      "label": "CRITICAL",
+      "variant": "emphasis"
+    },
+    {
+      "from": "severity",
+      "to": "slack_pd",
+      "label": "HIGH"
+    },
+    {
+      "from": "severity",
+      "to": "slack",
+      "label": "WARNING"
+    },
+    {
+      "from": "severity",
+      "to": "email",
+      "label": "INFO",
+      "variant": "dashed"
+    },
+    {
+      "from": "phone",
+      "to": "team",
+      "variant": "emphasis"
+    },
+    {
+      "from": "slack_pd",
+      "to": "team"
+    },
+    {
+      "from": "slack",
+      "to": "team"
+    },
+    {
+      "from": "team",
+      "to": "sre",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight"
+    },
+    {
+      "from": "team",
+      "to": "dev",
+      "label": "APP",
+      "toSide": "top"
+    },
+    {
+      "from": "team",
+      "to": "dba",
+      "label": "DATABASE"
+    },
+    {
+      "from": "team",
+      "to": "security",
+      "label": "SECURITY",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Severity Decides the Channel",
+      "items": [
+        "Critical alerts page a phone immediately and continue matching (continue: true)",
+        "High alerts reach Slack and PagerDuty; warnings stay in a Slack channel",
+        "Info alerts end at email and are never routed to a team"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Team Receivers in the Route Tree",
+      "items": [
+        "alertname ^(Node|Disk|CPU|Memory).* goes to sre-team",
+        "namespace ^(app|api|web).* goes to dev-team",
+        "alertname ^(MySQL|PostgreSQL|Redis|MongoDB).* goes to dba-team"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Escalation After Delivery",
+      "items": [
+        "0 min: primary on-call via Slack and PagerDuty",
+        "15 min: secondary on-call, SMS added",
+        "30 min: team lead by phone; 45 and 60 min escalate to management"
+      ]
+    }
+  ]
+}

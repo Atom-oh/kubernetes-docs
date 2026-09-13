@@ -1,0 +1,222 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "서비스 메시 도입 의사결정 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "adopt-path",
+        "label": "도입 권장 경로",
+        "focus": [
+          "start",
+          "q_micro",
+          "q_count",
+          "q_needs",
+          "q_ops",
+          "adopt"
+        ],
+        "note": "마이크로서비스 아키텍처, 10개 이상 서비스, 복잡한 트래픽·보안·관찰성 요구, 운영 리소스가 모두 충족될 때 Service Mesh 도입을 권장한다."
+      },
+      {
+        "id": "alt-path",
+        "label": "대안 경로",
+        "focus": [
+          "q_micro",
+          "q_count",
+          "not_needed",
+          "alternatives"
+        ],
+        "note": "마이크로서비스가 아니거나 서비스가 10개 미만이면 Ingress Controller, NetworkPolicy, CNI 같은 대안으로 충분하다."
+      },
+      {
+        "id": "careful-path",
+        "label": "신중한 검토",
+        "focus": [
+          "q_needs",
+          "q_ops",
+          "careful"
+        ],
+        "note": "요구사항이 복잡하지 않거나 운영 리소스가 부족하면 작은 규모로 시작하고 Ambient Mode를 검토한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "backend": {
+          "label": "결정 지점"
+        },
+        "external": {
+          "label": "결과 / 대안"
+        },
+        "cloud": {
+          "label": "권장 결과"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "decision",
+      "label": "도입 판단"
+    },
+    {
+      "id": "outcome",
+      "label": "결과 · 대안"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_micro",
+    "q_count",
+    "q_needs",
+    "q_ops",
+    "adopt"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decision",
+      "col": 0,
+      "type": "frontend",
+      "label": "서비스 메시 도입 검토",
+      "width": 160
+    },
+    {
+      "id": "q_micro",
+      "lane": "decision",
+      "col": 1,
+      "type": "backend",
+      "label": "마이크로서비스 구조?",
+      "width": 160
+    },
+    {
+      "id": "q_count",
+      "lane": "decision",
+      "col": 2,
+      "type": "backend",
+      "label": "10개 이상 서비스?",
+      "width": 160
+    },
+    {
+      "id": "q_needs",
+      "lane": "decision",
+      "col": 3,
+      "type": "backend",
+      "label": "복잡한 요구사항?",
+      "sublabel": "트래픽 · 보안 · 관찰성",
+      "width": 160
+    },
+    {
+      "id": "q_ops",
+      "lane": "decision",
+      "col": 4,
+      "type": "backend",
+      "label": "운영 리소스 확보?",
+      "width": 160
+    },
+    {
+      "id": "adopt",
+      "lane": "decision",
+      "col": 5,
+      "type": "cloud",
+      "label": "Service Mesh 권장",
+      "width": 160
+    },
+    {
+      "id": "not_needed",
+      "lane": "outcome",
+      "col": 1,
+      "type": "external",
+      "label": "Service Mesh 불필요",
+      "sublabel": "Ingress · NetworkPolicy",
+      "width": 160
+    },
+    {
+      "id": "alternatives",
+      "lane": "outcome",
+      "col": 2,
+      "type": "external",
+      "label": "대안 솔루션",
+      "sublabel": "CNI · Ingress · App-level",
+      "width": 160
+    },
+    {
+      "id": "careful",
+      "lane": "outcome",
+      "col": 4,
+      "type": "external",
+      "label": "신중한 검토",
+      "sublabel": "작은 규모로 시작 · Ambient Mode",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-micro",
+      "from": "start",
+      "to": "q_micro",
+      "route": "straight"
+    },
+    {
+      "id": "micro-count",
+      "from": "q_micro",
+      "to": "q_count",
+      "label": "YES",
+      "route": "straight"
+    },
+    {
+      "id": "count-needs",
+      "from": "q_count",
+      "to": "q_needs",
+      "label": "YES",
+      "route": "straight"
+    },
+    {
+      "id": "needs-ops",
+      "from": "q_needs",
+      "to": "q_ops",
+      "label": "YES",
+      "route": "straight"
+    },
+    {
+      "id": "ops-adopt",
+      "from": "q_ops",
+      "to": "adopt",
+      "label": "YES",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "micro-no",
+      "from": "q_micro",
+      "to": "not_needed",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "count-no",
+      "from": "q_count",
+      "to": "alternatives",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "needs-no",
+      "from": "q_needs",
+      "to": "careful",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "ops-no",
+      "from": "q_ops",
+      "to": "careful",
+      "label": "NO",
+      "role": "branch"
+    }
+  ]
+}

@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kong Mesh Multi-Zone Deployment Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      640
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Global Control Plane"
+        },
+        "cloud": {
+          "label": "Zone Control Plane"
+        },
+        "database": {
+          "label": "Global state store"
+        },
+        "security": {
+          "label": "Kuma DP (Envoy)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "policy-sync",
+        "label": "Policy sync",
+        "focus": [
+          "gcp",
+          "gdb",
+          "zcp1",
+          "zcp2",
+          "zcp3"
+        ],
+        "note": "The Global Control Plane centrally manages policy for every zone and synchronizes it to each Zone Control Plane."
+      },
+      {
+        "id": "xds-config",
+        "label": "xDS config push",
+        "focus": [
+          "zcp1",
+          "dp1",
+          "dp2",
+          "zcp2",
+          "dp3",
+          "zcp3",
+          "dpv"
+        ],
+        "note": "Each Zone Control Plane independently pushes xDS configuration to its local Kuma DPs, on Kubernetes pods and on VMs."
+      },
+      {
+        "id": "cross-zone-mtls",
+        "label": "Cross-zone mTLS",
+        "focus": [
+          "dp1",
+          "dp3",
+          "dp2",
+          "dpv"
+        ],
+        "note": "Cross-zone traffic between Kuma DPs is automatically encrypted with mTLS as well."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gcp",
+      "type": "backend",
+      "label": "Kong Mesh Global",
+      "sublabel": "Policy Store",
+      "pos": [
+        575,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "gdb",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "Global State",
+      "pos": [
+        820,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "zcp1",
+      "type": "cloud",
+      "label": "Zone Control Plane 1",
+      "sublabel": "Local State",
+      "pos": [
+        140,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "zcp2",
+      "type": "cloud",
+      "label": "Zone Control Plane 2",
+      "sublabel": "Local State",
+      "pos": [
+        580,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "zcp3",
+      "type": "cloud",
+      "label": "Zone Control Plane 3",
+      "sublabel": "Local State",
+      "pos": [
+        920,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "dp2",
+      "type": "security",
+      "label": "Kuma DP",
+      "sublabel": "Envoy · Backend (Pod B)",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "dp1",
+      "type": "security",
+      "label": "Kuma DP",
+      "sublabel": "Envoy · Frontend (Pod A)",
+      "pos": [
+        240,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "dp3",
+      "type": "security",
+      "label": "Kuma DP",
+      "sublabel": "Envoy · API Service (Pod C)",
+      "pos": [
+        580,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "dpv",
+      "type": "security",
+      "label": "Kuma DP",
+      "sublabel": "Envoy · Legacy App (VM)",
+      "pos": [
+        920,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Global Control Plane (Central Management)",
+      "wraps": [
+        "gcp",
+        "gdb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 1 — AWS EKS (Kubernetes)",
+      "wraps": [
+        "zcp1",
+        "dp1",
+        "dp2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 2 — GCP GKE (Kubernetes)",
+      "wraps": [
+        "zcp2",
+        "dp3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 3 — On-Premises (VM)",
+      "wraps": [
+        "zcp3",
+        "dpv"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gcp-gdb",
+      "from": "gcp",
+      "to": "gdb"
+    },
+    {
+      "id": "sync-zone1",
+      "from": "gcp",
+      "to": "zcp1",
+      "label": "Policy Sync (HTTP/gRPC)",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sync-zone2",
+      "from": "gcp",
+      "to": "zcp2",
+      "label": "Policy Sync",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 100
+    },
+    {
+      "id": "sync-zone3",
+      "from": "gcp",
+      "to": "zcp3",
+      "label": "Policy Sync",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "xds-dp1",
+      "from": "zcp1",
+      "to": "dp1",
+      "label": "xDS Config",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "xds-dp2",
+      "from": "zcp1",
+      "to": "dp2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "xds-dp3",
+      "from": "zcp2",
+      "to": "dp3",
+      "label": "xDS Config",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "xds-dpv",
+      "from": "zcp3",
+      "to": "dpv",
+      "label": "xDS Config",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "mtls-dp1-dp3",
+      "from": "dp1",
+      "to": "dp3",
+      "label": "Cross-Zone mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-dp2-dpv",
+      "from": "dp2",
+      "to": "dpv",
+      "label": "Cross-Zone mTLS",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          125,
+          530
+        ],
+        [
+          1005,
+          530
+        ]
+      ],
+      "labelSegment": 1
+    }
+  ]
+}

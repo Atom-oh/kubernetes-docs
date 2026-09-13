@@ -1,0 +1,218 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio vs VPC Lattice Decision Tree",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "multicloud",
+        "label": "Multi-cloud means Istio",
+        "focus": [
+          "start",
+          "q_platform",
+          "istio_multicloud"
+        ],
+        "note": "VPC Lattice is AWS-only, so a multi-cloud strategy goes straight to Istio."
+      },
+      {
+        "id": "aws_simple",
+        "label": "Simple AWS-only paths",
+        "focus": [
+          "q_platform",
+          "q_workload",
+          "lattice_mixed",
+          "q_feature",
+          "lattice_basic"
+        ],
+        "note": "Mixed EKS+ECS+Lambda workloads or basic feature needs are well served by VPC Lattice."
+      },
+      {
+        "id": "ops_tradeoff",
+        "label": "Advanced features vs ops",
+        "focus": [
+          "q_feature",
+          "q_ops",
+          "istio_advanced",
+          "lattice_practical"
+        ],
+        "note": "Even when advanced features are needed, limited operational resources make VPC Lattice the practical pick."
+      }
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "security": {
+          "label": "Question"
+        },
+        "backend": {
+          "label": "Istio"
+        },
+        "cloud": {
+          "label": "VPC Lattice"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "istio",
+      "label": "Istio recommended"
+    },
+    {
+      "id": "decision",
+      "label": "Decision questions"
+    },
+    {
+      "id": "lattice",
+      "label": "VPC Lattice recommended"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_platform",
+    "q_workload",
+    "q_feature",
+    "q_ops",
+    "istio_advanced"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decision",
+      "col": 0,
+      "type": "frontend",
+      "label": "Start",
+      "sublabel": "service networking"
+    },
+    {
+      "id": "q_platform",
+      "lane": "decision",
+      "col": 1,
+      "type": "security",
+      "label": "Platform?",
+      "sublabel": "AWS / multi-cloud"
+    },
+    {
+      "id": "q_workload",
+      "lane": "decision",
+      "col": 2,
+      "type": "security",
+      "label": "Workload type?",
+      "sublabel": "K8s / mixed"
+    },
+    {
+      "id": "q_feature",
+      "lane": "decision",
+      "col": 3,
+      "type": "security",
+      "label": "Feature needs?",
+      "sublabel": "basic / advanced"
+    },
+    {
+      "id": "q_ops",
+      "lane": "decision",
+      "col": 4,
+      "type": "security",
+      "label": "Ops resources?",
+      "sublabel": "sufficient / limited"
+    },
+    {
+      "id": "istio_multicloud",
+      "lane": "istio",
+      "col": 1,
+      "type": "backend",
+      "label": "Istio",
+      "sublabel": "cloud neutral"
+    },
+    {
+      "id": "istio_advanced",
+      "lane": "istio",
+      "col": 4,
+      "type": "backend",
+      "label": "Istio",
+      "sublabel": "fine-grained traffic"
+    },
+    {
+      "id": "lattice_mixed",
+      "lane": "lattice",
+      "col": 2,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "EKS+ECS+Lambda"
+    },
+    {
+      "id": "lattice_basic",
+      "lane": "lattice",
+      "col": 3,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "basic features suffice"
+    },
+    {
+      "id": "lattice_practical",
+      "lane": "lattice",
+      "col": 4,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "minimal ops burden"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q_platform"
+    },
+    {
+      "from": "q_platform",
+      "to": "q_workload",
+      "label": "AWS only"
+    },
+    {
+      "from": "q_platform",
+      "to": "istio_multicloud",
+      "label": "Multi-cloud",
+      "role": "branch"
+    },
+    {
+      "from": "q_workload",
+      "to": "q_feature",
+      "label": "K8s only",
+      "route": "straight"
+    },
+    {
+      "from": "q_workload",
+      "to": "lattice_mixed",
+      "label": "EKS+ECS+Lambda",
+      "role": "branch"
+    },
+    {
+      "from": "q_feature",
+      "to": "q_ops",
+      "label": "Advanced features",
+      "route": "straight"
+    },
+    {
+      "from": "q_feature",
+      "to": "lattice_basic",
+      "label": "Basic features",
+      "role": "branch"
+    },
+    {
+      "from": "q_ops",
+      "to": "istio_advanced",
+      "label": "Sufficient",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q_ops",
+      "to": "lattice_practical",
+      "label": "Limited",
+      "role": "branch"
+    }
+  ]
+}

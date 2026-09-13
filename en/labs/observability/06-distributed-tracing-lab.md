@@ -23,7 +23,9 @@
 
 ## Drill-Down Analysis Workflow
 
-![Sequence diagram of an operator drilling down in Grafana from an error-rate metric spike, through a Tempo trace reached via an exemplar, to correlated Loki logs, ending with the root cause identified.](../../../assets/diagrams/rendered/en-labs-observability-06-distributed-tracing-lab-0.svg)
+![Sequence diagram of an operator drilling down in Grafana from a p99 latency spike, through a Tempo trace reached via an exemplar, to correlated Loki logs, ending with the root cause identified.](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-0.html)
 
 ---
 
@@ -218,7 +220,9 @@ curl -X POST "http://$API_URL:8080/api/v1/orders" \
 
 Exemplars link metric data points to specific traces, enabling drill-down from anomalous metrics to the actual requests.
 
-![Flowchart showing a metric data point containing an exemplar that links onward to the full distributed trace for that request.](../../../assets/diagrams/rendered/en-labs-observability-06-distributed-tracing-lab-1.svg)
+![Workflow showing how an exemplar marker on a p99 latency spike in the metric graph links to the full request trace in Tempo, and from a span onward to the matching logs in Loki.](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-1.html)
 
 **Step 5.2: View Exemplars in Grafana**
 

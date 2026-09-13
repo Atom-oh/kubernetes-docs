@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AWS X-Ray 트레이싱 아키텍처",
+    "output": "ko-observability-tracing-02-xray-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      620
+    ],
+    "views": [
+      {
+        "id": "eks-collect",
+        "label": "EKS 수집 경로",
+        "focus": [
+          "apps",
+          "daemon",
+          "adot",
+          "xray"
+        ],
+        "note": "X-Ray SDK로 계측한 애플리케이션 Pod가 세그먼트는 X-Ray Daemon으로, OTLP는 ADOT Collector로 보내고 두 경로가 AWS X-Ray에 모인다."
+      },
+      {
+        "id": "auto-instr",
+        "label": "자동 계측",
+        "focus": [
+          "others",
+          "xray"
+        ],
+        "note": "Lambda, API Gateway, SQS, SNS 같은 관리형 서비스의 트레이스는 자동 계측으로 X-Ray에 바로 모인다."
+      },
+      {
+        "id": "analysis",
+        "label": "분석 도구",
+        "focus": [
+          "xray",
+          "cw",
+          "lens",
+          "insights"
+        ],
+        "note": "X-Ray에 모인 트레이스는 CloudWatch, ServiceLens, X-Ray Insights에서 서비스 맵과 응답 시간 분석에 쓰인다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apps",
+      "type": "backend",
+      "label": "Service A / B / C",
+      "sublabel": "X-Ray SDK 계측",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "daemon",
+      "type": "backend",
+      "label": "X-Ray Daemon",
+      "sublabel": "DaemonSet",
+      "pos": [
+        300,
+        120
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "adot",
+      "type": "backend",
+      "label": "ADOT Collector",
+      "sublabel": "Sidecar / DaemonSet",
+      "pos": [
+        300,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "xray",
+      "type": "cloud",
+      "label": "AWS X-Ray",
+      "sublabel": "중앙 트레이싱 서비스",
+      "pos": [
+        590,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "others",
+      "type": "external",
+      "label": "기타 AWS 서비스",
+      "sublabel": "Lambda · API Gateway · SQS · SNS",
+      "pos": [
+        570,
+        500
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "cw",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "메트릭 · 알림",
+      "pos": [
+        860,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "lens",
+      "type": "cloud",
+      "label": "ServiceLens",
+      "sublabel": "서비스 맵",
+      "pos": [
+        860,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "insights",
+      "type": "cloud",
+      "label": "X-Ray Insights",
+      "sublabel": "응답 시간 · 오류율 분석",
+      "pos": [
+        860,
+        350
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS 클러스터",
+      "wraps": [
+        "apps",
+        "daemon",
+        "adot"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 서비스",
+      "wraps": [
+        "xray",
+        "cw",
+        "lens",
+        "insights"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "apps-daemon",
+      "from": "apps",
+      "to": "daemon",
+      "label": "세그먼트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apps-adot",
+      "from": "apps",
+      "to": "adot",
+      "label": "OTLP"
+    },
+    {
+      "id": "daemon-xray",
+      "from": "daemon",
+      "to": "xray",
+      "label": "UDP/TCP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "adot-xray",
+      "from": "adot",
+      "to": "xray",
+      "label": "OTLP"
+    },
+    {
+      "id": "others-xray",
+      "from": "others",
+      "to": "xray",
+      "label": "자동 계측",
+      "variant": "dashed"
+    },
+    {
+      "id": "xray-cw",
+      "from": "xray",
+      "to": "cw"
+    },
+    {
+      "id": "xray-lens",
+      "from": "xray",
+      "to": "lens"
+    },
+    {
+      "id": "xray-insights",
+      "from": "xray",
+      "to": "insights"
+    }
+  ]
+}

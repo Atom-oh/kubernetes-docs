@@ -1,0 +1,251 @@
+{
+  "status": "passed",
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/SUMMARY.md",
+        "sha256": "0e2a32e283a3e905e6747d52a933e1d3dd2e1019c350056dbbca0f8f71c058cc",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h2",
+            "id": "소식"
+          },
+          {
+            "tag": "h2",
+            "id": "linux-container"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-핵심-개념"
+          },
+          {
+            "tag": "h2",
+            "id": "amazon-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "networking"
+          },
+          {
+            "tag": "h2",
+            "id": "service-mesh"
+          },
+          {
+            "tag": "h2",
+            "id": "storage"
+          },
+          {
+            "tag": "h2",
+            "id": "database"
+          },
+          {
+            "tag": "h2",
+            "id": "data-pipeline"
+          },
+          {
+            "tag": "h2",
+            "id": "ai-ml"
+          },
+          {
+            "tag": "h2",
+            "id": "security-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "gitops"
+          },
+          {
+            "tag": "h2",
+            "id": "엔터프라이즈-클라우드-거버넌스"
+          },
+          {
+            "tag": "h2",
+            "id": "platform-engineering"
+          },
+          {
+            "tag": "h2",
+            "id": "container-registry"
+          },
+          {
+            "tag": "h2",
+            "id": "observability"
+          },
+          {
+            "tag": "h2",
+            "id": "operations-guide"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-guides"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz-모음"
+          }
+        ],
+        "renderedIds": [
+          "table-of-contents",
+          "소개",
+          "소식",
+          "linux-container",
+          "kubernetes-핵심-개념",
+          "amazon-eks",
+          "networking",
+          "service-mesh",
+          "storage",
+          "database",
+          "data-pipeline",
+          "ai-ml",
+          "security-policy",
+          "gitops",
+          "엔터프라이즈-클라우드-거버넌스",
+          "platform-engineering",
+          "container-registry",
+          "observability",
+          "operations-guide",
+          "lab-guides",
+          "quiz-모음"
+        ]
+      },
+      {
+        "path": "en/SUMMARY.md",
+        "sha256": "73c94a60c4ada0914bb37c9da156c428433e5dfb6223130d5bfe84676e91a20f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h2",
+            "id": "news"
+          },
+          {
+            "tag": "h2",
+            "id": "linux-container"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-core-concepts"
+          },
+          {
+            "tag": "h2",
+            "id": "amazon-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "networking"
+          },
+          {
+            "tag": "h2",
+            "id": "service-mesh"
+          },
+          {
+            "tag": "h2",
+            "id": "storage"
+          },
+          {
+            "tag": "h2",
+            "id": "database"
+          },
+          {
+            "tag": "h2",
+            "id": "data-pipeline"
+          },
+          {
+            "tag": "h2",
+            "id": "ai-ml"
+          },
+          {
+            "tag": "h2",
+            "id": "security-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "gitops"
+          },
+          {
+            "tag": "h2",
+            "id": "enterprise-cloud-governance"
+          },
+          {
+            "tag": "h2",
+            "id": "platform-engineering"
+          },
+          {
+            "tag": "h2",
+            "id": "container-registry"
+          },
+          {
+            "tag": "h2",
+            "id": "observability"
+          },
+          {
+            "tag": "h2",
+            "id": "operations-guide"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-guides"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz-collection"
+          }
+        ],
+        "renderedIds": [
+          "table-of-contents",
+          "introduction",
+          "news",
+          "linux-container",
+          "kubernetes-core-concepts",
+          "amazon-eks",
+          "networking",
+          "service-mesh",
+          "storage",
+          "database",
+          "data-pipeline",
+          "ai-ml",
+          "security-policy",
+          "gitops",
+          "enterprise-cloud-governance",
+          "platform-engineering",
+          "container-registry",
+          "observability",
+          "operations-guide",
+          "lab-guides",
+          "quiz-collection"
+        ]
+      }
+    ]
+  },
+  "localLinksCheckedAgainst": "origin/main510b24c3pluscurrentworkingfiles",
+  "scope": "Navigationonly,notlinkedbodyreview",
+  "reviewFixes": {
+    "ids": [
+      "NAV-R1-001",
+      "NAV-R1-002",
+      "NAV-R1-003"
+    ],
+    "scope": "Recognizednewsupdatedates/kroprojectname/strictSpotconstraintwording;nativeoperationalexamplesunchanged"
+  }
+}

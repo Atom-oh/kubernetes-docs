@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Network Architecture",
+    "locale": "en",
+    "output": "en-networking-02-vpc-lattice-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "vpc-association",
+        "label": "VPC Association",
+        "focus": [
+          "vpc1",
+          "vpc2",
+          "vpc3",
+          "sn"
+        ],
+        "note": "Three VPCs from two accounts join one service network through VPC associations."
+      },
+      {
+        "id": "service-registration",
+        "label": "Service Registration",
+        "focus": [
+          "sn",
+          "svc1",
+          "svc2",
+          "svc3"
+        ],
+        "note": "Services registered with the service network are reachable from every associated VPC."
+      },
+      {
+        "id": "target-groups",
+        "label": "Target Group",
+        "focus": [
+          "svc1",
+          "svc2",
+          "svc3",
+          "tg1",
+          "tg2",
+          "tg3"
+        ],
+        "note": "Each service's target group forwards traffic to a different kind of target: an EC2 instance, an EKS pod, or a Lambda function."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "VPC"
+        },
+        "messagebus": {
+          "label": "Service Network"
+        },
+        "backend": {
+          "label": "VPC Lattice Service"
+        },
+        "external": {
+          "label": "Target Group (target type)"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "vpc1",
+      "type": "cloud",
+      "label": "VPC 1",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "vpc2",
+      "type": "cloud",
+      "label": "VPC 2",
+      "pos": [
+        60,
+        217
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "vpc3",
+      "type": "cloud",
+      "label": "VPC 3",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "sn",
+      "type": "messagebus",
+      "label": "Service Network",
+      "sublabel": "Logical boundary",
+      "pos": [
+        350,
+        200
+      ],
+      "size": [
+        170,
+        90
+      ]
+    },
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Service 1",
+      "pos": [
+        670,
+        110
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Service 2",
+      "pos": [
+        670,
+        217
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "backend",
+      "label": "Service 3",
+      "pos": [
+        670,
+        324
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "tg1",
+      "type": "external",
+      "label": "Target Group 1",
+      "sublabel": "Target: EC2 instance",
+      "pos": [
+        950,
+        110
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "tg2",
+      "type": "external",
+      "label": "Target Group 2",
+      "sublabel": "Target: EKS pod",
+      "pos": [
+        950,
+        217
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "tg3",
+      "type": "external",
+      "label": "Target Group 3",
+      "sublabel": "Target: Lambda function",
+      "pos": [
+        950,
+        324
+      ],
+      "size": [
+        190,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Account A",
+      "wraps": [
+        "vpc1",
+        "vpc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Account B",
+      "wraps": [
+        "vpc3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vpc1-sn",
+      "from": "vpc1",
+      "to": "sn",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "vpc2-sn",
+      "from": "vpc2",
+      "to": "sn",
+      "label": "VPC Association"
+    },
+    {
+      "id": "vpc3-sn",
+      "from": "vpc3",
+      "to": "sn",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sn-svc1",
+      "from": "sn",
+      "to": "svc1",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "sn-svc2",
+      "from": "sn",
+      "to": "svc2",
+      "label": "Service Registration",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sn-svc3",
+      "from": "sn",
+      "to": "svc3",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "svc1-tg1",
+      "from": "svc1",
+      "to": "tg1"
+    },
+    {
+      "id": "svc2-tg2",
+      "from": "svc2",
+      "to": "tg2",
+      "label": "Target Group",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc3-tg3",
+      "from": "svc3",
+      "to": "tg3"
+    }
+  ]
+}

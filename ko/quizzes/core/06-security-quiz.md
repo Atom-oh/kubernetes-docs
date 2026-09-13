@@ -7,7 +7,7 @@
 1. Kubernetes에서 사용자 인증을 위해 지원하는 방식이 아닌 것은 무엇인가요?
    - A) X.509 인증서
    - B) 서비스 계정 토큰
-   - C) OAuth 토큰
+   - C) OpenID Connect ID 토큰
    - D) 내장 사용자 데이터베이스
    
 <details>
@@ -16,7 +16,7 @@
 **정답: D) 내장 사용자 데이터베이스**
 
 **설명:**
-Kubernetes는 내장 사용자 데이터베이스를 제공하지 않습니다. 대신 X.509 인증서, 서비스 계정 토큰, OAuth 토큰, OpenID Connect 토큰, 웹훅 토큰 인증 등의 인증 방식을 지원합니다. 사용자 관리는 일반적으로 외부 시스템(예: LDAP, Active Directory)과 통합하여 수행합니다.
+Kubernetes는 내장 사용자 데이터베이스를 제공하지 않습니다. 대신 X.509 인증서, 서비스 계정 토큰, OIDC ID 토큰, 웹훅 토큰 인증을 지원합니다. 임의의 OAuth 액세스 토큰에는 적절한 인증기 구성이 필요합니다. 사용자 관리는 일반적으로 외부 시스템(예: LDAP, Active Directory)과 통합하여 수행합니다.
 </details>
 
 2. Kubernetes에서 RBAC(Role-Based Access Control)의 주요 구성 요소가 아닌 것은 무엇인가요?
@@ -31,7 +31,7 @@ Kubernetes는 내장 사용자 데이터베이스를 제공하지 않습니다. 
 **정답: D) SecurityPolicy**
 
 **설명:**
-Kubernetes RBAC의 주요 구성 요소는 Role, ClusterRole, RoleBinding, ClusterRoleBinding입니다. Role과 ClusterRole은 권한 집합을 정의하고, RoleBinding과 ClusterRoleBinding은 이러한 권한을 사용자, 그룹 또는 서비스 계정에 연결합니다. SecurityPolicy는 RBAC의 구성 요소가 아니며, 이와 유사한 리소스로는 PodSecurityPolicy(현재 deprecated) 또는 PodSecurityStandard가 있습니다.
+Kubernetes RBAC의 주요 구성 요소는 Role, ClusterRole, RoleBinding, ClusterRoleBinding입니다. Role과 ClusterRole은 권한 집합을 정의하고, RoleBinding과 ClusterRoleBinding은 이러한 권한을 사용자, 그룹 또는 서비스 계정에 연결합니다. SecurityPolicy는 RBAC의 구성 요소가 아니며, PodSecurityPolicy는 v1.25에서 제거되었습니다. Pod Security Standards는 Pod Security Admission이 집행하는 정책 정의이며 PodSecurityStandard API 리소스가 아닙니다.
 </details>
 
 3. Kubernetes에서 포드의 보안 컨텍스트(Security Context)를 통해 설정할 수 없는 것은 무엇인가요?
@@ -99,7 +99,7 @@ Kubernetes RBAC의 주요 구성 요소는 Role, ClusterRole, RoleBinding, Clust
 Restricted 정책은 가장 제한적이며, 최소 권한 원칙을 따르고 보안 모범 사례를 적용합니다. 이 정책은 권한 있는 컨테이너, 호스트 네임스페이스 공유, 호스트 경로 마운트 등을 금지합니다.
 </details>
 
-7. Kubernetes에서 Secret 데이터를 보호하기 위한 가장 효과적인 방법은 무엇인가요?
+7. etcd에 저장되는 Secret 데이터를 암호화하는 방법은 무엇인가요?
    - A) Base64로 인코딩
    - B) etcd 암호화 구성
    - C) 네임스페이스 분리
@@ -146,7 +146,7 @@ Kubernetes에서 Secret 데이터는 기본적으로 Base64로 인코딩되어 �
 
 10. Kubernetes에서 권한 있는(privileged) 컨테이너의 특징이 아닌 것은 무엇인가요?
     - A) 호스트의 모든 장치에 접근 가능
-    - B) 호스트 네트워크 스택 사용 가능
+    - B) 모든 Linux capability 부여
     - C) 호스트 커널 모듈 로드 가능
     - D) 다른 네임스페이스의 리소스에 자동 접근 가능
     
@@ -156,7 +156,7 @@ Kubernetes에서 Secret 데이터는 기본적으로 Base64로 인코딩되어 �
 **정답: D) 다른 네임스페이스의 리소스에 자동 접근 가능**
 
 **설명:**
-권한 있는 컨테이너는 호스트의 거의 모든 기능에 접근할 수 있지만, 다른 네임스페이스의 Kubernetes 리소스에 자동으로 접근할 수 있는 것은 아닙니다. 네임스페이스 간 접근은 RBAC 권한에 의해 제어됩니다. 권한 있는 컨테이너는 호스트의 장치, 네트워크 스택, 커널 모듈 등에 접근할 수 있어 보안 위험이 크므로, 꼭 필요한 경우에만 제한적으로 사용해야 합니다.
+권한 있는 컨테이너는 호스트의 거의 모든 기능에 접근할 수 있지만, 다른 네임스페이스의 Kubernetes 리소스에 자동으로 접근할 수 있는 것은 아닙니다. 네임스페이스 간 접근은 RBAC 권한에 의해 제어됩니다. `privileged: true`가 `hostNetwork: true`를 자동 설정하지는 않습니다. 그러나 주요 호스트 격리 장벽을 제거하므로 호스트 침해로 자격 증명이 노출되고 의도한 격리가 우회될 수 있습니다. RBAC만으로 침해된 특권 워크로드를 방어할 수는 없습니다.
 </details>
 
 ## 주관식 문제
@@ -167,7 +167,7 @@ Kubernetes에서 Secret 데이터는 기본적으로 Base64로 인코딩되어 �
 <summary>정답 보기</summary>
 
 **정답:**
-Role은 특정 네임스페이스 내에서만 권한을 정의하고 적용되는 반면, ClusterRole은 클러스터 전체에 적용되며 모든 네임스페이스에 걸쳐 권한을 정의합니다. ClusterRole은 네임스페이스가 없는 리소스(노드, PV 등)에 대한 권한을 정의할 때도 사용됩니다.
+Role은 네임스페이스 범위의 권한 정의입니다. ClusterRole은 클러스터 범위의 정의로 네임스페이스 리소스와 노드·PV 등 클러스터 리소스를 표현할 수 있습니다. RoleBinding으로 연결하면 해당 네임스페이스에 한정되고 ClusterRoleBinding이면 클러스터 전체에 부여됩니다. 역할을 정의하는 것만으로 누구에게도 권한이 생기지는 않습니다.
 </details>
 
 2. Kubernetes에서 '최소 권한 원칙'을 적용하기 위한 방법 세 가지를 설명하세요.
@@ -192,7 +192,7 @@ Role은 특정 네임스페이스 내에서만 권한을 정의하고 적용되�
 <summary>정답 보기</summary>
 
 **정답:**
-Secret은 민감한 정보(비밀번호, 토큰, 키 등)를 저장하기 위한 것이고, ConfigMap은 일반 구성 데이터를 저장하기 위한 것입니다. Secret은 Base64로 인코딩되어 저장되며(기본적으로는 암호화되지 않음), 메모리에만 마운트되도록 설정할 수 있고, 포드 생성 시에만 참조됩니다. 그러나 추가 구성 없이는 둘 다 etcd에 평문으로 저장되므로, 완전한 보안을 위해서는 etcd 암호화 설정이 필요합니다.
+Secret은 민감한 정보(비밀번호, 토큰, 키 등)를 저장하기 위한 것이고, ConfigMap은 일반 구성 데이터를 저장하기 위한 것입니다. Secret `data`의 API 표현은 base64이며 암호화가 아닙니다. Linux의 전체 Secret 볼륨은 메모리 기반 저장소를 사용하고 파드 생성 후에도 갱신될 수 있으므로 앱이 다시 읽어야 합니다. 저장 시 암호화는 클러스터 구성에 따라 다르며 EKS 1.28+는 API 데이터를 기본 암호화합니다. RBAC와 파드의 최소 권한 접근은 여전히 필요합니다.
 </details>
 
 4. Kubernetes에서 '서비스 계정 토큰 볼륨 프로젝션'의 목적과 이점은 무엇인가요?
@@ -201,7 +201,7 @@ Secret은 민감한 정보(비밀번호, 토큰, 키 등)를 저장하기 위한
 <summary>정답 보기</summary>
 
 **정답:**
-서비스 계정 토큰 볼륨 프로젝션은 포드에 마운트되는 서비스 계정 토큰에 대해 시간 제한, 대상 청중 제한 등의 추가 보안 기능을 제공합니다. 이를 통해 토큰의 수명을 제한하고, 특정 API 서버만 토큰을 수락하도록 할 수 있어 토큰 유출 시 위험을 줄일 수 있습니다. 또한 토큰이 자동으로 갱신되므로 장기 실행 애플리케이션의 인증 문제를 방지할 수 있습니다.
+서비스 계정 토큰 볼륨 프로젝션은 포드에 마운트되는 서비스 계정 토큰에 대해 시간 제한, 대상 청중 제한 등의 추가 보안 기능을 제공합니다. 이를 통해 토큰의 수명을 제한하고, 특정 API 서버만 토큰을 수락하도록 할 수 있어 토큰 유출 시 위험을 줄일 수 있습니다. kubelet이 프로젝션 토큰을 갱신하므로 앱도 다시 읽어야 하며 수신자는 audience와 만료를 검증해야 합니다. 앱이 토큰을 영구 캐시하면 자동 갱신만으로 그 캐시가 바뀌지는 않습니다.
 </details>
 
 5. Kubernetes에서 '컨테이너 샌드박싱'이란 무엇이며, 어떤 기술이 이를 구현하는 데 사용될 수 있나요?
@@ -240,7 +240,7 @@ metadata:
   namespace: monitoring
   name: pod-reader
 rules:
-  - apiGroups: [""]
+- apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
 ---
@@ -293,7 +293,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: frontend
+          kubernetes.io/metadata.name: frontend
     ports:
     - protocol: TCP
       port: 8080
@@ -306,10 +306,7 @@ spec:
 kubectl apply -f backend-network-policy.yaml
 ```
 
-참고: 이 NetworkPolicy가 작동하려면 'frontend' 네임스페이스에 'name: frontend' 레이블이 있어야 합니다. 없다면 다음 명령으로 추가할 수 있습니다:
-```bash
-kubectl label namespace frontend name=frontend
-```
+기본 `kubernetes.io/metadata.name: frontend` 네임스페이스 레이블을 사용하므로 사용자 정의 레이블이 필요 없습니다. 다른 정책의 허용 규칙과 출발지 파드의 egress 정책도 연결 가능 여부에 영향을 줍니다.
 </details>
 
 3. 다음 요구 사항에 맞는 보안 컨텍스트가 적용된 포드를 생성하세요:
@@ -331,7 +328,8 @@ metadata:
 spec:
   containers:
   - name: secure-container
-    image: nginx
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
     securityContext:
       runAsUser: 1000
       allowPrivilegeEscalation: false
@@ -411,7 +409,7 @@ kubectl apply -f pod-with-secret.yaml
 
 **정답:**
 
-OPA Gatekeeper는 Kubernetes 클러스터에 정책을 적용하기 위한 강력한 도구입니다. 다음은 적용할 수 있는 정책의 예입니다:
+OPA Gatekeeper는 Kubernetes 클러스터에 정책을 적용하기 위한 강력한 도구입니다. 아래 제약을 생성하기 전에 Gatekeeper와 공식 정책 라이브러리의 해당 ConstraintTemplate을 설치해야 합니다. Constraint 종류는 기본 Kubernetes API가 아니며 레지스트리 허용 목록만으로 이미지 서명이 검증되지는 않습니다. 다음은 적용할 수 있는 정책의 예입니다:
 
 1. **이미지 레지스트리 제한**: 승인된 레지스트리에서만 이미지를 가져오도록 강제하여 신뢰할 수 없는 소스의 이미지 사용을 방지합니다.
    ```yaml
@@ -477,7 +475,7 @@ mTLS(mutual TLS)는 클라이언트와 서버 모두 인증서를 사용하여 �
 1. **서비스 메시 사용**: Istio, Linkerd와 같은 서비스 메시는 사이드카 프록시를 통해 mTLS를 자동으로 구현합니다.
    ```yaml
    # Istio 예시
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -487,7 +485,7 @@ mTLS(mutual TLS)는 클라이언트와 서버 모두 인증서를 사용하여 �
        mode: STRICT
    ```
 
-2. **네트워크 정책과 함께 사용**: mTLS와 네트워크 정책을 결합하여 인증된 트래픽만 허용합니다.
+2. **네트워크 정책과 함께 사용**: NetworkPolicy는 L3/L4 연결을 제한하고 인증서 인증은 메시가 담당합니다. 워크로드를 메시에 등록하고 mTLS와 메시 인가 정책으로 인증된 ID의 접근을 제한하세요.
 
 3. **인증서 관리**: cert-manager와 같은 도구를 사용하여 인증서 수명 주기를 관리합니다.
    ```yaml
@@ -530,28 +528,28 @@ Kubernetes에서 공급망 보안을 강화하기 위한 방법은 다음과 같
    - Cosign, Notary 등의 도구를 사용하여 컨테이너 이미지에 서명
    - 서명된 이미지만 배포되도록 정책 적용 (예: OPA Gatekeeper, Kyverno)
    ```bash
-   cosign sign --key cosign.key docker.io/company/app:latest
+   cosign sign --key cosign.key "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
 2. **소프트웨어 자재 명세서(SBOM) 생성 및 검증**:
    - Syft, Anchore 등의 도구를 사용하여 SBOM 생성
    - 이미지에 포함된 모든 소프트웨어 구성 요소 추적
    ```bash
-   syft docker.io/company/app:latest -o spdx-json > sbom.json
+   syft "${IMAGE_REF:?Set repository@sha256:digest}" -o spdx-json > sbom.json
    ```
 
 3. **취약점 스캐닝**:
    - Trivy, Clair 등의 도구를 사용하여 이미지 취약점 스캔
    - CI/CD 파이프라인에 스캐닝 통합
    ```bash
-   trivy image docker.io/company/app:latest
+   trivy image "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
 4. **최소 기본 이미지 사용**:
    - 공격 표면을 줄이기 위해 distroless, scratch 등의 최소 이미지 사용
    ```dockerfile
-   FROM gcr.io/distroless/java:11
-   COPY --from=build /app/target/app.jar /app.jar
+   FROM gcr.io/distroless/java21-debian13:nonroot
+   COPY app.jar /app.jar
    CMD ["app.jar"]
    ```
 
@@ -559,7 +557,7 @@ Kubernetes에서 공급망 보안을 강화하기 위한 방법은 다음과 같
    - 이미지 연령, 취약점 심각도, 레지스트리 출처 등에 기반한 정책 적용
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
-   kind: K8sTrustedImages
+   kind: K8sAllowedRepos
    metadata:
      name: trusted-images
    spec:
@@ -568,7 +566,7 @@ Kubernetes에서 공급망 보안을 강화하기 위한 방법은 다음과 같
          - apiGroups: [""]
            kinds: ["Pod"]
      parameters:
-       allowedRegistries:
+       repos:
          - "docker.io/company/"
          - "gcr.io/verified/"
    ```
@@ -607,7 +605,7 @@ Kubernetes에서 공급망 보안을 강화하기 위한 방법은 다음과 같
    rules:
    - apiGroups: [""]
      resources: ["pods"]
-     verbs: ["get", "list"]
+     verbs: ["get"]
      resourceNames: ["app-pod"]
    ```
 
@@ -631,7 +629,7 @@ Kubernetes에서 공급망 보안을 강화하기 위한 방법은 다음과 같
    - 서비스 메시(Istio, Linkerd 등)를 사용하여 모든 서비스 간 통신에 mTLS 적용
    - 인증서 기반 서비스 신원 확인
    ```yaml
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -661,12 +659,23 @@ Kubernetes에서 공급망 보안을 강화하기 위한 방법은 다음과 같
    - 읽기 전용 파일 시스템 사용
    - 보안 컨텍스트 제한 적용
    ```yaml
-   securityContext:
-     runAsUser: 1000
-     runAsGroup: 3000
-     fsGroup: 2000
-     readOnlyRootFilesystem: true
-     allowPrivilegeEscalation: false
+   spec:
+     securityContext:
+       runAsUser: 1000
+       runAsGroup: 3000
+       fsGroup: 2000
+       runAsNonRoot: true
+       seccompProfile:
+         type: RuntimeDefault
+     containers:
+     - name: app
+       image: busybox:1.36
+       command: ["sh", "-c", "sleep 3600"]
+       securityContext:
+         readOnlyRootFilesystem: true
+         allowPrivilegeEscalation: false
+         capabilities:
+           drop: ["ALL"]
    ```
 
 8. **지속적인 보안 태세 평가**:
@@ -696,7 +705,7 @@ Kubernetes에서 런타임 보안을 위한 주요 도구와 기술은 다음과
      ```yaml
      - rule: Terminal shell in container
        desc: A shell was spawned by a container
-       condition: container and proc.name = bash
+       condition: spawned_process and container and proc.name = bash and proc.tty != 0
        output: Shell opened in container (user=%user.name container=%container.name)
        priority: WARNING
      ```
@@ -718,13 +727,17 @@ Kubernetes에서 런타임 보안을 위한 주요 도구와 기술은 다음과
          seccompProfile:
            type: Localhost
            localhostProfile: profiles/audit.json
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 3. **AppArmor**:
    - **작동 방식**: 프로그램별 접근 제어 프로필 적용
    - **특징**:
      - 파일, 네트워크, 기능 등에 대한 세밀한 접근 제어
-     - Linux 배포판에 기본 포함
+     - AppArmor가 활성화되고 프로필이 미리 로드된 Linux 노드 필요
      - 컨테이너별 프로필 적용 가능
    - **구현 예**:
      ```yaml
@@ -732,15 +745,22 @@ Kubernetes에서 런타임 보안을 위한 주요 도구와 기술은 다음과
      kind: Pod
      metadata:
        name: apparmor-pod
-       annotations:
-         container.apparmor.security.beta.kubernetes.io/container1: localhost/restricted
+     spec:
+       containers:
+       - name: container1
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
+         securityContext:
+           appArmorProfile:
+             type: Localhost
+             localhostProfile: restricted
      ```
 
 4. **SELinux**:
    - **작동 방식**: 강제적 접근 제어(MAC) 정책 적용
    - **특징**:
      - 세밀한 레이블 기반 보안 정책
-     - 군사급 보안 표준 지원
+     - 호스트에 구성된 SELinux 정책 집행
      - 복잡한 설정 필요
    - **구현 예**:
      ```yaml
@@ -752,10 +772,14 @@ Kubernetes에서 런타임 보안을 위한 주요 도구와 기술은 다음과
        securityContext:
          seLinuxOptions:
            level: "s0:c123,c456"
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 5. **OPA Gatekeeper**:
-   - **작동 방식**: 정책 기반 제어를 통한 런타임 거버넌스
+   - **작동 방식**: API 객체 admission 집행과 주기적 감사이며 시스템 콜 모니터링은 아님
    - **특징**:
      - 선언적 정책 정의
      - 광범위한 정책 적용 범위
@@ -813,9 +837,11 @@ Kubernetes에서 런타임 보안을 위한 주요 도구와 기술은 다음과
      handler: kata
      ```
 
+seccomp Localhost 프로필은 대상 노드의 kubelet seccomp 프로필 디렉토리에 있어야 하며 audit 전용 프로필은 호출을 차단하지 않고 기록합니다. AppArmor·SELinux는 호스트 지원과 프로필·레이블 구성이 필요합니다. RuntimeClass 핸들러(`runsc`, `kata`)는 CRI 런타임에 설치·설정되어야 하고 파드는 `runtimeClassName`을 선택해야 합니다. RuntimeClass 생성은 런타임 설치가 아닙니다. Java Dockerfile은 빌드 컨텍스트의 호환되는 사전 빌드 `app.jar`를 가정합니다.
+
 **비교 및 선택 기준**:
-  - **보안 수준**: Kata Containers와 gVisor는 가장 강력한 격리 제공
-  - **성능 영향**: Seccomp는 최소한의 오버헤드, Kata Containers는 가장 큰 오버헤드
+  - **보안 수준**: Kata Containers와 gVisor는 격리 경계를 추가하며 위협 모델에 따라 선택
+  - **성능 영향**: 실제 워크로드의 시작·I/O·메모리·시스템 콜 오버헤드를 측정
   - **구현 복잡성**: Seccomp와 AppArmor는 비교적 쉬움, SELinux는 복잡함
   - **모니터링 vs 방지**: Falco는 주로 모니터링, 다른 도구들은 예방적 보호 제공
   - **통합 용이성**: OPA Gatekeeper는 Kubernetes와 긴밀하게 통합

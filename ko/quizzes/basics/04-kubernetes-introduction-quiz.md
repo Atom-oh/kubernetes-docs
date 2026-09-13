@@ -81,7 +81,7 @@ Kubernetes의 서비스 유형은 ClusterIP, NodePort, LoadBalancer, ExternalNam
 **정답: C) ReplicaSet**
 
 **설명:**
-ReplicaSet은 지정된 수의 파드 복제본이 항상 실행되도록 보장합니다. 파드가 실패하거나 삭제되면 ReplicaSet은 자동으로 대체 파드를 생성합니다. Service는 파드 집합에 대한 단일 엔드포인트와 로드 밸런싱을 제공하고, ConfigMap은 구성 데이터를 저장하며, Namespace는 리소스 그룹을 격리하는 방법을 제공합니다.
+ReplicaSet은 원하는 Pod 개수를 조정하며 이미지/스케줄링/앱 오류가 있어도 모든 Pod의 Ready를 보장하는 것은 아닙니다. 파드가 실패하거나 삭제되면 ReplicaSet은 자동으로 대체 파드를 생성합니다. Service는 파드 집합에 대한 단일 엔드포인트와 로드 밸런싱을 제공하고, ConfigMap은 구성 데이터를 저장하며, Namespace는 리소스 그룹을 격리하는 방법을 제공합니다.
 </details>
 
 6. Kubernetes에서 상태 유지가 필요한 애플리케이션을 위한 워크로드 리소스는 무엇인가요?
@@ -98,6 +98,7 @@ ReplicaSet은 지정된 수의 파드 복제본이 항상 실행되도록 보장
 
 **설명:**
 StatefulSet은 상태 유지가 필요한 애플리케이션을 위한 워크로드 리소스입니다. 각 파드에 고유한 식별자를 부여하고, 안정적인 네트워크 식별자와 영구 스토리지를 제공합니다. 데이터베이스와 같이 상태를 유지해야 하는 애플리케이션에 적합합니다. Deployment는 상태가 없는 애플리케이션을 위한 것이고, DaemonSet은 모든 노드에서 파드의 복사본을 실행하도록 보장하며, Job은 일회성 작업을 실행합니다.
+StatefulSet 스토리지는 PVC/드라이버가 필요하며 데이터 복제/백업을 자동 구성하지 않습니다.
 </details>
 
 7. Kubernetes에서 모든 노드에서 파드의 복사본을 실행하도록 보장하는 리소스는 무엇인가요?
@@ -113,7 +114,7 @@ StatefulSet은 상태 유지가 필요한 애플리케이션을 위한 워크로
 **정답: C) DaemonSet**
 
 **설명:**
-DaemonSet은 모든 노드(또는 특정 노드)에서 파드의 복사본을 실행하도록 보장합니다. 노드가 클러스터에 추가되면 파드가 자동으로 추가되고, 노드가 제거되면 파드도 제거됩니다. 로그 수집기, 모니터링 에이전트, 네트워크 플러그인과 같은 백그라운드 서비스를 실행하는 데 주로 사용됩니다.
+DaemonSet은 스케줄링/admission 조건을 만족하는 각 노드에 Pod를 조정합니다. 노드가 클러스터에 추가되면 파드가 자동으로 추가되고, 노드가 제거되면 파드도 제거됩니다. 로그 수집기, 모니터링 에이전트, 네트워크 플러그인과 같은 백그라운드 서비스를 실행하는 데 주로 사용됩니다.
 </details>
 
 8. Kubernetes에서 일정에 따라 작업을 주기적으로 실행하는 리소스는 무엇인가요?
@@ -145,7 +146,7 @@ CronJob은 지정된 일정에 따라 Job을 주기적으로 실행합니다. �
 **정답: C) Namespace**
 
 **설명:**
-Namespace는 단일 클러스터 내에서 리소스 그룹을 격리하는 방법을 제공합니다. 이는 여러 팀이나 프로젝트가 동일한 클러스터를 사용할 때 유용합니다. Label은 객체에 연결된 키-값 쌍으로 객체를 식별하고 선택하는 데 사용되고, Annotation은 객체에 대한 비식별 메타데이터를 저장하는 키-값 쌍이며, ConfigMap은 구성 데이터를 저장합니다.
+Namespace는 이름과 리소스 구성을 구분하며 접근/사용량/네트워크 제한에는 RBAC, quota, NetworkPolicy 등이 추가로 필요합니다. 이는 여러 팀이나 프로젝트가 동일한 클러스터를 사용할 때 유용합니다. Label은 객체에 연결된 키-값 쌍으로 객체를 식별하고 선택하는 데 사용되고, Annotation은 객체에 대한 비식별 메타데이터를 저장하는 키-값 쌍이며, ConfigMap은 구성 데이터를 저장합니다.
 </details>
 
 10. Amazon EKS와 자체 관리형 Kubernetes의 주요 차이점이 아닌 것은 무엇인가요?
@@ -161,12 +162,12 @@ Namespace는 단일 클러스터 내에서 리소스 그룹을 격리하는 방�
 **정답: B) 기본 Kubernetes API**
 
 **설명:**
-Amazon EKS와 자체 관리형 Kubernetes 모두 동일한 표준 Kubernetes API를 사용합니다. 주요 차이점은 컨트롤 플레인 관리(EKS는 AWS에서 관리), 고가용성 구성(EKS는 기본 제공), 보안 패치 적용(EKS는 AWS에서 자동 적용) 등에 있습니다. EKS는 Kubernetes의 기본 기능을 모두 제공하면서도 AWS 서비스와의 통합과 관리 편의성을 추가로 제공합니다.
+Amazon EKS와 자체 관리형 Kubernetes 모두 동일한 표준 Kubernetes API를 사용합니다. 주요 차이점은 컨트롤 플레인 관리(EKS는 AWS에서 관리), 고가용성 구성(EKS는 기본 제공), 컨트롤 플레인 보안 패치 적용(EKS는 AWS에서 수행; 관리형 노드 AMI 업데이트 배포는 사용자 책임) 등에 있습니다. EKS는 Kubernetes의 기본 기능을 모두 제공하면서도 AWS 서비스와의 통합과 관리 편의성을 추가로 제공합니다.
 </details>
 
 ## 단답형 문제
 
-11. Kubernetes에서 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소는 무엇인가요?
+11. Kubernetes에서 Kubernetes API 객체와 클러스터 상태(애플리케이션 볼륨 내용 제외)를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소는 무엇인가요?
 
 <details>
 
@@ -175,7 +176,7 @@ Amazon EKS와 자체 관리형 Kubernetes 모두 동일한 표준 Kubernetes API
 **정답: etcd**
 
 **설명:**
-etcd는 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소입니다. Kubernetes의 모든 객체 정보, 상태, 구성 등이 etcd에 저장됩니다. etcd는 분산 시스템으로 설계되어 있어 고가용성을 제공하며, 강한 일관성을 보장합니다.
+etcd는 Kubernetes API 객체와 클러스터 상태(애플리케이션 볼륨 내용 제외)를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소입니다. Kubernetes의 모든 객체 정보, 상태, 구성 등이 etcd에 저장됩니다. etcd는 분산 시스템으로 설계되어 있어 고가용성을 제공하며, 강한 일관성을 보장합니다.
 </details>
 
 12. Kubernetes에서 새로 생성된 파드를 실행할 노드를 선택하는 컨트롤 플레인 구성 요소는 무엇인가요?
@@ -223,7 +224,7 @@ ConfigMap은 키-값 쌍의 형태로 구성 데이터를 저장하는 API 객�
 **정답: Secret**
 
 **설명:**
-Secret은 암호, 토큰, 키와 같은 민감한 정보를 저장하는 API 객체입니다. ConfigMap과 유사하지만, 민감한 데이터를 위해 설계되었습니다. Secret은 base64로 인코딩되어 저장되며, 파드에 환경 변수나 볼륨으로 마운트할 수 있습니다. Kubernetes는 다양한 유형의 Secret(Opaque, TLS, Docker registry 등)을 지원합니다.
+Secret은 암호, 토큰, 키와 같은 민감한 정보를 저장하는 API 객체입니다. ConfigMap과 유사하지만, 민감한 데이터를 위해 설계되었습니다. YAML/JSON의 Secret data는 base64 인코딩이며 암호화가 아닙니다. 저장 암호화는 클러스터 구성에 따르며 RBAC 보호가 필요합니다. Pod에서 환경 변수/볼륨으로 사용할 수 있습니다. Kubernetes는 다양한 유형의 Secret(Opaque, TLS, Docker registry 등)을 지원합니다.
 </details>
 
 ## 실습 문제
@@ -232,7 +233,7 @@ Secret은 암호, 토큰, 키와 같은 민감한 정보를 저장하는 API 객
     - 이름: nginx-deployment
     - 레이블: app=nginx
     - 복제본 수: 3
-    - 컨테이너 이미지: nginx:1.21
+    - 컨테이너 이미지: nginx:1.30.4
     - 컨테이너 포트: 80
     - 리소스 요청: CPU 100m, 메모리 128Mi
     - 리소스 제한: CPU 200m, 메모리 256Mi
@@ -246,35 +247,36 @@ Secret은 암호, 토큰, 키와 같은 민감한 정보를 저장하는 API 객
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-name: nginx-deployment
-labels:
-app: nginx
+  name: nginx-deployment
+  labels:
+    app: nginx
 spec:
-replicas: 3
-selector:
-matchLabels:
-app: nginx
-template:
-metadata:
-labels:
-app: nginx
-spec:
-containers:
-  - name: nginx
-image: nginx:1.21
-ports:
-  - containerPort: 80
-resources:
-requests:
-cpu: 100m
-memory: 128Mi
-limits:
-cpu: 200m
-memory: 256Mi
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.30.4
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
 ```
 
 **설명:**
-이 YAML 파일은 nginx:1.21 이미지를 사용하는 3개의 복제본을 가진 Deployment를 정의합니다. 각 컨테이너는 포트 80을 노출하고, CPU 요청 100m, 메모리 요청 128Mi, CPU 제한 200m, 메모리 제한 256Mi의 리소스 제약을 가집니다. selector 필드는 Deployment가 관리할 파드를 식별하는 방법을 정의합니다.
+이 YAML 파일은 nginx:1.30.4 이미지를 사용하는 3개의 복제본을 가진 Deployment를 정의합니다. 각 컨테이너는 포트 80을 노출하고, CPU 요청 100m, 메모리 요청 128Mi, CPU 제한 200m, 메모리 제한 256Mi의 리소스 제약을 가집니다. selector 필드는 Deployment가 관리할 파드를 식별하는 방법을 정의합니다.
+위 Deployment에는 애플리케이션 준비 검사도 환경에 맞게 추가합니다.
 </details>
 
 17. 다음 요구사항을 충족하는 Kubernetes Service YAML 파일을 작성하세요:
@@ -293,26 +295,27 @@ memory: 256Mi
 apiVersion: v1
 kind: Service
 metadata:
-name: nginx-service
+  name: nginx-service
 spec:
-type: LoadBalancer
-ports:
+  type: LoadBalancer
+  ports:
   - port: 80
-targetPort: 80
-selector:
-app: nginx
+    targetPort: 80
+  selector:
+    app: nginx
 ```
 
 **설명:**
 이 YAML 파일은 LoadBalancer 유형의 Service를 정의합니다. 이 서비스는 app=nginx 레이블을 가진 파드를 대상으로 하며, 서비스의 포트 80을 파드의 포트 80에 매핑합니다. LoadBalancer 유형은 클라우드 제공자의 로드 밸런서를 사용하여 서비스를 외부에 노출합니다.
+LoadBalancer 컨트롤러와 클라우드/로컬 네트워크 구성이 필요합니다. 외부 주소가 Pending이면 해당 구현을 확인하며 로컬 학습에서는 port-forward를 사용할 수 있습니다.
 </details>
 
 18. 다음 요구사항을 충족하는 Kubernetes ConfigMap YAML 파일을 작성하세요:
     - 이름: app-config
     - 데이터:
-      - DATABASE_URL: "mysql://user:password@mysql:3306/db"
-      - API_KEY: "abcdef123456"
+      - DATABASE_URL: "mysql://mysql.default.svc.cluster.local:3306/db" (자격 증명 제외)
       - LOG_LEVEL: "INFO"
+    - DB 사용자/암호와 API_KEY는 별도 Secret에 저장
 
 <details>
 
@@ -323,15 +326,25 @@ app: nginx
 apiVersion: v1
 kind: ConfigMap
 metadata:
-name: app-config
+  name: app-config
 data:
-DATABASE_URL: "mysql://user:password@mysql:3306/db"
-API_KEY: "abcdef123456"
-LOG_LEVEL: "INFO"
+  DATABASE_URL: mysql://mysql.default.svc.cluster.local:3306/db
+  LOG_LEVEL: INFO
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+type: Opaque
+stringData:
+  DB_USERNAME: replace-from-protected-source
+  DB_PASSWORD: replace-from-protected-source
+  API_KEY: replace-from-protected-source
 ```
 
 **설명:**
-이 YAML 파일은 app-config라는 이름의 ConfigMap을 정의합니다. ConfigMap은 키-값 쌍의 형태로 구성 데이터를 저장하며, 여기서는 DATABASE_URL, API_KEY, LOG_LEVEL이라는 세 개의 키와 그에 해당하는 값을 포함합니다. 이 ConfigMap은 파드에 환경 변수나 볼륨으로 마운트하여 사용할 수 있습니다.
+이 YAML 파일은 app-config라는 이름의 ConfigMap을 정의합니다. ConfigMap은 키-값 쌍의 형태로 구성 데이터를 저장하며, 여기서는 민감하지 않은 DATABASE_URL과 LOG_LEVEL만 포함합니다. DB 자격 증명과 API_KEY는 별도 Secret으로 분리합니다. 이 ConfigMap은 파드에 환경 변수나 볼륨으로 마운트하여 사용할 수 있습니다.
+Secret 값은 설명용 자리표시자입니다. 실제 값은 보호된 입력/시크릿 관리자를 사용하고 저장소에 커밋하지 않습니다. stringData도 저장 암호화를 대신하지 않습니다.
 </details>
 
 ## 심화 문제
@@ -357,12 +370,23 @@ RBAC의 주요 구성 요소:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-namespace: development
-name: pod-reader
+  name: pod-reader
+  namespace: development
 rules:
-  - apiGroups: [""]
-resources: ["pods", "pods/log"]
-verbs: ["get", "watch", "list"]
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ''
+  resources:
+  - pods/log
+  verbs:
+  - get
 ```
 
 이 Role을 사용자에게 바인딩하는 RoleBinding:
@@ -370,19 +394,20 @@ verbs: ["get", "watch", "list"]
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-name: read-pods
-namespace: development
+  name: read-pods
+  namespace: development
 subjects:
-  - kind: User
-name: jane
-apiGroup: rbac.authorization.k8s.io
+- kind: User
+  name: jane
+  apiGroup: rbac.authorization.k8s.io
 roleRef:
-kind: Role
-name: pod-reader
-apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
 ```
 
 이 YAML 파일들은 development 네임스페이스에서 파드를 조회하고 로그를 볼 수 있는 pod-reader라는 역할을 정의하고, 이 역할을 jane이라는 사용자에게 바인딩합니다. 이제 jane은 development 네임스페이스에서 파드 목록을 조회하고 로그를 볼 수 있지만, 파드를 생성, 수정 또는 삭제할 수는 없습니다.
+development 네임스페이스와 외부 인증으로 식별되는 jane 사용자가 필요합니다. RoleBinding은 사용자 계정을 생성하지 않습니다.
 </details>
 
 20. Kubernetes의 네트워크 정책(NetworkPolicy)에 대해 설명하고, 특정 네임스페이스의 데이터베이스 파드가 같은 네임스페이스의 백엔드 파드로부터만 트래픽을 받을 수 있도록 하는 NetworkPolicy YAML을 작성하세요.
@@ -406,27 +431,54 @@ apiGroup: rbac.authorization.k8s.io
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-name: db-network-policy
-namespace: production
+  name: db-network-policy
+  namespace: production
 spec:
-podSelector:
-matchLabels:
-role: database
-policyTypes:
+  podSelector:
+    matchLabels:
+      role: database
+  policyTypes:
   - Ingress
-ingress:
+  ingress:
   - from:
-  - podSelector:
-matchLabels:
-role: backend
-ports:
-  - protocol: TCP
-port: 3306
+    - podSelector:
+        matchLabels:
+          role: backend
+    ports:
+    - protocol: TCP
+      port: 3306
 ```
 
-이 NetworkPolicy는 production 네임스페이스에서 role=database 레이블을 가진 파드에 적용됩니다. 이 정책은 같은 네임스페이스에서 role=backend 레이블을 가진 파드로부터의 TCP 포트 3306(MySQL 기본 포트)으로의 인그레스 트래픽만 허용합니다. 다른 모든 인그레스 트래픽은 차단됩니다. 이그레스 트래픽은 이 정책에 의해 제한되지 않습니다.
+이 NetworkPolicy는 production 네임스페이스에서 role=database 레이블을 가진 파드에 적용됩니다. 이 정책은 같은 네임스페이스에서 role=backend 레이블을 가진 파드로부터의 TCP 포트 3306(MySQL 기본 포트)으로의 인그레스 트래픽만 허용합니다. 다른 정책이 추가로 허용하지 않는 인그레스 트래픽은 차단됩니다. 이그레스 트래픽은 이 정책에 의해 제한되지 않습니다.
+production 네임스페이스와 NetworkPolicy를 실제로 적용하는 네트워크 플러그인이 필요합니다. 정책의 허용 규칙은 합산되므로 다른 정책이 추가 접근을 허용할 수 있습니다. 이 정책은 egress를 제한하지 않습니다.
 </details>
 
 ---
 
 [학습 자료로 돌아가기](../../basics/04-kubernetes-introduction.md) | [다음 퀴즈: 클러스터 아키텍처](../core/01-cluster-architecture-quiz.md)
+
+## 검증 참고 자료
+
+- https://kubernetes.io/releases/version-skew-policy/
+- https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+- https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
+- https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+- https://kubernetes.io/docs/reference/networking/virtual-ips/
+- https://kubernetes.io/docs/concepts/services-networking/network-policies/
+- https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/
+- https://coredns.io/plugins/kubernetes/
+- https://github.com/fluent/fluent-bit/releases/tag/v5.1.2
+- https://github.com/fluent/fluent-bit/blob/v5.1.2/conf/parsers.conf
+- https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html
+- https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
+- https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html
+- https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html
+- https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+- https://eksctl.io/installation/
+- https://minikube.sigs.k8s.io/docs/tutorials/multi_node/
+- https://kind.sigs.k8s.io/docs/user/quick-start/
+- https://github.com/kubernetes/dashboard/blob/master/README.md
+- https://headlamp.dev/docs/latest/installation/in-cluster/
+- https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml

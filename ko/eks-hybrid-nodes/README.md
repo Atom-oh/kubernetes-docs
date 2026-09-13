@@ -1,8 +1,9 @@
 # EKS Hybrid Nodes
 
-> **지원 버전**: EKS 1.31+, nodeadm 0.1+ **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: 현재 EKS 지원 버전; 예제 검토 기준 EKS 1.36 / nodeadm 1.0.20
+> **마지막 업데이트**: 2026년 9월 13일
 
-Amazon EKS Hybrid Nodes는 온프레미스 서버를 AWS EKS 컨트롤 플레인에서 관리할 수 있게 해주는 기능입니다. 이 문서에서는 EKS Hybrid Nodes의 개념, 설정 방법, 그리고 실제 운영 환경에서의 활용 방법을 상세히 다룹니다.
+Amazon EKS Hybrid Nodes는 고객이 운영하는 온프레미스·엣지 노드를 AWS 관리형 EKS control plane에 연결합니다. Host·OS·연결·workload 운영은 계속 사용자 책임입니다. 이 가이드는 지원 인터페이스와 예제 구성을 구분하며 특정 온프레미스 프로덕션 배포를 검증했다는 증거가 아닙니다.
 
 ## 목차
 
@@ -17,11 +18,9 @@ Amazon EKS Hybrid Nodes는 온프레미스 서버를 AWS EKS 컨트롤 플레인
 9. [베어메탈 서버 OS 설치 및 마이그레이션 가이드](09-bare-metal-os-setup.md)
 10. [Hybrid Nodes Gateway](10-hybrid-nodes-gateway.md)
 
-## EKS Hybrid Nodes 개요
+## Hybrid Nodes 개요
 
-### Hybrid Nodes란?
-
-EKS Hybrid Nodes는 온프레미스 데이터센터나 엣지 환경에 있는 서버를 AWS EKS 컨트롤 플레인에서 관리되는 Kubernetes 노드로 등록할 수 있게 해주는 기능입니다. 이를 통해 클라우드와 온프레미스 인프라를 단일 Kubernetes 클러스터로 통합 관리할 수 있습니다.
+Hybrid Nodes와 일반 AWS compute node는 같은 cluster에 있을 수 있습니다. 반면 cloud machine을 **hybrid** node로 등록하는 것은 별개입니다. AWS Region·Local Zone·Outposts·다른 cloud를 hybrid-node 인프라로 사용하는 것은 지원하지 않으며 EC2에서도 hybrid 요금이 발생합니다.
 
 ![온프레미스 라우터와 게이트웨이를 거쳐 AWS VPC의 컨트롤 플레인 ENI까지 이어지는 EKS 하이브리드 노드 네트워크 개요 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-highlevel-0.png)
 
@@ -33,86 +32,70 @@ EKS Hybrid Nodes는 온프레미스 데이터센터나 엣지 환경에 있는 �
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-prereq-0.html)
 
-### 왜 Hybrid Nodes를 사용하는가?
+그림은 private 연결·라우팅 구조이며 모든 on-prem route/firewall/AWS service endpoint의 자동 생성을 뜻하지 않습니다.
 
-#### 1. 규제 준수 및 데이터 주권
+## 사용 사례와 데이터 경계
 
-특정 산업(금융, 의료, 공공기관)에서는 데이터가 특정 지역이나 시설을 벗어나지 못하도록 규정하고 있습니다. Hybrid Nodes를 사용하면 민감한 데이터를 온프레미스에 유지하면서도 EKS의 관리 기능을 활용할 수 있습니다.
+온프레미스 GPU, 대규모 로컬 데이터, edge 처리와 기존 하드웨어는 Hybrid Nodes를 선택하는 이유가 될 수 있습니다. Data locality에는 애플리케이션·스토리지·egress·logging 제어도 필요합니다. Kubernetes API 객체와 control-plane metadata는 AWS에서 관리되므로 node selector만으로 데이터 주권·규정 준수가 입증되지는 않습니다.
+
+`on-premises`라는 AWS zone이 있다고 가정하지 말고 실제 hybrid compute label과 명시적으로 관리하는 조직 label로 배치합니다.
 
 ```yaml
-# 규제 준수 워크로드 배치 예시
-apiVersion: v1
-kind: Pod
-metadata:
-  name: financial-data-processor
-spec:
-  nodeSelector:
-    topology.kubernetes.io/zone: "on-premises"
-    compliance.company.io/data-sovereignty: "required"
-  containers:
-  - name: processor
-    image: harbor.internal.company.io/finance/data-processor:v1.2.0
+# Pod spec fragment; set organization labels through the node owner.
+nodeSelector:
+  eks.amazonaws.com/compute-type: hybrid
+  example.com/data-location: on-premises
 ```
 
-#### 2. 데이터 중력 (Data Gravity)
+이 조각은 label, 완전한 앱, 보안 경계나 데이터 보존 정책을 만들지 않습니다. Image/runtime 호환성과 실제 데이터 경로를 검증하세요.
 
-대용량 데이터셋이 온프레미스에 존재하는 경우, 데이터를 클라우드로 이동하는 것보다 컴퓨팅을 데이터 가까이로 가져오는 것이 더 효율적입니다.
+## 아키텍처와 운영 책임
 
-#### 3. 기존 하드웨어 활용
+| 구성 요소 | 위치 | 책임 |
+|-----------|------|------|
+| EKS API server·etcd·controller·scheduler | AWS | AWS 관리형 control plane |
+| nodeadm | 지원되는 온프레미스 Linux host | 설치/bootstrap/upgrade CLI; 상시 node agent가 아님 |
+| kubelet/containerd | 온프레미스 | Node agent/CRI runtime; host owner가 운영 |
+| Cilium 또는 Calico | 온프레미스·cluster | 호환 CNI 구성; VPC CNI는 hybrid node를 관리하지 않음 |
+| SSM Agent 또는 Roles Anywhere signing helper | 온프레미스 | 해당 AWS 서비스에서 임시 자격 증명 획득 |
+| SSM/IAM Roles Anywhere 서비스 | AWS | 자격 증명 서비스이며 로컬 offline CA 대체물이 아님 |
+| VPN/Direct Connect·routing | 양쪽 환경 | 양방향 연결; Direct Connect만으로 암호화가 보장되지 않음 |
 
-이미 투자한 고성능 서버(특히 GPU 서버)를 계속 활용하면서 Kubernetes 기반의 현대적인 워크로드 관리 방식을 적용할 수 있습니다.
+지원 Bottlerocket VMware 변형은 자체 bootstrap 경로를 사용하며 nodeadm을 사용하지 않습니다. 다른 지원 host에서는 `nodeadm install`이 의존성을 설치하고 `nodeadm init`이 구성·join합니다. SSM signing key 변경 때문에 SSM 신규 설치/upgrade에는 **nodeadm 1.0.19 이상**이 필요하며, 확인한 현재 릴리스는 **1.0.20**입니다.
 
-#### 4. 통합 관리
+## 계획에 반영할 제약
 
-클라우드와 온프레미스의 Kubernetes 워크로드를 단일 컨트롤 플레인에서 관리함으로써 운영 복잡성을 줄일 수 있습니다.
+- **연결된 환경:** AWS와 안정적인 private 양방향 연결이 필요합니다. Disconnected/intermittent DDIL용이 아닙니다. 이 가이드의 “에어갭”은 필요한 AWS 연결을 유지하면서 인터넷 접근을 제한하는 환경이지 AWS로부터의 완전 격리가 아닙니다.
+- **주소:** IPv4 RFC1918 또는 CGNAT이며 remote node/Pod·VPC·service CIDR이 겹치면 안 됩니다. Cluster당 **node CIDR 15개·Pod CIDR 15개**까지 지원합니다.
+- **인증:** `API` 또는 `API_AND_CONFIG_MAP`과 Hybrid Nodes IAM role/access entry를 준비합니다.
+- **API endpoint:** AWS는 public-only 또는 private-only를 권장합니다. 둘 다 켜면 VPC 밖 노드는 public endpoint 주소를 해석하므로 기대한 private 경로·접근 규칙에 따라 join이 **실패할 수 있습니다**. 보편적인 API 금지는 아닙니다. Public API endpoint를 써도 control-plane→node private 연결 요구는 없어지지 않습니다.
+- **리전:** 현재 overview 기준 AWS GovCloud (US)·AWS China를 제외한 리전에서 지원합니다.
+- **Host 지원:** OS·아키텍처·CNI·kernel을 함께 검토합니다. AL2023은 on-prem 가상화 환경용이며 일반적인 bare-metal 권장이 아닙니다.
+- **요금:** Node가 연결된 동안 보고된 vCPU-hours로 과금합니다. Hyperthreading한 bare-metal core는 vCPU 2개로 보고될 수 있습니다. Workload가 idle이어도 node 요금이 자동 종료되지 않으며 cluster·다른 서비스 요금은 별도입니다.
 
-### 아키텍처 구성 요소
+## 자격 증명 프로바이더
 
-EKS Hybrid Nodes 아키텍처는 다음 구성 요소로 이루어집니다:
+두 방식 모두 갱신을 위해 AWS service endpoint 접근이 필요합니다. 로컬 CA가 IAM Roles Anywhere의 AWS 자격 증명 offline 발급을 가능하게 하지는 않습니다. 검토한 혼합 이유가 없다면 fleet에서 한 provider를 일관되게 사용하는 것을 권장합니다.
 
-| 구성 요소                           | 위치          | 역할                           |
-| ------------------------------- | ----------- | ---------------------------- |
-| EKS Control Plane               | AWS         | API 서버, etcd, 컨트롤러 매니저, 스케줄러 |
-| nodeadm                         | On-Premises | 노드 부트스트랩 및 관리 에이전트           |
-| kubelet                         | On-Premises | 파드 실행 및 노드 상태 보고             |
-| containerd                      | On-Premises | 컨테이너 런타임                     |
-| VPN/Direct Connect              | 네트워크        | AWS와 온프레미스 간 보안 연결           |
-| SSM Agent 또는 IAM Roles Anywhere | On-Premises | 자격 증명 관리                     |
+| 항목 | SSM hybrid activation | IAM Roles Anywhere |
+|------|-----------------------|--------------------|
+| Bootstrap | Activation ID/code와 준비한 SSM-trusting role | PKI·node별 cert/key·trust anchor·profile·role |
+| 이름 | SSM 생성 `mi-...` 이름 | 인증서 identity에 연결된 custom node name |
+| Session 수명 | 고정 1시간, SSM이 갱신 | 기본 1시간; request/profile은 15분–12시간 범위, effective duration·role maximum 적용 |
+| 단절 | 갱신 불가; 복구 후 retry backoff로 재연결이 지연될 수 있음 | Offline에서 새 자격 증명 획득 불가; 연결 복구 후 credential-process가 필요 시 획득 |
+| 규모/비용 | SSM node 등록·node 수 기준 관리 요금 없음; 기능별 사용 요금 조건은 별도 | IAM Roles Anywhere quota와 PKI 운영 요건 확인 |
+| 일반적인 선택 | 기존 PKI가 없고 간단한 등록이 필요할 때 | 기존 PKI·인증서 수명 관리가 있을 때 |
 
-### 주요 제약 사항 및 제한
+**요금 확인일: 2026년 9월 13일.** SSM은 2026년 6월 30일부로 Advanced Instances Tier를 폐지했습니다. Session Manager·Run Command 사용 요금 조건은 [현재 SSM 요금표](https://aws.amazon.com/systems-manager/pricing/)를 확인하며, [EKS Hybrid Nodes vCPU 요금](https://aws.amazon.com/eks/pricing/)은 별도입니다.
 
-* **네트워크 연결**: 온프레미스와 AWS 간 안정적인 VPN 또는 Direct Connect 연결 필요 (연결이 불안정한 환경에는 적합하지 않음)
-* **CIDR 제한**: 클러스터당 Remote Node Networks 및 Remote Pod Networks에 최대 15개 CIDR
-* **IPv4 전용**: IPv4 주소 패밀리만 지원 (하이브리드 노드에서 IPv6 미지원)
-* **인증 모드**: 클러스터는 `API` 또는 `API_AND_CONFIG_MAP` 인증 모드 사용 필수
-* **엔드포인트 접근**: Public 또는 Private 중 하나만 지원 ("Public and Private" 동시 사용 불가 — 하이브리드 노드 조인 실패)
-* **vCPU 기반 과금**: 하이브리드 노드는 시간당 vCPU 단위로 과금 (최소 약정 없음)
-* **클라우드 인프라 미지원**: EC2 등 클라우드 인프라에서 실행 시 하이브리드 노드 비용 발생
-* **VPC CNI 미호환**: Amazon VPC CNI는 하이브리드 노드와 호환되지 않으며, Cilium 또는 Calico 사용 필수
+Roles Anywhere profile은 custom role session name을 허용해야 하며 trust policy가 그 이름을 선택한 인증서 속성에 연결해야 합니다. Effective session duration은 IAM role maximum을 **초과하면 안 되며**, CreateSession API상 같은 값도 허용됩니다. [사전 요구 사항](01-prerequisites.md)에서 이 계약과 안전한 준비를 설명합니다.
 
-### 자격 증명 프로바이더 옵션
+## 워크로드 예시
 
-EKS Hybrid Nodes는 온프레미스 노드를 AWS에 인증하기 위해 두 가지 자격 증명 프로바이더를 지원합니다:
-
-| 기능           | SSM Hybrid Activations                                | IAM Roles Anywhere        |
-| ------------ | ----------------------------------------------------- | ------------------------- |
-| **설정 복잡도**   | 간단 — 활성화 코드/ID 쌍                                      | 보통 — PKI 인프라 필요           |
-| **인증서 필요**   | 아니오                                                   | 예 (노드별 X.509 인증서)         |
-| **에어갭 호환**   | 아니오 (SSM 엔드포인트 접근 필요)                                 | 예 (로컬 CA로 동작)             |
-| **자격 증명 갱신** | 자동 (AWS 관리, 1시간 TTL 고정)                               | 자동 (인증서 기반, 1-12시간 설정 가능) |
-| **노드 이름**    | 자동 생성 (`mi-xxxx`, 변경 불가)                              | 커스텀 (인증서 CN과 일치 필요)       |
-| **스케일링 제한**  | 계정당 리전당 1,000개 무료, 초과 시 advanced-instances 티어 (추가 비용) | 제한 없음                     |
-| **AWS 종속성**  | SSM 서비스                                               | IAM Roles Anywhere 서비스    |
-| **적합한 환경**   | 인터넷/VPN 연결된 표준 환경                                     | 에어갭, 엄격한 컴플라이언스, 기존 PKI   |
-
-> **권장 사항**: 대부분의 환경에서는 설정이 간단한 SSM Hybrid Activations를 사용하세요. 에어갭 환경이거나 이미 PKI 인프라가 있는 경우 IAM Roles Anywhere를 선택하세요.
-
-### 주요 사용 사례
-
-1. **AI/ML 워크로드**: 온프레미스 GPU 서버에서 모델 학습, 클라우드에서 추론 서비스
-2. **금융 서비스**: 거래 데이터 처리는 온프레미스, 분석은 클라우드
-3. **제조업**: 공장 내 엣지 컴퓨팅과 중앙 클라우드 통합
-4. **미디어 처리**: 대용량 미디어 파일 처리는 데이터가 있는 곳에서 수행
+1. 검증한 runtime·복구 계획을 사용하는 local GPU training/inference.
+2. AWS metadata/telemetry/egress 경로를 별도로 검토한 local data processing.
+3. 안정적인 연결·단절 동작 검증이 있는 factory/edge 앱.
+4. 기존 대규모 데이터 가까이에서 수행하는 media processing.
 
 ## 다음 단계
 
@@ -122,7 +105,16 @@ EKS Hybrid Nodes에 대한 이해를 더욱 깊이 하고 실습을 진행하려
 
 이 문서의 내용을 테스트하려면 다음 퀴즈를 풀어보세요:
 
-* [EKS Hybrid Nodes 퀴즈](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/eks-hybrid-nodes/README.md)
+* [EKS Hybrid Nodes 사전 요구사항 퀴즈](../quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+* [EKS Hybrid Nodes 네트워크 구성 퀴즈](../quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+* [EKS Hybrid Nodes 에어갭 환경 구성 퀴즈](../quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+* [EKS Hybrid Nodes 노드 부트스트래핑 퀴즈](../quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+* [EKS Hybrid Nodes GPU 통합 퀴즈](../quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+* [EKS Hybrid Nodes 워크로드 배치 퀴즈](../quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+* [노드 라이프사이클 관리 퀴즈](../quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+* [EKS Hybrid Nodes 운영 퀴즈](../quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+* [베어메탈 서버 OS 설치 퀴즈](../quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+* [EKS Hybrid Nodes Gateway 퀴즈](../quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 ### 관련 문서
 
@@ -139,3 +131,9 @@ EKS Hybrid Nodes에 대한 이해를 더욱 깊이 하고 실습을 진행하려
 * [하이브리드 노드 네트워킹 가이드](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
 * [하이브리드 노드 CNI 구성](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
 * [하이브리드 노드 트러블슈팅](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-troubleshooting.html)
+
+* [Hybrid operating-system compatibility](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html)
+* [Hybrid credentials and IAM role](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html)
+* [Host credentials during network disconnection](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html)
+* [IAM Roles Anywhere CreateSession semantics](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-create-session.html)
+* [EKS pricing](https://aws.amazon.com/eks/pricing/)

@@ -1,0 +1,125 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: reviewed-nginxapps
+spec:
+  schema:
+    apiVersion: v1alpha1
+    group: platform.example.com
+    kind: NginxApp
+    scope: Namespaced
+    spec:
+      replicas: integer | default=2 minimum=1 maximum=5
+      image: string | default="nginxinc/nginx-unprivileged:1.30.4-alpine"
+      ingress:
+        enabled: boolean | default=false
+        className: string | default="internal"
+        host: string | default="app.example.com"
+        tlsSecret: string | default="app-tls"
+    status:
+      availableReplicas: ${deployment.status.availableReplicas}
+      serviceIP: ${service.spec.clusterIP}
+  resources:
+    - id: deployment
+      readyWhen:
+        - ${deployment.status.availableReplicas >= deployment.spec.replicas}
+        - ${deployment.status.observedGeneration >= deployment.metadata.generation}
+      template:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        spec:
+          replicas: ${schema.spec.replicas}
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: ${schema.metadata.name}
+          template:
+            metadata:
+              labels:
+                app.kubernetes.io/name: ${schema.metadata.name}
+            spec:
+              automountServiceAccountToken: false
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 101
+                runAsGroup: 101
+                fsGroup: 101
+                seccompProfile:
+                  type: RuntimeDefault
+              containers:
+                - name: web
+                  image: ${schema.spec.image}
+                  ports:
+                    - name: http
+                      containerPort: 8080
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                      drop: [ALL]
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 64Mi
+                    limits:
+                      cpu: 500m
+                      memory: 128Mi
+                  readinessProbe:
+                    httpGet:
+                      path: /
+                      port: http
+                  volumeMounts:
+                    - name: tmp
+                      mountPath: /tmp
+              volumes:
+                - name: tmp
+                  emptyDir:
+                    sizeLimit: 64Mi
+    - id: service
+      template:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        spec:
+          type: ClusterIP
+          selector: ${deployment.spec.selector.matchLabels}
+          ports:
+            - name: http
+              port: 8080
+              targetPort: http
+    - id: ingress
+      includeWhen:
+        - ${schema.spec.ingress.enabled}
+      template:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        spec:
+          ingressClassName: ${schema.spec.ingress.className}
+          tls:
+            - hosts:
+                - ${schema.spec.ingress.host}
+              secretName: ${schema.spec.ingress.tlsSecret}
+          rules:
+            - host: ${schema.spec.ingress.host}
+              http:
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: ${service.metadata.name}
+                        port:
+                          number: 8080

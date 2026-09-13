@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium 아키텍처와 eBPF의 역할",
+    "output": "ko-networking-cilium-02-ebpf-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Cilium · K8s 구성 요소"
+        },
+        "database": {
+          "label": "eBPF 맵 (커널 상태 저장)"
+        },
+        "frontend": {
+          "label": "워크로드 Pod"
+        },
+        "external": {
+          "label": "운영자 도구"
+        },
+        "cloud": {
+          "label": "관찰성 플랫폼"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "control-path",
+        "label": "제어 경로",
+        "focus": [
+          "operator",
+          "apiserver",
+          "cli",
+          "agent"
+        ],
+        "note": "Operator가 CRD를 처리하고, 각 노드의 Cilium Agent는 API Server와 상태를 동기화한다."
+      },
+      {
+        "id": "datapath",
+        "label": "eBPF 데이터 경로",
+        "focus": [
+          "agent",
+          "ebpf",
+          "maps",
+          "pods"
+        ],
+        "note": "Agent가 eBPF 프로그램을 로드하고 맵을 관리하며, Pod 트래픽은 커널 안에서 처리된다."
+      },
+      {
+        "id": "observability",
+        "label": "관찰성",
+        "focus": [
+          "agent",
+          "hubble"
+        ],
+        "note": "Hubble은 eBPF 기반으로 네트워크 흐름과 보안 가시성을 제공한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Cilium Operator",
+      "sublabel": "클러스터 전체 리소스 · CRD",
+      "pos": [
+        80,
+        100
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "컨트롤 플레인",
+      "pos": [
+        370,
+        100
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "external",
+      "label": "Cilium CLI",
+      "sublabel": "운영자 입력",
+      "pos": [
+        660,
+        100
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "hubble",
+      "type": "cloud",
+      "label": "Hubble",
+      "sublabel": "관찰성 플랫폼",
+      "pos": [
+        950,
+        100
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "노드마다 실행되는 데몬",
+      "pos": [
+        370,
+        340
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "maps",
+      "type": "database",
+      "label": "eBPF 맵",
+      "sublabel": "엔드포인트 · 정책 · LB",
+      "pos": [
+        80,
+        580
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF 프로그램",
+      "sublabel": "XDP/TC 데이터 경로 · LB · 정책",
+      "pos": [
+        370,
+        580
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "Pod A · B · C · D",
+      "pos": [
+        950,
+        580
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "operator",
+        "apiserver",
+        "cli",
+        "hubble",
+        "agent",
+        "maps",
+        "ebpf",
+        "pods"
+      ],
+      "pad": 48
+    },
+    {
+      "kind": "region",
+      "label": "클러스터 수준 구성 요소",
+      "wraps": [
+        "operator",
+        "apiserver",
+        "cli",
+        "hubble"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워커 노드 (모든 노드 동일)",
+      "wraps": [
+        "agent",
+        "maps",
+        "ebpf",
+        "pods"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "operator-crd",
+      "from": "operator",
+      "to": "apiserver",
+      "label": "CRD 관리"
+    },
+    {
+      "id": "api-sync",
+      "from": "apiserver",
+      "to": "agent",
+      "label": "상태 동기화",
+      "variant": "emphasis",
+      "labelDy": 100
+    },
+    {
+      "id": "operator-state",
+      "from": "operator",
+      "to": "agent",
+      "label": "클러스터 상태"
+    },
+    {
+      "id": "cli-manage",
+      "from": "cli",
+      "to": "agent",
+      "label": "관리"
+    },
+    {
+      "id": "hubble-metrics",
+      "from": "agent",
+      "to": "hubble",
+      "label": "메트릭 수집",
+      "variant": "dashed"
+    },
+    {
+      "id": "agent-load",
+      "from": "agent",
+      "to": "ebpf",
+      "label": "로드",
+      "variant": "emphasis",
+      "labelDy": 100
+    },
+    {
+      "id": "agent-maps",
+      "from": "agent",
+      "to": "maps",
+      "label": "관리"
+    },
+    {
+      "id": "ebpf-maps",
+      "from": "ebpf",
+      "to": "maps",
+      "label": "데이터 접근",
+      "labelDy": 49
+    },
+    {
+      "id": "pods-packets",
+      "from": "pods",
+      "to": "ebpf",
+      "label": "패킷 처리"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Cilium Agent",
+      "items": [
+        "각 노드에서 실행되는 데몬",
+        "eBPF 프로그램 컴파일 및 로드",
+        "엔드포인트 관리 및 정책 적용",
+        "상태 모니터링 및 메트릭 수집"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "eBPF 프로그램",
+      "items": [
+        "XDP 및 TC 훅에 연결된 데이터 경로 프로그램",
+        "소켓 수준 로드 밸런싱",
+        "연결 추적 · 네트워크 정책 적용"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "eBPF 맵",
+      "items": [
+        "엔드포인트 정보 · 정책 규칙 저장",
+        "연결 추적 상태 관리",
+        "로드 밸런싱 서비스 정보"
+      ]
+    }
+  ]
+}

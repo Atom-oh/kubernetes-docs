@@ -1,0 +1,315 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Separate workload and flag decisions",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "start",
+        "label": "Deploy and start the canary",
+        "focus": [
+          "deploy",
+          "canary",
+          "flag_on"
+        ],
+        "note": "After code deployment, approve limited flag exposure separately; no automatic webhook wiring is implied."
+      },
+      {
+        "id": "gate",
+        "label": "Analysis gate and rollback",
+        "focus": [
+          "canary",
+          "flag_on",
+          "metrics",
+          "rollback",
+          "expand"
+        ],
+        "note": "Workload recovery follows failed-check limits; restoring flag configuration is a separate decision."
+      },
+      {
+        "id": "expand",
+        "label": "Progressive rollout and cleanup",
+        "focus": [
+          "expand",
+          "flag_expand",
+          "full",
+          "flag_full",
+          "cleanup"
+        ],
+        "note": "Validate workload promotion and full flag exposure separately; retire flags only after consumer and rollback checks."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Code deployment"
+        },
+        "cloud": {
+          "label": "Traffic split (Flagger)"
+        },
+        "backend": {
+          "label": "Flag control (flagd)"
+        },
+        "security": {
+          "label": "Analysis gate / rollback"
+        }
+      }
+    },
+    "viewBox": [
+      1200,
+      540
+    ]
+  },
+  "lanes": [
+    {
+      "id": "traffic",
+      "label": "Infrastructure level: traffic split (Flagger)"
+    },
+    {
+      "id": "flag",
+      "label": "Application level: feature flag"
+    },
+    {
+      "id": "exceptions",
+      "label": "Failure response · separate recovery",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "label": "Deploy",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p2",
+      "label": "Canary traffic",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "p3",
+      "label": "Metric analysis",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p4",
+      "label": "Progressive rollout",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "p5",
+      "label": "Full release",
+      "fromCol": 4,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "deploy",
+    "canary",
+    "metrics",
+    "expand",
+    "full",
+    "flag_full",
+    "cleanup"
+  ],
+  "nodes": [
+    {
+      "id": "deploy",
+      "lane": "traffic",
+      "col": 0,
+      "type": "frontend",
+      "label": "Deploy new version",
+      "sublabel": "Feature flag off",
+      "width": 160
+    },
+    {
+      "id": "canary",
+      "lane": "traffic",
+      "col": 1,
+      "type": "cloud",
+      "label": "Canary release",
+      "sublabel": "small share of traffic",
+      "width": 160
+    },
+    {
+      "id": "flag_on",
+      "lane": "flag",
+      "col": 1,
+      "type": "backend",
+      "label": "Limited exposure",
+      "sublabel": "trusted app context",
+      "tag": "separate Git change",
+      "width": 160
+    },
+    {
+      "id": "metrics",
+      "lane": "traffic",
+      "col": 2,
+      "type": "security",
+      "label": "Metric analysis",
+      "sublabel": "error rate · latency",
+      "tag": "interval 1m",
+      "width": 160
+    },
+    {
+      "id": "expand",
+      "lane": "traffic",
+      "col": 3,
+      "type": "cloud",
+      "label": "Expand traffic",
+      "sublabel": "example: 10 → 50%",
+      "width": 160
+    },
+    {
+      "id": "flag_expand",
+      "lane": "flag",
+      "col": 3,
+      "type": "backend",
+      "label": "Expand targets",
+      "sublabel": "separate cohort validation",
+      "width": 160
+    },
+    {
+      "id": "full",
+      "lane": "traffic",
+      "col": 4,
+      "type": "cloud",
+      "label": "Workload promoted",
+      "sublabel": "deployment analysis passed",
+      "width": 160
+    },
+    {
+      "id": "flag_full",
+      "lane": "flag",
+      "col": 4,
+      "type": "backend",
+      "label": "Approve exposure",
+      "sublabel": "separate flag decision",
+      "width": 160
+    },
+    {
+      "id": "cleanup",
+      "lane": "flag",
+      "col": 5,
+      "type": "backend",
+      "label": "Flag cleanup",
+      "sublabel": "consumers / rollback",
+      "width": 160
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 2,
+      "type": "security",
+      "label": "Workload recovery",
+      "sublabel": "inspect surviving traffic",
+      "tag": "flag is separate",
+      "width": 160
+    },
+    {
+      "id": "flag_restore",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "backend",
+      "width": 160,
+      "label": "Restore flag config",
+      "sublabel": "separately approved change"
+    }
+  ],
+  "edges": [
+    {
+      "id": "deploy-canary",
+      "from": "deploy",
+      "to": "canary"
+    },
+    {
+      "id": "canary-metrics",
+      "from": "canary",
+      "to": "metrics"
+    },
+    {
+      "id": "metrics-expand",
+      "from": "metrics",
+      "to": "expand",
+      "label": "pass",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metrics-rollback",
+      "from": "metrics",
+      "to": "rollback",
+      "label": "failure limit",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "expand-full",
+      "from": "expand",
+      "to": "full"
+    },
+    {
+      "id": "deploy-flag",
+      "from": "deploy",
+      "to": "flag_on",
+      "label": "separate PR",
+      "variant": "dashed"
+    },
+    {
+      "id": "flag-expand",
+      "from": "flag_on",
+      "to": "flag_expand"
+    },
+    {
+      "id": "flag-approve",
+      "from": "flag_expand",
+      "to": "flag_full"
+    },
+    {
+      "id": "full-approve",
+      "from": "full",
+      "to": "flag_full",
+      "label": "separate approval",
+      "variant": "dashed"
+    },
+    {
+      "id": "flag-cleanup",
+      "from": "flag_full",
+      "to": "cleanup"
+    },
+    {
+      "id": "restore",
+      "from": "rollback",
+      "to": "flag_restore",
+      "label": "separate change",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Analysis gate (Canary.spec.analysis)",
+      "items": [
+        "threshold 5: cumulative failed-check limit",
+        "Example policy: success ≥99%, latency ≤500ms",
+        "Verify instrumentation and sample volume"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Independent flag decision",
+      "items": [
+        "Promotion does not automatically change flag exposure",
+        "A successful rollback hook requests workload rollback",
+        "Flag restoration and consumer freshness are separate"
+      ]
+    }
+  ]
+}

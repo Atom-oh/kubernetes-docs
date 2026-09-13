@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Prometheus 아키텍처",
+    "output": "ko-observability-metrics-01-prometheus-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      680
+    ],
+    "views": [
+      {
+        "id": "collect",
+        "label": "수집",
+        "focus": [
+          "sd",
+          "exporters",
+          "shortjobs",
+          "pushgateway",
+          "retrieval",
+          "tsdb"
+        ],
+        "note": "서비스 디스커버리로 대상을 찾고 Retrieval이 /metrics 엔드포인트를 스크랩해 TSDB에 저장한다."
+      },
+      {
+        "id": "query",
+        "label": "쿼리",
+        "focus": [
+          "tsdb",
+          "http",
+          "vis"
+        ],
+        "note": "HTTP Server가 TSDB 데이터를 PromQL 쿼리 API로 Grafana, API 클라이언트, Prometheus UI에 제공한다."
+      },
+      {
+        "id": "alert",
+        "label": "알림",
+        "focus": [
+          "tsdb",
+          "rules",
+          "alertmanager",
+          "channels"
+        ],
+        "note": "Alert Rules가 저장된 데이터를 평가해 발화된 알림을 Alertmanager로 보내고, 알림 채널로 라우팅된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "exporters",
+      "type": "external",
+      "label": "Jobs / Exporters",
+      "sublabel": "/metrics 엔드포인트",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "shortjobs",
+      "type": "external",
+      "label": "Short-lived Jobs",
+      "sublabel": "batch / cron",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pushgateway",
+      "type": "backend",
+      "label": "Pushgateway",
+      "sublabel": "푸시 메트릭 중계",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sd",
+      "type": "external",
+      "label": "서비스 디스커버리",
+      "sublabel": "K8s · DNS · File · Consul",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "retrieval",
+      "type": "backend",
+      "label": "Retrieval",
+      "sublabel": "메트릭 수집 (pull)",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tsdb",
+      "type": "database",
+      "label": "TSDB",
+      "sublabel": "시계열 DB",
+      "pos": [
+        680,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "http",
+      "type": "backend",
+      "label": "HTTP Server",
+      "sublabel": "쿼리 API (PromQL)",
+      "pos": [
+        890,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "rules",
+      "type": "backend",
+      "label": "Alert Rules",
+      "sublabel": "알림 규칙 평가",
+      "pos": [
+        890,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "vis",
+      "type": "frontend",
+      "label": "시각화 / API",
+      "sublabel": "Grafana · API · UI",
+      "pos": [
+        1110,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "그룹핑 · 라우팅",
+      "pos": [
+        1110,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "channels",
+      "type": "external",
+      "label": "알림 채널",
+      "sublabel": "Email · Slack · PagerDuty",
+      "pos": [
+        1110,
+        570
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Prometheus Server",
+      "wraps": [
+        "retrieval",
+        "tsdb",
+        "http",
+        "rules"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스크랩 대상",
+      "wraps": [
+        "exporters",
+        "shortjobs",
+        "pushgateway"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sd-retrieval",
+      "from": "sd",
+      "to": "retrieval",
+      "label": "대상 발견"
+    },
+    {
+      "id": "scrape-exporters",
+      "from": "retrieval",
+      "to": "exporters",
+      "label": "scrape",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "push-pushgateway",
+      "from": "shortjobs",
+      "to": "pushgateway",
+      "label": "push",
+      "variant": "dashed"
+    },
+    {
+      "id": "scrape-pushgateway",
+      "from": "retrieval",
+      "to": "pushgateway",
+      "label": "scrape",
+      "variant": "dashed"
+    },
+    {
+      "id": "retrieval-tsdb",
+      "from": "retrieval",
+      "to": "tsdb",
+      "label": "저장",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tsdb-http",
+      "from": "tsdb",
+      "to": "http",
+      "label": "읽기",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tsdb-rules",
+      "from": "tsdb",
+      "to": "rules",
+      "label": "규칙 평가"
+    },
+    {
+      "id": "http-vis",
+      "from": "http",
+      "to": "vis",
+      "label": "PromQL",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rules-alertmanager",
+      "from": "rules",
+      "to": "alertmanager",
+      "label": "alerts"
+    },
+    {
+      "id": "alertmanager-channels",
+      "from": "alertmanager",
+      "to": "channels",
+      "label": "라우팅",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "수집",
+      "items": [
+        "서비스 디스커버리(Kubernetes API, DNS, 파일 등)로 스크랩 대상을 발견한다",
+        "HTTP로 대상의 /metrics 엔드포인트에서 메트릭을 스크랩한다 (pull)",
+        "Short-lived Job은 Pushgateway에 push하고, Retrieval이 Pushgateway를 스크랩한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "저장과 쿼리",
+      "items": [
+        "수집한 메트릭을 로컬 TSDB에 저장한다",
+        "HTTP API로 PromQL 쿼리를 처리해 Grafana, API 클라이언트, Prometheus UI에 제공한다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "알림",
+      "items": [
+        "저장된 데이터에 대해 알림 규칙과 기록 규칙을 평가한다",
+        "발화된 알림을 Alertmanager로 전송하고, Email · Slack · PagerDuty로 라우팅한다"
+      ]
+    }
+  ]
+}

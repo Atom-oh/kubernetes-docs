@@ -1,0 +1,130 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Gradual Migration Strategy",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-traffic-management-13-workload-entry-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1212,
+      284
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Migration phase"
+        },
+        "security": {
+          "label": "Key transition point (real traffic shift)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "migration",
+      "label": "WorkloadEntry-based VM → Kubernetes migration"
+    }
+  ],
+  "mainPath": [
+    "phase1",
+    "phase2",
+    "phase3",
+    "phase4",
+    "phase5"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "phase1"
+    ],
+    "allowedTerminals": [
+      "phase5"
+    ],
+    "requiredPaths": [
+      {
+        "from": "phase1",
+        "to": "phase5"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "phase1",
+      "lane": "migration",
+      "col": 0,
+      "type": "backend",
+      "label": "VM Mesh Registration",
+      "sublabel": "create WorkloadEntry",
+      "tag": "Phase 1",
+      "width": 170
+    },
+    {
+      "id": "phase2",
+      "lane": "migration",
+      "col": 1,
+      "type": "backend",
+      "label": "Traffic Splitting",
+      "sublabel": "VirtualService · 100% VM",
+      "tag": "Phase 2",
+      "width": 170
+    },
+    {
+      "id": "phase3",
+      "lane": "migration",
+      "col": 2,
+      "type": "backend",
+      "label": "Kubernetes Deployment",
+      "sublabel": "kubectl apply",
+      "tag": "Phase 3",
+      "width": 170
+    },
+    {
+      "id": "phase4",
+      "lane": "migration",
+      "col": 3,
+      "type": "security",
+      "label": "Traffic Transition",
+      "sublabel": "VM 90% → k8s 10%",
+      "tag": "Phase 4 · key step",
+      "width": 170
+    },
+    {
+      "id": "phase5",
+      "lane": "migration",
+      "col": 4,
+      "type": "backend",
+      "label": "VM Removal",
+      "sublabel": "delete WorkloadEntry",
+      "tag": "Phase 5",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "from": "phase1",
+      "to": "phase2",
+      "role": "main"
+    },
+    {
+      "from": "phase2",
+      "to": "phase3",
+      "role": "main"
+    },
+    {
+      "from": "phase3",
+      "to": "phase4",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "phase4",
+      "to": "phase5",
+      "label": "after 100% Kubernetes",
+      "role": "main",
+      "variant": "emphasis"
+    }
+  ]
+}

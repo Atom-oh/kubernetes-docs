@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Spark cluster mode: Kubernetes placement versus Spark tasks",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      670
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "driver",
+        "label": "Driver pod creation",
+        "focus": [
+          "user",
+          "api",
+          "driver",
+          "placement"
+        ],
+        "note": "Kubernetes scheduler places the requested pod; kubelet starts it. A separate Spark master is not required."
+      },
+      {
+        "id": "executors",
+        "label": "Executor pod creation",
+        "focus": [
+          "driver",
+          "api",
+          "exec",
+          "placement"
+        ],
+        "note": "The driver requests executor capacity; Kubernetes places it on nodes."
+      },
+      {
+        "id": "tasks",
+        "label": "Task execution and cleanup",
+        "focus": [
+          "driver",
+          "exec",
+          "api"
+        ],
+        "note": "Spark coordinates tasks. Cleanup depends on normal/failure shutdown and owner-reference settings."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "spark-submit"
+    },
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "Kubernetes API Server",
+      "sublabel": "API objects · admission"
+    },
+    {
+      "id": "placement",
+      "type": "backend",
+      "label": "Pod placement",
+      "sublabel": "scheduler + kubelets"
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "Driver Pod",
+      "sublabel": "Spark task coordination"
+    },
+    {
+      "id": "exec",
+      "type": "backend",
+      "label": "Executor Pods",
+      "sublabel": "spark.executor.instances"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 285,
+      "label": "1. Request and place the driver pod"
+    },
+    {
+      "from": 305,
+      "to": 410,
+      "label": "2. Request and place executor pods"
+    },
+    {
+      "from": 430,
+      "to": 610,
+      "label": "3. Spark task execution and cleanup"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create-driver",
+      "from": "user",
+      "to": "api",
+      "y": 190,
+      "label": "Create driver Pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "driver-spec",
+      "from": "api",
+      "to": "placement",
+      "y": 230,
+      "label": "Pod spec / binding"
+    },
+    {
+      "id": "start-driver",
+      "from": "placement",
+      "to": "driver",
+      "y": 265,
+      "label": "Place/start pod"
+    },
+    {
+      "id": "request-exec",
+      "from": "driver",
+      "to": "api",
+      "y": 325,
+      "label": "Request executor Pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "executor-spec",
+      "from": "api",
+      "to": "placement",
+      "y": 355,
+      "label": "Pod specs / bindings"
+    },
+    {
+      "id": "start-exec",
+      "from": "placement",
+      "to": "exec",
+      "y": 390,
+      "label": "Place/start pods"
+    },
+    {
+      "id": "register",
+      "from": "exec",
+      "to": "driver",
+      "y": 450,
+      "label": "Register",
+      "variant": "return"
+    },
+    {
+      "id": "assign",
+      "from": "driver",
+      "to": "exec",
+      "y": 490,
+      "label": "Assign Spark tasks",
+      "variant": "emphasis"
+    },
+    {
+      "id": "report",
+      "from": "exec",
+      "to": "driver",
+      "y": 530,
+      "label": "Results · status",
+      "variant": "return"
+    },
+    {
+      "id": "cleanup",
+      "from": "driver",
+      "to": "api",
+      "y": 580,
+      "label": "Request executor cleanup on normal shutdown"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 185,
+      "to": 235,
+      "type": "cloud"
+    },
+    {
+      "participant": "placement",
+      "from": 225,
+      "to": 270,
+      "type": "backend"
+    },
+    {
+      "participant": "driver",
+      "from": 260,
+      "to": 588,
+      "type": "backend"
+    },
+    {
+      "participant": "api",
+      "from": 320,
+      "to": 360,
+      "type": "cloud"
+    },
+    {
+      "participant": "placement",
+      "from": 350,
+      "to": 395,
+      "type": "backend"
+    },
+    {
+      "participant": "exec",
+      "from": 385,
+      "to": 538,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "트래픽 흐름 비교",
+    "output": "ko-service-mesh-istio-traffic-management-13-workload-entry-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": { "label": "클라이언트" },
+        "backend": { "label": "Kubernetes 파드 경로" },
+        "cloud": { "label": "WorkloadEntry (VM) 경로" }
+      }
+    },
+    "views": [
+      { "id": "pod-flow", "label": "Kubernetes 파드 흐름", "focus": ["client-k8s", "k8s-service", "k8s-pod"], "note": "Service가 엔드포인트를 자동으로 디스커버리하고 Envoy가 자동 주입된 Pod로 라우팅한다." },
+      { "id": "vm-flow", "label": "WorkloadEntry 흐름", "focus": ["client-vm", "service-entry", "workload-entry"], "note": "ServiceEntry를 수동으로 등록해야 Envoy가 설치된 VM(WorkloadEntry)으로 라우팅된다." }
+    ]
+  },
+  "components": [
+    { "id": "client-k8s", "type": "external", "label": "클라이언트", "pos": [40, 70], "size": [140, 60] },
+    { "id": "k8s-service", "type": "backend", "label": "Service", "sublabel": "자동 디스커버리", "pos": [270, 70], "size": [170, 60] },
+    { "id": "k8s-pod", "type": "backend", "label": "Pod", "sublabel": "Envoy 자동 주입", "pos": [530, 70], "size": [170, 60] },
+    { "id": "client-vm", "type": "external", "label": "클라이언트", "pos": [40, 250], "size": [140, 60] },
+    { "id": "service-entry", "type": "cloud", "label": "ServiceEntry", "sublabel": "수동 등록", "pos": [270, 250], "size": [170, 60] },
+    { "id": "workload-entry", "type": "cloud", "label": "WorkloadEntry", "sublabel": "VM + Envoy", "pos": [530, 250], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Kubernetes 파드 흐름", "wraps": ["client-k8s", "k8s-service", "k8s-pod"] },
+    { "kind": "region", "label": "WorkloadEntry 흐름", "wraps": ["client-vm", "service-entry", "workload-entry"] }
+  ],
+  "connections": [
+    { "id": "k8s-request", "from": "client-k8s", "to": "k8s-service", "label": "1. 요청", "variant": "emphasis" },
+    { "id": "k8s-routing", "from": "k8s-service", "to": "k8s-pod", "label": "2. 라우팅", "variant": "emphasis" },
+    { "id": "vm-request", "from": "client-vm", "to": "service-entry", "label": "1. 요청" },
+    { "id": "vm-routing", "from": "service-entry", "to": "workload-entry", "label": "2. 라우팅" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Kubernetes Pod", "items": ["Envoy 자동 주입 (사이드카)", "서비스 디스커버리 자동 (Service)", "IP 관리는 Kubernetes CNI가 담당"] },
+    { "dot": "amber", "title": "WorkloadEntry (VM)", "items": ["Envoy 수동 설치", "서비스 디스커버리 수동 (WorkloadEntry + ServiceEntry)", "IP 수동 지정"] }
+  ]
+}

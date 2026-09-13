@@ -1,0 +1,303 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "KServe 구성과 실제 추론 요청",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "클라이언트"
+        },
+        "backend": {
+          "label": "KServe 컴포넌트"
+        },
+        "cloud": {
+          "label": "실행 단위 (Pod)"
+        },
+        "security": {
+          "label": "배포 모드 결정"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "entry",
+        "label": "리소스 구성",
+        "focus": [
+          "request",
+          "isvc",
+          "predictor"
+        ],
+        "note": "스펙 제출은 제어 경로이며 추론 요청은 실행 중인 endpoint로 갑니다."
+      },
+      {
+        "id": "optional",
+        "label": "선택 컴포넌트",
+        "focus": [
+          "predictor",
+          "transformer",
+          "explainer",
+          "mode"
+        ],
+        "note": "Transformer(전/후처리)와 Explainer(모델 설명)는 필요할 때만 추가하는 선택 컴포넌트입니다."
+      },
+      {
+        "id": "modes",
+        "label": "배포 모드 분기",
+        "focus": [
+          "mode",
+          "knative",
+          "rawdep"
+        ],
+        "note": "Knative의 minReplicas 기본값은1; Standard는 HPA/KEDA 등 선택한 scaler를 사용합니다."
+      },
+      {
+        "id": "inference",
+        "label": "추론과 응답",
+        "focus": [
+          "client-call",
+          "model",
+          "response"
+        ],
+        "note": "클라이언트 요청은 구성된 network route를 통해 모델 서버에 도달합니다."
+      }
+    ],
+    "viewBox": [
+      1240,
+      776
+    ]
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "사용자 / 클라이언트"
+    },
+    {
+      "id": "isvc",
+      "label": "InferenceService"
+    },
+    {
+      "id": "optional",
+      "label": "선택 컴포넌트"
+    },
+    {
+      "id": "serverless",
+      "label": "Knative"
+    },
+    {
+      "id": "raw",
+      "label": "Standard"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "isvc",
+    "predictor",
+    "mode",
+    "knative",
+    "model"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "client",
+      "col": 0,
+      "type": "external",
+      "label": "스펙 적용",
+      "sublabel": "운영자 / API",
+      "width": 136
+    },
+    {
+      "id": "isvc",
+      "lane": "isvc",
+      "col": 1,
+      "type": "backend",
+      "label": "InferenceService",
+      "sublabel": "커스텀 리소스 객체",
+      "width": 136
+    },
+    {
+      "id": "predictor",
+      "lane": "isvc",
+      "col": 2,
+      "type": "backend",
+      "label": "Predictor 스펙",
+      "sublabel": "필수 · 모델 서버",
+      "width": 132
+    },
+    {
+      "id": "transformer",
+      "lane": "optional",
+      "col": 1,
+      "type": "backend",
+      "label": "Transformer",
+      "sublabel": "선택 · 전/후처리",
+      "width": 184
+    },
+    {
+      "id": "explainer",
+      "lane": "optional",
+      "col": 2,
+      "type": "backend",
+      "label": "Explainer",
+      "sublabel": "선택 · 모델 설명",
+      "width": 184
+    },
+    {
+      "id": "mode",
+      "lane": "isvc",
+      "col": 3,
+      "type": "security",
+      "label": "배포 모드",
+      "sublabel": "Knative / Standard",
+      "width": 148
+    },
+    {
+      "id": "knative",
+      "lane": "serverless",
+      "col": 4,
+      "type": "cloud",
+      "label": "Knative Service",
+      "sublabel": "0 축소는 조건부",
+      "width": 168
+    },
+    {
+      "id": "rawdep",
+      "lane": "raw",
+      "col": 3,
+      "type": "cloud",
+      "label": "Deployment / scaler",
+      "sublabel": "HPA / KEDA / external",
+      "width": 196
+    },
+    {
+      "id": "model",
+      "lane": "isvc",
+      "col": 5,
+      "type": "backend",
+      "label": "준비된 모델 서버",
+      "sublabel": "모델 로드 / 요청 처리",
+      "width": 196
+    },
+    {
+      "id": "response",
+      "lane": "client",
+      "col": 5,
+      "type": "external",
+      "label": "클라이언트에 응답",
+      "sublabel": "추론 결과",
+      "width": 168
+    },
+    {
+      "id": "client-call",
+      "lane": "client",
+      "col": 4,
+      "type": "external",
+      "label": "추론 요청",
+      "sublabel": "인증된 endpoint 경로",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-isvc",
+      "from": "request",
+      "to": "isvc"
+    },
+    {
+      "id": "isvc-predictor",
+      "from": "isvc",
+      "to": "predictor"
+    },
+    {
+      "id": "predictor-transformer",
+      "from": "predictor",
+      "to": "transformer",
+      "label": "선택",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "predictor-explainer",
+      "from": "predictor",
+      "to": "explainer",
+      "label": "선택",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "predictor-mode",
+      "from": "predictor",
+      "to": "mode"
+    },
+    {
+      "id": "mode-knative",
+      "from": "mode",
+      "to": "knative",
+      "label": "Knative",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mode-rawdep",
+      "from": "mode",
+      "to": "rawdep",
+      "label": "Standard",
+      "role": "branch"
+    },
+    {
+      "id": "knative-model",
+      "from": "knative",
+      "to": "model",
+      "route": "outside-right"
+    },
+    {
+      "id": "rawdep-model",
+      "from": "rawdep",
+      "to": "model",
+      "role": "branch"
+    },
+    {
+      "id": "model-response",
+      "from": "model",
+      "to": "response",
+      "label": "응답",
+      "role": "return"
+    },
+    {
+      "id": "client-model",
+      "from": "client-call",
+      "to": "model",
+      "label": "HTTP / gRPC",
+      "role": "branch",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "제어와 요청 경로",
+      "items": [
+        "InferenceService 스펙은 컨트롤러가 처리하며 모델 서버가 추론합니다.",
+        "Transformer·Explainer는 선택적이며 프로토콜 호환성이 필요합니다."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Knative",
+      "items": [
+        "기본 minReplicas는 1이며 0은 추가 조건이 필요합니다.",
+        "canaryTrafficPercent는 Knative revision traffic을 설정합니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Standard",
+      "items": [
+        "기본 HPA는 최소 1; KEDA는 적합한 activation 신호로 0 가능",
+        "재시작·모델 로드 지연이나 EC2 비용이 없어지는 것은 아닙니다."
+      ]
+    }
+  ]
+}

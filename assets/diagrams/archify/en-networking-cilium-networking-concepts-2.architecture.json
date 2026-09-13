@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Host Networking",
+    "locale": "en",
+    "output": "en-networking-cilium-networking-concepts-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "container-a",
+      "type": "backend",
+      "label": "Container A",
+      "sublabel": "Uses the host network namespace directly",
+      "pos": [
+        80,
+        90
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "container-b",
+      "type": "backend",
+      "label": "Container B",
+      "sublabel": "Uses the host network namespace directly",
+      "pos": [
+        80,
+        250
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "host-network",
+      "type": "cloud",
+      "label": "Host Network Stack",
+      "sublabel": "eth0 · 192.168.1.10",
+      "pos": [
+        520,
+        170
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Host",
+      "wraps": [
+        "container-a",
+        "container-b",
+        "host-network"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-host",
+      "from": "container-a",
+      "to": "host-network",
+      "label": "No isolation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-to-host",
+      "from": "container-b",
+      "to": "host-network",
+      "label": "No isolation",
+      "variant": "emphasis"
+    }
+  ]
+}

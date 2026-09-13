@@ -1,0 +1,802 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T03:08:11.350754+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/02-architecture.md",
+      "sha256": "16c7e5356e609731698caa0e0e96a4a071d8026852c3b5810173b14355195028"
+    },
+    {
+      "path": "en/quizzes/networking/calico/02-architecture-quiz.md",
+      "sha256": "df6b77223f83ec19280cb0a8ecd9d172c4eb4639f670c667caa1302566a8b57f"
+    },
+    {
+      "path": "ko/networking/calico/02-architecture.md",
+      "sha256": "6423ff236cb372725ffbfde75f70712591d2e24f4f4ea1713377b9d72be10080"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/02-architecture-quiz.md",
+      "sha256": "6f4c8e08442a6ccf7f8dcf35fc1a6a0ab8145f919c0791f3756c45089145558c"
+    }
+  ],
+  "sources": {
+    "release": {
+      "url": "https://api.github.com/repos/projectcalico/calico/releases/latest",
+      "key": "7bc4068c9f42"
+    },
+    "requirements": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements",
+      "key": "6f94a8862c24"
+    },
+    "EKS": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "key": "8b9a045ccc34"
+    },
+    "helm": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm",
+      "key": "11cf4ba2419c"
+    },
+    "editions": {
+      "url": "https://docs.tigera.io/calico/latest/about/calico-product-editions",
+      "key": "4115652e6e42"
+    },
+    "architecture": {
+      "url": "https://docs.tigera.io/calico/latest/reference/architecture/overview",
+      "key": "13138c565fbe"
+    },
+    "Windows": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations",
+      "key": "d784db9e78d6"
+    },
+    "MTU": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/mtu",
+      "key": "dca46d8d81f4"
+    },
+    "overlays": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip",
+      "key": "db51c23ce2ae"
+    },
+    "ebpf": {
+      "url": "https://docs.tigera.io/calico/latest/operations/ebpf/install",
+      "key": "e0b3156ff702"
+    },
+    "FelixMetrics": {
+      "url": "https://docs.tigera.io/calico/latest/reference/felix/prometheus",
+      "key": "b299dee33cd8"
+    },
+    "TyphaMetrics": {
+      "url": "https://docs.tigera.io/calico/latest/reference/typha/prometheus",
+      "key": "e9c383f722b2"
+    },
+    "metricsSetup": {
+      "url": "https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics",
+      "key": "84f7a45d1395"
+    },
+    "FelixConfiguration": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/felixconfig",
+      "key": "43fe47250f7c"
+    },
+    "NetworkPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/networkpolicy",
+      "key": "72c09bf8ede0"
+    },
+    "GlobalNetworkPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy",
+      "key": "7b7de74c5e4b"
+    },
+    "installationAPI": {
+      "url": "https://docs.tigera.io/calico/latest/reference/installation/api",
+      "key": "71a9d6b0ffba"
+    },
+    "releasedCRDs": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml",
+      "key": "366be3352d5d"
+    },
+    "releasedOperator": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml",
+      "key": "cdde707b47cc"
+    },
+    "VMAnnouncement": {
+      "url": "https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/",
+      "key": "9ba868c99ef1"
+    },
+    "VMDate": {
+      "url": "https://www.tigera.io/wp-json/wp/v2/news/69357",
+      "key": "ce253d32794c"
+    },
+    "EnterpriseRelease": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/release-notes/",
+      "key": "b3bf237be7e9"
+    },
+    "CiliumRequirements": {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "key": "47d0fa2d6ec0"
+    },
+    "onprem": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises",
+      "key": "02568f8010ac"
+    },
+    "VPCPolicyDisable": {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html",
+      "key": "434a09656a49"
+    },
+    "flowlogs": {
+      "url": "https://docs.tigera.io/calico/latest/observability/view-flow-logs",
+      "key": "6fac19fcc17d"
+    },
+    "domainPolicy": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy",
+      "key": "eb4790c977ec"
+    },
+    "vpcAnnotation": {
+      "url": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+      "key": "79a74010bf7d"
+    },
+    "kubernetesSchemas": {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "key": "b0fb38bb7c6c"
+    },
+    "kindRelease": {
+      "url": "https://api.github.com/repos/kubernetes-sigs/kind/releases/latest",
+      "key": "019cdbf01009"
+    },
+    "kindConfig": {
+      "url": "https://kind.sigs.k8s.io/docs/user/configuration/",
+      "key": "b50644ecbf61"
+    },
+    "calicoctlVersion": {
+      "url": "https://docs.tigera.io/calico/latest/reference/calicoctl/version",
+      "key": "4666062c5878"
+    },
+    "GKEV2": {
+      "url": "https://cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2",
+      "key": "cf7a046b13c2"
+    },
+    "kubectlSkew": {
+      "url": "https://kubernetes.io/releases/version-skew-policy/",
+      "key": "8a9bd073895e"
+    },
+    "Calico329": {
+      "url": "https://api.github.com/repos/projectcalico/calico/releases/tags/v3.29.0",
+      "key": "460d3bffdd3c"
+    },
+    "Calico300": {
+      "url": "https://api.github.com/repos/projectcalico/calico/releases/tags/v3.0.0",
+      "key": "8b038c702595"
+    },
+    "eBPFIntro": {
+      "url": "https://www.tigera.io/blog/introducing-the-calico-ebpf-dataplane/",
+      "key": "ca9d4edeeb9d"
+    },
+    "eBPFIntroREST": {
+      "url": "https://www.tigera.io/wp-json/wp/v2/posts/23226",
+      "key": "bbfdfa582470"
+    },
+    "Contributing": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/CONTRIBUTING.md",
+      "key": "d4416d0d7367"
+    },
+    "Makefile": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/Makefile",
+      "key": "e5405ef21f06"
+    },
+    "Community": {
+      "url": "https://www.tigera.io/project-calico/community/",
+      "key": "0dff09e6f134"
+    },
+    "BGPPeer": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/bgppeer",
+      "key": "94e016aa537b"
+    },
+    "IPPool": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/ippool",
+      "key": "785bcc7771cb"
+    },
+    "developerGuide": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/DEVELOPER_GUIDE.md",
+      "key": "2cfb6cd5bc13"
+    },
+    "license": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/LICENSE.md",
+      "key": "eda59ff181a0"
+    },
+    "calicoctlMakefile": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/Makefile",
+      "key": "74ffdf376d5d"
+    },
+    "sharedMakefile": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/lib.Makefile",
+      "key": "783182880812"
+    },
+    "kubeControllerConfig": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig",
+      "key": "26086bec9e79"
+    },
+    "kubeControllerEnv": {
+      "url": "https://docs.tigera.io/calico/latest/reference/kube-controllers/configuration",
+      "key": "f1b27c0d34a9"
+    },
+    "TyphaConfig": {
+      "url": "https://docs.tigera.io/calico/latest/reference/typha/configuration",
+      "key": "114771d254b1"
+    },
+    "BGPGuide": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/bgp",
+      "key": "bf86751ce725"
+    },
+    "CNIConfig": {
+      "url": "https://docs.tigera.io/calico/latest/reference/configure-cni-plugins",
+      "key": "2f30a04df192"
+    },
+    "kubeControllerMain": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/kube-controllers/cmd/kube-controllers/main.go",
+      "key": "f7dd94d32784"
+    },
+    "CNIMain": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/cni-plugin/pkg/plugin/plugin.go",
+      "key": "7bd39f25e982"
+    },
+    "BIRDTemplate": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/confd/etc/calico/confd/templates/bird.cfg.template",
+      "key": "7e2a993ceb0f"
+    },
+    "operatorTree": {
+      "url": "https://api.github.com/repos/tigera/operator/git/trees/v1.42.6?recursive=1",
+      "key": "633b3f9ecdaf"
+    },
+    "TyphaAutoscaler": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/controller/installation/typha_autoscaler.go",
+      "key": "1e0e9b9795e5"
+    },
+    "TyphaScaleFunction": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/common/autoscale.go",
+      "key": "ddc8289cc1af"
+    },
+    "TyphaRender": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/render/typha.go",
+      "key": "5ff9742e6fa2"
+    },
+    "KubeControllerRender": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/render/kubecontrollers/kube-controllers.go",
+      "key": "70e2bc839574"
+    },
+    "KubeControllerConfigSource": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/kube-controllers/pkg/config/config.go",
+      "key": "8fd49dfe0dd0"
+    },
+    "calicoTree": {
+      "url": "https://api.github.com/repos/projectcalico/calico/git/trees/v3.32.2?recursive=1",
+      "key": "9d286c6ea832"
+    },
+    "BIRDReload": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/confd/etc/calico/confd/conf.d/bird.toml",
+      "key": "dbc69d380827"
+    },
+    "RuleDefinitions": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/rules/rule_defs.go",
+      "key": "3655a511fbc5"
+    },
+    "NodeAPI": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/node",
+      "key": "39a39a28c097"
+    },
+    "KubeControllerRunConfig": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/kube-controllers/pkg/config/runconfig.go",
+      "key": "0c9b3c05836c"
+    },
+    "TyphaConfigSource": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/typha/pkg/config/config_params.go",
+      "key": "dfe38a91b193"
+    },
+    "BIRDStartup": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/node/filesystem/etc/service/available/bird/run",
+      "key": "fa154fb54f3c"
+    },
+    "KubernetesCNI": {
+      "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+      "key": "08a066cf82b7"
+    }
+  },
+  "findings": [
+    "FullreadoriginalEN579/KO582lineguidesandEN202/KO198line12-questionquizzes. All28figuresactuallyviewed.",
+    "Correctedruntime→CNI/IPAMinterface/addresscreationvsFelixasyncpolicy/routereconciliation;BIRDkernelprotocolalsoinstallslearnedroutes.",
+    "ReleasedFelixschemarejects6EN+10KOold/unsupportedfields. MinimalcurrentFelixresource+owner/fieldtable;deprecatedbpfConnectTimeLoadBalancingEnabledSTILLaccepted,notremoved.",
+    "CurrentoperatorTyphaformulaactualcodeN<=2:1,N<=4:2,elsemax(3,floorN200+2);500=4,1000=7,2000=12. Removedfixed50threshold/oldformula;documentedeligible-node/Linuxplacementconditions.",
+    "ReplacedincompletemanualTyphaDeploymentwithoperatorAPIownership/TLS/RBAC/healthcontextandmetricsmergepatch.",
+    "ReplacedunusedkubecontrollersJSONConfigMap/manualDeploymentwithrealKubeControllersConfigurationmergepatchpreservingcontrollers. StandardOSS1.42.6rendersnode,loadbalancer/1replica/Recreate;noassumedleader-electionHA.",
+    "RRtransitionusesKDDNodeannotationspreservingexistingfields,preparednonworkloadnodes,replacementBGPPeers/routes/trafficchecksBEFOREmeshdisable. Nozerodisruptionguarantee.",
+    "BIRDdiagnosticsverifiedsocket/var/run/calico/bird.ctl;replacedinventedconfdtemplatewithscopedreleasedexcerpt/check_cmd/reload_cmd;separatedBashfromconsoleoutput.",
+    "CorrectedTyphareadfanoutvswriteproxy,datastore/etcdscaleclaims,APIaggregation/nativev3TPdistinction;preservedKOclientconfigfilesandlabelednotKubernetesresources.",
+    "Retained13figureswithaccuratecaptions;removed15wrong/redundantreferenceswithprose/tables,underlyingparent-ownedassetsunchanged. Fixedall24quizanswers/optionsandexplanations."
+  ],
+  "checks": {
+    "schemaObjects": 10,
+    "bashBlocks": 10,
+    "controllerMergeCases": [
+      {
+        "language": "en",
+        "controllersPreserved": {
+          "node": {
+            "leakGracePeriod": "15m"
+          },
+          "loadBalancer": {
+            "assignIPs": "AllServices"
+          }
+        },
+        "valid": true
+      },
+      {
+        "language": "en",
+        "controllersPreserved": {
+          "node": {
+            "leakGracePeriod": "45m"
+          },
+          "loadBalancer": {
+            "assignIPs": "RequestedServicesOnly"
+          }
+        },
+        "valid": true
+      },
+      {
+        "language": "ko",
+        "controllersPreserved": {
+          "node": {
+            "leakGracePeriod": "15m"
+          },
+          "loadBalancer": {
+            "assignIPs": "AllServices"
+          }
+        },
+        "valid": true
+      },
+      {
+        "language": "ko",
+        "controllersPreserved": {
+          "node": {
+            "leakGracePeriod": "45m"
+          },
+          "loadBalancer": {
+            "assignIPs": "RequestedServicesOnly"
+          }
+        },
+        "valid": true
+      }
+    ],
+    "typhaScaleCases": [
+      {
+        "countedNodes": 1,
+        "replicas": 1,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 2,
+        "replicas": 1,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 3,
+        "replicas": 2,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 4,
+        "replicas": 2,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 5,
+        "replicas": 3,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 50,
+        "replicas": 3,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 199,
+        "replicas": 3,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 200,
+        "replicas": 3,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 399,
+        "replicas": 3,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 400,
+        "replicas": 4,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 500,
+        "replicas": 4,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 599,
+        "replicas": 4,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 600,
+        "replicas": 5,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 999,
+        "replicas": 6,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 1000,
+        "replicas": 7,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 1999,
+        "replicas": 11,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 2000,
+        "replicas": 12,
+        "sourceDerivedArithmetic": true
+      },
+      {
+        "countedNodes": 3600,
+        "replicas": 20,
+        "sourceDerivedArithmetic": true
+      }
+    ],
+    "RRSelectorCases": [
+      {
+        "language": "en",
+        "nodes": 5,
+        "undirectedSelectedPairs": [
+          [
+            "rr-1",
+            "rr-2"
+          ],
+          [
+            "rr-1",
+            "worker-1"
+          ],
+          [
+            "rr-1",
+            "worker-2"
+          ],
+          [
+            "rr-1",
+            "worker-3"
+          ],
+          [
+            "rr-2",
+            "worker-1"
+          ],
+          [
+            "rr-2",
+            "worker-2"
+          ],
+          [
+            "rr-2",
+            "worker-3"
+          ]
+        ],
+        "modelOnly": true
+      },
+      {
+        "language": "ko",
+        "nodes": 5,
+        "undirectedSelectedPairs": [
+          [
+            "rr-1",
+            "rr-2"
+          ],
+          [
+            "rr-1",
+            "worker-1"
+          ],
+          [
+            "rr-1",
+            "worker-2"
+          ],
+          [
+            "rr-1",
+            "worker-3"
+          ],
+          [
+            "rr-2",
+            "worker-1"
+          ],
+          [
+            "rr-2",
+            "worker-2"
+          ],
+          [
+            "rr-2",
+            "worker-3"
+          ]
+        ],
+        "modelOnly": true
+      }
+    ],
+    "quizAnswers": 24,
+    "clientConfigFiles": 2,
+    "figures": {
+      "viewed": 28,
+      "retained": 13,
+      "removedReferences": 15
+    },
+    "limits": [
+      "No Calico deployment, BGP peering/route convergence, policy enforcement or AWS provisioning was performed.",
+      "Typha tests are source-derived arithmetic; RR tests are isolated selectors and do not establish live route acceptance or availability.",
+      "Merge tests demonstrate preservation of controllers in synthetic API objects; real GitOps ownership and admission must still be respected.",
+      "CalicoAPIConfig examples are checked as client-file shapes, not Kubernetes resources or native calicoctl execution.",
+      "Figures have caption/prose corrections or justified reference removal; parent-owned underlying assets were not edited."
+    ]
+  },
+  "originalSchemaFindings": {
+    "en": [
+      {
+        "path": [
+          "spec"
+        ],
+        "message": "Additional properties are not allowed ('iptablesLockFilePath', 'iptablesLockProbeIntervalMillis', 'iptablesLockTimeoutSecs', 'iptablesPostWriteCheckIntervalSecs', 'reportingIntervalSecs', 'reportingTTLSecs' were unexpected)"
+      }
+    ],
+    "ko": [
+      {
+        "path": [
+          "spec"
+        ],
+        "message": "Additional properties are not allowed ('flowLogsEnableHostEndpoint', 'flowLogsFileDirectory', 'flowLogsFileEnabled', 'flowLogsFileMaxFileSizeMb', 'flowLogsFileMaxFiles', 'ipAutoDetectionMethod', 'iptablesLockFilePath', 'iptablesLockProbeIntervalMillis', 'iptablesLockTimeoutSecs', 'ipv6AutoDetectionMethod' were unexpected)"
+      }
+    ]
+  },
+  "figureReview": [
+    {
+      "locale": "en",
+      "index": 0,
+      "actuallyViewed": true,
+      "findings": "Actualimageis simplifiedAPI→Typha→Felix/BIRD,notfullcomponentsclaimedbyalt;omitsconfdandcontrolcomponents.Needaccuratealt/captionorreplace.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "en",
+      "index": 1,
+      "actuallyViewed": true,
+      "findings": "ExplicitFelixInterfaceManager→vethpairsetupiswrong(CNIownscreation);healthreportingandHTTP9099areconflated.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "en",
+      "index": 2,
+      "actuallyViewed": true,
+      "findings": "ExplicitCNIADDcalltoFelix/createveth/returnIPiswrong;replacewithcorrectruntime→CNI/IPAM+asyncFelixdescription.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "en",
+      "index": 3,
+      "actuallyViewed": true,
+      "findings": "Three-nodeiBGPmesh/externalToRtopologyconceptvalid;100+RRthresholdfooterisnotuniversal.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "en",
+      "index": 4,
+      "actuallyViewed": true,
+      "findings": "BIRDroutepropagationdiagrampartial(onewaykernel→BIRD);BIRDkernelprotocolalsoinstallsremote routes;routefilterisroutingpolicy,notNetworkPolicy.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "en",
+      "index": 5,
+      "actuallyViewed": true,
+      "findings": "BGPfullmeshfiguremisplacedunderconfdworkflow;duplicateBGPconcept+unsupportedhard50threshold.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "en",
+      "index": 6,
+      "actuallyViewed": true,
+      "findings": "Typhafanoutconceptusefulbutfootermax3ceilN200formulaWRONGcurrentoperator.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "en",
+      "index": 7,
+      "actuallyViewed": true,
+      "findings": "TyphafanoutconceptduplicatewithWRONGformulafooter;nodegroups100areillustrative.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "en",
+      "index": 8,
+      "actuallyViewed": true,
+      "findings": "Abstractreconcileloopcanberetainedonlyaslogicalcomparison,notactualtwoLISTcallsoneachinterval;realwatch/cachepath.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "en",
+      "index": 9,
+      "actuallyViewed": true,
+      "findings": "Typhaedgewatch/writeandFelixwritesviaTyphaaremisleading;Typhaisreadfanoutnotgeneralwriteproxy.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "en",
+      "index": 10,
+      "actuallyViewed": true,
+      "findings": "Etcdfigurealsoassignsread/writeTyphaedge;needcorrectwriteownershipandnoetcdscaleguarantee.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "en",
+      "index": 11,
+      "actuallyViewed": true,
+      "findings": "CurrentKDDdoesnotrequirePolicyController/WorkloadEndpointsyncshown;FelixdirectBIRDupdatearrowmisleading;replaceactualeventroles.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "en",
+      "index": 12,
+      "actuallyViewed": true,
+      "findings": "Same-nodekernel/vethpathconceptvalid;clarifybothPodendsandegress+ingresschecks,notdaemonpacketprocessing.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "en",
+      "index": 13,
+      "actuallyViewed": true,
+      "findings": "Felix/iptablesactorsmustmeanprogrammedkernelrules,notFelixprocess;IPIP/VXLANvsdirectarealternatives,notbothsequential.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "ko",
+      "index": 0,
+      "actuallyViewed": true,
+      "findings": "SimplifiedAPI→Typha→Felix/BIRD;omitsconfdandothercomponents.BIRDnotdirectTyphaAPIclient.Needcaptionorcorrectreplacement.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "ko",
+      "index": 1,
+      "actuallyViewed": true,
+      "findings": "Felixvethpaircreationlabeliswrong;CNIcreatesLinuxinterfaces.HealthHTTP9099vsdatastorestatusconflated.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "ko",
+      "index": 2,
+      "actuallyViewed": true,
+      "findings": "DirectCNIADD→Felix/createveth/returnIPwrong;replacewithruntime→CNI/IPAMthenasyncFelix.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "ko",
+      "index": 3,
+      "actuallyViewed": true,
+      "findings": "iptableschainoverviewhasillustrative/nonliteralchainnamesandclaimsOUTPUTsimplepass;needreleasedrule_defsverification/modescope.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "ko",
+      "index": 4,
+      "actuallyViewed": true,
+      "findings": "One-wayFelix→kernel→BIRDillustrationpartial;BIRDkernelprotocolalsoinstallsBGPlearnedroutes;routefiltersarenotNetworkPolicy.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "ko",
+      "index": 5,
+      "actuallyViewed": true,
+      "findings": "4-node6-sessionfullmeshconceptvalid;hard50nodeboundarynotuniversal.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "ko",
+      "index": 6,
+      "actuallyViewed": true,
+      "findings": "RRfigureactuallyeachclientconnectedtoonlyoneRR(notbothclaimedbyalt);doesnotprovideclientredundancy.Hard50thresholdwrong.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "ko",
+      "index": 7,
+      "actuallyViewed": true,
+      "findings": "HierarchicaleBGPdiagramconceptvalidbutreusesASNsacrossracks;routeacceptance/AS-loophandlingnotshown,notrunnablefabricdesign.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "ko",
+      "index": 8,
+      "actuallyViewed": true,
+      "findings": "Confdwatch→template→config→reloadconceptreasonable;actualreloadcommandshouldcomeversionedbird.toml,notassumeSIGHUP/birdc.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "ko",
+      "index": 9,
+      "actuallyViewed": true,
+      "findings": "Directwatchconceptvalidbutfooter50+mandatorywrongandonewatchpernodeonlyschematic.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "ko",
+      "index": 10,
+      "actuallyViewed": true,
+      "findings": "3-Typhafanoutconceptvalid;3replicasillustrative,edgeslogicalnotexactoneAPIwatchcount.",
+      "publishedAction": "retained_with_corrected_caption"
+    },
+    {
+      "locale": "ko",
+      "index": 11,
+      "actuallyViewed": true,
+      "findings": "Available5controller-typesprojectioncouldbeetcdpath,notcurrentKDDdefaultnode/loadbalancer;WorkloadEndpointcleanupwordingneedscheck.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "ko",
+      "index": 12,
+      "actuallyViewed": true,
+      "findings": "Kubelet→CNIarrowomitsCRI;CNIcreatesvethcorrectbutFelix+BIRDconflated;PodRunningnotpolicy/BGPconvergenceguarantee;createpodlabelnotliteralCLI.",
+      "publishedAction": "removed_wrong_or_redundant_reference; prose_or_table_preserved"
+    },
+    {
+      "locale": "ko",
+      "index": 13,
+      "actuallyViewed": true,
+      "findings": "Felix/iptablesactorsmustmeanprogrammedkernelrules,notdaemonprocessing;encap/directalternativesnotserialboth.",
+      "publishedAction": "retained_with_corrected_caption"
+    }
+  ],
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/calico/02-architecture.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/calico/02-architecture.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/calico/02-architecture-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/calico/02-architecture-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "batchValidation": {
+    "documents": 10,
+    "yamlBlocks": 24,
+    "shellBlocks": 28,
+    "errors": []
+  },
+  "docsTest": {
+    "tests": 118,
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-calico-architecture-validation/docs-test.log",
+    "environment": "login:false env-i OTELoff",
+    "note": "This worker checkpoint; parent responsive-renderer work continues independently."
+  },
+  "scopeDiffCheck": "passed",
+  "artifacts": "/tmp/networking-calico-architecture-validation"
+}

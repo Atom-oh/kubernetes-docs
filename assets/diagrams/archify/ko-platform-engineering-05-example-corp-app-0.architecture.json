@@ -1,0 +1,388 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ACK + KRO 통합 배포 아키텍처",
+    "output": "ko-platform-engineering-05-example-corp-app-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "KRO 커스텀 리소스"
+        },
+        "backend": {
+          "label": "Kubernetes 구성 요소"
+        },
+        "cloud": {
+          "label": "ACK가 관리하는 AWS 인프라"
+        },
+        "database": {
+          "label": "ACK가 관리하는 데이터베이스"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "kro-children",
+        "label": "KRO 자식 리소스 생성",
+        "focus": [
+          "cr",
+          "svc",
+          "tgb",
+          "dep",
+          "cm",
+          "lbc"
+        ],
+        "note": "OrderApp CR 하나가 Service, TargetGroupBinding, Deployment, ConfigMap을 함께 생성한다."
+      },
+      {
+        "id": "traffic-path",
+        "label": "트래픽 경로 연결",
+        "focus": [
+          "r53",
+          "nlb",
+          "tg",
+          "tgb",
+          "svc",
+          "lbc"
+        ],
+        "note": "Route 53 → NLB → Target Group으로 들어온 트래픽을 TargetGroupBinding이 Service의 Pod에 연결한다."
+      },
+      {
+        "id": "db-config",
+        "label": "DB 접속 정보 주입",
+        "focus": [
+          "aurora",
+          "cm",
+          "dep"
+        ],
+        "note": "Aurora endpoint를 ConfigMap에 담고 Deployment가 envFrom으로 읽는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cr",
+      "type": "frontend",
+      "label": "OrderApp CR",
+      "sublabel": "단일 애플리케이션 API",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "ClusterIP",
+      "pos": [
+        300,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "tgb",
+      "type": "backend",
+      "label": "TargetGroupBinding",
+      "sublabel": "LBC가 처리하는 연결 요청",
+      "pos": [
+        300,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dep",
+      "type": "backend",
+      "label": "Deployment",
+      "sublabel": "Order API Pod",
+      "pos": [
+        300,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cm",
+      "type": "backend",
+      "label": "ConfigMap",
+      "sublabel": "비밀을 제외한 DB endpoint",
+      "pos": [
+        300,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "NLB",
+      "sublabel": "Network Load Balancer",
+      "pos": [
+        680,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "r53",
+      "type": "cloud",
+      "label": "Route 53 Record",
+      "sublabel": "app.example.com",
+      "pos": [
+        940,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "tg",
+      "type": "cloud",
+      "label": "Target Group",
+      "sublabel": "Pod IP 대상 등록",
+      "pos": [
+        680,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "aurora",
+      "type": "database",
+      "label": "Aurora PostgreSQL",
+      "sublabel": "Writer / Reader endpoint",
+      "pos": [
+        680,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "lbc",
+      "type": "backend",
+      "label": "AWS Load Balancer Controller",
+      "sublabel": "Target 등록 / 해제",
+      "pos": [
+        980,
+        620
+      ],
+      "size": [
+        265,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "KRO (애플리케이션)",
+      "wraps": [
+        "cr",
+        "svc",
+        "tgb",
+        "dep",
+        "cm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "ACK (AWS 인프라)",
+      "wraps": [
+        "nlb",
+        "r53",
+        "tg",
+        "aurora"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cr-svc",
+      "from": "cr",
+      "to": "svc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cr-tgb",
+      "from": "cr",
+      "to": "tgb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cr-dep",
+      "from": "cr",
+      "to": "dep",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cr-cm",
+      "from": "cr",
+      "to": "cm",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-tgb",
+      "from": "svc",
+      "to": "tgb",
+      "label": "serviceRef",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "tgb-tg",
+      "from": "tgb",
+      "to": "tg",
+      "label": "참조 ARN",
+      "variant": "dashed"
+    },
+    {
+      "id": "dep-cm",
+      "from": "dep",
+      "to": "cm",
+      "label": "envFrom",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "cm-aurora",
+      "from": "cm",
+      "to": "aurora",
+      "label": "endpoints",
+      "variant": "dashed"
+    },
+    {
+      "id": "r53-nlb",
+      "from": "r53",
+      "to": "nlb"
+    },
+    {
+      "id": "nlb-tg",
+      "from": "nlb",
+      "to": "tg",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tgb-lbc",
+      "from": "tgb",
+      "to": "lbc",
+      "label": "binding 변경",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        925,
+        565
+      ],
+      "via": [
+        [
+          580,
+          230
+        ],
+        [
+          580,
+          300
+        ],
+        [
+          940,
+          300
+        ],
+        [
+          940,
+          655
+        ]
+      ]
+    },
+    {
+      "id": "lbc-tg",
+      "from": "lbc",
+      "to": "tg",
+      "label": "target API",
+      "fromSide": "top",
+      "toSide": "right",
+      "variant": "emphasis",
+      "labelAt": [
+        1120,
+        550
+      ],
+      "via": [
+        [
+          1112.5,
+          280
+        ],
+        [
+          900,
+          280
+        ],
+        [
+          900,
+          230
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "ACK (AWS 인프라)",
+      "items": [
+        "elbv2 컨트롤러: NLB + TargetGroup + Listener",
+        "route53 컨트롤러: app.example.com → NLB",
+        "rds 컨트롤러: Aurora PostgreSQL Writer + Reader"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "kro (애플리케이션)",
+      "items": [
+        "RGD가 OrderApp API와 CEL dependency를 정의",
+        "Service → TGB → Deployment 순서로 준비",
+        "DB 비밀은 미리 준비한 Secret 파일로 전달"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "검증 경계",
+      "items": [
+        "TGB는 ACK가 아니라 AWS LBC가 reconcile",
+        "로컬 schema/CEL 검사이며 실제 앱/DB 미실행",
+        "Deployment update는 Blue/Green·무중단 보장이 아님"
+      ]
+    }
+  ]
+}

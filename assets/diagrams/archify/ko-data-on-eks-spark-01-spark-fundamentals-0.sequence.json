@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Spark cluster mode: Kubernetes 배치와 Spark task 분리",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      670
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "driver",
+        "label": "드라이버 Pod 생성",
+        "focus": [
+          "user",
+          "api",
+          "driver",
+          "placement"
+        ],
+        "note": "API 요청 이후 Kubernetes scheduler와 kubelet이 Pod를 배치·시작합니다. 별도의 Spark master가 없다는 뜻과 구분합니다."
+      },
+      {
+        "id": "executors",
+        "label": "Executor Pod 생성",
+        "focus": [
+          "driver",
+          "api",
+          "exec",
+          "placement"
+        ],
+        "note": "Driver는 executor 개수를 요청하며 Kubernetes가 노드에 배치합니다."
+      },
+      {
+        "id": "tasks",
+        "label": "작업 실행과 정리",
+        "focus": [
+          "driver",
+          "exec",
+          "api"
+        ],
+        "note": "Task 조율은 Spark의 역할입니다. 정상 종료·실패와 owner-reference 설정에 따라 리소스 정리가 달라집니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "spark-submit"
+    },
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "Kubernetes API 서버",
+      "sublabel": "API 객체 · admission"
+    },
+    {
+      "id": "placement",
+      "type": "backend",
+      "label": "Pod 배치·시작",
+      "sublabel": "scheduler + kubelets"
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "Driver Pod",
+      "sublabel": "Spark task 조율"
+    },
+    {
+      "id": "exec",
+      "type": "backend",
+      "label": "Executor Pods",
+      "sublabel": "spark.executor.instances"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 285,
+      "label": "1. Driver Pod 요청과 배치"
+    },
+    {
+      "from": 305,
+      "to": 410,
+      "label": "2. Executor Pod 요청과 배치"
+    },
+    {
+      "from": 430,
+      "to": 610,
+      "label": "3. Spark task 실행과 정리"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create-driver",
+      "from": "user",
+      "to": "api",
+      "y": 190,
+      "label": "Create driver Pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "driver-spec",
+      "from": "api",
+      "to": "placement",
+      "y": 230,
+      "label": "Pod spec / binding"
+    },
+    {
+      "id": "start-driver",
+      "from": "placement",
+      "to": "driver",
+      "y": 265,
+      "label": "Pod 배치 · 시작"
+    },
+    {
+      "id": "request-exec",
+      "from": "driver",
+      "to": "api",
+      "y": 325,
+      "label": "Request executor Pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "executor-spec",
+      "from": "api",
+      "to": "placement",
+      "y": 355,
+      "label": "Pod specs / bindings"
+    },
+    {
+      "id": "start-exec",
+      "from": "placement",
+      "to": "exec",
+      "y": 390,
+      "label": "Pod 배치 · 시작"
+    },
+    {
+      "id": "register",
+      "from": "exec",
+      "to": "driver",
+      "y": 450,
+      "label": "Register",
+      "variant": "return"
+    },
+    {
+      "id": "assign",
+      "from": "driver",
+      "to": "exec",
+      "y": 490,
+      "label": "Spark task 할당",
+      "variant": "emphasis"
+    },
+    {
+      "id": "report",
+      "from": "exec",
+      "to": "driver",
+      "y": 530,
+      "label": "결과 · 상태",
+      "variant": "return"
+    },
+    {
+      "id": "cleanup",
+      "from": "driver",
+      "to": "api",
+      "y": 580,
+      "label": "정상 종료 시 executor 정리 요청"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 185,
+      "to": 235,
+      "type": "cloud"
+    },
+    {
+      "participant": "placement",
+      "from": 225,
+      "to": 270,
+      "type": "backend"
+    },
+    {
+      "participant": "driver",
+      "from": 260,
+      "to": 588,
+      "type": "backend"
+    },
+    {
+      "participant": "api",
+      "from": 320,
+      "to": 360,
+      "type": "cloud"
+    },
+    {
+      "participant": "placement",
+      "from": 350,
+      "to": 395,
+      "type": "backend"
+    },
+    {
+      "participant": "exec",
+      "from": 385,
+      "to": 538,
+      "type": "backend"
+    }
+  ]
+}

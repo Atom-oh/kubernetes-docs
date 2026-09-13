@@ -1,192 +1,106 @@
-# Advanced 퀴즈
+# Istio 고급 주제 퀴즈
 
-> **지원 버전**: Istio 1.28.0 **EKS 버전**: 1.34 (Kubernetes 1.28+) **마지막 업데이트**: 2026년 2월 19일
+> **검증 기준**: Istio 1.31.0, Kubernetes 1.32–1.36, Argo Rollouts 1.10.0
+> **마지막 검토**: 2026년 9월 11일
 
-이 퀴즈는 Istio의 고급 기능에 대한 이해도를 테스트합니다.
+설정, 실제 실행 동작, 검증 근거를 구분하는 퀴즈입니다. 예제는 서로 독립적이며 선택한 토폴로지와 연결된 가이드의 전제조건을 따라야 합니다. 아래 과거 계산 입력값은 현재 가격이나 새 벤치마크 결과가 아닙니다.
 
-## 객관식 문제 (1-5번)
+## 객관식 문제 (1–5번)
 
-### 문제 1: Ambient Mode vs Sidecar Mode
+### 문제 1: Ambient와 Sidecar 모드
 
-Istio Ambient Mode의 **가장 큰 장점**은?
+Ambient에서 workload별 proxy overhead를 줄일 수 있는 구조적 변화는 무엇인가요?
 
-A. 더 많은 기능 제공\
-B. 리소스 사용량 대폭 감소\
-C. 더 빠른 설치 속도\
-D. 더 나은 보안
+- A. Ambient는 항상 sidecar보다 많은 기능을 제공합니다.
+- B. 노드별 ztunnel이 L4를 처리하고 필요한 L7 처리를 별도 waypoint에 배치합니다.
+- C. 설치 속도가 반드시 열 배 빨라집니다.
+- D. 설정 변경 없이 모든 정책의 보안 수준이 높아집니다.
 
 <details>
-
 <summary>정답 및 해설</summary>
 
 **정답: B**
 
-Ambient Mode의 가장 큰 장점은 **리소스 사용량이 98% 이상 감소**한다는 것입니다.
+Ambient는 등록된 workload Pod마다 sidecar proxy가 있어야 하는 구조를 바꿉니다. ztunnel은 L4 보안 overlay를 제공하며 목적지의 waypoint 등록과 지원되는 L7 정책에 따라 추가 처리 경로가 결정됩니다. Waypoint는 양쪽 ztunnel이 임의로 선택하는 보편적인 공유 중간 지점이 아닙니다.
 
-**해설:**
+| 항목 | 올바른 비교 |
+|---|---|
+| CPU/메모리 | 동일한 트래픽·정책·telemetry와 실제 노드 수·waypoint replica를 기준으로 측정합니다. 보편적인 98% 절감 보장은 없습니다. |
+| 등록 | Sidecar가 없는 기존 Pod는 앱 재시작 없이 ambient에 등록할 수 있습니다. 이미 있는 sidecar를 제거하려면 workload 교체가 필요합니다. |
+| 기능 | 지원 범위가 다릅니다. Waypoint의 EnvoyFilter는 지원되지 않으며 ambient multicluster에는 별도 Beta 토폴로지 제약이 있습니다. |
+| 성숙도 | Ambient 핵심 기능은 Istio 1.24에서 GA가 되었습니다. 이후 모든 기능이 GA라는 뜻은 아닙니다. |
+| 보안 | 실제 경로와 지원되는 정책 연결 방식에 따라 mTLS·정책을 검증합니다. L7 강제가 필요하면 waypoint 우회도 방지해야 합니다. |
 
-**Sidecar Mode vs Ambient Mode 비교:**
+예를 들어 sidecar 1,000개의 사용량을 각각 50 MB/0.1 vCPU로 **가정**하면 합계는 50,000 MB/100 vCPU입니다. ztunnel 10개를 각각 50 MB/0.1 vCPU, waypoint 하나를 200 MB/0.5 vCPU로 가정하면 700 MB/1.5 vCPU이며 산술 절감률은 98.6%/98.5%입니다. 임의의 입력값이므로 실측이나 용량 보장이 아닙니다.
 
-| 항목          | Sidecar Mode     | Ambient Mode        | 개선       |
-| ----------- | ---------------- | ------------------- | -------- |
-| **메모리**     | 50MB × Pod 수     | ztunnel + waypoint만 | 98%+ 감소  |
-| **CPU**     | 0.1 vCPU × Pod 수 | ztunnel + waypoint만 | 98%+ 감소  |
-| **Pod 재시작** | 필요               | 불필요                 | 운영 간소화   |
-| **배포 속도**   | 느림 (Sidecar 주입)  | 빠름                  | 5-10배 향상 |
-
-**1000개 Pod 규모에서 리소스 비교:**
-
-```
-Sidecar Mode:
-- 메모리: 1000 × 50MB = 50GB
-- CPU: 1000 × 0.1 vCPU = 100 vCPU
-
-Ambient Mode (10개 노드):
-- 메모리: (10 × 50MB) + 200MB = 700MB
-- CPU: (10 × 0.1 vCPU) + 0.5 vCPU = 1.5 vCPU
-
-절감률: 98.6% (메모리), 98.5% (CPU)
-```
-
-**Ambient Mode 아키텍처:**
-
-![두 노드의 파드가 각 노드의 ztunnel L4 프록시로 연결되고, 두 ztunnel이 mTLS로 직접 통신하며 필요할 때만 선택적으로 waypoint L7 프록시를 거치는 Istio 앰비언트 메시 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-0.svg)
-
-**Ambient Mode 활성화:**
+지원되는 ambient component를 설치하고 기존 revision/injection label을 검토한 뒤 등록합니다.
 
 ```bash
-# Ambient Mode로 Istio 설치
-istioctl install --set profile=ambient -y
-
-# Namespace를 Ambient Mode에 추가
-kubectl label namespace default istio.io/dataplane-mode=ambient
-
-# 확인
-kubectl get pods -n istio-system | grep ztunnel
+kubectl label namespace ambient-demo istio.io/dataplane-mode=ambient --overwrite
+kubectl get daemonset ztunnel -n istio-system
+istioctl ztunnel-config workloads --workload-namespace ambient-demo
 ```
 
-**각 옵션 분석:**
+Namespace가 이미 존재하고 ambient용으로 선택되어 있으며 workload가 호환되어야 합니다. 이 명령만으로 CNI/ztunnel 설치, waypoint 구성, 주입된 Pod의 안전한 migration이 이루어지지는 않습니다.
 
-* A (X): 기능은 Sidecar와 동일 (일부 고급 기능은 waypoint 필요)
-* B (O): 리소스 사용량이 98% 이상 감소
-* C (X): 설치 속도는 부차적 이점
-* D (X): 보안 수준은 동일 (mTLS, AuthorizationPolicy 모두 지원)
-
-**참고 자료:**
-
-* [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+[Ambient 가이드](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 
 </details>
 
-***
+### 문제 2: Multicluster 서비스 검색
 
-### 문제 2: Multi-cluster Mesh
+Istio sidecar multicluster에서 허용된 Kubernetes 서비스 registry를 읽고 proxy discovery 설정을 생성하는 component는 무엇인가요?
 
-Istio Multi-cluster Mesh에서 **클러스터 간 서비스 검색**을 담당하는 것은?
-
-A. Istiod\
-B. CoreDNS\
-C. East-West Gateway\
-D. Service Entry
+- A. Istiod
+- B. CoreDNS 단독
+- C. East-west gateway 단독
+- D. ServiceEntry 객체 단독
 
 <details>
-
 <summary>정답 및 해설</summary>
 
 **정답: A**
 
-**Istiod**는 멀티 클러스터 환경에서 모든 클러스터의 서비스 정보를 수집하고 배포합니다.
+각 primary Istiod는 접근 권한을 가진 Kubernetes API를 읽습니다. Primary-remote에서는 remote workload가 primary control plane을 사용하며, remote 설치는 상위 “super-primary”가 관리하는 두 번째 전체 Istiod가 아닙니다. Multi-primary에서는 각 primary가 자체 control plane과 허용된 remote discovery를 가집니다.
 
-**해설:**
+Istiod는 proxy 설정을 생성·배포하지만 VirtualService/DestinationRule Kubernetes 객체나 앱 데이터를 모든 cluster로 복사하지 않습니다. 설정을 별도로 배포해야 합니다. 동일한 meshID만으로 공통 CA가 생기지 않으며 신뢰를 명시적으로 구성해야 합니다.
 
-**Multi-cluster Mesh 아키텍처:**
+CoreDNS는 forwarding 등의 설정을 사용할 수 있지만 Istio의 cross-cluster registry는 아닙니다. Gateway는 다른 network로 트래픽을 전달하고 ServiceEntry는 외부 서비스 등을 registry에 명시적으로 등록합니다.
 
-![하나의 Primary Istiod가 두 클러스터의 서비스 검색을 총괄하고, 각 클러스터의 Istiod가 자기 클러스터의 서비스 정보를 수집하며 두 클러스터의 파드가 크로스 클러스터로 통신하는 공유 컨트롤 플레인 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-1.svg)
+가상의 `data.kubeconfig`를 작성하지 말고 실제 remote secret을 생성합니다.
 
-**Istiod의 역할:**
-
-1. **서비스 검색 (Service Discovery)**:
-   * 모든 클러스터의 Kubernetes Service 수집
-   * 통합된 서비스 레지스트리 유지
-   * Envoy에 엔드포인트 정보 배포
-2. **구성 배포**:
-   * VirtualService, DestinationRule을 모든 클러스터에 배포
-   * Cross-cluster 라우팅 규칙 관리
-3. **인증서 관리**:
-   * 모든 클러스터의 mTLS 인증서 발급
-   * Root CA를 공유하여 신뢰 체인 구축
-
-**Multi-cluster 설정 예시:**
-
-```yaml
-# Primary 클러스터 설정
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  values:
-    global:
-      meshID: mesh1
-      multiCluster:
-        clusterName: cluster1
-      network: network1
-
----
-# Remote 클러스터에서 Primary 접근
-apiVersion: v1
-kind: Secret
-metadata:
-  name: istio-remote-secret-cluster2
-  namespace: istio-system
-  annotations:
-    networking.istio.io/cluster: cluster2
-type: Opaque
-data:
-  kubeconfig: <base64-encoded-kubeconfig>
+```bash
+# Remote 설치 후 실행하며 각 context가 의도한 cluster인지 확인합니다.
+istioctl create-remote-secret --context="$CTX_CLUSTER2" --name=cluster2   | kubectl --context="$CTX_CLUSTER1" apply -f -
 ```
 
-**각 옵션 분석:**
+이 secret은 primary가 **remote API**에 접근할 권한을 제공합니다. Credential을 보호하고 생성되는 RBAC를 검토하세요. Network를 연결하거나 정책 객체를 복제하는 기능은 아닙니다.
 
-* A (O): Istiod가 모든 클러스터의 서비스 정보를 수집하고 배포
-* B (X): CoreDNS는 클러스터 내부 DNS만 담당
-* C (X): East-West Gateway는 트래픽 라우팅만 담당 (서비스 검색 아님)
-* D (X): ServiceEntry는 외부 서비스를 수동으로 등록하는 리소스
-
-**참고 자료:**
-
-* [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+[Multicluster 가이드](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 
 </details>
 
-***
+### 문제 3: EnvoyFilter의 목적
 
-### 문제 3: EnvoyFilter 사용 목적
+EnvoyFilter의 주요 목적은 무엇인가요?
 
-EnvoyFilter를 사용하는 **주요 목적**은?
-
-A. Kubernetes Service 생성\
-B. VirtualService 자동 생성\
-C. Envoy 프록시 동작 커스터마이징\
-D. Istiod 구성 변경
+- A. Kubernetes Service 생성
+- B. 모든 VirtualService 자동 생성
+- C. 선택한 Envoy proxy의 생성된 설정 커스터마이징
+- D. 모든 Istiod 설치 설정 대체
 
 <details>
-
 <summary>정답 및 해설</summary>
 
 **정답: C**
 
-**EnvoyFilter**는 Envoy 프록시의 동작을 세밀하게 커스터마이징하기 위한 고급 리소스입니다.
-
-**해설:**
-
-**EnvoyFilter 사용 사례:**
-
-1. **커스텀 헤더 추가**:
+먼저 목적에 맞는 routing·telemetry·security·extension API를 사용합니다. 해당 API로 제공되지 않는 동작이 필요하고 생성된 설정을 이해하는 경우 EnvoyFilter를 고려합니다. 다음 sidecar 전용 Lua 예제는 outbound 요청의 설명용 header를 바꿉니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: add-custom-header
+  name: quiz-header
   namespace: default
 spec:
   workloadSelector:
@@ -199,1038 +113,310 @@ spec:
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
-        name: envoy.lua
+        name: envoy.filters.http.lua
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              request_handle:headers():add("x-custom-header", "my-value")
-            end
+          '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+          default_source_code:
+            inline_string: |
+              function envoy_on_request(handle)
+                handle:headers():replace("x-quiz-example", "yes")
+              end
 ```
 
-2. **Wasm 확장 통합**:
+Namespace와 selector가 실제 proxy와 일치해야 합니다. Selector가 없으면 일반적으로 resource namespace의 proxy에 적용되며 root namespace의 resource는 mesh 전체 범위가 될 수 있습니다. 하나의 YAML 객체에 `workloadSelector`를 두 번 작성하면 안 됩니다. Lua가 추가한 header는 인증된 identity가 아닙니다.
 
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: wasm-filter
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.wasm
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-          config:
-            vm_config:
-              runtime: "envoy.wasm.runtime.v8"
-              code:
-                local:
-                  filename: "/etc/istio/extensions/auth_filter.wasm"
-```
+다른 사용 사례에도 전체 의존성이 필요합니다. Wasm에는 검증된 artifact/runtime과 mount 또는 지원되는 WasmPlugin 전달 경로가 필요합니다. Global rate limiting에는 접근 가능한 service, 일치하는 descriptor와 실패 정책이 필요합니다. Filter 이름만 삽입해서 이런 시스템이 완성되지는 않습니다. Ambient waypoint는 EnvoyFilter를 지원하지 않습니다.
 
-3. **Rate Limiting 통합**:
+업그레이드 때 정확한 Istio/Envoy 버전, 적용 범위, filter 순서, typed payload와 생성된 proxy 설정을 검증하세요. Istiod 설치값은 Helm/istioctl에서 관리합니다. In-cluster operator는 제거되었지만 IstioOperator YAML은 istioctl 입력으로 계속 사용됩니다.
 
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: rate-limit-filter
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.ratelimit
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
-          domain: productpage-ratelimit
-          rate_limit_service:
-            grpc_service:
-              envoy_grpc:
-                cluster_name: rate_limit_cluster
-```
-
-**EnvoyFilter 적용 범위:**
-
-```yaml
-spec:
-  # 전체 메시에 적용
-  workloadSelector: {}
-
-  # 특정 워크로드에만 적용
-  workloadSelector:
-    labels:
-      app: reviews
-      version: v2
-
-  # 특정 네임스페이스에만 적용
-  # (metadata.namespace로 제어)
-```
-
-**주의사항:**
-
-⚠️ **EnvoyFilter는 매우 강력하지만 위험합니다:**
-
-* Envoy 내부 구조에 대한 깊은 이해 필요
-* Istio 버전 업그레이드 시 호환성 문제 가능
-* 잘못된 구성으로 전체 메시 장애 가능
-
-**모범 사례:**
-
-1. 가능하면 VirtualService, DestinationRule 사용
-2. EnvoyFilter는 최후의 수단으로만 사용
-3. 테스트 환경에서 충분히 검증
-4. workloadSelector로 범위 제한
-
-**각 옵션 분석:**
-
-* A (X): Kubernetes Service 생성은 kubectl로 수행
-* B (X): VirtualService는 수동으로 생성
-* C (O): Envoy 프록시의 동작을 세밀하게 커스터마이징
-* D (X): Istiod 구성은 IstioOperator로 변경
-
-**참고 자료:**
-
-* [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+[EnvoyFilter 가이드](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 
 </details>
 
-***
+### 문제 4: Sidecar 주입
 
-### 문제 4: Sidecar Injection
+새로 생성하는 Pod의 자동 sidecar 주입을 비활성화할 수 있는 설정은 무엇인가요?
 
-Istio에서 **자동 Sidecar 주입을 비활성화**하는 방법은?
-
-A. Namespace에서 `istio-injection=enabled` 레이블 제거\
-B. Pod에 `sidecar.istio.io/inject="false"` annotation 추가\
-C. Istiod 재시작\
-D. A와 B 모두 가능
+- A. Namespace label을 명시적으로 `istio-injection=disabled`로 설정
+- B. Workload Pod template의 label을 `sidecar.istio.io/inject: "false"`로 설정
+- C. 설정 변경 없이 Istiod 재시작
+- D. A와 B 모두 가능
 
 <details>
-
 <summary>정답 및 해설</summary>
 
 **정답: D**
 
-Namespace 레벨과 Pod 레벨 모두에서 Sidecar 주입을 제어할 수 있습니다.
-
-**해설:**
-
-**Sidecar 주입 제어 방법:**
-
-**1. Namespace 레벨 (A - O):**
-
 ```bash
-# Sidecar 주입 활성화
-kubectl label namespace default istio-injection=enabled
-
-# Sidecar 주입 비활성화
-kubectl label namespace default istio-injection-
-
-# 또는 레이블 변경
-kubectl label namespace default istio-injection=disabled --overwrite
+kubectl label namespace example istio-injection=disabled --overwrite
+kubectl get namespace example -L istio-injection,istio.io/rev
 ```
 
-**2. Pod 레벨 (B - O):**
+다음 조각을 기존 Deployment의 spec 아래에 병합하며 image·selector와 다른 필드를 보존합니다.
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
 spec:
   template:
     metadata:
-      annotations:
-        sidecar.istio.io/inject: "false"  # Sidecar 주입 비활성화
-    spec:
-      containers:
-      - name: myapp
-        image: myapp:latest
+      labels:
+        sidecar.istio.io/inject: 'false'
 ```
 
-**Sidecar 주입 우선순위:**
+Namespace 또는 Pod의 비활성화 label이 우선합니다. Pod opt-in은 `istio-injection=disabled`를 덮어쓰지 못합니다. `istio-injection=enabled`만 제거한다고 항상 비활성화되는 것은 아닙니다. Revision label, Pod opt-in, injector 기본값도 확인해야 합니다. 구형 inject annotation 대신 label을 사용하며 서로 모순되는 설정을 피하세요.
 
-```
-Pod annotation > Namespace label > 기본값
-
-예시:
-1. Namespace: istio-injection=enabled
-   Pod: sidecar.istio.io/inject="false"
-   결과: Sidecar 주입 안됨 (Pod annotation 우선)
-
-2. Namespace: istio-injection=disabled
-   Pod: sidecar.istio.io/inject="true"
-   결과: Sidecar 주입됨 (Pod annotation 우선)
-
-3. Namespace: 레이블 없음
-   Pod: annotation 없음
-   결과: Sidecar 주입 안됨 (기본값)
-```
-
-**Sidecar 주입 검증:**
+변경은 새 Pod에 적용되며 이미 주입된 proxy를 제거하지 않습니다. 기존 Pod 변경은 workload의 검토된 rollout 절차를 따릅니다. Namespace는 주입을 활성화하고 일부 template만 제외할 수 있지만 해당 workload의 mesh·보안 참여도 달라집니다.
 
 ```bash
-# Pod에 Sidecar가 주입되었는지 확인
-kubectl get pods <pod-name> -o jsonpath='{.spec.containers[*].name}'
-# 출력 예시: myapp istio-proxy (2개 = Sidecar 있음)
-
-# Sidecar 주입 로그 확인
-kubectl logs -n istio-system -l app=istiod --tail=100 | grep injection
-
-# Namespace 설정 확인
-kubectl get namespace -L istio-injection
+kubectl get pod "$POD" -n "$NAMESPACE" -o json   | jq '{containers: [.spec.containers[].name],
+         initContainers: [.spec.initContainers[]? | {name, restartPolicy}]}'
 ```
 
-**혼합 환경 예시:**
+Native sidecar는 initContainers에 `restartPolicy: Always`로 나타날 수 있습니다. 일반 containers만 검사하거나 항상 Ready `2/2`를 기대하면 안 됩니다. Ambient 등록은 별도 메커니즘입니다.
 
-```yaml
-# Namespace 전체에 Sidecar 주입
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: production
-  labels:
-    istio-injection: enabled
-
----
-# 특정 Pod만 제외 (예: 레거시 시스템)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: legacy-app
-  namespace: production
-spec:
-  template:
-    metadata:
-      annotations:
-        sidecar.istio.io/inject: "false"
-    spec:
-      containers:
-      - name: legacy
-        image: legacy:v1
-
----
-# 대부분의 Pod는 자동으로 Sidecar 주입됨
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: modern-app
-  namespace: production
-spec:
-  template:
-    spec:
-      containers:
-      - name: modern
-        image: modern:v2
-```
-
-**각 옵션 분석:**
-
-* A (O): Namespace 레벨에서 Sidecar 주입 제어 가능
-* B (O): Pod 레벨에서 Sidecar 주입 제어 가능
-* C (X): Istiod 재시작은 불필요
-* D (O): A와 B 모두 유효한 방법
-
-**참고 자료:**
-
-* [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+[주입 가이드](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 
 </details>
 
-***
+### 문제 5: Argo Rollouts 트래픽 분할
 
-### 문제 5: Argo Rollouts 통합
+Argo Rollouts가 변경하는 HTTP route weight를 담는 Istio의 **선언적 resource**는 무엇인가요?
 
-Argo Rollouts와 Istio를 함께 사용할 때 **트래픽 분할을 담당**하는 것은?
-
-A. Argo Rollouts Controller B. Istio VirtualService C. Kubernetes Service D. Istio Gateway
+- A. Rollouts controller process
+- B. VirtualService
+- C. Kubernetes Service 단독
+- D. Gateway 단독
 
 <details>
-
 <summary>정답 및 해설</summary>
 
 **정답: B**
 
-**Istio VirtualService**가 실제 트래픽 분할을 수행하고, Argo Rollouts는 VirtualService의 weight 값을 자동으로 업데이트합니다.
+Rollouts가 이름으로 지정한 route weight를 바꾸고 Istiod가 설정을 변환하며 **Envoy가 실제 routing을 실행**합니다. VirtualService는 packet을 처리하는 process가 아닙니다. 10%는 확률적인 weight이며 요청 100개마다 정확히 10개가 canary로 간다는 보장이 아닙니다. Retry·장기 연결도 관측값에 영향을 줍니다.
 
-**해설:**
-
-**Argo Rollouts + Istio 통합 아키텍처:**
-
-![사용자 요청이 Istio Gateway와 VirtualService를 거쳐 안정 파드와 카나리 파드로 가중치 분할되고, Argo Rollouts 컨트롤러가 Prometheus 메트릭 분석 결과에 따라 가중치와 파드 수를 자동 조정하는 카나리 배포 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-2.svg)
-
-**VirtualService 역할:**
+Subset 방식에는 앱을 선택하는 Service 하나, 두 subset, revision label에 대한 Rollouts ownership이 필요합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: test-subsets
+  namespace: rollouts-demo
+spec:
+  host: test
+  subsets:
+  - name: stable
+    labels:
+      app: test
+  - name: canary
+    labels:
+      app: test
+---
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: reviews
+  name: test-subsets
+  namespace: rollouts-demo
 spec:
   hosts:
-  - reviews
+  - test
+  - test.rollouts-demo.svc.cluster.local
   http:
-  - name: primary  # Argo Rollouts가 참조하는 route 이름
+  - name: primary
     route:
     - destination:
-        host: reviews
+        host: test
+        port:
+          number: 8080
         subset: stable
-      weight: 100  # Argo Rollouts가 자동으로 변경
+      weight: 100
     - destination:
-        host: reviews
+        host: test
+        port:
+          number: 8080
         subset: canary
-      weight: 0    # Argo Rollouts가 자동으로 변경
+      weight: 0
+    retries:
+      attempts: 0
 ```
 
-**Argo Rollouts 설정:**
+다음 strategy 조각은 가이드의 완전한 matching Rollout에 병합합니다. 불완전한 resource로 적용하거나 다른 host-level 분할 방식과 혼합하지 마세요.
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: reviews
 spec:
   strategy:
     canary:
-      # Istio 통합 설정
       trafficRouting:
         istio:
           virtualService:
-            name: reviews        # VirtualService 이름
+            name: test-subsets
             routes:
-            - primary            # route 이름
+            - primary
           destinationRule:
-            name: reviews        # DestinationRule 이름
+            name: test-subsets
             canarySubsetName: canary
             stableSubsetName: stable
-
-      # Canary 단계
       steps:
-      - setWeight: 10   # VirtualService weight를 10으로 변경
-      - pause: {duration: 2m}
-      - setWeight: 25   # VirtualService weight를 25로 변경
-      - pause: {duration: 2m}
-      - setWeight: 50
-      - pause: {duration: 2m}
+      - setWeight: 10
+      - pause: {}
 ```
 
-**배포 프로세스:**
+`test` Service, 전체 Rollout selector/template, controller/RBAC와 `rollouts-demo` namespace가 있어야 합니다. Rollouts가 subset revision label을 갱신합니다. `retries.attempts: 0`은 이 route의 mesh retry를 막으며 앱 자체 retry는 별도로 관리합니다.
 
-```
-1. Argo Rollouts가 새 버전 (v2) Pod 생성
-   ↓
-2. Argo Rollouts가 VirtualService의 canary weight를 10으로 설정
-   ↓
-3. Istio Envoy가 실제 10% 트래픽을 v2로 라우팅
-   ↓
-4. AnalysisTemplate이 메트릭 확인 (에러율, 지연시간)
-   ↓
-5. 성공 시 Argo Rollouts가 weight를 25로 증가
-   ↓
-6. 반복...
-   ↓
-7. 최종적으로 weight 100 (완전 전환)
-```
+분석은 설정한 경우에만 실행됩니다. 분석 실패로 rollout을 중단할 수 있지만 앱/DB 부작용을 되돌리지는 않습니다. 가이드의 완전한 host-level 또는 subset 예제를 하나씩 선택하세요.
 
-**책임 분담:**
-
-| 컴포넌트                     | 역할                                                                          |
-| ------------------------ | --------------------------------------------------------------------------- |
-| **Argo Rollouts**        | <p>- Pod 생성/삭제<br>- VirtualService weight 업데이트<br>- 배포 전략 실행<br>- 자동 롤백</p> |
-| **Istio VirtualService** | <p>- 실제 트래픽 분할<br>- 라우팅 규칙 적용<br>- Envoy 구성 생성</p>                          |
-| **Envoy Proxy**          | <p>- 트래픽 라우팅 실행<br>- 메트릭 수집</p>                                             |
-| **Prometheus**           | <p>- 메트릭 저장<br>- AnalysisTemplate에 데이터 제공</p>                               |
-
-**실제 트래픽 흐름:**
-
-```bash
-# 사용자 요청 100개
-100개 요청 → Istio Gateway
-              ↓
-         VirtualService
-         (weight: stable=90, canary=10)
-              ↓
-         ┌────┴────┐
-         ↓         ↓
-      90개       10개
-    Stable v1   Canary v2
-```
-
-**각 옵션 분석:**
-
-* A (X): Argo Rollouts는 VirtualService를 업데이트만 함 (직접 트래픽 분할 안함)
-* B (O): VirtualService가 실제 트래픽 분할 수행
-* C (X): Kubernetes Service는 로드 밸런싱만 담당 (트래픽 분할 안함)
-* D (X): Gateway는 외부 트래픽 진입점 (트래픽 분할 안함)
-
-**참고 자료:**
-
-* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+[Argo Rollouts 가이드](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
 
-***
+## 주관식 문제 (6–10번)
 
-## 주관식 문제 (6-10번)
+### 문제 6: Ambient 리소스·비용 분석
 
-### 문제 6: Ambient Mode 비용 절감 분석
-
-AWS EKS 클러스터에서 Sidecar Mode에서 Ambient Mode로 전환할 때의 **비용 절감 효과**를 계산하세요. (가정: 500개 Pod, 5개 노드, r5.xlarge 인스턴스, 월 730시간 운영)
+원래 가정값인 Pod 500개, r5.xlarge 노드 5개, 월 730시간과 노드당 시간당 $0.252를 사용해 proxy resource를 계산하고 청구 비용 절감 여부를 설명하세요. Sidecar는 각각 50 MB/0.1 vCPU, ztunnel은 각각 50 MB/0.1 vCPU, waypoint는 200 MB/0.5 vCPU로 가정합니다.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
+가격과 resource 수치는 **연습문제 입력값**이며 현재 AWS 견적이나 Istio 실측이 아닙니다. 아래 MB/GB 계산은 십진 단위입니다.
 
-**비용 절감 분석:**
+| Resource | Sidecar | 가정한 노드 5개의 ambient | 산술 감소량 |
+|---|---|---|---|
+| 메모리 |500 × 50 = 25,000 MB|5 × 50 + 200 = 450 MB|24,550 MB, 98.2%|
+| CPU |500 × 0.1 = 50 vCPU|5 × 0.1 + 0.5 = 1 vCPU|49 vCPU, 98%|
 
-***
+r5.xlarge는 vCPU 4개와 메모리 32 GiB를 제공합니다. 노드 5개는 system/app 용량을 제외하기 전에도 20 vCPU뿐이므로 sidecar 50 vCPU 가정부터 이 고정 노드 구성에서 불가능합니다. Proxy CPU만의 하한은 ceil(50/4) = 13개 노드이며 앱 CPU, system 예약, 메모리, IP 제한, placement와 복원력 요구사항을 제외한 값입니다.
 
-**1. 가정 조건**
+이 13개 하한을 “ambient 노드 하나”와 비교하면서 ztunnel은 계속 노드 5개분으로 계산하면 안 됩니다. **실제로 유지할 노드 수**에 맞춰 ztunnel 용량을 다시 계산하고 waypoint HA/트래픽 용량과 다른 workload도 포함해야 합니다.
 
-```
-클러스터 규모:
-- Pod 수: 500개
-- 노드 수: 5개
-- 인스턴스 타입: r5.xlarge (4 vCPU, 32GB RAM)
-- 인스턴스 비용: $0.252/시간
-- 운영 시간: 월 730시간
+가정 가격에서:
 
-리소스 사용량:
-- Sidecar 메모리: 50MB/Pod
-- Sidecar CPU: 0.1 vCPU/Pod
-- ztunnel 메모리: 50MB/Node
-- ztunnel CPU: 0.1 vCPU/Node
-- waypoint 메모리: 200MB
-- waypoint CPU: 0.5 vCPU
-```
+- 노드 한 개의 한 달 비용은 `0.252 × 730 = $183.96`입니다.
+- 동일한 노드 5개를 유지하면 두 모드 모두 `$919.80/월`입니다. Proxy 여유 용량만 늘었다고 청구액이 줄지는 않습니다.
+- 노드 13개의 한 달 비용은 `$2,391.48`로 기존 산술 오류를 바로잡습니다. 필요한 운영 fleet이 13개라는 검증은 아닙니다.
+- 검증된 fleet이 Nₛ개와 Nₐ개라면 다른 비용·약정을 제외한 compute 차이는 `(Nₛ − Nₐ) × $183.96/월`입니다.
 
-***
+전체 비교에는 EKS/control-plane, load balancer, AZ/Region 전송, storage, telemetry와 실제 구매 약정을 포함하세요. Sidecar도 local 통신을 사용하며 ambient가 network 비용이나 OOM을 자동 제거하지 않습니다.
 
-**2. Sidecar Mode 리소스 계산**
+연습문제의 migration effort $6,000에 대한 회수 기간은 실측 순절감액 S가 양수일 때만 `6000 / S`개월입니다. 청구 용량이 같으면 S가 0일 수 있어 유한한 회수 기간이 나오지 않습니다. Proxy 산술만으로 기존의 92% 비용 절감이나 2.7개월 ROI를 주장할 수 없습니다.
 
-```
-메모리 사용량:
-= 500 Pod × 50MB
-= 25,000MB
-= 25GB
-
-CPU 사용량:
-= 500 Pod × 0.1 vCPU
-= 50 vCPU
-```
-
-**필요 인스턴스 수 (r5.xlarge: 4 vCPU, 32GB RAM):**
-
-```
-CPU 기준:
-= 50 vCPU ÷ 4 vCPU/인스턴스
-= 12.5 인스턴스
-≈ 13 인스턴스 필요
-
-메모리 기준:
-= 25GB ÷ 32GB/인스턴스
-= 0.78 인스턴스
-≈ 1 인스턴스 필요
-
-실제 필요: max(13, 1) = 13 인스턴스
-```
-
-**Sidecar Mode 월간 비용:**
-
-```
-= 13 인스턴스 × $0.252/시간 × 730시간
-= $2,395.56/월
-```
-
-***
-
-**3. Ambient Mode 리소스 계산**
-
-```
-메모리 사용량:
-= (5 노드 × 50MB) + 200MB
-= 250MB + 200MB
-= 450MB
-
-CPU 사용량:
-= (5 노드 × 0.1 vCPU) + 0.5 vCPU
-= 0.5 vCPU + 0.5 vCPU
-= 1.0 vCPU
-```
-
-**필요 인스턴스 수:**
-
-```
-CPU 기준:
-= 1.0 vCPU ÷ 4 vCPU/인스턴스
-= 0.25 인스턴스
-≈ 1 인스턴스 필요
-
-메모리 기준:
-= 0.45GB ÷ 32GB/인스턴스
-= 0.01 인스턴스
-≈ 1 인스턴스 필요
-
-실제 필요: max(1, 1) = 1 인스턴스
-```
-
-**Ambient Mode 월간 비용:**
-
-```
-= 1 인스턴스 × $0.252/시간 × 730시간
-= $183.96/월
-```
-
-***
-
-**4. 비용 절감 효과**
-
-```
-월간 절감액:
-= $2,395.56 - $183.96
-= $2,211.60/월
-
-절감률:
-= ($2,211.60 ÷ $2,395.56) × 100
-= 92.3%
-
-연간 절감액:
-= $2,211.60 × 12
-= $26,539.20/년
-```
-
-***
-
-**5. 리소스 절감 요약**
-
-| 항목        | Sidecar Mode | Ambient Mode | 절감                 |
-| --------- | ------------ | ------------ | ------------------ |
-| **메모리**   | 25GB         | 0.45GB       | 24.55GB (98.2%)    |
-| **CPU**   | 50 vCPU      | 1.0 vCPU     | 49 vCPU (98.0%)    |
-| **인스턴스**  | 13대          | 1대           | 12대 (92.3%)        |
-| **월간 비용** | $2,395.56    | $183.96      | $2,211.60 (92.3%)  |
-| **연간 비용** | $28,746.72   | $2,207.52    | $26,539.20 (92.3%) |
-
-***
-
-**6. 추가 비용 절감 요인**
-
-**네트워크 비용:**
-
-* Sidecar Mode: localhost 통신 없음 (모든 트래픽이 네트워크 통과)
-* Ambient Mode: ztunnel 간 직접 통신으로 효율 향상
-
-**운영 비용:**
-
-* Pod 재시작 불필요 (배포 시간 단축)
-* Sidecar 주입 오류 없음
-* 관리 복잡도 감소
-
-**성능 향상:**
-
-* 메모리 압박 감소로 Pod 성능 향상
-* OOMKilled 빈도 감소
-* 노드 자원 여유 확보
-
-***
-
-**7. ROI (Return on Investment)**
-
-```
-Ambient Mode 전환 비용 (1회):
-- 학습 시간: 40시간 × $100/시간 = $4,000
-- 테스트 및 검증: 20시간 × $100/시간 = $2,000
-- 총 전환 비용: $6,000
-
-투자 회수 기간:
-= $6,000 ÷ $2,211.60/월
-= 2.7개월
-
-3년 총 절감액:
-= ($26,539.20 × 3) - $6,000
-= $73,617.60
-```
-
-***
-
-**8. 실전 고려사항**
-
-**장점:**
-
-* ✅ 92% 이상 비용 절감
-* ✅ 운영 간소화
-* ✅ 배포 속도 향상
-* ✅ 리소스 효율 극대화
-
-**주의사항:**
-
-* ⚠️ Istio 1.28+ 베타 기능
-* ⚠️ L7 기능 필요 시 waypoint 추가 배포
-* ⚠️ 일부 고급 기능은 Sidecar 모드 필요
-* ⚠️ 충분한 테스트 필요
-
-**참고 자료:**
-
-* [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+[Ambient 가이드](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 
 </details>
 
-***
 
-### 문제 7: Multi-cluster Service Mesh 구성
+### 문제 7: Primary-Remote EKS Mesh
 
-2개의 EKS 클러스터(us-east-1, us-west-2)를 **하나의 Istio Mesh**로 통합하는 방법을 설명하세요. **Primary-Remote 모델**을 사용하고, 클러스터 간 서비스 호출 예시를 포함해야 합니다.
+us-east-1과 us-west-2에 있는 기존 EKS cluster 두 개의 primary-remote 설계를 설명하세요. Discovery, trust, network 전제조건과 cross-cluster 검증 예시를 포함하세요.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
+이는 **sidecar** 설계입니다. 현재 ambient multicluster Beta는 multi-primary/multi-network를 지원하며 이 primary-remote 모델과 다릅니다. Primary Istiod가 remote proxy를 관리하며 더 높은 primary에게 설정을 받는 별도 전체 remote Istiod는 없습니다.
 
-**Multi-cluster Istio Mesh 구성:**
+설치 전에 검토된 공통 trust, API 접근, DNS, security group/firewall과 L4 control/data 경로를 마련합니다. 서로 다른 network ID는 network를 식별할 뿐 연결을 생성하지 않습니다. 여러 network에서는 양쪽에 remote endpoint로 갈 적절한 east-west gateway가 필요합니다. Region 간 비용·장애 복구는 별도 책임입니다.
 
-***
+Primary의 핵심 istioctl 입력은 다음과 같습니다.
 
-**1. 아키텍처 개요**
-
-![us-east-1과 us-west-2 두 클러스터가 각자 프라이머리 컨트롤 플레인을 두고 서비스 검색 정보를 교환하며, 두 클러스터의 파드가 East-West 게이트웨이를 거쳐 mTLS로 통신하는 멀티 프라이머리 멀티 네트워크 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-3.svg)
-
-***
-
-**2. 사전 준비**
-
-```bash
-# 두 클러스터에 접근 가능한 kubeconfig 설정
-export CTX_CLUSTER1=eks-us-east-1
-export CTX_CLUSTER2=eks-us-west-2
-
-# 컨텍스트 확인
-kubectl config get-contexts
-
-# CA 인증서 생성 (공유 Root CA)
-mkdir -p certs
-cd certs
-
-# Root CA 생성
-make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk root-ca
-
-# 각 클러스터용 중간 인증서 생성
-make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk cluster1-cacerts
-make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk cluster2-cacerts
-```
-
-***
-
-**3. 클러스터 1 (Primary) 설정**
-
-```bash
-# CA 인증서 Secret 생성
-kubectl create namespace istio-system --context="${CTX_CLUSTER1}"
-kubectl create secret generic cacerts -n istio-system \
-  --from-file=cluster1/ca-cert.pem \
-  --from-file=cluster1/ca-key.pem \
-  --from-file=cluster1/root-cert.pem \
-  --from-file=cluster1/cert-chain.pem \
-  --context="${CTX_CLUSTER1}"
-
-# Primary Istio 설치
-istioctl install --context="${CTX_CLUSTER1}" -f - <<EOF
+```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   values:
     global:
       meshID: mesh1
+      externalIstiod: true
       multiCluster:
         clusterName: cluster1
       network: network1
-
-  components:
-    ingressGateways:
-    - name: istio-eastwestgateway
-      label:
-        istio: eastwestgateway
-        app: istio-eastwestgateway
-        topology.istio.io/network: network1
-      enabled: true
-      k8s:
-        env:
-        - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-          value: network1
-        service:
-          type: LoadBalancer
-          ports:
-          - name: status-port
-            port: 15021
-            targetPort: 15021
-          - name: tls
-            port: 15443
-            targetPort: 15443
-          - name: tls-istiod
-            port: 15012
-            targetPort: 15012
-          - name: tls-webhook
-            port: 15017
-            targetPort: 15017
-EOF
-
-# East-West Gateway 노출
-kubectl apply --context="${CTX_CLUSTER1}" -n istio-system -f \
-  samples/multicluster/expose-services.yaml
 ```
 
-***
+Remote 설정의 **198.51.100.10은 문서용 placeholder**이며 실제 EKS endpoint가 아닙니다.
 
-**4. 클러스터 2 (Remote) 설정**
-
-```bash
-# CA 인증서 Secret 생성
-kubectl create namespace istio-system --context="${CTX_CLUSTER2}"
-kubectl create secret generic cacerts -n istio-system \
-  --from-file=cluster2/ca-cert.pem \
-  --from-file=cluster2/ca-key.pem \
-  --from-file=cluster2/root-cert.pem \
-  --from-file=cluster2/cert-chain.pem \
-  --context="${CTX_CLUSTER2}"
-
-# Remote Secret 생성 (cluster1에서 cluster2 접근)
-istioctl create-remote-secret \
-  --context="${CTX_CLUSTER2}" \
-  --name=cluster2 | \
-  kubectl apply -f - --context="${CTX_CLUSTER1}"
-
-# Remote Istio 설치
-istioctl install --context="${CTX_CLUSTER2}" -f - <<EOF
+```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
+  profile: remote
   values:
+    istiodRemote:
+      injectionPath: /inject/cluster/cluster2/net/network2
     global:
       meshID: mesh1
       multiCluster:
         clusterName: cluster2
       network: network2
-      remotePilotAddress: <CLUSTER1_EAST_WEST_GATEWAY_IP>
-
-  components:
-    ingressGateways:
-    - name: istio-eastwestgateway
-      label:
-        istio: eastwestgateway
-        app: istio-eastwestgateway
-        topology.istio.io/network: network2
-      enabled: true
-      k8s:
-        env:
-        - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-          value: network2
-        service:
-          type: LoadBalancer
-          ports:
-          - name: status-port
-            port: 15021
-          - name: tls
-            port: 15443
-          - name: tls-istiod
-            port: 15012
-          - name: tls-webhook
-            port: 15017
-EOF
+      remotePilotAddress: 198.51.100.10
 ```
 
-***
+Remote namespace에는 관리하는 primary도 지정합니다.
 
-**5. 서비스 배포 및 검증**
+```bash
+kubectl --context="$CTX_CLUSTER2" annotate namespace istio-system   topology.istio.io/controlPlaneClusters=cluster1 --overwrite
+```
 
-**클러스터 1에 Service A 배포:**
+유지보수되는 가이드에 따라 trust를 준비하고 같은 Istio release에서 gateway를 생성하며 primary discovery/injection을 노출합니다. Remote profile 설치 후 문제 2의 remote-access secret을 생성합니다. 이 두 network 예제의 remote injection path는 `net/network2`로 끝납니다.
+
+EKS NLB는 일반적으로 DNS 이름을 제공합니다. 해당 release는 DNS-valued remotePilotAddress를 표현할 수 있지만 chart render만으로 discovery/injection 연결과 certificate 이름이 검증되지는 않습니다. 공식 external-control-plane의 DNS/certificate/injection-URL 설계를 완성해야 하며 누락된 LB IP를 임의 주소로 대체하면 안 됩니다.
+
+검증에는 같은 Istio 배포본의 `helloworld`와 `curl` sample을 사용합니다. 양쪽 cluster에 같은 namespace/Service identity를 만들고 문서화된 version별 workload를 배포합니다. Local endpoint가 없는 Service도 로컬 Kubernetes DNS를 제공할 수 있으며 Istio는 remote endpoint를 검색할 수 있습니다.
 
 ```yaml
-# cluster1: service-a.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-a
-  labels:
-    app: service-a
+  name: helloworld
+  namespace: sample
 spec:
+  selector:
+    app: helloworld
   ports:
-  - port: 8080
-    name: http
-  selector:
-    app: service-a
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-a
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: service-a
-  template:
-    metadata:
-      labels:
-        app: service-a
-    spec:
-      containers:
-      - name: service-a
-        image: nginx:latest
-        ports:
-        - containerPort: 8080
+  - name: http
+    port: 5000
+    targetPort: 5000
 ```
+
+이 Service만으로 앱이 배포되지는 않습니다. Sample backend는 실제로 5000 port를 사용합니다. ContainerPort를 8080으로 선언한다고 기본 nginx process의 listen port가 바뀌지 않습니다. 전체 sample 배포 후 확인한 curl Pod/container를 선택하고 설정과 응답을 모두 확인합니다.
 
 ```bash
-kubectl apply --context="${CTX_CLUSTER1}" -f service-a.yaml
+kubectl --context="$CTX_CLUSTER1" get service,endpointslice -n sample
+kubectl --context="$CTX_CLUSTER2" get service,endpointslice -n sample
+istioctl --context="$CTX_CLUSTER1" proxy-status
+istioctl --context="$CTX_CLUSTER1" proxy-config endpoints "$CURL_POD" -n sample   --cluster 'outbound|5000||helloworld.sample.svc.cluster.local'
+kubectl --context="$CTX_CLUSTER1" exec -n sample "$CURL_POD" -c curl --   curl --fail --max-time 5 http://helloworld.sample.svc.cluster.local:5000/hello
 ```
 
-**클러스터 2에 Service B 배포:**
+다른 network의 경우 client는 remote Pod IP 대신 east-west gateway endpoint를 볼 수 있습니다. 응답 하나는 해당 호출만 입증합니다. 양방향, endpoint version, trust, policy와 실패 시나리오를 확인하세요.
 
-```yaml
-# cluster2: service-b.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-b
-  labels:
-    app: service-b
-spec:
-  ports:
-  - port: 8080
-    name: http
-  selector:
-    app: service-b
+**동일한 host/subset/port**를 가진 destination 두 개의 weight가 local 80%/remote 20%를 뜻하지 않습니다. 선택 가능한 endpoint에 대해 지원되는 locality 또는 명시적 destination 모델을 설계하세요. Cross-cluster 관측은 reporter 하나와 실제 source_cluster/destination_cluster label을 사용합니다.
 
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-b
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: service-b
-  template:
-    metadata:
-      labels:
-        app: service-b
-    spec:
-      containers:
-      - name: service-b
-        image: nginx:latest
-        ports:
-        - containerPort: 8080
-```
-
-```bash
-kubectl apply --context="${CTX_CLUSTER2}" -f service-b.yaml
-```
-
-***
-
-**6. Cross-cluster 서비스 호출 테스트**
-
-```bash
-# 클러스터 1에서 클러스터 2의 서비스 호출
-kubectl exec --context="${CTX_CLUSTER1}" -it \
-  $(kubectl get pod --context="${CTX_CLUSTER1}" -l app=service-a -o jsonpath='{.items[0].metadata.name}') \
-  -- curl http://service-b.default.svc.cluster.local:8080
-
-# 클러스터 2에서 클러스터 1의 서비스 호출
-kubectl exec --context="${CTX_CLUSTER2}" -it \
-  $(kubectl get pod --context="${CTX_CLUSTER2}" -l app=service-b -o jsonpath='{.items[0].metadata.name}') \
-  -- curl http://service-a.default.svc.cluster.local:8080
-```
-
-***
-
-**7. 서비스 검색 확인**
-
-```bash
-# 클러스터 1에서 Envoy 구성 확인
-istioctl --context="${CTX_CLUSTER1}" proxy-config endpoints \
-  $(kubectl get pod --context="${CTX_CLUSTER1}" -l app=service-a -o jsonpath='{.items[0].metadata.name}') | \
-  grep service-b
-
-# 출력 예시:
-# service-b.default.svc.cluster.local:8080  HEALTHY  <cluster2-pod-ip>:8080
-```
-
-***
-
-**8. 트래픽 정책 적용**
-
-```yaml
-# Cross-cluster 트래픽 라우팅
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: service-b
-spec:
-  hosts:
-  - service-b.default.svc.cluster.local
-  http:
-  - match:
-    - sourceLabels:
-        app: service-a
-    route:
-    - destination:
-        host: service-b.default.svc.cluster.local
-        port:
-          number: 8080
-      weight: 80  # 80%는 로컬 클러스터
-    - destination:
-        host: service-b.default.svc.cluster.local
-        port:
-          number: 8080
-      weight: 20  # 20%는 원격 클러스터
-
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: service-b
-spec:
-  host: service-b.default.svc.cluster.local
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true  # Locality-aware 라우팅
-```
-
-***
-
-**9. 모니터링 및 검증**
-
-```bash
-# Prometheus에서 Cross-cluster 트래픽 확인
-kubectl port-forward --context="${CTX_CLUSTER1}" -n istio-system \
-  svc/prometheus 9090:9090
-
-# Prometheus 쿼리:
-# sum(rate(istio_requests_total{source_cluster="cluster1", destination_cluster="cluster2"}[5m]))
-
-# Kiali로 시각화
-istioctl dashboard kiali --context="${CTX_CLUSTER1}"
-```
-
-***
-
-**10. 주의사항 및 모범 사례**
-
-**주의사항:**
-
-* ⚠️ 공유 Root CA 필수
-* ⚠️ 네트워크 레이턴시 고려
-* ⚠️ East-West Gateway 보안 강화
-* ⚠️ DNS 해석 올바르게 설정
-
-**모범 사례:**
-
-* ✅ Locality-aware 라우팅 활성화
-* ✅ Circuit Breaker 설정
-* ✅ 클러스터별 replica 유지
-* ✅ Cross-cluster 트래픽 모니터링
-
-**참고 자료:**
-
-* [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+[Multicluster 가이드](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 
 </details>
 
-***
+### 문제 8: 공유 사용자별 Rate Limiting
 
-### 문제 8: EnvoyFilter로 커스텀 Rate Limiting
-
-EnvoyFilter를 사용하여 특정 경로(`/api/premium/*`)에만 **사용자별 Rate Limiting**(분당 100 요청)을 적용하는 방법을 구현하세요.
+`/api/premium/*`에 사용자별 분당 100개 요청의 공유 quota를 구현하고 identity, descriptor, 실패 동작을 설명하세요.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
+요청 경로는 **인증된 진입점 → 전용 Envoy gateway → 공유 rate-limit service/Redis 판단 → backend 또는 거부**입니다. Local proxy bucket은 gateway replica 사이에 공유되는 quota가 아닙니다.
 
-**EnvoyFilter 기반 Rate Limiting 구현:**
+다음 예제에는 전제조건이 있습니다.
 
-***
+- `istio-system`의 전용 gateway에 실제 `app: premium-gateway` label이 있고 TLS/route 설정과 backend Service가 준비되어야 합니다.
+- 신뢰하는 인증 계층이 client가 보낸 x-user-id를 제거하고 비어 있지 않은 정규화된 사용자 identity 하나를 넣습니다. 이 인증 경로만 gateway/backend에 접근할 수 있어야 합니다. Caller가 임의로 쓴 header는 사용자 인증이 아닙니다.
+- 아래의 격리된 lab Redis endpoint가 이미 있어야 합니다. 운영 Redis 인증/TLS, persistence, HA, failover와 연결 설정은 별도로 설계해야 하며 replica 수만으로 완성되지 않습니다.
 
-**1. 아키텍처 개요**
-
-![클라이언트 요청이 Envoy 프록시를 거쳐 Redis의 Rate Limit 카운터를 확인하고, 한도 내이면 백엔드로 전달하고 초과하면 429 Too Many Requests로 거부하는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-4.svg)
-
-***
-
-**2. Redis Rate Limit 서버 배포**
+Descriptor는 `(header_match=premium, user_id=<신뢰한 사용자>)`라는 **두 entry의 순서**입니다. Server config는 premium 아래에 dynamic user entry를 중첩해야 합니다. 최상위 user_id 하나만 선언한 descriptor는 일치하지 않습니다.
 
 ```yaml
-# redis-ratelimit.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-ratelimit
-  namespace: istio-system
-spec:
-  ports:
-  - port: 6379
-    name: redis
-  selector:
-    app: redis-ratelimit
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-ratelimit
-  namespace: istio-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: redis-ratelimit
-  template:
-    metadata:
-      labels:
-        app: redis-ratelimit
-    spec:
-      containers:
-      - name: redis
-        image: redis:7-alpine
-        ports:
-        - containerPort: 6379
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-
----
-# Envoy Rate Limit 서비스
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -1240,12 +426,88 @@ data:
   config.yaml: |
     domain: premium-ratelimit
     descriptors:
-      # 사용자별 Rate Limit: 분당 100 요청
+    - key: header_match
+      value: premium
+      descriptors:
       - key: user_id
         rate_limit:
           unit: minute
           requests_per_unit: 100
-
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratelimit
+  namespace: istio-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratelimit
+  template:
+    metadata:
+      labels:
+        app: ratelimit
+        sidecar.istio.io/inject: 'true'
+    spec:
+      containers:
+      - name: ratelimit
+        image: docker.io/envoyproxy/ratelimit:8fe6ea42@sha256:a61547259607d40aff153050c2a87873ca1676d1d9f5f06937d412000dcc2df1
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 8081
+          name: grpc
+        env:
+        - name: LOG_LEVEL
+          value: info
+        - name: CONFIG_TYPE
+          value: FILE
+        - name: RUNTIME_ROOT
+          value: /data
+        - name: RUNTIME_SUBDIRECTORY
+          value: ratelimit
+        - name: RUNTIME_APPDIRECTORY
+          value: config
+        - name: RUNTIME_WATCH_ROOT
+          value: 'false'
+        - name: RUNTIME_IGNOREDOTFILES
+          value: 'true'
+        - name: USE_STATSD
+          value: 'false'
+        - name: REDIS_SOCKET_TYPE
+          value: tcp
+        - name: REDIS_URL
+          value: redis-ratelimit.istio-system.svc.cluster.local:6379
+        - name: HOST
+          value: '::'
+        - name: GRPC_HOST
+          value: '::'
+        - name: HEALTHY_WITH_AT_LEAST_ONE_CONFIG_LOADED
+          value: 'true'
+        volumeMounts:
+        - name: config-volume
+          mountPath: /data/ratelimit/config
+          readOnly: true
+        command:
+        - /bin/ratelimit
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config-volume
+        configMap:
+          name: ratelimit-config
 ---
 apiVersion: v1
 kind: Service
@@ -1254,72 +516,21 @@ metadata:
   namespace: istio-system
 spec:
   ports:
-  - port: 8081
+  - port: 8080
     name: http
-  - port: 9091
+    targetPort: 8080
+  - port: 8081
     name: grpc
+    targetPort: 8081
   selector:
     app: ratelimit
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ratelimit
-  namespace: istio-system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: ratelimit
-  template:
-    metadata:
-      labels:
-        app: ratelimit
-    spec:
-      containers:
-      - name: ratelimit
-        image: envoyproxy/ratelimit:master
-        ports:
-        - containerPort: 8081
-        - containerPort: 9091
-        env:
-        - name: REDIS_URL
-          value: redis-ratelimit.istio-system.svc.cluster.local:6379
-        - name: USE_STATSD
-          value: "false"
-        - name: LOG_LEVEL
-          value: debug
-        - name: RUNTIME_ROOT
-          value: /data
-        - name: RUNTIME_SUBDIRECTORY
-          value: ratelimit
-        volumeMounts:
-        - name: config-volume
-          mountPath: /data/ratelimit/config
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-      volumes:
-      - name: config-volume
-        configMap:
-          name: ratelimit-config
 ```
 
-```bash
-kubectl apply -f redis-ratelimit.yaml
-```
+Image는 검증한 upstream commit 8fe6ea42와 digest로 고정하며 움직이는 master tag가 아닙니다. gRPC는 **8081**, HTTP health는 **8080** port입니다. Workload와 맞는 injector와 실제 mesh/network 접근이 필요합니다. 보호된 Redis credential은 적절한 Secret/mount로 설정하세요. 새 config가 실제 로드되었는지 확인하며 이 file-mode 예제가 hot reload를 증명하지는 않습니다.
 
-***
-
-**3. EnvoyFilter 구성**
+기존 service discovery/TLS 정책이 적용되도록 Istio가 생성한 gRPC cluster를 사용합니다.
 
 ```yaml
-# envoyfilter-ratelimit.yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
@@ -1328,794 +539,424 @@ metadata:
 spec:
   workloadSelector:
     labels:
-      app: api-gateway
-
+      app: premium-gateway
   configPatches:
-  # HTTP 필터 체인에 Rate Limit 필터 추가
   - applyTo: HTTP_FILTER
     match:
-      context: SIDECAR_INBOUND
+      context: GATEWAY
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
           domain: premium-ratelimit
-          failure_mode_deny: true  # Rate Limit 서버 장애 시 거부
-          enable_x_ratelimit_headers: DRAFT_VERSION_03
+          failure_mode_deny: true
+          timeout: 0.1s
           rate_limit_service:
             grpc_service:
               envoy_grpc:
-                cluster_name: rate_limit_cluster
+                cluster_name: outbound|8081||ratelimit.istio-system.svc.cluster.local
+                authority: ratelimit.istio-system.svc.cluster.local
             transport_api_version: V3
-
-  # Rate Limit 클러스터 정의
-  - applyTo: CLUSTER
-    patch:
-      operation: ADD
-      value:
-        name: rate_limit_cluster
-        type: STRICT_DNS
-        connect_timeout: 1s
-        lb_policy: ROUND_ROBIN
-        http2_protocol_options: {}
-        load_assignment:
-          cluster_name: rate_limit_cluster
-          endpoints:
-          - lb_endpoints:
-            - endpoint:
-                address:
-                  socket_address:
-                    address: ratelimit.istio-system.svc.cluster.local
-                    port_value: 9091
-
-  # HTTP 라우트에 Rate Limit 액션 추가
-  - applyTo: HTTP_ROUTE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: premium-ratelimit-actions
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      app: premium-gateway
+  configPatches:
+  - applyTo: VIRTUAL_HOST
     match:
-      context: SIDECAR_INBOUND
-      routeConfiguration:
-        vhost:
-          route:
-            action: ANY
+      context: GATEWAY
     patch:
       operation: MERGE
       value:
-        route:
-          rate_limits:
-          # /api/premium/* 경로만 Rate Limit 적용
-          - actions:
-            - header_value_match:
-                descriptor_value: "premium"
-                headers:
-                - name: ":path"
-                  prefix_match: "/api/premium/"
-            - request_headers:
-                header_name: "x-user-id"
-                descriptor_key: "user_id"
+        rate_limits:
+        - actions:
+          - header_value_match:
+              descriptor_value: premium
+              headers:
+              - name: :path
+                string_match:
+                  prefix: /api/premium/
+          - request_headers:
+              header_name: x-user-id
+              descriptor_key: user_id
+              skip_if_absent: false
 ```
 
-```bash
-kubectl apply -f envoyfilter-ratelimit.yaml
-```
+Action은 전용 gateway에 한정합니다. 공유 gateway라면 실제 생성된 vhost로 범위를 좁혀야 합니다. Prefix 밖에서는 premium descriptor가 생성되지 않습니다. Encoded path와 별도 backend 접근까지 포함해 route/path normalization과 인증 정책을 일치시키세요.
 
-***
-
-**4. VirtualService 구성**
+Premium 경로의 identity가 없거나 비어 있을 때 descriptor 생성 누락으로 우회하지 못하도록 거부합니다.
 
 ```yaml
-# virtualservice.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
 metadata:
-  name: api-service
+  name: premium-requires-identity
+  namespace: istio-system
 spec:
-  hosts:
-  - api.example.com
-  gateways:
-  - api-gateway
-  http:
-  # Premium API 경로
-  - match:
-    - uri:
-        prefix: /api/premium/
-    route:
-    - destination:
-        host: premium-backend
-        port:
-          number: 8080
-
-  # 일반 API 경로 (Rate Limit 없음)
-  - match:
-    - uri:
-        prefix: /api/
-    route:
-    - destination:
-        host: backend
-        port:
-          number: 8080
-```
-
-***
-
-**5. 테스트 애플리케이션**
-
-```yaml
-# backend.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: premium-backend
-spec:
-  ports:
-  - port: 8080
-    name: http
-  selector:
-    app: premium-backend
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: premium-backend
-spec:
-  replicas: 2
   selector:
     matchLabels:
-      app: premium-backend
-  template:
-    metadata:
-      labels:
-        app: premium-backend
-        app: api-gateway  # EnvoyFilter 적용 대상
-    spec:
-      containers:
-      - name: backend
-        image: nginx:latest
-        ports:
-        - containerPort: 8080
+      app: premium-gateway
+  action: DENY
+  rules:
+  - to:
+    - operation:
+        paths:
+        - /api/premium/*
+    when:
+    - key: request.headers[x-user-id]
+      notValues:
+      - '*'
 ```
 
-```bash
-kubectl apply -f backend.yaml
-```
+이 DENY 정책은 누락 header 방어일 뿐 제공된 값의 인증이 아닙니다. 필수 trusted-entry/우회 방지, 기존 ALLOW 정책, TLS, 앱 인가를 대체하지 않습니다.
 
-***
+`failure_mode_deny: true`에서 rate-limit service 오류는 일반적으로 HTTP 500이며 over-limit 판단은 429입니다. 100 ms RPC budget은 Redis·network latency에 맞춰 검증할 예시입니다. Header나 counter 하나만으로 quota 강제가 입증되지는 않습니다.
 
-**6. 테스트**
+| 검증 사례 | 확인할 동작 |
+|---|---|
+| 같은 인증 사용자로 gateway replica 두 개 사용 | 하나의 공유 descriptor/window budget |
+| 다른 사용자 | 별도의 user descriptor |
+| 누락·위조 identity | Guard/인증 경계에서 거부되며 무료 quota 우회가 아님 |
+| Premium prefix 밖 경로 | Premium descriptor 없음; 다른 보안·rate 정책은 계속 적용 |
+| Redis/RLS 접근 불가 | 의도한 fail-closed와 실제 status/latency |
+| Window 경계·Redis 재시작 | Counter/window 동작 측정; 나눠 실행한 시험에서 항상 101번째가 거부된다고 단정하지 않음 |
 
-```bash
-# 정상 요청 (사용자별 100 요청/분 이하)
-for i in {1..50}; do
-  curl -H "x-user-id: user123" \
-       -H "Host: api.example.com" \
-       http://<INGRESS_GATEWAY>/api/premium/data
-  sleep 0.1
-done
+허용된 read-only endpoint에 bounded 요청을 보내며 새 test identity/window를 사용합니다. 50회 다음 150회를 실행한다고 두 번 모두 새 budget이 시작되지 않습니다. Rate-limit 응답 header에는 지원되는 service 응답과 filter 설정이 필요하므로 remaining/reset 값을 만들어 쓰지 마세요.
 
-# 출력: 200 OK (모두 성공)
+RLS health, 로드된 config와 실제 Envoy stat을 확인합니다. HTTP stat prefix 아래의 `ratelimit.ok`, `ratelimit.over_limit`, `ratelimit.error` 등이 해당합니다. 실제 Prometheus 이름/label을 확인하며 `rejected_total`을 추측하지 마세요. 큰 운영 keyspace에 Redis `KEYS *`를 실행하거나 내부 counter를 남은 quota로 해석하면 안 됩니다. 고정한 distroless RLS image는 redis-cli shell이 아닙니다.
 
-# Rate Limit 초과 (100 요청/분 초과)
-for i in {1..150}; do
-  curl -H "x-user-id: user123" \
-       -H "Host: api.example.com" \
-       http://<INGRESS_GATEWAY>/api/premium/data
-done
-
-# 출력:
-# 1-100번: 200 OK
-# 101-150번: 429 Too Many Requests
-
-# 다른 사용자는 영향 없음
-curl -H "x-user-id: user456" \
-     -H "Host: api.example.com" \
-     http://<INGRESS_GATEWAY>/api/premium/data
-
-# 출력: 200 OK
-```
-
-***
-
-**7. Rate Limit 헤더 확인**
-
-```bash
-curl -I -H "x-user-id: user123" \
-     -H "Host: api.example.com" \
-     http://<INGRESS_GATEWAY>/api/premium/data
-
-# 출력:
-# X-RateLimit-Limit: 100
-# X-RateLimit-Remaining: 73
-# X-RateLimit-Reset: 1735689600
-```
-
-***
-
-**8. Redis 모니터링**
-
-```bash
-# Redis에 저장된 Rate Limit 데이터 확인
-kubectl exec -it -n istio-system \
-  $(kubectl get pod -n istio-system -l app=redis-ratelimit -o jsonpath='{.items[0].metadata.name}') \
-  -- redis-cli
-
-# Redis CLI에서:
-KEYS *
-# 출력: "premium-ratelimit_user123_..."
-
-GET "premium-ratelimit_user123_..."
-# 출력: "27" (남은 요청 수)
-
-TTL "premium-ratelimit_user123_..."
-# 출력: "42" (초 단위 TTL)
-```
-
-***
-
-**9. Prometheus 메트릭**
-
-```promql
-# Rate Limit 거부된 요청 수
-sum(rate(envoy_http_ratelimit_rejected_total[5m])) by (pod)
-
-# Rate Limit 허용된 요청 수
-sum(rate(envoy_http_ratelimit_ok_total[5m])) by (pod)
-
-# Rate Limit 서버 오류
-sum(rate(envoy_http_ratelimit_error_total[5m])) by (pod)
-```
-
-***
-
-**10. 주의사항 및 모범 사례**
-
-**주의사항:**
-
-* ⚠️ Redis 고가용성 구성 필요 (프로덕션)
-* ⚠️ Rate Limit 서버 장애 시 동작 정의 (`failure_mode_deny`)
-* ⚠️ 사용자 식별 헤더 (`x-user-id`) 신뢰성 확보
-* ⚠️ EnvoyFilter는 Istio 버전 업그레이드 시 호환성 확인 필요
-
-**모범 사례:**
-
-* ✅ Redis Sentinel 또는 Cluster 사용
-* ✅ Rate Limit 서버 replica ≥ 2
-* ✅ 적절한 모니터링 및 알림
-* ✅ 사용자별 예외 처리 (VIP 사용자 등)
-
-**참고 자료:**
-
-* [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
-* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+[Rate-limiting 가이드](../../../service-mesh/istio/resilience/02-rate-limiting.md) · [EnvoyFilter 가이드](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 
 </details>
 
-***
 
-### 문제 9: Argo Rollouts Blue/Green 배포
+### 문제 9: 분석을 포함한 Blue/Green
 
-Argo Rollouts와 Istio를 사용하여 **Blue/Green 배포**를 구현하세요. **자동 분석**(AnalysisTemplate)을 포함하고, 실패 시 자동 롤백되도록 구성해야 합니다.
+Preview와 승격 후 분석을 포함한 Blue/Green Rollout을 구성하세요. 지표 누락을 성공으로 처리하지 않으면서 트래픽 전환과 실패 동작을 설명하세요.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
+이는 문제 5의 canary와 **대안 관계**인 strategy입니다. Argo Rollouts 1.10 controller/CRD, Istio가 주입된 demo workload·caller, 해당 source-reporter metric을 수집하는 Prometheus와 검증된 demo image를 위한 Linux amd64 용량을 가정합니다. Lab 예제이며 검증된 운영 배포가 아닙니다.
 
-**Argo Rollouts Blue/Green 배포 구현:**
-
-***
-
-**1. Blue/Green 배포 개념**
-
-![사용자 트래픽은 Gateway를 거쳐 Active Service의 Blue 버전으로 가고 Preview Service는 미리보기 트래픽만 Green 버전으로 보내며, AnalysisTemplate이 Green을 분석해 성공하면 트래픽을 전환하고 실패하면 롤백하는 블루-그린 배포 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-5.svg)
-
-***
-
-**2. Kubernetes Service 생성**
+기존 `rollouts-demo` namespace에 Service와 전체 Rollout을 만듭니다. Rollouts가 Service revision-hash selector를 관리하므로 GitOps가 이 동적 필드를 덮어쓰지 않도록 해야 합니다.
 
 ```yaml
-# services.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp-active
+  name: test-active
+  namespace: rollouts-demo
 spec:
-  ports:
-  - port: 8080
-    name: http
   selector:
-    app: myapp
-    # Argo Rollouts가 자동으로 selector 관리
-
+    app: test
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: myapp-preview
+  name: test-preview
+  namespace: rollouts-demo
 spec:
+  selector:
+    app: test
   ports:
-  - port: 8080
-    name: http
-  selector:
-    app: myapp
-    # Argo Rollouts가 자동으로 selector 관리
-```
-
-```bash
-kubectl apply -f services.yaml
-```
-
-***
-
-**3. Istio Gateway 및 VirtualService**
-
-```yaml
-# gateway.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: myapp-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - myapp.example.com
-
+  - name: http
+    port: 8080
+    targetPort: http
 ---
-# virtualservice.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: myapp
-spec:
-  hosts:
-  - myapp.example.com
-  gateways:
-  - myapp-gateway
-  http:
-  # 프로덕션 트래픽 (Active)
-  - match:
-    - uri:
-        prefix: /
-    route:
-    - destination:
-        host: myapp-active
-        port:
-          number: 8080
-
----
-# preview-virtualservice.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: myapp-preview
-spec:
-  hosts:
-  - myapp-preview.example.com
-  gateways:
-  - myapp-gateway
-  http:
-  # 미리보기 트래픽 (Preview)
-  - match:
-    - uri:
-        prefix: /
-    route:
-    - destination:
-        host: myapp-preview
-        port:
-          number: 8080
-```
-
-```bash
-kubectl apply -f gateway.yaml
-```
-
-***
-
-**4. AnalysisTemplate 정의**
-
-```yaml
-# analysis-template.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: success-rate
-spec:
-  args:
-  - name: service-name
-
-  metrics:
-  # 메트릭 1: 성공률 (95% 이상)
-  - name: success-rate
-    interval: 30s
-    count: 5
-    successCondition: result >= 0.95
-    failureLimit: 2
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              response_code!~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}"
-            }[2m]
-          ))
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: latency
-spec:
-  args:
-  - name: service-name
-
-  metrics:
-  # 메트릭 2: P95 지연시간 (500ms 이하)
-  - name: latency-p95
-    interval: 30s
-    count: 5
-    successCondition: result <= 500
-    failureLimit: 2
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          histogram_quantile(0.95,
-            sum(rate(
-              istio_request_duration_milliseconds_bucket{
-                destination_service_name="{{args.service-name}}"
-              }[2m]
-            )) by (le)
-          )
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: error-rate
-spec:
-  args:
-  - name: service-name
-
-  metrics:
-  # 메트릭 3: 에러율 (1% 이하)
-  - name: error-rate
-    interval: 30s
-    count: 5
-    successCondition: result <= 0.01
-    failureLimit: 2
-    provider:
-      prometheus:
-        address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              response_code=~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}"
-            }[2m]
-          ))
-```
-
-```bash
-kubectl apply -f analysis-template.yaml
-```
-
-***
-
-**5. Rollout 리소스 정의**
-
-```yaml
-# rollout.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: myapp
+  name: test
+  namespace: rollouts-demo
 spec:
-  replicas: 5
+  replicas: 3
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: myapp
-
+      app: test
   template:
     metadata:
       labels:
-        app: myapp
+        app: test
     spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      terminationGracePeriodSeconds: 45
       containers:
-      - name: myapp
-        image: myapp:v1
+      - name: app
+        image: argoproj/rollouts-demo@sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 1
         resources:
           requests:
             cpu: 100m
             memory: 128Mi
           limits:
-            cpu: 500m
-            memory: 512Mi
-
-  # Blue/Green 배포 전략
+            cpu: 200m
+            memory: 256Mi
   strategy:
     blueGreen:
-      # Active Service (프로덕션)
-      activeService: myapp-active
-
-      # Preview Service (테스트)
-      previewService: myapp-preview
-
-      # 자동 승격 비활성화 (수동 승격 또는 Analysis 기반)
-      autoPromotionEnabled: false
-
-      # Green 배포 후 대기 시간
-      scaleDownDelaySeconds: 30
-
-      # 배포 전 분석 (Green 환경 검증)
+      activeService: test-active
+      previewService: test-preview
+      autoPromotionEnabled: true
       prePromotionAnalysis:
         templates:
-        - templateName: success-rate
-        - templateName: latency
-        - templateName: error-rate
+        - templateName: preview-analysis
         args:
         - name: service-name
-          value: myapp-preview
-
-      # 승격 후 분석 (Active 전환 후 검증)
+          value: test-preview
+        - name: namespace
+          value: rollouts-demo
       postPromotionAnalysis:
         templates:
-        - templateName: success-rate
-        - templateName: latency
-        - templateName: error-rate
+        - templateName: active-analysis
         args:
         - name: service-name
-          value: myapp-active
+          value: test-active
+        - name: namespace
+          value: rollouts-demo
+      scaleDownDelaySeconds: 600
 ```
+
+초기 image는 검증한 blue demo digest이며 가이드에 update용 green digest도 있습니다. 새 revision이 생기면 preview가 candidate를 가리킵니다. 사전 분석 성공 후 `autoPromotionEnabled: true`는 자동 승격을 허용합니다. 명시적 수동 승격이 필요하면 false를 선택하며 이는 별도의 정책입니다.
+
+여기서는 meshed client가 내부 Service로 접근합니다. 운영 edge 노출에는 실제 Gateway, TLS, 일치하는 host binding과 인가가 필요합니다. 두 번째 VirtualService hostname을 만드는 것만으로 Gateway에 추가되거나 preview 접근이 보호되지는 않습니다.
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: test-bluegreen
+  namespace: rollouts-demo
+spec:
+  hosts:
+  - test-active
+  - test-active.rollouts-demo.svc.cluster.local
+  http:
+  - name: active
+    route:
+    - destination:
+        host: test-active
+        port:
+          number: 8080
+      weight: 100
+    retries:
+      attempts: 0
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: test-preview-route
+  namespace: rollouts-demo
+spec:
+  hosts:
+  - test-preview
+  - test-preview.rollouts-demo.svc.cluster.local
+  http:
+  - name: preview
+    route:
+    - destination:
+        host: test-preview
+        port:
+          number: 8080
+      weight: 100
+    retries:
+      attempts: 0
+```
+
+두 route 모두 mesh retry를 명시적으로 비활성화합니다. 승격 시 preview Service가 자동으로 구 stable version과 맞교환되지는 않습니다. Active Service selector가 새 revision으로 바뀌고 구 ReplicaSet은 이후 **scale down**되며 반드시 삭제되는 것은 아닙니다. 기존 연결이나 앱/DB 부작용은 selector 변경으로 되돌아가지 않습니다.
+
+Preview 분석 전과 분석 중에 preview Service를 통과하는 대표적인 허용 트래픽을 생성해야 합니다. Prometheus query는 트래픽을 만들지 않습니다. 예제는 2분 window의 추정 요청 수 20 이상, 유한한 2xx 성공률 95% 이상, p95 0.5초 이하, 5xx/zero-status 오류율 1% 이하를 요구합니다.
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: preview-analysis
+  namespace: rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: http-2xx-success
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: latency-p95
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.5
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          histogram_quantile(0.95,
+            sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+          ) / 1000
+    count: 5
+    initialDelay: 5m
+  - name: http-error-rate
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.01
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: active-analysis
+  namespace: rollouts-demo
+spec:
+  args:
+  - name: service-name
+  - name: namespace
+  metrics:
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: http-2xx-success
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"2.."}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+  - name: latency-p95
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.5
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          histogram_quantile(0.95,
+            sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+          ) / 1000
+    count: 5
+    initialDelay: 5m
+  - name: http-error-rate
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.01
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+    initialDelay: 5m
+```
+
+두 template은 같은 gate 정의를 서로 다른 Service 인수로 사용합니다. `initialDelay: 5m`은 2분 window가 전환 이전 구간에서 벗어날 여유를 주지만 source freshness와 실제 트래픽은 여전히 확인해야 합니다. 구 active-version sample을 candidate 근거로 읽으면 안 됩니다.
+
+Prometheus 결과는 vector이므로 길이와 유한한 값인지 확인한 뒤 `result[0]`을 사용합니다. 분자의 `or vector(0)`은 2xx가 없는 전체 5xx와 5xx가 없는 정상 사례를 처리합니다. 분모와 volume 검사가 누락·idle telemetry의 통과를 막습니다. 성공률은 2xx만 포함하므로 4xx는 성공률을 낮추지만 5xx/zero-status 오류 분자에는 포함되지 않습니다.
+
+`failureLimit: 0`은 첫 실패 측정에서 중단합니다. 2이면 세 번째 실패가 한도를 초과합니다. 실패를 허용한 sample 5개가 모두 성공해야 한다는 뜻은 아닙니다. Initial delay와 provider 오류 등을 포함하면 30초 간격 5회가 정확히 2.5분의 wall-clock phase라고 보장할 수도 없습니다.
+
+승격 전 실패는 기존 active 대상을 유지합니다. 승격 후 실패는 controller 규칙에 따라 이전 ReplicaSet이 사용 가능한 동안 중단하고 이전 active 선택을 복구합니다. 모든 요청이 즉시 복구되는 보장은 아닙니다. 구 version 용량을 충분히 유지하고 전파, session, drain과 DB 호환성을 확인하세요.
 
 ```bash
-kubectl apply -f rollout.yaml
+kubectl argo rollouts get rollout test -n rollouts-demo --watch
+kubectl get analysisrun -n rollouts-demo
+kubectl get service test-active test-preview -n rollouts-demo -o yaml
 ```
 
-***
+복사한 status 출력이나 존재하지 않는 metric 대신 실제 AnalysisRun condition과 revision tree를 확인합니다. Scale-down, endpoint 전파와 앱 복구는 해당 환경에서 검증해야 합니다.
 
-**6. 새 버전 배포**
-
-```bash
-# 새 버전 이미지로 업데이트
-kubectl argo rollouts set image myapp \
-  myapp=myapp:v2
-
-# 배포 상태 모니터링
-kubectl argo rollouts get rollout myapp --watch
-
-# 출력:
-# Name:            myapp
-# Namespace:       default
-# Status:          ॥ Paused
-# Strategy:        BlueGreen
-# Images:          myapp:v1 (stable, active)
-#                  myapp:v2 (preview)
-# Replicas:
-#   Desired:       5
-#   Current:       10
-#   Updated:       5
-#   Ready:         5
-#   Available:     5
-# Analysis:        Running
-```
-
-***
-
-**7. 배포 프로세스**
-
-```
-1. 새 버전 (Green) Pod 5개 생성
-   ↓
-2. Preview Service가 Green을 가리킴
-   ↓
-3. prePromotionAnalysis 시작 (2.5분)
-   - success-rate 측정 (5회 × 30초)
-   - latency-p95 측정 (5회 × 30초)
-   - error-rate 측정 (5회 × 30초)
-   ↓
-4. 분석 결과 확인
-   ├─ 성공 → 5단계 진행
-   └─ 실패 → 자동 롤백 (Green Pod 삭제)
-   ↓
-5. 수동 승격 또는 자동 승격
-   kubectl argo rollouts promote myapp
-   ↓
-6. Active Service가 Green을 가리킴
-   Preview Service가 Blue를 가리킴
-   ↓
-7. postPromotionAnalysis 시작 (2.5분)
-   - 프로덕션 트래픽으로 Green 검증
-   ↓
-8. 분석 결과 확인
-   ├─ 성공 → Blue Pod 삭제 (30초 후)
-   └─ 실패 → 즉시 롤백 (Active를 Blue로 복구)
-```
-
-***
-
-**8. 수동 승격**
-
-```bash
-# Green 환경 미리보기 (Preview Service)
-curl http://myapp-preview.example.com
-
-# 문제 없으면 승격
-kubectl argo rollouts promote myapp
-
-# 승격 후 Active Service로 트래픽 전환됨
-curl http://myapp.example.com
-```
-
-***
-
-**9. 자동 롤백 시나리오**
-
-**시나리오 1: prePromotionAnalysis 실패**
-
-```bash
-# Green 환경에서 에러율이 1% 초과
-# Analysis 로그:
-# error-rate: FAILED (0.03 > 0.01)
-# failureLimit: 2/2
-
-# 자동 롤백 실행
-# Green Pod 삭제
-# Blue가 계속 Active 유지
-
-kubectl argo rollouts get rollout myapp
-# Status: Degraded
-# Message: PrePromotionAnalysis Failed
-```
-
-**시나리오 2: postPromotionAnalysis 실패**
-
-```bash
-# Active 전환 후 성공률이 95% 미만
-# Analysis 로그:
-# success-rate: FAILED (0.92 < 0.95)
-# failureLimit: 2/2
-
-# 자동 롤백 실행
-# Active Service를 즉시 Blue로 복구
-# Green은 Preview로 이동
-
-kubectl argo rollouts get rollout myapp
-# Status: Degraded
-# Message: PostPromotionAnalysis Failed
-```
-
-***
-
-**10. 모니터링 및 대시보드**
-
-```bash
-# Argo Rollouts 대시보드
-kubectl argo rollouts dashboard
-
-# Kiali에서 트래픽 시각화
-istioctl dashboard kiali
-
-# Grafana에서 메트릭 확인
-kubectl port-forward -n istio-system svc/grafana 3000:3000
-```
-
-**Prometheus 쿼리:**
-
-```promql
-# 배포 진행 상태
-argo_rollouts_info{name="myapp"}
-
-# Analysis 결과
-argo_rollouts_analysis_run_metric_phase{name="myapp", metric="success-rate"}
-
-# 활성 버전별 트래픽
-sum(rate(istio_requests_total{destination_service_name="myapp"}[5m])) by (destination_version)
-```
-
-***
-
-**11. 모범 사례**
-
-**장점:**
-
-* ✅ 즉시 롤백 가능 (스위치 전환)
-* ✅ 프로덕션 영향 최소화
-* ✅ 충분한 테스트 시간 확보
-* ✅ 자동 분석 및 롤백
-
-**주의사항:**
-
-* ⚠️ 2배 리소스 필요 (Blue + Green)
-* ⚠️ 데이터베이스 스키마 호환성 확인
-* ⚠️ 세션 관리 (Sticky Session 필요 시)
-
-**참고 자료:**
-
-* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+[Argo Rollouts 가이드](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
 
-***
+### 문제 10: DNS 동작과 성능 측정
 
-### 문제 10: DNS Caching 성능 최적화
-
-Istio에서 **DNS Caching**을 활성화하여 외부 서비스 호출 성능을 개선하는 방법을 설명하세요. **벤치마크 결과**를 포함해야 합니다.
+Istio DNS capture와 Envoy upstream DNS resolution을 구분하고 유효한 설정과 재현 가능한 성능 비교를 제시하세요. 기존 미검증 benchmark 수치를 새 측정값으로 제시하지 않고 평가하세요.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
+앱 DNS, Istio DNS capture, CoreDNS/cache 동작과 Envoy upstream resolution은 서로 다릅니다. 새 HTTP 요청이 매번 새 DNS query나 connection을 필요로 하지는 않습니다. DNS capture는 임의의 upstream 응답을 모두 cache하는 기능이 아닙니다.
 
-**Istio DNS Caching 구현 및 성능 측정:**
+Sidecar에서는 istio-agent가 capture된 DNS 요청을 처리합니다. Ambient에는 별도로 문서화된 DNS 경로가 있고 Istio 1.25부터 capture가 기본 활성화됩니다. 알려진 mesh 이름은 name table에서 응답하고 모르는 이름은 forwarding할 수 있습니다. Envoy는 DNS 기반 upstream endpoint를 독립적으로 해석합니다.
 
-***
-
-**1. DNS Caching 필요성**
-
-**문제: DNS 조회 오버헤드**
-
-```
-외부 API 호출 시마다 DNS 조회 발생:
-1. 애플리케이션 → Envoy: HTTP 요청
-2. Envoy → CoreDNS: DNS 조회 (50-100ms)
-3. CoreDNS → 응답: IP 주소
-4. Envoy → 외부 API: HTTP 요청 (100-200ms)
-
-총 지연시간: 150-300ms
-```
-
-**해결: DNS Caching 활성화**
-
-```
-DNS Caching 후:
-1. 애플리케이션 → Envoy: HTTP 요청
-2. Envoy: 캐시된 IP 사용 (0ms)
-3. Envoy → 외부 API: HTTP 요청 (100-200ms)
-
-총 지연시간: 100-200ms (33-50% 개선)
-```
-
-***
-
-**2. ServiceEntry로 외부 서비스 등록**
+앱이 HTTPS를 시작하는 외부 서비스를 유효한 ServiceEntry로 등록합니다.
 
 ```yaml
-# external-api-serviceentry.yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api
+  namespace: default
 spec:
   hosts:
   - api.github.com
@@ -2124,315 +965,75 @@ spec:
     name: https
     protocol: HTTPS
   location: MESH_EXTERNAL
-  resolution: DNS  # DNS 해석 사용
+  resolution: DNS
 ```
 
-```bash
-kubectl apply -f external-api-serviceentry.yaml
-```
+이 설정은 TLS를 한 겹 더 시작하거나 egress firewall을 생성하지 않으며 암호화된 HTTP path를 sidecar가 읽게 하지도 않습니다. 적절한 network policy와 앱 TLS 검증은 계속 필요합니다.
 
-***
-
-**3. DestinationRule로 DNS Caching 활성화**
+Sidecar capture에는 다음 istioctl 입력을 기존 설치값에 병합하고 영향받는 workload를 정상 변경 절차로 rollout합니다.
 
 ```yaml
-# destinationrule-dns-cache.yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: external-api
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 spec:
-  host: api.github.com
-  trafficPolicy:
-    # DNS 리프레시 간격: 5분
-    # (TTL이 0이어도 5분마다 DNS 재조회)
-    dnsRefreshRate: 5m
-
-    # Connection Pool 설정
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
-        http2MaxRequests: 100
-        maxRequestsPerConnection: 10
-
-    # Outlier Detection
-    outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
-      baseEjectionTime: 30s
+  meshConfig:
+    defaultConfig:
+      proxyMetadata:
+        ISTIO_META_DNS_CAPTURE: 'true'
 ```
+
+DestinationRule에 `trafficPolicy.dnsRefreshRate`는 **없으며** `consecutiveErrors`도 현재 outlier 필드가 아닙니다. Istio 1.31이 생성하는 DNS cluster는 DNS TTL을 존중하며 관련 fallback에 사용하는 mesh `dnsRefreshRate` 기본값은 60초입니다. 5분을 설정한다고 모든 양수 TTL을 무시하고 고정 주기로 조회하지는 않습니다.
+
+가상의 `envoy.filters.network.dns_cache` filter/type을 삽입하면 안 됩니다. Dynamic forward proxy와 현재 DYNAMIC_DNS ServiceEntry mode는 각각 요구사항이 있는 별도 설계이며 일반 cache toggle이 아닙니다. 필요한 경우 DNS 가이드의 명시적 범위·버전 검증을 거친 cluster customization을 참고하세요.
+
+Bounded 시험에는 curl이 실제 들어 있는 caller와 DNS/TTL을 제어할 수 있는 **소유하거나 허가받은** HTTPS endpoint를 사용하고 BENCH_URL을 명시합니다. 이는 process 관점 timing이며 Envoy의 DNS latency만 측정하지 않습니다.
 
 ```bash
-kubectl apply -f destinationrule-dns-cache.yaml
+: "${BENCH_URL:?Set an authorized HTTPS benchmark endpoint}"
+for i in $(seq 1 20); do
+  curl --silent --show-error --fail --max-time 5 --output /dev/null     --write-out '%{http_code},%{time_namelookup},%{time_connect},%{time_appconnect},%{time_starttransfer},%{time_total}
+'     "$BENCH_URL" || break
+  sleep 0.2
+done
 ```
 
-***
+Client/image, Istio/Kubernetes 버전, proxy mode, TTL/응답 변경, DNS 경로, connection reuse, concurrency, payload, TLS와 warm/cold 절차를 기록합니다. 매번 새 curl process를 만들면 process-local 상태가 초기화되므로 connection reuse를 별도로 통제해야 합니다. 공개 GitHub API에 부하를 주거나 curl image에 ApacheBench도 있다고 가정하지 마세요. 통계 계산 전에 실패 sample도 명시적으로 처리해야 합니다.
 
-**4. EnvoyFilter로 고급 DNS 설정**
+기존 한국어 문서에는 EKS 1.34, Istio 1.28.0, r5.xlarge/us-east-1과 api.github.com이 적혀 있었지만 raw sample이나 재현 가능한 artifact가 없었습니다. 이 **과거 맥락**을 보존하며 Istio 1.31 결과로 이름만 바꾸지 않습니다.
 
-```yaml
-# envoyfilter-dns-cache.yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: dns-cache-filter
-  namespace: istio-system
-spec:
-  configPatches:
-  # DNS 캐시 필터 추가
-  - applyTo: NETWORK_FILTER
-    match:
-      context: SIDECAR_OUTBOUND
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.tcp_proxy"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.network.dns_cache
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.dns_cache.v3.DnsCacheConfig
-          dns_cache_config:
-            name: dynamic_forward_proxy_cache_config
-            dns_lookup_family: V4_ONLY
-            # DNS 캐시 TTL: 5분
-            dns_cache_ttl: 300s
-            # 최대 캐시 항목 수
-            max_hosts: 1024
-            # DNS 조회 타임아웃
-            dns_query_timeout: 5s
+| 원래 미검증 수치 | Before | After | 산술만 검산 |
+|---|---:|---:|---:|
+| 평균 응답 시간 |287 ms|152 ms|47.04% 감소|
+| p95 |350 ms|180 ms|48.57% 감소|
+| p99 |420 ms|210 ms|50% 감소|
+| 처리량 |12.34 RPS|23.15 RPS|87.60% 증가|
+| 주장한 cache hit rate |0%|99%|유효한 hit/miss 근거 없음|
+| 주장한 connection reuse |0%|95%|유효한 재사용 측정 없음|
 
-  # Cluster에 DNS 캐시 적용
-  - applyTo: CLUSTER
-    match:
-      context: SIDECAR_OUTBOUND
-      cluster:
-        service: "*.external"
-    patch:
-      operation: MERGE
-      value:
-        dns_lookup_family: V4_ONLY
-        # Strict DNS 사용 (DNS 캐싱 활성화)
-        type: STRICT_DNS
-        # DNS 리프레시 간격
-        dns_refresh_rate: 300s
-        # 연결 재사용
-        upstream_connection_options:
-          tcp_keepalive:
-            keepalive_time: 60
-```
+전체 응답 시간 차이를 모두 DNS 때문이라고 해석할 수 없습니다. Concurrency 10일 때 ApacheBench의 mean time per request는 약 `1000 × 10 / RPS` ms이고 “across all concurrent requests”는 `1000 / RPS` ms입니다. 기존 label이 반대로 적혀 있었습니다. 이를 고친다고 benchmark가 인증되는 것은 아닙니다.
 
-```bash
-kubectl apply -f envoyfilter-dns-cache.yaml
-```
+실제로 export했다면 `istio_agent_dns_requests_total`, `istio_agent_dns_upstream_requests_total`, `istio_agent_dns_upstream_failures_total`과 upstream duration histogram 등을 관측할 수 있습니다. Upstream success/(success+failure)는 query 성공률이며 cache hit rate가 아닙니다. `envoy_cluster_upstream_cx_active`는 gauge이므로 rate()로 connection reuse를 측정할 수 없습니다.
 
-***
+생성된 cluster DNS 설정, 검증된 export counter와 실제 resolver/connection trace를 확인합니다. 평균 latency뿐 아니라 DNS 변경과 실패 복구를 시험하세요. Workload 근거 없이 5–15분 refresh나 고정 성능 향상률을 권장하면 안 됩니다.
 
-**5. 테스트 애플리케이션 배포**
-
-```yaml
-# test-app.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-app
-  labels:
-    app: test-app
-spec:
-  containers:
-  - name: test
-    image: curlimages/curl:latest
-    command: ["/bin/sh"]
-    args: ["-c", "sleep 3600"]
-```
-
-```bash
-kubectl apply -f test-app.yaml
-```
-
-***
-
-**6. 성능 벤치마크**
-
-**DNS Caching 비활성화 (Before):**
-
-```bash
-# 100회 연속 호출 테스트
-kubectl exec -it test-app -- sh -c '
-for i in $(seq 1 100); do
-  time curl -s -o /dev/null -w "%{time_total}\n" https://api.github.com/users/octocat
-done' | awk '{sum+=$1; count++} END {print "평균 응답 시간:", sum/count, "초"}'
-
-# 출력:
-# 평균 응답 시간: 0.287 초
-```
-
-**DNS Caching 활성화 (After):**
-
-```bash
-# DestinationRule 적용 후 동일 테스트
-kubectl exec -it test-app -- sh -c '
-for i in $(seq 1 100); do
-  time curl -s -o /dev/null -w "%{time_total}\n" https://api.github.com/users/octocat
-done' | awk '{sum+=$1; count++} END {print "평균 응답 시간:", sum/count, "초"}'
-
-# 출력:
-# 평균 응답 시간: 0.152 초
-```
-
-**성능 개선:**
-
-```
-개선 전: 287ms
-개선 후: 152ms
-개선율: (287 - 152) / 287 = 47%
-
-DNS 조회 시간: ~135ms 절감
-```
-
-***
-
-**7. Envoy 통계 확인**
-
-```bash
-# Envoy DNS 캐시 통계
-kubectl exec -it test-app -c istio-proxy -- \
-  curl localhost:15000/stats | grep dns_cache
-
-# 출력:
-# cluster.outbound|443||api.github.com.dns_cache_hits: 99
-# cluster.outbound|443||api.github.com.dns_cache_misses: 1
-# cluster.outbound|443||api.github.com.dns_refresh: 0
-
-# 캐시 히트율: 99 / (99 + 1) = 99%
-```
-
-***
-
-**8. 상세 벤치마크 결과**
-
-**테스트 환경:**
-
-* 클러스터: AWS EKS 1.34
-* Istio: 1.28.0
-* 노드: r5.xlarge
-* 위치: us-east-1
-* 외부 API: api.github.com
-
-**벤치마크 도구: Apache Bench**
-
-```bash
-# DNS Caching 비활성화
-kubectl exec -it test-app -- ab -n 1000 -c 10 \
-  https://api.github.com/users/octocat
-
-# 결과:
-# Requests per second:    12.34 [#/sec]
-# Time per request:       81.07 [ms] (mean)
-# Time per request:       810.70 [ms] (mean, across all concurrent requests)
-
-# DNS Caching 활성화
-kubectl exec -it test-app -- ab -n 1000 -c 10 \
-  https://api.github.com/users/octocat
-
-# 결과:
-# Requests per second:    23.15 [#/sec]
-# Time per request:       43.19 [ms] (mean)
-# Time per request:       431.90 [ms] (mean, across all concurrent requests)
-
-# 처리량 개선: 23.15 / 12.34 = 1.88배 (88% 향상)
-```
-
-***
-
-**9. 비교표**
-
-| 항목             | DNS Caching 비활성화 | DNS Caching 활성화 | 개선    |
-| -------------- | ---------------- | --------------- | ----- |
-| **평균 응답 시간**   | 287ms            | 152ms           | 47% ↓ |
-| **P95 응답 시간**  | 350ms            | 180ms           | 49% ↓ |
-| **P99 응답 시간**  | 420ms            | 210ms           | 50% ↓ |
-| **처리량 (RPS)**  | 12.34            | 23.15           | 88% ↑ |
-| **DNS 캐시 히트율** | 0%               | 99%             | -     |
-| **연결 재사용률**    | 0%               | 95%             | -     |
-
-***
-
-**10. Prometheus 모니터링**
-
-```promql
-# DNS 캐시 히트율
-sum(rate(envoy_dns_cache_dns_query_success[5m]))
-/
-(
-  sum(rate(envoy_dns_cache_dns_query_success[5m])) +
-  sum(rate(envoy_dns_cache_dns_query_failure[5m]))
-)
-
-# 외부 API 지연시간 (P95)
-histogram_quantile(0.95,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket{
-      destination_service_name="api.github.com"
-    }[5m]
-  )) by (le)
-)
-
-# 연결 재사용률
-rate(envoy_cluster_upstream_cx_active[5m])
-/
-rate(envoy_cluster_upstream_cx_total[5m])
-```
-
-***
-
-**11. 모범 사례**
-
-**권장 설정:**
-
-* ✅ DNS 리프레시 간격: 5-15분 (외부 서비스 TTL 고려)
-* ✅ Connection Pool 활성화 (연결 재사용)
-* ✅ HTTP/2 사용 (멀티플렉싱)
-* ✅ Keep-Alive 활성화
-
-**주의사항:**
-
-* ⚠️ TTL이 짧은 서비스는 리프레시 간격 줄이기
-* ⚠️ DNS 변경 시 캐시 무효화 시간 고려
-* ⚠️ 장애 조치 시나리오 테스트
-
-**참고 자료:**
-
-* [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
+[DNS 가이드](../../../service-mesh/istio/advanced/04-dns-cache.md)
 
 </details>
 
-***
-
 ## 점수 계산
 
-* 객관식 1-5번: 각 10점 (총 50점)
-* 주관식 6-10번: 각 10점 (총 50점)
-* **총점: 100점**
-
-**평가 기준:**
-
-* 90-100점: 우수 (Istio 고급 기능 전문가)
-* 80-89점: 양호 (고급 기능 활용 가능)
-* 70-79점: 보통 (추가 학습 권장)
-* 60-69점: 미흡 (기본 개념 복습 필요)
-* 0-59점: 재학습 필요
+- 객관식 1–5번은 각 10점으로 총 50점입니다. 정답은 **B, A, C, D, B**입니다.
+- 주관식 6–10번은 각 10점으로 총 50점입니다. 정확한 동작, 전체 전제조건, 유효한 설정, 의미 있는 검증과 측정 한계 설명을 평가합니다.
+- 총점은 100점입니다. 퀴즈 점수는 문항 이해도를 나타내며 운영 전문성 인증이 아닙니다.
 
 ## 학습 자료
 
-* [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
-* [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
-* [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
-* [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
-* [gRPC](../../../service-mesh/istio/advanced/05-grpc.md)
-* [WebSocket](../../../service-mesh/istio/advanced/06-websocket.md)
-* [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
-* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+- [Ambient](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+- [Multicluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+- [DNS](../../../service-mesh/istio/advanced/04-dns-cache.md)
+- [gRPC](../../../service-mesh/istio/advanced/05-grpc.md)
+- [WebSocket](../../../service-mesh/istio/advanced/06-websocket.md)
+- [주입](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+- [KEDA](../../../service-mesh/istio/advanced/10-keda-autoscaling.md)

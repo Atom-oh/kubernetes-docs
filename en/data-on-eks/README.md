@@ -1,16 +1,16 @@
 # Data on EKS
 
-> **Last Updated**: September 2, 2026
+> **Last Updated**: September 12, 2026
 
 ## Overview
 
-"Data on EKS" covers running the core workloads of the AWS data ecosystem — streaming, batch processing, and workflow orchestration — as Kubernetes-native applications on Amazon EKS, rather than relying solely on fully managed services. By deploying tools like Kafka, Spark, Airflow, and Flink through containers and the Operator pattern, you can manage data workloads with the same deployment, observability, and scaling practices you already use for the rest of your platform on EKS.
+This section covers operating Kafka, Spark, Airflow and Flink on Amazon EKS and connecting them with AWS managed services. Helm charts, Kubernetes Operators and executors provide different deployment, observability, scaling and ownership models.
 
-This section is not meant to argue against fully managed services such as Amazon MSK, Amazon EMR, or Amazon MWAA. Both approaches involve real trade-offs, and most teams end up choosing — or combining — them based on operational capacity, customization needs, and cost structure. This section focuses on what you need to know once you've decided to run these tools directly on EKS.
+Compare self-operation with managed choices such as Amazon MSK, EMR and MWAA based on operating capacity, required features, availability and total cost. EMR on EKS manages job execution while leaving responsibility for the underlying EKS cluster. SageMaker Unified Studio is a managed data/AI workspace and governance integration, not software deployed into EKS.
 
 ## Data Workload Categories
 
-Tools in the data platform space generally fall into four categories, each solving a different problem.
+Distinguish four execution-workload categories and the managed governance area connecting them. A tool can cover multiple roles.
 
 | Category | Problem It Solves | Representative Tool | Data on EKS Coverage |
 |----------|--------------------|----------------------|------------------------|
@@ -20,16 +20,18 @@ Tools in the data platform space generally fall into four categories, each solvi
 | **Stream Processing** | Perform real-time aggregation, transformation, and stateful computation on streaming data | Apache Flink | Available — [Flink on EKS](flink/README.md) |
 | **Governed data and AI workspace** | Share data assets, project profiles, tools, and membership within a managed boundary | SageMaker Unified Studio | Available — [Unified Studio governance](sagemaker-unified-studio/README.md) |
 
-![Airflow orchestrates scheduled jobs on both Kafka and Spark, while Kafka streams events into Flink for stream processing and lands raw data into Spark for batch analytics.](../.gitbook/assets/en-data-on-eks-README-0.png)
+![Airflow coordinates Spark jobs, while Spark and Flink read and process Kafka events. This does not depict Airflow scheduling the Kafka brokers themselves.](../.gitbook/assets/en-data-on-eks-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-readme-0.html)
 
 ## Why Run These on EKS
 
-Fully managed services meaningfully reduce operational burden, but more teams are choosing to run these tools natively on EKS for reasons like:
+Evaluate these opportunities and constraints when considering direct operation on EKS:
 
-- **Unified operations and observability**: Data workloads can be managed with the same `kubectl`, GitOps workflows, and Prometheus/Grafana stack used across the rest of the platform, instead of maintaining a separate toolchain.
-- **Autoscaling**: [Karpenter](../autoscaling/02-karpenter.md)-driven node autoscaling combined with HPA/KEDA lets you scale brokers, workers, and executors precisely to match workload demand.
-- **Cost efficiency**: Techniques from [EKS cost optimization](../eks/07-eks-cost-optimization.md) — Spot Instances, improved bin-packing density, and so on — apply just as well to data workloads as to any other service.
-- **Multi-tenancy**: Kubernetes isolation primitives — namespaces, ResourceQuotas, NetworkPolicies — let multiple teams and workloads safely share a single cluster.
+- **Unified operations and observability**: Reuse existing `kubectl`, GitOps and Prometheus/Grafana practices. Data quality, lineage, query performance and consumer lag still need domain-specific observability.
+- **Autoscaling**: [Karpenter](../autoscaling/02-karpenter.md) adjusts node capacity; HPA/KEDA or engine-specific autoscalers adjust supported workers/jobs. Kafka broker changes also require partition reassignment, quorum, storage and Operator support review.
+- **Cost efficiency**: Apply Spot and bin-packing where restart, checkpoint and replication requirements permit. Assess [EKS cost optimization](../eks/07-eks-cost-optimization.md) alongside storage, networking and operating costs; do not apply it uniformly to brokers and stateful jobs.
+- **Multi-tenancy**: Namespaces, ResourceQuotas and NetworkPolicies are isolation components. Validate actual data permissions, trust levels, authentication, storage and networking; a namespace alone is not complete tenant isolation.
 
 This approach does come with trade-offs: your team takes on Operator management, storage design, and upgrade strategy directly. The deep dives that follow address that balance in detail for each tool.
 

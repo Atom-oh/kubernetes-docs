@@ -2,19 +2,19 @@
 
 > **対応バージョン**: Istio 1.28+ **API バージョン**: `networking.istio.io/v1`, `security.istio.io/v1` **最終更新**: February 19, 2026
 
-このドキュメントでは、Istio の内部アーキテクチャとネットワーキングの仕組みを詳しく説明します。
+このドキュメントでは、Istio の内部アーキテクチャとネットワーキングの仕組みを詳しく解説します。
 
 **背景と歴史**については、[基本概念](02-basic-concepts.md#background-and-history)のドキュメントを参照してください。
 
 **重要な変更点（Istio 1.5+）**:
 
-* Pilot、Citadel、Galley は**もはや個別のコンポーネントではありません**
-* これらは Istiod（`pilot-discovery`）という**単一バイナリ**に統合されました
-* Pilot/Citadel/Galley という用語は、**機能を表す歴史的な名称**を指します
+* Pilot、Citadel、Galley は、**もはや独立したコンポーネントではありません**
+* これらは Istiod（`pilot-discovery`）という**単一バイナリ**に統合されています
+* Pilot/Citadel/Galley という用語は、**機能を説明する歴史的な名称**を指します
 
 ## 目次
 
-1. [Istio アーキテクチャ概要](03-architecture.md#istio-architecture-overview)
+1. [Istio アーキテクチャの概要](03-architecture.md#istio-architecture-overview)
 2. [Control Plane: Istiod](03-architecture.md#control-plane-istiod)
 3. [Data Plane: Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
 4. [Sidecar インジェクションの仕組み](03-architecture.md#sidecar-injection-mechanism)
@@ -23,90 +23,37 @@
 7. [xDS API 通信](03-architecture.md#xds-api-communication)
 8. [Sidecar リソースによる最適化](03-architecture.md#optimization-with-sidecar-resource)
 
-## Istio アーキテクチャ概要
+## Istio アーキテクチャの概要
 
 ### 全体構造
+
+![Istio アーキテクチャの概要: Istiod は Kubernetes API server を監視し、Ingress Gateway と sidecar に xDS 設定を配信する一方、Pod は mTLS を介して相互に通信します。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-0.png)
+
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-0.html)
 
 ### Control Plane と Data Plane
 
 | カテゴリ        | Control Plane (Istiod)                        | Data Plane (Envoy)        |
 | --------------- | --------------------------------------------- | ------------------------- |
-| **役割**        | ポリシー管理、設定配布                        | 実際のトラフィック処理    |
-| **配置場所**    | 個別の Pod（通常 1～3 個）                    | すべてのアプリケーション Pod |
+| **役割**        | ポリシー管理、設定配信                        | 実際のトラフィック処理    |
+| **配置場所**    | 分離された Pod（通常 1～3 個）                | すべてのアプリケーション Pod |
 | **言語**        | Go                                            | C++                       |
-| **負荷**        | 低                                            | 高（すべてのトラフィック）|
+| **負荷**        | 低                                            | 高（すべてのトラフィック） |
 | **スケーラビリティ** | 水平スケーリング（HA）                    | 自動（Pod ごとに 1 個）   |
 
 ## Control Plane: Istiod
 
 ### Istiod の内部構造
 
-**重要**: Istio 1.5 以降、Pilot、Citadel、Galley は**個別のコンポーネントではなく、Istiod の内部機能**です。
+**重要**: Istio 1.5 以降、Pilot、Citadel、Galley は**独立したコンポーネントではなく、Istiod の内部機能です**。
 
-```mermaid
-flowchart TB
-    subgraph Istiod[Istiod Single Process]
-        subgraph PilotFunc[Pilot Functionality]
-            SD[Service Discovery<br/>Service Detection]
-            TR[Traffic Management<br/>Traffic Rules]
-            xDS[xDS Server<br/>Configuration Distribution]
-        end
-
-        subgraph CitadelFunc[Citadel Functionality]
-            CA[Certificate Authority<br/>CA Management]
-            ID[Identity Management<br/>SPIFFE ID]
-        end
-
-        subgraph GalleyFunc[Galley Functionality]
-            Val[Configuration Validation<br/>Config Validation]
-            Proc[Configuration Processing<br/>Config Processing]
-        end
-    end
-
-    subgraph K8S[Kubernetes API]
-        API[API Server]
-        CRD[Istio CRDs<br/>VirtualService, DestinationRule, etc.]
-    end
-
-    subgraph Envoys[Envoy Proxies]
-        E1[Envoy 1]
-        E2[Envoy 2]
-        E3[Envoy N]
-    end
-
-    API --> Val
-    CRD --> Val
-    Val --> SD
-    Val --> CA
-
-    SD --> xDS
-    TR --> xDS
-    CA --> xDS
-
-    xDS -->|xDS API<br/>Config Push| E1
-    xDS -->|xDS API<br/>Config Push| E2
-    xDS -->|xDS API<br/>Config Push| E3
-
-    CA -->|X.509 Certificates<br/>SDS API| E1
-    CA -->|X.509 Certificates<br/>SDS API| E2
-    CA -->|X.509 Certificates<br/>SDS API| E3
-
-    %% Style definitions
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class SD,TR,xDS,CA,ID,Val,Proc istiod;
-    class API,CRD k8s;
-    class E1,E2,E3 envoy;
-```
+![Istiod の単一プロセスが Pilot、Citadel、Galley の機能を統合し、Kubernetes API の設定を検証して Envoy sidecar proxy に xDS 設定と X.509 証明書を配信する様子を示すアーキテクチャ図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-0.svg)
 
 ### Istiod の主な機能
 
-**注記**: 以下の機能は、Istio 1.28 では Istiod 内に統合されています。歴史的な名称（Pilot、Citadel、Galley）は機能を説明するために使用されています。
+**注記**: 以下の機能は、Istio 1.28 では Istiod 内に統合されています。機能を説明するために、歴史的な名称（Pilot、Citadel、Galley）を使用しています。
 
-#### 1. Service Discovery（Pilot 機能）
+#### 1. Service Discovery（Pilot の機能）
 
 ```yaml
 # Kubernetes Service detection
@@ -128,7 +75,7 @@ Istiod は以下を追跡します:
 * Pod の状態変更
 * 外部 Service（ServiceEntry）
 
-#### 2. Traffic Management（Pilot 機能）
+#### 2. Traffic Management（Pilot の機能）
 
 Istio CRD を Envoy 設定に変換します:
 
@@ -168,26 +115,9 @@ spec:
 }
 ```
 
-#### 3. 証明書管理（Citadel 機能）
+#### 3. Certificate Management（Citadel の機能）
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Envoy
-    participant Istiod
-    participant SPIFFE
-
-    Envoy->>Istiod: CSR Request<br/>(Certificate Signing Request)
-    Istiod->>SPIFFE: Identity Verification<br/>(ServiceAccount)
-    SPIFFE->>Istiod: Verification Complete
-    Istiod->>Istiod: Sign Certificate
-    Istiod->>Envoy: Issue X.509 Certificate<br/>(TTL: 24 hours)
-
-    Note over Envoy: Use Certificate<br/>mTLS Communication
-
-    Envoy->>Istiod: Certificate Renewal Request<br/>(Before Expiry)
-    Istiod->>Envoy: Issue New Certificate
-```
+![Envoy が Istiod に証明書を要求し、Istiod が SPIFFE で workload identity を検証して mTLS 用の X.509 証明書に署名・発行し、その後有効期限前に更新する様子を示すシーケンス図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-1.svg)
 
 **SPIFFE ID 形式**:
 
@@ -195,7 +125,7 @@ sequenceDiagram
 spiffe://cluster.local/ns/default/sa/reviews
 ```
 
-#### 4. 設定検証（Galley 機能）
+#### 4. Configuration Validation（Galley の機能）
 
 ```yaml
 # Invalid configuration
@@ -222,7 +152,7 @@ configuration is invalid: host "non-existent-service" not found
 
 ### Istiod のプロセス構造
 
-**Istio 1.28 での実際の実装**:
+**Istio 1.28 における実際の実装**:
 
 ```bash
 # Processes inside Istiod pod
@@ -233,25 +163,25 @@ istio-p+     1  /usr/local/bin/pilot-discovery discovery
 # Single binary 'pilot-discovery' performs all functions
 ```
 
-**要点**:
+**主なポイント**:
 
 * Istiod は `pilot-discovery` という**単一の Go バイナリ**として実行されます
-* Pilot、Citadel、Galley は**コードレベルのパッケージ/モジュール**として存在しますが、個別のプロセスではありません
-* すべての機能は、単一プロセス内で goroutine として実行されます
+* Pilot、Citadel、Galley は**コードレベルの package/module**として存在しますが、独立したプロセスではありません
+* すべての機能は単一プロセス内で goroutine として実行されます
 
 **Istiod が提供する主なポート**:
 
 | ポート      | プロトコル | 用途                     | 機能                      |
 | --------- | -------- | ------------------------ | ------------------------- |
-| **15010** | gRPC     | xDS（レガシー）            | 後方互換性                |
+| **15010** | gRPC     | xDS（legacy）            | 後方互換性                 |
 | **15012** | gRPC     | TLS 経由の xDS           | 主な xDS API エンドポイント |
-| **15014** | HTTP     | Control Plane のモニタリング | メトリクスとヘルスチェック |
+| **15014** | HTTP     | Control Plane の監視     | Metrics とヘルスチェック  |
 | **15017** | HTTPS    | Webhook                  | Sidecar インジェクション  |
-| **8080**  | HTTP     | デバッグ                  | デバッグインターフェイス  |
+| **8080**  | HTTP     | Debug                    | デバッグインターフェース  |
 
 ### Istiod の Deployment
 
-**高可用性構成**:
+**高可用性設定**:
 
 ```yaml
 apiVersion: apps/v1
@@ -281,42 +211,16 @@ spec:
 **一般的なリソース使用量**:
 
 * CPU: 0.5～2 コア
-* メモリ: 2～4 GB
+* Memory: 2～4 GB
 * 数千の Service と Pod を処理可能
 
 ## Data Plane: Envoy Proxy
 
-### Envoy アーキテクチャ
+### Envoy のアーキテクチャ
 
-```mermaid
-flowchart TB
-    subgraph EnvoyProxy[Envoy Proxy]
-        Listener[Listeners<br/>Port Reception]
-        Filter[Filters<br/>Request Processing]
-        Router[Routers<br/>Routing Decision]
-        Cluster[Clusters<br/>Upstream Services]
+![受信リクエストが Envoy の listener、filter chain、router を通過して upstream service の cluster に入り、送信リクエストとして出ていく様子を示すアーキテクチャ図。](../../.gitbook/assets/en-service-mesh-istio-03-architecture-2.png)
 
-        Listener --> Filter
-        Filter --> Router
-        Router --> Cluster
-    end
-
-    subgraph External[External]
-        Incoming[Incoming Requests]
-        Outgoing[Outgoing Requests]
-    end
-
-    Incoming -->|Inbound| Listener
-    Cluster -->|Outbound| Outgoing
-
-    %% Style definitions
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Listener,Filter,Router,Cluster envoy;
-    class Incoming,Outgoing external;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-2.html)
 
 ### Envoy の主なコンポーネント
 
@@ -339,43 +243,20 @@ flowchart TB
 
 **デフォルトの Istio Listener**:
 
-* `0.0.0.0:15001`: すべての outbound TCP トラフィック
-* `0.0.0.0:15006`: すべての inbound TCP トラフィック
+* `0.0.0.0:15001`: すべての送信 TCP トラフィック
+* `0.0.0.0:15006`: すべての受信 TCP トラフィック
 * `0.0.0.0:15021`: ヘルスチェック
-* `0.0.0.0:15090`: Prometheus メトリクス
+* `0.0.0.0:15090`: Prometheus metrics
 
 #### 2. Filter
 
-**リクエスト/レスポンスを処理するプラグイン**:
+**リクエスト/レスポンスを処理する plugin**:
 
-```mermaid
-flowchart LR
-    Request[HTTP Request]
-
-    subgraph Filters[Filter Chain]
-        F1[JWT Auth]
-        F2[Rate Limiting]
-        F3[RBAC Validation]
-        F4[Stats Collection]
-        F5[Router]
-    end
-
-    Response[HTTP Response]
-
-    Request --> F1 --> F2 --> F3 --> F4 --> F5 --> Response
-
-    %% Style definitions
-    classDef req fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef filter fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Request,Response req;
-    class F1,F2,F3,F4,F5 filter;
-```
+![HTTP リクエストが Envoy の JWT authentication、rate limiting、RBAC validation、stats collection、router filter を順に通過し、HTTP レスポンスになるまでを示すフローチャート。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-3.svg)
 
 #### 3. Cluster
 
-**upstream Service の論理グループ**:
+**upstream service の論理グループ**:
 
 ```json
 {
@@ -411,57 +292,16 @@ flowchart LR
 
 **ベンチマーク**（一般的な環境）:
 
-* スループット: コアあたり 10,000+ RPS
+* Throughput: コアあたり 10,000+ RPS
 * 追加レイテンシ: < 1ms（P99）
-* メモリ: 50～100 MB（デフォルト設定）
+* Memory: 50～100 MB（デフォルト設定）
 * CPU: 0.1～0.5 コア（一般的な負荷）
 
 ## Sidecar インジェクションの仕組み
 
-### インジェクションのプロセス
+### インジェクションプロセス
 
-```mermaid
-flowchart TB
-    subgraph User[User]
-        Deploy[Create Deployment]
-    end
-
-    subgraph K8S[Kubernetes]
-        API[API Server]
-        Webhook[Mutating Webhook]
-    end
-
-    subgraph Istio[Istio]
-        Injector[Sidecar Injector]
-    end
-
-    subgraph Pod[Created Pod]
-        Init[istio-init<br/>init container]
-        App[Application<br/>container]
-        Proxy[istio-proxy<br/>sidecar container]
-    end
-
-    Deploy -->|1\. POST| API
-    API -->|2\. Call Webhook| Webhook
-    Webhook -->|3\. Injection Request| Injector
-    Injector -->|4\. Modified Pod Spec| Webhook
-    Webhook -->|5\. Return| API
-    API -->|6\. Create Pod| Init
-    Init -->|7\. Complete| App
-    Init -->|7\. Complete| Proxy
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istio fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Deploy user;
-    class API,Webhook k8s;
-    class Injector istio;
-    class Init,App,Proxy container;
-```
+![Deployment の Pod 作成呼び出しが Kubernetes API に対して行われ、mutating webhook が Istio の sidecar injector に Pod spec の変更を依頼し、アプリケーション container とともに istio-init container および istio-proxy sidecar を持つ Pod が作成される様子を示すフローチャート。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-4.svg)
 
 ### インジェクション前と後の比較
 
@@ -538,7 +378,7 @@ spec:
 
 #### 手動インジェクション
 
-`istioctl kube-inject` コマンドを使用して、YAML ファイルに直接 Sidecar をインジェクションします。
+`istioctl kube-inject` コマンドを使用して、YAML ファイルに直接 sidecar をインジェクションします。
 
 ```bash
 # Inject sidecar into YAML file and deploy
@@ -552,42 +392,20 @@ kubectl apply -f deployment-injected.yaml
 **手動インジェクションのシナリオ**:
 
 * 自動インジェクションを使用できない環境
-* CI/CD パイプラインで明示的な制御が必要な場合
-* デバッグのためにインジェクション済み YAML を確認したい場合
+* CI/CD pipeline で明示的な制御が必要な場合
+* デバッグのためにインジェクションされた YAML を確認したい場合
 
 ## iptables とトラフィックのインターセプト
 
 ### istio-init Container
 
-**役割**: Pod のネットワークトラフィックを Envoy Proxy にリダイレクトする iptables ルールを設定します
+**役割**: Pod ネットワークトラフィックを Envoy Proxy にリダイレクトする iptables ルールを設定します
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8S as Kubernetes
-    participant Init as istio-init
-    participant IPTables as iptables
-    participant App as Application
-    participant Envoy as Envoy Proxy
-
-    K8S->>Init: Start Init Container
-    Init->>IPTables: Set iptables rules
-    Note over IPTables: Redirect all traffic<br/>to Envoy
-
-    Init->>K8S: Complete (Exit 0)
-    K8S->>App: Start Application
-    K8S->>Envoy: Start Envoy
-
-    App->>IPTables: Outbound request<br/>(e.g., curl reviews:9080)
-    IPTables->>Envoy: Redirect (15001)
-    Envoy->>Envoy: Routing decision
-    Envoy->>IPTables: Send actual request
-    Note over IPTables: Envoy UID<br/>bypasses iptables
-```
+![istio-init container がアプリケーションと Envoy proxy の起動前に iptables を設定して Pod のトラフィックを Envoy にリダイレクトするため、その後の送信リクエストが透過的にインターセプトされて Envoy の listener にリダイレクトされる様子を示すシーケンス図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-5.svg)
 
 ### iptables ルールの詳細
 
-**istio-init によって実行されるコマンド**:
+**istio-init が実行するコマンド**:
 
 ```bash
 #!/bin/bash
@@ -615,48 +433,7 @@ iptables -t nat -I OUTPUT -p udp --dport 53 -j RETURN
 
 ### トラフィックフロー（iptables 適用後）
 
-```mermaid
-flowchart TB
-    subgraph Pod[Pod Network Namespace]
-        App[Application<br/>localhost:8080]
-
-        subgraph IPTables[iptables NAT]
-            Output[OUTPUT Chain]
-            PreRouting[PREROUTING Chain]
-        end
-
-        subgraph Envoy[Envoy Proxy<br/>UID: 1337]
-            L15001[Listener<br/>15001<br/>Outbound]
-            L15006[Listener<br/>15006<br/>Inbound]
-        end
-    end
-
-    External[External Service<br/>reviews:9080]
-
-    %% Outbound flow
-    App -->|1\. curl reviews:9080| Output
-    Output -->|2\. REDIRECT| L15001
-    L15001 -->|3\. Routing| L15001
-    L15001 -->|4\. UID 1337<br/>bypass iptables| External
-
-    %% Inbound flow
-    External -->|5\. Incoming request| PreRouting
-    PreRouting -->|6\. REDIRECT| L15006
-    L15006 -->|7\. mTLS verification| L15006
-    L15006 -->|8\. localhost| App
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef iptables fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class Output,PreRouting iptables;
-    class L15001,L15006 envoy;
-    class External external;
-```
+![アプリケーションの送信リクエストが iptables の OUTPUT chain ルールによって Envoy の送信 listener にリダイレクトされ、proxy 自身の UID を使用してさらなるインターセプトを回避しながら外部 Service に転送される様子と、mTLS 検証後に PREROUTING chain を通って Envoy の受信 listener からアプリケーションへ戻る対称的な受信パスを示すアーキテクチャ図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-6.svg)
 
 ### iptables ルールの確認
 
@@ -689,44 +466,20 @@ Chain ISTIO_INBOUND (1 references)
 REDIRECT   tcp  --  0.0.0.0/0  0.0.0.0/0           redir ports 15006
 ```
 
-### iptables と eBPF（CNI Plugin）
+### iptables と eBPF（CNI Plugin）の比較
 
 Istio は 2 つのトラフィックインターセプト方式をサポートしています:
 
 | 方式         | 利点                 | 欠点                    | 使用シナリオ                   |
 | -------------- | -------------------- | ----------------------- | ------------------------------ |
-| **iptables**   | シンプル、汎用的     | Init Container が必要   | デフォルトセットアップ         |
-| **eBPF (CNI)** | Init 不要、高速      | 最新のカーネルが必要    | 高パフォーマンス、Ambient Mode |
+| **iptables**   | シンプル、汎用的     | Init Container が必要   | デフォルト設定                 |
+| **eBPF (CNI)** | Init 不要、高速      | モダンな kernel が必要  | 高パフォーマンス、Ambient Mode |
 
 ## DNS 処理の仕組み
 
 ### Kubernetes DNS の基本動作
 
-```mermaid
-flowchart LR
-    App[Application]
-
-    subgraph Pod[Pod Network]
-        Resolve["/etc/resolv.conf<br/>nameserver 10.96.0.10"]
-    end
-
-    subgraph K8S[Kubernetes]
-        CoreDNS["CoreDNS<br/>Service: kube-dns<br/>ClusterIP: 10.96.0.10"]
-    end
-
-    App -->|"1\. Name resolution request<br/>(reviews)"| Resolve
-    Resolve -->|"2\. DNS query<br/>(UDP 53 → 10.96.0.10)"| CoreDNS
-    CoreDNS -->|"3\. Return ClusterIP<br/>(reviews = 10.100.1.5)"| Resolve
-    Resolve -->|"4\. Return IP<br/>(10.100.1.5)"| App
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dns fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App app;
-    class Resolve,CoreDNS dns;
-```
+![アプリケーションのデフォルト DNS lookup パスを示すフローチャート: 名前解決リクエストは Pod の resolv.conf を通って CoreDNS に送られ、CoreDNS が Service の ClusterIP をアプリケーションに返します。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-7.svg)
 
 **/etc/resolv.conf**（Pod 内）:
 
@@ -740,49 +493,17 @@ options ndots:5
 
 **Istio では、Envoy が DNS を処理します**:
 
-```mermaid
-flowchart TB
-    App[Application<br/>curl reviews:9080]
-
-    subgraph Envoy[Envoy Proxy]
-        Listener[Listener<br/>15001]
-        DNS[DNS Filter]
-        Route[Route Match]
-        Cluster["Cluster<br/>outbound:9080::reviews"]
-        EDS[Endpoint Discovery]
-    end
-
-    subgraph Istiod[Istiod]
-        XDS[xDS Server]
-    end
-
-    App -->|1\. TCP connection| Listener
-    Listener -->|2\. Inspect Host header| DNS
-    DNS -->|3\. Name resolution| Route
-    Route -->|4\. Select Cluster| Cluster
-    Cluster -->|5\. Query Endpoints| EDS
-    EDS <-->|6\. EDS API| XDS
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App app;
-    class Listener,DNS,Route,Cluster,EDS envoy;
-    class XDS istiod;
-```
+![Envoy がアプリケーションの TCP 接続をインターセプトし、Host header を検査して route を解決し、cluster を選択して、CoreDNS を呼び出すのではなく Istiod の xDS server を通じて endpoint を照会する様子を示すフローチャート。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-8.svg)
 
 **利点**:
 
 * CoreDNS 呼び出しが不要（パフォーマンス向上）
 * 動的な Endpoint 更新
-* 高度なルーティング（バージョン、重み付けなど）
+* 高度な routing（version、weight など）
 
-### DNS Proxy（任意）
+### DNS Proxy（オプション）
 
-**DNS Proxy 機能は Istio 1.8+ で追加されました**:
+**Istio 1.8+ で追加された DNS Proxy 機能**:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -796,28 +517,7 @@ spec:
 
 **動作**:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application
-    participant IPT as iptables
-    participant Envoy as Envoy<br/>DNS Proxy
-    participant CoreDNS as CoreDNS
-    participant Istiod as Istiod
-
-    App->>IPT: DNS query<br/>reviews (UDP 53)
-    IPT->>Envoy: Redirect (15053)
-
-    alt Istio Service
-        Envoy->>Istiod: Query service info<br/>(xDS)
-        Istiod->>Envoy: Return ClusterIP
-        Envoy->>App: 10.96.0.10
-    else External DNS
-        Envoy->>CoreDNS: DNS query
-        CoreDNS->>Envoy: Return IP
-        Envoy->>App: Return IP
-    end
-```
+![Envoy の DNS proxy がリダイレクトされた DNS query をインターセプトして分岐する様子を示すシーケンス図: mesh 内の Istio Service の場合は Istiod の xDS server に ClusterIP を要求し、それ以外の場合は CoreDNS への query にフォールバックして、どちらの場合もアプリケーションに IP を返します。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-9.svg)
 
 **DNS Proxy の iptables ルール**:
 
@@ -830,83 +530,25 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 ## xDS API 通信
 
-### xDS プロトコルの概要
+### xDS Protocol の概要
 
-**xDS**: Discovery Service の略であり、Envoy の動的設定プロトコルです。
+**xDS**: Discovery Service の略であり、Envoy の動的設定 protocol です。
 
-```mermaid
-flowchart LR
-    subgraph Istiod[Istiod]
-        Pilot[Pilot<br/>xDS Server]
-    end
-
-    subgraph Envoy[Envoy Proxy]
-        LDS[Listener DS]
-        RDS[Route DS]
-        CDS[Cluster DS]
-        EDS[Endpoint DS]
-        SDS[Secret DS]
-    end
-
-    Pilot <-->|gRPC<br/>Stream| LDS
-    Pilot <-->|gRPC<br/>Stream| RDS
-    Pilot <-->|gRPC<br/>Stream| CDS
-    Pilot <-->|gRPC<br/>Stream| EDS
-    Pilot <-->|gRPC<br/>Stream| SDS
-
-    %% Style definitions
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef xds fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pilot istiod;
-    class LDS,RDS,CDS,EDS,SDS xds;
-```
+![Istiod の Pilot component が Envoy と 5 つの双方向 gRPC stream を維持する様子を示すアーキテクチャ図: Listener、Route、Cluster、Endpoint、Secret Discovery Service。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-10.svg)
 
 ### xDS API の種類
 
 | API     | 名前               | 役割                       | 例                |
 | ------- | ------------------ | -------------------------- | ----------------- |
-| **LDS** | Listener Discovery | ポート設定を受信           | 15001, 15006      |
-| **RDS** | Route Discovery    | HTTP ルーティングルール    | VirtualService    |
-| **CDS** | Cluster Discovery  | upstream Service           | DestinationRule   |
+| **LDS** | Listener Discovery | ポート設定を受信           | 15001、15006      |
+| **RDS** | Route Discovery    | HTTP routing ルール        | VirtualService    |
+| **CDS** | Cluster Discovery  | upstream service           | DestinationRule   |
 | **EDS** | Endpoint Discovery | Pod IP リスト              | Service Endpoint  |
 | **SDS** | Secret Discovery   | TLS 証明書                 | mTLS 証明書       |
 
 ### xDS 通信フロー
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Envoy as Envoy Proxy
-    participant Istiod as Istiod<br/>(xDS Server)
-    participant K8S as Kubernetes API
-
-    Note over Envoy: Pod starts
-
-    Envoy->>Istiod: 1. Connect (gRPC :15012)
-    Istiod->>Envoy: 2. mTLS authentication
-
-    Envoy->>Istiod: 3. LDS request
-    Istiod->>Envoy: 4. Return Listeners
-
-    Envoy->>Istiod: 5. CDS request
-    Istiod->>Envoy: 6. Return Clusters
-
-    Envoy->>Istiod: 7. EDS request
-    Istiod->>Envoy: 8. Return Endpoints
-
-    Envoy->>Istiod: 9. RDS request
-    Istiod->>Envoy: 10. Return Routes
-
-    Envoy->>Istiod: 11. SDS request
-    Istiod->>Envoy: 12. Return Certificates
-
-    Note over Envoy: Configuration complete<br/>Ready to process traffic
-
-    K8S->>Istiod: 13. Service change detected
-    Istiod->>Envoy: 14. EDS push (new Endpoint)
-```
+![新たに起動した Envoy proxy が mTLS 経由で Istiod に接続し、完全に設定されるまで各 discovery resource type の xDS request/response 往復を繰り返した後、Istiod が Kubernetes Service の変更を検出すると endpoint 更新の push を受信する様子を示すシーケンス図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-11.svg)
 
 ### xDS 通信の検証
 
@@ -951,45 +593,22 @@ istioctl proxy-config routes <pod-name> -n default
 
 ## Sidecar リソースによる最適化
 
-### 問題: すべての Service 情報を受信する
+### 問題: すべての Service 情報の受信
 
-デフォルトでは、各 Envoy は**メッシュ全体のすべての Service に関する情報**を受信します:
+デフォルトでは、各 Envoy は**mesh 全体のすべての Service に関する情報**を受信します:
 
-```mermaid
-flowchart TB
-    subgraph Mesh[Service Mesh - 1000 services]
-        S1[Service 1]
-        S2[Service 2]
-        S3[Service 3]
-        Sn[Service 1000]
-    end
-
-    subgraph Pod[Single Pod]
-        App[Application<br/>Uses: Service 1, 2 only]
-        Envoy[Envoy Proxy<br/>Receives: All 1000]
-    end
-
-    Mesh -.->|Push all info| Envoy
-
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class S1,S2,S3,Sn service;
-    class Envoy envoy;
-```
+![デフォルトでは、1,000 Service の mesh 内のすべての Envoy sidecar が、Pod 内のアプリケーションがそのうち 2 つとしか通信しない場合でも、すべての Service の設定を受信する様子を示すアーキテクチャ図。](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-12.svg)
 
 **問題点**:
 
-* メモリ使用量の増加
+* Memory 使用量の増加
 * CPU 使用量の増加（設定処理）
 * ネットワーク帯域幅の浪費
 * Istiod の負荷増加
 
 ### 解決策: Sidecar リソース
 
-**Sidecar リソース**を使用して、必要な Service だけを受信するように制限します:
+**Sidecar リソース**を使用して、必要な Service のみを受信するように制限します:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1068,17 +687,17 @@ spec:
 
 ### Sidecar リソースの効果
 
-**前（Sidecar なし）**:
+**導入前（Sidecar なし）**:
 
-* 1000 Service → 1000 Cluster 設定
-* Envoy メモリ: \~500 MB
-* 設定プッシュ時間: 5～10 秒
+* 1,000 Service → 1,000 Cluster 設定
+* Envoy Memory: \~500 MB
+* 設定の push 時間: 5～10 秒
 
-**後（Sidecar 適用後）**:
+**導入後（Sidecar 適用済み）**:
 
 * 10 Service → 10 Cluster 設定
-* Envoy メモリ: \~80 MB
-* 設定プッシュ時間: < 1 秒
+* Envoy Memory: \~80 MB
+* 設定の push 時間: < 1 秒
 
 ### DNS と Sidecar の統合
 
@@ -1099,9 +718,9 @@ spec:
 
 **結果**:
 
-* Envoy は `reviews`、`ratings` のみを名前解決します
-* `google.com` などの外部ドメインは CoreDNS に転送されます
-* メモリと CPU を節約できます
+* Envoy は `reviews`、`ratings` のみを解決
+* `google.com` などの外部 domain は CoreDNS に転送
+* Memory と CPU を節約
 
 ## 参考資料
 

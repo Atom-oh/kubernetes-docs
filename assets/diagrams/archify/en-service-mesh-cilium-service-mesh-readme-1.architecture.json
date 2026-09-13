@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar vs eBPF Architecture Comparison",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "App container"
+        },
+        "backend": {
+          "label": "Envoy proxy"
+        },
+        "cloud": {
+          "label": "Network"
+        },
+        "messagebus": {
+          "label": "eBPF kernel datapath"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "istio",
+        "label": "Sidecar-based (Istio)",
+        "focus": [
+          "app-a-istio",
+          "envoy-a",
+          "network",
+          "envoy-b",
+          "app-b-istio"
+        ],
+        "note": "An Envoy sidecar attached to every Pod handles both L3/L4 and L7 in userspace."
+      },
+      {
+        "id": "cilium",
+        "label": "eBPF-based (Cilium)",
+        "focus": [
+          "app-a-cilium",
+          "ebpf-a",
+          "shared-envoy",
+          "ebpf-b",
+          "app-b-cilium"
+        ],
+        "note": "Kernel eBPF handles L3/L4; traffic passes through the single shared Envoy per node only when L7 is needed."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app-a-istio",
+      "type": "frontend",
+      "label": "App",
+      "sublabel": "container",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "envoy-a",
+      "type": "backend",
+      "label": "Envoy Sidecar",
+      "sublabel": "L3/L4 + L7",
+      "pos": [
+        250,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "Network",
+      "sublabel": "Pod-to-Pod network",
+      "pos": [
+        490,
+        90
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy-b",
+      "type": "backend",
+      "label": "Envoy Sidecar",
+      "sublabel": "L3/L4 + L7",
+      "pos": [
+        720,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app-b-istio",
+      "type": "frontend",
+      "label": "App",
+      "sublabel": "container",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "app-a-cilium",
+      "type": "frontend",
+      "label": "App",
+      "sublabel": "container",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ebpf-a",
+      "type": "messagebus",
+      "label": "eBPF",
+      "sublabel": "L3/L4 (kernel)",
+      "pos": [
+        250,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "shared-envoy",
+      "type": "backend",
+      "label": "Shared Envoy",
+      "sublabel": "L7 only · 1 per node",
+      "pos": [
+        490,
+        290
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "tag": "sidecar-free"
+    },
+    {
+      "id": "ebpf-b",
+      "type": "messagebus",
+      "label": "eBPF",
+      "sublabel": "L3/L4 (kernel)",
+      "pos": [
+        720,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app-b-cilium",
+      "type": "frontend",
+      "label": "App",
+      "sublabel": "container",
+      "pos": [
+        960,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Sidecar-based (Istio)",
+      "wraps": [
+        "app-a-istio",
+        "envoy-a",
+        "network",
+        "envoy-b",
+        "app-b-istio"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "eBPF-based (Cilium)",
+      "wraps": [
+        "app-a-cilium",
+        "ebpf-a",
+        "shared-envoy",
+        "ebpf-b",
+        "app-b-cilium"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "i1",
+      "from": "app-a-istio",
+      "to": "envoy-a"
+    },
+    {
+      "id": "i2",
+      "from": "envoy-a",
+      "to": "network"
+    },
+    {
+      "id": "i3",
+      "from": "network",
+      "to": "envoy-b"
+    },
+    {
+      "id": "i4",
+      "from": "envoy-b",
+      "to": "app-b-istio"
+    },
+    {
+      "id": "c1",
+      "from": "app-a-cilium",
+      "to": "ebpf-a"
+    },
+    {
+      "id": "c2",
+      "from": "ebpf-a",
+      "to": "shared-envoy",
+      "label": "L7",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c3",
+      "from": "shared-envoy",
+      "to": "ebpf-b"
+    },
+    {
+      "id": "c4",
+      "from": "ebpf-b",
+      "to": "app-b-cilium"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Sidecar-based (Istio)",
+      "items": [
+        "Proxy: 1 Envoy per Pod",
+        "L4 processing: Envoy (userspace)",
+        "L7 processing: Envoy"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "eBPF-based (Cilium)",
+      "items": [
+        "Proxy: 1 Envoy per node (L7 only)",
+        "L4 processing: eBPF (kernel)",
+        "L7 processing: shared Envoy"
+      ]
+    }
+  ]
+}

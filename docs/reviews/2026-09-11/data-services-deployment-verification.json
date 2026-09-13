@@ -1,0 +1,133 @@
+{
+  "checkedAt": "2026-09-13T00:03:30.458599+00:00",
+  "pr": 234,
+  "reviewedHead": "70381386da7a9efd908615f39417cd28dd50b391",
+  "mergeCommit": "e42277cacaff2f8c7625de90c430c1b7dbab8a31",
+  "deploymentRun": 34726568206,
+  "deploymentStatus": "success",
+  "pages": [
+    {
+      "path": "en/data-on-eks/flink/02-flink-kubernetes-operator.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/02-flink-kubernetes-operator",
+      "status": 200,
+      "baselineVisible": "1.15.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-data-on-eks-flink-02-flink-kubernetes-operator-0.BGcX2TwJ.png",
+          "status": 200,
+          "sha256": "750104f4f9c59c011a93a2c1a5442cf19c1ca45d8a9b2aa050a6e0bf404753ad",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/flink/03-state-checkpointing-streaming.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/03-state-checkpointing-streaming",
+      "status": 200,
+      "baselineVisible": "2.2.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-data-on-eks-flink-03-state-checkpointing-streaming-0.BsTq9ylc.png",
+          "status": 200,
+          "sha256": "64945773718f403775b16fba4a24f0e208e5f1c4c0d499c5fb4fac37169d72ad",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/flink/04-operations-ha.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/04-operations-ha",
+      "status": 200,
+      "baselineVisible": "2.2.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-data-on-eks-flink-04-operations-ha-0.DuJlvKVf.png",
+          "status": 200,
+          "sha256": "42840e0c65af95ae2cd7a7c51a2c750f60f4dc1062dc085b156552e6a280b387",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance",
+      "status": 200,
+      "baselineVisible": "Unified",
+      "images": [],
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/sagemaker-unified-studio/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/sagemaker-unified-studio/",
+      "status": 200,
+      "baselineVisible": "Unified",
+      "images": [],
+      "passed": true
+    },
+    {
+      "path": "ko/data-on-eks/flink/02-flink-kubernetes-operator.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/data-on-eks/flink/02-flink-kubernetes-operator",
+      "status": 200,
+      "baselineVisible": "1.15.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-data-on-eks-flink-02-flink-kubernetes-operator-0.BUX6RN0V.png",
+          "status": 200,
+          "sha256": "3ae1132bc6ece303a93c8f2f1908de581016b5d084b55b4b0268be4cefbdbee1",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/data-on-eks/flink/03-state-checkpointing-streaming.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/data-on-eks/flink/03-state-checkpointing-streaming",
+      "status": 200,
+      "baselineVisible": "2.2.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-data-on-eks-flink-03-state-checkpointing-streaming-0.C6ytnR11.png",
+          "status": 200,
+          "sha256": "92e41cab96c4163fc5b216bb864bd307b0e27dc9fa9a2927c90732c977b27962",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/data-on-eks/flink/04-operations-ha.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/data-on-eks/flink/04-operations-ha",
+      "status": 200,
+      "baselineVisible": "2.2.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-data-on-eks-flink-04-operations-ha-0.CPSWFXBw.png",
+          "status": 200,
+          "sha256": "fb45d0d7d6c083442a4f1845b450de8380028ba76cec7c3947ed546b059155af",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance",
+      "status": 200,
+      "baselineVisible": "Unified",
+      "images": [],
+      "passed": true
+    },
+    {
+      "path": "ko/data-on-eks/sagemaker-unified-studio/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/data-on-eks/sagemaker-unified-studio/",
+      "status": 200,
+      "baselineVisible": "Unified",
+      "images": [],
+      "passed": true
+    }
+  ],
+  "scope": "HTTP fetch only. No browser JavaScript or synthetic GA4 events. Published hashed img URLs verified against reviewed PNGs."
+}

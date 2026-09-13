@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Scheduling Optimization in Amazon EKS",
+    "locale": "en",
+    "output": "en-core-08-scheduling-preemption-eviction-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "nodegroups",
+      "type": "cloud",
+      "label": "Node Groups · Instance Types",
+      "sublabel": "Compute/memory optimized · Spot · GPU",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "azspread",
+      "type": "cloud",
+      "label": "Availability Zone Distribution",
+      "sublabel": "Pod Anti-Affinity · Topology Spread",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter Auto Scaling",
+      "sublabel": "Provisions nodes fitted to the workload",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "resourceopt",
+      "type": "cloud",
+      "label": "Request · Limit Optimization",
+      "sublabel": "Tune requests / limits",
+      "pos": [
+        910,
+        80
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "ca",
+      "type": "backend",
+      "label": "Cluster Autoscaler",
+      "sublabel": "Resizes node groups",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "multiaz",
+      "type": "backend",
+      "label": "Multi-AZ Deployment",
+      "sublabel": "Spread across topology.kubernetes.io/zone",
+      "pos": [
+        330,
+        280
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "nodepool",
+      "type": "backend",
+      "label": "NodePool",
+      "sublabel": "karpenter.sh/v1 · EC2NodeClass",
+      "pos": [
+        620,
+        280
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "vpa",
+      "type": "backend",
+      "label": "Vertical Pod Autoscaler",
+      "sublabel": "Goldilocks · ResourceQuota",
+      "pos": [
+        910,
+        280
+      ],
+      "size": [
+        250,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS scheduling optimization levers",
+      "wraps": [
+        "nodegroups",
+        "azspread",
+        "karpenter",
+        "resourceopt"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Implementing mechanisms · automation tools",
+      "wraps": [
+        "ca",
+        "multiaz",
+        "nodepool",
+        "vpa"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ng-to-ca",
+      "from": "nodegroups",
+      "to": "ca",
+      "label": "tool",
+      "labelDy": 60
+    },
+    {
+      "id": "az-to-multiaz",
+      "from": "azspread",
+      "to": "multiaz",
+      "label": "result",
+      "labelDy": 60
+    },
+    {
+      "id": "karpenter-to-nodepool",
+      "from": "karpenter",
+      "to": "nodepool",
+      "label": "uses",
+      "variant": "emphasis",
+      "labelDy": 60
+    },
+    {
+      "id": "res-to-vpa",
+      "from": "resourceopt",
+      "to": "vpa",
+      "label": "tool",
+      "labelDy": 60
+    }
+  ]
+}

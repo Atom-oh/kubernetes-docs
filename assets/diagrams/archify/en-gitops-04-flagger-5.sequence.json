@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Flux + Flagger Delivery",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      590
+    ],
+    "views": [
+      {
+        "id": "flux-sync",
+        "label": "Flux reconciles Git",
+        "focus": [
+          "developer",
+          "git",
+          "flux",
+          "kubernetes"
+        ],
+        "note": "Source fetches Git/charts; Kustomize applies HelmRelease and Helm reconciles the target workload."
+      },
+      {
+        "id": "canary-analysis",
+        "label": "Flagger canary analysis",
+        "focus": [
+          "kubernetes",
+          "flagger"
+        ],
+        "note": "Flagger manages how the change is rolled out: it initializes the canary, creates canary pods, and runs the analysis."
+      },
+      {
+        "id": "outcome",
+        "label": "Promote or rollback",
+        "focus": [
+          "flagger",
+          "kubernetes",
+          "developer"
+        ],
+        "note": "Final checks permit primary update/readiness/promotion. Reached pre-promotion failure limits restore primary."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "developer",
+      "type": "external",
+      "label": "Developer"
+    },
+    {
+      "id": "git",
+      "type": "database",
+      "label": "Git Repository",
+      "sublabel": "HelmRelease values"
+    },
+    {
+      "id": "flux",
+      "type": "backend",
+      "label": "Flux Controllers",
+      "sublabel": "source + helm"
+    },
+    {
+      "id": "flagger",
+      "type": "backend",
+      "label": "Flagger",
+      "sublabel": "canary controller"
+    },
+    {
+      "id": "kubernetes",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "Deployment + pods"
+    }
+  ],
+  "segments": [
+    {
+      "from": 155,
+      "to": 254,
+      "label": "Flux applies the target workload"
+    },
+    {
+      "from": 266,
+      "to": 344,
+      "label": "Flagger starts canary analysis"
+    },
+    {
+      "from": 356,
+      "to": 434,
+      "label": "Alternative: final checks pass"
+    },
+    {
+      "from": 446,
+      "to": 524,
+      "label": "Alternative: failure threshold reached"
+    }
+  ],
+  "messages": [
+    {
+      "id": "push-tag",
+      "from": "developer",
+      "to": "git",
+      "y": 175,
+      "label": "reviewed Git change"
+    },
+    {
+      "id": "detect-change",
+      "from": "git",
+      "to": "flux",
+      "y": 208,
+      "label": "source-controller detects change"
+    },
+    {
+      "id": "update-release",
+      "from": "flux",
+      "to": "kubernetes",
+      "y": 242,
+      "label": "apply target workload",
+      "variant": "emphasis"
+    },
+    {
+      "id": "spec-changed",
+      "from": "kubernetes",
+      "to": "flagger",
+      "y": 286,
+      "label": "Deployment spec changed",
+      "variant": "return"
+    },
+    {
+      "id": "create-canary",
+      "from": "flagger",
+      "to": "kubernetes",
+      "y": 326,
+      "label": "scale original canary"
+    },
+    {
+      "id": "promote",
+      "from": "flagger",
+      "to": "kubernetes",
+      "y": 376,
+      "label": "update primary; wait Ready",
+      "variant": "emphasis",
+      "note": "canary analysis passed: metric checks + webhooks"
+    },
+    {
+      "id": "notify-ok",
+      "from": "flagger",
+      "to": "developer",
+      "y": 416,
+      "label": "notify: deployment succeeded",
+      "variant": "return"
+    },
+    {
+      "id": "rollback",
+      "from": "flagger",
+      "to": "kubernetes",
+      "y": 466,
+      "label": "restore primary; canary 0",
+      "variant": "dashed",
+      "note": "canary analysis failed"
+    },
+    {
+      "id": "notify-fail",
+      "from": "flagger",
+      "to": "developer",
+      "y": 506,
+      "label": "notify: deployment failed",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "flux",
+      "from": 202,
+      "to": 248,
+      "type": "backend"
+    },
+    {
+      "participant": "flagger",
+      "from": 280,
+      "to": 514,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Traditional Testing vs Chaos Engineering",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "traditional",
+        "label": "Traditional Testing",
+        "focus": [
+          "devTest",
+          "stagingTest",
+          "prodIssue"
+        ],
+        "note": "When validation stops at dev and staging, failures surface for the first time in production."
+      },
+      {
+        "id": "chaos",
+        "label": "Chaos Engineering",
+        "focus": [
+          "contTest",
+          "discover",
+          "fix",
+          "resilient"
+        ],
+        "note": "Continuously injecting faults discovers weaknesses early, fixes them, and builds resilience."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Test / verification step"
+        },
+        "security": {
+          "label": "Production failure"
+        },
+        "messagebus": {
+          "label": "Fault injection"
+        },
+        "cloud": {
+          "label": "Resilience outcome"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "traditionalLane",
+      "label": "Traditional Testing",
+      "variant": "exception"
+    },
+    {
+      "id": "chaosLane",
+      "label": "Chaos Engineering"
+    }
+  ],
+  "mainPath": [
+    "contTest",
+    "discover",
+    "fix",
+    "resilient"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "devTest",
+      "contTest"
+    ],
+    "allowedTerminals": [
+      "prodIssue",
+      "resilient"
+    ],
+    "requiredPaths": [
+      {
+        "from": "devTest",
+        "to": "prodIssue"
+      },
+      {
+        "from": "contTest",
+        "to": "resilient"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "devTest",
+      "lane": "traditionalLane",
+      "col": 0,
+      "type": "backend",
+      "label": "Dev Environment Testing",
+      "width": 230
+    },
+    {
+      "id": "stagingTest",
+      "lane": "traditionalLane",
+      "col": 1,
+      "type": "backend",
+      "label": "Staging Environment Testing",
+      "width": 230
+    },
+    {
+      "id": "prodIssue",
+      "lane": "traditionalLane",
+      "col": 2,
+      "type": "security",
+      "label": "Production Failure Occurs",
+      "width": 230
+    },
+    {
+      "id": "contTest",
+      "lane": "chaosLane",
+      "col": 0,
+      "type": "messagebus",
+      "label": "Continuous Fault Injection",
+      "width": 230
+    },
+    {
+      "id": "discover",
+      "lane": "chaosLane",
+      "col": 1,
+      "type": "backend",
+      "label": "Discover Weaknesses",
+      "width": 230
+    },
+    {
+      "id": "fix",
+      "lane": "chaosLane",
+      "col": 2,
+      "type": "backend",
+      "label": "Proactive Fixes",
+      "width": 230
+    },
+    {
+      "id": "resilient",
+      "lane": "chaosLane",
+      "col": 3,
+      "type": "cloud",
+      "label": "Resilient System",
+      "width": 230
+    }
+  ],
+  "edges": [
+    {
+      "from": "devTest",
+      "to": "stagingTest",
+      "role": "branch"
+    },
+    {
+      "from": "stagingTest",
+      "to": "prodIssue",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "contTest",
+      "to": "discover",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "discover",
+      "to": "fix",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "fix",
+      "to": "resilient",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ]
+}

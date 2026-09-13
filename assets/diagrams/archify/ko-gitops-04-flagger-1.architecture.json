@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flagger 핵심 컴포넌트",
+    "output": "ko-gitops-04-flagger-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      940,
+      570
+    ],
+    "views": [
+      {
+        "id": "detect",
+        "label": "1. Canary 감지",
+        "focus": [
+          "crd",
+          "flagger",
+          "canary"
+        ],
+        "note": "Flagger는 Canary CRD를 감시하고, 새 배포가 감지되면 Canary Deployment에 새 버전을 기동한다."
+      },
+      {
+        "id": "shift",
+        "label": "2. 트래픽 전환",
+        "focus": [
+          "flagger",
+          "traffic"
+        ],
+        "note": "Mesh/Ingress Provider의 라우팅 규칙을 갱신해 Canary 트래픽 가중치를 단계적으로 늘린다."
+      },
+      {
+        "id": "analyze",
+        "label": "3. 메트릭 분석",
+        "focus": [
+          "flagger",
+          "metrics"
+        ],
+        "note": "단위·신선도·결측을 확인하고 실패 검사를 누적한다."
+      },
+      {
+        "id": "promote",
+        "label": "4. 승격과 알림",
+        "focus": [
+          "flagger",
+          "primary",
+          "alerts"
+        ],
+        "note": "준비된 canary로 서비스하며 primary spec을 갱신하고 Ready를 확인한다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "crd",
+      "type": "external",
+      "label": "Canary CRD",
+      "sublabel": "targetRef · analysis · webhooks",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "flagger",
+      "type": "backend",
+      "label": "Flagger",
+      "sublabel": "Kubernetes 컨트롤러 · 제어 루프",
+      "pos": [
+        340,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "focal"
+    },
+    {
+      "id": "primary",
+      "type": "backend",
+      "label": "app-primary",
+      "sublabel": "Deployment · Service (안정 버전)",
+      "pos": [
+        40,
+        460
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "app (Canary)",
+      "sublabel": "Deployment · app-canary Service",
+      "pos": [
+        330,
+        460
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "traffic",
+      "type": "cloud",
+      "label": "Mesh / Ingress Provider",
+      "sublabel": "Istio · Linkerd · Gateway API",
+      "pos": [
+        670,
+        250
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "메트릭 백엔드",
+      "sublabel": "Prometheus · Datadog · CloudWatch",
+      "pos": [
+        670,
+        60
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "alerts",
+      "type": "external",
+      "label": "알림 채널",
+      "sublabel": "Slack / Teams 변환기",
+      "pos": [
+        670,
+        460
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "관리되는 workload",
+      "wraps": [
+        "primary",
+        "canary"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "crd-to-flagger",
+      "from": "crd",
+      "to": "flagger",
+      "label": "Canary 감시"
+    },
+    {
+      "id": "flagger-to-traffic",
+      "from": "flagger",
+      "to": "traffic",
+      "label": "라우팅 규칙 · 가중치",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flagger-to-metrics",
+      "from": "flagger",
+      "to": "metrics",
+      "label": "메트릭 조회",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "flagger-to-alerts",
+      "from": "flagger",
+      "to": "alerts",
+      "label": "결과 알림",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1
+    },
+    {
+      "id": "flagger-to-canary",
+      "from": "flagger",
+      "to": "canary",
+      "label": "새 버전 기동",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 100
+    },
+    {
+      "id": "flagger-to-primary",
+      "from": "flagger",
+      "to": "primary",
+      "label": "승격 (spec 복사)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Canary / workload",
+      "items": [
+        "targetRef는 원본 workload를 참조",
+        "Git/Helm과 replica·Service 소유권을 분리"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Primary / Canary",
+      "items": [
+        "primary는 Flagger가 생성·승격",
+        "원본 Deployment가 canary; 일반 완료 후 0으로 축소"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "판정과 알림",
+      "items": [
+        "분석 중 실패 한도 도달 시 rollback",
+        "primary 승격 장애는 별도 복구 경로",
+        "Teams는 native MessageCard 변환 필요"
+      ]
+    }
+  ]
+}

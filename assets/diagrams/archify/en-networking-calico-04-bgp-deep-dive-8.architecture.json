@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-Datacenter BGP Design",
+    "locale": "en",
+    "output": "en-networking-calico-04-bgp-deep-dive-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "dc1-uplink",
+        "label": "DC1 eBGP uplink",
+        "focus": [
+          "dc1rr",
+          "wan1",
+          "wan2"
+        ],
+        "note": "DC1's route reflectors peer over eBGP with both WAN routers in AS 65000."
+      },
+      {
+        "id": "intra-dc",
+        "label": "Intra-DC route reflection",
+        "focus": [
+          "dc1rr",
+          "dc1nodes",
+          "dc2rr",
+          "dc2nodes"
+        ],
+        "note": "Inside each datacenter the nodes peer only with their own route reflectors (node-to-node mesh disabled)."
+      },
+      {
+        "id": "dc2-uplink",
+        "label": "DC2 eBGP uplink",
+        "focus": [
+          "dc2rr",
+          "wan2"
+        ],
+        "note": "DC2's route reflectors peer with the shared WAN edge the same way as DC1."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "wan1",
+      "type": "external",
+      "label": "WAN Router 1",
+      "sublabel": "10.255.0.1",
+      "pos": [
+        330,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wan2",
+      "type": "external",
+      "label": "WAN Router 2",
+      "sublabel": "10.255.0.2",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "dc1rr",
+      "type": "backend",
+      "label": "DC1 Route Reflectors",
+      "sublabel": "RR1 + RR2",
+      "pos": [
+        60,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "dc1nodes",
+      "type": "cloud",
+      "label": "DC1 Nodes",
+      "sublabel": "calico-node (BIRD)",
+      "pos": [
+        60,
+        430
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "dc2rr",
+      "type": "backend",
+      "label": "DC2 Route Reflectors",
+      "sublabel": "RR1 + RR2",
+      "pos": [
+        810,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "dc2nodes",
+      "type": "cloud",
+      "label": "DC2 Nodes",
+      "sublabel": "calico-node (BIRD)",
+      "pos": [
+        810,
+        430
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "WAN Edge · AS 65000",
+      "wraps": [
+        "wan1",
+        "wan2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "DC1 · AS 64512",
+      "wraps": [
+        "dc1rr",
+        "dc1nodes"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "DC2 · AS 64513",
+      "wraps": [
+        "dc2rr",
+        "dc2nodes"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dc1-wan1",
+      "from": "dc1rr",
+      "to": "wan1",
+      "label": "eBGP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dc1-wan2",
+      "from": "dc1rr",
+      "to": "wan2",
+      "label": "eBGP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dc2-wan2",
+      "from": "dc2rr",
+      "to": "wan2",
+      "label": "eBGP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dc1-nodes",
+      "from": "dc1rr",
+      "to": "dc1nodes",
+      "label": "iBGP via RR",
+      "labelAt": [
+        155,
+        380
+      ]
+    },
+    {
+      "id": "dc2-nodes",
+      "from": "dc2rr",
+      "to": "dc2nodes",
+      "label": "iBGP via RR",
+      "labelAt": [
+        905,
+        380
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Separate AS per DC",
+      "items": [
+        "DC1 = AS 64512, DC2 = AS 64513",
+        "nodeToNodeMeshEnabled: false; nodes peer only with their DC's route reflectors",
+        "Community 64512:1 tags DC1-origin routes"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "eBGP to the WAN edge",
+      "items": [
+        "BGPPeer dc1-to-wan: nodeSelector has(route-reflector), peerIP 10.255.0.1, asNumber 65000",
+        "Only DC1's dual WAN uplink is drawn; DC2's route reflectors peer with both WAN routers the same way"
+      ]
+    }
+  ]
+}

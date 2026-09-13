@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 업그레이드 개요",
+    "output": "ko-eks-08-eks-upgrades-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      920,
+      600
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "개요 · 정책"
+        },
+        "cloud": {
+          "label": "AWS 관리형 구성 요소"
+        },
+        "external": {
+          "label": "자체 관리형 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "overview",
+      "type": "backend",
+      "label": "EKS 업그레이드 개요",
+      "sublabel": "네 가지 범주",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "version-mgmt",
+      "type": "backend",
+      "label": "EKS 버전 관리",
+      "sublabel": "지원 버전 · 지원 기간 · 사용 중단",
+      "pos": [
+        310,
+        40
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "components",
+      "type": "backend",
+      "label": "업그레이드 구성 요소",
+      "sublabel": "함께 업그레이드되는 대상",
+      "pos": [
+        310,
+        130
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "upgrade-path",
+      "type": "backend",
+      "label": "업그레이드 경로",
+      "sublabel": "한 번에 마이너 버전 하나씩",
+      "pos": [
+        310,
+        350
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "upgrade-order",
+      "type": "backend",
+      "label": "업그레이드 순서",
+      "sublabel": "계획부터 검증까지 5단계",
+      "pos": [
+        310,
+        440
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "control-plane",
+      "type": "cloud",
+      "label": "EKS 컨트롤 플레인",
+      "sublabel": "API 서버 · etcd",
+      "pos": [
+        610,
+        40
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "node-groups",
+      "type": "cloud",
+      "label": "노드 그룹",
+      "sublabel": "워커 노드 · 노드 AMI",
+      "pos": [
+        610,
+        112
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "addons",
+      "type": "cloud",
+      "label": "애드온",
+      "sublabel": "CoreDNS · kube-proxy · VPC CNI",
+      "pos": [
+        610,
+        184
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "self-managed",
+      "type": "external",
+      "label": "자체 관리형 구성 요소",
+      "sublabel": "Helm 차트 · CRD",
+      "pos": [
+        610,
+        256
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "correct-path",
+      "type": "backend",
+      "label": "올바른 경로",
+      "sublabel": "1.24 → 1.25 → 1.26 → 1.27",
+      "pos": [
+        610,
+        340
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "invalid-path",
+      "type": "backend",
+      "label": "지원되지 않음",
+      "sublabel": "1.24 → 1.26",
+      "pos": [
+        610,
+        412
+      ],
+      "size": [
+        240,
+        56
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ov-vm",
+      "from": "overview",
+      "to": "version-mgmt"
+    },
+    {
+      "id": "ov-comp",
+      "from": "overview",
+      "to": "components"
+    },
+    {
+      "id": "ov-path",
+      "from": "overview",
+      "to": "upgrade-path"
+    },
+    {
+      "id": "ov-order",
+      "from": "overview",
+      "to": "upgrade-order"
+    },
+    {
+      "id": "comp-cp",
+      "from": "components",
+      "to": "control-plane",
+      "variant": "emphasis"
+    },
+    {
+      "id": "comp-ng",
+      "from": "components",
+      "to": "node-groups"
+    },
+    {
+      "id": "comp-ad",
+      "from": "components",
+      "to": "addons"
+    },
+    {
+      "id": "comp-sm",
+      "from": "components",
+      "to": "self-managed"
+    },
+    {
+      "id": "path-ok",
+      "from": "upgrade-path",
+      "to": "correct-path",
+      "label": "순차 업그레이드"
+    },
+    {
+      "id": "path-bad",
+      "from": "upgrade-path",
+      "to": "invalid-path",
+      "label": "버전 건너뛰기",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "EKS 버전 관리",
+      "items": [
+        "버전 지원: 최소 4개의 Kubernetes 버전을 동시에 지원",
+        "지원 기간: EKS 출시 후 약 14개월",
+        "버전 사용 중단: 최소 60일 전에 알림 제공"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "업그레이드 구성 요소",
+      "items": [
+        "EKS 컨트롤 플레인: Kubernetes API 서버, etcd, 컨트롤러 관리자",
+        "노드 그룹: 워커 노드 및 노드 AMI",
+        "애드온: CoreDNS, kube-proxy, VPC CNI 등 AWS 관리형 애드온",
+        "자체 관리형 구성 요소: Helm 차트, 사용자 정의 리소스"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "업그레이드 순서",
+      "items": [
+        "1. 업그레이드 계획 및 준비",
+        "2. EKS 컨트롤 플레인 업그레이드",
+        "3. 애드온 업그레이드",
+        "4. 노드 그룹 업그레이드",
+        "5. 업그레이드 검증"
+      ]
+    }
+  ]
+}

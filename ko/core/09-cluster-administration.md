@@ -1,9 +1,11 @@
 # Kubernetes 클러스터 관리
 
-> **버전 정보**: Kubernetes 1.34 (2025-11-24 릴리스)  
+> **버전 정보**: Kubernetes 1.34 - 1.36 (2026년 9월 11일 EKS 표준 지원 기준)
 > **마지막 업데이트**: 2026년 2월 11일
 
 Kubernetes 클러스터 관리는 클러스터의 설정, 유지 관리, 모니터링, 문제 해결 및 업그레이드를 포함하는 중요한 작업입니다. 이 장에서는 Kubernetes 클러스터 관리의 다양한 측면과 Amazon EKS에서의 클러스터 관리 모범 사례에 대해 알아보겠습니다.
+
+자체 관리형 kubeadm 작업과 EKS 서비스 작업은 구분해야 합니다. EKS는 컨트롤 플레인 호스트, 정적 파드 매니페스트, etcd 직접 접근을 제공하지 않습니다. 아래 블록은 연속 실행하는 단일 스크립트가 아닌 별도 예시입니다. 실제 클러스터 버전의 업스트림 지원과 애드온 호환성을 확인하세요.
 
 ## 핵심 개념
 
@@ -31,21 +33,18 @@ Kubernetes 클러스터 관리는 클러스터의 설정, 유지 관리, 모니�
 
 클러스터 관리를 위해 다음 도구들이 필요합니다:
 
+[공식 kubectl 설치 문서](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)를 사용하고 API 서버와 마이너 버전 차이를 1 이내로 유지하세요. 자체 관리형 클러스터의 kubeadm/kubelet은 대상 마이너 버전의 `pkgs.k8s.io` 저장소에서 설치합니다. 이전 `1.x.y-00` 패키지 예시는 더 이상 유효하지 않으며 저장소에서 정확한 패키지 버전을 선택해야 합니다.
+
+Helm과 k9s는 [Helm 공식 설치 지침](https://helm.sh/docs/intro/install/)과 [k9s 릴리스](https://github.com/derailed/k9s/releases)에서 아키텍처·체크섬을 확인해 설치하세요. EKS에는 인증된 AWS CLI와 호환되는 eksctl도 필요합니다.
+
 ```bash
-# kubectl 설치 (Linux)
-curl -LO "https://dl.k8s.io/release/v1.33.3/bin/linux/amd64/kubectl"
-chmod +x kubectl
-sudo mv kubectl /usr/local/bin/
-
-# kubeadm 설치 (클러스터 생성 및 관리용)
-sudo apt-get update && sudo apt-get install -y kubeadm=1.33.3-00
-
-# Helm 설치 (패키지 관리용)
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-# k9s 설치 (클러스터 관리 UI)
-curl -sS https://webinstall.dev/k9s | bash
+kubectl version --client
+helm version
+k9s version
+# 대상 마이너 저장소를 구성한 자체 관리형 노드에서만 확인:
+apt-cache madison kubeadm
 ```
+
 
 ## 클러스터 관리 개요
 
@@ -65,7 +64,9 @@ Kubernetes 클러스터는 컨트롤 플레인 구성요소와 노드 구성요�
 
 ### 컨트롤 플레인 구성요소 관리
 
-![컨트롤 플레인이 API 서버, etcd, 스케줄러, 컨트롤러 관리자, 클라우드 컨트롤러 관리자로 구성되며 각 구성요소가 담당하는 운영 작업을 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-0.svg)
+![컨트롤 플레인이 API 서버, etcd, 스케줄러, 컨트롤러 관리자, 클라우드 컨트롤러 관리자 다섯 구성요소로 나뉘고 각 구성요소가 인증 및 권한 부여, 데이터 백업, 스케줄링 정책, 컨트롤러 상태 모니터링, 클라우드 리소스 관리라는 운영 작업을 담당함을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-0.html)
 
 #### API 서버 관리
 
@@ -79,12 +80,12 @@ kubectl logs -n kube-system kube-apiserver-<master-node-name>
 sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml
 
 # API 서버 상태 확인
-kubectl get --raw='/healthz'
+kubectl get --raw='/readyz?verbose'
 ```
 
 #### etcd 관리
 
-etcd는 Kubernetes의 모든 클러스터 데이터를 저장하는 분산 키-값 저장소입니다.
+etcd는 Kubernetes API 상태를 저장하는 분산 키-값 저장소입니다.
 
 ```bash
 # etcd 백업
@@ -127,7 +128,7 @@ kubectl uncordon <node-name>
 
 ```bash
 # 컨트롤 플레인 구성요소 상태 확인
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # 시스템 파드 상태 확인
 kubectl get pods -n kube-system
@@ -136,7 +137,9 @@ kubectl get pods -n kube-system
 kubectl top nodes
 ```
 
-![클러스터 관리자가 설정, 운영, 보안, 업그레이드, 백업 다섯 영역을 관리하며 각 영역마다 사용하는 도구를 매핑한 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-1.svg)
+![클러스터 관리자가 설정, 운영, 보안, 업그레이드, 백업 다섯 영역을 관리하며 각 영역마다 사용하는 도구를 매핑해 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-1.html)
 
 ### 클러스터 관리 도구
 
@@ -147,7 +150,7 @@ Kubernetes 클러스터 관리를 위한 다양한 도구가 있습니다:
 3. **kops**: Kubernetes 클러스터 생성, 업그레이드, 관리를 위한 도구
 4. **eksctl**: Amazon EKS 클러스터 생성 및 관리를 위한 도구
 5. **Helm**: Kubernetes 애플리케이션 패키지 관리자
-6. **Kubernetes Dashboard**: 웹 기반 Kubernetes 사용자 인터페이스
+6. **Headlamp**: Kubernetes 웹 UI (기존 Kubernetes Dashboard 프로젝트는 보관 상태)
 7. **Prometheus & Grafana**: 모니터링 및 알림 도구
 8. **Fluentd & Elasticsearch**: 로깅 도구
 
@@ -167,7 +170,9 @@ Kubernetes 클러스터는 여러 구성요소로 이루어져 있으며, 이러
 
 다음 다이어그램은 Kubernetes 컨트롤 플레인 구성요소와 그 상호작용을 보여줍니다:
 
-![kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저, 클라우드 컨트롤러 매니저가 양방향으로 통신하고, 각 워커 노드의 kubelet이 API 서버와 통신하며 kube-proxy와 컨테이너 런타임을 관리하는 구조를 보여주는 아키텍처 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-2.svg)
+![kube-apiserver를 중심으로 etcd, kube-scheduler, kube-controller-manager, cloud-controller-manager가 양방향으로 통신하고, 워커 노드의 kubelet이 API 서버와 양방향으로 통신하며 컨테이너 런타임을 사용하고 kube-proxy는 별도로 Service·EndpointSlice 상태를 감시하는 구조를 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-2.html)
 
 #### 컨트롤 플레인 구성요소 모니터링
 
@@ -175,16 +180,22 @@ Kubernetes 클러스터는 여러 구성요소로 이루어져 있으며, 이러
 
 ```bash
 # 컨트롤 플레인 구성요소 상태 확인
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # API 서버 로그 확인
 kubectl logs -n kube-system kube-apiserver-<node-name>
 
 # etcd 상태 확인
-kubectl exec -it -n kube-system etcd-<node-name> -- etcdctl endpoint health
+kubectl exec -n kube-system etcd-<node-name> -- etcdctl \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+  --key=/etc/kubernetes/pki/etcd/healthcheck-client.key endpoint health
 ```
 
 #### 컨트롤 플레인 구성요소 구성
+
+아래 매니페스트는 플래그·구성 일부입니다. 호스트 네트워크, 인증서 마운트와 기타 kubeadm 생성 설정을 생략했으므로 실행 중인 컨트롤 플레인 매니페스트를 이것으로 대체하지 마세요. 이미지는 클러스터 업그레이드 계획과 일치시킵니다.
 
 컨트롤 플레인 구성요소의 구성을 관리하는 방법:
 
@@ -214,10 +225,12 @@ spec:
     - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
     - --secure-port=6443
     - --service-account-key-file=/etc/kubernetes/pki/sa.pub
+    - --service-account-signing-key-file=/etc/kubernetes/pki/sa.key
+    - --service-account-issuer=https://kubernetes.default.svc.cluster.local
     - --service-cluster-ip-range=10.96.0.0/12
     - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
     - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
-    image: k8s.gcr.io/kube-apiserver:v1.21.0
+    image: registry.k8s.io/kube-apiserver:v1.36.4
     name: kube-apiserver
 ```
 
@@ -227,7 +240,7 @@ spec:
 
 1. **kubelet**: 각 노드에서 실행되는 에이전트로, 포드와 컨테이너가 실행되도록 함
 2. **kube-proxy**: 네트워크 규칙을 유지하고 연결 포워딩을 처리
-3. **컨테이너 런타임**: 컨테이너를 실행하는 소프트웨어(Docker, containerd, CRI-O 등)
+3. **컨테이너 런타임**: 컨테이너를 실행하는 소프트웨어(containerd, CRI-O 또는 외부 CRI 어댑터를 사용하는 Docker Engine 등)
 
 #### 노드 관리
 
@@ -250,8 +263,10 @@ kubectl taint node <node-name> key=value:NoSchedule
 kubectl cordon <node-name>
 
 # 노드 드레인
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+kubectl drain <node-name> --ignore-daemonsets
 ```
+
+drain은 단독 파드, PDB, 로컬 데이터 때문에 중단될 수 있습니다. 기본적으로 `--force`·`--delete-emptydir-data`를 추가하지 말고 원인을 확인하세요. 후자는 emptyDir 데이터 손실을 명시적으로 허용합니다. drain 완료와 워크로드 상태를 확인한 뒤 유지 관리하세요.
 
 #### 노드 문제 해결
 
@@ -351,7 +366,7 @@ spec:
         averageUtilization: 80
 ```
 
-위 예시에서 `frontend` 디플로이먼트는 CPU 사용률이 80%를 초과하면 자동으로 스케일 아웃되고, 80% 미만이면 스케일 인됩니다. 최소 2개, 최대 10개의 레플리카를 유지합니다.
+위 예시에서 `frontend` 디플로이먼트는 요청 CPU 대비 평균 사용률 80%를 목표로 하며 허용 오차, 누락 메트릭, 안정화 구간과 스케일링 정책을 함께 적용합니다. 최소 2개, 최대 10개의 레플리카를 유지합니다.
 
 ### 수직 포드 자동 확장(VPA)
 
@@ -368,7 +383,7 @@ spec:
     kind: Deployment
     name: frontend
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Recreate"
 ```
 
 위 예시에서 `frontend` 디플로이먼트의 포드는 실제 리소스 사용량을 기반으로 CPU 및 메모리 요청이 자동으로 조정됩니다.
@@ -382,11 +397,13 @@ Kubernetes 네트워크 모델의 기본 요구 사항:
 
 1. 모든 포드는 NAT 없이 다른 모든 포드와 통신할 수 있어야 함
 2. 노드의 에이전트(kubelet)는 해당 노드의 모든 포드와 통신할 수 있어야 함
-3. NAT 모드에서 실행되는 포드는 외부와 통신할 수 있어야 함
+3. 외부 연결은 라우팅·egress 정책에 따라 달라지며 보편적인 Pod NAT 모드 요구사항은 없음
 
 다음 다이어그램은 Kubernetes 네트워킹 구성요소와 통신 흐름을 보여줍니다:
 
-![클라이언트 요청이 인그레스와 서비스를 거쳐 두 노드에 분산된 포드로 전달되고, 포드 간 통신과 외부 서비스로의 아웃바운드 트래픽까지 이어지는 클러스터 네트워킹 흐름을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-3.svg)
+![클라이언트 요청이 인그레스와 서비스를 거쳐 두 노드에 분산된 Pod로 전달되고, Pod 간 통신과 외부 서비스로의 아웃바운드 트래픽까지 이어지는 클러스터 네트워킹 흐름을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-3.html)
 
 ### CNI(Container Network Interface) 플러그인
 
@@ -396,19 +413,20 @@ Kubernetes는 CNI 플러그인을 통해 네트워킹을 구현합니다. 일반
 2. **Flannel**: 간단한 오버레이 네트워크 제공
 3. **Cilium**: eBPF 기반의 네트워킹 및 보안 솔루션
 4. **AWS VPC CNI**: AWS VPC와 통합된 CNI
-5. **Weave Net**: 멀티 호스트 컨테이너 네트워킹 솔루션
+5. **Weave Net (역사적 예시)**: 보관 상태이며 새 설치는 유지 관리되는 대안을 선택
 
 #### CNI 플러그인 설치 및 구성
 
 CNI 플러그인 설치 예시(Calico):
 
-```bash
-# Calico 설치
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+CNI 하나 또는 문서화된 체이닝·마이그레이션 구성을 선택하세요. Calico·Flannel·Cilium 대안을 같은 실행 중 클러스터에 순서대로 설치하면 안 됩니다. 지원되는 버전을 고정하고 제공자별 지침을 따르며 EKS에서는 [네트워킹 장](./03-services-networking.md)의 VPC CNI 또는 대체 CNI 전환 절차를 사용하세요.
 
-# Calico 상태 확인
-kubectl get pods -n kube-system -l k8s-app=calico-node
+```bash
+# 변경 전에 설치된 네트워킹 구성 요소 확인
+kubectl get daemonsets -A
+kubectl get pods -A -l k8s-app=calico-node
 ```
+
 
 ### 서비스 네트워킹
 
@@ -513,7 +531,9 @@ Kubernetes의 인증 및 권한 관리는 클러스터 보안의 핵심 요소�
 
 다음 다이어그램은 Kubernetes의 인증 및 권한 부여 흐름을 보여줍니다:
 
-![사용자 또는 서비스 계정의 요청이 인증, 권한 부여, 어드미션 컨트롤을 차례로 통과해 API 서버에 도달하며, 인증에는 X.509·토큰·OIDC·웹훅 방식이, 권한 부여에는 RBAC·ABAC·Node·Webhook 모드가 쓰인다는 것을 보여주는 흐름도](../../assets/diagrams/rendered/ko-core-09-cluster-administration-4.svg)
+![사용자 또는 서비스 계정의 요청이 인증, 권한 부여, 어드미션 컨트롤을 API 서버 내부에서 차례로 거치며, 인증에는 X.509·토큰·OIDC·웹훅 방식이, 권한 부여에는 RBAC·ABAC·Node·Webhook 모드가 쓰인다는 것을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-4.html)
 
 ### 인증(Authentication)
 
@@ -530,7 +550,9 @@ Kubernetes는 다양한 인증 방법을 지원합니다:
 X.509 인증서 생성 및 관리:
 
 ```bash
-# 인증서 서명 요청(CSR) 생성
+# 보호된 개인 키와 CSR 생성
+umask 077
+openssl genrsa -out user.key 2048
 openssl req -new -key user.key -out user.csr -subj "/CN=user/O=group"
 
 # CSR을 Kubernetes에 제출
@@ -548,6 +570,7 @@ EOF
 
 # CSR 승인
 kubectl certificate approve user-csr
+kubectl wait --for=jsonpath='{.status.certificate}' csr/user-csr --timeout=60s
 
 # 인증서 가져오기
 kubectl get csr user-csr -o jsonpath='{.status.certificate}' | base64 --decode > user.crt
@@ -591,6 +614,7 @@ rules:
   verbs: ["get", "watch", "list"]
 
 # RoleBinding 예시
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -624,6 +648,7 @@ rules:
   verbs: ["get", "watch", "list"]
 
 # ClusterRoleBinding 예시
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -653,6 +678,7 @@ metadata:
   namespace: default
 
 # 서비스 계정에 권한 부여
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -668,6 +694,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 
 # 포드에서 서비스 계정 사용
+---
 apiVersion: v1
 kind: Pod
 metadata:
@@ -693,9 +720,13 @@ spec:
     runAsUser: 1000
     runAsGroup: 3000
     fsGroup: 2000
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   containers:
   - name: security-context-container
-    image: nginx
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:
@@ -712,7 +743,9 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 성능 개선, 보�
 
 다음 다이어그램은 Kubernetes 클러스터 업그레이드 프로세스를 보여줍니다:
 
-![클러스터 업그레이드가 계획, 백업, 컨트롤 플레인 업그레이드와 테스트, 워커 노드 업그레이드, 검증을 거쳐 완료되며, 검증에서 문제가 발생하면 백업에서 복원하는 롤백 경로로 이어지는 순서도](../../assets/diagrams/rendered/ko-core-09-cluster-administration-5.svg)
+![클러스터 업그레이드가 계획과 버전 호환성 확인, etcd 백업, 첫 컨트롤 플레인 노드 업그레이드와 기능 테스트, 추가 컨트롤 플레인 노드와 워커 노드 업그레이드, 클러스터 검증을 거쳐 완료되며, 검증에서 문제가 발생하면 롤백해 백업에서 복원하는 경로로 이어지는 흐름을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-5.html)
 
 ### 업그레이드 계획
 
@@ -728,52 +761,27 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 성능 개선, 보�
 
 kubeadm을 사용한 컨트롤 플레인 업그레이드:
 
-```bash
-# 업그레이드 계획 확인
-kubeadm upgrade plan
+[해당 버전의 kubeadm 업그레이드 절차](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)를 따르세요. 대상 마이너 버전의 pkgs.k8s.io 저장소에서 실제 패키지 버전을 선택하고 한 번에 한 마이너 버전만 업그레이드합니다.
 
-# 첫 번째 컨트롤 플레인 노드 업그레이드
-ssh control-plane-1
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.22.0-00
-sudo kubeadm upgrade apply v1.22.0
+1. etcd 백업과 워크로드·애드온 호환성을 확인합니다. 첫 컨트롤 플레인 노드에서 kubeadm을 먼저 업그레이드한 뒤 `kubeadm upgrade plan`, `kubeadm upgrade apply <target-version>`을 실행합니다.
+2. 추가 컨트롤 플레인 노드는 kubeadm 업그레이드 후 `kubeadm upgrade node`를 실행합니다.
+3. 각 노드의 kubelet 업그레이드 전에 drain하고 실패하면 절차를 중단해 원인을 해결합니다. 호환 kubelet/kubectl 패키지 설치, systemd 재로드, kubelet 재시작, Ready·워크로드 확인 후 관리자 클라이언트에서 uncordon합니다.
+4. 워커도 kubeadm 업그레이드와 `kubeadm upgrade node` 후 drain/kubelet/검증/uncordon 절차를 수행합니다. 일반적인 전체 OS 업그레이드를 Kubernetes 버전별 업그레이드 절차 대신 사용하지 마세요.
 
-# 추가 컨트롤 플레인 노드 업그레이드
-ssh control-plane-2
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.22.0-00
-sudo kubeadm upgrade node
-
-# kubelet 및 kubectl 업그레이드
-sudo apt-get install -y kubelet=1.22.0-00 kubectl=1.22.0-00
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-```
+명령은 명시한 노드 또는 관리자 클라이언트에서 실행합니다. 중첩된 `ssh` 명령을 나열한 것은 다중 노드 자동화 스크립트가 아닙니다.
 
 ### 워커 노드 업그레이드
 
 워커 노드 업그레이드 과정:
 
-```bash
-# 노드 드레인
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+[해당 버전의 kubeadm 업그레이드 절차](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)를 따르세요. 대상 마이너 버전의 pkgs.k8s.io 저장소에서 실제 패키지 버전을 선택하고 한 번에 한 마이너 버전만 업그레이드합니다.
 
-# SSH로 노드에 접속
-ssh <node-name>
+1. etcd 백업과 워크로드·애드온 호환성을 확인합니다. 첫 컨트롤 플레인 노드에서 kubeadm을 먼저 업그레이드한 뒤 `kubeadm upgrade plan`, `kubeadm upgrade apply <target-version>`을 실행합니다.
+2. 추가 컨트롤 플레인 노드는 kubeadm 업그레이드 후 `kubeadm upgrade node`를 실행합니다.
+3. 각 노드의 kubelet 업그레이드 전에 drain하고 실패하면 절차를 중단해 원인을 해결합니다. 호환 kubelet/kubectl 패키지 설치, systemd 재로드, kubelet 재시작, Ready·워크로드 확인 후 관리자 클라이언트에서 uncordon합니다.
+4. 워커도 kubeadm 업그레이드와 `kubeadm upgrade node` 후 drain/kubelet/검증/uncordon 절차를 수행합니다. 일반적인 전체 OS 업그레이드를 Kubernetes 버전별 업그레이드 절차 대신 사용하지 마세요.
 
-# kubeadm 업그레이드
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.22.0-00
-sudo kubeadm upgrade node
-
-# kubelet 및 kubectl 업그레이드
-sudo apt-get install -y kubelet=1.22.0-00 kubectl=1.22.0-00
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-# 노드 언코든
-kubectl uncordon <node-name>
-```
+명령은 명시한 노드 또는 관리자 클라이언트에서 실행합니다. 중첩된 `ssh` 명령을 나열한 것은 다중 노드 자동화 스크립트가 아닙니다.
 
 ### 업그레이드 검증
 
@@ -784,7 +792,7 @@ kubectl uncordon <node-name>
 kubectl get nodes
 
 # 컴포넌트 상태 확인
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # 포드 상태 확인
 kubectl get pods --all-namespaces
@@ -800,7 +808,9 @@ Kubernetes 클러스터의 백업 및 복구는 재해 복구 계획의 중요�
 
 다음 다이어그램은 Kubernetes 클러스터의 백업 및 복구 프로세스를 보여줍니다:
 
-![예약된 백업이 etcd 스냅샷과 리소스 YAML을 백업 저장소에 모으고, 재해가 발생하면 그 저장소로부터 etcd를 복구하고 서비스를 재시작해 클러스터를 검증한 뒤 리소스를 복구하는 흐름을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-6.svg)
+![예약된 백업이 etcd 스냅샷과 리소스 YAML을 백업 저장소에 모으고, 재해가 발생하면 그 저장소로부터 etcd를 복구하고 서비스를 재시작해 클러스터를 검증한 뒤 리소스를 복구하는 흐름을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-6.html)
 
 ### etcd 백업
 
@@ -815,60 +825,55 @@ ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
   snapshot save /backup/etcd-snapshot-$(date +%Y-%m-%d-%H-%M-%S).db
 
 # 스냅샷 상태 확인
-ETCDCTL_API=3 etcdctl --write-out=table snapshot status /backup/etcd-snapshot-2023-01-01-12-00-00.db
+etcdutl snapshot status --write-out=table /backup/etcd-snapshot-2023-01-01-12-00-00.db
 ```
 
 ### etcd 복구
 
 etcd 스냅샷에서 복구:
 
+자체 관리형 재해 복구는 배포판 운영 절차에 따라 모든 API 서버와 해당 etcd 프로세스를 먼저 중지합니다. kubelet만 중지해도 기존 정적 파드 컨테이너는 계속 실행됩니다. 호환되는 etcdutl로 새 디렉토리에 복원하고 검증 전까지 원본 데이터를 보관하세요. 아래는 단일 멤버 예시이며 HA 다중 멤버 복구 절차가 아닙니다:
+
 ```bash
-# 모든 Kubernetes 서비스 중지
-sudo systemctl stop kubelet kube-apiserver kube-controller-manager kube-scheduler
-
-# etcd 데이터 디렉토리 백업
-sudo mv /var/lib/etcd /var/lib/etcd.bak
-
-# 스냅샷에서 복구
-ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key \
-  --data-dir=/var/lib/etcd \
-  --initial-cluster=master-1=https://192.168.1.10:2380 \
-  --initial-cluster-token=etcd-cluster-1 \
-  --initial-advertise-peer-urls=https://192.168.1.10:2380 \
-  snapshot restore /backup/etcd-snapshot-2023-01-01-12-00-00.db
-
-# 권한 설정
-sudo chown -R etcd:etcd /var/lib/etcd
-
-# Kubernetes 서비스 재시작
-sudo systemctl start etcd
-sudo systemctl start kubelet kube-apiserver kube-controller-manager kube-scheduler
+etcdutl snapshot status "$SNAPSHOT_FILE" --write-out=table
+etcdutl snapshot restore "$SNAPSHOT_FILE" \
+  --data-dir=/var/lib/etcd-restore \
+  --name=etcd-1 \
+  --initial-cluster=etcd-1=https://127.0.0.1:2380 \
+  --initial-cluster-token=restored-cluster \
+  --initial-advertise-peer-urls=https://127.0.0.1:2380 \
+  --bump-revision=1000000000 --mark-compacted
 ```
 
+SNAPSHOT_FILE에는 검증한 스냅샷 경로를 지정하세요. HA는 같은 스냅샷을 각 멤버의 고유 이름·피어 URL과 동일한 전체 멤버 목록으로 복원합니다. 스냅샷 이후 변경을 초과하는 리비전 증가량을 선택하고 etcd 매니페스트·서비스의 경로·소유권·인증서를 맞춘 뒤 쿼럼·상태를 확인합니다. 이후 API 서버·컨트롤러를 시작하세요([공식 복구 문서](https://etcd.io/docs/v3.6/op-guide/recovery/)). EKS 관리형 컨트롤 플레인의 etcd는 사용자가 직접 복구하지 않습니다.
+
 ### 리소스 백업
+
+다음 내보내기는 보호해야 할 인벤토리이며 완전한 이식형 복원 계획이 아닙니다. Secret이 포함되므로 제한된 권한·암호화가 필요하고 PV 데이터는 포함하지 않습니다. `umask 077`을 사용하고 각 명령 실패를 확인하세요. 복원 시 CRD·종속성 순서와 서버 소유 메타데이터 정리가 필요하며 `kubectl get all`은 일부 리소스 종류만 반환합니다.
 
 Kubernetes 리소스를 YAML 파일로 백업:
 
 ```bash
-# 모든 네임스페이스의 모든 리소스 백업
+# 목록 조회 가능한 리소스 내보내기 (민감한 Secret 포함)
+set -eu
+umask 077
 for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
   mkdir -p /backup/resources/$ns
-  for resource in $(kubectl api-resources --namespaced=true -o name); do
-    kubectl get -n $ns $resource -o yaml > /backup/resources/$ns/$resource.yaml
+  for resource in $(kubectl api-resources --verbs=list --namespaced=true -o name); do
+    kubectl get -n "$ns" "$resource" -o yaml > "/backup/resources/$ns/$resource.yaml"
   done
 done
 
 # 클러스터 범위 리소스 백업
 mkdir -p /backup/resources/cluster-scoped
-for resource in $(kubectl api-resources --namespaced=false -o name); do
-  kubectl get $resource -o yaml > /backup/resources/cluster-scoped/$resource.yaml
+for resource in $(kubectl api-resources --verbs=list --namespaced=false -o name); do
+  kubectl get "$resource" -o yaml > "/backup/resources/cluster-scoped/$resource.yaml"
 done
 ```
 
 ### 백업 자동화
+
+자체 관리형 kubeadm 전용 예시입니다. 호환 etcdctl이 포함된 검증 이미지로 교체하고 컨트롤 플레인 레이블·테인트·인증서 경로를 맞추며 백업 PVC를 먼저 생성하세요. 선택한 호스트는 표시한 루프백 주소에서 etcd에 접근 가능하고 PVC를 마운트할 수 있어야 합니다. EKS 관리형 컨트롤 플레인에서는 실행할 수 없습니다. 스냅샷 검증 후 보호된 외부 저장소로 복사해야 하며 클러스터 내부 PVC만으로 재해 복구가 되지는 않습니다.
 
 백업 작업을 CronJob으로 자동화:
 
@@ -879,35 +884,60 @@ metadata:
   name: etcd-backup
   namespace: kube-system
 spec:
+  concurrencyPolicy: Forbid
   schedule: "0 0 * * *"  # 매일 자정에 실행
   jobTemplate:
     spec:
       template:
         spec:
+          hostNetwork: true
+          automountServiceAccountToken: false
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: NoSchedule
           containers:
           - name: etcd-backup
-            image: bitnami/etcd:latest
+            image: example.invalid/etcd-backup-tools:replace-me
             command:
             - /bin/sh
             - -c
             - |
-              ETCDCTL_API=3 etcdctl --endpoints=https://etcd-client:2379 \
+              set -eu
+              umask 077
+              ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
                 --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-                --cert=/etc/kubernetes/pki/etcd/server.crt \
-                --key=/etc/kubernetes/pki/etcd/server.key \
+                --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+                --key=/etc/kubernetes/pki/etcd/healthcheck-client.key \
                 snapshot save /backup/etcd-snapshot-$(date +%Y-%m-%d-%H-%M-%S).db
             volumeMounts:
-            - name: etcd-certs
-              mountPath: /etc/kubernetes/pki/etcd
+            - name: etcd-ca
+              mountPath: /etc/kubernetes/pki/etcd/ca.crt
+              readOnly: true
+            - name: etcd-client-cert
+              mountPath: /etc/kubernetes/pki/etcd/healthcheck-client.crt
+              readOnly: true
+            - name: etcd-client-key
+              mountPath: /etc/kubernetes/pki/etcd/healthcheck-client.key
               readOnly: true
             - name: backup
               mountPath: /backup
           restartPolicy: OnFailure
           volumes:
-          - name: etcd-certs
+          - name: etcd-ca
             hostPath:
-              path: /etc/kubernetes/pki/etcd
-              type: Directory
+              path: /etc/kubernetes/pki/etcd/ca.crt
+              type: File
+          - name: etcd-client-cert
+            hostPath:
+              path: /etc/kubernetes/pki/etcd/healthcheck-client.crt
+              type: File
+          - name: etcd-client-key
+            hostPath:
+              path: /etc/kubernetes/pki/etcd/healthcheck-client.key
+              type: File
           - name: backup
             persistentVolumeClaim:
               claimName: etcd-backup-pvc
@@ -919,7 +949,9 @@ spec:
 
 다음 다이어그램은 Kubernetes 클러스터의 모니터링 및 로깅 아키텍처를 보여줍니다:
 
-![클러스터의 메트릭이 Prometheus를 거쳐 Alertmanager와 Grafana로, 로그가 Fluentd를 거쳐 Elasticsearch·Kibana와 Loki를 통해 다시 Grafana로 모이는 통합 모니터링·로깅 스택 구조를 보여주는 아키텍처 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-7.svg)
+![Kubernetes 클러스터의 API 서버·노드 메트릭이 kube-state-metrics와 Node Exporter를 거쳐 Prometheus에 수집되어 Alertmanager와 Grafana로 전달되고, Pod 로그가 Fluentd/Fluent Bit을 거쳐 Elasticsearch·Kibana와 Loki로 전달되어 Loki 로그가 다시 Grafana에서 조회되는 모니터링·로깅 스택 아키텍처를 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-7.html)
 
 ### 모니터링 도구
 
@@ -970,23 +1002,20 @@ Kubernetes 클러스터 로깅을 위한 도구:
 
 Helm을 사용한 EFK 스택 설치:
 
+독립 Elastic Stack Helm 차트 저장소는 보관 상태입니다. 유지 관리되는 배포에는 Elastic Cloud on Kubernetes(ECK)를 사용하고 Elasticsearch·Kibana 리소스와 호환 로그 수집기를 별도로 정의하세요. 오퍼레이터 설치만으로 EFK 스택이 생성되지는 않습니다:
+
 ```bash
-# Elasticsearch 설치
-helm install elasticsearch elastic/elasticsearch \
-  --namespace logging \
-  --create-namespace
-
-# Fluentd 설치
-helm install fluentd fluent/fluentd \
-  --namespace logging
-
-# Kibana 설치
-helm install kibana elastic/kibana \
-  --namespace logging \
-  --set service.type=LoadBalancer
+helm repo add elastic https://helm.elastic.co
+helm upgrade --install elastic-operator elastic/eck-operator \
+  --namespace elastic-system --create-namespace \
+  --version "${ECK_CHART_VERSION:?Select a supported ECK chart version}"
 ```
 
+대시보드는 ClusterIP·인증된 접근으로 보호하고 [ECK 문서](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart)에 따라 스토리지·TLS·자격 증명·수집기 파서·RBAC를 구성하세요.
+
 #### 로그 수집 구성
+
+이 예시는 Docker JSON을 가정하지 않고 CRI 로그 형식을 파싱합니다. 수집기 이미지에 메타데이터·출력 플러그인이 있어야 하며 노드 로그·쓰기 가능한 위치 파일 저장소를 마운트하고 제한된 메타데이터 RBAC를 부여해야 합니다. 실제 Elasticsearch의 TLS·인증을 설정하며 예시 호스트 이름만으로 ECK 통합이 완성되지는 않습니다. 부분·멀티라인 레코드는 선택한 수집기에 맞게 처리하세요.
 
 Fluentd 구성 예시:
 
@@ -1005,8 +1034,10 @@ data:
       tag kubernetes.*
       read_from_head true
       <parse>
-        @type json
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
+        @type regexp
+        expression /^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$/
+        time_type string
+        time_format %Y-%m-%dT%H:%M:%S.%N%:z
       </parse>
     </source>
 
@@ -1088,7 +1119,7 @@ kubectl get svc <service-name>
 kubectl describe svc <service-name>
 
 # 엔드포인트 확인
-kubectl get endpoints <service-name>
+kubectl get endpointslices -l kubernetes.io/service-name=<service-name>
 
 # DNS 확인
 kubectl run -it --rm --restart=Never busybox --image=busybox -- nslookup <service-name>
@@ -1107,7 +1138,7 @@ kubectl describe networkpolicy <policy-name>
 
 ```bash
 # 컴포넌트 상태 확인
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # API 서버 로그 확인
 kubectl logs -n kube-system kube-apiserver-<node-name>
@@ -1128,9 +1159,13 @@ Amazon EKS는 관리형 Kubernetes 서비스로, 클러스터 관리의 많은 �
 
 다음 다이어그램은 Amazon EKS 클러스터 아키텍처와 관리 구성요소를 보여줍니다:
 
-![사용자가 AWS 콘솔·CLI·API를 통해 관리하는 Amazon EKS가 컨트롤 플레인, 노드 그룹, Fargate로 구성되고 컨트롤 플레인은 IAM·VPC·CloudWatch 같은 AWS 관리형 구성요소를 사용하며 VPC CNI·CoreDNS·kube-proxy 같은 부가 기능이 함께 동작하는 구조를 보여주는 아키텍처 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-8.svg)
+![사용자가 AWS 콘솔·CLI·API를 통해 관리하는 Amazon EKS가 컨트롤 플레인, 노드 그룹, Fargate로 구성되고 컨트롤 플레인은 IAM·VPC·CloudWatch 같은 AWS 관리형 구성요소를 사용하며 VPC CNI·CoreDNS·kube-proxy 같은 부가 기능이 함께 동작하는 구조를 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-8.html)
 
 ### EKS 클러스터 구성
+
+엔드포인트 변경 전에 실제 관리자 CIDR을 정하고 프라이빗 접근 가능 여부도 확인하세요. 버전 업그레이드는 호환 애드온·노드를 준비한 다음 지원되는 마이너 버전으로 수행하며 다운그레이드나 마이너 건너뛰기에 사용하면 안 됩니다. 반환된 업데이트 ID를 확인하고 실패하면 후속 변경을 중단하세요.
 
 EKS 클러스터 구성 관리:
 
@@ -1141,12 +1176,12 @@ aws eks describe-cluster --name my-cluster
 # EKS 클러스터 업데이트
 aws eks update-cluster-config \
   --name my-cluster \
-  --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=true
+  --resources-vpc-config "endpointPublicAccess=true,endpointPrivateAccess=true,publicAccessCidrs=${ADMIN_CIDR:?Set an approved administrator public CIDR}"
 
 # EKS 클러스터 버전 업데이트
 aws eks update-cluster-version \
   --name my-cluster \
-  --kubernetes-version 1.22
+  --kubernetes-version "${TARGET_VERSION:?Select the next EKS-supported minor version}"
 ```
 
 ### EKS 노드 그룹 관리
@@ -1173,29 +1208,31 @@ aws eks update-nodegroup-version \
 
 ### EKS 추가 기능 관리
 
+`aws eks describe-cluster --name my-cluster --query cluster.version --output text`로 현재 버전을 확인하고 애드온 검색에 사용한 뒤 호환 버전을 고정하세요. create/update 전에 기존 설정·IAM을 검토하고 이미 관리 중인 애드온을 다시 생성하지 마세요. 삭제 예시는 `--preserve`로 CNI 실행을 유지하면서 EKS 관리만 제거하며 실행 중 네트워킹 삭제는 별도의 중단 작업입니다.
+
 EKS 추가 기능 관리:
 
 ```bash
 # 사용 가능한 추가 기능 확인
-aws eks describe-addon-versions \
-  --kubernetes-version 1.22
+aws eks describe-addon-versions --addon-name vpc-cni \
+  --kubernetes-version "${CLUSTER_VERSION:?Set the actual cluster version}"
 
 # 추가 기능 설치
 aws eks create-addon \
   --cluster-name my-cluster \
   --addon-name vpc-cni \
-  --addon-version v1.10.1-eksbuild.1
+  --addon-version "${CNI_ADDON_VERSION:?Select a compatible pinned VPC CNI add-on version}"
 
 # 추가 기능 업데이트
 aws eks update-addon \
   --cluster-name my-cluster \
   --addon-name vpc-cni \
-  --addon-version v1.10.2-eksbuild.1
+  --addon-version "${CNI_ADDON_VERSION:?Select a compatible pinned VPC CNI add-on version}"
 
 # 추가 기능 삭제
 aws eks delete-addon \
   --cluster-name my-cluster \
-  --addon-name vpc-cni
+  --addon-name vpc-cni --preserve
 ```
 
 ### EKS 클러스터 업그레이드
@@ -1206,7 +1243,7 @@ EKS 클러스터 업그레이드 과정:
    ```bash
    aws eks update-cluster-version \
      --name my-cluster \
-     --kubernetes-version 1.22
+     --kubernetes-version "${TARGET_VERSION:?Select the next EKS-supported minor version}"
    ```
 
 2. **추가 기능 업그레이드**:
@@ -1214,7 +1251,7 @@ EKS 클러스터 업그레이드 과정:
    aws eks update-addon \
      --cluster-name my-cluster \
      --addon-name vpc-cni \
-     --addon-version v1.10.2-eksbuild.1
+     --addon-version "${CNI_ADDON_VERSION:?Select a compatible pinned VPC CNI add-on version}"
    ```
 
 3. **노드 그룹 업그레이드**:
@@ -1226,6 +1263,8 @@ EKS 클러스터 업그레이드 과정:
 
 ### EKS 클러스터 모니터링
 
+컨트롤 플레인 로깅은 api/audit/authenticator/controllerManager/scheduler 로그를 내보냅니다. Container Insights에는 CloudWatch 에이전트·애드온과 제한된 텔레메트리 IAM 권한이 필요하며 update-cluster-logging으로 활성화되지 않습니다. CloudWatch 관측 애드온은 Prometheus/Grafana가 아닌 CloudWatch·Fluent Bit 구성 요소를 설치합니다([공식 설치 문서](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)).
+
 EKS 클러스터 모니터링 도구:
 
 1. **Amazon CloudWatch**: 메트릭, 로그, 알림
@@ -1233,10 +1272,10 @@ EKS 클러스터 모니터링 도구:
 3. **Amazon Managed Grafana**: 메트릭 시각화
 4. **Amazon Managed Service for Prometheus**: 메트릭 수집 및 저장
 
-CloudWatch Container Insights 활성화:
+EKS 컨트롤 플레인 로깅 활성화:
 
 ```bash
-# Container Insights 활성화
+# EKS 컨트롤 플레인 로그 활성화
 eksctl utils update-cluster-logging \
   --enable-types all \
   --cluster my-cluster \
@@ -1304,13 +1343,13 @@ Kubernetes에서 리소스 관리는 클러스터의 효율적인 운영을 위�
 
 ```bash
 # 네임스페이스 생성
-kubectl create namespace production
+kubectl create namespace admin-demo
 
 # 특정 네임스페이스의 리소스 확인
-kubectl get all -n production
+kubectl get all -n admin-demo
 
-# 네임스페이스 삭제 (주의: 모든 리소스도 함께 삭제됨)
-kubectl delete namespace production
+# 실습용 네임스페이스만 정리 (안의 리소스도 삭제됨)
+kubectl delete namespace admin-demo
 ```
 
 ### 리소스 쿼터 관리
@@ -1390,23 +1429,22 @@ Kubernetes 클러스터 네트워킹은 파드 간 통신, 서비스 디스커�
 
 ### 네트워크 아키텍처
 
-![클러스터 네트워킹이 파드 네트워크, 서비스 네트워크, 인그레스, 네트워크 정책 네 영역으로 나뉘고 각 영역이 CNI 플러그인, 서비스 타입, 인그레스 컨트롤러, 네트워크 보안이라는 구체적 구현 요소로 이어지는 것을 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-9.svg)
+![클러스터 네트워킹이 Pod 네트워크, 서비스 네트워크, 인그레스, 네트워크 정책 네 영역으로 나뉘고 각 영역이 CNI 플러그인, 서비스 타입(ClusterIP, NodePort, LoadBalancer), 인그레스 컨트롤러, 네트워크 보안이라는 구현 요소로 이어지는 것을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-9.html)
 
 ### CNI 플러그인 관리
 
 CNI(Container Network Interface) 플러그인은 Kubernetes 클러스터의 네트워킹을 담당합니다.
 
+CNI 하나 또는 문서화된 체이닝·마이그레이션 구성을 선택하세요. Calico·Flannel·Cilium 대안을 같은 실행 중 클러스터에 순서대로 설치하면 안 됩니다. 지원되는 버전을 고정하고 제공자별 지침을 따르며 EKS에서는 [네트워킹 장](./03-services-networking.md)의 VPC CNI 또는 대체 CNI 전환 절차를 사용하세요.
+
 ```bash
-# Calico CNI 설치
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
-
-# Flannel CNI 설치
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-
-# Cilium CNI 설치 (Helm 사용)
-helm repo add cilium https://helm.cilium.io/
-helm install cilium cilium/cilium --version 1.14.0 --namespace kube-system
+# 변경 전에 설치된 네트워킹 구성 요소 확인
+kubectl get daemonsets -A
+kubectl get pods -A -l k8s-app=calico-node
 ```
+
 
 ### CNI 플러그인 비교
 
@@ -1416,7 +1454,7 @@ helm install cilium cilium/cilium --version 1.14.0 --namespace kube-system
 | **Flannel** | VXLAN/호스트-게이트웨이 | 아니오 | 중간 | 간단한 설정, 제한된 기능 |
 | **Cilium** | eBPF | 예 | 매우 높음 | L3-L7 정책, 고성능 |
 | **Weave Net** | VXLAN | 예 | 중간 | 암호화 지원, 멀티클러스터 |
-| **AWS VPC CNI** | AWS VPC | 아니오 | 높음 | AWS EKS에 최적화 |
+| **AWS VPC CNI** | AWS VPC | 지원 버전·구성에서 가능 | 워크로드에 따라 다름 | EKS 네이티브 통합 |
 
 ### 네트워크 문제 해결
 
@@ -1435,7 +1473,7 @@ nslookup kubernetes.default.svc.cluster.local
 cat /etc/resolv.conf
 
 # 서비스 엔드포인트 확인
-kubectl get endpoints <service-name>
+kubectl get endpointslices -l kubernetes.io/service-name=<service-name>
 
 # 네트워크 정책 확인
 kubectl describe networkpolicy -n <namespace>
@@ -1491,10 +1529,10 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: secret-reader
+  name: namespace-reader
 rules:
 - apiGroups: [""]
-  resources: ["secrets"]
+  resources: ["namespaces"]
   verbs: ["get", "watch", "list"]
 ```
 
@@ -1503,34 +1541,41 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: read-secrets-global
+  name: read-namespaces-global
 subjects:
 - kind: Group
-  name: manager
+  name: namespace-viewers
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
-  name: secret-reader
+  name: namespace-reader
   apiGroup: rbac.authorization.k8s.io
 ```
 
 ### 사용자 인증서 생성
 
+자체 관리형 클라이언트 인증서는 CSR을 제출하고 권한 있는 승인자가 요청한 사용자·그룹을 검증해야 합니다. 클러스터 CA 개인 키를 배포하지 마세요. EKS 사용자 접근에는 IAM·액세스 항목을 사용합니다.
+
 ```bash
-# 개인 키 생성
+umask 077
 openssl genrsa -out jane.key 2048
-
-# 인증서 서명 요청(CSR) 생성
 openssl req -new -key jane.key -out jane.csr -subj "/CN=jane/O=dev"
-
-# Kubernetes CA로 인증서 서명
-sudo openssl x509 -req -in jane.csr \
-  -CA /etc/kubernetes/pki/ca.crt \
-  -CAkey /etc/kubernetes/pki/ca.key \
-  -CAcreateserial \
-  -out jane.crt -days 365
-
-# kubeconfig에 사용자 추가
+cat <<EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: jane-csr
+spec:
+  request: $(base64 < jane.csr | tr -d '\n')
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 86400
+  usages:
+  - client auth
+EOF
+# Authorized approver only, after reviewing the CSR identity:
+kubectl certificate approve jane-csr
+kubectl wait --for=jsonpath='{.status.certificate}' csr/jane-csr --timeout=60s
+kubectl get csr jane-csr -o jsonpath='{.status.certificate}' | base64 --decode > jane.crt
 kubectl config set-credentials jane --client-certificate=jane.crt --client-key=jane.key
 kubectl config set-context jane-context --cluster=kubernetes --user=jane
 ```
@@ -1546,7 +1591,7 @@ kubectl create rolebinding app-service-account-binding \
   --role=pod-reader \
   --serviceaccount=default:app-service-account
 
-# 서비스 계정 토큰 확인
+# ServiceAccount 메타데이터 확인 (프로젝션 토큰은 여기에 표시되지 않음)
 kubectl describe serviceaccount app-service-account
 ```
 
@@ -1565,7 +1610,9 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 
 ### 업그레이드 계획
 
-![업그레이드 계획이 버전 호환성 확인, 백업 생성, 업그레이드 전략 선택, 다운타임 계획 네 항목으로 나뉘고 각 항목이 API 변경 검토, etcd 백업, 인플레이스 대 블루/그린 선택, 사용자 커뮤니케이션 같은 구체적 조치로 이어지는 것을 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-10.svg)
+![업그레이드 계획이 버전 호환성 확인, 백업 생성, 업그레이드 전략 선택, 다운타임 계획 네 항목으로 나뉘고 각 항목이 API 변경 사항 검토, etcd 백업, 인플레이스 대 블루/그린 선택, 사용자 커뮤니케이션이라는 구체적 조치로 이어지는 것을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-10.html)
 
 ### 업그레이드 전략 비교
 
@@ -1577,40 +1624,14 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 
 ### kubeadm을 사용한 업그레이드
 
-```bash
-# 현재 버전 확인
-kubeadm version
+[해당 버전의 kubeadm 업그레이드 절차](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)를 따르세요. 대상 마이너 버전의 pkgs.k8s.io 저장소에서 실제 패키지 버전을 선택하고 한 번에 한 마이너 버전만 업그레이드합니다.
 
-# 업그레이드 계획 확인
-sudo kubeadm upgrade plan
+1. etcd 백업과 워크로드·애드온 호환성을 확인합니다. 첫 컨트롤 플레인 노드에서 kubeadm을 먼저 업그레이드한 뒤 `kubeadm upgrade plan`, `kubeadm upgrade apply <target-version>`을 실행합니다.
+2. 추가 컨트롤 플레인 노드는 kubeadm 업그레이드 후 `kubeadm upgrade node`를 실행합니다.
+3. 각 노드의 kubelet 업그레이드 전에 drain하고 실패하면 절차를 중단해 원인을 해결합니다. 호환 kubelet/kubectl 패키지 설치, systemd 재로드, kubelet 재시작, Ready·워크로드 확인 후 관리자 클라이언트에서 uncordon합니다.
+4. 워커도 kubeadm 업그레이드와 `kubeadm upgrade node` 후 drain/kubelet/검증/uncordon 절차를 수행합니다. 일반적인 전체 OS 업그레이드를 Kubernetes 버전별 업그레이드 절차 대신 사용하지 마세요.
 
-# 컨트롤 플레인 업그레이드
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.33.3-00
-sudo kubeadm upgrade apply v1.33.3
-
-# kubelet 업그레이드
-sudo apt-get install -y kubelet=1.33.3-00 kubectl=1.33.3-00
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-# 워커 노드 업그레이드 (각 노드에서)
-# 1. 노드 드레이닝
-kubectl drain <node-name> --ignore-daemonsets
-
-# 2. kubeadm 업그레이드
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.33.3-00
-sudo kubeadm upgrade node
-
-# 3. kubelet 업그레이드
-sudo apt-get install -y kubelet=1.33.3-00 kubectl=1.33.3-00
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-# 4. 노드 복귀
-kubectl uncordon <node-name>
-```
+명령은 명시한 노드 또는 관리자 클라이언트에서 실행합니다. 중첩된 `ssh` 명령을 나열한 것은 다중 노드 자동화 스크립트가 아닙니다.
 
 ### 업그레이드 후 검증
 
@@ -1622,7 +1643,7 @@ kubectl version
 kubectl get nodes
 
 # 컴포넌트 상태 확인
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # 워크로드 상태 확인
 kubectl get pods -A
@@ -1635,40 +1656,27 @@ Kubernetes 클러스터의 백업 및 복구는 재해 복구 계획의 중요�
 
 etcd는 클러스터의 모든 상태 정보를 저장하는 핵심 구성 요소입니다.
 
+자체 관리형 재해 복구는 배포판 운영 절차에 따라 모든 API 서버와 해당 etcd 프로세스를 먼저 중지합니다. kubelet만 중지해도 기존 정적 파드 컨테이너는 계속 실행됩니다. 호환되는 etcdutl로 새 디렉토리에 복원하고 검증 전까지 원본 데이터를 보관하세요. 아래는 단일 멤버 예시이며 HA 다중 멤버 복구 절차가 아닙니다:
+
 ```bash
-# etcd 백업
-ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key \
-  snapshot save /backup/etcd-snapshot-$(date +%Y-%m-%d).db
-
-# etcd 복구
-# 1. 클러스터 중지
-sudo systemctl stop kubelet
-sudo docker stop $(docker ps -q)
-
-# 2. etcd 데이터 복구
-ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-  snapshot restore /backup/etcd-snapshot-2025-11-24.db \
+etcdutl snapshot status "$SNAPSHOT_FILE" --write-out=table
+etcdutl snapshot restore "$SNAPSHOT_FILE" \
   --data-dir=/var/lib/etcd-restore \
-  --name=master \
-  --initial-cluster=master=https://127.0.0.1:2380 \
-  --initial-cluster-token=etcd-cluster-1 \
-  --initial-advertise-peer-urls=https://127.0.0.1:2380
-
-# 3. 복구된 데이터 디렉토리 사용하도록 설정
-sudo mv /var/lib/etcd /var/lib/etcd.bak
-sudo mv /var/lib/etcd-restore /var/lib/etcd
-
-# 4. 클러스터 재시작
-sudo systemctl start kubelet
+  --name=etcd-1 \
+  --initial-cluster=etcd-1=https://127.0.0.1:2380 \
+  --initial-cluster-token=restored-cluster \
+  --initial-advertise-peer-urls=https://127.0.0.1:2380 \
+  --bump-revision=1000000000 --mark-compacted
 ```
+
+SNAPSHOT_FILE에는 검증한 스냅샷 경로를 지정하세요. HA는 같은 스냅샷을 각 멤버의 고유 이름·피어 URL과 동일한 전체 멤버 목록으로 복원합니다. 스냅샷 이후 변경을 초과하는 리비전 증가량을 선택하고 etcd 매니페스트·서비스의 경로·소유권·인증서를 맞춘 뒤 쿼럼·상태를 확인합니다. 이후 API 서버·컨트롤러를 시작하세요([공식 복구 문서](https://etcd.io/docs/v3.6/op-guide/recovery/)). EKS 관리형 컨트롤 플레인의 etcd는 사용자가 직접 복구하지 않습니다.
 
 ### Kubernetes 리소스 백업
 
 ```bash
-# 모든 네임스페이스의 모든 리소스 백업
+# 선택한 리소스 내보내기이며 전체 클러스터 백업이 아님
+set -eu
+umask 077
 mkdir -p /backup/resources/$(date +%Y-%m-%d)
 for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
   kubectl -n $ns get all -o yaml > /backup/resources/$(date +%Y-%m-%d)/$ns-all.yaml
@@ -1682,17 +1690,20 @@ done
 
 ### Velero를 사용한 백업 및 복구
 
+공식 호환성 표로 Velero/AWS 플러그인 버전을 선택하세요. IRSA 예시는 클러스터 OIDC 제공자와 velero ServiceAccount를 신뢰하는 제한된 역할이 구성되어 있다고 가정합니다. 설치 전에 백업 버킷, 볼륨 스냅샷·파일 백업 지원, 암호화·복원 권한을 준비해야 하며 모든 PVC가 자동 보호되는 것은 아닙니다.
+
 Velero는 Kubernetes 클러스터 리소스와 영구 볼륨을 백업하고 복구하는 도구입니다.
 
 ```bash
 # Velero 설치 (AWS S3 백업 스토리지 사용)
 velero install \
   --provider aws \
-  --plugins velero/velero-plugin-for-aws:v1.7.0 \
+  --plugins "${VELERO_AWS_PLUGIN_IMAGE:?Select a plugin compatible with your Velero release}" \
   --bucket velero-backup \
   --backup-location-config region=us-west-2 \
   --snapshot-location-config region=us-west-2 \
-  --secret-file ./credentials-velero
+  --no-secret \
+  --sa-annotations "eks.amazonaws.com/role-arn=${VELERO_ROLE_ARN:?Set the preconfigured IRSA role ARN}"
 
 # 전체 클러스터 백업
 velero backup create full-cluster-backup --include-namespaces '*'
@@ -1714,14 +1725,16 @@ velero restore create --from-backup full-cluster-backup
 | **etcd 스냅샷** | 클러스터 상태 | 내장 기능, 완전한 상태 보존 | 볼륨 데이터 미포함, 수동 프로세스 | 중간 |
 | **리소스 YAML 백업** | Kubernetes 객체 | 간단한 구현, 선택적 복원 | 볼륨 데이터 미포함, 관계 복잡성 | 느림 |
 | **Velero** | 리소스 및 볼륨 | 자동화, 스케줄링, 볼륨 스냅샷 | 추가 도구 설치 필요 | 빠름 |
-| **클라우드 제공자 스냅샷** | 전체 클러스터 | 완전한 복구, 클라우드 통합 | 클라우드 종속성, 비용 | 매우 빠름 |
+| **클라우드 제공자 스냅샷** | 지원되는 디스크·파일시스템 | 백엔드 복구 지점 | Kubernetes/EKS 클러스터 전체를 캡처하지 않음 | 데이터·백엔드에 따라 다름 |
 ## 모니터링 및 로깅
 
 효과적인 클러스터 관리를 위해서는 포괄적인 모니터링 및 로깅 시스템이 필요합니다. 이를 통해 문제를 조기에 발견하고 해결할 수 있습니다.
 
 ### 모니터링 아키텍처
 
-![Kubernetes 모니터링이 메트릭 수집, 로그 수집, 알림, 시각화 네 기능으로 나뉘고 각각 Prometheus, Fluentd, Alertmanager, Grafana 도구가 맡으며 로그가 Elasticsearch에 쌓여 Kibana로 시각화되는 계층 구조를 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-11.svg)
+![Kubernetes 모니터링이 메트릭 수집, 로그 수집, 알림, 시각화 네 기능으로 나뉘고 각각 Prometheus, Fluentd, Alertmanager, Grafana 도구가 맡으며 로그가 Elasticsearch에 쌓여 Kibana로 시각화되는 계층 구조를 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-11.html)
 
 ### Prometheus 및 Grafana 설치
 
@@ -1734,36 +1747,28 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --namespace monitoring \
   --create-namespace \
   --set grafana.enabled=true \
-  --set prometheus.service.type=NodePort
+  --set prometheus.service.type=ClusterIP
 
 # 서비스 확인
 kubectl get svc -n monitoring
 
 # Grafana 접근 (포트 포워딩 사용)
 kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
-# 기본 사용자 이름: admin, 기본 비밀번호: prom-operator
+# 구성된 Grafana Secret에서 자격 증명을 확인하고 공개된 기본 비밀번호를 가정하지 마세요
 ```
 
 ### EFK 스택 설치 (Elasticsearch, Fluentd, Kibana)
 
+독립 Elastic Stack Helm 차트 저장소는 보관 상태입니다. 유지 관리되는 배포에는 Elastic Cloud on Kubernetes(ECK)를 사용하고 Elasticsearch·Kibana 리소스와 호환 로그 수집기를 별도로 정의하세요. 오퍼레이터 설치만으로 EFK 스택이 생성되지는 않습니다:
+
 ```bash
-# Elasticsearch 및 Kibana 설치
 helm repo add elastic https://helm.elastic.co
-helm repo update
-
-helm install elasticsearch elastic/elasticsearch \
-  --namespace logging \
-  --create-namespace \
-  --set replicas=1 \
-  --set minimumMasterNodes=1
-
-helm install kibana elastic/kibana \
-  --namespace logging \
-  --set service.type=NodePort
-
-# Fluentd 설치
-kubectl apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/fluentd-daemonset-elasticsearch.yaml
+helm upgrade --install elastic-operator elastic/eck-operator \
+  --namespace elastic-system --create-namespace \
+  --version "${ECK_CHART_VERSION:?Select a supported ECK chart version}"
 ```
+
+대시보드는 ClusterIP·인증된 접근으로 보호하고 [ECK 문서](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart)에 따라 스토리지·TLS·자격 증명·수집기 파서·RBAC를 구성하세요.
 
 ### 주요 모니터링 메트릭
 
@@ -1771,7 +1776,7 @@ kubectl apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-dae
 |------------|------|------------|--------------|
 | **노드 메트릭** | 노드 수준 리소스 사용량 | CPU, 메모리, 디스크, 네트워크 | node-exporter, Prometheus |
 | **파드 메트릭** | 컨테이너 리소스 사용량 | CPU, 메모리 사용량, 제한 | cAdvisor, Prometheus |
-| **클러스터 메트릭** | 클러스터 상태 및 리소스 | 파드 수, 노드 상태, 이벤트 | kube-state-metrics |
+| **클러스터 메트릭** | 클러스터 상태 및 리소스 | 파드 수, 노드·객체 상태, 원하는·현재 복제본 수 | kube-state-metrics |
 | **애플리케이션 메트릭** | 사용자 정의 애플리케이션 메트릭 | 요청 수, 지연 시간, 오류율 | Prometheus 클라이언트 라이브러리 |
 
 ### 로그 수집 및 분석
@@ -1797,51 +1802,53 @@ kubectl logs -l app=nginx -n <namespace>
 
 Prometheus Alertmanager를 사용하여 알림을 구성할 수 있습니다:
 
+monitoring에 `url` 키를 가진 보호된 `slack-webhook` Secret을 생성한 뒤 다음 Helm values를 기존 kube-prometheus-stack 릴리스 설정에 병합하세요. 웹훅 URL은 Git에 저장하지 않습니다. 독립 ConfigMap만 생성해서는 오퍼레이터가 자동으로 사용하지 않습니다.
+
 ```yaml
-# alertmanager-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: alertmanager-config
-  namespace: monitoring
-data:
-  alertmanager.yml: |
+# alertmanager-values.yaml
+alertmanager:
+  alertmanagerSpec:
+    secrets:
+    - slack-webhook
+  config:
     global:
       resolve_timeout: 5m
-      slack_api_url: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
-    
+      slack_api_url_file: /etc/alertmanager/secrets/slack-webhook/url
     route:
-      receiver: 'slack-notifications'
+      receiver: slack-notifications
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 4h
-      group_by: ['alertname', 'cluster', 'service']
-    
+      group_by: [alertname, cluster, service]
     receivers:
-    - name: 'slack-notifications'
+    - name: slack-notifications
       slack_configs:
       - channel: '#alerts'
         send_resolved: true
-        title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
-        text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+        title: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
 ```
+
+업그레이드 시 현재 차트 버전과 다른 설정을 유지하고 알림에 의존하기 전에 Alertmanager 재로드·상태를 확인하세요.
 ## 문제 해결
 
 Kubernetes 클러스터 문제 해결은 시스템 관리자와 운영자에게 중요한 기술입니다. 효과적인 문제 해결을 위해 체계적인 접근 방식이 필요합니다.
 
 ### 문제 해결 방법론
 
-![클러스터 문제 해결이 문제 식별, 정보 수집, 원인 분석, 해결책 적용, 검증, 문서화 순서로 진행되며 정보 수집 단계는 로그·이벤트·리소스 상태 확인이라는 세 가지 구체적 활동으로 나뉜다는 것을 보여주는 순서도](../../assets/diagrams/rendered/ko-core-09-cluster-administration-12.svg)
+![클러스터 문제 해결이 문제 식별, 정보 수집, 원인 분석, 해결책 적용, 검증, 문서화 순서로 진행되며 정보 수집 단계는 로그·이벤트·리소스 상태 확인이라는 세 가지 구체적 활동으로 나뉜다는 것을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-12.html)
 
 ### 일반적인 문제 및 해결 방법
 
 | 문제 유형 | 증상 | 진단 명령어 | 일반적인 해결 방법 |
 |----------|------|------------|-----------------|
 | **파드가 시작되지 않음** | 파드가 Pending 또는 ContainerCreating 상태 | `kubectl describe pod <pod-name>` | 리소스 제약 확인, 이미지 가용성 확인, 볼륨 마운트 확인 |
-| **서비스 연결 문제** | 서비스를 통해 파드에 접근할 수 없음 | `kubectl describe svc <service-name>`, `kubectl get endpoints <service-name>` | 레이블 선택자 확인, 파드 상태 확인, 네트워크 정책 확인 |
+| **서비스 연결 문제** | 서비스를 통해 파드에 접근할 수 없음 | `kubectl describe svc <service-name>`, `kubectl get endpointslices -l kubernetes.io/service-name=<service-name>` | 레이블 선택자 확인, 파드 상태 확인, 네트워크 정책 확인 |
 | **노드 문제** | 노드가 NotReady 상태 | `kubectl describe node <node-name>`, `kubectl get events` | kubelet 상태 확인, 시스템 리소스 확인, 네트워크 연결 확인 |
 | **DNS 문제** | 서비스 이름으로 연결할 수 없음 | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | CoreDNS 파드 확인, kube-dns 서비스 확인, 네트워크 정책 확인 |
-| **인증 문제** | API 서버 접근 거부 | `kubectl auth can-i <verb> <resource>` | RBAC 설정 확인, 인증서 유효성 확인, 서비스 계정 확인 |
+| **인증·인가 문제** | API 서버 접근 거부 | `kubectl auth can-i <verb> <resource>` | RBAC 설정 확인, 인증서 유효성 확인, 서비스 계정 확인 |
 
 ### 파드 문제 해결
 
@@ -1885,7 +1892,7 @@ ssh <node-ip> 'sudo systemctl status kubelet'
 ```bash
 # 서비스 및 엔드포인트 확인
 kubectl get svc <service-name>
-kubectl get endpoints <service-name>
+kubectl get endpointslices -l kubernetes.io/service-name=<service-name>
 
 # DNS 문제 해결
 kubectl run -it --rm dns-test --image=busybox -- sh
@@ -1902,11 +1909,13 @@ curl <service-name>:<port>
 ```
 ## Amazon EKS 클러스터 관리
 
-Amazon EKS(Elastic Kubernetes Service)는 AWS에서 관리하는 Kubernetes 서비스로, 컨트롤 플레인 관리를 AWS가 담당합니다. 그러나 노드, 네트워킹, 보안 등의 관리는 사용자의 책임입니다.
+Amazon EKS(Elastic Kubernetes Service)는 AWS에서 관리하는 Kubernetes 서비스로, 컨트롤 플레인 관리를 AWS가 담당합니다. 노드 관리 책임은 관리형 노드 그룹, Auto Mode, Fargate, 자체 관리형 컴퓨팅에 따라 달라지며 워크로드 보안·구성은 고객 책임입니다.
 
 ### EKS 클러스터 아키텍처
 
-![Amazon EKS 클러스터가 컨트롤 플레인, 데이터 플레인, 네트워킹, 보안 네 영역으로 구성되며 각 영역이 AWS 관리형 API 서버·etcd, 관리형/자체관리형 노드와 Fargate, VPC CNI 기반 네트워킹, IAM 기반 보안으로 이어지는 것을 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-13.svg)
+![Amazon EKS 클러스터가 AWS 관리 영역의 컨트롤 플레인(API 서버·etcd·스케줄러)과 사용자 책임 영역의 데이터 플레인(관리형 노드 그룹과 EC2 Auto Scaling 그룹, 자체 관리형 노드, Fargate), 네트워킹(VPC CNI와 AWS VPC), 보안(IAM 인증과 IAM 역할 및 정책)으로 나뉘는 것을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-13.html)
 
 ### EKS 클러스터 생성
 
@@ -1914,7 +1923,7 @@ Amazon EKS(Elastic Kubernetes Service)는 AWS에서 관리하는 Kubernetes 서�
 # eksctl을 사용한 클러스터 생성
 eksctl create cluster \
   --name my-cluster \
-  --version 1.33 \
+  --version 1.36 \
   --region us-west-2 \
   --nodegroup-name standard-workers \
   --node-type t3.medium \
@@ -1923,11 +1932,12 @@ eksctl create cluster \
   --nodes-max 5 \
   --managed
 
-# AWS CLI를 사용한 클러스터 생성
+# 대안: AWS CLI로 컨트롤 플레인 생성 (위 eksctl 예시 이후 중복 실행하지 않음)
 aws eks create-cluster \
   --name my-cluster \
   --role-arn arn:aws:iam::123456789012:role/eks-cluster-role \
-  --resources-vpc-config subnetIds=subnet-12345,subnet-67890,securityGroupIds=sg-12345
+  --kubernetes-version 1.36 \
+  --resources-vpc-config "subnetIds=${EKS_SUBNET_IDS:?Set two or more appropriate subnets},securityGroupIds=${EKS_SECURITY_GROUP_ID:?Set the intended security group},endpointPrivateAccess=true,endpointPublicAccess=true,publicAccessCidrs=${ADMIN_CIDR:?Set an approved administrator public CIDR}"
 ```
 
 ### 노드 그룹 관리
@@ -1951,11 +1961,10 @@ eksctl scale nodegroup \
   --region us-west-2
 
 # 노드 그룹 업데이트
-eksctl update nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
-  --region us-west-2 \
-  --max-pods-per-node 110
+aws eks update-nodegroup-version \
+  --cluster-name my-cluster \
+  --nodegroup-name my-nodegroup \
+  --region us-west-2
 ```
 
 ### EKS 클러스터 업그레이드
@@ -1967,7 +1976,7 @@ aws eks describe-cluster --name my-cluster --query "cluster.version"
 # 클러스터 컨트롤 플레인 업그레이드
 aws eks update-cluster-version \
   --name my-cluster \
-  --kubernetes-version 1.33
+  --kubernetes-version "${TARGET_VERSION:?Select the next EKS-supported minor version}"
 
 # 관리형 노드 그룹 업그레이드
 aws eks update-nodegroup-version \
@@ -1977,32 +1986,36 @@ aws eks update-nodegroup-version \
 
 ### EKS 클러스터 인증 및 권한
 
-```bash
-# IAM 사용자/역할을 클러스터 RBAC에 매핑
-eksctl create iamidentitymapping \
-  --cluster my-cluster \
-  --arn arn:aws:iam::123456789012:role/admin-role \
-  --group system:masters \
-  --username admin
+클러스터 인증 모드는 `API` 또는 `API_AND_CONFIG_MAP`이어야 합니다. 기존 관리자·노드 접근을 보존하며 레거시 aws-auth 매핑 전환을 계획하세요. 다음은 조회용 역할에 default 네임스페이스만 허용하는 예시입니다:
 
-# aws-auth ConfigMap 확인
-kubectl describe configmap aws-auth -n kube-system
+```bash
+aws eks describe-cluster --name my-cluster --query cluster.accessConfig.authenticationMode
+aws eks create-access-entry --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::123456789012:role/cluster-viewer --type STANDARD
+aws eks associate-access-policy --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::123456789012:role/cluster-viewer \
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy \
+  --access-scope type=namespace,namespaces=default
 ```
+
+[EKS 액세스 항목 문서](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)를 참고하세요. EKS 접근 항목을 관리하는 권한과 Kubernetes 워크로드 권한은 별개입니다.
 
 ### EKS 클러스터 모니터링
 
+컨트롤 플레인 로깅은 api/audit/authenticator/controllerManager/scheduler 로그를 내보냅니다. Container Insights에는 CloudWatch 에이전트·애드온과 제한된 텔레메트리 IAM 권한이 필요하며 update-cluster-logging으로 활성화되지 않습니다. CloudWatch 관측 애드온은 Prometheus/Grafana가 아닌 CloudWatch·Fluent Bit 구성 요소를 설치합니다([공식 설치 문서](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)).
+
 ```bash
-# CloudWatch Container Insights 활성화
+# EKS 컨트롤 플레인 로그 활성화
 eksctl utils update-cluster-logging \
   --enable-types all \
   --cluster my-cluster \
   --region us-west-2
 
-# Prometheus 및 Grafana 설치 (Amazon EKS 애드온 사용)
+# CloudWatch 관측 기능 설치 (Prometheus/Grafana가 아님)
 aws eks create-addon \
   --cluster-name my-cluster \
   --addon-name amazon-cloudwatch-observability \
-  --addon-version v1.1.1-eksbuild.1
+  --addon-version "${CLOUDWATCH_ADDON_VERSION:?Select a compatible add-on version}"
 ```
 ## 클러스터 관리 모범 사례
 
@@ -2069,7 +2082,7 @@ Kubernetes 클러스터 관리는 다양한 측면을 포함하는 복잡한 작
 6. **모니터링 및 로깅**: 클러스터 상태 및 성능 모니터링
 7. **문제 해결**: 체계적인 문제 해결 접근 방식
 
-특히 Amazon EKS와 같은 관리형 Kubernetes 서비스를 사용할 때는 서비스 제공자와 사용자 간의 책임 분담 모델을 이해하는 것이 중요합니다. AWS가 컨트롤 플레인을 관리하지만, 노드, 네트워킹, 보안 등의 관리는 여전히 사용자의 책임입니다.
+특히 Amazon EKS와 같은 관리형 Kubernetes 서비스를 사용할 때는 서비스 제공자와 사용자 간의 책임 분담 모델을 이해하는 것이 중요합니다. AWS가 컨트롤 플레인을 관리하며 컴퓨팅 책임은 모드에 따라 달라집니다. 애플리케이션 구성·보안은 고객이 관리합니다.
 
 모범 사례를 따르고 적절한 도구를 활용하면 안정적이고 안전하며 효율적인 Kubernetes 클러스터를 운영할 수 있습니다. 지속적인 학습과 개선을 통해 클러스터 관리 역량을 향상시키는 것이 중요합니다.
 

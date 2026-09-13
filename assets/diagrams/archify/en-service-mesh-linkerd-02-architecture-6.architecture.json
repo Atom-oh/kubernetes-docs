@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd Certificate Hierarchy",
+    "locale": "en",
+    "output": "en-service-mesh-linkerd-02-architecture-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "root",
+        "label": "Trust Anchor",
+        "focus": [
+          "anchor",
+          "issuer"
+        ],
+        "note": "The Trust Anchor root CA signs the Identity Issuer intermediate CA certificate."
+      },
+      {
+        "id": "workloads",
+        "label": "Workload cert issuance",
+        "focus": [
+          "issuer",
+          "cert1",
+          "cert2",
+          "cert3"
+        ],
+        "note": "The Identity Issuer signs a unique 24-hour workload certificate for each proxy."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "anchor",
+      "type": "security",
+      "label": "Trust Anchor",
+      "sublabel": "Root CA · 10 years",
+      "pos": [
+        380,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "issuer",
+      "type": "security",
+      "label": "Identity Issuer",
+      "sublabel": "Intermediate CA · 1 year",
+      "pos": [
+        380,
+        210
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "cert1",
+      "type": "backend",
+      "label": "Workload Cert 1",
+      "sublabel": "24 hours",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "cert2",
+      "type": "backend",
+      "label": "Workload Cert 2",
+      "sublabel": "24 hours",
+      "pos": [
+        380,
+        400
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "cert3",
+      "type": "backend",
+      "label": "Workload Cert 3",
+      "sublabel": "24 hours",
+      "pos": [
+        680,
+        400
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Certificate hierarchy (hierarchical PKI)",
+      "wraps": [
+        "anchor",
+        "issuer",
+        "cert1",
+        "cert2",
+        "cert3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "anchor-issuer",
+      "from": "anchor",
+      "to": "issuer",
+      "label": "signs",
+      "variant": "security",
+      "labelAt": [
+        480,
+        157
+      ]
+    },
+    {
+      "id": "issuer-cert1",
+      "from": "issuer",
+      "to": "cert1",
+      "label": "issues"
+    },
+    {
+      "id": "issuer-cert2",
+      "from": "issuer",
+      "to": "cert2",
+      "label": "issues",
+      "labelAt": [
+        480,
+        337
+      ]
+    },
+    {
+      "id": "issuer-cert3",
+      "from": "issuer",
+      "to": "cert3",
+      "label": "issues"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Trust Anchor (Root CA)",
+      "items": [
+        "Root of the PKI and the foundation of trust for every certificate chain",
+        "Valid 10 years, stored in the linkerd-identity-trust-roots Secret"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Identity Issuer (Intermediate CA)",
+      "items": [
+        "Intermediate CA signed by the Trust Anchor",
+        "Valid 1 year, stored in the linkerd-identity-issuer Secret"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Workload Certificates",
+      "items": [
+        "Each proxy receives its own unique certificate",
+        "Valid 24 hours by default, renewed automatically before expiry"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar Mode - Downstream / Upstream of an Outbound Request",
+    "locale": "en",
+    "output": "en-service-mesh-istio-glossary-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      340
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "sends the request",
+      "tag": "Downstream",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        160,
+        72
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "istio-proxy",
+      "tag": "Proxy",
+      "pos": [
+        420,
+        130
+      ],
+      "size": [
+        160,
+        72
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend Service",
+      "sublabel": "receives the request",
+      "tag": "Upstream",
+      "pos": [
+        800,
+        130
+      ],
+      "size": [
+        160,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application Pod (Sidecar Mode)",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-envoy",
+      "from": "app",
+      "to": "envoy",
+      "label": "Send request (Downstream → Envoy)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-to-backend",
+      "from": "envoy",
+      "to": "backend",
+      "label": "Forward request (Envoy → Upstream)",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "From Envoy's perspective",
+      "items": [
+        "The application is Downstream (sends requests)",
+        "The backend service is Upstream (receives requests)"
+      ]
+    }
+  ]
+}

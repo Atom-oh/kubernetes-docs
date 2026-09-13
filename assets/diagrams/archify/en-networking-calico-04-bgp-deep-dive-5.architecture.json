@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Spine-Leaf Architecture Integration",
+    "output": "en-networking-calico-04-bgp-deep-dive-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      640
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Spine switch"
+        },
+        "cloud": {
+          "label": "Leaf switch"
+        },
+        "backend": {
+          "label": "Kubernetes node"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "spine-leaf",
+        "label": "Spine-Leaf peering",
+        "focus": [
+          "spines",
+          "leaf1",
+          "leaf2",
+          "leaf3"
+        ],
+        "note": "Each leaf peers with both Spine 1 and Spine 2 over eBGP for redundancy (6 sessions total)."
+      },
+      {
+        "id": "rack-peering",
+        "label": "In-rack node peering",
+        "focus": [
+          "leaf1",
+          "leaf2",
+          "leaf3",
+          "nodes1",
+          "nodes2",
+          "nodes3"
+        ],
+        "note": "Nodes peer only with their own rack's leaf over eBGP and advertise Pod CIDRs to it."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "spines",
+      "type": "external",
+      "label": "Spine 1 · Spine 2",
+      "sublabel": "10.0.0.1 · 10.0.0.2",
+      "tag": "AS 65000 · redundant pair",
+      "pos": [
+        450,
+        50
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "leaf1",
+      "type": "cloud",
+      "label": "Leaf 1",
+      "sublabel": "10.0.1.1 · Rack 1",
+      "tag": "AS 65001",
+      "pos": [
+        110,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "leaf2",
+      "type": "cloud",
+      "label": "Leaf 2",
+      "sublabel": "10.0.2.1 · Rack 2",
+      "tag": "AS 65002",
+      "pos": [
+        490,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "leaf3",
+      "type": "cloud",
+      "label": "Leaf 3",
+      "sublabel": "10.0.3.1 · Rack 3",
+      "tag": "AS 65003",
+      "pos": [
+        870,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "nodes1",
+      "type": "backend",
+      "label": "K8s Node 1, 2",
+      "sublabel": "AS 64512",
+      "tag": "rack1",
+      "pos": [
+        110,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "nodes2",
+      "type": "backend",
+      "label": "K8s Node 3, 4",
+      "sublabel": "AS 64512",
+      "tag": "rack2",
+      "pos": [
+        490,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "nodes3",
+      "type": "backend",
+      "label": "K8s Node 5, 6",
+      "sublabel": "AS 64512",
+      "tag": "rack3",
+      "pos": [
+        870,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Spine Layer (AS 65000)",
+      "wraps": [
+        "spines"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Leaf Layer (per-rack AS)",
+      "wraps": [
+        "leaf1",
+        "leaf2",
+        "leaf3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes cluster (AS 64512)",
+      "wraps": [
+        "nodes1",
+        "nodes2",
+        "nodes3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "leaf1-spines",
+      "from": "leaf1",
+      "to": "spines",
+      "label": "eBGP × 2"
+    },
+    {
+      "id": "leaf2-spines",
+      "from": "leaf2",
+      "to": "spines",
+      "label": "eBGP × 2 (to Spine 1 and Spine 2)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "leaf3-spines",
+      "from": "leaf3",
+      "to": "spines",
+      "label": "eBGP × 2"
+    },
+    {
+      "id": "nodes1-leaf1",
+      "from": "nodes1",
+      "to": "leaf1",
+      "label": "eBGP",
+      "labelDy": -40
+    },
+    {
+      "id": "nodes2-leaf2",
+      "from": "nodes2",
+      "to": "leaf2",
+      "label": "eBGP · Pod CIDR advertisement",
+      "variant": "emphasis",
+      "labelDy": -40
+    },
+    {
+      "id": "nodes3-leaf3",
+      "from": "nodes3",
+      "to": "leaf3",
+      "label": "eBGP",
+      "labelDy": -40
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Spine Layer",
+      "items": [
+        "Two spines (10.0.0.1, 10.0.0.2) peer with all three leaves over eBGP (6 sessions)",
+        "If one spine fails, traffic takes the other spine path (redundancy)"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Leaf Layer (ToR)",
+      "items": [
+        "Each rack has its own AS: 65001 / 65002 / 65003",
+        "Forwards Pod CIDRs learned from its rack's nodes up to the spines"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Calico BGPPeer (per rack)",
+      "items": [
+        "nodeToNodeMeshEnabled: false in BGPConfiguration, asNumber 64512",
+        "nodeSelector: topology.kubernetes.io/zone == 'rack1' selects only that rack's nodes",
+        "peerIP = that rack's leaf, asNumber = the leaf's AS"
+      ]
+    }
+  ]
+}

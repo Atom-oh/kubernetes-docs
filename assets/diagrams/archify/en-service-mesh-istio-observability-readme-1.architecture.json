@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Observability Overall Architecture",
+    "output": "en-service-mesh-istio-observability-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "config",
+        "label": "istiod config propagation",
+        "focus": [
+          "istiod",
+          "pod-a",
+          "pod-b"
+        ],
+        "note": "istiod pushes telemetry configuration to every Envoy sidecar; no application code changes are required."
+      },
+      {
+        "id": "metrics",
+        "label": "Metrics collection flow",
+        "focus": [
+          "pod-a",
+          "prometheus",
+          "grafana",
+          "kiali"
+        ],
+        "note": "Prometheus scrapes Envoy-generated metrics from /stats/prometheus; Grafana and Kiali visualize them."
+      },
+      {
+        "id": "traces",
+        "label": "Distributed tracing flow",
+        "focus": [
+          "pod-b",
+          "jaeger",
+          "grafana"
+        ],
+        "note": "Jaeger/Zipkin collect Envoy-generated spans, Tempo keeps them long-term, and Grafana queries them."
+      },
+      {
+        "id": "logs",
+        "label": "Logging flow",
+        "focus": [
+          "pod-b",
+          "loki",
+          "grafana"
+        ],
+        "note": "Fluentd/Fluent Bit collect Envoy access logs into Loki, which Grafana queries."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "Telemetry config",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "App + Envoy sidecar",
+      "tag": "Zero Instrumentation",
+      "pos": [
+        240,
+        190
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "App + Envoy sidecar",
+      "tag": "Zero Instrumentation",
+      "pos": [
+        740,
+        190
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "+ OpenTelemetry · metrics collection",
+      "pos": [
+        60,
+        370
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "database",
+      "label": "Jaeger",
+      "sublabel": "+ Grafana Tempo · long-term storage",
+      "pos": [
+        480,
+        370
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Fluentd · Loki",
+      "sublabel": "log collection and storage",
+      "pos": [
+        900,
+        370
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kiali",
+      "type": "frontend",
+      "label": "Kiali",
+      "sublabel": "service topology visualization",
+      "pos": [
+        70,
+        560
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "unified dashboard · metrics/traces/logs",
+      "pos": [
+        670,
+        560
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application layer",
+      "wraps": [
+        "pod-a",
+        "pod-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istiod-pod-a",
+      "from": "istiod",
+      "to": "pod-a",
+      "label": "config",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istiod-pod-b",
+      "from": "istiod",
+      "to": "pod-b",
+      "label": "config",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-a-pod-b",
+      "from": "pod-a",
+      "to": "pod-b",
+      "label": "mTLS",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "pod-a-prometheus",
+      "from": "pod-a",
+      "to": "prometheus",
+      "label": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-b-jaeger",
+      "from": "pod-b",
+      "to": "jaeger",
+      "label": "traces",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-b-loki",
+      "from": "pod-b",
+      "to": "loki",
+      "label": "access logs",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prometheus-kiali",
+      "from": "prometheus",
+      "to": "kiali",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prometheus-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "jaeger-grafana",
+      "from": "jaeger",
+      "to": "grafana",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "loki-grafana",
+      "from": "loki",
+      "to": "grafana",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Metrics collection flow",
+      "items": [
+        "App → Envoy (metric generation)",
+        "→ Prometheus (Scrape /stats/prometheus)",
+        "→ Grafana (visualization)"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Distributed tracing flow",
+      "items": [
+        "App → Envoy (span generation)",
+        "→ Jaeger/Zipkin (trace collection)",
+        "→ Tempo (long-term storage) → Grafana"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Logging flow",
+      "items": [
+        "App → Envoy (access log generation)",
+        "→ Fluentd/Fluent Bit (log collection)",
+        "→ Loki (storage) → Grafana (query)"
+      ]
+    }
+  ]
+}

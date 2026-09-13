@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "문제: 모든 서비스 정보 수신",
+    "output": "ko-service-mesh-istio-03-architecture-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "메시 내 서비스"
+        },
+        "frontend": {
+          "label": "애플리케이션 컨테이너"
+        },
+        "cloud": {
+          "label": "Envoy 사이드카 · 과부하 지점"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Service 1",
+      "sublabel": "앱이 사용",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Service 2",
+      "sublabel": "앱이 사용",
+      "pos": [
+        260,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "backend",
+      "label": "Service 3",
+      "sublabel": "사용 안 함",
+      "pos": [
+        460,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc1000",
+      "type": "backend",
+      "label": "Service 1000",
+      "sublabel": "사용 안 함",
+      "pos": [
+        660,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "실제 사용: Service 1, 2만",
+      "pos": [
+        160,
+        320
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "cloud",
+      "label": "Envoy Proxy",
+      "sublabel": "수신: 1000개 전부",
+      "tag": "과부하",
+      "pos": [
+        520,
+        320
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Mesh · 1000개 서비스",
+      "wraps": [
+        "svc1",
+        "svc2",
+        "svc3",
+        "svc1000"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "단일 파드",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "push-1",
+      "from": "svc1",
+      "to": "envoy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "push-2",
+      "from": "svc2",
+      "to": "envoy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "push-3",
+      "from": "svc3",
+      "to": "envoy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "push-1000",
+      "from": "svc1000",
+      "to": "envoy",
+      "label": "모든 서비스 정보 푸시",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app-uses",
+      "from": "app",
+      "to": "envoy",
+      "label": "실제 트래픽은 2개 서비스만",
+      "labelDy": 40
+    }
+  ]
+}

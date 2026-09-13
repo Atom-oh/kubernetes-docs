@@ -10,13 +10,13 @@
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "쿠버네티스 객체"
+          "label": "Kubernetes Objects"
         },
         "messagebus": {
-          "label": "클레임"
+          "label": "Claim"
         },
         "cloud": {
-          "label": "AWS 볼륨"
+          "label": "AWS Volume"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "req",
-      "label": "확장 요청"
+      "label": "Expansion Request"
     },
     {
       "id": "apply",
-      "label": "실제 적용"
+      "label": "Actual Application"
     }
   ],
   "mainPath": [

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Syncer: Pod Creation and Status Sync",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [920, 700],
+    "views": [
+      { "id": "apply", "label": "kubectl apply", "focus": ["dev", "vapi", "syncer"], "note": "The Pod is created in the virtual control plane; the Syncer watches for it." },
+      { "id": "sync-up", "label": "Sync to host", "focus": ["syncer", "host"], "note": "Syncer rewrites metadata and creates the real Pod in the host namespace." },
+      { "id": "reconcile", "label": "Status back down", "focus": ["host", "syncer", "vapi"], "note": "Host status is propagated back into the vCluster continuously." }
+    ]
+  },
+  "participants": [
+    { "id": "dev", "type": "external", "label": "Developer", "sublabel": "vCluster kubeconfig" },
+    { "id": "vapi", "type": "backend", "label": "vCluster API", "sublabel": "virtual control plane" },
+    { "id": "syncer", "type": "messagebus", "label": "Syncer", "sublabel": "bidirectional bridge" },
+    { "id": "host", "type": "cloud", "label": "Host Cluster API", "sublabel": "EKS host namespace" }
+  ],
+  "segments": [
+    { "from": 165, "to": 290, "label": "Create in virtual cluster" },
+    { "from": 305, "to": 430, "label": "Sync to host" },
+    { "from": 445, "to": 575, "label": "Continuous reconciliation loop" }
+  ],
+  "messages": [
+    { "id": "apply", "from": "dev", "to": "vapi", "y": 192, "label": "kubectl apply (Pod)", "variant": "emphasis", "note": "Stored in the vCluster's own data store (etcd or k3s/k0s store)" },
+    { "id": "watch", "from": "syncer", "to": "vapi", "y": 236, "label": "watch Pods" },
+    { "id": "detected", "from": "vapi", "to": "syncer", "y": 274, "label": "Pod detected", "variant": "return" },
+    { "id": "create", "from": "syncer", "to": "host", "y": 332, "label": "create Pod with rewritten name/labels", "variant": "emphasis", "note": "nginx in team-alpha becomes nginx-x-default-x-team-alpha" },
+    { "id": "running", "from": "host", "to": "syncer", "y": 376, "label": "Scheduled, Running", "variant": "return" },
+    { "id": "update", "from": "syncer", "to": "vapi", "y": 414, "label": "update Pod status" },
+    { "id": "change", "from": "host", "to": "syncer", "y": 478, "label": "status change", "variant": "dashed" },
+    { "id": "sync", "from": "syncer", "to": "vapi", "y": 522, "label": "sync status" },
+    { "id": "get", "from": "vapi", "to": "dev", "y": 560, "label": "kubectl get pods shows host status", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "vapi", "from": 187, "to": 566, "type": "backend" },
+    { "participant": "syncer", "from": 231, "to": 528, "type": "messagebus" },
+    { "participant": "host", "from": 327, "to": 484, "type": "cloud" }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Metadata rewriting",
+      "items": [
+        "Names, labels and metadata are rewritten so Pods from different vClusters never collide in the host namespace",
+        "Only Pods, Services, Ingresses, PVCs and referenced ConfigMaps/Secrets flow vCluster -> Host"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Who owns what",
+      "items": [
+        "vCluster owns API resources, CRDs, RBAC and admission webhooks",
+        "Host owns actual scheduling on nodes, CNI networking and CSI storage",
+        "Syncer propagates host status back into the vCluster"
+      ]
+    }
+  ]
+}

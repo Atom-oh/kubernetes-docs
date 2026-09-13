@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Slack 워크플로우 — 알림 게시와 Acknowledge/Resolve 처리",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      640
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "post",
+        "label": "알림 게시",
+        "focus": [
+          "alert",
+          "oncall",
+          "slack",
+          "user"
+        ],
+        "note": "알림이 OnCall을 거쳐 Slack 채널에 버튼이 달린 메시지로 게시된다."
+      },
+      {
+        "id": "ack",
+        "label": "Acknowledge",
+        "focus": [
+          "user",
+          "slack",
+          "oncall"
+        ],
+        "note": "Acknowledge 버튼 클릭이 Slack을 거쳐 OnCall 상태와 채널 메시지를 갱신한다."
+      },
+      {
+        "id": "resolve",
+        "label": "Resolve",
+        "focus": [
+          "user",
+          "slack",
+          "oncall",
+          "alert"
+        ],
+        "note": "Resolve는 상태·메시지 갱신에 더해 알림 소스에 해결 알림을 보낸다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "alert",
+      "type": "messagebus",
+      "label": "Alert",
+      "sublabel": "알림 소스"
+    },
+    {
+      "id": "oncall",
+      "type": "backend",
+      "label": "OnCall",
+      "sublabel": "Grafana OnCall"
+    },
+    {
+      "id": "slack",
+      "type": "external",
+      "label": "Slack",
+      "sublabel": "채널 · Slack App"
+    },
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "온콜 담당자"
+    }
+  ],
+  "segments": [
+    {
+      "from": 290,
+      "to": 402,
+      "label": "Acknowledge"
+    },
+    {
+      "from": 418,
+      "to": 570,
+      "label": "Resolve"
+    }
+  ],
+  "messages": [
+    {
+      "id": "fire",
+      "from": "alert",
+      "to": "oncall",
+      "y": 185,
+      "label": "알림 발생",
+      "variant": "emphasis"
+    },
+    {
+      "id": "post",
+      "from": "oncall",
+      "to": "slack",
+      "y": 222,
+      "label": "채널에 메시지 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "show",
+      "from": "slack",
+      "to": "user",
+      "y": 259,
+      "label": "알림 표시 (버튼 포함)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ack-click",
+      "from": "user",
+      "to": "slack",
+      "y": 312,
+      "label": "\"Acknowledge\" 버튼 클릭"
+    },
+    {
+      "id": "ack-req",
+      "from": "slack",
+      "to": "oncall",
+      "y": 349,
+      "label": "확인 요청",
+      "note": "OnCall이 알림 상태 업데이트"
+    },
+    {
+      "id": "ack-msg",
+      "from": "oncall",
+      "to": "slack",
+      "y": 386,
+      "label": "메시지 업데이트",
+      "variant": "return"
+    },
+    {
+      "id": "res-click",
+      "from": "user",
+      "to": "slack",
+      "y": 440,
+      "label": "\"Resolve\" 버튼 클릭"
+    },
+    {
+      "id": "res-req",
+      "from": "slack",
+      "to": "oncall",
+      "y": 477,
+      "label": "해결 요청",
+      "note": "OnCall이 알림 상태 업데이트"
+    },
+    {
+      "id": "res-msg",
+      "from": "oncall",
+      "to": "slack",
+      "y": 514,
+      "label": "메시지 업데이트",
+      "variant": "return"
+    },
+    {
+      "id": "res-notify",
+      "from": "oncall",
+      "to": "alert",
+      "y": 551,
+      "label": "해결 알림",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "oncall",
+      "from": 180,
+      "to": 229,
+      "type": "backend"
+    },
+    {
+      "participant": "oncall",
+      "from": 344,
+      "to": 393,
+      "type": "backend"
+    },
+    {
+      "participant": "oncall",
+      "from": 472,
+      "to": 558,
+      "type": "backend"
+    }
+  ]
+}

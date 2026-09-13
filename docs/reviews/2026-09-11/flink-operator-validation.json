@@ -1,0 +1,627 @@
+{
+  "status": "passed",
+  "exampleValidation": {
+    "status": "passed",
+    "files": [
+      "ko/data-on-eks/flink/02-flink-kubernetes-operator.md",
+      "ko/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+      "en/data-on-eks/flink/02-flink-kubernetes-operator.md",
+      "en/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md"
+    ],
+    "fences": 10,
+    "quizQuestions": 40,
+    "schemaCases": 2,
+    "publishedHelmObjects": 20,
+    "operatorImagePinned": true,
+    "webhookRequiresCertManager": true,
+    "internalCertificateGenerationJob": false,
+    "nativeChartVariants": [
+      {
+        "variant": "default",
+        "objects": 18,
+        "kinds": {
+          "Certificate": 1,
+          "ClusterRole": 1,
+          "ClusterRoleBinding": 1,
+          "ConfigMap": 1,
+          "CustomResourceDefinition": 4,
+          "Deployment": 1,
+          "Issuer": 1,
+          "MutatingWebhookConfiguration": 1,
+          "Role": 1,
+          "RoleBinding": 1,
+          "Secret": 1,
+          "Service": 1,
+          "ServiceAccount": 2,
+          "ValidatingWebhookConfiguration": 1
+        },
+        "serviceAccounts": [
+          {
+            "name": "flink",
+            "namespace": "flink-operator",
+            "labels": {
+              "app.kubernetes.io/name": "flink-kubernetes-operator",
+              "app.kubernetes.io/version": "1.15.0",
+              "app.kubernetes.io/managed-by": "Helm",
+              "helm.sh/chart": "flink-kubernetes-operator-1.15.0"
+            },
+            "annotations": {
+              "helm.sh/resource-policy": "keep"
+            }
+          },
+          {
+            "name": "flink-operator",
+            "namespace": "flink-operator",
+            "labels": {
+              "app.kubernetes.io/name": "flink-kubernetes-operator",
+              "app.kubernetes.io/version": "1.15.0",
+              "app.kubernetes.io/managed-by": "Helm",
+              "helm.sh/chart": "flink-kubernetes-operator-1.15.0"
+            }
+          }
+        ]
+      },
+      {
+        "variant": "scoped",
+        "objects": 20,
+        "kinds": {
+          "Certificate": 1,
+          "ConfigMap": 1,
+          "CustomResourceDefinition": 4,
+          "Deployment": 1,
+          "Issuer": 1,
+          "MutatingWebhookConfiguration": 1,
+          "Role": 3,
+          "RoleBinding": 3,
+          "Secret": 1,
+          "Service": 1,
+          "ServiceAccount": 2,
+          "ValidatingWebhookConfiguration": 1
+        },
+        "serviceAccounts": [
+          {
+            "name": "flink",
+            "namespace": "data-processing",
+            "labels": {
+              "app.kubernetes.io/name": "flink-kubernetes-operator",
+              "app.kubernetes.io/version": "1.15.0",
+              "app.kubernetes.io/managed-by": "Helm",
+              "helm.sh/chart": "flink-kubernetes-operator-1.15.0"
+            },
+            "annotations": {
+              "helm.sh/resource-policy": "keep"
+            }
+          },
+          {
+            "name": "flink-operator",
+            "namespace": "flink-operator",
+            "labels": {
+              "app.kubernetes.io/name": "flink-kubernetes-operator",
+              "app.kubernetes.io/version": "1.15.0",
+              "app.kubernetes.io/managed-by": "Helm",
+              "helm.sh/chart": "flink-kubernetes-operator-1.15.0"
+            }
+          }
+        ]
+      },
+      {
+        "variant": "webhook-off",
+        "objects": 12,
+        "kinds": {
+          "ClusterRole": 1,
+          "ClusterRoleBinding": 1,
+          "ConfigMap": 1,
+          "CustomResourceDefinition": 4,
+          "Deployment": 1,
+          "Role": 1,
+          "RoleBinding": 1,
+          "ServiceAccount": 2
+        },
+        "serviceAccounts": [
+          {
+            "name": "flink",
+            "namespace": "flink-operator",
+            "labels": {
+              "app.kubernetes.io/name": "flink-kubernetes-operator",
+              "app.kubernetes.io/version": "1.15.0",
+              "app.kubernetes.io/managed-by": "Helm",
+              "helm.sh/chart": "flink-kubernetes-operator-1.15.0"
+            },
+            "annotations": {
+              "helm.sh/resource-policy": "keep"
+            }
+          },
+          {
+            "name": "flink-operator",
+            "namespace": "flink-operator",
+            "labels": {
+              "app.kubernetes.io/name": "flink-kubernetes-operator",
+              "app.kubernetes.io/version": "1.15.0",
+              "app.kubernetes.io/managed-by": "Helm",
+              "helm.sh/chart": "flink-kubernetes-operator-1.15.0"
+            }
+          }
+        ]
+      }
+    ],
+    "imageManifestChecks": [
+      {
+        "tag": "1.15.0",
+        "status": 200,
+        "digest": "sha256:5372e4461b433ee37391b0ee3fc3e4029980d14e9b64576b0cb78493d1cafe3a",
+        "mediaType": "application/vnd.oci.image.index.v1+json",
+        "platforms": [
+          {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          {
+            "architecture": "arm64",
+            "os": "linux"
+          },
+          {
+            "architecture": "unknown",
+            "os": "unknown"
+          },
+          {
+            "architecture": "unknown",
+            "os": "unknown"
+          }
+        ]
+      },
+      {
+        "tag": "79d730b",
+        "status": 200,
+        "digest": "sha256:5372e4461b433ee37391b0ee3fc3e4029980d14e9b64576b0cb78493d1cafe3a",
+        "mediaType": "application/vnd.oci.image.index.v1+json",
+        "platforms": [
+          {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          {
+            "architecture": "arm64",
+            "os": "linux"
+          },
+          {
+            "architecture": "unknown",
+            "os": "unknown"
+          },
+          {
+            "architecture": "unknown",
+            "os": "unknown"
+          }
+        ]
+      }
+    ],
+    "limits": "Offline Helm rendering, released CRD validation and shell/YAML structure checks; no Kubernetes API, issuance, live job, S3, HA or autoscaling execution."
+  },
+  "chartArtifact": {
+    "url": "https://downloads.apache.org/flink/flink-kubernetes-operator-1.15.0/flink-kubernetes-operator-1.15.0-helm.tgz",
+    "sha256": "73948033f014820b832dece5f9f3551b58de6227b8300c590a5db8a6ac7893dc",
+    "indexDigestVerified": true,
+    "bytes": 62676,
+    "version": "1.15.0"
+  },
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/data-on-eks/flink/02-flink-kubernetes-operator.md",
+        "sha256": "347e0fc58ec7297da52942bc37ebc96de4118ca678d237d7dae8262f4f4f84ce",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-flink-kubernetes-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-cr과-운영-경계"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-설치-cert-manager와-namespace를-먼저-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-먼저-image에-포함된-job으로-실행-경로-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-상태-보존-배포에-추가할-조건"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-upgrade-모드는-복원-전제와-함께-선택"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-autoscaler-관찰부터-시작"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-2-flink-kubernetes-operator",
+          "_1-cr과-운영-경계",
+          "_2-설치-cert-manager와-namespace를-먼저-준비",
+          "_3-먼저-image에-포함된-job으로-실행-경로-확인",
+          "_4-상태-보존-배포에-추가할-조건",
+          "_5-upgrade-모드는-복원-전제와-함께-선택",
+          "_6-autoscaler-관찰부터-시작",
+          "검증-범위",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/flink/02-flink-kubernetes-operator.md",
+        "sha256": "8909c5a29c2963dc90d06fc6fe0f448560c783ad470632756e4641c3e6527e36",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-flink-kubernetes-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-resources-and-operating-boundaries"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-installation-prepare-cert-manager-and-namespaces"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-first-verify-execution-with-a-bundled-job"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-additional-requirements-for-stateful-deployments"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-choose-upgrade-modes-together-with-restore-prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-autoscaler-begin-with-observation"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "part-2-flink-kubernetes-operator",
+          "_1-resources-and-operating-boundaries",
+          "_2-installation-prepare-cert-manager-and-namespaces",
+          "_3-first-verify-execution-with-a-bundled-job",
+          "_4-additional-requirements-for-stateful-deployments",
+          "_5-choose-upgrade-modes-together-with-restore-prerequisites",
+          "_6-autoscaler-begin-with-observation",
+          "validation-scope",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+        "sha256": "2effcbed07ed54495d9e592f75d0efa34413c422567b8bc70ee5d4b54bb21d24",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "flink-kubernetes-operator-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "flink-kubernetes-operator-퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+        "sha256": "c79401b87494483e3f92a678574d542ffb30af9a6bd2af9ffed6856c8129f951",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "flink-kubernetes-operator-quiz"
+          }
+        ],
+        "renderedIds": [
+          "flink-kubernetes-operator-quiz"
+        ]
+      }
+    ]
+  },
+  "viewerChecks": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "591d35471e031ffc441b6508cd394218af61eec73c0a1c98c5d8a53d152886f5"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "591d35471e031ffc441b6508cd394218af61eec73c0a1c98c5d8a53d152886f5"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "591d35471e031ffc441b6508cd394218af61eec73c0a1c98c5d8a53d152886f5"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "42c1df871780512c45a771de544bd07c1cc1496068ac8a307bed4d05363fc4fe"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "42c1df871780512c45a771de544bd07c1cc1496068ac8a307bed4d05363fc4fe"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "42c1df871780512c45a771de544bd07c1cc1496068ac8a307bed4d05363fc4fe"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "diagramDeliveries": [
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/ko-data-on-eks-flink-02-flink-kubernetes-operator-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/ko-data-on-eks-flink-02-flink-kubernetes-operator-0.html",
+      "specification": {
+        "sha256": "898f0083c115cbe24547cb4696303d320ac0115382ab1ff2bcf1e755838b47aa",
+        "bytes": 4723
+      },
+      "artifact": {
+        "sha256": "591d35471e031ffc441b6508cd394218af61eec73c0a1c98c5d8a53d152886f5",
+        "bytes": 709490
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/en-data-on-eks-flink-02-flink-kubernetes-operator-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/en-data-on-eks-flink-02-flink-kubernetes-operator-0.html",
+      "specification": {
+        "sha256": "dde6d069f1327ca7fe32621bf779a1b0310f49fcf3e2290096e3ba7567a41ff4",
+        "bytes": 4719
+      },
+      "artifact": {
+        "sha256": "42c1df871780512c45a771de544bd07c1cc1496068ac8a307bed4d05363fc4fe",
+        "bytes": 709414
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "relativeLinks": 10,
+  "pngVisualInspection": "Both current PNGs inspected after correcting label/node collisions. In-place/redeployment alternatives and pressure/constraint gating are visible, with no clipped nodes/cards.",
+  "sources": [
+    {
+      "name": "autoscaler",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/docs/content/docs/custom-resource/autoscaler.md",
+      "bytes": 19939,
+      "sha256": "deed55a9a9c33a12395fd204c1298396230649d1b27a87c4a8a891857c523e25"
+    },
+    {
+      "name": "jobs",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/docs/content/docs/custom-resource/job-management.md",
+      "bytes": 14416,
+      "sha256": "738dedd247d791fee007d9cd490ef2a0772184c3fa5acfcfd6a6cd1884f47588"
+    },
+    {
+      "name": "bluegreen",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/docs/content/docs/concepts/bluegreen-controller-flow.md",
+      "bytes": 20626,
+      "sha256": "9e823f23b060bd9d12a199b4455a5175c1045c9be770f85259609653c85d1227"
+    },
+    {
+      "name": "validator",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator/src/main/java/org/apache/flink/kubernetes/operator/validation/DefaultValidator.java",
+      "bytes": 29341,
+      "sha256": "239d136a0d9b568e0d712848edc261a399276ec42a11f16310d0a0fc7a141a44"
+    },
+    {
+      "name": "realizer",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator/src/main/java/org/apache/flink/kubernetes/operator/autoscaler/KubernetesScalingRealizer.java",
+      "bytes": 4959,
+      "sha256": "75aa3ffd77977b3219c8d738921e67c290e92d7dcc951e13541b3303cc0a9a49"
+    },
+    {
+      "name": "scaler-options",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-autoscaler/src/main/java/org/apache/flink/autoscaler/config/AutoScalerOptions.java",
+      "bytes": 26259,
+      "sha256": "2ac891369ff9449d386d3936d73bda2123b2b43b4733a0503d40d5cd960af407"
+    },
+    {
+      "name": "vertex-scaler",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-autoscaler/src/main/java/org/apache/flink/autoscaler/JobVertexScaler.java",
+      "bytes": 33102,
+      "sha256": "1f17c5f19417caabb79af97238e8d0eddbd06c1a4ae69e3de18f556b4ff74037"
+    },
+    {
+      "name": "metric-evaluator",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-autoscaler/src/main/java/org/apache/flink/autoscaler/ScalingMetricEvaluator.java",
+      "bytes": 25124,
+      "sha256": "4289424179589066850b69e90700d8ba6f5b0cfc6408094ce3391bd630f2a222"
+    },
+    {
+      "name": "scaling-executor",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-autoscaler/src/main/java/org/apache/flink/autoscaler/ScalingExecutor.java",
+      "bytes": 20932,
+      "sha256": "bbda83602239643ecd2a8cd905fd7afed264fd49cfb45360786f4e551d98694e"
+    },
+    {
+      "name": "deployment-status",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator-api/src/main/java/org/apache/flink/kubernetes/operator/api/status/FlinkDeploymentStatus.java",
+      "bytes": 4342,
+      "sha256": "1396a74e430c09f5a63ff39a7075c997076d0933c0a1ab24b5a2bd6cc05aecc0"
+    },
+    {
+      "name": "ConditionsUtils",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator-api/src/main/java/org/apache/flink/kubernetes/operator/api/utils/ConditionsUtils.java",
+      "bytes": 5557,
+      "sha256": "7150ea57458a9e2d20175b8cc1c058542e7f15571be3493deac9e9147b2b3fc2"
+    },
+    {
+      "name": "KubernetesOperatorConfigOptions",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator/src/main/java/org/apache/flink/kubernetes/operator/config/KubernetesOperatorConfigOptions.java",
+      "bytes": 41151,
+      "sha256": "bad41794cb9ef2744d6bc1b13661087929037d32ee94de9c9f838ffa1e04276e"
+    },
+    {
+      "name": "BlueGreenDeploymentService",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator/src/main/java/org/apache/flink/kubernetes/operator/controller/bluegreen/BlueGreenDeploymentService.java",
+      "bytes": 38698,
+      "sha256": "c1305c1428a7f9f1904cc61dbf6df53404c1e95063b0598972baa804b4d32a99"
+    },
+    {
+      "name": "BlueGreenKubernetesService",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator/src/main/java/org/apache/flink/kubernetes/operator/controller/bluegreen/BlueGreenKubernetesService.java",
+      "bytes": 5132,
+      "sha256": "c74f60a0c637004d7682774a69bc7eb4481de2aca0a1d4e5a19571c5dbed1159"
+    },
+    {
+      "name": "AbstractFlinkResourceReconciler",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator/src/main/java/org/apache/flink/kubernetes/operator/reconciler/deployment/AbstractFlinkResourceReconciler.java",
+      "bytes": 24283,
+      "sha256": "2c2be338ac8a880fe03f4e0358c72e531dd2046637d8307b72060361c7e77898"
+    },
+    {
+      "name": "ApplicationReconciler",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator/src/main/java/org/apache/flink/kubernetes/operator/reconciler/deployment/ApplicationReconciler.java",
+      "bytes": 19674,
+      "sha256": "f2937ecf7ca94f8c4c26ad05ead7cad16e20b69e08b446f354ad03ca6bb66876"
+    }
+  ],
+  "limits": "No Kubernetes deployment/cert issuance, Flink runtime job, actual S3/HA/rollback/autoscaling, or full site build. Chart/schema/structure/source and bounded browser checks only."
+}

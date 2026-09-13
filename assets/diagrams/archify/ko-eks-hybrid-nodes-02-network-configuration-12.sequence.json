@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "패턴 3: Pod → EKS 컨트롤 플레인",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      930,
+      640
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "요청 홉"
+        },
+        "emphasis": {
+          "label": "NAT 변환"
+        },
+        "return": {
+          "label": "응답 · CNI NAT 사용 (SNAT)"
+        },
+        "dashed": {
+          "label": "응답 · CNI NAT 미사용"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request",
+        "label": "요청 경로",
+        "focus": [
+          "pod",
+          "cni",
+          "kproxy",
+          "onprem-router",
+          "gateway",
+          "vpc-router",
+          "cp-eni"
+        ],
+        "note": "kubernetes Service IP로 보낸 패킷이 DNAT 후 VPN/DX를 거쳐 CP ENI에 도달한다."
+      },
+      {
+        "id": "return-snat",
+        "label": "응답 · CNI NAT 사용",
+        "focus": [
+          "cp-eni",
+          "vpc-router",
+          "gateway",
+          "cni",
+          "pod"
+        ],
+        "note": "SNAT로 출발지가 노드 IP가 되어 기존 노드 CIDR 경로만으로 돌아온다."
+      },
+      {
+        "id": "return-nosnat",
+        "label": "응답 · CNI NAT 미사용",
+        "focus": [
+          "cp-eni",
+          "vpc-router",
+          "gateway",
+          "onprem-router",
+          "pod"
+        ],
+        "note": "출발지가 파드 IP이므로 VPC와 온프레미스 양쪽에 파드 CIDR 역방향 라우팅이 필요하다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "10.85.1.56"
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "CNI",
+      "sublabel": "노드 10.80.0.2"
+    },
+    {
+      "id": "kproxy",
+      "type": "security",
+      "label": "kube-proxy",
+      "sublabel": "iptables"
+    },
+    {
+      "id": "onprem-router",
+      "type": "backend",
+      "label": "Router",
+      "sublabel": "온프레미스"
+    },
+    {
+      "id": "gateway",
+      "type": "external",
+      "label": "Gateway",
+      "sublabel": "VPN / DX"
+    },
+    {
+      "id": "vpc-router",
+      "type": "cloud",
+      "label": "VPC Router",
+      "sublabel": "10.0.0.0/16"
+    },
+    {
+      "id": "cp-eni",
+      "type": "cloud",
+      "label": "EKS CP",
+      "sublabel": "CP ENI 10.0.0.132"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 352,
+      "label": "요청 경로 (홉 1–7)"
+    },
+    {
+      "from": 372,
+      "to": 455,
+      "label": "응답 · CNI NAT 사용 (SNAT)"
+    },
+    {
+      "from": 475,
+      "to": 558,
+      "label": "응답 · CNI NAT 미사용"
+    }
+  ],
+  "messages": [
+    {
+      "id": "h1",
+      "from": "pod",
+      "to": "cni",
+      "y": 182,
+      "label": "1. dst 172.16.0.1 (kubernetes Service)",
+      "variant": "default"
+    },
+    {
+      "id": "h2",
+      "from": "cni",
+      "to": "kproxy",
+      "y": 212,
+      "label": "2. CNI NAT 사용 시 SNAT: src → 10.80.0.2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "h3",
+      "from": "kproxy",
+      "to": "onprem-router",
+      "y": 242,
+      "label": "3. DNAT: 172.16.0.1 → CP ENI 10.0.0.132",
+      "variant": "emphasis"
+    },
+    {
+      "id": "h4",
+      "from": "onprem-router",
+      "to": "gateway",
+      "y": 272,
+      "label": "4. 10.0.0.0/16 [static] via Gateway",
+      "variant": "default"
+    },
+    {
+      "id": "h5",
+      "from": "gateway",
+      "to": "vpc-router",
+      "y": 302,
+      "label": "5. VPN / DX 경계 통과",
+      "variant": "default"
+    },
+    {
+      "id": "h6",
+      "from": "vpc-router",
+      "to": "cp-eni",
+      "y": 332,
+      "label": "6–7. 10.0.0.0/16 [local] → CP ENI",
+      "variant": "default"
+    },
+    {
+      "id": "r1",
+      "from": "cp-eni",
+      "to": "gateway",
+      "y": 402,
+      "label": "dst 10.80.0.2 · 10.80.0.0/16 [static] via Gateway",
+      "variant": "return"
+    },
+    {
+      "id": "r2",
+      "from": "gateway",
+      "to": "pod",
+      "y": 440,
+      "label": "노드 IP로 도착 · CNI가 역 SNAT 후 파드로 전달",
+      "variant": "return"
+    },
+    {
+      "id": "n1",
+      "from": "cp-eni",
+      "to": "gateway",
+      "y": 505,
+      "label": "dst 10.85.1.56 · 10.85.0.0/16 [static] via Gateway 필요",
+      "variant": "dashed"
+    },
+    {
+      "id": "n2",
+      "from": "gateway",
+      "to": "pod",
+      "y": 543,
+      "label": "10.85.1.0/24 [dynamic] via 10.80.0.2 · 파드 CIDR 역방향 라우팅",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kproxy",
+      "from": 207,
+      "to": 249,
+      "type": "security"
+    },
+    {
+      "participant": "gateway",
+      "from": 267,
+      "to": 309,
+      "type": "external"
+    },
+    {
+      "participant": "cp-eni",
+      "from": 327,
+      "to": 408,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Cluster VPC 라우팅 테이블",
+      "items": [
+        "10.0.0.0/16 [local]",
+        "10.80.0.0/16 [static] via Gateway",
+        "10.85.0.0/16 [static] via Gateway — CNI NAT 미사용 시 필요"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "온프레미스 라우팅 테이블",
+      "items": [
+        "10.80.0.0/16 [local] via eth0",
+        "10.0.0.0/16 [static] via Gateway",
+        "10.85.1.0/24 [dynamic] via 10.80.0.2 · 10.85.2.0/24 [dynamic] via 10.80.0.3"
+      ]
+    }
+  ]
+}

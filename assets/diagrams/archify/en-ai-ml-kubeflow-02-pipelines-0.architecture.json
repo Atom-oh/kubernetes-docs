@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How a Pipeline Run Flows Through the System",
+    "locale": "en",
+    "output": "en-ai-ml-kubeflow-02-pipelines-0.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "KFP SDK (local)"
+        },
+        "backend": {
+          "label": "KFP backend"
+        },
+        "cloud": {
+          "label": "Component execution"
+        },
+        "database": {
+          "label": "Storage"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "sdk",
+        "label": "SDK compile",
+        "focus": [
+          "pipeline",
+          "compiler"
+        ],
+        "note": "Compilation produces IR; the package also provides client and runtime support."
+      },
+      {
+        "id": "backend",
+        "label": "Backend execution",
+        "focus": [
+          "apiserver",
+          "translate",
+          "argo",
+          "pods"
+        ],
+        "note": "Argo sequences work and creates Pods; Kubernetes places Pods on nodes."
+      },
+      {
+        "id": "storage",
+        "label": "Artifacts and metadata",
+        "focus": [
+          "pods",
+          "objectstore",
+          "mlmd"
+        ],
+        "note": "Launcher/runtime handles artifact transfer and metadata. Bytes and MLMD records are separate."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pipeline",
+      "type": "frontend",
+      "label": "Python pipeline",
+      "sublabel": "@dsl.pipeline / @dsl.component",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "compiler",
+      "type": "frontend",
+      "label": "KFP SDK Compiler",
+      "sublabel": "produces IR YAML",
+      "pos": [
+        320,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "KFP API Server",
+      "sublabel": "stores pipeline, accepts Run",
+      "pos": [
+        660,
+        80
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "translate",
+      "type": "backend",
+      "label": "IR YAML → Argo Workflow",
+      "sublabel": "backend translation",
+      "pos": [
+        950,
+        80
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "argo",
+      "type": "backend",
+      "label": "Argo Workflow Controller",
+      "sublabel": "sequence / create Pods",
+      "pos": [
+        950,
+        280
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "cloud",
+      "label": "driver / launcher / work",
+      "sublabel": "K8s places Pods on nodes",
+      "pos": [
+        660,
+        280
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "objectstore",
+      "type": "database",
+      "label": "Object store",
+      "sublabel": "S3 / MinIO · artifacts",
+      "pos": [
+        660,
+        480
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "mlmd",
+      "type": "database",
+      "label": "ML Metadata (MLMD)",
+      "sublabel": "execution + artifact metadata",
+      "pos": [
+        950,
+        480
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Local · KFP SDK",
+      "wraps": [
+        "pipeline",
+        "compiler"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "KFP backend (built on Argo Workflows)",
+      "wraps": [
+        "apiserver",
+        "translate",
+        "argo",
+        "pods"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pipeline-compiler",
+      "from": "pipeline",
+      "to": "compiler",
+      "label": "compile"
+    },
+    {
+      "id": "compiler-apiserver",
+      "from": "compiler",
+      "to": "apiserver",
+      "label": "upload / create Run",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apiserver-translate",
+      "from": "apiserver",
+      "to": "translate"
+    },
+    {
+      "id": "translate-argo",
+      "from": "translate",
+      "to": "argo",
+      "label": "Workflow resource",
+      "labelDy": 60
+    },
+    {
+      "id": "argo-pods",
+      "from": "argo",
+      "to": "pods"
+    },
+    {
+      "id": "pods-objectstore",
+      "from": "pods",
+      "to": "objectstore",
+      "label": "artifact read / write",
+      "labelDy": 60
+    },
+    {
+      "id": "pods-mlmd",
+      "from": "pods",
+      "to": "mlmd",
+      "label": "record metadata"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "IR and execution",
+      "items": [
+        "Upload alone does not execute; backend compatibility still matters.",
+        "Cache keys use artifact IDs and configuration, not file-byte hashes."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Storage and identity",
+      "items": [
+        "S3 is metered and needs root/provider/permission configuration.",
+        "Inspect actual execution ServiceAccounts and API-server access."
+      ]
+    }
+  ]
+}

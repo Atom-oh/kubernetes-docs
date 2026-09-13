@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cascading Failure 방지",
+    "output": "ko-service-mesh-istio-traffic-management-07-circuit-breaker-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": { "label": "정상 서비스" },
+        "external": { "label": "장애 서비스" },
+        "security": { "label": "Circuit Open (격리 지점)" }
+      }
+    },
+    "views": [
+      { "id": "without", "label": "Circuit Breaker 없이", "focus": ["a1", "b1", "c1", "d1"], "note": "서비스 B의 느린 응답을 타임아웃까지 기다리다 서비스 A의 리소스가 고갈되고, 장애가 C, D로 연쇄 전파된다." },
+      { "id": "with", "label": "Circuit Breaker 사용", "focus": ["a2", "b2", "c2", "d2"], "note": "장애 서비스 B로 향하는 요청은 즉시 실패 처리되고, 서비스 C, D 호출은 정상 동작을 유지한다." }
+    ]
+  },
+  "components": [
+    { "id": "a1", "type": "external", "label": "서비스 A", "sublabel": "리소스 고갈", "tag": "타임아웃 대기", "pos": [60, 130], "size": [150, 60] },
+    { "id": "b1", "type": "external", "label": "서비스 B", "sublabel": "장애", "pos": [300, 50], "size": [150, 60] },
+    { "id": "c1", "type": "external", "label": "서비스 C", "sublabel": "장애", "pos": [540, 130], "size": [150, 60] },
+    { "id": "d1", "type": "external", "label": "서비스 D", "sublabel": "장애", "pos": [780, 130], "size": [150, 60] },
+    { "id": "a2", "type": "backend", "label": "서비스 A", "sublabel": "정상", "tag": "리소스 보호", "pos": [60, 380], "size": [150, 60] },
+    { "id": "b2", "type": "security", "label": "서비스 B", "sublabel": "Circuit Open", "pos": [300, 300], "size": [150, 60] },
+    { "id": "c2", "type": "backend", "label": "서비스 C", "sublabel": "정상", "pos": [540, 380], "size": [150, 60] },
+    { "id": "d2", "type": "backend", "label": "서비스 D", "sublabel": "정상", "pos": [780, 380], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Circuit Breaker 없이", "wraps": ["a1", "b1", "c1", "d1"] },
+    { "kind": "region", "label": "Circuit Breaker 사용", "wraps": ["a2", "b2", "c2", "d2"] }
+  ],
+  "connections": [
+    { "id": "a1-b1", "from": "a1", "to": "b1", "label": "느린 응답", "variant": "dashed" },
+    { "id": "a1-c1", "from": "a1", "to": "c1", "label": "타임아웃 누적", "variant": "dashed" },
+    { "id": "c1-d1", "from": "c1", "to": "d1", "label": "연쇄 장애", "variant": "dashed" },
+    { "id": "a2-b2", "from": "a2", "to": "b2", "label": "빠른 실패", "variant": "security" },
+    { "id": "a2-c2", "from": "a2", "to": "c2", "label": "정상 동작", "variant": "emphasis" },
+    { "id": "c2-d2", "from": "c2", "to": "d2", "label": "정상 동작", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "Circuit Breaker 없이", "items": ["타임아웃까지 대기 (30s+)", "스레드/연결 고갈", "연쇄 장애 발생", "복구에 수동 개입 필요"] },
+    { "dot": "emerald", "title": "Circuit Breaker 사용", "items": ["즉시 실패 (1ms)", "리소스 보호", "장애 격리", "자동 복구 시도"] }
+  ]
+}

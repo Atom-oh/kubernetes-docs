@@ -1,324 +1,88 @@
 # vLLM Deployment & Optimization
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33  
-> **Last Updated**: April 9, 2026
+> **Review baseline**: vLLM 0.29.0, CUDA 12.9 image variant; historical 0.6.4.post1 benchmark separated
+> **Last Updated**: September 12, 2026
 
-vLLM is the most widely adopted open-source high-performance inference engine for Large Language Models (LLMs). In this chapter, we will explore vLLM's latest features and architecture, and learn how to deploy and optimize it at production scale on EKS.
+vLLM is an open-source inference engine for generative models and supported multimodal/pooling workloads. It should not be expanded as “Vector Language Model.” This chapter reviews a specific release and EKS operating boundaries without universal speedup or model-support guarantees.
 
 ## Lab Environment Setup
 
-To follow along with the examples in this document, you will need the following tools and environment:
+The baseline is [v0.29.0](https://github.com/vllm-project/vllm/releases/tag/v0.29.0), released September 9, 2026. Its default PyPI/Docker path uses CUDA 13.0, with a separate v0.29.0-cu129 image. Some tagged installation text still calls CUDA 12.9 the default; inspect the actual image variant/digest.
 
-### Required Tools and Resources
-- kubectl v1.31 or higher
-- Helm v3.10 or higher
-- EKS cluster with NVIDIA GPUs (minimum recommended: g5.2xlarge instance)
-- NVIDIA drivers and NVIDIA Device Plugin installed
-- At least 50GB of disk space
+PyPI requires Python >=3.10, <3.15, while the tagged GPU guide lists 3.10–3.13. This is not a guarantee for every Python/PyTorch/CUDA combination. The NVIDIA path requires compute capability 7.5 or newer, excluding V100 (7.0). Kernels, dtypes and quantization can impose additional device requirements.
 
-### GPU Node Setup
-
-```bash
-# Install NVIDIA Device Plugin
-kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.14.0/nvidia-device-plugin.yml
-
-# Verify GPU nodes
-kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
-```
+Follow the AMI/driver/device-plugin conditions in [AI/ML workloads](01-ai-ml-workloads.md). A CUDA image is not a drop-in Trainium/Inferentia deployment; validate Neuron or other platform plugins separately. Size GPU, RAM and disk for the model/cache/concurrency rather than treating g5.2xlarge or 50GB as universal minimums.
 
 ## Introduction to vLLM
 
 vLLM is an LLM inference engine with the following characteristics:
 
-![Diagram grouping vLLM's core features, its internal component pipeline, and the resulting benefits such as memory efficiency and high throughput.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-0.svg)
+![API requests, scheduler, model loader, engine and KV cache roles with conditional performance benefits.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-0.png)
 
-### Key Features of vLLM
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-0.html)
 
-1. **PagedAttention**:
-   - Memory management technology that efficiently manages KV cache
-   - Inspired by operating system virtual memory management
-   - Enables up to 10x more concurrent request processing
+### Capabilities and Support Boundaries
 
-2. **Continuous Batching**:
-   - Dynamically batches requests to maximize GPU utilization
-   - Starts processing new requests immediately upon arrival
-   - Up to 2x throughput improvement
+| Capability | Meaning and conditions |
+| --- | --- |
+| PagedAttention / KV cache | Manages token blocks to reduce waste; kernels/cache layouts depend on model/backend |
+| Continuous batching | Scheduler adjusts work each step; no guarantee of immediate admission, no queueing or fixed speedup |
+| TP / PP / DP / EP | Tensor, pipeline, data and expert parallelism are different axes requiring model/backend/network support |
+| Precision / quantization | Distinguish FP16/BF16 dtypes from FP8/INT8/INT4/AWQ formats, and weight quantization from KV-cache quantization |
+| Prefix caching / chunked prefill | Inspect supported-model defaults and overrides; not full-response caching or accuracy improvement |
+| Structured outputs | response_format or structured_outputs constrains format; truth and business validity need separate checks |
+| Tool calling | Requires model/chat template/parser and a client execution loop; server does not automatically execute tools |
+| LoRA | Requires model support and adapter registration; changing request model alone does not load an adapter |
 
-3. **Distributed Inference**:
-   - Supports large-scale models through tensor parallelization
-   - Model sharding across multiple GPUs
-   - Supports 175B+ parameter models
+0.29.0 makes Model Runner V2 the default runner. This is not the OpenAI-compatible API version or a separate “vLLM Engine V2.” Model-family names do not guarantee all sizes, quantization or vision variants; verify architecture, artifact/tokenizer, chat template and kernels.
 
-4. **Quantization**:
-   - Supports various precisions including INT8, FP16
-   - Reduces memory usage and improves inference speed
-   - Up to 2x memory efficiency improvement with minimal accuracy loss
+### Current CLI Feature Configuration
 
-## Supported Models
-
-vLLM supports the following models:
-
-| Model Family | Supported Models | Quantization Options |
-|-------------|-----------------|---------------------|
-| **LLaMA 3 / 3.1 / 3.2 / 3.3** | 1B, 3B, 8B, 70B, 405B | FP16, BF16, FP8, INT8, INT4, AWQ, GPTQ |
-| **DeepSeek V3 / R1** | 7B, 67B, 671B (MoE) | FP16, BF16, FP8, AWQ, GPTQ |
-| **Qwen 2 / 2.5 / QwQ** | 0.5B ~ 72B | FP16, BF16, FP8, INT8, AWQ, GPTQ |
-| **Mistral / Mixtral** | 7B, 8x7B, 8x22B, Large 2 | FP16, BF16, FP8, AWQ, GPTQ |
-| **Gemma 2 / 3** | 2B, 9B, 27B | FP16, BF16, INT8 |
-| **Phi-3 / Phi-4** | 3.8B, 7B, 14B | FP16, BF16, INT8, AWQ |
-| **Command R / R+** | 35B, 104B | FP16, BF16 |
-| **DBRX** | 132B (MoE) | FP16, BF16 |
-| **StarCoder 2** | 3B, 7B, 15B | FP16, BF16 |
-| **Vision Models (VLM)** | LLaVA, Pixtral, Qwen2-VL, InternVL | FP16, BF16 |
-
-1. **PagedAttention**: Memory-efficient attention mechanism that optimizes memory usage when processing long sequences.
-2. **Continuous Batching**: Dynamically batches requests to improve throughput.
-3. **Distributed Inference**: Distributes models across multiple GPUs and nodes to handle large-scale models.
-4. **Quantization**: Supports INT8/INT4 quantization to reduce memory usage and improve throughput.
-5. **OpenAI Compatible API**: Provides an interface compatible with the OpenAI API.
-
-### Latest vLLM Features (v0.6+)
-
-vLLM is evolving rapidly with significant new capabilities in recent releases:
-
-#### Speculative Decoding
-
-Uses a smaller draft model to generate multiple candidate tokens, which the larger model verifies in a single pass, improving inference speed by 2-3x:
+Use vllm serve instead of the deprecated python -m vllm.entrypoints.openai.api_server. Previous --speculative-model/--num-speculative-tokens options are replaced by --speculative-config in the current CLI.
 
 ```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model meta-llama/Llama-3.1-70B-Instruct \
-  --speculative-model meta-llama/Llama-3.1-8B-Instruct \
-  --num-speculative-tokens 5
+# Syntax when compatible target/draft models and sufficient memory are prepared.
+vllm serve /models/target \
+  --speculative-config '{"model":"/models/draft","method":"draft_model","num_speculative_tokens":5}'
 ```
 
-#### Prefix Caching
+This illustrates syntax; it does not provide those model files or establish a speedup. Draft acceptance, extra memory and communication costs can offset gains.
 
-Automatically reuses KV cache across requests that share the same system prompt or context, dramatically reducing TTFT (Time to First Token):
-
-```bash
---enable-prefix-caching
-```
-
-#### Chunked Prefill
-
-Splits long prompt prefill into smaller chunks interleaved with decode steps, reducing the impact of long-context requests on other requests' latency:
-
-```bash
---enable-chunked-prefill --max-num-batched-tokens 2048
-```
-
-#### Dynamic LoRA Adapter Loading
-
-Dynamically loads/unloads multiple LoRA adapters at runtime, serving many customized models from a single base model:
-
-```bash
---enable-lora --max-loras 4 --max-lora-rank 64
-```
-
-```python
-# Specify LoRA model in API request
-response = client.chat.completions.create(
-    model="my-custom-lora-adapter",
-    messages=[{"role": "user", "content": "Hello!"}]
-)
-```
-
-#### Structured Output
-
-Supports constrained output generation via JSON Schema, regex patterns, and CFG (Context-Free Grammar) for reliable structured data generation:
-
-```python
-from openai import OpenAI
-client = OpenAI(base_url="http://vllm-service:8000/v1")
-
-response = client.chat.completions.create(
-    model="meta-llama/Llama-3.1-8B-Instruct",
-    messages=[{"role": "user", "content": "Return user information as JSON"}],
-    response_format={
-        "type": "json_schema",
-        "json_schema": {
-            "name": "user_info",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string"},
-                    "age": {"type": "integer"},
-                    "email": {"type": "string"}
-                },
-                "required": ["name", "age", "email"]
-            }
-        }
-    }
-)
-```
-
-#### Tool Calling
-
-Supports OpenAI-compatible Tool/Function Calling for integration with agent workflows:
-
-```python
-response = client.chat.completions.create(
-    model="meta-llama/Llama-3.1-8B-Instruct",
-    messages=[{"role": "user", "content": "What's the weather in Seoul?"}],
-    tools=[{
-        "type": "function",
-        "function": {
-            "name": "get_weather",
-            "description": "Get the current weather for a specified location",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {"type": "string", "description": "City name"}
-                },
-                "required": ["location"]
-            }
-        }
-    }]
-)
-```
-
-#### FP8 Quantization
-
-Supports FP8 quantization on Hopper (H100) and Ada Lovelace (L4, L40S) GPUs, halving memory usage while maintaining near-identical accuracy:
-
-```bash
---quantization fp8 --kv-cache-dtype fp8
-```
-
-#### Vision-Language Model (VLM) Serving
-
-Supports multimodal models that process both images and text simultaneously:
-
-```python
-response = client.chat.completions.create(
-    model="llava-hf/llava-v1.6-mistral-7b-hf",
-    messages=[{
-        "role": "user",
-        "content": [
-            {"type": "text", "text": "Describe this image"},
-            {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
-        ]
-    }]
-)
-```
+Register startup LoRA with --enable-lora --lora-modules adapter=/models/adapter. Runtime loading/unloading requires the separate VLLM_ALLOW_RUNTIME_LORA_UPDATING opt-in and a restricted operator path. --enable-auto-tool-choice needs the appropriate --tool-call-parser. Multimodal URLs also require SSRF controls, allowed domains and download/decode limits.
 
 ## System Requirements
 
 System requirements for deploying vLLM on EKS:
 
-![Diagram showing hardware and software prerequisites for vLLM, and how GPU memory determines the supported model size tier.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-1.svg)
+![Weight and architecture-aware KV memory, additional overhead, device capability and explicit CUDA artifact requirements.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-1.png)
 
-1. **Hardware**:
-   - NVIDIA GPU (Volta, Turing, Ampere, Hopper architecture)
-   - Minimum GPU memory: Varies by model size
-     - 7B model: Minimum 16GB GPU memory
-     - 13B model: Minimum 24GB GPU memory
-     - 70B model: Minimum 80GB GPU memory (or distributed across multiple GPUs)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-1.html)
 
-2. **Software**:
-   - CUDA 12.1 or higher (CUDA 12.4 recommended for FP8)
-   - Python 3.9 or higher
-   - PyTorch 2.4.0 or higher
+Start weight memory estimation with parameter count × stored bytes. FP16/BF16 weights alone for 70B are about 140GB, so 80GB is not a universal 70B requirement. Add KV cache, activations, CUDA graphs/workspaces and communication buffers, accounting for quantization metadata and replicated tensors.
 
-3. **EKS Node Types**:
-   - p5.48xlarge: 8x NVIDIA H100 GPU, 80GB each (highest performance)
-   - p4d.24xlarge: 8x NVIDIA A100 GPU, 40GB or 80GB each
-   - g6.12xlarge: 4x NVIDIA L4 GPU, 24GB each (cost-effective)
-   - g5.12xlarge: 4x NVIDIA A10G GPU, 24GB each
-   - g6e.12xlarge: 4x NVIDIA L40S GPU, 48GB each
-   - trn1.32xlarge: 16x AWS Trainium, 32GB each (AWS silicon)
+A common dense-attention KV estimate is below. Use KV-head count for GQA/MQA rather than substituting hidden size from an MHA-only formula.
+
+```text
+KV bytes ≈ 2 × layers × KV_heads × head_dim × cached_tokens × bytes_per_element
+```
+
+cached_tokens sums tokens retained across concurrent requests. TP sharding/replication, sliding windows, MLA and hybrid architectures need separate treatment. Current Qwen2.5-7B config has 28 layers, 4 KV heads and head dimension 128: about 56KiB/token at two bytes per element, or 224MiB for one 4096-token sequence. This is an aggregate estimate, not measured per-GPU or total model memory.
+
+p4d.24xlarge uses 40GB A100s; distinguish 80GB A100 p4de instances. Compare p5/g6/g6e and other choices against regional capacity, drivers and workload needs. Fixed rules such as four CPU cores per GPU or RAM twice the weights do not replace measurement.
 
 ## EKS Infrastructure Configuration
 
-![Architecture diagram of an Amazon EKS cluster running vLLM: a control plane, GPU and CPU node groups, storage and networking resources, and supporting AWS services.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-2.svg)
+![Illustrative EKS node, model-storage, image and permission paths chosen for the workload.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-2.png)
 
-## Storage Configuration
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-2.html)
 
-vLLM requires high-performance storage as it needs to load large model weights:
+## Storage and Model Preparation
 
-### FSx for Lustre Setup
+FSx for Lustre is one option, not mandatory or universally optimal. Compare local NVMe/EBS, reusable caches, object storage and shared filesystems by loading time, cost and concurrency. emptyDir can survive a container restart but not Pod deletion/recreation.
 
-FSx for Lustre is a high-performance parallel file system suitable for quickly loading large model weights:
+Distinguish [static FSx PV/PVC and dynamic provisioning](01-ai-ml-workloads.md#storage-and-caching). Hugging Face snapshot_download downloads from Hugging Face, not S3. Record repository revision, integrity, license and access permissions. For gated models, mount tokens as files and use a download stage that reads the file. Do not enable trust in executable remote code by default.
 
-```yaml
-apiVersion: fsx.aws.k8s.io/v1beta1
-kind: Lustre
-metadata:
-  name: vllm-models
-spec:
-  deploymentType: SCRATCH_2
-  storageCapacity: 1200
-  subnetIds:
-    - subnet-0123456789abcdef0
-  securityGroupIds:
-    - sg-0123456789abcdef0
-  perUnitStorageThroughput: 200
----
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fsx-lustre-sc
-provisioner: fsx.csi.aws.com
-parameters:
-  fileSystemId: fs-0123456789abcdef0
-  mountName: vllm-models
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: vllm-models-pvc
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: fsx-lustre-sc
-  resources:
-    requests:
-      storage: 1200Gi
-```
-
-### Downloading Models from S3
-
-Job to store Hugging Face models in S3 and download to FSx for Lustre:
-
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: model-download
-spec:
-  template:
-    spec:
-      containers:
-      - name: model-download
-        image: huggingface/transformers:latest
-        command:
-        - python
-        - -c
-        - |
-          from huggingface_hub import snapshot_download
-          import os
-
-          model_id = "meta-llama/Llama-3.1-70B-Instruct"
-          dest_dir = "/models/llama-3.1-70b"
-
-          os.makedirs(dest_dir, exist_ok=True)
-          snapshot_download(repo_id=model_id, local_dir=dest_dir, token=os.environ["HF_TOKEN"])
-        env:
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: huggingface-token
-              key: token
-        volumeMounts:
-        - name: models-volume
-          mountPath: /models
-      restartPolicy: Never
-      volumes:
-      - name: models-volume
-        persistentVolumeClaim:
-          claimName: vllm-models-pvc
-```
+The example below uses a verified revision of public Qwen3-0.6B without a token. Its emptyDir cache downloads again after Pod recreation. Multi-node workers require the same model revision/path.
 
 ## vLLM Deployment
 
@@ -326,649 +90,346 @@ spec:
 
 The following diagram shows two main architectures for deploying vLLM on EKS:
 
-![Diagram comparing a single-node vLLM pod deployment with a multi-node NCCL-synchronized deployment, both fed by a load balancer and sharing FSx/S3-backed storage.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-3.svg)
+![Single-GPU serving versus a sharded multi-node group, separating API entry point, workers and model paths.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-3.png)
 
-### Single Node Deployment
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-3.html)
 
-Deployment running vLLM on a single GPU or multiple GPUs on a single node:
+### Single-GPU Configuration Example
+
+This is a **template for review before GPU execution**. Prepare the namespace and GPU driver/plugin. The digest identifies the v0.29.0-cu129 amd64 artifact; the model revision identifies the inspected public Qwen3-0.6B snapshot. Image pulling, non-root execution, kernel compilation and inference were not executed in this audit and require environment validation.
+
+Recreate avoids requiring an extra GPU replica but causes update downtime. startupProbe allows about 15 minutes for startup; readiness is not an SLA. The Service is ClusterIP and does not create public ingress.
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vllm-inference
+  name: vllm-demo
+  namespace: ml-inference
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: vllm-inference
+      app: vllm-demo
   template:
     metadata:
       labels:
-        app: vllm-inference
+        app: vllm-demo
     spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: vllm-server
-        image: vllm/vllm-openai:latest
-        command:
-        - python
-        - -m
-        - vllm.entrypoints.openai.api_server
-        - --model=/models/llama-3.1-70b
-        - --tensor-parallel-size=8
-        - --gpu-memory-utilization=0.95
-        - --max-num-batched-tokens=16384
-        - --enable-prefix-caching
-        - --enable-chunked-prefill
-        - --port=8000
-        ports:
-        - containerPort: 8000
-        resources:
-          limits:
-            nvidia.com/gpu: 8
-        volumeMounts:
-        - name: models-volume
-          mountPath: /models
-        env:
-        - name: CUDA_VISIBLE_DEVICES
-          value: "0,1,2,3,4,5,6,7"
+        - name: vllm
+          image: vllm/vllm-openai@sha256:3e10e8189823e0f7ae4620c271bcdaaf64127ec7d0edc351591a508498b7684a
+          command: ["vllm", "serve"]
+          args:
+            - Qwen/Qwen3-0.6B
+            - --revision=c1899de289a04d12100db370d81485cdf75e47ca
+            - --served-model-name=qwen3-demo
+            - --dtype=float16
+            - --max-model-len=2048
+            - --max-num-seqs=8
+            - --gpu-memory-utilization=0.80
+            - --host=0.0.0.0
+            - --port=8000
+          env:
+            - name: HF_HOME
+              value: /cache/huggingface
+            - name: XDG_CACHE_HOME
+              value: /cache
+            - name: XDG_CONFIG_HOME
+              value: /cache/config
+            - name: VLLM_NO_USAGE_STATS
+              value: "1"
+            - name: VLLM_CACHE_ROOT
+              value: /cache/vllm
+            - name: TORCHINDUCTOR_CACHE_DIR
+              value: /cache/torchinductor
+            - name: TRITON_CACHE_DIR
+              value: /cache/triton
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              ephemeral-storage: 4Gi
+            limits:
+              cpu: "4"
+              memory: 12Gi
+              ephemeral-storage: 12Gi
+              nvidia.com/gpu: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          volumeMounts:
+            - name: cache
+              mountPath: /cache
+            - name: tmp
+              mountPath: /tmp
+            - name: shm
+              mountPath: /dev/shm
       volumes:
-      - name: models-volume
-        persistentVolumeClaim:
-          claimName: vllm-models-pvc
+        - name: cache
+          emptyDir:
+            sizeLimit: 8Gi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: vllm-inference
+  name: vllm-demo
+  namespace: ml-inference
+  labels:
+    app: vllm-demo
 spec:
+  type: ClusterIP
   selector:
-    app: vllm-inference
+    app: vllm-demo
   ports:
-  - port: 8000
-    targetPort: 8000
-  type: LoadBalancer
+    - name: http
+      port: 8000
+      targetPort: http
 ```
 
-### Multi-Node Distributed Deployment
+### Multi-Node Sharding Versus Independent Replicas
 
-Method to distribute large models across multiple nodes:
+Sharding one model replica requires TP/PP plus Ray or multiprocessing coordination. Independent API-server replicas each load the model and provide horizontal scaling; they are different designs.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vllm-config
-data:
-  hostfile: |
-    vllm-inference-0 slots=8
-    vllm-inference-1 slots=8
-  run_server.sh: |
-    #!/bin/bash
+0.29.0 supports multiprocessing --nnodes, --node-rank, --master-addr and --master-port. The old --rank, --tensor-parallel-rank and --distributed-init-method examples are not these CLI options. With two prepared nodes providing eight GPUs each, the command shape is:
 
-    RANK=$HOSTNAME
-    if [[ $HOSTNAME == "vllm-inference-0" ]]; then
-      RANK=0
-    elif [[ $HOSTNAME == "vllm-inference-1" ]]; then
-      RANK=1
-    fi
-
-    python -m vllm.entrypoints.openai.api_server \
-      --model=/models/llama-3.1-70b \
-      --tensor-parallel-size=16 \
-      --pipeline-parallel-size=1 \
-      --max-num-batched-tokens=8192 \
-      --port=8000 \
-      --host=0.0.0.0 \
-      --master-addr=vllm-inference-0 \
-      --master-port=29500 \
-      --rank=$RANK
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: vllm-inference
-spec:
-  serviceName: "vllm-inference"
-  replicas: 2
-  selector:
-    matchLabels:
-      app: vllm-inference
-  template:
-    metadata:
-      labels:
-        app: vllm-inference
-    spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - vllm-inference
-            topologyKey: kubernetes.io/hostname
-      containers:
-      - name: vllm-server
-        image: vllm/vllm-openai:latest
-        command:
-        - bash
-        - /config/run_server.sh
-        ports:
-        - containerPort: 8000
-        - containerPort: 29500
-        resources:
-          limits:
-            nvidia.com/gpu: 8
-        volumeMounts:
-        - name: models-volume
-          mountPath: /models
-        - name: config-volume
-          mountPath: /config
-        env:
-        - name: CUDA_VISIBLE_DEVICES
-          value: "0,1,2,3,4,5,6,7"
-        - name: NCCL_DEBUG
-          value: "INFO"
-        - name: NCCL_IB_DISABLE
-          value: "0"
-        - name: NCCL_IB_GID_INDEX
-          value: "3"
-        - name: NCCL_NET_GDR_LEVEL
-          value: "5"
-      volumes:
-      - name: models-volume
-        persistentVolumeClaim:
-          claimName: vllm-models-pvc
-      - name: config-volume
-        configMap:
-          name: vllm-config
-          defaultMode: 0755
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-inference
-spec:
-  selector:
-    app: vllm-inference
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: api
-  - port: 29500
-    targetPort: 29500
-    name: nccl
-  clusterIP: None
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-inference-lb
-spec:
-  selector:
-    app: vllm-inference
-    statefulset.kubernetes.io/pod-name: vllm-inference-0
-  ports:
-  - port: 8000
-    targetPort: 8000
-  type: LoadBalancer
+```bash
+# node0: substitute an actual trusted head IP and identical prepared model path.
+vllm serve /models/model --distributed-executor-backend mp \
+  --tensor-parallel-size 8 --pipeline-parallel-size 2 \
+  --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29500
+# node1: the worker does not start a duplicate API server.
+vllm serve /models/model --distributed-executor-backend mp \
+  --tensor-parallel-size 8 --pipeline-parallel-size 2 \
+  --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29500 --headless
 ```
+
+These commands do not create nodes, model files or connectivity. Kubernetes requires appropriate concurrent worker creation, pre-readiness DNS, per-Pod VLLM_HOST_IP, internal connectivity and shared memory. Ray requires a functioning cluster and compatible Ray dependency before starting one API entry point with --distributed-executor-backend ray; see [Ray](ray/README.md). Keep internal communication ports private.
 
 ## Performance Optimization
 
-![Diagram showing GPU memory, throughput, and network optimization techniques, each with its configuration flag, converging on overall performance improvement.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-4.svg)
+![Current memory, offload, scheduler and communication tuning requires workload measurement.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-4.png)
 
-### GPU Memory Optimization
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-4.html)
 
-Methods to optimize vLLM's GPU memory usage:
+### Memory, Scheduler and Communication Options
 
-1. **GPU Memory Utilization Adjustment**:
+CacheConfig in 0.29.0 defaults gpu_memory_utilization to 0.92; this is not a hard cap on all process VRAM. The example explicitly chooses 0.80. --kv-cache-memory-bytes overrides automatic KV-cache sizing, so inspect option precedence.
 
-```bash
---gpu-memory-utilization=0.9
-```
+--swap-space is absent from the current CLI. Weight CPU offload and KV offload are separate capabilities/configurations, not a guarantee that host RAM solves GPU limits. Prefix caching can default on for supported models; chunked prefill is also model-dependent. Queue limits, token budgets, max-num-seqs and max-model-len are different controls.
 
-2. **Quantization Application**:
+EFA requires supported EC2 devices, AMI/plugin/network and AWS OFI NCCL/libfabric. Do not copy invented NCCL_IB_ENABLE_RDMA flags or arbitrary mlx5/GID settings as universal defaults. Check current NVIDIA/PyTorch variables and actual backend logs. Single-node NCCL tests do not establish multi-node EFA performance.
 
-```bash
---quantization awq
-```
+## Historical Measurement: Qwen2.5-7B on a Single L4 GPU
 
-3. **Swap Space Utilization**:
+These are historical measurements reported in the [September 4, 2026 repository commit](https://github.com/Atom-oh/kubernetes-docs/commit/8622d388cb684dc4f68083af7be6d91f80b79106). This audit did not find raw request results/server logs or a complete client artifact and did not rerun the experiment. The reported numbers are preserved, not relabeled as current 0.29.0 performance or independently reproduced results.
 
-```bash
---swap-space=16
-```
+![Historical L4 benchmark report with limits on raw logs and independent reproduction.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
 
-### Throughput Optimization
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-6.html)
 
-Methods to optimize vLLM's throughput:
+### Setup
 
-1. **Batch Size Adjustment**:
+- **Cluster**: a dedicated Karpenter NodePool (`bench-gpu`, on-demand `g6.2xlarge` — 1x NVIDIA L4, 24GB GPU memory, 8 vCPU, 32 GiB RAM), tainted `nvidia.com/gpu=true:NoSchedule` and labeled to join the existing `nvidia-device-plugin` daemonsets, deleted immediately after the run.
+- **Server**: `vllm/vllm-openai:v0.6.4.post1` (released 2024-11-15 — the vLLM project has since shipped its V1 engine with prefix caching on by default, so treat this as a snapshot of that release line, not current vLLM), model `Qwen/Qwen2.5-7B-Instruct`, `--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`. One precision (bf16, the model's native dtype) with no quantization, speculative decoding, or prefix caching — the plain defaults this page describes elsewhere.
+- **Client**: a Python `ThreadPoolExecutor` running as a Job **inside the cluster** (a separate, non-GPU node), hitting `/v1/chat/completions` through the `vllm-server` ClusterIP Service. Non-streaming, `temperature=0`, `max_tokens=128`, 8 rotating short prompts (Kubernetes concept questions asking for 1-2 sentence answers). In practice every response ran close to the 128-token cap (a consistent ~102-token mean across all three concurrent batches) rather than stopping at 1-2 sentences — useful for comparing throughput apples-to-apples across concurrency levels, but worth knowing before reading the latency numbers as "time to answer a short question."
+- **Cold start**: from the vLLM engine's startup log to its `/health` endpoint returning `200`, about 4.5 minutes — dominated by downloading the ~15 GB of Qwen2.5-7B-Instruct weights from Hugging Face into the pod's ephemeral cache. Image pull time is not included; it was not measured separately.
 
-```bash
---max-num-batched-tokens=8192
-```
-
-2. **KV Cache Optimization**:
-
-```bash
---block-size=16
-```
-
-3. **Tensor Parallel Processing Adjustment**:
-
-```bash
---tensor-parallel-size=8
-```
-
-### Network Optimization
-
-Methods to optimize network performance in distributed deployments:
-
-1. **EFA (Elastic Fabric Adapter) Utilization**:
+### Reproduce
 
 ```yaml
-resources:
-  limits:
-    nvidia.com/gpu: 8
-    vpc.amazonaws.com/efa: 1
+# NodePool (Karpenter) - dedicated, deleted after the run — nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata: { name: bench-gpu }
+spec:
+  limits: { cpu: "16", memory: 128Gi, nvidia.com/gpu: "1" }
+  template:
+    metadata:
+      labels: { node-type: bench-gpu, nvidia.com/device-plugin.config: default }
+    spec:
+      expireAfter: 6h
+      nodeClassRef: { group: karpenter.k8s.aws, kind: EC2NodeClass, name: gpu }
+      requirements:
+        - { key: node.kubernetes.io/instance-type, operator: In, values: [g6.2xlarge] }
+      taints: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+---
+# vLLM server (namespace bench-gpu) + the ClusterIP Service the client calls
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: vllm-server } }
+  template:
+    metadata: { labels: { app: vllm-server } }
+    spec:
+      nodeSelector: { node-type: bench-gpu }
+      tolerations: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:v0.6.4.post1
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--max-model-len", "4096",
+                 "--gpu-memory-utilization", "0.90", "--dtype", "bfloat16"]
+          ports: [{ containerPort: 8000 }]
+          resources:
+            limits: { nvidia.com/gpu: "1" }
+            requests: { nvidia.com/gpu: "1", cpu: "3", memory: 20Gi }
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 30, periodSeconds: 10, failureThreshold: 60 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  selector: { app: vllm-server }
+  ports: [{ port: 8000, targetPort: 8000 }]
 ```
 
-2. **NCCL Settings Optimization**:
+The manifests show part of the reported environment. They omit namespace creation, the existing EC2NodeClass and a complete client script, so they do not establish full reproduction. nvidia.com/device-plugin.config:default was a condition of that shared DaemonSet configuration, not a universal scheduling label requirement. The reported on-demand claim also needs the actual historical configuration.
 
-```yaml
-env:
-- name: NCCL_DEBUG
-  value: "INFO"
-- name: NCCL_MIN_NCHANNELS
-  value: "4"
-- name: NCCL_SOCKET_IFNAME
-  value: "^lo,docker"
-- name: NCCL_ASYNC_ERROR_HANDLING
-  value: "1"
-```
+### Results
 
-3. **Node Placement Optimization**:
+| Concurrency | Requests | Wall time | Client latency p50 / p90 | Client aggregate throughput | Server-reported peak generation throughput | GPU KV cache usage |
+|---|---|---|---|---|---|---|
+| 1 (serial) | 10 | ~53.2 s (sum of request latencies) | 5.65 s / 7.43 s | ~17-18 tokens/s per request | ~17 tokens/s | 0.1-0.2% |
+| 4 | 16 | 27.78 s | 6.99 s / 7.88 s | 58.67 tokens/s | 65-66 tokens/s | 0.4-0.7% |
+| 8 | 32 | 30.02 s | 7.18 s / 8.15 s | 109.04 tokens/s | 123-129 tokens/s | 0.8-1.4% |
+| 16 | 64 | 31.35 s | 7.52 s / 8.74 s | 208.08 tokens/s | up to 243 tokens/s | 1.5-2.6% |
 
-```yaml
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values:
-          - us-west-2a
-```
+Client aggregate throughput is completion-token count divided by measured wall time. Server Avg generation throughput is an interval average; its largest logged value is not an instantaneous “true peak.” Time windows, token accounting and HTTP boundaries differ, so they are not directly interchangeable metrics.
+
+### Interpretation
+
+Reported p50 increased from 5.65s to 7.52s, about 33.1%. Aggregate throughput at concurrency 4→8→16 was 58.67→109.04→208.08tokens/s. Distinguish this batching observation from causal proof of the underlying bottleneck.
+
+Dividing roughly 300GB/s bandwidth by 15.2GB of weights gives an idealized roofline near 20 tokens/s. This audit has no profiler evidence directly measuring bandwidth or FLOP execution, so it does not establish “definitely memory-bound” or “nearly free additional requests.” KV-cache occupancy and total VRAM use are different quantities.
+
+### Caveats
+
+This is a single run (n=1) on one model, one precision (bf16), one GPU type, and one context length — treat it as one calibrated data point, not a general vLLM/L4 performance claim. The client ran inside the cluster (a separate, non-GPU node), so network latency reflects intra-cluster hops, not an external caller. Latency here is full end-to-end HTTP response time, not time-to-first-token (TTFT) — no streaming was tested. Prefix caching, speculative decoding, FP8, and multi-GPU tensor parallelism (all described earlier on this page) were not exercised. Full reproduction needs missing execution artifacts and environment details; do not extrapolate these numbers to a different model size, GPU, or prompt length.
 
 ## Monitoring and Logging
 
-![Diagram showing vLLM, GPU, and Kubernetes metrics flowing into a Prometheus/Grafana monitoring stack that produces dashboards and alerts, alongside a separate logging stack.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-5.svg)
+![Actual metrics on API port 8000 and separate logging/access boundaries.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-5.png)
 
-### Prometheus Metrics
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-5.html)
 
-Method to collect Prometheus metrics from vLLM server:
+### Metrics and Logs
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-metrics
-  labels:
-    app: vllm-inference
-spec:
-  selector:
-    app: vllm-inference
-  ports:
-  - port: 8001
-    targetPort: 8001
-    name: metrics
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: vllm-metrics
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: vllm-inference
-  endpoints:
-  - port: metrics
-    interval: 15s
+The default /metrics endpoint uses the API's port 8000. Do not invent a separate 8001 port or --enable-metrics=true. Match Service labels, named ports and namespace selection in ServiceMonitor.
+
+```promql
+# End-to-end p95 by model
+histogram_quantile(0.95, sum by (le, model_name) (rate(vllm:e2e_request_latency_seconds_bucket[5m])))
+# Generation-token throughput
+sum by (model_name) (rate(vllm:generation_tokens_total[5m]))
+# Queued requests
+sum by (model_name) (vllm:num_requests_waiting)
 ```
 
-### Log Collection
-
-Method to collect vLLM server logs to CloudWatch:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluentd-config
-  namespace: logging
-data:
-  fluent.conf: |
-    <source>
-      @type tail
-      path /var/log/containers/vllm-*.log
-      pos_file /var/log/fluentd-vllm.log.pos
-      tag kubernetes.vllm.*
-      read_from_head true
-      <parse>
-        @type json
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
-      </parse>
-    </source>
-
-    <filter kubernetes.vllm.**>
-      @type kubernetes_metadata
-      @id filter_kube_metadata
-    </filter>
-
-    <match kubernetes.vllm.**>
-      @type cloudwatch_logs
-      log_group_name /eks/vllm/logs
-      log_stream_name_key $.kubernetes.pod_name
-      remove_log_stream_name_key true
-      auto_create_stream true
-      region us-west-2
-    </match>
-```
+vllm:kv_cache_usage_perc is a ratio where 1 means 100%, not total GPU-memory bytes. Observe gateway errors/cancellations alongside success counters, and do not call healthy idle periods a low-throughput outage. Verify actual endpoint names/labels. Distinguish CRI framing from application logs and avoid indiscriminate prompt/output/token logging.
 
 ## Autoscaling
 
-![Diagram showing CPU, GPU, request-rate, and queue-length signals driving pod-level autoscaling, which in turn drives GPU node autoscaling and spot capacity.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-6.svg)
+![Validated metrics, one Pod scaling owner, independent replicas and a separate node capacity owner.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-10.png)
 
-### HPA (Horizontal Pod Autoscaler)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-10.html)
 
-Method to automatically scale vLLM servers based on request volume:
+### Autoscaling and Availability
 
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: vllm-inference-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: vllm-inference
-  minReplicas: 1
-  maxReplicas: 5
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Pods
-    pods:
-      metric:
-        name: requests_per_second
-      target:
-        type: AverageValue
-        averageValue: 100
-```
+Scaling independent replicas with HPA/KEDA differs from scaling a sharded model's worker group. Increasing StatefulSet replicas does not automatically reconfigure TP/PP. Validate adapter request/queue signals, and do not use CPU-utilization HPA without CPU requests. Avoid competing Karpenter/Cluster Autoscaler ownership of the same capacity.
 
-### Node Autoscaling with Karpenter
-
-Method to automatically provision GPU nodes:
-
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: vllm-gpu
-spec:
-  template:
-    spec:
-      requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        - p3.16xlarge
-        - g5.12xlarge
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values:
-        - on-demand
-      - key: kubernetes.io/arch
-        operator: In
-        values:
-        - amd64
-      - key: vpc.amazonaws.com/efa
-        operator: In
-        values:
-        - "true"
-      nodeClassRef:
-        name: vllm-gpu-class
-  limits:
-    nvidia.com/gpu: 32
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: vllm-gpu-class
-spec:
-  subnetSelector:
-    karpenter.sh/discovery: vllm-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: vllm-cluster
-  ttlSecondsAfterEmpty: 30
-```
+PDBs constrain some voluntary evictions, not every failure. Independent replicas can span AZs; placing a communication-heavy TP/PP group across AZs has separate latency/cost implications. Validate model loading, warmup, draining, in-flight streams and spare GPUs before claiming interruption-free updates.
 
 ## Security Configuration
 
-### Network Policy
+--api-key does not protect every endpoint. This version's middleware guards /v1, /v2, /inference and /cohere prefixes; /invocations, /metrics and some operational endpoints need additional protection. An authenticated gateway should allow only required paths/methods; restrict distributed communication to trusted networks. CORS is not authentication.
 
-Method to restrict network access to vLLM servers:
+Runtime LoRA, remote model code and multimodal URLs each introduce trust/permission/SSRF boundaries. Regex blocking of “ignore instructions” does not prevent all prompt injection or guarantee PII removal. Enforce tool/data permissions independently of model output.
 
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: vllm-network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: vllm-inference
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: api-gateway
-    ports:
-    - protocol: TCP
-      port: 8000
-  - from:
-    - podSelector:
-        matchLabels:
-          app: vllm-inference
-    ports:
-    - protocol: TCP
-      port: 29500
-  egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: vllm-inference
-    ports:
-    - protocol: TCP
-      port: 29500
-  - to:
-    ports:
-    - protocol: TCP
-      port: 443
-```
-
-### Security Context
-
-Method to configure container security context:
-
-```yaml
-securityContext:
-  runAsUser: 1000
-  runAsGroup: 1000
-  fsGroup: 1000
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-    - ALL
-```
+Provide secrets as files and place Pod/container securityContext fields correctly. Match NetworkPolicy selectors, DNS, scrape direction and internal traffic to actual configuration. Pod annotations cannot enable API-server auditing; do not log Secret RequestResponse bodies. EKS control-plane audit and application access logs are separate.
 
 ## Client Integration
 
-![Diagram showing client SDKs reaching vLLM through an API gateway, a security layer for authentication and rate limiting, and finally the load-balanced backend service.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-7.svg)
+![Authenticated gateway allowlists and separate operator access protect internal vLLM endpoints.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-7.png)
 
-### API Gateway
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-7.html)
 
-Method to deploy an API gateway in front of vLLM servers:
+### Client Request
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-gateway
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: api-gateway
-  template:
-    metadata:
-      labels:
-        app: api-gateway
-    spec:
-      containers:
-      - name: api-gateway
-        image: nginx:latest
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: nginx-config
-          mountPath: /etc/nginx/conf.d
-      volumes:
-      - name: nginx-config
-        configMap:
-          name: nginx-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-config
-data:
-  default.conf: |
-    server {
-      listen 80;
-
-      location /v1/ {
-        proxy_pass http://vllm-inference:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-      }
-    }
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-gateway
-spec:
-  selector:
-    app: api-gateway
-  ports:
-  - port: 80
-    targetPort: 80
-  type: LoadBalancer
-```
-
-### Client Example
-
-Method to send requests to vLLM server using Python client:
+After deployment/readiness validation, an authorized developer can use kubectl port-forward -n ml-inference service/vllm-demo 8000:8000. Keep its default localhost binding. This local example is not a replacement for production gateway authentication.
 
 ```python
-import requests
 import json
-
-url = "http://api-gateway/v1/completions"
+import urllib.request
 
 payload = {
-    "model": "llama-3.1-70b",
-    "prompt": "Once upon a time",
-    "max_tokens": 100,
-    "temperature": 0.7
+    "model": "qwen3-demo",
+    "messages": [{"role": "user", "content": "Explain a Kubernetes Pod briefly."}],
+    "max_tokens": 64,
+    "temperature": 0,
+    "chat_template_kwargs": {"enable_thinking": False},
 }
-
-headers = {
-    "Content-Type": "application/json"
-}
-
-response = requests.post(url, headers=headers, data=json.dumps(payload))
-
-print(response.json())
+request = urllib.request.Request(
+    "http://127.0.0.1:8000/v1/chat/completions",
+    data=json.dumps(payload).encode(),
+    headers={"Content-Type": "application/json"},
+    method="POST",
+)
+with urllib.request.urlopen(request, timeout=60) as response:
+    result = json.load(response)
+print(result["choices"][0]["message"]["content"])
 ```
 
-## Best Practices
+Request model must match served-model-name or /v1/models. Production clients need file-based gateway credentials plus timeout/error/stream handling. A JSON body model field is not an HTTP model header, so header routing does not automatically inspect it.
 
-### Resource Management
+## Validation Scope
 
-1. **Consider Memory Overhead**:
-   - Allocate sufficient CPU memory in addition to GPU memory.
-   - It is recommended to allocate approximately twice the model size in CPU memory.
-
-2. **CPU Core Allocation**:
-   - Allocate at least 4 CPU cores per GPU.
-   - More CPU cores may be needed when using tensor parallelization.
-
-3. **Node Selection**:
-   - Select appropriate node types based on model size.
-   - Choose nodes with high memory bandwidth.
-
-### High Availability
-
-1. **Multi-Availability Zone Deployment**:
-   - Deploy vLLM servers across multiple availability zones.
-   - Ensure sufficient capacity in each availability zone.
-
-2. **Load Balancing**:
-   - Distribute requests across multiple vLLM server instances.
-   - Configure session affinity so requests from the same user are routed to the same server.
-
-3. **Failure Recovery**:
-   - Configure health checks to detect failed servers.
-   - Implement automatic recovery mechanisms.
-
-### Cost Optimization
-
-1. **Utilize Spot Instances**:
-   - Use Spot instances to reduce costs.
-   - Suitable for interruption-tolerant workloads.
-
-2. **Model Quantization**:
-   - Apply INT8 or INT4 quantization to reduce memory usage.
-   - Consider the balance between accuracy and performance.
-
-3. **Autoscaling**:
-   - Automatically scale servers based on request volume.
-   - Reduce costs by scaling down servers during idle times.
-
-## Conclusion
-
-vLLM is the most actively developed open-source LLM inference engine, comprehensively supporting production-essential features including Speculative Decoding, Prefix Caching, dynamic LoRA loading, Structured Output, and Tool Calling. Combined with appropriate GPU instance selection, high-performance storage, network optimization, and auto-scaling on EKS, you can build a cost-effective and scalable LLM serving platform. For comparisons with other frameworks like SGLang and TGI, refer to the [Inference Frameworks](./04-inference-frameworks.md) chapter.
+Pinned source was inspected for CLI arguments, metrics, authentication and artifact metadata. Kubernetes schemas/local HTTP fixtures do not validate actual vLLM parser/kernel/GPU execution. This audit did not download model weights or create GPU servers/cloud resources.
 
 ## References
 
-- [vLLM Official Documentation](https://docs.vllm.ai/) - Official vLLM documentation and latest feature guides
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - AWS guide and examples for deploying AI/ML workloads on EKS
+- [vLLM 0.29.0 release](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)
+- [Parallelism and scaling](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/serving/parallelism_scaling.md)
+- [Security boundaries](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/security.md)
+- [Production metrics](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/metrics.md)
+- [Structured outputs](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/structured_outputs.md)
+- [LoRA adapters](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/lora.md)
 
 ## Quiz
 

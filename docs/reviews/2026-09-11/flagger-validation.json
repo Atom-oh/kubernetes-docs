@@ -1,0 +1,50 @@
+{
+  "baseline": {
+    "flagger": "1.45.0",
+    "loadtester": "0.39.0",
+    "flux": "2.9.5",
+    "podinfo": "6.15.0"
+  },
+  "schema": {
+    "fences": 92,
+    "yaml": 66,
+    "bash": 20,
+    "javascript": 2,
+    "json": 2,
+    "crds": 42,
+    "specFragments": 18,
+    "errors": []
+  },
+  "helm": {
+    "flaggerLeaderReplicas": 2,
+    "loadtesterReplicas": 1,
+    "podinfoServiceAbsent": true,
+    "podinfoDeploymentReplicasOmitted": true,
+    "podinfoHPAPresent": true
+  },
+  "httpContracts": {
+    "leafCases": 26,
+    "implementation": "pinned upstream HTTP helpers, gate handlers and Datadog RunQuery; local payload/logging stubs only",
+    "observed": [
+      "HTTP204 rejected;200/201/202 accepted",
+      "metadata template text forwarded literally",
+      "gate approval is name.namespace, notchecksum scoped",
+      "gate restart loses approval",
+      "Datadog selectsoldestfirstpoint; null decoded aszero"
+    ]
+  },
+  "prometheus": {
+    "expressionCases": 11,
+    "alertTimingCases": 6,
+    "result": "passed with one-ULP fuzzy comparison",
+    "tool": "promtool3.14.0"
+  },
+  "limitations": "No real cluster deployment, AWS/Datadog request, notification or Grafana import. k6 syntax only; not installed in standard loadtester.",
+  "diagrams": {
+    "count": 17,
+    "composition": "all9/9",
+    "viewportsPerDiagram": 4,
+    "screenshots": "all inspected; PNG regenerated",
+    "evidence": "flagger-diagrams-validation.json"
+  }
+}

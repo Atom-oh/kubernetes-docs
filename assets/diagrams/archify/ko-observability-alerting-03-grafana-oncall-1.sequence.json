@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "알림 처리 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "routing",
+        "label": "수신과 라우팅",
+        "focus": [
+          "src",
+          "oncall",
+          "route",
+          "esc"
+        ],
+        "note": "알림을 그룹화한 뒤 라우팅 규칙으로 에스컬레이션 체인을 고른다."
+      },
+      {
+        "id": "first-notify",
+        "label": "1차 알림",
+        "focus": [
+          "esc",
+          "sched",
+          "notif"
+        ],
+        "note": "스케줄에서 현재 온콜 담당자를 찾아 알림을 보낸다."
+      },
+      {
+        "id": "escalate",
+        "label": "응답 없음 시 에스컬레이션",
+        "focus": [
+          "esc",
+          "sched",
+          "notif"
+        ],
+        "note": "대기 시간이 지나면 다음 담당자에게 자동으로 에스컬레이션된다."
+      },
+      {
+        "id": "ack",
+        "label": "확인과 상태 업데이트",
+        "focus": [
+          "notif",
+          "oncall",
+          "src"
+        ],
+        "note": "담당자가 확인(Acknowledge)하면 소스에 상태가 반영된다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "src",
+      "type": "external",
+      "label": "Alert Source",
+      "sublabel": "Alertmanager · Grafana 등"
+    },
+    {
+      "id": "oncall",
+      "type": "backend",
+      "label": "OnCall",
+      "sublabel": "Alert Engine"
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "Route",
+      "sublabel": "라우팅 규칙"
+    },
+    {
+      "id": "esc",
+      "type": "backend",
+      "label": "Escalation Chain",
+      "sublabel": "에스컬레이션 정책"
+    },
+    {
+      "id": "sched",
+      "type": "database",
+      "label": "Schedule",
+      "sublabel": "온콜 스케줄"
+    },
+    {
+      "id": "notif",
+      "type": "messagebus",
+      "label": "Notification",
+      "sublabel": "Slack · 모바일 · 전화"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 275,
+      "label": "수신 · 라우팅"
+    },
+    {
+      "from": 288,
+      "to": 395,
+      "label": "1차 알림"
+    },
+    {
+      "from": 408,
+      "to": 515,
+      "label": "응답 없음 → 에스컬레이션"
+    },
+    {
+      "from": 528,
+      "to": 612,
+      "label": "확인 · 상태 업데이트"
+    }
+  ],
+  "messages": [
+    {
+      "id": "receive",
+      "from": "src",
+      "to": "oncall",
+      "y": 185,
+      "label": "알림 수신",
+      "note": "관련 알림 그룹화"
+    },
+    {
+      "id": "evaluate",
+      "from": "oncall",
+      "to": "route",
+      "y": 222,
+      "label": "라우팅 규칙 평가"
+    },
+    {
+      "id": "select-chain",
+      "from": "route",
+      "to": "esc",
+      "y": 258,
+      "label": "에스컬레이션 체인 선택"
+    },
+    {
+      "id": "query-current",
+      "from": "esc",
+      "to": "sched",
+      "y": 305,
+      "label": "현재 온콜 담당자 조회"
+    },
+    {
+      "id": "current-info",
+      "from": "sched",
+      "to": "esc",
+      "y": 340,
+      "label": "담당자 정보",
+      "variant": "return"
+    },
+    {
+      "id": "notify",
+      "from": "esc",
+      "to": "notif",
+      "y": 378,
+      "label": "알림 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "query-next",
+      "from": "esc",
+      "to": "sched",
+      "y": 425,
+      "label": "다음 담당자 조회",
+      "note": "대기 시간 경과 후"
+    },
+    {
+      "id": "next-info",
+      "from": "sched",
+      "to": "esc",
+      "y": 460,
+      "label": "다음 담당자",
+      "variant": "return"
+    },
+    {
+      "id": "escalate-notify",
+      "from": "esc",
+      "to": "notif",
+      "y": 498,
+      "label": "에스컬레이션 알림",
+      "variant": "emphasis"
+    },
+    {
+      "id": "acknowledge",
+      "from": "notif",
+      "to": "oncall",
+      "y": 548,
+      "label": "담당자 확인(Acknowledge)"
+    },
+    {
+      "id": "status",
+      "from": "oncall",
+      "to": "src",
+      "y": 590,
+      "label": "상태 업데이트",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "oncall",
+      "from": 180,
+      "to": 596,
+      "type": "backend"
+    },
+    {
+      "participant": "esc",
+      "from": 253,
+      "to": 505,
+      "type": "backend"
+    },
+    {
+      "participant": "sched",
+      "from": 300,
+      "to": 345,
+      "type": "database"
+    },
+    {
+      "participant": "sched",
+      "from": 420,
+      "to": 465,
+      "type": "database"
+    },
+    {
+      "participant": "notif",
+      "from": 373,
+      "to": 552,
+      "type": "messagebus"
+    }
+  ]
+}

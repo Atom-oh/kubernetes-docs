@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Cross-Cluster Traffic Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      640
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "east-side",
+        "label": "East: request origin",
+        "focus": [
+          "client",
+          "client_proxy"
+        ],
+        "note": "The East Linkerd proxy intercepts the client pod's request and resolves the target web-west.production to the remote cluster."
+      },
+      {
+        "id": "cross-cluster",
+        "label": "Cross-cluster mTLS",
+        "focus": [
+          "client_proxy",
+          "gw_west"
+        ],
+        "note": "The East proxy opens an mTLS connection to the West Gateway over the internet or VPN — the only hop that crosses the cluster boundary."
+      },
+      {
+        "id": "west-side",
+        "label": "West: local forward and reply",
+        "focus": [
+          "gw_west",
+          "server_proxy",
+          "server"
+        ],
+        "note": "The Gateway forwards to the local service, the server pod handles it, and the response returns along the same hops in reverse."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client Pod",
+      "sublabel": "East cluster"
+    },
+    {
+      "id": "client_proxy",
+      "type": "security",
+      "label": "Client Proxy",
+      "sublabel": "East · linkerd-proxy"
+    },
+    {
+      "id": "gw_west",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "West cluster"
+    },
+    {
+      "id": "server_proxy",
+      "type": "security",
+      "label": "Server Proxy",
+      "sublabel": "West · linkerd-proxy"
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Server Pod",
+      "sublabel": "West cluster"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 345,
+      "label": "Request — East to West"
+    },
+    {
+      "from": 365,
+      "to": 545,
+      "label": "Response — same path in reverse"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req-client",
+      "from": "client",
+      "to": "client_proxy",
+      "y": 195,
+      "label": "HTTP Request",
+      "note": "Target: web-west.production"
+    },
+    {
+      "id": "req-mtls",
+      "from": "client_proxy",
+      "to": "gw_west",
+      "y": 245,
+      "label": "mTLS (via Internet/VPN)",
+      "variant": "security",
+      "note": "Cross-cluster mTLS"
+    },
+    {
+      "id": "req-forward",
+      "from": "gw_west",
+      "to": "server_proxy",
+      "y": 290,
+      "label": "Forward to local service",
+      "variant": "emphasis"
+    },
+    {
+      "id": "req-server",
+      "from": "server_proxy",
+      "to": "server",
+      "y": 330,
+      "label": "HTTP Request"
+    },
+    {
+      "id": "res-server",
+      "from": "server",
+      "to": "server_proxy",
+      "y": 395,
+      "label": "HTTP Response",
+      "variant": "return"
+    },
+    {
+      "id": "res-gw",
+      "from": "server_proxy",
+      "to": "gw_west",
+      "y": 440,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "res-mtls",
+      "from": "gw_west",
+      "to": "client_proxy",
+      "y": 485,
+      "label": "mTLS Response",
+      "variant": "return"
+    },
+    {
+      "id": "res-client",
+      "from": "client_proxy",
+      "to": "client",
+      "y": 530,
+      "label": "HTTP Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "client_proxy",
+      "from": 190,
+      "to": 536,
+      "type": "security"
+    },
+    {
+      "participant": "gw_west",
+      "from": 240,
+      "to": 491,
+      "type": "cloud"
+    },
+    {
+      "participant": "server_proxy",
+      "from": 285,
+      "to": 446,
+      "type": "security"
+    },
+    {
+      "participant": "server",
+      "from": 325,
+      "to": 400,
+      "type": "backend"
+    }
+  ]
+}

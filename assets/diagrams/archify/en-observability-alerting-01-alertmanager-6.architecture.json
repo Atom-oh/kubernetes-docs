@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Alertmanager Clustering Architecture",
+    "output": "en-observability-alerting-01-alertmanager-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "fan-out",
+        "label": "Alert fan-out",
+        "focus": [
+          "prometheus",
+          "am1",
+          "am2",
+          "am3"
+        ],
+        "note": "Prometheus sends the same alerts to all three replicas (alertmanager-0/1/2:9093)."
+      },
+      {
+        "id": "gossip",
+        "label": "Gossip sync",
+        "focus": [
+          "am1",
+          "am2",
+          "am3"
+        ],
+        "note": "Replicas gossip on port 9094 to sync the notification log (nflog) and silences."
+      },
+      {
+        "id": "notify",
+        "label": "Final delivery",
+        "focus": [
+          "am1",
+          "receivers"
+        ],
+        "note": "The synced nflog deduplicates, so receivers get each alert only once."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "Evaluates alert rules",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "am1",
+      "type": "backend",
+      "label": "Alertmanager 1",
+      "sublabel": "alertmanager-0 · sends after dedup",
+      "pos": [
+        400,
+        100
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "am2",
+      "type": "backend",
+      "label": "Alertmanager 2",
+      "sublabel": "alertmanager-1",
+      "pos": [
+        400,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "am3",
+      "type": "backend",
+      "label": "Alertmanager 3",
+      "sublabel": "alertmanager-2",
+      "pos": [
+        400,
+        500
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "receivers",
+      "type": "external",
+      "label": "Receivers",
+      "sublabel": "Slack / PagerDuty / Email",
+      "pos": [
+        860,
+        100
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Alertmanager cluster (StatefulSet, replicas: 3)",
+      "wraps": [
+        "am1",
+        "am2",
+        "am3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "alert-am1",
+      "from": "prometheus",
+      "to": "am1",
+      "label": "alerts",
+      "labelAt": [
+        295,
+        225
+      ]
+    },
+    {
+      "id": "alert-am2",
+      "from": "prometheus",
+      "to": "am2",
+      "label": "alerts",
+      "labelAt": [
+        350,
+        332
+      ]
+    },
+    {
+      "id": "alert-am3",
+      "from": "prometheus",
+      "to": "am3",
+      "label": "alerts",
+      "labelAt": [
+        295,
+        425
+      ]
+    },
+    {
+      "id": "gossip-21",
+      "from": "am2",
+      "to": "am1",
+      "label": "Gossip :9094",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        510,
+        232
+      ]
+    },
+    {
+      "id": "gossip-32",
+      "from": "am3",
+      "to": "am2",
+      "label": "Gossip :9094",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        510,
+        432
+      ]
+    },
+    {
+      "id": "gossip-13",
+      "from": "am1",
+      "to": "am3",
+      "label": "Gossip :9094",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "labelAt": [
+        662,
+        332
+      ]
+    },
+    {
+      "id": "notify",
+      "from": "am1",
+      "to": "receivers",
+      "label": "final notification",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Alert intake",
+      "items": [
+        "Register all three replicas under Prometheus alerting.alertmanagers",
+        "Every replica receives the same alerts"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Gossip cluster",
+      "items": [
+        "--cluster.listen-address=0.0.0.0:9094",
+        "--cluster.peer links the three replicas to each other",
+        "Syncs the notification log (nflog) and silences"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Deduplication",
+      "items": [
+        "An alert another replica already sent is found in nflog and not resent",
+        "If one replica fails, the others keep delivering"
+      ]
+    }
+  ]
+}

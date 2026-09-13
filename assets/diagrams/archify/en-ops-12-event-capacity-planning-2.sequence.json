@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      640
+    ],
+    "title": "From metrics to ready Pods"
+  },
+  "participants": [
+    {
+      "id": "keda",
+      "type": "messagebus",
+      "label": "KEDA",
+      "sublabel": "Metrics adapter"
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA",
+      "sublabel": "Recommendation"
+    },
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "Controllers / scheduler"
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter"
+    },
+    {
+      "id": "nodes",
+      "type": "external",
+      "label": "EC2 / nodes",
+      "sublabel": "Bootstrap / kubelet"
+    }
+  ],
+  "segments": [
+    {
+      "from": 155,
+      "to": 295,
+      "label": "Demand and scheduling needs"
+    },
+    {
+      "from": 310,
+      "to": 520,
+      "label": "Prepare nodes and apps; measure lead time"
+    }
+  ],
+  "messages": [
+    {
+      "id": "metrics",
+      "from": "keda",
+      "to": "hpa",
+      "y": 185,
+      "label": "Expose metrics"
+    },
+    {
+      "id": "replicas",
+      "from": "hpa",
+      "to": "k8s",
+      "y": 230,
+      "label": "Update the scale target",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "karpenter",
+      "to": "k8s",
+      "y": 275,
+      "label": "Observe unschedulable Pods"
+    },
+    {
+      "id": "launch",
+      "from": "karpenter",
+      "to": "nodes",
+      "y": 340,
+      "label": "Launch instances",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-ready",
+      "from": "nodes",
+      "to": "k8s",
+      "y": 390,
+      "label": "Register / Node Ready",
+      "variant": "return"
+    },
+    {
+      "id": "schedule",
+      "from": "k8s",
+      "to": "nodes",
+      "y": 440,
+      "label": "Bind / start Pods"
+    },
+    {
+      "id": "pod-ready",
+      "from": "nodes",
+      "to": "k8s",
+      "y": 490,
+      "label": "Report Pod readiness",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "hpa",
+      "from": 180,
+      "to": 235,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 225,
+      "to": 505,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 270,
+      "to": 345,
+      "type": "cloud"
+    },
+    {
+      "participant": "nodes",
+      "from": 335,
+      "to": 505,
+      "type": "external"
+    }
+  ]
+}

@@ -1,79 +1,79 @@
 # Network Fundamentals Part 3 Quiz — Application Protocols
 
-> **Last Updated**: August 28, 2026
+> **Last Updated**: September 11, 2026
 
 Tests your understanding of the 10 application-layer protocols, from DNS to MQTT.
 
 ## Multiple Choice Questions
 
-1. When investigating "we enabled HTTP/3, why isn't it faster?", what should you check first?
+1. When HTTP/3 is enabled but shows no speedup, which transport-level check is useful?
    - A) The server certificate's expiry date
-   - B) Whether the firewall blocks UDP 443, forcing a fallback to TCP
+   - B) Whether UDP 443 is reachable and HTTP/3 was actually negotiated
    - C) The DNS TTL settings
    - D) The HTTP/2 header compression (HPACK) settings
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Whether the firewall blocks UDP 443, forcing a fallback to TCP**
+**Answer: B) Whether UDP 443 is reachable and HTTP/3 was actually negotiated**
 
 **Explanation:**
-HTTP/3 runs on QUIC (UDP 443). In environments with strict UDP policies (such as regulated financial networks), QUIC is blocked and traffic falls back to TCP-based HTTP/2, so HTTP/3's benefits never arrive. Also remember that on paths with near-zero loss and short RTTs, the improvement is small to begin with.
+HTTP/3 commonly uses QUIC over UDP 443. If that path is blocked, a client may use TCP-based HTTP/2 or HTTP/1.1 when available. Verify the negotiated protocol before comparing performance. Loss, RTT, workload, implementation and CPU/offload behavior all influence the result; this question does not establish the cause of a real incident.
 
 </details>
 
-2. What is the main reason DNS-based failover cuts over far more slowly than expected?
+2. Which factor can delay DNS failover after an authoritative record changes?
    - A) DNS uses only TCP, so handshake costs are high
-   - B) Even with a short TTL, some clients and intermediate resolvers do not honor it
+   - B) Previously cached answers, application caching and existing connections can outlive the record change
    - C) The root nameservers must approve the update
    - D) A records cannot be changed
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Even with a short TTL, some clients and intermediate resolvers do not honor it**
+**Answer: B) Previously cached answers, application caching and existing connections can outlive the record change**
 
 **Explanation:**
-DNS caches expire based on TTL, but some clients and resolvers ignore the TTL and cache longer. If you need fast cutover, handle it in front of DNS — at the anycast or load-balancer level.
+A newly reduced TTL does not shorten the lifetime of an answer already cached with an older TTL. Failure detection, record updates, application caching and connection reuse also affect recovery. Resolvers may serve stale data under defined failure conditions (RFC 8767). DNS, load balancer and anycast designs each require measured failure/convergence behavior.
 
 </details>
 
-3. From an enterprise network perspective, why is DoH (DNS over HTTPS) a "headache"?
+3. What policy issue can arise when a browser chooses an unapproved public DoH resolver?
    - A) Because DNS responses grow larger and waste bandwidth
-   - B) Because DNS-based filtering and logging stop working, and browsers can bypass the organization's internal DNS
+   - B) It can bypass the organization’s resolver policies and fail to resolve private names
    - C) Because UDP port 53 gets overloaded
    - D) Because it is incompatible with DNSSEC
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Because DNS-based filtering and logging stop working, and browsers can bypass the organization's internal DNS**
+**Answer: B) It can bypass the organization’s resolver policies and fail to resolve private names**
 
 **Explanation:**
-DoH wraps DNS queries in HTTPS, making them indistinguishable from ordinary web traffic. Privacy improves, but organizational DNS filtering/logging is neutralized, and a browser's own DoH resolver can break internal-domain resolution — so in regulated environments, browser policy controls plus enforcing the organization's resolver usually go together.
+DoH protects the client–resolver hop with HTTPS, including integrity. A separate public resolver can bypass controls at the organizational resolver, but managed DoH can itself provide policy and logging. Select approved resolvers with endpoint policy and test split DNS. Encryption does not make the resolver endpoint or all traffic metadata invisible.
 
 </details>
 
-4. You put an L4 load balancer in front of a gRPC service and traffic piles onto specific backends. Why?
+4. Why can an L4 load balancer concentrate gRPC traffic on a few backends?
     - A) Because Protocol Buffers serialization is asymmetric
-    - B) Because gRPC keeps one long-lived TCP connection and multiplexes requests over it, so per-connection balancing cannot spread requests evenly
+    - B) Many RPCs can share long-lived connections, while L4 balancing selects backends per connection
     - C) Because HTTP/2 header compression breaks at the load balancer
     - D) Because gRPC is UDP-based, so L4 balancing is impossible
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Because gRPC keeps one long-lived TCP connection and multiplexes requests over it, so per-connection balancing cannot spread requests evenly**
+**Answer: B) Many RPCs can share long-lived connections, while L4 balancing selects backends per connection**
 
 **Explanation:**
-An L4 load balancer distributes per connection only. gRPC multiplexes many requests over a single long-lived connection, so requests are not balanced individually. The fixes are L7 load balancing, client-side load balancing, or a service mesh (such as Istio).
+A gRPC channel can use zero or more HTTP/2 connections. A small number of long-lived connections can carry many RPCs, and an L4 balancer does not redistribute each RPC. A suitable client-side policy or gRPC-aware L7 proxy can improve request distribution; an established stream remains on its backend.
 
 </details>
 
 5. Which problem→response pairing for operating WebSocket services is WRONG?
     - A) Disconnects from load balancer idle timeouts → keep alive with ping/pong frames
     - B) Reconnection storms during deployments → exponential backoff with jitter
-    - C) Sharing connection state across instances when scaling out → use Redis Pub/Sub or similar
+    - C) Delivering application events across instances → use messaging such as Redis Pub/Sub, with each socket still owned locally
     - D) Proxy blocking the Upgrade header → raise to QoS 2
 
 <details>
@@ -82,23 +82,23 @@ An L4 load balancer distributes per connection only. gRPC multiplexes many reque
 **Answer: D) Proxy blocking the Upgrade header → raise to QoS 2**
 
 **Explanation:**
-QoS levels are an MQTT concept and have nothing to do with WebSocket. Whether proxies/firewalls pass the HTTP `Upgrade` handshake is something to verify and allow in proxy configuration. The other options are real operational issues — and correct responses — arising from WebSocket being a stateful, long-lived connection.
+QoS levels belong to MQTT and do not repair WebSocket handshakes. HTTP/1.1 uses Upgrade, while HTTP/2 and HTTP/3 use Extended CONNECT when supported. Heartbeats must match idle-timeout behavior; backoff and draining reduce reconnection spikes. Pub/Sub can distribute application events, but does not migrate sockets or by itself provide durable message delivery.
 
 </details>
 
 6. Which correctly pairs the three email-domain authentication mechanisms (SPF, DKIM, DMARC) with their roles?
     - A) SPF: message signing / DKIM: publishing allowed sender IPs / DMARC: enforcing encryption
-    - B) SPF: publish allowed sender IPs in DNS / DKIM: sign messages with a domain key / DMARC: declare failure policy and reporting
+    - B) SPF: authorize hosts for envelope/HELO identities / DKIM: sign covered content with a domain key / DMARC: align the visible From domain with passing SPF or DKIM and publish policy
     - C) SPF: receiving-server authentication / DKIM: transport encryption / DMARC: spam filtering
     - D) SPF: mail queue management / DKIM: MX record validation / DMARC: enforcing TLS
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) SPF: publish allowed sender IPs in DNS / DKIM: sign messages with a domain key / DMARC: declare failure policy and reporting**
+**Answer: B) SPF: authorize hosts for envelope/HELO identities / DKIM: sign covered content with a domain key / DMARC: align the visible From domain with passing SPF or DKIM and publish policy**
 
 **Explanation:**
-SMTP's original design has no authentication, so sender forgery is free. SPF publishes the domain's allowed sender IPs in DNS, DKIM detects forgery and tampering via domain-key signatures, and DMARC declares the handling policy and reporting for SPF/DKIM failures. Without all three, deliverability drops and you cannot stop domain impersonation.
+SPF checks the envelope/HELO domain and DKIM verifies covered content for its signing domain. DMARC requires at least one passing mechanism aligned with the visible From domain; it does not require both to pass. These mechanisms help domain protection but do not guarantee delivery or prevent display-name/lookalike-domain impersonation.
 
 </details>
 

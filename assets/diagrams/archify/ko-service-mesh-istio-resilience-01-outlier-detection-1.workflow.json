@@ -1,0 +1,238 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Outlier Detection 프로세스",
+    "output": "public/archmaps/ko-service-mesh-istio-resilience-01-outlier-detection-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "detect",
+        "label": "에러 감지",
+        "focus": [
+          "start",
+          "check",
+          "count",
+          "threshold"
+        ],
+        "note": "요청마다 에러 여부를 확인하고 연속 에러 수를 consecutiveErrors 임계값과 비교합니다."
+      },
+      {
+        "id": "eject-recover",
+        "label": "제외와 복구",
+        "focus": [
+          "threshold",
+          "eject",
+          "wait",
+          "retry",
+          "start"
+        ],
+        "note": "임계값을 넘은 인스턴스는 baseEjectionTime 동안 제외된 뒤 복구를 시도하고 다시 요청 순환으로 돌아갑니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "요청 진입"
+        },
+        "backend": {
+          "label": "처리 단계"
+        },
+        "security": {
+          "label": "판단 분기"
+        },
+        "external": {
+          "label": "트래픽 풀 제외"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "request",
+      "label": "요청 판단"
+    },
+    {
+      "id": "healthy",
+      "label": "정상 처리"
+    },
+    {
+      "id": "ejection",
+      "label": "제외 · 복구",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "check",
+    "count",
+    "threshold",
+    "eject",
+    "wait",
+    "retry"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "normal"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "normal"
+      },
+      {
+        "from": "threshold",
+        "to": "retry"
+      },
+      {
+        "from": "retry",
+        "to": "start"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "request",
+      "col": 0,
+      "type": "frontend",
+      "label": "요청 시작",
+      "width": 124
+    },
+    {
+      "id": "check",
+      "lane": "request",
+      "col": 1,
+      "type": "security",
+      "label": "에러 확인",
+      "tag": "판단",
+      "width": 124
+    },
+    {
+      "id": "count",
+      "lane": "request",
+      "col": 2,
+      "type": "backend",
+      "label": "에러 카운트 증가",
+      "sublabel": "increment",
+      "width": 156
+    },
+    {
+      "id": "threshold",
+      "lane": "request",
+      "col": 3,
+      "type": "security",
+      "label": "임계값 초과?",
+      "sublabel": "consecutiveErrors",
+      "tag": "판단",
+      "width": 144
+    },
+    {
+      "id": "normal",
+      "lane": "healthy",
+      "col": 5,
+      "type": "backend",
+      "label": "정상 처리",
+      "width": 160
+    },
+    {
+      "id": "eject",
+      "lane": "ejection",
+      "col": 3,
+      "type": "external",
+      "label": "인스턴스 제외",
+      "sublabel": "eject",
+      "width": 130
+    },
+    {
+      "id": "wait",
+      "lane": "ejection",
+      "col": 4,
+      "type": "backend",
+      "label": "대기 시간",
+      "sublabel": "baseEjectionTime",
+      "width": 116
+    },
+    {
+      "id": "retry",
+      "lane": "ejection",
+      "col": 5,
+      "type": "backend",
+      "label": "복구 시도",
+      "sublabel": "retry",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "check",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "count",
+      "label": "에러",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "normal",
+      "label": "성공",
+      "role": "branch",
+      "route": "up-channel"
+    },
+    {
+      "from": "count",
+      "to": "threshold",
+      "role": "main"
+    },
+    {
+      "from": "threshold",
+      "to": "normal",
+      "label": "No",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "threshold",
+      "to": "eject",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        640,
+        250
+      ]
+    },
+    {
+      "from": "eject",
+      "to": "wait",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "from": "wait",
+      "to": "retry",
+      "role": "main"
+    },
+    {
+      "from": "retry",
+      "to": "start",
+      "label": "요청 순환 재진입",
+      "variant": "dashed",
+      "role": "return",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "labelDy": 10
+    }
+  ]
+}

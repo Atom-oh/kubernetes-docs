@@ -1,0 +1,337 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Monitoring and Logging Architecture",
+    "locale": "en",
+    "output": "en-core-09-cluster-administration-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1170,
+      620
+    ],
+    "views": [
+      {
+        "id": "metrics-path",
+        "label": "Metrics path",
+        "focus": [
+          "api",
+          "node",
+          "ksm",
+          "ne",
+          "prom",
+          "alert",
+          "grafana"
+        ],
+        "note": "kube-state-metrics and Node Exporter expose API server and node metrics; Prometheus scrapes them and feeds Alertmanager and Grafana."
+      },
+      {
+        "id": "logs-path",
+        "label": "Logs path",
+        "focus": [
+          "pod",
+          "fluentd",
+          "es",
+          "kibana",
+          "loki",
+          "grafana"
+        ],
+        "note": "Pod logs are collected by Fluentd/Fluent Bit and forwarded to Elasticsearch (Kibana) and Loki; Loki logs are queried from Grafana."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "object state",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "Node",
+      "sublabel": "CPU · memory · disk",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "container logs",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ksm",
+      "type": "backend",
+      "label": "kube-state-metrics",
+      "sublabel": "Kubernetes object metrics",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ne",
+      "type": "backend",
+      "label": "Node Exporter",
+      "sublabel": "node metrics",
+      "pos": [
+        300,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "metric collection and storage",
+      "pos": [
+        580,
+        110
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "alert",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "alert management · notifications",
+      "pos": [
+        880,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "metrics · log visualization",
+      "pos": [
+        880,
+        180
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "fluentd",
+      "type": "backend",
+      "label": "Fluentd / Fluent Bit",
+      "sublabel": "log collection and forwarding",
+      "pos": [
+        300,
+        380
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "es",
+      "type": "database",
+      "label": "Elasticsearch",
+      "sublabel": "log storage and search",
+      "pos": [
+        580,
+        520
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "kibana",
+      "type": "frontend",
+      "label": "Kibana",
+      "sublabel": "log visualization",
+      "pos": [
+        880,
+        520
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "log aggregation",
+      "pos": [
+        580,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "api",
+        "node",
+        "pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Monitoring Stack",
+      "wraps": [
+        "ksm",
+        "ne",
+        "prom",
+        "alert",
+        "grafana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Logging Stack",
+      "wraps": [
+        "fluentd",
+        "es",
+        "kibana",
+        "loki"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-ksm",
+      "from": "api",
+      "to": "ksm"
+    },
+    {
+      "id": "node-ne",
+      "from": "node",
+      "to": "ne"
+    },
+    {
+      "id": "pod-fluentd",
+      "from": "pod",
+      "to": "fluentd",
+      "label": "logs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ksm-prom",
+      "from": "ksm",
+      "to": "prom",
+      "label": "scrape"
+    },
+    {
+      "id": "ne-prom",
+      "from": "ne",
+      "to": "prom",
+      "label": "scrape"
+    },
+    {
+      "id": "prom-alert",
+      "from": "prom",
+      "to": "alert",
+      "label": "alert rules"
+    },
+    {
+      "id": "prom-grafana",
+      "from": "prom",
+      "to": "grafana",
+      "label": "query metrics",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fluentd-es",
+      "from": "fluentd",
+      "to": "es"
+    },
+    {
+      "id": "es-kibana",
+      "from": "es",
+      "to": "kibana"
+    },
+    {
+      "id": "fluentd-loki",
+      "from": "fluentd",
+      "to": "loki"
+    },
+    {
+      "id": "loki-grafana",
+      "from": "loki",
+      "to": "grafana",
+      "label": "query logs",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Monitoring Tools",
+      "items": [
+        "Prometheus: metric collection and storage",
+        "Grafana: metric visualization",
+        "Alertmanager: alert management",
+        "kube-state-metrics: generates Kubernetes object metrics"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Logging Tools",
+      "items": [
+        "Fluentd/Fluent Bit: log collection and forwarding",
+        "Elasticsearch: log storage and search",
+        "Kibana: log visualization",
+        "Loki: log aggregation system, visualized in Grafana"
+      ]
+    }
+  ]
+}

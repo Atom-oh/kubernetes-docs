@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cost Optimization Best Practices",
+    "locale": "en",
+    "output": "en-eks-07-eks-cost-optimization-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      540
+    ],
+    "views": [
+      {
+        "id": "categories",
+        "label": "Three categories",
+        "focus": [
+          "root",
+          "general",
+          "workload",
+          "finance"
+        ],
+        "note": "Best practices fall into general practices, workload-specific optimization, and cost optimization for financial services."
+      },
+      {
+        "id": "loop",
+        "label": "Continuous Cost Optimization",
+        "focus": [
+          "general",
+          "measure",
+          "analyze",
+          "optimize",
+          "monitor",
+          "iterate"
+        ],
+        "note": "Cost optimization is a continuous process, not a one-time task: measure → analyze → optimize → monitor → iterate."
+      },
+      {
+        "id": "workload-finance",
+        "label": "Workloads · Financial services",
+        "focus": [
+          "workload",
+          "finance"
+        ],
+        "note": "Strategies per workload (dev/test, batch, web, DB) and balancing compliance, HA, and security requirements against cost."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "Cost Optimization Best Practices",
+      "sublabel": "EKS cluster",
+      "pos": [
+        490,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "general",
+      "type": "backend",
+      "label": "General Best Practices",
+      "sublabel": "Continuous optimization · Culture · Automation",
+      "pos": [
+        60,
+        190
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "workload",
+      "type": "backend",
+      "label": "Workload-specific Optimization",
+      "sublabel": "Dev/Test · Batch · Web apps · DB",
+      "pos": [
+        450,
+        190
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "finance",
+      "type": "security",
+      "label": "Cost Optimization for Financial Services",
+      "sublabel": "Compliance · HA/security vs. cost balance",
+      "pos": [
+        840,
+        190
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "measure",
+      "type": "backend",
+      "label": "Measure",
+      "sublabel": "Current cost & usage",
+      "pos": [
+        120,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "analyze",
+      "type": "backend",
+      "label": "Analyze",
+      "sublabel": "Drivers & opportunities",
+      "pos": [
+        330,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "optimize",
+      "type": "backend",
+      "label": "Optimize",
+      "sublabel": "Implement strategies",
+      "pos": [
+        540,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "monitor",
+      "type": "backend",
+      "label": "Monitor",
+      "sublabel": "Results & adjustments",
+      "pos": [
+        750,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "iterate",
+      "type": "backend",
+      "label": "Iterate",
+      "sublabel": "Repeat the process",
+      "pos": [
+        960,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Continuous Cost Optimization",
+      "wraps": [
+        "measure",
+        "analyze",
+        "optimize",
+        "monitor",
+        "iterate"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-general",
+      "from": "root",
+      "to": "general"
+    },
+    {
+      "id": "root-workload",
+      "from": "root",
+      "to": "workload",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-finance",
+      "from": "root",
+      "to": "finance"
+    },
+    {
+      "id": "general-measure",
+      "from": "general",
+      "to": "measure",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "measure-analyze",
+      "from": "measure",
+      "to": "analyze"
+    },
+    {
+      "id": "analyze-optimize",
+      "from": "analyze",
+      "to": "optimize"
+    },
+    {
+      "id": "optimize-monitor",
+      "from": "optimize",
+      "to": "monitor"
+    },
+    {
+      "id": "monitor-iterate",
+      "from": "monitor",
+      "to": "iterate"
+    },
+    {
+      "id": "iterate-measure",
+      "from": "iterate",
+      "to": "measure",
+      "label": "Iterate",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          1035,
+          490
+        ],
+        [
+          195,
+          490
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "General Best Practices",
+      "items": [
+        "Continuous cost optimization: measure → analyze → optimize → monitor → iterate",
+        "Building a cost-aware culture: give teams cost visibility, set optimization goals, reward achievements",
+        "Utilizing automation: auto-scaling, cost anomaly alerting, automatic removal of idle resources"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Workload-specific Optimization",
+      "items": [
+        "Development and test environments: auto shutdown when not in use, spot instances, resource limits",
+        "Batch workloads: spot instances, schedule runs during off-peak hours, release resources after job completion",
+        "Web applications and database workloads are optimized for their own characteristics"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Cost Optimization for Financial Services",
+      "items": [
+        "Regulatory compliance cost management",
+        "High availability and cost balance",
+        "Security requirements and cost balance"
+      ]
+    }
+  ]
+}

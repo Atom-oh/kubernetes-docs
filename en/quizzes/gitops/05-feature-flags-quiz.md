@@ -2,17 +2,17 @@
 
 1. What is the key advantage of OpenFeature's Provider model?
    - A) Vendor lock-in provides optimal performance
-   - B) Vendor-neutral API allows freely switching Feature Flag backends
+   - B) A vendor-neutral evaluation API reduces code changes when switching backends
    - C) Requires running your own Feature Flag server
    - D) Only supports REST API
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Vendor-neutral API allows freely switching Feature Flag backends**
+**Answer: B) A vendor-neutral evaluation API reduces code changes when switching backends**
 
 **Explanation:**
-OpenFeature is a CNCF standard that provides a vendor-neutral SDK API. Through the Provider interface, you can swap between backends like flagd, LaunchDarkly, Flagsmith, and others by only changing the Provider configuration — no application code changes required.
+OpenFeature's vendor-neutral SDK API reduces evaluation-code changes when switching backends. Flag keys, variants, targeting rules, context semantics, credentials, caching, and event behavior still require migration and testing.
 
 </details>
 
@@ -20,17 +20,17 @@ OpenFeature is a CNCF standard that provides a vendor-neutral SDK API. Through t
 
 2. What is the difference between Sidecar and Standalone deployment modes for flagd on Kubernetes?
    - A) Sidecar has better performance, Standalone is easier to manage
-   - B) Sidecar is injected into each Pod minimizing latency, Standalone runs as a central service
+   - B) Sidecar runs inside an application Pod, while standalone serves evaluations through a shared Service
    - C) Sidecar only supports TCP, Standalone only supports HTTP
    - D) Sidecar uses CRDs, Standalone only uses ConfigMaps
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Sidecar is injected into each Pod minimizing latency, Standalone runs as a central service**
+**Answer: B) Sidecar runs inside an application Pod, while standalone serves evaluations through a shared Service**
 
 **Explanation:**
-In Sidecar mode, the OpenFeature Operator injects a flagd container into each Pod, enabling local communication with minimal latency. In Standalone mode, flagd runs as a separate Deployment managed centrally, which is more resource-efficient but requires network calls.
+RPC can call a sidecar locally or a shared Deployment through a Service. Measure actual latency and resource usage. Sidecar/shared deployment describes placement; RPC/in-process describes where evaluation happens. An in-process provider can synchronize rules and evaluate them inside the application.
 
 </details>
 
@@ -48,7 +48,7 @@ In Sidecar mode, the OpenFeature Operator injects a flagd container into each Po
 **Answer: B) Evaluate targeting rules using context like user ID, region, and environment**
 
 **Explanation:**
-Evaluation Context is metadata dynamically passed during flag evaluation. It includes information such as user ID, region, environment (dev/staging/prod), and user groups. Targeting rules use this information to enable features for specific users or groups.
+Evaluation Context is metadata dynamically passed during flag evaluation. It includes information such as user ID, region, environment (dev/staging/prod), and user groups. Targeting rules use this information to enable features for specific users or groups. Use server-verified attributes for entitlement-related decisions; feature flags do not replace authentication or authorization.
 
 </details>
 
@@ -56,17 +56,17 @@ Evaluation Context is metadata dynamically passed during flag evaluation. It inc
 
 4. What is the role of Feature Flags in the Dark Launch pattern?
    - A) Completely hide a service and block access
-   - B) Deploy new feature code but disable it via Flag so users don't see it
+   - B) Return the existing result while testing new logic through side-effect-free shadow execution
    - C) Switch servers to dark mode
    - D) Execute deployments only at night
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Deploy new feature code but disable it via Flag so users don't see it**
+**Answer: B) Return the existing result while testing new logic through side-effect-free shadow execution**
 
 **Explanation:**
-Dark Launch deploys new feature code to production but keeps it invisible to users via Feature Flags. The Flag is then gradually enabled for a subset of users for testing, and if no issues arise, it's rolled out to all users. This is a key pattern for separating deployment from release.
+Shadow validation returns the existing result and compares read-only calculations or isolated replays. It must not charge, write business records, or send notifications twice. Bound asynchronous concurrency and give background work its own timeout. This differs from a gradual release that actually exposes the new result to selected users.
 
 </details>
 
@@ -84,7 +84,7 @@ Dark Launch deploys new feature code to production but keeps it invisible to use
 **Answer: B) Flag changes managed via Git PRs enable review, audit, and rollback**
 
 **Explanation:**
-Feature Flag as Code manages FeatureFlag CRs in a Git repository, applying PR-based review and approval processes. Change history is recorded in Git for auditing, and issues can be quickly rolled back via Git revert. ArgoCD or Flux automatically syncs the changes.
+Managing FeatureFlag CRs in Git provides PR review, change history, and Git revert. Consumers still need ArgoCD/Flux reconciliation, source synchronization, and SDK state updates. Self-healing can undo an emergency manual patch, so ownership and reconciliation behavior must be considered together.
 
 </details>
 
@@ -102,7 +102,7 @@ Feature Flag as Code manages FeatureFlag CRs in a Git repository, applying PR-ba
 **Answer: B) Set expiration dates on Flags and clean up Flag code after release completion**
 
 **Explanation:**
-Feature Flags are often used as temporary release tools. After a release is complete, the Flag and related conditional code should be cleaned up to prevent technical debt accumulation. Tag Flags with expiration dates and owners, and operate a process to regularly detect and remove unused Flags.
+Record owners and review dates, and check older application versions and other consumers before removing code and configuration. Expiration metadata does not itself delete a flag. Permanent operational flags may need periodic review rather than deletion.
 
 </details>
 
@@ -120,7 +120,7 @@ Feature Flags are often used as temporary release tools. After a release is comp
 **Answer: A) Automatically inject flagd sidecars into Pods and manage FeatureFlag CRDs**
 
 **Explanation:**
-The OpenFeature Operator is an Operator for natively managing Feature Flags in Kubernetes. It declaratively manages Flags via FeatureFlag CRDs, defines Flag sources via FeatureFlagSource CRDs, and automatically injects flagd sidecar containers into Pods with the appropriate annotations.
+The Operator manages resources including FeatureFlag and FeatureFlagSource. Pod injection uses the openfeature.dev/enabled and openfeature.dev/featureflagsource annotations. File-source ConfigMap volumes, direct Kubernetes access, and proxy sources follow different synchronization paths. The application still needs SDK integration.
 
 </details>
 
@@ -138,6 +138,6 @@ The OpenFeature Operator is an Operator for natively managing Feature Flags in K
 **Answer: B) Flagger handles Canary traffic shifting while Feature Flag controls gradual feature exposure at the application level**
 
 **Explanation:**
-Flagger and Feature Flags operate at different levels. Flagger splits traffic at the infrastructure level and analyzes metrics to control deployment. Feature Flags control individual feature activation/deactivation at the application level. Using them together completely separates deployment (Flagger) from release (Feature Flags).
+Flagger controls workload delivery and traffic; feature flags control application behavior. They do not automatically form one transaction. Coordinated flag changes and rollback need real webhook or Git automation, authorization, and failure handling. Canary traffic percentages and user-cohort percentages also describe different populations.
 
 </details>

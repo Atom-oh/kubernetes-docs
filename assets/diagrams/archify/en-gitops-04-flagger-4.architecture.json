@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How Blue-Green Works",
+    "output": "en-gitops-04-flagger-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "before",
+        "label": "Analysis",
+        "focus": [
+          "lb1",
+          "blue1",
+          "green1"
+        ],
+        "note": "Primary v1 serves live requests while canary v2 is tested. Mirroring is optional."
+      },
+      {
+        "id": "testing",
+        "label": "Primary update",
+        "focus": [
+          "lb2",
+          "blue2",
+          "green2"
+        ],
+        "note": "After checks, serve canary while updating primary to v2 and waiting for readiness."
+      },
+      {
+        "id": "after",
+        "label": "Complete",
+        "focus": [
+          "lb3",
+          "blue3",
+          "green3"
+        ],
+        "note": "Return to ready primary v2 and scale canary down; this does not retain an old-v1 standby."
+      }
+    ],
+    "locale": "en",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "lb1",
+      "type": "cloud",
+      "label": "Traffic router",
+      "sublabel": "routing",
+      "pos": [
+        130,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "blue1",
+      "type": "backend",
+      "label": "Primary",
+      "sublabel": "v1 · live",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green1",
+      "type": "backend",
+      "label": "Canary",
+      "sublabel": "v2 · test",
+      "pos": [
+        220,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb2",
+      "type": "cloud",
+      "label": "Traffic router",
+      "sublabel": "routing",
+      "pos": [
+        530,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "blue2",
+      "type": "backend",
+      "label": "Primary",
+      "sublabel": "v1 → v2 · updating",
+      "pos": [
+        440,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green2",
+      "type": "backend",
+      "label": "Canary",
+      "sublabel": "v2 · temporary live",
+      "pos": [
+        620,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb3",
+      "type": "cloud",
+      "label": "Traffic router",
+      "sublabel": "routing",
+      "pos": [
+        930,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "blue3",
+      "type": "backend",
+      "label": "Primary",
+      "sublabel": "v2 · live",
+      "pos": [
+        840,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green3",
+      "type": "backend",
+      "label": "Canary",
+      "sublabel": "v2 · replicas 0",
+      "pos": [
+        1020,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1. Analysis",
+      "wraps": [
+        "lb1",
+        "blue1",
+        "green1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2. Primary update",
+      "wraps": [
+        "lb2",
+        "blue2",
+        "green2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "3. Complete",
+      "wraps": [
+        "lb3",
+        "blue3",
+        "green3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "before-live",
+      "from": "lb1",
+      "to": "blue1",
+      "label": "live traffic 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "testing-live",
+      "from": "lb2",
+      "to": "green2",
+      "label": "temporary live 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "testing-mirror",
+      "from": "lb1",
+      "to": "green1",
+      "label": "optional mirror",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "after-live",
+      "from": "lb3",
+      "to": "blue3",
+      "label": "live 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Analysis and promotion",
+      "items": [
+        "iterations strategy; do not mix with stepWeight/stepWeights",
+        "Failure threshold counts accumulated checks"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Operational limits",
+      "items": [
+        "Discarding mirror responses does not prevent writes or load",
+        "An unhealthy primary during promotion needs separate recovery"
+      ]
+    }
+  ]
+}

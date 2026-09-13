@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FinOps 프레임워크의 핵심 원칙",
+    "output": "ko-eks-07-eks-cost-optimization-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      560
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "FinOps 핵심 원칙"
+        },
+        "backend": {
+          "label": "EKS 구현 방법"
+        },
+        "cloud": {
+          "label": "비용 모니터링 도구"
+        },
+        "security": {
+          "label": "거버넌스 정책"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "visibility",
+        "label": "가시성과 책임",
+        "focus": [
+          "visibility",
+          "accountability",
+          "tagging",
+          "allocation"
+        ],
+        "note": "태깅과 비용 할당으로 팀별·앱별 비용을 보이게 만들고 책임을 나눈다."
+      },
+      {
+        "id": "monitoring-hub",
+        "label": "모니터링 허브",
+        "focus": [
+          "forecasting",
+          "realtime",
+          "monitoring"
+        ],
+        "note": "비용 모니터링 도구가 예측·계획과 실시간 의사 결정 두 원칙을 함께 뒷받침한다."
+      },
+      {
+        "id": "optimize-govern",
+        "label": "최적화와 문화",
+        "focus": [
+          "optimization",
+          "culture",
+          "automation",
+          "governance"
+        ],
+        "note": "지속적인 최적화는 자동화로, 비용 인식 문화는 거버넌스 정책으로 구현한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "visibility",
+      "type": "external",
+      "label": "가시성 및 투명성",
+      "pos": [
+        80,
+        50
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "accountability",
+      "type": "external",
+      "label": "책임 공유",
+      "pos": [
+        80,
+        122
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "optimization",
+      "type": "external",
+      "label": "지속적인 최적화",
+      "pos": [
+        80,
+        194
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "forecasting",
+      "type": "external",
+      "label": "예측 및 계획",
+      "pos": [
+        80,
+        266
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "realtime",
+      "type": "external",
+      "label": "실시간 의사 결정",
+      "pos": [
+        80,
+        338
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "culture",
+      "type": "external",
+      "label": "비용 인식 문화",
+      "pos": [
+        80,
+        410
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "tagging",
+      "type": "backend",
+      "label": "리소스 태깅 전략",
+      "sublabel": "네임스페이스 · 레이블 · 태그",
+      "pos": [
+        740,
+        50
+      ],
+      "size": [
+        300,
+        52
+      ]
+    },
+    {
+      "id": "allocation",
+      "type": "backend",
+      "label": "비용 할당",
+      "sublabel": "팀 · 애플리케이션 · 환경별",
+      "pos": [
+        740,
+        122
+      ],
+      "size": [
+        300,
+        52
+      ]
+    },
+    {
+      "id": "automation",
+      "type": "backend",
+      "label": "자동화된 최적화",
+      "sublabel": "오토스케일링 · 스팟 · 유휴 리소스 제거",
+      "pos": [
+        740,
+        194
+      ],
+      "size": [
+        300,
+        52
+      ]
+    },
+    {
+      "id": "monitoring",
+      "type": "cloud",
+      "label": "비용 모니터링 도구",
+      "sublabel": "AWS Cost Explorer · Kubecost",
+      "pos": [
+        740,
+        302.0
+      ],
+      "size": [
+        300,
+        52
+      ]
+    },
+    {
+      "id": "governance",
+      "type": "security",
+      "label": "거버넌스 정책",
+      "pos": [
+        740,
+        410
+      ],
+      "size": [
+        300,
+        52
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "FinOps 핵심 원칙",
+      "wraps": [
+        "visibility",
+        "accountability",
+        "optimization",
+        "forecasting",
+        "realtime",
+        "culture"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS 구현 방법",
+      "wraps": [
+        "tagging",
+        "allocation",
+        "automation",
+        "monitoring",
+        "governance"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "visibility-tagging",
+      "from": "visibility",
+      "to": "tagging",
+      "variant": "emphasis"
+    },
+    {
+      "id": "accountability-allocation",
+      "from": "accountability",
+      "to": "allocation"
+    },
+    {
+      "id": "optimization-automation",
+      "from": "optimization",
+      "to": "automation"
+    },
+    {
+      "id": "forecasting-monitoring",
+      "from": "forecasting",
+      "to": "monitoring"
+    },
+    {
+      "id": "realtime-monitoring",
+      "from": "realtime",
+      "to": "monitoring"
+    },
+    {
+      "id": "culture-governance",
+      "from": "culture",
+      "to": "governance"
+    }
+  ]
+}

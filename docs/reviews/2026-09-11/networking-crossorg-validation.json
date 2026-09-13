@@ -1,0 +1,336 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T01:21:16.485385+00:00",
+  "files": [
+    {
+      "path": "en/networking/05-cross-org-vpc-connectivity.md",
+      "sha256": "1d090629217f37f8daaa198b758f9328adcff14e404b03325081e79917d7fc26"
+    },
+    {
+      "path": "en/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+      "sha256": "cb15cc0f4248766fcb948023110ceb560d92b359e2357f71e12507ff44d19de4"
+    },
+    {
+      "path": "ko/networking/05-cross-org-vpc-connectivity.md",
+      "sha256": "78646641759a10db4e7c075c95006731090a4753ff658c9e8ecb1b981468b1fb"
+    },
+    {
+      "path": "ko/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+      "sha256": "5ca115eb62b1ed307cb8bbf7b62c51d8f4b0e2b17d2b4dac052bc07abdfb03fb"
+    }
+  ],
+  "sources": {
+    "RAMCreate": {
+      "url": "https://docs.aws.amazon.com/ram/latest/APIReference/API_CreateResourceShare.html",
+      "key": "97f0f884e884"
+    },
+    "TGWOptions": {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_TransitGatewayRequestOptions.html",
+      "key": "9f3c5c219656"
+    },
+    "TGWShare": {
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-3-1.html",
+      "key": "0d62eb21ea6c"
+    },
+    "TGWAcceptShare": {
+      "url": "https://docs.aws.amazon.com/vpc/latest/tgw/share-accept-tgw.html",
+      "key": "8b34bea11d63"
+    },
+    "TGWAcceptVPC": {
+      "url": "https://docs.aws.amazon.com/vpc/latest/tgw/acccept-tgw-attach.html",
+      "key": "f7ee56b1a81e"
+    },
+    "TGWPeering": {
+      "url": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering.html",
+      "key": "3644c37a08f8"
+    },
+    "TGWAcceptPeer": {
+      "url": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering-accept-reject.html",
+      "key": "38a61cfb3aa0"
+    },
+    "TGWRouting": {
+      "url": "https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html",
+      "key": "8a0c0d960065"
+    },
+    "Organizations": {
+      "url": "https://aws.amazon.com/blogs/architecture/choosing-between-single-or-multiple-organizations-in-aws-organizations/",
+      "key": "e2392c81b5b5"
+    },
+    "PrivateLink": {
+      "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html",
+      "key": "f772e7fe3823"
+    },
+    "PrivateLinkArchitecture": {
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-1.html",
+      "key": "33749d6ff687"
+    },
+    "PeeringArchitecture": {
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-2.html",
+      "key": "c3ea17c22649"
+    },
+    "PeeringLimits": {
+      "url": "https://docs.aws.amazon.com/vpc/latest/peering/invalid-peering-configurations.html",
+      "key": "205315187d07"
+    },
+    "NATOverlap": {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-scenarios.html",
+      "key": "5d42ff091ba3"
+    },
+    "LatticeSG": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/security-groups.html",
+      "key": "f22d40096999"
+    },
+    "LatticeFAQ": {
+      "url": "https://aws.amazon.com/vpc/lattice/faqs/",
+      "key": "04f7e355ef16"
+    },
+    "EC2Quota": {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html",
+      "key": "4d555199f087"
+    },
+    "EFA": {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html",
+      "key": "637d7540c86c"
+    },
+    "Whitepaper": {
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html",
+      "key": "e8357675126b"
+    }
+  },
+  "calculations": {
+    "measurementPreservation": {
+      "en": {
+        "mainRows": 7,
+        "frontedRows": 5,
+        "allNumericCellsUnchanged": true,
+        "originalReportTimestampRetained": true
+      },
+      "ko": {
+        "mainRows": 7,
+        "frontedRows": 5,
+        "allNumericCellsUnchanged": true,
+        "originalReportTimestampRetained": true
+      }
+    },
+    "derived": [
+      {
+        "comparison": "M2 − M1",
+        "TCP_RR": "-0.001",
+        "ICMP": "0.004",
+        "HTTP_KA": "-0.007"
+      },
+      {
+        "comparison": "M3 − M2",
+        "TCP_RR": "0.571",
+        "ICMP": "0.410",
+        "HTTP_KA": "0.606"
+      },
+      {
+        "comparison": "M4 − M2",
+        "TCP_RR": "0.551",
+        "ICMP": "0.787",
+        "HTTP_KA": "0.408"
+      },
+      {
+        "comparison": "M7 − M2",
+        "TCP_RR": "0.793",
+        "ICMP": null,
+        "HTTP_KA": "0.803"
+      },
+      {
+        "comparison": "M5 − M7",
+        "TCP_RR": "0.120",
+        "ICMP": null,
+        "HTTP_KA": "-0.172"
+      },
+      {
+        "comparison": "M6 − M2",
+        "TCP_RR": null,
+        "ICMP": null,
+        "HTTP_KA": "1.555"
+      }
+    ],
+    "fronted": {
+      "PrivateLinkMinusPeeringTCP": "0.036",
+      "PrivateLinkMinusPeeringHTTP": "0.197",
+      "SharedTGWOverPrivateLinkTCP": "1.934650455927051671732522796",
+      "PeeredTGWOverPrivateLinkTCP": "2.165653495440729483282674772",
+      "SharedTGWOverPrivateLinkHTTP": "1.487573964497041420118343195",
+      "PeeredTGWOverPrivateLinkHTTP": "1.513609467455621301775147929",
+      "LatticeMinusSharedTGWHTTP": "0.423",
+      "LatticeMinusPeeredTGWHTTP": "0.401"
+    },
+    "syntheticRoutingCases": [
+      {
+        "routes": [
+          {
+            "prefix": "10.1.0.0/16",
+            "type": "static"
+          },
+          {
+            "prefix": "10.1.2.0/24",
+            "type": "propagated"
+          }
+        ],
+        "destination": "10.1.2.3",
+        "selected": {
+          "prefix": "10.1.2.0/24",
+          "type": "propagated"
+        },
+        "modelOnly": true
+      },
+      {
+        "routes": [
+          {
+            "prefix": "10.1.2.0/24",
+            "type": "static"
+          },
+          {
+            "prefix": "10.1.2.0/24",
+            "type": "propagated"
+          }
+        ],
+        "destination": "10.1.2.3",
+        "selected": {
+          "prefix": "10.1.2.0/24",
+          "type": "static"
+        },
+        "modelOnly": true
+      }
+    ],
+    "mathematicalCounterexample": {
+      "syntheticNotBenchmark": true,
+      "A": [
+        0,
+        10,
+        11
+      ],
+      "B": [
+        0,
+        1,
+        10
+      ],
+      "differenceOfMedians": 9,
+      "medianOfPairedDifferences": 1
+    },
+    "limits": [
+      "No live AWS provisioning or benchmark rerun. Historical samples/harness/software/route configuration are not linked by the original page and were not independently reconstructed.",
+      "Numeric table cells preserved; new values are explicitly calculated contrasts/ratios, not new measurements or one-way component costs.",
+      "Synthetic median/routing examples demonstrate mathematical and documented precedence rules; they are not AWS dataplane measurements or a complete routing simulator."
+    ]
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/05-cross-org-vpc-connectivity.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/05-cross-org-vpc-connectivity.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "batchCheck": {
+    "batch": "networking-foundation",
+    "documents": 24,
+    "yamlBlocks": 160,
+    "shellBlocks": 106,
+    "errors": []
+  },
+  "referenceHTTP": [
+    {
+      "url": "https://aws.amazon.com/blogs/architecture/choosing-between-single-or-multiple-organizations-in-aws-organizations/",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/e2392c81b5b5.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_TransitGatewayRequestOptions.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/9f3c5c219656.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/4d555199f087.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/637d7540c86c.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-3-1.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/0d62eb21ea6c.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/ram/latest/APIReference/API_CreateResourceShare.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/97f0f884e884.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/security-groups.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/f22d40096999.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/f772e7fe3823.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/8a0c0d960065.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering-accept-reject.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/38a61cfb3aa0.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-scenarios.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/5d42ff091ba3.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/e8357675126b.txt"
+    }
+  ],
+  "docsTest": {
+    "tests": 118,
+    "pass": 118,
+    "fail": 0,
+    "log": "/tmp/networking-crossorg-validation/docs-test.log",
+    "environment": "login:false/env-i/OTELoff;escalatedforlocalchildprocesses"
+  },
+  "gitDiffCheck": 0,
+  "figureReview": {
+    "viewed": 2,
+    "retained": 2,
+    "fix": "Caption distinguishes TCP_RR path medians from Lattice HTTP KA, reported observations from new validation, and proposed GPU environment from actual CPU-instance benchmark. No asset or foreign edits."
+  },
+  "remainingLimitations": [
+    "Originalrawsamples,harness/software/timer/return-routeconfigurationanduncertaintyarenotlinkedbythispage;thisauditdoesnotindependentlyverifytheempiricaltest.",
+    "Publishednumericmeasurementcells/hardware/reporttimestampretained;causalcomponent/per-hop/throughput/optimalityclaimsremovedorqualified.",
+    "NoAWSprovisioning,livebenchmark,routechangeorteardownexecuted."
+  ],
+  "artifacts": "/tmp/networking-crossorg-validation"
+}

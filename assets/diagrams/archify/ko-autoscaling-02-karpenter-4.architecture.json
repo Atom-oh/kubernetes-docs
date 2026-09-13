@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 비용 최적화: Cluster Autoscaler vs Karpenter",
+    "output": "ko-autoscaling-02-karpenter-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1200, 500],
+    "legend": {
+      "entries": {
+        "backend": { "label": "오토스케일러" },
+        "cloud": { "label": "비용 최적화 전략" },
+        "external": { "label": "비용 절감 결과" }
+      }
+    },
+    "views": [
+      { "id": "ca-path", "label": "Cluster Autoscaler", "focus": ["ca", "ca-scaling", "ca-speed", "ca-result"], "note": "노드 그룹 단위로 동일한 인스턴스 유형을 느리게 늘리는 방식은 비용 절감 효과가 중간에 머문다." },
+      { "id": "ka-path", "label": "Karpenter", "focus": ["ka", "ka-scaling", "ka-speed", "ka-consolidation", "ka-result"], "note": "워크로드에 맞춰 다양한 인스턴스 유형을 빠르게 프로비저닝하고 노드 통합과 스팟까지 활용해 비용 절감이 높다." }
+    ]
+  },
+  "components": [
+    { "id": "ca", "type": "backend", "label": "Cluster Autoscaler", "sublabel": "노드 그룹 기반", "pos": [140, 40], "size": [200, 60] },
+    { "id": "ca-scaling", "type": "cloud", "label": "노드 그룹 기반 스케일링", "sublabel": "동일한 인스턴스 유형", "pos": [40, 180], "size": [190, 64] },
+    { "id": "ca-speed", "type": "cloud", "label": "느린 스케일링 속도", "sublabel": "제한된 빈 패킹", "pos": [250, 180], "size": [190, 64] },
+    { "id": "ca-result", "type": "external", "label": "비용 절감: 중간", "pos": [140, 330], "size": [200, 60] },
+    { "id": "ka", "type": "backend", "label": "Karpenter", "sublabel": "워크로드 기반", "pos": [745, 40], "size": [200, 60] },
+    { "id": "ka-scaling", "type": "cloud", "label": "워크로드 기반 스케일링", "sublabel": "다양한 인스턴스 유형", "pos": [540, 180], "size": [190, 64] },
+    { "id": "ka-speed", "type": "cloud", "label": "빠른 스케일링 속도", "sublabel": "효율적인 빈 패킹", "pos": [750, 180], "size": [190, 64] },
+    { "id": "ka-consolidation", "type": "cloud", "label": "노드 통합", "sublabel": "스팟 인스턴스 활용", "pos": [960, 180], "size": [190, 64] },
+    { "id": "ka-result", "type": "external", "label": "비용 절감: 높음", "pos": [745, 330], "size": [200, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Cluster Autoscaler 방식", "wraps": ["ca", "ca-scaling", "ca-speed", "ca-result"] },
+    { "kind": "region", "label": "Karpenter 방식", "wraps": ["ka", "ka-scaling", "ka-speed", "ka-consolidation", "ka-result"] }
+  ],
+  "connections": [
+    { "id": "ca-to-scaling", "from": "ca", "to": "ca-scaling", "fromSide": "bottom", "toSide": "top" },
+    { "id": "ca-to-speed", "from": "ca", "to": "ca-speed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "ca-scaling-to-result", "from": "ca-scaling", "to": "ca-result", "fromSide": "bottom", "toSide": "top" },
+    { "id": "ca-speed-to-result", "from": "ca-speed", "to": "ca-result", "fromSide": "bottom", "toSide": "top" },
+    { "id": "ka-to-scaling", "from": "ka", "to": "ka-scaling", "fromSide": "bottom", "toSide": "top" },
+    { "id": "ka-to-speed", "from": "ka", "to": "ka-speed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "ka-to-consolidation", "from": "ka", "to": "ka-consolidation", "fromSide": "bottom", "toSide": "top" },
+    { "id": "ka-scaling-to-result", "from": "ka-scaling", "to": "ka-result", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "ka-speed-to-result", "from": "ka-speed", "to": "ka-result", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "ka-consolidation-to-result", "from": "ka-consolidation", "to": "ka-result", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "Karpenter로 비용을 줄이는 세 가지 설정", "items": ["스팟 인스턴스 사용: capacity-type 요구사항을 spot으로 지정", "다양한 인스턴스 유형 사용: amd64/arm64와 여러 instance-type을 허용", "노드 통합 활성화: consolidation을 켜서 저활용 노드를 정리"] }
+  ]
+}

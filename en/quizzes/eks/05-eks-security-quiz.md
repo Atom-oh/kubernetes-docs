@@ -1,5 +1,7 @@
 # Amazon EKS Security Quiz
 
+> **Last Updated**: September 11, 2026
+
 This quiz tests your understanding of Amazon EKS security features, best practices, and configurations.
 
 ## Quiz Overview
@@ -12,1291 +14,1085 @@ This quiz tests your understanding of Amazon EKS security features, best practic
 
 ## Multiple Choice Questions
 
-### 1. What is the most effective way to control access to the Kubernetes API server in Amazon EKS?
+### 1. For an IAM user or role, which EKS setup correctly combines identity authentication and Kubernetes authorization?
 
-A. Use only IAM users and roles
-B. Use only Kubernetes RBAC
-C. Use integrated IAM and Kubernetes RBAC
-D. Use only network access restrictions to the API server
+- A) Use only IAM management permissions
+- B) Create RBAC rules without configuring the identity’s authentication path
+- C) Configure IAM cluster access plus appropriate RBAC and/or EKS access policies
+- D) Use only API endpoint network restrictions
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Use integrated IAM and Kubernetes RBAC**
+**Answer: C) Configure IAM cluster access plus appropriate RBAC and/or EKS access policies**
 
 **Explanation:**
-The most effective way to control access to the Kubernetes API server in Amazon EKS is to use an integration of AWS IAM and Kubernetes RBAC (Role-Based Access Control). This approach combines AWS's powerful identity management capabilities with Kubernetes' fine-grained permission control to provide a comprehensive security model.
 
-**Key Benefits of IAM and RBAC Integration:**
+IAM authenticates the intended human/automation identity through the configured EKS access path. Kubernetes RBAC and EKS access policies authorize Kubernetes operations; their grants are additive. Network restrictions are another layer and do not replace authorization. Pod-to-Kubernetes authentication normally uses its ServiceAccount token; IRSA/Pod Identity instead supplies workload AWS credentials.
 
-1. **Multi-layer Authentication and Authorization**:
-   - IAM controls "who" can connect to the API server (authentication)
-   - RBAC controls "what" authenticated users can do (authorization)
+An EKS cluster service role and a human developer role have different purposes. Attaching AmazonEKSClusterPolicy to the developer does not grant Kubernetes access, and DescribeCluster/ListClusters permissions or a kubeconfig file do not grant workload permissions.
 
-2. **Seamless Integration with AWS Services**:
-   - Leverage existing AWS IAM policies and roles
-   - Utilize AWS service accounts and workload identities
+**Scoped implementation:** an authorized platform operator prepares the namespace and RBAC below for an existing approved developer IAM role. The cluster must already support access entries. Preserve existing administrator/node mappings and review authentication-mode migration; do not overwrite aws-auth with a sample ConfigMap.
 
-3. **Fine-grained Permission Control**:
-   - Define detailed permissions for namespaces, resource types, and specific resources
-   - Implement the principle of least privilege
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+```
 
-**Implementation Methods:**
 
-1. **Configure aws-auth ConfigMap**:
-   ```yaml
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: aws-auth
-     namespace: kube-system
-   data:
-     mapRoles: |
-       - rolearn: arn:aws:iam::123456789012:role/EKSAdminRole
-         username: admin
-         groups:
-         - system:masters
-       - rolearn: arn:aws:iam::123456789012:role/EKSDeveloperRole
-         username: developer
-         groups:
-         - developers
-     mapUsers: |
-       - userarn: arn:aws:iam::123456789012:user/security-auditor
-         username: security-auditor
-         groups:
-         - security-auditors
-   ```
 
-2. **Define Kubernetes RBAC Roles and Bindings**:
-   ```yaml
-   # Developer role definition
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: Role
-   metadata:
-     namespace: dev
-     name: developer
-   rules:
-   - apiGroups: ["", "apps", "batch"]
-     resources: ["pods", "deployments", "jobs"]
-     verbs: ["get", "list", "watch", "create", "update", "patch"]
-   ---
-   # Developer role binding
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: RoleBinding
-   metadata:
-     name: developer-binding
-     namespace: dev
-   subjects:
-   - kind: Group
-     name: developers
-     apiGroup: rbac.authorization.k8s.io
-   roleRef:
-     kind: Role
-     name: developer
-     apiGroup: rbac.authorization.k8s.io
-   ```
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the verified cluster name}"
+: "${AWS_REGION:?Set its Region}"
+: "${DEVELOPER_ROLE_ARN:?Set a prepared IAM role ARN, not an STS session ARN}"
+MODE=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query cluster.accessConfig.authenticationMode --output text)
+case "$MODE" in
+  API|API_AND_CONFIG_MAP) ;;
+  *) echo "Access entries are not enabled; review the migration first"; exit 1 ;;
+esac
+aws eks list-access-entries --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --output json > security-access-entries.json
+python3 - "$DEVELOPER_ROLE_ARN" <<'PY'
+import json, sys
+with open("security-access-entries.json") as stream:
+    existing = json.load(stream)["accessEntries"]
+if sys.argv[1] in existing:
+    raise SystemExit("Entry already exists; inspect its groups/policies instead of overwriting")
+PY
+aws eks create-access-entry --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --principal-arn "$DEVELOPER_ROLE_ARN" --type STANDARD \
+  --kubernetes-groups security-demo-developers
+```
 
-3. **IAM Policy Example**:
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Action": [
-           "eks:DescribeCluster",
-           "eks:ListClusters"
-         ],
-         "Resource": "*"
-       }
-     ]
-   }
-   ```
 
-**Best Practices:**
 
-1. **Apply the Principle of Least Privilege**:
-   - Grant only the minimum necessary permissions
-   - Regularly review and audit permissions
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer
+  namespace: security-demo
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer
+  namespace: security-demo
+subjects:
+- kind: Group
+  name: security-demo-developers
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io
+```
 
-2. **Implement Role-based Access**:
-   - Define roles based on job functions
-   - Assign permissions to roles, not individuals
+The group name in the access entry must match the RoleBinding subject. This role permits the listed operations only in security-demo; other existing grants can broaden access. Creating Deployments/Jobs can indirectly use Secrets, PVCs and ServiceAccounts in that namespace, so absence of a direct Secret-read rule is not a tenant security boundary. Separate tenants and constrain workload identity/resource use through admission and ownership controls.
 
-3. **Use Temporary Credentials**:
-   - Use temporary credentials instead of long-term credentials
-   - Leverage AWS STS (Security Token Service)
+A separately reviewed viewer can instead use a namespace-scoped AmazonEKSViewPolicy association. Inspect existing access policies before adding it; it does not revoke broader RBAC or other access-policy grants. `eks:namespaces` filters access-policy association requests, not general kubectl requests.
 
-4. **Regular Auditing and Monitoring**:
-   - Log API calls through CloudTrail
-   - Enable and analyze Kubernetes audit logs
+**Validate the actual login:** the caller must be able to discover the cluster and assume the approved role. This creates a temporary kubeconfig rather than replacing the default context:
 
-**Practical Implementation Examples:**
+```bash
+set -euo pipefail
+umask 077
+: "${CLUSTER_NAME:?Set the reviewed cluster name}"
+: "${AWS_REGION:?Set the cluster Region}"
+: "${DEVELOPER_ROLE_ARN:?Set the intended IAM role ARN}"
+review_dir=$(mktemp -d "${TMPDIR:-/tmp}/eks-login-check.XXXXXXXX")
+trap 'rm -rf -- "$review_dir"' EXIT
+aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --role-arn "$DEVELOPER_ROLE_ARN" --kubeconfig "$review_dir/config"
+kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n security-demo
+kubectl --kubeconfig "$review_dir/config" auth can-i create jobs -n security-demo
+kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
+```
 
-1. **Create IAM Role for EKS Cluster Access**:
-   ```bash
-   aws iam create-role \
-     --role-name EKSDevRole \
-     --assume-role-policy-document file://trust-policy.json
+Inspect the results against the intended grants and investigate unexpected cross-namespace permission. `--as` tests impersonation/RBAC and does not establish that the IAM access-policy path works. No live IAM login or Kubernetes authorization test was executed for this quiz; schema/shell checks and mocked access-entry flows are the local evidence.
 
-   aws iam attach-role-policy \
-     --role-name EKSDevRole \
-     --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-   ```
+References: [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html), [EKS access policies](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html), [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
 
-2. **Update kubeconfig**:
-   ```bash
-   aws eks update-kubeconfig \
-     --name my-cluster \
-     --role-arn arn:aws:iam::123456789012:role/EKSDevRole \
-     --region us-west-2
-   ```
-
-3. **Apply RBAC Configuration**:
-   ```bash
-   kubectl apply -f rbac-config.yaml
-   ```
-
-Issues with other options:
-- **A. Use only IAM users and roles**: IAM can control cluster access but doesn't provide fine-grained permissions for Kubernetes resources.
-- **B. Use only Kubernetes RBAC**: RBAC controls permissions within the cluster but lacks integration with AWS services and doesn't provide AWS infrastructure-level security.
-- **D. Use only network access restrictions to the API server**: Network-level control is important but doesn't restrict permissions for authenticated users and doesn't provide fine-grained access control.
 </details>
-### 2. What is the most effective way to restrict network traffic between pods in Amazon EKS?
 
-A. Use only security groups
-B. Use Kubernetes Network Policies
-C. Use VPC endpoint policies
-D. Use host-based firewalls
+### 2. Which Kubernetes mechanism expresses label-based Pod traffic rules on an EKS network that supports policy enforcement?
+
+- A) Only instance security groups
+- B) NetworkPolicy resources with an enforcing network implementation
+- C) Only VPC endpoint policies
+- D) Only host firewall commands
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Use Kubernetes Network Policies**
+**Answer: B) NetworkPolicy resources with an enforcing network implementation**
 
 **Explanation:**
-The most effective way to restrict network traffic between pods in Amazon EKS is to use Kubernetes Network Policies. Network policies provide microsegmentation at the pod level, allowing fine-grained control over communication between pods.
 
-**Key Benefits of Kubernetes Network Policies:**
+NetworkPolicy selects Pods and permitted traffic using Kubernetes labels and namespaces. It requires an enforcing network implementation. Security groups, including supported security groups for Pods, remain useful AWS controls; they are not limited to whole instances. VPC endpoint policies govern supported AWS service access, not arbitrary label-based Pod traffic.
 
-1. **Fine-grained Control at the Pod Level**:
-   - Filtering based on IP addresses, ports, and protocols
-   - Dynamic policy application through label-based selectors
-   - Control both ingress and egress traffic
+**Complete policy example:** these manifests describe an isolated demonstration namespace, not an installation of applications or a replacement CNI. They assume standard Linux EC2 nodes with a supported enforcing CNI and the usual CoreDNS Deployment/Pod labels. Auto Mode or node-local DNS requires rules for the resolver path actually used. If CoreDNS ingress is restricted, its owner must also permit these queries.
 
-2. **Declarative Configuration**:
-   - Managed as Kubernetes resources
-   - Integration with GitOps and IaC workflows
-   - Version controlled and auditable
+Save and apply through the namespace owner. Default deny isolates both directions; client egress and destination ingress are explicitly allowed for frontend → API and API → database. DNS needs both UDP and TCP:
 
-3. **Integration with CNI Plugins**:
-   - Integration with Amazon VPC CNI, Calico, Cilium, etc.
-   - Various options for network policy enforcement
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-network-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-monitoring-demo
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: security-network-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: security-network-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-to-api
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-ingress
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-to-database
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: database
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-ingress
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: database
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitor-api
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: security-monitoring-demo
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9090
+```
 
-**Implementation Methods:**
+The monitoring peer uses namespaceSelector **and** podSelector in one peer, so only matching Prometheus Pods in security-monitoring-demo are selected. Its outgoing connection also needs permission when that client is egress-isolated:
 
-1. **Implement Default Deny Policy**:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: default-deny
-     namespace: prod
-   spec:
-     podSelector: {}
-     policyTypes:
-     - Ingress
-     - Egress
-   ```
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-to-demo-api
+  namespace: security-monitoring-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: security-network-demo
+      podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 9090
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+```
 
-2. **Allow Communication Between Specific Applications**:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: api-allow
-     namespace: prod
-   spec:
-     podSelector:
-       matchLabels:
-         app: api
-     policyTypes:
-     - Ingress
-     ingress:
-     - from:
-       - podSelector:
-           matchLabels:
-             app: frontend
-       ports:
-       - protocol: TCP
-         port: 8080
-   ```
+| Flow | Intended result with these policies |
+|---|---|
+| frontend → api TCP 8080 | Allow |
+| api → database TCP 5432 | Allow |
+| frontend → database TCP 5432 | Deny |
+| unrelated Pod → api TCP 8080 | Deny |
+| selected Prometheus → api TCP 9090 | Allow |
+| another Pod in the monitoring namespace → api TCP 9090 | Deny |
+| workload → matching CoreDNS Pod UDP/TCP 53 | Allow, subject to resolver-side controls |
+| arbitrary external destination | Deny unless an explicit egress rule is added |
 
-3. **Control Cross-namespace Communication**:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: allow-from-monitoring
-     namespace: prod
-   spec:
-     podSelector: {}
-     policyTypes:
-     - Ingress
-     ingress:
-     - from:
-       - namespaceSelector:
-           matchLabels:
-             purpose: monitoring
-       ports:
-       - protocol: TCP
-         port: 9090
-   ```
+Policies are additive and unordered. Another broad allow can widen the result; default deny does not override it. Test the complete installed policy set, DNS resolution and new allowed/denied connections on the target CNI. Established connections, hostNetwork/node traffic and NAT behavior have implementation-specific limits; a simple NetworkPolicy is not a universal IMDS or host-firewall boundary.
 
-**Implementing Network Policies in EKS:**
+For external services, scope actual destination addresses/ports or use the chosen implementation’s supported DNS-aware controls. Allowing every destination on port 443 or the entire 10.0.0.0/8 range is not a service allowlist. An arbitrary replacement Calico/Cilium manifest or partial kube-proxy-replacement flag is not a safe way to enable policy on an existing EKS network.
 
-1. **Select a Compatible CNI Plugin**:
-   - Amazon VPC CNI + Calico
-   - Cilium
-   - Antrea
+The paired source’s 18 synthetic selector/port cases were checked locally; no packet/CNI test was executed. Reference: [Kubernetes NetworkPolicy behavior](https://kubernetes.io/docs/concepts/services-networking/network-policies/).
 
-2. **Calico Installation Example**:
-   ```bash
-   kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
-   ```
-
-3. **Cilium Installation Example**:
-   ```bash
-   helm repo add cilium https://helm.cilium.io/
-   helm install cilium cilium/cilium \
-     --namespace kube-system \
-     --set nodeinit.enabled=true \
-     --set kubeProxyReplacement=partial \
-     --set hostServices.enabled=false \
-     --set externalIPs.enabled=true \
-     --set nodePort.enabled=true \
-     --set hostPort.enabled=true \
-     --set bpf.masquerade=false \
-     --set image.pullPolicy=IfNotPresent
-   ```
-
-**Best Practices:**
-
-1. **Start with Default Deny Policy**:
-   - Block all traffic by default
-   - Explicitly allow only necessary communication
-
-2. **Apply the Principle of Least Privilege**:
-   - Allow only the minimum necessary communication
-   - Restrict to specific ports and protocols
-
-3. **Use Label-based Policies**:
-   - Use labels instead of IP addresses
-   - Provide flexibility in dynamic environments
-
-4. **Test and Validate Policies**:
-   - Test policies in non-production environments
-   - Utilize network policy simulator tools
-
-**Practical Implementation Examples:**
-
-1. **Network Policy for Microservices Architecture**:
-   ```yaml
-   # Allow only frontend to API communication
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: api-backend
-     namespace: prod
-   spec:
-     podSelector:
-       matchLabels:
-         app: api
-     policyTypes:
-     - Ingress
-     - Egress
-     ingress:
-     - from:
-       - podSelector:
-           matchLabels:
-             app: frontend
-       ports:
-       - protocol: TCP
-         port: 8080
-     egress:
-     - to:
-       - podSelector:
-           matchLabels:
-             app: database
-       ports:
-       - protocol: TCP
-         port: 5432
-   ```
-
-2. **Restrict External Service Access**:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: limit-external
-     namespace: prod
-   spec:
-     podSelector:
-       matchLabels:
-         app: backend
-     policyTypes:
-     - Egress
-     egress:
-     - to:
-       - ipBlock:
-           cidr: 10.0.0.0/8
-     - to:
-       - ipBlock:
-           cidr: 0.0.0.0/0
-           except:
-           - 169.254.0.0/16
-           - 10.0.0.0/8
-       ports:
-       - protocol: TCP
-         port: 443
-   ```
-
-Issues with other options:
-- **A. Use only security groups**: Security groups operate at the instance level and don't provide fine-grained traffic control between pods.
-- **C. Use VPC endpoint policies**: VPC endpoint policies control access to AWS services but don't control pod-to-pod communication.
-- **D. Use host-based firewalls**: Host-based firewalls operate at the node level and cannot effectively control communication between pods running on the same node.
 </details>
-### 3. What is the most effective approach to enhance container image security in Amazon EKS?
 
-A. Perform manual security checks on all images
-B. Use only trusted official images
-C. Implement an integrated pipeline including image scanning, signature verification, and admission policies
-D. Run antivirus software inside containers
+### 3. Which approach combines complementary controls for container image security on EKS?
+
+- A) Rely only on manual image inspection
+- B) Assume every official image is free of vulnerabilities
+- C) Combine scanning, signing/verification and admission controls
+- D) Rely only on antivirus inside the container
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Implement an integrated pipeline including image scanning, signature verification, and admission policies**
+**Answer: C) Combine scanning, signing/verification and admission controls**
 
 **Explanation:**
-The most effective approach to enhance container image security in Amazon EKS is to implement an integrated pipeline that includes image scanning, signature verification, and admission policies. This comprehensive approach ensures security throughout the entire image lifecycle from build to deployment.
 
-**Key Components of an Integrated Image Security Pipeline:**
+A scanner identifies the issues covered by its rules and vulnerability database; it does not prove that every backdoor or future vulnerability is absent. A signature proves integrity and an identity relationship under the configured trust policy, not that the signed software is safe. Admission controls enforce the selected deployment policy. Use maintained minimal base images, rebuild for patches, track exceptions and select the appropriate ECR basic/enhanced or other scanning mode.
 
-1. **Image Scanning**:
-   - Check for known vulnerabilities (CVEs)
-   - Detect malware and backdoors
-   - Identify misconfigurations and security best practice violations
+**AWS Signer and Notation:** the container signing platform is `Notation-OCI-SHA384-ECDSA`. Use the Notation AWS Signer plugin to sign an image that has already been pushed, by digest. An `Aws::ECR::Image` platform or `start-signing-job --source-image` is not the supported workflow. The reviewed AWS CLI rejects that option.
 
-2. **Image Signing and Verification**:
-   - Ensure image integrity
-   - Verify trusted sources
-   - Prevent tampering
+Current ECR managed signing is also a supported push-triggered alternative with registry signing rules. If choosing it, configure the correct profile/permissions and wait for the actual signing status before promotion. Do not assume the presence of a pushed image proves that asynchronous signing completed.
 
-3. **Admission Policies**:
-   - Allow deployment of only approved images
-   - Apply minimum base image requirements
-   - Set vulnerability severity thresholds
+**Trust configuration:** prepare a verified Notation/Signer plugin installation, the correct partition’s AWS Signer root trust store, and a reviewed strict trust policy. This commercial-Region example limits trust to one repository and an approved profile. Replace every account/Region/repository/profile consistently; do not trust any signer merely because its certificate chains to the AWS root.
 
-**Implementation Methods:**
+```json
+{
+  "version": "1.0",
+  "trustPolicies": [
+    {
+      "name": "reviewed-eks-repository",
+      "registryScopes": [
+        "123456789012.dkr.ecr.us-west-2.amazonaws.com/team/app"
+      ],
+      "signatureVerification": {
+        "level": "strict"
+      },
+      "trustStores": [
+        "signingAuthority:aws-signer-ts"
+      ],
+      "trustedIdentities": [
+        "arn:aws:signer:us-west-2:123456789012:/signing-profiles/eks_images"
+      ]
+    }
+  ]
+}
+```
 
-1. **Configure Amazon ECR Image Scanning**:
-   ```bash
-   # Enable scanning when creating repository
-   aws ecr create-repository \
-     --repository-name my-app \
-     --image-scanning-configuration scanOnPush=true
+Import that policy into the build environment’s owned Notation configuration with `notation policy import notation-trust-policy.json`. Review any existing policy before replacement; do not overwrite a developer’s shared trust configuration from an unreviewed script. The build role needs repository-scoped ECR pull/push operations, ECR authentication and the required SignPayload/GetRevocationStatus permissions. Creating the signing profile is a separate provisioning responsibility; the build does not need PutSigningProfile merely to use an existing approved profile.
 
-   # Enable scanning for existing repository
-   aws ecr put-image-scanning-configuration \
-     --repository-name my-app \
-     --image-scanning-configuration scanOnPush=true
-   ```
+**CodeBuild example:** this is a buildspec, not a CodePipeline definition. It requires an owned Linux build image with Bash, Python, Docker/daemon access, AWS CLI, Trivy, Notation and the AWS Signer plugin already installed and version-pinned. Configure the project’s required runtime privilege, network access, scanner databases, IAM role, trust store/policy and existing ECR repository separately. The Dockerfile and source are trusted inputs to that build role. This example uses a resolved Git commit and one commercial AWS account/Region; it does not implement a cross-account signing design.
 
-2. **Sign Images Using AWS Signer**:
-   ```bash
-   # Create signing profile
-   aws signer put-signing-profile \
-     --profile-name MyAppSigningProfile \
-     --platform-id Aws::ECR::Image
+```yaml
+version: 0.2
+env:
+  shell: bash
+phases:
+  build:
+    commands:
+      - |
+        set -euo pipefail
+        umask 077
+        # Reserve this generated artifact name; remove stale output before any build step.
+        rm -f -- verified-image.json
+        : "${AWS_REGION:?Set the commercial AWS Region}"
+        : "${AWS_ACCOUNT_ID:?Set the expected ECR/signing account ID}"
+        : "${ECR_REPOSITORY:?Set the complete repository name, including any path}"
+        : "${SIGNING_PROFILE_ARN:?Set the approved AWS Signer profile ARN}"
+        : "${CODEBUILD_RESOLVED_SOURCE_VERSION:?This example requires a resolved Git commit}"
+        python3 - <<'PY'
+        import os, re
+        checks = {
+            "AWS_ACCOUNT_ID": r"[0-9]{12}",
+            "AWS_REGION": r"[a-z0-9-]+",
+            "ECR_REPOSITORY": r"[a-z0-9]+(?:[._/-][a-z0-9]+)*",
+            "CODEBUILD_RESOLVED_SOURCE_VERSION": r"(?:[0-9a-f]{40}|[0-9a-f]{64})",
+        }
+        for name, pattern in checks.items():
+            if not re.fullmatch(pattern, os.environ[name]):
+                raise SystemExit("Invalid example input: " + name)
+        prefix = f"arn:aws:signer:{os.environ['AWS_REGION']}:{os.environ['AWS_ACCOUNT_ID']}:/signing-profiles/"
+        profile = os.environ["SIGNING_PROFILE_ARN"]
+        if not profile.startswith(prefix) or not re.fullmatch(r"[A-Za-z0-9_/]+", profile[len(prefix):]):
+            raise SystemExit("Use an approved signing profile in this example's account/Region")
+        PY
+        REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        IMAGE_URI="${REGISTRY}/${ECR_REPOSITORY}:${CODEBUILD_RESOLVED_SOURCE_VERSION}"
+        ACTUAL_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+        if [[ "$ACTUAL_ACCOUNT" != "$AWS_ACCOUNT_ID" ]]; then
+          printf '%s\n' 'Unexpected build-role account' >&2
+          exit 1
+        fi
+        aws ecr get-login-password --region "$AWS_REGION" |
+          docker login --username AWS --password-stdin "$REGISTRY"
+        docker build --tag "$IMAGE_URI" .
+        trivy image --image-src docker --scanners vuln --severity HIGH,CRITICAL \
+          --exit-code 1 --no-progress "$IMAGE_URI"
+        docker push "$IMAGE_URI"
+        DIGESTS_JSON=$(docker image inspect --format '{{json .RepoDigests}}' "$IMAGE_URI")
+        IMAGE_REFERENCE=$(python3 - "$REGISTRY/$ECR_REPOSITORY" "$DIGESTS_JSON" <<'PY'
+        import json, re, sys
+        digests = json.loads(sys.argv[2])
+        if not isinstance(digests, list):
+            raise SystemExit("Expected Docker RepoDigests array")
+        pattern = re.escape(sys.argv[1]) + r"@sha256:[0-9a-f]{64}"
+        matching = {d for d in digests if isinstance(d, str) and re.fullmatch(pattern, d)}
+        if len(matching) != 1:
+            raise SystemExit("Expected exactly one pushed digest for this repository")
+        print(matching.pop())
+        PY
+        )
+        notation sign --plugin com.amazonaws.signer.notation.plugin \
+          --id "$SIGNING_PROFILE_ARN" "$IMAGE_REFERENCE"
+        notation verify "$IMAGE_REFERENCE"
+        python3 - "$IMAGE_REFERENCE" "$CODEBUILD_RESOLVED_SOURCE_VERSION" <<'PY'
+        import json, sys
+        with open("verified-image.json", "x") as stream:
+            json.dump({"image": sys.argv[1], "sourceCommit": sys.argv[2]}, stream)
+            stream.write("\n")
+        PY
+artifacts:
+  files:
+    - verified-image.json
+```
 
-   # Sign image
-   aws signer start-signing-job \
-     --source "s3={bucketName=my-bucket,key=my-image.tar}" \
-     --destination "s3={bucketName=my-bucket,prefix=signed/}" \
-     --profile-name MyAppSigningProfile
-   ```
+Set `AWS_ACCOUNT_ID`, `AWS_REGION`, `ECR_REPOSITORY` (for example `team/app`) and `SIGNING_PROFILE_ARN` through reviewed project configuration. The command authenticates to the registry hostname, retains nested repository paths, scans the locally built image before push, and selects the matching pushed RepoDigest instead of an arbitrary first entry or a mutable tag. Trivy here gates HIGH/CRITICAL vulnerability findings; add other explicitly designed checks for secrets, configuration and provenance.
 
-3. **Apply Image Policies Using Kyverno**:
-   ```yaml
-   apiVersion: kyverno.io/v1
-   kind: ClusterPolicy
-   metadata:
-     name: require-signed-images
-   spec:
-     validationFailureAction: enforce
-     rules:
-     - name: verify-image-signature
-       match:
-         resources:
-           kinds:
-           - Pod
-       verifyImages:
-       - image: "*.dkr.ecr.*.amazonaws.com/*"
-         key: "https://my-keystore.com/keys/my-key.pub"
-   ```
+All promotion steps are in one Bash build block with `set -euo pipefail`. A failed login/build/scan/push/sign/verify stops before a new artifact is written. CodeBuild post_build can run after a failed build, so a separate unguarded post_build push/sign step is unsafe. The reserved artifact path is cleared first to prevent reuse of a previous output. Downstream deployment must also require a successful build and validate the artifact; the JSON file alone is not an authorization or a signed attestation.
 
-4. **Apply Image Policies Using OPA Gatekeeper**:
-   ```yaml
-   apiVersion: constraints.gatekeeper.sh/v1beta1
-   kind: K8sTrustedImages
-   metadata:
-     name: trusted-repos
-   spec:
-     match:
-       kinds:
-       - apiGroups: [""]
-         kinds: ["Pod"]
-     parameters:
-       repos:
-       - "123456789012.dkr.ecr.us-west-2.amazonaws.com/*"
-       - "docker.io/library/*"
-   ```
+`verified-image.json` contains the exact digest reference for an EKS deployment/GitOps consumer. It is not ECS `imagedefinitions.json` and does not itself deploy anything. Successful signing/verification still depends on actual registry access, trust, revocation checks and AWS Signer availability.
 
-**Building an Integrated Pipeline:**
+**Admission:** a production signature verifier must understand the chosen Notation/Signer signature and trust policy. AWS documents Gatekeeper with Ratify and Kyverno with an AWS Signer/Notation integration. Installing a generic policy engine, a bare Gatekeeper constraint without its ConstraintTemplate, or a public-key field for a different signature scheme does not establish that integration. Validate trusted/untrusted profiles, unsigned images, digest mismatches, revoked/expired signatures, verifier outages and admission failure policy before enforcement.
 
-1. **CI/CD Pipeline Integration**:
-   ```yaml
-   # AWS CodePipeline example
-   version: 0.2
-   phases:
-     pre_build:
-       commands:
-         - echo Logging in to Amazon ECR...
-         - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
-     build:
-       commands:
-         - echo Building the Docker image...
-         - docker build -t $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION .
-     post_build:
-       commands:
-         - echo Running security scan...
-         - trivy image --exit-code 1 --severity HIGH,CRITICAL $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
-         - echo Signing the image...
-         - aws signer start-signing-job --profile-name MyAppSigningProfile --source-image $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
-         - echo Pushing the Docker image...
-         - docker push $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
-   ```
+The following separate Kyverno 1.19.1 rule only restricts **image reference syntax and repository** in security-demo. It checks regular, init and ephemeral containers. It deliberately does **not** claim to verify a signature:
 
-2. **Deploy Image Admission Controller**:
-   ```bash
-   # Install Kyverno
-   kubectl create -f https://github.com/kyverno/kyverno/releases/download/v1.8.0/install.yaml
+```yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: demo-approved-image-reference
+spec:
+  validationActions:
+  - Deny
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+      operations:
+      - CREATE
+      - UPDATE
+      scope: Namespaced
+  matchConditions:
+  - name: demo-namespace
+    expression: has(object.metadata.namespace) && object.metadata.namespace == 'security-demo'
+  validations:
+  - expression: object.spec.containers.all(c, c.image.matches('^123456789012[.]dkr[.]ecr[.]us-west-2[.]amazonaws[.]com/team/app@sha256:[0-9a-f]{64}$'))
+      && (!has(object.spec.initContainers) || object.spec.initContainers.all(c, c.image.matches('^123456789012[.]dkr[.]ecr[.]us-west-2[.]amazonaws[.]com/team/app@sha256:[0-9a-f]{64}$')))
+      && (!has(object.spec.ephemeralContainers) || object.spec.ephemeralContainers.all(c, c.image.matches('^123456789012[.]dkr[.]ecr[.]us-west-2[.]amazonaws[.]com/team/app@sha256:[0-9a-f]{64}$')))
+    message: Use a sha256 digest from the approved team/app repository in security-demo.
+```
 
-   # Apply policy
-   kubectl apply -f image-policy.yaml
-   ```
+Validation: 20 mocked pipeline failure/order/artifact cases and nine actual Kyverno CLI string-policy cases. Buildspec/Bash/Python/JSON and the released policy CRD were checked. No image was built/scanned/pushed, no real AWS signature was produced or verified, and no admission webhook was deployed. This is a reviewed teaching workflow with explicit environment assumptions, not tested production readiness.
 
-**Best Practices:**
+References: [Signer signing](https://docs.aws.amazon.com/signer/latest/developerguide/image-signing-steps.html), [Signer verification](https://docs.aws.amazon.com/signer/latest/developerguide/image-verification.html), [ECR managed signing](https://docs.aws.amazon.com/AmazonECR/latest/userguide/managed-signing.html), [EKS admission verification](https://docs.aws.amazon.com/eks/latest/userguide/image-verification.html), [CodeBuild buildspec](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html), [Trivy image flags](https://trivy.dev/docs/latest/references/configuration/cli/trivy_image/).
 
-1. **Use Minimal Base Images**:
-   - Minimize attack surface
-   - Include only necessary components
-   - Use distroless or lightweight images
-
-2. **Implement Defense in Depth**:
-   - Build-time scanning
-   - Pre-deployment validation
-   - Runtime monitoring
-
-3. **Regularly Update Images**:
-   - Apply latest security patches
-   - Regularly update base images
-   - Continuously monitor for vulnerabilities
-
-4. **Use Immutable Images**:
-   - Don't modify images after deployment
-   - Build and deploy new images when changes are needed
-   - Support version management and rollback
-
-**Practical Implementation Examples:**
-
-1. **Amazon ECR, AWS CodePipeline, and Kyverno Integration**:
-   ```yaml
-   # buildspec.yml
-   version: 0.2
-   phases:
-     pre_build:
-       commands:
-         - echo Logging in to Amazon ECR...
-         - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
-         - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-         - IMAGE_TAG=${COMMIT_HASH:=latest}
-     build:
-       commands:
-         - echo Building the Docker image...
-         - docker build -t $ECR_REPOSITORY_URI:$IMAGE_TAG .
-     post_build:
-       commands:
-         - echo Running Trivy security scan...
-         - trivy image --exit-code 1 --severity HIGH,CRITICAL $ECR_REPOSITORY_URI:$IMAGE_TAG
-         - echo Pushing the Docker image...
-         - docker push $ECR_REPOSITORY_URI:$IMAGE_TAG
-         - echo Creating image definition file...
-         - aws ecr describe-images --repository-name $(echo $ECR_REPOSITORY_URI | cut -d'/' -f2) --image-ids imageTag=$IMAGE_TAG --query 'imageDetails[].imageTags[0]' --output text
-   artifacts:
-     files:
-       - imagedefinitions.json
-   ```
-
-2. **Kyverno Image Policy**:
-   ```yaml
-   apiVersion: kyverno.io/v1
-   kind: ClusterPolicy
-   metadata:
-     name: restrict-image-registries
-   spec:
-     validationFailureAction: enforce
-     background: true
-     rules:
-     - name: allowed-registries
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Only images from approved registries are allowed"
-         pattern:
-           spec:
-             containers:
-             - image: "{{ regex_match('123456789012.dkr.ecr.*.amazonaws.com/*|docker.io/library/*', '@@') }}"
-   ```
-
-Issues with other options:
-- **A. Perform manual security checks on all images**: Manual checks are not scalable, lack consistency, and are impractical in continuous deployment environments.
-- **B. Use only trusted official images**: Even official images can have vulnerabilities, and custom images are often needed.
-- **D. Run antivirus software inside containers**: Running antivirus inside containers uses many resources, violates container design principles, and doesn't address security issues at the image build stage.
 </details>
-### 4. What is the most effective way to enhance pod security in Amazon EKS?
 
-A. Disable privileged mode for all pods
-B. Implement Pod Security Standards (PSS) and Pod Security Policies (PSP)
-C. Run all pods as non-root users
-D. Use read-only file systems for all pods
+### 4. Which approach applies a coherent, current Pod security baseline on EKS?
+
+- A) Only disable privileged mode
+- B) Use versioned PSS profiles through PSA, with reviewed admission policies where needed
+- C) Only set a non-root UID
+- D) Only make the root filesystem read-only
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Implement Pod Security Standards (PSS) and Pod Security Policies (PSP)**
+**Answer: B) Use versioned PSS profiles through PSA, with reviewed admission policies where needed**
 
 **Explanation:**
-The most effective way to enhance pod security in Amazon EKS is to implement Pod Security Standards (PSS) and Pod Security Policies (PSP) or their replacement mechanisms. These mechanisms control the security context of pods and apply consistent security standards across the cluster.
 
-**Note**: As of Kubernetes 1.25, PSP (Pod Security Policy) is deprecated, and PSS (Pod Security Standards) with PSA (Pod Security Admission) are recommended instead. In EKS, you can implement similar functionality using policy engines like Kyverno or OPA Gatekeeper.
+Pod Security Standards define Privileged, Baseline and Restricted profiles. Pod Security Admission enforces namespace-selected profiles. PSA is stable since Kubernetes 1.25; PodSecurityPolicy was deprecated in 1.21 and **removed in 1.25**. A current cluster cannot deploy that removed API. Kyverno/Gatekeeper policies are separate resources, even if an older example uses “PSP” in a constraint name.
 
-**Key Benefits of Pod Security Standards and Policies:**
+An isolated Linux demonstration with a reviewed v1.36 profile is:
 
-1. **Apply Consistent Security Standards**:
-   - Apply consistent security controls across the cluster
-   - Prevent privilege escalation
-   - Reduce container escape risk
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.36
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.36
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-demo
+  namespace: security-demo
+spec:
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: busybox:1.37.0
+    command:
+    - sh
+    - -c
+    args:
+    - id && sleep 3600
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+```
 
-2. **Support Various Security Levels**:
-   - Privileged: No restrictions
-   - Baseline: Apply basic restrictions
-   - Restricted: Apply strict security controls
+Namespace enforce applies to Pod admission. Audit/warn can report controller-template violations, but successful Deployment/Job apply does not prove its Pods pass enforcement. Changing labels does not retroactively evict existing Pods. Select a policy version for the actual cluster and review existing workloads before enforcement.
 
-3. **Fine-grained Security Controls**:
-   - Limit privilege escalation
-   - Restrict host namespace access
-   - Restrict volume types
-   - Restrict user and group IDs
+runAsNonRoot/runAsUser and seccomp are distinct from allowPrivilegeEscalation and capabilities. fsGroup is a Pod-level volume ownership setting, not a container capability. Read-only root is useful application-compatible hardening but is not a universal PSS Restricted requirement and does not make mounted PVCs read-only. Real applications need compatible UID/GID and writable temporary/cache/socket paths; a generic root-oriented nginx image is not made functional by merely adding these fields.
 
-**Implementation Methods:**
+**An additional scoped admission rule:** this Kyverno 1.19.1 ValidatingPolicy checks all regular, init and ephemeral containers in security-demo. Missing privileged is accepted as false; true is denied. It uses the current v1 policy API rather than an obsolete installation manifest:
 
-1. **Apply Pod Security Standards (PSS)**:
-   ```yaml
-   # Apply PSS labels to namespace
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: secure-ns
-     labels:
-       pod-security.kubernetes.io/enforce: restricted
-       pod-security.kubernetes.io/audit: restricted
-       pod-security.kubernetes.io/warn: restricted
-   ```
+```yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: demo-disallow-privileged
+spec:
+  validationActions:
+  - Deny
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+      operations:
+      - CREATE
+      - UPDATE
+      scope: Namespaced
+  matchConditions:
+  - name: demo-namespace
+    expression: has(object.metadata.namespace) && object.metadata.namespace == 'security-demo'
+  validations:
+  - expression: object.spec.containers.all(c, !has(c.securityContext) || !has(c.securityContext.privileged)
+      || c.securityContext.privileged == false) && (!has(object.spec.initContainers)
+      || object.spec.initContainers.all(c, !has(c.securityContext) || !has(c.securityContext.privileged)
+      || c.securityContext.privileged == false)) && (!has(object.spec.ephemeralContainers)
+      || object.spec.ephemeralContainers.all(c, !has(c.securityContext) || !has(c.securityContext.privileged)
+      || c.securityContext.privileged == false))
+    message: Privileged containers, including init and ephemeral containers, are not
+      allowed in security-demo.
+```
 
-2. **Implement Pod Security Policy Using Kyverno**:
-   ```yaml
-   apiVersion: kyverno.io/v1
-   kind: ClusterPolicy
-   metadata:
-     name: restrict-privileged
-   spec:
-     validationFailureAction: enforce
-     rules:
-     - name: no-privileged-pods
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Privileged mode is not allowed"
-         pattern:
-           spec:
-             containers:
-             - name: "*"
-               securityContext:
-                 privileged: false
-   ```
+This one rule does not replace the entire PSS profile or image verification. Keep privileged CSI/monitoring agents and deliberate exceptions under their platform owner; do not blanket-apply a demo policy to kube-system. A Gatekeeper alternative needs its actual ConstraintTemplate, matching constraint and validated behavior.
 
-3. **Implement Pod Security Policy Using OPA Gatekeeper**:
-   ```yaml
-   apiVersion: constraints.gatekeeper.sh/v1beta1
-   kind: K8sPSPPrivilegedContainer
-   metadata:
-     name: no-privileged-containers
-   spec:
-     match:
-       kinds:
-       - apiGroups: [""]
-         kinds: ["Pod"]
-   ```
+The manifest/schema and six actual Kyverno CLI cases cover omitted/false, privileged regular/init/ephemeral containers and another namespace. Ephemeral-container testing uses a synthetic UPDATE object, not Pod creation. No live admission webhook or Pod deployment was executed.
 
-**Key Pod Security Controls:**
+References: [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/), [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/).
 
-1. **Restrict Privileged Mode**:
-   ```yaml
-   securityContext:
-     privileged: false
-   ```
-
-2. **Run as Non-root User**:
-   ```yaml
-   securityContext:
-     runAsUser: 1000
-     runAsGroup: 3000
-     fsGroup: 2000
-   ```
-
-3. **Restrict Capabilities**:
-   ```yaml
-   securityContext:
-     capabilities:
-       drop:
-       - ALL
-       add:
-       - NET_BIND_SERVICE
-   ```
-
-4. **Read-only Root Filesystem**:
-   ```yaml
-   securityContext:
-     readOnlyRootFilesystem: true
-   ```
-
-5. **Apply seccomp Profile**:
-   ```yaml
-   securityContext:
-     seccompProfile:
-       type: RuntimeDefault
-   ```
-
-**Best Practices:**
-
-1. **Apply the Principle of Least Privilege**:
-   - Grant only the minimum necessary permissions
-   - Limit privileged mode usage
-   - Allow only necessary capabilities
-
-2. **Implement Defense in Depth**:
-   - Namespace-level policies
-   - Cluster-level policies
-   - Runtime security monitoring
-
-3. **Explicitly Define Security Context**:
-   - Don't rely on defaults
-   - Specify security context for all containers
-   - Regularly review security configurations
-
-4. **Manage Policy Exceptions**:
-   - Define clear processes when exceptions are needed
-   - Regularly review and audit exceptions
-   - Minimize exceptions
-
-**Practical Implementation Examples:**
-
-1. **Security-enhanced Pod Definition**:
-   ```yaml
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: secure-pod
-   spec:
-     securityContext:
-       fsGroup: 2000
-       runAsNonRoot: true
-       runAsUser: 1000
-       seccompProfile:
-         type: RuntimeDefault
-     containers:
-     - name: app
-       image: my-secure-app:1.0
-       securityContext:
-         allowPrivilegeEscalation: false
-         capabilities:
-           drop:
-           - ALL
-         readOnlyRootFilesystem: true
-         runAsNonRoot: true
-         runAsUser: 1000
-         seccompProfile:
-           type: RuntimeDefault
-   ```
-
-2. **Kyverno Policy Collection**:
-   ```yaml
-   apiVersion: kyverno.io/v1
-   kind: ClusterPolicy
-   metadata:
-     name: pod-security
-   spec:
-     validationFailureAction: enforce
-     rules:
-     - name: no-privileged
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Privileged containers are not allowed"
-         pattern:
-           spec:
-             containers:
-             - name: "*"
-               securityContext:
-                 privileged: false
-     - name: no-privilege-escalation
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Privilege escalation is not allowed"
-         pattern:
-           spec:
-             containers:
-             - name: "*"
-               securityContext:
-                 allowPrivilegeEscalation: false
-     - name: require-non-root
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Running as root is not allowed"
-         pattern:
-           spec:
-             containers:
-             - name: "*"
-               securityContext:
-                 runAsNonRoot: true
-   ```
-
-Issues with other options:
-- **A. Disable privileged mode for all pods**: Disabling privileged mode is important but is only one aspect of pod security and doesn't provide a comprehensive security strategy.
-- **C. Run all pods as non-root users**: Running as non-root is a good practice but doesn't address other important security controls (e.g., capabilities, volume mounts, host namespace access).
-- **D. Use read-only file systems for all pods**: Read-only file systems are a useful security control but aren't suitable for all applications and don't address other important security aspects.
 </details>
-### 5. What is the most effective approach to monitor and audit security compliance in Amazon EKS?
 
-A. Perform manual security reviews
-B. Use only AWS Config rules
-C. Use only AWS GuardDuty
-D. Use integrated AWS Security Hub, GuardDuty, CloudTrail, and Kubernetes audit logs
+### 5. Which approach gives complementary security evidence for an EKS workload?
+
+- A) Use only occasional manual reviews
+- B) Use only AWS Config checks
+- C) Use only GuardDuty
+- D) Combine posture findings, audit logs, runtime coverage and a verified response path
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D. Use integrated AWS Security Hub, GuardDuty, CloudTrail, and Kubernetes audit logs**
+**Answer: D) Combine posture findings, audit logs, runtime coverage and a verified response path**
 
 **Explanation:**
-The most effective approach to monitor and audit security compliance in Amazon EKS is to integrate AWS Security Hub, GuardDuty, CloudTrail, and Kubernetes audit logs. This integrated approach provides comprehensive security visibility at the infrastructure, cluster, and application levels.
 
-**Key Benefits of Integrated Security Monitoring and Auditing:**
+| Evidence/control | What it contributes and does not prove |
+|---|---|
+| Security Hub CSPM / AWS Config | Supported configuration controls and findings; not complete Kubernetes or regulatory certification |
+| GuardDuty EKS Protection | Kubernetes audit-based threat analysis through an independent stream |
+| GuardDuty Runtime Monitoring | Agent-based runtime events on supported nodes; enabled status alone is not coverage |
+| CloudTrail | AWS API activity; it does not replace Kubernetes audit or application data-access logs |
+| Kubernetes audit logs | Requests selected by the audit policy/level, not every workload action/body |
+| CloudWatch / incident routing | Log analysis and delivery to operators; delivery, retention and response must be verified |
 
-1. **Multi-layer Security Visibility**:
-   - AWS infrastructure-level monitoring
-   - Kubernetes cluster-level auditing
-   - Container and application-level security events
+Security Hub CSPM’s FSBP standard is not the CIS Kubernetes Benchmark. Supported CIS AWS Foundations controls are also not a complete CIS Kubernetes audit. Record the applicable benchmark/version, manual checks, managed-service exceptions and the evidence required for the workload’s actual obligations.
 
-2. **Automated Compliance Checks**:
-   - Verify compliance with industry standards and best practices
-   - Detect configuration drift
-   - Continuous compliance monitoring
+Use the existing organization/Region ownership for detectors, CSPM standards, Config recorders and CloudTrail. Do not create another regional detector, overwrite centralized configuration or start a trail without its prepared bucket policy, encryption, event selectors and retention. CloudTrail data events are separate from default management-event coverage. No account-level monitoring resources were provisioned in this review.
 
-3. **Centralized Security Management**:
-   - View security status from a single dashboard
-   - Integrated alerting and response
-   - Comprehensive security reports
+**EKS-specific checks:** enable and confirm the intended control plane log types, update completion and log arrival as shown in the source chapter. Both `eks-cluster-logging-enabled` (all types, periodic) and `eks-cluster-log-enabled` (optional selected types, configuration changes) are valid Config rules. Maintain the `oldestVersionSupported` parameter instead of assuming an automatic current-version catalog. An explicit encryptionConfig control finding does not mean EKS 1.28+ API data lacks default envelope encryption.
 
-**Implementation Methods:**
+GuardDuty audit analysis does not require your separate CloudWatch audit export. Runtime Monitoring needs the supported security agent/data endpoint and actual coverage; current EKS support includes EC2 and Auto Mode, not Fargate or Hybrid Nodes. Use the current RUNTIME_MONITORING feature and review legacy EKS_RUNTIME_MONITORING migration. Do not mistake EKS_AUDIT_LOGS for runtime monitoring.
 
-1. **Enable AWS Security Hub**:
-   ```bash
-   # Enable Security Hub
-   aws securityhub enable-security-hub \
-     --enable-default-standards \
-     --tags Environment=Production
-   ```
+**CSPM event routing example:** save this as `security-event-pattern.json`. It selects active HIGH/CRITICAL ASFF findings with NEW/NOTIFIED workflow status. It intentionally does not match the different `Findings Imported V2` OCSF event schema:
 
-2. **Enable Amazon GuardDuty EKS Protection**:
-   ```bash
-   # Enable GuardDuty
-   aws guardduty create-detector \
-     --enable \
-     --finding-publishing-frequency FIFTEEN_MINUTES
+```json
+{
+  "source": [
+    "aws.securityhub"
+  ],
+  "detail-type": [
+    "Security Hub Findings - Imported"
+  ],
+  "detail": {
+    "findings": {
+      "Severity": {
+        "Label": [
+          "HIGH",
+          "CRITICAL"
+        ]
+      },
+      "Workflow": {
+        "Status": [
+          "NEW",
+          "NOTIFIED"
+        ]
+      },
+      "RecordState": [
+        "ACTIVE"
+      ]
+    }
+  }
+}
+```
 
-   # Enable EKS Protection
-   aws guardduty update-detector \
-     --detector-id $(aws guardduty list-detectors --query 'DetectorIds[0]' --output text) \
-     --features '[{"Name": "EKS_RUNTIME_MONITORING", "Status": "ENABLED"}]'
-   ```
+This synthetic event is for pattern checking only; it is not a real finding or a complete ASFF import payload. Save as `synthetic-security-event.json`:
 
-3. **Configure CloudTrail Logging**:
-   ```bash
-   # Create CloudTrail trail
-   aws cloudtrail create-trail \
-     --name eks-audit-trail \
-     --s3-bucket-name my-eks-audit-logs \
-     --is-multi-region-trail \
-     --enable-log-file-validation
+```json
+{
+  "version": "0",
+  "id": "00000000-0000-0000-0000-000000000001",
+  "account": "123456789012",
+  "region": "us-west-2",
+  "time": "2026-09-11T00:00:00Z",
+  "source": "aws.securityhub",
+  "detail-type": "Security Hub Findings - Imported",
+  "resources": [],
+  "detail": {
+    "findings": [
+      {
+        "Id": "synthetic-example-not-a-real-finding",
+        "Severity": {
+          "Label": "HIGH"
+        },
+        "Workflow": {
+          "Status": "NEW"
+        },
+        "RecordState": "ACTIVE"
+      }
+    ]
+  }
+}
+```
 
-   # Enable trail logging
-   aws cloudtrail start-logging \
-     --name eks-audit-trail
-   ```
+In an authorized AWS test, `aws events test-event-pattern --event-pattern file://security-event-pattern.json --event file://synthetic-security-event.json --region us-west-2` should match. Also test LOW severity, RESOLVED/SUPPRESSED workflow, ARCHIVED state, missing fields and the V2 event type; those should not match this pattern. This review checked the JSON/source schema, not the EventBridge service’s matcher or live event delivery.
 
-4. **Enable EKS Audit Logs**:
-   ```bash
-   # Enable audit logs when creating cluster
-   aws eks create-cluster \
-     --name my-cluster \
-     --role-arn arn:aws:iam::123456789012:role/EKSClusterRole \
-     --resources-vpc-config subnetIds=subnet-12345,subnet-67890,securityGroupIds=sg-12345 \
-     --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
+A target configuration can use an **existing reviewed EventBridge execution role** with publish permission on the owned SNS topic, as supported by the current EventBridge guide. Save as `security-event-targets.json` after substituting owned ARNs:
 
-   # Enable audit logs for existing cluster
-   aws eks update-cluster-config \
-     --name my-cluster \
-     --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-   ```
+```json
+[
+  {
+    "Id": "SecurityAlerts",
+    "Arn": "arn:aws:sns:us-west-2:123456789012:eks-security-alerts",
+    "RoleArn": "arn:aws:iam::123456789012:role/EventBridgeSecurityAlerts"
+  }
+]
+```
 
-**Key Monitoring and Auditing Components:**
+The role needs the correct EventBridge trust and least-privilege sns:Publish permission; inspect applicable topic/key policies and any explicit denies. Alternatively, a target without an execution role needs its supported resource-based permission path. The target JSON alone grants no permission and does not create the rule, topic, role or subscription.
 
-1. **AWS Security Hub**:
-   - Apply EKS best practice standards
-   - CIS Kubernetes benchmark checks
-   - Centralize security findings
+Before using `aws events put-targets --rule eks-security-alerts --targets file://security-event-targets.json --region us-west-2`, inspect existing rule/target ownership. Check FailedEntryCount and FailedEntries, not only the command’s exit status. Confirm SNS subscriptions, encryption permissions, retry/dead-letter behavior and an end-to-end controlled delivery test. No notification was sent during this audit.
 
-2. **Amazon GuardDuty**:
-   - EKS runtime monitoring
-   - Container threat detection
-   - Anomaly detection
+**Audit investigation:** in the actual EKS log group, this Logs Insights example assumes JSON field discovery for Kubernetes audit records. It focuses on RBAC mutation requests; inspect responseStatus.code to distinguish successful and rejected requests:
 
-3. **AWS CloudTrail**:
-   - Log EKS control plane API calls
-   - Track management events
-   - Audit user activity
+```text
+fields @timestamp, verb, user.username, objectRef.resource, objectRef.namespace, responseStatus.code
+| filter @logStream like /kube-apiserver-audit/
+| filter verb in ["create", "update", "patch", "delete", "deletecollection"]
+| filter objectRef.resource in ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+| sort @timestamp desc
+| limit 100
+```
 
-4. **Kubernetes Audit Logs**:
-   - Log in-cluster activity
-   - Track API server requests
-   - Monitor permission changes
+Verify a sampled record’s fields and the stream name before relying on the query. Preserve relevant evidence, define ownership/severity/escalation and test the response process. Finding dashboards and enabled services are not evidence that remediation completed or a compliance obligation was met.
 
-5. **Amazon CloudWatch**:
-   - Centralize logs
-   - Monitor metrics
-   - Configure alerts
+References: [CSPM standards](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html), [ASFF events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html), [V2 events](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html), [EventBridge target permissions](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html), [EKS audit logs](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html).
 
-**Best Practices:**
-
-1. **Implement Comprehensive Logging Strategy**:
-   - Enable all relevant log sources
-   - Set appropriate log retention policies
-   - Ensure log integrity
-
-2. **Configure Automated Compliance Checks**:
-   - Schedule regular compliance scans
-   - Configure alerts for critical violations
-   - Automate compliance reports
-
-3. **Establish Response Plans for Security Events**:
-   - Define clear escalation paths
-   - Implement automated responses
-   - Regularly test response plans
-
-4. **Apply the Principle of Least Privilege**:
-   - Restrict access to audit logs
-   - Role-based access control for security tools
-   - Regularly review permissions
-
-**Practical Implementation Examples:**
-
-1. **AWS Security Hub and GuardDuty Integration**:
-   ```bash
-   # Send Security Hub findings to SNS topic
-   aws events put-rule \
-     --name SecurityHubFindings \
-     --event-pattern '{"source":["aws.securityhub"],"detail-type":["Security Hub Findings - Imported"]}'
-
-   aws events put-targets \
-     --rule SecurityHubFindings \
-     --targets 'Id"="1","Arn"="arn:aws:sns:us-west-2:123456789012:security-alerts"'
-   ```
-
-2. **Audit Log Analysis with CloudWatch Logs Insights**:
-   ```
-   fields @timestamp, @message
-   | filter @logStream like /kube-apiserver-audit/
-   | filter @message like "system:serviceaccount"
-   | filter @message like "create" or @message like "update" or @message like "delete"
-   | sort @timestamp desc
-   | limit 100
-   ```
-
-3. **Monitor EKS Configuration with AWS Config Rules**:
-   ```bash
-   # Create Config rule to check if EKS cluster endpoint is public
-   aws configservice put-config-rule \
-     --config-rule file://eks-endpoint-rule.json
-   ```
-
-4. **Configure Security Monitoring Infrastructure with Terraform**:
-   ```hcl
-   # Enable GuardDuty
-   resource "aws_guardduty_detector" "main" {
-     enable = true
-     finding_publishing_frequency = "FIFTEEN_MINUTES"
-   }
-
-   # Enable EKS Protection
-   resource "aws_guardduty_detector_feature" "eks_runtime" {
-     detector_id = aws_guardduty_detector.main.id
-     name        = "EKS_RUNTIME_MONITORING"
-     status      = "ENABLED"
-   }
-
-   # Enable Security Hub
-   resource "aws_securityhub_account" "main" {}
-
-   # Enable EKS standards
-   resource "aws_securityhub_standards_subscription" "cis_eks" {
-     depends_on    = [aws_securityhub_account.main]
-     standards_arn = "arn:aws:securityhub:${data.aws_region.current.name}::standards/aws-foundational-security-best-practices/v/1.0.0"
-   }
-   ```
-
-Issues with other options:
-- **A. Perform manual security reviews**: Manual reviews are not scalable, don't provide real-time threat detection, and are prone to human error.
-- **B. Use only AWS Config rules**: AWS Config is useful for monitoring configuration compliance but doesn't provide runtime threat detection or comprehensive logging.
-- **C. Use only AWS GuardDuty**: GuardDuty focuses on threat detection but doesn't provide configuration compliance checks or comprehensive audit logging.
 </details>
-### 6. What is the most secure approach for secrets management in Amazon EKS?
 
-A. Use Kubernetes Secrets with default settings
-B. Pass secrets as environment variables
-C. Integrate with AWS Secrets Manager or AWS Parameter Store
-D. Hardcode secrets in container images
+### 6. For application credentials requiring centrally governed AWS access and lifecycle management, which approach fits?
+
+- A) Store values without an access, rotation or reload plan
+- B) Treat environment variables as an encryption mechanism
+- C) Use an appropriate AWS secret/parameter backend with scoped identity and an explicit delivery/lifecycle design
+- D) Hardcode production credentials in the image
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Integrate with AWS Secrets Manager or AWS Parameter Store**
+**Answer: C) Use an appropriate AWS secret/parameter backend with scoped identity and an explicit delivery/lifecycle design**
 
 **Explanation:**
-The most secure approach for secrets management in Amazon EKS is to integrate with dedicated secret management services like AWS Secrets Manager or AWS Parameter Store. These services provide advanced security features such as encryption, access control, automatic rotation, and auditing.
 
-**Key Benefits of AWS Secret Management Service Integration:**
+Secrets Manager and Parameter Store can centralize AWS access controls and auditing, but an external backend is not automatically secure without workload identity, least privilege, delivery and reload controls. Secrets Manager supports configured rotation for supported credentials; Parameter Store does not provide the same built-in credential-rotation workflow. A SecureString parameter’s KMS encryption and versioning are different from changing the credential in the target database/service.
 
-1. **Strong Encryption**:
-   - Encryption at rest using AWS KMS
-   - Encryption in transit
-   - Fine-grained encryption key management
+EKS 1.28+ already encrypts all Kubernetes API data with default KMS v2 envelope encryption. Base64 in a Secret manifest is still only encoding, and API/Pod access can expose the value. Environment variables are a delivery mechanism, not encryption; existing process environments do not update when a Secret changes.
 
-2. **Fine-grained Access Control**:
-   - Access control through IAM policies
-   - Apply the principle of least privilege
-   - Support for temporary credentials
+**Choose ownership and delivery deliberately:** ESO writes a Kubernetes Secret. ASCP with Secrets Store CSI Driver mounts files, and can optionally synchronize a Kubernetes Secret. Do not let both controllers manage the same target Secret. A file-only CSI design still needs workload/node access controls; optional synchronization also introduces a Kubernetes API copy of the value.
 
-3. **Automatic Secret Rotation**:
-   - Automate regular secret rotation
-   - Rotate without application interruption
-   - Manage rotation schedules and policies
+**ASCP example:** this is a new owned Linux EC2 installation for the reviewed EKS 1.36 example, not a rollout into an unknown existing cluster. First inspect existing releases/CSIDriver ownership, node compatibility, privileged platform-agent admission, network access and scheduling. Fargate cannot run the CSI node DaemonSet. Hybrid/Auto Mode use requires their current provider/node prerequisites; it is not verified by the following local render.
 
-4. **Comprehensive Auditing and Logging**:
-   - Audit secret access
-   - Integration with CloudTrail
-   - Meet compliance requirements
+Use these `secrets-csi-values.yaml` settings for a separately managed CSI 1.6.1 driver. They explicitly configure both AWS token audiences, optional Secret synchronization and rotation:
 
-**Implementation Methods:**
+```yaml
+tokenRequests:
+- audience: sts.amazonaws.com
+- audience: pods.eks.amazonaws.com
+syncSecret:
+  enabled: true
+enableSecretRotation: true
+rotationPollInterval: 2m
+```
 
-1. **Integration with AWS Secrets Manager**:
+ASCP chart 3.1.3 normally includes the driver as a dependency and configures its token audiences. Because this example installs the driver separately, save the following as `ascp-values.yaml` to avoid a second driver:
 
-   a. **Install ASCP (AWS Secrets and Configuration Provider)**:
-   ```bash
-   helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
-   helm install -n kube-system csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver
+```yaml
+secrets-store-csi-driver:
+  install: false
+```
 
-   kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
-   ```
 
-   b. **Create SecretProviderClass**:
-   ```yaml
-   apiVersion: secrets-store.csi.x-k8s.io/v1
-   kind: SecretProviderClass
-   metadata:
-     name: aws-secrets
-   spec:
-     provider: aws
-     parameters:
-       objects: |
-         - objectName: "prod/myapp/db-creds"
-           objectType: "secretsmanager"
-           objectAlias: "db-creds.json"
-     secretObjects:
-     - secretName: db-credentials
-       type: Opaque
-       data:
-       - objectName: db-creds.json
-         key: username
-         property: username
-       - objectName: db-creds.json
-         key: password
-         property: password
-   ```
 
-   c. **Mount Secrets in Pod**:
-   ```yaml
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: app
-   spec:
-     containers:
-     - name: app
-       image: myapp:1.0
-       volumeMounts:
-       - name: secrets-store
-         mountPath: "/mnt/secrets"
-         readOnly: true
-       env:
-       - name: DB_USERNAME
-         valueFrom:
-           secretKeyRef:
-             name: db-credentials
-             key: username
-       - name: DB_PASSWORD
-         valueFrom:
-           secretKeyRef:
-             name: db-credentials
-             key: password
-     volumes:
-     - name: secrets-store
-       csi:
-         driver: secrets-store.csi.k8s.io
-         readOnly: true
-         volumeAttributes:
-           secretProviderClass: aws-secrets
-   ```
+```bash
+helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+helm repo add aws-secrets-manager https://aws.github.io/secrets-store-csi-driver-provider-aws
+helm repo update secrets-store-csi-driver aws-secrets-manager
+helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver \
+  --version 1.6.1 --namespace kube-system -f secrets-csi-values.yaml --wait --timeout 5m
+helm install secrets-provider-aws aws-secrets-manager/secrets-store-csi-driver-provider-aws \
+  --version 3.1.3 --namespace kube-system -f ascp-values.yaml --wait --timeout 5m
+```
 
-2. **Integration with AWS Parameter Store**:
+Existing installations need their owner’s version/CRD upgrade procedure; do not run these fresh-install commands or a partial `helm upgrade` over unrelated values. Chart pinning and successful rendering do not prove node plugin compatibility, connectivity or secret access.
 
-   a. **Install External Secrets Operator**:
-   ```bash
-   helm repo add external-secrets https://charts.external-secrets.io
-   helm install external-secrets external-secrets/external-secrets \
-     -n external-secrets \
-     --create-namespace
-   ```
+Prepare an owned Secrets Manager JSON secret with username/password fields and a role `ASCPSecretReader` scoped to that exact secret, plus the appropriate customer-key decrypt permission if needed. This IRSA trust uses the precise ServiceAccount subject; replace the complete OIDC issuer/provider and account consistently:
 
-   b. **Create SecretStore**:
-   ```yaml
-   apiVersion: external-secrets.io/v1beta1
-   kind: SecretStore
-   metadata:
-     name: aws-parameter-store
-   spec:
-     provider:
-       aws:
-         service: ParameterStore
-         region: us-west-2
-         auth:
-           jwt:
-             serviceAccountRef:
-               name: external-secrets-sa
-   ```
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLEOIDCID"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLEOIDCID:aud": "sts.amazonaws.com",
+          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLEOIDCID:sub": "system:serviceaccount:security-secrets-demo:ascp-reader"
+        }
+      }
+    }
+  ]
+}
+```
 
-   c. **Create ExternalSecret**:
-   ```yaml
-   apiVersion: external-secrets.io/v1beta1
-   kind: ExternalSecret
-   metadata:
-     name: db-credentials
-   spec:
-     refreshInterval: 1h
-     secretStoreRef:
-       name: aws-parameter-store
-       kind: SecretStore
-     target:
-       name: db-credentials
-     data:
-     - secretKey: username
-       remoteRef:
-         key: /prod/myapp/db/username
-     - secretKey: password
-       remoteRef:
-         key: /prod/myapp/db/password
-   ```
+The Namespace, ServiceAccount, SecretProviderClass and Pod below form the file-delivery example. Select the PSS version appropriate to the actual cluster. JMESPath extracts fields into aliases; `secretObjects.data.objectName` names those mounted aliases. A `property` field inside secretObjects.data is not supported. Permissions 0444 make these files readable to this non-root demonstration process; limit who can mount/create Pods and choose compatible UID/GID/file permissions for a real application.
 
-**Secret Management Best Practices:**
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-secrets-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ascp-reader
+  namespace: security-secrets-demo
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ASCPSecretReader
+automountServiceAccountToken: false
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: db-secrets-files
+  namespace: security-secrets-demo
+spec:
+  provider: aws
+  parameters:
+    region: us-west-2
+    usePodIdentity: 'false'
+    objects: |
+      - objectName: arn:aws:secretsmanager:us-west-2:123456789012:secret:training/db-credentials-ABC123
+        objectType: secretsmanager
+        objectAlias: credentials
+        filePermission: '0444'
+        jmesPath:
+        - path: username
+          objectAlias: db_username
+        - path: password
+          objectAlias: db_password
+  secretObjects:
+  - secretName: csi-db-credentials
+    type: Opaque
+    data:
+    - objectName: db_username
+      key: username
+    - objectName: db_password
+      key: password
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-file-check
+  namespace: security-secrets-demo
+spec:
+  serviceAccountName: ascp-reader
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: check
+    image: busybox:1.37
+    command:
+    - sh
+    - -c
+    - test -s /mnt/secrets/db_username && test -s /mnt/secrets/db_password && sleep 3600
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    volumeMounts:
+    - name: secrets
+      mountPath: /mnt/secrets
+      readOnly: true
+  volumes:
+  - name: secrets
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: db-secrets-files
+```
 
-1. **Apply the Principle of Least Privilege**:
-   - Grant access only to necessary secrets
-   - Use IAM roles per service account
-   - Regular permission reviews
+The Pod checks that files exist without printing their contents. `automountServiceAccountToken: false` disables the automatic Kubernetes API token mount, not the CSI driver’s explicit token requests. For Pod Identity instead of this IRSA example, use a supported agent/association for the workload ServiceAccount and `usePodIdentity: "true"`; do not assume an IRSA annotation supplies that association.
 
-2. **Implement Automatic Secret Rotation**:
-   ```bash
-   # Configure AWS Secrets Manager automatic rotation
-   aws secretsmanager rotate-secret \
-     --secret-id prod/myapp/db-creds \
-     --rotation-lambda-arn arn:aws:lambda:us-west-2:123456789012:function:RotateDBCreds \
-     --rotation-rules '{"AutomaticallyAfterDays": 30}'
-   ```
+The optional csi-db-credentials Secret is synchronized only after a Pod mounts the volume. Its lifecycle follows consuming Pods and it can be removed when all consumers are deleted. Creating SecretProviderClass alone is not a standalone Secret generator. Inspect SecretProviderClassPodStatus and controller/node events without dumping values.
 
-3. **Enhance Secret Encryption**:
-   ```bash
-   # Encrypt secrets with customer-managed KMS key
-   aws secretsmanager create-secret \
-     --name prod/myapp/api-key \
-     --secret-string '{"api-key": "abcdef12345"}' \
-     --kms-key-id arn:aws:kms:us-west-2:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab
-   ```
+For Parameter Store, the objects value can instead contain the following entry, with the provider’s required SSM read permission on the owned parameter and appropriate KMS access for SecureString. This is an objects fragment, not a complete SecretProviderClass:
 
-4. **Audit Secret Access**:
-   ```bash
-   # Filter CloudTrail events
-   aws cloudtrail lookup-events \
-     --lookup-attributes AttributeKey=EventName,AttributeValue=GetSecretValue
-   ```
+```yaml
+- objectName: /training/app/config
+  objectType: ssmparameter
+  objectAlias: app_config
+  filePermission: "0444"
+```
 
-**Practical Implementation Examples:**
+**ESO alternative:** use the source chapter’s prepared EKSSecretReader IRSA role/trust for the exact eso-reader ServiceAccount. With ESO 2.10.0 and its v1 CRDs installed under their owner, the following writes a different target, eso-db-credentials. The backend ARN, namespace, role and JSON properties must refer to the actual prepared secret:
 
-1. **AWS Secrets Manager and IRSA (IAM Roles for Service Accounts) Integration**:
-   ```yaml
-   # Create service account
-   apiVersion: v1
-   kind: ServiceAccount
-   metadata:
-     name: app-sa
-     namespace: default
-     annotations:
-       eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/app-role
-   ---
-   # Deployment configuration
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: app
-   spec:
-     selector:
-       matchLabels:
-         app: myapp
-     template:
-       metadata:
-         labels:
-           app: myapp
-       spec:
-         serviceAccountName: app-sa
-         containers:
-         - name: app
-           image: myapp:1.0
-           volumeMounts:
-           - name: secrets-store
-             mountPath: "/mnt/secrets"
-             readOnly: true
-         volumes:
-         - name: secrets-store
-           csi:
-             driver: secrets-store.csi.k8s.io
-             readOnly: true
-             volumeAttributes:
-               secretProviderClass: aws-secrets
-   ```
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-secrets-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: eso-reader
+  namespace: security-secrets-demo
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/EKSSecretReader
+automountServiceAccountToken: false
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: aws-secretsmanager
+  namespace: security-secrets-demo
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: us-west-2
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: eso-reader
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: db-credentials
+  namespace: security-secrets-demo
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secretsmanager
+    kind: SecretStore
+  target:
+    name: eso-db-credentials
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: username
+      remoteRef:
+        key: arn:aws:secretsmanager:us-west-2:123456789012:secret:training/db-credentials-ABC123
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: arn:aws:secretsmanager:us-west-2:123456789012:secret:training/db-credentials-ABC123
+        property: password
+```
 
-2. **Configure Secret Management Infrastructure with Terraform**:
-   ```hcl
-   # Create AWS Secrets Manager secret
-   resource "aws_secretsmanager_secret" "db_credentials" {
-     name                    = "prod/myapp/db-creds"
-     recovery_window_in_days = 7
-     kms_key_id              = aws_kms_key.secrets_key.arn
-   }
+Here Owner ties the target Secret to the ExternalSecret; deleting the owner can trigger garbage collection. Retain concerns backend disappearance, not immunity from owner deletion. ESO’s serviceAccountRef JWT method is IRSA. Controller Pod Identity is a different design: associate the controller ServiceAccount and omit the store auth block; ESO cannot use serviceAccountRef to impersonate another Pod Identity-associated account.
 
-   resource "aws_secretsmanager_secret_version" "db_credentials" {
-     secret_id     = aws_secretsmanager_secret.db_credentials.id
-     secret_string = jsonencode({
-       username = "dbuser",
-       password = random_password.db_password.result
-     })
-   }
+**Rotation and reload:** CSI 1.6+ uses kubelet RequiresRepublish calls for rotation. requiresRepublish alone does not enable rotation: the driver’s enableSecretRotation flag is also required. The two-minute rotationPollInterval here is a minimum cache duration, not a guaranteed two-minute end-to-end update interval; actual timing depends on kubelet republish. ESO’s refresh interval is another independent reconciliation schedule. Applications must reopen/watch updated files or perform a controlled rollout; subPath mounts and existing environment variables do not automatically refresh.
 
-   # IAM role and policy
-   resource "aws_iam_role" "app_role" {
-     name = "app-role"
-     assume_role_policy = jsonencode({
-       Version = "2012-10-17",
-       Statement = [{
-         Effect = "Allow",
-         Principal = {
-           Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${module.eks.oidc_provider}"
-         },
-         Action = "sts:AssumeRoleWithWebIdentity",
-         Condition = {
-           StringEquals = {
-             "${module.eks.oidc_provider}:sub" = "system:serviceaccount:default:app-sa"
-           }
-         }
-       }]
-     })
-   }
+Secrets Manager rotate-secret defaults to immediate rotation. Even --no-rotate-immediately can test a Lambda rotation function and create/remove AWSPENDING, while an older rate/day-based schedule may still run. It is not a harmless schedule-only or read-only check. Review target credential changes, overlapping validity, application reload and rollback before invoking rotation.
 
-   resource "aws_iam_policy" "secrets_access" {
-     name = "secrets-access"
-     policy = jsonencode({
-       Version = "2012-10-17",
-       Statement = [{
-         Effect = "Allow",
-         Action = [
-           "secretsmanager:GetSecretValue",
-           "secretsmanager:DescribeSecret"
-         ],
-         Resource = aws_secretsmanager_secret.db_credentials.arn
-       }]
-     })
-   }
+**Terraform example without secret values:** Terraform sensitive only suppresses selected display output; ordinary secret_string/random_password values can still be stored in state. The following manages only secret metadata, using an existing approved KMS key. For an already existing secret, reconcile/import it through the owner before managing it in this configuration:
 
-   resource "aws_iam_role_policy_attachment" "secrets_access" {
-     role       = aws_iam_role.app_role.name
-     policy_arn = aws_iam_policy.secrets_access.arn
-   }
-   ```
+```hcl
+terraform {
+  required_version = ">= 1.5.0, < 2.0.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.64.0"
+    }
+  }
+}
 
-Issues with other options:
-- **A. Use Kubernetes Secrets with default settings**: Default Kubernetes Secrets are only base64-encoded (not encrypted), and lack automatic rotation or fine-grained access control features.
-- **B. Pass secrets as environment variables**: Environment variables can be exposed in logs or accessed through process information, and lack automatic rotation or auditing features.
-- **D. Hardcode secrets in container images**: Hardcoding secrets in images poses serious security risks, and requires rebuilding and redeploying images when secrets need to be rotated.
+variable "aws_region" {
+  type    = string
+  default = "us-west-2"
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "Existing approved Secrets Manager encryption key ARN in this Region"
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+
+resource "aws_secretsmanager_secret" "credentials" {
+  name                    = "training/db-credentials"
+  kms_key_id              = var.kms_key_arn
+  recovery_window_in_days = 30
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+output "secret_arn" {
+  value = aws_secretsmanager_secret.credentials.arn
+}
+```
+
+This creates no secret version/value and enables no rotation. Supply the initial value through the approved secret-input process, not a hardcoded Terraform string or plaintext command argument. Protect state and plans even when only metadata is expected. prevent_destroy is a Terraform configuration guard, not an irreversible service protection; removing the resource configuration or operating outside Terraform changes the protection context.
+
+Validation covered native Kubernetes and the released SecretProviderClass/ESO CRDs, published chart checksums, 22 rendered CSI/ASCP objects and actual JMESPath projection of synthetic data. Generated null creationTimestamp fields were omitted only for the Swagger schema check. Terraform fmt passed; no init/plan/apply was run. No AWS secret was fetched, mounted, synchronized or rotated, and no application reload was tested.
+
+References: [ASCP configuration](https://github.com/aws/secrets-store-csi-driver-provider-aws), [CSI 1.6.1](https://github.com/kubernetes-sigs/secrets-store-csi-driver/releases/tag/v1.6.1), [CSI Secret synchronization](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret), [CSI rotation](https://secrets-store-csi-driver.sigs.k8s.io/topics/secret-auto-rotation), [ESO AWS authentication](https://github.com/external-secrets/external-secrets/blob/v2.10.0/docs/provider/aws-access.md), [EKS envelope encryption](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), [Secrets Manager rotation](https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/rotate-secret.html).
+
 </details>

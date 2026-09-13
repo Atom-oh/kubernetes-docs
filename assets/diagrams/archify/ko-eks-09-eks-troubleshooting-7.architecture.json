@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "성능 문제 분류",
+    "output": "ko-eks-09-eks-troubleshooting-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "node-branch",
+        "label": "노드 성능 문제",
+        "focus": [
+          "perf",
+          "node",
+          "node-causes"
+        ],
+        "note": "노드 리소스, 인스턴스 유형, 커널/OS, 네트워크 병목에서 비롯되는 문제"
+      },
+      {
+        "id": "pod-branch",
+        "label": "파드 성능 문제",
+        "focus": [
+          "perf",
+          "pod",
+          "pod-causes"
+        ],
+        "note": "파드의 리소스 제약과 경합, 지연, 디스크 I/O, 애플리케이션 코드 문제"
+      },
+      {
+        "id": "network-branch",
+        "label": "네트워크 성능 문제",
+        "focus": [
+          "perf",
+          "network",
+          "network-causes"
+        ],
+        "note": "CNI, 네트워크 정책, MTU, 대역폭, DNS 해결에서 비롯되는 문제"
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "perf",
+      "type": "external",
+      "label": "성능 문제",
+      "sublabel": "EKS 클러스터에서 관찰되는 성능 저하",
+      "pos": [
+        410,
+        40
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "노드 성능 문제",
+      "sublabel": "EC2 워커 노드 수준",
+      "pos": [
+        30,
+        200
+      ],
+      "size": [
+        320,
+        64
+      ],
+      "tag": "원인 5가지"
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "파드 성능 문제",
+      "sublabel": "파드 / 컨테이너 수준",
+      "pos": [
+        380,
+        200
+      ],
+      "size": [
+        320,
+        64
+      ],
+      "tag": "원인 5가지"
+    },
+    {
+      "id": "network",
+      "type": "messagebus",
+      "label": "네트워크 성능 문제",
+      "sublabel": "CNI / 네트워크 경로 수준",
+      "pos": [
+        730,
+        200
+      ],
+      "size": [
+        320,
+        64
+      ],
+      "tag": "원인 5가지"
+    },
+    {
+      "id": "node-causes",
+      "type": "cloud",
+      "label": "노드 원인",
+      "sublabel": "리소스 부족 · 오버프로비저닝 · 인스턴스 제약 · 커널/OS · 네트워크 병목",
+      "pos": [
+        30,
+        360
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "pod-causes",
+      "type": "backend",
+      "label": "파드 원인",
+      "sublabel": "리소스 제약 · 리소스 경합 · 네트워크 지연 · 디스크 I/O · 코드 문제",
+      "pos": [
+        380,
+        360
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "network-causes",
+      "type": "messagebus",
+      "label": "네트워크 원인",
+      "sublabel": "CNI 구성 · 정책 제한 · MTU 불일치 · 대역폭 제약 · DNS 지연",
+      "pos": [
+        730,
+        360
+      ],
+      "size": [
+        320,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "perf-node",
+      "from": "perf",
+      "to": "node",
+      "variant": "emphasis"
+    },
+    {
+      "id": "perf-pod",
+      "from": "perf",
+      "to": "pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "perf-network",
+      "from": "perf",
+      "to": "network",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-to-causes",
+      "from": "node",
+      "to": "node-causes",
+      "label": "일반적인 원인",
+      "labelDy": 60
+    },
+    {
+      "id": "pod-to-causes",
+      "from": "pod",
+      "to": "pod-causes",
+      "label": "일반적인 원인",
+      "labelDy": 60
+    },
+    {
+      "id": "network-to-causes",
+      "from": "network",
+      "to": "network-causes",
+      "label": "일반적인 원인",
+      "labelDy": 60
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "노드 성능 문제",
+      "items": [
+        "리소스 부족: CPU, 메모리 또는 디스크 리소스 부족",
+        "노드 오버프로비저닝: 노드에 너무 많은 파드 배치",
+        "인스턴스 유형 제약: 워크로드에 부적합한 인스턴스 유형",
+        "커널 또는 운영 체제 문제: 커널 또는 OS 구성 문제",
+        "네트워크 병목 현상: 네트워크 대역폭 또는 패킷 처리 제약"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "파드 성능 문제",
+      "items": [
+        "리소스 제약: CPU 또는 메모리 제약",
+        "리소스 경합: 노드에서 리소스 경합",
+        "네트워크 지연 시간: 네트워크 지연 시간 또는 대역폭 제약",
+        "디스크 I/O 제약",
+        "애플리케이션 코드 문제: 비효율적인 애플리케이션 코드"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "네트워크 성능 문제",
+      "items": [
+        "CNI 구성 문제: CNI 구성 또는 버전 문제",
+        "네트워크 정책 제한: 제한적인 네트워크 정책",
+        "MTU 불일치: 네트워크 인터페이스 간 MTU 불일치",
+        "대역폭 제약: 인스턴스 유형 또는 네트워크 인터페이스 대역폭 제약",
+        "DNS 해결 지연: DNS 해결 지연 또는 제한"
+      ]
+    }
+  ]
+}

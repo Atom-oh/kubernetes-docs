@@ -1,6 +1,6 @@
 # 아키텍처
 
-> **지원 버전**: Istio 1.28+ **API 버전**: `networking.istio.io/v1`, `security.istio.io/v1` **마지막 업데이트**: 2026년 2월 19일
+> **검토 버전**: Istio 1.31.0 **API 버전**: `networking.istio.io/v1`, `security.istio.io/v1` **마지막 업데이트**: 2026년 9월 11일
 
 Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다룹니다.
 
@@ -8,11 +8,13 @@ Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다
 
 **중요 변경사항 (Istio 1.5+)**:
 
-* Pilot, Citadel, Galley, Mixer는 별도 컴포넌트가 **아닙니다**
+* Pilot, Citadel, Galley는 별도 컴포넌트가 **아닙니다**
 * Istiod라는 **단일 바이너리**(`pilot-discovery`)로 통합되었습니다
 * Pilot/Citadel/Galley 용어는 **기능을 설명하기 위한 역사적 명칭**입니다
 
 ## 목차
+
+이 장은 주로 Sidecar 모드를 설명합니다. Ambient는 노드별 Rust 기반 ztunnel과 선택적 L7 waypoint를 사용하며 트래픽 가로채기와 DNS 경로가 다릅니다. Mixer는 istiod로 통합된 것이 아니라 퇴역하고 텔레메트리가 프록시로 이동했습니다. 아래 JSON과 주입된 파드 예시는 구조 설명용이며 완전한 배포 매니페스트가 아닙니다.
 
 1. [Istio 아키텍처 개요](03-architecture.md#istio-아키텍처-개요)
 2. [Control Plane: Istiod](03-architecture.md#control-plane-istiod)
@@ -47,11 +49,13 @@ Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다
 
 **중요**: Istio 1.5 이후 Pilot, Citadel, Galley는 **별도 컴포넌트가 아닌 Istiod 내부 기능**입니다.
 
-![Kubernetes API에서 검증된 구성이 Istiod의 Galley·Citadel·Pilot 기능을 거쳐 xDS API와 X.509 인증서로 Envoy 사이드카들에 전달되는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-0.svg)
+![Kubernetes API에서 검증된 구성이 Istiod의 Galley·Citadel·Pilot 기능을 거쳐 xDS API와 X.509 인증서로 Envoy 사이드카들에 전달되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-10.html)
 
 ### Istiod의 주요 기능
 
-**참고**: 아래 기능들은 Istio 1.28에서 Istiod 내부에 통합되어 있습니다. 역사적 명칭(Pilot, Citadel, Galley)은 기능을 설명하기 위해 사용됩니다.
+**참고**: 아래 기능들은 Istio 1.31에서 Istiod 내부에 통합되어 있습니다. 역사적 명칭(Pilot, Citadel, Galley)은 기능을 설명하기 위해 사용됩니다.
 
 #### 1. Service Discovery (Pilot 기능)
 
@@ -71,7 +75,7 @@ spec:
 Istiod는 다음을 추적합니다:
 
 * Kubernetes Service
-* Endpoints (파드 IP)
+* EndpointSlice (파드 IP)
 * Pod 상태 변화
 * 외부 서비스 (ServiceEntry)
 
@@ -104,11 +108,12 @@ spec:
 
 ```json
 {
-  "route_config": {
+  "match": {"prefix": "/"},
+  "route": {
     "weighted_clusters": {
       "clusters": [
-        {"name": "outbound|9080|v1|reviews", "weight": 90},
-        {"name": "outbound|9080|v2|reviews", "weight": 10}
+        {"name": "outbound|9080|v1|reviews.default.svc.cluster.local", "weight": 90},
+        {"name": "outbound|9080|v2|reviews.default.svc.cluster.local", "weight": 10}
       ]
     }
   }
@@ -117,7 +122,7 @@ spec:
 
 #### 3. Certificate Management (Citadel 기능)
 
-![Envoy가 Istiod에 CSR을 보내면 Istiod가 SPIFFE Identity를 검증하고 서명한 뒤 X.509 인증서를 발급하며, 만료 전 동일한 절차로 인증서를 갱신하는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-1.svg)
+Istio 에이전트가 키와 CSR을 생성하고 istiod에 인증해 서명된 인증서를 받습니다. Envoy는 로컬 에이전트의 SDS에서 인증서와 키를 받습니다. 유효 기간은 설정 가능하며 만료 전에 갱신됩니다.
 
 **SPIFFE ID 형식**:
 
@@ -127,8 +132,10 @@ spiffe://cluster.local/ns/default/sa/reviews
 
 #### 4. Configuration Validation (Galley 기능)
 
+Admission 검증은 스키마와 개별 설정 제약을 확인합니다. 리소스 간 참조는 `istioctl analyze`로 검사하며 존재하지 않는 destination이 항상 admission webhook에서 거부되는 것은 아닙니다. 아래 예제는 없는 Gateway를 참조합니다:
+
 ```yaml
-# 잘못된 설정
+# invalid-vs.yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
@@ -136,37 +143,33 @@ metadata:
 spec:
   hosts:
   - reviews
+  gateways:
+  - missing-gateway
   http:
   - route:
     - destination:
-        host: non-existent-service  # ❌ 존재하지 않는 서비스
+        host: reviews
 ```
 
-Istiod는 적용 전에 검증:
-
 ```bash
-$ kubectl apply -f invalid-vs.yaml
-Error from server: admission webhook "validation.istio.io" denied the request:
-configuration is invalid: host "non-existent-service" not found
+istioctl analyze invalid-vs.yaml --use-kube=false
+# IST0101: Referenced gateway not found: "missing-gateway"
 ```
 
 ### Istiod 프로세스 구조
 
-**Istio 1.28의 실제 구현**:
+**Istio 1.31의 실제 구현**:
 
 ```bash
-# Istiod 파드 내부 프로세스
-$ kubectl exec -n istio-system deploy/istiod -- ps aux
-USER       PID  COMMAND
-istio-p+     1  /usr/local/bin/pilot-discovery discovery
-
-# 단일 바이너리 'pilot-discovery'가 모든 기능 수행
+# Inspect the configured binary arguments; no shell in the image is required
+kubectl get deployment istiod -n istio-system   -o jsonpath='{.spec.template.spec.containers[?(@.name=="discovery")].args}'
+# The discovery container runs pilot-discovery discovery.
 ```
 
 **주요 포인트**:
 
 * Istiod는 `pilot-discovery`라는 **단일 Go 바이너리**로 실행됩니다
-* Pilot, Citadel, Galley는 **코드 레벨의 패키지/모듈**로 존재하지만, 별도 프로세스가 아닙니다
+* Pilot, Citadel, Galley는 역사적 역할 명칭이며 현재 코드 패키지 이름을 뜻하지 않습니다
 * 모든 기능이 하나의 프로세스 내에서 goroutine으로 실행됩니다
 
 **Istiod가 제공하는 주요 포트**:
@@ -176,7 +179,7 @@ istio-p+     1  /usr/local/bin/pilot-discovery discovery
 | **15010** | gRPC  | xDS (legacy)             | 이전 버전 호환성         |
 | **15012** | gRPC  | xDS over TLS             | 주요 xDS API 엔드포인트  |
 | **15014** | HTTP  | Control plane monitoring | 메트릭 및 헬스 체크       |
-| **15017** | HTTPS | Webhook                  | Sidecar injection |
+| **15017** | HTTPS | Webhook                  | 주입 및 구성 검증 |
 | **8080**  | HTTP  | Debug                    | 디버깅 인터페이스         |
 
 ### Istiod 배포
@@ -184,24 +187,16 @@ istio-p+     1  /usr/local/bin/pilot-discovery discovery
 **고가용성 구성**:
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: istiod
-  namespace: istio-system
+# Merge into the existing istioctl install file; do not replace a managed Deployment
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 spec:
-  replicas: 3  # HA를 위한 3개 replica
-  selector:
-    matchLabels:
-      app: istiod
-  template:
-    metadata:
-      labels:
-        app: istiod
-    spec:
-      containers:
-      - name: discovery
-        image: istio/pilot:1.28.0
+  components:
+    pilot:
+      k8s:
+        hpaSpec:
+          minReplicas: 3
+          maxReplicas: 5
         resources:
           requests:
             cpu: 500m
@@ -252,7 +247,9 @@ spec:
 
 **요청/응답을 처리하는 플러그인**:
 
-![HTTP 요청이 JWT 인증, Rate Limiting, RBAC 검증, Stats 수집을 거쳐 Router에 도달한 뒤 HTTP 응답으로 반환되는 Envoy 필터 체인 순서를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-3.svg)
+![HTTP 요청이 JWT 인증, Rate Limiting, RBAC 검증, Stats 수집을 거쳐 Router에 도달한 뒤 HTTP 응답으로 반환되는 Envoy 필터 체인 순서를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-3.html)
 
 #### 3. Clusters
 
@@ -290,18 +287,17 @@ spec:
 
 ### Envoy 성능
 
-**벤치마크** (일반적인 환경):
-
-* 처리량: 10,000+ RPS per core
-* 지연 시간 추가: < 1ms (P99)
-* 메모리: 50-100 MB (기본 구성)
-* CPU: 0.1-0.5 cores (일반적인 부하)
+실제 트래픽 패턴, 구성 크기, 텔레메트리 설정으로 측정하세요. [공식 벤치마크](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)는 Istio 1.24의 결과이며 공통 RPS/core, 1ms 미만 P99, 메모리 보장값은 없습니다. istiod도 서비스·프록시 수와 구성 변경량으로 산정해야 합니다.
 
 ## Sidecar Injection 메커니즘
 
 ### Injection 방식
 
-![사용자의 Deployment 생성 요청이 API Server와 Mutating Webhook을 거쳐 Sidecar Injector에서 Pod Spec을 수정한 뒤, 수정된 스펙으로 istio-init·애플리케이션·istio-proxy 컨테이너를 가진 파드가 생성되는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-4.svg)
+![사용자의 Deployment 생성 요청이 API Server와 Mutating Webhook을 거쳐 Sidecar Injector에서 파드 Spec을 수정한 뒤, 수정된 스펙으로 istio-init·애플리케이션·istio-proxy 컨테이너를 가진 파드가 생성되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-4.html)
+
+Webhook은 Deployment 자체가 아닌 파드 생성 요청을 변경합니다. 주입 활성화 후 기존 파드는 재생성해야 합니다. Istio CNI는 특권 네트워크 설정을 파드의 init 컨테이너 밖으로 옮기며 native sidecar 사용 여부에 따라 생성되는 파드 구조도 달라집니다.
 
 ### 원본 vs Injection 후
 
@@ -313,7 +309,13 @@ kind: Deployment
 metadata:
   name: reviews
 spec:
+  selector:
+    matchLabels:
+      app: reviews
   template:
+    metadata:
+      labels:
+        app: reviews
     spec:
       containers:
       - name: reviews
@@ -333,7 +335,7 @@ metadata:
 spec:
   initContainers:
   - name: istio-init
-    image: istio/proxyv2:1.28.0
+    image: istio/proxyv2:1.31.0
     command: ['istio-iptables', ...]
     securityContext:
       capabilities:
@@ -344,7 +346,7 @@ spec:
     ports:
     - containerPort: 9080
   - name: istio-proxy
-    image: istio/proxyv2:1.28.0
+    image: istio/proxyv2:1.31.0
     args: ['proxy', 'sidecar', ...]
 ```
 
@@ -362,13 +364,14 @@ kubectl label namespace default istio-injection=enabled
 kubectl apply -f deployment.yaml
 ```
 
-**Pod 레벨** (Annotation):
+**Pod 레벨** (Label):
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  annotations:
+  name: example-app
+  labels:
     sidecar.istio.io/inject: "true"  # 파드별 주입 활성화
 spec:
   containers:
@@ -401,11 +404,13 @@ kubectl apply -f deployment-injected.yaml
 
 **역할**: 파드의 네트워크 트래픽을 Envoy Proxy로 리다이렉트하는 iptables 규칙 설정
 
-![파드 시작 시 istio-init이 iptables 규칙을 설정해 모든 트래픽을 Envoy로 리다이렉트하고, 이후 애플리케이션의 아웃바운드 요청이 iptables를 거쳐 Envoy로 전달되며 Envoy 자신의 요청만 iptables를 우회하는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-5.svg)
+![파드 시작 시 istio-init이 iptables 규칙을 설정해 모든 트래픽을 Envoy로 리다이렉트하고, 이후 애플리케이션의 아웃바운드 요청이 iptables를 거쳐 Envoy로 전달되며 Envoy 자신의 요청만 iptables를 우회하는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-5.html)
 
 ### iptables 규칙 상세
 
-**istio-init가 실행하는 명령**:
+**단순화한 규칙 설명 — 실행할 스크립트가 아님**:
 
 ```bash
 #!/bin/bash
@@ -413,7 +418,7 @@ kubectl apply -f deployment-injected.yaml
 
 # 1. OUTPUT 체인: 애플리케이션의 아웃바운드 트래픽
 iptables -t nat -A OUTPUT -p tcp \
-  -m owner ! --uid-owner 1337 \  # Envoy UID 제외
+  -m owner ! --uid-owner 1337 \
   -j REDIRECT --to-port 15001     # Envoy 아웃바운드 포트
 
 # 2. PREROUTING 체인: 파드로 들어오는 인바운드 트래픽
@@ -433,19 +438,17 @@ iptables -t nat -I OUTPUT -p udp --dport 53 -j RETURN
 
 ### 트래픽 흐름 (iptables 적용 후)
 
-![애플리케이션의 아웃바운드 요청이 OUTPUT 체인을 거쳐 Envoy의 15001 리스너로 리다이렉트되어 외부 서비스로 나가고, 외부 서비스의 응답은 PREROUTING 체인을 거쳐 15006 리스너에서 mTLS 검증 후 애플리케이션으로 전달되는 경로를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-6.svg)
+![애플리케이션의 아웃바운드 요청이 OUTPUT 체인을 거쳐 Envoy의 15001 리스너로 리다이렉트되어 외부 서비스로 나가고, 파드로 들어오는 인바운드 트래픽은 PREROUTING 체인을 거쳐 15006 리스너에서 mTLS 검증 후 애플리케이션으로 전달되는 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-6.html)
 
 ### iptables 규칙 확인
 
 **파드 내부에서 확인**:
 
-```bash
-# 파드에 진입
-kubectl exec -it <pod-name> -c istio-proxy -- /bin/bash
+일반 istio-proxy는 distroless일 수 있으며 NET_ADMIN 권한이 없습니다. 필요한 도구와 권한이 있는 승인된 노드/파드 네트워크 네임스페이스 디버깅 세션에서만 확인하세요. 아래는 `iptables -t nat -L -n -v`의 출력 예시입니다:
 
-# iptables 규칙 확인
-iptables -t nat -L -n -v
-
+```text
 # OUTPUT 체인
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source     destination
@@ -466,20 +469,17 @@ Chain ISTIO_INBOUND (1 references)
 REDIRECT   tcp  --  0.0.0.0/0  0.0.0.0/0           redir ports 15006
 ```
 
-### iptables vs eBPF (CNI Plugin)
+### Init 컨테이너와 Istio CNI
 
-Istio는 두 가지 트래픽 가로채기 방식을 지원합니다:
-
-| 방식             | 장점           | 단점                | 사용 시나리오           |
-| -------------- | ------------ | ----------------- | ----------------- |
-| **iptables**   | 간단, 범용적      | Init Container 필요 | 기본 설정             |
-| **eBPF (CNI)** | Init 불필요, 빠름 | 최신 커널 필요          | 고성능, Ambient Mode |
+두 방식 모두 트래픽 리다이렉션을 구성합니다. Istio CNI는 AWS VPC CNI 같은 기본 CNI에 연결되는 특권 노드 DaemonSet이며 이를 대체하는 eBPF CNI가 아닙니다. Sidecar에서는 선택 사항이고 Ambient에서는 필수입니다.
 
 ## DNS 처리 메커니즘
 
 ### Kubernetes DNS 기본 동작
 
-![애플리케이션의 이름 해석 요청이 파드 내부의 resolv.conf를 거쳐 CoreDNS로 전달되고, ClusterIP가 반환되어 애플리케이션에 전달되는 기본 DNS 조회 경로를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-7.svg)
+![애플리케이션의 이름 해석 요청이 파드 내부의 resolv.conf를 거쳐 CoreDNS로 전달되고, ClusterIP가 반환되어 애플리케이션에 전달되는 기본 DNS 조회 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-7.html)
 
 **/etc/resolv.conf** (파드 내부):
 
@@ -491,19 +491,21 @@ options ndots:5
 
 ### Envoy의 DNS 처리
 
-**Istio에서는 Envoy가 DNS를 처리**합니다:
+**애플리케이션 DNS 조회와 Envoy의 엔드포인트 디스커버리는 서로 다른 동작**입니다:
 
-![애플리케이션의 TCP 연결이 Envoy의 Listener, DNS Filter, Route Match, Cluster를 거쳐 Endpoint Discovery에서 Istiod의 xDS Server와 EDS API로 통신하며 CoreDNS 호출 없이 엔드포인트를 해석하는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-8.svg)
+애플리케이션이 먼저 서비스 이름을 해석합니다. 이후 Envoy가 라우팅 구성과 EDS 엔드포인트로 업스트림을 선택하며 EDS는 애플리케이션의 DNS 조회를 대체하지 않습니다.
 
 **장점**:
 
-* CoreDNS 호출 불필요 (성능 향상)
+* EDS는 Envoy에 엔드포인트를 배포; 앱 DNS는 DNS 캡처가 로컬 응답하지 않으면 설정된 리졸버 사용
 * 동적 Endpoint 업데이트
 * 고급 라우팅 (버전, 가중치 등)
 
-### DNS Proxy (선택 사항)
+### DNS Proxy (Sidecar에서 선택 사항)
 
 **Istio 1.8+부터 DNS Proxy 기능 추가**:
+
+Sidecar DNS 프록시는 Istio 에이전트에서 실행되며 istiod가 배포한 로컬 이름 테이블로 응답합니다. DNS 요청마다 istiod에 조회하지 않습니다. 알 수 없는 이름은 `/etc/resolv.conf`의 리졸버로 전달합니다. Ambient DNS 캡처는 1.25부터 기본 활성화입니다. 아래 설정을 설치 파일에 병합하고 해당 Sidecar 워크로드를 재시작하세요.
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -517,12 +519,12 @@ spec:
 
 **동작 방식**:
 
-![애플리케이션의 DNS 쿼리가 iptables를 거쳐 Envoy DNS Proxy로 리다이렉트된 뒤, 메시 내부 서비스면 Istiod에 xDS로 조회하고 외부 도메인이면 CoreDNS에 위임해 IP를 반환받아 애플리케이션에 전달하는 분기 처리를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-9.svg)
+DNS 캡처 활성화 시: 앱 → Istio 에이전트 DNS 프록시 → 로컬 이름 테이블, 또는 알 수 없는 이름이면 업스트림 리졸버.
 
 **DNS Proxy iptables 규칙**:
 
 ```bash
-# UDP 53번 포트를 Envoy DNS Proxy로 리다이렉트
+# UDP 53번 포트를 Istio agent DNS proxy로 리다이렉트
 iptables -t nat -A OUTPUT -p udp --dport 53 \
   -m owner ! --uid-owner 1337 \
   -j REDIRECT --to-port 15053
@@ -534,7 +536,7 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 **xDS**: Discovery Service의 약자로, Envoy의 동적 구성 프로토콜입니다.
 
-![Istiod의 xDS Server(Pilot)가 gRPC 스트림으로 Envoy의 Listener·Route·Cluster·Endpoint·Secret Discovery Service 다섯 채널에 동적 구성을 동시에 공급하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-10.svg)
+LDS, RDS, CDS, EDS는 일반적으로 ADS 스트림을 공유하는 논리적 리소스 유형입니다. Sidecar SDS는 istiod의 다섯 번째 직접 스트림이 아니라 로컬 Istio 에이전트가 제공합니다.
 
 ### xDS API 종류
 
@@ -548,31 +550,18 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 ### xDS 통신 흐름
 
-![파드가 시작되면 Envoy가 Istiod에 연결해 mTLS 인증 후 LDS·CDS·EDS·RDS·SDS 리소스를 순회 요청해 구성을 완료하고, 이후 Kubernetes API의 서비스 변경을 감지한 Istiod가 새 Endpoint를 Envoy에 푸시하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-11.svg)
+시작 시 에이전트가 ID를 준비하고 istiod로 디스커버리 연결을 중계합니다. Envoy는 수신 구성을 ACK하며 구성이나 엔드포인트 변경 시 istiod가 업데이트를 배포합니다. 인증서는 로컬 에이전트의 SDS로 별도 제공됩니다.
 
 ### xDS 통신 확인
 
 **Envoy Admin API로 확인**:
 
 ```bash
-# 파드 내부에서
-kubectl exec -it <pod-name> -c istio-proxy -- curl localhost:15000/config_dump
-
-# LDS (Listeners)
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/config_dump | jq '.configs[0].dynamic_listeners'
-
-# CDS (Clusters)
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/config_dump | jq '.configs[1].dynamic_active_clusters'
-
-# EDS (Endpoints)
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/clusters | grep -A 5 "reviews"
-
-# RDS (Routes)
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/config_dump | jq '.configs[2].dynamic_route_configs'
+# Export via istioctl; no curl or shell is required inside the proxy image
+istioctl proxy-config all <pod-name> -n default -o json > config-dump.json
+jq '.configs[] | select(."@type" | endswith("ListenersConfigDump")) | .dynamic_listeners' config-dump.json
+jq '.configs[] | select(."@type" | endswith("ClustersConfigDump")) | .dynamic_active_clusters' config-dump.json
+jq '.configs[] | select(."@type" | endswith("RoutesConfigDump")) | .dynamic_route_configs' config-dump.json
 ```
 
 **istioctl로 확인**:
@@ -597,7 +586,9 @@ istioctl proxy-config routes <pod-name> -n default
 
 기본적으로 각 Envoy는 **메시 전체의 모든 서비스 정보**를 받습니다:
 
-![1000개 서비스로 이루어진 메시 전체의 구성 정보가 단일 파드의 Envoy Proxy에 모두 푸시되어, 애플리케이션이 실제 사용하는 서비스가 2개뿐인데도 Envoy가 1000개 전부를 수신하는 자원 낭비 문제를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-12.svg)
+![1000개 서비스로 이루어진 메시 전체의 구성 정보가 단일 파드의 Envoy Proxy에 모두 푸시되어, 애플리케이션이 실제 사용하는 서비스가 2개뿐인데도 Envoy가 1000개 전부를 수신하는 자원 낭비 문제를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-13.html)
 
 **문제점**:
 
@@ -621,12 +612,14 @@ spec:
   - hosts:
     - "./*"  # 같은 네임스페이스의 모든 서비스
     - "istio-system/*"  # istio-system의 모든 서비스
-    - "production/reviews"  # production 네임스페이스의 reviews만
+    - "production/reviews.production.svc.cluster.local"  # production 네임스페이스의 reviews만
 ```
+
+구성 범위 제한과 REGISTRY_ONLY는 아웃바운드 방화벽이 아닙니다. 격리에는 AuthorizationPolicy와 네트워크 정책 집행을 사용하세요. Sidecar 리소스는 Ambient 프록시를 구성하지 않습니다.
 
 ### Sidecar 리소스 예제
 
-#### 1. 네임스페이스 격리
+#### 1. 네임스페이스 구성 범위 제한
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -642,7 +635,7 @@ spec:
     - "shared/*"  # 공유 서비스
 ```
 
-#### 2. 특정 서비스만 접근
+#### 2. 특정 서비스 구성 가져오기
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -655,18 +648,19 @@ spec:
     labels:
       app: frontend
   egress:
-  - hosts:
-    - "default/reviews"
-    - "default/ratings"
-    - "default/details"
   - port:
       number: 443
+      name: https
       protocol: HTTPS
     hosts:
     - "external/*"
+  - hosts:
+    - "default/reviews.default.svc.cluster.local"
+    - "default/ratings.default.svc.cluster.local"
+    - "default/details.default.svc.cluster.local"
 ```
 
-#### 3. 외부 서비스만 접근
+#### 3. 미등록 목적지 탐지
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -682,22 +676,12 @@ spec:
   - hosts:
     - "./*"  # 같은 네임스페이스
   outboundTrafficPolicy:
-    mode: REGISTRY_ONLY  # ServiceEntry에 등록된 것만
+    mode: REGISTRY_ONLY  # 알려진 Kubernetes 서비스와 ServiceEntry 목적지
 ```
 
 ### Sidecar 리소스 효과
 
-**Before (Sidecar 없음)**:
-
-* 1000개 서비스 → 1000개 Cluster 구성
-* Envoy 메모리: \~500 MB
-* 구성 푸시 시간: 5-10초
-
-**After (Sidecar 적용)**:
-
-* 10개 서비스 → 10개 Cluster 구성
-* Envoy 메모리: \~80 MB
-* 구성 푸시 시간: < 1초
+가져오는 서비스 수를 줄이면 구성 크기가 줄고 프록시 메모리와 푸시 작업량을 줄일 수 있습니다. Cluster 수는 포트와 subset에도 영향을 받으므로 서비스 하나가 항상 Envoy Cluster 하나인 것은 아닙니다. 메모리와 푸시 시간 절감은 실제로 측정해야 합니다.
 
 ### DNS와 Sidecar 통합
 
@@ -710,15 +694,15 @@ metadata:
 spec:
   egress:
   - hosts:
-    - "default/reviews"
-    - "default/ratings"
-  # Envoy는 reviews, ratings의 DNS만 처리
-  # 나머지는 CoreDNS로 전달
+    - "default/reviews.default.svc.cluster.local"
+    - "default/ratings.default.svc.cluster.local"
+  # 가져오는 서비스 구성 범위 제한
+  # DNS 캡처는 별도 설정
 ```
 
 **결과**:
 
-* Envoy는 `reviews`, `ratings`만 해석
+* 선택한 서비스 구성을 가져오며 DNS 허용 목록이 아님
 * `google.com` 등 외부 도메인은 CoreDNS로 전달
 * 메모리 및 CPU 절약
 
@@ -733,7 +717,7 @@ spec:
 
 ### 역사 및 배경
 
-* [Envoy Origin Story - Matt Klein](https://blog.envoyproxy.io/the-universal-data-plane-api-d15cec7a)
+* [Envoy project milestones (CNCF)](https://www.cncf.io/projects/envoy/)
 * [Istio Announcement - Google Cloud Blog](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
 * [Service Mesh 역사](https://www.nginx.com/blog/what-is-a-service-mesh/)
 
@@ -742,3 +726,13 @@ spec:
 * [Envoy Architecture Overview](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview)
 * [Istio Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
 * [iptables Tutorial](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html)
+
+* [Architecture](https://istio.io/latest/docs/ops/deployment/architecture/)
+* [DNS Proxying](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+* [Install the Istio CNI node agent](https://istio.io/latest/docs/setup/additional-setup/cni/)
+* [Security](https://istio.io/latest/docs/concepts/security/)
+* [ReferencedResourceNotFound](https://istio.io/latest/docs/reference/config/analysis/ist0101/)
+* [Installing the Sidecar](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
+* [Sidecar](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+* [Configuration Scoping](https://istio.io/latest/docs/ops/configuration/mesh/configuration-scoping/)
+* [Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)

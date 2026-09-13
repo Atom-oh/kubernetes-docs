@@ -1,324 +1,88 @@
 # vLLM 배포 및 최적화
 
-> **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
-> **마지막 업데이트**: 2026년 4월 9일
+> **검토 기준**: vLLM 0.29.0; CUDA 12.9 이미지 변형; 과거 0.6.4.post1 벤치마크 별도 표기
+> **마지막 업데이트**: 2026년 9월 12일
 
-vLLM은 대규모 언어 모델(LLM)을 위한 고성능 오픈소스 추론 엔진으로, 현재 가장 널리 사용되는 LLM 서빙 프레임워크입니다. 이 장에서는 vLLM의 최신 기능과 아키텍처를 이해하고, EKS에서 프로덕션 수준으로 배포 및 최적화하는 방법을 알아보겠습니다.
+vLLM은 생성형 모델과 지원되는 멀티모달·pooling 모델을 서빙하는 오픈소스 추론 엔진입니다. `Vector Language Model`이라는 풀네임을 사용하지 않습니다. 이 장은 특정 릴리스의 구성과 EKS 운영 경계를 검토하며, 성능 배수나 지원 여부를 모든 모델에 일반화하지 않습니다.
 
 ## 실습 환경 설정
 
-이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+2026년 9월 9일 공개된 [v0.29.0 릴리스](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)를 기준으로 합니다. 릴리스의 기본 PyPI/Docker 경로는 CUDA 13.0이고 별도 `v0.29.0-cu129` 이미지가 있습니다. 같은 태그의 일부 설치 문서는 아직 CUDA 12.9를 기본값으로 설명하므로 실제 이미지 변형·digest를 확인해야 합니다.
 
-### 필수 도구 및 리소스
-- kubectl v1.31 이상
-- Helm v3.10 이상
-- NVIDIA GPU가 있는 EKS 클러스터 (최소 권장: g5.2xlarge 인스턴스)
-- NVIDIA 드라이버 및 NVIDIA Device Plugin 설치
-- 최소 50GB 이상의 디스크 공간
+PyPI 패키지 조건은 Python >=3.10, <3.15이지만 태그의 GPU 설치 가이드는 3.10–3.13을 안내합니다. 이것을 모든 Python·PyTorch·CUDA 조합의 호환성 보장으로 해석하지 마세요. NVIDIA 경로의 최소 compute capability는 7.5이며 V100 (7.0)을 현재 지원 예시로 사용해서는 안 됩니다. 선택한 kernel·dtype·양자화 방식은 더 높은 장치 조건을 요구할 수 있습니다.
 
-### GPU 노드 설정
-
-```bash
-# NVIDIA Device Plugin 설치
-kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.14.0/nvidia-device-plugin.yml
-
-# GPU 노드 확인
-kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
-```
+GPU node는 [AI/ML 장치 가이드](01-ai-ml-workloads.md)의 AMI·driver·device plugin 조건을 따르세요. 일반 CUDA 이미지를 Trainium/Inferentia에 그대로 실행하는 경로는 아니며 Neuron 등 별도 plugin/runtime의 지원을 검증해야 합니다. GPU·RAM·디스크는 모델과 cache·동시성에 맞게 산정하며 `g5.2xlarge`, 50GB 디스크 같은 단일 최소값으로 보장할 수 없습니다.
 
 ## vLLM 소개
 
 vLLM은 다음과 같은 특징을 가진 LLM 추론 엔진입니다:
 
-![PagedAttention과 연속 배치 처리 등 vLLM의 핵심 특징이 요청 스케줄러·추론 엔진·KV 캐시 관리자로 이어지는 파이프라인을 거쳐 메모리 효율성, 높은 처리량, 확장성이라는 이점으로 이어지는 관계를 보여주는 아키텍처 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-0.svg)
+![API 요청, scheduler, model loader, engine과 KV cache의 역할 및 조건부 성능 이점.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-0.png)
 
-### vLLM의 주요 기능
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-0.html)
 
-1. **PagedAttention**: 
-   - KV 캐시를 효율적으로 관리하는 메모리 관리 기술
-   - 운영 체제의 가상 메모리 관리에서 영감을 받은 기술
-   - 최대 10배 더 많은 동시 요청 처리 가능
+### 기능과 지원 범위
 
-2. **연속 배치 처리**:
-   - 동적으로 요청을 배치 처리하여 GPU 활용도 최대화
-   - 새로운 요청이 도착하면 즉시 처리 시작
-   - 처리량 최대 2배 향상
+| 기능 | 의미와 조건 |
+| --- | --- |
+| PagedAttention / KV cache | token block을 관리해 낭비를 줄임. 실제 커널·cache 형식은 모델/backend에 따라 다름 |
+| Continuous batching | scheduler step마다 처리할 요청을 조정. 도착 즉시 처리·대기 없음·고정 성능 배수를 보장하지 않음 |
+| TP / PP / DP / EP | tensor·pipeline·data·expert parallelism은 다른 축. 모델·통신·backend 호환성을 확인 |
+| 정밀도·양자화 | FP16/BF16 dtype과 FP8/INT8/INT4·AWQ 등 형식을 구분. 가중치와 KV cache 양자화도 별도 |
+| Prefix caching / chunked prefill | 지원 모델의 기본값과 CLI override를 확인. 응답 전체 캐시나 모델 정확도 개선 기능이 아님 |
+| Structured outputs | `response_format` 또는 `structured_outputs`로 형식을 제한. 사실성·업무 유효성은 별도 검증 |
+| Tool calling | 모델·chat template·parser와 client 실행 루프가 필요. 서버가 도구를 자동 실행하지 않음 |
+| LoRA | 모델이 지원해야 하며 adapter를 등록해야 함. 요청의 model 이름만 바꿔 자동 로딩되는 것은 아님 |
 
-3. **분산 추론**:
-   - 텐서 병렬화를 통한 대규모 모델 지원
-   - 여러 GPU에 걸쳐 모델 샤딩
-   - 175B+ 파라미터 모델 지원
+0.29.0은 Model Runner V2를 기본 runner로 전환했지만 이 명칭은 OpenAI 호환 API 버전이나 별도 “vLLM Engine V2”라는 뜻이 아닙니다. 모델 계열 이름만으로 모든 크기·양자화·비전 변형을 지원한다고 판단하지 말고 해당 model architecture와 artifact·tokenizer·chat template·kernel을 확인하세요.
 
-4. **양자화**:
-   - INT8, FP16 등 다양한 정밀도 지원
-   - 메모리 사용량 감소 및 추론 속도 향상
-   - 최소한의 정확도 손실로 최대 2배 메모리 효율성 향상
+### 현재 CLI에서의 기능 설정
 
-## 지원 모델
-
-vLLM은 다음과 같은 모델을 지원합니다:
-
-| 모델 계열 | 지원 모델 | 양자화 옵션 |
-|----------|----------|------------|
-| **LLaMA 3 / 3.1 / 3.2 / 3.3** | 1B, 3B, 8B, 70B, 405B | FP16, BF16, FP8, INT8, INT4, AWQ, GPTQ |
-| **DeepSeek V3 / R1** | 7B, 67B, 671B (MoE) | FP16, BF16, FP8, AWQ, GPTQ |
-| **Qwen 2 / 2.5 / QwQ** | 0.5B ~ 72B | FP16, BF16, FP8, INT8, AWQ, GPTQ |
-| **Mistral / Mixtral** | 7B, 8x7B, 8x22B, Large 2 | FP16, BF16, FP8, AWQ, GPTQ |
-| **Gemma 2 / 3** | 2B, 9B, 27B | FP16, BF16, INT8 |
-| **Phi-3 / Phi-4** | 3.8B, 7B, 14B | FP16, BF16, INT8, AWQ |
-| **Command R / R+** | 35B, 104B | FP16, BF16 |
-| **DBRX** | 132B (MoE) | FP16, BF16 |
-| **StarCoder 2** | 3B, 7B, 15B | FP16, BF16 |
-| **비전 모델 (VLM)** | LLaVA, Pixtral, Qwen2-VL, InternVL | FP16, BF16 |
-
-1. **PagedAttention**: 메모리 효율적인 어텐션 메커니즘으로, 긴 시퀀스를 처리할 때 메모리 사용량을 최적화합니다.
-2. **연속 배치 처리**: 요청을 동적으로 배치 처리하여 처리량을 향상시킵니다.
-3. **분산 추론**: 여러 GPU와 노드에 걸쳐 모델을 분산하여 대규모 모델을 처리할 수 있습니다.
-4. **양자화**: INT8/INT4 양자화를 지원하여 메모리 사용량을 줄이고 처리량을 향상시킵니다.
-5. **OpenAI 호환 API**: OpenAI API와 호환되는 인터페이스를 제공합니다.
-
-### vLLM 최신 기능 (v0.6+)
-
-vLLM은 빠르게 발전하고 있으며, 최근 버전에서 다음과 같은 주요 기능이 추가되었습니다:
-
-#### Speculative Decoding (추론 가속)
-
-작은 드래프트 모델을 사용하여 여러 토큰을 미리 생성하고, 큰 모델이 이를 한 번에 검증하는 방식으로 추론 속도를 2~3배 향상시킵니다:
+`python -m vllm.entrypoints.openai.api_server` 대신 `vllm serve`를 사용합니다. speculative decoding의 이전 `--speculative-model`·`--num-speculative-tokens` 조합은 현재 CLI에서 `--speculative-config`로 바뀌었습니다.
 
 ```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model meta-llama/Llama-3.1-70B-Instruct \
-  --speculative-model meta-llama/Llama-3.1-8B-Instruct \
-  --num-speculative-tokens 5
+# 별도 target/draft 모델과 메모리·tokenizer 호환성이 준비된 경우의 형식
+vllm serve /models/target \
+  --speculative-config '{"model":"/models/draft","method":"draft_model","num_speculative_tokens":5}'
 ```
 
-#### Prefix Caching (자동 프리픽스 캐싱)
+이는 형식 예제이며 이 경로에 모델을 준비하거나 가속률을 검증한 명령이 아닙니다. Draft의 수락률·추가 메모리·통신 비용 때문에 속도가 개선되지 않을 수도 있습니다.
 
-동일한 시스템 프롬프트나 컨텍스트를 공유하는 요청 간에 KV 캐시를 자동으로 재사용하여 TTFT(Time to First Token)를 대폭 줄입니다:
-
-```bash
---enable-prefix-caching
-```
-
-#### Chunked Prefill
-
-긴 프롬프트의 프리필 단계를 여러 청크로 분할하여 디코딩 요청과 인터리빙 처리합니다. 이를 통해 긴 컨텍스트 요청이 다른 요청의 지연 시간에 미치는 영향을 줄입니다:
-
-```bash
---enable-chunked-prefill --max-num-batched-tokens 2048
-```
-
-#### LoRA 어댑터 동적 로딩
-
-런타임에 여러 LoRA 어댑터를 동적으로 로드/언로드하여 단일 베이스 모델로 다수의 맞춤형 모델을 서빙합니다:
-
-```bash
---enable-lora --max-loras 4 --max-lora-rank 64
-```
-
-```python
-# API 요청 시 LoRA 모델 지정
-response = client.chat.completions.create(
-    model="my-custom-lora-adapter",
-    messages=[{"role": "user", "content": "Hello!"}]
-)
-```
-
-#### Structured Output (구조화된 출력)
-
-JSON Schema, 정규표현식, CFG(Context-Free Grammar) 기반의 제약된 출력을 지원하여 안정적인 구조화 데이터 생성이 가능합니다:
-
-```python
-from openai import OpenAI
-client = OpenAI(base_url="http://vllm-service:8000/v1")
-
-response = client.chat.completions.create(
-    model="meta-llama/Llama-3.1-8B-Instruct",
-    messages=[{"role": "user", "content": "사용자 정보를 JSON으로 반환해주세요"}],
-    response_format={
-        "type": "json_schema",
-        "json_schema": {
-            "name": "user_info",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string"},
-                    "age": {"type": "integer"},
-                    "email": {"type": "string"}
-                },
-                "required": ["name", "age", "email"]
-            }
-        }
-    }
-)
-```
-
-#### Tool Calling (도구 호출)
-
-OpenAI 호환 Tool/Function Calling을 지원하여 에이전트 워크플로우와 통합이 가능합니다:
-
-```python
-response = client.chat.completions.create(
-    model="meta-llama/Llama-3.1-8B-Instruct",
-    messages=[{"role": "user", "content": "서울 날씨 알려줘"}],
-    tools=[{
-        "type": "function",
-        "function": {
-            "name": "get_weather",
-            "description": "지정된 위치의 현재 날씨 정보를 가져옵니다",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {"type": "string", "description": "도시 이름"}
-                },
-                "required": ["location"]
-            }
-        }
-    }]
-)
-```
-
-#### FP8 양자화
-
-Hopper (H100) 및 Ada Lovelace (L4, L40S) GPU에서 FP8 양자화를 지원하여 메모리 사용량을 절반으로 줄이면서 거의 동일한 정확도를 유지합니다:
-
-```bash
---quantization fp8 --kv-cache-dtype fp8
-```
-
-#### 비전-언어 모델 (VLM) 서빙
-
-이미지와 텍스트를 동시에 처리하는 멀티모달 모델을 지원합니다:
-
-```python
-response = client.chat.completions.create(
-    model="llava-hf/llava-v1.6-mistral-7b-hf",
-    messages=[{
-        "role": "user",
-        "content": [
-            {"type": "text", "text": "이 이미지를 설명해주세요"},
-            {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
-        ]
-    }]
-)
-```
+LoRA를 시작 시 제공하려면 `--enable-lora --lora-modules adapter=/models/adapter`처럼 등록합니다. 동적 load/unload는 `VLLM_ALLOW_RUNTIME_LORA_UPDATING`의 별도 opt-in이며 운영자 제어 경로로 제한해야 합니다. `--enable-auto-tool-choice`에는 모델에 맞는 `--tool-call-parser`가 필요합니다. 멀티모달 URL은 SSRF·다운로드/디코드 크기 제한과 허용 도메인도 검토하세요.
 
 ## 시스템 요구 사항
 
 vLLM을 EKS에 배포하기 위한 시스템 요구 사항은 다음과 같습니다:
 
-![GPU 메모리를 중심으로 하드웨어, 소프트웨어 스택, 모델 크기별 GPU 메모리 요구량의 관계를 보여주는 시스템 요구 사항 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-1.svg)
+![가중치와 구조별 KV cache·추가 메모리, 장치 capability와 명시적 CUDA 이미지 조건.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-1.png)
 
-1. **하드웨어**:
-   - NVIDIA GPU(Volta, Turing, Ampere, Hopper 아키텍처)
-   - 최소 GPU 메모리: 모델 크기에 따라 다름
-     - 7B 모델: 최소 16GB GPU 메모리
-     - 13B 모델: 최소 24GB GPU 메모리
-     - 70B 모델: 최소 80GB GPU 메모리(또는 여러 GPU에 분산)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-1.html)
 
-2. **소프트웨어**:
-   - CUDA 12.1 이상 (FP8 사용 시 CUDA 12.4 권장)
-   - Python 3.9 이상
-   - PyTorch 2.4.0 이상
+가중치 메모리의 출발점은 `파라미터 수 × 저장 바이트`입니다. 70B의 FP16/BF16 가중치만 약 140GB이므로 “70B는 GPU80GB면 된다”는 일반 기준은 맞지 않습니다. 여기에 KV cache, activation, CUDA graph·workspace·통신 버퍼를 더해야 하며 양자화 metadata와 일부 복제 텐서도 고려해야 합니다.
 
-3. **EKS 노드 유형**:
-   - p5.48xlarge: 8x NVIDIA H100 GPU, 각 80GB (최고 성능)
-   - p4d.24xlarge: 8x NVIDIA A100 GPU, 각 40GB 또는 80GB
-   - g6.12xlarge: 4x NVIDIA L4 GPU, 각 24GB (비용 효율적)
-   - g5.12xlarge: 4x NVIDIA A10G GPU, 각 24GB
-   - g6e.12xlarge: 4x NVIDIA L40S GPU, 각 48GB
-   - trn1.32xlarge: 16x AWS Trainium, 각 32GB (AWS 실리콘)
+일반적인 dense attention의 전체 KV cache 근사는 다음과 같습니다. GQA/MQA의 KV head 수를 써야 하며 hidden size를 그대로 대입하는 MHA 식과 다릅니다.
+
+```text
+KV bytes ≈ 2 × layers × KV_heads × head_dim × cached_tokens × bytes_per_element
+```
+
+cached_tokens는 동시에 보존하는 요청들의 token 합입니다. TP sharding/복제, sliding window, MLA나 hybrid 모델은 별도로 계산해야 합니다. Qwen2.5-7B의 현재 config는 layers28, KV heads4, head dim128입니다. bf16/FP16 기준 token당 약56KiB이며, 4096token 요청 하나면 약224MiB의 전체 KV cache 근사값입니다. 이것을 GPU별 실측치나 전체 모델 메모리로 해석하면 안 됩니다.
+
+p4d.24xlarge의 A100은40GB이며80GB A100은 p4de 계열과 구분해야 합니다. p5·g6·g6e 등의 선택은 현재 리전 용량·driver·모델 요구와 비교하세요. CPU core/GPU4개 또는 RAM=가중치2배 같은 고정 비율은 실제 측정 대신 사용할 수 없습니다.
 
 ## EKS 인프라 구성
 
-![EKS 컨트롤 플레인이 GPU/CPU 노드 그룹에 워크로드를 스케줄링하고, GPU와 CPU 노드가 FSx for Lustre에서 모델을 불러오며 ECR과 CloudWatch 같은 AWS 관리형 서비스가 이를 지원하는 인프라 구조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-2.svg)
+![필요한 EKS 노드·모델 스토리지·이미지·권한 경로를 선택해 구성하는 예시.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-2.png)
 
-## 스토리지 구성
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-2.html)
 
-vLLM은 대규모 모델 가중치를 로드해야 하므로 고성능 스토리지가 필요합니다:
+## 스토리지와 모델 준비
 
-### FSx for Lustre 설정
+FSx for Lustre는 선택지이며 모든 vLLM 배포의 최적·필수 저장소는 아닙니다. 로컬 NVMe/EBS, 재사용 cache, 오브젝트 저장소와 공유 파일시스템을 모델 로드 시간·비용·동시 접근으로 비교하세요. emptyDir는 컨테이너 재시작에는 남을 수 있지만 Pod 제거·재생성에는 보존되지 않습니다.
 
-FSx for Lustre는 고성능 병렬 파일 시스템으로, 대규모 모델 가중치를 빠르게 로드하는 데 적합합니다:
+[FSx 정적 PV/PVC와 동적 방식](01-ai-ml-workloads.md#storage-and-caching)을 구분하세요. Hugging Face의 snapshot_download는 Hugging Face에서 받는 동작이며 S3 다운로드가 아닙니다. 저장소 revision과 파일 무결성, 라이선스·접근 권한을 기록해야 합니다. 접근 token이 필요한 경우 파일로 마운트하고 token 파일을 읽는 download 전용 단계를 사용하세요. 실행 가능한 remote code를 신뢰하는 옵션은 기본으로 켜지 마세요.
 
-```yaml
-apiVersion: fsx.aws.k8s.io/v1beta1
-kind: Lustre
-metadata:
-  name: vllm-models
-spec:
-  deploymentType: SCRATCH_2
-  storageCapacity: 1200
-  subnetIds:
-    - subnet-0123456789abcdef0
-  securityGroupIds:
-    - sg-0123456789abcdef0
-  perUnitStorageThroughput: 200
----
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fsx-lustre-sc
-provisioner: fsx.csi.aws.com
-parameters:
-  fileSystemId: fs-0123456789abcdef0
-  mountName: vllm-models
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: vllm-models-pvc
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: fsx-lustre-sc
-  resources:
-    requests:
-      storage: 1200Gi
-```
-
-### S3에서 모델 다운로드
-
-Hugging Face 모델을 S3에 저장하고 FSx for Lustre로 다운로드하는 작업:
-
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: model-download
-spec:
-  template:
-    spec:
-      containers:
-      - name: model-download
-        image: huggingface/transformers:latest
-        command:
-        - python
-        - -c
-        - |
-          from huggingface_hub import snapshot_download
-          import os
-          
-          model_id = "meta-llama/Llama-3.1-70B-Instruct"
-          dest_dir = "/models/llama-3.1-70b"
-          
-          os.makedirs(dest_dir, exist_ok=True)
-          snapshot_download(repo_id=model_id, local_dir=dest_dir, token=os.environ["HF_TOKEN"])
-        env:
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: huggingface-token
-              key: token
-        volumeMounts:
-        - name: models-volume
-          mountPath: /models
-      restartPolicy: Never
-      volumes:
-      - name: models-volume
-        persistentVolumeClaim:
-          claimName: vllm-models-pvc
-```
+아래 예제는 token이 필요 없는 공개 Qwen3-0.6B의 확인한 revision을 사용합니다. 캐시는 Pod의 emptyDir이므로 재생성 시 다시 다운로드합니다. 다중 노드는 모든 worker에서 같은 model revision/path를 사용해야 합니다.
 
 ## vLLM 배포
 
@@ -326,649 +90,346 @@ spec:
 
 다음 다이어그램은 EKS에서 vLLM을 배포하는 두 가지 주요 아키텍처를 보여줍니다:
 
-![클라이언트 요청이 로드 밸런서를 거쳐 GPU 8개짜리 단일 노드 파드나 NCCL로 통신하는 다중 노드 파드로 전달되고, 두 방식 모두 FSx for Lustre 공유 스토리지에서 모델을 불러오는 vLLM 배포 구조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-3.svg)
+![단일 GPU와 하나의 모델을 나눈 멀티노드 group의 API 진입점·worker·모델 경로 구분.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-3.png)
 
-### 단일 노드 배포
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-3.html)
 
-단일 GPU 또는 단일 노드의 여러 GPU에서 vLLM을 실행하는 배포:
+### 단일 GPU 구성 예제
+
+다음은 **GPU 실행 전 검토용 템플릿**입니다. namespace와 GPU driver/plugin은 미리 준비해야 합니다. 이미지 digest는 v0.29.0-cu129의 amd64 artifact, model revision은 확인한 Qwen3-0.6B snapshot입니다. 이미지 pull·non-root 실행·커널 컴파일·모델 추론은 이번 검토에서 실행하지 않았으므로 환경에서 확인해야 합니다.
+
+Recreate 전략은 제한된 GPU에서 중복 replica를 요구하지 않지만 업데이트 중 중단이 있습니다. startupProbe는 최대 약 15분의 시작 시간을 허용하고, readiness는 준비 상태만 확인하며 SLA를 보장하지 않습니다. 서비스는 ClusterIP이며 공개 ingress를 만들지 않습니다.
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vllm-inference
+  name: vllm-demo
+  namespace: ml-inference
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: vllm-inference
+      app: vllm-demo
   template:
     metadata:
       labels:
-        app: vllm-inference
+        app: vllm-demo
     spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: vllm-server
-        image: vllm/vllm-openai:latest
-        command:
-        - python
-        - -m
-        - vllm.entrypoints.openai.api_server
-        - --model=/models/llama-3.1-70b
-        - --tensor-parallel-size=8
-        - --gpu-memory-utilization=0.95
-        - --max-num-batched-tokens=16384
-        - --enable-prefix-caching
-        - --enable-chunked-prefill
-        - --port=8000
-        ports:
-        - containerPort: 8000
-        resources:
-          limits:
-            nvidia.com/gpu: 8
-        volumeMounts:
-        - name: models-volume
-          mountPath: /models
-        env:
-        - name: CUDA_VISIBLE_DEVICES
-          value: "0,1,2,3,4,5,6,7"
+        - name: vllm
+          image: vllm/vllm-openai@sha256:3e10e8189823e0f7ae4620c271bcdaaf64127ec7d0edc351591a508498b7684a
+          command: ["vllm", "serve"]
+          args:
+            - Qwen/Qwen3-0.6B
+            - --revision=c1899de289a04d12100db370d81485cdf75e47ca
+            - --served-model-name=qwen3-demo
+            - --dtype=float16
+            - --max-model-len=2048
+            - --max-num-seqs=8
+            - --gpu-memory-utilization=0.80
+            - --host=0.0.0.0
+            - --port=8000
+          env:
+            - name: HF_HOME
+              value: /cache/huggingface
+            - name: XDG_CACHE_HOME
+              value: /cache
+            - name: XDG_CONFIG_HOME
+              value: /cache/config
+            - name: VLLM_NO_USAGE_STATS
+              value: "1"
+            - name: VLLM_CACHE_ROOT
+              value: /cache/vllm
+            - name: TORCHINDUCTOR_CACHE_DIR
+              value: /cache/torchinductor
+            - name: TRITON_CACHE_DIR
+              value: /cache/triton
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              ephemeral-storage: 4Gi
+            limits:
+              cpu: "4"
+              memory: 12Gi
+              ephemeral-storage: 12Gi
+              nvidia.com/gpu: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          volumeMounts:
+            - name: cache
+              mountPath: /cache
+            - name: tmp
+              mountPath: /tmp
+            - name: shm
+              mountPath: /dev/shm
       volumes:
-      - name: models-volume
-        persistentVolumeClaim:
-          claimName: vllm-models-pvc
+        - name: cache
+          emptyDir:
+            sizeLimit: 8Gi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: vllm-inference
+  name: vllm-demo
+  namespace: ml-inference
+  labels:
+    app: vllm-demo
 spec:
+  type: ClusterIP
   selector:
-    app: vllm-inference
+    app: vllm-demo
   ports:
-  - port: 8000
-    targetPort: 8000
-  type: LoadBalancer
+    - name: http
+      port: 8000
+      targetPort: http
 ```
 
-### 다중 노드 분산 배포
+### 멀티노드와 독립 replica 구분
 
-여러 노드에 걸쳐 대규모 모델을 분산 배포하는 방법:
+같은 모델 replica를 노드에 나눌 때는 TP/PP와 Ray 또는 multiprocessing 실행 환경이 필요합니다. 여러 독립 API 서버 replica는 모델을 각각 적재하는 수평 확장이며 같은 의미가 아닙니다.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vllm-config
-data:
-  hostfile: |
-    vllm-inference-0 slots=8
-    vllm-inference-1 slots=8
-  run_server.sh: |
-    #!/bin/bash
-    
-    RANK=$HOSTNAME
-    if [[ $HOSTNAME == "vllm-inference-0" ]]; then
-      RANK=0
-    elif [[ $HOSTNAME == "vllm-inference-1" ]]; then
-      RANK=1
-    fi
-    
-    python -m vllm.entrypoints.openai.api_server \
-      --model=/models/llama-3.1-70b \
-      --tensor-parallel-size=16 \
-      --pipeline-parallel-size=1 \
-      --max-num-batched-tokens=8192 \
-      --port=8000 \
-      --host=0.0.0.0 \
-      --master-addr=vllm-inference-0 \
-      --master-port=29500 \
-      --rank=$RANK
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: vllm-inference
-spec:
-  serviceName: "vllm-inference"
-  replicas: 2
-  selector:
-    matchLabels:
-      app: vllm-inference
-  template:
-    metadata:
-      labels:
-        app: vllm-inference
-    spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - vllm-inference
-            topologyKey: kubernetes.io/hostname
-      containers:
-      - name: vllm-server
-        image: vllm/vllm-openai:latest
-        command:
-        - bash
-        - /config/run_server.sh
-        ports:
-        - containerPort: 8000
-        - containerPort: 29500
-        resources:
-          limits:
-            nvidia.com/gpu: 8
-        volumeMounts:
-        - name: models-volume
-          mountPath: /models
-        - name: config-volume
-          mountPath: /config
-        env:
-        - name: CUDA_VISIBLE_DEVICES
-          value: "0,1,2,3,4,5,6,7"
-        - name: NCCL_DEBUG
-          value: "INFO"
-        - name: NCCL_IB_DISABLE
-          value: "0"
-        - name: NCCL_IB_GID_INDEX
-          value: "3"
-        - name: NCCL_NET_GDR_LEVEL
-          value: "5"
-      volumes:
-      - name: models-volume
-        persistentVolumeClaim:
-          claimName: vllm-models-pvc
-      - name: config-volume
-        configMap:
-          name: vllm-config
-          defaultMode: 0755
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-inference
-spec:
-  selector:
-    app: vllm-inference
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: api
-  - port: 29500
-    targetPort: 29500
-    name: nccl
-  clusterIP: None
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-inference-lb
-spec:
-  selector:
-    app: vllm-inference
-    statefulset.kubernetes.io/pod-name: vllm-inference-0
-  ports:
-  - port: 8000
-    targetPort: 8000
-  type: LoadBalancer
+0.29.0은 multiprocessing의 `--nnodes`, `--node-rank`, `--master-addr`, `--master-port`를 지원합니다. 이전 예제의 `--rank`·`--tensor-parallel-rank`·`--distributed-init-method`는 이 CLI의 해당 옵션이 아닙니다. 준비된 두 노드가 각각 GPU8개를 제공하는 경우의 명령 형태는 다음과 같습니다.
+
+```bash
+# node0: 신뢰된 네트워크의 실제 head IP와 준비된 동일 모델 경로 사용
+vllm serve /models/model --distributed-executor-backend mp \
+  --tensor-parallel-size 8 --pipeline-parallel-size 2 \
+  --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29500
+# node1: worker에는 API server를 중복 시작하지 않음
+vllm serve /models/model --distributed-executor-backend mp \
+  --tensor-parallel-size 8 --pipeline-parallel-size 2 \
+  --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29500 --headless
 ```
+
+이 명령은 노드·모델·연결을 생성하지 않습니다. Kubernetes에서는 worker를 동시에 생성할 controller 정책, 준비 전 DNS, Pod별 VLLM_HOST_IP, 필요한 내부 통신·공유 메모리를 구성해야 합니다. Ray 경로는 정상적인 Ray cluster와 호환되는 Ray 의존성을 준비한 뒤 `--distributed-executor-backend ray`로 한 API 진입점을 실행합니다. [Ray 가이드](ray/README.md)를 함께 참고하세요. 내부 통신 포트를 공개하면 안 됩니다.
 
 ## 성능 최적화
 
-![GPU 메모리, 처리량, 네트워크 세 영역의 vLLM 튜닝 옵션들이 모두 하나의 성능 향상 결과로 수렴하는 관계를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-4.svg)
+![현재 메모리·offload·scheduler·통신 설정의 효과를 실제 측정으로 확인하는 흐름.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-4.png)
 
-### GPU 메모리 최적화
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-4.html)
 
-vLLM의 GPU 메모리 사용량을 최적화하는 방법:
+### 메모리·scheduler·통신 옵션
 
-1. **GPU 메모리 사용률 조정**:
+0.29.0의 CacheConfig 기본 gpu_memory_utilization은0.92이며 일반적인 프로세스 전체 VRAM hard limit이 아닙니다. 예제는0.80을 명시합니다. `--kv-cache-memory-bytes`를 지정하면 KV cache 예산에 대해 해당 추정 방식을 덮어쓰므로 서로 다른 옵션의 우선순위를 확인하세요.
 
-```bash
---gpu-memory-utilization=0.9
-```
+`--swap-space`는 현재 CLI에 없습니다. weight CPU offload와 KV offload는 별도 기능·설정이며 단순히 RAM을 더 주어 GPU 한계를 해결한다고 설명하면 안 됩니다. Prefix caching은 지원 모델에 기본 활성화될 수 있고 chunked prefill도 모델 조건에 따라 달라집니다. Queue, token budget, max-num-seqs, max-model-len은 서로 다른 제한입니다.
 
-2. **양자화 적용**:
+EFA는 지원 EC2 장치·AMI·plugin·네트워크와 AWS OFI NCCL/libfabric 구성이 필요합니다. 임의의 `NCCL_IB_ENABLE_RDMA` 같은 옵션이나 mlx5/GID 값을 공통 최적화 기본값으로 복사하지 마세요. 바뀐 NVIDIA/PyTorch 환경 변수 이름과 실제 backend 로그를 확인해야 합니다. 단일 노드의 NCCL 테스트로 멀티노드 EFA 성능을 입증할 수도 없습니다.
 
-```bash
---quantization awq
-```
+## 과거 측정 기록: L4의 Qwen2.5-7B
 
-3. **스왑 공간 활용**:
+다음 값은 [2026년 9월 4일 저장소 커밋](https://github.com/Atom-oh/kubernetes-docs/commit/8622d388cb684dc4f68083af7be6d91f80b79106)에 기록된 과거 실측 보고입니다. 이번 검토에서는 원시 요청 결과·서버 로그·완전한 client artifact를 찾지 못했고 재실행하지 않았습니다. 보고된 수치는 보존하되 현재 0.29.0의 검증 결과나 독립적으로 재현한 성능으로 해석하지 마세요.
 
-```bash
---swap-space=16
-```
+![과거 L4 벤치마크의 보고된 값과 원시 로그·재현 검증의 한계.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-6.png)
 
-### 처리량 최적화
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-6.html)
 
-vLLM의 처리량을 최적화하는 방법:
+### 구성
 
-1. **배치 크기 조정**:
+- **클러스터**: 전용 Karpenter NodePool(`bench-gpu`, on-demand `g6.2xlarge` — NVIDIA L4 1장, GPU 메모리 24GB, vCPU 8, RAM 32 GiB)을 만들어 `nvidia.com/gpu=true:NoSchedule` taint와 기존 `nvidia-device-plugin` DaemonSet이 인식하는 라벨을 붙였고, 측정이 끝난 뒤 즉시 삭제했습니다.
+- **서버**: `vllm/vllm-openai:v0.6.4.post1` 이미지, 모델 `Qwen/Qwen2.5-7B-Instruct`, `--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`. 정밀도는 1가지(bf16, 모델의 네이티브 dtype)입니다. 양자화·스펙큘레이티브 디코딩·프리픽스 캐싱은 쓰지 않았으며, 이 문서 다른 곳에서 설명한 순수 기본값입니다. 이 이미지는 2024-11-15 릴리스입니다. 이후 vLLM은 프리픽스 캐싱이 기본으로 켜진 V1 엔진을 냈으므로, 이 수치는 그 릴리스 라인의 한 시점 스냅샷으로 봐야 합니다.
+- **클라이언트**: **클러스터 내부**(GPU가 없는 별도 노드)에서 Job으로 실행한 Python `ThreadPoolExecutor`가 `vllm-server` ClusterIP Service를 거쳐 `/v1/chat/completions`를 호출합니다. Non-streaming, `temperature=0`, `max_tokens=128`, 짧은 Kubernetes 개념 질문 8개를 순환시켰습니다(1~2문장 답변을 요청하는 질문들). 실제로는 대부분의 응답이 1~2문장에서 멈추지 않고 128 토큰 한도 근처까지 이어졌습니다(세 동시성 배치 모두 평균 약 102 토큰). 동시성 구간 사이의 처리량을 동일 조건으로 비교하기엔 유용하지만, 아래 지연시간을 "짧은 질문에 답하는 시간"으로 읽기 전에 알아둘 만한 사실입니다.
+- **콜드 스타트**: vLLM 엔진의 시작 로그부터 `/health` 엔드포인트가 `200`을 반환하기까지 약 4분 30초 — Hugging Face에서 Qwen2.5-7B-Instruct 가중치(약 15GB)를 파드의 임시 캐시로 내려받는 시간이 대부분을 차지합니다. 이미지 pull 시간은 별도로 측정하지 않아 포함되지 않았습니다.
 
-```bash
---max-num-batched-tokens=8192
-```
-
-2. **KV 캐시 최적화**:
-
-```bash
---block-size=16
-```
-
-3. **텐서 병렬 처리 조정**:
-
-```bash
---tensor-parallel-size=8
-```
-
-### 네트워크 최적화
-
-분산 배포에서 네트워크 성능을 최적화하는 방법:
-
-1. **EFA(Elastic Fabric Adapter) 활용**:
+### 재현 방법
 
 ```yaml
-resources:
-  limits:
-    nvidia.com/gpu: 8
-    vpc.amazonaws.com/efa: 1
+# NodePool (Karpenter) - 전용, 측정 후 삭제 — nodeClassRef는 클러스터에 이미 있는 GPU용 EC2NodeClass(AMI·서브넷·SG)를 가리키며 여기에는 싣지 않았습니다
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata: { name: bench-gpu }
+spec:
+  limits: { cpu: "16", memory: 128Gi, nvidia.com/gpu: "1" }
+  template:
+    metadata:
+      labels: { node-type: bench-gpu, nvidia.com/device-plugin.config: default }
+    spec:
+      expireAfter: 6h
+      nodeClassRef: { group: karpenter.k8s.aws, kind: EC2NodeClass, name: gpu }
+      requirements:
+        - { key: node.kubernetes.io/instance-type, operator: In, values: [g6.2xlarge] }
+      taints: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+---
+# vLLM 서버 (bench-gpu 네임스페이스) + 클라이언트가 호출하는 ClusterIP Service
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: vllm-server } }
+  template:
+    metadata: { labels: { app: vllm-server } }
+    spec:
+      nodeSelector: { node-type: bench-gpu }
+      tolerations: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:v0.6.4.post1
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--max-model-len", "4096",
+                 "--gpu-memory-utilization", "0.90", "--dtype", "bfloat16"]
+          ports: [{ containerPort: 8000 }]
+          resources:
+            limits: { nvidia.com/gpu: "1" }
+            requests: { nvidia.com/gpu: "1", cpu: "3", memory: 20Gi }
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 30, periodSeconds: 10, failureThreshold: 60 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  selector: { app: vllm-server }
+  ports: [{ port: 8000, targetPort: 8000 }]
 ```
 
-2. **NCCL 설정 최적화**:
+위 매니페스트는 당시 보고된 환경의 일부입니다. namespace와 기존 EC2NodeClass, 완전한 client script가 포함되지 않아 그대로 완전 재현을 보장하지 않습니다. `nvidia.com/device-plugin.config: default`는 당시 공유 DaemonSet 설정의 조건이며 모든 NVIDIA plugin 설치의 필수 scheduling label이 아닙니다. NodePool의 on-demand 설명도 실제 당시 설정으로 확인해야 합니다.
 
-```yaml
-env:
-- name: NCCL_DEBUG
-  value: "INFO"
-- name: NCCL_MIN_NCHANNELS
-  value: "4"
-- name: NCCL_SOCKET_IFNAME
-  value: "^lo,docker"
-- name: NCCL_ASYNC_ERROR_HANDLING
-  value: "1"
-```
+### 결과
 
-3. **노드 배치 최적화**:
+| 동시성 | 요청 수 | Wall time | 클라이언트 지연시간 p50 / p90 | 클라이언트 집계 처리량 | 서버 기준 피크 생성 처리량 | GPU KV 캐시 사용률 |
+|---|---|---|---|---|---|---|
+| 1 (순차) | 10 | 약 53.2 s(요청별 지연시간 합산) | 5.65 s / 7.43 s | 요청당 약 17~18 tokens/s | 약 17 tokens/s | 0.1~0.2% |
+| 4 | 16 | 27.78 s | 6.99 s / 7.88 s | 58.67 tokens/s | 65~66 tokens/s | 0.4~0.7% |
+| 8 | 32 | 30.02 s | 7.18 s / 8.15 s | 109.04 tokens/s | 123~129 tokens/s | 0.8~1.4% |
+| 16 | 64 | 31.35 s | 7.52 s / 8.74 s | 208.08 tokens/s | 최대 243 tokens/s | 1.5~2.6% |
 
-```yaml
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values:
-          - us-west-2a
-```
+클라이언트 집계 처리량은 완료 token 합을 측정 wall time으로 나눈 값입니다. 서버의 `Avg generation throughput`은 서버 집계 구간의 평균이고, 그 로그에서 관측한 최대값을 순간적인 “진짜 peak”로 볼 수 없습니다. 측정 구간·token 수·HTTP 시간 경계가 다르므로 두 수치를 직접 같은 지표로 비교하지 마세요.
+
+### 해석
+
+보고된 p50은 5.65s에서7.52s로 약 33.1% 증가했고, 동시성4→8→16의 집계 처리량은58.67→109.04→208.08tokens/s였습니다. 이 범위에서 batching이 처리량을 높였다는 관측과, 어떤 병목이 원인이었는지의 인과 추론을 구분해야 합니다.
+
+가중치 약 15.2GB와 메모리 대역폭 약 300GB/s로 계산한 약 20 tokens/s는 이상화된 bandwidth roofline 추정입니다. profiler로 메모리 대역폭·연산량을 직접 측정한 증거는 이번 검토에 없으므로 “확실히 memory-bound” 또는 “추가 요청은 거의 공짜”라고 단정하지 않습니다. KV cache 사용률과 전체 VRAM 사용률도 다른 값입니다.
+
+### 한계
+
+이번 측정은 모델 1개·정밀도 1가지(bf16)·GPU 유형 1가지·컨텍스트 길이 1가지에 대한 단 1회(n=1) 실행입니다 — vLLM/L4 성능에 대한 일반적 주장이 아니라 하나의 보정된 데이터 포인트로 봐야 합니다. 클라이언트는 클러스터 내부(GPU가 없는 별도 노드)에서 실행했으므로, 지연시간은 클러스터 내부 홉을 반영할 뿐 외부 호출자의 것이 아닙니다. 여기서의 지연시간은 전체 HTTP 응답이 끝나기까지의 종단 시간이며, 첫 토큰까지의 시간(TTFT)이 아닙니다 — 스트리밍은 테스트하지 않았습니다. 이 문서 앞부분에서 설명한 프리픽스 캐싱·스펙큘레이티브 디코딩·FP8·멀티 GPU 텐서 병렬화는 사용하지 않았습니다. 완전한 재현에는 누락된 실행 자료와 환경이 필요하며, 이 수치를 다른 모델 크기·GPU·프롬프트 길이로 확대 해석하지 마십시오.
 
 ## 모니터링 및 로깅
 
-![vLLM·GPU·Kubernetes 메트릭이 Prometheus에 모여 Grafana 대시보드와 Alert Manager 알림으로 이어지고, 로그는 별도로 Fluentd를 거쳐 CloudWatch에 전달되는 관찰 가능성 파이프라인을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-5.svg)
+![API 포트 8000의 실제 메트릭과 별도 로그 수집·권한 경계.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-5.png)
 
-### Prometheus 메트릭
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-5.html)
 
-vLLM 서버에서 Prometheus 메트릭을 수집하는 방법:
+### 메트릭과 로그
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-metrics
-  labels:
-    app: vllm-inference
-spec:
-  selector:
-    app: vllm-inference
-  ports:
-  - port: 8001
-    targetPort: 8001
-    name: metrics
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: vllm-metrics
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: vllm-inference
-  endpoints:
-  - port: metrics
-    interval: 15s
+기본 `/metrics`는 API와 같은8000포트입니다. 별도8001포트나 `--enable-metrics=true` 옵션을 만들지 마세요. Service label·named port·namespace selector를 일치시켜 ServiceMonitor를 구성합니다.
+
+```promql
+# model별 종단 지연 p95
+histogram_quantile(0.95, sum by (le, model_name) (rate(vllm:e2e_request_latency_seconds_bucket[5m])))
+# 생성 token 처리량
+sum by (model_name) (rate(vllm:generation_tokens_total[5m]))
+# 대기 요청 수
+sum by (model_name) (vllm:num_requests_waiting)
 ```
 
-### 로그 수집
-
-vLLM 서버의 로그를 CloudWatch로 수집하는 방법:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluentd-config
-  namespace: logging
-data:
-  fluent.conf: |
-    <source>
-      @type tail
-      path /var/log/containers/vllm-*.log
-      pos_file /var/log/fluentd-vllm.log.pos
-      tag kubernetes.vllm.*
-      read_from_head true
-      <parse>
-        @type json
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
-      </parse>
-    </source>
-    
-    <filter kubernetes.vllm.**>
-      @type kubernetes_metadata
-      @id filter_kube_metadata
-    </filter>
-    
-    <match kubernetes.vllm.**>
-      @type cloudwatch_logs
-      log_group_name /eks/vllm/logs
-      log_stream_name_key $.kubernetes.pod_name
-      remove_log_stream_name_key true
-      auto_create_stream true
-      region us-west-2
-    </match>
-```
+`vllm:kv_cache_usage_perc`는1이100%인 비율이고 GPU 전체 메모리 bytes가 아닙니다. 성공 counter와 gateway 오류·취소도 함께 관측하고, 요청이 없는 정상 유휴 구간을 “낮은 처리량 장애”로 판단하지 마세요. 실제 endpoint에서 metric 이름과 label을 확인해야 합니다. 로그는 CRI·앱 형식을 구분하고 prompt·출력·token을 무조건 남기지 마세요.
 
 ## 오토스케일링
 
-![CPU·GPU 사용률과 요청량 같은 트리거가 HPA·KEDA·커스텀 메트릭을 통해 Karpenter와 Cluster Autoscaler의 노드 스케일링으로 이어지고 Spot 인스턴스로 비용을 절감하는 vLLM 오토스케일링 구조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-6.svg)
+![메트릭, 하나의 Pod scaler, 독립 모델 replica와 별도의 노드 용량 owner의 관계.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-10.png)
 
-### HPA(Horizontal Pod Autoscaler)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-10.html)
 
-요청량에 따라 vLLM 서버를 자동으로 스케일링하는 방법:
+### Autoscaling과 가용성
 
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: vllm-inference-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: vllm-inference
-  minReplicas: 1
-  maxReplicas: 5
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Pods
-    pods:
-      metric:
-        name: requests_per_second
-      target:
-        type: AverageValue
-        averageValue: 100
-```
+독립 모델 replica의 HPA/KEDA와 하나의 모델을 나눈 worker group의 확장은 다릅니다. StatefulSet replica 수를 늘리기만 해 TP/PP topology가 자동 재구성되지는 않습니다. custom metrics adapter의 요청·queue 신호를 검증하고 CPU request가 없는데 CPU utilization HPA를 사용하지 마세요. Karpenter와 Cluster Autoscaler를 같은 노드 용량의 경쟁 owner로 설정하지 않아야 합니다.
 
-### Karpenter를 사용한 노드 오토스케일링
-
-GPU 노드를 자동으로 프로비저닝하는 방법:
-
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: vllm-gpu
-spec:
-  template:
-    spec:
-      requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        - p3.16xlarge
-        - g5.12xlarge
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values:
-        - on-demand
-      - key: kubernetes.io/arch
-        operator: In
-        values:
-        - amd64
-      - key: vpc.amazonaws.com/efa
-        operator: In
-        values:
-        - "true"
-      nodeClassRef:
-        name: vllm-gpu-class
-  limits:
-    nvidia.com/gpu: 32
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: vllm-gpu-class
-spec:
-  subnetSelector:
-    karpenter.sh/discovery: vllm-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: vllm-cluster
-  ttlSecondsAfterEmpty: 30
-```
+PDB는 모든 장애에서 최소 replica를 보장하지 않으며 voluntary eviction의 일부를 제한합니다. 독립 replica는 AZ에 분산할 수 있지만 통신이 많은 같은 TP/PP group을 AZ에 나누는 비용·지연은 별도 판단입니다. 모델 로드·warmup·drain·진행 중 streaming 처리와 여유 GPU를 검증해야 무중단 업데이트를 평가할 수 있습니다.
 
 ## 보안 구성
 
-### 네트워크 정책
+`--api-key`만으로 서버의 모든 endpoint가 보호되지 않습니다. 이 버전 middleware는 `/v1`, `/v2`, `/inference`, `/cohere` 접두사를 검사하며 `/invocations`, `/metrics`, 일부 운영 endpoint는 별도 보호가 필요합니다. 인증된 gateway에서 필요한 경로·method만 허용하고 내부 분산 통신은 신뢰 네트워크로 제한하세요. CORS는 인증이 아닙니다.
 
-vLLM 서버에 대한 네트워크 액세스를 제한하는 방법:
+동적 LoRA·remote model code·멀티모달 URL은 각각 신뢰·권한·SSRF 경계가 필요합니다. 정규표현식으로 ignore instructions 등을 차단하는 것만으로 prompt injection을 막거나 PII 제거를 보장할 수 없습니다. 도구 권한과 데이터 경계를 모델 출력과 분리해 검증해야 합니다.
 
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: vllm-network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: vllm-inference
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: api-gateway
-    ports:
-    - protocol: TCP
-      port: 8000
-  - from:
-    - podSelector:
-        matchLabels:
-          app: vllm-inference
-    ports:
-    - protocol: TCP
-      port: 29500
-  egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: vllm-inference
-    ports:
-    - protocol: TCP
-      port: 29500
-  - to:
-    ports:
-    - protocol: TCP
-      port: 443
-```
-
-### 보안 컨텍스트
-
-컨테이너의 보안 컨텍스트를 구성하는 방법:
-
-```yaml
-securityContext:
-  runAsUser: 1000
-  runAsGroup: 1000
-  fsGroup: 1000
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-    - ALL
-```
+Secret은 파일로 제공하고 Pod/컨테이너 securityContext 필드의 위치를 구분하세요. NetworkPolicy의 namespace/pod selector 조합, DNS, metric scrape 방향과 내부 통신을 실제 구성에 맞춰야 합니다. API server audit policy를 Pod annotation으로 켤 수 없으며 Secret RequestResponse 로그를 남기는 예제를 사용하지 마세요. EKS control-plane audit와 애플리케이션 접근 로그는 별도입니다.
 
 ## 클라이언트 통합
 
-![Python·JavaScript·Curl 클라이언트가 Nginx·API Gateway·Envoy 게이트웨이를 거쳐 인증·속도 제한·CORS 보안 계층을 통과한 뒤 로드 밸런서를 거쳐 vLLM 서비스에 도달하는 요청 경로를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-7.svg)
+![인증된 gateway의 허용 경로와 별도 운영자 접근으로 내부 vLLM endpoint를 보호하는 구조.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-7.png)
 
-### API 게이트웨이
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-7.html)
 
-vLLM 서버 앞에 API 게이트웨이를 배포하는 방법:
+### 클라이언트 요청
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-gateway
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: api-gateway
-  template:
-    metadata:
-      labels:
-        app: api-gateway
-    spec:
-      containers:
-      - name: api-gateway
-        image: nginx:latest
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: nginx-config
-          mountPath: /etc/nginx/conf.d
-      volumes:
-      - name: nginx-config
-        configMap:
-          name: nginx-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-config
-data:
-  default.conf: |
-    server {
-      listen 80;
-      
-      location /v1/ {
-        proxy_pass http://vllm-inference:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-      }
-    }
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-gateway
-spec:
-  selector:
-    app: api-gateway
-  ports:
-  - port: 80
-    targetPort: 80
-  type: LoadBalancer
-```
-
-### 클라이언트 예제
-
-Python 클라이언트를 사용하여 vLLM 서버에 요청을 보내는 방법:
+배포·준비 상태를 환경에서 확인한 뒤, 권한 있는 개발자는 `kubectl port-forward -n ml-inference service/vllm-demo 8000:8000`으로 로컬 경로를 열 수 있습니다. 기본 localhost 바인딩을 유지하세요. 아래는 이 로컬 예제의 요청이며 운영 gateway 인증을 대신하지 않습니다.
 
 ```python
-import requests
 import json
-
-url = "http://api-gateway/v1/completions"
+import urllib.request
 
 payload = {
-    "model": "llama-3.1-70b",
-    "prompt": "Once upon a time",
-    "max_tokens": 100,
-    "temperature": 0.7
+    "model": "qwen3-demo",
+    "messages": [{"role": "user", "content": "Explain a Kubernetes Pod briefly."}],
+    "max_tokens": 64,
+    "temperature": 0,
+    "chat_template_kwargs": {"enable_thinking": False},
 }
-
-headers = {
-    "Content-Type": "application/json"
-}
-
-response = requests.post(url, headers=headers, data=json.dumps(payload))
-
-print(response.json())
+request = urllib.request.Request(
+    "http://127.0.0.1:8000/v1/chat/completions",
+    data=json.dumps(payload).encode(),
+    headers={"Content-Type": "application/json"},
+    method="POST",
+)
+with urllib.request.urlopen(request, timeout=60) as response:
+    result = json.load(response)
+print(result["choices"][0]["message"]["content"])
 ```
 
-## 모범 사례
+요청의 model은 실제 served-model-name 또는 `/v1/models` 결과와 같아야 합니다. 운영 endpoint에서는 파일 기반 자격 증명을 읽어 gateway 인증을 추가하고 timeout·오류·stream 중단을 처리하세요. JSON body의 model 필드는 HTTP model header와 같지 않으므로 헤더 기반 라우팅만 설정했다고 자동 분기되지는 않습니다.
 
-### 리소스 관리
+## 검증 범위
 
-1. **메모리 오버헤드 고려**:
-   - GPU 메모리 외에도 CPU 메모리를 충분히 할당합니다.
-   - 모델 크기의 약 2배 정도의 CPU 메모리를 할당하는 것이 좋습니다.
-
-2. **CPU 코어 할당**:
-   - GPU당 최소 4개의 CPU 코어를 할당합니다.
-   - 텐서 병렬 처리를 사용하는 경우 더 많은 CPU 코어가 필요할 수 있습니다.
-
-3. **노드 선택**:
-   - 모델 크기에 맞는 적절한 노드 유형을 선택합니다.
-   - 메모리 대역폭이 높은 노드를 선택합니다.
-
-### 고가용성
-
-1. **다중 가용 영역 배포**:
-   - 여러 가용 영역에 걸쳐 vLLM 서버를 배포합니다.
-   - 각 가용 영역에 충분한 용량을 확보합니다.
-
-2. **로드 밸런싱**:
-   - 여러 vLLM 서버 인스턴스 간에 요청을 분산합니다.
-   - 세션 어피니티를 구성하여 동일한 사용자의 요청이 동일한 서버로 라우팅되도록 합니다.
-
-3. **장애 복구**:
-   - 상태 확인을 구성하여 장애가 발생한 서버를 감지합니다.
-   - 자동 복구 메커니즘을 구현합니다.
-
-### 비용 최적화
-
-1. **Spot 인스턴스 활용**:
-   - 비용을 절감하기 위해 Spot 인스턴스를 사용합니다.
-   - 중단 허용 워크로드에 적합합니다.
-
-2. **모델 양자화**:
-   - INT8 또는 INT4 양자화를 적용하여 메모리 사용량을 줄입니다.
-   - 정확도와 성능 간의 균형을 고려합니다.
-
-3. **오토스케일링**:
-   - 요청량에 따라 서버를 자동으로 스케일링합니다.
-   - 유휴 시간에는 서버를 축소하여 비용을 절감합니다.
-
-## 결론
-
-vLLM은 가장 활발하게 개발되는 오픈소스 LLM 추론 엔진으로, Speculative Decoding, Prefix Caching, LoRA 동적 로딩, Structured Output, Tool Calling 등 프로덕션에 필수적인 기능을 포괄적으로 지원합니다. EKS에서 적절한 GPU 인스턴스 선택, 고성능 스토리지, 네트워크 최적화, 오토스케일링을 결합하면 비용 효율적이면서도 확장 가능한 LLM 서빙 플랫폼을 구축할 수 있습니다. SGLang, TGI 등 다른 프레임워크와의 비교는 [추론 프레임워크](./04-inference-frameworks.md) 장을 참고하세요.
+태그에 고정된 source에서 CLI 인자·메트릭·인증 경로와 artifact metadata를 확인했습니다. Kubernetes 스키마와 로컬 HTTP fixture 검증은 실제 vLLM parser·kernel·GPU 추론 검증이 아닙니다. 이번 작업은 모델 가중치를 다운로드하거나 GPU 서버·클라우드 리소스를 만들지 않았습니다.
 
 ## 참고 자료
 
-- [vLLM 공식 문서](https://docs.vllm.ai/) - vLLM 공식 문서 및 최신 기능 가이드
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/ko/) - AWS에서 제공하는 EKS 기반 AI/ML 워크로드 배포 가이드 및 예제
+- [vLLM 0.29.0 release](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)
+- [Parallelism and scaling](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/serving/parallelism_scaling.md)
+- [Security boundaries](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/security.md)
+- [Production metrics](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/metrics.md)
+- [Structured outputs](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/structured_outputs.md)
+- [LoRA adapters](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/lora.md)
 
 ## 퀴즈
 

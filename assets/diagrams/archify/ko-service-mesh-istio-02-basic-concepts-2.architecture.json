@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Envoy가 해결한 문제들",
+    "output": "ko-service-mesh-istio-02-basic-concepts-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "기존 프록시의 문제"
+        },
+        "backend": {
+          "label": "Envoy의 해결책"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "p1",
+      "type": "external",
+      "label": "정적 설정",
+      "sublabel": "파일 기반",
+      "pos": [
+        50,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "external",
+      "label": "제한적 메트릭",
+      "sublabel": "Observability 부족",
+      "pos": [
+        50,
+        160
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "p3",
+      "type": "external",
+      "label": "복잡한 재시작",
+      "sublabel": "설정 변경 시 중단",
+      "pos": [
+        50,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "p4",
+      "type": "external",
+      "label": "단순한 라우팅",
+      "sublabel": "고급 기능 제한",
+      "pos": [
+        50,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "동적 API",
+      "sublabel": "xDS Protocol",
+      "pos": [
+        530,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "풍부한 통계 / 추적",
+      "sublabel": "메트릭 · 트레이싱",
+      "pos": [
+        530,
+        160
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "backend",
+      "label": "Hot Restart",
+      "sublabel": "무중단",
+      "pos": [
+        530,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "backend",
+      "label": "고급 L7 라우팅",
+      "sublabel": "HTTP/2 · gRPC",
+      "pos": [
+        530,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "기존 프록시의 문제",
+      "wraps": [
+        "p1",
+        "p2",
+        "p3",
+        "p4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Envoy의 해결책",
+      "wraps": [
+        "s1",
+        "s2",
+        "s3",
+        "s4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "p1-s1",
+      "from": "p1",
+      "to": "s1",
+      "label": "해결",
+      "variant": "emphasis"
+    },
+    {
+      "id": "p2-s2",
+      "from": "p2",
+      "to": "s2",
+      "label": "해결",
+      "variant": "dashed"
+    },
+    {
+      "id": "p3-s3",
+      "from": "p3",
+      "to": "s3",
+      "label": "해결",
+      "variant": "dashed"
+    },
+    {
+      "id": "p4-s4",
+      "from": "p4",
+      "to": "s4",
+      "label": "해결",
+      "variant": "dashed"
+    }
+  ]
+}

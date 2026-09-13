@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "외부 네트워크 연동",
+    "output": "ko-networking-calico-02-architecture-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1070,
+      660
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "10.0.1.10 · AS 64512 · Pods 10.244.1.0/24",
+      "pos": [
+        55,
+        70
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "10.0.1.11 · AS 64512 · Pods 10.244.2.0/24",
+      "pos": [
+        350,
+        70
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "backend",
+      "label": "Node 3",
+      "sublabel": "10.0.2.10 · AS 64512 · Pods 10.244.3.0/24",
+      "pos": [
+        645,
+        70
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "tor1",
+      "type": "cloud",
+      "label": "ToR Switch 1",
+      "sublabel": "192.168.1.1 · AS 64513",
+      "pos": [
+        215,
+        260
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "tor2",
+      "type": "cloud",
+      "label": "ToR Switch 2",
+      "sublabel": "192.168.2.1 · AS 64513",
+      "pos": [
+        660,
+        260
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "spine",
+      "type": "cloud",
+      "label": "Spine Switch",
+      "sublabel": "AS 64514",
+      "pos": [
+        432,
+        420
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "core",
+      "type": "external",
+      "label": "Core Router",
+      "sublabel": "AS 64515",
+      "pos": [
+        432,
+        560
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 워커 노드",
+      "wraps": [
+        "node1",
+        "node2",
+        "node3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터센터 네트워크",
+      "wraps": [
+        "tor1",
+        "tor2",
+        "spine",
+        "core"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "node1-tor1",
+      "from": "node1",
+      "to": "tor1",
+      "label": "eBGP",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "node2-tor1",
+      "from": "node2",
+      "to": "tor1",
+      "label": "eBGP",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "node3-tor2",
+      "from": "node3",
+      "to": "tor2",
+      "label": "eBGP",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "tor1-spine",
+      "from": "tor1",
+      "to": "spine",
+      "label": "eBGP",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tor2-spine",
+      "from": "tor2",
+      "to": "spine",
+      "label": "eBGP",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "spine-core",
+      "from": "spine",
+      "to": "core",
+      "label": "eBGP",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "eBGP 피어링",
+      "items": [
+        "각 노드의 BIRD가 ToR 스위치와 eBGP 세션을 맺어 Pod CIDR 라우트를 광고한다",
+        "ToR → Spine → Core 순으로 서로 다른 AS 사이를 계층적으로 피어링한다"
+      ]
+    }
+  ]
+}

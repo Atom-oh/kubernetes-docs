@@ -1,196 +1,255 @@
 # Part 1: Introduction to Calico
 
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 22, 2026
+> **Review baseline**: Calico Open Source 3.32.2, kind 0.33.0, Kubernetes 1.36.4
+> **Last Updated**: September 12, 2026. Calico 3.32 is tested against Kubernetes 1.34–1.36.
 
-## Lab Environment Setup
+## Lab environment
 
-To follow along with the examples in this document, you will need the following tools and environment.
+This disposable local lab selects iptables, VXLAN and Calico IPAM explicitly. It does not replace an existing CNI or configure EKS. The audit checked published artifacts and configuration without creating the cluster or testing live traffic.
 
-### Required Tools
+| Tool/environment | Requirement |
+|---|---|
+| kind | 0.33.0; pin the 1.36.4 image below instead of accepting an unpinned default |
+| Docker | A supported working runtime with capacity for three kind nodes |
+| Node OS | Linux kernel/modules meeting [Calico requirements](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements); on macOS this is the container VM's kernel |
+| kubectl | Within one minor of API server 1.36; a matching 1.36 client is convenient |
+| calicoctl | Optional matching 3.32.2 client for the actual CLI host OS/architecture |
+| curl / Python 3 | Optional client download and SHA-256 verification below |
+| Helm | Optional alternative in the [overview](README.md), not needed for this lab |
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| kubectl | v1.28+ | Kubernetes cluster management |
-| calicoctl | v3.29+ | Calico resource management |
-| Helm | v3.12+ | Package management (optional) |
-| kind/minikube | Latest | Local Kubernetes cluster |
+The [Kubernetes skew policy](https://kubernetes.io/releases/version-skew-policy/) does not support an arbitrary `kubectl 1.28+` with every later server. Check Pod/Service CIDRs against your container network, host LAN and VPN before creating the lab.
 
-### Installing calicoctl
+### Optional: a matching calicoctl
+
+Choose one platform, verify the exact release asset's published digest and keep the binary in the lab directory. These commands do not require global installation or home-directory configuration.
 
 ```bash
-# Download calicoctl binary
-curl -L https://github.com/projectcalico/calico/releases/download/v3.29.0/calicoctl-linux-amd64 -o calicoctl
+set -euo pipefail
+CALICO_VERSION=v3.32.2
+case "$(uname -s)" in
+  Linux) CALICO_OS=linux ;;
+  Darwin) CALICO_OS=darwin ;;
+  *) echo "Select a supported calicoctl OS" >&2; exit 1 ;;
+esac
+case "$(uname -m)" in
+  x86_64|amd64) CALICO_ARCH=amd64 ;;
+  aarch64|arm64) CALICO_ARCH=arm64 ;;
+  *) echo "Select a supported calicoctl architecture" >&2; exit 1 ;;
+esac
+CALICO_ASSET="calicoctl-$CALICO_OS-$CALICO_ARCH"
+curl --fail --location --retry 3 \
+  "https://api.github.com/repos/projectcalico/calico/releases/tags/$CALICO_VERSION" \
+  --output calico-release.json
+curl --fail --location --retry 3 \
+  "https://github.com/projectcalico/calico/releases/download/$CALICO_VERSION/$CALICO_ASSET" \
+  --output calicoctl
+python3 - "$CALICO_ASSET" <<'PY'
+import hashlib
+import json
+import pathlib
+import sys
+
+release = json.loads(pathlib.Path("calico-release.json").read_text())
+if release["tag_name"] != "v3.32.2":
+    raise SystemExit("Unexpected release")
+asset = next(a for a in release["assets"] if a["name"] == sys.argv[1])
+expected = asset.get("digest") or ""
+actual = "sha256:" + hashlib.sha256(pathlib.Path("calicoctl").read_bytes()).hexdigest()
+if not expected.startswith("sha256:") or actual != expected:
+    raise SystemExit("Digest mismatch or missing published digest")
+print("Verified", asset["name"], actual)
+PY
 chmod +x calicoctl
-sudo mv calicoctl /usr/local/bin/
-
-# Verify installation
-calicoctl version
-
-# Configure datastore access (Kubernetes API)
-export DATASTORE_TYPE=kubernetes
-export KUBECONFIG=~/.kube/config
+./calicoctl --help
 ```
 
-### Setting Up a Local Cluster with kind
+Run `./calicoctl version` after configuring the lab datastore to see client and cluster information. The documented `version` command has no `--client` flag. Once the aggregated API server is ready, `kubectl` can also manage Calico resources; calicoctl is not mandatory for every operation.
+
+### Create a separate kind cluster
+
+Use an unused cluster name and a new local kubeconfig. The [kind 0.33.0 release](https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0) publishes this 1.36.4 image within Calico's tested minor range. The registry digest and amd64/arm64 manifest were checked; node-image layers were not downloaded during the audit.
 
 ```bash
-# Create kind cluster configuration
-cat <<EOF > kind-calico.yaml
+set -euo pipefail
+CALICO_LAB_KUBECONFIG="$PWD/calico-lab.kubeconfig"
+test ! -e "$CALICO_LAB_KUBECONFIG"
+cat > kind-calico.yaml <<'YAML'
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 networking:
   disableDefaultCNI: true
-  podSubnet: 192.168.0.0/16
+  kubeProxyMode: iptables
+  podSubnet: 10.244.0.0/16
 nodes:
-- role: control-plane
-- role: worker
-- role: worker
-EOF
-
-# Create the cluster
-kind create cluster --config kind-calico.yaml --name calico-lab
-
-# Install Calico
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/tigera-operator.yaml
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/custom-resources.yaml
-
-# Wait for Calico to be ready
-kubectl wait --for=condition=Ready pods -l k8s-app=calico-node -n calico-system --timeout=300s
+  - role: control-plane
+  - role: worker
+  - role: worker
+YAML
+kind create cluster --name calico-lab --config kind-calico.yaml \
+  --kubeconfig "$CALICO_LAB_KUBECONFIG" \
+  --image kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed
+export KUBECONFIG="$CALICO_LAB_KUBECONFIG"
+export DATASTORE_TYPE=kubernetes
+kubectl config current-context
+kubectl cluster-info
 ```
 
-### Verifying the Installation
+Nodes and ordinary Pods may remain unready until the CNI is installed. Do not install a second CNI to clear that condition. If the Pod CIDR conflicts, change it in both kind and the Installation before creating the cluster.
 
 ```bash
-# Check all Calico components
-kubectl get pods -n calico-system
-
-# Expected output:
-# NAME                                       READY   STATUS    RESTARTS   AGE
-# calico-kube-controllers-xxxxxxxxx-xxxxx    1/1     Running   0          2m
-# calico-node-xxxxx                          1/1     Running   0          2m
-# calico-node-yyyyy                          1/1     Running   0          2m
-# calico-typha-xxxxxxxxx-xxxxx               1/1     Running   0          2m
-# csi-node-driver-xxxxx                      2/2     Running   0          2m
-
-# Check node status
-calicoctl node status
-
-# Check IP pools
-calicoctl get ippools -o wide
+CALICO_VERSION=v3.32.2
+kubectl create -f "https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/v1_crd_projectcalico_org.yaml"
+kubectl create -f "https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/tigera-operator.yaml"
+kubectl -n tigera-operator rollout status deployment/tigera-operator --timeout=300s
+kubectl apply -f - <<'YAML'
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  kubernetesProvider: Kind
+  cni:
+    type: Calico
+  calicoNetwork:
+    linuxDataplane: Iptables
+    bgp: Disabled
+    ipPools:
+      - cidr: 10.244.0.0/16
+        blockSize: 26
+        encapsulation: VXLAN
+        natOutgoing: Enabled
+        nodeSelector: all()
+---
+apiVersion: operator.tigera.io/v1
+kind: APIServer
+metadata:
+  name: default
+spec: {}
+YAML
+kubectl get tigerastatus
+kubectl -n calico-system get pods -o wide
 ```
 
-## What is Calico?
+Wait for the operator-created workloads to appear, then check their rollouts and conditions. An empty label selection or one controller's availability does not establish that all node networking works.
 
-Calico is an open-source networking and network security solution designed for cloud-native workloads. It provides a highly scalable networking and network policy solution for Kubernetes, virtual machines, and bare metal workloads.
+```bash
+kubectl -n calico-system rollout status daemonset/calico-node --timeout=300s
+kubectl -n calico-system rollout status deployment/calico-kube-controllers --timeout=300s
+kubectl wait --for=condition=Available apiservice/v3.projectcalico.org --timeout=300s
+kubectl wait --for=condition=Ready nodes --all --timeout=300s
+kubectl get ippools.projectcalico.org -o wide
+kubectl get installations.operator.tigera.io default -o yaml
+# Optional, if the matching local client was downloaded:
+./calicoctl version
+./calicoctl get nodes
+```
 
-### Project History: From Project Calico to Tigera
+BGP is disabled here, so BIRD sessions and `calicoctl node status` are not readiness criteria. That command also needs the appropriate node environment rather than only a laptop kubeconfig. Observe actual component counts; CSI/Typha replicas are not fixed. Use disposable workloads to check Pod, Service and DNS connectivity and both permitted and denied policy flows.
 
-![Timeline showing Calico's evolution from an OpenStack networking project in 2014, through Kubernetes CNI adoption and Tigera's founding, to a Kubernetes-native datastore in 2018 and full eBPF data-plane feature parity in 2025.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-0.svg)
+## What Calico provides
 
-| Year | Milestone | Significance |
-|------|-----------|--------------|
-| 2014 | Project Calico founded | Started as networking for OpenStack |
-| 2016 | Kubernetes CNI support | Expanded to container orchestration |
-| 2017 | Tigera founded | Commercial backing and enterprise features |
-| 2018 | Calico 3.0 | Kubernetes-native datastore support |
-| 2019 | Windows support | Enterprise adoption accelerated |
-| 2020 | Calico Enterprise GA | Full enterprise feature set |
-| 2021 | Calico Cloud | SaaS offering launched |
-| 2022 | eBPF data plane GA | Modern data plane option |
-| 2024 | nftables backend | Next-gen Linux firewall support |
-| 2025 | Calico 3.29 | Full eBPF feature parity |
+Calico combines Kubernetes networking, IPAM and policy enforcement. In policy-only integrations, another CNI retains networking and IPAM. Features vary by operating system, data plane and product edition; a platform listing does not promise identical behavior.
 
-## Core Features
+## Project history and governance
 
-Calico provides five core capabilities that make it a leading choice for Kubernetes networking.
+Project Calico began at Metaswitch in 2014; Tigera was established in 2016 and is its primary maintainer. The release records below correct the earlier 3.0/3.29 dates and distinguish the original eBPF preview from later feature availability.
 
-### 1. High-Performance Networking
+| Date | Primary release record |
+|---|---|
+| December 21, 2017 | [Calico 3.0.0](https://github.com/projectcalico/calico/releases/tag/v3.0.0), a historical release, not an installation recommendation |
+| February 25, 2020 | [eBPF introduction](https://www.tigera.io/blog/introducing-the-calico-ebpf-dataplane/): announced as a **3.13 tech preview**, not GA |
+| October 29, 2024 | [Calico 3.29.0](https://github.com/projectcalico/calico/releases/tag/v3.29.0) |
+| August 30, 2026 | [Calico 3.32.2](https://github.com/projectcalico/calico/releases/tag/v3.32.2), this review's baseline |
 
-Calico offers multiple networking modes optimized for different environments:
+The old timeline's “full eBPF parity” and “Windows eBPF” claims were incorrect. Current [Windows limitations](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations) still exclude Linux eBPF, IPIP, IPv6/dual stack and WireGuard.
 
-![Architecture diagram mapping Calico's four networking modes to their performance characteristics, from encapsulated IPIP and VXLAN overlays through native-speed direct routing to the eBPF data plane, which reaches kernel-bypass performance.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-1.svg)
+Calico uses Apache-2.0 licensing with Tigera and community maintenance. A CNCF Landscape listing is not CNCF ownership, incubation or graduation. Enterprise is a commercial self-managed product; Cloud is a SaaS offering. Open Source is not restricted to small or non-production clusters.
 
-**Key Performance Features:**
-- Native Linux networking stack integration
-- Optional eBPF data plane for reduced overhead
-- BGP-based routing for optimal path selection
-- Minimal encapsulation overhead in direct routing mode
+![Calico ecosystem and commercial product relationships.](../../.gitbook/assets/en-networking-calico-01-introduction-4.png)
 
-### 2. Network Policy Enforcement
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-01-introduction-4.html)
 
-Calico implements the Kubernetes NetworkPolicy API and extends it with powerful additional features:
+The CNCF box represents Landscape/ecosystem participation only. Tigera maintains the open-source project as well as its products; the figure's grouping does not confer governance authority on CNCF.
+
+## Core capabilities
+
+### 1. Networking and data planes
+
+Encapsulation and implementation are separate choices. Calico can use IPIP, VXLAN or a routed underlay. CrossSubnet is a conditional IPIP/VXLAN setting, not a WAN connection service. Linux data planes include iptables, nftables and eBPF. eBPF runs **inside the kernel** and can bypass parts of its conventional packet-processing path; it does not bypass the kernel. Unencapsulated routing avoids tunnel headers only when the underlay has the required Pod routes, without guaranteeing the lowest latency for every workload.
+
+### 2. Kubernetes and Calico policy
+
+Kubernetes NetworkPolicy is namespaced and additive. Calico adds explicit actions, ordered policies and tiers, including tiers in Open Source. GlobalNetworkPolicy has cluster resource scope but can select one namespace. HostEndpoint describes a host endpoint to protect; it is not a third policy type below NetworkPolicy in a fixed hierarchy.
+
+These are **independent examples** in a dedicated namespace. Consider existing tiers and higher-priority policies; neither is a complete security baseline.
 
 ```yaml
-# Standard Kubernetes NetworkPolicy (supported by Calico)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: calico-demo
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-ingress
-  namespace: production
+  namespace: calico-demo
 spec:
   podSelector: {}
-  policyTypes:
-  - Ingress
----
-# Calico-specific GlobalNetworkPolicy
+  policyTypes: [Ingress]
+  ingress: []
+```
+
+```yaml
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
-  name: security-baseline
+  name: calico-demo-trusted-ingress
 spec:
-  selector: all()
-  types:
-  - Ingress
-  - Egress
+  namespaceSelector: kubernetes.io/metadata.name == 'calico-demo'
+  selector: app == 'backend'
+  order: 100
+  types: [Ingress]
   ingress:
-  - action: Allow
-    source:
-      selector: trusted == 'true'
-  egress:
-  - action: Allow
-    destination:
-      nets:
-      - 10.0.0.0/8
+    - action: Allow
+      protocol: TCP
+      source:
+        namespaceSelector: kubernetes.io/metadata.name == 'calico-demo'
+        selector: trusted == 'true'
+      destination:
+        ports: [8080]
+    - action: Deny
 ```
 
-**Policy Capabilities:**
-- Label-based pod selection
-- Namespace isolation
-- CIDR-based rules
-- Protocol and port filtering
-- Global policies (cluster-wide)
-- Ordered policy tiers (Enterprise)
-- FQDN-based egress policies
+The Calico example allows TCP 8080 to selected backends from matching demo-namespace endpoints, then denies other ingress. Protect label-writing permissions: `trusted` is not cryptographic identity. These examples do not configure egress or DNS. CIDR/port rules are supported, but a large private CIDR is not an identity boundary. DNS/FQDN and application-layer policy require the appropriate Enterprise/Cloud features; see the [edition matrix](https://docs.tigera.io/calico/latest/about/calico-product-editions).
 
-### 3. Flexible IP Address Management (IPAM)
+### 3. IP address management
 
-Calico's IPAM system efficiently allocates IP addresses across the cluster:
+When Calico owns IPAM, pools and blocks control allocation. An IPv4 /26 block contains 64 addresses, not 64 guaranteed usable Pod addresses on every platform; Windows reserves addresses and IPv6 has different defaults. In VPC CNI policy-only mode, AWS owns IPAM.
+
+This illustrates the [IPPool API](https://docs.tigera.io/calico/latest/reference/resources/ippool). **Do not create it beside an overlapping operator-managed pool.** The kind lab already has its pool; encapsulation/IPAM changes are separate planned exercises.
 
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
-  name: default-ipv4-pool
+  name: example-ipv4-pool
 spec:
-  cidr: 192.168.0.0/16
-  blockSize: 26              # 64 IPs per block
-  ipipMode: Always
-  vxlanMode: Never
+  cidr: 10.244.0.0/16
+  blockSize: 26
+  ipipMode: Never
+  vxlanMode: Always
   natOutgoing: true
   nodeSelector: all()
 ```
 
-**IPAM Features:**
-- Block-based allocation (default: /26 blocks)
-- Multiple IP pools for different workload types
-- Node-specific IP pool assignment
-- IPv4 and IPv6 dual-stack support
-- Automatic IP reclamation
+Multiple non-overlapping pools and node selectors can separate allocations. `natOutgoing` normally applies to traffic leaving Calico pools; it is not a firewall or encryption setting. Neither direct routing nor CrossSubnet connects separate sites without an underlay design.
 
-### 4. BGP-Based Routing
+### 4. BGP routing
 
-Calico's native BGP support enables seamless integration with existing network infrastructure:
+BGP distributes routes; application packets do not flow through the BIRD process, and BGP does not encrypt them. BGP can support direct routing or coexist with IPIP. Full mesh, route reflectors and external peers are topology choices.
+
+The following belongs to a **separate routed lab**, not the BGP-disabled kind example. Replace the documentation address, ASNs and node labels with a designed topology and matching router configuration. Do not disable the node mesh before replacement route distribution works.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -205,193 +264,71 @@ spec:
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
-  name: rack-tor-switch
+  name: example-rack-tor
 spec:
-  peerIP: 10.0.0.1
+  peerIP: 192.0.2.1
   asNumber: 64513
   nodeSelector: rack == 'rack-1'
 ```
 
-**BGP Capabilities:**
-- Full mesh between nodes (auto-configured)
-- Peering with external routers (ToR switches, firewalls)
-- Route reflector support for large clusters
-- AS path prepending and communities
-- Graceful restart support
+BGPPeer supports `password.secretKeyRef` for session authentication. The Secret belongs in the Calico node component's namespace and the router must use matching credentials; this does not encrypt workload traffic. Service-CIDR advertisement and mesh removal require additional testing; see [BGP deep dive](04-bgp-deep-dive.md).
 
-### 5. Cross-Platform Support
+### 5. Platform and scale boundaries
 
-Calico runs consistently across diverse environments:
+| Environment | Boundary |
+|---|---|
+| EKS | VPC CNI + Calico policy is one integration; full Calico CNI is a separate new-cluster design |
+| AKS | Check the provider's supported CNI/policy combination and current installation procedure |
+| GKE | Dataplane V2 uses **Cilium**; Calico applies to the relevant legacy configuration, not an installation over V2 |
+| Self-managed Kubernetes | Check distribution, kernel, CNI ownership, routes and privileges |
+| Windows | Specified IPv4 configurations; no Linux eBPF, IPIP, IPv6/dual-stack or WireGuard parity |
+| Hosts / VMs | Separate installation and feature requirements; KubeVirt/Enterprise status differs from basic host protection |
 
-| Platform | Support Level | Notes |
-|----------|---------------|-------|
-| AWS EKS | Full | Native VPC integration available |
-| Azure AKS | Full | Azure CNI + Calico policy option |
-| Google GKE | Full | Dataplane V2 based on Calico |
-| On-Premises | Full | BGP integration with physical network |
-| OpenStack | Full | Original platform support |
-| Windows | Full | Windows Server 2019/2022 |
-| Bare Metal | Full | Direct routing recommended |
+[GKE's documentation](https://cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2) explicitly distinguishes Cilium in V2 from the legacy Calico path.
 
-## Calico vs Traditional Networking
+Typha caches and distributes updates through a separate set of Pods, reducing direct Felix datastore watches. Three replicas are an example, not a universal minimum. Capacity depends on policies, endpoints, Service churn, hardware, datastore and data plane. This introduction has no reproducible evidence for a fixed “5,000 nodes / 100,000 Pods / millions of rules” limit.
 
-### Traditional Kubernetes Networking Challenges
+## Calico, kube-proxy and performance
 
-![Architecture diagram contrasting kube-proxy's linear iptables rule chains, which degrade in performance as a cluster grows, with Calico's Felix agent using optimized iptables or eBPF and IP sets to hold consistent performance at scale.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-2.svg)
+kube-proxy implements Service forwarding, not CNI networking or NetworkPolicy. Calico's standard data planes can work alongside it, as in this lab; the eBPF data plane can replace Service handling when configured.
 
-### Comparison Table
+| Concern | Compare |
+|---|---|
+| Pod networking/IPAM | CNI/IPAM implementations with the same topology |
+| Service forwarding | Selected kube-proxy backend or an eBPF replacement |
+| Policy | Equivalent rules and enforcement coverage |
+| Scale | Services/endpoints, selectors, churn and connection reuse |
+| CPU/memory/latency | Hardware, kernel, versions, workload, warm-up, repeats and errors |
 
-| Aspect | Traditional (kube-proxy) | Calico |
-|--------|-------------------------|--------|
-| **Rule Organization** | Linear iptables chains | IP sets + optimized chains |
-| **Scale Impact** | O(n) rule traversal | O(1) IP set lookups |
-| **Policy Support** | None (requires separate CNI) | Native, extended features |
-| **Routing** | Service-level only | Full L3 routing |
-| **Visibility** | Limited | Flow logs, metrics |
-| **BGP** | Not supported | Native support |
-| **Data Plane Options** | iptables only | iptables, nftables, eBPF |
+kube-proxy is not iptables-only: current Kubernetes also offers nftables and version-dependent legacy backends. An IP-set lookup does not make the entire Calico packet path O(1). Initial iptables Service NAT selection also differs from later packets' conntrack fast path. The earlier unsourced 1,000-node/50,000-Pod rule-count, latency and memory example was not a reproducible benchmark and should not be used for sizing.
 
-### Performance at Scale
+Traditional VM networks can also be automated and distributed. Calico's declarative policy does not imply unlimited IP capacity or guaranteed second-level convergence.
 
-```
-Cluster Size: 1000 nodes, 50,000 pods
+## Deployment scenarios
 
-Traditional iptables (kube-proxy):
-- Rules: ~150,000 iptables rules
-- Latency: 2-5ms added per connection
-- Memory: ~500MB per node
+- **On-premises**: coordinate Pod routes, BGP peers/filters, return paths and host protection. Disabling encapsulation alone does not create underlay routes.
+- **EKS**: to retain AWS networking, select `cni.type: AmazonVPC` and follow the [reviewed overview](README.md), including policy-engine ownership and Pod-IP annotations. Do not apply an EKS Installation to this Kind lab or run two policy engines.
+- **Hybrid/multi-cluster**: connectivity, discovery and policy administration are separate functions. A CrossSubnet IPPool does not establish VPNs, shared identity or cross-cluster discovery. Evaluate the appropriate cluster-mesh/multi-cluster product features and underlay separately; “Calico Federation” is not a universal built-in link.
+- **Regulated workloads**: Enterprise/Cloud can add reports, logs and security features; installing them does not establish compliance. API audit logs record API changes and flow logs record network observations, not automatically every enforcement decision. WireGuard is also available in supported Open Source Linux configurations.
 
-Calico (optimized):
-- Rules: ~5,000 rules + IP sets
-- Latency: <0.5ms added per connection
-- Memory: ~150MB per node
-```
+## Community and source development
 
-## Use Cases
+Use the [community page](https://www.tigera.io/project-calico/community/) for current Slack/meeting links, the [issue tracker](https://github.com/projectcalico/calico/issues) for reproducible reports, and the [contributor guide](https://github.com/projectcalico/calico/blob/v3.32.2/CONTRIBUTING.md). Do not assume an undated biweekly schedule or old forum URL is current.
 
-### 1. On-Premises Data Center
-
-Calico excels in on-premises deployments where BGP integration with existing network infrastructure is required:
-
-```yaml
-# BGP peering with data center ToR switches
-apiVersion: projectcalico.org/v3
-kind: BGPPeer
-metadata:
-  name: datacenter-tor
-spec:
-  peerIP: 10.1.0.1
-  asNumber: 65001
-  password:
-    secretKeyRef:
-      name: bgp-secrets
-      key: tor-password
-```
-
-**Benefits:**
-- No overlay overhead
-- Direct integration with existing routing
-- Hardware load balancer compatibility
-- Consistent security policies across VMs and containers
-
-### 2. Cloud Deployments (AWS, GCP, Azure)
-
-Calico provides enhanced security and policy features on top of cloud provider networking:
-
-```yaml
-# EKS deployment with VXLAN
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  kubernetesProvider: EKS
-  cni:
-    type: Calico
-  calicoNetwork:
-    bgp: Disabled
-    ipPools:
-    - cidr: 10.244.0.0/16
-      encapsulation: VXLAN
-```
-
-**Benefits:**
-- Works within cloud VPC constraints
-- Enhanced network policies beyond cloud-native options
-- Consistent policy model across multi-cloud
-- Integration with cloud security groups
-
-### 3. Hybrid and Multi-Cluster
-
-Calico Federation enables policy and routing across multiple clusters:
-
-![Architecture diagram showing three Kubernetes clusters, on-premises, AWS, and GCP, each running Calico alongside its workloads, linked pairwise by Calico Federation for policy and routing, with a direct BGP/VPN path connecting the on-premises and GCP clusters.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-3.svg)
-
-**Benefits:**
-- Unified policy management across clusters
-- Cross-cluster service discovery
-- Consistent security posture
-- Gradual migration support
-
-### 4. Compliance-Focused Environments
-
-Calico Enterprise provides advanced features for regulated industries:
-
-- **Audit Logging**: Complete record of policy changes and enforcement
-- **Compliance Reports**: Pre-built reports for PCI-DSS, SOC 2, HIPAA
-- **Encryption**: WireGuard-based node-to-node encryption
-- **Threat Defense**: DDoS protection and anomaly detection
-
-## Project Governance and Community
-
-### Open Source Governance
-
-Calico is an open-source project hosted under the Cloud Native Computing Foundation (CNCF) ecosystem:
-
-- **License**: Apache 2.0
-- **Governance**: Open community with Tigera as primary maintainer
-- **Contribution**: Open to community contributions via GitHub
-- **Releases**: Regular release cadence (approximately quarterly)
-
-### Community Resources
-
-| Resource | URL |
-|----------|-----|
-| GitHub | https://github.com/projectcalico/calico |
-| Documentation | https://docs.tigera.io/calico/latest/ |
-| Slack | https://calicousers.slack.com |
-| Community Meetings | Bi-weekly, open to all |
-| Stack Overflow | Tag: `project-calico` |
-
-### Getting Help
+For source study, the [developer guide](https://github.com/projectcalico/calico/blob/v3.32.2/DEVELOPER_GUIDE.md) describes a Linux/Docker/git/make environment and component-specific tests. There is no root `make dev-environment` target. This optional source workflow is separate from the networking lab and was not executed during the audit:
 
 ```bash
-# Join the Calico Slack community
-# Visit: https://slack.projectcalico.org
-
-# File issues on GitHub
-# https://github.com/projectcalico/calico/issues
-
-# Check the FAQ
-# https://docs.tigera.io/calico/latest/reference/faq
+git clone --depth 1 --branch v3.32.2 https://github.com/projectcalico/calico.git calico-source-study
+cd calico-source-study
+# Read prerequisites and the selected component's Makefile before running tests.
+cat DEVELOPER_GUIDE.md
+make -C calicoctl test
 ```
 
-## Summary
+Open Source provides community-supported networking and policy for production as well as labs. Enterprise adds commercial capabilities/support; Cloud delivers SaaS management. Select by the [feature matrix](https://docs.tigera.io/calico/latest/about/calico-product-editions), not a blanket “small versus large cluster” rule.
 
-Calico provides a mature, battle-tested networking solution for Kubernetes with:
+## Clean up the disposable lab
 
-1. **Proven Stability**: Used in production by thousands of organizations
-2. **Flexible Architecture**: Multiple data plane options (iptables, nftables, eBPF)
-3. **Comprehensive Policies**: Kubernetes NetworkPolicy plus extended Calico policies
-4. **Native BGP**: First-class support for on-premises and hybrid deployments
-5. **Cross-Platform**: Consistent experience across cloud, on-prem, and hybrid
+After saving results, remove only the `calico-lab` cluster created for this exercise with `kind delete cluster --name calico-lab`. Keep any unrelated clusters and kubeconfigs. This local cleanup is not an EKS deletion procedure.
 
-In the next section, we will dive deep into Calico's architecture to understand how these components work together.
-
-[Next: Part 2 - Calico Architecture Deep Dive](02-architecture.md)
-
-[Return to Calico Overview](README.md)
-
-## Quiz
-
-To test what you've learned in this chapter, try the [Introduction Quiz](../../quizzes/networking/calico/01-introduction-quiz.md).
+[Next: Calico architecture](02-architecture.md) · [Calico overview](README.md) · [Introduction quiz](../../quizzes/networking/calico/01-introduction-quiz.md)

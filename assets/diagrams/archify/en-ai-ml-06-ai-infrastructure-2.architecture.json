@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Device Plugin and DRA allocation paths",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1280,
+      630
+    ],
+    "output": "en-ai-ml-06-ai-infrastructure-2.html",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "external",
+      "label": "Pod workload",
+      "sublabel": "device request / execution",
+      "pos": [
+        30,
+        75
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "claim",
+      "type": "backend",
+      "label": "ResourceClaim",
+      "sublabel": "DeviceClass / exactly request",
+      "pos": [
+        495,
+        75
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Kubernetes scheduler",
+      "sublabel": "claim / Pod placement constraints",
+      "pos": [
+        960,
+        75
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "plugin",
+      "type": "backend",
+      "label": "Device Plugin",
+      "sublabel": "nvidia.com/gpu / MIG resources",
+      "pos": [
+        30,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "slice",
+      "type": "database",
+      "label": "ResourceSlice",
+      "sublabel": "driver-published inventory",
+      "pos": [
+        495,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "NVIDIA DRA driver",
+      "sublabel": "prepare allocated devices / CDI",
+      "pos": [
+        960,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-claim",
+      "from": "pod",
+      "to": "claim",
+      "label": "reference",
+      "variant": "emphasis"
+    },
+    {
+      "id": "claim-schedule",
+      "from": "claim",
+      "to": "scheduler",
+      "label": "evaluate requests",
+      "variant": "emphasis"
+    },
+    {
+      "id": "slice-schedule",
+      "from": "slice",
+      "to": "scheduler",
+      "label": "attributes / capacity",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "schedule-driver",
+      "from": "scheduler",
+      "to": "driver",
+      "label": "prepare allocation",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1080,
+        245
+      ]
+    },
+    {
+      "id": "driver-slice",
+      "from": "driver",
+      "to": "slice",
+      "label": "publish inventory",
+      "variant": "dashed"
+    },
+    {
+      "id": "pod-plugin",
+      "from": "pod",
+      "to": "plugin",
+      "label": "extended-resource path",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        150,
+        245
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Sharing and feature maturity",
+      "items": [
+        "Device plugins also provide configured MIG/time-slicing paths.",
+        "DRA API maturity differs from MPS/DynamicMIG/TimeSlicing gates.",
+        "Handwritten ResourceSlices do not create GPUs."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Deployment paths",
+      "items": [
+        "Operator26.7:GPUCluster and ClusterPolicy are mutually exclusive.",
+        "Standalone0.5 rejects default GPU rendering until explicit opt-in.",
+        "Avoid competing device-plugin/DRA ownership of the same devices."
+      ]
+    }
+  ]
+}

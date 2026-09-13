@@ -1,0 +1,393 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "관찰성의 3요소",
+    "output": "ko-service-mesh-istio-observability-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "데이터 소스 (Envoy)"
+        },
+        "backend": {
+          "label": "텔레메트리 신호"
+        },
+        "database": {
+          "label": "수집 · 저장 백엔드"
+        },
+        "frontend": {
+          "label": "통합 시각화"
+        },
+        "messagebus": {
+          "label": "알림"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "metrics-flow",
+        "label": "메트릭 수집 흐름",
+        "focus": [
+          "envoy",
+          "metrics-signal",
+          "prometheus",
+          "grafana",
+          "kiali",
+          "alertmanager"
+        ],
+        "note": "Envoy가 만든 메트릭을 Prometheus가 수집하고 Grafana·Kiali 시각화와 Alertmanager 알림에 쓴다."
+      },
+      {
+        "id": "tracing-flow",
+        "label": "분산 추적 흐름",
+        "focus": [
+          "envoy",
+          "tracing-signal",
+          "jaeger",
+          "grafana"
+        ],
+        "note": "Envoy가 생성한 Span을 Jaeger/Zipkin이 수집하고 Tempo에 장기 저장한 뒤 Grafana에서 본다."
+      },
+      {
+        "id": "logging-flow",
+        "label": "로깅 흐름",
+        "focus": [
+          "envoy",
+          "logging-signal",
+          "loki",
+          "grafana"
+        ],
+        "note": "Envoy Access Log를 Fluentd가 수집해 Loki에 저장하고 Grafana에서 쿼리한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "envoy",
+      "type": "external",
+      "label": "Envoy 사이드카",
+      "sublabel": "코드 변경 없이 자동 수집",
+      "tag": "Zero Instrumentation",
+      "pos": [
+        40,
+        358
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "metrics-signal",
+      "type": "backend",
+      "label": "메트릭 (Metrics)",
+      "sublabel": "요청 수 · 응답 시간 · 에러율",
+      "pos": [
+        250,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "VictoriaMetrics 대체 가능",
+      "pos": [
+        490,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "tracing-signal",
+      "type": "backend",
+      "label": "분산 추적 (Tracing)",
+      "sublabel": "요청 경로 · 서비스 의존성",
+      "pos": [
+        250,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "database",
+      "label": "Jaeger / Zipkin",
+      "sublabel": "Grafana Tempo 장기 저장",
+      "pos": [
+        490,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "logging-signal",
+      "type": "backend",
+      "label": "로깅 (Logging)",
+      "sublabel": "HTTP 요청/응답 · 보안 이벤트",
+      "pos": [
+        250,
+        540
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Grafana Loki",
+      "sublabel": "Fluentd 수집 · Elasticsearch 대안",
+      "pos": [
+        490,
+        540
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kiali",
+      "type": "frontend",
+      "label": "Kiali",
+      "sublabel": "서비스 토폴로지",
+      "pos": [
+        770,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana 대시보드",
+      "sublabel": "메트릭 · 트레이스 · 로그 통합",
+      "pos": [
+        885,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "messagebus",
+      "label": "Prometheus Alertmanager",
+      "sublabel": "Golden Signals 기반 알림",
+      "pos": [
+        1000,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1. 메트릭",
+      "wraps": [
+        "metrics-signal",
+        "prometheus"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2. 분산 추적",
+      "wraps": [
+        "tracing-signal",
+        "jaeger"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "3. 로깅",
+      "wraps": [
+        "logging-signal",
+        "loki"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "통합 관찰성 (Integration)",
+      "wraps": [
+        "kiali",
+        "grafana",
+        "alertmanager"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "envoy-metrics",
+      "from": "envoy",
+      "to": "metrics-signal",
+      "label": "메트릭 생성",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          115,
+          210
+        ]
+      ]
+    },
+    {
+      "id": "envoy-tracing",
+      "from": "envoy",
+      "to": "tracing-signal",
+      "label": "Span 생성"
+    },
+    {
+      "id": "envoy-logging",
+      "from": "envoy",
+      "to": "logging-signal",
+      "label": "Access Log 생성",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          115,
+          570
+        ]
+      ]
+    },
+    {
+      "id": "metrics-prometheus",
+      "from": "metrics-signal",
+      "to": "prometheus",
+      "label": "scrape",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tracing-jaeger",
+      "from": "tracing-signal",
+      "to": "jaeger"
+    },
+    {
+      "id": "logging-loki",
+      "from": "logging-signal",
+      "to": "loki"
+    },
+    {
+      "id": "prometheus-kiali",
+      "from": "prometheus",
+      "to": "kiali"
+    },
+    {
+      "id": "prometheus-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "시각화",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          580,
+          300
+        ],
+        [
+          975,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "jaeger-grafana",
+      "from": "jaeger",
+      "to": "grafana"
+    },
+    {
+      "id": "loki-grafana",
+      "from": "loki",
+      "to": "grafana",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          580,
+          480
+        ],
+        [
+          975,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "prometheus-alertmanager",
+      "from": "prometheus",
+      "to": "alertmanager",
+      "label": "알림 규칙",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          580,
+          130
+        ],
+        [
+          1090,
+          130
+        ]
+      ],
+      "labelSegment": 1
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "메트릭",
+      "items": [
+        "요청 수, 응답 시간, 에러율과 리소스 사용률을 측정한다",
+        "시스템 건강 상태 모니터링, SLO/SLI 추적, 용량 계획에 쓴다",
+        "도구: Prometheus, Grafana, VictoriaMetrics"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "분산 추적",
+      "items": [
+        "단일 요청의 전체 경로와 서비스별 처리 시간을 추적한다",
+        "성능 병목 식별, 장애 근본 원인 분석, 마이크로서비스 디버깅에 쓴다",
+        "도구: Jaeger, Zipkin, Grafana Tempo"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "로깅",
+      "items": [
+        "모든 HTTP 요청/응답, 에러, 보안 이벤트를 기록한다",
+        "상세 디버깅, 보안 감사, 규정 준수에 쓴다",
+        "도구: Grafana Loki, Elasticsearch, Fluentd"
+      ]
+    }
+  ]
+}

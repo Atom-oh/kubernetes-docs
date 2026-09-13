@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pattern 4: Control Plane → Webhook Pod",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      640
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Routing hop"
+        },
+        "emphasis": {
+          "label": "Webhook · TCP 8443+"
+        },
+        "security": {
+          "label": "Boundary · VPN/DX"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "aws-side",
+        "label": "AWS-side routing",
+        "focus": [
+          "cp",
+          "eni",
+          "vpcrouter",
+          "gateway"
+        ],
+        "note": "The connection initiated by the API server leaves via the CP ENI and follows the VPC route table's 10.85.0.0/16 static route to the Gateway."
+      },
+      {
+        "id": "boundary",
+        "label": "Boundary crossing",
+        "focus": [
+          "gateway",
+          "onprem"
+        ],
+        "note": "Traffic crosses to the on-premises Gateway/Router over VPN or Direct Connect. The remote pod CIDR must be routable."
+      },
+      {
+        "id": "onprem-side",
+        "label": "On-prem delivery",
+        "focus": [
+          "onprem",
+          "node",
+          "cni",
+          "pod"
+        ],
+        "note": "The on-prem router sends 10.85.1.0/24 to node 10.80.0.2; the packet passes iptables and the CNI to reach the webhook pod."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "cp",
+      "type": "cloud",
+      "label": "EKS CP",
+      "sublabel": "API server"
+    },
+    {
+      "id": "eni",
+      "type": "cloud",
+      "label": "CP ENI",
+      "sublabel": "10.0.0.132"
+    },
+    {
+      "id": "vpcrouter",
+      "type": "cloud",
+      "label": "Router",
+      "sublabel": "VPC 10.0.0.0/16"
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "VPN / DX"
+    },
+    {
+      "id": "onprem",
+      "type": "external",
+      "label": "On-prem",
+      "sublabel": "Router 10.80.0.0/16"
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "Node",
+      "sublabel": "Hybrid · 10.80.0.2"
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "CNI",
+      "sublabel": "10.85.1.0/24"
+    },
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Webhook",
+      "sublabel": "Pod 10.85.1.23"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "AWS — Cluster VPC 10.0.0.0/16"
+    },
+    {
+      "from": 318,
+      "to": 385,
+      "label": "Cloud boundary crossing"
+    },
+    {
+      "from": 403,
+      "to": 560,
+      "label": "On-premises — Remote Pod CIDR 10.85.0.0/16"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "cp",
+      "to": "eni",
+      "y": 195,
+      "label": "1. Initiate webhook call → 10.85.1.23",
+      "variant": "emphasis",
+      "note": "The API server opens a direct connection to the webhook pod IP"
+    },
+    {
+      "id": "m2",
+      "from": "eni",
+      "to": "vpcrouter",
+      "y": 240,
+      "label": "2. Forward to VPC router"
+    },
+    {
+      "from": "vpcrouter",
+      "to": "gateway",
+      "y": 285,
+      "label": "3. 10.85.0.0/16 [static] via Gateway",
+      "id": "m3"
+    },
+    {
+      "id": "m4",
+      "from": "gateway",
+      "to": "onprem",
+      "y": 355,
+      "label": "4. Cross boundary via VPN/DX",
+      "variant": "security"
+    },
+    {
+      "id": "m5",
+      "from": "onprem",
+      "to": "node",
+      "y": 440,
+      "label": "5. 10.85.1.0/24 [dynamic] via 10.80.0.2"
+    },
+    {
+      "id": "m6",
+      "from": "node",
+      "to": "cni",
+      "y": 485,
+      "label": "6. Pass through iptables"
+    },
+    {
+      "id": "m7",
+      "from": "cni",
+      "to": "pod",
+      "y": 530,
+      "label": "7. Deliver to webhook pod",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "cp",
+      "from": 185,
+      "to": 540,
+      "type": "cloud"
+    },
+    {
+      "participant": "gateway",
+      "from": 280,
+      "to": 362,
+      "type": "security"
+    },
+    {
+      "participant": "node",
+      "from": 435,
+      "to": 492,
+      "type": "backend"
+    },
+    {
+      "participant": "pod",
+      "from": 525,
+      "to": 540,
+      "type": "frontend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "VPC route table",
+      "items": [
+        "10.0.0.0/16 [local]",
+        "10.80.0.0/16 [static] via Gateway",
+        "10.85.0.0/16 [static] via Gateway"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "On-premises route table",
+      "items": [
+        "10.80.0.0/16 [local] via eth0",
+        "10.0.0.0/16 [static] via Gateway",
+        "10.85.1.0/24 [dynamic] via 10.80.0.2",
+        "10.85.2.0/24 [dynamic] via 10.80.0.3"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Requirements",
+      "items": [
+        "Requires a routable pod CIDR (AWS → On-Prem, TCP 8443+)",
+        "If the on-premises pod CIDR is not routable, run all webhooks on cloud nodes",
+        "The VPC route table must have a route for the remote pod CIDR"
+      ]
+    }
+  ]
+}

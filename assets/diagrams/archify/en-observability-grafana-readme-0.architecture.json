@@ -1,0 +1,280 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana Architecture",
+    "locale": "en",
+    "output": "en-observability-grafana-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "user",
+          "frontend",
+          "backend",
+          "postgres",
+          "redis"
+        ],
+        "note": "User requests pass through the Frontend and Backend and are persisted to the metadata DB and session cache."
+      },
+      {
+        "id": "datasource-path",
+        "label": "Data source queries",
+        "focus": [
+          "backend",
+          "plugin",
+          "datasources"
+        ],
+        "note": "The Backend queries Prometheus, VictoriaMetrics, Loki, Tempo, CloudWatch and Elasticsearch through the Plugin System."
+      },
+      {
+        "id": "alerting-path",
+        "label": "Alert delivery",
+        "focus": [
+          "alerting",
+          "channels"
+        ],
+        "note": "The Alerting Engine evaluates condition-based rules and sends notifications to Slack, PagerDuty, Email and Webhook."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Users",
+      "sublabel": "Web Browser · API Client",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "React",
+      "pos": [
+        80,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend",
+      "sublabel": "Go",
+      "pos": [
+        320,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "plugin",
+      "type": "backend",
+      "label": "Plugin System",
+      "sublabel": "Data source integration",
+      "pos": [
+        560,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "alerting",
+      "type": "backend",
+      "label": "Alerting Engine",
+      "sublabel": "Rule evaluation",
+      "pos": [
+        800,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL / MySQL",
+      "sublabel": "Metadata",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis / Memcached",
+      "sublabel": "Session cache",
+      "pos": [
+        320,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "datasources",
+      "type": "external",
+      "label": "Data Sources",
+      "sublabel": "Prometheus · Loki · Tempo · CloudWatch",
+      "pos": [
+        560,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "channels",
+      "type": "external",
+      "label": "Notification Channels",
+      "sublabel": "Slack · PagerDuty · Email · Webhook",
+      "pos": [
+        800,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Grafana Server",
+      "wraps": [
+        "frontend",
+        "backend",
+        "plugin",
+        "alerting"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage",
+      "wraps": [
+        "postgres",
+        "redis"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-frontend",
+      "from": "user",
+      "to": "frontend",
+      "label": "HTTPS",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "frontend-to-backend",
+      "from": "frontend",
+      "to": "backend",
+      "label": "API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "backend-to-plugin",
+      "from": "backend",
+      "to": "plugin",
+      "label": "Query"
+    },
+    {
+      "id": "backend-to-postgres",
+      "from": "backend",
+      "to": "postgres",
+      "label": "Store metadata",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "backend-to-redis",
+      "from": "backend",
+      "to": "redis",
+      "label": "Session cache",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80,
+      "labelDx": 44
+    },
+    {
+      "id": "plugin-to-datasources",
+      "from": "plugin",
+      "to": "datasources",
+      "label": "Fetch",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80
+    },
+    {
+      "id": "alerting-to-channels",
+      "from": "alerting",
+      "to": "channels",
+      "label": "Send alerts",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Grafana Server",
+      "items": [
+        "Frontend (React) serves the dashboard UI",
+        "Backend (Go) handles API requests",
+        "Plugin System extends the supported data sources"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Data Sources",
+      "items": [
+        "Prometheus, VictoriaMetrics, Loki, Tempo, CloudWatch, Elasticsearch",
+        "Metrics, logs and traces in a single dashboard"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Alerting",
+      "items": [
+        "Condition-based alert rule evaluation",
+        "Notifications to Slack, PagerDuty, Email and Webhook"
+      ]
+    }
+  ]
+}

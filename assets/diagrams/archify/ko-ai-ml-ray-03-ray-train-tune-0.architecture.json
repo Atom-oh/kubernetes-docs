@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray Tune 함수와 Train V2 실행",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1300,
+      580
+    ]
+  },
+  "components": [
+    {
+      "id": "tuner",
+      "type": "backend",
+      "label": "Tuner",
+      "sublabel": "searcher / trial scheduler",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "trial",
+      "type": "backend",
+      "label": "Trial function",
+      "sublabel": "construct Trainer + fit()",
+      "pos": [
+        430,
+        70
+      ],
+      "size": [
+        270,
+        80
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Train workers",
+      "sublabel": "model / data / collectives",
+      "pos": [
+        870,
+        70
+      ],
+      "size": [
+        280,
+        80
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "Persistent checkpoint store",
+      "sublabel": "user-authored state / shards",
+      "pos": [
+        870,
+        340
+      ],
+      "size": [
+        280,
+        80
+      ]
+    },
+    {
+      "id": "callback",
+      "type": "backend",
+      "label": "TuneReportCallback",
+      "sublabel": "metrics + checkpoint path",
+      "pos": [
+        400,
+        340
+      ],
+      "size": [
+        300,
+        80
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "trial-config",
+      "from": "tuner",
+      "to": "trial",
+      "label": "trial config",
+      "variant": "emphasis"
+    },
+    {
+      "id": "train-launch",
+      "from": "trial",
+      "to": "workers",
+      "label": "ScalingConfig",
+      "variant": "emphasis"
+    },
+    {
+      "id": "checkpoint",
+      "from": "workers",
+      "to": "store",
+      "label": "checkpoint upload",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1010,
+        245
+      ]
+    },
+    {
+      "id": "report",
+      "from": "workers",
+      "to": "callback",
+      "label": "report callback",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          1010,
+          210
+        ],
+        [
+          550,
+          210
+        ]
+      ],
+      "variant": "dashed",
+      "labelAt": [
+        765,
+        195
+      ]
+    },
+    {
+      "id": "callback-to-tune",
+      "from": "callback",
+      "to": "tuner",
+      "label": "rank 0 metrics / path",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "via": [
+        [
+          160,
+          380
+        ]
+      ],
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "명시적 연동",
+      "items": [
+        "V2 Trainer instance를 Tuner에 직접 넘기지 않음",
+        "Trial마다 고유 Train run 이름과 자원 예산 필요"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "보고·복구 경계",
+      "items": [
+        "2.58.0 V2 report는 모든 worker가 참여하는 barrier",
+        "Callback은 checkpoint를 다시 업로드하거나 metric 평균을 계산하지 않음"
+      ]
+    }
+  ]
+}

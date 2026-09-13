@@ -1,0 +1,385 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 위 컴포넌트 구성도",
+    "output": "ko-data-on-eks-airflow-01-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control",
+        "label": "Metadata / control",
+        "focus": [
+          "bundle",
+          "processor",
+          "db",
+          "triggerer",
+          "api",
+          "scheduler"
+        ],
+        "note": "필수 구성 역할과 optional triggerer입니다. Metadata DB와 코드 전달을 별도로 준비합니다."
+      },
+      {
+        "id": "kubernetes",
+        "label": "KubernetesExecutor",
+        "focus": [
+          "scheduler",
+          "kpod",
+          "api"
+        ],
+        "note": "Task Pod를 생성하고 supervisor가 Execution API를 호출합니다."
+      },
+      {
+        "id": "celery",
+        "label": "CeleryExecutor",
+        "focus": [
+          "scheduler",
+          "broker",
+          "worker",
+          "api"
+        ],
+        "note": "Broker에서 작업을 받은 worker의 supervisor가 Execution API를 사용합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "bundle",
+      "type": "database",
+      "label": "DAG bundle / code",
+      "sublabel": "Processor + worker 코드",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "processor",
+      "type": "backend",
+      "label": "DAG processor",
+      "sublabel": "파싱·직렬화",
+      "pos": [
+        290,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Metadata DB",
+      "sublabel": "PostgreSQL / MySQL",
+      "pos": [
+        540,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "triggerer",
+      "type": "backend",
+      "label": "Triggerer (optional)",
+      "sublabel": "Async triggers",
+      "pos": [
+        790,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "frontend",
+      "label": "API server",
+      "sublabel": "UI / REST / Execution API",
+      "pos": [
+        540,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Scheduler + executor",
+      "sublabel": "상태 관리·task 제출",
+      "pos": [
+        790,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "kpod",
+      "type": "backend",
+      "label": "Kubernetes task pod",
+      "sublabel": "Task SDK + supervisor",
+      "pos": [
+        290,
+        410
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Celery worker pool",
+      "sublabel": "Task SDK + supervisor",
+      "pos": [
+        540,
+        410
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "broker",
+      "type": "messagebus",
+      "label": "Celery broker",
+      "sublabel": "Redis 등 선택",
+      "pos": [
+        790,
+        410
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Airflow 3: logical components",
+      "wraps": [
+        "bundle",
+        "processor",
+        "db",
+        "triggerer",
+        "api",
+        "scheduler",
+        "kpod",
+        "worker",
+        "broker"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "code-to-processor",
+      "from": "bundle",
+      "to": "processor",
+      "label": "DAG code",
+      "labelAt": [
+        260,
+        70
+      ]
+    },
+    {
+      "id": "processor-to-db",
+      "from": "processor",
+      "to": "db",
+      "label": "serialize",
+      "labelAt": [
+        510,
+        70
+      ]
+    },
+    {
+      "id": "triggerer-to-db",
+      "from": "triggerer",
+      "to": "db",
+      "label": "trigger state",
+      "labelAt": [
+        760,
+        134
+      ]
+    },
+    {
+      "id": "api-to-db",
+      "from": "api",
+      "to": "db",
+      "label": "state R/W",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        615,
+        184
+      ]
+    },
+    {
+      "id": "scheduler-to-db",
+      "from": "scheduler",
+      "to": "db",
+      "label": "DAG / state R/W",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          885,
+          180
+        ],
+        [
+          1000,
+          180
+        ],
+        [
+          1000,
+          5
+        ],
+        [
+          635,
+          5
+        ]
+      ],
+      "labelAt": [
+        925,
+        165
+      ]
+    },
+    {
+      "id": "scheduler-to-broker",
+      "from": "scheduler",
+      "to": "broker",
+      "label": "queue tasks",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        927,
+        357
+      ]
+    },
+    {
+      "id": "broker-to-worker",
+      "from": "broker",
+      "to": "worker",
+      "label": "task delivery",
+      "labelAt": [
+        760,
+        492
+      ]
+    },
+    {
+      "id": "worker-to-api",
+      "from": "worker",
+      "to": "api",
+      "label": "Execution API",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        677,
+        357
+      ]
+    },
+    {
+      "id": "kpod-to-api",
+      "from": "kpod",
+      "to": "api",
+      "label": "Execution API",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          510,
+          442
+        ],
+        [
+          510,
+          262
+        ]
+      ],
+      "labelAt": [
+        469,
+        352
+      ]
+    },
+    {
+      "id": "scheduler-to-kpod",
+      "from": "scheduler",
+      "to": "kpod",
+      "label": "Kubernetes API: create task pod",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          1030,
+          262
+        ],
+        [
+          1030,
+          515
+        ],
+        [
+          385,
+          515
+        ]
+      ],
+      "labelAt": [
+        910,
+        503
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "DAG code",
+      "items": [
+        "Processor와 worker에 bundle/code 필요",
+        "Versioning은 bundle에 따라 다름"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Deployment choices",
+      "items": [
+        "DB/broker·replica 종류는 구성에 따름",
+        "유휴 control plane·노드 비용은 남음"
+      ]
+    }
+  ]
+}

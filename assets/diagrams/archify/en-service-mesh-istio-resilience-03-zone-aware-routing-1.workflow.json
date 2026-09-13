@@ -1,0 +1,179 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Locality Load Balancing Algorithm",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "same-zone",
+        "label": "Same zone first",
+        "focus": [
+          "request",
+          "check_local",
+          "route_local"
+        ],
+        "note": "When a request arrives, Istio first checks for healthy pods in the same zone and, if any exist, sends 80-100% of traffic there."
+      },
+      {
+        "id": "adjacent-zone",
+        "label": "Adjacent-zone failover",
+        "focus": [
+          "check_local",
+          "check_nearby",
+          "route_nearby"
+        ],
+        "note": "If the same zone has no healthy pods, it checks an adjacent zone in the same region and routes there (10-20%)."
+      },
+      {
+        "id": "other-region",
+        "label": "Other region as last resort",
+        "focus": [
+          "check_nearby",
+          "route_remote"
+        ],
+        "note": "Only when no healthy pods exist anywhere in the region is traffic routed to another region."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Request"
+        },
+        "backend": {
+          "label": "Healthy-pod check"
+        },
+        "cloud": {
+          "label": "In-region routing"
+        },
+        "external": {
+          "label": "Other-region routing"
+        }
+      }
+    },
+    "locale": "en",
+    "viewBox": [
+      991,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "ingress",
+      "label": "Request"
+    },
+    {
+      "id": "decision",
+      "label": "Locality decision (healthy-pod check)"
+    },
+    {
+      "id": "routing",
+      "label": "Routing result"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "check_local",
+    "route_local"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "ingress",
+      "col": 0,
+      "width": 190,
+      "type": "frontend",
+      "label": "Request arrives",
+      "sublabel": "client pod → service"
+    },
+    {
+      "id": "check_local",
+      "lane": "decision",
+      "col": 0,
+      "width": 190,
+      "type": "backend",
+      "label": "Same zone healthy?",
+      "sublabel": "1st · Same Zone"
+    },
+    {
+      "id": "check_nearby",
+      "lane": "decision",
+      "col": 2,
+      "width": 190,
+      "type": "backend",
+      "label": "Adjacent zone healthy?",
+      "sublabel": "2nd · Same Region"
+    },
+    {
+      "id": "route_local",
+      "lane": "routing",
+      "col": 0,
+      "width": 190,
+      "type": "cloud",
+      "label": "Route to same zone",
+      "sublabel": "Yes · 80-100%"
+    },
+    {
+      "id": "route_nearby",
+      "lane": "routing",
+      "col": 2,
+      "width": 190,
+      "type": "cloud",
+      "label": "Route to adjacent zone",
+      "sublabel": "Yes · 10-20%"
+    },
+    {
+      "id": "route_remote",
+      "lane": "routing",
+      "col": 4,
+      "width": 190,
+      "type": "external",
+      "label": "Route to other region",
+      "sublabel": "3rd · Different Region"
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-check-local",
+      "from": "request",
+      "to": "check_local",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "local-yes",
+      "from": "check_local",
+      "to": "route_local",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "local-no",
+      "from": "check_local",
+      "to": "check_nearby",
+      "label": "No",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "nearby-yes",
+      "from": "check_nearby",
+      "to": "route_nearby",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop"
+    },
+    {
+      "id": "nearby-no",
+      "from": "check_nearby",
+      "to": "route_remote",
+      "label": "No",
+      "role": "branch",
+      "variant": "dashed"
+    }
+  ]
+}

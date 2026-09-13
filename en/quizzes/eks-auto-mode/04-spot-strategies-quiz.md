@@ -4,198 +4,236 @@
 
 ## Multiple Choice Questions
 
-### 1. What is the optimal strategy to distribute Spot instance interruption risk?
+### 1. Which approach broadens compatible Spot capacity choices?
 
-- A) Use only a single instance type
-- B) Use diverse instance families, generations, and sizes
-- C) Use only On-Demand
-- D) Select only the cheapest instances
+- A) Use a single instance type in one AZ
+- B) Allow diverse compatible types, sizes, architectures and AZs
+- C) Require incompatible images on extra architectures
+- D) Always select only the cheapest type
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Use diverse instance families, generations, and sizes**
+**Answer: B) Allow diverse compatible types, sizes, architectures and AZs**
 
 **Explanation:**
-Spot instances experience interruptions per capacity pool. Allowing diverse instance types enables acquiring instances from multiple capacity pools, distributing the interruption risk.
+Spot pools are tied to instance type/AZ combinations. Diversification provides more options, but does not make interruptions independent or double actual capacity just by listing two architectures. Validate the image, dependencies and performance profile first.
 
 ```yaml
-spec:
-  template:
-    spec:
-      requirements:
-        # Diverse instance families
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["m", "c", "r", "i", "d"]
-        # Diverse generations
-        - key: karpenter.k8s.aws/instance-generation
-          operator: In
-          values: ["5", "6", "7"]
-        # Diverse sizes
-        - key: karpenter.k8s.aws/instance-size
-          operator: In
-          values: ["large", "xlarge", "2xlarge"]
-        # Diverse architectures
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]
+requirements:
+- key: eks.amazonaws.com/instance-category
+  operator: In
+  values:
+  - m
+  - c
+  - r
+  - i
+  - d
+- key: eks.amazonaws.com/instance-generation
+  operator: Gt
+  values:
+  - '4'
+- key: eks.amazonaws.com/instance-size
+  operator: In
+  values:
+  - large
+  - xlarge
+  - 2xlarge
+- key: kubernetes.io/arch
+  operator: In
+  values:
+  - amd64
+  - arm64
+- key: karpenter.sh/capacity-type
+  operator: In
+  values:
+  - spot
 ```
+
+This is a requirements fragment, not a complete NodePool.
 
 </details>
 
-### 2. What is the Karpenter label key that distinguishes between Spot and On-Demand instances?
+### 2. Which label distinguishes Spot and On-Demand capacity in these examples?
 
-- A) `node.kubernetes.io/capacity-type`
-- B) `karpenter.sh/capacity-type`
-- C) `eks.amazonaws.com/instance-type`
-- D) `karpenter.k8s.aws/spot-or-ondemand`
+- A) node.kubernetes.io/capacity-type
+- B) karpenter.sh/capacity-type
+- C) eks.amazonaws.com/instance-type
+- D) karpenter.k8s.aws/spot-or-ondemand
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) `karpenter.sh/capacity-type`**
+**Answer: B) karpenter.sh/capacity-type**
 
 **Explanation:**
-This label allows specifying Spot/On-Demand instances in Pod nodeAffinity or NodePool requirements.
+Use `karpenter.sh/capacity-type` in NodePool requirements or Pod selection. Preferred affinity does not require Spot, reserve spare nodes or establish a fixed purchase-option ratio.
 
 ```yaml
-# Setting Spot instance preference in Pod
 affinity:
   nodeAffinity:
     preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        preference:
-          matchExpressions:
-            - key: karpenter.sh/capacity-type
-              operator: In
-              values: ["spot"]
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values:
+          - spot
 ```
 
+For a mandatory baseline, use a compatible hard selector/required affinity in a separate workload. `spec.nodeName` from the Downward API is a node name, not a Spot boolean.
+
 </details>
 
-### 3. What is the default warning time given before a Spot instance is interrupted?
+### 3. How should you interpret the EC2 Spot stop/terminate warning?
 
-- A) 30 seconds
-- B) 2 minutes
-- C) 5 minutes
-- D) 10 minutes
+- A) Every Pod is guaranteed thirty seconds
+- B) Normally two minutes, delivered on a best-effort basis
+- C) Every Pod is guaranteed five minutes
+- D) A ten-minute extension can be requested by preStop
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) 2 minutes**
+**Answer: B) Normally two minutes, delivered on a best-effort basis**
 
 **Explanation:**
-AWS Spot instances are given a 2-minute warning before being reclaimed. Workloads must terminate gracefully during this time.
-
-**Spot Interrupt Handling Best Practices:**
-- Set Pod's terminationGracePeriodSeconds to 2 minutes or less
-- Implement SIGTERM handler in applications
-- Prefer stateless workloads
-- Implement checkpointing mechanism (for batch jobs)
+EC2 normally provides a two-minute stop/terminate interruption notice, but delivery is best effort and hibernation has different immediate-start behavior. Kubernetes detection, eviction and application work consume time. Pod grace periods and preStop hooks do not extend EC2's deadline; a 90-second sleep is not a checkpoint or graceful-shutdown implementation. Use periodic durable checkpoints, idempotent recovery and tested application signal handling.
 
 </details>
 
-### 4. Which workload type is NOT recommended for Spot instances?
+### 4. Which pattern most needs redesign before relying on interruptible capacity?
 
-- A) Batch processing jobs
-- B) Stateless web servers
-- C) Single-instance databases
-- D) Development/test environments
+- A) Idempotent batch work with validated retry
+- B) Replicated stateless service with tested failover
+- C) Critical single-instance database with no recovery path and its only state on local storage
+- D) Development jobs that tolerate delay and retry
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Single-instance databases**
+**Answer: C) Critical single-instance database with no recovery path and its only state on local storage**
 
 **Explanation:**
-Single-instance databases can experience availability issues during interrupts, making them unsuitable for Spot.
-
-**Workloads suitable for Spot:**
-- Batch processing / Big data analytics
-- CI/CD pipelines
-- Stateless web servers (Auto Scaling)
-- Development/test environments
-- Container-based microservices
-
-**Workloads requiring On-Demand:**
-- Databases
-- Message queues
-- Cluster management components
-- Long-running stateful jobs
+The single-instance pattern can lose availability and its only state. On-Demand also does not make node-local storage durable or eliminate maintenance/failure risk. Databases, queues and long-running jobs require architecture-specific evaluation rather than a blanket rule based on workload name.
 
 </details>
 
-### 5. How do you configure Spot-first selection when mixing Spot and On-Demand in NodePool?
+### 5. Within one mixed-capacity NodePool, how do you allow Spot-first selection?
 
-- A) `spotPriority: high`
-- B) NodePool priority setting via weight value
-- C) `capacityPriority: spot`
-- D) `preferSpot: true`
+- A) Set spotPriority: high
+- B) Allow spot and on-demand; Auto Mode applies its eligible-capacity priority
+- C) Set capacityPriority: spot
+- D) Use weight to reserve exactly 80% Spot nodes
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) NodePool priority setting via weight value**
+**Answer: B) Allow spot and on-demand; Auto Mode applies its eligible-capacity priority**
 
 **Explanation:**
-Create multiple NodePools and specify priority with weight values. Higher weight is used first.
+Allow both capacity types. Array order and weight do not choose a percentage within that pool. If reserved capacity is also allowed and suitable, it has higher priority than Spot; Spot has priority over On-Demand. Availability and constraints still apply.
+
+A separate two-pool strategy can use weights to influence provisioning preference:
 
 ```yaml
-# Spot-first NodePool (weight: 100)
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: spot-first
 spec:
-  weight: 100  # High priority
+  weight: 100
   template:
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - c
+        - m
+        - r
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      taints:
+      - key: spot-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        capacity-example: spot-lab
+        capacity-strategy: spot-preferred
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ---
-# On-Demand fallback NodePool (weight: 10)
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: ondemand-fallback
 spec:
-  weight: 10  # Low priority
+  weight: 10
   template:
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - c
+        - m
+        - r
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      taints:
+      - key: spot-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        capacity-example: spot-lab
+        capacity-strategy: spot-preferred
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ```
+
+Both pools have a common label and lab taint. Workloads needing fallback must tolerate the taint and match both pools; pinning a Pod to the Spot-only pool name prevents that fallback. Weight does not move already scheduled Pods or guarantee immediate fallback capacity.
 
 </details>
 
-### 6. What is the maximum savings rate for Spot instances compared to On-Demand?
+### 6. What potential EC2 Spot discount does AWS advertise?
 
-- A) 30-40%
-- B) 50-60%
-- C) 70-90%
-- D) 95% or more
+- A) A guaranteed 30–40% saving
+- B) A guaranteed 50–60% saving
+- C) Up to 90% versus On-Demand, not guaranteed whole-workload savings
+- D) A guaranteed 95% or more
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) 70-90%**
+**Answer: C) Up to 90% versus On-Demand, not guaranteed whole-workload savings**
 
 **Explanation:**
-Spot instances can achieve up to 70-90% cost savings compared to On-Demand.
+Actual rates and useful-work cost depend on type, AZ, period, recovery and other charges. Auto Mode management fees are additional to EC2 pricing. The previous teaching table is retained below without claiming verified results:
 
-**Cost Optimization Strategy Combinations:**
-| Strategy | Expected Savings |
-|----------|-----------------|
-| Spot instances | 70-90% |
-| Graviton (ARM) | ~20% |
+| Prior illustration | Unverified figure |
+|---|---|
+| Spot | 70–90% |
+| Graviton/ARM | About 20% |
 | Spot + Graviton | Up to 90% |
 
-However, Spot savings rates vary depending on instance type and availability zone.
+The comparison baselines and measurements were not established. Do not add these percentages or treat them as guaranteed savings. Advisor data is a trailing-month summary that can be delayed; use AZ-specific price history or actual bills and avoid double-counting recovery hours.
 
 </details>

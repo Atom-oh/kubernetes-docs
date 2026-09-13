@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "패턴 1: Kubelet → EKS 컨트롤 플레인",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      760
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 경로"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "Node 10.80.0.2"
+    },
+    {
+      "id": "dns",
+      "type": "cloud",
+      "label": "DNS",
+      "sublabel": "엔드포인트 조회"
+    },
+    {
+      "id": "router",
+      "type": "external",
+      "label": "Router",
+      "sublabel": "온프레미스"
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "VPN / DX"
+    },
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet",
+      "sublabel": "퍼블릭 인터넷"
+    },
+    {
+      "id": "vpcrouter",
+      "type": "cloud",
+      "label": "VPC Router",
+      "sublabel": "VPC 10.0.0.0/16"
+    },
+    {
+      "id": "cpeni",
+      "type": "cloud",
+      "label": "CP ENI",
+      "sublabel": "10.0.0.132"
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS CP",
+      "sublabel": "API 서버"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 280,
+      "label": "① 요청 시작 — DNS 조회 후 HTTPS 요청"
+    },
+    {
+      "from": 300,
+      "to": 415,
+      "label": "② → ③ 퍼블릭 엔드포인트 경로 (퍼블릭 액세스 모드)"
+    },
+    {
+      "from": 435,
+      "to": 630,
+      "label": "프라이빗 엔드포인트 경로 (프라이빗 액세스 모드)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "dns-query",
+      "from": "kubelet",
+      "to": "dns",
+      "y": 190,
+      "label": "API 서버 엔드포인트 DNS 조회",
+      "variant": "default"
+    },
+    {
+      "id": "dns-answer",
+      "from": "dns",
+      "to": "kubelet",
+      "y": 225,
+      "label": "엔드포인트 IP 응답",
+      "variant": "return"
+    },
+    {
+      "id": "https-start",
+      "from": "kubelet",
+      "to": "router",
+      "y": 262,
+      "label": "HTTPS 요청 (TCP 443)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pub-internet",
+      "from": "router",
+      "to": "internet",
+      "y": 330,
+      "label": "퍼블릭 인터넷으로 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pub-eks",
+      "from": "internet",
+      "to": "eks",
+      "y": 367,
+      "label": "퍼블릭 엔드포인트 도달 (HTTPS)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pub-resp",
+      "from": "eks",
+      "to": "kubelet",
+      "y": 403,
+      "label": "HTTPS 응답",
+      "variant": "return"
+    },
+    {
+      "id": "prv-gateway",
+      "from": "router",
+      "to": "gateway",
+      "y": 465,
+      "label": "10.0.0.0/16 [static] via Gateway",
+      "variant": "emphasis",
+      "note": "온프레미스 라우팅 테이블의 정적 경로"
+    },
+    {
+      "id": "prv-tunnel",
+      "from": "gateway",
+      "to": "vpcrouter",
+      "y": 505,
+      "label": "VPN / DX로 클라우드 경계 통과",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prv-eni",
+      "from": "vpcrouter",
+      "to": "cpeni",
+      "y": 545,
+      "label": "10.0.0.0/16 [local] → ENI",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prv-eks",
+      "from": "cpeni",
+      "to": "eks",
+      "y": 582,
+      "label": "API 서버로 전달",
+      "variant": "default"
+    },
+    {
+      "id": "prv-resp",
+      "from": "eks",
+      "to": "kubelet",
+      "y": 618,
+      "label": "HTTPS 응답",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kubelet",
+      "from": 185,
+      "to": 624,
+      "type": "backend"
+    },
+    {
+      "participant": "router",
+      "from": 257,
+      "to": 470,
+      "type": "external"
+    },
+    {
+      "participant": "eks",
+      "from": 362,
+      "to": 408,
+      "type": "cloud"
+    },
+    {
+      "participant": "eks",
+      "from": 577,
+      "to": 623,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "온프레미스 라우팅 테이블",
+      "items": [
+        "10.80.0.0/16 [local] via eth0 (CONNECTED)",
+        "10.0.0.0/16 [static] via Gateway (STATIC)",
+        "10.85.1.0/24 [dynamic] via 10.80.0.2 · 10.85.2.0/24 [dynamic] via 10.80.0.3"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Cluster VPC 라우팅 테이블",
+      "items": [
+        "10.0.0.0/16 [local]",
+        "10.80.0.0/16 [static] via Gateway (Remote Node CIDR)",
+        "10.85.0.0/16 [static] via Gateway (Remote Pod CIDR)"
+      ]
+    }
+  ]
+}

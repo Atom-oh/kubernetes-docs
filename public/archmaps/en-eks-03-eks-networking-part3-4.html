@@ -5031,10 +5031,10 @@
 
         <!-- Swimlanes -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="1102" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / 진단 단계</text>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / Diagnosis</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="1102" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / 조치 단계</text>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Remediation</text>
 
         <!-- Phase headers -->
 
@@ -5051,8 +5051,8 @@
         <path data-edge-from="classify" data-edge-to="restart" data-edge-label="policy · DNS" data-edge-key="5" data-edge-id="e6" data-composition-points="812.4,119;1059,119;1059,217" d="M 812.4 119 L 1059 119 L 1059 217" class="a-default" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead)"/>
 
         <!-- Nodes -->
-        <g id="node-alert" data-node-id="alert" data-node-label="Pod fault seen" tabindex="0" role="button" aria-label="Focus Pod fault seen, ContainerCreating, 진단 단계" aria-pressed="false" data-node-kind="external" data-node-sublabel="ContainerCreating" data-node-context="진단 단계">
-          <title>Pod fault seen · ContainerCreating · 진단 단계</title>
+        <g id="node-alert" data-node-id="alert" data-node-label="Pod fault seen" tabindex="0" role="button" aria-label="Focus Pod fault seen, ContainerCreating, Diagnosis" aria-pressed="false" data-node-kind="external" data-node-sublabel="ContainerCreating" data-node-context="Diagnosis">
+          <title>Pod fault seen · ContainerCreating · Diagnosis</title>
           <rect x="48" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="48" y="93" width="150" height="52" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 99) scale(0.6875)">
@@ -5063,8 +5063,8 @@
           <text data-detail="context" x="123" y="131" class="t-muted" font-size="8" text-anchor="middle">ContainerCreating</text>
         </g>
 
-        <g id="node-inspect" data-node-id="inspect" data-node-label="Step 1 inspect" tabindex="0" role="button" aria-label="Focus Step 1 inspect, CNI logs, 진단 단계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="CNI logs" data-node-context="진단 단계">
-          <title>Step 1 inspect · CNI logs · 진단 단계</title>
+        <g id="node-inspect" data-node-id="inspect" data-node-label="Step 1 inspect" tabindex="0" role="button" aria-label="Focus Step 1 inspect, CNI logs, Diagnosis" aria-pressed="false" data-node-kind="backend" data-node-sublabel="CNI logs" data-node-context="Diagnosis">
+          <title>Step 1 inspect · CNI logs · Diagnosis</title>
           <rect x="249.60000000000002" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="249.60000000000002" y="93" width="150" height="52" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(255.60000000000002 99) scale(0.6875)">
@@ -5074,8 +5074,8 @@
           <text data-detail="context" x="324.6" y="131" class="t-muted" font-size="8" text-anchor="middle">CNI logs</text>
         </g>
 
-        <g id="node-nettest" data-node-id="nettest" data-node-label="Step 2 test path" tabindex="0" role="button" aria-label="Focus Step 2 test path, ping · nslookup, 진단 단계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ping · nslookup" data-node-context="진단 단계">
-          <title>Step 2 test path · ping · nslookup · 진단 단계</title>
+        <g id="node-nettest" data-node-id="nettest" data-node-label="Step 2 test path" tabindex="0" role="button" aria-label="Focus Step 2 test path, ping · nslookup, Diagnosis" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ping · nslookup" data-node-context="Diagnosis">
+          <title>Step 2 test path · ping · nslookup · Diagnosis</title>
           <rect x="460.79999999999995" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="460.79999999999995" y="93" width="150" height="52" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(466.79999999999995 99) scale(0.6875)">
@@ -5085,8 +5085,8 @@
           <text data-detail="context" x="535.8" y="131" class="t-muted" font-size="8" text-anchor="middle">ping · nslookup</text>
         </g>
 
-        <g id="node-classify" data-node-id="classify" data-node-label="Cause class" tabindex="0" role="button" aria-label="Focus Cause class, IP · policy · DNS, 진단 단계" aria-pressed="false" data-node-kind="security" data-node-sublabel="IP · policy · DNS" data-node-context="진단 단계">
-          <title>Cause class · IP · policy · DNS · 진단 단계</title>
+        <g id="node-classify" data-node-id="classify" data-node-label="Cause class" tabindex="0" role="button" aria-label="Focus Cause class, IP · policy · DNS, Diagnosis" aria-pressed="false" data-node-kind="security" data-node-sublabel="IP · policy · DNS" data-node-context="Diagnosis">
+          <title>Cause class · IP · policy · DNS · Diagnosis</title>
           <rect x="662.4" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="662.4" y="93" width="150" height="52" rx="6" class="c-security" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(668.4 99) scale(0.6875)">
@@ -5097,8 +5097,8 @@
           <text data-detail="context" x="737.4" y="131" class="t-muted" font-size="8" text-anchor="middle">IP · policy · DNS</text>
         </g>
 
-        <g id="node-ipfix" data-node-id="ipfix" data-node-label="Resize IP pool" tabindex="0" role="button" aria-label="Focus Resize IP pool, WARM_IP_TARGET, 조치 단계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="WARM_IP_TARGET" data-node-context="조치 단계">
-          <title>Resize IP pool · WARM_IP_TARGET · 조치 단계</title>
+        <g id="node-ipfix" data-node-id="ipfix" data-node-label="Resize IP pool" tabindex="0" role="button" aria-label="Focus Resize IP pool, WARM_IP_TARGET, Remediation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="WARM_IP_TARGET" data-node-context="Remediation">
+          <title>Resize IP pool · WARM_IP_TARGET · Remediation</title>
           <rect x="782.4" y="217" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="782.4" y="217" width="150" height="52" rx="6" class="c-backend" data-animate="node" style="--step:8" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(788.4 223) scale(0.6875)">
@@ -5108,8 +5108,8 @@
           <text data-detail="context" x="857.4" y="255" class="t-muted" font-size="8" text-anchor="middle">WARM_IP_TARGET</text>
         </g>
 
-        <g id="node-restart" data-node-id="restart" data-node-label="Restart config" tabindex="0" role="button" aria-label="Focus Restart config, aws-node · CoreDNS, 조치 단계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="aws-node · CoreDNS" data-node-context="조치 단계">
-          <title>Restart config · aws-node · CoreDNS · 조치 단계</title>
+        <g id="node-restart" data-node-id="restart" data-node-label="Restart config" tabindex="0" role="button" aria-label="Focus Restart config, aws-node · CoreDNS, Remediation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="aws-node · CoreDNS" data-node-context="Remediation">
+          <title>Restart config · aws-node · CoreDNS · Remediation</title>
           <rect x="984" y="217" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="984" y="217" width="150" height="52" rx="6" class="c-backend" data-animate="node" style="--step:9" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(990 223) scale(0.6875)">
@@ -5148,17 +5148,17 @@
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
           <text x="20" y="304" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="진단 · 조치" data-legend-x="20" data-legend-baseline="324" data-legend-width="91">
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Diagnosis · Fix" data-legend-x="20" data-legend-baseline="324" data-legend-width="109">
             <rect x="20" y="316" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-            <text x="42" y="324" class="t-muted" font-size="7.5" font-weight="500">진단 · 조치</text>
+            <text x="42" y="324" class="t-muted" font-size="7.5" font-weight="500">Diagnosis · Fix</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="원인 분류" data-legend-x="118" data-legend-baseline="324" data-legend-width="83">
-            <rect x="118" y="316" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="140" y="324" class="t-muted" font-size="7.5" font-weight="500">원인 분류</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Cause classification" data-legend-x="136" data-legend-baseline="324" data-legend-width="130">
+            <rect x="136" y="316" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="158" y="324" class="t-muted" font-size="7.5" font-weight="500">Cause classification</text>
           </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="증상" data-legend-x="208" data-legend-baseline="324" data-legend-width="61">
-            <rect x="208" y="316" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
-            <text x="230" y="324" class="t-muted" font-size="7.5" font-weight="500">증상</text>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="Symptom" data-legend-x="273" data-legend-baseline="324" data-legend-width="74">
+            <rect x="273" y="316" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="295" y="324" class="t-muted" font-size="7.5" font-weight="500">Symptom</text>
           </g>
         </g>
       </svg>

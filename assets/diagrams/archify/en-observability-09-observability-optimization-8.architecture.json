@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Phased Observability Adoption Strategy",
+    "locale": "en",
+    "output": "en-observability-09-observability-optimization-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "phase1",
+        "label": "Phase 1: Basic",
+        "focus": [
+          "cw-logs",
+          "cw-metrics",
+          "container-insights"
+        ],
+        "note": "CloudWatch-based. Takes 1-2 days; low cost and low operational complexity."
+      },
+      {
+        "id": "phase2",
+        "label": "Phase 2: Intermediate",
+        "focus": [
+          "prom-grafana",
+          "fluentbit-loki",
+          "xray"
+        ],
+        "note": "Grafana stack. Takes 1-2 weeks; medium cost and operational complexity."
+      },
+      {
+        "id": "phase3",
+        "label": "Phase 3: Advanced",
+        "focus": [
+          "vm-amp",
+          "otel",
+          "ebpf",
+          "cost"
+        ],
+        "note": "OpenTelemetry + eBPF. Takes 2-4 weeks; high cost and high operational complexity."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cw-metrics",
+      "type": "cloud",
+      "label": "CloudWatch Metrics",
+      "sublabel": "basic metrics",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cw-logs",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "basic log collection",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "container-insights",
+      "type": "cloud",
+      "label": "Container Insights",
+      "sublabel": "container metrics",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "prom-grafana",
+      "type": "backend",
+      "label": "Prometheus + Grafana",
+      "sublabel": "metrics + dashboards",
+      "pos": [
+        310,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "fluentbit-loki",
+      "type": "backend",
+      "label": "Fluent Bit + Loki",
+      "sublabel": "log pipeline",
+      "pos": [
+        310,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "xray",
+      "type": "cloud",
+      "label": "X-Ray Tracing",
+      "sublabel": "distributed tracing",
+      "pos": [
+        310,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "vm-amp",
+      "type": "database",
+      "label": "VictoriaMetrics / AMP",
+      "sublabel": "long-term metrics storage",
+      "pos": [
+        590,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "backend",
+      "label": "OpenTelemetry",
+      "sublabel": "unified telemetry collection",
+      "pos": [
+        590,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cost",
+      "type": "backend",
+      "label": "Cost Monitoring",
+      "sublabel": "OpenCost / KubeCost",
+      "pos": [
+        850,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF Monitoring",
+      "sublabel": "no-code instrumentation",
+      "pos": [
+        850,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Phase 1: Basic",
+      "wraps": [
+        "cw-metrics",
+        "cw-logs",
+        "container-insights"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Phase 2: Intermediate",
+      "wraps": [
+        "prom-grafana",
+        "fluentbit-loki",
+        "xray"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Phase 3: Advanced",
+      "wraps": [
+        "vm-amp",
+        "otel",
+        "cost",
+        "ebpf"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "metrics-to-prom",
+      "from": "cw-metrics",
+      "to": "prom-grafana"
+    },
+    {
+      "id": "logs-to-loki",
+      "from": "cw-logs",
+      "to": "fluentbit-loki"
+    },
+    {
+      "id": "insights-to-xray",
+      "from": "container-insights",
+      "to": "xray"
+    },
+    {
+      "id": "prom-to-vm",
+      "from": "prom-grafana",
+      "to": "vm-amp",
+      "label": "remoteWrite"
+    },
+    {
+      "id": "loki-to-otel",
+      "from": "fluentbit-loki",
+      "to": "otel"
+    },
+    {
+      "id": "xray-to-otel",
+      "from": "xray",
+      "to": "otel"
+    },
+    {
+      "id": "vm-to-cost",
+      "from": "vm-amp",
+      "to": "cost"
+    },
+    {
+      "id": "otel-to-ebpf",
+      "from": "otel",
+      "to": "ebpf"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Phase 1 (Basic)",
+      "items": [
+        "CloudWatch-based setup",
+        "1-2 days · low cost · low operational complexity"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Phase 2 (Intermediate)",
+      "items": [
+        "Adopt the Grafana stack",
+        "1-2 weeks · medium cost · medium operational complexity"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Phase 3 (Advanced)",
+      "items": [
+        "OpenTelemetry + eBPF",
+        "2-4 weeks · high cost · high operational complexity"
+      ]
+    }
+  ]
+}

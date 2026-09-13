@@ -16,14 +16,21 @@ Istio의 트래픽 관리 기능은 서비스 메시 내에서 트래픽 흐름�
 10. [Session Affinity](10-session-affinity.md)
 11. [Egress 제어](11-egress-control.md)
 12. [ServiceEntry (외부 서비스 관리)](12-service-entry.md)
+13. [WorkloadEntry (VM 등록)](13-workload-entry.md)
 
 ## 개요
+
+아래는 지원되는 Istio 릴리스의 Sidecar 모드 구성 예제입니다. Gateway, VirtualService, DestinationRule은 프록시가 사용하는 API 객체이며 별도의 네트워크 홉이 아닙니다. Mirror는 90/10 분배의 나머지가 아니라 선택한 요청의 추가 복사본이며 응답은 버립니다. 그림은 논리적인 구성 관계를 나타냅니다.
+
+각 발췌는 대안 예제이며 동시에 적용할 하나의 매니페스트가 아닙니다. 참조하는 Service와 DestinationRule subset을 먼저 준비하세요. `gateways`가 없는 VirtualService는 메시 내부에 적용되며 인바운드에는 Gateway 연결과 호스트 일치가 필요합니다. Ambient는 지원되는 Gateway API/waypoint 라우팅을 사용하세요.
 
 트래픽 관리는 Istio의 핵심 기능 중 하나로, 다음과 같은 작업을 코드 변경 없이 수행할 수 있습니다:
 
 ### 주요 기능
 
-![클라이언트 요청이 Gateway, VirtualService, DestinationRule을 차례로 거쳐 세 개의 서비스 버전으로 분배되며, 90%는 주 트래픽, 10%는 Canary, 나머지는 Mirror로 전달되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-README-0.png)
+![클라이언트 요청이 Gateway, VirtualService, DestinationRule을 차례로 거쳐 세 개의 서비스 버전으로 분배되며, 90%는 주 트래픽, 10%는 Canary, 나머지는 Mirror로 전달되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-readme-0.html)
 
 ### 1. 지능형 라우팅
 
@@ -198,6 +205,8 @@ spec:
         subset: v1
 ```
 
+개발자 헤더는 클라이언트가 제공하는 라우팅 힌트이며 인증이나 인가 경계가 아닙니다.
+
 ### Circuit Breaker + Retry
 
 ```yaml
@@ -217,7 +226,7 @@ spec:
         maxRequestsPerConnection: 2
     # Circuit Breaker
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ---
@@ -241,7 +250,9 @@ spec:
 
 ## 트래픽 흐름
 
-![사용자 요청이 Ingress Gateway를 지나 VirtualService의 라우팅 단계(Path/Header/Weight 매칭)와 DestinationRule의 정책 단계(로드 밸런싱/Circuit Breaker/Connection Pool)를 차례로 통과한 뒤 파드로 전달되는 5단계 파이프라인을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-README-1.png)
+![사용자 요청이 Ingress Gateway를 지나 VirtualService의 라우팅 단계(Path/Header/Weight 매칭)와 DestinationRule의 정책 단계(로드 밸런싱/Circuit Breaker/Connection Pool)를 차례로 통과한 뒤 subset v1·v2 파드 3개 중 하나로 전달되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-readme-1.html)
 
 ## 학습 순서
 
@@ -308,7 +319,7 @@ weight: 100
 # 5% → 모니터링 → 10% → 모니터링 → ...
 ```
 
-### 2. 항상 Timeout 설정
+### 2. 워크로드에 맞는 Timeout 설정
 
 ```yaml
 # ✅ 항상 timeout 설정
@@ -318,6 +329,8 @@ http:
       host: reviews
   timeout: 10s
 ```
+
+스트리밍 요청에는 별도 타임아웃 설정이 필요할 수 있습니다. 짧은 HTTP 기한이 모든 gRPC 스트림이나 장시간 응답에 적합하지는 않습니다.
 
 ### 3. Retry 신중하게 사용
 
@@ -334,7 +347,7 @@ retries:
 ```yaml
 # ✅ 서비스 특성에 맞게 조정
 outlierDetection:
-  consecutiveErrors: 5      # 서비스에 따라 조정
+  consecutive5xxErrors: 5      # 서비스에 따라 조정
   interval: 30s
   baseEjectionTime: 30s
   maxEjectionPercent: 50    # 최대 50%만 제외

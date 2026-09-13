@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Bottlerocket 특성",
+    "output": "ko-eks-05-eks-security-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "security",
+        "label": "보안 특성",
+        "focus": [
+          "api",
+          "selinux",
+          "dmverity",
+          "readonly"
+        ],
+        "note": "API 기반 구성, SELinux, dm-verity, 읽기 전용 루트가 노드의 기본 보안 특성을 구성한다."
+      },
+      {
+        "id": "minimal",
+        "label": "최소화",
+        "focus": [
+          "api",
+          "noshell",
+          "nopkg",
+          "minsvc"
+        ],
+        "note": "SSH/셸 대신 API로 구성하고, 패키지 관리자와 불필요한 서비스를 제거한다."
+      },
+      {
+        "id": "updates",
+        "label": "업데이트",
+        "focus": [
+          "autoupdate",
+          "ab",
+          "rollback"
+        ],
+        "note": "자동 업데이트는 eksctl의 bottlerocket.settings로 설정하고, 새 버전은 노드를 수정하지 않고 새 노드 그룹으로 교체한다."
+      }
+    ],
+    "viewBox": [
+      1060,
+      660
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "security",
+      "label": "API 기반 구성",
+      "sublabel": "apiclient",
+      "pos": [
+        110,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "selinux",
+      "type": "security",
+      "label": "SELinux 적용",
+      "sublabel": "기본 활성화",
+      "pos": [
+        310,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "dmverity",
+      "type": "security",
+      "label": "dm-verity 무결성",
+      "sublabel": "블록 레벨 검증",
+      "pos": [
+        510,
+        140
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "readonly",
+      "type": "security",
+      "label": "읽기 전용 루트",
+      "sublabel": "루트 파일시스템",
+      "pos": [
+        770,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "noshell",
+      "type": "backend",
+      "label": "SSH/셸 기본 비활성화",
+      "sublabel": "컨트롤 컨테이너로 접근",
+      "pos": [
+        100,
+        310
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "nopkg",
+      "type": "backend",
+      "label": "패키지 관리자 없음",
+      "pos": [
+        440,
+        310
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "minsvc",
+      "type": "backend",
+      "label": "최소 서비스",
+      "pos": [
+        770,
+        310
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "autoupdate",
+      "type": "cloud",
+      "label": "자동 업데이트",
+      "sublabel": "eksctl bottlerocket.settings",
+      "pos": [
+        110,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ab",
+      "type": "cloud",
+      "label": "A/B 파티션",
+      "pos": [
+        440,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "rollback",
+      "type": "cloud",
+      "label": "자동 롤백",
+      "pos": [
+        770,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Bottlerocket OS",
+      "wraps": [
+        "api",
+        "selinux",
+        "dmverity",
+        "readonly",
+        "noshell",
+        "nopkg",
+        "minsvc",
+        "autoupdate",
+        "ab",
+        "rollback"
+      ],
+      "pad": 84
+    },
+    {
+      "kind": "security-group",
+      "label": "보안 특성",
+      "wraps": [
+        "api",
+        "selinux",
+        "dmverity",
+        "readonly"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "최소화",
+      "wraps": [
+        "noshell",
+        "nopkg",
+        "minsvc"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "업데이트",
+      "wraps": [
+        "autoupdate",
+        "ab",
+        "rollback"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "dmverity-readonly",
+      "from": "dmverity",
+      "to": "readonly",
+      "label": "무결성 검증",
+      "variant": "security"
+    },
+    {
+      "id": "api-noshell",
+      "from": "api",
+      "to": "noshell",
+      "label": "SSH 대신 API",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        245,
+        255
+      ]
+    },
+    {
+      "id": "autoupdate-ab",
+      "from": "autoupdate",
+      "to": "ab",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ab-rollback",
+      "from": "ab",
+      "to": "rollback",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "보안 특성",
+      "items": [
+        "SSH 대신 apiclient get / set / commit으로 노드를 구성",
+        "SELinux가 기본 활성화되어 컨테이너 간 격리를 강화",
+        "dm-verity가 부팅 시 루트 파일시스템 무결성을 검증하고 런타임 수정 시도를 차단"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "최소화",
+      "items": [
+        "컨테이너 워크로드 전용 Linux OS로 SSH/셸이 기본 비활성화",
+        "노드 설정은 컨트롤 컨테이너에서 apiclient로 수행하며 패키지 관리자는 없음",
+        "최소 서비스만 포함해 불변 인프라 전략에 적합"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "업데이트 / 불변 인프라",
+      "items": [
+        "eksctl에서 amiFamily: Bottlerocket으로 관리형 노드 그룹 생성",
+        "불변 인프라: 새 버전 노드 그룹 생성 → cordon/drain → 기존 노드 그룹 삭제",
+        "새 버전은 노드를 수정하지 않고 새 노드 그룹으로 교체"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "catalog": [
+    {
+      "locale": "ko",
+      "catalogEntriesMatchTestedCLI": 22,
+      "uniqueConfigDataKeys": 33,
+      "sendReferencesValid": true
+    },
+    {
+      "locale": "en",
+      "catalogEntriesMatchTestedCLI": 22,
+      "uniqueConfigDataKeys": 32,
+      "sendReferencesValid": true
+    }
+  ],
+  "prometheus": "promtool3.14.0, four actual time-series cases pass:29mfalse,30mtrue,resetfalse,missingfalse",
+  "providerDelivery": "not run"
+}

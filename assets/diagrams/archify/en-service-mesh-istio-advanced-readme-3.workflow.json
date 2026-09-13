@@ -1,0 +1,156 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sidecar Injection Methods",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "decision",
+        "label": "Label check",
+        "focus": [
+          "create",
+          "check"
+        ],
+        "note": "When a pod is created, the webhook checks the namespace's istio-injection label to decide whether to auto-inject."
+      },
+      {
+        "id": "inject",
+        "label": "Injection path",
+        "focus": [
+          "check",
+          "inject",
+          "deploy"
+        ],
+        "note": "In a namespace labeled istio-injection=enabled, the Envoy proxy container is injected automatically before the pod is deployed."
+      },
+      {
+        "id": "skip",
+        "label": "Skip path",
+        "focus": [
+          "check",
+          "skip",
+          "deploy"
+        ],
+        "note": "Without the label, injection is skipped and the pod is deployed as-is with no sidecar."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Pod lifecycle"
+        },
+        "backend": {
+          "label": "Automatic injection (webhook)"
+        },
+        "external": {
+          "label": "Injection skipped"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "pod",
+      "label": "Application pod"
+    },
+    {
+      "id": "injector",
+      "label": "Sidecar injector webhook"
+    },
+    {
+      "id": "skiplane",
+      "label": "Skip path",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "create",
+    "check",
+    "inject",
+    "deploy"
+  ],
+  "nodes": [
+    {
+      "id": "create",
+      "lane": "pod",
+      "col": 0,
+      "width": 160,
+      "type": "cloud",
+      "label": "Pod created",
+      "sublabel": "new pod request"
+    },
+    {
+      "id": "check",
+      "lane": "injector",
+      "col": 0,
+      "width": 176,
+      "type": "backend",
+      "label": "Check namespace label",
+      "sublabel": "istio-injection=enabled?"
+    },
+    {
+      "id": "inject",
+      "lane": "injector",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "Inject sidecar",
+      "sublabel": "adds Envoy proxy"
+    },
+    {
+      "id": "skip",
+      "lane": "skiplane",
+      "col": 1,
+      "width": 160,
+      "type": "external",
+      "label": "Injection skipped",
+      "sublabel": "no sidecar"
+    },
+    {
+      "id": "deploy",
+      "lane": "pod",
+      "col": 2,
+      "width": 160,
+      "type": "cloud",
+      "label": "Pod deployed",
+      "sublabel": "both paths merge"
+    }
+  ],
+  "edges": [
+    {
+      "id": "create-check",
+      "from": "create",
+      "to": "check",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "check-inject",
+      "from": "check",
+      "to": "inject",
+      "label": "enabled",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-skip",
+      "from": "check",
+      "to": "skip",
+      "label": "no label",
+      "role": "branch"
+    },
+    {
+      "id": "inject-deploy",
+      "from": "inject",
+      "to": "deploy"
+    },
+    {
+      "id": "skip-deploy",
+      "from": "skip",
+      "to": "deploy",
+      "role": "branch"
+    }
+  ]
+}

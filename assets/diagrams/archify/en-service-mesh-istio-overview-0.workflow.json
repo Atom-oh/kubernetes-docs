@@ -1,0 +1,223 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Service Mesh Adoption Decision Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "adopt-path",
+        "label": "Adopt path",
+        "focus": [
+          "start",
+          "q_micro",
+          "q_count",
+          "q_needs",
+          "q_ops",
+          "adopt"
+        ],
+        "note": "Recommend a mesh only when all four hold: microservices, 10+ services, complex traffic/security/observability needs, and ops resources."
+      },
+      {
+        "id": "alt-path",
+        "label": "Alternative path",
+        "focus": [
+          "q_micro",
+          "q_count",
+          "not_needed",
+          "alternatives"
+        ],
+        "note": "Without microservices, or with fewer than 10 services, alternatives such as an Ingress Controller, NetworkPolicy, or a CNI are sufficient."
+      },
+      {
+        "id": "careful-path",
+        "label": "Careful review",
+        "focus": [
+          "q_needs",
+          "q_ops",
+          "careful"
+        ],
+        "note": "If needs are not complex or ops resources are lacking, start small and consider Ambient Mode."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "backend": {
+          "label": "Decision"
+        },
+        "external": {
+          "label": "Outcome / alternative"
+        },
+        "cloud": {
+          "label": "Recommended outcome"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "decision",
+      "label": "Adoption decision"
+    },
+    {
+      "id": "outcome",
+      "label": "Outcomes · alternatives"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_micro",
+    "q_count",
+    "q_needs",
+    "q_ops",
+    "adopt"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decision",
+      "col": 0,
+      "type": "frontend",
+      "label": "Consider a mesh",
+      "width": 160
+    },
+    {
+      "id": "q_micro",
+      "lane": "decision",
+      "col": 1,
+      "type": "backend",
+      "label": "Microservices?",
+      "width": 160
+    },
+    {
+      "id": "q_count",
+      "lane": "decision",
+      "col": 2,
+      "type": "backend",
+      "label": "10+ microservices?",
+      "width": 160
+    },
+    {
+      "id": "q_needs",
+      "lane": "decision",
+      "col": 3,
+      "type": "backend",
+      "label": "Complex needs?",
+      "sublabel": "traffic/security/observability",
+      "width": 160
+    },
+    {
+      "id": "q_ops",
+      "lane": "decision",
+      "col": 4,
+      "type": "backend",
+      "label": "Ops resources?",
+      "width": 160
+    },
+    {
+      "id": "adopt",
+      "lane": "decision",
+      "col": 5,
+      "type": "cloud",
+      "label": "Mesh recommended",
+      "width": 160
+    },
+    {
+      "id": "not_needed",
+      "lane": "outcome",
+      "col": 1,
+      "type": "external",
+      "label": "Mesh not needed",
+      "sublabel": "Ingress · NetworkPolicy",
+      "width": 160
+    },
+    {
+      "id": "alternatives",
+      "lane": "outcome",
+      "col": 2,
+      "type": "external",
+      "label": "Alternatives",
+      "sublabel": "CNI · Ingress · App-level",
+      "width": 160
+    },
+    {
+      "id": "careful",
+      "lane": "outcome",
+      "col": 4,
+      "type": "external",
+      "label": "Careful review",
+      "sublabel": "start small · Ambient Mode",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-micro",
+      "from": "start",
+      "to": "q_micro",
+      "route": "straight"
+    },
+    {
+      "id": "micro-count",
+      "from": "q_micro",
+      "to": "q_count",
+      "label": "YES",
+      "route": "straight"
+    },
+    {
+      "id": "count-needs",
+      "from": "q_count",
+      "to": "q_needs",
+      "label": "YES",
+      "route": "straight"
+    },
+    {
+      "id": "needs-ops",
+      "from": "q_needs",
+      "to": "q_ops",
+      "label": "YES",
+      "route": "straight"
+    },
+    {
+      "id": "ops-adopt",
+      "from": "q_ops",
+      "to": "adopt",
+      "label": "YES",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "micro-no",
+      "from": "q_micro",
+      "to": "not_needed",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "count-no",
+      "from": "q_count",
+      "to": "alternatives",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "needs-no",
+      "from": "q_needs",
+      "to": "careful",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "ops-no",
+      "from": "q_ops",
+      "to": "careful",
+      "label": "NO",
+      "role": "branch"
+    }
+  ]
+}

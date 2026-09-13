@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch vs 오픈소스 솔루션",
+    "output": "ko-observability-metrics-04-cloudwatch-metrics-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": { "label": "CloudWatch" },
+        "backend": { "label": "오픈소스" }
+      }
+    },
+    "views": [
+      { "id": "ops", "label": "운영 모델", "focus": ["c1", "o1"], "note": "CloudWatch는 인프라 관리가 필요 없고, Prometheus/VM은 직접 설치·운영해야 한다." },
+      { "id": "cost", "label": "비용 모델", "focus": ["c3", "o3"], "note": "CloudWatch는 메트릭·API 사용량에 따라 과금되고, 오픈소스는 인프라 비용만 든다." },
+      { "id": "retention", "label": "보존 기간", "focus": ["c4", "o4"], "note": "CloudWatch는 15개월 보존이 기본이고, 오픈소스는 스토리지가 허용하는 한 무제한 보존이 가능하다." }
+    ]
+  },
+  "components": [
+    { "id": "c1", "type": "cloud", "label": "완전 관리형", "sublabel": "인프라 관리 불필요", "pos": [60, 70], "size": [230, 60] },
+    { "id": "c2", "type": "cloud", "label": "AWS 네이티브", "sublabel": "EC2·EKS·RDS 자동 연동", "pos": [60, 170], "size": [230, 60] },
+    { "id": "c3", "type": "cloud", "label": "사용량 기반 비용", "sublabel": "메트릭·API 호출량 과금", "pos": [60, 270], "size": [230, 60] },
+    { "id": "c4", "type": "cloud", "label": "15개월 보존", "sublabel": "기본 보존 기간", "pos": [60, 370], "size": [230, 60] },
+    { "id": "o1", "type": "backend", "label": "자체 운영", "sublabel": "설치·확장·장애 대응 직접 수행", "pos": [610, 70], "size": [230, 60] },
+    { "id": "o2", "type": "backend", "label": "클라우드 중립", "sublabel": "멀티클라우드·온프레미스", "pos": [610, 170], "size": [230, 60] },
+    { "id": "o3", "type": "backend", "label": "인프라 비용만", "sublabel": "노드·스토리지 비용", "pos": [610, 270], "size": [230, 60] },
+    { "id": "o4", "type": "backend", "label": "무제한 보존", "sublabel": "스토리지 용량이 허용하는 만큼", "pos": [610, 370], "size": [230, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "CloudWatch", "wraps": ["c1", "c2", "c3", "c4"] },
+    { "kind": "region", "label": "오픈소스 Prometheus/VM", "wraps": ["o1", "o2", "o3", "o4"] }
+  ],
+  "connections": [
+    { "id": "cmp-ops", "from": "c1", "to": "o1", "label": "운영 오버헤드", "variant": "dashed" },
+    { "id": "cmp-cloud", "from": "c2", "to": "o2", "label": "멀티클라우드", "variant": "dashed" },
+    { "id": "cmp-cost", "from": "c3", "to": "o3", "label": "비용 모델", "variant": "dashed" },
+    { "id": "cmp-retention", "from": "c4", "to": "o4", "label": "보존 기간", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "CloudWatch", "items": ["운영 오버헤드 없음, 자동 확장", "쿼리 언어: Metric Math", "AWS 전용, 커스터마이징 제한적"] },
+    { "dot": "slate", "title": "Prometheus/VM", "items": ["운영 오버헤드 있음, 수동 확장 설정", "쿼리 언어: PromQL/MetricsQL", "클라우드 중립, 완전 자유로운 커스터마이징"] }
+  ]
+}

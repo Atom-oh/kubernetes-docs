@@ -1,318 +1,420 @@
 # Cilium 고급 퀴즈
 
-> **지원 버전**: Cilium 1.17  
-> **마지막 업데이트**: 2026년 2월 22일
+> **검토 기준**: Cilium 1.20.1; Cilium CLI 0.20.0; Hubble CLI 1.19.4.
+> **최종 검토**: 2026년 9월 12일.
+
+[본문으로 돌아가기](../../../networking/cilium/07-advanced-topics.md)
 
 ## eBPF 기술
 
-1. **eBPF 프로그램이 실행되는 위치는 어디인가요?**
-   - A) 사용자 공간(User Space)
-   - B) 커널 공간(Kernel Space)
-   - C) 컨테이너 내부
-   - D) 가상 머신 내부
-   
+1. **이 과정의 Linux eBPF 데이터 경로 프로그램은 어디서 실행되나요?**
+
+   - A) 브라우저에서만
+   - B) Linux 커널의 지원 훅에서
+   - C) Envoy 내부에서만
+   - D) Kubernetes API 서버에서
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: B) 커널 공간(Kernel Space)</p>
-   <p><strong>설명</strong>: eBPF 프로그램은 Linux 커널 내부에서 안전하게 실행되며, 커널 기능을 확장하고 수정할 수 있습니다.</p>
+
+   **정답: B) Linux 커널의 지원 훅에서**
+
+   Cilium은 eBPF 프로그램을 커널 훅에 연결하고 사용자 공간 구성 요소가 이를 로드·관리합니다.
+
    </details>
 
-2. **eBPF 프로그램의 안전성을 보장하는 메커니즘은 무엇인가요?**
-   - A) 가상화
-   - B) 컨테이너화
-   - C) 정적 검증기(Verifier)
-   - D) 암호화
-   
+2. **커널이 eBPF 프로그램을 수락하기 전에 검사하는 수단은 무엇인가요?**
+
+   - A) 암호화
+   - B) 컨테이너 스케줄링
+   - C) 검증기(verifier)
+   - D) DNS
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: C) 정적 검증기(Verifier)</p>
-   <p><strong>설명</strong>: eBPF 검증기는 프로그램이 로드되기 전에 안전성을 검사하여 무한 루프나 커널 충돌을 방지합니다.</p>
+
+   **정답: C) 검증기(verifier)**
+
+   검증기는 메모리 접근과 유한 실행 같은 속성을 검사합니다. 구현 취약점이나 모든 커널 장애가 없다는 절대 보장은 아닙니다.
+
    </details>
 
-3. **Cilium에서 eBPF를 사용하는 주요 이점이 아닌 것은?**
-   - A) 커널 모듈 없이 네트워킹 기능 구현
-   - B) 높은 성능과 낮은 오버헤드
-   - C) 세분화된 네트워크 정책 적용
-   - D) 하드웨어 가속화 필수
-   
+3. **Cilium의 소프트웨어 eBPF 데이터 경로에 일반적으로 필수적이지 않은 것은 무엇인가요?**
+
+   - A) 지원 커널 기능
+   - B) 적절한 권한
+   - C) 호환되는 네트워크 구성
+   - D) 전용 하드웨어 오프로딩
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: D) 하드웨어 가속화 필수</p>
-   <p><strong>설명</strong>: eBPF는 하드웨어 가속화 없이도 소프트웨어 기반으로 높은 성능을 제공할 수 있습니다.</p>
+
+   **정답: D) 전용 하드웨어 오프로딩**
+
+   하드웨어 오프로딩은 필수가 아닙니다. 성능은 실제 경로, 워크로드, 커널과 하드웨어에 따라 달라집니다.
+
    </details>
 
 ## 네트워킹 모델
 
-4. **Cilium에서 지원하는 데이터 경로 모드가 아닌 것은?**
+4. **이 과정에서 설명한 Cilium native/tunnel 선택에 해당하지 않는 것은 무엇인가요?**
+
    - A) VXLAN
    - B) Geneve
-   - C) Direct Routing
-   - D) MPLS
-   
+   - C) Native 라우팅
+   - D) MPLS 데이터 경로 모드
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: D) MPLS</p>
-   <p><strong>설명</strong>: Cilium은 VXLAN, Geneve, Direct Routing을 지원하지만 MPLS는 지원하지 않습니다.</p>
+
+   **정답: D) MPLS 데이터 경로 모드**
+
+   Cilium의 구성 선택에 관한 설명이며 MPLS 기반 외부 underlay 사용을 금지한다는 뜻은 아닙니다.
+
    </details>
 
-5. **Cilium의 kube-proxy 대체 모드에서 사용하는 기술은 무엇인가요?**
-   - A) iptables
-   - B) IPVS
-   - C) eBPF 기반 XDP
-   - D) netfilter
-   
+5. **Cilium의 kube-proxy 대체는 무엇으로 구현되나요?**
+
+   - A) iptables 체인만
+   - B) IPVS 규칙만
+   - C) eBPF 서비스 처리와 선택적 XDP 가속
+   - D) 필수 외부 하드웨어 스위치
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: C) eBPF 기반 XDP</p>
-   <p><strong>설명</strong>: Cilium은 eBPF와 XDP(eXpress Data Path)를 사용하여 kube-proxy를 대체하고 더 높은 성능을 제공합니다.</p>
+
+   **정답: C) eBPF 서비스 처리와 선택적 XDP 가속**
+
+   소켓·패킷 경로 eBPF가 서비스를 처리합니다. XDP는 조건에 맞는 외부 전달 경로를 가속하며 모든 Service의 필수 조건이 아닙니다.
+
    </details>
 
-6. **Cilium의 네트워크 모델에서 Pod 간 통신 시 패킷 경로를 추적하는 기능은 무엇인가요?**
-   - A) tcpdump
-   - B) Hubble Flow Monitoring
-   - C) Wireshark
-   - D) Prometheus
-   
+6. **Kubernetes 메타데이터가 포함된 흐름 기록을 제공하는 Cilium 관측 구성 요소는 무엇인가요?**
+
+   - A) Helm
+   - B) Hubble
+   - C) kube-scheduler
+   - D) etcdctl
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: B) Hubble Flow Monitoring</p>
-   <p><strong>설명</strong>: Hubble은 Cilium의 네트워크 흐름 모니터링 도구로, Pod 간 통신을 실시간으로 추적하고 시각화할 수 있습니다.</p>
+
+   **정답: B) Hubble**
+
+   Hubble은 유한한 관측 데이터를 제공하며 모든 패킷의 무손실 캡처가 아닙니다. 다른 패킷 분석 도구의 역할과 구분합니다.
+
    </details>
 
 ## IPAM 및 네트워크 정책
 
-7. **Cilium에서 지원하는 IPAM(IP 주소 관리) 모드 중 AWS EKS와 통합되는 모드는?**
-   - A) Cluster Pool
-   - B) Kubernetes Host Scope
-   - C) AWS ENI
-   - D) CRD-based
-   
+7. **EC2 ENI를 사용해 VPC 주소를 할당하는 Cilium IPAM 모드는 무엇인가요?**
+
+   - A) Cluster pool
+   - B) Kubernetes host scope
+   - C) ENI
+   - D) 일반 CRD 기반
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: C) AWS ENI</p>
-   <p><strong>설명</strong>: Cilium은 AWS ENI(Elastic Network Interface) 모드를 통해 EKS와 통합되어 VPC IP 주소를 Pod에 직접 할당할 수 있습니다.</p>
+
+   **정답: C) ENI**
+
+   ENI 모드는 AWS 네트워크 인터페이스와 주소 할당을 사용합니다. 모든 EKS 컴퓨팅 모드가 대체 CNI를 지원한다는 뜻은 아니므로 플랫폼 조건을 확인합니다.
+
    </details>
 
-8. **Cilium 네트워크 정책에서 'toFQDNs' 규칙은 무엇을 허용하나요?**
-   - A) 특정 IP 주소로의 트래픽
-   - B) 특정 포트로의 트래픽
-   - C) 특정 도메인 이름으로의 트래픽
-   - D) 특정 프로토콜의 트래픽
-   
+8. **toFQDNs는 무엇을 사용해 외부 연결을 허용하나요?**
+
+   - A) 검증된 JWT
+   - B) 고정 Service 포트만
+   - C) 일치하는 DNS 이름에서 학습한 목적지 IP
+   - D) 자동 TLS 복호화
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: C) 특정 도메인 이름으로의 트래픽</p>
-   <p><strong>설명</strong>: toFQDNs 규칙은 특정 도메인 이름(FQDN)으로의 트래픽을 허용하며, Cilium이 DNS 조회를 모니터링하여 해당 도메인의 IP 주소를 동적으로 허용합니다.</p>
+
+   **정답: C) 일치하는 DNS 이름에서 학습한 목적지 IP**
+
+   DNS 질의 허용·프록시 관측과 이후 IP 연결은 별개이며 원격 애플리케이션을 인증하지 않습니다.
+
    </details>
 
-9. **다음 중 Cilium CiliumNetworkPolicy에서 지원하지 않는 선택자는?**
-   - A) endpointSelector
+9. **CiliumClusterwideNetworkPolicy의 노드 호스트 정책에 사용하는 선택자는 무엇인가요?**
+
+   - A) 모든 노드용 endpointSelector
    - B) nodeSelector
-   - C) namespaceSelector
-   - D) serviceSelector
-   
+   - C) 최상위 serviceSelector
+   - D) 최상위 namespaceSelector
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: D) serviceSelector</p>
-   <p><strong>설명</strong>: Cilium은 endpointSelector, nodeSelector, namespaceSelector를 지원하지만 serviceSelector는 직접 지원하지 않습니다.</p>
+
+   **정답: B) nodeSelector**
+
+   nodeSelector는 클러스터 범위 호스트 정책 필드입니다. Kubernetes의 모든 선택자를 CiliumNetworkPolicy 최상위에서 교환 가능한 필드로 설명하면 안 됩니다.
+
    </details>
 
-## L2-L7 네트워킹
+## L2–L7 네트워킹
 
-10. **Cilium의 L7 정책이 HTTP 요청에 대해 필터링할 수 있는 속성이 아닌 것은?**
-    - A) 경로(Path)
-    - B) 메서드(Method)
-    - C) 헤더(Headers)
-    - D) 응답 시간(Response Time)
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: D) 응답 시간(Response Time)</p>
-    <p><strong>설명</strong>: Cilium의 L7 정책은 경로, 메서드, 헤더와 같은 HTTP 요청 속성을 필터링할 수 있지만 응답 시간은 필터링 대상이 아닙니다.</p>
-    </details>
+10. **Cilium HTTP 정책의 요청 일치 필드가 아닌 것은 무엇인가요?**
 
-11. **Cilium의 Service Mesh 기능에서 제공하는 것이 아닌 것은?**
-    - A) 상호 TLS(mTLS)
-    - B) 트래픽 분할(Traffic Splitting)
-    - C) 서비스 디스커버리
-    - D) 사용자 인증(Authentication)
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: D) 사용자 인증(Authentication)</p>
-    <p><strong>설명</strong>: Cilium Service Mesh는 상호 TLS, 트래픽 분할, 서비스 디스커버리 등을 제공하지만, 사용자 인증은 일반적으로 별도의 인증 시스템에서 처리합니다.</p>
-    </details>
+   - A) 경로
+   - B) 메서드
+   - C) 헤더
+   - D) 응답 지연
 
-12. **Cilium의 Envoy 통합은 어떤 기능을 제공하나요?**
-    - A) L7 로드 밸런싱
-    - B) L7 가시성
-    - C) L7 정책 적용
-    - D) 위의 모든 것
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: D) 위의 모든 것</p>
-    <p><strong>설명</strong>: Cilium은 Envoy 프록시와 통합하여 L7 로드 밸런싱, 가시성, 정책 적용을 모두 제공합니다.</p>
-    </details>
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: D) 응답 지연**
+
+   HTTP가 보이는 경로에서 지원 요청 필드를 검사합니다. 지연 측정이 지연 기반 허용 규칙 필드를 생성하지는 않습니다.
+
+   </details>
+
+11. **ID 기반 네트워크 정책만으로 제공되지 않는 것은 무엇인가요?**
+
+   - A) 엔드포인트 선택
+   - B) 네트워크 접근 제한
+   - C) 방향별 규칙
+   - D) 최종 사용자 토큰 인증
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: D) 최종 사용자 토큰 인증**
+
+   사용자 인증에는 애플리케이션·게이트웨이 로직이 필요합니다. SPIRE 상호 인증과 Beta ztunnel 워크로드 mTLS는 별도 구성과 제약을 가집니다.
+
+   </details>
+
+12. **적절한 경로에 구성된 Cilium Envoy 연동은 무엇을 제공할 수 있나요?**
+
+   - A) HTTP 로드 밸런싱
+   - B) HTTP 가시성
+   - C) HTTP 정책 집행
+   - D) 위의 모든 것
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: D) 위의 모든 것**
+
+   선택한 프록시 경로와 구성에 따라 제공되며 무관한 네트워크 기능을 켠다고 모든 L7 기능이 활성화되지는 않습니다.
+
+   </details>
 
 ## 보안 및 가시성
 
-13. **Hubble UI에서 제공하지 않는 기능은?**
-    - A) 서비스 의존성 맵
-    - B) 네트워크 흐름 시각화
-    - C) 정책 위반 알림
-    - D) 코드 배포 관리
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: D) 코드 배포 관리</p>
-    <p><strong>설명</strong>: Hubble UI는 서비스 의존성 맵, 네트워크 흐름 시각화, 정책 위반 알림 등을 제공하지만 코드 배포 관리는 제공하지 않습니다.</p>
-    </details>
+13. **Hubble UI의 기능은 무엇인가요?**
 
-14. **Cilium에서 네트워크 트래픽 암호화에 사용할 수 있는 프로토콜은?**
-    - A) IPsec와 WireGuard
-    - B) TLS와 SSH
-    - C) SSL과 HTTPS
-    - D) DTLS와 QUIC
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: A) IPsec와 WireGuard</p>
-    <p><strong>설명</strong>: Cilium은 IPsec와 WireGuard 프로토콜을 사용하여 노드 간 네트워크 트래픽을 암호화할 수 있습니다.</p>
-    </details>
+   - A) Slack 장애 티켓 자동 생성
+   - B) 서비스 의존성 맵과 흐름 탐색
+   - C) 소스 코드 배포 관리
+   - D) JWT 서명 키 교체
 
-15. **Cilium의 보안 기능 중 다음 설명에 해당하는 것은? "특정 애플리케이션 계층 프로토콜의 특정 필드나 패턴을 기반으로 트래픽을 필터링"**
-    - A) 네트워크 정책
-    - B) L7 정책
-    - C) 암호화
-    - D) 침입 탐지
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: B) L7 정책</p>
-    <p><strong>설명</strong>: L7(애플리케이션 계층) 정책은 HTTP, gRPC, Kafka 등의 프로토콜에서 특정 필드나 패턴을 기반으로 트래픽을 필터링할 수 있습니다.</p>
-    </details>
+   <details>
+   <summary>정답 보기</summary>
 
-## 고급 주제 및 실제 사례
+   **정답: B) 서비스 의존성 맵과 흐름 탐색**
 
-16. **Cilium Cluster Mesh의 주요 기능이 아닌 것은?**
-    - A) 클러스터 간 서비스 검색
-    - B) 클러스터 간 네트워크 정책
-    - C) 클러스터 간 로드 밸런싱
-    - D) 클러스터 간 스토리지 공유
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: D) 클러스터 간 스토리지 공유</p>
-    <p><strong>설명</strong>: Cilium Cluster Mesh는 클러스터 간 서비스 검색, 네트워크 정책, 로드 밸런싱을 제공하지만 스토리지 공유는 제공하지 않습니다.</p>
-    </details>
+   알림·자동 대응에는 별도 연동이 필요합니다. UI는 관측된 네트워크 흐름을 시각화합니다.
 
-17. **Cilium의 Bandwidth Manager 기능은 무엇을 제공하나요?**
-    - A) 네트워크 대역폭 모니터링
-    - B) 네트워크 대역폭 제한 및 QoS
-    - C) 네트워크 대역폭 최적화
-    - D) 네트워크 대역폭 예측
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: B) 네트워크 대역폭 제한 및 QoS</p>
-    <p><strong>설명</strong>: Cilium의 Bandwidth Manager는 eBPF를 사용하여 Pod별 네트워크 대역폭 제한 및 QoS(Quality of Service)를 제공합니다.</p>
-    </details>
+   </details>
 
-18. **Cilium의 Host Firewall 기능은 무엇을 보호하나요?**
-    - A) 컨테이너 간 통신만
-    - B) 노드 간 통신만
-    - C) 호스트 자체의 네트워크 인터페이스
-    - D) 외부 클라우드 서비스
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: C) 호스트 자체의 네트워크 인터페이스</p>
-    <p><strong>설명</strong>: Cilium의 Host Firewall은 호스트 자체의 네트워크 인터페이스를 보호하여 호스트 수준의 보안을 강화합니다.</p>
-    </details>
+14. **Cilium 노드 전송 암호화의 대안 모드는 무엇인가요?**
 
-19. **Cilium의 Egress Gateway 기능의 주요 목적은 무엇인가요?**
-    - A) 외부 트래픽의 소스 IP 주소 보존
-    - B) 외부 트래픽의 대상 IP 주소 변경
-    - C) 외부 트래픽의 암호화
-    - D) 외부 트래픽의 차단
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: A) 외부 트래픽의 소스 IP 주소 보존</p>
-    <p><strong>설명</strong>: Cilium의 Egress Gateway는 Pod에서 클러스터 외부로 나가는 트래픽의 소스 IP 주소를 특정 IP로 SNAT하여 일관된 소스 IP를 제공합니다.</p>
-    </details>
+   - A) IPsec와 WireGuard
+   - B) HTTP와 DNS
+   - C) Relay와 Prometheus
+   - D) TCP와 UDP
 
-20. **Cilium의 BGP 지원을 통해 가능한 것이 아닌 것은?**
-    - A) 외부 라우터와의 경로 교환
-    - B) LoadBalancer 서비스의 외부 IP 광고
-    - C) 클러스터 간 직접 라우팅
-    - D) 자동 DNS 레코드 생성
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: D) 자동 DNS 레코드 생성</p>
-    <p><strong>설명</strong>: Cilium의 BGP 지원은 외부 라우터와의 경로 교환, LoadBalancer 서비스의 외부 IP 광고, 클러스터 간 직접 라우팅을 제공하지만 자동 DNS 레코드 생성은 제공하지 않습니다.</p>
-    </details>
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: A) IPsec와 WireGuard**
+
+   적용 범위와 전제 조건을 확인해야 합니다. 동일 노드 트래픽은 노드 터널로 암호화되지 않으며 워크로드 mTLS는 별도 기능입니다.
+
+   </details>
+
+15. **HTTP 메서드와 경로를 검사하는 정책 계층은 무엇인가요?**
+
+   - A) L2 주소 검사만
+   - B) L7 정책
+   - C) L3 CIDR 검사만
+   - D) 전송 암호화
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: B) L7 정책**
+
+   현재 Cilium HTTP 정책은 이러한 필드를 검사하며 Kafka 토픽 규칙은 제거되었습니다. 헤더 일치는 토큰 인증이 아닙니다.
+
+   </details>
+
+## 고급 주제 및 사용 사례
+
+16. **ClusterMesh의 기능이 아닌 것은 무엇인가요?**
+
+   - A) 클러스터 간 서비스 검색
+   - B) 정책에서 원격 엔드포인트 ID 사용
+   - C) 클러스터 간 서비스 로드 밸런싱
+   - D) 공유 영구 스토리지
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: D) 공유 영구 스토리지**
+
+   ClusterMesh는 네트워크 메타데이터·연결성을 다루며 공유 스토리지나 모든 정책 리소스의 자동 복제를 제공하지 않습니다.
+
+   </details>
+
+17. **Bandwidth Manager의 올바른 설명은 무엇인가요?**
+
+   - A) 대역폭 그래프만 그립니다
+   - B) 구성된 Pod별 대역폭 한계를 집행합니다
+   - C) Pod마다 물리 링크 예약을 보장합니다
+   - D) 머신 러닝으로 미래 트래픽을 예측합니다
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: B) 구성된 Pod별 대역폭 한계를 집행합니다**
+
+   Egress는 EDT, ingress는 eBPF 토큰 버킷을 사용합니다. Pod별 제한이며 egress L7·kind 제약이 있고 용량 예약을 보장하지는 않습니다.
+
+   </details>
+
+18. **Cilium Host Firewall의 범위는 무엇인가요?**
+
+   - A) 컨테이너 간 HTTP만
+   - B) 스토리지 암호화만
+   - C) 호스트의 네트워크 트래픽
+   - D) 외부 SaaS 인가
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: C) 호스트의 네트워크 트래픽**
+
+   호스트 방화벽은 노드·호스트 네트워크 정책이며 일반적인 런타임 시스템 호출 제어 시스템이 아닙니다.
+
+   </details>
+
+19. **Egress Gateway는 일치하는 외부 전송 트래픽에 무엇을 수행하나요?**
+
+   - A) 선택한 예측 가능한 게이트웨이 IP로 SNAT
+   - B) 항상 원래 Pod 출발지 IP 보존
+   - C) 모든 외부 연결 자동 암호화
+   - D) 전제 조건 없이 모든 클라우드에 공인 IP 생성
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: A) 선택한 예측 가능한 게이트웨이 IP로 SNAT**
+
+   게이트웨이 IP·인터페이스·라우팅을 준비해야 합니다. 새 Pod는 정책 적용 전에 트래픽을 보낼 수 있으며 ClusterMesh·CiliumEndpointSlice 비호환도 확인합니다.
+
+   </details>
+
+20. **Cilium BGP Control Plane이 수행하는 동작은 무엇인가요?**
+
+   - A) 학습한 모든 라우트를 로컬 Linux 데이터 경로에 설치
+   - B) 선택한 Pod 또는 Service 접두사를 피어에 광고
+   - C) 모든 Service의 DNS 레코드 생성
+   - D) 외부 라우터 인터페이스 할당
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: B) 선택한 Pod 또는 Service 접두사를 피어에 광고**
+
+   BGP 광고와 로컬 데이터 경로 라우팅·주소 할당·DNS는 별개입니다. 외부 라우터와 실제 왕복 경로를 검증합니다.
+
+   </details>
 
 ## 성능 및 문제 해결
 
-21. **Cilium의 성능 최적화 기능 중 패킷 처리 지연 시간을 크게 줄이는 기술은?**
-    - A) TCP BBR
-    - B) XDP(eXpress Data Path)
-    - C) DPDK
-    - D) TSO(TCP Segmentation Offload)
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: B) XDP(eXpress Data Path)</p>
-    <p><strong>설명</strong>: XDP는 네트워크 드라이버 수준에서 패킷을 처리하여 커널 네트워킹 스택을 우회함으로써 지연 시간을 크게 줄입니다.</p>
-    </details>
+21. **지원되는 외부 서비스 전달을 native 드라이버 훅에서 처리할 수 있는 수단은 무엇인가요?**
 
-22. **Cilium에서 네트워크 연결 문제를 진단하는 명령어는?**
-    - A) `cilium status`
-    - B) `cilium connectivity test`
-    - C) `cilium monitor`
-    - D) `cilium endpoint list`
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: B) `cilium connectivity test`</p>
-    <p><strong>설명</strong>: `cilium connectivity test` 명령어는 클러스터 내 다양한 네트워크 연결 시나리오를 테스트하여 문제를 진단합니다.</p>
-    </details>
+   - A) Grafana 대시보드
+   - B) XDP 가속
+   - C) DNS 검색 접미사
+   - D) 더 큰 애플리케이션 로그 파일
 
-23. **Cilium에서 특정 Pod의 네트워크 정책 상태를 확인하는 명령어는?**
-    - A) `cilium endpoint list`
-    - B) `cilium policy get`
-    - C) `cilium endpoint get <endpoint-id>`
-    - D) `cilium status --all-endpoints`
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: C) <code>cilium endpoint get &lt;endpoint-id&gt;</code></p>
-    <p><strong>설명</strong>: <code>cilium endpoint get &lt;endpoint-id&gt;</code> 명령어는 특정 엔드포인트(Pod)의 상세 정보와 적용된 네트워크 정책 상태를 보여줍니다.</p>
-    </details>
+   <details>
+   <summary>정답 보기</summary>
 
-24. **Cilium에서 BPF 맵 상태를 확인하는 명령어는?**
-    - A) `cilium map list`
-    - B) `cilium bpf maps`
-    - C) `cilium status --maps`
-    - D) `cilium bpf map list`
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: B) `cilium bpf maps`</p>
-    <p><strong>설명</strong>: `cilium bpf maps` 명령어는 Cilium에서 사용하는 모든 BPF 맵의 목록과 상태를 보여줍니다.</p>
-    </details>
+   **정답: B) XDP 가속**
 
-25. **Cilium에서 네트워크 패킷 캡처 및 분석을 위한 명령어는?**
-    - A) `cilium tcpdump`
-    - B) `cilium capture`
-    - C) `cilium monitor`
-    - D) `cilium packet-capture`
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: C) `cilium monitor`</p>
-    <p><strong>설명</strong>: `cilium monitor` 명령어는 Cilium의 eBPF 데이터 경로를 통과하는 패킷을 실시간으로 캡처하고 분석할 수 있습니다.</p>
-    </details>
+   XDP에는 지원 NIC·드라이버와 경로가 필요합니다. 임의 워크로드에 고정 지연·처리량 개선을 가정할 수 없습니다.
+
+   </details>
+
+22. **연결 시나리오를 시험하도록 워크로드를 실제 생성하는 독립 Cilium CLI 명령은 무엇인가요?**
+
+   - A) `cilium status`
+   - B) `cilium connectivity test`
+   - C) `hubble status`
+   - D) `kubectl get nodes`
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: B) `cilium connectivity test`**
+
+   리소스 생성과 트래픽을 수반하는 실제 시험이며 읽기 전용 상태 조회가 아닙니다. 격리된 시험 범위와 정리를 확인합니다.
+
+   </details>
+
+23. **담당 Cilium 에이전트 안에서 특정 엔드포인트의 상세 정보를 확인하는 명령은 무엇인가요?**
+
+   - A) `cilium endpoint list`
+   - B) `cilium policy get`
+   - C) `cilium-dbg endpoint get ENDPOINT_ID`
+   - D) `cilium status --all-endpoints`
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: C) `cilium-dbg endpoint get ENDPOINT_ID`**
+
+   해당 에이전트의 목록에서 노드 로컬 엔드포인트 ID를 얻습니다. 다른 에이전트의 ID가 같은 워크로드를 뜻하지는 않습니다.
+
+   </details>
+
+24. **에이전트 맵 관리자가 아는 열린 BPF 맵을 나열하는 로컬 명령은 무엇인가요?**
+
+   - A) `cilium-dbg map list`
+   - B) `cilium bpf maps`
+   - C) `cilium status --maps`
+   - D) `cilium bpf map list`
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: A) `cilium-dbg map list`**
+
+   모든 커널 BPF 맵의 목록은 아닙니다. 이전 답변의 cilium bpf maps는 유효한 명령이 아니었습니다.
+
+   </details>
+
+25. **Cilium BPF 프로그램이 발생시킨 로컬 이벤트를 표시하는 명령은 무엇인가요?**
+
+   - A) `cilium tcpdump`
+   - B) `cilium capture`
+   - C) `cilium-dbg monitor`
+   - D) `cilium packet-capture`
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: C) `cilium-dbg monitor`**
+
+   지원 이벤트·추적 유형을 표시합니다. 집계, 억제와 버퍼가 가시성에 영향을 주며 모든 패킷의 캡처를 보장하지 않습니다.
+
+   </details>

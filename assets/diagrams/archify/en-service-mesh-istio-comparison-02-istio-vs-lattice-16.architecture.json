@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Multi-Cloud",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-02-istio-vs-lattice-16.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "mtls-path",
+        "label": "Workload mTLS traffic",
+        "focus": [
+          "eks",
+          "gke",
+          "aks"
+        ],
+        "note": "EKS, GKE, and AKS workloads talk to each other directly over mTLS across cloud boundaries."
+      },
+      {
+        "id": "discovery",
+        "label": "Istiod Service Discovery",
+        "focus": [
+          "istiod-aws",
+          "istiod-gcp",
+          "istiod-azure"
+        ],
+        "note": "Each cloud's Istiod exchanges service discovery information with the others."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "eks",
+      "type": "backend",
+      "label": "EKS Cluster 1",
+      "sublabel": "Workloads",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "istiod-aws",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Control plane",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "gke",
+      "type": "backend",
+      "label": "GKE Cluster",
+      "sublabel": "Workloads",
+      "pos": [
+        400,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "istiod-gcp",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Control plane",
+      "pos": [
+        400,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "aks",
+      "type": "backend",
+      "label": "AKS Cluster",
+      "sublabel": "Workloads",
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "istiod-azure",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Control plane",
+      "pos": [
+        740,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS",
+      "wraps": [
+        "eks",
+        "istiod-aws"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Google Cloud",
+      "wraps": [
+        "gke",
+        "istiod-gcp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Azure",
+      "wraps": [
+        "aks",
+        "istiod-azure"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eks-gke-mtls",
+      "from": "eks",
+      "to": "gke",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gke-aks-mtls",
+      "from": "gke",
+      "to": "aks",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "aws-gcp-discovery",
+      "from": "istiod-aws",
+      "to": "istiod-gcp",
+      "label": "Service Discovery",
+      "variant": "dashed"
+    },
+    {
+      "id": "gcp-azure-discovery",
+      "from": "istiod-gcp",
+      "to": "istiod-azure",
+      "label": "Service Discovery",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istio multi-cloud advantages",
+      "items": [
+        "Cloud neutral",
+        "Consistent policies and observability",
+        "Automatic Service Discovery",
+        "Federated identity"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "VPC Lattice multi-cloud",
+      "items": [
+        "Not possible: VPC Lattice is AWS-only",
+        "Alternatives: AWS Transit Gateway + VPN, application-level integration, API Gateway"
+      ]
+    }
+  ]
+}

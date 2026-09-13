@@ -1,0 +1,201 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "eBPF Hook Points 패킷 파이프라인",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "ingress",
+        "label": "Ingress Path",
+        "focus": [
+          "nic",
+          "xdp",
+          "tc_in",
+          "sk_in"
+        ],
+        "note": "NIC로 들어온 패킷이 드라이버 레벨의 XDP부터 소켓 레벨까지 순서대로 Hook Point를 지난다."
+      },
+      {
+        "id": "egress",
+        "label": "Routing과 Egress Path",
+        "focus": [
+          "sk_in",
+          "rt",
+          "sk_out",
+          "tc_out",
+          "nic_out"
+        ],
+        "note": "라우팅 결정 후 Socket Ops의 연결 시간 LB와 TC Egress를 거쳐 NIC로 다시 나간다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "XDP (드라이버 레벨, 성능 최고)"
+        },
+        "backend": {
+          "label": "TC / Socket eBPF Hook Point"
+        },
+        "cloud": {
+          "label": "커널 라우팅 결정"
+        },
+        "external": {
+          "label": "NIC (네트워크 카드)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "ingress",
+      "label": "Ingress Path (NIC 수신)"
+    },
+    {
+      "id": "routing",
+      "label": "Routing"
+    },
+    {
+      "id": "egress",
+      "label": "Egress Path (NIC 송신)"
+    }
+  ],
+  "mainPath": [
+    "nic",
+    "xdp",
+    "tc_in",
+    "sk_in",
+    "rt",
+    "sk_out",
+    "tc_out",
+    "nic_out"
+  ],
+  "nodes": [
+    {
+      "id": "nic",
+      "lane": "ingress",
+      "col": 0,
+      "type": "external",
+      "label": "NIC",
+      "sublabel": "패킷 수신"
+    },
+    {
+      "id": "xdp",
+      "lane": "ingress",
+      "col": 1,
+      "type": "security",
+      "label": "XDP Hook",
+      "sublabel": "가장 빠른 처리",
+      "tag": "드라이버 레벨"
+    },
+    {
+      "id": "tc_in",
+      "lane": "ingress",
+      "col": 2,
+      "type": "backend",
+      "label": "TC Ingress",
+      "sublabel": "트래픽 제어"
+    },
+    {
+      "id": "sk_in",
+      "lane": "ingress",
+      "col": 3,
+      "type": "backend",
+      "label": "Socket Filter",
+      "sublabel": "소켓 레벨"
+    },
+    {
+      "id": "rt",
+      "lane": "routing",
+      "col": 3,
+      "type": "cloud",
+      "label": "Routing",
+      "sublabel": "라우팅 결정"
+    },
+    {
+      "id": "sk_out",
+      "lane": "egress",
+      "col": 3,
+      "type": "backend",
+      "label": "Socket Ops",
+      "sublabel": "연결 시간 LB"
+    },
+    {
+      "id": "tc_out",
+      "lane": "egress",
+      "col": 4,
+      "type": "backend",
+      "label": "TC Egress",
+      "sublabel": "트래픽 제어"
+    },
+    {
+      "id": "nic_out",
+      "lane": "egress",
+      "col": 5,
+      "type": "external",
+      "label": "NIC Out",
+      "sublabel": "패킷 송신"
+    }
+  ],
+  "edges": [
+    {
+      "from": "nic",
+      "to": "xdp"
+    },
+    {
+      "from": "xdp",
+      "to": "tc_in"
+    },
+    {
+      "from": "tc_in",
+      "to": "sk_in"
+    },
+    {
+      "from": "sk_in",
+      "to": "rt"
+    },
+    {
+      "from": "rt",
+      "to": "sk_out"
+    },
+    {
+      "from": "sk_out",
+      "to": "tc_out"
+    },
+    {
+      "from": "tc_out",
+      "to": "nic_out"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "XDP",
+      "items": [
+        "위치: 드라이버 레벨, 성능 최고",
+        "컨텍스트는 제한적",
+        "DDoS 방어, 패킷 드롭에 사용"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "TC Ingress / Egress",
+      "items": [
+        "네트워크 스택 진입과 출구에 위치",
+        "성능 높음, 컨텍스트 풍부함",
+        "NAT, 정책, 라우팅, 터널링에 사용"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Socket Ops",
+      "items": [
+        "소켓 레벨, 성능 보통",
+        "소켓 정보 컨텍스트",
+        "연결 시간 LB(connect-time load balancing)에 사용"
+      ]
+    }
+  ]
+}

@@ -19,7 +19,9 @@ Dynatrace는 AI 기반의 풀스택 관측성 플랫폼입니다. OneAgent 기�
 
 ## 아키텍처
 
-![EKS 클러스터 안의 Service A/B/C가 OneAgent DaemonSet에 자동 계측되고, OneAgent가 ActiveGate를 거쳐 Dynatrace SaaS로 전송한 데이터가 Davis AI 엔진과 Grail 데이터 레이크하우스로 나뉘어 공급되는 아키텍처를 보여준다.](../../../assets/diagrams/rendered/ko-observability-tracing-04-dynatrace-0.svg)
+![EKS 클러스터 안의 Service A/B/C가 OneAgent DaemonSet에 자동 계측되고, Dynatrace Operator가 OneAgent를 관리하며, OneAgent가 ActiveGate를 거쳐 암호화된 연결로 Dynatrace SaaS에 보낸 데이터가 Davis AI 엔진과 Grail 데이터 레이크하우스로 공급되는 아키텍처를 보여준다.](../../.gitbook/assets/ko-observability-tracing-04-dynatrace-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-04-dynatrace-0.html)
 
 ## Helm을 통한 EKS 배포
 
@@ -317,7 +319,9 @@ spec:
 
 ### Davis AI 작동 방식
 
-![수집된 텔레메트리 데이터가 기준선 학습, 이상 탐지, 상관관계 분석을 거쳐 근본 원인을 식별하고, 그 결과가 문제 카드·영향 분석·해결 제안 세 가지 출력으로 나뉘어 전달되는 Davis AI 처리 단계를 보여준다.](../../../assets/diagrams/rendered/ko-observability-tracing-04-dynatrace-1.svg)
+![수집된 텔레메트리 데이터가 기준선 학습, 이상 탐지, 상관관계 분석을 거쳐 근본 원인을 식별하고, 그 결과가 문제 카드·영향 분석·해결 제안 세 가지 출력으로 나뉘어 전달되는 Davis AI 처리 단계를 보여준다.](../../.gitbook/assets/ko-observability-tracing-04-dynatrace-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-04-dynatrace-1.html)
 
 ### 문제 알림 구성
 

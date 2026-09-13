@@ -1,0 +1,132 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio 데이터 플레인 진화",
+    "output": "ko-service-mesh-istio-advanced-01-ambient-mode-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "레거시"
+        },
+        "external": {
+          "label": "실험적"
+        },
+        "backend": {
+          "label": "알파"
+        },
+        "cloud": {
+          "label": "베타"
+        },
+        "security": {
+          "label": "안정 (GA)"
+        }
+      }
+    },
+    "viewBox": [
+      1130,
+      300
+    ]
+  },
+  "lanes": [
+    {
+      "id": "dataplane",
+      "label": "Istio 데이터 플레인"
+    }
+  ],
+  "phases": [
+    {
+      "id": "evolution",
+      "label": "Istio 진화",
+      "fromCol": 0,
+      "toCol": 4
+    }
+  ],
+  "mainPath": [
+    "v1",
+    "v2",
+    "v3",
+    "v4",
+    "v5"
+  ],
+  "nodes": [
+    {
+      "id": "v1",
+      "lane": "dataplane",
+      "col": 0,
+      "type": "frontend",
+      "label": "Istio 1.0 · 2018",
+      "sublabel": "Sidecar Mode",
+      "width": 140
+    },
+    {
+      "id": "v2",
+      "lane": "dataplane",
+      "col": 1,
+      "type": "external",
+      "label": "Istio 1.15 · 2022",
+      "sublabel": "Ambient 실험적 공개",
+      "width": 140
+    },
+    {
+      "id": "v3",
+      "lane": "dataplane",
+      "col": 2,
+      "type": "backend",
+      "label": "Istio 1.18 · 2023",
+      "sublabel": "Ambient Alpha",
+      "width": 140
+    },
+    {
+      "id": "v4",
+      "lane": "dataplane",
+      "col": 3,
+      "type": "cloud",
+      "label": "Istio 1.22 · 2024",
+      "sublabel": "Ambient Beta",
+      "width": 140
+    },
+    {
+      "id": "v5",
+      "lane": "dataplane",
+      "col": 4,
+      "type": "security",
+      "label": "Istio 1.24 · 2024",
+      "sublabel": "Ambient GA",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "id": "v1-to-v2",
+      "from": "v1",
+      "to": "v2",
+      "label": "Ambient 도입",
+      "role": "main"
+    },
+    {
+      "id": "v2-to-v3",
+      "from": "v2",
+      "to": "v3",
+      "label": "Alpha 승격",
+      "role": "main"
+    },
+    {
+      "id": "v3-to-v4",
+      "from": "v3",
+      "to": "v4",
+      "label": "Beta 승격",
+      "role": "main"
+    },
+    {
+      "id": "v4-to-v5",
+      "from": "v4",
+      "to": "v5",
+      "label": "안정화",
+      "role": "main",
+      "variant": "emphasis"
+    }
+  ]
+}

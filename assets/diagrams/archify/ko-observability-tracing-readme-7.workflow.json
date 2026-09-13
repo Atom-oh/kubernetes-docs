@@ -1,0 +1,223 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "분산 추적 솔루션 선택 가이드",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "aws-path",
+        "label": "AWS 네이티브 경로",
+        "focus": [
+          "q_aws",
+          "xray"
+        ],
+        "note": "AWS 네이티브 통합이 필요하면 바로 AWS X-Ray를 선택한다. EKS와 네이티브로 통합되며 비용은 사용량 기반이다."
+      },
+      {
+        "id": "oss-path",
+        "label": "비용 최우선 경로",
+        "focus": [
+          "q_aws",
+          "q_cost",
+          "q_grafana",
+          "tempo",
+          "jaeger"
+        ],
+        "note": "비용이 최우선이면 오픈소스로 간다. Grafana 스택을 이미 쓰고 있으면 Tempo, 아니면 Jaeger를 선택한다."
+      },
+      {
+        "id": "saas-path",
+        "label": "상용 SaaS 경로",
+        "focus": [
+          "q_aws",
+          "q_cost",
+          "q_ai",
+          "dynatrace",
+          "datadog"
+        ],
+        "note": "비용보다 기능이 우선이면 상용 SaaS로 간다. AI 분석이 필요하면 Dynatrace(Davis AI), 아니면 Datadog APM을 선택한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "판단 질문"
+        },
+        "cloud": {
+          "label": "AWS 관리형"
+        },
+        "frontend": {
+          "label": "오픈소스"
+        },
+        "external": {
+          "label": "상용 SaaS"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "step1",
+      "label": "1단계 · AWS 네이티브 통합"
+    },
+    {
+      "id": "step2",
+      "label": "2단계 · 비용 우선순위"
+    },
+    {
+      "id": "step3",
+      "label": "3단계 · 기존 스택·AI 분석"
+    },
+    {
+      "id": "result",
+      "label": "추천 솔루션"
+    }
+  ],
+  "mainPath": [
+    "q_aws",
+    "q_cost",
+    "q_grafana",
+    "tempo"
+  ],
+  "nodes": [
+    {
+      "id": "q_aws",
+      "lane": "step1",
+      "col": 0,
+      "width": 160,
+      "type": "backend",
+      "label": "AWS 네이티브 통합 필요?",
+      "sublabel": "EKS 통합 방식"
+    },
+    {
+      "id": "q_cost",
+      "lane": "step2",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "비용 최우선?",
+      "sublabel": "오픈소스 vs 상용 SaaS"
+    },
+    {
+      "id": "q_grafana",
+      "lane": "step3",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "Grafana 스택 사용 중?",
+      "sublabel": "기존 대시보드 연동"
+    },
+    {
+      "id": "q_ai",
+      "lane": "step3",
+      "col": 3,
+      "width": 160,
+      "type": "backend",
+      "label": "AI 분석 필요?",
+      "sublabel": "Davis AI · Watchdog"
+    },
+    {
+      "id": "xray",
+      "lane": "result",
+      "col": 0,
+      "width": 160,
+      "type": "cloud",
+      "label": "AWS X-Ray",
+      "sublabel": "AWS 관리형 · 사용량 기반"
+    },
+    {
+      "id": "tempo",
+      "lane": "result",
+      "col": 1,
+      "width": 160,
+      "type": "frontend",
+      "label": "Grafana Tempo",
+      "sublabel": "스토리지 비용만 · TraceQL"
+    },
+    {
+      "id": "jaeger",
+      "lane": "result",
+      "col": 2,
+      "width": 160,
+      "type": "frontend",
+      "label": "Jaeger",
+      "sublabel": "인프라 비용 · Cassandra/ES"
+    },
+    {
+      "id": "dynatrace",
+      "lane": "result",
+      "col": 3,
+      "width": 160,
+      "type": "external",
+      "label": "Dynatrace",
+      "sublabel": "Davis AI · OneAgent"
+    },
+    {
+      "id": "datadog",
+      "lane": "result",
+      "col": 4,
+      "width": 160,
+      "type": "external",
+      "label": "Datadog APM",
+      "sublabel": "Watchdog · 호스트/스팬 기반"
+    }
+  ],
+  "edges": [
+    {
+      "id": "aws-yes",
+      "from": "q_aws",
+      "to": "xray",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "id": "aws-no",
+      "from": "q_aws",
+      "to": "q_cost",
+      "label": "아니오"
+    },
+    {
+      "id": "cost-yes",
+      "from": "q_cost",
+      "to": "q_grafana",
+      "label": "예",
+      "toSide": "top"
+    },
+    {
+      "id": "cost-no",
+      "from": "q_cost",
+      "to": "q_ai",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "grafana-yes",
+      "from": "q_grafana",
+      "to": "tempo",
+      "label": "예"
+    },
+    {
+      "id": "grafana-no",
+      "from": "q_grafana",
+      "to": "jaeger",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "ai-yes",
+      "from": "q_ai",
+      "to": "dynatrace",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "id": "ai-no",
+      "from": "q_ai",
+      "to": "datadog",
+      "label": "아니오",
+      "role": "branch"
+    }
+  ]
+}

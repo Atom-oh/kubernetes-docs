@@ -32,14 +32,14 @@
 
 3. `${REPLICAS:-3}`의 의미는?
    - A) REPLICAS를 3으로 설정
-   - B) REPLICAS가 없으면 3을 사용
+   - B) REPLICAS가 미설정이거나 빈 문자열이면 3을 사용
    - C) REPLICAS에서 3을 뺌
    - D) 에러 발생
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) REPLICAS가 없으면 3을 사용**
+**정답: B) REPLICAS가 미설정이거나 빈 문자열이면 3을 사용**
 
 </details>
 
@@ -179,6 +179,8 @@
 
 **정답: /var/run/secrets/kubernetes.io/serviceaccount/token**
 
+기본 projected 토큰 경로이며 automount 비활성화 시 없을 수 있습니다. 토큰은 갱신됩니다.
+
 </details>
 
 ## 실습 문제
@@ -190,19 +192,19 @@
 
 ```bash
 #!/bin/bash
-: ${DATABASE_URL:?"DATABASE_URL required"}
+: "${DATABASE_URL:?DATABASE_URL required}"
 TIMEOUT=${TIMEOUT:-30}
 ```
 
 </details>
 
-17. 재시작 3회 이상 Pod를 JSON으로 출력하는 명령을 작성하세요.
+17. 일반/init 컨테이너의 재시작 합계가 3회 이상인 Pod를 JSON으로 출력하는 명령을 작성하세요.
 
 <details>
 <summary>정답 보기</summary>
 
 ```bash
-kubectl get pods -A -o json | jq '[.items[] | select([.status.containerStatuses[]?.restartCount] | add >= 3)]'
+kubectl get pods -A -o json | jq '[.items[] | select(([(.status.containerStatuses[]?, .status.initContainerStatuses[]?) | .restartCount] | add // 0) >= 3)]'
 ```
 
 </details>
@@ -213,7 +215,7 @@ kubectl get pods -A -o json | jq '[.items[] | select([.status.containerStatuses[
 <summary>정답 보기</summary>
 
 ```bash
-rsync -avzP --include='*.yaml' --exclude='*' -e "ssh -J bastion" /src/ user@host:/dest/
+rsync -avzP --prune-empty-dirs --include='*/' --include='*.yaml' --exclude='*' -e "ssh -J bastion" /src/ user@host:/dest/
 ```
 
 </details>
@@ -239,10 +241,24 @@ echo "=== kubelet ===" && systemctl status kubelet --no-pager
 <summary>정답 보기</summary>
 
 - 환경 변수: Pod 시작 시 로드, 변경 시 재시작 필요
-- 볼륨 마운트: 자동 업데이트 (~1분), 재시작 불필요
+- 볼륨 마운트: kubelet 동기화 주기와 캐시/watch 지연 후 갱신됩니다. 애플리케이션이 파일을 다시 읽거나 reload해야 하며 subPath 마운트는 갱신되지 않습니다.
 
 </details>
 
 ---
 
 [학습 자료로 돌아가기](../../basics/02-linux-advanced.md)
+
+## 검증 참고 자료
+
+- https://kubernetes.io/docs/concepts/storage/volumes/#local
+- https://kubernetes.io/docs/concepts/storage/storage-classes/#local
+- https://kubernetes.io/docs/tasks/run-application/access-api-from-pod/
+- https://kubernetes.io/docs/concepts/configuration/configmap/
+- https://kubernetes.io/docs/reference/kubectl/generated/kubectl_wait/
+- https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
+- https://www.gnu.org/software/bash/manual/html_node/Bash-Startup-Files.html
+- https://download.samba.org/pub/rsync/rsync.1
+- https://github.com/mikefarah/yq
+- https://busybox.net/downloads/BusyBox.html
+- https://github.com/docker-library/official-images/blob/master/library/busybox

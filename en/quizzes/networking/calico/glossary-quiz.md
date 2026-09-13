@@ -1,7 +1,7 @@
 # Calico Glossary Quiz
 
 > **Related Document**: [Calico Glossary](../../../networking/calico/glossary.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 12, 2026
 
 ## Quiz
 
@@ -17,7 +17,7 @@
 **Answer: B) Programming network policy rules and routes on each node**
 
 **Explanation:**
-Felix is Calico's per-node agent (runs as a DaemonSet) responsible for programming network policy rules (iptables or eBPF), routes, and ACLs on each node. It watches the datastore for policy and endpoint updates and translates them into kernel-level rules.
+Felix programs the selected policy dataplane and relevant routes on each node. The CNI plugin creates/configures ordinary Pod interfaces and invokes IPAM; Felix tracks endpoint state and programs rules rather than forwarding each packet in userspace.
 
 </details>
 
@@ -33,7 +33,7 @@ Felix is Calico's per-node agent (runs as a DaemonSet) responsible for programmi
 **Answer: B) BIRD Internet Routing Daemon - distributes routing information via BGP**
 
 **Explanation:**
-BIRD (BIRD Internet Routing Daemon - a recursive acronym) is the BGP daemon used by Calico to distribute routing information between nodes. It establishes BGP peering sessions and advertises pod CIDR routes, enabling direct pod-to-pod communication without overlay encapsulation.
+BIRD exchanges routes in BGP-enabled Calico profiles. The routing/encapsulation design determines whether traffic uses direct routing or a tunnel; BGP presence alone does not mean there is no overlay.
 
 </details>
 
@@ -49,7 +49,7 @@ BIRD (BIRD Internet Routing Daemon - a recursive acronym) is the BGP daemon used
 **Answer: B) Caching and fanning out datastore updates to Felix instances**
 
 **Explanation:**
-Typha acts as a caching proxy between Felix instances and the datastore (Kubernetes API or etcd). It reduces datastore load by aggregating watches from multiple Felix instances into a single watch, then distributing updates to all connected Felix daemons.
+Typha caches and distributes datastore changes to Felix, reducing per-client watch load. It can have multiple replicas and syncer/watch types; it is not a single universal watch or a policy-federation service. The operator manages scaling for the installed profile.
 
 </details>
 
@@ -65,7 +65,7 @@ Typha acts as a caching proxy between Felix instances and the datastore (Kuberne
 **Answer: B) IPPool defines available CIDR ranges; IPAM manages allocation from those ranges**
 
 **Explanation:**
-An IPPool is a Calico resource that defines a range of IP addresses (CIDR) available for pod allocation, along with configuration like NAT and encapsulation settings. IPAM (IP Address Management) is the system that manages the actual allocation of individual IPs from these pools to pods and nodes.
+IPPool defines an address range plus encapsulation, NAT and allocation eligibility. Calico IPAM allocates from eligible pools for supported uses. This is not the allocator used by VPC CNI policy-only, and an IPPool is not a Kubernetes Node PodCIDR alias.
 
 </details>
 
@@ -81,7 +81,7 @@ An IPPool is a Calico resource that defines a range of IP addresses (CIDR) avail
 **Answer: B) GlobalNetworkPolicy is cluster-scoped and supports additional features like tiers and deny rules**
 
 **Explanation:**
-GlobalNetworkPolicy is a Calico-specific resource that applies cluster-wide without namespace restrictions. Unlike Kubernetes NetworkPolicy, it supports explicit deny rules, policy tiers for ordering, application-layer (L7) rules, and selectors for non-namespaced resources like HostEndpoints.
+GlobalNetworkPolicy is cluster-scoped, with selectors defining which workloads or host endpoints it affects. It adds Calico actions/order/tiers; it does not automatically affect every Pod or enable L7 inspection without the required integration.
 
 </details>
 
@@ -97,7 +97,7 @@ GlobalNetworkPolicy is a Calico-specific resource that applies cluster-wide with
 **Answer: B) A hierarchical grouping that controls policy evaluation order**
 
 **Explanation:**
-Tiers provide a way to organize and order Calico network policies. Policies in higher-order tiers are evaluated before lower-order tiers. This enables patterns like platform-level security policies that take precedence over application-team policies, supporting multi-tenant policy management.
+Tiers group policies by priority. Lower numeric tier order is evaluated first, then policy order within the tier. Allow/Deny is terminal; Pass delegates to the next applicable tier and eventually profiles. Example security/platform/application names are user-defined, not a required default hierarchy.
 
 </details>
 
@@ -113,7 +113,7 @@ Tiers provide a way to organize and order Calico network policies. Policies in h
 **Answer: B) A network interface associated with a pod or VM workload**
 
 **Explanation:**
-A WorkloadEndpoint represents a network interface attached to a workload (pod, VM, or container). It contains information about the interface's IP addresses, the host it runs on, labels for policy selection, and the profile/policies applied to it. Calico automatically creates WorkloadEndpoints for pods.
+A WorkloadEndpoint represents a workload interface with IP/MAC/interface information, labels and profile references used to calculate policy. Its lifecycle is normally plugin/orchestrator-managed. It is not a Service EndpointSlice or a stored list of all effective policy decisions.
 
 </details>
 
@@ -129,23 +129,23 @@ A WorkloadEndpoint represents a network interface attached to a workload (pod, V
 **Answer: B) BGPConfiguration sets global BGP settings; BGPPeer defines specific peering sessions**
 
 **Explanation:**
-BGPConfiguration is a global resource that defines cluster-wide BGP settings like the AS number, node-to-node mesh enablement, and logging. BGPPeer resources define specific BGP peering relationships with external routers or route reflectors, including their IP addresses, AS numbers, and node selectors.
+BGPConfiguration default defines cluster defaults such as ASN and mesh/service advertisement settings; supported node overrides are separate. BGPPeer identifies intended peering relationships by peer address or selectors. It does not guarantee the session or required routes are established.
 
 </details>
 
 9. What is a NetworkSet in Calico, and what is its Cilium equivalent?
    - A) A group of Services; equivalent to Cilium ServiceGroup
-   - B) A named set of IP addresses/CIDRs for use in policies; similar to Cilium CiliumNetworkPolicy with CIDR rules
+   - B) A labeled IP/CIDR set; CiliumCIDRGroup with CIDR policy references is a related concept
    - C) A collection of namespaces; equivalent to Cilium ClusterPolicy
    - D) A DNS zone configuration; equivalent to Cilium DNSPolicy
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) A named set of IP addresses/CIDRs for use in policies; similar to Cilium CiliumNetworkPolicy with CIDR rules**
+**Answer: B) A labeled IP/CIDR set; CiliumCIDRGroup with CIDR policy references is a related concept**
 
 **Explanation:**
-A NetworkSet is a Calico resource that defines a named collection of IP addresses, CIDRs, or domains that can be referenced in network policies. This simplifies policy management when the same set of external IPs appears in multiple policies. Cilium achieves similar functionality through CIDR-based rules in CiliumNetworkPolicy.
+Calico NetworkSet is namespaced, while GlobalNetworkSet is cluster-scoped; both provide labeled IP/CIDR sets. CiliumCIDRGroup is cluster-scoped and can be referenced through cidrGroupRef or cidrGroupSelector in Cilium CIDR rules. These are related concepts with different APIs, not DNS rules or interchangeable manifests.
 
 </details>
 
@@ -161,6 +161,6 @@ A NetworkSet is a Calico resource that defines a named collection of IP addresse
 **Answer: B) To apply network policies to host interfaces (non-pod traffic)**
 
 **Explanation:**
-A HostEndpoint represents a network interface on a host node itself (not a pod). It enables Calico network policies to control traffic to and from host processes, protecting node-level services like kubelet, SSH, or other system daemons that don't run as pods.
+A HostEndpoint represents a host interface for policy on host traffic and, when configured, forwarded traffic. Review profiles, failsafes and management paths before creating/enforcing one. Workload and host policy scopes are distinct but forwarded Pod traffic can also be affected.
 
 </details>

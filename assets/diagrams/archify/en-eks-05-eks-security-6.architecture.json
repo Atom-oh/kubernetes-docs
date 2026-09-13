@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Private Cluster Access over VPN",
+    "output": "en-eks-05-eks-security-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [
+      1040,
+      340
+    ]
+  },
+  "components": [
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "Admin Workstation",
+      "sublabel": "kubectl client",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpn",
+      "type": "security",
+      "label": "AWS VPN",
+      "sublabel": "Site-to-Site / Client VPN",
+      "pos": [
+        270,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "endpoint",
+      "type": "cloud",
+      "label": "Private Endpoint",
+      "sublabel": "endpointPrivateAccess=true",
+      "pos": [
+        540,
+        110
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "Control Plane",
+      "sublabel": "Kubernetes API server",
+      "pos": [
+        820,
+        110
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS VPC",
+      "wraps": [
+        "endpoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "admin-to-vpn",
+      "from": "admin",
+      "to": "vpn",
+      "label": "VPN tunnel",
+      "variant": "security"
+    },
+    {
+      "id": "vpn-to-endpoint",
+      "from": "vpn",
+      "to": "endpoint",
+      "label": "enters the VPC",
+      "variant": "emphasis"
+    },
+    {
+      "id": "endpoint-to-cp",
+      "from": "endpoint",
+      "to": "cp",
+      "label": "kubectl",
+      "variant": "emphasis"
+    }
+  ]
+}

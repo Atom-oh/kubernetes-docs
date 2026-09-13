@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "분산 훈련 아키텍처",
+    "output": "ko-ai-ml-01-ai-ml-workloads-3.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "views": [
+      {
+        "id": "launch",
+        "label": "MPI Job 기동",
+        "focus": [
+          "launcher",
+          "workers"
+        ],
+        "note": "Job controller가 Pod를 만들고 launcher가 워커 안의 프로세스를 시작합니다."
+      },
+      {
+        "id": "collective",
+        "label": "집합 통신",
+        "focus": [
+          "workers",
+          "nccl",
+          "mpi",
+          "efa"
+        ],
+        "note": "NCCL → AWS OFI NCCL → libfabric → EFA; MPI는 필수 전송 계층이 아닙니다."
+      },
+      {
+        "id": "checkpoint",
+        "label": "체크포인트 저장",
+        "focus": [
+          "workers",
+          "fsx",
+          "s3",
+          "ckpt"
+        ],
+        "note": "체크포인트 작성·S3 export·복구는 명시적 구성과 검증이 필요합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "launcher",
+      "type": "backend",
+      "label": "Launcher 파드",
+      "sublabel": "mpirun",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Worker 파드 ×4",
+      "sublabel": "nvidia.com/gpu",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "nccl",
+      "type": "messagebus",
+      "label": "NVIDIA NCCL",
+      "sublabel": "집합 통신",
+      "pos": [
+        380,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "mpi",
+      "type": "messagebus",
+      "label": "AWS OFI NCCL",
+      "sublabel": "libfabric 연동",
+      "pos": [
+        610,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "efa",
+      "type": "cloud",
+      "label": "Elastic Fabric Adapter",
+      "sublabel": "EFA",
+      "pos": [
+        840,
+        240
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "고성능 병렬 파일 시스템",
+      "pos": [
+        380,
+        450
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "훈련 데이터 · 모델 아티팩트",
+      "pos": [
+        640,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ckpt",
+      "type": "database",
+      "label": "체크포인트 저장소",
+      "sublabel": "모델 체크포인트",
+      "pos": [
+        640,
+        510
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "MPI Job",
+      "wraps": [
+        "launcher",
+        "workers"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "통신 계층",
+      "wraps": [
+        "nccl",
+        "mpi",
+        "efa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "공유 스토리지",
+      "wraps": [
+        "fsx",
+        "s3",
+        "ckpt"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "launch-workers",
+      "from": "launcher",
+      "to": "workers",
+      "label": "프로세스 기동",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "workers-nccl",
+      "from": "workers",
+      "to": "nccl",
+      "label": "그래디언트 교환",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nccl-mpi",
+      "from": "nccl",
+      "to": "mpi"
+    },
+    {
+      "id": "mpi-efa",
+      "from": "mpi",
+      "to": "efa"
+    },
+    {
+      "id": "workers-fsx",
+      "from": "workers",
+      "to": "fsx",
+      "label": "체크포인트 기록",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "fsx-s3",
+      "from": "fsx",
+      "to": "s3",
+      "label": "구성된 import/export",
+      "labelAt": [
+        600,
+        380
+      ]
+    },
+    {
+      "id": "fsx-ckpt",
+      "from": "fsx",
+      "to": "ckpt"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "통신 경로",
+      "items": [
+        "NCCL은 AWS OFI NCCL과 libfabric으로 EFA를 사용할 수 있습니다.",
+        "장치·driver·plugin·네트워크·프레임워크 구성을 검증해야 합니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "복구",
+      "items": [
+        "FSx 연결만으로 checkpoint 보존·S3 export가 보장되지 않습니다."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Projected Volumes",
+    "output": "ko-core-04-storage-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Projected Volume"
+        },
+        "security": {
+          "label": "자격 증명 소스"
+        },
+        "cloud": {
+          "label": "구성·메타데이터 소스"
+        },
+        "database": {
+          "label": "마운트 경로"
+        },
+        "external": {
+          "label": "결과 파일"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "sources",
+        "label": "소스 결합",
+        "focus": [
+          "pv",
+          "secret",
+          "configmap",
+          "downward",
+          "satoken",
+          "mount"
+        ],
+        "note": "secret·configMap·downwardAPI·serviceAccountToken 네 소스를 하나의 볼륨으로 결합해 /etc/credentials 한 경로에 마운트합니다."
+      },
+      {
+        "id": "result",
+        "label": "결과 디렉토리",
+        "focus": [
+          "mount",
+          "dir",
+          "f1",
+          "f2",
+          "f3",
+          "f4"
+        ],
+        "note": "마운트 결과 디렉토리에는 소스별 items.path로 지정한 이름의 파일이 나란히 생성됩니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pv",
+      "type": "backend",
+      "label": "Projected Volume",
+      "sublabel": "volumes[].projected · all-in-one",
+      "pos": [
+        480,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "secret",
+      "type": "security",
+      "label": "secret",
+      "sublabel": "db-credentials",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "configmap",
+      "type": "cloud",
+      "label": "configMap",
+      "sublabel": "app-config",
+      "pos": [
+        340,
+        170
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "downward",
+      "type": "cloud",
+      "label": "downwardAPI",
+      "sublabel": "파드 메타데이터",
+      "pos": [
+        620,
+        170
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "satoken",
+      "type": "security",
+      "label": "serviceAccountToken",
+      "sublabel": "expirationSeconds: 3600",
+      "pos": [
+        900,
+        170
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "mount",
+      "type": "database",
+      "label": "/etc/credentials",
+      "sublabel": "mountPath · readOnly: true",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "dir",
+      "type": "database",
+      "label": "/etc/credentials/",
+      "sublabel": "결과 디렉토리",
+      "pos": [
+        480,
+        460
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "f1",
+      "type": "external",
+      "label": "db-password",
+      "sublabel": "from secret",
+      "pos": [
+        60,
+        590
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "f2",
+      "type": "external",
+      "label": "app-config.yaml",
+      "sublabel": "from configMap",
+      "pos": [
+        340,
+        590
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "f3",
+      "type": "external",
+      "label": "labels",
+      "sublabel": "from downwardAPI",
+      "pos": [
+        620,
+        590
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "f4",
+      "type": "external",
+      "label": "token",
+      "sublabel": "from serviceAccountToken",
+      "pos": [
+        900,
+        590
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Projected Volume 구성",
+      "wraps": [
+        "pv",
+        "secret",
+        "configmap",
+        "downward",
+        "satoken",
+        "mount"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "결과 디렉토리 구조",
+      "wraps": [
+        "dir",
+        "f1",
+        "f2",
+        "f3",
+        "f4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pv-secret",
+      "from": "pv",
+      "to": "secret",
+      "label": "소스",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pv-configmap",
+      "from": "pv",
+      "to": "configmap",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pv-downward",
+      "from": "pv",
+      "to": "downward",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pv-satoken",
+      "from": "pv",
+      "to": "satoken",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "secret-mount",
+      "from": "secret",
+      "to": "mount",
+      "label": "마운트",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "configmap-mount",
+      "from": "configmap",
+      "to": "mount",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "downward-mount",
+      "from": "downward",
+      "to": "mount",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "satoken-mount",
+      "from": "satoken",
+      "to": "mount",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mount-dir",
+      "from": "mount",
+      "to": "dir",
+      "label": "마운트 결과",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "dir-f1",
+      "from": "dir",
+      "to": "f1",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dir-f2",
+      "from": "dir",
+      "to": "f2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dir-f3",
+      "from": "dir",
+      "to": "f3",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dir-f4",
+      "from": "dir",
+      "to": "f4",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "예제 설정",
+      "items": [
+        "volumeMounts: all-in-one → mountPath /etc/credentials (readOnly)",
+        "secret db-credentials: username → db-username, password → db-password",
+        "configMap app-config: config.yaml → app-config.yaml",
+        "downwardAPI: metadata.labels → labels, metadata.namespace → namespace",
+        "serviceAccountToken: path token, expirationSeconds 3600, audience api"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "사용 사례",
+      "items": [
+        "통합 자격 증명 관리: 여러 소스의 자격 증명을 단일 디렉토리에 마운트",
+        "애플리케이션 구성: 구성 파일과 시크릿을 함께 제공",
+        "서비스 메시 통합: ServiceAccount 토큰과 인증서를 함께 마운트"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd vs Istio 컨트롤 플레인 비교",
+    "output": "ko-service-mesh-linkerd-02-architecture-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "linkerd-side",
+        "label": "Linkerd: 분산 컨트롤 플레인",
+        "focus": [
+          "destination",
+          "identity",
+          "injector",
+          "linkerd-proxy"
+        ],
+        "note": "세 개의 작은 컴포넌트가 각자 역할을 나눠 맡고, 경량 Rust 프록시에 커스텀 gRPC로 설정을 전달한다."
+      },
+      {
+        "id": "istio-side",
+        "label": "Istio: 통합 istiod",
+        "focus": [
+          "istiod",
+          "envoy"
+        ],
+        "note": "Pilot·Citadel·Galley가 istiod 하나로 합쳐져 xDS 프로토콜로 Envoy 프록시를 설정한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "destination",
+      "type": "backend",
+      "label": "Destination",
+      "sublabel": "서비스 디스커버리 · gRPC :8086",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "mTLS 인증서 발급 · gRPC :8080",
+      "pos": [
+        290,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "injector",
+      "type": "backend",
+      "label": "Proxy Injector",
+      "sublabel": "Admission Webhook · HTTPS :8443",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "linkerd-proxy",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "Rust · 약 10MB",
+      "pos": [
+        290,
+        360
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "tag": "경량 프록시"
+    },
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "Pilot + Citadel + Galley",
+      "pos": [
+        880,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "C++ · 약 50-100MB",
+      "pos": [
+        880,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Linkerd 컨트롤 플레인 (3개 컴포넌트)",
+      "wraps": [
+        "destination",
+        "identity",
+        "injector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Linkerd 데이터 플레인",
+      "wraps": [
+        "linkerd-proxy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio 컨트롤 플레인 (통합)",
+      "wraps": [
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio 데이터 플레인",
+      "wraps": [
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dest-to-proxy",
+      "from": "destination",
+      "to": "linkerd-proxy",
+      "label": "서비스 디스커버리 · gRPC",
+      "variant": "emphasis"
+    },
+    {
+      "id": "identity-to-proxy",
+      "from": "identity",
+      "to": "linkerd-proxy",
+      "label": "mTLS 인증서 발급",
+      "labelDy": 180
+    },
+    {
+      "id": "injector-to-proxy",
+      "from": "injector",
+      "to": "linkerd-proxy",
+      "label": "사이드카 주입",
+      "variant": "dashed"
+    },
+    {
+      "id": "istiod-to-envoy",
+      "from": "istiod",
+      "to": "envoy",
+      "label": "xDS 설정",
+      "variant": "emphasis",
+      "labelDy": 110
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Linkerd",
+      "items": [
+        "컨트롤 플레인: 분산 (3개 컴포넌트)",
+        "프록시: linkerd2-proxy (Rust), 설정 프로토콜은 커스텀 gRPC",
+        "CRD 약 10개, 리소스 사용량 낮음"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Istio",
+      "items": [
+        "컨트롤 플레인: 통합 (istiod)",
+        "프록시: Envoy (C++), 설정 프로토콜은 xDS",
+        "CRD 약 50개 이상, Wasm·Lua로 확장 가능"
+      ]
+    }
+  ]
+}

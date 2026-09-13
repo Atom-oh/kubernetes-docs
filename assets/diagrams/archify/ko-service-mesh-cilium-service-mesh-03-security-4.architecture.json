@@ -4,7 +4,21 @@
   "meta": {
     "title": "IP 기반 vs Identity 기반 보안",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

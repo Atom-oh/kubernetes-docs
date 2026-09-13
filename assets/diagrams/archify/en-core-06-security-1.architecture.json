@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Authentication Flow",
+    "locale": "en",
+    "output": "en-core-06-security-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "Authentication request",
+        "focus": [
+          "user",
+          "apiserver"
+        ],
+        "note": "A user or service sends a request to kube-apiserver, which passes through authentication first."
+      },
+      {
+        "id": "methods",
+        "label": "Five authentication methods",
+        "focus": [
+          "apiserver",
+          "cert",
+          "token",
+          "oidc",
+          "webhook",
+          "proxy"
+        ],
+        "note": "The API server verifies the requester's identity with the configured authentication methods."
+      },
+      {
+        "id": "outcome",
+        "label": "Authentication result",
+        "focus": [
+          "result",
+          "authz",
+          "reject"
+        ],
+        "note": "On success the request moves to the authorization stage; on failure it is denied."
+      }
+    ],
+    "viewBox": [
+      1250,
+      740
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User / Service",
+      "sublabel": "kubectl, Pods, etc.",
+      "pos": [
+        30,
+        310
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        240,
+        310
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cert",
+      "type": "security",
+      "label": "X.509 Certificates",
+      "sublabel": "TLS client certificates",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "token",
+      "type": "security",
+      "label": "Service Account Tokens",
+      "sublabel": "JWT",
+      "pos": [
+        480,
+        190
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "oidc",
+      "type": "security",
+      "label": "OpenID Connect",
+      "sublabel": "External identity provider",
+      "pos": [
+        480,
+        310
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Webhook Token Authentication",
+      "sublabel": "External authentication service",
+      "pos": [
+        480,
+        430
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "proxy",
+      "type": "security",
+      "label": "Authentication Proxy",
+      "sublabel": "User info passed via HTTP headers",
+      "pos": [
+        480,
+        550
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "result",
+      "type": "backend",
+      "label": "Authentication result",
+      "sublabel": "Success / Failure",
+      "pos": [
+        760,
+        310
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "authz",
+      "type": "security",
+      "label": "Move to Authorization Stage",
+      "sublabel": "Authorization",
+      "pos": [
+        1000,
+        200
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "reject",
+      "type": "external",
+      "label": "Request Denied",
+      "sublabel": "On authentication failure",
+      "pos": [
+        1000,
+        420
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Authentication Methods",
+      "wraps": [
+        "cert",
+        "token",
+        "oidc",
+        "webhook",
+        "proxy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "apiserver",
+      "label": "Authentication request",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "api-to-cert",
+      "from": "apiserver",
+      "to": "cert"
+    },
+    {
+      "id": "api-to-token",
+      "from": "apiserver",
+      "to": "token"
+    },
+    {
+      "id": "api-to-oidc",
+      "from": "apiserver",
+      "to": "oidc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-webhook",
+      "from": "apiserver",
+      "to": "webhook"
+    },
+    {
+      "id": "api-to-proxy",
+      "from": "apiserver",
+      "to": "proxy"
+    },
+    {
+      "id": "cert-to-result",
+      "from": "cert",
+      "to": "result"
+    },
+    {
+      "id": "token-to-result",
+      "from": "token",
+      "to": "result"
+    },
+    {
+      "id": "oidc-to-result",
+      "from": "oidc",
+      "to": "result",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-to-result",
+      "from": "webhook",
+      "to": "result"
+    },
+    {
+      "id": "proxy-to-result",
+      "from": "proxy",
+      "to": "result"
+    },
+    {
+      "id": "result-to-authz",
+      "from": "result",
+      "to": "authz",
+      "label": "Authentication success",
+      "variant": "emphasis"
+    },
+    {
+      "id": "result-to-reject",
+      "from": "result",
+      "to": "reject",
+      "label": "Authentication failure",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Authentication Methods",
+      "items": [
+        "X.509 Certificates: authentication using TLS client certificates",
+        "Service Account Tokens: service account authentication using JWT tokens",
+        "OpenID Connect (OIDC): authentication through external identity providers",
+        "Webhook Token Authentication: authentication through external authentication services",
+        "Authentication Proxy: authentication through a proxy"
+      ]
+    }
+  ]
+}

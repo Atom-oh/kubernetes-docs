@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KubernetesPodOperator Pod Lifecycle",
+    "locale": "en",
+    "output": "en-data-on-eks-airflow-03-dag-patterns-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      560
+    ],
+    "views": [
+      {
+        "id": "launch",
+        "label": "Pod launch",
+        "focus": [
+          "dag",
+          "kpo",
+          "pod"
+        ],
+        "note": "A worker runs KPO. Template merging and admission form the workload pod."
+      },
+      {
+        "id": "identity",
+        "label": "Identity / placement",
+        "focus": [
+          "pod",
+          "sa",
+          "node"
+        ],
+        "note": "Workload identity differs from caller API permissions; actual pod constraints govern placement."
+      },
+      {
+        "id": "report",
+        "label": "Task state",
+        "focus": [
+          "pod",
+          "kpo",
+          "af"
+        ],
+        "note": "Observed outcomes are reported through the Task SDK/supervisor Execution API path."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dag",
+      "type": "frontend",
+      "label": "Airflow worker",
+      "sublabel": "kpo_smoke.run_smoke",
+      "pos": [
+        420,
+        30
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "af",
+      "type": "backend",
+      "label": "Execution API",
+      "sublabel": "Task SDK / supervisor",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "kpo",
+      "type": "backend",
+      "label": "KubernetesPodOperator",
+      "sublabel": "Build / observe workload Pod",
+      "pos": [
+        420,
+        170
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Workload Pod",
+      "sublabel": "airflow-workloads namespace",
+      "pos": [
+        420,
+        320
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "tag": "task pod"
+    },
+    {
+      "id": "sa",
+      "type": "security",
+      "label": "Workload ServiceAccount",
+      "sublabel": "workload-smoke; AWS role optional",
+      "pos": [
+        60,
+        440
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "Kubernetes placement",
+      "sublabel": "Optional NodePool constraints",
+      "pos": [
+        740,
+        440
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dag-to-kpo",
+      "from": "dag",
+      "to": "kpo",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kpo-to-pod",
+      "from": "kpo",
+      "to": "pod",
+      "label": "Template + merge + Kubernetes API",
+      "variant": "emphasis",
+      "labelAt": [
+        523,
+        280
+      ]
+    },
+    {
+      "id": "pod-to-sa",
+      "from": "pod",
+      "to": "sa",
+      "label": "runs as",
+      "variant": "security"
+    },
+    {
+      "id": "pod-to-node",
+      "from": "pod",
+      "to": "node",
+      "label": "scheduled onto"
+    },
+    {
+      "id": "pod-to-kpo",
+      "from": "pod",
+      "to": "kpo",
+      "label": "completion status",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          720,
+          352
+        ],
+        [
+          720,
+          202
+        ]
+      ],
+      "labelAt": [
+        720,
+        280
+      ]
+    },
+    {
+      "id": "kpo-to-af",
+      "from": "kpo",
+      "to": "af",
+      "label": "Task state via supervisor",
+      "labelAt": [
+        350,
+        154
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pod configuration",
+      "items": [
+        "Lists may append; empty values may inherit",
+        "Inspect dry_run and admitted pod"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Placement",
+      "items": [
+        "Match selectors and tolerations to real nodes",
+        "Account for capacity and interruption"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Separate identities",
+      "items": [
+        "Airflow caller needs Kubernetes permissions",
+        "Workload AWS access requires explicit setup"
+      ]
+    }
+  ]
+}

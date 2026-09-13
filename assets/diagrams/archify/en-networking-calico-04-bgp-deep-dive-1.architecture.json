@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "BIRD: Calico's BGP Implementation",
+    "locale": "en",
+    "output": "en-networking-calico-04-bgp-deep-dive-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "bgp-path", "label": "BGP control path", "focus": ["api", "confd", "bird", "rt"], "note": "Calico API state is templated by confd into BIRD config; BIRD programs the node routing table." },
+      { "id": "peering", "label": "BGP peering", "focus": ["bird", "ext", "other"], "note": "BIRD exchanges pod routes with external routers and with BIRD on every other Calico node." },
+      { "id": "dataplane", "label": "Felix dataplane", "focus": ["felix", "dp"], "note": "Felix programs the iptables/eBPF dataplane independently of BGP." }
+    ]
+  },
+  "components": [
+    { "id": "api", "type": "backend", "label": "Calico API", "sublabel": "BGP config / node state", "pos": [40, 120], "size": [150, 60] },
+    { "id": "confd", "type": "backend", "label": "confd", "sublabel": "templates BIRD config", "pos": [260, 120], "size": [150, 60] },
+    { "id": "bird", "type": "backend", "label": "BIRD BGP", "sublabel": "BGP speaker", "pos": [480, 120], "size": [150, 60] },
+    { "id": "rt", "type": "database", "label": "Routing Table", "sublabel": "kernel routes", "pos": [480, 300], "size": [150, 60] },
+    { "id": "felix", "type": "backend", "label": "Felix", "sublabel": "policy agent", "pos": [40, 300], "size": [150, 60] },
+    { "id": "dp", "type": "security", "label": "Dataplane", "sublabel": "iptables / eBPF", "pos": [260, 300], "size": [150, 60] },
+    { "id": "ext", "type": "external", "label": "External Router", "sublabel": "eBGP / iBGP peer", "pos": [760, 40], "size": [160, 60] },
+    { "id": "other", "type": "external", "label": "Other Calico Nodes", "sublabel": "BIRD on each node", "pos": [760, 200], "size": [160, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Calico Node (calico-node DaemonSet pod)", "wraps": ["api", "confd", "bird", "rt", "felix", "dp"] }
+  ],
+  "connections": [
+    { "id": "api-confd", "from": "api", "to": "confd", "label": "watch", "variant": "emphasis" },
+    { "id": "confd-bird", "from": "confd", "to": "bird", "label": "configure", "variant": "emphasis" },
+    { "id": "bird-rt", "from": "bird", "to": "rt", "label": "program routes", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 40 },
+    { "id": "bird-ext", "from": "bird", "to": "ext", "label": "BGP peering" },
+    { "id": "bird-other", "from": "bird", "to": "other", "label": "BGP peering" },
+    { "id": "felix-dp", "from": "felix", "to": "dp", "label": "program rules", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "BGP path", "items": ["Calico API holds BGPConfiguration and node state", "confd renders it into BIRD configuration", "BIRD programs pod routes into the routing table"] },
+    { "dot": "cyan", "title": "Peering", "items": ["BIRD peers with external routers", "BIRD peers with BIRD on other Calico nodes (mesh or RR)"] },
+    { "dot": "rose", "title": "Dataplane", "items": ["Felix programs iptables/eBPF independently of BGP"] }
+  ]
+}

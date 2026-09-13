@@ -1,17 +1,9 @@
 # KEDA를 활용한 Istio 메트릭 기반 오토스케일링
 
-> **지원 버전**: KEDA 2.18, Istio 1.28
-> **마지막 업데이트**: 2026년 2월 19일
-> **Kubernetes 호환성**: 1.34
+> **검증 기준**: KEDA/chart 2.20.2, Istio 1.31.0, Kubernetes 1.32–1.36
+> **마지막 검토**: 2026년 9월 11일
 
-이 문서는 **Istio 메트릭을 활용한 실전 오토스케일링 전략**을 다룹니다. KEDA를 사용하여 Prometheus 및 CloudWatch 메트릭을 기반으로 워크로드를 스케일링하는 다양한 패턴과 실무 사례를 제공합니다.
-
-**학습 목표**:
-- Prometheus PromQL을 활용한 정교한 스케일링 정책 작성
-- CloudWatch 메트릭 통합 및 AWS 서비스 조합
-- RPS, Latency, 에러율 등 다양한 메트릭 기반 전략
-- Circuit Breaker 및 시간대별 예측 스케일링
-- 프로덕션 환경을 위한 안정화 및 모니터링
+이 가이드는 scaling signal과 제약을 설명하며 기존 workload·검증된 metric·충분한 cluster 용량을 가정합니다. 같은 Deployment를 대상으로 하는 예제는 **대안 관계**입니다. 모든 객체를 적용하지 말고 target마다 하나의 ScaledObject/HPA 관리자를 선택하세요.
 
 ## 목차
 
@@ -26,93 +18,51 @@
 
 ## 개요
 
-이 문서는 **Istio 메트릭을 활용한 실전 오토스케일링 전략**에 초점을 맞춥니다. KEDA는 Kubernetes HPA를 확장하여 Prometheus 및 CloudWatch의 복잡한 메트릭 쿼리를 기반으로 스케일링할 수 있게 해줍니다.
+Kubernetes HPA는 해당 API를 통해 resource·custom·external metric과 다중 metric을 지원합니다. CloudWatch도 adapter로 연결할 수 있으므로 HPA에서 원천적으로 불가능한 것은 아닙니다. KEDA는 scaler·external metrics API·활성화 제어를 제공하며 일반적인 replica scaling에는 HPA를 사용합니다.
 
-### 핵심 Istio 메트릭
+| 신호 | 의미 | 용도와 제약 |
+|---|---|---|
+| `istio_requests_total` | HTTP/gRPC 요청 counter | Rate로 수신 부하를 측정; reporter 하나와 실제 target workload 선택 |
+| `istio_request_duration_milliseconds_bucket` | Classic latency histogram bucket | Quantile은 품질 관측값이며 용량 증가에 항상 반비례하지 않음 |
+| `istio_tcp_connections_opened_total` | 누적 열린 연결 수 | Rate는 연결 생성 속도이며 현재 활성 연결 수가 아님 |
+| `istio_request_bytes_sum` | 누적 HTTP request bytes | Rate로 처리량을 측정하고 reporter/workload 범위를 지정 |
+| `envoy_cluster_upstream_rq_pending_overflow` | Client-side cluster overflow counter | Pool limit·의존성을 진단한 뒤 어떤 workload를 확장할지 판단 |
 
-Istio Envoy 프록시가 제공하는 메트릭을 스케일링에 활용합니다:
-
-| 메트릭 | 설명 | 스케일링 활용 |
-|--------|------|---------------|
-| **istio_requests_total** | 총 요청 수 | RPS 기반 스케일링 |
-| **istio_request_duration_milliseconds** | 요청 지연 시간 | 지연 기반 스케일링 |
-| **istio_tcp_connections_opened_total** | TCP 연결 수 | 연결 기반 스케일링 |
-| **istio_request_bytes_sum** | 요청 바이트 | 처리량 기반 스케일링 |
-| **envoy_cluster_upstream_rq_pending_overflow** | Circuit Breaker overflow | 과부하 감지 |
-
-### 왜 KEDA를 사용하는가?
-
-기본 Kubernetes HPA와 비교했을 때 KEDA의 장점:
-
-| 기능 | Kubernetes HPA | KEDA |
-|------|---------------|------|
-| **메트릭 소스** | CPU/Memory + Custom Metrics API | 60+ Scaler 직접 지원 |
-| **PromQL 쿼리** | ⚠️ Custom Metrics Adapter 필요 | ✅ 네이티브 지원 |
-| **CloudWatch 통합** | ❌ 불가능 | ✅ 직접 쿼리 |
-| **Scale to Zero** | ❌ 최소 1개 | ✅ 0개 가능 |
-| **다중 메트릭** | ⚠️ 제한적 | ✅ 여러 트리거 조합 |
-| **Cron 스케줄** | ❌ 미지원 | ✅ 시간대별 스케일링 |
-
-**이 문서의 초점**: KEDA 설치보다는 **Prometheus와 CloudWatch 메트릭을 활용한 실전 스케일링 패턴과 전략**에 집중합니다.
-
-### 주요 스케일링 전략
-
-이 문서에서 다루는 실전 스케일링 패턴:
-
-| 전략 | 주 메트릭 | 적합한 시나리오 | 핵심 장점 |
-|------|----------|----------------|----------|
-| **RPS 기반** | `istio_requests_total` | API 서버, 웹 서비스 | 직관적, 구현 간단 |
-| **Latency 기반** | P50/P95/P99 지연 시간 | 결제, 주문 등 지연 민감 서비스 | 사용자 경험 보장 |
-| **에러율 기반** | 5xx 응답 비율 | 고가용성 필수 서비스 | 빠른 장애 대응 |
-| **복합 메트릭** | RPS + Latency + Error | 프로덕션 서비스 | 안정적, 정확한 스케일링 |
-| **Circuit Breaker 기반** | overflow, connection pool | 외부 의존성 많은 서비스 | 연쇄 장애 방지 |
-| **시간대별 예측** | Cron + 메트릭 | 트래픽 패턴 예측 가능 | 비용 최적화, 사전 대응 |
+보정한 demand/backlog metric을 시작점으로 삼습니다. Latency·error·circuit-breaker 사건은 replica를 늘려도 해결되지 않는 downstream 장애에서 발생할 수 있습니다. Stateful membership·storage·앱 의미도 제약하므로 stateful/latency-sensitive 분류만으로 안전한 정책이 결정되지 않습니다.
 
 ## 아키텍처
 
-### 메트릭 기반 스케일링 흐름
+KEDA는 target의 HPA를 생성·설정하고 external metric을 제공합니다. HPA controller가 API로 metric을 조회하여 target의 `/scale` subresource를 바꾸고, 해당 controller와 scheduler가 Pod를 생성·배치합니다.
 
-![KEDA가 Prometheus에서 Istio 메트릭을 조회해 임계값과 비교한 뒤 HPA를 통해 Pod 수를 조정하는 시퀀스](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-10-keda-autoscaling-0.svg)
+| 설정/컴포넌트 | 역할 |
+|---|---|
+| KEDA `pollingInterval` | Trigger polling과0→1 활성화 |
+| HPA controller sync | 추가 metric 조회와1→N 판단; 기본15초이며 cluster 설정에 따름 |
+| `useCachedMetrics` | Poll 사이 KEDA metric cache 옵션; 본문 예제에서는 사용하지 않음 |
+| `activationThreshold` |0↔1 활성화 임계값이며 별도 HPA scale-down 임계값이 아님 |
+| `cooldownPeriod` | 비활성 후 KEDA가0으로 줄이기 전 대기; 모든 scale-down 뒤의 pause가 아님 |
+| HPA `behavior` |1→N 안정화·변경 속도 제한 |
 
-### ScaledObject 기본 구조
+`minReplicaCount`가0보다 크면 activation/cooldown을 일반 replica hysteresis로 사용하지 않습니다. Capture·scrape·query·HPA·Pod 시작/readiness가 모두 지연을 더하므로15초 poll이나 stabilization0이 즉시 준비된 용량을 보장하지 않습니다.
 
-KEDA의 핵심은 **ScaledObject** CRD입니다. Prometheus나 CloudWatch 메트릭을 기반으로 HPA를 자동 생성/관리합니다:
+### Metric Type과 이상적인 계산
 
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: my-app-scaler
-  namespace: default
-spec:
-  # 스케일 대상
-  scaleTargetRef:
-    name: my-app           # Deployment 이름
-    kind: Deployment
+HPA tolerance, 누락/unready Pod, min/max·behavior 제한을 제외하면:
 
-  # 스케일링 정책
-  pollingInterval: 30      # 30초마다 메트릭 확인
-  cooldownPeriod: 300      # 스케일 다운 후 5분 대기
-  minReplicaCount: 2       # 최소 Pod 수
-  maxReplicaCount: 20      # 최대 Pod 수
+- **AverageValue + 총수요**: desired replicas ≈ `ceil(총 metric / Pod당 target)`.
+- **Value + workload 전체 값**: desired replicas ≈ `ceil(현재 replicas × 관측값 / target)`.
 
-  # 메트릭 트리거
-  triggers:
-  - type: prometheus       # 또는 aws-cloudwatch
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |             # PromQL 쿼리
-        sum(rate(istio_requests_total{
-          destination_workload="my-app"
-        }[1m]))
-      threshold: '1000'    # 임계값: 1000 RPS
-```
+600 RPS에100 RPS/Pod면 AverageValue는6개를 요구합니다. Query에서 먼저 Pod3개로 나누면200을 입력하여2개를 요구하는 오류가 생깁니다. `count(up)`도 scrape target 수이지 안전한 replica 분모가 아닙니다.
+
+Replica4개, 전체 latency300ms, Value target200ms이면6개를 제안합니다. Replica를 늘려도 latency가 줄지 않으면 반복하여 cap까지 확장할 수 있습니다. Latency/error ratio controller는 음의 feedback을 입증해야 하는 실험이며 production 기본값이 아닙니다.
 
 ## Prometheus 메트릭 기반 스케일링
 
-### 1. RPS (Requests Per Second) 기반 스케일링
+`default`에 실제 `reviews` Deployment가 있다고 가정합니다. Service 이름은 scale target이 아닙니다. 배포된 Bookinfo는 일반적으로 `reviews-v1` 같은 Deployment를 사용하므로 `scaleTargetRef`와 metric selector를 실제 workload에 맞추세요.
 
-#### ScaledObject 정의
+해당 proxy를 중복 scrape하지 않고 실제 label을 확인해야 합니다. 주요 예제는 양쪽 reporter 중복을 피하려고 `reporter="destination"`을 사용합니다. 이는 target에 도달한 요청을 측정하므로 edge 거부/queue에는 별도로 검증한 demand signal이 필요할 수 있습니다.
+
+### 1. RPS 기반 스케일링
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -122,254 +72,342 @@ metadata:
   namespace: default
 spec:
   scaleTargetRef:
-    name: reviews
+    apiVersion: apps/v1
     kind: Deployment
-
-  # 스케일링 정책
-  pollingInterval: 30  # 30초마다 메트릭 확인
-  cooldownPeriod: 300  # 스케일 다운 후 5분 대기
-  minReplicaCount: 2   # 최소 레플리카
-  maxReplicaCount: 20  # 최대 레플리카
-
-  triggers:
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="reviews",
-          destination_workload_namespace="default",
-          response_code=~"2.*"
-        }[1m]))
-      threshold: '100'  # 100 RPS 이상이면 스케일 아웃
-      activationThreshold: '50'  # 50 RPS 이상이면 활성화
-```
-
-#### 동작 방식
-
-![RPS 임계값에 따라 레플리카를 늘리거나 줄이고 다시 대기 상태로 순환하는 KEDA 스케일링 결정 루프](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-10-keda-autoscaling-1.svg)
-
-### 2. Latency (지연 시간) 기반 스케일링
-
-#### P95 지연 시간으로 스케일링
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-latency-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
     name: reviews
-    kind: Deployment
-
   pollingInterval: 30
   cooldownPeriod: 300
   minReplicaCount: 2
   maxReplicaCount: 20
-
-  triggers:
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # P95 지연 시간 (95th percentile)
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews",
-            destination_workload_namespace="default"
-          }[2m])) by (le)
-        )
-      threshold: '200'  # 200ms 이상이면 스케일 아웃
-      activationThreshold: '100'
-```
-
-#### P50 및 P99 조합 스케일링
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-multi-latency-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: reviews
-    kind: Deployment
-
-  pollingInterval: 30
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  # 여러 트리거 중 하나라도 임계값 초과 시 스케일링
-  triggers:
-  # P50 지연 시간
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.50,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews",
-            destination_workload_namespace="default"
-          }[2m])) by (le)
-        )
-      threshold: '50'  # P50 > 50ms
-
-  # P95 지연 시간
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews",
-            destination_workload_namespace="default"
-          }[2m])) by (le)
-        )
-      threshold: '200'  # P95 > 200ms
-
-  # P99 지연 시간 (극단적 상황)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.99,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews",
-            destination_workload_namespace="default"
-          }[2m])) by (le)
-        )
-      threshold: '500'  # P99 > 500ms
-```
-
-### 3. 성공률 기반 스케일링
-
-에러율이 높을 때 스케일 아웃하여 부하 분산:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-error-rate-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: reviews
-    kind: Deployment
-
-  pollingInterval: 30
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  triggers:
-  # 에러율이 5% 이상이면 스케일 아웃
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        (
-          sum(rate(istio_requests_total{
-            destination_workload="reviews",
-            response_code=~"5.*"
-          }[2m]))
-          /
-          sum(rate(istio_requests_total{
-            destination_workload="reviews"
-          }[2m]))
-        ) * 100
-      threshold: '5'  # 5% 에러율
-      activationThreshold: '2'
-```
-
-### 4. 복합 메트릭 스케일링
-
-RPS와 Latency를 함께 고려:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-composite-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: reviews
-    kind: Deployment
-
-  pollingInterval: 30
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  # 고급 스케일링 동작
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
         scaleDown:
-          stabilizationWindowSeconds: 300  # 5분 안정화
+          stabilizationWindowSeconds: 300
           policies:
           - type: Percent
-            value: 10  # 최대 10%씩 감소
+            value: 10
             periodSeconds: 60
         scaleUp:
-          stabilizationWindowSeconds: 0  # 즉시 스케일 아웃
+          stabilizationWindowSeconds: 0
           policies:
           - type: Percent
-            value: 50  # 최대 50%씩 증가
+            value: 50
             periodSeconds: 60
           - type: Pods
-            value: 5  # 한 번에 최대 5개 추가
+            value: 5
             periodSeconds: 60
-          selectPolicy: Max  # 더 큰 값 선택
-
+          selectPolicy: Max
   triggers:
-  # RPS 기반
   - type: prometheus
+    name: rps
     metricType: AverageValue
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="reviews",
-          destination_workload_namespace="default"
-        }[1m])) / count(kube_pod_info{pod=~"reviews-.*"})
-      threshold: '50'  # Pod당 50 RPS
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
 
-  # P95 Latency 기반
+실패한 요청도 부하에 포함한 총 RPS입니다. AverageValue의 `threshold: "100"`은 replica당 target이며 “전체100 초과 시 Pod 추가”라는 스위치가 아닙니다. Pod 수로 다시 나누지 마세요.
+
+KEDA 2.20.2에서 `ignoreNullValues: "false"`는 누락·NaN·무한대 Prometheus 결과를 error로 처리합니다. 실제 counter의 zero rate는0입니다. Source 장애 fallback을 설정·시험하고 임의의 metric 누락을0으로 바꾸지 않아야 합니다. Scaler 활성화 전에 scrape/metric 전제조건을 확인하세요.
+
+여기의 fallback은 설정한 error threshold 이후 지정 floor와 현재 replica 중 큰 값을 사용하며 HPA 제한·behavior를 따릅니다. KEDA metrics API 자체의 장애나 node 용량 부족까지 보호하는 것은 아닙니다.
+
+### 2. Latency 기반 제어: 조건부 실험
+
+Workload 전체 p95에 Value를 명시하는 대안입니다.
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reviews-latency-experiment
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
   - type: prometheus
+    name: p95
     metricType: Value
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews"
-          }[2m])) by (le)
-        )
-      threshold: '200'  # P95 > 200ms
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '200'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
+
+실제 histogram count의 rate가0일 때만0을 반환합니다. Telemetry가 없으면 absent를 유지하고 잘못된 quantile은 건강한0이 아닌 error입니다. Idle p95의0은 제어용 값이지 관측한 zero-duration 요청이 아닙니다.
+
+여러 quantile도 Value metric으로 설정합니다.
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reviews-quantile-experiment
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: p50
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.5, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '50'
+      ignoreNullValues: 'false'
+  - type: prometheus
+    name: p95
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '200'
+      ignoreNullValues: 'false'
+  - type: prometheus
+    name: p99
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '500'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
+
+HPA는 평균이나 가중 혼합이 아닌 가장 큰 desired replica 수를 선택합니다. Quantile들은 상관되어 있으므로 trigger 추가만으로 안정성이나 latency가 보장되지는 않습니다.
+
+### 3. 에러율 제어: 조건부 실험
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reviews-error-experiment
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: error-percent
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (100 * (sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default",response_code=~"5..|0"}[2m])) or vector(0)) / sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+          and on() (sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '5'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
+
+Workload 전체5xx/zero-status 백분율에 Value target을 사용합니다. 관측된 idle은0이며 telemetry 누락을0으로 만들지 않습니다. Replica 부족이 오류 원인임을 확인한 뒤에만 사용하세요. 의존성 장애·인가 실패·client pool 제한이라면 scaling이 효과 없거나 문제를 키울 수 있습니다.
+
+### 4. 복합 메트릭
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reviews-composite-experiment
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: rps
+    metricType: AverageValue
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  - type: prometheus
+    name: p95
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '200'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
+
+RPS는 총수요/AverageValue, latency는 Value입니다. HPA는 가장 큰 권고를 선택합니다. Scale-up `selectPolicy: Max`는 허용 변경량 중 큰 값을 택하므로 percentage 정책이 더 큰 변경을 허용하면 five-Pod 정책이 절대 cap이 되지 않습니다. 이 대안도 용량·workload 검증이 필요합니다.
+
 
 ## CloudWatch 메트릭 기반 스케일링
 
-### 개요
+Source cadence·발행 지연·집계 기간·lookback·offset이 freshness를 결정합니다. High-resolution custom metric도 있으므로 “CloudWatch는 항상1–3분 지연”이라고 단정할 수 없습니다. Prometheus에도 수집·제어-loop 지연이 있습니다.
 
-CloudWatch는 Prometheus보다 **응답 속도가 느리지만** (1-3분 지연), AWS 네이티브 서비스와의 통합과 **장기 보관**에 유리합니다.
+### Identity와 발행 Metric 조건
 
-**사용 시나리오**:
-- ✅ AWS 서비스 메트릭과 조합 (ALB, RDS, SQS 등)
-- ✅ 장기 추세 분석 및 비용 최적화
-- ✅ 멀티 리전 환경에서 중앙 집중 모니터링
-- ❌ 실시간 스케일링 (Prometheus 권장)
+이 예제는 IRSA로 구성한 KEDA operator role과 workload namespace의 TriggerAuthentication을 사용합니다.
 
-> **전제 조건**: Istio 메트릭이 CloudWatch로 전송되고 있어야 합니다. ADOT Collector 설정은 [참고: KEDA 설치](#참고-keda-설치) 섹션을 참조하세요.
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-aws
+  namespace: default
+spec:
+  podIdentity:
+    provider: aws
+    identityOwner: keda
+```
 
-### CloudWatch 메트릭으로 스케일링
+`podIdentity.provider: aws`가 현재 IRSA provider이며 `identityOwner: keda`를 사용합니다. Deprecated scaler metadata의 `identityOwner: operator/pod`와는 다릅니다. 옛 metadata는2.20에서 지원되지만3에서 제거 예정입니다. `aws-eks`라는 옛 provider 이름을 새로운 EKS Pod Identity association과 혼동하지 말고 선택한 방식의 provider/SDK credential 설정을 따르세요.
 
-#### RPS 기반 스케일링
+뒤의 발행 예제는 다음 metric을 만듭니다.
+
+| Metric | Namespace·정확한 dimension | 의미 |
+|---|---|---|
+| `IstioRequestsPerSecond` | `IstioScaling`; ClusterName=`eks-demo`, destination_workload=`reviews`, destination_workload_namespace=`default` | 미리 계산한 RPS gauge |
+| `IstioP95LatencyMilliseconds` | 같은 dimension 집합 | Window별로 미리 계산한 p95 gauge, milliseconds |
+
+모든 dimension이 일치해야 합니다. destination_workload 하나만 지정한 query는 같은 custom metric을 가리키지 않습니다.
+
+### RPS Gauge
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -379,573 +417,686 @@ metadata:
   namespace: default
 spec:
   scaleTargetRef:
-    name: reviews
+    apiVersion: apps/v1
     kind: Deployment
-
-  pollingInterval: 60  # CloudWatch는 1분 간격 권장
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  triggers:
-  - type: aws-cloudwatch
-    metadata:
-      namespace: IstioMetrics
-      metricName: IstioRequestsTotal
-      dimensionName: destination_workload
-      dimensionValue: reviews
-      targetMetricValue: '1000'  # 1000 요청/분
-      minMetricValue: '100'
-
-      # 통계 유형
-      metricStatPeriod: '60'  # 1분
-      metricStat: Sum
-
-      # AWS 리전
-      awsRegion: us-west-2
-
-      # IRSA 사용
-      identityOwner: operator
-```
-
-#### Latency 기반 스케일링
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-cloudwatch-latency
-  namespace: default
-spec:
-  scaleTargetRef:
     name: reviews
-    kind: Deployment
-
   pollingInterval: 60
   cooldownPeriod: 300
   minReplicaCount: 2
   maxReplicaCount: 20
-
-  triggers:
-  - type: aws-cloudwatch
-    metadata:
-      namespace: IstioMetrics
-      metricName: IstioRequestDuration
-      dimensionName: destination_workload
-      dimensionValue: reviews
-
-      # P95 지연 시간 (CloudWatch에서 계산)
-      targetMetricValue: '200'  # 200ms
-      minMetricValue: '50'
-
-      metricStatPeriod: '60'
-      metricStat: 'p95'  # 95th percentile
-
-      awsRegion: us-west-2
-      identityOwner: operator
-```
-
-## 실전 스케일링 전략
-
-### 전략 1: 트래픽 패턴 기반 예측 스케일링
-
-시간대별 트래픽 패턴을 고려한 사전 스케일링:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: frontend-predictive-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: frontend
-    kind: Deployment
-
-  pollingInterval: 30
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 50
-
-  # 고급 HPA 동작 설정
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
         scaleDown:
-          stabilizationWindowSeconds: 600  # 10분 안정화
+          stabilizationWindowSeconds: 300
           policies:
           - type: Percent
             value: 10
-            periodSeconds: 120  # 2분마다 10%씩 감소
+            periodSeconds: 60
         scaleUp:
           stabilizationWindowSeconds: 0
           policies:
           - type: Percent
-            value: 100  # 한 번에 2배까지 증가 가능
-            periodSeconds: 30
+            value: 50
+            periodSeconds: 60
           - type: Pods
-            value: 10  # 한 번에 최대 10개 추가
-            periodSeconds: 30
+            value: 5
+            periodSeconds: 60
           selectPolicy: Max
-
   triggers:
-  # RPS 기반
-  - type: prometheus
+  - type: aws-cloudwatch
+    name: cw-rps
+    metricType: AverageValue
+    authenticationRef:
+      name: keda-aws
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="frontend"
-        }[1m])) / scalar(count(up{job="frontend"}))
-      threshold: '100'  # Pod당 100 RPS
-
-  # P95 지연 시간
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="frontend"
-          }[2m])) by (le)
-        )
-      threshold: '300'
-
-  # Cron 기반 사전 스케일링 (피크 시간대)
-  - type: cron
-    metadata:
-      timezone: Asia/Seoul
-      start: 0 9 * * 1-5  # 평일 오전 9시
-      end: 0 18 * * 1-5   # 평일 오후 6시
-      desiredReplicas: '20'  # 피크 시간대는 최소 20개
+      namespace: IstioScaling
+      metricName: IstioRequestsPerSecond
+      dimensionName: ClusterName;destination_workload;destination_workload_namespace
+      dimensionValue: eks-demo;reviews;default
+      targetMetricValue: '100'
+      minMetricValue: '0'
+      ignoreNullValues: 'false'
+      metricStatPeriod: '60'
+      metricStat: Average
+      metricCollectionTime: '300'
+      metricEndTimeOffset: '60'
+      awsRegion: us-west-2
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
 
-### 전략 2: Circuit Breaker 상태 기반 스케일링
+Gauge의60초 Average는 RPS 단위를 유지합니다. 누적 `istio_requests_total` sample을 Sum하면 분당 요청 수가 되지 않습니다. 실제 delta-count metric을 별도로 발행한다면 그 기간에 맞는 target을 다시 계산하세요.
 
-Circuit이 Open될 때 자동으로 스케일 아웃:
+Released scaler parser를 위해 `minMetricValue`를 명시했지만 빈 결과에는 `ignoreNullValues: "false"`가 우선합니다. `metricEndTimeOffset`은 최근의 미완성일 수 있는 point를 건너뛰며 지연을 추가할 뿐 freshness 증명이 아닙니다. 값이 존재해도 오래되었을 수 있으므로 timestamp·publisher 상태를 감시해야 합니다.
+
+### 미리 계산한 Latency Gauge
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: backend-circuit-breaker-scaler
+  name: reviews-cloudwatch-p95-experiment
   namespace: default
 spec:
   scaleTargetRef:
-    name: backend
+    apiVersion: apps/v1
     kind: Deployment
-
-  pollingInterval: 15  # Circuit Breaker는 빠른 반응 필요
-  cooldownPeriod: 180
-  minReplicaCount: 3
-  maxReplicaCount: 30
-
-  triggers:
-  # Circuit Breaker Overflow 감지
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(increase(envoy_cluster_upstream_rq_pending_overflow{
-          cluster_name=~"outbound.*backend.*"
-        }[1m]))
-      threshold: '10'  # 1분에 10개 이상 overflow
-      activationThreshold: '5'
-
-  # Upstream connection pool saturation
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(envoy_cluster_upstream_cx_active{
-          cluster_name=~"outbound.*backend.*"
-        })
-        /
-        sum(envoy_cluster_circuit_breakers_default_cx_open{
-          cluster_name=~"outbound.*backend.*"
-        }) * 100
-      threshold: '80'  # Connection pool 80% 이상 사용
-```
-
-### 전략 3: 다단계 스케일링 (Tiered Scaling)
-
-부하 수준에 따라 다른 스케일링 속도 적용:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: payment-tiered-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: payment-service
-    kind: Deployment
-
-  pollingInterval: 30
+    name: reviews
+  pollingInterval: 60
   cooldownPeriod: 300
-  minReplicaCount: 3
-  maxReplicaCount: 50
-
+  minReplicaCount: 2
+  maxReplicaCount: 20
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
-        scaleUp:
+        scaleDown:
+          stabilizationWindowSeconds: 300
           policies:
-          # 낮은 부하 (< 임계값 150%): 천천히 증가
           - type: Percent
-            value: 20
-            periodSeconds: 120
-          # 중간 부하 (150-200%): 빠르게 증가
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
           - type: Percent
             value: 50
             periodSeconds: 60
-          # 높은 부하 (> 200%): 매우 빠르게 증가
           - type: Pods
-            value: 10
-            periodSeconds: 30
+            value: 5
+            periodSeconds: 60
           selectPolicy: Max
-
-        scaleDown:
-          policies:
-          - type: Percent
-            value: 5  # 천천히 감소 (5%씩)
-            periodSeconds: 180  # 3분마다
-
   triggers:
-  - type: prometheus
+  - type: aws-cloudwatch
+    name: cw-p95
+    metricType: Value
+    authenticationRef:
+      name: keda-aws
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="payment-service",
-          response_code=~"2.*"
-        }[1m]))
-      threshold: '500'  # 500 RPS
+      namespace: IstioScaling
+      metricName: IstioP95LatencyMilliseconds
+      dimensionName: ClusterName;destination_workload;destination_workload_namespace
+      dimensionValue: eks-demo;reviews;default
+      targetMetricValue: '200'
+      minMetricValue: '0'
+      ignoreNullValues: 'false'
+      metricStatPeriod: '60'
+      metricStat: Maximum
+      metricCollectionTime: '300'
+      metricEndTimeOffset: '60'
+      awsRegion: us-west-2
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
 
-### 전략 4: 비용 최적화 스케일링
+기간 안에서 발행한 p95 gauge의 최대값을 조회하며, **그 CloudWatch 기간 전체 요청의 p95가 아닙니다**. Prometheus histogram 변환이나 p95-of-p95 gauge에 `metricStat: p95`를 사용해 원래 분포가 보존된다고 설명하면 안 됩니다. Native CloudWatch percentile에는 적절히 발행한 sample/statistic이 필요합니다.
 
-업무 시간과 비업무 시간을 구분:
+### 다중 Source는 순서 있는 Failover가 아님
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: analytics-cost-optimized-scaler
+  name: reviews-dual-source-example
   namespace: default
 spec:
   scaleTargetRef:
-    name: analytics-service
+    apiVersion: apps/v1
     kind: Deployment
-
-  pollingInterval: 60
-  cooldownPeriod: 600  # 비용 최적화를 위해 더 긴 대기
-  minReplicaCount: 1
-  maxReplicaCount: 30
-
-  triggers:
-  # 업무 시간 (09:00-18:00): 적극적 스케일링
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        (
-          sum(rate(istio_requests_total{
-            destination_workload="analytics-service"
-          }[2m]))
-          and
-          (hour() >= 9 and hour() < 18)
-        )
-      threshold: '50'
-      activationThreshold: '20'
-
-  # 비업무 시간: Scale to Zero 허용
-  - type: cron
-    metadata:
-      timezone: Asia/Seoul
-      start: 0 18 * * *  # 오후 6시
-      end: 0 9 * * *     # 오전 9시
-      desiredReplicas: '0'  # Scale to Zero
-```
-
-### 전략 5: Gateway 메트릭 기반 스케일링
-
-Istio Gateway의 부하를 모니터링하여 백엔드 스케일링:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: backend-gateway-based-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: backend
-    kind: Deployment
-
+    name: reviews
   pollingInterval: 30
   cooldownPeriod: 300
   minReplicaCount: 2
-  maxReplicaCount: 40
-
-  triggers:
-  # Gateway를 통한 유입 트래픽 모니터링
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          source_workload="istio-ingressgateway",
-          destination_service="backend.default.svc.cluster.local"
-        }[1m]))
-      threshold: '1000'
-
-  # Gateway의 pending 연결 수
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(envoy_http_downstream_rq_active{
-          app="istio-ingressgateway"
-        })
-      threshold: '500'  # 500개 이상의 동시 요청
-```
-
-## 모범 사례
-
-### 1. 메트릭 선택 가이드
-
-![워크로드 특성(상태 유무, 트래픽 예측 가능성, 지연 시간 민감도)에 따라 RPS, Latency, 예측, 복합 스케일링 전략을 선택하는 의사결정 트리](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-10-keda-autoscaling-2.svg)
-
-**권장 메트릭**:
-
-| 워크로드 유형 | 주 메트릭 | 보조 메트릭 | 이유 |
-|-------------|----------|-----------|------|
-| **API 서버** | RPS | P95 Latency | 요청 수가 부하의 직접적 지표 |
-| **웹 서버** | RPS | 에러율 | 동시 연결 수보다 요청 수가 중요 |
-| **데이터 처리** | P95 Latency | CPU/Memory | 처리 시간이 부하 지표 |
-| **Streaming** | TCP 연결 수 | 처리량 | 연결 수가 리소스 소비의 핵심 |
-| **배치 작업** | 큐 길이 | 처리 시간 | 작업 대기 수가 스케일링 기준 |
-
-### 2. 임계값 설정 가이드
-
-```yaml
-# 적절한 임계값 찾기 프로세스
-
-# 1단계: 현재 워크로드 측정
-# 평상시 RPS
-kubectl exec -it prometheus-xxx -n istio-system -- promtool query instant \
-  'sum(rate(istio_requests_total{destination_workload="reviews"}[5m]))'
-
-# 피크 시간대 RPS
-# 평상시: ~500 RPS
-# 피크: ~2000 RPS
-
-# 2단계: Pod당 처리 능력 측정
-# 부하 테스트 수행
-kubectl run load-test --image=fortio/fortio -- load -c 50 -qps 0 -t 60s http://reviews:9080
-
-# 결과: Pod당 약 200 RPS까지 P95 < 100ms 유지
-
-# 3단계: 임계값 계산
-# 목표 P95: 100ms
-# Pod당 처리 능력: 200 RPS
-# 안전 마진: 70% (140 RPS/pod)
-# → threshold: '140'
-
-# 4단계: ScaledObject 작성
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-optimized-scaler
-spec:
-  scaleTargetRef:
-    name: reviews
-  minReplicaCount: 3  # 평상시 500 RPS / 140 = 3.5 → 4개
-  maxReplicaCount: 20  # 피크 2000 RPS / 140 = 14.2 → 20개 (여유)
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
   triggers:
   - type: prometheus
+    name: prom-rps
+    metricType: AverageValue
     metadata:
-      query: |
-        sum(rate(istio_requests_total{destination_workload="reviews"}[1m]))
-        / count(kube_pod_info{pod=~"reviews-.*"})
-      threshold: '140'  # Pod당 140 RPS
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  - type: aws-cloudwatch
+    name: cw-rps
+    metricType: AverageValue
+    authenticationRef:
+      name: keda-aws
+    metadata:
+      namespace: IstioScaling
+      metricName: IstioRequestsPerSecond
+      dimensionName: ClusterName;destination_workload;destination_workload_namespace
+      dimensionValue: eks-demo;reviews;default
+      targetMetricValue: '100'
+      minMetricValue: '0'
+      ignoreNullValues: 'false'
+      metricStatPeriod: '60'
+      metricStat: Average
+      metricCollectionTime: '300'
+      metricEndTimeOffset: '60'
+      awsRegion: us-west-2
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
 
-### 3. 스케일링 속도 조정
+두 metric 모두 HPA의 최대 권고 계산에 참여합니다. “Prometheus primary, CloudWatch secondary”는 우선순위/failover 정책이 아니며 stale 값이 높은 replica 권고를 유지할 수 있습니다. 의도한 단일 source 또는 검증한 multi-source/fallback 설계를 선택하세요.
+
+## 실전 스케일링 전략
+
+### 1. 시간대별 Replica Floor
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: balanced-scaler
+  name: frontend-scheduled-floor
   namespace: default
 spec:
   scaleTargetRef:
-    name: myapp
+    apiVersion: apps/v1
     kind: Deployment
-
+    name: frontend
   pollingInterval: 30
   cooldownPeriod: 300
   minReplicaCount: 2
   maxReplicaCount: 50
-
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
-        # 스케일 다운: 보수적 (서비스 안정성 우선)
         scaleDown:
-          stabilizationWindowSeconds: 600  # 10분 관찰
+          stabilizationWindowSeconds: 300
           policies:
           - type: Percent
-            value: 10  # 10%씩 감소
-            periodSeconds: 180  # 3분마다
-          - type: Pods
-            value: 2  # 또는 최대 2개씩
-            periodSeconds: 180
-          selectPolicy: Min  # 더 보수적인 값 선택
-
-        # 스케일 업: 적극적 (빠른 대응)
+            value: 10
+            periodSeconds: 60
         scaleUp:
-          stabilizationWindowSeconds: 0  # 즉시
+          stabilizationWindowSeconds: 0
           policies:
           - type: Percent
-            value: 100  # 2배까지 증가
-            periodSeconds: 30
+            value: 50
+            periodSeconds: 60
           - type: Pods
-            value: 10  # 또는 10개씩
-            periodSeconds: 30
-          selectPolicy: Max  # 더 적극적인 값 선택
-
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
   triggers:
   - type: prometheus
+    name: rps
+    metricType: AverageValue
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: sum(rate(istio_requests_total{destination_workload="myapp"}[1m]))
-      threshold: '1000'
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="frontend",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  - type: cron
+    metadata:
+      timezone: Asia/Seoul
+      start: 0 9 * * 1-5
+      end: 0 18 * * 1-5
+      desiredReplicas: '20'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
 
-### 4. 멀티 클러스터 환경에서의 스케일링
+평일 Asia/Seoul window에는 Cron이20개 floor를 제공하며 demand는 max까지 더 요구할 수 있습니다. Traffic prediction model이 아닌 예약 scaling입니다. 시작/readiness 시간이 필요하면 실제 수요보다 앞서 준비하도록 일정을 정합니다.
+
+### 2. 명시적인 비업무 시간 Scale to Zero
+
+비업무 시간에 사용할 수 없어도 되는 workload에는 window 안의 양수 desired count와 `minReplicaCount: 0`을 사용합니다.
 
 ```yaml
-# Cluster 1: 주 트래픽 처리
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: frontend-cluster1-scaler
+  name: analytics-office-hours
   namespace: default
 spec:
   scaleTargetRef:
-    name: frontend
-  minReplicaCount: 5
+    apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-service
+  pollingInterval: 30
+  cooldownPeriod: 600
+  minReplicaCount: 0
   maxReplicaCount: 30
-
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
   triggers:
-  - type: prometheus
+  - type: cron
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # 글로벌 트래픽의 60%를 이 클러스터에서 처리
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="frontend",
-          source_cluster="cluster1"
-        }[1m])) * 0.6
-      threshold: '600'
----
-# Cluster 2: 보조 트래픽 처리
+      timezone: Asia/Seoul
+      start: 0 9 * * 1-5
+      end: 0 18 * * 1-5
+      desiredReplicas: '20'
+```
+
+Cron의 `desiredReplicas: "0"`은 유효하지 않습니다. Active window 밖에서는 inactivity/cooldown 규칙에 따라0이 될 수 있습니다. Client 요청이 이 Cron-only workload를 깨우지는 않습니다. Target-side Istio metric은 앱과 함께 사라지므로 단독으로 신뢰할0→1 신호가 되지 못합니다. 요청 시 가용성이 필요하면 독립된 queue/interceptor나 양수 minimum을 사용하세요.
+
+PromQL `hour()`는 UTC이며 Cron의 Asia/Seoul 설정을 상속하지 않습니다. 두 업무 시간 조건을 같다고 가정하여 혼합하지 마세요.
+
+### 3. Circuit-breaker 신호는 먼저 진단
+
+Client-side overflow와 현재 연결을 구분해 확인할 수 있습니다.
+
+```promql
+sum(increase(envoy_cluster_upstream_rq_pending_overflow{
+  cluster_name=~"outbound[|]9080[|][^|]*[|]backend[.]default[.]svc[.]cluster[.]local"
+}[1m]))
+
+sum(envoy_cluster_upstream_cx_active{
+  cluster_name=~"outbound[|]9080[|][^|]*[|]backend[.]default[.]svc[.]cluster[.]local"
+})
+
+max(envoy_cluster_circuit_breakers_default_cx_open{
+  cluster_name=~"outbound[|]9080[|][^|]*[|]backend[.]default[.]svc[.]cluster[.]local"
+})
+```
+
+실제 cluster 이름/port, export한 stats와 source scrape 범위를 확인합니다. `cx_open`은0/1 flag이지 connection capacity가 아니므로 활성 연결 수를 나누어 saturation 백분율을 계산할 수 없습니다. Backend replica를 늘려도 client의 고정 pool limit이 올라가지는 않습니다. Limit·의존성을 진단한 뒤 scaling target을 선택하세요.
+
+### 4. Scaling Policy는 부하 Tier가 아님
+
+Percent/Pods 정책 목록과 `selectPolicy: Max`/`Min`은 rolling period의 허용 변경량을 제한합니다. 주석에 쓴 low/medium/high 부하 구간을 자동 선택하지 않습니다. 본문의 behavior 예제로 속도를 제한하고 실제 workload 반응을 검증하세요.
+
+### 5. Gateway에서 본 Backend 수요
+
+```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: frontend-cluster2-scaler
+  name: backend-gateway-rps
   namespace: default
 spec:
   scaleTargetRef:
-    name: frontend
-  minReplicaCount: 3
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
   maxReplicaCount: 20
-
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
   triggers:
   - type: prometheus
+    name: gateway-backend-rps
+    metricType: AverageValue
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # 글로벌 트래픽의 40%
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="frontend",
-          source_cluster="cluster2"
-        }[1m])) * 0.4
-      threshold: '400'
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="source",source_workload="istio-ingressgateway",source_workload_namespace="istio-system",destination_service_name="backend",destination_service_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
+
+실제 gateway workload 이름과 destination Service label을 확인합니다. 특정 backend로 향하는 해당 gateway의 트래픽을 측정합니다. `envoy_http_downstream_rq_active`는 pending 연결이 아닌 active HTTP 요청이며 gateway 전체에는 다른 서비스도 포함됩니다. 이 aggregate로 임의의 backend를 확장하지 마세요.
+
+양수 minimum을 유지하는 예제입니다.0 replica를 고려한다면 독립 gateway/interceptor가 endpoint0에서도 필요한 metric을 내고 원하는 buffering/error 동작을 제공하는지 먼저 확인해야 합니다.
+
 
 ## 모범 사례
 
-### 1. 메트릭 수집 최적화
+### 1. Target마다 하나의 Autoscaler 관리자
 
-```yaml
-# Prometheus scrape 간격 조정
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus
-  namespace: istio-system
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 15s  # 기본 15초
-      evaluation_interval: 15s
+같은 target에 여러 예시 ScaledObject나 별도 “backup HPA”를 설치하지 마세요. 기존 HPA ownership·GitOps replicas 필드를 조율해야 합니다. 한 ScaledObject에 여러 metric을 넣을 수 있으며, native HPA는 metric error가 있으면 downscale을 건너뛰면서도 유효한 upscale을 허용할 수 있습니다.
 
-    scrape_configs:
-    # Istio 메트릭은 더 자주 수집
-    - job_name: 'istio-mesh'
-      scrape_interval: 10s  # 10초
-      kubernetes_sd_configs:
-      - role: endpoints
-        namespaces:
-          names:
-          - default
-          - production
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-        action: keep
-        regex: true
-```
+KEDA 2.20 fallback은 CPU/memory를 제외한 AverageValue와 Value trigger를 지원하며 ScaledJob이 아닌 ScaledObject에 적용됩니다. CPU/memory trigger는 자체 metrics-server/request 전제조건이 필요하고 독립 failover controller가 아닙니다.
 
-### 2. 스케일링 안정성 확보
+### 2. Benchmark가 아닌 용량 계산 예제
+
+기존 수치를 **가정 입력값**으로 유지합니다.
+
+| 가정/계산 | 결과 |
+|---|---|
+| 측정했다고 가정한 Pod당200 RPS × 선택한 활용 계수70% |140 RPS/Pod target |
+| 평상시500 /140을 올림 |4 replicas |
+| 피크2000 /140을 올림 |15 replicas |
+| 추가 여유로 선택한 최대값 |20, 실제 배치 가능한 용량 검토 필요 |
+
+이 감사에서 측정한 값이 아닙니다. 승인된 bounded 부하 시험으로 알려진 replica/target의 latency·error·resource·readiness를 기록하세요. 여러 replica로 분산하는 Service 시험을 바로 한 Pod의 용량으로 해석할 수 없습니다.
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: stable-scaler
+  name: reviews-capacity-example
   namespace: default
 spec:
   scaleTargetRef:
-    name: myapp
-
-  # 1. 적절한 폴링 간격
-  pollingInterval: 30  # 너무 짧으면 불안정, 너무 길면 반응 느림
-
-  # 2. 충분한 쿨다운
-  cooldownPeriod: 300  # 5분은 일반적으로 적절
-
-  # 3. 안전한 최소/최대값
-  minReplicaCount: 2  # 0은 위험, 최소 2개 권장
-  maxReplicaCount: 20  # 클러스터 용량의 70% 이하
-
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 4
+  maxReplicaCount: 20
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
         scaleDown:
-          # 4. 긴 안정화 윈도우
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: rps
+    metricType: AverageValue
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+      threshold: '140'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 4
+    behavior: currentReplicasIfHigher
+```
+
+“maxReplicaCount는 cluster 용량70% 이하”라는 보편적 규칙은 없습니다. Pod 수는 CPU/메모리/IP/quota 백분율이 아닙니다. HPA/KEDA는 workload를 확장하며 node 용량에는 별도 provisioning/autoscaler 설정이 필요합니다.
+
+### 3. Resource와 Health
+
+실제 container 이름·health endpoint를 확인한 후 **기존** Deployment/container에 병합하는 조각입니다. 실제 image·selector·label은 보존합니다.
+
+```yaml
+spec:
+  template:
+    spec:
+      containers:
+      - name: reviews
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+```
+
+Requests/limits·probe는 튜닝 입력이며 throughput 실측 보장이 아닙니다. Readiness와 시작/drain이 용량 사용 시점에 영향을 줍니다. Downstream 장애만으로 정상 process를 반복 재시작하는 liveness 정책은 피해야 합니다.
+
+### 4. 여러 Cluster와 Region
+
+각 target cluster에서 검증한 cluster-local datasource를 사용하거나 federated store에 실제 존재하는 cluster label을 명시합니다. Local destination-reporter 데이터라면 다음 예제는 그 cluster backend에 도달한 전체 부하를 셉니다.
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: frontend-local-demand
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 3
+  maxReplicaCount: 30
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: local-rps
+    metricType: AverageValue
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="frontend",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
+
+각 설정은 해당 cluster context에 적용합니다. Metadata의 `region` label이 ScaledObject를 원격 cluster로 보내지는 않습니다. `source_cluster`는 출발지이지 확장할 목적지 용량이 아니며, 이미 필터한 수요에0.6/0.4를 곱해 global traffic split을 구현할 수 없습니다.
+
+`*-us-*` 서비스명은 client 지리 정보가 아니고 `destination_region`도 항상 있는 기본 Istio label이 아닙니다. Region별 SLO에는 검증한 telemetry·workload 용량이 필요합니다.
+
+### 5. 결제와 Queue Workload
+
+결제 workload는 보정한 demand와 보수적인 변경 제한으로 시작하고 latency/error를 품질 지표로 관찰할 수 있습니다.
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: payment-capacity-example
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: payment-service
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 5
+  maxReplicaCount: 50
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
           stabilizationWindowSeconds: 600
           policies:
           - type: Percent
             value: 10
-            periodSeconds: 120
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: rps
+    metricType: AverageValue
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="payment-service",destination_workload_namespace="production"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 5
+    behavior: currentReplicasIfHigher
 ```
 
-### 3. 모니터링 및 알림
+100 RPS target과 제한값은 설명용입니다. Ratio trigger를 추가하기 전에 병목 원인·멱등성·downstream 제한·대표 실패 동작을 확인하세요.
+
+Queue worker는 replica0에서도 queue를 관측할 수 있습니다.
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: data-processor-queue
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: data-processor
+  pollingInterval: 30
+  cooldownPeriod: 600
+  minReplicaCount: 0
+  maxReplicaCount: 30
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: aws-sqs-queue
+    name: backlog
+    metricType: AverageValue
+    authenticationRef:
+      name: keda-aws
+    metadata:
+      queueURL: https://sqs.us-west-2.amazonaws.com/123456789012/data-processing-queue
+      queueLength: '10'
+      activationQueueLength: '0'
+      scaleOnInFlight: 'true'
+      scaleOnDelayed: 'false'
+      awsRegion: us-west-2
+```
+
+예시 account/queue URL을 교체하고 참조한 identity를 구성합니다. `queueLength: "10"`은 replica당 backlog target이지 열 개에서 활성화하는 임계값이 아닙니다. 명시한 activation threshold0에서는 양수 backlog로 활성화합니다. Visible·in-flight 메시지를 포함하고 delayed 메시지는 제외하므로 처리 concurrency·visibility timeout·종료 동작과 맞춰야 합니다.
+
+Istio HTTP latency가 SQS job 처리 시간은 아닙니다.0-replica worker에 관측할 수 없는 Pod-latency trigger를 넣는 대신 업무 처리 시간을 별도로 계측하세요.
+
+### 6. 모니터링
+
+Scaler 상태에는 **operator** metric을 노출·수집해야 합니다. Metrics adapter metric만으로 모든 operator counter를 얻을 수 없습니다. KEDA의 `namespace` metric label은 scale 대상 namespace이므로 exporter Pod namespace로 덮어쓰지 않습니다.
+
+기존 Prometheus 설정에 병합할 scrape 조각이며 EndpointSlice·Service·Pod에 대한 namespace 범위 discovery RBAC가 필요합니다.
+
+```yaml
+scrape_configs:
+- job_name: keda-components
+  kubernetes_sd_configs:
+  - role: endpointslice
+    namespaces:
+      names:
+      - keda
+  relabel_configs:
+  - source_labels:
+    - __meta_kubernetes_service_name
+    regex: keda-operator|keda-operator-metrics-apiserver
+    action: keep
+  - source_labels:
+    - __meta_kubernetes_endpointslice_port_name
+    regex: metrics
+    action: keep
+  - source_labels:
+    - __meta_kubernetes_namespace
+    target_label: exporter_namespace
+  - source_labels:
+    - __meta_kubernetes_pod_name
+    target_label: exporter_pod
+```
+
+HA operator Pod들을 하나의 load-balanced Service로 번갈아 수집하지 않고 각 endpoint를 발견합니다. 실제 Service/port 이름, target label, TLS/mesh 접근과 scrape 결과를 확인하세요. Prometheus Operator라면 생성된 ConfigMap을 덮어쓰지 말고 동등한 ServiceMonitor를 선택되도록 구성합니다.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -956,653 +1107,347 @@ metadata:
 spec:
   groups:
   - name: keda-scaling
-    interval: 30s
     rules:
-    # 최대 레플리카에 도달
     - alert: KEDAMaxReplicasReached
-      expr: |
-        kube_horizontalpodautoscaler_status_current_replicas
-        >= kube_horizontalpodautoscaler_spec_max_replicas
+      expr: |-
+        max by (namespace, horizontalpodautoscaler) (
+         kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler=~"keda-hpa-.*"}
+        ) >= on(namespace, horizontalpodautoscaler)
+        max by (namespace, horizontalpodautoscaler) (
+         kube_horizontalpodautoscaler_spec_max_replicas{horizontalpodautoscaler=~"keda-hpa-.*"}
+        )
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "KEDA scaled to maximum replicas"
-        description: "{{ $labels.horizontalpodautoscaler }} has reached max replicas ({{ $value }})"
-
-    # 스케일링 실패
-    - alert: KEDAScalingFailed
-      expr: |
-        increase(keda_scaler_errors_total[5m]) > 0
-      labels:
-        severity: critical
-      annotations:
-        summary: "KEDA scaling failed"
-        description: "KEDA scaler {{ $labels.scaledObject }} has errors"
-
-    # 빈번한 스케일링 (Flapping)
-    - alert: KEDAFlapping
-      expr: |
-        rate(keda_scaler_active[10m]) > 0.1
-      for: 10m
+        summary: KEDA-managed HPA is at its configured maximum
+    - alert: KEDAScalerErrors
+      expr: sum by (namespace, scaledObject) (increase(keda_scaler_detail_errors_total[5m])) > 0
+      for: 2m
       labels:
         severity: warning
       annotations:
-        summary: "KEDA is flapping"
-        description: "ScaledObject {{ $labels.scaledObject }} is scaling too frequently"
+        summary: Scaler retrieval errors observed; inspect source/identity and fallback
+    - alert: KEDAReplicaCountChurn
+      expr: |-
+        max by (namespace, horizontalpodautoscaler) (
+         changes(kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler=~"keda-hpa-.*"}[10m])
+        ) > 6
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Frequent observed replica-count changes; inspect demand, rollout and stabilization
 ```
 
-### 4. 리소스 제한 설정
+PrometheusRule에는 맞는 Operator rule selector/namespace가 필요합니다. HPA filter는 KEDA 기본 이름 prefix를 사용하므로 custom HPA 이름에 맞춰 바꿉니다. Released error counter는 `keda_scaler_detail_errors_total`이며 gauge인 `keda_scaler_active`에 `rate()`를 적용해 replica flapping을 측정하면 안 됩니다.
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: reviews
-  namespace: default
-spec:
-  replicas: 3
-  template:
-    spec:
-      containers:
-      - name: reviews
-        image: istio/examples-bookinfo-reviews-v1:1.17.0
-
-        # 리소스 요청/제한 (스케일링 계산에 중요)
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 200m
-            memory: 256Mi
-
-        # Readiness Probe (스케일 아웃 시 안전성)
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 9080
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-
-        # Liveness Probe
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-```
+Replica count 변화는 정상 demand·rollout일 수도 있습니다. 경고는 조사 신호이지 scaling 실패나 준비된 용량의 충분함을 증명하지 않습니다.
 
 ## 문제 해결
 
-### 1. KEDA가 메트릭을 가져오지 못함
-
-**증상**:
 ```bash
-kubectl get scaledobject -n default
-# STATUS: Unknown
-```
+kubectl get scaledobject reviews-rps-scaler -n default -o yaml
+kubectl describe hpa keda-hpa-reviews-rps-scaler -n default
+kubectl logs -n keda deployment/keda-operator
+kubectl get apiservice v1beta1.external.metrics.k8s.io
+kubectl get pods -n default -o wide
 
-**원인 분석**:
-
-```bash
-# 1. KEDA Operator 로그 확인
-kubectl logs -n keda -l app=keda-operator
-
-# 2. ScaledObject 상태 확인
-kubectl describe scaledobject reviews-rps-scaler -n default
-
-# 3. Prometheus 연결 테스트
-kubectl run curl-test --image=curlimages/curl -it --rm -- \
-  curl -s http://prometheus.istio-system.svc:9090/api/v1/query \
-  --data-urlencode 'query=up'
-```
-
-**해결 방법**:
-
-1. **Prometheus 주소 확인**:
-```bash
-# Prometheus Service 확인
-kubectl get svc -n istio-system | grep prometheus
-
-# ScaledObject에서 올바른 주소 사용
-serverAddress: http://prometheus.istio-system.svc:9090
-```
-
-2. **PromQL 쿼리 테스트**:
-```bash
-# Prometheus UI에서 직접 쿼리 테스트
+# Port-forward 동안 다른 터미널에서 로컬 query를 확인합니다.
 kubectl port-forward -n istio-system svc/prometheus 9090:9090
-
-# 브라우저: http://localhost:9090
-# 쿼리 입력 후 결과 확인
 ```
 
-### 2. 스케일링이 너무 느림
-
-**증상**: 트래픽 급증 시 스케일 아웃이 늦음
-
-**해결 방법**:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: fast-scaler
-spec:
-  # 1. 폴링 간격 단축
-  pollingInterval: 15  # 30초 → 15초
-
-  # 2. 스케일 업 안정화 윈도우 제거
-  advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleUp:
-          stabilizationWindowSeconds: 0  # 즉시 반응
-          policies:
-          - type: Pods
-            value: 5  # 한 번에 5개씩
-            periodSeconds: 30
-
-  # 3. 낮은 activation threshold
-  triggers:
-  - type: prometheus
-    metadata:
-      query: sum(rate(istio_requests_total{...}[1m]))
-      threshold: '100'
-      activationThreshold: '30'  # 낮은 임계값으로 조기 활성화
+```bash
+promtool query instant http://127.0.0.1:9090 'sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))'
 ```
 
-### 3. Flapping (불안정한 스케일링)
+로컬 port-forward가 KEDA Pod의 연결이나 credential을 증명하지는 않습니다. 실제 component 경로의 provider error, DNS, TLS/mesh policy, metric 존재/label과 aggregated API 가용성을 확인합니다.
 
-**증상**: Pod 수가 계속 증가/감소 반복
+느린 scaling은 pollingInterval을 줄이기 전에 source age·lookback·HPA sync/behavior·scheduling·image pull·readiness를 확인합니다. 양수 minimum의 일반1→N에는 activation threshold가 속도 조절이 아닙니다. 불안정한 count는 workload의 실제 반응과 HPA 안정화/속도 제한을 조사하며 cooldownPeriod로 일반 downscale을 제어하지 않습니다.
 
-**원인**: 임계값이 너무 민감하거나 안정화 기간 부족
+CloudWatch는 반환 timestamp, 모든 dimension, statistic/unit, 수집 창, offset과 IAM을 확인합니다. 두 번째 metric의 threshold를 높인다고 수동 대기 backup이 되지는 않습니다.
 
-**해결 방법**:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: stable-scaler
-spec:
-  # 1. 더 긴 쿨다운
-  cooldownPeriod: 600  # 10분
-
-  # 2. 더 긴 PromQL 평가 기간
-  triggers:
-  - type: prometheus
-    metadata:
-      query: |
-        sum(rate(istio_requests_total{...}[5m]))  # 1m → 5m
-      threshold: '100'
-
-  # 3. 보수적인 스케일 다운
-  advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleDown:
-          stabilizationWindowSeconds: 600
-          policies:
-          - type: Percent
-            value: 5  # 5%씩만 감소
-            periodSeconds: 180
-```
-
-### 4. CloudWatch 지연 시간
-
-**증상**: CloudWatch 메트릭이 실시간이 아님 (1-3분 지연)
-
-**해결 방법**:
-
-```yaml
-# Prometheus 메트릭을 주로 사용하고, CloudWatch는 보조로
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: hybrid-metrics-scaler
-spec:
-  triggers:
-  # 주 메트릭: Prometheus (실시간)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: sum(rate(istio_requests_total{...}[1m]))
-      threshold: '1000'
-
-  # 보조 메트릭: CloudWatch (추세 분석)
-  - type: aws-cloudwatch
-    metadata:
-      namespace: IstioMetrics
-      metricName: IstioRequestsTotal
-      targetMetricValue: '5000'  # 더 높은 임계값
-      metricStatPeriod: '300'  # 5분 집계
-```
-
-## 실전 예제
-
-### 예제 1: 이커머스 결제 서비스
-
-지연 시간이 매우 중요한 서비스:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: payment-service-scaler
-  namespace: production
-spec:
-  scaleTargetRef:
-    name: payment-service
-    kind: Deployment
-
-  pollingInterval: 15  # 빠른 반응
-  cooldownPeriod: 180  # 3분 쿨다운
-  minReplicaCount: 5   # 항상 5개 이상 유지
-  maxReplicaCount: 50
-
-  advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleUp:
-          stabilizationWindowSeconds: 0
-          policies:
-          - type: Percent
-            value: 100  # 빠르게 2배로
-            periodSeconds: 30
-        scaleDown:
-          stabilizationWindowSeconds: 900  # 15분 안정화
-          policies:
-          - type: Percent
-            value: 5
-            periodSeconds: 300  # 5분마다 5%씩
-
-  triggers:
-  # P50 지연 시간 (일반적인 경우)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.50,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="payment-service",
-            destination_workload_namespace="production"
-          }[1m])) by (le)
-        )
-      threshold: '50'  # P50 > 50ms
-      activationThreshold: '30'
-
-  # P95 지연 시간 (품질 보장)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="payment-service",
-            destination_workload_namespace="production"
-          }[1m])) by (le)
-        )
-      threshold: '200'  # P95 > 200ms
-
-  # 에러율 (5% 이상이면 긴급 스케일 아웃)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        (
-          sum(rate(istio_requests_total{
-            destination_workload="payment-service",
-            response_code=~"5.*"
-          }[1m]))
-          /
-          sum(rate(istio_requests_total{
-            destination_workload="payment-service"
-          }[1m]))
-        ) * 100
-      threshold: '5'
-```
-
-### 예제 2: 데이터 처리 서비스
-
-배치 처리 및 큐 기반 스케일링:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: data-processor-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: data-processor
-    kind: Deployment
-
-  pollingInterval: 60  # 배치는 느린 반응 허용
-  cooldownPeriod: 600  # 10분 쿨다운
-  minReplicaCount: 0   # Scale to Zero 허용
-  maxReplicaCount: 30
-
-  triggers:
-  # SQS 큐 길이 (주 메트릭)
-  - type: aws-sqs-queue
-    metadata:
-      queueURL: https://sqs.us-west-2.amazonaws.com/123456789/data-processing-queue
-      queueLength: '10'  # 큐에 10개 이상이면 활성화
-      awsRegion: us-west-2
-      identityOwner: operator
-
-  # Istio 처리 시간 (보조 메트릭)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="data-processor"
-          }[5m])) by (le)
-        )
-      threshold: '5000'  # 5초 이상 소요 시 스케일 아웃
-```
-
-### 예제 3: 멀티 리전 글로벌 서비스
-
-지연 시간 기반 지역별 스케일링:
-
-```yaml
-# US Region
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: api-us-scaler
-  namespace: default
-  labels:
-    region: us-east-1
-spec:
-  scaleTargetRef:
-    name: api-service
-  minReplicaCount: 3
-  maxReplicaCount: 30
-
-  triggers:
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # US 사용자 트래픽만 집계
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="api-service",
-          source_canonical_service=~".*-us-.*"
-        }[1m]))
-      threshold: '500'
-
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # US 지역 P95 지연 시간
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="api-service",
-            destination_region="us-east-1"
-          }[2m])) by (le)
-        )
-      threshold: '100'  # US 사용자는 100ms 목표
----
-# EU Region
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: api-eu-scaler
-  namespace: default
-  labels:
-    region: eu-west-1
-spec:
-  scaleTargetRef:
-    name: api-service
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  triggers:
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="api-service",
-          source_canonical_service=~".*-eu-.*"
-        }[1m]))
-      threshold: '300'
-
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="api-service",
-            destination_region="eu-west-1"
-          }[2m])) by (le)
-        )
-      threshold: '150'  # EU는 150ms 허용
-```
 
 ## 참고: KEDA 설치
 
-> **참고**: 이 섹션은 KEDA를 처음 설치하는 경우에만 필요합니다. 이미 설치되어 있다면 [Prometheus 메트릭 기반 스케일링](#prometheus-메트릭-기반-스케일링)부터 시작하세요.
+### 고정 Chart와 실제 호환성
 
-### Helm으로 설치
+KEDA 2.20의 공개 배포 요구사항은 Kubernetes 1.30 이상이며 chart metadata의 1.23 최소값보다 높습니다. Helm이 버전을 허용한다고 runtime 지원이 증명되지는 않습니다. Istio 1.31의 Kubernetes 1.32–1.36 지원 범위와 관리형 플랫폼의 지원 버전이 겹치는 구간을 사용하세요.
 
-```bash
-# KEDA Helm 레포지토리 추가
-helm repo add kedacore https://kedacore.github.io/charts
-helm repo update
-
-# KEDA 설치
-helm install keda kedacore/keda \
-  --namespace keda \
-  --create-namespace \
-  --set prometheus.metricServer.enabled=true \
-  --set prometheus.metricServer.port=9022 \
-  --set operator.replicaCount=2
-
-# 설치 확인
-kubectl get pods -n keda
-# 출력:
-# NAME                                      READY   STATUS
-# keda-operator-xxxxx                       1/1     Running
-# keda-operator-metrics-apiserver-xxxxx     1/1     Running
-```
-
-### AWS IRSA 설정 (CloudWatch 사용 시)
-
-CloudWatch 메트릭을 사용하는 경우 KEDA Operator에 IAM 권한이 필요합니다:
-
-```bash
-# IRSA 설정
-eksctl create iamserviceaccount \
-  --name keda-operator \
-  --namespace keda \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess \
-  --approve \
-  --override-existing-serviceaccounts
-
-# ServiceAccount 확인
-kubectl get sa keda-operator -n keda -o yaml | grep eks.amazonaws.com/role-arn
-```
-
-### CloudWatch 메트릭 전송 설정 (선택 사항)
-
-CloudWatch 메트릭 기반 스케일링을 사용하려면 ADOT Collector로 Istio 메트릭을 전송해야 합니다:
-
-#### 1단계: ADOT Collector 설치
+새 설치 또는 기존 값을 보존하는 검토된 업그레이드에는 다음 값을 사용합니다. 업그레이드는 해당 release의 변경사항과 CRD ownership/migration 절차도 먼저 확인해야 합니다.
 
 ```yaml
-apiVersion: opentelemetry.io/v1alpha1
-kind: OpenTelemetryCollector
-metadata:
-  name: istio-metrics-collector
-  namespace: istio-system
-spec:
-  mode: deployment
-  serviceAccount: adot-collector
-  config: |
-    receivers:
-      prometheus:
-        config:
-          scrape_configs:
-          - job_name: 'istio-mesh'
-            scrape_interval: 60s  # CloudWatch는 1분 단위 권장
-            kubernetes_sd_configs:
-            - role: endpoints
-              namespaces:
-                names:
-                - default
-            relabel_configs:
-            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-              action: keep
-              regex: true
-
-    processors:
-      batch:
-        timeout: 60s
-      metricstransform:
-        transforms:
-        - include: istio_requests_total
-          action: update
-          new_name: IstioRequestsTotal
-        - include: istio_request_duration_milliseconds
-          action: update
-          new_name: IstioRequestDuration
-
-    exporters:
-      awsemf:
-        namespace: IstioMetrics
-        region: us-west-2
-        dimension_rollup_option: NoDimensionRollup
-        metric_declarations:
-        - dimensions: [[destination_workload, destination_workload_namespace]]
-          metric_name_selectors:
-          - IstioRequestsTotal
-          - IstioRequestDuration
-
-    service:
-      pipelines:
-        metrics:
-          receivers: [prometheus]
-          processors: [batch, metricstransform]
-          exporters: [awsemf]
+operator:
+  replicaCount: 2
+prometheus:
+  operator:
+    enabled: true
+  metricServer:
+    enabled: true
+    port: 9022
 ```
 
-#### 2단계: IRSA 설정
-
 ```bash
-# IRSA 정책 생성
-cat > adot-cloudwatch-policy.json <<EOF
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update kedacore
+helm upgrade --install keda kedacore/keda --version 2.20.2   --namespace keda --create-namespace --values keda-values.yaml
+kubectl get deployments,services,pods -n keda
+```
+
+`operator.replicaCount: 2`와 metrics adapter의 9022 port override는 유효한 chart 값입니다. 9022는 기본값 8080을 명시적으로 바꾼 값이며 operator metric도 8080으로 활성화합니다. Operator replica 두 개만으로 adapter/webhook이나 전체 scaling 경로의 HA가 완성되지는 않습니다.
+
+Component에 Istio sidecar를 주입한다면 KEDA는 자체 TLS로 보호하는 내부 protocol에 다음 선택적 port 제외 설정을 문서화합니다.
+
+```yaml
+podAnnotations:
+  keda:
+    traffic.sidecar.istio.io/excludeInboundPorts: '9666'
+    traffic.sidecar.istio.io/excludeOutboundPorts: 9443,6443
+  metricsAdapter:
+    traffic.sidecar.istio.io/excludeInboundPorts: '6443'
+    traffic.sidecar.istio.io/excludeOutboundPorts: 9666,9443
+  webhooks:
+    traffic.sidecar.istio.io/excludeInboundPorts: '9443'
+    traffic.sidecar.istio.io/excludeOutboundPorts: 9666,6443
+```
+
+병합 전에 실제 port와 injection 설정을 확인하세요. KEDA의 자체 TLS는 유지되며 제외한 트래픽에는 Istio authorization이 적용되지 않습니다. 전체 transport security를 해제하는 설정이 아닙니다. API server aggregation, admission, operator↔adapter, Prometheus 연결을 확인하세요.
+
+### AWS Reader Identity
+
+실제 operator ServiceAccount로 제한한 EKS OIDC trust와 IAM role을 별도로 검토·구성합니다. 기존 ServiceAccount를 무조건 덮어쓰지 말고 해당 Helm 값을 반영하세요.
+
+```yaml
+podIdentity:
+  aws:
+    irsa:
+      enabled: true
+      roleArn: arn:aws:iam::123456789012:role/KedaMetricsReader
+```
+
+본문 CloudWatch scaler의 released 구현은 GetMetricData를 호출합니다.
+
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": ["cloudwatch:PutMetricData"],
+      "Action": [
+        "cloudwatch:GetMetricData"
+      ],
       "Resource": "*",
       "Condition": {
         "StringEquals": {
-          "cloudwatch:namespace": "IstioMetrics"
+          "aws:RequestedRegion": "us-west-2"
         }
       }
     }
   ]
 }
-EOF
-
-aws iam create-policy \
-  --policy-name ADOTCollectorCloudWatchPolicy \
-  --policy-document file://adot-cloudwatch-policy.json
-
-eksctl create iamserviceaccount \
-  --name adot-collector \
-  --namespace istio-system \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ADOTCollectorCloudWatchPolicy \
-  --approve
 ```
 
-**설치 완료 후** [Prometheus 메트릭 기반 스케일링](#prometheus-메트릭-기반-스케일링) 또는 [CloudWatch 메트릭 기반 스케일링](#cloudwatch-메트릭-기반-스케일링) 섹션으로 돌아가세요.
+이는 Region 범위 metric 읽기 권한이며 metric namespace별 권한 경계가 아닙니다. AWS 예제의 `cloudwatch:namespace` 조건은 **PutMetricData 발행**을 제한하며 이 query에 적용되지 않습니다. 별도 CloudWatch PromQL API의 IAM 요구사항을 이 scaler에 그대로 대입하지 마세요.
 
+SQS 예제를 사용한다면 operator에는 해당 queue의 attribute 읽기 권한도 필요합니다.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": "arn:aws:sqs:us-west-2:123456789012:data-processing-queue"
+    }
+  ]
+}
+```
+
+Queue worker에는 별도의 receive/delete/visibility 권한을 부여합니다. Scaler의 읽기 role이 이를 제공하지는 않습니다. Operator identity를 사용할 ScaledObject와 TriggerAuthentication의 생성·변경 권한도 제한하세요.
+
+### 선택적 CloudWatch EMF 발행
+
+이 예제는 Operator의 minor 버전 일치 권고에 맞춰 **upstream Collector Contrib 0.158.0과 Operator 0.158.0**을 사용합니다. Operator 0.158의 Kubernetes 지원 범위는 1.25–1.36입니다. Custom image는 operator가 자동 업그레이드하지 않습니다. ADOT를 선택할 때는 필요한 component와 설정을 별도로 확인해야 하며 아래 설정이 임의의 ADOT image에서 검증되었다고 가정할 수 없습니다.
+
+먼저 기존 Prometheus에 다음 recording-rule 파일을 로드합니다. PrometheusRule을 사용한다면 동등한 내용과 적절한 선택 label을 사용하세요.
+
+```yaml
+groups:
+- name: istio-scaling-export
+  interval: 30s
+  rules:
+  - record: istio_scaling_requests_per_second
+    expr: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+    labels:
+      destination_workload: reviews
+      destination_workload_namespace: default
+  - record: istio_scaling_p95_milliseconds
+    expr: |-
+      (histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+        and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+      or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+    labels:
+      destination_workload: reviews
+      destination_workload_namespace: default
+```
+
+표시한 workload만 발행합니다. 이미 계산한 RPS와 rolling-window p95 gauge이며 누적 request counter나 원래 latency 분포를 재구성할 수 있는 데이터가 아닙니다.
+
+호환 Operator/CRD와 검토된 publisher role/log group을 준비한 뒤 다음 설정을 사용합니다.
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: istio-metrics-publisher
+  namespace: istio-system
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/IstioMetricsPublisher
 ---
-
-## 참고 자료
-
-### 공식 문서
-
-- [KEDA 공식 문서](https://keda.sh/docs/)
-- [KEDA Prometheus Scaler](https://keda.sh/docs/scalers/prometheus/)
-- [KEDA AWS CloudWatch Scaler](https://keda.sh/docs/scalers/aws-cloudwatch/)
-- [Istio 메트릭](https://istio.io/latest/docs/reference/config/metrics/)
-
-### 관련 문서
-
-- [Observability](../observability/README.md) - Prometheus 및 메트릭 수집
-- [Resilience](../resilience/README.md) - Circuit Breaker 및 복원력
-- [Traffic Management](../traffic-management/README.md) - Istio 트래픽 관리
-
-## 요약
-
-### 메트릭 소스 선택 가이드
-
-| 메트릭 소스 | 장점 | 단점 | 권장 사용 |
-|------------|------|------|----------|
-| **Prometheus** | • 실시간 반응 (15-30초)<br>• PromQL 강력한 쿼리<br>• 클러스터 내부 통신 | • 장기 보관 비용<br>• 클러스터 의존성 | 실시간 스케일링, 대부분의 워크로드 |
-| **CloudWatch** | • AWS 서비스 통합<br>• 장기 보관<br>• 멀티 리전 지원 | • 1-3분 지연<br>• 비용 (메트릭 수에 비례) | 추세 분석, AWS 서비스 조합 |
-
-### 스케일링 전략 선택 가이드
-
-| 워크로드 유형 | 주 메트릭 | 보조 메트릭 | 권장 설정 |
-|-------------|----------|-----------|----------|
-| **API 서버** | RPS (Pod당) | P95 Latency | `pollingInterval: 30`, `cooldownPeriod: 300` |
-| **결제/주문** | P50/P95 Latency | 에러율 | `pollingInterval: 15`, 빠른 스케일 아웃 |
-| **데이터 처리** | 큐 길이, P95 Latency | CPU/Memory | `pollingInterval: 60`, Scale to Zero 허용 |
-| **웹 프론트엔드** | RPS, P95 Latency | Gateway 메트릭 | Cron 기반 사전 스케일링 |
-| **마이크로서비스** | RPS, Circuit Breaker | 에러율 | 다단계 스케일링 정책 |
-
-### 프로덕션 체크리스트
-
-스케일링 정책을 프로덕션에 적용하기 전 확인 사항:
-
-- [ ] **임계값 검증**: 부하 테스트로 적절한 threshold 값 확인
-- [ ] **안정화 설정**: `stabilizationWindowSeconds` 충분히 설정 (스케일 다운 최소 300초)
-- [ ] **리소스 제한**: Pod의 `requests`와 `limits` 명확히 정의
-- [ ] **Health Check**: Readiness/Liveness Probe 설정
-- [ ] **모니터링**: `KEDAMaxReplicasReached`, `KEDAScalingFailed` 알림 설정
-- [ ] **Flapping 방지**: 긴 PromQL 평가 기간 (`[5m]`) 및 보수적 스케일 다운
-- [ ] **최소/최대값**: 클러스터 용량의 70% 이하로 `maxReplicaCount` 설정
-- [ ] **Fallback**: Prometheus 장애 시 CPU/Memory 기반 HPA 백업
-
-### 권장 시작 경로
-
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: istio-scaling
+  namespace: istio-system
+spec:
+  mode: deployment
+  replicas: 1
+  serviceAccount: istio-metrics-publisher
+  image: otel/opentelemetry-collector-contrib:0.158.0
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  config:
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+          - job_name: istio-scaling-federate
+            scrape_interval: 60s
+            honor_labels: true
+            metrics_path: /federate
+            params:
+              match[]:
+              - '{__name__=~"istio_scaling_requests_per_second|istio_scaling_p95_milliseconds"}'
+            static_configs:
+            - targets:
+              - prometheus.istio-system.svc.cluster.local:9090
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 256
+        spike_limit_mib: 64
+      metricstransform:
+        transforms:
+        - include: istio_scaling_requests_per_second
+          action: update
+          new_name: IstioRequestsPerSecond
+          operations:
+          - action: add_label
+            new_label: ClusterName
+            new_value: eks-demo
+        - include: istio_scaling_p95_milliseconds
+          action: update
+          new_name: IstioP95LatencyMilliseconds
+          operations:
+          - action: add_label
+            new_label: ClusterName
+            new_value: eks-demo
+      batch:
+        timeout: 60s
+        send_batch_size: 256
+    exporters:
+      awsemf:
+        namespace: IstioScaling
+        region: us-west-2
+        log_group_name: /aws/otel/istio-scaling
+        log_stream_name: eks-demo
+        dimension_rollup_option: NoDimensionRollup
+        metric_declarations:
+        - dimensions:
+          - - ClusterName
+            - destination_workload
+            - destination_workload_namespace
+          metric_name_selectors:
+          - ^IstioRequestsPerSecond$
+          - ^IstioP95LatencyMilliseconds$
+        metric_descriptors:
+        - metric_name: IstioRequestsPerSecond
+          unit: Count/Second
+          overwrite: true
+        - metric_name: IstioP95LatencyMilliseconds
+          unit: Milliseconds
+          overwrite: true
+    service:
+      extensions:
+      - health_check
+      pipelines:
+        metrics:
+          receivers:
+          - prometheus
+          processors:
+          - memory_limiter
+          - metricstransform
+          - batch
+          exporters:
+          - awsemf
 ```
-1단계: RPS 기반 스케일링 구현
-   └─> 단일 메트릭으로 시작, 임계값 조정
 
-2단계: Latency 메트릭 추가
-   └─> P95 지연 시간 모니터링 및 스케일링
+`v1beta1`의 config는 object입니다. 이 Operator release는 구형 `v1alpha1`도 계속 serve하므로 제거된 API라고 설명하면 안 됩니다. 여기서는 현재 형식과 필요한 component가 포함된 명시적 Contrib image를 사용합니다.
 
-3단계: 복합 메트릭 전략
-   └─> RPS + Latency 조합으로 안정성 확보
+Collector는 이름을 제한한 recording metric 두 개만 federation으로 읽고 workload dimension을 보존하며 설정한 ClusterName을 추가해 고정 log stream으로 EMF를 보냅니다. Namespace, metric 이름, unit, 세 dimension을 CloudWatch scaler와 일치시키세요. EMF exporter는 NaN/Inf를 버립니다. Recording expression은 관측된 idle 0과 telemetry 부재를 구분합니다.
 
-4단계: 고급 전략 적용
-   └─> Circuit Breaker, Cron, 에러율 등 추가
+Publisher replica 하나는 이 예제의 중복 polling을 피하기 위한 값이며 HA 설계가 아닙니다. 실제 Prometheus 인증/mesh 연결, publisher identity, log retention과 resource limit을 구성해야 합니다. 이번 감사에서는 Operator/controller나 EMF 전달을 AWS에 배포해 검증하지 않았습니다.
+
+Publisher log group은 retention을 관리하는 플랫폼에서 미리 생성해야 합니다. 예시 role은 해당 stream의 생성·쓰기 권한만 가집니다.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:us-west-2:123456789012:log-group:/aws/otel/istio-scaling:log-stream:eks-demo"
+    }
+  ]
+}
 ```
 
-**핵심 원칙**:
-- Prometheus로 실시간 반응
-- 복합 메트릭으로 안정성 확보
-- 보수적인 스케일 다운, 적극적인 스케일 아웃
-- 지속적인 모니터링과 임계값 조정
+EMF는 CloudWatch Logs를 경유하므로 `cloudwatch:PutMetricData` 권한만으로 이 exporter를 사용할 수 없습니다. PutMetricData의 namespace 조건이 이 Logs 호출의 metric namespace를 제한하지도 않습니다. Log 수집/보관과 생성한 custom metric에는 별도 비용이 발생하므로 cardinality와 retention을 관리하세요. Replica 감소를 곧바로 청구 비용 절감으로 해석할 수 없습니다.
+
+## 참고자료
+
+- [KEDA ScaledObject specification](https://keda.sh/docs/2.20/reference/scaledobject-spec/)
+- [Activation과 scaling](https://keda.sh/docs/2.20/concepts/scaling-deployments/)
+- [Prometheus scaler](https://keda.sh/docs/2.20/scalers/prometheus/)
+- [CloudWatch scaler](https://keda.sh/docs/2.20/scalers/aws-cloudwatch/)
+- [SQS scaler](https://keda.sh/docs/2.20/scalers/aws-sqs/)
+- [Cron scaler](https://keda.sh/docs/2.20/scalers/cron/)
+- [AWS IRSA provider](https://keda.sh/docs/2.20/authentication-providers/aws/)
+- [KEDA metric](https://keda.sh/docs/2.20/integrations/prometheus/)
+- [KEDA와 Istio](https://keda.sh/docs/2.20/integrations/istio-integration/)
+- [KEDA 배포 요구사항](https://keda.sh/docs/2.20/deploy/)
+- [Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [Istio 표준 metric](https://istio.io/latest/docs/reference/config/metrics/)
+- [Operator 0.158 호환성](https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/docs/getting-started/compatibility.md)
+- [Collector 0.158 EMF exporter](https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsemfexporter/README.md)
+- [CloudWatch EMF](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format.html)
+- [CloudWatch namespace 조건](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-namespace.html)
+- [관측성](../observability/README.md)
+- [복원력](../resilience/README.md)
+- [트래픽 관리](../traffic-management/README.md)
+
+운영 적용 전에 신호 의미, 실제 metric label/freshness, idle·missing-data 동작, 단일 scaling 관리자, 용량, 대표 실패와 복구 동작을 확인하세요. 예제 threshold, replica minimum, 시간 값은 이 검증의 시작 입력입니다.

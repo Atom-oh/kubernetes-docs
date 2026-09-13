@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/data-on-eks/spark/02-spark-operator.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed both operator release APIs/chart rendering; fixed namespaces/RBAC, Spark runtime alignment, valid executor SA/volume/timezone fields, admission/identity/metrics/retry/retention claims; 40 questions, 53 schema objects, 3 negative cases, 30 fences, 2 diagrams plus 4 mobile checks. No live cloud submission.",
+    "reviewedSha256": "5dc71eebd91f9c0dd75b989644d62c125471092a528ba15274b75a07f35d97c2"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/spark/02-spark-operator-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed both operator release APIs/chart rendering; fixed namespaces/RBAC, Spark runtime alignment, valid executor SA/volume/timezone fields, admission/identity/metrics/retry/retention claims; 40 questions, 53 schema objects, 3 negative cases, 30 fences, 2 diagrams plus 4 mobile checks. No live cloud submission.",
+    "reviewedSha256": "1c01f9c13b315bcfeef1085aaecd5b760625dc01ab1c1e8eea07018bb3dacb49"
+  },
+  {
+    "path": "en/data-on-eks/spark/02-spark-operator.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed both operator release APIs/chart rendering; fixed namespaces/RBAC, Spark runtime alignment, valid executor SA/volume/timezone fields, admission/identity/metrics/retry/retention claims; 40 questions, 53 schema objects, 3 negative cases, 30 fences, 2 diagrams plus 4 mobile checks. No live cloud submission.",
+    "reviewedSha256": "e22abca6c33a3daf260937d63c2f9db586d049b7a7d38d8b0f1c5c0767dc277c"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/spark/02-spark-operator-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed both operator release APIs/chart rendering; fixed namespaces/RBAC, Spark runtime alignment, valid executor SA/volume/timezone fields, admission/identity/metrics/retry/retention claims; 40 questions, 53 schema objects, 3 negative cases, 30 fences, 2 diagrams plus 4 mobile checks. No live cloud submission.",
+    "reviewedSha256": "9a49cae417337dd50e12a196bb12187b52fad60625ece0c95c2ad9972042755a"
+  }
+]

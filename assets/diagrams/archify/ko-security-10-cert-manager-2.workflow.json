@@ -1,0 +1,292 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ACME 인증서 발급 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "Certificate 요청",
+        "focus": [
+          "create",
+          "certreq"
+        ],
+        "note": "사용자가 Certificate CR을 생성하면 cert-manager 컨트롤러가 이를 감지해 CertificateRequest를 만든다."
+      },
+      {
+        "id": "acme",
+        "label": "ACME Order·Authorization",
+        "focus": [
+          "certreq",
+          "order",
+          "authz",
+          "challenge"
+        ],
+        "note": "도메인 목록으로 Order를 만들고, 도메인별 Authorization을 거쳐 소유권을 증명할 Challenge가 발행된다."
+      },
+      {
+        "id": "solvers",
+        "label": "Challenge 솔버",
+        "focus": [
+          "challenge",
+          "http01",
+          "dns01",
+          "verify"
+        ],
+        "note": "HTTP-01은 /.well-known/acme-challenge/ 경로로, DNS-01은 _acme-challenge TXT 레코드로 도메인 소유권을 증명한다. 와일드카드 인증서는 DNS-01이 필수다."
+      },
+      {
+        "id": "issue",
+        "label": "발급과 저장",
+        "focus": [
+          "verify",
+          "finalize",
+          "issue",
+          "secret"
+        ],
+        "note": "Let's Encrypt가 검증에 성공하면 Order를 Finalize하고 인증서를 발급하며, cert-manager가 tls.crt와 tls.key를 Secret에 저장한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "사용자"
+        },
+        "backend": {
+          "label": "cert-manager"
+        },
+        "cloud": {
+          "label": "ACME 리소스"
+        },
+        "security": {
+          "label": "Challenge 솔버"
+        },
+        "external": {
+          "label": "Let's Encrypt"
+        },
+        "database": {
+          "label": "Secret"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "req",
+      "label": "1. 사용자 · cert-manager"
+    },
+    {
+      "id": "acme",
+      "label": "2. ACME 프로토콜"
+    },
+    {
+      "id": "solvers",
+      "label": "3. Challenge 솔버"
+    },
+    {
+      "id": "le",
+      "label": "4. Let's Encrypt"
+    },
+    {
+      "id": "output",
+      "label": "5. 결과"
+    }
+  ],
+  "mainPath": [
+    "create",
+    "certreq",
+    "order",
+    "authz",
+    "challenge",
+    "http01",
+    "verify",
+    "finalize",
+    "issue",
+    "secret"
+  ],
+  "nodes": [
+    {
+      "id": "create",
+      "lane": "req",
+      "col": 0,
+      "width": 200,
+      "type": "frontend",
+      "label": "Certificate CR 생성",
+      "sublabel": "kubectl apply"
+    },
+    {
+      "id": "certreq",
+      "lane": "req",
+      "col": 1,
+      "width": 200,
+      "type": "backend",
+      "label": "CertificateRequest 생성",
+      "sublabel": "Controller가 Certificate 감지"
+    },
+    {
+      "id": "order",
+      "lane": "acme",
+      "col": 1,
+      "width": 160,
+      "type": "cloud",
+      "label": "Order 생성",
+      "sublabel": "도메인 목록"
+    },
+    {
+      "id": "authz",
+      "lane": "acme",
+      "col": 2,
+      "width": 160,
+      "type": "cloud",
+      "label": "Authorization",
+      "sublabel": "도메인별 인증"
+    },
+    {
+      "id": "challenge",
+      "lane": "acme",
+      "col": 3,
+      "width": 160,
+      "type": "cloud",
+      "label": "Challenge",
+      "sublabel": "소유권 증명"
+    },
+    {
+      "id": "finalize",
+      "lane": "acme",
+      "col": 5,
+      "width": 160,
+      "type": "cloud",
+      "label": "Finalize",
+      "sublabel": "인증서 발급 요청"
+    },
+    {
+      "id": "http01",
+      "lane": "solvers",
+      "col": 3,
+      "width": 160,
+      "type": "security",
+      "label": "HTTP-01",
+      "sublabel": "/.well-known/acme-challenge/"
+    },
+    {
+      "id": "dns01",
+      "lane": "solvers",
+      "col": 4,
+      "width": 160,
+      "type": "security",
+      "label": "DNS-01",
+      "sublabel": "_acme-challenge TXT 레코드"
+    },
+    {
+      "id": "verify",
+      "lane": "le",
+      "col": 4,
+      "width": 200,
+      "type": "external",
+      "label": "도메인 소유권 검증",
+      "sublabel": "HTTP 요청 또는 DNS 조회"
+    },
+    {
+      "id": "issue",
+      "lane": "le",
+      "col": 5,
+      "width": 160,
+      "type": "external",
+      "label": "인증서 발급",
+      "sublabel": "서명된 인증서 반환"
+    },
+    {
+      "id": "secret",
+      "lane": "output",
+      "col": 5,
+      "width": 160,
+      "type": "database",
+      "label": "Secret 저장",
+      "sublabel": "tls.crt + tls.key"
+    }
+  ],
+  "edges": [
+    {
+      "id": "create-certreq",
+      "from": "create",
+      "to": "certreq"
+    },
+    {
+      "id": "certreq-order",
+      "from": "certreq",
+      "to": "order"
+    },
+    {
+      "id": "order-authz",
+      "from": "order",
+      "to": "authz"
+    },
+    {
+      "id": "authz-challenge",
+      "from": "authz",
+      "to": "challenge"
+    },
+    {
+      "id": "challenge-http01",
+      "from": "challenge",
+      "to": "http01",
+      "role": "branch"
+    },
+    {
+      "id": "challenge-dns01",
+      "from": "challenge",
+      "to": "dns01",
+      "role": "branch"
+    },
+    {
+      "id": "http01-verify",
+      "from": "http01",
+      "to": "verify"
+    },
+    {
+      "id": "dns01-verify",
+      "from": "dns01",
+      "to": "verify"
+    },
+    {
+      "id": "verify-finalize",
+      "from": "verify",
+      "to": "finalize",
+      "label": "성공",
+      "variant": "emphasis"
+    },
+    {
+      "id": "finalize-issue",
+      "from": "finalize",
+      "to": "issue",
+      "variant": "emphasis"
+    },
+    {
+      "id": "issue-secret",
+      "from": "issue",
+      "to": "secret",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "HTTP-01 솔버",
+      "items": [
+        "웹 서버(Ingress 컨트롤러)를 통해 도메인 소유권을 증명",
+        "포트 80으로 /.well-known/acme-challenge/ 토큰 경로에 접근 가능해야 함"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "DNS-01 솔버",
+      "items": [
+        "DNS TXT 레코드로 도메인 소유권을 증명",
+        "와일드카드 인증서 발급에 필수",
+        "EKS에서는 Route53 + IRSA로 자격 증명 없이 레코드 관리"
+      ]
+    }
+  ]
+}

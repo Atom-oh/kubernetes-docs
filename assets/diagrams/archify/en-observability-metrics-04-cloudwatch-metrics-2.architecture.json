@@ -1,0 +1,338 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch Cost Optimization Strategies",
+    "locale": "en",
+    "output": "en-observability-metrics-04-cloudwatch-metrics-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1030,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Optimization goal"
+        },
+        "backend": {
+          "label": "Optimization area"
+        },
+        "frontend": {
+          "label": "Tactic"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "metrics",
+        "label": "Metric optimization",
+        "focus": [
+          "root",
+          "metrics",
+          "m1",
+          "m2",
+          "m3"
+        ],
+        "note": "Custom metrics cost $0.30 each per month; lengthen the collection interval to 60s and drop unneeded dimension combinations."
+      },
+      {
+        "id": "logs",
+        "label": "Log optimization",
+        "focus": [
+          "root",
+          "logs",
+          "l1",
+          "l2",
+          "l3"
+        ],
+        "note": "Logs are billed for ingestion ($0.76/GB) and storage separately; trim with retention periods and log classes."
+      },
+      {
+        "id": "dashboards",
+        "label": "Dashboard optimization",
+        "focus": [
+          "root",
+          "dash",
+          "d1",
+          "d2"
+        ],
+        "note": "The first 3 dashboards are free, then $3.00 each per month; consolidate them and cut GetMetricData calls."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "CloudWatch Cost Optimization",
+      "sublabel": "Metrics · Logs · Dashboards",
+      "pos": [
+        30,
+        234
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metric Optimization",
+      "sublabel": "Fewer custom metrics",
+      "pos": [
+        390,
+        84
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "backend",
+      "label": "Log Optimization",
+      "sublabel": "Lower ingest/storage cost",
+      "pos": [
+        390,
+        264
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "dash",
+      "type": "backend",
+      "label": "Dashboard Optimization",
+      "sublabel": "Lower dashboard/query cost",
+      "pos": [
+        390,
+        414
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "m1",
+      "type": "frontend",
+      "label": "Minimize high-resolution metrics",
+      "pos": [
+        750,
+        30
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "m2",
+      "type": "frontend",
+      "label": "Remove unnecessary dimensions",
+      "pos": [
+        750,
+        90
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "m3",
+      "type": "frontend",
+      "label": "Adjust collection interval",
+      "pos": [
+        750,
+        150
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "l1",
+      "type": "frontend",
+      "label": "Set log retention period",
+      "pos": [
+        750,
+        210
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "l2",
+      "type": "frontend",
+      "label": "Log filtering",
+      "pos": [
+        750,
+        270
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "l3",
+      "type": "frontend",
+      "label": "Use log classes",
+      "pos": [
+        750,
+        330
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "d1",
+      "type": "frontend",
+      "label": "Consolidate dashboards",
+      "pos": [
+        750,
+        390
+      ],
+      "size": [
+        240,
+        48
+      ]
+    },
+    {
+      "id": "d2",
+      "type": "frontend",
+      "label": "Optimize queries",
+      "pos": [
+        750,
+        450
+      ],
+      "size": [
+        240,
+        48
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-metrics",
+      "from": "root",
+      "to": "metrics",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "root-logs",
+      "from": "root",
+      "to": "logs",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "root-dash",
+      "from": "root",
+      "to": "dash",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "metrics-m1",
+      "from": "metrics",
+      "to": "m1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "metrics-m2",
+      "from": "metrics",
+      "to": "m2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "metrics-m3",
+      "from": "metrics",
+      "to": "m3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "logs-l1",
+      "from": "logs",
+      "to": "l1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "logs-l2",
+      "from": "logs",
+      "to": "l2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "logs-l3",
+      "from": "logs",
+      "to": "l3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "dash-d1",
+      "from": "dash",
+      "to": "d1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "dash-d2",
+      "from": "dash",
+      "to": "d2",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Metrics",
+      "items": [
+        "Set metrics_collection_interval to 60s instead of 30s",
+        "Remove unnecessary dimension combinations from aggregation_dimensions",
+        "Enable enhanced_container_insights only when needed"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Logs",
+      "items": [
+        "Set per-log-group retention (7, 14, or 30 days) with put-retention-policy",
+        "Find log groups with no retention and fix them in bulk",
+        "Use the INFREQUENT_ACCESS log class for about 50% savings"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Dashboards",
+      "items": [
+        "First 3 dashboards are free, then $3.00 per dashboard per month",
+        "GetMetricData API costs $0.01 per 1,000 requests; reduce query volume"
+      ]
+    }
+  ]
+}

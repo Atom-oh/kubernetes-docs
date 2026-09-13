@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Identity Controller 인증서 발급 프로세스",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      680
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "issue",
+        "label": "최초 발급",
+        "focus": [
+          "proxy",
+          "identity",
+          "ca"
+        ],
+        "note": "Pod 시작 시 프록시가 CSR을 보내고, ServiceAccount 검증 후 Trust Anchor 서명을 거쳐 워크로드 인증서를 받습니다."
+      },
+      {
+        "id": "renew",
+        "label": "자동 갱신",
+        "focus": [
+          "proxy",
+          "identity"
+        ],
+        "note": "기본 24시간 유효 인증서를 만료 전 갱신 CSR로 자동 재발급합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "proxy",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "데이터 플레인 사이드카"
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity Controller",
+      "sublabel": "컨트롤 플레인"
+    },
+    {
+      "id": "ca",
+      "type": "security",
+      "label": "Trust Anchor",
+      "sublabel": "Root CA"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 370,
+      "label": "Pod 시작 — CSR · ServiceAccount 검증 · 최초 발급"
+    },
+    {
+      "from": 395,
+      "to": 535,
+      "label": "인증서 만료 전 — 자동 갱신 (기본 24시간 유효)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "csr",
+      "from": "proxy",
+      "to": "identity",
+      "y": 195,
+      "label": "CSR (Certificate Signing Request)",
+      "variant": "default",
+      "note": "프록시 시작 시 생성"
+    },
+    {
+      "id": "sign-req",
+      "from": "identity",
+      "to": "ca",
+      "y": 260,
+      "label": "ServiceAccount 검증 후 서명 요청",
+      "variant": "default",
+      "note": "Identity Controller가 Pod의 ServiceAccount를 검증한 뒤 Trust Anchor에 서명을 요청"
+    },
+    {
+      "id": "signed",
+      "from": "ca",
+      "to": "identity",
+      "y": 305,
+      "label": "서명된 인증서",
+      "variant": "return"
+    },
+    {
+      "id": "workload-cert",
+      "from": "identity",
+      "to": "proxy",
+      "y": 350,
+      "label": "워크로드 인증서 전달",
+      "variant": "emphasis"
+    },
+    {
+      "id": "renew-csr",
+      "from": "proxy",
+      "to": "identity",
+      "y": 440,
+      "label": "갱신 CSR",
+      "variant": "default",
+      "note": "만료 전 자동 수행"
+    },
+    {
+      "id": "new-cert",
+      "from": "identity",
+      "to": "proxy",
+      "y": 495,
+      "label": "새 인증서",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "identity",
+      "from": 190,
+      "to": 355,
+      "type": "security"
+    },
+    {
+      "participant": "ca",
+      "from": 255,
+      "to": 310,
+      "type": "security"
+    },
+    {
+      "participant": "identity",
+      "from": 435,
+      "to": 500,
+      "type": "security"
+    }
+  ]
+}

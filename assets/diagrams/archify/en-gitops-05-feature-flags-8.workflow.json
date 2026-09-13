@@ -1,0 +1,192 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PR-Based Flag Change Workflow",
+    "locale": "en",
+    "output": "en-gitops-05-feature-flags-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "change-and-ci",
+        "label": "PR and CI validation",
+        "focus": [
+          "pr_create",
+          "schema"
+        ],
+        "note": "Validate rendered definitions, schema, names, defaults, and duplicate keys."
+      },
+      {
+        "id": "review-gate",
+        "label": "Review and approval",
+        "focus": [
+          "approve",
+          "merge",
+          "pr_create"
+        ],
+        "note": "Configure CODEOWNERS and required review through repository protection."
+      },
+      {
+        "id": "deploy-verify",
+        "label": "GitOps deploy and verify",
+        "focus": [
+          "sync",
+          "verify",
+          "notify"
+        ],
+        "note": "Verify initial deployment and actual SDK propagation; notifications require separate configuration."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1180,
+      430
+    ]
+  },
+  "lanes": [
+    {
+      "id": "change",
+      "label": "Change · CI · review"
+    },
+    {
+      "id": "delivery",
+      "label": "Delivery · consumer checks"
+    }
+  ],
+  "mainPath": [
+    "pr_create",
+    "schema",
+    "approve",
+    "merge",
+    "sync",
+    "verify",
+    "notify"
+  ],
+  "nodes": [
+    {
+      "id": "pr_create",
+      "lane": "change",
+      "col": 0,
+      "type": "frontend",
+      "width": 160,
+      "label": "Change PR",
+      "sublabel": "flag definitions"
+    },
+    {
+      "id": "schema",
+      "lane": "change",
+      "col": 1,
+      "type": "backend",
+      "width": 160,
+      "label": "CI checks",
+      "sublabel": "render / schema / policy"
+    },
+    {
+      "id": "approve",
+      "lane": "change",
+      "col": 2,
+      "type": "security",
+      "width": 160,
+      "label": "Review gate",
+      "sublabel": "repository protection"
+    },
+    {
+      "id": "merge",
+      "lane": "change",
+      "col": 3,
+      "type": "backend",
+      "width": 160,
+      "label": "Merge",
+      "sublabel": "main branch"
+    },
+    {
+      "id": "sync",
+      "lane": "delivery",
+      "col": 3,
+      "type": "cloud",
+      "width": 160,
+      "label": "Sync / apply",
+      "sublabel": "ArgoCD / Flux"
+    },
+    {
+      "id": "verify",
+      "lane": "delivery",
+      "col": 4,
+      "type": "backend",
+      "width": 160,
+      "label": "Verify consumers",
+      "sublabel": "Deployment + SDK"
+    },
+    {
+      "id": "notify",
+      "lane": "delivery",
+      "col": 5,
+      "type": "external",
+      "width": 160,
+      "label": "Optional notice",
+      "sublabel": "configure separately"
+    }
+  ],
+  "edges": [
+    {
+      "from": "pr_create",
+      "to": "schema",
+      "variant": "emphasis"
+    },
+    {
+      "from": "schema",
+      "to": "approve",
+      "variant": "emphasis"
+    },
+    {
+      "from": "approve",
+      "to": "merge",
+      "variant": "emphasis"
+    },
+    {
+      "from": "merge",
+      "to": "sync",
+      "variant": "emphasis"
+    },
+    {
+      "from": "sync",
+      "to": "verify",
+      "variant": "emphasis"
+    },
+    {
+      "from": "verify",
+      "to": "notify",
+      "variant": "dashed"
+    },
+    {
+      "from": "approve",
+      "to": "pr_create",
+      "label": "revise",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CI validation steps",
+      "items": [
+        "Render overlays with pinned Kustomize",
+        "JSON Schema plus duplicate/default checks",
+        "Add business-context SDK tests separately"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "GitOps deployment settings",
+      "items": [
+        "Check ArgoCD/Flux reconciliation and policy",
+        "Flux checks initial flagd Deployment readiness",
+        "Verify cache/rule revision and actual consumers"
+      ]
+    }
+  ]
+}

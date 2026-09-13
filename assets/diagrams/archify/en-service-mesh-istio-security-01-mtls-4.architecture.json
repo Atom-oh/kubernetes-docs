@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "End-to-End mTLS Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-security-01-mtls-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      540
+    ],
+    "views": [
+      {
+        "id": "edge-handoff",
+        "label": "Edge segments",
+        "focus": [
+          "client",
+          "cloudfront",
+          "alb",
+          "gateway"
+        ],
+        "note": "CloudFront verifies the client cert over mTLS; ALB and the Istio Gateway then receive the cert info as headers over TLS."
+      },
+      {
+        "id": "mesh-mtls",
+        "label": "Inside the mesh",
+        "focus": [
+          "gateway",
+          "svc-a",
+          "svc-b",
+          "svc-c"
+        ],
+        "note": "From the Istio Gateway to Services A, B and C, Envoy sidecars connect with automatic mTLS (Envoy-to-Envoy)."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "Client Cert",
+      "pos": [
+        30,
+        80
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "cloudfront",
+      "type": "cloud",
+      "label": "CloudFront",
+      "sublabel": "mTLS verification",
+      "pos": [
+        250,
+        80
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB",
+      "sublabel": "Header forwarding",
+      "pos": [
+        480,
+        80
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "Header validation",
+      "pos": [
+        480,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Envoy mTLS",
+      "pos": [
+        720,
+        330
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "Envoy mTLS",
+      "pos": [
+        930,
+        330
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "Envoy mTLS",
+      "pos": [
+        1140,
+        330
+      ],
+      "size": [
+        130,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Edge",
+      "wraps": [
+        "cloudfront",
+        "alb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Cluster",
+      "wraps": [
+        "gateway",
+        "svc-a",
+        "svc-b",
+        "svc-c"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "Service Mesh",
+      "wraps": [
+        "svc-a",
+        "svc-b",
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "client",
+      "to": "cloudfront",
+      "label": "1. mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "c2",
+      "from": "cloudfront",
+      "to": "alb",
+      "label": "2. TLS + headers"
+    },
+    {
+      "id": "c3",
+      "from": "alb",
+      "to": "gateway",
+      "label": "3. TLS + headers",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "c4",
+      "from": "gateway",
+      "to": "svc-a",
+      "label": "4. mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "c5",
+      "from": "svc-a",
+      "to": "svc-b",
+      "label": "5. mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "c6",
+      "from": "svc-b",
+      "to": "svc-c",
+      "label": "6. mTLS",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Security per segment",
+      "items": [
+        "Client → CloudFront: mTLS (client certificate verification)",
+        "CloudFront → ALB: TLS + certificate info headers",
+        "ALB → Istio Gateway: TLS + certificate info headers",
+        "Inside Istio Mesh: automatic mTLS (Envoy-to-Envoy)"
+      ]
+    }
+  ]
+}

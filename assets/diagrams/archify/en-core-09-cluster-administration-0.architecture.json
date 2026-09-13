@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Control Plane Component Management",
+    "locale": "en",
+    "output": "en-core-09-cluster-administration-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      500
+    ],
+    "views": [
+      {
+        "id": "components",
+        "label": "Control Plane Components",
+        "focus": [
+          "cp",
+          "apiserver",
+          "etcd",
+          "scheduler",
+          "controller-manager",
+          "cloud-controller-manager"
+        ],
+        "note": "The five core components that make up the control plane"
+      },
+      {
+        "id": "operations",
+        "label": "Operational Concern per Component",
+        "focus": [
+          "apiserver",
+          "auth",
+          "etcd",
+          "backup",
+          "scheduler",
+          "sched-policy",
+          "controller-manager",
+          "ctrl-monitoring",
+          "cloud-controller-manager",
+          "cloud-resources"
+        ],
+        "note": "The cluster operations task each component is responsible for"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "Control Plane",
+      "sublabel": "Manages cluster state",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "Distributed key-value store",
+      "pos": [
+        270,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Scheduler",
+      "sublabel": "kube-scheduler",
+      "pos": [
+        500,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "controller-manager",
+      "type": "backend",
+      "label": "Controller Manager",
+      "sublabel": "kube-controller-manager",
+      "pos": [
+        730,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cloud-controller-manager",
+      "type": "cloud",
+      "label": "Cloud Controller Manager",
+      "sublabel": "cloud-controller-manager",
+      "pos": [
+        960,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Authentication & Authorization",
+      "sublabel": "Operational concern",
+      "pos": [
+        40,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "backup",
+      "type": "database",
+      "label": "Data Backup",
+      "sublabel": "Operational concern",
+      "pos": [
+        270,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "sched-policy",
+      "type": "backend",
+      "label": "Scheduling Policies",
+      "sublabel": "Operational concern",
+      "pos": [
+        500,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "ctrl-monitoring",
+      "type": "backend",
+      "label": "Controller State Monitoring",
+      "sublabel": "Operational concern",
+      "pos": [
+        730,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cloud-resources",
+      "type": "cloud",
+      "label": "Cloud Resource Management",
+      "sublabel": "Operational concern",
+      "pos": [
+        960,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane Components",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "scheduler",
+        "controller-manager",
+        "cloud-controller-manager"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-apiserver",
+      "from": "cp",
+      "to": "apiserver",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-etcd",
+      "from": "cp",
+      "to": "etcd",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-scheduler",
+      "from": "cp",
+      "to": "scheduler",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-controller-manager",
+      "from": "cp",
+      "to": "controller-manager",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-cloud-controller-manager",
+      "from": "cp",
+      "to": "cloud-controller-manager",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "apiserver-auth",
+      "from": "apiserver",
+      "to": "auth",
+      "variant": "dashed"
+    },
+    {
+      "id": "etcd-backup",
+      "from": "etcd",
+      "to": "backup",
+      "variant": "dashed"
+    },
+    {
+      "id": "scheduler-policy",
+      "from": "scheduler",
+      "to": "sched-policy",
+      "variant": "dashed"
+    },
+    {
+      "id": "controller-monitoring",
+      "from": "controller-manager",
+      "to": "ctrl-monitoring",
+      "variant": "dashed"
+    },
+    {
+      "id": "cloud-resources-mgmt",
+      "from": "cloud-controller-manager",
+      "to": "cloud-resources",
+      "variant": "dashed"
+    }
+  ]
+}

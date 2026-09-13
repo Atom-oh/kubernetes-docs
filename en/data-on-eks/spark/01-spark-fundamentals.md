@@ -1,143 +1,335 @@
 # Part 1: Spark on Kubernetes Fundamentals
 
-> **Supported Versions**: Apache Spark 4.2, Kubernetes 1.30+\
-> **Last Updated**: July 15, 2026
+> **Review baseline**: Spark 4.2.0, Kubernetes 1.34+; example image uses Java 21\
+> **Last reviewed**: September 12, 2026
 
-## Lab Environment Setup
+## Cluster mode and client mode
 
-To follow along with the examples in this document, you will need the following tools and environment:
+Kubernetes supports **both** Spark deployment modes. Client mode has been supported
+since Spark 2.4 and is not restricted to notebooks.
 
-### Required Tools
+| Mode | Driver location | Operational consequence |
+| --- | --- | --- |
+| Cluster | A driver pod created for the submission | The submitter needs API access; the driver needs its own service account/RBAC |
+| Client | The submitting application, in a pod or on a host | Executors must reach the driver's advertised RPC/block-manager endpoints; keep the driver alive |
 
-* kubectl v1.30 or later
-* A working Kubernetes cluster (Amazon EKS recommended)
-* Apache Spark 4.2 distributed locally (for running `spark-submit` against the cluster)
-* An IAM role associated with a Kubernetes service account (IRSA or EKS Pod Identity) if driver/executor pods need to reach AWS services such as S3
+Reaching the Kubernetes API is not sufficient to establish executor-to-driver
+connectivity. Client-mode networking may need a stable Service/hostname and fixed
+ports. If its driver runs in a pod, configure the **actual** driver pod name for
+executor owner-reference garbage collection; do not invent a pod owner for a
+driver running outside Kubernetes.
 
-## What is Spark on Kubernetes?
+## Who schedules what?
 
-Apache Spark is a distributed data processing engine for large-scale batch and streaming workloads. Since Spark 2.3, Kubernetes has been a first-class **native cluster manager** alongside Standalone, YARN, and Mesos (Mesos support was later removed). Running Spark on Kubernetes means the same Kubernetes API that schedules your other workloads also schedules Spark's driver and executor pods — no separate Spark cluster infrastructure to stand up or maintain.
+The API server handles authentication and admission and stores API objects; the
+Kubernetes scheduler places pods, and node kubelets start their containers.
+The Spark driver requests executor pods and its own schedulers coordinate
+stages/tasks on the registered executors. These are different layers.
 
-This document covers the concepts you need before deploying real Spark jobs on EKS: how `spark-submit` maps onto pods, why the driver — not a separate cluster manager — does the scheduling, how Dynamic Resource Allocation (DRA) behaves differently on Kubernetes than on YARN, and how graceful decommissioning protects running jobs when a pod is about to terminate. Part 2 covers the Spark Operator, which wraps these same primitives in a Kubernetes-native CRD-based workflow.
+![Cluster deploy mode: submitter and driver create Pod API objects, Kubernetes scheduling and kubelets place/start containers, and the driver separately assigns Spark tasks.](../../.gitbook/assets/en-data-on-eks-spark-01-spark-fundamentals-0.png)
 
-## 1. Cluster-Mode-Only Submission on Kubernetes
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-01-spark-fundamentals-0.html)
 
-### How spark-submit Works on Kubernetes
+1. The submitter requests the driver pod and associated resources.
+2. Kubernetes places and starts the driver; the driver requests executor pods.
+3. Kubernetes places/starts executors; they register with the driver.
+4. The driver assigns Spark tasks; executors execute and report results/status.
+5. On normal shutdown, Spark cleans up executors according to its configuration.
+   A completed/failed driver pod can remain for logs; failure and owner-reference
+   behavior must be considered rather than assuming immediate cleanup of everything.
 
-Kubernetes only supports **cluster deploy mode** for `spark-submit` — the driver itself runs inside a pod on the cluster, rather than on the machine that issued the submit command (client mode exists but is mainly used for interactive tools like spark-shell and notebooks). A typical submission looks like this:
+This avoids a separate YARN or Spark Standalone control layer, but does not
+eliminate Kubernetes capacity, node, storage, network or image operations.
+
+## A concrete cluster-mode example
+
+Prerequisites: Spark 4.2.0 locally, a compatible kubectl/current kubeconfig context,
+Kubernetes 1.34+, namespace capacity and image access. The submitter's API
+credentials and the in-cluster driver's RBAC are separate. The SparkPi example
+does not need AWS data permissions; S3 workloads additionally need their chosen
+workload identity and compatible Hadoop/AWS libraries.
+
+A namespace administrator reviews/applies `rbac.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spark-jobs
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark-driver
+  namespace: spark-jobs
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark-executor
+  namespace: spark-jobs
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: spark-driver
+  namespace: spark-jobs
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - services
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - delete
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: spark-driver
+  namespace: spark-jobs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: spark-driver
+subjects:
+- kind: ServiceAccount
+  name: spark-driver
+  namespace: spark-jobs
+```
+
+This role supports the basic example without dynamically created PVCs.
+Additional volume/resource-management features may need corresponding scoped
+permissions. Executor pods use a separate service account with API token automount
+disabled. Only trusted job code/submitters should use a namespace where the driver
+can create pods; RBAC alone is not a sandbox for untrusted application code.
+
+Save these as **Pod templates**, not standalone pods to `kubectl apply`.
+Spark fills in its image, commands and other fields:
+
+Driver template, `driver-template.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spark-driver-template
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 185
+    runAsGroup: 185
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: spark-kubernetes-driver
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+```
+
+Executor template, `executor-template.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spark-executor-template
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 185
+    runAsGroup: 185
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: spark-kubernetes-executor
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+  automountServiceAccountToken: false
+  terminationGracePeriodSeconds: 60
+```
+
+The files are accessible to the **submitting process**. In cluster mode Spark
+arranges for the executor template to be mounted into the driver. Spark overrides
+some template fields, so inspect the generated pods when combining templates,
+operator webhooks and Spark settings.
 
 ```bash
+#!/bin/bash
+set -euo pipefail
+# Run in the directory containing driver-template.yaml and executor-template.yaml.
+KUBE_CONTEXT="$(kubectl config current-context)"
+KUBE_API_URL="$(kubectl --context "$KUBE_CONTEXT" config view --minify -o jsonpath='{.clusters[0].cluster.server}')"
+case "$KUBE_API_URL" in https://*) ;; *) echo "Expected an HTTPS Kubernetes API URL" >&2; exit 1;; esac
+SPARK_APP_NAME="spark-pi-$(date -u +%Y%m%d%H%M%S)"
 spark-submit \
-  --master k8s://https://<EKS_API_SERVER_ENDPOINT>:443 \
+  --master "k8s://${KUBE_API_URL}" \
   --deploy-mode cluster \
-  --name spark-etl-job \
-  --class com.example.ETLJob \
+  --name "$SPARK_APP_NAME" \
+  --class org.apache.spark.examples.SparkPi \
+  --conf "spark.kubernetes.context=$KUBE_CONTEXT" \
   --conf spark.kubernetes.namespace=spark-jobs \
-  --conf spark.kubernetes.container.image=<ECR_IMAGE_URI> \
+  --conf spark.kubernetes.container.image=spark:4.2.0-scala2.13-java21-ubuntu \
   --conf spark.kubernetes.authenticate.driver.serviceAccountName=spark-driver \
-  --conf spark.executor.instances=4 \
-  local:///opt/spark/jobs/etl-job.jar
+  --conf spark.kubernetes.authenticate.executor.serviceAccountName=spark-executor \
+  --conf "spark.kubernetes.driver.pod.name=$SPARK_APP_NAME-driver" \
+  --conf spark.kubernetes.driver.podTemplateFile=driver-template.yaml \
+  --conf spark.kubernetes.executor.podTemplateFile=executor-template.yaml \
+  --conf spark.kubernetes.executor.terminationGracePeriodSeconds=60s \
+  --conf spark.driver.cores=1 \
+  --conf spark.driver.memory=1g \
+  --conf spark.kubernetes.driver.limit.cores=1 \
+  --conf spark.executor.cores=1 \
+  --conf spark.executor.memory=1g \
+  --conf spark.kubernetes.executor.limit.cores=1 \
+  --conf spark.executor.instances=3 \
+  local:///opt/spark/examples/jars/spark-examples.jar 10
+kubectl -n spark-jobs logs "$SPARK_APP_NAME-driver"
+kubectl -n spark-jobs get pod "$SPARK_APP_NAME-driver" -o jsonpath='{.status.phase}{"\n"}'
 ```
 
-The `k8s://<endpoint>` master URL points `spark-submit` at the Kubernetes API server. Once submitted, the flow looks like this:
+Apply `rbac.yaml` before running the submission script. The versioned official
+image contains the `spark-examples.jar` symlink; `local:///` means the artifact is
+already in the container, not a local laptop file to upload. Mirror/pin the image
+through your normal supply-chain process if required. The helper script uses a
+fresh driver name and the selected kubeconfig context; preserve these values for
+failure investigation.
 
-![Sequence diagram showing spark-submit asking the Kubernetes API server to create a Driver Pod, the Driver Pod requesting Executor Pods through the API server, the executors registering back with the driver, and the driver finally assigning tasks to the executors.](../../../assets/diagrams/rendered/en-data-on-eks-spark-01-spark-fundamentals-0.svg)
+Three fixed executors are requested, but quota, admission, scheduling, image pulls
+or node capacity can keep pods Pending. Check driver/executor events and logs;
+`spark-submit` alone is not evidence of successful task execution.
 
-1. `spark-submit` talks to the Kubernetes API server and creates a **driver pod** directly — no intermediate scheduling process is involved.
-2. Once running, the driver pod itself calls back into the Kubernetes API to create the **executor pods** it needs, based on `spark.executor.instances` (or Dynamic Resource Allocation, covered below).
-3. Executors register with the driver, pull their assigned tasks, execute them, and report results and status back to the driver.
-4. When the job finishes, the driver's Spark context shuts down and cleans up the executor pods it created.
+## Resources are requests, limits and task slots
 
-### Why This Is Simpler Than YARN — and What It Shifts
-
-On YARN, submitting a job means talking to a persistent **ResourceManager**, which negotiates containers from per-node **NodeManager** daemons and hands one to an ApplicationMaster that then manages the job's executors. Kubernetes removes that layer entirely: there is no long-running Spark-specific cluster-manager daemon to install, upgrade, or keep highly available. The Kubernetes control plane you already operate for every other workload is the only "cluster manager" Spark needs.
-
-The trade-off is that this pushes scheduling and resource-allocation responsibility onto the **driver pod itself**. The driver acts as its own scheduler: it is the one issuing `CREATE` requests for executor pods against the Kubernetes API, tracking which executors are alive, and requesting replacements when executors fail. This is architecturally simpler operationally (fewer moving parts to run), but it also means the driver pod's permissions (via its service account) and its ability to reach the API server are on the critical path for the entire job — if the driver pod cannot create or watch executor pods, no work gets scheduled at all.
-
-### Driver and Executor Pod Resource Model
-
-Each driver and executor runs as an ordinary pod, and standard Spark resource configuration maps onto standard Kubernetes pod resource fields:
-
-| Spark Configuration | Kubernetes Effect |
+| Spark setting | Kubernetes/default-profile effect |
 | --- | --- |
-| `spark.driver.cores`, `spark.driver.memory` | CPU/memory requests (and, with overhead added, limits) on the driver pod's container |
-| `spark.executor.cores`, `spark.executor.memory` | CPU/memory requests/limits on each executor pod's container |
-| `spark.kubernetes.driver.request.cores` / `.limit.cores` | Overrides the driver container's Kubernetes CPU request/limit independently of `spark.driver.cores` |
-| `spark.kubernetes.executor.request.cores` / `.limit.cores` | Same, for executor pods |
+| `spark.driver.cores` | Driver CPU request unless overridden |
+| `spark.executor.cores` | Executor task capacity and default CPU request |
+| `spark.kubernetes.{driver,executor}.request.cores` | Overrides Kubernetes CPU request, not the executor's Spark task-slot setting |
+| `spark.kubernetes.{driver,executor}.limit.cores` | Explicit CPU limit; a CPU limit is not automatically implied by cores |
+| Driver memory | Request and limit include heap plus configured/calculated overhead |
+| Executor memory | Request and limit include heap, overhead and applicable off-heap/PySpark memory |
 
-There isn't a one-size-fits-all default that fits every workload — the right driver/executor sizing depends on your job's shuffle volume, partition count, and per-task memory needs. Treat these settings as something to size through testing against your actual workload rather than values to copy from another job unchanged.
+For this JVM example, 1 GiB heap plus the default minimum 384 MiB overhead yields
+**1,408 MiB** memory request/limit. That is a verified default calculation, not a
+universal job size. Python/native memory and custom ResourceProfiles need their
+own review. A CPU request below task capacity can permit contention; changing a
+request is not the same as changing how many Spark tasks an executor can run.
 
-## 2. Dynamic Resource Allocation (DRA) on Kubernetes
+## Dynamic Resource Allocation
 
-### Why DRA Needs an Extra Flag on Kubernetes
+Spark DRA changes **executor count** as task backlog/idle conditions change. It is
+different from Kubernetes DRA for devices and from a node autoscaler's response to
+Pending pods.
 
-Dynamic Resource Allocation lets Spark scale the number of executors up and down during a job's execution, adding executors when there's a backlog of pending tasks and removing idle ones to free up cluster capacity. On YARN, this has long worked cleanly because YARN's NodeManager hosts an **External Shuffle Service (ESS)** — a daemon that lives outside any single executor's lifetime and can keep serving shuffle blocks after the executor that produced them has been removed.
+Stock Spark on Kubernetes does not support the YARN-style external shuffle service.
+Shuffle tracking is a supported choice, but not the only mechanism in Spark:
+decommission-based shuffle preservation and a suitable reliable ShuffleDataIO
+implementation are alternatives with their own conditions.
 
-Kubernetes has no equivalent built-in daemon. Without ESS, if the DRA logic removes an executor that's still holding shuffle blocks other tasks need to read, those blocks are gone and the tasks that need them fail (forcing an expensive recompute). This is why enabling DRA on Kubernetes requires **both** of the following settings together — enabling one without the other leaves this gap unprotected:
-
-```properties
-spark.dynamicAllocation.enabled=true
-spark.dynamicAllocation.shuffleTracking.enabled=true
-```
-
-`spark.dynamicAllocation.shuffleTracking.enabled` (stable since Spark 3.3.0) makes Spark track which executors are still holding shuffle blocks that other, not-yet-finished tasks depend on. With shuffle tracking on, the scale-down logic will not remove an executor that still holds needed shuffle data — it waits until those blocks are no longer needed or the job completes before reclaiming that executor's pod.
-
-### Tuning Knobs
-
-| Setting | Purpose |
-| --- | --- |
-| `spark.dynamicAllocation.minExecutors` | Floor on the number of executors DRA will scale down to |
-| `spark.dynamicAllocation.maxExecutors` | Ceiling on the number of executors DRA will scale up to |
-| `spark.kubernetes.allocation.batch.size` | How many executor pod creation requests the driver sends to the Kubernetes API per batch, controlling how aggressively it ramps up |
+For a shuffle-tracking profile:
 
 ```properties
 spark.dynamicAllocation.enabled=true
 spark.dynamicAllocation.shuffleTracking.enabled=true
 spark.dynamicAllocation.minExecutors=2
+spark.dynamicAllocation.initialExecutors=3
 spark.dynamicAllocation.maxExecutors=20
 spark.kubernetes.allocation.batch.size=5
 ```
 
-Setting `spark.kubernetes.allocation.batch.size` too high can cause a burst of pod creation requests to hit the Kubernetes API and the underlying node group's scaling all at once; a more moderate batch size smooths out how quickly new nodes need to be provisioned to satisfy new executor pods.
+Pass these properties with `--conf` or a properties file. Shuffle tracking was
+introduced in Spark 3.0 and is **already true by default in 4.2**; stating it
+explicitly documents the choice. The old claim that both explicit flags are always
+mandatory is incorrect.
 
-## 3. Graceful Executor Decommissioning
+Tracking tries to retain executors holding active shuffle data. Configured
+tracking/cached-executor idle timeouts, forced termination and node failure can
+still cause recomputation. It is not durable shared storage. Enabling overlapping
+preservation mechanisms can delay executor release; test their interaction.
 
-### The Problem: Pods Die, But Data Shouldn't
+The initial count considers `minExecutors`, `initialExecutors` and an existing
+`spark.executor.instances` value. The example's fixed count of three matches its
+initial count of three; min=2 does not mean it must start with two.
 
-A Kubernetes pod can be terminated for reasons that have nothing to do with the Spark job itself — a node scale-down event, a Spot Instance interruption, or a rolling node upgrade. By default, when an executor pod is killed, any data it held only in memory or on local disk (cached RDD partitions, shuffle blocks it was serving) is lost, and the tasks that depended on that data must be recomputed elsewhere.
+`spark.kubernetes.allocation.batch.size` controls a batch of pod requests. It is
+not a direct EC2 scaling policy: API throttling, pod allocation timing, ResourceQuota,
+scheduling constraints and node provisioning remain separate.
 
-### Graceful Decommission (Spark 3.1.1+)
+## Graceful decommission is best effort
 
-Spark's graceful decommissioning feature gives an executor a chance to migrate what it's holding to peer executors before it actually goes away, rather than losing that data outright. It is enabled with:
+These settings enable executor/block-manager decommission and migration of
+applicable RDD/shuffle blocks:
 
 ```properties
 spark.decommission.enabled=true
 spark.storage.decommission.enabled=true
+spark.storage.decommission.rddBlocks.enabled=true
+spark.storage.decommission.shuffleBlocks.enabled=true
+spark.kubernetes.executor.terminationGracePeriodSeconds=60s
 ```
 
-When a pod is signaled for termination, Kubernetes gives it a grace period — the pod's `terminationGracePeriodSeconds` (30 seconds by default) — before it is forcibly killed. With decommissioning enabled, Spark uses that window to migrate cached RDD blocks and shuffle blocks it's holding to other, still-healthy executors, rather than simply losing them when the pod disappears.
+With the chosen Spark 4.2 Kubernetes path, enabling decommission **injects a
+preStop hook** that runs `spark.kubernetes.decommission.script`, default
+`/opt/decom.sh`. The official image includes it. That script finds the executor
+JVM, sends **SIGPWR** and waits; Spark's default decommission signal is PWR.
+Normal pod termination is therefore mediated by this hook, not by assuming every
+plain SIGTERM automatically migrates data.
 
-```yaml
-# Example: a longer grace period gives decommissioning more time to migrate blocks
-apiVersion: v1
-kind: Pod
-metadata:
-  name: spark-executor-example
-spec:
-  terminationGracePeriodSeconds: 60
-  containers:
-    - name: spark-kubernetes-executor
-      # ...
-```
+Custom images must include a working script and its tools, and a changed signal
+must match the script. Spark can override a template's lifecycle settings. Inspect
+the actual hook and test both planned scale-down and interruption paths.
 
-This matters most in exactly the scenarios that make Kubernetes-based Spark attractive in the first place — cost-driven decisions like running executors on Spot Instances, where interruption is expected behavior rather than a rare failure. Graceful decommissioning is the foundation that makes an interruption a manageable event (some data migrated, some tasks recomputed) instead of a job-wide failure. The performance-tuning document later in this series covers Spot Instance-specific handling (interruption notices, node termination handlers, and how they interact with this decommissioning window) in more depth.
+The submission explicitly sets
+`spark.kubernetes.executor.terminationGracePeriodSeconds=60s`.
+Spark 4.2 overrides the pod template's value with this setting, whose default is
+30 seconds; setting only `terminationGracePeriodSeconds: 60` in the template is
+insufficient. The grace period includes preStop execution. It is
+an upper budget, not a promise of migration completion or a delay of the underlying
+Spot termination deadline. Healthy destination executors, disk/network capacity,
+time and any configured fallback storage are required. Hard node loss or forced
+deletion can bypass the opportunity entirely. Explicit deletion-grace settings,
+including Spark's dynamic-allocation delete path, can also change the available budget.
 
-## Next Steps
+These flags do not restart a failed driver, replace application checkpoints or
+guarantee end-to-end exactly-once output. Distinguish recomputable intermediate
+blocks from durable input/output and plan recovery accordingly.
 
-This document covered the fundamentals of running Spark on Kubernetes: how `spark-submit` in cluster mode creates a driver pod that schedules its own executor pods directly against the Kubernetes API, why Dynamic Resource Allocation needs `shuffleTracking.enabled` in the absence of a YARN-style External Shuffle Service, and how graceful decommissioning protects in-flight data when a pod is about to terminate. Part 2 covers deploying and managing Spark applications on EKS declaratively using the **Spark Operator**.
+## References and validation
 
-[Return to Main Page](./README.md)
+A local SparkPi job ran successfully with the driver bound to loopback and UI
+disabled. Native Spark 4.2 feature-step tests confirmed memory mapping, default
+CPU-limit behavior and automatic decommission-hook insertion without creating a
+Kubernetes client. These checks do not prove EKS submission, RBAC/CNI enforcement,
+actual migration completion or AWS data access.
+
+- [Spark 4.2.0 on Kubernetes](https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html)
+- [Spark 4.2.0 configuration](https://spark.apache.org/docs/4.2.0/configuration.html)
+- [Spark 4.2.0 dynamic allocation alternatives](https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation)
+- [Driver resource mapping](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala)
+- [Executor resources and decommission hook](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala)
+- [Official decommission script](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh)
+- [Official Spark image tags](https://github.com/docker-library/official-images/blob/master/library/spark)
+
+## Next steps
+
+[Part 2: Spark Operator](./02-spark-operator.md)
+
+[Return to main page](./README.md)
 
 ## Quiz
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md).
+[Topic quiz](../../quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)

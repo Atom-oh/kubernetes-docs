@@ -1,0 +1,166 @@
+[
+  {
+    "path": "en/eks/01-eks-introduction.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected EKS compute/responsibility, load balancer/storage prerequisites, support and lifecycle/security/cost overview in both languages.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-admission/"
+    ],
+    "findings": [
+      "Readalloriginal135English/148Koreanlines; reviewedpairedsubstantiveedits.",
+      "AWSverifiedstandard1.34–1.36,extended1.31–1.33;notupstream1.37assumption.",
+      "BottlerocketisnodeOS;AutoModeandHybridNodesdefinedcorrectly;MNGupdates/workloadresponsibilitiesclarified.",
+      "ConventionalLBC/EBSCSImustbeinstalledandpermissioned;AutoModehasdistinctmanagedcontrollers/classes;FargateALB/NLBIPtargetssupported.",
+      "ReplacedPodSecurityPolicyguidancewithPSA/PSS;AppMeshSep30EOSnotyetpast;auditdateSep11.",
+      "QualifiedFargate/Spot/locality/AutoModecostclaimsandHybridfees;noinventedbenchmarks.",
+      "Parentassetfollowup:ko/.gitbook/assets/ko-eks-01-eks-introduction-11.png and matchingarchmapstillneedFargatedirectLBrestrictioncorrectedtoIPtargetsupport;sourcealttextnowcorrect. Assetsnotedited."
+    ],
+    "validation": [
+      "OfficialAWS/Kubernetesreferencesreviewed;pairedprosechecked;scopedgitdiffcheckpassed.",
+      "NoAWSoperations. Diagramassetrepairdelegatedtoparentperuser."
+    ]
+  },
+  {
+    "path": "ko/eks/01-eks-introduction.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected EKS compute/responsibility, load balancer/storage prerequisites, support and lifecycle/security/cost overview in both languages.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-admission/"
+    ],
+    "findings": [
+      "Readalloriginal135English/148Koreanlines; reviewedpairedsubstantiveedits.",
+      "AWSverifiedstandard1.34–1.36,extended1.31–1.33;notupstream1.37assumption.",
+      "BottlerocketisnodeOS;AutoModeandHybridNodesdefinedcorrectly;MNGupdates/workloadresponsibilitiesclarified.",
+      "ConventionalLBC/EBSCSImustbeinstalledandpermissioned;AutoModehasdistinctmanagedcontrollers/classes;FargateALB/NLBIPtargetssupported.",
+      "ReplacedPodSecurityPolicyguidancewithPSA/PSS;AppMeshSep30EOSnotyetpast;auditdateSep11.",
+      "QualifiedFargate/Spot/locality/AutoModecostclaimsandHybridfees;noinventedbenchmarks.",
+      "Parentassetfollowup:ko/.gitbook/assets/ko-eks-01-eks-introduction-11.png and matchingarchmapstillneedFargatedirectLBrestrictioncorrectedtoIPtargetsupport;sourcealttextnowcorrect. Assetsnotedited."
+    ],
+    "validation": [
+      "OfficialAWS/Kubernetesreferencesreviewed;pairedprosechecked;scopedgitdiffcheckpassed.",
+      "NoAWSoperations. Diagramassetrepairdelegatedtoparentperuser."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks/01-eks-introduction-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed full-read paired audit: restored valid quiz answers, current EKS lifecycle/identity guidance and coherent bounded lab recipes.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-admission/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fsx-csi-create.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/sg-pods-example-deployment.html",
+      "https://aws.amazon.com/fargate/pricing/",
+      "https://github.com/eksctl-io/eksctl/blob/v0.230.0/pkg/apis/eksctl.io/v1alpha5/assets/schema.json",
+      "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/installation.md",
+      "https://aws.github.io/eks-charts/index.yaml",
+      "https://github.com/kubernetes-sigs/metrics-server/blob/v0.9.0/README.md",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json"
+    ],
+    "findings": [
+      "Fully read all original1285English/1444Korean lines. Removed Korean duplicate questions1–5 and escaped headings;15distinct questions preserved in each locale.",
+      "Corrected AutoMode node/storage denial, IAMaccessentries/IRSA/PodIdentity distinction, MNGmanualupdates, Fargateexecutionrole/EFSlimits, RWO/AZ, VPCprefix capacity and encryption claims.",
+      "Replaced unsupported1.28 cluster and stale CNI update targets with verified EKS1.36 example and explicit compatible-version selection. Added14+12support/automaticupgrade policy and conditional7dayrollback, verified directly againstAWS.",
+      "Corrected NGINX80/API responses and explicitfrontendproxy; replaced unusedBACKEND_URL. HPA andnodeautoscaler effects are distinct with no fabricatedscaling/loadresults.",
+      "Pinned eksctl0.230schema, LBC3.5.0controller/chart/policy andMetricsServer0.9.0(1.34+). Privatefiles/kubeconfig, restrictedclientCIDR, AL2023privateMNG, scopedIRSA andresourcecleanup added. No blanketnodeaddonpermissions or curlpipe execution.",
+      "Local eksctl0.229help exposed missing --approve on logging/IAMserviceaccount deletion; corrected --approve and --wait before markingfixed.",
+      "FSx rootREADME/raw guessedpaths404; authoritative AWSFSxprocedure supplied supportedparameters/PVCcapacity. No unsupporteddriver-version claim."
+    ],
+    "validation": [
+      "/tmp/eks-introduction-audit/validation.json",
+      "Acrosslocales:52Bashblocks,36nativeobjects(Kubernetes1.36.0schema),4eksctlconfigs(0.230.0schema),2SecurityGroupPolicystructures;all15answersconsistent.",
+      "Helm renderedverifiedLBC3.5.0chartoffline:10nativeobjects+1customobjectvalidatedagainstbundledCRD;chartdigestmatchedofficialindex.",
+      "AllpairedYAMLobjectsidentical;port/selector/proxyreferencesverified. FourmockcleanupcasespassedincludingwrongARN/tagandfailedIngressdeletion.",
+      "eksctlhelpflagscheckedwithlocal0.229.0;noAWSAPIcalls. Scopedgitdiffcheckpassed.",
+      "NoNGINXruntime,clusterprovisioning,deployment,loadtest,upgrade/rollbackorcostmeasurement. Validationlimitationsstatedindocument."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks/01-eks-introduction-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed full-read paired audit: restored valid quiz answers, current EKS lifecycle/identity guidance and coherent bounded lab recipes.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-admission/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fsx-csi-create.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/sg-pods-example-deployment.html",
+      "https://aws.amazon.com/fargate/pricing/",
+      "https://github.com/eksctl-io/eksctl/blob/v0.230.0/pkg/apis/eksctl.io/v1alpha5/assets/schema.json",
+      "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/installation.md",
+      "https://aws.github.io/eks-charts/index.yaml",
+      "https://github.com/kubernetes-sigs/metrics-server/blob/v0.9.0/README.md",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json"
+    ],
+    "findings": [
+      "Fully read all original1285English/1444Korean lines. Removed Korean duplicate questions1–5 and escaped headings;15distinct questions preserved in each locale.",
+      "Corrected AutoMode node/storage denial, IAMaccessentries/IRSA/PodIdentity distinction, MNGmanualupdates, Fargateexecutionrole/EFSlimits, RWO/AZ, VPCprefix capacity and encryption claims.",
+      "Replaced unsupported1.28 cluster and stale CNI update targets with verified EKS1.36 example and explicit compatible-version selection. Added14+12support/automaticupgrade policy and conditional7dayrollback, verified directly againstAWS.",
+      "Corrected NGINX80/API responses and explicitfrontendproxy; replaced unusedBACKEND_URL. HPA andnodeautoscaler effects are distinct with no fabricatedscaling/loadresults.",
+      "Pinned eksctl0.230schema, LBC3.5.0controller/chart/policy andMetricsServer0.9.0(1.34+). Privatefiles/kubeconfig, restrictedclientCIDR, AL2023privateMNG, scopedIRSA andresourcecleanup added. No blanketnodeaddonpermissions or curlpipe execution.",
+      "Local eksctl0.229help exposed missing --approve on logging/IAMserviceaccount deletion; corrected --approve and --wait before markingfixed.",
+      "FSx rootREADME/raw guessedpaths404; authoritative AWSFSxprocedure supplied supportedparameters/PVCcapacity. No unsupporteddriver-version claim."
+    ],
+    "validation": [
+      "/tmp/eks-introduction-audit/validation.json",
+      "Acrosslocales:52Bashblocks,36nativeobjects(Kubernetes1.36.0schema),4eksctlconfigs(0.230.0schema),2SecurityGroupPolicystructures;all15answersconsistent.",
+      "Helm renderedverifiedLBC3.5.0chartoffline:10nativeobjects+1customobjectvalidatedagainstbundledCRD;chartdigestmatchedofficialindex.",
+      "AllpairedYAMLobjectsidentical;port/selector/proxyreferencesverified. FourmockcleanupcasespassedincludingwrongARN/tagandfailedIngressdeletion.",
+      "eksctlhelpflagscheckedwithlocal0.229.0;noAWSAPIcalls. Scopedgitdiffcheckpassed.",
+      "NoNGINXruntime,clusterprovisioning,deployment,loadtest,upgrade/rollbackorcostmeasurement. Validationlimitationsstatedindocument."
+    ]
+  }
+]

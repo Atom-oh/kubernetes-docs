@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch vs Open Source Solutions",
+    "locale": "en",
+    "output": "en-observability-metrics-04-cloudwatch-metrics-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "CloudWatch"
+        },
+        "backend": {
+          "label": "Open source"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ops",
+        "label": "Operating model",
+        "focus": [
+          "c1",
+          "o1"
+        ],
+        "note": "CloudWatch needs no infrastructure management; Prometheus/VM must be installed and operated by your team."
+      },
+      {
+        "id": "cost",
+        "label": "Cost model",
+        "focus": [
+          "c3",
+          "o3"
+        ],
+        "note": "CloudWatch bills by metric and API usage; the open source stack costs only its infrastructure."
+      },
+      {
+        "id": "retention",
+        "label": "Retention",
+        "focus": [
+          "c4",
+          "o4"
+        ],
+        "note": "CloudWatch retains metrics for 15 months by default; open source retention is unlimited as far as storage allows."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "c1",
+      "type": "cloud",
+      "label": "Fully Managed",
+      "sublabel": "No infrastructure to manage",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "cloud",
+      "label": "AWS Native",
+      "sublabel": "Auto-integrates with EC2, EKS, RDS",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "cloud",
+      "label": "Usage-based Cost",
+      "sublabel": "Billed per metric and API call",
+      "pos": [
+        60,
+        270
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "c4",
+      "type": "cloud",
+      "label": "15 Month Retention",
+      "sublabel": "Default retention period",
+      "pos": [
+        60,
+        370
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "o1",
+      "type": "backend",
+      "label": "Self-managed",
+      "sublabel": "You install, scale and troubleshoot",
+      "pos": [
+        610,
+        70
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "o2",
+      "type": "backend",
+      "label": "Cloud Neutral",
+      "sublabel": "Multi-cloud and on-premises",
+      "pos": [
+        610,
+        170
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "o3",
+      "type": "backend",
+      "label": "Infrastructure Cost Only",
+      "sublabel": "Node and storage cost",
+      "pos": [
+        610,
+        270
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "o4",
+      "type": "backend",
+      "label": "Unlimited Retention",
+      "sublabel": "As long as storage capacity allows",
+      "pos": [
+        610,
+        370
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "CloudWatch",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3",
+        "c4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Open Source Prometheus/VM",
+      "wraps": [
+        "o1",
+        "o2",
+        "o3",
+        "o4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cmp-ops",
+      "from": "c1",
+      "to": "o1",
+      "label": "Operational overhead",
+      "variant": "dashed"
+    },
+    {
+      "id": "cmp-cloud",
+      "from": "c2",
+      "to": "o2",
+      "label": "Multi-cloud",
+      "variant": "dashed"
+    },
+    {
+      "id": "cmp-cost",
+      "from": "c3",
+      "to": "o3",
+      "label": "Cost model",
+      "variant": "dashed"
+    },
+    {
+      "id": "cmp-retention",
+      "from": "c4",
+      "to": "o4",
+      "label": "Retention",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "CloudWatch",
+      "items": [
+        "No operational overhead, automatic scaling",
+        "Query language: Metric Math",
+        "AWS only, limited customization"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Prometheus/VM",
+      "items": [
+        "Operational overhead, manual scaling configuration",
+        "Query language: PromQL/MetricsQL",
+        "Cloud neutral, fully flexible customization"
+      ]
+    }
+  ]
+}

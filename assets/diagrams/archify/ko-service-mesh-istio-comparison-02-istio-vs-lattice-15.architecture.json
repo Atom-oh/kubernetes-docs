@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "비용 비교 종합",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-15.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1240, 560],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": { "label": "Istio 비용" },
+        "external": { "label": "참고 (Ambient Mode)" },
+        "cloud": { "label": "VPC Lattice 비용" },
+        "security": { "label": "결론" }
+      }
+    },
+    "views": [
+      { "id": "istio-cost", "label": "Istio Sidecar 비용 구조", "focus": ["istio", "istio-infra", "istio-ops", "istio-tco"], "note": "연간 $49,500은 인프라 $10,500과 운영 $39,000의 합이며, 여기에 5년을 곱하고 예상외 비용 $50,000을 더해 TCO $297,500이 된다." },
+      { "id": "lattice-cost", "label": "VPC Lattice 비용 구조", "focus": ["lattice", "lattice-usage", "lattice-ops", "lattice-tco"], "note": "연간 $7,608은 사용량 $2,508과 운영 $5,100의 합이며, 5년을 곱하면 TCO $38,040이다." },
+      { "id": "tco-gap", "label": "5년 TCO 비교", "focus": ["istio-tco", "ambient", "lattice-tco", "savings"], "note": "Istio $297,500 대 VPC Lattice $38,040으로 5년간 $259,460(약 87%) 차이가 난다." }
+    ]
+  },
+  "components": [
+    { "id": "istio", "type": "backend", "label": "Istio Sidecar", "sublabel": "$49,500/년", "pos": [40, 60], "size": [200, 64] },
+    { "id": "istio-infra", "type": "backend", "label": "인프라", "sublabel": "$10,500/년 · Sidecar 오버헤드 포함", "pos": [290, 180], "size": [220, 64] },
+    { "id": "istio-ops", "type": "backend", "label": "운영", "sublabel": "$39,000/년 · 전문 인력 필요", "pos": [290, 290], "size": [220, 64] },
+    { "id": "istio-tco", "type": "backend", "label": "Istio 5년 TCO", "sublabel": "$297,500", "pos": [40, 410], "size": [200, 64] },
+    { "id": "ambient", "type": "external", "label": "Istio Ambient", "sublabel": "$46,380/년 · 약 6% 절감", "pos": [520, 60], "size": [200, 64], "tag": "참고" },
+    { "id": "savings", "type": "security", "label": "절감 $259,460", "sublabel": "5년 기준 · 약 87% 저렴", "pos": [520, 410], "size": [200, 64] },
+    { "id": "lattice-usage", "type": "cloud", "label": "사용량", "sublabel": "$2,508/년 · 오버헤드 없음", "pos": [730, 180], "size": [220, 64] },
+    { "id": "lattice-ops", "type": "cloud", "label": "운영", "sublabel": "$5,100/년 · 일반 엔지니어", "pos": [730, 290], "size": [220, 64] },
+    { "id": "lattice", "type": "cloud", "label": "VPC Lattice", "sublabel": "$7,608/년", "pos": [1000, 60], "size": [200, 64] },
+    { "id": "lattice-tco", "type": "cloud", "label": "VPC Lattice 5년 TCO", "sublabel": "$38,040", "pos": [1000, 410], "size": [200, 64] }
+  ],
+  "connections": [
+    { "id": "istio-to-infra", "from": "istio", "to": "istio-infra", "variant": "dashed" },
+    { "id": "istio-to-ops", "from": "istio", "to": "istio-ops", "variant": "dashed" },
+    { "id": "istio-to-tco", "from": "istio", "to": "istio-tco", "label": "× 5년 + 예상외 비용 $50,000", "labelAt": [140, 267] },
+    { "id": "lattice-to-usage", "from": "lattice", "to": "lattice-usage", "variant": "dashed" },
+    { "id": "lattice-to-ops", "from": "lattice", "to": "lattice-ops", "variant": "dashed" },
+    { "id": "lattice-to-tco", "from": "lattice", "to": "lattice-tco", "label": "× 5년", "labelAt": [1100, 267] },
+    { "id": "istio-tco-to-savings", "from": "istio-tco", "to": "savings", "variant": "emphasis" },
+    { "id": "lattice-tco-to-savings", "from": "lattice-tco", "to": "savings", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "Istio가 비싼 이유", "items": ["Sidecar 오버헤드: 노드 40-60% 추가 ($280/월)", "운영 인력: 전담 팀 필요 ($39,000/년)", "관찰성 인프라: Prometheus, Jaeger, Kiali ($150/월)", "업그레이드·긴급 대응: 연 $7,000"] },
+    { "dot": "amber", "title": "VPC Lattice가 저렴한 이유", "items": ["제로 오버헤드: Sidecar 없음", "완전 관리형: 운영 인력 최소화", "자동 업그레이드·CloudWatch 통합 관찰성"] },
+    { "dot": "slate", "title": "주의", "items": ["100 파드 환경 기준 추정치", "실제 비용은 워크로드 규모, 트래픽, 팀 규모에 따라 달라짐", "Ambient Mode 5년 TCO는 $281,900"] }
+  ]
+}

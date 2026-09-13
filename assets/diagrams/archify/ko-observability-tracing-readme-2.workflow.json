@@ -1,0 +1,146 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Span 하나의 구성 요소",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "identifiers",
+        "label": "식별자 헤더",
+        "focus": [
+          "header"
+        ],
+        "note": "TraceID는 전체 추적, SpanID는 이 Span, ParentSpanID는 부모 Span을 가리킨다. Root Span은 ParentSpanID가 null이다."
+      },
+      {
+        "id": "timing",
+        "label": "시간 정보",
+        "focus": [
+          "header",
+          "timing"
+        ],
+        "note": "Start Time과 Duration으로 이 작업이 언제 시작해 얼마나 걸렸는지 기록한다. 예: 10:30:00 시작, 150ms 소요."
+      },
+      {
+        "id": "metadata",
+        "label": "운영 메타데이터",
+        "focus": [
+          "timing",
+          "metadata"
+        ],
+        "note": "Operation Name(HTTP GET /users), Tags(service=api, http.method=GET), Logs(request received, response sent)를 담는다."
+      },
+      {
+        "id": "outcome",
+        "label": "최종 상태",
+        "focus": [
+          "metadata",
+          "status"
+        ],
+        "note": "작업이 끝나면 Status에 결과가 기록된다. 예시 Span은 Status: OK로 마감된다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "식별자"
+        },
+        "backend": {
+          "label": "시간 정보"
+        },
+        "database": {
+          "label": "메타데이터"
+        },
+        "security": {
+          "label": "상태"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "identity",
+      "label": "식별 · 시간 — Span이 시작될 때 채워진다"
+    },
+    {
+      "id": "outcome",
+      "label": "메타데이터 · 상태 — 작업 중과 종료 시 채워진다"
+    }
+  ],
+  "mainPath": [
+    "header",
+    "timing",
+    "metadata",
+    "status"
+  ],
+  "nodes": [
+    {
+      "id": "header",
+      "lane": "identity",
+      "col": 0,
+      "width": 176,
+      "type": "frontend",
+      "label": "헤더 정보",
+      "sublabel": "TraceID · SpanID · ParentSpanID",
+      "tag": "01 · 식별자",
+      "height": 116
+    },
+    {
+      "id": "timing",
+      "lane": "identity",
+      "col": 1,
+      "width": 176,
+      "type": "backend",
+      "label": "시간 정보",
+      "sublabel": "Start Time · Duration 150ms",
+      "tag": "02 · 타이밍",
+      "height": 116
+    },
+    {
+      "id": "metadata",
+      "lane": "outcome",
+      "col": 1,
+      "width": 176,
+      "type": "database",
+      "label": "메타데이터",
+      "sublabel": "Operation · Tags · Logs",
+      "tag": "03 · 메타데이터",
+      "height": 116
+    },
+    {
+      "id": "status",
+      "lane": "outcome",
+      "col": 2,
+      "width": 176,
+      "type": "security",
+      "label": "상태",
+      "sublabel": "Status: OK",
+      "tag": "04 · 결과",
+      "height": 116
+    }
+  ],
+  "edges": [
+    {
+      "id": "header-timing",
+      "from": "header",
+      "to": "timing"
+    },
+    {
+      "id": "timing-metadata",
+      "from": "timing",
+      "to": "metadata",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "metadata-status",
+      "from": "metadata",
+      "to": "status",
+      "variant": "emphasis",
+      "route": "straight"
+    }
+  ]
+}

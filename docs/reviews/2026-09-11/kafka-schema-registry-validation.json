@@ -1,0 +1,238 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/kafka/04-schema-registry.md",
+    "ko/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+    "en/data-on-eks/kafka/04-schema-registry.md",
+    "en/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md"
+  ],
+  "versions": {
+    "apicurio": "3.3.3",
+    "karapace": "6.2.3",
+    "avro": "1.12.2",
+    "strimzi": "1.2.0"
+  },
+  "sources": [
+    "https://avro.apache.org/docs/1.12.0/specification/",
+    "https://protobuf.dev/programming-guides/proto3/#updating",
+    "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+    "https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html",
+    "https://github.com/Aiven-Open/karapace/tree/6.2.3",
+    "https://github.com/Apicurio/apicurio-registry/tree/3.3.3",
+    "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/ccompat/rest/README.md",
+    "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/kafkasql/KafkaSqlConfiguration.java",
+    "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/util/KafkaAdminUtil.java",
+    "https://github.com/confluentinc/schema-registry/blob/master/LICENSE"
+  ],
+  "findings": [
+    "Corrected Karapace Protobuf support, component license scope, registry migration and serializer/wire-format caveats.",
+    "Fixed Avro logicalType nesting; validated reader defaults, conditional forward compatibility on removal, numeric promotion and non-transitive history.",
+    "Replaced plaintext old-cluster deployment with Apicurio 3.3.3/Strimzi v1 precreated topics, scoped ACLs, TLS/SCRAM, explicit hostname verification and current health management port.",
+    "Verified KafkaSQL journal/snapshots/events initialization, default no-compaction/no-retention checks, random group replay and separate snapshot-file persistence.",
+    "Registered the same canonical schema under orders-value using ccompat/v7 and explicit BACKWARD_TRANSITIVE; separated producer serializer from consumer deserializer settings.",
+    "Updated all 36 quiz questions and preserved chapter navigation; no images in these files."
+  ],
+  "validation": {
+    "avroVersion": "1.12.2",
+    "avroCases": [
+      "correct timestamp logical type recognized",
+      "legacy misplaced attribute parses but has no logical type",
+      "canonical datum round trip",
+      "defaulted addition backward compatible",
+      "defaulted addition fills null on historical datum",
+      "required addition without default incompatible",
+      "writer missing required field rejected",
+      "defaulted field removal backward compatible",
+      "defaulted field removal forward compatible",
+      "old reader fills default after field removal",
+      "required field removal not forward compatible",
+      "double to string incompatible",
+      "int writer to long reader compatible",
+      "long writer to int reader not compatible",
+      "numeric promotion real read",
+      "backward chain does not imply transitive compatibility",
+      "register and compatibility request match pinned OpenAPI",
+      "36 quiz questions retained"
+    ],
+    "objects": [
+      {
+        "kind": "KafkaTopic",
+        "name": "kafkasql-journal"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "kafkasql-snapshots"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "registry-events"
+      },
+      {
+        "kind": "KafkaUser",
+        "name": "apicurio-registry"
+      },
+      {
+        "kind": "Deployment",
+        "name": "apicurio-registry"
+      },
+      {
+        "kind": "Service",
+        "name": "apicurio-registry"
+      },
+      {
+        "kind": "NetworkPolicy",
+        "name": "apicurio-registry-ingress"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "kafkasql-journal"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "kafkasql-snapshots"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "registry-events"
+      },
+      {
+        "kind": "KafkaUser",
+        "name": "apicurio-registry"
+      },
+      {
+        "kind": "Deployment",
+        "name": "apicurio-registry"
+      },
+      {
+        "kind": "Service",
+        "name": "apicurio-registry"
+      },
+      {
+        "kind": "NetworkPolicy",
+        "name": "apicurio-registry-ingress"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "kafkasql-journal"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "kafkasql-snapshots"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "registry-events"
+      },
+      {
+        "kind": "KafkaUser",
+        "name": "apicurio-registry"
+      },
+      {
+        "kind": "Deployment",
+        "name": "apicurio-registry"
+      },
+      {
+        "kind": "Service",
+        "name": "apicurio-registry"
+      },
+      {
+        "kind": "NetworkPolicy",
+        "name": "apicurio-registry-ingress"
+      }
+    ],
+    "fences": [
+      {
+        "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+        "language": "json"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+        "language": "protobuf"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+        "language": "json"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+        "language": "json"
+      },
+      {
+        "path": "en/data-on-eks/kafka/04-schema-registry.md",
+        "language": "json"
+      },
+      {
+        "path": "en/data-on-eks/kafka/04-schema-registry.md",
+        "language": "protobuf"
+      },
+      {
+        "path": "en/data-on-eks/kafka/04-schema-registry.md",
+        "language": "json"
+      },
+      {
+        "path": "en/data-on-eks/kafka/04-schema-registry.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/04-schema-registry.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/04-schema-registry.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/04-schema-registry.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/04-schema-registry.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/04-schema-registry.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+        "language": "json"
+      }
+    ],
+    "relativeLinks": 12,
+    "quizQuestions": 36,
+    "limits": "Native Avro encode/decode and compatibility, source configuration, OpenAPI and Kubernetes/Strimzi schemas only. No deployed registry, broker connection, live reconciliation, actual image pull or AWS mutation."
+  },
+  "sourceChecks": [
+    "Apicurio Constants.java health/ready and health/live on9000",
+    "RegistryConfigSource environment underscore-to-dot mapping",
+    "KafkaSqlConfiguration common client properties; explicit HTTPS required because released default hostname algorithm empty",
+    "KafkaAdminUtil requires cleanup.policy delete; comment says compaction has no benefit, so no invented universal data-loss claim",
+    "KafkaSqlRegistryStorage initializes all3topics and stores snapshot paths; external snapshotfiles required",
+    "Pinned v7 OpenAPI register/config requests validated"
+  ],
+  "limitations": "Native Avro encode/decode and compatibility, source configuration, OpenAPI and Kubernetes/Strimzi schemas only. No deployed registry, broker connection, live reconciliation, actual image pull or AWS mutation."
+}

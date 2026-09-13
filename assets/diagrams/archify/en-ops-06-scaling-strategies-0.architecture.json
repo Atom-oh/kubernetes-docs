@@ -1,34 +1,185 @@
 {
-  "schema_version": 1, "diagram_type": "architecture",
-  "meta": { "title": "Custom Metrics Pipeline", "locale": "en", "output": "en-ops-06-scaling-strategies-0.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1240, 660] },
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Custom metric values and scaling decisions",
+    "locale": "en",
+    "output": "en-ops-06-scaling-strategies-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      420
+    ]
+  },
   "components": [
-    { "id": "appmetrics", "type": "frontend", "label": "Application metrics", "sublabel": "/metrics endpoint", "pos": [40, 220], "size": [230, 80] },
-    { "id": "prom", "type": "backend", "label": "Prometheus Server", "sublabel": "scrape · store · query", "pos": [340, 220], "size": [240, 80] },
-    { "id": "adapter", "type": "backend", "label": "Prometheus Adapter", "sublabel": "translates PromQL", "pos": [650, 220], "size": [240, 80] },
-    { "id": "apiserver", "type": "cloud", "label": "Kubernetes API server", "sublabel": "custom.metrics.k8s.io · external.metrics.k8s.io", "pos": [960, 220], "size": [250, 90] },
-    { "id": "hpa", "type": "backend", "label": "HorizontalPodAutoscaler", "sublabel": "custom · external metrics", "pos": [960, 470], "size": [250, 80] }
+    {
+      "id": "appmetrics",
+      "type": "frontend",
+      "label": "Application metrics",
+      "sublabel": "/metrics endpoint",
+      "pos": [
+        20,
+        110
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "backend",
+      "label": "Prometheus Server",
+      "sublabel": "scrape · store · query",
+      "pos": [
+        280,
+        110
+      ],
+      "size": [
+        190,
+        80
+      ]
+    },
+    {
+      "id": "adapter",
+      "type": "backend",
+      "label": "Prometheus Adapter",
+      "sublabel": "Metric names and query rules",
+      "pos": [
+        550,
+        110
+      ],
+      "size": [
+        210,
+        80
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "cloud",
+      "label": "API aggregation",
+      "sublabel": "custom.metrics.k8s.io",
+      "pos": [
+        820,
+        110
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA controller",
+      "sublabel": "Replica recommendation",
+      "pos": [
+        820,
+        260
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "workload",
+      "type": "backend",
+      "label": "Deployment /scale",
+      "sublabel": "Update desired replicas",
+      "pos": [
+        550,
+        260
+      ],
+      "size": [
+        210,
+        80
+      ]
+    }
   ],
   "connections": [
-    { "id": "app-prom", "from": "appmetrics", "to": "prom", "label": "scrape" },
-    { "id": "prom-adapter", "from": "prom", "to": "adapter", "label": "PromQL" },
-    { "id": "adapter-api", "from": "adapter", "to": "apiserver", "label": "APIService" },
-    { "id": "api-hpa", "from": "apiserver", "to": "hpa", "label": "metric values", "fromSide": "bottom", "toSide": "top", "labelDy": 80 }
+    {
+      "id": "app-prom",
+      "from": "appmetrics",
+      "to": "prom",
+      "label": "Scraped samples",
+      "labelAt": [
+        240,
+        95
+      ]
+    },
+    {
+      "id": "prom-adapter",
+      "from": "prom",
+      "to": "adapter",
+      "label": "Query results",
+      "labelAt": [
+        510,
+        95
+      ]
+    },
+    {
+      "id": "adapter-api",
+      "from": "adapter",
+      "to": "apiserver",
+      "label": "Aggregated response",
+      "labelAt": [
+        790,
+        95
+      ]
+    },
+    {
+      "id": "api-hpa",
+      "from": "apiserver",
+      "to": "hpa",
+      "label": "Metric response",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        920,
+        225
+      ]
+    },
+    {
+      "id": "hpa-scale",
+      "from": "hpa",
+      "to": "workload",
+      "label": "Update /scale",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelAt": [
+        790,
+        245
+      ]
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Why an adapter is needed", "items": [
-      "The HPA reads metrics only through the Kubernetes metrics APIs, not from Prometheus directly",
-      "Prometheus Adapter registers an APIService for custom.metrics.k8s.io and external.metrics.k8s.io",
-      "Its rules map PromQL queries onto metric names the HPA can reference"
-    ]},
-    { "dot": "emerald", "title": "Custom versus external metrics", "items": [
-      "Custom metrics attach to a Kubernetes object, such as requests per second on a Deployment",
-      "External metrics come from outside the cluster, such as SQS queue depth",
-      "KEDA covers the external case with a wider set of built-in scalers"
-    ]},
-    { "dot": "amber", "title": "Operational notes", "items": [
-      "kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1 confirms the API is serving",
-      "Scrape interval plus adapter cache means the HPA reacts on the order of tens of seconds",
-      "Set behavior.scaleDown.stabilizationWindowSeconds to avoid thrash on noisy metrics"
-    ]}
+    {
+      "dot": "cyan",
+      "title": "Arrows show returned values",
+      "items": [
+        "Prometheus scrapes the application /metrics endpoint",
+        "The adapter queries Prometheus; HPA reads the aggregated API"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Separate API ownership",
+      "items": [
+        "This adapter example serves custom.metrics.k8s.io only",
+        "Metrics-server serves CPU/memory; KEDA serves external metrics",
+        "Avoid competing owners of the same APIService"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Timing and failure handling",
+      "items": [
+        "Scraping, queries, HPA reconciliation and Pod readiness add latency",
+        "Multiple metrics select the largest replica recommendation",
+        "Missing data does not mean zero load or healthy operation"
+      ]
+    }
   ]
 }

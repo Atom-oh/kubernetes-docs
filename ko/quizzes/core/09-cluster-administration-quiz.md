@@ -1,3 +1,7 @@
+# 클러스터 관리 퀴즈
+
+자체 관리형 클러스터와 EKS의 운영, 백업, 유지 관리, 모니터링, 복구를 다룹니다. 기존 15개 문제를 유지하며 호스트의 etcd 작업은 EKS 관리형 컨트롤 플레인에 적용하지 않습니다.
+
 ## 주관식 문제
 
 1. Kubernetes 클러스터에서 etcd 데이터베이스의 백업 및 복원 절차를 설명하세요.
@@ -25,7 +29,7 @@
 
 3. **백업 파일 확인:**
    ```bash
-   ETCDCTL_API=3 etcdctl snapshot status snapshot.db --write-out=table
+   etcdutl snapshot status snapshot.db --write-out=table
    ```
 
 4. **백업 파일을 안전한 위치에 저장:**
@@ -35,61 +39,23 @@
 
 **etcd 복원 절차:**
 
-1. **복원을 위해 모든 API 서버 중지:**
-   ```bash
-   sudo systemctl stop kube-apiserver
-   ```
+1. 스냅샷을 검증하고 원본 데이터, PKI, 암호화 공급자 키·설정을 보관합니다. etcd 스냅샷에는 PV 파일이나 모든 호스트 설정이 포함되지 않습니다.
+2. 배포판 운영 절차로 모든 API 서버와 해당 etcd 프로세스를 중지합니다. kubeadm은 보통 개별 systemd 서비스가 아닌 정적 파드를 사용하며 kubelet만 중지해도 컨테이너가 종료되지는 않습니다.
+3. 호환 etcdutl로 새 디렉토리에 오프라인 복원합니다. 아래 단일 멤버 예시는 HA 복구 명령이 아닙니다:
 
-2. **etcd 서비스 중지:**
-   ```bash
-   sudo systemctl stop etcd
-   ```
+```bash
+etcdutl snapshot restore snapshot.db \
+  --data-dir=/var/lib/etcd-restore \
+  --name=etcd-1 \
+  --initial-cluster=etcd-1=https://127.0.0.1:2380 \
+  --initial-cluster-token=restored-cluster \
+  --initial-advertise-peer-urls=https://127.0.0.1:2380 \
+  --bump-revision=1000000000 --mark-compacted
+```
 
-3. **데이터 디렉토리 백업(선택 사항):**
-   ```bash
-   sudo mv /var/lib/etcd /var/lib/etcd.bak
-   ```
-
-4. **스냅샷에서 새 데이터 디렉토리 생성:**
-   ```bash
-   ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
-     --data-dir=/var/lib/etcd-restore \
-     --name=master \
-     --initial-cluster=master=https://127.0.0.1:2380 \
-     --initial-cluster-token=etcd-cluster-1 \
-     --initial-advertise-peer-urls=https://127.0.0.1:2380
-   ```
-
-5. **복원된 데이터 디렉토리를 etcd가 사용하도록 설정:**
-   ```bash
-   sudo mv /var/lib/etcd-restore /var/lib/etcd
-   sudo chown -R etcd:etcd /var/lib/etcd
-   ```
-
-6. **etcd 서비스 재시작:**
-   ```bash
-   sudo systemctl start etcd
-   ```
-
-7. **etcd 상태 확인:**
-   ```bash
-   ETCDCTL_API=3 etcdctl endpoint health \
-     --endpoints=https://127.0.0.1:2379 \
-     --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-     --cert=/etc/kubernetes/pki/etcd/server.crt \
-     --key=/etc/kubernetes/pki/etcd/server.key
-   ```
-
-8. **API 서버 재시작:**
-   ```bash
-   sudo systemctl start kube-apiserver
-   ```
-
-9. **클러스터 상태 확인:**
-   ```bash
-   kubectl get nodes
-   kubectl get pods --all-namespaces
-   ```
+4. HA는 같은 스냅샷을 각 멤버 고유 이름·피어 URL과 동일한 전체 멤버 목록으로 복원합니다. 리비전 증가량은 스냅샷 이후 쓰기를 초과하도록 정하고 watch 캐시를 무효화합니다.
+5. etcd 매니페스트·서비스의 경로, 소유권, 인증서를 복원 데이터에 맞춥니다. etcd 쿼럼·상태 확인 후 API 서버·컨트롤러를 시작하고 노드·워크로드를 검증합니다.
+6. [공식 복구 절차](https://etcd.io/docs/v3.6/op-guide/recovery/)를 따르세요. EKS 사용자는 관리형 etcd에 접근하지 않고 지원되는 백업 도구로 앱 리소스·데이터를 복원합니다.
 
 **모범 사례:**
 - 정기적인 백업 일정 설정(예: 매일)
@@ -123,7 +89,7 @@
 
 3. **노드 drain(비우기):**
    ```bash
-   kubectl drain <노드_이름> --ignore-daemonsets --delete-emptydir-data
+   kubectl drain <노드_이름> --ignore-daemonsets
    ```
 
 4. **유지 보수 작업 수행:**
@@ -153,8 +119,8 @@
 2. **`kubectl drain <노드_이름>`:**
    - 노드를 스케줄 불가능으로 표시합니다(cordon 포함).
    - 노드에서 실행 중인 포드를 안전하게 축출(evict)합니다.
-   - 포드는 다른 노드로 재스케줄링됩니다.
-   - DaemonSet 포드는 기본적으로 무시됩니다(`--ignore-daemonsets` 플래그 필요).
+   - 워크로드 컨트롤러가 대체 파드를 생성할 수 있으며 배치는 용량·제약 조건에 따라 달라집니다.
+   - DaemonSet 파드가 있으면 --ignore-daemonsets 없이는 drain이 거부되며 이 플래그는 해당 파드를 계속 실행시킵니다.
    - emptyDir 볼륨을 사용하는 포드는 데이터 손실 가능성이 있으므로 특별한 처리가 필요합니다(`--delete-emptydir-data` 플래그).
    - PodDisruptionBudget을 존중합니다.
 
@@ -186,9 +152,9 @@
 - **Metrics Server:**
   - 기본적인 CPU 및 메모리 사용량 메트릭 제공
   - `kubectl top` 명령 지원
-  - 설치 방법:
+  - Kubernetes 1.34+ 설치 예시 (요구사항과 기존 설치 여부를 먼저 확인):
     ```bash
-    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.0/components.yaml
     ```
   - 사용 예:
     ```bash
@@ -196,7 +162,7 @@
     kubectl top pods --all-namespaces
     ```
 
-- **Kubernetes Dashboard:**
+- **Headlamp (Kubernetes Dashboard는 보관 상태):**
   - 클러스터 상태 및 리소스 사용량의 시각적 표현
   - 포드, 노드, 네임스페이스 등의 리소스 관리 인터페이스 제공
 
@@ -345,24 +311,29 @@
   - 자동화된 테스트 스위트 실행
 
 - **API 호환성 확인:**
-  - 사용 중인 API 버전 확인:
+  - 현재 제공되는 API 종류 확인 (클라이언트 사용 이력과 다름):
     ```bash
     kubectl api-resources -o wide
     ```
-  - 더 이상 사용되지 않는 API 사용 확인:
+  - /metrics 접근이 허용되면 관측된 deprecated API 요청을 확인하고 매니페스트·요청 로그도 함께 검토:
     ```bash
-    kubectl get -A | grep "deprecated"
+    kubectl get --raw /metrics | grep '^apiserver_requested_deprecated_apis'
     ```
   - 필요한 경우 매니페스트 업데이트
 
 - **백업 및 복구 계획:**
   - etcd 데이터베이스 백업:
     ```bash
-    ETCDCTL_API=3 etcdctl snapshot save snapshot.db
+    ETCDCTL_API=3 etcdctl snapshot save snapshot.db \
+      --endpoints=https://127.0.0.1:2379 \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+      --key=/etc/kubernetes/pki/etcd/healthcheck-client.key
     ```
-  - 모든 중요 매니페스트 백업:
+  - 일부 워크로드 객체 내보내기 (전체 백업이 아니며 출력 보호 필요):
     ```bash
-    kubectl get all --all-namespaces -o yaml > all-resources.yaml
+    umask 077
+    kubectl get all --all-namespaces -o yaml > workload-subset.yaml
     ```
   - 복구 절차 문서화 및 테스트
 
@@ -388,7 +359,7 @@
     ```
   - **노드 드레이닝 시 주의:**
     ```bash
-    kubectl drain <노드_이름> --ignore-daemonsets --delete-emptydir-data
+    kubectl drain <노드_이름> --ignore-daemonsets
     ```
 
 - **모니터링 강화:**
@@ -674,7 +645,7 @@ kubectl create namespace development
 ```
 </details>
 
-2. 클러스터의 모든 노드에서 kubelet 서비스 상태를 확인하고, 문제가 있는 경우 해결하는 스크립트를 작성하세요.
+2. 각 노드의 SSH 별칭이 구성된 자체 관리형 Linux 클러스터에서 kubelet을 점검하고 명시적인 복구 모드를 지원하는 스크립트를 작성하세요.
 
 <details>
 <summary>정답 보기</summary>
@@ -682,65 +653,61 @@ kubectl create namespace development
 **정답:**
 
 ```bash
-#!/bin/bash
-# 파일명: check_kubelet.sh
-# 설명: 모든 노드에서 kubelet 서비스 상태를 확인하고 문제 해결
-
-# 노드 목록 가져오기
-NODES=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
-
-# 각 노드에 대해 반복
-for NODE in $NODES; do
-  echo "===== 노드 확인: $NODE ====="
-  
-  # 노드 상태 확인
-  NODE_STATUS=$(kubectl get node $NODE -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-  echo "노드 상태: $NODE_STATUS"
-  
-  # SSH를 통해 kubelet 상태 확인
-  echo "kubelet 서비스 상태 확인 중..."
-  ssh $NODE "sudo systemctl status kubelet | grep Active"
-  
-  # kubelet이 실행 중이 아니면 시작
-  if ssh $NODE "sudo systemctl is-active kubelet" != "active"; then
-    echo "kubelet이 실행 중이 아닙니다. 서비스 시작 중..."
-    ssh $NODE "sudo systemctl start kubelet"
-    
-    # 시작 후 상태 다시 확인
-    sleep 5
-    if ssh $NODE "sudo systemctl is-active kubelet" == "active"; then
-      echo "kubelet 서비스가 성공적으로 시작되었습니다."
-    else
-      echo "kubelet 서비스 시작 실패. 로그 확인 중..."
-      ssh $NODE "sudo journalctl -u kubelet --no-pager -n 50"
-    fi
+#!/usr/bin/env bash
+# check_kubelet.sh: self-managed Linux nodes with configured SSH aliases only.
+set -euo pipefail
+repair=${REPAIR_KUBELET:-0}
+status=0
+nodes=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
+for node in $nodes; do
+  printf '%s: ' "$node"
+  if state=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+      'sudo -n systemctl is-active kubelet'); then
+    printf 'kubelet %s\n' "$state"
+    continue
   else
-    echo "kubelet 서비스가 정상적으로 실행 중입니다."
+    rc=$?
   fi
-  
-  # kubelet 구성 확인
-  echo "kubelet 구성 확인 중..."
-  ssh $NODE "sudo cat /var/lib/kubelet/config.yaml | grep -E 'address|authentication|authorization'"
-  
-  echo "===== $NODE 확인 완료 ====="
-  echo ""
+  if [ "$rc" -ne 3 ]; then
+    printf 'SSH/sudo/service query failed (exit %s); no repair attempted\n' "$rc" >&2
+    status=1
+    continue
+  fi
+  printf 'kubelet %s\n' "$state"
+  if [ "$repair" != 1 ]; then
+    printf 'Inspect logs and approve a repair before rerunning with REPAIR_KUBELET=1\n'
+    status=1
+    continue
+  fi
+  if ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+      'sudo -n systemctl start kubelet && sudo -n systemctl is-active --quiet kubelet' \
+      && kubectl wait --for=condition=Ready "node/$node" --timeout=120s; then
+    printf '%s: kubelet active and node Ready\n' "$node"
+  else
+    status=1
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+      'sudo -n journalctl -u kubelet --no-pager -n 50' || true
+  fi
 done
+exit "$status"
 ```
 
 이 스크립트는 다음 작업을 수행합니다:
 1. `kubectl get nodes`를 사용하여 클러스터의 모든 노드 목록을 가져옵니다.
 2. 각 노드에 대해:
-   - 노드의 Ready 상태를 확인합니다.
+   - 서비스 상태를 조회하고 복구 요청 후 Ready 상태를 검증합니다.
    - SSH를 통해 노드에 연결하여 kubelet 서비스 상태를 확인합니다.
-   - kubelet이 실행 중이 아니면 서비스를 시작합니다.
+   - 서비스 상태 조회에 성공한 비활성 서비스를 보고하고 REPAIR_KUBELET=1일 때만 시작합니다.
    - 서비스 시작 후 상태를 다시 확인합니다.
    - 시작에 실패한 경우 로그를 확인합니다.
-   - kubelet 구성 파일의 주요 설정을 확인합니다.
+   - SSH·sudo·조회 실패를 비활성 서비스와 구분하고 복구 후 노드 Ready를 확인합니다.
 
 **사용 방법:**
 ```bash
 chmod +x check_kubelet.sh
 ./check_kubelet.sh
+# After diagnosing the inactive service and approving repair:
+REPAIR_KUBELET=1 ./check_kubelet.sh
 ```
 
 **참고 사항:**
@@ -759,56 +726,55 @@ chmod +x check_kubelet.sh
 **1. 백업 스크립트 생성:**
 
 ```bash
-#!/bin/bash
-# 파일명: backup_etcd.sh
-# 설명: etcd 데이터베이스 백업 및 원격 저장
+#!/usr/bin/env bash
+# backup_etcd.sh: self-managed etcd; external storage must already be mounted.
+set -euo pipefail
+umask 077
+BACKUP_DIR=${BACKUP_DIR:-/opt/etcd-backup}
+REMOTE_ROOT=${REMOTE_ROOT:-/mnt/remote-storage}
+REMOTE_DIR="$REMOTE_ROOT/etcd-backups"
+METRICS_DIR=${METRICS_DIR:-/var/lib/node_exporter/textfile_collector}
+RETENTION_DAYS=${RETENTION_DAYS:-7}
+ETCD_ENDPOINT=${ETCD_ENDPOINT:-https://127.0.0.1:2379}
+ETCD_CACERT=${ETCD_CACERT:-/etc/kubernetes/pki/etcd/ca.crt}
+ETCD_CERT=${ETCD_CERT:-/etc/kubernetes/pki/etcd/healthcheck-client.crt}
+ETCD_KEY=${ETCD_KEY:-/etc/kubernetes/pki/etcd/healthcheck-client.key}
 
-# 변수 설정
-BACKUP_DIR="/opt/etcd-backup"
-REMOTE_BACKUP_DIR="/mnt/remote-storage/etcd-backups"
-DATE=$(date +%Y%m%d-%H%M%S)
-BACKUP_FILE="etcd-snapshot-$DATE.db"
-ETCD_ENDPOINTS="https://127.0.0.1:2379"
-ETCD_CACERT="/etc/kubernetes/pki/etcd/ca.crt"
-ETCD_CERT="/etc/kubernetes/pki/etcd/server.crt"
-ETCD_KEY="/etc/kubernetes/pki/etcd/server.key"
-RETENTION_DAYS=7
-
-# 백업 디렉토리 생성
-mkdir -p $BACKUP_DIR
-
-# etcd 스냅샷 생성
-ETCDCTL_API=3 etcdctl snapshot save $BACKUP_DIR/$BACKUP_FILE \
-  --endpoints=$ETCD_ENDPOINTS \
-  --cacert=$ETCD_CACERT \
-  --cert=$ETCD_CERT \
-  --key=$ETCD_KEY
-
-# 백업 성공 확인
-if [ $? -eq 0 ]; then
-  echo "etcd 백업 성공: $BACKUP_FILE"
-  
-  # 백업 파일 상태 확인
-  ETCDCTL_API=3 etcdctl snapshot status $BACKUP_DIR/$BACKUP_FILE --write-out=table
-  
-  # 백업 파일 압축
-  gzip $BACKUP_DIR/$BACKUP_FILE
-  
-  # 원격 저장소에 복사
-  mkdir -p $REMOTE_BACKUP_DIR
-  cp $BACKUP_DIR/$BACKUP_FILE.gz $REMOTE_BACKUP_DIR/
-  
-  # 오래된 백업 파일 정리 (로컬)
-  find $BACKUP_DIR -name "etcd-snapshot-*.db.gz" -type f -mtime +$RETENTION_DAYS -delete
-  
-  # 오래된 백업 파일 정리 (원격)
-  find $REMOTE_BACKUP_DIR -name "etcd-snapshot-*.db.gz" -type f -mtime +$RETENTION_DAYS -delete
-  
-  echo "백업 완료 및 원격 저장소에 복사됨: $REMOTE_BACKUP_DIR/$BACKUP_FILE.gz"
-else
-  echo "etcd 백업 실패"
-  exit 1
-fi
+publish_status() {
+  rc=$?
+  trap - EXIT
+  if [ -d "$METRICS_DIR" ]; then
+    tmp=$(mktemp "$METRICS_DIR/.etcd-backup.XXXXXX")
+    success=0
+    [ "$rc" -eq 0 ] && success=1
+    printf 'etcd_backup_success %s\netcd_backup_last_attempt_timestamp_seconds %s\n' \
+      "$success" "$(date +%s)" > "$tmp"
+    chmod 0644 "$tmp"
+    mv "$tmp" "$METRICS_DIR/etcd_backup_status.prom"
+  fi
+  exit "$rc"
+}
+trap publish_status EXIT
+case "$RETENTION_DAYS" in ''|*[!0-9]*) echo 'Invalid retention' >&2; exit 1;; esac
+mountpoint -q "$REMOTE_ROOT" || { echo 'Remote storage is not mounted' >&2; exit 1; }
+mkdir -p "$BACKUP_DIR" "$REMOTE_DIR"
+exec 9>"$BACKUP_DIR/.backup.lock"
+flock -n 9 || { echo 'Another backup is running' >&2; exit 1; }
+name="etcd-snapshot-$(date -u +%Y%m%d-%H%M%S).db"
+ETCDCTL_API=3 etcdctl snapshot save "$BACKUP_DIR/$name" \
+  --endpoints="$ETCD_ENDPOINT" --cacert="$ETCD_CACERT" \
+  --cert="$ETCD_CERT" --key="$ETCD_KEY"
+etcdutl snapshot status "$BACKUP_DIR/$name" --write-out=table
+gzip "$BACKUP_DIR/$name"
+cp "$BACKUP_DIR/$name.gz" "$REMOTE_DIR/.$name.gz.partial"
+cmp "$BACKUP_DIR/$name.gz" "$REMOTE_DIR/.$name.gz.partial"
+mv "$REMOTE_DIR/.$name.gz.partial" "$REMOTE_DIR/$name.gz"
+# Retention runs only after snapshot validation and verified external copy.
+find "$BACKUP_DIR" -maxdepth 1 -type f -name 'etcd-snapshot-*.db.gz' \
+  -mtime "+$RETENTION_DAYS" -delete
+find "$REMOTE_DIR" -maxdepth 1 -type f -name 'etcd-snapshot-*.db.gz' \
+  -mtime "+$RETENTION_DAYS" -delete
+printf 'Verified backup copied to %s\n' "$REMOTE_DIR/$name.gz"
 ```
 
 **2. 스크립트에 실행 권한 부여:**
@@ -843,7 +809,7 @@ sudo crontab -e
     delaycompress
     missingok
     notifempty
-    create 0644 root root
+    create 0600 root root
 }
 ```
 
@@ -853,18 +819,9 @@ sudo crontab -e
 sudo /opt/etcd-backup/backup_etcd.sh
 ```
 
-**6. 백업 모니터링 설정 (선택 사항):**
+**6. 백업 모니터링:**
 
-백업 실패 시 알림을 받기 위해 모니터링 도구(예: Prometheus)와 통합할 수 있습니다. 백업 스크립트에 다음과 같은 코드를 추가할 수 있습니다:
-
-```bash
-# 백업 성공 여부를 나타내는 파일 생성
-if [ $? -eq 0 ]; then
-  echo "success" > /var/lib/node_exporter/etcd_backup_status.prom
-else
-  echo "failure" > /var/lib/node_exporter/etcd_backup_status.prom
-fi
-```
+스크립트의 EXIT 트랩은 METRICS_DIR이 있을 때 숫자형 `etcd_backup_success`, `etcd_backup_last_attempt_timestamp_seconds`를 기록합니다. node-exporter textfile collector가 해당 디렉토리를 읽도록 구성하고 작성 권한을 부여하며 실패·오래된 시도를 경고하세요. echo·복사 명령 뒤의 `$?`로 백업 성공 여부를 판정하면 안 됩니다. 외부 마운트는 이미 있어야 하며 검증·복사 실패 시 보존 기간 정리를 중단합니다.
 
 **참고 사항:**
 - 백업 파일은 클러스터 외부의 안전한 위치에 저장해야 합니다.
@@ -872,7 +829,7 @@ fi
 - 정기적으로 백업 복원 테스트를 수행하여 백업의 유효성을 확인해야 합니다.
 - 고가용성 etcd 클러스터의 경우 하나의 etcd 인스턴스에서만 백업을 수행하면 됩니다.
 </details>
-4. 클러스터의 모든 노드에 대해 롤링 업데이트를 수행하는 절차를 작성하세요. 업데이트 중에도 워크로드 가용성을 유지해야 합니다.
+4. 명시적으로 선택한 자체 관리형 Linux 워커 노드의 유지 관리 절차를 작성하세요. 중단 예산을 준수하고 상태 확인 실패 시 중단해야 합니다.
 
 <details>
 <summary>정답 보기</summary>
@@ -882,99 +839,65 @@ fi
 **노드 롤링 업데이트 절차:**
 
 ```bash
-#!/bin/bash
-# 파일명: node_rolling_update.sh
-# 설명: 클러스터 노드 롤링 업데이트 수행
-
-# 변수 설정
-UPGRADE_COMMAND="sudo apt update && sudo apt upgrade -y"
-REBOOT_REQUIRED_CHECK="[ -f /var/run/reboot-required ]"
-MAX_UNAVAILABLE=1  # 한 번에 업데이트할 노드 수
-
-# 클러스터 상태 확인
-echo "클러스터 상태 확인 중..."
-kubectl get nodes
-kubectl get pods --all-namespaces -o wide
-
-# PodDisruptionBudget 확인
-echo "PodDisruptionBudget 확인 중..."
-kubectl get poddisruptionbudget --all-namespaces
-
-# 노드 목록 가져오기
-NODES=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
-NODE_COUNT=$(echo $NODES | wc -w)
-
-echo "총 $NODE_COUNT 개의 노드를 업데이트합니다."
-echo "노드 목록: $NODES"
-echo "한 번에 최대 $MAX_UNAVAILABLE 개의 노드가 업데이트됩니다."
-echo "계속하려면 Enter 키를 누르세요. 취소하려면 Ctrl+C를 누르세요."
-read
-
-# 각 노드에 대해 반복
-for NODE in $NODES; do
-  echo "===== 노드 업데이트: $NODE ====="
-  
-  # 노드 cordon
-  echo "노드 cordon 중..."
-  kubectl cordon $NODE
-  
-  # 노드 drain
-  echo "노드 drain 중..."
-  kubectl drain $NODE --ignore-daemonsets --delete-emptydir-data --force
-  
-  # 노드 업데이트
-  echo "노드 업데이트 중..."
-  ssh $NODE "$UPGRADE_COMMAND"
-  
-  # 재부팅 필요 여부 확인
-  REBOOT_REQUIRED=$(ssh $NODE "$REBOOT_REQUIRED_CHECK && echo 'true' || echo 'false'")
-  
-  if [ "$REBOOT_REQUIRED" == "true" ]; then
-    echo "노드 재부팅 필요. 재부팅 중..."
-    ssh $NODE "sudo reboot"
-    
-    # 노드가 다시 Ready 상태가 될 때까지 대기
-    echo "노드 재부팅 중. Ready 상태가 될 때까지 대기 중..."
-    while true; do
-      STATUS=$(kubectl get node $NODE -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-      if [ "$STATUS" == "True" ]; then
-        echo "노드가 Ready 상태가 되었습니다."
-        break
-      fi
-      echo "노드가 아직 Ready 상태가 아닙니다. 10초 후 다시 확인합니다."
-      sleep 10
-    done
-  else
-    echo "노드 재부팅이 필요하지 않습니다."
-  fi
-  
-  # 노드 uncordon
-  echo "노드 uncordon 중..."
-  kubectl uncordon $NODE
-  
-  # 노드 상태 확인
-  echo "노드 상태 확인 중..."
-  kubectl get node $NODE
-  
-  # 포드가 노드에 다시 스케줄링될 때까지 대기
-  echo "포드가 노드에 다시 스케줄링될 때까지 대기 중..."
-  sleep 30
-  
-  # 클러스터 상태 확인
-  echo "클러스터 상태 확인 중..."
-  kubectl get pods --all-namespaces -o wide | grep $NODE
-  
-  echo "===== $NODE 업데이트 완료 ====="
-  echo ""
-  
-  # 다음 노드로 진행하기 전에 사용자 확인 (선택 사항)
-  echo "다음 노드로 진행하려면 Enter 키를 누르세요. 취소하려면 Ctrl+C를 누르세요."
-  read
+#!/usr/bin/env bash
+# node_rolling_update.sh: explicitly selected self-managed Linux workers only.
+set -euo pipefail
+: "${MAINTENANCE_COMMAND:?Set a reviewed node-maintenance command that does not reboot itself}"
+: "${WORKLOAD_HEALTHCHECK:?Set a command that verifies critical workload health}"
+[ "$#" -gt 0 ] || { echo 'Pass the worker node names as arguments' >&2; exit 1; }
+trap 'echo "Stopped on error; inspect the node before manually uncordoning it" >&2' ERR
+for node in "$@"; do
+  kubectl get node "$node" -o json | jq -e '
+    (.metadata.labels["kubernetes.io/os"] == "linux") and
+    (.metadata.labels | has("node-role.kubernetes.io/control-plane") | not) and
+    (.metadata.labels | has("node-role.kubernetes.io/master") | not)' >/dev/null
+  ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" 'sudo -n true'
 done
-
-echo "모든 노드 업데이트 완료!"
-kubectl get nodes
+kubectl get poddisruptionbudgets -A
+bash -c "$WORKLOAD_HEALTHCHECK"
+for node in "$@"; do
+  kubectl wait --for=condition=Ready "node/$node" --timeout=120s
+  boot_before=$(kubectl get node "$node" -o jsonpath='{.status.nodeInfo.bootID}')
+  kubectl cordon "$node"
+  kubectl drain "$node" --ignore-daemonsets --timeout=10m
+  ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" "$MAINTENANCE_COMMAND"
+  reboot_required=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" \
+    'if [ -f /var/run/reboot-required ]; then echo yes; else echo no; fi')
+  if [ "$reboot_required" = yes ]; then
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$node" 'sudo -n reboot' || true
+    deadline=$((SECONDS + 600))
+    while :; do
+      boot_after=$(kubectl get node "$node" -o jsonpath='{.status.nodeInfo.bootID}')
+      [ -n "$boot_after" ] && [ "$boot_after" != "$boot_before" ] && break
+      [ "$SECONDS" -lt "$deadline" ] || { echo 'New boot ID not reported' >&2; exit 1; }
+      sleep 5
+    done
+  fi
+  # Require a fresh kubelet lease renewal, not a stale pre-maintenance Ready flag.
+  lease_before=$(kubectl -n kube-node-lease get lease "$node" -o jsonpath='{.spec.renewTime}')
+  deadline=$((SECONDS + 120))
+  while :; do
+    lease_after=$(kubectl -n kube-node-lease get lease "$node" -o jsonpath='{.spec.renewTime}')
+    [ -n "$lease_after" ] && [ "$lease_after" != "$lease_before" ] && break
+    [ "$SECONDS" -lt "$deadline" ] || { echo 'No fresh kubelet lease' >&2; exit 1; }
+    sleep 5
+  done
+  kubectl wait --for=condition=Ready "node/$node" --timeout=5m
+  bash -c "$WORKLOAD_HEALTHCHECK"
+  kubectl uncordon "$node"
+  bash -c "$WORKLOAD_HEALTHCHECK"
+done
 ```
+
+이 예시는 kubectl, jq, 선택한 노드의 SSH 별칭, 승인된 비대화형 sudo, 검토한 유지 관리 명령이 필요합니다. Debian/Ubuntu의 reboot-required 표시를 검사하므로 OS에 맞게 조정하세요. WORKLOAD_HEALTHCHECK는 실제 중요 앱을 검증하는 명령으로 설정하고 검토한 워커 목록만 전달합니다:
+
+```bash
+MAINTENANCE_COMMAND='sudo -n /usr/local/sbin/approved-node-maintenance' \
+WORKLOAD_HEALTHCHECK='kubectl -n app rollout status deployment/frontend --timeout=5m' \
+./node_rolling_update.sh worker-1 worker-2
+```
+
+명령·스크립트와 앱 이름은 실제 환경·계획과 일치해야 합니다. force나 emptyDir 손실을 기본 허용하지 않으며 drain·유지 관리 실패 시 중단합니다. 재부팅 후 변경된 boot ID와 새 kubelet lease를 확인하고 실패 노드는 cordon 상태로 남깁니다. PDB·검증은 계획 중단을 줄이지만 동시 장애까지 가용성을 보장하지는 않습니다. EKS 관리형·Auto Mode 노드는 제공자의 업데이트 기능을, 컨트롤 플레인은 별도 kubeadm 절차를 사용하세요.
 
 **롤링 업데이트 전 준비 사항:**
 
@@ -1035,159 +958,111 @@ kubectl get nodes
 
 **정답:**
 
-```bash
-#!/bin/bash
-# 파일명: resource_usage_report.sh
-# 설명: 클러스터의 리소스 사용량이 높은 포드 식별 및 보고서 생성
+```python
+#!/usr/bin/env python3
+# resource_usage_report.py: read-only Kubernetes API/metrics reporting.
+import datetime
+from decimal import Decimal
+import html
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
 
-# 변수 설정
-REPORT_DIR="/tmp/k8s-reports"
-DATE=$(date +%Y%m%d-%H%M%S)
-REPORT_FILE="$REPORT_DIR/resource-usage-report-$DATE.txt"
-TOP_N=10  # 상위 N개 포드 표시
+SCALE = {"": Decimal(1), "n": Decimal("1e-9"), "u": Decimal("1e-6"),
+         "m": Decimal("1e-3"), "k": Decimal(1000), "K": Decimal(1000)}
+SCALE.update({s: Decimal(1000) ** n for n, s in enumerate("MGTPE", 2)})
+SCALE.update({s + "i": Decimal(1024) ** n for n, s in enumerate("KMGTPE", 1)})
 
-# 보고서 디렉토리 생성
-mkdir -p $REPORT_DIR
+def quantity(value):
+    text = str(value)
+    match = re.fullmatch(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)([a-zA-Z]*)", text)
+    if not match or match[2] not in SCALE:
+        raise ValueError("Unsupported Kubernetes quantity: " + text)
+    return Decimal(match[1]) * SCALE[match[2]]
 
-# 보고서 헤더 작성
-echo "===== Kubernetes 클러스터 리소스 사용량 보고서 =====" > $REPORT_FILE
-echo "생성 시간: $(date)" >> $REPORT_FILE
-echo "" >> $REPORT_FILE
+def kubectl_json(*args):
+    return json.loads(subprocess.check_output(["kubectl", *args], text=True))
 
-# 클러스터 정보 추가
-echo "===== 클러스터 정보 =====" >> $REPORT_FILE
-kubectl cluster-info >> $REPORT_FILE 2>&1
-echo "" >> $REPORT_FILE
+def make_rows(pods, metrics):
+    index = {(p["metadata"]["namespace"], p["metadata"]["name"]): p for p in pods}
+    rows = []
+    for metric in metrics:
+        key = metric["metadata"]["namespace"], metric["metadata"]["name"]
+        if key not in index:
+            continue  # API snapshots are not atomic; the Pod may have disappeared.
+        spec = index[key]["spec"]
+        active = spec.get("containers", []) + [c for c in spec.get("initContainers", [])
+                                               if c.get("restartPolicy") == "Always"]
+        usage = {r: sum((quantity(c["usage"][r]) for c in metric["containers"]), Decimal(0))
+                 for r in ("cpu", "memory")}
+        requests = {}
+        for resource in ("cpu", "memory"):
+            pod_request = spec.get("resources", {}).get("requests", {}).get(resource)
+            values = [c.get("resources", {}).get("requests", {}).get(resource) for c in active]
+            requests[resource] = (quantity(pod_request) if pod_request is not None else
+                                  sum((quantity(v) for v in values), Decimal(0))
+                                  if all(v is not None for v in values) else None)
+        rows.append((key, usage, requests))
+    return rows
 
-# 노드 리소스 사용량
-echo "===== 노드 리소스 사용량 =====" >> $REPORT_FILE
-kubectl top nodes | sort -k 3 -hr >> $REPORT_FILE
-echo "" >> $REPORT_FILE
+def render_report(rows):
+    lines = ["Kubernetes resource usage report", "Generated: " + datetime.datetime.now(datetime.timezone.utc).isoformat(),
+             "Requests: active application/native-sidecar containers or Pod-level requests.",
+             "This is not scheduler effective-request accounting for completed init stages/overhead."]
+    totals = {}
+    for key, usage, _ in rows:
+        total = totals.setdefault(key[0], {"cpu": Decimal(0), "memory": Decimal(0)})
+        for resource in total:
+            total[resource] += usage[resource]
+    for resource in ("cpu", "memory"):
+        lines.append("\nTop 10 Pods by " + resource)
+        for key, usage, requests in sorted(rows, key=lambda row: row[1][resource], reverse=True)[:10]:
+            request = requests[resource]
+            ratio = f"{usage[resource] / request * 100:.1f}%" if request else "request missing/zero"
+            lines.append(f"{key[0]}/{key[1]}: usage={usage[resource]}, request={request}, ratio={ratio}")
+    lines.append("\nNamespace totals (CPU cores, memory GiB)")
+    for namespace, total in sorted(totals.items()):
+        lines.append(f"{namespace}: {total['cpu']:.3f}, {total['memory'] / (1024 ** 3):.3f}")
+    lines.append("\nPods above 80% of known requests or with missing requests")
+    for key, usage, requests in rows:
+        if any(not requests[r] or usage[r] / requests[r] >= Decimal('0.8') for r in requests):
+            lines.append(f"{key[0]}/{key[1]}: usage={usage}; requests={requests}")
+    return "\n".join(lines)
 
-# CPU 사용량이 높은 상위 포드
-echo "===== CPU 사용량 상위 $TOP_N 포드 =====" >> $REPORT_FILE
-kubectl top pods --all-namespaces | sort -k 3 -hr | head -n $((TOP_N + 1)) >> $REPORT_FILE
-echo "" >> $REPORT_FILE
+def main():
+    os.umask(0o077)
+    group = kubectl_json("get", "--raw", "/apis/metrics.k8s.io")
+    version = group["preferredVersion"]["version"]
+    pod_metrics = kubectl_json("get", "--raw", f"/apis/metrics.k8s.io/{version}/pods")["items"]
+    pods = kubectl_json("get", "pods", "-A", "-o", "json")["items"]
+    rows = make_rows(pods, pod_metrics)
+    report = render_report(rows)
+    nodes = subprocess.check_output(["kubectl", "top", "nodes"], text=True)
+    report += "\n\nNode resource usage\n" + nodes
+    node_count = len(kubectl_json("get", "nodes", "-o", "json")["items"])
+    namespace_count = len(kubectl_json("get", "namespaces", "-o", "json")["items"])
+    context = subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
+    report += f"\nContext: {context}; nodes: {node_count}; namespaces: {namespace_count}\n"
+    report += f"Inventory Pods: {len(pods)}; Pods with matched metrics: {len(rows)}\n"
+    directory = Path(os.environ.get("REPORT_DIR", "/tmp/k8s-reports"))
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    stem = "resource-usage-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+    text_path = directory / (stem + ".txt")
+    text_path.write_text(report, encoding="utf-8")
+    (directory / (stem + ".html")).write_text(
+        '<!doctype html><meta charset="utf-8"><title>Kubernetes resource report</title><pre>'
+        + html.escape(report) + '</pre>', encoding="utf-8")
+    print(text_path)
 
-# 메모리 사용량이 높은 상위 포드
-echo "===== 메모리 사용량 상위 $TOP_N 포드 =====" >> $REPORT_FILE
-kubectl top pods --all-namespaces | sort -k 4 -hr | head -n $((TOP_N + 1)) >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-# 네임스페이스별 리소스 사용량
-echo "===== 네임스페이스별 리소스 사용량 =====" >> $REPORT_FILE
-echo "CPU 사용량 (코어):" >> $REPORT_FILE
-kubectl top pods --all-namespaces | tail -n +2 | awk '{print $2, $3}' | sed 's/m//' | awk '{ns[$1] += $2} END {for (namespace in ns) print namespace, ns[namespace]/1000}' | sort -k 2 -hr >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-echo "메모리 사용량 (GiB):" >> $REPORT_FILE
-kubectl top pods --all-namespaces | tail -n +2 | awk '{print $2, $4}' | sed 's/Mi//' | awk '{ns[$1] += $2} END {for (namespace in ns) print namespace, ns[namespace]/1024}' | sort -k 2 -hr >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-# 리소스 요청 대비 사용량이 높은 포드 식별
-echo "===== 리소스 요청 대비 사용량이 높은 포드 =====" >> $REPORT_FILE
-echo "포드 정보 수집 중..." >> $REPORT_FILE
-
-# 임시 파일 생성
-PODS_USAGE_FILE="$REPORT_DIR/pods-usage-$DATE.tmp"
-PODS_REQUESTS_FILE="$REPORT_DIR/pods-requests-$DATE.tmp"
-
-# 현재 사용량 수집
-kubectl top pods --all-namespaces | tail -n +2 > $PODS_USAGE_FILE
-
-# 모든 네임스페이스의 포드 리소스 요청 수집
-echo "네임스페이스,포드,CPU요청(m),메모리요청(Mi)" > $PODS_REQUESTS_FILE
-for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
-  kubectl get pods -n $ns -o jsonpath='{range .items[*]}{.metadata.namespace},{.metadata.name},{range .spec.containers[*]}{.resources.requests.cpu}{","}{.resources.requests.memory}{"\n"}{end}{end}' | sed 's/$/,/' | sed 's/,$//' >> $PODS_REQUESTS_FILE
-done
-
-# 리소스 요청 대비 사용량 계산 및 보고서에 추가
-echo "CPU 사용률이 높은 포드 (사용량/요청 > 80%):" >> $REPORT_FILE
-while read line; do
-  ns=$(echo $line | awk '{print $1}')
-  pod=$(echo $line | awk '{print $2}')
-  cpu_usage=$(echo $line | awk '{print $3}' | sed 's/m//')
-  
-  # 해당 포드의 CPU 요청 찾기
-  cpu_request=$(grep "$ns,$pod," $PODS_REQUESTS_FILE | awk -F, '{print $3}' | sed 's/[^0-9m.]//g' | sed 's/m//')
-  
-  # CPU 요청이 없으면 "미설정"으로 표시
-  if [ -z "$cpu_request" ] || [ "$cpu_request" == "" ]; then
-    echo "$ns/$pod: CPU 사용량 ${cpu_usage}m, 요청 미설정" >> $REPORT_FILE
-  else
-    # CPU 사용률 계산
-    cpu_percentage=$(echo "scale=2; $cpu_usage / $cpu_request * 100" | bc)
-    
-    # 사용률이 80% 이상인 경우만 표시
-    if (( $(echo "$cpu_percentage >= 80" | bc -l) )); then
-      echo "$ns/$pod: CPU 사용량 ${cpu_usage}m, 요청 ${cpu_request}m, 사용률 ${cpu_percentage}%" >> $REPORT_FILE
-    fi
-  fi
-done < $PODS_USAGE_FILE
-
-echo "" >> $REPORT_FILE
-echo "메모리 사용률이 높은 포드 (사용량/요청 > 80%):" >> $REPORT_FILE
-while read line; do
-  ns=$(echo $line | awk '{print $1}')
-  pod=$(echo $line | awk '{print $2}')
-  mem_usage=$(echo $line | awk '{print $4}' | sed 's/Mi//')
-  
-  # 해당 포드의 메모리 요청 찾기
-  mem_request=$(grep "$ns,$pod," $PODS_REQUESTS_FILE | awk -F, '{print $4}' | sed 's/[^0-9Mi.]//g' | sed 's/Mi//')
-  
-  # 메모리 요청이 없으면 "미설정"으로 표시
-  if [ -z "$mem_request" ] || [ "$mem_request" == "" ]; then
-    echo "$ns/$pod: 메모리 사용량 ${mem_usage}Mi, 요청 미설정" >> $REPORT_FILE
-  else
-    # 메모리 사용률 계산
-    mem_percentage=$(echo "scale=2; $mem_usage / $mem_request * 100" | bc)
-    
-    # 사용률이 80% 이상인 경우만 표시
-    if (( $(echo "$mem_percentage >= 80" | bc -l) )); then
-      echo "$ns/$pod: 메모리 사용량 ${mem_usage}Mi, 요청 ${mem_request}Mi, 사용률 ${mem_percentage}%" >> $REPORT_FILE
-    fi
-  fi
-done < $PODS_USAGE_FILE
-
-echo "" >> $REPORT_FILE
-
-# 리소스 요청이 설정되지 않은 포드 식별
-echo "===== 리소스 요청이 설정되지 않은 포드 =====" >> $REPORT_FILE
-kubectl get pods --all-namespaces -o json | jq -r '.items[] | select((.spec.containers[].resources.requests.cpu == null) or (.spec.containers[].resources.requests.memory == null)) | .metadata.namespace + "/" + .metadata.name' >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-# 임시 파일 정리
-rm -f $PODS_USAGE_FILE $PODS_REQUESTS_FILE
-
-# 보고서 요약
-echo "===== 보고서 요약 =====" >> $REPORT_FILE
-echo "총 노드 수: $(kubectl get nodes | tail -n +2 | wc -l)" >> $REPORT_FILE
-echo "총 포드 수: $(kubectl get pods --all-namespaces | tail -n +2 | wc -l)" >> $REPORT_FILE
-echo "총 네임스페이스 수: $(kubectl get ns | tail -n +2 | wc -l)" >> $REPORT_FILE
-echo "보고서 생성 완료: $REPORT_FILE" >> $REPORT_FILE
-
-# 보고서 위치 출력
-echo "보고서가 생성되었습니다: $REPORT_FILE"
-
-# HTML 보고서 생성 (선택 사항)
-HTML_REPORT="${REPORT_FILE%.txt}.html"
-echo "<html><head><title>Kubernetes 리소스 사용량 보고서</title>" > $HTML_REPORT
-echo "<style>body{font-family:Arial;margin:20px}h1{color:#326ce5}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}th{background-color:#f2f2f2}</style>" >> $HTML_REPORT
-echo "</head><body>" >> $HTML_REPORT
-echo "<h1>Kubernetes 클러스터 리소스 사용량 보고서</h1>" >> $HTML_REPORT
-echo "<p>생성 시간: $(date)</p>" >> $HTML_REPORT
-
-# 보고서 내용을 HTML로 변환
-awk '/===== 클러스터 정보 =====/{flag=1;print "<h2>클러스터 정보</h2><pre>"}/===== 노드 리소스 사용량 =====/{flag=0;print "</pre><h2>노드 리소스 사용량</h2><table><tr><th>노드</th><th>CPU(%)</th><th>메모리(%)</th></tr>"}/===== CPU 사용량 상위/{flag=0;print "</table><h2>CPU 사용량 상위 포드</h2><table><tr><th>네임스페이스</th><th>포드</th><th>CPU(m)</th><th>메모리(Mi)</th></tr>"}/===== 메모리 사용량 상위/{flag=0;print "</table><h2>메모리 사용량 상위 포드</h2><table><tr><th>네임스페이스</th><th>포드</th><th>CPU(m)</th><th>메모리(Mi)</th></tr>"}/===== 네임스페이스별 리소스 사용량 =====/{flag=0;print "</table><h2>네임스페이스별 리소스 사용량</h2>"}/CPU 사용량 \(코어\):/{flag=0;print "<h3>CPU 사용량 (코어)</h3><table><tr><th>네임스페이스</th><th>CPU(코어)</th></tr>"}/메모리 사용량 \(GiB\):/{flag=0;print "</table><h3>메모리 사용량 (GiB)</h3><table><tr><th>네임스페이스</th><th>메모리(GiB)</th></tr>"}/===== 리소스 요청 대비 사용량이 높은 포드 =====/{flag=0;print "</table><h2>리소스 요청 대비 사용량이 높은 포드</h2>"}/CPU 사용률이 높은 포드/{flag=0;print "<h3>CPU 사용률이 높은 포드 (사용량/요청 > 80%)</h3><ul>"}/메모리 사용률이 높은 포드/{flag=0;print "</ul><h3>메모리 사용률이 높은 포드 (사용량/요청 > 80%)</h3><ul>"}/===== 리소스 요청이 설정되지 않은 포드 =====/{flag=0;print "</ul><h2>리소스 요청이 설정되지 않은 포드</h2><ul>"}/===== 보고서 요약 =====/{flag=0;print "</ul><h2>보고서 요약</h2><ul>"}{if(flag==1)print;else if($0 ~ /^NAME/){print "<tr>";for(i=1;i<=NF;i++)print "<th>"$i"</th>";print "</tr>"}else if($0 ~ /^[a-z].*[0-9]%/){print "<tr>";for(i=1;i<=NF;i++)print "<td>"$i"</td>";print "</tr>"}else if($0 ~ /^[a-z].*[0-9]m/){print "<tr>";for(i=1;i<=NF;i++)print "<td>"$i"</td>";print "</tr>"}else if($0 ~ /^[a-z].* [0-9]/){print "<tr><td>"$1"</td><td>"$2"</td></tr>"}else if($0 ~ /^[a-z].*\//){print "<li>"$0"</li>"}else if($0 ~ /^총/){print "<li>"$0"</li>"}}' $REPORT_FILE >> $HTML_REPORT
-
-echo "</ul></body></html>" >> $HTML_REPORT
-echo "HTML 보고서가 생성되었습니다: $HTML_REPORT"
+if __name__ == "__main__":
+    main()
 ```
 
 **스크립트 사용 방법:**
 ```bash
-chmod +x resource_usage_report.sh
-./resource_usage_report.sh
+python3 resource_usage_report.py
 ```
 
 **스크립트 기능:**
@@ -1200,7 +1075,7 @@ chmod +x resource_usage_report.sh
 7. 텍스트 및 HTML 형식의 보고서 생성
 
 **참고 사항:**
-- 이 스크립트를 실행하려면 `kubectl`, `jq`, `bc` 도구가 필요합니다.
+- Python 3와 파드·메트릭 API 읽기 권한이 있는 kubectl이 필요합니다. 제공되는 메트릭 버전을 검색하고 다중 컨테이너 사용량을 네임스페이스별로 합산하며 단위 변환과 HTML 이스케이프를 수행합니다.
 - Metrics Server가 클러스터에 설치되어 있어야 합니다.
 - 대규모 클러스터에서는 스크립트 실행 시간이 길어질 수 있습니다.
 - 정기적인 보고서 생성을 위해 cron 작업으로 설정할 수 있습니다.
@@ -1208,7 +1083,7 @@ chmod +x resource_usage_report.sh
 </details>
 ## 고급 주제
 
-1. Kubernetes 클러스터에서 etcd 성능 최적화를 위한 주요 설정 매개변수와 모범 사례는 무엇인가요?
+1. 실제 etcd 설정·운영 기법으로 구성된 항목 두 개는 무엇인가요? (두 개 선택)
    - A) `--max-request-bytes`, `--quota-backend-bytes`, 정기적인 압축
    - B) `--max-concurrent-requests`, `--max-connections`, 디스크 RAID 구성
    - C) `--auto-compaction-retention`, `--snapshot-count`, SSD 스토리지 사용
@@ -1217,14 +1092,14 @@ chmod +x resource_usage_report.sh
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) `--auto-compaction-retention`, `--snapshot-count`, SSD 스토리지 사용**
+**정답: A, C**
 
 **설명:**
 etcd는 Kubernetes 클러스터의 핵심 데이터 저장소로, 그 성능은 전체 클러스터 성능에 직접적인 영향을 미칩니다. etcd 성능 최적화를 위한 주요 설정 매개변수와 모범 사례는 다음과 같습니다:
 
 1. **`--auto-compaction-retention`**: etcd는 모든 변경 사항의 기록을 유지하는 append-only 저장소입니다. 이 매개변수는 이전 버전의 키를 자동으로 압축하는 주기를 설정합니다. 기본값은 0(비활성화)이지만, 프로덕션 환경에서는 일반적으로 1시간(1h) 또는 24시간(24h)으로 설정합니다. 이를 통해 디스크 공간을 절약하고 성능을 향상시킬 수 있습니다.
 
-2. **`--snapshot-count`**: etcd가 스냅샷을 생성하기 전에 커밋할 트랜잭션 수를 지정합니다. 기본값은 100,000이지만, 대규모 클러스터에서는 이 값을 조정하여 스냅샷 생성 빈도를 최적화할 수 있습니다. 값이 작을수록 스냅샷이 더 자주 생성되어 복구 시간이 단축되지만, 디스크 I/O가 증가합니다.
+2. **`--snapshot-count`**: etcd가 스냅샷을 생성하기 전에 커밋할 트랜잭션 수를 지정합니다. 이는 이식형 백업 스냅샷이 아닌 내부 Raft 스냅샷을 제어합니다. 기본값은 버전별로 다르며 v3.6 문서는 10,000을 명시하므로 설치 버전을 확인하고 측정 후 조정하세요.
 
 3. **SSD 스토리지 사용**: etcd는 디스크 I/O에 민감하므로, SSD(Solid State Drive)를 사용하면 성능이 크게 향상됩니다. 특히 대규모 클러스터에서는 SSD 사용이 필수적입니다.
 
@@ -1233,10 +1108,10 @@ etcd는 Kubernetes 클러스터의 핵심 데이터 저장소로, 그 성능은 
 - **전용 디스크 사용**: etcd 데이터를 위한 전용 디스크를 사용하여 다른 애플리케이션과의 I/O 경합을 방지합니다.
 - **적절한 메모리 할당**: etcd는 성능을 위해 데이터를 메모리에 캐시하므로, 충분한 메모리를 할당해야 합니다.
 - **클러스터 크기 최적화**: 일반적으로 3-5개의 etcd 멤버가 최적의 성능과 가용성을 제공합니다.
-- **네트워크 지연 시간 최소화**: etcd 멤버 간의 네트워크 지연 시간을 최소화하기 위해 동일한 데이터 센터 또는 가용 영역에 배치합니다.
+- **네트워크 지연 시간 최소화**: 멤버 간 지연과 장애 격리를 함께 고려하세요. 모든 멤버를 한 영역에 배치하면 그 영역 장애로 쿼럼을 잃습니다.
 - **정기적인 백업 및 압축**: 데이터 안전성을 보장하고 디스크 공간을 효율적으로 사용하기 위해 정기적인 백업과 압축을 수행합니다.
 
-`--max-request-bytes`와 `--quota-backend-bytes`는 실제 etcd 매개변수이지만, 주로 성능보다는 리소스 제한에 관련됩니다. `--max-concurrent-requests`, `--max-connections`, `--max-txn-ops`, `--max-result-buffer`는 실제 etcd 매개변수가 아니거나 성능 최적화의 주요 요소가 아닙니다.
+`--max-request-bytes`, `--quota-backend-bytes`, `--max-txn-ops`는 실제 설정입니다. D에는 지원되지 않는 `--max-result-buffer`도 포함되어 있습니다. 설정 한도, 보존 기간, 내부 스냅샷은 백업 전략과 구분해야 합니다.
 </details>
 
 2. Kubernetes 클러스터에서 컨트롤 플레인 고가용성(HA)을 구현하는 가장 효과적인 방법은 무엇인가요?
@@ -1274,27 +1149,27 @@ Kubernetes 컨트롤 플레인의 고가용성(HA)을 구현하는 가장 효과
 - 감시 프로세스는 도움이 될 수 있지만, 그 자체로는 진정한 고가용성 솔루션이 아닙니다.
 </details>
 
-3. Kubernetes 클러스터에서 감사 로깅(Audit Logging)을 구성할 때 가장 중요한 고려 사항은 무엇인가요?
-   - A) 모든 API 요청을 로깅하여 완전한 감사 추적 보장
-   - B) 감사 정책을 사용하여 중요한 이벤트만 선택적으로 로깅
+3. Kubernetes 감사 로그에 기록할 이벤트와 상세 수준을 선택하는 메커니즘은 무엇인가요?
+   - A) 필터 없이 모든 요청·응답 본문 기록
+   - B) 감사 정책으로 이벤트와 수준 선택
    - C) 감사 로그를 외부 SIEM 시스템으로 실시간 전송
    - D) 감사 로그에 대한 접근을 관리자로 제한
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 감사 정책을 사용하여 중요한 이벤트만 선택적으로 로깅**
+**정답: B) 감사 정책으로 이벤트와 수준 선택**
 
 **설명:**
-Kubernetes 감사 로깅(Audit Logging)을 구성할 때 가장 중요한 고려 사항은 감사 정책을 사용하여 중요한 이벤트만 선택적으로 로깅하는 것입니다. 이는 다음과 같은 이유로 중요합니다:
+Kubernetes 감사 로깅(Audit Logging)을 구성할 때 가장 중요한 고려 사항은 감사 정책으로 이벤트와 수준 선택하는 것입니다. 이는 다음과 같은 이유로 중요합니다:
 
-1. **성능 영향 최소화**: 모든 API 요청을 로깅하면 API 서버에 상당한 부하가 발생하고 성능이 저하될 수 있습니다. 특히 대규모 클러스터에서는 초당 수천 개의 API 요청이 발생할 수 있습니다.
+1. **성능 영향 최소화**: 모든 API 요청을 로깅하면 API 서버에 상당한 부하가 발생하고 성능이 저하될 수 있습니다. 필요한 감사 이력과 측정한 부하에 따라 수준을 선택하며 모든 요청의 메타데이터 기록도 지원되는 기본 전략입니다.
 
 2. **스토리지 효율성**: 모든 이벤트를 로깅하면 로그 데이터의 양이 급격히 증가하여 스토리지 비용이 증가하고 로그 분석이 어려워집니다.
 
 3. **관련 정보 집중**: 중요한 이벤트만 로깅함으로써 보안 분석가가 중요한 정보에 집중할 수 있습니다.
 
-4. **규정 준수**: 많은 규정 준수 요구 사항은 모든 이벤트가 아닌 특정 유형의 이벤트 로깅을 요구합니다.
+4. **규정 준수**: 시스템에 적용되는 요구사항에 맞게 이벤트 범위·보존·접근 제어를 정하세요.
 
 Kubernetes 감사 정책은 다음과 같은 감사 수준을 지원합니다:
 
@@ -1308,26 +1183,12 @@ Kubernetes 감사 정책은 다음과 같은 감사 수준을 지원합니다:
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
-# 인증 및 권한 부여 요청에 대한 로깅 수준 설정
 - level: Metadata
-  users: ["system:anonymous"]
-  verbs: ["get", "list", "watch"]
-
-# Secret, ConfigMap 등 민감한 리소스에 대한 변경 사항 자세히 로깅
-- level: Request
   resources:
   - group: ""
-    resources: ["secrets", "configmaps"]
-  verbs: ["create", "update", "patch", "delete"]
-
-# 중요한 리소스 변경 사항 자세히 로깅
-- level: RequestResponse
-  resources:
-  - group: ""
-    resources: ["pods"]
-  verbs: ["create", "update", "patch", "delete"]
-
-# 기본적으로 메타데이터만 로깅
+    resources: ["secrets", "configmaps", "serviceaccounts/token"]
+  - group: authentication.k8s.io
+    resources: ["tokenreviews"]
 - level: Metadata
 ```
 
@@ -1337,7 +1198,7 @@ rules:
 - 감사 로그에 대한 접근 제한은 중요하지만, 로깅 정책 자체보다는 보안 조치에 해당합니다.
 </details>
 
-4. Kubernetes 클러스터에서 노드 자동 복구(Node Auto-Repair)를 구현하는 가장 효과적인 방법은 무엇인가요?
+4. 자체 관리형 환경에서 전용 노드 문제 감지와 사용자 정의 복구 로직을 결합하는 방식은 무엇인가요?
    - A) 노드 상태를 모니터링하고 문제가 있는 노드를 자동으로 재부팅하는 DaemonSet 배포
    - B) 클라우드 제공자의 관리형 노드 그룹 및 자동 복구 기능 활용
    - C) Node Problem Detector와 사용자 정의 컨트롤러를 사용한 노드 상태 모니터링 및 복구
@@ -1349,7 +1210,7 @@ rules:
 **정답: C) Node Problem Detector와 사용자 정의 컨트롤러를 사용한 노드 상태 모니터링 및 복구**
 
 **설명:**
-Kubernetes 클러스터에서 노드 자동 복구(Node Auto-Repair)를 구현하는 가장 효과적인 방법은 Node Problem Detector와 사용자 정의 컨트롤러를 함께 사용하는 것입니다. 이 접근 방식은 다음과 같은 이점을 제공합니다:
+Node Problem Detector와 사용자 정의 복구는 확장 가능한 설계 중 하나입니다. 보편적으로 가장 좋은 방식은 아니며 EKS 노드 복구 같은 제공자 관리 기능이 운영 부담을 줄일 수 있습니다. 이 접근 방식은 다음과 같은 이점을 제공합니다:
 
 1. **정확한 문제 감지**: Node Problem Detector(NPD)는 다양한 노드 문제를 감지할 수 있는 특수 목적의 도구입니다. 이는 다음과 같은 문제를 감지할 수 있습니다:
    - 커널 오류 및 충돌
@@ -1365,7 +1226,7 @@ Kubernetes 클러스터에서 노드 자동 복구(Node Auto-Repair)를 구현�
 
 3. **Kubernetes 네이티브 통합**: NPD는 노드 상태를 NodeCondition으로 보고하므로, 기존 Kubernetes 메커니즘과 잘 통합됩니다.
 
-4. **클라우드 독립적**: 이 접근 방식은 모든 환경(온프레미스, 다양한 클라우드 제공자)에서 작동합니다.
+4. **클라우드 독립적**: 감지·복구는 OS·런타임·제공자에 맞아야 하며 노드 에이전트가 보고할 수 없는 노드 손실에는 외부 신호·컨트롤러도 필요합니다.
 
 구현 단계:
 
@@ -1410,7 +1271,7 @@ Kubernetes 클러스터에서 RBAC(Role-Based Access Control)를 효과적으로
 
 1. **최소 권한 원칙**: 사용자와 서비스 계정에 필요한 최소한의 권한만 부여하여 보안 위험을 최소화합니다. 이는 의도하지 않은 변경이나 악의적인 행위로부터 클러스터를 보호하는 데 도움이 됩니다.
 
-2. **네임스페이스 격리**: 네임스페이스별로 역할을 정의하면 팀이나 애플리케이션 간의 논리적 격리를 강화할 수 있습니다. 이를 통해 한 팀의 실수가 다른 팀의 리소스에 영향을 미치는 것을 방지할 수 있습니다.
+2. **네임스페이스 격리**: 네임스페이스별로 역할을 정의하면 팀이나 애플리케이션 간의 논리적 격리를 강화할 수 있습니다. 일반적인 API 작업을 제한하며 네임스페이스 격리에는 워크로드 admission·네트워크 통제도 필요합니다.
 
 3. **세분화된 접근 제어**: 특정 리소스 유형이나 작업에 대한 권한을 세밀하게 제어할 수 있습니다. 예를 들어, 개발자에게는 포드와 서비스를 관리할 수 있는 권한을 부여하되, 시크릿이나 네임스페이스 자체를 수정할 수 있는 권한은 제한할 수 있습니다.
 
@@ -1432,10 +1293,9 @@ RBAC 모범 사례 구현 예시:
    - apiGroups: ["apps"]
      resources: ["deployments", "replicasets"]
      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-   - apiGroups: [""]
-     resources: ["secrets"]
-     verbs: ["get", "list", "watch"]  # 시크릿 읽기만 허용
    ```
+
+Pod·Deployment 생성 권한으로 네임스페이스의 Secret·ServiceAccount 권한을 간접적으로 사용할 수 있습니다. 직접 Secret 읽기 제거만으로 워크로드가 마운트할 자격 증명을 제한하지는 못하므로 적절한 admission 통제가 필요합니다.
 
 2. **역할 바인딩 생성**:
    ```yaml
@@ -1484,7 +1344,7 @@ RBAC 모범 사례 구현 예시:
 
 - **모든 사용자에게 cluster-admin 역할 부여**: 이는 심각한 보안 위험을 초래합니다. 모든 사용자가 클러스터의 모든 리소스에 대한 완전한 접근 권한을 갖게 되어, 의도하지 않은 변경이나 악의적인 행위에 취약해집니다.
 
-- **모든 권한을 단일 ClusterRole에 통합**: 이는 세분화된 접근 제어를 불가능하게 만들고, 최소 권한 원칙에 위배됩니다.
+- **모든 권한을 단일 ClusterRole에 통합**: 모든 권한을 모은 역할은 과도한 권한을 줄 수 있지만 좁게 정의한 재사용 ClusterRole과 네임스페이스 RoleBinding은 적절할 수 있습니다.
 
 - **항상 사용자 인증서 사용**: 서비스 계정은 애플리케이션에 대한 인증에 적합하며, 모든 상황에서 사용자 인증서를 사용하는 것은 관리 부담을 증가시킵니다. 상황에 따라 적절한 인증 메커니즘을 선택하는 것이 중요합니다.
 </details>

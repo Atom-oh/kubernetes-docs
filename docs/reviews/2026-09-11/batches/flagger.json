@@ -1,0 +1,126 @@
+[
+  {
+    "path": "ko/gitops/04-flagger.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed and updated against Flagger1.45.0 and loadtester0.39.0; controller behavior, routing, gates, metrics and GitOps examples corrected.",
+    "sources": [
+      "https://github.com/fluxcd/flagger/tree/v1.45.0",
+      "https://docs.flagger.app/usage/how-it-works",
+      "https://docs.flagger.app/usage/metrics",
+      "https://docs.flagger.app/usage/webhooks",
+      "https://docs.flagger.app/usage/alerting"
+    ],
+    "findings": [
+      "Cumulative failedChecks and promotion-failure canary fallback were incorrectly described as consecutive failures/always old-version rollback.",
+      "Fixed exclusive iterations/stepWeight/stepWeights and real chart/CRD/API fields; ConfigMap tracking is on by default.",
+      "Manual gates are in-memory and name/namespace scoped; rollback hooks request rollback on success, metadata is literal and HTTP204 fails.",
+      "Fixed unsupported native PagerDuty and Teams Workflows assumptions; loadtester lacks k6.",
+      "Corrected Prometheus metric semantics and provider behavior: CloudWatch region supported; Datadog first/oldest and null-as-zero caveat.",
+      "Corrected Flux ownership and unsupported Canary notification event source; reviewed AppMesh EoS and ingress/OSM status.",
+      "Reworked 17 diagrams to match controller sequencing, traffic ownership, gates and image promotion."
+    ],
+    "validation": [
+      "92 fences:66YAML20Bash2JS2JSON;42 CRDs+18 spec fragments;0 syntax/schema errors.",
+      "Three actual Helm renders verified Flagger, loadtester and Podinfo ownership.",
+      "26 pinned-code HTTP/gate/Datadog leaf tests pass.",
+      "11 PromQL expression +6 alert timing cases pass promtool3.14.0.",
+      "17 diagrams composition9/9,4viewport containment each, all visually inspected and PNG regenerated.",
+      "No live infrastructure or external notifications executed."
+    ],
+    "reviewedSha256": "5e7f08e336af6a2bb5e92272c449ac19790d47f44d5415ef6390f7d23eb28619"
+  },
+  {
+    "path": "ko/quizzes/gitops/04-flagger-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed and updated against Flagger1.45.0 and loadtester0.39.0; controller behavior, routing, gates, metrics and GitOps examples corrected.",
+    "sources": [
+      "https://github.com/fluxcd/flagger/tree/v1.45.0",
+      "https://docs.flagger.app/usage/how-it-works",
+      "https://docs.flagger.app/usage/metrics",
+      "https://docs.flagger.app/usage/webhooks",
+      "https://docs.flagger.app/usage/alerting"
+    ],
+    "findings": [
+      "Cumulative failedChecks and promotion-failure canary fallback were incorrectly described as consecutive failures/always old-version rollback.",
+      "Fixed exclusive iterations/stepWeight/stepWeights and real chart/CRD/API fields; ConfigMap tracking is on by default.",
+      "Manual gates are in-memory and name/namespace scoped; rollback hooks request rollback on success, metadata is literal and HTTP204 fails.",
+      "Fixed unsupported native PagerDuty and Teams Workflows assumptions; loadtester lacks k6.",
+      "Corrected Prometheus metric semantics and provider behavior: CloudWatch region supported; Datadog first/oldest and null-as-zero caveat.",
+      "Corrected Flux ownership and unsupported Canary notification event source; reviewed AppMesh EoS and ingress/OSM status.",
+      "Reworked 17 diagrams to match controller sequencing, traffic ownership, gates and image promotion."
+    ],
+    "validation": [
+      "92 fences:66YAML20Bash2JS2JSON;42 CRDs+18 spec fragments;0 syntax/schema errors.",
+      "Three actual Helm renders verified Flagger, loadtester and Podinfo ownership.",
+      "26 pinned-code HTTP/gate/Datadog leaf tests pass.",
+      "11 PromQL expression +6 alert timing cases pass promtool3.14.0.",
+      "17 diagrams composition9/9,4viewport containment each, all visually inspected and PNG regenerated.",
+      "No live infrastructure or external notifications executed."
+    ],
+    "reviewedSha256": "bccd56224f0333d3740224cb0b44cbf5b2b9587374471abf57701dcfc3a2201b"
+  },
+  {
+    "path": "en/gitops/04-flagger.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed and updated against Flagger1.45.0 and loadtester0.39.0; controller behavior, routing, gates, metrics and GitOps examples corrected.",
+    "sources": [
+      "https://github.com/fluxcd/flagger/tree/v1.45.0",
+      "https://docs.flagger.app/usage/how-it-works",
+      "https://docs.flagger.app/usage/metrics",
+      "https://docs.flagger.app/usage/webhooks",
+      "https://docs.flagger.app/usage/alerting"
+    ],
+    "findings": [
+      "Cumulative failedChecks and promotion-failure canary fallback were incorrectly described as consecutive failures/always old-version rollback.",
+      "Fixed exclusive iterations/stepWeight/stepWeights and real chart/CRD/API fields; ConfigMap tracking is on by default.",
+      "Manual gates are in-memory and name/namespace scoped; rollback hooks request rollback on success, metadata is literal and HTTP204 fails.",
+      "Fixed unsupported native PagerDuty and Teams Workflows assumptions; loadtester lacks k6.",
+      "Corrected Prometheus metric semantics and provider behavior: CloudWatch region supported; Datadog first/oldest and null-as-zero caveat.",
+      "Corrected Flux ownership and unsupported Canary notification event source; reviewed AppMesh EoS and ingress/OSM status.",
+      "Reworked 17 diagrams to match controller sequencing, traffic ownership, gates and image promotion."
+    ],
+    "validation": [
+      "92 fences:66YAML20Bash2JS2JSON;42 CRDs+18 spec fragments;0 syntax/schema errors.",
+      "Three actual Helm renders verified Flagger, loadtester and Podinfo ownership.",
+      "26 pinned-code HTTP/gate/Datadog leaf tests pass.",
+      "11 PromQL expression +6 alert timing cases pass promtool3.14.0.",
+      "17 diagrams composition9/9,4viewport containment each, all visually inspected and PNG regenerated.",
+      "No live infrastructure or external notifications executed."
+    ],
+    "reviewedSha256": "8a39122550b77d5c671dc7da1c005c6641c10340acd63e252806f328cc2ba0db"
+  },
+  {
+    "path": "en/quizzes/gitops/04-flagger-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed and updated against Flagger1.45.0 and loadtester0.39.0; controller behavior, routing, gates, metrics and GitOps examples corrected.",
+    "sources": [
+      "https://github.com/fluxcd/flagger/tree/v1.45.0",
+      "https://docs.flagger.app/usage/how-it-works",
+      "https://docs.flagger.app/usage/metrics",
+      "https://docs.flagger.app/usage/webhooks",
+      "https://docs.flagger.app/usage/alerting"
+    ],
+    "findings": [
+      "Cumulative failedChecks and promotion-failure canary fallback were incorrectly described as consecutive failures/always old-version rollback.",
+      "Fixed exclusive iterations/stepWeight/stepWeights and real chart/CRD/API fields; ConfigMap tracking is on by default.",
+      "Manual gates are in-memory and name/namespace scoped; rollback hooks request rollback on success, metadata is literal and HTTP204 fails.",
+      "Fixed unsupported native PagerDuty and Teams Workflows assumptions; loadtester lacks k6.",
+      "Corrected Prometheus metric semantics and provider behavior: CloudWatch region supported; Datadog first/oldest and null-as-zero caveat.",
+      "Corrected Flux ownership and unsupported Canary notification event source; reviewed AppMesh EoS and ingress/OSM status.",
+      "Reworked 17 diagrams to match controller sequencing, traffic ownership, gates and image promotion."
+    ],
+    "validation": [
+      "92 fences:66YAML20Bash2JS2JSON;42 CRDs+18 spec fragments;0 syntax/schema errors.",
+      "Three actual Helm renders verified Flagger, loadtester and Podinfo ownership.",
+      "26 pinned-code HTTP/gate/Datadog leaf tests pass.",
+      "11 PromQL expression +6 alert timing cases pass promtool3.14.0.",
+      "17 diagrams composition9/9,4viewport containment each, all visually inspected and PNG regenerated.",
+      "No live infrastructure or external notifications executed."
+    ],
+    "reviewedSha256": "9308e5fbd26e330f60c03d893ce723510f099a16255339c8f5ef6e762f7caaa2"
+  }
+]

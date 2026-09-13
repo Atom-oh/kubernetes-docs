@@ -231,13 +231,15 @@
       "from": "config",
       "to": "cluster",
       "label": "audits",
-      "labelDy": 100
+      "labelDy": 56
     },
     {
       "id": "fw-cluster",
       "from": "fw",
       "to": "cluster",
-      "label": "protects"
+      "label": "protects",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "iam-pod",

@@ -1,0 +1,326 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI/ML Workload Deployment",
+    "locale": "en",
+    "output": "en-ai-ml-01-ai-ml-workloads-2.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "GPU node stack"
+        },
+        "backend": {
+          "label": "ML platform components"
+        },
+        "frontend": {
+          "label": "Model serving"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gpu-stack",
+        "label": "NVIDIA GPU Operator",
+        "focus": [
+          "gpu-operator",
+          "driver",
+          "toolkit",
+          "device-plugin",
+          "dcgm"
+        ],
+        "note": "Disable Operator driver/toolkit installation on AL2023 NVIDIA AMIs and avoid duplicate owners."
+      },
+      {
+        "id": "kubeflow-stack",
+        "label": "Kubeflow",
+        "focus": [
+          "kubeflow",
+          "notebooks",
+          "training",
+          "pipelines-katib"
+        ],
+        "note": "Trainer, Pipelines, Notebooks, Katib and KServe have separate APIs/dependencies."
+      },
+      {
+        "id": "serving-training",
+        "label": "Serving and distributed training",
+        "focus": [
+          "kserve",
+          "serving-runtimes",
+          "mpi-operator"
+        ],
+        "note": "Select maintained runtimes and matching model formats; MPIJob must match the installed operator API."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gpu-operator",
+      "type": "cloud",
+      "label": "NVIDIA GPU Operator",
+      "sublabel": "Installed via Helm chart",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "cloud",
+      "label": "NVIDIA Driver",
+      "sublabel": "preinstalled in AL2023 AMI",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "toolkit",
+      "type": "cloud",
+      "label": "NVIDIA Container Toolkit",
+      "sublabel": "preinstalled in AL2023 AMI",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "device-plugin",
+      "type": "cloud",
+      "label": "NVIDIA Device Plugin",
+      "sublabel": "Exposes GPU resources",
+      "pos": [
+        740,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "dcgm",
+      "type": "cloud",
+      "label": "NVIDIA DCGM Exporter",
+      "sublabel": "GPU monitoring metrics",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kubeflow",
+      "type": "backend",
+      "label": "Kubeflow",
+      "sublabel": "ML platform / individual components",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "notebooks",
+      "type": "backend",
+      "label": "Jupyter Notebooks",
+      "sublabel": "Interactive development environment",
+      "pos": [
+        300,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "training",
+      "type": "backend",
+      "label": "Trainer / legacy Jobs",
+      "sublabel": "Runs distributed training jobs",
+      "pos": [
+        520,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pipelines-katib",
+      "type": "backend",
+      "label": "Pipelines · Katib",
+      "sublabel": "ML workflows · hyperparameter tuning",
+      "pos": [
+        740,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kserve",
+      "type": "frontend",
+      "label": "KServe",
+      "sublabel": "Model serving platform",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "serving-runtimes",
+      "type": "frontend",
+      "label": "Validated serving runtimes",
+      "sublabel": "model / device / protocol support",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "mpi-operator",
+      "type": "backend",
+      "label": "MPI Operator",
+      "sublabel": "Distributed training via MPIJob",
+      "pos": [
+        740,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "gpu-operator",
+        "driver",
+        "toolkit",
+        "device-plugin",
+        "dcgm",
+        "kubeflow",
+        "notebooks",
+        "training",
+        "pipelines-katib",
+        "kserve",
+        "serving-runtimes",
+        "mpi-operator"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "GPU layers by component owner",
+      "wraps": [
+        "driver",
+        "toolkit",
+        "device-plugin",
+        "dcgm"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Kubeflow Components",
+      "wraps": [
+        "notebooks",
+        "training",
+        "pipelines-katib"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Model Serving Options",
+      "wraps": [
+        "serving-runtimes"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Distributed Training",
+      "wraps": [
+        "mpi-operator"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gpu-deploys",
+      "from": "gpu-operator",
+      "to": "driver",
+      "label": "check ownership",
+      "variant": "emphasis",
+      "labelAt": [
+        270,
+        175
+      ]
+    },
+    {
+      "id": "kubeflow-provides",
+      "from": "kubeflow",
+      "to": "notebooks",
+      "label": "provides"
+    },
+    {
+      "id": "kserve-runtimes",
+      "from": "kserve",
+      "to": "serving-runtimes",
+      "label": "serving options",
+      "labelDy": 56
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "GPU layers",
+      "items": [
+        "AL2023 supplies driver/toolkit; plugins and observability are separate.",
+        "Do not duplicate GPU Operator and standalone plugin ownership."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Training and serving",
+      "items": [
+        "KServe is the current name; TorchServe is no longer actively maintained.",
+        "Resource creation does not prove training/inference success."
+      ]
+    }
+  ]
+}

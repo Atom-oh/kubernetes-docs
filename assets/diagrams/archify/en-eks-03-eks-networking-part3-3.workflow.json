@@ -10,16 +10,16 @@
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "클러스터 계층"
+          "label": "Cluster layer"
         },
         "cloud": {
-          "label": "AWS 계층"
+          "label": "AWS layer"
         },
         "external": {
-          "label": "증상"
+          "label": "Symptom"
         },
         "database": {
-          "label": "진단 도구"
+          "label": "Diagnostic tools"
         }
       }
     },
@@ -28,11 +28,11 @@
   "lanes": [
     {
       "id": "triage",
-      "label": "증상 분류"
+      "label": "Symptom triage"
     },
     {
       "id": "tools",
-      "label": "진단과 조치"
+      "label": "Diagnosis and remediation"
     }
   ],
   "mainPath": [
@@ -92,7 +92,7 @@
       "lane": "tools",
       "col": 5,
       "type": "backend",
-      "label": "Confirm · remediate",
+      "label": "Confirm · fix",
       "sublabel": "Fix · restart",
       "width": 150
     }

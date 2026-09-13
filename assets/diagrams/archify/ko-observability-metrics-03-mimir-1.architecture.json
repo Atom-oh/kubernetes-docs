@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana Mimir 전체 아키텍처",
+    "output": "ko-observability-metrics-03-mimir-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "write-path",
+        "label": "쓰기 경로",
+        "focus": [
+          "prometheus",
+          "distributor",
+          "ingester",
+          "storage"
+        ],
+        "note": "Prometheus가 remote_write로 보낸 샘플을 Distributor가 분배하고 Ingester가 메모리에 저장한 뒤 주기적으로 블록을 업로드한다."
+      },
+      {
+        "id": "read-path",
+        "label": "읽기 경로",
+        "focus": [
+          "grafana",
+          "query-frontend",
+          "querier",
+          "ingester",
+          "store-gateway"
+        ],
+        "note": "Query-frontend가 쿼리를 분할·캐싱하고 Querier가 Ingester(최근)와 Store-gateway(과거) 결과를 병합한다."
+      },
+      {
+        "id": "background",
+        "label": "백그라운드 프로세스",
+        "focus": [
+          "compactor",
+          "storage",
+          "store-gateway"
+        ],
+        "note": "Compactor가 작은 블록을 큰 블록으로 병합하고 보존 정책을 적용한다. Store-gateway는 그 블록을 읽는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "prometheus",
+      "type": "external",
+      "label": "Prometheus",
+      "sublabel": "×3 · remote_write",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "external",
+      "label": "Grafana",
+      "sublabel": "PromQL 대시보드",
+      "pos": [
+        900,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "distributor",
+      "type": "backend",
+      "label": "Distributor",
+      "sublabel": "테넌트 검증 · 샘플 분배",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "query-frontend",
+      "type": "backend",
+      "label": "Query-frontend",
+      "sublabel": "쿼리 분할 · 캐싱",
+      "pos": [
+        900,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ingester",
+      "type": "backend",
+      "label": "Ingester",
+      "sublabel": "메모리 저장 · 최근 데이터",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "querier",
+      "type": "backend",
+      "label": "Querier",
+      "sublabel": "결과 병합",
+      "pos": [
+        480,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "store-gateway",
+      "type": "backend",
+      "label": "Store-gateway",
+      "sublabel": "과거 블록 캐싱",
+      "pos": [
+        900,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "compactor",
+      "type": "backend",
+      "label": "Compactor",
+      "sublabel": "블록 병합 · 보존 정책",
+      "pos": [
+        480,
+        460
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "객체 스토리지",
+      "sublabel": "S3 / GCS / Azure Blob",
+      "pos": [
+        400,
+        610
+      ],
+      "size": [
+        330,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Grafana Mimir",
+      "wraps": [
+        "distributor",
+        "query-frontend",
+        "ingester",
+        "querier",
+        "store-gateway",
+        "compactor"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "prom-to-distributor",
+      "from": "prometheus",
+      "to": "distributor",
+      "label": "remote_write",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "distributor-to-ingester",
+      "from": "distributor",
+      "to": "ingester",
+      "label": "샘플 복제",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ingester-to-storage",
+      "from": "ingester",
+      "to": "storage",
+      "label": "블록 업로드",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "compactor-to-storage",
+      "from": "compactor",
+      "to": "storage",
+      "label": "컴팩션",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "store-gateway-to-storage",
+      "from": "store-gateway",
+      "to": "storage",
+      "label": "블록 읽기",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "grafana-to-qf",
+      "from": "grafana",
+      "to": "query-frontend",
+      "label": "PromQL",
+      "labelDy": 24
+    },
+    {
+      "id": "qf-to-querier",
+      "from": "query-frontend",
+      "to": "querier",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "querier-to-ingester",
+      "from": "querier",
+      "to": "ingester",
+      "label": "최근 데이터"
+    },
+    {
+      "id": "querier-to-store-gateway",
+      "from": "querier",
+      "to": "store-gateway",
+      "label": "과거 데이터",
+      "labelDy": -39
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "쓰기 경로",
+      "items": [
+        "Prometheus가 remote_write로 메트릭 전송",
+        "Distributor가 테넌트 검증 및 샘플 분배",
+        "Ingester가 메모리에 저장 후 주기적으로 블록 업로드"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "읽기 경로",
+      "items": [
+        "Query-frontend가 쿼리 분할 및 캐싱",
+        "Querier가 Ingester(최근 데이터)와 Store-gateway(과거 데이터) 쿼리",
+        "결과 병합 후 반환"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "백그라운드 프로세스",
+      "items": [
+        "Compactor가 작은 블록을 큰 블록으로 병합",
+        "다운샘플링 및 보존 정책 적용"
+      ]
+    }
+  ]
+}

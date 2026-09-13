@@ -1,0 +1,498 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T21:02:37.284413+00:00",
+  "scope": {
+    "documents": 4,
+    "questions": 20,
+    "figures": 2
+  },
+  "baseline": "Trainer2.2.0/Community26.03.1 with2.3upgradecomparison",
+  "helm": {
+    "status": "passed",
+    "profiles": [
+      {
+        "version": "2.2.0",
+        "chartSha256": "34191da2886a91d9effb0543087ef0ad19b870b094c336c2ca34f474cba0030e",
+        "resourceCounts": {
+          "CustomResourceDefinition": 4,
+          "ServiceAccount": 2,
+          "Secret": 2,
+          "ConfigMap": 3,
+          "ClusterRole": 2,
+          "ClusterRoleBinding": 2,
+          "Role": 2,
+          "RoleBinding": 2,
+          "Service": 3,
+          "Deployment": 2,
+          "ClusterTrainingRuntime": 8,
+          "MutatingWebhookConfiguration": 2,
+          "ValidatingWebhookConfiguration": 2
+        },
+        "trainerCRDLocations": [
+          "kubeflow-trainer/crds/trainer.kubeflow.org_clustertrainingruntimes.yaml",
+          "kubeflow-trainer/crds/trainer.kubeflow.org_trainingruntimes.yaml",
+          "kubeflow-trainer/crds/trainer.kubeflow.org_trainjobs.yaml"
+        ],
+        "runtimes": 8,
+        "runtimesEmbeddedInConfigMap": false,
+        "runtimeSchemaChecks": 8,
+        "trainJobSchemaPassed": true,
+        "defaultTorchHasNoPodGroupPolicy": true,
+        "legacyPodTemplateOverridesAbsent": true,
+        "hookJobs": []
+      },
+      {
+        "version": "2.3.0",
+        "chartSha256": "bc9a6993f3885999ef5008c07108904d4bbee90c7f7b3e9fddec80a4f6eabacd",
+        "resourceCounts": {
+          "CustomResourceDefinition": 4,
+          "ServiceAccount": 3,
+          "Secret": 2,
+          "ConfigMap": 4,
+          "ClusterRole": 7,
+          "ClusterRoleBinding": 5,
+          "Role": 3,
+          "RoleBinding": 3,
+          "Service": 3,
+          "Deployment": 2,
+          "MutatingWebhookConfiguration": 2,
+          "ValidatingWebhookConfiguration": 2,
+          "Job": 2
+        },
+        "trainerCRDLocations": [
+          "kubeflow-trainer/templates/crd/trainer.kubeflow.org_clustertrainingruntimes.yaml",
+          "kubeflow-trainer/templates/crd/trainer.kubeflow.org_trainingruntimes.yaml",
+          "kubeflow-trainer/templates/crd/trainer.kubeflow.org_trainjobs.yaml"
+        ],
+        "runtimes": 8,
+        "runtimesEmbeddedInConfigMap": true,
+        "runtimeSchemaChecks": 8,
+        "trainJobSchemaPassed": true,
+        "defaultTorchHasNoPodGroupPolicy": true,
+        "legacyPodTemplateOverridesAbsent": true,
+        "hookJobs": [
+          {
+            "name": "trainer-kubeflow-trainer-runtimes-installer-cleanup",
+            "hook": "pre-delete"
+          },
+          {
+            "name": "trainer-kubeflow-trainer-runtimes-installer",
+            "hook": "post-install,post-upgrade"
+          }
+        ]
+      }
+    ],
+    "scope": "Official OCI chart render and JSON Schema only; no Kubernetes admission/CEL/controller/upgrade/hook/image execution. 2.3 runtimes parsed from installer ConfigMap, not assumed absent."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/kubeflow/05-training-operator.md",
+        "sha256": "5333b6f7ea951216180ff31cf780a919edfb643ba6cfd67444dd44baa8c3db51",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-5-kubeflow-trainer와-분산-학습"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "프레임워크별-오퍼레이터에서-통합-api로"
+          },
+          {
+            "tag": "h3",
+            "id": "기존-training-operator-v1"
+          },
+          {
+            "tag": "h3",
+            "id": "kubeflow-trainer-v2로의-전환"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-2-0과-2-3-0의-차이"
+          },
+          {
+            "tag": "h3",
+            "id": "레거시-api의-마이그레이션"
+          },
+          {
+            "tag": "h2",
+            "id": "trainjob과-런타임의-책임"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes에서의-분산-학습-메커니즘"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-katib와-trainjob"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-근거"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "part-5-kubeflow-trainer와-분산-학습",
+          "실습-환경-준비",
+          "프레임워크별-오퍼레이터에서-통합-api로",
+          "기존-training-operator-v1",
+          "kubeflow-trainer-v2로의-전환",
+          "_2-2-0과-2-3-0의-차이",
+          "레거시-api의-마이그레이션",
+          "trainjob과-런타임의-책임",
+          "kubernetes에서의-분산-학습-메커니즘",
+          "참고-katib와-trainjob",
+          "검증과-근거",
+          "다음-단계",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/kubeflow/05-training-operator.md",
+        "sha256": "346705687d40df29dccfabe52d680d20ae44023bd61a525f1158f90de32b6a97",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-5-kubeflow-trainer-and-distributed-training"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "from-framework-specific-operators-to-a-unified-api"
+          },
+          {
+            "tag": "h3",
+            "id": "the-original-training-operator-v1"
+          },
+          {
+            "tag": "h3",
+            "id": "the-shift-to-kubeflow-trainer-v2"
+          },
+          {
+            "tag": "h3",
+            "id": "differences-between-2-2-0-and-2-3-0"
+          },
+          {
+            "tag": "h3",
+            "id": "migrating-legacy-apis"
+          },
+          {
+            "tag": "h2",
+            "id": "trainjob-and-runtime-responsibilities"
+          },
+          {
+            "tag": "h2",
+            "id": "distributed-training-mechanics-on-kubernetes"
+          },
+          {
+            "tag": "h2",
+            "id": "cross-reference-katib-and-trainjob"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-sources"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "part-5-kubeflow-trainer-and-distributed-training",
+          "lab-environment-setup",
+          "from-framework-specific-operators-to-a-unified-api",
+          "the-original-training-operator-v1",
+          "the-shift-to-kubeflow-trainer-v2",
+          "differences-between-2-2-0-and-2-3-0",
+          "migrating-legacy-apis",
+          "trainjob-and-runtime-responsibilities",
+          "distributed-training-mechanics-on-kubernetes",
+          "cross-reference-katib-and-trainjob",
+          "validation-and-sources",
+          "next-steps",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/kubeflow/05-training-operator-quiz.md",
+        "sha256": "37f7cd2c853f3fcf7917ac298706021f9cf2bd62899681457c82f698311d5d83",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-trainer와-분산-학습-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형-문제"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-trainer와-분산-학습-퀴즈",
+          "객관식-문제",
+          "단답형-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/kubeflow/05-training-operator-quiz.md",
+        "sha256": "5f053f1626aef4521561f62648e34ba1a5eeca237a905d84b95a05d850eafee3",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-trainer-and-distributed-training-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-trainer-and-distributed-training-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "dcd84f03c3f60384dc1749c136f7afb3f879975924e9733e83154f5858ed765a"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "dcd84f03c3f60384dc1749c136f7afb3f879975924e9733e83154f5858ed765a"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "dcd84f03c3f60384dc1749c136f7afb3f879975924e9733e83154f5858ed765a"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "1c7d996371e6fe239d996836e5f947f3939b295f1304fe72a72d13e222256140"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "1c7d996371e6fe239d996836e5f947f3939b295f1304fe72a72d13e222256140"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "1c7d996371e6fe239d996836e5f947f3939b295f1304fe72a72d13e222256140"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "sources": [
+    {
+      "path": "pkg/apis/trainer/v1alpha1/trainjob_types.go",
+      "file": "pkg_apis_trainer_v1alpha1_trainjob_types.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/pkg/apis/trainer/v1alpha1/trainjob_types.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/apis/trainer/v1alpha1/trainingruntime_types.go",
+      "file": "pkg_apis_trainer_v1alpha1_trainingruntime_types.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/pkg/apis/trainer/v1alpha1/trainingruntime_types.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/runtime/framework/plugins/trainjobstatus/trainjobstatus.go",
+      "file": "pkg_runtime_framework_plugins_trainjobstatus_trainjobstatus.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/pkg/runtime/framework/plugins/trainjobstatus/trainjobstatus.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/statusserver/server.go",
+      "file": "pkg_statusserver_server.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/pkg/statusserver/server.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/runtime/framework/plugins/coscheduling/coscheduling.go",
+      "file": "pkg_runtime_framework_plugins_coscheduling_coscheduling.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/pkg/runtime/framework/plugins/coscheduling/coscheduling.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/runtime/framework/plugins/jobset/jobset.go",
+      "file": "pkg_runtime_framework_plugins_jobset_jobset.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/pkg/runtime/framework/plugins/jobset/jobset.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/runtime/framework/plugins/torch/torch.go",
+      "file": "pkg_runtime_framework_plugins_torch_torch.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/pkg/runtime/framework/plugins/torch/torch.go",
+      "status": 200
+    },
+    {
+      "path": "manifests/base/runtimes/torch_distributed.yaml",
+      "file": "manifests_base_runtimes_torch_distributed.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/manifests/base/runtimes/torch_distributed.yaml",
+      "status": 200
+    },
+    {
+      "path": "charts/kubeflow-trainer/values.yaml",
+      "file": "charts_kubeflow-trainer_values.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/charts/kubeflow-trainer/values.yaml",
+      "status": 200
+    },
+    {
+      "path": "charts/kubeflow-trainer/Chart.yaml",
+      "file": "charts_kubeflow-trainer_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/trainer/v2.2.0/charts/kubeflow-trainer/Chart.yaml",
+      "status": 200
+    }
+  ],
+  "diagrams": [
+    {
+      "name": "ko-ai-ml-kubeflow-05-training-operator-0",
+      "layoutPassed": true,
+      "pngSha256": "706a4a598cc897385979d7fa5ee49dddf00319de5072d7b95ffc547fa6c547a3",
+      "htmlSha256": "dcd84f03c3f60384dc1749c136f7afb3f879975924e9733e83154f5858ed765a"
+    },
+    {
+      "name": "en-ai-ml-kubeflow-05-training-operator-0",
+      "layoutPassed": true,
+      "pngSha256": "5d6f289979f61cd8a67ddc1f7d9f77b224e31baec23e95a66c2ceb8bc1a3a7b8",
+      "htmlSha256": "1c7d996371e6fe239d996836e5f947f3939b295f1304fe72a72d13e222256140"
+    }
+  ],
+  "limitations": [
+    "No Kubernetes admission/CEL, hook execution, actual upgrade, distributed/GPU training, status-server interaction or cloud mutation.",
+    "Old kubeflow.org migration URL returned403; replacement pinned official repository migration guide read and linked.",
+    "2.3 runtimes are in installer ConfigMap; absence of top-level runtime objects is not an installation failure."
+  ]
+}

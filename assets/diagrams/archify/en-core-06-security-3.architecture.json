@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Security Context",
+    "locale": "en",
+    "output": "en-core-06-security-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      580
+    ],
+    "views": [
+      {
+        "id": "pod-level",
+        "label": "Pod Security Context",
+        "focus": [
+          "pod",
+          "psc"
+        ],
+        "note": "spec.securityContext sets the identity of every process in the Pod via runAsUser, runAsGroup, fsGroup and supplementalGroups."
+      },
+      {
+        "id": "container-level",
+        "label": "Container Security Context",
+        "focus": [
+          "pod",
+          "container",
+          "csc"
+        ],
+        "note": "Each container's securityContext controls privileged, allowPrivilegeEscalation, readOnlyRootFilesystem, capabilities and seLinuxOptions."
+      },
+      {
+        "id": "standards",
+        "label": "Pod Security Standards",
+        "focus": [
+          "pod",
+          "pss",
+          "privileged",
+          "baseline",
+          "restricted"
+        ],
+        "note": "The Pod must comply with the Privileged, Baseline or Restricted level enforced on its namespace."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "Pod spec",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "psc",
+      "type": "security",
+      "label": "Pod Security Context",
+      "sublabel": "runAsUser · runAsGroup · fsGroup · supplementalGroups",
+      "pos": [
+        300,
+        100
+      ],
+      "size": [
+        380,
+        64
+      ]
+    },
+    {
+      "id": "container",
+      "type": "backend",
+      "label": "Container",
+      "sublabel": "e.g. nginx:1.19",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "csc",
+      "type": "security",
+      "label": "Container Security Context",
+      "sublabel": "privileged · allowPrivilegeEscalation · capabilities …",
+      "pos": [
+        300,
+        460
+      ],
+      "size": [
+        380,
+        64
+      ]
+    },
+    {
+      "id": "pss",
+      "type": "security",
+      "label": "Pod Security Standards",
+      "sublabel": "Three policy levels",
+      "pos": [
+        780,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "privileged",
+      "type": "security",
+      "label": "Privileged",
+      "sublabel": "No restrictions",
+      "pos": [
+        1050,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "baseline",
+      "type": "security",
+      "label": "Baseline",
+      "sublabel": "Basic security",
+      "pos": [
+        1050,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "restricted",
+      "type": "security",
+      "label": "Restricted",
+      "sublabel": "Enhanced security",
+      "pos": [
+        1050,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod and container-level settings",
+      "wraps": [
+        "pod",
+        "psc",
+        "container",
+        "csc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod Security Standards",
+      "wraps": [
+        "pss",
+        "privileged",
+        "baseline",
+        "restricted"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-psc",
+      "from": "pod",
+      "to": "psc",
+      "label": "contains"
+    },
+    {
+      "id": "pod-container",
+      "from": "pod",
+      "to": "container",
+      "label": "contains"
+    },
+    {
+      "id": "container-csc",
+      "from": "container",
+      "to": "csc",
+      "label": "contains",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-pss",
+      "from": "pod",
+      "to": "pss",
+      "label": "complies with",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pss-privileged",
+      "from": "pss",
+      "to": "privileged"
+    },
+    {
+      "id": "pss-baseline",
+      "from": "pss",
+      "to": "baseline"
+    },
+    {
+      "id": "pss-restricted",
+      "from": "pss",
+      "to": "restricted"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Pod Security Context",
+      "items": [
+        "runAsUser — user ID the container process runs as",
+        "runAsGroup — group ID the container process runs as",
+        "fsGroup — group ID used when accessing volumes",
+        "supplementalGroups — additional groups granted to the process"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Container Security Context",
+      "items": [
+        "privileged — privileged mode",
+        "allowPrivilegeEscalation — whether a process can gain more privileges than its parent",
+        "readOnlyRootFilesystem — mount the root filesystem read-only",
+        "capabilities — add or drop Linux kernel capabilities",
+        "seLinuxOptions — SELinux options"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Pod Security Standards",
+      "items": [
+        "Privileged — no restrictions, all privileges allowed",
+        "Baseline — blocks known privilege escalation paths",
+        "Restricted — strongly hardened security policy",
+        "Applied via namespace labels pod-security.kubernetes.io/enforce, audit and warn"
+      ]
+    }
+  ]
+}

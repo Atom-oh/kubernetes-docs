@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AppProject 개요",
+    "output": "ko-gitops-argocd-06-projects-rbac-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ownership",
+        "label": "팀의 앱 관리 권한",
+        "focus": [
+          "team-frontend",
+          "team-backend",
+          "team-platform",
+          "proj-frontend",
+          "proj-backend",
+          "proj-platform"
+        ],
+        "note": "SSO 그룹을 프로젝트의 앱 관리 역할에 연결합니다. AppProject 정책 변경 권한은 별도로 관리합니다."
+      },
+      {
+        "id": "destinations",
+        "label": "배포 대상 제한",
+        "focus": [
+          "proj-frontend",
+          "proj-backend",
+          "proj-platform",
+          "ns-frontend",
+          "ns-backend",
+          "ns-platform"
+        ],
+        "note": "destinations는 Argo CD 배포의 허용 범위입니다. Namespace 독점 소유나 런타임 격리를 자동으로 만들지 않습니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Namespace 범위"
+        },
+        "external": {
+          "label": "SSO 그룹"
+        },
+        "security": {
+          "label": "AppProject"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "team-frontend",
+      "type": "external",
+      "label": "Frontend Team",
+      "sublabel": "그룹: frontend-team",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "team-backend",
+      "type": "external",
+      "label": "Backend Team",
+      "sublabel": "그룹: backend-team",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "team-platform",
+      "type": "external",
+      "label": "Platform Team",
+      "sublabel": "그룹: platform-team",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "proj-frontend",
+      "type": "security",
+      "label": "Project: Frontend",
+      "sublabel": "frontend-web · frontend-mobile",
+      "pos": [
+        340,
+        70
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "proj-backend",
+      "type": "security",
+      "label": "Project: Backend",
+      "sublabel": "api-gateway · user-service",
+      "pos": [
+        340,
+        210
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "proj-platform",
+      "type": "security",
+      "label": "Project: Platform",
+      "sublabel": "monitoring · logging",
+      "pos": [
+        340,
+        350
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "ns-frontend",
+      "type": "backend",
+      "label": "Namespace: frontend-*",
+      "sublabel": "허용된 배포 대상",
+      "pos": [
+        720,
+        70
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "ns-backend",
+      "type": "backend",
+      "label": "Namespace: backend-*",
+      "sublabel": "허용된 배포 대상",
+      "pos": [
+        720,
+        210
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "ns-platform",
+      "type": "backend",
+      "label": "monitoring · logging",
+      "sublabel": "공용 플랫폼 네임스페이스",
+      "pos": [
+        720,
+        350
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Teams (SSO 그룹)",
+      "wraps": [
+        "team-frontend",
+        "team-backend",
+        "team-platform"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "ArgoCD · AppProject",
+      "wraps": [
+        "proj-frontend",
+        "proj-backend",
+        "proj-platform"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "허용 클러스터의 Namespace",
+      "wraps": [
+        "ns-frontend",
+        "ns-backend",
+        "ns-platform"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "own-frontend",
+      "from": "team-frontend",
+      "to": "proj-frontend",
+      "label": "앱 역할",
+      "variant": "emphasis"
+    },
+    {
+      "id": "own-backend",
+      "from": "team-backend",
+      "to": "proj-backend",
+      "label": "앱 역할"
+    },
+    {
+      "id": "own-platform",
+      "from": "team-platform",
+      "to": "proj-platform",
+      "label": "앱 역할"
+    },
+    {
+      "id": "deploy-frontend",
+      "from": "proj-frontend",
+      "to": "ns-frontend",
+      "label": "배포 가능",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deploy-backend",
+      "from": "proj-backend",
+      "to": "ns-backend",
+      "label": "배포 가능"
+    },
+    {
+      "id": "deploy-platform",
+      "from": "proj-platform",
+      "to": "ns-platform",
+      "label": "배포 가능"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "AppProject가 하는 일",
+      "items": [
+        "Application을 논리적으로 그룹화한다",
+        "소스 저장소·대상 클러스터/네임스페이스·리소스 유형을 제한한다",
+        "프로젝트 역할(roles)과 권한을 정의한다"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "추가 격리 계층",
+      "items": [
+        "Namespace는 플랫폼에서 사전 생성",
+        "Kubernetes RBAC · Pod Security · NetworkPolicy · Quota 별도"
+      ]
+    }
+  ]
+}

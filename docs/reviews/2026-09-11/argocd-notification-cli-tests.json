@@ -1,0 +1,1430 @@
+{
+  "cli": "Argo CD 3.5.2 official verified binary",
+  "network": "loopback mock AppProject only",
+  "delivery": "console:stdout only; empty secret; no notification service configuration",
+  "cases": 180,
+  "passed": 180,
+  "mockRequests": 180,
+  "results": [
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "healthy",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "failed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "multi-source",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "rollback",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-succeeded",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "failed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "error",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "rollback",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-failed",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "failed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "rollback",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-health-degraded",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "healthy",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "failed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "multi-source",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "rollback",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-deployed",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "failed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "running-recent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "running-long",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "rollback",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-running",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "failed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "error",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "rollback",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-sync-status-unknown",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "healthy",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "failed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "multi-source",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "rollback",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-deployed",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "failed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "rollback",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-resource-failed",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "healthy",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "failed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "error",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "running-recent",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "running-long",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "multi-source",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "rollback",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-many-images",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "failed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "running-long",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "rollback",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-long-sync",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "failed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "rollback",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-declared-rollback",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "failed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "error",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "rollback",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-critical-failure",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "failed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "error",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "rollback",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-production-namespace-failure",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "healthy",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "failed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "multi-source",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "rollback",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-utc-window",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "healthy",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "failed",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "error",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "rollback",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-deployed",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "healthy",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "failed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "error",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "multi-source",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "rollback",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-github-failed",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "new",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "healthy",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "old-success-drifted",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "failed",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "error",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "running-recent",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "running-long",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "multi-source",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "rollback",
+      "passed": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "kind": "trigger",
+      "name": "on-aws-sync-completed",
+      "case": "minimal-status",
+      "passed": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "kind": "template",
+      "name": "app-status",
+      "case": "new",
+      "passed": true
+    },
+    {
+      "kind": "template",
+      "name": "app-status",
+      "case": "healthy",
+      "passed": true
+    },
+    {
+      "kind": "template",
+      "name": "app-status",
+      "case": "multi-source",
+      "passed": true
+    },
+    {
+      "kind": "template",
+      "name": "github-deployed",
+      "case": "healthy",
+      "passed": true
+    },
+    {
+      "kind": "template",
+      "name": "github-deployed",
+      "case": "failed",
+      "passed": true
+    },
+    {
+      "kind": "template",
+      "name": "github-failed",
+      "case": "healthy",
+      "passed": true
+    },
+    {
+      "kind": "template",
+      "name": "github-failed",
+      "case": "failed",
+      "passed": true
+    },
+    {
+      "kind": "template",
+      "name": "aws-app-event",
+      "case": "new",
+      "passed": true
+    },
+    {
+      "kind": "template",
+      "name": "aws-app-event",
+      "case": "healthy",
+      "passed": true
+    },
+    {
+      "kind": "template",
+      "name": "aws-app-event",
+      "case": "multi-source",
+      "passed": true
+    }
+  ]
+}

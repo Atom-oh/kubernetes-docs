@@ -1,0 +1,238 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "CloudWatch Alarm 자동 대응 구성",
+    "output": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "alarm-to-rule",
+        "label": "알람 → EventBridge",
+        "focus": [
+          "alarm",
+          "eventbridge",
+          "rule"
+        ],
+        "note": "ALARM 상태 변경 이벤트가 EventBridge로 들어와 이벤트 패턴을 가진 Event Rule에 매칭됩니다."
+      },
+      {
+        "id": "lambda-targets",
+        "label": "Lambda 대응",
+        "focus": [
+          "rule",
+          "autoscale",
+          "restart",
+          "notify"
+        ],
+        "note": "Lambda 타겟으로 자동 스케일링, 인스턴스 재시작, Slack 알림을 수행합니다."
+      },
+      {
+        "id": "aws-automation",
+        "label": "SSM · Step Functions",
+        "focus": [
+          "rule",
+          "runbook",
+          "recovery"
+        ],
+        "note": "SSM Runbook을 실행하거나 Step Functions 복구 워크플로우를 시작합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "detect",
+      "label": "감지 · 라우팅"
+    },
+    {
+      "id": "lambda",
+      "label": "Lambda 자동 대응"
+    },
+    {
+      "id": "aws",
+      "label": "AWS 서비스 자동 대응"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p-detect",
+      "label": "감지",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p-route",
+      "label": "라우팅",
+      "fromCol": 1,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p-respond",
+      "label": "자동 대응",
+      "fromCol": 3,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "alarm",
+    "eventbridge",
+    "rule",
+    "autoscale"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "alarm"
+    ],
+    "allowedTerminals": [
+      "autoscale",
+      "restart",
+      "notify",
+      "runbook",
+      "recovery"
+    ],
+    "requiredPaths": [
+      {
+        "from": "alarm",
+        "to": "autoscale"
+      },
+      {
+        "from": "alarm",
+        "to": "recovery"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "alarm",
+      "lane": "detect",
+      "col": 0,
+      "type": "cloud",
+      "label": "CloudWatch Alarm",
+      "width": 156
+    },
+    {
+      "id": "eventbridge",
+      "lane": "detect",
+      "col": 1,
+      "type": "messagebus",
+      "label": "EventBridge",
+      "width": 164
+    },
+    {
+      "id": "rule",
+      "lane": "detect",
+      "col": 2,
+      "type": "security",
+      "label": "Event Rule",
+      "tag": "put-rule",
+      "width": 150
+    },
+    {
+      "id": "autoscale",
+      "lane": "lambda",
+      "col": 3,
+      "type": "backend",
+      "label": "Lambda: 자동 스케일링",
+      "width": 200
+    },
+    {
+      "id": "restart",
+      "lane": "lambda",
+      "col": 4,
+      "type": "backend",
+      "label": "Lambda: 인스턴스 재시작",
+      "width": 210
+    },
+    {
+      "id": "notify",
+      "lane": "lambda",
+      "col": 5,
+      "type": "backend",
+      "label": "Lambda: Slack 알림",
+      "width": 220
+    },
+    {
+      "id": "runbook",
+      "lane": "aws",
+      "col": 3,
+      "type": "cloud",
+      "label": "SSM: Runbook 실행",
+      "width": 200
+    },
+    {
+      "id": "recovery",
+      "lane": "aws",
+      "col": 5,
+      "type": "cloud",
+      "label": "Step Functions: 복구 워크플로우",
+      "width": 268
+    }
+  ],
+  "edges": [
+    {
+      "from": "alarm",
+      "to": "eventbridge",
+      "label": "상태 변경 이벤트",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "eventbridge",
+      "to": "rule",
+      "label": "패턴 매칭",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "rule",
+      "to": "autoscale",
+      "label": "타겟",
+      "role": "main"
+    },
+    {
+      "from": "rule",
+      "to": "restart",
+      "role": "branch",
+      "channelY": 168
+    },
+    {
+      "from": "rule",
+      "to": "notify",
+      "role": "branch",
+      "channelY": 168
+    },
+    {
+      "from": "rule",
+      "to": "runbook",
+      "role": "branch",
+      "channelY": 294
+    },
+    {
+      "from": "rule",
+      "to": "recovery",
+      "role": "branch",
+      "channelY": 294
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "이벤트 패턴",
+      "items": [
+        "source: aws.cloudwatch",
+        "detail-type: CloudWatch Alarm State Change",
+        "detail.state.value: ALARM"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "타겟 등록",
+      "items": [
+        "aws events put-targets로 Rule에 타겟 추가",
+        "Lambda · SSM Automation · Step Functions 모두 타겟 가능"
+      ]
+    }
+  ]
+}

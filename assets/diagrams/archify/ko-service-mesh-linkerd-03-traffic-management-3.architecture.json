@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EWMA 알고리즘",
+    "output": "ko-service-mesh-linkerd-03-traffic-management-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "request",
+      "type": "external",
+      "label": "새 요청",
+      "sublabel": "클라이언트 호출",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "backend",
+      "label": "Load Balancer",
+      "sublabel": "EWMA 점수가 가장 낮은 엔드포인트 선택",
+      "pos": [
+        270,
+        120
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "e1",
+      "type": "backend",
+      "label": "Endpoint 1",
+      "sublabel": "지연 시간 10ms · 점수 0.1",
+      "pos": [
+        600,
+        120
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "e2",
+      "type": "backend",
+      "label": "Endpoint 2",
+      "sublabel": "지연 시간 50ms · 점수 0.5",
+      "pos": [
+        600,
+        260
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "e3",
+      "type": "backend",
+      "label": "Endpoint 3",
+      "sublabel": "지연 시간 20ms · 점수 0.2",
+      "pos": [
+        600,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EWMA 로드 밸런싱",
+      "wraps": [
+        "lb",
+        "e1",
+        "e2",
+        "e3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request-to-lb",
+      "from": "request",
+      "to": "lb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-e1",
+      "from": "lb",
+      "to": "e1",
+      "label": "선택",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-e2",
+      "from": "lb",
+      "to": "e2",
+      "label": "대기",
+      "variant": "dashed",
+      "labelSegment": 2
+    },
+    {
+      "id": "lb-to-e3",
+      "from": "lb",
+      "to": "e3",
+      "label": "대기",
+      "variant": "dashed",
+      "labelSegment": 2
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "EWMA 특성",
+      "items": [
+        "지연 시간 기반: 응답 시간이 빠른 엔드포인트 선호",
+        "실시간 적응: 엔드포인트 상태 변화에 빠르게 적응",
+        "공정한 분배: 새 엔드포인트도 트래픽 받을 기회 제공",
+        "자동 회피: 느린 엔드포인트 자동으로 트래픽 감소"
+      ]
+    }
+  ]
+}

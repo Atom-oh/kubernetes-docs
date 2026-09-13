@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flink Native 역할과 공유 가능한 task slot",
+    "output": "ko-data-on-eks-flink-01-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scheduling",
+        "label": "서브태스크 스케줄링",
+        "focus": [
+          "jg",
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "note": "JobManager가 잡 그래프를 병렬 서브태스크로 나눠 TaskManager Pod의 태스크 슬롯에 배치한다."
+      },
+      {
+        "id": "checkpointing",
+        "label": "체크포인트 조율",
+        "focus": [
+          "cp",
+          "tm1",
+          "tm2"
+        ],
+        "note": "Checkpoint Coordinator가 주기적으로 모든 TaskManager에 걸친 오퍼레이터 상태의 분산 스냅샷을 트리거한다."
+      },
+      {
+        "id": "resources",
+        "label": "TaskManager Pod 자원 관리",
+        "focus": [
+          "rm",
+          "tm1",
+          "tm2"
+        ],
+        "note": "네이티브 Kubernetes 배포에서 Kubernetes ResourceManager가 필요에 따라 TaskManager Pod를 요청하고 반환한다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "REST API & Web UI",
+      "sublabel": "상태 조회 / 잡 제출",
+      "pos": [
+        440,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "rm",
+      "type": "cloud",
+      "label": "Kubernetes ResourceManager",
+      "sublabel": "Pod 요청 / 반환",
+      "pos": [
+        440,
+        170
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "Checkpoint Coordinator",
+      "sublabel": "스냅샷 트리거",
+      "pos": [
+        440,
+        280
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "jg",
+      "type": "backend",
+      "label": "JobMaster / Scheduler",
+      "sublabel": "서브태스크 배포",
+      "pos": [
+        440,
+        390
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "tm1",
+      "type": "backend",
+      "label": "TaskManager 1",
+      "sublabel": "워커 프로세스",
+      "pos": [
+        60,
+        225
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "Task Slot 1",
+      "sublabel": "Sharing / chaining 가능",
+      "pos": [
+        60,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "Task Slot 2",
+      "sublabel": "Sharing / chaining 가능",
+      "pos": [
+        60,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "tm2",
+      "type": "backend",
+      "label": "TaskManager 2",
+      "sublabel": "워커 프로세스",
+      "pos": [
+        850,
+        225
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "backend",
+      "label": "Task Slot 1",
+      "sublabel": "Sharing / chaining 가능",
+      "pos": [
+        850,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "backend",
+      "label": "Task Slot 2",
+      "sublabel": "Sharing / chaining 가능",
+      "pos": [
+        850,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "ui",
+        "rm",
+        "cp",
+        "jg",
+        "tm1",
+        "s1",
+        "s2",
+        "tm2",
+        "s3",
+        "s4"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "region",
+      "label": "JobManager Pod",
+      "wraps": [
+        "ui",
+        "rm",
+        "cp",
+        "jg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "TaskManager Pod 1",
+      "wraps": [
+        "tm1",
+        "s1",
+        "s2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "TaskManager Pod 2",
+      "wraps": [
+        "tm2",
+        "s3",
+        "s4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rm-tm1",
+      "from": "rm",
+      "to": "tm1",
+      "label": "K8s API를 통한 Pod 관리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rm-tm2",
+      "from": "rm",
+      "to": "tm2",
+      "label": "K8s API를 통한 Pod 관리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cp-tm1",
+      "from": "cp",
+      "to": "tm1",
+      "label": "스냅샷 트리거",
+      "variant": "dashed"
+    },
+    {
+      "id": "cp-tm2",
+      "from": "cp",
+      "to": "tm2",
+      "label": "스냅샷 트리거",
+      "variant": "dashed"
+    },
+    {
+      "id": "jg-s1",
+      "from": "jg",
+      "to": "s1",
+      "label": "서브태스크 배포"
+    },
+    {
+      "id": "jg-s2",
+      "from": "jg",
+      "to": "s2"
+    },
+    {
+      "id": "jg-s3",
+      "from": "jg",
+      "to": "s3",
+      "label": "서브태스크 배포"
+    },
+    {
+      "id": "jg-s4",
+      "from": "jg",
+      "to": "s4"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "JobManager",
+      "items": [
+        "실행·checkpoint·복구 조정",
+        "Application main()은 JM에서 실행"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "TaskManager / Slots",
+      "items": [
+        "Slot에 여러 operator task 배치 가능",
+        "Slot 자체는 CPU isolation을 제공하지 않음"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Native ResourceManager",
+      "items": [
+        "Pod 요청·해제는 Kubernetes API 경유",
+        "Idle timeout·용량·profile 조건 적용"
+      ]
+    }
+  ]
+}

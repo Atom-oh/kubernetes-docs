@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ROUND_ROBIN (기본값) — 순차적 요청 분배",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      660
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "first-round",
+        "label": "1회전: Pod 1 → 2 → 3",
+        "focus": [
+          "client",
+          "lb",
+          "pod1",
+          "pod2",
+          "pod3"
+        ],
+        "note": "요청 1·2·3이 엔드포인트 순서대로 Pod 1, Pod 2, Pod 3에 하나씩 배분됩니다."
+      },
+      {
+        "id": "cycle",
+        "label": "4번째 요청은 다시 Pod 1",
+        "focus": [
+          "client",
+          "lb",
+          "pod1"
+        ],
+        "note": "마지막 엔드포인트까지 돌면 처음으로 돌아가 순환합니다. 파드별 부하 차이는 고려하지 않습니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "요청 발신"
+    },
+    {
+      "id": "lb",
+      "type": "backend",
+      "label": "Load Balancer",
+      "sublabel": "ROUND_ROBIN"
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "엔드포인트 1"
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "엔드포인트 2"
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "엔드포인트 3"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 260,
+      "label": "요청 1 → Pod 1"
+    },
+    {
+      "from": 275,
+      "to": 360,
+      "label": "요청 2 → Pod 2"
+    },
+    {
+      "from": 375,
+      "to": 460,
+      "label": "요청 3 → Pod 3"
+    },
+    {
+      "from": 475,
+      "to": 560,
+      "label": "요청 4 → 다시 Pod 1 (순환)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req1",
+      "from": "client",
+      "to": "lb",
+      "y": 185,
+      "label": "Request 1"
+    },
+    {
+      "id": "route1",
+      "from": "lb",
+      "to": "pod1",
+      "y": 215,
+      "label": "Route"
+    },
+    {
+      "id": "resp1",
+      "from": "pod1",
+      "to": "client",
+      "y": 245,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "req2",
+      "from": "client",
+      "to": "lb",
+      "y": 285,
+      "label": "Request 2"
+    },
+    {
+      "id": "route2",
+      "from": "lb",
+      "to": "pod2",
+      "y": 315,
+      "label": "Route"
+    },
+    {
+      "id": "resp2",
+      "from": "pod2",
+      "to": "client",
+      "y": 345,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "req3",
+      "from": "client",
+      "to": "lb",
+      "y": 385,
+      "label": "Request 3"
+    },
+    {
+      "id": "route3",
+      "from": "lb",
+      "to": "pod3",
+      "y": 415,
+      "label": "Route"
+    },
+    {
+      "id": "resp3",
+      "from": "pod3",
+      "to": "client",
+      "y": 445,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "req4",
+      "from": "client",
+      "to": "lb",
+      "y": 485,
+      "label": "Request 4"
+    },
+    {
+      "id": "route4",
+      "from": "lb",
+      "to": "pod1",
+      "y": 515,
+      "label": "Route (순환)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "resp4",
+      "from": "pod1",
+      "to": "client",
+      "y": 545,
+      "label": "Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "pod1",
+      "from": 210,
+      "to": 250,
+      "type": "backend"
+    },
+    {
+      "participant": "pod2",
+      "from": 310,
+      "to": 350,
+      "type": "backend"
+    },
+    {
+      "participant": "pod3",
+      "from": 410,
+      "to": 450,
+      "type": "backend"
+    },
+    {
+      "participant": "pod1",
+      "from": 510,
+      "to": 550,
+      "type": "backend"
+    }
+  ]
+}

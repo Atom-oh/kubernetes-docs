@@ -1,4 +1,5 @@
 import unicodedata
+import pytest
 
 from src.pii_tokens import (
     Entity,
@@ -54,8 +55,11 @@ def test_nfc_normalization_and_repeated_variants_are_deterministic():
 
     result = pseudonymize_text(text, [Entity("PERSON", "김가상")])
 
-    assert result.masked_text == "고객 [PERSON_1], 별칭 [PERSON_1]"
-    assert result.mapping == {"PERSON_1": "김가상"}
+    assert result.masked_text == "고객 [PERSON_1], 별칭 [PERSON_2]"
+    assert result.mapping == {"PERSON_1": "김가상", "PERSON_2": "김 가 상"}
+    assert reassemble_text(result.masked_text, result.mapping) == unicodedata.normalize(
+        "NFC", text
+    )
 
 
 def test_equal_offset_prefers_longer_value_and_numeric_boundary_is_preserved():
@@ -127,3 +131,54 @@ def test_pseudonymize_skips_values_absent_from_source():
 
     assert result.masked_text == "고객 [PERSON_1]"
     assert result.mapping == {"PERSON_1": "김가상"}
+
+
+def test_generated_tokens_do_not_rewrite_existing_source_placeholders():
+    text = "Alice [PERSON_1] [UNKNOWN_9]"
+
+    result = pseudonymize_text(text, [Entity("PERSON", "Alice")])
+
+    assert result.masked_text == "[PERSON_2] [PERSON_1] [UNKNOWN_9]"
+    assert reassemble_text(result.masked_text, result.mapping) == text
+
+
+def test_distinct_source_spellings_remain_exactly_reversible():
+    text = "김가상 / 김 가 상 / 김가상"
+
+    result = pseudonymize_text(text, [Entity("PERSON", "김가상")])
+
+    assert result.masked_text == "[PERSON_1] / [PERSON_2] / [PERSON_1]"
+    assert result.mapping == {"PERSON_1": "김가상", "PERSON_2": "김 가 상"}
+    assert reassemble_text(result.masked_text, result.mapping) == text
+
+
+def test_numeric_variant_restores_the_actual_source_separator():
+    text = "번호 010 0000 0001"
+
+    result = pseudonymize_text(text, [Entity("PHONE", "010-0000-0001")])
+
+    assert result.masked_text == "번호 [PHONE_1]"
+    assert result.mapping == {"PHONE_1": "010 0000 0001"}
+    assert reassemble_text(result.masked_text, result.mapping) == text
+
+
+def test_parser_and_replacement_use_the_same_numeric_boundaries():
+    assert parse_tsv("ACCOUNT\t123456", "99812345677") == []
+    result = pseudonymize_text("99812345677", [Entity("ACCOUNT", "123456")])
+    assert result.mapping == {}
+
+
+@pytest.mark.parametrize("kind,invented,source", [
+    ("PHONE", "fabricated01000000001", "010-0000-0001"),
+    ("ACCOUNT", "alias123456", "123456"),
+    ("DOB", "born19900101", "1990-01-01"),
+    ("CARD", "card9999000000000000", "9999 0000 0000 0000"),
+])
+def test_numeric_variants_do_not_strip_invented_letters(kind, invented, source):
+    assert parse_tsv(f"{kind}\t{invented}", source) == []
+
+
+def test_non_numeric_original_can_still_match_literally():
+    assert parse_tsv("ACCOUNT\tacct123456", "Account acct123456") == [
+        Entity("ACCOUNT", "acct123456")
+    ]

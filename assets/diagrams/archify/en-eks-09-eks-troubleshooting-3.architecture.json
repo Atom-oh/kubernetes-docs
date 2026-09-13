@@ -1,0 +1,347 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Node and Pod Issues",
+    "output": "en-eks-09-eks-troubleshooting-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      640
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Causes"
+        },
+        "cloud": {
+          "label": "Solutions"
+        },
+        "backend": {
+          "label": "Category · Steps"
+        },
+        "external": {
+          "label": "Root category"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "external",
+      "label": "Node and Pod Issues",
+      "sublabel": "EKS troubleshooting categories",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "branch-a",
+      "type": "backend",
+      "label": "Node NotReady Issues",
+      "sublabel": "Node stuck in NotReady",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "a-causes",
+      "type": "security",
+      "label": "Common Causes",
+      "sublabel": "5 most common causes",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "a-steps",
+      "type": "backend",
+      "label": "Troubleshooting Steps",
+      "sublabel": "kubectl describe node · kubelet logs",
+      "pos": [
+        60,
+        400
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "a-solutions",
+      "type": "cloud",
+      "label": "Common Solutions",
+      "sublabel": "Restart kubelet · drain node",
+      "pos": [
+        60,
+        500
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "branch-b",
+      "type": "backend",
+      "label": "Pod Not Running Issues",
+      "sublabel": "image pull · scheduling · volumes",
+      "pos": [
+        400,
+        170
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "b-causes",
+      "type": "security",
+      "label": "Common Causes",
+      "sublabel": "5 most common causes",
+      "pos": [
+        400,
+        300
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "b-steps",
+      "type": "backend",
+      "label": "Troubleshooting Steps",
+      "sublabel": "kubectl describe pod · check logs",
+      "pos": [
+        400,
+        400
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "b-solutions",
+      "type": "cloud",
+      "label": "Common Solutions",
+      "sublabel": "Fix resources, image, config",
+      "pos": [
+        400,
+        500
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "branch-c",
+      "type": "backend",
+      "label": "Resource Constraint Issues",
+      "sublabel": "CPU, memory, disk, quotas",
+      "pos": [
+        740,
+        170
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "c-causes",
+      "type": "security",
+      "label": "Common Causes",
+      "sublabel": "5 most common causes",
+      "pos": [
+        740,
+        300
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "c-steps",
+      "type": "backend",
+      "label": "Troubleshooting Steps",
+      "sublabel": "kubectl top · quotas · limit ranges",
+      "pos": [
+        740,
+        400
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "c-solutions",
+      "type": "cloud",
+      "label": "Common Solutions",
+      "sublabel": "Adjust requests, quotas, capacity",
+      "pos": [
+        740,
+        500
+      ],
+      "size": [
+        240,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node NotReady Issues",
+      "wraps": [
+        "branch-a",
+        "a-causes",
+        "a-steps",
+        "a-solutions"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod Not Running Issues",
+      "wraps": [
+        "branch-b",
+        "b-causes",
+        "b-steps",
+        "b-solutions"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Resource Constraint Issues",
+      "wraps": [
+        "branch-c",
+        "c-causes",
+        "c-steps",
+        "c-solutions"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-to-a",
+      "from": "root",
+      "to": "branch-a",
+      "variant": "default"
+    },
+    {
+      "id": "branch-a-to-a-causes",
+      "from": "branch-a",
+      "to": "a-causes"
+    },
+    {
+      "id": "a-causes-to-a-steps",
+      "from": "a-causes",
+      "to": "a-steps"
+    },
+    {
+      "id": "a-steps-to-a-solutions",
+      "from": "a-steps",
+      "to": "a-solutions"
+    },
+    {
+      "id": "root-to-b",
+      "from": "root",
+      "to": "branch-b",
+      "variant": "emphasis"
+    },
+    {
+      "id": "branch-b-to-b-causes",
+      "from": "branch-b",
+      "to": "b-causes"
+    },
+    {
+      "id": "b-causes-to-b-steps",
+      "from": "b-causes",
+      "to": "b-steps"
+    },
+    {
+      "id": "b-steps-to-b-solutions",
+      "from": "b-steps",
+      "to": "b-solutions"
+    },
+    {
+      "id": "root-to-c",
+      "from": "root",
+      "to": "branch-c",
+      "variant": "default"
+    },
+    {
+      "id": "branch-c-to-c-causes",
+      "from": "branch-c",
+      "to": "c-causes"
+    },
+    {
+      "id": "c-causes-to-c-steps",
+      "from": "c-causes",
+      "to": "c-steps"
+    },
+    {
+      "id": "c-steps-to-c-solutions",
+      "from": "c-steps",
+      "to": "c-solutions"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Common causes of Node NotReady",
+      "items": [
+        "kubelet Issues: kubelet service is not running or has errors",
+        "Node Network Issues: node network configuration issues",
+        "Node Resource Exhaustion: CPU, memory or disk exhausted",
+        "Node Health Check Failure: node health checks failing",
+        "Node Disk Pressure: node disk space exhaustion"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Common causes of Pod Not Running",
+      "items": [
+        "Image Pull Failure: container image pull failure",
+        "Resource Request Issues: insufficient resources for requests",
+        "Pod Configuration Error: pod specification errors",
+        "Scheduling Failure: pod could not be scheduled",
+        "Volume Mount Failure: volume mount failure"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Common causes of resource constraints",
+      "items": [
+        "Insufficient CPU: insufficient CPU resources",
+        "Insufficient Memory: insufficient memory resources",
+        "Insufficient Disk: insufficient disk space",
+        "Resource Quotas: resource quota limits reached",
+        "Limit Ranges: container limit ranges exceeded"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "프록시 트래픽 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      630
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "outbound",
+        "label": "아웃바운드 처리",
+        "focus": [
+          "client_app",
+          "client_proxy"
+        ],
+        "note": "iptables가 요청을 프록시로 돌리고, 프록시가 대상 조회·로드밸런싱·mTLS 핸드셰이크를 처리한다."
+      },
+      {
+        "id": "encrypted",
+        "label": "mTLS 구간",
+        "focus": [
+          "client_proxy",
+          "server_proxy"
+        ],
+        "note": "프록시 사이 구간만 암호화되고, 애플리케이션은 평문 HTTP만 본다."
+      },
+      {
+        "id": "inbound",
+        "label": "인바운드 검증",
+        "focus": [
+          "server_proxy",
+          "server_app"
+        ],
+        "note": "서버 프록시가 mTLS 검증과 정책 확인을 마친 뒤 애플리케이션에 전달한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client_app",
+      "type": "frontend",
+      "label": "Client App",
+      "sublabel": "애플리케이션 컨테이너"
+    },
+    {
+      "id": "client_proxy",
+      "type": "security",
+      "label": "Client Proxy",
+      "sublabel": "linkerd-proxy (Outbound)"
+    },
+    {
+      "id": "server_proxy",
+      "type": "security",
+      "label": "Server Proxy",
+      "sublabel": "linkerd-proxy (Inbound)"
+    },
+    {
+      "id": "server_app",
+      "type": "backend",
+      "label": "Server App",
+      "sublabel": "애플리케이션 컨테이너"
+    }
+  ],
+  "segments": [
+    {
+      "from": 168,
+      "to": 278,
+      "label": "아웃바운드 — 대상 조회 · 로드밸런싱 · mTLS 핸드셰이크"
+    },
+    {
+      "from": 288,
+      "to": 388,
+      "label": "mTLS 암호화 구간 — 인바운드 검증과 정책 확인"
+    },
+    {
+      "from": 398,
+      "to": 515,
+      "label": "응답 반환"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http_req",
+      "from": "client_app",
+      "to": "client_proxy",
+      "y": 195,
+      "label": "HTTP Request",
+      "note": "iptables 리다이렉트 (포트 4140)"
+    },
+    {
+      "id": "handshake",
+      "from": "client_proxy",
+      "to": "server_proxy",
+      "y": 250,
+      "label": "mTLS 핸드셰이크",
+      "variant": "security",
+      "note": "대상 서비스 조회 → 로드밸런싱 (EWMA) 후 연결"
+    },
+    {
+      "id": "enc_req",
+      "from": "client_proxy",
+      "to": "server_proxy",
+      "y": 305,
+      "label": "Encrypted Request",
+      "variant": "emphasis",
+      "note": "iptables 리다이렉트 (포트 4143)"
+    },
+    {
+      "id": "fwd_req",
+      "from": "server_proxy",
+      "to": "server_app",
+      "y": 360,
+      "label": "HTTP Request",
+      "note": "mTLS 검증 → 정책 확인 통과 후 전달"
+    },
+    {
+      "id": "http_resp",
+      "from": "server_app",
+      "to": "server_proxy",
+      "y": 410,
+      "label": "HTTP Response",
+      "variant": "return"
+    },
+    {
+      "id": "enc_resp",
+      "from": "server_proxy",
+      "to": "client_proxy",
+      "y": 455,
+      "label": "Encrypted Response",
+      "variant": "return"
+    },
+    {
+      "id": "final_resp",
+      "from": "client_proxy",
+      "to": "client_app",
+      "y": 495,
+      "label": "HTTP Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "client_proxy",
+      "from": 195,
+      "to": 500,
+      "type": "security"
+    },
+    {
+      "participant": "server_proxy",
+      "from": 250,
+      "to": 460,
+      "type": "security"
+    },
+    {
+      "participant": "server_app",
+      "from": 360,
+      "to": 415,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hierarchical Route Reflectors (Large Clusters)",
+    "output": "en-networking-calico-04-bgp-deep-dive-10.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": { "label": "Global route reflector" },
+        "cloud": { "label": "Rack route reflector" },
+        "backend": { "label": "Kubernetes node" }
+      }
+    },
+    "views": [
+      { "id": "global-tier", "label": "Tier 1: global RRs", "focus": ["grrs", "rrr1", "rrr2", "rrr3"], "note": "Two global route reflectors peer with each other and with every rack RR." },
+      { "id": "rack-tier", "label": "Tier 2: rack RRs", "focus": ["rrr1", "rrr2", "rrr3"], "note": "One RR per rack; each peers with both global RRs so losing one global RR isolates nothing." },
+      { "id": "rack-nodes", "label": "Rack-local nodes", "focus": ["rrr1", "nodes1"], "note": "Nodes peer only with their own rack RR, so per-node session count stays flat as the cluster grows." }
+    ]
+  },
+  "components": [
+    { "id": "grrs", "type": "external", "label": "Global RR 1 · Global RR 2", "sublabel": "peer with each other", "tag": "redundant pair", "pos": [450, 50], "size": [260, 64] },
+    { "id": "rrr1", "type": "cloud", "label": "Rack 1 RR", "sublabel": "rack route reflector", "pos": [110, 260], "size": [180, 64] },
+    { "id": "rrr2", "type": "cloud", "label": "Rack 2 RR", "sublabel": "rack route reflector", "pos": [490, 260], "size": [180, 64] },
+    { "id": "rrr3", "type": "cloud", "label": "Rack 3 RR", "sublabel": "rack route reflector", "pos": [870, 260], "size": [180, 64] },
+    { "id": "nodes1", "type": "backend", "label": "Node · Node", "sublabel": "Rack 1 Nodes", "pos": [110, 470], "size": [180, 64] },
+    { "id": "nodes2", "type": "backend", "label": "Node · Node", "sublabel": "Rack 2 Nodes", "pos": [490, 470], "size": [180, 64] },
+    { "id": "nodes3", "type": "backend", "label": "Node · Node", "sublabel": "Rack 3 Nodes", "pos": [870, 470], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Tier 1 - Global RRs", "wraps": ["grrs"] },
+    { "kind": "region", "label": "Tier 2 - Rack RRs", "wraps": ["rrr1", "rrr2", "rrr3"] },
+    { "kind": "region", "label": "Rack 1 Nodes", "wraps": ["nodes1"] },
+    { "kind": "region", "label": "Rack 2 Nodes", "wraps": ["nodes2"] },
+    { "kind": "region", "label": "Rack 3 Nodes", "wraps": ["nodes3"] }
+  ],
+  "connections": [
+    { "id": "rrr1-grrs", "from": "rrr1", "to": "grrs", "label": "peers with both" },
+    { "id": "rrr2-grrs", "from": "rrr2", "to": "grrs", "label": "peers with both global RRs", "variant": "emphasis" },
+    { "id": "rrr3-grrs", "from": "rrr3", "to": "grrs", "label": "peers with both" },
+    { "id": "nodes1-rrr1", "from": "nodes1", "to": "rrr1", "label": "rack RR only", "labelDy": -40 },
+    { "id": "nodes2-rrr2", "from": "nodes2", "to": "rrr2", "label": "peers with local rack RR only", "variant": "emphasis", "labelDy": -40 },
+    { "id": "nodes3-rrr3", "from": "nodes3", "to": "rrr3", "label": "rack RR only", "labelDy": -40 }
+  ],
+  "cards": [
+    { "dot": "violet", "title": "Tier 1 - Global RRs", "items": ["Two global route reflectors peer with each other", "Each global RR peers with every rack RR"] },
+    { "dot": "orange", "title": "Tier 2 - Rack RRs", "items": ["One route reflector per rack", "Each rack RR peers with both global RRs for redundancy"] },
+    { "dot": "cyan", "title": "Rack nodes", "items": ["Nodes peer only with their own rack RR", "Per-node BGP session count stays flat as racks are added"] }
+  ]
+}

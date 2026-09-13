@@ -1,0 +1,177 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Silence Management Best Practices",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "create",
+        "label": "Create a silence",
+        "focus": [
+          "need",
+          "type",
+          "comment"
+        ],
+        "note": "Set the duration by silence type and always record why the silence was created in a comment."
+      },
+      {
+        "id": "review",
+        "label": "Regular review and expiry",
+        "focus": [
+          "review",
+          "expired",
+          "auto_remove",
+          "manual"
+        ],
+        "note": "Review long-lived silences regularly; expired ones are removed automatically, the rest get a manual review."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "create",
+      "label": "Create a silence"
+    },
+    {
+      "id": "review",
+      "label": "Regular review"
+    },
+    {
+      "id": "followup",
+      "label": "Follow-up"
+    }
+  ],
+  "mainPath": [
+    "need",
+    "type",
+    "comment",
+    "review",
+    "expired",
+    "auto_remove"
+  ],
+  "nodes": [
+    {
+      "id": "need",
+      "lane": "create",
+      "col": 0,
+      "type": "frontend",
+      "label": "Silence needed",
+      "sublabel": "alerts to pause",
+      "width": 150
+    },
+    {
+      "id": "type",
+      "lane": "create",
+      "col": 1,
+      "type": "security",
+      "label": "Type?",
+      "sublabel": "maintenance · deploy · investigation · known issue",
+      "tag": "sets duration",
+      "width": 290
+    },
+    {
+      "id": "comment",
+      "lane": "create",
+      "col": 2,
+      "type": "backend",
+      "label": "Clear comment",
+      "sublabel": "reason + author",
+      "tag": "mandatory",
+      "width": 150
+    },
+    {
+      "id": "review",
+      "lane": "review",
+      "col": 3,
+      "type": "backend",
+      "label": "Regular review",
+      "sublabel": "long-lived silences",
+      "width": 150
+    },
+    {
+      "id": "expired",
+      "lane": "review",
+      "col": 4,
+      "type": "security",
+      "label": "Expired?",
+      "sublabel": "endsAt reached?",
+      "tag": "review point"
+    },
+    {
+      "id": "auto_remove",
+      "lane": "review",
+      "col": 5,
+      "type": "cloud",
+      "label": "Auto removal",
+      "sublabel": "silence cleaned up",
+      "width": 150
+    },
+    {
+      "id": "manual",
+      "lane": "followup",
+      "col": 5,
+      "type": "external",
+      "label": "Manual review",
+      "sublabel": "checked by the owner",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "need",
+      "to": "type"
+    },
+    {
+      "from": "type",
+      "to": "comment",
+      "label": "duration per type",
+      "variant": "emphasis"
+    },
+    {
+      "from": "comment",
+      "to": "review"
+    },
+    {
+      "from": "review",
+      "to": "expired"
+    },
+    {
+      "from": "expired",
+      "to": "auto_remove",
+      "label": "YES",
+      "variant": "emphasis"
+    },
+    {
+      "from": "expired",
+      "to": "manual",
+      "label": "NO",
+      "role": "branch",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Recommendations",
+      "items": [
+        "Always write comments: record why the silence was created",
+        "Set minimum duration: only silence for as long as needed",
+        "Regular review: periodically review long-term silences",
+        "Set up notifications: alert before a silence expires"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Silence duration by type",
+      "items": [
+        "Maintenance: for the planned window",
+        "Deployment: until the deploy completes",
+        "Investigation: max 4 hours",
+        "Known issue: until the fix lands"
+      ]
+    }
+  ]
+}

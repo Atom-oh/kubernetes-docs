@@ -1,0 +1,1417 @@
+{
+  "date": "2026-09-11",
+  "branch": "docs/review-followup-2026-09-12",
+  "repo": "/home/atomoh/kubernetes-docs",
+  "state": "active original observability audit; CloudWatch closed, Datadog full-read begins",
+  "coverage": {
+    "serviceMeshInventory": 170,
+    "fullyRead": 304,
+    "fixedAndValidated": 300,
+    "fullyReadPendingValidation": 4,
+    "serviceMeshUnread": 0,
+    "networkingQueued": 0,
+    "observabilityAndLabsQueued": 90,
+    "totalAssignedMarkdownInventory": 394,
+    "totalUnreadInventory": 90,
+    "networkingFullyRead": 108,
+    "networkingFixedAndValidated": 108,
+    "observabilityFullyRead": 26,
+    "observabilityFixedAndValidated": 22
+  },
+  "completedBatches": [
+    "istio-foundation (16)",
+    "istio-traffic (30)",
+    "istio-security (10)",
+    "istio-observability (12)",
+    "istio-resilience (10)",
+    "istio-advanced (24)",
+    "istio-comparison (10)",
+    "istio-troubleshooting (2)",
+    "mesh-other-istio-overview (4)",
+    "mesh-linkerd (28)",
+    "mesh-cilium (24)",
+    "networking-foundation (28)",
+    "networking-calico-bgp-deep-dive4",
+    "networking-calico-policy4",
+    "networking-calico-ebpf4",
+    "networking-calico-advanced-topics4",
+    "networking-calico-eks-integration4",
+    "networking-calico-operations4",
+    "networking-calico-glossary4",
+    "networking-calico complete42",
+    "networking-cilium-readme2",
+    "networking-cilium-introduction4",
+    "networking-cilium-ebpf4",
+    "networking-cilium-networking4",
+    "networking-cilium-ipam-policy4",
+    "networking-cilium-l2l7-4",
+    "networking-cilium-security-4",
+    "networking-cilium-advanced-4",
+    "networking-cilium-glossary-4",
+    "networking-cilium-concepts-4",
+    "networking-cilium complete38",
+    "networking complete108",
+    "observability-foundation-readme2",
+    "observability-metrics-overview4",
+    "observability-prometheus4",
+    "observability-victoriametrics4",
+    "observability-mimir",
+    "observability-cloudwatch-metrics"
+  ],
+  "activeBatch": "observability-metrics Datadog",
+  "currentFiles": [
+    "en/observability/metrics/05-datadog.md",
+    "en/quizzes/observability/metrics/05-datadog-quiz.md",
+    "ko/observability/metrics/05-datadog.md",
+    "ko/quizzes/observability/metrics/05-datadog-quiz.md"
+  ],
+  "currentWork": "Current observability-metrics Datadog: 4/4 sources fully read; primary verification/fixes pending. Last completed read: ko/quizzes/observability/metrics/05-datadog-quiz.md.",
+  "nextSteps": [
+    "Read each Datadog guide/quiz completely, EN/KO; markfullyReadonlyafteractualEOF.",
+    "Verify officialDatadogAgent/chart/operator/config/API/features andsupportedEKSplatform/security/metrics/pricing claims; safeconcretefixesonly.",
+    "Continue remaining logging/tracing/grafana/alerting/optimization/labs sequentially; nofullbuild/cloudmutations/commits."
+  ],
+  "blockers": [],
+  "knownLimitations": [
+    "No live AWS/cluster deployment, production-load validation or destructive sample execution.",
+    "Kiali2.31 published compatibility table lacks an explicit Istio1.31 entry; this gap is documented rather than treated as proven incompatibility or compatibility.",
+    "Inaccurate/404 figures were removed only with corresponding explanation; external archmap sources requiring regeneration are listed in per-document findings. Parent owns mechanical/foreign-translation assets.",
+    "Kong Mesh2.14.4 is published, but the official Kubernetes validation matrix currently stops at2.13; the comparison explicitly records this evidence gap rather than claiming compatibility.",
+    "Parent freed /tmp inodes by removing only its disposable go-cache; this worker made no cache deletions during the transient startup failure. Reuse existing tools and avoid large dependency trees.",
+    "Traffic/security published guides have final followup changes beyond their /tmp writers (latency timing and default Viz issuer metric labels); do not blindly rerun writers.",
+    "Completed16pageCiliumztunnelcollateralfollowupisnotinolder/tmpREADME/architecture/comparisonwriters;publishedfilesandbatchrecordsaretruth.",
+    "Fourquizrenderfixesareonlyincurrentpublishedfiles;older/tmpquizwritersmayreintroduceunescaped<...>placeholders. Do notblindlyrerunolderwriters. NISTfurther-reading403isnotaprovenbrokenlink.",
+    "Current1.20.1ENIreferenceIPv6Beta contradictsEKSinstallIPv4-onlycaveat. READMEandbestpracticesexplicitlyrecordthis;noEKSIPv6runtimevalidation."
+  ],
+  "durableReports": [
+    "docs/reviews/2026-09-11/service-mesh-progress.json",
+    "docs/reviews/2026-09-11/worker-domain-queue.json",
+    "docs/reviews/2026-09-11/batches/istio-foundation.json",
+    "docs/reviews/2026-09-11/batches/istio-traffic.json",
+    "docs/reviews/2026-09-11/batches/istio-security.json",
+    "docs/reviews/2026-09-11/batches/istio-observability.json",
+    "docs/reviews/2026-09-11/retry-guidance-regression.json",
+    "docs/reviews/2026-09-11/batches/istio-comparison.json",
+    "docs/reviews/2026-09-11/istio-comparison-benchmark-calculations.json",
+    "docs/reviews/2026-09-11/batches/istio-troubleshooting.json",
+    "docs/reviews/2026-09-11/batches/mesh-other-istio-overview.json",
+    "docs/reviews/2026-09-11/istio-overview-quiz-validation.json",
+    "docs/reviews/2026-09-11/batches/mesh-linkerd.json",
+    "docs/reviews/2026-09-11/linkerd-installation-validation.json",
+    "docs/reviews/2026-09-11/linkerd-architecture-validation.json",
+    "docs/reviews/2026-09-11/linkerd-traffic-validation.json",
+    "docs/reviews/2026-09-11/linkerd-security-validation.json",
+    "docs/reviews/2026-09-11/linkerd-observability-validation.json",
+    "docs/reviews/2026-09-11/linkerd-multicluster-validation.json",
+    "docs/reviews/2026-09-11/linkerd-best-practices-validation.json",
+    "docs/reviews/2026-09-11/batches/mesh-cilium.json",
+    "docs/reviews/2026-09-11/cilium-readme-validation.json",
+    "docs/reviews/2026-09-11/cilium-architecture-validation.json",
+    "docs/reviews/2026-09-11/cilium-traffic-validation.json",
+    "docs/reviews/2026-09-11/cilium-ztunnel-followup.json",
+    "docs/reviews/2026-09-11/cilium-security-validation.json",
+    "docs/reviews/2026-09-11/mesh-render-compilation.json",
+    "docs/reviews/2026-09-11/retry-guidance-wording-followup.json",
+    "docs/reviews/2026-09-11/cilium-observability-validation.json",
+    "docs/reviews/2026-09-11/cilium-ingress-validation.json",
+    "docs/reviews/2026-09-11/cilium-best-practices-validation.json",
+    "docs/reviews/2026-09-11/service-mesh-coverage.json",
+    "docs/reviews/2026-09-11/networking-overview-validation.json",
+    "docs/reviews/2026-09-11/networking-progress.json",
+    "docs/reviews/2026-09-11/batches/networking-foundation.json",
+    "docs/reviews/2026-09-11/worker-render-compilation.json",
+    "docs/reviews/2026-09-11/networking-vpc-cni-validation.json",
+    "docs/reviews/2026-09-11/networking-lattice-validation.json",
+    "docs/reviews/2026-09-11/networking-lbc-validation.json",
+    "docs/reviews/2026-09-11/networking-gateway-validation.json",
+    "docs/reviews/2026-09-11/networking-crossorg-validation.json",
+    "docs/reviews/2026-09-11/networking-pod-benchmark-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-readme-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-introduction-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-architecture-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-modes-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-bgp-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-policy-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-ebpf-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-advanced-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-eks-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-operations-validation.json",
+    "docs/reviews/2026-09-11/networking-calico-glossary-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-readme-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-ebpf-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-networking-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-ipam-policy-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-l2l7-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-security-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-advanced-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-glossary-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-concepts-validation.json",
+    "docs/reviews/2026-09-11/networking-coverage.json",
+    "docs/reviews/2026-09-11/observability-domain-progress.json",
+    "docs/reviews/2026-09-11/observability-overview-validation.json",
+    "docs/reviews/2026-09-11/observability-metrics-overview-validation.json",
+    "docs/reviews/2026-09-11/observability-prometheus-validation.json",
+    "docs/reviews/2026-09-11/observability-victoriametrics-validation.json",
+    "docs/reviews/2026-09-11/observability-mimir-validation.json",
+    "docs/reviews/2026-09-11/observability-cloudwatch-metrics-validation.json"
+  ],
+  "temporaryArtifacts": {
+    "sourceCache": "/tmp/istio-foundation-sources/ (SHA256(url)[:12].html is raw; .txt is extracted text)",
+    "sourceFetcher": "/tmp/istio-foundation-sources/fetch.py (official-page network calls need require_escalated)",
+    "auditHelpers": [
+      "/tmp/mesh_audit.py",
+      "/tmp/mesh_batch_check.py",
+      "/tmp/mesh_metrics_validation.py",
+      "/tmp/mesh_logql_validation.py",
+      "/tmp/mesh-zone-check.py"
+    ],
+    "quizOriginals": [
+      "/tmp/observability-quiz-original-en.md",
+      "/tmp/observability-quiz-original-ko.md",
+      "/tmp/resilience-quiz-original-en.md",
+      "/tmp/resilience-quiz-original-ko.md"
+    ],
+    "quizEditScripts": [
+      "/tmp/mesh-observability-quiz-fix1.py",
+      "/tmp/mesh-observability-quiz-fix2.py"
+    ],
+    "businessCode": [
+      "/tmp/mesh-business-code/app.py",
+      "/tmp/mesh-business-code/app.cjs"
+    ],
+    "businessDependency": "/tmp/mesh-business-validation/node_modules/@prometheus-io/client (0.16.1; Node22 supported)",
+    "nativeValidators": [
+      "/tmp/promtool (3.14.0)",
+      "/tmp/otelcol-contrib (0.160.0)",
+      "/tmp/jaeger (2.20.0)",
+      "/tmp/loki and /tmp/lokitool (3.7.7)",
+      "/tmp/alloy (1.19.2)"
+    ],
+    "istio": "Native /tmp/istioctl-1.31.0 plus released1.31.0 CRD schemas/charts; prior rows preserve actual validator versions.",
+    "warning": "Edit scripts can be non-idempotent; do not rerun against current files. Keep original snapshots and exact section boundaries. New Envoy proto validator uses pinned Istio1.31 dependency with Go1.26 under /tmp only.",
+    "envoyProtoValidator": "/tmp/mesh-envoy-proto-check; source/go.mod under /tmp/mesh-envoy-validation; rate checks /tmp/mesh-rate-check.py",
+    "istio31CLI": "/tmp/istioctl-1.31.0; official asset sha256:c2367fb837d8fd10ed9a742c1927d8207b06fdc5271255a7288eafd8f2a85d42",
+    "zoneSources": {
+      "k8sSpread": "4f7e995f7bb7",
+      "awsNetworkCost": "83b331dc50e1",
+      "ebs": "cbd4c7908852",
+      "nthREADME": "a4c6e6fa8f62",
+      "releasedDRproto": "d7f473a9607a",
+      "releasedLoadBalancer": "66c1a8b9d075",
+      "releasedValidation": "f4b844301cf4",
+      "releasedProxyConfig": "8b6efc2c1086",
+      "endpointWriter": "9447daace718",
+      "IMDSv2": "82aca706445c",
+      "AZIDs": "8988e812c241",
+      "eksctlNodegroups": "5c6d3e1ecb3e"
+    },
+    "resilienceFinal": [
+      "/tmp/mesh-resilience-final-validation.json",
+      "/tmp/istio-resilience-batch-validation.json",
+      "/tmp/mesh-resilience-final-check.py",
+      "/tmp/kubernetes-docs-full-review/docs-test-resilience.log"
+    ],
+    "advancedSources": {
+      "ambientOverview": "e22a9556901c",
+      "waypoint": "e2bd02e09b86",
+      "DNSProxy": "bc9962506e98",
+      "Lua": "fdfd868d78d7",
+      "KEDARelease": "2f5517a8f874 (v2.20.2)",
+      "KEDADeploy": "efeb4df256dd",
+      "KEDAScaledObjectSpec": "c31a52cfe072",
+      "KEDAScaledObjectCRD": "56c175e93b20",
+      "KEDAPrometheus": "41d6d54455e2",
+      "KEDACloudWatch": "2b6fd16c9945",
+      "HPA": "3e97077d488e",
+      "ArgoIstio": "45faadc7bd1c"
+    },
+    "ambientSources": {
+      "trafficRedirection": "18355af7586b",
+      "HBONE": "f76d27207465",
+      "platformPrereqs": "9a419bbabd24",
+      "istioctlInstall": "7ce398b72c02",
+      "L7Status": "a7ddccda2fb0",
+      "mTLSVerify": "eea9c5258d51",
+      "multiclusterStatus": "8229d81a2d61",
+      "bookinfo131": "7ca89082c8c7",
+      "curl131": "9266da2121d4",
+      "httpbin131": "a93816a4a5cf",
+      "addWorkloads": "21603c00375f",
+      "manageTraffic": "426ee248b50f",
+      "sampleApp": "5131a12742cd",
+      "dataPlane": "76a732663d27",
+      "gatewayAPI160CRDs": "794ad80426bd",
+      "intro2022": "7831a07e930f",
+      "beta122": "c846feb87858",
+      "performance": "06c6c993ec2c",
+      "oldSecurity2022": "ac33470dd19f",
+      "oldGettingStarted2022": "57ceca9ad878",
+      "community": "5057797cf5df",
+      "SKTArticle": "438cdac17aa4"
+    },
+    "ambientScripts": [
+      "/tmp/mesh-ambient-edit1.py",
+      "/tmp/mesh-ambient-install-edit.py",
+      "/tmp/mesh-ambient-migration-edit.py",
+      "/tmp/mesh-ambient-final-edit.py",
+      "/tmp/mesh-ambient-check.py"
+    ],
+    "ambientValidation": "/tmp/mesh-ambient-validation.json; docs/reviews/2026-09-11/istio-ambient-resource-model.json",
+    "multiclusterValidation": "/tmp/mesh-multicluster-validation/report.json",
+    "envoyFilter": [
+      "/tmp/envoy-filter-original-en.md",
+      "/tmp/envoy-filter-original-ko.md",
+      "/tmp/mesh-envoy-filter-validation.json",
+      "/tmp/mesh-envoy-filter-typed.json",
+      "/tmp/mesh-envoy-filter-lua.json"
+    ],
+    "dnsValidation": "/tmp/mesh-dns-validation/report.json",
+    "injectionValidation": "/tmp/mesh-injection-validation/report.json",
+    "recentEditScripts": [
+      "/tmp/mesh-envoy-edit1.py",
+      "/tmp/mesh-envoy-edit2.py",
+      "/tmp/mesh-envoy-edit3.py",
+      "/tmp/mesh-dns-edit1.py",
+      "/tmp/mesh-dns-edit2.py",
+      "/tmp/mesh-grpc-edit.py",
+      "/tmp/mesh-websocket-edit.py",
+      "/tmp/mesh-injection-edit.py"
+    ],
+    "recentScriptWarning": "Edit scriptsnon-idempotent andsomefinalchangesappliedseparately; do notrerun. Currentrepositoryfilesandbatchrowsaretruth.",
+    "argoCurrentSources": {
+      "release": "7d8d284e2449",
+      "istio": "45faadc7bd1c",
+      "analysisDocs": "bca4964a90c8",
+      "prometheus": "9efb289ec1bd",
+      "bluegreen": "72a957ba33c3",
+      "experiment": "61814315e303",
+      "spec": "3c9683cb2a00",
+      "FAQ": "0b3324df5de3",
+      "istioController": "0267a93e0e65",
+      "rolloutCRD": "629698de3598",
+      "analysisTemplateCRD": "e817619cef02",
+      "blueDockerHub": "2198199a23d4",
+      "greenDockerHub": "0679dc026400",
+      "demoDockerfile": "5648264314f8",
+      "demoMain": "236fbbf480b0",
+      "evaluate": "2e2a3f883824",
+      "analysisController": "337e78672725",
+      "analysisHelpers": "008c37ee643d",
+      "argocdSyncRaw": "c971d0a0b6d4",
+      "trafficManagement": "3c9905267d97",
+      "goMod": "ef3352819384",
+      "repoTree": "2a4fce2dc970",
+      "webMetricDocs": "4fc863dfe8a3",
+      "headerFixture": "6fbf770c0bc7",
+      "mirrorFixture": "5fef8a6ea225"
+    },
+    "argoImages": {
+      "blueDigest": "sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20",
+      "greenDigest": "sha256:e32df3d15f759d36c323b3dccb7003d38df1a4274d37217715151f085c24c58f",
+      "platform": "linux/amd64 only forboth tags",
+      "originalRemote": "/tmp/istio-argo-service-metrics.png (verifiedoriginalreleasedasset, historicalGrafanaService screenshot)",
+      "contactSheet": "/tmp/istio-argo-figures.png"
+    },
+    "argoValidation": [
+      "/tmp/mesh-argo-validation/report.json",
+      "/tmp/mesh-argo-validation/predicate-proof.json",
+      "/tmp/mesh-argo-validation/prometheus-fixtures.yaml",
+      "/tmp/mesh-argo-validation/prometheus-fixtures.json",
+      "/tmp/mesh-argo-validation/conditions.json",
+      "/tmp/mesh-argo-check.py",
+      "/tmp/mesh-argo-prom-fixtures.py",
+      "/tmp/mesh-argo-expr-check"
+    ],
+    "argoCurrentWriters": [
+      "/tmp/mesh-argo-content.py",
+      "/tmp/mesh-argo-sections-en.py",
+      "/tmp/mesh-argo-sections-ko.py"
+    ],
+    "argoWriterNote": "WritersbuildthefinaldocfromsharedobjectsbutfinalEnglishspacingandhistoryCLIreplacementwerealsoapplied;prefercurrentrepositoryfiles. NativeGoexprsourceunder/tmp/mesh-argo-expr;onlyoneadditionalmodule,nomassdependencycopy.",
+    "zonalArgoSources": {
+      "disruptions": "b2cb58aaf3d9",
+      "PDB": "5bb569773cff",
+      "affinity": "37b2614a3ee3",
+      "EC2SpotNotices": "ff704e292777",
+      "AWSAZs": "67149aa133ac",
+      "localityFailover": "0df60205b93d",
+      "EKSSpotBadURL": "8bbbc8ecaeb2 (spot.html returns only Amazon EKS landing content; do not cite asarticle)",
+      "EKSManagedNodes": "Official awsknowledge search chunk for https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html confirms diversification/rebalancing and no replacementReady guarantee."
+    },
+    "zonalArgoValidation": [
+      "/tmp/mesh-zone-argo-validation/report.json",
+      "/tmp/mesh-zone-argo-validation/prometheus-fixtures.json",
+      "/tmp/mesh-zone-argo-validation/prometheus-fixtures.yaml",
+      "/tmp/mesh-zone-argo-validation/conditions.json",
+      "/tmp/mesh-zone-argo-check.py",
+      "/tmp/mesh-zone-argo-prom-fixtures.py"
+    ],
+    "zonalArgoWriters": [
+      "/tmp/mesh-zone-argo-content.py",
+      "/tmp/mesh-zone-argo-en.py",
+      "/tmp/mesh-zone-argo-ko.py"
+    ],
+    "kedaDrafts": [
+      "/tmp/mesh-keda-content.py",
+      "/tmp/mesh-keda-publishing.py",
+      "/tmp/mesh-keda-en.py",
+      "/tmp/mesh-keda-ko.py"
+    ],
+    "kedaValidation": [
+      "/tmp/mesh-keda-validation/",
+      "/tmp/keda-2.20.2.tgz",
+      "/tmp/otelcol-contrib-0.158.0"
+    ],
+    "advancedQuizWriters": [
+      "/tmp/mesh-advanced-quiz-content.py",
+      "/tmp/mesh-advanced-quiz-en.py",
+      "/tmp/mesh-advanced-quiz-ko.py"
+    ],
+    "advancedQuizValidation": [
+      "/tmp/mesh-advanced-quiz-validation/",
+      "/tmp/mesh-advanced-quiz-check.py",
+      "/tmp/mesh-advanced-quiz-fixtures.py"
+    ],
+    "comparisonSources": {
+      "LinkerdOverview": "c0dee6733367",
+      "LinkerdMeshExpansion": "1af6d0fb8d72",
+      "LinkerdReleases": "c277728da1fa",
+      "KongOverview": "be19e378fde6",
+      "KongArchitecture": "96aae17403db",
+      "ConsulMesh": "fb22f3427eed",
+      "IstioVM": "2b4f15b569d6",
+      "Cilium1201Architecture": "52ba047fa27b",
+      "Cilium1201MutualAuth": "2e97c35c1c5d",
+      "LatticeOverview": "57229010cd53"
+    },
+    "comparisonWriters": [
+      "/tmp/mesh-comparison-readme-edit.py"
+    ],
+    "comparison01Sources": {
+      "KongSupport": "063243efaa35",
+      "KongHTTPRoute": "2a558aef870c",
+      "KongPermission": "2f3f75373f49",
+      "KongMultizone": "440f810c8f2e",
+      "ConsulRelease": "93bf5d9634d1 (v2.0.4Sep10)",
+      "ConsulLicenseMain": "f1084323855b",
+      "ConsulProxy": "c9cde347871a",
+      "LinkerdInstall": "68291fb8424a",
+      "LinkerdK8sMatrix": "6c22a907474a",
+      "LinkerdLocalRatelimit": "8f6d55a5bc23",
+      "LinkerdSMIdeprecation": "5d1e33b54c3e",
+      "KongSelfManaged": "767f935f92e8",
+      "KongMatrix": "1d06eb7a2ddd (onlythrough2.13;gapfor2.14)",
+      "KongChangelog": "0b7f7aecd641 (2.14.4Sep3,Kuma2.14.4)",
+      "LinkerdRequestRouting": "9d10ba07f5c7",
+      "LinkerdHTTPRoute": "b6a69c767266",
+      "LinkerdAuthorization": "df5aed0b7772",
+      "LinkerdMulticluster": "c60507bd06d0",
+      "Consul204License": "82a23fb53225",
+      "KongChartIndex": "23eb44d69b87",
+      "ConsulChartIndex": "95ba87b236c2",
+      "LinkerdEdgeRelease": "856a41b4d161",
+      "LinkerdGatewayAPI": "7c922f1e19ff (2.20supports1.2.1–1.5.1)",
+      "LinkerdTracing": "1d8bc540c1af",
+      "GatewayAPI151CRDs": "eb0857b733ef",
+      "ConsulSplitter": "f8770aad9918",
+      "ConsulResolver": "a7ea78b9a7a3",
+      "ConsulDefaults": "575c8c20e091",
+      "ConsulIntentions": "7b46a72459f2",
+      "KongLoadBalancing": "c2674b6b697c"
+    },
+    "comparison01Tools": [
+      "/tmp/mesh-comparison-tools/artifacts.json",
+      "/tmp/mesh-comparison-tools/linkerd-edge-26.9.1",
+      "/tmp/mesh-comparison-tools/kong-rendered.yaml",
+      "/tmp/mesh-comparison-tools/consul-rendered.yaml",
+      "/tmp/mesh-comparison-tools/linkerd-crds.yaml",
+      "/tmp/mesh-comparison-tools/linkerd-control-plane.yaml",
+      "/tmp/mesh-comparison01-resume.md"
+    ],
+    "comparison01Writers": [
+      "/tmp/mesh-comparison01-content.py",
+      "/tmp/mesh-comparison01-en.py",
+      "/tmp/mesh-comparison01-ko.py",
+      "/tmp/mesh-comparison01-schema.py",
+      "/tmp/mesh-comparison01-check.py"
+    ],
+    "comparison01Validation": "/tmp/mesh-comparison01-validation/report.json",
+    "comparison02Originals": [
+      "/tmp/mesh-comparison02-original-en.md",
+      "/tmp/mesh-comparison02-original-ko.md"
+    ],
+    "latticeSources": {
+      "CreateRule": "479bcdbda641",
+      "CreateListener": "e9cf4bbf20db",
+      "CreateTargetGroup": "2d914fe6be33",
+      "PutAuthPolicy": "8f9c73105a59",
+      "AuthPolicies": "e752f7e7f6fc",
+      "CloudWatchMetrics": "263c26800310",
+      "AccessLogs": "5db1a64fe31d",
+      "WafAssociateAPI": "055ddd37df26",
+      "Pricing": "bba50548b6fa",
+      "RuleAction": "0b767f2c25d8",
+      "RuleMatch": "698ca1fce14f",
+      "HttpMatch": "e27e2b51dfb6",
+      "PathMatch": "c984b54f708f",
+      "TargetGroups": "cf6f629f3803",
+      "HealthChecks": "c0ec351cd95d",
+      "TLSListener": "a7c5aa479e1a",
+      "HTTPSListener": "350d7bd4852d",
+      "SDKServiceModel": "3e3b0d3ada37",
+      "CNCFLanding": "c827bd608373",
+      "ActualHealthChecks": "454d432eef11",
+      "Associations": "2a32f7cebcf9",
+      "CloudFrontEdge": "3f18f7428b87",
+      "CloudWatchModel": "15f0161759ab",
+      "LogsModel": "4a986403f2ec",
+      "CreateService": "ee450c7d71fd"
+    },
+    "latticeValidation": "/tmp/mesh-lattice-validation/ (CNCF PDF, extracted text and attribution check; no live AWS calls)",
+    "latticeWriters": [
+      "/tmp/mesh-lattice-content.py",
+      "/tmp/mesh-lattice-en.py",
+      "/tmp/mesh-lattice-ko.py",
+      "/tmp/mesh-aws-shape-check.py"
+    ],
+    "latticeValidators": [
+      "/tmp/mesh-lattice-check.py",
+      "/tmp/mesh-lattice-fixtures.py",
+      "/tmp/mesh-aws-shape-check.py"
+    ],
+    "comparison03Originals": [
+      "/tmp/mesh-comparison03-original-en.md",
+      "/tmp/mesh-comparison03-original-ko.md"
+    ],
+    "comparison03Sources": {
+      "Istio1302Release": "5e5c4bff7e89",
+      "Istio1302GoMod": "85f54459b12d",
+      "Istio1302Agent": "4ded2dc9f524",
+      "Fortio1694Release": "fd7e3c12df56",
+      "K8sLifecycle": "832e816851b9",
+      "AWSNPConfigure": "b2b0dfe277a3",
+      "AWSNPOverview": "87050528ccc6",
+      "CiliumPolicyIntro": "fd538e21d24a"
+    },
+    "comparison03Harness": "/tmp/mesh-comparison03-harness/ (original extraction modified only after red tests; red.log, red-after-order-fix.log, green.log; five real local HTTP regressions now pass)",
+    "comparison03Validation": [
+      "/tmp/mesh-comparison03-validation/",
+      "/tmp/mesh-comparison03-tools/",
+      "/tmp/mesh-comparison03-harness/",
+      "/tmp/mesh-comparison03-check.py"
+    ],
+    "comparison03DraftWarning": "Published repository has final spacing, log annotations, pinned CLI variable and source-link adjustments beyond /tmp writers. Do not rerun writers over current source.",
+    "comparisonQuizOriginals": [
+      "/tmp/mesh-comparison-quiz-original-en.md",
+      "/tmp/mesh-comparison-quiz-original-ko.md"
+    ],
+    "comparisonFullTests": "/tmp/kubernetes-docs-full-review/docs-test-istio-comparison-clean.log",
+    "troubleshootingValidation": "/tmp/mesh-troubleshooting-validation/report.json",
+    "troubleshootingWriters": [
+      "/tmp/mesh-troubleshooting-content.py",
+      "/tmp/mesh-troubleshooting-en.py",
+      "/tmp/mesh-troubleshooting-ko.py"
+    ],
+    "orphanIstioValidation": "/tmp/mesh-orphan-quiz-validation/",
+    "orphanWriters": [
+      "/tmp/mesh-orphan-istio-edit.py",
+      "/tmp/mesh-orphan-quiz-content.py",
+      "/tmp/mesh-orphan-quiz-en.py",
+      "/tmp/mesh-orphan-quiz-ko.py"
+    ],
+    "orphanWarning": "PublishedENquizspacingandoverviewquiz-topiclabelhavefinaladjustmentsoutsidewriters;preferrepositoryfiles. Originalsnapshotsunder/tmp/mesh-orphan-istio-{quiz-}original-{en,ko}.md.",
+    "linkerdCurrentSources": {
+      "edge2684": "3349fabf04ab",
+      "edge2682": "63df18586fab",
+      "edge2671": "3e5efaedc05c",
+      "edge2691": "856a41b4d161",
+      "mTLS": "8a2421194625",
+      "install": "68291fb8424a",
+      "meshExpansion": "1af6d0fb8d72",
+      "requestRouting": "9d10ba07f5c7",
+      "gatewayAPI": "7c922f1e19ff",
+      "releases": "c277728da1fa",
+      "protocols": "fb9b0a25f561",
+      "CNCF": "cc6807907013"
+    },
+    "linkerdCLI": "/tmp/mesh-comparison-tools/linkerd-edge-26.9.1",
+    "linkerdReadmeArtifacts": "/tmp/mesh-linkerd-validation/readme-cli-*.txt; /tmp/mesh-linkerd-readme-images.png; /tmp/mesh-linkerd-readme-original-{en,ko}.md",
+    "linkerdReadmeWriter": "/tmp/mesh-linkerd-readme-edit.py (repository includes a final prose cleanup beyond writer; do not blindly rerun)",
+    "linkerdInstallSources": {
+      "chartIndex": "f9c3e8db52c9",
+      "deprecatedInstaller": "324c964b20b9",
+      "k8sMatrix": "6c22a907474a",
+      "helmInstall": "d0ab8c93d1e1",
+      "HA": "d8458806d965",
+      "platform": "9bcc67aee2b2",
+      "uninstall": "120a3883fceb"
+    },
+    "linkerdInstallOriginals": [
+      "/tmp/mesh-linkerd-install-original-en.md",
+      "/tmp/mesh-linkerd-install-original-ko.md",
+      "/tmp/mesh-linkerd-install-quiz-original-en.md",
+      "/tmp/mesh-linkerd-install-quiz-original-ko.md"
+    ],
+    "linkerdInstallationDrafts": [
+      "/tmp/mesh-linkerd-install-content.py",
+      "/tmp/mesh-linkerd-install-en.py",
+      "/tmp/mesh-linkerd-install-ko.py",
+      "/tmp/mesh-linkerd-install-quiz-edit.py"
+    ],
+    "linkerdInstallationEvidence": [
+      "/tmp/mesh-linkerd-validation/chart-artifacts.json",
+      "/tmp/mesh-linkerd-validation/original-values-characterization.json",
+      "/tmp/mesh-linkerd-install-characterize.py"
+    ],
+    "linkerdFinalAdjustmentWarning": "Published guide has final EN spacing and concrete debug Pod variables beyond writers; prefer repository files.",
+    "linkerdInstallationValidation": "/tmp/mesh-linkerd-validation/installation-final-report.json",
+    "linkerdInstallFinalWarning": "Published guides contain final spacing, concrete debugPod variables, Identity/log suppression explanations, Smallstep canonical link and legacy/migration notes beyond writers. Do not blindly rerun writers.",
+    "linkerdArchitectureOriginals": [
+      "/tmp/mesh-linkerd-architecture-original-en.md",
+      "/tmp/mesh-linkerd-architecture-original-ko.md",
+      "/tmp/mesh-linkerd-architecture-quiz-original-en.md",
+      "/tmp/mesh-linkerd-architecture-quiz-original-ko.md"
+    ],
+    "linkerdArchitectureDrafts": [
+      "/tmp/mesh-linkerd-architecture-content.py",
+      "/tmp/mesh-linkerd-architecture-en.py",
+      "/tmp/mesh-linkerd-architecture-ko.py",
+      "/tmp/mesh-linkerd-architecture-quiz-edit.py"
+    ],
+    "linkerdArchitectureSources": {
+      "architecture": "c57bb26eb68e",
+      "injection": "0fd0cb23d817",
+      "authorization": "df5aed0b7772",
+      "apiGoMod": "65239a3cb7f3",
+      "destinationProto": "e0074b4b1cae",
+      "proxyTree": "3156c80fe78c",
+      "proxyTagMetadata": "d5cf920ccab0",
+      "proxyBumpPR": "b9020898f9c7",
+      "certify": "91428ea67ebd",
+      "validator": "41cc2c742eb9",
+      "domain": "1c57312ea374",
+      "loadbalancing": "9c2df5ef75de",
+      "manualRotation": "71d074bdea40",
+      "managedRotation": "0dd09674f2c0"
+    },
+    "linkerdArchitectureValidation": [
+      "/tmp/mesh-linkerd-architecture-validation/report.json",
+      "/tmp/mesh-linkerd-architecture-check.py"
+    ],
+    "linkerdArchitectureFinalWarning": "Published guides include final spacing/TLS1.3 and observed manual-annotation precedence. Writers were partly updated but repository remains authoritative. Manual help says annotations unsupported, yet native test proves CPUannotation700m beatsflag100m and logannotationapplies.",
+    "linkerdTrafficOriginals": [
+      "/tmp/mesh-linkerd-traffic-original-en.md",
+      "/tmp/mesh-linkerd-traffic-original-ko.md",
+      "/tmp/mesh-linkerd-traffic-quiz-original-en.md",
+      "/tmp/mesh-linkerd-traffic-quiz-original-ko.md"
+    ],
+    "linkerdTrafficValidation": "/tmp/mesh-linkerd-traffic-validation",
+    "linkerdTrafficSources": {
+      "SP": "4602b90c5419",
+      "retryOverview": "3e211c274175",
+      "retryRef": "c3298eadf9b6",
+      "timeoutRef": "ab55977914cf",
+      "circuit": "30a1f5e1377a",
+      "circuitTask": "2393c98a870b",
+      "HTTPRoute": "b6a69c767266",
+      "SMIdeprecation": "5d1e33b54c3e",
+      "metrics": "1c1250f5bd70",
+      "flaggerRelease": "76c2b2ec5912",
+      "flaggerTree": "c4593b777d03",
+      "flaggerIndex": "043717a529f8",
+      "flaggerLinkerdDoc": "6163c64ce933",
+      "flaggerGatewayDoc": "6c40d06b9a5b",
+      "flaggerRouterFactory": "e2aeb93b2ae5",
+      "flaggerGatewayRouter": "a6ad5506bbf6",
+      "flaggerLinkerdMetrics": "0a7ab274ef79",
+      "flaggerPromProvider": "0b68ef9b5ac7",
+      "flaggerMetricsScheduler": "96a48e7bddbd",
+      "flaggerCanaryTypes": "8c5cdd861735",
+      "flaggerScheduler": "83e12f621a63",
+      "flaggerCRDs": "d8b089b214ec",
+      "proxyTimeoutTests": "37b89a4cdf58",
+      "proxyTimeout": "c01760c002d2"
+    },
+    "linkerdTrafficArtifacts": "/tmp/mesh-linkerd-traffic-validation/ (nativegeneratorfixtures/results,chartarchive/values,digest);14figures /tmp/mesh-linkerd-traffic-figures-0..3.png",
+    "linkerdTrafficDrafts": [
+      "/tmp/mesh-linkerd-traffic-content.py",
+      "/tmp/mesh-linkerd-traffic-en.py",
+      "/tmp/mesh-linkerd-traffic-ko.py",
+      "/tmp/mesh-linkerd-traffic-quiz.py"
+    ],
+    "linkerdTrafficFullTests": "/tmp/kubernetes-docs-full-review/docs-test-linkerd-traffic-clean.log",
+    "linkerdSecurityDrafts": [
+      "/tmp/mesh-linkerd-security-content.py",
+      "/tmp/mesh-linkerd-security-en.py",
+      "/tmp/mesh-linkerd-security-ko.py",
+      "/tmp/mesh-linkerd-security-quiz.py"
+    ],
+    "linkerdSecurityValidation": "/tmp/mesh-linkerd-security-validation",
+    "linkerdSecuritySources": {
+      "policyFeature": "81005d091f98",
+      "identityCLI": "956d5e1d51de",
+      "certmanagerVault": "1e5a787a6c12",
+      "certmanagerCA": "c71804e7a5c6",
+      "vaultIntermediateAPI": "451041bd2690",
+      "issuerReload": "b2fdca3c2775",
+      "CLIIdentitySource": "44e6faba6144",
+      "inboundWorkload": "8ee774c7502f",
+      "injectSource": "66defccf19ea",
+      "adminHTTP": "2df7d2f8c426",
+      "proxyInit": "1d9f70ccb7b9",
+      "identityChart": "51ac3dd389fb",
+      "TLSLabels": "bc2f504f16e8",
+      "certmanagerCRDs": "aefc5a09233a"
+    },
+    "linkerdObservabilityValidation": "/tmp/mesh-linkerd-observability-validation/",
+    "cachedNativeGo": "/tmp/mesh-go-path/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.0.linux-arm64/bin/go with GOTOOLCHAIN=local GOENV=off GOPROXY=off GOSUMDB=off; wrapper go auto shim fails checksumdb-off evenwhenbinarycached.",
+    "linkerdObservabilitySources": {
+      "tracingFeature": "1d8bc540c1af",
+      "tracingTask": "a637d4053d42",
+      "exportMetrics": "d2405aa93942",
+      "grafana": "cac18aca09d1",
+      "dashboard": "05e3b87ed4ec",
+      "proxyConfiguration": "fd79c3c76777",
+      "metricBodyTiming": "31a7bc8a573c",
+      "metricReport": "6cddb166a7d5",
+      "retryMetrics": "e248426f6b47",
+      "classification": "86ff41e56729",
+      "proxyTemplate": "8a270342e0bd",
+      "podMonitor0931": "0a72dca10e9c",
+      "serviceMonitor0931": "f95ef94693b9",
+      "promRule0931": "c8ca36f41dbf",
+      "KSMpodMetrics": "ed797b051d6a",
+      "GrafanaJSON": "4f265e72b9a0",
+      "FlaskPyPI": "4e471b1b4dbd",
+      "GoHTTP": "75405f80decc",
+      "W3C": "6a0029787a22",
+      "StatGolden": "bb80becbbd77",
+      "TCPStatGolden": "d71032d9dfed",
+      "tapSource": "2fcdd83880aa",
+      "GrafanaValues": "8cc5898a1dc2",
+      "PrometheusConfig3140": "6f3cb0ae20bb",
+      "FlaskTesting": "41b697ef5da5",
+      "RequestsQuickstart": "08675b8514d2"
+    },
+    "linkerdObservabilityDrafts": [
+      "/tmp/mesh-linkerd-observability-content.py",
+      "/tmp/mesh-linkerd-observability-en.py",
+      "/tmp/mesh-linkerd-observability-ko.py",
+      "/tmp/mesh-linkerd-observability-quiz.py"
+    ],
+    "linkerdObservabilityFinalChecks": [
+      "/tmp/mesh-linkerd-observability-check.py",
+      "/tmp/mesh-linkerd-observability-prom-fixtures.py",
+      "/tmp/mesh-linkerd-observability-discovery.py",
+      "/tmp/kubernetes-docs-full-review/docs-test-linkerd-observability-clean.log"
+    ],
+    "linkerdMulticlusterValidation": "/tmp/mesh-linkerd-multicluster-validation/",
+    "linkerdMulticlusterLinkgenCheck": "/tmp/mesh-linkerd-multicluster-linkgen-check.py",
+    "linkerdMulticlusterSources": {
+      "feature": "c60507bd06d0",
+      "install": "fffc1f21bbb2",
+      "task": "6ff32f58ca8f",
+      "flat": "1444ebd42434",
+      "federation": "1662027c1e0b",
+      "deprecatedFailover": "8d42d0cc4c2c",
+      "reference": "4e5a0e9e043d",
+      "VPCPeering": "d265edf5f808",
+      "PrivateLink": "f772e7fe3823",
+      "EKSEndpoint": "9724ce882930",
+      "EKSInterfaceEndpoints": "a3103a311c1d",
+      "EKSAutoNLB": "52a371f17c4d",
+      "AWSLBCAnnotations": "836c09330c98",
+      "legacyLinkSource": "0bfd6e2663d8",
+      "linkGenSource": "3dc2759c3147",
+      "probeMetrics": "222c971a4d44",
+      "probeWorker": "9fab70c4ec3e",
+      "clusterWatcher": "e8c0ed6e5ec1",
+      "gatewaysCLI": "da45c65b9f97",
+      "gatewayTemplate": "61901606abba",
+      "K8sEndpointSlices": "778be919fd5c"
+    },
+    "linkerdMulticlusterDrafts": [
+      "/tmp/mesh-linkerd-multicluster-content.py",
+      "/tmp/mesh-linkerd-multicluster-en.py",
+      "/tmp/mesh-linkerd-multicluster-ko.py",
+      "/tmp/mesh-linkerd-multicluster-quiz.py"
+    ],
+    "linkerdMulticlusterFinalChecks": [
+      "/tmp/mesh-linkerd-multicluster-check.py",
+      "/tmp/mesh-linkerd-multicluster-linkgen-check.py",
+      "/tmp/mesh-linkerd-multicluster-prom-fixtures.py",
+      "/tmp/kubernetes-docs-full-review/docs-test-linkerd-multicluster-clean.log"
+    ],
+    "linkerdBestPracticesValidation": "/tmp/mesh-linkerd-best-practices-validation/",
+    "linkerdBestPracticesDrafts": [
+      "/tmp/mesh-linkerd-best-practices-content.py",
+      "/tmp/mesh-linkerd-best-practices-en.py",
+      "/tmp/mesh-linkerd-best-practices-ko.py",
+      "/tmp/mesh-linkerd-best-practices-characterize.py"
+    ],
+    "linkerdBestPracticesSources": {
+      "upgrade": "b6fdbe155c39",
+      "checkReferenceWithHistoricalExamples": "e6006c9ba94c",
+      "HAProfile": "257f3f7a2644",
+      "TransitGateway": "65dada376188"
+    },
+    "linkerdBestPracticesFinalChecks": [
+      "/tmp/mesh-linkerd-best-practices-characterize.py",
+      "/tmp/mesh-linkerd-best-practices-check.py",
+      "/tmp/kubernetes-docs-full-review/docs-test-linkerd-complete-clean.log"
+    ],
+    "availableWTGTGBARCCache": [
+      {
+        "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+        "cache": "/tmp/istio-foundation-sources/650b0f39e45b.txt"
+      },
+      {
+        "url": "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+        "cache": "/tmp/istio-foundation-sources/836c09330c98.txt"
+      }
+    ],
+    "ciliumTools": "/tmp/mesh-cilium-tools/artifacts.json (ciliumCLI0.20.0,Hubble1.19.4,chart1.20.1;verifiedofficialSHAs)",
+    "ciliumReadmeValidation": "/tmp/mesh-cilium-readme-validation/",
+    "ciliumReadmeWriters": [
+      "/tmp/mesh-cilium-readme-content.py",
+      "/tmp/mesh-cilium-readme-en.py",
+      "/tmp/mesh-cilium-readme-ko.py",
+      "/tmp/mesh-cilium-readme-characterize.py"
+    ],
+    "ciliumReadmeSources": {
+      "release": "1bf12fa5fb12",
+      "CLIrelease": "1e78738f163d",
+      "HubbleRelease": "10ca76911d19",
+      "tree": "de443d87a570",
+      "system": "47d0fa2d6ec0",
+      "helmIndex": "9e33205ffb26",
+      "AWSalternateCNI": "f8ab97c61343",
+      "AWShybridCNI": "6416838432bd",
+      "K8sCompatibility": "68e8148446c9",
+      "CNPschemaVersionTableNotK8sMatrix": "8120a835d312",
+      "gateway": "b39c0ea53b22",
+      "envoy": "f8ee7190da5e",
+      "wireguard": "93d5e022335e",
+      "SPIREinstall": "764e6d88ad19",
+      "CNPcrd": "0fe7c551ccb3",
+      "confGatewayVersion": "749cf3308343",
+      "gatewayInstall": "db37b7fa0ee2",
+      "EKSrequirements": "28bc1af39e3f",
+      "AWSchaining": "5b06bc94656b",
+      "chainingLimits": "ceea22b69755",
+      "EKSCI": "5e9e24c27ae4",
+      "mutualAuth": "2e97c35c1c5d",
+      "architecture": "52ba047fa27b"
+    },
+    "ciliumReadmeFinalCheck": "/tmp/mesh-cilium-readme-check.py",
+    "ciliumReadmeFinalTest": "/tmp/kubernetes-docs-full-review/docs-test-cilium-readme-clean.log",
+    "ciliumIstioIntegrationSource": "e1fcd2fe136f (used onlyforhigh-level coexistence distinction; do notblindlycopy historicalambient enrollment/hostNetworkrecipes)",
+    "ciliumArchitecture": {
+      "validation": "/tmp/mesh-cilium-architecture-validation/",
+      "checker": "/tmp/mesh-cilium-architecture-check.py",
+      "writers": [
+        "/tmp/mesh-cilium-architecture-content.py",
+        "/tmp/mesh-cilium-architecture-en.py",
+        "/tmp/mesh-cilium-architecture-ko.py",
+        "/tmp/mesh-cilium-architecture-quiz.py"
+      ],
+      "nativeProto": "/tmp/mesh-cilium-envoy-proto-check",
+      "cache": ".vitepress/cache/mesh-cilium-envoy",
+      "figures": "/tmp/mesh-cilium-architecture-{en,ko}-figures-{0,5,10}.jpg"
+    },
+    "ciliumTraffic": {
+      "originals": "/tmp/mesh-cilium-traffic-original-{en,ko}.md and /tmp/mesh-cilium-traffic-quiz-original-{en,ko}.md",
+      "writers": [
+        "/tmp/mesh-cilium-traffic-edit.py",
+        "/tmp/mesh-cilium-traffic-notes-en.py",
+        "/tmp/mesh-cilium-traffic-notes-ko.py",
+        "/tmp/mesh-cilium-traffic-quiz.py"
+      ],
+      "checks": [
+        "/tmp/mesh-cilium-traffic-check.py",
+        "/tmp/mesh-cilium-traffic-functional.py",
+        "/tmp/mesh-cilium-traffic-extra-check.py"
+      ],
+      "reports": "/tmp/mesh-cilium-traffic-validation/",
+      "envoyCommand": "/tmp/mesh-cilium-tools/envoy-libs/ld-linux-aarch64.so.1 --library-path /tmp/mesh-cilium-tools/envoy-libs /tmp/mesh-cilium-tools/cilium-envoy-1.37.5",
+      "note": "Onlynative--versionworksinsandbox;nativevalidateandloopbackneedrequire_escalatedforIPv4socketprobe. Normalloggingcleanenv. Nativeimagecompiledearlyheader_mutationbutNOTordinaryHTTPheader_mutation,Lua,previous_priorities."
+    },
+    "ciliumSecurity": {
+      "originals": "/tmp/mesh-cilium-security-original-{en,ko}.md and /tmp/mesh-cilium-security-quiz-original-{en,ko}.md",
+      "sources": {
+        "ztunnel": "6050aa75f1a1",
+        "encryptionOverview": "cc4b4773f5d6",
+        "authExample": "0e7420e0099d",
+        "WireGuard": "93d5e022335e",
+        "IPsec": "4089ae7aa86f",
+        "nativeBlog": "6927b932c3ad",
+        "policyTroubleshooting": "fb5b607025cd",
+        "CCNPSchema": "cd9d92fba63a"
+      },
+      "readSourceStatus": "ztunnel202/encryptionOverview95/authExample244/WireGuard370/IPsec455/policyTroubleshooting216fullyread. Metrics/optionsfocusedexcerptsread. SPIREVault/Disk/ServerandpolicyIntrofetchednotyetread. Nativeblog200shelltitleonlynotarticleproof;currentrelease docsused.10securityfiguresvisuallyreviewed;3identityhashwrong;othersneedqualifications. Nosecuritywriter/checkeryet.",
+      "ztunnelFollowup": "/tmp/mesh-cilium-ztunnel-followup.py;16pagesalreadyedited+recorded;DONOTRERUN(non-idempotent)",
+      "sourcesAdditional": {
+        "CAserver": "7a9fc833ad33",
+        "ztunnelConfig": "c79d70d7ebf3",
+        "ztunnelSecretScript": "9d8f84d06651",
+        "endpointConfigCLI": "bb517bc815bb",
+        "encryptStatusCLI": "0fe8f6995551",
+        "agentOptions": "d9c0dfea2c70",
+        "metricsDocs": "15c7cb160654",
+        "runtimeOptions": "b7e0f5dfe617",
+        "endpointOptions": "09817f50029f",
+        "policyIntro": "fd538e21d24a",
+        "SPIREVault": "23f61724d140",
+        "SPIREDisk": "d7b6eb5a7c01",
+        "SPIREServer": "bd0c09ebd0dc"
+      },
+      "writers": [
+        "/tmp/mesh-cilium-security-content.py",
+        "/tmp/mesh-cilium-security-en.py",
+        "/tmp/mesh-cilium-security-ko.py",
+        "/tmp/mesh-cilium-security-quiz.py"
+      ],
+      "checker": "/tmp/mesh-cilium-security-check.py",
+      "validation": "/tmp/mesh-cilium-security-validation/report.json",
+      "sourcesFinal": {
+        "ruleAPI": "8f0d098abb54",
+        "ruleDefaulting": "51bbb97566af",
+        "repository": "5edccb83f23a",
+        "STS": "83768741772b",
+        "WireGuardProtocol": "421e40653af4"
+      },
+      "status": "Complete. Originalguides880→900lines;quizzes209→195.9Helmcases32publishedschemas3nativeHubblefilters. NativeztunnelCA/bootstrap/profileboundariesdocumented;HCLnotfullservervalidated."
+    },
+    "ciliumObservability": {
+      "originals": "/tmp/mesh-cilium-observability-original-{en,ko}.md and /tmp/mesh-cilium-observability-quiz-original-{en,ko}.md",
+      "readState": "All4originalsfullyread;noedits/noextra sourcesfetchedyet. ReuseCilium1.20.1tree/values/metricsdocsandnativeHubble1.19.4,Promtool3.14,OTel0.160/Loki3.7.7.",
+      "sources": {
+        "setup": "2f1862bb8cb7",
+        "tls": "f0d4cf84937d",
+        "export": "ec4efe20f068",
+        "cliDocs": "df49d93d3618",
+        "ui": "6a7cef1adfad",
+        "httpHandler": "206577258147",
+        "httpPlugin": "0b2b12726387",
+        "metricContexts": "d3a749abda35",
+        "metricRegistry": "24364d684cb8",
+        "flowProto": "6f3574577311",
+        "otelFilelog": "7a70613b1872",
+        "otelPrometheusReceiver": "e6d86fbf21c9"
+      },
+      "scratch": "/tmp/mesh-cilium-observability-validation/flows.jsonl andinitial-cli-output.jsonl;initial4syntheticHTTPresponsesconfirm64bitlatency_ns isJSONstring. Testsnotfinished;noeditor/checkeryet.",
+      "findingsVerified": "HTTPV2recordsRESPONSEonly,requests_totalincludesstatus,reporterclient=EGRESS/server=INGRESS,invertssource/destmetriccontexts. No destination_service labelsContext;usedestination_namespace/workload withexplicitconfiguration. Hubblejson=jsonpb. Supported CLIfrom-ip/to-ip,httpstatusprefix5+,methodexact,serviceprefixandClusterIPsemantics. Charttlsdefault365days/methodhelm;upstreamdocstale3ydefaultbutexplicit1095valid. Helmcertsnotautorenewed. Hubbleexportonlystatic/dynamicfileconfig;opentelemetryabsent. Furthernative/sourcevalidationpending.",
+      "models": "/tmp/mesh-cilium-observability-content.py",
+      "checks": [
+        "/tmp/mesh-cilium-observability-cli-check.py",
+        "/tmp/mesh-cilium-observability-prom-check.py",
+        "/tmp/mesh-cilium-observability-collector-check.py"
+      ],
+      "nativeResults": {
+        "CLI": "/tmp/mesh-cilium-observability-validation/cli-validation.json (24cases,5formats,4JQcasespass)",
+        "Prometheus": "/tmp/mesh-cilium-observability-validation/prometheus/report.json (17scenarios,36expression+17alertassertionspass)",
+        "CollectorLoki": "/tmp/mesh-cilium-observability-validation/collector/report.json (13newlogs,old13skipped,14afterrestartwithno replay;loopbackonlyanalyticsdisabled)"
+      },
+      "sourcesMore": {
+        "metricAPI": "68748183ff6b",
+        "HTTPworkloadDashboard": "0f1d8fe8ce01",
+        "generalDashboard": "635b36b22480",
+        "LokiOTLPindex": "3d64e1ff6280",
+        "LokiOTLPshared": "bbd1ef8e24c4",
+        "JSONParser": "e2f896037eb2",
+        "LokiLocalConfig": "d67a7e36932d",
+        "GoogleSRE": "71b82c307f88"
+      },
+      "state": "Complete. Published guides796lines,quizzes195. Original snapshots retained;8figures retainedwithqualifications. Native proofs in validation directory. CLI26cases includes corrected response-port fixture directions; all fake fields cleaned.",
+      "writers": [
+        "/tmp/mesh-cilium-observability-content.py",
+        "/tmp/mesh-cilium-observability-en.py",
+        "/tmp/mesh-cilium-observability-ko.py",
+        "/tmp/mesh-cilium-observability-quiz.py"
+      ],
+      "finalCheck": "/tmp/mesh-cilium-observability-check.py"
+    },
+    "ciliumIngress": {
+      "models": "/tmp/mesh-cilium-ingress-edit.py",
+      "notes": [
+        "/tmp/mesh-cilium-ingress-notes-en.py",
+        "/tmp/mesh-cilium-ingress-notes-ko.py"
+      ],
+      "quiz": "/tmp/mesh-cilium-ingress-quiz.py",
+      "validation": "/tmp/mesh-cilium-ingress-validation",
+      "checks": [
+        "/tmp/mesh-cilium-ingress-check.py",
+        "/tmp/mesh-cilium-ingress-prom-check.py",
+        "/tmp/mesh-cilium-ingress-proxy-check.py"
+      ]
+    },
+    "ciliumBestPractices": {
+      "content": "/tmp/mesh-cilium-best-content.py",
+      "writers": [
+        "/tmp/mesh-cilium-best-en.py",
+        "/tmp/mesh-cilium-best-ko.py"
+      ],
+      "checks": [
+        "/tmp/mesh-cilium-best-check.py",
+        "/tmp/mesh-cilium-best-prom-check.py"
+      ],
+      "validation": "/tmp/mesh-cilium-best-validation",
+      "warning": "README ENI source followup applied directly; older README writers would revert it."
+    },
+    "networkingOverview": {
+      "originals": [
+        "/tmp/networking-overview-original-en.md",
+        "/tmp/networking-overview-original-ko.md",
+        "/tmp/networking-overview-quiz-original-en.md",
+        "/tmp/networking-overview-quiz-original-ko.md"
+      ],
+      "sources": "/tmp/networking-overview-sources.json",
+      "matrix": "/tmp/networking-overview-calico-matrix.json",
+      "resume": "/tmp/networking-overview-resume.md",
+      "figures": "/tmp/networking-overview-figures-{en,ko}-{0,1}.jpg",
+      "writers": [
+        "/tmp/networking-overview-edit.py",
+        "/tmp/networking-overview-en.py",
+        "/tmp/networking-overview-ko.py",
+        "/tmp/networking-overview-quiz.py"
+      ],
+      "validator": "/tmp/networking-overview-check.py",
+      "validation": "/tmp/networking-overview-validation"
+    },
+    "networkingVpcCni": {
+      "sources": "/tmp/networking-vpc-cni-sources.json",
+      "validation": "/tmp/networking-vpc-cni-validation",
+      "resume": "/tmp/networking-vpc-cni-resume.md",
+      "originals": [
+        "/tmp/networking-vpc-cni-original-en.md",
+        "/tmp/networking-vpc-cni-original-ko.md",
+        "/tmp/networking-vpc-cni-quiz-original-en.md",
+        "/tmp/networking-vpc-cni-quiz-original-ko.md"
+      ],
+      "writers": [
+        "/tmp/networking-vpc-cni-content.py",
+        "/tmp/networking-vpc-cni-en.py",
+        "/tmp/networking-vpc-cni-ko.py",
+        "/tmp/networking-vpc-cni-quiz.py"
+      ],
+      "validators": [
+        "/tmp/networking-vpc-cni-check.py",
+        "/tmp/networking-vpc-cni-prom-check.py"
+      ]
+    },
+    "networkingLattice": {
+      "validation": "/tmp/networking-lattice-validation",
+      "writers": [
+        "/tmp/networking-lattice-content.py",
+        "/tmp/networking-lattice-en.md",
+        "/tmp/networking-lattice-ko.md",
+        "/tmp/networking-lattice-quiz.py"
+      ],
+      "validators": [
+        "/tmp/networking-lattice-check.py",
+        "/tmp/networking-lattice-runtime-check.py",
+        "/tmp/networking-lattice-nginx-check.py",
+        "/tmp/networking-lattice-policy-check.py"
+      ]
+    },
+    "networkingLBC": {
+      "validation": "/tmp/networking-lbc-validation",
+      "sources": "/tmp/networking-lbc-sources.json",
+      "resume": "/tmp/networking-lbc-resume.md",
+      "writers": [
+        "/tmp/networking-lbc-edit1.py",
+        "/tmp/networking-lbc-edit2.py",
+        "/tmp/networking-lbc-edit3.py",
+        "/tmp/networking-lbc-quiz.py"
+      ],
+      "validator": "/tmp/networking-lbc-check.py",
+      "warning": "Guideedit1/2/3non-idempotent;currentpublishedfilesaretruth.Donotrerun."
+    },
+    "networkingGateway": {
+      "resume": "/tmp/networking-gateway-resume.md",
+      "sources": "/tmp/networking-gateway-sources.json",
+      "validation": "/tmp/networking-gateway-validation",
+      "writers": [
+        "/tmp/networking-gateway-edit1.py",
+        "/tmp/networking-gateway-edit2.py",
+        "/tmp/networking-gateway-quiz.py"
+      ],
+      "validator": "/tmp/networking-gateway-check.py",
+      "warning": "Guides have finalchangesbeyondnonidempotentwriters.Currentpublishedfiles/reportaretruth;do notrerunwriters."
+    },
+    "networkingCrossOrg": {
+      "resume": "/tmp/networking-crossorg-resume.md",
+      "sources": "/tmp/networking-crossorg-sources.json",
+      "validation": "/tmp/networking-crossorg-validation",
+      "writers": [
+        "/tmp/networking-crossorg-edit.py",
+        "/tmp/networking-crossorg-en.md",
+        "/tmp/networking-crossorg-ko.md",
+        "/tmp/networking-crossorg-quiz.py"
+      ],
+      "validator": "/tmp/networking-crossorg-check.py",
+      "warning": "Originalsnapshotwriterisnonidempotent;donotrerun."
+    },
+    "networkingPodBenchmark": {
+      "resume": "/tmp/networking-pod-benchmark-resume.md"
+    },
+    "podBenchmark": {
+      "validation": "/tmp/networking-pod-benchmark-validation",
+      "sourceLedger": "/tmp/networking-pod-benchmark-sources.json",
+      "checker": "/tmp/networking-pod-benchmark-check.py",
+      "writerWarning": "Publishedfilesaretruth;editwritersguardagainstnewerchanges.Donotrerun."
+    },
+    "calicoResume": "/tmp/networking-calico-resume.md",
+    "calico": {
+      "sources": "/tmp/networking-calico-sources.json",
+      "readme": "/tmp/networking-calico-readme-validation",
+      "checker": "/tmp/networking-calico-readme-check.py",
+      "writerWarning": "Donotrerunbuilder;finalrelativeCiliumlinkandpipefailfollowupsareonlyinpublishedfiles.",
+      "introduction": {
+        "artifacts": "/tmp/networking-calico-intro-validation",
+        "sources": "/tmp/networking-calico-intro-sources.json",
+        "checker": "/tmp/networking-calico-intro-check.py",
+        "writerWarning": "lab+concepts+finish+quizvia runpy;publishednull-digesthandlingfollowuponlycurrentfiles.Donotrerunwriters."
+      },
+      "architecture": {
+        "sources": "/tmp/networking-calico-architecture-sources.json",
+        "artifacts": "/tmp/networking-calico-architecture-validation",
+        "writers": [
+          "/tmp/networking-calico-architecture-felix.py",
+          "/tmp/networking-calico-architecture-management.py"
+        ],
+        "warning": "Allwritersalreadyapplied;DO NOTRERUN. FinalcontrollerMERGEPATCH/externalBGPSecretprereq/KOquizchoicesonlyinpublishedfiles;partial4resourcechecksuperseded.",
+        "checker": "/tmp/networking-calico-architecture-check.py",
+        "status": "complete"
+      },
+      "modes": {
+        "sources": "/tmp/networking-calico-modes-sources.json",
+        "artifacts": "/tmp/networking-calico-modes-validation",
+        "checker": "/tmp/networking-calico-modes-check.py",
+        "writerWarning": "Allmodewritersalreadyapplied;DO NOTRERUN. PublishedAPIpreconditions/current-PodIPv4guardfollowupsnotinwriters."
+      }
+    },
+    "networkingCiliumReadme": {
+      "checker": "/tmp/networking-cilium-readme-check.py",
+      "models": "/tmp/networking-cilium-readme-blocks.json",
+      "sources": "/tmp/networking-cilium-readme-sources.json",
+      "artifacts": "/home/atomoh/kubernetes-docs/.vitepress/cache/networking-cilium-readme-audit",
+      "note": "OriginalsSQLite;currentreadmeadvisoryprojectJuly6/globalrecordSept3differenceisintentional;do notrestoreearlierincorrectSep3onlywording."
+    },
+    "networkingCiliumIntroduction": {
+      "models": "/tmp/networking-cilium-intro-models.json",
+      "checker": "/tmp/networking-cilium-intro-check.py",
+      "sources": "/tmp/networking-cilium-intro-sources.json",
+      "artifacts": "/home/atomoh/kubernetes-docs/.vitepress/cache/networking-cilium-intro-audit"
+    },
+    "availabilityAfter20260912Restart": "LOST: all/tmpand/dev/shm paths are historical references only; do not expect these tools/sources to exist. Persistentcache/reports authoritative."
+  },
+  "scopeRules": [
+    "Only assigned ko/en docs/quizzes/labs and review evidence; the single shared test exception is explicit.",
+    "No foreign prose, SUMMARY, package manifests or other scripts; no commits/pushes/further delegation.",
+    "Ignore root aws-architecture-review-request.md and musinsa-standardization-aws-sa-review (1).html.",
+    "Only mark fullyRead after an actual complete read. Parent external-links/code-syntax reports are candidates, not proof.",
+    "Preserve historical benchmark versions/dates/measurements. Latest release metadata is not a compatibility matrix."
+  ],
+  "skillsAlreadyApplied": [
+    "aws-containers",
+    "aws-observability",
+    "aws-billing-and-cost-management",
+    "aws-auth",
+    "verification-before-completion",
+    "superpowers:systematic-debugging",
+    "superpowers:test-driven-development (and writing-good-tests reference)"
+  ],
+  "importantVerifiedFacts": [
+    "Istio1.31 supports Kubernetes1.32–1.36; EKS standard1.34–1.36. Latest Kubernetes1.37 is not an Istio1.31 compatibility target.",
+    "In-cluster Istio operator removed in1.24; IstioOperator YAML remains istioctl input.",
+    "Official1.31 charts lack platform-eks profile despite overview docs listing it; global.platform=eks fails in released charts.",
+    "Promtail EOL2026-03-02; new logging examples use Alloy1.19.2/Loki3.7.7.",
+    "JavaScript prom-client15.1.3 is deprecated; maintained @prometheus-io/client0.16.1 requires Node22/24/26+.",
+    "CloudFront currently supports native viewer mTLS; do not incorrectly remove the capability.",
+    "Istio1.31 maxEjectionPercent0 does not disable ejection: released applyOutlierDetection only sets positive values; success-rate enforcement is explicitly disabled.",
+    "Released Istio bootstrap uses cluster_name metric label; detected versus enforced ejection counters differ; minHealthPercent is panic/fail-open threshold.",
+    "localityLbSetting and zoneAwareLbSetting are distinct Istio1.31 messages; do not mix their failoverPriority/minClusterSize semantics. Locality API allows region/zone labels and a single terminal wildcard.",
+    "Ambient in-pod capture uses Linux netns +iptables, not eBPF. HBONE is HTTP2+CONNECT+mTLS onTCP15008.",
+    "Ambient VirtualService is Alpha; mixing with GatewayAPI undefined. EnvoyFilter is unsupported for waypoints; L7 policy only protects traffic reaching waypoint, require documented L4 guard for mandatory traversal.",
+    "Current ambient multicluster is beta, only multi-primary/multi-network; primary-remote and single-network unsupported/untested. Do not apply sidecar multicluster assumptions.",
+    "Istio1.31 go.mod/conformance use GatewayAPI1.6.0, matching official ambient installation tutorial. Latest catalog1.6.2 alone is not compatibility proof.",
+    "Released Bookinfo1.31 manifest uses registry.istio.io/release images1.20.3 and complete reviews v1/v2/v3 +ratings deps. curl sample8.16.0; httpbin Service8000→target8080, imagego-httpbin2.15.0.",
+    "CLI1.31 waypoint apply supports --name,--for,--wait and --enroll-namespace, no --service-account; delete uses a positional waypoint name. ztunnel-config workloads supports --workload-namespace.",
+    "Ambient profile rendered offline to /tmp/mesh-ambient-rendered.yaml: ztunnel has no hostNetwork/hostPID; privileged:false with specific NET_ADMIN/SYS_ADMIN/NET_RAW capabilities and token/CA/socket/tmp mounts.",
+    "Istio1.31 DNS agent metrics are istio_agent_dns_requests_total, dns_upstream_requests_total/failures_total and dns_upstream_request_duration_seconds_bucket; failures count agent-generatedSERVFAIL after exchangefailures.",
+    "Istio1.31 native IPallocator supports DYNAMIC_DNS wildcardkeepHost; defaultIPv4prefix240.240.0.0/16+IPv6prefix2001:2::/48. Actualallocation inServiceEntry.status.addresses.",
+    "Istio1.31 cluster generation sets respectDnsTtltrue; meshDNSrefreshdefault60seconds, contradicting currentconceptualpage fixed30secondtext.",
+    "Istio1.31 kube-inject withall3localconfigfiles stillstartsdefaultrevision clusterwatcher unless--revision isexplicit. --revisiondefault avoidsdiscovery; sixofflinefixturecasespassed. See officialistioctl/pkg/cli/context.go RevisionOrDefault andkubeinject.go.",
+    "ArgoRollouts1.10 analysis compares Failed>failureLimit;failureLimit2 fails on thirdfailure, count5doesnotmean5successes iffailurestolerated. successConditionalonefalsemeansFailed; bothconditionsfalsemeansInconclusive. Expr1.17.7 fromGo.mod; sourceenvincludesisNaN/isInf.",
+    "ArgoRollouts1.10 supportsmanagedheader/mirrorroutecleanup andweightedexperimentsforIstio;specRefonlystable/canary, notexperimental. AdditionalSubsetNames supported, whole-destination-arrayoverwriteclaimwrong. BlueGreenautoPromotiondefaulttrue;scaleDownDelay scalesRSdown,notdeletes.",
+    "Argo1.10createHeaderRoute/createMirrorRoute doNOTcopyprimaryretryconfiguration. Managedheader/mirrordemosrequireexplicitread-only/idempotentinputlimitsandactualgeneratedconfigreview; do notpromisemeshwrite-retryprotection.",
+    "ArgoCLI1.10 hasnohistorycommand.Usegetrolloutrevisiontreeandundo--to-revision;actualhelpverified.",
+    "Promtool3.14.0nativeArm64at/tmp/promtool; actualIstioPromQLmissing-numerator/idle/absent/histogramfixturespassed8scenarios23assertions. Parentinformedofexactbinaryversion/path.",
+    "ZonalrevisionService/subsetscannotfailoveroutsideeligibleendpointpool. Main09guideexplicitlyboundedzoneisolation, nottransparentcrossAZHA. PDBmin1perzoneisnotgloballyequivalenttomin6; sourceLabelsneedsrealclientPodlabels,notautomaticNodeAZ."
+  ],
+  "executionEnvironment": {
+    "instruction": "login:false, shell/bin/sh, minimal telemetry-free env; no full site/repository builds; bounded native checks only.",
+    "wrapper": "/bin/sh .vitepress/cache/mesh-audit-env.sh PROGRAM ARGS",
+    "nodeHeapMiB": 1024,
+    "homeSettingsModified": false
+  },
+  "futureObservabilityEvidence": [
+    {
+      "from": "parent/user 2026-09-11",
+      "subject": "kube-prometheus-stack90.0.0 published2026-09-06; verify per-guide compatibility, not bulk latest replacement",
+      "artifacts": [
+        "/tmp/kubernetes-docs-full-review/gitops-sources/kube-prom-chart",
+        "/tmp/kubernetes-docs-full-review/gitops-sources/kube-prom-values90",
+        "/tmp/kubernetes-docs-full-review/gitops-sources/kube-prom-release"
+      ],
+      "notes": [
+        "User reports Grafana dependency repository oci://ghcr.io/grafana-community/helm-charts; old grafana/helm-charts/main/charts/grafana/values.yaml404.",
+        "User reports root grafana.admin.existingSecret/userKey/passwordKey documented. Worker must inspect actual parent artifacts/official versioned sources when reviewing affected guides."
+      ]
+    },
+    {
+      "from": "parent/user2026-09-11",
+      "subject": "Loki chart18.12.1/app3.7.7 from grafana-community Sep4; EnvoyGatewayv1.9.1 Aug28 OCI digest prefix91bae9",
+      "artifacts": [
+        "/tmp/kubernetes-docs-full-review/gitops-sources/"
+      ],
+      "notes": [
+        "Parent primary-verified these chart pins. Worker must inspect exact chart/values/platform prerequisites when reaching corresponding guides; not independently chart-validated by this worker yet."
+      ]
+    }
+  ],
+  "latestParentCheckpoint": "Parentresumedaftercompaction;PR220onsitestatscleanupcomplete,mainintegratedinroot;latestHEADAIreview+CIbeforeautomergeparentowned.Workercontinuesoriginalaudit,nofulllocalbuild/devserver.",
+  "resolvedExecutionIssues": [
+    "/tmp inode exhaustion (free bytes14GB, free inodes0) prevented sandbox startup. Removed only own /tmp/mesh-go-cache disposable compilation cache; artifacts/module sources/reports retained; execution resumed.",
+    "Second/tmpinodeexhaustion occurred duringArgoEnglishread. Removedonlyownregenerated/tmp/mesh-go-cache;freeinodes1418immediatelyaftercleanupandreadingresumed.Parentinformedofrecurrence. CachemayneedrebuildifextendingGovalidatoragain."
+  ],
+  "parentRendererUpdates": [
+    "User reports Archify Hangul font fallback fixed by explicit Noto Sans CJK KR in production merge/export/canvas and PNG renderer;6/6build tests passed. Parent will regenerate referenced KO PNGs after content stabilizes. Worker does not edit shared renderer/fonts or foreign prose.",
+    "Parentremovedonlyown/tmp/kubernetes-docs-audit-build(23035entries), retainedfullreview; free~78kinodes. Preview4193unusable. PNGhelperfullPage:true with1600x1816bottom/CJKfixtureverified. Avoidmassdependencycopies."
+  ],
+  "latestParentPromQLCheckpoint": {
+    "tool": "/tmp/kubernetes-docs-full-review/prometheus-tools/promtool",
+    "version": "3.14.0 linux-amd64",
+    "reportedValidation": "Argo05 34actualseriescasespass inclmissingnumerator,missingmetrics,zeroNaN,classichistogram; rollouts-promql-tests.yaml",
+    "workerTool": "/tmp/promtool3.14.0linux-arm64 retained; no duplicate download"
+  },
+  "externalTranslationFollowups": [
+    {
+      "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "owner": "parent translation pipeline; mesh source semantic review remains in worker queue",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: unquoted [Zone1,Zone2] label near598"
+    },
+    {
+      "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "owner": "parent translation pipeline; mesh source semantic review remains in worker queue",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: unquoted [Zone1,Zone2] label near598"
+    },
+    {
+      "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "owner": "parent translation pipeline; mesh source semantic review remains in worker queue",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: unquoted [Zone1,Zone2] label near598"
+    },
+    {
+      "path": "cn/ai-ml/ray/03-ray-train-tune.md",
+      "owner": "parent Ray/translation pipeline",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: malformed ObjectStoreNode near52"
+    },
+    {
+      "path": "es/ai-ml/ray/03-ray-train-tune.md",
+      "owner": "parent Ray/translation pipeline",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: malformed ObjectStoreNode near52"
+    }
+  ],
+  "parentMermaidCheckpoint": "User reports1971refs/661unique,659pass2fail; ko/en pass. docs/reviews/2026-09-11/mermaid-syntax.json. No foreign prose edited.",
+  "parentDomainFollowups": [
+    {
+      "scope": "observability",
+      "note": "Verify against parent gitops primary cache: ArgoCD3.5.2 has no server.audit.enabled/path; use component JSON stdout + K8s Events/API audit correlation. Fluent Bit native cloudwatch_logs and CRI framing differ from application JSON. SealedSecrets0.40/chart2.20 repo moved to bitnami; ESO2.10 v1 API. No changes outside own scope.",
+      "evidence": "/tmp/kubernetes-docs-full-review/gitops-sources/"
+    }
+  ],
+  "latestSharedTest": {
+    "passed": 118,
+    "failed": 0,
+    "log": "/home/atomoh/kubernetes-docs/.vitepress/cache/networking-cilium-intro-audit/docs-test.log"
+  },
+  "troubleshootingDiagramFollowup": {
+    "sourcePages": [
+      "en/service-mesh/istio/troubleshooting/common-errors.md",
+      "ko/service-mesh/istio/troubleshooting/common-errors.md"
+    ],
+    "removedFigureIndexes": [
+      0,
+      1,
+      2
+    ],
+    "reason": "Oldfiguresmisstatedshutdownordering/drainsuccessandPeerAuthenticationdirection. Anyreuseofparent-ownedarchmapsrequiressemanticregeneration;assetsnotedited.",
+    "translationQueue": [
+      "cn/service-mesh/istio/troubleshooting/common-errors.md",
+      "jp/service-mesh/istio/troubleshooting/common-errors.md",
+      "es/service-mesh/istio/troubleshooting/common-errors.md"
+    ],
+    "policy": "Automatedsource-sync/backfillonly;noforeignproseedited."
+  },
+  "linkerdDiagramFollowup": {
+    "removedFigure": "{en,ko}-service-mesh-linkerd-overview-0",
+    "reason": "Unverified fixed memory/latency claims embedded in footer; replaced redundant diagram with accurate role table. Any reuse needs parent-owned semantic regeneration.",
+    "translationPolicy": "Automated source-sync/backfill only; no foreign prose edited."
+  },
+  "parentSharedOwnership": "Parent owns shared frontend/site statistics and analytics workflow. No GA4 credentials supplied; worker continues assigned semantic scopes only. Max2workers; no delegation.",
+  "linkerdUpcomingSourcePitfall": "Official managed-rotation page has a comment saying two months before expiry beside duration8760h/renewBefore7320h, which actually renews about60days after issuance. Do not copy that arithmetic into the forthcoming security guide. It also copies whole root Secret data unnecessarily; evaluate public-bundle-only sources.",
+  "linkerdArchitectureDiagramFollowup": {
+    "retained": [
+      0,
+      3,
+      5,
+      8,
+      9
+    ],
+    "removed": [
+      1,
+      2,
+      4,
+      6,
+      7,
+      10
+    ],
+    "parentAction": "Semantic regeneration of removed/wrong source diagrams if reused; automated source-sync/backfill for foreign pages only, no manual foreign prose edits."
+  },
+  "parentSteering": [
+    "Parent owns Ops15 and reports current NLB weighted target groups support weights0..999 fornewflows, citing ELBnetwork/load-balancer-listeners.html and AWSblog network-load-balancers-now-support-weighted-target-groups. Preserve feature in future networking/LBC audit; independently verify detailed semantics then. Do not edit Ops15.",
+    "Existing NLBlistener cache650b0f39e45b.txt explicitly supports0..999 andnewconnectionrouting. It also separately says weight0 stopsnewconnections andclosesexistingones aftershortperiod; verify zero-weight transition separately fromgeneral weight-update persistence. Shared withparent via commentary; noTGB/ARCstandalonecachefound.",
+    "Parent verified NLB general weight changes preserve connections; weight0 closes existing after short period. /tmp only~13k inodes free: new many-file dependency caches go under ignored .vitepress/cache; preserve unrelated temps.",
+    "2026-09-11 AutoMode DNS:parentprimaryverified auto-networking.html/workloads-add-ons-available-eks.html plus AWSContainersblog faster-nodes-smarter-scaling-whats-new-inside-amazon-elastic-kubernetes-service-amazon-eks-auto-mode/ . PureAutoMode usesnode-localCoreDNSsystemd serviceanddoesnotrequireCoreDNSDeployment/addon; mixednonAutoNodesrequireDeployment. InitialquerylocalbutupstreamforwardingcanleaveNode. Verify/apply duringnetworkingaudit;parentownsOps01/16.",
+    "Parent resumed ops03CI→ops04–14/data/AI. No-GCP-project steering concerns statistics only and does not cancel this audit. /tmp inode pressure ~10k free; new many-file dependencies stay in ignored repo cache. No parent work reread needed.",
+    "Parent2026-09-11ownsOps07alerts/quiz;sharedconfirmedCilium1.20.1cilium_drop_count_total{reason,direction}cache15c7cb160654:590, Hubblehubble_drop_totalflowobservations. No1.19same-versionclaim;Calicometricsunverifiedyet. NoOps/observabilityeditsbeyondownqueue.",
+    "Parentcheckpoint:Ops03–08guides/quizzescomplete,Ops09fullreadthen10–14/data/AI/news/nav;GA4없음notcancellation;root1.8GBfree/tmp10GBfewinodes,avoidlargeinstall,nocommitsuntilworkersstable."
+  ],
+  "currentDateUTC": "2026-09-12",
+  "parentRendererSteering": "Forfuturemobileartifacttests:normalizeArchmapFonts thennormalizeArchmapResponsiveLayout.Parentownssharedhelpers/tests.",
+  "primaryCacheUpdate": {
+    "database": ".vitepress/cache/mesh-primary-cache.sqlite3",
+    "helper": ".vitepress/cache/mesh-primary-cache.py",
+    "note": "Old/tmpcachelostafterhostrestart;currentchapterprimaryevidencerestored;donotrepeatclosedbatches."
+  },
+  "parentMSKFollowup": {
+    "providedByParent": true,
+    "independentlyVerifiedByWorker": false,
+    "note": "CurrentMSK IPv4privateIAM9098/public9198;IPv6IAM20098(TLS20094/SCRAM20096/plain20092);managedmultiVPCotherports,retrieveactualbootstrap. MultiVPCPrivateLinksameRegion. Serverlessretention.bytes250GiBpartition+7days. MSKConnectclientAuthNONE/IAM;networkpathaloneTLS/SCRAMlistenernotdropin. Preserveforfutureobservabilityscope;parentownsMSK."
+  },
+  "newPrimaryEKSRecovery": {
+    "url": "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+    "cacheKey": "8a7356ed413b",
+    "fact": "Conditional previous-minor rollback within7days aftereligibleinplaceupgrade;addonsnotautomaticrollback,nodepreparationrequired;parentinformed,noOpsedits."
+  },
+  "operationsPrimaryFacts": [
+    "Felix failures counter name felix_int_dataplane_failures(no_total); apply_time_seconds is summary,not histogram. felix_log_errors means logging output errors,not ERROR-level entries.",
+    "Typha native default metricsport9091 disabled;operator typhaMetricsPort9093 explicit; connections_dropped counts rebalancing,not genericconnectionfailure.",
+    "kube-controllers ipam_allocations_in_use/borrowed/gc_candidates/gc_reclamations/ipam_blocks/ippool_size; labelsippool,node.",
+    "calicoctl node diags --log-dir is input logdir,nooutput-dir;root,privilegedcontainer+signalpossible; node statuslocal. ipam splitNUMBER poolnotblock andrequireslock;--ipshowvalid;--releasehandle/blockinvalid;get--export ignoredwithoutname.",
+    "Goldmane/WhiskerOSSflowlogs currentguideTechPreview;supportedfieldflowLogsFlushInterval/GoldmaneServer/LocalReporter,notFileEnabled/DNSfilelegacyfields.",
+    "NativeBIRDtreehasnoadvertisedPrometheusbird_protocol_up; treatexporterconfigassumptionexplicit. ENfigurefooterBIRDmetrics/unconditionalrestoreclaimsneedcaptionorremoval."
+  ],
+  "calicoHybridFollowup": {
+    "files": [
+      "en/networking/calico/07-advanced-topics.md",
+      "en/networking/calico/08-eks-integration.md",
+      "ko/networking/calico/07-advanced-topics.md",
+      "ko/networking/calico/08-eks-integration.md"
+    ],
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+    ],
+    "note": "Followup2026-09-12:AWSgeneralalternate-CNIpage stillstatescoreCalico/CiliumsupportforHybrid; specializedHybridCNIpage listsAWSmaintainedCilium/movesCalicoexamples. Qualified prior wording: do notinferCalicosupportterminationfromexamplemove;exactdistribution/capabilitysupportrequiresconfirmation.4currentVuecompilationspass;no code changed."
+  },
+  "ciliumAdvisoryDateCorrection": {
+    "projectAPIKey": "2eab867c62fe",
+    "projectPublishedAt": "2026-07-06T13:15:48Z",
+    "globalAPIKey": "cb8fbbc2f369",
+    "globalPublishedAt": "2026-09-03T17:17:47Z",
+    "action": "Useprojectdisclosuredate;explicitlydocumentmetadatadisagreement;earliercommentarycorrected."
+  },
+  "branchTransitions": [
+    {
+      "from": "audit/full-content-2026-09",
+      "to": "docs/review-followup-2026-09-12",
+      "reason": "Parent/userreportedworkspacebranchchangedduringstats/reviewcontinuation; no workercheckout/reset.",
+      "sourceEditsPreservedPerParent": true
+    }
+  ],
+  "restartRecovery": {
+    "at": "2026-09-12T13:49:23.854842+00:00",
+    "event": "Host restart13:26UTC destroyed /tmp and /dev/shm. Current four source documents remain unchanged; completed batch ledgers preserved.",
+    "preserved": [
+      ".vitepress/cache/networking-cilium-ebpf-audit/ native C source, 13-check report, libbpf1.7 source/static library, binaries",
+      "Original source C error logs; counter/reader helper simulation sources"
+    ],
+    "lost": [
+      "/tmp Markdown rewrite and quiz draft scripts (not applied)",
+      "/tmp mesh-primary-cache.sqlite3 and legacy primary responses; official URLs remain in reports/conversation",
+      "/tmp standalone native tools and render helpers"
+    ],
+    "policy": "No full VitePress/devserver/repository-wide builds; bounded native checks; Node heap<=1GiB; evidence/scripts stay in persistent cache/reports; no checkout/reset/commit/push or cloud mutations."
+  },
+  "latestBoundedValidation": {
+    "chapter": "observability-cloudwatch-metrics",
+    "report": "docs/reviews/2026-09-11/observability-cloudwatch-metrics-validation.json",
+    "documents": 4,
+    "codeBlocks": 42,
+    "quizQuestions": 20,
+    "nativeChecks": 20,
+    "sdkPython": "3.12.13",
+    "mermaid": 2
+  },
+  "currentReadFiles": [
+    "en/observability/metrics/05-datadog.md",
+    "en/quizzes/observability/metrics/05-datadog-quiz.md",
+    "ko/observability/metrics/05-datadog.md",
+    "ko/quizzes/observability/metrics/05-datadog-quiz.md"
+  ],
+  "scopeExternalFollowups": [
+    {
+      "path": "en/eks-hybrid-nodes/02-network-configuration.md",
+      "lines": [
+        1057,
+        1058,
+        1156
+      ],
+      "finding": "Existing snippets still select spec.addresses[0]/podCIDRs[0] and generate ip route add. Parent should review typed address/family and actual next-hop prerequisites; worker did not fully audit or edit this outside-scope file.",
+      "basis": "Exactsnippetsearch+currentCiliumNodeAPIsemantics;currentchapter'snativejqfixtureprovesfirstaddresscanbeCiliumInternalIP."
+    },
+    {
+      "path": "ko/eks-hybrid-nodes/02-network-configuration.md",
+      "lines": [
+        1057,
+        1058,
+        1156
+      ],
+      "finding": "Existing snippets still select spec.addresses[0]/podCIDRs[0] and generate ip route add. Parent should review typed address/family and actual next-hop prerequisites; worker did not fully audit or edit this outside-scope file.",
+      "basis": "Exactsnippetsearch+currentCiliumNodeAPIsemantics;currentchapter'snativejqfixtureprovesfirstaddresscanbeCiliumInternalIP."
+    }
+  ],
+  "temporaryReviewAssignment": {
+    "head": "70381386da7a9efd908615f39417cd28dd50b391",
+    "base": "a16d5937ad6d47a94c011ce1221a2cbe08ecb88f",
+    "state": "complete-original-audit-resumed",
+    "resumeRequiresParentConfirmation": false,
+    "artifact": ".vitepress/cache/data-audit-integration/review-70381386.json",
+    "verdict": "PASS",
+    "rawScore": 90,
+    "coverage": "45/45",
+    "critical": 0,
+    "major": 0,
+    "minor": 0
+  },
+  "updatedAt": "2026-09-13T00:05:39.597997+00:00",
+  "currentPendingSummary": "CloudWatchmetrics4fullyread,no sourceedits;currentprimarycache/version/config/mathfindingspersistedinobservability-cloudwatch-metrics-audit.300read296closed;Mimiralreadyclosed."
+}

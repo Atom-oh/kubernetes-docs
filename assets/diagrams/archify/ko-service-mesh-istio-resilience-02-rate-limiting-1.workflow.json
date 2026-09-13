@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Token Bucket 알고리즘",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": { "label": "요청" },
+        "database": { "label": "토큰 저장소" },
+        "backend": { "label": "처리" },
+        "security": { "label": "판정" },
+        "external": { "label": "거부 응답" }
+      }
+    }
+  },
+  "lanes": [
+    { "id": "bucket", "label": "Token Bucket · 토큰 보충" },
+    { "id": "request", "label": "요청 처리" },
+    { "id": "reject", "label": "초과 요청 거부", "variant": "exception" }
+  ],
+  "mainPath": ["arrive", "check", "allow"],
+  "nodes": [
+    { "id": "refill", "lane": "bucket", "col": 0, "type": "backend", "label": "Refill", "sublabel": "10 tokens/sec", "width": 128 },
+    { "id": "tokens", "lane": "bucket", "col": 1, "type": "database", "label": "Token Bucket", "sublabel": "최대 100 tokens", "width": 136 },
+    { "id": "arrive", "lane": "request", "col": 0, "type": "frontend", "label": "요청 도착", "width": 148 },
+    { "id": "check", "lane": "request", "col": 1, "type": "security", "label": "토큰 있음?", "sublabel": "버킷 잔량 확인", "width": 136 },
+    { "id": "allow", "lane": "request", "col": 2, "type": "backend", "label": "요청 허용", "sublabel": "토큰 1개 소비", "width": 136 },
+    { "id": "deny", "lane": "reject", "col": 2, "type": "external", "label": "요청 거부", "sublabel": "429 반환", "width": 136 }
+  ],
+  "edges": [
+    { "id": "refill-tokens", "from": "refill", "to": "tokens", "label": "매초 10개 추가", "variant": "dashed", "role": "async" },
+    { "id": "arrive-check", "from": "arrive", "to": "check", "variant": "emphasis" },
+    { "id": "tokens-check", "from": "tokens", "to": "check", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "id": "check-allow", "from": "check", "to": "allow", "label": "Yes", "variant": "emphasis" },
+    { "id": "check-deny", "from": "check", "to": "deny", "label": "No", "variant": "security", "role": "error", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "id": "allow-tokens", "from": "allow", "to": "tokens", "label": "토큰 감소", "variant": "dashed", "role": "return" }
+  ]
+}

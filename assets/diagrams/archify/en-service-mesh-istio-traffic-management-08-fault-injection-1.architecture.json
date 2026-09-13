@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Verifying Circuit Breaker and Timeout Settings",
+    "output": "en-service-mesh-istio-traffic-management-08-fault-injection-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "Request and fault response",
+        "focus": [
+          "service-a",
+          "service-b"
+        ],
+        "note": "Service A sends a request; the fault-injected Service B returns a delayed or failed response."
+      },
+      {
+        "id": "verify",
+        "label": "Circuit Breaker check",
+        "focus": [
+          "service-a",
+          "monitoring"
+        ],
+        "note": "After fault responses accumulate, monitoring confirms the Circuit Breaker actually tripped."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "service-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Caller (Circuit Breaker applied)",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "service-b",
+      "type": "backend",
+      "label": "Dependent Service B",
+      "sublabel": "VirtualService fault (delay / abort)",
+      "tag": "Fault Injection",
+      "pos": [
+        460,
+        60
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "monitoring",
+      "type": "cloud",
+      "label": "Monitoring",
+      "sublabel": "Circuit Breaker activation metrics",
+      "pos": [
+        460,
+        340
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request",
+      "from": "service-a",
+      "to": "service-b",
+      "label": "1. Request",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "fault-response",
+      "from": "service-b",
+      "to": "service-a",
+      "label": "2. Delay or failure",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -130
+    },
+    {
+      "id": "verify",
+      "from": "service-a",
+      "to": "monitoring",
+      "label": "3. Verify Circuit Breaker activation"
+    }
+  ]
+}

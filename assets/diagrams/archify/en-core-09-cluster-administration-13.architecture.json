@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Cluster Architecture",
+    "output": "en-core-09-cluster-administration-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "aws-managed",
+        "label": "AWS-managed",
+        "focus": [
+          "eks",
+          "cp"
+        ],
+        "note": "AWS operates the control plane: API server, etcd, and scheduler."
+      },
+      {
+        "id": "data-plane",
+        "label": "Data plane",
+        "focus": [
+          "dp",
+          "mng",
+          "selfnodes",
+          "fargate",
+          "asg"
+        ],
+        "note": "Choose how workloads run: managed node groups, self-managed nodes, or Fargate."
+      },
+      {
+        "id": "net-sec",
+        "label": "Networking and security",
+        "focus": [
+          "net",
+          "vpccni",
+          "vpc",
+          "sec",
+          "iam"
+        ],
+        "note": "VPC CNI attaches pods to the AWS VPC; IAM roles and policies authenticate cluster access."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "Amazon EKS Cluster",
+      "sublabel": "AWS-managed Kubernetes",
+      "tag": "EKS",
+      "pos": [
+        510,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "Control Plane",
+      "sublabel": "API server · etcd · scheduler",
+      "tag": "AWS managed components",
+      "pos": [
+        30,
+        190
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "dp",
+      "type": "backend",
+      "label": "Data Plane",
+      "sublabel": "runs worker nodes",
+      "pos": [
+        485,
+        190
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "net",
+      "type": "backend",
+      "label": "Networking",
+      "sublabel": "pod network",
+      "pos": [
+        870,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sec",
+      "type": "security",
+      "label": "Security",
+      "sublabel": "authn · authz",
+      "pos": [
+        1060,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "mng",
+      "type": "backend",
+      "label": "Managed Node Groups",
+      "sublabel": "EKS-managed node lifecycle",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "selfnodes",
+      "type": "backend",
+      "label": "Self-Managed Nodes",
+      "sublabel": "EC2 you operate yourself",
+      "pos": [
+        490,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "fargate",
+      "type": "cloud",
+      "label": "Fargate",
+      "sublabel": "serverless pod execution",
+      "pos": [
+        680,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpccni",
+      "type": "backend",
+      "label": "VPC CNI",
+      "sublabel": "assigns VPC IPs to pods",
+      "pos": [
+        870,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM Authentication",
+      "sublabel": "IAM roles and policies",
+      "pos": [
+        1060,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "asg",
+      "type": "cloud",
+      "label": "EC2 Auto Scaling Groups",
+      "sublabel": "scale node count in/out",
+      "pos": [
+        300,
+        460
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "sublabel": "subnets · security groups",
+      "pos": [
+        870,
+        460
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS-managed",
+      "wraps": [
+        "cp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Customer responsibility",
+      "wraps": [
+        "dp",
+        "net",
+        "sec",
+        "mng",
+        "selfnodes",
+        "fargate",
+        "vpccni",
+        "iam",
+        "asg",
+        "vpc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eks-cp",
+      "from": "eks",
+      "to": "cp",
+      "fromSide": "left",
+      "toSide": "top",
+      "label": "operated by AWS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eks-dp",
+      "from": "eks",
+      "to": "dp",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-net",
+      "from": "eks",
+      "to": "net"
+    },
+    {
+      "id": "eks-sec",
+      "from": "eks",
+      "to": "sec"
+    },
+    {
+      "id": "dp-mng",
+      "from": "dp",
+      "to": "mng"
+    },
+    {
+      "id": "dp-self",
+      "from": "dp",
+      "to": "selfnodes"
+    },
+    {
+      "id": "dp-fargate",
+      "from": "dp",
+      "to": "fargate"
+    },
+    {
+      "id": "mng-asg",
+      "from": "mng",
+      "to": "asg",
+      "label": "provisions nodes",
+      "labelDy": 24
+    },
+    {
+      "id": "net-cni",
+      "from": "net",
+      "to": "vpccni"
+    },
+    {
+      "id": "cni-vpc",
+      "from": "vpccni",
+      "to": "vpc",
+      "label": "ENI · IP",
+      "labelDy": 24
+    },
+    {
+      "id": "sec-iam",
+      "from": "sec",
+      "to": "iam"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS owns",
+      "items": [
+        "Control plane operation: API server, etcd, scheduler",
+        "Control plane upgrades requested via aws eks update-cluster-version"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Customer owns",
+      "items": [
+        "Nodes: managed node groups · self-managed nodes · Fargate",
+        "Networking: AWS VPC integration through VPC CNI",
+        "Security: IAM authentication and RBAC mapping via the aws-auth ConfigMap"
+      ]
+    }
+  ]
+}

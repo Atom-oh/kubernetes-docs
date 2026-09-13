@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Before and After ServiceEntry",
+    "output": "en-service-mesh-istio-traffic-management-12-service-entry-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "without",
+        "label": "Without ServiceEntry",
+        "focus": [
+          "svc-without",
+          "ext-without"
+        ],
+        "note": "The mesh knows nothing about traffic to the external API, so it is a black hole with no monitoring, policy, or circuit breaker."
+      },
+      {
+        "id": "with",
+        "label": "With ServiceEntry",
+        "focus": [
+          "svc-with",
+          "ext-with"
+        ],
+        "note": "Registering the external API as a ServiceEntry gives the same traffic monitoring, policy, and a circuit breaker."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "svc-without",
+      "type": "backend",
+      "label": "Mesh Internal Service",
+      "sublabel": "sidecar proxy",
+      "pos": [
+        70,
+        90
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ext-without",
+      "type": "external",
+      "label": "External API",
+      "sublabel": "no monitoring, policy, or circuit breaker",
+      "tag": "black hole",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "svc-with",
+      "type": "backend",
+      "label": "Mesh Internal Service",
+      "sublabel": "sidecar proxy",
+      "pos": [
+        70,
+        290
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ext-with",
+      "type": "external",
+      "label": "External API",
+      "sublabel": "monitoring, policy, circuit breaker applied",
+      "tag": "ServiceEntry",
+      "pos": [
+        520,
+        290
+      ],
+      "size": [
+        270,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Without ServiceEntry",
+      "wraps": [
+        "svc-without",
+        "ext-without"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "With ServiceEntry",
+      "wraps": [
+        "svc-with",
+        "ext-with"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "unknown-traffic",
+      "from": "svc-without",
+      "to": "ext-without",
+      "label": "Unknown traffic",
+      "variant": "dashed"
+    },
+    {
+      "id": "registered-traffic",
+      "from": "svc-with",
+      "to": "ext-with",
+      "label": "Registered traffic",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Without ServiceEntry",
+      "items": [
+        "No monitoring (black hole)",
+        "Cannot apply policies",
+        "No circuit breaker"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "With ServiceEntry",
+      "items": [
+        "Monitoring enabled (full metrics)",
+        "Policies applied (timeout, retry)",
+        "Circuit breaker"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "배포와 기능 노출",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "traditional",
+        "label": "전통적 배포",
+        "focus": [
+          "deploy_t",
+          "release_t",
+          "all_users"
+        ],
+        "note": "새 동작은 워크로드의 배포 전략을 따라 전달됩니다. 모든 Pod가 동시에 바뀌는 것은 아닙니다."
+      },
+      {
+        "id": "flagged",
+        "label": "Feature Flag 배포",
+        "focus": [
+          "deploy_f",
+          "flag",
+          "target_users",
+          "existing"
+        ],
+        "note": "배포된 코드의 기능 노출을 런타임 플래그로 제어합니다. SDK 통합과 규칙 검증이 필요합니다."
+      },
+      {
+        "id": "decision",
+        "label": "플래그 평가 결과",
+        "focus": [
+          "flag",
+          "target_users",
+          "existing"
+        ],
+        "note": "평가 결과에 따라 새 기능 또는 기존 동작을 선택합니다. 인증·인가는 별도입니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "코드 배포"
+        },
+        "backend": {
+          "label": "릴리스 결정"
+        },
+        "cloud": {
+          "label": "사용자 노출"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "trad",
+      "label": "전통적 배포"
+    },
+    {
+      "id": "ff",
+      "label": "Feature Flag 배포"
+    }
+  ],
+  "mainPath": [
+    "deploy_f",
+    "flag",
+    "target_users"
+  ],
+  "nodes": [
+    {
+      "id": "deploy_t",
+      "lane": "trad",
+      "col": 0,
+      "width": 160,
+      "type": "frontend",
+      "label": "배포",
+      "sublabel": "새 버전 롤아웃"
+    },
+    {
+      "id": "release_t",
+      "lane": "trad",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "릴리스",
+      "sublabel": "코드와 함께 동작 변경"
+    },
+    {
+      "id": "all_users",
+      "lane": "trad",
+      "col": 2,
+      "width": 160,
+      "type": "cloud",
+      "label": "롤아웃 대상",
+      "sublabel": "배포 전략에 따라 반영"
+    },
+    {
+      "id": "deploy_f",
+      "lane": "ff",
+      "col": 0,
+      "width": 160,
+      "type": "frontend",
+      "label": "배포",
+      "sublabel": "새 버전 롤아웃"
+    },
+    {
+      "id": "flag",
+      "lane": "ff",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "Feature Flag",
+      "sublabel": "런타임 플래그 평가"
+    },
+    {
+      "id": "target_users",
+      "lane": "ff",
+      "col": 2,
+      "width": 160,
+      "type": "cloud",
+      "label": "대상 사용자",
+      "sublabel": "새 기능 노출"
+    },
+    {
+      "id": "existing",
+      "lane": "ff",
+      "col": 3,
+      "width": 200,
+      "type": "cloud",
+      "label": "기존 경험",
+      "sublabel": "기존 동작 유지"
+    }
+  ],
+  "edges": [
+    {
+      "id": "deploy_t-release_t",
+      "from": "deploy_t",
+      "to": "release_t",
+      "label": "롤아웃"
+    },
+    {
+      "id": "release_t-all_users",
+      "from": "release_t",
+      "to": "all_users"
+    },
+    {
+      "id": "deploy_f-flag",
+      "from": "deploy_f",
+      "to": "flag"
+    },
+    {
+      "id": "flag-target_users",
+      "from": "flag",
+      "to": "target_users",
+      "label": "ON",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flag-existing",
+      "from": "flag",
+      "to": "existing",
+      "label": "OFF",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ]
+}

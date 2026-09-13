@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Component Interaction Sequence",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "views": [
+      {
+        "id": "policy-path",
+        "label": "NetworkPolicy path",
+        "focus": [
+          "api",
+          "kc",
+          "typha",
+          "felix",
+          "dp"
+        ],
+        "note": "A new NetworkPolicy is synced by kube-controllers, fanned out by Typha, and programmed by Felix."
+      },
+      {
+        "id": "pod-path",
+        "label": "Pod path",
+        "focus": [
+          "api",
+          "kc",
+          "typha",
+          "felix",
+          "dp",
+          "bird"
+        ],
+        "note": "A new Pod becomes a workload endpoint; Felix programs its rules and updates BGP routes."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "api",
+      "type": "database",
+      "label": "Kubernetes API",
+      "sublabel": "datastore"
+    },
+    {
+      "id": "kc",
+      "type": "backend",
+      "label": "kube-controllers",
+      "sublabel": "policy / endpoint sync"
+    },
+    {
+      "id": "typha",
+      "type": "messagebus",
+      "label": "Typha",
+      "sublabel": "fan-out cache"
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "per-node agent"
+    },
+    {
+      "id": "dp",
+      "type": "security",
+      "label": "iptables / eBPF",
+      "sublabel": "local data plane"
+    },
+    {
+      "id": "bird",
+      "type": "backend",
+      "label": "BIRD",
+      "sublabel": "BGP daemon"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 365,
+      "label": "New NetworkPolicy"
+    },
+    {
+      "from": 385,
+      "to": 625,
+      "label": "New Pod created"
+    }
+  ],
+  "messages": [
+    {
+      "id": "np-event",
+      "from": "api",
+      "to": "kc",
+      "y": 195,
+      "label": "NetworkPolicy event",
+      "note": "New NetworkPolicy"
+    },
+    {
+      "id": "np-sync",
+      "from": "kc",
+      "to": "api",
+      "y": 230,
+      "label": "SYNC POLICY",
+      "variant": "return"
+    },
+    {
+      "id": "np-update",
+      "from": "api",
+      "to": "typha",
+      "y": 268,
+      "label": "Policy update",
+      "variant": "emphasis"
+    },
+    {
+      "id": "np-dist",
+      "from": "typha",
+      "to": "felix",
+      "y": 305,
+      "label": "Distribute policy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "np-prog",
+      "from": "felix",
+      "to": "dp",
+      "y": 345,
+      "label": "Program rules",
+      "variant": "security",
+      "note": "Calculate rules"
+    },
+    {
+      "id": "pod-event",
+      "from": "api",
+      "to": "kc",
+      "y": 410,
+      "label": "Pod event",
+      "note": "New Pod created"
+    },
+    {
+      "id": "pod-sync",
+      "from": "kc",
+      "to": "api",
+      "y": 445,
+      "label": "SYNC POD",
+      "variant": "return"
+    },
+    {
+      "id": "pod-update",
+      "from": "api",
+      "to": "typha",
+      "y": 483,
+      "label": "Endpoint update",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-dist",
+      "from": "typha",
+      "to": "felix",
+      "y": 520,
+      "label": "Distribute endpoint",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-prog",
+      "from": "felix",
+      "to": "dp",
+      "y": 558,
+      "label": "Program endpoint rules",
+      "variant": "security"
+    },
+    {
+      "id": "bgp",
+      "from": "felix",
+      "to": "bird",
+      "y": 598,
+      "label": "Update BGP routes",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kc",
+      "from": 190,
+      "to": 236,
+      "type": "backend"
+    },
+    {
+      "participant": "felix",
+      "from": 300,
+      "to": 353,
+      "type": "backend"
+    },
+    {
+      "participant": "kc",
+      "from": 405,
+      "to": 451,
+      "type": "backend"
+    },
+    {
+      "participant": "felix",
+      "from": 515,
+      "to": 606,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "kube-controllers",
+      "items": [
+        "Policy Controller syncs Kubernetes NetworkPolicy with Calico policy",
+        "WorkloadEndpoint Controller keeps Pod endpoints in sync"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Typha and Felix",
+      "items": [
+        "Typha reduces API server load by fanning updates out to every Felix",
+        "Felix programs routes and ACLs on its node, then updates BGP routes"
+      ]
+    }
+  ]
+}

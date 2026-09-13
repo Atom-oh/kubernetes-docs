@@ -1,0 +1,149 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Head-based Sampling (헤드 기반 샘플링)",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "요청 진입"
+        },
+        "security": {
+          "label": "샘플링 결정"
+        },
+        "database": {
+          "label": "추적 수집"
+        },
+        "external": {
+          "label": "건너뜀"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "request",
+      "label": "요청 시작 시점 · 즉시 결정"
+    },
+    {
+      "id": "sampled",
+      "label": "샘플링됨 · 10%"
+    },
+    {
+      "id": "skipped",
+      "label": "건너뜀 · 90%",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "arrive",
+    "decide",
+    "collect"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "arrive"
+    ],
+    "allowedTerminals": [
+      "collect",
+      "skip"
+    ],
+    "requiredEdges": [
+      {
+        "from": "decide",
+        "to": "collect"
+      },
+      {
+        "from": "decide",
+        "to": "skip"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "arrive",
+      "lane": "request",
+      "col": 0,
+      "type": "frontend",
+      "label": "요청 수신",
+      "sublabel": "첫 Span 생성",
+      "width": 164
+    },
+    {
+      "id": "decide",
+      "lane": "request",
+      "col": 1,
+      "type": "security",
+      "label": "샘플링 결정",
+      "sublabel": "traceidratio 0.1",
+      "tag": "결정 지점",
+      "width": 180
+    },
+    {
+      "id": "collect",
+      "lane": "sampled",
+      "col": 2,
+      "type": "database",
+      "label": "추적 수집",
+      "sublabel": "모든 Span 기록",
+      "width": 172
+    },
+    {
+      "id": "skip",
+      "lane": "skipped",
+      "col": 2,
+      "type": "external",
+      "label": "추적 건너뜀",
+      "sublabel": "오류·지연 여부 미확인",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "arrive-decide",
+      "from": "arrive",
+      "to": "decide",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "decide-collect",
+      "from": "decide",
+      "to": "collect",
+      "label": "10% 샘플",
+      "variant": "emphasis",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "decide-skip",
+      "from": "decide",
+      "to": "skip",
+      "label": "90% 건너뜀",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "장점",
+      "items": [
+        "구현이 간단함",
+        "오버헤드가 낮음",
+        "일관된 샘플링 결정"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "단점",
+      "items": [
+        "중요한 요청을 놓칠 수 있음",
+        "오류나 지연이 발생한 요청도 건너뛸 수 있음"
+      ]
+    }
+  ]
+}

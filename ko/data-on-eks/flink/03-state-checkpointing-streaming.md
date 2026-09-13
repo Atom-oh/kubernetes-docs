@@ -1,208 +1,435 @@
-# Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴
+# Part 3: 상태, 체크포인트와 스트리밍 패턴
 
-> **마지막 업데이트**: 2026년 7월 15일
+> 검토: 2026-09-12. Operator 1.15.0. Kafka 예제는 Flink 2.2.1, Iceberg 예제는 별도 Flink 2.1.3 조합입니다.
 
-## 상태 관리가 Flink에서 어려운 이유
+State는 집계·조인·중복 제거가 기억하는 데이터입니다. 모든 윈도우 집계가 원본 레코드
+전체를 보관하는 것은 아니며, SUM/COUNT 같은 증분 집계는 accumulator를 유지할 수 있습니다.
+Stateless 처리도 source 재읽기·ack·외부 쓰기 오류로 데이터 유실/중복이 생길 수 있습니다.
+**내부 state 일관성, source 재생 가능성, sink commit 보장**을 함께 검증해야 합니다.
 
-상태가 없는(stateless) 스트림 처리는 레코드 하나를 변환해서 바로 흘려보내면 끝입니다. 기억할 것도, 잃을 것도 없습니다. 하지만 실제 운영되는 작업 대부분은 그렇게 단순하지 않습니다. 윈도우 집계는 현재 윈도우에 들어온 레코드를 전부 기억해야 하고, 조인은 한쪽 스트림을 기다리는 동안 다른 쪽 데이터를 붙잡고 있어야 하며, 중복 제거는 이미 처리한 키를 계속 추적해야 합니다. 이렇게 기억해 둔 데이터가 곧 **상태(state)**이고, 이 상태는 TaskManager 장애·Pod 축출·롤링 업그레이드를 거쳐도 결과가 깨지거나 데이터가 조용히 사라지지 않고 살아남아야 합니다. 이번 Part에서 다루는 상태 백엔드, 체크포인트, 세이브포인트, 정확히 한 번(exactly-once) 시맨틱 싱크는 모두 결국 하나의 질문에 답하기 위한 장치입니다 — 장애가 나도 처리 속도를 유지하면서 상태를 정확하게 지키려면 Flink는 무엇을 해야 하는가?
+## 1. 버전 조합부터 고정
 
-이 문서는 Part 2에서 다룬 Flink Kubernetes Operator를 통해 EKS에 이미 Flink 클러스터가 떠 있다고 가정합니다. 여기서 설명하는 내용은 그 클러스터 위에서 실제로 돌아가는 잡(job) 수준의 이야기입니다.
-
-## 상태 백엔드: HashMap vs RocksDB
-
-Flink는 오퍼레이터 상태를 **상태 백엔드**에 저장하며, 어떤 백엔드를 쓰느냐에 따라 상태가 물리적으로 어디에 저장되고 얼마나 커질 수 있는지가 결정됩니다.
-
-| | HashMapStateBackend | EmbeddedRocksDBStateBackend |
+| 예제 | Flink | 추가 dependency |
 | --- | --- | --- |
-| **저장 위치** | 힙(JVM 힙 위의 객체) | 힙 밖 — TaskManager 슬롯마다 로컬 디스크에 스필되는 RocksDB 인스턴스 |
-| **접근 속도** | 가장 빠름 — 순수 Java 객체 접근 | 상대적으로 느림 — 모든 읽기/쓰기가 RocksDB의 (역)직렬화 경로를 거침 |
-| **상태 크기 한계** | 가용 힙 메모리에 제한됨 | 로컬 디스크 용량에 제한 — 메모리보다 훨씬 큰 상태도 가능 |
-| **체크포인트 방식** | 전체(full) 체크포인트만 지원 | 증분(incremental) 체크포인트 지원 |
-| **GC 부담** | 큼 — 상태가 커질수록 힙이 커지고 GC 정지 시간도 길어짐 | 작음 — 상태가 힙 밖에 있으므로 상태 크기와 무관하게 힙은 작게 유지됨 |
-| **적합한 상황** | 상태가 작고 지연에 민감한 작업(단순 집계, 카디널리티 낮은 키) | 상태가 큰 작업(카디널리티 높은 키, 긴 윈도우, 대규모 조인) — 대규모 운영의 기본 선택 |
+| Kafka sink·SQL | 2.2.1 / Java 17 | flink-connector-kafka 5.0.0-2.2, connector-base와 필요한 SQL/runtime/format 모듈 |
+| Dynamic Iceberg sink | 2.1.3 / Java 17 | iceberg-flink-runtime-2.1 1.11.0 |
 
-트레이드오프는 명확합니다. HashMapStateBackend는 상태가 순수 Java 객체로 힙에 존재하므로 연산당 속도는 더 빠르지만, 전체 상태 크기가 TaskManager의 메모리 예산 안에 여유 있게 들어와야만 이점이 유지됩니다. 키 개수가 수백만에 이르거나, 세션 윈도우가 넓거나, 스트림-스트림 조인 규모가 커지면 힙에 상태를 올려두는 방식은 JVM GC와 충돌하기 시작하고 결국 메모리가 부족해집니다. EmbeddedRocksDBStateBackend는 레코드 단위 지연을 조금 희생하는(RocksDB는 모든 키/값 접근에 직렬화를 거침) 대신 상태를 로컬 SSD로 스필할 수 있어 상태 크기가 더 이상 RAM에 갇히지 않습니다. TaskManager당 상태가 수백 MB를 넘어설 것으로 예상되는 작업이라면 RocksDB를 기본값으로 선택하는 것이 맞고, 상태가 작고 크기가 확실히 제한돼 있어 속도 이점이 메모리 상한을 감수할 만한 경우에만 HashMap을 유지하면 됩니다.
+공식 Iceberg 1.11.0 배포 목록은 Flink 2.1/2.0/1.20 runtime JAR를 제공합니다.
+2.1용 JAR를 2.2.1에 넣고 검증된 조합으로 표시하지 않습니다. 아래 Java helper는
+각각의 조합으로 컴파일했으며, 실행 시 source·보안·catalog·storage 설정을 별도로 준비합니다.
 
-백엔드 선택은 설정 값 하나로 끝납니다.
+## 2. State backend와 checkpoint storage는 별개
 
-```yaml
-# flink-conf.yaml (또는 FlinkDeployment.spec.flinkConfiguration)
-state.backend.type: rocksdb
-execution.checkpointing.incremental: true
-```
-
-## 체크포인트: Flink가 장애에서 복구하는 방법
-
-**체크포인트**는 잡이 실행되는 동안 일정 주기로 자동으로 찍히는, 모든 오퍼레이터 상태의 일관된 스냅숏입니다. TaskManager가 죽으면 JobManager는 영향받은 태스크를 재시작하고 가장 최근에 완료된 체크포인트에서 상태를 복원하므로, 처리는 처음부터가 아니라 일관성이 보장된 지점에서 다시 시작됩니다.
-
-```yaml
-execution.checkpointing.interval: 60s
-execution.checkpointing.mode: EXACTLY_ONCE
-execution.checkpointing.timeout: 10min
-execution.checkpointing.min-pause: 30s
-```
-
-### 증분 체크포인트
-
-`EmbeddedRocksDBStateBackend`를 쓰면 전체 체크포인트는 매번 모든 키의 현재 값을 다시 업로드한다는 뜻이라, 상태가 커지면 비용이 만만치 않습니다. 증분 체크포인트를 켜면 실제로 저장되는 대상이 바뀝니다.
-
-```yaml
-execution.checkpointing.incremental: true
-```
-
-전체 스냅숏 대신, 각 증분 체크포인트는 이전 체크포인트 이후 변경된 RocksDB SSTable 파일만 저장하고, 이전 체크포인트에서 만들어진 어떤 SSTable 파일들이 여전히 유효해서 전체 상태를 재구성할 때 필요한지 기록하는 매니페스트를 함께 남깁니다. 이는 체크포인트 시점의 네트워크·시간 비용과 복구 시점의 약간의 복잡성을 맞바꾸는 구조입니다.
-
-* **체크포인트 비용 감소** — 델타만 전송되므로 체크포인트 소요 시간과 네트워크/스토리지 비용이 전체 상태 크기가 아니라 변경률에 비례합니다.
-* **복구 비용은 이동** — 증분 체크포인트에서 복원하려면 현재 델타뿐 아니라 매니페스트가 여전히 참조하는 이전 파일들까지 모두 가져와야 하므로, 전체 체크포인트의 단일 스냅숏보다 개별 파일을 더 많이 가져오게 될 수 있습니다. 체크포인트 스토리지가 네트워크에 병목이 있는 경우(예: S3까지의 경로가 느린 경우) 복구가 전체 체크포인트보다 오히려 느려질 수 있습니다. 반대로 병목이 TaskManager의 CPU나 IOPS라면, 전체적으로 RocksDB에 다시 써 넣을 데이터가 적기 때문에 증분 체크포인트가 대체로 더 빨리 복구됩니다.
-
-## 체크포인트 저장소 vs 세이브포인트
-
-체크포인트와 세이브포인트는 모두 Flink의 파일시스템 기반 체크포인트 스토리지 백엔드를 통해 저장되며, EKS 환경에서는 거의 항상 S3를 사용합니다(AWS 밖에서는 HDFS, GCS, Azure Blob Storage가 동등한 역할을 합니다).
-
-```yaml
-execution.checkpointing.dir: s3://my-flink-checkpoints/checkpoints
-execution.checkpointing.savepoint-dir: s3://my-flink-checkpoints/savepoints
-```
-
-저장 방식은 같지만 체크포인트와 세이브포인트는 목적이 다르며, 이름만 다른 같은 개념으로 취급하면 안 됩니다.
-
-| | 체크포인트 | 세이브포인트 |
+| Backend | 특성 | 확인할 한계 |
 | --- | --- | --- |
-| **트리거 주체** | Flink가 일정 주기로 자동 실행 | 사용자 또는 운영자가 명시적으로 실행 |
-| **목적** | 장애 복구 | 계획된 업그레이드, 마이그레이션, 버전 업그레이드 |
-| **라이프사이클** | Flink가 보존 정책을 관리하며 오래된 것은 자동 만료 | 수동으로 삭제하기 전까지 유지 — 영구적인 산출물로 취급 |
-| **사용 주체** | 태스크 자동 재시작 | Flink Kubernetes Operator의 `last-state` 업그레이드 모드(Part 2), 또는 수동 `flink savepoint`/stop-with-savepoint |
+| HashMap | Keyed state를 JVM heap 객체로 보관 | Heap·GC·serializer 비용; state 크기와 부하에 맞춰 측정 |
+| EmbeddedRocksDB | Keyed state를 직렬화해 local RocksDB에 보관; native memory/cache와 disk 사용 | Disk뿐 아니라 managed/native memory·I/O·CPU도 필요 |
+| ForSt | Remote filesystem의 SST와 local cache를 사용하는 disaggregated backend | 2.2에서 experimental; async-state API와 snapshot 제약 확인 |
 
-Part 2에서 다룬 Operator의 `last-state` 업그레이드 모드는 실제로는 세이브포인트가 아니라 **가장 최근 체크포인트**에서 복원합니다. 그래서 빠르고 완전히 자동화될 수 있지만, 특정 잡 그래프에 묶이게 되는 대가가 있습니다. 반면 의도적인 버전 업그레이드, 스키마 변경, 다른 클러스터로의 마이그레이션을 계획한다면 먼저 명시적으로 세이브포인트를 찍어야 합니다.
+RocksDB를 “slot당 정확히 한 인스턴스” 또는 “모든 operator state가 disk에 있으므로
+heap이 state 크기와 무관하다”고 설명하지 않습니다. Keyed operator별 backend가
+있을 수 있고, 같은 slot의 여러 인스턴스는 managed-memory budget/cache를 공유합니다.
+Operator state와 사용자 객체·timer·buffer 등도 메모리를 사용합니다.
 
+특정 MB를 넘으면 무조건 RocksDB라는 기준 대신 state 형태·serializer·GC·I/O와
+checkpoint/restore 시간을 비교합니다. ForSt도 incremental snapshot을 지원하므로
+“증분은 RocksDB만 가능”이라고 일반화하지 않습니다. 이 장의 실습은 RocksDB입니다.
+
+### Incremental checkpoint가 줄이는 것
+
+RocksDB의 새로운 SST 파일과 checkpoint metadata를 저장하고, 재사용 가능한 shared
+SST는 참조합니다. 논리적인 key 변경분을 직접 비교하는 방식이 아닙니다.
+Compaction이 SST를 다시 만들면 적은 논리 변경에도 업로드가 커질 수 있습니다.
+
+Restore에는 선택한 checkpoint가 참조하는 모든 파일이 필요합니다. 모든 과거
+checkpoint를 순서대로 재생하는 것은 아니며, full checkpoint도 항상 단일 파일은 아닙니다.
+Native SST 복원은 canonical key/value에서 RocksDB를 재구축하는 비용을 줄일 수 있지만
+전송량·파일 수·network·I/O에 따라 더 빠르거나 느릴 수 있습니다.
+Active checkpoint가 참조하는 shared 파일을 S3 수명주기로 임의 삭제하지 않습니다.
+
+## 3. S3 상태 보존 예제의 실제 전제
+
+Part 2의 Operator와 data-processing namespace, chart가 생성한 Role/flink를 사용합니다.
+S3 버킷·prefix와 IAM role은 미리 준비하고 아래 예제 값을 실제 값으로 바꿉니다.
+읽기·쓰기·list·정리/delete·multipart 처리와 필요 시 KMS 권한을 경로별로 확인합니다.
+SA annotation은 IAM role 생성이나 OIDC trust 구성을 대신하지 않습니다.
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flink-state
+  namespace: data-processing
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/flink-state-checkpoints
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flink-state
+  namespace: data-processing
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: flink
+subjects:
+- kind: ServiceAccount
+  name: flink-state
+  namespace: data-processing
+```
+
+다음은 IRSA를 사용하는 FlinkDeployment입니다. JM/TM 모두에 S3 plugin을 활성화하고
+local RocksDB 공간은 emptyDir에 둡니다. Pod/node 손실 후 복구할 state는 S3에 있습니다.
+fsGroup은 이 image의 flink UID/GID 9999에 맞춘 예제입니다.
+
+중요한 버전 제한이 있습니다. 검토한 2.2.1 S3 Hadoop plugin은 **Hadoop 3.3.4와
+AWS SDK for Java 1.12.779**를 포함합니다. SDK 1.x는 2025-12-31 지원 종료 상태입니다.
+아래는 그 artifact의 실제 v1 credential class에 맞춘 구성으로, 지원되는 v2 SDK로
+검증된 구성이라는 뜻은 아닙니다. Production에서는 upstream filesystem plugin의
+지원·보안 상태와 교체 가능한 runtime/connector 조합을 검토합니다.
+서로 다른 SDK 세대의 JAR/class 이름만 바꾸어 classpath를 섞지 않습니다.
+
+```yaml
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: flink-state-demo
+  namespace: data-processing
+spec:
+  image: flink:2.2.1-java17
+  flinkVersion: v2_2
+  mode: native
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: '2'
+    state.backend.type: rocksdb
+    state.backend.rocksdb.localdir: /opt/flink/state
+    execution.checkpointing.storage: filesystem
+    execution.checkpointing.dir: s3://replace-with-your-bucket/flink-state-demo/checkpoints
+    execution.checkpointing.savepoint-dir: s3://replace-with-your-bucket/flink-state-demo/savepoints
+    execution.checkpointing.interval: 2 s
+    execution.checkpointing.mode: EXACTLY_ONCE
+    execution.checkpointing.timeout: 10 min
+    execution.checkpointing.min-pause: 30 s
+    execution.checkpointing.incremental: 'true'
+    execution.checkpointing.num-retained: '3'
+    execution.checkpointing.externalized-checkpoint-retention: RETAIN_ON_CANCELLATION
+    high-availability.type: org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory
+    high-availability.storageDir: s3://replace-with-your-bucket/flink-state-demo/ha
+    fs.s3a.aws.credentials.provider: com.amazonaws.auth.WebIdentityTokenCredentialsProvider
+  serviceAccount: flink-state
+  jobManager:
+    resource:
+      memory: 2048m
+      cpu: 1
+  taskManager:
+    resource:
+      memory: 2048m
+      cpu: 1
+  job:
+    jarURI: local:///opt/flink/examples/streaming/StateMachineExample.jar
+    parallelism: 2
+    upgradeMode: last-state
+    state: running
+    args:
+    - --backend
+    - rocksdb
+    - --checkpoint-dir
+    - s3://replace-with-your-bucket/flink-state-demo/checkpoints
+    - --incremental-checkpoints
+    - 'true'
+  podTemplate:
+    spec:
+      securityContext:
+        fsGroup: 9999
+      containers:
+      - name: flink-main-container
+        env:
+        - name: ENABLE_BUILT_IN_PLUGINS
+          value: flink-s3-fs-hadoop-2.2.1.jar
+        volumeMounts:
+        - name: rocksdb-local
+          mountPath: /opt/flink/state
+      volumes:
+      - name: rocksdb-local
+        emptyDir: {}
+```
+
+StateMachineExample은 코드에서 checkpoint interval을 **2초로 설정**합니다.
+이 예제의 config도 그 값과 맞췄으며 min-pause=30초와 checkpoint 소요 시간 때문에
+실제 주기가 2초마다 고정되는 것은 아닙니다. 60초를 config에 넣어도 application 코드의
+명시적 설정이 덮어쓸 수 있으므로 실행 중 effective config를 확인합니다.
+
+Pod Identity를 선택한다면 IRSA 설정 대신 해당 SA의 association·Agent와 network
+경로를 준비하고, 이 v1 artifact에서는 com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+등 container credential을 포함하는 경로를 검증합니다. 1.12.779는 문서화된 Pod Identity
+최소 버전 1.12.746 이상이지만 SDK 지원 종료 문제까지 없어지는 것은 아닙니다.
+더 앞선 환경 변수·IRSA·다른 credential source가 선택되지 않는지도 확인합니다.
+
+배포 후 Running 상태뿐 아니라 실제 완료된 checkpoint, S3 metadata/data 파일,
+재시작 후 restore와 application 결과를 확인합니다. EmptyDir는 durable backup이 아닙니다.
+이 검토에서는 실제 AWS 배포나 장애 복구를 실행하지 않았습니다.
+
+## 4. Checkpoint와 savepoint의 수명
+
+| 항목 | Checkpoint | Savepoint |
+| --- | --- | --- |
+| 일반 목적 | 장애 복구를 위한 state/source 위치 | 계획된 복원·업그레이드·fork 지점 |
+| Trigger | 주기 또는 명시적 요청 | 사용자·Operator 요청; 자동화로 주기 생성 가능 |
+| 보존 | 개수·externalized retention·job 종료 정책에 따름 | 사용자/Operator 정책과 restore ownership에 따름 |
+| 형식·저장소 | JobManager 또는 filesystem storage 등 | Canonical/native 형식과 접근 가능한 저장소 |
+
+Savepoint가 영구적으로 자동 보존되는 것도, checkpoint가 항상 S3에 저장되는 것도
+아닙니다. Canonical은 backend 간 이식성을 고려한 형식이며 native는 backend별 형식입니다.
+State schema·UID·serializer·max parallelism·버전 호환성은 별도로 검증합니다.
+
+Restore의 CLAIM/NO_CLAIM은 snapshot 소유와 삭제 책임에 영향을 줍니다.
+RocksDB NO_CLAIM 복원 뒤 첫 checkpoint는 독립성을 확보하기 위해 full checkpoint가
+될 수 있습니다. 참조 관계가 끊기기 전에 원본 snapshot을 지우지 않습니다.
+Operator last-state도 HA metadata나 마지막 checkpoint/savepoint 등 접근 가능한
+상태를 사용하므로 “항상 마지막 checkpoint 하나만”으로 단순화하지 않습니다.
+
+### 새 savepoint를 고유 CR로 요청
+
+아래 generateName은 create 때 새 이름을 부여합니다. 같은 완료된 CR을 재사용해
+과거 snapshot을 새 성공으로 오인하지 않도록 합니다.
+
+```yaml
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkStateSnapshot
+metadata:
+  generateName: flink-state-before-upgrade-
+  namespace: data-processing
+spec:
+  jobReference:
+    kind: FlinkDeployment
+    name: flink-state-demo
+  savepoint:
+    formatType: CANONICAL
+    disposeOnDelete: false
+```
 ```bash
-kubectl exec -n flink deploy/order-events-processor -- \
-  flink savepoint <job-id> s3://my-flink-checkpoints/savepoints
+kubectl create -f savepoint.yaml
+kubectl get flinkstatesnapshots -n data-processing --watch
 ```
 
-또는 Operator가 같은 목적으로 제공하는 `FlinkStateSnapshot` CRD를 사용하면, 명령형 CLI 호출 대신 잡의 나머지 쿠버네티스 매니페스트와 함께 세이브포인트 라이프사이클을 선언적으로 관리할 수 있습니다.
+생성된 CR의 status.state=COMPLETED와 status.path를 확인합니다. FAILED/ABANDONED이면
+error와 job 상태를 조사합니다. disposeOnDelete=false는 이 예제의 보존 선택이며,
+기본 true 및 Operator snapshot 정리 정책과 다릅니다. 보존된 파일의 삭제 책임도 기록합니다.
 
-## Kafka로의 정확히 한 번(Exactly-Once) 전달
+## 5. Kafka exactly-once: checkpoint, transaction, consumer를 함께
 
-이 사이트의 [Kafka on EKS](../kafka/01-kafka-fundamentals.md) 섹션은 Kafka 자체의 내구성·파티셔닝 모델을 깊게 다룹니다. 이번 절은 Flink가 프로듀서 역할을 할 때 `KafkaSink`가 그 위에 정확히 한 번 시맨틱을 어떻게 얹는지를 다룹니다.
+KafkaSink의 EXACTLY_ONCE는 checkpoint 완료에 연동해 Kafka transaction을 commit합니다.
+재생 가능한 source와 복구 가능한 state, 올바른 sink 설정이 필요하며 downstream은
+read_committed로 읽어야 합니다. 모든 subtask·partition·다른 sink 시스템까지 하나의
+전역 atomic transaction이 되는 것은 아닙니다.
+한 Kafka transaction은 여러 topic/partition을 포함할 수 있지만, 여러 sink subtask의
+서로 다른 transaction 전체를 Flink checkpoint 하나와 동일시하지 않습니다.
 
-`DeliveryGuarantee.EXACTLY_ONCE`로 설정된 `KafkaSink`는 Kafka의 트랜잭션 프로듀서 API를 이용한 2단계 커밋(two-phase-commit, 2PC) 프로토콜을 사용하며, 이 프로토콜은 Flink 자체의 체크포인팅과 직접 맞물려 있습니다.
-
-1. 체크포인트 사이에 **KafkaWriter**는 열려 있는 Kafka 트랜잭션 안에서 레코드를 씁니다 — 데이터는 브로커에 존재하지만, `isolation.level=read_committed`로 읽는 컨슈머에게는 아직 보이지 않습니다.
-2. 잡 전체에 걸친 Flink 체크포인트가 성공적으로 완료되면, 그때서야 **KafkaCommitter**가 해당 Kafka 트랜잭션을 커밋합니다 — 이 시점에야 기록된 레코드가 다운스트림에 노출됩니다.
-3. 체크포인트가 완료되기 전에 잡이 실패하면 Flink는 마지막 체크포인트에서 복원하고, 아직 커밋되지 않은 Kafka 트랜잭션은 중단(또는 타임아웃)되므로 부분적인 출력이 노출되는 일은 없습니다.
+다음 helper는 Kafka connector 5.0.0-2.2와 Flink 2.2.1로 컴파일했습니다.
+Caller가 input stream, 실제 bootstrap 서버, TLS/SASL 등 producer 설정과 timeout을
+제공하고 application에서 execute해야 합니다. 자체 완결된 Kafka cluster 설치 예제는 아닙니다.
 
 ```java
-KafkaSink<String> sink = KafkaSink.<String>builder()
-    .setBootstrapServers("my-msk-cluster:9092")
-    .setRecordSerializer(KafkaRecordSerializationSchema.builder()
-        .setTopic("orders-enriched")
-        .setValueSerializationSchema(new SimpleStringSchema())
-        .build())
-    .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
-    .setTransactionalIdPrefix("orders-enrichment-job")
-    .build();
+import java.util.Properties;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.connector.base.DeliveryGuarantee;
+import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
+import org.apache.flink.connector.kafka.sink.KafkaSink;
+import org.apache.flink.streaming.api.datastream.DataStream;
+
+public final class KafkaExample {
+    private KafkaExample() {}
+
+    public static void attach(
+            DataStream<String> input,
+            String bootstrapServers,
+            String transactionalIdPrefix,
+            int transactionTimeoutMs,
+            Properties securityProperties) {
+        if (transactionTimeoutMs <= 0 || transactionalIdPrefix.isBlank()) {
+            throw new IllegalArgumentException("Positive timeout and a unique stable prefix are required");
+        }
+        Properties producer = new Properties();
+        producer.putAll(securityProperties);
+        producer.setProperty("transaction.timeout.ms", Integer.toString(transactionTimeoutMs));
+        input.getExecutionEnvironment().enableCheckpointing(60_000);
+
+        KafkaSink<String> sink = KafkaSink.<String>builder()
+                .setBootstrapServers(bootstrapServers)
+                .setKafkaProducerConfig(producer)
+                .setRecordSerializer(KafkaRecordSerializationSchema.<String>builder()
+                        .setTopic("orders-enriched")
+                        .setValueSerializationSchema(new SimpleStringSchema())
+                        .build())
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(transactionalIdPrefix)
+                .build();
+        input.sinkTo(sink).name("orders-enriched").uid("orders-enriched-sink");
+    }
+}
 ```
 
-`transactionalIdPrefix`는 안정적으로 고정해야 합니다. Flink는 각 서브태스크의 실제 트랜잭션 ID를 이 prefix로부터 파생시키는데, 복원 시점에 이전 실행에서 커미터가 만들었던 ID와 정확히 맞아떨어져야 장애로 열려 있던 트랜잭션을 올바르게 해소할 수 있습니다.
+transactionalIdPrefix는 같은 Kafka cluster의 독립적인 동시 sink/job 사이에서
+고유해야 하며 재시작 동안 안정적으로 유지합니다. 변경하면 이전 transaction이
+제대로 중단되지 않아 timeout까지 read_committed 진행이 막힐 수 있습니다.
+Blue/green의 두 실행에 무조건 같은 prefix를 주면 fencing/충돌 위험이 있습니다.
 
-이 기능을 켜기 전에 짚어야 할 현실적인 함정이 두 가지 있습니다.
+5.0.0 builder의 기본 transaction timeout은 **1시간**입니다. Broker의 허용 최대값과
+맞추고, 최대 checkpoint·재시작·복구 시간보다 충분히 길게 설계합니다.
+Transaction 만료 후에는 설정 문자열만으로 exactly-once를 복구할 수 없습니다.
 
-* **출력 지연**: Kafka 트랜잭션은 이를 감싸는 Flink 체크포인트가 완료돼야 커밋되므로, `read_committed`로 읽는 다운스트림 컨슈머는 대략 체크포인트 주기만큼 늦게 결과를 보게 됩니다. 체크포인트 주기가 60초라면 종단 간 지연이 최대 60초 정도 추가된다는 뜻입니다.
-* **트랜잭션 코디네이터 부담**: 이 지연을 줄이려고 체크포인트 주기를 짧게 잡으면 Kafka 쪽에 대가가 따릅니다. 체크포인트 주기마다 싱크 서브태스크별로 새 트랜잭션이 열리는데, 병렬 서브태스크가 많은 상태에서 체크포인트 주기를 몇 초 단위로 줄이면 브로커의 트랜잭션 코디네이터가 추적해야 하는 트랜잭션 ID가 넘쳐날 수 있습니다. 체크포인트 주기는 순수하게 복구 속도만 보고 정할 게 아니라, 허용 가능한 출력 지연과 코디네이터 부담 사이의 균형으로 조정해야 합니다.
+60초 checkpoint interval은 “추가 지연 최대 60초”라는 상한이 아닙니다.
+대기·checkpoint 소요 시간·commit·실패/재시도·consumer 지연이 합쳐집니다.
+짧은 주기는 commit/metadata 부하를 늘립니다. 기본 INCREMENTING naming은 새 ID를
+사용하지만, 선택 가능한 POOLING은 ID를 재사용하며 Kafka 3+·추가 topic read 권한·
+정해진 migration 절차가 필요합니다. 모든 설정이 매번 새 ID를 무한히 만든다고 일반화하지 않습니다.
 
-## 스트리밍 패턴: Kafka에서 S3/Iceberg로
+## 6. Dynamic Iceberg sink: 실제 API와 별도 runtime
 
-이 사이트에서 EKS의 Kafka와 가장 흔하게 짝을 이루는 패턴은 MSK에서 Flink를 거쳐 다운스트림 분석용으로 S3 위의 Apache Iceberg 테이블에 데이터를 적재하는 것입니다.
-
-![Kafka 소스 토픽에서 유입된 데이터가 Flink Job의 TaskManager(RocksDB 상태 백엔드)에서 처리되며 주기적으로 S3에 체크포인트를 남기고, 싱크 단계에서 KafkaSink(EXACTLY_ONCE 2PC)와 Dynamic Iceberg Sink 두 갈래로 결과가 나가는 스트리밍 상태 관리 흐름도.](../../../assets/diagrams/rendered/ko-data-on-eks-flink-03-state-checkpointing-streaming-0.svg)
-
-### Dynamic Iceberg Sink
-
-2025년 11월 Iceberg Flink 커넥터에 추가된 Dynamic Iceberg Sink는 기존 Iceberg 싱크를 확장해 **하나의 싱크에서 여러 Iceberg 테이블에 쓸 수** 있게 해줍니다. 각 레코드마다 대상 테이블을 선택하고, 레코드 내용이 요구하는 대로 각 테이블의 스키마를 자동으로 진화시킵니다. 개념적으로는 다음과 같습니다.
+Iceberg 1.11.0 / Flink 2.1.3용 helper입니다. Input RowData는
+target_table STRING, id BIGINT, value STRING 순서이며, 예제는 **insert-only**입니다.
+CatalogLoader는 caller가 catalog·warehouse·인증을 구성해 제공합니다.
+대상 table 이름은 신뢰 경계와 허용 목록으로 제한합니다.
 
 ```java
-// 예시 코드 — 각 레코드의 대상 테이블/스키마는 잡 그래프 구성 시점이 아니라
-// 런타임에 레코드 내용으로부터 결정됩니다.
-DynamicIcebergSink.forRecords(stream)
-    .withTableIdentifierSelector(record -> record.getTargetTable())
-    .withSchemaEvolutionEnabled(true)
-    .build();
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.table.data.GenericRowData;
+import org.apache.flink.table.data.RowData;
+import org.apache.iceberg.DistributionMode;
+import org.apache.iceberg.PartitionSpec;
+import org.apache.iceberg.Schema;
+import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.flink.CatalogLoader;
+import org.apache.iceberg.flink.sink.dynamic.DynamicIcebergSink;
+import org.apache.iceberg.flink.sink.dynamic.DynamicRecord;
+import org.apache.iceberg.types.Types;
+
+public final class IcebergExample {
+    private IcebergExample() {}
+    private static final Schema PAYLOAD_SCHEMA = new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.optional(2, "value", Types.StringType.get()));
+
+    // Insert-only input RowData: target_table STRING, id BIGINT, value STRING.
+    // The caller supplies an authenticated, authorized CatalogLoader.
+    public static void attach(DataStream<RowData> input, CatalogLoader catalogLoader) {
+        input.getExecutionEnvironment().enableCheckpointing(60_000);
+        DynamicIcebergSink.forInput(input)
+                .generator((row, out) -> {
+                    TableIdentifier target = TableIdentifier.of("docs", row.getString(0).toString());
+                    GenericRowData payload = GenericRowData.of(
+                            row.getLong(1), row.isNullAt(2) ? null : row.getString(2));
+                    out.collect(new DynamicRecord(
+                            target, "main", PAYLOAD_SCHEMA, payload,
+                            PartitionSpec.unpartitioned(), DistributionMode.HASH, 2));
+                })
+                .catalogLoader(catalogLoader)
+                .uidPrefix("docs-dynamic-iceberg")
+                .writeParallelism(2)
+                .append();
+    }
+}
 ```
 
-이 기능은 CDC 팬아웃에 특히 잘 맞습니다. Debezium 소스 기반의 Kafka 토픽 하나(또는 소스 테이블별 토픽)에 여러 소스 테이블의 insert/update/delete가 섞여 들어와도, 레코드별로 맞는 Iceberg 테이블로 라우팅하고 상류 스키마가 바뀌면 새 컬럼을 자동으로 반영할 수 있어 테이블마다 별도 싱크를 손으로 관리할 필요가 없습니다.
+실제 API는 forInput → generator → catalogLoader → append입니다.
+Generator는 record를 return하는 대신 Collector에 0개 이상을 보냅니다.
+기존 forRecords/withTableIdentifierSelector/withSchemaEvolutionEnabled 예제는 이
+릴리스에 없는 API였습니다.
 
-### Flink가 꼭 필요하지 않은 경우
+각 DynamicRecord에 target·schema·RowData·partition spec 등을 제공합니다.
+Schema evolution은 허용되는 변경과 설정에 따르며 arbitrary rename/type 변경을
+자동 해결하지 않습니다. CDC update/delete에는 RowKind, equality fields, upsert와
+table-format 지원을 검증해야 합니다. 이 insert-only helper를 그대로 CDC 처리기로 쓰지 않습니다.
+여러 table의 commit이나 Kafka와 Iceberg 동시 출력도 전역 atomic commit이 아닙니다.
 
-MSK의 데이터를 S3 위의 Iceberg로 옮기는 방법이 Flink만 있는 것은 아니며, Flink의 프로그래밍 유연성이 그만큼의 운영 비용을 감당할 가치가 있는지 의식적으로 판단해야 합니다.
+단순 적재에는 MSK → Firehose → S3 Tables/Iceberg 또는 MSK Connect sink도 검토할 수
+있습니다. 지원 source/network·인증·catalog/table format·row operation·key·buffering과
+실패 처리 조건을 확인합니다. 예를 들어 Firehose Iceberg는 문서화된 V2/Parquet/MOR
+조건이 있습니다. 관리형이라는 이유로 구성·schema·전달 의미 검증이 없어지지는 않습니다.
 
-* **MSK → Data Firehose → S3 Tables/Iceberg**: 완전관리형이고 코드가 필요 없는 경로입니다. Firehose는 기본적인 포맷 변환과 버퍼링만으로 S3 Tables(Iceberg 기반)에 직접 쓸 수 있어, 별도로 운영할 클러스터가 전혀 없습니다.
-* **MSK Connect + Iceberg 싱크 커넥터**: 관리형 MSK Connect 위에서 동작하는 Kafka Connect 커넥터가 토픽 데이터를 Iceberg 테이블에 바로 씁니다. 범용 스트림 프로세서 없이 커넥터 수준의 설정만으로 충분합니다.
-* **Flink on EKS**: 조인, 윈도우 집계, 레코드별 라우팅 로직, 복잡한 이벤트 타임 처리, 앞서 설명한 동적 멀티 테이블 팬아웃처럼 실제 연산이 필요할 때 선택합니다. 파이프라인이 단순 패스스루이거나 포맷 변환 정도라면 Firehose나 MSK Connect 파이프라인이 구축·운영 부담이 훨씬 적습니다.
+![State checkpoints and sink commits are separate boundaries; Kafka and Iceberg examples use their listed runtime profiles.](../../.gitbook/assets/ko-data-on-eks-flink-03-state-checkpointing-streaming-0.png)
 
-## Flink SQL/Table API vs DataStream API
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-flink-03-state-checkpointing-streaming-0.html)
 
-Flink는 두 가지 서로 다른 프로그래밍 표면을 제공하며, 처음부터 적절한 쪽을 고르면 나중에 잡을 다시 작성하는 일을 피할 수 있습니다.
+## 7. SQL, time attribute와 늦은 데이터
 
-| | Flink SQL / Table API | DataStream API |
-| --- | --- | --- |
-| **적합한 용도** | SQL로 표현 가능한 일반적인 ETL, 집계, 윈도우, 조인 | 커스텀 오퍼레이터, 복잡한 이벤트 타임/상태 로직, 세밀한 제어 |
-| **코드량** | 적음 — 선언적 쿼리 | 많음 — Java/Python/Scala로 명시적인 오퍼레이터 체인 작성 |
-| **내장 커넥터** | Kafka, Iceberg, JDBC 등이 SQL 커넥터로 기본 제공 | 같은 커넥터를 사용할 수 있지만 명령형으로 직접 연결해야 함 |
-| **내부 동작 제어** | 제한적 — 플래너가 오퍼레이터 동작을 결정 | 체크포인트 배리어, 백프레셔 처리, 커스텀 상태 접근까지 완전한 제어 |
-| **권장 시작점** | 대부분의 작업에서 Yes | SQL/Table API로 표현이 안 될 때만 |
+SQL/Table API는 관계형 변환·집계를 선언적으로 표현하고, DataStream은 사용자 state·
+timer·operator 로직을 표현합니다. SQL도 고급 기능을 제공하며 DataStream이라고
+checkpoint barrier나 backpressure를 임의로 우회할 수 있는 것은 아닙니다.
+2.x의 공개 API 지원과 connector/format JAR을 확인합니다. Kafka/Iceberg/JDBC가
+항상 기본 배포판에 모두 들어 있거나 모든 Scala API가 유지된다고 가정하지 않습니다.
 
-단순한 윈도우 집계는 SQL로 쓰면 실제로 코드가 훨씬 짧습니다.
+아래는 watermark가 있는 table 정의까지 포함한 planning 예제입니다.
+실행 전 broker·보안 설정과 JSON 필드/시간 인코딩을 실제 source에 맞춥니다.
 
 ```sql
-SELECT
-  window_start,
-  window_end,
-  customer_id,
-  SUM(amount) AS total_amount
-FROM TABLE(
-  TUMBLE(TABLE orders, DESCRIPTOR(event_time), INTERVAL '1' MINUTE))
+-- Schema/planning example. Supply real broker/authentication settings before execution.
+CREATE TEMPORARY TABLE orders (
+  customer_id STRING,
+  amount DECIMAL(12,2),
+  event_time TIMESTAMP(3),
+  WATERMARK FOR event_time AS event_time - INTERVAL '5' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'topic' = 'orders',
+  'properties.bootstrap.servers' = 'kafka.example.invalid:9093',
+  'properties.group.id' = 'docs-orders',
+  'scan.startup.mode' = 'earliest-offset',
+  'format' = 'json'
+);
+
+SELECT window_start, window_end, customer_id, SUM(amount) AS total_amount
+FROM TABLE(TUMBLE(TABLE orders, DESCRIPTOR(event_time), INTERVAL '1' MINUTE))
 GROUP BY window_start, window_end, customer_id;
 ```
 
-같은 로직을 DataStream API로 작성하려면 명시적인 `KeyedStream`, 윈도우 호출, 커스텀 집계 함수가 필요합니다 — 코드는 더 많아지지만, 체크포인트 정렬을 수동으로 제어하거나 커스텀 상태를 다루는 오퍼레이터를 직접 작성해야 하는 등 Table API 플래너가 노출하지 않는 무언가가 필요해지는 순간부터는 필수적인 선택이 됩니다.
+Flink 2.2.1 플래너에서 이 쿼리가 계획되는 것과, watermark 없는 일반 TIMESTAMP
+컬럼으로 바꾸면 time attribute 오류로 거부되는 것을 확인했습니다.
+실제 Kafka 데이터를 읽거나 window 결과를 실행한 검증은 아닙니다.
 
-## 윈도우와 워터마크
+Watermark는 event-time 진행 추정치이며 오래된 이벤트가 절대로 오지 않는다는
+보장이 아닙니다. 모든 record에 event timestamp가 자동으로 존재하지도 않습니다.
+Timestamp 추출·watermark 전략과 partition별 idleness를 구성합니다.
+느린/유휴 input이 진행을 막을 수 있고, 다시 활성화된 input은 늦은 데이터를 낼 수 있습니다.
 
-두 API 모두 같은 이벤트 타임 모델 위에서 동작합니다. 모든 레코드는 이벤트 타임 타임스탬프를 가지고 있고, **워터마크**는 스트림에 주기적으로 삽입되는 일종의 휴리스틱 신호로, "이 워터마크보다 오래된 타임스탬프를 가진 레코드는 더 이상 오지 않는다"는 것을 알려줍니다. 윈도우는 이 워터마크를 기준으로 언제 결과를 안전하게 닫고 내보낼지 판단합니다. 벽시계(처리) 시간에만 의존하면 컨슈머가 지연되거나 과거 데이터를 재처리할 때 결과가 일관되지 않을 수 있기 때문입니다.
+- Tumbling: 고정 크기의 겹치지 않는 window.
+- Sliding: 고정 크기와 slide 간격의 window; slide가 작으면 겹칩니다.
+- Session: event-time gap과 watermark 진행으로 묶이며 단순 wall-clock idle timer와 다릅니다.
 
-표준 윈도우 유형은 대부분의 사용 사례를 다룹니다.
+DataStream window의 allowedLateness>0이면 state가 유지되는 동안 늦은 record로
+window가 다시 계산/발행될 수 있습니다. Cleanup 이후 늦은 데이터는 버려지거나
+명시적으로 구성한 late-data side output으로 갑니다.
+allowedLateness만 설정한다고 side output이 자동 생성되지 않습니다.
+SQL window의 late-data 동작을 같은 DataStream 옵션으로 일반화하지 않습니다.
 
-* **텀블링(Tumbling) 윈도우**: 고정 크기, 겹치지 않음(예: "1분 단위 구간").
-* **슬라이딩(Sliding) 윈도우**: 고정 크기지만 더 작은 스텝으로 겹침(예: "최근 5분을 1분마다 다시 계산").
-* **세션(Session) 윈도우**: 크기가 동적으로 결정되며, 설정된 타임아웃보다 긴 비활성 구간이 지나면 닫힘 — 고정된 윈도우 경계 없이 키별로 활동이 몰리는 구간(예: 사용자 세션)을 묶는 데 유용합니다.
+## 검증 범위
 
-늦게 도착한 데이터 — 이미 워터마크가 지나간 윈도우에 도착한 레코드 — 는 설정된 `allowedLateness`에 따라 버려지거나 별도 처리를 위한 **사이드 출력(side output)**으로 라우팅됩니다.
+서로 다른 두 runtime 조합의 Java helper를 release 17 대상으로 컴파일했습니다.
+SQL 플래너의 정상/누락-watermark 두 경우, S3 plugin archive의 v1 credential class,
+CRD/YAML 구조와 릴리스 소스를 확인했습니다. 로컬 Java 도구는 Corretto 21이었으며
+Java 17 cluster의 실제 실행·AWS/Kafka/Iceberg 연결·CDC·장애 복구 시험은 하지 않았습니다.
 
-## 실습 환경 준비
+## 참고 자료
 
-이번 Part의 패턴을 따라 해보려면 다음이 필요합니다.
+- [Flink 2.2 state backends](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/ops/state/state_backends/)
+- [Checkpoint configuration](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/fault-tolerance/checkpointing/)
+- [Savepoints and ownership](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/ops/state/savepoints/)
+- [S3 filesystem plugins](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/filesystems/s3/)
+- [S3 plugin dependencies](https://github.com/apache/flink/blob/release-2.2.1/flink-filesystems/flink-s3-fs-base/pom.xml)
+- [Bundled StateMachineExample](https://github.com/apache/flink/blob/release-2.2.1/flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/statemachine/StateMachineExample.java)
+- [Operator snapshots](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/docs/content/docs/custom-resource/snapshots.md)
+- [Kafka connector 5.0.0 sink](https://github.com/apache/flink-connector-kafka/blob/v5.0.0/flink-connector-kafka/src/main/java/org/apache/flink/connector/kafka/sink/KafkaSink.java)
+- [Kafka transaction naming](https://github.com/apache/flink-connector-kafka/blob/v5.0.0/flink-connector-kafka/src/main/java/org/apache/flink/connector/kafka/sink/TransactionNamingStrategy.java)
+- [Iceberg release/runtime matrix](https://iceberg.apache.org/releases/)
+- [Iceberg 1.11 DynamicIcebergSink](https://github.com/apache/iceberg/blob/apache-iceberg-1.11.0/flink/v2.1/flink/src/main/java/org/apache/iceberg/flink/sink/dynamic/DynamicIcebergSink.java)
+- [Windows and late data](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/operators/windows/)
+- [Watermarks and idleness](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/event-time/generating_watermarks/)
+- [EKS Pod Identity SDK requirements](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-minimum-sdk.html)
+- [AWS SDK for Java 1.x support status](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/document-history.html)
+- [Firehose Iceberg prerequisites](https://docs.aws.amazon.com/firehose/latest/dev/apache-iceberg-prereq.html)
 
-* Part 2에서 사용한 EKS 클러스터에 대한 `kubectl` 접근 권한 — Flink Kubernetes Operator가 설치되어 있고 `FlinkDeployment`/`FlinkSessionJob`이 이미 실행 중이어야 합니다.
-* 체크포인트·세이브포인트 저장용 S3 버킷, 그리고 Flink 잡의 IRSA 역할에 해당 버킷에 대한 `s3:PutObject`/`s3:GetObject`/`s3:ListBucket` 권한:
+[Part 4: Operations and HA](04-operations-ha.md)
 
-```bash
-aws s3 mb s3://my-flink-checkpoints --region us-east-1
-```
+[README](README.md)
 
-* (선택) Flink 잡의 VPC/서브넷에서 접근 가능한 MSK 클러스터 — 위 정확히 한 번 예제의 소스/싱크로 사용할 토픽이 미리 생성돼 있어야 합니다.
-
-```bash
-kubectl get flinkdeployment -n flink
-kubectl logs -n flink deploy/order-events-processor
-```
-
-## 다음 단계
-
-이번 Part에서는 Flink가 상태를 정확하고 복구 가능하게 유지하는 방법 — 상태 백엔드, 체크포인트와 세이브포인트의 구분, Kafka로의 정확히 한 번 전달, MSK와 S3의 Iceberg를 잇는 스트리밍 패턴 — 을 다뤘습니다. 이 시리즈의 다음 Part는 잡 수준의 관심사에서 클러스터 수준의 운영으로 넘어가, EKS에서 Flink를 프로덕션으로 운영할 때의 모니터링과 스케일링을 다룹니다.
-
-[메인 페이지로 돌아가기](./README.md)
-
-## 퀴즈
-
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)를 풀어보세요.
+[Quiz](../../quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)

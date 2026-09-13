@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "패턴 4: EKS 컨트롤 플레인 → 웹훅 Pod",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [1080, 640],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": { "label": "라우팅 홉" },
+        "emphasis": { "label": "웹훅 연결 · TCP 8443+" },
+        "security": { "label": "경계 통과 · VPN/DX" }
+      }
+    },
+    "views": [
+      { "id": "aws-side", "label": "AWS 측 라우팅", "focus": ["cp", "eni", "vpcrouter", "gateway"], "note": "API 서버가 시작한 연결이 CP ENI를 거쳐 VPC 라우팅 테이블의 10.85.0.0/16 static 경로로 Gateway에 도달한다." },
+      { "id": "boundary", "label": "경계 통과", "focus": ["gateway", "onprem"], "note": "VPN 또는 Direct Connect를 통해 온프레미스 Gateway/Router로 넘어간다. 원격 파드 CIDR이 라우팅 가능해야 한다." },
+      { "id": "onprem-side", "label": "온프레미스 측 전달", "focus": ["onprem", "node", "cni", "pod"], "note": "온프레미스 라우터가 10.85.1.0/24를 노드 10.80.0.2로 보내고, iptables와 CNI를 거쳐 웹훅 Pod에 도달한다." }
+    ]
+  },
+  "participants": [
+    { "id": "cp", "type": "cloud", "label": "EKS CP", "sublabel": "API 서버" },
+    { "id": "eni", "type": "cloud", "label": "CP ENI", "sublabel": "10.0.0.132" },
+    { "id": "vpcrouter", "type": "cloud", "label": "라우터", "sublabel": "VPC 10.0.0.0/16" },
+    { "id": "gateway", "type": "security", "label": "Gateway", "sublabel": "VPN / DX" },
+    { "id": "onprem", "type": "external", "label": "온프레미스", "sublabel": "Router 10.80.0.0/16" },
+    { "id": "node", "type": "backend", "label": "노드", "sublabel": "Hybrid · 10.80.0.2" },
+    { "id": "cni", "type": "backend", "label": "CNI", "sublabel": "10.85.1.0/24" },
+    { "id": "pod", "type": "frontend", "label": "웹훅", "sublabel": "Pod 10.85.1.23" }
+  ],
+  "segments": [
+    { "from": 160, "to": 300, "label": "AWS — Cluster VPC 10.0.0.0/16" },
+    { "from": 318, "to": 385, "label": "클라우드 경계 통과" },
+    { "from": 403, "to": 560, "label": "온프레미스 — Remote Pod CIDR 10.85.0.0/16" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "cp", "to": "eni", "y": 195, "label": "1. 웹훅 호출 시작 → 10.85.1.23", "variant": "emphasis", "note": "API 서버가 웹훅 Pod IP로 직접 연결을 시작" },
+    { "id": "m2", "from": "eni", "to": "vpcrouter", "y": 240, "label": "2. VPC 라우터로 전달" },
+    { "from": "vpcrouter", "to": "gateway", "y": 285, "label": "3. 10.85.0.0/16 [static] via Gateway", "id": "m3" },
+    { "id": "m4", "from": "gateway", "to": "onprem", "y": 355, "label": "4. VPN/DX로 경계 통과", "variant": "security" },
+    { "id": "m5", "from": "onprem", "to": "node", "y": 440, "label": "5. 10.85.1.0/24 [dynamic] via 10.80.0.2" },
+    { "id": "m6", "from": "node", "to": "cni", "y": 485, "label": "6. iptables 통과" },
+    { "id": "m7", "from": "cni", "to": "pod", "y": 530, "label": "7. 웹훅 Pod에 전달", "variant": "emphasis" }
+  ],
+  "activations": [
+    { "participant": "cp", "from": 185, "to": 540, "type": "cloud" },
+    { "participant": "gateway", "from": 280, "to": 362, "type": "security" },
+    { "participant": "node", "from": 435, "to": 492, "type": "backend" },
+    { "participant": "pod", "from": 525, "to": 540, "type": "frontend" }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "VPC 라우팅 테이블",
+      "items": [
+        "10.0.0.0/16 [local]",
+        "10.80.0.0/16 [static] via Gateway",
+        "10.85.0.0/16 [static] via Gateway"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "온프레미스 라우팅 테이블",
+      "items": [
+        "10.80.0.0/16 [local] via eth0",
+        "10.0.0.0/16 [static] via Gateway",
+        "10.85.1.0/24 [dynamic] via 10.80.0.2",
+        "10.85.2.0/24 [dynamic] via 10.80.0.3"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "요구 사항",
+      "items": [
+        "라우팅 가능한 파드 CIDR이 필요 (AWS → On-Prem, TCP 8443+)",
+        "온프레미스 파드 CIDR이 라우팅 불가능하면 모든 웹훅을 클라우드 노드에서 실행",
+        "VPC 라우팅 테이블에 원격 파드 CIDR 경로가 있어야 함"
+      ]
+    }
+  ]
+}

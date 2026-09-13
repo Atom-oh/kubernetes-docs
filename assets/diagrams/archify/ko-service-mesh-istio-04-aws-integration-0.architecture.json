@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "NLB 아키텍처",
+    "output": "ko-service-mesh-istio-04-aws-integration-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "외부 사용자",
+      "pos": [
+        0,
+        290
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "Network Load Balancer",
+      "sublabel": "Layer 4 · TCP/UDP",
+      "pos": [
+        250,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "igw1",
+      "type": "backend",
+      "label": "Gateway Pod 1",
+      "sublabel": "Envoy Proxy",
+      "pos": [
+        560,
+        130
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "igw2",
+      "type": "backend",
+      "label": "Gateway Pod 2",
+      "sublabel": "Envoy Proxy",
+      "pos": [
+        560,
+        450
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Pod",
+      "pos": [
+        850,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "Pod",
+      "pos": [
+        1070,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 클라우드",
+      "wraps": [
+        "nlb",
+        "igw1",
+        "igw2",
+        "app1",
+        "app2"
+      ],
+      "pad": 100
+    },
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "igw1",
+        "igw2",
+        "app1",
+        "app2"
+      ],
+      "pad": 60
+    },
+    {
+      "kind": "security-group",
+      "label": "Istio Ingress Gateway",
+      "wraps": [
+        "igw1",
+        "igw2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "애플리케이션",
+      "wraps": [
+        "app1",
+        "app2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-nlb",
+      "from": "client",
+      "to": "nlb",
+      "label": "HTTPS 요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "nlb-igw1",
+      "from": "nlb",
+      "to": "igw1",
+      "label": "TCP 443",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "nlb-igw2",
+      "from": "nlb",
+      "to": "igw2",
+      "label": "TCP 443",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "igw1-app1",
+      "from": "igw1",
+      "to": "app1",
+      "label": "HTTP/HTTPS",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          645,
+          240
+        ],
+        [
+          935,
+          240
+        ]
+      ]
+    },
+    {
+      "id": "igw2-app1",
+      "from": "igw2",
+      "to": "app1",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          645,
+          400
+        ],
+        [
+          935,
+          400
+        ]
+      ]
+    },
+    {
+      "id": "igw1-app2",
+      "from": "igw1",
+      "to": "app2",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          1155,
+          160
+        ]
+      ]
+    },
+    {
+      "id": "igw2-app2",
+      "from": "igw2",
+      "to": "app2",
+      "label": "HTTP/HTTPS",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          1155,
+          480
+        ]
+      ]
+    }
+  ]
+}

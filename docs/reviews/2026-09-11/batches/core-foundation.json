@@ -1,0 +1,888 @@
+[
+  {
+    "path": "en/core/01-cluster-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected current-version scope, obsolete APIs/flags, runtime and communication behavior, invalid examples, etcd recovery, storage, and quiz parity.",
+    "sources": [
+      "https://kubernetes.io/releases/",
+      "https://kubernetes.io/docs/reference/scheduling/config/",
+      "https://kubernetes.io/docs/reference/networking/virtual-ips/",
+      "https://kubernetes.io/docs/setup/best-practices/cluster-large/",
+      "https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/",
+      "https://kubernetes.io/docs/setup/production-environment/container-runtimes/",
+      "https://etcd.io/docs/v3.6/op-guide/recovery/",
+      "https://etcd.io/docs/v3.6/op-guide/failures/",
+      "https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/",
+      "https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/",
+      "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx",
+      "https://raw.githubusercontent.com/kubernetes/dashboard/master/README.md",
+      "https://github.com/weaveworks/weave",
+      "https://kubernetes.io/docs/concepts/services-networking/"
+    ],
+    "findings": [
+      "Replaced removed scheduler plugins/kubelet flags and in-tree EBS examples; corrected runtime/proxy modes, API server–kubelet flow, CSI ownership and cluster size limits.",
+      "Added missing selector/YAML separator and etcd TLS settings; replaced unsafe Docker-wide etcd recovery with scoped runbook guidance.",
+      "Corrected VPC CNI configuration and distinguished upstream/EKS support. Removed stale prerelease timeline with incorrect patch dates.",
+      "Quiz: supplied weight: 2, retained cordon filtering, corrected etcd partition reads and L4 TLS pass-through.",
+      "Parent followup: inspect architecture diagram 0/3 arrows; kube-proxy does not drive the container runtime, and kubelet watches PodSpecs instead of receiving API-server pushes on 10250.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed.",
+      "Replaced archived Dashboard recommendation, marked archived Weave historical, and corrected node-to-local-Pod vs internet connectivity requirements."
+    ],
+    "validation": [
+      "Read lines 1–1829 in full; no cluster commands executed.",
+      "Official source passages fetched and bilingual corrections applied",
+      "Static validation: 24 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/core/01-cluster-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected current-version scope, obsolete APIs/flags, runtime and communication behavior, invalid examples, etcd recovery, storage, and quiz parity.",
+    "sources": [
+      "https://kubernetes.io/releases/",
+      "https://kubernetes.io/docs/reference/scheduling/config/",
+      "https://kubernetes.io/docs/reference/networking/virtual-ips/",
+      "https://kubernetes.io/docs/setup/best-practices/cluster-large/",
+      "https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/",
+      "https://kubernetes.io/docs/setup/production-environment/container-runtimes/",
+      "https://etcd.io/docs/v3.6/op-guide/recovery/",
+      "https://etcd.io/docs/v3.6/op-guide/failures/",
+      "https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/",
+      "https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/",
+      "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx",
+      "https://raw.githubusercontent.com/kubernetes/dashboard/master/README.md",
+      "https://github.com/weaveworks/weave",
+      "https://kubernetes.io/docs/concepts/services-networking/"
+    ],
+    "findings": [
+      "Replaced removed scheduler plugins/kubelet flags and in-tree EBS examples; corrected runtime/proxy modes, API server–kubelet flow, CSI ownership and cluster size limits.",
+      "Added missing selector/YAML separator and etcd TLS settings; replaced unsafe Docker-wide etcd recovery with scoped runbook guidance.",
+      "Corrected VPC CNI configuration and distinguished upstream/EKS support. Removed stale prerelease timeline with incorrect patch dates.",
+      "Quiz: supplied weight: 2, retained cordon filtering, corrected etcd partition reads and L4 TLS pass-through.",
+      "Parent followup: inspect architecture diagram 0/3 arrows; kube-proxy does not drive the container runtime, and kubelet watches PodSpecs instead of receiving API-server pushes on 10250.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed.",
+      "Replaced archived Dashboard recommendation, marked archived Weave historical, and corrected node-to-local-Pod vs internet connectivity requirements."
+    ],
+    "validation": [
+      "Full sequential reading completed, including re-reading truncated output gaps.",
+      "Official source passages fetched and bilingual corrections applied",
+      "Static validation: 24 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/01-cluster-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected current-version scope, obsolete APIs/flags, runtime and communication behavior, invalid examples, etcd recovery, storage, and quiz parity.",
+    "sources": [
+      "https://kubernetes.io/releases/",
+      "https://kubernetes.io/docs/reference/scheduling/config/",
+      "https://kubernetes.io/docs/reference/networking/virtual-ips/",
+      "https://kubernetes.io/docs/setup/best-practices/cluster-large/",
+      "https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/",
+      "https://kubernetes.io/docs/setup/production-environment/container-runtimes/",
+      "https://etcd.io/docs/v3.6/op-guide/recovery/",
+      "https://etcd.io/docs/v3.6/op-guide/failures/",
+      "https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/",
+      "https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/",
+      "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html"
+    ],
+    "findings": [
+      "Aligned proxy/CSI answers; added missing scheduler weight, retained NodeUnschedulable, added etcd mTLS authentication, corrected partition behavior and TLS load-balancer guidance."
+    ],
+    "validation": [
+      "Full sequential reading completed, including re-reading truncated output gaps.",
+      "Official source passages fetched and bilingual corrections applied",
+      "Static validation: 3 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/01-cluster-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected current-version scope, obsolete APIs/flags, runtime and communication behavior, invalid examples, etcd recovery, storage, and quiz parity.",
+    "sources": [
+      "https://kubernetes.io/releases/",
+      "https://kubernetes.io/docs/reference/scheduling/config/",
+      "https://kubernetes.io/docs/reference/networking/virtual-ips/",
+      "https://kubernetes.io/docs/setup/best-practices/cluster-large/",
+      "https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/",
+      "https://kubernetes.io/docs/setup/production-environment/container-runtimes/",
+      "https://etcd.io/docs/v3.6/op-guide/recovery/",
+      "https://etcd.io/docs/v3.6/op-guide/failures/",
+      "https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/",
+      "https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/",
+      "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html"
+    ],
+    "findings": [
+      "Aligned proxy/CSI answers; added missing scheduler weight, retained NodeUnschedulable, added etcd mTLS authentication, corrected partition behavior and TLS load-balancer guidance."
+    ],
+    "validation": [
+      "Full sequential reading completed, including re-reading truncated output gaps.",
+      "Official source passages fetched and bilingual corrections applied",
+      "Static validation: 3 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/core/02-pods-and-workloads.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Repaired workload manifests and Markdown; corrected lifecycle, backup, and StatefulSet HA claims; synchronized quiz answers.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+      "https://kubernetes.io/docs/concepts/cluster-administration/logging/",
+      "https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/",
+      "https://dev.mysql.com/doc/refman/8.4/en/docker-mysql-more-topics.html",
+      "https://www.postgresql.org/docs/14/app-pgdump.html",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Removed orphan Mermaid/fence and nonexistent TOC targets; repaired shared-volume wiring and multi-object YAML.",
+      "Replaced broken MySQL replication/HA manifests with an explicitly single-instance StatefulSet and operator-responsibility quiz.",
+      "Corrected native-sidecar, stop signal/preStop, EndpointSlice termination, PDB bypass, Deployment condition, CronJob time zone and job completion explanations.",
+      "Made backup fail before retention on dump errors; restricted retention to backup files. Updated control-plane taint and CRI log paths.",
+      "Quiz now accepts both non-built-in Deployment strategies and distinguishes Job history from backup retention.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed."
+    ],
+    "validation": [
+      "Read lines 1–1558 in full.",
+      "Official source passages checked; paired edits complete",
+      "Static validation: 31 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/core/02-pods-and-workloads.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Repaired workload manifests and Markdown; corrected lifecycle, backup, and StatefulSet HA claims; synchronized quiz answers.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+      "https://kubernetes.io/docs/concepts/cluster-administration/logging/",
+      "https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/",
+      "https://dev.mysql.com/doc/refman/8.4/en/docker-mysql-more-topics.html",
+      "https://www.postgresql.org/docs/14/app-pgdump.html",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Removed orphan Mermaid/fence and nonexistent TOC targets; repaired shared-volume wiring and multi-object YAML.",
+      "Replaced broken MySQL replication/HA manifests with an explicitly single-instance StatefulSet and operator-responsibility quiz.",
+      "Corrected native-sidecar, stop signal/preStop, EndpointSlice termination, PDB bypass, Deployment condition, CronJob time zone and job completion explanations.",
+      "Made backup fail before retention on dump errors; restricted retention to backup files. Updated control-plane taint and CRI log paths.",
+      "Quiz now accepts both non-built-in Deployment strategies and distinguishes Job history from backup retention.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed."
+    ],
+    "validation": [
+      "Read every line in full.",
+      "Official source passages checked; paired edits complete",
+      "Static validation: 31 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/02-pods-and-workloads-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Repaired workload manifests and Markdown; corrected lifecycle, backup, and StatefulSet HA claims; synchronized quiz answers.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+      "https://kubernetes.io/docs/concepts/cluster-administration/logging/",
+      "https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/",
+      "https://dev.mysql.com/doc/refman/8.4/en/docker-mysql-more-topics.html",
+      "https://www.postgresql.org/docs/14/app-pgdump.html",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Removed orphan Mermaid/fence and nonexistent TOC targets; repaired shared-volume wiring and multi-object YAML.",
+      "Replaced broken MySQL replication/HA manifests with an explicitly single-instance StatefulSet and operator-responsibility quiz.",
+      "Corrected native-sidecar, stop signal/preStop, EndpointSlice termination, PDB bypass, Deployment condition, CronJob time zone and job completion explanations.",
+      "Made backup fail before retention on dump errors; restricted retention to backup files. Updated control-plane taint and CRI log paths.",
+      "Quiz now accepts both non-built-in Deployment strategies and distinguishes Job history from backup retention.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed."
+    ],
+    "validation": [
+      "Read every line in full.",
+      "Official source passages checked; paired edits complete",
+      "Static validation: 3 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/02-pods-and-workloads-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Repaired workload manifests and Markdown; corrected lifecycle, backup, and StatefulSet HA claims; synchronized quiz answers.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+      "https://kubernetes.io/docs/concepts/cluster-administration/logging/",
+      "https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/",
+      "https://dev.mysql.com/doc/refman/8.4/en/docker-mysql-more-topics.html",
+      "https://www.postgresql.org/docs/14/app-pgdump.html",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Removed orphan Mermaid/fence and nonexistent TOC targets; repaired shared-volume wiring and multi-object YAML.",
+      "Replaced broken MySQL replication/HA manifests with an explicitly single-instance StatefulSet and operator-responsibility quiz.",
+      "Corrected native-sidecar, stop signal/preStop, EndpointSlice termination, PDB bypass, Deployment condition, CronJob time zone and job completion explanations.",
+      "Made backup fail before retention on dump errors; restricted retention to backup files. Updated control-plane taint and CRI log paths.",
+      "Quiz now accepts both non-built-in Deployment strategies and distinguishes Job history from backup retention.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed."
+    ],
+    "validation": [
+      "Read every line in full.",
+      "Official source passages checked; paired edits complete",
+      "Static validation: 3 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/core/03-services-networking.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected EndpointSlice fields, controller lifecycle/configuration, networking behavior, and Cilium installation prerequisites.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/",
+      "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-load-balancing.html",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/installation/k8s-install-helm.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/installation/cni-chaining-aws-cni.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/network/concepts/routing.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/security/network/proxy/envoy.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/install/kubernetes/cilium/values.yaml",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://linkerd.io/2-edge/reference/service-profiles/",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Replaced removed EndpointSlice topology with nodeName/zone; documented legacy Endpoints deprecation and selectorless manual backend requirements.",
+      "Corrected externalIPs semantics/deprecation, AWS LBC annotations, ingressClassName, and retired ingress-nginx examples.",
+      "Added missing CNI section, removed duplicate sections, clarified namespace/additive policy/DNS behavior and L7 Envoy processing.",
+      "Replaced obsolete/unsafe Cilium install recipes with explicit mode-specific Helm values and prerequisites; corrected Hubble Pod filter.",
+      "Updated Istio API versions and Linkerd ServiceProfile compatibility status; resolved ambiguous discovery quiz.",
+      "Parent diagram followup: networking diagrams 0/1 should depict EndpointSlices and Ingress as configuration, not packet-processing hops; IP-target load balancers may route directly to Pods.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed."
+    ],
+    "validation": [
+      "Read every assigned line in this document.",
+      "Official source passages checked; docs.cilium.io returned 403 so official GitHub sources were used.",
+      "Static validation: 22 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/03-services-networking-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected EndpointSlice fields, controller lifecycle/configuration, networking behavior, and Cilium installation prerequisites.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/",
+      "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-load-balancing.html",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/installation/k8s-install-helm.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/installation/cni-chaining-aws-cni.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/network/concepts/routing.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/security/network/proxy/envoy.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/install/kubernetes/cilium/values.yaml",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://linkerd.io/2-edge/reference/service-profiles/"
+    ],
+    "findings": [
+      "Replaced removed EndpointSlice topology with nodeName/zone; documented legacy Endpoints deprecation and selectorless manual backend requirements.",
+      "Corrected externalIPs semantics/deprecation, AWS LBC annotations, ingressClassName, and retired ingress-nginx examples.",
+      "Added missing CNI section, removed duplicate sections, clarified namespace/additive policy/DNS behavior and L7 Envoy processing.",
+      "Replaced obsolete/unsafe Cilium install recipes with explicit mode-specific Helm values and prerequisites; corrected Hubble Pod filter.",
+      "Updated Istio API versions and Linkerd ServiceProfile compatibility status; resolved ambiguous discovery quiz."
+    ],
+    "validation": [
+      "Read every assigned line in this document.",
+      "Official source passages checked; docs.cilium.io returned 403 so official GitHub sources were used.",
+      "Static validation: 0 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/core/03-services-networking.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected EndpointSlice fields, controller lifecycle/configuration, networking behavior, and Cilium installation prerequisites.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/",
+      "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-load-balancing.html",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/installation/k8s-install-helm.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/installation/cni-chaining-aws-cni.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/network/concepts/routing.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/security/network/proxy/envoy.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/install/kubernetes/cilium/values.yaml",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://linkerd.io/2-edge/reference/service-profiles/",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Replaced removed EndpointSlice topology with nodeName/zone; documented legacy Endpoints deprecation and selectorless manual backend requirements.",
+      "Corrected externalIPs semantics/deprecation, AWS LBC annotations, ingressClassName, and retired ingress-nginx examples.",
+      "Added missing CNI section, removed duplicate sections, clarified namespace/additive policy/DNS behavior and L7 Envoy processing.",
+      "Replaced obsolete/unsafe Cilium install recipes with explicit mode-specific Helm values and prerequisites; corrected Hubble Pod filter.",
+      "Updated Istio API versions and Linkerd ServiceProfile compatibility status; resolved ambiguous discovery quiz.",
+      "Parent diagram followup: networking diagrams 0/1 should depict EndpointSlices and Ingress as configuration, not packet-processing hops; IP-target load balancers may route directly to Pods.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed."
+    ],
+    "validation": [
+      "Read every assigned line in this document.",
+      "Official source passages checked; docs.cilium.io returned 403 so official GitHub sources were used.",
+      "Static validation: 22 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/03-services-networking-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected EndpointSlice fields, controller lifecycle/configuration, networking behavior, and Cilium installation prerequisites.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/",
+      "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-load-balancing.html",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/installation/k8s-install-helm.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/installation/cni-chaining-aws-cni.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/network/concepts/routing.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/security/network/proxy/envoy.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/main/install/kubernetes/cilium/values.yaml",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://linkerd.io/2-edge/reference/service-profiles/"
+    ],
+    "findings": [
+      "Replaced removed EndpointSlice topology with nodeName/zone; documented legacy Endpoints deprecation and selectorless manual backend requirements.",
+      "Corrected externalIPs semantics/deprecation, AWS LBC annotations, ingressClassName, and retired ingress-nginx examples.",
+      "Added missing CNI section, removed duplicate sections, clarified namespace/additive policy/DNS behavior and L7 Envoy processing.",
+      "Replaced obsolete/unsafe Cilium install recipes with explicit mode-specific Helm values and prerequisites; corrected Hubble Pod filter.",
+      "Updated Istio API versions and Linkerd ServiceProfile compatibility status; resolved ambiguous discovery quiz."
+    ],
+    "validation": [
+      "Read every assigned line in this document.",
+      "Official source passages checked; docs.cilium.io returned 403 so official GitHub sources were used.",
+      "Static validation: 0 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/core/04-storage.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected PVC lifecycle/access modes, CSI provisioning and cloning, expansion, AWS storage behavior, and unsafe examples.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/concepts/storage/volume-pvc-datasource/",
+      "https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/limit-storage-consumption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fsx-csi.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html",
+      "https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html",
+      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html",
+      "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/v1.66.0/examples/kubernetes/clone/README.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/master/pkg/driver/controller.go",
+      "https://raw.githubusercontent.com/vllm-project/vllm/main/README.md",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
+      "https://raw.githubusercontent.com/aws-controllers-k8s/secretsmanager-controller/main/config/crd/bases/secretsmanager.services.k8s.aws_secrets.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml"
+    ],
+    "findings": [
+      "Replaced legacy provisioners/Recycle example; aligned static PV/PVC labels/capacity and corrected dynamic provisioning/selector behavior.",
+      "Clarified RWO vs RWOP, generic ephemeral PVC garbage collection, backend reclaim, snapshot consistency, expansion constraints, token audience, and raw-block application requirements.",
+      "Confirmed EBS cloning from v1.51.0; removed false FSx CLONE_VOLUME support and invalid CSIDriver capability lookup; allowed compatible differing StorageClasses.",
+      "Removed ineffective PVC LimitRange defaults; corrected current gp3/io2 specifications, EFS access-point/capacity/mount-target guidance and FSx scratch durability/parameters.",
+      "Removed invalid/incomplete HA database and stock-image AWS CLI backup examples in favor of explicit, reviewable operational requirements; corrected vLLM terminology."
+    ],
+    "validation": [
+      "Read the full document in sequential chunks.",
+      "Fully read both language variants and quizzes; verified with current official AWS docs and versioned EBS CSI source.",
+      "Static validation: 42 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/04-storage-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected PVC lifecycle/access modes, CSI provisioning and cloning, expansion, AWS storage behavior, and unsafe examples.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/concepts/storage/volume-pvc-datasource/",
+      "https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/limit-storage-consumption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fsx-csi.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html",
+      "https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html",
+      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html",
+      "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/v1.66.0/examples/kubernetes/clone/README.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/master/pkg/driver/controller.go",
+      "https://raw.githubusercontent.com/vllm-project/vllm/main/README.md",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
+      "https://raw.githubusercontent.com/aws-controllers-k8s/secretsmanager-controller/main/config/crd/bases/secretsmanager.services.k8s.aws_secrets.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml"
+    ],
+    "findings": [
+      "Replaced legacy provisioners/Recycle example; aligned static PV/PVC labels/capacity and corrected dynamic provisioning/selector behavior.",
+      "Clarified RWO vs RWOP, generic ephemeral PVC garbage collection, backend reclaim, snapshot consistency, expansion constraints, token audience, and raw-block application requirements.",
+      "Confirmed EBS cloning from v1.51.0; removed false FSx CLONE_VOLUME support and invalid CSIDriver capability lookup; allowed compatible differing StorageClasses.",
+      "Removed ineffective PVC LimitRange defaults; corrected current gp3/io2 specifications, EFS access-point/capacity/mount-target guidance and FSx scratch durability/parameters.",
+      "Removed invalid/incomplete HA database and stock-image AWS CLI backup examples in favor of explicit, reviewable operational requirements; corrected vLLM terminology."
+    ],
+    "validation": [
+      "Read the full document in sequential chunks.",
+      "Fully read both language variants and quizzes; verified with current official AWS docs and versioned EBS CSI source.",
+      "Static validation: 2 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/core/04-storage.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected PVC lifecycle/access modes, CSI provisioning and cloning, expansion, AWS storage behavior, and unsafe examples.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/concepts/storage/volume-pvc-datasource/",
+      "https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/limit-storage-consumption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fsx-csi.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html",
+      "https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html",
+      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html",
+      "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/v1.66.0/examples/kubernetes/clone/README.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/master/pkg/driver/controller.go",
+      "https://raw.githubusercontent.com/vllm-project/vllm/main/README.md",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
+      "https://raw.githubusercontent.com/aws-controllers-k8s/secretsmanager-controller/main/config/crd/bases/secretsmanager.services.k8s.aws_secrets.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml"
+    ],
+    "findings": [
+      "Replaced legacy provisioners/Recycle example; aligned static PV/PVC labels/capacity and corrected dynamic provisioning/selector behavior.",
+      "Clarified RWO vs RWOP, generic ephemeral PVC garbage collection, backend reclaim, snapshot consistency, expansion constraints, token audience, and raw-block application requirements.",
+      "Confirmed EBS cloning from v1.51.0; removed false FSx CLONE_VOLUME support and invalid CSIDriver capability lookup; allowed compatible differing StorageClasses.",
+      "Removed ineffective PVC LimitRange defaults; corrected current gp3/io2 specifications, EFS access-point/capacity/mount-target guidance and FSx scratch durability/parameters.",
+      "Removed invalid/incomplete HA database and stock-image AWS CLI backup examples in favor of explicit, reviewable operational requirements; corrected vLLM terminology."
+    ],
+    "validation": [
+      "Read the full document in sequential chunks.",
+      "Fully read both language variants and quizzes; verified with current official AWS docs and versioned EBS CSI source.",
+      "Static validation: 41 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/04-storage-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected PVC lifecycle/access modes, CSI provisioning and cloning, expansion, AWS storage behavior, and unsafe examples.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/concepts/storage/volume-pvc-datasource/",
+      "https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/limit-storage-consumption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fsx-csi.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html",
+      "https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html",
+      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html",
+      "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
+      "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/v1.66.0/examples/kubernetes/clone/README.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/master/pkg/driver/controller.go",
+      "https://raw.githubusercontent.com/vllm-project/vllm/main/README.md",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
+      "https://raw.githubusercontent.com/aws-controllers-k8s/secretsmanager-controller/main/config/crd/bases/secretsmanager.services.k8s.aws_secrets.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml"
+    ],
+    "findings": [
+      "Replaced legacy provisioners/Recycle example; aligned static PV/PVC labels/capacity and corrected dynamic provisioning/selector behavior.",
+      "Clarified RWO vs RWOP, generic ephemeral PVC garbage collection, backend reclaim, snapshot consistency, expansion constraints, token audience, and raw-block application requirements.",
+      "Confirmed EBS cloning from v1.51.0; removed false FSx CLONE_VOLUME support and invalid CSIDriver capability lookup; allowed compatible differing StorageClasses.",
+      "Removed ineffective PVC LimitRange defaults; corrected current gp3/io2 specifications, EFS access-point/capacity/mount-target guidance and FSx scratch durability/parameters.",
+      "Removed invalid/incomplete HA database and stock-image AWS CLI backup examples in favor of explicit, reviewable operational requirements; corrected vLLM terminology."
+    ],
+    "validation": [
+      "Read the full document in sequential chunks.",
+      "Fully read both language variants and quizzes; verified with current official AWS docs and versioned EBS CSI source.",
+      "Static validation: 2 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/core/05-configuration-secrets.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected Secret disclosure, update semantics, invalid fields, and EKS/AppConfig/KMS/IAM examples.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/configmap/",
+      "https://kubernetes.io/docs/concepts/configuration/secret/",
+      "https://external-secrets.io/latest/provider/aws-secrets-manager/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/associate-encryption-config.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate-profile.html",
+      "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-containers-agent.html",
+      "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-containers-agent-configuring.html",
+      "https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/README.md",
+      "https://raw.githubusercontent.com/aws-controllers-k8s/secretsmanager-controller/main/config/crd/bases/secretsmanager.services.k8s.aws_secrets.yaml",
+      "https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_secretsmanager.Secret.html",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html"
+    ],
+    "findings": [
+      "Replaced Secret-value logging with presence checks; aligned --from-file keys; added subPath and eventual-update caveats, correct 1 MiB limits and immutable fields.",
+      "Corrected ESO v1 resources, scoped IAM permissions, ASCP mount/sync/rotation and SSM identity requirements.",
+      "Rebuilt AppConfig example using container-agent variables and local HTTP retrieval; replaced fictional native FargateProfile with eksctl configuration.",
+      "Fixed duplicate KMS key creation/wrong EKS API and documented default API-data encryption; removed invalid ACK fields and unsafe no-recovery deletion.",
+      "Replaced broken/overprivileged CDK cluster snippet with a typed grantRead helper; corrected invalid configMapKeyRef.subPath and quiz request/QoS/CLI/update explanations.",
+      "Parent diagram followup: configuration overview should not imply native ConfigMaps auto-reload applications, that KSOPS encrypts already-created Secrets, or that ASCP syncs Kubernetes Secrets by default.",
+      "Current specific Hybrid Nodes add-on guide supports appropriately configured Pod Identity Agent and AWS Secrets Store CSI provider; removed an overly broad EC2-only prerequisite. Fargate limitation retained."
+    ],
+    "validation": [
+      "Full sequential read complete in both languages and quizzes.",
+      "Full read and official-source checks completed",
+      "Static validation: 30 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed.",
+      "Follow-up prose cross-check against official Hybrid Nodes add-on guide; no code or cluster execution changed."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/05-configuration-secrets-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected Secret disclosure, update semantics, invalid fields, and EKS/AppConfig/KMS/IAM examples.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/configmap/",
+      "https://kubernetes.io/docs/concepts/configuration/secret/",
+      "https://external-secrets.io/latest/provider/aws-secrets-manager/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/associate-encryption-config.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate-profile.html",
+      "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-containers-agent.html",
+      "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-containers-agent-configuring.html",
+      "https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/README.md",
+      "https://raw.githubusercontent.com/aws-controllers-k8s/secretsmanager-controller/main/config/crd/bases/secretsmanager.services.k8s.aws_secrets.yaml",
+      "https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_secretsmanager.Secret.html",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml"
+    ],
+    "findings": [
+      "Replaced Secret-value logging with presence checks; aligned --from-file keys; added subPath and eventual-update caveats, correct 1 MiB limits and immutable fields.",
+      "Corrected ESO v1 resources, scoped IAM permissions, ASCP mount/sync/rotation and SSM identity requirements.",
+      "Rebuilt AppConfig example using container-agent variables and local HTTP retrieval; replaced fictional native FargateProfile with eksctl configuration.",
+      "Fixed duplicate KMS key creation/wrong EKS API and documented default API-data encryption; removed invalid ACK fields and unsafe no-recovery deletion.",
+      "Replaced broken/overprivileged CDK cluster snippet with a typed grantRead helper; corrected invalid configMapKeyRef.subPath and quiz request/QoS/CLI/update explanations."
+    ],
+    "validation": [
+      "Full sequential read complete in both languages and quizzes.",
+      "Full read and official-source checks completed",
+      "Static validation: 7 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/core/05-configuration-secrets.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected Secret disclosure, update semantics, invalid fields, and EKS/AppConfig/KMS/IAM examples.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/configmap/",
+      "https://kubernetes.io/docs/concepts/configuration/secret/",
+      "https://external-secrets.io/latest/provider/aws-secrets-manager/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/associate-encryption-config.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate-profile.html",
+      "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-containers-agent.html",
+      "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-containers-agent-configuring.html",
+      "https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/README.md",
+      "https://raw.githubusercontent.com/aws-controllers-k8s/secretsmanager-controller/main/config/crd/bases/secretsmanager.services.k8s.aws_secrets.yaml",
+      "https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_secretsmanager.Secret.html",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html"
+    ],
+    "findings": [
+      "Replaced Secret-value logging with presence checks; aligned --from-file keys; added subPath and eventual-update caveats, correct 1 MiB limits and immutable fields.",
+      "Corrected ESO v1 resources, scoped IAM permissions, ASCP mount/sync/rotation and SSM identity requirements.",
+      "Rebuilt AppConfig example using container-agent variables and local HTTP retrieval; replaced fictional native FargateProfile with eksctl configuration.",
+      "Fixed duplicate KMS key creation/wrong EKS API and documented default API-data encryption; removed invalid ACK fields and unsafe no-recovery deletion.",
+      "Replaced broken/overprivileged CDK cluster snippet with a typed grantRead helper; corrected invalid configMapKeyRef.subPath and quiz request/QoS/CLI/update explanations.",
+      "Parent diagram followup: configuration overview should not imply native ConfigMaps auto-reload applications, that KSOPS encrypts already-created Secrets, or that ASCP syncs Kubernetes Secrets by default.",
+      "Current specific Hybrid Nodes add-on guide supports appropriately configured Pod Identity Agent and AWS Secrets Store CSI provider; removed an overly broad EC2-only prerequisite. Fargate limitation retained."
+    ],
+    "validation": [
+      "Full sequential read complete in both languages and quizzes.",
+      "Full read and official-source checks completed",
+      "Static validation: 30 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed.",
+      "Follow-up prose cross-check against official Hybrid Nodes add-on guide; no code or cluster execution changed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/05-configuration-secrets-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected Secret disclosure, update semantics, invalid fields, and EKS/AppConfig/KMS/IAM examples.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/configmap/",
+      "https://kubernetes.io/docs/concepts/configuration/secret/",
+      "https://external-secrets.io/latest/provider/aws-secrets-manager/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/associate-encryption-config.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate-profile.html",
+      "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-containers-agent.html",
+      "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-containers-agent-configuring.html",
+      "https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/README.md",
+      "https://raw.githubusercontent.com/aws-controllers-k8s/secretsmanager-controller/main/config/crd/bases/secretsmanager.services.k8s.aws_secrets.yaml",
+      "https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_secretsmanager.Secret.html",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml"
+    ],
+    "findings": [
+      "Replaced Secret-value logging with presence checks; aligned --from-file keys; added subPath and eventual-update caveats, correct 1 MiB limits and immutable fields.",
+      "Corrected ESO v1 resources, scoped IAM permissions, ASCP mount/sync/rotation and SSM identity requirements.",
+      "Rebuilt AppConfig example using container-agent variables and local HTTP retrieval; replaced fictional native FargateProfile with eksctl configuration.",
+      "Fixed duplicate KMS key creation/wrong EKS API and documented default API-data encryption; removed invalid ACK fields and unsafe no-recovery deletion.",
+      "Replaced broken/overprivileged CDK cluster snippet with a typed grantRead helper; corrected invalid configMapKeyRef.subPath and quiz request/QoS/CLI/update explanations."
+    ],
+    "validation": [
+      "Full sequential read complete in both languages and quizzes.",
+      "Full read and official-source checks completed",
+      "Static validation: 7 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/core/06-security.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected token/RBAC/security-context semantics, audit confidentiality, admission configuration, and AWS protection examples.",
+    "sources": [
+      "https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-admission/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "https://kubernetes.io/docs/tasks/debug-application-cluster/audit/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html",
+      "https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring-configuration.html",
+      "https://open-policy-agent.github.io/gatekeeper/website/docs/howto/",
+      "https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/master/library/general/containerresources/template.yaml",
+      "https://raw.githubusercontent.com/GoogleContainerTools/distroless/main/README.md",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Removed duplicate authentication/overview content and legacy token creation; documented projected-token rotation, disabled unused automount, and distinguished OIDC from EKS IAM authentication.",
+      "Clarified Role/ClusterRole binding scope and PSA/PSS vs removed PSP; replaced nonfunctional non-root read-only nginx with a compatible sleep container.",
+      "Corrected AdmissionConfiguration API group, removed Secret/token bodies from audit logs, and described real log/webhook backends.",
+      "Scoped S3 permissions, documented default EKS encryption, required SG/WAF association, and separated GuardDuty audit/runtime features and agent coverage.",
+      "Quiz: corrected privileged/hostNetwork ambiguity, malformed RBAC and securityContext fields, incomplete Pods, obsolete AppArmor annotation, missing Gatekeeper templates, undefined Docker build stage, and runtime-control claims.",
+      "Parent asset followup: security diagram 5 should attach WAF to ALB/CloudFront web traffic, never directly to the EKS API server, Pods, or NLB. Caption corrected; asset not edited.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed."
+    ],
+    "validation": [
+      "Read every line in full.",
+      "Static validation: 12 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/core/06-security.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected token/RBAC/security-context semantics, audit confidentiality, admission configuration, and AWS protection examples.",
+    "sources": [
+      "https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-admission/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "https://kubernetes.io/docs/tasks/debug-application-cluster/audit/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html",
+      "https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring-configuration.html",
+      "https://open-policy-agent.github.io/gatekeeper/website/docs/howto/",
+      "https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/master/library/general/containerresources/template.yaml",
+      "https://raw.githubusercontent.com/GoogleContainerTools/distroless/main/README.md",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Removed duplicate authentication/overview content and legacy token creation; documented projected-token rotation, disabled unused automount, and distinguished OIDC from EKS IAM authentication.",
+      "Clarified Role/ClusterRole binding scope and PSA/PSS vs removed PSP; replaced nonfunctional non-root read-only nginx with a compatible sleep container.",
+      "Corrected AdmissionConfiguration API group, removed Secret/token bodies from audit logs, and described real log/webhook backends.",
+      "Scoped S3 permissions, documented default EKS encryption, required SG/WAF association, and separated GuardDuty audit/runtime features and agent coverage.",
+      "Quiz: corrected privileged/hostNetwork ambiguity, malformed RBAC and securityContext fields, incomplete Pods, obsolete AppArmor annotation, missing Gatekeeper templates, undefined Docker build stage, and runtime-control claims.",
+      "Parent asset followup: security diagram 5 should attach WAF to ALB/CloudFront web traffic, never directly to the EKS API server, Pods, or NLB. Caption corrected; asset not edited.",
+      "Updated obsolete NGINX tutorial pins to officially verified stable 1.30.4 (released July 15, 2026); rollout example uses its verified Alpine variant. No measured benchmark was changed."
+    ],
+    "validation": [
+      "Read every line in full.",
+      "Static validation: 12 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "en/quizzes/core/06-security-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected token/RBAC/security-context semantics, audit confidentiality, admission configuration, and AWS protection examples.",
+    "sources": [
+      "https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-admission/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "https://kubernetes.io/docs/tasks/debug-application-cluster/audit/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html",
+      "https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring-configuration.html",
+      "https://open-policy-agent.github.io/gatekeeper/website/docs/howto/",
+      "https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/master/library/general/containerresources/template.yaml",
+      "https://raw.githubusercontent.com/GoogleContainerTools/distroless/main/README.md",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Removed duplicate authentication/overview content and legacy token creation; documented projected-token rotation, disabled unused automount, and distinguished OIDC from EKS IAM authentication.",
+      "Clarified Role/ClusterRole binding scope and PSA/PSS vs removed PSP; replaced nonfunctional non-root read-only nginx with a compatible sleep container.",
+      "Corrected AdmissionConfiguration API group, removed Secret/token bodies from audit logs, and described real log/webhook backends.",
+      "Scoped S3 permissions, documented default EKS encryption, required SG/WAF association, and separated GuardDuty audit/runtime features and agent coverage.",
+      "Quiz: corrected privileged/hostNetwork ambiguity, malformed RBAC and securityContext fields, incomplete Pods, obsolete AppArmor annotation, missing Gatekeeper templates, undefined Docker build stage, and runtime-control claims."
+    ],
+    "validation": [
+      "Read every line in full.",
+      "Static validation: 12 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/core/06-security-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected token/RBAC/security-context semantics, audit confidentiality, admission configuration, and AWS protection examples.",
+    "sources": [
+      "https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+      "https://kubernetes.io/docs/concepts/security/pod-security-admission/",
+      "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "https://kubernetes.io/docs/tasks/debug-application-cluster/audit/",
+      "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html",
+      "https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring-configuration.html",
+      "https://open-policy-agent.github.io/gatekeeper/website/docs/howto/",
+      "https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/master/library/general/containerresources/template.yaml",
+      "https://raw.githubusercontent.com/GoogleContainerTools/distroless/main/README.md",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "Removed duplicate authentication/overview content and legacy token creation; documented projected-token rotation, disabled unused automount, and distinguished OIDC from EKS IAM authentication.",
+      "Clarified Role/ClusterRole binding scope and PSA/PSS vs removed PSP; replaced nonfunctional non-root read-only nginx with a compatible sleep container.",
+      "Corrected AdmissionConfiguration API group, removed Secret/token bodies from audit logs, and described real log/webhook backends.",
+      "Scoped S3 permissions, documented default EKS encryption, required SG/WAF association, and separated GuardDuty audit/runtime features and agent coverage.",
+      "Quiz: corrected privileged/hostNetwork ambiguity, malformed RBAC and securityContext fields, incomplete Pods, obsolete AppArmor annotation, missing Gatekeeper templates, undefined Docker build stage, and runtime-control claims."
+    ],
+    "validation": [
+      "Read lines 1–824 in full.",
+      "Static validation: 13 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+    ]
+  }
+]

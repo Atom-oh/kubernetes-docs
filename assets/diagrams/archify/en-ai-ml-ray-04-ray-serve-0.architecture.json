@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray Serve Request Flow and Three-Tier Autoscaling",
+    "locale": "en",
+    "output": "en-ai-ml-ray-04-ray-serve-0.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1160,
+      700
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "ingress",
+          "preprocess",
+          "inference",
+          "response"
+        ],
+        "note": "Proxies differ from application ingress deployments; internal calls can use DeploymentHandles."
+      },
+      {
+        "id": "autoscaling-chain",
+        "label": "Three-tier autoscaling",
+        "focus": [
+          "serve-autoscaler",
+          "kuberay-autoscaler",
+          "karpenter",
+          "preprocess",
+          "inference"
+        ],
+        "note": "Check desired and ready capacity at each layer. Actors, Pods, and nodes are not one-to-one."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "HTTP / gRPC",
+      "pos": [
+        30,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "frontend",
+      "label": "Serve proxy",
+      "sublabel": "HTTP / gRPC routing",
+      "pos": [
+        230,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "preprocess",
+      "type": "backend",
+      "label": "Deployment: Preprocess",
+      "sublabel": "actor replicas",
+      "pos": [
+        470,
+        120
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "inference",
+      "type": "backend",
+      "label": "Deployment: Model Inference",
+      "sublabel": "actor replicas",
+      "pos": [
+        720,
+        120
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "response",
+      "type": "external",
+      "label": "Response",
+      "sublabel": "returned to client",
+      "pos": [
+        990,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "serve-autoscaler",
+      "type": "backend",
+      "label": "Serve controller",
+      "sublabel": "replica goals / autoscaling",
+      "pos": [
+        590,
+        310
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "kuberay-autoscaler",
+      "type": "backend",
+      "label": "Ray / KubeRay",
+      "sublabel": "actor placement / Pod capacity",
+      "pos": [
+        590,
+        450
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "K8s + node provisioner",
+      "sublabel": "Pod placement / EC2 capacity",
+      "pos": [
+        590,
+        590
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application (Serve pipeline)",
+      "wraps": [
+        "preprocess",
+        "inference"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-ingress",
+      "from": "client",
+      "to": "ingress",
+      "label": "HTTP / gRPC",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingress-to-preprocess",
+      "from": "ingress",
+      "to": "preprocess",
+      "variant": "emphasis"
+    },
+    {
+      "id": "preprocess-to-inference",
+      "from": "preprocess",
+      "to": "inference",
+      "variant": "emphasis",
+      "label": "DeploymentHandle",
+      "labelAt": [
+        690,
+        106
+      ]
+    },
+    {
+      "id": "inference-to-response",
+      "from": "inference",
+      "to": "response",
+      "variant": "emphasis"
+    },
+    {
+      "id": "serve-watches-preprocess",
+      "from": "serve-autoscaler",
+      "to": "preprocess",
+      "label": "request metrics / targets",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "serve-watches-inference",
+      "from": "serve-autoscaler",
+      "to": "inference",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "kuberay-watches-serve",
+      "from": "kuberay-autoscaler",
+      "to": "serve-autoscaler",
+      "label": "actor capacity if needed",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "karpenter-watches-kuberay",
+      "from": "karpenter",
+      "to": "kuberay-autoscaler",
+      "label": "Pod / node capacity if needed",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Request handling",
+      "items": [
+        "Distinguish caller queues from requests assigned to replicas",
+        "Serve deployments use actor replicas, not Kubernetes Deployment objects"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Conditional scaling",
+      "items": [
+        "Existing capacity, group bounds, placement, and readiness affect scaling",
+        "A new actor does not imply one new Pod or EC2 node"
+      ]
+    }
+  ]
+}

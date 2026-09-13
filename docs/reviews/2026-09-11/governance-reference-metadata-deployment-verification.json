@@ -1,0 +1,1479 @@
+{
+  "verifiedAt": "2026-09-13T01:51:46.815422+00:00",
+  "deploymentRun": 34731066096,
+  "deployedCommit": "c15a9b10ff6055ede3bb92439b98c8d425c047a1",
+  "prs": [
+    240,
+    243,
+    244
+  ],
+  "pages": [
+    {
+      "path": "en/ai-ml/04-inference-frameworks.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/04-inference-frameworks",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ai-ml/04-inference-frameworks",
+      "status": 200,
+      "sha256": "676b7d75eaf4b5c45aeb3d4c0af047b9d8cba0dd95c41748b5809e671a523fed",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/05-model-training.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/05-model-training",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ai-ml/05-model-training",
+      "status": 200,
+      "sha256": "87734a70d64ee6a2e7df2accf142036193c22dd60279e81abaa51d428991c491",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/06-ai-infrastructure.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/06-ai-infrastructure",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ai-ml/06-ai-infrastructure",
+      "status": 200,
+      "sha256": "976b9861e397e5486ea84d7d38b658a73494e56b6df14bcd3121cc023ea04d0f",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/07-ai-ml-best-practices.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/07-ai-ml-best-practices",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ai-ml/07-ai-ml-best-practices",
+      "status": 200,
+      "sha256": "688b2247188334eca07cdbc63293190f633d174c7f5992318c5e5981bf2d1323",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/sagemaker-ai/01-platform-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/sagemaker-ai/01-platform-architecture",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ai-ml/sagemaker-ai/01-platform-architecture",
+      "status": 200,
+      "sha256": "f280c484fe55795643f4a8ff11c2f96b16e4f7ad9d06a9181aba94fe20a10ff6",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution",
+      "status": 200,
+      "sha256": "48a2703df063f839ff26165b8180fb4000d1055f9f86546dbcbb2bad9693b01b",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/sagemaker-ai/04-validation-results.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/sagemaker-ai/04-validation-results",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ai-ml/sagemaker-ai/04-validation-results",
+      "status": 200,
+      "sha256": "09b5140834e9252c76b41e14bc6e0890683372216d93965d3f9e52e6d281a637",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/autoscaling/02-karpenter.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/autoscaling/02-karpenter",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/autoscaling/02-karpenter",
+      "status": 200,
+      "sha256": "3c1d28c39650da9326a9f6f5b030b7be1d03ff2a929d9ef4847edbd882237dcf",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "en/basics/03-container-technology.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/basics/03-container-technology",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/basics/03-container-technology",
+      "status": 200,
+      "sha256": "7504fac73f3364bd3511ed34bcba8af9cad3206999178100f7c55d714d48b33a",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "en/basics/05-ebpf-fundamentals.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/basics/05-ebpf-fundamentals",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/basics/05-ebpf-fundamentals",
+      "status": 200,
+      "sha256": "49fe74905926838f0b836ae47adca372e9b373e453aae63c8fab5c09c3e95fa1",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "en/core/06-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/core/06-security",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/core/06-security",
+      "status": 200,
+      "sha256": "38fe944a153522d3e01d96c4f2cbf2925d7929e5b098780fa0ada117b96340ef",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/airflow/04-mwaa-integration.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/airflow/04-mwaa-integration",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/airflow/04-mwaa-integration",
+      "status": 200,
+      "sha256": "ee72311368ea2200c6df3581bb478855894a1121aea92defd56bf37187ec2680",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/flink/01-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/01-architecture",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/01-architecture",
+      "status": 200,
+      "sha256": "2be91d51ae7b989002a5f2be701af047ca0dfa9d70e2155f827f371747b1e001",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/flink/02-flink-kubernetes-operator.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/02-flink-kubernetes-operator",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/02-flink-kubernetes-operator",
+      "status": 200,
+      "sha256": "1c1d7446def204dddfa57a06d8d426dcf3c3e1d99acfa489c3b97216e60140d6",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/flink/03-state-checkpointing-streaming.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/03-state-checkpointing-streaming",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/03-state-checkpointing-streaming",
+      "status": 200,
+      "sha256": "ccf526bcc2376736040d9e9b6da98acf617107aedb0eeec68c23069d1975238e",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/flink/04-operations-ha.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/04-operations-ha",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/04-operations-ha",
+      "status": 200,
+      "sha256": "d1f70ed3d22878382e63fb7c44e5e6cbe3cff615272353c4310c3a8547799cbf",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/kafka/01-kafka-fundamentals.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/kafka/01-kafka-fundamentals",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/kafka/01-kafka-fundamentals",
+      "status": 200,
+      "sha256": "e26f01b9c7969fb35e33581abeeb6219f4a3f1b28cc64149b2e017211ceb7a82",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/kafka/02-strimzi-operator",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/kafka/02-strimzi-operator",
+      "status": 200,
+      "sha256": "aed809f1e49a6683692764695771c4afd159b24431136ec3198df7c2e6a88501",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/kafka/03-kafka-operations",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/kafka/03-kafka-operations",
+      "status": 200,
+      "sha256": "962b48b2df95c713ba5b1271239f155da1615f1823fa90ffdbe3c5a16935740f",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/kafka/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/kafka/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/kafka/",
+      "status": 200,
+      "sha256": "e089673820fec825c556dfb0435cc641ee4d0b9df96029b27c21dd80df465c1e",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/governance/00-governance-overview.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/governance/00-governance-overview",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/governance/00-governance-overview",
+      "status": 200,
+      "sha256": "c28766db612ed71ff6c96f69010b285831da2740c3fbb7bf7871a7aed3840b32",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "en/governance/01-landing-zone-and-ou.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/governance/01-landing-zone-and-ou",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/governance/01-landing-zone-and-ou",
+      "status": 200,
+      "sha256": "afc507fa6a152d559bce4f177d6448e33d2e1127d382fe0a46957ce92bcd8018",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "en/governance/02-account-and-iam.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/governance/02-account-and-iam",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/governance/02-account-and-iam",
+      "status": 200,
+      "sha256": "c3c205b16912bfcbc69f6e0bfdf084b2e3149cc28714a319b9d64126c2e45fc0",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "en/governance/03-eks-multi-account-multi-cluster.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/governance/03-eks-multi-account-multi-cluster",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/governance/03-eks-multi-account-multi-cluster",
+      "status": 200,
+      "sha256": "8a1be10ae89f97433a835ddbdd22f054053fd9fa1102ad64aff8eac84a280059",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "en/governance/04-shared-vpc-and-connectivity.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/governance/04-shared-vpc-and-connectivity",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/governance/04-shared-vpc-and-connectivity",
+      "status": 200,
+      "sha256": "0fb63fead2ecc361ae2cf0ad7d3af2a9e44d4bfb386b9cb55a83d7d3243fa433",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "en/governance/05-data-security-boundaries.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/governance/05-data-security-boundaries",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/governance/05-data-security-boundaries",
+      "status": 200,
+      "sha256": "89b0e52b06ee1b03bb5f0fa14b6a99d3d9bfc149ffa310c7081e4a6a194045fc",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": true,
+      "passed": true
+    },
+    {
+      "path": "en/governance/06-decision-framework-and-poc.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/governance/06-decision-framework-and-poc",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/governance/06-decision-framework-and-poc",
+      "status": 200,
+      "sha256": "87222ab3eef5360fdb8be55f6414c63d7d82bfdac67f02e7700915e492ab537c",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "en/networking/02-vpc-lattice.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice",
+      "status": 200,
+      "sha256": "9df726b38e70ff5a6bf2e364607825aaba695d62ca67b52b3b00bb5a302b280c",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/networking/03-aws-lb-controller.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/03-aws-lb-controller",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/networking/03-aws-lb-controller",
+      "status": 200,
+      "sha256": "0933d21c66117ceb9b003073dcb70e470611c3457c45b8c3d77813a40f4e6495",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/networking/04-gateway-api.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/04-gateway-api",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/networking/04-gateway-api",
+      "status": 200,
+      "sha256": "0b491f8cbdb2ef52eee3bb9e6e9cf1306e578297ad4da8338078c87b79b1a706",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/networking/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/networking/",
+      "status": 200,
+      "sha256": "83d6e545b7d2469b77e63404c025457798b850fdda2a8b91af86b1f4a32f355b",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/networking/calico/01-introduction.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/calico/01-introduction",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/networking/calico/01-introduction",
+      "status": 200,
+      "sha256": "23e91b36d373a1faf0da521e4cf9be32963625f35243e4841ab0a751b36f2a23",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/networking/calico/02-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/calico/02-architecture",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/networking/calico/02-architecture",
+      "status": 200,
+      "sha256": "55869b94d03f85bff48d5870840d278a82476415f201e6d34f65a3ae930e4daa",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/networking/calico/03-networking-modes.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/calico/03-networking-modes",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/networking/calico/03-networking-modes",
+      "status": 200,
+      "sha256": "7d0b6358ed3d4fe62c1496e3e1b7c9e1fc37ac35d8c2dffb24f9bc7ff17194f9",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/networking/calico/04-bgp-deep-dive.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/calico/04-bgp-deep-dive",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/networking/calico/04-bgp-deep-dive",
+      "status": 200,
+      "sha256": "1e2bb60508699fa14c8fa48b269ce2bb083be6b557c04a68e92369470bead1f1",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/networking/calico/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/calico/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/networking/calico/",
+      "status": 200,
+      "sha256": "a3a673e74dde31d16eb23a6661adebb68f71396f86112afad3177d375bd2937b",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ops/09-observability-stack.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ops/09-observability-stack",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ops/09-observability-stack",
+      "status": 200,
+      "sha256": "dbbf9a9aa1586b8babd047d11821e9639d98089e05fa89c0c46837a6e733e226",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ops/10-resource-optimization.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ops/10-resource-optimization",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ops/10-resource-optimization",
+      "status": 200,
+      "sha256": "b552d200b7997ad4d34cfd7ff80aff768f030ffb177585ac944e996d6749aa8a",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ops/11-upgrade-operations.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ops/11-upgrade-operations",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ops/11-upgrade-operations",
+      "status": 200,
+      "sha256": "e842ded4e831eb5eaa6154469ed9428b3add8cc0813bf137b9a0c208f11b41b1",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ops/12-event-capacity-planning.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ops/12-event-capacity-planning",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ops/12-event-capacity-planning",
+      "status": 200,
+      "sha256": "82362992eeddae9a965b2f1240377a29aa242e49350fbd27f2fa393e3eb44182",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ops/13-finops-cost-platform.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ops/13-finops-cost-platform",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ops/13-finops-cost-platform",
+      "status": 200,
+      "sha256": "2023f92b1aa52ff3e2ecf6309e600a91ae22c578717e5e4853ccc13987e49fdb",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/ops/14-tekton-pipelines.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ops/14-tekton-pipelines",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ops/14-tekton-pipelines",
+      "status": 200,
+      "sha256": "8b6e7bfee1ef7473e86f1dba890c95d6c07780c303b430e8089739772fa27079",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz",
+      "status": 200,
+      "sha256": "dd793e34473fa2663a2354e08ac4fa10064924700627dc8c82426511d1808d05",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz",
+      "status": 200,
+      "sha256": "cdcbc2d8938274087c9f1acc164addcd296bda9efebcec905c417992003bb045",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz",
+      "status": 200,
+      "sha256": "5cd06aabbdb2b529417ff3d9744a0d4978465042f1dd2f5e7071806e4477fdfd",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks/02-eks-cluster-creation-part1-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks/02-eks-cluster-creation-part1-quiz",
+      "status": 200,
+      "sha256": "651d63484021687a4fb691477a60937990fbdebc3989e8d94436a3444b5d205e",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/governance/00-governance-overview-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/00-governance-overview-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/00-governance-overview-quiz",
+      "status": 200,
+      "sha256": "8116f6f8d7e8b4fc59b6f414ab0939d960219151e0da1740c0ce4ebba3ea8c42",
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/01-landing-zone-and-ou-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/01-landing-zone-and-ou-quiz",
+      "status": 200,
+      "sha256": "d0fd0d7e0aef7015ef2f0ad61c0dce92378451253a1377f690b0e7732f3762a7",
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/governance/02-account-and-iam-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/02-account-and-iam-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/02-account-and-iam-quiz",
+      "status": 200,
+      "sha256": "38bcbeb5779436bbc08aba21090e9ecd746873f7ba5b2acceff37b0bd00c21be",
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz",
+      "status": 200,
+      "sha256": "ea693c1811fb80f7feb68bc4bd2a982f04fc9a6888b3e3f1834adbf7ebe70ea6",
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/04-shared-vpc-and-connectivity-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/04-shared-vpc-and-connectivity-quiz",
+      "status": 200,
+      "sha256": "cab517af1015f887508781c57cbd9c4581d19692b1d13a0605a724bb5accac48",
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/governance/05-data-security-boundaries-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/05-data-security-boundaries-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/05-data-security-boundaries-quiz",
+      "status": 200,
+      "sha256": "a3831b7e15e2726cca54a099cf02a7481ac4cd6c5168835441520e171d6fbbf4",
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/06-decision-framework-and-poc-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/governance/06-decision-framework-and-poc-quiz",
+      "status": 200,
+      "sha256": "92a9cf57d7f29f63026ae41707b94e81f10afb8350a897fb422de163c535254b",
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/service-mesh/02-istio-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/02-istio-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/02-istio-quiz",
+      "status": 200,
+      "sha256": "cfb70603f3ff2b95819c89046a44f189326c04f90bc1a07b80e2dd1088cb6e68",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/comparison.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/istio/comparison",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/istio/comparison",
+      "status": 200,
+      "sha256": "34254dd5cb1dba2ddd21e86447018f37582d0b47e4e4a096f744e3e5a4444a72",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/observability.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/istio/observability",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/istio/observability",
+      "status": 200,
+      "sha256": "7739be3d534ee310d393f2e9998398de451b83b4d067d10ebec7c2b8db07384f",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/resilience.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/istio/resilience",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/istio/resilience",
+      "status": 200,
+      "sha256": "befa1f465d8fb7b44906888be13bd39a19ac327a3c6aa266cb1c6cf3e74f4947",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/istio/security",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/istio/security",
+      "status": 200,
+      "sha256": "9fdc61e1be0f2eaa97369ce3441da2dac3aa60104a9565afe9565cd4883d3437",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/linkerd/architecture",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/quizzes/service-mesh/linkerd/architecture",
+      "status": 200,
+      "sha256": "ad47d87f814c5631dab6a7b6793adc3926690c65adb0643758dd2ff4bc4974c9",
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/02-istio.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/02-istio",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/02-istio",
+      "status": 200,
+      "sha256": "460fb0f3abe3d8910af55fbf70913703793c530cd9c8b2aed4e09f7702526ea8",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/03-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/cilium-service-mesh/03-security",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/cilium-service-mesh/03-security",
+      "status": 200,
+      "sha256": "8bb8ad509bf338de8479c59230ec61efac2c99d166abbea60277ae372882b1c9",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/04-observability.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/cilium-service-mesh/04-observability",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/cilium-service-mesh/04-observability",
+      "status": 200,
+      "sha256": "04778eabd2d550fc07e467b48ee0301dc1078d1c1a9f593f14583015008135c2",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/cilium-service-mesh/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/cilium-service-mesh/",
+      "status": 200,
+      "sha256": "701031c1886aa6075b2569a8e71ac49538160f718c9b25f32b6830f2e29dc7ba",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/01-ambient-mode.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/01-ambient-mode",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/01-ambient-mode",
+      "status": 200,
+      "sha256": "079244da893951921d64d4425c34648dce5a59dcf4699c56e72568c5c88def52",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/02-multi-cluster.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/02-multi-cluster",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/02-multi-cluster",
+      "status": 200,
+      "sha256": "584fc78cc7101c976e7e3c1db4ca1d778c48e0773b2cffc22357bb612bfdd302",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/",
+      "status": 200,
+      "sha256": "ee8064ac974f468fe6b53739985d4a029be705557dd72a1dc9a26f7fe63614d7",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/comparison/03-sidecar-vs-ambient",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/comparison/03-sidecar-vs-ambient",
+      "status": 200,
+      "sha256": "ed6f8b35fcbb2d42ca4c96183a17552d31a4dd5bb54801e282548b9aa4d2bb99",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/observability/01-metrics.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/01-metrics",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/01-metrics",
+      "status": 200,
+      "sha256": "ee264ee693a2108f71016953a97c9d3eeb2a3591a69c61790baceb44520207e2",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/observability/02-tracing.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/02-tracing",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/02-tracing",
+      "status": 200,
+      "sha256": "cecb9313c245a86125396d12c0aaad3104b9f081e75591bed267df72b7c3860e",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/observability/03-logging.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/03-logging",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/03-logging",
+      "status": 200,
+      "sha256": "c09ef41cdae74bbdc294507b002085743d01231d55f56a4fb89ffca8e37c2c9d",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/observability/04-dashboards.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/04-dashboards",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/04-dashboards",
+      "status": 200,
+      "sha256": "535bf78c69bce2b1a8a20aa59738746fa6f54781b036792b2f35ffd917052473",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/observability/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/",
+      "status": 200,
+      "sha256": "5a438b54f6872ca00cb5cc38032443f6189452bb163036680d72c2bc158d59da",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/01-outlier-detection.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/resilience/01-outlier-detection",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/resilience/01-outlier-detection",
+      "status": 200,
+      "sha256": "140a8708add9e6f3b2694724e1b375e2965044a79d92d4335f7551d3c9caafd2",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/02-rate-limiting.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/resilience/02-rate-limiting",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/resilience/02-rate-limiting",
+      "status": 200,
+      "sha256": "93436d896e74ce4f1d6b3c1a294916db9da860a726a0a36ebbdb0d1adf683bf0",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/03-zone-aware-routing.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/resilience/03-zone-aware-routing",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/resilience/03-zone-aware-routing",
+      "status": 200,
+      "sha256": "6ae2b909d8a322f484899456661d39b7c9e707a73c6ee0c254ca5541ef5648c8",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/resilience/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/resilience/",
+      "status": 200,
+      "sha256": "a29c5177f5617d0f6aa0d47e6fedb3004addecdf44877bb6b26e8c54f349ab14",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/troubleshooting/common-errors.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/troubleshooting/common-errors",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/troubleshooting/common-errors",
+      "status": 200,
+      "sha256": "78cf7ad1438cd7ba40ccc3e91f495a0ca7760196965ca7158deb8daceb523bf1",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/linkerd/01-installation.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/01-installation",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/01-installation",
+      "status": 200,
+      "sha256": "058e433915389ee9d05deaab34365f51bc31a85a523a947bdacad429d278ac19",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/linkerd/02-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/02-architecture",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/02-architecture",
+      "status": 200,
+      "sha256": "f53b11352e0b9d38ffdefb72ec9a895bd46cff5d42d3419cc18d4aaeac30db61",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/linkerd/03-traffic-management.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/03-traffic-management",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/03-traffic-management",
+      "status": 200,
+      "sha256": "99a862c5bdf63476c8a2cff3727746ced796dc16efffc6e601e890f78e8435cf",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/linkerd/04-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/04-security",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/04-security",
+      "status": 200,
+      "sha256": "0ff96dfd6a291cf463a970fe06bd93e96ee3e04ece79ca0f4257657d9e8bf3be",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/linkerd/05-observability.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/05-observability",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/05-observability",
+      "status": 200,
+      "sha256": "b655071cbb58bf790c7608abd74f497f45b4bc2c3ecb9dd10116dab5ecd04e0d",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/linkerd/06-multi-cluster.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/06-multi-cluster",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/06-multi-cluster",
+      "status": 200,
+      "sha256": "0124ab6f6408ca598f5b517590e70f822b3c0c3f8ecafd402db12b747244b0c7",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/linkerd/07-best-practices.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/07-best-practices",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/07-best-practices",
+      "status": 200,
+      "sha256": "b9784686fa1f7e40726a4c6f9ffc7a8c14ed9466f6c48a67f7887b9ec62a339b",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/linkerd/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/service-mesh/linkerd/",
+      "status": 200,
+      "sha256": "e993661004869c7ec44e7a2f084ee0db7a749110fca56b711c9598362b47f087",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/04-inference-frameworks.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/04-inference-frameworks",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/04-inference-frameworks",
+      "status": 200,
+      "sha256": "1dd1c930a31de8637ba988c112eef22a703b5412a15763d54090e813fb7cad1f",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/05-model-training.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/05-model-training",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/05-model-training",
+      "status": 200,
+      "sha256": "86ebf350694f7d414dd6bf4fbb5dad11fd8013e27bab9c12537ea3d6c18310f7",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/06-ai-infrastructure.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/06-ai-infrastructure",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/06-ai-infrastructure",
+      "status": 200,
+      "sha256": "88ff668ea989f32a02a9609f9a812b598b2e69cd10c82f9d6203a77ce5e0c611",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/07-ai-ml-best-practices.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/07-ai-ml-best-practices",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/07-ai-ml-best-practices",
+      "status": 200,
+      "sha256": "c06dea7783d5875b7777c9f34d4454419715d9ae8b1e197504da097b3ed71577",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/mlflow/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/mlflow/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/mlflow/",
+      "status": 200,
+      "sha256": "1c7e02233750c99e2f04864c6735eb4ec5780133be8a845bceb599de32066e64",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/ray/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/ray/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/ray/",
+      "status": 200,
+      "sha256": "a0a7e21d76a3acaced526784f035f64fad17bb96504f31631a3d222dbc06bb6e",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution",
+      "status": 200,
+      "sha256": "15d5f1a40267fb0f82bbcc0fe20a4f9512d6f55b9c9295fa26a2610928c0f319",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/sagemaker-ai/04-validation-results.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/sagemaker-ai/04-validation-results",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/sagemaker-ai/04-validation-results",
+      "status": 200,
+      "sha256": "8a9029cf4a65178bd40810a7e294df277f341690fe2466f68ce3edf5ae2e8be2",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/autoscaling/02-karpenter.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/autoscaling/02-karpenter",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/autoscaling/02-karpenter",
+      "status": 200,
+      "sha256": "df0a7e9699b0bbd4c28488eb5457479cf87812fb1ee74966998ad3beefc030a7",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "ko/basics/03-container-technology.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/basics/03-container-technology",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/basics/03-container-technology",
+      "status": 200,
+      "sha256": "99221b0da7d71dd092e04f77bba0482d7f729f71ec6ad2c1455c194c2e59e7ec",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "ko/basics/05-ebpf-fundamentals.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/basics/05-ebpf-fundamentals",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/basics/05-ebpf-fundamentals",
+      "status": 200,
+      "sha256": "4217cd7cd9b2d5394d802babb178ee5193c016a6c54579d4157c084025c164df",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "ko/container-registry/03-harbor.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/container-registry/03-harbor",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/container-registry/03-harbor",
+      "status": 200,
+      "sha256": "9169f154400e8c284fb426a4956c552197574c8a1b81228eec361b21f5f7122f",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "ko/container-registry/04-best-practices.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/container-registry/04-best-practices",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/container-registry/04-best-practices",
+      "status": 200,
+      "sha256": "e5645bdafc702dc33214bf4db6a011a5490bbd9374ebd02c50117aa9094bd96f",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "ko/core/06-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/core/06-security",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/core/06-security",
+      "status": 200,
+      "sha256": "a9772673c6d06b1f17e59a744602093091e7ba94f4d3314d78f0aaaedb9a7560",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "ko/governance/00-governance-overview.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/governance/00-governance-overview",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/governance/00-governance-overview",
+      "status": 200,
+      "sha256": "606a2e84b023575b98071a153b3576cfc2fffebb11663b1aa0cefd15f123657f",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "ko/governance/01-landing-zone-and-ou.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/governance/01-landing-zone-and-ou",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/governance/01-landing-zone-and-ou",
+      "status": 200,
+      "sha256": "e7a194d1c4aa0482575acc87ceefd3e207319cdc587c460c8bdc8229a4a4885b",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "ko/governance/02-account-and-iam.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/governance/02-account-and-iam",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/governance/02-account-and-iam",
+      "status": 200,
+      "sha256": "77b17d0487ae3ae446e15e62603fa2c6309ed61e1b5bced8af4456ac86f19e26",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "ko/governance/03-eks-multi-account-multi-cluster.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/governance/03-eks-multi-account-multi-cluster",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/governance/03-eks-multi-account-multi-cluster",
+      "status": 200,
+      "sha256": "75754a6939645d5f4eb4bb81bb3c6688be9819b2903c27fcf85cc7b0c3f3e1cb",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "ko/governance/04-shared-vpc-and-connectivity.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/governance/04-shared-vpc-and-connectivity",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/governance/04-shared-vpc-and-connectivity",
+      "status": 200,
+      "sha256": "71ea11f447b785428aacd84bbf84540bf587e40bed77d273c371f24dc864c988",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "ko/governance/05-data-security-boundaries.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/governance/05-data-security-boundaries",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/governance/05-data-security-boundaries",
+      "status": 200,
+      "sha256": "a15deda44d448a56a58d5cb93026a05524cc2c8103e9f300a8a911b846fa2f2e",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": true,
+      "passed": true
+    },
+    {
+      "path": "ko/governance/06-decision-framework-and-poc.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/governance/06-decision-framework-and-poc",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/governance/06-decision-framework-and-poc",
+      "status": 200,
+      "sha256": "5549113f32e2c4d21fc7ac2fc056d0c40b88b51b13a4b10d3bc08c17d6dd4847",
+      "govUpdateDatePresent": true,
+      "auroraControlPresent": null,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/03-aws-lb-controller.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/03-aws-lb-controller",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/03-aws-lb-controller",
+      "status": 200,
+      "sha256": "8bd1963c0b74ae86c3936b4a8b2e5370ab16d0687082638e258fcad5e5bda5a2",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/04-gateway-api.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/04-gateway-api",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/04-gateway-api",
+      "status": 200,
+      "sha256": "40226ca88d750729b257931310e1a988028dff04b5cf1a5dda0a2d36d5254f8a",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/05-cross-org-vpc-connectivity.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/05-cross-org-vpc-connectivity",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/05-cross-org-vpc-connectivity",
+      "status": 200,
+      "sha256": "d4e68f83e0dc48e091a439a728103b069a09f3cc01d79566d1c009d7a7a94759",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/06-pod-network-benchmark.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/06-pod-network-benchmark",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/06-pod-network-benchmark",
+      "status": 200,
+      "sha256": "6a95e1fc4def6c88061f8dffbeb682617e35337e727a85826d2abe8f298a74d0",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/",
+      "status": 200,
+      "sha256": "014de23213dcb1235e62c75766a7ec0f7d94b6ac419d9d3ffa48df902e11e907",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/calico/01-introduction.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/01-introduction",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/01-introduction",
+      "status": 200,
+      "sha256": "39a72693ff8afc9a830bad46777d375ade9daa84085e7c8f7a15485fa0e09cb4",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/calico/02-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/02-architecture",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/02-architecture",
+      "status": 200,
+      "sha256": "b9c0c7633e67288cfdd9b661495925699c0bd2ee6625ab2d9683ad03b2e5b42b",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/calico/03-networking-modes.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/03-networking-modes",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/03-networking-modes",
+      "status": 200,
+      "sha256": "cdef113eddc4e22082c274566ecfc97cfef22248587b2d1b9090b13db87adb65",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/calico/04-bgp-deep-dive.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/04-bgp-deep-dive",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/04-bgp-deep-dive",
+      "status": 200,
+      "sha256": "4ab12016d56d5d676da83077281473e3483dfdacfa7a4c8ba6de38ac08398480",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/networking/calico/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/networking/calico/",
+      "status": 200,
+      "sha256": "af235d6045d09b7ddae701ac4eea7cf37ed0620b61bf9a297fcb4aa06fc36b18",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/ops/14-tekton-pipelines.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ops/14-tekton-pipelines",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ops/14-tekton-pipelines",
+      "status": 200,
+      "sha256": "12ad9fc6124a4cc0e071c76b6329284f50e8880a63afb1f7cfa17275bea80427",
+      "expectedDate": "2026-09-12",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks/02-eks-cluster-creation-part1-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks/02-eks-cluster-creation-part1-quiz",
+      "status": 200,
+      "sha256": "a0cb7f62faca229f110534a9297c3f3dfc000d80c13a64b42ead7123c071af8e",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/governance/00-governance-overview-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/00-governance-overview-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/00-governance-overview-quiz",
+      "status": 200,
+      "sha256": "8bef65735d70ae1a284032dae53d9a145dc70d8439c32f959e0604c3a303397c",
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/01-landing-zone-and-ou-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/01-landing-zone-and-ou-quiz",
+      "status": 200,
+      "sha256": "a4099fd24a997be1909b7efd94f9107be63e3d74ecc4ffdf5e83dcfbf2cfc7f2",
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/governance/02-account-and-iam-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/02-account-and-iam-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/02-account-and-iam-quiz",
+      "status": 200,
+      "sha256": "1874903c422112a036480429008d5ccf002d831d928a8b2cb2b09474bd7e550c",
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz",
+      "status": 200,
+      "sha256": "1ede67ba23a2bfa2b99a1597055d21d5ae2ded2777d462918cf2f3194b2a41dc",
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz",
+      "status": 200,
+      "sha256": "0a0a5f3670ee6038ffcd8ae106c3069021f8521f7845eb8aaf1b5740bf521f71",
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/governance/05-data-security-boundaries-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/05-data-security-boundaries-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/05-data-security-boundaries-quiz",
+      "status": 200,
+      "sha256": "04fa419afe5a26c37c9e2ba7432c8cc5ea351ebab9545a8407aeab5aac2066fb",
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/06-decision-framework-and-poc-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/governance/06-decision-framework-and-poc-quiz",
+      "status": 200,
+      "sha256": "63f475dd43f0e5f2308340fb65ba4997c5b5e8b3446cb4fe5ee4feb77b6527d2",
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/service-mesh/02-istio-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/02-istio-quiz",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/02-istio-quiz",
+      "status": 200,
+      "sha256": "84a7c3abc3bc7b1cdb0bfeff8b38511782af564c47b1a4f91b6842b4003098db",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/comparison.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/istio/comparison",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/istio/comparison",
+      "status": 200,
+      "sha256": "6b7e2db363afb261ea3f3315f29900219d3387fab98109fd2857caecf9747704",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/observability.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/istio/observability",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/istio/observability",
+      "status": 200,
+      "sha256": "f10a21d5099c889b3fa5df5c648c1b09df2f55eed8dab514674602130df3f74f",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/resilience.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/istio/resilience",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/istio/resilience",
+      "status": 200,
+      "sha256": "da1aa78bb02f940701438b95452f348b51ddc3105242a59496e6df2f6545f0b7",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/istio/security",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/istio/security",
+      "status": 200,
+      "sha256": "84c73d7439ea997cddbe9226cef4f4c8f2fe52109ade3b95f01207f081b28354",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/linkerd/architecture",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/quizzes/service-mesh/linkerd/architecture",
+      "status": 200,
+      "sha256": "d00872606c239dfa1b4147f0bbf5a2cfc972c168cccaa373a4bfcfabce892ef3",
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/02-istio.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/02-istio",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/02-istio",
+      "status": 200,
+      "sha256": "8df2146a454a9597fa5fbf741316e61c7112def489a3d6ba8cf145720c24e980",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/03-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/cilium-service-mesh/03-security",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/cilium-service-mesh/03-security",
+      "status": 200,
+      "sha256": "6d8059acc635b79021726599cfdb3113a353582280dbbe243bb76e921c502b3e",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/04-observability.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/cilium-service-mesh/04-observability",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/cilium-service-mesh/04-observability",
+      "status": 200,
+      "sha256": "bfb9120a3edc003e6117253f58c749b1c7871fb68be61b2b59734fc2979634cc",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/01-ambient-mode.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/advanced/01-ambient-mode",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/advanced/01-ambient-mode",
+      "status": 200,
+      "sha256": "0a9a7f72db3051f44c8d4bd01d1832af9c812e48025bc68c4f2d1eb13a40b51a",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/02-multi-cluster.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/advanced/02-multi-cluster",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/advanced/02-multi-cluster",
+      "status": 200,
+      "sha256": "6aec05e4266f2439f39fcf721e3394b8cb7508fdb4e12f5a20f614391d0fe63a",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/advanced/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/advanced/",
+      "status": 200,
+      "sha256": "855ef3df8ee41c2812d4bccb037562ee489c0a4fb57521134571c15f4b006713",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/comparison/03-sidecar-vs-ambient",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/comparison/03-sidecar-vs-ambient",
+      "status": 200,
+      "sha256": "c88028766bbbafe63e72490efdac6275537dafdcc9d6607e153fc11eda41aeb2",
+      "replacementLinksPresent": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/01-metrics.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/01-metrics",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/01-metrics",
+      "status": 200,
+      "sha256": "86efaae238965153821b4533153f14d2cc339066c25a5514c745a324a2d02489",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/02-tracing.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/02-tracing",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/02-tracing",
+      "status": 200,
+      "sha256": "c9a19a429267bd9c883399e2d63bc7a2dd48e99798366ef8fd9224c598aff18b",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/03-logging.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/03-logging",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/03-logging",
+      "status": 200,
+      "sha256": "13302541e3eb228401ade43a62627f269bcf6e8d9af96dea9886d304bc3e6311",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/04-dashboards.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/04-dashboards",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/04-dashboards",
+      "status": 200,
+      "sha256": "70640a6702be5524c60cb355f5b04956e46d5659cf4d28b4a5191d6efd412775",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/",
+      "status": 200,
+      "sha256": "dcb78c8359b5fa271f37735d9c5f307c31efc0164ac60bb0f9cb7ffd8622be11",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/01-outlier-detection.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/resilience/01-outlier-detection",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/resilience/01-outlier-detection",
+      "status": 200,
+      "sha256": "cb7a1dae02932df17a2405c899fc5be7bb377c88c57aa75bd9644ed7a2c8f151",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/02-rate-limiting.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/resilience/02-rate-limiting",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/resilience/02-rate-limiting",
+      "status": 200,
+      "sha256": "d8ab8f9ac2ae26d305fad61443923689e6fd8b09091229c0af5a7e4bc68667f1",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/03-zone-aware-routing.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/resilience/03-zone-aware-routing",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/resilience/03-zone-aware-routing",
+      "status": 200,
+      "sha256": "32b2f52869edfe6983b67c1128535733ffea127b4902a19551b8431ff1c412b6",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/resilience/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/resilience/",
+      "status": 200,
+      "sha256": "5825cf55893be1d9609e4ae43ba42a5cd1f94f4e5147480a9b35db9d9c36752d",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/troubleshooting/common-errors.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/troubleshooting/common-errors",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/troubleshooting/common-errors",
+      "status": 200,
+      "sha256": "d5704fe5b03c46a71edb2fa86321b4e6c3cad6843e32b0fe56e209725cad99c2",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/linkerd/01-installation.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/linkerd/01-installation",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/linkerd/01-installation",
+      "status": 200,
+      "sha256": "70645f1ba37382c09f36587a32caa8458d13ff116ff03df181db38ea1a4bbd2f",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/linkerd/02-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/linkerd/02-architecture",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/linkerd/02-architecture",
+      "status": 200,
+      "sha256": "96c15324130c9a8f7818714da7dfd5e10ef57180b991c686ef9a9d82751a433f",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/linkerd/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/linkerd/",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/linkerd/",
+      "status": 200,
+      "sha256": "8d1c9537792c93f8f446311bf3d306c4ac9668ea526bc9965110d38f4f513dca",
+      "expectedDate": "2026-09-11",
+      "dateModifiedMatches": true,
+      "passed": true
+    }
+  ],
+  "passed": 151,
+  "total": 151,
+  "scope": "HTTPHTMLonly;nodocumentJavaScriptexecution/GA4events;metadata/sourcechecksnotfullvisualreview"
+}

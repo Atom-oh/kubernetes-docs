@@ -25,15 +25,15 @@
   "lanes": [
     {
       "id": "inbound",
-      "label": "인바운드 트래픽"
+      "label": "Inbound Traffic"
     },
     {
       "id": "outbound",
-      "label": "아웃바운드 트래픽"
+      "label": "Outbound Traffic"
     },
     {
       "id": "control",
-      "label": "컨트롤 플레인 통신"
+      "label": "Control Plane Communication"
     }
   ],
   "mainPath": [

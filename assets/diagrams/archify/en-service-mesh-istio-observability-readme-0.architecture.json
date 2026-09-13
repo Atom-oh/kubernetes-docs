@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The Three Elements of Observability",
+    "locale": "en",
+    "output": "en-service-mesh-istio-observability-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Source (Envoy)"
+        },
+        "backend": {
+          "label": "Signal"
+        },
+        "database": {
+          "label": "Backend"
+        },
+        "frontend": {
+          "label": "Dashboards"
+        },
+        "messagebus": {
+          "label": "Alerting"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "metrics-flow",
+        "label": "Metrics collection flow",
+        "focus": [
+          "envoy",
+          "metrics-signal",
+          "prometheus",
+          "grafana",
+          "kiali",
+          "alertmanager"
+        ],
+        "note": "Prometheus scrapes the metrics Envoy generates; they drive Grafana and Kiali visualization and Alertmanager alerts."
+      },
+      {
+        "id": "tracing-flow",
+        "label": "Distributed tracing flow",
+        "focus": [
+          "envoy",
+          "tracing-signal",
+          "jaeger",
+          "grafana"
+        ],
+        "note": "Jaeger/Zipkin collect the spans Envoy generates, Tempo keeps them long-term, and Grafana visualizes them."
+      },
+      {
+        "id": "logging-flow",
+        "label": "Logging flow",
+        "focus": [
+          "envoy",
+          "logging-signal",
+          "loki",
+          "grafana"
+        ],
+        "note": "Fluentd collects Envoy access logs into Loki, and Grafana queries them."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "envoy",
+      "type": "external",
+      "label": "Envoy sidecar",
+      "sublabel": "Zero-code auto collection",
+      "tag": "Zero Instrumentation",
+      "pos": [
+        40,
+        358
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "metrics-signal",
+      "type": "backend",
+      "label": "Metrics",
+      "sublabel": "Requests · latency · errors",
+      "pos": [
+        250,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "or VictoriaMetrics",
+      "pos": [
+        490,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "tracing-signal",
+      "type": "backend",
+      "label": "Distributed Tracing",
+      "sublabel": "Request path · dependencies",
+      "pos": [
+        250,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "database",
+      "label": "Jaeger / Zipkin",
+      "sublabel": "Tempo long-term storage",
+      "pos": [
+        490,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "logging-signal",
+      "type": "backend",
+      "label": "Logging",
+      "sublabel": "HTTP calls · security events",
+      "pos": [
+        250,
+        540
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Grafana Loki",
+      "sublabel": "via Fluentd · or Elasticsearch",
+      "pos": [
+        490,
+        540
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kiali",
+      "type": "frontend",
+      "label": "Kiali",
+      "sublabel": "Service topology",
+      "pos": [
+        770,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana dashboard",
+      "sublabel": "Metrics · traces · logs",
+      "pos": [
+        885,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "messagebus",
+      "label": "Prometheus Alertmanager",
+      "sublabel": "Golden Signals alerts",
+      "pos": [
+        1000,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1. Metrics",
+      "wraps": [
+        "metrics-signal",
+        "prometheus"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2. Distributed Tracing",
+      "wraps": [
+        "tracing-signal",
+        "jaeger"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "3. Logging",
+      "wraps": [
+        "logging-signal",
+        "loki"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Integrated observability",
+      "wraps": [
+        "kiali",
+        "grafana",
+        "alertmanager"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "envoy-metrics",
+      "from": "envoy",
+      "to": "metrics-signal",
+      "label": "metrics",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          115,
+          210
+        ]
+      ]
+    },
+    {
+      "id": "envoy-tracing",
+      "from": "envoy",
+      "to": "tracing-signal",
+      "label": "spans"
+    },
+    {
+      "id": "envoy-logging",
+      "from": "envoy",
+      "to": "logging-signal",
+      "label": "access logs",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          115,
+          570
+        ]
+      ]
+    },
+    {
+      "id": "metrics-prometheus",
+      "from": "metrics-signal",
+      "to": "prometheus",
+      "label": "scrape",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tracing-jaeger",
+      "from": "tracing-signal",
+      "to": "jaeger"
+    },
+    {
+      "id": "logging-loki",
+      "from": "logging-signal",
+      "to": "loki"
+    },
+    {
+      "id": "prometheus-kiali",
+      "from": "prometheus",
+      "to": "kiali"
+    },
+    {
+      "id": "prometheus-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "visualization",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          580,
+          300
+        ],
+        [
+          975,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "jaeger-grafana",
+      "from": "jaeger",
+      "to": "grafana"
+    },
+    {
+      "id": "loki-grafana",
+      "from": "loki",
+      "to": "grafana",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          580,
+          480
+        ],
+        [
+          975,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "prometheus-alertmanager",
+      "from": "prometheus",
+      "to": "alertmanager",
+      "label": "alert rules",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          580,
+          130
+        ],
+        [
+          1090,
+          130
+        ]
+      ],
+      "labelSegment": 1
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Metrics",
+      "items": [
+        "Measures request count, response time, error rate, and resource utilization",
+        "Used for system health monitoring, SLO/SLI tracking, and capacity planning",
+        "Tools: Prometheus, Grafana, VictoriaMetrics"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Distributed Tracing",
+      "items": [
+        "Tracks the complete path of a single request and each service's processing time",
+        "Used for bottleneck identification, root cause analysis, and microservices debugging",
+        "Tools: Jaeger, Zipkin, Grafana Tempo"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Logging",
+      "items": [
+        "Records all HTTP requests/responses, errors, and security events",
+        "Used for detailed debugging, security audits, and compliance",
+        "Tools: Grafana Loki, Elasticsearch, Fluentd"
+      ]
+    }
+  ]
+}

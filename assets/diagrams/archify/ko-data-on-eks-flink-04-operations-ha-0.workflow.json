@@ -1,0 +1,215 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Parallelism과 node capacity: 경로와 피드백",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "job-loop",
+        "label": "잡 단위 판단",
+        "focus": [
+          "metrics",
+          "autoscaler"
+        ],
+        "note": "처리율·pressure·quota·복구 조건을 평가합니다. Node 유형을 직접 선택하는 과정은 아닙니다."
+      },
+      {
+        "id": "scale-up",
+        "label": "스케일 업 경로",
+        "focus": [
+          "autoscaler",
+          "pods-add",
+          "provision"
+        ],
+        "note": "기존 용량에 배치할 수 없고 NodePool 조건을 충족하는 경우 새 node가 필요할 수 있습니다."
+      },
+      {
+        "id": "scale-down",
+        "label": "스케일 다운 경로",
+        "focus": [
+          "autoscaler",
+          "pods-remove",
+          "consolidate",
+          "feedback"
+        ],
+        "note": "정책에 맞는 empty/underutilized node를 평가합니다. Node 변화가 먼저 발생해 lag·복구를 바꿀 수도 있습니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "flink",
+      "label": "Flink 오토스케일러"
+    },
+    {
+      "id": "up",
+      "label": "스케일 업"
+    },
+    {
+      "id": "down",
+      "label": "스케일 다운"
+    }
+  ],
+  "phases": [
+    {
+      "id": "job-level",
+      "label": "Job decision",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "pod-level",
+      "label": "TM placement",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "dashed"
+    },
+    {
+      "id": "node-level",
+      "label": "Node capacity",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "metrics",
+    "autoscaler",
+    "pods-add",
+    "provision"
+  ],
+  "nodes": [
+    {
+      "id": "metrics",
+      "lane": "flink",
+      "col": 0,
+      "type": "external",
+      "label": "버텍스별 메트릭",
+      "sublabel": "Rates / lag / pressure",
+      "width": 150
+    },
+    {
+      "id": "autoscaler",
+      "lane": "flink",
+      "col": 1,
+      "type": "backend",
+      "label": "오토스케일러가 병렬도 변경",
+      "sublabel": "Recommendations + constraints",
+      "width": 196
+    },
+    {
+      "id": "pods-add",
+      "lane": "up",
+      "col": 2,
+      "type": "backend",
+      "label": "TaskManager Pod 추가 요청",
+      "sublabel": "Check scheduling feasibility",
+      "width": 196
+    },
+    {
+      "id": "provision",
+      "lane": "up",
+      "col": 3,
+      "type": "cloud",
+      "label": "Evaluate EC2 capacity",
+      "sublabel": "NodePool / quota / availability",
+      "width": 192
+    },
+    {
+      "id": "pods-remove",
+      "lane": "down",
+      "col": 2,
+      "type": "backend",
+      "label": "TM demand decreases",
+      "sublabel": "Idle / allocation policy",
+      "width": 196
+    },
+    {
+      "id": "consolidate",
+      "lane": "down",
+      "col": 3,
+      "type": "cloud",
+      "label": "Evaluate disruption",
+      "sublabel": "Empty / underutilized nodes",
+      "width": 192
+    },
+    {
+      "id": "feedback",
+      "lane": "flink",
+      "col": 3,
+      "type": "external",
+      "label": "Recovery / lag changes",
+      "sublabel": "Next Flink evaluation",
+      "width": 192
+    }
+  ],
+  "edges": [
+    {
+      "id": "metrics-autoscaler",
+      "from": "metrics",
+      "to": "autoscaler",
+      "label": "Evaluate"
+    },
+    {
+      "id": "autoscaler-pods-add",
+      "from": "autoscaler",
+      "to": "pods-add",
+      "label": "Scale up",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pods-add-provision",
+      "from": "pods-add",
+      "to": "provision",
+      "label": "스케줄 불가"
+    },
+    {
+      "id": "autoscaler-pods-remove",
+      "from": "autoscaler",
+      "to": "pods-remove",
+      "label": "Scale down",
+      "role": "branch"
+    },
+    {
+      "id": "pods-remove-consolidate",
+      "from": "pods-remove",
+      "to": "consolidate",
+      "label": "Policy permits",
+      "role": "branch"
+    },
+    {
+      "id": "capacity-feedback",
+      "from": "consolidate",
+      "to": "feedback",
+      "label": "Affects workload",
+      "role": "return",
+      "route": "outside-right",
+      "fromSide": "right",
+      "toSide": "right",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "상호 영향",
+      "items": [
+        "Flink: parallelism·state 복구·pressure",
+        "Node 변화가 job 판단보다 먼저 올 수도 있음"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "검증할 시간과 제약",
+      "items": [
+        "Provisioning + restore + backlog catch-up",
+        "Timer 하나의 대소 관계로 중단을 막지 못함"
+      ]
+    }
+  ]
+}

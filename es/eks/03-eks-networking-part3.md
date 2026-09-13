@@ -1,58 +1,60 @@
-# Parte 3: Troubleshooting
+# Parte 3: Solución de problemas
 
 ## Descripción general
 
-Este documento cubre la optimización del rendimiento, los métodos de troubleshooting y los casos de uso avanzados para Amazon EKS networking. Analizaremos cómo optimizar el rendimiento de red, resolver problemas comunes de networking y aprovechar funcionalidades avanzadas de networking.
-
-![Optimización del rendimiento de red de EKS](../.gitbook/assets/network_performance_optimization.png)
+Este documento cubre la optimización del rendimiento, los métodos de solución de problemas y los casos de uso avanzados para las redes de Amazon EKS. Analizaremos cómo optimizar el rendimiento de red, resolver problemas comunes de red y aprovechar las características avanzadas de red.
 
 ## Optimización del rendimiento de red
 
-Existen varias estrategias para optimizar el rendimiento de red en clusters de EKS.
+Existen varias estrategias para optimizar el rendimiento de red en los clústeres de EKS.
 
-![Optimización del rendimiento de red de EKS](../.gitbook/assets/network_performance_optimization.png)
+![Diagrama del orden de ajuste del rendimiento de red de EKS, desde el tipo de instancia hasta el modo CNI, MTU, ajuste de TCP, proximidad de ubicación y limpieza de políticas de red.](../.gitbook/assets/en-eks-03-eks-networking-part3-0.png)
 
-### Selección del tipo de instance
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-0.html)
 
-El rendimiento de red varía significativamente según el tipo de instance. Para workloads intensivos en red, se recomienda elegir tipos de instance que soporten enhanced networking.
+### Selección del tipo de instancia
 
-1. **Instances con soporte para Enhanced Networking**:
-   * Los tipos de instance como C5, M5 y R5 soportan enhanced networking.
-   * Estas instances proporcionan mayor bandwidth, menor latency y menor jitter.
-2. **Network Bandwidth**:
-   * Los tamaños de instance más grandes proporcionan mayor network bandwidth.
-   * Por ejemplo, m5.large proporciona hasta 10Gbps, mientras que m5.24xlarge proporciona hasta 25Gbps de network bandwidth.
+El rendimiento de red varía significativamente según el tipo de instancia. Para cargas de trabajo que requieren un uso intensivo de la red, se recomienda elegir tipos de instancia que admitan redes mejoradas.
+
+1. **Instancias compatibles con redes mejoradas**:
+   * Los tipos de instancia como C5, M5 y R5 admiten redes mejoradas.
+   * Estas instancias proporcionan mayor ancho de banda, menor latencia y menor jitter.
+2. **Ancho de banda de red**:
+   * Los tamaños de instancia más grandes proporcionan mayor ancho de banda de red.
+   * Por ejemplo, m5.large proporciona hasta 10Gbps, mientras que m5.24xlarge proporciona hasta 25Gbps de ancho de banda de red.
 3. **Elastic Network Adapter (ENA)**:
-   * ENA soporta network bandwidth de hasta 100Gbps.
-   * La mayoría de los tipos de instance modernos soportan ENA.
+   * ENA admite un ancho de banda de red de hasta 100Gbps.
+   * La mayoría de los tipos de instancia modernos admiten ENA.
 
-### Modos de Cluster Networking
+### Modos de red del clúster
 
-EKS soporta múltiples modos de networking, cada uno con diferentes características de rendimiento.
+EKS admite varios modos de red, cada uno con diferentes características de rendimiento.
 
-![Modos de EKS Networking](../.gitbook/assets/eks_networking_modes.png)
+![Diagrama de los modos de red de EKS, donde AWS VPC CNI asigna IP de VPC nativas a los pods mediante ENI y se aplican grupos de seguridad por ENI.](../.gitbook/assets/en-eks-03-eks-networking-part3-1.png)
 
-1. **AWS VPC CNI (Default)**:
-   * Asigna direcciones IP de VPC directamente a los Pods.
-   * Rendimiento excelente porque usa VPC networking nativo.
-   * Cada node tiene un límite en la cantidad de direcciones IP que puede asignar.
-2. **Custom Networking**:
-   * Permite asignar direcciones IP desde subnets específicas a los Pods.
-   * Puede ampliar el espacio de direcciones IP usando bloques CIDR secundarios.
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-1.html)
+
+1. **AWS VPC CNI (predeterminado)**:
+   * Asigna direcciones IP de VPC directamente a los pods.
+   * Ofrece un rendimiento excelente, ya que usa redes de VPC nativas.
+   * Cada nodo tiene un límite en la cantidad de direcciones IP que puede asignar.
+2. **Redes personalizadas**:
+   * Permite asignar direcciones IP de subredes específicas a los pods.
+   * Puede ampliar el espacio de direcciones IP mediante bloques CIDR secundarios.
    * Proporciona un control más preciso sobre la topología de red.
-3. **Alternative CNI Plugins**:
-   * Se pueden usar Alternative CNI plugins como Calico y Cilium.
-   * Estos plugins proporcionan funcionalidades adicionales (por ejemplo, network policies, encryption), pero pueden tener overhead de rendimiento.
+3. **Plugins de CNI alternativos**:
+   * Se pueden usar plugins de CNI alternativos como Calico y Cilium.
+   * Estos plugins proporcionan características adicionales (por ejemplo, políticas de red y cifrado), pero pueden tener sobrecarga de rendimiento.
 
 ### Optimización de MTU
 
 MTU (Maximum Transmission Unit) es un factor importante que afecta el rendimiento de red.
 
-1. **Configuraciones de MTU por defecto**:
-   * El MTU por defecto para AWS VPC CNI es 9001.
-   * Algunas rutas de red pueden requerir un MTU más pequeño.
+1. **Configuración predeterminada de MTU**:
+   * La MTU predeterminada para AWS VPC CNI es 9001.
+   * Algunas rutas de red pueden requerir una MTU menor.
 2. **Ajuste de MTU**:
-   * La configuración de MTU de AWS VPC CNI se puede ajustar:
+   * Se puede ajustar la configuración de MTU de AWS VPC CNI:
 
 ```bash
 kubectl set env daemonset aws-node -n kube-system ENI_MTU=9001
@@ -60,14 +62,14 @@ kubectl set env daemonset aws-node -n kube-system ENI_MTU=9001
 
 3. **Jumbo Frames**:
    * Usar jumbo frames (MTU > 1500) puede mejorar el rendimiento de red.
-   * Todos los componentes de red, incluidos VPC, subnets, security groups y load balancers, deben soportar jumbo frames.
+   * Todos los componentes de red, incluidos VPC, subredes, grupos de seguridad y balanceadores de carga, deben admitir jumbo frames.
 
 ### Optimización de TCP
 
 La configuración de TCP se puede optimizar para mejorar el rendimiento de red.
 
 1. **TCP Early Demux**:
-   * TCP early demux puede mejorar el rendimiento, pero puede causar problemas en algunos modos de networking.
+   * TCP early demux puede mejorar el rendimiento, pero puede causar problemas en algunos modos de red.
    * Se puede deshabilitar si es necesario:
 
 ```bash
@@ -76,7 +78,7 @@ kubectl set env daemonset aws-node -n kube-system DISABLE_TCP_EARLY_DEMUX=true
 
 2. **Configuración de TCP Keepalive**:
    * La configuración de TCP keepalive se puede ajustar para optimizar el mantenimiento y la reutilización de conexiones.
-   * Esto es particularmente útil para workloads que manejan muchas conexiones cortas.
+   * Esto es especialmente útil para cargas de trabajo que gestionan muchas conexiones cortas.
 
 ```bash
 # System-level TCP keepalive settings
@@ -85,9 +87,9 @@ sysctl -w net.ipv4.tcp_keepalive_intvl=15
 sysctl -w net.ipv4.tcp_keepalive_probes=6
 ```
 
-3. **Tamaño del TCP Buffer**:
-   * El tamaño del TCP buffer se puede ajustar para optimizar el throughput.
-   * Se recomienda configurar el tamaño del buffer de acuerdo con el Bandwidth Delay Product (BDP).
+3. **Tamaño de búfer TCP**:
+   * El tamaño del búfer TCP se puede ajustar para optimizar el rendimiento.
+   * Se recomienda establecer el tamaño del búfer según el producto de ancho de banda y retardo (BDP).
 
 ```bash
 # System-level TCP buffer settings
@@ -97,15 +99,17 @@ sysctl -w net.ipv4.tcp_rmem="4096 87380 16777216"
 sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216"
 ```
 
-### Ubicación y localidad de Nodes
+### Ubicación y proximidad de nodos
 
-El rendimiento de red se puede mejorar optimizando la ubicación y la localidad de los nodes.
+El rendimiento de red se puede mejorar optimizando la ubicación y la proximidad de los nodos.
 
-![Optimización de ubicación y localidad de Nodes](../.gitbook/assets/node_placement_locality.png)
+![Diagrama que separa el tráfico intra-AZ de alta frecuencia de la replicación de DB entre AZ, a través de pods web, de caché y de DB en dos Availability Zones.](../.gitbook/assets/en-eks-03-eks-networking-part3-2.png)
 
-1. **Localidad de Availability Zone**:
-   * Coloca Pods que se comunican con frecuencia en la misma Availability Zone para reducir la latency.
-   * Usa pod affinity y anti-affinity para controlar la ubicación de los Pods.
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-2.html)
+
+1. **Proximidad de Availability Zone**:
+   * Coloque los pods que se comunican con frecuencia en la misma zona de disponibilidad para reducir la latencia.
+   * Use afinidad y antiafinidad de pods para controlar la ubicación de los pods.
 
 ```yaml
 apiVersion: apps/v1
@@ -136,9 +140,9 @@ spec:
               topologyKey: topology.kubernetes.io/zone
 ```
 
-2. **Localidad de Node**:
-   * Coloca Pods que se comunican con frecuencia en el mismo node para reducir los network hops.
-   * Esto es particularmente útil para aplicaciones sensibles a la latency.
+2. **Proximidad de nodos**:
+   * Coloque los pods que se comunican con frecuencia en el mismo nodo para reducir los saltos de red.
+   * Esto es especialmente útil para aplicaciones sensibles a la latencia.
 
 ```yaml
 apiVersion: apps/v1
@@ -170,8 +174,8 @@ spec:
 ```
 
 3. **Topology Aware Hints**:
-   * Usa topology aware hints para mantener el tráfico del Service dentro de la misma zone.
-   * Esto reduce los costos de data transfer entre Availability Zones y mejora la latency.
+   * Use topology aware hints para mantener el tráfico de Service dentro de la misma zona.
+   * Esto reduce los costos de transferencia de datos entre zonas de disponibilidad y mejora la latencia.
 
 ```yaml
 apiVersion: v1
@@ -189,45 +193,49 @@ spec:
   type: ClusterIP
 ```
 
-### Optimización de Network Policy
+### Optimización de políticas de red
 
-Las network policies mejoran la seguridad, pero pueden afectar el rendimiento.
+Las políticas de red mejoran la seguridad, pero pueden afectar el rendimiento.
 
-1. **Minimizar el número de policies**:
-   * Aplica solo las network policies mínimas necesarias.
-   * Demasiadas policies pueden causar degradación del rendimiento.
-2. **Optimizar el alcance de las policies**:
-   * Usa policies específicas en lugar de policies amplias.
-   * Usa label selectors para limitar el alcance de las policies.
-3. **Considerar el orden de evaluación de policies**:
-   * Las network policies se evalúan de forma acumulativa.
-   * Define primero las reglas usadas con más frecuencia para optimizar el rendimiento de la evaluación.
+1. **Minimizar el número de políticas**:
+   * Aplique únicamente las políticas de red mínimas necesarias.
+   * Demasiadas políticas pueden causar una degradación del rendimiento.
+2. **Optimizar el alcance de las políticas**:
+   * Use políticas específicas en lugar de políticas amplias.
+   * Use selectores de etiquetas para limitar el alcance de las políticas.
+3. **Considerar el orden de evaluación de las políticas**:
+   * Las políticas de red se evalúan de forma acumulativa.
+   * Defina primero las reglas más utilizadas para optimizar el rendimiento de evaluación.
 
-## Troubleshooting de Networking
+## Solución de problemas de red
 
-Exploremos los problemas comunes de networking que pueden ocurrir en clusters de EKS y cómo resolverlos.
+Exploremos problemas comunes de red que pueden ocurrir en los clústeres de EKS y cómo resolverlos.
 
-![Troubleshooting de EKS Networking](../.gitbook/assets/networking_troubleshooting.png)
+![Diagrama de clasificación de problemas de red de EKS que se estrecha desde las redes de pods hasta los servicios y el balanceo de carga, y luego hasta VPC y subredes antes de diagnósticos profundos.](../.gitbook/assets/en-eks-03-eks-networking-part3-3.png)
 
-### Problemas de Pod Networking
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-3.html)
 
-![Problemas de Pod Networking](../.gitbook/assets/pod_networking_issues.png)
+### Problemas de red de Pod
+
+![Diagrama del flujo de diagnóstico de redes de pods, que avanza desde la inspección de estado hasta las pruebas de ruta y la clasificación de causas, para luego redimensionar los grupos de IP y reiniciar.](../.gitbook/assets/en-eks-03-eks-networking-part3-4.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-4.html)
 
 1. **Fallo en la asignación de IP de Pod**:
-   * Síntoma: El Pod queda atascado en estado `ContainerCreating`
-   * Causa: El node no tiene suficientes direcciones IP disponibles
+   * Síntoma: Pod atascado en el estado `ContainerCreating`
+   * Causa: El nodo no tiene suficientes direcciones IP disponibles
    * Solución:
-     * Verificar el estado del node: `kubectl describe node <node-name>`
-     * Verificar los logs de AWS VPC CNI: `kubectl logs -n kube-system -l k8s-app=aws-node`
-     * Aumentar WARM\_IP\_TARGET: `kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=10`
-     * Actualizar el tipo de instance del node: Cambiar a un tipo de instance que soporte más ENIs y direcciones IP
-2. **Problemas de comunicación Pod-to-Pod**:
-   * Síntoma: El Pod no puede comunicarse con otros Pods
-   * Causa: Network policies, security groups, problemas de routing, etc.
+     * Compruebe el estado del nodo: `kubectl describe node <node-name>`
+     * Compruebe los logs de AWS VPC CNI: `kubectl logs -n kube-system -l k8s-app=aws-node`
+     * Aumente WARM\_IP\_TARGET: `kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=10`
+     * Actualice el tipo de instancia del nodo: cambie a un tipo de instancia que admita más ENI y direcciones IP
+2. **Problemas de comunicación de Pod a Pod**:
+   * Síntoma: Pod no puede comunicarse con otros pods
+   * Causa: Políticas de red, grupos de seguridad, problemas de enrutamiento, etc.
    * Solución:
-     * Verificar network policies: `kubectl get networkpolicy`
-     * Verificar reglas de security group: Usar AWS console o AWS CLI
-     * Probar la conectividad de red desde dentro del Pod:
+     * Compruebe las políticas de red: `kubectl get networkpolicy`
+     * Compruebe las reglas de los grupos de seguridad: use la consola de AWS o AWS CLI
+     * Pruebe la conectividad de red desde dentro del pod:
 
 ```bash
 kubectl exec -it <pod-name> -- ping <target-pod-ip>
@@ -236,48 +244,50 @@ kubectl exec -it <pod-name> -- traceroute <target-pod-ip>
 ```
 
 3. **Problemas de resolución DNS**:
-   * Síntoma: El Pod no puede resolver nombres de Service
-   * Causa: Problemas de CoreDNS, network policies, security groups, etc.
+   * Síntoma: Pod no puede resolver nombres de Service
+   * Causa: Problemas de CoreDNS, políticas de red, grupos de seguridad, etc.
    * Solución:
-     * Verificar el estado del Pod de CoreDNS: `kubectl get pods -n kube-system -l k8s-app=kube-dns`
-     * Verificar logs de CoreDNS: `kubectl logs -n kube-system -l k8s-app=kube-dns`
-     * Verificar configuración de DNS: `kubectl exec -it <pod-name> -- cat /etc/resolv.conf`
-     * Probar consultas DNS:
+     * Compruebe el estado de los pods de CoreDNS: `kubectl get pods -n kube-system -l k8s-app=kube-dns`
+     * Compruebe los logs de CoreDNS: `kubectl logs -n kube-system -l k8s-app=kube-dns`
+     * Compruebe la configuración de DNS: `kubectl exec -it <pod-name> -- cat /etc/resolv.conf`
+     * Pruebe las consultas DNS:
 
 ```bash
 kubectl exec -it <pod-name> -- nslookup kubernetes.default.svc.cluster.local
 kubectl exec -it <pod-name> -- dig kubernetes.default.svc.cluster.local
 ```
 
-### Problemas de Service y Load Balancing
+### Problemas de Service y balanceo de carga
 
-![Problemas de Service y Load Balancer](../.gitbook/assets/service_loadbalancer_issues.png)
+![Diagrama de solución de problemas que muestra la ruta de Service a EndpointSlice y a pod, junto con el ALB y el grupo de destino creados por AWS Load Balancer Controller.](../.gitbook/assets/en-eks-03-eks-networking-part3-5.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-5.html)
 
 1. **Problemas de conexión de Service**:
-   * Síntoma: No se puede conectar a los Pods a través del Service
-   * Causa: Selector del Service, estado del Pod, endpoints, etc.
+   * Síntoma: No se puede conectar a los pods mediante el Service
+   * Causa: Selector de Service, estado de los pods, endpoints, etc.
    * Solución:
-     * Verificar el estado del Service: `kubectl describe service <service-name>`
-     * Verificar endpoints: `kubectl get endpoints <service-name>`
-     * Verificar el estado del Pod: `kubectl get pods -l <selector-label>`
-     * Verificar DNS del Service: `kubectl exec -it <pod-name> -- nslookup <service-name>`
-2. **Problemas de Load Balancer**:
-   * Síntoma: No se puede conectar al load balancer desde el exterior
-   * Causa: Security groups, subnet tags, health checks, etc.
+     * Compruebe el estado del Service: `kubectl describe service <service-name>`
+     * Compruebe los endpoints: `kubectl get endpoints <service-name>`
+     * Compruebe el estado de los pods: `kubectl get pods -l <selector-label>`
+     * Compruebe el DNS de Service: `kubectl exec -it <pod-name> -- nslookup <service-name>`
+2. **Problemas de balanceador de carga**:
+   * Síntoma: No se puede conectar al balanceador de carga desde el exterior
+   * Causa: Grupos de seguridad, etiquetas de subred, comprobaciones de estado, etc.
    * Solución:
-     * Verificar el estado del load balancer: Usar AWS console o AWS CLI
-     * Verificar reglas de security group: Confirmar que el inbound traffic esté permitido
-     * Verificar subnet tags: Confirmar que existan los tags adecuados
-     * Verificar la configuración de health check: Ruta de health check, port, etc.
+     * Compruebe el estado del balanceador de carga: use la consola de AWS o AWS CLI
+     * Compruebe las reglas de los grupos de seguridad: verifique que se permita el tráfico entrante
+     * Compruebe las etiquetas de subred: verifique que existan las etiquetas adecuadas
+     * Compruebe la configuración de comprobación de estado: ruta, puerto, etc. de comprobación de estado
 3. **Problemas de Ingress**:
-   * Síntoma: No se puede conectar al Service a través de Ingress
-   * Causa: Ingress controller, annotations, certificates, etc.
+   * Síntoma: No se puede conectar al Service mediante Ingress
+   * Causa: Controlador de Ingress, anotaciones, certificados, etc.
    * Solución:
-     * Verificar el estado de Ingress: `kubectl describe ingress <ingress-name>`
-     * Verificar logs del Ingress controller: `kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller`
-     * Verificar el estado de ALB: Usar AWS console o AWS CLI
-     * Verificar el estado del target group: Confirmar que los targets estén healthy
+     * Compruebe el estado de Ingress: `kubectl describe ingress <ingress-name>`
+     * Compruebe los logs del controlador de Ingress: `kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller`
+     * Compruebe el estado de ALB: use la consola de AWS o AWS CLI
+     * Compruebe el estado del grupo de destino: verifique que los destinos estén en buen estado
 
-## Quiz
+## Cuestionario
 
-Para comprobar lo que has aprendido en este capítulo, intenta el [quiz del tema](../quizzes/eks/03-eks-networking-part3-quiz.md).
+Para comprobar lo que ha aprendido en este capítulo, pruebe el [cuestionario del tema](../quizzes/eks/03-eks-networking-part3-quiz.md).

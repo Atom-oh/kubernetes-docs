@@ -1,16 +1,18 @@
-# Parte 5: Acceso, validación, actualización y eliminación del clúster
+# Parte 5: Acceso, validación, actualización y eliminación del cluster
 
-## Configuración del acceso al clúster
+## Configuración del acceso al cluster
 
-Después de crear un clúster de EKS, se requiere configuración para acceder al clúster. En esta sección, aprenderemos cómo configurar el acceso al clúster.
+Después de crear un cluster de EKS, se requiere configuración para acceder al cluster. En esta sección, aprenderemos a configurar el acceso al cluster.
 
-### Proceso de configuración del acceso al clúster
+### Proceso de configuración del acceso al cluster
 
-![Proceso de configuración del acceso al clúster de EKS](../.gitbook/assets/eks_cluster_access_configuration.png)
+![Diagrama del flujo de configuración de acceso: kubeconfig, principal de IAM, entrada de acceso, reglas y binding de RBAC, y luego una prueba de acceso.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-0.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-0.html)
 
 ### Configuración de kubeconfig
 
-Necesitas configurar el archivo kubeconfig para acceder a un clúster de EKS. Puedes configurar kubeconfig usando AWS CLI:
+Debes configurar el archivo kubeconfig para acceder a un cluster de EKS. Puedes configurar kubeconfig mediante AWS CLI:
 
 ```bash
 aws eks update-kubeconfig \
@@ -18,19 +20,21 @@ aws eks update-kubeconfig \
   --region us-west-2
 ```
 
-Este comando actualiza el archivo `~/.kube/config` para habilitar el acceso al clúster de EKS.
+Este comando actualiza el archivo `~/.kube/config` para habilitar el acceso al cluster de EKS.
 
-### Configuración del acceso para IAM User y Role
+### Configuración del acceso de usuarios y roles de IAM
 
-De forma predeterminada, solo la entidad IAM (user o role) que creó el clúster de EKS puede acceder al clúster. Hay dos métodos para conceder acceso al clúster a otros IAM users o roles: el método tradicional con aws-auth ConfigMap y el nuevo método EKS Access Entry.
+De forma predeterminada, solo la entidad de IAM (usuario o rol) que creó el cluster de EKS puede acceder a este. Hay dos métodos para conceder acceso al cluster a otros usuarios o roles de IAM: el método tradicional aws-auth ConfigMap y el nuevo método EKS Access Entry.
 
-![Comparación de métodos de acceso IAM de EKS](../.gitbook/assets/eks_iam_access_methods.png)
+![Diagrama que compara las dos formas en que un principal de IAM se asigna a la API de Kubernetes: las entradas de acceso de EKS y el aws-auth ConfigMap.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-1.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-1.html)
 
 #### Método 1: EKS Access Entry (recomendado)
 
-EKS Access Entry es un nuevo método que reemplaza el aws-auth ConfigMap y proporciona un enfoque más estable y fácil de administrar.
+EKS Access Entry es un método nuevo que reemplaza el aws-auth ConfigMap y ofrece un enfoque más estable y fácil de administrar.
 
-1. Habilita Access Entry para el clúster:
+1. Habilita Access Entry para el cluster:
 
 ```bash
 aws eks update-cluster-config \
@@ -39,7 +43,7 @@ aws eks update-cluster-config \
   --access-config authenticationMode=API_AND_CONFIG_MAP
 ```
 
-2. Crea Access Entry para un IAM role:
+2. Crea una Access Entry para un rol de IAM:
 
 ```bash
 aws eks create-access-entry \
@@ -49,7 +53,7 @@ aws eks create-access-entry \
   --kubernetes-groups system:masters
 ```
 
-3. Crea Access Entry para un IAM user:
+3. Crea una Access Entry para un usuario de IAM:
 
 ```bash
 aws eks create-access-entry \
@@ -59,13 +63,13 @@ aws eks create-access-entry \
   --kubernetes-groups system:masters
 ```
 
-4. Lista los Access Entries:
+4. Lista las Access Entries:
 
 ```bash
 aws eks list-access-entries --cluster-name my-cluster
 ```
 
-5. Describe los detalles de Access Entry:
+5. Describe los detalles de la Access Entry:
 
 ```bash
 aws eks describe-access-entry \
@@ -75,7 +79,7 @@ aws eks describe-access-entry \
 
 #### Método 2: aws-auth ConfigMap (heredado)
 
-El aws-auth ConfigMap es el método tradicional y aún es compatible, pero se recomienda usar Access Entry para clústeres nuevos.
+El aws-auth ConfigMap es el método tradicional y sigue siendo compatible, pero se recomienda usar Access Entry para los nuevos clusters.
 
 1. Obtén el ConfigMap `aws-auth` actual:
 
@@ -83,7 +87,7 @@ El aws-auth ConfigMap es el método tradicional y aún es compatible, pero se re
 kubectl get configmap aws-auth -n kube-system -o yaml > aws-auth.yaml
 ```
 
-2. Edita el archivo `aws-auth.yaml` para agregar users o roles:
+2. Edita el archivo `aws-auth.yaml` para agregar usuarios o roles:
 
 ```yaml
 apiVersion: v1
@@ -117,19 +121,19 @@ data:
 kubectl apply -f aws-auth.yaml
 ```
 
-> **Nota**: EKS Access Entry se introdujo en 2023, y se recomienda usar Access Entry para clústeres nuevos. Los clústeres existentes se pueden migrar a un modo híbrido que admite ambos métodos.
+> **Nota**: EKS Access Entry se introdujo en 2023, y se recomienda usar Access Entry para los nuevos clusters. Los clusters existentes se pueden migrar a un modo híbrido que admite ambos métodos.
 
 ### Configuración de RBAC
 
-Puedes controlar el acceso a los recursos dentro del clúster usando Kubernetes Role-Based Access Control (RBAC).
+Puedes controlar el acceso a los recursos dentro del cluster mediante Kubernetes Role-Based Access Control (RBAC).
 
-1. Crea namespace:
+1. Crea un namespace:
 
 ```bash
 kubectl create namespace dev
 ```
 
-2. Crea role:
+2. Crea un rol:
 
 ```yaml
 # role.yaml
@@ -151,7 +155,7 @@ rules:
 kubectl apply -f role.yaml
 ```
 
-3. Crea role binding:
+3. Crea un role binding:
 
 ```yaml
 # rolebinding.yaml
@@ -174,17 +178,19 @@ roleRef:
 kubectl apply -f rolebinding.yaml
 ```
 
-## Validación del clúster
+## Validación del cluster
 
-Después de crear un clúster de EKS, debes verificar que el clúster esté funcionando correctamente. En esta sección, aprenderemos cómo validar el clúster.
+Después de crear un cluster de EKS, debes verificar que funcione correctamente. En esta sección, aprenderemos a validar el cluster.
 
-### Proceso de validación del clúster
+### Proceso de validación del cluster
 
-![Proceso de validación del clúster de EKS](../.gitbook/assets/eks_cluster_validation_process.png)
+![Diagrama de validación del cluster que comprueba los nodes y los Pods del sistema, implementa y expone una aplicación de prueba, y luego revisa los logs.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-2.png)
 
-### Verificar Nodes
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-2.html)
 
-Verifica los nodes en el clúster:
+### Verificar los nodes
+
+Verifica los nodes en el cluster:
 
 ```bash
 kubectl get nodes
@@ -192,19 +198,19 @@ kubectl get nodes
 
 Verifica que todos los nodes estén en estado `Ready`.
 
-### Verificar Pods del sistema
+### Verificar los Pods del sistema
 
-Verifica los pods en el namespace kube-system:
+Verifica los Pods en el namespace kube-system:
 
 ```bash
 kubectl get pods -n kube-system
 ```
 
-Verifica que todos los system pods estén en estado `Running`.
+Verifica que todos los Pods del sistema estén en estado `Running`.
 
-### Desplegar una aplicación de prueba
+### Implementar una aplicación de prueba
 
-Despliega una aplicación de prueba simple para verificar que el clúster esté funcionando correctamente:
+Implementa una aplicación de prueba sencilla para verificar que el cluster funcione correctamente:
 
 ```yaml
 # nginx.yaml
@@ -245,7 +251,7 @@ spec:
 kubectl apply -f nginx.yaml
 ```
 
-Verifica el estado del deployment y del service:
+Verifica el estado del Deployment y el Service:
 
 ```bash
 kubectl get deployments
@@ -253,28 +259,30 @@ kubectl get pods
 kubectl get services
 ```
 
-Verifica que puedas acceder a la aplicación usando la IP externa del service LoadBalancer:
+Verifica que puedas acceder a la aplicación mediante la IP externa del Service LoadBalancer:
 
 ```bash
 curl http://<EXTERNAL-IP>
 ```
 
-### Verificar los logs del clúster
+### Verificar los logs del cluster
 
-Verifica los logs del clúster en CloudWatch Logs:
+Verifica los logs del cluster en CloudWatch Logs:
 
 ```bash
 aws logs describe-log-groups \
   --log-group-name-prefix /aws/eks/my-cluster
 ```
 
-## Actualización del clúster
+## Actualización del cluster
 
-Para mantener un clúster de EKS actualizado, se requieren actualizaciones periódicas. En esta sección, aprenderemos cómo actualizar un clúster.
+Para mantener actualizado un cluster de EKS, se requieren actualizaciones periódicas. En esta sección, aprenderemos a actualizar un cluster.
 
-### Proceso de actualización del clúster
+### Proceso de actualización del cluster
 
-![Proceso de actualización del clúster de EKS](../.gitbook/assets/eks_cluster_upgrade_process.png)
+![Diagrama del proceso de actualización, desde la planificación y las comprobaciones de versión hasta el control plane, los node groups, los add-ons y las pruebas de funciones.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-3.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-3.html)
 
 ### Actualización del control plane
 
@@ -288,7 +296,7 @@ aws eks describe-addon-versions \
   --query "addons[].addonVersions[].compatibilities[].clusterVersion"
 ```
 
-2. Actualiza el clúster:
+2. Actualiza el cluster:
 
 ```bash
 aws eks update-cluster-version \
@@ -304,9 +312,9 @@ aws eks describe-update \
   --update-id <UPDATE-ID>
 ```
 
-### Actualización de Nodes
+### Actualización de nodes
 
-Después de actualizar el control plane, los nodes también deben actualizarse:
+Después de actualizar el control plane, también se deben actualizar los nodes:
 
 #### Actualización de Managed Node Group
 
@@ -318,13 +326,13 @@ aws eks update-nodegroup-version \
 
 #### Actualización de Self-Managed Node
 
-Para self-managed nodes, necesitas crear un nuevo node group, migrar workloads y luego eliminar el node group antiguo.
+Para los nodes autogestionados, debes crear un nuevo node group, migrar las cargas de trabajo y luego eliminar el node group anterior.
 
 ### Actualización de add-ons
 
 Para actualizar los add-ons de EKS, sigue estos pasos:
 
-1. Comprueba las versiones de add-on disponibles:
+1. Comprueba las versiones de add-ons disponibles:
 
 ```bash
 aws eks describe-addon-versions \
@@ -341,19 +349,21 @@ aws eks update-addon \
   --addon-version <VERSION>
 ```
 
-## Eliminación del clúster
+## Eliminación del cluster
 
-Cuando un clúster de EKS ya no sea necesario, puedes eliminarlo para ahorrar costos. En esta sección, aprenderemos cómo eliminar un clúster.
+Cuando ya no se necesita un cluster de EKS, puedes eliminarlo para ahorrar costos. En esta sección, aprenderemos a eliminar un cluster.
 
-### Proceso de eliminación del clúster
+### Proceso de eliminación del cluster
 
-![Proceso de eliminación del clúster de EKS](../.gitbook/assets/eks_cluster_deletion_process.png)
+![Diagrama del proceso de eliminación que borra los load balancers y los PVC, elimina los node groups y los perfiles de Fargate, luego el cluster y finalmente comprueba los recursos restantes.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-4.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-4.html)
 
 ### Limpieza de recursos
 
-Antes de eliminar un clúster, debes limpiar todos los recursos creados en el clúster:
+Antes de eliminar un cluster, debes limpiar todos los recursos creados en él:
 
-1. Elimina los services LoadBalancer:
+1. Elimina los Services de LoadBalancer:
 
 ```bash
 kubectl get services --all-namespaces -o json | jq -r '.items[] | select(.spec.type == "LoadBalancer") | .metadata.name + " " + .metadata.namespace' | while read name namespace; do
@@ -367,19 +377,19 @@ done
 kubectl delete pvc --all --all-namespaces
 ```
 
-### Eliminar el clúster usando eksctl
+### Eliminar el cluster mediante eksctl
 
-Si creaste el clúster usando eksctl, puedes eliminarlo con el siguiente comando:
+Si creaste el cluster mediante eksctl, puedes eliminarlo con el siguiente comando:
 
 ```bash
 eksctl delete cluster --name my-cluster --region us-west-2
 ```
 
-### Eliminar el clúster usando AWS CLI
+### Eliminar el cluster mediante AWS CLI
 
-Para eliminar un clúster usando AWS CLI, sigue estos pasos:
+Para eliminar un cluster mediante AWS CLI, sigue estos pasos:
 
-1. Elimina node group:
+1. Elimina el node group:
 
 ```bash
 aws eks delete-nodegroup \
@@ -387,7 +397,7 @@ aws eks delete-nodegroup \
   --nodegroup-name my-nodegroup
 ```
 
-2. Elimina Fargate profile:
+2. Elimina el perfil de Fargate:
 
 ```bash
 aws eks delete-fargate-profile \
@@ -395,16 +405,16 @@ aws eks delete-fargate-profile \
   --fargate-profile-name my-fargate-profile
 ```
 
-3. Elimina el clúster:
+3. Elimina el cluster:
 
 ```bash
 aws eks delete-cluster \
   --name my-cluster
 ```
 
-### Limpiar recursos relacionados
+### Limpiar los recursos relacionados
 
-Después de eliminar el clúster de EKS, los siguientes recursos relacionados pueden permanecer:
+Después de eliminar el cluster de EKS, pueden permanecer los siguientes recursos relacionados:
 
 1. VPC y recursos relacionados:
 
@@ -412,7 +422,7 @@ Después de eliminar el clúster de EKS, los siguientes recursos relacionados pu
 aws ec2 delete-vpc --vpc-id vpc-xxxxxxxxxxxxxxxxx
 ```
 
-2. IAM roles y policies:
+2. Roles y políticas de IAM:
 
 ```bash
 aws iam detach-role-policy \
@@ -445,4 +455,4 @@ aws logs delete-log-group \
 
 ## Cuestionario
 
-Para probar lo que aprendiste en este capítulo, intenta el [Cuestionario de creación de clúster de EKS - Parte 5](../quizzes/eks/02-eks-cluster-creation-part5-quiz.md).
+Para poner a prueba lo que aprendiste en este capítulo, intenta el [Cuestionario sobre la creación de clusters de EKS - Parte 5](../quizzes/eks/02-eks-cluster-creation-part5-quiz.md).

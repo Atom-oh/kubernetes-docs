@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "재시도 동작 — 지수 백오프",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      680
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "return": {
+          "label": "실패 응답"
+        },
+        "emphasis": {
+          "label": "성공 응답"
+        },
+        "default": {
+          "label": "동기화 시도"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "argocd",
+      "type": "backend",
+      "label": "ArgoCD",
+      "sublabel": "application controller"
+    },
+    {
+      "id": "apiserver",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "API server"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 232,
+      "label": "시도 1"
+    },
+    {
+      "from": 255,
+      "to": 317,
+      "label": "시도 2 · 5초 대기 후"
+    },
+    {
+      "from": 340,
+      "to": 402,
+      "label": "시도 3 · 10초 대기 후 (5s × 2)"
+    },
+    {
+      "from": 425,
+      "to": 487,
+      "label": "시도 4 · 20초 대기 후 (10s × 2)"
+    },
+    {
+      "from": 510,
+      "to": 572,
+      "label": "시도 5 · 40초 대기 후 · 네 번째 재시도에서 성공"
+    }
+  ],
+  "messages": [
+    {
+      "id": "a1",
+      "from": "argocd",
+      "to": "apiserver",
+      "y": 190,
+      "label": "동기화 시도 1"
+    },
+    {
+      "id": "f1",
+      "from": "apiserver",
+      "to": "argocd",
+      "y": 222,
+      "label": "실패",
+      "variant": "return",
+      "note": "5초 대기"
+    },
+    {
+      "id": "a2",
+      "from": "argocd",
+      "to": "apiserver",
+      "y": 275,
+      "label": "동기화 시도 2"
+    },
+    {
+      "id": "f2",
+      "from": "apiserver",
+      "to": "argocd",
+      "y": 307,
+      "label": "실패",
+      "variant": "return",
+      "note": "10초 대기 (5s × 2)"
+    },
+    {
+      "id": "a3",
+      "from": "argocd",
+      "to": "apiserver",
+      "y": 360,
+      "label": "동기화 시도 3"
+    },
+    {
+      "id": "f3",
+      "from": "apiserver",
+      "to": "argocd",
+      "y": 392,
+      "label": "실패",
+      "variant": "return",
+      "note": "20초 대기 (10s × 2)"
+    },
+    {
+      "id": "a4",
+      "from": "argocd",
+      "to": "apiserver",
+      "y": 445,
+      "label": "동기화 시도 4"
+    },
+    {
+      "id": "f4",
+      "from": "apiserver",
+      "to": "argocd",
+      "y": 477,
+      "label": "실패",
+      "variant": "return",
+      "note": "40초 대기 (20s × 2)"
+    },
+    {
+      "id": "a5",
+      "from": "argocd",
+      "to": "apiserver",
+      "y": 530,
+      "label": "동기화 시도 5"
+    },
+    {
+      "id": "ok",
+      "from": "apiserver",
+      "to": "argocd",
+      "y": 562,
+      "label": "성공",
+      "variant": "emphasis",
+      "note": "성공하여 종료 (재시도 한도 소진 아님)"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "apiserver",
+      "from": 185,
+      "to": 227,
+      "type": "cloud"
+    },
+    {
+      "participant": "apiserver",
+      "from": 270,
+      "to": 312,
+      "type": "cloud"
+    },
+    {
+      "participant": "apiserver",
+      "from": 355,
+      "to": 397,
+      "type": "cloud"
+    },
+    {
+      "participant": "apiserver",
+      "from": 440,
+      "to": 482,
+      "type": "cloud"
+    },
+    {
+      "participant": "apiserver",
+      "from": 525,
+      "to": 567,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "syncPolicy.retry 설정",
+      "items": [
+        "limit: 5 — 최초 시도 + 최대 5회 재시도, 총 최대 6회",
+        "backoff.duration: 5s — 초기 대기 시간",
+        "backoff.factor: 2 — 대기 시간 증가 배수",
+        "backoff.maxDuration: 3m — 대기 시간 상한"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "대기 시간 계산",
+      "items": [
+        "5s → 10s → 20s → 40s: 실패마다 factor 배로 증가",
+        "계산값이 maxDuration(3m)을 넘으면 3m으로 고정",
+        "이 예시는 네 번째 재시도에서 성공하여 남은 재시도를 실행하지 않음"
+      ]
+    }
+  ]
+}

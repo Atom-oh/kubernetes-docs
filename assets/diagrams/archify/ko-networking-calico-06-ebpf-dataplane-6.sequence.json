@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "DSR 동작 원리 — 일반 모드 vs DSR 모드",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      640
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "직접 응답 (LB 노드 우회)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "non-dsr",
+        "label": "일반 모드 (Non-DSR)",
+        "focus": [
+          "client",
+          "lb",
+          "pod"
+        ],
+        "note": "응답이 LB 노드로 돌아와 SNAT된 뒤 클라이언트에 전달된다 — LB 노드가 양방향 트래픽을 처리한다."
+      },
+      {
+        "id": "dsr",
+        "label": "DSR 모드",
+        "focus": [
+          "client",
+          "lb",
+          "pod"
+        ],
+        "note": "Backend Pod가 소스 IP를 VIP로 설정해 클라이언트에 직접 응답한다 — LB 노드는 요청만 처리한다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "외부 클라이언트"
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Node 1",
+      "sublabel": "LB 노드 (VIP:80)"
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "Backend Pod (:8080)"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 355,
+      "label": "일반 모드 (Non-DSR) — 응답이 LB 노드를 경유"
+    },
+    {
+      "from": 380,
+      "to": 560,
+      "label": "DSR 모드 — 응답이 클라이언트로 직접 전달"
+    }
+  ],
+  "messages": [
+    {
+      "id": "n-req",
+      "from": "client",
+      "to": "lb",
+      "y": 190,
+      "label": "1. 요청 → VIP:80"
+    },
+    {
+      "id": "n-dnat",
+      "from": "lb",
+      "to": "pod",
+      "y": 232,
+      "label": "2. DNAT → Pod:8080"
+    },
+    {
+      "id": "n-resp",
+      "from": "pod",
+      "to": "lb",
+      "y": 278,
+      "label": "3. 응답 (LB 노드 경유)",
+      "variant": "return"
+    },
+    {
+      "id": "n-snat",
+      "from": "lb",
+      "to": "client",
+      "y": 322,
+      "label": "4. SNAT 후 반환 (src=VIP:80)",
+      "variant": "return"
+    },
+    {
+      "id": "d-req",
+      "from": "client",
+      "to": "lb",
+      "y": 412,
+      "label": "1. 요청 → VIP:80"
+    },
+    {
+      "id": "d-encap",
+      "from": "lb",
+      "to": "pod",
+      "y": 456,
+      "label": "2. 터널/캡슐화로 Pod에 전달"
+    },
+    {
+      "id": "d-direct",
+      "from": "pod",
+      "to": "client",
+      "y": 512,
+      "label": "3. 직접 응답 (src=VIP:80) — LB 노드 우회",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "lb",
+      "from": 185,
+      "to": 328,
+      "type": "cloud"
+    },
+    {
+      "participant": "pod",
+      "from": 227,
+      "to": 283,
+      "type": "backend"
+    },
+    {
+      "participant": "lb",
+      "from": 407,
+      "to": 462,
+      "type": "cloud"
+    },
+    {
+      "participant": "pod",
+      "from": 451,
+      "to": 518,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "새 자동 동기화 요청의 윈도우 판정",
+    "output": "public/archmaps/ko-gitops-argocd-03-sync-strategies-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "deny-path",
+        "label": "차단 경로",
+        "focus": [
+          "request",
+          "check",
+          "deny_q",
+          "sync_block"
+        ],
+        "note": "deny 윈도우가 활성이면 allow 윈도우보다 우선해 동기화를 차단합니다."
+      },
+      {
+        "id": "allow-path",
+        "label": "허용 경로",
+        "focus": [
+          "deny_q",
+          "allow_q",
+          "has_allow",
+          "sync_run"
+        ],
+        "note": "활성 deny가 없을 때, 활성 allow가 있거나 매칭 allow 규칙이 없으면 윈도우가 허용합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "frontend": {
+          "label": "시작 · 사용자 단계"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    },
+    "viewBox": [
+      1120,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "app",
+      "label": "Application 동기화 요청"
+    },
+    {
+      "id": "windows",
+      "label": "AppProject syncWindows 판정"
+    },
+    {
+      "id": "result",
+      "label": "판정 결과"
+    },
+    {
+      "id": "blocked",
+      "label": "차단",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "check",
+    "deny_q",
+    "allow_q",
+    "has_allow",
+    "sync_run"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "app",
+      "col": 0,
+      "type": "frontend",
+      "label": "동기화 요청",
+      "sublabel": "새 자동 sync",
+      "width": 120
+    },
+    {
+      "id": "check",
+      "lane": "app",
+      "col": 1,
+      "type": "backend",
+      "label": "윈도우 확인",
+      "sublabel": "매칭 규칙만 선택",
+      "width": 130
+    },
+    {
+      "id": "deny_q",
+      "lane": "windows",
+      "col": 2,
+      "type": "security",
+      "label": "Deny 윈도우 활성?",
+      "sublabel": "kind: deny",
+      "tag": "우선 적용",
+      "width": 180
+    },
+    {
+      "id": "allow_q",
+      "lane": "windows",
+      "col": 3,
+      "type": "security",
+      "label": "Allow 윈도우 활성?",
+      "sublabel": "kind: allow",
+      "width": 180
+    },
+    {
+      "id": "has_allow",
+      "lane": "windows",
+      "col": 4,
+      "type": "security",
+      "label": "매칭 Allow 규칙 있음?",
+      "sublabel": "현재 비활성",
+      "width": 180
+    },
+    {
+      "id": "sync_run",
+      "lane": "result",
+      "col": 5,
+      "type": "backend",
+      "label": "윈도우 허용",
+      "sublabel": "권한 등은 별도 판정",
+      "width": 150
+    },
+    {
+      "id": "sync_block",
+      "lane": "blocked",
+      "col": 2,
+      "type": "security",
+      "label": "동기화 차단",
+      "sublabel": "활성 deny / 비활성 allow",
+      "width": 180
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "deny_q",
+      "toSide": "top"
+    },
+    {
+      "from": "deny_q",
+      "to": "sync_block",
+      "label": "예",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "deny_q",
+      "to": "allow_q",
+      "label": "아니오"
+    },
+    {
+      "from": "allow_q",
+      "to": "sync_run",
+      "label": "예",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "allow_q",
+      "to": "has_allow",
+      "label": "아니오"
+    },
+    {
+      "from": "has_allow",
+      "to": "sync_run",
+      "variant": "emphasis",
+      "label": "아니오"
+    },
+    {
+      "from": "has_allow",
+      "to": "sync_block",
+      "label": "예",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "판정 범위와 매칭",
+      "items": [
+        "활성 deny가 우선하며, 비활성 allow만 매칭되면 차단한다",
+        "이름·네임스페이스·클러스터는 기본 OR; andOperator: true는 AND",
+        "구체성 순위는 없다. 수동 예외·진행 중 작업·시간대는 본문 참조"
+      ]
+    }
+  ]
+}

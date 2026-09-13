@@ -34,7 +34,7 @@
           "leaf_sched",
           "leaf_image"
         ],
-        "note": "Pending means scheduling; ImagePullBackOff means image name or registry auth. Either way, kubectl describe pod Events is the first clue."
+        "note": "Check nodeName and PodScheduled first. Unbound pods need scheduling events; bound Pending pods need image, CNI, and mount diagnostics."
       },
       {
         "id": "crashing",
@@ -54,7 +54,7 @@
           "leaf_ready",
           "leaf_net"
         ],
-        "note": "READY 0/1: look for Readiness probe failed events. READY 1/1 but no response: EndpointSlices → Service selector → NetworkPolicy → DNS → ALB."
+        "note": "Check Pod Ready as well as container counts. EndpointSlice addresses and ready/serving/terminating are separate fields."
       }
     ]
   },
@@ -118,8 +118,8 @@
       "lane": "gates",
       "col": 1,
       "type": "security",
-      "label": "Pending",
-      "sublabel": "not scheduled to a node",
+      "label": "No node assigned",
+      "sublabel": "PodScheduled=False",
       "width": 136
     },
     {
@@ -127,8 +127,8 @@
       "lane": "gates",
       "col": 2,
       "type": "security",
-      "label": "ImagePullBackOff",
-      "sublabel": "ErrImagePull → backoff",
+      "label": "Image / setup",
+      "sublabel": "pull · CNI · mount",
       "width": 136
     },
     {
@@ -145,8 +145,8 @@
       "lane": "gates",
       "col": 4,
       "type": "security",
-      "label": "Running · READY 0/1",
-      "sublabel": "Ready condition False",
+      "label": "Pod Ready=False",
+      "sublabel": "Probe · readiness gate",
       "width": 156
     },
     {
@@ -154,8 +154,8 @@
       "lane": "gates",
       "col": 5,
       "type": "security",
-      "label": "Running · READY 1/1",
-      "sublabel": "still no response",
+      "label": "Pod Ready=True",
+      "sublabel": "Verify response separately",
       "width": 156
     },
     {
@@ -173,7 +173,7 @@
       "col": 2,
       "type": "backend",
       "label": "kubectl describe pod",
-      "sublabel": "Events: Failed to pull image",
+      "sublabel": "Events: pull · CNI · mounts",
       "width": 190
     },
     {
@@ -182,7 +182,7 @@
       "col": 3,
       "type": "backend",
       "label": "kubectl logs --previous",
-      "sublabel": "describe: Exit 137 + Reason OOMKilled",
+      "sublabel": "Reason · exit · events",
       "width": 190
     },
     {
@@ -200,7 +200,7 @@
       "col": 5,
       "type": "cloud",
       "label": "kubectl get endpointslices",
-      "sublabel": "selector · NetworkPolicy · DNS · ALB",
+      "sublabel": "Addresses + ready · selector · DNS",
       "width": 212
     }
   ],
@@ -279,31 +279,29 @@
   "cards": [
     {
       "dot": "rose",
-      "title": "Pending — pin the cause from the FailedScheduling message",
+      "title": "Separate scheduling and initialization",
       "items": [
-        "Insufficient cpu / Insufficient memory → lower requests or add nodes",
-        "node(s) had untolerated taint → add tolerations",
-        "pod has unbound immediate PersistentVolumeClaims → check PVC · StorageClass",
-        "node(s) didn't match Pod's node affinity/selector → check nodeSelector labels"
+        "Pending pods can already have an assigned node",
+        "Scheduling failure-reason counts can overlap",
+        "After binding, inspect image, CNI, and mount states"
       ]
     },
     {
       "dot": "amber",
-      "title": "CrashLoopBackOff · ImagePullBackOff — what to read",
+      "title": "Restart and image failures",
       "items": [
-        "Reason: OOMKilled · Exit Code: 137 → raise the memory limit or fix the leak",
-        "Any other Exit Code (e.g. 1) → kubectl logs --previous shows the app error",
-        "Liveness probe failed event → check probe path · initialDelaySeconds",
-        "Failed to pull image → image name/tag, imagePullSecrets, node role's ECR permission"
+        "For OOMKilled distinguish limits from node pressure",
+        "Probe failure can reflect a real application problem",
+        "Check ECR identity, image existence, and network separately"
       ]
     },
     {
       "dot": "cyan",
-      "title": "Running but unreachable — work from the inside out",
+      "title": "Readiness and real reachability",
       "items": [
-        "kubectl get endpointslices -l kubernetes.io/service-name=<svc> shows no endpoints → Service selector ↔ Pod label, readinessProbe",
-        "kubectl exec <pod> -- nslookup <svc> fails → check CoreDNS",
-        "NetworkPolicy ingress rules → then Ingress/ALB target health"
+        "Excluding all Running pods can miss CrashLoops",
+        "An EndpointSlice address can have ready=false",
+        "Check policy ingress/egress, DNS, and LB health"
       ]
     }
   ]

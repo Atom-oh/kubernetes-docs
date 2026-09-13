@@ -1,6 +1,6 @@
 # GitOps
 
-> **Last Updated**: February 23, 2026
+> **Last Updated**: September 11, 2026
 
 ## Table of Contents
 - [What is GitOps?](#what-is-gitops)
@@ -17,19 +17,17 @@ GitOps is an operational framework that applies DevOps best practices for infras
 
 At its core, GitOps uses Git repositories as the single source of truth for declarative infrastructure and application configurations. Changes to the desired state are made through Git commits, and automated processes ensure the actual system state matches the declared state.
 
-![Architecture diagram showing a developer pushing changes to Git, which a GitOps agent watches and reconciles into a Kubernetes cluster, while the cluster reports status back to the agent.](../../assets/diagrams/rendered/gitops-reconciliation-loop.svg)
+![Architecture diagram showing a developer pushing changes to Git, which a GitOps agent watches and reconciles into a Kubernetes cluster, while the cluster reports status back to the agent.](../.gitbook/assets/en-gitops-readme-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-10.html)
 
 ### History and Evolution
 
-| Year | Milestone |
-|------|-----------|
-| 2017 | Weaveworks coins "GitOps" term |
-| 2019 | Flux v1 released, ArgoCD gains popularity |
-| 2020 | CNCF accepts Flux as incubating project |
-| 2021 | ArgoCD becomes CNCF graduated project |
-| 2022 | GitOps Working Group publishes principles |
-| 2023 | OpenGitOps project formalizes standards |
-| 2024 | GitOps becomes dominant K8s deployment pattern |
+| Milestone | Verified project history |
+|---|---|
+| Flux | CNCF Sandbox July 2019; Incubating March 2021; Graduated November 30, 2022 |
+| Argo project | CNCF Incubating March 2020; Graduated December 6, 2022 |
+| OpenGitOps | Publishes versioned principles; distinguish released documents from the working main branch |
 
 ### CNCF OpenGitOps Definition
 
@@ -42,13 +40,15 @@ The OpenGitOps project defines GitOps through four principles:
 
 ## Core Principles
 
+Git history records desired configuration. A Git revert does not restore database migrations, deleted data or external state. Argo CD automated sync, prune and selfHeal are separate settings; GitOps describes a control loop attempting reconciliation.
+
 ### Declarative Configuration
 
 Everything is defined as code—infrastructure, applications, policies, and configurations. This enables:
 
-- **Reproducibility**: Any environment can be recreated from the Git repository
-- **Auditability**: Complete history of all changes with who, what, when, and why
-- **Consistency**: Identical configurations across environments
+- **Reproducibility**: Versioned configuration plus available artifacts, secrets and data enable recreation
+- **Auditability**: Retained configuration history; runtime/API audit logs still need collection
+- **Consistency**: Shared bases with explicit, reviewed environment differences
 
 ```yaml
 # Example: Declarative application state
@@ -96,13 +96,15 @@ GitOps agents continuously:
 
 ### Self-Healing Systems
 
-When the actual state drifts from the desired state (manual changes, failures, etc.), GitOps agents automatically restore the correct state.
+Reconciliation attempts depend on sync/self-heal policy, permissions and health. For example, Argo CD automated sync and selfHeal require configuration; installation alone does not revert every manual change or recover lost data.
 
 ## Push vs Pull Model
 
-GitOps supports two deployment models:
+Compare traditional push deployment with pull-based GitOps. A CI-only `kubectl apply` pipeline does not by itself satisfy OpenGitOps automatic-pull and continuous-reconciliation principles:
 
-![Flowchart contrasting traditional push-based CI/CD, where a pipeline applies changes directly to the cluster, with the GitOps pull model, where an agent watches Git and applies changes itself.](../../assets/diagrams/rendered/gitops-push-vs-pull.svg)
+![Flowchart contrasting traditional push-based CI/CD, where a pipeline applies changes directly to the cluster, with the GitOps pull model, where an agent watches Git and applies changes itself.](../.gitbook/assets/en-gitops-readme-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-11.html)
 
 ### Push Model
 
@@ -119,12 +121,12 @@ In the traditional push model:
 ### Pull Model (Recommended)
 
 In the GitOps pull model:
-- Agent runs inside the cluster
+- Agent runs in the target cluster or a separate management cluster
 - Agent pulls changes from Git
-- No external cluster access required
+- Management-cluster agents still require authorized network/API access to remote targets
 
 **Advantages:**
-- Enhanced security (no external credentials)
+- Can reduce target-cluster credentials in CI; agents still hold source/API access rights
 - Complete audit trail in Git
 - Automatic drift detection and correction
 - Works behind firewalls
@@ -158,9 +160,9 @@ FluxCD is a set of continuous delivery solutions for Kubernetes that are open an
 
 **Best For:** Teams preferring CLI-first, lightweight solutions, image automation workflows
 
-### Jenkins X
+### Jenkins X / JayeX
 
-Jenkins X provides CI/CD for cloud-native applications on Kubernetes.
+Jenkins X / JayeX provides CI/CD for cloud-native applications on Kubernetes.
 
 **Key Features:**
 - Automated CI/CD pipelines
@@ -168,22 +170,18 @@ Jenkins X provides CI/CD for cloud-native applications on Kubernetes.
 - GitOps promotion
 - Tekton-based pipelines
 
-**Best For:** Teams heavily invested in Jenkins ecosystem
+**Evaluate for:** Integrated CI/CD and preview-environment workflows; JayeX/Jenkins X / JayeX is not simply Jenkins with GitOps enabled
 
 ### Comparison Matrix
 
-| Feature | ArgoCD | FluxCD | Jenkins X |
-|---------|--------|--------|-----------|
-| Web UI | ✅ Rich | ❌ CLI only | ✅ Basic |
-| Multi-cluster | ✅ Native | ✅ Via Flux | ✅ Limited |
-| Helm Support | ✅ Full | ✅ Full | ✅ Full |
-| Kustomize | ✅ Full | ✅ Full | ✅ Limited |
-| Image Automation | ⚠️ Limited | ✅ Native | ✅ Native |
-| RBAC | ✅ Granular | ⚠️ Basic | ⚠️ Basic |
-| Notifications | ✅ Rich | ✅ Rich | ✅ Basic |
-| Learning Curve | Medium | Low | High |
-| Resource Usage | Medium | Low | High |
-| CNCF Status | Graduated | Graduated | Sandbox |
+| Requirement | Argo CD | Flux |
+|---|---|---|
+| Default UI | Built-in Web UI and CLI | Core controllers/CLI; optional ecosystem UIs |
+| Helm behavior | helm template; Argo CD owns resource lifecycle | Helm Controller owns Helm release lifecycle |
+| Image updates | Separate Argo CD Image Updater | Optional Image Reflector/Automation controllers |
+| Multi-tenancy | AppProjects, RBAC, destination/source restrictions | Kubernetes RBAC, ServiceAccount impersonation, cross-namespace restrictions |
+| OCI sources | General OCI/Helm sources; validate layers/media types | OCIRepository/Helm sources; validate verification/layer settings |
+| Capacity | Measure application/cluster count and reconcile load | Measure installed controllers, sources and reconcile load |
 
 ## Tool Selection Guide
 
@@ -205,7 +203,11 @@ Jenkins X provides CI/CD for cloud-native applications on Kubernetes.
 
 ### Decision Framework
 
-![Decision tree guiding the choice between ArgoCD, FluxCD, or either tool based on web UI needs, multi-cluster scope, RBAC requirements, image automation priority, and lightweight footprint priority.](../../assets/diagrams/rendered/gitops-tool-selection.svg)
+The diagram illustrates selection questions, not exclusive capabilities. Compare current features, authorization boundaries and operational cost with the table and a representative trial.
+
+![Decision tree guiding the choice between ArgoCD, FluxCD, or either tool based on web UI needs, multi-cluster scope, RBAC requirements, image automation priority, and lightweight footprint priority.](../.gitbook/assets/en-gitops-readme-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-12.html)
 
 ## GitOps on Amazon EKS
 
@@ -214,6 +216,8 @@ Jenkins X provides CI/CD for cloud-native applications on Kubernetes.
 When implementing GitOps on Amazon EKS:
 
 #### IAM Integration
+
+A ServiceAccount annotation alone does not establish IAM access. Configure the IRSA OIDC provider/trust policy/SDK support or an EKS Pod Identity association. AWS API permissions and target Kubernetes API authentication/RBAC are separate.
 
 Use IAM Roles for Service Accounts (IRSA) for secure AWS API access:
 
@@ -228,7 +232,9 @@ metadata:
 
 #### Multi-Account Architecture
 
-![Architecture diagram showing ArgoCD in a management account reading from Git and reconciling EKS clusters in separate development, staging, and production accounts over cross-account connections.](../../assets/diagrams/rendered/gitops-multi-account-argocd.svg)
+![Architecture diagram showing ArgoCD in a management account reading from Git and reconciling EKS clusters in separate development, staging, and production accounts over cross-account connections.](../.gitbook/assets/en-gitops-readme-13.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-13.html)
 
 #### AWS Service Integration
 
@@ -266,10 +272,12 @@ GitOps can manage AWS resources through:
 
 ### ArgoCD Quick Start
 
+Use a compatible Kubernetes version, an empty dedicated namespace and cluster permissions for CRDs/RBAC. This non-HA installation example pins Argo CD 3.5.2; review the full [installation guide](argocd/01-installation.md) before production. Initial admin credentials must be changed and the bootstrap Secret removed after use.
+
 1. **Install ArgoCD:**
    ```bash
    kubectl create namespace argocd
-   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
    ```
 
 2. **Access the UI:**
@@ -286,16 +294,20 @@ For detailed ArgoCD setup, see the [ArgoCD documentation](argocd/README.md).
 
 ### FluxCD Quick Start
 
+Prepare `GITHUB_ORG`/`GITOPS_REPOSITORY`, the documented GitHub authentication and Kubernetes permissions. Bootstrap writes to Git and installs cluster controllers. Add `--personal` only for a personal owner and explicitly select optional image-automation controllers when needed.
+
 1. **Install Flux CLI:**
    ```bash
-   curl -s https://fluxcd.io/install.sh | sudo bash
+   curl --fail --location https://fluxcd.io/install.sh -o install-flux.sh
+   # Review the script and select a supported version before running it.
+   sudo bash install-flux.sh
    ```
 
 2. **Bootstrap Flux:**
    ```bash
    flux bootstrap github \
-     --owner=<org> \
-     --repository=<repo> \
+     --owner="$GITHUB_ORG" \
+     --repository="$GITOPS_REPOSITORY" \
      --path=clusters/my-cluster
    ```
 
@@ -320,3 +332,14 @@ To test what you've learned, try the following quizzes:
 - [ArgoCD Quiz](../quizzes/gitops/01-argocd-quiz.md)
 - [FluxCD Quiz](../quizzes/gitops/02-fluxcd-quiz.md)
 - [GitOps Comparison Quiz](../quizzes/gitops/03-gitops-comparison-quiz.md)
+
+### Review Sources
+
+- [OpenGitOps principles](https://github.com/open-gitops/documents/blob/v1.0.0/PRINCIPLES.md)
+- [Argo project maturity](https://www.cncf.io/projects/argo/)
+- [Flux project maturity](https://www.cncf.io/projects/flux/)
+- [Argo CD OCI sources](https://argo-cd.readthedocs.io/en/stable/user-guide/oci/)
+- [Argo CD automated sync](https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/)
+- [Flux multi-tenancy](https://fluxcd.io/flux/installation/configuration/multitenancy/)
+- [Flux ecosystem](https://fluxcd.io/ecosystem/)
+- [JayeX project](https://jayex.io/v3/about/)

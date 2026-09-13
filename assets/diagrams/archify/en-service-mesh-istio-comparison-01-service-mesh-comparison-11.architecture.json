@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Mesh Latency Overhead Comparison",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      560
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "baseline",
+      "type": "external",
+      "label": "Baseline",
+      "sublabel": "Direct K8s Service · 0.1ms",
+      "pos": [
+        60,
+        248
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "linkerd",
+      "type": "backend",
+      "label": "Linkerd",
+      "sublabel": "Linkerd2-proxy · +0.5-1ms",
+      "pos": [
+        520,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kong",
+      "type": "backend",
+      "label": "Kong Mesh",
+      "sublabel": "Kuma DP · +1-2.5ms",
+      "pos": [
+        520,
+        185
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "istio",
+      "type": "backend",
+      "label": "Istio",
+      "sublabel": "Envoy Proxy · +1-3ms",
+      "pos": [
+        520,
+        310
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "consul",
+      "type": "backend",
+      "label": "Consul",
+      "sublabel": "Envoy/Built-in · +1-3ms",
+      "pos": [
+        520,
+        435
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Mesh Data-Plane Proxies",
+      "wraps": [
+        "linkerd",
+        "kong",
+        "istio",
+        "consul"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "baseline-linkerd",
+      "from": "baseline",
+      "to": "linkerd",
+      "label": "Lightweight proxy",
+      "variant": "emphasis",
+      "labelSegment": 2
+    },
+    {
+      "id": "baseline-kong",
+      "from": "baseline",
+      "to": "kong",
+      "label": "Medium",
+      "labelSegment": 2
+    },
+    {
+      "id": "baseline-istio",
+      "from": "baseline",
+      "to": "istio",
+      "label": "Feature-rich",
+      "labelSegment": 2
+    },
+    {
+      "id": "baseline-consul",
+      "from": "baseline",
+      "to": "consul",
+      "label": "Medium",
+      "labelSegment": 2
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Conclusion",
+      "items": [
+        "Linkerd: lowest overhead, lightweight proxy",
+        "Istio / Consul: slightly higher overhead due to more features",
+        "Kong Mesh: medium performance level"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Test Environment",
+      "items": [
+        "3-node EKS 1.28, m5.xlarge",
+        "100 services, 1000 RPS"
+      ]
+    }
+  ]
+}

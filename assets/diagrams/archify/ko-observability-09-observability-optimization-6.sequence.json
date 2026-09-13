@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "도구 간 데이터 상관관계 분석 — traceID로 연결",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      920,
+      700
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "metrics",
+        "label": "메트릭 → Exemplar",
+        "focus": [
+          "user",
+          "grafana",
+          "prometheus"
+        ],
+        "note": "P99 지연 시간 쿼리 결과에 붙은 Exemplar가 traceID를 제공한다."
+      },
+      {
+        "id": "trace",
+        "label": "트레이스 조회",
+        "focus": [
+          "grafana",
+          "tempo"
+        ],
+        "note": "traceID로 Tempo에서 전체 요청 흐름을 받아 병목 서비스를 식별한다."
+      },
+      {
+        "id": "logs",
+        "label": "로그 → 통합 결과",
+        "focus": [
+          "grafana",
+          "loki",
+          "user"
+        ],
+        "note": "같은 traceID로 Loki 로그를 필터링해 통합된 분석 결과를 돌려준다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "운영자"
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "통합 조회"
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭"
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "로그"
+    },
+    {
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo",
+      "sublabel": "트레이스"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 275,
+      "label": "1. 메트릭에서 traceID 확보"
+    },
+    {
+      "from": 295,
+      "to": 395,
+      "label": "2. 트레이스로 병목 식별"
+    },
+    {
+      "from": 415,
+      "to": 555,
+      "label": "3. 로그 필터링 → 통합 결과"
+    }
+  ],
+  "messages": [
+    {
+      "id": "investigate",
+      "from": "user",
+      "to": "grafana",
+      "y": 190,
+      "label": "느린 API 응답 조사",
+      "variant": "emphasis"
+    },
+    {
+      "id": "query-p99",
+      "from": "grafana",
+      "to": "prometheus",
+      "y": 228,
+      "label": "P99 지연 시간 쿼리"
+    },
+    {
+      "id": "exemplar",
+      "from": "prometheus",
+      "to": "grafana",
+      "y": 264,
+      "label": "메트릭 + Exemplar (traceID)",
+      "variant": "return"
+    },
+    {
+      "id": "query-trace",
+      "from": "grafana",
+      "to": "tempo",
+      "y": 320,
+      "label": "traceID로 트레이스 조회"
+    },
+    {
+      "id": "request-flow",
+      "from": "tempo",
+      "to": "grafana",
+      "y": 358,
+      "label": "전체 요청 흐름",
+      "variant": "return",
+      "note": "병목 서비스 식별"
+    },
+    {
+      "id": "query-logs",
+      "from": "grafana",
+      "to": "loki",
+      "y": 440,
+      "label": "서비스 로그 조회 (traceID 필터)"
+    },
+    {
+      "id": "related-logs",
+      "from": "loki",
+      "to": "grafana",
+      "y": 478,
+      "label": "관련 로그",
+      "variant": "return"
+    },
+    {
+      "id": "result",
+      "from": "grafana",
+      "to": "user",
+      "y": 530,
+      "label": "통합된 분석 결과",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "grafana",
+      "from": 185,
+      "to": 536,
+      "type": "frontend"
+    },
+    {
+      "participant": "prometheus",
+      "from": 223,
+      "to": 270,
+      "type": "database"
+    },
+    {
+      "participant": "tempo",
+      "from": 315,
+      "to": 364,
+      "type": "database"
+    },
+    {
+      "participant": "loki",
+      "from": 435,
+      "to": 484,
+      "type": "database"
+    }
+  ]
+}

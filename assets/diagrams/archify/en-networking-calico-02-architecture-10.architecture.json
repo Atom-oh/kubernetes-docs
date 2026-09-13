@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "etcd Datastore (Legacy)",
+    "output": "en-networking-calico-02-architecture-10.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "dataplane-path", "label": "Datastore to data plane", "focus": ["etcd", "typha", "felix"], "note": "Typha reads Calico state straight from the dedicated etcd cluster and fans it out to Felix." },
+      { "id": "k8s-bridge", "label": "Kubernetes bridge", "focus": ["apiserver", "kubecontrollers", "etcd"], "note": "kube-controllers is the only component that talks to the Kubernetes API server, syncing K8s resources into Calico etcd." }
+    ]
+  },
+  "components": [
+    { "id": "felix", "type": "backend", "label": "Felix", "sublabel": "per-node agent", "pos": [60, 80], "size": [170, 60] },
+    { "id": "typha", "type": "backend", "label": "Typha", "sublabel": "datastore cache / fan-out", "pos": [60, 230], "size": [170, 60] },
+    { "id": "kubecontrollers", "type": "backend", "label": "kube-controllers", "sublabel": "K8s to Calico sync", "pos": [60, 380], "size": [170, 60] },
+    { "id": "etcd", "type": "database", "label": "Calico etcd", "sublabel": "dedicated etcd cluster", "pos": [560, 150], "size": [180, 60], "tag": "legacy" },
+    { "id": "apiserver", "type": "backend", "label": "K8s API Server", "sublabel": "Kubernetes resources", "pos": [560, 380], "size": [180, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Calico components", "wraps": ["felix", "typha", "kubecontrollers"] },
+    { "kind": "region", "label": "Datastores", "wraps": ["etcd", "apiserver"] }
+  ],
+  "connections": [
+    { "id": "apiserver-to-kc", "from": "apiserver", "to": "kubecontrollers", "label": "watch K8s resources", "variant": "emphasis", "labelDx": 110 },
+    { "id": "kc-to-etcd", "from": "kubecontrollers", "to": "etcd", "label": "sync Calico state", "variant": "emphasis" },
+    { "id": "etcd-to-typha", "from": "etcd", "to": "typha", "label": "read / write", "variant": "emphasis", "labelDx": -90 },
+    { "id": "typha-to-felix", "from": "typha", "to": "felix", "label": "fan-out updates", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Advantages", "items": ["Decoupled from the Kubernetes API server", "Usable for non-Kubernetes workloads (VMs, bare metal)", "Historical option for very large clusters"] },
+    { "dot": "slate", "title": "Trade-offs", "items": ["Higher operational complexity: separate etcd cluster to run", "Separate backup/restore tooling and etcd auth instead of K8s RBAC", "Recommended only for special cases; Kubernetes API datastore is the default"] }
+  ]
+}

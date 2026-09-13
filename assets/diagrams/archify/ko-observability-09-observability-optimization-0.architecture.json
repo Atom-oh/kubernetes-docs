@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "로깅, 메트릭, 트레이싱의 관계",
+    "output": "ko-observability-09-observability-optimization-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "관측성 축"
+        },
+        "database": {
+          "label": "데이터 특성"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "logging",
+      "type": "backend",
+      "label": "로깅 (Logging)",
+      "sublabel": "\"무엇이 일어났나?\"",
+      "pos": [
+        80,
+        180
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "메트릭 (Metrics)",
+      "sublabel": "\"시스템이 정상인가?\"",
+      "pos": [
+        440,
+        180
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "tracing",
+      "type": "backend",
+      "label": "트레이싱 (Tracing)",
+      "sublabel": "\"왜 느린가?\"",
+      "pos": [
+        800,
+        180
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "logging-data",
+      "type": "database",
+      "label": "이벤트 기반 · 비정형 데이터",
+      "sublabel": "디버깅에 최적",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "metrics-data",
+      "type": "database",
+      "label": "시계열 · 집계된 수치",
+      "sublabel": "알림에 최적",
+      "pos": [
+        440,
+        400
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "tracing-data",
+      "type": "database",
+      "label": "요청 흐름 · 인과관계 파악",
+      "sublabel": "성능 분석에 최적",
+      "pos": [
+        800,
+        400
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "관측성 3대 축",
+      "wraps": [
+        "logging",
+        "metrics",
+        "tracing"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 특성",
+      "wraps": [
+        "logging-data",
+        "metrics-data",
+        "tracing-data"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "logging-to-data",
+      "from": "logging",
+      "to": "logging-data"
+    },
+    {
+      "id": "metrics-to-data",
+      "from": "metrics",
+      "to": "metrics-data"
+    },
+    {
+      "id": "tracing-to-data",
+      "from": "tracing",
+      "to": "tracing-data"
+    },
+    {
+      "id": "exemplars",
+      "from": "logging",
+      "to": "metrics",
+      "label": "Exemplars",
+      "variant": "dashed"
+    },
+    {
+      "id": "context",
+      "from": "metrics",
+      "to": "tracing",
+      "label": "Context",
+      "variant": "dashed"
+    },
+    {
+      "id": "correlation-id",
+      "from": "tracing",
+      "to": "logging",
+      "label": "Correlation ID",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          910,
+          80
+        ],
+        [
+          190,
+          80
+        ]
+      ],
+      "labelAt": [
+        550,
+        68
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "로깅",
+      "items": [
+        "이벤트 기록, 감사, 디버깅",
+        "데이터 볼륨 높음, 저장 비용 높음"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "메트릭",
+      "items": [
+        "시스템 상태 모니터링, 알림",
+        "데이터 볼륨 중간, 카디널리티에 민감"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "트레이싱",
+      "items": [
+        "요청 흐름 추적, 병목 분석",
+        "볼륨 높아 샘플링 필요, 비용은 샘플링률에 비례"
+      ]
+    }
+  ]
+}

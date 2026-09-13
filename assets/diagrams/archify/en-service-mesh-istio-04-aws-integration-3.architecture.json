@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Using Istio + VPC Lattice Together",
+    "locale": "en",
+    "output": "en-service-mesh-istio-04-aws-integration-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inside-cluster",
+        "label": "Inside the cluster: Istio",
+        "focus": [
+          "istiod",
+          "svc-a",
+          "svc-b"
+        ],
+        "note": "istiod configures the Envoy sidecars, and service-to-service traffic is protected by internal mTLS."
+      },
+      {
+        "id": "cross-account",
+        "label": "Cross-account: VPC Lattice",
+        "focus": [
+          "svc-a",
+          "lattice",
+          "svc-c",
+          "lambda"
+        ],
+        "note": "Traffic leaving the Istio cluster is routed by the VPC Lattice service network to a service and a Lambda function in another account."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "security",
+      "label": "istiod",
+      "sublabel": "control plane",
+      "pos": [
+        160,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "+ Envoy sidecar",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "+ Envoy sidecar",
+      "pos": [
+        280,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lattice",
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "Service Network",
+      "pos": [
+        560,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "No sidecar",
+      "pos": [
+        850,
+        160
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lambda",
+      "type": "external",
+      "label": "Lambda Function",
+      "sublabel": "No sidecar",
+      "pos": [
+        850,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Account 1 · EKS Cluster 1 (Istio)",
+      "wraps": [
+        "istiod",
+        "svc-a",
+        "svc-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Account 2",
+      "wraps": [
+        "svc-c",
+        "lambda"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "EKS Cluster 2",
+      "wraps": [
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istiod-svc-b",
+      "from": "istiod",
+      "to": "svc-b",
+      "label": "Config",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istiod-svc-a",
+      "from": "istiod",
+      "to": "svc-a",
+      "label": "Config",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-a-svc-b",
+      "from": "svc-a",
+      "to": "svc-b",
+      "label": "Internal mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "svc-a-lattice",
+      "from": "svc-a",
+      "to": "lattice",
+      "label": "VPC Lattice",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lattice-svc-c",
+      "from": "lattice",
+      "to": "svc-c",
+      "label": "Routing"
+    },
+    {
+      "id": "lattice-lambda",
+      "from": "lattice",
+      "to": "lambda",
+      "label": "Routing"
+    }
+  ]
+}

@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VirtualService vs DestinationRule 역할 비교",
+    "output": "ko-service-mesh-istio-traffic-management-03-destination-rule-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "where",
+        "label": "VirtualService: 어디로?",
+        "focus": [
+          "request",
+          "match",
+          "route"
+        ],
+        "note": "HTTP 요청의 헤더·경로 등 조건을 매칭해 어느 subset으로 보낼지 결정한다."
+      },
+      {
+        "id": "how",
+        "label": "DestinationRule: 어떻게?",
+        "focus": [
+          "route",
+          "subset",
+          "policy"
+        ],
+        "note": "VirtualService가 참조한 subset을 선택하고 로드 밸런싱 등 트래픽 정책을 적용한다."
+      },
+      {
+        "id": "lb",
+        "label": "파드로 로드 밸런싱",
+        "focus": [
+          "policy",
+          "p1",
+          "p2",
+          "p3"
+        ],
+        "note": "정책이 적용된 트래픽이 subset에 속한 reviews 파드들로 분산된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "request",
+      "type": "external",
+      "label": "HTTP 요청",
+      "sublabel": "Host: reviews",
+      "pos": [
+        30,
+        290
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "match",
+      "type": "backend",
+      "label": "조건 매칭",
+      "sublabel": "match",
+      "pos": [
+        260,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "라우팅 결정",
+      "sublabel": "route → subset",
+      "pos": [
+        260,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "subset",
+      "type": "backend",
+      "label": "Subset 선택",
+      "sublabel": "v1 / v2 레이블",
+      "pos": [
+        620,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "backend",
+      "label": "정책 적용",
+      "sublabel": "trafficPolicy",
+      "pos": [
+        620,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "backend",
+      "label": "reviews-v1-pod1",
+      "sublabel": "version: v1",
+      "pos": [
+        1000,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "backend",
+      "label": "reviews-v1-pod2",
+      "sublabel": "version: v1",
+      "pos": [
+        1000,
+        260
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "p3",
+      "type": "backend",
+      "label": "reviews-v2-pod1",
+      "sublabel": "version: v2",
+      "pos": [
+        1000,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VirtualService 역할",
+      "wraps": [
+        "match",
+        "route"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "DestinationRule 역할",
+      "wraps": [
+        "subset",
+        "policy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "파드",
+      "wraps": [
+        "p1",
+        "p2",
+        "p3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "req-match",
+      "from": "request",
+      "to": "match",
+      "variant": "emphasis"
+    },
+    {
+      "id": "match-route",
+      "from": "match",
+      "to": "route",
+      "label": "헤더, 경로 등",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "route-subset-v1",
+      "from": "route",
+      "to": "subset",
+      "label": "v1 · weight 90%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-subset-v2",
+      "from": "route",
+      "to": "subset",
+      "label": "v2 · weight 10%",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "subset-policy",
+      "from": "subset",
+      "to": "policy",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "policy-p1",
+      "from": "policy",
+      "to": "p1"
+    },
+    {
+      "id": "policy-p2",
+      "from": "policy",
+      "to": "p2",
+      "label": "로드 밸런싱",
+      "labelSegment": 2
+    },
+    {
+      "id": "policy-p3",
+      "from": "policy",
+      "to": "p3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "VirtualService (어디로?)",
+      "items": [
+        "hosts: reviews 요청의 헤더·경로 조건을 매칭한다",
+        "route.destination.subset으로 DestinationRule의 subset을 참조한다"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "DestinationRule (어떻게?)",
+      "items": [
+        "subsets: 레이블(version: v1/v2)로 파드를 논리 그룹화한다",
+        "trafficPolicy: 로드 밸런싱·연결 풀·Circuit Breaker·TLS를 적용한다"
+      ]
+    }
+  ]
+}

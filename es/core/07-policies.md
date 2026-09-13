@@ -1,21 +1,21 @@
-# Kubernetes Policies
+# Políticas de Kubernetes
 
 > **Versiones compatibles**: Kubernetes 1.32 - 1.34
 > **Última actualización**: February 22, 2026
 
-En Kubernetes, las policies (políticas) son conjuntos de reglas que controlan y regulan el comportamiento de clusters y workloads. Mediante policies, puedes gestionar diversos aspectos como la seguridad, el uso de recursos y la comunicación de red. En este capítulo, aprenderemos sobre los diferentes tipos de policies en Kubernetes, cómo implementarlas y la gestión de policies en Amazon EKS.
+En Kubernetes, las políticas son conjuntos de reglas que controlan y regulan el comportamiento de los clusters y las cargas de trabajo. Mediante las políticas, puedes gestionar diversos aspectos, como la seguridad, el uso de recursos y la comunicación de red. En este capítulo, aprenderemos sobre los distintos tipos de políticas en Kubernetes, cómo implementarlas y la gestión de políticas en Amazon EKS.
 
-## Lab Environment Setup
+## Configuración del entorno de laboratorio
 
 Para seguir los ejemplos de este documento, necesitas las siguientes herramientas y entorno:
 
-### Required Tools
+### Herramientas necesarias
 - kubectl v1.34 o superior
-- Un cluster Kubernetes funcional (EKS, minikube, kind, etc.)
-- Kyverno CLI (opcional)
+- Un cluster de Kubernetes operativo (EKS, minikube, kind, etc.)
+- CLI de Kyverno (opcional)
 - OPA Gatekeeper (opcional)
 
-### Policy Example Setup
+### Configuración de ejemplo de políticas
 
 ```bash
 # Create namespace
@@ -53,82 +53,28 @@ EOF
 kubectl -n policy-demo get resourcequota,networkpolicy
 ```
 
-## Kubernetes Policy Architecture
+## Arquitectura de políticas de Kubernetes
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Policy Architecture"
-        subgraph "Policy Types"
-            Resource["Resource Policies"]
-            Security["Security Policies"]
-            Network["Network Policies"]
-            Custom["Custom Policies"]
-        end
+![Los cuatro tipos de políticas de Kubernetes se implementan mediante ResourceQuota/LimitRange, Pod Security Standards, Admission Controllers, NetworkPolicy y OPA Gatekeeper/Kyverno, y se aplican en el nivel de cluster, namespace o pod.](../.gitbook/assets/en-core-07-policies-0.png)
 
-        subgraph "Policy Implementation Mechanisms"
-            Quota["ResourceQuota"]
-            Limit["LimitRange"]
-            PSS["Pod Security Standards"]
-            NetPol["NetworkPolicy"]
-            OPA["OPA Gatekeeper"]
-            Kyverno["Kyverno"]
-            AdmCtrl["Admission Controllers"]
-        end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-0.html)
 
-        subgraph "Policy Application Layers"
-            Cluster["Cluster Level"]
-            NS["Namespace Level"]
-            Pod["Pod Level"]
-        end
+## Comparación de tipos de políticas
 
-        Resource --> Quota
-        Resource --> Limit
-        Security --> PSS
-        Security --> AdmCtrl
-        Network --> NetPol
-        Custom --> OPA
-        Custom --> Kyverno
-
-        Quota --> NS
-        Limit --> NS
-        PSS --> Pod
-        NetPol --> Pod
-        OPA --> Cluster
-        OPA --> NS
-        OPA --> Pod
-        Kyverno --> Cluster
-        Kyverno --> NS
-        Kyverno --> Pod
-        AdmCtrl --> Pod
-    end
-
-    %% Style definitions
-    classDef policyType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef mechanism fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef level fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Resource,Security,Network,Custom policyType;
-    class Quota,Limit,PSS,NetPol,OPA,Kyverno,AdmCtrl mechanism;
-    class Cluster,NS,Pod level;
-```
-
-## Policy Type Comparison
-
-| Policy Type | Implementation Mechanism | Application Level | Primary Purpose | Kubernetes Version Support |
+| Tipo de política | Mecanismo de implementación | Nivel de aplicación | Propósito principal | Compatibilidad de versión de Kubernetes |
 |------------|--------------------------|-------------------|-----------------|---------------------------|
-| **Resource Policies** | ResourceQuota, LimitRange | Namespace | Resource usage limitation and management | All versions |
-| **Security Policies** | Pod Security Standards, PodSecurityPolicy(deprecated) | Pod, Namespace | Security context restrictions | PSP: ~1.24, PSS: 1.22+ |
-| **Network Policies** | NetworkPolicy | Pod | Network traffic control | 1.8+ |
-| **Custom Policies** | OPA Gatekeeper, Kyverno | Cluster, Namespace, Pod | User-defined policy enforcement | All versions (add-ons) |
+| **Políticas de recursos** | ResourceQuota, LimitRange | Namespace | Limitación y gestión del uso de recursos | Todas las versiones |
+| **Políticas de seguridad** | Pod Security Standards, PodSecurityPolicy(deprecated) | Pod, Namespace | Restricciones del contexto de seguridad | PSP: ~1.24, PSS: 1.22+ |
+| **Políticas de red** | NetworkPolicy | Pod | Control del tráfico de red | 1.8+ |
+| **Políticas personalizadas** | OPA Gatekeeper, Kyverno | Cluster, Namespace, Pod | Aplicación de políticas definidas por el usuario | Todas las versiones (add-ons) |
 
-## Resource Policies
+## Políticas de recursos
 
-Las resource policies son mecanismos para limitar y gestionar recursos de cómputo (CPU, memoria, etc.) y conteos de objetos (pods, services, etc.) dentro de un cluster Kubernetes.
+Las políticas de recursos son mecanismos para limitar y gestionar los recursos de computación (CPU, memoria, etc.) y los recuentos de objetos (pods, services, etc.) dentro de un cluster de Kubernetes.
 
 ### ResourceQuota
 
-ResourceQuota limita la cantidad total de recursos que se pueden usar dentro de un namespace.
+ResourceQuota limita la cantidad total de recursos que pueden utilizarse dentro de un namespace.
 
 ```yaml
 apiVersion: v1
@@ -151,7 +97,7 @@ spec:
 
 ### LimitRange
 
-LimitRange establece límites y requests de recursos predeterminados para containers o pods individuales dentro de un namespace.
+LimitRange establece límites y solicitudes de recursos predeterminados para contenedores o pods individuales dentro de un namespace.
 
 ```yaml
 apiVersion: v1
@@ -176,71 +122,40 @@ spec:
     type: Container
 ```
 
-## Table of Contents
-1. [Policy Overview](#policy-overview)
-2. [Resource Allocation Policies](#resource-allocation-policies)
-3. [Pod Security Policies](#pod-security-policies)
-4. [Network Policies](#network-policies)
-5. [Resource Quotas](#resource-quotas)
+## Índice
+1. [Descripción general de las políticas](#policy-overview)
+2. [Políticas de asignación de recursos](#resource-allocation-policies)
+3. [Políticas de seguridad de Pod](#pod-security-policies)
+4. [Políticas de red](#network-policies)
+5. [Cuotas de recursos](#resource-quotas)
 6. [LimitRange](#limitrange)
-7. [Policy Engines](#policy-engines)
-8. [Policy Management in Amazon EKS](#policy-management-in-amazon-eks)
-9. [Policy Best Practices](#policy-best-practices)
-10. [Conclusion](#conclusion)
+7. [Motores de políticas](#policy-engines)
+8. [Gestión de políticas en Amazon EKS](#policy-management-in-amazon-eks)
+9. [Prácticas recomendadas de políticas](#policy-best-practices)
+10. [Conclusión](#conclusion)
 
-## Policy Overview
+## Descripción general de las políticas
 
-Las policies de Kubernetes proporcionan una forma para que los administradores de clusters definan restricciones sobre recursos y workloads dentro del cluster. Las policies se usan para los siguientes propósitos:
+Las políticas de Kubernetes proporcionan una forma para que los administradores de clusters definan restricciones sobre los recursos y las cargas de trabajo dentro del cluster. Las políticas se utilizan para los siguientes propósitos:
 
-1. **Security Enhancement**: Prevenir operaciones no autorizadas y aplicar las mejores prácticas de seguridad
-2. **Resource Management**: Limitar el uso de recursos y garantizar una distribución justa de los recursos
-3. **Compliance**: Garantizar el cumplimiento de policies y regulaciones organizacionales
-4. **Standardization**: Aplicar prácticas coherentes de configuración y deployment
+1. **Mejora de la seguridad**: Evitar operaciones no autorizadas y aplicar prácticas recomendadas de seguridad
+2. **Gestión de recursos**: Limitar el uso de recursos y garantizar una distribución justa de recursos
+3. **Cumplimiento**: Garantizar el cumplimiento de las políticas y regulaciones de la organización
+4. **Estandarización**: Aplicar prácticas coherentes de configuración y despliegue
 
-Kubernetes puede implementar varios tipos de policies mediante recursos integrados (por ejemplo, NetworkPolicy, ResourceQuota, LimitRange) o policy engines de terceros (por ejemplo, OPA Gatekeeper, Kyverno).
+Kubernetes puede implementar diversos tipos de políticas mediante recursos integrados (por ejemplo, NetworkPolicy, ResourceQuota, LimitRange) o motores de políticas de terceros (por ejemplo, OPA Gatekeeper, Kyverno).
 
-## Resource Allocation Policies
+## Políticas de asignación de recursos
 
-Las resource allocation policies controlan la cantidad de recursos, como CPU y memoria, que pueden usar pods y containers.
+Las políticas de asignación de recursos controlan la cantidad de recursos como CPU y memoria que pueden usar los pods y los contenedores.
 
-```mermaid
-graph TD
-    subgraph "Resource Allocation Mechanisms"
-        Requests["Resource Requests<br>(requests)"]
-        Limits["Resource Limits<br>(limits)"]
-        QoS["QoS Classes"]
-    end
+![Las solicitudes y los límites establecidos en el campo resources de un pod determinan su clase QoS, y esa clase establece el orden de expulsión cuando un nodo se queda sin recursos: primero BestEffort, después Burstable y por último Guaranteed.](../.gitbook/assets/en-core-07-policies-1.png)
 
-    Requests -->|set| Pod["Pod/Container"]
-    Limits -->|set| Pod
-    Pod -->|determines| QoS
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-1.html)
 
-    QoS -->|type| Guaranteed["Guaranteed<br>(requests = limits)"]
-    QoS -->|type| Burstable["Burstable<br>(requests < limits)"]
-    QoS -->|type| BestEffort["BestEffort<br>(no requests/limits)"]
+### Solicitudes y límites de recursos
 
-    subgraph "Eviction Order During Resource Shortage"
-        BestEffort -->|1st priority| Eviction["Eviction"]
-        Burstable -->|2nd priority| Eviction
-        Guaranteed -->|3rd priority| Eviction
-    end
-
-    %% Style definitions
-    classDef resourceMechanism fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef qosClass fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef evictionComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Requests,Limits,QoS resourceMechanism;
-    class Pod k8sComponent;
-    class Guaranteed,Burstable,BestEffort qosClass;
-    class Eviction evictionComponent;
-```
-
-### Resource Requests and Limits
-
-Puedes gestionar el uso de recursos estableciendo resource requests y limits para pods y containers:
+Puedes gestionar el uso de recursos configurando solicitudes y límites de recursos para pods y contenedores:
 
 ```yaml
 apiVersion: v1
@@ -260,81 +175,47 @@ spec:
         cpu: "500m"
 ```
 
-- **requests**: La cantidad mínima de recursos garantizada para el container
-- **limits**: La cantidad máxima de recursos que el container puede usar
+- **requests**: La cantidad mínima de recursos garantizada para el contenedor
+- **limits**: La cantidad máxima de recursos que puede usar el contenedor
 
-Establecer resource requests y limits proporciona los siguientes beneficios:
+Configurar solicitudes y límites de recursos proporciona los siguientes beneficios:
 
-1. **Resource Guarantee**: Se garantiza que los Pods tengan los recursos mínimos que necesitan
-2. **Resource Isolation**: Evita que un pod monopolice los recursos de otro pod
-3. **Efficient Scheduling**: El scheduler considera la capacidad de recursos del node al ubicar pods
+1. **Garantía de recursos**: Se garantiza a los pods los recursos mínimos que necesitan
+2. **Aislamiento de recursos**: Evita que un pod monopolice los recursos de otro pod
+3. **Planificación eficiente**: El scheduler considera la capacidad de recursos del nodo al ubicar pods
 
-### QoS (Quality of Service) Classes
+### Clases QoS (Quality of Service)
 
-Kubernetes asigna automáticamente clases QoS según la configuración de resource requests y limits del pod:
+Kubernetes asigna automáticamente clases QoS según la configuración de solicitudes y límites de recursos del pod:
 
-1. **Guaranteed**: Todos los containers tienen resource requests y limits establecidos, y requests es igual a limits
-2. **Burstable**: Al menos un container tiene resource requests establecidos, pero no cumple las condiciones de Guaranteed
-3. **BestEffort**: Ningún container tiene resource requests ni limits establecidos
+1. **Guaranteed**: Todos los contenedores tienen solicitudes y límites de recursos configurados, y las solicitudes son iguales a los límites
+2. **Burstable**: Al menos un contenedor tiene solicitudes de recursos configuradas, pero no cumple las condiciones de Guaranteed
+3. **BestEffort**: Ningún contenedor tiene solicitudes y límites de recursos configurados
 
-Las clases QoS determinan el orden de eviction de pods durante una escasez de recursos:
-1. Los pods BestEffort se evictan primero
-2. Los pods Burstable se evictan después
-3. Los pods Guaranteed se evictan al final
+Las clases QoS determinan el orden de expulsión de pods durante la escasez de recursos:
+1. Los pods BestEffort se expulsan primero
+2. Los pods Burstable se expulsan después
+3. Los pods Guaranteed se expulsan al final
 
-## Pod Security Policies
+## Políticas de seguridad de Pod
 
-Pod Security Policy (PSP) quedó en desuso a partir de Kubernetes 1.21 y se eliminó por completo en la versión 1.25. En su lugar, se introdujeron Pod Security Standards y Pod Security Admission.
+Pod Security Policy (PSP) quedó obsoleta a partir de Kubernetes 1.21 y se eliminó por completo en la versión 1.25. En su lugar, se introdujeron Pod Security Standards y Pod Security Admission.
 
-```mermaid
-graph TD
-    subgraph "Pod Security Standards"
-        PSS["Pod Security Standards"]
-        PSS -->|level| Privileged["Privileged<br>(no restrictions)"]
-        PSS -->|level| Baseline["Baseline<br>(basic security)"]
-        PSS -->|level| Restricted["Restricted<br>(hardened security)"]
-    end
+![Una etiqueta de namespace establece el modo de Pod Security Admission y el nivel de Pod Security Standards con el que se valida cada solicitud de creación de un pod, que después se permite o se deniega.](../.gitbook/assets/en-core-07-policies-2.png)
 
-    subgraph "Pod Security Admission"
-        PSA["Pod Security Admission"]
-        PSA -->|mode| Enforce["enforce<br>(block on violation)"]
-        PSA -->|mode| Audit["audit<br>(log on violation)"]
-        PSA -->|mode| Warn["warn<br>(warn on violation)"]
-    end
-
-    NS["Namespace"] -->|label setting| PSA
-    PSA -->|references| PSS
-    PSA -->|validates| Pod["Pod Creation Request"]
-
-    Pod -->|compliant| Allow["Allow"]
-    Pod -->|violation| Deny["Deny"]
-
-    %% Style definitions
-    classDef securityStandard fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef securityLevel fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef admissionMode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class PSS securityStandard;
-    class Privileged,Baseline,Restricted securityLevel;
-    class NS,Pod k8sComponent;
-    class PSA,Enforce,Audit,Warn admissionMode;
-    class Allow,Deny resultComponent;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-2.html)
 
 ### Pod Security Standards
 
-Pod Security Standards define tres niveles de policy:
+Pod Security Standards define tres niveles de políticas:
 
-1. **Privileged**: Sin restricciones, todos los permisos permitidos
+1. **Privileged**: Sin restricciones, todos los permisos están permitidos
 2. **Baseline**: Bloquea rutas conocidas de escalamiento de privilegios
-3. **Restricted**: Policy de seguridad fuertemente endurecida
+3. **Restricted**: Política de seguridad fuertemente reforzada
 
 ### Pod Security Admission
 
-Pod Security Admission aplica Pod Security Standards mediante labels de namespace:
+Pod Security Admission aplica Pod Security Standards mediante etiquetas de namespace:
 
 ```yaml
 apiVersion: v1
@@ -347,58 +228,18 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-Significado de cada label:
-- **enforce**: Bloquea la creación de pods que violan la policy
-- **audit**: Registra las violaciones en audit logs
-- **warn**: Muestra mensajes de advertencia para las violaciones
+Significado de cada etiqueta:
+- **enforce**: Bloquea la creación de pods que infringen la política
+- **audit**: Registra las infracciones en los registros de auditoría
+- **warn**: Muestra mensajes de advertencia sobre las infracciones
 
-## Network Policies
+## Políticas de red
 
-Network Policy proporciona una forma de controlar la comunicación entre pods. De forma predeterminada, todos los pods de un cluster Kubernetes pueden comunicarse entre sí, pero las network policies pueden restringir esto.
+Network Policy proporciona una forma de controlar la comunicación entre pods. De forma predeterminada, todos los pods de un cluster de Kubernetes pueden comunicarse entre sí, pero las políticas de red pueden restringirlo.
 
-```mermaid
-graph TD
-    subgraph "Network Policy Configuration"
-        NP["NetworkPolicy"]
-        NP -->|selects| PodSelector["podSelector<br>(target pods)"]
-        NP -->|defines| PolicyTypes["policyTypes<br>(Ingress/Egress)"]
-        NP -->|rules| Ingress["ingress<br>(inbound rules)"]
-        NP -->|rules| Egress["egress<br>(outbound rules)"]
-    end
+![El podSelector, los policyTypes y las reglas ingress/egress de NetworkPolicy api-allow se aplican al pod de API y solo permiten tráfico entrante desde el frontend y saliente hacia la base de datos, junto con los tres tipos de selector.](../.gitbook/assets/en-core-07-policies-3.png)
 
-    subgraph "Traffic Flow"
-        Frontend["Frontend<br>Pod"]
-        API["API<br>Pod"]
-        DB["Database<br>Pod"]
-
-        Frontend -->|inbound allowed| API
-        API -->|outbound allowed| DB
-        Frontend -.->|direct communication blocked| DB
-    end
-
-    NP -->|applied to| API
-
-    subgraph "Selector Types"
-        Selectors["Selectors"]
-        Selectors -->|type| PodSel["podSelector<br>(pod labels)"]
-        Selectors -->|type| NSSel["namespaceSelector<br>(namespace labels)"]
-        Selectors -->|type| IPBlock["ipBlock<br>(IP CIDR)"]
-    end
-
-    %% Style definitions
-    classDef networkPolicy fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef policyConfig fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef selectorType fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class NP,PolicyTypes,Ingress,Egress networkPolicy;
-    class PodSelector,Selectors policyConfig;
-    class Frontend,API userApp;
-    class DB dataStore;
-    class PodSel,NSSel,IPBlock selectorType;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-3.html)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -432,25 +273,25 @@ spec:
 ```
 
 En el ejemplo anterior:
-- Define una network policy para pods con el label `api`
-- Solo permite tráfico entrante desde pods con el label `frontend` en el puerto 8080
-- Solo permite tráfico saliente hacia pods con el label `database` en el puerto 5432
+- Define una política de red para pods con la etiqueta `api`
+- Solo permite tráfico entrante desde pods con la etiqueta `frontend` en el puerto 8080
+- Solo permite tráfico saliente hacia pods con la etiqueta `database` en el puerto 5432
 
-Para usar network policies, el plugin de red del cluster debe admitir network policies. Plugins CNI como Calico, Cilium y Antrea admiten network policies.
+Para usar políticas de red, el plugin de red del cluster debe admitir políticas de red. Los plugins CNI como Calico, Cilium y Antrea admiten políticas de red.
 
-### Network Policy Types
+### Tipos de políticas de red
 
-1. **Ingress Policy**: Controla el tráfico que entra al pod
-2. **Egress Policy**: Controla el tráfico que sale del pod
-3. **Ingress and Egress Policy**: Controla el tráfico en ambas direcciones
+1. **Política Ingress**: Controla el tráfico que entra al pod
+2. **Política Egress**: Controla el tráfico que sale del pod
+3. **Política Ingress y Egress**: Controla ambas direcciones del tráfico
 
-### Network Policy Selectors
+### Selectores de políticas de red
 
-Las network policies pueden filtrar tráfico mediante varios selectors:
+Las políticas de red pueden filtrar el tráfico mediante varios selectores:
 
-1. **podSelector**: Selecciona según labels de pod
-2. **namespaceSelector**: Selecciona según labels de namespace
-3. **ipBlock**: Selecciona según rangos CIDR de IP
+1. **podSelector**: Selecciona según las etiquetas de pod
+2. **namespaceSelector**: Selecciona según las etiquetas de namespace
+3. **ipBlock**: Selecciona según rangos IP CIDR
 
 ```yaml
 # Example combining multiple selectors
@@ -468,58 +309,13 @@ ingress:
       - 172.17.1.0/24
 ```
 
-## Resource Quotas
+## Cuotas de recursos
 
-ResourceQuota limita la cantidad total de recursos que se pueden usar dentro de un namespace. Esto evita que un equipo monopolice todos los recursos cuando varios equipos o proyectos comparten los recursos del cluster.
+ResourceQuota limita la cantidad total de recursos que pueden utilizarse dentro de un namespace. Esto evita que un equipo monopolice todos los recursos cuando varios equipos o proyectos comparten los recursos del cluster.
 
-```mermaid
-graph TD
-    subgraph "Resource Quota Types"
-        RQ["ResourceQuota"]
-        RQ -->|type| Compute["Compute Resource Quota<br>(CPU, Memory)"]
-        RQ -->|type| Storage["Storage Resource Quota<br>(PVC)"]
-        RQ -->|type| Object["Object Count Quota<br>(Pod, Service, etc.)"]
-        RQ -->|type| Priority["Priority Class Quota"]
-    end
+![Cuatro tipos de ResourceQuota aplicados a un namespace, el uso de los pods sumado frente a esa cuota y una nueva solicitud de pod admitida o denegada según si el uso más la solicitud permanece dentro de la cuota.](../.gitbook/assets/en-core-07-policies-4.png)
 
-    subgraph "Application Scope"
-        NS["Namespace"]
-        NS -->|contains| Pod1["Pod 1"]
-        NS -->|contains| Pod2["Pod 2"]
-        NS -->|contains| Pod3["Pod 3"]
-    end
-
-    RQ -->|applied to| NS
-
-    subgraph "Resource Usage"
-        Usage["Namespace Resource Usage"]
-        Usage -->|limited by| Limit["Quota Limit"]
-        Pod1 -->|contributes| Usage
-        Pod2 -->|contributes| Usage
-        Pod3 -->|contributes| Usage
-
-        NewPod["New Pod Creation Request"]
-        NewPod -->|validates| Check{{"usage + request <= quota?"}}
-        Check -->|yes| Allow["Allow"]
-        Check -->|no| Deny["Deny"]
-    end
-
-    %% Style definitions
-    classDef quotaType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef quotaCategory fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef usageComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef checkComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class RQ quotaType;
-    class Compute,Storage,Object,Priority quotaCategory;
-    class NS,Pod1,Pod2,Pod3,NewPod k8sComponent;
-    class Usage,Limit usageComponent;
-    class Check checkComponent;
-    class Allow,Deny resultComponent;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-4.html)
 
 ```yaml
 apiVersion: v1
@@ -538,14 +334,14 @@ spec:
 
 En el ejemplo anterior:
 - El namespace `team-a` puede crear un máximo de 10 pods
-- La suma de todos los CPU requests de pod no puede superar 4 cores
-- La suma de todos los memory requests de pod no puede superar 8Gi
-- La suma de todos los CPU limits de pod no puede superar 8 cores
-- La suma de todos los memory limits de pod no puede superar 16Gi
+- La suma de todas las solicitudes de CPU de los pods no puede superar 4 núcleos
+- La suma de todas las solicitudes de memoria de los pods no puede superar 8Gi
+- La suma de todos los límites de CPU de los pods no puede superar 8 núcleos
+- La suma de todos los límites de memoria de los pods no puede superar 16Gi
 
-### Object Count Quota
+### Cuota de recuento de objetos
 
-Las resource quotas también pueden limitar la cantidad de objetos que se pueden crear dentro de un namespace más allá de CPU y memoria:
+Las cuotas de recursos también pueden limitar la cantidad de objetos que se pueden crear dentro de un namespace, además de CPU y memoria:
 
 ```yaml
 apiVersion: v1
@@ -563,9 +359,9 @@ spec:
     services.loadbalancers: "2"
 ```
 
-### Priority Class Quota
+### Cuota de clase de prioridad
 
-También puedes establecer quotas para pods de priority classes específicas:
+También puedes establecer cuotas para pods de clases de prioridad específicas:
 
 ```yaml
 apiVersion: v1
@@ -588,7 +384,7 @@ spec:
 
 ## LimitRange
 
-LimitRange establece límites y requests de recursos predeterminados para recursos individuales (pods, containers, etc.) creados dentro de un namespace. Esto se aplica cuando los developers no establecen explícitamente resource requests y limits.
+LimitRange establece límites y solicitudes de recursos predeterminados para recursos individuales (pods, contenedores, etc.) creados dentro de un namespace. Esto se aplica cuando los desarrolladores no establecen explícitamente solicitudes y límites de recursos.
 
 ```yaml
 apiVersion: v1
@@ -614,85 +410,32 @@ spec:
 ```
 
 En el ejemplo anterior:
-- **default**: Límite predeterminado aplicado cuando un container no tiene un limit explícito
-- **defaultRequest**: Request predeterminado aplicado cuando un container no tiene un request explícito
-- **max**: Límite máximo que un container puede establecer
-- **min**: Request mínimo que un container puede establecer
+- **default**: Límite predeterminado que se aplica cuando un contenedor no tiene un límite explícito
+- **defaultRequest**: Solicitud predeterminada que se aplica cuando un contenedor no tiene una solicitud explícita
+- **max**: Límite máximo que puede establecer un contenedor
+- **min**: Solicitud mínima que puede establecer un contenedor
 
 LimitRange se puede aplicar a los siguientes tipos de recursos:
 - Container
 - Pod
 - PersistentVolumeClaim
 
-## Policy Engines
+## Motores de políticas
 
-El ecosistema de Kubernetes tiene varios policy engines que pueden implementar policies más complejas y flexibles.
+El ecosistema de Kubernetes cuenta con varios motores de políticas que pueden implementar políticas más complejas y flexibles.
 
-```mermaid
-graph TD
-    subgraph "Policy Engines"
-        OPA["OPA Gatekeeper"]
-        Kyverno["Kyverno"]
-        Kubewarden["Kubewarden"]
-    end
+![El servidor de API llama al Admission Webhook, que entrega las solicitudes a OPA Gatekeeper, Kyverno y Kubewarden; cada motor utiliza sus propios recursos de políticas y admite validate y mutate, mientras que generate solo está disponible en Kyverno.](../.gitbook/assets/en-core-07-policies-5.png)
 
-    subgraph "Policy Definitions"
-        OPATemplate["ConstraintTemplate<br>(Rego language)"]
-        OPAConstraint["Constraint<br>(policy instance)"]
-        KyvernoPolicy["ClusterPolicy/Policy<br>(YAML-based)"]
-        KubewardenPolicy["ClusterAdmissionPolicy<br>(WebAssembly)"]
-    end
-
-    OPA -->|uses| OPATemplate
-    OPA -->|uses| OPAConstraint
-    Kyverno -->|uses| KyvernoPolicy
-    Kubewarden -->|uses| KubewardenPolicy
-
-    subgraph "Policy Types"
-        Validate["Validate"]
-        Mutate["Mutate"]
-        Generate["Generate"]
-    end
-
-    OPA -->|supports| Validate
-    OPA -->|supports| Mutate
-    Kyverno -->|supports| Validate
-    Kyverno -->|supports| Mutate
-    Kyverno -->|supports| Generate
-    Kubewarden -->|supports| Validate
-    Kubewarden -->|supports| Mutate
-
-    subgraph "Kubernetes API"
-        API["API Server"]
-        Webhook["Admission Webhook"]
-    end
-
-    API -->|calls| Webhook
-    Webhook -->|processes| OPA
-    Webhook -->|processes| Kyverno
-    Webhook -->|processes| Kubewarden
-
-    %% Style definitions
-    classDef policyEngine fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef policyDef fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef policyType fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class OPA,Kyverno,Kubewarden policyEngine;
-    class OPATemplate,OPAConstraint,KyvernoPolicy,KubewardenPolicy policyDef;
-    class Validate,Mutate,Generate policyType;
-    class API,Webhook k8sComponent;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-5.html)
 
 ### OPA Gatekeeper
 
-OPA (Open Policy Agent) Gatekeeper es un proyecto open-source para definir y aplicar policies en clusters Kubernetes. Gatekeeper funciona como un admission controller de Kubernetes que intercepta las solicitudes enviadas al API server y aplica policies.
+OPA (Open Policy Agent) Gatekeeper es un proyecto de código abierto para definir y aplicar políticas en clusters de Kubernetes. Gatekeeper funciona como un controlador de admisión de Kubernetes que intercepta las solicitudes enviadas al servidor de API y aplica políticas.
 
 Gatekeeper consta de los siguientes componentes:
 
-1. **ConstraintTemplate**: Una plantilla que define la lógica de la policy
-2. **Constraint**: Una instancia de ConstraintTemplate que aplica la policy a recursos específicos
+1. **ConstraintTemplate**: Una plantilla que define la lógica de la política
+2. **Constraint**: Una instancia de ConstraintTemplate que aplica la política a recursos específicos
 
 ```yaml
 # ConstraintTemplate example
@@ -741,7 +484,7 @@ spec:
 
 ### Kyverno
 
-Kyverno es un policy engine nativo de Kubernetes que puede validar, modificar y generar recursos de Kubernetes mediante policies basadas en YAML. Puedes escribir policies con una sintaxis similar a los recursos de Kubernetes sin necesidad de aprender el lenguaje Rego.
+Kyverno es un motor de políticas nativo de Kubernetes que puede validar, modificar y generar recursos de Kubernetes mediante políticas basadas en YAML. Puedes escribir políticas con una sintaxis similar a los recursos de Kubernetes sin necesidad de aprender el lenguaje Rego.
 
 ```yaml
 # Kyverno policy example
@@ -766,17 +509,17 @@ spec:
             owner: "?*"
 ```
 
-Kyverno admite los siguientes tipos de policy:
+Kyverno admite los siguientes tipos de políticas:
 
 1. **Validate**: Valida que los recursos cumplan condiciones específicas
-2. **Mutate**: Modifica recursos automáticamente
-3. **Generate**: Crea otros recursos automáticamente cuando se crea un recurso
-4. **Verify Images**: Valida firmas de images
-5. **Clean Up**: Limpia automáticamente recursos relacionados cuando se elimina un recurso
+2. **Mutate**: Modifica automáticamente los recursos
+3. **Generate**: Crea automáticamente otros recursos cuando se crea un recurso
+4. **Verify Images**: Valida firmas de imágenes
+5. **Clean Up**: Limpia automáticamente los recursos relacionados cuando se elimina un recurso
 
 ### Kubewarden
 
-Kubewarden es un policy engine basado en WebAssembly que permite escribir policies en varios lenguajes de programación. Las policies se compilan en módulos WebAssembly y se ejecutan en el policy server de Kubewarden.
+Kubewarden es un motor de políticas basado en WebAssembly que permite escribir políticas en diversos lenguajes de programación. Las políticas se compilan en módulos WebAssembly y se ejecutan en el servidor de políticas de Kubewarden.
 
 ```yaml
 # Kubewarden policy example
@@ -799,72 +542,17 @@ spec:
       - owner
 ```
 
-## Policy Management in Amazon EKS
+## Gestión de políticas en Amazon EKS
 
-En Amazon EKS, puedes gestionar policies usando los mecanismos de policy predeterminados de Kubernetes junto con diversos servicios de AWS.
+En Amazon EKS, puedes gestionar políticas mediante los mecanismos de políticas predeterminados de Kubernetes junto con diversos servicios de AWS.
 
-```mermaid
-graph TD
-    subgraph "AWS Services"
-        IAM["AWS IAM"]
-        SG["AWS Security Groups"]
-        Config["AWS Config"]
-        Org["AWS Organizations"]
-        FW["AWS Firewall Manager"]
-    end
+![AWS Organizations, Config y Firewall Manager restringen, auditan y protegen el cluster de EKS; IAM y Security Groups actúan sobre los pods; y las políticas integradas de Kubernetes se aplican en todo el cluster, los namespaces y los pods.](../.gitbook/assets/en-core-07-policies-6.png)
 
-    subgraph "EKS Policy Integration"
-        IRSA["IAM Roles for Service Accounts<br>(IRSA)"]
-        SGPods["Security Groups for Pods"]
-        SCPs["Service Control Policies<br>(SCPs)"]
-        ConfigRules["Config Rules"]
-        FWPolicies["Firewall Policies"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-6.html)
 
-    IAM -->|integration| IRSA
-    SG -->|integration| SGPods
-    Org -->|integration| SCPs
-    Config -->|integration| ConfigRules
-    FW -->|integration| FWPolicies
+### Integración con AWS IAM
 
-    subgraph "Kubernetes Policies"
-        K8sPolicies["Kubernetes Policies"]
-        K8sPolicies -->|type| RQ["ResourceQuota"]
-        K8sPolicies -->|type| LR["LimitRange"]
-        K8sPolicies -->|type| NP["NetworkPolicy"]
-        K8sPolicies -->|type| PSS["Pod Security Standards"]
-    end
-
-    subgraph "EKS Cluster"
-        Cluster["EKS Cluster"]
-        Cluster -->|contains| NS["Namespace"]
-        NS -->|contains| Pod["Pod"]
-    end
-
-    IRSA -->|grants permissions| Pod
-    SGPods -->|network security| Pod
-    SCPs -->|restricts| Cluster
-    ConfigRules -->|audits| Cluster
-    FWPolicies -->|protects| Cluster
-
-    K8sPolicies -->|applied to| Cluster
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef eksIntegration fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sPolicy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class IAM,SG,Config,Org,FW awsService;
-    class IRSA,SGPods,SCPs,ConfigRules,FWPolicies eksIntegration;
-    class K8sPolicies,RQ,LR,NP,PSS k8sPolicy;
-    class Cluster,NS,Pod k8sComponent;
-```
-
-### Integration with AWS IAM
-
-Amazon EKS puede otorgar permisos a pods para servicios de AWS mediante IAM Roles for Service Accounts (IRSA). Esto permite aplicar el principio de privilegio mínimo.
+Amazon EKS puede conceder permisos a pods para servicios de AWS mediante IAM Roles for Service Accounts (IRSA). Esto permite aplicar el principio de mínimo privilegio.
 
 ```bash
 # Create OIDC provider
@@ -881,7 +569,7 @@ eksctl create iamserviceaccount \
 
 ### AWS Security Groups for Pods
 
-Amazon EKS proporciona la capacidad de aplicar AWS security groups a nivel de pod. Esto permite un control más detallado de la comunicación entre pods.
+Amazon EKS proporciona la capacidad de aplicar AWS security groups en el nivel de pod. Esto permite un control más detallado de la comunicación entre pods.
 
 ```yaml
 apiVersion: vpcresources.k8s.aws/v1beta1
@@ -898,9 +586,9 @@ spec:
       - sg-12345
 ```
 
-### AWS Config and AWS Organizations
+### AWS Config y AWS Organizations
 
-Puedes aplicar policies a nivel de organización a clusters EKS usando AWS Config y AWS Organizations. Por ejemplo, puedes restringir la creación de clusters EKS sin tags específicos.
+Puedes aplicar políticas a nivel de organización a clusters de EKS mediante AWS Config y AWS Organizations. Por ejemplo, puedes restringir la creación de clusters de EKS sin etiquetas específicas.
 
 ```json
 {
@@ -922,54 +610,54 @@ Puedes aplicar policies a nivel de organización a clusters EKS usando AWS Confi
 
 ### AWS Firewall Manager
 
-Puedes usar AWS Firewall Manager para gestionar de forma centralizada network policies para múltiples clusters EKS. Esto permite aplicar policies de seguridad coherentes en toda la organización.
+Puedes usar AWS Firewall Manager para gestionar de forma centralizada las políticas de red de varios clusters de EKS. Esto permite aplicar políticas de seguridad coherentes en toda la organización.
 
-## Policy Best Practices
+## Prácticas recomendadas de políticas
 
-Estas son mejores prácticas para gestionar eficazmente policies en clusters Kubernetes.
+Estas son prácticas recomendadas para gestionar eficazmente las políticas en clusters de Kubernetes.
 
-### Policy Design
+### Diseño de políticas
 
-1. **Principle of Least Privilege**: Diseña policies que otorguen solo los permisos mínimos necesarios.
-2. **Gradual Application**: No apliques todas las policies a la vez; aplícalas gradualmente para minimizar el impacto.
-3. **Audit Mode**: Ejecuta policies en audit mode antes de aplicarlas para evaluar el impacto.
-4. **Clear Documentation**: Documenta claramente el propósito y el impacto de cada policy.
+1. **Principio de mínimo privilegio**: Diseña políticas que concedan solo los permisos mínimos necesarios.
+2. **Aplicación gradual**: No apliques todas las políticas a la vez; aplícalas gradualmente para minimizar el impacto.
+3. **Modo de auditoría**: Ejecuta las políticas en modo de auditoría antes de aplicarlas para evaluar el impacto.
+4. **Documentación clara**: Documenta claramente el propósito y el impacto de cada política.
 
-### Resource Management
+### Gestión de recursos
 
-1. **Namespace Isolation**: Separa namespaces por equipo o proyecto y establece resource quotas apropiadas para cada namespace.
-2. **Default Limits**: Usa LimitRange para establecer resource limits predeterminados para todos los containers.
-3. **QoS Class Consideration**: Establece clases QoS apropiadas según la importancia del workload.
+1. **Aislamiento de namespace**: Separa los namespaces por equipo o proyecto y establece cuotas de recursos apropiadas para cada namespace.
+2. **Límites predeterminados**: Usa LimitRange para establecer límites de recursos predeterminados para todos los contenedores.
+3. **Consideración de la clase QoS**: Establece clases QoS apropiadas según la importancia de la carga de trabajo.
 
-### Network Security
+### Seguridad de red
 
-1. **Default Deny Policy**: Establece policies que denieguen todo el tráfico de forma predeterminada y permitan explícitamente solo la comunicación necesaria.
-2. **Granular Policies**: Establece network policies que controlen de forma precisa la comunicación entre pods.
-3. **Regular Review**: Revisa y actualiza regularmente las network policies.
+1. **Política de denegación predeterminada**: Establece políticas que denieguen todo el tráfico de forma predeterminada y permitan explícitamente solo la comunicación necesaria.
+2. **Políticas granulares**: Establece políticas de red que controlen con precisión la comunicación entre pods.
+3. **Revisión regular**: Revisa y actualiza regularmente las políticas de red.
 
-### Policy Automation
+### Automatización de políticas
 
-1. **CI/CD Integration**: Integra la validación de policies en pipelines CI/CD para detectar violaciones de policy antes del deployment.
-2. **Policy Testing**: Prueba las policies primero en un entorno de prueba y luego aplícalas a producción cuando no haya problemas.
-3. **Policy Version Control**: Gestiona las policies como código y usa sistemas de control de versiones para rastrear cambios.
+1. **Integración de CI/CD**: Integra la validación de políticas en los pipelines de CI/CD para detectar infracciones de políticas antes del despliegue.
+2. **Pruebas de políticas**: Prueba primero las políticas en un entorno de prueba y, cuando no haya problemas, aplícalas a producción.
+3. **Control de versiones de políticas**: Gestiona las políticas como código y usa sistemas de control de versiones para realizar un seguimiento de los cambios.
 
-## Conclusion
+## Conclusión
 
-Las policies de Kubernetes son herramientas poderosas para controlar la seguridad, el uso de recursos y la comunicación de red de clusters y workloads. Puedes crear un framework de policies adaptado a los requisitos de tu organización combinando mecanismos de policy integrados (ResourceQuota, LimitRange, NetworkPolicy, etc.) con policy engines de terceros (OPA Gatekeeper, Kyverno, etc.).
+Las políticas de Kubernetes son herramientas potentes para controlar la seguridad, el uso de recursos y la comunicación de red de clusters y cargas de trabajo. Puedes crear un marco de políticas adaptado a los requisitos de tu organización combinando mecanismos de políticas integrados (ResourceQuota, LimitRange, NetworkPolicy, etc.) con motores de políticas de terceros (OPA Gatekeeper, Kyverno, etc.).
 
-Al usar Amazon EKS, puedes fortalecer aún más la gestión de policies aprovechando diversos servicios de AWS (IAM, Security Groups, AWS Config, AWS Organizations, AWS Firewall Manager, etc.). Mediante la integración de estos servicios, puedes gestionar eficazmente la seguridad, el cumplimiento y la gestión de recursos de clusters y workloads.
+Al usar Amazon EKS, puedes fortalecer aún más la gestión de políticas aprovechando diversos servicios de AWS (IAM, Security Groups, AWS Config, AWS Organizations, AWS Firewall Manager, etc.). Al integrar estos servicios, puedes gestionar eficazmente la seguridad, el cumplimiento y la gestión de recursos de los clusters y las cargas de trabajo.
 
-Las policies son un área en evolución continua, por lo que es importante revisar y actualizar regularmente las policies para responder a nuevas amenazas y requisitos. Además, se recomienda gestionar las policies como código y automatizarlas para mejorar la coherencia y la eficiencia.
+Las políticas son un área en continua evolución, por lo que es importante revisarlas y actualizarlas regularmente para responder a nuevas amenazas y requisitos. Además, se recomienda gestionar las políticas como código y automatizarlas para mejorar la coherencia y la eficiencia.
 
-## Quiz
+## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, intenta el [Policies Quiz](../quizzes/core/07-policies-quiz.md).
+Para poner a prueba lo que aprendiste en este capítulo, intenta el [Cuestionario de políticas](../quizzes/core/07-policies-quiz.md).
 
-## References
+## Referencias
 
-- [Documentación oficial de Kubernetes - Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
+- [Documentación oficial de Kubernetes - Cuotas de recursos](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
 - [Documentación oficial de Kubernetes - LimitRange](https://kubernetes.io/docs/concepts/policy/limit-range/)
-- [Documentación oficial de Kubernetes - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Documentación oficial de Kubernetes - Políticas de red](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [Documentación oficial de Kubernetes - Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Documentación oficial de Kubernetes - Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
 - [Documentación oficial de OPA Gatekeeper](https://open-policy-agent.github.io/gatekeeper/website/docs/)

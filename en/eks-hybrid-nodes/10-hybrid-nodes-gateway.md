@@ -70,7 +70,9 @@ The gateway transforms what was a complex, error-prone, multi-team networking ch
 
 The EKS Hybrid Nodes Gateway sits at the boundary between your VPC and your on-premises network, acting as a VXLAN-based bridge for Pod traffic. The following diagram illustrates the overall architecture:
 
-![Architecture diagram showing a leader gateway pod in the AWS VPC bridging cloud nodes and the EKS control plane to on-premises hybrid nodes over a VXLAN tunnel, with a standby gateway ready to take over and a VPC route table steering pod traffic to the leader's ENI.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.svg)
+![A leader gateway pod in the AWS VPC bridges VPC Pods to on-premises hybrid nodes over a VXLAN tunnel, with a standby gateway ready to take over and a VPC route table steering hybrid Pod traffic to the leader's ENI.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html)
 
 ### VXLAN Tunnel Mechanics
 
@@ -168,7 +170,7 @@ metadata:
   namespace: eks-hybrid-nodes-gateway
 spec:
   holderIdentity: "gateway-pod-abc123"
-  leaseDurationSeconds: 15
+  leaseDurationSeconds: 3
   acquireTime: "2026-06-28T10:00:00Z"
   renewTime: "2026-06-28T10:00:10Z"
   leaseTransitions: 3
@@ -178,9 +180,9 @@ The leader election parameters control failover timing:
 
 | Parameter | Default Value | Description |
 |-----------|---------------|-------------|
-| `leaseDuration` | 15s | How long a lease is valid |
-| `renewDeadline` | 10s | How long the leader has to renew |
-| `retryPeriod` | 2s | How often non-leaders retry acquiring the lease |
+| `leaseDuration` | 3s | How long a lease is valid |
+| `renewDeadline` | 2s | How long the leader has to renew |
+| `retryPeriod` | 1s | How often non-leaders retry acquiring the lease |
 
 #### What the Leader Does
 
@@ -204,7 +206,9 @@ The standby pod:
 
 One of the gateway's most valuable features is automatic VPC route table management. The leader pod watches for Hybrid Node events and programs routes accordingly.
 
-![Sequence diagram showing the leader gateway watching Kubernetes node events, then programming or removing FDB, ARP, and local route entries and reflecting the change into the VPC route table, symmetrically for a hybrid node joining and leaving the cluster.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.svg)
+![Sequence showing the leader gateway receiving Kubernetes node watch events when a hybrid node joins or leaves, programming or removing FDB, ARP, and local route entries for the node, and then adding or deleting the Pod CIDR route in the VPC route table via ec2:CreateRoute and ec2:DeleteRoute.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html)
 
 The gateway uses the EC2 API to manage routes:
 
@@ -220,7 +224,9 @@ The gateway uses the EC2 API to manage routes:
 
 The following diagram shows how all components interact:
 
-![Architecture diagram showing the gateway pod as the hub that holds a leader-election lease, watches node resources, and updates CiliumVTEPConfig and the VPC route table, which drive a data plane where the hybrid_vxlan0 interface tunnels to a Cilium agent and an EC2 ENI forwards VPC-routed traffic into that tunnel.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.svg)
+![Architecture diagram of the gateway pod holding a leader Lease, watching Node objects, and updating CiliumVTEPConfig and the VPC route table, which steer traffic via the gateway ENI into the hybrid_vxlan0 VXLAN tunnel to Cilium agents.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html)
 
 ---
 
@@ -772,9 +778,9 @@ vxlanPort: 8472
 # --- Leader election settings (advanced) ---
 
 leaderElection:
-  leaseDuration: 15s
-  renewDeadline: 10s
-  retryPeriod: 2s
+  leaseDuration: 3s
+  renewDeadline: 2s
+  retryPeriod: 1s
 
 # --- Logging ---
 
@@ -1008,7 +1014,9 @@ Understanding how traffic flows through the gateway is essential for troubleshoo
 
 This is the most common pattern --- a Pod running on a cloud node in the VPC needs to communicate with a Pod running on a hybrid node on-premises.
 
-![Sequence diagram showing a packet from a cloud pod matching the VPC route table to the gateway leader, getting VXLAN-encapsulated onto hybrid_vxlan0, crossing Direct Connect or VPN, and being decapsulated and delivered to the destination pod on the hybrid node.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.svg)
+![Sequence diagram showing a packet from a cloud pod matching the VPC route table to the gateway leader, getting VXLAN-encapsulated onto hybrid_vxlan0, crossing Direct Connect or VPN, and being decapsulated and delivered to the destination pod on the hybrid node.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html)
 
 **Step-by-step packet flow:**
 
@@ -1025,7 +1033,9 @@ This is the most common pattern --- a Pod running on a cloud node in the VPC nee
 
 When a Pod on a hybrid node needs to reach a Pod (or any IP) in the VPC.
 
-![Sequence diagram showing a packet from a hybrid pod resolved by the Cilium agent's BPF VTEP lookup, VXLAN-encapsulated across Direct Connect or VPN to the gateway, decapsulated, and delivered natively through the VPC to the destination cloud pod.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.svg)
+![Sequence diagram showing a packet from a hybrid pod resolved by the Cilium agent's BPF VTEP lookup, VXLAN-encapsulated across Direct Connect or VPN to the gateway, decapsulated, and delivered natively through the VPC to the destination cloud pod.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html)
 
 **Step-by-step packet flow:**
 
@@ -1131,23 +1141,27 @@ VPC Pod → Hybrid Pod:
 
 The recommended production deployment uses 2 gateway replicas spread across Availability Zones:
 
-![Architecture diagram showing a leader gateway pod in Availability Zone A holding the Kubernetes lease, managing the CiliumVTEPConfig, and programming the VPC route table, while a standby gateway pod in Availability Zone B monitors the lease for takeover.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.svg)
+![Architecture diagram showing a leader gateway pod in Availability Zone A holding the Kubernetes lease, managing the CiliumVTEPConfig, and programming the VPC route table, while a standby gateway pod in Availability Zone B monitors the lease for takeover.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html)
 
 ### Failover Sequence
 
 When the leader gateway pod becomes unavailable (node failure, pod crash, network partition), the following failover sequence occurs:
 
-![Sequence diagram showing the leader gateway pod failing to renew its Kubernetes lease, the standby pod acquiring the expired lease and becoming leader, then updating CiliumVTEPConfig and replacing the VPC route in parallel to complete failover in about fifteen to twenty-five seconds.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.svg)
+![Sequence diagram showing the leader gateway pod failing to renew its Kubernetes lease, the standby pod acquiring the expired lease and becoming leader, then updating CiliumVTEPConfig and replacing the VPC route in parallel to complete failover in about five to ten seconds.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html)
 
 ### Failover Timeline
 
 | Phase | Duration | Description |
 |-------|----------|-------------|
-| **Detection** | 0-15s | Current leader fails to renew lease; lease expires after `leaseDuration` |
-| **Election** | 0-2s | Standby acquires lease on next `retryPeriod` tick |
+| **Detection** | 0-3s | Current leader fails to renew lease; lease expires after `leaseDuration` |
+| **Election** | 0-1s | Standby acquires lease on next `retryPeriod` tick |
 | **Route update** | 1-3s | New leader calls `ec2:ReplaceRoute` to update VPC routes |
 | **VTEP update** | 1-5s | New leader updates `CiliumVTEPConfig`; Cilium agents reload BPF maps |
-| **Total** | **~15-25s** | End-to-end failover time |
+| **Total** | **~5-10s** | End-to-end failover time |
 
 During the failover window:
 - **VPC-to-hybrid traffic**: Drops until VPC routes are updated (packets go to the failed gateway's ENI)
@@ -1565,7 +1579,7 @@ During an upgrade:
 1. The standby pod is replaced first (if using rolling update strategy)
 2. Once the new standby pod is ready, the old leader pod is replaced
 3. A leader transition occurs (see [Failover Sequence](#failover-sequence))
-4. Brief connectivity disruption (~15-25 seconds) during leader transition
+4. Brief connectivity disruption (~5-10 seconds) during leader transition
 
 To minimize disruption:
 
@@ -1626,7 +1640,7 @@ kubectl label node ip-10-0-2-200.us-west-2.compute.internal \
 | **Encapsulation overhead** | None (native routing with BGP) or varies | VXLAN (~50 bytes per packet) |
 | **Single point of traffic** | No (distributed routing) | Yes (all traffic through gateway) |
 | **High availability** | Depends on BGP/router HA | Built-in leader election |
-| **Failover time** | BGP convergence (seconds to minutes) | ~15-25 seconds |
+| **Failover time** | BGP convergence (seconds to minutes) | ~5-10 seconds |
 | **Network team involvement** | Required (router/firewall/BGP config) | Minimal (security group + firewall rules for UDP 8472) |
 | **Cost** | VPN/DX only | VPN/DX + EC2 gateway instances |
 | **Maximum throughput** | Limited by DX/VPN bandwidth | Limited by gateway instance + DX/VPN bandwidth |

@@ -1,58 +1,65 @@
 # Spark on EKS 딥다이브
 
-## 개요
+> **검토 기준**: Apache Spark 4.2.0, Kubernetes 1.34 이상\
+> **최종 검토**: 2026년 9월 12일
 
-Apache Spark는 대규모 배치 ETL, SQL 분석, 스트리밍 워크로드를 처리하는 핵심 분산 처리 엔진이며, Spark 2.3부터는 Standalone·YARN과 함께 Kubernetes를 정식 클러스터 매니저로 지원합니다. EKS에서 Spark를 실행한다는 것은 다른 워크로드를 스케줄링하는 것과 동일한 Kubernetes API 서버가 Spark의 드라이버·Executor Pod까지 스케줄링한다는 의미로, 별도의 Spark 클러스터 인프라를 구축하거나 유지보수할 필요가 없습니다. 실무에서는 `spark-submit`을 직접 호출하는 방식, Kubernetes 네이티브 CRD로 감싼 **Spark Operator**를 사용하는 방식, 또는 기존 EKS 클러스터 위에서 동작하는 AWS의 관리형 Spark 런타임인 **Amazon EMR on EKS**를 사용하는 방식 중 하나를 선택하게 됩니다.
+Apache Spark는 배치·SQL·스트리밍 등의 분산 데이터를 처리합니다.
+Kubernetes 네이티브 지원은 Spark 2.3, client mode 지원은 2.4부터입니다.
+Spark 4.2.0 공식 문서는 **Kubernetes 1.34+**를 전제로 합니다.
+kubectl도 오래된 고정 최솟값 대신 실제 EKS 버전과 호환되게 선택합니다.
 
-> **지원 버전**: Apache Spark 4.2, Kubernetes 1.30+
-> **마지막 업데이트**: 2026년 7월 15일
+별도의 Spark Standalone master나 YARN ResourceManager 없이 기존 Kubernetes
+용량·제어 영역을 사용할 수 있지만 노드, 이미지, 인증, 네트워크, 저장소와 관측
+운영은 남습니다. ResourceManager·NodeManager는 Spark 전용이 아닌 YARN 구성요소입니다.
 
-## 핵심 아키텍처 개념
+## 실행 책임 구분
 
-YARN과 달리 Spark on Kubernetes에는 상시 구동되는 클러스터 매니저 데몬이 없습니다. 즉, 작업을 기다리며 항상 떠 있는 ResourceManager나 NodeManager 같은 프로세스가 존재하지 않습니다. 대신 `spark-submit`은 Kubernetes API 서버에 직접 요청을 보내 단 하나의 **드라이버 Pod**를 생성합니다. 이 드라이버 Pod는 작업이 실행되는 동안 그 자체로 클러스터 매니저 역할을 하며, 실행이 시작되면 `spark.executor.instances` 설정이나 Dynamic Resource Allocation에 따라 필요한 **Executor Pod**를 Kubernetes API를 직접 호출해 생성·관리합니다. Executor는 드라이버에 등록한 뒤 작업(task)을 받아 처리하고 결과와 상태를 다시 드라이버로 보고하는데, 이 과정은 드라이버-Executor 간 직접 연결로 이루어지며 Kubernetes는 Pod 스케줄링과 라이프사이클 관리에만 관여할 뿐 작업 조율 자체에는 개입하지 않습니다.
+**Cluster deploy mode**에서는 제출 클라이언트가 Kubernetes API에 driver Pod를
+요청합니다. Pod 배치·시작은 Kubernetes admission·scheduler·노드 kubelet이
+처리합니다. Spark driver는 executor Pod를 요청하고 Spark stage/task를 조율하며
+Kubernetes scheduler를 대체하지 않습니다.
 
-![spark-submit이 Kubernetes API Server에 드라이버 Pod 생성을 요청하고, 드라이버 Pod가 API Server를 통해 Executor Pod를 스케줄링받은 뒤 각 Executor가 드라이버에 등록 및 상태를 보고하는 흐름을 보여주는 다이어그램](../../.gitbook/assets/ko-data-on-eks-spark-README-0.png)
+Executor는 Spark 작업을 위해 driver에 직접 등록·통신하고 Kubernetes는 Pod의
+수명주기를 계속 관리합니다. **Client mode**에서는 제출 애플리케이션의 driver가
+Pod 안이나 다른 호스트에서 실행되며 executor에서 접근 가능해야 합니다.
+두 모드 모두 Spark 애플리케이션에 사용할 수 있습니다.
 
-## 딥다이브 목차
+![Cluster mode 제출에서 Kubernetes API 요청과 Pod 배치·시작을 Spark driver의 태스크 조율과 구분한 실행 구조.](../../.gitbook/assets/ko-data-on-eks-spark-readme-0.png)
 
-**[1. Spark on Kubernetes 기초](01-spark-fundamentals.md)**
-- 클러스터 모드 전용 `spark-submit`: 드라이버 Pod가 Executor Pod를 직접 생성·관리하는 흐름
-- Kubernetes 환경의 Dynamic Resource Allocation(DRA) — External Shuffle Service가 없는 이유와 대안
-- Pod 종료 직전 상태를 보호하는 Executor Graceful Decommission
+[인터랙티브 다이어그램](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-spark-readme-0.html)
 
-**[2. Spark Operator](02-spark-operator.md)**
-- `apache/spark-kubernetes-operator` vs `kubeflow/spark-operator` — 거버넌스, 성숙도, 클러스터별 선택 기준
-- `SparkApplication` CRD와 라이프사이클 관리(`restartPolicy`, 상태 조회)
-- 드라이버/Executor Pod에 커스터마이징을 주입하는 Mutating Admission Webhook
-- 모니터링 연동 방식과 EKS 배포 시 고려사항
+## 목차
 
-**[3. Amazon EMR on EKS](03-emr-on-eks.md)**
-- 가상 클러스터(Virtual Cluster): EKS 네임스페이스를 EMR 컨트롤 플레인에 등록하기
-- `StartJobRun` API 기반 제출 vs `kubectl apply` 기반 제출
-- 작업 실행 IAM 역할과 가상 클러스터 온보딩
-- EMR on EKS vs 셀프 매니지드 Spark Operator — 상황별 선택 기준
+1. [Spark on Kubernetes 기초](01-spark-fundamentals.md): cluster/client 제출,
+   리소스 매핑, 동적 할당과 decommission의 조건.
+2. [Spark Operator](02-spark-operator.md): Apache·Kubeflow operator의 구분,
+   API·작업 수명주기·제출·관측.
+3. [EMR on EKS](03-emr-on-eks.md): 가상 클러스터, 작업 제출·실행 ID,
+   관리형 런타임과 EKS 용량 운영의 구분.
+4. [성능과 비용](04-performance-tuning.md): 셔플·스토리지·CPU·메모리 병목,
+   적절한 노드 기능, Spot 복구와 executor·노드 확장.
+5. [모범 사례와 보안](05-best-practices.md): Kubernetes·AWS 인증,
+   데이터 접근, event log/history, 메트릭·네트워크 정책과 복구.
 
-**[4. 성능 및 비용 튜닝](04-performance-tuning.md)**
-- 셔플이 많은 작업을 위한 노드 타입 선정: 로컬 NVMe 인스턴스 스토어를 갖춘 R 계열 인스턴스
-- Executor에 Spot 인스턴스를 활용하고 Graceful Decommission으로 작업 진행 손실 방지하기
-- 서로 결합되어 있지만 독립적으로 동작하는 두 개의 스케일링 루프: Karpenter와 Dynamic Resource Allocation
-- 드라이버/Executor 리소스 사이징과 비용 최적화
-
-**[5. 모범 사례 및 보안](05-best-practices.md)**
-- IRSA를 활용한 안전하고 자격증명 없는 S3 접근
-- 네이티브 `PrometheusServlet`과 JMX Prometheus Exporter 비교, Spark History Server를 통한 디버깅
-- IAM/IRSA를 넘어선 보안 강화(RBAC, 네트워크 정책)
-- 프로덕션 준비 체크리스트
+Spark의 **Dynamic Resource Allocation**은 애플리케이션 안의 executor 수를
+조정합니다. 장치용 Kubernetes Dynamic Resource Allocation이나 노드 자동 확장과는
+다릅니다. Decommission은 재계산을 줄일 수 있지만 강제 종료에서도 모든 블록을
+보존한다고 보장하지 않습니다.
 
 ## 참고 자료
 
-- [Running Spark on Kubernetes (Apache Spark 공식 문서)](https://spark.apache.org/docs/latest/running-on-kubernetes.html)
-- [apache/spark-kubernetes-operator](https://github.com/apache/spark-kubernetes-operator)
-- [kubeflow/spark-operator](https://github.com/kubeflow/spark-operator)
-- [Amazon EMR on EKS 개념 안내](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-concepts.html)
-- [Best Practices for Running Spark on Amazon EKS](https://aws.amazon.com/blogs/containers/best-practices-for-running-spark-on-amazon-eks/)
-- [AWS Data on EKS 프로젝트](https://awslabs.github.io/data-on-eks/)
+- [Spark 4.2.0 on Kubernetes](https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html)
+- [Spark 4.2.0 configuration](https://spark.apache.org/docs/4.2.0/configuration.html)
+- [Spark 4.2.0 dynamic allocation alternatives](https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation)
+- [Driver resource mapping](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala)
+- [Executor resources and decommission hook](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala)
+- [Official decommission script](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh)
+- [Official Spark image tags](https://github.com/docker-library/official-images/blob/master/library/spark)
+
+- [Apache Spark Kubernetes Operator](https://github.com/apache/spark-kubernetes-operator)
+- [Kubeflow Spark Operator](https://github.com/kubeflow/spark-operator)
+- [EMR on EKS 개념](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-concepts.html)
 
 ## 퀴즈
 
-이 섹션에서 배운 내용을 테스트하려면 [Spark 기초 퀴즈](../../quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)를 풀어보세요.
+[Spark 기초 퀴즈](../../quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)

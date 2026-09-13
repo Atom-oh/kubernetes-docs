@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Proxy Traffic Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      630
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "outbound",
+        "label": "Outbound handling",
+        "focus": [
+          "client_app",
+          "client_proxy"
+        ],
+        "note": "iptables redirects the request into the proxy, which resolves the destination, load-balances, and completes the mTLS handshake."
+      },
+      {
+        "id": "encrypted",
+        "label": "mTLS segment",
+        "focus": [
+          "client_proxy",
+          "server_proxy"
+        ],
+        "note": "Only the proxy-to-proxy hop is encrypted; the applications see plain HTTP."
+      },
+      {
+        "id": "inbound",
+        "label": "Inbound verification",
+        "focus": [
+          "server_proxy",
+          "server_app"
+        ],
+        "note": "The server proxy verifies mTLS and checks policy before forwarding to the application."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client_app",
+      "type": "frontend",
+      "label": "Client App",
+      "sublabel": "application container"
+    },
+    {
+      "id": "client_proxy",
+      "type": "security",
+      "label": "Client Proxy",
+      "sublabel": "linkerd-proxy (Outbound)"
+    },
+    {
+      "id": "server_proxy",
+      "type": "security",
+      "label": "Server Proxy",
+      "sublabel": "linkerd-proxy (Inbound)"
+    },
+    {
+      "id": "server_app",
+      "type": "backend",
+      "label": "Server App",
+      "sublabel": "application container"
+    }
+  ],
+  "segments": [
+    {
+      "from": 168,
+      "to": 278,
+      "label": "Outbound — destination lookup · load balancing · mTLS handshake"
+    },
+    {
+      "from": 288,
+      "to": 388,
+      "label": "mTLS hop — inbound verification · policy check"
+    },
+    {
+      "from": 398,
+      "to": 515,
+      "label": "Response return"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http_req",
+      "from": "client_app",
+      "to": "client_proxy",
+      "y": 195,
+      "label": "HTTP Request",
+      "note": "iptables redirect (port 4140)"
+    },
+    {
+      "id": "handshake",
+      "from": "client_proxy",
+      "to": "server_proxy",
+      "y": 250,
+      "label": "mTLS handshake",
+      "variant": "security",
+      "note": "connect after destination lookup → load balancing (EWMA)"
+    },
+    {
+      "id": "enc_req",
+      "from": "client_proxy",
+      "to": "server_proxy",
+      "y": 305,
+      "label": "Encrypted Request",
+      "variant": "emphasis",
+      "note": "iptables redirect (port 4143)"
+    },
+    {
+      "id": "fwd_req",
+      "from": "server_proxy",
+      "to": "server_app",
+      "y": 360,
+      "label": "HTTP Request",
+      "note": "forward after mTLS verification → policy check"
+    },
+    {
+      "id": "http_resp",
+      "from": "server_app",
+      "to": "server_proxy",
+      "y": 410,
+      "label": "HTTP Response",
+      "variant": "return"
+    },
+    {
+      "id": "enc_resp",
+      "from": "server_proxy",
+      "to": "client_proxy",
+      "y": 455,
+      "label": "Encrypted Response",
+      "variant": "return"
+    },
+    {
+      "id": "final_resp",
+      "from": "client_proxy",
+      "to": "client_app",
+      "y": 495,
+      "label": "HTTP Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "client_proxy",
+      "from": 195,
+      "to": 500,
+      "type": "security"
+    },
+    {
+      "participant": "server_proxy",
+      "from": 250,
+      "to": 460,
+      "type": "security"
+    },
+    {
+      "participant": "server_app",
+      "from": 360,
+      "to": 415,
+      "type": "backend"
+    }
+  ]
+}

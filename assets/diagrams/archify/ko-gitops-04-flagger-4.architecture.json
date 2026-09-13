@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Blue-Green 동작 원리",
+    "output": "ko-gitops-04-flagger-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "before",
+        "label": "분석",
+        "focus": [
+          "lb1",
+          "blue1",
+          "green1"
+        ],
+        "note": "Primary v1이 live 요청을 처리하며 Canary v2를 검증한다. mirror는 선택 기능이다."
+      },
+      {
+        "id": "testing",
+        "label": "Primary 갱신",
+        "focus": [
+          "lb2",
+          "blue2",
+          "green2"
+        ],
+        "note": "검사 후 canary로 서비스하며 primary를 v2로 갱신하고 Ready를 기다린다."
+      },
+      {
+        "id": "after",
+        "label": "완료",
+        "focus": [
+          "lb3",
+          "blue3",
+          "green3"
+        ],
+        "note": "준비된 Primary v2로 돌아가며 canary는 축소한다. 이전 v1 standby를 유지하는 모델이 아니다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "lb1",
+      "type": "cloud",
+      "label": "Traffic router",
+      "sublabel": "라우팅",
+      "pos": [
+        130,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "blue1",
+      "type": "backend",
+      "label": "Primary",
+      "sublabel": "v1 · live",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green1",
+      "type": "backend",
+      "label": "Canary",
+      "sublabel": "v2 · 검증",
+      "pos": [
+        220,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb2",
+      "type": "cloud",
+      "label": "Traffic router",
+      "sublabel": "라우팅",
+      "pos": [
+        530,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "blue2",
+      "type": "backend",
+      "label": "Primary",
+      "sublabel": "v1 → v2 · 갱신",
+      "pos": [
+        440,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green2",
+      "type": "backend",
+      "label": "Canary",
+      "sublabel": "v2 · 임시 live",
+      "pos": [
+        620,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb3",
+      "type": "cloud",
+      "label": "Traffic router",
+      "sublabel": "라우팅",
+      "pos": [
+        930,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "blue3",
+      "type": "backend",
+      "label": "Primary",
+      "sublabel": "v2 · live",
+      "pos": [
+        840,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green3",
+      "type": "backend",
+      "label": "Canary",
+      "sublabel": "v2 · replicas 0",
+      "pos": [
+        1020,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1. 분석",
+      "wraps": [
+        "lb1",
+        "blue1",
+        "green1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2. Primary 갱신",
+      "wraps": [
+        "lb2",
+        "blue2",
+        "green2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "3. 완료",
+      "wraps": [
+        "lb3",
+        "blue3",
+        "green3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "before-live",
+      "from": "lb1",
+      "to": "blue1",
+      "label": "실제 트래픽 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "testing-live",
+      "from": "lb2",
+      "to": "green2",
+      "label": "temporary live 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "testing-mirror",
+      "from": "lb1",
+      "to": "green1",
+      "label": "optional mirror",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "after-live",
+      "from": "lb3",
+      "to": "blue3",
+      "label": "live 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "분석과 승격",
+      "items": [
+        "iterations 전략: stepWeight/stepWeights와 혼합하지 않음",
+        "실패 한도는 누적 검사 수"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "운영 제약",
+      "items": [
+        "Mirror 응답을 버려도 쓰기·부하 부작용은 남음",
+        "승격 중 primary 장애는 별도 복구 경로"
+      ]
+    }
+  ]
+}

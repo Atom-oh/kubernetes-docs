@@ -464,6 +464,6 @@ Calculate 1 point per question.
 
 ## Related Documentation
 
-* [EKS Security Best Practices](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/06-eks-security-best-practices.md)
-* [Pod Security Standards](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/03-pod-security-standards.md)
-* [Secrets Management](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/05-secrets-management.md)
+* [EKS Security Best Practices](06-eks-security-best-practices-quiz.md)
+* [Pod Security Standards](03-pod-security-standards-quiz.md)
+* [Secrets Management](05-secrets-management-quiz.md)

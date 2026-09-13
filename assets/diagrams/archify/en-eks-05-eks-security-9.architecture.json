@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Security Layers",
+    "locale": "en",
+    "output": "en-eks-05-eks-security-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      720
+    ],
+    "views": [
+      {
+        "id": "pss-levels",
+        "label": "PSS Levels",
+        "focus": [
+          "ns-labels",
+          "privileged",
+          "baseline",
+          "restricted",
+          "app-pod",
+          "privileged-pod"
+        ],
+        "note": "Namespace labels select the PSS level, which is then applied per pod type."
+      },
+      {
+        "id": "security-context",
+        "label": "Security Context",
+        "focus": [
+          "security-context",
+          "app-pod",
+          "system-pod"
+        ],
+        "note": "Pod- and container-level securityContext restricts privileges of application and system pods."
+      },
+      {
+        "id": "policy-engines",
+        "label": "Policy Engine",
+        "focus": [
+          "opa-gatekeeper",
+          "kyverno",
+          "admission-webhook",
+          "app-pod"
+        ],
+        "note": "OPA Gatekeeper and Kyverno enforce cluster-wide policies through an admission webhook."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ns-labels",
+      "type": "cloud",
+      "label": "Namespace Labels",
+      "sublabel": "enforce · audit · warn",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "privileged",
+      "type": "security",
+      "label": "Privileged",
+      "sublabel": "No restrictions",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "baseline",
+      "type": "security",
+      "label": "Baseline",
+      "sublabel": "Prevent privilege escalation",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "restricted",
+      "type": "security",
+      "label": "Restricted",
+      "sublabel": "Strong restrictions",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "security-context",
+      "type": "security",
+      "label": "Security Context",
+      "sublabel": "securityContext",
+      "pos": [
+        300,
+        470
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "opa-gatekeeper",
+      "type": "backend",
+      "label": "OPA Gatekeeper",
+      "sublabel": "Policy engine",
+      "pos": [
+        880,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kyverno",
+      "type": "backend",
+      "label": "Kyverno",
+      "sublabel": "Policy engine",
+      "pos": [
+        880,
+        390
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "admission-webhook",
+      "type": "backend",
+      "label": "Admission Webhook",
+      "sublabel": "Admission controller",
+      "pos": [
+        880,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "privileged-pod",
+      "type": "frontend",
+      "label": "Privileged Pods",
+      "sublabel": "Privileged allowed",
+      "pos": [
+        600,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app-pod",
+      "type": "frontend",
+      "label": "Application Pods",
+      "sublabel": "Baseline / Restricted",
+      "pos": [
+        600,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "system-pod",
+      "type": "frontend",
+      "label": "System Pods",
+      "sublabel": "Security context applied",
+      "pos": [
+        600,
+        600
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Enforcement Methods",
+      "wraps": [
+        "ns-labels"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod Security Standards (PSS)",
+      "wraps": [
+        "privileged",
+        "baseline",
+        "restricted"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Security Context",
+      "wraps": [
+        "security-context"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Policy Engines",
+      "wraps": [
+        "opa-gatekeeper",
+        "kyverno",
+        "admission-webhook"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod Type Security",
+      "wraps": [
+        "privileged-pod",
+        "app-pod",
+        "system-pod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "labels-to-pss",
+      "from": "ns-labels",
+      "to": "restricted",
+      "label": "set PSS level",
+      "variant": "emphasis"
+    },
+    {
+      "id": "privileged-to-pod",
+      "from": "privileged",
+      "to": "privileged-pod"
+    },
+    {
+      "id": "baseline-to-app",
+      "from": "baseline",
+      "to": "app-pod",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "restricted-to-app",
+      "from": "restricted",
+      "to": "app-pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "context-to-app",
+      "from": "security-context",
+      "to": "app-pod",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "context-to-system",
+      "from": "security-context",
+      "to": "system-pod",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "opa-to-webhook",
+      "from": "opa-gatekeeper",
+      "to": "admission-webhook"
+    },
+    {
+      "id": "kyverno-to-webhook",
+      "from": "kyverno",
+      "to": "admission-webhook"
+    },
+    {
+      "id": "webhook-to-app",
+      "from": "admission-webhook",
+      "to": "app-pod",
+      "label": "policy validation",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Pod Security Standards (PSS)",
+      "items": [
+        "Privileged: no restrictions",
+        "Baseline: prevent known privilege escalation",
+        "Restricted: apply strong security restrictions",
+        "Selected via namespace labels pod-security.kubernetes.io/enforce, audit, warn"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Security Context",
+      "items": [
+        "runAsUser: run as a non-root user",
+        "readOnlyRootFilesystem: read-only filesystem",
+        "allowPrivilegeEscalation: false",
+        "capabilities.drop: ALL"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Policy Engine",
+      "items": [
+        "Apply cluster-wide policies with OPA Gatekeeper or Kyverno",
+        "Pod creation requests are validated in the admission webhook",
+        "Example: ClusterPolicy that disallows privileged containers"
+      ]
+    }
+  ]
+}

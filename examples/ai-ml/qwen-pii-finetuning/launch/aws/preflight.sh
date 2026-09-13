@@ -7,13 +7,15 @@ export AWS_MAX_ATTEMPTS=10
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 PACKAGE_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
+# This pinned cohort is executable only while its upstream patch support is current.
+"${PYTHON:-python3}" "$PACKAGE_ROOT/src/runtime_contract.py" --check-execution
 INVENTORY="$PACKAGE_ROOT/results/resource-inventory.json"
 REGION=ap-northeast-2
 DLC_ACCOUNT=763104351884
 DLC_REPOSITORY=pytorch-training
 DLC_TAG=2.8.0-gpu-py312-cu129-ubuntu22.04-sagemaker
 
-for command in aws kubectl eksctl helm docker jq python3; do
+for command in aws kubectl eksctl helm docker jq python3 envsubst flock; do
   command -v "$command" >/dev/null || {
     printf 'Missing required command: %s\n' "$command" >&2
     exit 1
@@ -25,7 +27,7 @@ if [[ -e "$INVENTORY" ]]; then
   exit 1
 fi
 
-aws sts get-caller-identity >/dev/null
+"${PYTHON:-python3}" "$SCRIPT_DIR/lifecycle.py" inputs >/dev/null
 
 RESOLVED_REGION=${AWS_REGION:-${AWS_DEFAULT_REGION:-$(aws configure get region 2>/dev/null || true)}}
 if [[ "$RESOLVED_REGION" != "$REGION" ]]; then
@@ -93,20 +95,13 @@ if [[ "$ROLE_COUNT" != "0" ]]; then
   exit 1
 fi
 
-UNIFIED_DOMAIN_ID=$(aws datazone list-domains \
-  --region "$REGION" \
-  --query "items[?name=='sagemaker_hyper'].id | [0]" \
-  --output text)
-if [[ -n "$UNIFIED_DOMAIN_ID" && "$UNIFIED_DOMAIN_ID" != "None" ]]; then
-  PROJECT_COUNT=$(aws datazone list-projects \
-    --region "$REGION" \
-    --domain-identifier "$UNIFIED_DOMAIN_ID" \
-    --output json | jq \
-    '[.items[]? | select(.name | startswith("qwen-pii-"))] | length')
-  if [[ "$PROJECT_COUNT" != "0" ]]; then
-    printf 'Found %s qwen-pii Unified Studio projects; clean them before continuing.\n' "$PROJECT_COUNT" >&2
-    exit 1
-  fi
+# Scope the existing-project check to the explicitly validated domain.
+PROJECT_COUNT=$(aws datazone list-projects \
+  --region "$REGION" --domain-identifier "$DATAZONE_DOMAIN_ID" --output json |
+  jq '[.items[]? | select(.name | startswith("qwen-pii-"))] | length')
+if [[ "$PROJECT_COUNT" != "0" ]]; then
+  printf 'Existing experiment projects require owner review before continuing.\n' >&2
+  exit 1
 fi
 
 printf 'Preflight passed: region=%s, SageMaker quota=%s, EC2 GPU vCPU quota=%s\n' \

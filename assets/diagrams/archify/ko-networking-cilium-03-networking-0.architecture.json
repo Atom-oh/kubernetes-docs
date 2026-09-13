@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium 네트워킹 모드",
+    "output": "ko-networking-cilium-03-networking-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Cilium 라우팅 모드"
+        },
+        "cloud": {
+          "label": "클라우드 IPAM 통합"
+        },
+        "external": {
+          "label": "성능 결과"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "overlay",
+        "label": "오버레이 모드",
+        "focus": [
+          "vxlan",
+          "geneve",
+          "encap"
+        ],
+        "note": "VXLAN(UDP 8472)과 Geneve(UDP 6081)는 패킷을 캡슐화하므로 약간의 성능 오버헤드가 생긴다."
+      },
+      {
+        "id": "native",
+        "label": "네이티브 라우팅 모드",
+        "focus": [
+          "direct",
+          "bgp",
+          "noencap"
+        ],
+        "note": "직접 라우팅과 BGP는 캡슐화 없이 전달하므로 가장 높은 성능을 낸다."
+      },
+      {
+        "id": "cloud",
+        "label": "클라우드 통합 모드",
+        "focus": [
+          "aws-eni",
+          "azure-ipam",
+          "gke",
+          "cloud"
+        ],
+        "note": "AWS ENI, Azure IPAM, GKE는 각 클라우드 VPC/VNET에 통합되어 클라우드 네이티브 성능을 얻는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "vxlan",
+      "type": "backend",
+      "label": "VXLAN",
+      "sublabel": "UDP 8472",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "geneve",
+      "type": "backend",
+      "label": "Geneve",
+      "sublabel": "UDP 6081",
+      "pos": [
+        190,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "direct",
+      "type": "backend",
+      "label": "직접 라우팅",
+      "sublabel": "캡슐화 없음",
+      "pos": [
+        400,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "bgp",
+      "type": "backend",
+      "label": "BGP",
+      "sublabel": "캡슐화 없음",
+      "pos": [
+        550,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "aws-eni",
+      "type": "cloud",
+      "label": "AWS ENI",
+      "sublabel": "VPC IP",
+      "pos": [
+        760,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "azure-ipam",
+      "type": "cloud",
+      "label": "Azure IPAM",
+      "sublabel": "VNET IP",
+      "pos": [
+        910,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "gke",
+      "type": "cloud",
+      "label": "GKE",
+      "sublabel": "Google Cloud VPC",
+      "pos": [
+        1060,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "encap",
+      "type": "external",
+      "label": "캡슐화 오버헤드",
+      "sublabel": "성능 영향 약간",
+      "pos": [
+        90,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "noencap",
+      "type": "external",
+      "label": "캡슐화 없음",
+      "sublabel": "최고 성능",
+      "pos": [
+        450,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "cloud",
+      "type": "external",
+      "label": "클라우드 네이티브",
+      "sublabel": "성능 최적화",
+      "pos": [
+        885,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "오버레이 모드",
+      "wraps": [
+        "vxlan",
+        "geneve"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "네이티브 라우팅 모드",
+      "wraps": [
+        "direct",
+        "bgp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클라우드 통합 모드",
+      "wraps": [
+        "aws-eni",
+        "azure-ipam",
+        "gke"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vxlan-encap",
+      "from": "vxlan",
+      "to": "encap",
+      "label": "캡슐화 (UDP 8472)",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "geneve-encap",
+      "from": "geneve",
+      "to": "encap",
+      "label": "캡슐화 (UDP 6081)",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": -22
+    },
+    {
+      "id": "direct-noencap",
+      "from": "direct",
+      "to": "noencap",
+      "label": "직접 라우팅",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "bgp-noencap",
+      "from": "bgp",
+      "to": "noencap",
+      "label": "BGP 라우팅",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "aws-cloud",
+      "from": "aws-eni",
+      "to": "cloud",
+      "label": "AWS VPC 통합",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "azure-cloud",
+      "from": "azure-ipam",
+      "to": "cloud",
+      "label": "Azure VNET 통합",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80
+    },
+    {
+      "id": "gke-cloud",
+      "from": "gke",
+      "to": "cloud",
+      "label": "Google Cloud VPC 통합",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

@@ -1,0 +1,340 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 관찰성 스택 아키텍처",
+    "output": "ko-service-mesh-istio-observability-04-dashboards-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "metrics-path",
+        "label": "메트릭 경로",
+        "focus": [
+          "envoy",
+          "prometheus",
+          "kiali",
+          "grafana"
+        ],
+        "note": "Envoy 사이드카의 메트릭을 Prometheus가 수집하고, Kiali 서비스 그래프와 Grafana 메트릭 대시보드가 이를 조회한다."
+      },
+      {
+        "id": "logs-path",
+        "label": "로그 경로",
+        "focus": [
+          "envoy",
+          "loki",
+          "grafana-logs"
+        ],
+        "note": "Envoy 액세스 로그는 Loki에 저장되고 Grafana 로그 대시보드에서 분석한다."
+      },
+      {
+        "id": "traces-path",
+        "label": "트레이스 경로",
+        "focus": [
+          "envoy",
+          "jaeger",
+          "tempo",
+          "jaeger-ui",
+          "grafana"
+        ],
+        "note": "Envoy span은 Jaeger 또는 Tempo로 전송되며, Jaeger UI와 Grafana에서 분산 추적을 확인한다."
+      },
+      {
+        "id": "config-path",
+        "label": "구성 검증",
+        "focus": [
+          "istiod",
+          "kiali"
+        ],
+        "note": "Kiali는 istiod의 Istio 구성을 읽어 VirtualService, DestinationRule 등의 오류를 검증한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "Istio 구성",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Sidecar",
+      "sublabel": "모든 파드에 주입 (×N)",
+      "pos": [
+        610,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭 수집·쿼리",
+      "pos": [
+        280,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo",
+      "sublabel": "트레이스 저장",
+      "pos": [
+        500,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "로그 저장",
+      "pos": [
+        720,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "database",
+      "label": "Jaeger",
+      "sublabel": "트레이스 저장",
+      "pos": [
+        940,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "kiali",
+      "type": "frontend",
+      "label": "Kiali",
+      "sublabel": "서비스 그래프",
+      "pos": [
+        280,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "메트릭 대시보드",
+      "pos": [
+        500,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana-logs",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "로그 대시보드",
+      "pos": [
+        720,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "jaeger-ui",
+      "type": "frontend",
+      "label": "Jaeger UI",
+      "sublabel": "분산 추적",
+      "pos": [
+        940,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "메트릭 백엔드",
+      "wraps": [
+        "prometheus",
+        "tempo",
+        "loki",
+        "jaeger"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "시각화",
+      "wraps": [
+        "kiali",
+        "grafana",
+        "grafana-logs",
+        "jaeger-ui"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "envoy-metrics",
+      "from": "envoy",
+      "to": "prometheus",
+      "label": "메트릭",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-traces-tempo",
+      "from": "envoy",
+      "to": "tempo",
+      "label": "트레이스",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-logs",
+      "from": "envoy",
+      "to": "loki",
+      "label": "로그",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-traces-jaeger",
+      "from": "envoy",
+      "to": "jaeger",
+      "label": "트레이스",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-kiali",
+      "from": "prometheus",
+      "to": "kiali",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prom-grafana",
+      "from": "prometheus",
+      "to": "grafana"
+    },
+    {
+      "id": "tempo-grafana",
+      "from": "tempo",
+      "to": "grafana"
+    },
+    {
+      "id": "loki-grafana-logs",
+      "from": "loki",
+      "to": "grafana-logs"
+    },
+    {
+      "id": "jaeger-ui-link",
+      "from": "jaeger",
+      "to": "jaeger-ui"
+    },
+    {
+      "id": "istiod-config",
+      "from": "istiod",
+      "to": "kiali",
+      "label": "Istio 구성",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Kiali",
+      "items": [
+        "서비스 토폴로지, 트래픽 분석, 구성 검증",
+        "데이터 소스: Prometheus, Istio Config"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Grafana",
+      "items": [
+        "메트릭 시각화, 알림, 로그 분석",
+        "데이터 소스: Prometheus, Loki, Tempo"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Prometheus / Jaeger",
+      "items": [
+        "Prometheus: Envoy·istiod 메트릭 수집 및 쿼리",
+        "Jaeger: Envoy span 기반 분산 추적 분석"
+      ]
+    }
+  ]
+}

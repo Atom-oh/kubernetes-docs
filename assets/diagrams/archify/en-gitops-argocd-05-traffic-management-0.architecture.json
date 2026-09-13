@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts Architecture",
+    "locale": "en",
+    "output": "en-gitops-argocd-05-traffic-management-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Controller / strategies"
+        },
+        "cloud": {
+          "label": "Traffic integrations"
+        },
+        "external": {
+          "label": "Analysis provider"
+        },
+        "frontend": {
+          "label": "Kubernetes Service"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "strategies",
+        "label": "Strategy execution",
+        "focus": [
+          "controller",
+          "bluegreen",
+          "canary",
+          "experiment"
+        ],
+        "note": "The Rollouts Controller executes the blue-green, canary, or experiment strategy defined in the Rollout resource."
+      },
+      {
+        "id": "traffic",
+        "label": "Traffic management",
+        "focus": [
+          "bluegreen",
+          "canary",
+          "services",
+          "router"
+        ],
+        "note": "Blue-green updates the active Service selector; canary manages Service selectors and router weights."
+      },
+      {
+        "id": "analysis",
+        "label": "Analysis outcomes",
+        "focus": [
+          "controller",
+          "analysis"
+        ],
+        "note": "Successful advances, Failed/Error aborts, and Inconclusive pauses. Git and data are not reverted."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Rollouts Controller",
+      "sublabel": "Reconciles Rollout resources",
+      "pos": [
+        420,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "bluegreen",
+      "type": "backend",
+      "label": "Blue-Green",
+      "sublabel": "Service selector switch",
+      "pos": [
+        120,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "Canary",
+      "sublabel": "Gradual traffic shift",
+      "pos": [
+        430,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "experiment",
+      "type": "backend",
+      "label": "Experiment",
+      "sublabel": "Separate replicas / metrics",
+      "pos": [
+        740,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "services",
+      "type": "frontend",
+      "label": "Service selectors",
+      "sublabel": "active / stable / canary",
+      "pos": [
+        120,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "Traffic Router",
+      "sublabel": "ALB / Gateway API / Istio",
+      "pos": [
+        430,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "external",
+      "label": "Analysis Provider",
+      "sublabel": "Metrics / HTTP / Jobs",
+      "pos": [
+        1010,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Argo Rollouts",
+      "wraps": [
+        "controller"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Deployment Strategies",
+      "wraps": [
+        "bluegreen",
+        "canary",
+        "experiment"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Integrations",
+      "wraps": [
+        "services",
+        "router",
+        "analysis"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ctrl-bluegreen",
+      "from": "controller",
+      "to": "bluegreen",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-canary",
+      "from": "controller",
+      "to": "canary",
+      "label": "execute",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ctrl-experiment",
+      "from": "controller",
+      "to": "experiment"
+    },
+    {
+      "id": "bluegreen-ingress",
+      "from": "bluegreen",
+      "to": "services",
+      "label": "update selector",
+      "labelDy": 24
+    },
+    {
+      "id": "canary-ingress",
+      "from": "canary",
+      "to": "services",
+      "label": "select Pod hash"
+    },
+    {
+      "id": "canary-mesh",
+      "from": "canary",
+      "to": "router",
+      "label": "weighted routing",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ctrl-analysis",
+      "from": "controller",
+      "to": "analysis",
+      "label": "AnalysisRun query",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "analysis-ctrl",
+      "from": "analysis",
+      "to": "controller",
+      "label": "result",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Deployment strategies",
+      "items": [
+        "Blue-green: change the active Service selector",
+        "Canary: manage weights and ReplicaSet capacity",
+        "Experiment: separate ReplicaSets; supply test traffic separately"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Analysis",
+      "items": [
+        "Successful: next step; manual gates still apply",
+        "Failed/Error: abort and return traffic to stable",
+        "Inconclusive: pause and investigate"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EWMA Algorithm",
+    "output": "en-service-mesh-linkerd-03-traffic-management-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "request",
+      "type": "external",
+      "label": "New Request",
+      "sublabel": "client call",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "backend",
+      "label": "Load Balancer",
+      "sublabel": "picks the endpoint with the lowest EWMA score",
+      "pos": [
+        270,
+        120
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "e1",
+      "type": "backend",
+      "label": "Endpoint 1",
+      "sublabel": "latency 10ms · score 0.1",
+      "pos": [
+        600,
+        120
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "e2",
+      "type": "backend",
+      "label": "Endpoint 2",
+      "sublabel": "latency 50ms · score 0.5",
+      "pos": [
+        600,
+        260
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "e3",
+      "type": "backend",
+      "label": "Endpoint 3",
+      "sublabel": "latency 20ms · score 0.2",
+      "pos": [
+        600,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EWMA Load Balancing",
+      "wraps": [
+        "lb",
+        "e1",
+        "e2",
+        "e3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request-to-lb",
+      "from": "request",
+      "to": "lb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-e1",
+      "from": "lb",
+      "to": "e1",
+      "label": "Selected",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-e2",
+      "from": "lb",
+      "to": "e2",
+      "label": "Waiting",
+      "variant": "dashed",
+      "labelSegment": 2
+    },
+    {
+      "id": "lb-to-e3",
+      "from": "lb",
+      "to": "e3",
+      "label": "Waiting",
+      "variant": "dashed",
+      "labelSegment": 2
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "EWMA Characteristics",
+      "items": [
+        "Latency-based: prefers endpoints with faster response times",
+        "Real-time adaptation: quickly adapts to endpoint state changes",
+        "Fair distribution: gives new endpoints a chance to receive traffic",
+        "Automatic avoidance: automatically reduces traffic to slow endpoints"
+      ]
+    }
+  ]
+}

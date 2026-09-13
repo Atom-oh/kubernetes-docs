@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DNS Proxy Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-04-dns-cache-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "App"
+        },
+        "security": {
+          "label": "iptables"
+        },
+        "backend": {
+          "label": "Istio"
+        },
+        "database": {
+          "label": "DNS Table"
+        },
+        "external": {
+          "label": "External"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "dns-path",
+        "label": "DNS resolution path",
+        "focus": [
+          "app",
+          "dns-rule",
+          "dns-listener",
+          "dns-table"
+        ],
+        "note": "iptables sends the UDP 53 DNS query to 15053, and Envoy answers with a virtual IP looked up in its ServiceEntry-based DNS table."
+      },
+      {
+        "id": "http-path",
+        "label": "HTTP forwarding path",
+        "focus": [
+          "app",
+          "tcp-rule",
+          "http-listener",
+          "api"
+        ],
+        "note": "HTTP requests to the virtual IP are redirected to 15001; the HTTP Listener converts them to the actual IP and reaches the external service."
+      },
+      {
+        "id": "control-fallback",
+        "label": "xDS push & CoreDNS fallback",
+        "focus": [
+          "xds",
+          "dns-table",
+          "dns-listener",
+          "coredns"
+        ],
+        "note": "Istiod pushes ServiceEntry config over xDS; domains not in a ServiceEntry are handed off to CoreDNS."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "curl api.example.com",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "dns-rule",
+      "type": "security",
+      "label": "DNS Rule",
+      "sublabel": "UDP 53 → 15053",
+      "pos": [
+        320,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tcp-rule",
+      "type": "security",
+      "label": "TCP Rule",
+      "sublabel": "TCP → 15001",
+      "pos": [
+        320,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "dns-table",
+      "type": "database",
+      "label": "DNS Table",
+      "sublabel": "ServiceEntry based",
+      "pos": [
+        580,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "dns-listener",
+      "type": "backend",
+      "label": "DNS Listener",
+      "sublabel": ":15053",
+      "pos": [
+        580,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "http-listener",
+      "type": "backend",
+      "label": "HTTP Listener",
+      "sublabel": ":15001",
+      "pos": [
+        580,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "xds",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "xDS Server · ServiceEntry config",
+      "pos": [
+        880,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "coredns",
+      "type": "external",
+      "label": "CoreDNS",
+      "sublabel": "Cluster DNS",
+      "pos": [
+        880,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "external",
+      "label": "api.example.com",
+      "sublabel": "Actual IP",
+      "pos": [
+        880,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application Pod",
+      "wraps": [
+        "app",
+        "dns-rule",
+        "tcp-rule",
+        "dns-table",
+        "dns-listener",
+        "http-listener"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "iptables NAT",
+      "wraps": [
+        "dns-rule",
+        "tcp-rule"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Envoy Proxy",
+      "wraps": [
+        "dns-table",
+        "dns-listener",
+        "http-listener"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "External",
+      "wraps": [
+        "coredns",
+        "api"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "s1-dns-query",
+      "from": "app",
+      "to": "dns-rule",
+      "label": "1. DNS query UDP 53"
+    },
+    {
+      "id": "s2-redirect-dns",
+      "from": "dns-rule",
+      "to": "dns-listener",
+      "label": "2. Redirect",
+      "labelDy": -17
+    },
+    {
+      "id": "s3-lookup",
+      "from": "dns-listener",
+      "to": "dns-table",
+      "label": "3. Lookup",
+      "labelDx": -40
+    },
+    {
+      "id": "s4-virtual-ip",
+      "from": "dns-table",
+      "to": "dns-listener",
+      "label": "4. Virtual IP 240.240.0.1",
+      "labelDx": 70,
+      "labelDy": 24
+    },
+    {
+      "id": "s5-dns-response",
+      "from": "dns-listener",
+      "to": "app",
+      "label": "5. DNS response",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s6-http-request",
+      "from": "app",
+      "to": "tcp-rule",
+      "label": "6. HTTP request 240.240.0.1"
+    },
+    {
+      "id": "s7-redirect-http",
+      "from": "tcp-rule",
+      "to": "http-listener",
+      "label": "7. Redirect"
+    },
+    {
+      "id": "s8-real-ip",
+      "from": "http-listener",
+      "to": "api",
+      "label": "8. Convert to actual IP"
+    },
+    {
+      "id": "xds-push",
+      "from": "xds",
+      "to": "dns-table",
+      "label": "ServiceEntry push",
+      "variant": "dashed"
+    },
+    {
+      "id": "coredns-fallback",
+      "from": "dns-listener",
+      "to": "coredns",
+      "label": "Non-Istio domains",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "DNS Proxy key features",
+      "items": [
+        "Envoy intercepts and processes DNS requests on UDP 53",
+        "External services registered as ServiceEntry get DNS responses automatically",
+        "Virtual IPs are allocated automatically to external services",
+        "Bypasses CoreDNS to reduce cluster DNS load"
+      ]
+    }
+  ]
+}

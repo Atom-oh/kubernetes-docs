@@ -1,0 +1,338 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Tier 평가 흐름",
+    "output": "ko-networking-calico-05-network-policy-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "들어오는 트래픽"
+        },
+        "backend": {
+          "label": "Tier (정책 평가 단계)"
+        },
+        "frontend": {
+          "label": "Accept (허용)"
+        },
+        "security": {
+          "label": "Drop (거부)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pass-order",
+        "label": "Pass: order 순 평가",
+        "focus": [
+          "traffic",
+          "security",
+          "platform",
+          "application",
+          "default"
+        ],
+        "note": "규칙에 매치되지 않으면 Pass로 다음 Tier에 넘어간다. Security(100) → Platform(200) → Application(300) → Default 순서."
+      },
+      {
+        "id": "allow-path",
+        "label": "Allow: 즉시 Accept",
+        "focus": [
+          "security",
+          "platform",
+          "application",
+          "default",
+          "accept1",
+          "accept2",
+          "accept3",
+          "accept4"
+        ],
+        "note": "어느 Tier에서든 Allow 규칙에 매치되면 평가가 즉시 끝나고 패킷이 허용된다."
+      },
+      {
+        "id": "deny-path",
+        "label": "Deny / No Match: Drop",
+        "focus": [
+          "security",
+          "platform",
+          "application",
+          "default",
+          "drop1",
+          "drop2",
+          "drop3",
+          "drop4"
+        ],
+        "note": "Deny 매치는 즉시 Drop. Default Tier에서도 매치가 없으면 Default Deny로 차단된다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "allow",
+      "label": "Allow → Accept"
+    },
+    {
+      "id": "tiers",
+      "label": "Tier 평가 (order 순)"
+    },
+    {
+      "id": "deny",
+      "label": "Deny → Drop",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "traffic",
+    "security",
+    "platform",
+    "application",
+    "default"
+  ],
+  "nodes": [
+    {
+      "id": "traffic",
+      "lane": "tiers",
+      "col": 0,
+      "type": "external",
+      "label": "들어오는 트래픽",
+      "sublabel": "패킷 진입",
+      "width": 120
+    },
+    {
+      "id": "security",
+      "lane": "tiers",
+      "col": 1,
+      "type": "backend",
+      "label": "Security Tier",
+      "sublabel": "악성 IP 차단 → 규정 준수 검사",
+      "tag": "order: 100",
+      "width": 176
+    },
+    {
+      "id": "platform",
+      "lane": "tiers",
+      "col": 2,
+      "type": "backend",
+      "label": "Platform Tier",
+      "sublabel": "모니터링 허용 → 로깅 시스템 허용",
+      "tag": "order: 200",
+      "width": 176
+    },
+    {
+      "id": "application",
+      "lane": "tiers",
+      "col": 3,
+      "type": "backend",
+      "label": "Application Tier",
+      "sublabel": "마이크로서비스 정책 → DB 접근",
+      "tag": "order: 300",
+      "width": 176
+    },
+    {
+      "id": "default",
+      "lane": "tiers",
+      "col": 4,
+      "type": "backend",
+      "label": "Default Tier",
+      "sublabel": "K8s NetworkPolicy",
+      "tag": "order: 무한대",
+      "width": 176
+    },
+    {
+      "id": "accept1",
+      "lane": "allow",
+      "col": 1,
+      "type": "frontend",
+      "label": "Accept",
+      "sublabel": "Security Tier 허용",
+      "width": 120
+    },
+    {
+      "id": "accept2",
+      "lane": "allow",
+      "col": 2,
+      "type": "frontend",
+      "label": "Accept",
+      "sublabel": "Platform Tier 허용",
+      "width": 120
+    },
+    {
+      "id": "accept3",
+      "lane": "allow",
+      "col": 3,
+      "type": "frontend",
+      "label": "Accept",
+      "sublabel": "Application Tier 허용",
+      "width": 120
+    },
+    {
+      "id": "accept4",
+      "lane": "allow",
+      "col": 4,
+      "type": "frontend",
+      "label": "Accept",
+      "sublabel": "NetworkPolicy 허용",
+      "width": 120
+    },
+    {
+      "id": "drop1",
+      "lane": "deny",
+      "col": 1,
+      "type": "security",
+      "label": "Drop",
+      "sublabel": "Security Tier 거부",
+      "width": 120
+    },
+    {
+      "id": "drop2",
+      "lane": "deny",
+      "col": 2,
+      "type": "security",
+      "label": "Drop",
+      "sublabel": "Platform Tier 거부",
+      "width": 120
+    },
+    {
+      "id": "drop3",
+      "lane": "deny",
+      "col": 3,
+      "type": "security",
+      "label": "Drop",
+      "sublabel": "Application Tier 거부",
+      "width": 120
+    },
+    {
+      "id": "drop4",
+      "lane": "deny",
+      "col": 4,
+      "type": "security",
+      "label": "Default Deny",
+      "sublabel": "매치 없음",
+      "width": 120
+    }
+  ],
+  "edges": [
+    {
+      "id": "traffic-security",
+      "from": "traffic",
+      "to": "security",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "security-platform",
+      "from": "security",
+      "to": "platform",
+      "label": "Pass",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "platform-application",
+      "from": "platform",
+      "to": "application",
+      "label": "Pass",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "application-default",
+      "from": "application",
+      "to": "default",
+      "label": "Pass",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "security-allow",
+      "from": "security",
+      "to": "accept1",
+      "label": "Allow",
+      "role": "branch"
+    },
+    {
+      "id": "platform-allow",
+      "from": "platform",
+      "to": "accept2",
+      "label": "Allow",
+      "role": "branch"
+    },
+    {
+      "id": "application-allow",
+      "from": "application",
+      "to": "accept3",
+      "label": "Allow",
+      "role": "branch"
+    },
+    {
+      "id": "default-allow",
+      "from": "default",
+      "to": "accept4",
+      "label": "Allow",
+      "role": "branch"
+    },
+    {
+      "id": "security-deny",
+      "from": "security",
+      "to": "drop1",
+      "label": "Deny",
+      "role": "error",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    },
+    {
+      "id": "platform-deny",
+      "from": "platform",
+      "to": "drop2",
+      "label": "Deny",
+      "role": "error",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    },
+    {
+      "id": "application-deny",
+      "from": "application",
+      "to": "drop3",
+      "label": "Deny",
+      "role": "error",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    },
+    {
+      "id": "default-deny",
+      "from": "default",
+      "to": "drop4",
+      "label": "No Match",
+      "role": "error",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Tier 계층화",
+      "items": [
+        "Security(100) · Platform(200) · Application(300) Tier를 보안팀 · 플랫폼팀 · 개발팀이 각자 관리",
+        "Allow 또는 Deny에 매치되면 평가가 즉시 종료되고, Pass면 다음 Tier로 넘어간다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Default Tier",
+      "items": [
+        "기본 제공 Tier로 order는 무한대(가장 마지막)",
+        "모든 Kubernetes NetworkPolicy는 이 Tier에 속하며, 매치가 없으면 Default Deny"
+      ]
+    }
+  ]
+}

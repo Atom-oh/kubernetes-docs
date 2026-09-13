@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "로그·메트릭·트레이스 연결 경로",
+    "output": "ko-ops-08-observability-analysis-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "traces",
+        "label": "트레이스",
+        "focus": [
+          "app",
+          "collector",
+          "tempo"
+        ],
+        "note": "SDK가 내보낸 OTLP 트레이스를 Collector가 Tempo로 전달한다."
+      },
+      {
+        "id": "logs",
+        "label": "로그",
+        "focus": [
+          "app",
+          "alloy",
+          "loki"
+        ],
+        "note": "stdout JSON 로그는 별도 수집기인 Alloy를 통해 Loki로 간다."
+      },
+      {
+        "id": "metrics",
+        "label": "메트릭",
+        "focus": [
+          "app",
+          "prometheus"
+        ],
+        "note": "Prometheus가 애플리케이션의 OpenMetrics endpoint를 스크랩한다."
+      },
+      {
+        "id": "links",
+        "label": "조회와 연결",
+        "focus": [
+          "grafana",
+          "tempo",
+          "loki",
+          "prometheus"
+        ],
+        "note": "Grafana 데이터소스 UID·exemplar·trace_id 매핑으로 신호 사이를 이동한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    },
+    "viewBox": [
+      1040,
+      550
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "SDK · JSON 로그 · /metrics",
+      "pos": [
+        30,
+        260
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "collector",
+      "type": "backend",
+      "label": "OTel Collector",
+      "sublabel": "트레이스 파이프라인",
+      "pos": [
+        280,
+        90
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "alloy",
+      "type": "backend",
+      "label": "Grafana Alloy",
+      "sublabel": "Kubernetes 로그 수집",
+      "pos": [
+        280,
+        260
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo",
+      "sublabel": "트레이스 저장·검색",
+      "pos": [
+        530,
+        90
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "로그 저장·검색",
+      "pos": [
+        530,
+        260
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭·exemplar 저장",
+      "pos": [
+        530,
+        400
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "데이터소스 링크·Explore",
+      "pos": [
+        800,
+        240
+      ],
+      "size": [
+        210,
+        120
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-traces",
+      "from": "app",
+      "to": "collector",
+      "label": "OTLP traces",
+      "fromSide": "top",
+      "toSide": "left",
+      "labelAt": [
+        130,
+        215
+      ],
+      "via": [
+        [
+          130,
+          200
+        ],
+        [
+          250,
+          200
+        ],
+        [
+          250,
+          130
+        ]
+      ]
+    },
+    {
+      "id": "collector-tempo",
+      "from": "collector",
+      "to": "tempo",
+      "label": "OTLP",
+      "labelAt": [
+        505,
+        75
+      ]
+    },
+    {
+      "id": "app-logs",
+      "from": "app",
+      "to": "alloy",
+      "label": "JSON",
+      "labelAt": [
+        255,
+        245
+      ]
+    },
+    {
+      "id": "alloy-loki",
+      "from": "alloy",
+      "to": "loki",
+      "label": "logs",
+      "labelAt": [
+        505,
+        245
+      ]
+    },
+    {
+      "id": "app-metrics",
+      "from": "app",
+      "to": "prometheus",
+      "label": "scrape 응답",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "labelAt": [
+        300,
+        420
+      ]
+    },
+    {
+      "id": "grafana-tempo",
+      "from": "grafana",
+      "to": "tempo",
+      "label": "TraceQL",
+      "fromSide": "top",
+      "toSide": "right",
+      "labelAt": [
+        905,
+        205
+      ]
+    },
+    {
+      "id": "grafana-loki",
+      "from": "grafana",
+      "to": "loki",
+      "label": "LogQL",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelAt": [
+        765,
+        280
+      ]
+    },
+    {
+      "id": "grafana-prometheus",
+      "from": "grafana",
+      "to": "prometheus",
+      "label": "PromQL",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "labelAt": [
+        905,
+        420
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "이 장의 실제 전송 경로",
+      "items": [
+        "트레이스만 OTLP Collector를 통과한다",
+        "stdout 로그는 SDK trace exporter가 자동 수집하지 않는다",
+        "메트릭은 OpenMetrics scrape와 exemplar 저장 설정이 필요하다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "동일한 식별자와 이름",
+      "items": [
+        "trace_id는 로그 필드와 exemplar에 같은 형식으로 기록한다",
+        "resource service.name과 Loki/Prometheus label 매핑을 맞춘다",
+        "trace_id를 일반 metric/stream label로 만들지 않는다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "연결의 범위",
+      "items": [
+        "Tempo가 로그·메트릭을 자동 결합하는 허브는 아니다",
+        "Grafana에 실제 데이터소스 UID와 링크를 설정한다",
+        "샘플링·보존·누락으로 해당 트레이스가 없을 수도 있다"
+      ]
+    }
+  ]
+}

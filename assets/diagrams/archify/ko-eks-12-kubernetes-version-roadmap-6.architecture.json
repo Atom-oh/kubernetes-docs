@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 1.29 \"Mandala\" Enhancement 분포",
+    "output": "ko-eks-12-kubernetes-version-roadmap-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      520
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "release",
+      "type": "cloud",
+      "label": "Kubernetes 1.29 \"Mandala\"",
+      "sublabel": "2023년 12월 · Enhancement 49개",
+      "pos": [
+        50,
+        228
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable (GA)",
+      "sublabel": "11개 · 프로덕션 사용 가능",
+      "pos": [
+        470,
+        78
+      ],
+      "size": [
+        230,
+        64
+      ],
+      "tag": "핵심"
+    },
+    {
+      "id": "beta",
+      "type": "backend",
+      "label": "Beta",
+      "sublabel": "19개 · 기본 활성(On)",
+      "pos": [
+        470,
+        228
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "alpha",
+      "type": "backend",
+      "label": "Alpha",
+      "sublabel": "19개 · 기본 비활성(Off)",
+      "pos": [
+        470,
+        378
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "성숙도 단계별 분포 (총 49개)",
+      "wraps": [
+        "stable",
+        "beta",
+        "alpha"
+      ],
+      "pad": 28
+    }
+  ],
+  "connections": [
+    {
+      "id": "release-to-stable",
+      "from": "release",
+      "to": "stable",
+      "variant": "emphasis"
+    },
+    {
+      "id": "release-to-beta",
+      "from": "release",
+      "to": "beta"
+    },
+    {
+      "id": "release-to-alpha",
+      "from": "release",
+      "to": "alpha"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Stable (GA) 대표 기능",
+      "items": [
+        "KMS v2 GA (KEP-3299) — Secrets 암호화, DEK 캐싱",
+        "ReadWriteOncePod PV Access Mode GA (KEP-2485)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Beta 대표 기능",
+      "items": [
+        "Sidecar Containers Beta 도입 (KEP-753)",
+        "Pod Scheduling Readiness",
+        "Load Balancer IP Mode"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Alpha 대표 기능",
+      "items": [
+        "nftables kube-proxy 모드",
+        "Node Log Query"
+      ]
+    }
+  ]
+}

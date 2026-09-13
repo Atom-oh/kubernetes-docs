@@ -1,0 +1,813 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T04:31:04.197262+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/04-bgp-deep-dive.md",
+      "sha256": "040202eb7def6135225e2a4e007137ce1dbb61af693ccc1460a8411ba8b8443a"
+    },
+    {
+      "path": "en/quizzes/networking/calico/04-bgp-deep-dive-quiz.md",
+      "sha256": "f9d5514a998bf1338233e0cc7c58c946cbf05ab90c29b7b3fd3367c7e845a251"
+    },
+    {
+      "path": "ko/networking/calico/04-bgp-deep-dive.md",
+      "sha256": "d66dd0665546d79212a8ce1b9650aa7da2ab7eeb8c7befedb6ccf41b3d2d3911"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/04-bgp-deep-dive-quiz.md",
+      "sha256": "e3487b208999a136ceb0f4f37241834ffcac6601ca77a6065966d0ad73012362"
+    }
+  ],
+  "sources": {
+    "BGPPeer": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/bgppeer",
+      "key": "94e016aa537b",
+      "rawSHA256": "cfeedd0ca406b90f86d8412b2ec04a4b0078dd66849cce1ec228a8a05843fbbf"
+    },
+    "BGPConfiguration": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/bgpconfig",
+      "key": "7d8eeec11736",
+      "rawSHA256": "3f24e72f9a888cf5ac847c5fd2b0006d2190ea04a89787a0efcd49a316d0e893"
+    },
+    "BGPFilter": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/bgpfilter",
+      "key": "4d9a69dd6ee2",
+      "rawSHA256": "0133e7941893a802687613b0225bb3687f37f5eea9800c2f436e756256077f64"
+    },
+    "ServiceAdvertisement": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips",
+      "key": "8c2ed47a58b3",
+      "rawSHA256": "822d7d105825e0358e38ab3cef3e7e59a53a6b536fed1be7e2772b7bc8a6bc55"
+    },
+    "LoadBalancerIPAM": {
+      "url": "https://docs.tigera.io/calico/latest/networking/ipam/service-loadbalancer",
+      "key": "356b2185325a",
+      "rawSHA256": "f5535c2ea0bfb5ebad6d75c19e3f85ce195fdf4143cb08443a36216eb394e386"
+    },
+    "BGPGuide": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/bgp",
+      "key": "bf86751ce725",
+      "rawSHA256": "3470e4df2b16d8d05d8ab7856901437d9bba5d6b73825f7cf273e7895d2a246d"
+    },
+    "Node": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/node",
+      "key": "39a39a28c097",
+      "rawSHA256": "407cb38489aa7063694feffb08963dd2888887f41cf6d52bb0f350e87450f0c9"
+    },
+    "IANA": {
+      "url": "https://www.iana.org/assignments/as-numbers/as-numbers.xhtml",
+      "key": "01d881f92814",
+      "rawSHA256": "c7c29ad54fbc2e293a0643cdb4d58c5b5546c2069d89e09128ecee7b66f9ac61"
+    },
+    "RFC4271": {
+      "url": "https://www.rfc-editor.org/rfc/rfc4271",
+      "key": "9aab2974d544",
+      "rawSHA256": "77ec45b49999be11ec71f57a5a269ba2aaef4c90c703f14aaf022551cd2ba4e2"
+    },
+    "RFC4456": {
+      "url": "https://www.rfc-editor.org/rfc/rfc4456",
+      "key": "b754b69cf234",
+      "rawSHA256": "6332c3e9e438036bcff57e07c1158bed653668531b44048e3672b710539bee82"
+    },
+    "RFC5082": {
+      "url": "https://www.rfc-editor.org/rfc/rfc5082",
+      "key": "3421282b6808",
+      "rawSHA256": "f3db1cb918c60f7175d27fd0a2957b20d85dc4eafa05ac0eed942ca39c7a58a0"
+    },
+    "RFC4724": {
+      "url": "https://www.rfc-editor.org/rfc/rfc4724",
+      "key": "cda95d7df9f8",
+      "rawSHA256": "aa89917914ad1847f7294c2667f8b37a43ca16ee31960931fecbbf517763abf3"
+    },
+    "RFC6996": {
+      "url": "https://www.rfc-editor.org/rfc/rfc6996",
+      "key": "d1152264f0b6",
+      "rawSHA256": "f2d179e931ab18710c30466c2f422929bd9163db3ac3b49f7b98b9b920792011"
+    },
+    "RFC1997": {
+      "url": "https://www.rfc-editor.org/rfc/rfc1997",
+      "key": "74c11f8f7194",
+      "rawSHA256": "9f55f338817756e0569922acce32276b4ef4226edfecacd10a31e8f7de9b68f3"
+    },
+    "RFC8092": {
+      "url": "https://www.rfc-editor.org/rfc/rfc8092",
+      "key": "09f0418aba74",
+      "rawSHA256": "4b3cc8c3daf5b62a8b94682c449a7de0bf3b6705970018b7012e65b2c5ed156c"
+    },
+    "KubernetesService": {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "key": "fb91f3263e90",
+      "rawSHA256": "c79c12d9beb86cb6057bd06daded0f384c6b5d0f7b2068146855a1109edcd0d2"
+    },
+    "MetalLB": {
+      "url": "https://metallb.io/usage/",
+      "key": "b15fc4a8aa66",
+      "rawSHA256": "565b1c4ab858f00c49973f9b3f87ee99939dea6dfc2dcd8719feea6ad9cfab20"
+    },
+    "Cisco": {
+      "url": "https://www.cisco.com/c/en/us/td/docs/routers/ios/config/17-x/ip-routing/b-ip-routing/m_irg-bgp-dynamic-neighbors.html",
+      "key": "0aeeeafa1e77",
+      "rawSHA256": "1886eda24c910413e74fdb338383825109c835d6b65c84300ac1dac3d987f53b"
+    },
+    "JunosPrefixList": {
+      "url": "https://www.juniper.net/documentation/us/en/software/junos/routing-policy/topics/concept/policy-configuring-prefix-lists-for-use-in-routing-policy-match-conditions.html",
+      "key": "5b00fc887cc4",
+      "rawSHA256": "09e084d810763d6f9148a5407819aed244defc0b103fd7e7fc15800d77bf8f30"
+    },
+    "JunosRouteFilter": {
+      "url": "https://www.juniper.net/documentation/en_US/junos/topics/usage-guidelines/policy-configuring-route-lists-for-use-in-routing-policy-match-conditions.html",
+      "key": "d136be97810c",
+      "rawSHA256": "5c6b21750bfd55ad136fa52d87c8e750b58faa3833d9cae49996b2529b2d3819"
+    },
+    "releasedCRDs": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml",
+      "key": "366be3352d5d",
+      "rawSHA256": "cb46786692404fb7955c6d31329c667d0dd8f1ff4821dc7869d0156c93d3a859"
+    },
+    "Metadata": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/metadata.mk",
+      "key": "043773c09ced",
+      "rawSHA256": "7b654aa0ec6e6ffc2445d1fe64a5814c112ee7267876a8f5e946ac590e290378"
+    },
+    "NodeDockerfile": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/node/Dockerfile",
+      "key": "cb9c759f33c2",
+      "rawSHA256": "fa29a8ca1df4055a9c28612e12c8ba9d8a221ea827770e9cee701aa4ac9aa799"
+    },
+    "BGPProcessor": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/confd/pkg/backends/calico/bgp_processor.go",
+      "key": "420714fc218d",
+      "rawSHA256": "6e2731f7bdc690c9b0c5bc0ca4ca454f0138a555dd1ad6e659a9ae7f3a58c7d7"
+    },
+    "BIRDTypes": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/confd/pkg/backends/types/bird_bgp_config.go",
+      "key": "8a2e05b39cff",
+      "rawSHA256": "ea7f8dcd5ca445259a62b6e7e1d1d7fc6a2428893f26a2af58ad757a93db43db"
+    },
+    "BIRDTemplate": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/confd/etc/calico/confd/templates/bird.cfg.template",
+      "key": "7e2a993ceb0f",
+      "rawSHA256": "bb0285045c480a4f1928f0bc6cc4e45ea5081906e9a98b3d94187d925042bc9b"
+    },
+    "IPAMTemplate": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/confd/etc/calico/confd/templates/bird_ipam.cfg.template",
+      "key": "982d9b3c0260",
+      "rawSHA256": "1e2d715990f385b6fdfc07c495111c004dcdedb2a1bb80e6473e179f807588c2"
+    },
+    "AggregationTemplate": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/confd/etc/calico/confd/templates/bird_aggr.cfg.template",
+      "key": "d82eb462c677",
+      "rawSHA256": "ef3c14da067e0773e3c84ad836ddfe97709b302452bbbd20b6af56eb32ae7b45"
+    },
+    "ServiceRoutes": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/confd/pkg/backends/calico/routes.go",
+      "key": "d3e03d5eb93c",
+      "rawSHA256": "5e68f15077106275759d3a0765953530086305cefaefc1469f4abfa0c0376da1"
+    },
+    "NodeKDD": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/libcalico-go/lib/backend/k8s/resources/node.go",
+      "key": "aa86c20b7503",
+      "rawSHA256": "06a0b0591e463d3d5e1bc8171058900216b7e1a55413da5e7e5eebc3cc83bf97"
+    },
+    "BIRD6Socket": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/node/filesystem/etc/service/available/bird6/run",
+      "key": "b0fc240bf22f",
+      "rawSHA256": "26172935a96bdb71c907ddb7bd205bae3bed20f9be935bb4d434e7141a7c67ac"
+    },
+    "BIRDConfig": {
+      "url": "https://raw.githubusercontent.com/projectcalico/bird/9111ec3c/proto/bgp/config.Y",
+      "key": "e0e02f3e82f9",
+      "rawSHA256": "e6640ca6d2409b43cc455e473884e63918f7254de46d20816b2c9c50f28f4f80"
+    },
+    "BIRDBGP": {
+      "url": "https://raw.githubusercontent.com/projectcalico/bird/9111ec3c/proto/bgp/bgp.c",
+      "key": "baa8dc567a22",
+      "rawSHA256": "d3ef5f086d70b1f4894567475b468f6c2dabff339445c2602c213d6f33cf0513"
+    },
+    "BIRDAttrs": {
+      "url": "https://raw.githubusercontent.com/projectcalico/bird/9111ec3c/proto/bgp/attrs.c",
+      "key": "c93d3b8eb07b",
+      "rawSHA256": "e08d7917acc931d254e616b24ab4ef874109833a6b0995da48c873ed1fd17e37"
+    },
+    "BIRDPackets": {
+      "url": "https://raw.githubusercontent.com/projectcalico/bird/9111ec3c/proto/bgp/packets.c",
+      "key": "cf61df0fc092",
+      "rawSHA256": "d485ad0e6312e0e80663fbd1b542d0a2996578f0f696b0518978ee45000779e8"
+    },
+    "BIRDManual": {
+      "url": "https://raw.githubusercontent.com/projectcalico/bird/9111ec3c/doc/bird.sgml",
+      "key": "9cb860307bf6",
+      "rawSHA256": "c64f0ba7eea611e8b8d14f91a3995fd1f6ef84dea9dd3eba0aa848aeaee37cea"
+    },
+    "requirements": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements",
+      "key": "6f94a8862c24",
+      "rawSHA256": "7fa25ebe3ea0cad2e3308daf97694b165ee24d0769c8e45b6a54cef21764278b"
+    }
+  },
+  "findings": [
+    "Fully read original EN1040/KO984 guide lines and EN250/KO246 quiz lines. All18 figures actually viewed. No coverage inferred from grep.",
+    "Pinned review to Calico3.32.2/Kubernetes-tested1.34–1.36, separated BGP control plane from encapsulation and BGP-free Felix routing; no latest-equals-compatible inference.",
+    "Corrected ASN reserved/private distinctions, iBGP propagation, vendor-only Weight/AD defaults, BIRD best-path priorities and implementation-specific TTL. Calico-pinned BIRD source9111ec3c is v0.3.3+birdv1.6.8, not fabricated2.0.8.",
+    "Corrected RR session math using total/client counts:100total2RR197sessions;500total2RR997. Removed unsupported hard node/memory limits. KDD annotations preserve node fields; RR nodes leave automatic mesh immediately. Explicit replacement sessions/routes/traffic verified before disabling old mesh via field-preserving merge patch.",
+    "Corrected BGPPeer keepaliveTime spelling/duration, unsupported holdTime/restartTime, sourceAddress enum, filters string references, and numAllowedLocalASNumbers as AS-path loop prevention relaxation rather than TTL.",
+    "BGPConfiguration bindMode None listens without address restriction rather than disabling BGP; nodeMeshPassword authenticates mesh rather than enabling IPv4. nodeMeshMaxRestartTime requires duration string and only scopes automatic mesh.",
+    "prefixAdvertisements source applies communities to existing matching Pod routes too, not merely Service routes. It neither originates nor aggregates prefixes. Explicit BGPFilter export Accept bypasses built-in aggregation/tagging; accepted-route addCommunity operation used explicitly.",
+    "Preserved current native Calico LoadBalancer IPAM with dedicated allowedUses:LoadBalancer pool, loadBalancerClass calico, owned VIP range and ready endpoints; allocation/advertisement/return-path distinct. Removed nonexistent per-Service bgp-advertise opt-out. Covering aggregates defeat host-route-only suppression. Kubernetes1.36 externalIPs deprecation verified.",
+    "Corrected BGPFilter In0/0 accept-all and NotIn0/0 reject-none to Equaldefault/approvedunderlay/unconditionalReject; prefixLength object includes required borrowed/mobility32routes. Native pinned BIRD reproduced old errors and passed40before-after route cases.",
+    "Corrected GTSM threshold to256-hops (oneedge requires255). Source BIRD Hold default240s with negotiated minimum; explicitkeepalive does not setHold=3x. GR requires negotiated support plus live forwarding and mayblackhole stale routes; no invented BFD API.",
+    "Removed hardcoded MD5 passwords; namespace/key/RBAC/router prerequisites explicit. Replaced mixed/undefined Cisco/EOS/Junos recipes with version-scoped adaptation and verified Junosroute-filterfragment. Router runtime/failover remains untested and explicitly scoped.",
+    "Corrected explicit IPv4/IPv6 BIRD sockets, actualprotocolnames, node-vs-workstation diagnostics. Multi-rack/DC examples retain AS-loop,returnroute,failure-domain requirements. Repaired RFC5082 label/source links and Korean previous-guide label.",
+    "All original30quizquestions reviewed; ambiguous options, RRtransition, GR/authguarantees andcommands corrected. Addedfour questions covering real filter/aggregation defects;34answers consistent with options and prose.",
+    "18figuresreviewed:11retainedwithsemanticcaptions,7wrong/duplicatedreferencesremoved. Underlyingassetsunchanged;qualifieddiagramlimitationsretainedinreport."
+  ],
+  "validation": {
+    "schemaObjects": 52,
+    "bashBlocks": 13,
+    "quizAnswers": 34,
+    "schemaByKind": {
+      "BGPPeer": 31,
+      "BGPConfiguration": 15,
+      "IPPool": 2,
+      "Service": 2,
+      "BGPFilter": 2
+    },
+    "RRModels": [
+      {
+        "totalNodes": 8,
+        "RRs": 2,
+        "clients": 6,
+        "finalSessions": 13,
+        "transitionSessions": 28,
+        "fullMeshSameTotal": 28,
+        "modelOnly": true
+      },
+      {
+        "totalNodes": 100,
+        "RRs": 2,
+        "clients": 98,
+        "finalSessions": 197,
+        "transitionSessions": 4950,
+        "fullMeshSameTotal": 4950,
+        "modelOnly": true
+      },
+      {
+        "totalNodes": 500,
+        "RRs": 2,
+        "clients": 498,
+        "finalSessions": 997,
+        "transitionSessions": 124750,
+        "fullMeshSameTotal": 124750,
+        "modelOnly": true
+      },
+      {
+        "totalNodes": 102,
+        "RRs": 2,
+        "clients": 100,
+        "finalSessions": 201,
+        "transitionSessions": 5151,
+        "fullMeshSameTotal": 5151,
+        "modelOnly": true
+      },
+      {
+        "totalNodes": 12,
+        "RRs": 3,
+        "clients": 9,
+        "finalSessions": 30,
+        "transitionSessions": 66,
+        "fullMeshSameTotal": 66,
+        "modelOnly": true
+      }
+    ],
+    "timerModels": [
+      {
+        "peerHoldProposal": 240,
+        "explicitKeepalive": 0,
+        "negotiatedHold": 240,
+        "keepalive": 80,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "peerHoldProposal": 180,
+        "explicitKeepalive": 0,
+        "negotiatedHold": 180,
+        "keepalive": 60,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "peerHoldProposal": 90,
+        "explicitKeepalive": 0,
+        "negotiatedHold": 90,
+        "keepalive": 30,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "peerHoldProposal": 240,
+        "explicitKeepalive": 20,
+        "negotiatedHold": 240,
+        "keepalive": 20,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "peerHoldProposal": 90,
+        "explicitKeepalive": 20,
+        "negotiatedHold": 90,
+        "keepalive": 20,
+        "sourceDerivedModelOnly": true
+      }
+    ],
+    "GTSMModels": [
+      {
+        "edges": 1,
+        "incomingTTL": 255,
+        "acceptedByTTLThreshold": true,
+        "modelOnly": true
+      },
+      {
+        "edges": 1,
+        "incomingTTL": 254,
+        "acceptedByTTLThreshold": false,
+        "modelOnly": true
+      },
+      {
+        "edges": 2,
+        "incomingTTL": 254,
+        "acceptedByTTLThreshold": true,
+        "modelOnly": true
+      },
+      {
+        "edges": 2,
+        "incomingTTL": 253,
+        "acceptedByTTLThreshold": false,
+        "modelOnly": true
+      },
+      {
+        "edges": 3,
+        "incomingTTL": 253,
+        "acceptedByTTLThreshold": true,
+        "modelOnly": true
+      }
+    ],
+    "figures": {
+      "viewed": 18,
+      "retained": 11,
+      "removedReferences": 7
+    },
+    "nativeBIRD": {
+      "source": {
+        "url": "https://codeload.github.com/projectcalico/bird/tar.gz/9111ec3c3ff3e769727a5940d3d829a0be8b5201",
+        "commit": "9111ec3c3ff3e769727a5940d3d829a0be8b5201",
+        "sha256": "5aaf11e2f0ba3c44cdf27746c0b5da631befd67636579ff5e2ac65b144bee0b3",
+        "bytes": 736380,
+        "sourceArchiveOnly": true
+      },
+      "version": "BIRD version v0.3.3+birdv1.6.8",
+      "cases": [
+        {
+          "filter": "old_importV4",
+          "prefix": "0.0.0.0/0",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_importV4",
+          "prefix": "10.0.0.0/16",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_importV4",
+          "prefix": "10.0.1.0/24",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_importV4",
+          "prefix": "10.1.0.0/16",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_importV4",
+          "prefix": "10.244.0.0/16",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_importV4",
+          "prefix": "10.244.0.0/26",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_importV4",
+          "prefix": "10.244.1.7/32",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_importV4",
+          "prefix": "198.51.100.0/24",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_importV4",
+          "prefix": "198.51.100.50/32",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_importV4",
+          "prefix": "203.0.113.0/24",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "0.0.0.0/0",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "10.0.0.0/16",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "10.0.1.0/24",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "10.1.0.0/16",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "10.244.0.0/16",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "10.244.0.0/26",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "10.244.1.7/32",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "198.51.100.0/24",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "198.51.100.50/32",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "old_exportV4",
+          "prefix": "203.0.113.0/24",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "0.0.0.0/0",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "10.0.0.0/16",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "10.0.1.0/24",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "10.1.0.0/16",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "10.244.0.0/16",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "10.244.0.0/26",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "10.244.1.7/32",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "198.51.100.0/24",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "198.51.100.50/32",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_importV4",
+          "prefix": "203.0.113.0/24",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "0.0.0.0/0",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "10.0.0.0/16",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "10.0.1.0/24",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "10.1.0.0/16",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "10.244.0.0/16",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "10.244.0.0/26",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "10.244.1.7/32",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "198.51.100.0/24",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "198.51.100.50/32",
+          "accepted": true,
+          "expected": true,
+          "passed": true
+        },
+        {
+          "filter": "fixed_exportV4",
+          "prefix": "203.0.113.0/24",
+          "accepted": false,
+          "expected": false,
+          "passed": true
+        }
+      ],
+      "scope": "Native pinned BIRD local static RIB/filter evaluation only; no kernel protocol, BGP sessions or remote network peers.",
+      "checksums": {
+        "filters.conf": "af434103f278604876b03c96991b477f66ea0e92220edef719ec6df63ab077e4",
+        "bird.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "old_importV4.txt": "39339ea9b5dc539f5c74a152258363533fcda9d1ec2da9cbd9d57446d6e03562",
+        "old_exportV4.txt": "39339ea9b5dc539f5c74a152258363533fcda9d1ec2da9cbd9d57446d6e03562",
+        "fixed_importV4.txt": "ba57dcc09783ab33508b3f0aa9480ece500c68c0a763d2bea44619ddd96ec207",
+        "fixed_exportV4.txt": "e69e25468d9739262576bf7c2d162b448ff3c3c5c5d1776a17f78b86684fdc35"
+      }
+    },
+    "limitations": [
+      "CRD/OpenAPI validation is offline; no API server admission or operator reconciliation run.",
+      "Native BIRD used a local static RIB and semantically translated documented filter subset; no live Calico BGP session, kernel FIB, router CLI, allocation, forwarding or failover was tested.",
+      "Router-specific configuration remains a clearly marked policy fragment/design prerequisite.",
+      "Existing image assets remain unchanged; inaccurate duplicated references removed or scope explicitly qualified."
+    ]
+  },
+  "render": {
+    "passed": 4,
+    "total": 4
+  },
+  "docsTest": {
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-calico-bgp-validation/docs-test.log"
+  },
+  "diffCheck": "All assigned ko/en mesh/networking/observability guide/quiz/lab scopes clean.",
+  "figures": [
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-1.png",
+      "actuallyViewed": true,
+      "findings": "Calico API drawn inside node boundary; Felix routing role omitted (EN); KO generic TTL/AD footer inaccurate for Calico.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-2.png",
+      "actuallyViewed": true,
+      "findings": "Cisco Weight/oldest-path ladder incorrectly presented as universal Calico best-path.",
+      "action": "Removed inaccurate/redundant Markdown and interactive references; useful content replaced by corrected prose/tables. Asset unchanged.",
+      "retained": false
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-3.png",
+      "actuallyViewed": true,
+      "findings": "All ten edges for five-node mesh correctly enumerated.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-4.png",
+      "actuallyViewed": true,
+      "findings": "Two RRs and six clients; 2N+1 uses N clients whereas mesh formula uses total; clarify captions and prerequisites.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-5.png",
+      "actuallyViewed": true,
+      "findings": "Spine/leaf connections schematic; shared node ASN requires explicit loop prevention/ASN design; diagram alone not complete routing recipe.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-7.png",
+      "actuallyViewed": true,
+      "findings": "Dual RRs share one rack, leaving common rack failure; arrows summarize multiple node sessions.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-8.png",
+      "actuallyViewed": true,
+      "findings": "WAN links do not show internal WAN transit; named community alone not applied; fix accompanying config and caption.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png",
+      "actuallyViewed": true,
+      "findings": "Unsubstantiated hard 50/200-node cutoffs and mixed node counts.",
+      "action": "Removed inaccurate/redundant Markdown and interactive references; useful content replaced by corrected prose/tables. Asset unchanged.",
+      "retained": false
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-10.png",
+      "actuallyViewed": true,
+      "findings": "Single RR per rack remains a single failure point; flat session-count statement incorrect.",
+      "action": "Removed inaccurate/redundant Markdown and interactive references; useful content replaced by corrected prose/tables. Asset unchanged.",
+      "retained": false
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-04-bgp-deep-dive-11.png",
+      "actuallyViewed": true,
+      "findings": "Dual-zone peering accurate schematic; surviving transport/forwarding and capacity still required.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-0.png",
+      "actuallyViewed": true,
+      "findings": "AS relationship diagram sound, but generic TTL/administrative-distance footer not Calico defaults.",
+      "action": "Removed inaccurate/redundant Markdown and interactive references; useful content replaced by corrected prose/tables. Asset unchanged.",
+      "retained": false
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-1.png",
+      "actuallyViewed": true,
+      "findings": "Calico API drawn inside node boundary; Felix routing role omitted (EN); KO generic TTL/AD footer inaccurate for Calico.",
+      "action": "Removed inaccurate/redundant Markdown and interactive references; useful content replaced by corrected prose/tables. Asset unchanged.",
+      "retained": false
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-2.png",
+      "actuallyViewed": true,
+      "findings": "Cisco Weight/oldest-path ladder incorrectly presented as universal Calico best-path.",
+      "action": "Removed inaccurate/redundant Markdown and interactive references; useful content replaced by corrected prose/tables. Asset unchanged.",
+      "retained": false
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-3.png",
+      "actuallyViewed": true,
+      "findings": "All ten edges for five-node mesh correctly enumerated.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-4.png",
+      "actuallyViewed": true,
+      "findings": "Two RRs and six clients; 2N+1 uses N clients whereas mesh formula uses total; clarify captions and prerequisites.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-5.png",
+      "actuallyViewed": true,
+      "findings": "Spine/leaf connections schematic; shared node ASN requires explicit loop prevention/ASN design; diagram alone not complete routing recipe.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-6.png",
+      "actuallyViewed": true,
+      "findings": "AS-per-rack illustration uses documentation/public ASNs, omits full WAN/transit routing; qualify or remove redundant reference.",
+      "action": "Retained with corrected semantic alt text and explicit scope/capacity/path caption.",
+      "retained": true
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-9.png",
+      "actuallyViewed": true,
+      "findings": "Unsubstantiated hard 50/200-node cutoffs and mixed node counts.",
+      "action": "Removed inaccurate/redundant Markdown and interactive references; useful content replaced by corrected prose/tables. Asset unchanged.",
+      "retained": false
+    }
+  ],
+  "sourceAccessLimitations": [
+    "Arista manual returned a JavaScript challenge; no executable EOS recipe retained or claimed validated."
+  ],
+  "artifacts": [
+    "/tmp/networking-calico-bgp-validation",
+    "/home/atomoh/kubernetes-docs/.vitepress/cache/calico-bgp-bird/route-tests",
+    "/tmp/networking-calico-bgp-sources.json",
+    "/tmp/networking-calico-bgp-check.py",
+    "/tmp/networking-calico-bgp-native-check.py"
+  ]
+}

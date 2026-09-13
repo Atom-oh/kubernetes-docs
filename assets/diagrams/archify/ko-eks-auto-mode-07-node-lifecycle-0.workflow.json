@@ -1,0 +1,287 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "expireAfter 동작 원리",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "시작"
+        },
+        "backend": {
+          "label": "동작 단계"
+        },
+        "security": {
+          "label": "판단(결정)"
+        },
+        "cloud": {
+          "label": "노드 교체"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "wait",
+        "label": "만료 대기",
+        "focus": [
+          "create",
+          "timer",
+          "expired",
+          "mark"
+        ],
+        "note": "노드가 생성되면 expireAfter 타이머가 시작되고, 만료 시간에 도달할 때까지는 계속 운영됩니다."
+      },
+      {
+        "id": "graceful",
+        "label": "Graceful 종료 경로",
+        "focus": [
+          "workload",
+          "evict",
+          "pdb",
+          "graceful",
+          "delete"
+        ],
+        "note": "워크로드가 있으면 Pod 퇴거를 시작하고 PDB를 확인한 뒤 Graceful 종료를 거쳐 노드를 삭제합니다."
+      },
+      {
+        "id": "immediate",
+        "label": "즉시 종료 경로",
+        "focus": [
+          "workload",
+          "immediate",
+          "delete"
+        ],
+        "note": "워크로드가 없는 노드는 퇴거 절차 없이 즉시 종료되고 삭제됩니다."
+      },
+      {
+        "id": "replace",
+        "label": "노드 교체",
+        "focus": [
+          "delete",
+          "newnode"
+        ],
+        "note": "삭제 후 남은 Pod 수요가 있으면 새 노드가 프로비저닝됩니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "lifetime",
+      "label": "노드 수명"
+    },
+    {
+      "id": "expiry",
+      "label": "만료 처리"
+    },
+    {
+      "id": "terminate",
+      "label": "노드 종료"
+    },
+    {
+      "id": "gracefulpath",
+      "label": "Graceful 종료 경로 (워크로드 있음)"
+    }
+  ],
+  "mainPath": [
+    "create",
+    "timer",
+    "expired",
+    "mark",
+    "workload",
+    "evict",
+    "pdb",
+    "graceful",
+    "delete",
+    "newnode"
+  ],
+  "nodes": [
+    {
+      "id": "create",
+      "lane": "lifetime",
+      "col": 0,
+      "type": "external",
+      "label": "노드 생성"
+    },
+    {
+      "id": "timer",
+      "lane": "lifetime",
+      "col": 1,
+      "type": "backend",
+      "label": "expireAfter 타이머 시작",
+      "width": 192
+    },
+    {
+      "id": "expired",
+      "lane": "lifetime",
+      "col": 2,
+      "type": "security",
+      "label": "만료 시간 도달?",
+      "width": 152
+    },
+    {
+      "id": "mark",
+      "lane": "expiry",
+      "col": 2,
+      "type": "backend",
+      "label": "노드 만료 표시",
+      "width": 148
+    },
+    {
+      "id": "workload",
+      "lane": "expiry",
+      "col": 3,
+      "type": "security",
+      "label": "워크로드 존재?",
+      "width": 148
+    },
+    {
+      "id": "evict",
+      "lane": "gracefulpath",
+      "col": 3,
+      "type": "backend",
+      "label": "Pod 퇴거 시작",
+      "width": 148
+    },
+    {
+      "id": "pdb",
+      "lane": "gracefulpath",
+      "col": 4,
+      "type": "backend",
+      "label": "PDB 확인"
+    },
+    {
+      "id": "graceful",
+      "lane": "gracefulpath",
+      "col": 5,
+      "type": "backend",
+      "label": "Graceful 종료",
+      "width": 148
+    },
+    {
+      "id": "immediate",
+      "lane": "terminate",
+      "col": 4,
+      "type": "backend",
+      "label": "즉시 종료"
+    },
+    {
+      "id": "delete",
+      "lane": "terminate",
+      "col": 5,
+      "type": "backend",
+      "label": "노드 삭제"
+    },
+    {
+      "id": "newnode",
+      "lane": "lifetime",
+      "col": 5,
+      "type": "cloud",
+      "label": "필요시 새 노드 프로비저닝",
+      "width": 184
+    }
+  ],
+  "edges": [
+    {
+      "id": "create-timer",
+      "from": "create",
+      "to": "timer"
+    },
+    {
+      "id": "timer-expired",
+      "from": "timer",
+      "to": "expired"
+    },
+    {
+      "id": "expired-timer",
+      "from": "expired",
+      "to": "timer",
+      "label": "NO · 계속 운영",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "id": "expired-mark",
+      "from": "expired",
+      "to": "mark",
+      "label": "YES"
+    },
+    {
+      "id": "mark-workload",
+      "from": "mark",
+      "to": "workload"
+    },
+    {
+      "id": "workload-evict",
+      "from": "workload",
+      "to": "evict",
+      "label": "YES",
+      "variant": "emphasis"
+    },
+    {
+      "id": "evict-pdb",
+      "from": "evict",
+      "to": "pdb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pdb-graceful",
+      "from": "pdb",
+      "to": "graceful",
+      "variant": "emphasis"
+    },
+    {
+      "id": "graceful-delete",
+      "from": "graceful",
+      "to": "delete"
+    },
+    {
+      "id": "workload-immediate",
+      "from": "workload",
+      "to": "immediate",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "immediate-delete",
+      "from": "immediate",
+      "to": "delete",
+      "role": "branch"
+    },
+    {
+      "id": "delete-newnode",
+      "from": "delete",
+      "to": "newnode"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "expireAfter 필드",
+      "items": [
+        "노드의 최대 수명을 설정하는 NodePool 필드",
+        "이전의 ttlSecondsUntilExpired를 대체",
+        "예: expireAfter: 168h (7일)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Auto Mode 21일 상한",
+      "items": [
+        "노드는 생성 후 최대 21일(504h)이면 자동 교체",
+        "21일보다 길게 설정해도 21일이 상한으로 적용",
+        "상태 유지 워크로드는 Pod 재배치 절차를 사전 준비"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "권장 만료 시간",
+      "items": [
+        "프로덕션 168h · 스테이징 72h · 개발 24h",
+        "보안 중요 환경 48h로 빠른 패치 적용",
+        "GPU 워크로드 336h (21일 상한 이내)"
+      ]
+    }
+  ]
+}

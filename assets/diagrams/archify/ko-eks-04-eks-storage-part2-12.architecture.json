@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Mountpoint for S3 성능 특성",
+    "output": "ko-eks-04-eks-storage-part2-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "파드 워크로드"
+        },
+        "cloud": {
+          "label": "CSI 드라이버"
+        },
+        "database": {
+          "label": "S3 버킷"
+        },
+        "backend": {
+          "label": "최적화된 작업 · 높은 처리량으로 지원"
+        },
+        "security": {
+          "label": "제한된 작업 · 미지원 또는 오버헤드 발생"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "mount-path",
+        "label": "마운트 경로",
+        "focus": [
+          "pod",
+          "mountpoint",
+          "bucket"
+        ],
+        "note": "파드가 Mountpoint CSI 드라이버를 통해 S3 버킷을 파일 시스템으로 마운트한다."
+      },
+      {
+        "id": "optimized",
+        "label": "최적화된 작업",
+        "focus": [
+          "mountpoint",
+          "seq-read",
+          "large-file",
+          "stream-read"
+        ],
+        "note": "순차·대용량·스트리밍 읽기는 멀티파트 다운로드로 높은 처리량을 낸다."
+      },
+      {
+        "id": "limited",
+        "label": "제한된 작업",
+        "focus": [
+          "mountpoint",
+          "random-write",
+          "small-files",
+          "append-write"
+        ],
+        "note": "랜덤 쓰기와 파일 추가 쓰기는 S3 객체 특성상 지원되지 않고, 소용량 파일 다수는 요청 수 증가로 오버헤드가 발생한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "파드",
+      "sublabel": "S3 마운트 볼륨 사용",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "mountpoint",
+      "type": "cloud",
+      "label": "Mountpoint for S3 CSI",
+      "sublabel": "s3.csi.aws.com",
+      "pos": [
+        440,
+        80
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "bucket",
+      "type": "database",
+      "label": "S3 버킷",
+      "sublabel": "객체 스토리지",
+      "pos": [
+        900,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "seq-read",
+      "type": "backend",
+      "label": "순차 읽기",
+      "sublabel": "멀티파트 다운로드 · 높은 처리량",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        165,
+        60
+      ]
+    },
+    {
+      "id": "large-file",
+      "type": "backend",
+      "label": "대용량 파일",
+      "sublabel": "효율적인 전송",
+      "pos": [
+        225,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "stream-read",
+      "type": "backend",
+      "label": "스트리밍 읽기",
+      "sublabel": "순차 액세스 패턴 최적화",
+      "pos": [
+        395,
+        300
+      ],
+      "size": [
+        165,
+        60
+      ]
+    },
+    {
+      "id": "random-write",
+      "type": "security",
+      "label": "랜덤 쓰기",
+      "sublabel": "미지원 · S3 객체 특성상 불가",
+      "pos": [
+        620,
+        300
+      ],
+      "size": [
+        165,
+        60
+      ]
+    },
+    {
+      "id": "small-files",
+      "type": "security",
+      "label": "작은 파일 많음",
+      "sublabel": "요청 수 증가 · 오버헤드",
+      "pos": [
+        805,
+        300
+      ],
+      "size": [
+        165,
+        60
+      ]
+    },
+    {
+      "id": "append-write",
+      "type": "security",
+      "label": "파일 추가 쓰기",
+      "sublabel": "미지원 · 덮어쓰기만 가능",
+      "pos": [
+        990,
+        300
+      ],
+      "size": [
+        165,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "최적화된 작업",
+      "wraps": [
+        "seq-read",
+        "large-file",
+        "stream-read"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "제한된 작업",
+      "wraps": [
+        "random-write",
+        "small-files",
+        "append-write"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-mount",
+      "from": "pod",
+      "to": "mountpoint",
+      "label": "파일 시스템 마운트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mount-bucket",
+      "from": "mountpoint",
+      "to": "bucket",
+      "label": "S3 API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m-seq",
+      "from": "mountpoint",
+      "to": "seq-read",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "m-large",
+      "from": "mountpoint",
+      "to": "large-file",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "m-stream",
+      "from": "mountpoint",
+      "to": "stream-read",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "m-random",
+      "from": "mountpoint",
+      "to": "random-write",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "m-small",
+      "from": "mountpoint",
+      "to": "small-files",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "m-append",
+      "from": "mountpoint",
+      "to": "append-write",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "최적화된 작업",
+      "items": [
+        "순차 읽기: 멀티파트 다운로드로 높은 처리량 달성",
+        "대용량 파일: 효율적인 전송",
+        "스트리밍 읽기: 순차 액세스 패턴에 최적화"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "제한된 작업",
+      "items": [
+        "랜덤 쓰기: S3 특성상 기존 파일 수정 불가",
+        "작은 파일 많음: 요청 수 증가로 오버헤드 발생",
+        "파일 추가 쓰기: 지원 안 됨, 덮어쓰기만 가능"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "그 외 작업 (페이지 표 기준)",
+      "items": [
+        "순차 쓰기: 양호 (새 파일 생성 시 멀티파트 업로드)",
+        "랜덤 읽기: 보통 (바이트 범위 요청 지원, 지연 시간 존재)",
+        "메타데이터 작업: 양호 (ListObjects API 활용)"
+      ]
+    }
+  ]
+}

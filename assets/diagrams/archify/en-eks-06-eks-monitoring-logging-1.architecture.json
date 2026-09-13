@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Container Logging Architecture",
+    "locale": "en",
+    "output": "en-eks-06-eks-monitoring-logging-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "node-collect",
+        "label": "Collection on the node",
+        "focus": [
+          "containers",
+          "kubelet",
+          "agent"
+        ],
+        "note": "Containers write to stdout/stderr, kubelet persists them as files under /var/log/containers/, and the log agent tails them."
+      },
+      {
+        "id": "aws-fanout",
+        "label": "Delivery to AWS",
+        "focus": [
+          "agent",
+          "cwl",
+          "opensearch",
+          "s3"
+        ],
+        "note": "The log agent fans logs out to CloudWatch Logs, Amazon OpenSearch, and Amazon S3."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "containers",
+      "type": "backend",
+      "label": "Containers",
+      "sublabel": "application process",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "node agent",
+      "pos": [
+        300,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Log Agent",
+      "sublabel": "Fluent Bit",
+      "pos": [
+        620,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cwl",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "log group",
+      "pos": [
+        940,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "opensearch",
+      "type": "cloud",
+      "label": "Amazon OpenSearch",
+      "sublabel": "search / analytics",
+      "pos": [
+        940,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "long-term archive",
+      "pos": [
+        940,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Worker Node",
+      "wraps": [
+        "containers",
+        "kubelet",
+        "agent"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "containers-to-kubelet",
+      "from": "containers",
+      "to": "kubelet",
+      "label": "stdout/stderr",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kubelet-to-agent",
+      "from": "kubelet",
+      "to": "agent",
+      "label": "/var/log/containers/",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-to-cwl",
+      "from": "agent",
+      "to": "cwl"
+    },
+    {
+      "id": "agent-to-opensearch",
+      "from": "agent",
+      "to": "opensearch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-to-s3",
+      "from": "agent",
+      "to": "s3"
+    }
+  ]
+}

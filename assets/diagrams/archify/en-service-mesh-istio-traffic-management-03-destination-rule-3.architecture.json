@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Traffic Policy Hierarchy",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-03-destination-rule-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inherit",
+        "label": "Inherit default policy",
+        "focus": [
+          "dr",
+          "global",
+          "v1"
+        ],
+        "note": "A subset without its own trafficPolicy inherits the DestinationRule's top-level policy unchanged."
+      },
+      {
+        "id": "override",
+        "label": "Subset override",
+        "focus": [
+          "dr",
+          "global",
+          "v2"
+        ],
+        "note": "A trafficPolicy inside a subset overrides the default policy for that subset only."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Inherits"
+        },
+        "security": {
+          "label": "Own policy"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "dr",
+      "type": "backend",
+      "label": "DestinationRule",
+      "sublabel": "host: reviews",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "global",
+      "type": "security",
+      "label": "Global Traffic Policy",
+      "sublabel": "Applied to all subsets",
+      "tag": "LEAST_REQUEST",
+      "pos": [
+        400,
+        190
+      ],
+      "size": [
+        220,
+        68
+      ]
+    },
+    {
+      "id": "v1",
+      "type": "backend",
+      "label": "Subset: v1",
+      "sublabel": "Inherits global policy",
+      "pos": [
+        180,
+        370
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "security",
+      "label": "Subset: v2",
+      "sublabel": "v2-specific policy · overrides global policy",
+      "tag": "ROUND_ROBIN",
+      "pos": [
+        620,
+        370
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "subsets",
+      "wraps": [
+        "v1",
+        "v2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dr-global",
+      "from": "dr",
+      "to": "global",
+      "label": "trafficPolicy",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "global-v1",
+      "from": "global",
+      "to": "v1",
+      "label": "inherits",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "global-v2",
+      "from": "global",
+      "to": "v2",
+      "label": "overrides",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Default policy",
+      "items": [
+        "spec.trafficPolicy is the default for every subset",
+        "Example: loadBalancer.simple: LEAST_REQUEST"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Subset override",
+      "items": [
+        "subsets[].trafficPolicy overrides the default policy for that subset",
+        "Example v2: ROUND_ROBIN + connectionPool.http1MaxPendingRequests: 10"
+      ]
+    }
+  ]
+}

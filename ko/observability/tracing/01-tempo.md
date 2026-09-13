@@ -22,7 +22,9 @@ Grafana Tempo는 대규모 분산 추적을 위한 오픈소스 백엔드입니�
 
 Tempo는 다음과 같은 주요 구성 요소로 이루어져 있습니다:
 
-![애플리케이션의 트레이스가 OTEL Collector와 Tempo 클러스터의 쓰기 경로(Distributor→Ingester)를 거쳐 S3에 저장되고, Metrics Generator가 생성한 RED 메트릭이 Grafana로 전달되며, Grafana의 TraceQL 조회가 Query Frontend와 Querier를 통해 S3와 캐시에서 트레이스를 검색하는 전체 흐름을 보여주는 아키텍처 다이어그램.](../../../assets/diagrams/rendered/ko-observability-tracing-01-tempo-0.svg)
+![애플리케이션의 트레이스가 OTEL Collector와 Tempo 클러스터의 쓰기 경로(Distributor→Ingester)를 거쳐 S3에 저장되고, Metrics Generator가 만든 RED 메트릭이 Grafana로 전달되며, Grafana의 TraceQL 조회가 Query Frontend와 Querier를 통해 S3와 캐시에서 트레이스를 검색하는 Tempo 아키텍처를 보여준다.](../../.gitbook/assets/ko-observability-tracing-01-tempo-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-01-tempo-0.html)
 
 ### 구성 요소 상세
 

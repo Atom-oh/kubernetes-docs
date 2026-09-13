@@ -1,4 +1,4 @@
-> [English Version](https://atomoh.gitbook.io/kubernetes-docs-en/)
+> [English Version](https://www.atomai.click/kubernetes-docs/en/)
 
 # Cloud Native Operations 교육 컨텐츠
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
@@ -12,7 +12,7 @@
 - [학습 자료 목차](#목차) - 주제별 학습 자료
 - [퀴즈 모음](./quizzes/README.md) - 주제별 퀴즈
 - [가이드북 로드맵](./roadmap.md) - 전체 학습 지도와 추천 학습 경로 | [퀴즈](./quizzes/roadmap-quiz.md)
-- [LLM과 함께 읽기](./llm-guide.md) - llms.txt로 AI에게 이 가이드북 전체를 읽히는 방법 | [퀴즈](./quizzes/llm-guide-quiz.md)
+- [LLM과 함께 읽기](./llm-guide.md) - llms.txt·문서 manifest·MCP로 필요한 자료를 검색하고 읽는 방법 | [퀴즈](./quizzes/llm-guide-quiz.md)
 
 ## 목차
 
@@ -290,6 +290,15 @@
 5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [퀴즈](./quizzes/gitops/04-flagger-quiz.md)
 6. [Feature Flags와 OpenFeature](./gitops/05-feature-flags.md) | [퀴즈](./quizzes/gitops/05-feature-flags-quiz.md)
 
+### 엔터프라이즈 클라우드 거버넌스
+1. [거버넌스 개요](./governance/00-governance-overview.md) | [퀴즈](./quizzes/governance/00-governance-overview-quiz.md)
+2. [Landing Zone, OU와 조직 Control](./governance/01-landing-zone-and-ou.md) | [퀴즈](./quizzes/governance/01-landing-zone-and-ou-quiz.md)
+3. [Account 구성과 IAM 경계](./governance/02-account-and-iam.md) | [퀴즈](./quizzes/governance/02-account-and-iam-quiz.md)
+4. [EKS 멀티 계정·멀티 클러스터 아키텍처](./governance/03-eks-multi-account-multi-cluster.md) | [퀴즈](./quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md)
+5. [Shared VPC와 Connectivity](./governance/04-shared-vpc-and-connectivity.md) | [퀴즈](./quizzes/governance/04-shared-vpc-and-connectivity-quiz.md)
+6. [Data·Security 경계](./governance/05-data-security-boundaries.md) | [퀴즈](./quizzes/governance/05-data-security-boundaries-quiz.md)
+7. [의사결정 프레임워크와 POC 설계](./governance/06-decision-framework-and-poc.md) | [퀴즈](./quizzes/governance/06-decision-framework-and-poc-quiz.md)
+
 ### Platform Engineering
 0. [Platform Engineering 개요](./platform-engineering/00-platform-engineering-overview.md) | [퀴즈](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [퀴즈](./quizzes/platform-engineering/01-helm-quiz.md)
@@ -355,6 +364,7 @@
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [Zonal 클러스터 운영 전략](./ops/15-zonal-operations-guide.md) | [퀴즈](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 16. [트러블슈팅 플레이북](./ops/16-troubleshooting-playbook.md) | [퀴즈](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
+17. [EKS Spot 운영 적용 실험과 결과 판정](./ops/17-spot-production-experiments.md) | [퀴즈](./quizzes/ops/17-spot-production-experiments-quiz.md)
 
 ## 실습 가이드
 

@@ -1,45 +1,58 @@
 # Fine-Tuning Qwen for PII with SageMaker AI
 
-> **Last Updated**: September 2, 2026
+> Documentation reviewed: 2026-09-12. AWS provisioning outcomes refer to the historical 2026-09-01 experiment.
 
-## Overview
+This guide describes a QLoRA experiment design and component-tested package for
+Qwen/Qwen3-30B-A3B-Instruct-2507. Managed SageMaker Training Jobs and ephemeral EKS
+GPU Jobs are configured to share source, synthetic data and evaluation code.
+**It is not evidence of successful end-to-end GPU training on either path.**
 
-This guidebook applies QLoRA to `Qwen/Qwen3-30B-A3B-Instruct-2507` so the model extracts PII entities from a document and deterministic code replaces the original values with tokens such as `[PERSON_1]` and `[EMAIL_1]`.
+The pinned PyTorch 2.8 DLC reached end of patch on 2026-08-06, so **resource creation and GPU execution are blocked**. Upgrade the image/dependency cohort; the [execution chapter](03-sagemaker-mlflow-execution.md) explains local checks and resumption requirements.
 
-The same source code and synthetic dataset support two execution paths:
+The model emits `TYPE<TAB>ORIGINAL` candidates; Python code validates, replaces and
+restores them. Deterministic replacement or successful round trips do not guarantee
+complete PII detection, masking or anonymity. Evaluate missed and misclassified
+entities separately.
 
-- **Managed path**: SageMaker AI Training Job + SageMaker MLflow App
-- **Kubernetes path**: ephemeral Amazon EKS GPU Job + MLflow on EKS
+## Five-part learning path
 
-The model does not generate the final masked document. Its responsibility ends at emitting one `TYPE<TAB>ORIGINAL` entity per line; tested Python code performs validation, ordering, replacement, and round-trip restoration.
+| Part | Topic |
+| --- | --- |
+| [1](01-platform-architecture.md) | Platform responsibilities and target architecture |
+| [2](02-pii-data-tokenization.md) | Synthetic data, replacement and evaluation limits |
+| [3](03-sagemaker-mlflow-execution.md) | SageMaker/EKS execution contracts and MLflow |
+| [4](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | Unified Studio domains/projects/membership |
+| [5](04-validation-results.md) | What ran and what was not measured |
 
-## Five-Part Learning Path
+## Validation record
 
-| Part | Topic | Core Question |
-|---|---|---|
-| [Part 1](01-platform-architecture.md) | Platform architecture | How should SageMaker AI, EKS, MLflow, and Unified Studio divide responsibilities? |
-| [Part 2](02-pii-data-tokenization.md) | PII data and tokenization | How do you build training data without real PII and measure leakage? |
-| [Part 3](03-sagemaker-mlflow-execution.md) | SageMaker AI and MLflow execution | How does one training contract run on managed and EKS paths? |
-| [Part 4](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | Unified Studio governance | How should domains, project profiles, projects, and membership be operated? |
-| [Part 5](04-validation-results.md) | Factual validation results | What ran, where did it stop, and what was not measured? |
+| Evidence | Scope |
+| --- | --- |
+| 2026-09-12 local recheck | Initial 30 tests followed by added tokenization, evaluation, execution, and cleanup regressions; no GPU or AWS API execution |
+| 2026-09-01 AWS record | Quotas, MLflow App and project-provisioning failure paths |
+| Unexecuted in that record | SageMaker Training Job / EKS GPU Job |
+| Historical cleanup | Experiment App/S3/IAM resources reclaimed; one Unified Studio project remained |
 
-## Current Validation Status
+The current AWS account was not queried, so this does not assert that the project
+still exists. Verify current ownership/inventory before resuming. Fine-tuned F1,
+GPU peak memory, training duration and cost are not reported as measured results.
 
-| Status | Verified Scope |
-|---|---|
-| **Validated locally** | synthetic dataset, tokenizer, aggregate metrics, SageMaker/EKS request contracts |
-| **Observed in AWS** | quotas, SageMaker MLflow App, Unified Studio project-creation failure paths |
-| **Not executed** | SageMaker Training Job, EKS GPU Job |
-| **Blocked** | cleanup of one Unified Studio project |
+## Experiment policy and limits
 
-The September 1, 2026 AWS validation stopped before GPU training. Consequently, this guidebook does not report a fine-tuned F1, training duration, GPU memory, or GPU cost as a measured result.
+- Use seed-42 synthetic data and record split hashes.
+- Design ordinary logs/MLflow to exclude source text, extracted values, mappings
+  and raw completions. Validate autologging/tracing and artifact contents during actual execution.
+- Private inventory can retain resource IDs/ARNs needed for cleanup; public reports summarize them.
+  Treat presigned URLs as temporary access credentials.
+- Base smoke/full progression on reviewed execution results and limit cleanup to this run's owned resources.
+- Model IDs, seeds and direct dependency pins do not ensure complete reproducibility
+  or equivalent security across environments.
 
-## Safety Rules
+Example package: `examples/ai-ml/qwen-pii-finetuning/`.
 
-1. Use only fully synthetic data generated with seed `42`.
-2. Never write source text, extracted values, token mappings, or raw completions to stdout, CloudWatch, or MLflow parameters/tags.
-3. Log only configuration, versions, dataset hashes, aggregate metrics, and non-sensitive artifacts to MLflow.
-4. Do not begin a full run until a smoke run passes.
-5. Complete inventory-based teardown and verify that no experiment resources remain.
+## References
 
-The runnable package lives at `examples/ai-ml/qwen-pii-finetuning/`.
+- [Qwen model card](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507)
+- [QLoRA paper](https://arxiv.org/abs/2305.14314)
+- [Experiment configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/config/experiment.yaml)
+- [Recorded provisioning result](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json)

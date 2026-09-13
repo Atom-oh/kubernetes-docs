@@ -1,0 +1,180 @@
+{
+  "status": "passed",
+  "currentReverification": {
+    "status": "passed",
+    "recoveredAfterHostRestart": true,
+    "chart": "1.22.0",
+    "airflow": "3.3.1",
+    "variants": [
+      {
+        "name": "kubernetes",
+        "objects": 24,
+        "valuesSchema": "passed",
+        "scaledObjectChecks": "passed"
+      },
+      {
+        "name": "celery",
+        "objects": 26,
+        "valuesSchema": "passed",
+        "scaledObjectChecks": "passed"
+      },
+      {
+        "name": "mixed",
+        "objects": 26,
+        "valuesSchema": "passed",
+        "scaledObjectChecks": "passed"
+      },
+      {
+        "name": "aliased-chart-default",
+        "objects": 26,
+        "valuesSchema": "passed",
+        "scaledObjectChecks": "passed"
+      },
+      {
+        "name": "stateful",
+        "objects": 26,
+        "valuesSchema": "passed",
+        "scaledObjectChecks": "passed"
+      }
+    ],
+    "files": [
+      "ko/data-on-eks/airflow/02-helm-deployment.md",
+      "ko/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
+      "en/data-on-eks/airflow/02-helm-deployment.md",
+      "en/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md"
+    ],
+    "fences": 18,
+    "questions": 36,
+    "limits": "No deployment/database connection/secret creation. Prior24PostgreSQL18.3WASM query cases were completed before restart; raw temporary artifacts were lost and are not represented as rerun here."
+  },
+  "viewerChecks": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "8e2403c8ee8d9938f4ca9ccc2861149a89ad8daee8ea756f29466a3eeafac4ca"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "8e2403c8ee8d9938f4ca9ccc2861149a89ad8daee8ea756f29466a3eeafac4ca"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "8e2403c8ee8d9938f4ca9ccc2861149a89ad8daee8ea756f29466a3eeafac4ca"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "a4dd9c6798674ca62065b478521ff0bcd84e2f6ed3cbaa212ea9d1ce7ba19195"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "a4dd9c6798674ca62065b478521ff0bcd84e2f6ed3cbaa212ea9d1ce7ba19195"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "a4dd9c6798674ca62065b478521ff0bcd84e2f6ed3cbaa212ea9d1ce7ba19195"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "relativeLinks": 12,
+  "pngVisualInspection": "Both current Korean/English figures inspected; labels and cards reflect reviewed guidance without fixed latency/no-idle-cost claims.",
+  "historicalSqlVerification": {
+    "engine": "PostgreSQL18.3/PGlite0.5.8WASM",
+    "cases": 24,
+    "result": "passed before instance restart; recorded in parent checkpoint and prior tool output",
+    "rawTemporaryEvidenceLostOnRestart": true,
+    "rerunClaimed": false
+  },
+  "limits": "NoEKSdeployment,secretcreation,externalDB/TLSconnection,AirflowtaskexecutionorKEDAcontrolleroperations. Reverification is bounded local chart/schema/fence/figure work."
+}

@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana Tempo 아키텍처",
+    "output": "ko-observability-tracing-01-tempo-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "write-path",
+        "label": "쓰기 경로",
+        "focus": [
+          "app",
+          "otel",
+          "dist",
+          "ing",
+          "s3"
+        ],
+        "note": "애플리케이션의 트레이스가 OTEL Collector를 거쳐 Distributor→Ingester로 들어가 S3에 블록으로 저장된다."
+      },
+      {
+        "id": "read-path",
+        "label": "조회 경로",
+        "focus": [
+          "grafana",
+          "qfront",
+          "querier",
+          "s3",
+          "cache"
+        ],
+        "note": "Grafana의 TraceQL 조회를 Query Frontend가 분할하고 Querier가 S3와 캐시에서 검색한다."
+      },
+      {
+        "id": "background",
+        "label": "메트릭·압축",
+        "focus": [
+          "ing",
+          "metrics",
+          "grafana",
+          "compact",
+          "s3"
+        ],
+        "note": "Metrics Generator는 트레이스에서 RED 메트릭을 만들고, Compactor는 저장된 블록을 압축하고 보존 정책을 적용한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "애플리케이션",
+      "sublabel": "트레이스 소스",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "backend",
+      "label": "OTEL Collector",
+      "sublabel": "수집·전달",
+      "pos": [
+        270,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "dist",
+      "type": "backend",
+      "label": "Distributor",
+      "sublabel": "수신·유효성 검사·해싱",
+      "pos": [
+        490,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ing",
+      "type": "backend",
+      "label": "Ingester",
+      "sublabel": "버퍼링·블록 생성",
+      "pos": [
+        710,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metrics Generator",
+      "sublabel": "RED 메트릭 생성",
+      "pos": [
+        490,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "compact",
+      "type": "backend",
+      "label": "Compactor",
+      "sublabel": "블록 압축·보존 정책",
+      "pos": [
+        930,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "qfront",
+      "type": "backend",
+      "label": "Query Frontend",
+      "sublabel": "쿼리 분할·캐싱·대기열",
+      "pos": [
+        710,
+        370
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "querier",
+      "type": "backend",
+      "label": "Querier",
+      "sublabel": "저장소에서 트레이스 검색",
+      "pos": [
+        930,
+        370
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 / Object Storage",
+      "sublabel": "트레이스 블록",
+      "pos": [
+        1150,
+        230
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Memcached / Redis",
+      "sublabel": "조회 캐시",
+      "pos": [
+        1150,
+        510
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "TraceQL 조회·대시보드",
+      "pos": [
+        710,
+        510
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "데이터 수신",
+      "wraps": [
+        "app",
+        "otel"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tempo 클러스터",
+      "wraps": [
+        "dist",
+        "ing",
+        "metrics",
+        "compact",
+        "qfront",
+        "querier"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스토리지",
+      "wraps": [
+        "s3",
+        "cache"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "시각화",
+      "wraps": [
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-otel",
+      "from": "app",
+      "to": "otel",
+      "label": "OTLP · Jaeger · Zipkin",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "otel-dist",
+      "from": "otel",
+      "to": "dist",
+      "label": "OTLP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dist-ing",
+      "from": "dist",
+      "to": "ing",
+      "label": "해시 기반 분배",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ing-s3",
+      "from": "ing",
+      "to": "s3",
+      "label": "블록 저장",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ing-metrics",
+      "from": "ing",
+      "to": "metrics",
+      "label": "메트릭 생성"
+    },
+    {
+      "id": "metrics-grafana",
+      "from": "metrics",
+      "to": "grafana",
+      "label": "RED 메트릭"
+    },
+    {
+      "id": "grafana-qfront",
+      "from": "grafana",
+      "to": "qfront",
+      "label": "TraceQL",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "qfront-querier",
+      "from": "qfront",
+      "to": "querier",
+      "label": "쿼리 분할"
+    },
+    {
+      "id": "querier-s3",
+      "from": "querier",
+      "to": "s3",
+      "label": "검색"
+    },
+    {
+      "id": "querier-cache",
+      "from": "querier",
+      "to": "cache",
+      "label": "캐시"
+    },
+    {
+      "id": "compact-s3",
+      "from": "compact",
+      "to": "s3",
+      "label": "압축 / 최적화",
+      "variant": "dashed",
+      "labelDy": 16
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "쓰기 경로",
+      "items": [
+        "Distributor: 추적 데이터 수신, 유효성 검사, 해싱 (수평 확장)",
+        "Ingester: 메모리 버퍼링 후 블록을 생성해 S3에 저장 (복제로 수평 확장)"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "조회 경로",
+      "items": [
+        "Query Frontend: 쿼리 분할, 캐싱, 대기열 관리 (수평 확장)",
+        "Querier: 저장소와 캐시에서 트레이스 검색 (수평 확장)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "백그라운드 컴포넌트",
+      "items": [
+        "Metrics Generator: 추적에서 RED 메트릭 생성 (수평 확장)",
+        "Compactor: 블록 압축, 보존 정책 적용 (단일 인스턴스)"
+      ]
+    }
+  ]
+}

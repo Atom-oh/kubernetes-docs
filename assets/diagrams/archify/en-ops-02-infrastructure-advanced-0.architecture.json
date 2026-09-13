@@ -2,174 +2,181 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "NLB-Based Blue/Green Architecture",
+    "title": "Shared NLB and per-cluster TLS targets",
     "output": "en-ops-02-infrastructure-advanced-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1280,
-      780
+      1240,
+      560
     ],
     "locale": "en"
   },
   "components": [
     {
-      "id": "r53",
-      "type": "cloud",
-      "label": "Route 53",
-      "sublabel": "api.example.com",
+      "id": "users",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "New connections",
       "pos": [
-        40,
-        340
+        35,
+        235
       ],
       "size": [
-        200,
-        80
+        150,
+        76
       ]
     },
     {
-      "id": "nlb",
+      "id": "lb",
       "type": "cloud",
-      "label": "NLB (shared)",
-      "sublabel": "Weights 80 / 20",
+      "label": "NLB · TCP 443",
+      "sublabel": "Cross-zone · client SG",
       "pos": [
-        290,
-        340
+        265,
+        235
       ],
       "size": [
-        200,
-        80
+        220,
+        76
       ]
     },
     {
-      "id": "tgblue",
+      "id": "tga",
       "type": "cloud",
-      "label": "Target Group (Blue)",
-      "sublabel": "weight 80%",
+      "label": "Blue target group",
+      "sublabel": "traffic_weights.blue",
       "pos": [
-        590,
+        610,
         110
       ],
       "size": [
-        240,
-        80
+        210,
+        76
       ]
     },
     {
-      "id": "blue",
-      "type": "backend",
-      "label": "EKS cluster (Blue)",
-      "sublabel": "ap-northeast-2a · pods · EBS",
+      "id": "tgc",
+      "type": "cloud",
+      "label": "Green target group",
+      "sublabel": "traffic_weights.green",
       "pos": [
-        910,
+        610,
+        360
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "cla",
+      "type": "backend",
+      "label": "Blue TLS Pods",
+      "sublabel": "Service 443 → Pod 8443",
+      "pos": [
+        960,
         110
       ],
       "size": [
-        280,
-        80
+        230,
+        76
       ]
     },
     {
-      "id": "tggreen",
-      "type": "cloud",
-      "label": "Target Group (Green)",
-      "sublabel": "weight 20%",
-      "pos": [
-        590,
-        570
-      ],
-      "size": [
-        240,
-        80
-      ]
-    },
-    {
-      "id": "green",
+      "id": "clc",
       "type": "backend",
-      "label": "EKS cluster (Green)",
-      "sublabel": "ap-northeast-2c · pods · EBS",
+      "label": "Green TLS Pods",
+      "sublabel": "Service 443 → Pod 8443",
       "pos": [
-        910,
-        570
+        960,
+        360
       ],
       "size": [
-        280,
-        80
+        230,
+        76
       ]
     }
   ],
   "boundaries": [
     {
-      "kind": "region",
-      "label": "VPC 10.0.0.0/16",
+      "kind": "security-group",
+      "label": "Blue cluster",
       "wraps": [
-        "tgblue",
-        "blue",
-        "tggreen",
-        "green"
+        "cla"
       ],
-      "pad": 38
+      "pad": 22
+    },
+    {
+      "kind": "security-group",
+      "label": "Green cluster",
+      "wraps": [
+        "clc"
+      ],
+      "pad": 22
     }
   ],
   "connections": [
     {
-      "id": "r53-nlb",
-      "from": "r53",
-      "to": "nlb",
-      "label": "DNS",
-      "labelDy": 62
+      "id": "client-lb",
+      "from": "users",
+      "to": "lb",
+      "label": "Requests",
+      "labelDy": -22
     },
     {
-      "id": "nlb-blue",
-      "from": "nlb",
-      "to": "tgblue",
-      "label": "weight 80%"
+      "id": "lb-a",
+      "from": "lb",
+      "to": "tga",
+      "label": "weight B"
     },
     {
-      "id": "nlb-green",
-      "from": "nlb",
-      "to": "tggreen",
-      "label": "weight 20%"
+      "id": "lb-c",
+      "from": "lb",
+      "to": "tgc",
+      "label": "weight G"
     },
     {
-      "id": "tg-blue",
-      "from": "tgblue",
-      "to": "blue",
-      "label": "registers"
+      "id": "a-workers",
+      "from": "tga",
+      "to": "cla",
+      "label": "TLS 8443",
+      "labelDy": -22
     },
     {
-      "id": "tg-green",
-      "from": "tggreen",
-      "to": "green",
-      "label": "registers"
+      "id": "c-workers",
+      "from": "tgc",
+      "to": "clc",
+      "label": "TLS 8443",
+      "labelDy": -22
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "One shared NLB, two target groups",
+      "title": "Ports and ownership",
       "items": [
-        "A single NLB splits traffic across the Blue and Green target groups by weight",
-        "DNS never changes, so there is no TTL propagation to wait out",
-        "Weights take effect immediately at the listener rule level"
+        "NLB TCP443 → Pod TLS8443; no HTTP redirect",
+        "Separate LBC TGB registers targets and backend rules",
+        "Application provides TLS certificate and HTTPS /healthz"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Shift procedure",
+      "title": "Staged transition",
       "items": [
-        "Bring up the Green cluster and get its target group passing health checks",
-        "Raise the Green weight in stages: 20% → 50% → 100%",
-        "If the metrics stay clean, drop Blue to 0 and tear it down later"
+        "Weights are relative 0..999; total100 is not required",
+        "Weight zero requires connection/retry validation",
+        "Verify flows, errors, latency, and capacity after change"
       ]
     },
     {
       "dot": "amber",
-      "title": "Watch out for",
+      "title": "Other layer requirements",
       "items": [
-        "Each cluster has its own EBS volumes, so stateful workloads need a separate migration plan",
-        "If Blue and Green share a database, verify schema compatibility first",
-        "Rollback is just reverting the weights, so do not delete Blue too early"
+        "DNS selection needs two independent LB endpoints",
+        "Automation proposes by default; no atomicity with external writers",
+        "Plan data replication, schema compatibility, and recovery separately"
       ]
     }
   ]

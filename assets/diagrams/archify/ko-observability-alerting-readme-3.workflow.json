@@ -1,0 +1,76 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "알림 피로 방지",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "vicious",
+        "label": "악순환",
+        "focus": ["excessive", "ignored", "missed", "incident", "more_alerts"],
+        "note": "알림이 너무 많으면 무시되고 중요 알림을 놓치며, 인시던트마다 알림이 더 추가된다."
+      },
+      {
+        "id": "prevention",
+        "label": "개선 순환",
+        "focus": ["refine", "thresholds", "grouping", "review"],
+        "note": "알림을 적절한 임계값과 그룹화로 정제하고 정기 리뷰로 유지하면 악순환이 끊어진다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "security": { "label": "알림 피로 단계" },
+        "backend": { "label": "개선 단계" }
+      }
+    }
+  },
+  "lanes": [
+    { "id": "fatigue", "label": "알림 피로 — 악순환", "variant": "exception" },
+    { "id": "prevent", "label": "예방 — 개선 순환" }
+  ],
+  "mainPath": ["refine", "thresholds", "grouping", "review"],
+  "nodes": [
+    { "id": "excessive", "lane": "fatigue", "col": 0, "width": 160, "type": "security", "label": "과도한 알림", "sublabel": "너무 많고 소음이 심함" },
+    { "id": "ignored", "lane": "fatigue", "col": 1, "width": 150, "type": "security", "label": "알림 무시", "sublabel": "담당자가 무감각해짐" },
+    { "id": "missed", "lane": "fatigue", "col": 2, "width": 150, "type": "security", "label": "중요 알림 누락", "sublabel": "중요한 신호를 놓침" },
+    { "id": "incident", "lane": "fatigue", "col": 3, "width": 150, "type": "security", "label": "인시던트 발생", "sublabel": "늦은 감지" },
+    { "id": "more_alerts", "lane": "fatigue", "col": 4, "width": 160, "type": "security", "label": "더 많은 알림 추가", "sublabel": "사후 대응형 규칙" },
+    { "id": "refine", "lane": "prevent", "col": 0, "width": 160, "type": "backend", "label": "알림 정제", "sublabel": "실행 가능한 알림", "tag": "시작점" },
+    { "id": "thresholds", "lane": "prevent", "col": 1, "width": 150, "type": "backend", "label": "적절한 임계값", "sublabel": "너무 민감하지 않게" },
+    { "id": "grouping", "lane": "prevent", "col": 2, "width": 150, "type": "backend", "label": "알림 그룹화", "sublabel": "관련 알림을 하나로" },
+    { "id": "review", "lane": "prevent", "col": 3, "width": 150, "type": "backend", "label": "정기적 리뷰", "sublabel": "불필요한 알림 제거" }
+  ],
+  "edges": [
+    { "from": "excessive", "to": "ignored", "variant": "security", "route": "straight" },
+    { "from": "ignored", "to": "missed", "variant": "security", "route": "straight" },
+    { "from": "missed", "to": "incident", "variant": "security", "route": "straight" },
+    { "from": "incident", "to": "more_alerts", "variant": "security", "route": "straight" },
+    { "from": "more_alerts", "to": "excessive", "label": "순환 반복", "role": "return", "variant": "dashed" },
+    { "from": "refine", "to": "thresholds", "route": "straight" },
+    { "from": "thresholds", "to": "grouping", "route": "straight" },
+    { "from": "grouping", "to": "review", "route": "straight" },
+    { "from": "review", "to": "refine", "label": "순환 반복", "role": "return", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "알림 피로가 생기는 과정",
+      "items": [
+        "알림이 너무 많으면 중요한 알림을 놓치게 된다",
+        "놓친 인시던트마다 사후 대응형 알림이 추가되는 경향이 있다",
+        "늘어난 소음이 다음 번 알림 무시로 이어진다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "알림 피로 방지 전략",
+      "items": [
+        "임계값 조정: 너무 민감하지 않게 설정",
+        "알림 그룹화와 억제(Inhibition): 관련 알림을 묶고 상위 알림 발생 시 하위 알림 억제",
+        "정기적 리뷰와 점진적 도입: 불필요한 알림 제거, 새 알림은 낮은 심각도로 시작"
+      ]
+    }
+  ]
+}

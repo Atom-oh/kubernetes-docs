@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/sagemaker-ai/04-validation-results.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "92a5084908719fb583cd6697adab83a35e31c2e3bd679cbf4e4fc66ed7da7531",
+    "summary": "Full read, corrected against implementation/historical primary evidence, validated with 100CPU tests and targetedMarkdowncompile. See sagemaker-results-validation.json. Publicationreviewpending."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "56a2361f816d02796ca88c7b0a340940e02edd5b964a50681dd7e3a0d05f153d",
+    "summary": "Full read, corrected against implementation/historical primary evidence, validated with 100CPU tests and targetedMarkdowncompile. See sagemaker-results-validation.json. Publicationreviewpending."
+  },
+  {
+    "path": "en/ai-ml/sagemaker-ai/04-validation-results.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "6d5f6fcd7120d997b8900ce0342fb3acf77bcd10914bd2fad5a24752751014a9",
+    "summary": "Full read, corrected against implementation/historical primary evidence, validated with 100CPU tests and targetedMarkdowncompile. See sagemaker-results-validation.json. Publicationreviewpending."
+  },
+  {
+    "path": "en/quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "0da9c584015bd9ed91884a65a70437af4286b59859280ee4163e0b18884d188f",
+    "summary": "Full read, corrected against implementation/historical primary evidence, validated with 100CPU tests and targetedMarkdowncompile. See sagemaker-results-validation.json. Publicationreviewpending."
+  }
+]

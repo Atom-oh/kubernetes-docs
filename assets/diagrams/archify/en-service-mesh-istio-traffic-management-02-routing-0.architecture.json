@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VirtualService Routing",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-02-routing-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "request"
+        },
+        "backend": {
+          "label": "routing rule"
+        },
+        "cloud": {
+          "label": "destination"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "api-v1",
+        "label": "Rule 1 · URI",
+        "focus": [
+          "request",
+          "rule1",
+          "svc-api"
+        ],
+        "note": "Requests matching uri prefix \"/api/v1\" are routed to api-v1 by the first rule."
+      },
+      {
+        "id": "mobile",
+        "label": "Rule 2 · Header",
+        "focus": [
+          "request",
+          "rule2",
+          "svc-mobile"
+        ],
+        "note": "Requests whose user-agent header matches the Mobile regex are routed to mobile-app."
+      },
+      {
+        "id": "default",
+        "label": "Rule 3 · Default fallback",
+        "focus": [
+          "request",
+          "rule3",
+          "svc-web"
+        ],
+        "note": "The last rule has no match and sends every remaining request to web-app."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "request",
+      "type": "external",
+      "label": "Incoming Request",
+      "sublabel": "myapp.example.com",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rule1",
+      "type": "backend",
+      "label": "Match Condition 1",
+      "sublabel": "uri prefix \"/api/v1\"",
+      "tag": "Rule 1",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "rule2",
+      "type": "backend",
+      "label": "Match Condition 2",
+      "sublabel": "headers user-agent ~ Mobile",
+      "tag": "Rule 2",
+      "pos": [
+        300,
+        250
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "rule3",
+      "type": "backend",
+      "label": "Match Condition 3 · Default",
+      "sublabel": "no match (catch-all)",
+      "tag": "Rule 3",
+      "pos": [
+        300,
+        410
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "svc-api",
+      "type": "cloud",
+      "label": "api-v1",
+      "sublabel": "API v1 Service",
+      "pos": [
+        680,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-mobile",
+      "type": "cloud",
+      "label": "mobile-app",
+      "sublabel": "Mobile App Service",
+      "pos": [
+        680,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-web",
+      "type": "cloud",
+      "label": "web-app",
+      "sublabel": "Web App Service",
+      "pos": [
+        680,
+        410
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VirtualService routing rules (evaluated top → bottom)",
+      "wraps": [
+        "rule1",
+        "rule2",
+        "rule3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "req-rule1",
+      "from": "request",
+      "to": "rule1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "req-rule2",
+      "from": "request",
+      "to": "rule2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "req-rule3",
+      "from": "request",
+      "to": "rule3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rule1-api",
+      "from": "rule1",
+      "to": "svc-api",
+      "label": "match → route"
+    },
+    {
+      "id": "rule2-mobile",
+      "from": "rule2",
+      "to": "svc-mobile",
+      "label": "match → route"
+    },
+    {
+      "id": "rule3-web",
+      "from": "rule3",
+      "to": "svc-web",
+      "label": "default route"
+    }
+  ]
+}

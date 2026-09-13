@@ -1,0 +1,326 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Prometheus Architecture",
+    "locale": "en",
+    "output": "en-observability-metrics-01-prometheus-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      680
+    ],
+    "views": [
+      {
+        "id": "collect",
+        "label": "Collection",
+        "focus": [
+          "sd",
+          "exporters",
+          "shortjobs",
+          "pushgateway",
+          "retrieval",
+          "tsdb"
+        ],
+        "note": "Service discovery finds targets; Retrieval scrapes their /metrics endpoints and writes to the TSDB."
+      },
+      {
+        "id": "query",
+        "label": "Query",
+        "focus": [
+          "tsdb",
+          "http",
+          "vis"
+        ],
+        "note": "The HTTP Server exposes TSDB data through the PromQL query API to Grafana, API clients, and the Prometheus UI."
+      },
+      {
+        "id": "alert",
+        "label": "Alerting",
+        "focus": [
+          "tsdb",
+          "rules",
+          "alertmanager",
+          "channels"
+        ],
+        "note": "Alert Rules evaluate stored data, send fired alerts to Alertmanager, which routes them to notification channels."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "exporters",
+      "type": "external",
+      "label": "Jobs / Exporters",
+      "sublabel": "/metrics endpoint",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "shortjobs",
+      "type": "external",
+      "label": "Short-lived Jobs",
+      "sublabel": "batch / cron",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pushgateway",
+      "type": "backend",
+      "label": "Pushgateway",
+      "sublabel": "relays pushed metrics",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sd",
+      "type": "external",
+      "label": "Service Discovery",
+      "sublabel": "K8s · DNS · File · Consul",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "retrieval",
+      "type": "backend",
+      "label": "Retrieval",
+      "sublabel": "metric collection (pull)",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tsdb",
+      "type": "database",
+      "label": "TSDB",
+      "sublabel": "time series DB",
+      "pos": [
+        680,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "http",
+      "type": "backend",
+      "label": "HTTP Server",
+      "sublabel": "query API (PromQL)",
+      "pos": [
+        890,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "rules",
+      "type": "backend",
+      "label": "Alert Rules",
+      "sublabel": "alert rule evaluation",
+      "pos": [
+        890,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "vis",
+      "type": "frontend",
+      "label": "Visualization / API",
+      "sublabel": "Grafana · API · UI",
+      "pos": [
+        1110,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "grouping · routing",
+      "pos": [
+        1110,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "channels",
+      "type": "external",
+      "label": "Notification Channels",
+      "sublabel": "Email · Slack · PagerDuty",
+      "pos": [
+        1110,
+        570
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Prometheus Server",
+      "wraps": [
+        "retrieval",
+        "tsdb",
+        "http",
+        "rules"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Scrape Targets",
+      "wraps": [
+        "exporters",
+        "shortjobs",
+        "pushgateway"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sd-retrieval",
+      "from": "sd",
+      "to": "retrieval",
+      "label": "discover"
+    },
+    {
+      "id": "scrape-exporters",
+      "from": "retrieval",
+      "to": "exporters",
+      "label": "scrape",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "push-pushgateway",
+      "from": "shortjobs",
+      "to": "pushgateway",
+      "label": "push",
+      "variant": "dashed"
+    },
+    {
+      "id": "scrape-pushgateway",
+      "from": "retrieval",
+      "to": "pushgateway",
+      "label": "scrape",
+      "variant": "dashed"
+    },
+    {
+      "id": "retrieval-tsdb",
+      "from": "retrieval",
+      "to": "tsdb",
+      "label": "store",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tsdb-http",
+      "from": "tsdb",
+      "to": "http",
+      "label": "read",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tsdb-rules",
+      "from": "tsdb",
+      "to": "rules",
+      "label": "evaluate"
+    },
+    {
+      "id": "http-vis",
+      "from": "http",
+      "to": "vis",
+      "label": "PromQL",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rules-alertmanager",
+      "from": "rules",
+      "to": "alertmanager",
+      "label": "alerts"
+    },
+    {
+      "id": "alertmanager-channels",
+      "from": "alertmanager",
+      "to": "channels",
+      "label": "route",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Collection",
+      "items": [
+        "Discover scrape targets via service discovery (Kubernetes API, DNS, files, etc.)",
+        "Scrape metrics from each target's /metrics endpoint over HTTP (pull)",
+        "Short-lived jobs push to the Pushgateway, which Retrieval scrapes in turn"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Storage and Query",
+      "items": [
+        "Store collected metrics in the local TSDB",
+        "Serve PromQL queries over the HTTP API to Grafana, API clients, and the Prometheus UI"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Alerting",
+      "items": [
+        "Evaluate alert and recording rules against stored data",
+        "Send fired alerts to Alertmanager, which routes them to Email · Slack · PagerDuty"
+      ]
+    }
+  ]
+}

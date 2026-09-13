@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Inhibition Concept",
+    "locale": "en",
+    "output": "en-observability-alerting-01-alertmanager-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "without",
+        "label": "Without inhibition",
+        "focus": [
+          "l-nodedown",
+          "l-podnotready",
+          "l-serviceunavailable",
+          "l-receiver"
+        ],
+        "note": "Without an inhibit rule, NodeDown and the PodNotReady and ServiceUnavailable alerts it causes are all delivered to the receiver."
+      },
+      {
+        "id": "with",
+        "label": "With inhibition",
+        "focus": [
+          "r-nodedown",
+          "r-podnotready",
+          "r-serviceunavailable",
+          "r-receiver",
+          "r-inhibited"
+        ],
+        "note": "NodeDown acts as the source_match alert, so the two related target_match alerts are blocked and only NodeDown is delivered."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "l-nodedown",
+      "type": "messagebus",
+      "label": "NodeDown",
+      "sublabel": "alert",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "l-podnotready",
+      "type": "messagebus",
+      "label": "PodNotReady",
+      "sublabel": "alert",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "l-serviceunavailable",
+      "type": "messagebus",
+      "label": "ServiceUnavailable",
+      "sublabel": "alert",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "l-receiver",
+      "type": "external",
+      "label": "Receiver",
+      "sublabel": "receives all 3",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        160,
+        296
+      ]
+    },
+    {
+      "id": "r-nodedown",
+      "type": "messagebus",
+      "label": "NodeDown",
+      "sublabel": "source_match alert",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "source"
+    },
+    {
+      "id": "r-podnotready",
+      "type": "messagebus",
+      "label": "PodNotReady",
+      "sublabel": "target_match alert",
+      "pos": [
+        620,
+        200
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "r-serviceunavailable",
+      "type": "messagebus",
+      "label": "ServiceUnavailable",
+      "sublabel": "target_match alert",
+      "pos": [
+        620,
+        320
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "r-receiver",
+      "type": "external",
+      "label": "Receiver",
+      "sublabel": "receives NodeDown only",
+      "pos": [
+        910,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "r-inhibited",
+      "type": "security",
+      "label": "Inhibited",
+      "sublabel": "2 blocked",
+      "pos": [
+        910,
+        200
+      ],
+      "size": [
+        160,
+        176
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Without inhibition",
+      "wraps": [
+        "l-nodedown",
+        "l-podnotready",
+        "l-serviceunavailable",
+        "l-receiver"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "With inhibition",
+      "wraps": [
+        "r-nodedown",
+        "r-podnotready",
+        "r-serviceunavailable",
+        "r-receiver",
+        "r-inhibited"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "l-nodedown-send",
+      "from": "l-nodedown",
+      "to": "l-receiver",
+      "label": "sent",
+      "labelAt": [
+        232,
+        108
+      ]
+    },
+    {
+      "id": "l-podnotready-send",
+      "from": "l-podnotready",
+      "to": "l-receiver",
+      "label": "sent",
+      "labelAt": [
+        232,
+        228
+      ]
+    },
+    {
+      "id": "l-serviceunavailable-send",
+      "from": "l-serviceunavailable",
+      "to": "l-receiver",
+      "label": "sent",
+      "labelAt": [
+        232,
+        348
+      ]
+    },
+    {
+      "id": "r-nodedown-send",
+      "from": "r-nodedown",
+      "to": "r-receiver",
+      "label": "sent",
+      "variant": "emphasis",
+      "labelAt": [
+        812,
+        108
+      ]
+    },
+    {
+      "id": "r-podnotready-inhibit",
+      "from": "r-podnotready",
+      "to": "r-inhibited",
+      "label": "inhibited",
+      "variant": "dashed",
+      "labelAt": [
+        812,
+        228
+      ]
+    },
+    {
+      "id": "r-serviceunavailable-inhibit",
+      "from": "r-serviceunavailable",
+      "to": "r-inhibited",
+      "label": "inhibited",
+      "variant": "dashed",
+      "labelAt": [
+        812,
+        348
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Inhibit rule example",
+      "items": [
+        "source_match: alertname: NodeDown",
+        "target_match_re: alertname: ^(PodNotReady|PodCrashLooping|ContainerOOMKilled)$",
+        "equal: ['node'] — only alerts sharing the same node label are inhibited"
+      ]
+    }
+  ]
+}

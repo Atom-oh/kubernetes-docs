@@ -2,16 +2,16 @@
 
 1. What does this guidebook's `llms.txt` file contain, and what is it for?
    - A) The full Korean content in markdown, for pasting whole into a context window
-   - B) An index of every content page (title + URL), for letting an LLM pick and fetch only the pages it needs
+   - B) An index of each content page's title, summary, and raw Markdown URL, for letting an LLM pick and fetch only the pages it needs
    - C) A collection of quiz answer keys, for automated grading
    - D) A bundle of diagram PNGs, for building slides
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) An index of every content page (title + URL), for letting an LLM pick and fetch only the pages it needs**
+**Answer: B) An index of each content page's title, summary, and raw Markdown URL, for letting an LLM pick and fetch only the pages it needs**
 
 **Explanation:**
-In the endpoints table, `llms.txt` is the "Index of every content page (title + URL)", used for "Letting an LLM pick and fetch only the pages it needs". The full markdown content lives in the separate `llms-full-ko.txt` / `llms-full-en.txt` files. The index follows the standard llms.txt layout — `# title` / `>` summary / `## Docs (한국어)` / `## Docs (English)` / `## Optional` — and each entry is labeled with its group and title, so the taxonomy survives even in a flat list. Quizzes and labs are not listed page by page; `## Optional` carries one quiz-index link and one lab-index link per language.
+In the endpoints table, `llms.txt` is an index of each content page's group, title, summary, and raw Markdown URL, used for letting an LLM pick and fetch only the pages it needs. Each content link uses `/llms/<locale>/<source path>.md`, so the model reads the document source without a rendered page's sidebar or scripts. The full markdown content lives in the separate `llms-full-ko.txt` / `llms-full-en.txt` files. Quizzes and labs are not listed page by page; `## Optional` carries one quiz-index link and one lab-index link per language.
 
 </details>
 
@@ -26,22 +26,22 @@ In the endpoints table, `llms.txt` is the "Index of every content page (title + 
 **Answer: B) Korean and English — two files (`llms-full-ko.txt`, `llms-full-en.txt`)**
 
 **Explanation:**
-The endpoints table lists exactly three files: `llms.txt` (the index), `llms-full-ko.txt` (full Korean content), and `llms-full-en.txt` (full English content), all served under `https://www.atomai.click/kubernetes-docs/`. The Korean file is recommended for "Whole-book context or RAG indexing" and the English one for "English-language tools and pipelines".
+The language-wide full files are `llms-full-ko.txt` and `llms-full-en.txt`. The index, manifest, section bundles and per-document Markdown are additional endpoints served under `https://www.atomai.click/kubernetes-docs/`. The Korean file is recommended for "Whole-book context or RAG indexing" and the English one for "English-language tools and pipelines".
 
 </details>
 
-3. Why do `llms.txt` and the full files always match the published content?
+3. How are `llms.txt` and full files produced for a successful site deployment?
    - A) The author re-uploads the three files by hand after every edit
    - B) A weekly news-digest workflow refreshes them
-   - C) All three files are regenerated on every site deploy
+   - C) The site build generates them from the same source and deploys them together
    - D) The server converts the documents on the fly for each LLM request
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) All three files are regenerated on every site deploy**
+**Answer: C) The site build generates them from the same source and deploys them together**
 
 **Explanation:**
-The page states: "All three files are regenerated on every site deploy, so they always match the published content." They are build outputs of the deploy pipeline — not manual uploads and not on-demand conversions.
+The page states: "The site build generates them from the same source and deploys them together, so they always match the published content." They are build outputs of the deploy pipeline — not manual uploads and not on-demand conversions.
 
 </details>
 
@@ -101,7 +101,7 @@ Under "Format notes", "every document is preceded by a separator block" — a da
 **Answer: B) The LLM reads the diagram's description (alt text) to understand it, while a person opens the interactive viewer URL and uses the Export menu to download PNG/JPEG/WebP, SVG, WebM, or a Share Card**
 
 **Explanation:**
-The "Diagrams are for people — the export links" section explains that because the full files carry each document's markdown verbatim, every diagram's alt text and its viewer URL (`https://www.atomai.click/kubernetes-docs/archmaps/<name>.html`) are in the text. "An LLM reads the description to understand the diagram; a person opens the URL and uses the viewer's **Export** menu to download PNG/JPEG/WebP, a dual-theme SVG, a 6-second trace-animation WebM, or a 1200×630 Share Card." The per-item guidance lives in the Guidebook Roadmap's "Share a diagram" section.
+The "Diagrams are for people — the export links" section explains that because the full files carry each document's markdown verbatim, every diagram's alt text and its viewer URL (`https://www.atomai.click/kubernetes-docs/archmaps/<name>.html`) are in the text. "A text LLM uses the alt text and surrounding prose but cannot infer image-only nodes/edges reliably; a person opens the URL and uses the viewer's **Export** menu to download PNG/JPEG/WebP, a dual-theme SVG, a 6-second trace-animation WebM, or a 1200×630 Share Card." The per-item guidance lives in the Guidebook Roadmap's "Share a diagram" section.
 
 </details>
 

@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Upgrade Best Practices",
+    "locale": "en",
+    "output": "en-eks-08-eks-upgrades-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      430
+    ],
+    "views": [
+      {
+        "id": "categories",
+        "label": "Three categories",
+        "focus": [
+          "root",
+          "general",
+          "large",
+          "financial"
+        ],
+        "note": "Best practices split into general, large-cluster, and financial-services categories."
+      },
+      {
+        "id": "general-stages",
+        "label": "Four general stages",
+        "focus": [
+          "general",
+          "planning",
+          "preparation",
+          "execution",
+          "post"
+        ],
+        "note": "General practices break down into planning, preparation, execution, and post-upgrade."
+      },
+      {
+        "id": "industry",
+        "label": "Industry-specific extras",
+        "focus": [
+          "large",
+          "financial"
+        ],
+        "note": "Large clusters and financial-services environments add further practices."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "Upgrade Best Practices",
+      "sublabel": "EKS cluster upgrades",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "general",
+      "type": "backend",
+      "label": "General Best Practices",
+      "sublabel": "Plan · Prepare · Execute · Post-upgrade",
+      "pos": [
+        25,
+        170
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "large",
+      "type": "cloud",
+      "label": "Best Practices for Large Clusters",
+      "sublabel": "Canary · Automation · Automated rollback",
+      "pos": [
+        455,
+        170
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "financial",
+      "type": "security",
+      "label": "Best Practices for Financial Services",
+      "sublabel": "Compliance · Risk assessment · Change mgmt",
+      "pos": [
+        880,
+        170
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "planning",
+      "type": "backend",
+      "label": "Upgrade Planning",
+      "sublabel": "Version · Schedule · Phases · Rollback plan",
+      "pos": [
+        30,
+        330
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "preparation",
+      "type": "backend",
+      "label": "Upgrade Preparation",
+      "sublabel": "Backup · Resources · Compatibility · Deprecated API",
+      "pos": [
+        315,
+        330
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "execution",
+      "type": "backend",
+      "label": "Upgrade Execution",
+      "sublabel": "Control plane → Add-ons → Nodes (gradual)",
+      "pos": [
+        600,
+        330
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "post",
+      "type": "backend",
+      "label": "Post-upgrade",
+      "sublabel": "Validate · Monitor · Document · Learn",
+      "pos": [
+        885,
+        330
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-general",
+      "from": "root",
+      "to": "general",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-large",
+      "from": "root",
+      "to": "large"
+    },
+    {
+      "id": "root-financial",
+      "from": "root",
+      "to": "financial"
+    },
+    {
+      "id": "general-planning",
+      "from": "general",
+      "to": "planning",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "general-preparation",
+      "from": "general",
+      "to": "preparation",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "general-execution",
+      "from": "general",
+      "to": "execution",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "general-post",
+      "from": "general",
+      "to": "post",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "General Best Practices",
+      "items": [
+        "Planning: version selection, upgrade schedule, phased approach, rollback planning",
+        "Preparation: backup, resource allocation, compatibility check, deprecated API identification",
+        "Execution: control plane first, add-ons next, nodes last, gradual node upgrade",
+        "Post-upgrade: validation, monitoring, documentation, learning"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Large Clusters",
+      "items": [
+        "Canary deployment",
+        "Automation",
+        "Enhanced monitoring",
+        "Communication plan",
+        "Automated rollback"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Financial Services",
+      "items": [
+        "Regulatory compliance",
+        "Risk assessment",
+        "Change management",
+        "Enhanced testing",
+        "Enhanced documentation"
+      ]
+    }
+  ]
+}

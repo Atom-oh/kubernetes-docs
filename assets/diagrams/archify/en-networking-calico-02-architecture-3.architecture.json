@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "BIRD in Calico Architecture",
+    "locale": "en",
+    "output": "en-networking-calico-02-architecture-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ibgp-mesh",
+        "label": "iBGP full mesh",
+        "focus": [
+          "bird1",
+          "bird2",
+          "bird3"
+        ],
+        "note": "Each node's BIRD peers with every other node over iBGP to exchange per-node pod CIDR routes."
+      },
+      {
+        "id": "ebgp-peering",
+        "label": "eBGP external peering",
+        "focus": [
+          "bird1",
+          "bird2",
+          "bird3",
+          "tor",
+          "core"
+        ],
+        "note": "Nodes peer over eBGP with the top-of-rack switch, which forwards pod routes on to the core router."
+      }
+    ],
+    "viewBox": [
+      1200,
+      680
+    ]
+  },
+  "components": [
+    {
+      "id": "bird1",
+      "type": "backend",
+      "label": "BIRD (node-1)",
+      "sublabel": "advertises node-1 pod CIDR",
+      "pos": [
+        180,
+        120
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "bird2",
+      "type": "backend",
+      "label": "BIRD (node-2)",
+      "sublabel": "advertises node-2 pod CIDR",
+      "pos": [
+        180,
+        300
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "bird3",
+      "type": "backend",
+      "label": "BIRD (node-3)",
+      "sublabel": "advertises node-3 pod CIDR",
+      "pos": [
+        180,
+        480
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "tor",
+      "type": "external",
+      "label": "ToR Switch",
+      "sublabel": "top-of-rack BGP peer",
+      "pos": [
+        640,
+        300
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "core",
+      "type": "external",
+      "label": "Core Router",
+      "sublabel": "data center core",
+      "pos": [
+        920,
+        300
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes cluster (3 nodes)",
+      "wraps": [
+        "bird1",
+        "bird2",
+        "bird3"
+      ],
+      "pad": 72
+    },
+    {
+      "kind": "region",
+      "label": "External network",
+      "wraps": [
+        "tor",
+        "core"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "mesh-1-2",
+      "from": "bird1",
+      "to": "bird2",
+      "label": "iBGP",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "mesh-2-3",
+      "from": "bird2",
+      "to": "bird3",
+      "variant": "dashed"
+    },
+    {
+      "id": "mesh-1-3",
+      "from": "bird1",
+      "to": "bird3",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          132,
+          152
+        ],
+        [
+          132,
+          512
+        ]
+      ]
+    },
+    {
+      "id": "ebgp-1",
+      "from": "bird1",
+      "to": "tor",
+      "label": "eBGP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebgp-2",
+      "from": "bird2",
+      "to": "tor",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebgp-3",
+      "from": "bird3",
+      "to": "tor",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tor-to-core",
+      "from": "tor",
+      "to": "core",
+      "label": "pod routes"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "BGP session types",
+      "items": [
+        "Node-to-node mesh: default for small clusters, automatic full mesh",
+        "Route reflector: large clusters (100+ nodes) use dedicated RR nodes",
+        "External peering: manual BGPPeer config for on-premises integration"
+      ]
+    }
+  ]
+}

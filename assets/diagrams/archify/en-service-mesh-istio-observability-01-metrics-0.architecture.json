@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Metrics Collection Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-observability-01-metrics-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "configure",
+        "label": "Configure metrics",
+        "focus": [
+          "telemetry",
+          "istiod",
+          "envoy"
+        ],
+        "note": "A Telemetry resource is applied to istiod, which configures how the Envoy sidecar generates metrics."
+      },
+      {
+        "id": "collect",
+        "label": "Collect metrics",
+        "focus": [
+          "app",
+          "envoy",
+          "prometheus",
+          "otel"
+        ],
+        "note": "Envoy's metrics are either scraped by Prometheus or pushed to the OpenTelemetry Collector."
+      },
+      {
+        "id": "visualize",
+        "label": "Visualization",
+        "focus": [
+          "prometheus",
+          "grafana",
+          "kiali"
+        ],
+        "note": "Metrics stored in Prometheus are explored through Grafana dashboards and the Kiali service graph."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Workload / control plane"
+        },
+        "cloud": {
+          "label": "Istio config resource"
+        },
+        "messagebus": {
+          "label": "Collection pipeline"
+        },
+        "database": {
+          "label": "Time-series store"
+        },
+        "frontend": {
+          "label": "Visualization tool"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "telemetry",
+      "type": "cloud",
+      "label": "Telemetry Config",
+      "sublabel": "Telemetry resource",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "control plane",
+      "pos": [
+        280,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "App Container",
+      "sublabel": "application",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Sidecar",
+      "sublabel": ":15020/stats/prometheus",
+      "pos": [
+        280,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "messagebus",
+      "label": "OpenTelemetry Collector",
+      "sublabel": "OTLP :4317",
+      "pos": [
+        540,
+        160
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "metrics store / query",
+      "pos": [
+        540,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "dashboards",
+      "pos": [
+        820,
+        230
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kiali",
+      "type": "frontend",
+      "label": "Kiali",
+      "sublabel": "service graph",
+      "pos": [
+        820,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Control Plane",
+      "wraps": [
+        "telemetry",
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Application Pod",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Metrics Backend",
+      "wraps": [
+        "otel",
+        "prometheus"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Visualization",
+      "wraps": [
+        "grafana",
+        "kiali"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "telemetry-istiod",
+      "from": "telemetry",
+      "to": "istiod",
+      "label": "applied by",
+      "variant": "dashed"
+    },
+    {
+      "id": "istiod-envoy",
+      "from": "istiod",
+      "to": "envoy",
+      "label": "Configure metrics",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 90
+    },
+    {
+      "id": "app-envoy",
+      "from": "app",
+      "to": "envoy",
+      "label": "traffic",
+      "variant": "dashed"
+    },
+    {
+      "id": "envoy-prometheus",
+      "from": "envoy",
+      "to": "prometheus",
+      "label": "scrape",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-otel",
+      "from": "envoy",
+      "to": "otel",
+      "label": "push metrics",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "otel-prometheus",
+      "from": "otel",
+      "to": "prometheus",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prometheus-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "query"
+    },
+    {
+      "id": "prometheus-kiali",
+      "from": "prometheus",
+      "to": "kiali",
+      "label": "query"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Golden Signals",
+      "items": [
+        "Latency: request processing time",
+        "Traffic: throughput (RPS, bandwidth)",
+        "Errors: failure rate and error types",
+        "Saturation: resource utilization"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Two collection paths",
+      "items": [
+        "Prometheus scrapes the sidecar's :15020 /stats/prometheus endpoint",
+        "Telemetry API pushes to the OpenTelemetry Collector (OTLP :4317)"
+      ]
+    }
+  ]
+}

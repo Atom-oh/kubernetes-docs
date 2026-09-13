@@ -1,0 +1,330 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CI와 검증 후 GitOps 승격",
+    "output": "ko-ops-14-tekton-pipelines-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      520
+    ],
+    "views": [
+      {
+        "id": "ci",
+        "label": "Tekton CI 파이프라인",
+        "focus": [
+          "src",
+          "trigger",
+          "clone",
+          "test",
+          "build",
+          "push"
+        ],
+        "note": "Tekton CI는 승인 소스를 테스트하고 후보 이미지를 게시·스캔합니다."
+      },
+      {
+        "id": "handoff",
+        "label": "GitOps 핸드오프",
+        "focus": [
+          "update",
+          "gitops",
+          "sync"
+        ],
+        "note": "CI 성공과 서명·provenance 검증 후 담당자 또는 별도 workflow가 digest 변경을 리뷰합니다."
+      },
+      {
+        "id": "cd",
+        "label": "ArgoCD CD 배포",
+        "focus": [
+          "ecr",
+          "sync",
+          "deploy"
+        ],
+        "note": "ArgoCD는 manifest를 동기화하고 kubelet/runtime이 ECR 이미지를 가져옵니다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "src",
+      "type": "external",
+      "label": "app-source",
+      "sublabel": "소스 리포지토리",
+      "pos": [
+        30,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "trigger",
+      "type": "messagebus",
+      "label": "Trigger",
+      "sublabel": "Webhook 수신",
+      "pos": [
+        198,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "clone",
+      "type": "backend",
+      "label": "git-clone",
+      "sublabel": "소스 클론",
+      "pos": [
+        366,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "test",
+      "type": "backend",
+      "label": "테스트 / 린트",
+      "sublabel": "단위 테스트·린트",
+      "pos": [
+        534,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "이미지 빌드",
+      "sublabel": "컨테이너 이미지",
+      "pos": [
+        702,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "push",
+      "type": "backend",
+      "label": "ECR Push",
+      "sublabel": "이미지 푸시",
+      "pos": [
+        870,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "update",
+      "type": "backend",
+      "label": "승격 검증",
+      "sublabel": "CI · scan · 서명",
+      "pos": [
+        1038,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Container Registry",
+      "sublabel": "Amazon ECR",
+      "pos": [
+        534,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gitops",
+      "type": "external",
+      "label": "app-manifests",
+      "sublabel": "검토된 digest 변경",
+      "pos": [
+        1038,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sync",
+      "type": "backend",
+      "label": "ArgoCD Sync",
+      "sublabel": "매니페스트 동기화",
+      "pos": [
+        786,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "backend",
+      "label": "kubelet / runtime",
+      "sublabel": "이미지 pull · Pod 실행",
+      "pos": [
+        534,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Tekton (CI)",
+      "wraps": [
+        "trigger",
+        "clone",
+        "test",
+        "build",
+        "push"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "ArgoCD (CD)",
+      "wraps": [
+        "sync"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "별도 승격 절차",
+      "wraps": [
+        "update",
+        "gitops"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 실행",
+      "wraps": [
+        "deploy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "src-trigger",
+      "from": "src",
+      "to": "trigger",
+      "label": "push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trigger-clone",
+      "from": "trigger",
+      "to": "clone"
+    },
+    {
+      "id": "clone-test",
+      "from": "clone",
+      "to": "test"
+    },
+    {
+      "id": "test-build",
+      "from": "test",
+      "to": "build"
+    },
+    {
+      "id": "build-push",
+      "from": "build",
+      "to": "push"
+    },
+    {
+      "id": "push-ecr",
+      "from": "push",
+      "to": "ecr",
+      "label": "이미지"
+    },
+    {
+      "id": "push-update",
+      "from": "push",
+      "to": "update"
+    },
+    {
+      "id": "update-gitops",
+      "from": "update",
+      "to": "gitops",
+      "label": "리뷰·merge",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gitops-sync",
+      "from": "gitops",
+      "to": "sync",
+      "label": "감지",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync-deploy",
+      "from": "sync",
+      "to": "deploy",
+      "label": "manifest"
+    },
+    {
+      "id": "ecr-deploy",
+      "from": "ecr",
+      "to": "deploy",
+      "label": "pull",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CI / promotion",
+      "items": [
+        "빌드·스캔 성공과 서명을 각각 확인",
+        "검토된 digest 변경을 Git에 반영"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "CD",
+      "items": [
+        "ArgoCD가 manifest 동기화",
+        "kubelet이 이미지를 pull하고 실제 건강 상태 확인"
+      ]
+    }
+  ]
+}

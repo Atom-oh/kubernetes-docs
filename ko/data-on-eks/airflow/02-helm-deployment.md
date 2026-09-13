@@ -1,195 +1,324 @@
 # Part 2: Helm 배포와 Executor 선택
 
-> **지원 버전**: apache/airflow Helm 차트 1.22+ (기본적으로 Airflow 3.2.2 배포), Kubernetes 1.30+\
-> **마지막 업데이트**: 2026년 7월 15일
+> **검토 기준**: chart 1.22.0 / Airflow 3.3.1 / KEDA 2.20 · 2026년 9월 12일
 
-## 실습 환경 설정
+## 1. Chart와 실제 기본값
 
-이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+이 문서는 Apache Airflow 저장소의 공식 chart를 사용합니다. 저장소 alias를
+apache-airflow로 등록하므로 Helm 명령의 chart 이름은 **apache-airflow/airflow**입니다.
+airflow-helm/charts 같은 별도 커뮤니티 chart의 values를 혼용하지 않습니다.
+두 가지 외에 다른 chart가 전혀 없다는 뜻은 아닙니다.
 
-### 필수 도구
+Chart 1.22.0은 기본적으로 **Airflow 3.2.2 + CeleryExecutor**를 선택합니다.
+기본 KubernetesExecutor 설치라는 기존 설명은 잘못되었습니다. 아래에서는 image tag와
+airflowVersion을 3.3.1로 맞추고 executor를 명시합니다. 두 필드나 digest override가
+실제 이미지와 어긋나면 chart의 버전별 설정도 달라질 수 있습니다.
 
-* kubectl v1.30 이상
-* Helm v3.19 이상 (공식 차트가 요구하는 최소 버전)
-* 작동하는 Kubernetes 클러스터 (Amazon EKS 권장)
-* KEDA — 이 문서 뒤쪽의 `CeleryExecutor` 오토스케일링 예제를 실습할 경우에만 필요
+Helm 3.19.0 이상을 사용합니다. Chart의 현재 릴리스 변경 기록은 이 최소값을
+명시하지만 일부 패키지 README에는 오래된 Helm 3.0+ 문구가 남아 있습니다.
+Kubernetes 요구와 별개로 Airflow 3.3.1의 테스트 목록은 1.30–1.35입니다.
+Chart 1.16.0 README는 1.29+였으므로 “1.16부터 1.30+”라는 이력도 정정합니다.
+Chart.yaml이 모든 최소 버전을 강제하여 반드시 설치를 거부한다고 가정하지 않습니다.
+실제 1.29 대상으로도 템플릿은 렌더링됐지만 지원을 증명하지는 않습니다.
 
-## 서로 다른 두 개의 Airflow Helm 차트
+## 2. 설치 전 연결과 Secret 준비
 
-설치를 시작하기 전에 자주 혼동되는 부분을 먼저 정리하겠습니다. Airflow를 Kubernetes에 배포하는 Helm 차트는 **서로 무관한 두 가지**가 존재하며, 이 둘의 문서나 values 스키마, GitHub 이슈를 혼용하면 엉뚱한 방향으로 헤매게 됩니다.
+실습은 기존 namespace 권한, 준비된 외부 PostgreSQL, EKS 네트워크·용량을 전제로
+합니다. DB schema/user와 migration 권한, 연결 URI·TLS·백업/보존 정책을 확인합니다.
+KEDA는 Celery scaling을 사용할 때만 필요합니다.
 
-* **`apache/airflow`**: Apache Airflow 프로젝트가 직접 관리하는 공식 차트로, 메인 `apache/airflow` 저장소의 `chart` 디렉터리에서 배포됩니다. 이 문서가 다루는 차트이며, 업스트림 문서와 릴리스 노트가 가리키는 대상도 이 차트입니다.
-* **`airflow-helm/charts`**: 흔히 저장소 이름을 따 `airflow-helm`이라고도 불리는, 더 오래된 커뮤니티 유지보수 차트입니다. 공식 차트보다 먼저 존재했고 values 스키마도 전혀 다르며, Apache Airflow 프로젝트와는 관련이 없습니다. 오래된 튜토리얼이나 블로그 글에서 자주 인용되기 때문에, 공식 차트에는 적용되지 않는 values.yaml 스니펫이 돌아다니는 가장 흔한 원인이 됩니다.
+다음 값은 Helm values에 비밀번호를 넣는 대신 기존 Secret을 참조합니다.
+DB URI는 보호된 파일에 한 줄로 저장하고, password 등의 예약 문자는 URI 규칙에
+맞게 인코딩합니다. RDS 등은 검증되는 TLS 연결을 사용합니다. sslrootcert 경로를
+지정한다면 실제 DB client container에서 읽을 수 있어야 합니다. **KEDA도 DB client**
+이므로 CA 파일·DNS·네트워크·DB 접근을 Airflow Pod에만 준비하면 충분하지 않습니다.
+Chart가 CA를 KEDA에 자동 복사하지 않습니다.
 
-공식 차트의 릴리스 주기는 Airflow 본체의 릴리스와 비교적 밀접하게 맞물려 있습니다. 이 글을 쓰는 시점 기준 최신 버전은 **1.22.0**(2026년 6월 릴리스)이며, 기본적으로 **Airflow 3.2.2**를 배포합니다. 차트는 최소 Helm 버전으로 **3.19.0**을 요구하며, **1.16.0** 버전부터는 **Kubernetes 1.30+**를 요구합니다 — 둘 다 차트 자체의 `Chart.yaml` 제약 조건으로 강제되므로, 더 낮은 버전의 Helm이나 클러스터를 사용하면 배포가 어설프게 되는 것이 아니라 설치 시점에 곧바로 실패합니다.
-
-## 설치
-
-### 저장소 추가 및 설치
+아래는 **최초 설치용**입니다. 이미 존재하는 Secret은 덮어쓰지 않으며 일반 upgrade 때
+Fernet/API/JWT key를 새로 생성하지 않습니다. 백업·회전은 별도의 절차로 관리합니다.
 
 ```bash
-# Apache Airflow 공식 Helm 저장소 추가
-helm repo add apache-airflow https://airflow.apache.org/
-helm repo update
+set -euo pipefail
+# Fresh installation only. Keep existing Fernet/API/JWT keys during an ordinary upgrade.
+# AIRFLOW_DB_URI_FILE contains the tested, single-line PostgreSQL URI; do not commit it.
+: "${AIRFLOW_DB_URI_FILE:?Set the path to your protected database connection file}"
+kubectl create namespace airflow --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n airflow create secret generic airflow-metadata \
+  --from-file="connection=$AIRFLOW_DB_URI_FILE"
 
-# 전용 네임스페이스에 특정 차트 버전으로 설치
+umask 077
+AIRFLOW_SECRET_TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$AIRFLOW_SECRET_TMP_DIR"' EXIT
+python3 - "$AIRFLOW_SECRET_TMP_DIR" <<'PY'
+import base64
+from pathlib import Path
+import secrets
+import sys
+folder = Path(sys.argv[1])
+(folder / "fernet-key").write_text(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())
+(folder / "api-secret-key").write_text(secrets.token_urlsafe(48))
+(folder / "jwt-secret").write_text(secrets.token_urlsafe(48))
+PY
+kubectl -n airflow create secret generic airflow-fernet \
+  --from-file="fernet-key=$AIRFLOW_SECRET_TMP_DIR/fernet-key"
+kubectl -n airflow create secret generic airflow-api-secret \
+  --from-file="api-secret-key=$AIRFLOW_SECRET_TMP_DIR/api-secret-key"
+kubectl -n airflow create secret generic airflow-jwt \
+  --from-file="jwt-secret=$AIRFLOW_SECRET_TMP_DIR/jwt-secret"
+```
+
+metadataSecretName이 있으면 metadataConnection은 연결 정보의 우선 출처가 아닙니다.
+PostgreSQL을 비활성화하는 것만으로 외부 DB 주소·인증이 구성되지 않습니다.
+URI를 Airflow와 KEDA가 함께 사용하는 PostgreSQL profile에서는 양쪽이 해석할 수 있는
+postgresql:// 형식을 확인합니다. SQLAlchemy 전용 +driver scheme을 그대로 KEDA에
+전달하면 호환되지 않을 수 있습니다.
+
+## 3. 명시적인 KubernetesExecutor 설치
+
+kubernetes-values.yaml로 저장합니다. Triggerer persistence를 끈 실습 profile이므로
+임시 로컬 로그를 영속 로그로 간주하지 않습니다. DAG 전달은 Part 3, 원격 로그·운영
+저장은 Part 5에서 준비하며 production 전 실제 task의 사후 로그 조회까지 확인합니다.
+
+```yaml
+airflowVersion: 3.3.1
+defaultAirflowTag: 3.3.1
+executor: KubernetesExecutor
+postgresql:
+  enabled: false
+redis:
+  enabled: false
+data:
+  metadataSecretName: airflow-metadata
+  metadataConnection:
+    protocol: postgresql
+fernetKeySecretName: airflow-fernet
+apiSecretKeySecretName: airflow-api-secret
+jwtSecretName: airflow-jwt
+createUserJob:
+  enabled: false
+triggerer:
+  persistence:
+    enabled: false
+config:
+  core:
+    auth_manager: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+```
+
+```bash
+helm repo add apache-airflow https://airflow.apache.org
+helm repo update apache-airflow
 helm install airflow apache-airflow/airflow \
-  --namespace airflow \
-  --create-namespace \
-  --version 1.22.0
-
-# 설치 확인
-kubectl get pods -n airflow
+  --namespace airflow --version 1.22.0 \
+  --values kubernetes-values.yaml --wait --timeout 10m
+kubectl -n airflow get deployments,statefulsets,pods,jobs
 helm list -n airflow
 ```
 
-기본값으로 설치하면 차트에 내장된 PostgreSQL과 `KubernetesExecutor`가 함께 배포되어, 실습이나 평가용으로는 곧바로 동작하는 Airflow 3 환경을 얻을 수 있습니다. 이를 넘어서는 것(실제 메타데이터 DB, Executor 선택, 리소스 사이징)은 모두 `-f`로 전달하는 `values.yaml`에서 다뤄야 합니다.
+--wait 성공과 Running Pod만으로 DAG 실행 성공을 판단하지 않습니다. Migration Job은
+성공 상태인지, 장기 실행 컴포넌트는 Ready인지 확인하고 Part 3의 smoke DAG로
+실제 worker 시작·Execution API 통신·결과·로그를 검증합니다.
 
-### 가장 중요한 설정: `executor`
+### 초기 사용자
 
-차트의 다른 모든 설정은 결국 최상위 값 하나에 종속됩니다. 이 값에 따라 차트가 어떤 부속 컴포넌트를 배포할지 자체가 달라지기 때문입니다.
-
-```yaml
-# values.yaml
-executor: KubernetesExecutor  # 또는 CeleryExecutor
-
-# executor가 CeleryExecutor일 때만 참조됨
-workers:
-  celery:
-    keda:
-      enabled: false  # 아래 오토스케일링 절 참고
-
-# 실습을 넘어서는 환경이라면 외부 메타데이터 DB를 지정
-postgresql:
-  enabled: true  # RDS로 전환하면 false
-```
+기본 createUserJob은 admin/admin을 생성할 수 있어 위 profile에서는 비활성화했습니다.
+현재 설정 위치는 createUserJob.defaultUser이며 옛 webserver.defaultUser는 호환 경로입니다.
+비밀번호를 values.yaml이나 Helm --set에 넣는 대신, 이 profile이 선택한 FAB auth
+manager에서 다음 대화형 명령을 사용합니다. 다른 auth manager/SSO에는 그 방식의
+사용자 관리 절차를 따릅니다.
 
 ```bash
-helm upgrade airflow apache-airflow/airflow \
-  --namespace airflow \
-  --version 1.22.0 \
-  -f values.yaml
+# FAB auth manager, as selected in these values. Password is prompted twice.
+kubectl -n airflow exec -it deployment/airflow-api-server -c api-server -- \
+  airflow users create --username airflow-admin --role Admin \
+  --email admin@example.com --firstname Airflow --lastname Admin
+kubectl -n airflow port-forward --address 127.0.0.1 service/airflow-api-server 8080:8080
 ```
 
-이미 태스크가 실행 중인 상태에서 `executor`를 바꾸는 것은 파급 효과가 큽니다 — scheduler, 그리고 `CeleryExecutor`의 경우 worker Deployment와 Redis까지 이 필드 값에 따라 조건부로 렌더링되기 때문입니다. 프로덕션 트래픽을 받기 전에 배포 단위로 executor를 확정해 두는 것이 좋습니다.
+Port-forward가 실행 중인 동안 로컬 8080에서 UI를 확인합니다. 운영 UI에는 적절한
+인증·인가·TLS 경로가 필요하며 이 명령이 공개 endpoint를 만드는 것은 아닙니다.
+API secret과 task JWT secret은 역할이 다르고 안정적으로 유지해야 합니다.
+Fernet key를 잃거나 무작정 바꾸면 기존 암호화된 connection/variable을 읽지 못할 수 있습니다.
 
-### 외부 메타데이터 데이터베이스 연결
+## 4. Executor를 성능·운영 조건으로 선택
 
-내장된 PostgreSQL Pod(PVC 기반 단일 replica)는 실습용으로는 충분하지만, 릴리스를 삭제하는 순간 함께 사라지고 failover도 없습니다. 실습을 넘어서는 환경이라면 이를 비활성화하고 외부 Amazon RDS for PostgreSQL 인스턴스를 대신 가리키도록 설정합니다.
+| 항목 | KubernetesExecutor | CeleryExecutor |
+| --- | --- | --- |
+| Worker 단위 | Task instance별 Pod | Broker에서 작업을 받는 pool |
+| 시작 시간 | 이미지 cache·API·scheduler·node 여유에 따라 측정 | Warm pool은 시작 비용을 줄일 수 있음; scale-to-zero 후 cold start |
+| 유휴 비용 | Task Pod 외 control plane·DB·노드·로그 비용 유지 | Worker 수 외 broker·DB·노드 비용 유지 |
+| 자원·격리 | Pod spec·quota·SA·네트워크·노드 경계에 달림 | Worker 안의 동시 task가 자원·의존성을 공유 |
+| 추가 요구 | Task image/runtime·DAG 전달·Kubernetes API 권한 | Broker, result backend, worker lifecycle·queue·동시성 관리 |
+
+고정된 1–2분 지연이나 특정 executor의 보편적인 대규모 우위를 가정하지 않습니다.
+KubernetesExecutor의 worker image는 호환 **Airflow task runtime과 DAG 의존성**이
+필요합니다. 임의 GPU/CLI 이미지를 그대로 넣는 기능과는 다릅니다.
+KubernetesPodOperator는 별도 child Pod에 임의 작업 이미지를 실행하는 다른 경로입니다.
+작업 실패 시 Pod 보존·삭제도 provider 설정에 따라 달라집니다.
+
+여러 executor를 구성할 수 있지만 대부분의 배포가 반드시 혼합형이어야 하는 것은
+아닙니다. 단일 executor의 단순성과 혼합 운영의 이득·추가 정책을 실제 workload로 비교합니다.
+
+![Per-task Kubernetes workers compared with a scalable Celery worker pool.](../../.gitbook/assets/ko-data-on-eks-airflow-02-helm-deployment-0.png)
+
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-airflow-02-helm-deployment-0.html)
+
+## 5. Celery worker scaling
+
+외부 broker와 result backend를 먼저 준비합니다. 다음 Secret은 Celery profile에만
+필요하며 protocol·TLS·권한은 실제 서비스를 기준으로 검증합니다. Celery의 SQLAlchemy
+DB result backend URI는 db+postgresql:// 같은 형식을 사용하므로 metadata URI를
+무조건 그대로 복사하지 않습니다.
+
+```bash
+# Use protected URI files for the chosen external broker and result backend.
+: "${AIRFLOW_BROKER_URI_FILE:?Set the protected broker URI file}"
+: "${AIRFLOW_RESULT_URI_FILE:?Set the protected Celery result-backend URI file}"
+kubectl -n airflow create secret generic airflow-broker \
+  --from-file="connection=$AIRFLOW_BROKER_URI_FILE"
+kubectl -n airflow create secret generic airflow-result-backend \
+  --from-file="connection=$AIRFLOW_RESULT_URI_FILE"
+```
+
+celery-values.yaml은 독립적인 **전체 profile**입니다. 신규 설치에서는 앞의 install 명령에
+이 파일을 선택합니다. 실행 중 배포의 executor 변경은 drain·이행·복구 계획 후 수행합니다.
 
 ```yaml
-# values.yaml
+airflowVersion: 3.3.1
+defaultAirflowTag: 3.3.1
+executor: CeleryExecutor
 postgresql:
   enabled: false
-
+redis:
+  enabled: false
 data:
+  metadataSecretName: airflow-metadata
   metadataConnection:
-    user: airflow
-    pass: airflow-password   # 실제 배포에서는 평문이 아니라 Secret을 참조
     protocol: postgresql
-    host: airflow-metadata.xxxxxxxxxxxx.us-east-1.rds.amazonaws.com
-    port: 5432
-    db: airflow
-```
-
-차트에 내장된 PostgreSQL 서브차트와 외부 연결 필드는 실질적으로 상호 배타적입니다 — `postgresql.enabled`를 `false`로 설정하면 scheduler, api-server, dag-processor, triggerer 등 모든 컴포넌트가 대신 `data.metadataConnection`을 읽습니다.
-
-## Executor 선택: KubernetesExecutor vs. CeleryExecutor
-
-Part 1에서 컴포넌트 아키텍처의 일부로 두 executor를 개괄적으로 소개했다면, 여기서는 실제 배포 전에 결정해야 하는 트레이드오프를 더 깊이 다룹니다.
-
-### KubernetesExecutor
-
-각 태스크 인스턴스는 scheduler가 Kubernetes API를 통해 생성하는 자신만의 Pod에서 실행되고, 완료되면 곧바로 삭제됩니다.
-
-* **적합한 경우**: 태스크가 런타임 격리가 필요하거나, 리소스 소모가 크거나, 태스크별로 다른 컨테이너 이미지(다른 Python 환경, GPU 이미지, DAG의 나머지 부분과 전혀 다른 런타임)를 써야 하는 경우
-* **비용**: 아주 짧은 태스크라도 대략 **1~2분**의 콜드 스타트가 발생합니다 — Pod 스케줄링, (캐시되지 않았다면) 이미지 풀, 그리고 여유 용량이 없으면 Karpenter나 Cluster Autoscaler를 통한 노드 스케일 아웃까지 포함될 수 있습니다.
-* **이점**: 태스크가 몰리지 않는 구간에는 유휴 비용이 전혀 없고, 격리 수준도 높습니다 — 한 태스크의 의존성 충돌이나 메모리 누수가 다른 태스크의 Pod에 영향을 주지 않습니다.
-
-### CeleryExecutor
-
-미리 기동된 Celery worker Pod 풀이 계속 실행되며 브로커에서 대기 중인 태스크를 가져와 처리합니다.
-
-* **적합한 경우**: 시작 지연이 중요한, 짧고 동질적인 태스크 — 한 실행에 수백 개의 작은 태스크가 있는 DAG라면, 태스크당 1~2분의 Pod 기동을 기다리는 것과 이미 떠 있는 worker에 초 단위로 즉시 분배되는 것은 체감 차이가 큽니다.
-* **비용**: 같은 worker로 라우팅된 모든 태스크가 그 worker의 리소스와 설치된 의존성을 공유합니다 — 태스크마다 전용 Pod를 쓰는 방식보다 격리 수준이 훨씬 낮습니다.
-* **필요 조건**: 메시지 브로커(Redis 또는 RabbitMQ)와 상시 실행되는 worker Deployment가 추가로 필요하며, 둘 다 별도의 용량 계획과 운영 부담이 따르는 구성 요소입니다.
-
-### 정답이 정해진 문제가 아니라 트레이드오프
-
-이 선택은 "특별한 이유가 없으면 KubernetesExecutor를 쓴다"처럼 기본값이 정해진 문제가 아니라, 실제 트레이드오프입니다.
-
-| | KubernetesExecutor | CeleryExecutor |
-|---|---|---|
-| 태스크 시작 지연 | 콜드 스타트 약 1~2분 | 초 단위 (warm pool) |
-| 유휴 비용 | 없음 — 태스크가 실행되는 동안만 Pod 존재 | 0으로 스케일하지 않으면 worker 풀이 계속 실행됨 |
-| 격리 수준 | 강함 — 태스크당 Pod 1개 | 약함 — 태스크들이 worker의 리소스/의존성을 공유 |
-| 추가 인프라 | 클러스터 자체 외에는 없음 | Redis/RabbitMQ 브로커 + worker Deployment |
-| 대량 태스크 시 스케일링 특성 | 예측 가능 — 클러스터 용량에 따라 스케일 | 지속적인 고부하 상황에서 worker 풀 스케일링이 골칫거리가 될 수 있음 |
-
-실무에서는 태스크 처리량이 큰 팀일수록 `KubernetesExecutor`가 더 예측 가능하게 스케일된다고 느끼는 경우가 많습니다. 태스크별 리소스 사용량이 명시적이고, 나머지는 클러스터 오토스케일링이 처리하기 때문입니다. 반면 `CeleryExecutor`로 시작했다가 초기 사이징을 넘어서는 규모로 커진 배포는 worker 풀 스케일링 한계에 부딪혀 수동으로 재조정해야 하는 상황을 겪기도 합니다.
-
-그렇다고 배포 전체에서 반드시 하나만 골라야 하는 것은 아닙니다. Part 1에서 소개한 Airflow 3의 "여러 executor 동시 사용" 기능을 이용하면, 배포 전역에 하나의 executor를 못 박는 대신 태스크 또는 DAG 단위로 executor를 지정할 수 있습니다 — 예를 들어 대부분의 DAG는 지연이 낮은 warm `CeleryExecutor` 풀에서 돌리면서, 리소스 소모가 크거나 GPU가 필요한 일부 태스크만 격리를 위해 `KubernetesExecutor`로 라우팅하는 식입니다. 대부분의 본격적인 배포에서는 이 방식이 현실적인 답입니다: 합리적인 기본 executor를 정하고, 다른 executor의 특성이 필요한 태스크만 명시적으로 오버라이드하는 것입니다.
-
-![KubernetesExecutor는 스케줄러가 태스크마다 Pod를 하나씩 새로 생성하고 태스크 종료 후 즉시 삭제하는 반면, CeleryExecutor는 스케줄러가 Redis 브로커에 태스크를 큐잉하면 상시 실행 중인 warm 워커 Pod가 이를 가져가 처리하는 구조를 비교하는 다이어그램입니다.](../../../assets/diagrams/rendered/ko-data-on-eks-airflow-02-helm-deployment-0.svg)
-
-`KubernetesExecutor`는 태스크마다 새 Pod가 생성되고 그 태스크의 생명주기 동안만 존재합니다. `CeleryExecutor`는 worker Pod가 장기간 살아있으면서 브로커에서 작업을 가져오는 구조로, 위 다이어그램의 worker Pod들은 태스크가 큐에 들어오기 전부터 이미 실행 중인 상태입니다.
-
-## KEDA로 CeleryExecutor Worker 오토스케일링
-
-Celery worker는 기본적으로 고정된 풀이기 때문에, 피크 부하에 맞춰 worker Deployment 크기를 잡으면 유휴 시간에는 그만큼 용량을 낭비하게 됩니다. KEDA는 고정된 replica 수 대신 실제로 실행/대기 중인 태스크 수를 기준으로 worker Deployment를 스케일링해 이 간극을 줄여줍니다.
-
-`values.yaml`에서 활성화합니다.
-
-```yaml
+  brokerUrlSecretName: airflow-broker
+  resultBackendSecretName: airflow-result-backend
+fernetKeySecretName: airflow-fernet
+apiSecretKeySecretName: airflow-api-secret
+jwtSecretName: airflow-jwt
+createUserJob:
+  enabled: false
+triggerer:
+  persistence:
+    enabled: false
+config:
+  core:
+    auth_manager: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+  celery:
+    worker_concurrency: 4
 workers:
   celery:
+    persistence:
+      enabled: false
     keda:
       enabled: true
       minReplicaCount: 0
       maxReplicaCount: 20
+      pollingInterval: 10
+      cooldownPeriod: 300
+      advanced:
+        horizontalPodAutoscalerConfig:
+          behavior:
+            scaleDown:
+              stabilizationWindowSeconds: 300
 ```
 
-활성화하면 차트가 worker Deployment를 대상으로 하는 KEDA `ScaledObject`를 생성합니다. KEDA는 대략 **10초마다** 다음과 같은 쿼리로 메타데이터 DB를 폴링합니다.
+Worker concurrency=4와 maxReplicaCount=20은 예시 상한이며 처리량·비용 보장이 아닙니다.
+Worker 자원 크기·task 메모리·DB/broker 부하·node 한도와 함께 조정합니다.
+이 profile은 worker persistence=false라 Deployment를 대상으로 합니다.
+Persistence=true이면 chart는 StatefulSet을 대상으로 할 수 있으며 KEDA도 이를 지원합니다.
+
+Chart의 실제 기본값은 pollingInterval=5s, cooldownPeriod=30s입니다. 예제는 의도를
+명확히 하려고 **10s/300s를 직접 지정**했습니다. Cooldown은 0으로 줄이는 경로이며
+1개 이상에서의 조정은 HPA의 polling·stabilization 설정과 구분합니다.
+실제 DB 조회 주기는 KEDA 활성 상태·HPA 요청·metric caching 등에도 영향을 받으므로
+항상 정확히 10초 간격이라고 단정하지 않습니다.
+
+이 profile에서 렌더링된 PostgreSQL 쿼리는 다음과 같습니다.
 
 ```sql
-SELECT ceil(COUNT(*)::decimal / worker_concurrency)
-FROM task_instance
-WHERE state IN ('running', 'queued');
+SELECT ceil(COUNT(*)::decimal / 4) FROM task_instance WHERE (state='running' OR state='queued') AND queue IN ('default')
 ```
 
-이 결과가 곧 Pod당 설정된 `worker_concurrency`로 현재 실행/대기 중인 태스크 인스턴스를 모두 처리하는 데 필요한 worker replica 수입니다. 실행/대기 중인 태스크 수가 0이 되면 ScaledObject는 Deployment를 **0개 replica**까지 줄이지만, 태스크 활동이 없는 상태가 대략 **5분** 정도 유지된 뒤에야 스케일 다운이 이뤄집니다. 이는 DAG 실행 사이의 짧은 공백 때문에 worker 풀이 내려갔다가 곧바로 다시 올라오는 것을 막기 위한 것입니다.
+worker_concurrency는 DB column이 아니라 chart가 넣는 **숫자 4**입니다.
+running/queued 상태를 해당 worker queue 범위로 세어 필요한 worker 수를 계산합니다.
+결과가 25여도 maxReplicaCount=20이면 그 이상으로 늘지 않으므로 backlog가 남을 수 있습니다.
+쿼리 오류·인증 실패를 0개 작업으로 해석하지 말고 ScaledObject와 HPA 상태를 확인합니다.
 
-### KubernetesExecutor에는 대응되는 KEDA 설정이 없는 이유
+### 혼합 executor와 alias의 함정
 
-이 절은 `CeleryExecutor`에만 적용되며, "KubernetesExecutor용 KEDA" 같은 대응 패턴은 존재하지 않습니다 — 이는 빠진 기능이 아니라 설계상 그런 것입니다. `KubernetesExecutor`의 스케일링은 이미 Pod 단위로 세밀하게 이뤄집니다. 태스크마다 정확히 하나의 Pod가 생성되므로, 처음부터 크기를 조절해야 할 고정 크기의 worker 풀 자체가 존재하지 않습니다. `KubernetesExecutor`에서 실제로 스케일이 필요한 대상은 그 태스크 Pod들을 위한 클러스터 수준의 컴퓨트 용량이며, 이는 KEDA 같은 워크로드 단위 오토스케일러가 아니라 Karpenter나 Cluster Autoscaler의 역할입니다. KEDA는 외부 지표를 기준으로 장기 실행 중인 Deployment의 크기를 조절하는 역할을 하는데, `KubernetesExecutor`에는 크기를 조절할 장기 실행 Deployment 자체가 없습니다.
+KubernetesExecutor와 함께 쓰면 Celery가 처리하지 않을 작업을 제외해야 합니다.
+Chart 기본 쿼리는 문자열 KubernetesExecutor를 제외하지만 task가 k8s 같은 alias를
+저장하면 그대로 집계될 수 있습니다. 실제 TaskInstance는 task.executor 값을 보존합니다.
 
-## 배포 확인
+아래는 CeleryExecutor를 기본으로 하고 KubernetesExecutor를 함께 설정한 경우의
+예시 query override입니다. Queue·alias·전체 클래스 이름을 바꾸면 실제 저장 값을
+확인해 필터도 수정합니다. NULL은 이 예제에서 기본 Celery executor를 쓰는 task입니다.
+
+```yaml
+executor: CeleryExecutor,KubernetesExecutor
+workers:
+  celery:
+    keda:
+      query: >-
+        SELECT ceil(COUNT(*)::decimal / {{ .Values.config.celery.worker_concurrency }})
+        FROM task_instance
+        WHERE state IN ('running', 'queued')
+        AND queue = 'default'
+        AND (executor IS NULL OR executor = 'CeleryExecutor')
+```
+
+이 부분 설정은 Celery 전체 profile에 합칩니다. 변경 전에 helm template로 실제 SQL과
+대상 worker를 검토합니다. KubernetesExecutor의 task Pod 자체는 KEDA가 같은
+방식으로 replica를 조절하는 pool이 아닙니다. Karpenter/Cluster Autoscaler 등의
+node 용량과 Airflow의 parallelism·pool·DAG 동시성·API 처리량은 여전히 별도 제한입니다.
+KEDA가 Deployment만 지원하거나 KubernetesExecutor 환경에서 다른 용도로 쓸 수
+없다는 뜻은 아닙니다.
+
+## 6. 검증과 리소스 수명주기
 
 ```bash
-# 모든 컴포넌트 Pod가 Running 상태인지 확인
-kubectl get pods -n airflow
-
-# scheduler와 dag-processor에 재시작/크래시가 없는지 개별 확인
-kubectl get pods -n airflow -l component=scheduler
-kubectl get pods -n airflow -l component=dag-processor
-
-# api-server를 로컬로 포트포워딩해 UI 접근
-kubectl port-forward -n airflow svc/airflow-api-server 8080:8080
+kubectl -n airflow rollout status deployment/airflow-api-server --timeout=180s
+kubectl -n airflow rollout status deployment/airflow-scheduler --timeout=180s
+kubectl -n airflow rollout status deployment/airflow-dag-processor --timeout=180s
+kubectl -n airflow get jobs
+kubectl -n airflow logs deployment/airflow-scheduler -c scheduler --tail=100
+kubectl -n airflow logs deployment/airflow-dag-processor -c dag-processor --tail=100
+# Celery/KEDA profile only:
+kubectl -n airflow get scaledobjects,hpa
+kubectl -n airflow describe scaledobject airflow-worker
+kubectl -n airflow get deployments,statefulsets -l component=worker
 ```
 
-포트포워딩이 연결된 상태에서 `http://localhost:8080`으로 UI에 접근할 수 있습니다. 차트는 최초 설치 시 기본 `admin`/`admin` 사용자를 생성합니다 — 설치 전에 `values.yaml`의 `webserver.defaultUser.password`를 지정해 비밀번호를 바꾸세요(테스트용 랩이 아니라면 기본값을 그대로 두지 마세요). `executor: CeleryExecutor`로 설정했다면 worker Deployment와 Redis도 정상 상태인지 함께 확인합니다.
+한 번의 UI 접속이나 healthy Deployment만으로 DB migration·DAG 전달·task 실행·
+원격 로그·KEDA scale-to-zero가 모두 검증되지는 않습니다. 예상한 task를 넣고 worker
+수·실행 결과·로그를 확인한 후 idle 복귀와 복구를 시험합니다.
 
-```bash
-kubectl get deploy -n airflow -l component=worker
-kubectl get pods -n airflow -l component=redis
-```
+내장 PostgreSQL은 이 profile에서 사용하지 않습니다. 기본 chart는 오래된
+bitnamilegacy PostgreSQL 이미지를 사용하므로 단순 기본 설치를 production 기준으로
+삼지 않습니다. Helm uninstall로 DB Pod가 사라져도 PVC/PV 데이터까지 즉시 삭제되는
+것은 아닙니다. PVC 보존 정책·StorageClass reclaim policy·외부 DB의 삭제/백업 정책을
+각각 확인하고 namespace·Secret·DB를 일괄 삭제하는 정리 명령으로 대체하지 않습니다.
 
-## 다음 단계
+이번 검토에서는 chart와 KEDA 리소스 형식, 공개 image manifest, 실제 PostgreSQL
+엔진의 SQL 24개 사례를 확인했습니다. 실제 EKS/DB 연결·이미지 실행·사용자 생성이나
+KEDA controller scaling을 수행한 것은 아닙니다.
 
-이 문서에서는 두 가지 Airflow Helm 차트와 그중 `apache/airflow`만이 공식 차트인 이유를 정리하고, 실제로 동작하는 Airflow 3 배포를 설치했으며, `KubernetesExecutor`와 `CeleryExecutor`의 선택 기준과 Celery worker의 KEDA 기반 오토스케일링까지 깊이 다뤘습니다. 이 섹션의 다음 장에서는 Kubernetes 위에서의 DAG 작성 패턴 — `KubernetesPodOperator`, 태스크 단위 executor 오버라이드, Part 1에서 소개한 dag-processor에 맞춘 DAG 구조화 — 을 다룹니다.
 
-[메인 페이지로 돌아가기](./README.md)
+- [Official chart 1.22.0 parameters](https://airflow.apache.org/docs/helm-chart/1.22.0/parameters-ref.html)
+- [Official chart 1.22.0 production guide](https://airflow.apache.org/docs/helm-chart/1.22.0/production-guide.html)
+- [KEDA configuration in the chart](https://airflow.apache.org/docs/helm-chart/1.22.0/keda.html)
+- [Chart 1.22.0 source](https://github.com/apache/airflow/tree/helm-chart/1.22.0/chart)
+- [KubernetesExecutor requirements](https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/kubernetes_executor.html)
+- [Concurrent executors](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/executor/index.html)
+- [KEDA PostgreSQL scaler](https://keda.sh/docs/2.20/scalers/postgresql/)
+- [KEDA ScaledObject timing and targets](https://keda.sh/docs/2.20/reference/scaledobject-spec/)
 
-## 퀴즈
+[Part 3: DAG patterns](03-dag-patterns.md)
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)를 풀어보세요.
+[README](README.md)
+
+[Quiz](../../quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)

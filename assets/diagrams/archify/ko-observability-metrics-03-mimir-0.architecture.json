@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Mimir vs Cortex vs Thanos",
+    "output": "ko-observability-metrics-03-mimir-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "이전 프로젝트"
+        },
+        "backend": {
+          "label": "현행 프로젝트"
+        },
+        "cloud": {
+          "label": "접근 방식"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "lineage",
+        "label": "Cortex → Mimir 계보",
+        "focus": [
+          "cortex",
+          "mimir",
+          "centralized"
+        ],
+        "note": "Mimir는 Cortex의 후속 프로젝트로, 중앙 집중식 remote_write 방식을 그대로 이어받았다."
+      },
+      {
+        "id": "thanos-path",
+        "label": "Thanos의 독립 경로",
+        "focus": [
+          "thanos",
+          "sidecar"
+        ],
+        "note": "Thanos는 별도로 발전하며 Prometheus 사이드카 기반 연합 쿼리 방식을 택했다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cortex",
+      "type": "external",
+      "label": "Cortex",
+      "sublabel": "2016",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "mimir",
+      "type": "backend",
+      "label": "Mimir",
+      "sublabel": "2022",
+      "pos": [
+        320,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "후속 프로젝트"
+    },
+    {
+      "id": "thanos",
+      "type": "backend",
+      "label": "Thanos",
+      "sublabel": "2017",
+      "pos": [
+        640,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "centralized",
+      "type": "cloud",
+      "label": "중앙 집중식",
+      "sublabel": "remote_write",
+      "pos": [
+        180,
+        330
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "cloud",
+      "label": "사이드카 기반",
+      "sublabel": "연합 쿼리",
+      "pos": [
+        630,
+        330
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "발전 과정",
+      "wraps": [
+        "cortex",
+        "mimir",
+        "thanos"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "접근 방식",
+      "wraps": [
+        "centralized",
+        "sidecar"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cortex-to-mimir",
+      "from": "cortex",
+      "to": "mimir",
+      "label": "계승",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cortex-approach",
+      "from": "cortex",
+      "to": "centralized",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mimir-approach",
+      "from": "mimir",
+      "to": "centralized",
+      "label": "사용",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 55
+    },
+    {
+      "id": "thanos-approach",
+      "from": "thanos",
+      "to": "sidecar",
+      "label": "사용",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 100
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "중앙 집중식 (Mimir · Cortex)",
+      "items": [
+        "Prometheus 수정 불필요",
+        "네이티브 멀티테넌시",
+        "Mimir: 빠른 쿼리 성능, 낮은 운영 오버헤드"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "사이드카 기반 (Thanos)",
+      "items": [
+        "Prometheus마다 사이드카 필요",
+        "제한적 멀티테넌시",
+        "쿼리 성능·운영 오버헤드 모두 중간"
+      ]
+    }
+  ]
+}

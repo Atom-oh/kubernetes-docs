@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch Logs 핵심 개념",
+    "output": "ko-observability-logging-03-cloudwatch-logs-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1320, 680],
+    "views": [
+      { "id": "ingest", "label": "수집과 저장", "focus": ["src", "lg", "ls"], "note": "EKS·애플리케이션·Lambda의 로그가 하나의 Log Group으로 모이고, 소스별 Log Stream에 저장된다." },
+      { "id": "query-alarm", "label": "조회와 알람", "focus": ["lg", "insights", "metric", "alarm"], "note": "Logs Insights로 쿼리 분석하고, Metric Filter가 추출한 지표로 CloudWatch Alarm을 만든다." },
+      { "id": "stream", "label": "실시간 전달", "focus": ["sub", "s3", "kdf", "os", "lambda2"], "note": "Subscription Filter가 로그를 S3·Kinesis Data Firehose(→OpenSearch)·Lambda로 실시간 전달한다." }
+    ]
+  },
+  "components": [
+    { "id": "src", "type": "external", "label": "로그 소스", "sublabel": "EKS 클러스터 · 애플리케이션 · Lambda", "pos": [40, 250], "size": [200, 64] },
+    { "id": "lg", "type": "cloud", "label": "Log Group", "sublabel": "/aws/eks/cluster/logs", "pos": [300, 250], "size": [180, 64] },
+    { "id": "ls", "type": "database", "label": "Log Streams", "sublabel": "Log Stream 1 · 2 · 3", "pos": [300, 380], "size": [180, 64] },
+    { "id": "insights", "type": "cloud", "label": "Logs Insights", "sublabel": "쿼리 분석", "pos": [580, 60], "size": [180, 64] },
+    { "id": "metric", "type": "cloud", "label": "Metric Filters", "sublabel": "로그 → 지표", "pos": [580, 190], "size": [180, 64] },
+    { "id": "alarm", "type": "cloud", "label": "CloudWatch Alarms", "sublabel": "임계값 알림", "pos": [580, 320], "size": [180, 64] },
+    { "id": "sub", "type": "messagebus", "label": "Subscription Filters", "sublabel": "실시간 스트리밍", "pos": [580, 450], "size": [180, 64] },
+    { "id": "s3", "type": "database", "label": "S3", "sublabel": "장기 보관", "pos": [860, 340], "size": [180, 64] },
+    { "id": "kdf", "type": "messagebus", "label": "Kinesis Data Firehose", "sublabel": "전송 스트림", "pos": [860, 450], "size": [180, 64] },
+    { "id": "lambda2", "type": "backend", "label": "Lambda", "sublabel": "실시간 처리", "pos": [860, 560], "size": [180, 64] },
+    { "id": "os", "type": "database", "label": "OpenSearch", "sublabel": "검색 · 분석", "pos": [1120, 450], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "CloudWatch Logs", "wraps": ["lg", "ls"] },
+    { "kind": "region", "label": "기능", "wraps": ["insights", "metric", "alarm", "sub"] },
+    { "kind": "region", "label": "목적지", "wraps": ["s3", "kdf", "lambda2", "os"] }
+  ],
+  "connections": [
+    { "id": "src-lg", "from": "src", "to": "lg", "label": "로그 전송", "variant": "emphasis" },
+    { "id": "lg-ls", "from": "lg", "to": "ls" },
+    { "id": "lg-insights", "from": "lg", "to": "insights", "label": "조회" },
+    { "id": "lg-metric", "from": "lg", "to": "metric" },
+    { "id": "lg-sub", "from": "lg", "to": "sub", "label": "실시간 전달", "variant": "emphasis" },
+    { "id": "metric-alarm", "from": "metric", "to": "alarm" },
+    { "id": "sub-s3", "from": "sub", "to": "s3" },
+    { "id": "sub-kdf", "from": "sub", "to": "kdf", "variant": "emphasis" },
+    { "id": "sub-lambda2", "from": "sub", "to": "lambda2" },
+    { "id": "kdf-os", "from": "kdf", "to": "os", "label": "적재" }
+  ]
+}

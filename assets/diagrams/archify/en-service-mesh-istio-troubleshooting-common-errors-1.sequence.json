@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How Pod Termination Works with terminationDrainDuration",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      660
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "default": {
+          "label": "regular call"
+        },
+        "emphasis": {
+          "label": "drain · normal response"
+        },
+        "return": {
+          "label": "response"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "kubelet"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "app container"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "istio-proxy"
+    },
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "external request"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 262,
+      "label": "Pod termination starts → Drain mode (terminationDrainDuration: 30s)"
+    },
+    {
+      "from": 278,
+      "to": 420,
+      "label": "Request handled during shutdown — existing connections kept"
+    },
+    {
+      "from": 436,
+      "to": 548,
+      "label": "Clean termination"
+    }
+  ],
+  "messages": [
+    {
+      "id": "sigterm-app",
+      "from": "k8s",
+      "to": "app",
+      "y": 185,
+      "label": "Send SIGTERM"
+    },
+    {
+      "id": "sigterm-envoy",
+      "from": "k8s",
+      "to": "envoy",
+      "y": 235,
+      "label": "Send SIGTERM",
+      "variant": "emphasis",
+      "note": "Enters Drain mode · rejects new connections · keeps existing ones · waits 30s"
+    },
+    {
+      "id": "req",
+      "from": "client",
+      "to": "envoy",
+      "y": 305,
+      "label": "Send request"
+    },
+    {
+      "id": "fwd",
+      "from": "envoy",
+      "to": "app",
+      "y": 340,
+      "label": "Forward request"
+    },
+    {
+      "id": "resp",
+      "from": "app",
+      "to": "envoy",
+      "y": 375,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "ok",
+      "from": "envoy",
+      "to": "client",
+      "y": 410,
+      "label": "Normal response",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-exit",
+      "from": "envoy",
+      "to": "k8s",
+      "y": 470,
+      "label": "Terminates normally",
+      "variant": "return",
+      "note": "Exits after confirming active connections closed"
+    },
+    {
+      "id": "app-exit",
+      "from": "app",
+      "to": "k8s",
+      "y": 520,
+      "label": "Graceful Shutdown",
+      "variant": "return",
+      "note": "App also terminates normally"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 235,
+      "to": 475,
+      "type": "security"
+    },
+    {
+      "participant": "app",
+      "from": 185,
+      "to": 525,
+      "type": "backend"
+    }
+  ]
+}

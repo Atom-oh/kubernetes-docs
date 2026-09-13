@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "mTLS (Mutual TLS)",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1060,
+      470
+    ]
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "App",
+      "sublabel": "Pod A application",
+      "pos": [
+        60,
+        310
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "Sidecar proxy",
+      "pos": [
+        280,
+        310
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "Sidecar proxy",
+      "pos": [
+        640,
+        310
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "App",
+      "sublabel": "Pod B application",
+      "pos": [
+        860,
+        310
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "citadel",
+      "type": "security",
+      "label": "istiod",
+      "sublabel": "Citadel (certificate issuance)",
+      "pos": [
+        450,
+        90
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod A",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod B",
+      "wraps": [
+        "envoy2",
+        "app2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-envoy1",
+      "from": "app1",
+      "to": "envoy1",
+      "label": "Plaintext"
+    },
+    {
+      "id": "envoy1-envoy2",
+      "from": "envoy1",
+      "to": "envoy2",
+      "label": "mTLS encrypted (both directions)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy2-app2",
+      "from": "envoy2",
+      "to": "app2",
+      "label": "Plaintext"
+    },
+    {
+      "id": "citadel-envoy1",
+      "from": "citadel",
+      "to": "envoy1",
+      "label": "Certificate issuance",
+      "variant": "security"
+    },
+    {
+      "id": "citadel-envoy2",
+      "from": "citadel",
+      "to": "envoy2",
+      "label": "Certificate issuance",
+      "variant": "security"
+    }
+  ]
+}

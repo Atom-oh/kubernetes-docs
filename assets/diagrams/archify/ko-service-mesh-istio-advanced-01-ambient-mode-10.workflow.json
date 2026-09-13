@@ -1,0 +1,217 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "언제 Ambient Mode를 선택해야 하는가",
+    "output": "public/archmaps/ko-service-mesh-istio-advanced-01-ambient-mode-10.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1120,
+      560
+    ],
+    "views": [
+      {
+        "id": "constrained",
+        "label": "리소스 제약 있음",
+        "focus": [
+          "start",
+          "resource",
+          "simple",
+          "ambient_l4",
+          "ambient_l7"
+        ],
+        "note": "간단한 보안과 텔레메트리만 필요하면 ztunnel만 사용하고, 그 이상이면 Waypoint를 추가합니다."
+      },
+      {
+        "id": "unconstrained",
+        "label": "리소스 여유 있음",
+        "focus": [
+          "start",
+          "resource",
+          "l7",
+          "sidecar",
+          "ambient_l7"
+        ],
+        "note": "모든 서비스에 복잡한 L7 기능이 필요하면 Sidecar Mode, 일부 서비스만 필요하면 Ambient Mode + Waypoint를 권장합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "security": {
+          "label": "판단"
+        },
+        "cloud": {
+          "label": "Ambient Mode"
+        },
+        "backend": {
+          "label": "Sidecar Mode"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "constrained",
+      "label": "리소스 제약 있음"
+    },
+    {
+      "id": "entry",
+      "label": "Service Mesh 도입 검토"
+    },
+    {
+      "id": "unconstrained",
+      "label": "리소스 여유 있음"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "resource",
+    "simple",
+    "ambient_l4"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "ambient_l4",
+      "ambient_l7",
+      "sidecar"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "ambient_l4"
+      },
+      {
+        "from": "start",
+        "to": "ambient_l7"
+      },
+      {
+        "from": "start",
+        "to": "sidecar"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "entry",
+      "col": 0,
+      "type": "frontend",
+      "label": "Service Mesh 도입 검토",
+      "sublabel": "시작",
+      "width": 220
+    },
+    {
+      "id": "resource",
+      "lane": "entry",
+      "col": 1,
+      "type": "security",
+      "label": "리소스 제약 있음?",
+      "tag": "판단",
+      "width": 200
+    },
+    {
+      "id": "simple",
+      "lane": "constrained",
+      "col": 2,
+      "type": "security",
+      "label": "간단한 보안 + 텔레메트리?",
+      "tag": "판단",
+      "width": 236
+    },
+    {
+      "id": "l7",
+      "lane": "unconstrained",
+      "col": 2,
+      "type": "security",
+      "label": "복잡한 L7 기능 필요?",
+      "tag": "판단",
+      "width": 230
+    },
+    {
+      "id": "ambient_l4",
+      "lane": "constrained",
+      "col": 3,
+      "type": "cloud",
+      "label": "Ambient Mode",
+      "sublabel": "ztunnel only",
+      "tag": "권장",
+      "width": 170
+    },
+    {
+      "id": "ambient_l7",
+      "lane": "entry",
+      "col": 3,
+      "type": "cloud",
+      "label": "Ambient Mode",
+      "sublabel": "+ Waypoint",
+      "tag": "권장",
+      "width": 170
+    },
+    {
+      "id": "sidecar",
+      "lane": "unconstrained",
+      "col": 3,
+      "type": "backend",
+      "label": "Sidecar Mode",
+      "sublabel": "모든 서비스 L7",
+      "tag": "권장",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "resource",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "resource",
+      "to": "simple",
+      "label": "예",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "resource",
+      "to": "l7",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "simple",
+      "to": "ambient_l4",
+      "label": "예",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "simple",
+      "to": "ambient_l7",
+      "label": "아니오",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop"
+    },
+    {
+      "from": "l7",
+      "to": "sidecar",
+      "label": "모든 서비스",
+      "role": "branch"
+    },
+    {
+      "from": "l7",
+      "to": "ambient_l7",
+      "label": "일부 서비스만",
+      "role": "branch"
+    }
+  ]
+}

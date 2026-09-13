@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sidecar Container Lifecycle Guarantees (GA in 1.33)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      660
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "kubelet action"
+        },
+        "emphasis": {
+          "label": "main container start"
+        },
+        "return": {
+          "label": "container exit"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "startup",
+        "label": "Startup order",
+        "focus": [
+          "kubelet",
+          "sidecar1",
+          "sidecar2",
+          "init",
+          "main"
+        ],
+        "note": "Sidecars start first, the init container must exit 0, then the main container starts."
+      },
+      {
+        "id": "shutdown",
+        "label": "Shutdown order",
+        "focus": [
+          "kubelet",
+          "main",
+          "sidecar2",
+          "sidecar1"
+        ],
+        "note": "The main container is terminated first; sidecars are stopped last in reverse start order."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "node agent"
+    },
+    {
+      "id": "sidecar1",
+      "type": "cloud",
+      "label": "Sidecar 1",
+      "sublabel": "envoy-proxy"
+    },
+    {
+      "id": "sidecar2",
+      "type": "cloud",
+      "label": "Sidecar 2",
+      "sublabel": "fluent-bit"
+    },
+    {
+      "id": "init",
+      "type": "external",
+      "label": "Init",
+      "sublabel": "db-migration"
+    },
+    {
+      "id": "main",
+      "type": "frontend",
+      "label": "Main",
+      "sublabel": "app"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 338,
+      "label": "Pod startup"
+    },
+    {
+      "from": 350,
+      "to": 545,
+      "label": "Pod shutdown"
+    }
+  ],
+  "messages": [
+    {
+      "id": "start-sc1",
+      "from": "kubelet",
+      "to": "sidecar1",
+      "y": 185,
+      "label": "START (restartPolicy: Always)"
+    },
+    {
+      "id": "start-sc2",
+      "from": "kubelet",
+      "to": "sidecar2",
+      "y": 217,
+      "label": "START (restartPolicy: Always)"
+    },
+    {
+      "id": "start-init",
+      "from": "kubelet",
+      "to": "init",
+      "y": 249,
+      "label": "START INIT"
+    },
+    {
+      "id": "init-exit",
+      "from": "init",
+      "to": "kubelet",
+      "y": 281,
+      "label": "EXIT 0 (success)",
+      "variant": "return"
+    },
+    {
+      "id": "start-main",
+      "from": "kubelet",
+      "to": "main",
+      "y": 318,
+      "label": "START MAIN",
+      "variant": "emphasis"
+    },
+    {
+      "id": "term-main",
+      "from": "kubelet",
+      "to": "main",
+      "y": 368,
+      "label": "SIGTERM"
+    },
+    {
+      "id": "main-exit",
+      "from": "main",
+      "to": "kubelet",
+      "y": 400,
+      "label": "EXIT",
+      "variant": "return"
+    },
+    {
+      "id": "term-sc2",
+      "from": "kubelet",
+      "to": "sidecar2",
+      "y": 432,
+      "label": "SIGTERM (reverse order)"
+    },
+    {
+      "id": "sc2-exit",
+      "from": "sidecar2",
+      "to": "kubelet",
+      "y": 464,
+      "label": "EXIT",
+      "variant": "return"
+    },
+    {
+      "id": "term-sc1",
+      "from": "kubelet",
+      "to": "sidecar1",
+      "y": 496,
+      "label": "SIGTERM (reverse order)"
+    },
+    {
+      "id": "sc1-exit",
+      "from": "sidecar1",
+      "to": "kubelet",
+      "y": 528,
+      "label": "EXIT",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "sidecar1",
+      "from": 180,
+      "to": 533,
+      "type": "cloud"
+    },
+    {
+      "participant": "sidecar2",
+      "from": 212,
+      "to": 469,
+      "type": "cloud"
+    },
+    {
+      "participant": "init",
+      "from": 244,
+      "to": 286,
+      "type": "external"
+    },
+    {
+      "participant": "main",
+      "from": 313,
+      "to": 405,
+      "type": "frontend"
+    }
+  ]
+}

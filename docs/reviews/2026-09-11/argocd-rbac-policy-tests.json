@@ -1,0 +1,449 @@
+{
+  "cases": 42,
+  "passed": 42,
+  "results": [
+    {
+      "locale": "ko",
+      "test": "validate",
+      "ok": true,
+      "stdout": "Policy is valid.",
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:40Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "developers",
+      "action": "get",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:42Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "developers",
+      "action": "sync",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:43Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "developers",
+      "action": "delete",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:44Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "developers",
+      "action": "update",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:45Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "developers",
+      "action": "override",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:46Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "developers",
+      "action": "get",
+      "resource": "applications",
+      "object": "backend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:48Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "developers",
+      "action": "action/apps/Deployment/restart",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:49Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "developers",
+      "action": "action/apps/StatefulSet/restart",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:50Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "viewers",
+      "action": "get",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:51Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "viewers",
+      "action": "sync",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:52Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "unbound-user",
+      "action": "get",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:54Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "frontend-team",
+      "action": "delete",
+      "resource": "applications",
+      "object": "frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:55Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "frontend-team",
+      "action": "delete",
+      "resource": "applications",
+      "object": "backend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:56Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "platform-team",
+      "action": "delete",
+      "resource": "applications",
+      "object": "backend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:57Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "security-team",
+      "action": "get",
+      "resource": "applications",
+      "object": "backend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:28:59Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "security-team",
+      "action": "sync",
+      "resource": "applications",
+      "object": "backend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:00Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "sre-team",
+      "action": "create",
+      "resource": "exec",
+      "object": "production/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:01Z\"}"
+    },
+    {
+      "locale": "ko",
+      "subject": "sre-team",
+      "action": "create",
+      "resource": "exec",
+      "object": "frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:02Z\"}"
+    },
+    {
+      "locale": "ko",
+      "test": "scoped-default",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:03Z\"}"
+    },
+    {
+      "locale": "ko",
+      "test": "readonly-default",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:05Z\"}"
+    },
+    {
+      "locale": "en",
+      "test": "validate",
+      "ok": true,
+      "stdout": "Policy is valid.",
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:06Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "developers",
+      "action": "get",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:07Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "developers",
+      "action": "sync",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:08Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "developers",
+      "action": "delete",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:10Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "developers",
+      "action": "update",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:11Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "developers",
+      "action": "override",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:12Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "developers",
+      "action": "get",
+      "resource": "applications",
+      "object": "team-b/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:13Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "developers",
+      "action": "action/apps/Deployment/restart",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:14Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "developers",
+      "action": "action/apps/StatefulSet/restart",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:16Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "viewers",
+      "action": "get",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:17Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "viewers",
+      "action": "sync",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:18Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "unbound-user",
+      "action": "get",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:19Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "frontend-team",
+      "action": "delete",
+      "resource": "applications",
+      "object": "team-frontend/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:20Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "frontend-team",
+      "action": "delete",
+      "resource": "applications",
+      "object": "team-b/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:22Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "platform-team",
+      "action": "delete",
+      "resource": "applications",
+      "object": "team-b/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:23Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "security-team",
+      "action": "get",
+      "resource": "applications",
+      "object": "team-b/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:24Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "security-team",
+      "action": "sync",
+      "resource": "applications",
+      "object": "team-b/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:25Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "sre-team",
+      "action": "create",
+      "resource": "exec",
+      "object": "production/app",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:27Z\"}"
+    },
+    {
+      "locale": "en",
+      "subject": "sre-team",
+      "action": "create",
+      "resource": "exec",
+      "object": "team-frontend/app",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:28Z\"}"
+    },
+    {
+      "locale": "en",
+      "test": "scoped-default",
+      "expected": false,
+      "actual": false,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:29Z\"}"
+    },
+    {
+      "locale": "en",
+      "test": "readonly-default",
+      "expected": true,
+      "actual": true,
+      "ok": true,
+      "stderr": "{\"level\":\"warning\",\"msg\":\"user defined roles not found in policies: role:admin\",\"time\":\"2026-09-11T09:29:30Z\"}"
+    }
+  ],
+  "scope": "Actual Argo CD3.5.2 CLI with local policy files and offline dummy kubeconfig; no API calls. Built-in-role warning from validate is expected; can augments built-in policies."
+}

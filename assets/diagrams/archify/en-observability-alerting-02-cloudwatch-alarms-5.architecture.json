@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch Alarms Cost Optimization Strategies",
+    "locale": "en",
+    "output": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      700
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Optimization goal"
+        },
+        "backend": {
+          "label": "Strategy"
+        },
+        "external": {
+          "label": "Tactic"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "v-count",
+        "label": "Minimize Alarm Count",
+        "focus": [
+          "goal",
+          "min-count",
+          "dedupe",
+          "replace-composite"
+        ],
+        "note": "Consolidate duplicate alarms and replace them with composite alarms to cut the alarm count itself."
+      },
+      {
+        "id": "v-res",
+        "label": "Optimize Resolution",
+        "focus": [
+          "goal",
+          "resolution",
+          "res-by-priority",
+          "min-high-res"
+        ],
+        "note": "Set the period by priority and keep high-resolution alarms to a minimum."
+      },
+      {
+        "id": "v-comp",
+        "label": "Use Composite Alarms",
+        "focus": [
+          "goal",
+          "composite",
+          "combine"
+        ],
+        "note": "Combine multiple metric alarms into a single composite alarm."
+      },
+      {
+        "id": "v-remove",
+        "label": "Remove Unnecessary Alarms",
+        "focus": [
+          "goal",
+          "remove",
+          "delete-unused",
+          "review"
+        ],
+        "note": "Delete unused alarms and review them regularly."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "goal",
+      "type": "cloud",
+      "label": "Cost Optimization",
+      "sublabel": "CloudWatch Alarms",
+      "pos": [
+        40,
+        293
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "min-count",
+      "type": "backend",
+      "label": "Minimize Alarm Count",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "resolution",
+      "type": "backend",
+      "label": "Optimize Resolution",
+      "pos": [
+        400,
+        230
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "composite",
+      "type": "backend",
+      "label": "Use Composite Alarms",
+      "pos": [
+        400,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "remove",
+      "type": "backend",
+      "label": "Remove Unnecessary Alarms",
+      "pos": [
+        400,
+        530
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dedupe",
+      "type": "external",
+      "label": "Consolidate Duplicate Alarms",
+      "pos": [
+        800,
+        30
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "replace-composite",
+      "type": "external",
+      "label": "Replace with Composite Alarm",
+      "pos": [
+        800,
+        100
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "res-by-priority",
+      "type": "external",
+      "label": "Set Resolution by Priority",
+      "pos": [
+        800,
+        200
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "min-high-res",
+      "type": "external",
+      "label": "Minimize High Resolution",
+      "pos": [
+        800,
+        270
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "combine",
+      "type": "external",
+      "label": "Combine Alarms into One Composite",
+      "pos": [
+        800,
+        384
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "delete-unused",
+      "type": "external",
+      "label": "Delete Unused Alarms",
+      "pos": [
+        800,
+        500
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "review",
+      "type": "external",
+      "label": "Regular Review",
+      "pos": [
+        800,
+        570
+      ],
+      "size": [
+        270,
+        52
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "goal-to-min-count",
+      "from": "goal",
+      "to": "min-count",
+      "variant": "emphasis"
+    },
+    {
+      "id": "goal-to-resolution",
+      "from": "goal",
+      "to": "resolution",
+      "variant": "emphasis"
+    },
+    {
+      "id": "goal-to-composite",
+      "from": "goal",
+      "to": "composite",
+      "variant": "emphasis"
+    },
+    {
+      "id": "goal-to-remove",
+      "from": "goal",
+      "to": "remove",
+      "variant": "emphasis"
+    },
+    {
+      "id": "min-count-to-dedupe",
+      "from": "min-count",
+      "to": "dedupe"
+    },
+    {
+      "id": "min-count-to-replace-composite",
+      "from": "min-count",
+      "to": "replace-composite"
+    },
+    {
+      "id": "resolution-to-res-by-priority",
+      "from": "resolution",
+      "to": "res-by-priority"
+    },
+    {
+      "id": "resolution-to-min-high-res",
+      "from": "resolution",
+      "to": "min-high-res"
+    },
+    {
+      "id": "composite-to-combine",
+      "from": "composite",
+      "to": "combine"
+    },
+    {
+      "id": "remove-to-delete-unused",
+      "from": "remove",
+      "to": "delete-unused"
+    },
+    {
+      "id": "remove-to-review",
+      "from": "remove",
+      "to": "review"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Cost Factors (monthly)",
+      "items": [
+        "Standard Resolution alarm (60s): $0.10/alarm",
+        "High Resolution alarm (10s): $0.30/alarm",
+        "Anomaly Detection: $0.30/metric",
+        "Composite Alarm: $0.50/alarm"
+      ]
+    }
+  ]
+}

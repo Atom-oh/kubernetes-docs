@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "App of Apps 패턴",
+    "output": "ko-gitops-argocd-02-applications-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": { "label": "루트 Application" },
+        "backend": { "label": "자식 Application" },
+        "external": { "label": "Kubernetes 리소스" }
+      }
+    },
+    "views": [
+      { "id": "root-to-children", "label": "루트 → 자식 Application", "focus": ["root", "app1", "app2", "app3", "app4"], "note": "루트 Application이 apps/children 경로를 동기화하여 자식 Application 리소스를 argocd 네임스페이스에 생성한다." },
+      { "id": "children-to-resources", "label": "자식 → Kubernetes 리소스", "focus": ["app1", "app2", "app3", "app4", "deployments", "services", "configmaps"], "note": "각 자식 Application은 manifests/<app> 경로를 동기화하여 대상 네임스페이스에 실제 리소스를 생성한다." }
+    ]
+  },
+  "components": [
+    { "id": "root", "type": "cloud", "label": "apps-of-apps", "sublabel": "root application", "pos": [470, 40], "size": [180, 60] },
+    { "id": "app1", "type": "backend", "label": "app-1", "sublabel": "child", "pos": [80, 200], "size": [150, 60] },
+    { "id": "app2", "type": "backend", "label": "app-2", "sublabel": "child", "pos": [340, 200], "size": [150, 60] },
+    { "id": "app3", "type": "backend", "label": "app-3", "sublabel": "child", "pos": [620, 200], "size": [150, 60] },
+    { "id": "app4", "type": "backend", "label": "app-4", "sublabel": "child", "pos": [900, 200], "size": [150, 60] },
+    { "id": "deployments", "type": "external", "label": "Deployments", "sublabel": "from app-1, app-2", "pos": [190, 400], "size": [190, 60] },
+    { "id": "services", "type": "external", "label": "Services", "sublabel": "from app-3", "pos": [610, 400], "size": [170, 60] },
+    { "id": "configmaps", "type": "external", "label": "ConfigMaps", "sublabel": "from app-4", "pos": [890, 400], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "argocd 네임스페이스 (Application 리소스)", "wraps": ["root", "app1", "app2", "app3", "app4"] },
+    { "kind": "region", "label": "대상 네임스페이스 (destination)", "wraps": ["deployments", "services", "configmaps"] }
+  ],
+  "connections": [
+    { "id": "root-app1", "from": "root", "to": "app1", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "root-app2", "from": "root", "to": "app2", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "root-app3", "from": "root", "to": "app3", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "root-app4", "from": "root", "to": "app4", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "app1-deployments", "from": "app1", "to": "deployments", "fromSide": "bottom", "toSide": "top" },
+    { "id": "app2-deployments", "from": "app2", "to": "deployments", "fromSide": "bottom", "toSide": "top" },
+    { "id": "app3-services", "from": "app3", "to": "services", "fromSide": "bottom", "toSide": "top" },
+    { "id": "app4-configmaps", "from": "app4", "to": "configmaps", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "루트 Application", "items": ["source.path: apps/children — 자식 Application 매니페스트를 동기화", "destination.namespace: argocd — Application 리소스는 argocd 네임스페이스에 생성", "syncPolicy.automated (prune, selfHeal)로 자식 추가·삭제를 자동 반영"] },
+    { "dot": "cyan", "title": "자식 Application", "items": ["source.path: manifests/<app> — 앱별 매니페스트를 동기화", "destination.namespace: 앱별 네임스페이스 (CreateNamespace=true)", "resources-finalizer로 삭제 시 하위 리소스까지 정리"] }
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Certificate Hierarchy",
+    "locale": "en",
+    "output": "en-service-mesh-linkerd-04-security-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "CA (issuer)"
+        },
+        "backend": {
+          "label": "Workload cert"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "trust-anchor",
+      "type": "security",
+      "label": "Trust Anchor · Root CA",
+      "sublabel": "Validity: 1–10 years",
+      "tag": "Secret: linkerd-identity-trust-roots",
+      "pos": [
+        330,
+        50
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "identity-issuer",
+      "type": "security",
+      "label": "Identity Issuer · Intermediate CA",
+      "sublabel": "Validity: 1 year",
+      "tag": "Secret: linkerd-identity-issuer",
+      "pos": [
+        320,
+        210
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "workload-cert-1",
+      "type": "backend",
+      "label": "Workload Cert (Proxy 1)",
+      "sublabel": "Validity: 24 hours",
+      "tag": "Auto-renewed before expiry",
+      "pos": [
+        110,
+        380
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "workload-cert-2",
+      "type": "backend",
+      "label": "Workload Cert (Proxy 2)",
+      "sublabel": "Validity: 24 hours",
+      "tag": "Auto-renewed before expiry",
+      "pos": [
+        560,
+        380
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Certificate Hierarchy",
+      "wraps": [
+        "trust-anchor",
+        "identity-issuer",
+        "workload-cert-1",
+        "workload-cert-2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "anchor-signs-issuer",
+      "from": "trust-anchor",
+      "to": "identity-issuer",
+      "label": "signs (intermediate-ca)",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        450,
+        162
+      ]
+    },
+    {
+      "id": "issuer-signs-cert-1",
+      "from": "identity-issuer",
+      "to": "workload-cert-1",
+      "label": "issues",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "issuer-signs-cert-2",
+      "from": "identity-issuer",
+      "to": "workload-cert-2",
+      "label": "issues",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Rotation cadence and method",
+      "items": [
+        "Trust Anchor: bundle the old and new certs into ca-bundle.crt and swap with zero downtime",
+        "Identity Issuer: reissue under the new Trust Anchor, then restart linkerd-identity",
+        "Workload certificates: proxies renew them automatically before the 24-hour expiry"
+      ]
+    }
+  ]
+}

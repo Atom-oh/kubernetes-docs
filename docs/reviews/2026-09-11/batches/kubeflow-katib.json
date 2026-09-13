@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/kubeflow/04-katib.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b10bf182dd9c8625f9afbb30b0dce3fe166b543f3dc1af800d65bdb4674feac9",
+    "summary": "Reviewed0.19controller/config/metrics; corrected CR vs CRD, termination counts/failure boundaries, pull vs Push and custom scrape, concurrency units, and documented medianstop arithmetic-mean discrepancy with native function evidence."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/kubeflow/04-katib-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "4b424af21757ac537406f616b0daebaff9a49e1ab19894d6c2f1be174c784e9f",
+    "summary": "Reviewed0.19controller/config/metrics; corrected CR vs CRD, termination counts/failure boundaries, pull vs Push and custom scrape, concurrency units, and documented medianstop arithmetic-mean discrepancy with native function evidence."
+  },
+  {
+    "path": "en/ai-ml/kubeflow/04-katib.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "993f899c0c91e6c63390af83b668fdbeaed47892acd4ab9e9c69228d2547a336",
+    "summary": "Reviewed0.19controller/config/metrics; corrected CR vs CRD, termination counts/failure boundaries, pull vs Push and custom scrape, concurrency units, and documented medianstop arithmetic-mean discrepancy with native function evidence."
+  },
+  {
+    "path": "en/quizzes/ai-ml/kubeflow/04-katib-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "59a42f210a4da5b70ebb5866199ae142ce07f3cc29997047732f98ed214e89d4",
+    "summary": "Reviewed0.19controller/config/metrics; corrected CR vs CRD, termination counts/failure boundaries, pull vs Push and custom scrape, concurrency units, and documented medianstop arithmetic-mean discrepancy with native function evidence."
+  }
+]

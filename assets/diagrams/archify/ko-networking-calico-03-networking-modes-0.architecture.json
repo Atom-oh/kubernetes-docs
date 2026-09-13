@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico 네트워킹 모드와 선택 기준",
+    "output": "ko-networking-calico-03-networking-modes-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "선택 기준"
+        },
+        "cloud": {
+          "label": "모드 선택 지점"
+        },
+        "backend": {
+          "label": "Calico 네트워킹 모드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "by-network",
+        "label": "네트워크 환경",
+        "focus": [
+          "net",
+          "select",
+          "ipip",
+          "vxlan",
+          "direct"
+        ],
+        "note": "네트워크 환경은 IPIP, VXLAN, Direct 선택에 영향을 준다. 온프레미스 Direct는 BGP가 필요하다."
+      },
+      {
+        "id": "by-perf",
+        "label": "성능 요구사항",
+        "focus": [
+          "perf",
+          "select",
+          "direct",
+          "ipip"
+        ],
+        "note": "성능이 우선이면 캡슐화가 없는 Direct가 최고이고, IPIP는 20 bytes 오버헤드로 좋음 수준이다."
+      },
+      {
+        "id": "by-compat",
+        "label": "호환성",
+        "focus": [
+          "compat",
+          "select",
+          "vxlan",
+          "cross"
+        ],
+        "note": "호환성이 우선이면 VXLAN(Azure 권장)이나 CrossSubnet(AWS · GCP 권장)을 고른다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "net",
+      "type": "external",
+      "label": "네트워크 환경",
+      "sublabel": "클라우드 VPC / 온프레미스",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "perf",
+      "type": "external",
+      "label": "성능 요구사항",
+      "sublabel": "오버헤드 · MTU",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "compat",
+      "type": "external",
+      "label": "호환성",
+      "sublabel": "클라우드 제공자 제약",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "select",
+      "type": "cloud",
+      "label": "모드 선택",
+      "sublabel": "환경 · 성능 · 호환성 종합",
+      "pos": [
+        300,
+        238
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ipip",
+      "type": "backend",
+      "label": "IPIP 모드",
+      "sublabel": "IP-in-IP 캡슐화",
+      "tag": "+20 bytes",
+      "pos": [
+        740,
+        30
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "vxlan",
+      "type": "backend",
+      "label": "VXLAN 모드",
+      "sublabel": "UDP 캡슐화",
+      "tag": "+50 bytes",
+      "pos": [
+        740,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "direct",
+      "type": "backend",
+      "label": "Direct 모드",
+      "sublabel": "캡슐화 없음",
+      "tag": "0 bytes",
+      "pos": [
+        740,
+        310
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cross",
+      "type": "backend",
+      "label": "CrossSubnet",
+      "sublabel": "조건부 캡슐화",
+      "tag": "가변",
+      "pos": [
+        740,
+        450
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "선택 기준",
+      "wraps": [
+        "net",
+        "perf",
+        "compat"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Calico 네트워킹 모드",
+      "wraps": [
+        "ipip",
+        "vxlan",
+        "direct",
+        "cross"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "net-select",
+      "from": "net",
+      "to": "select"
+    },
+    {
+      "id": "perf-select",
+      "from": "perf",
+      "to": "select",
+      "variant": "emphasis"
+    },
+    {
+      "id": "compat-select",
+      "from": "compat",
+      "to": "select"
+    },
+    {
+      "id": "select-ipip",
+      "from": "select",
+      "to": "ipip",
+      "label": "IP Protocol 4",
+      "labelSegment": 2
+    },
+    {
+      "id": "select-vxlan",
+      "from": "select",
+      "to": "vxlan",
+      "label": "UDP 4789",
+      "labelSegment": 2
+    },
+    {
+      "id": "select-direct",
+      "from": "select",
+      "to": "direct",
+      "label": "BGP 필요",
+      "variant": "emphasis",
+      "labelSegment": 2
+    },
+    {
+      "id": "select-cross",
+      "from": "select",
+      "to": "cross",
+      "label": "클라우드 권장",
+      "labelSegment": 2
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "캡슐화와 MTU",
+      "items": [
+        "IPIP: IP Protocol 4, 권장 MTU 1480",
+        "VXLAN: UDP 4789, 권장 MTU 1450",
+        "Direct: 캡슐화 없음, MTU 1500",
+        "CrossSubnet: 다른 서브넷만 캡슐화, MTU 가변"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "환경별 권장",
+      "items": [
+        "AWS · GCP: CrossSubnet 권장, Direct는 VPC 설정 필요",
+        "Azure: VXLAN 권장, IPIP는 제한적",
+        "온프레미스: Direct와 CrossSubnet은 BGP 필요"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "성능",
+      "items": [
+        "Direct 최고 → CrossSubnet 최적화됨 → IPIP 좋음 → VXLAN 보통"
+      ]
+    }
+  ]
+}

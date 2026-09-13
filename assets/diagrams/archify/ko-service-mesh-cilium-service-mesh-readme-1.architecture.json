@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "사이드카 vs eBPF 아키텍처 비교",
+    "output": "ko-service-mesh-cilium-service-mesh-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": { "label": "App 컨테이너" },
+        "backend": { "label": "Envoy 프록시" },
+        "cloud": { "label": "네트워크" },
+        "messagebus": { "label": "eBPF 커널 데이터패스" }
+      }
+    },
+    "views": [
+      { "id": "istio", "label": "사이드카 방식 (Istio)", "focus": ["app-a-istio", "envoy-a", "network", "envoy-b", "app-b-istio"], "note": "Pod마다 붙는 Envoy 사이드카가 L3/L4와 L7을 모두 사용자 공간에서 처리한다." },
+      { "id": "cilium", "label": "eBPF 방식 (Cilium)", "focus": ["app-a-cilium", "ebpf-a", "shared-envoy", "ebpf-b", "app-b-cilium"], "note": "커널의 eBPF가 L3/L4를 처리하고, L7이 필요할 때만 노드당 하나의 공유 Envoy를 거친다." }
+    ]
+  },
+  "components": [
+    { "id": "app-a-istio", "type": "frontend", "label": "App", "sublabel": "container", "pos": [40, 90], "size": [140, 60] },
+    { "id": "envoy-a", "type": "backend", "label": "Envoy Sidecar", "sublabel": "L3/L4 + L7", "pos": [250, 90], "size": [170, 60] },
+    { "id": "network", "type": "cloud", "label": "Network", "sublabel": "Pod 간 네트워크", "pos": [490, 90], "size": [160, 60] },
+    { "id": "envoy-b", "type": "backend", "label": "Envoy Sidecar", "sublabel": "L3/L4 + L7", "pos": [720, 90], "size": [170, 60] },
+    { "id": "app-b-istio", "type": "frontend", "label": "App", "sublabel": "container", "pos": [960, 90], "size": [140, 60] },
+    { "id": "app-a-cilium", "type": "frontend", "label": "App", "sublabel": "container", "pos": [40, 290], "size": [140, 60] },
+    { "id": "ebpf-a", "type": "messagebus", "label": "eBPF", "sublabel": "L3/L4 (커널)", "pos": [250, 290], "size": [170, 60] },
+    { "id": "shared-envoy", "type": "backend", "label": "Shared Envoy", "sublabel": "L7 only · 노드당 1개", "pos": [490, 290], "size": [160, 60], "tag": "sidecar-free" },
+    { "id": "ebpf-b", "type": "messagebus", "label": "eBPF", "sublabel": "L3/L4 (커널)", "pos": [720, 290], "size": [170, 60] },
+    { "id": "app-b-cilium", "type": "frontend", "label": "App", "sublabel": "container", "pos": [960, 290], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "사이드카 방식 (Istio)", "wraps": ["app-a-istio", "envoy-a", "network", "envoy-b", "app-b-istio"] },
+    { "kind": "region", "label": "eBPF 방식 (Cilium)", "wraps": ["app-a-cilium", "ebpf-a", "shared-envoy", "ebpf-b", "app-b-cilium"] }
+  ],
+  "connections": [
+    { "id": "i1", "from": "app-a-istio", "to": "envoy-a" },
+    { "id": "i2", "from": "envoy-a", "to": "network" },
+    { "id": "i3", "from": "network", "to": "envoy-b" },
+    { "id": "i4", "from": "envoy-b", "to": "app-b-istio" },
+    { "id": "c1", "from": "app-a-cilium", "to": "ebpf-a" },
+    { "id": "c2", "from": "ebpf-a", "to": "shared-envoy", "label": "L7", "variant": "emphasis" },
+    { "id": "c3", "from": "shared-envoy", "to": "ebpf-b" },
+    { "id": "c4", "from": "ebpf-b", "to": "app-b-cilium" }
+  ],
+  "cards": [
+    { "dot": "slate", "title": "사이드카 방식 (Istio)", "items": ["프록시: Pod당 Envoy 1개", "L4 처리: Envoy (사용자 공간)", "L7 처리: Envoy"] },
+    { "dot": "orange", "title": "eBPF 방식 (Cilium)", "items": ["프록시: 노드당 Envoy 1개 (L7만)", "L4 처리: eBPF (커널)", "L7 처리: 공유 Envoy"] }
+  ]
+}

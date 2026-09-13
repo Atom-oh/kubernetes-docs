@@ -1,0 +1,42 @@
+{
+  "body_mismatches": 0,
+  "completed": 18000,
+  "duration_seconds": 900.0,
+  "errors": 10,
+  "failure_span_is_downtime": false,
+  "failure_span_seconds": 3.354426,
+  "first_failed_request_utc_start": "2026-09-12T14:08:45.499645Z",
+  "full_60s_windows": 841,
+  "generator_valid": true,
+  "http_error_rate": 0.0,
+  "http_errors": 0,
+  "last_failed_completion_utc": "2026-09-12T14:08:48.854071Z",
+  "launched": 18000,
+  "p50_ms": 1.9668269999328913,
+  "p95_ms": 2.7107079999950656,
+  "p99_ms": 5.631134000168458,
+  "percentile_method": "nearest_rank",
+  "request_error_rate": 0.0005555555555555556,
+  "scheduled": 18000,
+  "scheduled_origin_utc": "2026-09-12T14:05:11.099428Z",
+  "skipped": 0,
+  "success": 17990,
+  "timeouts": 8,
+  "transport_errors": 2,
+  "worst_60s_p99_ms": 7.429546999901504,
+  "worst_60s_p99_window": {
+    "completed": 1200,
+    "errors": 10,
+    "start_second": 212,
+    "utc_end": "2026-09-12T14:09:43.099428Z",
+    "utc_start": "2026-09-12T14:08:43.099428Z"
+  },
+  "worst_60s_request_error_rate": 0.008333333333333333,
+  "worst_60s_request_error_window": {
+    "completed": 1200,
+    "errors": 10,
+    "start_second": 156,
+    "utc_end": "2026-09-12T14:08:47.099428Z",
+    "utc_start": "2026-09-12T14:07:47.099428Z"
+  }
+}

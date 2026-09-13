@@ -1,143 +1,323 @@
 # Part 1: Spark on Kubernetes 기초
 
-> **지원 버전**: Apache Spark 4.2, Kubernetes 1.30+\
-> **마지막 업데이트**: 2026년 7월 15일
+> **검토 기준**: Spark 4.2.0, Kubernetes 1.34+; 예제 이미지는 Java 21\
+> **최종 검토**: 2026년 9월 12일
 
-## 실습 환경 준비
+## Cluster mode와 client mode
 
-이 문서의 예제를 따라 하려면 다음 도구와 환경이 필요합니다.
+Kubernetes는 Spark의 **두 배포 모드 모두** 지원합니다. Client mode는 Spark
+2.4부터 지원되며 notebook만을 위한 기능이 아닙니다.
 
-### 필수 도구
+| 모드 | Driver 위치 | 운영 시 고려사항 |
+| --- | --- | --- |
+| Cluster | 제출로 생성한 driver Pod | 제출자 API 접근과 driver 자체의 service account/RBAC 필요 |
+| Client | 제출 애플리케이션의 Pod 또는 호스트 | Executor에서 광고된 driver RPC·block-manager 주소로 접근하고 driver가 살아 있어야 함 |
 
-* kubectl v1.30 이상
-* 사용 가능한 Kubernetes 클러스터 (Amazon EKS 권장)
-* 로컬에 설치된 Apache Spark 4.2 배포판 (클러스터로 `spark-submit`을 실행하기 위함)
-* 드라이버/executor Pod가 S3 등 AWS 서비스에 접근해야 한다면, Kubernetes 서비스 어카운트에 연결된 IAM 역할 (IRSA 또는 EKS Pod Identity)
+Kubernetes API에 접근할 수 있다는 사실만으로 executor→driver 통신이 완성되지는
+않습니다. Client mode는 안정적인 Service·hostname과 고정 포트가 필요할 수
+있습니다. Driver가 Pod에서 실행되면 executor owner reference 정리를 위해
+**실제 driver Pod 이름**을 설정합니다. 외부 호스트 driver에 가상의 Pod owner를
+설정하지 않습니다.
 
-## Spark on Kubernetes란 무엇인가?
+## 무엇을 누가 스케줄링하는가?
 
-Apache Spark는 대규모 배치·스트리밍 워크로드를 처리하는 분산 데이터 처리 엔진입니다. Spark 2.3부터 Kubernetes는 Standalone, YARN, Mesos(이후 지원 종료)와 함께 **네이티브 클러스터 매니저**로 지원되고 있습니다. Spark를 Kubernetes 위에서 운영한다는 것은, 다른 워크로드를 스케줄링하는 것과 동일한 Kubernetes API로 Spark의 드라이버와 executor Pod까지 스케줄링한다는 의미입니다. 별도의 Spark 클러스터 인프라를 구축하거나 유지 관리할 필요가 없습니다.
+API server는 인증·admission과 객체 저장을 담당하고, Kubernetes scheduler가
+노드를 선택하며 kubelet이 컨테이너를 시작합니다. Spark driver는 executor Pod를
+요청하고 Spark scheduler로 stage/task를 조율합니다. 서로 다른 계층입니다.
 
-이 문서는 EKS에서 실제 Spark 작업을 배포하기 전에 이해해야 할 핵심 개념을 다룹니다: `spark-submit`이 어떻게 Pod로 매핑되는지, 별도의 클러스터 매니저가 아니라 드라이버가 직접 스케줄링을 담당하는 이유, DRA(Dynamic Resource Allocation)가 YARN과 Kubernetes에서 왜 다르게 동작하는지, 그리고 Pod가 종료되려 할 때 정상 종료(graceful decommission)가 실행 중인 작업을 어떻게 보호하는지를 살펴봅니다. Part 2에서는 이 개념들을 Kubernetes 네이티브 CRD 기반 워크플로로 감싸는 Spark Operator를 다룹니다.
+![Cluster deploy mode에서 제출자·driver의 Pod API 요청, Kubernetes scheduler·kubelet의 배치·시작, driver의 Spark task 할당을 구분한 흐름.](../../.gitbook/assets/ko-data-on-eks-spark-01-spark-fundamentals-0.png)
 
-## 1. Kubernetes에서는 클러스터 모드만 지원되는 제출 방식
+[인터랙티브 다이어그램](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-spark-01-spark-fundamentals-0.html)
 
-### Kubernetes에서 spark-submit이 동작하는 방식
+1. 제출자가 driver Pod와 관련 리소스를 요청합니다.
+2. Kubernetes가 driver를 배치·시작하면 driver가 executor Pod를 요청합니다.
+3. Kubernetes가 executor를 배치·시작하고 executor는 driver에 등록합니다.
+4. Driver가 Spark task를 할당하고 executor가 실행·결과·상태를 보고합니다.
+5. 정상 종료 시 Spark가 설정에 따라 executor를 정리합니다. 완료·실패한 driver
+   Pod는 로그용으로 남을 수 있습니다. 실패·owner reference 동작을 고려하며 모든
+   리소스가 즉시 지워진다고 가정하지 않습니다.
 
-Kubernetes는 `spark-submit`에 대해 **클러스터 배포 모드(cluster deploy mode)**만 지원합니다. 즉 드라이버 자체가 제출 명령을 실행한 머신이 아니라 클러스터 내부의 Pod에서 실행됩니다(클라이언트 모드도 존재하지만 주로 spark-shell이나 노트북 같은 대화형 도구에 사용됩니다). 일반적인 제출 명령은 다음과 같습니다.
+별도 YARN·Spark Standalone 제어 계층은 줄지만 Kubernetes 용량·노드·스토리지·
+네트워크·이미지 운영 자체가 없어지지는 않습니다.
+
+## 구체적인 cluster mode 예제
+
+로컬 Spark 4.2.0, 호환 kubectl·현재 kubeconfig context, Kubernetes 1.34+,
+namespace 용량과 이미지 접근을 전제로 합니다. 제출자의 API 인증과 클러스터 안
+driver RBAC는 별개입니다. SparkPi는 AWS 데이터 권한이 필요 없지만 S3 작업은
+선택한 워크로드 ID와 호환 Hadoop/AWS 라이브러리를 추가로 준비합니다.
+
+Namespace 관리자가 `rbac.yaml`을 검토·적용합니다.
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spark-jobs
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark-driver
+  namespace: spark-jobs
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark-executor
+  namespace: spark-jobs
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: spark-driver
+  namespace: spark-jobs
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - services
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - delete
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: spark-driver
+  namespace: spark-jobs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: spark-driver
+subjects:
+- kind: ServiceAccount
+  name: spark-driver
+  namespace: spark-jobs
+```
+
+이 역할은 동적 PVC가 없는 기본 예제용입니다. 추가 볼륨·리소스 관리 기능에는
+해당 범위의 권한이 필요할 수 있습니다. Executor는 API token 자동 마운트를 끈
+별도 service account를 사용합니다. Driver가 Pod를 만들 수 있는 namespace에는
+신뢰하는 작업 코드·제출자만 허용합니다. RBAC만으로 비신뢰 코드를 격리하지는 못합니다.
+
+다음은 `kubectl apply`할 독립 Pod가 아닌 **Pod template**입니다. Spark가
+이미지·명령과 다른 필드를 채웁니다.
+
+Driver template, `driver-template.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spark-driver-template
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 185
+    runAsGroup: 185
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: spark-kubernetes-driver
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+```
+
+Executor template, `executor-template.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spark-executor-template
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 185
+    runAsGroup: 185
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: spark-kubernetes-executor
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+  automountServiceAccountToken: false
+  terminationGracePeriodSeconds: 60
+```
+
+파일은 **제출 프로세스**에서 읽을 수 있어야 합니다. Cluster mode에서는 Spark가
+executor template을 driver에 마운트하도록 준비합니다. 일부 필드는 Spark가
+덮어쓰므로 template·operator webhook·Spark 설정을 조합하면 실제 생성 Pod를 확인합니다.
 
 ```bash
+#!/bin/bash
+set -euo pipefail
+# Run in the directory containing driver-template.yaml and executor-template.yaml.
+KUBE_CONTEXT="$(kubectl config current-context)"
+KUBE_API_URL="$(kubectl --context "$KUBE_CONTEXT" config view --minify -o jsonpath='{.clusters[0].cluster.server}')"
+case "$KUBE_API_URL" in https://*) ;; *) echo "Expected an HTTPS Kubernetes API URL" >&2; exit 1;; esac
+SPARK_APP_NAME="spark-pi-$(date -u +%Y%m%d%H%M%S)"
 spark-submit \
-  --master k8s://https://<EKS_API_SERVER_ENDPOINT>:443 \
+  --master "k8s://${KUBE_API_URL}" \
   --deploy-mode cluster \
-  --name spark-etl-job \
-  --class com.example.ETLJob \
+  --name "$SPARK_APP_NAME" \
+  --class org.apache.spark.examples.SparkPi \
+  --conf "spark.kubernetes.context=$KUBE_CONTEXT" \
   --conf spark.kubernetes.namespace=spark-jobs \
-  --conf spark.kubernetes.container.image=<ECR_IMAGE_URI> \
+  --conf spark.kubernetes.container.image=spark:4.2.0-scala2.13-java21-ubuntu \
   --conf spark.kubernetes.authenticate.driver.serviceAccountName=spark-driver \
-  --conf spark.executor.instances=4 \
-  local:///opt/spark/jobs/etl-job.jar
+  --conf spark.kubernetes.authenticate.executor.serviceAccountName=spark-executor \
+  --conf "spark.kubernetes.driver.pod.name=$SPARK_APP_NAME-driver" \
+  --conf spark.kubernetes.driver.podTemplateFile=driver-template.yaml \
+  --conf spark.kubernetes.executor.podTemplateFile=executor-template.yaml \
+  --conf spark.kubernetes.executor.terminationGracePeriodSeconds=60s \
+  --conf spark.driver.cores=1 \
+  --conf spark.driver.memory=1g \
+  --conf spark.kubernetes.driver.limit.cores=1 \
+  --conf spark.executor.cores=1 \
+  --conf spark.executor.memory=1g \
+  --conf spark.kubernetes.executor.limit.cores=1 \
+  --conf spark.executor.instances=3 \
+  local:///opt/spark/examples/jars/spark-examples.jar 10
+kubectl -n spark-jobs logs "$SPARK_APP_NAME-driver"
+kubectl -n spark-jobs get pod "$SPARK_APP_NAME-driver" -o jsonpath='{.status.phase}{"\n"}'
 ```
 
-`k8s://<endpoint>` 형태의 마스터 URL은 `spark-submit`이 Kubernetes API 서버를 바라보게 만듭니다. 제출 이후의 흐름은 다음과 같습니다.
+제출 전에 rbac.yaml을 적용합니다. 버전을 고정한 공식 이미지에는
+spark-examples.jar 심볼릭 링크가 있습니다. local:///는 노트북의 로컬 파일을
+업로드한다는 뜻이 아니라 컨테이너에 이미 있는 경로입니다. 필요하면 기존 공급망
+절차에 따라 이미지를 복제·digest 고정합니다. 새 driver 이름과 선택 context를
+문제 조사에 사용할 수 있도록 기록합니다.
 
-![spark-submit 사용자의 요청으로 Kubernetes API 서버가 Driver Pod를 생성하고, Driver Pod가 다시 API 서버를 통해 Executor Pod들을 생성한 뒤 Executor가 Driver에 등록·보고하고 작업을 할당받는 순서를 보여주는 시퀀스 다이어그램.](../../../assets/diagrams/rendered/ko-data-on-eks-spark-01-spark-fundamentals-0.svg)
+고정 executor 3개를 요청해도 quota·admission·스케줄링·이미지 pull·노드 용량 때문에
+Pending일 수 있습니다. Driver·executor event와 로그를 확인하며 spark-submit 실행만으로
+작업 성공을 판단하지 않습니다.
 
-1. `spark-submit`은 Kubernetes API 서버와 직접 통신하여 **드라이버 Pod**를 곧바로 생성합니다. 중간에 별도의 스케줄링 프로세스가 개입하지 않습니다.
-2. 드라이버 Pod가 실행되면, 드라이버 스스로가 Kubernetes API를 다시 호출해 필요한 **executor Pod**를 생성합니다. 이때 기준이 되는 값은 `spark.executor.instances`이거나, 뒤에서 다룰 Dynamic Resource Allocation입니다.
-3. executor들은 드라이버에 등록한 뒤 할당받은 작업을 실행하고, 결과와 상태를 드라이버에 다시 보고합니다.
-4. 작업이 끝나면 드라이버의 Spark 컨텍스트가 종료되면서 자신이 생성했던 executor Pod들을 정리합니다.
+## 리소스 요청·제한과 task slot
 
-### YARN보다 단순한 이유와 그 대신 옮겨가는 책임
-
-YARN에서 작업을 제출하면 상시 실행 중인 **ResourceManager**와 통신하게 되고, ResourceManager는 노드마다 떠 있는 **NodeManager** 데몬으로부터 컨테이너를 협상해 ApplicationMaster에 넘겨주며, ApplicationMaster가 다시 해당 작업의 executor들을 관리합니다. Kubernetes는 이 계층 자체를 없앱니다. 설치하고 업그레이드하고 고가용성을 유지해야 할, Spark 전용의 상시 실행 클러스터 매니저 데몬이 존재하지 않습니다. 이미 다른 모든 워크로드를 위해 운영하고 있는 Kubernetes 컨트롤 플레인이 곧 Spark에 필요한 유일한 "클러스터 매니저"가 됩니다.
-
-다만 그 대신 스케줄링과 리소스 할당의 책임이 **드라이버 Pod 자신**에게 넘어갑니다. 드라이버는 스스로 스케줄러 역할을 수행합니다 — Kubernetes API에 executor Pod 생성 요청을 직접 보내고, 어떤 executor가 살아 있는지 추적하며, executor가 실패하면 대체 Pod를 요청하는 주체가 바로 드라이버입니다. 운영 관점에서는 관리해야 할 구성 요소가 줄어든다는 점에서 확실히 더 단순하지만, 동시에 드라이버 Pod의 권한(서비스 어카운트를 통해 부여됨)과 API 서버에 접근할 수 있는지 여부가 작업 전체의 성패를 좌우하는 요소가 됩니다. 드라이버 Pod가 executor Pod를 생성하거나 감시(watch)할 수 없다면 어떤 작업도 스케줄링되지 않습니다.
-
-### 드라이버·Executor Pod의 리소스 모델
-
-드라이버와 executor는 각각 평범한 Pod로 실행되며, Spark의 표준 리소스 설정은 Kubernetes Pod의 표준 리소스 필드로 매핑됩니다.
-
-| Spark 설정 | Kubernetes에서의 효과 |
+| Spark 설정 | Kubernetes의 기본 ResourceProfile 동작 |
 | --- | --- |
-| `spark.driver.cores`, `spark.driver.memory` | 드라이버 Pod 컨테이너의 CPU/메모리 요청(및 오버헤드를 더한 제한값) |
-| `spark.executor.cores`, `spark.executor.memory` | 각 executor Pod 컨테이너의 CPU/메모리 요청/제한값 |
-| `spark.kubernetes.driver.request.cores` / `.limit.cores` | `spark.driver.cores`와 별도로 드라이버 컨테이너의 Kubernetes CPU 요청/제한값을 재정의 |
-| `spark.kubernetes.executor.request.cores` / `.limit.cores` | executor Pod에 대해 동일한 방식으로 재정의 |
+| spark.driver.cores | 별도 지정 없으면 driver CPU request |
+| spark.executor.cores | Executor task 용량과 기본 CPU request |
+| spark.kubernetes.{driver,executor}.request.cores | Kubernetes CPU request 재정의; Spark task slot 자체는 아님 |
+| spark.kubernetes.{driver,executor}.limit.cores | 명시적인 CPU limit; cores만으로 자동 생성되지 않음 |
+| Driver memory | Heap과 지정·계산한 overhead를 더한 request·limit |
+| Executor memory | Heap·overhead와 적용되는 off-heap/PySpark memory를 합산한 request·limit |
 
-모든 워크로드에 공통으로 맞는 만능 기본값은 없습니다. 드라이버/executor의 적절한 크기는 작업의 셔플 데이터량, 파티션 수, 작업당 필요한 메모리에 따라 달라집니다. 이 설정들은 다른 작업의 값을 그대로 복사해 쓸 대상이 아니라, 실제 워크로드를 대상으로 테스트하며 튜닝해야 할 값으로 다루는 것이 안전합니다.
+JVM 예제는 heap 1GiB에 기본 최소 overhead 384MiB를 더해 **1,408MiB**가 됩니다.
+검증한 기본 계산이지 모든 작업의 적정 크기는 아닙니다. Python·native memory와
+custom ResourceProfile은 따로 검토합니다. Task 용량보다 CPU request를 낮추면
+경합할 수 있으며 request 변경과 실행 가능한 Spark task 수 변경은 다릅니다.
 
-## 2. Kubernetes에서의 Dynamic Resource Allocation(DRA)
+## Dynamic Resource Allocation
 
-### Kubernetes에서 DRA에 별도 설정이 필요한 이유
+Spark DRA는 task backlog·idle 상태에 따라 **executor 수**를 바꿉니다.
+장치용 Kubernetes DRA나 Pending Pod에 대응하는 노드 autoscaler와 구분합니다.
 
-Dynamic Resource Allocation은 작업이 실행되는 동안 executor 수를 동적으로 늘리거나 줄여주는 기능입니다. 대기 중인 작업이 쌓이면 executor를 추가하고, 유휴 상태인 executor는 제거해 클러스터 자원을 돌려줍니다. YARN에서는 이 기능이 오래전부터 매끄럽게 동작했는데, YARN의 NodeManager가 **External Shuffle Service(ESS)**라는 데몬을 함께 운영하기 때문입니다. ESS는 특정 executor의 생명주기와 무관하게 독립적으로 동작하며, 셔플 데이터를 만든 executor가 제거된 뒤에도 해당 셔플 블록을 계속 서빙할 수 있습니다.
+기본 Spark on Kubernetes는 YARN 방식의 external shuffle service를 지원하지
+않습니다. Shuffle tracking은 지원되는 선택이지만 Spark의 유일한 방식은 아닙니다.
+Decommission 기반 shuffle 보존과 적절한 reliable ShuffleDataIO 구현도 각자의
+조건을 가진 대안입니다.
 
-Kubernetes에는 이에 대응하는 내장 데몬이 없습니다. ESS가 없는 상태에서 DRA의 스케일 다운 로직이 다른 작업이 필요로 하는 셔플 블록을 여전히 들고 있는 executor를 제거해 버리면, 그 블록은 사라지고 해당 데이터를 필요로 하는 작업은 실패하며 비용이 큰 재계산이 강제됩니다. 이 때문에 Kubernetes에서 DRA를 활성화할 때는 다음 두 설정을 **함께** 켜야 합니다. 둘 중 하나만 켜면 이 구멍이 그대로 남습니다.
-
-```properties
-spark.dynamicAllocation.enabled=true
-spark.dynamicAllocation.shuffleTracking.enabled=true
-```
-
-`spark.dynamicAllocation.shuffleTracking.enabled`(Spark 3.3.0부터 안정화)는 아직 끝나지 않은 다른 작업이 의존하는 셔플 블록을 어떤 executor가 들고 있는지를 Spark가 직접 추적하게 합니다. 셔플 트래킹이 켜져 있으면 스케일 다운 로직은 필요한 셔플 데이터를 여전히 들고 있는 executor를 제거하지 않으며, 해당 블록이 더 이상 필요 없어지거나 작업이 끝날 때까지 그 executor의 Pod 회수를 미룹니다.
-
-### 튜닝 옵션
-
-| 설정 | 목적 |
-| --- | --- |
-| `spark.dynamicAllocation.minExecutors` | DRA가 축소할 수 있는 executor 수의 하한선 |
-| `spark.dynamicAllocation.maxExecutors` | DRA가 확장할 수 있는 executor 수의 상한선 |
-| `spark.kubernetes.allocation.batch.size` | 드라이버가 한 번에 Kubernetes API로 보내는 executor Pod 생성 요청 수 — 얼마나 공격적으로 확장할지를 제어 |
+Shuffle tracking 프로필:
 
 ```properties
 spark.dynamicAllocation.enabled=true
 spark.dynamicAllocation.shuffleTracking.enabled=true
 spark.dynamicAllocation.minExecutors=2
+spark.dynamicAllocation.initialExecutors=3
 spark.dynamicAllocation.maxExecutors=20
 spark.kubernetes.allocation.batch.size=5
 ```
 
-`spark.kubernetes.allocation.batch.size`를 너무 높게 설정하면 Pod 생성 요청이 한꺼번에 몰려 Kubernetes API와 노드 그룹의 스케일링에 부담을 줄 수 있습니다. 배치 크기를 적절히 조절하면 새 executor Pod를 수용하기 위해 노드를 프로비저닝하는 속도를 완만하게 유지할 수 있습니다.
+--conf 또는 properties 파일로 추가합니다. Shuffle tracking은 Spark 3.0부터이며
+4.2에서는 **이미 기본값 true**입니다. 명시는 선택을 문서화합니다. 두 플래그를
+언제나 명시해야 한다는 기존 설명은 틀립니다.
 
-## 3. Executor의 정상 종료(Graceful Decommission)
+Tracking은 활성 shuffle 데이터를 가진 executor를 유지하려 하지만 설정한
+tracking·cached-executor idle timeout, 강제 종료와 노드 장애로 재계산이 발생할 수
+있습니다. 영속 공유 저장소가 아닙니다. 보존 방식을 중복해서 켜면 executor 회수가
+지연될 수 있어 상호작용을 시험해야 합니다.
 
-### 문제 상황: Pod는 죽어도 데이터는 사라지면 안 된다
+초기 수는 minExecutors·initialExecutors와 기존 spark.executor.instances를
+고려합니다. 예제의 고정 3개와 initial 3개는 일치하며 min=2가 처음에 반드시 2개를
+실행한다는 뜻은 아닙니다.
 
-Kubernetes Pod는 Spark 작업 자체와는 무관한 이유로도 종료될 수 있습니다. 노드 스케일 다운, Spot 인스턴스 중단, 롤링 노드 업그레이드 등이 대표적입니다. 기본 동작에서는 executor Pod가 종료되면 그 Pod가 메모리나 로컬 디스크에만 들고 있던 데이터(캐시된 RDD 파티션, 서빙 중이던 셔플 블록)가 그대로 사라지고, 해당 데이터에 의존하던 작업은 다른 곳에서 다시 계산해야 합니다.
+spark.kubernetes.allocation.batch.size는 Pod 요청 batch를 제어하며 EC2 확장
+정책 자체는 아닙니다. API throttling, Pod 할당 간격, ResourceQuota, 배치 조건과
+노드 프로비저닝은 별도로 작동합니다.
 
-### 정상 종료 기능 (Spark 3.1.1+)
+## Decommission의 동작과 한계
 
-Spark의 정상 종료(graceful decommission) 기능은 executor가 실제로 사라지기 전에, 자신이 들고 있던 데이터를 다른 executor로 옮길 수 있는 시간을 줍니다. 다음 두 설정으로 활성화합니다.
+다음은 executor·block manager decommission과 적용 가능한 RDD/shuffle block
+이전을 활성화합니다.
 
 ```properties
 spark.decommission.enabled=true
 spark.storage.decommission.enabled=true
+spark.storage.decommission.rddBlocks.enabled=true
+spark.storage.decommission.shuffleBlocks.enabled=true
+spark.kubernetes.executor.terminationGracePeriodSeconds=60s
 ```
 
-Pod가 종료 신호를 받으면 Kubernetes는 강제로 종료시키기 전에 일정한 유예 시간 — Pod의 `terminationGracePeriodSeconds`(기본값 30초) — 을 부여합니다. 정상 종료 기능이 켜져 있으면 Spark는 이 유예 시간 동안 캐시된 RDD 블록과 셔플 블록을 여전히 살아 있는 다른 executor로 옮기며, Pod가 사라지는 순간 그대로 데이터를 잃어버리는 상황을 막습니다.
+이 Spark 4.2 Kubernetes 경로에서는 decommission을 켜면
+**preStop hook이 자동 추가**되어 spark.kubernetes.decommission.script
+(기본 /opt/decom.sh)를 실행합니다. 공식 이미지에 이 스크립트가 포함되어 있으며
+executor JVM을 찾아 **SIGPWR**를 보내고 기다립니다. Spark의 기본 종료 신호도
+PWR입니다. 평범한 SIGTERM이 언제나 데이터를 이전한다고 가정하는 대신 hook 경로를
+구분해야 합니다.
 
-```yaml
-# 예시: 유예 시간을 늘려주면 블록을 이전할 시간을 더 확보할 수 있음
-apiVersion: v1
-kind: Pod
-metadata:
-  name: spark-executor-example
-spec:
-  terminationGracePeriodSeconds: 60
-  containers:
-    - name: spark-kubernetes-executor
-      # ...
-```
+Custom image에는 동작하는 스크립트·도구가 필요하고 신호를 바꾸면 스크립트도
+맞춰야 합니다. Spark는 template의 lifecycle을 덮어쓸 수 있습니다. 실제 hook을
+확인하고 계획된 축소·중단 경로를 모두 시험합니다.
 
-이 기능이 가장 중요해지는 상황은, Kubernetes 기반 Spark를 매력적으로 만드는 바로 그 시나리오입니다 — 비용을 이유로 executor를 Spot 인스턴스에서 실행하는 경우, 중단은 드문 장애가 아니라 예상되는 정상적인 이벤트로 취급해야 합니다. 정상 종료 기능은 이러한 중단을 (데이터 일부는 이전되고, 일부 작업만 재계산되는) 관리 가능한 이벤트로 바꿔주는 토대입니다. 이 시리즈의 뒤에 나올 성능 튜닝 문서에서는 Spot 인스턴스 관련 처리(중단 통지, 노드 종료 핸들러, 그리고 이들이 이 유예 시간과 어떻게 상호작용하는지)를 더 깊이 다룹니다.
+제출 예제는 `spark.kubernetes.executor.terminationGracePeriodSeconds=60s`를
+명시합니다. Spark 4.2는 template 값을 이 설정으로 덮어쓰며 기본값은 30초입니다.
+따라서 template에 terminationGracePeriodSeconds:60만 적는 것으로는 부족합니다.
+유예 시간에는 preStop 실행도 포함됩니다.
+이전 완료나 Spot 종료 기한 연장을 보장하는 시간이 아닙니다. 정상적인 대상
+executor, 디스크·네트워크 용량, 시간과 필요한 fallback 저장소가 있어야 합니다.
+강제 삭제·노드 소실은 이전 기회를 없앨 수도 있습니다. 동적 할당의 삭제 경로 등에서
+명시한 deletion grace도 실제 시간 예산을 바꿀 수 있습니다.
+
+이 플래그는 driver 장애 재시작, 애플리케이션 checkpoint나 전체 경로의 exactly-once
+출력을 보장하지 않습니다. 재계산 가능한 중간 블록과 영속 입출력을 구분해 복구를 설계합니다.
+
+## 참고 자료와 검증 범위
+
+Driver를 loopback에 묶고 UI를 끈 로컬 SparkPi 작업을 실행했습니다.
+Spark 4.2의 실제 feature-step 검사로 메모리 매핑, CPU limit 기본 동작과
+decommission hook 주입을 확인했으며 Kubernetes client는 생성하지 않았습니다.
+이 검사는 EKS 제출·RBAC/CNI 집행·실제 이전 완료·AWS 데이터 접근 성공을 뜻하지 않습니다.
+
+- [Spark 4.2.0 on Kubernetes](https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html)
+- [Spark 4.2.0 configuration](https://spark.apache.org/docs/4.2.0/configuration.html)
+- [Spark 4.2.0 dynamic allocation alternatives](https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation)
+- [Driver resource mapping](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala)
+- [Executor resources and decommission hook](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala)
+- [Official decommission script](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh)
+- [Official Spark image tags](https://github.com/docker-library/official-images/blob/master/library/spark)
 
 ## 다음 단계
 
-이번 문서에서는 Spark를 Kubernetes 위에서 운영할 때의 기초 — 클러스터 모드의 `spark-submit`이 드라이버 Pod를 만들고 그 드라이버가 Kubernetes API에 직접 executor Pod 스케줄링을 요청하는 방식, YARN 스타일의 External Shuffle Service가 없는 상황에서 Dynamic Resource Allocation이 `shuffleTracking.enabled`를 필요로 하는 이유, 그리고 Pod가 종료되려 할 때 정상 종료 기능이 진행 중인 데이터를 어떻게 보호하는지 — 를 살펴봤습니다. Part 2에서는 **Spark Operator**를 이용해 EKS에서 Spark 애플리케이션을 선언적으로 배포하고 관리하는 방법을 다룹니다.
+[Part 2: Spark Operator](./02-spark-operator.md)
 
 [메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)를 풀어보세요.
+[주제 퀴즈](../../quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)

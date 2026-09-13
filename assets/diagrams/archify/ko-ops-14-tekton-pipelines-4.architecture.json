@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CI 상태·서명·provenance 검증",
+    "output": "ko-ops-14-tekton-pipelines-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "build-to-sign",
+        "label": "빌드 완료 → 자동 서명",
+        "focus": [
+          "taskrun",
+          "observer",
+          "sign",
+          "provenance"
+        ],
+        "note": "이미지 서명과 Pipeline provenance는 처리 시점이 다릅니다. CI 성공은 별도로 확인합니다."
+      },
+      {
+        "id": "transparency",
+        "label": "OCI 저장",
+        "focus": [
+          "sign",
+          "provenance",
+          "rekor"
+        ],
+        "note": "이 예제는 ECR의 DSSE 저장 방식과 내부 키 정책을 사용하며 Rekor 업로드를 끕니다."
+      },
+      {
+        "id": "deploy-verify",
+        "label": "배포 시점 검증",
+        "focus": [
+          "rekor",
+          "verify",
+          "policy",
+          "admission"
+        ],
+        "note": "고정 digest·신뢰된 키와 승인 소스·builder를 함께 검사합니다. signed annotation만으로 승인하지 않습니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "taskrun",
+      "type": "backend",
+      "label": "CI 실행",
+      "sublabel": "TaskRun / PipelineRun",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "observer",
+      "type": "backend",
+      "label": "Chains controller",
+      "sublabel": "Run 완료 후 비동기",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sign",
+      "type": "security",
+      "label": "OCI 이미지 서명",
+      "sublabel": "Task 출력 · KMS",
+      "pos": [
+        270,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "provenance",
+      "type": "security",
+      "label": "Provenance / Attestation",
+      "sublabel": "Pipeline · SLSA v1.0",
+      "pos": [
+        480,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rekor",
+      "type": "external",
+      "label": "OCI 서명 저장소",
+      "sublabel": "Amazon ECR",
+      "pos": [
+        380,
+        420
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "verify",
+      "type": "security",
+      "label": "CI + 서명 검증",
+      "sublabel": "성공 상태 · 신뢰된 키",
+      "pos": [
+        820,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "provenance 정책",
+      "sublabel": "builder · source · digest",
+      "pos": [
+        820,
+        250
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "admission",
+      "type": "security",
+      "label": "Admission Control",
+      "sublabel": "승격·admission 별도 정책",
+      "pos": [
+        820,
+        420
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "빌드 단계",
+      "wraps": [
+        "taskrun"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tekton Chains 자동 처리",
+      "wraps": [
+        "observer",
+        "sign",
+        "provenance",
+        "rekor"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "검증 단계 (배포 시점)",
+      "wraps": [
+        "verify",
+        "policy",
+        "admission"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "taskrun-observer",
+      "from": "taskrun",
+      "to": "observer",
+      "label": "완료 훅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "observer-sign",
+      "from": "observer",
+      "to": "sign",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "observer-provenance",
+      "from": "observer",
+      "to": "provenance",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sign-rekor",
+      "from": "sign",
+      "to": "rekor",
+      "label": "서명 기록",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "provenance-rekor",
+      "from": "provenance",
+      "to": "rekor",
+      "label": "attestation 기록",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rekor-verify",
+      "from": "rekor",
+      "to": "verify",
+      "label": "서명·증명 조회",
+      "variant": "dashed",
+      "labelAt": [
+        710,
+        344
+      ]
+    },
+    {
+      "id": "verify-policy",
+      "from": "verify",
+      "to": "policy"
+    },
+    {
+      "id": "policy-admission",
+      "from": "policy",
+      "to": "admission",
+      "label": "허용 / 차단",
+      "labelDy": 24
+    }
+  ]
+}

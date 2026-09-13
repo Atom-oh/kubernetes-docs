@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "HTTP Request Through the Filter Chain",
+    "output": "en-service-mesh-istio-03-architecture-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "authn-authz",
+        "label": "Authentication and authorization",
+        "focus": [
+          "request",
+          "jwt",
+          "ratelimit",
+          "rbac"
+        ],
+        "note": "The request first passes JWT authentication and rate limiting; RBAC validation then decides whether it is allowed."
+      },
+      {
+        "id": "route",
+        "label": "Observability and routing",
+        "focus": [
+          "stats",
+          "router",
+          "response"
+        ],
+        "note": "A validated request goes through stats collection, then the Router forwards it upstream and the response comes back."
+      }
+    ],
+    "locale": "en",
+    "viewBox": [
+      1380,
+      320
+    ]
+  },
+  "components": [
+    {
+      "id": "request",
+      "type": "external",
+      "label": "HTTP Request",
+      "sublabel": "request in",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "jwt",
+      "type": "security",
+      "label": "JWT Authentication",
+      "sublabel": "authn",
+      "pos": [
+        260,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ratelimit",
+      "type": "backend",
+      "label": "Rate Limiting",
+      "sublabel": "throttle",
+      "pos": [
+        440,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC Validation",
+      "sublabel": "authz",
+      "pos": [
+        620,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "stats",
+      "type": "backend",
+      "label": "Stats Collection",
+      "sublabel": "metrics",
+      "pos": [
+        800,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Router",
+      "sublabel": "forward upstream",
+      "pos": [
+        980,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "response",
+      "type": "external",
+      "label": "HTTP Response",
+      "sublabel": "response out",
+      "pos": [
+        1200,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Envoy filter chain",
+      "wraps": [
+        "jwt",
+        "ratelimit",
+        "rbac",
+        "stats",
+        "router"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request-to-jwt",
+      "from": "request",
+      "to": "jwt",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jwt-to-ratelimit",
+      "from": "jwt",
+      "to": "ratelimit"
+    },
+    {
+      "id": "ratelimit-to-rbac",
+      "from": "ratelimit",
+      "to": "rbac"
+    },
+    {
+      "id": "rbac-to-stats",
+      "from": "rbac",
+      "to": "stats"
+    },
+    {
+      "id": "stats-to-router",
+      "from": "stats",
+      "to": "router"
+    },
+    {
+      "id": "router-to-response",
+      "from": "router",
+      "to": "response",
+      "variant": "emphasis"
+    }
+  ]
+}

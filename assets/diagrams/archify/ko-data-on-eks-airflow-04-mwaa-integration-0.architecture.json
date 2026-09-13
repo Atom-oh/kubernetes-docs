@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MWAA에서 EKS 클러스터 제어하기",
+    "output": "ko-data-on-eks-airflow-04-mwaa-integration-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pod-path",
+        "label": "Pod 생성 경로",
+        "focus": [
+          "s3",
+          "sch",
+          "dag",
+          "api",
+          "pod"
+        ],
+        "note": "Worker subnet의 DNS·HTTPS 연결과 인증 후 workload를 실행합니다."
+      },
+      {
+        "id": "auth-path",
+        "label": "권한 부여",
+        "focus": [
+          "iam",
+          "api",
+          "pod"
+        ],
+        "note": "Access entry의 group과 namespace RoleBinding을 연결합니다. Child Pod의 AWS 권한은 별도입니다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1280,
+      620
+    ]
+  },
+  "components": [
+    {
+      "id": "sch",
+      "type": "backend",
+      "label": "MWAA managed runtime",
+      "sublabel": "사용자 VPC private subnet 연결",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "dag",
+      "type": "backend",
+      "label": "MWAA worker: KPO",
+      "sublabel": "in_cluster=False · kubeconfig exec",
+      "tag": "DAG",
+      "pos": [
+        80,
+        250
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 버킷",
+      "sublabel": "DAG + kube_config.yaml",
+      "pos": [
+        80,
+        470
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Workload Pod",
+      "sublabel": "data-processing / workload-smoke",
+      "pos": [
+        960,
+        250
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "EKS access entry + RBAC",
+      "sublabel": "Execution role → namespace group",
+      "pos": [
+        510,
+        470
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "EKS API",
+      "sublabel": "인증 + namespace 권한",
+      "pos": [
+        600,
+        250
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 관리 MWAA 환경",
+      "wraps": [
+        "sch",
+        "dag"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "사용자의 EKS 클러스터 (별도 인프라)",
+      "wraps": [
+        "api",
+        "pod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "s3-sync",
+      "from": "s3",
+      "to": "dag",
+      "label": "동기화",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sch-run",
+      "from": "sch",
+      "to": "dag",
+      "label": "실행",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dag-pod",
+      "from": "dag",
+      "to": "api",
+      "label": "HTTPS 443 + IAM",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iam-rbac",
+      "from": "iam",
+      "to": "api",
+      "label": "group / RoleBinding",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "api-pod",
+      "from": "api",
+      "to": "pod",
+      "label": "create / watch",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "연결",
+      "items": [
+        "Worker subnet → EKS API DNS / HTTPS",
+        "kubeconfig exec → MWAA execution role"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "권한 경계",
+      "items": [
+        "Access entry group → namespace RoleBinding",
+        "Workload AWS identity configured separately"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "운영",
+      "items": [
+        "S3 delivery + constraints + parsing checks",
+        "DAG health, capacity and upgrades still matter"
+      ]
+    }
+  ]
+}

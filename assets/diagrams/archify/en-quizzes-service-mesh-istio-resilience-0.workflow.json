@@ -1,0 +1,189 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "How Outlier Detection Works",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "detect",
+        "label": "Error detection and threshold",
+        "focus": [
+          "start",
+          "check",
+          "count",
+          "threshold",
+          "normal"
+        ],
+        "note": "Each request is checked for errors, the error count accumulates, and the threshold is evaluated."
+      },
+      {
+        "id": "eject",
+        "label": "Temporary ejection and recovery",
+        "focus": [
+          "threshold",
+          "eject",
+          "wait",
+          "retry",
+          "start"
+        ],
+        "note": "When the threshold is exceeded the instance is temporarily ejected from the traffic pool, then a recovery attempt follows the wait."
+      }
+    ],
+    "viewBox": [
+      980,
+      534
+    ]
+  },
+  "lanes": [
+    {
+      "id": "request",
+      "label": "Request Handling"
+    },
+    {
+      "id": "detect",
+      "label": "Error Detection"
+    },
+    {
+      "id": "ejection",
+      "label": "Ejection + Recovery",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "check",
+    "count",
+    "threshold",
+    "eject",
+    "wait",
+    "retry"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "request",
+      "col": 0,
+      "type": "frontend",
+      "label": "Request Start",
+      "width": 118
+    },
+    {
+      "id": "check",
+      "lane": "request",
+      "col": 1,
+      "type": "security",
+      "label": "Error Check",
+      "sublabel": "judge response result",
+      "width": 118
+    },
+    {
+      "id": "normal",
+      "lane": "request",
+      "col": 4,
+      "type": "backend",
+      "label": "Normal Processing",
+      "sublabel": "keeps receiving traffic",
+      "width": 150
+    },
+    {
+      "id": "count",
+      "lane": "detect",
+      "col": 2,
+      "type": "backend",
+      "width": 170,
+      "label": "Increment Error Count",
+      "sublabel": "consecutive errors accumulate"
+    },
+    {
+      "id": "threshold",
+      "lane": "detect",
+      "col": 3,
+      "type": "security",
+      "label": "Threshold Exceeded?",
+      "sublabel": "consecutiveErrors",
+      "width": 158
+    },
+    {
+      "id": "eject",
+      "lane": "ejection",
+      "col": 3,
+      "type": "security",
+      "label": "Eject Instance",
+      "sublabel": "temporarily out of pool",
+      "tag": "not deleted",
+      "width": 140
+    },
+    {
+      "id": "wait",
+      "lane": "ejection",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Wait Time",
+      "sublabel": "baseEjectionTime",
+      "width": 118
+    },
+    {
+      "id": "retry",
+      "lane": "ejection",
+      "col": 5,
+      "type": "cloud",
+      "label": "Recovery Attempt",
+      "sublabel": "rejoin once healthy",
+      "width": 146
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "count",
+      "label": "Error",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "check",
+      "to": "normal",
+      "label": "Success",
+      "variant": "emphasis"
+    },
+    {
+      "from": "count",
+      "to": "threshold"
+    },
+    {
+      "from": "threshold",
+      "to": "eject",
+      "label": "Yes",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "threshold",
+      "to": "normal",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "eject",
+      "to": "wait"
+    },
+    {
+      "from": "wait",
+      "to": "retry"
+    },
+    {
+      "from": "retry",
+      "to": "start",
+      "label": "retry",
+      "role": "return",
+      "variant": "dashed"
+    }
+  ]
+}

@@ -1,9 +1,9 @@
 # Istio Glossary
 
-> **Supported Version**: Istio 1.28+
-> **Last Updated**: February 23, 2026
+> **Reviewed Version**: Istio 1.31.0
+> **Last Updated**: September 11, 2026
 
-This glossary organizes key terms related to Istio and Service Mesh in alphabetical order.
+This glossary organizes key terms related to Istio and Service Mesh in grouped reference sections.
 
 ## Table of Contents
 
@@ -20,9 +20,17 @@ This glossary organizes key terms related to Istio and Service Mesh in alphabeti
 
 ## A-C
 
+### AuthorizationPolicy
+
+An Istio security policy defining ALLOW, DENY, CUSTOM, or AUDIT behavior for selected workloads or target resources. Authentication and authorization are separate; waypoint policies use targetRefs.
+
+### Control Plane
+
+The configuration, discovery, and identity-management layer, implemented by istiod. Application payloads flow through data-plane proxies rather than through istiod.
+
 ### Ambient Mode
 
-A new data plane mode introduced in Istio 1.20+ that provides service mesh functionality without Sidecar Proxies.
+A data plane mode first shipped as alpha in Istio 1.18 and generally available since Istio 1.24 that provides service mesh functionality without Sidecar Proxies.
 
 **Features**:
 - No Sidecar containers required
@@ -43,7 +51,7 @@ An authority that issues and manages certificates for mTLS communication between
 - Issues certificates based on SPIFFE ID
 - Automatic certificate renewal (default TTL: 24 hours)
 
-**Related Terms**: [Citadel](#citadel), [SPIFFE](#spiffe), [mTLS](#mtls)
+**Related Terms**: [Citadel](#citadel), [SPIFFE](#spiffe-secure-production-identity-framework-for-everyone), [mTLS](#mtls-mutual-tls)
 
 ---
 
@@ -56,14 +64,17 @@ A pattern that blocks requests to failed services to prevent failure propagation
 2. **Open**: Blocks requests after consecutive failures
 3. **Half-Open**: Allows some requests after a certain time
 
-**Istio Implementation**:
+**Istio Implementation**: Connection-pool circuit breaking and per-endpoint outlier ejection do not expose this literal three-state machine.
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-1
 spec:
+  host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -74,7 +85,7 @@ spec:
 
 ### Citadel
 
-A security component that existed independently before Istio 1.4. It is now integrated into Istiod.
+A security component that existed independently through Istio 1.4. It is now integrated into Istiod.
 
 **Main Functions**:
 - Certificate Authority (CA) management
@@ -98,7 +109,7 @@ One of the xDS APIs that allows Envoy to dynamically receive configuration for u
 - Circuit breaker settings
 - TLS settings
 
-**Related Terms**: [xDS](#xds), [Envoy](#envoy)
+**Related Terms**: [xDS](#xds-discovery-service), [Envoy](#envoy-proxy)
 
 ---
 
@@ -109,12 +120,12 @@ One of the xDS APIs that allows Envoy to dynamically receive configuration for u
 The layer that handles actual traffic in a service mesh.
 
 **Istio's Data Plane**:
-- Envoy Proxy (Sidecar or Ambient Mode)
-- Handles all inbound/outbound traffic
+- Envoy sidecars, or ambient ztunnel plus optional L7 waypoints
+- Handles enrolled mesh traffic; exclusions and protocol limits apply
 - mTLS encryption/decryption
 - Metric collection
 
-**Related Terms**: [Control Plane](#control-plane), [Envoy](#envoy)
+**Related Terms**: [Control Plane](#control-plane), [Envoy](#envoy-proxy)
 
 ---
 
@@ -153,11 +164,7 @@ spec:
 
 A technology that allows programs to run safely inside the Linux kernel.
 
-**Usage in Istio**:
-- Core technology for Ambient Mode
-- Replaces iptables (faster performance)
-- Traffic interception through CNI plugins
-- No Init Container required
+Istio can coexist with an eBPF-based primary CNI such as Cilium. Istio CNI is a separate chained plugin/node agent that configures redirection; ambient does not require eBPF and does not replace the primary CNI.
 
 **Advantages**:
 - Low overhead
@@ -193,7 +200,7 @@ One of the xDS APIs that dynamically provides actual endpoints (pod IPs) within 
 }
 ```
 
-**Related Terms**: [xDS](#xds), [CDS](#cds-cluster-discovery-service)
+**Related Terms**: [xDS](#xds-discovery-service), [CDS](#cds-cluster-discovery-service)
 
 ---
 
@@ -226,7 +233,7 @@ A high-performance L7 proxy that forms the Data Plane of Istio.
 
 ### Galley
 
-A configuration validation component that existed independently before Istio 1.4. It is now integrated into Istiod.
+A configuration validation component that existed independently through Istio 1.4. It is now integrated into Istiod.
 
 **Main Functions**:
 - Istio configuration validation
@@ -282,7 +289,7 @@ A high-performance RPC (Remote Procedure Call) framework developed by Google.
 - Low latency
 - Uses Protocol Buffers
 
-**Related Terms**: [xDS](#xds)
+**Related Terms**: [xDS](#xds-discovery-service)
 
 ---
 
@@ -300,7 +307,7 @@ Represents the identity of a workload within the Service Mesh.
 spiffe://cluster.local/ns/default/sa/reviews
 ```
 
-**Related Terms**: [SPIFFE](#spiffe), [mTLS](#mtls)
+**Related Terms**: [SPIFFE](#spiffe-secure-production-identity-framework-for-everyone), [mTLS](#mtls-mutual-tls)
 
 ---
 
@@ -309,11 +316,11 @@ spiffe://cluster.local/ns/default/sa/reviews
 A firewall tool that controls network traffic in Linux.
 
 **Role in Istio**:
-- istio-init container sets up iptables rules
+- istio-init or the Istio CNI node agent configures traffic redirection
 - Redirects all pod traffic to Envoy
 - Uses NAT table (PREROUTING, OUTPUT chains)
 
-**Key Rules**:
+**Simplified rules (illustration, not an installation script)**:
 ```bash
 # Outbound: All traffic except Envoy -> 15001
 iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner 1337 -j REDIRECT --to-port 15001
@@ -322,7 +329,7 @@ iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner 1337 -j REDIRECT --to-po
 iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
 ```
 
-**Alternative**: eBPF (Ambient Mode)
+**Setup alternative**: Istio CNI performs privileged network setup at node level.
 
 **Related Documentation**: [Architecture - iptables](03-architecture.md#iptables-and-traffic-interception)
 
@@ -369,7 +376,7 @@ One of the xDS APIs that allows Envoy to dynamically receive ports to listen on 
 - `0.0.0.0:15021`: Health check
 - `0.0.0.0:15090`: Prometheus metrics
 
-**Related Terms**: [xDS](#xds), [Envoy](#envoy)
+**Related Terms**: [xDS](#xds-discovery-service), [Envoy](#envoy-proxy)
 
 ---
 
@@ -386,7 +393,10 @@ A load balancing method that considers locality (Region, Zone) information.
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-2
 spec:
+  host: reviews
   trafficPolicy:
     loadBalancer:
       localityLbSetting:
@@ -406,7 +416,7 @@ spec:
 
 ### Mixer
 
-A policy and telemetry component that existed before Istio 1.4.
+A policy and telemetry component that existed through Istio 1.4.
 
 **Main Functions**:
 - Policy enforcement (Rate Limiting, Access Control)
@@ -416,7 +426,7 @@ A policy and telemetry component that existed before Istio 1.4.
 - Performance overhead (Mixer call for every request)
 - Complex architecture
 
-**Current Status**: Completely removed in Istio 1.5+ (functionality moved to Envoy)
+**Current Status**: Deprecated during the 1.5 transition; remaining Mixer functionality removed in 1.8
 
 **Related Terms**: [Istiod](#istiod)
 
@@ -429,12 +439,12 @@ A bidirectional TLS communication method where client and server authenticate ea
 **Istio's mTLS**:
 - Automatic certificate issuance and renewal
 - SPIFFE ID-based authentication
-- Default encryption: AES-256-GCM
+- TLS cipher is negotiated; it is not fixed to AES-256-GCM
 
 **Modes**:
 1. **STRICT**: Only mTLS allowed
 2. **PERMISSIVE**: mTLS + plaintext allowed (for migration)
-3. **DISABLE**: Only plaintext allowed
+3. **DISABLE**: Disable Istio transport mTLS in sidecar mode; unsupported in ambient
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -457,15 +467,18 @@ A feature that automatically excludes endpoints exhibiting abnormal behavior.
 **Detection Conditions**:
 - Consecutive error count
 - Error rate
-- Response latency
+- Connection failures/timeouts; latency alone is not an outlier-ejection threshold
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-3
 spec:
+  host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -495,7 +508,9 @@ Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 
 #### 1. Sidecar Mode - Outbound Request
 
-![From the Envoy sidecar's perspective, the application sending the request is the downstream side and the backend service receiving it is the upstream side.](../../../assets/diagrams/rendered/en-service-mesh-istio-glossary-0.svg)
+![In sidecar mode the application (downstream) sends a request to the Envoy sidecar in the same Pod, and Envoy forwards it to the backend service (upstream).](../../.gitbook/assets/en-service-mesh-istio-glossary-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-0.html)
 
 **Perspective**:
 - **From Envoy's view**: Application is Downstream (sending requests)
@@ -503,7 +518,9 @@ Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 
 #### 2. Ingress Gateway - External Request
 
-![From the Ingress Gateway's Envoy perspective, an external client is the downstream side and the internal service it routes to is the upstream side.](../../../assets/diagrams/rendered/en-service-mesh-istio-glossary-1.svg)
+![From the Ingress Gateway's Envoy perspective, an external client is the downstream side and the internal service it routes to is the upstream side.](../../.gitbook/assets/en-service-mesh-istio-glossary-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-1.html)
 
 **Downstream-related Envoy Configuration**:
 
@@ -513,15 +530,19 @@ apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: downstream-config
+  namespace: default
 spec:
+  workloadSelector:
+    labels:
+      app: reviews
   configPatches:
   - applyTo: LISTENER
+    match:
+      context: SIDECAR_INBOUND
     patch:
       operation: MERGE
       value:
         per_connection_buffer_limit_bytes: 32768  # Downstream buffer
-        listener_filters:
-        - name: envoy.filters.listener.tls_inspector
 ```
 
 **Downstream Metrics**:
@@ -576,7 +597,7 @@ spec:
         http1MaxPendingRequests: 50
         http2MaxRequests: 100
     outlierDetection:
-      consecutiveErrors: 5        # Upstream failure detection
+      consecutive5xxErrors: 5        # Upstream failure detection
       interval: 30s
 ```
 
@@ -598,6 +619,8 @@ istioctl proxy-config endpoints <pod-name> | grep reviews
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-4
 spec:
   host: reviews
   trafficPolicy:
@@ -620,7 +643,7 @@ spec:
 
     # Upstream Circuit Breaker
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 10s
       baseEjectionTime: 30s
 ```
@@ -684,8 +707,8 @@ Internal Service (Upstream)
 # Upstream connection count
 envoy_cluster_upstream_cx_active
 
-# Upstream request success rate
-envoy_cluster_upstream_rq_success_rate
+# Upstream request counter; derive success/error rates from response-class counters
+envoy_cluster_upstream_rq_total
 
 # Upstream response time
 envoy_cluster_upstream_rq_time
@@ -694,14 +717,16 @@ envoy_cluster_upstream_rq_time
 envoy_cluster_health_check_success
 
 # Upstream Circuit Breaker
-envoy_cluster_circuit_breakers_default_remaining
+envoy_cluster_circuit_breakers_default_remaining_rq
 ```
 
-**Upstream Health Check**:
+**Passive Upstream Health Detection**: Active health-check statistics require separate configuration.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-5
 spec:
   host: reviews
   trafficPolicy:
@@ -738,7 +763,7 @@ istioctl proxy-config all <pod-name> -o json | \
 
 ### Pilot
 
-A traffic management component that existed independently before Istio 1.4. It is now integrated into Istiod.
+A traffic management component that existed independently through Istio 1.4. It is now integrated into Istiod.
 
 **Main Functions**:
 - Service Discovery
@@ -747,7 +772,7 @@ A traffic management component that existed independently before Istio 1.4. It i
 
 **Current Status**: Exists as an internal function within Istiod in Istio 1.5+
 
-**Related Terms**: [Istiod](#istiod), [xDS](#xds)
+**Related Terms**: [Istiod](#istiod), [xDS](#xds-discovery-service)
 
 ---
 
@@ -764,7 +789,7 @@ One of the xDS APIs that dynamically provides HTTP routing rules.
 **Relationship with VirtualService**:
 - VirtualService -> Converted by Istiod -> RDS configuration
 
-**Related Terms**: [xDS](#xds), [VirtualService](#virtualservice)
+**Related Terms**: [xDS](#xds-discovery-service), [VirtualService](#virtualservice)
 
 ---
 
@@ -777,23 +802,44 @@ A feature that limits the number of requests allowed per unit time.
 2. **Global Rate Limiting**: Uses an external Rate Limit service
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: filter-local-ratelimit
+  namespace: default
 spec:
+  workloadSelector:
+    labels:
+      app: reviews
   configPatches:
   - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 100
             tokens_per_fill: 100
             fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
 ```
 
 **Related Documentation**: [Rate Limiting](resilience/02-rate-limiting.md)
@@ -816,7 +862,7 @@ One of the xDS APIs that dynamically provides TLS certificates and keys.
 - Automatic certificate renewal
 - Zero-downtime renewal
 
-**Related Terms**: [xDS](#xds), [mTLS](#mtls)
+**Related Terms**: [xDS](#xds-discovery-service), [mTLS](#mtls-mutual-tls)
 
 ---
 
@@ -863,7 +909,7 @@ An infrastructure layer that manages communication between microservices.
 - Istio
 - Linkerd
 - Consul Connect
-- AWS App Mesh
+- AWS App Mesh ([support ends September 30, 2026](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html))
 
 ---
 
@@ -873,7 +919,9 @@ A signature protocol for authenticating AWS API requests.
 
 **How It Works**:
 
-![Sequence diagram showing Envoy transparently signing an outbound client request with AWS SigV4 credentials before forwarding it to an AWS service and returning the response.](../../../assets/diagrams/rendered/en-service-mesh-istio-glossary-2.svg)
+![Sequence diagram showing Envoy transparently signing an outbound client request with AWS SigV4 credentials before forwarding it to an AWS service and returning the response.](../../.gitbook/assets/en-service-mesh-istio-glossary-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-2.html)
 
 **Signature Components**:
 
@@ -902,236 +950,30 @@ A signature protocol for authenticating AWS API requests.
 
 **Integration with Istio**:
 
-#### 1. SigV4 Authentication via EnvoyFilter
+AWS SDKs and the AWS CLI sign HTTPS requests using temporary credentials supplied by IRSA or EKS Pod Identity. This keeps signing associated with the workload's AWS permissions. Istio mTLS identity and AWS IAM identity are separate.
 
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: aws-sigv4-filter
-  namespace: istio-system
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_OUTBOUND
-      listener:
-        filterChain:
-          filter:
-            name: envoy.filters.network.http_connection_manager
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.aws_request_signing
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.aws_request_signing.v3.AwsRequestSigning
-          service_name: s3
-          region: us-west-2
-          use_unsigned_payload: false
-          match_excluded_headers:
-          - prefix: x-envoy
-```
+Envoy's `aws_request_signing` HTTP filter is an advanced alternative. It needs an Envoy build containing the extension, credentials available to the **proxy container**, the correct AWS service/region, and a filter match restricted to the intended AWS destination. Insert it before the router, after any header/path rewrites that affect the signature. Application-originated HTTPS is opaque to this HTTP filter: Envoy cannot add a signature inside encrypted TLS. A proxy-signing design must present HTTP to the signing proxy and originate verified TLS upstream; avoid double TLS origination or exposing unsigned HTTP beyond the intended local proxy path.
 
-#### 2. Integration with External Authorization
+The diagram above describes this explicitly configured signing-proxy path, not a default Istio capability. An IRSA annotation on the application ServiceAccount alone does not prove that a gateway or sidecar has the credential environment and token mount it needs.
 
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: RequestAuthentication
-metadata:
-  name: aws-auth
-  namespace: default
-spec:
-  jwtRules:
-  - issuer: "https://sts.amazonaws.com"
-    audiences:
-    - "sts.amazonaws.com"
-    jwksUri: "https://sts.amazonaws.com/.well-known/jwks"
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: require-aws-auth
-  namespace: default
-spec:
-  action: CUSTOM
-  provider:
-    name: aws-sigv4-authorizer
-  rules:
-  - to:
-    - operation:
-        paths: ["/api/*"]
-```
+**Authentication is not JWT validation**:
 
-**Use Case Scenarios**:
+SigV4 is an HMAC request signature, not a JWT. `https://sts.amazonaws.com/.well-known/jwks` is not a JWT issuer endpoint for validating AWS API signatures. Istio RequestAuthentication validates JWTs from a real OIDC issuer. A CUSTOM AuthorizationPolicy additionally requires a configured `extensionProviders` service implementing external authorization; it cannot validate SigV4 without that implementation. Prefer IAM-authenticated AWS endpoints or the AWS SDK for AWS API access.
 
-#### Scenario 1: S3 Access
-
-```yaml
-# Register S3 with ServiceEntry
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: s3-external
-spec:
-  hosts:
-  - "*.s3.amazonaws.com"
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
----
-# Configure TLS with DestinationRule
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: s3-external
-spec:
-  host: "*.s3.amazonaws.com"
-  trafficPolicy:
-    tls:
-      mode: SIMPLE
-```
-
-**Application Code**:
-```python
-import requests
-
-# Envoy automatically adds SigV4 signature
-response = requests.get("https://my-bucket.s3.us-west-2.amazonaws.com/object.txt")
-print(response.text)
-```
-
-#### Scenario 2: API Gateway Integration
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: aws-api-gateway
-spec:
-  hosts:
-  - api.example.com
-  http:
-  - match:
-    - uri:
-        prefix: "/api"
-    route:
-    - destination:
-        host: my-api.execute-api.us-west-2.amazonaws.com
-        port:
-          number: 443
-```
-
-#### Scenario 3: DynamoDB Access
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: dynamodb-sigv4
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.aws_request_signing
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.aws_request_signing.v3.AwsRequestSigning
-          service_name: dynamodb
-          region: us-west-2
-          host_rewrite: dynamodb.us-west-2.amazonaws.com
-```
-
-**Methods for Providing AWS Credentials**:
-
-1. **ServiceAccount + IRSA (Recommended)**:
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: app-sa
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/app-role
-```
-
-2. **EC2 Instance Profile**:
-   - Automatically uses IAM role assigned to the node
-
-3. **Environment Variables**:
-```yaml
-env:
-- name: AWS_ACCESS_KEY_ID
-  valueFrom:
-    secretKeyRef:
-      name: aws-credentials
-      key: access-key-id
-- name: AWS_SECRET_ACCESS_KEY
-  valueFrom:
-    secretKeyRef:
-      name: aws-credentials
-      key: secret-access-key
-```
-
-**Security Considerations**:
-
-1. **Credential Rotation**:
-   - Automatic rotation using IRSA
-   - Default TTL: 1 hour
-
-2. **Principle of Least Privilege**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": "arn:aws:s3:::my-bucket/*"
-    }
-  ]
-}
-```
-
-3. **Audit Logging**:
-   - Record all API calls with CloudTrail
-   - Integration with Istio Access Log
-
-**Debugging**:
+**Read-only verification example** (AWS CLI installed in the workload, with its intended IAM role):
 
 ```bash
-# Check SigV4 signature in Envoy logs
-kubectl logs <pod-name> -c istio-proxy | grep aws_request_signing
-
-# Check Authorization header
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -v localhost:15000/config_dump | jq '.configs[] | select(.["@type"] == "type.googleapis.com/envoy.admin.v3.ClustersConfigDump")'
-
-# Test AWS API call
-kubectl exec -it <pod-name> -- \
-  curl -v https://my-bucket.s3.amazonaws.com/test.txt
+aws sts get-caller-identity
+aws s3api head-object --bucket my-bucket --key object.txt --region us-west-2
 ```
 
-**Performance Impact**:
+**Operational considerations**:
 
-| Operation | Latency |
-|-----------|---------|
-| SigV4 signature calculation | ~1-2ms |
-| Credential load (cache) | ~0.1ms |
-| Credential load (IRSA) | ~50ms (first request) |
-| Total overhead | ~1-3ms |
-
-**Alternative Comparison**:
-
-| Method | Advantages | Disadvantages |
-|--------|------------|---------------|
-| **SigV4 (Envoy)** | No application code changes required | Envoy configuration needed |
-| **AWS SDK** | Flexible control | SDK required in all apps |
-| **API Gateway** | Managed solution | Additional cost |
+- Grant the workload only the required AWS actions and resources. Avoid depending on a shared node instance role.
+- Confirm that the selected credential provider supports temporary credentials and refresh. Session duration is configurable, not universally one hour.
+- CloudTrail management events and data events have different coverage; S3 object access requires the appropriate data-event configuration.
+- Inspect proxy configuration to confirm filter placement. A config dump does not display the Authorization header of each live request, and unsigned curl over HTTPS is not a SigV4 test.
+- Measure signing/buffering/credential-fetch overhead for the actual request sizes; no fixed millisecond overhead is guaranteed.
 
 **Related Terms**: [AuthorizationPolicy](#authorizationpolicy), [ServiceEntry](#service-entry), [EnvoyFilter](advanced/03-envoy-filter.md)
 
@@ -1150,14 +992,17 @@ A helper container pattern deployed alongside an application container.
 - Container name: `istio-proxy`
 - Image: `istio/proxyv2`
 - Runs Envoy Proxy
-- Intercepts all traffic (iptables or eBPF)
+- Intercepts configured traffic through init-container or Istio CNI redirection
 
 **Injection Methods**:
 1. **Automatic**: Namespace label
 2. **Manual**: `istioctl kube-inject`
 
 ```yaml
+apiVersion: v1
+kind: Namespace
 metadata:
+  name: example-mesh
   labels:
     istio-injection: enabled  # Automatic injection
 ```
@@ -1173,7 +1018,7 @@ An Istio CRD that limits the service information Envoy receives.
 **Purpose**:
 - Reduce memory usage
 - Shorten configuration push time
-- Network isolation
+- Configuration scoping; not a network security boundary
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1189,10 +1034,9 @@ spec:
 ```
 
 **Effect**:
-- Before: 1000 services -> 500 MB memory
-- After: 10 services -> 80 MB memory
+- Fewer imported services can reduce memory and configuration work; measure actual savings.
 
-**Related Documentation**: [Architecture - Sidecar Resource](03-architecture.md#optimization-through-sidecar-resource)
+**Related Documentation**: [Architecture - Sidecar Resource](03-architecture.md#optimization-with-sidecar-resource)
 
 ---
 
@@ -1219,9 +1063,9 @@ spiffe://cluster.local/ns/default/sa/reviews
 
 **Components**:
 - **SPIFFE ID**: Workload identifier
-- **SVID (SPIFFE Verifiable Identity Document)**: X.509 certificate
+- **SVID (SPIFFE Verifiable Identity Document)**: X.509-SVID or JWT-SVID; Istio mTLS uses X.509-SVID
 
-**Related Terms**: [Identity](#identity), [mTLS](#mtls)
+**Related Terms**: [Identity](#identity), [mTLS](#mtls-mutual-tls)
 
 ---
 
@@ -1237,7 +1081,10 @@ A logical grouping of services defined in DestinationRule.
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-6
 spec:
+  host: reviews
   subsets:
   - name: v1
     labels:
@@ -1258,7 +1105,7 @@ spec:
 An optional proxy that provides L7 functionality in Ambient Mode.
 
 **Role**:
-- Deployed per Service Account or Namespace
+- Selected with namespace, Service, or Pod labels; not automatically per ServiceAccount
 - Based on Envoy Proxy
 - Dedicated to L7 traffic management functions
 - Works alongside ztunnel
@@ -1289,11 +1136,13 @@ spec:
 - ztunnel handles only L4, waypoint handles L7
 - Selective use only for services that need it
 - More resource efficient than Sidecar (shared approach)
-- Deployed per Service Account or Namespace
+- Selected with namespace, Service, or Pod labels; not automatically per ServiceAccount
 
 **Related Terms**: [Ambient Mode](#ambient-mode), [ztunnel](#ztunnel-zero-trust-tunnel)
 
 ---
+
+After creating the waypoint, enroll the intended service, for example `kubectl label service reviews istio.io/use-waypoint=reviews-waypoint --overwrite`. Deploying a Gateway alone does not route traffic through it.
 
 ### VirtualService
 
@@ -1347,6 +1196,8 @@ A binary instruction format designed to run in web browsers. In Istio, it is use
 3. **Advanced Routing**: Custom routing logic
 4. **Metric Collection**: Specialized telemetry
 
+The registry URLs, digests, credentials, and pluginConfig fields below are placeholders for your own built plugin; Istio does not supply those example images or interpret plugin-specific options. A file:// module must exist inside the proxy container.
+
 **WASM Plugin Example**:
 ```yaml
 apiVersion: extensions.istio.io/v1alpha1
@@ -1375,7 +1226,7 @@ kind: WasmPlugin
 metadata:
   name: rate-limiter
 spec:
-  url: oci://docker.io/istio/rate-limit:1.0.0
+  url: oci://ghcr.io/my-org/rate-limit:v1.0.0
   imagePullPolicy: Always
   imagePullSecret: registry-credential
 ```
@@ -1389,7 +1240,7 @@ metadata:
   name: custom-filter
 spec:
   url: https://example.com/filters/custom-filter.wasm
-  sha256: "8a8c3b5e..."
+  # Add sha256: with the actual 64-character module digest before deployment
 ```
 
 #### 3. Local File Deployment
@@ -1409,58 +1260,34 @@ spec:
 use proxy_wasm::traits::*;
 use proxy_wasm::types::*;
 
-#[no_mangle]
-pub fn _start() {
-    proxy_wasm::set_log_level(LogLevel::Trace);
+proxy_wasm::main! {{
     proxy_wasm::set_http_context(|_, _| -> Box<dyn HttpContext> {
         Box::new(CustomFilter)
     });
-}
+}}
 
 struct CustomFilter;
+impl Context for CustomFilter {}
 
 impl HttpContext for CustomFilter {
-    fn on_http_request_headers(&mut self, _: usize) -> Action {
-        // API Key validation
-        match self.get_http_request_header("x-api-key") {
-            Some(key) if key == "secret-key" => {
-                Action::Continue
-            }
-            _ => {
-                self.send_http_response(
-                    403,
-                    vec![("content-type", "text/plain")],
-                    Some(b"Forbidden: Invalid API Key"),
-                );
-                Action::Pause
-            }
-        }
+    fn on_http_request_headers(&mut self, _: usize, _: bool) -> Action {
+        // Demonstrate header mutation, not production API-key authentication.
+        self.set_http_request_header("x-mesh-demo", Some("wasm"));
+        Action::Continue
     }
 }
 ```
 
-**Build and Deployment**:
+**Build and deployment prerequisites**:
+
+Use a Rust `cdylib` crate with a compatible `proxy-wasm` dependency and a locked dependency version. The callback above follows the [official Rust SDK example](https://github.com/proxy-wasm/proxy-wasm-rust-sdk/tree/main/examples/http_headers). Install the `wasm32-unknown-unknown` target, build the module, and package the resulting `.wasm` in a supported OCI Wasm image before referencing it from WasmPlugin. A generic `docker build` with no Dockerfile does not perform that packaging.
 
 ```bash
-# 1. Build WASM (Rust)
+rustup target add wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
-
-# 2. Package as OCI image
-docker build -t ghcr.io/my-org/custom-auth:v1.0.0 .
-docker push ghcr.io/my-org/custom-auth:v1.0.0
-
-# 3. Apply WasmPlugin
-kubectl apply -f wasmplugin.yaml
 ```
 
-**Performance Characteristics**:
-
-| Metric | Value |
-|--------|-------|
-| Startup time | ~1-5ms |
-| Memory overhead | ~100KB per filter |
-| Execution overhead | ~0.1-1ms per request |
-| Sandbox isolation | Guaranteed |
+Measure startup time, memory, and per-request overhead for the specific plugin. Wasm executes in a runtime sandbox inside the proxy process; it is not a separate process or an unconditional security/performance guarantee.
 
 **Ambient Mode Support**:
 
@@ -1470,9 +1297,10 @@ kind: WasmPlugin
 metadata:
   name: waypoint-filter
 spec:
-  selector:
-    matchLabels:
-      gateway.networking.k8s.io/gateway-name: reviews-waypoint
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: reviews-waypoint
   url: oci://ghcr.io/filters/custom:latest
   phase: AUTHN
 ```
@@ -1487,13 +1315,13 @@ kubectl get wasmplugin -A
 kubectl logs <pod-name> -c istio-proxy | grep wasm
 
 # Check WASM module load
-istioctl proxy-config all <pod-name> -o json | jq '.configs[] | select(.name | contains("wasm"))'
+istioctl proxy-config all <pod-name> -o json | jq '.. | objects | select(has("@type")) | select(.["@type"] | test("wasm"; "i"))'
 ```
 
 **Security Considerations**:
-1. **Sandbox Isolation**: WASM modules run in an isolated environment from the Envoy process
+1. **Sandbox Isolation**: Runtime sandbox inside Envoy; review plugin trust and resource use
 2. **Resource Limits**: CPU and memory limits can be configured
-3. **Signature Verification**: Integrity check with SHA256 hash
+3. **Integrity Verification**: SHA256 checks content; it does not authenticate the publisher
 4. **Least Privilege**: Grant only necessary permissions
 
 **Advantages**:
@@ -1511,10 +1339,10 @@ istioctl proxy-config all <pod-name> -o json | jq '.configs[] | select(.name | c
 **Related Terms**: [Envoy](#envoy-proxy), [Waypoint Proxy](#waypoint-proxy), [Ambient Mode](#ambient-mode)
 
 **References**:
-- [Istio WASM Plugin](https://istio.io/latest/docs/concepts/wasm/)
+- [Istio WASM Plugin](https://istio.io/latest/docs/reference/config/proxy_extensions/wasm-plugin/)
 - [Proxy-Wasm SDK](https://github.com/proxy-wasm)
 - [WebAssembly Official Site](https://webassembly.org/)
-- [Ambient Mode - WASM](advanced/01-ambient-mode.md#wasm-plugin)
+- [Ambient Mode - WASM](https://istio.io/latest/docs/ambient/usage/extend-waypoint-wasm/)
 
 ---
 
@@ -1543,7 +1371,8 @@ A set of APIs for dynamic configuration of Envoy Proxy.
 
 **Order**:
 ```
-Envoy Start -> LDS -> CDS -> EDS -> RDS -> SDS
+Agent bootstraps identity -> Envoy subscribes to ADS resources
+Istiod pushes LDS/CDS/EDS/RDS updates; local agent serves SDS certificates
 ```
 
 **Related Documentation**: [Architecture - xDS API Communication](03-architecture.md#xds-api-communication)
@@ -1586,50 +1415,35 @@ A core component of Ambient Mode, a lightweight L4 proxy running at the node lev
 
 **Technical Features**:
 - Written in Rust (high performance)
-- eBPF-based traffic redirection
+- Istio CNI-managed traffic redirection
 - No Init Container required
-- Low resource usage (~50MB per node)
+- Shared L4 proxy resources; size from measured node workload
 
 **Deployment Example**:
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: ztunnel
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      app: ztunnel
-  template:
-    spec:
-      hostNetwork: true
-      containers:
-      - name: istio-proxy
-        image: istio/ztunnel:1.28.0
-        securityContext:
-          privileged: true
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
+```bash
+# Use the reviewed istioctl version and the complete ambient installation profile
+istioctl install --set profile=ambient
+kubectl rollout status daemonset/ztunnel -n istio-system
 ```
+
+For an existing sidecar workload, remove injection/revision labels and restart pods to remove the sidecars before ambient enrollment; a new sidecar-free workload does not need a restart.
 
 **Namespace Activation**:
 ```bash
 # Enable Ambient Mode
-kubectl label namespace default istio.io/dataplane-mode=ambient
+kubectl label namespace default istio-injection- istio.io/rev-
+kubectl label namespace default istio.io/dataplane-mode=ambient --overwrite
 ```
 
 **Advantages**:
-- 86% memory reduction compared to Sidecar
+- Potential memory savings depend on node/workload and waypoint capacity
 - No pod restart required
 - Application transparency
 - Minimized initial latency
 
 **Limitations**:
 - Waypoint Proxy required for L7 features
-- eBPF-compatible kernel required (Linux 4.20+)
+- Requires a supported Linux Kubernetes platform, primary CNI, and Istio CNI prerequisites
 
 **Related Terms**: [Ambient Mode](#ambient-mode), [Waypoint Proxy](#waypoint-proxy), [eBPF](#ebpf-extended-berkeley-packet-filter)
 
@@ -1650,4 +1464,20 @@ kubectl label namespace default istio.io/dataplane-mode=ambient
 
 ---
 
-**Last Updated**: November 24, 2025
+**Last Updated**: September 11, 2026
+
+- [Destination Rule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Install the Istio CNI node agent](https://istio.io/latest/docs/setup/additional-setup/cni/)
+- [Ztunnel traffic redirection](https://istio.io/latest/docs/ambient/architecture/traffic-redirection/)
+- [Install with istioctl](https://istio.io/latest/docs/ambient/install/istioctl/)
+- [Configure waypoint proxies](https://istio.io/latest/docs/ambient/usage/waypoint/)
+- [Enabling Rate Limits using Envoy](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
+- [Wasm Plugin](https://istio.io/latest/docs/reference/config/proxy_extensions/wasm-plugin/)
+- [Proxy-Wasm Rust SDK HTTP example](https://raw.githubusercontent.com/proxy-wasm/proxy-wasm-rust-sdk/main/examples/http_headers/src/lib.rs)
+- [AWS Signature Version 4 for API requests - AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv.html)
+- [AWS Request Signing](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/aws_request_signing_filter)
+- [Statistics](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)
+- [Istio 1.8 Change Notes](https://istio.io/latest/news/releases/1.8.x/announcing-1.8/change-notes/)
+- [What Is AWS App Mesh? - AWS App Mesh](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)
+
+- [CloudTrail data event coverage](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html)

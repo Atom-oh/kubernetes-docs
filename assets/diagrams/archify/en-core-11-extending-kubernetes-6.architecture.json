@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS Extension Architecture",
+    "locale": "en",
+    "output": "en-core-11-extending-kubernetes-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "addons",
+        "label": "EKS Add-ons",
+        "focus": [
+          "cp",
+          "vcni",
+          "cdns",
+          "ebscsi",
+          "albc",
+          "vpc",
+          "ebs",
+          "elb"
+        ],
+        "note": "Add-ons managed by the control plane integrate with Amazon VPC, EBS, and Elastic Load Balancing respectively."
+      },
+      {
+        "id": "irsa",
+        "label": "IRSA",
+        "focus": [
+          "iam",
+          "ng"
+        ],
+        "note": "IAM Roles for Service Accounts binds IAM roles to service accounts so pods access AWS services securely."
+      },
+      {
+        "id": "ack",
+        "label": "ACK",
+        "focus": [
+          "ack"
+        ],
+        "note": "AWS Controllers for Kubernetes is a set of operators that manage AWS resources as Kubernetes resources."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS Cluster",
+      "sublabel": "Amazon EKS",
+      "pos": [
+        480,
+        40
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "Control Plane",
+      "sublabel": "AWS managed",
+      "pos": [
+        260,
+        160
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "ng",
+      "type": "backend",
+      "label": "Node Groups",
+      "sublabel": "worker nodes",
+      "pos": [
+        920,
+        160
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "vcni",
+      "type": "backend",
+      "label": "Amazon VPC CNI",
+      "sublabel": "networking",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "cdns",
+      "type": "backend",
+      "label": "CoreDNS / kube-proxy",
+      "sublabel": "DNS · network proxy",
+      "pos": [
+        260,
+        290
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "ebscsi",
+      "type": "backend",
+      "label": "Amazon EBS CSI Driver",
+      "sublabel": "EBS volume management",
+      "pos": [
+        480,
+        290
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "albc",
+      "type": "backend",
+      "label": "AWS Load Balancer Controller",
+      "sublabel": "load balancer management",
+      "pos": [
+        700,
+        290
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "Amazon VPC",
+      "sublabel": "network",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "ack",
+      "type": "backend",
+      "label": "AWS Controllers for Kubernetes",
+      "sublabel": "ACK · manages AWS resources",
+      "pos": [
+        260,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "cloud",
+      "label": "Amazon EBS",
+      "sublabel": "block storage",
+      "pos": [
+        480,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "elb",
+      "type": "cloud",
+      "label": "Elastic Load Balancing",
+      "sublabel": "ALB / NLB",
+      "pos": [
+        700,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "sublabel": "IAM roles",
+      "pos": [
+        920,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "eks",
+        "cp",
+        "ng",
+        "vcni",
+        "cdns",
+        "ebscsi",
+        "albc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Add-ons",
+      "wraps": [
+        "vcni",
+        "cdns",
+        "ebscsi",
+        "albc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Services",
+      "wraps": [
+        "vpc",
+        "ack",
+        "ebs",
+        "elb",
+        "iam"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eks-cp",
+      "from": "eks",
+      "to": "cp",
+      "label": "Manages",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-ng",
+      "from": "eks",
+      "to": "ng",
+      "label": "Manages",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-vcni",
+      "from": "cp",
+      "to": "vcni",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-cdns",
+      "from": "cp",
+      "to": "cdns",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-ebscsi",
+      "from": "cp",
+      "to": "ebscsi",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-albc",
+      "from": "cp",
+      "to": "albc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "vcni-vpc",
+      "from": "vcni",
+      "to": "vpc",
+      "label": "VPC integration",
+      "labelDy": 84
+    },
+    {
+      "id": "ebscsi-ebs",
+      "from": "ebscsi",
+      "to": "ebs",
+      "label": "volumes",
+      "labelDy": 84
+    },
+    {
+      "id": "albc-elb",
+      "from": "albc",
+      "to": "elb",
+      "label": "provisions ALB / NLB",
+      "labelDy": 84
+    },
+    {
+      "id": "iam-ng",
+      "from": "iam",
+      "to": "ng",
+      "label": "IRSA",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

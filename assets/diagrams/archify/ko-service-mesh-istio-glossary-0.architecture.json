@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar Mode - 아웃바운드 요청의 Downstream / Upstream",
+    "output": "ko-service-mesh-istio-glossary-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      340
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "요청을 보내는 쪽",
+      "tag": "Downstream",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        160,
+        72
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "istio-proxy",
+      "tag": "Proxy",
+      "pos": [
+        420,
+        130
+      ],
+      "size": [
+        160,
+        72
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend 서비스",
+      "sublabel": "요청을 받는 쪽",
+      "tag": "Upstream",
+      "pos": [
+        800,
+        130
+      ],
+      "size": [
+        160,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "애플리케이션 Pod (Sidecar Mode)",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-envoy",
+      "from": "app",
+      "to": "envoy",
+      "label": "요청 전송 (Downstream → Envoy)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-to-backend",
+      "from": "envoy",
+      "to": "backend",
+      "label": "요청 전달 (Envoy → Upstream)",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Envoy 입장에서의 관점",
+      "items": [
+        "애플리케이션이 Downstream (요청 보내는 쪽)",
+        "Backend 서비스가 Upstream (요청 받는 쪽)"
+      ]
+    }
+  ]
+}

@@ -1,32 +1,42 @@
 # Amazon ECR (Elastic Container Registry)
 
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 11, 2026
 
 ## ECR Overview
 
 Amazon Elastic Container Registry (ECR) is a fully managed container registry service provided by AWS. It eliminates the need to operate your own container registry infrastructure while providing deep integration with AWS services, particularly Amazon EKS.
 
+Unless stated otherwise, the CLI/CDK/IAM/lifecycle examples target ECR Private. They are alternative configurations, not one script to execute blindly. Choose a creation method rather than creating the same repository twice. Scan/query examples require an existing repository and image tag. Configure AWS credentials and replace sample account/resource identifiers.
+
+```bash
+export AWS_REGION=us-east-1
+export AWS_DEFAULT_REGION="$AWS_REGION"
+```
+
 ### Architecture
 
 ECR operates as a regional service with two distinct offerings:
 
-![Architecture diagram contrasting Amazon ECR Private, a regionally scoped registry with IAM-based access control and cross-region replication, against Amazon ECR Public, a globally hosted registry offering anonymous read access and gallery discovery.](../../assets/diagrams/rendered/en-container-registry-02-amazon-ecr-0.svg)
+![Diagram showing Amazon ECR Private repositories in an AWS account governed by IAM auth, lifecycle policies, encryption, scanning and cross-region replication, beside a separate ECR Public registry in us-east-1 that allows anonymous pulls.](../.gitbook/assets/en-container-registry-02-amazon-ecr-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-02-amazon-ecr-0.html)
 
 **ECR Private**: For internal container images with IAM-based access control. Images are stored regionally and can be replicated across regions.
 
-**ECR Public**: For open-source projects and public image distribution. Hosted in `us-east-1` with a public gallery at `gallery.ecr.aws`.
+**ECR Public**: For public image distribution. Management API endpoints are available in `us-east-1` and `us-west-2`; images use global `public.ecr.aws` URLs. The diagram's us-east-1 location is an example, not an exclusive endpoint.
 
 ### Pricing
 
 | Component | Price |
 |-----------|-------|
-| **Storage** | $0.10 per GB-month |
-| **Data Transfer (same region)** | Free |
-| **Data Transfer (cross-region)** | $0.02 per GB |
-| **Data Transfer (to internet)** | $0.09 per GB (first 10TB) |
-| **Data Transfer (ECR Public egress)** | Free (first 500GB/month, then standard rates) |
+| **Storage** | Region/storage-class pricing; official standard-storage examples use $0.10/GB-month |
+| **Transfer to supported same-region AWS compute** | No ECR transfer charge; networking-service charges are separate |
+| **Cross-region/internet transfer** | Check source, destination, tiers and allowances; not a universal $0.02/GB |
+| **ECR Public** | Storage, anonymous transfer and authenticated transfer have different free allowances |
 | **Basic Scanning** | Free |
 | **Enhanced Scanning** | Amazon Inspector pricing applies |
+
+AWS Signer, KMS and VPC endpoint costs may also apply. Use [current ECR pricing](https://aws.amazon.com/ecr/pricing/) for an actual estimate and the [Public endpoint list](https://docs.aws.amazon.com/general/latest/gr/ecr-public.html) for API regions.
 
 ### Regional Service Considerations
 
@@ -47,9 +57,9 @@ aws ecr create-repository \
   --repository-name myapp \
   --region us-east-1
 
-# Create repository with all recommended settings
+# Alternative example using a separate repository; the KMS key must exist
 aws ecr create-repository \
-  --repository-name myapp \
+  --repository-name myapp-secure \
   --image-tag-mutability IMMUTABLE \
   --image-scanning-configuration scanOnPush=true \
   --encryption-configuration encryptionType=KMS,kmsKey=alias/ecr-key \
@@ -116,7 +126,8 @@ export class EcrStack extends cdk.Stack {
 | Setting | Description | Use Case |
 |---------|-------------|----------|
 | `MUTABLE` (default) | Tags can be overwritten | Development, CI builds |
-| `IMMUTABLE` | Tags cannot be overwritten | Production, compliance |
+| `IMMUTABLE` | Existing tags cannot be overwritten | Stable release references while those tags exist |
+| `IMMUTABLE_WITH_EXCLUSION` | Only matching exception tags may be overwritten | Explicit mutable aliases such as latest |
 
 ```bash
 # Update existing repository to immutable
@@ -129,24 +140,28 @@ aws ecr put-image-tag-mutability \
 
 | Type | Description | Cost |
 |------|-------------|------|
-| `AES256` (default) | AWS-managed encryption | Free |
-| `KMS` | Customer-managed KMS key | KMS key charges |
+| `AES256` (default) | Amazon S3-managed encryption keys (SSE-S3) | No separate KMS key charge |
+| `KMS` | AWS-managed ECR key or a specified customer-managed KMS key | Applicable KMS charges |
 
 Benefits of KMS encryption:
 - Audit key usage via CloudTrail
 - Fine-grained access control
 - Key rotation support
-- Cross-account key sharing
+- Explicit key lifecycle management
+
+The key must be in the repository's region. Encryption configuration cannot be changed on an existing repository; plan migration to a new repository and inspect `cdk diff` before infrastructure changes.
 
 #### Scan on Push
 
 | Scan Type | Description | Cost |
 |-----------|-------------|------|
-| Basic Scanning | CVE scanning using Clair database | Free |
+| Basic Scanning | OS CVE scanning using AWS native technology | Free |
 | Enhanced Scanning | Amazon Inspector with continuous monitoring | Inspector pricing |
 
 ```bash
-# Enable enhanced scanning (account-level)
+# Inspect existing rules before replacing account/region registry configuration
+aws ecr get-registry-scanning-configuration
+# Isolated-registry example; merge existing production rules rather than dropping them
 aws ecr put-registry-scanning-configuration \
   --scan-type ENHANCED \
   --rules '[{"repositoryFilters":[{"filter":"*","filterType":"WILDCARD"}],"scanFrequency":"CONTINUOUS_SCAN"}]'
@@ -156,6 +171,14 @@ aws ecr describe-image-scan-findings \
   --repository-name myapp \
   --image-id imageTag=v1.0.0
 ```
+
+For new Basic scanning configuration, use registry-level `BASIC` rules with `SCAN_ON_PUSH` filters. The repository-level `imageScanOnPush`/CLI option shown in creation examples is a legacy compatibility setting. Basic scanning is limited per image over a 24-hour period; wait for a scan to complete before interpreting findings. Enhanced scanning follows its configured eligibility and rescan duration.
+
+#### Image Signing
+
+ECR supports AWS Signer managed automatic signing and client-side signing such as Notation. Storing signatures does not automatically enforce EKS admission: configure trusted identities/keys, digest verification and admission policy separately. See [ECR image signing](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html).
+
+Pushers to a managed-signing repository also need the required signing-profile permissions, such as `signer:SignPayload`. The ECR-only IAM examples below do not grant those additional permissions.
 
 ## Authentication and Access Control
 
@@ -183,7 +206,7 @@ aws ecr get-login-password --region $REGION | \
 Install and configure the ECR credential helper for automatic authentication:
 
 ```bash
-# Install on Amazon Linux / RHEL
+# Install on Amazon Linux 2023; check upstream instructions for other distributions
 sudo yum install -y amazon-ecr-credential-helper
 
 # Install on Ubuntu / Debian
@@ -192,16 +215,16 @@ sudo apt-get install -y amazon-ecr-credential-helper
 # Install on macOS
 brew install docker-credential-helper-ecr
 
-# Configure Docker to use the helper
-mkdir -p ~/.docker
-cat > ~/.docker/config.json << 'EOF'
+# Merge the following fragment into Docker config; do not overwrite other credentials/settings.
+```
+
+```json
 {
   "credHelpers": {
     "123456789012.dkr.ecr.us-east-1.amazonaws.com": "ecr-login",
     "public.ecr.aws": "ecr-login"
   }
 }
-EOF
 ```
 
 ### IAM Policies
@@ -300,7 +323,7 @@ EOF
       "Action": [
         "ecr:DescribeImageScanFindings"
       ],
-      "Resource": "*"
+      "Resource": "arn:aws:ecr:us-east-1:123456789012:repository/myapp"
     }
   ]
 }
@@ -381,14 +404,16 @@ ECR lifecycle policies automate image cleanup to optimize storage costs and main
 
 ### Rule Evaluation Order
 
-Lifecycle policies evaluate rules in **priority order** (lowest number first). Key principles:
+Lifecycle policies **evaluate all rules first**, then apply the results by priority:
 
-1. Each image is evaluated against rules in priority order
-2. An image matches only the **first** rule that applies to it
-3. Once an image matches a rule, subsequent rules do not evaluate that image
-4. Rules with the same priority are evaluated in an undefined order (avoid this)
+1. Evaluation happens regardless of priority; a lower numeric `rulePriority` has higher application priority.
+2. An image matching a higher-priority rule's tag requirements cannot be expired by a lower-priority rule.
+3. An image is expired or archived by at most one rule. Counts refer to image digests, not the number of tags.
+4. Priorities must be unique. Prefix sets and untagged rules must satisfy the service's constraints for the selected storage class; an `any` rule goes last.
 
-![Flowchart showing how an ECR lifecycle policy evaluates an image against ranked rules (SemVer tags, dev/staging tags, untagged), applies the first matching rule, then expires the image only if it exceeds that rule's retention threshold, otherwise retaining it.](../../assets/diagrams/rendered/en-container-registry-02-amazon-ecr-1.svg)
+![Simplified flow showing priority application to lifecycle evaluation results. The service evaluates all rules first and then applies priority when deciding expiration or retention.](../.gitbook/assets/en-container-registry-02-amazon-ecr-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-02-amazon-ecr-1.html)
 
 ### Selection Criteria
 
@@ -396,10 +421,12 @@ Lifecycle policies evaluate rules in **priority order** (lowest number first). K
 |-----------|-------------|--------|
 | `tagStatus` | Filter by tag presence | `tagged`, `untagged`, `any` |
 | `tagPrefixList` | Match tags starting with prefixes | `["v1.", "release-"]` |
-| `tagPatternList` | Match tags using wildcards/regex | `["*-dev*", "^\\d+\\.\\d+\\.\\d+$"]` |
+| `tagPatternList` | Documented `*` wildcard; multiple patterns use AND | `["v*"]` |
 | `countType` | How to count images | `imageCountMoreThan`, `sinceImagePushed` |
 | `countUnit` | Unit for `sinceImagePushed` | `days` |
-| `countNumber` | Threshold value | Integer |
+| `countNumber` | Threshold for the selected count type | Positive integer |
+
+This is not regex or full Unix glob matching: do not use `?`, `[0-9]`, `^` or `$` to validate SemVer. At most four `*` wildcards are allowed per string. These examples use CI-validated `v1.2.3` release tags and select them with `v*`. They cover active-image expiration; consult the [current lifecycle rules](https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html) for archival/restoration times, reference artifacts and additional count types.
 
 ### Strategy A: Separate Repositories (Recommended)
 
@@ -421,10 +448,12 @@ Lifecycle Policy - Keep last 100 SemVer releases:
   "rules": [
     {
       "rulePriority": 1,
-      "description": "Keep last 100 production releases (SemVer tags)",
+      "description": "Keep newest 100 v-prefixed release image digests; CI validates the version format",
       "selection": {
         "tagStatus": "tagged",
-        "tagPatternList": ["^\\d+\\.\\d+\\.\\d+$"],
+        "tagPatternList": [
+          "v*"
+        ],
         "countType": "imageCountMoreThan",
         "countNumber": 100
       },
@@ -464,16 +493,21 @@ aws ecr create-repository \
   --image-scanning-configuration scanOnPush=true
 ```
 
-Lifecycle Policy - Keep up to 30 images for 60 days:
+Lifecycle Policy - Expire tagged images after 60 days:
+
+This is an age-only policy, not a guarantee to keep a minimum count. Adding a lower-priority count rule is not a safety net. Protect running and rollback digests separately.
 
 ```json
 {
   "rules": [
     {
       "rulePriority": 1,
-      "description": "Expire images older than 60 days",
+      "description": "Expire tagged development images older than 60 days",
       "selection": {
-        "tagStatus": "any",
+        "tagStatus": "tagged",
+        "tagPatternList": [
+          "*"
+        ],
         "countType": "sinceImagePushed",
         "countUnit": "days",
         "countNumber": 60
@@ -484,11 +518,12 @@ Lifecycle Policy - Keep up to 30 images for 60 days:
     },
     {
       "rulePriority": 2,
-      "description": "Keep maximum 30 images",
+      "description": "Expire untagged images after 3 days",
       "selection": {
-        "tagStatus": "any",
-        "countType": "imageCountMoreThan",
-        "countNumber": 30
+        "tagStatus": "untagged",
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "countNumber": 3
       },
       "action": {
         "type": "expire"
@@ -513,10 +548,12 @@ When separate repositories are not practical, use a single repository with caref
   "rules": [
     {
       "rulePriority": 1,
-      "description": "Keep last 100 production SemVer images",
+      "description": "Keep newest 100 v-prefixed release image digests; CI validates the version format",
       "selection": {
         "tagStatus": "tagged",
-        "tagPatternList": ["^\\d+\\.\\d+\\.\\d+$"],
+        "tagPatternList": [
+          "v*"
+        ],
         "countType": "imageCountMoreThan",
         "countNumber": 100
       },
@@ -526,10 +563,12 @@ When separate repositories are not practical, use a single repository with caref
     },
     {
       "rulePriority": 2,
-      "description": "Expire dev/staging images older than 60 days",
+      "description": "Expire dev-* images older than 60 days",
       "selection": {
         "tagStatus": "tagged",
-        "tagPatternList": ["*-dev*", "*-stage*", "*-staging*"],
+        "tagPatternList": [
+          "dev-*"
+        ],
         "countType": "sinceImagePushed",
         "countUnit": "days",
         "countNumber": 60
@@ -539,7 +578,39 @@ When separate repositories are not practical, use a single repository with caref
       }
     },
     {
-      "rulePriority": 10,
+      "rulePriority": 3,
+      "description": "Expire stage-* images older than 60 days",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPatternList": [
+          "stage-*"
+        ],
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "countNumber": 60
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
+    {
+      "rulePriority": 4,
+      "description": "Expire staging-* images older than 60 days",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPatternList": [
+          "staging-*"
+        ],
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "countNumber": 60
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
+    {
+      "rulePriority": 9,
       "description": "Expire untagged images after 3 days",
       "selection": {
         "tagStatus": "untagged",
@@ -555,9 +626,9 @@ When separate repositories are not practical, use a single repository with caref
 }
 ```
 
-#### Critical Limitation: No OR/Union Logic
+#### Critical Limitation: Combining Minimum Count and Age
 
-**Important**: ECR lifecycle policies cannot express OR/union logic like "keep images that are either less than 60 days old OR in the most recent 10 images."
+**Important**: A rule selects one count type. Independent expiration rules are not a general Boolean retention expression that directly guarantees "keep images less than 60 days old OR in the newest 10." Separate dev/stage rules select different tag groups; that is distinct from combining retention conditions for the same images.
 
 With the above policy, Rule Priority 2 will expire ALL dev/staging images older than 60 days, even if there are only 5 dev images in the repository. ECR cannot say "expire if older than 60 days AND more than 10 images exist."
 
@@ -569,112 +640,102 @@ With the above policy, Rule Priority 2 will expire ALL dev/staging images older 
 | Slow development | 8 images (5 >60 days) | Expires 5 old images | Only 3 remain! |
 | Dormant project | 10 images (all >60 days) | Expires ALL images | Zero images remain! |
 
-If your development cadence varies and you need to guarantee a minimum number of recent images are always retained regardless of age, use Strategy C (Lambda-based).
+Separate repositories isolate environments but do not create a composite age/count predicate for the same images. A custom decision process is needed for that requirement; the following example is read-only.
 
-### Strategy C: Lambda-Based Custom Lifecycle
+### Strategy C: Read-Only Retention Candidate Preview
 
-For complex requirements like "keep maximum of 10 images OR all images less than 60 days old (whichever keeps more)", implement a Lambda function triggered by EventBridge.
+A custom process can calculate combined retention conditions, but candidate calculation and deletion are separate operations. This example never calls a deletion API. Set `REPOSITORY_NAME`, grant only the relevant repository's `ecr:DescribeImages` permission, and use a boto3 version supporting the current ECR model. It conservatively considers ordinary images with only dev/stage tags and excludes release/unknown tags, indexes, signatures and explicitly protected digests.
 
 #### Architecture
 
 ```
 ┌─────────────────┐     ┌───────────────────┐     ┌─────────────────┐
 │ EventBridge     │────▶│ Lambda Function   │────▶│ ECR             │
-│ (Daily Schedule)│     │ (Custom Logic)    │     │ (batch-delete)  │
+│ (Optional)      │     │ (Read-only report)│     │ (describe-images)│
 └─────────────────┘     └───────────────────┘     └─────────────────┘
 ```
 
 #### Lambda Function (Python)
 
+The example retains both a minimum count and a recent time window. Before adding any deletion mechanism, independently check active workloads, manifest references, rollback needs and concurrent retagging. Inventories over 10,000 records cause an explicit failure instead of a decision based on partial data.
+
 ```python
+# ecr_retention_preview.py -- read-only candidate report, never deletes images
+import os
+from datetime import datetime, timedelta, timezone
+
 import boto3
-import json
-from datetime import datetime, timezone, timedelta
+
+ecr = boto3.client("ecr")
+
+
+def retention_candidates(images, now, min_images=10, max_age_days=60, protected_digests=()):
+    if type(min_images) is not int or min_images < 1:
+        raise ValueError("min_images must be a positive integer")
+    if type(max_age_days) is not int or max_age_days < 1:
+        raise ValueError("max_age_days must be a positive integer")
+    if not isinstance(now, datetime) or now.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+    if isinstance(protected_digests, str):
+        raise ValueError("protected_digests must be a collection, not a string")
+    protected = set(protected_digests)
+    by_digest = {image["imageDigest"]: image for image in images if image.get("imageDigest")}
+    eligible = []
+    manifests = {
+        "application/vnd.docker.distribution.manifest.v2+json",
+        "application/vnd.oci.image.manifest.v1+json",
+    }
+    configs = {
+        None,
+        "application/vnd.docker.container.image.v1+json",
+        "application/vnd.oci.image.config.v1+json",
+    }
+    for digest, image in by_digest.items():
+        tags = image.get("imageTags") or []
+        timestamp = image.get("lastActivatedAt") or image.get("imagePushedAt")
+        if digest in protected or not tags:
+            continue
+        # A dev tag must not hide a release/protected tag on the same digest.
+        if not all(tag.startswith(("dev-", "stage-", "staging-")) for tag in tags):
+            continue
+        # This example does not classify indexes, signatures or unknown artifacts.
+        if image.get("imageManifestMediaType") not in manifests:
+            continue
+        if image.get("artifactMediaType") not in configs:
+            continue
+        if not isinstance(timestamp, datetime) or timestamp.tzinfo is None:
+            continue
+        eligible.append((timestamp, digest, tags))
+    eligible.sort(reverse=True, key=lambda item: item[0])
+    cutoff = now - timedelta(days=max_age_days)
+    return [
+        {"imageDigest": digest, "imageTags": tags, "timestamp": timestamp.isoformat()}
+        for timestamp, digest, tags in eligible[min_images:]
+        if timestamp < cutoff
+    ]
+
 
 def lambda_handler(event, context):
-    """
-    Custom ECR lifecycle: Keep max(MIN_IMAGES, images < MAX_AGE_DAYS).
-
-    This implements logic ECR lifecycle policies cannot express:
-    - Always keep at least MIN_IMAGES, regardless of age
-    - Delete images older than MAX_AGE_DAYS, but only if we have more than MIN_IMAGES
-    """
-
-    ecr = boto3.client('ecr')
-
-    # Configuration
-    REPOSITORY_NAME = event.get('repository_name', 'myapp-dev')
-    MIN_IMAGES = event.get('min_images', 10)
-    MAX_AGE_DAYS = event.get('max_age_days', 60)
-    DRY_RUN = event.get('dry_run', True)
-
-    # Get all images in repository
+    repository = os.environ["REPOSITORY_NAME"]
     images = []
-    paginator = ecr.get_paginator('describe_images')
-    for page in paginator.paginate(repositoryName=REPOSITORY_NAME):
-        images.extend(page['imageDetails'])
-
-    # Sort by push date (newest first)
-    images.sort(key=lambda x: x['imagePushedAt'], reverse=True)
-
-    now = datetime.now(timezone.utc)
-    cutoff_date = now - timedelta(days=MAX_AGE_DAYS)
-
-    # Determine which images to keep
-    images_to_keep = []
-    images_to_delete = []
-
-    for i, image in enumerate(images):
-        pushed_at = image['imagePushedAt']
-        image_id = {'imageDigest': image['imageDigest']}
-        tags = image.get('imageTags', ['<untagged>'])
-
-        # Keep if: within MIN_IMAGES count OR newer than cutoff
-        if i < MIN_IMAGES or pushed_at > cutoff_date:
-            images_to_keep.append({
-                'digest': image['imageDigest'][:12],
-                'tags': tags,
-                'age_days': (now - pushed_at).days,
-                'reason': 'within_min_count' if i < MIN_IMAGES else 'within_max_age'
-            })
-        else:
-            images_to_delete.append({
-                'imageDigest': image['imageDigest'],
-                'tags': tags,
-                'age_days': (now - pushed_at).days
-            })
-
-    result = {
-        'repository': REPOSITORY_NAME,
-        'total_images': len(images),
-        'images_to_keep': len(images_to_keep),
-        'images_to_delete': len(images_to_delete),
-        'dry_run': DRY_RUN,
-        'configuration': {
-            'min_images': MIN_IMAGES,
-            'max_age_days': MAX_AGE_DAYS
-        }
+    paginator = ecr.get_paginator("describe_images")
+    for page in paginator.paginate(repositoryName=repository, filter={"imageStatus": "ACTIVE"}):
+        images.extend(page.get("imageDetails", []))
+        if len(images) > 10000:
+            raise ValueError("Inventory too large for this example; use a paged batch workflow")
+    candidates = retention_candidates(
+        images,
+        datetime.now(timezone.utc),
+        event.get("min_images", 10),
+        event.get("max_age_days", 60),
+        event.get("protected_digests", []),
+    )
+    return {
+        "repository": repository,
+        "dry_run": True,
+        "candidate_count": len(candidates),
+        "candidates_requiring_review": candidates,
     }
-
-    if images_to_delete and not DRY_RUN:
-        # Batch delete (max 100 per call)
-        deleted_count = 0
-        for i in range(0, len(images_to_delete), 100):
-            batch = [{'imageDigest': img['imageDigest']} for img in images_to_delete[i:i+100]]
-            response = ecr.batch_delete_image(
-                repositoryName=REPOSITORY_NAME,
-                imageIds=batch
-            )
-            deleted_count += len(response.get('imageIds', []))
-        result['deleted_count'] = deleted_count
-    else:
-        result['would_delete'] = [
-            f"{img['tags']} ({img['age_days']} days old)"
-            for img in images_to_delete[:10]  # Show first 10
-        ]
-
-    print(json.dumps(result, indent=2))
-    return result
 ```
 
 ### Lifecycle Policy Dry Run
@@ -687,11 +748,17 @@ aws ecr start-lifecycle-policy-preview \
   --repository-name myapp \
   --lifecycle-policy-text file://lifecycle-policy.json
 
+aws ecr wait lifecycle-policy-preview-complete --repository-name myapp
+
 # Check preview results
 aws ecr get-lifecycle-policy-preview \
   --repository-name myapp
 
-# Sample output showing what would be deleted
+```
+
+Illustrative response structure (abbreviated):
+
+```json
 {
     "registryId": "123456789012",
     "repositoryName": "myapp",
@@ -717,11 +784,11 @@ aws ecr get-lifecycle-policy-preview \
 
 | Tag Pattern | Description | Example | Environment |
 |-------------|-------------|---------|-------------|
-| `X.Y.Z` | Semantic Version (release) | `1.2.3` | Production |
-| `X.Y.Z-rc.N` | Release Candidate | `1.2.3-rc.1` | Staging |
-| `X.Y.Z-beta.N` | Beta Release | `1.2.3-beta.2` | Pre-production |
-| `<sha>-dev` | Git SHA (development) | `abc123f-dev` | Development |
-| `<sha>-staging` | Git SHA (staging) | `abc123f-staging` | Staging |
+| `vX.Y.Z` | CI-validated stable release | `v1.2.3` | Production |
+| `stage-X.Y.Z-rc.N` | Release Candidate | `stage-1.2.3-rc.1` | Staging |
+| `stage-X.Y.Z-beta.N` | Beta Release | `stage-1.2.3-beta.2` | Pre-production |
+| `dev-<sha>` | Git SHA (development) | `dev-abc123f` | Development |
+| `staging-<sha>` | Git SHA (staging) | `staging-abc123f` | Staging |
 | `<branch>-<sha>` | Branch + SHA | `feature-auth-abc123f` | Feature branch |
 | `latest` | Most recent build | `latest` | Never in production |
 
@@ -764,25 +831,27 @@ BUILD_DATE=$(date -u +%Y%m%d)
 case "$GIT_BRANCH" in
   main|master)
     # Production release - requires VERSION env var
-    if [ -z "$VERSION" ]; then
+    if [ -z "${VERSION:-}" ]; then
       echo "ERROR: VERSION environment variable required for production builds"
       exit 1
     fi
     REPO="${ECR_BASE}/myapp-prod"
-    TAGS=("$VERSION" "$VERSION-${GIT_SHA}")
+    RELEASE_VERSION=${VERSION#v}
+    [[ "$RELEASE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || exit 1
+    TAGS=("v$RELEASE_VERSION" "v$RELEASE_VERSION-${GIT_SHA}")
     ;;
   staging)
     REPO="${ECR_BASE}/myapp-staging"
-    TAGS=("${GIT_SHA}-staging" "${BUILD_DATE}-staging")
+    TAGS=("staging-${GIT_SHA}" "staging-${BUILD_DATE}")
     ;;
   develop)
     REPO="${ECR_BASE}/myapp-dev"
-    TAGS=("${GIT_SHA}-dev" "latest-dev")
+    TAGS=("dev-${GIT_SHA}" "dev-latest")
     ;;
   feature/*|bugfix/*)
     REPO="${ECR_BASE}/myapp-dev"
-    BRANCH_SLUG=$(echo $GIT_BRANCH | sed 's/[^a-zA-Z0-9]/-/g')
-    TAGS=("${BRANCH_SLUG}-${GIT_SHA}")
+    BRANCH_SLUG=$(printf '%s' "$GIT_BRANCH" | sed 's/[^a-zA-Z0-9_.-]/-/g' | cut -c1-90)
+    TAGS=("dev-${BRANCH_SLUG}-${GIT_SHA}")
     ;;
   *)
     echo "Unknown branch: $GIT_BRANCH"
@@ -815,96 +884,65 @@ aws ecr put-image-tag-mutability \
   --repository-name myapp-prod \
   --image-tag-mutability IMMUTABLE
 
-# Attempting to push existing tag will fail
+# Pushing a different digest under an existing immutable tag fails
 docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp-prod:v1.0.0
 # Error: tag invalid: The image tag 'v1.0.0' already exists...
 ```
 
 ## EKS Integration
 
-### IAM Roles for Service Accounts (IRSA)
+### Image-Pull Identity Versus Workload Identity
 
-IRSA is the recommended authentication method for EKS workloads accessing ECR.
+Image pulling occurs **before** the application container starts and is performed by kubelet/the node execution environment. Kubelet does not inherit the application's IRSA or Pod Identity SDK credentials.
 
-```bash
-# Create OIDC provider for EKS cluster (if not exists)
-eksctl utils associate-iam-oidc-provider \
-  --cluster my-cluster \
-  --approve
+| Execution environment | Initial ECR image-pull permissions |
+|---|---|
+| EC2 managed/self-managed nodes | Node IAM role ECR pull permissions |
+| EKS Auto Mode | Auto Mode node role ECR pull permissions |
+| Fargate | Fargate Pod execution role |
+| A separately configured provider/Secret setup | That provider or same-namespace imagePullSecrets |
 
-# Create IAM role with ECR permissions
-eksctl create iamserviceaccount \
-  --name ecr-pull-sa \
-  --namespace default \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly \
-  --approve
-```
+Check the [node role](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html), for example `AmazonEC2ContainerRegistryPullOnly`. The [Fargate execution role](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html) is not assumed directly by application containers. Cross-account pulls also need repository-policy and caller-IAM authorization.
 
-### EKS Pod Identity (New)
+### Where IRSA and Pod Identity Apply
 
-EKS Pod Identity is a simpler alternative to IRSA available in EKS 1.24+.
+An already-running build or operations Pod can use its workload role to call ECR APIs or push images. This does not replace the bootstrap image-pull identity. IRSA needs OIDC/trust configuration; Pod Identity needs a supported runtime, Agent, role trust and ServiceAccount association. Follow the [EKS workload identity documentation](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html).
+
+### Environments Requiring imagePullSecrets
+
+ECR authorization tokens last 12 hours. The following standalone script requires AWS CLI, Python 3 and kubectl. It constructs the new configuration before updating Kubernetes and **does not delete the existing Secret first**. The Secret and Pod must share a namespace, and the caller must have Kubernetes API credentials.
 
 ```bash
-# Install Pod Identity Agent add-on
-aws eks create-addon \
-  --cluster-name my-cluster \
-  --addon-name eks-pod-identity-agent
-
-# Create Pod Identity Association
-aws eks create-pod-identity-association \
-  --cluster-name my-cluster \
-  --namespace default \
-  --service-account ecr-pull-sa \
-  --role-arn arn:aws:iam::123456789012:role/ecr-pull-role
+#!/usr/bin/env bash
+set -euo pipefail
+: "${AWS_REGION:?Set the ECR region}"
+ECR_ACCOUNT_ID=${ECR_ACCOUNT_ID:-$(aws sts get-caller-identity --query Account --output text)}
+export ECR_REGISTRY="$ECR_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+PULL_SECRET_NAMESPACE=${PULL_SECRET_NAMESPACE:-default}
+registry_secret_file=$(mktemp)
+trap 'rm -f "$registry_secret_file"' EXIT
+# Build the config before touching Kubernetes; an AWS failure keeps the old Secret.
+aws ecr get-login-password --region "$AWS_REGION" | python3 -c '
+import base64, json, os, sys
+password = sys.stdin.read().strip()
+if not password:
+    raise SystemExit("No ECR password returned")
+auth = base64.b64encode(("AWS:" + password).encode()).decode()
+json.dump({"auths": {os.environ["ECR_REGISTRY"]: {"auth": auth}}}, sys.stdout)
+' > "$registry_secret_file"
+kubectl create secret generic ecr-secret \
+  --namespace "$PULL_SECRET_NAMESPACE" \
+  --type=kubernetes.io/dockerconfigjson \
+  --from-file=.dockerconfigjson="$registry_secret_file" \
+  --dry-run=client -o yaml | \
+  kubectl apply --server-side --field-manager=ecr-credentials-sync -f -
 ```
 
-### Using imagePullSecrets (Alternative)
-
-For environments without IRSA/Pod Identity, use traditional image pull secrets:
-
-```bash
-# Create ECR pull secret
-kubectl create secret docker-registry ecr-secret \
-  --docker-server=123456789012.dkr.ecr.us-east-1.amazonaws.com \
-  --docker-username=AWS \
-  --docker-password=$(aws ecr get-login-password --region us-east-1)
-```
-
-**Note**: ECR tokens expire after 12 hours. Implement automatic rotation:
-
-```yaml
-# CronJob to refresh ECR secret
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: ecr-secret-refresh
-spec:
-  schedule: "0 */6 * * *"  # Every 6 hours
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: ecr-secret-manager
-          containers:
-          - name: refresh
-            image: amazon/aws-cli:2.13.0
-            command:
-            - /bin/sh
-            - -c
-            - |
-              TOKEN=$(aws ecr get-login-password --region us-east-1)
-              kubectl delete secret ecr-secret --ignore-not-found
-              kubectl create secret docker-registry ecr-secret \
-                --docker-server=123456789012.dkr.ecr.us-east-1.amazonaws.com \
-                --docker-username=AWS \
-                --docker-password=$TOKEN
-          restartPolicy: OnFailure
-```
+A CronJob additionally needs a tested image containing all three tools, IAM permission for `ecr:GetAuthorizationToken`, get/create/patch permissions on the destination Secret, a refresh interval shorter than 12 hours and failure monitoring. The AWS CLI image alone does not provide kubectl. Do not make the refresh job's own image depend on the expiring Secret. Resolve field-manager conflicts deliberately instead of overwriting another controller with `--force-conflicts`.
 
 ### Private VPC Endpoints
 
-For air-gapped or security-sensitive environments, use VPC endpoints. Required endpoints:
+Use VPC endpoints for private AWS connectivity; this is not a fully disconnected air gap. Check the [current endpoint guidance](https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html) for first PTC pulls, Windows foreign layers and other dependencies. The usual private-image endpoints are:
 
 - **ecr.api**: Interface endpoint for ECR API calls
 - **ecr.dkr**: Interface endpoint for Docker registry protocol
@@ -937,15 +975,17 @@ aws ec2 create-vpc-endpoint \
 
 ### Pull-Through Cache
 
-ECR Pull-Through Cache reduces latency, avoids external rate limits, and removes dependencies on external registry availability.
+ECR Pull-Through Cache can reduce repeated upstream downloads. Cache misses and refreshes still depend on upstream availability and policy; a cache is not an unconditional bypass of rate limits.
 
-![Flowchart showing a kubelet image pull request checking the ECR endpoint: a cache hit serves the image instantly, while a cache miss pulls the image from the upstream registry, caches it in the ECR repository, and then serves it.](../../assets/diagrams/rendered/en-container-registry-02-amazon-ecr-2.svg)
+![Flowchart showing a kubelet image pull request checking the ECR endpoint: a cache hit serves the image instantly, while a cache miss pulls the image from the upstream registry, caches it in the ECR repository, and then serves it.](../.gitbook/assets/en-container-registry-02-amazon-ecr-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-02-amazon-ecr-2.html)
 
 #### Supported Upstream Registries
 
 | Upstream Registry | ECR Prefix | Auth Required | Notes |
 |---|---|---|---|
-| Docker Hub | `docker-hub` | Yes (Secrets Manager) | Bypasses rate limits |
+| Docker Hub | `docker-hub` | Yes (Secrets Manager) | Reduces repeated downloads; upstream policies still apply |
 | Quay.io | `quay` | No | Red Hat / CoreOS images |
 | GitHub Container Registry | `ghcr` | Yes (Secrets Manager) | GitHub Actions images |
 | registry.k8s.io | `k8s` | No | Kubernetes core components |
@@ -972,7 +1012,8 @@ aws secretsmanager create-secret \
 aws ecr create-pull-through-cache-rule \
   --ecr-repository-prefix docker-hub \
   --upstream-registry-url registry-1.docker.io \
-  --credential-arn arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/docker-hub
+  --credential-arn "$(aws secretsmanager describe-secret --secret-id ecr-pullthroughcache/docker-hub --region "$AWS_REGION" --query ARN --output text)" \
+  --region "$AWS_REGION"
 
 # Quay.io cache rule
 aws ecr create-pull-through-cache-rule \
@@ -983,7 +1024,8 @@ aws ecr create-pull-through-cache-rule \
 aws ecr create-pull-through-cache-rule \
   --ecr-repository-prefix ghcr \
   --upstream-registry-url ghcr.io \
-  --credential-arn arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/ghcr
+  --credential-arn "$(aws secretsmanager describe-secret --secret-id ecr-pullthroughcache/ghcr --region "$AWS_REGION" --query ARN --output text)" \
+  --region "$AWS_REGION"
 
 # Kubernetes registry cache rule
 aws ecr create-pull-through-cache-rule \
@@ -998,27 +1040,48 @@ aws ecr create-pull-through-cache-rule \
 
 #### IAM Policy for Pull-Through Cache
 
+This example covers cache pull/import callers; rule-creation administration is separate. ECR retrieves upstream secrets through its service-linked role, so do not give ordinary pull clients blanket access to those secrets. See [PTC permissions](https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-iam.html).
+
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "PullThroughCachePermissions",
+      "Sid": "RegistryAuthentication",
+      "Effect": "Allow",
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ReadCachedImages",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchCheckLayerAvailability"
+      ],
+      "Resource": [
+        "arn:aws:ecr:us-east-1:123456789012:repository/docker-hub/*",
+        "arn:aws:ecr:us-east-1:123456789012:repository/quay/*",
+        "arn:aws:ecr:us-east-1:123456789012:repository/ghcr/*",
+        "arn:aws:ecr:us-east-1:123456789012:repository/k8s/*",
+        "arn:aws:ecr:us-east-1:123456789012:repository/ecr-public/*"
+      ]
+    },
+    {
+      "Sid": "ImportCacheMisses",
       "Effect": "Allow",
       "Action": [
         "ecr:BatchImportUpstreamImage",
-        "ecr:CreateRepository",
-        "ecr:TagResource"
+        "ecr:CreateRepository"
       ],
-      "Resource": "arn:aws:ecr:us-east-1:123456789012:repository/*"
-    },
-    {
-      "Sid": "SecretsManagerAccess",
-      "Effect": "Allow",
-      "Action": [
-        "secretsmanager:GetSecretValue"
-      ],
-      "Resource": "arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/*"
+      "Resource": [
+        "arn:aws:ecr:us-east-1:123456789012:repository/docker-hub/*",
+        "arn:aws:ecr:us-east-1:123456789012:repository/quay/*",
+        "arn:aws:ecr:us-east-1:123456789012:repository/ghcr/*",
+        "arn:aws:ecr:us-east-1:123456789012:repository/k8s/*",
+        "arn:aws:ecr:us-east-1:123456789012:repository/ecr-public/*"
+      ]
     }
   ]
 }
@@ -1031,36 +1094,19 @@ aws ecr create-pull-through-cache-rule \
 aws ecr describe-pull-through-cache-rules
 
 # Test pull (Docker Hub nginx)
-docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/docker-hub/library/nginx:1.25
+docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/docker-hub/library/nginx:1.30.4
 
 # Verify cached repository was created
 aws ecr describe-repositories \
   --repository-names docker-hub/library/nginx
 
 # Test Kubernetes registry image
-docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/k8s/pause:3.9
+docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/k8s/pause:3.10
 ```
 
-#### Containerd Configuration (Transparent Pull-Through)
+#### Use Explicit Cache Image References
 
-Configure containerd mirrors so pods use the cache without changing image paths:
-
-```toml
-# /etc/containerd/config.toml (EKS node configuration)
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-  endpoint = ["https://123456789012.dkr.ecr.us-east-1.amazonaws.com/docker-hub/"]
-
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors."quay.io"]
-  endpoint = ["https://123456789012.dkr.ecr.us-east-1.amazonaws.com/quay/"]
-
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry.k8s.io"]
-  endpoint = ["https://123456789012.dkr.ecr.us-east-1.amazonaws.com/k8s/"]
-
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors."ghcr.io"]
-  endpoint = ["https://123456789012.dkr.ecr.us-east-1.amazonaws.com/ghcr/"]
-```
-
-> **Note:** For EKS managed node groups, apply containerd configuration through Launch Template user data.
+Use the real ECR cache URI in Pod/Helm/Kustomize image references. An ECR URL pasted into deprecated `registry.mirrors` settings is not a complete transparent mirror configuration. Such a design additionally requires current containerd hosts settings, prefix mapping, TLS and working ECR authentication.
 
 ## Multi-Region Replication
 
@@ -1084,7 +1130,7 @@ aws ecr put-replication-configuration \
         ],
         "repositoryFilters": [
           {
-            "filter": "prod-",
+            "filter": "myapp",
             "filterType": "PREFIX_MATCH"
           }
         ]
@@ -1095,46 +1141,57 @@ aws ecr put-replication-configuration \
 
 ### Disaster Recovery Considerations
 
-| Scenario | Strategy | RTO | RPO |
-|----------|----------|-----|-----|
-| Region failure | Cross-region replication | Minutes | Near-zero |
-| Accidental deletion | Tag immutability + replication | Minutes | Zero (immutable) |
-| Account compromise | Cross-account replication | Hours | Depends on sync |
-| Ransomware | Air-gapped backup to S3 | Hours | Last backup |
+Replication is asynchronous. Existing images are not automatically backfilled; pushes or restores after configuration are eligible. Repository settings, policies and lifecycle rules are configured independently at the destination, for example through creation templates. Deletions are not a mechanism for synchronizing retention across regions.
+
+RTO/RPO must be measured against the complete recovery process. Tag immutability is not deletion protection, and connected S3 storage is not automatically an air gap. Verify the required digest at the destination, independent permissions/retention and the workload's regional image reference before declaring recovery ready.
 
 ### Cross-Region Pull Configuration
 
-Update deployments to prefer local region:
+Kubernetes does not expand shell environment variables inside an `image` field. Use a concrete registry URI or render an overlay. The placeholder base below must be deployed through an appropriate regional overlay, with the target repository/image already present.
 
 ```yaml
+# base/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: myapp
 spec:
+  selector:
+    matchLabels:
+      app: myapp
   template:
+    metadata:
+      labels:
+        app: myapp
     spec:
       containers:
       - name: app
-        # Use regional ECR endpoint based on cluster region
-        image: 123456789012.dkr.ecr.${AWS_REGION}.amazonaws.com/myapp:v1.0.0
+        image: myapp:v1.0.0
 ```
-
-Using Kustomize for multi-region deployments:
 
 ```yaml
 # base/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 resources:
 - deployment.yaml
+```
 
+```yaml
 # overlays/us-east-1/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 resources:
 - ../../base
 images:
 - name: myapp
   newName: 123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp
+```
 
+```yaml
 # overlays/eu-west-1/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 resources:
 - ../../base
 images:
@@ -1142,74 +1199,53 @@ images:
   newName: 123456789012.dkr.ecr.eu-west-1.amazonaws.com/myapp
 ```
 
+Render with `kubectl kustomize overlays/eu-west-1` and inspect the image URI before applying to the intended cluster context. Replication configuration uses a `myapp` repository prefix in this example; choose the actual intended scope in production.
+
 ## Monitoring and Cost Optimization
 
-### CloudWatch Metrics
+### CloudWatch Metrics and Scan Findings
 
-ECR emits metrics to CloudWatch for monitoring:
+ECR's native repository metric in `AWS/ECR` is `RepositoryPullCount`, with the `RepositoryName` dimension. Use the [documented metric list](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ecr-repository-metrics.html). An alarm on an assumed native `ImagePushCount` or `ImageScanFindingsSeverityCounts` metric will not monitor the intended data.
 
 ```bash
-# Get repository metrics
+# Linux example using GNU date: repository pulls during the last seven days
 aws cloudwatch get-metric-statistics \
-  --namespace AWS/ECR \
-  --metric-name RepositoryPullCount \
+  --namespace AWS/ECR --metric-name RepositoryPullCount \
   --dimensions Name=RepositoryName,Value=myapp \
-  --start-time $(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  --period 86400 \
-  --statistics Sum
+  --start-time "$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)" \
+  --end-time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --period 86400 --statistics Sum --region "$AWS_REGION"
+
+# Query findings through ECR/Inspector APIs
+aws ecr describe-image-scan-findings \
+  --repository-name myapp --image-id imageTag=v1.0.0 \
+  --query '{status:imageScanStatus.status,counts:imageScanFindings.findingSeverityCounts}' --region "$AWS_REGION"
 ```
 
-Key metrics:
-
-| Metric | Description |
-|--------|-------------|
-| `RepositoryPullCount` | Number of image pulls |
-| `ImagePushCount` | Number of image pushes |
-| `ImageScanFindingsSeverityCounts` | Vulnerability counts by severity |
-
-### CloudWatch Alarms
-
-Create alarms for critical vulnerabilities:
-
-```bash
-# Create SNS topic for alerts
-aws sns create-topic --name ecr-alerts
-
-# Create CloudWatch alarm for critical vulnerabilities
-aws cloudwatch put-metric-alarm \
-  --alarm-name ecr-critical-vulnerabilities \
-  --alarm-description "Critical vulnerabilities detected in ECR images" \
-  --metric-name ImageScanFindingsSeverityCounts \
-  --namespace AWS/ECR \
-  --statistic Maximum \
-  --period 300 \
-  --threshold 0 \
-  --comparison-operator GreaterThanThreshold \
-  --evaluation-periods 1 \
-  --dimensions Name=RepositoryName,Value=myapp-prod Name=FindingSeverity,Value=CRITICAL \
-  --alarm-actions arn:aws:sns:us-east-1:123456789012:ecr-alerts
-```
+Use Basic-scan completion or Inspector-finding events through EventBridge for notifications. If a numeric CloudWatch alarm is required, explicitly publish a custom metric from those events/API responses. Do not confuse that custom metric with a native ECR metric. Missing/null findings do not mean zero vulnerabilities; check scan status and eligibility.
 
 ### Cost Optimization Strategies
 
-#### 1. Implement Lifecycle Policies
+#### 1. Review Logical Image Sizes
+
+Summed metadata sizes can double-count shared layers and omit other billing categories such as archive storage. Do not convert these totals directly into a storage bill or claimed savings.
 
 ```bash
-# Check repository size
-aws ecr describe-repositories --query 'repositories[*].[repositoryName]' --output text | \
-while read repo; do
-  size=$(aws ecr describe-images --repository-name $repo --query 'sum(imageDetails[*].imageSizeInBytes)' --output text)
-  echo "$repo: $(echo "scale=2; $size/1024/1024/1024" | bc) GB"
-done
+# Active-image metadata sizes are logical totals, not billed unique-layer storage.
+aws ecr describe-repositories --region "$AWS_REGION" --output json | \
+  jq -r '.repositories[].repositoryName' | while IFS= read -r repo; do
+    size=$(aws ecr describe-images --repository-name "$repo" \
+      --region "$AWS_REGION" --output json | \
+      jq '[.imageDetails[].imageSizeInBytes // 0] | add // 0')
+    printf '%s: %s logical image bytes\n' "$repo" "$size"
+  done
 ```
 
-#### 2. Remove Untagged Images
+#### 2. Review Untagged Images
 
 ```bash
-# Find and delete untagged images
-aws ecr list-images --repository-name myapp --filter tagStatus=UNTAGGED --query 'imageIds[*]' --output json > untagged.json
-aws ecr batch-delete-image --repository-name myapp --image-ids file://untagged.json
+# Read-only inventory; untagged does not mean unreferenced or safe to delete.
+aws ecr list-images --repository-name myapp --filter tagStatus=UNTAGGED --output json
 ```
 
 #### 3. Audit Image Sizes
@@ -1225,7 +1261,7 @@ aws ecr describe-images --repository-name myapp \
 
 ```dockerfile
 # Multi-stage build to reduce image size
-FROM golang:1.21 AS builder
+FROM golang:1.27.1 AS builder
 WORKDIR /app
 COPY . .
 RUN CGO_ENABLED=0 go build -o /app/server
@@ -1237,82 +1273,27 @@ ENTRYPOINT ["/server"]
 
 #### 5. Cost Monitoring
 
-Use AWS Cost Explorer to track ECR costs:
+Use Cost Explorer/CUR from an authorized billing context. End dates are exclusive. An ECR service filter does not include separately billed Inspector, Signer, KMS or networking charges.
 
 ```bash
-# Query ECR costs for the last month
-aws ce get-cost-and-usage \
-  --time-period Start=$(date -d '30 days ago' +%Y-%m-%d),End=$(date +%Y-%m-%d) \
-  --granularity MONTHLY \
-  --metrics "UnblendedCost" \
-  --filter '{
-    "Dimensions": {
-      "Key": "SERVICE",
-      "Values": ["Amazon EC2 Container Registry (ECR)"]
-    }
-  }'
+: "${START_DATE:?Set inclusive YYYY-MM-DD start}"
+: "${END_DATE:?Set exclusive YYYY-MM-DD end}"
+# Discover the exact billing service name rather than hard-coding a legacy label.
+aws ce get-dimension-values --region us-east-1 \
+  --time-period Start="$START_DATE",End="$END_DATE" \
+  --dimension SERVICE --search-string 'Container Registry'
+
+: "${ECR_BILLING_SERVICE:?Set the returned service name}"
+aws ce get-cost-and-usage --region us-east-1 \
+  --time-period Start="$START_DATE",End="$END_DATE" \
+  --granularity MONTHLY --metrics UnblendedCost \
+  --filter "$(jq -nc --arg service "$ECR_BILLING_SERVICE" \
+    '{Dimensions:{Key:"SERVICE",Values:[$service]}}')"
 ```
 
-### Automated Cleanup Script
+### Cleanup Workflow
 
-```bash
-#!/bin/bash
-# ecr-cleanup.sh - Comprehensive ECR cleanup script
-
-set -e
-
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION=${AWS_REGION:-us-east-1}
-DRY_RUN=${DRY_RUN:-true}
-
-echo "ECR Cleanup Script"
-echo "=================="
-echo "Account: $ACCOUNT_ID"
-echo "Region: $REGION"
-echo "Dry Run: $DRY_RUN"
-echo ""
-
-# Get all repositories
-repos=$(aws ecr describe-repositories --query 'repositories[*].repositoryName' --output text)
-
-total_savings=0
-
-for repo in $repos; do
-  echo "Repository: $repo"
-
-  # Count untagged images
-  untagged=$(aws ecr list-images --repository-name $repo --filter tagStatus=UNTAGGED --query 'length(imageIds)' --output text)
-
-  if [ "$untagged" != "0" ] && [ "$untagged" != "None" ]; then
-    # Get size of untagged images
-    size=$(aws ecr describe-images --repository-name $repo \
-      --query 'sum(imageDetails[?imageTags==`null`].imageSizeInBytes)' --output text)
-
-    if [ "$size" != "None" ]; then
-      size_gb=$(echo "scale=3; $size/1024/1024/1024" | bc)
-      cost_savings=$(echo "scale=2; $size_gb * 0.10" | bc)
-      total_savings=$(echo "scale=2; $total_savings + $cost_savings" | bc)
-
-      echo "  - Untagged images: $untagged"
-      echo "  - Size: ${size_gb} GB"
-      echo "  - Potential monthly savings: \$${cost_savings}"
-
-      if [ "$DRY_RUN" = "false" ]; then
-        aws ecr list-images --repository-name $repo --filter tagStatus=UNTAGGED \
-          --query 'imageIds' --output json > /tmp/untagged.json
-        aws ecr batch-delete-image --repository-name $repo --image-ids file:///tmp/untagged.json
-        echo "  - DELETED"
-      fi
-    fi
-  else
-    echo "  - No untagged images"
-  fi
-  echo ""
-done
-
-echo "=================="
-echo "Total potential monthly savings: \$${total_savings}"
-```
+Use the read-only candidate preview above and an explicit repository allowlist. Before authorizing removal, re-check active/rollback digests, multi-architecture references, signatures and replication. `BatchDeleteImage` accepts at most 100 IDs per request and can return per-image failures. Never send an unbounded `list-images` result directly to deletion or treat a partial response as full success.
 
 ## Summary
 
@@ -1326,9 +1307,9 @@ Amazon ECR provides a robust, fully managed container registry that integrates s
 
 ### Security
 
-- Use **IRSA or Pod Identity** instead of long-lived credentials
+- Use node/Fargate execution credentials for bootstrap image pulls; use IRSA/Pod Identity for workload API access
 - Enable **scan-on-push** with Enhanced Scanning for production
-- Configure **VPC endpoints** for air-gapped environments
+- Configure **VPC endpoints** for private connectivity and verify remaining network dependencies
 - Review scan results and block deployments of vulnerable images
 
 ### Cost Management

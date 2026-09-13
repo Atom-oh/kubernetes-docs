@@ -1,23 +1,25 @@
-# 第 2 部分：Storage Classes
+# 第 2 部分：存储类
 
-本文档是 Amazon EKS 存储系列的第二部分，涵盖 FSx for Lustre、Amazon S3、snapshot、volume expansion 和性能优化。
+本文档是 Amazon EKS 存储系列的第二部分，涵盖 FSx for Lustre、Amazon S3、快照、卷扩展和性能优化。
 
 ## 目录
 
 1. [Amazon FSx for Lustre](04-eks-storage-part2.md#amazon-fsx-for-lustre)
 2. [Amazon S3 存储集成](04-eks-storage-part2.md#amazon-s3-storage-integration)
-3. [Snapshots 和 Backups](04-eks-storage-part2.md#snapshots-and-backups)
-4. [Volume Expansion 和 Resizing](04-eks-storage-part2.md#volume-expansion-and-resizing)
-5. [Volume Cloning](04-eks-storage-part2.md#volume-cloning)
+3. [快照和备份](04-eks-storage-part2.md#snapshots-and-backups)
+4. [卷扩展和调整大小](04-eks-storage-part2.md#volume-expansion-and-resizing)
+5. [卷克隆](04-eks-storage-part2.md#volume-cloning)
 6. [Multi-Attach EBS](04-eks-storage-part2.md#multi-attach-ebs)
 7. [Mountpoint for S3 CSI 深入解析](04-eks-storage-part2.md#mountpoint-for-s3-csi-deep-dive)
 8. [存储性能优化](04-eks-storage-part2.md#storage-performance-optimization)
 
 ## Amazon FSx for Lustre
 
-Amazon FSx for Lustre 是一种面向计算密集型工作负载的高性能 file system，例如高性能计算 (HPC)、machine learning 和 big data processing。Lustre 是一种并行分布式 file system，可提供高吞吐量和低延迟，并支持数千个客户端同时访问。
+Amazon FSx for Lustre 是一种高性能文件系统，适用于高性能计算（HPC）、机器学习和大数据处理等计算密集型工作负载。Lustre 是一种并行分布式文件系统，可从数千个客户端同时访问，并提供高吞吐量和低延迟。
 
-![FSx for Lustre CSI 架构](../.gitbook/assets/fsx_lustre_csi_architecture.png)
+![ML 训练和推理 Pod 通过 FSx CSI driver 挂载 FSx for Lustre，且 FSx 将数据同步到 S3 的架构图。](../.gitbook/assets/en-eks-04-eks-storage-part2-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-0.html)
 
 ### 安装 FSx for Lustre CSI Driver
 
@@ -47,9 +49,9 @@ helm upgrade -i aws-fsx-csi-driver aws-fsx-csi-driver/aws-fsx-csi-driver \
   --set controller.serviceAccount.name=fsx-csi-controller-sa
 ```
 
-### 创建 FSx for Lustre File System
+### 创建 FSx for Lustre 文件系统
 
-你可以使用 AWS CLI 创建 FSx for Lustre file system：
+您可以使用 AWS CLI 创建 FSx for Lustre 文件系统：
 
 ```bash
 # Get VPC ID and subnet ID of EKS cluster
@@ -89,9 +91,9 @@ FILE_SYSTEM_ID=$(aws fsx create-file-system \
   --output text)
 ```
 
-### 创建 FSx for Lustre Storage Class
+### 创建 FSx for Lustre StorageClass
 
-创建一个使用 FSx for Lustre 的 storage class：
+创建使用 FSx for Lustre 的存储类：
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -130,7 +132,7 @@ spec:
       storage: 1200Gi
 ```
 
-2. 将 PVC 挂载到 pod：
+2. 将 PVC 挂载到 Pod：
 
 ```yaml
 apiVersion: v1
@@ -151,9 +153,9 @@ spec:
       claimName: fsx-claim
 ```
 
-### FSx for Lustre Mount 的 Static Provisioning
+### FSx for Lustre 挂载的静态配置
 
-你也可以静态挂载已经创建的 FSx for Lustre file system：
+您也可以静态挂载已创建的 FSx for Lustre 文件系统：
 
 ```yaml
 apiVersion: v1
@@ -176,20 +178,20 @@ spec:
       mountname: fsx
 ```
 
-### FSx for Lustre Deployment Types
+### FSx for Lustre 部署类型
 
-FSx for Lustre 提供多种 deployment type，以满足不同的工作负载需求：
+FSx for Lustre 提供多种部署类型，以满足不同工作负载的需求：
 
-1. **Scratch File Systems**:
-   * **Scratch 1**: 面向短期存储和处理的成本优化 file system
-   * **Scratch 2**: 与 Scratch 1 相比，提供更高的突发吞吐量和更好的数据持久性
-2. **Persistent File Systems**:
-   * **Persistent 1**: 面向长期存储和吞吐量关键型工作负载的 file system
-   * **Persistent 2**: 与 Persistent 1 相比，提供更高吞吐量
+1. **Scratch 文件系统**：
+   * **Scratch 1**：针对短期存储和处理进行成本优化的文件系统
+   * **Scratch 2**：比 Scratch 1 提供更高的突发吞吐量和更好的数据持久性
+2. **Persistent 文件系统**：
+   * **Persistent 1**：适用于长期存储和吞吐量关键型工作负载的文件系统
+   * **Persistent 2**：比 Persistent 1 提供更高的吞吐量
 
-### 面向 vLLM 的 FSx for Lustre 配置
+### vLLM 的 FSx for Lustre 配置
 
-请考虑使用以下配置，为 vLLM (Vector Language Model) 等大规模 AI 工作负载优化 FSx for Lustre：
+考虑以下配置，以针对 vLLM（Vector Language Model）等大规模 AI 工作负载优化 FSx for Lustre：
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -205,21 +207,23 @@ parameters:
   mountName: "vllm-models"
 ```
 
-此配置提供以下优势：
+此配置具有以下优势：
 
-* 高吞吐量可减少模型加载时间
-* 数据压缩可提升存储效率
-* 多个 Node 可同时访问相同的模型文件
+* 高吞吐量可缩短模型加载时间
+* 数据压缩可提高存储效率
+* 多个节点可同时访问相同的模型文件
 
 ## Amazon S3 存储集成
 
-Amazon S3 是一种 object storage 服务，可以存储和检索无限量的数据。在 Kubernetes 中，S3 不能作为 volume 直接挂载，但有多种方式可以与 S3 集成。
+Amazon S3 是一种对象存储服务，可存储和检索无限量的数据。在 Kubernetes 中，S3 无法直接挂载为卷，但可通过多种方式与 S3 集成。
 
-![S3 集成方法](../.gitbook/assets/s3_integration_methods.png)
+![S3 集成方式图：应用 Pod 通过 IRSA 获取凭证，并通过 Mountpoint S3 CSI driver 或 AWS SDK 访问 S3。](../.gitbook/assets/en-eks-04-eks-storage-part2-1.png)
 
-### S3 访问的 IRSA 设置
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-1.html)
 
-为 pods 设置 IAM Roles for Service Accounts (IRSA)，以访问 S3：
+### 为 S3 访问设置 IRSA
+
+设置 IAM Roles for Service Accounts（IRSA），让 Pod 可以访问 S3：
 
 ```bash
 eksctl create iamserviceaccount \
@@ -230,9 +234,9 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-### S3 访问的 Pod 配置
+### 用于 S3 访问的 Pod 配置
 
-使用 service account 访问 S3 的 Pod：
+使用 Service Account 访问 S3 的 Pod：
 
 ```yaml
 apiVersion: v1
@@ -247,9 +251,9 @@ spec:
     command: ["sleep", "infinity"]
 ```
 
-### S3A File System Mount
+### S3A 文件系统挂载
 
-你可以使用 Hadoop S3A file system，以类似 HDFS 的方式访问 S3：
+您可以使用 Hadoop S3A 文件系统，以类似 HDFS 的方式访问 S3：
 
 ```yaml
 apiVersion: v1
@@ -298,7 +302,7 @@ data:
 
 ### 使用 CSI Driver 挂载 S3 Bucket
 
-你可以使用 [AWS S3 CSI driver](https://github.com/awslabs/mountpoint-s3-csi-driver) 将 S3 buckets 挂载为 Kubernetes volumes：
+您可以使用 [AWS S3 CSI driver](https://github.com/awslabs/mountpoint-s3-csi-driver) 将 S3 bucket 挂载为 Kubernetes 卷：
 
 1. 安装 driver：
 
@@ -311,7 +315,7 @@ helm upgrade --install aws-mountpoint-s3-csi-driver aws-mountpoint-s3-csi-driver
   --set controller.serviceAccount.name=s3-csi-controller-sa
 ```
 
-2. 创建 storage class：
+2. 创建存储类：
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -324,7 +328,7 @@ parameters:
   mountOptions: "--cache-control-max-ttl 0"
 ```
 
-3. 创建 PVC 和 pod：
+3. 创建 PVC 和 Pod：
 
 ```yaml
 apiVersion: v1
@@ -361,21 +365,23 @@ spec:
 
 Amazon S3 适用于以下使用场景：
 
-1. **Data Lake**: 面向大规模 data analytics 的集中式存储库
-2. **Backup and Archive**: 长期数据保留
-3. **Static Web Content**: 提供图片、视频、文档等静态内容
-4. **ML Model Repository**: 存储训练好的模型文件
-5. **Logs and Audit Data**: 存储日志文件和审计数据
+1. **数据湖**：用于大规模数据分析的中央存储库
+2. **备份和归档**：长期数据保留
+3. **静态 Web 内容**：提供图片、视频、文档等静态内容
+4. **ML 模型存储库**：存储已训练的模型文件
+5. **日志和审计数据**：存储日志文件和审计数据
 
-## Snapshots 和 Backups
+## 快照和备份
 
-在 Kubernetes 中，你可以使用 volume snapshots 来备份和恢复 PV 数据。
+在 Kubernetes 中，您可以使用卷快照备份和恢复 PV 数据。
 
-![Volume Snapshot 系统](../.gitbook/assets/volume_snapshot_system.png)
+![快照流程图：从源 PVC 经由 VolumeSnapshot 和 SnapshotContent 创建 EBS 快照，然后恢复为新的 PVC。](../.gitbook/assets/en-eks-04-eks-storage-part2-2.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-2.html)
 
 ### 安装 Volume Snapshot Controller
 
-安装 snapshot controller 以使用 volume snapshot 功能：
+安装 snapshot controller 以使用卷快照功能：
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
@@ -388,7 +394,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snaps
 
 ### 创建 Volume Snapshot Class
 
-为 EBS volumes 创建 snapshot class：
+为 EBS 卷创建 snapshot class：
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -404,7 +410,7 @@ parameters:
 
 ### 创建 Volume Snapshot
 
-创建 PVC 的 snapshot：
+创建 PVC 的快照：
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -417,9 +423,9 @@ spec:
     persistentVolumeClaimName: ebs-claim
 ```
 
-### 从 Snapshot 恢复 PVC
+### 从快照恢复 PVC
 
-从 snapshot 创建新的 PVC：
+从快照创建新的 PVC：
 
 ```yaml
 apiVersion: v1
@@ -439,9 +445,9 @@ spec:
     apiGroup: snapshot.storage.k8s.io
 ```
 
-### 自动化定期 Snapshots
+### 自动创建定期快照
 
-你可以使用 [Velero](https://velero.io/) 自动执行定期备份和恢复：
+您可以使用 [Velero](https://velero.io/) 自动执行定期备份和恢复：
 
 1. 安装 Velero：
 
@@ -473,15 +479,17 @@ velero schedule create daily-backup \
 velero restore create --from-backup daily-backup-20250710010000
 ```
 
-## Volume Expansion 和 Resizing
+## 卷扩展和调整大小
 
-在 Kubernetes 中，你可以扩展 PVC 大小以增加存储容量。
+在 Kubernetes 中，您可以扩展 PVC 大小以增加存储容量。
 
-![Volume Expansion 流程](../.gitbook/assets/volume_expansion_process.png)
+![卷扩展流程图：StorageClass 允许扩展，然后依次经过 PVC 编辑、CSI 调用、EBS 扩容和文件系统调整大小。](../.gitbook/assets/en-eks-04-eks-storage-part2-3.png)
 
-### 启用 Volume Expansion
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-3.html)
 
-在 storage class 中启用 volume expansion：
+### 启用卷扩展
+
+在存储类中启用卷扩展：
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -512,14 +520,14 @@ spec:
       storage: 20Gi  # Expanded from original 10Gi to 20Gi
 ```
 
-### File System Expansion
+### 文件系统扩展
 
-volume expansion 之后，你可能需要扩展 file system：
+卷扩展后，您可能需要扩展文件系统：
 
-1. 在线扩展（pod 正在运行时）：
-   * EBS CSI driver 会自动扩展 file system。
+1. 在线扩展（Pod 运行时）：
+   * EBS CSI driver 会自动扩展文件系统。
 2. 离线扩展（需要手动扩展时）：
-   * 连接到 pod 并运行 file system 扩展命令：
+   * 连接到 Pod 并运行文件系统扩展命令：
 
 ```bash
 # For ext4 file system
@@ -529,32 +537,32 @@ resize2fs /dev/xvdf
 xfs_growfs /data
 ```
 
-### Volume Resizing 最佳实践
+### 卷调整大小最佳实践
 
-1. **设置合适的初始大小**: 将初始 volume 大小设置为略大于所需容量
-2. **设置监控**: 监控 volume 使用情况并设置告警
-3. **逐步扩展**: 根据需要逐步扩展 volume 大小
-4. **规划停机时间**: 某些 file system 扩展可能需要停机时间
-5. **考虑自动化**: 实现自动扩展策略
+1. **设置合适的初始大小**：将初始卷大小设置得略大于所需容量
+2. **设置监控**：监控卷使用情况并设置告警
+3. **逐步扩展**：根据需要逐步扩展卷大小
+4. **规划停机时间**：某些文件系统扩展可能需要停机时间
+5. **考虑自动化**：实施自动扩展策略
 
-## Volume Cloning
+## 卷克隆
 
-Volume cloning 允许你从现有 PVC 创建新的 PVC，而无需经过 snapshot 流程。这对于创建测试环境、调试生产数据问题，或使用现有数据快速预置新工作负载非常有用。
+卷克隆允许您从现有 PVC 创建新的 PVC，而无需经过快照流程。这对于创建测试环境、调试生产数据问题，或使用现有数据快速配置新工作负载非常有用。
 
-### EBS CSI Volume Cloning 概念
+### EBS CSI 卷克隆概念
 
-EBS CSI driver 支持使用 `dataSource` 字段进行 PVC cloning。克隆 volume 时，CSI driver 会从源 volume 的 snapshot 创建新的 EBS volume，但该过程对用户是抽象隐藏的。
+EBS CSI driver 支持使用 `dataSource` 字段进行 PVC 克隆。克隆卷时，CSI driver 会从源卷的快照创建新的 EBS 卷，但这一过程对用户是抽象的。
 
-Volume cloning 的关键特性：
+卷克隆的主要特性：
 
-* clone 独立于源 PVC
-* 对 clone 的更改不会影响源
-* 除非另有指定，否则 clone 会继承源的 storage class
-* 源和 clone 必须位于同一 namespace
+* 克隆独立于源 PVC
+* 对克隆所做的更改不会影响源
+* 除非另有指定，否则克隆会继承源的存储类
+* 源和克隆必须位于同一 namespace
 
 ### 使用 dataSource 字段
 
-要创建 clone，请在 `dataSource` 字段中指定源 PVC：
+要创建克隆，请在 `dataSource` 字段中指定源 PVC：
 
 ```yaml
 apiVersion: v1
@@ -573,19 +581,19 @@ spec:
     name: ebs-source-pvc
 ```
 
-### Clone 与 Snapshot 对比
+### 克隆与快照对比
 
-| Feature          | Volume Clone        | Volume Snapshot                           |
+| 功能          | 卷克隆        | 卷快照                           |
 | ---------------- | ------------------- | ----------------------------------------- |
-| 创建速度         | 快（单一步骤）      | 两步（创建 snapshot，然后恢复）           |
-| 存储开销         | 立即完整复制        | 增量存储                                  |
-| 跨 Namespace     | 否                  | 是（使用 VolumeSnapshotContent）          |
-| 时间点           | clone 创建时        | 任意已保存的 snapshot                     |
-| 使用场景         | 快速复制            | 备份与恢复                                |
+| 创建速度   | 快速（单一步骤）  | 两个步骤（创建快照，然后恢复） |
+| 存储开销 | 立即完整复制 | 增量存储                       |
+| 跨 Namespace  | 否                  | 是（通过 VolumeSnapshotContent）          |
+| 时间点    | 克隆创建时   | 任意已保存的快照                        |
+| 使用场景         | 快速复制   | 备份和恢复                       |
 
-### Volume Clone YAML 示例
+### 卷克隆 YAML 示例
 
-克隆数据库 volume 的完整示例：
+克隆数据库卷的完整示例：
 
 ```yaml
 # Source PVC (existing)
@@ -643,45 +651,45 @@ spec:
 
 ## Multi-Attach EBS
 
-Multi-Attach 允许将单个 EBS volume 同时挂载到多个 EC2 instances。此功能适用于 io1 和 io2 Block Express volumes，对需要高性能共享存储的集群化应用程序很有用。
+Multi-Attach 允许将单个 EBS 卷同时挂载到多个 EC2 实例。此功能适用于 io1 和 io2 Block Express 卷，适合需要高性能共享存储的集群应用程序。
 
-### io1/io2 Block Express Multi-Attachment
+### io1/io2 Block Express 多重挂载
 
-Multi-Attach 仅支持 Provisioned IOPS SSD volumes：
+Multi-Attach 仅支持 Provisioned IOPS SSD 卷：
 
-* **io1**: 最多 16 个同时 attachment
-* **io2 Block Express**: 最多 16 个同时 attachment，并提供更高性能
+* **io1**：最多 16 个同时挂载
+* **io2 Block Express**：最多 16 个同时挂载，且性能更高
 
 要求：
 
-* Instances 必须与 volume 位于同一个 Availability Zone
-* Instances 必须是基于 Nitro 的 EC2 instances
-* Volume 必须使用 Block device mode（而不是 Filesystem mode）
+* 实例必须与卷位于同一 Availability Zone
+* 实例必须是基于 Nitro 的 EC2 实例
+* 卷必须使用 Block 设备模式（而非 Filesystem 模式）
 
 ### 为什么不使用 ReadWriteMany？
 
-EBS Multi-Attach 并不支持传统意义上的 `ReadWriteMany` access mode，原因如下：
+EBS Multi-Attach 不以传统意义支持 `ReadWriteMany` 访问模式，原因如下：
 
-1. **需要 Block Mode**: Multi-Attach 仅适用于 raw block devices，而不是已挂载的 filesystems
-2. **没有 Filesystem 协调**: EBS 不提供 filesystem 级别的协调
-3. **应用程序责任**: 应用程序必须处理并发访问和数据完整性
+1. **必须使用 Block 模式**：Multi-Attach 仅适用于原始块设备，不适用于已挂载的文件系统
+2. **没有文件系统协调机制**：EBS 不提供文件系统级协调
+3. **应用程序责任**：应用程序必须处理并发访问和数据完整性
 
-Multi-Attach EBS 的 Kubernetes access mode 是 `ReadWriteOncePod`，或通过 Block volumeMode 配合应用层协调（如 clustered databases 或 OCFS2/GFS2）。
+Multi-Attach EBS 的 Kubernetes 访问模式是 `ReadWriteOncePod`，或者通过具有应用程序级协调机制的 Block `volumeMode`（如集群数据库或 OCFS2/GFS2）。
 
 ### 限制
 
-* **仅限同一 AZ**: 所有已挂载 instances 必须位于同一个 Availability Zone
-* **仅限 Block Mode**: 如果没有 cluster-aware filesystem，不能作为共享 filesystem 使用
-* **Nitro Instances**: 仅支持基于 Nitro 的 instance types
-* **不支持 Online Resize**: 挂载到多个 instances 时无法 resize
-* **应用程序协调**: 应用程序必须实现自己的锁定/协调机制
+* **仅限同一 AZ**：所有已挂载的实例必须位于同一 Availability Zone
+* **仅限 Block 模式**：没有集群感知型文件系统时，不能作为共享文件系统使用
+* **Nitro 实例**：仅支持基于 Nitro 的实例类型
+* **不支持在线调整大小**：挂载到多个实例时无法调整大小
+* **应用程序协调**：应用程序必须实现自己的锁定/协调机制
 
 ### Multi-Attach 使用场景和 YAML 示例
 
 常见使用场景：
 
-* Clustered databases（Oracle RAC、SQL Server FCI）
-* 带有共享状态的高可用应用程序
+* 集群数据库（Oracle RAC、SQL Server FCI）
+* 具有共享状态的高可用应用程序
 * 分布式存储系统
 
 ```yaml
@@ -745,68 +753,68 @@ spec:
 
 ## Mountpoint for S3 CSI 深入解析
 
-Mountpoint for Amazon S3 是一种 file client，可将 file system 操作转换为 S3 object API 调用，使应用程序能够通过类似 POSIX 的接口访问 S3 buckets。Mountpoint for S3 CSI driver 将此能力与 Kubernetes 集成。
+Mountpoint for Amazon S3 是一种文件客户端，可将文件系统操作转换为 S3 对象 API 调用，使应用程序能够通过类似 POSIX 的接口访问 S3 bucket。Mountpoint for S3 CSI driver 将此功能与 Kubernetes 集成。
 
 ### 性能特征
 
 Mountpoint for S3 针对特定访问模式进行了优化：
 
-**Sequential Read Optimization**:
+**顺序读取优化**：
 
 * 对大型顺序读取具有出色性能
-* 针对可预测访问模式自动预取
-* 吞吐量随 object 大小扩展
-* 非常适合 data analytics 和 ML training 工作负载
+* 针对可预测的访问模式自动预取
+* 吞吐量随对象大小扩展
+* 非常适合数据分析和 ML 训练工作负载
 
-**Random Write Limitations**:
+**随机写入限制**：
 
-* S3 是 object store，不是 block store
-* Random writes 需要重写整个 object
-* Append 操作会创建新的 object versions
-* 不适合数据库工作负载或需要 random I/O 的应用程序
+* S3 是对象存储，而不是块存储
+* 随机写入需要重写整个对象
+* 追加操作会创建新的对象版本
+* 不适合数据库工作负载或需要随机 I/O 的应用程序
 
 性能基准（近似值）：
 
-| Operation                     | Performance                      |
+| 操作                     | 性能                      |
 | ----------------------------- | -------------------------------- |
-| Sequential Read（大文件）     | 最高 100 Gbps 聚合吞吐量         |
-| Sequential Write（新文件）    | 最高 50 Gbps 聚合吞吐量          |
-| Random Read（小文件）         | 延迟更高，吞吐量更低             |
-| Random Write                  | 不推荐                           |
+| 顺序读取（大文件） | 聚合最高可达 100 Gbps         |
+| 顺序写入（新文件）  | 聚合最高可达 50 Gbps          |
+| 随机读取（小文件）     | 更高延迟，更低吞吐量 |
+| 随机写入                  | 不推荐                  |
 
 ### 限制
 
-Mountpoint for S3 有若干 POSIX 兼容性限制：
+Mountpoint for S3 存在多项 POSIX 兼容性限制：
 
-* **No hard links**: 不支持 hard links
-* **No symbolic links**: 不支持 symbolic links
-* **No chmod/chown**: 文件权限创建后无法更改
-* **No file locking**: 不提供 advisory 和 mandatory locks
-* **No sparse files**: 不支持 sparse file 操作
-* **No extended attributes**: 不支持 xattr 操作
-* **Eventual consistency**: List 操作可能不会立即反映最近的写入
-* **No rename across directories**: 仅支持同一目录内的 rename
-* **No append to existing files**: 必须重写整个 object
+* **不支持硬链接**：不支持硬链接
+* **不支持符号链接**：不支持符号链接
+* **不支持 chmod/chown**：文件创建后无法更改文件权限
+* **不支持文件锁定**：不提供建议锁和强制锁
+* **不支持稀疏文件**：不支持稀疏文件操作
+* **不支持扩展属性**：不支持 xattr 操作
+* **最终一致性**：列表操作可能不会立即反映最近的写入
+* **不支持跨目录重命名**：仅支持在同一目录内重命名
+* **不支持追加到现有文件**：必须重写整个对象
 
-### Cache 设置
+### 缓存设置
 
-Mountpoint for S3 提供 caching 选项以提升性能：
+Mountpoint for S3 提供可提高性能的缓存选项：
 
-**Metadata Cache**:
+**元数据缓存**：
 
 ```yaml
 parameters:
   mountOptions: "--metadata-ttl 60"  # Cache metadata for 60 seconds
 ```
 
-**Data Cache**（适用于读取密集型工作负载）：
+**数据缓存**（适用于读取密集型工作负载）：
 
 ```yaml
 parameters:
   mountOptions: "--cache /tmp/s3-cache --max-cache-size 10737418240"  # 10GB cache
 ```
 
-完整 cache 配置示例：
+完整缓存配置示例：
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -826,7 +834,7 @@ parameters:
 
 ### 大型数据集训练场景示例
 
-Mountpoint for S3 非常适合读取大型数据集的 ML training 工作负载：
+Mountpoint for S3 非常适合读取大型数据集的 ML 训练工作负载：
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -896,26 +904,28 @@ spec:
         node.kubernetes.io/instance-type: p4d.24xlarge
 ```
 
-此示例中的关键优化：
+本示例中的关键优化：
 
-* **ReadOnlyMany access**: 多个 training pods 可以同时读取
-* **Large prefetch**: 50MB 预取可降低读取延迟
-* **Local cache**: 100GB cache 用于频繁访问的数据
-* **合适的 instance type**: 具有高网络带宽的 GPU instance
+* **ReadOnlyMany 访问**：多个训练 Pod 可同时读取
+* **大规模预取**：50MB 预取可降低读取延迟
+* **本地缓存**：为频繁访问的数据提供 100GB 缓存
+* **合适的实例类型**：具有高网络带宽的 GPU 实例
 
 ## 存储性能优化
 
-下面探索在 EKS 中优化存储性能的多种策略。
+让我们探索在 EKS 中优化存储性能的多种策略。
 
-![存储性能优化](../.gitbook/assets/storage_performance_optimization.png)
+![存储性能调优图：将数据库、Web 服务器、分析和机器学习工作负载映射到 EBS、EFS 和 FSx for Lustre。](../.gitbook/assets/en-eks-04-eks-storage-part2-4.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-4.html)
 
 ### EBS 性能优化
 
-1. **选择合适的 volume type**:
+1. **选择合适的卷类型**：
    * 通用工作负载：gp3
    * 高性能数据库：io2
    * 以吞吐量为中心的工作负载：st1
-2. **gp3 volume 性能调优**:
+2. **gp3 卷性能调优**：
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -929,11 +939,11 @@ parameters:
   throughput: "1000"  # Up to 1,000 MiB/s
 ```
 
-3. **考虑 instance type**:
-   * 使用 EBS-optimized instances
-   * 选择具有足够网络带宽的 instances
-4. **Volume initialization**:
-   * 考虑在使用前初始化新 volumes：
+3. **考虑实例类型**：
+   * 使用 EBS 优化型实例
+   * 选择具有足够网络带宽的实例
+4. **卷初始化**：
+   * 考虑在使用新卷前对其进行初始化：
 
 ```bash
 dd if=/dev/zero of=/dev/xvdf bs=1M count=1000 oflag=direct
@@ -941,16 +951,16 @@ dd if=/dev/zero of=/dev/xvdf bs=1M count=1000 oflag=direct
 
 ### EFS 性能优化
 
-1. **选择合适的 performance mode**:
-   * 大多数工作负载：General Purpose mode
-   * 高并发工作负载：Max I/O mode
-2. **选择 throughput mode**:
-   * 可预测工作负载：Provisioned throughput
-   * 可变工作负载：Bursting 或 Elastic throughput
-3. **优化访问模式**:
-   * 大文件操作：使用较大的 I/O sizes
-   * 并行访问：使用多个 threads 或 processes
-4. **优化 mount options**:
+1. **选择合适的性能模式**：
+   * 大多数工作负载：General Purpose 模式
+   * 高并发工作负载：Max I/O 模式
+2. **选择吞吐量模式**：
+   * 可预测的工作负载：预置吞吐量
+   * 可变工作负载：Bursting 或 Elastic 吞吐量
+3. **优化访问模式**：
+   * 大文件操作：使用较大的 I/O 大小
+   * 并行访问：使用多个线程或进程
+4. **优化挂载选项**：
 
 ```yaml
 apiVersion: v1
@@ -979,13 +989,13 @@ spec:
 
 ### FSx for Lustre 性能优化
 
-1. **选择合适的 deployment type 和 throughput**:
-   * 高吞吐量需求：PERSISTENT\_2 + 高吞吐量
-   * 成本高效的临时工作负载：SCRATCH\_2
-2. **优化 striping**:
-   * 大文件：跨多个 OSTs (Object Storage Targets) 进行 striping
+1. **选择合适的部署类型和吞吐量**：
+   * 高吞吐量要求：PERSISTENT\_2 + 高吞吐量
+   * 经济高效的临时工作负载：SCRATCH\_2
+2. **优化条带化**：
+   * 大文件：跨多个 OST（Object Storage Targets）进行条带化
    * 小文件：存储在单个 OST 上
-3. **Client mount options**:
+3. **客户端挂载选项**：
 
 ```yaml
 mountOptions:
@@ -994,21 +1004,21 @@ mountOptions:
   - relatime
 ```
 
-4. **启用数据压缩**:
+4. **启用数据压缩**：
 
 ```yaml
 parameters:
   dataCompressionType: "LZ4"
 ```
 
-### 面向 vLLM 工作负载的存储优化
+### vLLM 工作负载的存储优化
 
-面向 vLLM 等大语言模型工作负载的存储优化：
+针对 vLLM 等大语言模型工作负载的存储优化：
 
-1. **使用 FSx for Lustre**:
-   * 高吞吐量可减少模型加载时间
-   * 多个 Node 可同时访问相同的模型文件
-2. **最佳配置**:
+1. **使用 FSx for Lustre**：
+   * 高吞吐量可缩短模型加载时间
+   * 多个节点可同时访问相同的模型文件
+2. **最佳配置**：
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1023,19 +1033,19 @@ parameters:
   dataCompressionType: "LZ4"  # Enable data compression
 ```
 
-3. **模型文件优化**:
+3. **模型文件优化**：
    * 将模型文件预加载到内存中
    * 考虑模型量化
    * 实现模型分片
-4. **Node instance type 选择**:
-   * 选择具有足够内存和网络带宽的 instances
-   * 考虑 GPU instances 的 EFA (Elastic Fabric Adapter) 支持
+4. **节点实例类型选择**：
+   * 选择具有足够内存和网络带宽的实例
+   * 考虑为 GPU 实例提供 EFA（Elastic Fabric Adapter）支持
 
 ## 结论
 
-本文档介绍了 Amazon EKS 中的 FSx for Lustre、S3、snapshots、volume expansion 和性能优化。每种存储选项都有不同的特征和使用场景，因此必须根据应用程序需求选择并优化合适的存储解决方案。
+本文档介绍了 Amazon EKS 中的 FSx for Lustre、S3、快照、卷扩展和性能优化。每个存储选项都有不同的特性和使用场景，因此请务必根据您的应用程序需求选择并优化合适的存储解决方案。
 
-下一部分将介绍 EKS 存储的监控、故障排查、成本优化和安全性。
+下一部分将介绍 EKS 存储的监控、故障排除、成本优化和安全性。
 
 ## 参考资料
 
@@ -1047,4 +1057,4 @@ parameters:
 
 ## 测验
 
-要测试你在本章学到的内容，请尝试完成[主题测验](../quizzes/eks/04-eks-storage-part2-quiz.md)。
+要测试您在本章中学到的内容，请尝试[主题测验](../quizzes/eks/04-eks-storage-part2-quiz.md)。

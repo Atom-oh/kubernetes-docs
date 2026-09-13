@@ -7,7 +7,7 @@
     "animation": "trace",
     "viewBox": [
       1300,
-      500
+      540
     ],
     "views": [
       {
@@ -27,32 +27,33 @@
         "id": "ebpf-path",
         "label": "eBPF 패킷 경로",
         "focus": [
-          "nic-ebpf",
-          "tc-hook",
-          "bpf-maps",
+          "src-pod",
           "connect-lb",
+          "nic-tc",
+          "bpf-maps",
           "pod-ebpf"
         ],
-        "note": "TC hook의 BPF 프로그램 하나가 BPF Map을 O(1)로 조회해 정책과 라우팅을 한 번에 처리한다. 지연이 낮다."
+        "note": "앱의 connect()가 먼저 소켓 레벨 connect-time LB에서 백엔드로 바뀌고, 그 뒤 패킷은 TC hook의 BPF 프로그램 하나가 BPF Map을 O(1)로 조회해 정책과 라우팅을 한 번에 처리한다. 지연이 낮다."
       },
       {
         "id": "kube-proxy-replacement",
         "label": "kube-proxy 대체",
         "focus": [
           "kubeproxy",
-          "bpf-maps",
-          "connect-lb"
+          "connect-lb",
+          "bpf-maps"
         ],
-        "note": "iptables 모드의 Service LB는 kube-proxy 규칙이 맡지만, eBPF 모드는 소켓 레벨 connect-time LB가 처리해 kube-proxy가 필요 없다."
+        "note": "iptables 모드의 Service LB는 kube-proxy 규칙이 맡지만, eBPF 모드는 패킷이 생기기 전 cgroup connect() hook의 소켓 레벨 connect-time LB가 처리해 kube-proxy가 필요 없다."
       }
     ],
     "legend": {
+      "mode": "auto",
       "entries": {
         "external": {
-          "label": "패킷 엔드포인트 (NIC / Pod)"
+          "label": "엔드포인트"
         },
         "backend": {
-          "label": "iptables 체인 · 규칙"
+          "label": "iptables"
         },
         "cloud": {
           "label": "eBPF 프로그램"
@@ -71,7 +72,7 @@
       "sublabel": "패킷 수신",
       "pos": [
         60,
-        90
+        56
       ],
       "size": [
         110,
@@ -85,7 +86,7 @@
       "sublabel": "raw · mangle · nat + conntrack",
       "pos": [
         214,
-        90
+        56
       ],
       "size": [
         180,
@@ -99,7 +100,7 @@
       "sublabel": "mangle · filter",
       "pos": [
         438,
-        90
+        56
       ],
       "size": [
         160,
@@ -114,7 +115,7 @@
       "tag": "O(N) 규칙 평가",
       "pos": [
         642,
-        90
+        56
       ],
       "size": [
         190,
@@ -128,7 +129,7 @@
       "sublabel": "mangle · nat",
       "pos": [
         876,
-        90
+        56
       ],
       "size": [
         170,
@@ -142,7 +143,7 @@
       "sublabel": "높은 지연",
       "pos": [
         1090,
-        90
+        56
       ],
       "size": [
         130,
@@ -150,45 +151,16 @@
       ]
     },
     {
-      "id": "nic-ebpf",
+      "id": "src-pod",
       "type": "external",
-      "label": "NIC",
-      "sublabel": "패킷 수신",
+      "label": "소스 Pod",
+      "sublabel": "앱 소켓 · connect()",
       "pos": [
         60,
-        290
+        222
       ],
       "size": [
-        110,
-        64
-      ]
-    },
-    {
-      "id": "tc-hook",
-      "type": "cloud",
-      "label": "TC Hook",
-      "sublabel": "BPF 프로그램 하나로 정책 + 라우팅",
-      "pos": [
-        214,
-        290
-      ],
-      "size": [
-        200,
-        64
-      ]
-    },
-    {
-      "id": "bpf-maps",
-      "type": "database",
-      "label": "BPF Maps",
-      "sublabel": "Policy · Service Routing · Endpoint",
-      "tag": "O(1) Map 조회",
-      "pos": [
-        470,
-        290
-      ],
-      "size": [
-        220,
+        130,
         64
       ]
     },
@@ -196,14 +168,43 @@
       "id": "connect-lb",
       "type": "cloud",
       "label": "Connect-time LB",
-      "sublabel": "소켓 레벨 · kube-proxy 불필요",
-      "tag": "DSR 지원",
+      "sublabel": "cgroup connect() hook · 소켓 레벨",
+      "tag": "kube-proxy 불필요 · DSR 지원",
       "pos": [
-        746,
-        290
+        300,
+        222
       ],
       "size": [
-        250,
+        270,
+        64
+      ]
+    },
+    {
+      "id": "nic-tc",
+      "type": "cloud",
+      "label": "veth TC Hook",
+      "sublabel": "BPF 프로그램 하나로 정책 + 라우팅",
+      "pos": [
+        700,
+        222
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "bpf-maps",
+      "type": "database",
+      "label": "BPF Maps",
+      "sublabel": "Policy · Service/NAT · Endpoint",
+      "tag": "O(1) Map 조회",
+      "pos": [
+        700,
+        360
+      ],
+      "size": [
+        240,
         64
       ]
     },
@@ -214,7 +215,7 @@
       "sublabel": "낮은 지연",
       "pos": [
         1090,
-        290
+        222
       ],
       "size": [
         130,
@@ -239,10 +240,10 @@
       "kind": "region",
       "label": "eBPF 데이터플레인 (Modern) · O(1) Map 조회",
       "wraps": [
-        "nic-ebpf",
-        "tc-hook",
-        "bpf-maps",
+        "src-pod",
         "connect-lb",
+        "nic-tc",
+        "bpf-maps",
         "pod-ebpf"
       ]
     }
@@ -276,28 +277,32 @@
       "labelDy": -26
     },
     {
-      "id": "c-nic-tc",
-      "from": "nic-ebpf",
-      "to": "tc-hook",
-      "variant": "emphasis"
+      "id": "c-src-lb",
+      "from": "src-pod",
+      "to": "connect-lb",
+      "label": "connect(VIP)",
+      "variant": "emphasis",
+      "labelDy": 26
     },
     {
-      "id": "c-tc-maps",
-      "from": "tc-hook",
-      "to": "bpf-maps",
-      "label": "Map 조회",
+      "id": "c-lb-tc",
+      "from": "connect-lb",
+      "to": "nic-tc",
+      "label": "목적지 재작성",
       "variant": "emphasis",
       "labelDy": -26
     },
     {
-      "id": "c-maps-lb",
-      "from": "bpf-maps",
-      "to": "connect-lb",
-      "variant": "emphasis"
+      "id": "c-tc-maps",
+      "from": "nic-tc",
+      "to": "bpf-maps",
+      "label": "Map 조회",
+      "variant": "emphasis",
+      "labelDy": 24
     },
     {
-      "id": "c-lb-pod",
-      "from": "connect-lb",
+      "id": "c-tc-pod",
+      "from": "nic-tc",
       "to": "pod-ebpf",
       "label": "단일 처리 경로",
       "variant": "emphasis",
@@ -319,8 +324,8 @@
       "title": "eBPF 모드",
       "items": [
         "BPF Map 해시 조회로 규모와 무관한 O(1) 검색",
-        "BPF 프로그램 하나가 정책·NAT·라우팅을 한 번에 처리해 지연이 낮다",
-        "kube-proxy 없이 connect-time LB로 서비스를 처리하고 DSR을 지원한다"
+        "TC hook의 BPF 프로그램 하나가 정책·NAT·라우팅을 한 번에 처리해 지연이 낮다",
+        "패킷이 생기기 전 connect() 시점에 소켓 레벨 LB가 백엔드를 고르므로 kube-proxy 없이 서비스를 처리하고 DSR을 지원한다"
       ]
     },
     {

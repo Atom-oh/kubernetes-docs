@@ -1,0 +1,169 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Step-by-step Migration from Sidecar Mode to Ambient Mode",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-8.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "prepare",
+        "label": "Prepare ambient components",
+        "focus": [
+          "start",
+          "install"
+        ],
+        "note": "On the cluster running Sidecar Mode, first install ztunnel and the CNI with the ambient profile."
+      },
+      {
+        "id": "switch",
+        "label": "Switch the namespace",
+        "focus": [
+          "install",
+          "label",
+          "remove"
+        ],
+        "note": "Label the namespace istio.io/dataplane-mode=ambient and restart pods to remove the sidecars."
+      },
+      {
+        "id": "finish",
+        "label": "Waypoint and completion",
+        "focus": [
+          "remove",
+          "waypoint",
+          "done"
+        ],
+        "note": "Deploy a waypoint only when L7 features are needed, then complete the Ambient Mode switch."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Workload state"
+        },
+        "cloud": {
+          "label": "Istio component"
+        },
+        "security": {
+          "label": "Namespace setting"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "state",
+      "label": "Data plane state"
+    },
+    {
+      "id": "system",
+      "label": "istio-system"
+    },
+    {
+      "id": "app",
+      "label": "Application namespace"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "install",
+    "label",
+    "remove",
+    "waypoint",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "state",
+      "col": 0,
+      "type": "backend",
+      "label": "Sidecar Mode in production",
+      "sublabel": "istio-proxy injected",
+      "width": 212
+    },
+    {
+      "id": "install",
+      "lane": "system",
+      "col": 1,
+      "type": "cloud",
+      "label": "Install ambient components",
+      "sublabel": "profile=ambient · ztunnel + CNI",
+      "width": 226
+    },
+    {
+      "id": "label",
+      "lane": "app",
+      "col": 2,
+      "type": "security",
+      "label": "Add namespace label",
+      "sublabel": "istio.io/dataplane-mode=ambient",
+      "width": 216
+    },
+    {
+      "id": "remove",
+      "lane": "app",
+      "col": 3,
+      "type": "backend",
+      "label": "Remove sidecar",
+      "sublabel": "kubectl rollout restart",
+      "width": 176
+    },
+    {
+      "id": "waypoint",
+      "lane": "app",
+      "col": 4,
+      "type": "cloud",
+      "label": "Deploy waypoint",
+      "sublabel": "istioctl x waypoint apply",
+      "tag": "if L7 needed",
+      "width": 180
+    },
+    {
+      "id": "done",
+      "lane": "state",
+      "col": 5,
+      "type": "backend",
+      "label": "Complete Ambient Mode",
+      "sublabel": "mTLS via ztunnel",
+      "width": 190
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "install",
+      "label": "Step 1",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "install",
+      "to": "label",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "label",
+      "to": "remove",
+      "label": "Step 4",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "remove",
+      "to": "waypoint",
+      "label": "Step 5",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "waypoint",
+      "to": "done",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ]
+}

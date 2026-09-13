@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes DNS 기본 동작",
+    "output": "ko-service-mesh-istio-03-architecture-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      330
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "curl reviews",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "resolv",
+      "type": "backend",
+      "label": "/etc/resolv.conf",
+      "sublabel": "nameserver 10.96.0.10",
+      "pos": [
+        380,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "파드 내 리졸버 설정"
+    },
+    {
+      "id": "coredns",
+      "type": "database",
+      "label": "CoreDNS",
+      "sublabel": "kube-dns · 10.96.0.10",
+      "pos": [
+        720,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "애플리케이션 파드",
+      "wraps": [
+        "app",
+        "resolv"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터 DNS",
+      "wraps": [
+        "coredns"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-resolv",
+      "from": "app",
+      "to": "resolv",
+      "label": "1. 이름 해석 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "resolv-to-coredns",
+      "from": "resolv",
+      "to": "coredns",
+      "label": "2. DNS 쿼리 (UDP 53)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "coredns-to-resolv",
+      "from": "coredns",
+      "to": "resolv",
+      "label": "3. ClusterIP 응답",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "resolv-to-app",
+      "from": "resolv",
+      "to": "app",
+      "label": "4. IP 반환",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ]
+}

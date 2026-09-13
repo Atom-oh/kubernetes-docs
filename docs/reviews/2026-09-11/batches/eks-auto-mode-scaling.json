@@ -1,0 +1,143 @@
+[
+  {
+    "path": "en/eks-auto-mode/03-scaling-behavior.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed paired scaling/quiz review: corrected eligibility, drift/termination and monitoring semantics; preserved legacy timing numbers as unverified estimates, and validated bounded diagnostic examples.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/apis/crds/karpenter.sh_nodepools.yaml"
+    ],
+    "findings": [
+      "Unverified40-90s phase timings and optimization gains are presented as typical guarantees.",
+      "Consolidation is described using actual CPU/memory thresholds instead of requested resources and scheduling feasibility.",
+      "Drift hash annotation is not a public drift boolean; NodeClaim conditions are the relevant signal.",
+      "All requirement changes called drift, unsupported AMI/block-device fields reused, replacement ordering oversimplified.",
+      "720h exceeds Auto Mode21day maximum; expiry/grace behavior needs precise current sources.",
+      "CloudWatch table uses unverified raw Karpenter metric names; events/greps are not a latency benchmark.",
+      "Consolidation uses scheduling/request/cost feasibility; consolidateAfter is a resettable eligibility delay, not a deletion deadline. DaemonSet-only nodes can qualify as empty.",
+      "Preserved currently supported Balanced policy; distinguished graceful and forceful paths, no guarantee of sequential or pre-ready replacement for every event.",
+      "NodeClaim Drifted conditions replace nonexistent drift-hash; compatible requirement widening and behavioral edits are not automatic drift.",
+      "AutoMode defaultexpiry336h/defaultNodeClaimgrace24h distinguished from OSS720h; old30day recommendation violates documented21day maximum.",
+      "Replaced unsupported amiFamily/blockDeviceMappings with valid ephemeralStorage template; no measured boot/attach speedup claimed. Original40–90/20–40/15–25 and optimization estimates retained with provenance caveats.",
+      "Replaced unverified CloudWatch metric-name table with real signal/collector distinctions and separately configured AUTO_MODE_COMPUTE/BLOCK_STORAGE/LOAD_BALANCING/IPAM log delivery.",
+      "Inspected SVG prose in four existing diagrams; retained with conceptual/percentage-not-measurement/no-live-migration qualifications. Parent may improve optimal-instance/request-percentage labels; no image/HTML asset edits."
+    ],
+    "validation": [
+      "Fully read lines1-259; original snapshot/hash saved.",
+      "Allfour originals fullyread: EN259/KO171 source plus160quiz lines per locale,750total; original snapshots/hashes saved.",
+      "Four NodePools passed released Karpenter1.14.1 structural schema including Balanced. NodeClass fields checked against official AWS reference; no live cluster admission or provisioning claimed.",
+      "Five exact jq transformations tested with synthetic NodeClaim/Pod/events API objects: true/absent/unknown drift, scheduled-Pending, gated/unschedulable, event timestamp/count fallbacks and private-field exclusion.",
+      "Paired executable fences, YAML duplicate keys/Bash syntax,14localreferences,quiz keysBBBDDB andgit diff--checkpassed. Evidence:.vitepress/cache/core-audit/eks-auto-mode-scaling/final-validation.json. No cloudcalls/fullbuilds or fabricated benchmark execution."
+    ]
+  },
+  {
+    "path": "ko/eks-auto-mode/03-scaling-behavior.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed paired scaling/quiz review: corrected eligibility, drift/termination and monitoring semantics; preserved legacy timing numbers as unverified estimates, and validated bounded diagnostic examples.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/apis/crds/karpenter.sh_nodepools.yaml"
+    ],
+    "findings": [
+      "Shell drift query is fenced as YAML and reads nonexistent drift-hash annotation.",
+      "ConsolidateAfter/expireAfter comments imply exact deletion or ready-replacement deadlines.",
+      "Unsupported amiFamily/blockDeviceMappings repeated and unverified10-20s/5-10s speedups asserted.",
+      "English has extra timeline/expiration/metrics sections; retain useful shared material while qualifying unverified estimates.",
+      "Consolidation uses scheduling/request/cost feasibility; consolidateAfter is a resettable eligibility delay, not a deletion deadline. DaemonSet-only nodes can qualify as empty.",
+      "Preserved currently supported Balanced policy; distinguished graceful and forceful paths, no guarantee of sequential or pre-ready replacement for every event.",
+      "NodeClaim Drifted conditions replace nonexistent drift-hash; compatible requirement widening and behavioral edits are not automatic drift.",
+      "AutoMode defaultexpiry336h/defaultNodeClaimgrace24h distinguished from OSS720h; old30day recommendation violates documented21day maximum.",
+      "Replaced unsupported amiFamily/blockDeviceMappings with valid ephemeralStorage template; no measured boot/attach speedup claimed. Original40–90/20–40/15–25 and optimization estimates retained with provenance caveats.",
+      "Replaced unverified CloudWatch metric-name table with real signal/collector distinctions and separately configured AUTO_MODE_COMPUTE/BLOCK_STORAGE/LOAD_BALANCING/IPAM log delivery.",
+      "Inspected SVG prose in four existing diagrams; retained with conceptual/percentage-not-measurement/no-live-migration qualifications. Parent may improve optimal-instance/request-percentage labels; no image/HTML asset edits."
+    ],
+    "validation": [
+      "Fullread1-171; original snapshot/hash saved.",
+      "Allfour originals fullyread: EN259/KO171 source plus160quiz lines per locale,750total; original snapshots/hashes saved.",
+      "Four NodePools passed released Karpenter1.14.1 structural schema including Balanced. NodeClass fields checked against official AWS reference; no live cluster admission or provisioning claimed.",
+      "Five exact jq transformations tested with synthetic NodeClaim/Pod/events API objects: true/absent/unknown drift, scheduled-Pending, gated/unschedulable, event timestamp/count fallbacks and private-field exclusion.",
+      "Paired executable fences, YAML duplicate keys/Bash syntax,14localreferences,quiz keysBBBDDB andgit diff--checkpassed. Evidence:.vitepress/cache/core-audit/eks-auto-mode-scaling/final-validation.json. No cloudcalls/fullbuilds or fabricated benchmark execution."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks-auto-mode/03-scaling-behavior-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed paired scaling/quiz review: corrected eligibility, drift/termination and monitoring semantics; preserved legacy timing numbers as unverified estimates, and validated bounded diagnostic examples.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/apis/crds/karpenter.sh_nodepools.yaml"
+    ],
+    "findings": [
+      "Q4 is internally contradictory: DaemonSet-only nodes are treated as empty yet answer says they prevent consolidation.",
+      "Q3 confuses Pod requirements with NodePool requirements and promises immediate40-90s EC2 launch.",
+      "Q1 consolidateAfter treated as a completion deadline. Q5 treats all config/security-group edits as drift and promises sequential replacement.",
+      "Q6 offers AMI-family choice and unverified AL2023(20-40s)/Bottlerocket(15-25s) benchmark.",
+      "Consolidation uses scheduling/request/cost feasibility; consolidateAfter is a resettable eligibility delay, not a deletion deadline. DaemonSet-only nodes can qualify as empty.",
+      "Preserved currently supported Balanced policy; distinguished graceful and forceful paths, no guarantee of sequential or pre-ready replacement for every event.",
+      "NodeClaim Drifted conditions replace nonexistent drift-hash; compatible requirement widening and behavioral edits are not automatic drift.",
+      "AutoMode defaultexpiry336h/defaultNodeClaimgrace24h distinguished from OSS720h; old30day recommendation violates documented21day maximum.",
+      "Replaced unsupported amiFamily/blockDeviceMappings with valid ephemeralStorage template; no measured boot/attach speedup claimed. Original40–90/20–40/15–25 and optimization estimates retained with provenance caveats.",
+      "Replaced unverified CloudWatch metric-name table with real signal/collector distinctions and separately configured AUTO_MODE_COMPUTE/BLOCK_STORAGE/LOAD_BALANCING/IPAM log delivery.",
+      "Inspected SVG prose in four existing diagrams; retained with conceptual/percentage-not-measurement/no-live-migration qualifications. Parent may improve optimal-instance/request-percentage labels; no image/HTML asset edits."
+    ],
+    "validation": [
+      "Fully read1-160; snapshot/hash saved.",
+      "Allfour originals fullyread: EN259/KO171 source plus160quiz lines per locale,750total; original snapshots/hashes saved.",
+      "Four NodePools passed released Karpenter1.14.1 structural schema including Balanced. NodeClass fields checked against official AWS reference; no live cluster admission or provisioning claimed.",
+      "Five exact jq transformations tested with synthetic NodeClaim/Pod/events API objects: true/absent/unknown drift, scheduled-Pending, gated/unschedulable, event timestamp/count fallbacks and private-field exclusion.",
+      "Paired executable fences, YAML duplicate keys/Bash syntax,14localreferences,quiz keysBBBDDB andgit diff--checkpassed. Evidence:.vitepress/cache/core-audit/eks-auto-mode-scaling/final-validation.json. No cloudcalls/fullbuilds or fabricated benchmark execution."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks-auto-mode/03-scaling-behavior-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed paired scaling/quiz review: corrected eligibility, drift/termination and monitoring semantics; preserved legacy timing numbers as unverified estimates, and validated bounded diagnostic examples.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/apis/crds/karpenter.sh_nodepools.yaml"
+    ],
+    "findings": [
+      "Q4 all-of-above answer incorrectly includes DaemonSet-only nodes as consolidation blocker while explanation calls them empty.",
+      "Q3 promises immediate allocation and conflates NodePool requirements with Pod schedulability.",
+      "Q5 treats all edits as drift and sequential replacement; Q6 fake selectableAMI/20-40vs15-25s figures need explicit unverified provenance.",
+      "Consolidation uses scheduling/request/cost feasibility; consolidateAfter is a resettable eligibility delay, not a deletion deadline. DaemonSet-only nodes can qualify as empty.",
+      "Preserved currently supported Balanced policy; distinguished graceful and forceful paths, no guarantee of sequential or pre-ready replacement for every event.",
+      "NodeClaim Drifted conditions replace nonexistent drift-hash; compatible requirement widening and behavioral edits are not automatic drift.",
+      "AutoMode defaultexpiry336h/defaultNodeClaimgrace24h distinguished from OSS720h; old30day recommendation violates documented21day maximum.",
+      "Replaced unsupported amiFamily/blockDeviceMappings with valid ephemeralStorage template; no measured boot/attach speedup claimed. Original40–90/20–40/15–25 and optimization estimates retained with provenance caveats.",
+      "Replaced unverified CloudWatch metric-name table with real signal/collector distinctions and separately configured AUTO_MODE_COMPUTE/BLOCK_STORAGE/LOAD_BALANCING/IPAM log delivery.",
+      "Inspected SVG prose in four existing diagrams; retained with conceptual/percentage-not-measurement/no-live-migration qualifications. Parent may improve optimal-instance/request-percentage labels; no image/HTML asset edits."
+    ],
+    "validation": [
+      "Fullyread1-160; original snapshot/hash saved.",
+      "Allfour originals fullyread: EN259/KO171 source plus160quiz lines per locale,750total; original snapshots/hashes saved.",
+      "Four NodePools passed released Karpenter1.14.1 structural schema including Balanced. NodeClass fields checked against official AWS reference; no live cluster admission or provisioning claimed.",
+      "Five exact jq transformations tested with synthetic NodeClaim/Pod/events API objects: true/absent/unknown drift, scheduled-Pending, gated/unschedulable, event timestamp/count fallbacks and private-field exclusion.",
+      "Paired executable fences, YAML duplicate keys/Bash syntax,14localreferences,quiz keysBBBDDB andgit diff--checkpassed. Evidence:.vitepress/cache/core-audit/eks-auto-mode-scaling/final-validation.json. No cloudcalls/fullbuilds or fabricated benchmark execution."
+    ]
+  }
+]

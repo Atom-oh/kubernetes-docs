@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Dynamo: 실행과 제어 계층",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1280,
+      580
+    ],
+    "output": "ko-ai-ml-04-inference-frameworks-2.html"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "승인된 요청",
+      "pos": [
+        35,
+        65
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "backend",
+      "label": "Dynamo Frontend",
+      "sublabel": "선택한 routing 정책",
+      "pos": [
+        490,
+        65
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "decode",
+      "type": "backend",
+      "label": "Decode worker",
+      "sublabel": "호환 모델·backend",
+      "pos": [
+        945,
+        65
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "control",
+      "type": "cloud",
+      "label": "Controller / Planner",
+      "sublabel": "DGD / DGDR",
+      "pos": [
+        35,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "prefill",
+      "type": "backend",
+      "label": "Prefill worker",
+      "sublabel": "선택적 분리 경로",
+      "pos": [
+        490,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "transfer",
+      "type": "messagebus",
+      "label": "KV transfer",
+      "sublabel": "검증된 connector / transport",
+      "pos": [
+        945,
+        355
+      ],
+      "size": [
+        240,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request",
+      "from": "client",
+      "to": "frontend",
+      "label": "API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "decode-route",
+      "from": "frontend",
+      "to": "decode",
+      "label": "backend 실행",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prefill-route",
+      "from": "frontend",
+      "to": "prefill",
+      "label": "분리 경로",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        610,
+        255
+      ]
+    },
+    {
+      "id": "kv",
+      "from": "prefill",
+      "to": "transfer",
+      "label": "KV",
+      "variant": "emphasis"
+    },
+    {
+      "id": "handoff",
+      "from": "transfer",
+      "to": "decode",
+      "label": "호환 KV 전달",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        1070,
+        255
+      ]
+    },
+    {
+      "id": "reconcile",
+      "from": "control",
+      "to": "prefill",
+      "label": "배포·용량 조정",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "구성 조건",
+      "items": [
+        "aggregated 경로는 별도 prefill worker가 필요하지 않습니다.",
+        "서로 다른 backend/GPU의 KV 호환성을 먼저 검증합니다.",
+        "Redis가 전체 KV tensor의 필수 저장소인 것은 아닙니다."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "제어 계층",
+      "items": [
+        "DGD는 배포 구성; DGDR은 profiling과 배포 생성을 요청합니다.",
+        "planner와 controller의 권한·의존성·비용을 확인합니다."
+      ]
+    }
+  ]
+}

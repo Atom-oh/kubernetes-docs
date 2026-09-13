@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "이미지 변경과 Canary 배포",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      660
+    ],
+    "views": [
+      {
+        "id": "image-automation",
+        "label": "이미지 자동화",
+        "focus": [
+          "cicd",
+          "ecr",
+          "flux",
+          "git"
+        ],
+        "note": "Reflector가 정책으로 선택하고 Automation이 marker 필드를 브랜치에 기록한다. main 병합은 별도다."
+      },
+      {
+        "id": "gitops-sync",
+        "label": "GitOps 동기화",
+        "focus": [
+          "git",
+          "flux",
+          "k8s"
+        ],
+        "note": "Git 변경을 감지해 Deployment를 갱신하는 구간"
+      },
+      {
+        "id": "canary-rollout",
+        "label": "Canary 배포",
+        "focus": [
+          "k8s",
+          "flagger"
+        ],
+        "note": "Flagger가 Pod 변경을 감지해 점진적 배포 후 완료 또는 롤백"
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "cicd",
+      "type": "external",
+      "label": "CI / Review",
+      "sublabel": "build / approve"
+    },
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Image registry",
+      "sublabel": "GHCR / ECR"
+    },
+    {
+      "id": "flux",
+      "type": "backend",
+      "label": "Flux controllers",
+      "sublabel": "reflect / update / apply"
+    },
+    {
+      "id": "git",
+      "type": "database",
+      "label": "Git 저장소",
+      "sublabel": "source branch: main"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "Deployment"
+    },
+    {
+      "id": "flagger",
+      "type": "security",
+      "label": "Flagger",
+      "sublabel": "Canary 컨트롤러"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 330,
+      "label": "이미지 선택 · PR"
+    },
+    {
+      "from": 338,
+      "to": 418,
+      "label": "GitOps 적용"
+    },
+    {
+      "from": 426,
+      "to": 565,
+      "label": "Canary 분석"
+    }
+  ],
+  "messages": [
+    {
+      "id": "push-image",
+      "from": "cicd",
+      "to": "ecr",
+      "y": 185,
+      "label": "새 검토 대상 image",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scan-tags",
+      "from": "flux",
+      "to": "ecr",
+      "y": 228,
+      "label": "Reflector 태그 선택",
+      "note": "ImageRepository interval 5m · provider aws"
+    },
+    {
+      "id": "commit-tag",
+      "from": "flux",
+      "to": "git",
+      "y": 270,
+      "label": "Automation 브랜치 push",
+      "variant": "emphasis",
+      "note": "ImageUpdateAutomation · Setters 전략"
+    },
+    {
+      "id": "review-merge",
+      "from": "cicd",
+      "to": "git",
+      "y": 312,
+      "label": "PR review / merge",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect-git",
+      "from": "flux",
+      "to": "git",
+      "y": 354,
+      "label": "병합된 revision 가져오기",
+      "variant": "return"
+    },
+    {
+      "id": "update-deploy",
+      "from": "flux",
+      "to": "k8s",
+      "y": 396,
+      "label": "Pod template 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect-pod",
+      "from": "k8s",
+      "to": "flagger",
+      "y": 440,
+      "label": "workload 변경 감지"
+    },
+    {
+      "id": "start-canary",
+      "from": "flagger",
+      "to": "k8s",
+      "y": 483,
+      "label": "분석 · 라우팅",
+      "variant": "emphasis",
+      "note": "stepWeight 10 → maxWeight 50 · interval 1m"
+    },
+    {
+      "id": "finish-or-rollback",
+      "from": "flagger",
+      "to": "k8s",
+      "y": 533,
+      "label": "승격 / 분석 중 복구",
+      "variant": "return",
+      "note": "request-success-rate ≥ 99% 유지 시 완료"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "flux",
+      "from": 222,
+      "to": 402,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 390,
+      "to": 541,
+      "type": "cloud"
+    },
+    {
+      "participant": "flagger",
+      "from": 434,
+      "to": 541,
+      "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Image automation",
+      "items": [
+        "image.toolkit v1 · policy >=6.15.0 <7.0.0",
+        "Current .Changed template; reviewed branch merge"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Flagger",
+      "items": [
+        "Target Pod template update starts analysis",
+        "Cumulative failures; no competing Service/replica owner"
+      ]
+    }
+  ]
+}

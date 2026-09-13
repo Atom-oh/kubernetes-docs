@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flink Operator와 Native 모드 scaling",
+    "output": "ko-data-on-eks-flink-02-flink-kubernetes-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      620
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "reconcile",
+        "label": "CR 감시와 Pod 관리",
+        "focus": [
+          "cr-deployment",
+          "cr-sessionjob",
+          "operator",
+          "jobmanager",
+          "taskmanager"
+        ],
+        "note": "Operator가 FlinkDeployment / FlinkSessionJob CR을 감시하고 JobManager와 TaskManager Pod를 관리한다."
+      },
+      {
+        "id": "autoscale",
+        "label": "오토스케일링 루프",
+        "focus": [
+          "jobmanager",
+          "taskmanager",
+          "metrics",
+          "autoscaler",
+          "operator"
+        ],
+        "note": "처리율·backlog·pressure·제약을 평가하고 활성화된 경우 override를 반영합니다. In-place 또는 재배포 경로를 사용합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cr-deployment",
+      "type": "external",
+      "label": "FlinkDeployment CR",
+      "sublabel": "Application / Session cluster",
+      "pos": [
+        180,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "cr-sessionjob",
+      "type": "external",
+      "label": "FlinkSessionJob CR",
+      "sublabel": "Session 클러스터에 제출하는 잡",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Flink Kubernetes Operator",
+      "sublabel": "CR 조정 + 내장 오토스케일러 호스팅",
+      "pos": [
+        340,
+        180
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "jobmanager",
+      "type": "backend",
+      "label": "JobManager Pod",
+      "sublabel": "잡 그래프 조정",
+      "pos": [
+        360,
+        330
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "taskmanager",
+      "type": "backend",
+      "label": "TaskManager Pods",
+      "sublabel": "vertex 병렬 인스턴스 실행",
+      "pos": [
+        660,
+        330
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "autoscaler",
+      "type": "backend",
+      "label": "오토스케일러",
+      "sublabel": "vertex별 병렬도 계산",
+      "pos": [
+        40,
+        183
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Flink REST metrics",
+      "sublabel": "Rates · backlog · pressure",
+      "pos": [
+        340,
+        480
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cr1-watch",
+      "from": "cr-deployment",
+      "to": "operator",
+      "label": "감시",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cr2-watch",
+      "from": "cr-sessionjob",
+      "to": "operator",
+      "label": "감시",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "op-manage-jm",
+      "from": "operator",
+      "to": "jobmanager",
+      "label": "In-place / redeploy",
+      "variant": "emphasis",
+      "labelAt": [
+        460,
+        290
+      ]
+    },
+    {
+      "id": "jm-to-tm",
+      "from": "jobmanager",
+      "to": "taskmanager",
+      "label": "Native allocation / tasks",
+      "labelAt": [
+        610,
+        312
+      ]
+    },
+    {
+      "id": "jm-emit",
+      "from": "jobmanager",
+      "to": "metrics",
+      "label": "지표 생성",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "tm-emit",
+      "from": "taskmanager",
+      "to": "metrics",
+      "label": "지표 생성",
+      "variant": "dashed"
+    },
+    {
+      "id": "as-read",
+      "from": "autoscaler",
+      "to": "metrics",
+      "label": "읽음"
+    },
+    {
+      "id": "as-threshold",
+      "from": "autoscaler",
+      "to": "operator",
+      "label": "Enabled + constraints",
+      "variant": "emphasis",
+      "labelDy": -25
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "평가 입력",
+      "items": [
+        "처리율·edge ratio·backlog 목표",
+        "Memory/GC pressure·quota·scaling 제약"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Scaling 적용",
+      "items": [
+        "관찰 모드에서 추천부터 확인",
+        "State 복구·in-place/재배포 경로 검증"
+      ]
+    }
+  ]
+}

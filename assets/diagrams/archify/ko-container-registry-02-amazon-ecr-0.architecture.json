@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon ECR 아키텍처",
+    "output": "ko-container-registry-02-amazon-ecr-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "프라이빗 리포지토리"
+        },
+        "security": {
+          "label": "공통 보안·운영 기능"
+        },
+        "cloud": {
+          "label": "ECR Public"
+        }
+      }
+    },
+    "viewBox": [
+      1140,
+      380
+    ]
+  },
+  "components": [
+    {
+      "id": "repo-prod",
+      "type": "database",
+      "label": "myapp-prod",
+      "sublabel": "v1.0.0 · v1.1.0 · v1.2.0",
+      "tag": "IMMUTABLE",
+      "pos": [
+        80,
+        110
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "repo-dev",
+      "type": "database",
+      "label": "myapp-dev",
+      "sublabel": "dev-abc123 · dev-def456",
+      "pos": [
+        300,
+        110
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "repo-backend",
+      "type": "database",
+      "label": "backend",
+      "sublabel": "2.1.0 · 2.2.0 · latest",
+      "pos": [
+        520,
+        110
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "features",
+      "type": "security",
+      "label": "공통 기능",
+      "sublabel": "IAM 인증 · 수명주기 정책 · 암호화 · 이미지 스캔 · 멀티 리전 복제",
+      "pos": [
+        80,
+        230
+      ],
+      "size": [
+        620,
+        60
+      ]
+    },
+    {
+      "id": "public-repo",
+      "type": "cloud",
+      "label": "공개 리포지토리",
+      "sublabel": "public.ecr.aws/<alias>/<repo>",
+      "pos": [
+        800,
+        110
+      ],
+      "size": [
+        270,
+        60
+      ]
+    },
+    {
+      "id": "public-access",
+      "type": "cloud",
+      "label": "익명 pull 가능",
+      "sublabel": "인증 선택적 · 오픈소스/공개 배포",
+      "pos": [
+        800,
+        230
+      ],
+      "size": [
+        270,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 계정",
+      "wraps": [
+        "repo-prod",
+        "repo-dev",
+        "repo-backend",
+        "features",
+        "public-repo",
+        "public-access"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Amazon ECR Private · 모든 상용 리전",
+      "wraps": [
+        "repo-prod",
+        "repo-dev",
+        "repo-backend",
+        "features"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Amazon ECR Public · us-east-1 호스팅 · 글로벌",
+      "wraps": [
+        "public-repo",
+        "public-access"
+      ]
+    }
+  ],
+  "connections": []
+}

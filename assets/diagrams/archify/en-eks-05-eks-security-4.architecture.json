@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Identity Agent Mechanics",
+    "locale": "en",
+    "output": "en-eks-05-eks-security-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "Request and delivery",
+        "focus": [
+          "pod",
+          "pia"
+        ],
+        "note": "The node's Pod Identity Agent intercepts the pod's credential request and relays the issued credentials back to the pod."
+      },
+      {
+        "id": "mapping",
+        "label": "Role mapping check",
+        "focus": [
+          "pia",
+          "sa",
+          "assoc",
+          "iam"
+        ],
+        "note": "The Pod Identity Association links the service account to an IAM role. The agent checks this association."
+      },
+      {
+        "id": "sts",
+        "label": "Credential issuance",
+        "focus": [
+          "pia",
+          "sts",
+          "iam"
+        ],
+        "note": "The agent calls AssumeRoleForPodIdentity to obtain temporary credentials for the associated IAM role."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Application Pod",
+      "sublabel": "AWS SDK",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pia",
+      "type": "security",
+      "label": "Pod Identity Agent",
+      "sublabel": "DaemonSet",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sa",
+      "type": "backend",
+      "label": "Service Account",
+      "sublabel": "ServiceAccount",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "assoc",
+      "type": "cloud",
+      "label": "Pod Identity Association",
+      "sublabel": "service account ↔ IAM role",
+      "pos": [
+        330,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sts",
+      "type": "cloud",
+      "label": "AWS STS",
+      "sublabel": "issues temporary credentials",
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM Role",
+      "sublabel": "permissions for the pod",
+      "pos": [
+        740,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS Cluster",
+      "wraps": [
+        "pod",
+        "pia",
+        "sa",
+        "assoc"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "region",
+      "label": "Node",
+      "wraps": [
+        "pod",
+        "pia"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-to-pia",
+      "from": "pod",
+      "to": "pia",
+      "label": "1. Credential request",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "pia-to-assoc",
+      "from": "pia",
+      "to": "assoc",
+      "label": "2. Check association",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24,
+      "labelDx": -50
+    },
+    {
+      "id": "assoc-to-iam",
+      "from": "assoc",
+      "to": "iam",
+      "label": "3. Role mapping",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "pia-to-sts",
+      "from": "pia",
+      "to": "sts",
+      "label": "4. AssumeRoleForPodIdentity",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "sts-to-pia",
+      "from": "sts",
+      "to": "pia",
+      "label": "5. Temporary credentials",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pia-to-pod",
+      "from": "pia",
+      "to": "pod",
+      "label": "6. Deliver credentials",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "sa-to-pod",
+      "from": "sa",
+      "to": "pod",
+      "label": "bound to",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sa-to-assoc",
+      "from": "sa",
+      "to": "assoc",
+      "label": "referenced by",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "What the Pod Identity Agent does",
+      "items": [
+        "Runs as a DaemonSet on every node",
+        "Intercepts the pod's credential request",
+        "Checks the Pod Identity Association",
+        "Obtains temporary credentials for the associated IAM role and delivers them to the pod"
+      ]
+    }
+  ]
+}

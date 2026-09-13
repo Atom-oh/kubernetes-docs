@@ -2,112 +2,84 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Data-Layer AZ-Affinity Read Path",
+    "title": "AZ-aware reads and remote fallback",
     "output": "en-ops-15-zonal-operations-guide-1.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1300,
-      860
+      1190,
+      640
     ],
     "locale": "en"
   },
   "components": [
     {
-      "id": "users",
-      "type": "external",
-      "label": "Users",
-      "sublabel": "HTTPS",
-      "pos": [
-        40,
-        130
-      ],
-      "size": [
-        160,
-        76
-      ]
-    },
-    {
-      "id": "alb",
-      "type": "cloud",
-      "label": "ALB",
-      "sublabel": "Regional entry point",
-      "pos": [
-        250,
-        130
-      ],
-      "size": [
-        170,
-        76
-      ]
-    },
-    {
-      "id": "pod",
+      "id": "app",
       "type": "frontend",
-      "label": "App Pod",
-      "sublabel": "AZ-a",
+      "label": "Application",
+      "sublabel": "AZ-a · known AZ value",
       "pos": [
-        490,
-        130
+        55,
+        255
       ],
       "size": [
-        190,
+        220,
         76
       ]
     },
     {
       "id": "kafka",
       "type": "messagebus",
-      "label": "Kafka Broker",
-      "sublabel": "AZ-a",
+      "label": "Kafka replica",
+      "sublabel": "Matching client.rack",
       "pos": [
-        300,
-        440
+        470,
+        95
       ],
       "size": [
-        200,
+        220,
         76
       ]
     },
     {
-      "id": "redis",
+      "id": "cache",
       "type": "database",
-      "label": "Redis Node",
-      "sublabel": "AZ-a replica",
+      "label": "Valkey reader",
+      "sublabel": "GLIDE AZ preference",
       "pos": [
-        530,
-        440
+        470,
+        255
       ],
       "size": [
-        200,
+        220,
         76
       ]
     },
     {
-      "id": "auroraA",
+      "id": "aurora",
       "type": "database",
       "label": "Aurora reader",
-      "sublabel": "AZ-a",
+      "sublabel": "Managed local members",
       "pos": [
-        760,
-        440
+        470,
+        415
       ],
       "size": [
-        200,
+        220,
         76
       ]
     },
     {
-      "id": "auroraC",
+      "id": "remote",
       "type": "database",
-      "label": "Aurora writer",
-      "sublabel": "AZ-c",
+      "label": "Other-AZ targets",
+      "sublabel": "Writes · read fallback",
       "pos": [
-        1000,
-        690
+        875,
+        255
       ],
       "size": [
-        200,
+        255,
         76
       ]
     }
@@ -117,97 +89,96 @@
       "kind": "security-group",
       "label": "AZ-a",
       "wraps": [
-        "pod",
+        "app",
         "kafka",
-        "redis",
-        "auroraA"
+        "cache",
+        "aurora"
       ],
-      "pad": 26
+      "pad": 25
     },
     {
       "kind": "security-group",
-      "label": "AZ-c",
+      "label": "Other AZs",
       "wraps": [
-        "auroraC"
+        "remote"
       ],
-      "pad": 26
+      "pad": 25
     }
   ],
   "connections": [
     {
-      "id": "u-alb",
-      "from": "users",
-      "to": "alb",
-      "label": "HTTPS",
-      "labelDy": 60
-    },
-    {
-      "id": "alb-pod",
-      "from": "alb",
-      "to": "pod",
-      "label": "routes"
-    },
-    {
-      "id": "pod-kafka",
-      "from": "pod",
+      "id": "app-kafka",
+      "from": "app",
       "to": "kafka",
-      "label": "read (KIP-392)",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "label": "Prefer local replica"
     },
     {
-      "id": "pod-redis",
-      "from": "pod",
-      "to": "redis",
-      "label": "read (GLIDE)",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelDy": 60
+      "id": "app-cache",
+      "from": "app",
+      "to": "cache",
+      "label": "Read",
+      "labelDy": -25,
+      "labelAt": [
+        435,
+        275
+      ]
     },
     {
-      "id": "pod-auroraA",
-      "from": "pod",
-      "to": "auroraA",
-      "label": "read (reader)",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "id": "app-aurora",
+      "from": "app",
+      "to": "aurora",
+      "label": "Select local reader"
     },
     {
-      "id": "pod-auroraC",
-      "from": "pod",
-      "to": "auroraC",
-      "label": "write (cross-AZ)",
+      "id": "app-remote",
+      "from": "app",
+      "to": "remote",
+      "label": "Write or no local reader",
       "variant": "dashed",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "bottom",
+      "labelAt": [
+        770,
+        550
+      ],
+      "via": [
+        [
+          165,
+          575
+        ],
+        [
+          1002.5,
+          575
+        ]
+      ]
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "One principle",
+      "title": "Cost and consistency",
       "items": [
-        "Writes must reach the leader or primary, so cross-AZ hops can happen",
-        "Send reads only to a replica in the same AZ and the inter-AZ charge disappears",
-        "The gain is largest for read-heavy workloads: caches, lookup queries, consumers"
+        "Local reads reduce some transfer; total cost is not zero",
+        "Replication, metadata, and fallback can cross AZs",
+        "Check replica lag and read-after-write requirements"
       ]
     },
     {
       "dot": "emerald",
-      "title": "How a pod learns its own AZ",
+      "title": "Discover the AZ",
       "items": [
-        "The pod or a sidecar queries placement/availability-zone from EC2 IMDS",
-        "A mutating policy such as Kyverno copies the node's topology.k8s.aws/zone-id into a pod annotation",
-        "Use an operator that treats rack awareness as a first-class feature, as Strimzi does"
+        "Ordinary Pod creation precedes node selection",
+        "Use binding-time injection or trusted post-scheduling lookup",
+        "Match each client’s rack/AZ value to its servers"
       ]
     },
     {
       "dot": "amber",
-      "title": "Per-service settings",
+      "title": "Test fallback",
       "items": [
-        "Kafka reads from a same-rack broker through KIP-392 follower fetch",
-        "Redis enables the AZ-affinity read option in the GLIDE client",
-        "Aurora points at the same-AZ instance endpoint instead of the reader endpoint"
+        "Kafka falls back to leader without a local replica",
+        "GLIDE: local replica, local primary, then remote",
+        "Missing local Aurora readers need an app reconnect policy"
       ]
     }
   ]

@@ -1,0 +1,409 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium 보안 아키텍처",
+    "output": "ko-networking-cilium-06-security-visibility-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "유입 트래픽"
+        },
+        "security": {
+          "label": "보안 제어"
+        },
+        "backend": {
+          "label": "탐지 · 관찰성"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "policy-path",
+        "label": "정책 적용 범위",
+        "focus": [
+          "traffic",
+          "l3l4",
+          "encrypt",
+          "segment",
+          "l7",
+          "api",
+          "identity"
+        ],
+        "note": "트래픽에는 네트워크 보안(L3/L4·암호화·마이크로세그멘테이션)과 애플리케이션 보안(L7·API·ID 기반 정책)이 순서 없이 함께 적용된다."
+      },
+      {
+        "id": "hubble-visibility",
+        "label": "Hubble 가시성",
+        "focus": [
+          "l3l4",
+          "l7",
+          "api",
+          "hubble",
+          "intrusion",
+          "anomaly"
+        ],
+        "note": "L3/L4·L7·API 정책 지점의 플로우가 Hubble로 모여 침입·이상 탐지의 근거가 된다."
+      },
+      {
+        "id": "runtime",
+        "label": "런타임 보안",
+        "focus": [
+          "identity",
+          "process",
+          "syscall",
+          "container"
+        ],
+        "note": "ID 기반 정책은 프로세스·시스템 콜·컨테이너 수준의 런타임 보안으로 이어진다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "traffic",
+      "type": "external",
+      "label": "트래픽",
+      "sublabel": "Pod / 외부 유입",
+      "pos": [
+        30,
+        100
+      ],
+      "size": [
+        130,
+        54
+      ]
+    },
+    {
+      "id": "l3l4",
+      "type": "security",
+      "label": "L3/L4 정책",
+      "sublabel": "IP · 포트 기반",
+      "pos": [
+        230,
+        100
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "encrypt",
+      "type": "security",
+      "label": "암호화",
+      "sublabel": "IPsec / WireGuard",
+      "pos": [
+        230,
+        190
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "segment",
+      "type": "security",
+      "label": "마이크로세그멘테이션",
+      "sublabel": "횡적 이동 차단",
+      "pos": [
+        230,
+        280
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "l7",
+      "type": "security",
+      "label": "L7 정책",
+      "sublabel": "HTTP / gRPC / Kafka",
+      "pos": [
+        520,
+        100
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "api",
+      "type": "security",
+      "label": "API 인식 필터링",
+      "sublabel": "메서드 · 경로 · 헤더",
+      "pos": [
+        520,
+        190
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "ID 기반 정책",
+      "sublabel": "서비스 ID · mTLS",
+      "pos": [
+        520,
+        280
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "hubble",
+      "type": "backend",
+      "label": "Hubble 관찰성",
+      "sublabel": "eBPF 플로우 가시성",
+      "pos": [
+        855,
+        100
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "intrusion",
+      "type": "backend",
+      "label": "침입 탐지",
+      "sublabel": "알려진 공격 패턴",
+      "pos": [
+        770,
+        230
+      ],
+      "size": [
+        160,
+        54
+      ]
+    },
+    {
+      "id": "anomaly",
+      "type": "backend",
+      "label": "이상 탐지",
+      "sublabel": "비정상 네트워크 활동",
+      "pos": [
+        960,
+        230
+      ],
+      "size": [
+        160,
+        54
+      ]
+    },
+    {
+      "id": "process",
+      "type": "security",
+      "label": "프로세스 모니터링",
+      "sublabel": "권한 상승 방지",
+      "pos": [
+        230,
+        440
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "syscall",
+      "type": "security",
+      "label": "시스템 콜 필터링",
+      "sublabel": "syscall 수준 제어",
+      "pos": [
+        520,
+        440
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "container",
+      "type": "security",
+      "label": "컨테이너 보안",
+      "sublabel": "이스케이프 탐지",
+      "pos": [
+        810,
+        440
+      ],
+      "size": [
+        170,
+        54
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "네트워크 보안",
+      "wraps": [
+        "l3l4",
+        "encrypt",
+        "segment"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "애플리케이션 보안",
+      "wraps": [
+        "l7",
+        "api",
+        "identity"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "위협 탐지",
+      "wraps": [
+        "hubble",
+        "intrusion",
+        "anomaly"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "런타임 보안",
+      "wraps": [
+        "process",
+        "syscall",
+        "container"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "traffic-to-l3l4",
+      "from": "traffic",
+      "to": "l3l4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "traffic-to-l7",
+      "from": "traffic",
+      "to": "l7",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          95,
+          385
+        ],
+        [
+          440,
+          385
+        ],
+        [
+          440,
+          127
+        ]
+      ]
+    },
+    {
+      "id": "l3l4-to-hubble",
+      "from": "l3l4",
+      "to": "hubble",
+      "label": "플로우 로그",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          315,
+          40
+        ],
+        [
+          940,
+          40
+        ]
+      ],
+      "labelAt": [
+        628,
+        34
+      ]
+    },
+    {
+      "id": "l7-to-hubble",
+      "from": "l7",
+      "to": "hubble",
+      "variant": "dashed"
+    },
+    {
+      "id": "api-to-hubble",
+      "from": "api",
+      "to": "hubble",
+      "variant": "dashed"
+    },
+    {
+      "id": "hubble-to-intrusion",
+      "from": "hubble",
+      "to": "intrusion",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hubble-to-anomaly",
+      "from": "hubble",
+      "to": "anomaly",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "identity-to-process",
+      "from": "identity",
+      "to": "process",
+      "variant": "security"
+    },
+    {
+      "id": "identity-to-syscall",
+      "from": "identity",
+      "to": "syscall",
+      "variant": "security"
+    },
+    {
+      "id": "identity-to-container",
+      "from": "identity",
+      "to": "container",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "네트워크 보안",
+      "items": [
+        "마이크로세그멘테이션으로 횡적 이동 방지, 최소 권한 원칙 적용",
+        "노드 간 IPsec 또는 WireGuard 투명 암호화",
+        "DNS 기반 정책과 악성 도메인 차단"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "애플리케이션 보안",
+      "items": [
+        "HTTP 메서드·경로·헤더, gRPC, Kafka 기반 API 인식 필터링",
+        "서비스 ID 기반 정책과 mTLS · SPIFFE/SPIRE 통합"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "탐지와 런타임",
+      "items": [
+        "Hubble이 eBPF 플로우로 비정상 활동과 알려진 공격 패턴을 식별",
+        "프로세스·시스템 콜 모니터링, 컨테이너 이스케이프 탐지, 권한 상승 방지"
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # Windows in Kubernetes
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: February 11, 2026
+> **Upstream Kubernetes versions reviewed**: Kubernetes 1.35, 1.36, 1.37
+> **Last Updated**: September 11, 2026
 
 Kubernetes was originally designed for Linux containers, but production support for Windows containers was added starting with version 1.14. In this chapter, we will explore how to run Windows workloads in Kubernetes, the architecture, limitations, and Windows support in Amazon EKS.
 
@@ -25,15 +25,17 @@ Windows containers are containers that run on the Windows operating system, allo
 
 ### Windows Container Types
 
-There are two types of Windows containers:
+Windows offers two isolation types. Kubernetes supports **process isolation only**; Hyper-V below is background information, not a Kubernetes deployment option:
 
-1. **Windows Server Containers**: Similar to Linux containers, they share the host OS kernel. They are lightweight and start quickly, but require the same Windows version as the host.
+1. **Windows Server Containers**: Similar to Linux containers, they share the host OS kernel. They are lightweight and start quickly, but require a host/image combination supported by Microsoft.
 
 2. **Hyper-V Isolation Containers**: Each container runs in a lightweight VM, providing a higher level of isolation. They can run different Windows versions than the host but use more resources.
 
 The following diagram shows the architectural differences between the two Windows container types:
 
-![Comparison of Windows Server Containers, which share one host kernel, against Hyper-V Isolation Containers, where each container gets its own lightweight VM and kernel before reaching the shared hypervisor and hardware.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-0.svg)
+![Comparison of Windows Server Containers, where several Windows apps share one container runtime and the host OS kernel, against Hyper-V Isolation Containers, where each app runs in its own lightweight VM with a dedicated Windows OS kernel under the Hyper-V hypervisor before reaching the same Windows Server OS and physical hardware.](../.gitbook/assets/en-core-10-windows-in-kubernetes-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-0.html)
 
 ### Windows Container Images
 
@@ -41,17 +43,15 @@ Windows container images are based on base images provided by Microsoft:
 
 1. **Windows Server Core**: A lightweight image that provides a minimal Windows Server environment
 2. **Nano Server**: An ultra-lightweight image with a smaller footprint
-3. **Windows**: An image that provides a full Windows Server environment
+3. **Windows**: A larger Windows API surface; container images do not provide a full desktop/GUI server
 
 Example Dockerfile:
 
 ```dockerfile
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
-WORKDIR /app
-COPY . .
-RUN powershell -Command "Install-WindowsFeature Web-Server"
+FROM mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
+COPY website/ C:/inetpub/wwwroot/
 EXPOSE 80
-CMD ["powershell", "-Command", "Start-Service W3SVC; Get-Content -Path 'C:\\inetpub\\logs\\LogFiles\\W3SVC1\\u_ex*' -Wait"]
+# Inherit the IIS image entrypoint (ServiceMonitor.exe).
 ```
 
 ## Kubernetes Windows Support Architecture
@@ -66,7 +66,9 @@ The Windows support architecture in Kubernetes is as follows:
 2. **Linux Worker Nodes**: Run system components (CoreDNS, metrics-server, etc.).
 3. **Windows Worker Nodes**: Run Windows application workloads.
 
-![A single Linux-only control plane manages a mixed cluster, reaching both a Linux worker node and two Windows worker nodes that each run kubelet, kube-proxy, and Windows containers.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-1.svg)
+![A Linux-only control plane (kube-apiserver, kube-controller-manager, kube-scheduler, etcd) manages a mixed cluster, reaching a Linux worker node that runs system pods such as CoreDNS and metrics-server and two Windows worker nodes that each run kubelet, kube-proxy, and Windows containers.](../.gitbook/assets/en-core-10-windows-in-kubernetes-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-1.html)
 
 ### Windows Node Components
 
@@ -83,88 +85,40 @@ There are several limitations to be aware of when using Windows nodes in Kuberne
 
 ### Feature Limitations
 
-1. **Privileged Containers**: Windows does not support privileged containers.
-2. **Host Network Mode**: Windows pods cannot use host network mode.
-3. **Pod Security Context**: Some security context features (runAsUser, fsGroup, etc.) are not supported.
-4. **DaemonSet**: DaemonSets running on Windows nodes require special considerations.
-5. **emptyDir Volumes**: Memory-based emptyDir volumes are not supported on Windows.
-6. **Resource Limits**: CPU limits are applied differently on Windows.
+1. `privileged` is unsupported. Node agents can use **HostProcess containers** with hostProcess and hostNetwork enabled; restrict their host privileges carefully.
+2. Regular Windows Pods cannot use hostNetwork; HostProcess is the exception.
+3. Pods with `spec.os.name: windows` must not set Linux-only fields such as runAsUser, fsGroup, seccomp, capabilities, or readOnlyRootFilesystem.
+4. Use OS-specific images and nodeSelector for separate DaemonSets.
+5. Memory-backed emptyDir, raw block volumeDevices, PIDPressure, and Linux-style OOM eviction are unsupported.
+6. CPU/memory limits use Windows mechanisms. Windows has no Linux OOM killer; exhausted memory can cause allocation failures or paging and degraded performance.
 
 ### Networking Limitations
 
-1. **Network Mode**: Windows only supports L3 networking.
-2. **Service Types**: Windows nodes have limitations on some service types.
-3. **Load Balancing**: Some load balancing features may be limited.
+Check the Windows HNS/CNI support matrix for modes such as L2bridge and overlay. Containers in the same Pod share networking and localhost, but not process namespaces or root filesystems. Verify NetworkPolicy, Service and DSR support for the selected OS/CNI/cluster combination.
 
 ### Operating System Version Compatibility
 
-Windows containers have important compatibility considerations with the host OS version:
+Kubernetes v1.37 supports Windows Server 2022 and 2025 workers. This chapter uses **Windows Server 2022 + ltsc2022** examples. Check both Microsoft’s compatibility matrix and the distribution’s support policy, and apply monthly security updates. Hyper-V isolation cannot bypass Kubernetes compatibility requirements.
 
-| Container Base Image | Compatible Host OS Versions |
-|---------------------|---------------------------|
-| Windows Server 2019 | Windows Server 2019 |
-| Windows Server 2022 | Windows Server 2022 |
-
-Hyper-V isolation can relax these limitations but requires additional resources.
 ## Windows Node Setup
 
 Let's explore the process of adding Windows nodes to a Kubernetes cluster.
 
 ### Prerequisites
 
-Before setting up Windows nodes, verify the following:
-
-1. **Kubernetes Version**: 1.14 or later
-2. **Windows Version**: Windows Server 2019 or later
-3. **Network Plugin**: CNI plugin that supports Windows (Calico, Flannel, etc.)
-4. **Container Runtime**: Docker, containerd, etc.
+Use a supported Kubernetes/Windows combination, a Linux control plane, a Windows-capable CNI, and CRI-compatible containerd. Docker Engine alone does not implement CRI; built-in dockershim was removed in Kubernetes 1.24. For EKS nodes, follow the EKS section below.
 
 ### Preparing Windows Nodes
 
-Steps to prepare a Windows node:
-
-1. **Install Windows Server**: Install Windows Server 2019 or later
-2. **Enable Container Feature**:
+Enable the Containers feature in administrator PowerShell and complete any required reboot. The following is for **self-managed kubeadm workers**. Download `hostprocess/Install-Containerd.ps1` and `hostprocess/PrepareNode.ps1` from a reviewed commit of official sig-windows-tools, inspect them and verify checksums before execution. Select a supported containerd patch and kubelet version compatible with the cluster. Review installer-created firewall rules and restrict port 10250 to required control-plane sources.
 
 ```powershell
-Install-WindowsFeature -Name Containers
-Restart-Computer -Force
-```
-
-3. **Install Docker**:
-
-```powershell
-Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
-Install-Package -Name Docker -ProviderName DockerMsftProvider -Force
-Restart-Computer -Force
-```
-
-4. **Install Kubernetes Components**:
-
-```powershell
-# Create directory
-mkdir -p c:\k
-
-# Download kubelet, kubeadm, kubectl
-curl.exe -LO https://dl.k8s.io/v1.22.0/bin/windows/amd64/kubelet.exe
-curl.exe -LO https://dl.k8s.io/v1.22.0/bin/windows/amd64/kubectl.exe
-curl.exe -LO https://dl.k8s.io/v1.22.0/bin/windows/amd64/kube-proxy.exe
-curl.exe -LO https://github.com/kubernetes-sigs/sig-windows-tools/releases/latest/download/wins.exe
-
-# Move files to C:\k
-mv kubelet.exe C:\k
-mv kubectl.exe C:\k
-mv kube-proxy.exe C:\k
-mv wins.exe C:\k
-```
-
-5. **Configure Network**:
-
-```powershell
-# Set firewall rules
-New-NetFirewallRule -Name kubelet -DisplayName 'kubelet' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 10250
-New-NetFirewallRule -Name https -DisplayName 'https' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 443
-New-NetFirewallRule -Name http -DisplayName 'http' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 80
+$ErrorActionPreference = "Stop"
+$ContainerdVersion = Read-Host "Validated containerd version (without v)"
+$KubernetesVersion = Read-Host "Cluster-compatible Kubernetes version (vX.Y.Z)"
+if (-not $ContainerdVersion -or -not $KubernetesVersion) { throw "Versions required" }
+.\Install-Containerd.ps1 -ContainerDVersion $ContainerdVersion
+.\PrepareNode.ps1 -KubernetesVersion $KubernetesVersion
 ```
 
 ### Joining Windows Node Using kubeadm
@@ -181,18 +135,14 @@ Run join command on the Windows node:
 # Run kubeadm join command
 kubeadm join <control-plane-host>:<control-plane-port> --token <token> --discovery-token-ca-cert-hash sha256:<hash>
 
-# Register and start kubelet service
-sc.exe create kubelet binPath= "C:\k\kubelet.exe --windows-service --kubeconfig=C:\k\config"
-Start-Service kubelet
 ```
 
 ### Setting Windows Node Labels
 
-Set appropriate labels on Windows nodes to control workload scheduling:
+Inspect OS, architecture and build labels published by kubelet. Do not overwrite an OS label to force scheduling. `spec.os.name` declares the Pod OS but does not replace scheduler selectors; also use nodeSelector.
 
 ```bash
-kubectl label node <windows-node-name> kubernetes.io/os=windows
-kubectl label node <windows-node-name> kubernetes.io/arch=amd64
+kubectl get nodes -L kubernetes.io/os,kubernetes.io/arch,node.kubernetes.io/windows-build
 ```
 
 ## Deploying Windows Containers
@@ -218,11 +168,13 @@ spec:
       labels:
         app: iis
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: iis
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         resources:
           limits:
             cpu: 1
@@ -251,11 +203,13 @@ kind: Pod
 metadata:
   name: windows-custom-script
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     command:
     - powershell.exe
     - -Command
@@ -276,22 +230,27 @@ kind: Pod
 metadata:
   name: windows-multi-container
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
-  - name: web
-    image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-    ports:
-    - containerPort: 80
+  - name: writer
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    command: [powershell.exe, -Command, 'while ($true) { Add-Content C:\shared-logs\app.log "Log at $(Get-Date)"; Start-Sleep 10 }']
+    volumeMounts:
+    - name: logs
+      mountPath: C:\shared-logs
   - name: logger
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
-    command:
-    - powershell.exe
-    - -Command
-    - |
-      while ($true) {
-        Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
-      }
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    command: [powershell.exe, -Command, 'while (-not (Test-Path C:\shared-logs\app.log)) { Start-Sleep 2 }; Get-Content C:\shared-logs\app.log -Wait']
+    volumeMounts:
+    - name: logs
+      mountPath: C:\shared-logs
+      readOnly: true
+  volumes:
+  - name: logs
+    emptyDir: {}
 ```
 
 ## Networking
@@ -300,7 +259,9 @@ Networking on Windows nodes has different characteristics than Linux nodes.
 
 The following diagram shows the networking architecture of a Kubernetes cluster with mixed Windows and Linux nodes:
 
-![A client request reaches a Kubernetes Service, which load-balances to Linux and Windows pods alike, while the pods themselves form one flat mesh network regardless of node OS.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-2.svg)
+![A client uses a Service virtual IP whose data plane selects Linux or Windows Pod endpoints. Cross-OS Pod connectivity depends on compatible CNI routing and policies; the Service API object is not a packet-processing hop.](../.gitbook/assets/en-core-10-windows-in-kubernetes-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-2.html)
 
 ### Supported Network Plugins
 
@@ -314,72 +275,7 @@ Network plugins supported on Windows nodes:
 
 ### Flannel Setup Example
 
-Windows networking setup using Flannel:
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: kube-flannel-ds-windows
-  namespace: kube-system
-  labels:
-    tier: node
-    app: flannel
-spec:
-  selector:
-    matchLabels:
-      app: flannel
-  template:
-    metadata:
-      labels:
-        tier: node
-        app: flannel
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/os
-                operator: In
-                values:
-                - windows
-      hostNetwork: true
-      containers:
-      - name: kube-flannel
-        image: sigwindowstools/flannel:v0.13.0
-        command:
-        - powershell
-        args:
-        - -file
-        - /opt/bin/flannel-host.ps1
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        volumeMounts:
-        - name: host-run
-          mountPath: /run
-        - name: cni
-          mountPath: /etc/cni/net.d
-        - name: flannel-cfg
-          mountPath: /etc/kube-flannel/
-      volumes:
-      - name: host-run
-        hostPath:
-          path: /run
-      - name: cni
-        hostPath:
-          path: /etc/cni/net.d
-      - name: flannel-cfg
-        configMap:
-          name: kube-flannel-cfg
-```
+Copying a Linux Flannel manifest into a Windows DaemonSet does not work. Windows binaries, HNS, CNI paths, RBAC and HostProcess configuration are required. Use the distribution’s Windows installation procedure and coordinate Linux networking with Windows win-overlay/win-bridge configuration. Check Flannel Windows VXLAN requirements for VNI 4096/UDP 4789. Adding hostNetwork to a regular application Pod is not an installation method.
 
 ### Exposing Services
 
@@ -430,7 +326,9 @@ Let's explore storage options available on Windows nodes.
 
 The following diagram shows various storage options available on Windows nodes:
 
-![A Windows container can mount emptyDir, hostPath, ConfigMap, Secret, or PersistentVolume storage, with hostPath backed by the node disk and PersistentVolumes reaching Azure Disk/File, AWS EBS, or SMB shares through a CSI driver.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-3.svg)
+![A Windows container in a Windows Pod mounts emptyDir and hostPath volumes on the Windows node (hostPath backed by the node disk), ConfigMap and Secret volumes delivered by the Kubernetes API, and a PersistentVolume that reaches Azure Disk/File, AWS EBS, or an SMB share through a CSI driver.](../.gitbook/assets/en-core-10-windows-in-kubernetes-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-3.html)
 
 ### Supported Volume Types
 
@@ -440,10 +338,7 @@ Volume types supported on Windows nodes:
 2. **hostPath**: Host node filesystem
 3. **configMap**: Configuration data
 4. **secret**: Sensitive data
-5. **azureFile**: Azure File storage
-6. **awsElasticBlockStore**: AWS EBS volumes
-7. **azureDisk**: Azure Disk storage
-8. **CSI**: Container Storage Interface drivers
+5. **CSI/PVC**: Windows-compatible Azure Files, Azure Disk, EBS or SMB CSI drivers with filesystem volumes; check each driver’s OS and filesystem support.
 
 ### emptyDir Volume Example
 
@@ -453,11 +348,13 @@ kind: Pod
 metadata:
   name: windows-emptydir
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: temp-volume
       mountPath: C:\temp
@@ -483,11 +380,13 @@ kind: Pod
 metadata:
   name: windows-hostpath
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: logs-volume
       mountPath: C:\logs
@@ -535,23 +434,25 @@ kind: Pod
 metadata:
   name: windows-config-secret
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: config-volume
       mountPath: C:\config
     - name: secret-volume
       mountPath: C:\secret
+      readOnly: true
     command:
     - powershell.exe
     - -Command
     - |
       Get-Content -Path C:\config\config.json
-      Get-Content -Path C:\secret\username
-      Get-Content -Path C:\secret\password
+      if (-not (Test-Path C:\secret\username) -or -not (Test-Path C:\secret\password)) { throw "Secret files missing" }
       while ($true) { Start-Sleep -Seconds 10 }
   volumes:
   - name: config-volume
@@ -564,7 +465,9 @@ spec:
 
 ### Using CSI Drivers
 
-Example of using CSI drivers on Windows:
+Prerequisite: create `windows-csi` with an installed Windows-compatible CSI driver and filesystem (for example, EBS CSI with NTFS and WaitForFirstConsumer). The name alone does not install a driver. EBS volumes are AZ-bound; use filesystem mode, not raw block.
+
+Example:
 
 ```yaml
 apiVersion: v1
@@ -584,11 +487,13 @@ kind: Pod
 metadata:
   name: windows-csi-pod
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     volumeMounts:
     - name: data-volume
       mountPath: C:\data
@@ -618,11 +523,10 @@ Tools for monitoring Windows nodes:
 Installing Prometheus Windows Exporter on Windows nodes:
 
 ```powershell
-# Download Windows Exporter
-Invoke-WebRequest -Uri https://github.com/prometheus-community/windows_exporter/releases/download/v0.16.0/windows_exporter-0.16.0-amd64.msi -OutFile windows_exporter.msi
-
-# Install Windows Exporter
-Start-Process msiexec.exe -ArgumentList '/i', 'windows_exporter.msi', 'ENABLED_COLLECTORS=cpu,memory,disk,net,service,os,system', '/quiet' -Wait
+# Download a supported release MSI, verify its checksum, then install locally.
+$ExporterMsi = (Resolve-Path .\windows_exporter.msi).Path
+Start-Process msiexec.exe -ArgumentList "/i `"$ExporterMsi`" ENABLED_COLLECTORS=cpu,memory,logical_disk,net,service,os,system REMOVE=FirewallException /quiet" -Wait
+# Restrict any separately configured port 9182 firewall rule to Prometheus sources.
 ```
 
 Prometheus configuration:
@@ -646,12 +550,11 @@ Tools for collecting Windows container logs:
 
 Installing Fluent Bit on Windows nodes:
 
-```powershell
-# Download Fluent Bit
-Invoke-WebRequest -Uri https://fluentbit.io/releases/1.8/fluent-bit-1.8.11-win64.zip -OutFile fluent-bit.zip
+Configure the actual Elasticsearch endpoint, authentication and trusted CA. The service account needs Security event-log read permission and write permission on the checkpoint path.
 
-# Extract
-Expand-Archive -Path fluent-bit.zip -DestinationPath C:\fluent-bit
+```powershell
+# Install a supported Windows Fluent Bit release, verify its checksum,
+# and arrange bin/ and conf/ under C:\fluent-bit before continuing.
 
 # Create configuration file
 @"
@@ -663,6 +566,7 @@ Expand-Archive -Path fluent-bit.zip -DestinationPath C:\fluent-bit
 [INPUT]
     Name         winlog
     Channels     Application,System,Security
+    DB           C:\fluent-bit\winlog.db
 
 [OUTPUT]
     Name         es
@@ -670,6 +574,9 @@ Expand-Archive -Path fluent-bit.zip -DestinationPath C:\fluent-bit
     Host         elasticsearch-host
     Port         9200
     Index        windows_logs
+    Suppress_Type_Name On
+    tls          On
+    tls.verify   On
 "@ | Out-File -FilePath C:\fluent-bit\conf\fluent-bit.conf -Encoding ascii
 
 # Register service
@@ -679,38 +586,7 @@ Start-Service fluent-bit
 
 ### Application Log Collection
 
-Collecting Windows container application logs:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: windows-logging
-spec:
-  nodeSelector:
-    kubernetes.io/os: windows
-  containers:
-  - name: iis
-    image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
-    volumeMounts:
-    - name: logs
-      mountPath: C:\inetpub\logs\LogFiles
-  - name: log-collector
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
-    command:
-    - powershell.exe
-    - -Command
-    - |
-      while ($true) {
-        Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
-      }
-    volumeMounts:
-    - name: logs
-      mountPath: C:\inetpub\logs\LogFiles
-  volumes:
-  - name: logs
-    emptyDir: {}
-```
+Integrate Microsoft LogMonitor into the application image and define actual file/ETW/Event Log sources in LogMonitorConfig.json to emit IIS logs to stdout. Test the entrypoint so ServiceMonitor and IIS lifetimes remain correct. The shared-file sidecar above demonstrates volume sharing; it does not handle file rotation or duplicate/lost records during restart. Production collectors need checkpoints and rotation handling. `kubectl logs` reads stdout/stderr and does not automatically collect IIS files.
 
 ## Security
 
@@ -732,13 +608,13 @@ Recommendations for Windows container security:
 
 1. **Minimal Base Image**: Use the smallest possible base image (Nano Server, etc.)
 2. **Image Scanning**: Scan container images for vulnerabilities
-3. **ReadOnlyRootFilesystem**: Use read-only root filesystem when possible
+3. **Filesystem permissions**: Restrict NTFS ACLs and use read-only data mounts where supported; readOnlyRootFilesystem is unsupported on Windows.
 4. **Non-Privileged User**: Run applications as non-privileged users
 5. **Network Policies**: Apply appropriate network policies
 
 ### RunAsUsername
 
-In Windows containers, you can use `runAsUsername` instead of `runAsUser` to specify the user to run inside the container:
+In Windows containers, you can use `securityContext.windowsOptions.runAsUserName` instead of `runAsUser` to specify the user to run inside the container:
 
 ```yaml
 apiVersion: v1
@@ -746,6 +622,8 @@ kind: Pod
 metadata:
   name: windows-runasusername
 spec:
+  os:
+    name: windows
   nodeSelector:
     kubernetes.io/os: windows
   securityContext:
@@ -753,7 +631,7 @@ spec:
       runAsUserName: "ContainerUser"
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
     command:
     - powershell.exe
     - -Command
@@ -764,49 +642,79 @@ spec:
 
 ### Group Managed Service Accounts (gMSA)
 
-gMSA configuration for Active Directory authentication in Windows containers:
+`gmsaCredentialSpecName` references a cluster-scoped **GMSACredentialSpec**, not a Secret. Install the CRD, mutating/validating webhooks and ServiceAccount `use` RBAC permission. Replace the example domain/host names and generate AD SID/GUID/NetBIOS/DNS values with the CredentialSpec module. This example uses domain-joined hosts; a supported portable identity configuration for non-domain-joined hosts requires separate setup.
 
-1. **Create gMSA in Active Directory**:
+Check `Get-KdsRootKey` first. If a new key is needed, an AD administrator uses `Add-KdsRootKey -EffectiveImmediately` and allows replication time (up to 10 hours). Backdating 10 hours is for a single-DC test environment only. gMSA supplies network credentials; it neither joins the container to the domain nor changes `whoami` to the gMSA name. Validate actual service Kerberos authentication and inspect `klist`.
 
 ```powershell
-# Create gMSA
-New-ADServiceAccount -Name WebApp1 -DNSHostName WebApp1.contoso.com -ServicePrincipalNames http/WebApp1.contoso.com -PrincipalsAllowedToRetrieveManagedPassword "Domain Controllers", "Domain Computers"
+# On an authorized AD administration host, after KDS readiness is confirmed:
+Import-Module ActiveDirectory
+New-ADGroup -Name 'WebAppHosts' -SamAccountName 'WebAppHosts' -GroupScope DomainLocal
+Add-ADGroupMember -Identity 'WebAppHosts' -Members 'ContainerHost01$'
+New-ADServiceAccount -Name WebApp1 -DNSHostName WebApp1.contoso.com -ServicePrincipalNames http/WebApp1.contoso.com -PrincipalsAllowedToRetrieveManagedPassword WebAppHosts
+# Install/review the official CredentialSpec PowerShell module first.
+Import-Module CredentialSpec
+New-CredentialSpec -AccountName WebApp1 -Path C:\gmsa-credspec.json
+$spec = Get-Content C:\gmsa-credspec.json -Raw | ConvertFrom-Json
+@{ apiVersion='windows.k8s.io/v1'; kind='GMSACredentialSpec'; metadata=@{name='gmsa-cred-spec'}; credspec=$spec } |
+    ConvertTo-Json -Depth 20 | Set-Content C:\gmsa-resource.json -Encoding utf8
 ```
 
-2. **Store gMSA Credentials in Kubernetes**:
+```bash
+# Requires the GMSA CRD and mutating/validating webhooks installed by an administrator.
+kubectl apply -f gmsa-resource.json
+```
 
 ```yaml
 apiVersion: v1
-kind: Secret
+kind: ServiceAccount
 metadata:
-  name: gmsa-cred-spec
-type: microsoft.com/gmsa-credential-spec
-data:
-  credspec.json: <base64-encoded-credential-spec>
-```
-
-3. **Apply gMSA Configuration to Pod**:
-
-```yaml
+  name: windows-app
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: use-webapp-gmsa
+rules:
+- apiGroups: [windows.k8s.io]
+  resources: [gmsacredentialspecs]
+  resourceNames: [gmsa-cred-spec]
+  verbs: [use]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: use-webapp-gmsa
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: use-webapp-gmsa
+subjects:
+- kind: ServiceAccount
+  name: windows-app
+  namespace: default
+---
 apiVersion: v1
 kind: Pod
 metadata:
   name: windows-gmsa
+  namespace: default
 spec:
+  os:
+    name: windows
+  serviceAccountName: windows-app
   nodeSelector:
     kubernetes.io/os: windows
   securityContext:
     windowsOptions:
       gmsaCredentialSpecName: gmsa-cred-spec
+      runAsUserName: 'NT AUTHORITY\NETWORK SERVICE'
   containers:
   - name: windows-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2019
-    command:
-    - powershell.exe
-    - -Command
-    - |
-      whoami
-      while ($true) { Start-Sleep -Seconds 10 }
+    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    command: [powershell.exe, -Command, 'whoami; Start-Sleep -Seconds 3600']
 ```
 
 ## Windows Support in Amazon EKS
@@ -815,23 +723,15 @@ Let's explore how to run Windows workloads in Amazon EKS.
 
 The following diagram shows the Windows support architecture in Amazon EKS:
 
-![The managed EKS control plane reaches both a Linux node group and a Windows node group, plus AWS IAM, VPC, and CloudWatch, while Windows application pods reach end users through an Elastic Load Balancer.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-4.svg)
+![The managed EKS control plane manages both a Linux node group (running CoreDNS, VPC CNI, and kube-proxy system pods) and a Windows node group (running Windows application pods), integrates with AWS IAM, Amazon VPC, and CloudWatch, and the Windows application pods reach end users through an Elastic Load Balancer.](../.gitbook/assets/en-core-10-windows-in-kubernetes-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-10-windows-in-kubernetes-4.html)
 
 ### Enabling Windows Support in EKS
 
-Steps to enable Windows support in Amazon EKS:
+EKS manages the VPC resource controller responsible for Windows IPAM. Do not install the old release-1.11 controller/webhook manifests. Grant the cluster IAM role `AmazonEKSVPCResourceController` permissions and follow current AWS setup instructions to set `enable-windows-ipam: "true"` in `kube-system/amazon-vpc-cni`. Preserve existing keys and configure through the owning Helm/add-on workflow where applicable.
 
-1. **Update VPC CNI Plugin**:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.11/config/master/vpc-resource-controller.yaml
-```
-
-2. **Install Windows VPC Admission Webhook**:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.11/config/master/vpc-admission-webhook.yaml
-```
+Provide Linux nodes or a supported Fargate setup for CoreDNS. Windows is unsupported for EKS Auto Mode, Fargate workloads, Hybrid Nodes, IPv6, custom networking and security groups for Pods. The Windows node-role access entry type is `EC2_WINDOWS`; legacy aws-auth mappings need the `eks:kube-proxy-windows` group.
 
 ### Creating Windows Node Groups
 
@@ -847,7 +747,7 @@ eksctl create nodegroup \
   --nodes-min 1 \
   --nodes-max 4 \
   --managed \
-  --node-ami-family WindowsServer2019FullContainer
+  --node-ami-family WindowsServer2022FullContainer
 ```
 
 Creating Windows node group using AWS Management Console:
@@ -882,11 +782,13 @@ spec:
         tier: backend
         track: stable
     spec:
+      os:
+        name: windows
       nodeSelector:
         kubernetes.io/os: windows
       containers:
       - name: windows-server-iis
-        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019
+        image: mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2022
         ports:
         - name: http
           containerPort: 80
@@ -915,43 +817,9 @@ spec:
 
 ### Windows Container Logging in EKS
 
-Collecting Windows container logs using CloudWatch Logs:
+Windows Container Insights is supported by CloudWatch Observability EKS add-on 1.5.0 and later. Select a cluster-compatible add-on version, IAM permissions and Windows agent configuration. Windows Application Signals is unsupported.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: amazon-cloudwatch
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
-
-    [INPUT]
-        Name          tail
-        Tag           kube.*
-        Path          /var/log/containers/*.log
-        Parser        docker
-        DB            /var/fluent-bit/state/flb_container.db
-        Mem_Buf_Limit 50MB
-
-    [FILTER]
-        Name          kubernetes
-        Match         kube.*
-        Kube_URL      https://kubernetes.default.svc:443
-        Merge_Log     On
-
-    [OUTPUT]
-        Name          cloudwatch_logs
-        Match         kube.*
-        region        us-west-2
-        log_group_name /aws/eks/my-cluster/windows-logs
-        log_stream_prefix windows-
-        auto_create_group true
-```
+Collect Windows stdout/stderr from kubelet CRI log locations (typically `C:\var\log\pods` and `C:\var\log\containers`); verify distribution paths instead of copying Linux `/var/log` and Docker-parser configuration. EKS writes kubelet/kube-proxy logs to the **EKS Windows** event log. Mounting .evtx files into a regular container does not make winlog read the host event API. Use a host service or reviewed HostProcess collector.
 
 ## Best Practices
 
@@ -1002,3 +870,14 @@ To successfully implement Windows in Kubernetes, it's important to follow approp
 ## Quiz
 
 To test what you learned in this chapter, try the [Windows in Kubernetes Quiz](../quizzes/core/10-windows-in-kubernetes-quiz.md).
+
+## Verification References
+
+- https://kubernetes.io/docs/concepts/windows/intro/
+- https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/adding-windows-nodes/
+- https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/
+- https://kubernetes.io/docs/tasks/configure-pod-container/configure-gmsa/
+- https://learn.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility
+- https://github.com/microsoft/windows-container-tools/tree/main/LogMonitor
+- https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html
+- https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html

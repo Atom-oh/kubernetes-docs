@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 문제 해결 기본 사항",
+    "output": "ko-eks-09-eks-troubleshooting-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": { "label": "문제 해결 단계" },
+        "cloud": { "label": "정보 수집 소스" }
+      }
+    },
+    "views": [
+      { "id": "approach", "label": "6단계 접근 방식", "focus": ["identify", "collect", "analyze", "resolve", "verify", "document"], "note": "문제 식별부터 문서화까지 체계적으로 진행하는 여섯 단계의 문제 해결 흐름." },
+      { "id": "sources", "label": "정보 수집 소스", "focus": ["tools", "logs", "diag", "collect"], "note": "필수 도구, 로그, 진단 정보가 2단계 정보 수집에 쓰이는 관련 로그·이벤트·메트릭을 제공한다." }
+    ]
+  },
+  "components": [
+    { "id": "identify", "type": "backend", "label": "1. 문제 식별", "sublabel": "증상과 영향 파악", "pos": [170, 80], "size": [140, 60] },
+    { "id": "collect", "type": "backend", "label": "2. 정보 수집", "sublabel": "로그·이벤트·메트릭", "pos": [340, 80], "size": [140, 60] },
+    { "id": "analyze", "type": "backend", "label": "3. 분석", "sublabel": "근본 원인 파악", "pos": [510, 80], "size": [140, 60] },
+    { "id": "resolve", "type": "backend", "label": "4. 해결", "sublabel": "해결책 적용", "pos": [680, 80], "size": [140, 60] },
+    { "id": "verify", "type": "backend", "label": "5. 검증", "sublabel": "해결 여부 확인", "pos": [850, 80], "size": [140, 60] },
+    { "id": "document", "type": "backend", "label": "6. 문서화", "sublabel": "향후 참조용 기록", "pos": [1020, 80], "size": [140, 60] },
+    { "id": "tools", "type": "cloud", "label": "필수 도구 및 명령어", "sublabel": "AWS CLI · kubectl · eksctl · CloudWatch", "pos": [40, 300], "size": [230, 64] },
+    { "id": "logs", "type": "cloud", "label": "로그 수집 및 분석", "sublabel": "컨트롤 플레인 · 노드 · 파드 로그", "pos": [300, 300], "size": [230, 64] },
+    { "id": "diag", "type": "cloud", "label": "진단 정보 수집", "sublabel": "클러스터 · 시스템 리소스 · 네트워크", "pos": [560, 300], "size": [230, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "문제 해결 접근 방식", "wraps": ["identify", "collect", "analyze", "resolve", "verify", "document"] },
+    { "kind": "region", "label": "도구 · 로그 · 진단 정보", "wraps": ["tools", "logs", "diag"] }
+  ],
+  "connections": [
+    { "id": "s1", "from": "identify", "to": "collect", "variant": "emphasis" },
+    { "id": "s2", "from": "collect", "to": "analyze", "variant": "emphasis" },
+    { "id": "s3", "from": "analyze", "to": "resolve", "variant": "emphasis" },
+    { "id": "s4", "from": "resolve", "to": "verify", "variant": "emphasis" },
+    { "id": "s5", "from": "verify", "to": "document", "variant": "emphasis" },
+    { "id": "tools-collect", "from": "tools", "to": "collect", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "logs-collect", "from": "logs", "to": "collect", "label": "로그 · 이벤트 · 메트릭", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "diag-collect", "from": "diag", "to": "collect", "variant": "dashed", "fromSide": "top", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "필수 도구 및 명령어", "items": ["AWS CLI — 클러스터·노드 그룹 정보 확인", "kubectl — 노드·파드·서비스·이벤트·로그 확인", "eksctl — 클러스터 관리 및 로깅 활성화", "AWS CloudWatch — 로그 및 메트릭 확인"] },
+    { "dot": "cyan", "title": "로그 수집 및 분석", "items": ["EKS 컨트롤 플레인 로그", "노드 로그", "파드 로그"] },
+    { "dot": "emerald", "title": "진단 정보 수집", "items": ["클러스터 진단 정보", "시스템 리소스 정보", "네트워크 진단"] }
+  ]
+}

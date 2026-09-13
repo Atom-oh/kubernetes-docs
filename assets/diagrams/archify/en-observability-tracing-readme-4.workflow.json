@@ -1,0 +1,150 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Head-based Sampling",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Request entry"
+        },
+        "security": {
+          "label": "Sampling decision"
+        },
+        "database": {
+          "label": "Trace collected"
+        },
+        "external": {
+          "label": "Skipped"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "request",
+      "label": "Request start · decide immediately"
+    },
+    {
+      "id": "sampled",
+      "label": "Sampled · 10%"
+    },
+    {
+      "id": "skipped",
+      "label": "Skipped · 90%",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "arrive",
+    "decide",
+    "collect"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "arrive"
+    ],
+    "allowedTerminals": [
+      "collect",
+      "skip"
+    ],
+    "requiredEdges": [
+      {
+        "from": "decide",
+        "to": "collect"
+      },
+      {
+        "from": "decide",
+        "to": "skip"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "arrive",
+      "lane": "request",
+      "col": 0,
+      "type": "frontend",
+      "label": "Request received",
+      "sublabel": "first Span created",
+      "width": 164
+    },
+    {
+      "id": "decide",
+      "lane": "request",
+      "col": 1,
+      "type": "security",
+      "label": "Sampling decision",
+      "sublabel": "traceidratio 0.1",
+      "tag": "decision point",
+      "width": 180
+    },
+    {
+      "id": "collect",
+      "lane": "sampled",
+      "col": 2,
+      "type": "database",
+      "label": "Trace collected",
+      "sublabel": "every Span recorded",
+      "width": 172
+    },
+    {
+      "id": "skip",
+      "lane": "skipped",
+      "col": 2,
+      "type": "external",
+      "label": "Trace skipped",
+      "sublabel": "error/latency unknown",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "arrive-decide",
+      "from": "arrive",
+      "to": "decide",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "decide-collect",
+      "from": "decide",
+      "to": "collect",
+      "label": "10% sampled",
+      "variant": "emphasis",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "decide-skip",
+      "from": "decide",
+      "to": "skip",
+      "label": "90% skipped",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Advantages",
+      "items": [
+        "Simple implementation",
+        "Low overhead",
+        "Consistent sampling decisions"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Disadvantages",
+      "items": [
+        "May miss important requests",
+        "May skip requests with errors or latency"
+      ]
+    }
+  ]
+}

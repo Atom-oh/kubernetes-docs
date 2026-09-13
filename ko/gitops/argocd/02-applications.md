@@ -1,7 +1,7 @@
 # ArgoCD Application 심층 분석
 
-> **지원 버전**: ArgoCD v2.9+
-> **마지막 업데이트**: 2026년 2월 22일
+> **지원 버전**: Argo CD 3.5.2
+> **마지막 업데이트**: 2026년 9월 11일
 
 ## 목차
 
@@ -18,18 +18,24 @@
 
 ## Application CRD 개요
 
+예제는 독립적인 설정입니다. myorg·계정·클러스터·경로는 실제 소스와 권한으로 대체합니다. source/sources와 렌더러, destination.server/name은 사용 방식에 맞게 선택하며 모든 선택지를 동시에 활성화하지 않습니다.
+
 Application은 ArgoCD의 핵심 Custom Resource입니다. Git 저장소의 매니페스트를 특정 Kubernetes 클러스터와 네임스페이스에 배포하는 방법을 정의합니다.
 
-![ArgoCD Application CRD가 Git·Helm·OCI 저장소를 소스로 받아 Kubernetes 클러스터와 네임스페이스에 배포하는 구조를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-02-applications-0.svg)
+![ArgoCD Application CRD가 Git·Helm·OCI 저장소를 소스로 받아 Kubernetes 클러스터와 네임스페이스에 배포하는 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-02-applications-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-02-applications-0.html)
 
 ### 기본 구조
+
+status.sync·status.health·history 등은 컨트롤러가 기록하는 관측값이므로 원하는 상태의 입력으로 작성하지 않습니다. 다른 namespace의 Application은 controller/server의 application.namespaces와 AppProject.sourceNamespaces 등 관리자 설정을 모두 만족해야 합니다.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: my-application
-  namespace: argocd  # Application은 항상 argocd 네임스페이스에 생성
+  namespace: argocd  # 기본 설치 namespace; 다른 namespace는 관리자 설정 필요
   labels:
     app.kubernetes.io/name: my-application
     environment: production
@@ -39,16 +45,17 @@ metadata:
     - resources-finalizer.argocd.argoproj.io  # 삭제 시 리소스도 함께 삭제
 spec:
   project: default  # AppProject 참조
-  source: {}        # 소스 정의
-  destination: {}   # 대상 정의
-  syncPolicy: {}    # 동기화 정책
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: HEAD
+    path: guestbook
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: guestbook
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
   ignoreDifferences: []  # 무시할 차이점
   info: []          # 추가 정보
-status:
-  sync: {}          # 동기화 상태
-  health: {}        # 헬스 상태
-  history: []       # 배포 이력
-  resources: []     # 관리되는 리소스 목록
 ```
 
 ## 전체 스펙 해설
@@ -61,7 +68,7 @@ Application이 속한 AppProject를 지정합니다:
 spec:
   project: default  # 기본 프로젝트
   # 또는
-  project: production  # 커스텀 프로젝트
+  # project: production  # 위 값 대신 선택할 커스텀 프로젝트
 ```
 
 ### source
@@ -81,7 +88,7 @@ spec:
     path: manifests/production
 
     # 또는 Helm 차트 이름 (Helm 저장소 사용 시)
-    chart: my-chart
+    # chart: my-chart  # Git path 대신 Helm repository를 사용할 때
 
     # 디렉토리 옵션
     directory:
@@ -91,13 +98,13 @@ spec:
       include: '*.yaml'  # 포함 패턴
 
     # Helm 옵션
-    helm: {}
+    # helm: {}  # directory와 함께 활성화하지 않음
 
     # Kustomize 옵션
-    kustomize: {}
+    # kustomize: {}
 
     # 플러그인
-    plugin: {}
+    # plugin: {}
 ```
 
 ### destination
@@ -110,7 +117,7 @@ spec:
     # 클러스터 지정 (둘 중 하나 필수)
     server: https://kubernetes.default.svc  # 클러스터 URL
     # 또는
-    name: in-cluster  # 클러스터 이름 (argocd cluster add로 등록)
+    # name: in-cluster  # server 대신 선택하는 등록된 클러스터 이름
 
     # 네임스페이스 (선택)
     namespace: production
@@ -224,54 +231,40 @@ spec:
 
 #### 저장소의 차트
 
+버전이 고정된 작은 podinfo Chart로 소스 형식을 설명합니다. 최종 replicaCount는 parameters가 valuesObject보다 우선하여 3입니다. valuesObject는 구조화된 인라인 값이며 환경 변수에서 자동으로 값을 읽는 기능이 아닙니다.
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: helm-chart-app
+  name: podinfo-helm
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: nginx
-    targetRevision: 15.0.0
+    repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.15.0
     helm:
-      # values 파일 내용 (인라인)
-      values: |
-        replicaCount: 3
-        service:
-          type: LoadBalancer
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-
-      # 개별 파라미터 오버라이드
-      parameters:
-        - name: image.tag
-          value: "1.25.0"
-        - name: service.port
-          value: "8080"
-
-      # 환경 변수로부터 값 설정
       valuesObject:
-        ingress:
-          enabled: true
-          hostname: nginx.example.com
-
-      # Helm 옵션
-      releaseName: my-nginx  # 릴리스 이름 (기본값: Application 이름)
-      passCredentials: false  # 차트 의존성에 자격 증명 전달
-      skipCrds: false         # CRD 설치 스킵
-      version: v3             # Helm 버전 (v2 또는 v3)
+        replicaCount: 2
+        service:
+          type: ClusterIP
+        ui:
+          message: "Managed by Argo CD"
+      parameters:
+      - name: replicaCount
+        value: "3"
+      passCredentials: false
+      skipCrds: false
   destination:
     server: https://kubernetes.default.svc
-    namespace: nginx
+    namespace: podinfo-demo
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
+
+우선순위는 parameters → valuesObject → values → valueFiles → Chart 기본값입니다. 인라인 값은 valuesObject 또는 values 중 하나로 관리하는 편이 명확하며, valuesObject가 있으면 그것을 인라인 값으로 사용합니다. passCredentials는 다른 도메인에도 인증을 전달할 수 있어 필요한 경우에만 켭니다. 이 기준 버전은 번들 Helm 4를 사용하므로 v2/v3를 임의로 지정하지 않습니다.
 
 #### Git 저장소의 차트
 
@@ -327,13 +320,15 @@ spec:
       # 이미지 오버라이드
       images:
         - my-app=123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/my-app:v1.2.3
-        - sidecar=docker.io/library/busybox:1.36
+        - sidecar=docker.io/library/busybox:1.37.0
 
       # 네임 프리픽스/서픽스
       namePrefix: prod-
       nameSuffix: -v1
 
       # 공통 레이블
+      labelWithoutSelector: true
+      labelIncludeTemplates: true
       commonLabels:
         app.kubernetes.io/environment: production
         app.kubernetes.io/version: v1.2.3
@@ -343,7 +338,7 @@ spec:
         team: platform
 
       # Kustomize 버전 (커스텀 버전 사용 시)
-      version: v5.0.0
+      # version: select only a version installed and configured in repo-server
 
       # 복제본 수 오버라이드
       replicas:
@@ -356,9 +351,9 @@ spec:
             kind: Deployment
             name: my-deployment
           patch: |-
-            - op: replace
-              path: /spec/replicas
-              value: 10
+            - op: add
+              path: /spec/progressDeadlineSeconds
+              value: 600
   destination:
     server: https://kubernetes.default.svc
     namespace: production
@@ -366,47 +361,42 @@ spec:
 
 ### 4. OCI 아티팩트
 
-OCI 레지스트리에 저장된 Helm 차트나 매니페스트를 사용합니다:
+일반 OCI 소스는 oci:// URI와 펼친 아티팩트 내부 path를 사용합니다. 다음 계정/repository/tag는 실제로 게시한 아티팩트로 바꿉니다. 일반 컨테이너 이미지를 그대로 매니페스트 소스로 지정하는 예제가 아닙니다.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: oci-helm-app
+  name: oci-manifests
   namespace: argocd
 spec:
   project: default
   source:
-    # OCI 레지스트리 URL
-    repoURL: oci://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com
-    chart: my-helm-chart
-    targetRevision: 1.0.0
-    helm:
-      values: |
-        replicaCount: 2
+    repoURL: oci://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/my-manifests
+    targetRevision: v1.0.0
+    path: .
   destination:
     server: https://kubernetes.default.svc
     namespace: my-app
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
 
-**ECR OCI 저장소 등록:**
+Argo CD 3.5.2는 하나의 layer와 지원 media type을 요구합니다. 기본 layer type은 application/vnd.oci.image.layer.v1.tar+gzip 또는 Helm chart content tar+gzip입니다. 다른 타입은 Repo Server의 ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES 설정과 아티팩트 구조를 함께 검증합니다.
+
+기존 Helm OCI 방식은 chart 필드와 **oci://를 제외한** repository URL을 사용합니다. 아래는 Application.spec에 넣을 source 조각입니다.
 
 ```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ecr-oci-creds
-  namespace: argocd
-  labels:
-    argocd.argoproj.io/secret-type: repository
-type: Opaque
-stringData:
-  type: helm
-  url: oci://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com
-  enableOCI: "true"
-  username: AWS
-  password: <ecr-login-token>  # aws ecr get-login-password
+source:
+  repoURL: ghcr.io/stefanprodan/charts
+  chart: podinfo
+  targetRevision: 6.15.0
+  helm:
+    valuesObject:
+      replicaCount: 2
 ```
+
+인증도 타입을 맞춥니다. 일반 OCI repository Secret은 type: oci와 oci:// URL을, Helm OCI Secret은 type: helm, enableOCI: "true", scheme 없는 URL을 사용합니다. ECR은 필요한 Registry 권한과 12시간 토큰의 재발급/적용 절차가 필요하며 IRSA 권한 부여만으로 Secret이 갱신되지는 않습니다.
 
 ### 5. Jsonnet
 
@@ -430,11 +420,13 @@ spec:
             value: production
           - name: replicas
             value: "3"
+            code: true
 
         # Top-level 인자
         tlas:
           - name: config
             value: '{"debug": false}'
+            code: true
 
         # 추가 라이브러리 경로
         libs:
@@ -447,83 +439,38 @@ spec:
 
 ## 다중 소스
 
-ArgoCD v2.6+에서는 여러 소스를 결합할 수 있습니다:
+sources를 지정하면 단수 source는 무시됩니다. 관련된 한 애플리케이션의 구성(예: Chart와 별도 values 저장소)을 합치는 기능이며, 서로 독립적인 플랫폼 스택의 묶음에는 ApplicationSet/App of Apps를 사용합니다.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: multi-source-app
+  name: podinfo-with-values
   namespace: argocd
 spec:
   project: default
   sources:
-    # Helm 차트 (첫 번째 소스)
-    - repoURL: https://charts.bitnami.com/bitnami
-      chart: postgresql
-      targetRevision: 12.0.0
-      helm:
-        releaseName: my-postgres
-        valueFiles:
-          - $values/postgresql/values-production.yaml
-
-    # Values 파일 저장소 (두 번째 소스, 참조용)
-    - repoURL: https://github.com/myorg/helm-values.git
-      targetRevision: main
-      ref: values  # 참조 이름 ($values)
-
-    # 추가 매니페스트 (세 번째 소스)
-    - repoURL: https://github.com/myorg/k8s-manifests.git
-      targetRevision: main
-      path: extras/monitoring
+  - repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.15.0
+    helm:
+      valueFiles:
+      - $values/environments/production/podinfo-values.yaml
+  - repoURL: https://github.com/myorg/helm-values.git
+    targetRevision: main
+    ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: database
+    namespace: podinfo-demo
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
 
-### 다중 소스 활용 사례
-
-**1. Helm 차트 + 커스텀 리소스:**
-
-```yaml
-sources:
-  # 기본 Helm 차트
-  - repoURL: https://charts.example.com
-    chart: my-app
-    targetRevision: 2.0.0
-    helm:
-      values: |
-        service:
-          type: ClusterIP
-
-  # 추가 커스텀 리소스 (ServiceMonitor, PodMonitor 등)
-  - repoURL: https://github.com/myorg/custom-resources.git
-    path: monitoring/my-app
-    targetRevision: main
-```
-
-**2. 여러 Helm 차트 결합:**
-
-```yaml
-sources:
-  - repoURL: https://charts.bitnami.com/bitnami
-    chart: redis
-    targetRevision: 17.0.0
-    helm:
-      releaseName: cache
-      values: |
-        architecture: standalone
-
-  - repoURL: https://charts.bitnami.com/bitnami
-    chart: postgresql
-    targetRevision: 12.0.0
-    helm:
-      releaseName: database
-      values: |
-        architecture: standalone
-```
+ref: values가 $values를 해당 Git 저장소 루트로 연결합니다. path를 생략하면 값 파일만 사용하고, path를 추가하면 그 경로의 매니페스트도 생성합니다. ref source에는 chart를 함께 넣지 않습니다. 같은 group/kind/name/namespace 리소스가 중복되면 마지막 소스가 우선하고 RepeatedResourceWarning이 발생합니다. 이는 필드별 자동 병합이 아니므로 의도한 override인지 확인합니다.
 
 ## 대상 구성
+
+server와 name 중 하나로 등록된 대상을 지정합니다. destination.namespace는 namespace가 없는 namespaced 리소스의 기본값이며, CreateNamespace는 이 대상 namespace만 생성합니다. Chart에 명시된 모든 namespace를 만들어 주지는 않습니다. managedNamespaceMetadata는 생성 옵션과 함께 사용하며 기존 namespace를 덮어쓰기 전에 소유권을 확인합니다.
 
 ### 클러스터 지정 방법
 
@@ -533,7 +480,7 @@ sources:
 destination:
   server: https://kubernetes.default.svc  # 동일 클러스터
   # 또는
-  server: https://eks-cluster.ap-northeast-2.eks.amazonaws.com  # 외부 클러스터
+  # server: https://eks-cluster.ap-northeast-2.eks.amazonaws.com  # 위 값 대신 실제 endpoint 사용
 ```
 
 **클러스터 이름 사용:**
@@ -558,10 +505,12 @@ syncPolicy:
     labels:
       istio-injection: enabled
     annotations:
-      scheduler.alpha.kubernetes.io/defaultTolerations: '[{"key":"reserved","operator":"Equal","value":"platform","effect":"NoSchedule"}]'
+      owner: platform-team
 ```
 
 ## 리비전 히스토리와 롤백
+
+CLI history rollback은 자동 sync가 활성화된 Application에서 사용할 수 없습니다. 실제 소유자인 Git/ApplicationSet 정책을 먼저 검토합니다. rollback은 Git을 수정하지 않으므로 이후 자동 조정이 원래 Git 상태로 되돌릴 수 있습니다. 지속할 변경은 Git의 승인된 revert/리비전 변경으로 남기고, DB·외부 상태 복구는 따로 준비합니다.
 
 ### 리비전 히스토리 제한
 
@@ -571,6 +520,8 @@ spec:
 ```
 
 ### CLI를 통한 롤백
+
+ID는 현재 history 결과에서 선택합니다. 이전 manifest 적용과 불필요한 리소스 삭제(prune)는 별도 결정입니다.
 
 ```bash
 # 히스토리 확인
@@ -585,126 +536,89 @@ argocd app rollback my-app
 
 ### 롤백 동작
 
-![사용자의 롤백 요청을 ArgoCD가 처리해 Kubernetes에 이전 버전을 적용하지만 Git 저장소는 변경하지 않는 시퀀스를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-02-applications-1.svg)
+![사용자의 롤백 요청을 ArgoCD가 처리해 Kubernetes에 이전 버전을 적용하지만 Git 저장소는 변경하지 않는 시퀀스를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-02-applications-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-02-applications-1.html)
 
 ## 헬스 체크
 
+Synced는 비교 대상 필드가 원하는 상태와 맞는다는 뜻이며 서비스가 실제로 요청을 처리한다는 증명은 아닙니다. Healthy도 구성된 리소스별 판정에 따릅니다. 헬스 체크가 없는 CR은 앱 집계에서 제외될 수 있어 별도 정의가 필요합니다.
+
 ### 내장 헬스 체크
 
-ArgoCD는 Kubernetes 리소스에 대한 내장 헬스 체크를 제공합니다:
+아래는 3.5.2 구현의 주요 기준을 요약한 것으로, replica 수 하나만 비교하는 완전한 판정식이 아닙니다.
 
-| 리소스 | 헬스 기준 |
-|--------|-----------|
-| Deployment | availableReplicas >= replicas |
-| StatefulSet | readyReplicas >= replicas |
-| DaemonSet | numberReady >= desiredNumberScheduled |
-| ReplicaSet | availableReplicas >= replicas |
-| Pod | 모든 컨테이너 Ready |
-| Service | 엔드포인트 존재 |
-| Ingress | 로드밸런서 IP/호스트 할당 |
-| PersistentVolumeClaim | Bound 상태 |
-| Job | succeeded > 0 또는 active > 0 |
+| 리소스 | 주요 판정 |
+|---|---|
+| Deployment | 관찰된 generation, rollout 진행/실패 조건, 갱신·가용 replica |
+| StatefulSet | generation, update 전략·partition, revision과 replica 상태 |
+| DaemonSet | generation, 갱신·가용 Pod 수와 원하는 수 |
+| Pod | phase, readiness, 컨테이너 종료/실패 상태 |
+| Service | LoadBalancer는 주소 할당을 기다림; 다른 유형은 endpoint 존재를 검증하지 않음 |
+| Ingress | loadBalancer 주소 상태 등 Controller가 보고하는 값 |
+| PVC | Bound 여부 |
+| Job | 미완료는 Progressing, 실패는 Degraded, 완료는 Healthy, 중지는 Suspended |
 
-### 커스텀 헬스 체크 (Lua)
+### 커스텀 헬스 체크
+
+기본 제공되는 Rollout·cert-manager Certificate 체크를 간단한 phase 비교로 덮어쓰지 않습니다. Certificate의 API 그룹은 cert-manager.io이며, 내장 체크는 Issuing 상태를 Ready보다 먼저 처리합니다. 아래 ACK 예제는 상태·조건이 없으면 Progressing이고 ARN 존재만으로 Healthy라고 하지 않습니다. 설치한 ACK 버전이 제공하는 Ready/ACK.ResourceSynced와 오류 조건을 확인합니다. 아래는 Ready가 있으면 우선하고, 없는 버전에서는 ACK.ResourceSynced를 사용합니다.
 
 ```yaml
-# argocd-cm ConfigMap
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: argocd-cm
   namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
 data:
-  resource.customizations.health.argoproj.io_Rollout: |
-    hs = {}
-    if obj.status ~= nil then
-      if obj.status.phase == "Healthy" then
-        hs.status = "Healthy"
-        hs.message = "Rollout is healthy"
-      elseif obj.status.phase == "Paused" then
-        hs.status = "Suspended"
-        hs.message = obj.status.message
-      elseif obj.status.phase == "Progressing" then
-        hs.status = "Progressing"
-        hs.message = "Rollout is progressing"
-      elseif obj.status.phase == "Degraded" then
+  resource.customizations.health.s3.services.k8s.aws_Bucket: |
+    local hs = {status = "Progressing", message = "Waiting for ACK reconciliation"}
+    local conditions = {}
+    if obj.status ~= nil and obj.status.conditions ~= nil then
+      conditions = obj.status.conditions
+    end
+    for _, condition in ipairs(conditions) do
+      if condition.type == "ACK.Terminal" and condition.status == "True" then
         hs.status = "Degraded"
-        hs.message = obj.status.message
-      else
-        hs.status = "Unknown"
-      end
-    end
-    return hs
-
-  resource.customizations.health.kafka.strimzi.io_Kafka: |
-    hs = {}
-    if obj.status ~= nil then
-      for i, condition in ipairs(obj.status.conditions) do
-        if condition.type == "Ready" and condition.status == "True" then
-          hs.status = "Healthy"
-          hs.message = "Kafka cluster is ready"
-          return hs
-        end
-      end
-      hs.status = "Progressing"
-      hs.message = "Kafka cluster is not ready"
-    end
-    return hs
-```
-
-### CRD 헬스 체크 예시
-
-```yaml
-# Argo Rollout 헬스 체크
-resource.customizations.health.argoproj.io_Rollout: |
-  hs = {}
-  if obj.status ~= nil then
-    if obj.status.phase == "Healthy" then
-      hs.status = "Healthy"
-      hs.message = "Rollout is healthy"
-    elseif obj.status.phase == "Paused" then
-      hs.status = "Suspended"
-      hs.message = "Rollout is paused: " .. (obj.status.message or "")
-    elseif obj.status.phase == "Progressing" then
-      hs.status = "Progressing"
-      hs.message = "Rollout is progressing"
-    else
-      hs.status = "Degraded"
-      hs.message = obj.status.message or "Rollout is degraded"
-    end
-  else
-    hs.status = "Progressing"
-    hs.message = "Waiting for rollout status"
-  end
-  return hs
-
-# Cert-Manager Certificate 헬스 체크
-resource.customizations.health.cert-manager.io_Certificate: |
-  hs = {}
-  if obj.status ~= nil then
-    for i, condition in ipairs(obj.status.conditions or {}) do
-      if condition.type == "Ready" then
-        if condition.status == "True" then
-          hs.status = "Healthy"
-          hs.message = "Certificate is ready"
-        else
-          hs.status = "Degraded"
-          hs.message = condition.message
-        end
+        hs.message = condition.message or "ACK reported a terminal error"
         return hs
       end
     end
-  end
-  hs.status = "Progressing"
-  hs.message = "Waiting for certificate"
-  return hs
+    for _, condition in ipairs(conditions) do
+      if condition.type == "ACK.Recoverable" and condition.status == "True" then
+        hs.message = condition.message or "ACK is retrying a recoverable error"
+        return hs
+      end
+    end
+    local synchronized = nil
+    local ready = nil
+    for _, condition in ipairs(conditions) do
+      if condition.type == "ACK.ResourceSynced" then synchronized = condition end
+      if condition.type == "Ready" then ready = condition end
+    end
+    local reported = ready or synchronized
+    if reported ~= nil then
+      hs.message = reported.message or hs.message
+      if reported.status == "True" then
+        hs.status = "Healthy"
+        hs.message = reported.message or "ACK reports the resource synchronized"
+      end
+    end
+    return hs
 ```
+
+이 예제는 controller가 보고한 상태를 해석하며 AWS 리소스를 직접 조회하지 않습니다. 기존 argocd-cm에 키를 병합하고 nil/대기/준비/오류/새 spec 변경을 실제 CR로 시험합니다. EKS 관리형 Argo CD는 ACK/kro 기본 체크를 제공하므로 지원 설정 범위와 기존 체크를 먼저 확인합니다.
 
 ## 리소스 훅
 
+PostSync는 Sync 성공과 관련 리소스의 Healthy 상태를 기다립니다. 명시적으로 일부 리소스만 고르는 selective sync에서는 훅이 실행되지 않습니다. 반면 3.5.2의 ApplyOutOfSyncOnly 옵션은 훅을 실행하고 이력도 남깁니다. SyncFail은 실행 가능한 동기화 실패 경로의 정리 수단이며, manifest 해석 오류를 포함한 모든 오류에서 반드시 실행되는 백업 수단으로 취급하지 않습니다.
+
 리소스 훅은 동기화 과정의 특정 시점에 실행되는 작업입니다:
 
-![ArgoCD가 PreSync, Sync, PostSync 훅을 순서대로 실행하고 실패 시 SyncFail 훅으로 전환되는 흐름을 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-02-applications-2.svg)
+![PreSync 성공 후 Sync, Sync 성공과 Healthy 확인 후 PostSync를 실행하며, 실행 중인 훅·동기화 작업 실패에서 SyncFail로 전환하는 주요 경로를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-02-applications-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-02-applications-2.html)
 
 ### 훅 유형
 
@@ -712,9 +626,11 @@ resource.customizations.health.cert-manager.io_Certificate: |
 |----|-----------|------|
 | **PreSync** | 동기화 전 | DB 마이그레이션, 백업 |
 | **Sync** | 동기화 중 | 특정 순서 리소스 |
-| **PostSync** | 동기화 후 | 테스트, 알림 |
+| **PostSync** | Sync 성공 및 Healthy 확인 후 | 테스트, 알림 |
 | **SyncFail** | 동기화 실패 시 | 정리, 알림 |
-| **Skip** | 동기화 제외 | 수동 관리 리소스 |
+| **Skip** | 적용 생략 | 해당 manifest를 적용하지 않음 |
+| **PreDelete** | Application 전체 삭제 전 | 삭제 전 처리 |
+| **PostDelete** | Application 리소스 삭제 후 | 정리·알림 |
 
 ### 훅 어노테이션
 
@@ -728,14 +644,14 @@ metadata:
     argocd.argoproj.io/hook: PreSync
 
     # 훅 삭제 정책
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
     # 옵션: HookSucceeded, HookFailed, BeforeHookCreation
 spec:
   template:
     spec:
       containers:
         - name: migrate
-          image: my-app:latest
+          image: my-app:v1.2.3
           command: ["./migrate.sh"]
       restartPolicy: Never
   backoffLimit: 3
@@ -766,6 +682,7 @@ spec:
             - /bin/sh
             - -c
             - |
+              set -eu
               echo "Running database migrations..."
               ./manage.py migrate --no-input
               echo "Migrations completed successfully"
@@ -796,20 +713,20 @@ metadata:
   name: smoke-test
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
   template:
     spec:
       containers:
         - name: test
-          image: curlimages/curl:8.1.0
+          image: curlimages/curl:8.22.0
           command:
             - /bin/sh
             - -c
             - |
               echo "Running smoke tests..."
               for i in 1 2 3 4 5; do
-                if curl -sf http://my-app-service:8080/health; then
+                if curl --fail --show-error --silent --connect-timeout 3 --max-time 10 http://my-app-service:8080/health; then
                   echo "Health check passed"
                   exit 0
                 fi
@@ -831,18 +748,18 @@ metadata:
   name: sync-fail-notification
   annotations:
     argocd.argoproj.io/hook: SyncFail
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
   template:
     spec:
       containers:
         - name: notify
-          image: curlimages/curl:8.1.0
+          image: curlimages/curl:8.22.0
           command:
             - /bin/sh
             - -c
             - |
-              curl -X POST "$SLACK_WEBHOOK_URL" \
+              curl --fail --show-error --silent --connect-timeout 5 --max-time 20 -X POST "$SLACK_WEBHOOK_URL" \
                 -H 'Content-Type: application/json' \
                 -d '{
                   "text": "🚨 ArgoCD Sync Failed",
@@ -864,107 +781,51 @@ spec:
       restartPolicy: Never
 ```
 
+고정 이름의 Job은 재실행 시 BeforeHookCreation 등 수명주기 정책이 필요합니다. 실패 로그를 외부에 보존한 뒤 정리하며, 이전 HookSucceeded Job이 언제 지워지는지는 Argo sync phase/result에 따릅니다. DB migration은 사용하는 이미지·DB Secret·ServiceAccount를 준비하고 멱등성·잠금·롤백 호환성을 별도로 검증합니다. 훅 실패가 DB나 기존 Deployment를 자동으로 이전 상태로 되돌리지는 않습니다. PreDelete/PostDelete는 Application 삭제용이며 일반 sync의 prune과 구분합니다.
+
 ## 차이 무시 구성
 
-### 기본 사용법
+알고 있는 별도 controller가 관리하는 특정 필드만 좁게 제외합니다. 예를 들어 아래는 production의 my-deployment에서 HPA가 관리하는 replicas만 제외하는 Application.spec 조각입니다.
 
 ```yaml
 spec:
   ignoreDifferences:
-    # JSON Pointer 사용
-    - group: apps
-      kind: Deployment
-      jsonPointers:
-        - /spec/replicas
-
-    # JQ 표현식 사용
-    - group: ""
-      kind: ConfigMap
-      jqPathExpressions:
-        - '.data["config.yaml"]'
-
-    # 특정 이름의 리소스만
-    - group: apps
-      kind: Deployment
-      name: my-deployment
-      jsonPointers:
-        - /spec/template/spec/containers/0/image
+  - group: apps
+    kind: Deployment
+    name: my-deployment
+    namespace: production
+    jsonPointers:
+    - /spec/replicas
+  syncPolicy:
+    syncOptions:
+    - RespectIgnoreDifferences=true
 ```
 
-### 일반적인 무시 패턴
+ignoreDifferences는 기본적으로 비교에만 적용됩니다. 동기화에서도 유지하려면 RespectIgnoreDifferences=true가 필요하지만, 아직 live 리소스가 없는 첫 생성에서는 desired manifest가 그대로 적용됩니다. 이미지·시크릿·전체 resources·모든 manager를 일괄 무시하면 중요한 드리프트를 숨길 수 있습니다.
+
+JQ로 webhook 배열을 지정할 때는 고정 인덱스 0/1 대신 이름으로 선택하고 리소스 이름도 제한합니다. 이 예제는 실제 CA 주입 controller와 webhook 이름을 알고 있을 때만 사용합니다.
 
 ```yaml
 spec:
   ignoreDifferences:
-    # HPA가 관리하는 레플리카
-    - group: apps
-      kind: Deployment
-      jsonPointers:
-        - /spec/replicas
-
-    # 자동 생성되는 Service clusterIP
-    - group: ""
-      kind: Service
-      jsonPointers:
-        - /spec/clusterIP
-        - /spec/clusterIPs
-
-    # Webhook CA 번들
-    - group: admissionregistration.k8s.io
-      kind: MutatingWebhookConfiguration
-      jsonPointers:
-        - /webhooks/0/clientConfig/caBundle
-        - /webhooks/1/clientConfig/caBundle
-    - group: admissionregistration.k8s.io
-      kind: ValidatingWebhookConfiguration
-      jsonPointers:
-        - /webhooks/0/clientConfig/caBundle
-
-    # ServiceAccount 토큰
-    - group: ""
-      kind: ServiceAccount
-      jsonPointers:
-        - /secrets
-
-    # 자동 생성 레이블
-    - group: apps
-      kind: Deployment
-      jqPathExpressions:
-        - .spec.template.metadata.labels["pod-template-hash"]
+  - group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    name: my-webhook
+    jqPathExpressions:
+    - '.webhooks[]? | select(.name == "admission.example.com") | .clientConfig.caBundle'
 ```
 
-### 전역 무시 설정
-
-모든 Application에 적용되는 전역 설정:
-
-```yaml
-# argocd-cm ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cm
-  namespace: argocd
-data:
-  resource.compareoptions: |
-    ignoreAggregatedRoles: true
-
-  resource.customizations.ignoreDifferences.all: |
-    managedFieldsManagers:
-      - kube-controller-manager
-      - helm
-    jsonPointers:
-      - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
-
-  resource.customizations.ignoreDifferences.admissionregistration.k8s.io_MutatingWebhookConfiguration: |
-    jsonPointers:
-      - /webhooks/0/clientConfig/caBundle
-```
+전역 resource.customizations.ignoreDifferences 설정은 모든 Application에 영향을 줍니다. 가능하면 Application 단위 규칙을 사용하고, managedFieldsManagers 규칙은 실제 managedFields에서 그 주체가 어떤 필드를 소유하는지 확인한 뒤 선택합니다.
 
 ## App of Apps 패턴
 
+App of Apps는 관리자 수준의 bootstrap 패턴입니다. 부모 소스의 작성자는 관리 namespace의 Application·AppProject를 통해 강한 권한에 영향을 줄 수 있어 저장소 쓰기·리뷰·대상을 제한합니다. 부모/자식 finalizer와 prune은 연쇄 삭제를 만들 수 있습니다. child Application의 생성 순서만으로 child workload의 readiness가 보장되지는 않으므로 Application 헬스 전달·자동 sync 정책·wave 동작을 함께 검증합니다.
+
 App of Apps 패턴은 여러 Application을 관리하는 상위 Application을 생성하는 패턴입니다:
 
-![루트 Application이 네 개의 자식 Application을 관리하고 각 자식이 Kubernetes 리소스를 생성하는 앱 오브 앱스 계층 구조를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-02-applications-3.svg)
+![루트 Application이 네 개의 자식 Application을 관리하고 각 자식이 Kubernetes 리소스를 생성하는 앱 오브 앱스 계층 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-02-applications-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-02-applications-3.html)
 
 ### 구현 예시
 
@@ -1044,6 +905,8 @@ spec:
 
 ### Helm을 사용한 App of Apps
 
+charts/root-app에는 유효한 Chart.yaml이 필요합니다. 아래 values가 템플릿의 repoURL·targetRevision·applications를 모두 제공합니다.
+
 ```yaml
 # apps/root-app.yaml
 apiVersion: argoproj.io/v1alpha1
@@ -1059,6 +922,8 @@ spec:
     path: charts/root-app
     helm:
       values: |
+        repoURL: https://github.com/myorg/gitops-repo.git
+        targetRevision: main
         applications:
           - name: frontend
             namespace: frontend
@@ -1090,8 +955,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: {{ $.Values.repoURL }}
-    targetRevision: {{ $.Values.targetRevision }}
+    repoURL: {{ required "repoURL is required" $.Values.repoURL | quote }}
+    targetRevision: {{ required "targetRevision is required" $.Values.targetRevision | quote }}
     path: {{ .path }}
   destination:
     server: https://kubernetes.default.svc
@@ -1123,3 +988,13 @@ spec:
 ## 퀴즈
 
 이 장에서 배운 내용을 테스트하려면 [Application 퀴즈](../../quizzes/gitops/argocd/02-applications-quiz.md)를 풀어보세요.
+
+### 버전별 검토 근거
+
+- [3.5.2 sources and Helm](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md)
+- [Multiple sources](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/multiple_sources.md)
+- [OCI source rules](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md)
+- [Sync options](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md)
+- [Phases, waves and hooks](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md)
+- [Service health implementation](https://github.com/argoproj/argo-cd/blob/v3.5.2/gitops-engine/pkg/health/health_service.go)
+- [ACK condition definitions](https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go)

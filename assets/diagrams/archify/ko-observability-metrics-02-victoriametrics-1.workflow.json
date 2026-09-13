@@ -1,0 +1,211 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "VictoriaMetrics 배포 모드 선택 가이드",
+    "output": "public/archmaps/ko-observability-metrics-02-victoriametrics-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "backend": {
+          "label": "판단 기준"
+        },
+        "database": {
+          "label": "vmsingle 계열"
+        },
+        "cloud": {
+          "label": "클러스터 모드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ingestion",
+        "label": "수집량 기준",
+        "focus": [
+          "start",
+          "ingest",
+          "cluster"
+        ],
+        "note": "일일 수집량이 1억 샘플을 넘으면 다른 조건을 따지지 않고 클러스터 모드로 갑니다."
+      },
+      {
+        "id": "ha-branch",
+        "label": "고가용성 분기",
+        "focus": [
+          "ingest",
+          "ha",
+          "vmsingle",
+          "complexity"
+        ],
+        "note": "수집량이 적어도 고가용성이 필요한지에 따라 vmsingle 단일 노드와 다음 판단으로 나뉩니다."
+      },
+      {
+        "id": "complexity",
+        "label": "복잡성 감수 여부",
+        "focus": [
+          "complexity",
+          "replicated",
+          "cluster"
+        ],
+        "note": "운영 복잡성을 감수할 수 있으면 클러스터 모드, 아니면 vmsingle에 복제 스토리지를 더합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "판단 기준"
+    },
+    {
+      "id": "modes",
+      "label": "배포 모드"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "ingest",
+    "ha",
+    "complexity"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "vmsingle",
+      "replicated",
+      "cluster"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "vmsingle"
+      },
+      {
+        "from": "start",
+        "to": "replicated"
+      },
+      {
+        "from": "start",
+        "to": "cluster"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decide",
+      "col": 0,
+      "type": "frontend",
+      "label": "VictoriaMetrics",
+      "sublabel": "배포 모드 선택",
+      "width": 150
+    },
+    {
+      "id": "ingest",
+      "lane": "decide",
+      "col": 1,
+      "type": "backend",
+      "label": "일일 수집량?",
+      "sublabel": "samples / day",
+      "width": 152
+    },
+    {
+      "id": "ha",
+      "lane": "decide",
+      "col": 2,
+      "type": "backend",
+      "label": "고가용성 필요?",
+      "sublabel": "HA",
+      "width": 172
+    },
+    {
+      "id": "complexity",
+      "lane": "decide",
+      "col": 3,
+      "type": "backend",
+      "label": "복잡성 감수?",
+      "sublabel": "운영 부담",
+      "width": 166
+    },
+    {
+      "id": "vmsingle",
+      "lane": "modes",
+      "col": 1,
+      "type": "database",
+      "label": "vmsingle",
+      "sublabel": "단일 노드"
+    },
+    {
+      "id": "replicated",
+      "lane": "modes",
+      "col": 3,
+      "type": "database",
+      "label": "vmsingle + 복제 스토리지",
+      "sublabel": "replicated storage",
+      "width": 244
+    },
+    {
+      "id": "cluster",
+      "lane": "modes",
+      "col": 4,
+      "type": "cloud",
+      "label": "클러스터 모드",
+      "sublabel": "vminsert / vmstorage / vmselect",
+      "width": 204
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "ingest",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "ingest",
+      "to": "ha",
+      "label": "< 100M 샘플/일",
+      "role": "main",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "ingest",
+      "to": "cluster",
+      "label": "> 100M 샘플/일",
+      "role": "branch",
+      "fromSide": "bottom"
+    },
+    {
+      "from": "ha",
+      "to": "vmsingle",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "ha",
+      "to": "complexity",
+      "label": "예",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "complexity",
+      "to": "cluster",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "complexity",
+      "to": "replicated",
+      "label": "아니오",
+      "role": "branch"
+    }
+  ]
+}

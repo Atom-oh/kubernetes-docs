@@ -1,9 +1,9 @@
 # Istio 용어집
 
-> **지원 버전**: Istio 1.28+
-> **마지막 업데이트**: 2026년 2월 23일
+> **검토 버전**: Istio 1.31.0
+> **마지막 업데이트**: 2026년 9월 11일
 
-Istio와 Service Mesh 관련 주요 용어들을 알파벳 순으로 정리한 용어집입니다.
+Istio와 Service Mesh 관련 주요 용어들을 주제별 참조 섹션으로 정리한 용어집입니다.
 
 ## 목차
 
@@ -20,9 +20,17 @@ Istio와 Service Mesh 관련 주요 용어들을 알파벳 순으로 정리한 �
 
 ## A-C
 
+### AuthorizationPolicy
+
+선택한 워크로드/대상 리소스에 ALLOW, DENY, CUSTOM, AUDIT 동작을 정의하는 Istio 보안 정책입니다. 인증과 인가는 별개이며 waypoint 정책은 targetRefs를 사용합니다.
+
+### Control Plane
+
+istiod가 구현하는 구성·디스커버리·ID 관리 계층입니다. 애플리케이션 페이로드는 istiod가 아닌 Data Plane 프록시를 통과합니다.
+
 ### Ambient Mode
 
-Istio 1.20+에서 도입된 새로운 데이터 플레인 모드로, Sidecar Proxy 없이 서비스 메시 기능을 제공합니다.
+Istio 1.18에서 alpha로 처음 배포되고 1.24에서 GA가 된 데이터 플레인 모드로, Sidecar Proxy 없이 서비스 메시 기능을 제공합니다.
 
 **특징**:
 - Sidecar 컨테이너 불필요
@@ -43,7 +51,7 @@ Istio 1.20+에서 도입된 새로운 데이터 플레인 모드로, Sidecar Pro
 - SPIFFE ID 기반 인증서 발급
 - 자동 인증서 갱신 (기본 TTL: 24시간)
 
-**관련 항목**: [Citadel](#citadel), [SPIFFE](#spiffe), [mTLS](#mtls)
+**관련 항목**: [Citadel](#citadel), [SPIFFE](#spiffe-secure-production-identity-framework-for-everyone), [mTLS](#mtls-mutual-tls)
 
 ---
 
@@ -56,14 +64,17 @@ Istio 1.20+에서 도입된 새로운 데이터 플레인 모드로, Sidecar Pro
 2. **Open**: 연속 실패 시 요청 차단
 3. **Half-Open**: 일정 시간 후 일부 요청 허용
 
-**Istio 구현**:
+**Istio 구현**: Connection Pool 제한과 엔드포인트별 Outlier Ejection을 사용하며 위의 3단계 상태 머신을 그대로 제공하지는 않습니다.
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-1
 spec:
+  host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -74,7 +85,7 @@ spec:
 
 ### Citadel
 
-Istio 1.4 이전에 독립적으로 존재했던 보안 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
+Istio 1.4까지 독립적으로 존재했던 보안 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
 
 **주요 기능**:
 - Certificate Authority (CA) 관리
@@ -98,7 +109,7 @@ xDS API의 하나로, Envoy가 업스트림 서비스(클러스터)의 구성을
 - Circuit breaker 설정
 - TLS 설정
 
-**관련 항목**: [xDS](#xds), [Envoy](#envoy)
+**관련 항목**: [xDS](#xds-discovery-service), [Envoy](#envoy-proxy)
 
 ---
 
@@ -109,12 +120,12 @@ xDS API의 하나로, Envoy가 업스트림 서비스(클러스터)의 구성을
 서비스 메시에서 실제 트래픽을 처리하는 계층입니다.
 
 **Istio의 Data Plane**:
-- Envoy Proxy (Sidecar 또는 Ambient Mode)
-- 모든 인바운드/아웃바운드 트래픽 처리
+- Envoy 사이드카 또는 Ambient ztunnel과 선택적 L7 waypoint
+- 등록된 메시 트래픽 처리; 제외 규칙과 프로토콜 제약 적용
 - mTLS 암호화/복호화
 - 메트릭 수집
 
-**관련 항목**: [Control Plane](#control-plane), [Envoy](#envoy)
+**관련 항목**: [Control Plane](#control-plane), [Envoy](#envoy-proxy)
 
 ---
 
@@ -153,11 +164,7 @@ spec:
 
 Linux 커널 내부에서 안전하게 프로그램을 실행할 수 있는 기술입니다.
 
-**Istio에서의 활용**:
-- Ambient Mode의 핵심 기술
-- iptables 대체 (더 빠른 성능)
-- CNI 플러그인을 통한 트래픽 가로채기
-- Init Container 불필요
+Istio는 Cilium 같은 eBPF 기반 기본 CNI와 함께 사용할 수 있습니다. Istio CNI는 리다이렉션을 구성하는 별도 체인 플러그인/노드 에이전트이며 Ambient는 eBPF를 요구하거나 기본 CNI를 대체하지 않습니다.
 
 **장점**:
 - 낮은 오버헤드
@@ -193,7 +200,7 @@ xDS API의 하나로, 클러스터 내 실제 엔드포인트(파드 IP)를 동�
 }
 ```
 
-**관련 항목**: [xDS](#xds), [CDS](#cds-cluster-discovery-service)
+**관련 항목**: [xDS](#xds-discovery-service), [CDS](#cds-cluster-discovery-service)
 
 ---
 
@@ -226,7 +233,7 @@ Istio의 Data Plane을 구성하는 고성능 L7 프록시입니다.
 
 ### Galley
 
-Istio 1.4 이전에 독립적으로 존재했던 구성 검증 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
+Istio 1.4까지 독립적으로 존재했던 구성 검증 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
 
 **주요 기능**:
 - Istio 구성 검증
@@ -282,7 +289,7 @@ Google이 개발한 고성능 RPC (Remote Procedure Call) 프레임워크입니�
 - 낮은 지연 시간
 - Protocol Buffers 사용
 
-**관련 항목**: [xDS](#xds)
+**관련 항목**: [xDS](#xds-discovery-service)
 
 ---
 
@@ -300,7 +307,7 @@ Service Mesh 내에서 워크로드의 신원을 나타냅니다.
 spiffe://cluster.local/ns/default/sa/reviews
 ```
 
-**관련 항목**: [SPIFFE](#spiffe), [mTLS](#mtls)
+**관련 항목**: [SPIFFE](#spiffe-secure-production-identity-framework-for-everyone), [mTLS](#mtls-mutual-tls)
 
 ---
 
@@ -309,11 +316,11 @@ spiffe://cluster.local/ns/default/sa/reviews
 Linux에서 네트워크 트래픽을 제어하는 방화벽 도구입니다.
 
 **Istio에서의 역할**:
-- istio-init 컨테이너가 iptables 규칙 설정
+- istio-init 또는 Istio CNI 노드 에이전트가 트래픽 리다이렉션 설정
 - 파드의 모든 트래픽을 Envoy로 리다이렉트
 - NAT 테이블 사용 (PREROUTING, OUTPUT 체인)
 
-**주요 규칙**:
+**단순화한 규칙 (설명용이며 설치 스크립트가 아님)**:
 ```bash
 # 아웃바운드: Envoy 제외한 모든 트래픽 → 15001
 iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner 1337 -j REDIRECT --to-port 15001
@@ -322,7 +329,7 @@ iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner 1337 -j REDIRECT --to-po
 iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
 ```
 
-**대안**: eBPF (Ambient Mode)
+**설정 대안**: Istio CNI가 특권 네트워크 설정을 노드 레벨에서 수행합니다.
 
 **관련 문서**: [아키텍처 - iptables](03-architecture.md#iptables와-트래픽-가로채기)
 
@@ -369,7 +376,7 @@ xDS API의 하나로, Envoy가 수신 대기할 포트와 필터 체인을 동�
 - `0.0.0.0:15021`: Health check
 - `0.0.0.0:15090`: Prometheus 메트릭
 
-**관련 항목**: [xDS](#xds), [Envoy](#envoy)
+**관련 항목**: [xDS](#xds-discovery-service), [Envoy](#envoy-proxy)
 
 ---
 
@@ -386,7 +393,10 @@ xDS API의 하나로, Envoy가 수신 대기할 포트와 필터 체인을 동�
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-2
 spec:
+  host: reviews
   trafficPolicy:
     loadBalancer:
       localityLbSetting:
@@ -406,7 +416,7 @@ spec:
 
 ### Mixer
 
-Istio 1.4 이전에 존재했던 정책 및 텔레메트리 컴포넌트입니다.
+Istio 1.4까지 존재했던 정책 및 텔레메트리 컴포넌트입니다.
 
 **주요 기능**:
 - 정책 적용 (Rate Limiting, 접근 제어)
@@ -416,7 +426,7 @@ Istio 1.4 이전에 존재했던 정책 및 텔레메트리 컴포넌트입니�
 - 성능 오버헤드 (모든 요청마다 Mixer 호출)
 - 복잡한 아키텍처
 
-**현재 상태**: Istio 1.5+에서 완전히 제거됨 (기능이 Envoy로 이동)
+**현재 상태**: 1.5 전환기에 사용 중단; 남은 Mixer 기능은 1.8에서 제거
 
 **관련 항목**: [Istiod](#istiod)
 
@@ -429,12 +439,12 @@ Istio 1.4 이전에 존재했던 정책 및 텔레메트리 컴포넌트입니�
 **Istio의 mTLS**:
 - 자동 인증서 발급 및 갱신
 - SPIFFE ID 기반 인증
-- 기본 암호화: AES-256-GCM
+- TLS 암호군은 협상되며 AES-256-GCM으로 고정되지 않음
 
 **모드**:
 1. **STRICT**: mTLS만 허용
 2. **PERMISSIVE**: mTLS + 평문 허용 (마이그레이션용)
-3. **DISABLE**: 평문만 허용
+3. **DISABLE**: Sidecar의 Istio 전송 mTLS 해제; Ambient에서는 미지원
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -457,15 +467,18 @@ spec:
 **감지 조건**:
 - 연속 오류 횟수
 - 오류 비율
-- 응답 지연 시간
+- 연결 실패/타임아웃; 지연 시간 자체는 엔드포인트 제외 임계값이 아님
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-3
 spec:
+  host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -495,7 +508,9 @@ Downstream (클라이언트)  →  Envoy Proxy  →  Upstream (백엔드)
 
 #### 1. Sidecar Mode - 아웃바운드 요청
 
-![애플리케이션(Downstream)이 Envoy Sidecar로 요청을 보내고 Envoy가 이를 Backend 서비스(Upstream)로 전달하는 흐름을 보여주는 3단계 흐름도입니다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-glossary-0.svg)
+![Sidecar Mode에서 애플리케이션(Downstream)이 같은 Pod의 Envoy Sidecar로 요청을 보내고 Envoy가 이를 Backend 서비스(Upstream)로 전달하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-glossary-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-glossary-0.html)
 
 **관점**:
 - **Envoy 입장**: 애플리케이션이 Downstream (요청 보내는 쪽)
@@ -503,7 +518,9 @@ Downstream (클라이언트)  →  Envoy Proxy  →  Upstream (백엔드)
 
 #### 2. Ingress Gateway - 외부 요청
 
-![외부 클라이언트(Downstream)가 Ingress Gateway로 HTTP 요청을 보내고 Gateway가 이를 내부 서비스(Upstream)로 라우팅하는 흐름을 보여주는 3단계 흐름도입니다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-glossary-1.svg)
+![외부 클라이언트(Downstream)가 Ingress Gateway의 Envoy로 HTTP 요청을 보내고, Envoy가 이를 클러스터 내부 서비스(Upstream)로 라우팅하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-glossary-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-glossary-1.html)
 
 **Downstream 관련 Envoy 설정**:
 
@@ -513,15 +530,19 @@ apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: downstream-config
+  namespace: default
 spec:
+  workloadSelector:
+    labels:
+      app: reviews
   configPatches:
   - applyTo: LISTENER
+    match:
+      context: SIDECAR_INBOUND
     patch:
       operation: MERGE
       value:
         per_connection_buffer_limit_bytes: 32768  # Downstream 버퍼
-        listener_filters:
-        - name: envoy.filters.listener.tls_inspector
 ```
 
 **Downstream 메트릭**:
@@ -576,7 +597,7 @@ spec:
         http1MaxPendingRequests: 50
         http2MaxRequests: 100
     outlierDetection:
-      consecutiveErrors: 5        # Upstream 장애 감지
+      consecutive5xxErrors: 5        # Upstream 장애 감지
       interval: 30s
 ```
 
@@ -598,6 +619,8 @@ istioctl proxy-config endpoints <pod-name> | grep reviews
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-4
 spec:
   host: reviews
   trafficPolicy:
@@ -620,7 +643,7 @@ spec:
 
     # Upstream Circuit Breaker
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 10s
       baseEjectionTime: 30s
 ```
@@ -684,8 +707,8 @@ Internal Service (Upstream)
 # Upstream 연결 수
 envoy_cluster_upstream_cx_active
 
-# Upstream 요청 성공률
-envoy_cluster_upstream_rq_success_rate
+# Upstream 요청 카운터; 응답 분류 카운터로 성공/오류율 계산
+envoy_cluster_upstream_rq_total
 
 # Upstream 응답 시간
 envoy_cluster_upstream_rq_time
@@ -694,14 +717,16 @@ envoy_cluster_upstream_rq_time
 envoy_cluster_health_check_success
 
 # Upstream Circuit Breaker
-envoy_cluster_circuit_breakers_default_remaining
+envoy_cluster_circuit_breakers_default_remaining_rq
 ```
 
-**Upstream Health Check**:
+**Passive Upstream Health Detection**: Active health-check statistics require separate configuration.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-5
 spec:
   host: reviews
   trafficPolicy:
@@ -738,7 +763,7 @@ istioctl proxy-config all <pod-name> -o json | \
 
 ### Pilot
 
-Istio 1.4 이전에 독립적으로 존재했던 트래픽 관리 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
+Istio 1.4까지 독립적으로 존재했던 트래픽 관리 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
 
 **주요 기능**:
 - Service Discovery
@@ -747,7 +772,7 @@ Istio 1.4 이전에 독립적으로 존재했던 트래픽 관리 컴포넌트�
 
 **현재 상태**: Istio 1.5+에서는 Istiod 내부 기능으로 존재
 
-**관련 항목**: [Istiod](#istiod), [xDS](#xds)
+**관련 항목**: [Istiod](#istiod), [xDS](#xds-discovery-service)
 
 ---
 
@@ -764,7 +789,7 @@ xDS API의 하나로, HTTP 라우팅 규칙을 동적으로 제공하는 서비�
 **VirtualService와의 관계**:
 - VirtualService → Istiod에서 변환 → RDS 구성
 
-**관련 항목**: [xDS](#xds), [VirtualService](#virtualservice)
+**관련 항목**: [xDS](#xds-discovery-service), [VirtualService](#virtualservice)
 
 ---
 
@@ -777,23 +802,44 @@ xDS API의 하나로, HTTP 라우팅 규칙을 동적으로 제공하는 서비�
 2. **Global Rate Limiting**: 외부 Rate Limit 서비스 사용
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: filter-local-ratelimit
+  namespace: default
 spec:
+  workloadSelector:
+    labels:
+      app: reviews
   configPatches:
   - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 100
             tokens_per_fill: 100
             fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
 ```
 
 **관련 문서**: [Rate Limiting](resilience/02-rate-limiting.md)
@@ -816,7 +862,7 @@ xDS API의 하나로, TLS 인증서와 키를 동적으로 제공하는 서비�
 - 자동 인증서 갱신
 - 무중단 갱신
 
-**관련 항목**: [xDS](#xds), [mTLS](#mtls)
+**관련 항목**: [xDS](#xds-discovery-service), [mTLS](#mtls-mutual-tls)
 
 ---
 
@@ -863,7 +909,7 @@ spec:
 - Istio
 - Linkerd
 - Consul Connect
-- AWS App Mesh
+- AWS App Mesh ([support ends September 30, 2026](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html))
 
 ---
 
@@ -873,7 +919,9 @@ AWS API 요청을 인증하기 위한 서명 프로토콜입니다.
 
 **작동 방식**:
 
-![클라이언트의 HTTP 요청을 받은 Envoy Proxy가 AWS Credentials를 로드해 SigV4 서명(HMAC-SHA256)을 생성하고 Authorization 헤더를 추가해 AWS 서비스로 전달하면, AWS가 서명을 검증한 뒤 응답이 Envoy를 거쳐 클라이언트로 돌아오는 시퀀스를 보여줍니다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-glossary-2.svg)
+![클라이언트의 HTTP 요청을 받은 Envoy Proxy가 AWS Credentials를 로드해 SigV4 서명(HMAC-SHA256)을 생성하고 Authorization 헤더를 붙여 AWS 서비스로 보내면, AWS가 서명을 검증한 뒤 응답이 Envoy를 거쳐 클라이언트로 돌아오는 시퀀스를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-glossary-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-glossary-2.html)
 
 **서명 구성 요소**:
 
@@ -902,236 +950,30 @@ AWS API 요청을 인증하기 위한 서명 프로토콜입니다.
 
 **Istio와의 통합**:
 
-#### 1. EnvoyFilter를 통한 SigV4 인증
+AWS SDK와 AWS CLI는 IRSA 또는 EKS Pod Identity가 제공한 임시 자격 증명으로 HTTPS 요청에 서명합니다. 서명 권한은 워크로드의 AWS 권한과 연결되며 Istio mTLS ID와 AWS IAM ID는 별개입니다.
 
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: aws-sigv4-filter
-  namespace: istio-system
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_OUTBOUND
-      listener:
-        filterChain:
-          filter:
-            name: envoy.filters.network.http_connection_manager
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.aws_request_signing
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.aws_request_signing.v3.AwsRequestSigning
-          service_name: s3
-          region: us-west-2
-          use_unsigned_payload: false
-          match_excluded_headers:
-          - prefix: x-envoy
-```
+Envoy의 `aws_request_signing` HTTP 필터는 고급 대안입니다. 해당 확장을 포함한 Envoy 빌드, **프록시 컨테이너**가 사용할 자격 증명, 올바른 AWS 서비스/리전, 의도한 AWS 목적지만 선택하는 필터 match가 필요합니다. 서명에 영향을 주는 헤더·경로 재작성 이후, router 이전에 배치하세요. 애플리케이션이 시작한 HTTPS는 암호화되어 있으므로 이 HTTP 필터가 TLS 내부에 서명을 추가할 수 없습니다. 프록시 서명은 서명 프록시에 HTTP를 전달한 뒤 업스트림에 검증된 TLS를 시작하도록 설계해야 합니다. 이중 TLS나 의도한 로컬 프록시 경로 밖의 서명 전 HTTP 노출을 피하세요.
 
-#### 2. External Authorization과 통합
+위 그림은 이러한 서명 프록시를 명시적으로 구성한 경로이며 Istio 기본 기능이 아닙니다. 앱 ServiceAccount의 IRSA annotation만으로 별도 게이트웨이/사이드카의 자격 증명 환경 변수와 토큰 마운트까지 보장되지는 않습니다.
 
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: RequestAuthentication
-metadata:
-  name: aws-auth
-  namespace: default
-spec:
-  jwtRules:
-  - issuer: "https://sts.amazonaws.com"
-    audiences:
-    - "sts.amazonaws.com"
-    jwksUri: "https://sts.amazonaws.com/.well-known/jwks"
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: require-aws-auth
-  namespace: default
-spec:
-  action: CUSTOM
-  provider:
-    name: aws-sigv4-authorizer
-  rules:
-  - to:
-    - operation:
-        paths: ["/api/*"]
-```
+**JWT 검증과의 구분**:
 
-**사용 시나리오**:
+SigV4는 JWT가 아닌 HMAC 요청 서명입니다. `https://sts.amazonaws.com/.well-known/jwks`는 AWS API 서명을 검증하는 JWT 발급자 엔드포인트가 아닙니다. Istio RequestAuthentication은 실제 OIDC 발급자의 JWT를 검증합니다. CUSTOM AuthorizationPolicy에는 외부 인가를 구현하는 `extensionProviders` 서비스가 별도로 필요하며 그 구현 없이 SigV4가 검증되지는 않습니다. AWS API 접근에는 IAM 인증 엔드포인트 또는 AWS SDK를 사용하세요.
 
-#### 시나리오 1: S3 접근
-
-```yaml
-# ServiceEntry로 S3 등록
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: s3-external
-spec:
-  hosts:
-  - "*.s3.amazonaws.com"
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
----
-# DestinationRule로 TLS 설정
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: s3-external
-spec:
-  host: "*.s3.amazonaws.com"
-  trafficPolicy:
-    tls:
-      mode: SIMPLE
-```
-
-**애플리케이션 코드**:
-```python
-import requests
-
-# Envoy가 자동으로 SigV4 서명 추가
-response = requests.get("https://my-bucket.s3.us-west-2.amazonaws.com/object.txt")
-print(response.text)
-```
-
-#### 시나리오 2: API Gateway 통합
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: aws-api-gateway
-spec:
-  hosts:
-  - api.example.com
-  http:
-  - match:
-    - uri:
-        prefix: "/api"
-    route:
-    - destination:
-        host: my-api.execute-api.us-west-2.amazonaws.com
-        port:
-          number: 443
-```
-
-#### 시나리오 3: DynamoDB 접근
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: dynamodb-sigv4
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.aws_request_signing
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.aws_request_signing.v3.AwsRequestSigning
-          service_name: dynamodb
-          region: us-west-2
-          host_rewrite: dynamodb.us-west-2.amazonaws.com
-```
-
-**AWS Credentials 제공 방법**:
-
-1. **ServiceAccount + IRSA (권장)**:
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: app-sa
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/app-role
-```
-
-2. **EC2 Instance Profile**:
-   - 노드에 할당된 IAM 역할 자동 사용
-
-3. **환경 변수**:
-```yaml
-env:
-- name: AWS_ACCESS_KEY_ID
-  valueFrom:
-    secretKeyRef:
-      name: aws-credentials
-      key: access-key-id
-- name: AWS_SECRET_ACCESS_KEY
-  valueFrom:
-    secretKeyRef:
-      name: aws-credentials
-      key: secret-access-key
-```
-
-**보안 고려사항**:
-
-1. **Credential Rotation**:
-   - IRSA를 사용하여 자동 순환
-   - 기본 TTL: 1시간
-
-2. **최소 권한 원칙**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": "arn:aws:s3:::my-bucket/*"
-    }
-  ]
-}
-```
-
-3. **Audit Logging**:
-   - CloudTrail로 모든 API 호출 기록
-   - Istio Access Log와 통합
-
-**디버깅**:
+**읽기 전용 검증 예시** (의도한 IAM 역할과 AWS CLI를 사용하는 워크로드 내부):
 
 ```bash
-# Envoy 로그에서 SigV4 서명 확인
-kubectl logs <pod-name> -c istio-proxy | grep aws_request_signing
-
-# Authorization 헤더 확인
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -v localhost:15000/config_dump | jq '.configs[] | select(.["@type"] == "type.googleapis.com/envoy.admin.v3.ClustersConfigDump")'
-
-# AWS API 호출 테스트
-kubectl exec -it <pod-name> -- \
-  curl -v https://my-bucket.s3.amazonaws.com/test.txt
+aws sts get-caller-identity
+aws s3api head-object --bucket my-bucket --key object.txt --region us-west-2
 ```
 
-**성능 영향**:
+**운영 고려사항**:
 
-| 작업 | 지연 시간 |
-|------|----------|
-| SigV4 서명 계산 | ~1-2ms |
-| Credential 로드 (캐시) | ~0.1ms |
-| Credential 로드 (IRSA) | ~50ms (첫 요청) |
-| 전체 오버헤드 | ~1-3ms |
-
-**대안 비교**:
-
-| 방식 | 장점 | 단점 |
-|------|------|------|
-| **SigV4 (Envoy)** | 애플리케이션 코드 수정 불필요 | Envoy 구성 필요 |
-| **AWS SDK** | 유연한 제어 | 모든 앱에 SDK 추가 |
-| **API Gateway** | 관리형 솔루션 | 추가 비용 |
+- 워크로드에 필요한 AWS 작업과 리소스만 허용하고 공유 노드 역할에 의존하지 마세요.
+- 자격 증명 제공자가 임시 자격 증명과 갱신을 지원하는지 확인하세요. 세션 수명은 설정에 따라 다르며 항상 1시간이 아닙니다.
+- CloudTrail 관리 이벤트와 데이터 이벤트의 범위는 다릅니다. S3 객체 접근은 해당 데이터 이벤트 설정이 필요합니다.
+- 프록시 구성으로 필터 배치를 확인하세요. Config dump는 실시간 요청의 Authorization 헤더를 보여주지 않으며 HTTPS에 대한 서명 없는 curl은 SigV4 검증이 아닙니다.
+- 요청 크기에 따라 서명·버퍼링·자격 증명 조회 오버헤드를 측정하세요. 고정된 밀리초 보장값은 없습니다.
 
 **관련 항목**: [AuthorizationPolicy](#authorizationpolicy), [ServiceEntry](#service-entry), [EnvoyFilter](advanced/03-envoy-filter.md)
 
@@ -1150,14 +992,17 @@ kubectl exec -it <pod-name> -- \
 - 컨테이너 이름: `istio-proxy`
 - 이미지: `istio/proxyv2`
 - Envoy Proxy 실행
-- 모든 트래픽 가로채기 (iptables 또는 eBPF)
+- Init 컨테이너 또는 Istio CNI 리다이렉션으로 설정된 트래픽 가로채기
 
 **Injection 방법**:
 1. **Automatic**: Namespace 레이블
 2. **Manual**: `istioctl kube-inject`
 
 ```yaml
+apiVersion: v1
+kind: Namespace
 metadata:
+  name: example-mesh
   labels:
     istio-injection: enabled  # Automatic injection
 ```
@@ -1173,7 +1018,7 @@ Envoy가 수신할 서비스 정보를 제한하는 Istio CRD입니다.
 **목적**:
 - 메모리 사용량 감소
 - 구성 푸시 시간 단축
-- 네트워크 격리
+- 구성 범위 제한; 네트워크 보안 경계가 아님
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1189,8 +1034,7 @@ spec:
 ```
 
 **효과**:
-- Before: 1000개 서비스 → 500 MB 메모리
-- After: 10개 서비스 → 80 MB 메모리
+- 가져오는 서비스를 줄이면 메모리와 구성 작업량을 줄일 수 있으며 실제 절감량은 측정해야 합니다.
 
 **관련 문서**: [아키텍처 - Sidecar 리소스](03-architecture.md#sidecar-리소스를-통한-최적화)
 
@@ -1219,9 +1063,9 @@ spiffe://cluster.local/ns/default/sa/reviews
 
 **구성 요소**:
 - **SPIFFE ID**: 워크로드 식별자
-- **SVID (SPIFFE Verifiable Identity Document)**: X.509 인증서
+- **SVID (SPIFFE Verifiable Identity Document)**: X.509-SVID 또는 JWT-SVID; Istio mTLS는 X.509-SVID 사용
 
-**관련 항목**: [Identity](#identity), [mTLS](#mtls)
+**관련 항목**: [Identity](#identity), [mTLS](#mtls-mutual-tls)
 
 ---
 
@@ -1237,7 +1081,10 @@ DestinationRule에서 정의하는 서비스의 논리적 그룹입니다.
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-6
 spec:
+  host: reviews
   subsets:
   - name: v1
     labels:
@@ -1258,7 +1105,7 @@ spec:
 Ambient Mode에서 L7 기능을 제공하는 선택적 프록시입니다.
 
 **역할**:
-- Service Account 또는 Namespace별로 배포
+- 네임스페이스·Service·Pod 레이블로 선택; ServiceAccount별 자동 배포가 아님
 - Envoy Proxy 기반
 - L7 트래픽 관리 기능 전담
 - ztunnel과 함께 동작
@@ -1289,11 +1136,13 @@ spec:
 - ztunnel이 L4만 처리하고 L7은 waypoint가 담당
 - 필요한 서비스만 선택적 사용 가능
 - Sidecar보다 리소스 효율적 (공유 방식)
-- Service Account 단위 또는 Namespace 단위 배포
+- 네임스페이스·Service·Pod별로 선택해 사용
 
 **관련 항목**: [Ambient Mode](#ambient-mode), [ztunnel](#ztunnel-zero-trust-tunnel)
 
 ---
+
+Waypoint 생성 후 `kubectl label service reviews istio.io/use-waypoint=reviews-waypoint --overwrite` 등으로 대상을 등록하세요. Gateway 생성만으로 트래픽이 자동 경유하지는 않습니다.
 
 ### VirtualService
 
@@ -1347,6 +1196,8 @@ spec:
 3. **고급 라우팅**: 커스텀 라우팅 로직
 4. **메트릭 수집**: 특화된 텔레메트리
 
+아래 레지스트리 URL·다이제스트·자격 증명·pluginConfig는 직접 빌드한 플러그인으로 교체할 예시입니다. Istio는 예시 이미지를 제공하거나 플러그인 전용 옵션을 해석하지 않습니다. file:// 모듈은 프록시 컨테이너 내부에 있어야 합니다.
+
 **WASM 플러그인 예시**:
 ```yaml
 apiVersion: extensions.istio.io/v1alpha1
@@ -1375,7 +1226,7 @@ kind: WasmPlugin
 metadata:
   name: rate-limiter
 spec:
-  url: oci://docker.io/istio/rate-limit:1.0.0
+  url: oci://ghcr.io/my-org/rate-limit:v1.0.0
   imagePullPolicy: Always
   imagePullSecret: registry-credential
 ```
@@ -1389,7 +1240,7 @@ metadata:
   name: custom-filter
 spec:
   url: https://example.com/filters/custom-filter.wasm
-  sha256: "8a8c3b5e..."
+  # Add sha256: with the actual 64-character module digest before deployment
 ```
 
 #### 3. 로컬 파일 배포
@@ -1409,58 +1260,34 @@ spec:
 use proxy_wasm::traits::*;
 use proxy_wasm::types::*;
 
-#[no_mangle]
-pub fn _start() {
-    proxy_wasm::set_log_level(LogLevel::Trace);
+proxy_wasm::main! {{
     proxy_wasm::set_http_context(|_, _| -> Box<dyn HttpContext> {
         Box::new(CustomFilter)
     });
-}
+}}
 
 struct CustomFilter;
+impl Context for CustomFilter {}
 
 impl HttpContext for CustomFilter {
-    fn on_http_request_headers(&mut self, _: usize) -> Action {
-        // API Key 검증
-        match self.get_http_request_header("x-api-key") {
-            Some(key) if key == "secret-key" => {
-                Action::Continue
-            }
-            _ => {
-                self.send_http_response(
-                    403,
-                    vec![("content-type", "text/plain")],
-                    Some(b"Forbidden: Invalid API Key"),
-                );
-                Action::Pause
-            }
-        }
+    fn on_http_request_headers(&mut self, _: usize, _: bool) -> Action {
+        // Demonstrate header mutation, not production API-key authentication.
+        self.set_http_request_header("x-mesh-demo", Some("wasm"));
+        Action::Continue
     }
 }
 ```
 
-**빌드 및 배포**:
+**빌드 및 배포 사전 요구사항**:
+
+호환 `proxy-wasm` 의존성과 잠근 의존성 버전을 가진 Rust `cdylib` 크레이트를 준비하세요. 위 콜백은 [공식 Rust SDK 예제](https://github.com/proxy-wasm/proxy-wasm-rust-sdk/tree/main/examples/http_headers)의 인터페이스를 따릅니다. `wasm32-unknown-unknown` 타깃으로 모듈을 빌드한 후 `.wasm`을 지원되는 OCI Wasm 이미지로 패키징해 WasmPlugin에서 참조하세요. Dockerfile 없는 일반 `docker build`만으로 패키징되지는 않습니다.
 
 ```bash
-# 1. WASM 빌드 (Rust)
+rustup target add wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
-
-# 2. OCI 이미지로 패키징
-docker build -t ghcr.io/my-org/custom-auth:v1.0.0 .
-docker push ghcr.io/my-org/custom-auth:v1.0.0
-
-# 3. WasmPlugin 적용
-kubectl apply -f wasmplugin.yaml
 ```
 
-**성능 특징**:
-
-| 메트릭 | 값 |
-|--------|-----|
-| 시작 시간 | ~1-5ms |
-| 메모리 오버헤드 | ~100KB per filter |
-| 실행 오버헤드 | ~0.1-1ms per request |
-| 샌드박스 격리 | ✅ 보장됨 |
+시작 시간·메모리·요청당 오버헤드는 플러그인별로 측정하세요. Wasm은 프록시 프로세스 내부 런타임 샌드박스에서 실행되며 별도 프로세스나 무조건적인 보안·성능 보장이 아닙니다.
 
 **Ambient Mode 지원**:
 
@@ -1470,9 +1297,10 @@ kind: WasmPlugin
 metadata:
   name: waypoint-filter
 spec:
-  selector:
-    matchLabels:
-      gateway.networking.k8s.io/gateway-name: reviews-waypoint
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: reviews-waypoint
   url: oci://ghcr.io/filters/custom:latest
   phase: AUTHN
 ```
@@ -1487,13 +1315,13 @@ kubectl get wasmplugin -A
 kubectl logs <pod-name> -c istio-proxy | grep wasm
 
 # WASM 모듈 로드 확인
-istioctl proxy-config all <pod-name> -o json | jq '.configs[] | select(.name | contains("wasm"))'
+istioctl proxy-config all <pod-name> -o json | jq '.. | objects | select(has("@type")) | select(.["@type"] | test("wasm"; "i"))'
 ```
 
 **보안 고려사항**:
-1. **샌드박스 격리**: WASM 모듈은 Envoy 프로세스와 격리된 환경에서 실행
+1. **샌드박스 격리**: Envoy 내부 런타임 샌드박스; 플러그인 신뢰성과 리소스 사용량 검토
 2. **리소스 제한**: CPU 및 메모리 제한 설정 가능
-3. **서명 검증**: SHA256 해시로 무결성 확인
+3. **무결성 검증**: SHA256은 내용 일치를 검사하며 게시자 서명을 인증하지 않음
 4. **최소 권한**: 필요한 권한만 부여
 
 **장점**:
@@ -1511,10 +1339,10 @@ istioctl proxy-config all <pod-name> -o json | jq '.configs[] | select(.name | c
 **관련 항목**: [Envoy](#envoy-proxy), [Waypoint Proxy](#waypoint-proxy), [Ambient Mode](#ambient-mode)
 
 **참고 자료**:
-- [Istio WASM Plugin](https://istio.io/latest/docs/concepts/wasm/)
+- [Istio WASM Plugin](https://istio.io/latest/docs/reference/config/proxy_extensions/wasm-plugin/)
 - [Proxy-Wasm SDK](https://github.com/proxy-wasm)
 - [WebAssembly 공식 사이트](https://webassembly.org/)
-- [Ambient Mode - WASM](advanced/01-ambient-mode.md#wasm-플러그인)
+- [Ambient Mode - WASM](https://istio.io/latest/docs/ambient/usage/extend-waypoint-wasm/)
 
 ---
 
@@ -1543,7 +1371,8 @@ Envoy Proxy의 동적 구성을 위한 API 세트입니다.
 
 **순서**:
 ```
-Envoy 시작 → LDS → CDS → EDS → RDS → SDS
+에이전트 ID 초기화 → Envoy의 ADS 리소스 구독
+istiod가 LDS/CDS/EDS/RDS 갱신 배포; 로컬 에이전트가 SDS 인증서 제공
 ```
 
 **관련 문서**: [아키텍처 - xDS API 통신](03-architecture.md#xds-api-통신)
@@ -1586,50 +1415,35 @@ Ambient Mode의 핵심 구성 요소로, 노드 레벨에서 실행되는 경량
 
 **기술 특징**:
 - Rust로 작성 (고성능)
-- eBPF 기반 트래픽 리다이렉션
+- Istio CNI가 관리하는 트래픽 리다이렉션
 - Init Container 불필요
-- 낮은 리소스 사용 (~50MB per node)
+- 공유 L4 프록시 리소스; 노드 워크로드 측정으로 산정
 
 **배포 예시**:
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: ztunnel
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      app: ztunnel
-  template:
-    spec:
-      hostNetwork: true
-      containers:
-      - name: istio-proxy
-        image: istio/ztunnel:1.28.0
-        securityContext:
-          privileged: true
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
+```bash
+# Use the reviewed istioctl version and the complete ambient installation profile
+istioctl install --set profile=ambient
+kubectl rollout status daemonset/ztunnel -n istio-system
 ```
+
+기존 Sidecar 워크로드는 주입/revision 레이블 제거 후 파드를 재시작해 사이드카를 제거해야 Ambient로 전환됩니다. 이미 사이드카가 없는 워크로드는 재시작이 필요 없습니다.
 
 **Namespace 활성화**:
 ```bash
 # Ambient Mode 활성화
-kubectl label namespace default istio.io/dataplane-mode=ambient
+kubectl label namespace default istio-injection- istio.io/rev-
+kubectl label namespace default istio.io/dataplane-mode=ambient --overwrite
 ```
 
 **장점**:
-- Sidecar 대비 86% 메모리 절감
+- 메모리 절감은 노드·워크로드 및 waypoint 용량에 따라 다름
 - 파드 재시작 불필요
 - 애플리케이션 투명성
 - 초기 지연 최소화
 
 **제한사항**:
 - L7 기능은 Waypoint Proxy 필요
-- eBPF 지원 커널 필요 (Linux 4.20+)
+- 지원되는 Linux Kubernetes 플랫폼, 기본 CNI 및 Istio CNI 사전 요구사항 필요
 
 **관련 항목**: [Ambient Mode](#ambient-mode), [Waypoint Proxy](#waypoint-proxy), [eBPF](#ebpf-extended-berkeley-packet-filter)
 
@@ -1650,4 +1464,20 @@ kubectl label namespace default istio.io/dataplane-mode=ambient
 
 ---
 
-**마지막 업데이트**: 2025년 11월 24일
+**마지막 업데이트**: 2026년 9월 11일
+
+- [Destination Rule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Install the Istio CNI node agent](https://istio.io/latest/docs/setup/additional-setup/cni/)
+- [Ztunnel traffic redirection](https://istio.io/latest/docs/ambient/architecture/traffic-redirection/)
+- [Install with istioctl](https://istio.io/latest/docs/ambient/install/istioctl/)
+- [Configure waypoint proxies](https://istio.io/latest/docs/ambient/usage/waypoint/)
+- [Enabling Rate Limits using Envoy](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
+- [Wasm Plugin](https://istio.io/latest/docs/reference/config/proxy_extensions/wasm-plugin/)
+- [Proxy-Wasm Rust SDK HTTP example](https://raw.githubusercontent.com/proxy-wasm/proxy-wasm-rust-sdk/main/examples/http_headers/src/lib.rs)
+- [AWS Signature Version 4 for API requests - AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv.html)
+- [AWS Request Signing](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/aws_request_signing_filter)
+- [Statistics](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)
+- [Istio 1.8 Change Notes](https://istio.io/latest/news/releases/1.8.x/announcing-1.8/change-notes/)
+- [What Is AWS App Mesh? - AWS App Mesh](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)
+
+- [CloudTrail data event coverage](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html)

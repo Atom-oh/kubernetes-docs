@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "주요 기능 성숙도 진행 타임라인",
+    "output": "ko-eks-12-kubernetes-version-roadmap-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "어드미션 정책 기능"
+        },
+        "backend": {
+          "label": "워크로드 · 스케줄링 기능"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "early-ga",
+        "label": "1.30~1.34 GA",
+        "focus": [
+          "vap",
+          "sidecar",
+          "dra"
+        ],
+        "note": "ValidatingAdmissionPolicy가 1.30에 먼저 GA, Sidecar Containers(1.33)와 DRA Core APIs(1.34)가 뒤따랐다."
+      },
+      {
+        "id": "recent-ga",
+        "label": "1.35~1.36 GA",
+        "focus": [
+          "inplace",
+          "mutating",
+          "gang"
+        ],
+        "note": "In-Place Pod Resize는 1.35, MutatingAdmissionPolicy와 Gang Scheduling은 1.36에 GA로 졸업했다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "vap",
+      "type": "security",
+      "label": "ValidatingAdmissionPolicy",
+      "sublabel": "Alpha 1.26 · Beta 1.28 · GA 1.30",
+      "tag": "KEP-3488",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "Sidecar Containers",
+      "sublabel": "Alpha 1.28 · Beta 1.29 · GA 1.33",
+      "tag": "KEP-753",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "dra",
+      "type": "backend",
+      "label": "DRA Core APIs",
+      "sublabel": "Alpha 1.26 · Beta 1.31 · GA 1.34",
+      "tag": "KEP-4381",
+      "pos": [
+        740,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "inplace",
+      "type": "backend",
+      "label": "In-Place Pod Resize",
+      "sublabel": "Alpha 1.27 · Beta 1.33 · GA 1.35",
+      "tag": "KEP-1287",
+      "pos": [
+        60,
+        270
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "mutating",
+      "type": "security",
+      "label": "MutatingAdmissionPolicy",
+      "sublabel": "Alpha 1.33 · Beta 1.34 · GA 1.36",
+      "tag": "KEP-3962",
+      "pos": [
+        400,
+        270
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "gang",
+      "type": "backend",
+      "label": "Gang Scheduling",
+      "sublabel": "Alpha 1.35 · GA 1.36",
+      "tag": "KEP-4832",
+      "pos": [
+        740,
+        270
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1.30 ~ 1.34 GA 졸업",
+      "wraps": [
+        "vap",
+        "sidecar",
+        "dra"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "1.35 ~ 1.36 GA 졸업",
+      "wraps": [
+        "inplace",
+        "mutating",
+        "gang"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vap-to-sidecar",
+      "from": "vap",
+      "to": "sidecar",
+      "label": "GA 졸업 순서",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "sidecar-to-dra",
+      "from": "sidecar",
+      "to": "dra",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dra-to-inplace",
+      "from": "dra",
+      "to": "inplace",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "inplace-to-mutating",
+      "from": "inplace",
+      "to": "mutating",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mutating-to-gang",
+      "from": "mutating",
+      "to": "gang",
+      "label": "같은 릴리스",
+      "variant": "dashed",
+      "labelDy": -26
+    }
+  ]
+}

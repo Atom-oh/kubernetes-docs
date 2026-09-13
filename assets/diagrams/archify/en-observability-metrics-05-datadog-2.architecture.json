@@ -1,0 +1,338 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Datadog Cost Optimization Strategies",
+    "locale": "en",
+    "output": "en-observability-metrics-05-datadog-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1360,
+      440
+    ],
+    "views": [
+      {
+        "id": "view-metric",
+        "label": "Metric optimization",
+        "focus": [
+          "root",
+          "metric",
+          "m1",
+          "m2",
+          "m3"
+        ],
+        "note": "Trim collected metrics with ignoreAutoConfig, dogstatsd and containerExcludeMetrics in values.yaml."
+      },
+      {
+        "id": "view-log",
+        "label": "Log optimization",
+        "focus": [
+          "root",
+          "log",
+          "l1",
+          "l2",
+          "l3"
+        ],
+        "note": "Collect selectively with containerCollectAll: false and exclude via pod-annotation log_processing_rules."
+      },
+      {
+        "id": "view-apm",
+        "label": "APM optimization",
+        "focus": [
+          "root",
+          "apm",
+          "a1",
+          "a2",
+          "a3"
+        ],
+        "note": "Cap trace volume with DD_TRACE_SAMPLE_RATE 0.1 (10%) and DD_TRACE_RATE_LIMIT 100."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "Datadog Cost Optimization",
+      "pos": [
+        570,
+        30
+      ],
+      "size": [
+        220,
+        60
+      ],
+      "sublabel": "Example: 100-node EKS ~$3,350/month"
+    },
+    {
+      "id": "metric",
+      "type": "backend",
+      "label": "Metric Optimization",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "sublabel": "Infra $15/host/month"
+    },
+    {
+      "id": "log",
+      "type": "backend",
+      "label": "Log Optimization",
+      "pos": [
+        480,
+        250
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "sublabel": "$0.10/GB"
+    },
+    {
+      "id": "apm",
+      "type": "backend",
+      "label": "APM Optimization",
+      "pos": [
+        930,
+        250
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "sublabel": "$31/host/month"
+    },
+    {
+      "id": "m1",
+      "type": "backend",
+      "label": "Limit custom metrics",
+      "pos": [
+        230,
+        170
+      ],
+      "size": [
+        200,
+        50
+      ],
+      "sublabel": "dogstatsd.nonLocalTraffic"
+    },
+    {
+      "id": "m2",
+      "type": "backend",
+      "label": "Manage tag cardinality",
+      "pos": [
+        230,
+        250
+      ],
+      "size": [
+        200,
+        50
+      ],
+      "sublabel": "containerExcludeMetrics"
+    },
+    {
+      "id": "m3",
+      "type": "backend",
+      "label": "Adjust collection interval",
+      "pos": [
+        230,
+        330
+      ],
+      "size": [
+        200,
+        50
+      ]
+    },
+    {
+      "id": "l1",
+      "type": "backend",
+      "label": "Log filtering",
+      "pos": [
+        680,
+        170
+      ],
+      "size": [
+        200,
+        50
+      ],
+      "sublabel": "containerCollectAll: false"
+    },
+    {
+      "id": "l2",
+      "type": "backend",
+      "label": "Sampling",
+      "pos": [
+        680,
+        250
+      ],
+      "size": [
+        200,
+        50
+      ]
+    },
+    {
+      "id": "l3",
+      "type": "backend",
+      "label": "Index exclusion filters",
+      "pos": [
+        680,
+        330
+      ],
+      "size": [
+        200,
+        50
+      ]
+    },
+    {
+      "id": "a1",
+      "type": "backend",
+      "label": "Adjust sampling rate",
+      "pos": [
+        1130,
+        170
+      ],
+      "size": [
+        200,
+        50
+      ],
+      "sublabel": "DD_TRACE_SAMPLE_RATE"
+    },
+    {
+      "id": "a2",
+      "type": "backend",
+      "label": "Select services",
+      "pos": [
+        1130,
+        250
+      ],
+      "size": [
+        200,
+        50
+      ]
+    },
+    {
+      "id": "a3",
+      "type": "backend",
+      "label": "Optimize instrumentation scope",
+      "pos": [
+        1130,
+        330
+      ],
+      "size": [
+        200,
+        50
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Metrics",
+      "wraps": [
+        "metric",
+        "m1",
+        "m2",
+        "m3"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "Logs",
+      "wraps": [
+        "log",
+        "l1",
+        "l2",
+        "l3"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "APM",
+      "wraps": [
+        "apm",
+        "a1",
+        "a2",
+        "a3"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-metric",
+      "from": "root",
+      "to": "metric",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-log",
+      "from": "root",
+      "to": "log",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-apm",
+      "from": "root",
+      "to": "apm",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "metric-m1",
+      "from": "metric",
+      "to": "m1"
+    },
+    {
+      "id": "metric-m2",
+      "from": "metric",
+      "to": "m2"
+    },
+    {
+      "id": "metric-m3",
+      "from": "metric",
+      "to": "m3"
+    },
+    {
+      "id": "log-l1",
+      "from": "log",
+      "to": "l1"
+    },
+    {
+      "id": "log-l2",
+      "from": "log",
+      "to": "l2"
+    },
+    {
+      "id": "log-l3",
+      "from": "log",
+      "to": "l3"
+    },
+    {
+      "id": "apm-a1",
+      "from": "apm",
+      "to": "a1"
+    },
+    {
+      "id": "apm-a2",
+      "from": "apm",
+      "to": "a2"
+    },
+    {
+      "id": "apm-a3",
+      "from": "apm",
+      "to": "a3"
+    }
+  ]
+}

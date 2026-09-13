@@ -1,7 +1,7 @@
 # Network Policy Quiz
 
 > **Related Document**: [Network Policy](../../../networking/calico/05-network-policy.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 12, 2026
 
 ## Quiz
 
@@ -17,7 +17,7 @@
 **Answer: C) No deny rules, no global policies, limited selector options**
 
 **Explanation:**
-Kubernetes standard NetworkPolicy has several limitations: it only supports Allow rules (no explicit Deny), cannot create cluster-wide global policies, has limited selector options, and doesn't support L7 (application layer) filtering. Calico extends NetworkPolicy with explicit Deny/Allow/Log/Pass actions, GlobalNetworkPolicy, advanced selectors, and L7 policy support.
+The standard Kubernetes NetworkPolicy object provides namespaced, additive L3/L4 allow rules. It already supports named ports and numeric ranges with endPort when the plugin implements them. Calico adds explicit actions, global policy, tiers and expression selectors. Open Source HTTP policy requires the Istio/Dikastes integration; DNS domains are a commercial extension.
 
 </details>
 
@@ -49,7 +49,7 @@ Calico uses an expression-based selector syntax that supports operators like `==
 **Answer: B) Allow, Deny, Log, Pass**
 
 **Explanation:**
-Calico NetworkPolicy supports four action types: `Allow` (permit the traffic), `Deny` (drop the traffic), `Log` (log the traffic and continue evaluation), and `Pass` (skip to the next tier for evaluation). These actions provide fine-grained control over traffic handling.
+Allow and Deny finish this endpoint/direction’s normal policy decision. Log continues evaluation and can still be followed by a deny. Pass skips all remaining policies in the current tier and goes to the next applicable tier; after the last tier, Profiles are considered. The other endpoint’s policy still applies.
 
 </details>
 
@@ -65,7 +65,7 @@ Calico NetworkPolicy supports four action types: `Allow` (permit the traffic), `
 **Answer: B) NetworkPolicy requires a namespace, GlobalNetworkPolicy applies cluster-wide**
 
 **Explanation:**
-Calico NetworkPolicy is namespaced and applies only to pods within that namespace, similar to Kubernetes NetworkPolicy. GlobalNetworkPolicy is cluster-wide and can apply to all pods across all namespaces, making it ideal for security baselines, compliance requirements, and cluster-wide rules like default deny policies.
+NetworkPolicy selects workloads in its namespace. GlobalNetworkPolicy is non-namespaced and can select workloads across namespaces and HostEndpoints. It does not automatically mean every endpoint is selected; use explicit target scope and preserve host/system connectivity.
 
 </details>
 
@@ -81,7 +81,7 @@ Calico NetworkPolicy is namespaced and applies only to pods within that namespac
 **Answer: B) Defining reusable sets of IP addresses/CIDRs**
 
 **Explanation:**
-A NetworkSet is a Calico resource that defines a set of IP addresses or CIDR blocks that can be referenced in network policies. This allows you to define groups of external IPs (like database servers or trusted partners) once and reference them in multiple policies, making policy management easier and more maintainable.
+A NetworkSet groups labeled IP/CIDR ranges for reuse. A namespaced NetworkSet and a GlobalNetworkSet have different selection scope. Use a separate namespaceSelector: global() when selecting global resources from a namespaced policy; global(label-expression) is not valid syntax.
 
 </details>
 
@@ -97,7 +97,7 @@ A NetworkSet is a Calico resource that defines a set of IP addresses or CIDR blo
 **Answer: B) By order field, lower numbers evaluated first**
 
 **Explanation:**
-Tiers are evaluated in order based on their `order` field, with lower numbers evaluated first. Within each tier, policies are also evaluated by their order field. This hierarchical structure allows organizations to separate security policies (low order), platform policies (medium order), and application policies (high order).
+Lower tier orders are evaluated first, then lower policy orders within each tier. Only tiers with a policy selecting the endpoint and direction apply. No rule match in an applicable tier uses its defaultAction, normally Deny. The built-in default tier is fixed at 1,000,000; it is not an implicit infinity.
 
 </details>
 
@@ -113,11 +113,11 @@ Tiers are evaluated in order based on their `order` field, with lower numbers ev
 **Answer: C) Skips to the next tier for continued evaluation**
 
 **Explanation:**
-The `Pass` action causes policy evaluation to skip the remaining policies in the current tier and continue to the next tier. This is useful when a higher-priority tier (like security) wants to allow certain traffic to be further evaluated by lower-priority tiers (like application policies) rather than making a final decision.
+Pass skips the remaining policies in its tier, including any later security restrictions. To check all deny-only guardrails before delegation, a tier-level defaultAction: Pass can be more appropriate than an early unconditional Pass rule.
 
 </details>
 
-8. How can you implement FQDN-based (domain name) policies in Calico?
+8. Where does Calico Enterprise 3.23 specify allowed egress domain names?
    - A) Using the `hosts` field in ingress rules
    - B) Using the `domains` field in destination specification
    - C) FQDN policies are not supported
@@ -129,7 +129,7 @@ The `Pass` action causes policy evaluation to skip the remaining policies in the
 **Answer: B) Using the `domains` field in destination specification**
 
 **Explanation:**
-Calico supports FQDN-based policies using the `domains` field in egress rules. You can specify domain patterns like `"*.amazonaws.com"` or exact domains. Calico resolves these domains to IP addresses and creates the appropriate rules. This feature is available in Calico Enterprise and requires DNS proxy configuration in open-source Calico.
+Calico Enterprise supports destination.domains on egress Allow rules with trusted DNS learning. This field is absent from the Open Source 3.32 CRD; enabling policySyncPathPrefix or an arbitrary DNS proxy does not add it. A prefix wildcard matches one or more domain components, and IP-based matching is not HTTPS hostname authentication.
 
 </details>
 
@@ -145,7 +145,7 @@ Calico supports FQDN-based policies using the `domains` field in egress rules. Y
 **Answer: A) Whether the policy applies to forwarded/routed traffic through the host**
 
 **Explanation:**
-The `applyOnForward` setting determines whether the policy applies to traffic being forwarded through the host (not destined to or originating from the host itself). This is important for host endpoint policies and scenarios where the node is acting as a router for traffic between other endpoints.
+For HostEndpoint policy, applyOnForward: true also applies to forwarded traffic. It is required when doNotTrack or preDNAT is true. A host Allow does not bypass the applicable workload endpoint policy.
 
 </details>
 
@@ -161,7 +161,7 @@ The `applyOnForward` setting determines whether the policy applies to traffic be
 **Answer: B) Applies the policy before connection tracking (stateless)**
 
 **Explanation:**
-The `doNotTrack` option applies the policy rules before Linux connection tracking (conntrack). This creates stateless rules that don't track connection state, useful for high-performance scenarios or when you need to apply rules to traffic before it enters the connection tracking system. Both request and response traffic must be explicitly allowed.
+doNotTrack is a host-policy option, requires applyOnForward: true and applies before connection tracking. An untracked Allow prevents tracking of matching traffic; requests and responses need explicit rules. It is not a universal speed improvement and can conflict with Service/NAT paths that depend on conntrack.
 
 </details>
 
@@ -177,23 +177,23 @@ The `doNotTrack` option applies the policy rules before Linux connection trackin
 **Answer: B) Applies policy before Destination NAT, seeing original destination**
 
 **Explanation:**
-The `preDNAT` option applies the policy before Destination NAT occurs, allowing the policy to see the original destination IP/port before it is translated. This is useful for policies on host endpoints where you want to filter traffic based on the original destination (like external IPs) before DNAT translates it to a pod IP.
+preDNAT evaluates ingress host traffic using the original destination IP/port before DNAT. It requires applyOnForward: true, cannot contain egress rules and cannot be combined with doNotTrack. A miss does not automatically drop at this stage; later host/workload policy still applies.
 
 </details>
 
-12. How do you implement a default deny policy for all pods in Calico?
+12. Which baseline selects both directions for demo-namespace workloads after earlier explicit allow policies?
    - A) Set a cluster-wide flag in FelixConfiguration
-   - B) Create a GlobalNetworkPolicy with selector `all()` and no rules
+   - B) Create a scoped GlobalNetworkPolicy with `types: [Ingress, Egress]` and empty rules
    - C) Delete all existing NetworkPolicies
    - D) Configure default deny in the IPPool
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Create a GlobalNetworkPolicy with selector `all()` and no rules**
+**Answer: B) Create a scoped GlobalNetworkPolicy with `types: [Ingress, Egress]` and empty rules**
 
 **Explanation:**
-To implement default deny, create a GlobalNetworkPolicy that selects all pods (`selector: all()`) with `types: [Ingress, Egress]` but no allow rules. This policy should have a high order number so it's evaluated last. Any traffic not explicitly allowed by other policies will be denied by this catch-all policy.
+Select the intended namespace/workloads, explicitly set both types, and leave rules empty. An omitted order follows explicitly ordered policies. The baseline does not override earlier terminal Allows, and selector: all() alone can include HostEndpoints. Do not apply an unscoped catch-all to system traffic as a generic tutorial step.
 
 </details>
 
@@ -225,25 +225,58 @@ The `order` field determines the evaluation priority of policies within a tier. 
 **Answer: B) A representation of a host's network interface for policy enforcement**
 
 **Explanation:**
-A Host Endpoint represents a network interface on a host node, allowing Calico policies to be applied to traffic entering or leaving the host itself (not just pod traffic). This enables securing the host's network interfaces, controlling what traffic can reach node services, and implementing host-level firewall rules.
+HostEndpoint represents an interface on a managed host for policy enforcement. Manual endpoints can introduce default-deny behavior; automatic endpoints normally have a default-allow profile, and failsafe ports still matter. Installation.hostPorts does not create automatic HostEndpoints.
 
 </details>
 
 15. How can you debug why a network policy is not working as expected?
     - A) Only by reading the policy YAML
-    - B) Check workload endpoints, policy evaluation with calicoctl, and Felix logs
+    - B) Check endpoint labels, all applicable tiers, backend/logs and actual connections
     - C) Restart all Calico components
     - D) Network policy debugging is not supported
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Check workload endpoints, policy evaluation with calicoctl, and Felix logs**
+**Answer: B) Check endpoint labels, all applicable tiers, backend/logs and actual connections**
 
 **Explanation:**
-To debug network policies: 1) Use `calicoctl get workloadendpoint -n <namespace>` to verify the endpoint exists and has correct labels, 2) Use `calicoctl get networkpolicy -A` and `globalnetworkpolicy` to list all policies, 3) Check Felix logs for policy-related messages, 4) Verify selector expressions match the endpoint labels, 5) In eBPF mode, use `tc filter show` to inspect applied rules.
+List both Kubernetes and Calico policies, explicitly inspect all relevant tiers, verify endpoint labels and test allowed/denied new connections. Felix readiness is not a latency benchmark. iptables Log actions use kernel logs. Service/NAT behavior in kube-proxy or its replacement can also explain failures; a tc program listing alone is not an effective-policy trace.
 
 </details>
+
+16. Which permission structure implements Calico application-tier editing through the standard API server?
+    - A) Ordinary networkpolicies with resourceNames: ["application.*"] alone
+    - B) Get on the application Tier plus tier.networkpolicies with application.* and the intended namespace binding
+    - C) Any Role containing verbs: ["*"]
+    - D) A namespace named application
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Get on the application Tier plus tier.networkpolicies with application.* and the intended namespace binding**
+
+**Explanation:**
+Calico checks its tier.networkpolicies pseudo-resource, a synthetic application.* or policy name, and get permission on the Tier. This is not a generic Kubernetes resourceNames glob. Broader additive bindings and native-v3 read limitations must also be considered.
+
+</details>
+
+17. A client uses source port 49152 to connect to backend port 8080. Which ingress port match expresses the server listener?
+    - A) source.ports: [8080]
+    - B) source.ports: [49152] for every client
+    - C) destination.ports: [8080] with protocol TCP
+    - D) No protocol and a source-port range covering every port
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) destination.ports: [8080] with protocol TCP**
+
+**Explanation:**
+The service listens on destination port 8080. Client source ports vary. Numeric port matches require a supported port-bearing protocol. A source-port match is appropriate in different cases, such as an explicitly defined untracked DNS response rule.
+
+</details>
+
 
 ---
 

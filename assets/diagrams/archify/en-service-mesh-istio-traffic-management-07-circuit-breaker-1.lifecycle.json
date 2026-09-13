@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Circuit Breaker Overview",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "viewBox": [
+      980,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "start": {
+          "label": "start"
+        },
+        "active": {
+          "label": "normal (Closed)"
+        },
+        "waiting": {
+          "label": "test (HalfOpen)"
+        },
+        "failure": {
+          "label": "blocked (Open)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Request handling state"
+    },
+    {
+      "id": "probe",
+      "label": "Recovery probe"
+    }
+  ],
+  "states": [
+    {
+      "id": "start",
+      "type": "start",
+      "label": "Start",
+      "sublabel": "initial state",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "closed",
+      "type": "active",
+      "label": "Closed",
+      "sublabel": "normal · all requests pass",
+      "lane": "main",
+      "col": 1,
+      "tag": "normal"
+    },
+    {
+      "id": "open",
+      "type": "failure",
+      "label": "Open",
+      "sublabel": "blocked · fail immediately",
+      "lane": "main",
+      "col": 3,
+      "tag": "blocked"
+    },
+    {
+      "id": "halfopen",
+      "type": "waiting",
+      "label": "HalfOpen",
+      "sublabel": "test · limited requests",
+      "lane": "probe",
+      "col": 1,
+      "tag": "test"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-init",
+      "from": "start",
+      "to": "closed"
+    },
+    {
+      "id": "t-trip",
+      "from": "closed",
+      "to": "open",
+      "label": "Consecutive error threshold exceeded",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "t-wait",
+      "from": "open",
+      "to": "halfopen",
+      "label": "Wait time elapsed",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "t-recover",
+      "from": "halfopen",
+      "to": "closed",
+      "label": "Request successful",
+      "variant": "emphasis",
+      "toSide": "bottom"
+    },
+    {
+      "id": "t-retrip",
+      "from": "halfopen",
+      "to": "open",
+      "label": "Request failed",
+      "variant": "security",
+      "route": "right-channel",
+      "fromSide": "right",
+      "toSide": "right"
+    }
+  ]
+}

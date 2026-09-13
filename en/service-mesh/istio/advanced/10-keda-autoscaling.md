@@ -1,17 +1,9 @@
 # KEDA-based Autoscaling with Istio Metrics
 
-> **Supported Versions**: KEDA 2.18, Istio 1.28
-> **Last Updated**: February 19, 2026
-> **Kubernetes Compatibility**: 1.34
+> **Verification baseline**: KEDA/chart 2.20.2, Istio 1.31.0, Kubernetes 1.32–1.36
+> **Last reviewed**: September 11, 2026
 
-This document covers **practical autoscaling strategies using Istio metrics**. It provides various patterns and real-world examples for scaling workloads based on Prometheus and CloudWatch metrics using KEDA.
-
-**Learning Objectives**:
-- Writing sophisticated scaling policies using Prometheus PromQL
-- CloudWatch metrics integration and AWS service combinations
-- Strategies based on various metrics including RPS, Latency, and error rates
-- Circuit Breaker and time-based predictive scaling
-- Stabilization and monitoring for production environments
+This guide explains scaling signals and their limits. It assumes existing workloads, verified metrics and sufficient cluster capacity. Examples targeting the same Deployment are **alternatives**: select one ScaledObject/HPA owner per target, not all the objects on this page.
 
 ## Table of Contents
 
@@ -26,93 +18,51 @@ This document covers **practical autoscaling strategies using Istio metrics**. I
 
 ## Overview
 
-This document focuses on **practical autoscaling strategies using Istio metrics**. KEDA extends Kubernetes HPA to enable scaling based on complex metric queries from Prometheus and CloudWatch.
+Kubernetes HPA supports resource, custom and external metrics through the corresponding APIs, including multiple metrics. CloudWatch can be integrated through an adapter; it is not inherently impossible with HPA. KEDA provides scalers, an external metrics API and activation management while still using HPA for ordinary replica scaling.
 
-### Core Istio Metrics
+| Signal | Meaning | Use and limitation |
+|---|---|---|
+| `istio_requests_total` | HTTP/gRPC request counter | Rate can measure admitted load; choose one reporter and the actual target workload |
+| `istio_request_duration_milliseconds_bucket` | Classic latency histogram buckets | Quantiles are quality observations, not guaranteed inverse-capacity signals |
+| `istio_tcp_connections_opened_total` | Cumulative opened connections | Its rate is connection creation rate, not currently active connections |
+| `istio_request_bytes_sum` | Cumulative observed HTTP request bytes | A rate measures throughput; scope reporters and workloads |
+| `envoy_cluster_upstream_rq_pending_overflow` | Client-side cluster overflow counter | Diagnose pool limits/dependencies before deciding which workload, if any, should scale |
 
-Metrics provided by Istio Envoy proxy used for scaling:
-
-| Metric | Description | Scaling Use |
-|--------|------|---------------|
-| **istio_requests_total** | Total request count | RPS-based scaling |
-| **istio_request_duration_milliseconds** | Request latency | Latency-based scaling |
-| **istio_tcp_connections_opened_total** | TCP connection count | Connection-based scaling |
-| **istio_request_bytes_sum** | Request bytes | Throughput-based scaling |
-| **envoy_cluster_upstream_rq_pending_overflow** | Circuit Breaker overflow | Overload detection |
-
-### Why Use KEDA?
-
-Advantages of KEDA compared to standard Kubernetes HPA:
-
-| Feature | Kubernetes HPA | KEDA |
-|------|---------------|------|
-| **Metric Sources** | CPU/Memory + Custom Metrics API | 60+ Scalers with direct support |
-| **PromQL Queries** | Custom Metrics Adapter required | Native support |
-| **CloudWatch Integration** | Not possible | Direct query |
-| **Scale to Zero** | Minimum 1 | 0 possible |
-| **Multiple Metrics** | Limited | Multiple trigger combinations |
-| **Cron Schedule** | Not supported | Time-based scaling |
-
-**Focus of this document**: Rather than KEDA installation, this focuses on **practical scaling patterns and strategies using Prometheus and CloudWatch metrics**.
-
-### Key Scaling Strategies
-
-Practical scaling patterns covered in this document:
-
-| Strategy | Primary Metric | Suitable Scenarios | Key Benefits |
-|------|----------|----------------|----------|
-| **RPS-based** | `istio_requests_total` | API servers, web services | Intuitive, simple implementation |
-| **Latency-based** | P50/P95/P99 latency | Payment, orders - latency-sensitive services | User experience guarantee |
-| **Error rate-based** | 5xx response ratio | High-availability essential services | Fast failure response |
-| **Composite Metrics** | RPS + Latency + Error | Production services | Stable, accurate scaling |
-| **Circuit Breaker-based** | overflow, connection pool | Services with many external dependencies | Cascading failure prevention |
-| **Time-based Prediction** | Cron + metrics | Predictable traffic patterns | Cost optimization, proactive response |
+A calibrated demand/backlog metric is a starting point. Latency, errors and circuit-breaker events can result from downstream failures that more replicas will not fix. Stateful membership, storage and application semantics also constrain scaling; “stateful” or “latency-sensitive” alone does not select a safe autoscaling policy.
 
 ## Architecture
 
-### Metrics-based Scaling Flow
+KEDA creates/configures an HPA for the scale target and exposes external metrics. The HPA controller requests metrics through that API and updates the target's `/scale` subresource; the target controller and scheduler then create/place Pods.
 
-![A request passes through the Envoy sidecar, which exposes Istio metrics to Prometheus; KEDA polls Prometheus, compares the result to a threshold, and when it decides to scale out it updates the HPA target so Kubernetes creates new Pods, then waits out a cooldown period before evaluating again.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-10-keda-autoscaling-0.svg)
+| Setting or component | Responsibility |
+|---|---|
+| KEDA `pollingInterval` | Trigger polling and activation, including 0→1 |
+| HPA controller sync | Additional metric requests and 1→N decisions; default sync period 15 seconds, cluster configurable |
+| `useCachedMetrics` | Optional KEDA metric caching between polls; not enabled in these examples |
+| `activationThreshold` | Activation threshold for 0↔1, not a second HPA scale-down threshold |
+| `cooldownPeriod` | Wait after inactivity before KEDA scales to 0, not a pause after every scale-down |
+| HPA `behavior` | 1→N stabilization and rate-of-change limits |
 
-### ScaledObject Basic Structure
+With `minReplicaCount` above 0, do not use activation/cooldown as ordinary replica hysteresis. Capture→scrape→query→HPA→Pod startup/readiness all contribute delay; neither a 15-second poll nor zero stabilization guarantees immediate ready capacity.
 
-The core of KEDA is the **ScaledObject** CRD. It automatically creates/manages HPA based on Prometheus or CloudWatch metrics:
+### Metric Types and Ideal Arithmetic
 
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: my-app-scaler
-  namespace: default
-spec:
-  # Scale target
-  scaleTargetRef:
-    name: my-app           # Deployment name
-    kind: Deployment
+Ignoring HPA tolerance, missing/unready Pods, limits and behavior policies:
 
-  # Scaling policy
-  pollingInterval: 30      # Check metrics every 30 seconds
-  cooldownPeriod: 300      # Wait 5 minutes after scale down
-  minReplicaCount: 2       # Minimum Pod count
-  maxReplicaCount: 20      # Maximum Pod count
+- **AverageValue + total demand**: desired replicas ≈ `ceil(total metric / target per Pod)`.
+- **Value + a workload-wide value**: desired replicas ≈ `ceil(current replicas × observed value / target value)`.
 
-  # Metric triggers
-  triggers:
-  - type: prometheus       # or aws-cloudwatch
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |             # PromQL query
-        sum(rate(istio_requests_total{
-          destination_workload="my-app"
-        }[1m]))
-      threshold: '1000'    # Threshold: 1000 RPS
-```
+For 600 RPS at 100 RPS/Pod, AverageValue asks for 6 replicas. Dividing the query by 3 Pods first would feed 200 and incorrectly ask for 2. `count(up)` counts scrape targets and is not a safe replica divisor either.
+
+With 4 replicas, a global 300ms latency and a Value target 200ms suggest 6 replicas. If adding replicas does not reduce that latency, repeated decisions can drive the workload to its cap. Treat latency/error ratio controllers as experiments requiring evidence of negative feedback, not production defaults.
 
 ## Prometheus Metrics-based Scaling
 
-### 1. RPS (Requests Per Second) Based Scaling
+The examples assume an actual Deployment named `reviews` in `default`. A Service name is not a scale target. Released Bookinfo commonly uses Deployment names such as `reviews-v1`; adapt both `scaleTargetRef` and metric selectors to the real workload rather than assuming they match a Service.
 
-#### ScaledObject Definition
+Verify one scrape of each relevant proxy and the actual labels. The primary examples use `reporter="destination"` to avoid counting both request reports. This measures requests admitted at the target; edge rejections/queues may require an independently measured demand signal.
+
+### 1. RPS-based Scaling
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -122,254 +72,341 @@ metadata:
   namespace: default
 spec:
   scaleTargetRef:
-    name: reviews
+    apiVersion: apps/v1
     kind: Deployment
-
-  # Scaling policy
-  pollingInterval: 30  # Check metrics every 30 seconds
-  cooldownPeriod: 300  # Wait 5 minutes after scale down
-  minReplicaCount: 2   # Minimum replicas
-  maxReplicaCount: 20  # Maximum replicas
-
-  triggers:
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="reviews",
-          destination_workload_namespace="default",
-          response_code=~"2.*"
-        }[1m]))
-      threshold: '100'  # Scale out above 100 RPS
-      activationThreshold: '50'  # Activate above 50 RPS
-```
-
-#### How It Works
-
-![A polling loop collects RPS metrics, checks the RPS against a scale-out threshold and a scale-in threshold, adjusts replica count when a threshold is crossed, then waits and repeats.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-10-keda-autoscaling-1.svg)
-
-### 2. Latency Based Scaling
-
-#### Scaling by P95 Latency
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-latency-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
     name: reviews
-    kind: Deployment
-
   pollingInterval: 30
   cooldownPeriod: 300
   minReplicaCount: 2
   maxReplicaCount: 20
-
-  triggers:
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # P95 latency (95th percentile)
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews",
-            destination_workload_namespace="default"
-          }[2m])) by (le)
-        )
-      threshold: '200'  # Scale out above 200ms
-      activationThreshold: '100'
-```
-
-#### Combined P50 and P99 Scaling
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-multi-latency-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: reviews
-    kind: Deployment
-
-  pollingInterval: 30
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  # Scale when any trigger exceeds threshold
-  triggers:
-  # P50 latency
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.50,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews",
-            destination_workload_namespace="default"
-          }[2m])) by (le)
-        )
-      threshold: '50'  # P50 > 50ms
-
-  # P95 latency
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews",
-            destination_workload_namespace="default"
-          }[2m])) by (le)
-        )
-      threshold: '200'  # P95 > 200ms
-
-  # P99 latency (extreme cases)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.99,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews",
-            destination_workload_namespace="default"
-          }[2m])) by (le)
-        )
-      threshold: '500'  # P99 > 500ms
-```
-
-### 3. Success Rate Based Scaling
-
-Scale out when error rate is high to distribute load:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-error-rate-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: reviews
-    kind: Deployment
-
-  pollingInterval: 30
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  triggers:
-  # Scale out when error rate exceeds 5%
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        (
-          sum(rate(istio_requests_total{
-            destination_workload="reviews",
-            response_code=~"5.*"
-          }[2m]))
-          /
-          sum(rate(istio_requests_total{
-            destination_workload="reviews"
-          }[2m]))
-        ) * 100
-      threshold: '5'  # 5% error rate
-      activationThreshold: '2'
-```
-
-### 4. Composite Metrics Scaling
-
-Considering both RPS and Latency:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-composite-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: reviews
-    kind: Deployment
-
-  pollingInterval: 30
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  # Advanced scaling behavior
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
         scaleDown:
-          stabilizationWindowSeconds: 300  # 5 minute stabilization
+          stabilizationWindowSeconds: 300
           policies:
           - type: Percent
-            value: 10  # Maximum 10% decrease
+            value: 10
             periodSeconds: 60
         scaleUp:
-          stabilizationWindowSeconds: 0  # Immediate scale out
+          stabilizationWindowSeconds: 0
           policies:
           - type: Percent
-            value: 50  # Maximum 50% increase
+            value: 50
             periodSeconds: 60
           - type: Pods
-            value: 5  # Maximum 5 pods at once
+            value: 5
             periodSeconds: 60
-          selectPolicy: Max  # Select larger value
-
+          selectPolicy: Max
   triggers:
-  # RPS-based
   - type: prometheus
+    name: rps
     metricType: AverageValue
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="reviews",
-          destination_workload_namespace="default"
-        }[1m])) / count(kube_pod_info{pod=~"reviews-.*"})
-      threshold: '50'  # 50 RPS per Pod
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
 
-  # P95 Latency-based
+The query includes failed requests as load and returns total RPS. `threshold: "100"` is the target per replica for AverageValue, not a global “above 100 means add a Pod” switch. Do not divide by Pod count again.
+
+`ignoreNullValues: "false"` makes missing, NaN or infinite Prometheus results errors in KEDA 2.20.2. A real zero counter rate remains 0. Configure and test fallback for source failures; do not silently convert arbitrary missing metrics to 0. Bootstrap the scrape/metric data contract before enabling the scaler.
+
+Fallback here uses the higher of the configured floor and current replicas after the configured error threshold, still subject to HPA limits/behavior. It is not protection against a down KEDA metrics API or absent node capacity.
+
+### 2. Latency-based Control: Conditional Experiment
+
+This alternative explicitly uses Value for the workload-wide p95:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reviews-latency-experiment
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
   - type: prometheus
+    name: p95
     metricType: Value
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="reviews"
-          }[2m])) by (le)
-        )
-      threshold: '200'  # P95 > 200ms
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '200'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
+
+The query returns 0 only when the actual histogram count has zero rate. With absent telemetry it stays absent; invalid quantiles remain errors rather than healthy 0. A p95 of 0 in an idle window is an intentional control value, not an observed zero-duration request.
+
+Multiple quantiles are also Value metrics:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reviews-quantile-experiment
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: p50
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.5, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '50'
+      ignoreNullValues: 'false'
+  - type: prometheus
+    name: p95
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '200'
+      ignoreNullValues: 'false'
+  - type: prometheus
+    name: p99
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.99, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '500'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
+
+HPA chooses the largest desired replica count, not an average or a weighted blend. Quantiles are correlated; more triggers do not inherently improve stability or establish a latency guarantee.
+
+### 3. Error-rate Control: Conditional Experiment
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reviews-error-experiment
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: error-percent
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (100 * (sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default",response_code=~"5..|0"}[2m])) or vector(0)) / sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+          and on() (sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '5'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
+
+This is a workload-wide 5xx/zero-status percentage with a Value target. Known idle traffic returns 0; no telemetry is not fabricated as0. Only use an error-based controller after establishing that replica shortage causes those errors. Dependency outages, authorization failures or client-side pool limits can make scaling ineffective or harmful.
+
+### 4. Composite Metrics
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reviews-composite-experiment
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: rps
+    metricType: AverageValue
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  - type: prometheus
+    name: p95
+    metricType: Value
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: |-
+        (histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+          and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+        or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+      threshold: '200'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
+
+The RPS input is total demand with AverageValue; the latency input is Value. HPA takes the largest recommendation. The scale-up `selectPolicy: Max` chooses the larger permitted change: a five-Pod policy is not an absolute cap when the percentage policy permits more. These alternatives still need capacity and workload tests.
 
 ## CloudWatch Metrics-based Scaling
 
-### Overview
+CloudWatch source cadence, publication latency, aggregation period, lookback and offset determine freshness. High-resolution custom metrics exist; a fixed “CloudWatch always has 1–3 minutes delay” is inaccurate. Prometheus also has collection and control-loop delays.
 
-CloudWatch has **slower response time** than Prometheus (1-3 minute delay), but is advantageous for integration with AWS native services and **long-term retention**.
+### Identity and Published Metric Contract
 
-**Use Scenarios**:
-- Combination with AWS service metrics (ALB, RDS, SQS, etc.)
-- Long-term trend analysis and cost optimization
-- Centralized monitoring in multi-region environments
-- Not recommended for real-time scaling (use Prometheus)
+These examples use a KEDA operator role configured through IRSA and this workload-namespace TriggerAuthentication:
 
-> **Prerequisite**: Istio metrics must be sent to CloudWatch. See [Reference: KEDA Installation](#reference-keda-installation) section for ADOT Collector setup.
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-aws
+  namespace: default
+spec:
+  podIdentity:
+    provider: aws
+    identityOwner: keda
+```
 
-### Scaling with CloudWatch Metrics
+`podIdentity.provider: aws` is the current IRSA provider. Its `identityOwner: keda` differs from the deprecated scaler metadata `identityOwner: operator/pod`, which remains supported in 2.20 but is scheduled for removal in 3. Do not confuse the old `aws-eks` provider name with a new EKS Pod Identity association. Use the documented provider/SDK credential setup for the chosen identity mechanism.
 
-#### RPS-based Scaling
+The publishing example later in this guide emits:
+
+| Metric | Namespace and exact dimensions | Interpretation |
+|---|---|---|
+| `IstioRequestsPerSecond` | `IstioScaling`; ClusterName=`eks-demo`, destination_workload=`reviews`, destination_workload_namespace=`default` | Precomputed RPS gauge |
+| `IstioP95LatencyMilliseconds` | Same dimension set | Precomputed per-window p95 gauge in milliseconds |
+
+All dimensions must match. A query containing only destination_workload does not identify the same custom metric.
+
+### RPS Gauge
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -379,573 +416,685 @@ metadata:
   namespace: default
 spec:
   scaleTargetRef:
-    name: reviews
+    apiVersion: apps/v1
     kind: Deployment
-
-  pollingInterval: 60  # 1 minute interval recommended for CloudWatch
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  triggers:
-  - type: aws-cloudwatch
-    metadata:
-      namespace: IstioMetrics
-      metricName: IstioRequestsTotal
-      dimensionName: destination_workload
-      dimensionValue: reviews
-      targetMetricValue: '1000'  # 1000 requests/minute
-      minMetricValue: '100'
-
-      # Statistics type
-      metricStatPeriod: '60'  # 1 minute
-      metricStat: Sum
-
-      # AWS region
-      awsRegion: us-west-2
-
-      # Use IRSA
-      identityOwner: operator
-```
-
-#### Latency-based Scaling
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-cloudwatch-latency
-  namespace: default
-spec:
-  scaleTargetRef:
     name: reviews
-    kind: Deployment
-
   pollingInterval: 60
   cooldownPeriod: 300
   minReplicaCount: 2
   maxReplicaCount: 20
-
-  triggers:
-  - type: aws-cloudwatch
-    metadata:
-      namespace: IstioMetrics
-      metricName: IstioRequestDuration
-      dimensionName: destination_workload
-      dimensionValue: reviews
-
-      # P95 latency (calculated in CloudWatch)
-      targetMetricValue: '200'  # 200ms
-      minMetricValue: '50'
-
-      metricStatPeriod: '60'
-      metricStat: 'p95'  # 95th percentile
-
-      awsRegion: us-west-2
-      identityOwner: operator
-```
-
-## Practical Scaling Strategies
-
-### Strategy 1: Traffic Pattern-based Predictive Scaling
-
-Pre-scaling considering time-based traffic patterns:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: frontend-predictive-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: frontend
-    kind: Deployment
-
-  pollingInterval: 30
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 50
-
-  # Advanced HPA behavior settings
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
         scaleDown:
-          stabilizationWindowSeconds: 600  # 10 minute stabilization
+          stabilizationWindowSeconds: 300
           policies:
           - type: Percent
             value: 10
-            periodSeconds: 120  # 10% decrease every 2 minutes
+            periodSeconds: 60
         scaleUp:
           stabilizationWindowSeconds: 0
           policies:
           - type: Percent
-            value: 100  # Can double at once
-            periodSeconds: 30
+            value: 50
+            periodSeconds: 60
           - type: Pods
-            value: 10  # Maximum 10 pods at once
-            periodSeconds: 30
+            value: 5
+            periodSeconds: 60
           selectPolicy: Max
-
   triggers:
-  # RPS-based
-  - type: prometheus
+  - type: aws-cloudwatch
+    name: cw-rps
+    metricType: AverageValue
+    authenticationRef:
+      name: keda-aws
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="frontend"
-        }[1m])) / scalar(count(up{job="frontend"}))
-      threshold: '100'  # 100 RPS per Pod
-
-  # P95 latency
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="frontend"
-          }[2m])) by (le)
-        )
-      threshold: '300'
-
-  # Cron-based pre-scaling (peak hours)
-  - type: cron
-    metadata:
-      timezone: Asia/Seoul
-      start: 0 9 * * 1-5  # Weekdays 9 AM
-      end: 0 18 * * 1-5   # Weekdays 6 PM
-      desiredReplicas: '20'  # Minimum 20 during peak hours
+      namespace: IstioScaling
+      metricName: IstioRequestsPerSecond
+      dimensionName: ClusterName;destination_workload;destination_workload_namespace
+      dimensionValue: eks-demo;reviews;default
+      targetMetricValue: '100'
+      minMetricValue: '0'
+      ignoreNullValues: 'false'
+      metricStatPeriod: '60'
+      metricStat: Average
+      metricCollectionTime: '300'
+      metricEndTimeOffset: '60'
+      awsRegion: us-west-2
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
 
-### Strategy 2: Circuit Breaker State-based Scaling
+Average over the gauge's60-second period retains RPS units. Summing cumulative `istio_requests_total` samples is not a request count per minute. For a genuinely published delta-count metric, derive a separately calibrated per-period target instead.
 
-Automatic scale out when Circuit opens:
+`minMetricValue` is explicitly present for the released scaler parser, but `ignoreNullValues: "false"` takes precedence on empty results. `metricEndTimeOffset` skips recent potentially incomplete points; it adds delay and does not prove data freshness. Monitor timestamps and publisher health, including stale-but-nonempty results.
+
+### Precomputed Latency Gauge
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: backend-circuit-breaker-scaler
+  name: reviews-cloudwatch-p95-experiment
   namespace: default
 spec:
   scaleTargetRef:
-    name: backend
+    apiVersion: apps/v1
     kind: Deployment
-
-  pollingInterval: 15  # Circuit Breaker needs fast response
-  cooldownPeriod: 180
-  minReplicaCount: 3
-  maxReplicaCount: 30
-
-  triggers:
-  # Circuit Breaker Overflow detection
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(increase(envoy_cluster_upstream_rq_pending_overflow{
-          cluster_name=~"outbound.*backend.*"
-        }[1m]))
-      threshold: '10'  # 10+ overflows per minute
-      activationThreshold: '5'
-
-  # Upstream connection pool saturation
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(envoy_cluster_upstream_cx_active{
-          cluster_name=~"outbound.*backend.*"
-        })
-        /
-        sum(envoy_cluster_circuit_breakers_default_cx_open{
-          cluster_name=~"outbound.*backend.*"
-        }) * 100
-      threshold: '80'  # Connection pool 80%+ usage
-```
-
-### Strategy 3: Tiered Scaling
-
-Apply different scaling speeds based on load level:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: payment-tiered-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: payment-service
-    kind: Deployment
-
-  pollingInterval: 30
+    name: reviews
+  pollingInterval: 60
   cooldownPeriod: 300
-  minReplicaCount: 3
-  maxReplicaCount: 50
-
+  minReplicaCount: 2
+  maxReplicaCount: 20
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
-        scaleUp:
+        scaleDown:
+          stabilizationWindowSeconds: 300
           policies:
-          # Low load (< 150% threshold): slow increase
           - type: Percent
-            value: 20
-            periodSeconds: 120
-          # Medium load (150-200%): fast increase
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
           - type: Percent
             value: 50
             periodSeconds: 60
-          # High load (> 200%): very fast increase
           - type: Pods
-            value: 10
-            periodSeconds: 30
+            value: 5
+            periodSeconds: 60
           selectPolicy: Max
-
-        scaleDown:
-          policies:
-          - type: Percent
-            value: 5  # Slow decrease (5% at a time)
-            periodSeconds: 180  # Every 3 minutes
-
   triggers:
-  - type: prometheus
+  - type: aws-cloudwatch
+    name: cw-p95
+    metricType: Value
+    authenticationRef:
+      name: keda-aws
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="payment-service",
-          response_code=~"2.*"
-        }[1m]))
-      threshold: '500'  # 500 RPS
+      namespace: IstioScaling
+      metricName: IstioP95LatencyMilliseconds
+      dimensionName: ClusterName;destination_workload;destination_workload_namespace
+      dimensionValue: eks-demo;reviews;default
+      targetMetricValue: '200'
+      minMetricValue: '0'
+      ignoreNullValues: 'false'
+      metricStatPeriod: '60'
+      metricStat: Maximum
+      metricCollectionTime: '300'
+      metricEndTimeOffset: '60'
+      awsRegion: us-west-2
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
 
-### Strategy 4: Cost-optimized Scaling
+This asks for the largest published p95 gauge in the period. It is **not** the p95 of all requests in that CloudWatch period. Do not request `metricStat: p95` on a Prometheus histogram conversion or a p95-of-p95 gauge and claim the original distribution is preserved. Native CloudWatch percentile use requires appropriately published samples/statistics.
 
-Distinguish between business hours and off-hours:
+### Multiple Sources Are Not Ordered Failover
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: analytics-cost-optimized-scaler
+  name: reviews-dual-source-example
   namespace: default
 spec:
   scaleTargetRef:
-    name: analytics-service
+    apiVersion: apps/v1
     kind: Deployment
-
-  pollingInterval: 60
-  cooldownPeriod: 600  # Longer wait for cost optimization
-  minReplicaCount: 1
-  maxReplicaCount: 30
-
-  triggers:
-  # Business hours (09:00-18:00): aggressive scaling
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        (
-          sum(rate(istio_requests_total{
-            destination_workload="analytics-service"
-          }[2m]))
-          and
-          (hour() >= 9 and hour() < 18)
-        )
-      threshold: '50'
-      activationThreshold: '20'
-
-  # Off-hours: Allow Scale to Zero
-  - type: cron
-    metadata:
-      timezone: Asia/Seoul
-      start: 0 18 * * *  # 6 PM
-      end: 0 9 * * *     # 9 AM
-      desiredReplicas: '0'  # Scale to Zero
-```
-
-### Strategy 5: Gateway Metrics-based Scaling
-
-Monitor Istio Gateway load to scale backend:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: backend-gateway-based-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: backend
-    kind: Deployment
-
+    name: reviews
   pollingInterval: 30
   cooldownPeriod: 300
   minReplicaCount: 2
-  maxReplicaCount: 40
-
-  triggers:
-  # Monitor incoming traffic through Gateway
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          source_workload="istio-ingressgateway",
-          destination_service="backend.default.svc.cluster.local"
-        }[1m]))
-      threshold: '1000'
-
-  # Gateway pending connection count
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(envoy_http_downstream_rq_active{
-          app="istio-ingressgateway"
-        })
-      threshold: '500'  # 500+ concurrent requests
-```
-
-## Best Practices
-
-### 1. Metric Selection Guide
-
-![A decision tree that routes a workload to RPS-based, latency-based, predictive, or composite scaling based on whether it is stateless, has a predictable traffic pattern, and is latency sensitive, with the two single-metric strategies able to combine into a composite one.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-10-keda-autoscaling-2.svg)
-
-**Recommended Metrics**:
-
-| Workload Type | Primary Metric | Secondary Metric | Reason |
-|-------------|----------|-----------|------|
-| **API Server** | RPS | P95 Latency | Request count is direct load indicator |
-| **Web Server** | RPS | Error rate | Request count more important than concurrent connections |
-| **Data Processing** | P95 Latency | CPU/Memory | Processing time is load indicator |
-| **Streaming** | TCP connections | Throughput | Connection count is key to resource consumption |
-| **Batch Jobs** | Queue length | Processing time | Pending work count is scaling criteria |
-
-### 2. Threshold Setting Guide
-
-```yaml
-# Process for finding appropriate thresholds
-
-# Step 1: Measure current workload
-# Normal RPS
-kubectl exec -it prometheus-xxx -n istio-system -- promtool query instant \
-  'sum(rate(istio_requests_total{destination_workload="reviews"}[5m]))'
-
-# Peak time RPS
-# Normal: ~500 RPS
-# Peak: ~2000 RPS
-
-# Step 2: Measure per-Pod processing capacity
-# Run load test
-kubectl run load-test --image=fortio/fortio -- load -c 50 -qps 0 -t 60s http://reviews:9080
-
-# Result: Maintains P95 < 100ms up to about 200 RPS per Pod
-
-# Step 3: Calculate threshold
-# Target P95: 100ms
-# Per-Pod capacity: 200 RPS
-# Safety margin: 70% (140 RPS/pod)
-# -> threshold: '140'
-
-# Step 4: Write ScaledObject
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: reviews-optimized-scaler
-spec:
-  scaleTargetRef:
-    name: reviews
-  minReplicaCount: 3  # Normal 500 RPS / 140 = 3.5 -> 4
-  maxReplicaCount: 20  # Peak 2000 RPS / 140 = 14.2 -> 20 (with margin)
+  maxReplicaCount: 20
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
   triggers:
   - type: prometheus
+    name: prom-rps
+    metricType: AverageValue
     metadata:
-      query: |
-        sum(rate(istio_requests_total{destination_workload="reviews"}[1m]))
-        / count(kube_pod_info{pod=~"reviews-.*"})
-      threshold: '140'  # 140 RPS per Pod
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  - type: aws-cloudwatch
+    name: cw-rps
+    metricType: AverageValue
+    authenticationRef:
+      name: keda-aws
+    metadata:
+      namespace: IstioScaling
+      metricName: IstioRequestsPerSecond
+      dimensionName: ClusterName;destination_workload;destination_workload_namespace
+      dimensionValue: eks-demo;reviews;default
+      targetMetricValue: '100'
+      minMetricValue: '0'
+      ignoreNullValues: 'false'
+      metricStatPeriod: '60'
+      metricStat: Average
+      metricCollectionTime: '300'
+      metricEndTimeOffset: '60'
+      awsRegion: us-west-2
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
 
-### 3. Scaling Speed Adjustment
+Both metrics participate in the HPA's maximum recommendation. “Prometheus primary, CloudWatch secondary” is not a priority/failover policy, and stale values can retain an elevated replica recommendation. Prefer a deliberate single source or a tested multi-source/fallback design.
+
+## Practical Scaling Strategies
+
+### 1. Scheduled Replica Floor
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: balanced-scaler
+  name: frontend-scheduled-floor
   namespace: default
 spec:
   scaleTargetRef:
-    name: myapp
+    apiVersion: apps/v1
     kind: Deployment
-
+    name: frontend
   pollingInterval: 30
   cooldownPeriod: 300
   minReplicaCount: 2
   maxReplicaCount: 50
-
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
-        # Scale down: conservative (service stability first)
         scaleDown:
-          stabilizationWindowSeconds: 600  # 10 minute observation
+          stabilizationWindowSeconds: 300
           policies:
           - type: Percent
-            value: 10  # 10% decrease
-            periodSeconds: 180  # Every 3 minutes
-          - type: Pods
-            value: 2  # Or maximum 2 at a time
-            periodSeconds: 180
-          selectPolicy: Min  # Select more conservative value
-
-        # Scale up: aggressive (fast response)
+            value: 10
+            periodSeconds: 60
         scaleUp:
-          stabilizationWindowSeconds: 0  # Immediate
+          stabilizationWindowSeconds: 0
           policies:
           - type: Percent
-            value: 100  # Up to 2x increase
-            periodSeconds: 30
+            value: 50
+            periodSeconds: 60
           - type: Pods
-            value: 10  # Or 10 at a time
-            periodSeconds: 30
-          selectPolicy: Max  # Select more aggressive value
-
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
   triggers:
   - type: prometheus
+    name: rps
+    metricType: AverageValue
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: sum(rate(istio_requests_total{destination_workload="myapp"}[1m]))
-      threshold: '1000'
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="frontend",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  - type: cron
+    metadata:
+      timezone: Asia/Seoul
+      start: 0 9 * * 1-5
+      end: 0 18 * * 1-5
+      desiredReplicas: '20'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
 
-### 4. Multi-cluster Environment Scaling
+During the weekday Asia/Seoul window, the Cron trigger supplies a 20-replica floor while demand can request more, up to the configured maximum. This is scheduled scaling, not a traffic-prediction model. Schedule ahead of demand when startup/readiness takes time.
+
+### 2. Explicit Off-hours Scale to Zero
+
+For a workload that may be unavailable outside office hours, use a positive desired count inside the window and `minReplicaCount: 0`:
 
 ```yaml
-# Cluster 1: Primary traffic handling
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: frontend-cluster1-scaler
+  name: analytics-office-hours
   namespace: default
 spec:
   scaleTargetRef:
-    name: frontend
-  minReplicaCount: 5
+    apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-service
+  pollingInterval: 30
+  cooldownPeriod: 600
+  minReplicaCount: 0
   maxReplicaCount: 30
-
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
   triggers:
-  - type: prometheus
+  - type: cron
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # 60% of global traffic handled by this cluster
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="frontend",
-          source_cluster="cluster1"
-        }[1m])) * 0.6
-      threshold: '600'
----
-# Cluster 2: Secondary traffic handling
+      timezone: Asia/Seoul
+      start: 0 9 * * 1-5
+      end: 0 18 * * 1-5
+      desiredReplicas: '20'
+```
+
+Cron `desiredReplicas: "0"` is invalid. Outside the active window, KEDA can return to 0 under its inactivity/cooldown rules. A client request does not wake this Cron-only workload. Destination-side Istio metrics disappear with the application, so they cannot by themselves provide a reliable 0→1 demand signal. Use an independently observable queue/interceptor or keep a positive minimum when on-demand availability is required.
+
+PromQL `hour()` uses UTC; it does not inherit a Cron scaler's Asia/Seoul timezone. Avoid mixing them as if their business-hour windows were identical.
+
+### 3. Circuit-breaker Signals Are Diagnostics First
+
+Client-side overflow and current connections can be inspected separately:
+
+```promql
+sum(increase(envoy_cluster_upstream_rq_pending_overflow{
+  cluster_name=~"outbound[|]9080[|][^|]*[|]backend[.]default[.]svc[.]cluster[.]local"
+}[1m]))
+
+sum(envoy_cluster_upstream_cx_active{
+  cluster_name=~"outbound[|]9080[|][^|]*[|]backend[.]default[.]svc[.]cluster[.]local"
+})
+
+max(envoy_cluster_circuit_breakers_default_cx_open{
+  cluster_name=~"outbound[|]9080[|][^|]*[|]backend[.]default[.]svc[.]cluster[.]local"
+})
+```
+
+Verify the real cluster name/port, exported stats and source scrape scope. `cx_open` is a 0/1 circuit-breaker flag, not connection capacity; dividing active connections by it cannot produce saturation percentage. Increasing backend replicas does not raise a client's fixed connection-pool limits. Diagnose the limit/dependency before assigning a scaling target.
+
+### 4. Scaling Policies Are Not Load Tiers
+
+HPA policy lists with Percent/Pods and `selectPolicy: Max` or `Min` limit allowed changes over rolling periods. They do not automatically select “low”, “medium” and “high” load tiers from comments. Use the main behavior example to bound changes and validate it against the measured workload response.
+
+### 5. Gateway-observed Backend Demand
+
+```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: frontend-cluster2-scaler
+  name: backend-gateway-rps
   namespace: default
 spec:
   scaleTargetRef:
-    name: frontend
-  minReplicaCount: 3
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 2
   maxReplicaCount: 20
-
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
   triggers:
   - type: prometheus
+    name: gateway-backend-rps
+    metricType: AverageValue
     metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # 40% of global traffic
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="frontend",
-          source_cluster="cluster2"
-        }[1m])) * 0.4
-      threshold: '400'
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="source",source_workload="istio-ingressgateway",source_workload_namespace="istio-system",destination_service_name="backend",destination_service_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
 ```
+
+Verify the real gateway workload name and destination Service labels. This measures traffic for the specific backend from that gateway. `envoy_http_downstream_rq_active` is active HTTP requests, not pending connections, and a gateway-wide aggregate includes unrelated services. Do not use that aggregate to scale an arbitrary backend.
+
+This example keeps a positive minimum. If considering 0 replicas, first prove the independent gateway/interceptor still emits the necessary metric with no backend endpoints and provides the desired request-buffering/error behavior.
 
 ## Best Practices
 
-### 1. Metric Collection Optimization
+### 1. One Target, One Autoscaler Owner
 
-```yaml
-# Adjust Prometheus scrape interval
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus
-  namespace: istio-system
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 15s  # Default 15 seconds
-      evaluation_interval: 15s
+Do not install several example ScaledObjects or an extra “backup HPA” on the same target. Coordinate existing HPA ownership and GitOps replicas fields before a change. Multiple metrics can live in one ScaledObject; native HPA can skip downscaling when a metric errors while still allowing a valid scale-up recommendation.
 
-    scrape_configs:
-    # Collect Istio metrics more frequently
-    - job_name: 'istio-mesh'
-      scrape_interval: 10s  # 10 seconds
-      kubernetes_sd_configs:
-      - role: endpoints
-        namespaces:
-          names:
-          - default
-          - production
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-        action: keep
-        regex: true
-```
+KEDA 2.20 fallback supports AverageValue and Value triggers except CPU/memory; it applies to ScaledObjects, not ScaledJobs. A CPU/memory trigger needs its own metrics-server/request prerequisites and is not an independent failover controller.
 
-### 2. Ensure Scaling Stability
+### 2. Capacity Planning Example, Not a Benchmark
+
+The following preserves the original numbers as **hypothetical inputs**:
+
+| Assumption/calculation | Result |
+|---|---|
+| Assumed measured per-Pod capacity 200 RPS × chosen utilization factor 70% | 140 RPS/Pod target |
+| Normal load 500 /140, rounded up | 4 replicas |
+| Peak load 2000 /140, rounded up | 15 replicas |
+| Chosen maximum with extra room | 20, subject to actual schedulable capacity |
+
+These were not measured by this audit. Run a bounded, approved load test against a known replica/target and record latency, errors, resources and readiness. A Service load-balancing over several replicas does not directly measure one Pod's capacity.
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: stable-scaler
+  name: reviews-capacity-example
   namespace: default
 spec:
   scaleTargetRef:
-    name: myapp
-
-  # 1. Appropriate polling interval
-  pollingInterval: 30  # Too short is unstable, too long is slow
-
-  # 2. Sufficient cooldown
-  cooldownPeriod: 300  # 5 minutes is generally appropriate
-
-  # 3. Safe min/max values
-  minReplicaCount: 2  # 0 is risky, recommend minimum 2
-  maxReplicaCount: 20  # 70% or less of cluster capacity
-
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reviews
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 4
+  maxReplicaCount: 20
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
         scaleDown:
-          # 4. Long stabilization window
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: rps
+    metricType: AverageValue
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+      threshold: '140'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 4
+    behavior: currentReplicasIfHigher
+```
+
+There is no universal “maxReplicaCount ≤70% of cluster capacity” rule: Pod count is not a CPU/memory/IP/quota percentage. HPA/KEDA scale workloads; node capacity requires separate provisioning/autoscaler configuration.
+
+### 3. Resources and Health
+
+Merge this fragment into the **existing** Deployment/container after confirming its container name and actual health endpoint. Retain its real image, selectors and labels:
+
+```yaml
+spec:
+  template:
+    spec:
+      containers:
+      - name: reviews
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+```
+
+Requests/limits and probes are tuning inputs, not a measured throughput guarantee. Readiness and startup/draining affect when capacity is usable. Liveness should not restart an otherwise healthy process merely because a downstream dependency is unavailable.
+
+### 4. Multiple Clusters and Regions
+
+Use a scaler in each target cluster with a verified cluster-local datasource, or explicit cluster labels that truly exist in a federated store. With cluster-local destination-reporter data, this example counts all local backend demand:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: frontend-local-demand
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 3
+  maxReplicaCount: 30
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: local-rps
+    metricType: AverageValue
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="frontend",destination_workload_namespace="default"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 3
+    behavior: currentReplicasIfHigher
+```
+
+Apply each configuration in its intended cluster context. Metadata labels such as `region` do not make a ScaledObject control a remote cluster. `source_cluster` describes origin, not the destination capacity to scale; multiplying already-filtered traffic by 0.6/0.4 does not implement a global traffic split.
+
+Service naming patterns such as `*-us-*` do not establish client geography, and `destination_region` is not a guaranteed default Istio label. Regional SLOs need verified telemetry and workload capacity, not assumed country names in service labels.
+
+### 5. Payment and Queue Workloads
+
+A payment workload can begin with calibrated demand and conservative bounds while latency/errors remain quality indicators:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: payment-capacity-example
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: payment-service
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 5
+  maxReplicaCount: 50
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
           stabilizationWindowSeconds: 600
           policies:
           - type: Percent
             value: 10
-            periodSeconds: 120
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: prometheus
+    name: rps
+    metricType: AverageValue
+    metadata:
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="payment-service",destination_workload_namespace="production"}[2m]))
+      threshold: '100'
+      ignoreNullValues: 'false'
+  fallback:
+    failureThreshold: 3
+    replicas: 5
+    behavior: currentReplicasIfHigher
 ```
 
-### 3. Monitoring and Alerting
+The 100 RPS target and limits are illustrative. Confirm bottleneck causality, idempotency, downstream limits and representative failure behavior before adding ratio-based triggers.
+
+For a queue worker, the queue remains visible when worker replicas are 0:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: data-processor-queue
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: data-processor
+  pollingInterval: 30
+  cooldownPeriod: 600
+  minReplicaCount: 0
+  maxReplicaCount: 30
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Percent
+            value: 10
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 60
+          - type: Pods
+            value: 5
+            periodSeconds: 60
+          selectPolicy: Max
+  triggers:
+  - type: aws-sqs-queue
+    name: backlog
+    metricType: AverageValue
+    authenticationRef:
+      name: keda-aws
+    metadata:
+      queueURL: https://sqs.us-west-2.amazonaws.com/123456789012/data-processing-queue
+      queueLength: '10'
+      activationQueueLength: '0'
+      scaleOnInFlight: 'true'
+      scaleOnDelayed: 'false'
+      awsRegion: us-west-2
+```
+
+Replace the example account/queue URL and configure the referenced identity. `queueLength: "10"` means target backlog per replica, not an activation threshold of ten. Activation defaults to positive backlog with the explicitly zero activation threshold. The example counts visible plus in-flight messages and excludes delayed messages; align this with processing concurrency, visibility timeout and shutdown behavior.
+
+Istio HTTP latency is not automatically SQS job-processing duration. Instrument business processing separately instead of adding an unavailable Pod-latency trigger to the 0-replica worker.
+
+### 6. Monitoring
+
+Expose and scrape **operator** metrics for scaler health. The metrics adapter's metrics alone do not contain every operator counter. KEDA's `namespace` metric label identifies the scaled resource namespace; do not overwrite it with the exporter Pod namespace.
+
+This is a scrape-config fragment to merge into the existing Prometheus configuration, with namespace-scoped discovery RBAC for EndpointSlices, Services and Pods:
+
+```yaml
+scrape_configs:
+- job_name: keda-components
+  kubernetes_sd_configs:
+  - role: endpointslice
+    namespaces:
+      names:
+      - keda
+  relabel_configs:
+  - source_labels:
+    - __meta_kubernetes_service_name
+    regex: keda-operator|keda-operator-metrics-apiserver
+    action: keep
+  - source_labels:
+    - __meta_kubernetes_endpointslice_port_name
+    regex: metrics
+    action: keep
+  - source_labels:
+    - __meta_kubernetes_namespace
+    target_label: exporter_namespace
+  - source_labels:
+    - __meta_kubernetes_pod_name
+    target_label: exporter_pod
+```
+
+It discovers each endpoint rather than alternating between HA operator Pods through one load-balanced Service. Confirm actual Service/port names, target labels, TLS/mesh access and scrape results. With Prometheus Operator, use equivalent selected ServiceMonitors rather than overwriting its generated ConfigMap.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -956,653 +1105,346 @@ metadata:
 spec:
   groups:
   - name: keda-scaling
-    interval: 30s
     rules:
-    # Reached maximum replicas
     - alert: KEDAMaxReplicasReached
-      expr: |
-        kube_horizontalpodautoscaler_status_current_replicas
-        >= kube_horizontalpodautoscaler_spec_max_replicas
+      expr: |-
+        max by (namespace, horizontalpodautoscaler) (
+         kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler=~"keda-hpa-.*"}
+        ) >= on(namespace, horizontalpodautoscaler)
+        max by (namespace, horizontalpodautoscaler) (
+         kube_horizontalpodautoscaler_spec_max_replicas{horizontalpodautoscaler=~"keda-hpa-.*"}
+        )
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "KEDA scaled to maximum replicas"
-        description: "{{ $labels.horizontalpodautoscaler }} has reached max replicas ({{ $value }})"
-
-    # Scaling failed
-    - alert: KEDAScalingFailed
-      expr: |
-        increase(keda_scaler_errors_total[5m]) > 0
-      labels:
-        severity: critical
-      annotations:
-        summary: "KEDA scaling failed"
-        description: "KEDA scaler {{ $labels.scaledObject }} has errors"
-
-    # Frequent scaling (Flapping)
-    - alert: KEDAFlapping
-      expr: |
-        rate(keda_scaler_active[10m]) > 0.1
-      for: 10m
+        summary: KEDA-managed HPA is at its configured maximum
+    - alert: KEDAScalerErrors
+      expr: sum by (namespace, scaledObject) (increase(keda_scaler_detail_errors_total[5m])) > 0
+      for: 2m
       labels:
         severity: warning
       annotations:
-        summary: "KEDA is flapping"
-        description: "ScaledObject {{ $labels.scaledObject }} is scaling too frequently"
+        summary: Scaler retrieval errors observed; inspect source/identity and fallback
+    - alert: KEDAReplicaCountChurn
+      expr: |-
+        max by (namespace, horizontalpodautoscaler) (
+         changes(kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler=~"keda-hpa-.*"}[10m])
+        ) > 6
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Frequent observed replica-count changes; inspect demand, rollout and stabilization
 ```
 
-### 4. Resource Limit Settings
+PrometheusRule requires a matching Operator rule selector/namespace. The HPA filters use KEDA's default name prefix; adjust for custom HPA names. `keda_scaler_detail_errors_total` is the released error counter; `keda_scaler_active` is a gauge and must not be passed to `rate()` as a replica-flapping measure.
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: reviews
-  namespace: default
-spec:
-  replicas: 3
-  template:
-    spec:
-      containers:
-      - name: reviews
-        image: istio/examples-bookinfo-reviews-v1:1.17.0
-
-        # Resource requests/limits (important for scaling calculation)
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 200m
-            memory: 256Mi
-
-        # Readiness Probe (safety during scale out)
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 9080
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-
-        # Liveness Probe
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-```
+Replica-count changes can reflect demand or rollouts, not necessarily harmful oscillation. These alerts are investigation signals, not proof of failed scaling or sufficient ready capacity.
 
 ## Troubleshooting
 
-### 1. KEDA Not Fetching Metrics
-
-**Symptoms**:
 ```bash
-kubectl get scaledobject -n default
-# STATUS: Unknown
-```
+kubectl get scaledobject reviews-rps-scaler -n default -o yaml
+kubectl describe hpa keda-hpa-reviews-rps-scaler -n default
+kubectl logs -n keda deployment/keda-operator
+kubectl get apiservice v1beta1.external.metrics.k8s.io
+kubectl get pods -n default -o wide
 
-**Root Cause Analysis**:
-
-```bash
-# 1. Check KEDA Operator logs
-kubectl logs -n keda -l app=keda-operator
-
-# 2. Check ScaledObject status
-kubectl describe scaledobject reviews-rps-scaler -n default
-
-# 3. Test Prometheus connectivity
-kubectl run curl-test --image=curlimages/curl -it --rm -- \
-  curl -s http://prometheus.istio-system.svc:9090/api/v1/query \
-  --data-urlencode 'query=up'
-```
-
-**Resolution**:
-
-1. **Verify Prometheus address**:
-```bash
-# Check Prometheus Service
-kubectl get svc -n istio-system | grep prometheus
-
-# Use correct address in ScaledObject
-serverAddress: http://prometheus.istio-system.svc:9090
-```
-
-2. **Test PromQL query**:
-```bash
-# Test query directly in Prometheus UI
+# Local query inspection; use a second terminal while port-forward is active.
 kubectl port-forward -n istio-system svc/prometheus 9090:9090
-
-# Browser: http://localhost:9090
-# Enter query and verify results
 ```
 
-### 2. Scaling Too Slow
-
-**Symptoms**: Scale out delayed during traffic spikes
-
-**Resolution**:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: fast-scaler
-spec:
-  # 1. Reduce polling interval
-  pollingInterval: 15  # 30s -> 15s
-
-  # 2. Remove scale up stabilization window
-  advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleUp:
-          stabilizationWindowSeconds: 0  # React immediately
-          policies:
-          - type: Pods
-            value: 5  # 5 at a time
-            periodSeconds: 30
-
-  # 3. Lower activation threshold
-  triggers:
-  - type: prometheus
-    metadata:
-      query: sum(rate(istio_requests_total{...}[1m]))
-      threshold: '100'
-      activationThreshold: '30'  # Low threshold for early activation
+```bash
+promtool query instant http://127.0.0.1:9090 'sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))'
 ```
 
-### 3. Flapping (Unstable Scaling)
+A local port-forward proves neither KEDA Pod connectivity nor its credentials. Check provider errors, DNS, TLS/mesh policy, metric existence/labels and aggregated-API availability from the actual component path.
 
-**Symptoms**: Pod count keeps increasing/decreasing repeatedly
+For slow scaling, inspect source age, lookback, HPA sync/behavior, scheduling, image pulls and readiness before reducing pollingInterval. Activation thresholds do not accelerate ordinary 1→N scaling when a positive minimum is used. For unstable counts, examine the measured capacity response and HPA stabilization/rate limits; cooldownPeriod is not its general downscale control.
 
-**Cause**: Threshold too sensitive or insufficient stabilization period
-
-**Resolution**:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: stable-scaler
-spec:
-  # 1. Longer cooldown
-  cooldownPeriod: 600  # 10 minutes
-
-  # 2. Longer PromQL evaluation period
-  triggers:
-  - type: prometheus
-    metadata:
-      query: |
-        sum(rate(istio_requests_total{...}[5m]))  # 1m -> 5m
-      threshold: '100'
-
-  # 3. Conservative scale down
-  advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleDown:
-          stabilizationWindowSeconds: 600
-          policies:
-          - type: Percent
-            value: 5  # Only 5% decrease
-            periodSeconds: 180
-```
-
-### 4. CloudWatch Latency
-
-**Symptoms**: CloudWatch metrics not real-time (1-3 minute delay)
-
-**Resolution**:
-
-```yaml
-# Use Prometheus primarily, CloudWatch as secondary
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: hybrid-metrics-scaler
-spec:
-  triggers:
-  # Primary metric: Prometheus (real-time)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: sum(rate(istio_requests_total{...}[1m]))
-      threshold: '1000'
-
-  # Secondary metric: CloudWatch (trend analysis)
-  - type: aws-cloudwatch
-    metadata:
-      namespace: IstioMetrics
-      metricName: IstioRequestsTotal
-      targetMetricValue: '5000'  # Higher threshold
-      metricStatPeriod: '300'  # 5 minute aggregation
-```
-
-## Practical Examples
-
-### Example 1: E-commerce Payment Service
-
-Service where latency is critical:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: payment-service-scaler
-  namespace: production
-spec:
-  scaleTargetRef:
-    name: payment-service
-    kind: Deployment
-
-  pollingInterval: 15  # Fast response
-  cooldownPeriod: 180  # 3 minute cooldown
-  minReplicaCount: 5   # Always maintain 5+
-  maxReplicaCount: 50
-
-  advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleUp:
-          stabilizationWindowSeconds: 0
-          policies:
-          - type: Percent
-            value: 100  # Fast 2x
-            periodSeconds: 30
-        scaleDown:
-          stabilizationWindowSeconds: 900  # 15 minute stabilization
-          policies:
-          - type: Percent
-            value: 5
-            periodSeconds: 300  # 5% every 5 minutes
-
-  triggers:
-  # P50 latency (normal case)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.50,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="payment-service",
-            destination_workload_namespace="production"
-          }[1m])) by (le)
-        )
-      threshold: '50'  # P50 > 50ms
-      activationThreshold: '30'
-
-  # P95 latency (quality guarantee)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="payment-service",
-            destination_workload_namespace="production"
-          }[1m])) by (le)
-        )
-      threshold: '200'  # P95 > 200ms
-
-  # Error rate (emergency scale out above 5%)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        (
-          sum(rate(istio_requests_total{
-            destination_workload="payment-service",
-            response_code=~"5.*"
-          }[1m]))
-          /
-          sum(rate(istio_requests_total{
-            destination_workload="payment-service"
-          }[1m]))
-        ) * 100
-      threshold: '5'
-```
-
-### Example 2: Data Processing Service
-
-Batch processing and queue-based scaling:
-
-```yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: data-processor-scaler
-  namespace: default
-spec:
-  scaleTargetRef:
-    name: data-processor
-    kind: Deployment
-
-  pollingInterval: 60  # Batch allows slow response
-  cooldownPeriod: 600  # 10 minute cooldown
-  minReplicaCount: 0   # Allow Scale to Zero
-  maxReplicaCount: 30
-
-  triggers:
-  # SQS queue length (primary metric)
-  - type: aws-sqs-queue
-    metadata:
-      queueURL: https://sqs.us-west-2.amazonaws.com/123456789/data-processing-queue
-      queueLength: '10'  # Activate when 10+ in queue
-      awsRegion: us-west-2
-      identityOwner: operator
-
-  # Istio processing time (secondary metric)
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="data-processor"
-          }[5m])) by (le)
-        )
-      threshold: '5000'  # Scale out when taking 5+ seconds
-```
-
-### Example 3: Multi-region Global Service
-
-Region-specific scaling based on latency:
-
-```yaml
-# US Region
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: api-us-scaler
-  namespace: default
-  labels:
-    region: us-east-1
-spec:
-  scaleTargetRef:
-    name: api-service
-  minReplicaCount: 3
-  maxReplicaCount: 30
-
-  triggers:
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # Aggregate only US user traffic
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="api-service",
-          source_canonical_service=~".*-us-.*"
-        }[1m]))
-      threshold: '500'
-
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      # US region P95 latency
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="api-service",
-            destination_region="us-east-1"
-          }[2m])) by (le)
-        )
-      threshold: '100'  # US users target 100ms
----
-# EU Region
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: api-eu-scaler
-  namespace: default
-  labels:
-    region: eu-west-1
-spec:
-  scaleTargetRef:
-    name: api-service
-  minReplicaCount: 2
-  maxReplicaCount: 20
-
-  triggers:
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="api-service",
-          source_canonical_service=~".*-eu-.*"
-        }[1m]))
-      threshold: '300'
-
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus.istio-system.svc:9090
-      query: |
-        histogram_quantile(0.95,
-          sum(rate(istio_request_duration_milliseconds_bucket{
-            destination_workload="api-service",
-            destination_region="eu-west-1"
-          }[2m])) by (le)
-        )
-      threshold: '150'  # EU allows 150ms
-```
+For CloudWatch, inspect returned timestamps, all dimensions, statistic/unit, collection window, offset and IAM. A higher threshold on a second metric does not make it a passive backup.
 
 ## Reference: KEDA Installation
 
-> **Note**: This section is only needed if installing KEDA for the first time. If already installed, start from [Prometheus Metrics-based Scaling](#prometheus-metrics-based-scaling).
+### Pinned Chart and Actual Compatibility
 
-### Install with Helm
+The published KEDA 2.20 deployment requirement is Kubernetes 1.30+, while the chart metadata has a looser 1.23 floor. Helm accepting a version is not proof of runtime support. Use the intersection with Istio 1.31's 1.32–1.36 support and the managed platform's supported versions.
 
-```bash
-# Add KEDA Helm repository
-helm repo add kedacore https://kedacore.github.io/charts
-helm repo update
-
-# Install KEDA
-helm install keda kedacore/keda \
-  --namespace keda \
-  --create-namespace \
-  --set prometheus.metricServer.enabled=true \
-  --set prometheus.metricServer.port=9022 \
-  --set operator.replicaCount=2
-
-# Verify installation
-kubectl get pods -n keda
-# Output:
-# NAME                                      READY   STATUS
-# keda-operator-xxxxx                       1/1     Running
-# keda-operator-metrics-apiserver-xxxxx     1/1     Running
-```
-
-### AWS IRSA Setup (for CloudWatch)
-
-IAM permissions required for KEDA Operator when using CloudWatch metrics:
-
-```bash
-# IRSA setup
-eksctl create iamserviceaccount \
-  --name keda-operator \
-  --namespace keda \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess \
-  --approve \
-  --override-existing-serviceaccounts
-
-# Verify ServiceAccount
-kubectl get sa keda-operator -n keda -o yaml | grep eks.amazonaws.com/role-arn
-```
-
-### CloudWatch Metrics Sending Setup (Optional)
-
-To use CloudWatch metrics-based scaling, you need to send Istio metrics via ADOT Collector:
-
-#### Step 1: Install ADOT Collector
+For a new installation, or a reviewed upgrade preserving existing values, use these values. Before upgrading, also review the release changes and CRD ownership/migration procedure:
 
 ```yaml
-apiVersion: opentelemetry.io/v1alpha1
-kind: OpenTelemetryCollector
-metadata:
-  name: istio-metrics-collector
-  namespace: istio-system
-spec:
-  mode: deployment
-  serviceAccount: adot-collector
-  config: |
-    receivers:
-      prometheus:
-        config:
-          scrape_configs:
-          - job_name: 'istio-mesh'
-            scrape_interval: 60s  # 1 minute recommended for CloudWatch
-            kubernetes_sd_configs:
-            - role: endpoints
-              namespaces:
-                names:
-                - default
-            relabel_configs:
-            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-              action: keep
-              regex: true
-
-    processors:
-      batch:
-        timeout: 60s
-      metricstransform:
-        transforms:
-        - include: istio_requests_total
-          action: update
-          new_name: IstioRequestsTotal
-        - include: istio_request_duration_milliseconds
-          action: update
-          new_name: IstioRequestDuration
-
-    exporters:
-      awsemf:
-        namespace: IstioMetrics
-        region: us-west-2
-        dimension_rollup_option: NoDimensionRollup
-        metric_declarations:
-        - dimensions: [[destination_workload, destination_workload_namespace]]
-          metric_name_selectors:
-          - IstioRequestsTotal
-          - IstioRequestDuration
-
-    service:
-      pipelines:
-        metrics:
-          receivers: [prometheus]
-          processors: [batch, metricstransform]
-          exporters: [awsemf]
+operator:
+  replicaCount: 2
+prometheus:
+  operator:
+    enabled: true
+  metricServer:
+    enabled: true
+    port: 9022
 ```
 
-#### Step 2: IRSA Setup
-
 ```bash
-# Create IRSA policy
-cat > adot-cloudwatch-policy.json <<EOF
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update kedacore
+helm upgrade --install keda kedacore/keda --version 2.20.2   --namespace keda --create-namespace --values keda-values.yaml
+kubectl get deployments,services,pods -n keda
+```
+
+`operator.replicaCount: 2` and the metrics-adapter port 9022 override are valid chart values;9022 is an explicit override of the chart's8080 default. This enables operator metrics on 8080 as well. Two operator replicas alone do not make the metrics adapter/webhook or entire scaling path highly available.
+
+If the components are injected into Istio, KEDA documents this optional port-exclusion workaround for its own TLS-protected internal protocols:
+
+```yaml
+podAnnotations:
+  keda:
+    traffic.sidecar.istio.io/excludeInboundPorts: '9666'
+    traffic.sidecar.istio.io/excludeOutboundPorts: 9443,6443
+  metricsAdapter:
+    traffic.sidecar.istio.io/excludeInboundPorts: '6443'
+    traffic.sidecar.istio.io/excludeOutboundPorts: 9666,9443
+  webhooks:
+    traffic.sidecar.istio.io/excludeInboundPorts: '9443'
+    traffic.sidecar.istio.io/excludeOutboundPorts: 9666,6443
+```
+
+Verify actual ports and injection settings before merging. KEDA keeps its native TLS; Istio authorization does not cover the excluded traffic. This is not permission to disable transport security globally. Test API-server aggregation, admission, operator↔adapter and Prometheus connectivity.
+
+### AWS Reader Identity
+
+Create/review the IAM role and its EKS OIDC trust outside this example, scoped to the actual operator ServiceAccount. Apply the corresponding Helm values without blindly overwriting an existing ServiceAccount:
+
+```yaml
+podIdentity:
+  aws:
+    irsa:
+      enabled: true
+      roleArn: arn:aws:iam::123456789012:role/KedaMetricsReader
+```
+
+For the shown CloudWatch scaler, the released implementation calls GetMetricData:
+
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": ["cloudwatch:PutMetricData"],
+      "Action": [
+        "cloudwatch:GetMetricData"
+      ],
       "Resource": "*",
       "Condition": {
         "StringEquals": {
-          "cloudwatch:namespace": "IstioMetrics"
+          "aws:RequestedRegion": "us-west-2"
         }
       }
     }
   ]
 }
-EOF
-
-aws iam create-policy \
-  --policy-name ADOTCollectorCloudWatchPolicy \
-  --policy-document file://adot-cloudwatch-policy.json
-
-eksctl create iamserviceaccount \
-  --name adot-collector \
-  --namespace istio-system \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ADOTCollectorCloudWatchPolicy \
-  --approve
 ```
 
-**After installation**, return to [Prometheus Metrics-based Scaling](#prometheus-metrics-based-scaling) or [CloudWatch Metrics-based Scaling](#cloudwatch-metrics-based-scaling) section.
+This is regional metric-read permission, not a per-metric namespace boundary. `cloudwatch:namespace` in the AWS example policy constrains **PutMetricData publishing**, not this query. The separate CloudWatch PromQL API has different IAM requirements; do not infer them from this scaler.
 
+If using the SQS example, the operator additionally needs the specific queue's attribute-read permission:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": "arn:aws:sqs:us-west-2:123456789012:data-processing-queue"
+    }
+  ]
+}
+```
+
+The queue worker needs its own receive/delete/visibility permissions as appropriate; the scaler's read role does not grant those. Limit who may create/change ScaledObjects and TriggerAuthentications using operator identities.
+
+### Optional CloudWatch EMF Publication
+
+This example uses **upstream Collector Contrib 0.158.0 with Operator 0.158.0**, matching the operator's minor-version recommendation. Operator 0.158 supports Kubernetes 1.25–1.36. A custom image is not automatically upgraded by the operator. An ADOT distribution is an alternative only after verifying its components/configuration; the commands below are not claimed tested against an unspecified ADOT image.
+
+First load this recording-rule file into the existing Prometheus (or equivalent PrometheusRule with the appropriate selection labels):
+
+```yaml
+groups:
+- name: istio-scaling-export
+  interval: 30s
+  rules:
+  - record: istio_scaling_requests_per_second
+    expr: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m]))
+    labels:
+      destination_workload: reviews
+      destination_workload_namespace: default
+  - record: istio_scaling_p95_milliseconds
+    expr: |-
+      (histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])))
+        and on() (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) > 0))
+      or on() (0 * (sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[2m])) == 0))
+    labels:
+      destination_workload: reviews
+      destination_workload_namespace: default
+```
+
+Only the shown workload is exported. These are already-calculated RPS and rolling-window p95 gauges; they are not raw cumulative request counters or a reconstructable request-latency distribution.
+
+Then, with the compatible Operator/CRDs and an existing reviewed publisher role/log group:
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: istio-metrics-publisher
+  namespace: istio-system
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/IstioMetricsPublisher
 ---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: istio-scaling
+  namespace: istio-system
+spec:
+  mode: deployment
+  replicas: 1
+  serviceAccount: istio-metrics-publisher
+  image: otel/opentelemetry-collector-contrib:0.158.0
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  config:
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+          - job_name: istio-scaling-federate
+            scrape_interval: 60s
+            honor_labels: true
+            metrics_path: /federate
+            params:
+              match[]:
+              - '{__name__=~"istio_scaling_requests_per_second|istio_scaling_p95_milliseconds"}'
+            static_configs:
+            - targets:
+              - prometheus.istio-system.svc.cluster.local:9090
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 256
+        spike_limit_mib: 64
+      metricstransform:
+        transforms:
+        - include: istio_scaling_requests_per_second
+          action: update
+          new_name: IstioRequestsPerSecond
+          operations:
+          - action: add_label
+            new_label: ClusterName
+            new_value: eks-demo
+        - include: istio_scaling_p95_milliseconds
+          action: update
+          new_name: IstioP95LatencyMilliseconds
+          operations:
+          - action: add_label
+            new_label: ClusterName
+            new_value: eks-demo
+      batch:
+        timeout: 60s
+        send_batch_size: 256
+    exporters:
+      awsemf:
+        namespace: IstioScaling
+        region: us-west-2
+        log_group_name: /aws/otel/istio-scaling
+        log_stream_name: eks-demo
+        dimension_rollup_option: NoDimensionRollup
+        metric_declarations:
+        - dimensions:
+          - - ClusterName
+            - destination_workload
+            - destination_workload_namespace
+          metric_name_selectors:
+          - ^IstioRequestsPerSecond$
+          - ^IstioP95LatencyMilliseconds$
+        metric_descriptors:
+        - metric_name: IstioRequestsPerSecond
+          unit: Count/Second
+          overwrite: true
+        - metric_name: IstioP95LatencyMilliseconds
+          unit: Milliseconds
+          overwrite: true
+    service:
+      extensions:
+      - health_check
+      pipelines:
+        metrics:
+          receivers:
+          - prometheus
+          processors:
+          - memory_limiter
+          - metricstransform
+          - batch
+          exporters:
+          - awsemf
+```
+
+The `v1beta1` config is an object. The older `v1alpha1` API remains served by this operator release, so it should not be described as removed; this example uses the current form and an explicit Contrib image with the required components.
+
+The Collector federates only the two named recording metrics, preserves workload dimensions, adds the configured ClusterName, and writes EMF to a fixed log stream. Keep the namespace, metric names, units and all three dimensions aligned with the CloudWatch scalers. NaN/Inf are dropped by the EMF exporter; the recording expression distinguishes known idle 0 from unavailable telemetry.
+
+One publisher replica avoids duplicate polling in this example; this is not an HA design. Configure real Prometheus authentication/mesh access, publisher identity, log retention and resource limits. The operator/controller and EMF delivery were not deployed or tested against AWS by this audit.
+
+The publisher log group must already exist with platform-managed retention. Its example role needs stream creation/write within that group:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:us-west-2:123456789012:log-group:/aws/otel/istio-scaling:log-stream:eks-demo"
+    }
+  ]
+}
+```
+
+EMF goes through CloudWatch Logs; `cloudwatch:PutMetricData` alone does not authorize this exporter. The configured metric namespace is not enforced by a PutMetricData namespace condition on these Logs calls. Log ingestion/storage and generated custom metrics have separate costs; control cardinality and retention rather than assuming replica reduction equals bill savings.
 
 ## References
 
-### Official Documentation
+- [KEDA ScaledObject specification](https://keda.sh/docs/2.20/reference/scaledobject-spec/)
+- [Activation and scaling](https://keda.sh/docs/2.20/concepts/scaling-deployments/)
+- [Prometheus scaler](https://keda.sh/docs/2.20/scalers/prometheus/)
+- [CloudWatch scaler](https://keda.sh/docs/2.20/scalers/aws-cloudwatch/)
+- [SQS scaler](https://keda.sh/docs/2.20/scalers/aws-sqs/)
+- [Cron scaler](https://keda.sh/docs/2.20/scalers/cron/)
+- [AWS IRSA provider](https://keda.sh/docs/2.20/authentication-providers/aws/)
+- [KEDA metrics](https://keda.sh/docs/2.20/integrations/prometheus/)
+- [KEDA with Istio](https://keda.sh/docs/2.20/integrations/istio-integration/)
+- [KEDA deployment requirements](https://keda.sh/docs/2.20/deploy/)
+- [Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [Istio standard metrics](https://istio.io/latest/docs/reference/config/metrics/)
+- [Operator0.158 compatibility](https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/docs/getting-started/compatibility.md)
+- [Collector0.158 EMF exporter](https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsemfexporter/README.md)
+- [CloudWatch EMF](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format.html)
+- [CloudWatch namespace conditions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-namespace.html)
+- [Observability](../observability/README.md)
+- [Resilience](../resilience/README.md)
+- [Traffic Management](../traffic-management/README.md)
 
-- [KEDA Official Documentation](https://keda.sh/docs/)
-- [KEDA Prometheus Scaler](https://keda.sh/docs/scalers/prometheus/)
-- [KEDA AWS CloudWatch Scaler](https://keda.sh/docs/scalers/aws-cloudwatch/)
-- [Istio Metrics](https://istio.io/latest/docs/reference/config/metrics/)
-
-### Related Documents
-
-- [Observability](../observability/README.md) - Prometheus and metrics collection
-- [Resilience](../resilience/README.md) - Circuit Breaker and resilience
-- [Traffic Management](../traffic-management/README.md) - Istio traffic management
-
-## Summary
-
-### Metric Source Selection Guide
-
-| Metric Source | Advantages | Disadvantages | Recommended Use |
-|------------|------|------|----------|
-| **Prometheus** | - Real-time response (15-30s)<br>- Powerful PromQL queries<br>- In-cluster communication | - Long-term retention cost<br>- Cluster dependency | Real-time scaling, most workloads |
-| **CloudWatch** | - AWS service integration<br>- Long-term retention<br>- Multi-region support | - 1-3 minute delay<br>- Cost (proportional to metric count) | Trend analysis, AWS service combinations |
-
-### Scaling Strategy Selection Guide
-
-| Workload Type | Primary Metric | Secondary Metric | Recommended Settings |
-|-------------|----------|-----------|----------|
-| **API Server** | RPS (per Pod) | P95 Latency | `pollingInterval: 30`, `cooldownPeriod: 300` |
-| **Payment/Orders** | P50/P95 Latency | Error rate | `pollingInterval: 15`, fast scale out |
-| **Data Processing** | Queue length, P95 Latency | CPU/Memory | `pollingInterval: 60`, Allow Scale to Zero |
-| **Web Frontend** | RPS, P95 Latency | Gateway metrics | Cron-based pre-scaling |
-| **Microservices** | RPS, Circuit Breaker | Error rate | Tiered scaling policy |
-
-### Production Checklist
-
-Items to verify before applying scaling policies to production:
-
-- [ ] **Threshold verification**: Verify appropriate threshold values through load testing
-- [ ] **Stabilization settings**: Set sufficient `stabilizationWindowSeconds` (minimum 300 seconds for scale down)
-- [ ] **Resource limits**: Clearly define Pod `requests` and `limits`
-- [ ] **Health Check**: Configure Readiness/Liveness Probe
-- [ ] **Monitoring**: Set up `KEDAMaxReplicasReached`, `KEDAScalingFailed` alerts
-- [ ] **Flapping prevention**: Long PromQL evaluation period (`[5m]`) and conservative scale down
-- [ ] **Min/Max values**: Set `maxReplicaCount` to 70% or less of cluster capacity
-- [ ] **Fallback**: CPU/Memory-based HPA backup in case of Prometheus failure
-
-### Recommended Starting Path
-
-```
-Step 1: Implement RPS-based scaling
-   └─> Start with single metric, adjust thresholds
-
-Step 2: Add Latency metrics
-   └─> Monitor and scale on P95 latency
-
-Step 3: Composite metrics strategy
-   └─> Ensure stability with RPS + Latency combination
-
-Step 4: Apply advanced strategies
-   └─> Add Circuit Breaker, Cron, error rate, etc.
-```
-
-**Core Principles**:
-- Real-time response with Prometheus
-- Ensure stability with composite metrics
-- Conservative scale down, aggressive scale out
-- Continuous monitoring and threshold adjustment
+Before production use, validate signal semantics, actual metric labels/freshness, idle/missing-data behavior, one-owner scaling, capacity, representative failure response and recovery. The example thresholds, replica floors and timing values are starting inputs to those tests.

@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Scenario 2: Client -> CloudFront -> ALB -> Gateway",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-03-envoy-filter-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      250
+    ],
+    "views": [
+      {
+        "id": "xff-chain",
+        "label": "XFF accumulation path",
+        "focus": [
+          "client",
+          "cf",
+          "alb",
+          "gateway"
+        ],
+        "note": "CloudFront and the ALB each append one hop's IP to X-Forwarded-For."
+      },
+      {
+        "id": "trusted-hops",
+        "label": "Trusted-hop decision",
+        "focus": [
+          "gateway",
+          "app"
+        ],
+        "note": "Istio Gateway trusts the last 2 hops (xff_num_trusted_hops: 2) and extracts the real client IP."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "203.0.113.5",
+      "pos": [
+        24,
+        100
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "cf",
+      "type": "cloud",
+      "label": "CloudFront",
+      "sublabel": "172.64.0.1",
+      "pos": [
+        300,
+        100
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "AWS ALB",
+      "sublabel": "10.0.1.100",
+      "pos": [
+        586,
+        100
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "10.0.2.50",
+      "pos": [
+        872,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "tag": "xff_num_trusted_hops: 2"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "In-mesh workload",
+      "pos": [
+        1178,
+        100
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS edge proxies",
+      "wraps": [
+        "cf",
+        "alb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio mesh",
+      "wraps": [
+        "gateway",
+        "app"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-cf",
+      "from": "client",
+      "to": "cf",
+      "label": "XFF: (none)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cf-to-alb",
+      "from": "cf",
+      "to": "alb",
+      "label": "XFF: 203.0.113.5",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alb-to-gateway",
+      "from": "alb",
+      "to": "gateway",
+      "label": "XFF: + 172.64.0.1 (2 hops)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-app",
+      "from": "gateway",
+      "to": "app",
+      "label": "XFF: + 10.0.1.100 (3 hops)",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "XFF calculation",
+      "items": [
+        "X-Forwarded-For: 203.0.113.5, 172.64.0.1, 10.0.1.100",
+        "xff_num_trusted_hops: 2 -> trust last 2 (CloudFront, ALB)",
+        "Actual client IP: 203.0.113.5"
+      ]
+    }
+  ]
+}

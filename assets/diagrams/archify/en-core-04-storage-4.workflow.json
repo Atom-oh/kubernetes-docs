@@ -1,0 +1,188 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Volume Expansion Flow",
+    "output": "public/archmaps/en-core-04-storage-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request",
+        "label": "Expansion request",
+        "focus": [
+          "user",
+          "pvc",
+          "sc"
+        ],
+        "note": "The user raises the PVC's storage request; the StorageClass must have allowVolumeExpansion: true."
+      },
+      {
+        "id": "expand",
+        "label": "Actual expansion",
+        "focus": [
+          "pv",
+          "storage",
+          "pod"
+        ],
+        "note": "The PersistentVolume grows the underlying volume, then the file system mounted in the Pod is expanded."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "User"
+        },
+        "cloud": {
+          "label": "Kubernetes storage objects"
+        },
+        "security": {
+          "label": "StorageClass expansion check"
+        },
+        "backend": {
+          "label": "Pod"
+        },
+        "database": {
+          "label": "Physical storage"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "userLane",
+      "label": "User"
+    },
+    {
+      "id": "k8s",
+      "label": "Kubernetes storage objects"
+    },
+    {
+      "id": "infra",
+      "label": "Underlying volume · Pod"
+    }
+  ],
+  "mainPath": [
+    "user",
+    "pvc",
+    "sc",
+    "pv",
+    "storage"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "user"
+    ],
+    "allowedTerminals": [
+      "storage",
+      "pod"
+    ],
+    "requiredPaths": [
+      {
+        "from": "user",
+        "to": "storage"
+      },
+      {
+        "from": "user",
+        "to": "pod"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "user",
+      "lane": "userLane",
+      "col": 0,
+      "type": "external",
+      "label": "User",
+      "sublabel": "requests a larger PVC",
+      "width": 132
+    },
+    {
+      "id": "pvc",
+      "lane": "k8s",
+      "col": 1,
+      "type": "cloud",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "storage: 8Gi → 16Gi",
+      "tag": "PVC",
+      "width": 176
+    },
+    {
+      "id": "sc",
+      "lane": "k8s",
+      "col": 2,
+      "type": "security",
+      "label": "StorageClass",
+      "sublabel": "allowVolumeExpansion: true",
+      "tag": "SC",
+      "width": 176
+    },
+    {
+      "id": "pv",
+      "lane": "k8s",
+      "col": 3,
+      "type": "cloud",
+      "label": "PersistentVolume",
+      "sublabel": "expand the bound PV",
+      "tag": "PV",
+      "width": 156
+    },
+    {
+      "id": "storage",
+      "lane": "infra",
+      "col": 4,
+      "type": "database",
+      "label": "Physical Storage",
+      "sublabel": "grow volume size",
+      "width": 144
+    },
+    {
+      "id": "pod",
+      "lane": "infra",
+      "col": 5,
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "expand file system",
+      "tag": "Pod",
+      "width": 132
+    }
+  ],
+  "edges": [
+    {
+      "from": "user",
+      "to": "pvc",
+      "label": "Request PVC size increase",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "pvc",
+      "to": "sc",
+      "label": "Expansion request",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "sc",
+      "to": "pv",
+      "label": "Check allowVolumeExpansion: true",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "from": "pv",
+      "to": "storage",
+      "label": "Expand volume size",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "pv",
+      "to": "pod",
+      "label": "Expand file system",
+      "role": "branch"
+    }
+  ]
+}

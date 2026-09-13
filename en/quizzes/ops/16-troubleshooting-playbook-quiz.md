@@ -4,160 +4,146 @@
 
 ## Multiple Choice Questions
 
-### 1. A `Pending` pod shows the following `FailedScheduling` event. Which reading of the message is correct?
+### 1. FailedScheduling reports one CPU failure, one memory failure, six affinity failures, and eight taint failures. Which interpretation is correct?
 
-```
-0/15 nodes are available: 1 Insufficient cpu, 1 Insufficient memory,
-6 node(s) didn't match Pod's node affinity/selector, 8 node(s) had untolerated taint(s).
-```
-
-- A) All 15 nodes are short of CPU and memory
-- B) Only one node is eligible for this pod, and that node lacks CPU and memory
-- C) The scheduler is broken and could not evaluate any node
-- D) Scheduling failed because 8 nodes have too many pods (`Too many pods`)
+- A) Reason counts can overlap; compare individual node states
+- B) Exactly the same one node must be short of CPU and memory
+- C) All fifteen nodes lack CPU
+- D) The scheduler evaluated no nodes
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Only one node is eligible for this pod, and that node lacks CPU and memory**
+**Answer: A) Reason counts can overlap; compare individual node states**
 
-**Explanation:**
-The scheduler aggregates the rejection reason per node. 8 nodes were rejected by taints with no matching toleration, 6 by a nodeSelector/affinity label mismatch, and the one remaining node lacked CPU and memory. In other words, exactly one node satisfies the scheduling constraints and it is full — so you either widen the toleration/labels or add nodes that satisfy them (with Karpenter, the label key must appear in the NodePool requirements).
+The scheduler can aggregate multiple reasons per node. Counts alone do not partition nodes into mutually exclusive sets or identify a particular node. Check nodeName and PodScheduled to distinguish scheduling from image/CNI initialization waits.
 
 </details>
 
-### 2. A pod using a private ECR image is in `ImagePullBackOff`, and the `describe` events show `Failed to pull image "...dkr.ecr...": ... 401 Unauthorized`. What should you suspect first?
+### 2. An ECR image pull on an ordinary EC2 worker fails with 401 Unauthorized. What should be checked first?
 
-- A) An image tag typo
-- B) The node IAM role lacks ECR pull permission (`AmazonEC2ContainerRegistryPullOnly` or `ReadOnly`)
-- C) The Docker Hub rate limit (`toomanyrequests`)
-- D) A private subnet with no NAT/VPC endpoints
+- A) Docker Hub rate limits
+- B) The kubelet image credential path and node role ECR permissions
+- C) The container liveness path
+- D) The application S3 bucket name
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The node IAM role lacks ECR pull permission (`AmazonEC2ContainerRegistryPullOnly` or `ReadOnly`)**
+**Answer: B) The kubelet image credential path and node role ECR permissions**
 
-**Explanation:**
-What follows `Failed to pull image` is the diagnosis. `401 Unauthorized` / `no basic auth credentials` means registry authentication failed; for ECR the kubelet authenticates with the node IAM role, so check that role's ECR pull permission. A tag typo shows up as `not found` / `manifest unknown`, a network-path problem as `dial tcp ... i/o timeout`, and the Docker Hub limit as `toomanyrequests`.
+Do not confuse application IRSA with the image-pull identity. Fargate uses the pod execution role. crictl pull does not automatically reuse kubelet credential providers or imagePullSecrets, so it is not an equivalent authentication test.
 
 </details>
 
-### 3. A `CrashLoopBackOff` pod's `lastState.terminated` shows `Reason: OOMKilled`, `Exit Code: 137`. Which statement is correct?
+### 3. A container has termination reason OOMKilled and exit code 137. What is the appropriate next step?
 
-- A) The app detected an error itself and exited with code 1
-- B) The kernel sent SIGKILL because the memory limit was exceeded; raise the limit or fix the memory leak
-- C) It received SIGTERM and shut down gracefully, so no action is needed
-- D) The image architecture (arm64/amd64) does not match the node
+- A) A long runtime proves a memory leak
+- B) Inspect container limits, node pressure, memory time series, and kernel events
+- C) Always double the limit immediately
+- D) Ignore it as a graceful SIGTERM exit
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The kernel sent SIGKILL because the memory limit was exceeded; raise the limit or fix the memory leak**
+**Answer: B) Inspect container limits, node pressure, memory time series, and kernel events**
 
-**Explanation:**
-Exit code 137 is SIGKILL (128+9). With Reason `OOMKilled` the kernel OOM killer terminated the container for exceeding its memory limit; the same 137 with Reason `Error` is a SIGKILL for another reason, such as a liveness failure where the container did not exit within `terminationGracePeriodSeconds`. A graceful SIGTERM exit is 143, and an architecture mismatch appears as 126 under a shell entrypoint (`cannot execute binary file: Exec format error`) or as Reason `StartError` when the image execs the binary directly. Read the logs from just before the crash with `kubectl logs <pod> -c <container> --previous`.
+137 commonly represents SIGKILL (128+9); OOMKilled adds evidence of OOM. This does not alone prove a leak or exclusively a container-limit failure. A different reason with 137 needs separate investigation. SIGTERM handling can also produce exit codes other than 143 depending on the application.
 
 </details>
 
-### 4. All pods are `1/1 Running`, but requests never reach the Service. The ENDPOINTS column of `kubectl get endpointslices -l kubernetes.io/service-name=<svc>` is empty. What is the most likely cause?
+### 4. An IP appears in the ENDPOINTS column for an EndpointSlice. What can you conclude?
 
-- A) CoreDNS pods are down, so name resolution fails
-- B) The Service `selector` does not match the pod labels
-- C) `targetPort` differs from the port the container listens on
-- D) A NetworkPolicy blocks ingress
+- A) Every pod is Ready
+- B) Service requests must succeed
+- C) The address exists; inspect ready, serving, and terminating separately
+- D) All NetworkPolicies allow traffic
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The Service `selector` does not match the pod labels**
+**Answer: C) The address exists; inspect ready, serving, and terminating separately**
 
-**Explanation:**
-An EndpointSlice lists the IPs of **Ready pods** matched by the Service selector. If every pod is Ready and the slice is still empty, the selector and the pod labels differ (in Helm charts, `selectorLabels` and `podLabels` drifting apart is a common culprit). A wrong `targetPort` shows IPs plus `connection refused`, a NetworkPolicy block shows IPs plus timeouts, and a CoreDNS outage shows `NXDOMAIN`/resolution failures. On Kubernetes 1.33+ `kubectl get endpoints` prints a deprecation warning, so check EndpointSlices instead.
+A not-ready pod can appear with ready=false. Container READY counts also differ from the Pod Ready condition. Missing addresses call for checking selectors, namespaces, and management; selectorless Services can need manually managed EndpointSlices.
 
 </details>
 
-### 5. A node's conditions show `DiskPressure=True (KubeletHasDiskPressure)`. Which taint does the node controller (kube-controller-manager) add to the node automatically?
+### 5. Which automatic taint corresponds to DiskPressure=True?
 
-- A) `node.kubernetes.io/unreachable`
-- B) `node.kubernetes.io/not-ready`
-- C) `node.kubernetes.io/disk-pressure`
-- D) `node.kubernetes.io/memory-pressure`
+- A) node.kubernetes.io/unreachable
+- B) node.kubernetes.io/not-ready
+- C) node.kubernetes.io/disk-pressure
+- D) node.kubernetes.io/memory-pressure
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) `node.kubernetes.io/disk-pressure`**
+**Answer: C) node.kubernetes.io/disk-pressure**
 
-**Explanation:**
-Each node condition has a matching automatic taint: `DiskPressure` → `node.kubernetes.io/disk-pressure`, `MemoryPressure` → `node.kubernetes.io/memory-pressure`, `PIDPressure` → `node.kubernetes.io/pid-pressure`, `Ready=False` → `node.kubernetes.io/not-ready`, and `Ready=Unknown` (the kubelet stopped posting status, reason `NodeStatusUnknown`) → `node.kubernetes.io/unreachable`. That is why a node can be `Ready` while new pods avoid it with `node(s) had untolerated taint(s)`. DiskPressure is commonly caused by the image cache and container logs filling the root volume, and pods are `Evicted` with `The node was low on resource: ephemeral-storage`.
+A node can remain Ready while pressure prevents new scheduling. Inspect inodes as well as free bytes and filesystem layout. Ready=Unknown relates to unreachable; Ready=False relates to not-ready.
 
 </details>
 
-### 6. A PVC is `Pending` and `describe pvc` shows only `WaitForFirstConsumer: waiting for first consumer to be created before binding`. No pod that uses this PVC has been deployed yet. What is the correct call?
+### 6. A PVC uses a WaitForFirstConsumer StorageClass and no consuming pod exists yet. What is the correct interpretation?
 
-- A) The StorageClass name is misspelled; check it with `kubectl get sc`
-- B) The EBS CSI controller lacks IAM permission
-- C) This is normal — `volumeBindingMode: WaitForFirstConsumer` defers volume creation until a pod is scheduled
-- D) The PV is in another AZ, causing a `volume node affinity conflict`
+- A) It must be a CSI IAM error
+- B) A StorageClass named gp3 must be wrong
+- C) It can be normal: binding/provisioning waits for the consumer’s scheduling constraints
+- D) Delete the PV immediately
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) This is normal — `volumeBindingMode: WaitForFirstConsumer` defers volume creation until a pod is scheduled**
+**Answer: C) It can be normal: binding/provisioning waits for the consumer’s scheduling constraints**
 
-**Explanation:**
-The `gp2` StorageClass that EKS creates by default uses the `WaitForFirstConsumer` binding mode. A `gp3` StorageClass you create for the EBS CSI driver only does so if you set `volumeBindingMode: WaitForFirstConsumer` explicitly — the API default is `Immediate` — and the `gp3` class on the verification cluster does, as the `kubectl get storageclass` output in the playbook shows. The delay is intentional: the EBS volume is created in the AZ where the pod ends up being scheduled, so a PVC that stays `Pending` while no pod uses it is not a problem. A StorageClass typo appears as `storageclass.storage.k8s.io "<name>" not found`, missing IAM permission as `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied`, and an AZ mismatch as `volume node affinity conflict` in the pod's `FailedScheduling` event.
+Behavior depends on volumeBindingMode, not the StorageClass name. The API default is Immediate, so inspect the real value. If the consumer is also Pending, check FailedScheduling and topology constraints. PVC deletion is not the default diagnostic action.
 
 </details>
 
-### 7. AWS API calls from inside a pod are `AccessDenied`, and the denied principal is the node IAM role rather than the service account role. `kubectl get sa` shows the `eks.amazonaws.com/role-arn` annotation, but the pod env has no `AWS_ROLE_ARN`/`AWS_WEB_IDENTITY_TOKEN_FILE`. What are the cause and fix?
+### 7. An IRSA annotation was added to a service account after the pod was created; the old pod has no injected fields. What next?
 
-- A) The IAM role's permission policy is insufficient → add actions to the policy
-- B) The annotation was added **after** the pod was created, so the webhook never injected credentials → `kubectl rollout restart`
-- C) There is no OIDC provider → recreate the cluster
-- D) The EKS Pod Identity agent is down → restart the agent
+- A) Recreate the cluster
+- B) Check serviceAccountName and webhook configuration, then recreate pods with impact considered
+- C) Grant AdministratorAccess to the node role
+- D) Wait for the existing environment to change regardless of service account
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The annotation was added after the pod was created, so the webhook never injected credentials → `kubectl rollout restart`**
+**Answer: B) Check serviceAccountName and webhook configuration, then recreate pods with impact considered**
 
-**Explanation:**
-IRSA works by having pod-identity-webhook inject the `AWS_ROLE_ARN` and `AWS_WEB_IDENTITY_TOKEN_FILE` env (plus the token volume) **at pod creation time**. If there is no trace of injection, the pod was created before the annotation existed or the SA name differs, and the SDK falls back to the node role because it finds no credentials. Recreating the pods fixes it. An insufficient permission policy (A) looks different — env is fine but a specific API is denied — and Pod Identity (D) is recognizable by the `AWS_CONTAINER_CREDENTIALS_FULL_URI` env.
+Injection happens at Pod creation; existing pods are not automatically modified. Verify injection and the actual caller after recreation. Another SDK credential provider can take precedence, and node-role fallback is unavailable when IMDS access is blocked.
 
 </details>
 
-### 8. A pod is `Pending`, no new NodeClaim appears, and a Karpenter event says `all available instance types exceed limits for nodepool "graviton"`. What is the cause?
+### 8. Karpenter reports all available instance types exceed limits for nodepool. What does this mean?
 
-- A) The pod's nodeSelector label key is not in the NodePool requirements
-- B) There is no toleration for the NodePool taint
-- C) The NodePool `spec.limits` (cpu/memory) has already been reached
-- D) EC2 has no capacity in that AZ (`InsufficientInstanceCapacity`)
+- A) It can occur only when current usage exactly equals the limit
+- B) Adding any candidate instance would exceed remaining NodePool headroom
+- C) No EC2 instance type exists in the Region
+- D) The pod must lack a toleration
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) The NodePool `spec.limits` (cpu/memory) has already been reached**
+**Answer: B) Adding any candidate instance would exceed remaining NodePool headroom**
 
-**Explanation:**
-Karpenter walks every NodePool for a pod and records why each was rejected as an event. `exceed limits` means any instance it could add would push the NodePool past its `spec.limits`; `kubectl get nodepool -o custom-columns=...spec.limits.cpu,...status.resources.cpu` shows the limit and usage equal. A missing label key appears as `label "<key>" does not have known values`, a missing toleration as `did not tolerate <key>=<value>:NoSchedule`, and missing EC2 capacity as `InsufficientInstanceCapacity` in the Karpenter controller logs.
+With current CPU 7, limit 8, and a smallest candidate of 2 CPUs, the error can occur below the limit. Also check other resource limits, DaemonSet overhead, and requirements. A Nominated event does not prove node or pod readiness.
 
 </details>
 
-### 9. Pods on an EKS node stall in `ContainerCreating` with the event `FailedCreatePodSandBox ... plugin type="aws-cni" ... failed to assign an IP address to container`. The subnet's `AvailableIpAddressCount` is in the single digits, and `aws-node` runs with the VPC CNI defaults (`WARM_ENI_TARGET=1`, `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` unset). Which statement is correct?
+### 9. In secondary-IP mode, WARM_IP_TARGET=3, MINIMUM_IP_TARGET=6, and one IP is in use. Which interpretation is correct?
 
-- A) The `WARM_ENI_TARGET=1` default keeps one whole spare ENI's worth of IPs attached to every node, so the subnet runs out far sooner than the pod count suggests; setting `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` shrinks that warm pool because they take precedence over the warm-ENI rule
-- B) Setting `WARM_ENI_TARGET=0` is enough, because `WARM_IP_TARGET` is ignored while `WARM_ENI_TARGET` is set
-- C) `ENABLE_PREFIX_DELEGATION=true` adds IPs by attaching more ENIs, so it works on any instance family
-- D) `FailedCreatePodSandBox` means the scheduler could not find a node, so this is the same failure as `Too many pods`
+- A) Total IPs must be four
+- B) Satisfying both targets can require six total and five spare
+- C) MINIMUM_IP_TARGET means at least six spare IPs
+- D) Too many pods proves subnet exhaustion
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) The `WARM_ENI_TARGET=1` default keeps one whole spare ENI's worth of IPs attached to every node, so the subnet runs out far sooner than the pod count suggests; setting `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` shrinks that warm pool because they take precedence over the warm-ENI rule**
+**Answer: B) Satisfying both targets can require six total and five spare**
 
-**Explanation:**
-With the default `WARM_ENI_TARGET=1` alone, ipamd keeps one full spare ENI attached to each node (15 IPs per ENI on an m5.xlarge), so in a small subnet the pre-claimed IPs are exhausted long before the pods are. Once `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` are set they override the warm-ENI rule — the playbook's verification cluster uses `WARM_IP_TARGET=3`, `MINIMUM_IP_TARGET=6`, so a node keeps only 3 spare IPs beyond what its pods use and never fewer than 6 IPs allocated in total (`MINIMUM_IP_TARGET` bounds the total, in-use plus spare — not the spare count). B has the precedence backwards. Prefix delegation (C) assigns /28 prefixes to the existing ENI slots rather than adding ENIs, and it requires Nitro-based instances plus a max-pods recalculation. D confuses two symptoms: `FailedCreatePodSandBox` fires after scheduling, when the kubelet asks the CNI for an IP on a node that has none left; `Too many pods` is the scheduler rejecting the node because `allocatable.pods` is already reached — both share the root cause (no IP to hand out) but occur at different stages.
+Warm targets spare addresses; minimum is the total in-use-plus-spare floor. IPAM reconciliation, ENI limits, and prefix allocation granularity affect actual counts. Positive IP targets take precedence over WARM_ENI_TARGET. Prefix mode needs supported instances and contiguous /28 blocks; diagnose max-pods separately from real IP exhaustion.
 
 </details>

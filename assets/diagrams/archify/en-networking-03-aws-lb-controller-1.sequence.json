@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How the AWS Load Balancer Controller Works",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      730
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "kubectl apply"
+    },
+    {
+      "id": "k8sapi",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "Ingress / Service"
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "LB Controller",
+      "sublabel": "kube-system"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS API",
+      "sublabel": "ELBv2"
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB / NLB",
+      "sublabel": "provisioned resource"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 246,
+      "label": "1. Detect resource"
+    },
+    {
+      "from": 264,
+      "to": 454,
+      "label": "2. Provision AWS resources"
+    },
+    {
+      "from": 472,
+      "to": 552,
+      "label": "3. Return result"
+    },
+    {
+      "from": 570,
+      "to": 626,
+      "label": "4. Ongoing reconciliation (on Pod changes)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create",
+      "from": "user",
+      "to": "k8sapi",
+      "y": 182,
+      "label": "Create Ingress / Service"
+    },
+    {
+      "id": "watch",
+      "from": "k8sapi",
+      "to": "ctrl",
+      "y": 216,
+      "label": "Watch event"
+    },
+    {
+      "id": "create-lb",
+      "from": "ctrl",
+      "to": "aws",
+      "y": 286,
+      "label": "Request Load Balancer creation",
+      "variant": "emphasis",
+      "note": "Called after analyzing the resource (annotations · spec)"
+    },
+    {
+      "id": "provision",
+      "from": "aws",
+      "to": "alb",
+      "y": 320,
+      "label": "Provision ALB / NLB"
+    },
+    {
+      "id": "arn",
+      "from": "aws",
+      "to": "ctrl",
+      "y": 354,
+      "label": "Return ARN",
+      "variant": "return"
+    },
+    {
+      "id": "create-tg",
+      "from": "ctrl",
+      "to": "aws",
+      "y": 388,
+      "label": "Create Target Group"
+    },
+    {
+      "id": "listener",
+      "from": "ctrl",
+      "to": "aws",
+      "y": 422,
+      "label": "Configure Listener rules"
+    },
+    {
+      "id": "status",
+      "from": "ctrl",
+      "to": "k8sapi",
+      "y": 494,
+      "label": "Update Status"
+    },
+    {
+      "id": "dns",
+      "from": "k8sapi",
+      "to": "user",
+      "y": 528,
+      "label": "Provide Load Balancer DNS",
+      "variant": "return"
+    },
+    {
+      "id": "targets",
+      "from": "ctrl",
+      "to": "aws",
+      "y": 598,
+      "label": "Auto-register / deregister targets",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ctrl",
+      "from": 211,
+      "to": 502,
+      "type": "backend"
+    },
+    {
+      "participant": "aws",
+      "from": 281,
+      "to": 430,
+      "type": "cloud"
+    }
+  ]
+}

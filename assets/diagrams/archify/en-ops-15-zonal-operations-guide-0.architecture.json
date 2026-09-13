@@ -2,13 +2,13 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Zonal Cell Architecture with Weighted Traffic Shift",
+    "title": "Listener weights and per-cluster target registration",
     "output": "en-ops-15-zonal-operations-guide-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1340,
-      800
+      1240,
+      560
     ],
     "locale": "en"
   },
@@ -16,25 +16,39 @@
     {
       "id": "users",
       "type": "external",
-      "label": "Users",
-      "sublabel": "HTTPS requests",
+      "label": "Client",
+      "sublabel": "New connections",
       "pos": [
-        40,
-        340
+        35,
+        235
       ],
       "size": [
-        170,
+        150,
         76
       ]
     },
     {
-      "id": "r53",
+      "id": "lb",
       "type": "cloud",
-      "label": "Route 53 + ARC",
-      "sublabel": "Weighted records",
+      "label": "ALB / NLB",
+      "sublabel": "Weighted forward action",
       "pos": [
-        250,
-        340
+        265,
+        235
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "tga",
+      "type": "cloud",
+      "label": "Target Group A",
+      "sublabel": "weight 20",
+      "pos": [
+        610,
+        110
       ],
       "size": [
         210,
@@ -42,26 +56,26 @@
       ]
     },
     {
-      "id": "tga",
+      "id": "tgc",
       "type": "cloud",
-      "label": "ALB/NLB + Target Group",
-      "sublabel": "Created outside the cluster via IaC",
+      "label": "Target Group C",
+      "sublabel": "weight 80",
       "pos": [
-        580,
-        110
+        610,
+        360
       ],
       "size": [
-        250,
+        210,
         76
       ]
     },
     {
       "id": "cla",
       "type": "backend",
-      "label": "EKS Zonal Cluster",
-      "sublabel": "AZ-a only",
+      "label": "Cluster A workers",
+      "sublabel": "Pod registration by TGB",
       "pos": [
-        950,
+        960,
         110
       ],
       "size": [
@@ -70,27 +84,13 @@
       ]
     },
     {
-      "id": "tgc",
-      "type": "cloud",
-      "label": "ALB/NLB + Target Group",
-      "sublabel": "Created outside the cluster via IaC",
-      "pos": [
-        580,
-        570
-      ],
-      "size": [
-        250,
-        76
-      ]
-    },
-    {
       "id": "clc",
       "type": "backend",
-      "label": "EKS Zonal Cluster",
-      "sublabel": "AZ-c only",
+      "label": "Cluster C workers",
+      "sublabel": "Pod registration by TGB",
       "pos": [
-        950,
-        570
+        960,
+        360
       ],
       "size": [
         230,
@@ -100,94 +100,83 @@
   ],
   "boundaries": [
     {
-      "kind": "region",
-      "label": "VPC (ap-northeast-2)",
-      "wraps": [
-        "tga",
-        "cla",
-        "tgc",
-        "clc"
-      ],
-      "pad": 40
-    },
-    {
       "kind": "security-group",
-      "label": "AZ-a (Cell A, weight 80%)",
+      "label": "AZ-a",
       "wraps": [
-        "tga",
         "cla"
       ],
-      "pad": 18
+      "pad": 22
     },
     {
       "kind": "security-group",
-      "label": "AZ-c (Cell C, weight 20%)",
+      "label": "AZ-c",
       "wraps": [
-        "tgc",
         "clc"
       ],
-      "pad": 18
+      "pad": 22
     }
   ],
   "connections": [
     {
-      "id": "u-r53",
+      "id": "client-lb",
       "from": "users",
-      "to": "r53",
-      "label": "HTTPS",
-      "labelDy": 60
+      "to": "lb",
+      "label": "Requests",
+      "labelDy": -22
     },
     {
-      "id": "r53-tga",
-      "from": "r53",
+      "id": "lb-a",
+      "from": "lb",
       "to": "tga",
-      "label": "weight 80%"
+      "label": "20 / 100"
     },
     {
-      "id": "r53-tgc",
-      "from": "r53",
+      "id": "lb-c",
+      "from": "lb",
       "to": "tgc",
-      "label": "weight 20%"
+      "label": "80 / 100"
     },
     {
-      "id": "tga-cla",
+      "id": "a-workers",
       "from": "tga",
       "to": "cla",
-      "label": "TargetGroupBinding"
+      "label": "Pod targets",
+      "labelDy": -22
     },
     {
-      "id": "tgc-clc",
+      "id": "c-workers",
       "from": "tgc",
       "to": "clc",
-      "label": "TargetGroupBinding"
+      "label": "Pod targets",
+      "labelDy": -22
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Why the load balancer lives outside the cluster",
+      "title": "Configuration ownership",
       "items": [
-        "Create the NLB/ALB and target group outside the cluster with IaC such as Terraform",
-        "Deleting or rebuilding the cluster leaves the load balancer and its DNS name intact",
-        "Bind each zonal cluster's Service to that target group with the TargetGroupBinding CRD"
+        "Manage LB and target groups through external IaC",
+        "TGB registers targets; it has no weight field",
+        "For nondefault ALB rules, modify that rule’s action"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Weighted shift",
+      "title": "Verify the transition",
       "items": [
-        "Route 53 weighted records adjust the traffic split between cells",
-        "Roll a new version into one cell and move its weight 20% → 50% → 100%",
-        "If something looks wrong, drop the weight to 0 to isolate that cell immediately"
+        "Weight zero can close existing connections; test reconnection",
+        "Check NewFlowCount, ActiveFlowCount, and health",
+        "Validate AZ target placement and cross-zone settings"
       ]
     },
     {
       "dot": "amber",
-      "title": "Cell isolation",
+      "title": "DNS and recovery",
       "items": [
-        "Align cells with AZ boundaries so a failure stays inside one AZ",
-        "Isolation only holds if shared resources between cells are minimized",
-        "Application Recovery Controller (ARC) can automate the zonal shift"
+        "Route 53 selects LB endpoints, not target-group ARNs",
+        "EKS zonal shift does not rewrite cross-cluster weights",
+        "Configure autoshift and healthy-cell capacity separately"
       ]
     }
   ]

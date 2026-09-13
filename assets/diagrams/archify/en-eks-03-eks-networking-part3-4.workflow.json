@@ -10,13 +10,13 @@
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "진단 · 조치"
+          "label": "Diagnosis · Fix"
         },
         "security": {
-          "label": "원인 분류"
+          "label": "Cause classification"
         },
         "external": {
-          "label": "증상"
+          "label": "Symptom"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "diag",
-      "label": "진단 단계"
+      "label": "Diagnosis"
     },
     {
       "id": "fix",
-      "label": "조치 단계"
+      "label": "Remediation"
     }
   ],
   "mainPath": [

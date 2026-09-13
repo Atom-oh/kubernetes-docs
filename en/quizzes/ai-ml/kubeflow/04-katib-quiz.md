@@ -16,7 +16,7 @@ This quiz tests your understanding of Katib's Experiment/Trial/Suggestion archit
 **Answer: C) An Experiment owns many Trials, each running a specific hyperparameter combination, while a Suggestion service proposes those combinations**
 
 **Explanation:**
-An Experiment CRD describes one tuning run and owns up to `maxTrialCount` Trials over its lifetime. Each Trial is a single training run with one specific hyperparameter combination. The Suggestion service implements the search algorithm and proposes which combinations each Trial should try, based on prior results.
+An Experiment object describes tuning; maxTrialCount is a completion-count criterion, not a successful-training count or immutable spending cap. Each Trial is a single training run with one specific hyperparameter combination. The Suggestion service implements an algorithm; how it uses prior observations depends on that algorithm.
 </details>
 
 2. Which search algorithm builds a probabilistic model of how hyperparameters map to the objective metric, using that model to pick the next most promising point(s) to try?
@@ -64,34 +64,34 @@ Hyperband trades exhaustive per-configuration information for early pruning: it 
 `objective` names the metric (e.g., accuracy or loss) and the goal (maximize or minimize), and can optionally include a target value that allows the Experiment to stop early once reached. The search space is defined separately, under `parameters`, and how each Trial's job is run is defined under `trialTemplate`.
 </details>
 
-5. What does the median-stopping rule do, conceptually?
+5. What did this review verify about Katib 0.19.0 medianstop threshold calculation?
    - A) It stops the Experiment entirely once the median Trial finishes
-   - B) It compares a Trial's intermediate objective value against the median of its peers at the same point in training, and stops the Trial early if it's meaningfully behind
+   - B) It stores successful-Trial averages over the first start_step observations, then calculates their arithmetic mean
    - C) It only allows exactly half of all proposed Trials to run
    - D) It selects the median hyperparameter value as the final answer
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It compares a Trial's intermediate objective value against the median of its peers at the same point in training, and stops the Trial early if it's meaningfully behind**
+**Answer: B) It stores successful-Trial averages over the first start_step observations, then calculates their arithmetic mean**
 
 **Explanation:**
-Median-stopping is a form of early stopping: rather than letting a clearly underperforming Trial run to completion, its intermediate value is compared against the median of other Trials at the same training point, and it's terminated early if it's falling significantly short — saving the compute it would otherwise consume for an unlikely-to-be-competitive result.
+The official guide describes a median rule, but 0.19.0 calculates an arithmetic mean. Successful-Trial averages [1, 2, 100] yield about 34.333 in the unchanged function, not statistical median 2. Defaults are min_trials_required=3 and start_step=4; collector/timestamp requirements also apply.
 </details>
 
 6. How does Katib typically get the objective metric value out of a running Trial's training container?
    - A) The training container must call a Katib API directly from inside its code
-   - B) A metrics-collector sidecar tails logs/stdout or scrapes a metrics endpoint and reports the parsed value back to Katib
+   - B) Configured pull collectors gather metrics, or Push mode report_metrics() sends them to DB manager
    - C) Katib pauses the container and inspects its memory directly
    - D) The Kubernetes scheduler extracts the metric automatically from resource usage
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) A metrics-collector sidecar tails logs/stdout or scrapes a metrics endpoint and reports the parsed value back to Katib**
+**Answer: B) Configured pull collectors gather metrics, or Push mode report_metrics() sends them to DB manager**
 
 **Explanation:**
-A metrics-collector sidecar is injected into the Trial pod alongside the training container. It observes the training container's output — typically parsing stdout/log files or scraping an exposed metrics endpoint — and reports the objective metric back to Katib, keeping the training code itself largely unaware of Katib.
+StdOut/File/TensorFlowEvent and Custom collectors coexist with Push mode. Arbitrary HTTP scraping is not a built-in default. Pull injection requires namespace labeling, webhook and target Pod/container configuration. Job success alone does not prove metric collection.
 </details>
 
 7. Why does a high `parallelTrialCount` create sharper resource pressure on an EKS cluster than the same `maxTrialCount` run at low concurrency?
@@ -106,22 +106,22 @@ A metrics-collector sidecar is injected into the Trial pod alongside the trainin
 **Answer: B) High parallelism means many Trials (and their resource requests, e.g. GPUs) hit the cluster at the same time rather than spread out, producing a short, sharp demand spike**
 
 **Explanation:**
-Each concurrent Trial is a full training job. A `parallelTrialCount` of 8 means 8 concurrent resource requests (e.g., GPU requests) all at once, rather than spread over time — which can spike demand sharply even for an Experiment whose total `maxTrialCount` looks modest.
+Each concurrent Trial is a full training job. Demand is concurrency × Pods per Trial × resources per Pod, plus collector and service overhead — which can spike demand sharply even for an Experiment whose total `maxTrialCount` looks modest.
 </details>
 
 8. On EKS, what is a likely explanation if newly created Trial pods sit pending for a while right after a high-`parallelTrialCount` Experiment starts?
    - A) The Suggestion service has crashed
-   - B) Karpenter is provisioning new GPU-backed nodes in response to the burst of pending pods, and GPU instance types often have longer provisioning lead times
+   - B) It may be waiting for capacity; confirm through Pod events, NodePool conditions, quotas, EC2 capacity and bootstrap state
    - C) Katib always pauses new Trials for a fixed warm-up period
    - D) The metrics-collector sidecar is blocking pod startup
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Karpenter is provisioning new GPU-backed nodes in response to the burst of pending pods, and GPU instance types often have longer provisioning lead times**
+**Answer: B) It may be waiting for capacity; confirm through Pod events, NodePool conditions, quotas, EC2 capacity and bootstrap state**
 
 **Explanation:**
-A burst of pending Trial pods from a high `parallelTrialCount` typically triggers Karpenter to provision new nodes. GPU instance types can take longer to provision than general-purpose ones, so Trials may sit waiting on node capacity — worth checking via Trial pod events before assuming the search algorithm itself is slow.
+Pending alone does not prove Karpenter is successfully provisioning. Affinity, taints, volumes, quotas, capacity limits and bootstrap failures can also explain it. Use observed events and controller state.
 </details>
 
 ## Short Answer Questions
@@ -131,7 +131,7 @@ A burst of pending Trial pods from a high `parallelTrialCount` typically trigger
 <details>
 <summary>Show Answer</summary>
 
-**Answer:** Any two of: random search (cheap baseline for large/poorly understood search spaces), grid search (exhaustive coverage of small, low-dimensional discrete spaces), Bayesian optimization (reducing total Trials needed when each Trial is expensive, via a probabilistic model of the objective), Hyperband (pruning underperforming configurations early using a cheap, informative early signal), or CMA-ES/population-based approaches (continuous or higher-dimensional spaces suited to evolving a population of candidates).
+**Answer:** Any two of: random search (cheap baseline for large/poorly understood search spaces), grid search (exhaustive coverage of small, low-dimensional discrete spaces), Bayesian optimization (reducing total Trials needed when each Trial is expensive, via a probabilistic model of the objective), Hyperband (pruning underperforming configurations early using a cheap, informative early signal), or CMA-ES (covariance-adaptation evolution), or PBT (a separate population-based training strategy requiring checkpoint sharing).
 
 **Explanation:**
 Each algorithm trades off exploration cost against search efficiency differently, and the right choice depends on how expensive a single Trial is and how much structure the search space has.
@@ -145,7 +145,7 @@ Each algorithm trades off exploration cost against search efficiency differently
 **Answer:** Hyperband is a search strategy that decides up front how much resource budget to give each configuration; early stopping is a runtime check applied to a Trial already in progress, based on how it's performing relative to its peers at that point in training.
 
 **Explanation:**
-The two operate at different levels: Hyperband's pruning is part of the search algorithm's overall budget-allocation strategy, while early stopping is a per-Trial decision made while that Trial is running, independent of which search algorithm proposed it.
+The two operate at different levels: Hyperband's pruning is part of the search algorithm's overall budget-allocation strategy, while early stopping is a per-Trial decision made while that Trial is running, subject to compatible collector/log configuration, not automatic support for every combination.
 </details>
 
 ## Hands-on / Applied Question
@@ -155,7 +155,7 @@ The two operate at different levels: Hyperband's pruning is part of the search a
 <details>
 <summary>Show Answer</summary>
 
-**Answer:** A high `parallelTrialCount` (e.g., 20) finishes all 60 Trials in fewer sequential rounds but produces a sharp burst of 20 simultaneous GPU requests, which can outrun how fast Karpenter can provision GPU nodes — leaving early Trials pending rather than training, and potentially spiking shared cluster capacity if other workloads are competing for the same GPU NodePool. A low `parallelTrialCount` (e.g., 4) spreads the same 60 Trials over more rounds, giving Karpenter time to provision incrementally and reducing the risk of a capacity spike, at the cost of the Experiment taking longer overall to reach `maxTrialCount`.
+**Answer:** A high `parallelTrialCount` (e.g., 20) can process Trials in fewer rounds when capacity is available but produces a sharp burst of 20 simultaneous GPU requests, which can outrun how fast Karpenter can provision GPU nodes — leaving early Trials pending rather than training, and potentially spiking shared cluster capacity if other workloads are competing for the same GPU NodePool. A low `parallelTrialCount` (e.g., 4) spreads the same 60 Trials over more rounds, giving Karpenter time to provision incrementally and reducing the risk of a capacity spike, potentially increasing elapsed time. Actual time and cost depend on capacity, durations, failures, stopping and node reclamation.
 
 **Explanation:**
 `parallelTrialCount` and `maxTrialCount` need to be tuned together with cluster autoscaling behavior in mind, not treated as independent settings — especially when Trials request scarce or slow-to-provision resources like GPUs.

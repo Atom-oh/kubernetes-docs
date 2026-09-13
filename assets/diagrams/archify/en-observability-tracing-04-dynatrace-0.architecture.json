@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Dynatrace on EKS Architecture",
+    "locale": "en",
+    "output": "en-observability-tracing-04-dynatrace-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      580
+    ],
+    "views": [
+      {
+        "id": "instrumentation",
+        "label": "Auto-instrumentation",
+        "focus": [
+          "svc-a",
+          "svc-b",
+          "svc-c",
+          "oneagent"
+        ],
+        "note": "The OneAgent DaemonSet auto-instruments Service A/B/C with no code changes."
+      },
+      {
+        "id": "telemetry-path",
+        "label": "Telemetry path",
+        "focus": [
+          "oneagent",
+          "activegate",
+          "saas"
+        ],
+        "note": "Metrics, traces and logs travel through ActiveGate to Dynatrace SaaS over an encrypted connection."
+      },
+      {
+        "id": "platform",
+        "label": "Dynatrace Platform",
+        "focus": [
+          "saas",
+          "davis",
+          "grail"
+        ],
+        "note": "Data arriving in SaaS feeds the Davis AI engine and the Grail data lakehouse."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Application",
+      "pos": [
+        100,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "Application",
+      "pos": [
+        285,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "Application",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "security",
+      "label": "Dynatrace Operator",
+      "sublabel": "Operator Pod + Webhook",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "oneagent",
+      "type": "backend",
+      "label": "OneAgent",
+      "sublabel": "DaemonSet (worker nodes)",
+      "pos": [
+        290,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "tag": "Auto-instrumentation"
+    },
+    {
+      "id": "activegate",
+      "type": "backend",
+      "label": "ActiveGate",
+      "sublabel": "StatefulSet",
+      "pos": [
+        570,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "saas",
+      "type": "cloud",
+      "label": "Dynatrace SaaS",
+      "sublabel": "Tenant",
+      "pos": [
+        870,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "davis",
+      "type": "backend",
+      "label": "Davis AI Engine",
+      "sublabel": "Root cause analysis",
+      "pos": [
+        870,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "grail",
+      "type": "database",
+      "label": "Grail Data Lakehouse",
+      "sublabel": "Data lakehouse",
+      "pos": [
+        870,
+        460
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS Cluster",
+      "wraps": [
+        "svc-a",
+        "svc-b",
+        "svc-c",
+        "operator",
+        "oneagent",
+        "activegate"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Dynatrace Platform",
+      "wraps": [
+        "saas",
+        "davis",
+        "grail"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-oneagent",
+      "from": "svc-a",
+      "to": "oneagent",
+      "label": "Auto-instrumentation",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b-to-oneagent",
+      "from": "svc-b",
+      "to": "oneagent",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c-to-oneagent",
+      "from": "svc-c",
+      "to": "oneagent",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "operator-to-oneagent",
+      "from": "operator",
+      "to": "oneagent",
+      "label": "Deploy / manage",
+      "variant": "dashed",
+      "labelDy": -38
+    },
+    {
+      "id": "oneagent-to-activegate",
+      "from": "oneagent",
+      "to": "activegate",
+      "label": "Metrics / Traces / Logs",
+      "variant": "emphasis",
+      "labelDy": -31
+    },
+    {
+      "id": "activegate-to-saas",
+      "from": "activegate",
+      "to": "saas",
+      "label": "Encrypted connection",
+      "variant": "security"
+    },
+    {
+      "id": "saas-to-davis",
+      "from": "saas",
+      "to": "davis",
+      "label": "Analyze",
+      "labelDy": -30
+    },
+    {
+      "id": "saas-to-grail",
+      "from": "saas",
+      "to": "grail",
+      "label": "Store / query",
+      "labelDy": 40
+    }
+  ]
+}

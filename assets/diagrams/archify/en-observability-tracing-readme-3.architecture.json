@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Span Relationships and Hierarchy",
+    "locale": "en",
+    "output": "en-observability-tracing-readme-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      480
+    ],
+    "views": [
+      {
+        "id": "root-children",
+        "label": "Root → Child Span",
+        "focus": [
+          "gateway",
+          "auth",
+          "order"
+        ],
+        "note": "The API Gateway Root Span (span001) opens a Child Span for each call into Auth and Order."
+      },
+      {
+        "id": "grandchildren",
+        "label": "Child → Grandchild Span",
+        "focus": [
+          "order",
+          "payment",
+          "inventory"
+        ],
+        "note": "The Order Span (span003) becomes the parent of the Payment and Inventory calls, deepening the tree."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "API Gateway",
+      "sublabel": "Root Span · span001",
+      "pos": [
+        450,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Auth Service",
+      "sublabel": "Child Span · span002",
+      "pos": [
+        170,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "Child Span · span003",
+      "pos": [
+        730,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "Grandchild Span · span004",
+      "pos": [
+        530,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "Inventory Service",
+      "sublabel": "Grandchild Span · span005",
+      "pos": [
+        790,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gateway-auth",
+      "from": "gateway",
+      "to": "auth",
+      "label": "ParentSpanID span001",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gateway-order",
+      "from": "gateway",
+      "to": "order",
+      "label": "ParentSpanID span001",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order-payment",
+      "from": "order",
+      "to": "payment",
+      "label": "ParentSpanID span003",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "order-inventory",
+      "from": "order",
+      "to": "inventory",
+      "label": "ParentSpanID span003",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    }
+  ]
+}

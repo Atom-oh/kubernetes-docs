@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Temporary release flag lifecycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "rollout-path",
+        "label": "Delivery path",
+        "focus": [
+          "plan",
+          "develop",
+          "test",
+          "rollout",
+          "stable"
+        ],
+        "note": "Example for a temporary release flag; audience and observation windows are team policy."
+      },
+      {
+        "id": "cleanup-path",
+        "label": "Cleanup path",
+        "focus": [
+          "stable",
+          "cleanup",
+          "removed"
+        ],
+        "note": "Check consumers and rollback needs, retain the chosen behavior, then remove code and definitions."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1080,
+      640
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Delivery phases"
+    },
+    {
+      "id": "retire",
+      "label": "Cleanup phase"
+    },
+    {
+      "id": "terminal",
+      "label": "Retired"
+    }
+  ],
+  "states": [
+    {
+      "id": "plan",
+      "type": "start",
+      "label": "Plan",
+      "sublabel": "owner / review date",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "FLAG REQUEST"
+    },
+    {
+      "id": "develop",
+      "type": "active",
+      "label": "Development",
+      "sublabel": "implement with flag off",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "Start implementation"
+    },
+    {
+      "id": "test",
+      "type": "waiting",
+      "label": "Testing",
+      "sublabel": "awaiting QA approval",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "Review complete"
+    },
+    {
+      "id": "rollout",
+      "type": "active",
+      "label": "Rollout",
+      "sublabel": "validated cohort stages",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "QA approved"
+    },
+    {
+      "id": "stable",
+      "type": "waiting",
+      "label": "Stable",
+      "sublabel": "rollback window",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "100% rollout"
+    },
+    {
+      "id": "cleanup",
+      "type": "active",
+      "label": "Cleanup",
+      "sublabel": "flag removal PR",
+      "lane": "retire",
+      "col": 1,
+      "step": "06"
+    },
+    {
+      "id": "removed",
+      "type": "success",
+      "label": "Removed",
+      "sublabel": "chosen behavior",
+      "lane": "terminal",
+      "col": 1,
+      "step": "07"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-plan-develop",
+      "from": "plan",
+      "to": "develop"
+    },
+    {
+      "id": "t-develop-test",
+      "from": "develop",
+      "to": "test"
+    },
+    {
+      "id": "t-test-rollout",
+      "from": "test",
+      "to": "rollout"
+    },
+    {
+      "id": "t-rollout-stable",
+      "from": "rollout",
+      "to": "stable"
+    },
+    {
+      "id": "t-stable-cleanup",
+      "from": "stable",
+      "to": "cleanup",
+      "label": "after consumer checks",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "channelY": 242
+    },
+    {
+      "id": "t-cleanup-removed",
+      "from": "cleanup",
+      "to": "removed",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "auto"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Decided at planning",
+      "items": [
+        "Define name, type, and owner",
+        "Review dates are operational metadata",
+        "Identify consumers and rollback needs"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Done at cleanup",
+      "items": [
+        "Retain the chosen final behavior",
+        "Check old consumers and rollback window",
+        "Clean up branches, definitions, and tests together"
+      ]
+    }
+  ]
+}

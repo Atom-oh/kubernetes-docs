@@ -1,0 +1,36 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Service Mesh 점진적 도입 전략",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": { "label": "도입 단계" },
+        "cloud": { "label": "최종 목표 단계" }
+      }
+    }
+  },
+  "lanes": [
+    { "id": "rollout", "label": "단계별 도입 순서" }
+  ],
+  "phases": [
+    { "id": "p1", "label": "Phase 1", "fromCol": 0, "toCol": 0 },
+    { "id": "p2", "label": "Phase 2", "fromCol": 1, "toCol": 1 },
+    { "id": "p3", "label": "Phase 3", "fromCol": 2, "toCol": 2 },
+    { "id": "p4", "label": "Phase 4", "fromCol": 3, "toCol": 3, "variant": "emphasis" }
+  ],
+  "mainPath": ["observability", "security", "traffic", "advanced"],
+  "nodes": [
+    { "id": "observability", "lane": "rollout", "col": 0, "width": 160, "type": "frontend", "label": "관찰성", "sublabel": "메트릭 수집만" },
+    { "id": "security", "lane": "rollout", "col": 1, "width": 160, "type": "frontend", "label": "보안", "sublabel": "mTLS 적용" },
+    { "id": "traffic", "lane": "rollout", "col": 2, "width": 160, "type": "frontend", "label": "트래픽 관리", "sublabel": "Canary 배포" },
+    { "id": "advanced", "lane": "rollout", "col": 3, "width": 160, "type": "cloud", "label": "고급 기능", "sublabel": "모든 기능 활용", "tag": "최종 목표" }
+  ],
+  "edges": [
+    { "id": "obs-sec", "from": "observability", "to": "security", "label": "검증 후" },
+    { "id": "sec-traffic", "from": "security", "to": "traffic", "label": "검증 후" },
+    { "id": "traffic-adv", "from": "traffic", "to": "advanced", "label": "검증 후", "variant": "emphasis" }
+  ]
+}

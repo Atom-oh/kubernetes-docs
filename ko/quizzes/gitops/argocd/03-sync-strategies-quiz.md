@@ -30,7 +30,7 @@ Refresh 작업은 Git에서 최신 매니페스트를 가져와 라이브 상태
 **정답: B) 원하는 상태가 라이브 상태와 다를 때 자동 동기화 활성화**
 
 **설명:**
-`syncPolicy.automated`가 활성화되면 ArgoCD는 라이브 상태가 Git에 정의된 원하는 상태에서 벗어났음을 감지할 때마다 애플리케이션을 자동으로 동기화합니다.
+`syncPolicy.automated`가 활성화되면 ArgoCD는 정책에 따라 OutOfSync 변경을 자동 적용합니다. live-only 드리프트 수정은 selfHeal, 삭제는 prune이 별도이며, 같은 실패 commit을 무조건 계속 재시도하는 것은 아닙니다.
 
 </details>
 
@@ -46,7 +46,7 @@ Refresh 작업은 Git에서 최신 매니페스트를 가져와 라이브 상태
 **정답: B) Git에 더 이상 정의되지 않은 리소스 자동 삭제**
 
 **설명:**
-자동 동기화에서 `prune: true`가 설정되면 ArgoCD는 클러스터에 존재하지만 Git 리포지토리에 더 이상 정의되지 않은 Kubernetes 리소스를 자동으로 삭제합니다.
+자동 동기화에서 `prune: true`가 설정되면 ArgoCD는 이 Application이 추적하는 리소스 중 원하는 소스에서 사라진 대상을 삭제합니다. 클러스터의 모든 비관리 리소스를 삭제하는 기능은 아닙니다.
 
 </details>
 
@@ -62,7 +62,7 @@ Refresh 작업은 Git에서 최신 매니페스트를 가져와 라이브 상태
 **정답: B) 수동 변경으로 인해 라이브 상태가 원하는 상태에서 벗어나면 자동 동기화**
 
 **설명:**
-Self-heal은 누군가 클러스터에서 리소스를 수동으로 변경하면(Git 외부에서) ArgoCD가 자동으로 Git의 원하는 상태와 일치하도록 되돌립니다.
+자동 sync가 활성화되고 selfHeal을 설정하면 비교 대상의 live-only 드리프트를 조정합니다. 동기화 윈도우·권한·ignore 규칙도 적용되며 손실된 데이터나 YAML 오류를 자동 복구하지는 않습니다.
 
 </details>
 
@@ -78,6 +78,6 @@ Self-heal은 누군가 클러스터에서 리소스를 수동으로 변경하면
 **정답: B) Replace=true**
 
 **설명:**
-`Replace=true` 동기화 옵션은 ArgoCD에 `kubectl apply` 대신 `kubectl replace`를 사용하도록 지시하여 패치가 아닌 리소스를 완전히 교체합니다. 이는 불변 필드를 다룰 때 유용합니다.
+`Replace=true` 동기화 옵션은 ArgoCD에 `kubectl apply` 대신 `kubectl replace`를 사용하도록 지시하여 패치가 아닌 리소스를 완전히 교체합니다. replace/create도 immutable 필드 제한을 자동 우회하지 않습니다. Force=true와 Replace=true의 delete/create는 별도 파괴적 동작이며 PVC 마이그레이션을 대신하지 않습니다.
 
 </details>

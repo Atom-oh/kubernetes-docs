@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Without vs. With Load Balancing",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-06-load-balancing-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "without-lb",
+        "label": "Without Load Balancing",
+        "focus": [
+          "c1",
+          "s1",
+          "s2",
+          "s3"
+        ],
+        "note": "Every request lands on Service 1, driving it to 100% load while Services 2 and 3 sit idle at 0%."
+      },
+      {
+        "id": "with-lb",
+        "label": "With Load Balancing",
+        "focus": [
+          "c2",
+          "lb",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "note": "The load balancer splits the same requests 33% / 33% / 34%, so all three services carry a similar load."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "c1",
+      "type": "external",
+      "label": "All Requests",
+      "sublabel": "Client traffic",
+      "pos": [
+        115,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "Service 1",
+      "sublabel": "100% load",
+      "tag": "Overload",
+      "pos": [
+        125,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "Service 2",
+      "sublabel": "0% load",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "backend",
+      "label": "Service 3",
+      "sublabel": "0% load",
+      "pos": [
+        210,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "external",
+      "label": "Distributed Requests",
+      "sublabel": "Client traffic",
+      "pos": [
+        630,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "Envoy proxy",
+      "pos": [
+        640,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "backend",
+      "label": "Service 1",
+      "sublabel": "33% load",
+      "pos": [
+        460,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s5",
+      "type": "backend",
+      "label": "Service 2",
+      "sublabel": "33% load",
+      "pos": [
+        640,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s6",
+      "type": "backend",
+      "label": "Service 3",
+      "sublabel": "34% load",
+      "pos": [
+        820,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Without Load Balancing",
+      "wraps": [
+        "c1",
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "With Load Balancing",
+      "wraps": [
+        "c2",
+        "lb",
+        "s4",
+        "s5",
+        "s6"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1-s1",
+      "from": "c1",
+      "to": "s1",
+      "label": "Overload",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "c2-lb",
+      "from": "c2",
+      "to": "lb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-s4",
+      "from": "lb",
+      "to": "s4",
+      "label": "33%"
+    },
+    {
+      "id": "lb-s5",
+      "from": "lb",
+      "to": "s5",
+      "label": "33%",
+      "labelDy": 24
+    },
+    {
+      "id": "lb-s6",
+      "from": "lb",
+      "to": "s6",
+      "label": "34%"
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Performance Tuning Architecture",
+    "locale": "en",
+    "output": "en-networking-cilium-07-advanced-topics-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Optimization goal"
+        },
+        "security": {
+          "label": "Kernel Parameters"
+        },
+        "database": {
+          "label": "eBPF Maps"
+        },
+        "cloud": {
+          "label": "Resource Allocation"
+        },
+        "messagebus": {
+          "label": "Networking Mode"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "overview",
+        "label": "Overview",
+        "focus": [
+          "perf",
+          "kernel",
+          "ebpf",
+          "resources",
+          "netmode"
+        ],
+        "note": "A single goal, performance optimization, branches into four tuning areas."
+      },
+      {
+        "id": "kernel-view",
+        "label": "Kernel Parameters",
+        "focus": [
+          "perf",
+          "kernel"
+        ],
+        "note": "Adjust sysctl values for TCP parameters, connection tracking (conntrack), the ARP cache, and memory management."
+      },
+      {
+        "id": "ebpf-view",
+        "label": "eBPF Maps",
+        "focus": [
+          "perf",
+          "ebpf"
+        ],
+        "note": "Size the connection tracking, NAT, policy, and endpoint maps."
+      },
+      {
+        "id": "resources-view",
+        "label": "Resource Allocation",
+        "focus": [
+          "perf",
+          "resources"
+        ],
+        "note": "Allocate resources to Cilium components via CPU limits, memory limits, Pod priority, and node affinity."
+      },
+      {
+        "id": "netmode-view",
+        "label": "Networking Mode",
+        "focus": [
+          "perf",
+          "netmode"
+        ],
+        "note": "Choose direct routing or overlay, kube-proxy replacement, and XDP acceleration."
+      }
+    ],
+    "viewBox": [
+      1160,
+      380
+    ]
+  },
+  "components": [
+    {
+      "id": "perf",
+      "type": "backend",
+      "label": "Performance Optimization",
+      "sublabel": "Cilium performance tuning goal",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "kernel",
+      "type": "security",
+      "label": "Kernel Parameters",
+      "sublabel": "TCP params · conntrack · ARP cache · memory",
+      "pos": [
+        30,
+        230
+      ],
+      "size": [
+        260,
+        68
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "database",
+      "label": "eBPF Maps",
+      "sublabel": "Conntrack · NAT · policy · endpoint maps",
+      "pos": [
+        310,
+        230
+      ],
+      "size": [
+        260,
+        68
+      ]
+    },
+    {
+      "id": "resources",
+      "type": "cloud",
+      "label": "Resource Allocation",
+      "sublabel": "CPU/mem limits · Pod priority · node affinity",
+      "pos": [
+        590,
+        230
+      ],
+      "size": [
+        260,
+        68
+      ]
+    },
+    {
+      "id": "netmode",
+      "type": "messagebus",
+      "label": "Networking Mode",
+      "sublabel": "Direct/overlay · kube-proxy replacement · XDP",
+      "pos": [
+        870,
+        230
+      ],
+      "size": [
+        260,
+        68
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Performance Tuning Areas",
+      "wraps": [
+        "kernel",
+        "ebpf",
+        "resources",
+        "netmode"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "perf-kernel",
+      "from": "perf",
+      "to": "kernel",
+      "label": "tune sysctl",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "perf-ebpf",
+      "from": "perf",
+      "to": "ebpf",
+      "label": "size maps",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "perf-resources",
+      "from": "perf",
+      "to": "resources",
+      "label": "set requests / limits",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 16
+    },
+    {
+      "id": "perf-netmode",
+      "from": "perf",
+      "to": "netmode",
+      "label": "select mode",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

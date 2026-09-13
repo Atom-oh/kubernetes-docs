@@ -1,0 +1,130 @@
+[
+  {
+    "path": "ko/data-on-eks/kafka/08-best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full best-practice/quiz review, current client semantics and validated examples complete.",
+    "sources": [
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/tiered-storage/",
+      "https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html"
+    ],
+    "findings": [
+      "Replaced PartitionCount-headercount with currentTopicCommand partitionrow inventory inclLeader:none; logicalpartitionsvsreplicaplacement distinguished.",
+      "Removed universalpartitionlimits/resource-costformulas, scopedJavaMurmur2serializedkeys, salting/order/compaction/joins consequences andnon-universalremapping.",
+      "Correctedacks/minISR/idempotenceconflicts/batch.size/defaultlinger/deadline/compressionandend-to-endtransactionclaims.",
+      "Explicitclassicconsumerprofile, staticmembertimeoutlimits, actualenvironmentresolutioninsteadliteralPOD_NAME, synchronousprocess-before-commit andabort-on-failure; warnedagainstuncoordinatedthreadpool.",
+      "CorrectedclientsCAvsclusterCA, listenerexposuretypevsTLSauthentication, separatev1mTLSuserandadditionallistenerpreservingSCRAMbaseline.",
+      "CorrectedonepeerANDvsseparateOR andadditiveCNIpolicysemantics; explicitcrossnamespacecredentialdistribution/rotationrequirements.",
+      "StorageClassencryptedtrue/WaitForFirstConsumer/Retain; AutoModenodediskencryptionnotdynamicPVCproof, parameterdefaultfalsecurrentdoc, no retroactiveencryption.",
+      "TieredStoragecurrentcustompluginintegration, retention3d/50GiBperpartition, asynccompactionnotstoragecap, Spot/rack/AZandPDBlimits; removedcheckboxproductionguarantee.",
+      "Updatedall36questions, addedPart9navigation; native12+partition8+9schemaobjects/26fencespass; nofigures."
+    ],
+    "validation": [
+      "kafka-best-practices-validation.json"
+    ],
+    "reviewedSha256": "a12873fc8f68d8852c40669872fce20336b114b05c22b2195f9f32a0cc6e39af"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full best-practice/quiz review, current client semantics and validated examples complete.",
+    "sources": [
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/tiered-storage/",
+      "https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html"
+    ],
+    "findings": [
+      "Replaced PartitionCount-headercount with currentTopicCommand partitionrow inventory inclLeader:none; logicalpartitionsvsreplicaplacement distinguished.",
+      "Removed universalpartitionlimits/resource-costformulas, scopedJavaMurmur2serializedkeys, salting/order/compaction/joins consequences andnon-universalremapping.",
+      "Correctedacks/minISR/idempotenceconflicts/batch.size/defaultlinger/deadline/compressionandend-to-endtransactionclaims.",
+      "Explicitclassicconsumerprofile, staticmembertimeoutlimits, actualenvironmentresolutioninsteadliteralPOD_NAME, synchronousprocess-before-commit andabort-on-failure; warnedagainstuncoordinatedthreadpool.",
+      "CorrectedclientsCAvsclusterCA, listenerexposuretypevsTLSauthentication, separatev1mTLSuserandadditionallistenerpreservingSCRAMbaseline.",
+      "CorrectedonepeerANDvsseparateOR andadditiveCNIpolicysemantics; explicitcrossnamespacecredentialdistribution/rotationrequirements.",
+      "StorageClassencryptedtrue/WaitForFirstConsumer/Retain; AutoModenodediskencryptionnotdynamicPVCproof, parameterdefaultfalsecurrentdoc, no retroactiveencryption.",
+      "TieredStoragecurrentcustompluginintegration, retention3d/50GiBperpartition, asynccompactionnotstoragecap, Spot/rack/AZandPDBlimits; removedcheckboxproductionguarantee.",
+      "Updatedall36questions, addedPart9navigation; native12+partition8+9schemaobjects/26fencespass; nofigures."
+    ],
+    "validation": [
+      "kafka-best-practices-validation.json"
+    ],
+    "reviewedSha256": "803d345e5ad7af7d623d4dd14cf9653d7c59c096db5955e5ec41a89bce25b2c4"
+  },
+  {
+    "path": "en/data-on-eks/kafka/08-best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full best-practice/quiz review, current client semantics and validated examples complete.",
+    "sources": [
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/tiered-storage/",
+      "https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html"
+    ],
+    "findings": [
+      "Replaced PartitionCount-headercount with currentTopicCommand partitionrow inventory inclLeader:none; logicalpartitionsvsreplicaplacement distinguished.",
+      "Removed universalpartitionlimits/resource-costformulas, scopedJavaMurmur2serializedkeys, salting/order/compaction/joins consequences andnon-universalremapping.",
+      "Correctedacks/minISR/idempotenceconflicts/batch.size/defaultlinger/deadline/compressionandend-to-endtransactionclaims.",
+      "Explicitclassicconsumerprofile, staticmembertimeoutlimits, actualenvironmentresolutioninsteadliteralPOD_NAME, synchronousprocess-before-commit andabort-on-failure; warnedagainstuncoordinatedthreadpool.",
+      "CorrectedclientsCAvsclusterCA, listenerexposuretypevsTLSauthentication, separatev1mTLSuserandadditionallistenerpreservingSCRAMbaseline.",
+      "CorrectedonepeerANDvsseparateOR andadditiveCNIpolicysemantics; explicitcrossnamespacecredentialdistribution/rotationrequirements.",
+      "StorageClassencryptedtrue/WaitForFirstConsumer/Retain; AutoModenodediskencryptionnotdynamicPVCproof, parameterdefaultfalsecurrentdoc, no retroactiveencryption.",
+      "TieredStoragecurrentcustompluginintegration, retention3d/50GiBperpartition, asynccompactionnotstoragecap, Spot/rack/AZandPDBlimits; removedcheckboxproductionguarantee.",
+      "Updatedall36questions, addedPart9navigation; native12+partition8+9schemaobjects/26fencespass; nofigures."
+    ],
+    "validation": [
+      "kafka-best-practices-validation.json"
+    ],
+    "reviewedSha256": "c25c5dc77076045ed5b529ceaf20eca4915f26608e014ef48ff3b5efab1350da"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full best-practice/quiz review, current client semantics and validated examples complete.",
+    "sources": [
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/tiered-storage/",
+      "https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html"
+    ],
+    "findings": [
+      "Replaced PartitionCount-headercount with currentTopicCommand partitionrow inventory inclLeader:none; logicalpartitionsvsreplicaplacement distinguished.",
+      "Removed universalpartitionlimits/resource-costformulas, scopedJavaMurmur2serializedkeys, salting/order/compaction/joins consequences andnon-universalremapping.",
+      "Correctedacks/minISR/idempotenceconflicts/batch.size/defaultlinger/deadline/compressionandend-to-endtransactionclaims.",
+      "Explicitclassicconsumerprofile, staticmembertimeoutlimits, actualenvironmentresolutioninsteadliteralPOD_NAME, synchronousprocess-before-commit andabort-on-failure; warnedagainstuncoordinatedthreadpool.",
+      "CorrectedclientsCAvsclusterCA, listenerexposuretypevsTLSauthentication, separatev1mTLSuserandadditionallistenerpreservingSCRAMbaseline.",
+      "CorrectedonepeerANDvsseparateOR andadditiveCNIpolicysemantics; explicitcrossnamespacecredentialdistribution/rotationrequirements.",
+      "StorageClassencryptedtrue/WaitForFirstConsumer/Retain; AutoModenodediskencryptionnotdynamicPVCproof, parameterdefaultfalsecurrentdoc, no retroactiveencryption.",
+      "TieredStoragecurrentcustompluginintegration, retention3d/50GiBperpartition, asynccompactionnotstoragecap, Spot/rack/AZandPDBlimits; removedcheckboxproductionguarantee.",
+      "Updatedall36questions, addedPart9navigation; native12+partition8+9schemaobjects/26fencespass; nofigures."
+    ],
+    "validation": [
+      "kafka-best-practices-validation.json"
+    ],
+    "reviewedSha256": "c8b8a1d2139143fa0866c2387de30455e81afdcd7a548625ff78d355a39ea21a"
+  }
+]

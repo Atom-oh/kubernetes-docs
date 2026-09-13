@@ -7,17 +7,17 @@
 ### 1. HPA(Horizontal Pod Autoscaler)에서 Custom Metrics를 사용하려면 어떤 컴포넌트가 필요한가요?
 
 - A) Vertical Pod Autoscaler
-- B) Prometheus Adapter 또는 KEDA
+- B) custom.metrics.k8s.io API를 제공하는 adapter
 - C) Cluster Autoscaler만
 - D) Ingress Controller
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Prometheus Adapter 또는 KEDA**
+**정답: B) custom.metrics.k8s.io API를 제공하는 adapter**
 
 **설명:**
-HPA가 CPU/메모리 외의 Custom Metrics를 사용하려면 custom.metrics.k8s.io API를 제공하는 어댑터가 필요합니다. Prometheus Adapter는 Prometheus 메트릭을 Kubernetes Metrics API로 변환하고, KEDA는 더 다양한 외부 소스(SQS, Kafka, Redis 등)를 지원합니다.
+HPA가 CPU/메모리 외의 Custom Metrics를 사용하려면 custom.metrics.k8s.io API를 제공하는 어댑터가 필요합니다. Prometheus Adapter는 설정한 Prometheus series를 custom metrics로 제공합니다. KEDA는 주로 external.metrics.k8s.io 경로로 외부 소스를 HPA에 제공하므로 두 API를 혼동하지 않습니다.
 
 </details>
 
@@ -34,7 +34,7 @@ HPA가 CPU/메모리 외의 Custom Metrics를 사용하려면 custom.metrics.k8s
 **정답: B) 외부 메트릭 소스를 확인하는 주기**
 
 **설명:**
-pollingInterval은 KEDA가 외부 메트릭 소스(SQS 큐 길이, Kafka 컨슈머 랙 등)를 확인하는 주기를 초 단위로 지정합니다. 기본값은 30초이며, 더 빠른 반응이 필요하면 값을 줄일 수 있지만 외부 API 호출 비용이 증가할 수 있습니다.
+pollingInterval은 KEDA가 외부 메트릭 소스(SQS 큐 길이, Kafka 컨슈머 랙 등)를 확인하는 주기를 초 단위로 지정합니다. 기본값은 30초이며 HPA sync period와는 별개입니다. 실제 반응에는 metric 수집, HPA, 노드와 Pod 준비 시간이 포함되고 호출 빈도를 높이면 소스 부하도 커질 수 있습니다.
 
 </details>
 
@@ -51,7 +51,7 @@ pollingInterval은 KEDA가 외부 메트릭 소스(SQS 큐 길이, Kafka 컨슈�
 **정답: B) 권장 값만 계산하고 실제 적용은 하지 않음**
 
 **설명:**
-updateMode: "Off"는 VPA가 리소스 사용 패턴을 분석하여 권장 requests/limits 값을 계산하지만, 실제로 Pod에 적용하지는 않습니다. 이 모드는 현재 설정이 적절한지 확인하거나, 권장 값을 수동으로 검토한 후 적용할 때 유용합니다.
+updateMode: "Off"는 VPA가 리소스 사용 패턴을 분석하여 주로 권장 resource requests를 계산하지만, 실제로 Pod에 적용하지는 않습니다. 이 모드는 현재 설정이 적절한지 확인하거나, 권장 값을 수동으로 검토한 후 적용할 때 유용합니다.
 
 </details>
 
@@ -89,20 +89,20 @@ HPA와 VPA를 CPU/메모리에 대해 동시에 설정하면 서로 충돌할 �
 
 </details>
 
-### 6. Kubernetes 1.27+에서 지원되는 In-Place Pod Vertical Scaling의 장점은 무엇인가요?
+### 6. 지원되는 Kubernetes에서 In-Place Pod Vertical Scaling의 장점은 무엇인가요?
 
 - A) 더 많은 메트릭 지원
-- B) Pod 재시작 없이 리소스 변경 가능
+- B) Pod 객체를 유지하면서 지원되는 리소스 변경 가능
 - C) 자동 롤백 지원
 - D) 멀티 클러스터 지원
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Pod 재시작 없이 리소스 변경 가능**
+**정답: B) Pod 객체를 유지하면서 지원되는 리소스 변경 가능**
 
 **설명:**
-In-Place Pod Vertical Scaling(KEP-1287)은 Pod를 재시작하지 않고도 CPU/메모리 requests와 limits를 변경할 수 있게 합니다. 기존 VPA는 리소스 변경 시 Pod를 재생성해야 했지만, 이 기능을 사용하면 서비스 중단 없이 리소스를 조정할 수 있습니다.
+KEP-1287은 Kubernetes 1.27 alpha, 1.33 beta, 1.35 stable로 발전했습니다. Pod를 유지하더라도 resizePolicy가 RestartContainer이면 컨테이너는 재시작할 수 있고 노드 용량·QoS·지원 모드에 따라 지연되거나 거부될 수 있습니다. VPA 갱신 모드도 별도로 맞춰야 합니다.
 
 </details>
 
@@ -119,7 +119,7 @@ In-Place Pod Vertical Scaling(KEP-1287)은 Pod를 재시작하지 않고도 CPU/
 **정답: B) 이벤트가 없으면 Pod를 0개로 스케일 다운 (scale-to-zero)**
 
 **설명:**
-KEDA의 핵심 기능 중 하나는 scale-to-zero입니다. minReplicaCount: 0으로 설정하면 트리거 조건이 충족되지 않을 때(예: SQS 큐가 비어있을 때) Pod를 0개로 줄여 리소스를 절약합니다. 이벤트가 발생하면 KEDA가 빠르게 Pod를 생성합니다.
+KEDA의 핵심 기능 중 하나는 scale-to-zero입니다. minReplicaCount: 0으로 설정하면 트리거 조건이 충족되지 않을 때(예: SQS 큐가 비어있을 때) Pod를 0개로 줄여 리소스를 절약합니다. 재활성화에는 KEDA가 관측할 수 있는 이벤트와 준비된 용량이 필요합니다. 애플리케이션 자체의 HTTP metric만 남긴 채 모든 Pod를 없애는 구성은 별도 activation 경로가 필요할 수 있습니다.
 
 </details>
 
@@ -153,7 +153,7 @@ stabilizationWindowSeconds는 HPA가 스케일 다운 결정 시 지정된 시�
 **정답: B) 스케일 다운 시 어떤 Pod를 먼저 삭제할지 우선순위 지정**
 
 **설명:**
-`controller.kubernetes.io/pod-deletion-cost` 어노테이션은 스케일 다운 시 Pod 삭제 우선순위를 지정합니다. 값이 낮은 Pod가 먼저 삭제됩니다. 예를 들어, 중요한 작업을 처리 중인 Pod에 높은 값을 설정하여 먼저 삭제되지 않도록 보호할 수 있습니다.
+이 annotation은 같은 ReplicaSet 내부의 best-effort 삭제 선호입니다. 미할당·Pod phase·Ready 상태 등을 먼저 비교한 뒤 낮은 cost를 선호합니다. Job/StatefulSet, 서로 다른 Deployment, eviction이나 Spot 노드 소실을 막는 보호 장치가 아닙니다.
 
 </details>
 
@@ -170,6 +170,6 @@ stabilizationWindowSeconds는 HPA가 스케일 다운 결정 시 지정된 시�
 **정답: B) ScaledJob은 Job 워크로드용, ScaledObject는 Deployment/StatefulSet용**
 
 **설명:**
-ScaledObject는 Deployment, StatefulSet 같은 장기 실행 워크로드의 스케일링에 사용됩니다. ScaledJob은 Kubernetes Job을 이벤트에 따라 동적으로 생성하는 데 사용됩니다. 예를 들어, SQS 메시지마다 Job을 생성하여 배치 처리를 수행할 수 있습니다.
+ScaledObject는 Deployment, StatefulSet 같은 장기 실행 워크로드의 스케일링에 사용됩니다. ScaledJob은 Kubernetes Job을 이벤트에 따라 동적으로 생성하는 데 사용됩니다. 큐 지표를 사용해 Job 수를 조정하지만 특정 메시지를 Job에 정확히 1:1로 배정하지는 않습니다. 실제 worker가 수신·처리·삭제와 재시도를 구현해야 합니다.
 
 </details>

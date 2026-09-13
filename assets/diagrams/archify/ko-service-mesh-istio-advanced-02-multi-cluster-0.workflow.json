@@ -1,0 +1,280 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Multi-cluster 도입 의사결정 흐름",
+    "output": "public/archmaps/ko-service-mesh-istio-advanced-02-multi-cluster-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "검토 시작"
+        },
+        "security": {
+          "label": "판단 질문"
+        },
+        "backend": {
+          "label": "Istio 직접 운영"
+        },
+        "cloud": {
+          "label": "AWS 관리형"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cluster-region",
+        "label": "클러스터·지역 판단",
+        "focus": [
+          "start",
+          "q1",
+          "q2",
+          "single"
+        ],
+        "note": "클러스터가 하나뿐이거나 지역 분리가 필요 없다면 Single-cluster Istio가 가장 간단합니다."
+      },
+      {
+        "id": "dr-l7-ops",
+        "label": "DR·L7·운영 역량",
+        "focus": [
+          "q3",
+          "q4",
+          "q5",
+          "lattice"
+        ],
+        "note": "DR/HA나 강력한 L7 기능이 필요 없거나 운영 복잡도를 감당하기 어렵다면 AWS 관리형 VPC Lattice를 택합니다."
+      },
+      {
+        "id": "hybrid-option",
+        "label": "권장 조합과 대안",
+        "focus": [
+          "q5",
+          "hybrid",
+          "multi"
+        ],
+        "note": "다섯 질문을 모두 통과하면 Istio + Lattice Hybrid를 권장하며, 전체 제어가 필요할 때 Multi-cluster Istio를 옵션으로 둡니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "questions",
+      "label": "다섯 가지 질문"
+    },
+    {
+      "id": "choices",
+      "label": "선택지"
+    },
+    {
+      "id": "option",
+      "label": "선택적 대안"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q1",
+    "q2",
+    "q3",
+    "q4",
+    "q5",
+    "hybrid"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "single",
+      "lattice",
+      "multi"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "hybrid"
+      },
+      {
+        "from": "start",
+        "to": "single"
+      },
+      {
+        "from": "start",
+        "to": "lattice"
+      },
+      {
+        "from": "hybrid",
+        "to": "multi"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "questions",
+      "col": 0,
+      "type": "frontend",
+      "label": "Multi-cluster 고려",
+      "sublabel": "도입 전 검토",
+      "width": 160
+    },
+    {
+      "id": "q1",
+      "lane": "questions",
+      "col": 1,
+      "type": "security",
+      "label": "여러 클러스터 이미 운영?",
+      "width": 170
+    },
+    {
+      "id": "q2",
+      "lane": "questions",
+      "col": 2,
+      "type": "security",
+      "label": "지역적 분리 필요?",
+      "width": 160
+    },
+    {
+      "id": "q3",
+      "lane": "questions",
+      "col": 3,
+      "type": "security",
+      "label": "DR/HA 필수?",
+      "width": 140
+    },
+    {
+      "id": "q4",
+      "lane": "questions",
+      "col": 4,
+      "type": "security",
+      "label": "강력한 L7 기능 필요?",
+      "width": 150
+    },
+    {
+      "id": "q5",
+      "lane": "questions",
+      "col": 5,
+      "type": "security",
+      "label": "운영 복잡도 감당 가능?",
+      "width": 176
+    },
+    {
+      "id": "single",
+      "lane": "choices",
+      "col": 1,
+      "type": "backend",
+      "label": "Single-cluster Istio",
+      "sublabel": "가장 간단",
+      "width": 166
+    },
+    {
+      "id": "lattice",
+      "lane": "choices",
+      "col": 3,
+      "type": "cloud",
+      "label": "AWS VPC Lattice",
+      "sublabel": "AWS 관리형",
+      "width": 140
+    },
+    {
+      "id": "hybrid",
+      "lane": "choices",
+      "col": 5,
+      "type": "backend",
+      "label": "Hybrid: Istio + Lattice",
+      "sublabel": "최선의 조합",
+      "tag": "권장",
+      "width": 176
+    },
+    {
+      "id": "multi",
+      "lane": "option",
+      "col": 5,
+      "type": "backend",
+      "label": "Multi-cluster Istio",
+      "sublabel": "전체 제어",
+      "width": 166
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q1",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q1",
+      "to": "q2",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q2",
+      "to": "q3",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q3",
+      "to": "q4",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q4",
+      "to": "q5",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q5",
+      "to": "hybrid",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q1",
+      "to": "single",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q2",
+      "to": "single",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q3",
+      "to": "lattice",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q4",
+      "to": "lattice",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q5",
+      "to": "lattice",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "hybrid",
+      "to": "multi",
+      "label": "옵션",
+      "role": "async",
+      "variant": "dashed"
+    }
+  ]
+}

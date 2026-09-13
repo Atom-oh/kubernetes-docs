@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Network Policy Controller와 Calico 비교",
+    "output": "ko-networking-calico-08-eks-integration-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "k8s-policy",
+        "label": "Kubernetes NetworkPolicy 경로",
+        "focus": [
+          "k8snp",
+          "npc",
+          "felix",
+          "pods"
+        ],
+        "note": "표준 NetworkPolicy는 AWS 네이티브 컨트롤러와 Calico Felix 양쪽에서 처리된다."
+      },
+      {
+        "id": "calico-only",
+        "label": "Calico 전용 정책 경로",
+        "focus": [
+          "calnp",
+          "felix",
+          "pods"
+        ],
+        "note": "GlobalNetworkPolicy 등 projectcalico.org/v3 리소스는 Felix만 처리한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "k8snp",
+      "type": "security",
+      "label": "Kubernetes NetworkPolicy",
+      "sublabel": "networking.k8s.io/v1",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "calnp",
+      "type": "security",
+      "label": "Calico 전용 정책",
+      "sublabel": "GlobalNetworkPolicy 등 (projectcalico.org/v3)",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "npc",
+      "type": "cloud",
+      "label": "Network Policy Controller",
+      "sublabel": "VPC CNI 애드온 · dataplane: eBPF",
+      "pos": [
+        400,
+        120
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "tag": "enableNetworkPolicy: true"
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix Agent",
+      "sublabel": "calico-node · dataplane: iptables/eBPF",
+      "pos": [
+        400,
+        340
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Worker Node Pod",
+      "sublabel": "정책 적용 대상",
+      "pos": [
+        780,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 네이티브 (EKS 1.25+)",
+      "wraps": [
+        "npc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Calico",
+      "wraps": [
+        "felix"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8snp-to-npc",
+      "from": "k8snp",
+      "to": "npc",
+      "label": "처리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "k8snp-to-felix",
+      "from": "k8snp",
+      "to": "felix",
+      "label": "처리"
+    },
+    {
+      "id": "calnp-to-felix",
+      "from": "calnp",
+      "to": "felix",
+      "label": "Felix만 처리",
+      "variant": "emphasis",
+      "labelDx": -45
+    },
+    {
+      "id": "npc-to-pods",
+      "from": "npc",
+      "to": "pods",
+      "label": "eBPF 규칙"
+    },
+    {
+      "id": "felix-to-pods",
+      "from": "felix",
+      "to": "pods",
+      "label": "iptables/eBPF 규칙"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "EKS Native Policy",
+      "items": [
+        "Kubernetes NetworkPolicy 완전 지원",
+        "GlobalNetworkPolicy · NetworkSet · Tier 미지원",
+        "관측성: CloudWatch"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Calico",
+      "items": [
+        "GlobalNetworkPolicy · NetworkSet · Tier · Host Endpoint 지원",
+        "L7 · DNS 기반 정책은 Enterprise",
+        "관측성: Prometheus"
+      ]
+    }
+  ]
+}

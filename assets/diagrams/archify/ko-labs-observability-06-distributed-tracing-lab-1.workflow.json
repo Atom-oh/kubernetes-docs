@@ -1,0 +1,156 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Exemplar 워크플로우: 메트릭 → 트레이스 → 로그 드릴다운",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "메트릭 (Prometheus)"
+        },
+        "security": {
+          "label": "드릴다운 피벗 (Exemplar)"
+        },
+        "backend": {
+          "label": "트레이스 (Tempo)"
+        },
+        "database": {
+          "label": "로그 (Loki)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "spike",
+        "label": "지연 급증 발견",
+        "focus": [
+          "metric",
+          "exemplar"
+        ],
+        "note": "p99 지연 그래프 위의 다이아몬드(◇) 마커가 Exemplar이며, 마우스를 올리면 해당 요청의 TraceID가 표시됩니다."
+      },
+      {
+        "id": "trace",
+        "label": "트레이스로 이동",
+        "focus": [
+          "exemplar",
+          "trace"
+        ],
+        "note": "Exemplar 마커를 클릭하면 집계된 메트릭에서 개별 요청의 Tempo 트레이스로 바로 이동합니다."
+      },
+      {
+        "id": "logs",
+        "label": "로그까지 드릴다운",
+        "focus": [
+          "trace",
+          "log"
+        ],
+        "note": "Tempo에서 Span을 선택해 Logs for this span을 누르면 Loki가 같은 시간 범위와 TraceID로 로그를 검색합니다."
+      }
+    ],
+    "viewBox": [
+      940,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prom",
+      "label": "Grafana · Prometheus 패널"
+    },
+    {
+      "id": "tempo",
+      "label": "Tempo"
+    },
+    {
+      "id": "loki",
+      "label": "Loki"
+    }
+  ],
+  "mainPath": [
+    "metric",
+    "exemplar",
+    "trace",
+    "log"
+  ],
+  "nodes": [
+    {
+      "id": "metric",
+      "lane": "prom",
+      "col": 0,
+      "type": "frontend",
+      "label": "메트릭 그래프",
+      "sublabel": "p99 latency spike",
+      "width": 160
+    },
+    {
+      "id": "exemplar",
+      "lane": "prom",
+      "col": 1,
+      "type": "security",
+      "label": "Exemplar 점",
+      "sublabel": "특정 요청의 TraceID",
+      "width": 168
+    },
+    {
+      "id": "trace",
+      "lane": "tempo",
+      "col": 2,
+      "type": "backend",
+      "label": "트레이스",
+      "sublabel": "요청 경로 상세 분석",
+      "width": 168
+    },
+    {
+      "id": "log",
+      "lane": "loki",
+      "col": 3,
+      "type": "database",
+      "label": "로그",
+      "sublabel": "에러 메시지 확인",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "metric-exemplar",
+      "from": "metric",
+      "to": "exemplar",
+      "label": "마커 hover"
+    },
+    {
+      "id": "exemplar-trace",
+      "from": "exemplar",
+      "to": "trace",
+      "label": "클릭",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trace-log",
+      "from": "trace",
+      "to": "log",
+      "label": "Logs for this span"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Grafana에서 Exemplar 확인",
+      "items": [
+        "Time series 패널에서 Exemplars 옵션 활성화",
+        "그래프 위의 다이아몬드(◇) 마커에 마우스를 올리면 TraceID 표시",
+        "클릭하면 Tempo 트레이스로 이동"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Prometheus 사전 조건",
+      "items": [
+        "enableFeatures에 exemplar-storage 추가",
+        "exemplars.maxSize로 저장 개수 제한 (예: 100000)"
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # Flagger Progressive Delivery Quiz
 
 1. In Flagger's Canary deployment, what does `stepWeight: 10`, `maxWeight: 50` mean?
-   - A) Start traffic at 10% and incrementally increase to 50%, then promote to 100%
+   - A) Increase analysis traffic by 10% up to 50%, then run promotion
    - B) Create 10 Pods and scale up to a maximum of 50
    - C) Shift traffic to 50% at 10-second intervals
    - D) Allow up to 10% error rate and rollback at 50%
@@ -9,10 +9,10 @@
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) Start traffic at 10% and incrementally increase to 50%, then promote to 100%**
+**Answer: A) Increase analysis traffic by 10% up to 50%, then run promotion**
 
 **Explanation:**
-`stepWeight` is the traffic percentage to increase at each analysis step, and `maxWeight` is the maximum traffic percentage the Canary can receive. Traffic increases 10% → 20% → 30% → 40% → 50%, and if all metrics pass, it promotes to 100%.
+StepWeight is the analysis weight increment and maxWeight is its analysis target. Checks advance through 10→20→30→40→50%, followed by primary update/traffic promotion. Canary can temporarily receive all traffic during promotion; 50% is not a lifetime traffic ceiling.
 
 </details>
 
@@ -20,17 +20,17 @@
 
 2. Under what condition does Flagger automatically rollback a Canary deployment?
    - A) When CPU usage exceeds 80%
-   - B) When metric thresholds are exceeded for the configured number of consecutive failures
+   - B) When failed checks for a revision reach threshold
    - C) When Pod count exceeds maxReplicas
    - D) When deployment time exceeds 30 minutes
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) When metric thresholds are exceeded for the configured number of consecutive failures**
+**Answer: B) When failed checks for a revision reach threshold**
 
 **Explanation:**
-Flagger evaluates defined metrics (request-success-rate, request-duration, etc.) at each analysis step. When the consecutive failure count reaches the `threshold`, it automatically performs a rollback, reverting Canary traffic to 0% and maintaining the original version.
+Flagger evaluates defined metrics (request-success-rate, request-duration, etc.) at each analysis step. Failed checks accumulate for a revision rather than resetting on every success. Reaching threshold causes rollback on subsequent reconciliation. Primary-promotion failures can require different recovery, including retaining the healthy canary.
 
 </details>
 
@@ -48,7 +48,7 @@ Flagger evaluates defined metrics (request-success-rate, request-duration, etc.)
 **Answer: B) Flagger integrates with the Flux ecosystem, while Argo Rollouts integrates with the Argo ecosystem**
 
 **Explanation:**
-Flagger is part of the Flux/Flagger ecosystem and naturally integrates into GitOps workflows with FluxCD. Argo Rollouts is part of the Argo ecosystem alongside ArgoCD. Both support Canary, Blue-Green, and A/B Testing strategies, and both work with various service meshes and ingress controllers.
+Flagger is part of the Flux/Flagger ecosystem and naturally integrates into GitOps workflows with FluxCD. Argo Rollouts is part of the Argo ecosystem alongside ArgoCD. These ecosystem associations are not exclusive requirements. Flagger controls an existing workload through Canary, while Argo Rollouts uses Rollout and workloadRef support. Specific routing/experiment capabilities depend on the provider.
 
 </details>
 
@@ -66,7 +66,7 @@ Flagger is part of the Flux/Flagger ecosystem and naturally integrates into GitO
 **Answer: B) Replicate production traffic to the Canary (Green) for testing with real traffic**
 
 **Explanation:**
-`mirror: true` sends a copy of production traffic to the new version (Green) for testing with real traffic patterns. Mirrored responses are not returned to clients, allowing verification of the new version's behavior without impacting users.
+`mirror: true` sends a copy of production traffic to the new version (Green) for testing with real traffic patterns. Responses are discarded, but database writes, messages, payments, and extra load can still occur. Use verified read-only requests or isolation/idempotency controls.
 
 </details>
 
@@ -102,14 +102,14 @@ Flagger is part of the Flux/Flagger ecosystem and naturally integrates into GitO
 **Answer: B) Run load tests or conformance tests before traffic shifting to validate the new version**
 
 **Explanation:**
-Pre-rollout webhooks are invoked before traffic shifting begins. Typically, they run load tests (hey, wrk) or Helm tests via the Flagger loadtester to verify the new version performs basic operations correctly before exposing it to real users.
+Pre-rollout webhooks are invoked before traffic shifting begins. Run smoke/conformance tests with prepared tools and permissions. Asynchronous cmd load-test acceptance is not a quality verdict; blocking tests such as bash must complete within their timeout.
 
 </details>
 
 ---
 
 7. What is the correct sequence when using FluxCD Image Automation with Flagger?
-   - A) New image tag detected → Git commit → Flux sync → Flagger Canary analysis
+   - A) Image selected → reviewed/merged Git change → Flux apply → Flagger analysis
    - B) Flagger Canary analysis → New image tag detected → Git commit
    - C) Git commit → New image tag detected → Flux sync
    - D) Flux sync → Flagger Canary analysis → New image tag detected
@@ -117,10 +117,10 @@ Pre-rollout webhooks are invoked before traffic shifting begins. Typically, they
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) New image tag detected → Git commit → Flux sync → Flagger Canary analysis**
+**Answer: A) Image selected → reviewed/merged Git change → Flux apply → Flagger analysis**
 
 **Explanation:**
-Flux Image Automation detects new image tags in the registry and creates a commit updating the manifests in the Git repository. When Flux syncs this change, the Deployment is updated, and Flagger detects the change to automatically begin the Canary analysis process.
+Image-reflector evaluates tags/policy and image-automation edits marked YAML. A separate push branch requires PR review/merge before Flux applies the source branch and Flagger observes the workload change. Flagger does not directly reconcile HelmRelease objects.
 
 </details>
 
@@ -138,6 +138,6 @@ Flux Image Automation detects new image tags in the registry and creates a commi
 **Answer: B) Only requests matching specific HTTP header/cookie conditions are routed to the new version**
 
 **Explanation:**
-In A/B Testing, traffic is classified based on HTTP header or cookie conditions defined in `spec.analysis.match`. Only requests matching these conditions are routed to the new version, allowing exposure of new features to specific user groups (beta testers, internal employees, etc.) while other users continue using the stable version.
+In A/B Testing, traffic is classified based on HTTP header or cookie conditions defined in `spec.analysis.match`. Only requests matching these conditions are routed to the new version, allowing cohort routing while other requests use stable. Client-controlled headers/cookies are not employee authorization or protection for sensitive features.
 
 </details>

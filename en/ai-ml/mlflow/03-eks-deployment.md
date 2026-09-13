@@ -1,72 +1,106 @@
 # Part 3: Deploying MLflow on EKS
 
-> **Supported Versions**: MLflow 3.15.1, Kubernetes 1.34+
-> **Last Updated**: August 19, 2026
+> **Review baseline**: MLflow 3.16.0 · community chart 1.11.7 · 2026-09-12
 
 ## Lab Environment Setup
 
-To follow along with the examples in this document, you will need the following tools and environment:
+Prepare a supported EKS Kubernetes version, compatible kubectl, Helm 3, metadata database, and artifact storage. A lower bound such as `kubectl >=1.34` does not establish compatibility with every API server. Check the client/server version-skew policy for the actual cluster.
 
-### Required Tools
-
-* kubectl v1.34 or later, pointed at a working Amazon EKS cluster
-* Helm v3, if you choose the community Helm chart installation path
-* An existing Amazon RDS or Aurora PostgreSQL instance for the backend store (or the ability to provision one)
-* An S3 bucket for the artifact store
-* An IRSA role or EKS Pod Identity association granting the tracking server access to that S3 bucket
+This chapter is based on a downloaded chart, native Helm rendering, and MLflow 3.16.0 server source. **It does not establish successful AWS provisioning, RDS connectivity, S3 uploads, or EKS deployment.** See [Part 1](01-tracking.md) for local SQLite/API checks and [Part 2](02-model-registry.md) for Registry checks.
 
 ## Why Run MLflow's Tracking Server on EKS
 
-The trade-off here follows the same pattern as other self-hosted ML infrastructure covered in this documentation site. A team already running EKS gets to reuse the same deployment manifests, observability stack, and IAM patterns (IRSA or Pod Identity) for MLflow as for everything else on the cluster, instead of learning a separate operational model. In exchange, that team takes on operating the tracking server process itself, along with its backend store and artifact store, rather than pointing training code at a managed alternative — Databricks-managed MLflow or SageMaker's MLflow-compatible tracking capability, for example. Neither choice is universally correct; it comes down to whether the team wants one more service on its existing Kubernetes operational surface, or one less service to operate at all.
+You can reuse Kubernetes deployment, observability, and IAM patterns while taking responsibility for servers, databases, artifacts, access control, backups, and upgrades. SageMaker MLflow Apps and other managed registries are alternatives; their supported versions, authentication, features, and cost are not necessarily identical.
+
+Sharing with a team does not automatically require provisioning separate new RDS and S3 resources. Small SQLite/PVC exercises are possible; choose production architecture from concurrency, durability, and recovery requirements.
 
 ## Architecture
 
-A production MLflow deployment on EKS has three moving pieces, and none of them is optional once real teams share the tracking server.
+| Layer | Responsibility and state to inspect |
+|---|---|
+| HTTP server | SDK APIs, UI, artifact proxy; authentication, authorization, host/CORS policy, workers |
+| Metadata database | experiment/run/metric/model/registry metadata; pools, migrations, backups |
+| Artifact store | model/data/plot files; bucket/prefix, IAM, encryption, retention |
+| Authentication store | user/permission database, session/signing secrets, cache for the selected auth mechanism |
+| Optional feature state | queues, caches, and temporary files used by enabled jobs, tracing/evaluation, or gateway features |
 
-**MLflow Tracking Server.** This is a container running `mlflow server`, exposing both the REST API that client SDKs (`mlflow.log_metric`, `mlflow.log_artifact`, and so on) talk to, and the web UI that people browse experiments and runs in. It's stateless by design — all durable state lives in the backend store and artifact store — so it fits naturally into a Kubernetes Deployment, fronted by a Service and an Ingress (typically backed by the AWS Load Balancer Controller provisioning an ALB).
+PostgreSQL plus S3 does not make every feature stateless. For example, Pod-local basic-auth SQLite databases can leave replicas with different users or permissions. Check OIDC-plugin caches and job storage separately.
 
-**Backend store.** MLflow's default backend store is a local SQLite file, which is fine for a single experimenter on a laptop but breaks down the moment more than one process needs to write concurrently — SQLite simply doesn't support the level of concurrent access a shared team tracking server needs. On AWS, the standard replacement is a real relational database: Amazon RDS for PostgreSQL, or Aurora Serverless v2 if you want the database to scale with tracking load rather than being sized up front. The backend store holds all of MLflow's structured metadata — experiments, runs, parameters, metrics, registered models, model versions, and aliases (see [Part 2](02-model-registry.md)) — everything that benefits from being queryable with SQL.
+SQLite is a relational database and supports multiple processes with serialized writes. It does not immediately fail when a second user connects. However, separate Pod-local SQLite files are not a shared database; even shared files have writer, filesystem-locking, and recovery constraints. Relate production PostgreSQL selection to those requirements.
 
-**Artifact store.** Backend store rows are small; the things MLflow logs alongside them often aren't. Serialized models, plots, datasets, and other large binary objects go to a separate artifact store instead of the database. On AWS, that's Amazon S3: the tracking server writes and reads artifacts under an S3 URI configured as the default artifact root, and clients fetch artifacts either through the tracking server's proxy or with direct S3 access, depending on how the server is configured.
+![Protected access leads to MLflow servers using metadata/authentication databases and S3 artifacts. S3 IAM permissions and PostgreSQL login permissions are separate; shared state is externalized before scaling replicas.](../../.gitbook/assets/en-ai-ml-mlflow-03-eks-deployment-0.png)
 
-![A user reaches a load-balanced MLflow tracking server running as replicated pods inside an EKS cluster, where an IAM-mapped service account grants the pods access to an RDS/Aurora Postgres backend store and an S3 artifact store outside the cluster.](../../../assets/diagrams/rendered/en-ai-ml-mlflow-03-eks-deployment-0.svg)
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-03-eks-deployment-0.html)
 
-## Installation Approaches
+## Installation Approaches and Version Pins
 
-There are two practical paths to getting the pieces above running on a cluster.
+| Route | What was verified |
+|---|---|
+| Community chart | downloaded/rendered `community-charts/mlflow` 1.11.7; appVersion 3.16.0, default image `burakince/mlflow` |
+| MLflow repository chart | `v3.16.0/charts` contains chart 0.1.1 with appVersion 3.15.2; source tag, chart version, and image version differ |
+| Direct manifests | an option when file-based credential delivery, networking, authentication, or migration policies need direct control |
 
-**Write your own manifests.** A Deployment for the `mlflow server` container, a Service in front of it, and an Ingress (or a Service of type `LoadBalancer`) to expose it externally, with the backend store connection string and the S3 artifact root passed in as environment variables or command-line flags on the container. This gives full control over every detail, at the cost of maintaining the YAML yourself.
+Source in the upstream repository does not prove an identically versioned OCI package is published. The official OCI chart 0.1.1 pull returned `not found` during review, so it is not presented here as a verified installation command.
 
-**Use a community Helm chart.** The `community-charts/helm-charts` project maintains an MLflow chart for exactly this use case:
+These commands inspect chart defaults through discovery, download, and rendering. Prepare production values separately using the checks below.
 
 ```bash
 helm repo add community-charts https://community-charts.github.io/helm-charts
-helm repo update
-helm search repo community-charts/mlflow
+helm repo update community-charts
+helm show chart community-charts/mlflow --version 1.11.7
+helm pull community-charts/mlflow --version 1.11.7 --untar --untardir ./vendor
+helm show values community-charts/mlflow --version 1.11.7 > values.reference.yaml
+helm template mlflow ./vendor/mlflow --namespace mlflow -f values.reference.yaml > rendered.yaml
 ```
 
-The chart exposes configuration for the pieces described above at a conceptual level — pointing the backend store at an external database connection instead of SQLite, pointing the artifact store at an S3 bucket, and the usual Kubernetes concerns like replica count, resource requests, and Ingress settings. Check the chart's own documentation for the exact `values.yaml` keys and current defaults before deploying, since these can change between chart versions.
+Inspect the rendered image/digest, ServiceAccount, credential delivery, CLI arguments, probes, Service, and Ingress before applying. The chart defaults to a community image rather than the upstream MLflow image; verify its database drivers, AWS SDK, and authentication plugins too.
 
-Either path lands on the same runtime architecture: one or more stateless tracking server Pods, a database they all point at, and an S3 bucket they all point at.
+### Important Chart 1.11.7 Defaults
 
-## IAM Access to the Artifact Store
+- Defaults include `replicaCount: 1`, `auth.enabled: false`, and `ingress.enabled: false`.
+- `backendStore.defaultSqlitePath: ":memory:"` configures in-memory metadata. **This differs from the upstream CLI's new SQLite-file default.** A default chart installation is not a durable production service.
+- External PostgreSQL uses `backendStore.postgres.*`; credential references use `backendStore.existingDatabaseSecret.*`.
+- Check `artifactRoot.s3.*` together with `artifactRoot.proxiedArtifactStorage: true`. Native rendering produced `--artifacts-destination=s3://...` and `--serve-artifacts`.
+- Basic-auth database settings are separate under `auth.postgres.*`. Changing the tracking database does not automatically share authentication state.
+- `backendStore.databaseMigration: true` adds a Pod init-container path. Plan backups, one coordinated migration phase, and compatibility checks before allowing several replicas to migrate concurrently.
 
-The tracking server Pod needs AWS permissions to read and write objects in the S3 artifact bucket — for example, `s3:PutObject` and `s3:GetObject` scoped to that bucket's prefix. On EKS, the long-standing mechanism for binding an IAM role to a Kubernetes ServiceAccount is IRSA (IAM Roles for Service Accounts), which annotates the ServiceAccount with `eks.amazonaws.com/role-arn` so pods using it receive temporary credentials for that role. EKS Pod Identity is the newer mechanism for binding IAM roles to pods, and is increasingly the recommended default for new IAM-to-pod bindings on EKS generally, regardless of workload. Either mechanism keeps static AWS credentials out of the tracking server's environment and configuration: for a new MLflow deployment, Pod Identity is the more modern starting point, with IRSA remaining a valid choice on clusters or teams already standardized on it.
+Filling in names without real values and Secrets does not finish production setup. Some database/authentication references in this chart are delivered through **container environment variables**. SecretKeyRef avoids plaintext values in Git but does not remove process-environment exposure. Where policy prohibits secret values in environments, prepare credential files supplied from Secrets Manager/SSM or an equivalent store and a deployment that consumes those files. Do not put static AWS keys in Helm values or images.
+
+## IAM and Database Authentication
+
+Scope S3 permissions to the intended bucket/prefix. Depending on the actual operations, check `GetObject`, `PutObject`, listing, multipart, and KMS permissions. Proxy mode uses server AWS permissions; direct artifact mode uses client permissions. Existing experiment URIs are not rewritten merely by changing server flags.
+
+EKS Pod Identity requires the Agent, association, and supported SDK, and targets Linux EC2 workers. It is not universally available to Fargate or Windows Pods. IRSA remains another choice within its supported configurations. Specifying a ServiceAccount name or one annotation does not complete IAM trust, association, and SDK setup.
+
+An IAM role for S3 does not automatically authorize PostgreSQL login. Verify database network access, TLS validation, users/credentials, or separately configured IAM database authentication. Review IMDS and SDK configuration to prevent unintended node-role credential fallback.
+
+## Server Access and Health Checks
+
+ClusterIP, private ALBs, and TLS provide networking or transport controls; they do not replace per-user MLflow permissions. Use the organization's protected ingress architecture rather than assuming direct public ALB exposure.
+
+Configure MLflow 3.16.0 `allowed_hosts` and CORS origins for actual callers. In this community chart, the corresponding CLI arguments can be set through `extraArgs.allowedHosts` and `extraArgs.corsAllowedOrigins`. Host/CORS restrictions do not replace login or authorization. Basic-auth changed to fail-closed authorization by default in 3.16.0, so validate existing auth plugins and endpoint compatibility.
+
+The verified health endpoint is **`/health`**, implemented as a return of `"OK", 200`. It checks HTTP process responsiveness, not continuous RDS/S3 connectivity or user authorization. This release exempts health endpoints from host validation. Check actual service paths when using `static-prefix`, ingress rewrites, or plugins.
 
 ## Operational Notes
 
-**Run more than one replica.** Because a Postgres-backed tracking server is stateless — all shared state lives in the database and S3, not in the Pod — it's safe to run multiple replicas behind the Service and Ingress for availability. This is a meaningful difference from the SQLite-backed single-process default, which can't safely be scaled out at all since SQLite doesn't tolerate concurrent writers.
+Before scaling replicas, share or externalize metadata/auth databases, session secrets, and enabled queues/caches; test failover. Then apply topology spread, PDBs, readiness, and resource limits. Two Pods alone do not guarantee high availability.
 
-**Wire up health probes.** As with any long-running Kubernetes service, configure readiness and liveness probes against the tracking server's health endpoint so the Service only routes traffic to Pods that can actually serve requests, and so a wedged Pod gets restarted automatically. Confirm the exact health-check path against the MLflow version you're running rather than assuming one, since it can vary by release.
+One API call is not always one SQL write. Measure batch logging, transactions, trace payloads, metric history, and per-worker connection pools together. Pools across replicas/workers add up; one pool's configuration does not describe total database connection demand.
 
-**Size the database for your write pattern.** Every logged parameter, metric, and metric step is a write to the backend store, so training jobs that log metrics at high frequency (per-step rather than per-epoch, for example) put real load on the database. Aurora Serverless v2 is worth considering specifically because it can absorb bursty tracking load from a training run without requiring the database to be sized for peak load year-round.
+Aurora Serverless v2 operates within configured capacity ranges and connection, I/O, and transaction constraints. It does not absorb unlimited bursts or guarantee lower cost. Compare it with provisioned RDS/Aurora against measured load and recovery requirements.
 
-## Next Steps
+Back up metadata/auth databases and artifacts together and test restoration. Review permanent deletion tools such as `mlflow gc` against retention policy instead of adding them as routine cleanup. Model alias changes and serving redeployment are also separate operations.
 
-That's the end of this three-part MLflow series: [Part 1](01-tracking.md) covered logging experiments and runs, [Part 2](02-model-registry.md) covered giving trained models a stable, versioned identity in the Model Registry, and this part covered running the tracking server, backend store, and artifact store on EKS. Once a model has a registered version or alias, the natural next step many teams take is loading that specific version into a serving system — KServe, a custom FastAPI or Flask wrapper, SageMaker, or something else entirely. That serving layer is its own broad topic and is out of scope for this series.
+## Primary Sources
 
-[Return to Main Page](./README.md)
+- [MLflow 3.16.0 release](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
+- [Tracking server architecture](https://mlflow.org/docs/3.16.0/self-hosting/architecture/tracking-server/)
+- [Community chart](https://github.com/community-charts/helm-charts/tree/main/charts/mlflow)
+- [MLflow repository chart](https://github.com/mlflow/mlflow/tree/v3.16.0/charts)
+- [Server health implementation](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/server/__init__.py)
+- [EKS Pod Identity restrictions](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+- [SQLite use cases and concurrency](https://www.sqlite.org/whentouse.html)
+- [Aurora Serverless v2 capacity configuration](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.setting-capacity.html)
 
-## Quiz
-
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md).
+[Main Page](README.md) · [Quiz](../../quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)

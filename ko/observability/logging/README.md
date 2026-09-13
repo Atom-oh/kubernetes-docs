@@ -124,7 +124,9 @@ Kubernetes 환경에서 JSON 형식은 사실상 표준입니다. 대부분의 �
 
 ### 전체 아키텍처 개요
 
-![애플리케이션·시스템·Kubernetes·컨트롤 플레인 로그가 수집(DaemonSet/Sidecar/OTEL), 처리(파싱·정규화·필터링·버퍼링), 저장(Loki·OpenSearch·CloudWatch·ClickHouse), 분석(Grafana 등)의 5단계를 순서대로 거치는 로그 파이프라인 아키텍처.](../../.gitbook/assets/ko-observability-logging-README-0.png)
+![애플리케이션·시스템·Kubernetes·컨트롤 플레인 로그가 수집 계층(DaemonSet/Sidecar/OTEL Collector)과 처리 계층(Parse·Enrich·Filter·Buffer)을 거쳐 Loki·ClickHouse·OpenSearch·CloudWatch Logs에 적재되고, 각 저장소를 Grafana 등 짝이 되는 분석 도구가 조회하는 로그 수집 파이프라인을 보여준다.](../../.gitbook/assets/ko-observability-logging-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-readme-0.html)
 
 ### 계층별 역할
 
@@ -454,7 +456,9 @@ ClickHouse (자체 호스팅):
 
 ### 의사결정 플로우차트
 
-![기존 Grafana 스택 보유 여부, 전문 검색 필요성, AWS 네이티브 선호도, 분석 복잡성, 비용과 기능의 우선순위를 순서대로 물어 Loki·OpenSearch·CloudWatch Logs 중 하나를 추천하는 의사결정 플로우차트.](../../.gitbook/assets/ko-observability-logging-README-1.png)
+![기존 Grafana 스택 보유 여부, 전문 검색 필요성, AWS 네이티브 선호도, 비용과 기능의 우선순위, 분석 복잡성, SQL 선호와 대규모 분석 여부를 차례로 물어 Loki, OpenSearch, ClickHouse, CloudWatch Logs 중 하나를 추천하는 로그 저장소 의사결정 플로우차트를 보여준다.](../../.gitbook/assets/ko-observability-logging-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-readme-1.html)
 
 ---
 

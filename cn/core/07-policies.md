@@ -3,15 +3,15 @@
 > **支持的版本**: Kubernetes 1.32 - 1.34
 > **最后更新**: February 22, 2026
 
-在 Kubernetes 中，策略是一组用于控制和规范 cluster 与 workload 行为的规则。通过策略，你可以管理安全性、resource 使用量和网络通信等各个方面。本章将学习 Kubernetes 中不同类型的策略、如何实现这些策略，以及 Amazon EKS 中的策略管理。
+在 Kubernetes 中，策略是一组用于控制和规范集群及工作负载行为的规则。通过策略，您可以管理安全性、资源使用和网络通信等各个方面。本章将学习 Kubernetes 中不同类型的策略、如何实施这些策略，以及 Amazon EKS 中的策略管理。
 
 ## 实验环境设置
 
-要跟随本文档中的示例进行操作，你需要以下工具和环境：
+要按照本文档中的示例操作，您需要以下工具和环境：
 
 ### 必需工具
 - kubectl v1.34 或更高版本
-- 可用的 Kubernetes cluster（EKS、minikube、kind 等）
+- 可用的 Kubernetes 集群（EKS、minikube、kind 等）
 - Kyverno CLI（可选）
 - OPA Gatekeeper（可选）
 
@@ -55,80 +55,26 @@ kubectl -n policy-demo get resourcequota,networkpolicy
 
 ## Kubernetes 策略架构
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Policy Architecture"
-        subgraph "Policy Types"
-            Resource["Resource Policies"]
-            Security["Security Policies"]
-            Network["Network Policies"]
-            Custom["Custom Policies"]
-        end
+![四种 Kubernetes 策略类型分别由 ResourceQuota/LimitRange、Pod Security Standards、Admission Controllers、NetworkPolicy 和 OPA Gatekeeper/Kyverno 实现，并应用于集群、namespace 或 Pod 层级。](../.gitbook/assets/en-core-07-policies-0.png)
 
-        subgraph "Policy Implementation Mechanisms"
-            Quota["ResourceQuota"]
-            Limit["LimitRange"]
-            PSS["Pod Security Standards"]
-            NetPol["NetworkPolicy"]
-            OPA["OPA Gatekeeper"]
-            Kyverno["Kyverno"]
-            AdmCtrl["Admission Controllers"]
-        end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-0.html)
 
-        subgraph "Policy Application Layers"
-            Cluster["Cluster Level"]
-            NS["Namespace Level"]
-            Pod["Pod Level"]
-        end
+## 策略类型比较
 
-        Resource --> Quota
-        Resource --> Limit
-        Security --> PSS
-        Security --> AdmCtrl
-        Network --> NetPol
-        Custom --> OPA
-        Custom --> Kyverno
-
-        Quota --> NS
-        Limit --> NS
-        PSS --> Pod
-        NetPol --> Pod
-        OPA --> Cluster
-        OPA --> NS
-        OPA --> Pod
-        Kyverno --> Cluster
-        Kyverno --> NS
-        Kyverno --> Pod
-        AdmCtrl --> Pod
-    end
-
-    %% Style definitions
-    classDef policyType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef mechanism fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef level fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Resource,Security,Network,Custom policyType;
-    class Quota,Limit,PSS,NetPol,OPA,Kyverno,AdmCtrl mechanism;
-    class Cluster,NS,Pod level;
-```
-
-## 策略类型对比
-
-| 策略类型 | 实现机制 | 应用级别 | 主要目的 | Kubernetes 版本支持 |
+| 策略类型 | 实现机制 | 应用层级 | 主要用途 | Kubernetes 版本支持 |
 |------------|--------------------------|-------------------|-----------------|---------------------------|
-| **Resource Policies** | ResourceQuota, LimitRange | Namespace | Resource 使用限制与管理 | 所有版本 |
-| **Security Policies** | Pod Security Standards, PodSecurityPolicy(deprecated) | Pod, Namespace | Security context 限制 | PSP: ~1.24, PSS: 1.22+ |
-| **Network Policies** | NetworkPolicy | Pod | Network traffic 控制 | 1.8+ |
-| **Custom Policies** | OPA Gatekeeper, Kyverno | Cluster, Namespace, Pod | 用户定义的策略强制执行 | 所有版本（add-ons） |
+| **资源策略** | ResourceQuota、LimitRange | Namespace | 资源使用限制和管理 | 所有版本 |
+| **安全策略** | Pod Security Standards、PodSecurityPolicy（已弃用） | Pod、Namespace | 安全上下文限制 | PSP：~1.24，PSS：1.22+ |
+| **网络策略** | NetworkPolicy | Pod | 网络流量控制 | 1.8+ |
+| **自定义策略** | OPA Gatekeeper、Kyverno | Cluster、Namespace、Pod | 用户定义的策略强制执行 | 所有版本（附加组件） |
 
-## Resource Policies
+## 资源策略
 
-Resource policies 是用于限制和管理 Kubernetes cluster 内计算资源（CPU、memory 等）以及 object 数量（pods、services 等）的机制。
+资源策略是在 Kubernetes 集群内限制和管理计算资源（CPU、内存等）及对象数量（Pod、Service 等）的机制。
 
 ### ResourceQuota
 
-ResourceQuota 限制 namespace 内可以使用的资源总量。
+ResourceQuota 限制一个 namespace 内可使用的资源总量。
 
 ```yaml
 apiVersion: v1
@@ -151,7 +97,7 @@ spec:
 
 ### LimitRange
 
-LimitRange 为 namespace 内的单个 containers 或 pods 设置默认 resource limits 和 requests。
+LimitRange 为 namespace 内的各个 container 或 Pod 设置默认资源限制和请求。
 
 ```yaml
 apiVersion: v1
@@ -178,69 +124,38 @@ spec:
 
 ## 目录
 1. [策略概述](#policy-overview)
-2. [Resource 分配策略](#resource-allocation-policies)
-3. [Pod Security Policies](#pod-security-policies)
-4. [Network Policies](#network-policies)
-5. [Resource Quotas](#resource-quotas)
+2. [资源分配策略](#resource-allocation-policies)
+3. [Pod 安全策略](#pod-security-policies)
+4. [网络策略](#network-policies)
+5. [资源配额](#resource-quotas)
 6. [LimitRange](#limitrange)
-7. [Policy Engines](#policy-engines)
+7. [策略引擎](#policy-engines)
 8. [Amazon EKS 中的策略管理](#policy-management-in-amazon-eks)
 9. [策略最佳实践](#policy-best-practices)
 10. [结论](#conclusion)
 
 ## 策略概述
 
-Kubernetes 策略为 cluster 管理员提供了一种方式，用于定义 cluster 内 resources 和 workloads 的约束。策略用于以下目的：
+Kubernetes 策略为集群管理员提供了一种定义集群内资源和工作负载约束的方法。策略用于以下目的：
 
-1. **安全增强**：防止未经授权的操作，并应用安全最佳实践
-2. **Resource 管理**：限制 resource 使用量并确保公平的 resource 分配
-3. **合规性**：确保符合组织策略和法规要求
-4. **标准化**：应用一致的配置和 deployment 实践
+1. **增强安全性**：防止未经授权的操作，并应用安全最佳实践
+2. **资源管理**：限制资源使用，并确保资源公平分配
+3. **合规性**：确保符合组织策略和法规
+4. **标准化**：应用一致的配置和部署实践
 
-Kubernetes 可以通过内置 resources（例如 NetworkPolicy、ResourceQuota、LimitRange）或第三方 policy engines（例如 OPA Gatekeeper、Kyverno）实现多种类型的策略。
+Kubernetes 可以通过内置资源（例如 NetworkPolicy、ResourceQuota、LimitRange）或第三方策略引擎（例如 OPA Gatekeeper、Kyverno）实施各种类型的策略。
 
-## Resource 分配策略
+## 资源分配策略
 
-Resource 分配策略控制 pods 和 containers 可以使用的 CPU、memory 等资源量。
+资源分配策略控制 Pod 和 container 可使用的 CPU、内存等资源量。
 
-```mermaid
-graph TD
-    subgraph "Resource Allocation Mechanisms"
-        Requests["Resource Requests<br>(requests)"]
-        Limits["Resource Limits<br>(limits)"]
-        QoS["QoS Classes"]
-    end
+![在 Pod 的 resources 字段中设置的 requests 和 limits 决定其 QoS 类别；当节点资源不足时，该类别决定驱逐顺序：首先是 BestEffort，随后是 Burstable，最后是 Guaranteed。](../.gitbook/assets/en-core-07-policies-1.png)
 
-    Requests -->|set| Pod["Pod/Container"]
-    Limits -->|set| Pod
-    Pod -->|determines| QoS
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-1.html)
 
-    QoS -->|type| Guaranteed["Guaranteed<br>(requests = limits)"]
-    QoS -->|type| Burstable["Burstable<br>(requests < limits)"]
-    QoS -->|type| BestEffort["BestEffort<br>(no requests/limits)"]
+### 资源请求和限制
 
-    subgraph "Eviction Order During Resource Shortage"
-        BestEffort -->|1st priority| Eviction["Eviction"]
-        Burstable -->|2nd priority| Eviction
-        Guaranteed -->|3rd priority| Eviction
-    end
-
-    %% Style definitions
-    classDef resourceMechanism fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef qosClass fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef evictionComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Requests,Limits,QoS resourceMechanism;
-    class Pod k8sComponent;
-    class Guaranteed,Burstable,BestEffort qosClass;
-    class Eviction evictionComponent;
-```
-
-### Resource Requests 和 Limits
-
-你可以通过为 pods 和 containers 设置 resource requests 和 limits 来管理 resource 使用量：
+您可以通过为 Pod 和 container 设置资源请求和限制来管理资源使用：
 
 ```yaml
 apiVersion: v1
@@ -260,81 +175,47 @@ spec:
         cpu: "500m"
 ```
 
-- **requests**：为 container 保证的最小 resource 数量
-- **limits**：container 可以使用的最大 resource 数量
+- **requests**：为 container 保证的最小资源量
+- **limits**：container 可使用的最大资源量
 
-设置 resource requests 和 limits 可以带来以下好处：
+设置资源请求和限制具有以下优势：
 
-1. **Resource 保证**：Pods 可以获得它们所需的最小 resources 保证
-2. **Resource 隔离**：防止一个 pod 独占另一个 pod 的 resources
-3. **高效调度**：scheduler 在放置 pods 时会考虑 node resource 容量
+1. **资源保障**：确保 Pod 获得所需的最小资源
+2. **资源隔离**：防止一个 Pod 独占其他 Pod 的资源
+3. **高效调度**：调度器在放置 Pod 时会考虑节点资源容量
 
-### QoS (Quality of Service) Classes
+### QoS（服务质量）类别
 
-Kubernetes 会根据 pod resource request 和 limit 设置自动分配 QoS classes：
+Kubernetes 根据 Pod 的资源请求和限制设置自动分配 QoS 类别：
 
-1. **Guaranteed**：所有 containers 都设置了 resource requests 和 limits，且 requests 等于 limits
-2. **Burstable**：至少一个 container 设置了 resource requests，但不满足 Guaranteed 条件
-3. **BestEffort**：没有 containers 设置 resource requests 和 limits
+1. **Guaranteed**：所有 container 都设置了资源请求和限制，并且 requests 等于 limits
+2. **Burstable**：至少一个 container 设置了资源请求，但不满足 Guaranteed 条件
+3. **BestEffort**：没有任何 container 设置资源请求和限制
 
-QoS classes 决定 resource 短缺时的 pod 驱逐顺序：
-1. BestEffort pods 首先被驱逐
-2. Burstable pods 接着被驱逐
-3. Guaranteed pods 最后被驱逐
+QoS 类别决定资源短缺时的 Pod 驱逐顺序：
+1. 首先驱逐 BestEffort Pod
+2. 随后驱逐 Burstable Pod
+3. 最后驱逐 Guaranteed Pod
 
-## Pod Security Policies
+## Pod 安全策略
 
-Pod Security Policy (PSP) 从 Kubernetes 1.21 开始被弃用，并在 1.25 版本中完全移除。取而代之的是引入了 Pod Security Standards 和 Pod Security Admission。
+Pod Security Policy（PSP）从 Kubernetes 1.21 开始弃用，并在 1.25 版本中完全移除。取而代之的是 Pod Security Standards 和 Pod Security Admission。
 
-```mermaid
-graph TD
-    subgraph "Pod Security Standards"
-        PSS["Pod Security Standards"]
-        PSS -->|level| Privileged["Privileged<br>(no restrictions)"]
-        PSS -->|level| Baseline["Baseline<br>(basic security)"]
-        PSS -->|level| Restricted["Restricted<br>(hardened security)"]
-    end
+![namespace 标签设置 Pod Security Admission 模式和 Pod Security Standards 级别，据此验证每个 Pod 创建请求，然后允许或拒绝该请求。](../.gitbook/assets/en-core-07-policies-2.png)
 
-    subgraph "Pod Security Admission"
-        PSA["Pod Security Admission"]
-        PSA -->|mode| Enforce["enforce<br>(block on violation)"]
-        PSA -->|mode| Audit["audit<br>(log on violation)"]
-        PSA -->|mode| Warn["warn<br>(warn on violation)"]
-    end
-
-    NS["Namespace"] -->|label setting| PSA
-    PSA -->|references| PSS
-    PSA -->|validates| Pod["Pod Creation Request"]
-
-    Pod -->|compliant| Allow["Allow"]
-    Pod -->|violation| Deny["Deny"]
-
-    %% Style definitions
-    classDef securityStandard fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef securityLevel fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef admissionMode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class PSS securityStandard;
-    class Privileged,Baseline,Restricted securityLevel;
-    class NS,Pod k8sComponent;
-    class PSA,Enforce,Audit,Warn admissionMode;
-    class Allow,Deny resultComponent;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-2.html)
 
 ### Pod Security Standards
 
 Pod Security Standards 定义了三个策略级别：
 
 1. **Privileged**：无限制，允许所有权限
-2. **Baseline**：阻止已知的 privilege escalation 路径
-3. **Restricted**：强强化的安全策略
+2. **Baseline**：阻止已知的权限提升路径
+3. **Restricted**：强力加固的安全策略
 
 ### Pod Security Admission
 
-Pod Security Admission 通过 namespace labels 应用 Pod Security Standards：
+Pod Security Admission 通过 namespace 标签应用 Pod Security Standards：
 
 ```yaml
 apiVersion: v1
@@ -347,58 +228,18 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-每个 label 的含义：
-- **enforce**：阻止违反策略的 pod 创建
-- **audit**：在 audit logs 中记录违规
-- **warn**：针对违规显示 warning messages
+各标签的含义：
+- **enforce**：阻止创建违反策略的 Pod
+- **audit**：在审计日志中记录违规行为
+- **warn**：显示违规警告消息
 
-## Network Policies
+## 网络策略
 
-Network Policy 提供了一种控制 pods 之间通信的方式。默认情况下，Kubernetes cluster 中的所有 pods 都可以相互通信，但 network policies 可以对此进行限制。
+Network Policy 提供了一种控制 Pod 之间通信的方法。默认情况下，Kubernetes 集群中的所有 Pod 都可以相互通信，但网络策略可以限制这种通信。
 
-```mermaid
-graph TD
-    subgraph "Network Policy Configuration"
-        NP["NetworkPolicy"]
-        NP -->|selects| PodSelector["podSelector<br>(target pods)"]
-        NP -->|defines| PolicyTypes["policyTypes<br>(Ingress/Egress)"]
-        NP -->|rules| Ingress["ingress<br>(inbound rules)"]
-        NP -->|rules| Egress["egress<br>(outbound rules)"]
-    end
+![api-allow NetworkPolicy 的 podSelector、policyTypes 和 ingress/egress 规则应用于 API Pod，仅允许来自 frontend 的入站流量以及到 database 的出站流量，同时展示三种 selector 类型。](../.gitbook/assets/en-core-07-policies-3.png)
 
-    subgraph "Traffic Flow"
-        Frontend["Frontend<br>Pod"]
-        API["API<br>Pod"]
-        DB["Database<br>Pod"]
-
-        Frontend -->|inbound allowed| API
-        API -->|outbound allowed| DB
-        Frontend -.->|direct communication blocked| DB
-    end
-
-    NP -->|applied to| API
-
-    subgraph "Selector Types"
-        Selectors["Selectors"]
-        Selectors -->|type| PodSel["podSelector<br>(pod labels)"]
-        Selectors -->|type| NSSel["namespaceSelector<br>(namespace labels)"]
-        Selectors -->|type| IPBlock["ipBlock<br>(IP CIDR)"]
-    end
-
-    %% Style definitions
-    classDef networkPolicy fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef policyConfig fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef selectorType fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class NP,PolicyTypes,Ingress,Egress networkPolicy;
-    class PodSelector,Selectors policyConfig;
-    class Frontend,API userApp;
-    class DB dataStore;
-    class PodSel,NSSel,IPBlock selectorType;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-3.html)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -431,25 +272,25 @@ spec:
       port: 5432
 ```
 
-在上面的示例中：
-- 为带有 `api` label 的 pods 定义 network policy
-- 仅允许来自带有 `frontend` label 的 pods 在 8080 端口上的入站 traffic
-- 仅允许到带有 `database` label 的 pods 在 5432 端口上的出站 traffic
+在上述示例中：
+- 为带有 `api` 标签的 Pod 定义网络策略
+- 仅允许带有 `frontend` 标签的 Pod 通过端口 8080 发送入站流量
+- 仅允许通过端口 5432 向带有 `database` 标签的 Pod 发送出站流量
 
-要使用 network policies，cluster 的 network plugin 必须支持 network policies。Calico、Cilium 和 Antrea 等 CNI plugins 支持 network policies。
+要使用网络策略，集群的网络插件必须支持网络策略。Calico、Cilium 和 Antrea 等 CNI 插件均支持网络策略。
 
-### Network Policy 类型
+### 网络策略类型
 
-1. **Ingress Policy**：控制进入 pod 的 traffic
-2. **Egress Policy**：控制离开 pod 的 traffic
-3. **Ingress and Egress Policy**：控制两个方向的 traffic
+1. **Ingress 策略**：控制进入 Pod 的流量
+2. **Egress 策略**：控制离开 Pod 的流量
+3. **Ingress 和 Egress 策略**：控制两个方向的流量
 
-### Network Policy Selectors
+### 网络策略选择器
 
-Network policies 可以通过多种 selectors 过滤 traffic：
+网络策略可以通过各种选择器过滤流量：
 
-1. **podSelector**：基于 pod labels 选择
-2. **namespaceSelector**：基于 namespace labels 选择
+1. **podSelector**：基于 Pod 标签选择
+2. **namespaceSelector**：基于 namespace 标签选择
 3. **ipBlock**：基于 IP CIDR 范围选择
 
 ```yaml
@@ -468,58 +309,13 @@ ingress:
       - 172.17.1.0/24
 ```
 
-## Resource Quotas
+## 资源配额
 
-ResourceQuota 限制 namespace 内可以使用的 resource 总量。当多个团队或项目共享 cluster resources 时，这可以防止某个团队独占所有 resources。
+ResourceQuota 限制一个 namespace 内可使用的资源总量。当多个团队或项目共享集群资源时，这可防止一个团队独占所有资源。
 
-```mermaid
-graph TD
-    subgraph "Resource Quota Types"
-        RQ["ResourceQuota"]
-        RQ -->|type| Compute["Compute Resource Quota<br>(CPU, Memory)"]
-        RQ -->|type| Storage["Storage Resource Quota<br>(PVC)"]
-        RQ -->|type| Object["Object Count Quota<br>(Pod, Service, etc.)"]
-        RQ -->|type| Priority["Priority Class Quota"]
-    end
+![四种 ResourceQuota 类型应用于一个 namespace，将 Pod 使用量与该配额汇总比较，并根据使用量加请求量是否处于配额以内来准入或拒绝新的 Pod 请求。](../.gitbook/assets/en-core-07-policies-4.png)
 
-    subgraph "Application Scope"
-        NS["Namespace"]
-        NS -->|contains| Pod1["Pod 1"]
-        NS -->|contains| Pod2["Pod 2"]
-        NS -->|contains| Pod3["Pod 3"]
-    end
-
-    RQ -->|applied to| NS
-
-    subgraph "Resource Usage"
-        Usage["Namespace Resource Usage"]
-        Usage -->|limited by| Limit["Quota Limit"]
-        Pod1 -->|contributes| Usage
-        Pod2 -->|contributes| Usage
-        Pod3 -->|contributes| Usage
-
-        NewPod["New Pod Creation Request"]
-        NewPod -->|validates| Check{{"usage + request <= quota?"}}
-        Check -->|yes| Allow["Allow"]
-        Check -->|no| Deny["Deny"]
-    end
-
-    %% Style definitions
-    classDef quotaType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef quotaCategory fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef usageComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef checkComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class RQ quotaType;
-    class Compute,Storage,Object,Priority quotaCategory;
-    class NS,Pod1,Pod2,Pod3,NewPod k8sComponent;
-    class Usage,Limit usageComponent;
-    class Check checkComponent;
-    class Allow,Deny resultComponent;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-4.html)
 
 ```yaml
 apiVersion: v1
@@ -536,16 +332,16 @@ spec:
     limits.memory: 16Gi
 ```
 
-在上面的示例中：
-- `team-a` namespace 最多可以创建 10 个 pods
-- 所有 pod CPU requests 的总和不能超过 4 cores
-- 所有 pod memory requests 的总和不能超过 8Gi
-- 所有 pod CPU limits 的总和不能超过 8 cores
-- 所有 pod memory limits 的总和不能超过 16Gi
+在上述示例中：
+- `team-a` namespace 最多可创建 10 个 Pod
+- 所有 Pod CPU requests 的总和不得超过 4 核
+- 所有 Pod 内存 requests 的总和不得超过 8Gi
+- 所有 Pod CPU limits 的总和不得超过 8 核
+- 所有 Pod 内存 limits 的总和不得超过 16Gi
 
-### Object Count Quota
+### 对象数量配额
 
-Resource quotas 还可以在 CPU 和 memory 之外限制 namespace 内可创建的 objects 数量：
+除 CPU 和内存外，资源配额还可以限制在 namespace 内创建的对象数量：
 
 ```yaml
 apiVersion: v1
@@ -563,9 +359,9 @@ spec:
     services.loadbalancers: "2"
 ```
 
-### Priority Class Quota
+### Priority Class 配额
 
-你还可以为特定 priority classes 的 pods 设置 quotas：
+您还可以为特定优先级类别的 Pod 设置配额：
 
 ```yaml
 apiVersion: v1
@@ -588,7 +384,7 @@ spec:
 
 ## LimitRange
 
-LimitRange 为 namespace 内创建的单个 resources（pods、containers 等）设置默认 resource limits 和 requests。当开发者没有显式设置 resource requests 和 limits 时会应用这些默认值。
+LimitRange 为 namespace 内创建的各个资源（Pod、container 等）设置默认资源限制和请求。当开发人员未显式设置资源请求和限制时，将应用此设置。
 
 ```yaml
 apiVersion: v1
@@ -613,86 +409,33 @@ spec:
     type: Container
 ```
 
-在上面的示例中：
-- **default**：当 container 没有显式 limit 时应用的默认 limit
-- **defaultRequest**：当 container 没有显式 request 时应用的默认 request
-- **max**：container 可以设置的最大 limit
-- **min**：container 可以设置的最小 request
+在上述示例中：
+- **default**：当 container 未设置显式限制时应用的默认限制
+- **defaultRequest**：当 container 未设置显式请求时应用的默认请求
+- **max**：container 可设置的最大限制
+- **min**：container 可设置的最小请求
 
-LimitRange 可以应用于以下 resource types：
+LimitRange 可以应用于以下资源类型：
 - Container
 - Pod
 - PersistentVolumeClaim
 
-## Policy Engines
+## 策略引擎
 
-Kubernetes 生态系统中有几个 policy engines，可以实现更复杂、更灵活的策略。
+Kubernetes 生态系统拥有多个策略引擎，可实施更复杂且灵活的策略。
 
-```mermaid
-graph TD
-    subgraph "Policy Engines"
-        OPA["OPA Gatekeeper"]
-        Kyverno["Kyverno"]
-        Kubewarden["Kubewarden"]
-    end
+![API server 调用 Admission Webhook，后者将请求交给 OPA Gatekeeper、Kyverno 和 Kubewarden；每个引擎都使用自己的策略资源，并支持 validate 和 mutate，只有 Kyverno 支持 generate。](../.gitbook/assets/en-core-07-policies-5.png)
 
-    subgraph "Policy Definitions"
-        OPATemplate["ConstraintTemplate<br>(Rego language)"]
-        OPAConstraint["Constraint<br>(policy instance)"]
-        KyvernoPolicy["ClusterPolicy/Policy<br>(YAML-based)"]
-        KubewardenPolicy["ClusterAdmissionPolicy<br>(WebAssembly)"]
-    end
-
-    OPA -->|uses| OPATemplate
-    OPA -->|uses| OPAConstraint
-    Kyverno -->|uses| KyvernoPolicy
-    Kubewarden -->|uses| KubewardenPolicy
-
-    subgraph "Policy Types"
-        Validate["Validate"]
-        Mutate["Mutate"]
-        Generate["Generate"]
-    end
-
-    OPA -->|supports| Validate
-    OPA -->|supports| Mutate
-    Kyverno -->|supports| Validate
-    Kyverno -->|supports| Mutate
-    Kyverno -->|supports| Generate
-    Kubewarden -->|supports| Validate
-    Kubewarden -->|supports| Mutate
-
-    subgraph "Kubernetes API"
-        API["API Server"]
-        Webhook["Admission Webhook"]
-    end
-
-    API -->|calls| Webhook
-    Webhook -->|processes| OPA
-    Webhook -->|processes| Kyverno
-    Webhook -->|processes| Kubewarden
-
-    %% Style definitions
-    classDef policyEngine fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef policyDef fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef policyType fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class OPA,Kyverno,Kubewarden policyEngine;
-    class OPATemplate,OPAConstraint,KyvernoPolicy,KubewardenPolicy policyDef;
-    class Validate,Mutate,Generate policyType;
-    class API,Webhook k8sComponent;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-5.html)
 
 ### OPA Gatekeeper
 
-OPA (Open Policy Agent) Gatekeeper 是一个开源项目，用于在 Kubernetes clusters 上定义和强制执行策略。Gatekeeper 作为 Kubernetes admission controller 工作，会拦截发送到 API server 的 requests 并应用策略。
+OPA（Open Policy Agent）Gatekeeper 是一个用于在 Kubernetes 集群上定义和强制执行策略的开源项目。Gatekeeper 作为 Kubernetes admission controller 运行，拦截发送到 API server 的请求并应用策略。
 
-Gatekeeper 由以下组件组成：
+Gatekeeper 包含以下组件：
 
-1. **ConstraintTemplate**：定义策略逻辑的 template
-2. **Constraint**：ConstraintTemplate 的实例，用于将策略应用到特定 resources
+1. **ConstraintTemplate**：定义策略逻辑的模板
+2. **Constraint**：将策略应用于特定资源的 ConstraintTemplate 实例
 
 ```yaml
 # ConstraintTemplate example
@@ -741,7 +484,7 @@ spec:
 
 ### Kyverno
 
-Kyverno 是一个 Kubernetes-native policy engine，可以使用基于 YAML 的策略对 Kubernetes resources 进行 validate、mutate 和 generate。你可以使用类似 Kubernetes resources 的语法编写策略，而无需学习 Rego 语言。
+Kyverno 是 Kubernetes 原生策略引擎，可使用基于 YAML 的策略来验证、变更和生成 Kubernetes 资源。您无需学习 Rego 语言，即可使用与 Kubernetes 资源类似的语法编写策略。
 
 ```yaml
 # Kyverno policy example
@@ -768,15 +511,15 @@ spec:
 
 Kyverno 支持以下策略类型：
 
-1. **Validate**：验证 resources 是否满足特定条件
-2. **Mutate**：自动修改 resources
-3. **Generate**：创建某个 resource 时自动创建其他 resources
-4. **Verify Images**：验证 image signatures
-5. **Clean Up**：删除某个 resource 时自动清理相关 resources
+1. **Validate**：验证资源是否满足特定条件
+2. **Mutate**：自动修改资源
+3. **Generate**：在创建资源时自动创建其他资源
+4. **Verify Images**：验证镜像签名
+5. **Clean Up**：删除资源时自动清理相关资源
 
 ### Kubewarden
 
-Kubewarden 是一个基于 WebAssembly 的 policy engine，允许使用多种编程语言编写策略。策略会被编译为 WebAssembly modules，并在 Kubewarden policy server 上运行。
+Kubewarden 是一个基于 WebAssembly 的策略引擎，允许使用各种编程语言编写策略。策略会被编译为 WebAssembly 模块，并在 Kubewarden policy server 上运行。
 
 ```yaml
 # Kubewarden policy example
@@ -801,70 +544,15 @@ spec:
 
 ## Amazon EKS 中的策略管理
 
-在 Amazon EKS 中，你可以结合多种 AWS services，使用 Kubernetes 的默认策略机制来管理策略。
+在 Amazon EKS 中，您可以使用 Kubernetes 的默认策略机制以及各种 AWS 服务来管理策略。
 
-```mermaid
-graph TD
-    subgraph "AWS Services"
-        IAM["AWS IAM"]
-        SG["AWS Security Groups"]
-        Config["AWS Config"]
-        Org["AWS Organizations"]
-        FW["AWS Firewall Manager"]
-    end
+![AWS Organizations、Config 和 Firewall Manager 对 EKS 集群进行限制、审计和保护；IAM 和 Security Groups 作用于 Pod；内置 Kubernetes 策略则应用于整个集群、namespace 和 Pod。](../.gitbook/assets/en-core-07-policies-6.png)
 
-    subgraph "EKS Policy Integration"
-        IRSA["IAM Roles for Service Accounts<br>(IRSA)"]
-        SGPods["Security Groups for Pods"]
-        SCPs["Service Control Policies<br>(SCPs)"]
-        ConfigRules["Config Rules"]
-        FWPolicies["Firewall Policies"]
-    end
-
-    IAM -->|integration| IRSA
-    SG -->|integration| SGPods
-    Org -->|integration| SCPs
-    Config -->|integration| ConfigRules
-    FW -->|integration| FWPolicies
-
-    subgraph "Kubernetes Policies"
-        K8sPolicies["Kubernetes Policies"]
-        K8sPolicies -->|type| RQ["ResourceQuota"]
-        K8sPolicies -->|type| LR["LimitRange"]
-        K8sPolicies -->|type| NP["NetworkPolicy"]
-        K8sPolicies -->|type| PSS["Pod Security Standards"]
-    end
-
-    subgraph "EKS Cluster"
-        Cluster["EKS Cluster"]
-        Cluster -->|contains| NS["Namespace"]
-        NS -->|contains| Pod["Pod"]
-    end
-
-    IRSA -->|grants permissions| Pod
-    SGPods -->|network security| Pod
-    SCPs -->|restricts| Cluster
-    ConfigRules -->|audits| Cluster
-    FWPolicies -->|protects| Cluster
-
-    K8sPolicies -->|applied to| Cluster
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef eksIntegration fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sPolicy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class IAM,SG,Config,Org,FW awsService;
-    class IRSA,SGPods,SCPs,ConfigRules,FWPolicies eksIntegration;
-    class K8sPolicies,RQ,LR,NP,PSS k8sPolicy;
-    class Cluster,NS,Pod k8sComponent;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-6.html)
 
 ### 与 AWS IAM 集成
 
-Amazon EKS 可以通过 IAM Roles for Service Accounts (IRSA) 向 pods 授予访问 AWS services 的权限。这允许应用 least privilege principle。
+Amazon EKS 可以通过 IAM Roles for Service Accounts（IRSA）为 Pod 授予 AWS 服务权限。这使得可以应用最小权限原则。
 
 ```bash
 # Create OIDC provider
@@ -879,9 +567,9 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-### AWS Security Groups for Pods
+### 用于 Pod 的 AWS Security Groups
 
-Amazon EKS 提供在 pod 级别应用 AWS security groups 的能力。这可以更细粒度地控制 pods 之间的通信。
+Amazon EKS 提供了在 Pod 层级应用 AWS security groups 的功能。这使得能够更精细地控制 Pod 之间的通信。
 
 ```yaml
 apiVersion: vpcresources.k8s.aws/v1beta1
@@ -900,7 +588,7 @@ spec:
 
 ### AWS Config 和 AWS Organizations
 
-你可以使用 AWS Config 和 AWS Organizations 将组织级策略应用到 EKS clusters。例如，你可以限制创建没有特定 tags 的 EKS clusters。
+您可以使用 AWS Config 和 AWS Organizations 向 EKS 集群应用组织级策略。例如，您可以限制创建没有特定标签的 EKS 集群。
 
 ```json
 {
@@ -922,61 +610,61 @@ spec:
 
 ### AWS Firewall Manager
 
-你可以使用 AWS Firewall Manager 集中管理多个 EKS clusters 的 network policies。这允许在整个组织内应用一致的安全策略。
+您可以使用 AWS Firewall Manager 集中管理多个 EKS 集群的网络策略。这使得可以在整个组织中应用一致的安全策略。
 
 ## 策略最佳实践
 
-以下是在 Kubernetes clusters 中有效管理策略的最佳实践。
+以下是在 Kubernetes 集群中有效管理策略的最佳实践。
 
 ### 策略设计
 
-1. **最小权限原则**：设计只授予最低必要权限的策略。
-2. **逐步应用**：不要一次性应用所有策略；应逐步应用以尽量减少影响。
-3. **Audit Mode**：在强制执行之前以 audit mode 运行策略，以评估影响。
-4. **清晰文档**：清楚记录每项策略的目的和影响。
+1. **最小权限原则**：设计仅授予所需最低权限的策略。
+2. **逐步应用**：不要一次应用所有策略；应逐步应用以尽量减少影响。
+3. **审计模式**：在强制执行前，以审计模式运行策略以评估影响。
+4. **清晰的文档**：清楚记录每个策略的目的和影响。
 
-### Resource 管理
+### 资源管理
 
-1. **Namespace 隔离**：按团队或项目划分 namespaces，并为每个 namespace 设置适当的 resource quotas。
-2. **默认 Limits**：使用 LimitRange 为所有 containers 设置默认 resource limits。
-3. **QoS Class 考量**：根据 workload 重要性设置适当的 QoS classes。
+1. **Namespace 隔离**：按团队或项目分隔 namespace，并为每个 namespace 设置适当的资源配额。
+2. **默认限制**：使用 LimitRange 为所有 container 设置默认资源限制。
+3. **QoS 类别考量**：根据工作负载的重要性设置适当的 QoS 类别。
 
 ### 网络安全
 
-1. **Default Deny Policy**：设置默认拒绝所有 traffic 的策略，并仅显式允许必要通信。
-2. **Granular Policies**：设置精细控制 pods 之间通信的 network policies。
-3. **定期审查**：定期审查并更新 network policies。
+1. **默认拒绝策略**：设置默认拒绝所有流量的策略，并仅显式允许必要的通信。
+2. **细粒度策略**：设置精细控制 Pod 之间通信的网络策略。
+3. **定期审查**：定期审查和更新网络策略。
 
 ### 策略自动化
 
-1. **CI/CD 集成**：将策略验证集成到 CI/CD pipelines 中，以在 deployment 前检测策略违规。
-2. **策略测试**：先在测试环境中测试策略，确认没有问题后再应用到 production。
-3. **策略版本控制**：将策略作为代码进行管理，并使用 version control systems 跟踪变更。
+1. **CI/CD 集成**：将策略验证集成到 CI/CD 管道中，以便在部署前检测策略违规。
+2. **策略测试**：先在测试环境中测试策略，确认无问题后再应用到生产环境。
+3. **策略版本控制**：将策略作为代码进行管理，并使用版本控制系统跟踪变更。
 
 ## 结论
 
-Kubernetes 策略是用于控制 clusters 和 workloads 的安全性、resource 使用量及网络通信的强大工具。通过将内置策略机制（ResourceQuota、LimitRange、NetworkPolicy 等）与第三方 policy engines（OPA Gatekeeper、Kyverno 等）结合使用，你可以构建符合组织需求的策略框架。
+Kubernetes 策略是用于控制集群和工作负载的安全性、资源使用及网络通信的强大工具。通过将内置策略机制（ResourceQuota、LimitRange、NetworkPolicy 等）与第三方策略引擎（OPA Gatekeeper、Kyverno 等）相结合，您可以构建符合组织需求的策略框架。
 
-使用 Amazon EKS 时，你可以利用多种 AWS services（IAM、Security Groups、AWS Config、AWS Organizations、AWS Firewall Manager 等）进一步加强策略管理。通过集成这些 services，你可以有效管理 clusters 和 workloads 的安全性、合规性与 resource 管理。
+使用 Amazon EKS 时，您可以利用各种 AWS 服务（IAM、Security Groups、AWS Config、AWS Organizations、AWS Firewall Manager 等）进一步加强策略管理。通过集成这些服务，您可以有效管理集群和工作负载的安全性、合规性及资源管理。
 
 策略是一个持续演进的领域，因此定期审查和更新策略以应对新的威胁和需求非常重要。此外，建议将策略作为代码进行管理并实现自动化，以提高一致性和效率。
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试 [策略测验](../quizzes/core/07-policies-quiz.md)。
+要测试本章所学内容，请尝试[策略测验](../quizzes/core/07-policies-quiz.md)。
 
 ## 参考资料
 
-- [Kubernetes 官方文档 - Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
+- [Kubernetes 官方文档 - 资源配额](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
 - [Kubernetes 官方文档 - LimitRange](https://kubernetes.io/docs/concepts/policy/limit-range/)
-- [Kubernetes 官方文档 - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Kubernetes 官方文档 - 网络策略](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [Kubernetes 官方文档 - Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Kubernetes 官方文档 - Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
 - [OPA Gatekeeper 官方文档](https://open-policy-agent.github.io/gatekeeper/website/docs/)
 - [Kyverno 官方文档](https://kyverno.io/docs/)
 - [Kubewarden 官方文档](https://docs.kubewarden.io/)
 - [Amazon EKS 官方文档 - IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-- [Amazon EKS 官方文档 - Security Groups for Pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+- [Amazon EKS 官方文档 - 用于 Pod 的 Security Groups](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 - [AWS Config 官方文档](https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html)
 - [AWS Organizations 官方文档](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html)
 - [AWS Firewall Manager 官方文档](https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html)

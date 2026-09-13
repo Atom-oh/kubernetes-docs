@@ -1,0 +1,332 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Observability 스택 아키텍처",
+    "output": "ko-labs-observability-02-observability-stack-lab-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "데이터 소스"
+        },
+        "backend": {
+          "label": "OTel Collector 파이프라인"
+        },
+        "database": {
+          "label": "저장 백엔드"
+        },
+        "frontend": {
+          "label": "시각화"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ingest",
+        "label": "텔레메트리 수집",
+        "focus": [
+          "app",
+          "node",
+          "k8s",
+          "receivers"
+        ],
+        "note": "MSA 앱은 OTel SDK로 OTLP를 보내고, 노드 메트릭과 K8s 이벤트도 Receivers로 모인다."
+      },
+      {
+        "id": "pipeline",
+        "label": "Collector 파이프라인",
+        "focus": [
+          "receivers",
+          "processors",
+          "exporters"
+        ],
+        "note": "Receivers → Processors(memory_limiter, k8sattributes, batch) → Exporters 순서로 처리한다."
+      },
+      {
+        "id": "fanout",
+        "label": "백엔드 fan-out",
+        "focus": [
+          "exporters",
+          "metrics",
+          "logging",
+          "tracing",
+          "grafana"
+        ],
+        "note": "Exporters가 metrics · logs · traces를 백엔드별로 분기하고, Grafana가 이를 통합 조회한다."
+      }
+    ],
+    "viewBox": [
+      1390,
+      542
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "MSA 앱",
+      "sublabel": "OTel SDK 계측",
+      "pos": [
+        30,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "node",
+      "type": "external",
+      "label": "노드 메트릭",
+      "sublabel": "kubelet · node exporter",
+      "pos": [
+        30,
+        240
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "external",
+      "label": "K8s 이벤트",
+      "sublabel": "API 서버 이벤트",
+      "pos": [
+        30,
+        390
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "receivers",
+      "type": "backend",
+      "label": "Receivers",
+      "sublabel": "OTLP · Prometheus",
+      "pos": [
+        240,
+        240
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "processors",
+      "type": "backend",
+      "label": "Processors",
+      "sublabel": "k8sattributes · batch",
+      "pos": [
+        420,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "exporters",
+      "type": "backend",
+      "label": "Exporters",
+      "sublabel": "백엔드별 fan-out",
+      "pos": [
+        630,
+        240
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "메트릭 백엔드",
+      "sublabel": "Prometheus→AMP · VictoriaMetrics · Mimir · CloudWatch",
+      "pos": [
+        860,
+        90
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "logging",
+      "type": "database",
+      "label": "로깅 백엔드",
+      "sublabel": "Loki · ClickHouse · OpenSearch · CloudWatch Logs",
+      "pos": [
+        860,
+        240
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "tracing",
+      "type": "database",
+      "label": "트레이싱 백엔드",
+      "sublabel": "Tempo · X-Ray",
+      "pos": [
+        860,
+        390
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "통합 대시보드 · AMG",
+      "pos": [
+        1220,
+        240
+      ],
+      "size": [
+        140,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "데이터 소스",
+      "wraps": [
+        "app",
+        "node",
+        "k8s"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "OTel Collector (Gateway)",
+      "wraps": [
+        "receivers",
+        "processors",
+        "exporters"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Observability 백엔드",
+      "wraps": [
+        "metrics",
+        "logging",
+        "tracing"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-receivers",
+      "from": "app",
+      "to": "receivers",
+      "label": "OTLP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-to-receivers",
+      "from": "node",
+      "to": "receivers"
+    },
+    {
+      "id": "k8s-to-receivers",
+      "from": "k8s",
+      "to": "receivers"
+    },
+    {
+      "id": "receivers-to-processors",
+      "from": "receivers",
+      "to": "processors",
+      "variant": "emphasis"
+    },
+    {
+      "id": "processors-to-exporters",
+      "from": "processors",
+      "to": "exporters",
+      "variant": "emphasis"
+    },
+    {
+      "id": "exporters-to-metrics",
+      "from": "exporters",
+      "to": "metrics",
+      "label": "metrics"
+    },
+    {
+      "id": "exporters-to-logging",
+      "from": "exporters",
+      "to": "logging",
+      "label": "logs",
+      "variant": "emphasis",
+      "labelDx": 22
+    },
+    {
+      "id": "exporters-to-tracing",
+      "from": "exporters",
+      "to": "tracing",
+      "label": "traces"
+    },
+    {
+      "id": "metrics-to-grafana",
+      "from": "metrics",
+      "to": "grafana",
+      "variant": "dashed"
+    },
+    {
+      "id": "logging-to-grafana",
+      "from": "logging",
+      "to": "grafana",
+      "variant": "dashed"
+    },
+    {
+      "id": "tracing-to-grafana",
+      "from": "tracing",
+      "to": "grafana",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "메트릭 백엔드",
+      "items": [
+        "Prometheus(kube-prometheus-stack) → remote write로 AMP 전송",
+        "VictoriaMetrics, Mimir 장기 저장 대안",
+        "CloudWatch Metrics는 ADOT(awsemf) 경로"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "로깅 백엔드",
+      "items": [
+        "Loki(SimpleScalable), ClickHouse",
+        "OpenSearch, CloudWatch Logs는 FluentBit 경로"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "트레이싱 · 시각화",
+      "items": [
+        "Tempo(otlp/tempo), X-Ray(awsxray) exporter",
+        "Grafana datasource provisioning + Amazon Managed Grafana"
+      ]
+    }
+  ]
+}

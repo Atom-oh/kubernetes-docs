@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How Connect-Time Load Balancing Works",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      720
+    ],
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "Application",
+      "sublabel": "process in a Pod"
+    },
+    {
+      "id": "kp",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "iptables DNAT"
+    },
+    {
+      "id": "poda",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "backend"
+    },
+    {
+      "id": "sock",
+      "type": "backend",
+      "label": "Socket Layer",
+      "sublabel": "kernel socket layer"
+    },
+    {
+      "id": "ebpf",
+      "type": "security",
+      "label": "eBPF Program",
+      "sublabel": "cgroup connect hook"
+    },
+    {
+      "id": "podb",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "backend"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 330,
+      "label": "Per-Packet LB (kube-proxy) — DNAT on every packet"
+    },
+    {
+      "from": 350,
+      "to": 600,
+      "label": "Connect-Time LB (eBPF) — backend picked once at connect()"
+    }
+  ],
+  "messages": [
+    {
+      "id": "syn1",
+      "from": "app",
+      "to": "kp",
+      "y": 190,
+      "label": "SYN → VIP:80"
+    },
+    {
+      "id": "dnat1",
+      "from": "kp",
+      "to": "poda",
+      "y": 222,
+      "label": "DNAT → Pod A"
+    },
+    {
+      "id": "data1",
+      "from": "app",
+      "to": "kp",
+      "y": 262,
+      "label": "DATA · FIN → VIP:80"
+    },
+    {
+      "id": "dnat2",
+      "from": "kp",
+      "to": "poda",
+      "y": 296,
+      "label": "per-packet DNAT + conntrack"
+    },
+    {
+      "id": "conn",
+      "from": "app",
+      "to": "sock",
+      "y": 385,
+      "label": "connect(VIP:80)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hook",
+      "from": "sock",
+      "to": "ebpf",
+      "y": 425,
+      "label": "cgroup/connect4 hook",
+      "variant": "security"
+    },
+    {
+      "id": "rewrite",
+      "from": "ebpf",
+      "to": "sock",
+      "y": 470,
+      "label": "rewrite dst → Pod B:8080",
+      "variant": "return",
+      "note": "NAT Frontend/Backend Map lookup → backend Pod B selected"
+    },
+    {
+      "id": "syn2",
+      "from": "sock",
+      "to": "podb",
+      "y": 520,
+      "label": "SYN → Pod B directly",
+      "variant": "emphasis"
+    },
+    {
+      "id": "data2",
+      "from": "sock",
+      "to": "podb",
+      "y": 565,
+      "label": "DATA · FIN — no packet-level NAT",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kp",
+      "from": 185,
+      "to": 302,
+      "type": "backend"
+    },
+    {
+      "participant": "ebpf",
+      "from": 420,
+      "to": 476,
+      "type": "security"
+    },
+    {
+      "participant": "podb",
+      "from": 515,
+      "to": 572,
+      "type": "backend"
+    }
+  ]
+}

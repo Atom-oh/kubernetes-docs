@@ -1,0 +1,59 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: reviewed-documentation-starter
+  title: Reviewed documentation starter
+  description: Creates a catalog and TechDocs skeleton; it does not deploy an application.
+spec:
+  owner: group:default/platform-team
+  type: documentation
+  parameters:
+    - title: Service metadata
+      required: [name, description, owner, repoUrl]
+      properties:
+        name:
+          type: string
+          pattern: "^[a-z][a-z0-9-]{1,38}[a-z0-9]$"
+        description:
+          type: string
+          maxLength: 200
+        owner:
+          type: string
+          enum: [group:default/backend-team, group:default/platform-team]
+        repoUrl:
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts: [github.com]
+            allowedOwners: [replace-approved-org]
+  steps:
+    - id: fetch
+      name: Render the complete documentation skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+    - id: publish
+      name: Create the approved repository
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        allowedHosts: [github.com]
+        repoVisibility: private
+        defaultBranch: main
+        description: ${{ parameters.description }}
+    - id: register
+      name: Register the published catalog entity
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Catalog
+        entityRef: ${{ steps.register.output.entityRef }}

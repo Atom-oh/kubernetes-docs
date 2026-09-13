@@ -1,0 +1,385 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Cluster Monitoring Solutions and Targets",
+    "locale": "en",
+    "output": "en-eks-06-eks-monitoring-logging-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      700
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "AWS managed service"
+        },
+        "backend": {
+          "label": "Open-source component"
+        },
+        "frontend": {
+          "label": "Dashboard"
+        },
+        "external": {
+          "label": "Monitoring target"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "container-insights",
+        "label": "Container Insights",
+        "focus": [
+          "cw-ci",
+          "cluster-level",
+          "node-level",
+          "pod-level"
+        ],
+        "note": "CloudWatch Container Insights alone collects cluster-, node-, and pod-level metrics."
+      },
+      {
+        "id": "prometheus-stack",
+        "label": "Prometheus stack",
+        "focus": [
+          "prometheus",
+          "kube-state-metrics",
+          "node-exporter",
+          "grafana",
+          "cluster-level",
+          "node-level"
+        ],
+        "note": "Prometheus scrapes kube-state-metrics and Node Exporter; Grafana visualizes the results."
+      },
+      {
+        "id": "managed",
+        "label": "AMP / AMG",
+        "focus": [
+          "amp",
+          "amg"
+        ],
+        "note": "Remote-write into Amazon Managed Prometheus and query it from Amazon Managed Grafana."
+      },
+      {
+        "id": "tracing",
+        "label": "Distributed tracing",
+        "focus": [
+          "xray",
+          "otel",
+          "cluster-level",
+          "pod-level"
+        ],
+        "note": "X-Ray traces API server requests; OpenTelemetry handles pod-level trace data."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cw-ci",
+      "type": "cloud",
+      "label": "CloudWatch Container Insights",
+      "sublabel": "Logs Insights · CloudWatch Alarms",
+      "pos": [
+        40,
+        160
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "amp",
+      "type": "cloud",
+      "label": "Amazon Managed Prometheus",
+      "sublabel": "AMP workspace",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "amg",
+      "type": "cloud",
+      "label": "Amazon Managed Grafana",
+      "sublabel": "AMG workspace",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "Time-series store · scrape",
+      "pos": [
+        980,
+        250
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "kube-state-metrics",
+      "type": "backend",
+      "label": "kube-state-metrics",
+      "sublabel": "Object state metrics",
+      "pos": [
+        790,
+        160
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "node-exporter",
+      "type": "backend",
+      "label": "Node Exporter",
+      "sublabel": "Node system metrics",
+      "pos": [
+        790,
+        330
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Dashboard visualization",
+      "pos": [
+        980,
+        440
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "xray",
+      "type": "cloud",
+      "label": "AWS X-Ray",
+      "sublabel": "Distributed tracing",
+      "pos": [
+        790,
+        50
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "Distributed tracing"
+    },
+    {
+      "id": "otel",
+      "type": "backend",
+      "label": "OpenTelemetry",
+      "sublabel": "Trace instrumentation",
+      "pos": [
+        790,
+        520
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "Distributed tracing"
+    },
+    {
+      "id": "cluster-level",
+      "type": "external",
+      "label": "Cluster Level",
+      "sublabel": "Control plane · API server · Scheduler · Controller manager",
+      "pos": [
+        400,
+        160
+      ],
+      "size": [
+        300,
+        72
+      ]
+    },
+    {
+      "id": "node-level",
+      "type": "external",
+      "label": "Node Level",
+      "sublabel": "CPU · Memory · Disk I/O · Network I/O",
+      "pos": [
+        400,
+        330
+      ],
+      "size": [
+        300,
+        72
+      ]
+    },
+    {
+      "id": "pod-level",
+      "type": "external",
+      "label": "Pod Level",
+      "sublabel": "Pod CPU · Memory · Network · Restart count",
+      "pos": [
+        400,
+        510
+      ],
+      "size": [
+        300,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Solutions",
+      "wraps": [
+        "cw-ci",
+        "amp",
+        "amg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Solutions",
+      "wraps": [
+        "prometheus",
+        "kube-state-metrics",
+        "node-exporter",
+        "grafana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Monitoring target",
+      "wraps": [
+        "cluster-level",
+        "node-level",
+        "pod-level"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ci-cluster",
+      "from": "cw-ci",
+      "to": "cluster-level",
+      "label": "cluster metrics",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ci-node",
+      "from": "cw-ci",
+      "to": "node-level",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ci-pod",
+      "from": "cw-ci",
+      "to": "pod-level",
+      "variant": "emphasis"
+    },
+    {
+      "id": "amp-amg",
+      "from": "amp",
+      "to": "amg",
+      "label": "data source",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "prom-ksm",
+      "from": "prometheus",
+      "to": "kube-state-metrics",
+      "label": "scrape",
+      "labelDy": 14
+    },
+    {
+      "id": "prom-ne",
+      "from": "prometheus",
+      "to": "node-exporter",
+      "label": "scrape",
+      "labelDy": 12
+    },
+    {
+      "id": "ksm-cluster",
+      "from": "kube-state-metrics",
+      "to": "cluster-level"
+    },
+    {
+      "id": "ne-node",
+      "from": "node-exporter",
+      "to": "node-level"
+    },
+    {
+      "id": "prom-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "query",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "xray-api",
+      "from": "xray",
+      "to": "cluster-level",
+      "label": "API server request traces",
+      "variant": "dashed"
+    },
+    {
+      "id": "otel-pod",
+      "from": "otel",
+      "to": "pod-level",
+      "label": "pod traces",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS Solutions",
+      "items": [
+        "CloudWatch Container Insights: collects cluster-, node-, and pod-level metrics",
+        "CloudWatch Logs Insights for log queries, CloudWatch Alarms for threshold alerts",
+        "Amazon Managed Prometheus (AMP) and Amazon Managed Grafana (AMG)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Kubernetes Solutions",
+      "items": [
+        "Prometheus scrapes kube-state-metrics and Node Exporter",
+        "Grafana visualizes Prometheus metrics as dashboards",
+        "Kubernetes Dashboard: web UI for managing cluster resources"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Tracing Solutions",
+      "items": [
+        "AWS X-Ray: application request data and service map",
+        "OpenTelemetry: pod-level trace instrumentation",
+        "Jaeger: open-source distributed tracing backend"
+      ]
+    }
+  ]
+}

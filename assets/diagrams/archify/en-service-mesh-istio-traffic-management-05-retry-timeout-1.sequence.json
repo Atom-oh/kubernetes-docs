@@ -6,8 +6,8 @@
     "quality_profile": "showcase",
     "locale": "en",
     "viewBox": [
-      820,
-      760
+      1080,
+      690
     ],
     "column_fit": "spread",
     "animation": "trace"
@@ -40,18 +40,18 @@
   ],
   "segments": [
     {
-      "from": 165,
-      "to": 355,
+      "from": 164,
+      "to": 332,
       "label": "First attempt succeeds"
     },
     {
-      "from": 375,
-      "to": 520,
+      "from": 349,
+      "to": 477,
       "label": "Automatic retry duplicates it"
     },
     {
-      "from": 540,
-      "to": 660,
+      "from": 494,
+      "to": 600,
       "label": "Everyone sees 200 OK"
     }
   ],
@@ -60,7 +60,7 @@
       "id": "post-orders",
       "from": "client",
       "to": "proxy",
-      "y": 195,
+      "y": 191,
       "label": "POST /orders (create order)",
       "variant": "emphasis"
     },
@@ -68,21 +68,21 @@
       "id": "forward",
       "from": "proxy",
       "to": "service",
-      "y": 240,
+      "y": 230,
       "label": "POST /orders"
     },
     {
       "id": "insert1",
       "from": "service",
       "to": "db",
-      "y": 285,
+      "y": 270,
       "label": "INSERT order (success)"
     },
     {
       "id": "ok1",
       "from": "db",
       "to": "service",
-      "y": 325,
+      "y": 305,
       "label": "200 OK",
       "variant": "return"
     },
@@ -90,7 +90,7 @@
       "id": "lost",
       "from": "service",
       "to": "proxy",
-      "y": 400,
+      "y": 371,
       "label": "network timeout — response lost",
       "variant": "dashed",
       "note": "Proxy retries automatically"
@@ -99,7 +99,7 @@
       "id": "retry-post",
       "from": "proxy",
       "to": "service",
-      "y": 450,
+      "y": 415,
       "label": "POST /orders (same request)",
       "variant": "security"
     },
@@ -107,7 +107,7 @@
       "id": "insert2",
       "from": "service",
       "to": "db",
-      "y": 495,
+      "y": 455,
       "label": "INSERT order (duplicate!)",
       "variant": "security",
       "note": "Duplicate order created"
@@ -116,7 +116,7 @@
       "id": "ok2",
       "from": "db",
       "to": "service",
-      "y": 560,
+      "y": 512,
       "label": "200 OK",
       "variant": "return"
     },
@@ -124,7 +124,7 @@
       "id": "ok3",
       "from": "service",
       "to": "proxy",
-      "y": 600,
+      "y": 547,
       "label": "200 OK",
       "variant": "return"
     },
@@ -132,7 +132,7 @@
       "id": "ok4",
       "from": "proxy",
       "to": "client",
-      "y": 640,
+      "y": 582,
       "label": "200 OK",
       "variant": "return"
     }
@@ -140,20 +140,20 @@
   "activations": [
     {
       "participant": "proxy",
-      "from": 190,
-      "to": 648,
+      "from": 186,
+      "to": 589,
       "type": "backend"
     },
     {
       "participant": "service",
-      "from": 235,
-      "to": 608,
+      "from": 226,
+      "to": 554,
       "type": "backend"
     },
     {
       "participant": "db",
-      "from": 280,
-      "to": 568,
+      "from": 266,
+      "to": 519,
       "type": "database"
     }
   ]

@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ambient Mode Architecture",
+    "locale": "en",
+    "output": "en-quizzes-service-mesh-istio-advanced-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Pod (no sidecar)"
+        },
+        "security": {
+          "label": "ztunnel · L4 (per node)"
+        },
+        "frontend": {
+          "label": "waypoint · L7 (optional)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "l4-path",
+        "label": "L4 path (ztunnel mTLS)",
+        "focus": [
+          "pod-a",
+          "pod-b",
+          "ztunnel-1",
+          "ztunnel-2",
+          "pod-c",
+          "pod-d"
+        ],
+        "note": "Pods connect to their node's ztunnel with no sidecar; traffic between ztunnels is protected by mTLS."
+      },
+      {
+        "id": "l7-path",
+        "label": "L7 path (waypoint)",
+        "focus": [
+          "ztunnel-1",
+          "ztunnel-2",
+          "waypoint"
+        ],
+        "note": "Traffic goes through the waypoint only when advanced L7 features are needed."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "pos": [
+        250,
+        80
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "ztunnel-1",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "L4 proxy",
+      "pos": [
+        150,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pod-c",
+      "type": "backend",
+      "label": "Pod C",
+      "pos": [
+        720,
+        80
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "pod-d",
+      "type": "backend",
+      "label": "Pod D",
+      "pos": [
+        890,
+        80
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "ztunnel-2",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "L4 proxy",
+      "pos": [
+        790,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "waypoint",
+      "type": "frontend",
+      "label": "waypoint",
+      "sublabel": "L7 proxy · optional",
+      "pos": [
+        460,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node 1",
+      "wraps": [
+        "pod-a",
+        "pod-b",
+        "ztunnel-1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2",
+      "wraps": [
+        "pod-c",
+        "pod-d",
+        "ztunnel-2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Waypoint Proxy",
+      "wraps": [
+        "waypoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-a-to-ztunnel-1",
+      "from": "pod-a",
+      "to": "ztunnel-1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-b-to-ztunnel-1",
+      "from": "pod-b",
+      "to": "ztunnel-1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-c-to-ztunnel-2",
+      "from": "pod-c",
+      "to": "ztunnel-2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-d-to-ztunnel-2",
+      "from": "pod-d",
+      "to": "ztunnel-2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ztunnel-mtls",
+      "from": "ztunnel-1",
+      "to": "ztunnel-2",
+      "label": "mTLS (bidirectional)",
+      "variant": "security"
+    },
+    {
+      "id": "ztunnel-1-to-waypoint",
+      "from": "ztunnel-1",
+      "to": "waypoint",
+      "label": "When L7 needed",
+      "variant": "dashed"
+    },
+    {
+      "id": "ztunnel-2-to-waypoint",
+      "from": "ztunnel-2",
+      "to": "waypoint",
+      "label": "When L7 needed",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Resource comparison (1000 Pods, 10 nodes)",
+      "items": [
+        "Sidecar Mode: 50GB memory, 100 vCPU",
+        "Ambient Mode: 700MB memory, 1.5 vCPU",
+        "Savings: 98.6% (memory), 98.5% (CPU)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Enabling Ambient Mode",
+      "items": [
+        "istioctl install --set profile=ambient -y",
+        "kubectl label namespace default istio.io/dataplane-mode=ambient",
+        "Pods join the mesh without a restart"
+      ]
+    }
+  ]
+}

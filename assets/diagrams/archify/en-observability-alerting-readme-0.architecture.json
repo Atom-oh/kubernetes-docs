@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Alerting's Position in the Three Pillars of Observability",
+    "locale": "en",
+    "output": "en-observability-alerting-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "database": { "label": "Observability pillar" },
+        "backend": { "label": "Alert rules engine" },
+        "messagebus": { "label": "Notification channels" },
+        "external": { "label": "Responders" }
+      }
+    },
+    "views": [
+      { "id": "pillars", "label": "Three pillars", "focus": ["metrics", "logs", "traces", "rules"], "note": "Metrics, logs, and traces are the three data sources alert rules evaluate." },
+      { "id": "pipeline", "label": "Alerting pipeline", "focus": ["rules", "notifications", "escalation"], "note": "Detected anomalies are notified to responsible personnel and escalated when nobody responds." }
+    ]
+  },
+  "components": [
+    { "id": "metrics", "type": "database", "label": "Metrics", "sublabel": "CPU, memory, requests", "pos": [40, 60], "size": [170, 60] },
+    { "id": "logs", "type": "database", "label": "Logs", "sublabel": "event records", "pos": [40, 190], "size": [170, 60] },
+    { "id": "traces", "type": "database", "label": "Traces", "sublabel": "distributed request flow", "pos": [40, 320], "size": [170, 60] },
+    { "id": "rules", "type": "backend", "label": "Alert Rules", "sublabel": "anomaly detection", "pos": [340, 190], "size": [170, 60], "tag": "focal" },
+    { "id": "notifications", "type": "messagebus", "label": "Notifications", "sublabel": "Slack, Email, SMS, PagerDuty", "pos": [600, 190], "size": [190, 60] },
+    { "id": "escalation", "type": "external", "label": "Escalation", "sublabel": "next responder", "pos": [880, 190], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Observability", "wraps": ["metrics", "logs", "traces"] },
+    { "kind": "region", "label": "Alerting", "wraps": ["rules", "notifications", "escalation"] }
+  ],
+  "connections": [
+    { "id": "metrics-to-rules", "from": "metrics", "to": "rules", "variant": "emphasis" },
+    { "id": "logs-to-rules", "from": "logs", "to": "rules", "label": "evaluate", "variant": "emphasis", "labelDx": -40 },
+    { "id": "traces-to-rules", "from": "traces", "to": "rules", "variant": "emphasis" },
+    { "id": "rules-to-notifications", "from": "rules", "to": "notifications", "label": "notify", "variant": "emphasis" },
+    { "id": "notifications-to-escalation", "from": "notifications", "to": "escalation", "label": "escalate", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Three pillars", "items": ["Metrics: quantitative state of the system (CPU, memory, request count)", "Logs: detailed records of events", "Traces: request flow in distributed systems"] },
+    { "dot": "orange", "title": "Alerting", "items": ["Detects anomalies based on the three data sources", "Notifies the responsible personnel in a timely manner", "Escalates to the next responder when there is no response"] }
+  ]
+}

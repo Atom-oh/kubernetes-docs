@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CNCF OpenGitOps 원칙",
+    "output": "ko-gitops-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "핵심 개념"
+        },
+        "backend": {
+          "label": "GitOps 원칙"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "gitops",
+      "type": "cloud",
+      "label": "GitOps 원칙",
+      "sublabel": "CNCF OpenGitOps 4대 원칙",
+      "tag": "Single Source of Truth",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        240,
+        66
+      ]
+    },
+    {
+      "id": "declarative",
+      "type": "backend",
+      "label": "선언적 (Declarative)",
+      "sublabel": "원하는 상태를 코드로 정의",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "versioned",
+      "type": "backend",
+      "label": "버전 관리와 불변성",
+      "sublabel": "Versioned and Immutable",
+      "pos": [
+        320,
+        400
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "automated",
+      "type": "backend",
+      "label": "자동 Pull",
+      "sublabel": "Pulled Automatically",
+      "pos": [
+        600,
+        400
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "reconciled",
+      "type": "backend",
+      "label": "지속적 조정 (Reconciled)",
+      "sublabel": "실제 상태 관찰 · 적용 시도",
+      "pos": [
+        880,
+        400
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "to-declarative",
+      "from": "gitops",
+      "to": "declarative",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "to-versioned",
+      "from": "gitops",
+      "to": "versioned",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "to-automated",
+      "from": "gitops",
+      "to": "automated",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "to-reconciled",
+      "from": "gitops",
+      "to": "reconciled",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "선언적 · 버전 관리와 불변성",
+      "items": [
+        "원하는 시스템 상태를 선언적으로 표현한다",
+        "버전과 전체 이력을 보존하고 불변성을 보장한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "자동 Pull",
+      "items": [
+        "소프트웨어 에이전트가 원하는 상태 선언을 자동으로 가져온다",
+        "CI의 일회성 kubectl apply만으로는 이 원칙을 충족하지 않는다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "지속적 조정",
+      "items": [
+        "실제 상태를 계속 관찰하고 원하는 상태 적용을 시도한다",
+        "조정 정책·권한·상태에 따라 적용 결과가 달라질 수 있다"
+      ]
+    }
+  ]
+}

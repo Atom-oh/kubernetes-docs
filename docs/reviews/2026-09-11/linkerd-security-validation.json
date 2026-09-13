@@ -1,0 +1,145 @@
+{
+  "files": [
+    {
+      "path": "en/service-mesh/linkerd/04-security.md",
+      "releasedCRDSchemas": 11,
+      "yamlDocuments": 16,
+      "bashBlocks": 6,
+      "prometheusRules": 4,
+      "quizQuestions": 12
+    },
+    {
+      "path": "ko/service-mesh/linkerd/04-security.md",
+      "releasedCRDSchemas": 11,
+      "yamlDocuments": 16,
+      "bashBlocks": 6,
+      "prometheusRules": 4,
+      "quizQuestions": 12
+    }
+  ],
+  "codeParity": true,
+  "helmRenders": [
+    {
+      "case": "linkerd-owned-default",
+      "objects": 40,
+      "issuerSecretCreated": true,
+      "trustConfigMapCreated": true,
+      "effectiveDefaultPolicy": "all-unauthenticated",
+      "admin4191Bypass": true
+    },
+    {
+      "case": "certmanager-issuer-helm-bundle",
+      "objects": 39,
+      "issuerSecretCreated": false,
+      "trustConfigMapCreated": true,
+      "effectiveDefaultPolicy": "all-unauthenticated",
+      "admin4191Bypass": true
+    },
+    {
+      "case": "external-issuer-and-bundle",
+      "objects": 38,
+      "issuerSecretCreated": false,
+      "trustConfigMapCreated": false,
+      "effectiveDefaultPolicy": "all-unauthenticated",
+      "admin4191Bypass": true
+    },
+    {
+      "case": "current-default-deny",
+      "objects": 40,
+      "issuerSecretCreated": true,
+      "trustConfigMapCreated": true,
+      "effectiveDefaultPolicy": "deny",
+      "admin4191Bypass": true
+    },
+    {
+      "case": "old-ignored-default",
+      "objects": 40,
+      "issuerSecretCreated": true,
+      "trustConfigMapCreated": true,
+      "effectiveDefaultPolicy": "all-unauthenticated",
+      "admin4191Bypass": true
+    }
+  ],
+  "nativeHelp": [
+    [
+      "identity",
+      "--help"
+    ],
+    [
+      "viz",
+      "authz",
+      "--help"
+    ],
+    [
+      "viz",
+      "edges",
+      "--help"
+    ]
+  ],
+  "publicCredentialChecks": [
+    "tls.crt",
+    "crt.pem",
+    "missing certificate data fails",
+    "both public PEM entries printed",
+    "issuer beyond1day passes",
+    "issuer within10years window fails"
+  ],
+  "metricSource": "proxy release/v2.368.0 commit a66af8117769df060adda6233302a2d1c4142229; Linkerd edge-26.9.1 Identity source",
+  "limits": [
+    "No live cluster, CA issuer or Vault provisioning/renewal",
+    "No admission CEL/controller/runtime policy execution",
+    "Native CLI help/source, Helm templates, public PEM extraction/expiry and Promtool checks only"
+  ],
+  "prometheus": {
+    "promtool": "3.14.0 native linux-arm64",
+    "fixtures": 11,
+    "expressionAssertions": 17,
+    "alertAssertions": 14,
+    "cases": [
+      "authenticated-only-no-unauthenticated-series",
+      "all-no-identity-no-authenticated-series",
+      "tls-without-client-id-is-not-workload-authentication",
+      "twenty-percent-without-identity",
+      "other-targets-and-outbound-excluded",
+      "idle-is-not-positive-traffic-proof",
+      "missing-is-not-positive-traffic-proof",
+      "normal24h-leaf-and-issuer-not-expiring",
+      "near-expiry-duration-and-for-window",
+      "actual-authorization-counter",
+      "certificates-outside-namespace-or-controller-job-not-selected"
+    ],
+    "source": "actualpublishedENPrometheusRule; EN/KOcodeparity checked",
+    "limits": [
+      "No live scrape/policy enforcement/CA rotation",
+      "Missing or idle data suppresses the traffic ratio alert but is not proof of security"
+    ]
+  },
+  "sources": [
+    "https://linkerd.io/docs/features/automatic-mtls/",
+    "https://linkerd.io/docs/features/server-policy/",
+    "https://linkerd.io/docs/reference/authorization-policy/",
+    "https://linkerd.io/docs/reference/cli/identity/",
+    "https://linkerd.io/docs/reference/proxy-metrics/",
+    "https://linkerd.io/docs/tasks/generate-certificates/",
+    "https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/",
+    "https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/validator.go",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/domain.go",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/pkg/identity/service.go",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/templates/identity.yaml",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/partials/templates/_proxy-init.tpl",
+    "https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/app/core/src/transport/labels.rs",
+    "https://cert-manager.io/docs/configuration/ca/",
+    "https://cert-manager.io/docs/configuration/vault/",
+    "https://github.com/cert-manager/cert-manager/releases/download/v1.21.1/cert-manager.crds.yaml",
+    "https://developer.hashicorp.com/vault/api-docs/secret/pki#sign-intermediate"
+  ],
+  "artifacts": "/tmp/mesh-linkerd-security-validation",
+  "fullSuiteTail": "adcrumbList with ordered positions\n  ---\n  duration_ms: 0.186699\n  type: 'test'\n  ...\n# Subtest: structuredData omits the breadcrumb node for a page with no trail\nok 118 - structuredData omits the breadcrumb node for a page with no trail\n  ---\n  duration_ms: 0.069561\n  type: 'test'\n  ...\n1..118\n# tests 118\n# suites 0\n# pass 118\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2845.651768\n",
+  "testLog": "/tmp/kubernetes-docs-full-review/docs-test-linkerd-security-clean.log",
+  "controllerLabelsFollowup": {
+    "source": "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/viz/charts/linkerd-viz/templates/prometheus.yaml",
+    "evidence": "/tmp/mesh-linkerd-validation/en-viz-render.yaml",
+    "correction": "Default controller scrape has component but no namespace. Issuer alert now selects job=linkerd-controller,component=identity. Both rules and actual fixtures revalidated."
+  }
+}

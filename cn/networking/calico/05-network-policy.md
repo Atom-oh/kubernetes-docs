@@ -1,35 +1,22 @@
-# 第 5 部分：网络策略
+# 第 5 部分：Network Policy
 
 > **支持的版本**：Calico v3.29+ / Kubernetes 1.28+ **最后更新**：February 23, 2026
 
 ## 简介
 
-网络策略是 Kubernetes 安全的基础，可控制 Pod、namespace 和外部端点之间的流量。Kubernetes 提供基本的 NetworkPolicy API，而 Calico 则通过全局策略、分层策略评估、基于 DNS 的规则和第 7 层过滤等强大功能对其进行了扩展。
+网络策略是 Kubernetes 安全的基础，用于控制 Pod、namespace 和外部端点之间的流量。尽管 Kubernetes 提供了基本的 NetworkPolicy API，Calico 还通过全局策略、分层策略评估、基于 DNS 的规则和 Layer 7 过滤等强大功能对其进行了扩展。
 
-本深入指南涵盖 Kubernetes 标准策略和 Calico 扩展功能，并提供满足企业安全要求的模式和示例。
+本深入讲解涵盖 Kubernetes 标准策略和 Calico 的扩展功能，为企业安全需求提供模式和示例。
 
 ***
 
 ## Kubernetes 标准 NetworkPolicy
 
-### NetworkPolicy 基础知识
+### NetworkPolicy 基础
 
-Kubernetes NetworkPolicy 是一种 namespace 范围的资源，可根据标签、namespace 和 IP 块控制进出 Pod 的流量。
+Kubernetes NetworkPolicy 是一种 namespace 范围的资源，根据标签、namespace 和 IP 块控制进出 Pod 的流量。
 
-```mermaid
-flowchart LR
-    subgraph "Without NetworkPolicy"
-        A1[Pod A] <--> B1[Pod B]
-        A1 <--> C1[Pod C]
-        B1 <--> C1
-    end
-
-    subgraph "With NetworkPolicy"
-        A2[Pod A] --> B2[Pod B]
-        A2 -.X.-> C2[Pod C]
-        B2 -.X.-> A2
-    end
-```
+![对比图：没有 NetworkPolicy 时，每个 pod 都可以自由访问其他每个 pod；而 NetworkPolicy 将这种网状连接收窄为一条明确允许的路径，并阻止其余路径。](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-0.svg)
 
 ### 基本 NetworkPolicy 结构
 
@@ -78,17 +65,17 @@ spec:
           port: 5432
 ```
 
-### Kubernetes NetworkPolicy 限制
+### Kubernetes NetworkPolicy 的限制
 
-| 限制                  | 说明                         | Calico 解决方案          |
+| 限制 | 描述 | Calico 解决方案 |
 | --------------------- | ----------------------------------- | ------------------------ |
-| 仅限 namespace 范围 | 无法创建集群范围的策略 | GlobalNetworkPolicy      |
-| 无策略排序    | 所有策略均等评估      | 分层策略          |
-| 无拒绝规则         | 仅允许（隐式拒绝）          | 显式 Deny 操作    |
-| 有限的 L4 过滤  | 仅支持基本端口/协议            | 端口范围、命名端口 |
-| 无 L7 过滤       | 无法按 HTTP 方法过滤       | HTTP 匹配规则         |
-| 不支持 FQDN       | 无法使用域名             | DNS 策略               |
-| 仅以 Pod 为中心      | 无法保护节点                | Host endpoint           |
+| 仅限 namespace 范围 | 无法创建集群范围的策略 | GlobalNetworkPolicy |
+| 无策略排序 | 所有策略同等评估 | 分层策略 |
+| 无拒绝规则 | 仅允许（隐式拒绝） | 显式 Deny 操作 |
+| 有限的 L4 过滤 | 仅支持基本端口/协议 | 端口范围、命名端口 |
+| 无 L7 过滤 | 无法按 HTTP 方法过滤 | HTTP 匹配规则 |
+| 不支持 FQDN | 无法使用域名 | DNS 策略 |
+| 仅面向 Pod | 无法保护节点 | Host endpoints |
 
 ***
 
@@ -96,7 +83,7 @@ spec:
 
 ### 扩展协议支持
 
-除 TCP 和 UDP 外，Calico 还支持其他协议：
+Calico 支持 TCP 和 UDP 以外的其他协议：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -176,7 +163,7 @@ spec:
 
 ### 增强的选择器语法
 
-Calico 使用比 Kubernetes 更具表达力的选择器语法：
+Calico 使用比 Kubernetes 更具表现力的选择器语法：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -225,7 +212,7 @@ spec:
 
 ## GlobalNetworkPolicy
 
-GlobalNetworkPolicy 适用于所有 namespace，非常适合用于集群范围的安全规则。
+GlobalNetworkPolicy 跨所有 namespace 应用，非常适合用于集群范围的安全规则。
 
 ### GlobalNetworkPolicy 结构
 
@@ -281,7 +268,7 @@ spec:
   egress: []
 ```
 
-**允许基本服务：**
+**允许必要服务：**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -344,7 +331,7 @@ spec:
 
 ## NetworkSet 和 GlobalNetworkSet
 
-NetworkSet 对 IP 地址进行分组，以便跨策略复用。
+NetworkSet 将 IP 地址分组，以便在策略之间重复使用。
 
 ### NetworkSet（namespace 范围）
 
@@ -434,28 +421,15 @@ spec:
 
 ## 分层策略
 
-![Calico Network Policy Tier Evaluation](../../.gitbook/assets/calico_network_policy_tiers.png)
+![Calico 策略层级评估：数据包依次经过 Security (100)、Platform (200)、Application (500) 和 Default 层级；Allow 或 Deny 会结束评估，Pass 会交由下一层级处理，而无匹配项则应用 profile 默认值。](../../.gitbook/assets/en-networking-calico-05-network-policy-2.png)
 
-层级提供分层策略评估，可在平台、安全和应用团队之间实现职责分离。
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-05-network-policy-2.html)
+
+层级提供分层的策略评估，使平台、安全和应用团队能够分离关注点。
 
 ### 策略评估顺序
 
-```mermaid
-flowchart TD
-    T[Traffic] --> SEC[Security Tier<br/>Order: 100]
-    SEC -->|Pass| PLAT[Platform Tier<br/>Order: 200]
-    PLAT -->|Pass| APP[Application Tier<br/>Order: 500]
-    APP -->|Pass| DEF[Default Tier<br/>Order: 1000]
-    DEF -->|No Match| DENY[Implicit Deny]
-
-    SEC -->|Deny| DROP1[Drop Packet]
-    PLAT -->|Deny| DROP2[Drop Packet]
-    APP -->|Deny| DROP3[Drop Packet]
-
-    SEC -->|Allow| ALLOW1[Allow Packet]
-    PLAT -->|Allow| ALLOW2[Allow Packet]
-    APP -->|Allow| ALLOW3[Allow Packet]
-```
+![流程图展示流量依次通过 Security、Platform 和 Application 层级，其中每个层级均可拒绝数据包、允许数据包，或将其传递给下一层级；如果没有层级匹配，最终将隐式拒绝。](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-1.svg)
 
 ### 创建层级
 
@@ -616,7 +590,7 @@ rules:
 
 ## 基于 FQDN 的 Egress 策略
 
-Calico 可以根据域名过滤 Egress 流量，这对于控制对外部服务的访问非常有用。
+Calico 可以根据域名过滤 Egress 流量，这对于控制对外部服务的访问很有用。
 
 ### DNS 策略配置
 
@@ -702,9 +676,9 @@ spec:
 
 ***
 
-## HTTP 方法过滤（第 7 层）
+## HTTP 方法过滤（Layer 7）
 
-Calico Enterprise 和 Calico Cloud 支持用于 HTTP 流量的第 7 层策略。
+Calico Enterprise 和 Calico Cloud 支持用于 HTTP 流量的 Layer 7 策略。
 
 ### HTTP 匹配规则
 
@@ -793,7 +767,7 @@ spec:
 
 ## Host Endpoint 保护
 
-Host endpoint 保护进出节点本身的流量，而不只是 Pod 流量。
+Host endpoint 保护节点自身的进出流量，而不仅仅是 Pod 流量。
 
 ### 启用 Host Endpoint
 
@@ -893,7 +867,7 @@ spec:
 
 ### DoNotTrack 策略
 
-DoNotTrack 策略会绕过连接跟踪，适用于高吞吐量场景：
+DoNotTrack 策略绕过连接跟踪，适用于高吞吐量场景：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -1294,19 +1268,19 @@ spec:
 
 ### 性能注意事项
 
-| 因素              | 影响                  | 缓解措施                              |
+| 因素 | 影响 | 缓解措施 |
 | ------------------- | ----------------------- | --------------------------------------- |
-| 策略数量  | 线性规则评估  | 使用分层策略，优化选择器 |
-| 选择器复杂度 | 匹配时间增加 | 使用简单的标签匹配                |
-| IP 集大小         | 内存使用量            | 聚合 IP 范围                     |
-| 日志频率       | CPU 和存储         | 对高流量使用采样            |
-| 连接跟踪 | 有状态连接的内存     | 对无状态连接使用 DoNotTrack                |
+| 策略数量 | 规则线性评估 | 使用分层策略，优化选择器 |
+| 选择器复杂度 | 匹配时间增加 | 使用简单标签匹配 |
+| IP 集合大小 | 内存使用量 | 聚合 IP 范围 |
+| 日志频率 | CPU 和存储 | 对高流量使用采样 |
+| 连接跟踪 | 有状态连接的内存开销 | 对无状态连接使用 DoNotTrack |
 
 ### 优化建议
 
 1. **使用分层策略**：先评估拒绝规则
-2. **尽量降低选择器复杂度**：优先使用相等匹配而不是集合操作
-3. **聚合 IP 范围**：使用 CIDR 块而不是单个 IP
+2. **最小化选择器复杂度**：优先使用相等匹配而非集合操作
+3. **聚合 IP 范围**：使用 CIDR 块而非单个 IP
 4. **使用 GlobalNetworkSet**：跨策略复用 IP 组
 5. **启用策略缓存**：近期 Calico 版本默认启用
 
@@ -1331,25 +1305,25 @@ iptables -L -n | wc -l
 
 ### 设计原则
 
-1. **从默认拒绝开始**：将所需流量加入白名单
-2. **遵循最小权限原则**：仅允许必要的端口和协议
-3. **分层设置策略**：安全 -> 平台 -> 应用
-4. **统一标签**：使用标准标签作为策略目标
-5. **记录策略**：包含说明意图的注释
+1. **从默认拒绝开始**：将所需流量列入白名单
+2. **使用最小权限原则**：仅允许必要的端口和协议
+3. **对策略分层**：Security -> Platform -> Application
+4. **保持标签一致**：使用标准标签作为策略目标
+5. **记录策略文档**：添加说明意图的注释
 
 ### 运维建议
 
 1. **先在 staging 环境测试**：在生产环境前验证策略
-2. **使用审计模式**：在强制实施新策略前先记录日志
-3. **监控策略命中次数**：识别未使用的规则
+2. **使用审计模式**：在强制执行新策略前先记录日志
+3. **监控策略命中计数**：识别未使用的规则
 4. **定期审查策略**：移除过时规则
-5. **自动化策略部署**：使用 GitOps 进行策略管理
+5. **自动化策略部署**：使用 GitOps 管理策略
 
 ### 安全建议
 
-1. **阻止元数据服务**：防止 SSRF 攻击
+1. **阻止 metadata service**：防止 SSRF 攻击
 2. **控制 Egress**：将外部访问限制为已批准的目标
-3. **保护控制平面**：限制对 kube-system 的访问
+3. **保护 control plane**：限制对 kube-system 的访问
 4. **启用日志记录**：审计被拒绝的连接
 5. **使用 FQDN 策略**：按名称控制对外部服务的访问
 
@@ -1358,6 +1332,6 @@ iptables -L -n | wc -l
 ## 参考资料
 
 * [Calico Network Policy 文档](https://docs.tigera.io/calico/latest/network-policy/)
-* [Kubernetes 网络策略](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-* [Calico 策略教程](https://docs.tigera.io/calico/latest/network-policy/get-started/calico-policy/calico-policy-tutorial)
-* [Tigera 策略最佳实践](https://docs.tigera.io/calico/latest/network-policy/policy-best-practices)
+* [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+* [Calico Policy 教程](https://docs.tigera.io/calico/latest/network-policy/get-started/calico-policy/calico-policy-tutorial)
+* [Tigera Policy 最佳实践](https://docs.tigera.io/calico/latest/network-policy/policy-best-practices)

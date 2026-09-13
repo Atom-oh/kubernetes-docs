@@ -1,0 +1,273 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Choosing Between Mimir and VictoriaMetrics",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-metrics-03-mimir-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "mimir-path",
+        "label": "Path to Mimir",
+        "focus": [
+          "start",
+          "grafana",
+          "tenancy",
+          "objstore",
+          "mimir"
+        ],
+        "note": "Grafana-centric teams that need multi-tenancy or object storage converge on Mimir."
+      },
+      {
+        "id": "vm-path",
+        "label": "Path to VictoriaMetrics",
+        "focus": [
+          "start",
+          "grafana",
+          "simplicity",
+          "cost",
+          "vm"
+        ],
+        "note": "Teams outside the Grafana ecosystem that prioritize simplicity or cost converge on VictoriaMetrics."
+      },
+      {
+        "id": "crossover",
+        "label": "Crossover branches",
+        "focus": [
+          "objstore",
+          "cost",
+          "mimir",
+          "vm"
+        ],
+        "note": "Skipping object storage leads to VictoriaMetrics; prioritizing scalability leads back to Mimir."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "backend": {
+          "label": "Decision point"
+        },
+        "database": {
+          "label": "Recommendation"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "Start"
+    },
+    {
+      "id": "yes",
+      "label": "Grafana ecosystem centric: Yes"
+    },
+    {
+      "id": "mimirLane",
+      "label": "Recommendation: Grafana Mimir"
+    },
+    {
+      "id": "no",
+      "label": "Grafana ecosystem centric: No"
+    },
+    {
+      "id": "vmLane",
+      "label": "Recommendation: VictoriaMetrics"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "grafana",
+    "tenancy",
+    "mimir"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "mimir",
+      "vm"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "mimir"
+      },
+      {
+        "from": "start",
+        "to": "vm"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "entry",
+      "col": 0,
+      "type": "frontend",
+      "label": "Metrics Storage Selection",
+      "width": 204
+    },
+    {
+      "id": "grafana",
+      "lane": "entry",
+      "col": 1,
+      "type": "backend",
+      "label": "Grafana ecosystem centric?",
+      "width": 220
+    },
+    {
+      "id": "tenancy",
+      "lane": "yes",
+      "col": 2,
+      "type": "backend",
+      "label": "Need multi-tenancy?",
+      "sublabel": "enterprise-grade",
+      "width": 176
+    },
+    {
+      "id": "objstore",
+      "lane": "yes",
+      "col": 3,
+      "type": "backend",
+      "label": "Want object storage?",
+      "width": 190
+    },
+    {
+      "id": "mimir",
+      "lane": "mimirLane",
+      "col": 4,
+      "type": "database",
+      "label": "Mimir",
+      "sublabel": "object storage · native multi-tenancy",
+      "width": 200
+    },
+    {
+      "id": "simplicity",
+      "lane": "no",
+      "col": 2,
+      "type": "backend",
+      "label": "Operational simplicity?",
+      "width": 200
+    },
+    {
+      "id": "cost",
+      "lane": "no",
+      "col": 3,
+      "type": "backend",
+      "label": "Cloud storage cost?",
+      "width": 186
+    },
+    {
+      "id": "vm",
+      "lane": "vmLane",
+      "col": 5,
+      "type": "database",
+      "label": "VictoriaMetrics",
+      "sublabel": "local disk · low ops complexity",
+      "width": 200
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "grafana",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "grafana",
+      "to": "tenancy",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "grafana",
+      "to": "simplicity",
+      "label": "No",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "from": "tenancy",
+      "to": "mimir",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "tenancy",
+      "to": "objstore",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "objstore",
+      "to": "mimir",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "objstore",
+      "to": "vm",
+      "label": "No",
+      "role": "branch",
+      "variant": "dashed"
+    },
+    {
+      "from": "simplicity",
+      "to": "vm",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "simplicity",
+      "to": "cost",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "cost",
+      "to": "vm",
+      "label": "Cost important",
+      "role": "branch"
+    },
+    {
+      "from": "cost",
+      "to": "mimir",
+      "label": "Scalability important",
+      "role": "branch",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Choose Mimir when",
+      "items": [
+        "Using Grafana Cloud or the Grafana ecosystem",
+        "Need enterprise-grade multi-tenancy",
+        "Want to leverage object storage",
+        "Can manage a complex operational environment"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Choose VictoriaMetrics when",
+      "items": [
+        "Prefer a simple operational environment",
+        "Prefer local disk-based storage",
+        "Maximum compression and performance matter",
+        "Cost efficiency is the priority"
+      ]
+    }
+  ]
+}

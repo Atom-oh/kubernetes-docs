@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "CloudWatch Alarm State Transitions",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "threshold",
+        "label": "Threshold evaluation",
+        "focus": [
+          "created",
+          "ok",
+          "alarm"
+        ],
+        "note": "Crossing the threshold moves the alarm to ALARM and runs its actions; when the metric returns to normal it goes back to OK."
+      },
+      {
+        "id": "missing",
+        "label": "Missing data",
+        "focus": [
+          "ok",
+          "alarm",
+          "insufficient"
+        ],
+        "note": "From either state, missing data drops the alarm into INSUFFICIENT_DATA; once data resumes it returns to OK or ALARM based on the value."
+      }
+    ],
+    "viewBox": [
+      980,
+      566
+    ],
+    "legend": {
+      "entries": {
+        "start": {
+          "label": "start"
+        },
+        "success": {
+          "label": "OK"
+        },
+        "failure": {
+          "label": "ALARM"
+        },
+        "waiting": {
+          "label": "no data"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Threshold evaluation"
+    },
+    {
+      "id": "nodata",
+      "label": "Missing data"
+    }
+  ],
+  "states": [
+    {
+      "id": "created",
+      "type": "start",
+      "label": "Alarm created",
+      "sublabel": "evaluation begins",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "ok",
+      "type": "success",
+      "label": "OK",
+      "sublabel": "metric within normal range",
+      "lane": "main",
+      "col": 1,
+      "tag": "normal"
+    },
+    {
+      "id": "alarm",
+      "type": "failure",
+      "label": "ALARM",
+      "sublabel": "threshold exceeded, actions run",
+      "lane": "main",
+      "col": 3,
+      "tag": "actions run",
+      "width": 150
+    },
+    {
+      "id": "insufficient",
+      "type": "waiting",
+      "label": "INSUFFICIENT_DATA",
+      "sublabel": "not enough data to evaluate",
+      "lane": "nodata",
+      "col": 1,
+      "tag": "no data",
+      "width": 160
+    }
+  ],
+  "transitions": [
+    {
+      "from": "created",
+      "to": "ok",
+      "label": "Within threshold",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "ok",
+      "to": "alarm",
+      "label": "Threshold exceeded",
+      "variant": "emphasis",
+      "route": "top-channel"
+    },
+    {
+      "from": "alarm",
+      "to": "ok",
+      "label": "Returns to normal",
+      "route": "straight",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "from": "ok",
+      "to": "insufficient",
+      "label": "No data",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "alarm",
+      "to": "insufficient",
+      "label": "No data",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "insufficient",
+      "to": "ok",
+      "label": "Data received",
+      "route": "left-channel",
+      "channelX": 171
+    },
+    {
+      "from": "insufficient",
+      "to": "alarm",
+      "label": "Data received + threshold exceeded",
+      "variant": "emphasis",
+      "route": "right-channel",
+      "labelSegment": 1,
+      "labelDx": 48,
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "treat-missing-data",
+      "items": [
+        "Each alarm decides how missing data is treated",
+        "Choose notBreaching / breaching / ignore / missing",
+        "The basic alarm example sets notBreaching"
+      ]
+    }
+  ]
+}

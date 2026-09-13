@@ -1,0 +1,183 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Tail-based Sampling 흐름",
+    "output": "public/archmaps/ko-observability-tracing-readme-5.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "collect-all",
+        "label": "모든 Span 수집",
+        "focus": [
+          "receive",
+          "collect",
+          "analyze"
+        ],
+        "note": "요청이 끝날 때까지 모든 Span을 임시 저장한 뒤 결과를 보고 판정합니다."
+      },
+      {
+        "id": "keep-or-drop",
+        "label": "보관 또는 삭제",
+        "focus": [
+          "analyze",
+          "keep",
+          "drop"
+        ],
+        "note": "오류나 지연이 있으면 Trace를 보관하고 정상 요청은 삭제합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "요청 입력"
+        },
+        "messagebus": {
+          "label": "Span 임시 저장"
+        },
+        "security": {
+          "label": "샘플링 판정"
+        },
+        "database": {
+          "label": "Trace 보관"
+        },
+        "backend": {
+          "label": "삭제 처리"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "trace",
+      "label": "요청 처리 · Trace 수집"
+    },
+    {
+      "id": "discard",
+      "label": "정상 요청 삭제",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "receive",
+    "collect",
+    "analyze",
+    "keep"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "receive"
+    ],
+    "allowedTerminals": [
+      "keep",
+      "drop"
+    ],
+    "requiredPaths": [
+      {
+        "from": "receive",
+        "to": "keep"
+      },
+      {
+        "from": "receive",
+        "to": "drop"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "receive",
+      "lane": "trace",
+      "col": 0,
+      "type": "frontend",
+      "label": "요청 수신",
+      "sublabel": "요청 시작",
+      "width": 168
+    },
+    {
+      "id": "collect",
+      "lane": "trace",
+      "col": 1,
+      "type": "messagebus",
+      "label": "모든 Span 수집",
+      "sublabel": "임시 저장",
+      "tag": "decision_wait",
+      "width": 168
+    },
+    {
+      "id": "analyze",
+      "lane": "trace",
+      "col": 2,
+      "type": "security",
+      "label": "분석",
+      "sublabel": "오류? 지연?",
+      "tag": "요청 완료 후",
+      "width": 168
+    },
+    {
+      "id": "keep",
+      "lane": "trace",
+      "col": 3,
+      "type": "database",
+      "label": "보관",
+      "sublabel": "Trace 저장",
+      "width": 168
+    },
+    {
+      "id": "drop",
+      "lane": "discard",
+      "col": 3,
+      "type": "backend",
+      "label": "삭제",
+      "sublabel": "Span 폐기",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "from": "receive",
+      "to": "collect",
+      "role": "main"
+    },
+    {
+      "from": "collect",
+      "to": "analyze",
+      "label": "요청 완료",
+      "role": "main"
+    },
+    {
+      "from": "analyze",
+      "to": "keep",
+      "label": "오류 또는 지연",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "analyze",
+      "to": "drop",
+      "label": "정상",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "보관 정책 (OTEL Collector tail_sampling)",
+      "items": [
+        "status_code가 ERROR인 요청은 모두 수집",
+        "latency threshold_ms 1000을 넘는 느린 요청 수집",
+        "나머지는 probabilistic 10% 샘플링"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "트레이드오프",
+      "items": [
+        "중요한 요청(오류, 지연)을 놓치지 않음",
+        "모든 Span을 임시 저장해야 해 메모리 사용량이 높음",
+        "Head-based보다 구현이 복잡함"
+      ]
+    }
+  ]
+}

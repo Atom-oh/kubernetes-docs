@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Consistent Hash 불균형 위험",
+    "output": "ko-service-mesh-istio-traffic-management-06-load-balancing-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      440
+    ],
+    "views": [
+      {
+        "id": "hotspot",
+        "label": "해시 집중",
+        "focus": [
+          "users",
+          "pod1"
+        ],
+        "note": "1000명 중 80%가 같은 해시 값으로 몰려 Pod 1 하나가 800명을 처리한다."
+      },
+      {
+        "id": "idle",
+        "label": "남는 파드",
+        "focus": [
+          "users",
+          "pod2",
+          "pod3"
+        ],
+        "note": "Pod 2와 Pod 3은 각각 15%, 5%만 받아 거의 놀고 있다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "1000명 사용자",
+      "sublabel": "해시 키 기준 분배",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "800명 · 과부하",
+      "tag": "핫스팟",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "150명",
+      "pos": [
+        560,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "50명",
+      "pos": [
+        560,
+        300
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "문제 상황",
+      "wraps": [
+        "users",
+        "pod1",
+        "pod2",
+        "pod3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-pod1",
+      "from": "users",
+      "to": "pod1",
+      "label": "80%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "users-pod2",
+      "from": "users",
+      "to": "pod2",
+      "label": "15%",
+      "labelDx": 80
+    },
+    {
+      "id": "users-pod3",
+      "from": "users",
+      "to": "pod3",
+      "label": "5%"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "원인",
+      "items": [
+        "특정 해시 값에 트래픽이 집중되는 경우"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "해결책",
+      "items": [
+        "minimumRingSize 증가",
+        "여러 해시 키 조합 사용",
+        "Bounded Load 알고리즘 고려 (Envoy 미지원)"
+      ]
+    }
+  ]
+}

@@ -63,7 +63,9 @@ Loki was designed with the philosophy of "handling logs like Prometheus":
 
 ### Component Overview
 
-![Diagram of Loki's write path (log agents through the distributor and ingester into S3 object storage) and read path (Grafana through the query frontend into the querier, which merges live data from the ingester, historical data from S3, and cached results from Redis/Memcached, while a compactor optimizes S3's indexes).](../../../assets/diagrams/rendered/en-observability-logging-01-loki-0.svg)
+![Loki component overview showing the write path from log agents through the Distributor and Ingester into S3, the read path from Grafana through the Query Frontend and Scheduler to the Querier merging Ingester, S3 and cache results, and the Compactor optimizing S3.](../../.gitbook/assets/en-observability-logging-01-loki-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-01-loki-0.html)
 
 ### Component Details
 
@@ -834,7 +836,9 @@ labels:
 
 ### Cardinality Management
 
-![Flowchart showing how the number of labels and the cardinality of each label's values multiply into total stream count, which is the single factor driving index size, query performance, and memory usage.](../../../assets/diagrams/rendered/en-observability-logging-01-loki-1.svg)
+![Flowchart showing how the number of labels and the cardinality of each label's values multiply into total stream count, which is the single factor driving index size, query performance, and memory usage.](../../.gitbook/assets/en-observability-logging-01-loki-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-01-loki-1.html)
 
 **Stream Count Calculation:**
 ```

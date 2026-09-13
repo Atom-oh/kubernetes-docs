@@ -1,31 +1,33 @@
-# パート 2: eksctl による Cluster の作成
+# パート 2: eksctl を使用したクラスターの作成
 
-## eksctl を使用した Cluster の作成
+## eksctl を使用したクラスターの作成
 
-eksctl は EKS Cluster を作成および管理する最もシンプルな方法です。eksctl は CloudFormation を使用して EKS Cluster と関連リソースを作成します。
+eksctl は、EKS クラスターを作成および管理する最も簡単な方法です。eksctl は CloudFormation を使用して、EKS クラスターと関連リソースを作成します。
 
-次の図は、eksctl を使用した EKS Cluster の作成プロセスを示しています。
+次の図は、eksctl を使用した EKS クラスター作成プロセスを示しています。
 
-![eksctl Cluster 作成プロセス](../.gitbook/assets/eksctl_cluster_creation_process.png)
+![CloudFormation スタックを通じて、VPC、IAM、control plane、node group を順番に構築する eksctl クラスター作成プロセスの図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-0.png)
 
-### 基本的な Cluster の作成
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-0.html)
 
-EKS Cluster の最も基本的な形式を作成するには、次のコマンドを実行します。
+### 基本的なクラスターの作成
+
+EKS クラスターの最も基本的な形式を作成するには、次のコマンドを実行します。
 
 ```bash
 eksctl create cluster --name my-cluster --region us-west-2
 ```
 
-このコマンドは、次のデフォルト設定で Cluster を作成します。
+このコマンドは、次のデフォルト設定でクラスターを作成します。
 
-* 2 m5.large nodes
-* New VPC and subnets
-* Default Amazon Linux 2 AMI
-* Latest Kubernetes version
+* m5.large node 2 台
+* 新しい VPC とサブネット
+* デフォルトの Amazon Linux 2 AMI
+* 最新の Kubernetes バージョン
 
-### 設定ファイルを使用した Cluster の作成
+### 設定ファイルを使用したクラスターの作成
 
-より複雑な設定の場合は、YAML ファイルを使用して Cluster を定義できます。
+より複雑な設定の場合は、YAML ファイルを使用してクラスターを定義できます。
 
 ```yaml
 # cluster.yaml
@@ -98,19 +100,21 @@ cloudWatch:
     enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 ```
 
-この設定ファイルを使用して Cluster を作成するには、次のコマンドを実行します。
+この設定ファイルを使用してクラスターを作成するには、次のコマンドを実行します。
 
 ```bash
 eksctl create cluster -f cluster.yaml
 ```
 
-### Managed Node Groups の作成
+### Managed Node Group の作成
 
-次の図は、EKS Cluster の Managed Node Group アーキテクチャを示しています。
+次の図は、EKS クラスターの Managed Node Group アーキテクチャを示しています。
 
-![EKS Managed Node Group アーキテクチャ](../.gitbook/assets/eks_managed_node_group_detailed.png)
+![Auto Scaling group が Pod を実行する EC2 インスタンスを起動する node group を、control plane が管理するアーキテクチャ図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-1.png)
 
-既存の Cluster に Managed Node Group を追加するには、次のコマンドを実行します。
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-1.html)
+
+既存のクラスターに Managed Node Group を追加するには、次のコマンドを実行します。
 
 ```bash
 eksctl create nodegroup \
@@ -153,11 +157,13 @@ managedNodeGroups:
 eksctl create nodegroup -f nodegroup.yaml
 ```
 
-### Fargate Profiles の作成
+### Fargate Profile の作成
 
 次の図は、EKS Fargate Profile アーキテクチャを示しています。
 
-![EKS Fargate Profile アーキテクチャ](../.gitbook/assets/eks_fargate_profile_architecture.png)
+![Fargate Profile の namespace および label selector に一致する Pod が、専用 microVM に配置されることを示すアーキテクチャ図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-2.png)
+
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-2.html)
 
 Fargate Profile を作成するには、次のコマンドを実行します。
 
@@ -194,9 +200,9 @@ fargate:
 eksctl create fargateprofile -f fargate.yaml
 ```
 
-### Cluster の更新
+### クラスターの更新
 
-eksctl を使用して既存の Cluster を更新できます。
+eksctl を使用して既存のクラスターを更新できます。
 
 ```bash
 # Upgrade cluster version
@@ -206,20 +212,22 @@ eksctl upgrade cluster --name=my-cluster --version=1.27
 eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup
 ```
 
-### Cluster の削除
+### クラスターの削除
 
-eksctl を使用して Cluster を削除できます。
+eksctl を使用してクラスターを削除できます。
 
 ```bash
 eksctl delete cluster --name=my-cluster --region=us-west-2
 ```
 
-## EKS Cluster ライフサイクル管理
+## EKS クラスターのライフサイクル管理
 
-次の図は、EKS Cluster の全体的なライフサイクル管理プロセスを示しています。
+次の図は、EKS クラスターの全体的なライフサイクル管理プロセスを示しています。
 
-![EKS Cluster ライフサイクル管理](../.gitbook/assets/eks_cluster_lifecycle_management.png)
+![作成と設定からバージョン更新、削除までの EKS クラスターのライフサイクル図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-3.png)
+
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-3.html)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[EKS Cluster 作成 - パート 2 クイズ](../quizzes/eks/02-eks-cluster-creation-part2-quiz.md)に挑戦してみてください。
+この章で学んだ内容を確認するには、[EKS クラスターの作成 - パート 2 クイズ](../quizzes/eks/02-eks-cluster-creation-part2-quiz.md)に挑戦してください。

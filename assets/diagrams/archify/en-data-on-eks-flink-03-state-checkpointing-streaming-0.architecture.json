@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flink state and sink-commit boundaries",
+    "output": "en-data-on-eks-flink-03-state-checkpointing-streaming-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      640
+    ],
+    "views": [
+      {
+        "id": "processing",
+        "label": "Source and state processing",
+        "focus": [
+          "source",
+          "flink",
+          "rocksdb"
+        ],
+        "note": "Validate state, source replay and sink delivery together."
+      },
+      {
+        "id": "checkpoint",
+        "label": "Periodic checkpoints",
+        "focus": [
+          "flink",
+          "rocksdb",
+          "s3ckpt"
+        ],
+        "note": "Check shared SST references, compaction, retention and recoverable storage."
+      },
+      {
+        "id": "sinks",
+        "label": "Two sink paths",
+        "focus": [
+          "flink",
+          "kafkaout",
+          "iceberg"
+        ],
+        "note": "Choose matching runtime/connectors for each sink; there is no global atomic commit across sinks."
+      }
+    ],
+    "locale": "en",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "source",
+      "type": "messagebus",
+      "label": "MSK / Kafka",
+      "sublabel": "Source topic",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "flink",
+      "type": "backend",
+      "label": "Flink runtime",
+      "sublabel": "Match the connector profile",
+      "pos": [
+        445,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "rocksdb",
+      "type": "database",
+      "label": "RocksDB keyed state",
+      "sublabel": "Memory / local SST",
+      "pos": [
+        435,
+        100
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "s3ckpt",
+      "type": "cloud",
+      "label": "S3 checkpoint storage",
+      "sublabel": "Shared SST + metadata",
+      "pos": [
+        435,
+        500
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "kafkaout",
+      "type": "messagebus",
+      "label": "Kafka Output Topic",
+      "sublabel": "read_committed consumers",
+      "pos": [
+        1000,
+        180
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "iceberg",
+      "type": "cloud",
+      "label": "S3 / Iceberg",
+      "sublabel": "Catalog / table commits",
+      "pos": [
+        1000,
+        420
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "TaskManagers",
+      "wraps": [
+        "rocksdb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "source-to-flink",
+      "from": "source",
+      "to": "flink",
+      "label": "consume",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flink-state",
+      "from": "flink",
+      "to": "rocksdb",
+      "label": "Keyed state",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "checkpoint",
+      "from": "flink",
+      "to": "s3ckpt",
+      "label": "Checkpoint / restore",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "kafka-sink",
+      "from": "flink",
+      "to": "kafkaout",
+      "label": "Checkpoint → transaction commit"
+    },
+    {
+      "id": "iceberg-sink",
+      "from": "flink",
+      "to": "iceberg",
+      "label": "DynamicRecord → table commit"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Checkpoint state",
+      "items": [
+        "Shared SST references and compaction",
+        "Storage, retention and restore requirements"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Sink commit",
+      "items": [
+        "Kafka: checkpoint + transaction + read_committed",
+        "No global transaction across sinks/tables"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Checked version profiles",
+      "items": [
+        "Kafka 5.0.0-2.2 / Flink 2.2.1",
+        "Iceberg 1.11.0 / Flink 2.1.3"
+      ]
+    }
+  ]
+}

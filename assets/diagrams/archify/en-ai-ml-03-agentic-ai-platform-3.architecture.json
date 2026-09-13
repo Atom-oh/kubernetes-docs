@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "InferencePool v1: configuration and requests",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1220,
+      610
+    ],
+    "output": "en-ai-ml-03-agentic-ai-platform-3.html",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "HTTPS / authorization",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "Inference Gateway",
+      "sublabel": "verify implementation / configuration",
+      "pos": [
+        475,
+        80
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "model",
+      "type": "backend",
+      "label": "Selected model Pod",
+      "sublabel": "app=vllm-demo :8000",
+      "pos": [
+        910,
+        80
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "route",
+      "type": "cloud",
+      "label": "HTTPRoute",
+      "sublabel": "backendRefs → InferencePool",
+      "pos": [
+        40,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "pool",
+      "type": "cloud",
+      "label": "InferencePool v1",
+      "sublabel": "model-pool / targetPorts:8000",
+      "pos": [
+        475,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "epp",
+      "type": "backend",
+      "label": "EPP Service",
+      "sublabel": "model-epp :9002",
+      "pos": [
+        910,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request",
+      "from": "client",
+      "to": "gateway",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proxy",
+      "from": "gateway",
+      "to": "model",
+      "label": "inference proxy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-pool",
+      "from": "route",
+      "to": "pool",
+      "label": "backendRefs",
+      "variant": "dashed"
+    },
+    {
+      "id": "pool-epp",
+      "from": "pool",
+      "to": "epp",
+      "label": "endpointPickerRef",
+      "variant": "dashed"
+    },
+    {
+      "id": "gateway-epp",
+      "from": "gateway",
+      "to": "epp",
+      "label": "selection request",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "route-gateway",
+      "from": "route",
+      "to": "gateway",
+      "label": "route configuration",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Configuration versus data path",
+      "items": [
+        "HTTPRoute and InferencePool are resources, not extra proxy hops.",
+        "The gateway uses the EPP selection to proxy to a model Pod.",
+        "Selectors match Pods in the same namespace."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Explicit prerequisites",
+      "items": [
+        "Example uses FailClose; configure EPP algorithm, authentication and TLS separately."
+      ]
+    }
+  ]
+}

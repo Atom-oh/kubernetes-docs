@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "가상 USD 10,000의 비용 배분",
+    "output": "ko-ops-13-finops-cost-platform-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1060,
+      560
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "총 클러스터 비용"
+        },
+        "backend": {
+          "label": "직접 비용"
+        },
+        "messagebus": {
+          "label": "공유 비용"
+        },
+        "external": {
+          "label": "유휴 비용 (최적화 대상)"
+        },
+        "frontend": {
+          "label": "팀별 배분 결과"
+        },
+        "security": {
+          "label": "팀별 합산"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "split",
+        "label": "비용 분류",
+        "focus": [
+          "total",
+          "direct",
+          "shared",
+          "idle"
+        ],
+        "note": "실제 청구서가 아닌, 서로 겹치지 않는 가상 비용 풀입니다."
+      },
+      {
+        "id": "shared-dist",
+        "label": "공유 비용 분배",
+        "focus": [
+          "shared",
+          "alloc",
+          "team-a",
+          "team-b",
+          "team-c"
+        ],
+        "note": "공유 2,500 USD는 직접 비용 비중에 따라 배분합니다."
+      },
+      {
+        "id": "idle-dist",
+        "label": "유휴 비용 배분",
+        "focus": [
+          "idle",
+          "alloc",
+          "team-a",
+          "team-b",
+          "team-c"
+        ],
+        "note": "유휴 1,000 USD는 균등 배분하고 센트 나머지는 합계가 보존되도록 처리합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "total",
+      "type": "cloud",
+      "label": "가상 비용 풀",
+      "sublabel": "USD 10,000.00",
+      "pos": [
+        40,
+        248
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "direct",
+      "type": "backend",
+      "label": "직접 비용",
+      "sublabel": "$6,500 (65%)",
+      "pos": [
+        290,
+        78
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "shared",
+      "type": "messagebus",
+      "label": "공유 비용",
+      "sublabel": "$2,500 (25%)",
+      "pos": [
+        290,
+        248
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "idle",
+      "type": "external",
+      "label": "유휴 비용",
+      "sublabel": "$1,000 (10%)",
+      "pos": [
+        290,
+        418
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "최적화 대상"
+    },
+    {
+      "id": "alloc",
+      "type": "security",
+      "label": "팀별 비용 합산",
+      "sublabel": "공유: 비례 / 유휴: 균등",
+      "pos": [
+        540,
+        248
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "team-a",
+      "type": "frontend",
+      "label": "팀 A",
+      "sublabel": "USD 4,487.19",
+      "pos": [
+        800,
+        78
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "team-b",
+      "type": "frontend",
+      "label": "팀 B",
+      "sublabel": "USD 3,102.56",
+      "pos": [
+        800,
+        248
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "team-c",
+      "type": "frontend",
+      "label": "팀 C",
+      "sublabel": "USD 2,410.25",
+      "pos": [
+        800,
+        418
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "비용 분류",
+      "wraps": [
+        "direct",
+        "shared",
+        "idle"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "팀별 배분 (Showback)",
+      "wraps": [
+        "team-a",
+        "team-b",
+        "team-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "total-direct",
+      "from": "total",
+      "to": "direct",
+      "variant": "emphasis"
+    },
+    {
+      "id": "total-shared",
+      "from": "total",
+      "to": "shared",
+      "variant": "emphasis"
+    },
+    {
+      "id": "total-idle",
+      "from": "total",
+      "to": "idle",
+      "variant": "emphasis"
+    },
+    {
+      "id": "direct-alloc",
+      "from": "direct",
+      "to": "alloc"
+    },
+    {
+      "id": "shared-alloc",
+      "from": "shared",
+      "to": "alloc"
+    },
+    {
+      "id": "idle-alloc",
+      "from": "idle",
+      "to": "alloc",
+      "variant": "dashed"
+    },
+    {
+      "id": "alloc-a",
+      "from": "alloc",
+      "to": "team-a",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alloc-b",
+      "from": "alloc",
+      "to": "team-b",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alloc-c",
+      "from": "alloc",
+      "to": "team-c",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Direct · USD 6,500",
+      "items": [
+        "A 3,000.00 / B 2,000.00 / C 1,500.00"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Shared · USD 2,500",
+      "items": [
+        "A 1,153.85 / B 769.23 / C 576.92",
+        "직접 비용 비중으로 배분"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Idle · USD 1,000",
+      "items": [
+        "A 333.34 / B 333.33 / C 333.33",
+        "균등 배분 · 센트 나머지 보존"
+      ]
+    }
+  ]
+}

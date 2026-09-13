@@ -1,0 +1,203 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio에서 Linkerd로의 마이그레이션 단계",
+    "output": "public/archmaps/ko-service-mesh-linkerd-07-best-practices-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "마이그레이션 단계 작업"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "prepare",
+        "label": "Phase 1 · 준비",
+        "focus": [
+          "analyze",
+          "testenv",
+          "mapping"
+        ],
+        "note": "기존 Istio 환경을 분석하고 Linkerd 테스트 환경에서 기능 매핑을 검토합니다."
+      },
+      {
+        "id": "parallel",
+        "label": "Phase 2 · 병행 운영",
+        "focus": [
+          "mapping",
+          "migrate_ns",
+          "verify",
+          "monitoring"
+        ],
+        "note": "네임스페이스 단위로 Linkerd로 전환하면서 트래픽을 검증하고 모니터링을 통합합니다."
+      },
+      {
+        "id": "complete",
+        "label": "Phase 3 · 완료",
+        "focus": [
+          "monitoring",
+          "remove_istio",
+          "optimize"
+        ],
+        "note": "모든 네임스페이스가 전환된 뒤 Istio를 제거하고 Linkerd를 최적화합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "p1",
+      "label": "Phase 1 · 준비"
+    },
+    {
+      "id": "p2",
+      "label": "Phase 2 · 병행 운영"
+    },
+    {
+      "id": "p3",
+      "label": "Phase 3 · 완료"
+    }
+  ],
+  "mainPath": [
+    "analyze",
+    "testenv",
+    "mapping",
+    "migrate_ns",
+    "verify",
+    "monitoring",
+    "remove_istio",
+    "optimize"
+  ],
+  "nodes": [
+    {
+      "id": "analyze",
+      "lane": "p1",
+      "col": 0,
+      "type": "backend",
+      "label": "Istio 환경 분석",
+      "width": 206
+    },
+    {
+      "id": "testenv",
+      "lane": "p1",
+      "col": 1,
+      "type": "backend",
+      "label": "테스트 환경 구축",
+      "sublabel": "Linkerd",
+      "width": 200
+    },
+    {
+      "id": "mapping",
+      "lane": "p1",
+      "col": 2,
+      "type": "backend",
+      "label": "기능 매핑 검토",
+      "sublabel": "VirtualService → ServiceProfile",
+      "width": 186
+    },
+    {
+      "id": "migrate_ns",
+      "lane": "p2",
+      "col": 2,
+      "type": "backend",
+      "label": "네임스페이스 단위 전환",
+      "sublabel": "linkerd.io/inject=enabled",
+      "width": 186
+    },
+    {
+      "id": "verify",
+      "lane": "p2",
+      "col": 3,
+      "type": "backend",
+      "label": "트래픽 검증",
+      "sublabel": "linkerd viz stat / tap",
+      "width": 126
+    },
+    {
+      "id": "monitoring",
+      "lane": "p2",
+      "col": 4,
+      "type": "backend",
+      "label": "모니터링 통합",
+      "width": 176
+    },
+    {
+      "id": "remove_istio",
+      "lane": "p3",
+      "col": 4,
+      "type": "backend",
+      "label": "Istio 제거",
+      "width": 126
+    },
+    {
+      "id": "optimize",
+      "lane": "p3",
+      "col": 5,
+      "type": "backend",
+      "label": "Linkerd 최적화",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "from": "analyze",
+      "to": "testenv",
+      "role": "main"
+    },
+    {
+      "from": "testenv",
+      "to": "mapping",
+      "role": "main"
+    },
+    {
+      "from": "mapping",
+      "to": "migrate_ns",
+      "role": "main"
+    },
+    {
+      "from": "migrate_ns",
+      "to": "verify",
+      "role": "main"
+    },
+    {
+      "from": "verify",
+      "to": "monitoring",
+      "role": "main"
+    },
+    {
+      "from": "monitoring",
+      "to": "remove_istio",
+      "role": "main"
+    },
+    {
+      "from": "remove_istio",
+      "to": "optimize",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "네임스페이스 전환 절차",
+      "items": [
+        "istio-injection 레이블 제거로 Istio 비활성화",
+        "linkerd.io/inject=enabled 어노테이션 추가",
+        "kubectl rollout restart로 워크로드 재시작",
+        "linkerd viz stat / tap으로 트래픽 검증"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "기능 매핑",
+      "items": [
+        "VirtualService · DestinationRule → ServiceProfile, HTTPRoute",
+        "PeerAuthentication → 자동 mTLS (기본값)",
+        "AuthorizationPolicy → ServerAuthorization",
+        "Gateway → 별도 Ingress 필요"
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # ArgoCD ApplicationSets
 
-> **지원 버전**: ArgoCD v2.9+
-> **마지막 업데이트**: 2026년 2월 22일
+> **검토 기준**: Argo CD 3.5.2 (ApplicationSet 컨트롤러 포함)
+> **마지막 업데이트**: 2026년 9월 11일
 
 ## 목차
 
@@ -16,7 +16,13 @@
 
 ApplicationSet은 템플릿을 사용하여 여러 ArgoCD Application을 자동으로 생성하는 컨트롤러입니다. 대규모 배포, 멀티 클러스터 환경, 동적 환경 관리에 유용합니다.
 
-![Generator와 Template 두 입력이 ApplicationSet Controller의 템플릿 처리 단계를 거쳐 여러 개의 Application 리소스로 동시에 생성되는 팬아웃 구조를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-04-applicationsets-0.svg)
+![Generator와 Template 두 입력이 ApplicationSet Controller의 템플릿 처리 단계를 거쳐 각 조합에 해당하는 Application 리소스로 생성되는 팬아웃 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-04-applicationsets-0.html)
+
+이 문서의 `myorg`, `example.com`, 클러스터 URL과 사내 차트는 구조를 설명하는 자리표시자입니다. 저장소 경로·차트·values 파일을 실제 소스로 교체하고 대상 클러스터 등록, AppProject 권한, 인증 정보를 먼저 준비해야 합니다. ApplicationSet은 클러스터나 AppProject를 만들지 않습니다. `CreateNamespace=true`는 허용된 대상 Namespace만 생성합니다. 모든 예제는 Go 템플릿을 명시적으로 활성화합니다.
+
+ApplicationSet과 생성기 입력을 수정하는 권한은 관리자 범위로 제한합니다. Git/PR에서 `project`, 저장소 URL, 대상 클러스터 등을 임의로 선택하게 하면 배포 권한이 확대될 수 있으므로 고정한 AppProject의 허용 목록과 저장소 승인 절차를 함께 적용합니다.
 
 ### 기본 구조
 
@@ -27,57 +33,41 @@ metadata:
   name: my-applicationset
   namespace: argocd
 spec:
-  # 생성기: Application 생성에 사용할 데이터 소스
   generators:
-    - list:
-        elements:
-          - name: dev
-            namespace: dev
-          - name: staging
-            namespace: staging
-
-  # 템플릿: 생성될 Application의 템플릿
+  - list:
+      elements:
+      - name: dev
+        namespace: dev
+      - name: staging
+        namespace: staging
   template:
     metadata:
-      name: 'myapp-{{name}}'
+      name: myapp-{{ .name }}
     spec:
       project: default
       source:
         repoURL: https://github.com/myorg/myapp.git
         targetRevision: main
-        path: 'environments/{{name}}'
+        path: environments/{{ .name }}
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{namespace}}'
+        namespace: '{{ .namespace }}'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
-
-  # 동기화 정책
+        syncOptions:
+        - CreateNamespace=true
   syncPolicy:
-    preserveResourcesOnDeletion: false  # ApplicationSet 삭제 시 Application도 삭제
-
-  # 전략
-  strategy:
-    type: RollingSync
-    rollingSync:
-      steps:
-        - matchExpressions:
-            - key: env
-              operator: In
-              values:
-                - dev
-        - matchExpressions:
-            - key: env
-              operator: In
-              values:
-                - staging
+    preserveResourcesOnDeletion: false
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 ## 생성기 (Generators)
 
-ApplicationSet은 9가지 생성기를 지원합니다.
+아래에서는 9개 생성기 유형을 다룹니다. Git 생성기의 Directory와 File 모드를 나누어 총 10개 예제로 설명합니다.
 
 ### 1. List Generator
 
@@ -91,44 +81,50 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - list:
-        elements:
-          - name: dev
-            namespace: dev-ns
-            cluster: https://dev-cluster.example.com
-            values:
-              replicas: "1"
-              environment: development
-          - name: staging
-            namespace: staging-ns
-            cluster: https://staging-cluster.example.com
-            values:
-              replicas: "2"
-              environment: staging
-          - name: prod
-            namespace: prod-ns
-            cluster: https://prod-cluster.example.com
-            values:
-              replicas: "5"
-              environment: production
+  - list:
+      elements:
+      - name: dev
+        namespace: dev-ns
+        cluster: https://dev-cluster.example.com
+        values:
+          replicas: '1'
+          environment: development
+      - name: staging
+        namespace: staging-ns
+        cluster: https://staging-cluster.example.com
+        values:
+          replicas: '2'
+          environment: staging
+      - name: prod
+        namespace: prod-ns
+        cluster: https://prod-cluster.example.com
+        values:
+          replicas: '5'
+          environment: production
   template:
     metadata:
-      name: 'myapp-{{name}}'
+      name: myapp-{{ .name }}
       labels:
-        environment: '{{values.environment}}'
+        environment: '{{ .values.environment }}'
     spec:
       project: default
       source:
         repoURL: https://github.com/myorg/myapp.git
         targetRevision: main
-        path: 'k8s/{{name}}'
+        path: charts/myapp
         helm:
           parameters:
-            - name: replicaCount
-              value: '{{values.replicas}}'
+          - name: replicaCount
+            value: '{{ .values.replicas }}'
       destination:
-        server: '{{cluster}}'
-        namespace: '{{namespace}}'
+        server: '{{ .cluster }}'
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 ### 2. Cluster Generator
@@ -143,26 +139,15 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - clusters:
-        # 모든 클러스터
-        selector: {}
-        # 또는 레이블 셀렉터
-        # selector:
-        #   matchLabels:
-        #     environment: production
-        #   matchExpressions:
-        #     - key: region
-        #       operator: In
-        #       values:
-        #         - ap-northeast-2
-        #         - us-west-2
-        values:
-          helmVersion: "3"
+  - clusters:
+      selector:
+        matchLabels:
+          environment: production
   template:
     metadata:
-      name: 'cluster-addons-{{name}}'
+      name: cluster-addons-{{ .nameNormalized }}
       labels:
-        cluster: '{{name}}'
+        cluster: '{{ .name }}'
     spec:
       project: default
       source:
@@ -171,10 +156,16 @@ spec:
         path: addons
         helm:
           valueFiles:
-            - 'values-{{metadata.labels.environment}}.yaml'
+          - values-{{ .metadata.labels.environment }}.yaml
       destination:
-        server: '{{server}}'
+        server: '{{ .server }}'
         namespace: kube-system
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 **클러스터 Secret에 레이블 추가:**
@@ -203,6 +194,8 @@ stringData:
     }
 ```
 
+빈 Cluster selector는 로컬 클러스터도 포함할 수 있습니다. 기본 로컬 클러스터는 Secret이 없어 레이블 selector로 선택되지 않을 수 있으므로, 필요한 레이블을 가진 클러스터 Secret을 준비합니다. Application 이름에는 `nameNormalized`를 사용하며 Namespace·Label의 별도 길이/문자 제한도 확인합니다. Secret 예시는 형식 설명이며 `...`는 유효한 인증 정보가 아닙니다.
+
 ### 3. Git Generator - Directory
 
 Git 저장소의 디렉토리 구조에서 Application을 생성합니다:
@@ -215,33 +208,34 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - git:
-        repoURL: https://github.com/myorg/gitops-repo.git
-        revision: main
-        directories:
-          # 포함할 디렉토리
-          - path: apps/*
-          # 제외할 디렉토리
-          - path: apps/excluded-app
-            exclude: true
+  - git:
+      repoURL: https://github.com/myorg/gitops-repo.git
+      revision: main
+      directories:
+      - path: apps/*
+      - path: apps/excluded-app
+        exclude: true
   template:
     metadata:
-      name: '{{path.basename}}'
+      name: '{{ .path.basename }}'
     spec:
       project: default
       source:
         repoURL: https://github.com/myorg/gitops-repo.git
         targetRevision: main
-        path: '{{path}}'
+        path: '{{ .path.path }}'
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{path.basename}}'
+        namespace: '{{ .path.basename }}'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
-          - CreateNamespace=true
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 **저장소 구조:**
@@ -273,32 +267,38 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - git:
-        repoURL: https://github.com/myorg/gitops-config.git
-        revision: main
-        files:
-          - path: 'environments/*/config.json'
+  - git:
+      repoURL: https://github.com/myorg/gitops-config.git
+      revision: main
+      files:
+      - path: environments/*/config.json
   template:
     metadata:
-      name: '{{name}}-app'
+      name: '{{ .name }}-app'
       labels:
-        environment: '{{environment}}'
-        region: '{{region}}'
+        environment: '{{ .environment }}'
+        region: '{{ .region }}'
     spec:
-      project: '{{project}}'
+      project: development
       source:
-        repoURL: '{{repoURL}}'
-        targetRevision: '{{targetRevision}}'
-        path: '{{path}}'
+        repoURL: '{{ .repoURL }}'
+        targetRevision: '{{ .targetRevision }}'
+        path: '{{ .appPath }}'
         helm:
           valueFiles:
-            - 'values-{{environment}}.yaml'
+          - values-{{ .environment }}.yaml
           parameters:
-            - name: image.tag
-              value: '{{imageTag}}'
+          - name: image.tag
+            value: '{{ .imageTag }}'
       destination:
-        server: '{{cluster}}'
-        namespace: '{{namespace}}'
+        server: '{{ .cluster }}'
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 **config.json 파일 예시:**
@@ -308,13 +308,12 @@ spec:
   "name": "myapp-dev",
   "environment": "dev",
   "region": "ap-northeast-2",
-  "project": "development",
   "repoURL": "https://github.com/myorg/myapp.git",
   "targetRevision": "develop",
-  "path": "helm/myapp",
+  "appPath": "helm/myapp",
   "cluster": "https://dev-cluster.example.com",
   "namespace": "myapp-dev",
-  "imageTag": "dev-latest"
+  "imageTag": "git-8c9f1a2"
 }
 ```
 
@@ -330,43 +329,47 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - matrix:
-        generators:
-          # 첫 번째 생성기: 클러스터
-          - clusters:
-              selector:
-                matchLabels:
-                  environment: production
-          # 두 번째 생성기: 애플리케이션 목록
-          - list:
-              elements:
-                - app: frontend
-                  port: "80"
-                - app: backend
-                  port: "8080"
-                - app: api-gateway
-                  port: "443"
+  - matrix:
+      generators:
+      - clusters:
+          selector:
+            matchLabels:
+              environment: production
+      - list:
+          elements:
+          - app: frontend
+            port: '80'
+          - app: backend
+            port: '8080'
+          - app: api-gateway
+            port: '443'
   template:
     metadata:
-      name: '{{name}}-{{app}}'
+      name: '{{ .nameNormalized }}-{{ .app }}'
       labels:
-        cluster: '{{name}}'
-        app: '{{app}}'
+        cluster: '{{ .name }}'
+        app: '{{ .app }}'
     spec:
       project: default
       source:
         repoURL: https://github.com/myorg/apps.git
         targetRevision: main
-        path: '{{app}}'
+        path: '{{ .app }}'
         helm:
           parameters:
-            - name: clusterName
-              value: '{{name}}'
-            - name: service.port
-              value: '{{port}}'
+          - name: clusterName
+            value: '{{ .name }}'
+          - name: service.port
+            value: '{{ .port }}'
       destination:
-        server: '{{server}}'
-        namespace: '{{app}}'
+        server: '{{ .server }}'
+        namespace: '{{ .app }}'
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 **결과 예시** (3 클러스터 × 3 앱 = 9 Application):
@@ -377,6 +380,8 @@ spec:
 - prod-us-west-2-backend
 - prod-us-west-2-api-gateway
 - ...
+
+Matrix는 정확히 두 자식 생성기를 결합하며 조합 생성기의 중첩은 한 단계만 지원합니다. 서로 다른 Git 생성기가 만든 `path` 키가 충돌하면 `pathParamPrefix`로 분리합니다.
 
 ### 6. Merge Generator
 
@@ -390,38 +395,36 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - merge:
-        mergeKeys:
-          - name  # 병합 키
-        generators:
-          # 기본 설정
-          - list:
-              elements:
-                - name: dev
-                  replicas: "1"
-                  resources: small
-                - name: staging
-                  replicas: "2"
-                  resources: medium
-                - name: prod
-                  replicas: "5"
-                  resources: large
-          # 환경별 오버라이드
-          - list:
-              elements:
-                - name: dev
-                  cluster: https://dev-cluster.example.com
-                  namespace: dev-ns
-                - name: staging
-                  cluster: https://staging-cluster.example.com
-                  namespace: staging-ns
-                - name: prod
-                  cluster: https://prod-cluster.example.com
-                  namespace: prod-ns
-                  replicas: "10"  # prod만 오버라이드
+  - merge:
+      mergeKeys:
+      - name
+      generators:
+      - list:
+          elements:
+          - name: dev
+            replicas: '1'
+            resources: small
+          - name: staging
+            replicas: '2'
+            resources: medium
+          - name: prod
+            replicas: '5'
+            resources: large
+      - list:
+          elements:
+          - name: dev
+            cluster: https://dev-cluster.example.com
+            namespace: dev-ns
+          - name: staging
+            cluster: https://staging-cluster.example.com
+            namespace: staging-ns
+          - name: prod
+            cluster: https://prod-cluster.example.com
+            namespace: prod-ns
+            replicas: '10'
   template:
     metadata:
-      name: 'myapp-{{name}}'
+      name: myapp-{{ .name }}
     spec:
       project: default
       source:
@@ -430,14 +433,22 @@ spec:
         path: helm
         helm:
           parameters:
-            - name: replicaCount
-              value: '{{replicas}}'
-            - name: resources
-              value: '{{resources}}'
+          - name: replicaCount
+            value: '{{ .replicas }}'
+          - name: resources
+            value: '{{ .resources }}'
       destination:
-        server: '{{cluster}}'
-        namespace: '{{namespace}}'
+        server: '{{ .cluster }}'
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
+
+Merge는 첫 생성기의 항목을 기준으로 `mergeKeys`가 일치하는 값만 덮어씁니다. 뒤쪽 생성기가 더 높은 우선순위이며, 일치하지 않는 추가 항목은 버립니다. Go 템플릿 모드에서는 중첩된 merge key를 지원하지 않습니다.
 
 ### 7. SCM Provider Generator
 
@@ -451,44 +462,42 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - scmProvider:
-        # GitHub
-        github:
-          organization: myorg
-          api: https://api.github.com/
-          tokenRef:
-            secretName: github-token
-            key: token
-          # 필터
-          filters:
-            - repositoryMatch: '^k8s-.*'  # k8s-로 시작하는 저장소
-              branchMatch: main
-            - labelMatch: argocd-enabled  # 토픽 레이블
-          # 또는 GitLab
-          # gitlab:
-          #   group: mygroup
-          #   includeSubgroups: true
-          # 또는 Bitbucket
-          # bitbucketServer:
-          #   project: MYPROJ
+  - scmProvider:
+      github:
+        organization: myorg
+        api: https://api.github.com/
+        tokenRef:
+          secretName: github-token
+          key: token
+      filters:
+      - repositoryMatch: ^k8s-.*
+        branchMatch: ^main$
+        labelMatch: ^argocd-enabled$
+        pathsExist:
+        - k8s/
   template:
     metadata:
-      name: '{{repository}}'
+      name: '{{ .repository }}'
     spec:
       project: default
       source:
-        repoURL: '{{url}}'
-        targetRevision: '{{branch}}'
+        repoURL: '{{ .url }}'
+        targetRevision: '{{ .branch }}'
         path: k8s
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{repository}}'
+        namespace: '{{ .repository }}'
       syncPolicy:
         automated:
           prune: true
         syncOptions:
-          - CreateNamespace=true
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
+
+`scmProvider.filters`는 provider(`github` 등)와 같은 레벨입니다. 한 filter 안의 조건은 AND, filter 항목 사이는 OR입니다. 예제는 이름·경로·레이블을 모두 만족해야 하도록 한 항목에 묶었습니다. 비공개 저장소와 높은 API 요청량에는 범위가 제한된 토큰이나 GitHub App 인증을 준비합니다.
 
 ### 8. Pull Request Generator
 
@@ -502,47 +511,50 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - pullRequest:
-        github:
-          owner: myorg
-          repo: myapp
-          tokenRef:
-            secretName: github-token
-            key: token
-          # 레이블 필터
-          labels:
-            - preview
-            - deploy-preview
-        # 재확인 간격
-        requeueAfterSeconds: 60
+  - pullRequest:
+      github:
+        owner: myorg
+        repo: myapp
+        tokenRef:
+          secretName: github-token
+          key: token
+        labels:
+        - preview
+        - deploy-preview
+      requeueAfterSeconds: 60
   template:
     metadata:
-      name: 'myapp-pr-{{number}}'
+      name: myapp-pr-{{ .number }}
       labels:
         app: myapp
-        pr: '{{number}}'
+        pr: '{{ .number }}'
     spec:
-      project: default
+      project: previews
       source:
         repoURL: https://github.com/myorg/myapp.git
-        targetRevision: '{{head_sha}}'
+        targetRevision: '{{ .head_sha }}'
         path: k8s
         kustomize:
-          namePrefix: 'pr-{{number}}-'
+          namePrefix: pr-{{ .number }}-
           commonLabels:
-            pr: '{{number}}'
+            pr: '{{ .number }}'
       destination:
         server: https://kubernetes.default.svc
-        namespace: 'preview-pr-{{number}}'
+        namespace: preview-pr-{{ .number }}
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
-          - CreateNamespace=true
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
-**PR이 병합/닫히면 Application이 자동 삭제됩니다.**
+**기본 sync 정책에서는 다음 재조정 때 필터에 매칭되지 않는 PR의 Application이 삭제됩니다.** `applicationsSync: create-update` 등 삭제 금지 정책이면 달라집니다. Application 삭제 후 배포 리소스 정리는 finalizer와 `preserveResourcesOnDeletion` 설정을 따릅니다. `CreateNamespace=true`만으로 생성한 Namespace 자체가 함께 삭제된다고 가정하지 말고 별도로 관리합니다.
+
+PR 예제는 사전에 만든 `previews` AppProject가 허용하는 격리된 클러스터·Namespace에서만 사용합니다. GitHub의 `labels`는 모두 매칭되어야 하며 레이블이 배포 코드 자체의 안전성을 보증하지는 않습니다. 외부 PR에 운영 Secret이나 클러스터 관리자 권한을 제공하지 않습니다.
 
 ### 9. Cluster Decision Resource Generator
 
@@ -556,20 +568,15 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - clusterDecisionResource:
-        # Duck-typing을 통한 리소스 참조
-        configMapRef: cluster-decisions
-        name: my-placement
-        requeueAfterSeconds: 180
-        labelSelector:
-          matchLabels:
-            environment: production
-        # 또는 values 추출
-        values:
-          region: '{{metadata.labels.region}}'
+  - clusterDecisionResource:
+      configMapRef: cluster-decisions
+      labelSelector:
+        matchLabels:
+          cluster.open-cluster-management.io/placement: production
+      requeueAfterSeconds: 180
   template:
     metadata:
-      name: 'addon-{{name}}'
+      name: '{{ normalize .name }}-addon'
     spec:
       project: default
       source:
@@ -577,9 +584,32 @@ spec:
         targetRevision: main
         path: addons
       destination:
-        server: '{{clusterName}}'
+        server: '{{ .server }}'
         namespace: kube-system
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
+
+**PlacementDecision 조회 설정:**
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-decisions
+  namespace: argocd
+data:
+  apiVersion: cluster.open-cluster-management.io/v1beta1
+  kind: placementdecisions
+  statusListKey: decisions
+  matchKey: clusterName
+```
+
+Open Cluster Management의 Placement/PlacementDecision CRD와 컨트롤러가 이미 설치되고 `production` Placement가 결정을 생성한다는 전제입니다. `argocd` 네임스페이스의 결정 리소스를 읽을 RBAC 권한이 필요합니다. `status.decisions[].clusterName`은 Argo CD에 등록된 클러스터 이름과 일치해야 하며 실제 API 주소는 생성기의 `server` 값에서 가져옵니다. `name` 또는 `labelSelector` 중 하나로 결정을 선택합니다.
 
 ### 10. Plugin Generator
 
@@ -593,25 +623,32 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - plugin:
-        configMapRef: my-plugin
-        input:
-          parameters:
-            environment: production
-            region: ap-northeast-2
-        requeueAfterSeconds: 300
+  - plugin:
+      configMapRef:
+        name: my-plugin
+      input:
+        parameters:
+          environment: production
+          region: ap-northeast-2
+      requeueAfterSeconds: 300
   template:
     metadata:
-      name: '{{name}}'
+      name: '{{ .name }}'
     spec:
       project: default
       source:
-        repoURL: '{{repoURL}}'
-        targetRevision: '{{revision}}'
-        path: '{{path}}'
+        repoURL: '{{ .repoURL }}'
+        targetRevision: '{{ .revision }}'
+        path: '{{ .path }}'
       destination:
-        server: '{{cluster}}'
-        namespace: '{{namespace}}'
+        server: '{{ .cluster }}'
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 **Plugin ConfigMap:**
@@ -623,9 +660,12 @@ metadata:
   name: my-plugin
   namespace: argocd
 data:
-  token: "$plugin.token"  # Secret 참조
-  baseUrl: "https://api.example.com/applications"
+  token: "$appset-plugin-token:token"
+  baseUrl: "https://appset-plugin.example.com"
+  requestTimeout: "30"
 ```
+
+Plugin은 ConfigMap 안에서 코드를 실행하지 않습니다. 별도 HTTP 서비스의 `/api/v1/getparams.execute`에 POST하고 응답의 `output.parameters` 배열을 사용합니다. 위 도메인은 교체해야 하며 정상 TLS 인증서가 필요합니다. `argocd` 네임스페이스의 `appset-plugin-token` Secret에 `token` 키와 `app.kubernetes.io/part-of: argocd` 레이블을 준비하고 값은 Git에 저장하지 않습니다. 플러그인의 인증·입력 검증·응답 스키마를 구현한 후 연결합니다.
 
 ## Go 템플릿
 
@@ -638,30 +678,29 @@ metadata:
   name: go-template-example
   namespace: argocd
 spec:
-  goTemplate: true  # Go 템플릿 활성화
-  goTemplateOptions: ["missingkey=error"]  # 누락된 키 오류 처리
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
   generators:
-    - list:
-        elements:
-          - name: dev
-            replicas: 1
-            features:
-              - logging
-              - monitoring
-          - name: prod
-            replicas: 5
-            features:
-              - logging
-              - monitoring
-              - alerting
+  - list:
+      elements:
+      - name: dev
+        replicas: 1
+        features:
+        - logging
+        - monitoring
+      - name: prod
+        replicas: 5
+        features:
+        - logging
+        - monitoring
+        - alerting
   template:
     metadata:
-      name: 'myapp-{{ .name }}'
+      name: myapp-{{ .name }}
       annotations:
-        # 조건부 어노테이션
-        {{- if eq .name "prod" }}
-        notifications.argoproj.io/subscribe.on-sync-failed.slack: production-alerts
-        {{- end }}
+        notifications.argoproj.io/subscribe.on-sync-failed.slack: '{{ if eq .name "prod" }}production-alerts{{ else
+          }}development-alerts{{ end }}'
     spec:
       project: default
       source:
@@ -677,38 +716,36 @@ spec:
             {{- end }}
       destination:
         server: https://kubernetes.default.svc
-        namespace: 'myapp-{{ .name }}'
+        namespace: myapp-{{ .name }}
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
 ```
 
 ### Go 템플릿 함수
 
+각 문자열 필드를 독립적으로 평가합니다. `if`나 `range`를 YAML 필드 사이에 걸쳐 배치할 수 없습니다. boolean·object·list 필드를 바꾸려면 `spec.templatePatch`를 사용합니다. `missingkey=error`에서는 없는 키에 직접 접근한 뒤 `default`를 적용해도 오류가 나므로 `dig`로 조회합니다.
+
 ```yaml
-# 문자열 조작
-name: '{{ .name | upper }}'           # 대문자
-name: '{{ .name | lower }}'           # 소문자
-name: '{{ .name | title }}'           # 타이틀 케이스
-name: '{{ .name | replace "-" "_" }}' # 대체
-
-# 조건
-{{- if eq .environment "prod" }}
-replicas: 5
-{{- else }}
-replicas: 1
-{{- end }}
-
-# 기본값
-namespace: '{{ .namespace | default "default" }}'
-
-# 반복
-{{- range .items }}
-  - {{ . }}
-{{- end }}
-
-# 인덱스
-value: '{{ index .values "key-with-dash" }}'
+# spec.template.metadata의 문자열 필드 예시
+name: '{{ .name | normalize }}'
+annotations:
+  display-name: '{{ .name | upper }}'
+  tier: '{{ if eq .environment "prod" }}critical{{ else }}standard{{ end }}'
+  target-namespace: '{{ dig "namespace" "default" . }}'
+  feature-list: '{{ join "," .features }}'
+  custom-value: '{{ index .values "key-with-dash" }}'
 ```
 
+Sprig 함수는 `env`, `expandenv`, `getHostByName`을 제외하고 지원합니다. `normalize` 결과는 DNS 이름에 맞추지만, Namespace나 Label처럼 더 짧은 길이 제한까지 모두 보장하지는 않습니다. Helm 차트로 ApplicationSet을 배포하면 두 템플릿 단계가 충돌하므로 ApplicationSet 표현식을 Helm 문자열 리터럴로 이스케이프해야 합니다.
+
 ## Progressive Syncs
+
+Progressive Syncs는 3.3부터 Beta이며 3.5.2에서도 명시적으로 활성화해야 합니다. 기존 `argocd-cmd-params-cm.data`에 `applicationsetcontroller.enable.progressive.syncs: "true"`를 병합하고 ApplicationSet 컨트롤러를 재시작합니다. Helm 설치라면 같은 설정을 `configs.params`에 관리합니다.
+
+RollingSync는 **생성된 Application의 labels**로 단계를 선택하고 앞 단계의 모든 Application이 Healthy가 되어야 다음 단계로 진행합니다. 자식 Application의 자동 동기화는 비활성화하며 ApplicationSet 컨트롤러가 sync를 요청합니다. Sync window와 Application retry 정책은 적용됩니다. 어떤 단계에도 매칭되지 않는 Application은 수동 sync가 필요합니다.
+
+`maxUpdate: 0`은 해당 그룹의 자동 sync를 멈춥니다. 승인을 받은 것처럼 다음 중복 그룹으로 자동 통과하지 않으며, 해당 그룹을 수동으로 동기화하거나 검토한 전략 변경을 적용해야 합니다. 0보다 큰 백분율은 내림하되 최소 1개입니다. 한 그룹 안의 Application 순서는 보장되지 않습니다. 아래 예제는 하나의 클러스터에서 서로 다른 Namespace를 사용하며, `region`은 그룹화를 위한 메타데이터입니다.
 
 Progressive Syncs를 사용하면 Application을 단계적으로 롤아웃할 수 있습니다:
 
@@ -720,65 +757,67 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - list:
-        elements:
-          - name: dev
-            env: dev
-          - name: staging
-            env: staging
-          - name: prod-ap
-            env: prod
-            region: ap-northeast-2
-          - name: prod-us
-            env: prod
-            region: us-west-2
+  - list:
+      elements:
+      - name: dev
+        env: dev
+      - name: staging
+        env: staging
+      - name: prod-ap
+        env: prod
+        region: ap-northeast-2
+      - name: prod-us
+        env: prod
+        region: us-west-2
   strategy:
     type: RollingSync
     rollingSync:
       steps:
-        # Step 1: dev 먼저
-        - matchExpressions:
-            - key: env
-              operator: In
-              values:
-                - dev
-          # 최대 동시 업데이트 수
-          maxUpdate: 100%  # 또는 숫자 (예: 1)
-        # Step 2: staging
-        - matchExpressions:
-            - key: env
-              operator: In
-              values:
-                - staging
-        # Step 3: prod (한 번에 하나씩)
-        - matchExpressions:
-            - key: env
-              operator: In
-              values:
-                - prod
-          maxUpdate: 1
+      - matchExpressions:
+        - key: env
+          operator: In
+          values:
+          - dev
+        maxUpdate: 100%
+      - matchExpressions:
+        - key: env
+          operator: In
+          values:
+          - staging
+      - matchExpressions:
+        - key: env
+          operator: In
+          values:
+          - prod
+        maxUpdate: 1
   template:
     metadata:
-      name: 'myapp-{{name}}'
+      name: myapp-{{ .name }}
       labels:
-        env: '{{env}}'
-        {{- if .region }}
-        region: '{{region}}'
-        {{- end }}
+        env: '{{ .env }}'
+        region: '{{ dig "region" "global" . }}'
     spec:
       project: default
       source:
         repoURL: https://github.com/myorg/myapp.git
         targetRevision: main
-        path: 'envs/{{env}}'
+        path: envs/{{ .env }}
       destination:
         server: https://kubernetes.default.svc
-        namespace: 'myapp-{{name}}'
+        namespace: myapp-{{ .name }}
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 ### Progressive Sync 흐름
 
-![myapp-dev에서 myapp-staging을 거쳐 myapp-prod-ap, myapp-prod-us 순으로 진행되는 3단계 프로그레시브 롤아웃과 Prod 단계의 maxUpdate 1 제약을 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-04-applicationsets-1.svg)
+![Dev와 Staging의 Healthy 상태를 차례로 기다린 후 Prod 두 Application을 한 번에 하나씩 동기화한다. Prod 그룹 내부의 순서는 보장하지 않는다.](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-04-applicationsets-1.html)
 
 ## 멀티 클러스터 배포 패턴
 
@@ -792,38 +831,44 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - matrix:
-        generators:
-          - list:
-              elements:
-                - env: dev
-                  cluster: https://dev.example.com
-                  revision: develop
-                - env: staging
-                  cluster: https://staging.example.com
-                  revision: release
-                - env: prod
-                  cluster: https://prod.example.com
-                  revision: main
-          - git:
-              repoURL: https://github.com/myorg/apps.git
-              revision: main
-              directories:
-                - path: apps/*
+  - matrix:
+      generators:
+      - list:
+          elements:
+          - env: dev
+            cluster: https://dev.example.com
+            revision: develop
+          - env: staging
+            cluster: https://staging.example.com
+            revision: release
+          - env: prod
+            cluster: https://prod.example.com
+            revision: main
+      - git:
+          repoURL: https://github.com/myorg/apps.git
+          revision: main
+          directories:
+          - path: apps/*
   template:
     metadata:
-      name: '{{env}}-{{path.basename}}'
+      name: '{{ .env }}-{{ .path.basename }}'
     spec:
-      project: '{{env}}'
+      project: '{{ .env }}'
       source:
         repoURL: https://github.com/myorg/apps.git
-        targetRevision: '{{revision}}'
-        path: '{{path}}'
+        targetRevision: '{{ .revision }}'
+        path: '{{ .path.path }}'
         kustomize:
-          namePrefix: '{{env}}-'
+          namePrefix: '{{ .env }}-'
       destination:
-        server: '{{cluster}}'
-        namespace: '{{path.basename}}'
+        server: '{{ .cluster }}'
+        namespace: '{{ .path.basename }}'
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 ### 패턴 2: 리전별 배포
@@ -836,54 +881,57 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - clusters:
-        selector:
-          matchLabels:
-            environment: production
-        values:
-          helmRepo: https://charts.example.com
+  - clusters:
+      selector:
+        matchLabels:
+          environment: production
+      values:
+        helmRepo: https://charts.example.com
   strategy:
     type: RollingSync
     rollingSync:
       steps:
-        # AP 리전 먼저
-        - matchExpressions:
-            - key: region
-              operator: In
-              values:
-                - ap-northeast-2
-                - ap-southeast-1
-        # US 리전
-        - matchExpressions:
-            - key: region
-              operator: In
-              values:
-                - us-west-2
-                - us-east-1
-        # EU 리전 마지막
-        - matchExpressions:
-            - key: region
-              operator: In
-              values:
-                - eu-west-1
+      - matchExpressions:
+        - key: region
+          operator: In
+          values:
+          - ap-northeast-2
+          - ap-southeast-1
+      - matchExpressions:
+        - key: region
+          operator: In
+          values:
+          - us-west-2
+          - us-east-1
+      - matchExpressions:
+        - key: region
+          operator: In
+          values:
+          - eu-west-1
   template:
     metadata:
-      name: '{{name}}-platform-services'
+      name: '{{ .nameNormalized }}-platform-services'
       labels:
-        cluster: '{{name}}'
-        region: '{{metadata.labels.region}}'
+        cluster: '{{ .name }}'
+        region: '{{ .metadata.labels.region }}'
     spec:
       project: platform
       source:
-        repoURL: '{{values.helmRepo}}'
+        repoURL: '{{ .values.helmRepo }}'
         chart: platform-services
         targetRevision: 2.0.0
         helm:
           valueFiles:
-            - 'values-{{metadata.labels.region}}.yaml'
+          - values-{{ .metadata.labels.region }}.yaml
       destination:
-        server: '{{server}}'
+        server: '{{ .server }}'
         namespace: platform
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 ### 패턴 3: 테넌트별 배포
@@ -896,17 +944,17 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - git:
-        repoURL: https://github.com/myorg/tenant-config.git
-        revision: main
-        files:
-          - path: 'tenants/*/config.yaml'
+  - git:
+      repoURL: https://github.com/myorg/tenant-config.git
+      revision: main
+      files:
+      - path: tenants/*/config.yaml
   template:
     metadata:
-      name: 'tenant-{{tenant.name}}'
+      name: tenant-{{ .tenant.name }}
       labels:
-        tenant: '{{tenant.name}}'
-        tier: '{{tenant.tier}}'
+        tenant: '{{ .tenant.name }}'
+        tier: '{{ .tenant.tier }}'
     spec:
       project: tenants
       source:
@@ -916,10 +964,10 @@ spec:
         helm:
           values: |
             tenant:
-              name: {{ tenant.name }}
-              tier: {{ tenant.tier }}
+              name: {{ .tenant.name }}
+              tier: {{ .tenant.tier }}
             resources:
-              {{- if eq tenant.tier "enterprise" }}
+              {{- if eq .tenant.tier "enterprise" }}
               requests:
                 cpu: "2"
                 memory: "4Gi"
@@ -929,8 +977,14 @@ spec:
                 memory: "1Gi"
               {{- end }}
       destination:
-        server: '{{cluster}}'
-        namespace: 'tenant-{{tenant.name}}'
+        server: '{{ .cluster }}'
+        namespace: tenant-{{ .tenant.name }}
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 ## 템플릿 오버라이드
@@ -945,31 +999,37 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - list:
-        elements:
-          - name: dev
-            env: development
-          - name: prod
-            env: production
-        # 이 생성기의 결과에만 적용되는 템플릿 오버라이드
-        template:
-          metadata:
-            annotations:
-              custom-annotation: 'from-list-generator'
-    - clusters:
-        selector:
-          matchLabels:
-            environment: staging
-        # 이 생성기의 결과에만 적용
-        template:
-          spec:
-            syncPolicy:
-              automated:
-                prune: false  # staging은 prune 비활성화
-  # 기본 템플릿
+  - list:
+      elements:
+      - name: dev
+        env: development
+      - name: prod
+        env: production
+      template:
+        metadata:
+          annotations:
+            custom-annotation: from-list-generator
+        spec:
+          project: ''
+          destination: {}
+  - clusters:
+      selector:
+        matchLabels:
+          environment: staging
+      template:
+        spec:
+          source:
+            targetRevision: staging
+            repoURL: https://github.com/myorg/myapp.git
+          project: ''
+          destination:
+            server: '{{ .server }}'
+            namespace: '{{ .nameNormalized }}'
+        metadata:
+          name: staging-{{ .nameNormalized }}
   template:
     metadata:
-      name: 'app-{{name}}'
+      name: app-{{ .name }}
     spec:
       project: default
       source:
@@ -978,16 +1038,31 @@ spec:
         path: manifests
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{name}}'
+        namespace: '{{ .name }}'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
 ```
 
 ### 템플릿 병합 동작
 
-![기본 템플릿과 생성기별 오버라이드가 Deep Merge 단계에서 합쳐져 최종 템플릿이 만들어지고, 오버라이드가 기본값보다 우선한다는 규칙을 편집적 캐아웃으로 강조한 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-04-applicationsets-2.svg)
+![ApplicationSet의 기본 템플릿 spec.template과 생성기별 오버라이드 템플릿이 Deep Merge 단계에서 key-by-key로 병합되어 생성기 요소별 최종 Application spec이 만들어지고, 생성기별로 지정한 값을 기본 템플릿과 병합하는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-04-applicationsets-2.html)
+
+## 삭제와 보존 정책
+
+ApplicationSet 삭제는 ownerReferences를 통해 생성한 Application도 삭제합니다. `preserveResourcesOnDeletion: true`는 Application의 배포 리소스 삭제 finalizer를 추가하지 않게 하는 설정이며 **Application 자체를 보존하는 설정이 아닙니다**. 기존 Application의 finalizer 상태를 먼저 확인합니다.
+
+ApplicationSet만 제거하고 자식 Application을 남길 때는 `kubectl delete applicationset NAME -n argocd --cascade=orphan`을 사용합니다. 남은 Application의 자동 동기화와 finalizer도 계속 유효하므로 이후 그 Application을 삭제하면 배포 리소스가 삭제될 수 있습니다. `applicationsSync: create-update`는 생성기 재조정에 의한 삭제를 제한할 뿐 부모 삭제에 의한 GC까지 막지 않습니다.
+
+`templatePatch`는 `goTemplate: true`에서만 동작합니다. 3.5.2 구현은 Application 타입에 대한 Kubernetes strategic merge patch를 사용합니다. 병합 태그가 없는 Application spec의 배열(예: Helm valueFiles)은 교체되므로 Pod의 containers처럼 이름 기준으로 병합된다고 가정하면 안 됩니다. 값 없는 `spec:`(null)으로 기존 설정을 지우지 않도록 하고, `spec.project` 변경에는 사용하지 않습니다. 신뢰할 수 없는 문자열을 삽입할 경우 `toJson` 등으로 이스케이프합니다.
 
 ## 다음 단계
 

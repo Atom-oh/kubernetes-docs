@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CI dependencies and final reporting",
+    "locale": "en",
+    "output": "en-ops-14-tekton-pipelines-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "parallel",
+        "label": "Parallel execution",
+        "focus": [
+          "clone",
+          "test",
+          "lint"
+        ],
+        "note": "After git-clone, lint and unit-test declared with runAfter run at the same time."
+      },
+      {
+        "id": "converge",
+        "label": "Build, scan and finish",
+        "focus": [
+          "test",
+          "lint",
+          "build",
+          "scan",
+          "deploy"
+        ],
+        "note": "Publish a candidate after test/vet, then scan its digest. Deployment uses a separate promotion procedure."
+      },
+      {
+        "id": "finally",
+        "label": "finally Tasks",
+        "focus": [
+          "deploy",
+          "notify"
+        ],
+        "note": "Report after ordinary Tasks finish; cancellation, timeout or resolution errors can prevent execution."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clone",
+      "type": "backend",
+      "label": "checkout",
+      "sublabel": "fetch source",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "test",
+      "type": "backend",
+      "label": "go-test",
+      "sublabel": "test suite",
+      "pos": [
+        240,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "lint",
+      "type": "backend",
+      "label": "go-vet",
+      "sublabel": "static checks",
+      "pos": [
+        240,
+        360
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "build-image",
+      "sublabel": "publish candidate",
+      "pos": [
+        440,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "scan",
+      "type": "security",
+      "label": "scan-image",
+      "sublabel": "scan by digest",
+      "pos": [
+        650,
+        250
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "backend",
+      "label": "CI completion",
+      "sublabel": "check success status",
+      "pos": [
+        850,
+        250
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "notify",
+      "type": "backend",
+      "label": "report-status",
+      "sublabel": "run name / status",
+      "pos": [
+        1080,
+        140
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "CI work and completion",
+      "wraps": [
+        "clone",
+        "test",
+        "lint",
+        "build",
+        "scan",
+        "deploy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "finally Tasks",
+      "wraps": [
+        "notify"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clone-test",
+      "from": "clone",
+      "to": "test",
+      "label": "runAfter"
+    },
+    {
+      "id": "clone-lint",
+      "from": "clone",
+      "to": "lint"
+    },
+    {
+      "id": "test-build",
+      "from": "test",
+      "to": "build"
+    },
+    {
+      "id": "lint-build",
+      "from": "lint",
+      "to": "build"
+    },
+    {
+      "id": "build-scan",
+      "from": "build",
+      "to": "scan",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scan-deploy",
+      "from": "scan",
+      "to": "deploy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deploy-notify",
+      "from": "deploy",
+      "to": "notify",
+      "label": "finally attempt",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Dependencies",
+      "items": [
+        "Run vet/test in parallel after checkout",
+        "After both succeed: build → scan"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "finally",
+      "items": [
+        "Execution is not unconditional",
+        "Avoid image Results that may never have been produced"
+      ]
+    }
+  ]
+}

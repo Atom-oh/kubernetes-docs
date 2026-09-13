@@ -1,6 +1,6 @@
 # Traffic Management Quiz
 
-> **Supported Version**: Istio 1.28.0 **EKS Version**: 1.34 (Kubernetes 1.28+) **Last Updated**: February 23, 2026
+> **Reviewed Version**: Istio 1.31.0 **EKS Versions**: 1.34–1.36 **Last Updated**: September 11, 2026
 
 This quiz tests your understanding of Istio's traffic management features.
 
@@ -10,7 +10,10 @@ This quiz tests your understanding of Istio's traffic management features.
 
 Which statement about VirtualService is **correct**?
 
-A. It is a resource that replaces Kubernetes Service B. It can only define load balancing algorithms C. It defines routing rules and controls traffic D. It only operates in the Control Plane
+A. It is a resource that replaces Kubernetes Service\
+B. It can only define load balancing algorithms\
+C. It defines routing rules and controls traffic\
+D. It sends every application request through istiod
 
 <details>
 
@@ -30,12 +33,12 @@ VirtualService is a core Istio CRD that controls traffic by defining **routing r
   * Header-based routing
   * Weight-based traffic splitting
   * Timeout and Retry settings
-* D (X): VirtualService runs in Envoy in the Data Plane
+* D (X): istiod compiles the VirtualService API object; Envoy enforces the resulting routing configuration in the data plane
 
 **Example:**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -60,7 +63,7 @@ spec:
 **Reference:**
 
 * [Routing](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [VirtualService Concepts](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
+* [VirtualService Concepts](../../../service-mesh/istio/02-basic-concepts.md#1-virtualservice)
 
 </details>
 
@@ -70,7 +73,10 @@ spec:
 
 Which is **NOT** a function performed by DestinationRule?
 
-A. Defining subsets B. Configuring load balancing algorithms C. HTTP path-based routing D. Configuring Connection Pool
+A. Defining subsets\
+B. Configuring load balancing algorithms\
+C. HTTP path-based routing\
+D. Configuring Connection Pool
 
 <details>
 
@@ -87,7 +93,7 @@ HTTP path-based routing is the role of **VirtualService**.
 1. **Defining Subsets (A - O)**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -129,9 +135,13 @@ spec:
 
 ```yaml
 # Handled by VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
+metadata:
+  name: path-routing-example
 spec:
+  hosts:
+  - api-service
   http:
   - match:
     - uri:
@@ -153,8 +163,8 @@ spec:
 
 **Reference:**
 
-* [Load Balancing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md)
-* [Connection Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/08-connection-pool.md)
+* [Load Balancing](../../../service-mesh/istio/traffic-management/06-load-balancing.md)
+* [Connection Pool](../../../service-mesh/istio/traffic-management/07-circuit-breaker.md)
 
 </details>
 
@@ -165,7 +175,7 @@ spec:
 What is the traffic ratio between v1 and v2 in the following VirtualService configuration?
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -184,7 +194,10 @@ spec:
       weight: 20
 ```
 
-A. v1: 50%, v2: 50% B. v1: 80%, v2: 20% C. v1: 20%, v2: 80% D. v1: 100%, v2: 0%
+A. v1: 50%, v2: 50%\
+B. v1: 80%, v2: 20%\
+C. v1: 20%, v2: 80%\
+D. v1: 100%, v2: 0%
 
 <details>
 
@@ -226,27 +239,29 @@ Since the weight values are **v1: 80, v2: 20**, traffic is distributed as **80% 
 **Automated Canary with Argo Rollouts:**
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-spec:
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: reviews
-      steps:
-      - setWeight: 10
-      - pause: {duration: 2m}
-      - setWeight: 25
-      - pause: {duration: 2m}
-      - setWeight: 50
-      - pause: {duration: 2m}
+# Strategy fragment; merge into a complete Rollout with selector/template
+strategy:
+  canary:
+    trafficRouting:
+      istio:
+        virtualService:
+          name: reviews
+        destinationRule:
+          name: reviews
+          stableSubsetName: v1
+          canarySubsetName: v2
+    steps:
+    - setWeight: 10
+    - pause: {duration: 2m}
+    - setWeight: 25
+    - pause: {duration: 2m}
+    - setWeight: 50
+    - pause: {duration: 2m}
 ```
 
 **Reference:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Traffic Splitting](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)
 * [Argo Rollouts Integration](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
@@ -255,90 +270,41 @@ spec:
 
 ### Question 4: Gateway Purpose
 
-Which is **NOT** a primary role of Istio Gateway?
+Which is **NOT** a role of an Istio ingress Gateway configuration?
 
-A. Entry point for traffic from outside the cluster to inside B. TLS termination and certificate management C. mTLS encryption between services D. Load balancing of external traffic
+A. Define listener ports, protocols, and allowed hosts\
+B. Configure TLS termination using a certificate Secret\
+C. Automatically inject a proxy into every application Pod and secure all east-west traffic by itself\
+D. Bind ingress traffic to VirtualService routing
 
 <details>
-
 <summary>Show Answer</summary>
 
 **Answer: C**
 
-mTLS encryption between services is the role of **Sidecar Envoy** and **PeerAuthentication**.
-
-**Explanation:**
-
-**Main Roles of Gateway:**
-
-1. **Ingress/Egress Traffic Entry Point (A - O)**
+An Istio Gateway configures an existing gateway proxy. Workload enrollment and service-to-service mesh security require the sidecar or ambient data plane and its policies. Gateway proxies can themselves originate upstream mTLS, so “Gateway never uses mTLS” would also be incorrect. The Gateway does not issue certificates; `credentialName` references a Secret managed separately in the gateway workload namespace.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
+  namespace: istio-system
 spec:
   selector:
-    istio: ingressgateway  # Select Ingress Gateway Pod
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "*"
-```
-
-2. **TLS Termination (B - O)**
-
-```yaml
-spec:
+    istio: ingressgateway
   servers:
   - port:
       number: 443
       name: https
       protocol: HTTPS
+    hosts: [bookinfo.example.com]
     tls:
       mode: SIMPLE
-      credentialName: bookinfo-secret  # TLS certificate
-    hosts:
-    - bookinfo.example.com
+      credentialName: bookinfo-secret
 ```
 
-3. **External Traffic Load Balancing (D - O)**
-
-* Gateway integrates with Kubernetes LoadBalancer Service
-* Distributes external traffic into the cluster
-
-4. **Service-to-Service mTLS (C - X)**
-
-* This is the role of Sidecar Envoy:
-
-```yaml
-# Enable mTLS with PeerAuthentication
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-spec:
-  mtls:
-    mode: STRICT
-```
-
-**Gateway vs Sidecar Role:**
-
-| Function                     | Gateway | Sidecar Envoy |
-| ---------------------------- | ------- | ------------- |
-| External -> Internal traffic | Yes     | No            |
-| TLS termination              | Yes     | No            |
-| Service-to-service mTLS      | No      | Yes           |
-| Internal routing             | No      | Yes           |
-
-**Reference:**
-
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+[Gateway and VirtualService](../../../service-mesh/istio/traffic-management/01-gateway-virtualservice.md)
 
 </details>
 
@@ -349,7 +315,7 @@ spec:
 What does the following VirtualService configuration mean?
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -366,7 +332,10 @@ spec:
       perTryTimeout: 2s
 ```
 
-A. Retry up to 3 times after the original request, with each delivery limited to 2 seconds and the whole request limited to 10 seconds B. Retry up to 3 times within 2 seconds total, each attempt limited to 10 seconds C. Unlimited retries within 10 seconds total, each attempt limited to 2 seconds D. Fail after 10 seconds without retries
+A. Retry up to 3 times after the original request, with each delivery limited to 2 seconds and the whole request limited to 10 seconds\
+B. Retry up to 3 times within 2 seconds total, each attempt limited to 10 seconds\
+C. Unlimited retries within 10 seconds total, each attempt limited to 2 seconds\
+D. Fail after 10 seconds without retries
 
 <details>
 
@@ -386,6 +355,8 @@ retries:
   attempts: 3          # Up to 3 retries after the original request
   perTryTimeout: 2s    # Time limit for each delivery
 ```
+
+These timing examples assume a failure eligible under retryOn and omit backoff/processing overhead. A timeout does not imply every policy will retry it.
 
 **Execution Scenarios:**
 
@@ -431,7 +402,7 @@ retries:
 # Write requests: disable mesh retry
 - match:
   - method:
-      regex: "^(POST|PATCH)$"
+      regex: "^(POST|PUT|PATCH|DELETE)$"
   retries:
     attempts: 0
 ```
@@ -456,161 +427,130 @@ retries:
 
 ### Question 6: Argo Rollouts + Istio Canary Deployment
 
-Explain the process of implementing automated Canary deployment using Argo Rollouts and Istio together. Include **required resources** (Rollout, VirtualService, DestinationRule, AnalysisTemplate) and **automatic rollback conditions**.
+Describe a subset-based canary rollout with automatic metric gates, including resources, ordering, and abort conditions.
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer:**
+Use a Service, DestinationRule stable/canary subsets, a VirtualService route, AnalysisTemplates, and a complete Rollout. Argo updates route weights and subset pod-template hashes; it does not create the pre-referenced Istio resources. Host-level integration instead uses separate stable/canary Services. Named routes must match the Rollout’s explicit route list; a single route can omit that list.
 
-**Implementing Argo Rollouts + Istio Canary Deployment:**
+Use a fresh lab namespace with sidecar injection and a compatible Argo Rollouts controller/CLI (the audited guide uses v1.10.0). Add the pod scrape relabeling below to Prometheus and confirm canary traffic has `rollout_hash` and `reporter="destination"` labels. These gates measure the newest ReplicaSet rather than a diluted stable+canary average.
 
-***
+```yaml
+# Existing workload pod scrape job: relabel_configs fragment
+- source_labels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash]
+  target_label: rollout_hash
+```
 
-**1. Create Service (Basic Kubernetes Service)**
+Create the prerequisites first:
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: reviews
+  namespace: default
 spec:
   ports:
   - port: 9080
     name: http
   selector:
-    app: reviews  # Select all Pods from Rollout
-```
-
-***
-
-**2. Define DestinationRule (Subset Definition)**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+    app: reviews
+---
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-destrule
+  namespace: default
 spec:
   host: reviews
   subsets:
   - name: stable
-    labels: {}  # Managed automatically by Rollout
+    labels:
+      app: reviews
   - name: canary
-    labels: {}  # Managed automatically by Rollout
-```
-
-**Important**: Rollout automatically adds `rollouts-pod-template-hash` label to Pods and uses this label to distinguish subsets.
-
-***
-
-**3. Define VirtualService (Traffic Splitting)**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+    labels:
+      app: reviews
+---
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
+  namespace: default
 spec:
   hosts:
   - reviews
   http:
-  - name: primary  # Route name referenced by Rollout (required)
+  - name: primary
     route:
     - destination:
         host: reviews
         subset: stable
-      weight: 100  # Automatically modified by Rollout
+      weight: 100
     - destination:
         host: reviews
         subset: canary
-      weight: 0    # Automatically modified by Rollout
-```
-
-**Key Points**:
-
-* The `http[].name` field is required
-* Rollout only automatically updates the `weight` values in this VirtualService
-
-***
-
-**4. Define AnalysisTemplate (Automatic Rollback Conditions)**
-
-**Success Rate Analysis:**
-
-```yaml
+      weight: 0
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: success-rate
+  namespace: default
 spec:
   args:
   - name: service-name
-
+  - name: pod-template-hash
   metrics:
   - name: success-rate
     interval: 30s
-    count: 4  # 4 measurements (total 2 minutes)
-    successCondition: result >= 0.95  # 95% or higher success rate
-    failureLimit: 2  # Auto rollback after 2 failures
+    count: 4
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] >= 0.95
+    failureLimit: 0
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              response_code!~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}"
-            }[2m]
-          ))
-```
-
-**Latency Analysis:**
-
-```yaml
+        query: "sum(rate(\n  istio_requests_total{\n    destination_service_name=\"\
+          {{args.service-name}}\",\n    reporter=\"destination\",\n    rollout_hash=\"\
+          {{args.pod-template-hash}}\",\n    destination_workload_namespace=\"default\"\
+          ,\n    response_code!~\"5.*\"\n  }[2m]\n))\n/\nsum(rate(\n  istio_requests_total{\n\
+          \    destination_service_name=\"{{args.service-name}}\",\n    reporter=\"\
+          destination\",\n    rollout_hash=\"{{args.pod-template-hash}}\",\n    destination_workload_namespace=\"\
+          default\"\n  }[2m]\n))\n"
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: latency
+  namespace: default
 spec:
   args:
   - name: service-name
-
+  - name: pod-template-hash
   metrics:
   - name: latency-p95
     interval: 30s
     count: 4
-    successCondition: result <= 500  # P95 latency 500ms or less
-    failureLimit: 2
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] <= 500
+    failureLimit: 0
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
-        query: |
-          histogram_quantile(0.95,
-            sum(rate(
-              istio_request_duration_milliseconds_bucket{
-                destination_service_name="{{args.service-name}}"
-              }[2m]
-            )) by (le)
-          )
+        query: "histogram_quantile(0.95,\n  sum(rate(\n    istio_request_duration_milliseconds_bucket{\n\
+          \      destination_service_name=\"{{args.service-name}}\",\n    reporter=\"\
+          destination\",\n    rollout_hash=\"{{args.pod-template-hash}}\",\n     \
+          \ destination_workload_namespace=\"default\"\n    }[2m]\n  )) by (le)\n\
+          )\n"
 ```
 
-***
-
-**5. Define Rollout Resource (Canary Strategy)**
+Then create the Rollout:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: reviews
+  namespace: default
 spec:
   replicas: 5
   revisionHistoryLimit: 2
@@ -621,17 +561,22 @@ spec:
     metadata:
       labels:
         app: reviews
+        sidecar.istio.io/inject: 'true'
     spec:
       containers:
       - name: reviews
-        image: istio/examples-bookinfo-reviews-v2:1.17.0
+        image: docker.io/istio/examples-bookinfo-reviews-v2:1.20.3
         ports:
         - containerPort: 9080
-
-  # Canary deployment strategy
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 100m
+          limits:
+            memory: 128Mi
+            cpu: 200m
   strategy:
     canary:
-      # Traffic control via Istio VirtualService
       trafficRouting:
         istio:
           virtualService:
@@ -642,315 +587,115 @@ spec:
             name: reviews-destrule
             canarySubsetName: canary
             stableSubsetName: stable
-
-      # Define Canary stages
       steps:
-      - setWeight: 10    # 10% traffic to Canary
+      - setWeight: 10
       - pause:
           duration: 2m
-
-      - setWeight: 25    # 25% traffic to Canary
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 25
       - pause:
           duration: 2m
-
-      - setWeight: 50    # 50% traffic to Canary
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 50
       - pause:
           duration: 2m
-
-      - setWeight: 75    # 75% traffic to Canary
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 75
       - pause:
           duration: 2m
-
-      # Automatic metric analysis
-      analysis:
-        templates:
-        - templateName: success-rate
-        - templateName: latency
-        startingStep: 1
-        args:
-        - name: service-name
-          value: reviews
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
 ```
 
-***
-
-**6. Deployment Execution and Monitoring**
+The first deployment establishes the stable version; update the image to exercise canary stages. Each weighted stage has a finite inline analysis gate. With failureLimit 0, one failed measurement aborts the active rollout; missing/NaN data cannot pass. A successful gate advances to the next stage. Timing depends on traffic, scrape/analysis intervals and reconciliation, not a guaranteed few seconds.
 
 ```bash
-# Install Argo Rollouts
-kubectl create namespace argo-rollouts
-kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
-
-# Deploy resources
-kubectl apply -f service.yaml
-kubectl apply -f destination-rule.yaml
-kubectl apply -f virtual-service.yaml
-kubectl apply -f analysis-templates.yaml
-kubectl apply -f rollout.yaml
-
-# Deploy new version
-kubectl argo rollouts set image reviews \
-  reviews=istio/examples-bookinfo-reviews-v3:1.17.0
-
-# Monitor deployment status in real-time
 kubectl argo rollouts get rollout reviews --watch
-
-# Rollout dashboard
-kubectl argo rollouts dashboard
+kubectl get analysisruns
+kubectl argo rollouts set image reviews reviews=istio/examples-bookinfo-reviews-v3:1.20.3
+# Stop a failing active rollout; undo is a separate desired-template rollback
+kubectl argo rollouts abort reviews
 ```
 
-***
-
-**Automatic Rollback Scenarios:**
-
-**Scenario 1: Error rate > 5%**
-
-```
-10% Canary -> Analysis starts
-+- Measurement 1 (30s): 6% error rate -> Failure (1/2)
-+- Measurement 2 (30s): 7% error rate -> Failure (2/2)
-+- Auto rollback executed -> Stable 100%
-```
-
-**Scenario 2: Latency > 500ms**
-
-```
-25% Canary -> Analysis starts
-+- Measurement 1 (30s): P95 600ms -> Failure (1/2)
-+- Measurement 2 (30s): P95 550ms -> Failure (2/2)
-+- Auto rollback executed -> Stable 100%
-```
-
-**Scenario 3: All metrics normal**
-
-```
-10% Canary -> Analysis passed -> 25% Canary
-25% Canary -> Analysis passed -> 50% Canary
-50% Canary -> Analysis passed -> 75% Canary
-75% Canary -> Analysis passed -> 100% Canary
-```
-
-***
-
-**Key Benefits:**
-
-1. **Fully Automated**: Deployment progresses without human intervention
-2. **Instant Rollback**: Rollback within seconds after metric failure detection
-3. **Safe Deployment**: Automatic verification at each stage
-4. **Consistent Process**: Standardized deployment strategy
-
-**Reference:**
-
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
-* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+Allow configuration to propagate and verify healthy endpoints before shifting live traffic. Do not let another controller overwrite Argo-managed weights/hashes. See the [complete rollout guide](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md) for installation and execution prerequisites.
 
 </details>
 
 ***
 
-### Question 7: Blue/Green Deployment vs Canary Deployment
+### Question 7: Blue/Green vs Canary
 
-Compare the **differences** between Blue/Green deployment and Canary deployment, and explain the **pros and cons** and **use scenarios** for each.
+Compare traffic movement, resource needs, rollback, and suitable use cases.
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer:**
+| Aspect | Blue/Green | Canary |
+| --- | --- | --- |
+| Traffic | Preview first, then switch the active Service selector | Increase routed request weight in steps |
+| Validation | Pre- and post-promotion analysis | Inline/background analysis during progression |
+| Capacity | Often two full revisions during the transition; preview sizing can vary | Depends on replicas and scaling policy; retaining full stable capacity can approach two revisions |
+| Rollback | Switch back while the previous revision/capacity remains available | Abort the active rollout to stable; undo/redeploy after promotion as appropriate |
+| Main tradeoff | Simple production cutover, broad impact at promotion | Smaller exposure per stage, more routing/analysis coordination |
 
-**Blue/Green Deployment vs Canary Deployment Comparison:**
+Neither cutover is network-atomic: endpoint/proxy propagation and existing connections matter. Neither reverses database migrations or external side effects. Keep schemas and API contracts compatible during coexistence. Canary weight is not a stable user cohort; A/B tests need an explicit cohort key.
 
-***
-
-**1. Deployment Method Differences**
-
-**Blue/Green Deployment:**
-
-```
-Blue (current version) --+
-                         +--> [100% Traffic]
-Green (new version) -----+
-
-Stage 1: Blue 100% active
-Stage 2: Deploy and test Green (0% traffic)
-Stage 3: Switch traffic (Blue 0% -> Green 100%)
-Stage 4: Remove Blue
-```
-
-**Canary Deployment:**
-
-```
-Stable (current version) --> 90% -> 75% -> 50% -> 0%
-Canary (new version) -----> 10% -> 25% -> 50% -> 100%
-
-Gradually increase traffic
-```
-
-***
-
-**2. Detailed Comparison Table**
-
-| Item               | Blue/Green                           | Canary                                 |
-| ------------------ | ------------------------------------ | -------------------------------------- |
-| **Traffic Switch** | Instant 100% switch                  | Gradual increase (10% -> 100%)         |
-| **Rollback Speed** | Instant (single switch)              | Fast (from current stage only)         |
-| **Resource Usage** | 2x (Blue + Green)                    | 1x + small amount (Stable + Canary)    |
-| **Risk Level**     | Medium (all users at once)           | Low (starts with few users)            |
-| **Testing Period** | Sufficient testing before deployment | Gradual validation in production       |
-| **Complexity**     | Low                                  | Medium (requires metric analysis)      |
-| **User Impact**    | All users affected simultaneously    | Gradual impact starting with few users |
-
-***
-
-**3. Istio Implementation Examples**
-
-**Blue/Green Deployment (Argo Rollouts):**
+Blue/Green suits releases that can be extensively previewed and have enough temporary capacity. Canary suits progressive production validation when representative traffic and trustworthy metrics exist. Do not choose canary solely on an assumed “1x plus a little” cost: inspect its scaling settings, including optional dynamicStableScale.
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: myapp
-spec:
-  replicas: 5
-  strategy:
-    blueGreen:
-      activeService: myapp-active    # Blue (production)
-      previewService: myapp-preview  # Green (test)
-      autoPromotionEnabled: false    # Manual approval
-      scaleDownDelaySeconds: 30      # Remove previous version 30s after Green -> Blue switch
-
-      # Pre-promotion testing
-      prePromotionAnalysis:
-        templates:
-        - templateName: smoke-tests
-
-      # Post-promotion validation
-      postPromotionAnalysis:
-        templates:
-        - templateName: performance-tests
+# Alternative strategy fragment for a complete Rollout
+strategy:
+  blueGreen:
+    activeService: myapp-active
+    previewService: myapp-preview
+    autoPromotionEnabled: false
+    scaleDownDelaySeconds: 600
+    prePromotionAnalysis:
+      templates:
+      - templateName: smoke-tests
+    postPromotionAnalysis:
+      templates:
+      - templateName: post-promotion-tests
 ```
 
-**Canary Deployment (Argo Rollouts):**
+Create the Services and matching AnalysisTemplates with their required arguments before use. Choose retention to cover post-promotion analysis and rollback needs. A hybrid progression is a designed workflow; changing a strategy field mid-rollout is not an automatic canary-to-blue/green conversion.
 
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: myapp
-spec:
-  replicas: 5
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: myapp-vsvc
-      steps:
-      - setWeight: 10
-      - pause: {duration: 2m}
-      - analysis:
-          templates:
-          - templateName: success-rate
-      - setWeight: 25
-      - pause: {duration: 2m}
-      - analysis:
-          templates:
-          - templateName: success-rate
-      - setWeight: 50
-      - pause: {duration: 2m}
-      - setWeight: 100
-```
-
-***
-
-**4. Pros and Cons Comparison**
-
-**Blue/Green Pros:**
-
-* Simple structure (only Blue <-> Green switch)
-* Instant rollback possible (switch flip)
-* Sufficient testing possible before deployment
-* Predictable behavior
-
-**Blue/Green Cons:**
-
-* Requires 2x resources
-* All users affected simultaneously
-* Complex database migrations
-* No gradual validation
-
-**Canary Pros:**
-
-* Gradual validation starting with few users
-* Resource efficient (1x + small amount)
-* Real validation in production environment
-* Automatic rollback possible (metric-based)
-
-**Canary Cons:**
-
-* Complex configuration (metrics, analysis)
-* Monitoring required
-* Longer deployment time
-* Version coexistence period exists
-
-***
-
-**5. Use Scenarios**
-
-**Blue/Green Recommended Scenarios:**
-
-1. **Important releases**: Fast switch after sufficient testing
-2. **No database changes**: When there are no schema changes
-3. **Need instant rollback**: When fast recovery is needed on issues
-4. **Sufficient resources**: When 2x resources can be afforded
-5. **Predictable changes**: When pre-testing is sufficient for verification
-
-**Examples:**
-
-```
-- Major feature releases
-- Complete UI redesign
-- API version upgrades
-- Marketing campaign integration (switch at specific time)
-```
-
-**Canary Recommended Scenarios:**
-
-1. **Experimental features**: Test with few users first
-2. **Resource constraints**: When 2x resources unavailable
-3. **Gradual validation**: Validation with real data in production
-4. **Automated deployment**: Automatic deployment in CI/CD
-5. **Microservices**: When service dependencies are complex
-
-**Examples:**
-
-```
-- A/B testing
-- Performance optimization
-- Bug fixes
-- Minor feature additions
-- Daily deployment (Continuous Deployment)
-```
-
-***
-
-**6. Hybrid Approach**
-
-In practice, you can combine both strategies:
-
-```yaml
-# Stage 1: Gradual validation with Canary
-10% -> 25% -> 50%
-
-# Stage 2: Final switch with Blue/Green
-50% -> 100% (instant switch)
-```
-
-**Reference:**
-
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
-* [Blue/Green Deployment](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment)
+[Deployment strategies and examples](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)
 
 </details>
 
@@ -982,7 +727,7 @@ Traffic mirroring is a technique that duplicates production traffic and sends it
 
 * Users only receive v1's response
 * v2's response is discarded by Envoy
-* v2's errors don't affect users
+* v2 responses are not returned to the client, but shared-resource contention and write side effects can still affect users
 
 ***
 
@@ -991,7 +736,7 @@ Traffic mirroring is a technique that duplicates production traffic and sends it
 **Basic Mirroring (100%):**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -1093,9 +838,9 @@ Purpose: Verify that bug fix actually works
 ```
 Purpose: Pre-populate new version's cache
 
-1. Warm cache via mirroring before v2 deployment
+1. Deploy v2, then warm its cache with mirror traffic before cutover
 2. Once v2's cache is sufficiently populated
-3. No cold start when switching to v2
+3. Warmup can reduce cache misses; it does not guarantee no cold start
 ```
 
 ***
@@ -1150,12 +895,12 @@ Example:
 - v2: 1000 RPS (mirror)
 - Total load: 2000 RPS
 
-Solution: Set mirrorPercentage to 50% or less
+Choose the percentage from shadow capacity and the test hypothesis; 50% is not a universal safe limit
 ```
 
 **Warning - Watch for Side Effects:**
 
-```yaml
+```text
 # Don't mirror write operations!
 
 # Bad example
@@ -1170,9 +915,8 @@ GET /api/orders   # Mirror only read-only operations
 ```
 Mirroring increases resources and costs.
 
-- 2x computing resources
-- 2x network traffic
-- 2x database queries
+- 100% mirroring duplicates request volume on that route
+- CPU, response traffic, and database cost depend on workload behavior
 
 Solution: Mirror only for short periods (1-2 days)
 ```
@@ -1181,7 +925,7 @@ Solution: Mirror only for short periods (1-2 days)
 
 ```
 Mirror traffic responses are discarded, so
-you cannot validate response content.
+Istio does not compare response content. Application instrumentation or a dedicated shadow comparison system can validate correctness separately.
 
 Can validate:
 - Error rate
@@ -1189,15 +933,14 @@ Can validate:
 - Resource usage
 
 Cannot validate:
-- Response data accuracy
-- Business logic verification
+- Response/business correctness requires additional validation tooling
 ```
 
 ***
 
 **6. Best Practices**
 
-```yaml
+```text
 # Good examples
 1. Mirror only read-only APIs
 2. mirrorPercentage: 50% (reduce load)
@@ -1206,313 +949,43 @@ Cannot validate:
 
 # Bad examples
 1. Mirroring write operations (duplicate data)
-2. mirrorPercentage: 100% (overload)
+2. mirrorPercentage: 100% without capacity planning
 3. Long-term mirroring (cost increase)
 4. Manual validation (slow)
 ```
 
 **Reference:**
 
-* [Traffic Mirroring](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/04-traffic-mirroring.md)
+* [Traffic Mirroring](../../../service-mesh/istio/traffic-management/09-traffic-mirror.md)
 
 </details>
 
 ***
 
-### Question 9: Locality Load Balancing (Zone Aware Routing)
+### Question 9: Locality and Cross-AZ Costs
 
-Explain how to use Istio's Locality Load Balancing to **reduce cross-AZ costs** in AWS EKS. Include configuration examples and **estimated cost savings**.
+Explain locality routing on EKS, the failover requirements, and how to estimate savings from measured traffic.
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer:**
-
-**Locality Load Balancing Concept:**
-
-Locality Load Balancing is a feature that **preferentially routes to services within the same Availability Zone (AZ)** to reduce network latency and cross-AZ costs.
-
-***
-
-**1. Cross-AZ Costs in AWS EKS**
-
-**Cost Structure:**
-
-```
-Same AZ traffic: Free
-Cross-AZ traffic: $0.01-0.02 per GB
-Cross-Region traffic: $0.02-0.09 per GB
-```
-
-**Example Calculation:**
-
-```
-Service A (us-east-1a) -> Service B (us-east-1b)
-- Monthly traffic: 1TB = 1000GB
-- Cross-AZ cost: 1000GB x $0.01 = $10/month
-
-If 80% traffic is routed to same AZ:
-- Same AZ: 800GB x $0 = $0
-- Cross-AZ: 200GB x $0.01 = $2/month
-- Savings: $8/month (80%)
-```
-
-***
-
-**2. EKS Pod Topology Labels**
-
-EKS nodes automatically have topology labels set:
-
-```yaml
-# EKS node labels (automatic)
-topology.kubernetes.io/region: us-east-1
-topology.kubernetes.io/zone: us-east-1a
-
-# Pods inherit node labels
-```
-
-***
-
-**3. Locality Load Balancing Configuration**
-
-**Basic Configuration (Same AZ Priority):**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        # 100% routing to same AZ if Pods exist there
-        # Automatic failover to other AZ if not
-```
-
-**Advanced Configuration (Weighted Distribution):**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        distribute:
-        # Traffic originating from us-east-1a
-        - from: us-east-1/us-east-1a/*
-          to:
-            "us-east-1/us-east-1a/*": 80  # Same AZ 80%
-            "us-east-1/us-east-1b/*": 20  # Other AZ 20% (for failover)
-
-        # Traffic originating from us-east-1b
-        - from: us-east-1/us-east-1b/*
-          to:
-            "us-east-1/us-east-1b/*": 80  # Same AZ 80%
-            "us-east-1/us-east-1a/*": 20  # Other AZ 20% (for failover)
-```
-
-**Failover Policy:**
-
-```yaml
-spec:
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        failover:
-        # On us-east-1a failure, route to us-east-1b
-        - from: us-east-1/us-east-1a
-          to: us-east-1/us-east-1b
-
-        # On us-east-1 complete failure, route to us-west-2
-        - from: us-east-1
-          to: us-west-2
-```
-
-***
-
-**4. Combining with Outlier Detection**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  trafficPolicy:
-    # Locality Load Balancing
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-
-    # Outlier Detection (exclude unhealthy instances)
-    outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
-      baseEjectionTime: 30s
-      maxEjectionPercent: 50
-```
-
-**Behavior:**
-
-```
-1. Prioritize Pods in same AZ (us-east-1a)
-2. Exclude that Pod after 5 consecutive failures
-3. Automatic switch to healthy Pod in other AZ (us-east-1b)
-4. Retry excluded Pod after 30 seconds
-```
-
-***
-
-**5. Cost Savings Calculation**
-
-**Scenario: Large-scale Microservices Architecture**
-
-```
-Assumptions:
-- Number of services: 20
-- Monthly traffic between each service: 500GB
-- Total monthly traffic: 20 x 20 x 500GB = 200TB
-- Cross-AZ ratio (without Locality LB): 70%
-- Cross-AZ ratio (with Locality LB): 20%
-```
-
-**Without Locality LB:**
-
-```
-Cross-AZ traffic: 200TB x 70% = 140TB
-Cost: 140,000GB x $0.01 = $1,400/month
-```
-
-**With Locality LB:**
-
-```
-Cross-AZ traffic: 200TB x 20% = 40TB
-Cost: 40,000GB x $0.01 = $400/month
-
-Savings: $1,400 - $400 = $1,000/month (71% savings)
-Annual savings: $1,000 x 12 = $12,000/year
-```
-
-***
-
-**6. Performance Improvement**
-
-**Latency Improvement:**
-
-```
-Same AZ communication: ~1ms
-Cross-AZ communication: ~2-3ms
-
-With Locality LB:
-- 30-50% reduction in average latency
-- 40-60% reduction in P99 latency
-```
-
-**Actual Measurement Example:**
+Istiod derives locality from node topology; Pods do not automatically inherit node labels. Inspect Nodes and proxy endpoint locality:
 
 ```bash
-# us-east-1a -> us-east-1a (same AZ)
-$ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
-0.001s
-
-# us-east-1a -> us-east-1b (cross-AZ)
-$ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
-0.003s
+kubectl get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
+istioctl proxy-config endpoints <pod-name> -o json
 ```
 
-***
-
-**7. Monitoring**
-
-**Prometheus Queries:**
-
-```promql
-# Traffic distribution by Locality
-sum(rate(
-  istio_requests_total[5m]
-)) by (
-  source_workload_namespace,
-  destination_workload_namespace,
-  source_canonical_service,
-  destination_canonical_service
-)
-
-# Cross-AZ traffic ratio
-sum(rate(istio_requests_total{
-  source_cluster="us-east-1a",
-  destination_cluster!="us-east-1a"
-}[5m]))
-/
-sum(rate(istio_requests_total[5m]))
-```
-
-**Grafana Dashboard:**
+A weighted-distribution example is:
 
 ```yaml
-Panel 1: Request count by Locality (us-east-1a, us-east-1b, us-east-1c)
-Panel 2: Cross-AZ traffic ratio (target: <20%)
-Panel 3: Latency (same AZ vs cross-AZ)
-Panel 4: Estimated cost (cross-AZ traffic x $0.01/GB)
-```
-
-***
-
-**8. Cautions**
-
-**Warning - Unbalanced Load:**
-
-```
-If all traffic concentrates on one AZ, overload can occur
-
-Solutions:
-- Deploy sufficient replicas in each AZ
-- Configure HPA (Horizontal Pod Autoscaler)
-- Ensure minimum replicas with PodDisruptionBudget
-```
-
-**Warning - AZ Failure:**
-
-```
-If entire AZ fails, traffic moves to other AZs
-
-Failover policy configuration required:
-- from: us-east-1/us-east-1a
-  to: us-east-1/us-east-1b
-```
-
-**Warning - Cold Start:**
-
-```
-On failover, Pods in other AZ may be in cold start state
-
-Solutions:
-- Maintain at least 1 replica in each AZ
-- Verify ready state with Readiness Probe
-```
-
-***
-
-**9. Best Practices**
-
-```yaml
-# Recommended configuration
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: production-service
+  name: reviews-locality
 spec:
-  host: production-service
+  host: reviews
   trafficPolicy:
     loadBalancer:
       localityLbSetting:
@@ -1520,26 +993,34 @@ spec:
         distribute:
         - from: us-east-1/us-east-1a/*
           to:
-            "us-east-1/us-east-1a/*": 80  # Cost savings
-            "us-east-1/us-east-1b/*": 15  # Failover
-            "us-east-1/us-east-1c/*": 5   # Additional backup
-
+            "us-east-1/us-east-1a/*": 80
+            "us-east-1/us-east-1b/*": 20
+        - from: us-east-1/us-east-1b/*
+          to:
+            "us-east-1/us-east-1b/*": 80
+            "us-east-1/us-east-1a/*": 20
     outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
+      consecutive5xxErrors: 5
+      interval: 10s
       baseEjectionTime: 30s
-
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
 ```
 
-**Reference:**
+The remote 20% is active traffic, not idle failover capacity. Explicit `failover` is an alternative to `distribute`, and its from/to values are **regions**, for example us-east-1 to us-west-2; they are not region/zone paths. Zone failover uses endpoint locality/health. Provide healthy capacity in other AZs and verify ejection/panic behavior. PDB limits voluntary disruption; it neither creates replicas nor prevents AZ failure.
 
-* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-* [AWS EKS Cost Optimization](../../../service-mesh/istio/best-practices.md#cost-optimization)
+**Hypothetical arithmetic, not an AWS price quote:** assume 200,000 billable GB/month, cross-AZ share falling from 70% to 20%, and an effective rate of $0.01 per billable GB for the measured path.
+
+| | Before | After |
+| --- | ---: | ---: |
+| Cross-AZ GB | 140,000 | 40,000 |
+| Modeled monthly charge | $1,400 | $400 |
+
+Modeled savings are $1,000/month (71.4%) or $12,000/year. Use actual billing-path rates, directions, load-balancer/NAT/service charges, and measured bytes; do not derive traffic by multiplying service count by itself. Current rates depend on region and service/path, and same-AZ traffic is not universally free of every processing charge.
+
+`source_cluster`/`destination_cluster` are cluster IDs, not AZs. Standard Istio metrics do not automatically provide every source/destination AZ label. Use explicitly configured topology telemetry or VPC Flow Logs with time-correct endpoint/AZ mapping and billing data. Measure latency under controlled traffic; no fixed 30–60% improvement is guaranteed.
+
+- [AWS EC2 transfer pricing](https://aws.amazon.com/ec2/pricing/on-demand/)
+- [VPC Flow Log fields](https://docs.aws.amazon.com/vpc/latest/userguide/flow-log-records.html)
+- [Locality guide](../../../service-mesh/istio/traffic-management/06-load-balancing.md)
 
 </details>
 
@@ -1547,141 +1028,80 @@ spec:
 
 ### Question 10: Gateway TLS Configuration
 
-Explain how to configure **TLS termination** and set up **HTTPS redirect** in Istio Gateway. Include both cases: using ACM (AWS Certificate Manager) certificates and using self-signed certificates.
+Explain TLS termination at Istio versus ACM TLS termination at an NLB, including HTTP redirects and certificate renewal.
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer:**
+Choose one termination design. Assume the gateway workload is in istio-system with istio=ingressgateway labels, matching Service ports, and an installed AWS Load Balancer Controller. Merge Service changes through its owning installer. The NLB certificate ARN and the Istio credentialName are different objects.
 
-**Istio Gateway TLS Configuration:**
+**1. TLS at Istio**
 
-***
-
-**1. Using Self-Signed Certificates (Kubernetes Secret)**
-
-**Step 1: Generate TLS Certificate**
+Use TCP passthrough on the NLB. For a local test, generate a certificate with a DNS SAN and explicitly trust it in the client. Replace example hostnames with a domain you control:
 
 ```bash
-# Generate self-signed certificate (for testing)
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout bookinfo.key \
-  -out bookinfo.crt \
-  -subj "/CN=bookinfo.example.com"
-
-# Or use Let's Encrypt certificate
-certbot certonly --standalone -d bookinfo.example.com
+  -keyout bookinfo.key -out bookinfo.crt \
+  -subj "/CN=bookinfo.example.com" \
+  -addext "subjectAltName=DNS:bookinfo.example.com"
+kubectl create secret tls bookinfo-secret -n istio-system \
+  --key=bookinfo.key --cert=bookinfo.crt
 ```
-
-**Step 2: Create Kubernetes Secret**
-
-```bash
-# Create Secret for Istio to use
-kubectl create -n istio-system secret tls bookinfo-secret \
-  --key=bookinfo.key \
-  --cert=bookinfo.crt
-
-# Verify Secret
-kubectl get secret bookinfo-secret -n istio-system
-```
-
-**Step 3: Configure Gateway (HTTPS + HTTP -> HTTPS Redirect)**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
-  namespace: default
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
   servers:
-  # HTTPS (port 443)
   - port:
       number: 443
       name: https
       protocol: HTTPS
+    hosts: [bookinfo.example.com]
     tls:
-      mode: SIMPLE  # One-way TLS (server certificate only)
-      credentialName: bookinfo-secret  # Kubernetes Secret name
-    hosts:
-    - bookinfo.example.com
-
-  # HTTP (port 80) - Redirect to HTTPS
+      mode: SIMPLE
+      credentialName: bookinfo-secret
   - port:
       number: 80
       name: http
       protocol: HTTP
-    hosts:
-    - bookinfo.example.com
+    hosts: [bookinfo.example.com]
     tls:
-      httpsRedirect: true  # HTTP -> HTTPS redirect
-```
-
-**Step 4: Connect VirtualService**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+      httpsRedirect: true
+---
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: bookinfo-vs
   namespace: default
 spec:
-  hosts:
-  - bookinfo.example.com
-  gateways:
-  - bookinfo-gateway
+  hosts: [bookinfo.example.com]
+  gateways: [istio-system/bookinfo-gateway]
   http:
-  - match:
-    - uri:
-        prefix: /productpage
-    route:
+  - route:
     - destination:
         host: productpage
         port:
           number: 9080
-    timeout: 10s
-    retries:
-      attempts: 3
-      perTryTimeout: 2s
 ```
-
-**Step 5: Test**
 
 ```bash
-# HTTPS access
-curl -v https://bookinfo.example.com/productpage
-
-# HTTP access -> HTTPS redirect verification
-curl -v http://bookinfo.example.com/productpage
-# Output:
-# HTTP/1.1 301 Moved Permanently
-# location: https://bookinfo.example.com/productpage
+# INGRESS_HOST is the actual LB hostname; preserve the certificate hostname/SNI
+curl --cacert bookinfo.crt \
+  --connect-to "bookinfo.example.com:443:${INGRESS_HOST}:443" \
+  https://bookinfo.example.com/productpage
+curl -I --connect-to "bookinfo.example.com:80:${INGRESS_HOST}:80" \
+  http://bookinfo.example.com/productpage
 ```
 
-***
+**2. ACM termination at NLB**
 
-**2. Using AWS ACM Certificates (NLB Annotation)**
-
-In AWS EKS, the recommended approach is TLS termination at NLB with ACM certificates.
-
-**Step 1: Issue ACM Certificate**
-
-```bash
-# Issue ACM certificate via AWS Console or CLI
-aws acm request-certificate \
-  --domain-name bookinfo.example.com \
-  --validation-method DNS \
-  --region us-east-1
-
-# Get ARN
-aws acm list-certificates --region us-east-1
-# Output: arn:aws:acm:us-east-1:123456789012:certificate/abc123
-```
-
-**Step 2: Modify Istio Ingress Gateway Service**
+Use an ISSUED, DNS-validated ACM certificate in the NLB’s region. Requesting a certificate alone does not finish validation. NLB is a transport-layer load balancer and does not perform HTTP redirects; the SSL negotiation policy only selects TLS versions/ciphers. Send decrypted port-443 traffic to a different gateway target port from the HTTP-redirect listener to avoid a redirect loop:
 
 ```yaml
 apiVersion: v1
@@ -1690,69 +1110,68 @@ metadata:
   name: istio-ingressgateway
   namespace: istio-system
   annotations:
-    # Use NLB
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-
-    # TLS termination (ACM certificate)
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:123456789012:certificate/abc123"
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-east-1:123456789012:certificate/replace-with-issued-certificate
     service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-
-    # HTTP -> HTTPS redirect (NLB level)
-    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS-1-2-2017-01"
-
-    # Cross-AZ load balancing
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
 spec:
   type: LoadBalancer
   selector:
     istio: ingressgateway
     app: istio-ingressgateway
   ports:
-  # HTTP (80) - NLB redirects to HTTPS(443)
   - name: http
     port: 80
     targetPort: 8080
-    protocol: TCP
-
-  # HTTPS (443) - NLB terminates TLS and forwards to 8443
   - name: https
     port: 443
-    targetPort: 8443
-    protocol: TCP
-```
-
-**Step 3: Configure Gateway (TLS Passthrough)**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+    targetPort: 8081
+---
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
   servers:
-  # Receive as HTTP since NLB terminated TLS
   - port:
-      number: 8443
-      name: http
-      protocol: HTTP  # NLB already terminated TLS
-    hosts:
-    - bookinfo.example.com
+      number: 80
+      name: http-redirect
+      protocol: HTTP
+    hosts: [bookinfo.example.com]
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: http-after-nlb
+      protocol: HTTP
+    hosts: [bookinfo.example.com]
 ```
 
-***
+This alternative replaces the prior TLS Gateway and uses the same VirtualService binding. The NLB-to-gateway leg is plaintext in this example. To encrypt that leg, configure a separate TLS backend design, not a mismatched SIMPLE/passthrough listener.
 
-**3. Mutual TLS (mTLS) - Client Authentication**
+**3. Client-certificate authentication at Istio**
 
-When client must also present a certificate:
+For an Istio MUTUAL listener, use a Secret containing server credentials and the trusted client CA; do not mix credentialName with a separate CA file path:
+
+```bash
+kubectl create secret generic server-cert-secret -n istio-system \
+  --from-file=tls.crt=server.crt --from-file=tls.key=server.key \
+  --from-file=ca.crt=client-ca.crt
+```
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: secure-gateway
+  name: mutual-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -1761,157 +1180,31 @@ spec:
       number: 443
       name: https-mutual
       protocol: HTTPS
+    hosts: [secure.example.com]
     tls:
-      mode: MUTUAL  # Two-way TLS
-      credentialName: server-cert-secret  # Server certificate
-      caCertificates: /etc/istio/client-ca/ca-chain.crt  # Client CA
-    hosts:
-    - secure.example.com
+      mode: MUTUAL
+      credentialName: server-cert-secret
+      minProtocolVersion: TLSV1_2
 ```
 
-**Connect with Client Certificate:**
-
 ```bash
-curl --cert client.crt --key client.key \
+curl --cacert server-ca.crt --cert client.crt --key client.key \
   https://secure.example.com/api
 ```
 
-***
+Configure a matching VirtualService/DNS for that host. A wildcard SAN such as *.example.com covers one leftmost label (api.example.com), not example.com or x.api.example.com. Set SANs explicitly. The cipherSuites field configures pre-TLS-1.3 suites; it does not select TLS 1.3 cipher suites.
 
-**4. Wildcard Certificates**
+**4. Certificate renewal**
 
-Use single certificate for multiple subdomains:
-
-```bash
-# Generate wildcard certificate
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout wildcard.key \
-  -out wildcard.crt \
-  -subj "/CN=*.example.com"
-
-# Create Secret
-kubectl create -n istio-system secret tls wildcard-secret \
-  --key=wildcard.key \
-  --cert=wildcard.crt
-```
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: wildcard-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: wildcard-secret
-    hosts:
-    - "*.example.com"  # Allow all subdomains
-```
-
-**Route by Subdomain with VirtualService:**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: multi-subdomain
-spec:
-  hosts:
-  - api.example.com
-  - web.example.com
-  - admin.example.com
-  gateways:
-  - wildcard-gateway
-  http:
-  - match:
-    - uri:
-        prefix: /api
-      authority:
-        exact: api.example.com
-    route:
-    - destination:
-        host: api-service
-
-  - match:
-    - authority:
-        exact: web.example.com
-    route:
-    - destination:
-        host: web-service
-
-  - match:
-    - authority:
-        exact: admin.example.com
-    route:
-    - destination:
-        host: admin-service
-```
-
-***
-
-**5. TLS Version and Cipher Suite Settings**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: secure-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: bookinfo-secret
-      minProtocolVersion: TLSV1_2  # Allow only TLS 1.2 and above
-      maxProtocolVersion: TLSV1_3
-      cipherSuites:
-      - ECDHE-ECDSA-AES256-GCM-SHA384
-      - ECDHE-RSA-AES256-GCM-SHA384
-      - ECDHE-ECDSA-AES128-GCM-SHA256
-    hosts:
-    - bookinfo.example.com
-```
-
-***
-
-**6. Automatic Certificate Renewal (cert-manager)**
+cert-manager 1.21 supports Kubernetes 1.33–1.36; recheck its release matrix before installation or upgrade. If it is not already managed in the cluster, the audited release is v1.21.1:
 
 ```bash
-# Install cert-manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.1/cert-manager.yaml
+```
 
-# Create Let's Encrypt Issuer
-kubectl apply -f - <<EOF
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@example.com
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-    - http01:
-        ingress:
-          class: istio
-EOF
+Configure a Ready Issuer/ClusterIssuer with a challenge solver that matches your real ingress/Gateway API/DNS setup. An ingress class string alone does not ensure ACME challenges are reachable. Then create the Certificate in the gateway workload namespace:
 
-# Create Certificate resource (auto-renewal)
-kubectl apply -f - <<EOF
+```yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -1920,63 +1213,20 @@ metadata:
 spec:
   secretName: bookinfo-secret
   issuerRef:
-    name: letsencrypt-prod
+    name: configured-issuer
     kind: ClusterIssuer
-  dnsNames:
-  - bookinfo.example.com
-EOF
+  dnsNames: [bookinfo.example.com]
 ```
 
-***
-
-**7. Best Practices**
-
-```yaml
-# Recommended configuration
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: production-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  # HTTPS (recommended)
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: prod-tls-secret
-      minProtocolVersion: TLSV1_2  # Security hardening
-    hosts:
-    - "*.example.com"
-
-  # HTTP -> HTTPS redirect
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "*.example.com"
-    tls:
-      httpsRedirect: true
+```bash
+kubectl wait --for=condition=Ready certificate/bookinfo-cert -n istio-system --timeout=120s
 ```
 
-**Notes:**
+Istio watches the resulting Secret; renewal is performed by cert-manager. Avoid competing manual Secret ownership. Public ingress needs certificates trusted by its clients; the self-signed example above is a lab trust setup, while internal PKI requires deliberate trust distribution and lifecycle management.
 
-* Use TLS 1.2 or higher
-* Configure strong Cipher Suites
-* Auto-renew certificates (cert-manager)
-* Enable HTTP -> HTTPS redirect
-* Do not use self-signed certificates in production
-* Do not use TLS 1.0/1.1
-
-**Reference:**
-
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [TLS Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration)
+- [Istio cert-manager integration](https://istio.io/latest/docs/ops/integrations/certmanager/)
+- [cert-manager supported releases](https://cert-manager.io/docs/releases/)
+- [AWS integration examples](../../../service-mesh/istio/04-aws-integration.md)
 
 </details>
 
@@ -2000,6 +1250,21 @@ spec:
 
 * [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Gateway](../../../service-mesh/istio/traffic-management/01-gateway-virtualservice.md)
+* [Traffic Splitting](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
+* [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+* [Primary reference 2](https://istio.io/latest/docs/reference/config/networking/gateway/)
+* [Primary reference 3](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+* [Primary reference 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md)
+* [Primary reference 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md)
+* [Primary reference 6](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md)
+* [Primary reference 7](https://aws.amazon.com/ec2/pricing/on-demand/)
+* [Primary reference 8](https://docs.aws.amazon.com/vpc/latest/userguide/flow-log-records.html)
+* [Primary reference 9](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+* [Primary reference 10](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
+* [Primary reference 11](https://cert-manager.io/docs/releases/)
+* [Primary reference 12](https://istio.io/latest/docs/ops/integrations/certmanager/)
+* [Primary reference 13](https://cert-manager.io/docs/usage/certificate/)
+* [Primary reference 14](https://www.rfc-editor.org/rfc/rfc9525.html)

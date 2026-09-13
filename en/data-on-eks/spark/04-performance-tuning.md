@@ -1,219 +1,395 @@
 # Part 4: Performance and Cost Tuning
 
-> **Last Updated**: July 15, 2026
+> **Review baseline**: September 12, 2026 · upstream Spark 4.2.0 · Karpenter 1.14
 
-Part 1 covered how `spark-submit` schedules driver and executor pods directly against the Kubernetes API, and introduced Dynamic Resource Allocation (DRA) and graceful decommissioning as the two mechanisms that make Spark on Kubernetes resilient to pods disappearing mid-job. This document builds on both: it looks at what node types and local storage actually hold up under shuffle-heavy Spark workloads, how to combine Spot Instances with decommissioning without losing job progress, and how Karpenter's node-level autoscaling and Spark's pod-level DRA have to be tuned as two separate but interacting control loops rather than one.
+## Scope and measurement
 
-## Lab Environment Setup
+This chapter uses Part 1's direct spark-submit path. Spark 4.2 requires Kubernetes
+1.34+; also check EKS, kubectl and Karpenter compatibility. Part 2's operators and
+Part 3's EMR have different submission and pod-customization paths. Do not copy
+all settings across them without review. Values below are small starting points,
+not measured performance optima.
 
-To follow along with the examples in this document, you will need:
+**metrics-server is not required for Karpenter's pending-pod provisioning.**
+Karpenter uses pod requests and scheduling constraints. metrics-server helps with
+usage observation and consumers such as kubectl top/HPA; it does not supply Spark
+task backlog or directly provision EC2.
 
-### Required Tools
+Measure stage/task time, spill, shuffle fetch wait, skew, GC and executor loss in
+Spark UI/event logs alongside node CPU, memory, disk and network limits. Confirm
+the bottleneck before assuming R-series or NVMe is always faster. Review AQE,
+partitioning, join strategy and data format, changing one factor at a time.
 
-* kubectl v1.30 or later
-* An EKS cluster with [Karpenter](../../autoscaling/02-karpenter.md) installed and at least one `EC2NodeClass`/`NodePool` pair configured
-* Apache Spark 4.2 distributed locally (for `spark-submit` against the cluster)
-* metrics-server or the Kubernetes Metrics API enabled, so pending-pod-driven scaling behaves as described
+## 1. Choose nodes and instance storage
 
-## 1. Node Type Selection for Shuffle-Heavy Jobs
+Older R5d/R5ad/R5dn examples are a subset of available choices. Compare M/C/R/I
+families according to CPU, memory, disk and network demands, current AZ capacity
+and total cost. R-series is not universally best for shuffle, and C-series is not
+inherently unsuitable for Spark.
 
-AWS's own best-practices guidance for running Spark on EKS recommends **R-series instances with local NVMe instance store** — specifically R5d, R5ad, and R5dn — for shuffle-heavy workloads. The reasoning is straightforward: shuffle stages are usually memory- and disk-I/O-bound rather than CPU-bound, so an instance family that pairs generous memory-per-vCPU with fast local disk fits the workload better than a general-purpose or compute-optimized family.
+Graviton is a valid Spark evaluation option. A tested multi-architecture image may
+already be available; building your own image is not always necessary. Check arm64
+support for JNI, codecs, BLAS, Python wheels and custom plugins. The example below
+selects amd64 for one consistent path, without claiming it is faster.
+
+**Nitro/NVMe does not identify a disk as instance store.** EBS is also exposed as
+NVMe on Nitro. An unmounted disk is not necessarily empty or safe to format.
+The old loop that formatted unmounted NVMe devices could misidentify EBS/root
+devices and has been removed.
+
+## 2. Managed scratch storage on AL2023
+
+Before this lab, have an administrator prepare two EC2NodeClasses:
+
+- `spark-general`: a reviewed general node configuration for drivers.
+- `spark-nvme`: a new executor-specific class with a **pinned AL2023 AMI** matching
+  the Kubernetes release/architecture, and appropriate IAM/subnet/security-group settings.
+
+Include this field in the complete spark-nvme configuration. It is a **fragment**,
+not a standalone kubectl apply resource. Changing an existing NodeClass can cause
+drift and node replacement; do not improvise disk formatting on running nodes.
+
+```yaml
+spec:
+  instanceStorePolicy: RAID0
+```
+
+For AL2023, Karpenter configures instance-store RAID0 through NodeConfig and uses
+it for kubelet/containerd ephemeral storage, including node allocatable capacity.
+This avoids pinning /dev/nvme1n1 or requiring hostPath. Follow the documented
+procedure for other AMI families or custom bootstrap.
+
+Instance store is transient scratch that can be lost on stop, termination or
+failure. RAID0 is not replication or backup. Although there is no separate EBS
+volume charge, instance pricing, idle capacity and recomputation still cost money.
+Properly sized EBS is also an option; consider both volume and instance throughput
+limits. Do not assume every EKS node has a 20GB root volume or the same backing filesystem.
+
+## 3. Place drivers on On-Demand and executors on Spot
+
+On-Demand reduces driver exposure to Spot reclamation, but not failures,
+maintenance or Karpenter drift/expiration. Driver SparkContext/coordination state
+matters in both cluster and client modes. Design job reruns and data recovery separately.
+
+Save the following as nodepools.yaml, referencing the two prepared NodeClasses.
+Executors require instance-store capacity. This is Spot-only: insufficient Spot
+capacity can leave pods Pending, with no automatic On-Demand fallback. Design an
+explicit fallback policy and cost bounds if needed.
 
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: spark-shuffle-heavy
+  name: spark-driver
 spec:
   template:
+    metadata:
+      labels:
+        workload-pool: spark-driver
     spec:
       requirements:
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values: ["r5d.2xlarge", "r5d.4xlarge", "r5ad.2xlarge", "r5dn.2xlarge"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot", "on-demand"]
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: spark-nvme
-```
-
-**A note on Graviton:** the source AWS guidance this section is based on does not call out Graviton (arm64) instance types — such as R6gd or R7gd, which also pair R-series memory ratios with NVMe instance store — specifically for Spark shuffle workloads. Rather than assert Graviton parity that hasn't been documented for this workload, treat it as worth evaluating independently: build a Spark container image for arm64, benchmark a representative shuffle-heavy job against equivalent x86 NVMe instances, and confirm any native/JNI dependencies in your job (compression codecs, native BLAS libraries, etc.) actually have arm64 builds before committing to it.
-
-## 2. Shuffle Spill Storage: NVMe Instance Store Over EBS
-
-Spark writes shuffle blocks and RDD spill data to the directories listed in `spark.local.dir`. By default, on a freshly provisioned EKS worker node, that resolves to space on the **root EBS volume** — typically provisioned around 20GB, which is sized for the OS and container images, not for terabytes of shuffle scratch space. Under real shuffle pressure this fills up fast and jobs fail with `No space left on device` long before they fail for any Spark-level reason.
-
-The fix is to mount the NVMe instance store disks that come attached to R5d/R5ad/R5dn instances (and Nitro instances generally) and point `spark.local.dir` at them instead. Because instance store is ephemeral local disk directly attached to the physical host, it delivers far higher throughput and IOPS than network-attached EBS, with none of the per-GB or per-IOPS cost.
-
-```bash
-# EC2NodeClass userData (excerpt): format and mount NVMe instance store at bootstrap
-#!/bin/bash
-for disk in $(lsblk -d -o NAME,TYPE | awk '$2=="disk" && $1 ~ /^nvme/ {print $1}'); do
-  # Skip the root/EBS-backed device; only touch actual instance-store NVMe disks
-  if ! mount | grep -q "/dev/$disk"; then
-    mkfs.xfs "/dev/$disk"
-    mkdir -p "/mnt/k8s-disks/$disk"
-    mount "/dev/$disk" "/mnt/k8s-disks/$disk"
-    chmod 777 "/mnt/k8s-disks/$disk"
-  fi
-done
-```
-
-```yaml
-# Executor pod template: mount the host's NVMe path as spark.local.dir
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-    - name: spark-kubernetes-executor
-      volumeMounts:
-        - name: spark-local-dir
-          mountPath: /data/spark-local
-  volumes:
-    - name: spark-local-dir
-      hostPath:
-        path: /mnt/k8s-disks/nvme1n1
-        type: Directory
-```
-
-```properties
-# spark-submit conf
-spark.local.dir=/data/spark-local
-```
-
-Since instance store is wiped whenever the underlying instance stops or terminates, this pattern is only appropriate for transient shuffle/spill scratch data — never for anything Spark needs to survive a pod restart.
-
-## 3. Spot Instance Strategy: On-Demand Drivers, Spot Executors
-
-The driver holds the job's coordination state — the DAG scheduler, task bookkeeping, and (in client-adjacent setups) the SparkContext itself. Losing it mid-job means losing the whole job, not just a few tasks. Executors, by contrast, are replaceable compute: losing one costs at most the tasks it was running and whatever shuffle data it hadn't yet migrated. This asymmetry is why the recommended split is:
-
-* **Driver pods → On-Demand** capacity, which AWS will not reclaim on short notice
-* **Executor pods → Spot** capacity, accepting that individual executors may be interrupted
-
-### Enforcing the Split
-
-Node-group-level taints plus pod-level tolerations and node selectors keep driver pods off Spot nodes and executor pods off (or, less strictly, merely preferring) On-Demand nodes:
-
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: spark-driver-on-demand
-spec:
-  template:
-    spec:
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: kubernetes.io/os
+        operator: In
+        values:
+        - linux
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+      - key: karpenter.k8s.aws/instance-category
+        operator: In
+        values:
+        - m
+        - r
+      - key: karpenter.k8s.aws/instance-generation
+        operator: Gt
+        values:
+        - '5'
       taints:
-        - key: spark-role
-          value: driver
-          effect: NoSchedule
+      - key: spark-role
+        value: driver
+        effect: NoSchedule
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass
-        name: spark-nvme
+        name: spark-general
+  limits:
+    cpu: '64'
+    memory: 512Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 120s
 ---
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: spark-executor-spot
+  name: spark-executor
 spec:
   template:
+    metadata:
+      labels:
+        workload-pool: spark-executor
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: kubernetes.io/os
+        operator: In
+        values:
+        - linux
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+      - key: karpenter.k8s.aws/instance-category
+        operator: In
+        values:
+        - m
+        - r
+        - i
+      - key: karpenter.k8s.aws/instance-generation
+        operator: Gt
+        values:
+        - '5'
+      - key: karpenter.k8s.aws/instance-local-nvme
+        operator: Gt
+        values:
+        - '0'
+      taints:
+      - key: spark-role
+        value: executor
+        effect: NoSchedule
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass
         name: spark-nvme
+  limits:
+    cpu: '256'
+    memory: 2048Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 120s
 ```
 
-Spark has no `spark.kubernetes.*.tolerations.*` configuration property — tolerations aren't exposed as flat `spark-submit` conf keys, only as pod template fields (or, if you're on the Spark Operator from Part 2, as the `SparkApplication` CRD's `spec.driver.tolerations`). For a plain `spark-submit`, add the toleration via a driver pod template:
+Pool labels/selectors choose a target; tolerations allow its taints. A toleration
+does not force placement, and other pods may also have it. NoSchedule does not evict
+already-running pods. NodePool limits are eventually consistent capacity guardrails
+that may briefly overrun during concurrent scale-out, not exact spending caps.
+
+Save as driver-template.yaml. It is a **Spark pod template**, completed by Spark,
+not a standalone pod deployment.
 
 ```yaml
-# driver-pod-template.yaml
 apiVersion: v1
 kind: Pod
 spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 185
+    fsGroup: 185
   tolerations:
-    - key: spark-role
-      operator: Equal
-      value: driver
-      effect: NoSchedule
+  - key: spark-role
+    operator: Equal
+    value: driver
+    effect: NoSchedule
+  containers:
+  - name: spark-kubernetes-driver
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        ephemeral-storage: 2Gi
+      limits:
+        ephemeral-storage: 4Gi
 ```
 
+Save as executor-template.yaml.
+
+```yaml
+apiVersion: v1
+kind: Pod
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 185
+    fsGroup: 185
+  tolerations:
+  - key: spark-role
+    operator: Equal
+    value: executor
+    effect: NoSchedule
+  containers:
+  - name: spark-kubernetes-executor
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        ephemeral-storage: 10Gi
+      limits:
+        ephemeral-storage: 20Gi
+    volumeMounts:
+    - name: spark-local-dir-scratch
+      mountPath: /var/data/spark-local
+  automountServiceAccountToken: false
+  volumes:
+  - name: spark-local-dir-scratch
+    emptyDir:
+      sizeLimit: 16Gi
+```
+
+This emptyDir uses the prepared NVMe-backed kubelet filesystem; another node
+configuration could back it differently. The volume name must start with
+`spark-local-dir-`, including the final hyphen and a suffix. The old name
+`spark-local-dir` is not recognized and can cause an additional emptyDir mount
+at the same path.
+
+Setting only spark.local.dir can make Kubernetes Spark create an emptyDir there;
+hostPath is not required. Recognized scratch mounts populate SPARK_LOCAL_DIRS.
+sizeLimit is not reserved capacity: node disk exhaustion may occur first.
+Observe requests/limits, logs, writable layers and disk pressure together.
+tmpfs consumes RAM and needs memory budgeting.
+
+## 4. Two scaling loops and termination
+
+Save as performance.properties, reusing Part 1's namespace and RBAC.
+
 ```properties
-# spark-submit conf: driver uses the template above and targets the On-Demand pool
-spark.kubernetes.driver.podTemplateFile=driver-pod-template.yaml
+spark.kubernetes.namespace=spark-jobs
+spark.kubernetes.container.image=spark:4.2.0-scala2.13-java21-ubuntu
+spark.kubernetes.authenticate.driver.serviceAccountName=spark-driver
+spark.kubernetes.authenticate.executor.serviceAccountName=spark-executor
+spark.kubernetes.driver.podTemplateFile=driver-template.yaml
+spark.kubernetes.executor.podTemplateFile=executor-template.yaml
+spark.kubernetes.driver.node.selector.workload-pool=spark-driver
+spark.kubernetes.executor.node.selector.workload-pool=spark-executor
 spark.kubernetes.driver.node.selector.karpenter.sh/capacity-type=on-demand
-
-# Executors get no toleration for the driver taint, so they can never land there,
-# and are explicitly steered toward the Spot pool
 spark.kubernetes.executor.node.selector.karpenter.sh/capacity-type=spot
-```
-
-Because only driver pods carry the `spark-role=driver` toleration, the `NoSchedule` taint on the On-Demand `NodePool` keeps every other pod — including executors — off it. Executors are separately pointed at the Spot `NodePool` via node selector.
-
-### Making Interruptions Survivable
-
-Taints and tolerations only control *placement* — they don't make a Spot interruption harmless on their own. That's what Part 1's graceful decommissioning settings are for:
-
-```properties
+spark.driver.cores=1
+spark.driver.memory=1g
+spark.kubernetes.driver.limit.cores=1
+spark.executor.cores=2
+spark.executor.memory=4g
+spark.kubernetes.executor.limit.cores=2
+spark.executor.instances=2
+spark.dynamicAllocation.enabled=true
+spark.dynamicAllocation.shuffleTracking.enabled=true
+spark.dynamicAllocation.minExecutors=1
+spark.dynamicAllocation.initialExecutors=2
+spark.dynamicAllocation.maxExecutors=10
+spark.dynamicAllocation.executorIdleTimeout=60s
+spark.kubernetes.allocation.batch.size=5
+spark.kubernetes.allocation.batch.delay=1s
 spark.decommission.enabled=true
 spark.storage.decommission.enabled=true
+spark.kubernetes.executor.terminationGracePeriodSeconds=120s
 ```
 
-AWS gives Spot instances roughly a **two-minute interruption notice** before reclaiming the capacity. With decommissioning enabled, Spark uses that window to migrate the shuffle blocks and cached RDD partitions the doomed executor is holding to a healthy peer executor, rather than losing them outright. If no peer executor has spare capacity to receive that data, Spark falls back to whatever durable/remote shuffle storage is configured (or, absent one, simply lets the affected tasks recompute) — degraded, but not a job failure. The result is that a Spot interruption becomes "a handful of tasks re-run on another executor" instead of "the job restarts from scratch."
+```bash
+# Prerequisite: Part 1's spark-jobs namespace and driver/executor RBAC.
+# All template/property files below must be present in the submitter's working directory.
+K8S_API_SERVER="$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')"
+: "${K8S_API_SERVER:?Select the intended Kubernetes context first}"
+spark-submit \
+  --master "k8s://${K8S_API_SERVER}" --deploy-mode cluster \
+  --name spark-performance-smoke \
+  --properties-file performance.properties \
+  --class org.apache.spark.examples.SparkPi \
+  local:///opt/spark/examples/jars/spark-examples.jar 10
+```
 
-## 4. Two Independent Scaling Loops: Karpenter and Dynamic Resource Allocation
+Spark DRA adjusts executor count from task backlog and idle/cache/shuffle state.
+spark.kubernetes.allocation.batch.size and batch.delay control Kubernetes allocator
+pod creation rate; they are not exclusive to DRA. Karpenter supplies capacity from
+unschedulable pod requests and constraints. Image pulls, IP/quota/AZ shortages and
+taint mismatches can also delay pods.
 
-Once DRA and Karpenter are both in play, it helps to be explicit that they are **two separate control loops**, each reacting to a different signal, that happen to feed each other:
+WhenEmpty with 120s is a conservative starting consolidation policy for ordinary
+running Spark pods. Karpenter's definition of empty can include remaining pods
+with no disruption cost, such as DaemonSets. Also inspect other ordinary workloads
+before treating an executor-only node as empty.
 
-* **Spark's DRA** watches its own backlog of pending *tasks* and decides how many executor *pods* to request or release — a Spark-internal decision that has no direct knowledge of the underlying nodes.
-* **Karpenter** watches for pending *pods* that can't be scheduled (or nodes that have gone empty) and decides whether to provision or deprovision EC2 capacity — a node-level decision that has no knowledge of Spark's task backlog, only of the pods DRA already created.
+consolidateAfter > executorIdleTimeout does not guarantee DRA releases first.
+The timers start from different events, and cached data/shuffle tracking can keep
+executors longer. Drift, expiration and Spot interruption are separate from
+consolidation. PDBs, do-not-disrupt and disruption budgets do not prevent Spot reclamation.
 
-![A racetrack-shaped cycle diagram showing how Spark Dynamic Resource Allocation and Karpenter cooperate: pending tasks trigger DRA to request more executor pods, which go unschedulable until Karpenter provisions a new EC2 node, and once executors finish and idle, DRA releases them, the node empties, and Karpenter deprovisions it, restarting the loop.](../../../assets/diagrams/rendered/en-data-on-eks-spark-04-performance-tuning-0.svg)
+![Spark executor allocation and Karpenter node provisioning are separate control loops.](../../.gitbook/assets/en-data-on-eks-spark-04-performance-tuning-0.png)
 
-The practical consequence is that tuning one loop without the other produces mismatched behavior. If DRA's `spark.kubernetes.allocation.batch.size` requests executors faster than Karpenter's `NodePool` can provision matching nodes, new executor pods sit `Pending` for longer than expected. If Karpenter's `consolidateAfter` (see the [NodePool configuration](../../autoscaling/02-karpenter.md#nodepool) reference) is set very aggressively while DRA's `spark.dynamicAllocation.executorIdleTimeout` is comparatively long, Karpenter may try to consolidate a node that still has an executor DRA hasn't decided to release yet, colliding with the PodDisruptionBudget/decommissioning path from section 3. As a starting point, keep Karpenter's consolidation delay somewhat longer than DRA's executor idle timeout, so DRA has already vacated a node before Karpenter tries to reclaim it.
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-04-performance-tuning-0.html)
 
-## 5. Sizing Driver and Executor Resource Requests/Limits
+### Actual decommission limits
 
-The driver and executor pods have different jobs, and that should show up in how they're sized, at least conceptually:
+Spot stop/terminate warnings normally arrive two minutes ahead, on a best-effort
+basis. Hibernation starts immediately without that two-minute warning. Karpenter's
+Spot handling needs EventBridge-to-SQS wiring, an interruption queue and permissions.
+Spark flags alone do not receive AWS interruption notices.
 
-* **Driver**: sized larger and steadier relative to its actual workload, because it's a single point of failure for the job — it shouldn't be running so close to its memory limit that a transient spike triggers an OOM-kill, and (per section 3) it shouldn't be casually evicted the way a replaceable executor can be.
-* **Executors**: sized smaller and multiplied — many executors each handling a slice of the data is the whole point of horizontal parallelism, and DRA (section 4) depends on executors being cheap enough, individually, to add and remove freely.
+As verified in Part 1, Spark 4.2's decommission flag injects the official image's
+/opt/decom.sh preStop. Check the actual script, signal, pod grace and node drain
+path. spark.kubernetes.executor.terminationGracePeriodSeconds=120s requests grace;
+it does not guarantee remaining cloud lifetime or completed block migration.
+Overriding lifecycle hooks can change that behavior.
 
-Spark's own resource settings map directly onto Kubernetes pod resource fields:
+Migration depends on peer capacity, network and time. Shuffle fallback requires an
+explicit spark.storage.decommission.fallbackStorage.path plus working filesystem
+and permissions. Arbitrary remote storage or a History Server is not automatic
+fallback. RDD-cache and shuffle recovery also differ. Recomputation, repeated
+losses, fetch/task retry limits or unreadable source data can fail the job;
+executor loss is not guaranteed harmless.
 
-| Spark Setting | Kubernetes Effect |
+## 5. Validate resources and cost
+
+| Setting | Kubernetes effect |
 | --- | --- |
-| `spark.driver.memory`, `spark.driver.cores` | Driver container's `resources.requests`/`.limits` (with memory overhead added) |
-| `spark.executor.memory`, `spark.executor.cores` | Each executor container's `resources.requests`/`.limits` |
-| `spark.driver.memoryOverheadFactor` | Extra headroom added on top of `spark.driver.memory` for off-heap/JVM overhead |
+| Driver/executor memory | Heap plus applicable overhead/other memory in request and limit |
+| Driver/executor cores | Default CPU request and Spark role-specific concurrency; not an automatic CPU limit |
+| spark.kubernetes.*.request.cores | Explicit CPU request, distinct from task-slot count |
+| spark.kubernetes.*.limit.cores | Explicit CPU limit |
+| Template ephemeral-storage | Scratch/log temporary-storage budget; backing storage depends on node setup |
 
-There isn't a numeric default that fits every job here — how much memory a driver needs depends on how much state it tracks (partition count, broadcast variable size, accumulators), and how much an executor needs depends on per-task working-set size and shuffle buffer settings. Treat these as values to arrive at through load testing against your actual job and dataset size, not as constants to copy from another pipeline.
+A JVM executor with 4g heap and default 10% overhead adds 409MiB after integer
+conversion, totaling 4505MiB. Account separately for PySpark, off-heap and explicit
+overhead settings; 4g is not the entire pod memory. A driver need not always be
+larger than an executor, and smaller executors are not universally better.
 
-## 6. Cost Optimization: Building on General EKS Practices
+Compare cost per successful job and p95 completion time, including retries, idle
+capacity, storage/network and logs, rather than only instance hourly price.
+EMR runtime behavior such as executor preallocation can differ from upstream;
+inspect the selected release's configuration.
 
-Most EKS-wide cost techniques — Spot Instance usage, bin-packing via Karpenter consolidation, right-sizing instance types — apply to Spark exactly as they apply to any other workload on the cluster. [Amazon EKS Cost Optimization](../../eks/07-eks-cost-optimization.md) covers those techniques in general; this section is specifically about applying them to **Spark's driver/executor pod model**:
+Examples are checked against CRDs and native Spark feature-step construction.
+This does not constitute EC2 provisioning, disk initialization, a Spot-interruption
+test or a large shuffle-performance benchmark.
 
-* The [Spot Instance section](../../eks/07-eks-cost-optimization.md#spot-instance-utilization) of that guide applies to executors, not drivers — section 3 above is the Spark-specific reason why the split matters.
-* [Karpenter's consolidation behavior](../../autoscaling/02-karpenter.md#nodepool) reclaims nodes left empty when DRA scales executors down, which is exactly the second half of the feedback loop in section 4 — consolidation only pays off if DRA is actually releasing idle executors promptly.
-* Instance-type selection (section 1) and NVMe-backed local storage (section 2) are Spark-specific refinements on top of the general "pick the right instance family" guidance in the cost-optimization document.
 
-## Next Steps
+- [Karpenter instanceStorePolicy and AMI behavior](https://karpenter.sh/docs/concepts/nodeclasses/#specinstancestorepolicy)
+- [Karpenter disruption and interruption handling](https://karpenter.sh/docs/concepts/disruption/)
+- [Karpenter scheduling](https://karpenter.sh/docs/concepts/scheduling/)
+- [EKS AL2023 instance-store setup implementation](https://github.com/awslabs/amazon-eks-ami/blob/main/templates/al2023/runtime/bin/setup-local-disks)
+- [Spark 4.2 Kubernetes configuration](https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html)
+- [Spark local-directory feature implementation](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/LocalDirsFeatureStep.scala)
+- [Spark 4.2 configuration](https://spark.apache.org/docs/4.2.0/configuration.html)
+- [Spot interruption notice limitations](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html)
+- [EMR-specific performance and storage guidance](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/best-practices.html)
 
-This document covered node type selection for shuffle-heavy jobs, why NVMe instance store beats EBS for shuffle spill, the On-Demand-driver/Spot-executor split and how graceful decommissioning makes Spot interruptions survivable, the two independent Karpenter/DRA scaling loops and how to keep them from working against each other, and how to think about driver/executor resource sizing. Together with the general EKS cost techniques it builds on, this rounds out the performance and cost half of running Spark on EKS. Operational concerns — monitoring, security, and day-2 best practices for Spark on EKS — are covered next in [Part 5: Best Practices and Security](./05-best-practices.md).
+[Part 5: Best practices](./05-best-practices.md)
 
-[Return to Main Page](./README.md)
+[README](./README.md)
 
-## Quiz
-
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/spark/04-performance-tuning-quiz.md).
+[Quiz](../../quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)

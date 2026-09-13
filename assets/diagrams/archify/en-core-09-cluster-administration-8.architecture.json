@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS Cluster Architecture and Management Components",
+    "locale": "en",
+    "output": "en-core-09-cluster-administration-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      720
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "pos": [
+        30,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "sublabel": "Cluster administrator"
+    },
+    {
+      "id": "console",
+      "type": "cloud",
+      "label": "AWS Console / CLI / API",
+      "pos": [
+        230,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "sublabel": "Management interface"
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "Amazon EKS",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Managed Kubernetes"
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "EKS Control Plane",
+      "pos": [
+        720,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "AWS-managed"
+    },
+    {
+      "id": "ng",
+      "type": "backend",
+      "label": "EKS Node Groups",
+      "pos": [
+        720,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "EC2 instances"
+    },
+    {
+      "id": "fargate",
+      "type": "backend",
+      "label": "EKS Fargate",
+      "pos": [
+        720,
+        460
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "Fargate profiles"
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "pos": [
+        990,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Identity / permissions"
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "pos": [
+        990,
+        160
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Networking"
+    },
+    {
+      "id": "cw",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "pos": [
+        990,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Control plane logs"
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "Amazon VPC CNI",
+      "pos": [
+        60,
+        620
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Pod networking"
+    },
+    {
+      "id": "coredns",
+      "type": "backend",
+      "label": "CoreDNS",
+      "pos": [
+        280,
+        620
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Cluster DNS"
+    },
+    {
+      "id": "kubeproxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "pos": [
+        500,
+        620
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Service proxy"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Cloud",
+      "wraps": [
+        "cp",
+        "ng",
+        "fargate",
+        "iam",
+        "vpc",
+        "cw"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Add-ons",
+      "wraps": [
+        "cni",
+        "coredns",
+        "kubeproxy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-console",
+      "from": "user",
+      "to": "console",
+      "label": "Manage",
+      "variant": "emphasis"
+    },
+    {
+      "id": "console-eks",
+      "from": "console",
+      "to": "eks",
+      "label": "Manage",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eks-cp",
+      "from": "eks",
+      "to": "cp"
+    },
+    {
+      "id": "eks-ng",
+      "from": "eks",
+      "to": "ng"
+    },
+    {
+      "id": "eks-fargate",
+      "from": "eks",
+      "to": "fargate"
+    },
+    {
+      "id": "cp-iam",
+      "from": "cp",
+      "to": "iam",
+      "label": "Uses"
+    },
+    {
+      "id": "cp-vpc",
+      "from": "cp",
+      "to": "vpc",
+      "label": "Uses"
+    },
+    {
+      "id": "cp-cw",
+      "from": "cp",
+      "to": "cw",
+      "label": "Logging"
+    },
+    {
+      "id": "eks-cni",
+      "from": "eks",
+      "to": "cni",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-coredns",
+      "from": "eks",
+      "to": "coredns",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-kubeproxy",
+      "from": "eks",
+      "to": "kubeproxy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

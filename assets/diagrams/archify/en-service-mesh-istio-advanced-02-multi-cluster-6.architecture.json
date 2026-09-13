@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pattern 3: Hybrid (Istio + VPC Lattice)",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-02-multi-cluster-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "intra",
+        "label": "Intra-cluster: Istio",
+        "focus": [
+          "istiod1",
+          "svc-a1",
+          "svc-b1",
+          "istiod2",
+          "svc-a2",
+          "svc-b2"
+        ],
+        "note": "Inside each cluster the Istio mesh provides the full Istio feature set, including mTLS and retry."
+      },
+      {
+        "id": "cross",
+        "label": "Cross-cluster: VPC Lattice",
+        "focus": [
+          "svc-b1",
+          "lattice-sn",
+          "svc-b2"
+        ],
+        "note": "Cross-cluster traffic goes through an AWS VPC Lattice service network, with no East-West Gateway."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod1",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Istio mesh control plane",
+      "pos": [
+        150,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-a1",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "via local Envoy",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-b1",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "via local Envoy",
+      "pos": [
+        280,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "istiod2",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Istio mesh control plane",
+      "pos": [
+        780,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-b2",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "via local Envoy",
+      "pos": [
+        670,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-a2",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "via local Envoy",
+      "pos": [
+        910,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lattice-sn",
+      "type": "cloud",
+      "label": "Service Network",
+      "sublabel": "Cross-cluster",
+      "pos": [
+        450,
+        410
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster 1 · us-east-1 (Istio Mesh)",
+      "wraps": [
+        "istiod1",
+        "svc-a1",
+        "svc-b1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster 2 · us-west-2 (Istio Mesh)",
+      "wraps": [
+        "istiod2",
+        "svc-b2",
+        "svc-a2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS VPC Lattice",
+      "wraps": [
+        "lattice-sn"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istiod1-to-a1",
+      "from": "istiod1",
+      "to": "svc-a1",
+      "label": "Full Istio features",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "a1-to-b1",
+      "from": "svc-a1",
+      "to": "svc-b1",
+      "label": "mTLS · Retry",
+      "variant": "emphasis"
+    },
+    {
+      "id": "istiod2-to-a2",
+      "from": "istiod2",
+      "to": "svc-a2",
+      "label": "Full Istio features",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b2-to-a2",
+      "from": "svc-b2",
+      "to": "svc-a2",
+      "label": "mTLS · Retry",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b1-to-sn",
+      "from": "svc-b1",
+      "to": "lattice-sn",
+      "label": "VPC Lattice",
+      "variant": "dashed"
+    },
+    {
+      "id": "sn-to-b2",
+      "from": "lattice-sn",
+      "to": "svc-b2",
+      "label": "VPC Lattice",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Intra-cluster: Istio",
+      "items": [
+        "All advanced Istio features: Retry, Circuit Breaker, fine-grained routing",
+        "Istio handles mTLS, AuthN/AuthZ and distributed tracing"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Cross-cluster: VPC Lattice",
+      "items": [
+        "No East-West Gateway, so less operational complexity",
+        "Cost optimization by minimizing cross-region traffic",
+        "Cross-cluster traffic is limited to Lattice features"
+      ]
+    }
+  ]
+}

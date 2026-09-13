@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "언더레이 네트워킹(직접 라우팅)",
+    "output": "ko-networking-cilium-networking-concepts-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      470
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "컨테이너"
+        },
+        "cloud": {
+          "label": "호스트 라우팅 테이블"
+        },
+        "external": {
+          "label": "물리 인터페이스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "containerA",
+      "type": "backend",
+      "label": "컨테이너 A",
+      "sublabel": "IP: 10.0.0.2",
+      "pos": [
+        70,
+        70
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "routeA",
+      "type": "cloud",
+      "label": "라우팅 테이블",
+      "sublabel": "10.0.0.2 → local · 10.0.0.3 → 호스트 B",
+      "pos": [
+        70,
+        190
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "ethA",
+      "type": "external",
+      "label": "eth0",
+      "sublabel": "192.168.1.10",
+      "pos": [
+        70,
+        310
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "containerB",
+      "type": "backend",
+      "label": "컨테이너 B",
+      "sublabel": "IP: 10.0.0.3",
+      "pos": [
+        610,
+        70
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "routeB",
+      "type": "cloud",
+      "label": "라우팅 테이블",
+      "sublabel": "10.0.0.3 → local · 10.0.0.2 → 호스트 A",
+      "pos": [
+        610,
+        190
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "ethB",
+      "type": "external",
+      "label": "eth0",
+      "sublabel": "192.168.1.11",
+      "pos": [
+        610,
+        310
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "호스트 A",
+      "wraps": [
+        "containerA",
+        "routeA",
+        "ethA"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "호스트 B",
+      "wraps": [
+        "containerB",
+        "routeB",
+        "ethB"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-route",
+      "from": "containerA",
+      "to": "routeA",
+      "label": "10.0.0.3 행 조회",
+      "labelDy": 24
+    },
+    {
+      "id": "a-eth",
+      "from": "routeA",
+      "to": "ethA",
+      "label": "캡슐화 없이 전달",
+      "labelDy": 24
+    },
+    {
+      "id": "physical",
+      "from": "ethA",
+      "to": "ethB",
+      "label": "물리 네트워크",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-route",
+      "from": "ethB",
+      "to": "routeB",
+      "label": "10.0.0.3 → local"
+    },
+    {
+      "id": "b-container",
+      "from": "routeB",
+      "to": "containerB",
+      "label": "로컬 전달"
+    }
+  ]
+}

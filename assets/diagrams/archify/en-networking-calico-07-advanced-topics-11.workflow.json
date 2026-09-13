@@ -1,0 +1,157 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Advanced Calico Topics",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "database": {
+          "label": "IP addressing"
+        },
+        "security": {
+          "label": "Encryption"
+        },
+        "backend": {
+          "label": "Dataplane + scale"
+        },
+        "cloud": {
+          "label": "Multi-cluster"
+        },
+        "external": {
+          "label": "Windows platform"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "chapter",
+      "label": "Part 7 chapter roadmap"
+    }
+  ],
+  "mainPath": [
+    "ipam",
+    "wireguard",
+    "egress",
+    "multicluster",
+    "windows",
+    "scale"
+  ],
+  "nodes": [
+    {
+      "id": "ipam",
+      "lane": "chapter",
+      "col": 0,
+      "type": "database",
+      "label": "IPAM Deep Dive",
+      "sublabel": "block-based allocation",
+      "tag": "/26 blocks",
+      "width": 112
+    },
+    {
+      "id": "wireguard",
+      "lane": "chapter",
+      "col": 1,
+      "type": "security",
+      "label": "WireGuard Encryption",
+      "sublabel": "in-transit security",
+      "tag": "UDP 51820",
+      "width": 150
+    },
+    {
+      "id": "egress",
+      "lane": "chapter",
+      "col": 2,
+      "type": "backend",
+      "label": "Egress Gateway",
+      "sublabel": "controlled egress",
+      "tag": "fixed source IPs",
+      "width": 112
+    },
+    {
+      "id": "multicluster",
+      "lane": "chapter",
+      "col": 3,
+      "type": "cloud",
+      "label": "Multi-Cluster",
+      "sublabel": "federation",
+      "tag": "Typha-based",
+      "width": 100
+    },
+    {
+      "id": "windows",
+      "lane": "chapter",
+      "col": 4,
+      "type": "external",
+      "label": "Windows Support",
+      "sublabel": "HNS integration",
+      "tag": "VXLAN + policy",
+      "width": 118
+    },
+    {
+      "id": "scale",
+      "lane": "chapter",
+      "col": 5,
+      "type": "backend",
+      "label": "Large-Scale Design",
+      "sublabel": "1000+ nodes",
+      "tag": "Typha sizing",
+      "width": 138
+    }
+  ],
+  "edges": [
+    {
+      "from": "ipam",
+      "to": "wireguard"
+    },
+    {
+      "from": "wireguard",
+      "to": "egress"
+    },
+    {
+      "from": "egress",
+      "to": "multicluster"
+    },
+    {
+      "from": "multicluster",
+      "to": "windows"
+    },
+    {
+      "from": "windows",
+      "to": "scale"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Addressing + Encryption",
+      "items": [
+        "IPAM hands out /26 blocks (64 IPs) per node to cut datastore round-trips",
+        "WireGuard costs roughly 5-10% throughput vs 15-25% for IPsec",
+        "Key rotation is automatic with WireGuard, manual or IKE with IPsec"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Egress + Federation",
+      "items": [
+        "Egress Gateway presents fixed source IPs for firewall allowlists and PCI-DSS/HIPAA needs",
+        "Federation connects each cluster's Typha to one shared Federation Controller",
+        "Cross-cluster network policy rides on the same federated state"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Platform + Scale",
+      "items": [
+        "Windows nodes support VXLAN, BGP and L3-L4 policy but not eBPF, WireGuard or L7",
+        "Typha replicas = max(3, ceil(nodes / 200)), so 1000 nodes need 5",
+        "Route reflectors, Felix tuning and datastore sizing complete the large-cluster design"
+      ]
+    }
+  ]
+}

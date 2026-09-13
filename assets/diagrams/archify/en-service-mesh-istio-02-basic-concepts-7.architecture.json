@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ambient Mode: Node-Level Traffic Handling",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      590
+    ],
+    "views": [
+      {
+        "id": "l4-path",
+        "label": "L4 transparent redirect",
+        "focus": [
+          "app1",
+          "app2",
+          "ztunnel"
+        ],
+        "note": "Traffic from sidecar-less pods is transparently redirected to the single per-node ztunnel."
+      },
+      {
+        "id": "l7-path",
+        "label": "Optional L7 handling",
+        "focus": [
+          "ztunnel",
+          "waypoint"
+        ],
+        "note": "Traffic passes through the Waypoint Proxy only when L7 features are needed."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "No sidecar",
+      "pos": [
+        150,
+        150
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "No sidecar",
+      "pos": [
+        430,
+        150
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "1 per node · L4 proxy",
+      "pos": [
+        285,
+        370
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "L4"
+    },
+    {
+      "id": "waypoint",
+      "type": "backend",
+      "label": "Waypoint Proxy",
+      "sublabel": "L7 proxy · Optional",
+      "pos": [
+        690,
+        370
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "tag": "L7"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Worker Node",
+      "wraps": [
+        "app1",
+        "app2",
+        "ztunnel",
+        "waypoint"
+      ],
+      "pad": 130
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "app1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "app2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-ztunnel",
+      "from": "app1",
+      "to": "ztunnel",
+      "label": "Transparent redirect",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app2-ztunnel",
+      "from": "app2",
+      "to": "ztunnel",
+      "label": "Transparent redirect",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ztunnel-waypoint",
+      "from": "ztunnel",
+      "to": "waypoint",
+      "label": "When L7 needed",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Advantages",
+      "items": [
+        "Low resource usage (1 per node)",
+        "Fast pod startup",
+        "Simple operations",
+        "Gradual L7 feature adoption possible"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Disadvantages",
+      "items": [
+        "Relatively new technology (less mature)",
+        "Some advanced features limited",
+        "Fine-grained per-pod control is harder"
+      ]
+    }
+  ]
+}

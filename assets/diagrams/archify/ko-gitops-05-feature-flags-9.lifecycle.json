@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "임시 릴리스 Flag 생명주기",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "rollout-path",
+        "label": "출시 경로",
+        "focus": [
+          "plan",
+          "develop",
+          "test",
+          "rollout",
+          "stable"
+        ],
+        "note": "임시 릴리스 Flag 예시입니다. 대상과 관측 기간은 팀 정책으로 정합니다."
+      },
+      {
+        "id": "cleanup-path",
+        "label": "정리 경로",
+        "focus": [
+          "stable",
+          "cleanup",
+          "removed"
+        ],
+        "note": "소비자·롤백 기간을 확인하고 선택한 동작을 유지한 뒤 코드와 정의를 정리합니다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1080,
+      640
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "출시 단계"
+    },
+    {
+      "id": "retire",
+      "label": "정리 단계"
+    },
+    {
+      "id": "terminal",
+      "label": "정리 완료"
+    }
+  ],
+  "states": [
+    {
+      "id": "plan",
+      "type": "start",
+      "label": "계획",
+      "sublabel": "이름·유형·소유자·검토일",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "FLAG 요청"
+    },
+    {
+      "id": "develop",
+      "type": "active",
+      "label": "개발",
+      "sublabel": "flag off 상태로 구현",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "구현 시작"
+    },
+    {
+      "id": "test",
+      "type": "waiting",
+      "label": "테스트",
+      "sublabel": "리뷰 후 QA 승인 대기",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "리뷰 완료"
+    },
+    {
+      "id": "rollout",
+      "type": "active",
+      "label": "롤아웃",
+      "sublabel": "검증한 코호트 단계",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "QA 승인"
+    },
+    {
+      "id": "stable",
+      "type": "waiting",
+      "label": "완료",
+      "sublabel": "안정화 · 롤백 기간 확인",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "100% 롤아웃"
+    },
+    {
+      "id": "cleanup",
+      "type": "active",
+      "label": "정리",
+      "sublabel": "Flag 코드 제거 PR",
+      "lane": "retire",
+      "col": 1,
+      "step": "06"
+    },
+    {
+      "id": "removed",
+      "type": "success",
+      "label": "제거됨",
+      "sublabel": "선택한 최종 동작 유지",
+      "lane": "terminal",
+      "col": 1,
+      "step": "07"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-plan-develop",
+      "from": "plan",
+      "to": "develop"
+    },
+    {
+      "id": "t-develop-test",
+      "from": "develop",
+      "to": "test"
+    },
+    {
+      "id": "t-test-rollout",
+      "from": "test",
+      "to": "rollout"
+    },
+    {
+      "id": "t-rollout-stable",
+      "from": "rollout",
+      "to": "stable"
+    },
+    {
+      "id": "t-stable-cleanup",
+      "from": "stable",
+      "to": "cleanup",
+      "label": "소비자 검토 후",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "channelY": 242
+    },
+    {
+      "id": "t-cleanup-removed",
+      "from": "cleanup",
+      "to": "removed",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "auto"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "계획 단계에서 정하는 것",
+      "items": [
+        "이름·유형·소유자 정의",
+        "검토일은 운영 메타데이터",
+        "영향 받는 소비자와 롤백 계획"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "정리 단계에서 하는 것",
+      "items": [
+        "선택한 최종 동작을 유지",
+        "구버전 소비자와 롤백 기간 확인",
+        "분기 코드·정의·테스트 함께 정리"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flink Operator and Native-mode scaling",
+    "locale": "en",
+    "output": "en-data-on-eks-flink-02-flink-kubernetes-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      620
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "reconcile",
+        "label": "CR watch and pod management",
+        "focus": [
+          "cr-deployment",
+          "cr-sessionjob",
+          "operator",
+          "jobmanager",
+          "taskmanager"
+        ],
+        "note": "The operator watches FlinkDeployment / FlinkSessionJob CRs and manages the JobManager and TaskManager pods."
+      },
+      {
+        "id": "autoscale",
+        "label": "Autoscaling loop",
+        "focus": [
+          "jobmanager",
+          "taskmanager",
+          "metrics",
+          "autoscaler",
+          "operator"
+        ],
+        "note": "Evaluate rates, backlog, pressure and constraints; apply overrides only when enabled, through in-place scaling or redeployment."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cr-deployment",
+      "type": "external",
+      "label": "FlinkDeployment CR",
+      "sublabel": "Application / Session cluster",
+      "pos": [
+        180,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "cr-sessionjob",
+      "type": "external",
+      "label": "FlinkSessionJob CR",
+      "sublabel": "Job submitted to a session cluster",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Flink Kubernetes Operator",
+      "sublabel": "Reconciles CRs, hosts the built-in autoscaler",
+      "pos": [
+        340,
+        180
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "jobmanager",
+      "type": "backend",
+      "label": "JobManager Pod",
+      "sublabel": "Coordinates the job graph",
+      "pos": [
+        360,
+        330
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "taskmanager",
+      "type": "backend",
+      "label": "TaskManager Pods",
+      "sublabel": "Run parallel vertex instances",
+      "pos": [
+        660,
+        330
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "autoscaler",
+      "type": "backend",
+      "label": "Autoscaler",
+      "sublabel": "Computes per-vertex parallelism",
+      "pos": [
+        40,
+        183
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Flink REST metrics",
+      "sublabel": "Rates · backlog · pressure",
+      "pos": [
+        340,
+        480
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cr1-watch",
+      "from": "cr-deployment",
+      "to": "operator",
+      "label": "watches",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cr2-watch",
+      "from": "cr-sessionjob",
+      "to": "operator",
+      "label": "watches",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "op-manage-jm",
+      "from": "operator",
+      "to": "jobmanager",
+      "label": "In-place / redeploy",
+      "variant": "emphasis",
+      "labelAt": [
+        460,
+        290
+      ]
+    },
+    {
+      "id": "jm-to-tm",
+      "from": "jobmanager",
+      "to": "taskmanager",
+      "label": "Native allocation / tasks",
+      "labelAt": [
+        610,
+        312
+      ]
+    },
+    {
+      "id": "jm-emit",
+      "from": "jobmanager",
+      "to": "metrics",
+      "label": "emits metrics",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "tm-emit",
+      "from": "taskmanager",
+      "to": "metrics",
+      "label": "emits metrics",
+      "variant": "dashed"
+    },
+    {
+      "id": "as-read",
+      "from": "autoscaler",
+      "to": "metrics",
+      "label": "reads"
+    },
+    {
+      "id": "as-threshold",
+      "from": "autoscaler",
+      "to": "operator",
+      "label": "Enabled + constraints",
+      "variant": "emphasis",
+      "labelDy": -25
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Evaluation inputs",
+      "items": [
+        "Rates, edge ratios and backlog target",
+        "Memory/GC pressure, quotas and scaling limits"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Applying scaling",
+      "items": [
+        "Begin with recommendations in observation mode",
+        "Validate state recovery and in-place/redeploy paths"
+      ]
+    }
+  ]
+}

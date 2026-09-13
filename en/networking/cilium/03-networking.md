@@ -1,346 +1,238 @@
 # Networking Models and VXLAN
 
-> **Supported Versions**: Cilium 1.18
-> **Last Updated**: February 22, 2026
+> **Review baseline**: Cilium 1.20.1, tested Kubernetes 1.33–1.36, Linux 5.10+ or documented equivalent backports such as RHEL 8.10's 4.18 kernel.
+> **Last reviewed**: September 12, 2026
 
 ## Lab Environment Setup
 
-To follow along with the examples in this document, you need the following tools and environment:
+Use the [installation guide](README.md) to prepare a disposable cluster and architecture-appropriate Cilium CLI. Keep kubectl within one minor version of the API server; “v1.31 or higher” is not a compatibility rule.
 
-### Required Tools
-- kubectl v1.31 or higher
-- A working Kubernetes cluster (EKS, minikube, kind, etc.)
-- Cilium CLI
-- tcpdump, wireshark (for network packet analysis)
+The generic mode examples below require at least two schedulable Linux nodes, no competing Pod CNI, working kube-proxy and a non-overlapping Pod CIDR. The native-routing example additionally requires the nodes to share an L2 segment. These are not EKS ENI, GKE Dataplane V2, AKS managed-Cilium or in-place CNI migration recipes.
 
-### Network Analysis Tool Installation
+### Network Analysis Tools
+
+Install tcpdump/Wireshark through the analysis host's supported package source. Node packet capture must run on the relevant node/network namespace, not merely on the laptop that runs kubectl. An agent monitor reports emitted BPF events; it is not a full packet capture.
 
 ```bash
-# Install tcpdump
-sudo apt-get update
-sudo apt-get install -y tcpdump
-
-# Cilium network packet capture
-kubectl exec -n kube-system -it $(kubectl get pods -n kube-system -l k8s-app=cilium -o jsonpath='{.items[0].metadata.name}') -- cilium monitor -v
-
-# VXLAN traffic analysis
-sudo tcpdump -i any udp port 8472 -vv
+kubectl config current-context
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+export CILIUM_POD=cilium-REPLACE-WITH-AGENT-ON-TARGET-NODE
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- \
+  cilium-dbg monitor --type trace -v
 ```
+
+For the explicit VXLAN profile below, capture a bounded sample on the relevant worker:
+
+```bash
+sudo tcpdump -nn -i any -c 50 'udp port 8472'
+```
+
+Use the configured tunnel port if it differs. Generate cross-node Pod traffic: same-node traffic need not traverse the overlay. An empty capture can mean the wrong node, interface, port or traffic path rather than a network failure.
 
 ## Container Networking Model Comparison
 
-Container networking models define how containers communicate with each other. Each model has advantages and disadvantages in terms of performance, scalability, security, and implementation complexity.
+Host namespaces, bridges and inter-node transports describe different aspects of networking and can coexist. They are not a universal performance or security ranking.
 
-### Major Networking Models:
-
-1. **Host Network Model**:
-   - Container shares the host's network namespace
-   - Best performance, but possibility of port conflicts
-   - Limited security isolation
-
-2. **Bridge Network Model**:
-   - Containers connect through a virtual bridge within the host
-   - Efficient for communication between containers on the same host
-   - Additional mechanisms needed for inter-host communication
-
-3. **Overlay Network Model**:
-   - Builds virtual network on top of physical network
-   - Uses encapsulation for inter-host communication
-   - Flexible but slight performance overhead
-
-4. **Underlay Network Model**:
-   - Directly utilizes physical network infrastructure
-   - Best performance with minimal overhead
-   - Dependent on physical network configuration
-
-### Networking Model Comparison:
-
-| Model | Performance | Scalability | Security | Implementation Complexity | Use Cases |
-|-------|-------------|-------------|----------|---------------------------|-----------|
-| Host | Very High | Low | Low | Low | High-performance workloads, single container |
-| Bridge | High | Medium | Medium | Medium | Single host deployments |
-| Overlay | Medium | High | High | High | Multi-host clusters |
-| Underlay | High | Medium | Medium | Very High | Performance-focused production environments |
+| Model | Mechanism | Important tradeoff |
+|---|---|---|
+| Host network | A Pod shares the node network namespace | Port conflicts and reduced network-namespace isolation; not automatically the best application performance |
+| Bridge | A virtual L2 bridge connects interfaces | Inter-node communication still needs routing/transport; Cilium does not require a Linux bridge for every endpoint |
+| Overlay | Encapsulated traffic crosses an IP underlay | Extra headers and processing, but the underlay need not route every Pod prefix |
+| Native/underlay routing | The network can route workload addresses | Requires correct forwarding/return routes and address planning; does not inherently provide or remove policy/encryption |
 
 ### Cilium Networking Modes
 
-![Diagram grouping Cilium's networking modes into overlay, native routing, and cloud integration, showing that skipping encapsulation with native routing yields the best performance while overlay modes trade some performance for portability.](../../../assets/diagrams/rendered/en-networking-cilium-03-networking-0.svg)
+Cilium's `routingMode` is `tunnel` or `native`. VXLAN/Geneve choose the tunnel protocol. Cloud IPAM integrations are another configuration dimension, often paired with a native datapath; they are not a third `routingMode` value. BGP is a route-advertisement mechanism, not a separate packet-forwarding mode.
 
 ## VXLAN Technology Deep Dive
 
-> **Key Concept**: VXLAN (Virtual Extensible LAN) is a network virtualization technology that overlays a Layer 2 network over a Layer 3 network.
+VXLAN carries an inner Ethernet frame in UDP over an IP network. A VTEP encapsulates/decapsulates traffic; the 24-bit VNI offers a theoretical space of 2^24 identifiers. This does not promise that a Kubernetes deployment supports 16 million tenants.
 
-VXLAN is a network virtualization technology that overlays a Layer 2 network over a Layer 3 network. It is widely used in cloud environments to expand the number of network segments and support multi-tenant environments.
+The standardized VXLAN destination port is UDP 4789. **Cilium defaults to UDP 8472** for VXLAN and UDP 6081 for Geneve; both are configurable. Cilium can carry security-identity metadata in encapsulation, so do not equate generic VXLAN segment counts with Cilium tenant/policy boundaries.
 
-### VXLAN Basic Concepts:
+### VXLAN Packet Structure
 
-- **VXLAN Segment**: Logical L2 segment identified by VXLAN Network Identifier (VNI)
-- **VXLAN Tunnel Endpoint (VTEP)**: Responsible for encapsulation and decapsulation of VXLAN packets
-- **VNI (VXLAN Network Identifier)**: Supports up to 16,777,216 (2^24) unique network segments
-- **Encapsulation**: Encapsulates original L2 frame into UDP packet
-
-### VXLAN Packet Structure:
-
-```
-+-------------------------------+
-| Outer Ethernet Header         |
-+-------------------------------+
-| Outer IP Header (usually IPv4)|
-+-------------------------------+
-| Outer UDP Header (port 8472)  |
-+-------------------------------+
-| VXLAN Header (contains VNI)   |
-+-------------------------------+
-| Original Ethernet Frame       |
-| (Inner Ethernet Header +      |
-|  Payload)                     |
-+-------------------------------+
+```text
+Outer Ethernet
+  Outer IP (IPv4 or IPv6)
+    Outer UDP (Cilium VXLAN default destination 8472; standard 4789)
+      VXLAN header (8 bytes, including VNI)
+        Inner Ethernet
+          Inner IP packet and transport/application payload
 ```
 
-### Cilium VXLAN Configuration Example
+IP carries UDP; an outer IP header is not itself carried inside the outer UDP header. VXLAN segmentation does not provide encryption, integrity or automatic NetworkPolicy isolation. Restrict the underlay path appropriately and configure policy/encryption separately.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "vxlan"
-  enable-ipv4: "true"
-  enable-ipv6: "false"
-  ipv4-range: "10.0.0.0/16"
-  ipv4-service-range: "10.96.0.0/12"
-```
+### MTU Budget
 
-This configuration instructs Cilium to set up inter-pod communication within the cluster using VXLAN tunneling. Each node acts as a VTEP and encapsulates pod traffic into VXLAN packets for transmission to other nodes.
+For ordinary VXLAN with no additional encapsulation/options, the reduction in the inner IP budget is:
 
-![Layer stack showing a VXLAN-encapsulated packet from the outer Ethernet header down through the outer IP header and the VXLAN header carrying the VNI, to the original inner Ethernet frame it wraps.](../../../assets/diagrams/rendered/en-networking-cilium-03-networking-1.svg)
+| Underlay IP family | Outer IP + UDP + VXLAN + inner Ethernet | Inner IP budget for a 1,500-byte underlay IP MTU |
+|---|---|---|
+| IPv4 | 20 + 8 + 8 + 14 = 50 bytes | 1,450 bytes |
+| IPv6 | 40 + 8 + 8 + 14 = 70 bytes | 1,430 bytes |
 
-### How VXLAN Works:
+The outer Ethernet header is outside that underlay IP MTU. Encryption, Geneve options and other paths can change the budget. The effective route MTU and a Pod veth's device MTU need not be identical.
 
-1. **Encapsulation**: Source VTEP encapsulates original L2 frame with VXLAN header
-2. **Transmission**: Encapsulated packet is sent to destination VTEP through IP network
-3. **Decapsulation**: Destination VTEP removes VXLAN header and extracts original L2 frame
-4. **Delivery**: Original L2 frame is delivered to destination endpoint
+In Cilium 1.20.1, Helm **`MTU` overrides the underlying-network MTU**; Cilium then calculates route overhead. `MTU: 0` selects detection. Setting `MTU: 1450` as if it meant “the final Pod payload MTU” can subtract the tunnel overhead again. Local interface detection also does not prove the smallest MTU across the entire path.
 
-### VXLAN vs Other Overlay Technologies:
+### VXLAN vs Other Encapsulations
 
-| Technology | Encapsulation | Max Networks | Port | Advantages | Disadvantages |
-|------------|---------------|--------------|------|------------|---------------|
-| VXLAN | L2 over UDP | 16,777,216 (2^24) | 4789 | Widely supported, large-scale scalability | Overhead (50 bytes) |
-| GENEVE | Variable length header | 16,777,216 (2^24) | 6081 | Extensible metadata | Newer, limited support |
-| GRE | IP over IP | Unlimited | IP Protocol 47 | Low overhead | Firewall traversal issues |
-| NVGRE | L2 over GRE | 16,777,216 (2^24) | IP Protocol 47 | Microsoft environment integration | Limited hardware offload |
+| Technology | Carrier / identifier | Protocol or port | Boundary |
+|---|---|---|---|
+| VXLAN | Ethernet in UDP; 24-bit VNI | UDP 4789 standard; Cilium 8472 default | Fixed base header; not encryption |
+| Geneve | Generic network virtualization with extensible options; 24-bit VNI | UDP 6081 | Option length changes overhead |
+| GRE | Generic encapsulation; base GRE has no VXLAN-style VNI | IP protocol 47, not TCP/UDP port 47 | Optional extensions must be considered; “unlimited networks” is not a defined capacity |
+| NVGRE | Ethernet over GRE; 24-bit VSID within the GRE key | IP protocol 47 | Different identifier/flow semantics; support depends on implementation |
 
 ## Cilium's Overlay Networking
 
-Cilium uses VXLAN by default to implement overlay networking, but also supports other encapsulation protocols like Geneve. Cilium's overlay networking leverages eBPF to provide an optimized data path.
+Without an overriding platform/profile configuration, Cilium uses tunnel routing with VXLAN. Cross-node Pod transport needs reachable node addresses, permitted tunnel UDP traffic and a usable MTU. Overlay does not fix overlapping Pod address ranges or make disconnected nodes reachable.
 
-### Cilium Overlay Network Architecture:
+![Cross-node overlay flow: endpoint processing, source VTEP encapsulation, underlay transit, destination decapsulation and endpoint delivery.](../../.gitbook/assets/en-networking-cilium-03-networking-2.png)
 
-![Architecture diagram showing a container on Host A reaching a container on Host B through each host's eBPF datapath and VTEP, which exchange VXLAN-encapsulated traffic over the shared physical network.](../../../assets/diagrams/rendered/en-networking-cilium-03-networking-2.svg)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-03-networking-2.html)
 
-### How Cilium Overlay Networking Works:
+The figure is a conceptual flow. Its addresses are not a per-node IPAM allocation plan; real node Pod blocks must be allocated consistently without overlap. Policy is applied where configured, and source/destination hooks can differ.
 
-1. **Packet Generation**: Container A sends packet to Container B
-2. **eBPF Processing**: eBPF program intercepts packet and applies policies
-3. **VTEP Identification**: Identifies VTEP of destination container
-4. **Encapsulation**: Encapsulates packet with VXLAN header
-5. **Transmission**: Sends encapsulated packet to destination host through physical network
-6. **Decapsulation**: Removes VXLAN header at destination host
-7. **eBPF Processing**: eBPF program on destination host processes packet
-8. **Delivery**: Delivers packet to destination container
-
-### Cilium Overlay Network Optimizations:
-
-- **Direct Path**: Uses direct routing when possible
-- **DSR (Direct Server Return)**: Optimization for load balanced responses
-- **Connection Tracking Bypass**: Bypasses connection tracking for known connections
-- **XDP Integration**: Leverages XDP for early packet processing
-- **Header Push/Pop Optimization**: Efficient header handling
-
-### Cilium Overlay Network Configuration:
-
-```yaml
-# cilium-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable overlay mode
-  tunnel: "vxlan"
-
-  # VXLAN port setting (default: 8472)
-  tunnel-port: "8472"
-
-  # MTU setting
-  mtu: "1450"
-
-  # Auto direct node routes
-  auto-direct-node-routes: "true"
-```
-
-## Performance Optimization Techniques
-
-Cilium provides various performance optimization techniques to minimize network latency and maximize throughput.
-
-### Network Mode Optimization:
-
-1. **Direct Routing Mode**:
-   - Uses direct routing without overlay encapsulation
-   - Performance improvement by removing encapsulation overhead
-   - Requires routable network between hosts
-
-2. **Hybrid Mode**:
-   - Uses direct routing when possible, otherwise overlay
-   - Balance between flexibility and performance
-
-3. **Native Routing Mode**:
-   - Integrates with existing network infrastructure
-   - Leverages routing protocols like BGP
-
-### Data Path Optimization:
-
-1. **XDP Utilization**:
-   - Packet processing at early stage of network stack
-   - Performance improvement by early dropping unnecessary packets
-
-2. **eBPF Map Optimization**:
-   - Efficient map structure and size adjustment
-   - Memory usage optimization with LRU (Least Recently Used) maps
-
-3. **Connection Tracking Optimization**:
-   - Connection tracking table size adjustment
-   - Connection tracking bypass for known connections
-
-4. **Socket-based Load Balancing**:
-   - Load balancing at socket level
-   - Reduced packet processing overhead
-
-### System-level Optimization:
-
-1. **CPU Affinity**:
-   - Bind network processing to specific CPU cores
-   - Improved cache locality and reduced context switching
-
-2. **NUMA Awareness**:
-   - NUMA (Non-Uniform Memory Access) topology awareness
-   - Local memory access optimization
-
-3. **Interrupt Tuning**:
-   - Network interrupt processing optimization
-   - Interrupt coalescing and distribution
-
-4. **Huge Pages**:
-   - Reduced memory management overhead
-   - Reduced TLB (Translation Lookaside Buffer) misses
+1. Cilium identifies the remote endpoint/node from control-plane and datapath state.
+2. The source encapsulates the relevant Pod packet and sends it using underlay node addresses.
+3. The destination decapsulates and processes/delivers the inner packet.
+4. Datapath events, route state and captures help locate failures; one missing event alone does not identify the cause.
 
 ## Routing Mechanisms
 
-Cilium supports two main routing mechanisms: Encapsulation and Native-Routing.
+### Encapsulation
 
-### 1. Encapsulation
+The underlay only needs the node/tunnel path, rather than a route for every Pod prefix. The cost includes headers and processing. Larger frames can reduce the relative overhead only if the whole path supports the chosen MTU.
 
-Encapsulation is a method of transmitting the original packet by wrapping it inside another packet. Cilium supports encapsulation protocols like VXLAN and Geneve.
+### Native Routing
 
-**How it works**:
-1. Packet is generated at source node.
-2. Cilium encapsulates the packet by wrapping the original packet with encapsulation header.
-3. Encapsulated packet is sent to destination node through physical network.
-4. At destination node, Cilium decapsulates the packet to extract the original packet.
-5. Extracted packet is delivered to destination container.
+The node and underlay must route the Pod addresses, including return traffic. Routes can come from a cloud network, a router, static configuration or another routing component. Enabling native mode does not automatically start BGP or advertise every Pod CIDR.
 
-**Advantages**:
-- Compatibility with existing network infrastructure
-- Independence from network topology
-- Prevention of IP conflicts in multi-cluster environments
+`autoDirectNodeRoutes: true` installs direct PodCIDR routes for nodes sharing an L2 network. With multiple L2 segments, `directRoutingSkipUnreachable` may skip unreachable direct routes while an independently working routed path handles them. It does not fall back to overlay tunnels.
 
-**Disadvantages**:
-- Performance impact due to encapsulation overhead
-- Reduced MTU size
-- Additional CPU usage
+**Do not combine tunnel routing with `autoDirectNodeRoutes: true`: Cilium 1.20.1 explicitly rejects this combination at startup.** The old “hybrid mode” recipe was invalid. Native routing can still coexist with feature-specific encapsulation, such as a configured Geneve DSR path; that is a separate service feature.
 
-### 2. Native-Routing
+The Cilium BGP Control Plane advertises configured Pod/Service prefixes to peers. It does **not program the local datapath** and must not be treated as the component that automatically supplies missing intra-cluster routes.
 
-Native routing is a method that uses direct routing without encapsulation. In this mode, the underlying network infrastructure must be able to route pod IP addresses.
+## Performance Optimization Techniques
 
-**How it works**:
-1. Each node advertises the CIDR block of pods running on that node.
-2. Routing tables are configured to route each pod CIDR block to the corresponding node.
-3. Packets are routed directly to destination node without encapsulation.
+Measure with the same protocol, payload sizes, concurrency, node placement, policy, encryption and proxy settings before comparing modes. Removing one encapsulation header does not guarantee lower application latency.
 
-**Advantages**:
-- No encapsulation overhead
-- Improved network performance
-- Lower CPU usage
-
-**Disadvantages**:
-- Dependency on underlying network infrastructure
-- Network topology constraints
-- IP address management complexity
+- **Datapath:** socket load balancing, supported XDP acceleration and DSR apply to particular paths. They are not automatically enabled by VXLAN or native routing.
+- **Connection tracking:** Cilium BPF connection tracking and Linux netfilter conntrack are different state mechanisms. Bypassing a netfilter path does not mean all established traffic stops using Cilium connection state.
+- **Maps:** size maps against actual capacity and memory pressure. LRU eviction is useful for caches, not a universal optimization for every map.
+- **Host tuning:** CPU/NUMA placement, IRQ distribution/coalescing and queue configuration can help or hurt particular workloads. Huge pages are not a general Cilium speed switch; require evidence for the actual consumer and environment.
 
 ## Cloud Provider-specific Networking
 
-Cilium integrates with networking features from various cloud providers.
+| Environment | Correct distinction |
+|---|---|
+| AWS ENI IPAM | Cilium allocates VPC-routable ENI addresses with operator IAM/API/subnet/instance-capacity requirements. ENI security groups and Cilium policy complement each other; this is not automatically the AWS VPC CNI's per-Pod branch-ENI feature |
+| EKS platforms | Alternate CNI on ordinary EC2 nodes has separate support responsibilities. Fargate and EKS Auto Mode do not support replacing their CNI with this generic lab profile. Hybrid Nodes have a separate supported installation path |
+| Google Cloud | Self-managed upstream Cilium can use Kubernetes host-scope IPAM and routable alias ranges. Managed GKE Dataplane V2 uses Google-managed Cilium/`anetd`; do not install another upstream dataplane over it or assume identical exposed features |
+| Azure | Azure CNI Powered by Cilium is managed by AKS with delegated IPAM. Upstream Azure IPAM targets self-managed Azure VM/VMSS clusters; AKS BYOCNI is another explicitly selected deployment model |
 
-### 1. AWS ENI (Elastic Network Interface)
-
-In AWS ENI mode, Cilium uses AWS Elastic Network Interfaces to assign native VPC IP addresses to pods.
-
-**Key Features**:
-- Native VPC IP address assignment to pods
-- VPC native networking without overlay network
-- AWS security group and network policy integration
-- Improved network performance
-
-### 2. Google Cloud Networking
-
-In Google Kubernetes Engine (GKE), Cilium integrates with Google Cloud networking features.
-
-**Key Features**:
-- GCP VPC native IP address assignment
-- GCP firewall rules integration
-- GKE networking optimization
+Cloud firewall/security-group configuration is not automatically created by every Cilium policy. Select the platform guide and support model first.
 
 ## Lab: Cilium Networking Mode Configuration and Performance Testing
 
-### Various Networking Mode Configurations:
+### Select One Mode on a Fresh Prepared Cluster
 
-```bash
-# VXLAN overlay mode configuration
-cilium install --config tunnel=vxlan
+Save this common file, first replacing the Pod CIDR if it overlaps node, Service, VPC or connected-network ranges. Keep the chosen range consistent with cluster/kube-proxy configuration and the native profile's `ipv4NativeRoutingCIDR`; changing only one file is insufficient. `kubeProxyReplacement: false` deliberately assumes working kube-proxy. These are Helm values, not a ConfigMap to apply with kubectl.
 
-# Geneve overlay mode configuration
-cilium install --config tunnel=geneve
+**`lab-common.yaml`**
 
-# Direct routing mode configuration
-cilium install --config tunnel=disabled --config auto-direct-node-routes=true
-
-# Hybrid mode configuration
-cilium install --config tunnel=vxlan --config auto-direct-node-routes=true
+```yaml
+kubeProxyReplacement: false
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.244.0.0/16
+    clusterPoolIPv4MaskSize: 24
+MTU: 0
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
 ```
 
-### Network Performance Testing:
+
+Choose exactly one of the following mode files. Use separate disposable clusters for comparisons rather than reinstalling the CNI repeatedly on a live cluster.
+
+**`mode-vxlan.yaml`**
+
+```yaml
+routingMode: tunnel
+tunnelProtocol: vxlan
+tunnelPort: 8472
+autoDirectNodeRoutes: false
+```
+
+**`mode-geneve.yaml`**
+
+```yaml
+routingMode: tunnel
+tunnelProtocol: geneve
+tunnelPort: 6081
+autoDirectNodeRoutes: false
+```
+
+**`mode-native.yaml`**
+
+```yaml
+routingMode: native
+ipv4NativeRoutingCIDR: 10.244.0.0/16
+autoDirectNodeRoutes: true
+```
+
+
+For the VXLAN example:
 
 ```bash
-# Deploy test pods
-kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/master/examples/kubernetes/connectivity-check/connectivity-check.yaml
-
-# Latency test
-kubectl exec -it pod/netperf-client -- netperf -H netperf-server -t TCP_RR
-
-# Throughput test
-kubectl exec -it pod/netperf-client -- netperf -H netperf-server -t TCP_STREAM
-
-# Connection establishment speed test
-kubectl exec -it pod/netperf-client -- netperf -H netperf-server -t TCP_CRR
+kubectl config current-context
+cilium install --version 1.20.1 --values lab-common.yaml --values mode-vxlan.yaml
+cilium status --wait
 ```
+
+Select `mode-geneve.yaml` or `mode-native.yaml` instead only when its network prerequisites hold. Do not apply the obsolete `tunnel: vxlan`, `ipv4-range` or `ipv4-service-range` ConfigMap examples; configure IPAM through the supported Helm fields.
+
+### Network Performance Testing
+
+Use the CLI's maintained performance workloads rather than assuming an unrelated manifest creates `netperf-client` and `netperf-server`. On the prepared disposable cluster:
+
+```bash
+cilium connectivity perf --test-namespace cilium-net-perf \
+  --namespace-labels docs-audit-lab=cilium-networking-03 \
+  --duration 10s --samples 2 --crr --udp \
+  --host-net=false --pod-net=true --same-node=true --other-node=true \
+  --report-dir ./cilium-net-perf-results
+```
+
+The duration is per test case/sample, not a ten-second total run. This creates test workloads and network load. CLI 0.20.0 appends a sequence suffix to the namespace (`cilium-net-perf-1` for the default single suite). Save versions, placement and settings with results; no throughput/latency number is guaranteed.
+
+TCP request/response, connection-rate and stream tests answer different questions. If using an independently prepared iperf3 setup, UDP testing still needs the TCP control connection and a UDP data path; a Service exposing only TCP 5201 is insufficient. Offered UDP rate is not measured achieved throughput.
+
+These examples were checked against current official values, API schemas and CLI source. This audit did not render Helm templates, deploy a cluster or run a network benchmark after the host restart; validate the complete platform/lab environment before relying on results.
+
+## Sources
+
+- [Cilium 1.20.1 routing](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/routing.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml), [startup validation](https://github.com/cilium/cilium/blob/v1.20.1/daemon/cmd/daemon_main.go), [MTU calculation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/mtu/mtu.go), [MTU option](https://github.com/cilium/cilium/blob/v1.20.1/pkg/mtu/cell.go)
+- [VXLAN RFC 7348](https://www.rfc-editor.org/rfc/rfc7348.txt), [Geneve RFC 8926](https://www.rfc-editor.org/rfc/rfc8926.txt), [GRE RFC 2784](https://www.rfc-editor.org/rfc/rfc2784.txt), [NVGRE RFC 7637](https://www.rfc-editor.org/rfc/rfc7637.txt)
+- [BGP Control Plane](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst), [AWS ENI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst), [EKS alternate CNI](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html), [GKE Dataplane V2](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2), [Azure IPAM](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/azure.rst)
+- [CLI 0.20.0 connectivity/perf options](https://github.com/cilium/cilium-cli/blob/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go), [iperf3 invocation](https://software.es.net/iperf/invoking.html), [kubectl version skew](https://kubernetes.io/releases/version-skew-policy/)
+
 
 [Return to Main Page](README.md)
 
 ## Quiz
 
-To test what you learned in this chapter, try the [Topic Quiz](../../quizzes/networking/cilium/03-networking-quiz.md).
+Work through the [networking validation exercises and expected results](../../quizzes/networking/cilium/03-networking-quiz.md).

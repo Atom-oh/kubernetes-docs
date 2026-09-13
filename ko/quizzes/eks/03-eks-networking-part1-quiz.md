@@ -1,886 +1,632 @@
 # EKS 네트워킹 퀴즈 - Part 1
 
-이 퀴즈는 Amazon EKS의 네트워킹 기본 개념, VPC CNI, 네트워크 정책 및 서비스 디스커버리에 대한 이해를 테스트합니다. EKS 클러스터의 네트워킹 아키텍처와 구성 요소에 중점을 둡니다.
+> **마지막 업데이트**: 2026년 9월 11일
+
+EKS 네트워킹·주소 계획·정책·컨트롤러 소유권을 다룹니다. 별도 설명이 없으면 일반 Linux EC2 네트워킹 예제입니다. 공식 자료·로컬 스키마로 API·구성을 검토했으며 클라우드 네트워크 변경이나 실제 패킷 테스트는 실행하지 않았습니다.
 
 ## 객관식 문제
 
-### 1. Amazon EKS에서 기본적으로 사용하는 CNI(Container Network Interface) 플러그인은 무엇인가요?
-
-A. Calico\
-B. Flannel\
-C. Amazon VPC CNI\
-D. Weave Net
-
-<details>
-
-<summary>정답 및 설명</summary>
-
-**정답: C. Amazon VPC CNI**
-
-**설명:** Amazon EKS는 기본적으로 Amazon VPC CNI 플러그인을 사용합니다. 이 플러그인은 Kubernetes 파드에 VPC IP 주소를 할당하고, AWS VPC 네트워킹의 기본 기능을 활용하여 파드 간 통신을 가능하게 합니다.
-
-**주요 특징:**
-
-1. **네이티브 VPC 네트워킹**: 각 파드는 VPC 내에서 고유한 IP 주소를 받습니다. 이는 파드가 VPC 내의 다른 서비스와 직접 통신할 수 있게 해줍니다.
-2. **보조 IP 주소 할당**: 각 노드의 탄력적 네트워크 인터페이스(ENI)에 보조 IP 주소를 할당하여 파드에 제공합니다.
-3. **보안 그룹 통합**: 파드 수준에서 AWS 보안 그룹을 적용할 수 있어 세밀한 네트워크 보안 제어가 가능합니다.
-4. **성능**: 오버레이 네트워크를 사용하지 않아 네트워크 성능이 향상됩니다.
-5. **AWS 서비스 통합**: AWS Load Balancer Controller, AWS App Mesh 등 다른 AWS 서비스와 원활하게 통합됩니다.
-
-**구성 예시:**
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-network-policy: "true"
-  enable-pod-eni: "true"
-  warm-ip-target: "5"
-  minimum-ip-target: "10"
-```
-
-Amazon VPC CNI는 오픈 소스이며 GitHub에서 관리됩니다. 필요에 따라 Calico, Cilium 등 다른 CNI 플러그인으로 대체할 수 있지만, Amazon VPC CNI가 EKS의 기본 옵션이며 AWS에서 공식적으로 지원합니다.
-
-</details>
-
-### 2. Amazon EKS에서 VPC CNI가 파드에 IP 주소를 할당하는 방식은 무엇인가요?
-
-A. 각 파드에 별도의 탄력적 네트워크 인터페이스(ENI)를 할당한다\
-B. 노드의 탄력적 네트워크 인터페이스(ENI)에 보조 IP 주소를 할당하여 파드에 제공한다\
-C. 오버레이 네트워크를 사용하여 가상 IP 주소를 할당한다\
-D. 각 파드에 별도의 VPC 서브넷을 할당한다
+1. 일반 EKS EC2 노드의 기본 CNI는 무엇인가요?
+   * A) Calico
+   * B) Flannel
+   * C) Amazon VPC CNI
+   * D) Weave Net
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: C) Amazon VPC CNI**
 
-**정답: B. 노드의 탄력적 네트워크 인터페이스(ENI)에 보조 IP 주소를 할당하여 파드에 제공한다**
+일반 EKS EC2 노드는 Amazon VPC CNI를 사용합니다. Auto Mode는 관리형 네트워킹을 제공하고 Hybrid Nodes는 지원되는 대체 CNI를 사용하므로 “모든 EKS 클러스터가 이 DaemonSet을 실행한다”는 설명은 과도합니다.
 
-**설명:** Amazon VPC CNI는 노드의 탄력적 네트워크 인터페이스(ENI)에 보조 IP 주소를 할당하고, 이 IP 주소를 파드에 제공하는 방식으로 작동합니다. 이 방식은 "IP-per-Pod" 모델이라고도 불립니다.
+CNI는 VPC 주소로 일반 Pod 네트워크를 구성하며 보조 IP·prefix·Pod 보안 그룹 경로는 서로 다릅니다. 라우팅 가능한 주소가 라우트·보안 그룹·NACL·정책을 우회하지는 않으며 오버레이를 피한다고 실측 성능이 보장되는 것도 아닙니다.
 
-**작동 방식:**
-
-1. **ENI 할당**: 각 EC2 인스턴스(노드)는 하나 이상의 ENI를 가질 수 있습니다. 인스턴스 유형에 따라 ENI당 할당할 수 있는 IP 주소 수가 결정됩니다.
-2. **IP 주소 풀 관리**: VPC CNI의 `aws-node` DaemonSet는 각 노드에서 실행되며, 사용 가능한 IP 주소 풀을 관리합니다.
-3. **IP 주소 할당**: 파드가 생성되면, CNI는 IP 주소 풀에서 IP 주소를 할당하고 파드의 네트워크 네임스페이스에 연결합니다.
-4. **IP 주소 회수**: 파드가 종료되면, CNI는 IP 주소를 회수하여 풀로 반환합니다.
-
-**예시 구성:**
+Linux 예제에서 소문자 `warm-ip-target`·`enable-pod-eni` 키의 기존 `amazon-vpc-cni` ConfigMap은 올바른 설정 경로가 아닙니다. 실제 애드온 스키마·Helm 값 또는 지원되는 `aws-node` 환경변수를 소유자를 통해 관리하세요. 설치 빌드를 먼저 확인합니다:
 
 ```bash
-# 노드당 최대 파드 수 계산
-최대 파드 수 = (ENI 수 × (ENI당 IP 주소 수 - 1)) + 2
-
-# m5.large 인스턴스의 경우
-# ENI 수: 3, ENI당 IP 주소 수: 10
-최대 파드 수 = (3 × (10 - 1)) + 2 = 29
+set -euo pipefail
+CNI_ADDON_VERSION=$(aws eks describe-addon --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --addon-name vpc-cni --query addon.addonVersion --output text)
+aws eks describe-addon-configuration --region "$EXAMPLE_REGION" --addon-name vpc-cni \
+  --addon-version "$CNI_ADDON_VERSION" --query configurationSchema --output text
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" -n kube-system get daemonset aws-node \
+  -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{": "}{.image}{"\n"}{end}'
 ```
+다음은 Kubernetes ConfigMap이 아닌 **애드온 설정 조각**입니다. Warm pool 값은 예시이며 검토한 기존 설정과 병합하고 선택 버전의 스키마를 확인하세요. Windows IPAM ConfigMap 설정은 별도 인터페이스입니다.
 
-**주요 고려 사항:**
-
-1. **IP 주소 제한**: 인스턴스 유형에 따라 노드당 실행할 수 있는 최대 파드 수가 제한됩니다.
-2. **워밍(Warm) IP**: VPC CNI는 `WARM_IP_TARGET` 설정을 통해 미리 일정 수의 IP 주소를 할당하여 파드 시작 시간을 단축할 수 있습니다.
-3. **프리픽스 위임(Prefix Delegation)**: 최신 버전의 VPC CNI는 /28 CIDR 블록(16개 IP)을 각 ENI에 할당하는 프리픽스 위임 기능을 지원하여 IP 주소 밀도를 높일 수 있습니다.
-4. **보안 그룹**: `ENABLE_POD_ENI` 설정을 활성화하면 특정 파드에 대해 별도의 보안 그룹을 구성할 수 있습니다(Security Groups for Pods 기능).
-
-다른 옵션들의 문제점:
-
-* **A**: 일반적으로 각 파드에 별도의 ENI를 할당하지 않습니다. 이는 EC2 인스턴스당 ENI 제한으로 인해 비효율적입니다.
-* **C**: VPC CNI는 오버레이 네트워크를 사용하지 않습니다. 이는 Flannel이나 Weave Net과 같은 다른 CNI 플러그인의 특징입니다.
-* **D**: 각 파드에 별도의 VPC 서브넷을 할당하는 것은 AWS VPC 아키텍처에서 불가능합니다.
+```json
+{"env":{"WARM_IP_TARGET":"5","MINIMUM_IP_TARGET":"10"}}
+```
+Pod 보안 그룹·기본 NetworkPolicy에는 각각 추가 선행조건이 있습니다. IP pool 예제를 적용하면서 무관한 기능까지 켜거나 동작 중인 클러스터에 구성하지 않은 두 번째 CNI를 적용하지 마세요.
 
 </details>
 
-### 3. Amazon EKS에서 파드 간 통신이 VPC 외부로 나가지 않고 VPC 내에서 직접 이루어지는 이유는 무엇인가요?
-
-A. 모든 파드가 동일한 서브넷에 위치하기 때문에\
-B. 파드가 노드의 네트워크 네임스페이스를 공유하기 때문에\
-C. 파드가 VPC IP 주소를 직접 할당받기 때문에\
-D. 파드 간 통신이 항상 서비스 메시를 통해 이루어지기 때문에
+2. IPv4 보조 IP 모드에서 일반 Pod에 주소를 어떻게 할당하나요?
+   * A) Pod마다 전용 VPC
+   * B) 노드 ENI·IP pool의 주소
+   * C) 오버레이 주소만
+   * D) Pod마다 별도 서브넷
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: B) 노드 ENI·IP pool의 주소**
 
-**정답: C. 파드가 VPC IP 주소를 직접 할당받기 때문에**
+일반 IPv4 보조 IP 모드에서는 IPAMD가 노드의 ENI·IP pool을 관리하고 CNI 설정이 pool 주소를 Pod 네트워크 네임스페이스에 할당합니다. CNI 정리·재사용 대기 후 주소가 warm pool로 돌아갈 수 있으며 EC2에서 즉시 할당 해제되는 것은 아닙니다.
 
-**설명:** Amazon EKS에서 파드 간 통신이 VPC 외부로 나가지 않고 VPC 내에서 직접 이루어지는 주된 이유는 Amazon VPC CNI 플러그인이 각 파드에 VPC IP 주소를 직접 할당하기 때문입니다.
+아래 일반 max-Pods 계산은 이 모드의 예제입니다. ENI마다 기본 주소를 제외하며 마지막 2는 호스트 네트워크 시스템 Pod를 반영한 전통적인 여유분입니다:
 
-**주요 메커니즘:**
-
-1. **VPC IP 주소 할당**: 각 파드는 VPC 서브넷에서 고유한 IP 주소를 할당받습니다. 이 IP 주소는 노드의 ENI에 연결된 보조 IP 주소입니다.
-2. **직접 라우팅**: 파드가 VPC IP 주소를 가지므로, VPC 내의 다른 리소스(다른 파드, EC2 인스턴스, RDS 데이터베이스 등)와 직접 통신할 수 있습니다.
-3. **VPC 라우팅 테이블**: 파드 간 통신은 VPC 라우팅 테이블을 따르며, 동일한 VPC 내에서는 외부로 나가지 않고 직접 라우팅됩니다.
-
-**장점:**
-
-1. **네트워크 성능**: 오버레이 네트워크나 NAT를 사용하지 않아 지연 시간이 감소하고 처리량이 향상됩니다.
-2. **보안**: VPC 보안 그룹, 네트워크 ACL 등 기존 AWS 네트워크 보안 메커니즘을 활용할 수 있습니다.
-3. **가시성**: VPC 흐름 로그를 통해 파드 간 트래픽을 모니터링하고 분석할 수 있습니다.
-4. **AWS 서비스 통합**: 파드가 VPC IP 주소를 가지므로 VPC 엔드포인트, PrivateLink 등의 AWS 서비스와 원활하게 통합됩니다.
-
-**예시 시나리오:**
-
-파드 A(IP: 10.0.1.23)가 파드 B(IP: 10.0.2.45)와 통신하는 경우:
-
-1. 파드 A는 파드 B의 IP 주소(10.0.2.45)로 직접 패킷을 전송합니다.
-2. 패킷은 VPC 라우팅 테이블에 따라 라우팅됩니다.
-3. 패킷이 VPC 내에서 직접 파드 B에 도달합니다.
-4. 이 과정에서 패킷은 VPC 외부로 나가지 않습니다.
-
-다른 옵션들의 문제점:
-
-* **A**: 파드는 여러 서브넷에 분산될 수 있으며, 서로 다른 서브넷에 있는 파드들도 VPC 내에서 직접 통신할 수 있습니다.
-* **B**: 파드는 노드의 네트워크 네임스페이스를 공유하지 않습니다. 각 파드는 자체 네트워크 네임스페이스를 가집니다.
-* **D**: 파드 간 통신이 항상 서비스 메시를 통해 이루어지는 것은 아닙니다. 서비스 메시는 선택적으로 사용되는 추가 계층입니다.
+```text
+ENIs × (IPv4 addresses per ENI − 1) + 2
+m5.large: 3 × (10 − 1) + 2 = 29
+```
+보편적인 워크로드 한도는 아닙니다. 서브넷 공간·kubelet maxPods·컴퓨팅 자원·커스텀 네트워킹·branch ENI 한도도 중요합니다. Prefix 모드는 ENI 주소 슬롯에 /28을 할당하며 ENI당 정확히 한 prefix만 사용하는 것이 아닙니다. Pod 보안 그룹은 별도 branch ENI 경로를 사용합니다. HostNetwork Pod는 노드 네트워크를 공유하므로 단순한 Pod당 보조 IP 설명의 또 다른 예외입니다.
 
 </details>
 
-### 4. Amazon EKS에서 파드에 대한 인바운드 및 아웃바운드 트래픽을 제어하는 가장 적합한 Kubernetes 리소스는 무엇인가요?
-
-A. Service\
-B. Ingress\
-C. NetworkPolicy\
-D. SecurityContext
+3. 일반 VPC CNI의 VPC 내부 라우팅 모델을 가능하게 하는 것은 무엇인가요?
+   * A) 모든 Pod가 한 서브넷 사용
+   * B) 모든 Pod가 호스트 네트워크 공유
+   * C) 필요한 경로·제어와 VPC 라우팅 가능한 Pod 주소
+   * D) 필수 서비스 메시
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: C) 필요한 경로·제어와 VPC 라우팅 가능한 Pod 주소**
 
-**정답: C. NetworkPolicy**
+일반 VPC CNI 경로의 Pod는 VPC에서 라우팅 가능한 주소를 사용합니다. 노드 간 트래픽은 노드·ENI·VPC 라우팅을 사용할 수 있고 같은 노드의 트래픽은 호스트 네트워크 스택 안에 남을 수 있습니다. SG·NACL·정책·검사 장비용 커스텀 경로가 실제 도달 가능성을 결정합니다.
 
-**설명:** Amazon EKS에서 파드에 대한 인바운드 및 아웃바운드 트래픽을 제어하는 가장 적합한 Kubernetes 리소스는 NetworkPolicy입니다. NetworkPolicy는 Kubernetes의 네트워크 보안 메커니즘으로, 파드 간 통신을 세밀하게 제어할 수 있습니다.
+`10.0.1.23 → 10.0.2.45` 예제는 일반적인 VPC 내부 경로이며 모든 패킷이 항상 VPC 라우팅 테이블을 거치거나 구성된 검사 장비 경로를 절대 사용하지 않는다는 증명이 아닙니다. 같은 노드의 Pod 트래픽은 VPC Flow Logs에 완전히 보이지 않습니다. 대부분의 Pod는 자체 네트워크 네임스페이스를 가지지만 hostNetwork Pod는 예외입니다.
 
-**NetworkPolicy의 주요 특징:**
+오버레이가 없다는 이유로 지연·처리량 개선을 보장하면 안 됩니다. 실제 경로를 측정하고 AZ 간 전송·대상 유형·SNAT·워크로드 동작을 고려하세요. 서비스 메시는 선택적 추가 계층이며 일반 Pod 라우팅의 필수조건은 아닙니다.
 
-1. **선택적 적용**: 레이블 선택기를 사용하여 특정 파드에 정책을 적용할 수 있습니다.
-2. **인바운드 및 아웃바운드 규칙**: 인바운드(ingress) 및 아웃바운드(egress) 트래픽을 모두 제어할 수 있습니다.
-3. **다양한 선택기**: 네임스페이스, 레이블, IP CIDR 블록, 포트 등을 기준으로 트래픽을 필터링할 수 있습니다.
-4. **기본 거부 정책**: 명시적으로 허용되지 않은 트래픽은 기본적으로 거부됩니다.
+</details>
 
-**NetworkPolicy 예시:**
+4. Pod ingress·egress 정책을 표현하는 Kubernetes 리소스는 무엇인가요?
+   * A) Service
+   * B) Ingress
+   * C) NetworkPolicy
+   * D) SecurityContext
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) NetworkPolicy**
+
+NetworkPolicy는 Pod를 선택하고 지정한 트래픽 방향만 격리합니다. 해당 Pod·방향을 선택하는 정책이 없으면 격리되지 않습니다. 정책은 합산되므로 제한적으로 보이는 정책을 추가해도 다른 정책이 허용한 트래픽을 제거하지 못합니다.
+
+호환 집행 구현을 사용하세요. 현재 Amazon VPC CNI는 활성화 시 기본 네트워크 정책을 지원하므로 집행할 수 없다는 기존 설명은 잘못되었습니다. 관리형 애드온은 추정한 `ENABLE_NETWORK_POLICY` 환경변수가 아닌 `enableNetworkPolicy` 설정 필드를 사용합니다:
+
+```json
+{"enableNetworkPolicy":"true"}
+```
+선택한 애드온 버전·스키마에 맞춰 소유자를 통해 병합할 설정 조각입니다. 테스트 전에 정책 에이전트와 AWS의 컴퓨팅·커널·Pod 소유자·인터페이스 제한을 확인하세요. Standard 시작 모드는 정책 연결 전 잠시 트래픽을 허용할 수 있고 strict 모드는 필요한 시스템·DNS 허용 규칙이 모두 필요합니다. 지원되는 마이그레이션 설계 없이 floating Calico 매니페스트와 기본 정책 집행을 동시에 설치하지 마세요.
+
+다음은 검토한 실습 네임스페이스와 컨트롤러 관리 워크로드용입니다. **같은 피어 항목의** 네임스페이스·Pod 셀렉터는 AND이며 항목을 나누면 OR입니다. DNS 예외도 명시합니다:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: api-allow
-  namespace: production
+  namespace: policy-lab
 spec:
   podSelector:
-    matchLabels:
-      app: api
-  policyTypes:
-  - Ingress
-  - Egress
+    matchLabels: {app: api}
+  policyTypes: [Ingress, Egress]
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          purpose: frontend
-    - podSelector:
-        matchLabels:
-          role: frontend
+          kubernetes.io/metadata.name: frontend-lab
+      podSelector:
+        matchLabels: {role: frontend}
     ports:
-    - protocol: TCP
-      port: 8080
+    - {protocol: TCP, port: 8080}
   egress:
   - to:
     - namespaceSelector:
         matchLabels:
-          purpose: database
+          kubernetes.io/metadata.name: database-lab
+      podSelector:
+        matchLabels: {app: database}
     ports:
-    - protocol: TCP
-      port: 5432
+    - {protocol: TCP, port: 5432}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels: {k8s-app: kube-dns}
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
 ```
-
-**EKS에서의 NetworkPolicy 구현:**
-
-Amazon EKS에서 NetworkPolicy를 사용하려면 네트워크 정책을 지원하는 CNI 플러그인이 필요합니다. 기본 Amazon VPC CNI는 네트워크 정책을 직접 지원하지 않으므로, 다음과 같은 추가 구성이 필요합니다:
-
-1.  **Calico 설치**: Calico는 EKS에서 NetworkPolicy를 구현하는 가장 일반적인 방법입니다.
-
-    ```bash
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
-    ```
-2.  **Amazon VPC CNI의 네트워크 정책 활성화**: 최신 버전의 Amazon VPC CNI는 네트워크 정책 지원을 제공합니다.
-
-    ```bash
-    kubectl set env daemonset aws-node -n kube-system ENABLE_NETWORK_POLICY=true
-    ```
-
-다른 옵션들의 문제점:
-
-* **A. Service**: Service는 파드에 대한 네트워크 액세스를 제공하지만, 트래픽 제어나 필터링 기능은 없습니다.
-* **B. Ingress**: Ingress는 HTTP/HTTPS 트래픽을 클러스터 내 서비스로 라우팅하는 데 사용되지만, 일반적인 네트워크 정책을 정의하지는 않습니다.
-* **D. SecurityContext**: SecurityContext는 파드 또는 컨테이너 수준의 보안 설정을 정의하지만, 네트워크 트래픽 제어와는 관련이 없습니다.
+실제 네임스페이스·Pod 레이블과 리스너 포트를 사용하세요. NodeLocal DNSCache 등 다른 DNS 경로는 별도 허용이 필요합니다. Service·Ingress는 트래픽을 라우팅하며 이 L3·L4 접근 규칙을 대체하지 않습니다. SecurityContext는 워크로드 권한을 제어하며 선언적인 네트워크 허용 목록은 아닙니다.
 
 </details>
 
-### 5. Amazon EKS에서 클러스터 내 서비스 디스커버리를 위해 사용되는 DNS 서비스는 무엇인가요?
-
-A. Amazon Route 53\
-B. CoreDNS\
-C. kube-dns\
-D. AWS Cloud Map
+5. 일반 EKS 클러스터 서비스 검색에 보통 구성하는 DNS 구성 요소는 무엇인가요?
+   * A) Route 53 프라이빗 호스팅 영역만
+   * B) CoreDNS
+   * C) 필수 기존 kube-dns Deployment
+   * D) Cloud Map만
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: B) CoreDNS**
 
-**정답: B. CoreDNS**
+일반 EKS는 클러스터 DNS로 CoreDNS를 사용합니다. 모든 EKS 모드가 보이는 CoreDNS Deployment를 자동 생성한다고 가정하면 안 됩니다. Auto Mode는 관리형 DNS를 제공하며 기본 부트스트랩 애드온을 끄는 도구는 선택한 애드온을 명시적으로 구성해야 합니다.
 
-**설명:** Amazon EKS에서 클러스터 내 서비스 디스커버리를 위해 기본적으로 사용되는 DNS 서비스는 CoreDNS입니다. CoreDNS는 Kubernetes 클러스터 내에서 DNS 기반 서비스 디스커버리를 제공하는 유연하고 확장 가능한 DNS 서버입니다.
+EKS 관리형 CoreDNS는 지원되는 `corefile` 설정 값과 정확한 버전의 스키마로 커스텀 구성을 보존합니다. ConfigMap 직접 수정은 애드온이 덮어쓸 수 있습니다. 자체 관리 CoreDNS는 매니페스트·GitOps 소유자를 통해 변경하세요. 일반 예제로 전체 ConfigMap을 교체하지 말고 필요한 `ready`·전달·Kubernetes 영역·reload 동작을 검토합니다.
 
-**CoreDNS의 주요 특징:**
+DNS 응답은 리소스 유형에 따라 다릅니다:
 
-1. **Kubernetes 통합**: CoreDNS는 Kubernetes API와 통합되어 서비스 및 파드의 DNS 레코드를 자동으로 생성합니다.
-2. **플러그인 아키텍처**: CoreDNS는 다양한 플러그인을 통해 기능을 확장할 수 있습니다.
-3. **고가용성**: EKS에서 CoreDNS는 일반적으로 여러 복제본으로 배포되어 고가용성을 보장합니다.
-4. **구성 가능성**: Corefile을 통해 다양한 DNS 설정을 구성할 수 있습니다.
+| 리소스 | 일반적인 DNS 동작 |
+| --- | --- |
+| 일반 Service | `<service>.<namespace>.svc.<cluster-domain>`이 Service IP 주소군으로 해석 |
+| Headless Service | 준비·게시 설정에 따른 엔드포인트 주소 |
+| ExternalName Service | 설정된 외부 이름으로 CNAME |
+| 기존 IPv4 Pod 레코드 | CoreDNS `pods` 모드에 따라 `10-0-1-23.<namespace>.pod.<cluster-domain>` 같은 하이픈 주소 사용 |
 
-**EKS에서의 CoreDNS 배포:**
+`cluster.local`은 흔한 기본값이지 보편적인 도메인이 아닙니다. `pods insecure`는 Pod 존재를 검증하지 않는 기존 IP 기반 응답이며 보안 보장이 아닙니다. 임의 노트북 DNS가 아닌 승인된 클러스터 내부 진단 워크로드에서 테스트하세요.
 
-EKS 클러스터를 생성하면 CoreDNS가 자동으로 배포됩니다. CoreDNS는 `kube-system` 네임스페이스에서 Deployment로 실행됩니다:
+EKS 관리형 CoreDNS는 호환 애드온 버전에서 설정된 오토스케일링을 지원합니다. 복제본 제어자는 하나로 유지하며 관리형 오토스케일링·HPA가 활성화된 상태에서 수동 `kubectl scale`로 경쟁시키면 안 됩니다.
 
-```bash
-kubectl get deployment coredns -n kube-system
-```
+다음은 검토 후 기존 cache 구문을 대체하는 **Corefile 조각**이며 YAML이 아닙니다. CoreDNS 1.14.7은 `denial 1000`을 수용하지만 실제 최소 용량 1024로 보정합니다. 예제는 그 용량을 명시하며 `success 10000`은 9984로 내림 조정됩니다:
 
-**CoreDNS 구성 예시:**
-
-CoreDNS의 구성은 ConfigMap에 저장됩니다:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: coredns
-  namespace: kube-system
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-            lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-            pods insecure
-            fallthrough in-addr.arpa ip6.arpa
-            ttl 30
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
-```
-
-**서비스 디스커버리 작동 방식:**
-
-1. **서비스 생성**: Kubernetes 서비스가 생성되면, CoreDNS는 자동으로 DNS 레코드를 생성합니다.
-2. **DNS 이름 형식**:
-   * 서비스: `<service-name>.<namespace>.svc.cluster.local`
-   * 파드: `<pod-ip>.<namespace>.pod.cluster.local`
-3. **DNS 조회**: 클러스터 내 파드가 서비스 이름으로 DNS 조회를 수행하면, CoreDNS가 해당 서비스의 ClusterIP로 응답합니다.
-
-**예시:**
-
-```bash
-# my-service라는 서비스가 default 네임스페이스에 있는 경우
-nslookup my-service.default.svc.cluster.local
-
-# 결과
-Name:   my-service.default.svc.cluster.local
-Address: 10.100.43.150  # 서비스의 ClusterIP
-```
-
-**CoreDNS 스케일링 및 최적화:**
-
-EKS에서 CoreDNS는 클러스터 크기에 따라 자동으로 스케일링되지 않으므로, 대규모 클러스터에서는 수동으로 스케일링해야 할 수 있습니다:
-
-```bash
-kubectl scale deployment coredns --replicas=4 -n kube-system
-```
-
-또한, 캐시 설정을 조정하여 성능을 최적화할 수 있습니다:
-
-```yaml
+```text
 cache {
     success 10000
-    denial 1000
+    denial 1024
     prefetch 10 10m 20%
 }
 ```
-
-다른 옵션들의 문제점:
-
-* **A. Amazon Route 53**: Route 53은 AWS의 DNS 서비스이지만, EKS 클러스터 내부의 서비스 디스커버리에는 기본적으로 사용되지 않습니다.
-* **C. kube-dns**: kube-dns는 이전 버전의 Kubernetes에서 사용되었지만, EKS에서는 CoreDNS로 대체되었습니다.
-* **D. AWS Cloud Map**: Cloud Map은 AWS의 서비스 디스커버리 서비스이지만, EKS 클러스터 내부의 기본 DNS 서비스로 사용되지 않습니다.
+캐시 용량·TTL·prefetch 설정에는 워크로드 측정이 필요하며 이 예제는 성능 벤치마크가 아닙니다. 제어된 변경 후 DNS 오류·캐시 동작·CPU·메모리를 확인하세요.
 
 </details>
 
-\## 단답형 문제
+## 단답형 문제
 
-### 6. Amazon EKS 클러스터에서 노드당 최대 파드 수를 제한하는 주요 요소는 무엇이며, 이를 늘리기 위한 방법은 무엇인가요?
+6. Pod 밀도를 제한하는 요소와 prefix delegation의 영향은 무엇인가요?
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+EC2 인터페이스·주소 용량, 서브넷 가용 주소, Kubernetes·컴퓨팅 용량을 구분합니다. 일반 IPv4 보조 IP 모드의 전통적인 식은 `ENI 수 × (ENI당 IP 수 − 1) + 2`이며 t3.small은 11, m5.large는 29, c5.4xlarge는 234입니다. 모든 관리형 그룹의 실제 한도가 아닌 계산식 결과입니다.
 
-**정답:** Amazon EKS 클러스터에서 노드당 최대 파드 수를 제한하는 주요 요소는 **EC2 인스턴스 유형별 ENI(탄력적 네트워크 인터페이스) 수와 ENI당 할당 가능한 IP 주소 수**입니다. 이를 늘리기 위한 주요 방법은 **프리픽스 위임(Prefix Delegation) 기능을 활성화**하는 것입니다.
+IPv4 prefix 모드에서 `/28` 하나는 주소 16개를 제공하고 보조 주소 슬롯 하나를 차지합니다. ENI에 여러 prefix를 할당할 수 있으므로 기존의 “ENI당 prefix 하나에서 주소 하나 제외”로 m5.large를 47로 계산한 식은 잘못되었습니다. 호환 관리형 그룹의 maxPods 상한은 30 vCPU 미만이면 110, 그 외에는 250이며 CPU·메모리·실제 CNI 설정에 따라 사용 가능한 워크로드 용량은 더 작을 수 있습니다.
 
-**상세 설명:**
+관리형 애드온 설정 조각 예제는 다음과 같습니다:
 
-1.  **노드당 최대 파드 수 계산 공식**:
+```json
+{"env":{"ENABLE_PREFIX_DELEGATION":"true","WARM_PREFIX_TARGET":"1"}}
+```
+정확한 버전 스키마와 기존 구성을 검토한 후 병합합니다. WARM_PREFIX_TARGET은 여유 prefix 용량이며 ENI당 prefix를 하나로 제한하는 값이 아닙니다. WARM_IP_TARGET·MINIMUM_IP_TARGET을 설정하면 해당 동작보다 우선합니다. Prefix 모드는 연속 /28 공간과 지원 인스턴스·CNI가 필요하며 서브넷을 확장하지 않습니다.
 
-    ```
-    최대 파드 수 = (ENI 수 × (ENI당 IP 주소 수 - 1)) + 2
-    ```
+Prefix delegation과 Pod 보안 그룹은 함께 사용할 수 있습니다. Branch ENI Pod는 여전히 인스턴스별 branch 한도를 사용하며 prefix 밀도 증가 혜택을 받지 않습니다. 변수만 바꾸고 모든 실행 Pod·maxPods가 바뀌었다고 가정하지 말고 새 노드·교체 노드와 PDB를 고려한 이전을 계획하세요. 커스텀 AL2023 AMI에는 검토한 NodeConfig maxPods가 필요할 수 있으며 kubelet 한도만 높여도 IP·CPU가 생기지는 않습니다.
 
-    * 각 ENI의 첫 번째 IP 주소는 노드 자체를 위해 예약됩니다.
-    * 추가 2개는 kube-proxy와 aws-node 파드를 위한 것입니다.
-2. **인스턴스 유형별 제한 예시**:
-   * **t3.small**: (3 ENI × (4 IP - 1)) + 2 = 11 파드
-   * **m5.large**: (3 ENI × (10 IP - 1)) + 2 = 29 파드
-   * **c5.4xlarge**: (8 ENI × (30 IP - 1)) + 2 = 234 파드
-3.  **프리픽스 위임(Prefix Delegation)을 통한 확장**: 프리픽스 위임은 각 ENI에 개별 IP 주소 대신 /28 CIDR 블록(16개 IP)을 할당하는 기능입니다.
-
-    **활성화 방법**:
-
-    ```bash
-    # ConfigMap 수정
-    kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-    # 선택적으로 프리픽스 할당 모드 설정
-    kubectl set env daemonset aws-node -n kube-system WARM_PREFIX_TARGET=1
-    ```
-
-    **프리픽스 위임 활성화 후 계산 공식**:
-
-    ```
-    최대 파드 수 = (ENI 수 × (ENI당 프리픽스 수 × 프리픽스당 IP 수 - 1)) + 2
-    ```
-
-    예: m5.large에서 프리픽스 위임 활성화 시
-
-    * 프리픽스 위임 없이: 29 파드
-    * 프리픽스 위임 활성화: (3 ENI × (1 프리픽스 × 16 IP - 1)) + 2 = 47 파드
-4. **기타 최대 파드 수를 늘리는 방법**:
-   * **더 큰 인스턴스 유형 사용**: 더 많은 ENI와 IP 주소를 지원하는 인스턴스 유형으로 변경
-   * **사용자 지정 CNI 구성**: `--max-pods` 플래그를 사용하여 kubelet 구성 조정 (권장하지 않음)
-   * **대체 CNI 플러그인 사용**: Calico, Cilium 등 오버레이 네트워크를 사용하는 CNI 플러그인으로 전환
-5. **고려 사항**:
-   * 프리픽스 위임은 EC2 Nitro 기반 인스턴스에서만 지원됩니다.
-   * 프리픽스 위임을 활성화하면 보안 그룹을 파드에 직접 할당하는 기능(SecurityGroupsForPods)을 사용할 수 없습니다.
-   * 노드당 파드 수가 많아지면 노드 리소스(CPU, 메모리) 경합이 발생할 수 있으므로 적절한 인스턴스 크기 선택이 중요합니다.
-6.  **모니터링 및 최적화**:
-
-    ```bash
-    # 현재 IP 주소 사용량 확인
-    kubectl exec -n kube-system ds/aws-node -- curl -s http://localhost:61679/v1/enis | jq
-
-    # 프리픽스 위임 상태 확인
-    kubectl describe daemonset aws-node -n kube-system | grep PREFIX
-    ```
-
-프리픽스 위임을 활성화하면 노드당 최대 파드 수를 크게 늘릴 수 있지만, 클러스터의 요구 사항과 워크로드 특성에 따라 적절한 구성을 선택하는 것이 중요합니다.
+```bash
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get nodes \
+  -o custom-columns=NAME:.metadata.name,PODS:.status.allocatable.pods,POD_ENI:.status.allocatable.vpc\\.amazonaws\\.com/pod-eni
+```
+실제 할당 가능 용량과 CNI·EC2 할당을 확인합니다. aws-node 컨테이너에 curl이 있다고 가정하지 말고 설치 빌드·대상 노드의 문서화된 introspection·디버그 경로를 사용하세요.
 
 </details>
 
-### 7. Amazon EKS에서 파드에 특정 AWS 보안 그룹을 할당하는 기능의 이름은 무엇이며, 이를 구성하는 방법을 설명하세요.
+7. 일반 EKS EC2 노드의 선택된 Pod에 보안 그룹을 어떻게 지정하나요?
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+Pod 보안 그룹은 **노드의 trunk ENI와 선택된 Pod의 branch ENI**를 사용합니다. EKS VPC resource controller가 `AmazonEKSVPCResourceController` 등을 포함한 **클러스터 IAM 역할** 권한으로 경로를 생성·관리하며 단순히 Pod ServiceAccount에 권한을 주는 방식이 아닙니다.
 
-**정답:** Amazon EKS에서 파드에 특정 AWS 보안 그룹을 할당하는 기능의 이름은 **Security Groups for Pods** 또는 \*\*Pod ENI(Elastic Network Interface)\*\*입니다. 이 기능은 VPC CNI의 **ENABLE\_POD\_ENI** 옵션을 활성화하여 구성할 수 있습니다.
+일반 Linux EC2 예제는 trunking을 지원하는 인스턴스 유형(모든 Nitro 유형은 아님), 호환 VPC CNI와 소유자를 통해 설정한 `ENABLE_POD_ENI=true`를 확인합니다. `POD_SECURITY_GROUP_ENFORCING_MODE`, DNS·프로브·라우팅·SG 규칙도 검토하세요. Strict·standard 모드는 특히 VPC 외부·노드 내부 경로에서 SNAT와 적용 SG가 다릅니다.
 
-**상세 설명:**
+전용 `sgp-lab` 네임스페이스를 만들고 SG 자리표시자를 올바른 VPC의 승인된 그룹으로 바꿉니다. 다음 컨트롤러 관리 대기 클라이언트는 선택 관계를 보여 주며 DB 접근 성공을 검증하지 않습니다:
 
-1. **Security Groups for Pods 개요**: 이 기능은 특정 파드에 대해 별도의 ENI(트렁크 ENI라고도 함)를 생성하고, 이 ENI에 보안 그룹을 연결하여 파드 수준에서 세밀한 네트워크 보안 제어를 가능하게 합니다.
-2. **사전 요구 사항**:
-   * Amazon VPC CNI 플러그인 버전 1.7.7 이상
-   * Kubernetes 버전 1.17 이상
-   * EC2 Nitro 기반 인스턴스
-   * 프리픽스 위임 기능이 비활성화되어 있어야 함
-3.  **구성 단계**:
-
-    a. **VPC CNI에서 Pod ENI 기능 활성화**:
-
-    ```bash
-    kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-    ```
-
-    b. **SecurityGroupPolicy 리소스 생성**:
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
+```yaml
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: db-client-policy
+  namespace: sgp-lab
+spec:
+  podSelector:
+    matchLabels: {role: db-client}
+  securityGroups:
+    groupIds: [sg-REPLACE_WITH_APPROVED_GROUP]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-client
+  namespace: sgp-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {role: db-client}
+  template:
     metadata:
-      name: allow-db-access
-      namespace: app
+      labels: {role: db-client}
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: client
+        image: public.ecr.aws/docker/library/busybox:1.37.0
+        command: [sleep, '3600']
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 32Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+```
+필요에 따라 podSelector 또는 serviceAccountSelector를 사용합니다. 새 Pod, CNINode·branch 용량과 실제 허용·차단 연결을 확인하세요. SecurityGroupPolicy 선택 변경은 실행 중인 Pod에 소급 적용되지 않으며 SG 규칙 자체의 변경은 연결 추적 동작이 별도로 적용됩니다. HostNetwork Pod는 노드 네트워크를 사용합니다.
+
+Prefix delegation과 호환되지만 branch ENI Pod 용량을 늘리지는 않습니다. 기존 SecurityGroupPolicy와 Auto Mode NodeClass의 Pod 서브넷·SG 선택 기능은 같은 API가 아니므로 해당 컴퓨팅의 문서를 따라야 합니다.
+
+</details>
+
+8. AWS Load Balancer Controller가 LoadBalancer Service에 만드는 로드 밸런서와 소유권 설정은 무엇인가요?
+
+<details>
+<summary>정답 보기</summary>
+
+AWS Load Balancer Controller는 LoadBalancer Service로 **NLB**를 생성하며 CLB를 생성하지 않습니다. 기존 퀴즈는 이를 이전 in-tree Service 컨트롤러와 혼동했습니다. 현재 LBC의 명시적 소유권은 `service.k8s.aws/nlb`이며 v2.2부터 새 NLB의 기본 scheme은 **internal**입니다. 의도한 scheme을 명시하세요.
+
+다음은 컨트롤러 설치·권한과 적격 서브넷·SG 규칙을 검증한 뒤 `lb-lab`의 검토된 기존 `app=echo` 워크로드를 대상으로 하는 새 Service입니다. 유료 내부 NLB를 생성하므로 프로덕션 네임스페이스에 임의로 적용하면 안 됩니다:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-nlb
+  namespace: lb-lab
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+spec:
+  type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  allocateLoadBalancerNodePorts: false
+  selector: {app: echo}
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+```
+IP 대상은 적격 Pod IP로 전달하고 instance 대상은 노드·NodePort 경로를 사용합니다. 예제는 IP 모드에서 사용하지 않는 NodePort 할당을 끕니다. Auto Mode는 별도 소유권 클래스(`eks.amazonaws.com/nlb`)와 지원 설정을 사용합니다. 기존 legacy Service의 컨트롤러 선택 어노테이션·클래스를 검토 없이 바꾸면 리소스가 남거나 외부로 노출될 수 있습니다.
+
+**설정 선택**은 컨트롤러 버전과 리스너 설계에 맞춰야 합니다: 표의 어노테이션 이름은 공통 `service.beta.kubernetes.io/` 접두사를 생략했습니다.
+
+| 요구 | 현재 설정·고려 사항 |
+| --- | --- |
+| 내부·퍼블릭 scheme | `aws-load-balancer-scheme: internal` 또는 `internet-facing`; 라우팅·서브넷도 일치해야 함 |
+| IP 대상 | `aws-load-balancer-nlb-target-type: ip` |
+| 커스텀 프런트엔드 SG | `aws-load-balancer-security-groups`; 백엔드 규칙 관리·상태 확인 경로 검토 |
+| 명시적 서브넷 | `aws-load-balancer-subnets`; 적격성·AZ·IP 제약은 유지 |
+| 교차 영역 동작 | `aws-load-balancer-attributes`의 `load_balancing.cross_zone.enabled`; 가용성·토폴로지·비용 평가 |
+| 기존 S3 접근 로그 | `aws-load-balancer-attributes`의 `access_logs.s3.*`; NLB는 TLS 요청만 기록하며 버킷·전달 권한 검토 필요 |
+| TLS 종료 | `aws-load-balancer-ssl-cert`와 Service 리스너에 맞는 `aws-load-balancer-ssl-ports`; NLB TLS 종료이지 ALB HTTP 라우팅은 아님 |
+
+기존 `aws-load-balancer-internal`·교차 영역·접근 로그 어노테이션 대신 scheme·attributes 설정을 사용합니다. 현재 NLB는 향상된 CloudWatch 로그 전달도 제공하므로 S3 어노테이션이 그 기능까지 구성한다고 가정하지 말고 해당 통합 문서를 따르세요. 접근 로그는 최선형이며 전체 요청 회계 기록이 아닙니다.
+**ALB 대안:** 구성된 `alb` IngressClass와 IP 대상으로 ClusterIP 백엔드에 연결합니다. 같은 예제 백엔드에 NLB·ALB를 실수로 모두 만드는 것을 피합니다:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-backend
+  namespace: lb-lab
+spec:
+  type: ClusterIP
+  selector: {app: echo}
+  ports:
+  - {port: 8080, targetPort: 8080, protocol: TCP}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: echo-alb
+  namespace: lb-lab
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: echo-backend
+            port: {number: 8080}
+```
+설치 전에 컨트롤러 ServiceAccount와 범위를 제한한 IAM 권한을 준비합니다. 검토한 차트 3.5.0은 컨트롤러 v3.5.0을 포함하며 IMDS 검색이 없는 환경을 위해 리전·VPC를 명시합니다. 배포 전에 렌더링·검토하세요:
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update eks
+helm template aws-load-balancer-controller eks/aws-load-balancer-controller \
+  --version 3.5.0 --kube-version 1.36.0 --namespace kube-system \
+  --set-string clusterName="${EXAMPLE_CLUSTER:?}" \
+  --set-string region="${EXAMPLE_REGION:?}" --set-string vpcId="${EXAMPLE_VPC_ID:?}" \
+  --set serviceAccount.create=false --set-string serviceAccount.name=aws-load-balancer-controller \
+  > lbc-reviewed.yaml
+```
+| 기능 | CLB(기존) | NLB | ALB |
+| --- | --- | --- | --- |
+| 주요 라우팅 계층 | 기존 L4·L7 리스너 | L4 | HTTP·HTTPS L7 |
+| 직접 IP 대상 | 아니요 | 예 | 예 |
+| AZ별 정적 주소 선택 | 아니요 | 예 | 기본 정적 프런트엔드 IP 없음 |
+| HTTP 경로 라우팅 | 아니요 | 아니요 | 예 |
+
+현재 NLB는 TCP·TLS·UDP·TCP_UDP·QUIC·TCP_QUIC 리스너를 지원합니다. 컨트롤러 지원·설정은 별도로 확인해야 하며 LBC 3.5는 QUIC 포트 어노테이션을 문서화합니다. 기존 “좋음·매우 좋음” 성능 표는 벤치마크가 아니었습니다. 애플리케이션에 맞게 선택·측정하며 모든 환경의 교차 영역 활성화나 일괄 지연 순위를 프로덕션 규칙으로 삼지 마세요.
+
+</details>
+
+## 실습 문제
+
+9. 같은 네임스페이스 통신·DNS 예외와 네임스페이스 간 TCP 차단을 구현·검증하세요.
+
+<details>
+<summary>정답 보기</summary>
+
+대상 네임스페이스의 모든 Pod를 선택하고 같은 네임스페이스 피어와 명시적인 DNS 예외를 허용합니다. L3·L4 정책이며 완전한 테넌트·노드 격리를 입증하지는 않습니다.
+
+**선행조건:** 승인된 일반 IPv4 Linux 테스트 클러스터, 지원 소유자·설정 경로로 이미 활성화된 VPC CNI NetworkPolicy, 컨트롤러 관리 테스트 Pod, 동작하는 CoreDNS와 충돌하지 않는 조직 정책이 필요합니다. 실습 중 Calico를 설치하거나 추정한 `ENABLE_NETWORK_POLICY` 변수를 켜지 마세요.
+
+새 네임스페이스 두 개를 만들고 UID를 기록합니다. 아래 코드는 같은 Bash 세션에서 사용하세요:
+
+```bash
+set -euo pipefail
+umask 077
+: "${EXAMPLE_KUBECONFIG:?Use the reviewed IPv4 Linux lab cluster kubeconfig}"
+NP_LAB_DIR=$(mktemp -d /tmp/eks-network-policy.XXXXXX)
+NP_LAB_ID="$(date +%s)-$$"
+NP_NAMESPACE_A="np-a-$NP_LAB_ID"
+NP_NAMESPACE_B="np-b-$NP_LAB_ID"
+for ns in "$NP_NAMESPACE_A" "$NP_NAMESPACE_B"; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" create namespace "$ns" -o json \
+    > "$NP_LAB_DIR/$ns-created.json"
+  jq -e '.metadata.uid | type == "string" and length > 0' \
+    "$NP_LAB_DIR/$ns-created.json" >/dev/null
+done
+```
+HTTP 서버에서 확인 가능한 Python TCP 진단도 사용합니다. Service·컨테이너 포트는 모두 8080입니다. 프로덕션 사이징이 아닌 테스트 워크로드이며 재현성을 위해 이미지 digest를 기록하세요.
+
+```bash
+for ns in "$NP_NAMESPACE_A" "$NP_NAMESPACE_B"; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$ns" create -f - <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: network-probe
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: network-probe}
+  template:
+    metadata:
+      labels: {app: network-probe}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector: {kubernetes.io/os: linux}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: probe
+        image: python:3.13-alpine
+        command: [python, -m, http.server, "8080", --directory, /tmp]
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          tcpSocket: {port: 8080}
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 200m, memory: 128Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: network-probe
+spec:
+  type: ClusterIP
+  selector: {app: network-probe}
+  ports:
+  - {port: 8080, targetPort: 8080, protocol: TCP}
+EOF
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$ns" \
+    rollout status deployment/network-probe --timeout=180s
+done
+```
+**기본 연결:** 정책 적용 전에 네임스페이스 내부·상호 TCP 연결이 모두 성공해야 합니다. DNS·exec 실패는 TCP 차단과 구분합니다. ICMP ping은 이식 가능한 NetworkPolicy 집행 테스트가 아닙니다.
+
+```bash
+check_tcp() {
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$1" exec deployment/network-probe \
+    -c probe -- python -c '
+import socket, sys
+try:
+    address = socket.gethostbyname(sys.argv[1])
+except OSError as error:
+    print("DNS failed:", error, file=sys.stderr)
+    sys.exit(43)
+try:
+    connection = socket.create_connection((address, 8080), timeout=3)
+    connection.close()
+except OSError as error:
+    print("TCP failed:", error, file=sys.stderr)
+    sys.exit(42)
+print("TCP succeeded")
+' "network-probe.$2"
+}
+
+# All four paths must work before applying the policy.
+check_tcp "$NP_NAMESPACE_A" "$NP_NAMESPACE_A"
+check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_B"
+check_tcp "$NP_NAMESPACE_A" "$NP_NAMESPACE_B"
+check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_A"
+```
+**네임스페이스 A에만 적용:** 피어의 빈 podSelector는 정책과 같은 네임스페이스의 Pod를 선택합니다. DNS 피어는 kube-system 네임스페이스와 CoreDNS Pod 레이블을 함께 사용합니다. NodeLocal DNSCache 등 다른 DNS 경로는 수정해야 합니다. 정책 연결은 비동기이므로 허용 대조군과 양방향 차단으로 전파를 확인하세요:
+
+```bash
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NP_NAMESPACE_A" create -f - <<'EOF'
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: namespace-boundary
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
       podSelector:
         matchLabels:
-          role: db-client
-      securityGroups:
-        groupIds:
-          - sg-0123456789abcdef0
-    ```
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+EOF
 
-    c. **서비스 계정에 IAM 권한 부여**: VPC CNI의 서비스 계정에 다음 권한이 필요합니다:
+expect_tcp_block() {
+  if check_tcp "$1" "$2"; then
+    return 1
+  else
+    result=$?
+    [ "$result" -eq 42 ] || {
+      printf '%s\n' 'DNS or exec failure is not proof of policy denial.' >&2
+      exit 1
+    }
+    return 0
+  fi
+}
+NP_VERIFIED=false
+for attempt in $(seq 1 30); do
+  check_tcp "$NP_NAMESPACE_A" "$NP_NAMESPACE_A"
+  check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_B"
+  if expect_tcp_block "$NP_NAMESPACE_A" "$NP_NAMESPACE_B" &&
+     expect_tcp_block "$NP_NAMESPACE_B" "$NP_NAMESPACE_A"; then
+    # Repeat positive controls after observing both blocked cross-namespace paths.
+    check_tcp "$NP_NAMESPACE_A" "$NP_NAMESPACE_A"
+    check_tcp "$NP_NAMESPACE_B" "$NP_NAMESPACE_B"
+    NP_VERIFIED=true
+    break
+  fi
+  sleep 2
+done
+[ "$NP_VERIFIED" = true ] || {
+  printf '%s\n' 'Expected policy behavior was not observed; inspect the enforcement path.' >&2
+  exit 1
+}
+```
+성공은 DNS·서버 가용성을 확인한 상태에서 테스트한 TCP 경로가 예상대로 동작했다는 의미이며 모든 프로토콜·인터페이스가 필터링된다는 뜻은 아닙니다. 노드·메타데이터 서비스·보안 그룹 통제는 별도로 유지하세요.
 
-    * ec2:CreateNetworkInterface
-    * ec2:DeleteNetworkInterface
-    * ec2:DescribeNetworkInterfaces
-    * ec2:DescribeSecurityGroups
-    * ec2:ModifyNetworkInterfaceAttribute
-    * ec2:CreateTags
-4.  **파드 구성 예시**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: db-client
-      namespace: app
-      labels:
-        role: db-client
-    spec:
-      containers:
-      - name: app
-        image: amazonlinux:2
-        command: ['sleep', '3600']
-    ```
-5. **작동 방식**:
-   * SecurityGroupPolicy와 일치하는 레이블을 가진 파드가 생성되면, VPC CNI는 해당 파드를 위한 브랜치 ENI를 생성합니다.
-   * 이 브랜치 ENI에 지정된 보안 그룹이 연결됩니다.
-   * 파드의 트래픽은 이 브랜치 ENI를 통해 라우팅되며, 연결된 보안 그룹 규칙이 적용됩니다.
-6.  **확인 방법**:
-
-    ```bash
-    # 파드의 ENI 정보 확인
-    kubectl describe pod db-client -n app
-
-    # SecurityGroupPolicy 확인
-    kubectl get securitygrouppolicy -n app
-
-    # VPC CNI 로그 확인
-    kubectl logs -n kube-system -l k8s-app=aws-node
-    ```
-7. **제한 사항**:
-   * 노드당 브랜치 ENI 수에 제한이 있습니다 (인스턴스 유형에 따라 다름).
-   * 프리픽스 위임 기능과 함께 사용할 수 없습니다.
-   * 파드가 생성된 후에는 보안 그룹을 변경할 수 없습니다.
-   * 파드 시작 시간이 약간 증가할 수 있습니다.
-8. **사용 사례**:
-   * RDS, ElastiCache 등 보안 그룹으로 액세스를 제어하는 AWS 서비스에 접근하는 파드
-   * 특정 파드에 대한 인바운드/아웃바운드 트래픽을 세밀하게 제어해야 하는 경우
-   * 규제 요구 사항에 따라 네트워크 격리가 필요한 워크로드
-
-Security Groups for Pods 기능은 EKS의 네트워킹 보안을 강화하는 강력한 도구이지만, 추가 ENI 사용으로 인한 리소스 오버헤드와 제한 사항을 고려하여 적절히 사용해야 합니다.
-
-</details>
-
-### 8. Amazon EKS에서 서비스 타입 LoadBalancer를 사용할 때, AWS Load Balancer Controller가 기본적으로 생성하는 로드 밸런서 유형은 무엇이며, 이를 변경하는 방법은 무엇인가요?
-
-<details>
-
-<summary>정답 및 설명</summary>
-
-**정답:** Amazon EKS에서 서비스 타입 LoadBalancer를 사용할 때, AWS Load Balancer Controller는 기본적으로 \*\*Classic Load Balancer(CLB)\*\*를 생성합니다. 이를 \*\*Network Load Balancer(NLB)\*\*로 변경하려면 서비스에 특정 \*\*어노테이션(annotation)\*\*을 추가해야 합니다.
-
-**상세 설명:**
-
-1. **기본 동작**: Kubernetes의 `LoadBalancer` 타입 서비스를 생성하면, AWS 클라우드 컨트롤러 매니저는 기본적으로 Classic Load Balancer를 프로비저닝합니다.
-2.  **Network Load Balancer로 변경하는 방법**: 서비스에 다음 어노테이션을 추가합니다:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb
-    ```
-3.  **완전한 서비스 예시 (NLB 사용)**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: my-service
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb
-    spec:
-      type: LoadBalancer
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: my-app
-    ```
-4.  **내부 로드 밸런서 구성**: 기본적으로 생성되는 로드 밸런서는 인터넷 연결이 가능합니다. 내부 로드 밸런서로 구성하려면:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
-    ```
-5.  **추가 구성 옵션**:
-
-    a. **대상 유형 설정 (IP 모드)**:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
-    ```
-
-    b. **보안 그룹 지정**:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-security-groups: sg-0123456789abcdef0
-    ```
-
-    c. **서브넷 지정**:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-subnets: subnet-0123456789abcdef0,subnet-0123456789abcdef1
-    ```
-
-    d. **교차 영역 로드 밸런싱 비활성화**:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "false"
-    ```
-
-    e. **액세스 로그 활성화**:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-access-log-enabled: "true"
-    service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-name: "my-elb-logs"
-    service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-prefix: "my-app"
-    ```
-
-    f. **SSL 인증서 구성 (HTTPS)**:
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:region:account-id:certificate/certificate-id
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-    ```
-6.  **AWS Load Balancer Controller 사용**: 최신 EKS 클러스터에서는 AWS Load Balancer Controller를 사용하여 더 많은 기능을 활용할 수 있습니다:
-
-    a. **설치**:
-
-    ```bash
-    helm repo add eks https://aws.github.io/eks-charts
-    helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-      -n kube-system \
-      --set clusterName=my-cluster \
-      --set serviceAccount.create=false \
-      --set serviceAccount.name=aws-load-balancer-controller
-    ```
-
-    b. **Application Load Balancer (ALB) 사용 (Ingress)**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: my-ingress
-      annotations:
-        kubernetes.io/ingress.class: alb
-        alb.ingress.kubernetes.io/scheme: internet-facing
-    spec:
-      rules:
-      - http:
-          paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: my-service
-                port:
-                  number: 80
-    ```
-7.  **로드 밸런서 유형 비교**:
-
-    | 특성         | Classic Load Balancer | Network Load Balancer | Application Load Balancer |
-    | ---------- | --------------------- | --------------------- | ------------------------- |
-    | 프로토콜       | TCP, SSL, HTTP, HTTPS | TCP, UDP, TLS         | HTTP, HTTPS               |
-    | 레이어        | 4 & 7                 | 4                     | 7                         |
-    | 성능         | 좋음                    | 매우 좋음                 | 좋음                        |
-    | 지연 시간      | 중간                    | 매우 낮음                 | 낮음                        |
-    | 정적 IP      | 아니오                   | 예                     | 아니오                       |
-    | 경로 기반 라우팅  | 아니오                   | 아니오                   | 예                         |
-    | WebSockets | 제한적                   | 예                     | 예                         |
-    | 컨테이너 기반 대상 | 아니오                   | 예 (IP 모드)             | 예 (IP 모드)                 |
-8. **모범 사례**:
-   * 대부분의 HTTP/HTTPS 트래픽은 Ingress와 ALB 사용
-   * TCP/UDP 트래픽이나 매우 높은 처리량이 필요한 경우 NLB 사용
-   * 레거시 애플리케이션이나 특별한 요구 사항이 없는 경우 CLB 대신 NLB 또는 ALB 사용 권장
-   * 프로덕션 환경에서는 항상 교차 영역 로드 밸런싱 활성화
-
-AWS Load Balancer Controller를 사용하면 Kubernetes 서비스와 Ingress 리소스를 통해 AWS 로드 밸런서를 더 효과적으로 관리할 수 있으며, 다양한 어노테이션을 통해 세밀한 구성이 가능합니다.
-
-</details>
-
-\## 실습 문제
-
-### 9. Amazon EKS 클러스터에서 특정 네임스페이스 내의 파드 간 통신만 허용하고, 다른 네임스페이스의 파드와의 통신을 차단하는 NetworkPolicy를 작성하세요.
-
-<details>
-
-<summary>정답 및 설명</summary>
-
-**정답:** 다음은 특정 네임스페이스 내의 파드 간 통신만 허용하고, 다른 네임스페이스의 파드와의 통신을 차단하는 NetworkPolicy입니다:
+**확장:** 같은 네임스페이스의 특정 Pod·포트만 허용하려면 광범위한 내부 허용을 교체·검토해야 합니다. 좁은 정책 추가로 기존 넓은 허용을 제거할 수는 없습니다. 검토한 외부 API에는 필요한 CIDR·포트를 선택하는 egress 정책을 추가할 수 있으며 아래 문서용 주소는 실제 목적지가 아닙니다:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: restrict-to-same-namespace
-  namespace: app-namespace  # 적용할 네임스페이스 이름
+  name: allow-reviewed-external-api
+  namespace: app-namespace
 spec:
-  podSelector: {}  # 네임스페이스의 모든 파드에 적용
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: app-namespace  # 동일한 네임스페이스
+  podSelector:
+    matchLabels: {app: web}
+  policyTypes: [Egress]
   egress:
   - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: app-namespace  # 동일한 네임스페이스
-  # DNS 조회 허용 (kube-system의 CoreDNS로)
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
+    - ipBlock:
+        cidr: 203.0.113.0/24
     ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
+    - {protocol: TCP, port: 443}
 ```
+표준 NetworkPolicy는 FQDN 허용 목록을 제공하지 않습니다. NAT·엔드포인트 선택에 따라 평가하는 IP가 달라질 수 있습니다. RFC1918만 제외한 `0.0.0.0/0`은 특정 외부 서비스 규칙도, 링크 로컬 메타데이터 엔드포인트의 완전한 보호도 아닙니다.
 
-**상세 설명:**
+테스트 후 기록한 네임스페이스만 정리합니다:
 
-1. **NetworkPolicy 구성 요소 설명**:
-   * **metadata.namespace**: 이 정책이 적용될 네임스페이스를 지정합니다.
-   * **spec.podSelector: {}**: 빈 파드 선택기는 네임스페이스의 모든 파드에 정책을 적용합니다.
-   * **policyTypes**: Ingress(인바운드)와 Egress(아웃바운드) 트래픽 모두 제어합니다.
-   * **ingress.from.namespaceSelector**: 동일한 네임스페이스에서 오는 트래픽만 허용합니다.
-   * **egress.to.namespaceSelector**: 동일한 네임스페이스로 가는 트래픽만 허용합니다.
-   * **DNS 조회 허용**: kube-system 네임스페이스의 CoreDNS로의 DNS 트래픽을 허용합니다.
-2.  **구현 단계**:
-
-    a. **네임스페이스 생성**:
-
-    ```bash
-    kubectl create namespace app-namespace
-    ```
-
-    b. **네임스페이스에 레이블 추가** (Kubernetes 1.21 이상에서는 자동으로 추가됨):
-
-    ```bash
-    kubectl label namespace app-namespace kubernetes.io/metadata.name=app-namespace
-    ```
-
-    c. **NetworkPolicy 적용**:
-
-    ```bash
-    kubectl apply -f network-policy.yaml
-    ```
-
-    d. **정책 확인**:
-
-    ```bash
-    kubectl describe networkpolicy restrict-to-same-namespace -n app-namespace
-    ```
-3.  **테스트 방법**:
-
-    a. **동일 네임스페이스에 테스트 파드 배포**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: test-pod-1
-      namespace: app-namespace
-    spec:
-      containers:
-      - name: busybox
-        image: busybox
-        command: ['sleep', '3600']
-    ```
-
-    b. **다른 네임스페이스에 테스트 파드 배포**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: test-pod-2
-      namespace: default
-    spec:
-      containers:
-      - name: busybox
-        image: busybox
-        command: ['sleep', '3600']
-    ```
-
-    c. **연결 테스트**:
-
-    ```bash
-    # 동일 네임스페이스 내 통신 테스트 (성공해야 함)
-    kubectl exec -n app-namespace test-pod-1 -- ping -c 2 $(kubectl get pod test-pod-3 -n app-namespace -o jsonpath='{.status.podIP}')
-
-    # 다른 네임스페이스로의 통신 테스트 (실패해야 함)
-    kubectl exec -n app-namespace test-pod-1 -- ping -c 2 $(kubectl get pod test-pod-2 -n default -o jsonpath='{.status.podIP}')
-    ```
-4.  **주의 사항 및 고려 사항**:
-
-    a. **NetworkPolicy 지원 확인**: Amazon EKS에서 NetworkPolicy를 사용하려면 네트워크 정책을 지원하는 CNI 플러그인이 필요합니다:
-
-    ```bash
-    # Calico 설치
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
-
-    # 또는 Amazon VPC CNI의 네트워크 정책 활성화
-    kubectl set env daemonset aws-node -n kube-system ENABLE_NETWORK_POLICY=true
-    ```
-
-    b. **기본 거부 정책**: NetworkPolicy를 적용하면, 명시적으로 허용되지 않은 모든 트래픽은 기본적으로 거부됩니다.
-
-    c. **DNS 액세스 허용**: 파드가 DNS 조회를 수행할 수 있도록 kube-system 네임스페이스의 CoreDNS로의 트래픽을 허용해야 합니다.
-
-    d. **시스템 서비스 액세스**: 필요에 따라 Kubernetes API 서버, 모니터링 서비스 등 시스템 서비스에 대한 액세스를 허용해야 할 수 있습니다.
-5.  **확장 및 개선**:
-
-    a. **특정 파드 간 통신만 허용**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-specific-pods
-      namespace: app-namespace
-    spec:
-      podSelector:
-        matchLabels:
-          app: web
-      policyTypes:
-      - Ingress
-      ingress:
-      - from:
-        - podSelector:
-            matchLabels:
-              app: api
-    ```
-
-    b. **특정 포트만 허용**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-specific-ports
-      namespace: app-namespace
-    spec:
-      podSelector: {}
-      policyTypes:
-      - Ingress
-      ingress:
-      - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: app-namespace
-        ports:
-        - protocol: TCP
-          port: 8080
-    ```
-
-    c. **외부 서비스 액세스 허용**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-external-service
-      namespace: app-namespace
-    spec:
-      podSelector:
-        matchLabels:
-          app: web
-      policyTypes:
-      - Egress
-      egress:
-      - to:
-        - ipBlock:
-            cidr: 10.0.0.0/16  # VPC CIDR
-        - ipBlock:
-            cidr: 0.0.0.0/0
-            except:
-            - 10.0.0.0/8
-            - 172.16.0.0/12
-            - 192.168.0.0/16
-    ```
-
-NetworkPolicy를 사용하면 EKS 클러스터 내에서 세밀한 네트워크 보안 제어를 구현할 수 있으며, 이는 멀티 테넌트 환경이나 규제 요구 사항이 있는 워크로드에 특히 유용합니다.
+```bash
+for ns in "${NP_NAMESPACE_A:?}" "${NP_NAMESPACE_B:?}"; do
+  expected_uid=$(jq -er '.metadata.uid' "${NP_LAB_DIR:?}/$ns-created.json") || exit 1
+  current_uid=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get namespace "$ns" \
+    --ignore-not-found -o jsonpath='{.metadata.uid}') || exit 1
+  if [ -z "$current_uid" ]; then
+    continue
+  elif [ "$current_uid" = "$expected_uid" ]; then
+    kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" delete namespace "$ns" --wait=true || exit 1
+  else
+    printf '%s\n' 'Namespace UID changed; no deletion attempted for this namespace.' >&2
+    exit 1
+  fi
+done
+```
 
 </details>
 
 ## 고급 문제
 
-### 10. Amazon EKS 클러스터에서 VPC CNI의 IP 주소 부족 문제를 해결하기 위한 다양한 전략을 설명하고, 각 접근 방식의 장단점을 비교하세요.
+10. VPC CNI 주소 부족 해결책을 비교하고 노드 밀도와 전체 주소 공간을 구분하세요.
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+먼저 부족한 자원이 서브넷 주소·연속 prefix 블록·노드 ENI 슬롯·branch ENI·kubelet maxPods·컴퓨팅 용량 중 무엇인지 확인합니다. 각각 해결책이 다르므로 “prefix delegation이 항상 가장 간단한 해법”이라는 기존 결론은 과도했습니다.
 
-**정답:** Amazon EKS 클러스터에서 VPC CNI의 IP 주소 부족 문제를 해결하기 위한 다양한 전략과 각 접근 방식의 장단점은 다음과 같습니다:
+| 방식 | 도움이 되는 대상 | 중요한 한계 |
+| --- | --- | --- |
+| Prefix delegation | 일반 ENI 슬롯당 Pod 주소 증가·할당 효율 | 연속 /28 필요; IPv4 공간·branch ENI 용량은 늘리지 않음 |
+| Warm·minimum pool 조정 | 사용하지 않는 사전 할당 주소 | 할당 준비·API 호출과 주소 사용의 균형 |
+| 커스텀 네트워킹 | 노드·Pod 서브넷 수요 분리 | 같은 VPC·AZ, 라우팅·SG·계획된 노드 이전 필요 |
+| VPC CIDR·서브넷 추가 | 할당 가능한 주소 공간 증가 | 중복·쿼터·라우팅·제어 플레인 반영 검토 |
+| 더 큰 새 서브넷 | 계획된 주소 증가 | 기존 서브넷 단순 크기 변경 불가; 연결 VPC CIDR에 포함되어야 함 |
+| IPv6 클러스터 설계 | 공유 IPv4 Pod 주소 압박 감소 | 새 클러스터·IP family 계획, 지원 컴퓨팅·CNI·egress 필요 |
+| 대체 CNI | 다른 IPAM·라우팅 모델 | 지원·테스트한 이전 절차 필요; 매니페스트 토글만으로 전환 불가 |
+| Fargate | 노드·IP 할당 운영 위임 | Pod마다 서브넷·VPC 주소를 사용하므로 고갈된 서브넷을 해결하지 않음 |
 
-### 1. 프리픽스 위임(Prefix Delegation) 활성화
+**Prefix 모드:** 일반 IPv4 prefix는 주소 슬롯 하나를 쓰는 /28 블록입니다. 기존 “최대 5배”는 검증되지 않은 일반적 주장이지 벤치마크가 아닙니다. 실제 인스턴스·CNI·kubelet 한도를 사용하세요. Pod 보안 그룹과 함께 사용할 수 있지만 branch Pod 한도는 그대로입니다. 단편화를 확인하고 필요하면 prefix 공간 예약·새 서브넷을 사용합니다. 개별 가용 IP 개수만으로 연속 블록 존재를 판단하지 마세요.
 
-**설명**: 각 ENI에 개별 IP 주소 대신 /28 CIDR 블록(16개 IP)을 할당하는 기능입니다.
+**Warm pool:** `WARM_IP_TARGET`은 여유 주소, `MINIMUM_IP_TARGET`은 최소 총 할당량입니다. Prefix·ENI warm target보다 우선할 수 있습니다. 예시 5·10은 워크로드·API 호출 예산에 맞춰 조정해야 합니다:
 
-**구현 방법**:
-
-```bash
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
+```json
+{"env":{"WARM_IP_TARGET":"5","MINIMUM_IP_TARGET":"10"}}
 ```
+`MAX_ENI`는 EC2 인스턴스 유형 상한 내에서 노드 할당을 제한합니다. 5로 설정해도 더 적은 ENI만 지원하는 유형이 5개를 사용할 수 있게 되지는 않습니다. 변경 전에 실제 할당 메트릭을 확인하세요.
 
-**장점**:
+**커스텀 네트워킹:** 같은 VPC·AZ의 Pod 서브넷·SG를 준비한 뒤 기존 CNI 소유자를 통해 설정을 병합합니다. 안정된 영역 레이블은 폐기된 beta 레이블이 아닌 `topology.kubernetes.io/zone`입니다:
 
-* 노드당 사용 가능한 IP 주소 수를 크게 증가시킴 (최대 5배)
-* 기존 VPC CNI의 기능과 호환됨
-* IP 주소 할당 속도 향상
-
-**단점**:
-
-* EC2 Nitro 기반 인스턴스에서만 지원됨
-* Security Groups for Pods 기능과 함께 사용할 수 없음
-* 일부 AWS 서비스와의 호환성 문제 가능성
-
-### 2. 사용자 지정 네트워킹 모드 활성화
-
-**설명**: 파드 IP 주소를 노드가 있는 서브넷이 아닌 별도의 서브넷에서 할당하는 기능입니다.
-
-**구현 방법**:
-
-```bash
-kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true
-kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=failure-domain.beta.kubernetes.io/zone
+```json
+{
+  "env": {
+    "AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG": "true",
+    "ENI_CONFIG_LABEL_DEF": "topology.kubernetes.io/zone"
+  }
+}
 ```
-
-각 가용 영역에 대한 ENIConfig 생성:
 
 ```yaml
 apiVersion: crd.k8s.amazonaws.com/v1alpha1
@@ -888,197 +634,117 @@ kind: ENIConfig
 metadata:
   name: us-west-2a
 spec:
+  subnet: subnet-REPLACE_WITH_POD_SUBNET_IN_SAME_VPC_AND_AZ
   securityGroups:
-    - sg-0123456789abcdef0
-  subnet: subnet-0123456789abcdef0
+  - sg-REPLACE_WITH_APPROVED_POD_GROUP
 ```
+사용하는 AZ마다 일치하는 ENIConfig를 만듭니다. 노드 annotation의 우선 적용도 검토하세요. 올바른 zone 레이블의 교체 노드는 기존 ENIConfig를 재사용하므로 매번 재생성할 필요가 없습니다. 실행 중인 모든 Pod의 네트워크가 즉시 바뀌지는 않습니다. 교체 노드를 검증하고 용량·PDB·데이터를 확인하며 이전합니다.
 
-**장점**:
+**CIDR·서브넷 변경:** 적격·비중복 CIDR과 서브넷을 IaC 소유자를 통해 추가하고 라우팅·보안·엔드포인트·검색 태그를 검토합니다. 새 VPC CIDR을 EKS 제어 플레인 작업이 인식하는 데 최대 한 시간이 걸릴 수 있습니다. /16 서브넷 생성에도 사용 가능한 연결 /16 범위가 필요하며 크기만 키운다고 VPC 한도를 우회하지는 않습니다.
 
-* 노드 서브넷의 IP 주소 고갈 방지
-* 파드 네트워킹을 위한 전용 서브넷 구성 가능
-* 더 큰 CIDR 블록 사용 가능
+**대체 CNI·IPv6:** 제어 플레인·DNS·Service 및 로드 밸런서·정책·부트스트랩·롤백 경로를 모두 계획합니다. 실행 중인 클러스터에 floating Calico overlay를 적용하고 aws-node를 끄는 것을 일반 전환 절차로 사용하지 마세요. 기존 EKS 클러스터의 IP family를 단순히 IPv6로 바꿀 수는 없습니다. 지원 범위·AWS 통합은 컴퓨팅·CNI 모드에 따라 달라집니다.
 
-**단점**:
-
-* 복잡한 설정 및 관리
-* 추가 서브넷 필요
-* 노드 교체 시 ENIConfig 재구성 필요
-
-### 3. 보조 CIDR 블록 추가
-
-**설명**: VPC에 보조 CIDR 블록을 추가하고 이를 새 서브넷에 할당하여 IP 주소 공간을 확장합니다.
-
-**구현 방법**:
-
-1. AWS 콘솔 또는 CLI를 통해 VPC에 보조 CIDR 블록 추가
-2. 보조 CIDR 블록에서 새 서브넷 생성
-3. 사용자 지정 네트워킹 모드와 함께 사용
-
-**장점**:
-
-* 기존 VPC의 IP 주소 공간을 크게 확장
-* 기존 인프라에 영향 없이 구현 가능
-* 더 큰 CIDR 블록 사용 가능
-
-**단점**:
-
-* VPC 피어링, Transit Gateway 등 네트워킹 구성 복잡성 증가
-* 라우팅 테이블 업데이트 필요
-* 일부 AWS 서비스가 보조 CIDR을 완전히 지원하지 않을 수 있음
-
-### 4. 대체 CNI 플러그인 사용
-
-**설명**: Amazon VPC CNI 대신 Calico, Cilium 등의 대체 CNI 플러그인을 사용합니다.
-
-**구현 방법**:
+**Fargate:** 네임스페이스 레이블만으로 프로필이 생성되지 않으며 `eks.amazonaws.com/v1alpha1 kind: FargateProfile`은 기본 Kubernetes API가 아닙니다. EKS API·eksctl 또는 명시적으로 설치한 지원 컨트롤러를 사용합니다. 다음 API 예제는 미사용 프로필 이름·검토한 프라이빗 서브넷·실행 역할을 요구합니다:
 
 ```bash
-# Calico 설치 예시
-kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
-
-# Amazon VPC CNI 비활성화
-kubectl patch daemonset aws-node -n kube-system -p '{"spec": {"template": {"spec": {"nodeSelector": {"non-existing": "true"}}}}}'
+# New profile example; this does not create or enlarge subnet address space.
+aws eks create-fargate-profile --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --fargate-profile-name "${NEW_FARGATE_PROFILE:?}" \
+  --pod-execution-role-arn "${FARGATE_EXECUTION_ROLE_ARN:?}" \
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --selectors '[{"namespace":"ipam-fargate"}]'
 ```
-
-**장점**:
-
-* 오버레이 네트워크를 통한 IP 주소 제한 해결
-* 더 풍부한 네트워크 정책 기능
-* 클라우드 제공업체에 구애받지 않는 네트워킹
-
-**단점**:
-
-* AWS 네이티브 기능(보안 그룹 등)과의 통합 부족
-* 성능 오버헤드 가능성
-* 추가 관리 복잡성
-* AWS 지원 범위 밖
-
-### 5. 더 큰 서브넷 CIDR 사용
-
-**설명**: 클러스터 생성 시 더 큰 CIDR 블록을 가진 서브넷을 사용합니다.
-
-**구현 방법**: 새 클러스터 생성 시 더 큰 CIDR 블록(예: /16 또는 /17)을 가진 서브넷 사용
-
-**장점**:
-
-* 간단한 구현
-* 추가 구성 불필요
-* 기존 VPC CNI 기능 모두 사용 가능
-
-**단점**:
-
-* 기존 클러스터에 적용하기 어려움
-* IP 주소 공간의 비효율적 사용 가능성
-* VPC 설계 변경 필요
-
-### 6. 워밍 IP 및 최소 IP 설정 최적화
-
-**설명**: VPC CNI의 IP 주소 할당 동작을 최적화하여 IP 주소 사용 효율성을 높입니다.
-
-**구현 방법**:
-
-```bash
-# 워밍 IP 타겟 설정
-kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=5
-
-# 최소 IP 타겟 설정
-kubectl set env daemonset aws-node -n kube-system MINIMUM_IP_TARGET=10
-
-# 최대 ENI 설정
-kubectl set env daemonset aws-node -n kube-system MAX_ENI=5
-```
-
-**장점**:
-
-* 기존 설정의 간단한 조정으로 구현 가능
-* 추가 인프라 변경 불필요
-* IP 주소 할당 효율성 향상
-
-**단점**:
-
-* IP 주소 부족 문제를 완전히 해결하지 못할 수 있음
-* 파드 시작 지연 가능성
-* 노드 유형에 따라 효과가 제한적
-
-### 7. 하이브리드 접근 방식
-
-**설명**: 여러 전략을 조합하여 사용합니다. 예를 들어, 프리픽스 위임과 사용자 지정 네트워킹을 함께 사용하거나, 일부 워크로드는 Fargate로 이동합니다.
-
-**구현 방법**: 워크로드 특성에 따라 다양한 전략을 선택적으로 적용
-
-**장점**:
-
-* 워크로드 특성에 맞는 최적화된 솔루션
-* 리소스 효율성 향상
-* 점진적 구현 가능
-
-**단점**:
-
-* 구성 및 관리 복잡성 증가
-* 다양한 네트워킹 모델 이해 필요
-* 문제 해결 어려움 증가
-
-### 8. Fargate 사용
-
-**설명**: 노드 기반 워크로드 대신 Fargate를 사용하여 IP 주소 관리를 AWS에 위임합니다.
-
-**구현 방법**:
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: my-app
-  labels:
-    fargate: "true"
-
----
-apiVersion: eks.amazonaws.com/v1alpha1
-kind: FargateProfile
-metadata:
-  name: my-fargate-profile
-  namespace: default
-spec:
-  selectors:
-  - namespace: my-app
-```
-
-**장점**:
-
-* IP 주소 관리 오버헤드 제거
-* 노드 관리 불필요
-* 서버리스 확장성
-
-**단점**:
-
-* 비용 증가 가능성
-* 일부 Kubernetes 기능 제한 (DaemonSets, 특권 컨테이너 등)
-* 모든 워크로드에 적합하지 않음
-
-### 권장 접근 방식 및 모범 사례
-
-1. **현재 상황 평가**:
-   * 현재 IP 주소 사용량 및 예상 성장률 분석
-   * 워크로드 특성 및 요구 사항 이해
-   * 기존 네트워크 구성 검토
-2. **단기 해결책**:
-   * 프리픽스 위임 활성화 (가장 간단하고 효과적인 방법)
-   * 워밍 IP 및 최소 IP 설정 최적화
-   * 불필요한 파드 정리
-3. **중장기 해결책**:
-   * 사용자 지정 네트워킹 구성
-   * 보조 CIDR 블록 추가
-   * 하이브리드 접근 방식 구현
-4. **모니터링 및 경고**:
-   * IP 주소 사용량 모니터링
-   * 임계값 기반 경고 설정
-   * 정기적인 용량 계획 검토
-5. **자동화**:
-   * IP 주소 사용량 모니터링 및 보고 자동화
-   * 클러스터 확장 시 네트워크 구성 자동 조정
-   * 문서화 및 운영 절차 수립
-
-IP 주소 부족 문제는 EKS 클러스터가 성장함에 따라 흔히 발생하는 문제이며, 클러스터 규모와 워크로드 특성에 따라 적절한 전략을 선택하거나 조합하여 해결해야 합니다. 프리픽스 위임은 대부분의 경우 가장 간단하고 효과적인 해결책이지만, 장기적으로는 더 포괄적인 네트워크 설계가 필요할 수 있습니다.
+일치하는 네임스페이스·워크로드를 별도로 만들고 프로필 활성화를 확인합니다. Fargate는 운영 책임을 바꾸지만 선택한 서브넷의 유한한 주소 용량을 바꾸지는 않습니다. 모든 전략을 함께 적용하지 말고 측정한 수요에 따라 비교하세요. 이번 감사에서 네트워크 이전이나 성능 벤치마크를 실행하지 않았습니다.
 
 </details>
+
+
+## VPC 기초 확인 문제
+
+11. 퍼블릭 10.0.0.0/24·10.0.1.0/24와 겹치지 않고 정렬된 프라이빗 서브넷 쌍은 무엇인가요?
+   * A) 10.0.2.0/22와 10.0.6.0/22
+   * B) 10.0.4.0/22와 10.0.8.0/22
+   * C) 10.0.0.0/22와 10.0.1.0/22
+   * D) 문자열만 다르면 모두 가능
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) 10.0.4.0/22와 10.0.8.0/22**
+
+/22는 세 번째 옥텟의 4 단위 경계에서 시작합니다. 10.0.2.0/22를 정규화하면 10.0.0.0/22가 되어 퍼블릭 범위와 겹칩니다.
+
+</details>
+
+12. 일반 AWS IPv4 /24 서브넷은 리소스 사용 전에 몇 개를 할당할 수 있나요?
+   * A) 256
+   * B) 254
+   * C) 251
+   * D) 항상 240
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 251**
+
+일반 서브넷마다 처음 4개·마지막 1개를 예약하므로 총 256개 중 251개를 할당할 수 있습니다. BYOIP에는 문서화된 예외가 있습니다.
+
+</details>
+
+13. elb 서브넷 역할 태그가 Internet Gateway 경로를 생성하나요?
+   * A) 예
+   * B) 아니요; 라우팅과 컨트롤러 검색은 별개
+   * C) 프라이빗 서브넷에서만 가능
+   * D) 모든 보안 그룹도 개방
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) 아니요; 라우팅과 컨트롤러 검색은 별개**
+
+태그는 컨트롤러·버전·기능 게이트에 따라 검색에 영향을 주며 경로 생성이나 보안 경계를 제공하지 않습니다.
+
+</details>
+
+14. 모든 EKS 노드에 퍼블릭 인터넷 경로가 필수인가요?
+   * A) 예, 항상 NAT Gateway 필요
+   * B) 예, 항상 IGW 필요
+   * C) 아니요; 필요한 서비스 접근은 적절한 프라이빗 엔드포인트·미러로 가능
+   * D) 네트워크 접근 자체가 불필요
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 아니요; 필요한 서비스 접근은 적절한 프라이빗 엔드포인트·미러로 가능**
+
+실제 API·레지스트리·DNS·워크로드 의존성을 계획합니다. AWS EKS 서비스 엔드포인트와 Kubernetes 클러스터 API는 다릅니다.
+
+</details>
+
+15. 제어 플레인에서 kubelet로 향하는 일반적인 목적지 포트는 무엇인가요?
+   * A) TCP 1025–65535 전체
+   * B) TCP 10250
+   * C) 기본적으로 모든 NodePort
+   * D) UDP 53만
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) TCP 10250**
+
+프라이빗 API TCP443·DNS TCP/UDP53·실제 웹훅 및 워크로드 포트·SG 연결을 별도 검토합니다. 상태 저장 SG의 응답 트래픽과 비상태 저장 NACL 규칙은 다릅니다.
+
+</details>
+
+## 참고 자료
+
+- [VPC/subnet requirements](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)
+- [VPC CNI 1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md)
+- [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [EKS native policies](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+- [LBC 3.5 Service annotations](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md)
+- [LBC subnet discovery](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/subnet_discovery.md)
+- [NLB listeners](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+- [NLB logs](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-access-logs.html)
+- [CoreDNS cache](https://coredns.io/plugins/cache/)
+- [CoreDNS cache implementation](https://github.com/coredns/coredns/blob/v1.14.7/plugin/pkg/cache/cache.go)

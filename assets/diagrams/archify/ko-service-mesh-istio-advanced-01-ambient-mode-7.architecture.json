@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "HBONE 프로토콜 터널링 흐름",
+    "output": "ko-service-mesh-istio-advanced-01-ambient-mode-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      300
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "평문 TCP",
+      "pos": [
+        30,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel-src",
+      "type": "security",
+      "label": "출발지 ztunnel",
+      "sublabel": "HBONE 캡슐화",
+      "pos": [
+        280,
+        110
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "네트워크",
+      "sublabel": "HBONE / HTTP/2 · mTLS",
+      "pos": [
+        540,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel-dst",
+      "type": "security",
+      "label": "도착지 ztunnel",
+      "sublabel": "HBONE 해제",
+      "pos": [
+        810,
+        110
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "target",
+      "type": "frontend",
+      "label": "대상 앱",
+      "sublabel": "평문 TCP",
+      "pos": [
+        1070,
+        110
+      ],
+      "size": [
+        120,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-src",
+      "from": "app",
+      "to": "ztunnel-src",
+      "label": "평문"
+    },
+    {
+      "id": "src-to-net",
+      "from": "ztunnel-src",
+      "to": "network",
+      "label": "HBONE 터널",
+      "variant": "security"
+    },
+    {
+      "id": "net-to-dst",
+      "from": "network",
+      "to": "ztunnel-dst",
+      "label": "HBONE 터널",
+      "variant": "security"
+    },
+    {
+      "id": "dst-to-target",
+      "from": "ztunnel-dst",
+      "to": "target",
+      "label": "평문"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "HBONE 특징",
+      "items": [
+        "HTTP/2 기반: 기존 인프라와 호환",
+        "mTLS 내장: 보안 통신",
+        "효율적: 최소한의 오버헤드",
+        "방화벽 친화적: 표준 HTTP/2 포트 사용"
+      ]
+    }
+  ]
+}

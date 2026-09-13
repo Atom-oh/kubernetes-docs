@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SPIRE Federation Architecture",
+    "output": "en-security-12-spiffe-spire-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "domain-identity",
+        "label": "In-domain identity issuance",
+        "focus": [
+          "wl_a",
+          "server_a",
+          "bundle_a"
+        ],
+        "note": "Each trust domain's SPIRE Server issues SVIDs to its own workloads and manages its trust bundle."
+      },
+      {
+        "id": "bundle-exchange",
+        "label": "Trust bundle exchange",
+        "focus": [
+          "server_a",
+          "be_a",
+          "be_b",
+          "server_b"
+        ],
+        "note": "The two servers periodically fetch and store each other's trust bundle through the bundle endpoints (:8443)."
+      },
+      {
+        "id": "cross-mtls",
+        "label": "Cross-domain mTLS",
+        "focus": [
+          "wl_a",
+          "wl_b"
+        ],
+        "note": "Using the exchanged bundles as the trust root, workloads in both domains talk directly over mTLS."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "wl_a",
+      "type": "backend",
+      "label": "Workload A",
+      "sublabel": "us-east.example.com",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "server_a",
+      "type": "security",
+      "label": "SPIRE Server A",
+      "sublabel": "federation enabled",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "bundle_a",
+      "type": "database",
+      "label": "Trust Bundle A",
+      "sublabel": "own + Bundle B",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "be_a",
+      "type": "cloud",
+      "label": "Bundle Endpoint A",
+      "sublabel": ":8443",
+      "pos": [
+        330,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "be_b",
+      "type": "cloud",
+      "label": "Bundle Endpoint B",
+      "sublabel": ":8443",
+      "pos": [
+        600,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wl_b",
+      "type": "backend",
+      "label": "Workload B",
+      "sublabel": "eu-west.example.com",
+      "pos": [
+        890,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "server_b",
+      "type": "security",
+      "label": "SPIRE Server B",
+      "sublabel": "federation enabled",
+      "pos": [
+        890,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "bundle_b",
+      "type": "database",
+      "label": "Trust Bundle B",
+      "sublabel": "own + Bundle A",
+      "pos": [
+        890,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Trust Domain A · us-east.example.com",
+      "wraps": [
+        "wl_a",
+        "server_a",
+        "bundle_a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Trust Domain B · eu-west.example.com",
+      "wraps": [
+        "wl_b",
+        "server_b",
+        "bundle_b"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Federation setup",
+      "wraps": [
+        "be_a",
+        "be_b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "wl-a-svid",
+      "from": "wl_a",
+      "to": "server_a",
+      "label": "SVID",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "server-a-bundle",
+      "from": "server_a",
+      "to": "bundle_a",
+      "label": "store Bundle B",
+      "labelDy": 24
+    },
+    {
+      "id": "server-a-publish",
+      "from": "server_a",
+      "to": "be_a",
+      "label": "publish bundle"
+    },
+    {
+      "id": "bundle-exchange",
+      "from": "be_a",
+      "to": "be_b",
+      "label": "bundle exchange",
+      "variant": "emphasis"
+    },
+    {
+      "id": "server-b-publish",
+      "from": "server_b",
+      "to": "be_b",
+      "label": "publish bundle"
+    },
+    {
+      "id": "wl-b-svid",
+      "from": "wl_b",
+      "to": "server_b",
+      "label": "SVID",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "server-b-bundle",
+      "from": "server_b",
+      "to": "bundle_b",
+      "label": "store Bundle A",
+      "labelDy": 24
+    },
+    {
+      "id": "cross-mtls",
+      "from": "wl_a",
+      "to": "wl_b",
+      "label": "mTLS",
+      "variant": "security"
+    }
+  ]
+}

@@ -1,578 +1,151 @@
 # AWS Controllers for Kubernetes (ACK)
 
-## Table of Contents
+> **Last Updated**: September 12, 2026
 
-* [Introduction](02-ack.md#introduction)
-* [Architecture](02-ack.md#architecture)
-* [Installation and Configuration](02-ack.md#installation-and-configuration)
-* [Supported AWS Services](02-ack.md#supported-aws-services)
-* [The Origins and Evolution of ACK](02-ack.md#the-origins-and-evolution-of-ack)
-* [Resource Creation Examples](02-ack.md#resource-creation-examples)
-* [Resource Management](02-ack.md#resource-management)
-* [Security Considerations](02-ack.md#security-considerations)
-* [Monitoring and Logging](02-ack.md#monitoring-and-logging)
-* [Best Practices](02-ack.md#best-practices)
-* [Troubleshooting](02-ack.md#troubleshooting)
-* [Conclusion](02-ack.md#conclusion)
+## Concepts and Architecture
 
-## Introduction
+ACK connects Kubernetes custom resources to AWS APIs through service-specific controllers. CRDs define inputs; controllers reconcile desired state with observed AWS state. Creating a CR does not mean the AWS resource is ready. Inspect status and the service's own readiness.
 
-AWS Controllers for Kubernetes (ACK) is a project that enables Kubernetes users to directly manage AWS services and resources through the Kubernetes API. ACK extends Kubernetes' declarative API model to AWS resources, allowing developers and operators to manage AWS infrastructure using familiar Kubernetes tools and APIs.
+ACK reuses Kubernetes APIs, RBAC and GitOps tools, but Kubernetes authorization and AWS IAM remain separate. A user's CR normally causes actions under the controller's AWS permissions. Permission to write a CR therefore delegates the ability to request AWS actions through that controller.
 
-### Key Benefits of ACK
+ACK is not a mandatory successor to CloudFormation or Terraform. AWS holds the actual resource; Kubernetes holds CR spec/status. Drift handling depends on supported fields and controller logic. Assign one mutation owner rather than letting several tools or clusters reconcile the same AWS resource.
 
-* **Unified Experience**: Manage Kubernetes and AWS resources with the same tools and workflows
-* **GitOps Support**: Define AWS resources as code and manage them in Git repositories
-* **Declarative Configuration**: Define desired state and let the controller reconcile actual state
-* **Kubernetes Native Approach**: Use standard Kubernetes concepts and APIs
-* **Multi-Cluster Support**: Reference the same AWS resources from multiple clusters
-* **IAM Integration**: Integration of Kubernetes service accounts with AWS IAM roles
+![ACK reconciles Kubernetes custom resources through AWS APIs](../.gitbook/assets/en-platform-engineering-02-ack-0.png)
 
-### Comparison with Existing Approaches
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-02-ack-0.html)
 
-| Feature                | ACK                 | AWS CloudFormation       | Terraform       | AWS SDK/CLI         |
-| ---------------------- | ------------------- | ------------------------ | --------------- | ------------------- |
-| Interface              | Kubernetes API      | CloudFormation templates | HCL             | Programming API/CLI |
-| Declarative            | ✅                   | ✅                        | ✅               | ❌                   |
-| State Management       | Kubernetes etcd     | CloudFormation stack     | Terraform state | Manual management   |
-| Drift Detection        | ✅                   | ✅                        | ✅               | ❌                   |
-| Kubernetes Integration | Native              | Limited                  | Limited         | Limited             |
-| Supported Services     | Limited (expanding) | Extensive                | Extensive       | All services        |
+## Versions and Support
 
-## Architecture
+| Controller | Version |
+| --- | --- |
+| s3 | 1.12.1 |
+| iam | 1.9.0 |
+| sqs | 1.7.0 |
+| sns | 1.10.1 |
+| elbv2 | 1.7.0 |
+| route53 | 1.6.0 |
+| rds | 1.12.0 |
 
-ACK is based on the Kubernetes operator pattern and provides controllers for each AWS service.
+These versions were checked against official releases and OCI charts. Consult the official service list for complete coverage and Alpha/Beta/GA status. GA does not imply every AWS API feature or every operational requirement is covered. A CRD's v1alpha1 API string is distinct from controller maturity.
 
-### Key Components
+The historical Kubernetes 1.16 minimum is not a current operations baseline. Verify a supported Kubernetes/EKS version, controller compatibility, Helm version and CRD upgrade process together.
 
-1. **Service Controller**: Dedicated controller for each AWS service
-2. **Custom Resource Definitions (CRD)**: Define AWS resources as Kubernetes API
-3. **Custom Resources (CR)**: Instances of AWS resources
-4. **Reconciliation Loop**: Detects and resolves differences between desired and actual state
+## Installation Preparation and Offline Inspection
 
-### How It Works
-
-1. User applies Kubernetes YAML manifest to define AWS resource
-2. ACK controller detects custom resource changes
-3. Controller calls AWS API to create, update, or delete the corresponding AWS resource
-4. Controller monitors AWS resource state and updates Kubernetes resource status
-
-## Installation and Configuration
-
-### Prerequisites
-
-* Kubernetes cluster (v1.16 or higher)
-* kubectl configured
-* AWS account and appropriate IAM permissions
-* Helm 3 (optional)
-
-### Installation Methods
-
-#### 1. Installing ACK Service Controller
-
-ACK controllers are installed separately for each AWS service. For example, to install the S3 controller:
+Use the OCI chart path below, rather than the former eks-charts s3-chart path. This command renders manifests without installing into a cluster.
 
 ```bash
-# Add Helm chart repository
-helm repo add aws-controllers-k8s https://aws.github.io/eks-charts
-
-# Install S3 controller
-helm install --create-namespace -n ack-system ack-s3-controller \
-  aws-controllers-k8s/s3-chart
+helm template ack-s3 \
+  oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --version 1.12.1 --namespace infra \
+  --set aws.region=us-west-2 \
+  --set installScope=namespace --set watchNamespace=infra \
+  --set enableCARM=false --set enableCrossNamespace=false \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=ack-s3-controller \
+  --set metrics.service.create=true --set deletionPolicy=retain
 ```
 
-#### 2. IAM Permission Setup
+Before a real install/upgrade, prepare the infra namespace and controller ServiceAccount, then configure IRSA or supported EKS Pod Identity. Verify IRSA OIDC trust conditions for the namespace/ServiceAccount, or Pod Identity agent/SDK compatibility and association. Creating an IAM role alone does not attach permissions to a ServiceAccount.
 
-ACK controllers need appropriate IAM permissions to manage AWS resources. You can set up permissions using IRSA (IAM Roles for Service Accounts):
+Review controller read/create/update/delete/tag and any PassRole permissions against the managed resources. AmazonS3FullAccess or Resource:"*" is not a least-privilege example. The data-access policies in the subguide are not a complete controller policy.
+
+Successful rendering does not validate IAM, AWS API constraints, admission, CRD installation, endpoint connectivity or resource creation. Installing controllers and changing CRDs are separate operational changes.
+
+## Namespace and Account Isolation
+
+The default installScope is cluster. Merely installing releases into dev/prod namespaces can leave both controllers watching the same CRs. This example sets installScope=namespace and watchNamespace=infra and disables CARM and cross-namespace references. Use separate watch scopes, ServiceAccounts, IAM roles and RBAC for other teams.
+
+Even in namespace mode, the current chart renders a ClusterRole granting namespaces get/list/watch for its namespace cache. Namespace mode does not remove every cluster permission. Inspect rendered Roles, ClusterRoles, Bindings and Secret/FieldExport access. Permission to alter namespace annotations, role mappings and reference targets also affects isolation.
+
+CARM is cross-account management requiring target-role trust, AssumeRole permissions and controller configuration. It does not guarantee safe concurrent mutation by several clusters. Separate read-only references from mutation ownership.
+
+## Creation, References and Status
+
+Service schemas differ. S3 policy belongs in Bucket.spec.policy; there is no separate BucketPolicy CRD. IAM managed policies attach through Role.policies/policyRefs. The subguides show SQS queueName/string attributes and the dedicated SNS Topic/Subscription fields.
+
+- [S3 / IAM](ack/01-s3-iam.md)
+- [SQS / SNS](ack/02-sqs-sns.md)
+- [ELBv2 / Route 53 / Aurora](ack/03-elbv2-route53-rds.md)
 
 ```bash
-# Create IAM policy
-aws iam create-policy \
-  --policy-name ACKs3ControllerPolicy \
-  --policy-document file://s3-controller-policy.json
-
-# Attach IAM role to service account
-eksctl create iamserviceaccount \
-  --cluster=<cluster-name> \
-  --namespace=ack-system \
-  --name=ack-s3-controller \
-  --attach-policy-arn=arn:aws:iam::<account-id>:policy/ACKs3ControllerPolicy \
-  --approve
+kubectl get buckets.s3.services.k8s.aws -n infra
+kubectl get bucket.s3.services.k8s.aws app-data -n infra -o json
+kubectl describe bucket.s3.services.k8s.aws app-data -n infra
+kubectl logs -n infra \
+  -l app.kubernetes.io/instance=ack-s3 --all-containers --tail=100
+kubectl get events -n infra \
+  --field-selector involvedObject.name=app-data
 ```
 
-s3-controller-policy.json example:
+ACK.ResourceSynced=True describes controller synchronization; it is not a database connection or app-readiness check. Inspect other conditions such as ACK.Terminal/ACK.Recoverable and service status. When supplied for the resource, its ARN is under status.ackResourceMetadata.arn; NLB and TargetGroup ARNs use this path too.
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:CreateBucket",
-        "s3:DeleteBucket",
-        "s3:PutBucketTagging",
-        "s3:GetBucketTagging",
-        "s3:PutEncryptionConfiguration",
-        "s3:GetEncryptionConfiguration",
-        "s3:PutBucketPolicy",
-        "s3:GetBucketPolicy",
-        "s3:ListBucket"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
+Supported Ref fields can connect resources in the same namespace. Applying several YAML documents is not an AWS-wide transaction. Verify referenced-resource readiness and external identifiers/ARNs.
 
-#### 3. Controller Configuration
+## Adoption and Retention
 
-You can use Helm values files to customize controller configuration:
-
-```yaml
-# values.yaml
-aws:
-  region: us-west-2
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 500m
-    memory: 256Mi
-serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/ACKs3ControllerRole
-```
-
-```bash
-helm install --create-namespace -n ack-system ack-s3-controller \
-  aws-controllers-k8s/s3-chart -f values.yaml
-```
-
-## Supported AWS Services
-
-ACK provides controllers for various AWS services. Each service controller can be installed and managed individually.
-
-### Currently Supported Services (as of July 2025)
-
-* Amazon API Gateway (apigatewayv2)
-* Amazon DynamoDB
-* Amazon ECR
-* Amazon EKS
-* Amazon ElastiCache
-* Amazon MemoryDB
-* Amazon MQ
-* Amazon RDS
-* Amazon S3
-* Amazon SageMaker
-* AWS IAM
-* AWS Lambda
-* AWS SNS
-* AWS SQS
-* Amazon EventBridge
-* Amazon MSK
-* Amazon OpenSearch Service
-* AWS ACM
-* AWS Route 53
-
-### Service Controller Status
-
-Each service controller has one of the following states:
-
-* **Alpha**: Early development stage, API may change
-* **Beta**: Feature complete, stable but API may change
-* **GA (Generally Available)**: Ready for production use
-
-Check the latest status at the [ACK GitHub Repository](https://github.com/aws-controllers-k8s/community).
-
-## The Origins and Evolution of ACK
-
-### Evolution of Infrastructure as Code
-
-AWS resource management has evolved as follows:
-
-1. **Manual Management Era**: Creating and managing resources directly in the AWS Console
-2. **AWS CloudFormation**: Introduction of template-based declarative infrastructure management, but separated from Kubernetes workflows
-3. **Terraform**: Unified infrastructure management with multi-cloud support and HCL, but still requiring separate tools and workflows
-4. **ACK**: Direct AWS resource management through the Kubernetes API — leveraging existing K8s toolchain including kubectl, GitOps, RBAC
-
-### Why Kubernetes-Native AWS Management?
-
-Limitations of existing approaches:
-
-* **Tool Separation**: Dual management burden of operating Terraform/CloudFormation and kubectl separately
-* **State Inconsistency**: IaC tool state and Kubernetes cluster state are separated, causing potential drift
-* **GitOps Integration Difficulty**: Challenging to manage AWS resources with GitOps tools like ArgoCD/Flux
-* **Team Experience Fragmentation**: Infrastructure and application teams using different tools and workflows
-
-ACK addresses these issues by enabling unified management of AWS infrastructure and applications through a single Kubernetes control plane.
-
-## Resource Creation Examples
-
-For detailed examples of creating AWS resources with ACK, see the following documents:
-
-* [S3 and IAM](ack/01-s3-iam.md)
-* [SQS and SNS](ack/02-sqs-sns.md)
-* [ELBv2, Route 53, RDS (NLB + Aurora PostgreSQL)](ack/03-elbv2-route53-rds.md)
-
-## Resource Management
-
-### Checking Resource Status
-
-To check the status of ACK resources:
-
-```bash
-kubectl describe bucket my-sample-bucket
-```
-
-Example output:
-
-```
-Name:         my-sample-bucket
-Namespace:    default
-API Version:  s3.services.k8s.aws/v1alpha1
-Kind:         Bucket
-Metadata:
-  ...
-Spec:
-  Name:  my-unique-bucket-name-123
-  ...
-Status:
-  Ack Resource Metadata:
-    Arn:                    arn:aws:s3:::my-unique-bucket-name-123
-    Owner Account ID:       123456789012
-  Conditions:
-    Last Transition Time:  2025-07-13T04:00:00Z
-    Status:                True
-    Type:                  ACK.ResourceSynced
-```
-
-### Updating Resources
-
-To update an ACK resource, modify the manifest and reapply:
-
-```bash
-kubectl apply -f updated-bucket.yaml
-```
-
-### Deleting Resources
-
-To delete an ACK resource:
-
-```bash
-kubectl delete bucket my-sample-bucket
-```
-
-By default, ACK also deletes the corresponding AWS resource when the Kubernetes resource is deleted. You can change this behavior using annotations:
-
-```yaml
-metadata:
-  annotations:
-    services.k8s.aws/deletion-policy: "orphan"
-```
-
-### Importing Resources
-
-To import existing AWS resources into ACK:
+Use the ResourceAdoption annotations below. The current S3 chart enables this feature gate. Review identifiers, account and region, and plan ownership transfer from other tools before adoption.
 
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
-  name: imported-bucket
+  name: existing-data
+  namespace: infra
   annotations:
-    services.k8s.aws/resource-imported: "true"
+    services.k8s.aws/adoption-policy: adopt
+    services.k8s.aws/adoption-fields: '{"name":"REPLACE_WITH_EXISTING_BUCKET"}'
+    services.k8s.aws/deletion-policy: retain
 spec:
-  name: existing-bucket-name
+  name: REPLACE_WITH_EXISTING_BUCKET
 ```
 
-## Security Considerations
+The runtime accepts adopt and adopt-or-create. adopt reads existing state into spec/status; adopt-or-create can create a missing resource. Subsequent normal reconciliation can mutate an adopted resource, so adoption is not merely read access. Read-only behavior is a separate feature with its own gate and lifecycle. The former resource-imported:"true" annotation does not configure adoption. Official documentation also identifies AdoptedResource as the older approach.
 
-### IAM Permission Management
+The retention value is **retain**. The current runtime does not accept orphan. Precedence is the individual CR's services.k8s.aws/deletion-policy, the namespace's service-specific deletion-policy, then controller default. Retaining AWS resources leaves ongoing cost, ownership and backup responsibilities.
 
-ACK controllers need appropriate IAM permissions for the AWS resources they manage. It's recommended to follow the principle of least privilege and grant only necessary permissions.
+## Observability, Scaling and Recovery
 
-#### Granular IAM Policy Example
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:CreateBucket",
-        "s3:DeleteBucket",
-        "s3:GetBucketTagging",
-        "s3:PutBucketTagging"
-      ],
-      "Resource": "arn:aws:s3:::my-unique-bucket-name-*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:ListAllMyBuckets"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-### Namespace Isolation
-
-You can use separate namespaces and IAM roles for different teams or environments to isolate permissions:
-
-```bash
-# Install controller for development environment
-helm install --create-namespace -n ack-system-dev ack-s3-controller \
-  aws-controllers-k8s/s3-chart \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::123456789012:role/ACKs3ControllerRoleDev
-
-# Install controller for production environment
-helm install --create-namespace -n ack-system-prod ack-s3-controller \
-  aws-controllers-k8s/s3-chart \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::123456789012:role/ACKs3ControllerRoleProd
-```
-
-### Resource Policies
-
-You can use Kubernetes RBAC to restrict access to ACK resources:
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: dev
-  name: s3-editor
-rules:
-- apiGroups: ["s3.services.k8s.aws"]
-  resources: ["buckets"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: dev-s3-editor
-  namespace: dev
-subjects:
-- kind: User
-  name: developer
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: Role
-  name: s3-editor
-  apiGroup: rbac.authorization.k8s.io
-```
-
-## Monitoring and Logging
-
-### Checking Controller Logs
-
-To check ACK controller logs:
-
-```bash
-kubectl logs -n ack-system -l app.kubernetes.io/name=ack-s3-controller
-```
-
-### Prometheus Metrics
-
-ACK controllers expose Prometheus metrics:
+Enable metrics.service.create and match the target namespace and port name below. Prometheus Operator CRDs and the Prometheus ServiceMonitor selectors are separate prerequisites.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: ack-s3-controller
+  name: ack-s3
   namespace: monitoring
 spec:
+  namespaceSelector:
+    matchNames: [infra]
   selector:
     matchLabels:
-      app.kubernetes.io/name: ack-s3-controller
+      app.kubernetes.io/name: s3-chart
+      app.kubernetes.io/instance: ack-s3
   endpoints:
-  - port: metrics
-    interval: 30s
+    - port: metricsport
+      interval: 30s
 ```
 
-Key metrics:
+The reviewed runtime defines ack_outbound_api_requests_total and ack_outbound_api_requests_error_total. Do not invent reconcile success/failure or API-latency metric names. Verify controller-runtime metric names, labels and versions at the actual endpoint. CloudTrail auditing depends on the service/API logging support and configured events.
 
-* `ack_reconcile_success_total`: Number of successful reconciliations
-* `ack_reconcile_failure_total`: Number of failed reconciliations
-* `ack_api_call_duration_seconds`: AWS API call latency
+Replica configuration is deployment.replicas; review leaderElection.enabled when running several replicas. replicaCount is not this chart's setting. Additional leader-elected replicas do not automatically increase parallel throughput. Tune reconcile concurrency/resync with observed quotas, throttling and resource usage.
 
-### AWS CloudTrail Integration
-
-AWS API calls made by ACK controllers are logged in CloudTrail. You can review CloudTrail logs to audit ACK operations.
-
-## Best Practices
-
-### Resource Organization
-
-1. **Clear Naming**: Use clear and consistent resource names
-2. **Use Annotations**: Leverage annotations for resource management
-3. **Apply Labels**: Use labels for resource grouping and filtering
-
-```yaml
-apiVersion: s3.services.k8s.aws/v1alpha1
-kind: Bucket
-metadata:
-  name: app-data-bucket
-  annotations:
-    services.k8s.aws/deletion-policy: "orphan"
-    description: "Application data storage"
-  labels:
-    environment: production
-    app: my-application
-    team: data-engineering
-spec:
-  name: my-app-data-20250713
-  tagging:
-    tagSet:
-      - key: Environment
-        value: Production
-```
-
-### Version Control
-
-1. **Use Git Repository**: Store ACK resource manifests in Git repository
-2. **Separate Environment Configurations**: Maintain separate configurations for development, staging, production environments
-3. **Use Kustomize**: Use Kustomize to manage environment-specific differences
-
-```
-├── base/
-│   ├── s3-bucket.yaml
-│   ├── sqs-queue.yaml
-│   └── kustomization.yaml
-├── overlays/
-│   ├── dev/
-│   │   ├── kustomization.yaml
-│   │   └── patch.yaml
-│   ├── staging/
-│   │   ├── kustomization.yaml
-│   │   └── patch.yaml
-│   └── prod/
-│       ├── kustomization.yaml
-│       └── patch.yaml
-```
-
-### Performance and Scalability
-
-1. **Set Resource Requests and Limits**: Allocate appropriate resources to controllers
-2. **Scale Controller Replicas**: Increase controller replicas in large environments
-3. **Adjust Reconciliation Frequency**: Optimize reconciliation frequency as needed
-
-```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: ack-s3-controller
-  namespace: ack-system
-spec:
-  chart:
-    spec:
-      chart: s3-chart
-      sourceRef:
-        kind: HelmRepository
-        name: aws-controllers-k8s
-  values:
-    resources:
-      requests:
-        cpu: 200m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-    replicaCount: 2
-```
-
-### Disaster Recovery
-
-1. **Backup Strategy**: Regular backup of ACK resource manifests
-2. **Recovery Plan**: Document resource recovery procedures in case of failure
-3. **Multi-Region Consideration**: Implement multi-region strategy for critical resources
+Version environment-specific manifests and charts in Git, keeping credentials out. Recovery needs AWS data/backups, identifiers, retention policy and ownership as well as CRs. Creating a CR in another region does not implement data replication or recovery.
 
 ## Troubleshooting
 
-### Common Issues
+For creation failures, inspect conditions/events, controller image/logs, account/region, IAM trust/policies, references and service constraints. Distinguish Kubernetes RBAC from AWS IAM errors. For Terminating resources, identify the AWS deletion, dependency or retention condition the finalizer is waiting for.
 
-#### 1. Resource Creation Failure
+Do not routinely clear finalizers. Doing so can leave untracked AWS resources. Resolve the cause first; use a last-resort recovery procedure only after reviewing actual resource state, backups and subsequent ownership.
 
-**Symptom**: ACK resource is created but AWS resource is not created
+## Verification and References
 
-**Solution**:
+The eight original guide files and two quizzes in Korean/English, including 56 unique code blocks, were read. Seven official OCI charts were rendered and 18 resource examples checked against versioned CRDs with unknown-spec-field rejection. No AWS resource creation, controller execution, admission/CEL, message delivery or database connectivity was tested.
 
-* Check controller logs
-* Verify IAM permissions
-* Check resource status and events
+- [ACK services](https://aws-controllers-k8s.github.io/community/docs/community/services/)
+- [Resource adoption](https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption)
+- [Retention](https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/)
+- [S3 chart 1.12.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/helm)
+- [Runtime 0.63.0](https://github.com/aws-controllers-k8s/runtime/tree/v0.63.0)
 
-```bash
-kubectl logs -n ack-system -l app.kubernetes.io/name=ack-s3-controller
-kubectl describe bucket my-sample-bucket
-```
-
-#### 2. Permission Issues
-
-**Symptom**: "AccessDenied" error message
-
-**Solution**:
-
-* Verify IAM policies and roles
-* Check IRSA configuration
-* Review CloudTrail logs
-
-#### 3. Resource Deletion Stuck
-
-**Symptom**: Resource stuck in "Terminating" state
-
-**Solution**:
-
-* Check dependencies
-* Remove finalizers (if necessary)
-
-```bash
-kubectl patch bucket my-sample-bucket -p '{"metadata":{"finalizers":[]}}' --type=merge
-```
-
-### Debugging Tools
-
-```bash
-# Check controller version
-kubectl get deployment -n ack-system ack-s3-controller -o jsonpath="{.spec.template.spec.containers[0].image}"
-
-# Check CRDs
-kubectl get crd | grep services.k8s.aws
-
-# Check events
-kubectl get events --field-selector involvedObject.name=my-sample-bucket
-
-# Check controller logs in detail
-kubectl logs -n ack-system -l app.kubernetes.io/name=ack-s3-controller --tail=100
-```
-
-## Conclusion
-
-AWS Controllers for Kubernetes (ACK) is a powerful tool that bridges the gap between Kubernetes and AWS services. ACK allows Kubernetes users to manage AWS resources using familiar Kubernetes APIs and tools.
-
-This document covered the basic concepts of ACK, installation methods, S3, IAM, SQS, SNS resource creation examples, resource management, security considerations, monitoring, and troubleshooting.
-
-ACK continues to evolve, with support being added for more AWS services. Combined with GitOps workflows, it provides a powerful way to manage AWS infrastructure as code.
-
-### Next Steps
-
-* Build GitOps pipelines using ACK
-* Integrate multiple AWS service controllers
-* Extend custom resource definitions
-* Develop multi-account and multi-region strategies
-
-## References
-
-* [ACK Official Documentation](https://aws-controllers-k8s.github.io/community/)
-* [ACK GitHub Repository](https://github.com/aws-controllers-k8s/community)
-* [AWS Service Controller List](https://aws-controllers-k8s.github.io/community/docs/community/services/)
-* [ACK Design Principles](https://aws-controllers-k8s.github.io/community/docs/community/design/)
-* [EKS Workshop - ACK](https://www.eksworkshop.com/intermediate/290_ack/)
-
-## Quiz
-
-To test what you've learned in this chapter, try the [ACK Quiz](../quizzes/platform-engineering/02-ack-quiz.md).
+[ACK quiz](../quizzes/platform-engineering/02-ack-quiz.md)

@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flink Native-mode control flow",
+    "output": "en-data-on-eks-flink-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "declare-reconcile",
+        "label": "Declare and reconcile",
+        "focus": [
+          "user",
+          "apiserver",
+          "operator",
+          "jobmanager"
+        ],
+        "note": "FlinkDeployment manages the cluster; FlinkSessionJob submits to an existing Session cluster."
+      },
+      {
+        "id": "resource-manager",
+        "label": "Dynamic TaskManager requests",
+        "focus": [
+          "jobmanager",
+          "apiserver",
+          "tm1",
+          "tm2"
+        ],
+        "note": "The Kubernetes ResourceManager inside the JobManager asks the API server for TaskManager pods and releases them when no longer needed."
+      },
+      {
+        "id": "job-execution",
+        "label": "Job execution",
+        "focus": [
+          "jobmanager",
+          "tm1",
+          "tm2"
+        ],
+        "note": "The JobManager schedules subtasks and coordinates checkpoints; records are processed in TaskManager task slots."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Operator",
+      "sublabel": "kubectl apply",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "cloud",
+      "label": "Kubernetes API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Flink Kubernetes Operator",
+      "sublabel": "watches CRs · reconcile loop",
+      "pos": [
+        600,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "jobmanager",
+      "type": "backend",
+      "label": "JobManager Pod",
+      "sublabel": "embeds the ResourceManager",
+      "pos": [
+        600,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "tm1",
+      "type": "backend",
+      "label": "TaskManager Pod 1",
+      "sublabel": "task slots · runs subtasks",
+      "pos": [
+        1000,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "tm2",
+      "type": "backend",
+      "label": "TaskManager Pod 2",
+      "sublabel": "task slots · runs subtasks",
+      "pos": [
+        1000,
+        400
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS cluster",
+      "wraps": [
+        "apiserver",
+        "operator",
+        "jobmanager",
+        "tm1",
+        "tm2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Flink cluster (FlinkDeployment)",
+      "wraps": [
+        "jobmanager",
+        "tm1",
+        "tm2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "apply-cr",
+      "from": "user",
+      "to": "apiserver",
+      "label": "apply FlinkDeployment / FlinkSessionJob CR",
+      "variant": "emphasis",
+      "labelDy": 56
+    },
+    {
+      "id": "watch-cr",
+      "from": "apiserver",
+      "to": "operator",
+      "label": "watch CR changes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "reconcile-jm",
+      "from": "operator",
+      "to": "jobmanager",
+      "label": "create / reconcile",
+      "variant": "emphasis",
+      "labelDy": 40
+    },
+    {
+      "id": "request-tm",
+      "from": "jobmanager",
+      "to": "apiserver",
+      "label": "ResourceManager: request · release TaskManager pods",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    },
+    {
+      "id": "schedule-tm1",
+      "from": "jobmanager",
+      "to": "tm1",
+      "label": "subtasks · checkpoints"
+    },
+    {
+      "id": "schedule-tm2",
+      "from": "jobmanager",
+      "to": "tm2",
+      "label": "subtasks · checkpoints"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Flink Kubernetes Operator",
+      "items": [
+        "Supports Native and Standalone",
+        "Manages cluster/job lifecycle and upgrade conditions"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "JobManager",
+      "items": [
+        "Graph preparation depends on submission mode",
+        "Native ResourceManager uses the Kubernetes API"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "TaskManager",
+      "items": [
+        "Slot sharing and operator chaining",
+        "Pod allocation and node capacity are separate layers"
+      ]
+    }
+  ]
+}

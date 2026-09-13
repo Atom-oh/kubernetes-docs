@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "CNI 동작 방식 — ADD / DEL 호출",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      680
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "add",
+        "label": "Pod 생성 (ADD)",
+        "focus": [
+          "kubelet",
+          "cni",
+          "net"
+        ],
+        "note": "Kubelet의 ADD 호출에 CNI Plugin이 인터페이스 생성, IP 할당, 라우팅 설정을 마치고 IP를 반환한다."
+      },
+      {
+        "id": "del",
+        "label": "Pod 삭제 (DEL)",
+        "focus": [
+          "kubelet",
+          "cni",
+          "net"
+        ],
+        "note": "Pod가 삭제되면 DEL 호출로 네트워크 리소스를 정리하고 완료를 알린다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "노드 에이전트"
+    },
+    {
+      "id": "cni",
+      "type": "cloud",
+      "label": "CNI Plugin",
+      "sublabel": "네트워크 플러그인"
+    },
+    {
+      "id": "net",
+      "type": "external",
+      "label": "Network",
+      "sublabel": "노드 네트워크 스택"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 400,
+      "label": "Pod 생성 — ADD"
+    },
+    {
+      "from": 425,
+      "to": 580,
+      "label": "Pod 삭제 — DEL"
+    }
+  ],
+  "messages": [
+    {
+      "id": "add-call",
+      "from": "kubelet",
+      "to": "cni",
+      "y": 190,
+      "label": "ADD 호출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iface",
+      "from": "cni",
+      "to": "net",
+      "y": 235,
+      "label": "네트워크 인터페이스 생성"
+    },
+    {
+      "id": "ip",
+      "from": "cni",
+      "to": "net",
+      "y": 280,
+      "label": "IP 주소 할당"
+    },
+    {
+      "id": "route",
+      "from": "cni",
+      "to": "net",
+      "y": 325,
+      "label": "라우팅 설정"
+    },
+    {
+      "id": "ip-return",
+      "from": "cni",
+      "to": "kubelet",
+      "y": 375,
+      "label": "IP 반환",
+      "variant": "return"
+    },
+    {
+      "id": "del-call",
+      "from": "kubelet",
+      "to": "cni",
+      "y": 455,
+      "label": "DEL 호출",
+      "variant": "emphasis",
+      "note": "Pod 실행 후 삭제 시"
+    },
+    {
+      "id": "cleanup",
+      "from": "cni",
+      "to": "net",
+      "y": 505,
+      "label": "리소스 정리"
+    },
+    {
+      "id": "done",
+      "from": "cni",
+      "to": "kubelet",
+      "y": 555,
+      "label": "완료",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "cni",
+      "from": 185,
+      "to": 382,
+      "type": "cloud"
+    },
+    {
+      "participant": "cni",
+      "from": 450,
+      "to": 562,
+      "type": "cloud"
+    }
+  ]
+}

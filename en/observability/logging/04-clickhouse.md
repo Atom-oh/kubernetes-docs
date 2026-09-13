@@ -66,11 +66,15 @@ ClickHouse is an open-source columnar database optimized for OLAP (Online Analyt
 
 ### ClickHouse Cluster Architecture
 
-![Architecture diagram of a ClickHouse log pipeline: log collectors buffer through an optional Kafka topic into a ZooKeeper-coordinated ClickHouse cluster, which writes to EBS, tiers cold data to S3, and serves Grafana and Superset queries.](../../../assets/diagrams/rendered/en-observability-logging-04-clickhouse-0.svg)
+![Architecture diagram of a ClickHouse log pipeline: log collectors buffer through an optional Kafka topic into a ZooKeeper-coordinated ClickHouse cluster, which writes to EBS, tiers cold data to S3, and serves Grafana and Superset queries.](../../.gitbook/assets/en-observability-logging-04-clickhouse-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-0.html)
 
 ### Data Flow
 
-![Sequence diagram showing a log's path from an application through FluentBit and an optional Kafka buffer into ClickHouse, which stores it in a MergeTree table and, on a TTL policy, asynchronously moves cold data to S3.](../../../assets/diagrams/rendered/en-observability-logging-04-clickhouse-1.svg)
+![Sequence diagram showing a log's path from an application through FluentBit and an optional Kafka buffer into ClickHouse, which stores it in a MergeTree table and, on a TTL policy, asynchronously moves cold data to S3.](../../.gitbook/assets/en-observability-logging-04-clickhouse-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-1.html)
 
 ***
 

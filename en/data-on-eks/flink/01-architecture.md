@@ -1,101 +1,144 @@
 # Part 1: Flink Architecture on Kubernetes
 
-> **Supported Versions**: Apache Flink 2.2+, Kubernetes 1.21+\
-> **Last Updated**: July 15, 2026
+> **Last Updated**: September 12, 2026. Integration examples: Flink 2.2.1 / Java 17 / Operator 1.15.0.
 
-## What is Apache Flink?
+This chapter explains cluster roles and resource sizing. Prepare a currently
+supported EKS/Kubernetes version, compatible kubectl, a Flink distribution and
+client access. Part 2 covers installation, service accounts, RBAC and Operator
+resources. Historical Kubernetes minimums are not current support matrices.
 
-Apache Flink is a distributed stream processing engine built for stateful computation over unbounded and bounded data streams. It is widely used for real-time analytics, event-driven applications, and continuous ETL pipelines that need low-latency processing with exactly-once state guarantees.
+## 1. JobManager, TaskManager and client
 
-This document covers the core architectural concepts you need before running Flink on EKS: the JobManager/TaskManager cluster model, the three deployment modes, and the difference between native Kubernetes deployment and standalone-on-Kubernetes. Part 2 walks through installing and operating the **Flink Kubernetes Operator** on a real EKS cluster.
+| Role | Responsibility |
+| --- | --- |
+| Client | Depending on submission path, run application main() to build a graph or request application execution on the cluster |
+| JobManager | Dispatcher, ResourceManager and per-job JobMaster coordinate submission, slots, execution, checkpoints and recovery |
+| TaskManager | Execute task threads, exchange/buffer data and process state |
+| Kubernetes ResourceManager | Request/release TaskManager pods through the Kubernetes API in Native mode |
 
-## Lab Environment Setup
+The JobManager does not always build the initial graph in every deployment mode.
+Application mode runs main() on the JobManager; ordinary 2.2 Session CLI submission
+builds the graph on the client. TaskManagers perform normal operator record
+processing, but application main() is user code: do not assume it leaves the
+JobManager permanently lightweight.
 
-To follow along with the examples in this document, you will need the following tools and environment:
+### Slots, operator chaining and slot sharing
 
-### Required Tools
+A task slot is a TaskManager resource-allocation unit. Classic fixed-slot
+configuration partitions managed memory but **does not itself provide CPU isolation**.
+Each TaskManager is a JVM that can host multiple task threads.
 
-* kubectl v1.21 or later
-* A working Kubernetes cluster (Amazon EKS recommended)
-* The Flink CLI (`bin/flink`), bundled with the Apache Flink distribution, for submitting jobs directly against a cluster
-* (Covered in Part 2) The Flink Kubernetes Operator's CRDs — not required for this document, since this part focuses on the architecture the Operator manages rather than the Operator itself
+Flink can **chain** operator subtasks into one task/thread. Different tasks of the
+same job can also share slots through **slot sharing groups**.
+Consequently, four slots do not mean a maximum of four operator subtasks.
 
-## 1. Core Cluster Architecture: JobManager and TaskManager
+| Example assumptions | Simple slot calculation |
+| --- | --- |
+| source(4) → map(4) → sink(2), all in one sharing group | Can fit in 4 slots, the maximum parallelism |
+| source/map in group A and sink in group B | Simultaneous execution of both groups requires 4 + 2 = 6 slots |
 
-### Core Terminology
+These are simple streaming examples with compatible group/resource requirements.
+Account separately for batch scheduling, fine-grained resource profiles, other
+jobs and chaining. At two slots/TM, four slots need at least two TMs and six slots
+need at least three. Actual CPU, network, state size and headroom must also fit.
 
-* **JobManager (JM)**: The control plane of a Flink cluster. It builds the job graph from a submitted application, coordinates checkpoints, schedules work onto TaskManagers, and serves the REST API and Web UI. On Kubernetes, the JobManager runs as its own pod.
-* **TaskManager (TM)**: The worker process that actually executes the job. Each TaskManager offers one or more **task slots**, and each slot runs one parallel instance of an operator subtask. On Kubernetes, each TaskManager runs as its own pod.
-* **Task Slot**: A fixed slice of a TaskManager's resources (primarily memory) reserved for exactly one operator subtask at a time. A TaskManager with 4 slots can run up to 4 subtasks concurrently.
-* **Checkpoint Coordinator**: A component inside the JobManager that periodically triggers distributed snapshots of operator state across all TaskManagers, enabling exactly-once recovery after a failure.
-* **Kubernetes ResourceManager**: The JobManager-internal component that talks to the Kubernetes API server to request or release TaskManager pods, used only in native Kubernetes deployment (see Section 3).
+![Native Flink roles, checkpoint coordination and task slots that can share operator tasks.](../../.gitbook/assets/en-data-on-eks-flink-01-architecture-0.png)
 
-### JobManager <-> TaskManager Flow on Kubernetes
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-flink-01-architecture-0.html)
 
-![Diagram of the Flink JobManager pod (Job Graph and Scheduler, Checkpoint Coordinator, Kubernetes ResourceManager, REST API and Web UI) coordinating two TaskManager pods, showing the ResourceManager requesting and releasing pods, the Job Graph and Scheduler deploying subtasks into each pod's task slots, and the Checkpoint Coordinator triggering snapshots on one slot per pod.](../../../assets/diagrams/rendered/en-data-on-eks-flink-01-architecture-0.svg)
+## 2. Application/Session selects cluster lifecycle and sharing
 
-The JobManager decomposes a submitted application into a job graph, splits each operator into parallel subtasks, and assigns those subtasks to task slots across the available TaskManager pods. When native Kubernetes deployment is used, the JobManager's own Kubernetes ResourceManager dynamically requests new TaskManager pods when more slots are needed and releases them when a job's parallelism shrinks or the job finishes.
-
-### Slot Sharing: Why Slot Count Isn't the Sum of All Parallelism
-
-By default, Flink places subtasks from different operators of the same job into the same slot via a shared **slot sharing group**, rather than requiring one slot per operator per parallel instance. This means the number of task slots a job actually needs is generally the job's **maximum operator parallelism**, not the sum of every operator's parallelism. For example, a job with a `source` (parallelism 4) -> `map` (parallelism 4) -> `sink` (parallelism 2) pipeline needs only 4 slots total, since the three operators' subtasks for a given parallel "pipeline instance" co-locate in the same slot. This is one of the main levers for sizing how many TaskManager pods a cluster actually needs.
-
-## 2. Deployment Modes
-
-Flink supports three deployment modes that differ in where a job's `main()` method runs and how tightly a job is bound to its own cluster.
-
-| Mode | How it works | Isolation | Recommendation |
-| --- | --- | --- | --- |
-| **Application Mode** | A dedicated cluster is created per job; the job's `main()` runs inside the JobManager itself | Full resource isolation and fencing between jobs — one job's failure or resource spike cannot affect another | **Recommended default for production** |
-| **Session Mode** | A single, shared, long-lived cluster runs multiple jobs submitted independently over time | Lower isolation — jobs share the same JobManager and compete for the same TaskManager pool | Good fit for many short-lived or ad-hoc jobs where cluster startup overhead matters more than isolation |
-| **Per-Job Mode** | Legacy mode; the client executed `main()` locally and submitted a pre-built job graph, spinning up a dedicated cluster per job | Full isolation, similar to Application Mode | **Not supported on native Kubernetes deployment** — effectively dead going forward |
-
-**Application Mode is the recommended default** because running the job's `main()` inside the JobManager avoids shipping a large, client-side-constructed job graph over the network and, more importantly, gives every job its own dedicated JobManager and TaskManager pods. That per-job resource isolation and fencing means a misbehaving or resource-hungry job cannot starve or destabilize any other job's cluster — a property that matters a lot in a shared EKS cluster running many Flink workloads.
-
-**Session Mode** trades away that isolation for lower per-job startup latency, since the cluster already exists and a new job simply gets submitted to it. It remains a reasonable choice for interactive exploration or a large number of small, short-lived batch jobs, as long as you accept that a single noisy job can affect the whole session cluster.
-
-**Per-Job Mode** is only mentioned here to explain why you won't see it recommended anywhere in a Kubernetes context: native Kubernetes deployment never implemented it, so on EKS it is simply not an available option. Application Mode covers the same per-job isolation goal without the legacy client-side submission path.
-
-## 3. Native Kubernetes Deployment vs. Standalone-on-Kubernetes
-
-Flink can run on Kubernetes in two fundamentally different ways, and the distinction matters when deciding how a cluster's TaskManager count is managed.
-
-| Aspect | Native Kubernetes Deployment | Standalone-on-Kubernetes |
+| Mode | main() and cluster lifetime | Operational boundary |
 | --- | --- | --- |
-| Resource management | Flink's own Kubernetes ResourceManager integration talks directly to the Kubernetes API to request and release TaskManager pods | None — Flink has no visibility into Kubernetes; pods are just plain processes |
-| TaskManager pod count | Elastic — grows and shrinks dynamically based on the job's required slots | Fixed — a set number of TaskManager pods defined upfront via plain Kubernetes `Deployment`/YAML manifests |
-| How it's deployed | `flink run-application` / `flink run` targeting a Kubernetes context, or a controller built on top of it (e.g., the Flink Kubernetes Operator) | Hand-written Kubernetes `Deployment`, `Service`, and `ConfigMap` YAML that starts JobManager and TaskManager containers directly |
-| Operational maturity | The modern, recommended path — this is what the **Flink Kubernetes Operator** (covered in Part 2) is built on top of | Legacy/manual path — still technically works, but requires manually editing and reapplying YAML to change TaskManager count |
+| Application | Run main() on a cluster dedicated to an application; lifetime follows that application | One main() can create multiple jobs, so it is not invariably one cluster per job |
+| Session | Submit applications/jobs to an existing cluster; ordinary 2.2 CLI runs main() on the client | Jobs share JM/TM capacity; one TM failure may affect several jobs |
 
-**Native Kubernetes deployment** is the recommended path in 2026: because the JobManager can talk to the Kubernetes API server directly, it can request exactly as many TaskManager pods as a job's parallelism requires and release them when they're no longer needed, without an operator or human editing YAML by hand. This dynamic resource allocation is also the foundation the Flink Kubernetes Operator builds on — the Operator adds a Kubernetes-native CRD layer (`FlinkDeployment`, `FlinkSessionJob`) on top of native mode so that cluster lifecycle, upgrades, and savepoint-based redeploys can be managed declaratively.
+Application mode separates JVMs/lifecycles between applications, but does not
+fully isolate shared EKS nodes, network, storage or API quotas. Multiple jobs in
+one application also share their cluster. The 2.2 baseline documents Application
+HA for single-execute applications; check version-specific limits for multi-job
+applications rather than applying 2.3 improvements retroactively.
 
-**Standalone-on-Kubernetes** predates native support and simply runs JobManager and TaskManager as plain containers with a fixed pod count, with no elastic resource requests at all. It still works and is sometimes used where tighter control over exactly which pods exist is wanted, but it is legacy and manual: scaling TaskManagers means editing and reapplying a `Deployment` manifest yourself, and there is no built-in mechanism for the cluster to ask Kubernetes for more capacity on demand.
+Session mode can reuse allocated resources and avoid cluster startup overhead.
+It does not guarantee immediate execution without free slots, and shared failures/
+contention still matter.
 
-Submitting a job directly with native Kubernetes deployment (Application Mode) looks like this from the Flink CLI, with no operator involved:
+Per-Job was the historical model of client-built graphs and job-specific clusters.
+It is not a Native Kubernetes option. The current Kubernetes choices covered here
+are Application and Session, not three supported modes.
+
+## 3. Native/Standalone is a separate resource-management axis
+
+Application/Session and Native/Standalone are different classifications.
+Operator 1.15.0 supports Application/Session clusters and **Native/Standalone deployment**.
+
+| Aspect | Native | Standalone |
+| --- | --- | --- |
+| TM pod management | JM's Kubernetes ResourceManager requests/releases pods through the API | An external manager such as the Operator reconciles Kubernetes resources |
+| Runtime permissions | Kubernetes API permissions are needed for native resource management | External management is possible; separately check API permissions for additional features such as HA |
+| Replica changes | Governed by Flink slot demands, idle policy and limits | Can be managed by the Operator/other controllers, not only hand-edited YAML |
+
+Native is the normal default path, but Standalone is not simply a discarded legacy
+mode. Select through CR spec.mode and assess where resource-creation privileges
+should reside and which feature limits apply. This does not automatically remove
+every Kubernetes API interaction or fully isolate untrusted code.
+
+Native TaskManager allocation also depends on resource profiles, bounds and idle
+timeouts. The 2.2.1 default resourcemanager.taskmanager-timeout is 30 seconds.
+Job completion or lower parallelism does not immediately remove a precisely
+proportional number of pods/nodes. Karpenter/Cluster Autoscaler manages node
+capacity at a separate layer.
+
+### Current CLI submission form
+
+This is a **Native Application submission without the Operator**, after preparing
+the namespace and flink service account/RBAC from Part 2.
+Do not let both an Operator CR and the CLI manage the same cluster ID.
+The bundled state-machine example is long-running; it is not a terminating batch
+smoke test.
 
 ```bash
-# Submit a job in Application Mode using native Kubernetes deployment
-./bin/flink run-application \
+# Illustration after namespace/ServiceAccount/RBAC preparation from Part 2.
+# Use the Flink 2.2.1 distribution and a cluster ID not owned by an Operator CR.
+./bin/flink run \
   --target kubernetes-application \
-  -Dkubernetes.cluster-id=my-flink-app \
-  -Dkubernetes.container.image=my-registry/my-flink-app:2.3.0 \
+  -Dkubernetes.cluster-id=flink-cli-example \
+  -Dkubernetes.container.image.ref=flink:2.2.1-java17 \
   -Dkubernetes.namespace=data-processing \
+  -Dkubernetes.jobmanager.service-account=flink \
   -Dtaskmanager.numberOfTaskSlots=2 \
-  local:///opt/flink/usrlib/my-job.jar
+  -p 2 \
+  local:///opt/flink/examples/streaming/StateMachineExample.jar
 ```
 
-This single command causes the Flink client to talk to the Kubernetes API to create the JobManager deployment; from there, the JobManager's own Kubernetes ResourceManager takes over requesting TaskManager pods as the job needs them. Part 2 replaces this imperative CLI invocation with a declarative `FlinkDeployment` custom resource applied via `kubectl apply`, managed continuously by the Flink Kubernetes Operator.
+The 2.2.1 CLI uses run --target kubernetes-application. Do not copy the old
+run-application action. image.ref is the current key; container.image is a
+deprecated alias. The local URI identifies the JAR inside this example image.
+Verify client/JM permissions, image pulls, DNS, capacity and actual REST/log results.
 
-## 4. Flink 2.x on Kubernetes: Version Baseline
+## 4. Runtime and validation scope
 
-Apache Flink's 2.x line is the current stable baseline as of mid-2026, with **Flink 2.3.0** released in June 2026 as the latest stable release. A notable platform change carried through the 2.x line is the move to **Java 17 as the baseline runtime** for JobManager and TaskManager images, replacing the Java 11 baseline used historically. This affects the base images referenced in Kubernetes pod specs and any custom Flink images built on top of them — they should be built on a Java 17 (or later) JRE/JDK rather than Java 11.
+Java 17 is the recommended/default image choice for this baseline.
+Official image metadata also lists Java 11 variants, so it is incorrect to claim
+that every 2.x Java 11 image was removed. The 2.2 documentation describes Java 21
+support as experimental; arbitrary JDKs above 17 are not equally supported.
+Match application bytecode, connectors and reflection settings as well.
 
-## Next Steps
+Architecture, CLI dispatch/configuration keys, Operator source and image tag
+metadata were checked. No cluster creation, CLI job submission, HA or throughput
+test was performed here.
 
-This document covered Flink's core architecture on Kubernetes — the JobManager/TaskManager model, the three deployment modes and why Application Mode is the production default, and the difference between native Kubernetes deployment and the legacy standalone-on-Kubernetes path. Part 2 covers installing and operating the **Flink Kubernetes Operator**, which builds on native Kubernetes deployment to manage Flink clusters declaratively via `FlinkDeployment` and `FlinkSessionJob` custom resources.
+## References
 
-[Return to Main Page](./README.md)
+- [Flink releases and connector compatibility](https://flink.apache.org/downloads/)
+- [Flink 2.2 architecture](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/concepts/flink-architecture/)
+- [Flink 2.2 deployment modes](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/overview/)
+- [Native Kubernetes deployment](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/resource-providers/native_kubernetes/)
+- [Java compatibility](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/java_compatibility/)
+- [Operator 1.15.0 deployment modes](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/docs/content/docs/custom-resource/overview.md)
 
-## Quiz
+[Part 2: Operator](02-flink-kubernetes-operator.md)
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/flink/01-architecture-quiz.md).
+[README](README.md)
+
+[Quiz](../../quizzes/data-on-eks/flink/01-architecture-quiz.md)

@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "AWS Load Balancer Controller 동작 방식",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      730
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "kubectl apply"
+    },
+    {
+      "id": "k8sapi",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "Ingress / Service"
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "LB Controller",
+      "sublabel": "kube-system"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS API",
+      "sublabel": "ELBv2"
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB / NLB",
+      "sublabel": "프로비저닝 대상"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 246,
+      "label": "1. 리소스 감지"
+    },
+    {
+      "from": 264,
+      "to": 454,
+      "label": "2. AWS 리소스 프로비저닝"
+    },
+    {
+      "from": 472,
+      "to": 552,
+      "label": "3. 결과 반환"
+    },
+    {
+      "from": 570,
+      "to": 626,
+      "label": "4. 지속 조정 (Pod 변경 시)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create",
+      "from": "user",
+      "to": "k8sapi",
+      "y": 182,
+      "label": "Ingress / Service 생성"
+    },
+    {
+      "id": "watch",
+      "from": "k8sapi",
+      "to": "ctrl",
+      "y": 216,
+      "label": "Watch 이벤트"
+    },
+    {
+      "id": "create-lb",
+      "from": "ctrl",
+      "to": "aws",
+      "y": 286,
+      "label": "Load Balancer 생성 요청",
+      "variant": "emphasis",
+      "note": "리소스 분석 (annotation · spec) 후 호출"
+    },
+    {
+      "id": "provision",
+      "from": "aws",
+      "to": "alb",
+      "y": 320,
+      "label": "ALB / NLB 프로비저닝"
+    },
+    {
+      "id": "arn",
+      "from": "aws",
+      "to": "ctrl",
+      "y": 354,
+      "label": "ARN 반환",
+      "variant": "return"
+    },
+    {
+      "id": "create-tg",
+      "from": "ctrl",
+      "to": "aws",
+      "y": 388,
+      "label": "Target Group 생성"
+    },
+    {
+      "id": "listener",
+      "from": "ctrl",
+      "to": "aws",
+      "y": 422,
+      "label": "Listener 규칙 설정"
+    },
+    {
+      "id": "status",
+      "from": "ctrl",
+      "to": "k8sapi",
+      "y": 494,
+      "label": "Status 업데이트"
+    },
+    {
+      "id": "dns",
+      "from": "k8sapi",
+      "to": "user",
+      "y": 528,
+      "label": "Load Balancer DNS 제공",
+      "variant": "return"
+    },
+    {
+      "id": "targets",
+      "from": "ctrl",
+      "to": "aws",
+      "y": 598,
+      "label": "Target 자동 등록 / 해제",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ctrl",
+      "from": 211,
+      "to": 502,
+      "type": "backend"
+    },
+    {
+      "participant": "aws",
+      "from": 281,
+      "to": 430,
+      "type": "cloud"
+    }
+  ]
+}

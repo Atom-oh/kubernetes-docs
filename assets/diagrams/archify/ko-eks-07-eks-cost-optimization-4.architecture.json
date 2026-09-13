@@ -1,0 +1,330 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "네트워킹 비용 최적화",
+    "output": "ko-eks-07-eks-cost-optimization-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1390,
+      680
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "최적화 영역"
+        },
+        "backend": {
+          "label": "세부 전략"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "data-transfer",
+        "label": "데이터 전송 최적화",
+        "focus": [
+          "network-cost",
+          "data-transfer",
+          "regional-comm",
+          "az-routing",
+          "compression"
+        ],
+        "note": "리전 간·가용 영역 간 전송을 줄이고 압축으로 전송량 자체를 줄인다."
+      },
+      {
+        "id": "load-balancer",
+        "label": "로드 밸런서 최적화",
+        "focus": [
+          "network-cost",
+          "load-balancer",
+          "lb-type",
+          "lb-sharing",
+          "idle-lb"
+        ],
+        "note": "워크로드에 맞는 유형을 고르고, Ingress로 공유하며, 유휴 LB는 제거한다."
+      },
+      {
+        "id": "nat-gateway",
+        "label": "NAT 게이트웨이 최적화",
+        "focus": [
+          "network-cost",
+          "nat-gateway",
+          "nat-sharing",
+          "vpc-endpoints",
+          "outbound-traffic"
+        ],
+        "note": "NAT 게이트웨이는 시간당 요금과 데이터 처리 요금이 함께 부과되므로 VPC 엔드포인트로 우회하는 것이 핵심이다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "network-cost",
+      "type": "cloud",
+      "label": "네트워킹 비용 최적화",
+      "sublabel": "EKS 네트워킹 비용",
+      "pos": [
+        575,
+        160
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "data-transfer",
+      "type": "cloud",
+      "label": "데이터 전송 최적화",
+      "sublabel": "리전·AZ 간 전송 비용",
+      "pos": [
+        330,
+        162
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "load-balancer",
+      "type": "cloud",
+      "label": "로드 밸런서 최적화",
+      "sublabel": "유형 선택 · 공유 · 유휴 정리",
+      "pos": [
+        850,
+        162
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "nat-gateway",
+      "type": "cloud",
+      "label": "NAT 게이트웨이 최적화",
+      "sublabel": "시간당 + 데이터 처리 요금",
+      "pos": [
+        590,
+        360
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "regional-comm",
+      "type": "backend",
+      "label": "리전 내 통신 활용",
+      "sublabel": "클러스터와 AWS 서비스를 같은 리전에",
+      "pos": [
+        20,
+        100
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "az-routing",
+      "type": "backend",
+      "label": "가용 영역 인식 라우팅",
+      "sublabel": "topology-aware-hints",
+      "pos": [
+        20,
+        180
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "compression",
+      "type": "backend",
+      "label": "압축 사용",
+      "sublabel": "API 응답 · 로그/지표 · 정적 자산",
+      "pos": [
+        20,
+        260
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "lb-type",
+      "type": "backend",
+      "label": "적절한 로드 밸런서 유형 선택",
+      "sublabel": "NLB · ALB · CLB",
+      "pos": [
+        1110,
+        100
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "lb-sharing",
+      "type": "backend",
+      "label": "로드 밸런서 공유",
+      "sublabel": "ALB Ingress로 여러 서비스 노출",
+      "pos": [
+        1110,
+        180
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "idle-lb",
+      "type": "backend",
+      "label": "유휴 로드 밸런서 제거",
+      "sublabel": "트래픽 없는 LB 모니터링·정리",
+      "pos": [
+        1110,
+        260
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "nat-sharing",
+      "type": "backend",
+      "label": "NAT 게이트웨이 공유",
+      "sublabel": "가용 영역당 1개, 서브넷 간 공유",
+      "pos": [
+        850,
+        350
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "vpc-endpoints",
+      "type": "backend",
+      "label": "VPC 엔드포인트 사용",
+      "sublabel": "S3 · DynamoDB · ECR · CloudWatch Logs · STS",
+      "pos": [
+        850,
+        430
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "outbound-traffic",
+      "type": "backend",
+      "label": "아웃바운드 트래픽 최적화",
+      "sublabel": "외부 API 호출 최소화 · 오프피크 예약",
+      "pos": [
+        850,
+        510
+      ],
+      "size": [
+        260,
+        56
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-dt",
+      "from": "network-cost",
+      "to": "data-transfer"
+    },
+    {
+      "id": "root-lb",
+      "from": "network-cost",
+      "to": "load-balancer"
+    },
+    {
+      "id": "root-nat",
+      "from": "network-cost",
+      "to": "nat-gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dt-regional",
+      "from": "data-transfer",
+      "to": "regional-comm"
+    },
+    {
+      "id": "dt-az",
+      "from": "data-transfer",
+      "to": "az-routing"
+    },
+    {
+      "id": "dt-compression",
+      "from": "data-transfer",
+      "to": "compression"
+    },
+    {
+      "id": "lb-type-edge",
+      "from": "load-balancer",
+      "to": "lb-type"
+    },
+    {
+      "id": "lb-sharing-edge",
+      "from": "load-balancer",
+      "to": "lb-sharing"
+    },
+    {
+      "id": "lb-idle-edge",
+      "from": "load-balancer",
+      "to": "idle-lb"
+    },
+    {
+      "id": "nat-sharing-edge",
+      "from": "nat-gateway",
+      "to": "nat-sharing"
+    },
+    {
+      "id": "nat-vpce-edge",
+      "from": "nat-gateway",
+      "to": "vpc-endpoints",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nat-outbound-edge",
+      "from": "nat-gateway",
+      "to": "outbound-traffic"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "로드 밸런서 유형",
+      "items": [
+        "NLB: TCP/UDP 트래픽, 낮은 지연 시간",
+        "ALB: HTTP/HTTPS 트래픽, 경로 기반 라우팅",
+        "CLB: 레거시 워크로드"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "자주 쓰는 VPC 엔드포인트",
+      "items": [
+        "S3, DynamoDB",
+        "ECR, CloudWatch Logs, STS",
+        "프라이빗 액세스로 NAT 게이트웨이 데이터 처리 요금 절감"
+      ]
+    }
+  ]
+}

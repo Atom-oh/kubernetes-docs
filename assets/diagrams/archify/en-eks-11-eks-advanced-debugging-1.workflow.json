@@ -1,0 +1,365 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "NotReady Node Decision Tree",
+    "output": "public/archmaps/en-eks-11-eks-advanced-debugging-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Check step"
+        },
+        "security": {
+          "label": "Confirmed cause · fix"
+        },
+        "external": {
+          "label": "Deep dive"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "instance-and-kubelet",
+        "label": "Instance · kubelet",
+        "focus": [
+          "ec2",
+          "ec2Issue",
+          "kubelet",
+          "startKubelet"
+        ],
+        "note": "Start by confirming the EC2 instance is Running and kubelet is up."
+      },
+      {
+        "id": "network-and-pressure",
+        "label": "Network · resource pressure",
+        "focus": [
+          "network",
+          "networkIssue",
+          "disk",
+          "cleanDisk",
+          "memory",
+          "memoryIssue"
+        ],
+        "note": "Narrow down through security groups/routing, then DiskPressure and MemoryPressure."
+      },
+      {
+        "id": "runtime-and-logs",
+        "label": "Runtime · logs",
+        "focus": [
+          "runtime",
+          "restartContainerd",
+          "kubeletLogs"
+        ],
+        "note": "Restart containerd if it is unhealthy; otherwise analyze journalctl -u kubelet in detail."
+      }
+    ],
+    "locale": "en",
+    "viewBox": [
+      1221,
+      534
+    ]
+  },
+  "lanes": [
+    {
+      "id": "check",
+      "label": "NotReady · check order"
+    },
+    {
+      "id": "fix",
+      "label": "Cause · remediation",
+      "variant": "exception"
+    },
+    {
+      "id": "analyze",
+      "label": "Deep-dive analysis"
+    }
+  ],
+  "mainPath": [
+    "ec2",
+    "kubelet",
+    "network",
+    "disk",
+    "memory",
+    "runtime",
+    "kubeletLogs"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "ec2"
+    ],
+    "allowedTerminals": [
+      "ec2Issue",
+      "startKubelet",
+      "networkIssue",
+      "cleanDisk",
+      "memoryIssue",
+      "restartContainerd",
+      "kubeletLogs"
+    ],
+    "requiredPaths": [
+      {
+        "from": "ec2",
+        "to": "kubeletLogs"
+      },
+      {
+        "from": "ec2",
+        "to": "restartContainerd"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "ec2",
+      "lane": "check",
+      "col": 0,
+      "type": "backend",
+      "label": "EC2 Status?",
+      "sublabel": "check instance state",
+      "tag": "TRIGGER",
+      "width": 140
+    },
+    {
+      "id": "kubelet",
+      "lane": "check",
+      "col": 1,
+      "type": "backend",
+      "label": "kubelet Running?",
+      "sublabel": "systemctl status kubelet",
+      "width": 140
+    },
+    {
+      "id": "network",
+      "lane": "check",
+      "col": 2,
+      "type": "backend",
+      "label": "Network OK?",
+      "sublabel": "control plane reach",
+      "width": 140
+    },
+    {
+      "id": "disk",
+      "lane": "check",
+      "col": 3,
+      "type": "backend",
+      "label": "Disk Pressure?",
+      "sublabel": "DiskPressure cond.",
+      "width": 140
+    },
+    {
+      "id": "memory",
+      "lane": "check",
+      "col": 4,
+      "type": "backend",
+      "label": "Memory Pressure?",
+      "sublabel": "MemoryPressure cond.",
+      "width": 140
+    },
+    {
+      "id": "runtime",
+      "lane": "check",
+      "col": 5,
+      "type": "backend",
+      "label": "Runtime OK?",
+      "sublabel": "systemctl status containerd",
+      "width": 150
+    },
+    {
+      "id": "ec2Issue",
+      "lane": "fix",
+      "col": 0,
+      "type": "security",
+      "label": "EC2 Issue",
+      "sublabel": "check ASG/instance",
+      "width": 140
+    },
+    {
+      "id": "startKubelet",
+      "lane": "fix",
+      "col": 1,
+      "type": "security",
+      "label": "Start kubelet",
+      "sublabel": "systemctl start kubelet",
+      "width": 140
+    },
+    {
+      "id": "networkIssue",
+      "lane": "fix",
+      "col": 2,
+      "type": "security",
+      "label": "Network Issue",
+      "sublabel": "check SG / routing",
+      "width": 140
+    },
+    {
+      "id": "cleanDisk",
+      "lane": "fix",
+      "col": 3,
+      "type": "security",
+      "label": "Clean Disk",
+      "sublabel": "crictl rmi --prune",
+      "width": 140
+    },
+    {
+      "id": "memoryIssue",
+      "lane": "fix",
+      "col": 4,
+      "type": "security",
+      "label": "Memory Shortage",
+      "sublabel": "evict pods or scale up",
+      "width": 140
+    },
+    {
+      "id": "restartContainerd",
+      "lane": "fix",
+      "col": 5,
+      "type": "security",
+      "label": "Restart Runtime",
+      "sublabel": "systemctl restart containerd",
+      "width": 150
+    },
+    {
+      "id": "kubeletLogs",
+      "lane": "analyze",
+      "col": 5,
+      "type": "external",
+      "label": "kubelet Logs",
+      "sublabel": "journalctl -u kubelet",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "ec2",
+      "to": "kubelet",
+      "label": "Running",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "kubelet",
+      "to": "network",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "network",
+      "to": "disk",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "disk",
+      "to": "memory",
+      "label": "No",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "memory",
+      "to": "runtime",
+      "label": "No",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "ec2",
+      "to": "ec2Issue",
+      "label": "Stopped/Terminated",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        261,
+        168
+      ]
+    },
+    {
+      "from": "kubelet",
+      "to": "startKubelet",
+      "label": "No",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        401,
+        168
+      ]
+    },
+    {
+      "from": "network",
+      "to": "networkIssue",
+      "label": "No",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        579,
+        168
+      ]
+    },
+    {
+      "from": "disk",
+      "to": "cleanDisk",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        760,
+        168
+      ]
+    },
+    {
+      "from": "memory",
+      "to": "memoryIssue",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        938,
+        168
+      ]
+    },
+    {
+      "from": "runtime",
+      "to": "restartContainerd",
+      "label": "Issue",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1138,
+        168
+      ]
+    },
+    {
+      "from": "runtime",
+      "to": "kubeletLogs",
+      "label": "Normal",
+      "variant": "emphasis",
+      "role": "main",
+      "labelAt": [
+        1160,
+        294
+      ]
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "mTLS Certificate Lifecycle — 24-Hour Auto-Renewal",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1005,
+      620
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Initial issuance"
+        },
+        "emphasis": {
+          "label": "Renewed issuance"
+        },
+        "default": {
+          "label": "CSR request"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Sidecar",
+      "sublabel": "Pod"
+    },
+    {
+      "id": "istiod",
+      "type": "security",
+      "label": "Istiod (CA)",
+      "sublabel": "Control Plane"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 270,
+      "label": "T=0 h · Initial certificate issued → T=0-16 h certificate in use"
+    },
+    {
+      "from": 290,
+      "to": 440,
+      "label": "T=16 h · Auto-renewal starts (8 hours before expiry)"
+    },
+    {
+      "from": 455,
+      "to": 512,
+      "label": "T=16-24 h · Using new certificate → T=24 h previous certificate expires (no impact)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "issue-initial",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 205,
+      "label": "Issue new certificate (X.509 · 24 h · contains SPIFFE ID)",
+      "variant": "security",
+      "note": "Validity 24 hours · X.509 · contains SPIFFE ID"
+    },
+    {
+      "id": "csr",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 330,
+      "label": "Request new certificate (CSR) — Istiod validates SPIFFE ID",
+      "note": "Istiod validates SPIFFE ID, then generates new certificate"
+    },
+    {
+      "id": "issue-renewed",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 395,
+      "label": "Issue new certificate → Envoy hot-reloads without downtime",
+      "variant": "emphasis",
+      "note": "Envoy applies the new certificate without downtime"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 200,
+      "to": 508,
+      "type": "backend"
+    },
+    {
+      "participant": "istiod",
+      "from": 325,
+      "to": 403,
+      "type": "security"
+    }
+  ]
+}

@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Workload Registration Comparison Summary",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "k8s-pod",
+      "type": "backend",
+      "label": "Kubernetes Pod",
+      "sublabel": "Inside cluster",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "multi-cluster",
+      "type": "cloud",
+      "label": "Multi-Cluster",
+      "sublabel": "Different cluster",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "vm",
+      "type": "external",
+      "label": "Virtual Machine",
+      "sublabel": "Outside cluster",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "istio",
+      "type": "security",
+      "label": "Istio Service Mesh",
+      "sublabel": "Envoy proxy · workload registration",
+      "pos": [
+        400,
+        248
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "mtls",
+      "type": "security",
+      "label": "mTLS Encryption",
+      "pos": [
+        780,
+        60
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "traffic",
+      "type": "backend",
+      "label": "Traffic Management",
+      "pos": [
+        780,
+        180
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Security Policy",
+      "pos": [
+        780,
+        300
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metrics & Tracing",
+      "pos": [
+        780,
+        420
+      ],
+      "size": [
+        170,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Workload Types",
+      "wraps": [
+        "k8s-pod",
+        "multi-cluster",
+        "vm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Common Features",
+      "wraps": [
+        "mtls",
+        "traffic",
+        "policy",
+        "metrics"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-istio",
+      "from": "k8s-pod",
+      "to": "istio",
+      "label": "Automatic sidecar injection",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mc-istio",
+      "from": "multi-cluster",
+      "to": "istio"
+    },
+    {
+      "id": "vm-istio",
+      "from": "vm",
+      "to": "istio",
+      "label": "WorkloadEntry registration"
+    },
+    {
+      "id": "istio-mtls",
+      "from": "istio",
+      "to": "mtls"
+    },
+    {
+      "id": "istio-traffic",
+      "from": "istio",
+      "to": "traffic"
+    },
+    {
+      "id": "istio-policy",
+      "from": "istio",
+      "to": "policy"
+    },
+    {
+      "id": "istio-metrics",
+      "from": "istio",
+      "to": "metrics"
+    }
+  ]
+}

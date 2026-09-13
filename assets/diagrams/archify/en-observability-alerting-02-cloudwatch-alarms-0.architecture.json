@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch Alarms Operation Flow",
+    "locale": "en",
+    "output": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1330,
+      500
+    ],
+    "views": [
+      {
+        "id": "collect",
+        "label": "Metric collection",
+        "focus": [
+          "aws-sources",
+          "custom",
+          "metrics"
+        ],
+        "note": "AWS service metrics from EC2, EKS, RDS, and Lambda plus custom metrics land in CloudWatch Metrics."
+      },
+      {
+        "id": "evaluate",
+        "label": "Alarm evaluation",
+        "focus": [
+          "metrics",
+          "math",
+          "anomaly",
+          "alarms"
+        ],
+        "note": "Alarms evaluate a metric directly, a Metrics Math expression result, or an Anomaly Detection band."
+      },
+      {
+        "id": "act",
+        "label": "Actions and channels",
+        "focus": [
+          "alarms",
+          "sns",
+          "autoscaling",
+          "ec2-actions",
+          "ssm",
+          "email-sms",
+          "lambda-http"
+        ],
+        "note": "On ALARM, SNS, Auto Scaling, EC2 Actions, and Systems Manager actions fire, and SNS forwards to the notification channels."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "aws-sources",
+      "type": "cloud",
+      "label": "AWS Service Metrics",
+      "sublabel": "EC2 · EKS · RDS · Lambda",
+      "pos": [
+        30,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "custom",
+      "type": "external",
+      "label": "Custom Metrics",
+      "sublabel": "application metrics",
+      "pos": [
+        30,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Metrics",
+      "sublabel": "store and query",
+      "pos": [
+        260,
+        225
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "math",
+      "type": "backend",
+      "label": "Metrics Math",
+      "sublabel": "derived metrics",
+      "pos": [
+        460,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "anomaly",
+      "type": "backend",
+      "label": "Anomaly Detection",
+      "sublabel": "ML-based expected band",
+      "pos": [
+        460,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "alarms",
+      "type": "security",
+      "label": "Alarms",
+      "sublabel": "threshold / band check",
+      "pos": [
+        680,
+        225
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "SNS Topic",
+      "sublabel": "publish notification",
+      "pos": [
+        880,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "autoscaling",
+      "type": "cloud",
+      "label": "Auto Scaling",
+      "sublabel": "run scaling policy",
+      "pos": [
+        880,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ec2-actions",
+      "type": "cloud",
+      "label": "EC2 Actions",
+      "sublabel": "reboot · recover · stop",
+      "pos": [
+        880,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ssm",
+      "type": "cloud",
+      "label": "Systems Manager",
+      "sublabel": "run SSM Automation",
+      "pos": [
+        880,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "email-sms",
+      "type": "external",
+      "label": "Email · SMS",
+      "sublabel": "on-call notification",
+      "pos": [
+        1130,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lambda-http",
+      "type": "external",
+      "label": "Lambda · HTTP/HTTPS",
+      "sublabel": "automation · webhook",
+      "pos": [
+        1130,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Metric Sources",
+      "wraps": [
+        "aws-sources",
+        "custom"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Amazon CloudWatch",
+      "wraps": [
+        "metrics",
+        "math",
+        "anomaly",
+        "alarms"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Alarm Actions",
+      "wraps": [
+        "sns",
+        "autoscaling",
+        "ec2-actions",
+        "ssm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Notification Channels",
+      "wraps": [
+        "email-sms",
+        "lambda-http"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "aws-to-metrics",
+      "from": "aws-sources",
+      "to": "metrics"
+    },
+    {
+      "id": "custom-to-metrics",
+      "from": "custom",
+      "to": "metrics"
+    },
+    {
+      "id": "metrics-to-alarms",
+      "from": "metrics",
+      "to": "alarms",
+      "label": "threshold check",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metrics-to-math",
+      "from": "metrics",
+      "to": "math"
+    },
+    {
+      "id": "math-to-alarms",
+      "from": "math",
+      "to": "alarms",
+      "label": "expression result"
+    },
+    {
+      "id": "metrics-to-anomaly",
+      "from": "metrics",
+      "to": "anomaly"
+    },
+    {
+      "id": "anomaly-to-alarms",
+      "from": "anomaly",
+      "to": "alarms",
+      "label": "band breach"
+    },
+    {
+      "id": "alarms-to-sns",
+      "from": "alarms",
+      "to": "sns",
+      "label": "publish notification",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alarms-to-autoscaling",
+      "from": "alarms",
+      "to": "autoscaling"
+    },
+    {
+      "id": "alarms-to-ec2",
+      "from": "alarms",
+      "to": "ec2-actions"
+    },
+    {
+      "id": "alarms-to-ssm",
+      "from": "alarms",
+      "to": "ssm"
+    },
+    {
+      "id": "sns-to-email",
+      "from": "sns",
+      "to": "email-sms"
+    },
+    {
+      "id": "sns-to-lambda",
+      "from": "sns",
+      "to": "lambda-http",
+      "variant": "dashed"
+    }
+  ]
+}

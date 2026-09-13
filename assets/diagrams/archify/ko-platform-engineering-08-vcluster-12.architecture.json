@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "팀별 API와 공유 호스트 자원",
+    "output": "ko-platform-engineering-08-vcluster-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "fe-team",
+      "type": "external",
+      "label": "프론트엔드 팀",
+      "sublabel": "개발자",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "be-team",
+      "type": "external",
+      "label": "백엔드 팀",
+      "sublabel": "개발자",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "data-team",
+      "type": "external",
+      "label": "데이터 팀",
+      "sublabel": "개발자",
+      "pos": [
+        40,
+        410
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vc-frontend",
+      "type": "backend",
+      "label": "vCluster: frontend",
+      "sublabel": "검증한 버전과 정책 profile",
+      "pos": [
+        330,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "vc-backend",
+      "type": "backend",
+      "label": "vCluster: backend",
+      "sublabel": "검증한 버전과 정책 profile",
+      "pos": [
+        330,
+        250
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "vc-data",
+      "type": "backend",
+      "label": "vCluster: data",
+      "sublabel": "검증한 버전과 정책 profile",
+      "pos": [
+        330,
+        410
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB Controller",
+      "sublabel": "공유 Ingress",
+      "pos": [
+        690,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "cloud",
+      "label": "EBS CSI",
+      "sublabel": "공유 스토리지",
+      "pos": [
+        690,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "mon",
+      "type": "cloud",
+      "label": "Prometheus Stack",
+      "sublabel": "공유 모니터링",
+      "pos": [
+        690,
+        410
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "호스트 EKS 클러스터",
+      "wraps": [
+        "vc-frontend",
+        "vc-backend",
+        "vc-data",
+        "alb",
+        "ebs",
+        "mon"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "vcluster-frontend",
+      "wraps": [
+        "vc-frontend"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "vcluster-backend",
+      "wraps": [
+        "vc-backend"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "vcluster-data",
+      "wraps": [
+        "vc-data"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "공유 인프라",
+      "wraps": [
+        "alb",
+        "ebs",
+        "mon"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fe-owns",
+      "from": "fe-team",
+      "to": "vc-frontend",
+      "label": "팀 소유",
+      "variant": "emphasis"
+    },
+    {
+      "id": "be-owns",
+      "from": "be-team",
+      "to": "vc-backend",
+      "label": "팀 소유"
+    },
+    {
+      "id": "data-owns",
+      "from": "data-team",
+      "to": "vc-data",
+      "label": "팀 소유"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "팀·CI·SaaS 공통",
+      "items": [
+        "팀별 API 접근과 리소스 quota를 관리",
+        "공유 노드 성능·IP·스토리지는 합산해서 계획",
+        "SaaS 보안 요구가 Shared Nodes만으로 충족된다고 가정하지 않음"
+      ]
+    }
+  ]
+}

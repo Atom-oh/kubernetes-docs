@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VM Workload Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-13-workload-entry-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "VM legacy application"
+        },
+        "backend": {
+          "label": "Pod application"
+        },
+        "security": {
+          "label": "Envoy sidecar"
+        },
+        "cloud": {
+          "label": "Istio control plane"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "local",
+        "label": "Local communication",
+        "focus": [
+          "vm-app",
+          "vm-envoy",
+          "pod-app",
+          "pod-envoy"
+        ],
+        "note": "On both the VM and the Pod, the application talks only to its local Envoy."
+      },
+      {
+        "id": "mtls",
+        "label": "mTLS traffic",
+        "focus": [
+          "vm-envoy",
+          "pod-envoy"
+        ],
+        "note": "The manually installed VM Envoy and the auto-injected Pod Envoy talk directly over mTLS."
+      },
+      {
+        "id": "control",
+        "label": "istiod config push",
+        "focus": [
+          "istiod",
+          "vm-envoy",
+          "pod-envoy"
+        ],
+        "note": "istiod pushes xDS config to both Envoys and additionally issues a Service Account based certificate to the VM side."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "vm-app",
+      "type": "external",
+      "label": "Legacy Application",
+      "sublabel": "Port 8080",
+      "pos": [
+        100,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "vm-envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "Manual install",
+      "pos": [
+        100,
+        210
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod-app",
+      "type": "backend",
+      "label": "Application",
+      "pos": [
+        760,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod-envoy",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Auto injection",
+      "pos": [
+        760,
+        210
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        460,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Virtual Machine",
+      "wraps": [
+        "vm-app",
+        "vm-envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "pod-app",
+        "pod-envoy",
+        "istiod"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod",
+      "wraps": [
+        "pod-app",
+        "pod-envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vm-local",
+      "from": "vm-app",
+      "to": "vm-envoy",
+      "label": "Local communication",
+      "labelAt": [
+        190,
+        327
+      ]
+    },
+    {
+      "id": "pod-local",
+      "from": "pod-app",
+      "to": "pod-envoy",
+      "label": "Local communication",
+      "labelAt": [
+        850,
+        327
+      ]
+    },
+    {
+      "id": "mtls",
+      "from": "vm-envoy",
+      "to": "pod-envoy",
+      "label": "mTLS traffic",
+      "variant": "emphasis",
+      "labelAt": [
+        520,
+        230
+      ]
+    },
+    {
+      "id": "xds-vm",
+      "from": "istiod",
+      "to": "vm-envoy",
+      "label": "xDS config (ServiceEntry, DestinationRule)",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          50,
+          72
+        ],
+        [
+          50,
+          242
+        ]
+      ],
+      "labelAt": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "xds-pod",
+      "from": "istiod",
+      "to": "pod-envoy",
+      "label": "xDS config",
+      "variant": "dashed",
+      "toSide": "top"
+    },
+    {
+      "id": "cert-vm",
+      "from": "istiod",
+      "to": "vm-envoy",
+      "label": "Certificate issuance (Service Account)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          550,
+          150
+        ],
+        [
+          190,
+          150
+        ]
+      ],
+      "labelAt": [
+        370,
+        138
+      ]
+    }
+  ]
+}

@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "데이터 흐름 — 로그 수집부터 UltraWarm · Cold 스토리지까지",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      630
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "emphasis": {
+          "label": "주 경로"
+        },
+        "dashed": {
+          "label": "Cold 아카이브 이동"
+        },
+        "default": {
+          "label": "일반 메시지"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ingest",
+        "label": "로그 수집 · Hot 인덱싱",
+        "focus": [
+          "app",
+          "fb",
+          "os",
+          "ebs"
+        ],
+        "note": "애플리케이션 로그가 FluentBit의 Bulk API 호출로 OpenSearch에 들어와 EBS(Hot)에 색인된다."
+      },
+      {
+        "id": "warm",
+        "label": "7일 후 → UltraWarm",
+        "focus": [
+          "os",
+          "uw"
+        ],
+        "note": "ISM 정책이 7일이 지난 인덱스를 읽기 전용 UltraWarm 티어로 옮긴다."
+      },
+      {
+        "id": "cold",
+        "label": "30일 후 → Cold 스토리지",
+        "focus": [
+          "uw",
+          "s3"
+        ],
+        "note": "30일이 지나면 S3 기반 Cold 스토리지로 다시 이동해 보관 비용을 낮춘다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "로그 생성"
+    },
+    {
+      "id": "fb",
+      "type": "backend",
+      "label": "FluentBit",
+      "sublabel": "로그 수집기"
+    },
+    {
+      "id": "os",
+      "type": "backend",
+      "label": "OpenSearch",
+      "sublabel": "Data Node"
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "EBS Storage",
+      "sublabel": "Hot 티어"
+    },
+    {
+      "id": "uw",
+      "type": "database",
+      "label": "UltraWarm",
+      "sublabel": "읽기 전용 티어"
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Cold Storage",
+      "sublabel": "S3 기반 아카이브"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "수집 · Hot 인덱싱"
+    },
+    {
+      "from": 320,
+      "to": 400,
+      "label": "7일 후"
+    },
+    {
+      "from": 420,
+      "to": 500,
+      "label": "30일 후"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send-logs",
+      "from": "app",
+      "to": "fb",
+      "y": 190,
+      "label": "로그 전송",
+      "variant": "default"
+    },
+    {
+      "id": "bulk-api",
+      "from": "fb",
+      "to": "os",
+      "y": 232,
+      "label": "Bulk API 호출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "index-hot",
+      "from": "os",
+      "to": "ebs",
+      "y": 275,
+      "label": "인덱싱 (Hot)",
+      "variant": "default"
+    },
+    {
+      "id": "to-ultrawarm",
+      "from": "os",
+      "to": "uw",
+      "y": 365,
+      "label": "ISM 정책에 따라 UltraWarm으로 이동",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-cold",
+      "from": "uw",
+      "to": "s3",
+      "y": 465,
+      "label": "Cold 스토리지로 이동",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "fb",
+      "from": 185,
+      "to": 238,
+      "type": "backend"
+    },
+    {
+      "participant": "os",
+      "from": 227,
+      "to": 372,
+      "type": "backend"
+    },
+    {
+      "participant": "ebs",
+      "from": 270,
+      "to": 295,
+      "type": "database"
+    },
+    {
+      "participant": "uw",
+      "from": 360,
+      "to": 472,
+      "type": "database"
+    },
+    {
+      "participant": "s3",
+      "from": 460,
+      "to": 485,
+      "type": "cloud"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+fullnameOverride: backstage
+backstage:
+  image:
+    registry: example.invalid
+    repository: backstage
+    tag: replace-with-reviewed-app-revision
+  replicas: 3
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  extraEnvVarsSecrets: []
+  extraAppConfig:
+    - filename: app-config.production.yaml
+      configMapRef: backstage-app-config
+  extraVolumeMounts:
+    - name: credentials
+      mountPath: /var/run/backstage-secrets
+      readOnly: true
+    - name: public-config
+      mountPath: /var/run/backstage-public
+      readOnly: true
+  extraVolumes:
+    - name: credentials
+      secret:
+        secretName: backstage-credentials
+    - name: public-config
+      configMap:
+        name: backstage-public-config
+  readinessProbe:
+    httpGet:
+      path: /.backstage/health/v1/readiness
+      port: 7007
+  livenessProbe:
+    httpGet:
+      path: /.backstage/health/v1/liveness
+      port: 7007
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+serviceAccount:
+  create: false
+  name: backstage
+  automountServiceAccountToken: false
+postgresql:
+  enabled: false
+ingress:
+  enabled: false

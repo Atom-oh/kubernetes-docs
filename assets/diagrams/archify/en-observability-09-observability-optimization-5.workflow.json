@@ -1,0 +1,203 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Log/Metrics Storage Cost Reduction Strategies",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-09-observability-optimization-5.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1040,
+      660
+    ],
+    "views": [
+      {
+        "id": "high-tier",
+        "label": "High · Full storage",
+        "focus": [
+          "classify",
+          "full",
+          "glacier"
+        ],
+        "note": "High-priority data is stored in full and tiered into S3 Glacier Deep Archive for long-term retention."
+      },
+      {
+        "id": "medium-tier",
+        "label": "Medium · Sampling",
+        "focus": [
+          "classify",
+          "sample",
+          "standardIa"
+        ],
+        "note": "High-frequency events are sampled and kept in S3 Standard-IA for medium-term retention. Table estimate: 30-50% savings."
+      },
+      {
+        "id": "low-tier",
+        "label": "Low · Aggregation only",
+        "focus": [
+          "classify",
+          "aggregate",
+          "local"
+        ],
+        "note": "Low-priority data keeps only aggregates in memory/local storage for short-term retention, minimizing the retention period."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "intake",
+      "label": "Collection · Classification"
+    },
+    {
+      "id": "high",
+      "label": "High priority"
+    },
+    {
+      "id": "medium",
+      "label": "Medium priority"
+    },
+    {
+      "id": "low",
+      "label": "Low priority"
+    }
+  ],
+  "mainPath": [
+    "collect",
+    "classify"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "collect"
+    ],
+    "allowedTerminals": [
+      "glacier",
+      "standardIa",
+      "local"
+    ],
+    "requiredPaths": [
+      {
+        "from": "collect",
+        "to": "glacier"
+      },
+      {
+        "from": "collect",
+        "to": "standardIa"
+      },
+      {
+        "from": "collect",
+        "to": "local"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "collect",
+      "lane": "intake",
+      "col": 0,
+      "type": "frontend",
+      "label": "Data Collection",
+      "sublabel": "Logs · Metrics",
+      "width": 150
+    },
+    {
+      "id": "classify",
+      "lane": "intake",
+      "col": 1,
+      "type": "security",
+      "label": "Priority Classification",
+      "tag": "DECISION",
+      "width": 224
+    },
+    {
+      "id": "full",
+      "lane": "high",
+      "col": 3,
+      "type": "backend",
+      "label": "Full Storage",
+      "sublabel": "Long-term retention",
+      "width": 164
+    },
+    {
+      "id": "glacier",
+      "lane": "high",
+      "col": 5,
+      "type": "cloud",
+      "label": "S3 Glacier",
+      "sublabel": "Deep Archive",
+      "width": 164
+    },
+    {
+      "id": "sample",
+      "lane": "medium",
+      "col": 3,
+      "type": "backend",
+      "label": "Sampling",
+      "sublabel": "Medium-term retention",
+      "width": 164
+    },
+    {
+      "id": "standardIa",
+      "lane": "medium",
+      "col": 5,
+      "type": "cloud",
+      "label": "S3 Standard-IA",
+      "width": 164
+    },
+    {
+      "id": "aggregate",
+      "lane": "low",
+      "col": 3,
+      "type": "backend",
+      "label": "Aggregation Only",
+      "sublabel": "Short-term retention",
+      "width": 164
+    },
+    {
+      "id": "local",
+      "lane": "low",
+      "col": 5,
+      "type": "database",
+      "label": "Memory/Local",
+      "width": 164
+    }
+  ],
+  "edges": [
+    {
+      "from": "collect",
+      "to": "classify",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "classify",
+      "to": "full",
+      "label": "High",
+      "role": "branch"
+    },
+    {
+      "from": "classify",
+      "to": "sample",
+      "label": "Medium",
+      "role": "branch"
+    },
+    {
+      "from": "classify",
+      "to": "aggregate",
+      "label": "Low",
+      "role": "branch"
+    },
+    {
+      "from": "full",
+      "to": "glacier"
+    },
+    {
+      "from": "sample",
+      "to": "standardIa"
+    },
+    {
+      "from": "aggregate",
+      "to": "local"
+    }
+  ]
+}

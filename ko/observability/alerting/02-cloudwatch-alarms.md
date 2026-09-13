@@ -48,13 +48,17 @@ Amazon CloudWatch Alarms는 AWS 네이티브 모니터링 서비스의 알림 �
 
 ### CloudWatch Alarms 동작 흐름
 
-![EC2, EKS, RDS, Lambda 등 다양한 메트릭 소스가 CloudWatch로 모여 Metrics, Metrics Math, Anomaly Detection을 거쳐 Alarms가 판정하고, 그 결과가 SNS/Auto Scaling 등 알림 액션과 Email/SMS 등 알림 채널로 이어지는 전체 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-02-cloudwatch-alarms-0.svg)
+![EC2, EKS, RDS, Lambda 등 다양한 메트릭 소스가 CloudWatch로 모여 Metrics, Metrics Math, Anomaly Detection을 거쳐 Alarms가 판정하고, 그 결과가 SNS/Auto Scaling 등 알림 액션과 Email/SMS 등 알림 채널로 이어지는 전체 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-02-cloudwatch-alarms-0.html)
 
 ### 알림 상태
 
 CloudWatch Alarm은 세 가지 상태를 가집니다:
 
-![CloudWatch Alarm이 OK 상태에서 임계값 초과 시 ALARM으로, 정상 복귀 시 다시 OK로 전이하며, 데이터가 없으면 어느 상태에서든 INSUFFICIENT_DATA로 빠졌다가 데이터 수신 여부에 따라 OK 또는 ALARM으로 복귀하는 상태 전이도.](../../../assets/diagrams/rendered/ko-observability-alerting-02-cloudwatch-alarms-1.svg)
+![CloudWatch Alarm이 OK 상태에서 임계값 초과 시 ALARM으로, 정상 복귀 시 다시 OK로 전이하며, 데이터가 없으면 어느 상태에서든 INSUFFICIENT_DATA로 빠졌다가 데이터 수신 여부에 따라 OK 또는 ALARM으로 복귀하는 상태 전이를 보여준다.](../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-02-cloudwatch-alarms-1.html)
 
 ---
 
@@ -198,7 +202,9 @@ math-functions:
 
 Composite Alarm은 여러 개의 Metric Alarm을 조합하여 복잡한 조건을 정의할 수 있습니다.
 
-![High CPU, High Memory, High Disk 세 개의 개별 Metric Alarm이 (CPU AND Memory) OR Disk 규칙으로 결합되어 하나의 Composite Alarm(Server Resource Critical)을 발생시키고, 이것이 SNS/Lambda 액션으로 이어지는 구조.](../../../assets/diagrams/rendered/ko-observability-alerting-02-cloudwatch-alarms-2.svg)
+![High CPU, High Memory, High Disk 세 개의 Metric Alarm이 (CPU AND Memory) OR Disk 규칙으로 결합되어 Composite Alarm(Server Resource Critical)을 발생시키고, 이 Composite Alarm만 SNS/Lambda 액션을 호출하는 구조를 보여준다.](../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-02-cloudwatch-alarms-2.html)
 
 ### Composite Alarm 생성
 
@@ -303,7 +309,9 @@ aws cloudwatch set-alarm-state \
 
 CloudWatch Anomaly Detection은 기계 학습을 사용하여 메트릭의 정상 패턴을 학습하고, 이상치를 탐지합니다.
 
-![과거 데이터를 ML 모델이 학습해 예상 범위(Expected Band)를 만들고, 현재 메트릭이 그 범위를 벗어나면 이상 알림(Anomaly Alert)을, 범위 이내이면 정상(Normal)으로 판정하는 CloudWatch Anomaly Detection의 학습·탐지 흐름.](../../../assets/diagrams/rendered/ko-observability-alerting-02-cloudwatch-alarms-3.svg)
+![과거 데이터를 ML 모델이 학습해 예상 범위(Expected Band)를 만들고, 현재 메트릭이 그 범위를 벗어나면 Anomaly Alert, 이내이면 Normal로 판정하는 CloudWatch Anomaly Detection의 학습·탐지 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-02-cloudwatch-alarms-3.html)
 
 ### Anomaly Detection 알림 생성
 
@@ -533,7 +541,9 @@ aws events put-targets \
 
 ### 자동 대응 구성
 
-![CloudWatch Alarm 상태 변경이 EventBridge를 거쳐 Event Rule에서 자동 스케일링, 인스턴스 재시작, Slack 알림, Runbook 실행, 복구 워크플로우 실행이라는 다섯 가지 자동 대응으로 분기되는 구조.](../../../assets/diagrams/rendered/ko-observability-alerting-02-cloudwatch-alarms-4.svg)
+![CloudWatch Alarm의 ALARM 상태 변경이 EventBridge의 Event Rule에 매칭되어 Lambda 함수, SSM Runbook, Step Functions 복구 워크플로우 등 다섯 가지 자동 대응 타겟으로 분기되는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-02-cloudwatch-alarms-4.html)
 
 ### EventBridge 이벤트 패턴
 
@@ -777,7 +787,9 @@ aws cloudwatch put-metric-alarm \
 
 ### 비용 최적화 전략
 
-![CloudWatch Alarms 비용을 알림 수 최소화, 해상도 적정화, Composite Alarm 활용, 불필요한 알림 제거라는 네 가지 방향으로 최적화하는 전략 트리.](../../../assets/diagrams/rendered/ko-observability-alerting-02-cloudwatch-alarms-5.svg)
+![CloudWatch Alarms 비용 최적화 목표가 알림 수 최소화, 해상도 적정화, Composite Alarm 활용, 불필요한 알림 제거라는 네 가지 전략으로 나뉘고 각 전략이 구체적인 실행 항목으로 이어지는 전략 트리를 보여준다.](../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-02-cloudwatch-alarms-5.html)
 
 ### 권장 설정
 

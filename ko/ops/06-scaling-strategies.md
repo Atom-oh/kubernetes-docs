@@ -1,45 +1,130 @@
 # 스케일링 전략
 
-> **지원 버전**: Kubernetes 1.28+, KEDA 2.14+, VPA 1.0+ **마지막 업데이트**: 2026년 2월 21일
+> **운영 적용 검증**: Spot 도입 전 [EKS Spot 운영 적용 실험과 결과 판정](./17-spot-production-experiments.md)에서 실제 회수·폴백·정합성·비용을 검증합니다. 구성 예시나 예상 절감률은 실측 결과가 아닙니다.
 
-< [이전: GitOps 자동화](05-gitops-automation.md) | [목차](./README.md) | [다음: 운영 알림 구성](07-observability-alerts.md) >
+> **검토 기준**: Prometheus Adapter 0.12.0 / chart 5.3.0, KEDA 2.20.2, VPA 1.7.1 / 공식 chart 0.12.0, Goldilocks 4.16.1 / chart 11.1.0\
+> **마지막 검토**: 2026년 9월 11일. 버전별 차트·CRD·Kubernetes OpenAPI와 로컬 렌더링을 검증했습니다. 실제 클러스터 설치·부하 시험·SQS/DB 조회·Pod resize는 실행하지 않았습니다.
 
-***
+< [이전: GitOps 자동화](05-gitops-automation.md) | [목차](README.md) | [다음: 운영 알림](07-observability-alerts.md) >
 
-## 개요
+이 장은 커스텀 메트릭 HPA, KEDA, VPA와 Spot 배치를 구분합니다. **한 워크로드의 replicas는 하나의 autoscaler가 소유**해야 합니다. 같은 `podinfo`를 대상으로 한 HPA·RPS ScaledObject·Cron ScaledObject는 대안이며 동시에 적용하지 않습니다.
 
-EKS 클러스터의 효율적인 스케일링은 성능, 비용, 안정성의 균형을 맞추는 핵심 운영 역량입니다. 이 문서에서는 CPU/메모리 외의 커스텀 메트릭을 활용한 HPA, 이벤트 드리븐 스케일링을 위한 KEDA, 리소스 최적화를 위한 VPA, 그리고 비용 효율적인 Spot 인스턴스 활용 전략을 다룹니다.
+KEDA 2.20의 최소 설치 버전과 공개 테스트 범위는 다릅니다. 공식 배포 문서의 최소 Kubernetes 1.30 및 테스트 범위 1.33–1.35를 확인하고, 더 새로운 배포판은 별도로 검증합니다. 이 장의 native 객체 검증은 Kubernetes 1.36.2 OpenAPI를 사용했으며 실제 클러스터 호환성 시험을 대신하지 않습니다.
 
-### 학습 목표
+## 1. HPA와 커스텀 메트릭
 
-* Prometheus 메트릭 기반 HPA 커스텀 메트릭 구성
-* KEDA를 활용한 다양한 이벤트 소스 기반 스케일링
-* VPA와 HPA의 효과적인 조합 전략 이해
-* Pod Deletion Cost를 활용한 스케일링 우선순위 제어
-* Spot 인스턴스의 안전한 활용 및 Fallback 전략
+![Prometheus의 스크랩 값, Adapter의 질의 응답, Kubernetes API 집계와 HPA의 Deployment scale 갱신 경로.](../.gitbook/assets/ko-ops-06-scaling-strategies-0.png)
 
-***
+[인터랙티브 다이어그램](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-06-scaling-strategies-0.html)
 
-## 1. HPA Custom Metrics
+| API | 이 예제의 제공자 | 역할 |
+|---|---|---|
+| `metrics.k8s.io` | metrics-server | CPU·메모리 리소스 지표 |
+| `custom.metrics.k8s.io` | Prometheus Adapter | Pod 등 Kubernetes 객체별 메트릭 |
+| `external.metrics.k8s.io` | KEDA를 선택할 때 KEDA metrics API server | 외부 이벤트 메트릭 |
 
-기본 CPU/메모리 메트릭 외에 RPS, 큐 깊이, 비즈니스 메트릭 등을 기반으로 스케일링할 수 있습니다.
+Prometheus Adapter도 external/resource API를 구성할 수 있지만, 이 예제는 custom API만 제공합니다. 같은 APIService를 두 adapter나 KEDA가 경쟁 관리하지 않게 합니다. CloudWatch Exporter만 설치한다고 Kubernetes external metrics API가 생기지는 않습니다.
 
-![애플리케이션 메트릭이 Prometheus와 Prometheus Adapter를 거쳐 Kubernetes 메트릭 API로 노출되고 HPA가 이를 읽는 커스텀 메트릭 파이프라인 다이어그램.](../.gitbook/assets/ko-ops-06-scaling-strategies-0.png)
+### 선행 조건과 실습 애플리케이션
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-06-scaling-strategies-0.html)
+metrics-server, Prometheus Operator/Prometheus와 cert-manager를 먼저 준비합니다. 실제 Prometheus Service 주소를 아래 values에 맞춥니다. Prometheus의 `serviceMonitorSelector`와 `serviceMonitorNamespaceSelector`가 `scaling-demo`의 ServiceMonitor를 선택해야 합니다. `/metrics`에 `namespace`, `pod`, `service` target label이 붙는지도 확인합니다.
 
-### 1.1 Prometheus Adapter 설치
-
-**Helm values.yaml:**
+다음 Podinfo 6.15.0 이미지는 공개 registry의 멀티 플랫폼 digest를 확인했습니다. 실제 애플리케이션을 사용할 때는 동작하는 metric·probe·종료 계약을 구현한 승인 이미지로 대체합니다.
 
 ```yaml
-# prometheus-adapter-values.yaml
+# fixtures/application.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scaling-demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: podinfo
+          image: ghcr.io/stefanprodan/podinfo@sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da
+          ports:
+            - name: http
+              containerPort: 9898
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+  labels:
+    app: podinfo
+spec:
+  selector:
+    app: podinfo
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+spec:
+  selector:
+    matchLabels:
+      app: podinfo
+  namespaceSelector:
+    matchNames: [scaling-demo]
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+```
+
+Podinfo의 `http_requests_total`은 HTTP 요청 counter입니다. 데모에는 health check 등 운영 요청도 포함될 수 있으므로 사업 트래픽만 정확히 측정하는 production 지표로 그대로 간주하지 않습니다. 별도 scrape annotation을 동시에 추가해 중복 수집하지 않습니다.
+
+### Adapter 설정
+
+```yaml
+# fixtures/adapter-values.yaml
+replicas: 2
 prometheus:
   url: http://prometheus.monitoring.svc
   port: 9090
-
-replicas: 2
-
+certManager:
+  enabled: true
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  maxUnavailable: null
 resources:
   requests:
     cpu: 100m
@@ -47,49 +132,11 @@ resources:
   limits:
     cpu: 500m
     memory: 512Mi
-
-# 커스텀 메트릭 규칙
 rules:
   default: false
-
-  # 외부 메트릭 (External Metrics)
   external: []
-
-  # 리소스 메트릭 (기본 CPU/Memory 대체)
-  resource:
-    cpu:
-      containerQuery: |
-        sum(rate(container_cpu_usage_seconds_total{<<.LabelMatchers>>}[3m])) by (<<.GroupBy>>)
-      nodeQuery: |
-        sum(rate(container_cpu_usage_seconds_total{<<.LabelMatchers>>, id='/'}[3m])) by (<<.GroupBy>>)
-      resources:
-        overrides:
-          namespace:
-            resource: namespace
-          node:
-            resource: node
-          pod:
-            resource: pod
-      containerLabel: container
-    memory:
-      containerQuery: |
-        sum(container_memory_working_set_bytes{<<.LabelMatchers>>}) by (<<.GroupBy>>)
-      nodeQuery: |
-        sum(container_memory_working_set_bytes{<<.LabelMatchers>>,id='/'}) by (<<.GroupBy>>)
-      resources:
-        overrides:
-          namespace:
-            resource: namespace
-          node:
-            resource: node
-          pod:
-            resource: pod
-      containerLabel: container
-
-  # 커스텀 메트릭 규칙
   custom:
-    # HTTP RPS 메트릭
-    - seriesQuery: 'http_requests_total{namespace!="",pod!=""}'
+    - seriesQuery: 'http_requests_total{namespace="scaling-demo",pod!=""}'
       resources:
         overrides:
           namespace:
@@ -97,350 +144,43 @@ rules:
           pod:
             resource: pod
       name:
-        matches: "^(.*)_total$"
-        as: "${1}_per_second"
-      metricsQuery: |
-        sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)
-
-    # HTTP 요청 지연시간
-    - seriesQuery: 'http_request_duration_seconds_bucket{namespace!="",pod!=""}'
-      resources:
-        overrides:
-          namespace:
-            resource: namespace
-          pod:
-            resource: pod
-      name:
-        matches: "^(.*)_bucket$"
-        as: "${1}_p99"
-      metricsQuery: |
-        histogram_quantile(0.99, sum(rate(<<.Series>>{<<.LabelMatchers>>}[5m])) by (le, <<.GroupBy>>))
-
-    # 활성 연결 수
-    - seriesQuery: 'nginx_connections_active{namespace!="",pod!=""}'
-      resources:
-        overrides:
-          namespace:
-            resource: namespace
-          pod:
-            resource: pod
-      name:
-        matches: "^(.*)$"
-        as: "${1}"
-      metricsQuery: |
-        sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)
-
-    # 큐 깊이 (Redis)
-    - seriesQuery: 'redis_queue_length{namespace!="",service!=""}'
-      resources:
-        overrides:
-          namespace:
-            resource: namespace
-          service:
-            resource: service
-      name:
-        matches: "^(.*)$"
-        as: "${1}"
-      metricsQuery: |
-        sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)
-
-# ServiceMonitor 생성
-serviceMonitor:
-  enabled: true
-  namespace: monitoring
-
-# PodDisruptionBudget
-podDisruptionBudget:
-  enabled: true
-  minAvailable: 1
-
-# 높은 가용성 설정
-affinity:
-  podAntiAffinity:
-    preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        podAffinityTerm:
-          labelSelector:
-            matchLabels:
-              app.kubernetes.io/name: prometheus-adapter
-          topologyKey: kubernetes.io/hostname
+        matches: "^http_requests_total$"
+        as: http_requests_per_second
+      metricsQuery: 'sum(rate(http_requests_total{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'
 ```
 
-**Helm 설치:**
-
 ```bash
-# Prometheus Adapter Helm repo 추가
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-
-# 설치
 helm upgrade --install prometheus-adapter prometheus-community/prometheus-adapter \
-  -n monitoring \
-  -f prometheus-adapter-values.yaml
+  --version 5.3.0 --namespace monitoring --create-namespace \
+  --kube-context "$TARGET_CONTEXT" --values adapter-values.yaml
 
-# 설치 확인
-kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1 | jq .
-kubectl get --raw /apis/external.metrics.k8s.io/v1beta1 | jq .
+kubectl --context "$TARGET_CONTEXT" get --raw \
+  /apis/custom.metrics.k8s.io/v1beta1
 ```
 
-### 1.2 RPS 기반 HPA
+cert-manager가 인증서와 APIService CA 주입을 처리하는 구성입니다. `tls.enable=false` 같은 Helm 옵션 이름만 보고 API 통신이 암호화되지 않는다고 단정하지 말고, 렌더링된 APIService·인증서·검증 설정을 확인합니다. 이 예제에는 external rule이 없으므로 Adapter의 external API가 있어야 한다고 검사하지 않습니다.
 
-초당 요청 수(RPS)를 기반으로 Pod를 스케일링합니다.
+Adapter의 Helm `rules.custom`과 실제 서버 설정 파일의 구조도 다릅니다. 임의의 ConfigMap에 값을 넣는 것만으로 기존 차트가 그 파일을 읽지는 않습니다. 하나의 values 소스로 관리합니다.
 
-**애플리케이션 메트릭 노출:**
+### Pod당 RPS와 CPU를 사용하는 HPA
 
 ```yaml
-# deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: myapp
-  template:
-    metadata:
-      labels:
-        app: myapp
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
-        prometheus.io/path: "/metrics"
-    spec:
-      containers:
-        - name: myapp
-          image: myapp:v1.0.0
-          ports:
-            - containerPort: 8080
-              name: http
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 1000m
-              memory: 512Mi
----
-# servicemonitor.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: myapp
-  namespace: production
-  labels:
-    release: prometheus
-spec:
-  selector:
-    matchLabels:
-      app: myapp
-  endpoints:
-    - port: http
-      path: /metrics
-      interval: 15s
-  namespaceSelector:
-    matchNames:
-      - production
-```
-
-**PromQL 쿼리 테스트:**
-
-```bash
-# Prometheus에서 직접 쿼리 테스트
-curl -s "http://prometheus.monitoring:9090/api/v1/query" \
-  --data-urlencode 'query=sum(rate(http_requests_total{namespace="production",service="myapp"}[2m]))' | jq
-
-# 예상 결과: 전체 RPS
-# {"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1234567890,"150.5"]}]}}
-
-# Pod당 RPS
-curl -s "http://prometheus.monitoring:9090/api/v1/query" \
-  --data-urlencode 'query=sum(rate(http_requests_total{namespace="production",service="myapp"}[2m])) by (pod)' | jq
-```
-
-**RPS 기반 HPA:**
-
-```yaml
-# hpa-rps.yaml
+# fixtures/hpa.yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: myapp-rps
-  namespace: production
+  name: podinfo
+  namespace: scaling-demo
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: myapp
-
+    name: podinfo
   minReplicas: 3
-  maxReplicas: 50
-
+  maxReplicas: 20
   metrics:
-    # 커스텀 메트릭: Pod당 RPS
-    - type: Pods
-      pods:
-        metric:
-          name: http_requests_per_second
-        target:
-          type: AverageValue
-          averageValue: "100"  # Pod당 100 RPS 목표
-
-  # 스케일링 동작 세부 설정
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 0  # 즉시 스케일 업
-      policies:
-        - type: Percent
-          value: 100  # 현재 replicas의 100%까지 증가 가능
-          periodSeconds: 15
-        - type: Pods
-          value: 4  # 또는 한 번에 최대 4개 추가
-          periodSeconds: 15
-      selectPolicy: Max  # 두 정책 중 큰 값 선택
-
-    scaleDown:
-      stabilizationWindowSeconds: 300  # 5분 안정화 기간
-      policies:
-        - type: Percent
-          value: 10  # 15초마다 최대 10% 감소
-          periodSeconds: 15
-        - type: Pods
-          value: 2  # 또는 한 번에 최대 2개 감소
-          periodSeconds: 60
-      selectPolicy: Min  # 두 정책 중 작은 값 선택 (보수적)
-```
-
-### 1.3 CloudWatch External Metrics
-
-CloudWatch 메트릭을 HPA에서 사용하기 위해 CloudWatch Exporter를 설치합니다.
-
-**CloudWatch Exporter 설정:**
-
-```yaml
-# cloudwatch-exporter-values.yaml
-serviceAccount:
-  create: true
-  name: cloudwatch-exporter
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/CloudWatchExporterRole
-
-config: |
-  region: ap-northeast-2
-  metrics:
-    # SQS 큐 메트릭
-    - aws_namespace: AWS/SQS
-      aws_metric_name: ApproximateNumberOfMessagesVisible
-      aws_dimensions:
-        - QueueName
-      aws_statistics:
-        - Average
-      aws_tag_select:
-        resource_type_selection: "sqs:queue"
-        resource_id_dimension: QueueName
-
-    # RDS 메트릭
-    - aws_namespace: AWS/RDS
-      aws_metric_name: DatabaseConnections
-      aws_dimensions:
-        - DBInstanceIdentifier
-      aws_statistics:
-        - Average
-
-    # ALB 메트릭
-    - aws_namespace: AWS/ApplicationELB
-      aws_metric_name: RequestCount
-      aws_dimensions:
-        - LoadBalancer
-        - TargetGroup
-      aws_statistics:
-        - Sum
-      period_seconds: 60
-
-    # Lambda 메트릭
-    - aws_namespace: AWS/Lambda
-      aws_metric_name: Invocations
-      aws_dimensions:
-        - FunctionName
-      aws_statistics:
-        - Sum
-```
-
-**External Metrics 기반 HPA:**
-
-```yaml
-# hpa-external.yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: sqs-worker
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: sqs-worker
-
-  minReplicas: 1
-  maxReplicas: 100
-
-  metrics:
-    # External 메트릭: SQS 큐 메시지 수
-    - type: External
-      external:
-        metric:
-          name: sqs_approximate_number_of_messages_visible
-          selector:
-            matchLabels:
-              queue_name: "my-queue"
-        target:
-          type: AverageValue
-          averageValue: "10"  # Pod당 10개 메시지 처리 목표
-
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 0
-      policies:
-        - type: Pods
-          value: 10
-          periodSeconds: 30
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-        - type: Percent
-          value: 25
-          periodSeconds: 60
-```
-
-### 1.4 HPA Behavior 상세 설정
-
-**스케일링 속도 제어:**
-
-```yaml
-# hpa-behavior-detailed.yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: myapp-detailed
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: myapp
-
-  minReplicas: 5
-  maxReplicas: 100
-
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
     - type: Pods
       pods:
         metric:
@@ -448,1647 +188,719 @@ spec:
         target:
           type: AverageValue
           averageValue: "100"
-
-  behavior:
-    # 스케일 업 정책
-    scaleUp:
-      # 안정화 기간: 이 시간 동안 가장 높은 권장 replica 수 유지
-      stabilizationWindowSeconds: 0
-
-      policies:
-        # 정책 1: 현재 replicas의 100%까지 15초마다 증가
-        - type: Percent
-          value: 100
-          periodSeconds: 15
-
-        # 정책 2: 한 번에 최대 10개 Pod 추가
-        - type: Pods
-          value: 10
-          periodSeconds: 15
-
-      # 정책 선택 방식: Max (더 공격적), Min (더 보수적), Disabled
-      selectPolicy: Max
-
-    # 스케일 다운 정책
-    scaleDown:
-      # 안정화 기간: 300초 동안 가장 높은 권장 replica 수 유지
-      # -> 일시적 부하 감소에 과민 반응 방지
-      stabilizationWindowSeconds: 300
-
-      policies:
-        # 정책 1: 60초마다 현재 replicas의 10% 감소
-        - type: Percent
-          value: 10
-          periodSeconds: 60
-
-        # 정책 2: 120초마다 최대 5개 Pod 감소
-        - type: Pods
-          value: 5
-          periodSeconds: 120
-
-      # 정책 선택 방식: Min (보수적으로 감소)
-      selectPolicy: Min
-```
-
-**Behavior 동작 설명:**
-
-```
-ScaleUp (부하 증가 시):
-┌─────────────────────────────────────────────────────────────┐
-│ 현재: 10 replicas, 목표: 25 replicas                        │
-│                                                             │
-│ Policy 1 (Percent 100%): 10 * 2 = 20 (15초 후)              │
-│ Policy 2 (Pods 10): 10 + 10 = 20 (15초 후)                  │
-│                                                             │
-│ selectPolicy: Max → 20개로 스케일 업                         │
-│                                                             │
-│ 15초 후: 20 replicas                                        │
-│ Policy 1: 20 * 2 = 40 (> 25, 제한됨) → 25                   │
-│ Policy 2: 20 + 10 = 30 (> 25, 제한됨) → 25                  │
-│                                                             │
-│ 30초 후: 25 replicas (목표 달성)                             │
-└─────────────────────────────────────────────────────────────┘
-
-ScaleDown (부하 감소 시):
-┌─────────────────────────────────────────────────────────────┐
-│ 현재: 25 replicas, 목표: 10 replicas                        │
-│ stabilizationWindow: 300초                                  │
-│                                                             │
-│ T+0: 메트릭 감소 감지, 300초 대기 시작                        │
-│ T+300: 안정화 기간 종료                                      │
-│                                                             │
-│ Policy 1 (Percent 10%): 25 * 0.9 = 22 (60초 후)             │
-│ Policy 2 (Pods 5): 25 - 5 = 20 (120초 후)                   │
-│                                                             │
-│ selectPolicy: Min                                           │
-│ - T+360: 22개 (Policy 1 적용)                                │
-│ - T+420: 20개 (더 작은 값 선택)                               │
-│ - ...계속 감소...                                           │
-│ - 최종: 10 replicas                                         │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 1.5 테스트 및 검증
-
-```bash
-# HPA 상태 확인
-kubectl get hpa myapp-detailed -n production -o wide
-
-# HPA 이벤트 확인
-kubectl describe hpa myapp-detailed -n production
-
-# 커스텀 메트릭 확인
-kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/production/pods/*/http_requests_per_second" | jq
-
-# 부하 테스트
-kubectl run -it --rm load-generator --image=busybox:1.28 \
-  --restart=Never -- /bin/sh -c \
-  "while sleep 0.01; do wget -q -O- http://myapp.production:80/; done"
-
-# 스케일링 이벤트 모니터링
-kubectl get hpa -n production -w
-
-# HPA 메트릭 상세 확인
-kubectl get hpa myapp-detailed -n production -o yaml
-```
-
-***
-
-## 2. KEDA 이벤트 드리븐 스케일링
-
-KEDA(Kubernetes Event-driven Autoscaling)는 다양한 이벤트 소스를 기반으로 워크로드를 스케일링합니다.
-
-> 상세 내용은 [KEDA 가이드](../autoscaling/01-keda.md)를 참조하세요.
-
-### 2.1 KEDA 아키텍처 요약
-
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                           KEDA                                      │
-│  ┌──────────────────┐    ┌──────────────────┐    ┌───────────────┐ │
-│  │  Metrics Server  │    │  KEDA Operator   │    │  Admission    │ │
-│  │  (custom.metrics)│    │  (ScaledObject)  │    │  Webhooks     │ │
-│  └────────┬─────────┘    └────────┬─────────┘    └───────────────┘ │
-│           │                       │                                 │
-│           │    ┌──────────────────┴──────────────────┐             │
-│           │    │           Event Sources              │             │
-│           │    │  ┌─────┐ ┌─────┐ ┌─────┐ ┌───────┐  │             │
-│           │    │  │ SQS │ │Kafka│ │Prom │ │Postgres│  │             │
-│           │    │  └─────┘ └─────┘ └─────┘ └───────┘  │             │
-│           │    └─────────────────────────────────────┘             │
-│           │                       │                                 │
-│           ▼                       ▼                                 │
-│      ┌─────────┐           ┌─────────────┐                         │
-│      │   HPA   │◀──────────│ ScaledObject│                         │
-│      └────┬────┘           └─────────────┘                         │
-│           │                                                         │
-│           ▼                                                         │
-│      ┌─────────────┐                                               │
-│      │ Deployment  │                                               │
-│      │ (replicas)  │                                               │
-│      └─────────────┘                                               │
-└────────────────────────────────────────────────────────────────────┘
-```
-
-### 2.2 RPS ScaledObject (Prometheus Trigger)
-
-```yaml
-# scaledobject-rps.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: myapp-rps
-  namespace: production
-spec:
-  scaleTargetRef:
-    name: myapp
-    kind: Deployment
-    apiVersion: apps/v1
-
-  minReplicaCount: 3
-  maxReplicaCount: 100
-
-  # 0으로 스케일 다운 허용 여부
-  # idleReplicaCount: 0  # 트래픽 없을 때 0으로
-
-  # 쿨다운 기간 (초)
-  cooldownPeriod: 300
-
-  # 폴링 간격 (초)
-  pollingInterval: 15
-
-  # 고급 설정
-  advanced:
-    horizontalPodAutoscalerConfig:
-      name: myapp-rps-hpa
-      behavior:
-        scaleUp:
-          stabilizationWindowSeconds: 0
-          policies:
-            - type: Percent
-              value: 100
-              periodSeconds: 15
-        scaleDown:
-          stabilizationWindowSeconds: 300
-          policies:
-            - type: Percent
-              value: 10
-              periodSeconds: 60
-
-  triggers:
-    # Prometheus 트리거: RPS 기반
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus.monitoring.svc:9090
-        metricName: http_requests_per_second
-        query: |
-          sum(rate(http_requests_total{namespace="production",service="myapp"}[2m]))
-        threshold: "500"  # 전체 500 RPS 초과 시 스케일 업
-        activationThreshold: "50"  # 50 RPS 이상일 때만 활성화
-
-    # 추가 트리거: CPU 기반 (백업)
-    - type: cpu
-      metricType: Utilization
-      metadata:
-        value: "70"
-```
-
-### 2.3 PostgreSQL 세션 기반 스케일링
-
-데이터베이스 연결 수를 기반으로 애플리케이션을 스케일링합니다.
-
-```yaml
-# scaledobject-postgres.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: api-postgres
-  namespace: production
-spec:
-  scaleTargetRef:
-    name: api-server
-    kind: Deployment
-
-  minReplicaCount: 2
-  maxReplicaCount: 20
-  pollingInterval: 30
-  cooldownPeriod: 300
-
-  triggers:
-    - type: postgresql
-      metadata:
-        host: mydb.cluster-xxx.ap-northeast-2.rds.amazonaws.com
-        port: "5432"
-        userName: keda_user
-        dbName: myapp
-        sslmode: require
-        # 활성 연결 수 쿼리
-        query: |
-          SELECT count(*) FROM pg_stat_activity
-          WHERE datname = 'myapp'
-          AND state = 'active'
-        targetQueryValue: "10"  # Pod당 10개 활성 연결 목표
-        activationTargetQueryValue: "5"
-      authenticationRef:
-        name: postgres-auth
----
-# TriggerAuthentication
-apiVersion: keda.sh/v1alpha1
-kind: TriggerAuthentication
-metadata:
-  name: postgres-auth
-  namespace: production
-spec:
-  secretTargetRef:
-    - parameter: password
-      name: postgres-credentials
-      key: password
-```
-
-### 2.4 SQS 큐 기반 스케일링
-
-```yaml
-# scaledobject-sqs.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: sqs-processor
-  namespace: production
-spec:
-  scaleTargetRef:
-    name: sqs-worker
-    kind: Deployment
-
-  minReplicaCount: 0  # 큐가 비어있으면 0으로
-  maxReplicaCount: 50
-  pollingInterval: 10
-  cooldownPeriod: 60
-
-  triggers:
-    - type: aws-sqs-queue
-      metadata:
-        queueURL: https://sqs.ap-northeast-2.amazonaws.com/111122223333/my-queue
-        queueLength: "5"  # 메시지 5개당 1 replica
-        awsRegion: ap-northeast-2
-        # Dead Letter Queue 포함
-        # queueURLFromEnv: SQS_QUEUE_URL
-      authenticationRef:
-        name: aws-credentials
----
-# Pod Identity 기반 인증
-apiVersion: keda.sh/v1alpha1
-kind: TriggerAuthentication
-metadata:
-  name: aws-credentials
-  namespace: production
-spec:
-  podIdentity:
-    provider: aws
-```
-
-### 2.5 Cron 기반 스케일링
-
-예측 가능한 트래픽 패턴에 맞춰 미리 스케일링합니다.
-
-```yaml
-# scaledobject-cron.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: myapp-cron
-  namespace: production
-spec:
-  scaleTargetRef:
-    name: myapp
-    kind: Deployment
-
-  minReplicaCount: 3
-  maxReplicaCount: 100
-
-  triggers:
-    # 업무 시간 (09:00-18:00 KST)
-    - type: cron
-      metadata:
-        timezone: Asia/Seoul
-        start: 0 9 * * 1-5    # 평일 09:00
-        end: 0 18 * * 1-5     # 평일 18:00
-        desiredReplicas: "20"
-
-    # 점심 시간 피크 (11:30-13:30 KST)
-    - type: cron
-      metadata:
-        timezone: Asia/Seoul
-        start: 30 11 * * 1-5  # 평일 11:30
-        end: 30 13 * * 1-5    # 평일 13:30
-        desiredReplicas: "40"
-
-    # 야간 (18:00-09:00)
-    - type: cron
-      metadata:
-        timezone: Asia/Seoul
-        start: 0 18 * * 1-5   # 평일 18:00
-        end: 0 9 * * 2-6      # 다음날 09:00
-        desiredReplicas: "5"
-
-    # 주말
-    - type: cron
-      metadata:
-        timezone: Asia/Seoul
-        start: 0 0 * * 0,6    # 토/일 00:00
-        end: 59 23 * * 0,6    # 토/일 23:59
-        desiredReplicas: "3"
-
-    # 메트릭 기반 (Cron보다 우선)
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus.monitoring.svc:9090
-        query: |
-          sum(rate(http_requests_total{service="myapp"}[2m]))
-        threshold: "1000"
-```
-
-### 2.6 복합 트리거 (AND/OR 로직)
-
-```yaml
-# scaledobject-composite.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: myapp-composite
-  namespace: production
-spec:
-  scaleTargetRef:
-    name: myapp
-    kind: Deployment
-
-  minReplicaCount: 3
-  maxReplicaCount: 100
-
-  # 복합 트리거 공식
-  # formula: "(trigger0 || trigger1) && trigger2"  # 향후 지원 예정
-
-  triggers:
-    # 트리거 0: CPU
-    - type: cpu
-      metricType: Utilization
-      metadata:
-        value: "70"
-
-    # 트리거 1: RPS
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus.monitoring.svc:9090
-        query: sum(rate(http_requests_total{service="myapp"}[2m]))
-        threshold: "500"
-
-    # 트리거 2: 메모리
-    - type: memory
-      metricType: Utilization
-      metadata:
-        value: "80"
-
-# 참고: 현재 KEDA는 OR 로직만 지원 (하나라도 임계값 초과 시 스케일)
-# AND 로직이 필요한 경우 Prometheus 쿼리에서 조합
-```
-
-### 2.7 ScaledJob (배치 처리)
-
-일회성 작업을 위한 Job 스케일링입니다.
-
-```yaml
-# scaledjob.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledJob
-metadata:
-  name: batch-processor
-  namespace: production
-spec:
-  jobTargetRef:
-    parallelism: 1
-    completions: 1
-    backoffLimit: 3
-    template:
-      spec:
-        containers:
-          - name: processor
-            image: batch-processor:v1
-            env:
-              - name: SQS_QUEUE_URL
-                value: https://sqs.ap-northeast-2.amazonaws.com/111122223333/batch-queue
-            resources:
-              requests:
-                cpu: 500m
-                memory: 512Mi
-        restartPolicy: Never
-
-  # 스케일링 설정
-  pollingInterval: 30
-  minReplicaCount: 0
-  maxReplicaCount: 100
-
-  # 성공한 Job 정리 (초)
-  successfulJobsHistoryLimit: 5
-  failedJobsHistoryLimit: 5
-
-  # 스케일링 전략
-  scalingStrategy:
-    strategy: default  # default, custom, accurate
-    # accurate: 메시지 수에 정확히 맞춤
-    # custom: 사용자 정의 메트릭 사용
-
-  triggers:
-    - type: aws-sqs-queue
-      metadata:
-        queueURL: https://sqs.ap-northeast-2.amazonaws.com/111122223333/batch-queue
-        queueLength: "1"  # 메시지 1개당 Job 1개
-        awsRegion: ap-northeast-2
-      authenticationRef:
-        name: aws-credentials
-```
-
-### 2.8 KEDA + HPA 상호작용
-
-```
-KEDA ScaledObject 생성
-        │
-        ▼
-KEDA가 HPA 자동 생성 (keda-hpa-{scaledobject-name})
-        │
-        ▼
-KEDA Metrics Server가 external.metrics.k8s.io 제공
-        │
-        ▼
-HPA가 KEDA 메트릭 사용하여 스케일링 결정
-        │
-        ▼
-Deployment replica 조정
-
-주의사항:
-- 동일 Deployment에 별도 HPA와 ScaledObject 동시 사용 금지
-- ScaledObject가 HPA를 관리함
-- 기존 HPA가 있다면 ScaledObject로 마이그레이션 필요
-```
-
-***
-
-## 3. VPA Pod Resize
-
-VPA(Vertical Pod Autoscaler)는 Pod의 CPU/메모리 리소스 요청을 자동으로 조정합니다.
-
-### 3.1 VPA 설치
-
-```bash
-# VPA Helm repo (비공식)
-helm repo add cowboysysop https://cowboysysop.github.io/charts/
-helm repo update
-
-# 또는 공식 manifest로 설치
-git clone https://github.com/kubernetes/autoscaler.git
-cd autoscaler/vertical-pod-autoscaler
-./hack/vpa-up.sh
-```
-
-**Helm values:**
-
-```yaml
-# vpa-values.yaml
-admissionController:
-  enabled: true
-  replicaCount: 2
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-
-  # MutatingWebhook 설정
-  mutatingWebhookConfiguration:
-    failurePolicy: Ignore  # VPA 장애 시 Pod 생성 허용
-
-recommender:
-  enabled: true
-  replicaCount: 1
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-
-  extraArgs:
-    - --storage=prometheus
-    - --prometheus-address=http://prometheus.monitoring:9090
-    - --history-length=48h
-    - --memory-aggregation-interval=24h
-
-updater:
-  enabled: true
-  replicaCount: 1
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-
-  extraArgs:
-    - --min-replicas=2  # 최소 2 replicas 이상일 때만 업데이트
-```
-
-### 3.2 UpdateMode 비교
-
-| UpdateMode   | 동작                    | 사용 사례         |
-| ------------ | --------------------- | ------------- |
-| **Off**      | 추천만 제공, 실제 변경 없음      | 분석 및 검토 단계    |
-| **Initial**  | Pod 생성 시에만 적용         | 기존 Pod 영향 최소화 |
-| **Recreate** | Pod 재시작하여 적용          | 즉시 적용 필요 시    |
-| **Auto**     | Initial + Recreate 조합 | 완전 자동화        |
-
-### 3.3 VPA CRD 예시
-
-```yaml
-# vpa-recommendation-only.yaml
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: myapp-vpa
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: myapp
-
-  updatePolicy:
-    updateMode: "Off"  # 추천만, 실제 변경 없음
-
-  resourcePolicy:
-    containerPolicies:
-      - containerName: myapp
-        # 리소스 경계 설정
-        minAllowed:
-          cpu: 100m
-          memory: 128Mi
-        maxAllowed:
-          cpu: 4
-          memory: 8Gi
-        # 제어 대상 리소스
-        controlledResources:
-          - cpu
-          - memory
-        # 제어 모드
-        controlledValues: RequestsAndLimits
----
-# vpa-auto.yaml
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: batch-worker-vpa
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: batch-worker
-
-  updatePolicy:
-    updateMode: "Auto"
-    # 최소 2개 replica 유지하면서 업데이트
-    minReplicas: 2
-
-  resourcePolicy:
-    containerPolicies:
-      - containerName: worker
-        minAllowed:
-          cpu: 250m
-          memory: 256Mi
-        maxAllowed:
-          cpu: 8
-          memory: 16Gi
-        controlledResources:
-          - cpu
-          - memory
----
-# vpa-memory-only.yaml (HPA와 공존)
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: api-vpa
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: api-server
-
-  updatePolicy:
-    updateMode: "Auto"
-
-  resourcePolicy:
-    containerPolicies:
-      - containerName: api
-        # 메모리만 VPA가 관리 (CPU는 HPA용)
-        controlledResources:
-          - memory
-        minAllowed:
-          memory: 256Mi
-        maxAllowed:
-          memory: 4Gi
-```
-
-### 3.4 In-Place Pod Resize (KEP-1287)
-
-Kubernetes 1.27+에서 Pod를 재시작하지 않고 리소스를 변경할 수 있습니다.
-
-```yaml
-# deployment-resize-enabled.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: myapp
-  template:
-    metadata:
-      labels:
-        app: myapp
-    spec:
-      containers:
-        - name: myapp
-          image: myapp:v1
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 1000m
-              memory: 512Mi
-          # In-Place Resize 설정
-          resizePolicy:
-            - resourceName: cpu
-              restartPolicy: NotRequired  # CPU 변경 시 재시작 불필요
-            - resourceName: memory
-              restartPolicy: RestartContainer  # 메모리 변경 시 재시작 필요
-```
-
-**리사이즈 실행:**
-
-```bash
-# 현재 리소스 확인
-kubectl get pod myapp-xxx -n production -o jsonpath='{.spec.containers[0].resources}'
-
-# kubectl patch로 리사이즈 (In-Place)
-kubectl patch pod myapp-xxx -n production --subresource=resize -p '{
-  "spec": {
-    "containers": [{
-      "name": "myapp",
-      "resources": {
-        "requests": {"cpu": "200m"},
-        "limits": {"cpu": "2000m"}
-      }
-    }]
-  }
-}'
-
-# 리사이즈 상태 확인
-kubectl get pod myapp-xxx -n production -o jsonpath='{.status.resize}'
-# InProgress, Proposed, Infeasible, Deferred
-```
-
-### 3.5 Goldilocks (최적 리소스 추천 대시보드)
-
-```bash
-# Goldilocks 설치
-helm repo add fairwinds-stable https://charts.fairwinds.com/stable
-helm repo update
-
-helm upgrade --install goldilocks fairwinds-stable/goldilocks \
-  -n goldilocks \
-  --create-namespace \
-  --set dashboard.enabled=true \
-  --set dashboard.service.type=LoadBalancer
-```
-
-**네임스페이스 활성화:**
-
-```bash
-# 네임스페이스에 Goldilocks 레이블 추가
-kubectl label namespace production goldilocks.fairwinds.com/enabled=true
-
-# VPA가 자동으로 생성됨
-kubectl get vpa -n production
-```
-
-### 3.6 VPA + HPA 공존 전략
-
-**권장 패턴: CPU는 HPA, Memory는 VPA**
-
-```yaml
-# hpa-cpu.yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: myapp-hpa
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: myapp
-  minReplicas: 3
-  maxReplicas: 50
-  metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
           averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+      selectPolicy: Min
+```
+
+여러 metric은 우선순위나 단순 “CPU fallback” 목록이 아닙니다. 각 metric이 요구한 복제본 중 **가장 큰 값**을 선택합니다. 일부 metric을 읽지 못하면 scale-down이 생략될 수 있으며, 유효한 다른 metric이 scale-up을 요구하면 증가할 수 있습니다.
+
+모든 대상 Pod와 메트릭이 준비됐다고 가정하면 기본 비율은 `ceil(currentReplicas × currentMetric / targetMetric)`입니다. Pod당 RPS가 250이고 목표가 100일 때 4개 Pod의 계산상 목표는 10개입니다. 실제 값은 min/max, 준비되지 않은 Pod, 누락 메트릭, 허용 오차와 behavior에 따라 조정됩니다.
+
+| 설정 | 실제 의미 |
+|---|---|
+| scale-up stabilization | 최근 구간의 낮은 권고를 고려해 급증을 완화 |
+| scale-down stabilization | 최근 구간의 높은 권고를 고려해 급감을 완화 |
+| `periodSeconds` | 그 구간 동안 허용되는 변경량을 계산하는 관찰 창 |
+| `selectPolicy: Max` | 더 많은 변경을 허용하는 정책 |
+| scale-down `Min` | 더 적게 삭제하는 정책 |
+
+안정화 구간은 매번 새로 시작하는 고정 sleep이 아닙니다. `periodSeconds`는 1–1,800, stabilization window는 0–3,600 범위이며 300초 policy도 유효합니다. 500% 증가 제한은 현재 수의 **추가 500%**, 즉 최대 6배에 해당합니다.
+
+예제 scale-down에서 현재 20개라면 Percent 10%와 Pods 2 모두 최대 2개 삭제를 허용합니다. 최근 변경 이력·권고와 다른 제한도 적용되므로 특정 시각에 반드시 18개가 된다는 시간표로 해석하지 않습니다.
+
+일반 HPA의 `minReplicas: 0`은 Kubernetes 버전·`HPAScaleToZero` 및 metric 조건을 확인해야 합니다. 이 예제는 최소 3개를 사용하고 외부 큐의 scale-to-zero는 아래 KEDA 예제로 구분합니다. API 응답이 맞아도 이미지 pull·노드 용량·애플리케이션 준비 시간이 남습니다.
+
+### 외부 지표와 확인
+
+큐 길이는 순간 gauge이고 `*_total` 누적 counter를 이름만 바꿔 queue depth로 쓰면 안 됩니다. 전역 큐 길이에서 Pod당 처리량을 목표로 할 때는 일반적으로 `AverageValue`를 사용합니다. `Value`와 계산식이 같다고 가정하지 않습니다.
+
+CloudWatch를 사용할 때는 KEDA의 직접 scaler 또는 Exporter → Prometheus → Adapter external rule 전체 경로가 필요합니다. Exporter의 실제 metric/label 이름과 HPA 이름을 맞추고, APIService 소유권 충돌을 피합니다. `AWS/ApplicationELB RequestCount`에 임의로 TargetGroup dimension을 추가하지 않습니다. [검토된 KEDA 가이드](../autoscaling/01-keda.md)의 CloudWatch 예제를 참고합니다.
+
+```bash
+kubectl --context "$TARGET_CONTEXT" get --raw \
+  '/apis/custom.metrics.k8s.io/v1beta1/namespaces/scaling-demo/pods/*/http_requests_per_second'
+kubectl --context "$TARGET_CONTEXT" describe hpa podinfo -n scaling-demo
+kubectl --context "$TARGET_CONTEXT" get deployment,pods -n scaling-demo
+```
+
+부하 시험은 별도 실습 환경에서 제한된 요청량·시간으로 수행합니다. 오래된 BusyBox 이미지와 무한 루프를 무심코 실행하지 않습니다. GitOps로 관리할 때는 Deployment의 `replicas`와 autoscaler의 필드 소유권도 맞춥니다.
+
+## 2. KEDA 이벤트 기반 스케일링
+
+KEDA operator는 ScaledObject와 HPA를 관리하고 활성화/0 전환을 처리합니다. 1개 이상에서의 수평 조정은 HPA와 연동합니다. ScaledJob은 별도로 Job을 생성하며 HPA가 Job replicas를 조정하는 구조가 아닙니다.
+
+### 설치와 AWS 인증
+
+일반 설치·호환성·네트워크는 [KEDA 가이드](../autoscaling/01-keda.md)를 따릅니다. AWS 예제는 **KEDA operator의 IRSA**를 명시적으로 사용합니다. 실제 cluster OIDC provider, 정확한 namespace/ServiceAccount trust와 대상 큐 읽기 역할을 먼저 구성합니다.
+
+```yaml
+# fixtures/keda-values.yaml
+# This example explicitly uses IRSA on the KEDA operator.
+# Prepare the cluster OIDC provider, scoped trust and queue-read role first.
+podIdentity:
+  aws:
+    irsa:
+      enabled: true
+      roleArn: arn:aws:iam::123456789012:role/KedaQueueReadRole
+```
+
+```bash
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update
+helm upgrade --install keda kedacore/keda \
+  --version 2.20.2 --namespace keda --create-namespace \
+  --kube-context "$TARGET_CONTEXT" --values keda-values.yaml
+```
+
+위 role ARN을 실제 승인한 역할로 바꿉니다. `provider: aws-eks`라는 구 인증 옵션 이름을 EKS Pod Identity라는 뜻으로 해석하지 않습니다. IRSA와 Pod Identity는 다른 구성이며, 다른 방식을 선택하면 실제 operator SDK credential chain·association·trust를 그 방식에 맞춰야 합니다.
+
+### RPS ScaledObject
+
+기존 HPA의 소유권을 정리하거나 지원되는 이전 절차를 따른 뒤 이 **대안**을 선택합니다.
+
+```yaml
+# fixtures/keda-rps.yaml
+# Alternative to hpa.yaml. Do not let both own podinfo's replica count.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  minReplicaCount: 3
+  maxReplicaCount: 20
+  pollingInterval: 15
+  cooldownPeriod: 300
+  fallback:
+    failureThreshold: 3
+    replicas: 5
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+  triggers:
+    - type: prometheus
+      name: requests
+      metricType: AverageValue
+      metadata:
+        serverAddress: http://prometheus.monitoring.svc:9090
+        query: sum(rate(http_requests_total{namespace="scaling-demo",service="podinfo"}[2m]))
+        threshold: "100"
+        activationThreshold: "0"
+        ignoreNullValues: "false"
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "70"
+```
+
+`AverageValue`의 threshold 100은 전체 100 RPS를 넘는 순간 무조건 증가한다는 뜻이 아니라 **Pod당 100 RPS 목표**입니다. 예를 들어 총 1,000 RPS면 계산상 10개를 요구합니다. `activationThreshold`는 활성화 조건이며 HPA target과 다릅니다.
+
+`ignoreNullValues=false`는 누락 결과를 정상 0으로 간주하지 않도록 합니다. Prometheus query는 하나의 값으로 집계하고 오류·NaN·0 traffic을 따로 처리합니다. fallback은 지원 metric의 반복 실패에 대한 제한된 동작이며 metric 제공자·HPA·노드 장애를 모두 복구하지 않습니다.
+
+이 HTTP 예제는 최소 3개를 유지합니다. 애플리케이션 자체의 metric만 읽으면서 모두 0개로 줄이면 새 HTTP 요청을 관측하고 다시 켤 경로가 없어질 수 있습니다. scale-to-zero에는 외부 큐나 별도 activation 경로가 필요합니다.
+
+### SQS 큐
+
+실제 `sqs-worker` Deployment와 worker 전용 SQS 소비 권한을 준비합니다. KEDA의 큐 속성 읽기 권한과 worker의 receive/delete/change-visibility 권한은 별개입니다.
+
+```yaml
+# fixtures/keda-sqs.yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-aws
+  namespace: scaling-demo
+spec:
+  podIdentity:
+    provider: aws
+    identityOwner: keda
 ---
-# vpa-memory.yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sqs-worker
+  namespace: scaling-demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sqs-worker
+  minReplicaCount: 0
+  maxReplicaCount: 50
+  pollingInterval: 15
+  cooldownPeriod: 60
+  triggers:
+    - type: aws-sqs-queue
+      authenticationRef:
+        name: keda-aws
+      metadata:
+        queueURL: https://sqs.ap-northeast-2.amazonaws.com/REPLACE_ACCOUNT/my-queue
+        queueLength: "10"
+        activationQueueLength: "0"
+        scaleOnInFlight: "true"
+        scaleOnDelayed: "false"
+        awsRegion: ap-northeast-2
+```
+
+`activationQueueLength: "0"`은 0보다 클 때 활성화합니다. `"1"`이면 한 개 이상이 아니라 **1 초과** 조건입니다. 기본/명시한 in-flight 포함 여부, delayed 메시지 처리와 visibility timeout을 함께 검토합니다. DLQ가 자동 합산되는 것은 아닙니다.
+
+폴링 간격은 KEDA 확인 주기에 관계하며 HPA sync period나 Pod 시작 시간이 아닙니다. 일반적인 1→N 조정과 0 전환의 타이밍이 다르고, `cooldownPeriod`는 모든 scale-down의 고정 대기 시간이 아닙니다. 긴 작업은 종료·재처리·중복 처리와 메시지 visibility를 설계해야 합니다.
+
+### PostgreSQL 작업 큐
+
+DB 연결 수가 늘었다는 이유로 애플리케이션을 늘리면 오히려 연결 압력을 악화시킬 수 있습니다. 아래는 worker가 실제로 소비하는 pending 작업 수를 사용합니다.
+
+```yaml
+# fixtures/keda-postgresql.yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: queue-database
+  namespace: scaling-demo
+spec:
+  secretTargetRef:
+    - parameter: connection
+      name: queue-database
+      key: connection
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: database-worker
+  namespace: scaling-demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: database-worker
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+    - type: postgresql
+      authenticationRef:
+        name: queue-database
+      metricType: AverageValue
+      metadata:
+        query: SELECT count(*) FROM public.job_queue WHERE status = 'pending'
+        targetQueryValue: "50"
+        activationTargetQueryValue: "0"
+```
+
+`queue-database` Secret의 `connection`에는 검증된 DSN이 있어야 합니다. TLS hostname/CA를 검증하는 `sslmode=verify-full`과 필요한 CA 경로를 KEDA operator 환경에 준비합니다. Secret 값은 Git에 넣지 않습니다. KEDA 계정에는 해당 큐 테이블을 읽는 권한만 주며 worker가 사용할 쓰기 권한과 분리합니다.
+
+쿼리는 하나의 숫자를 반환해야 합니다. 오래된 pending 작업을 `created_at > now()-1h`로 무조건 제외하면 backlog를 보지 못합니다. Worker의 atomic claim, 중복 처리와 완료 상태 관리도 필요합니다.
+
+### Cron과 여러 지표
+
+```yaml
+# fixtures/keda-cron.yaml
+# Alternative to the preceding podinfo HPA/ScaledObject.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: podinfo
+  namespace: scaling-demo
+spec:
+  scaleTargetRef:
+    name: podinfo
+  minReplicaCount: 3
+  maxReplicaCount: 50
+  triggers:
+    - type: cron
+      metadata:
+        timezone: Asia/Seoul
+        start: "0 9 * * 1-5"
+        end: "0 18 * * 1-5"
+        desiredReplicas: "20"
+    - type: cron
+      metadata:
+        timezone: Asia/Seoul
+        start: "30 11 * * 1-5"
+        end: "30 13 * * 1-5"
+        desiredReplicas: "40"
+    - type: prometheus
+      metricType: AverageValue
+      metadata:
+        serverAddress: http://prometheus.monitoring.svc:9090
+        query: sum(rate(http_requests_total{namespace="scaling-demo",service="podinfo"}[2m]))
+        threshold: "100"
+        ignoreNullValues: "false"
+```
+
+평일 업무 시간에는 20개, 점심 구간에는 40개가 metric 기반 요구와 함께 비교됩니다. 활성 trigger 중 더 큰 요구가 적용되므로 Cron이나 Prometheus에 임의의 우선순위가 있는 것은 아닙니다. 그 밖의 시간은 최소 3개를 유지합니다. 야간·주말 구간을 추가할 때는 경계와 겹침을 실제 timezone으로 시험합니다.
+
+현재 KEDA에는 `advanced.scalingModifiers`가 있습니다. “OR만 지원하고 formula는 미래 기능”이라는 설명은 맞지 않습니다. 다음은 같은 worker가 소비하는 두 큐의 **동일 단위 gauge**를 합하는 예제입니다.
+
+```yaml
+# fixtures/keda-composite.yaml
+# Requires a worker that consumes both queues and the two named gauge series.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: shared-queue-worker
+  namespace: scaling-demo
+spec:
+  scaleTargetRef:
+    name: shared-queue-worker
+  minReplicaCount: 1
+  maxReplicaCount: 30
+  advanced:
+    scalingModifiers:
+      formula: queue_a + queue_b
+      target: "50"
+      activationTarget: "0"
+      metricType: AverageValue
+  triggers:
+    - type: prometheus
+      name: queue_a
+      metadata:
+        serverAddress: http://prometheus.monitoring.svc:9090
+        query: sum(queue_messages_pending{queue="a"})
+        threshold: "50"
+        ignoreNullValues: "false"
+    - type: prometheus
+      name: queue_b
+      metadata:
+        serverAddress: http://prometheus.monitoring.svc:9090
+        query: sum(queue_messages_pending{queue="b"})
+        threshold: "50"
+        ignoreNullValues: "false"
+```
+
+formula의 trigger 이름은 표현식에서 참조할 수 있어야 하며 결과는 numeric metric이어야 합니다. CPU·메모리 resource trigger와 서로 다른 단위를 무심코 더하지 않습니다. AND 조건이 필요하면 0/수치가 나오는 조건식을 설계하고 starvation·활성화·오류 시 동작을 검증합니다.
+
+### ScaledJob
+
+다음은 실제 worker 이미지와 `batch-worker` ServiceAccount를 준비한 뒤 사용하는 템플릿입니다.
+
+```yaml
+# fixtures/keda-job.yaml
+# Supply an actual bounded, idempotent SQS consumer image and worker identity.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: batch-processor
+  namespace: scaling-demo
+spec:
+  pollingInterval: 30
+  minReplicaCount: 0
+  maxReplicaCount: 20
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  scalingStrategy:
+    strategy: default
+  jobTargetRef:
+    parallelism: 1
+    completions: 1
+    activeDeadlineSeconds: 600
+    backoffLimit: 2
+    template:
+      spec:
+        serviceAccountName: batch-worker
+        restartPolicy: Never
+        containers:
+          - name: processor
+            image: REPLACE_WITH_APPROVED_WORKER_IMAGE
+            env:
+              - name: SQS_QUEUE_URL
+                value: https://sqs.ap-northeast-2.amazonaws.com/REPLACE_ACCOUNT/batch-queue
+            resources:
+              requests:
+                cpu: 250m
+                memory: 256Mi
+  triggers:
+    - type: aws-sqs-queue
+      authenticationRef:
+        name: keda-aws
+      metadata:
+        queueURL: https://sqs.ap-northeast-2.amazonaws.com/REPLACE_ACCOUNT/batch-queue
+        queueLength: "1"
+        awsRegion: ap-northeast-2
+```
+
+`successfulJobsHistoryLimit`과 `failedJobsHistoryLimit`은 초가 아니라 **개수**입니다. `queueLength: "1"`이 특정 메시지와 Job을 정확히 1:1로 묶지는 않습니다. Worker가 메시지를 수신·처리·삭제하고 재시도에 안전해야 합니다. default/accurate/custom/eager 전략은 queue 및 running/pending Job 계산 방식이 다릅니다.
+
+Cron trigger가 활성화된 시간 동안 ScaledJob은 반복 생성될 수 있습니다. “매일 한 번” 작업은 Kubernetes CronJob의 schedule/timeZone·동시 실행·재시도 정책으로 구성합니다. 예제에 `autoscaling.keda.sh/paused-replicas`를 남겨 스케일링을 의도치 않게 중지하지 않습니다.
+
+## 3. VPA와 In-Place Resize
+
+VPA는 주로 **resource requests 추천**을 생성합니다. limits는 선택한 controlledValues와 기존 비율 등에 따라 처리되며 독립적인 최적 limit을 항상 추천하는 것은 아닙니다.
+
+### 공식 차트와 추천 모드
+
+VPA 1.7.1의 공식 chart 0.12.0을 사용합니다. 기존 VPA 설치가 있으면 또 설치하지 말고 CRD·RBAC·설정 이행을 먼저 확인합니다. 아래 구성은 cert-manager가 webhook 인증서를 관리하므로 cert-manager와 cainjector가 필요합니다.
+
+```yaml
+# fixtures/vpa-values.yaml
+admissionController:
+  replicas: 2
+  certGen:
+    enabled: false
+  certManager:
+    enabled: true
+    createSelfSignedIssuer:
+      enabled: true
+recommender:
+  replicas: 2
+updater:
+  replicas: 2
+  extraArgs:
+    - --in-place-skip-disruption-budget=false
+```
+
+```bash
+helm upgrade --install vpa \
+  https://github.com/kubernetes/autoscaler/releases/download/vertical-pod-autoscaler-chart-0.12.0/vertical-pod-autoscaler-0.12.0.tgz \
+  --namespace vpa --create-namespace --kube-context "$TARGET_CONTEXT" \
+  --values vpa-values.yaml
+```
+
+차트 key는 `replicas`이며 다른 차트의 `replicaCount`·extraArgs 구조를 섞지 않습니다. 이 차트는 여러 recommender/updater replica에 leader election을 설정합니다. `--in-place-skip-disruption-budget=false`를 명시했으며, 불명확한 Prometheus history 옵션만 추가해 수집 이력이 자동 완성된다고 가정하지 않습니다.
+
+```yaml
+# fixtures/vpa.yaml
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: myapp-vpa
-  namespace: production
+  name: podinfo
+  namespace: scaling-demo
 spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: myapp
+    name: podinfo
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Off"
   resourcePolicy:
     containerPolicies:
-      - containerName: myapp
-        controlledResources:
-          - memory  # 메모리만 VPA 관리
+      - containerName: podinfo
+        controlledResources: [cpu, memory]
+        controlledValues: RequestsOnly
         minAllowed:
-          memory: 256Mi
+          cpu: 100m
+          memory: 128Mi
         maxAllowed:
-          memory: 4Gi
+          cpu: "1"
+          memory: 512Mi
 ```
 
-**공존 시 주의사항:**
+`Off`는 추천을 계산하되 Pod에 적용하지 않습니다. 실제 적용 전 request/limit, namespace quota와 노드 용량을 검토합니다. 같은 Deployment에 여러 VPA 예제를 동시에 적용하지 않습니다.
 
-```
-┌───────────────────────────────────────────────────────────────┐
-│                VPA + HPA 공존 권장 패턴                        │
-├───────────────────────────────────────────────────────────────┤
-│                                                               │
-│  HPA                          VPA                             │
-│  ┌─────────────────┐          ┌─────────────────┐            │
-│  │ CPU Utilization │          │ Memory Sizing   │            │
-│  │ Custom Metrics  │          │ (controlledRes: │            │
-│  │ External Metrics│          │   memory)       │            │
-│  └────────┬────────┘          └────────┬────────┘            │
-│           │                            │                      │
-│           │        Deployment          │                      │
-│           └───────────┬───────────────┘                      │
-│                       │                                       │
-│  HPA: replicas 조정   │  VPA: resources.requests.memory 조정  │
-│                       ▼                                       │
-│               ┌───────────────┐                              │
-│               │    Pods       │                              │
-│               └───────────────┘                              │
-│                                                               │
-│  ⚠️ 주의: 동일 리소스(CPU)에 HPA와 VPA 동시 적용 금지         │
-│  - HPA가 replica 조정 → VPA가 requests 변경                   │
-│  - → HPA 계산 기준 변경 → 무한 스케일링 루프 가능             │
-│                                                               │
-└───────────────────────────────────────────────────────────────┘
-```
+| 모드 | VPA 1.7.1의 의미 |
+|---|---|
+| `Off` | 추천만 생성 |
+| `Initial` | 새 Pod 생성 시 적용 |
+| `Recreate` | 필요한 경우 eviction/recreation으로 적용 |
+| `InPlaceOrRecreate` | in-place를 시도하고 필요하면 recreation으로 대체 |
+| `InPlace` | eviction fallback 없이 in-place 재시도; 별도 feature gate 필요 |
+| `Auto` | deprecated이며 현재 Recreate와 같은 동작; 명시적 모드 사용 |
 
-***
+VPA 1.7.1의 in-place 모드는 Kubernetes 1.33 이상 등 요구 조건을 확인해야 합니다. `InPlaceOrRecreate`의 이전 VPA feature gate는 1.7에서 제거됐지만 `InPlace`에는 `--feature-gates=InPlace=true`가 필요합니다. `minReplicas`는 updater의 적용 조건이지 항상 그만큼 가용 Pod를 보장하는 PDB가 아닙니다.
 
-## 4. Custom Scheduler & Pod Deletion Cost
+### Kubernetes resize
 
-스케일 다운 시 어떤 Pod를 먼저 종료할지 제어할 수 있습니다.
-
-> 상세 스케줄러 내용은 [스케줄링 가이드](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/scheduling/README.md)를 참조하세요.
-
-### 4.1 Pod Deletion Cost 개념
+Pod in-place resize는 1.27에서 alpha로 시작했고 1.33 beta, 1.35 stable로 발전했습니다. “1.27부터 기본적으로 무중단”이라는 뜻이 아닙니다. 지원 노드·runtime·QoS·resizePolicy를 확인합니다.
 
 ```yaml
-# Pod Annotation
+# Container fragment; select the restart behavior required by the application.
+resizePolicy:
+  - resourceName: cpu
+    restartPolicy: NotRequired
+  - resourceName: memory
+    restartPolicy: RestartContainer
+```
+
+기존 데모 Pod의 CPU request를 바꾸는 patch 파일입니다. 대상 Pod를 확인한 후 resize subresource를 사용합니다.
+
+```json
+{
+  "spec": {
+    "containers": [
+      {
+        "name": "podinfo",
+        "resources": {
+          "requests": {"cpu": "200m"},
+          "limits": {"cpu": "1"}
+        }
+      }
+    ]
+  }
+}
+```
+
+```bash
+kubectl --context "$TARGET_CONTEXT" patch pod "$POD_NAME" -n scaling-demo \
+  --subresource=resize --type=strategic --patch-file=resize-patch.json
+kubectl --context "$TARGET_CONTEXT" get pod "$POD_NAME" -n scaling-demo -o json |
+  jq '.status.conditions[]? | select(.type | startswith("PodResize"))'
+```
+
+`PodResizePending`의 Deferred/Infeasible와 `PodResizeInProgress` 조건을 확인합니다. 오래된 `.status.resize` 필드만 확인하지 않습니다. Pod를 재생성하지 않아도 `RestartContainer` 정책은 컨테이너를 재시작할 수 있습니다. QoS class를 바꾸는 resize, 지원하지 않는 init/ephemeral container·노드 정책·OS 등의 제한도 있습니다.
+
+Pod에 대한 resize가 Deployment template을 영구 수정하는 것은 아닙니다. Pod가 교체돼도 유지할 설정은 VPA 또는 Git의 목표 상태에 반영합니다.
+
+### Goldilocks와 HPA 공존
+
+```yaml
+# fixtures/goldilocks-values.yaml
+vpa:
+  enabled: false
+controller:
+  enabled: true
+dashboard:
+  enabled: true
+  service:
+    type: ClusterIP
+```
+
+```bash
+helm repo add fairwinds-stable https://charts.fairwinds.com/stable
+helm repo update
+helm upgrade --install goldilocks fairwinds-stable/goldilocks \
+  --version 11.1.0 --namespace goldilocks --create-namespace \
+  --kube-context "$TARGET_CONTEXT" --values goldilocks-values.yaml
+```
+
+기존 VPA 설치를 재사용하고 dashboard는 ClusterIP로 둡니다. 검토용 접근은 인증된 내부 경로나 localhost port-forward로 제공합니다. Goldilocks namespace label을 활성화하면 VPA를 생성할 수 있으므로 직접 만든 VPA와 같은 target을 경쟁 관리하지 않게 합니다.
+
+HPA CPU utilization과 VPA CPU request 변경은 같은 계산의 분모에 영향을 줍니다. VPA `Initial`도 새 Pod의 request를 바꾸므로 이 문제를 자동으로 없애지 않습니다. 추천 모드로 시작하거나 HPA는 RPS/큐, VPA는 resource sizing을 맡기고 실제 동작을 검증합니다. CPU HPA와 memory-only VPA도 재시작·스케줄링 영향을 고려해야 합니다.
+
+## 4. Pod Deletion Cost
+
+이 annotation은 **ReplicaSet 내부 scale-down의 best-effort 선택 기준**입니다. 노드 중단·eviction·Job·StatefulSet·서로 다른 Deployment의 복제본 비율을 제어하는 전역 우선순위가 아닙니다.
+
+```yaml
 metadata:
   annotations:
     controller.kubernetes.io/pod-deletion-cost: "100"
 ```
 
-**동작 원리:**
+현재 ReplicaSet 정렬은 미할당 여부, Pod phase, Ready 여부를 먼저 비교한 뒤 deletion cost를 고려합니다. 이후 동일 노드의 복제본 밀도, Ready 기간, 재시작과 생성 시각 등이 적용됩니다. 낮은 cost가 항상 모든 Pod보다 먼저 삭제된다고 단정하지 않습니다.
 
+범위는 signed 32-bit 정수이며 기본값은 0입니다. **같은 ReplicaSet**에 속한 Pod와 현재 상태를 확인한 뒤 다음처럼 특정 Pod의 선호를 바꿀 수 있습니다.
+
+```bash
+kubectl --context "$TARGET_CONTEXT" get pod "$POD_A" "$POD_B" \
+  -n scaling-demo -o json |
+  jq '.items[] | {name:.metadata.name,node:.spec.nodeName,
+    owners:.metadata.ownerReferences,phase:.status.phase}'
+
+kubectl --context "$TARGET_CONTEXT" annotate pod "$POD_A" -n scaling-demo \
+  controller.kubernetes.io/pod-deletion-cost=-100 --overwrite
+kubectl --context "$TARGET_CONTEXT" annotate pod "$POD_B" -n scaling-demo \
+  controller.kubernetes.io/pod-deletion-cost=100 --overwrite
 ```
-스케일 다운 시 Pod 삭제 우선순위:
 
-1. controller.kubernetes.io/pod-deletion-cost 값이 낮은 Pod 먼저
-2. 값이 같으면:
-   - Pending > Running
-   - Not Ready > Ready
-   - 최근 생성된 Pod > 오래된 Pod
-   - 더 많은 container restart > 적은 restart
-```
+Pod template의 모든 Pod에 같은 cost를 넣으면 서로 간의 구분은 생기지 않습니다. 생성 시 admission webhook은 대개 아직 할당될 node를 모르고, `preStop`은 삭제 대상이 선택된 뒤이므로 사전에 삭제 순서를 바꾸는 시점이 아닙니다.
 
-**범위:**
+동적 controller가 필요하면 binding 이후 처리, 정확한 controller 소유권·UID, namespace별 patch 권한, 누락 annotations, watch 재연결과 API 오류를 구현해야 합니다. Pod readiness를 작업 완료로 간주하거나 Job 진행률에 cost를 붙이면 Job 종료 순서가 바뀐다고 가정하지 않습니다.
 
-* 최소값: -2147483648 (먼저 삭제)
-* 최대값: 2147483647 (마지막에 삭제)
-* 기본값: 0
+## 5. Spot 배치와 종료
 
-### 4.2 사용 사례
-
-**사례 1: Spot 노드 Pod 우선 삭제**
+다음은 Auto Mode `default` NodeClass가 있는 실습 클러스터용입니다. 두 NodePool 모두 같은 workload label을 제공하므로 Pod가 두 capacity type을 사용할 수 있습니다.
 
 ```yaml
-# deployment-spot.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  namespace: production
-spec:
-  replicas: 10
-  selector:
-    matchLabels:
-      app: myapp
-  template:
-    metadata:
-      labels:
-        app: myapp
-      annotations:
-        # Spot 노드에 스케줄된 Pod는 낮은 cost
-        controller.kubernetes.io/pod-deletion-cost: "-100"
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: eks.amazonaws.com/capacityType
-                    operator: In
-                    values:
-                      - SPOT
-      containers:
-        - name: myapp
-          image: myapp:v1
----
-# deployment-ondemand.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp-ondemand
-  namespace: production
-spec:
-  replicas: 5
-  selector:
-    matchLabels:
-      app: myapp
-      tier: stable
-  template:
-    metadata:
-      labels:
-        app: myapp
-        tier: stable
-      annotations:
-        # On-Demand 노드에 스케줄된 Pod는 높은 cost
-        controller.kubernetes.io/pod-deletion-cost: "100"
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: eks.amazonaws.com/capacityType
-                    operator: In
-                    values:
-                      - ON_DEMAND
-      containers:
-        - name: myapp
-          image: myapp:v1
-```
-
-**사례 2: 데이터 처리 Pod 보호**
-
-```yaml
-# statefulset-data-processor.yaml
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: data-processor
-  namespace: production
-spec:
-  replicas: 5
-  selector:
-    matchLabels:
-      app: data-processor
-  template:
-    metadata:
-      labels:
-        app: data-processor
-      annotations:
-        # 데이터 처리 중인 Pod 보호
-        controller.kubernetes.io/pod-deletion-cost: "1000"
-    spec:
-      containers:
-        - name: processor
-          image: data-processor:v1
-          # 데이터 처리 완료 후 annotation 업데이트하는 로직 필요
-```
-
-**사례 3: 배치 작업 완료 후 우선 삭제**
-
-```yaml
-# batch-job-controller.yaml (컨셉)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: batch-worker
-  namespace: production
-spec:
-  replicas: 10
-  template:
-    metadata:
-      annotations:
-        # 초기에는 높은 cost (작업 중)
-        controller.kubernetes.io/pod-deletion-cost: "500"
-    spec:
-      containers:
-        - name: worker
-          image: batch-worker:v1
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    # 작업 완료 시 deletion cost 낮추기
-                    # (실제로는 외부 컨트롤러 필요)
-                    echo "Batch job completed, reducing deletion cost"
-```
-
-### 4.3 동적 Deletion Cost 관리 컨트롤러
-
-```python
-# deletion-cost-controller.py
-from kubernetes import client, config, watch
-import json
-
-config.load_incluster_config()
-v1 = client.CoreV1Api()
-
-# Spot 노드의 Pod에 낮은 deletion cost 부여
-def update_deletion_cost_for_spot():
-    pods = v1.list_pod_for_all_namespaces(
-        label_selector="app=myapp"
-    )
-
-    for pod in pods.items:
-        node_name = pod.spec.node_name
-        if not node_name:
-            continue
-
-        node = v1.read_node(node_name)
-        capacity_type = node.metadata.labels.get(
-            'eks.amazonaws.com/capacityType', 'ON_DEMAND'
-        )
-
-        current_cost = pod.metadata.annotations.get(
-            'controller.kubernetes.io/pod-deletion-cost', '0'
-        )
-
-        if capacity_type == 'SPOT':
-            new_cost = '-100'
-        else:
-            new_cost = '100'
-
-        if current_cost != new_cost:
-            patch = {
-                'metadata': {
-                    'annotations': {
-                        'controller.kubernetes.io/pod-deletion-cost': new_cost
-                    }
-                }
-            }
-            v1.patch_namespaced_pod(
-                name=pod.metadata.name,
-                namespace=pod.metadata.namespace,
-                body=patch
-            )
-            print(f"Updated {pod.metadata.name}: {current_cost} -> {new_cost}")
-
-# 배치 작업 상태에 따른 deletion cost 조정
-def watch_batch_status():
-    w = watch.Watch()
-    for event in w.stream(v1.list_namespaced_pod, namespace='production',
-                          label_selector='app=batch-worker'):
-        pod = event['object']
-        event_type = event['type']
-
-        if event_type in ['ADDED', 'MODIFIED']:
-            # Pod 상태 확인
-            phase = pod.status.phase
-            conditions = pod.status.conditions or []
-
-            # Ready 상태이고 특정 annotation이 있으면 작업 완료로 판단
-            is_ready = any(
-                c.type == 'Ready' and c.status == 'True'
-                for c in conditions
-            )
-            job_completed = pod.metadata.annotations.get(
-                'batch.example.com/completed', 'false'
-            ) == 'true'
-
-            if job_completed:
-                new_cost = '-500'  # 완료된 작업은 먼저 삭제
-            elif is_ready:
-                new_cost = '500'   # 진행 중인 작업은 보호
-            else:
-                new_cost = '0'     # 준비 안된 Pod는 기본
-
-            current_cost = pod.metadata.annotations.get(
-                'controller.kubernetes.io/pod-deletion-cost', '0'
-            )
-
-            if current_cost != new_cost:
-                patch = {
-                    'metadata': {
-                        'annotations': {
-                            'controller.kubernetes.io/pod-deletion-cost': new_cost
-                        }
-                    }
-                }
-                v1.patch_namespaced_pod(
-                    name=pod.metadata.name,
-                    namespace=pod.metadata.namespace,
-                    body=patch
-                )
-
-if __name__ == '__main__':
-    import threading
-
-    t1 = threading.Thread(target=update_deletion_cost_for_spot, daemon=True)
-    t2 = threading.Thread(target=watch_batch_status, daemon=True)
-
-    t1.start()
-    t2.start()
-
-    t1.join()
-    t2.join()
-```
-
-***
-
-## 5. Spot 노드 활용 전략
-
-Spot 인스턴스를 활용하여 비용을 절감하면서 안정성을 유지하는 전략입니다.
-
-### 5.1 Auto Mode NodePool with Spot
-
-```yaml
-# nodepool-spot.yaml (EKS Auto Mode)
-apiVersion: eks.amazonaws.com/v1
+# fixtures/nodepools.yaml
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: general-spot
+  name: web-spot
 spec:
+  weight: 100
   template:
+    metadata:
+      labels:
+        workload-type: web
     spec:
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
-
-      # Spot 인스턴스 설정
-      capacityType: Spot
-
-      # 인스턴스 타입 다양화 (가용성 향상)
-      instanceTypes:
-        - m6i.large
-        - m6i.xlarge
-        - m5.large
-        - m5.xlarge
-        - c6i.large
-        - c6i.xlarge
-        - r6i.large
-        - r6i.xlarge
-
-      # Taints
-      taints:
-        - key: eks.amazonaws.com/capacityType
-          value: SPOT
-          effect: NoSchedule
-
-      # Labels
-      labels:
-        capacity-type: spot
-        workload-type: stateless
-
-  # 스케일링 제한
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: [spot]
+        - key: kubernetes.io/arch
+          operator: In
+          values: [amd64, arm64]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [m7i.large, m7i.xlarge, m7g.large, m7g.xlarge, c7i.large, c7g.large]
   limits:
-    cpu: 1000
-    memory: 2000Gi
-
-  # Disruption 설정
+    cpu: "100"
+    memory: 200Gi
   disruption:
     consolidationPolicy: WhenEmpty
-    consolidateAfter: 30s
+    consolidateAfter: 5m
+    budgets:
+      - nodes: "10%"
 ---
-# nodepool-ondemand.yaml
-apiVersion: eks.amazonaws.com/v1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: general-ondemand
+  name: web-ondemand
 spec:
+  weight: 10
   template:
+    metadata:
+      labels:
+        workload-type: web
     spec:
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
-
-      capacityType: OnDemand
-
-      instanceTypes:
-        - m6i.large
-        - m6i.xlarge
-        - m6i.2xlarge
-
-      labels:
-        capacity-type: on-demand
-        workload-type: stateful
-
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: [on-demand]
+        - key: kubernetes.io/arch
+          operator: In
+          values: [amd64, arm64]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [m7i.large, m7i.xlarge, m7g.large, m7g.xlarge, c7i.large, c7g.large]
   limits:
-    cpu: 200
-    memory: 400Gi
-
+    cpu: "50"
+    memory: 100Gi
   disruption:
     consolidationPolicy: WhenEmpty
-    consolidateAfter: 1h
+    consolidateAfter: 10m
+    budgets:
+      - nodes: "10%"
 ```
 
-### 5.2 NodePool 분리 전략
+높은 weight는 provisioning 선호이며 “Spot이 모두 소진됐을 때만 On-Demand”, 특정 Spot 비율 또는 예약된 fallback 용량을 보장하지 않습니다. 기존 노드, scheduling 제약, 가용 AZ·instance type, quota와 용량에 따라 달라집니다.
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                     NodePool 분리 전략                              │
-├────────────────────────────────────────────────────────────────────┤
-│                                                                    │
-│  ┌──────────────────────┐      ┌──────────────────────┐           │
-│  │  general-spot        │      │  general-ondemand    │           │
-│  │  ────────────────    │      │  ────────────────    │           │
-│  │  - Stateless 워크로드 │      │  - Stateful 워크로드  │           │
-│  │  - Web servers       │      │  - Databases         │           │
-│  │  - API servers       │      │  - Message queues    │           │
-│  │  - Batch workers     │      │  - Critical services │           │
-│  │                      │      │                      │           │
-│  │  Taint:              │      │  No Taint            │           │
-│  │  capacityType=SPOT   │      │                      │           │
-│  │                      │      │                      │           │
-│  │  비용: ~70% 절감     │      │  비용: 기본          │           │
-│  └──────────────────────┘      └──────────────────────┘           │
-│                                                                    │
-│  워크로드 배치:                                                    │
-│  - Stateless + 내결함성 → Spot                                     │
-│  - Stateful + 중요도 높음 → On-Demand                              │
-│  - 혼합 가능 (TopologySpread로 분산)                               │
-│                                                                    │
-└────────────────────────────────────────────────────────────────────┘
-```
+Auto Mode/Karpenter의 capacity label은 `karpenter.sh/capacity-type`의 `spot`/`on-demand`입니다. Managed node group의 `eks.amazonaws.com/capacityType` 및 사용자 정의 taint와 혼동하지 않습니다. `kubernetes.io/capacity-type`은 이 예제의 올바른 label이 아닙니다.
 
-### 5.3 Spot Interruption 처리
-
-**Node Termination Handler:**
+### 배치 patch와 PDB
 
 ```yaml
-# aws-node-termination-handler.yaml
+# fixtures/placement-patch.yaml
+# Kustomize strategic-merge patch for application.yaml; not standalone.
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  name: aws-node-termination-handler
-  namespace: kube-system
+  name: podinfo
+  namespace: scaling-demo
 spec:
-  selector:
-    matchLabels:
-      app: aws-node-termination-handler
   template:
-    metadata:
-      labels:
-        app: aws-node-termination-handler
     spec:
       nodeSelector:
-        eks.amazonaws.com/capacityType: SPOT
-      serviceAccountName: aws-node-termination-handler
-      hostNetwork: true
-      containers:
-        - name: handler
-          image: public.ecr.aws/aws-ec2/aws-node-termination-handler:v1.22.0
-          env:
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: ENABLE_SPOT_INTERRUPTION_DRAINING
-              value: "true"
-            - name: ENABLE_SCHEDULED_EVENT_DRAINING
-              value: "true"
-            - name: ENABLE_REBALANCE_DRAINING
-              value: "true"
-            - name: DELETE_LOCAL_DATA
-              value: "true"
-            - name: GRACE_PERIOD
-              value: "120"
-            - name: WEBHOOK_URL
-              value: "https://hooks.slack.com/services/xxx"
-            - name: WEBHOOK_HEADERS
-              value: '{"Content-Type":"application/json"}'
-            - name: WEBHOOK_TEMPLATE
-              value: |
-                {
-                  "text": "Spot Interruption: Node {{.NodeName}} is being terminated",
-                  "attachments": [{
-                    "color": "warning",
-                    "fields": [
-                      {"title": "Instance ID", "value": "{{.InstanceID}}", "short": true},
-                      {"title": "Node", "value": "{{.NodeName}}", "short": true},
-                      {"title": "Event Type", "value": "{{.EventType}}", "short": true}
-                    ]
-                  }]
-                }
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-```
-
-### 5.4 PDB + Pod Deletion Cost 조합
-
-```yaml
-# pdb-spot-safe.yaml
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: myapp-pdb
-  namespace: production
-spec:
-  # 최소 가용 Pod 수
-  minAvailable: 3
-  # 또는 최대 비가용 비율
-  # maxUnavailable: 25%
-  selector:
-    matchLabels:
-      app: myapp
----
-# deployment-spot-optimized.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  namespace: production
-spec:
-  replicas: 10
-  selector:
-    matchLabels:
-      app: myapp
-  template:
-    metadata:
-      labels:
-        app: myapp
-      annotations:
-        # Spot 노드에서 실행되면 낮은 deletion cost
-        controller.kubernetes.io/pod-deletion-cost: "-100"
-    spec:
-      # Spot 노드 Toleration
-      tolerations:
-        - key: eks.amazonaws.com/capacityType
-          operator: Equal
-          value: SPOT
-          effect: NoSchedule
-
-      # Spot 노드 우선 선호
+        workload-type: web
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 80
               preference:
                 matchExpressions:
-                  - key: eks.amazonaws.com/capacityType
+                  - key: karpenter.sh/capacity-type
                     operator: In
-                    values:
-                      - SPOT
-            - weight: 20
-              preference:
-                matchExpressions:
-                  - key: eks.amazonaws.com/capacityType
-                    operator: In
-                    values:
-                      - ON_DEMAND
-
-      containers:
-        - name: myapp
-          image: myapp:v1
-          resources:
-            requests:
-              cpu: 200m
-              memory: 256Mi
-          # Graceful shutdown
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - sleep 15 && /app/graceful-shutdown.sh
-          terminationGracePeriodSeconds: 120
-```
-
-### 5.5 TopologySpreadConstraints로 분산
-
-```yaml
-# deployment-spread.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  namespace: production
-spec:
-  replicas: 12
-  selector:
-    matchLabels:
-      app: myapp
-  template:
-    metadata:
-      labels:
-        app: myapp
-    spec:
+                    values: [spot]
       topologySpreadConstraints:
-        # Spot/On-Demand 간 분산
-        - maxSkew: 2
-          topologyKey: eks.amazonaws.com/capacityType
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              app: myapp
-
-        # 가용영역 간 분산
         - maxSkew: 1
           topologyKey: topology.kubernetes.io/zone
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: myapp
-
-        # 노드 간 분산
-        - maxSkew: 2
+              app: podinfo
+        - maxSkew: 1
           topologyKey: kubernetes.io/hostname
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app: myapp
-
-      tolerations:
-        - key: eks.amazonaws.com/capacityType
-          operator: Equal
-          value: SPOT
-          effect: NoSchedule
-
-      containers:
-        - name: myapp
-          image: myapp:v1
+              app: podinfo
 ```
-
-**분산 결과 예시:**
-
-```
-가용영역 A              가용영역 B              가용영역 C
-┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
-│ Spot Node 1     │   │ Spot Node 3     │   │ Spot Node 5     │
-│  Pod 1, Pod 2   │   │  Pod 5, Pod 6   │   │  Pod 9, Pod 10  │
-├─────────────────┤   ├─────────────────┤   ├─────────────────┤
-│ Spot Node 2     │   │ Spot Node 4     │   │ On-Demand Node 3│
-│  Pod 3, Pod 4   │   │  Pod 7, Pod 8   │   │  Pod 11, Pod 12 │
-├─────────────────┤   ├─────────────────┤   ├─────────────────┤
-│ On-Demand Node 1│   │ On-Demand Node 2│   │                 │
-│  (백업)         │   │  (백업)         │   │                 │
-└─────────────────┘   └─────────────────┘   └─────────────────┘
-
-Spot 비율: 10/12 = 83%
-On-Demand 비율: 2/12 = 17% (안전 마진)
-```
-
-### 5.6 Graceful Shutdown 구현
 
 ```yaml
-# deployment-graceful.yaml
-apiVersion: apps/v1
-kind: Deployment
+# fixtures/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
 metadata:
-  name: myapp
-  namespace: production
+  name: podinfo
+  namespace: scaling-demo
 spec:
-  replicas: 10
+  minAvailable: 2
   selector:
     matchLabels:
-      app: myapp
-  template:
-    metadata:
-      labels:
-        app: myapp
-    spec:
-      # 종료 유예 시간 (Spot은 2분 사전 통지)
-      terminationGracePeriodSeconds: 120
-
-      containers:
-        - name: myapp
-          image: myapp:v1
-          ports:
-            - containerPort: 8080
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    echo "Received termination signal"
-                    # 1. 새 요청 수락 중지 (LB에서 제외)
-                    touch /tmp/unhealthy
-                    # 2. 진행 중인 요청 완료 대기
-                    sleep 15
-                    # 3. 연결 정리
-                    /app/graceful-shutdown.sh
-                    # 4. 종료
-                    echo "Graceful shutdown completed"
-
-          # Health checks
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            failureThreshold: 1
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            failureThreshold: 3
-
-      # Pod 우선순위 (Spot에서 중요)
-      priorityClassName: high-priority
+      app: podinfo
 ```
-
-**graceful-shutdown.sh 예시:**
-
-```bash
-#!/bin/bash
-# graceful-shutdown.sh
-
-echo "Starting graceful shutdown..."
-
-# 1. 새 연결 거부 (nginx의 경우)
-# nginx -s quit
-
-# 2. 데이터베이스 연결 정리
-if [ -n "$DB_HOST" ]; then
-  echo "Closing database connections..."
-  # 연결 풀 정리 로직
-fi
-
-# 3. 캐시 플러시
-if [ -n "$REDIS_HOST" ]; then
-  echo "Flushing cache..."
-  # Redis 연결 정리
-fi
-
-# 4. 메시지 큐 연결 정리
-if [ -n "$SQS_QUEUE_URL" ]; then
-  echo "Draining message queue connections..."
-  # 진행 중인 메시지 처리 완료 대기
-fi
-
-# 5. 메트릭 전송 (최종 상태)
-curl -s -X POST http://prometheus-pushgateway:9091/metrics/job/myapp/instance/${HOSTNAME} \
-  --data-binary @- << EOF
-# TYPE shutdown_timestamp gauge
-shutdown_timestamp $(date +%s)
-EOF
-
-echo "Graceful shutdown completed"
-exit 0
-```
-
-### 5.7 비용 분석
-
-**Spot 절감 추정:**
-
-```
-On-Demand 기준 비용 (월간):
-- m6i.xlarge (4 vCPU, 16GB): $0.192/hr x 730hr = $140.16
-- 10개 노드: $140.16 x 10 = $1,401.60
-
-Spot 사용 시 (약 70% 할인):
-- m6i.xlarge Spot: ~$0.058/hr x 730hr = $42.34
-- 10개 노드: $42.34 x 10 = $423.40
-
-월간 절감: $1,401.60 - $423.40 = $978.20 (70% 절감)
-
-혼합 전략 (Spot 80%, On-Demand 20%):
-- Spot 8개: $42.34 x 8 = $338.72
-- On-Demand 2개: $140.16 x 2 = $280.32
-- 합계: $619.04
-- 절감: $1,401.60 - $619.04 = $782.56 (56% 절감)
-
-권장: 80/20 혼합으로 안정성 확보하면서 50%+ 비용 절감
-```
-
-### 5.8 Fallback 전략
 
 ```yaml
-# fallback-strategy.yaml
-# 1. NodePool 우선순위 설정
-apiVersion: eks.amazonaws.com/v1
-kind: NodePool
-metadata:
-  name: spot-priority
-spec:
-  weight: 100  # 높은 우선순위
-  template:
-    spec:
-      capacityType: Spot
-      # ...
----
-apiVersion: eks.amazonaws.com/v1
-kind: NodePool
-metadata:
-  name: ondemand-fallback
-spec:
-  weight: 10  # 낮은 우선순위 (Spot 부족 시 사용)
-  template:
-    spec:
-      capacityType: OnDemand
-      # ...
----
-# 2. Capacity Reservation (예약 용량)
-# Terraform으로 관리
-# resource "aws_ec2_capacity_reservation" "eks_fallback" {
-#   instance_type           = "m6i.xlarge"
-#   instance_platform       = "Linux/UNIX"
-#   availability_zone       = "ap-northeast-2a"
-#   instance_count          = 5
-#   instance_match_criteria = "targeted"
-#
-#   tags = {
-#     Name = "eks-fallback-capacity"
-#   }
-# }
+# fixtures/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - application.yaml
+  - hpa.yaml
+  - nodepools.yaml
+  - pdb.yaml
+patches:
+  - path: placement-patch.yaml
 ```
 
-***
+위 파일을 함께 두고 `kustomize build .`로 합쳐 확인합니다. patch만 완전한 Deployment처럼 적용하지 않습니다. `ScheduleAnyway`는 soft preference이고 `DoNotSchedule`도 실제로 적합한 topology domain이 있어야 합니다. 분산 조건이 임의의 80/20 비율이나 예비 노드를 만들지는 않습니다.
 
-## 요약
+PDB는 지원되는 자발적 eviction을 제한합니다. HPA/ReplicaSet의 replica 축소나 실제 Spot 노드 소실을 막아 가용성을 보장하는 장치는 아닙니다. `minAvailable: 2`가 언제나 두 Pod의 실행을 보장한다는 뜻도 아닙니다.
 
-### 스케일링 전략 선택 가이드
+### 중단 처리와 graceful shutdown
 
-| 상황            | 권장 전략                               |
-| ------------- | ----------------------------------- |
-| 웹 트래픽 기반 스케일링 | HPA + Prometheus Adapter (RPS 메트릭)  |
-| 큐 기반 워커 스케일링  | KEDA + SQS/Kafka 트리거                |
-| 예측 가능한 트래픽    | KEDA Cron 트리거 + 메트릭 백업              |
-| 리소스 최적화       | VPA (추천 모드) + Goldilocks            |
-| 비용 최적화        | Spot NodePool + Deletion Cost       |
-| 고가용성 요구       | TopologySpread + PDB + On-Demand 백업 |
+Auto Mode의 관리형 interruption 처리를 사용하는 노드에 별도 drain controller를 무심코 중복 설치하지 않습니다. 자체 관리 Karpenter는 interruption queue/EventBridge와 controller 권한이 필요합니다. Node Termination Handler가 필요한 다른 노드 유형은 해당 모드와 권한을 명확히 구분합니다.
 
-### 핵심 포인트
+Spot interruption의 사전 통지를 매번 애플리케이션이 온전히 사용할 수 있는 120초로 해석하지 않습니다. hibernation 등 예외, 통지 감지·drain·종료에 걸린 시간과 실제 종료 시점을 고려합니다.
 
-1. **HPA Custom Metrics**: Prometheus Adapter로 비즈니스 메트릭 기반 스케일링
-2. **KEDA**: 이벤트 드리븐 워크로드에 최적, 0으로 스케일 다운 지원
-3. **VPA**: HPA와 공존 시 리소스 분리 필수 (CPU vs Memory)
-4. **Pod Deletion Cost**: 스케일 다운 시 중요 Pod 보호
-5. **Spot 활용**: 70%+ 비용 절감 가능, 적절한 Fallback 필수
+`terminationGracePeriodSeconds`는 **Pod spec** 필드입니다. preStop 시간도 이 종료 예산에 포함됩니다. 애플리케이션이 SIGTERM과 drain을 실제로 처리하도록 만들고, readiness에서 제거된 뒤의 연결·메시지 처리와 재시도를 검증합니다. `touch /tmp/unhealthy`만으로 HTTP probe가 실패하거나 “연결 정리”라는 echo가 DB pool을 닫지는 않습니다.
 
-***
+외부 알림·Pushgateway 요청이 종료를 무한정 막지 않게 합니다. 임의의 우선순위 클래스나 deletion cost도 Spot 소실 자체를 막지 않습니다.
+
+### 비용과 용량
+
+CPU request gauge의 `increase()`는 node-hours가 아닙니다. 실제 노드 실행 시간과 해당 시간·AZ·플랫폼·구매 방식의 비용 자료를 사용하고, 누락된 가격을 무료로 처리하지 않습니다.
+
+동일 자원 사용량의 On-Demand 기준선과 실제 지출을 비교하되 Savings Plans/RI, EKS/Auto Mode, 볼륨·네트워크·재시도·유휴 비용 등 비교 범위를 명시합니다. 고정된 “70% 할인” 또는 “80/20이면 50% 이상 절감”을 보장하지 않습니다.
+
+Capacity Reservation도 생성만으로 targeted 예약이 NodePool에서 사용되는 것은 아닙니다. 지원되는 NodeClass 선택자·AZ/instance 조건과 요금·미사용 용량을 검토합니다. 가용성 요구에 맞는 fallback을 부하·장애 시험으로 확인합니다.
 
 ## 참고 자료
 
-* [Kubernetes HPA 공식 문서](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-* [Prometheus Adapter](https://github.com/kubernetes-sigs/prometheus-adapter)
-* [KEDA 공식 문서](https://keda.sh/docs/)
-* [VPA 공식 문서](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
-* [EKS Spot Best Practices](https://aws.github.io/aws-eks-best-practices/cost_optimization/spot/)
-* [Pod Deletion Cost](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
-* [KEDA 가이드](../autoscaling/01-keda.md)
-* [스케줄링 가이드](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/scheduling/README.md)
+- [HPA 동작](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [KEDA 2.20 ScaledObject](https://keda.sh/docs/2.20/reference/scaledobject-spec/)
+- [KEDA 2.20 ScaledJob](https://keda.sh/docs/2.20/reference/scaledjob-spec/)
+- [VPA 1.7.1 기능](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/features.md)
+- [Pod resize](https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/)
+- [ReplicaSet deletion cost](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
+- [이 장의 퀴즈](../quizzes/ops/06-scaling-strategies-quiz.md)
 
-***
-
-< [이전: GitOps 자동화](05-gitops-automation.md) | [목차](./README.md) | [다음: 운영 알림 구성](07-observability-alerts.md) >
+< [이전: GitOps 자동화](05-gitops-automation.md) | [목차](README.md) | [다음: 운영 알림](07-observability-alerts.md) >

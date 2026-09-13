@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "AI/ML Pod Cold Start Timeline",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      650
+    ],
+    "animation": "none",
+    "views": [
+      {
+        "id": "schedule",
+        "label": "Scheduling",
+        "focus": [
+          "scheduler",
+          "kubelet"
+        ],
+        "note": "Pending time can include capacity, PVC, quota and taint constraints."
+      },
+      {
+        "id": "pull",
+        "label": "Image pull",
+        "focus": [
+          "kubelet",
+          "registry"
+        ],
+        "note": "Measure fetch, unpack, cache hits and lazy loading separately."
+      },
+      {
+        "id": "load",
+        "label": "Model loading",
+        "focus": [
+          "runtime",
+          "app"
+        ],
+        "note": "Measure model preparation, loading and probes without fixed-time assumptions."
+      }
+    ],
+    "output": "en-ai-ml-07-ai-ml-best-practices-2.html"
+  },
+  "participants": [
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "K8s Scheduler",
+      "sublabel": "kube-scheduler"
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "worker node"
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "Container Registry",
+      "sublabel": "e.g. Amazon ECR"
+    },
+    {
+      "id": "runtime",
+      "type": "cloud",
+      "label": "Container Runtime",
+      "sublabel": "containerd"
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "AI/ML Application",
+      "sublabel": "model serving process"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 220,
+      "label": "Pod placement: measured waiting"
+    },
+    {
+      "from": 235,
+      "to": 345,
+      "label": "Image fetch / unpack: cache and network"
+    },
+    {
+      "from": 360,
+      "to": 420,
+      "label": "Container creation: runtime configuration"
+    },
+    {
+      "from": 435,
+      "to": 565,
+      "label": "Model loading and readiness: per workload"
+    }
+  ],
+  "messages": [
+    {
+      "id": "scheduled",
+      "from": "scheduler",
+      "to": "kubelet",
+      "y": 190,
+      "label": "Pod scheduled"
+    },
+    {
+      "id": "pull-request",
+      "from": "kubelet",
+      "to": "registry",
+      "y": 267,
+      "label": "CRI image preparation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "image-layers",
+      "from": "registry",
+      "to": "kubelet",
+      "y": 327,
+      "label": "Image layers",
+      "variant": "return"
+    },
+    {
+      "id": "create",
+      "from": "kubelet",
+      "to": "runtime",
+      "y": 393,
+      "label": "Create container"
+    },
+    {
+      "id": "start",
+      "from": "runtime",
+      "to": "app",
+      "y": 475,
+      "label": "Start process",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ready",
+      "from": "app",
+      "to": "kubelet",
+      "y": 550,
+      "label": "readiness probe result",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kubelet",
+      "from": 185,
+      "to": 400,
+      "type": "backend"
+    },
+    {
+      "participant": "registry",
+      "from": 262,
+      "to": 333,
+      "type": "database"
+    },
+    {
+      "participant": "runtime",
+      "from": 388,
+      "to": 556,
+      "type": "cloud"
+    },
+    {
+      "participant": "app",
+      "from": 470,
+      "to": 556,
+      "type": "frontend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Startup measurement",
+      "items": [
+        "These are logical stages; the runtime performs the actual image pull.",
+        "SOCI indexing/prefetch does not guarantee80–95% improvement.",
+        "Immediate reads of all weights can limit lazy-loading benefits."
+      ]
+    }
+  ]
+}

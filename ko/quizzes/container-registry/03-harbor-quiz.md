@@ -1,5 +1,5 @@
 # Harbor 퀴즈
-> **마지막 업데이트**: 2026년 2월 25일
+> **마지막 업데이트**: 2026년 9월 11일
 
 1. Harbor의 CNCF(Cloud Native Computing Foundation) 프로젝트 상태는?
    - A) Sandbox 프로젝트
@@ -18,7 +18,7 @@ Harbor는 2020년에 CNCF Graduated 프로젝트가 되었습니다. 이는 Harb
 </details>
 
 2. Harbor의 핵심 구성 요소가 아닌 것은?
-   - A) Core (API 및 UI)
+   - A) Core (API 및 인증)
    - B) Registry (Docker Distribution)
    - C) Trivy (취약점 스캐너)
    - D) Prometheus (메트릭 수집)
@@ -29,11 +29,11 @@ Harbor는 2020년에 CNCF Graduated 프로젝트가 되었습니다. 이는 Harb
 **정답: D) Prometheus (메트릭 수집)**
 
 **설명:**
-Harbor의 핵심 구성 요소는 Core(웹 UI와 API), Registry(Docker Distribution 기반), Database(PostgreSQL), Redis, 그리고 선택적으로 Trivy(취약점 스캐너), Notary(이미지 서명) 등이 있습니다. Prometheus는 Harbor의 구성 요소가 아니라 외부 모니터링 도구입니다.
+Harbor의 핵심 구성 요소는 Core(API·인증), Portal(웹 UI), Registry, Job Service, PostgreSQL, Redis, Trivy 어댑터가 있습니다. Notary v1 서버는 Harbor 2.9부터 제거되었습니다. Prometheus는 Harbor의 구성 요소가 아니라 외부 모니터링 도구입니다.
 
 </details>
 
-3. Helm을 사용하여 Harbor를 설치할 때 권장되는 방식은?
+3. TLS Secret과 유지보수 중인 Ingress Controller를 준비한 환경에서 Harbor 노출 방식을 지정하는 올바른 옵션은?
    - A) helm install harbor harbor/harbor --set expose.type=nodePort
    - B) helm install harbor harbor/harbor --set expose.type=ingress
    - C) helm install harbor harbor/harbor --set persistence.enabled=false
@@ -45,7 +45,7 @@ Harbor의 핵심 구성 요소는 Core(웹 UI와 API), Registry(Docker Distribut
 **정답: B) helm install harbor harbor/harbor --set expose.type=ingress**
 
 **설명:**
-프로덕션 환경에서는 Ingress를 통해 Harbor를 노출하는 것이 권장됩니다. TLS 종료, 로드 밸런싱, 도메인 기반 라우팅 등을 Ingress Controller에서 처리할 수 있습니다. NodePort는 개발/테스트 환경에 적합합니다.
+`expose.type=ingress`는 Harbor Chart의 Ingress 노출 옵션입니다. TLS Secret, IngressClass, externalURL과 Controller 설정이 함께 필요합니다. 다른 노출 방식도 환경에 따라 사용할 수 있으며 외부 DB 선택은 `database.type=external`입니다.
 
 </details>
 
@@ -61,7 +61,7 @@ Harbor의 핵심 구성 요소는 Core(웹 UI와 API), Registry(Docker Distribut
 **정답: B) CI/CD 파이프라인 등 자동화 시스템의 인증**
 
 **설명:**
-Robot Account는 CI/CD 파이프라인, 스크립트 등 자동화된 시스템에서 Harbor에 인증하기 위해 사용됩니다. 특정 프로젝트나 레포지토리에 대해 제한된 권한(push, pull 등)을 부여할 수 있으며, 만료 기간을 설정할 수 있습니다.
+Robot Account는 CI/CD 파이프라인, 스크립트 등 자동화된 시스템에서 Harbor에 인증하기 위해 사용됩니다. 프로젝트 범위에 제한된 권한(push, pull 등)을 부여할 수 있으며, 만료 기간을 설정할 수 있습니다.
 
 </details>
 
@@ -77,7 +77,7 @@ Robot Account는 CI/CD 파이프라인, 스크립트 등 자동화된 시스템�
 **정답: B) 대상 Harbor에서 소스 레지스트리의 이미지를 가져옴**
 
 **설명:**
-Pull-based 복제에서는 대상(destination) Harbor가 소스 레지스트리(Harbor, Docker Hub, ECR 등)에서 이미지를 가져옵니다. 이는 소스 레지스트리에 Harbor가 설치되지 않은 경우나 에어갭 환경으로 이미지를 가져올 때 유용합니다.
+Pull-based 복제에서는 대상(destination) Harbor가 소스 레지스트리(Harbor, Docker Hub, ECR 등)에서 이미지를 가져옵니다. 이는 소스가 Harbor가 아닌 레지스트리에도 유용하지만, 대상 Harbor에서 업스트림으로 연결할 수 있어야 합니다. 완전한 폐쇄망에는 별도 오프라인 반입이 필요합니다.
 
 </details>
 

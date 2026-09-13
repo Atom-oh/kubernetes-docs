@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubeflow Trainer Reconciliation Flow",
+    "locale": "en",
+    "output": "en-ai-ml-kubeflow-05-training-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Input resources"
+        },
+        "backend": {
+          "label": "Controller / JobSet"
+        },
+        "cloud": {
+          "label": "Worker Pods"
+        },
+        "messagebus": {
+          "label": "Peer discovery"
+        },
+        "database": {
+          "label": "Status store"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "declare",
+        "label": "What vs. how",
+        "focus": [
+          "tj",
+          "rt",
+          "c"
+        ],
+        "note": "TrainJob says what to run, ClusterTrainingRuntime says how; the controller watches both."
+      },
+      {
+        "id": "launch",
+        "label": "Create and schedule",
+        "focus": [
+          "c",
+          "js",
+          "w",
+          "svc"
+        ],
+        "note": "JobSet manages execution; PodGroup/gang scheduling requires separate policy and scheduler integration."
+      },
+      {
+        "id": "report",
+        "label": "Status reporting",
+        "focus": [
+          "w",
+          "c",
+          "st"
+        ],
+        "note": "trainerStatus needs the default-off alpha gate and explicit application reporting."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "tj",
+      "type": "frontend",
+      "label": "TrainJob",
+      "sublabel": "script · args · worker count",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "frontend",
+      "label": "ClusterTrainingRuntime",
+      "sublabel": "image · launch mechanics",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "c",
+      "type": "backend",
+      "label": "Trainer Controller",
+      "sublabel": "reconciliation loop",
+      "pos": [
+        330,
+        220
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "st",
+      "type": "database",
+      "label": "TrainJob.status",
+      "sublabel": "conditions / optional trainerStatus",
+      "pos": [
+        840,
+        220
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "js",
+      "type": "backend",
+      "label": "JobSet",
+      "sublabel": "optional PodGroup policy",
+      "pos": [
+        330,
+        390
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "w",
+      "type": "cloud",
+      "label": "Training Pods / processes",
+      "sublabel": "Pod / process / EC2 counts differ",
+      "pos": [
+        330,
+        560
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "messagebus",
+      "label": "Headless Service",
+      "sublabel": "peer DNS names",
+      "pos": [
+        720,
+        560
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "tj-rt",
+      "from": "tj",
+      "to": "rt",
+      "label": "references",
+      "variant": "dashed"
+    },
+    {
+      "id": "tj-c",
+      "from": "tj",
+      "to": "c",
+      "label": "watched by",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rt-c",
+      "from": "rt",
+      "to": "c",
+      "label": "watched by",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c-js",
+      "from": "c",
+      "to": "js",
+      "label": "creates",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "js-w",
+      "from": "js",
+      "to": "w"
+    },
+    {
+      "id": "w-svc",
+      "from": "w",
+      "to": "svc",
+      "label": "discover peers",
+      "variant": "dashed"
+    },
+    {
+      "id": "w-c",
+      "from": "w",
+      "to": "c",
+      "label": "opt-in status",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          250,
+          592
+        ],
+        [
+          250,
+          252
+        ]
+      ],
+      "labelSegment": 1,
+      "labelDx": -52,
+      "variant": "dashed"
+    },
+    {
+      "id": "c-st",
+      "from": "c",
+      "to": "st",
+      "label": "reports status"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "TrainJob and runtimes",
+      "items": [
+        "TrainJob: run settings; runtime: reusable template and ML policy",
+        "Distinguish 2.2 RuntimePatches from 2.3 CRD/hook changes."
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Conditional capabilities",
+      "items": [
+        "Default Torch runtime has no podGroupPolicy.",
+        "TrainJobStatus alpha gate defaults false.",
+        "Sequential node creation differs from synchronous process rendezvous."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts Blue/Green Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-04-traffic-splitting-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      640
+    ]
+  },
+  "components": [
+    {
+      "id": "ingress",
+      "type": "external",
+      "label": "Ingress Gateway",
+      "sublabel": "External traffic",
+      "pos": [
+        40,
+        310
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "rollout",
+      "type": "backend",
+      "label": "Rollout Resource",
+      "sublabel": "Blue/Green strategy",
+      "pos": [
+        590,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "prepromo",
+      "type": "backend",
+      "label": "PrePromotion Analysis",
+      "sublabel": "Pre-promotion tests",
+      "pos": [
+        590,
+        430
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "postpromo",
+      "type": "backend",
+      "label": "PostPromotion Analysis",
+      "sublabel": "Post-promotion verification",
+      "pos": [
+        590,
+        150
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "active",
+      "type": "cloud",
+      "label": "Active Service",
+      "sublabel": "Production traffic",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "preview",
+      "type": "cloud",
+      "label": "Preview Service",
+      "sublabel": "Test traffic",
+      "pos": [
+        300,
+        540
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "blue",
+      "type": "backend",
+      "label": "Blue Pods",
+      "sublabel": "Current version",
+      "pos": [
+        880,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "green",
+      "type": "backend",
+      "label": "Green Pods",
+      "sublabel": "New version",
+      "pos": [
+        880,
+        540
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Gateway",
+      "wraps": [
+        "ingress"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Argo Rollouts Controller",
+      "wraps": [
+        "postpromo",
+        "rollout",
+        "prepromo"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Services",
+      "wraps": [
+        "active",
+        "preview"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod Environment",
+      "wraps": [
+        "blue",
+        "green"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ingress-active",
+      "from": "ingress",
+      "to": "active",
+      "label": "Production traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingress-preview",
+      "from": "ingress",
+      "to": "preview",
+      "label": "Test only",
+      "variant": "dashed"
+    },
+    {
+      "id": "active-blue",
+      "from": "active",
+      "to": "blue",
+      "label": "100% traffic",
+      "variant": "emphasis",
+      "labelAt": [
+        700,
+        54
+      ]
+    },
+    {
+      "id": "preview-green",
+      "from": "preview",
+      "to": "green",
+      "label": "Test traffic",
+      "labelAt": [
+        700,
+        556
+      ]
+    },
+    {
+      "id": "rollout-active",
+      "from": "rollout",
+      "to": "active",
+      "label": "Manage",
+      "toSide": "bottom",
+      "labelAt": [
+        562,
+        301
+      ]
+    },
+    {
+      "id": "rollout-preview",
+      "from": "rollout",
+      "to": "preview",
+      "label": "Manage",
+      "toSide": "top",
+      "labelAt": [
+        562,
+        341
+      ]
+    },
+    {
+      "id": "rollout-blue",
+      "from": "rollout",
+      "to": "blue",
+      "label": "Deploy",
+      "toSide": "bottom"
+    },
+    {
+      "id": "rollout-green",
+      "from": "rollout",
+      "to": "green",
+      "label": "Deploy",
+      "toSide": "top"
+    },
+    {
+      "id": "prepromo-preview",
+      "from": "prepromo",
+      "to": "preview",
+      "label": "Test",
+      "toSide": "top",
+      "labelAt": [
+        562,
+        448
+      ]
+    },
+    {
+      "id": "postpromo-active",
+      "from": "postpromo",
+      "to": "active",
+      "label": "Verify",
+      "toSide": "bottom",
+      "labelAt": [
+        562,
+        168
+      ]
+    }
+  ]
+}

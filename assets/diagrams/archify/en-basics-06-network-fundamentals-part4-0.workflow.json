@@ -4,7 +4,11 @@
   "meta": {
     "title": "https://example.com — One Request, End to End",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "viewBox": [
+      1057,
+      652
+    ]
   },
   "lanes": [
     {

@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ArgoCD Architecture",
+    "output": "en-gitops-03-gitops-comparison-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "sync-path",
+        "label": "Sync path",
+        "focus": [
+          "git",
+          "repo",
+          "ctrl",
+          "k8s"
+        ],
+        "note": "The Repo Server pulls manifests from Git and the Application Controller applies them to the cluster."
+      },
+      {
+        "id": "api-hub",
+        "label": "API Server hub",
+        "focus": [
+          "ui",
+          "dex",
+          "api",
+          "redis",
+          "ctrl"
+        ],
+        "note": "Web UI and Dex SSO requests converge on the API Server; state is cached in Redis."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repository",
+      "sublabel": "manifest source",
+      "pos": [
+        30,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Web UI",
+      "sublabel": "argocd UI",
+      "pos": [
+        240,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dex",
+      "type": "security",
+      "label": "Dex",
+      "sublabel": "SSO (OIDC)",
+      "pos": [
+        660,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "central hub",
+      "pos": [
+        450,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "repo",
+      "type": "backend",
+      "label": "Repo Server",
+      "sublabel": "manifest generation",
+      "pos": [
+        240,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Application Controller",
+      "sublabel": "reconciliation",
+      "pos": [
+        660,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis Cache",
+      "sublabel": "cache",
+      "pos": [
+        240,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "external",
+      "label": "Kubernetes Cluster",
+      "sublabel": "target cluster",
+      "pos": [
+        920,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ArgoCD",
+      "wraps": [
+        "ui",
+        "dex",
+        "api",
+        "repo",
+        "ctrl",
+        "redis"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-to-repo",
+      "from": "git",
+      "to": "repo",
+      "label": "sync",
+      "variant": "emphasis"
+    },
+    {
+      "id": "repo-to-ctrl",
+      "from": "repo",
+      "to": "ctrl",
+      "label": "manifests",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-to-k8s",
+      "from": "ctrl",
+      "to": "k8s",
+      "label": "apply",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ui-to-api",
+      "from": "ui",
+      "to": "api",
+      "label": "HTTPS",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dex-to-api",
+      "from": "dex",
+      "to": "api",
+      "label": "SSO",
+      "variant": "security"
+    },
+    {
+      "id": "api-to-ctrl",
+      "from": "api",
+      "to": "ctrl",
+      "label": "status"
+    },
+    {
+      "id": "api-to-redis",
+      "from": "api",
+      "to": "redis",
+      "label": "cache",
+      "variant": "dashed"
+    }
+  ]
+}

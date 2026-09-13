@@ -64,11 +64,15 @@ ClickHouse는 OLAP(Online Analytical Processing) 워크로드에 최적화된 �
 
 ### ClickHouse 클러스터 아키텍처
 
-![수집기가 Kafka를 거쳐 3개 샤드(각 2개 레플리카)로 구성된 ClickHouse 클러스터에 로그를 적재하고, ZooKeeper/Keeper가 샤드 간 복제를 조정하며, 데이터가 EBS(Hot)에서 S3(Cold)로 이동하고 Grafana/Superset이 클러스터를 조회하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-04-clickhouse-0.svg)
+![수집기가 Kafka Topic을 거쳐 3개 샤드(각 2개 레플리카)로 구성된 ClickHouse 클러스터에 로그를 적재하고, ZooKeeper/Keeper가 샤드별 레플리카 복제를 조정하며, 데이터가 EBS(Hot)에서 S3(Cold)로 이동하고 Grafana/Superset이 클러스터를 조회하는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-logging-04-clickhouse-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-04-clickhouse-0.html)
 
 ### 데이터 흐름
 
-![애플리케이션이 생성한 로그가 FluentBit와 Kafka를 거쳐 ClickHouse의 MergeTree 테이블에 저장되고, TTL 정책에 따라 일정 시간이 지나면 S3 Cold 스토리지로 이동하는 순서를 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-04-clickhouse-1.svg)
+![애플리케이션이 생성한 로그가 FluentBit와 Kafka를 거쳐 ClickHouse의 MergeTree 테이블에 저장되고, TTL 정책에 따라 일정 시간이 지나면 S3 Cold 스토리지로 이동하는 순서를 보여준다.](../../.gitbook/assets/ko-observability-logging-04-clickhouse-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-04-clickhouse-1.html)
 
 ***
 

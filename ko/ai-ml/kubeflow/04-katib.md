@@ -1,90 +1,102 @@
 # Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML
 
-> **지원 버전**: Katib 0.19.0, Kubeflow Community Distribution 26.03
-> **마지막 업데이트**: 2026년 8월 19일
+> **지원 버전**: Katib 0.19.0, Kubeflow Community Distribution 26.03.1
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 실습 환경 준비
 
-이 문서의 예제를 따라 하려면 다음 도구와 환경이 필요합니다.
-
-### 필요한 도구
-
-* Kubeflow가 설치된 클러스터를 가리키는 kubectl v1.34 이상 (설치 과정은 Part 1 참고)
-* Experiment를 제출할 수 있는 Kubeflow Central Dashboard의 사용자 Profile(네임스페이스) 접근 권한
-* GPU 기반 Trial을 실행할 계획이라면 [Karpenter](../../autoscaling/02-karpenter.md)로 구성한 GPU 지원 `NodePool`/`EC2NodeClass` 조합
-* `trialTemplate`에서 참조할 동작하는 학습 잡 템플릿 (예: Part 5의 `TrainJob`/`ClusterTrainingRuntime` 조합, 또는 평범한 Kubernetes `Job`)
+Katib 0.19.0 컨트롤러·DB manager·저장소, 필요한 Suggestion 이미지, Experiment를 생성할 네임스페이스 권한이 필요합니다. 전체 Kubeflow 설치의 Profile과 standalone 접근 모델은 구분하세요. GPU 용량은 선택 사항이며 Karpenter는 공급 방법 중 하나입니다.
 
 ## Katib이란 무엇인가
 
-앞선 시리즈에서는 Kubeflow의 노트북과 파이프라인 레이어를 다뤘습니다. 이번 문서는 Kubeflow의 Kubernetes 네이티브 하이퍼파라미터 튜닝/AutoML 컴포넌트인 **Katib**을 다룹니다. Katib은 "학습률, 배치 크기, 네트워크 깊이를 어떻게 잡아야 할까?"라는 질문을 사람이 수동으로 값을 바꿔가며 실행-확인을 반복하는 루프가 아니라, 선언적으로 정의하고 클러스터가 스케줄링하는 탐색으로 바꿔줍니다. 이는 별도의 스케줄러를 새로 만든 것이 아니라, Custom Resource·Pod·Service 같은 평범한 Kubernetes 오브젝트를 조합해서 구현됩니다.
+Katib은 하이퍼파라미터 최적화(HPO)와 신경망 구조 탐색(NAS)을 지원합니다. `Experiment`가 목표·탐색 공간·알고리즘·Trial 템플릿을 정의하고, `Suggestion`과 알고리즘 서비스가 후보를 제안하며, `Trial`은 후보 하나의 실행을 관리합니다. 후보 선택이 과거 결과를 활용하는 방식은 알고리즘마다 다릅니다.
 
-Katib은 서로 다른 하이퍼파라미터 조합으로 여러 학습 잡을 병렬로 실행하고, 그 결과를 바탕으로 다음에 어떤 조합을 시도할지 결정하는 방식으로 하이퍼파라미터 최적화(HPO)와 신경망 구조 탐색(NAS)을 자동화합니다. 이를 위해 서로 협력하는 세 가지 요소로 구성됩니다.
+이들은 CRD로 정의된 **커스텀 리소스 객체**이며 실행마다 새 CRD를 설치하는 것은 아닙니다. Trial 컨트롤러는 설정된 Job 리소스를 만들고, 해당 Job 컨트롤러와 Kubernetes 스케줄러가 실제 Pod 생성·노드 배치를 담당합니다. 0.19.0 기본 trialResources에는 `TrainJob.v1alpha1.trainer.kubeflow.org`, Kubernetes Job과 레거시 학습 Job 종류가 포함됩니다. 실제 Trainer API, runtime, 권한, 성공·실패 조건과 collector 대상 Pod/컨테이너를 맞춰야 하며 자동 호환을 가정해서는 안 됩니다.
 
-* **Experiment** — 하나의 튜닝 실행을 기술하는 CRD입니다. 최적화할 목표(objective), 하이퍼파라미터 탐색 공간, 사용할 탐색 알고리즘, 그리고 학습 잡 하나를 실행하는 방법을 담은 템플릿을 정의합니다.
-* **Trial** — Katib 컨트롤러가 생성하는 CRD로, 특정 하이퍼파라미터 조합 하나로 실행되는 단일 학습 실행을 나타냅니다. `maxTrialCount: 50`으로 설정된 Experiment는 전체 수명 동안 최대 50개의 Trial을 만들어냅니다.
-* **Suggestion** — 탐색 알고리즘을 구현하는 서비스(역시 CRD로 뒷받침됩니다)입니다. 완료되었거나 진행 중인 Trial들의 결과를 받아 다음에 시도할 하이퍼파라미터 조합을 제안합니다.
-
-이들의 관계는 계층적입니다. 하나의 Experiment가 여러 Trial을 소유하고, 각 Trial은 실제 학습 잡(Kubernetes `Job`, 또는 Kubeflow Trainer와 연동될 경우 `TrainJob`과 같은 학습 잡 리소스 — Part 5 참고)을 소유하며, 이 잡은 다른 워크로드와 마찬가지로 Kubernetes가 스케줄링하고 실행합니다. 모든 것이 CRD이기 때문에 `kubectl get experiments`, `kubectl get trials`, 이들에 대한 `kubectl describe`는 Deployment나 Job에 대해 쓰는 것과 완전히 동일하게 동작합니다 — 상태를 확인하기 위한 별도의 CLI나 UI가 필요하지 않지만, Kubeflow Central Dashboard에 포함된 Katib UI를 쓰면 Trial 진행 상황과 메트릭 곡선을 시각적으로 볼 수 있습니다.
+`kubectl get experiments.kubeflow.org`와 `kubectl get trials.kubeflow.org`로 상태를 볼 수 있습니다. 같은 이름의 KFP Experiment API와는 다른 리소스입니다.
 
 ## 탐색 알고리즘
 
-Katib은 Suggestion 서비스를 통해 노출되는 플러그형 탐색 알고리즘 여러 개를 기본으로 제공합니다. 각 알고리즘은 "지금까지의 결과를 바탕으로 다음 Trial(들)은 무엇을 시도해야 하는가?"라는 동일한 질문에 서로 다른 전략과, 탐색 비용과 탐색 효율성 사이의 서로 다른 트레이드오프로 답합니다.
+알고리즘 이름은 설치된 KatibConfig와 Suggestion 이미지에 맞아야 합니다. 0.19.0의 기본 설정에는 다음 항목이 포함됩니다.
 
-| 알고리즘 | 적합한 상황 | 개념적 동작 방식 |
-|---|---|---|
-| **랜덤 탐색(Random search)** | 저렴한 베이스라인이 필요할 때, 또는 탐색 공간이 매우 크거나 잘 파악되지 않았을 때 | 정의된 탐색 공간에서 하이퍼파라미터 조합을 독립적으로, 균등한 무작위로 샘플링합니다. 과거 Trial에 대한 기억이 없습니다. |
-| **그리드 탐색(Grid search)** | 차원이 낮고 작은 탐색 공간에서 전체 탐색이 감당 가능할 때 | 각 하이퍼파라미터에 지정된 이산 값들의 모든 조합을 나열합니다. 전체 커버리지를 보장하지만 파라미터 수에 따라 조합 수가 기하급수적으로 늘어납니다. |
-| **베이지안 최적화(Bayesian optimization)** | 학습 비용이 큰 모델에서 각 Trial의 비용이 중요하고, 정보에 기반한 샘플링이 이득이 될 때 | 하이퍼파라미터가 목표 메트릭에 어떻게 매핑되는지에 대한 확률 모델을 만들고, 이 모델을 이용해 지금까지 관찰된 최고 결과를 개선할 가능성이 가장 높은 다음 지점(들)을 고릅니다. 많은 워크로드에서 랜덤 탐색보다 더 적은 Trial 수로 수렴하지만, 제안 사이에 순차적 의존성이 다소 생깁니다. |
-| **Hyperband** | "이 설정이 초반부터 유망해 보이는가?"라는 신호가 저렴하고 유용한 정보인 워크로드(예: 몇 epoch 만에 드러나는 loss 곡선) | 작은 리소스 예산으로 많은 설정을 동시에 실행하고, 성적이 가장 나쁜 것들을 적극적으로 걸러낸 뒤 남은 예산을 살아남은 설정들에 더 오래 재할당합니다. 설정별로 낱낱이 정보를 얻는 대신 조기 가지치기를 택하는 방식입니다. |
-| **CMA-ES 및 기타 고급 전략** | 연속적이고 차원이 높은 탐색 공간, 또는 population-based training처럼 집단(population) 방식 탐색이 유리한 워크로드 | 여러 세대에 걸쳐 후보 설정들의 집단(또는 분포)을 진화시키며, 어떤 후보가 좋은 성과를 냈는지에 따라 샘플링 분포를 적응시킵니다. 단순 샘플링보다는 진화/최적화 알고리즘에 개념적으로 더 가깝습니다. |
+| 이름 | 전략과 조건 |
+| --- | --- |
+| `random` | 지정된 탐색 공간·분포의 샘플링. 모든 파라미터가 반드시 균등 분포인 것은 아님 |
+| `grid` | 유한한 조합 탐색. 목표 도달·실패·Trial 제한으로 전체를 실행하지 못할 수 있음 |
+| `bayesianoptimization`, `tpe`, `multivariate-tpe` | 관측값으로 후보를 고르는 서로 다른 모델 기반 전략. 적은 Trial로 최적화된다는 보장은 없음 |
+| `hyperband` | 여러 자원 예산과 successive halving을 이용한 탐색. 학습 코드의 예산 파라미터와 호환 필요 |
+| `cmaes`, `sobol` | 각각 공분산 적응 진화 전략과 저불일치 샘플링. 동일한 알고리즘이 아님 |
+| `pbt` | population-based training. checkpoint 공유 등 별도 요구사항이 있으며 CMA-ES와 다름 |
+| `enas`, `darts` | 구조 탐색용 알고리즘; 일반 HPO와 템플릿·의존성이 다름 |
 
-어떤 알고리즘을 선택할지는 각 Trial의 비용과 탐색 공간이 가진 구조에 따라 달라집니다. 랜덤 탐색은 베이스라인을 잡기에 합리적인 기본값이고, 베이지안 최적화와 Hyperband는 Trial 하나를 학습시키는 비용이 커서 전체 Trial 수를 줄이는 것이 실질적으로 중요해질 때 더 흔히 선택됩니다.
+PBT 가이드는 RWX 볼륨과 `resumePolicy: FromVolume`을 요구합니다. 단순히 알고리즘 이름만 바꿔 모든 학습 코드를 재사용할 수 있는 것은 아닙니다.
 
 ## Experiment 스펙의 구조
 
-Experiment의 스펙에서 튜닝 실행의 동작 방식을 좌우하는 핵심 부분은 세 가지입니다.
+| 필드 | 의미 |
+| --- | --- |
+| `objective` | 메트릭 이름, maximize/minimize, 선택적 목표값 |
+| `parameters` | double/int/discrete/categorical과 허용 범위·목록·분포 |
+| `algorithm` | 실제 설치된 Suggestion 알고리즘과 설정 |
+| `trialTemplate` | trialParameters 치환과 Job 스펙, primary container/Pod 선택, 성공·실패 조건 |
+| `parallelTrialCount` | 동시 처리 Trial 수. Pod·GPU·EC2 수와 동일하지 않음 |
+| `maxTrialCount` | 완료 Trial 수에 따른 종료 기준. 성공한 학습 수나 고정된 평생 비용 상한이 아님 |
+| `maxFailedTrialCount` | 실패와 메트릭 미확보 Trial을 포함한 실패 종료 기준 |
+| `metricsCollectorSpec` / `earlyStopping` | 메트릭 보고 방식과 별도 조기 종료 설정 |
 
-* **`objective`** — 최적화할 메트릭(예: `accuracy`, `loss`)과 목표(`maximize` 또는 `minimize`)를 지정합니다. 목표값에 도달하면 Experiment를 "충분히 좋다"고 판단해 조기에 종료하는 데 쓸 수 있는 선택적 목표값도 함께 지정할 수 있습니다.
-* **`parameters`** — 탐색 공간입니다. 하이퍼파라미터마다 이름, 타입, 그리고 연속 범위(최소/최대값, 학습률 같은 값에 적합) 또는 이산 값 목록(옵티마이저 선택이나 카테고리형 아키텍처 플래그 같은 값에 적합) 중 하나를 지정합니다.
-* **`trialTemplate`** — 각 Trial의 실제 학습 잡을 어떻게 만들지 기술합니다. 기반이 되는 잡 스펙 템플릿에, Suggestion 서비스가 그 Trial을 위해 제안한 구체적인 하이퍼파라미터 값으로 치환되는 플레이스홀더가 들어갑니다. 요즘 Kubeflow 배포에서는 이 템플릿이 흔히 **Kubeflow Trainer**(Part 5에서 자세히 다룹니다)가 관리하는 학습 잡 리소스를 가리킵니다 — 여기서 Katib의 역할은 분산 학습 잡을 어떻게 실행할지를 다시 구현하는 것이 아니라, *어떤 값을* 주입할지 결정하는 것입니다.
+목표 달성, 최대 완료 수, Suggestion 소진으로 성공 종료할 수 있고 실패 제한이나 Suggestion 오류로 실패할 수 있습니다. 상태 판정의 완료 수에는 성공·실패·강제 종료·조기 종료·메트릭 미확보가 포함됩니다. 재시작 정책이나 스펙 변경도 수명에 영향을 주므로 `maxTrialCount`를 불변의 전체 생성 상한이나 비용 한도로 해석하지 마세요.
 
-탐색이 무엇을 찾을지가 아니라 어떻게 실행될지를 좌우하는 필드도 두 가지 더 있습니다.
+`Succeeded`는 제어 루프의 종료 상태이며 모델 품질을 인증하지 않습니다. `status.currentOptimalTrial`은 수집된 관측값 중 현재 최적 결과이고, 메트릭을 얻지 못했다면 쓸 수 있는 최적 모델이 없을 수도 있습니다.
 
-* **`parallelTrialCount`** — 동시에 실행될 수 있는 Trial 수입니다.
-* **`maxTrialCount`** — 목표 메트릭 값에 도달했는지와 무관하게, Experiment가 멈추기 전까지 전체 수명 동안 실행할 Trial의 총 개수입니다.
+## 조기 종료와 0.19.0의 medianstop 구현
 
-## 조기 종료(Early Stopping)
+조기 종료는 진행 중인 Trial을 평가해 중단할 수 있습니다. 공식 가이드는 `StdOut`/`File` collector와 타임스탬프가 있는 로그를 요구합니다. 다른 collector나 임의의 학습 루프에도 그대로 적용된다고 가정하지 마세요. 기본 설정은 `min_trials_required=3`, `start_step=4`입니다.
 
-모든 Trial이 끝까지 완료돼야만 "이건 이길 가능성이 없다"는 것을 알 수 있는 건 아닙니다. Katib은 **조기 종료**를 지원해서, 학습 중간에 명백히 성적이 나쁜 Trial을 전체 리소스 할당량을 다 쓰기 전에 종료할 수 있습니다. 흔히 쓰이는 방식은 **median-stopping rule**로, 학습의 특정 시점에서 한 Trial의 중간 목표 값을 같은 시점의 다른 Trial들의 중간 값 중앙값과 비교합니다. 만약 의미 있게 뒤처진다면, 어차피 경쟁력 없을 가능성이 큰 결과를 위해 끝까지 실행시키는 대신 그 Trial을 중단시킵니다.
+**이 버전은 설명과 구현을 구분해야 합니다.** 공식 문서는 완료 Trial의 running average에 대한 중앙값 규칙을 설명합니다. 그러나 v0.19.0의 `get_median_value`는 성공 Trial별 처음 start_step개 관측값의 평균을 저장한 뒤, 저장된 평균값들의 **산술평균**을 반환합니다. 로컬에서 수정하지 않은 함수를 실행했을 때 `[1, 2, 100]`은 중앙값 2가 아니라 약 34.333의 임계값을 만들었습니다. 알고리즘 이름만으로 통계적 중앙값 계산을 보장하면 안 됩니다.
 
-조기 종료와 Hyperband 같은 알고리즘은 서로 관련된 문제, 즉 "어디로도 가지 못하는 학습에 컴퓨트를 낭비하지 않는 것"을 다루지만, 서로 다른 층위에서 작동합니다. Hyperband는 각 설정에 처음부터 얼마의 예산을 줄지 결정하는 *탐색 전략*이고, 조기 종료는 이미 진행 중인 Trial에 대해 다른 Trial들과 비교해 진행 상황이 어떤지를 기준으로 적용되는 *실행 중 판단*입니다.
+Hyperband의 예산 배분과 이 조기 종료 서비스는 별도 설정·실행 경로입니다. 중단이 유망한 후보를 제거할 가능성과 메트릭 형식·주기·예산 파라미터의 영향을 검증하세요.
 
 ## Experiment의 전체 실행 흐름
 
-![Experiment CRD가 생성되면 Katib 컨트롤러가 Suggestion 서비스를 만들고, 이 서비스가 반복적으로 하이퍼파라미터 조합을 제안해 여러 Trial 학습 잡을 실행시키며, 각 Trial의 메트릭 사이드카가 결과를 다시 Suggestion 서비스로 보고하는 루프를 돌다가 종료 조건이 충족되면 Experiment가 Succeeded 상태가 되고 최적 결과가 status에 기록되는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-ai-ml-kubeflow-04-katib-0.svg)
+![Experiment와 Suggestion이 후보를 만들고 Trial Job의 메트릭이 DB manager로 보고되는 제어 루프. 종료는 목표·완료 수·실패 조건에 따라 달라집니다.](../../.gitbook/assets/ko-ai-ml-kubeflow-04-katib-0.png)
 
-전체 루프는 다음과 같습니다. Katib 컨트롤러가 Experiment를 리컨사일하고 요청된 알고리즘용 Suggestion 서비스를 시작합니다. Suggestion 서비스는 (`parallelTrialCount`로 제한된 개수만큼) 하나 이상의 하이퍼파라미터 조합을 제안합니다. 컨트롤러는 각각에 대해 Trial CRD(및 그 하위의 학습 잡)를 생성합니다. Trial들이 결과를 보고하면 그 결과는 다시 Suggestion 서비스로 피드백되어 다음 라운드의 제안에 반영됩니다. 이 루프는 `maxTrialCount`에 도달하거나 목표(objective)의 목표값이 충족될 때까지 계속됩니다. 이 과정 전체에서 Experiment의 상태는 지금까지 관찰된 최고 성과 Trial로 계속 갱신되고, Experiment가 완료되면 그 최고 Trial의 하이퍼파라미터와 메트릭 값이 최종 결과로 기록됩니다.
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-kubeflow-04-katib-0.html)
+
+Experiment 컨트롤러는 Suggestion 리소스를 통해 후보를 요청하고 Trial 객체를 만듭니다. Trial 컨트롤러와 학습 Job 컨트롤러가 실행을 진행하며 메트릭이 DB manager로 보고됩니다. 알고리즘은 지원하는 방식으로 결과를 활용합니다. 성공·실패 조건과 실제 하위 Job의 잔존 여부를 함께 확인해야 하며, 최적 하이퍼파라미터가 곧 배포 가능한 모델 아티팩트인 것은 아닙니다.
 
 ## 메트릭 수집
 
-학습 잡은 그 자체로는 자신이 Katib Experiment의 일부라는 사실을 알지 못하므로, Katib은 각 Trial의 Pod에서 목표 메트릭을 끌어낼 방법이 필요합니다. 이는 학습 컨테이너와 함께 Trial Pod에 주입되는 **메트릭 수집(metrics-collector) 사이드카**를 통해 이루어집니다. 이 사이드카의 역할은 학습 컨테이너의 출력을 관찰하는 것입니다 — 보통은 stdout/로그 파일을 인식 가능한 메트릭 패턴으로 tail하거나, 학습 코드가 노출하는 메트릭 엔드포인트를 스크래핑하는 방식으로 — 그리고 파싱된 목표 메트릭 값을 Katib의 메트릭 저장소로 보고합니다.
+| 방식 | 설정과 조건 |
+| --- | --- |
+| `StdOut` | 기본 pull 방식. 지정된 primary container의 로그 형식에서 메트릭 추출 |
+| `File` | TEXT 또는 줄별 JSON 파일, 경로·필터 설정 필요 |
+| `TensorFlowEvent` | 이벤트 파일 디렉터리에서 수집. 호환되는 TensorBoard writer도 가능 |
+| `Custom` | 사용자가 collector 컨테이너와 동작을 구현. 임의 HTTP scrape는 기본 내장 방식이 아님 |
+| `Push` | 학습 코드가 SDK `report_metrics()`로 DB manager에 전송. collector 사이드카가 항상 필요한 것은 아님 |
 
-이 사이드카 패턴 덕분에 학습 코드 자체는 대체로 Katib에 대해 알 필요가 없습니다. 이미 매 epoch마다 정확도나 loss를 파싱 가능한 형식으로 출력하는 학습 스크립트라면, Katib과 연동하기 위해 다시 작성할 필요가 없습니다 — 추출은 수집기가 대신 해줍니다. 또한 수집 전략(로그 파싱 vs. 엔드포인트 스크래핑)의 선택은 Katib이 중간 진행 상황을 얼마나 신뢰성 있고 얼마나 자주 관찰할 수 있는지에 영향을 주며, 이는 다시 조기 종료나 Hyperband 방식 알고리즘이 그 진행 상황을 얼마나 잘 활용할 수 있는지에 영향을 줍니다.
+Pull collector 주입에는 네임스페이스의 `katib.kubeflow.org/metrics-collector-injection: enabled`, 동작하는 webhook과 적절한 대상 Pod/컨테이너 선택이 필요합니다. 분산 학습은 어느 rank가 메트릭을 보고하는지 정해야 합니다. 메트릭 이름, 숫자 형식, 타임스탬프, 네트워크·정책을 검증하세요. 학습 Job 성공만으로 메트릭 확보가 보장되지는 않습니다.
 
-## EKS에서 Katib Experiment를 돌릴 때: 리소스 압박
+## EKS에서의 용량과 비용
 
-Katib의 동시성 설정 값들은 클러스터 용량과 직접적으로 상호작용하는데, 고정되고 여유 있게 프로비저닝된 온프레미스 클러스터보다 EKS에서 이 상호작용이 더 중요하게 작용합니다.
+수요는 대략 **동시 Trial 수 × Trial당 Pod 수 × Pod당 자원**에 collector·Suggestion·DB 등의 오버헤드를 더한 값입니다. 예를 들어 Trial당 2 Pod가 각각 GPU 4개를 요청하면 parallelTrialCount 8은 최대 64 GPU 수요이며 8 GPU가 아닙니다.
 
-* **`parallelTrialCount`는 리소스 수요를 그대로 곱해버립니다.** 동시에 실행되는 Trial 하나하나가 완전한 학습 잡입니다 — 개별 Trial이 GPU를 요청한다면, `parallelTrialCount`가 8이라는 것은 8개의 GPU 요청이 시간에 걸쳐 분산되는 게 아니라 한꺼번에 클러스터를 때린다는 뜻입니다. 종이 위로는 소박해 보이는 Experiment(`maxTrialCount: 100`)도 `parallelTrialCount`를 높게 잡으면 짧고 뾰족한 수요 스파이크를 만들어낼 수 있습니다.
-* **클러스터 오토스케일링이 이를 따라가야 합니다.** EKS에서는 이런 압박을 보통 [Karpenter](../../autoscaling/02-karpenter.md)가 대기 중인 Trial Pod의 급증에 반응해 새 GPU 노드를 프로비저닝하는 방식으로 흡수합니다. GPU 인스턴스 타입은 범용 인스턴스보다 프로비저닝 소요 시간이 긴 경우가 많아서, `parallelTrialCount`를 높게 잡으면 초기 Trial들이 실제로 학습하지 못하고 노드를 기다리며 대기하는 상태에 머무를 수 있습니다 — Suggestion 알고리즘 자체가 느리다고 단정하기 전에 Trial Pod의 이벤트를 먼저 확인해 볼 가치가 있습니다.
-* **`parallelTrialCount`와 `maxTrialCount`는 따로가 아니라 함께 튜닝해야 합니다.** 같은 총 Trial 수를 더 빨리 끝내기 위해 `parallelTrialCount`를 높게 잡는 것보다, `parallelTrialCount`를 낮추고 Experiment를 더 오래 걸리게 하는 쪽이 공유 클러스터 용량에 더 부담이 적은 경우가 많습니다 — 어느 쪽이 맞는지는 그 클러스터가 이 튜닝 실행을 위해 전용으로 쓰이는지, 다른 워크로드와 공유되는지에 따라 달라집니다.
-* **조기 종료는 낭비되는 비용을 직접 줄여줍니다.** 조기에 종료된 Trial은 그만큼 빨리 GPU 할당을 반환하므로, median-stopping rule(위 "조기 종료(Early Stopping)" 참고)은 단순히 탐색 효율을 높이는 장치가 아니라 EKS에서는 좋은 하이퍼파라미터 조합에 수렴하기까지 튜닝 실행이 소모하는 GPU 시간당 비용을 직접 낮추는 레버이기도 합니다.
+Pending이면 Pod 이벤트와 스케줄링 조건, quota, NodePool/EC2 용량, 드라이버·부팅 상태를 확인하세요. Karpenter가 항상 용량을 공급하거나 높은 동시성이 반드시 전체 실행을 단축한다고 가정할 수 없습니다. 조기 종료로 Pod 자원이 풀려도 노드가 남아 있으면 EC2 비용은 계속 발생할 수 있습니다.
+
+총 Trial 기준, 동시성, Trial 내부 재시도·분산 크기, 종료 시간과 데이터 보존을 함께 설정하세요. 작은 CPU 예제로 메트릭 수집·종료를 확인한 뒤 GPU 규모를 늘리는 편이 원인 분리에 유리합니다.
+
+## 검증과 근거
+
+v0.19.0 설정·컨트롤러·API·collector 경로와 medianstop 소스를 검토했습니다. 수정하지 않은 medianstop 함수를 로컬에서 사전 입력한 성공 이력으로 실행하고 네트워크 호출을 차단했습니다. Experiment나 GPU를 실제 실행한 결과는 아닙니다.
+
+- [0.19.0 기본 KatibConfig](https://github.com/kubeflow/katib/blob/v0.19.0/manifests/v1beta1/installs/katib-standalone/katib-config.yaml)
+- [Experiment 상태 판정](https://github.com/kubeflow/katib/blob/v0.19.0/pkg/controller.v1beta1/experiment/util/status_util.go)
+- [medianstop 구현](https://github.com/kubeflow/katib/blob/v0.19.0/pkg/earlystopping/v1beta1/medianstop/service.py)
+- [메트릭 수집 가이드](https://www.kubeflow.org/docs/components/katib/user-guides/metrics-collector/)
+- [조기 종료 가이드](https://www.kubeflow.org/docs/components/katib/user-guides/early-stopping/)
 
 ## 다음 단계
 
-Katib은 하이퍼파라미터 탐색을 Kubernetes 네이티브 제어 루프로 바꿔줍니다. Experiment가 목표와 탐색 공간을 기술하고, Suggestion 서비스가 플러그형 탐색 알고리즘을 이용해 하이퍼파라미터 조합을 제안하고, Trial들이 그 조합을 평범한 학습 잡으로 실행하고, 메트릭 수집 사이드카가 결과를 다시 보고해서 탐색이 최적의 설정으로 수렴하도록 합니다. EKS에서 실질적으로 다뤄야 할 레버는 `parallelTrialCount`/`maxTrialCount`를 오토스케일링 용량과 맞춰 조율하는 것입니다 — 특히 GPU 기반 Trial의 경우, 튜닝 실행의 동시성이 클러스터가 실제로 노드를 프로비저닝할 수 있는 속도를 앞지르지 않도록 해야 합니다.
-
-Part 5에서는 Katib의 `trialTemplate`이 각 Trial의 분산 학습 잡을 실행하기 위해 흔히 위임하는 대상인 **Kubeflow Trainer**를 다룹니다.
+[Part 5: Trainer](05-training-operator.md)에서 분산 학습 API와 런타임을 살펴봅니다.
 
 [메인 페이지로 돌아가기](./README.md)
 

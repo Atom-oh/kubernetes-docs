@@ -20,7 +20,9 @@
 
 Modern observability consists of three core pillars:
 
-![Architecture diagram showing metrics, logs, and traces feeding a shared alert-rules engine that notifies and escalates to responders.](../../../assets/diagrams/rendered/en-observability-alerting-readme-0.svg)
+![Architecture diagram showing metrics, logs, and traces feeding a shared alert-rules engine that notifies and escalates to responders.](../../.gitbook/assets/en-observability-alerting-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-0.html)
 
 - **Metrics**: Quantitative state of the system (CPU, memory, request count, etc.)
 - **Logs**: Detailed records of events
@@ -52,7 +54,9 @@ Modern observability consists of three core pillars:
 
 Alerts go through the following lifecycle:
 
-![State machine showing an alert moving from inactive through pending, firing, notification, and acknowledgment to resolution, with early-return paths back to inactive.](../../../assets/diagrams/rendered/en-observability-alerting-readme-1.svg)
+![State machine showing an alert moving from inactive through pending, firing, notification, and acknowledgment to resolution, with early-return paths back to inactive.](../../.gitbook/assets/en-observability-alerting-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-1.html)
 
 ### 1. Detection
 
@@ -89,7 +93,9 @@ groups:
 - **Severity-based**: Different escalation paths based on severity
 - **Automatic escalation**: Automatic escalation according to defined rules
 
-![Flowchart showing an alert escalating every 15 minutes from the primary on-call through secondary and team-lead responders to a full-team page, until any responder acts.](../../../assets/diagrams/rendered/en-observability-alerting-readme-2.svg)
+![Flowchart showing an alert escalating every 15 minutes from the primary on-call through secondary and team-lead responders to a full-team page, until any responder acts.](../../.gitbook/assets/en-observability-alerting-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-2.html)
 
 ### 4. Resolution
 
@@ -121,7 +127,9 @@ Runbook: https://wiki.company.com/db-connection-exhausted
 
 Too many alerts can cause important alerts to be missed.
 
-![Two reinforcing cycles: a vicious cycle where excessive alerts get ignored and cause missed incidents that add even more alerts, alongside a prevention cycle where refining alerts into better thresholds and grouping is sustained by regular review.](../../../assets/diagrams/rendered/en-observability-alerting-readme-3.svg)
+![Two reinforcing cycles: a vicious cycle where excessive alerts get ignored and cause missed incidents that add even more alerts, alongside a prevention cycle where refining alerts into better thresholds and grouping is sustained by regular review.](../../.gitbook/assets/en-observability-alerting-readme-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-3.html)
 
 **Alert fatigue prevention strategies:**
 
@@ -195,7 +203,9 @@ annotations:
 
 Alerts should be delivered to appropriate receivers based on various criteria:
 
-![Architecture diagram grouping Amazon EKS alerting targets into four areas: control plane (API server, etcd, scheduler/controller manager), data plane (node, pod, container status), networking (VPC CNI, Service/Ingress, CoreDNS), and storage (EBS/EFS CSI, PV/PVC).](../../../assets/diagrams/rendered/en-observability-alerting-readme-4.svg)
+![Architecture diagram grouping Amazon EKS alerting targets into four areas: control plane (API server, etcd, scheduler/controller manager), data plane (node, pod, container status), networking (VPC CNI, Service/Ingress, CoreDNS), and storage (EBS/EFS CSI, PV/PVC).](../../.gitbook/assets/en-observability-alerting-readme-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
 
 ### Routing Tree Design
 
@@ -255,7 +265,13 @@ Set up time-based escalation policies to ensure alerts are not ignored:
 
 On-call refers to a designated responder responsible for system issues during a specified period.
 
-![Flowchart showing an alert routed first by severity to a phone, PagerDuty, Slack, or email channel, then, for the three actionable severities, routed again by owning team to SRE, dev, DBA, or security.](../../../assets/diagrams/rendered/en-observability-alerting-readme-5.svg)
+![Gantt chart showing four SRE engineers each taking a sequential seven-day on-call shift over four weeks.](../../.gitbook/assets/en-observability-alerting-readme-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
+
+![Flowchart showing an alert routed first by severity to a phone, PagerDuty, Slack, or email channel, then, for the three actionable severities, routed again by owning team to SRE, dev, DBA, or security.](../../.gitbook/assets/en-observability-alerting-readme-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
 
 ### On-Call Best Practices
 
@@ -279,7 +295,9 @@ On-call refers to a designated responder responsible for system issues during a 
 
 ### EKS-Specific Alerting Areas
 
-![Flowchart guiding the choice of an alerting solution: whether on-call management is needed, then AWS-native preference or budget, ending at CloudWatch Alarms, Alertmanager, Grafana OnCall, PagerDuty, or OpsGenie.](../../../assets/diagrams/rendered/en-observability-alerting-readme-6.svg)
+![Flowchart guiding the choice of an alerting solution: whether on-call management is needed, then AWS-native preference or budget, ending at CloudWatch Alarms, Alertmanager, Grafana OnCall, PagerDuty, or OpsGenie.](../../.gitbook/assets/en-observability-alerting-readme-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-6.html)
 
 ### Alerting Strategy by Layer
 
@@ -418,8 +436,6 @@ EKS integrates with various AWS services, so alerts for these are also needed:
 
 ### Solution Selection Guide
 
-![Architecture diagram of a hybrid alerting pipeline: Prometheus and CloudWatch feed Alertmanager, which routes to Grafana OnCall and PagerDuty for on-call management, fanning out to Slack, email, and SMS notification channels.](../../../assets/diagrams/rendered/en-observability-alerting-readme-7.svg)
-
 #### Recommended Solutions by Situation
 
 1. **Small team, cost-conscious**: Alertmanager + Slack
@@ -432,7 +448,9 @@ EKS integrates with various AWS services, so alerts for these are also needed:
 
 Most production environments use a combination of solutions:
 
-![Gantt chart showing four SRE engineers each taking a sequential seven-day on-call shift over four weeks.](../../../assets/diagrams/rendered/en-observability-alerting-readme-8.svg)
+![Architecture diagram of a hybrid alerting pipeline: Prometheus and CloudWatch feed Alertmanager, which routes to Grafana OnCall and PagerDuty for on-call management, fanning out to Slack, email, and SMS notification channels.](../../.gitbook/assets/en-observability-alerting-readme-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
 
 **Recommended Architecture:**
 

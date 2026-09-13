@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "flagd placement on Kubernetes",
+    "locale": "en",
+    "output": "en-gitops-05-feature-flags-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "sidecar-path",
+        "label": "Sidecar mode",
+        "focus": [
+          "flagsrc",
+          "sidecar",
+          "app"
+        ],
+        "note": "RPC placement: the application calls flagd in its own Pod."
+      },
+      {
+        "id": "standalone-path",
+        "label": "Standalone mode",
+        "focus": [
+          "flagsrc",
+          "flagd-deploy",
+          "svc-a",
+          "svc-b",
+          "svc-c"
+        ],
+        "note": "Shared flagd serves calls behind a Service; in-process evaluation is a separate choice."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "flagsrc",
+      "type": "external",
+      "label": "Flag sources",
+      "sublabel": "CRs · files · sync APIs",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "flagd sidecar",
+      "sublabel": "same pod · localhost",
+      "pos": [
+        340,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "OpenFeature SDK",
+      "pos": [
+        600,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "flagd-deploy",
+      "type": "backend",
+      "label": "Shared flagd",
+      "sublabel": "Service + Deployment",
+      "pos": [
+        340,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "frontend",
+      "label": "Service A",
+      "sublabel": "OpenFeature SDK",
+      "pos": [
+        860,
+        300
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "frontend",
+      "label": "Service B",
+      "sublabel": "OpenFeature SDK",
+      "pos": [
+        860,
+        400
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "frontend",
+      "label": "Service C",
+      "sublabel": "OpenFeature SDK",
+      "pos": [
+        860,
+        500
+      ],
+      "size": [
+        160,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Sidecar mode",
+      "wraps": [
+        "sidecar",
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Standalone mode",
+      "wraps": [
+        "flagd-deploy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Application pods",
+      "wraps": [
+        "svc-a",
+        "svc-b",
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "src-to-sidecar",
+      "from": "flagsrc",
+      "to": "sidecar",
+      "label": "flag sync",
+      "variant": "dashed"
+    },
+    {
+      "id": "src-to-deploy",
+      "from": "flagsrc",
+      "to": "flagd-deploy",
+      "label": "flag sync",
+      "variant": "dashed"
+    },
+    {
+      "id": "sidecar-to-app",
+      "from": "app",
+      "to": "sidecar",
+      "label": "RPC :8013",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "deploy-to-a",
+      "from": "svc-a",
+      "to": "flagd-deploy",
+      "label": "RPC :8013"
+    },
+    {
+      "id": "deploy-to-b",
+      "from": "svc-b",
+      "to": "flagd-deploy"
+    },
+    {
+      "id": "deploy-to-c",
+      "from": "svc-c",
+      "to": "flagd-deploy"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Flag sources",
+      "items": [
+        "Explicit source and permission settings",
+        "Asynchronous updates; verify freshness"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Sidecar mode",
+      "items": [
+        "One daemon per application Pod",
+        "Local RPC on port 8013"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Standalone mode",
+      "items": [
+        "Operator-owned Flagd Deployment",
+        "Shared Service; scale replicas"
+      ]
+    }
+  ]
+}

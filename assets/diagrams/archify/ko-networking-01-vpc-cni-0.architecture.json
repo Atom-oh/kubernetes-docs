@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VPC CNI 아키텍처",
+    "output": "ko-networking-01-vpc-cni-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ip-allocation",
+        "label": "IP 할당 경로",
+        "focus": [
+          "ipamd",
+          "cni",
+          "pod1",
+          "pod2",
+          "pod3"
+        ],
+        "note": "IPAMD가 사전 확보한 IP를 kubelet이 호출한 CNI Binary가 각 Pod에 할당한다."
+      },
+      {
+        "id": "eni-pool",
+        "label": "ENI와 VPC",
+        "focus": [
+          "eni0",
+          "eni1",
+          "eni2",
+          "vpc"
+        ],
+        "note": "Primary ENI는 노드의 기본 네트워크를, Secondary ENI는 Pod용 추가 IP를 VPC 서브넷에서 공급받는다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "VPC CNI 구성 요소"
+        },
+        "cloud": {
+          "label": "ENI (네트워크 인터페이스)"
+        },
+        "frontend": {
+          "label": "Pod (워크로드)"
+        },
+        "external": {
+          "label": "Amazon VPC"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "ipamd",
+      "type": "backend",
+      "label": "IPAMD",
+      "sublabel": "L-IPAM Daemon",
+      "pos": [
+        210,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "CNI Binary",
+      "sublabel": "kubelet이 호출하는 CNI 플러그인",
+      "pos": [
+        180,
+        150
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "eni0",
+      "type": "cloud",
+      "label": "Primary ENI",
+      "sublabel": "eth0",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "eni1",
+      "type": "cloud",
+      "label": "Secondary ENI 1",
+      "sublabel": "eth1",
+      "pos": [
+        220,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "eni2",
+      "type": "cloud",
+      "label": "Secondary ENI 2",
+      "sublabel": "eth2",
+      "pos": [
+        400,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "frontend",
+      "label": "Pod 1",
+      "pos": [
+        980,
+        40
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "frontend",
+      "label": "Pod 2",
+      "pos": [
+        980,
+        140
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "frontend",
+      "label": "Pod 3",
+      "pos": [
+        980,
+        240
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "external",
+      "label": "Amazon VPC",
+      "sublabel": "VPC 서브넷 · IP 풀",
+      "pos": [
+        220,
+        410
+      ],
+      "size": [
+        200,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EC2 워커 노드",
+      "wraps": [
+        "ipamd",
+        "cni",
+        "eni0",
+        "eni1",
+        "eni2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ipamd-to-cni",
+      "from": "ipamd",
+      "to": "cni",
+      "label": "IP 할당 관리",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "cni-to-pod1",
+      "from": "cni",
+      "to": "pod1",
+      "label": "IP 할당",
+      "variant": "emphasis",
+      "labelSegment": 2
+    },
+    {
+      "id": "cni-to-pod2",
+      "from": "cni",
+      "to": "pod2",
+      "label": "IP 할당",
+      "variant": "emphasis",
+      "labelDx": 90
+    },
+    {
+      "id": "cni-to-pod3",
+      "from": "cni",
+      "to": "pod3",
+      "label": "IP 할당",
+      "variant": "emphasis",
+      "labelSegment": 2
+    },
+    {
+      "id": "eni0-to-vpc",
+      "from": "eni0",
+      "to": "vpc",
+      "label": "기본 네트워크",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eni1-to-vpc",
+      "from": "eni1",
+      "to": "vpc",
+      "label": "추가 IP",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eni2-to-vpc",
+      "from": "eni2",
+      "to": "vpc",
+      "label": "추가 IP",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "IPAMD (L-IPAM Daemon)",
+      "items": [
+        "각 노드에서 실행되는 데몬",
+        "ENI와 IP 주소를 사전 할당하고 관리"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "CNI Binary",
+      "items": [
+        "kubelet이 호출하는 CNI 플러그인",
+        "IPAMD에서 IP를 할당받아 Pod 네트워크 네임스페이스를 설정"
+      ]
+    }
+  ]
+}

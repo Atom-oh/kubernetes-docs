@@ -1,0 +1,364 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "보안 모니터링 및 탐지",
+    "output": "ko-eks-05-eks-security-15.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      620
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "AWS 보안 서비스"
+        },
+        "external": {
+          "label": "K8s 보안 도구"
+        },
+        "security": {
+          "label": "탐지 유형"
+        },
+        "backend": {
+          "label": "위협 탐지 워크플로우"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "aws-signals",
+        "label": "AWS 보안 서비스",
+        "focus": [
+          "guardduty",
+          "securityhub",
+          "cloudwatch",
+          "runtime-network-identity",
+          "config"
+        ],
+        "note": "GuardDuty EKS Protection은 런타임·네트워크·ID 위협을, Security Hub는 구성·ID 보안 상태를 다룬다."
+      },
+      {
+        "id": "k8s-tools",
+        "label": "Kubernetes 보안 도구",
+        "focus": [
+          "falco",
+          "kube-audit",
+          "runtime-network-identity",
+          "config"
+        ],
+        "note": "Falco는 컨테이너 런타임 이상 탐지를, kube-audit는 클러스터 구성 점검을 담당한다."
+      },
+      {
+        "id": "workflow",
+        "label": "위협 탐지 워크플로우",
+        "focus": [
+          "collection",
+          "analysis",
+          "detection",
+          "response",
+          "remediation",
+          "securityhub"
+        ],
+        "note": "수집 → 분석 → 탐지 → 대응 → 해결로 이어지며, 탐지 결과는 Security Hub로 다시 모인다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "runtime-network-identity",
+      "type": "security",
+      "label": "런타임 · 네트워크 · ID 보안",
+      "sublabel": "ID 및 액세스 보안 포함",
+      "pos": [
+        345,
+        40
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "config",
+      "type": "security",
+      "label": "구성 보안",
+      "sublabel": "클러스터 설정 점검",
+      "pos": [
+        845,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "Amazon CloudWatch",
+      "sublabel": "로그 · 지표",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "guardduty",
+      "type": "cloud",
+      "label": "Amazon GuardDuty",
+      "sublabel": "EKS Protection",
+      "pos": [
+        270,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "falco",
+      "type": "external",
+      "label": "Falco",
+      "sublabel": "런타임 이상 탐지",
+      "pos": [
+        500,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "securityhub",
+      "type": "cloud",
+      "label": "AWS Security Hub",
+      "sublabel": "보안 상태 중앙 관리",
+      "pos": [
+        730,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "kube-audit",
+      "type": "external",
+      "label": "kube-audit",
+      "sublabel": "구성 점검",
+      "pos": [
+        960,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "collection",
+      "type": "backend",
+      "label": "데이터 수집",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        360,
+        60
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "backend",
+      "label": "데이터 분석",
+      "pos": [
+        430,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "detection",
+      "type": "backend",
+      "label": "위협 탐지",
+      "pos": [
+        660,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "response",
+      "type": "backend",
+      "label": "대응",
+      "pos": [
+        890,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "remediation",
+      "type": "backend",
+      "label": "문제 해결",
+      "pos": [
+        1120,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "탐지 유형",
+      "wraps": [
+        "runtime-network-identity",
+        "config"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "위협 탐지 워크플로우",
+      "wraps": [
+        "collection",
+        "analysis",
+        "detection",
+        "response",
+        "remediation"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gd-runtime",
+      "from": "guardduty",
+      "to": "runtime-network-identity",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "falco-runtime",
+      "from": "falco",
+      "to": "runtime-network-identity",
+      "label": "런타임",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sh-identity",
+      "from": "securityhub",
+      "to": "runtime-network-identity",
+      "label": "ID 및 액세스"
+    },
+    {
+      "id": "sh-config",
+      "from": "securityhub",
+      "to": "config",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "kubeaudit-config",
+      "from": "kube-audit",
+      "to": "config",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "cw-collect",
+      "from": "cloudwatch",
+      "to": "collection",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gd-collect",
+      "from": "guardduty",
+      "to": "collection",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "falco-collect",
+      "from": "falco",
+      "to": "collection",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "collect-analyze",
+      "from": "collection",
+      "to": "analysis",
+      "variant": "emphasis"
+    },
+    {
+      "id": "analyze-detect",
+      "from": "analysis",
+      "to": "detection",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect-respond",
+      "from": "detection",
+      "to": "response",
+      "variant": "emphasis"
+    },
+    {
+      "id": "respond-remediate",
+      "from": "response",
+      "to": "remediation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect-securityhub",
+      "from": "detection",
+      "to": "securityhub",
+      "label": "탐지 결과 전달",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS 보안 서비스",
+      "items": [
+        "GuardDuty EKS Protection: EKS_RUNTIME_MONITORING 기능으로 런타임 위협 탐지",
+        "Security Hub: 보안 상태 중앙 관리, AWS Foundational Security Best Practices 표준 적용"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Kubernetes 보안 도구",
+      "items": [
+        "Falco: Helm으로 설치해 런타임 보안 모니터링과 이상 탐지 수행",
+        "kube-audit: 클러스터 구성 보안 점검"
+      ]
+    }
+  ]
+}

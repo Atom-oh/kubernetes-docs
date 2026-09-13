@@ -1,0 +1,147 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: examplecorp-webapps
+spec:
+  schema:
+    apiVersion: v1alpha1
+    group: platform.example.com
+    kind: OrderApp
+    scope: Namespaced
+    spec:
+      replicas: integer | default=3 minimum=1 maximum=10
+      image: string | required=true
+      port: integer | default=8080 minimum=1 maximum=65535
+      targetGroupARN: string | required=true
+      vpcID: string | required=true
+      credentialsSecretName: string | required=true
+      aurora:
+        writerEndpoint: string | required=true
+        readerEndpoint: string | required=true
+        port: integer | default=5432
+        dbName: string | required=true
+    status:
+      availableReplicas: ${deployment.status.availableReplicas}
+      serviceIP: ${service.spec.clusterIP}
+  resources:
+  - id: service
+    template:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: ${schema.metadata.name}
+        namespace: ${schema.metadata.namespace}
+        labels:
+          app.kubernetes.io/name: ${schema.metadata.name}
+      spec:
+        type: ClusterIP
+        selector:
+          app.kubernetes.io/name: ${schema.metadata.name}
+        ports:
+        - name: http
+          port: ${schema.spec.port}
+          targetPort: http
+  - id: dbConfig
+    template:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: ${schema.metadata.name + "-db"}
+        namespace: ${schema.metadata.namespace}
+        labels:
+          app.kubernetes.io/name: ${schema.metadata.name}
+      data:
+        DB_WRITER_HOST: ${schema.spec.aurora.writerEndpoint}
+        DB_READER_HOST: ${schema.spec.aurora.readerEndpoint}
+        DB_PORT: ${string(schema.spec.aurora.port)}
+        DB_NAME: ${schema.spec.aurora.dbName}
+  - id: targetGroupBinding
+    template:
+      apiVersion: elbv2.k8s.aws/v1beta1
+      kind: TargetGroupBinding
+      metadata:
+        name: ${schema.metadata.name + "-tgb"}
+        namespace: ${schema.metadata.namespace}
+        labels:
+          app.kubernetes.io/name: ${schema.metadata.name}
+      spec:
+        targetGroupARN: ${schema.spec.targetGroupARN}
+        targetType: ip
+        vpcID: ${schema.spec.vpcID}
+        serviceRef:
+          name: ${service.metadata.name}
+          port: ${schema.spec.port}
+  - id: deployment
+    readyWhen:
+    - ${deployment.status.availableReplicas >= deployment.spec.replicas}
+    - ${deployment.status.observedGeneration >= deployment.metadata.generation}
+    template:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: ${schema.metadata.name}
+        namespace: ${schema.metadata.namespace}
+        labels:
+          app.kubernetes.io/name: ${schema.metadata.name}
+      spec:
+        replicas: ${schema.spec.replicas}
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        template:
+          metadata:
+            labels:
+              app.kubernetes.io/name: ${schema.metadata.name}
+            annotations:
+              platform.example.com/target-group-binding: ${targetGroupBinding.metadata.name}
+          spec:
+            automountServiceAccountToken: false
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 10001
+              runAsGroup: 10001
+              fsGroup: 10001
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+            - name: order-api
+              image: ${schema.spec.image}
+              ports:
+              - name: http
+                containerPort: ${schema.spec.port}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                  - ALL
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+                limits:
+                  cpu: 500m
+                  memory: 128Mi
+              readinessProbe:
+                httpGet:
+                  path: /readyz
+                  port: http
+              volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: db-credentials
+                mountPath: /var/run/order-db
+                readOnly: true
+              envFrom:
+              - configMapRef:
+                  name: ${dbConfig.metadata.name}
+              env:
+              - name: DB_CREDENTIALS_DIR
+                value: /var/run/order-db
+            volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 64Mi
+            - name: db-credentials
+              secret:
+                secretName: ${schema.spec.credentialsSecretName}

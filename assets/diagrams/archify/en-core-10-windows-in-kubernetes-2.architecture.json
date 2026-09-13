@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Mixed Windows/Linux Cluster Networking Architecture",
+    "locale": "en",
+    "output": "en-core-10-windows-in-kubernetes-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      440
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "External request path",
+        "focus": [
+          "client",
+          "lb",
+          "svc",
+          "lp1",
+          "wp1"
+        ],
+        "note": "A client request passes the load balancer and the Kubernetes Service and is spread over Linux and Windows pods regardless of OS."
+      },
+      {
+        "id": "pod-to-pod",
+        "label": "Pod-to-pod traffic",
+        "focus": [
+          "lp1",
+          "lp2",
+          "wp1",
+          "wp2"
+        ],
+        "note": "Pods on nodes with different operating systems still talk directly over the cluster network."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "External user",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "External entry point",
+      "pos": [
+        240,
+        190
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Kubernetes Service",
+      "sublabel": "Balances across Linux and Windows pods",
+      "pos": [
+        500,
+        190
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "lp1",
+      "type": "backend",
+      "label": "Linux Pod",
+      "sublabel": "kubernetes.io/os: linux",
+      "pos": [
+        780,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lp2",
+      "type": "backend",
+      "label": "Linux Pod",
+      "sublabel": "kubernetes.io/os: linux",
+      "pos": [
+        1010,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "wp1",
+      "type": "backend",
+      "label": "Windows Pod",
+      "sublabel": "kubernetes.io/os: windows",
+      "pos": [
+        780,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "wp2",
+      "type": "backend",
+      "label": "Windows Pod",
+      "sublabel": "kubernetes.io/os: windows",
+      "pos": [
+        1010,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "External Network",
+      "wraps": [
+        "client",
+        "lb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "svc",
+        "lp1",
+        "lp2",
+        "wp1",
+        "wp2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Linux Node",
+      "wraps": [
+        "lp1",
+        "lp2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Windows Node",
+      "wraps": [
+        "wp1",
+        "wp2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-svc",
+      "from": "lb",
+      "to": "svc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-lp1",
+      "from": "svc",
+      "to": "lp1",
+      "label": "Load balancing",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "svc-wp1",
+      "from": "svc",
+      "to": "wp1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "svc-lp2",
+      "from": "svc",
+      "to": "lp2",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-wp2",
+      "from": "svc",
+      "to": "wp2",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "lp1-lp2",
+      "from": "lp1",
+      "to": "lp2",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "wp1-wp2",
+      "from": "wp1",
+      "to": "wp2",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "lp1-wp1",
+      "from": "lp1",
+      "to": "wp1",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "lp2-wp2",
+      "from": "lp2",
+      "to": "wp2",
+      "label": "Pod-to-pod traffic (bidirectional)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 110
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Network plugins supported on Windows nodes",
+      "items": [
+        "Flannel: VXLAN or host-gw mode",
+        "Calico: VXLAN mode",
+        "Antrea: OVS-based networking",
+        "Azure CNI / AWS VPC CNI: per cloud environment"
+      ]
+    }
+  ]
+}

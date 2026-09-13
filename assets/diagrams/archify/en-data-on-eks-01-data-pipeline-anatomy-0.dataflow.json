@@ -2,12 +2,12 @@
   "schema_version": 1,
   "diagram_type": "dataflow",
   "meta": {
-    "title": "Anatomy of a Modern Data Pipeline — Five Layers",
+    "title": "Five roles in a data pipeline",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
       1080,
-      760
+      540
     ]
   },
   "stages": [
@@ -42,7 +42,7 @@
       "label": "IoT · External APIs",
       "sublabel": "event producers",
       "stage": 0,
-      "row": 4
+      "row": 2
     },
     {
       "id": "batch",
@@ -58,13 +58,13 @@
       "label": "Streaming Queue",
       "sublabel": "Kafka · Kinesis",
       "stage": 1,
-      "row": 4
+      "row": 2
     },
     {
       "id": "lake",
       "type": "database",
       "label": "Data Lake",
-      "sublabel": "raw · low cost",
+      "sublabel": "raw / curated retention",
       "stage": 2,
       "row": 0
     },
@@ -72,9 +72,9 @@
       "id": "dwh",
       "type": "database",
       "label": "Warehouse",
-      "sublabel": "query-optimized",
+      "sublabel": "SQL transform",
       "stage": 2,
-      "row": 2
+      "row": 1
     },
     {
       "id": "spark",
@@ -90,7 +90,7 @@
       "label": "Stream Processing",
       "sublabel": "Flink · KStreams",
       "stage": 3,
-      "row": 4
+      "row": 2
     },
     {
       "id": "bi",
@@ -106,7 +106,7 @@
       "label": "ML · APIs",
       "sublabel": "feature store",
       "stage": 4,
-      "row": 4
+      "row": 2
     }
   ],
   "flows": [
@@ -114,7 +114,11 @@
       "id": "app-batch",
       "from": "app",
       "to": "batch",
-      "label": "snapshots · CDC"
+      "label": "snapshot / incremental",
+      "labelAt": [
+        208,
+        210
+      ]
     },
     {
       "id": "iot-stream",
@@ -134,15 +138,23 @@
       "id": "stream-lake",
       "from": "stream",
       "to": "lake",
-      "label": "raw retention",
-      "variant": "dashed"
+      "label": "retain via connector",
+      "variant": "dashed",
+      "labelAt": [
+        420,
+        310
+      ]
     },
     {
       "id": "lake-dwh",
       "from": "lake",
       "to": "dwh",
-      "label": "curated loads (ELT)",
-      "variant": "default"
+      "label": "load, then transform",
+      "variant": "default",
+      "labelAt": [
+        565,
+        214
+      ]
     },
     {
       "id": "lake-spark",
@@ -164,13 +176,20 @@
       "from": "dwh",
       "to": "bi",
       "label": "SQL analytics",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "route": "straight"
     },
     {
       "id": "flink-ml",
       "from": "flink",
       "to": "ml",
       "label": "realtime features"
+    },
+    {
+      "id": "spark-bi",
+      "from": "spark",
+      "to": "bi",
+      "label": "aggregate output"
     }
   ]
 }

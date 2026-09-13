@@ -1,209 +1,231 @@
 # Linkerd 아키텍처 퀴즈
 
-이 퀴즈는 Linkerd 아키텍처에 대한 이해를 테스트합니다.
+2026년 9월 11일 edge-26.9.1 기준으로 검토했습니다. 근거와 적용 한계는 [아키텍처 가이드](../../../service-mesh/linkerd/02-architecture.md)를 확인하세요.
 
-## 퀴즈 문제
+### 1. Linkerd control-plane 구성 요소가 아닌 것은?
 
-### 1. Linkerd 컨트롤 플레인의 핵심 컴포넌트가 아닌 것은?
+A. Destination controller
 
-A. Destination Controller
-B. Identity Controller
+B. Identity controller
+
 C. Proxy Injector
-D. Envoy Proxy
+
+D. Envoy proxy
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: D. Envoy Proxy**
+**정답: D**
 
-**설명:**
-Linkerd 컨트롤 플레인은 Destination, Identity, Proxy Injector로 구성됩니다. Envoy는 Istio의 데이터 플레인 프록시이며, Linkerd는 Rust로 작성된 자체 linkerd2-proxy를 사용합니다.
+Linkerd는 Rust data-plane proxy를 사용합니다. 고정한 control plane의 핵심 Deployment는 3개이며 policy 같은 추가 논리 controller가 그 안에서 실행됩니다. Envoy는 Istio sidecar/waypoint에 사용되며 Linkerd controller가 아닙니다.
 
 </details>
 
-### 2. linkerd2-proxy가 작성된 프로그래밍 언어는?
+### 2. linkerd2-proxy의 구현 언어는?
 
 A. Go
+
 B. C++
+
 C. Rust
+
 D. Java
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. Rust**
+**정답: C**
 
-**설명:**
-linkerd2-proxy는 Rust로 작성되어 메모리 안전성과 높은 성능을 제공합니다. 약 10MB의 메모리만 사용하고 1ms 미만의 p99 지연 시간을 추가합니다.
+Rust로 작성되었습니다. 언어 선택만으로 보편적인 10MB, 1ms 미만 p99나 다른 proxy 대비 일정한 우위가 증명되지 않습니다. 실제 build, workload와 설정으로 비교해야 합니다.
 
 </details>
 
-### 3. Destination Controller의 주요 역할이 아닌 것은?
+### 3. Destination의 주된 책임이 아닌 것은?
 
-A. 서비스 디스커버리
-B. 인증서 발급
-C. ServiceProfile 정보 제공
-D. 엔드포인트 업데이트
+A. Service discovery
+
+B. Workload 인증서 발급
+
+C. 지원 ServiceProfile 정보
+
+D. Endpoint 갱신
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 인증서 발급**
+**정답: B**
 
-**설명:**
-인증서 발급은 Identity Controller의 역할입니다. Destination Controller는 서비스 디스커버리, 엔드포인트 업데이트, ServiceProfile 및 TrafficSplit 정책 배포를 담당합니다.
+Workload 인증서는 Identity가 구성한 issuer credential로 발급합니다. Destination은 discovery/profile 정보를 제공하며 현재 Gateway API 라우팅·인가에는 policy controller도 관여합니다. 이전 TrafficSplit 확장이 현재 정책 모델의 전부는 아닙니다.
 
 </details>
 
-### 4. Linkerd의 인증서 계층 구조에서 가장 상위에 있는 것은?
+### 4. 기본 인증서 계층의 최상위 신뢰 기반은?
 
-A. Workload Certificate
-B. Identity Issuer
-C. Trust Anchor
-D. Proxy Certificate
+A. Workload 인증서
+
+B. Identity issuer
+
+C. Trust anchor
+
+D. 고유 Pod 이름
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. Trust Anchor**
+**정답: C**
 
-**설명:**
-인증서 계층은 Trust Anchor(Root CA) → Identity Issuer(Intermediate CA) → Workload Certificate 순입니다. Trust Anchor는 PKI의 루트로 모든 인증서 체인의 신뢰 기반입니다.
+공개 trust anchor가 chain 검증의 신뢰 기반입니다. 보통 중간 issuer를 서명하고 issuer 키가 workload 인증서를 서명합니다. Linkerd가 모든 workload CSR을 처리하기 위해 root 개인 키를 필요로 하지는 않습니다.
 
 </details>
 
-### 5. 워크로드 인증서의 기본 유효 기간은?
+### 5. Workload 인증서의 명목 기본 유효기간은?
 
 A. 1시간
+
 B. 24시간
+
 C. 7일
+
 D. 30일
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 24시간**
+**정답: B**
 
-**설명:**
-Linkerd 워크로드 인증서의 기본 유효 기간은 24시간입니다. 프록시는 만료 전에 자동으로 인증서를 갱신합니다. 짧은 유효 기간은 인증서 유출 시 위험을 최소화합니다.
+기본 issuance lifetime은 24시간이며 만료 전에 갱신합니다. 실제 유효기간·refresh 시점은 설정과 인증서 상태에 따릅니다. 인증서 갱신이 새 개인 키, issuer 회전이나 root 회전과 같지는 않습니다.
 
 </details>
 
-### 6. Proxy Injector가 동작하는 Kubernetes 메커니즘은?
+### 6. 자동 proxy 주입에 사용하는 Kubernetes 메커니즘은?
 
 A. DaemonSet
+
 B. CronJob
-C. Admission Webhook
-D. Custom Controller
+
+C. Mutating admission webhook
+
+D. Application load balancer
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. Admission Webhook**
+**정답: C**
 
-**설명:**
-Proxy Injector는 Mutating Admission Webhook으로 동작합니다. Pod 생성 요청을 가로채서 linkerd-proxy 사이드카와 linkerd-init init 컨테이너를 자동으로 주입합니다.
+Webhook이 대상인 새 Pod를 변형합니다. 선택한 릴리스는 보통 native sidecar를 만들며 Linkerd CNI를 구성하면 linkerd-init을 생략합니다. 기존 Pod와 제외·override된 Pod는 별도로 고려해야 합니다.
 
 </details>
 
-### 7. linkerd-init 컨테이너의 역할은?
+### 7. Linkerd CNI가 없을 때 linkerd-init은 무엇을 하나요?
 
-A. 프록시 설정 다운로드
-B. iptables 규칙 설정
-C. 인증서 생성
-D. 메트릭 수집
+A. 모든 routing policy 다운로드
+
+B. Pod network 트래픽 캡처 구성
+
+C. Root CA 역할
+
+D. Prometheus 시계열 저장
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. iptables 규칙 설정**
+**정답: B**
 
-**설명:**
-linkerd-init은 Init 컨테이너로 실행되어 iptables 규칙을 설정합니다. 이 규칙은 모든 인바운드/아웃바운드 트래픽을 linkerd-proxy로 리다이렉트합니다.
+Pod network namespace 안에 capture 규칙을 구성합니다. TCP를 redirect하기 전에 proxy UID와 설정된 bypass를 고려해야 합니다. 모든 protocol과 우회 port를 proxy가 처리한다는 뜻은 아닙니다.
 
 </details>
 
-### 8. Linkerd 프록시의 인바운드 포트는?
+### 8. 기본 inbound proxy port는?
 
 A. 4140
+
 B. 4143
+
 C. 4191
+
 D. 8080
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 4143**
+**정답: B**
 
-**설명:**
-Linkerd 프록시 포트: 4143(인바운드), 4140(아웃바운드), 4191(admin/metrics). 인바운드 포트는 다른 서비스에서 오는 트래픽을 수신합니다.
+기본값은 inbound 4143, outbound 4140, admin/metrics 4191입니다. Inbound/outbound는 HTTP/gRPC 또는 opaque payload가 담긴 캡처 TCP를 처리합니다. Port는 변경할 수 있습니다.
 
 </details>
 
-### 9. SPIFFE ID 형식으로 올바른 것은?
+### 9. Control-plane namespace가 linkerd, trust domain이 cluster.local일 때 my-app의 web-service ServiceAccount에 대한 기본 Kubernetes identity는?
 
-A. `spiffe://cluster/namespace/service`
-B. `spiffe://trust-domain/ns/namespace/sa/service-account`
-C. `https://linkerd.io/identity/namespace/pod`
-D. `urn:linkerd:identity:namespace:pod`
+A. spiffe://root.linkerd.cluster.local/ns/my-app/sa/web-service
+
+B. web-service.my-app.serviceaccount.identity.linkerd.cluster.local
+
+C. `https://linkerd.io/identity/my-pod`
+
+D. urn:linkerd:my-pod
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. `spiffe://trust-domain/ns/namespace/sa/service-account`**
+**정답: B**
 
-**설명:**
-Linkerd의 SPIFFE ID는 `spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>` 형식입니다. 예: `spiffe://root.linkerd.cluster.local/ns/production/sa/web-server`
+Kubernetes TokenReview로 확인한 ServiceAccount identity를 DNS 이름으로 만듭니다. 같은 ServiceAccount를 쓰는 여러 Pod가 identity를 공유합니다. SPIFFE/SPIRE 외부 workload는 별도 bootstrap 경로이며 기본 Kubernetes URI 형식이 아닙니다.
 
 </details>
 
-### 10. Istio의 Envoy와 비교했을 때 linkerd2-proxy의 특징이 아닌 것은?
+### 10. 동일 조건의 benchmark 없이 정당화할 수 있는 비교는?
 
-A. 더 적은 메모리 사용량
-B. Wasm 확장 지원
-C. 더 낮은 지연 시간
-D. 더 작은 바이너리 크기
+A. Linkerd는 항상 정확히 10MB 사용
+
+B. 아키텍처·지원 API를 비교하고 실제 workload의 resource·latency 차이를 측정
+
+C. Istio는 항상 p99 2–5ms 추가
+
+D. 작은 memory request가 적은 실제 소비량을 증명
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. Wasm 확장 지원**
+**정답: B**
 
-**설명:**
-linkerd2-proxy는 Wasm 확장을 지원하지 않습니다(제한적 확장성). 대신 약 10MB 메모리(Envoy ~50-100MB), <1ms p99 지연(Envoy 2-5ms), ~10MB 바이너리(Envoy ~60MB)로 더 경량입니다.
+설정한 예약, binary 크기, 실제 memory와 latency는 서로 다른 특성입니다. 같은 version/build, architecture, traffic과 policy로 비교하세요. 확장성도 제품의 일반 순위가 아니라 선택한 mode/API에서 확인해야 합니다.
 
 </details>
 
-### 11. Identity Controller가 인증서를 발급하기 전에 검증하는 것은?
+### 11. 기본 Kubernetes identity validator가 확인하는 것은?
 
-A. Pod의 IP 주소
-B. ServiceAccount 토큰
-C. 네임스페이스 레이블
-D. ConfigMap 설정
+A. Pod IP만
+
+B. 제출된 ServiceAccount token을 Kubernetes TokenReview로 검증
+
+C. Namespace label만
+
+D. ConfigMap 이름만
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. ServiceAccount 토큰**
+**정답: B**
 
-**설명:**
-Identity Controller는 프록시가 제출한 CSR과 함께 전송된 ServiceAccount 토큰을 검증합니다. 이를 통해 프록시의 ID(SPIFFE ID)가 실제 워크로드와 일치하는지 확인합니다.
+릴리스 validator는 token을 인증하고 Kubernetes user 정보에서 DNS 형식 identity를 만듭니다. 인증 요청에는 identity와 CSR도 포함됩니다. 호출자가 그럴듯한 SPIFFE URI를 보냈다는 이유만으로 수용한다는 의미가 아닙니다.
 
 </details>
 
-### 12. Linkerd 프록시 admin 포트(4191)가 제공하는 것이 아닌 것은?
+### 12. 동적으로 갱신되는 routing/policy 설정은 보통 어떻게 proxy에 전달되나요?
 
-A. Prometheus 메트릭
-B. 상태 확인 엔드포인트
-C. 트래픽 라우팅 설정
-D. 프록시 버전 정보
+A. Prometheus metric endpoint에 쓰기
+
+B. Root 인증서 subject 변경
+
+C. Streaming gRPC를 포함한 control-plane API
+
+D. Node namespace에 임의 REDIRECT 규칙 적용
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. 트래픽 라우팅 설정**
+**정답: C**
 
-**설명:**
-Admin 포트(4191)는 Prometheus 메트릭(/metrics), 상태 확인(/ready, /live), 프록시 정보를 제공합니다. 트래픽 라우팅 설정은 Destination Controller에서 gRPC로 프록시에 전달됩니다.
+Admin port의 health·metric interface는 control-plane policy API의 대체재가 아닙니다. 시작 시 environment/injection 설정과 동적 정책은 서로 다른 입력이므로 진단할 때 둘 다 확인해야 합니다.
 
 </details>

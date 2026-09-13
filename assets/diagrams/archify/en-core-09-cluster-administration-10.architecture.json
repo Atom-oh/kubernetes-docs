@@ -1,0 +1,280 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Upgrade Planning",
+    "output": "en-core-09-cluster-administration-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Upgrade planning"
+        },
+        "backend": {
+          "label": "Planning task"
+        },
+        "external": {
+          "label": "Concrete action"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "tasks",
+        "label": "Four planning tasks",
+        "focus": [
+          "plan",
+          "compat",
+          "backup",
+          "strategy",
+          "downtime"
+        ],
+        "note": "Upgrade planning splits into version compatibility, backup, strategy, and downtime."
+      },
+      {
+        "id": "safety",
+        "label": "Safety: compatibility and backup",
+        "focus": [
+          "compat",
+          "api-review",
+          "backup",
+          "etcd-backup"
+        ],
+        "note": "Review API changes and take an etcd snapshot before proceeding."
+      },
+      {
+        "id": "rollout",
+        "label": "Strategy and downtime",
+        "focus": [
+          "strategy",
+          "inplace-bluegreen",
+          "downtime",
+          "user-comm"
+        ],
+        "note": "Pick in-place or blue/green, then communicate the downtime window to users."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "plan",
+      "type": "cloud",
+      "label": "Upgrade Planning",
+      "sublabel": "cluster upgrade preparation",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "compat",
+      "type": "backend",
+      "label": "Check Version Compatibility",
+      "sublabel": "current → target version",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "backup",
+      "type": "backend",
+      "label": "Create Backup",
+      "sublabel": "before upgrading",
+      "pos": [
+        280,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "strategy",
+      "type": "backend",
+      "label": "Choose Upgrade Strategy",
+      "sublabel": "include rollback path",
+      "pos": [
+        520,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "downtime",
+      "type": "backend",
+      "label": "Plan Downtime",
+      "sublabel": "estimate impact scope",
+      "pos": [
+        760,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "api-review",
+      "type": "external",
+      "label": "Review API Changes",
+      "sublabel": "API changes between versions",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "etcd-backup",
+      "type": "external",
+      "label": "etcd Backup",
+      "sublabel": "snapshot save",
+      "pos": [
+        280,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "inplace-bluegreen",
+      "type": "external",
+      "label": "In-place vs Blue/Green",
+      "sublabel": "see strategy comparison",
+      "pos": [
+        520,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "user-comm",
+      "type": "external",
+      "label": "User Communication",
+      "sublabel": "announce schedule and impact",
+      "pos": [
+        760,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Planning tasks",
+      "wraps": [
+        "compat",
+        "backup",
+        "strategy",
+        "downtime"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Concrete actions",
+      "wraps": [
+        "api-review",
+        "etcd-backup",
+        "inplace-bluegreen",
+        "user-comm"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "plan-compat",
+      "from": "plan",
+      "to": "compat",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "plan-backup",
+      "from": "plan",
+      "to": "backup",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "plan-strategy",
+      "from": "plan",
+      "to": "strategy",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "plan-downtime",
+      "from": "plan",
+      "to": "downtime",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "compat-api-review",
+      "from": "compat",
+      "to": "api-review",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "backup-etcd-backup",
+      "from": "backup",
+      "to": "etcd-backup",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "strategy-inplace-bluegreen",
+      "from": "strategy",
+      "to": "inplace-bluegreen",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "downtime-user-comm",
+      "from": "downtime",
+      "to": "user-comm",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Upgrade strategy comparison",
+      "items": [
+        "In-place upgrade: upgrade the existing cluster directly — resource efficient but rollback is complex (dev/test)",
+        "Blue/green deployment: build a new-version cluster and switch — safe rollback, duplicated resources (production)",
+        "Canary deployment: move only some workloads to the new cluster — gradual verification, dual operation (critical production)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Benefits of Istio Integration",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-08-argo-rollouts-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "deploy-v1",
+      "type": "backend",
+      "label": "Deployment v1",
+      "sublabel": "weight: 100%",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "deploy-v2",
+      "type": "backend",
+      "label": "Deployment v2",
+      "sublabel": "weight: 0%",
+      "pos": [
+        270,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "manual",
+      "type": "external",
+      "label": "Manual traffic adjustment",
+      "sublabel": "Hand-edit the VirtualService",
+      "pos": [
+        150,
+        260
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rollout",
+      "type": "backend",
+      "label": "Rollout",
+      "sublabel": "Automatic version management",
+      "pos": [
+        660,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "auto",
+      "type": "cloud",
+      "label": "Automatic traffic adjustment",
+      "sublabel": "Metric-based progression",
+      "pos": [
+        660,
+        210
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "security",
+      "label": "Analysis",
+      "sublabel": "Success rate / latency verification",
+      "pos": [
+        660,
+        360
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Without Argo Rollouts",
+      "wraps": [
+        "deploy-v1",
+        "deploy-v2",
+        "manual"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "With Argo Rollouts + Istio",
+      "wraps": [
+        "rollout",
+        "auto",
+        "analysis"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "v1-manual",
+      "from": "deploy-v1",
+      "to": "manual",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "v2-manual",
+      "from": "deploy-v2",
+      "to": "manual",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rollout-auto",
+      "from": "rollout",
+      "to": "auto",
+      "label": "adjust VirtualService weight",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "auto-analysis",
+      "from": "auto",
+      "to": "analysis",
+      "label": "Prometheus metrics",
+      "variant": "emphasis",
+      "labelDy": 24
+    }
+  ]
+}

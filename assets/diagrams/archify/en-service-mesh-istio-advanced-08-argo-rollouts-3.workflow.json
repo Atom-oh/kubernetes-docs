@@ -1,0 +1,276 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "AnalysisRun Decision Flow",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "measure-loop",
+        "label": "Measurement loop",
+        "focus": [
+          "start",
+          "measure",
+          "check",
+          "allPassed"
+        ],
+        "note": "interval 30s · count 5 — when the success rate is at least 95%, the run moves on to the next measurement."
+      },
+      {
+        "id": "success-path",
+        "label": "Total success",
+        "focus": [
+          "allPassed",
+          "success"
+        ],
+        "note": "When all five measurements pass, the Rollout proceeds to the next step."
+      },
+      {
+        "id": "failure-path",
+        "label": "Failure and rollback",
+        "focus": [
+          "check",
+          "failCount",
+          "failLimit",
+          "rollback"
+        ],
+        "note": "failureLimit 2 — once failures reach 2, the AnalysisRun fails as a whole and rolls back automatically."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "backend": {
+          "label": "Measurement"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "messagebus": {
+          "label": "Failure count"
+        },
+        "cloud": {
+          "label": "Success"
+        },
+        "external": {
+          "label": "Rollback"
+        }
+      }
+    },
+    "viewBox": [
+      1160,
+      480
+    ]
+  },
+  "lanes": [
+    {
+      "id": "loop",
+      "label": "AnalysisRun loop"
+    },
+    {
+      "id": "failure",
+      "label": "Failure handling (failureLimit: 2)",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "measure",
+    "check",
+    "allPassed",
+    "success"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "success",
+      "rollback"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "success"
+      },
+      {
+        "from": "check",
+        "to": "rollback"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "loop",
+      "col": 0,
+      "type": "frontend",
+      "label": "AnalysisRun start",
+      "sublabel": "canary step begins",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "measure",
+      "lane": "loop",
+      "col": 1,
+      "type": "backend",
+      "label": "Measure every 30s",
+      "sublabel": "Prometheus success rate",
+      "tag": "interval 30s",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "check",
+      "lane": "loop",
+      "col": 2,
+      "type": "security",
+      "label": "Success rate >= 95%?",
+      "sublabel": "successCondition",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "allPassed",
+      "lane": "loop",
+      "col": 3,
+      "type": "security",
+      "label": "All 5 passed?",
+      "sublabel": "count 5",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "success",
+      "lane": "loop",
+      "col": 4,
+      "type": "cloud",
+      "label": "Total success",
+      "sublabel": "proceed to next step",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "failCount",
+      "lane": "failure",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Failure count +1",
+      "sublabel": "failure count++",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "failLimit",
+      "lane": "failure",
+      "col": 3,
+      "type": "security",
+      "label": "2 failures?",
+      "sublabel": "failureLimit",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "rollback",
+      "lane": "failure",
+      "col": 4,
+      "type": "external",
+      "label": "Automatic rollback",
+      "sublabel": "AnalysisRun total failure",
+      "width": 168,
+      "yOffset": -16
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "measure",
+      "role": "main"
+    },
+    {
+      "from": "measure",
+      "to": "check",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "allPassed",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "allPassed",
+      "to": "success",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "allPassed",
+      "to": "measure",
+      "label": "NO · next measurement",
+      "variant": "dashed",
+      "role": "return",
+      "via": [
+        [
+          730,
+          70
+        ],
+        [
+          328,
+          70
+        ]
+      ]
+    },
+    {
+      "from": "check",
+      "to": "failCount",
+      "label": "NO",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop",
+      "labelDy": 32
+    },
+    {
+      "from": "failCount",
+      "to": "failLimit",
+      "role": "branch"
+    },
+    {
+      "from": "failLimit",
+      "to": "rollback",
+      "label": "YES",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "failLimit",
+      "to": "measure",
+      "label": "NO · measure again",
+      "variant": "dashed",
+      "role": "return",
+      "via": [
+        [
+          730,
+          326
+        ],
+        [
+          328,
+          326
+        ]
+      ],
+      "labelSegment": 2,
+      "labelDy": 52
+    }
+  ]
+}

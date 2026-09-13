@@ -1,9 +1,9 @@
-> [한국어 버전](https://atomoh.gitbook.io/kubernetes-docs/)
+> [한국어 버전](https://www.atomai.click/kubernetes-docs/ko/)
 
 # Kubernetes and Amazon EKS Training Content
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
-This repository is a comprehensive cloud guidebook covering Linux and container fundamentals, Kubernetes and Amazon EKS, networking, service mesh, storage, databases, data pipelines, AI/ML, and security & operations. Alongside the learning materials it provides benchmark data measured on real AWS environments, plus quizzes and hands-on labs for every topic.
+This repository is a comprehensive cloud guidebook covering Linux and container fundamentals, Kubernetes and Amazon EKS, networking, service mesh, storage, databases, data pipelines, AI/ML, and security & operations. Alongside the learning materials it provides benchmark data measured on real AWS environments, plus topic quizzes and selected hands-on labs.
 
 ## Learning Materials and Quizzes
 
@@ -12,7 +12,7 @@ This training content provides quizzes for each topic along with the learning ma
 - [Learning Materials Table of Contents](#table-of-contents) - Learning materials by topic
 - [Quiz Collection](./quizzes/README.md) - Quizzes by topic
 - [Guidebook Roadmap](./roadmap.md) - The full learning map and recommended learning paths | [Quiz](./quizzes/roadmap-quiz.md)
-- [Reading with LLMs](./llm-guide.md) - How to feed this entire guidebook to an AI via llms.txt | [Quiz](./quizzes/llm-guide-quiz.md)
+- [Reading with LLMs](./llm-guide.md) - Find and read source material through llms.txt, the manifest and MCP | [Quiz](./quizzes/llm-guide-quiz.md)
 
 ## Table of Contents
 
@@ -290,6 +290,15 @@ This training content provides quizzes for each topic along with the learning ma
 5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [Quiz](./quizzes/gitops/04-flagger-quiz.md)
 6. [Feature Flags and OpenFeature](./gitops/05-feature-flags.md) | [Quiz](./quizzes/gitops/05-feature-flags-quiz.md)
 
+### Enterprise Cloud Governance
+1. [Governance Overview](./governance/00-governance-overview.md) | [Quiz](./quizzes/governance/00-governance-overview-quiz.md)
+2. [Landing Zone, OUs, and Organizational Control](./governance/01-landing-zone-and-ou.md) | [Quiz](./quizzes/governance/01-landing-zone-and-ou-quiz.md)
+3. [Account Structure and IAM Boundaries](./governance/02-account-and-iam.md) | [Quiz](./quizzes/governance/02-account-and-iam-quiz.md)
+4. [Multi-Account, Multi-Cluster EKS Architecture](./governance/03-eks-multi-account-multi-cluster.md) | [Quiz](./quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md)
+5. [Shared VPC and Connectivity](./governance/04-shared-vpc-and-connectivity.md) | [Quiz](./quizzes/governance/04-shared-vpc-and-connectivity-quiz.md)
+6. [Data and Security Boundaries](./governance/05-data-security-boundaries.md) | [Quiz](./quizzes/governance/05-data-security-boundaries-quiz.md)
+7. [Decision Framework and PoC Design](./governance/06-decision-framework-and-poc.md) | [Quiz](./quizzes/governance/06-decision-framework-and-poc-quiz.md)
+
 ### Platform Engineering
 0. [Platform Engineering Overview](./platform-engineering/00-platform-engineering-overview.md) | [Quiz](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
@@ -318,7 +327,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [CloudWatch Metrics](./observability/metrics/04-cloudwatch-metrics.md) | [Quiz](./quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
    - [Datadog](./observability/metrics/05-datadog.md) | [Quiz](./quizzes/observability/metrics/05-datadog-quiz.md)
 3. **Logging**
-   - [Logging Overview](./observability/logging/README.md)
+   - [Logging Overview](./observability/logging/README.md) | [Quiz](./quizzes/observability/logging/README-quiz.md)
    - [Grafana Loki](./observability/logging/01-loki.md) | [Quiz](./quizzes/observability/logging/01-loki-quiz.md)
    - [OpenSearch](./observability/logging/02-opensearch.md) | [Quiz](./quizzes/observability/logging/02-opensearch-quiz.md)
    - [CloudWatch Logs](./observability/logging/03-cloudwatch-logs.md) | [Quiz](./quizzes/observability/logging/03-cloudwatch-logs-quiz.md)
@@ -355,6 +364,7 @@ This training content provides quizzes for each topic along with the learning ma
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [Zonal Cluster Operations](./ops/15-zonal-operations-guide.md) | [Quiz](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 16. [Troubleshooting Playbook](./ops/16-troubleshooting-playbook.md) | [Quiz](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
+17. [EKS Spot Production Experiments and Result Assessment](./ops/17-spot-production-experiments.md) | [Quiz](./quizzes/ops/17-spot-production-experiments-quiz.md)
 
 ## Lab Guides
 

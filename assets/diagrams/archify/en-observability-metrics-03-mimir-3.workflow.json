@@ -1,0 +1,226 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Mimir Query Caching Strategy",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-metrics-03-mimir-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "result-cache",
+        "label": "Result cache",
+        "focus": [
+          "query",
+          "resultCache",
+          "cachedResult"
+        ],
+        "note": "The Query-frontend checks the result cache first and returns the cached result immediately on a hit."
+      },
+      {
+        "id": "metadata-cache",
+        "label": "Metadata cache",
+        "focus": [
+          "resultCache",
+          "metaCache",
+          "cachedMeta"
+        ],
+        "note": "On a result-cache miss the query descends to the Querier, which checks the metadata cache."
+      },
+      {
+        "id": "chunk-cache-s3",
+        "label": "Chunk cache and S3",
+        "focus": [
+          "metaCache",
+          "chunkCache",
+          "cachedChunk",
+          "s3"
+        ],
+        "note": "S3 object storage is read only when the Store-gateway chunk cache misses as well."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Query input"
+        },
+        "database": {
+          "label": "Cache lookup"
+        },
+        "backend": {
+          "label": "Cache-hit response"
+        },
+        "cloud": {
+          "label": "Object storage"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "frontend",
+      "label": "Query-frontend"
+    },
+    {
+      "id": "querier",
+      "label": "Querier"
+    },
+    {
+      "id": "storegw",
+      "label": "Store-gateway"
+    },
+    {
+      "id": "storage",
+      "label": "Object storage"
+    }
+  ],
+  "mainPath": [
+    "query",
+    "resultCache",
+    "metaCache",
+    "chunkCache",
+    "s3"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "query"
+    ],
+    "allowedTerminals": [
+      "cachedResult",
+      "cachedMeta",
+      "cachedChunk",
+      "s3"
+    ],
+    "requiredPaths": [
+      {
+        "from": "query",
+        "to": "s3"
+      },
+      {
+        "from": "query",
+        "to": "cachedResult"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "query",
+      "lane": "frontend",
+      "col": 0,
+      "type": "frontend",
+      "label": "Query",
+      "sublabel": "PromQL request"
+    },
+    {
+      "id": "resultCache",
+      "lane": "frontend",
+      "col": 1,
+      "type": "database",
+      "label": "Check result cache",
+      "sublabel": "results_cache",
+      "width": 168
+    },
+    {
+      "id": "cachedResult",
+      "lane": "frontend",
+      "col": 2,
+      "type": "backend",
+      "label": "Cached result",
+      "sublabel": "respond immediately",
+      "width": 150
+    },
+    {
+      "id": "metaCache",
+      "lane": "querier",
+      "col": 2,
+      "type": "database",
+      "label": "Check metadata cache",
+      "sublabel": "block metadata",
+      "width": 190
+    },
+    {
+      "id": "cachedMeta",
+      "lane": "querier",
+      "col": 3,
+      "type": "backend",
+      "label": "Cached metadata",
+      "sublabel": "respond immediately",
+      "width": 170
+    },
+    {
+      "id": "chunkCache",
+      "lane": "storegw",
+      "col": 3,
+      "type": "database",
+      "label": "Check chunk cache",
+      "sublabel": "chunks_cache",
+      "width": 168
+    },
+    {
+      "id": "cachedChunk",
+      "lane": "storegw",
+      "col": 4,
+      "type": "backend",
+      "label": "Cached chunk",
+      "sublabel": "respond immediately",
+      "width": 150
+    },
+    {
+      "id": "s3",
+      "lane": "storage",
+      "col": 4,
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "read blocks directly",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "query",
+      "to": "resultCache",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "resultCache",
+      "to": "cachedResult",
+      "label": "hit",
+      "role": "branch"
+    },
+    {
+      "from": "resultCache",
+      "to": "metaCache",
+      "label": "miss",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "metaCache",
+      "to": "cachedMeta",
+      "label": "hit",
+      "role": "branch"
+    },
+    {
+      "from": "metaCache",
+      "to": "chunkCache",
+      "label": "miss",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "chunkCache",
+      "to": "cachedChunk",
+      "label": "hit",
+      "role": "branch"
+    },
+    {
+      "from": "chunkCache",
+      "to": "s3",
+      "label": "miss",
+      "role": "main",
+      "variant": "emphasis"
+    }
+  ]
+}

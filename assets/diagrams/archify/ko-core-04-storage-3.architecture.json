@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "볼륨 스냅샷과 복원",
+    "output": "ko-core-04-storage-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "snapshot-create",
+        "label": "볼륨 스냅샷 생성",
+        "focus": [
+          "admin",
+          "vsc",
+          "user",
+          "vs",
+          "pvc1"
+        ],
+        "note": "관리자가 VolumeSnapshotClass를 만들고, 사용자가 기존 PVC의 특정 시점 복사본인 VolumeSnapshot을 생성한다."
+      },
+      {
+        "id": "snapshot-restore",
+        "label": "스냅샷에서 복원",
+        "focus": [
+          "user",
+          "pvc2",
+          "vs",
+          "pv2",
+          "storage"
+        ],
+        "note": "새 PVC가 dataSource로 VolumeSnapshot을 지정하면 새 PV가 바인딩되고 스토리지가 스냅샷에서 복원된다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "관리자 / 사용자"
+        },
+        "cloud": {
+          "label": "볼륨 스냅샷 클래스"
+        },
+        "backend": {
+          "label": "스냅샷 · PVC · PV"
+        },
+        "database": {
+          "label": "물리적 스토리지"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "클러스터 관리자",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vsc",
+      "type": "cloud",
+      "label": "볼륨 스냅샷 클래스",
+      "sublabel": "csi-hostpath-snapclass",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "backend",
+      "label": "볼륨 스냅샷",
+      "sublabel": "new-snapshot",
+      "pos": [
+        380,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pvc1",
+      "type": "backend",
+      "label": "기존 PVC",
+      "sublabel": "myclaim",
+      "pos": [
+        380,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pvc2",
+      "type": "backend",
+      "label": "새 PVC",
+      "sublabel": "restore-pvc",
+      "pos": [
+        780,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pv2",
+      "type": "backend",
+      "label": "새 PV",
+      "sublabel": "동적 프로비저닝",
+      "pos": [
+        780,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "물리적 스토리지",
+      "pos": [
+        780,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "볼륨 스냅샷 생성",
+      "wraps": [
+        "admin",
+        "user",
+        "vsc",
+        "vs",
+        "pvc1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스냅샷에서 복원",
+      "wraps": [
+        "pvc2",
+        "pv2",
+        "storage"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "admin-vsc",
+      "from": "admin",
+      "to": "vsc",
+      "label": "생성",
+      "labelDy": 40
+    },
+    {
+      "id": "user-vs",
+      "from": "user",
+      "to": "vs",
+      "label": "생성",
+      "labelDy": 40
+    },
+    {
+      "id": "vs-vsc",
+      "from": "vs",
+      "to": "vsc",
+      "label": "참조"
+    },
+    {
+      "id": "vs-pvc1",
+      "from": "vs",
+      "to": "pvc1",
+      "label": "스냅샷 생성",
+      "labelDy": 40
+    },
+    {
+      "id": "user-pvc2",
+      "from": "user",
+      "to": "pvc2",
+      "label": "생성"
+    },
+    {
+      "id": "pvc2-vs",
+      "from": "pvc2",
+      "to": "vs",
+      "label": "데이터 소스로 사용",
+      "variant": "dashed"
+    },
+    {
+      "id": "pvc2-pv2",
+      "from": "pvc2",
+      "to": "pv2",
+      "label": "바인딩",
+      "variant": "emphasis",
+      "labelDy": 40
+    },
+    {
+      "id": "pv2-storage",
+      "from": "pv2",
+      "to": "storage",
+      "label": "스냅샷에서 복원",
+      "variant": "emphasis",
+      "labelDy": 40
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Mimir Tenant Isolation",
+    "locale": "en",
+    "output": "en-observability-metrics-03-mimir-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "tenant-a",
+      "type": "external",
+      "label": "Tenant A",
+      "sublabel": "Team A",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tenant-b",
+      "type": "external",
+      "label": "Tenant B",
+      "sublabel": "Team B",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tenant-c",
+      "type": "external",
+      "label": "Tenant C",
+      "sublabel": "Team C",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "distributor",
+      "type": "backend",
+      "label": "Distributor",
+      "sublabel": "validates tenant header",
+      "pos": [
+        520,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ingester",
+      "type": "backend",
+      "label": "Ingester",
+      "sublabel": "builds per-tenant blocks",
+      "pos": [
+        520,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "blocks-a",
+      "type": "database",
+      "label": "tenant-a/blocks/",
+      "sublabel": "Tenant A blocks",
+      "pos": [
+        920,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "blocks-b",
+      "type": "database",
+      "label": "tenant-b/blocks/",
+      "sublabel": "Tenant B blocks",
+      "pos": [
+        920,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "blocks-c",
+      "type": "database",
+      "label": "tenant-c/blocks/",
+      "sublabel": "Tenant C blocks",
+      "pos": [
+        920,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Tenants",
+      "wraps": [
+        "tenant-a",
+        "tenant-b",
+        "tenant-c"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Mimir",
+      "wraps": [
+        "distributor",
+        "ingester"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Object Storage",
+      "wraps": [
+        "blocks-a",
+        "blocks-b",
+        "blocks-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-distributor",
+      "from": "tenant-a",
+      "to": "distributor",
+      "label": "X-Scope-OrgID: tenant-a",
+      "variant": "emphasis",
+      "labelSegment": 0
+    },
+    {
+      "id": "b-to-distributor",
+      "from": "tenant-b",
+      "to": "distributor",
+      "label": "X-Scope-OrgID: tenant-b",
+      "labelSegment": 0
+    },
+    {
+      "id": "c-to-distributor",
+      "from": "tenant-c",
+      "to": "distributor",
+      "label": "X-Scope-OrgID: tenant-c",
+      "labelSegment": 0
+    },
+    {
+      "id": "distributor-to-ingester",
+      "from": "distributor",
+      "to": "ingester",
+      "label": "forward samples",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        655,
+        290
+      ]
+    },
+    {
+      "id": "ingester-to-a",
+      "from": "ingester",
+      "to": "blocks-a",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingester-to-b",
+      "from": "ingester",
+      "to": "blocks-b"
+    },
+    {
+      "id": "ingester-to-c",
+      "from": "ingester",
+      "to": "blocks-c"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Tenant identification",
+      "items": [
+        "The remote_write header X-Scope-OrgID identifies the tenant",
+        "A basic_auth username can identify the tenant as well"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Per-tenant limits",
+      "items": [
+        "limits sets the default limits for every tenant",
+        "overrides tunes ingestion_rate and series counts per tenant"
+      ]
+    }
+  ]
+}

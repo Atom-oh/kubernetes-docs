@@ -1,7 +1,7 @@
 # Kubernetes 확장
 
-> **지원 버전**: Kubernetes 1.32, 1.33, 1.34
-> **마지막 업데이트**: 2026년 2월 19일
+> **검토한 upstream Kubernetes 버전**: Kubernetes 1.35, 1.36, 1.37
+> **마지막 업데이트**: 2026년 9월 11일
 
 Kubernetes는 확장성을 고려하여 설계된 플랫폼으로, 다양한 방법으로 기능을 확장할 수 있습니다. 이 장에서는 Kubernetes를 확장하는 다양한 방법과 Amazon EKS에서의 확장 기능 활용 방법에 대해 알아보겠습니다.
 
@@ -36,7 +36,9 @@ Kubernetes는 다양한 확장 지점을 제공하여 기본 기능을 확장하
 
 다음 다이어그램은 Kubernetes의 주요 확장 지점을 보여줍니다:
 
-![사용자 요청을 받는 API 서버가 API 확장, 컨트롤러 확장, 스케줄링 확장 지점으로 이어지고, 별도로 노드가 CSI·CNI·디바이스 플러그인으로 확장되는 Kubernetes의 주요 확장 지점 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-0.svg)
+![사용자 요청을 받는 API 서버가 API 확장(커스텀 리소스·어드미션 컨트롤러·API 서버 확장), 컨트롤러 확장(오퍼레이터·클라우드 컨트롤러 매니저), 스케줄링 확장으로 이어지고, 노드가 CSI 드라이버·CNI 플러그인·디바이스 플러그인으로 확장되는 Kubernetes의 주요 확장 지점 구조를 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-11-extending-kubernetes-0.html)
 
 ### 확장 방법 선택
 
@@ -54,7 +56,9 @@ Kubernetes는 다양한 확장 지점을 제공하여 기본 기능을 확장하
 
 다음 다이어그램은 커스텀 리소스의 작동 방식을 보여줍니다:
 
-![사용자가 커스텀 리소스 정의와 커스텀 리소스 인스턴스를 생성하면 API 서버 내부에서 등록·검증을 거쳐 etcd에 저장되는 커스텀 리소스의 처리 흐름을 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-1.svg)
+![사용자가 커스텀 리소스 정의와 커스텀 리소스 인스턴스를 생성하면 API 서버 내부에서 등록·검증을 거쳐 etcd에 저장되는 커스텀 리소스의 처리 흐름을 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-11-extending-kubernetes-1.html)
 
 ### 커스텀 리소스 정의(CRD)
 
@@ -118,7 +122,7 @@ spec:
 
 ### 커스텀 리소스 인스턴스 생성
 
-CRD를 정의한 후 해당 유형의 리소스 인스턴스를 생성할 수 있습니다:
+CRD의 Established 조건을 확인한 후 인스턴스를 생성합니다. CRD는 데이터를 저장/검증할 뿐 컨트롤러 없이는 백업을 실행하지 않습니다.
 
 ```yaml
 apiVersion: example.com/v1
@@ -148,13 +152,13 @@ openAPIV3Schema:
           maximum: 10
         image:
           type: string
-          pattern: '^[a-zA-Z0-9./:_-]+$'
+          minLength: 1
       required:
       - replicas
       - image
 ```
 
-위 예시에서 `replicas` 필드는 1에서 10 사이의 정수여야 하고, `image` 필드는 지정된 패턴과 일치해야 합니다.
+위 예시에서 `replicas` 필드는 1에서 10 사이의 정수여야 하고, `image` 필드는 비어 있지 않아야 하며 이미지 존재/서명 검증은 별도 정책이 필요합니다.
 
 ### 버전 관리
 
@@ -173,19 +177,15 @@ versions:
   storage: true
 ```
 
-위 예시에서 `v1alpha1`, `v1beta1`, `v1` 세 가지 버전이 제공되지만, 데이터는 `v1` 형식으로 저장됩니다.
+위 예시에서 `v1alpha1`, `v1beta1`, `v1` 세 가지 버전이 제공되지만, 새 쓰기는 `v1` 형식으로 저장됩니다. 위 조각에는 버전별 구조적 스키마를 추가해야 합니다. 기존 객체가 자동 재작성되지는 않으므로 이전 storedVersions 항목을 제거하기 전에 저장 데이터를 마이그레이션해야 합니다.
 
 ### 변환 웹훅
 
 서로 다른 버전 간의 변환을 처리하기 위해 변환 웹훅을 사용할 수 있습니다:
 
 ```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: backups.example.com
+# Merge this spec fragment into the complete CRD above.
 spec:
-  # ... 다른 필드 생략 ...
   conversion:
     strategy: Webhook
     webhook:
@@ -194,6 +194,7 @@ spec:
           namespace: default
           name: example-conversion-webhook
           path: /convert
+        caBundle: <base64-encoded-ca-cert>
       conversionReviewVersions:
       - v1
 ```
@@ -204,7 +205,9 @@ spec:
 
 다음 다이어그램은 오퍼레이터 패턴의 작동 방식을 보여줍니다:
 
-![사용자가 만든 커스텀 리소스를 오퍼레이터의 컨트롤러가 감시·상태 확인하며 필요한 조치를 실행해 실제 Kubernetes 리소스에 반영하고 다시 커스텀 리소스 상태를 갱신하는 조정 루프를 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-2.svg)
+![사용자가 만든 커스텀 리소스를 오퍼레이터의 컨트롤러가 감시·상태 확인하며 필요한 조치를 실행해 실제 Kubernetes 리소스에 반영하고 다시 커스텀 리소스 상태를 갱신하는 조정 루프를 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-11-extending-kubernetes-2.html)
 
 ### 오퍼레이터 개념
 
@@ -280,7 +283,7 @@ metadata:
   name: my-db
 spec:
   engine: postgresql
-  version: "13.4"
+  version: "17"
   storageSize: 10Gi
   replicas: 3
 ```
@@ -299,10 +302,8 @@ spec:
 Operator SDK를 사용한 오퍼레이터 생성:
 
 ```bash
-# Operator SDK 설치
-curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.16.0/operator-sdk_linux_amd64
-chmod +x operator-sdk_linux_amd64
-mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk
+: "${OPERATOR_IMAGE:?Set a registry image tag or digest you control}"
+# Install a reviewed supported Operator SDK release and verify its checksum first.
 
 # 새 오퍼레이터 프로젝트 생성
 operator-sdk init --domain example.com --repo github.com/example/database-operator
@@ -313,8 +314,8 @@ operator-sdk create api --group database --version v1 --kind Database --resource
 # 컨트롤러 구현 (main.go, controllers/database_controller.go 등)
 
 # 오퍼레이터 빌드 및 배포
-make docker-build docker-push
-make deploy
+make docker-build docker-push IMG="$OPERATOR_IMAGE"
+make deploy IMG="$OPERATOR_IMAGE"
 ```
 
 ### 인기 있는 오퍼레이터
@@ -323,18 +324,20 @@ make deploy
 
 1. **Prometheus Operator**: Prometheus 모니터링 스택 관리
 2. **Elasticsearch Operator**: Elasticsearch 클러스터 관리
-3. **etcd Operator**: etcd 클러스터 관리
+3. **CoreOS etcd Operator(보관됨)**: 과거 etcd 자동화 예시이며 현재 설치 권장 대상은 아님
 4. **PostgreSQL Operator**: PostgreSQL 데이터베이스 관리
-5. **Jaeger Operator**: Jaeger 분산 추적 시스템 관리
+5. **OpenTelemetry Operator**: Jaeger v2 배포에 사용하며 기존 Jaeger Operator는 지원 종료된 v1 전용
 6. **Strimzi Kafka Operator**: Apache Kafka 클러스터 관리
-7. **Istio Operator**: Istio 서비스 메시 관리
+7. **Istio in-cluster Operator(1.24에서 제거)**: 과거 예시이며 지원되는 Helm/istioctl 설치 절차 사용
 ## 어드미션 컨트롤러
 
 어드미션 컨트롤러는 Kubernetes API 서버에 대한 요청을 가로채고 수정하거나 검증하는 플러그인입니다.
 
 다음 다이어그램은 어드미션 컨트롤러의 작동 방식을 보여줍니다:
 
-![사용자의 API 요청이 인증·권한 부여를 거쳐 변형 어드미션 컨트롤러와 검증 어드미션 컨트롤러에서 각각 웹훅을 호출한 뒤, 검증된 요청이 API 처리 단계에서 etcd에 저장되기까지의 순서를 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-3.svg)
+![사용자의 API 요청이 인증·권한 부여를 거쳐 변형 어드미션 컨트롤러와 검증 어드미션 컨트롤러에서 각각 웹훅을 호출한 뒤, 검증된 요청이 API 처리 단계에서 etcd에 저장되기까지의 순서를 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-11-extending-kubernetes-3.html)
 
 ### 어드미션 컨트롤러 유형
 
@@ -349,10 +352,10 @@ Kubernetes에는 여러 내장 어드미션 컨트롤러가 있습니다:
 
 1. **NamespaceLifecycle**: 삭제 중인 네임스페이스에 리소스 생성을 방지
 2. **LimitRanger**: 포드 및 컨테이너에 기본 리소스 제한 설정
-3. **ServiceAccount**: 서비스 계정 자동 생성 및 토큰 추가
+3. **ServiceAccount**: Pod의 서비스 계정 기본값/존재 여부를 확인하고 automount 설정에 따라 projected 토큰 볼륨을 추가합니다. 기본 계정 생성은 별도 컨트롤러 역할입니다.
 4. **DefaultStorageClass**: PVC에 기본 스토리지 클래스 할당
 5. **ResourceQuota**: 네임스페이스별 리소스 사용량 제한
-6. **PodSecurityPolicy**: 포드 보안 정책 적용
+6. **PodSecurity**: 네임스페이스 Pod Security Standards를 적용하며 PodSecurityPolicy는 1.25에서 제거되었습니다.
 7. **NodeRestriction**: 노드가 수정할 수 있는 리소스 제한
 
 ### 웹훅 어드미션 컨트롤러
@@ -379,7 +382,7 @@ webhooks:
     resources: ["pods"]
     operations: ["CREATE"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
@@ -404,119 +407,120 @@ webhooks:
     resources: ["pods"]
     operations: ["CREATE", "UPDATE"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
 
 ### 웹훅 서버 구현
 
-웹훅 서버는 다음과 같은 엔드포인트를 구현해야 합니다:
+아래 Go 조각은 하나의 파일에서 v1 AdmissionReview 핸들러를 구현합니다. /mutate와 /validate를 Service 이름과 일치하는 인증서/CA를 사용하는 HTTPS 서버에 연결합니다. 외부 부작용이 없어 dry-run에 안전하며 대상 네임스페이스를 제한해야 합니다. 태그 검사는 정책 예시로 이미지 참조 전체 구문이나 서명을 검증하지 않습니다.
 
 ```go
-// 변형 웹훅 예시
-func mutateHandler(w http.ResponseWriter, r *http.Request) {
-    var body []byte
-    if r.Body != nil {
-        if data, err := ioutil.ReadAll(r.Body); err == nil {
-            body = data
-        }
-    }
+package main
 
-    // AdmissionReview 객체로 변환
-    admissionReview := v1.AdmissionReview{}
-    if err := json.Unmarshal(body, &admissionReview); err != nil {
-        http.Error(w, "Could not parse admission review request", http.StatusBadRequest)
+import (
+    "encoding/json"
+    "net/http"
+    "strings"
+    admissionv1 "k8s.io/api/admission/v1"
+    corev1 "k8s.io/api/core/v1"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func readPodReview(w http.ResponseWriter, r *http.Request) (*admissionv1.AdmissionRequest, *corev1.Pod, bool) {
+    if r.Method != http.MethodPost || r.Body == nil {
+        http.Error(w, "POST body required", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    var review admissionv1.AdmissionReview
+    if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 2<<20)).Decode(&review); err != nil {
+        http.Error(w, "Invalid AdmissionReview JSON", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    req := review.Request
+    if review.APIVersion != "admission.k8s.io/v1" || review.Kind != "AdmissionReview" || req == nil || req.UID == "" {
+        http.Error(w, "AdmissionReview v1 request and UID required", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    if req.Kind.Group != "" || req.Kind.Version != "v1" || req.Kind.Kind != "Pod" ||
+        (req.Operation != admissionv1.Create && req.Operation != admissionv1.Update) {
+        http.Error(w, "Only Pod CREATE/UPDATE is supported", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    var pod corev1.Pod
+    if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
+        http.Error(w, "Invalid Pod JSON", http.StatusBadRequest)
+        return nil, nil, false
+    }
+    return req, &pod, true
+}
+
+func writeReview(w http.ResponseWriter, response admissionv1.AdmissionResponse) {
+    review := admissionv1.AdmissionReview{
+        TypeMeta: metav1.TypeMeta{APIVersion: "admission.k8s.io/v1", Kind: "AdmissionReview"},
+        Response: &response,
+    }
+    data, err := json.Marshal(review)
+    if err != nil {
+        http.Error(w, "Response encoding failed", http.StatusInternalServerError)
         return
     }
-
-    // 포드 객체 추출
-    pod := corev1.Pod{}
-    if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
-        http.Error(w, "Could not parse pod object", http.StatusBadRequest)
-        return
-    }
-
-    // 패치 생성
-    patches := []map[string]interface{}{
-        {
-            "op":    "add",
-            "path":  "/metadata/labels/injected-by",
-            "value": "mutating-webhook",
-        },
-    }
-
-    patchBytes, _ := json.Marshal(patches)
-
-    // 응답 생성
-    admissionResponse := v1.AdmissionResponse{
-        UID:     admissionReview.Request.UID,
-        Allowed: true,
-        Patch:   patchBytes,
-        PatchType: func() *v1.PatchType {
-            pt := v1.PatchTypeJSONPatch
-            return &pt
-        }(),
-    }
-
-    admissionReview.Response = &admissionResponse
-    resp, _ := json.Marshal(admissionReview)
     w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
+    _, _ = w.Write(data)
+}
+
+func writePatch(w http.ResponseWriter, req *admissionv1.AdmissionRequest, patches []map[string]interface{}) {
+    response := admissionv1.AdmissionResponse{UID: req.UID, Allowed: true}
+    if len(patches) > 0 {
+        data, err := json.Marshal(patches)
+        if err != nil {
+            http.Error(w, "Patch encoding failed", http.StatusInternalServerError)
+            return
+        }
+        patchType := admissionv1.PatchTypeJSONPatch
+        response.PatchType, response.Patch = &patchType, data
+    }
+    writeReview(w, response)
+}
+
+func deny(w http.ResponseWriter, req *admissionv1.AdmissionRequest, message string) {
+    writeReview(w, admissionv1.AdmissionResponse{
+        UID: req.UID, Allowed: false,
+        Result: &metav1.Status{Status: "Failure", Reason: metav1.StatusReasonForbidden, Code: 403, Message: message},
+    })
+}
+func mutateHandler(w http.ResponseWriter, r *http.Request) {
+    req, pod, ok := readPodReview(w, r)
+    if !ok { return }
+    if pod.Labels["injected-by"] == "mutating-webhook" {
+        writePatch(w, req, nil)
+        return
+    }
+    if pod.Labels == nil { pod.Labels = map[string]string{} }
+    pod.Labels["injected-by"] = "mutating-webhook"
+    // Add the whole map, preserving existing labels. Works when labels was absent.
+    writePatch(w, req, []map[string]interface{}{{"op": "add", "path": "/metadata/labels", "value": pod.Labels}})
 }
 ```
 
 ```go
-// 검증 웹훅 예시
 func validateHandler(w http.ResponseWriter, r *http.Request) {
-    var body []byte
-    if r.Body != nil {
-        if data, err := ioutil.ReadAll(r.Body); err == nil {
-            body = data
+    req, pod, ok := readPodReview(w, r)
+    if !ok { return }
+    images := []string{}
+    for _, c := range pod.Spec.Containers { images = append(images, c.Image) }
+    for _, c := range pod.Spec.InitContainers { images = append(images, c.Image) }
+    for _, c := range pod.Spec.EphemeralContainers { images = append(images, c.Image) }
+    for _, image := range images {
+        if strings.Contains(image, "@") { continue } // Digest references have no implicit latest tag.
+        last := image[strings.LastIndex(image, "/")+1:]
+        if !strings.Contains(last, ":") || strings.HasSuffix(last, ":latest") {
+            deny(w, req, "Use an explicit non-latest tag or digest for every container")
+            return
         }
     }
-
-    // AdmissionReview 객체로 변환
-    admissionReview := v1.AdmissionReview{}
-    if err := json.Unmarshal(body, &admissionReview); err != nil {
-        http.Error(w, "Could not parse admission review request", http.StatusBadRequest)
-        return
-    }
-
-    // 포드 객체 추출
-    pod := corev1.Pod{}
-    if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
-        http.Error(w, "Could not parse pod object", http.StatusBadRequest)
-        return
-    }
-
-    // 검증 로직
-    allowed := true
-    var message string
-    for _, container := range pod.Spec.Containers {
-        if container.Image == "nginx:latest" {
-            allowed = false
-            message = "Using 'latest' tag is not allowed. Please specify a version."
-            break
-        }
-    }
-
-    // 응답 생성
-    admissionResponse := v1.AdmissionResponse{
-        UID:     admissionReview.Request.UID,
-        Allowed: allowed,
-    }
-
-    if !allowed {
-        admissionResponse.Result = &metav1.Status{
-            Message: message,
-        }
-    }
-
-    admissionReview.Response = &admissionResponse
-    resp, _ := json.Marshal(admissionReview)
-    w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
+    writeReview(w, admissionv1.AdmissionResponse{UID: req.UID, Allowed: true})
 }
 ```
 
@@ -560,6 +564,8 @@ spec:
 2. **리소스 핸들러**: 특정 리소스 유형에 대한 요청 처리
 3. **스토리지 백엔드**: 리소스 데이터 저장
 
+아래는 구현 개요이며 독립 실행 프로그램이 아닙니다. k8s.io 의존성에 맞는 공식 sample-apiserver에서 시작하여 TLS, 위임 인증/권한, 실제 example.com/v1 타입, 저장소 및 종료 컨텍스트를 구성합니다. APIService와 서버의 group/version이 일치해야 합니다.
+
 ```go
 // 확장 API 서버 예시
 func main() {
@@ -580,14 +586,14 @@ func main() {
 
     // API 그룹 정보 설정
     apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
-        samplev1alpha1.GroupName,
+        samplev1.GroupName,
         apiserver.Scheme,
         metav1.ParameterCodec,
         apiserver.Codecs,
     )
 
     // 스토리지 설정
-    apiGroupInfo.VersionedResourcesStorageMap["v1alpha1"] = map[string]rest.Storage{
+    apiGroupInfo.VersionedResourcesStorageMap["v1"] = map[string]rest.Storage{
         "widgets": NewWidgetStorage(),
     }
 
@@ -651,86 +657,27 @@ Kubernetes 1.15부터 도입된 스케줄러 프레임워크는 플러그인을 
 스케줄러 구성 예시:
 
 ```yaml
-apiVersion: kubescheduler.config.k8s.io/v1beta1
+apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 leaderElection:
   leaderElect: true
-clientConnection:
-  kubeconfig: /etc/kubernetes/scheduler.conf
 profiles:
-- schedulerName: default-scheduler
-  plugins:
-    queueSort:
-      enabled:
-      - name: PrioritySort
-    preFilter:
-      enabled:
-      - name: NodeResourcesFit
-      - name: NodePorts
-      - name: PodTopologySpread
-      - name: InterPodAffinity
-      - name: VolumeBinding
-      - name: NodeAffinity
-    filter:
-      enabled:
-      - name: NodeUnschedulable
-      - name: NodeName
-      - name: TaintToleration
-      - name: NodeAffinity
-      - name: NodePorts
-      - name: NodeResourcesFit
-      - name: VolumeRestrictions
-      - name: EBSLimits
-      - name: GCEPDLimits
-      - name: NodeVolumeLimits
-      - name: AzureDiskLimits
-      - name: VolumeBinding
-      - name: VolumeZone
-      - name: PodTopologySpread
-      - name: InterPodAffinity
-    postFilter:
-      enabled:
-      - name: DefaultPreemption
-    preScore:
-      enabled:
-      - name: InterPodAffinity
-      - name: PodTopologySpread
-      - name: TaintToleration
-      - name: NodeAffinity
-    score:
-      enabled:
-      - name: NodeResourcesBalancedAllocation
-        weight: 1
-      - name: ImageLocality
-        weight: 1
-      - name: InterPodAffinity
-        weight: 1
-      - name: NodeResourcesFit
-        weight: 1
-      - name: NodeAffinity
-        weight: 1
-      - name: PodTopologySpread
-        weight: 2
-      - name: TaintToleration
-        weight: 1
-    reserve:
-      enabled:
-      - name: VolumeBinding
-    permit:
-      enabled: []
-    preBind:
-      enabled:
-      - name: VolumeBinding
-    bind:
-      enabled:
-      - name: DefaultBinder
-    postBind:
-      enabled: []
+- schedulerName: custom-scheduler
+  pluginConfig:
+  - name: NodeResourcesFit
+    args:
+      scoringStrategy:
+        type: MostAllocated
+        resources:
+        - name: cpu
+          weight: 1
+        - name: memory
+          weight: 1
 ```
 
 ### 사용자 정의 스케줄러
 
-자체 스케줄러를 구현하여 Kubernetes와 함께 실행할 수도 있습니다:
+아래 Deployment는 빌드한 custom-scheduler 이미지, 앞의 config.yaml을 담은 custom-scheduler-config ConfigMap 및 스케줄링/Lease RBAC 권한이 있는 ServiceAccount가 필요합니다. in-cluster 인증을 사용하며 워커에서 관리형 컨트롤 플레인의 scheduler.conf를 마운트하지 않습니다. schedulerName은 Pod와 일치해야 합니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -749,21 +696,20 @@ spec:
         app: custom-scheduler
     spec:
       serviceAccountName: custom-scheduler
+      nodeSelector:
+        kubernetes.io/os: linux
       containers:
       - name: custom-scheduler
-        image: example/custom-scheduler:v1.0.0
-        command:
-        - /custom-scheduler
-        - --kubeconfig=/etc/kubernetes/scheduler.conf
+        image: example/custom-scheduler:REPLACE_WITH_TESTED_RELEASE
+        command: [/custom-scheduler, --config=/etc/scheduler/config.yaml]
         volumeMounts:
-        - name: kubeconfig
-          mountPath: /etc/kubernetes/scheduler.conf
+        - name: config
+          mountPath: /etc/scheduler
           readOnly: true
       volumes:
-      - name: kubeconfig
-        hostPath:
-          path: /etc/kubernetes/scheduler.conf
-          type: File
+      - name: config
+        configMap:
+          name: custom-scheduler-config
 ```
 
 포드에서 사용자 정의 스케줄러 지정:
@@ -777,7 +723,7 @@ spec:
   schedulerName: custom-scheduler
   containers:
   - name: container
-    image: nginx
+    image: nginx:1.30.4
 ```
 
 ## 클라우드 컨트롤러 매니저
@@ -794,71 +740,19 @@ spec:
 
 ### AWS 클라우드 컨트롤러 매니저
 
-AWS 클라우드 컨트롤러 매니저 구성 예시:
+AWS CCM은 AWS 위의 **자체 관리 Kubernetes**를 위한 외부 클라우드 컨트롤러입니다. Kubernetes 버전에 맞는 cloud-provider-aws 릴리스를 선택하고 공식 기존 클러스터 설치 절차의 ServiceAccount/RBAC, IAM, 클러스터 태그, 노드 이름 및 `--cloud-provider=external` 전환 조건을 확인합니다. 현재 이미지 경로는 `registry.k8s.io/provider-aws/cloud-controller-manager`입니다. VPC/서브넷 태그는 임의의 cloud.conf 키로 대신할 수 없습니다.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aws-cloud-controller-manager
-  namespace: kube-system
-data:
-  cloud.conf: |
-    [global]
-    zone = us-east-1a
-    vpc = vpc-xxx
-    subnet-id = subnet-xxx
-    role-arn = arn:aws:iam::xxx:role/xxx
-    kubernetes.io/cluster/my-cluster = owned
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: aws-cloud-controller-manager
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      k8s-app: aws-cloud-controller-manager
-  template:
-    metadata:
-      labels:
-        k8s-app: aws-cloud-controller-manager
-    spec:
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
-      tolerations:
-      - key: node.cloudprovider.kubernetes.io/uninitialized
-        value: "true"
-        effect: NoSchedule
-      - key: node-role.kubernetes.io/master
-        effect: NoSchedule
-      serviceAccountName: cloud-controller-manager
-      containers:
-      - name: aws-cloud-controller-manager
-        image: k8s.gcr.io/cloud-controller-manager:v1.21.0
-        command:
-        - /usr/local/bin/cloud-controller-manager
-        - --cloud-provider=aws
-        - --cloud-config=/etc/kubernetes/cloud.conf
-        - --use-service-account-credentials
-        - --allocate-node-cidrs=false
-        volumeMounts:
-        - name: cloud-config
-          mountPath: /etc/kubernetes/cloud.conf
-          readOnly: true
-      volumes:
-      - name: cloud-config
-        configMap:
-          name: aws-cloud-controller-manager
-```
+EKS의 AWS 관리 컨트롤 플레인에 이 DaemonSet을 설치하거나 scheduler.conf를 마운트할 수 없습니다. EKS에서는 서비스가 관리하는 클라우드 통합과 지원되는 AWS Load Balancer Controller 또는 Auto Mode 기능을 사용하며 동일 리소스를 여러 컨트롤러가 소유하지 않게 합니다.
+
 ## CSI(Container Storage Interface)
 
 CSI는 Kubernetes와 스토리지 시스템 간의 표준 인터페이스를 제공합니다.
 
 다음 다이어그램은 CSI의 아키텍처와 작동 방식을 보여줍니다:
 
-![사용자가 만든 PersistentVolumeClaim이 StorageClass와 프로비저너를 거쳐 CSI 드라이버에 전달되고, CSI 드라이버가 컨트롤러 서비스와 노드 서비스를 통해 볼륨을 생성·마운트하며 스토리지 시스템과 연동되는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-4.svg)
+![사용자가 만든 PersistentVolumeClaim이 StorageClass와 CSI 외부 프로비저너를 거쳐 CSI 드라이버에 볼륨 생성을 요청하고, CSI 드라이버가 컨트롤러 서비스와 노드 서비스를 통해 스토리지 시스템의 볼륨을 생성·마운트하여 PersistentVolume으로 바인딩되고 Pod에 마운트되는 과정을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-core-11-extending-kubernetes-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-11-extending-kubernetes-4.html)
 
 ### CSI 아키텍처
 
@@ -896,7 +790,7 @@ CSI는 다음과 같은 구성 요소로 이루어집니다:
 
 ### CSI 드라이버 배포
 
-CSI 드라이버 배포 예시:
+아래는 드라이버 개발용 템플릿이며 완전한 설치 매니페스트가 아닙니다. 공급자 문서에 따라 드라이버 이미지/인수, 호환되는 sidecar 버전, ServiceAccount/RBAC 및 CSIDriver 등록을 준비합니다. NodePlugin은 Linux에서 실행되며 지정된 호스트 경로와 권한이 필요합니다.
 
 ```yaml
 # CSI 컨트롤러 서비스
@@ -915,9 +809,11 @@ spec:
         app: csi-controller
     spec:
       serviceAccountName: csi-controller
+      nodeSelector:
+        kubernetes.io/os: linux
       containers:
       - name: csi-provisioner
-        image: k8s.gcr.io/sig-storage/csi-provisioner:v2.1.0
+        image: registry.k8s.io/sig-storage/csi-provisioner:REPLACE_WITH_COMPATIBLE_RELEASE
         args:
         - "--csi-address=$(ADDRESS)"
         - "--v=5"
@@ -928,7 +824,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy/
       - name: csi-attacher
-        image: k8s.gcr.io/sig-storage/csi-attacher:v3.1.0
+        image: registry.k8s.io/sig-storage/csi-attacher:REPLACE_WITH_COMPATIBLE_RELEASE
         args:
         - "--csi-address=$(ADDRESS)"
         - "--v=5"
@@ -957,6 +853,7 @@ spec:
       - name: socket-dir
         emptyDir: {}
 
+---
 # CSI 노드 서비스
 apiVersion: apps/v1
 kind: DaemonSet
@@ -972,10 +869,12 @@ spec:
         app: csi-node
     spec:
       serviceAccountName: csi-node
+      nodeSelector:
+        kubernetes.io/os: linux
       hostNetwork: true
       containers:
       - name: csi-node-driver-registrar
-        image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.1.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:REPLACE_WITH_COMPATIBLE_RELEASE
         args:
         - "--csi-address=$(ADDRESS)"
         - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
@@ -1038,11 +937,12 @@ metadata:
 provisioner: example.csi.k8s.io
 parameters:
   type: ssd
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
 reclaimPolicy: Delete
 allowVolumeExpansion: true
-volumeBindingMode: Immediate
+volumeBindingMode: WaitForFirstConsumer
 
+---
 # PVC
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1072,7 +972,9 @@ CNI는 Kubernetes와 네트워킹 솔루션 간의 표준 인터페이스를 제
 
 다음 다이어그램은 CNI의 아키텍처와 작동 방식을 보여줍니다:
 
-![kubelet이 컨테이너 런타임을 통해 CNI 플러그인을 호출하면 IPAM 플러그인이 IP 풀에서 주소를 할당하고 네트워크 구성이 적용되어 포드 네트워크가 완성되는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-5.svg)
+![kubelet이 컨테이너 런타임을 통해 CNI 플러그인을 호출하면 IPAM 플러그인이 IP 풀에서 주소를 할당하고 네트워크 구성이 적용되어 Pod 네트워크가 완성되는 과정을 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-11-extending-kubernetes-5.html)
 
 ### CNI 아키텍처
 
@@ -1086,8 +988,8 @@ CNI는 다음과 같은 구성 요소로 이루어집니다:
 +-------------------+
 |                   |
 |  Kubernetes       |
-|  (kubelet)        |
-|                   |
+|  CRI runtime      |
+|  (via kubelet)    |
 +--------+----------+
          |
          | CNI Spec
@@ -1109,7 +1011,7 @@ CNI는 다음과 같은 구성 요소로 이루어집니다:
 
 ### CNI 플러그인 구성
 
-CNI 플러그인 구성 예시:
+아래 단일 노드 bridge/host-local 예제는 CNI 규약을 설명합니다. 클러스터에는 노드별 고유 서브넷과 노드 간 라우팅이 필요합니다. 최신 kubelet이 직접 호출하는 것이 아니라 CRI 런타임이 CNI를 호출합니다.
 
 ```json
 {
@@ -1134,7 +1036,7 @@ CNI 플러그인 구성 예시:
 1. **Calico**: 네트워크 정책 및 보안 기능이 강화된 CNI
 2. **Flannel**: 간단한 오버레이 네트워크 제공
 3. **Cilium**: eBPF 기반의 네트워킹 및 보안 솔루션
-4. **Weave Net**: 멀티 호스트 컨테이너 네트워킹 솔루션
+4. **Weave Net(보관됨)**: 과거 멀티 호스트 네트워킹 프로젝트이며 유지 관리되는 대안 검토
 5. **AWS VPC CNI**: AWS VPC와 통합된 CNI
 6. **Azure CNI**: Azure 가상 네트워크와 통합된 CNI
 7. **Antrea**: Open vSwitch 기반의 네트워킹 솔루션
@@ -1144,7 +1046,11 @@ CNI 플러그인 구성 예시:
 Calico CNI 플러그인 설치 예시:
 
 ```bash
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+# Use the official Calico installation guide for your distribution.
+# Select a supported release and inspect the operator/custom-resources manifests.
+# Do not install a second primary CNI over an existing cluster network.
+kubectl get nodes -o wide
+kubectl -n kube-system get daemonsets
 ```
 
 ## 디바이스 플러그인
@@ -1187,40 +1093,7 @@ kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 
 NVIDIA GPU 디바이스 플러그인 배포 예시:
 
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: nvidia-device-plugin-daemonset
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      name: nvidia-device-plugin-ds
-  template:
-    metadata:
-      labels:
-        name: nvidia-device-plugin-ds
-    spec:
-      tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: nvidia-device-plugin-ctr
-        image: nvidia/k8s-device-plugin:v0.9.0
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
-        volumeMounts:
-        - name: device-plugin
-          mountPath: /var/lib/kubelet/device-plugins
-      volumes:
-      - name: device-plugin
-        hostPath:
-          path: /var/lib/kubelet/device-plugins
-```
+호환되는 NVIDIA 드라이버/Container Toolkit과 런타임을 먼저 구성합니다. 공식 NVIDIA device-plugin Helm 차트에서 검증한 버전을 고정하고 Linux GPU 노드만 선택합니다. 운영자가 이미 GPU Operator/Auto Mode로 플러그인을 관리하는 경우 중복 설치하지 않습니다.
 
 ### GPU 요청 포드
 
@@ -1232,9 +1105,12 @@ kind: Pod
 metadata:
   name: gpu-pod
 spec:
+  restartPolicy: Never
+  nodeSelector:
+    kubernetes.io/os: linux
   containers:
   - name: cuda-container
-    image: nvidia/cuda:11.0-base
+    image: nvidia/cuda:REPLACE_WITH_DRIVER_COMPATIBLE_TAG
     command: ["nvidia-smi"]
     resources:
       limits:
@@ -1251,11 +1127,15 @@ spec:
 
 ## Amazon EKS에서의 확장 기능
 
+EKS 버전 지원은 upstream과 다릅니다. 2026-09-11 기준 EKS 표준 지원은 1.34–1.36이며 애드온/컨트롤러의 개별 호환성도 확인합니다.
+
 Amazon EKS는 다양한 확장 기능을 지원하여 Kubernetes 클러스터의 기능을 확장할 수 있습니다.
 
 다음 다이어그램은 Amazon EKS의 확장 기능 아키텍처를 보여줍니다:
 
-![EKS 클러스터가 컨트롤 플레인과 노드 그룹을 관리하고, 컨트롤 플레인에 연결된 VPC CNI·CoreDNS·kube-proxy·EBS CSI·로드 밸런서 컨트롤러 같은 추가 기능이 각각 대응하는 AWS 서비스와 연동되며, IAM이 IRSA로 노드 그룹에 권한을 부여하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-6.svg)
+![EKS는 컨트롤 플레인을 관리하며 애드온 워크로드는 호환되는 워커 컴퓨트에서 실행됩니다. IRSA는 ServiceAccount를 사용하는 Pod에 권한을 부여하고 노드 IAM 역할은 별개입니다. ACK는 AWS API로 리소스를 조정합니다.](../.gitbook/assets/ko-core-11-extending-kubernetes-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-11-extending-kubernetes-6.html)
 
 ### EKS 추가 기능
 
@@ -1265,28 +1145,22 @@ Amazon EKS는 다음과 같은 추가 기능을 제공합니다:
 2. **CoreDNS**: 클러스터 내 DNS 서비스
 3. **kube-proxy**: 네트워크 프록시
 4. **Amazon EBS CSI 드라이버**: EBS 볼륨 관리
-5. **AWS Load Balancer Controller**: AWS 로드 밸런서 관리
+5. **AWS Load Balancer Controller**: 지원되는 Helm/매니페스트로 별도 설치하며 모든 확장이 EKS 관리형 애드온이라고 가정하지 않음
 
 ```bash
-# EKS 추가 기능 목록 확인
-aws eks list-addons --cluster-name my-cluster
-
-# EKS 추가 기능 설치
-aws eks create-addon \
-  --cluster-name my-cluster \
-  --addon-name amazon-ebs-csi-driver \
-  --service-account-role-arn arn:aws:iam::123456789012:role/AmazonEKS_EBS_CSI_DriverRole
-
-# EKS 추가 기능 업데이트
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name amazon-ebs-csi-driver \
-  --addon-version v1.5.0-eksbuild.1
-
-# EKS 추가 기능 삭제
-aws eks delete-addon \
-  --cluster-name my-cluster \
-  --addon-name amazon-ebs-csi-driver
+set -euo pipefail
+: "${CLUSTER_NAME:?Set cluster name}"
+KUBERNETES_VERSION=$(aws eks describe-cluster --name "$CLUSTER_NAME" --query cluster.version --output text)
+aws eks list-addons --cluster-name "$CLUSTER_NAME"
+aws eks describe-addon-versions --addon-name amazon-ebs-csi-driver --kubernetes-version "$KUBERNETES_VERSION"
+# Choose a compatible version and prepare the controller's scoped IAM role first.
+: "${ADDON_VERSION:?Set reviewed compatible add-on version}"
+: "${EBS_ROLE_ARN:?Set EBS CSI IRSA role ARN}"
+aws eks create-addon --cluster-name "$CLUSTER_NAME" --addon-name amazon-ebs-csi-driver \
+  --addon-version "$ADDON_VERSION" --service-account-role-arn "$EBS_ROLE_ARN"
+# For an existing installation, use update-addon instead of create-addon.
+# To stop EKS management while retaining the workload (not uninstall it):
+# aws eks delete-addon --cluster-name "$CLUSTER_NAME" --addon-name amazon-ebs-csi-driver --preserve
 ```
 
 ### AWS Controllers for Kubernetes(ACK)
@@ -1294,19 +1168,26 @@ aws eks delete-addon \
 ACK는 Kubernetes에서 AWS 리소스를 관리할 수 있게 해주는 오퍼레이터 모음입니다:
 
 ```bash
-# ACK 컨트롤러 설치
-helm repo add ack-controller https://aws.github.io/aws-controllers-k8s
-helm install ack-s3-controller ack-controller/s3-chart
+set -euo pipefail
+: "${ACK_VERSION:?Set a reviewed S3 controller chart version}"
+: "${AWS_REGION:?Set target service region}"
+# First prepare ack-s3-controller ServiceAccount with scoped IRSA/Pod Identity permissions.
+helm upgrade --install ack-s3-controller oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --version "$ACK_VERSION" --namespace ack-system --create-namespace \
+  --set aws.region="$AWS_REGION" --set serviceAccount.create=false \
+  --set serviceAccount.name=ack-s3-controller
+# Creating a Bucket CR provisions a real AWS resource: review IAM, naming and retention first.
+```
 
-# S3 버킷 생성
-cat <<EOF | kubectl apply -f -
+아래 Bucket 예제는 컨트롤러가 설치되어 있고 IAM 권한이 있으면 실제 AWS 리소스를 생성합니다. 전역적으로 고유한 이름으로 바꾸고 수명 주기/보존 정책을 검토합니다. Kubernetes 객체 삭제 시 버킷도 삭제될 수 있으므로 데이터 보존 요구에 맞는 컨트롤러 삭제 정책을 설정합니다.
+
+```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
-  name: my-bucket
+  name: example-bucket
 spec:
-  name: my-bucket-123456
-EOF
+  name: replace-with-your-globally-unique-bucket-name
 ```
 
 ### AWS Load Balancer Controller
@@ -1320,10 +1201,10 @@ kind: Ingress
 metadata:
   name: example-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - host: example.com
     http:
@@ -1343,6 +1224,7 @@ IRSA는 Kubernetes 서비스 계정에 AWS IAM 역할을 연결하여 포드가 
 
 ```bash
 # OIDC 제공자 생성
+: "${S3_READ_POLICY_ARN:?Set a customer-managed policy restricted to your bucket/prefix}"
 eksctl utils associate-iam-oidc-provider \
   --cluster my-cluster \
   --approve
@@ -1352,7 +1234,7 @@ eksctl create iamserviceaccount \
   --cluster my-cluster \
   --namespace default \
   --name my-service-account \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+  --attach-policy-arn "$S3_READ_POLICY_ARN" \
   --approve
 
 # 서비스 계정을 사용하는 포드
@@ -1363,12 +1245,12 @@ metadata:
   name: s3-reader
 spec:
   serviceAccountName: my-service-account
+  restartPolicy: Never
   containers:
   - name: aws-cli
-    image: amazon/aws-cli:latest
-    command:
-    - sleep
-    - "3600"
+    image: public.ecr.aws/aws-cli/aws-cli:REPLACE_WITH_TESTED_RELEASE
+    command: [aws]
+    args: [sts, get-caller-identity]
 EOF
 ```
 
@@ -1427,3 +1309,26 @@ Kubernetes 확장 기능을 구현할 때는 표준 인터페이스 사용, 선�
 ## 퀴즈
 
 이 장에서 배운 내용을 테스트하려면 [Kubernetes 확장 퀴즈](../quizzes/core/11-extending-kubernetes-quiz.md)를 풀어보세요.
+
+## 검증 참고 자료
+
+- https://kubernetes.io/releases/
+- https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
+- https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+- https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/
+- https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/scheduler/apis/config/types.go
+- https://github.com/kubernetes/cloud-provider-aws/blob/master/docs/prerequisites.md
+- https://github.com/kubernetes/cloud-provider-aws/blob/master/examples/existing-cluster/base/aws-cloud-controller-manager-daemonset.yaml
+- https://github.com/kubernetes-sigs/kubebuilder/blob/master/README.md
+- https://github.com/operator-framework/operator-sdk/blob/master/README.md
+- https://github.com/NVIDIA/k8s-device-plugin/blob/main/README.md
+- https://github.com/jaegertracing/jaeger-operator/blob/main/README.md
+- https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/
+- https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html
+- https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+- https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html
+- https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/user-docs/install.md
+- https://github.com/aws-controllers-k8s/s3-controller/blob/main/helm/values.yaml

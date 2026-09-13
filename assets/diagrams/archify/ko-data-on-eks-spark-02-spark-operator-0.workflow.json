@@ -1,0 +1,201 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubeflow Spark Operator 실행 흐름",
+    "output": "ko-data-on-eks-spark-02-spark-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "submit",
+        "label": "제출·admission",
+        "focus": [
+          "apply",
+          "watch",
+          "webhook",
+          "driver"
+        ],
+        "note": "Controller가 spark-submit을 실행하고 Kubernetes admission이 Pod를 처리합니다."
+      },
+      {
+        "id": "run",
+        "label": "Driver·executor 실행",
+        "focus": [
+          "driver",
+          "executor",
+          "run"
+        ],
+        "note": "Driver가 executor를 요청합니다. Kubernetes는 Pod를 배치하고 driver는 Spark task를 할당합니다."
+      },
+      {
+        "id": "loop",
+        "label": "상태 조정·재시도",
+        "focus": [
+          "driver",
+          "executor",
+          "status",
+          "watch"
+        ],
+        "note": "Operator는 driver·executor 상태를 관찰하고 CR 상태·재시도·정리를 관리합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "사용자 제출"
+        },
+        "backend": {
+          "label": "Spark Operator"
+        },
+        "security": {
+          "label": "Mutating Webhook"
+        },
+        "database": {
+          "label": "CR .status 기록"
+        },
+        "cloud": {
+          "label": "Spark Pod"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "사용자"
+    },
+    {
+      "id": "operator",
+      "label": "Kubeflow Controller"
+    },
+    {
+      "id": "admission",
+      "label": "Kubernetes Admission"
+    },
+    {
+      "id": "spark",
+      "label": "Spark Pods on Kubernetes"
+    }
+  ],
+  "mainPath": [
+    "apply",
+    "watch",
+    "webhook",
+    "driver",
+    "executor",
+    "run",
+    "status"
+  ],
+  "nodes": [
+    {
+      "id": "apply",
+      "lane": "user",
+      "col": 0,
+      "type": "frontend",
+      "label": "kubectl apply",
+      "sublabel": "SparkApplication CR",
+      "width": 176
+    },
+    {
+      "id": "watch",
+      "lane": "operator",
+      "col": 1,
+      "type": "backend",
+      "label": "Controller 제출",
+      "sublabel": "spark-submit",
+      "tag": "컨트롤 루프",
+      "width": 176
+    },
+    {
+      "id": "webhook",
+      "lane": "admission",
+      "col": 2,
+      "type": "security",
+      "label": "Kubernetes admission",
+      "sublabel": "Kubeflow Pod mutator",
+      "width": 176
+    },
+    {
+      "id": "driver",
+      "lane": "spark",
+      "col": 3,
+      "type": "cloud",
+      "label": "Driver Pod 실행",
+      "sublabel": "Kubernetes 배치",
+      "width": 176
+    },
+    {
+      "id": "executor",
+      "lane": "spark",
+      "col": 4,
+      "type": "cloud",
+      "label": "Executor 요청",
+      "sublabel": "driver → Kubernetes API",
+      "width": 176
+    },
+    {
+      "id": "run",
+      "lane": "spark",
+      "col": 5,
+      "type": "cloud",
+      "label": "Spark task 실행",
+      "sublabel": "driver가 작업 할당",
+      "width": 176
+    },
+    {
+      "id": "status",
+      "lane": "operator",
+      "col": 5,
+      "type": "database",
+      "label": "Pod 상태 관찰",
+      "sublabel": "driver + executor → CR",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "apply-to-watch",
+      "from": "apply",
+      "to": "watch",
+      "label": "CR 생성",
+      "toSide": "left"
+    },
+    {
+      "id": "watch-to-webhook",
+      "from": "watch",
+      "to": "webhook"
+    },
+    {
+      "id": "webhook-to-driver",
+      "from": "webhook",
+      "to": "driver"
+    },
+    {
+      "id": "driver-to-executor",
+      "from": "driver",
+      "to": "executor",
+      "label": "admission + placement"
+    },
+    {
+      "id": "executor-to-run",
+      "from": "executor",
+      "to": "run"
+    },
+    {
+      "id": "run-to-status",
+      "from": "run",
+      "to": "status",
+      "label": "Pod watch"
+    },
+    {
+      "id": "status-to-watch",
+      "from": "status",
+      "to": "watch",
+      "label": "reconcile / retry",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ]
+}

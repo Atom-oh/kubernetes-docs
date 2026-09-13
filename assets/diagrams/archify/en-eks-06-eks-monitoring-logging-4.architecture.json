@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Log Analysis and Visualization Pipeline",
+    "locale": "en",
+    "output": "en-eks-06-eks-monitoring-logging-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "cloudwatch-path",
+        "label": "CloudWatch path",
+        "focus": [
+          "src-direct",
+          "src-workload",
+          "collectors",
+          "cwlogs",
+          "insights"
+        ],
+        "note": "Control plane and AWS service logs land directly in CloudWatch Logs and are queried with Logs Insights."
+      },
+      {
+        "id": "opensearch-path",
+        "label": "OpenSearch path",
+        "focus": [
+          "src-workload",
+          "collectors",
+          "opensearch",
+          "osdash"
+        ],
+        "note": "Fluent Bit or Vector ships logs to Amazon OpenSearch, visualized in OpenSearch Dashboards."
+      },
+      {
+        "id": "s3-loki-path",
+        "label": "S3 · Loki path",
+        "focus": [
+          "src-workload",
+          "collectors",
+          "s3",
+          "athena",
+          "loki",
+          "grafana"
+        ],
+        "note": "The S3 archive is analyzed with Athena and QuickSight; Loki with Grafana Explore and dashboards."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src-direct",
+      "type": "external",
+      "label": "Control Plane · AWS Service Logs",
+      "sublabel": "sent directly to CloudWatch",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "src-workload",
+      "type": "external",
+      "label": "Container · Application Logs",
+      "sublabel": "worker node stdout/stderr",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "collectors",
+      "type": "backend",
+      "label": "Log Collectors",
+      "sublabel": "Fluent Bit · Fluentd · Vector · CloudWatch Agent",
+      "pos": [
+        360,
+        340
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "cwlogs",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "Fluent Bit · CloudWatch Agent",
+      "pos": [
+        740,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "opensearch",
+      "type": "cloud",
+      "label": "Amazon OpenSearch",
+      "sublabel": "Fluent Bit · Vector",
+      "pos": [
+        740,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "Fluent Bit · long-term archive",
+      "pos": [
+        740,
+        340
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Grafana Loki",
+      "sublabel": "Fluentd",
+      "pos": [
+        740,
+        480
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "insights",
+      "type": "frontend",
+      "label": "CloudWatch Logs Insights",
+      "sublabel": "queries → custom dashboards",
+      "pos": [
+        1050,
+        60
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "osdash",
+      "type": "frontend",
+      "label": "OpenSearch Dashboards",
+      "sublabel": "OpenSearch Visualizations",
+      "pos": [
+        1050,
+        200
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "athena",
+      "type": "frontend",
+      "label": "Amazon Athena",
+      "sublabel": "SQL queries → QuickSight",
+      "pos": [
+        1050,
+        340
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana Explore",
+      "sublabel": "Grafana Dashboards",
+      "pos": [
+        1050,
+        480
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Log Sources",
+      "wraps": [
+        "src-direct",
+        "src-workload"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Log Collection",
+      "wraps": [
+        "collectors"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Log Storage",
+      "wraps": [
+        "cwlogs",
+        "opensearch",
+        "s3",
+        "loki"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Log Analysis · Visualization",
+      "wraps": [
+        "insights",
+        "osdash",
+        "athena",
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "direct-to-cw",
+      "from": "src-direct",
+      "to": "cwlogs",
+      "label": "direct",
+      "variant": "emphasis"
+    },
+    {
+      "id": "workload-to-collectors",
+      "from": "src-workload",
+      "to": "collectors",
+      "variant": "emphasis"
+    },
+    {
+      "id": "collectors-to-cw",
+      "from": "collectors",
+      "to": "cwlogs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "collectors-to-os",
+      "from": "collectors",
+      "to": "opensearch"
+    },
+    {
+      "id": "collectors-to-s3",
+      "from": "collectors",
+      "to": "s3"
+    },
+    {
+      "id": "collectors-to-loki",
+      "from": "collectors",
+      "to": "loki"
+    },
+    {
+      "id": "cw-to-insights",
+      "from": "cwlogs",
+      "to": "insights",
+      "variant": "emphasis"
+    },
+    {
+      "id": "os-to-dash",
+      "from": "opensearch",
+      "to": "osdash"
+    },
+    {
+      "id": "s3-to-athena",
+      "from": "s3",
+      "to": "athena"
+    },
+    {
+      "id": "loki-to-grafana",
+      "from": "loki",
+      "to": "grafana"
+    }
+  ]
+}

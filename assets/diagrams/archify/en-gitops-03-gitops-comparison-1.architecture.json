@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FluxCD Architecture",
+    "locale": "en",
+    "output": "en-gitops-03-gitops-comparison-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      640
+    ],
+    "views": [
+      {
+        "id": "sources",
+        "label": "Watch sources",
+        "focus": [
+          "git",
+          "helm",
+          "oci",
+          "sc"
+        ],
+        "note": "The Source Controller watches Git, Helm, and OCI repositories and fetches their artifacts."
+      },
+      {
+        "id": "reconcile",
+        "label": "Apply to cluster",
+        "focus": [
+          "sc",
+          "kc",
+          "hc",
+          "k8s"
+        ],
+        "note": "The Kustomize and Helm controllers apply source changes to the Kubernetes cluster."
+      },
+      {
+        "id": "automation",
+        "label": "Notifications and image automation",
+        "focus": [
+          "nc",
+          "iac",
+          "git",
+          "sc",
+          "kc",
+          "hc"
+        ],
+        "note": "The Notification Controller sends events and the Image Automation Controller commits new image tags to Git."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repository",
+      "sublabel": "source",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "helm",
+      "type": "external",
+      "label": "Helm Repository",
+      "sublabel": "source",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "oci",
+      "type": "external",
+      "label": "OCI Registry",
+      "sublabel": "source",
+      "pos": [
+        40,
+        490
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "iac",
+      "type": "backend",
+      "label": "Image Automation Controller",
+      "sublabel": "image tag updates",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "Source Controller",
+      "sublabel": "watches repositories",
+      "pos": [
+        300,
+        290
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "tag": "core"
+    },
+    {
+      "id": "kc",
+      "type": "backend",
+      "label": "Kustomize Controller",
+      "sublabel": "reconciles manifests",
+      "pos": [
+        620,
+        130
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "hc",
+      "type": "backend",
+      "label": "Helm Controller",
+      "sublabel": "reconciles HelmRelease",
+      "pos": [
+        620,
+        450
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "nc",
+      "type": "messagebus",
+      "label": "Notification Controller",
+      "sublabel": "event notifications",
+      "pos": [
+        620,
+        290
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes Cluster",
+      "sublabel": "target cluster",
+      "pos": [
+        930,
+        290
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "FluxCD",
+      "wraps": [
+        "iac",
+        "sc",
+        "kc",
+        "hc",
+        "nc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-to-sc",
+      "from": "git",
+      "to": "sc",
+      "label": "watch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "helm-to-sc",
+      "from": "helm",
+      "to": "sc"
+    },
+    {
+      "id": "oci-to-sc",
+      "from": "oci",
+      "to": "sc"
+    },
+    {
+      "id": "sc-to-kc",
+      "from": "sc",
+      "to": "kc",
+      "label": "sync",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sc-to-hc",
+      "from": "sc",
+      "to": "hc",
+      "label": "sync"
+    },
+    {
+      "id": "kc-to-k8s",
+      "from": "kc",
+      "to": "k8s",
+      "label": "apply",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hc-to-k8s",
+      "from": "hc",
+      "to": "k8s",
+      "label": "apply"
+    },
+    {
+      "id": "nc-to-sc",
+      "from": "nc",
+      "to": "sc",
+      "label": "notify",
+      "variant": "dashed",
+      "labelDx": 30
+    },
+    {
+      "id": "nc-to-kc",
+      "from": "nc",
+      "to": "kc",
+      "variant": "dashed"
+    },
+    {
+      "id": "nc-to-hc",
+      "from": "nc",
+      "to": "hc",
+      "variant": "dashed"
+    },
+    {
+      "id": "iac-to-git",
+      "from": "iac",
+      "to": "git",
+      "label": "commit image tag",
+      "variant": "dashed"
+    }
+  ]
+}

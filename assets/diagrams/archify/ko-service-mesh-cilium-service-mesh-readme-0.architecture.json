@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "사이드카 vs 사이드카리스 아키텍처",
+    "output": "ko-service-mesh-cilium-service-mesh-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": { "label": "애플리케이션 Pod" },
+        "external": { "label": "Pod당 사이드카 프록시 (Envoy)" },
+        "security": { "label": "커널 eBPF 데이터패스" },
+        "backend": { "label": "노드당 공유 Envoy (L7 전용)" }
+      }
+    },
+    "views": [
+      { "id": "sidecar-path", "label": "사이드카 방식 (Istio)", "focus": ["poda-sidecar", "proxy-a", "proxy-b", "podb-sidecar"], "note": "Pod마다 Envoy 사이드카가 붙어 모든 홉이 사용자 공간 프록시 두 개를 거친다." },
+      { "id": "cilium-path", "label": "Cilium Service Mesh 방식", "focus": ["poda-cilium", "ebpf", "node-envoy", "podb-cilium"], "note": "L3/L4는 커널 eBPF가 처리하고, L7이 필요할 때만 노드당 하나의 공유 Envoy를 거친다." }
+    ]
+  },
+  "components": [
+    { "id": "poda-sidecar", "type": "frontend", "label": "Pod A", "sublabel": "애플리케이션", "pos": [60, 90], "size": [150, 60] },
+    { "id": "proxy-a", "type": "external", "label": "Sidecar Envoy", "sublabel": "proxy-a · L4 + L7", "pos": [300, 90], "size": [170, 60] },
+    { "id": "proxy-b", "type": "external", "label": "Sidecar Envoy", "sublabel": "proxy-b · L4 + L7", "pos": [640, 90], "size": [170, 60] },
+    { "id": "podb-sidecar", "type": "frontend", "label": "Pod B", "sublabel": "애플리케이션", "pos": [900, 90], "size": [150, 60] },
+    { "id": "poda-cilium", "type": "frontend", "label": "Pod A", "sublabel": "애플리케이션", "pos": [60, 420], "size": [150, 60] },
+    { "id": "ebpf", "type": "security", "label": "eBPF 데이터패스", "sublabel": "Linux 커널 · L3/L4", "pos": [300, 420], "size": [170, 60] },
+    { "id": "node-envoy", "type": "backend", "label": "Node Envoy", "sublabel": "노드당 1개 · L7 처리", "pos": [640, 300], "size": [170, 60] },
+    { "id": "podb-cilium", "type": "frontend", "label": "Pod B", "sublabel": "애플리케이션", "pos": [900, 420], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "전통적인 사이드카 방식 (Istio)", "wraps": ["poda-sidecar", "proxy-a", "proxy-b", "podb-sidecar"] },
+    { "kind": "region", "label": "Cilium Service Mesh 방식", "wraps": ["poda-cilium", "ebpf", "node-envoy", "podb-cilium"] }
+  ],
+  "connections": [
+    { "id": "poda-to-proxy-a", "from": "poda-sidecar", "to": "proxy-a", "label": "앱 트래픽" },
+    { "id": "proxy-a-to-proxy-b", "from": "proxy-a", "to": "proxy-b", "label": "네트워크 (mTLS)" },
+    { "id": "proxy-b-to-podb", "from": "proxy-b", "to": "podb-sidecar", "label": "앱 트래픽" },
+    { "id": "poda-to-ebpf", "from": "poda-cilium", "to": "ebpf", "label": "앱 트래픽", "variant": "emphasis" },
+    { "id": "ebpf-to-podb", "from": "ebpf", "to": "podb-cilium", "label": "L3/L4 커널 처리", "variant": "emphasis" },
+    { "id": "ebpf-to-envoy", "from": "ebpf", "to": "node-envoy", "label": "L7 필요 시", "variant": "dashed" },
+    { "id": "envoy-to-podb", "from": "node-envoy", "to": "podb-cilium", "label": "L7 처리 후", "variant": "dashed" }
+  ]
+}

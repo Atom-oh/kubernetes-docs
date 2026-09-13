@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Storage Monitoring Solutions",
+    "locale": "en",
+    "output": "en-eks-04-eks-storage-part3-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1390,
+      550
+    ],
+    "views": [
+      {
+        "id": "cloudwatch",
+        "label": "CloudWatch alarm path",
+        "focus": [
+          "ebs",
+          "efs",
+          "fsx",
+          "metrics",
+          "alarms",
+          "cw-dashboard"
+        ],
+        "note": "EBS, EFS and FSx metrics converge into the key monitoring metrics, feed CloudWatch alarms and surface on the dashboard."
+      },
+      {
+        "id": "k8s",
+        "label": "Prometheus / Grafana",
+        "focus": [
+          "prometheus",
+          "monitors",
+          "rules",
+          "grafana"
+        ],
+        "note": "ServiceMonitor/PodMonitor scrape CSI metrics, PrometheusRule raises alerts and Grafana visualizes them."
+      },
+      {
+        "id": "custom",
+        "label": "Custom Solutions",
+        "focus": [
+          "exporter",
+          "custom"
+        ],
+        "note": "A volume-usage exporter DaemonSet provides PVC usage metrics and custom alerts."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ebs",
+      "type": "cloud",
+      "label": "EBS Volume Metrics",
+      "sublabel": "VolumeQueueLength, ...",
+      "pos": [
+        50,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "cloud",
+      "label": "EFS File System Metrics",
+      "sublabel": "BurstCreditBalance, ...",
+      "pos": [
+        215,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "cloud",
+      "label": "FSx for Lustre Metrics",
+      "sublabel": "DataReadBytes, ...",
+      "pos": [
+        420,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Key Monitoring Metrics",
+      "sublabel": "Volume usage · IOPS · Throughput · Latency · Queue length · Burst credits",
+      "pos": [
+        50,
+        200
+      ],
+      "size": [
+        560,
+        70
+      ]
+    },
+    {
+      "id": "alarms",
+      "type": "security",
+      "label": "CloudWatch Alarms",
+      "sublabel": "Threshold watch",
+      "pos": [
+        205,
+        330
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "cw-dashboard",
+      "type": "frontend",
+      "label": "CloudWatch Dashboard",
+      "sublabel": "EBSVolumeMonitoring",
+      "pos": [
+        205,
+        450
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "kube-prometheus-stack",
+      "pos": [
+        720,
+        70
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "monitors",
+      "type": "backend",
+      "label": "ServiceMonitor / PodMonitor",
+      "sublabel": "CSI driver metrics scrape",
+      "pos": [
+        690,
+        200
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "rules",
+      "type": "security",
+      "label": "Alert Rules",
+      "sublabel": "PrometheusRule",
+      "pos": [
+        930,
+        200
+      ],
+      "size": [
+        170,
+        70
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana Dashboard",
+      "sublabel": "PVC usage · CSI latency",
+      "pos": [
+        690,
+        330
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "exporter",
+      "type": "backend",
+      "label": "Volume Usage Exporter",
+      "sublabel": "DaemonSet",
+      "pos": [
+        1170,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "custom",
+      "type": "security",
+      "label": "Custom Metrics · Alerts",
+      "sublabel": "VolumeUsageHigh, ...",
+      "pos": [
+        1170,
+        200
+      ],
+      "size": [
+        190,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS CloudWatch",
+      "wraps": [
+        "ebs",
+        "efs",
+        "fsx",
+        "metrics",
+        "alarms",
+        "cw-dashboard"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Monitoring",
+      "wraps": [
+        "prometheus",
+        "monitors",
+        "rules",
+        "grafana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Custom Solutions",
+      "wraps": [
+        "exporter",
+        "custom"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ebs-metrics",
+      "from": "ebs",
+      "to": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "efs-metrics",
+      "from": "efs",
+      "to": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "fsx-metrics",
+      "from": "fsx",
+      "to": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "metrics-alarms",
+      "from": "metrics",
+      "to": "alarms",
+      "label": "threshold breached",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "alarms-dashboard",
+      "from": "alarms",
+      "to": "cw-dashboard",
+      "label": "visualize",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "prom-monitors",
+      "from": "prometheus",
+      "to": "monitors",
+      "label": "discover targets",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-rules",
+      "from": "prometheus",
+      "to": "rules",
+      "label": "evaluate",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "monitors-grafana",
+      "from": "monitors",
+      "to": "grafana",
+      "label": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "exporter-custom",
+      "from": "exporter",
+      "to": "custom",
+      "label": "PVC usage",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ]
+}

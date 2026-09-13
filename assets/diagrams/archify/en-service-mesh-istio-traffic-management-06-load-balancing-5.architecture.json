@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Consistent Hash Imbalance Risk",
+    "output": "en-service-mesh-istio-traffic-management-06-load-balancing-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      440
+    ],
+    "views": [
+      {
+        "id": "hotspot",
+        "label": "Hash hotspot",
+        "focus": [
+          "users",
+          "pod1"
+        ],
+        "note": "80% of 1000 users hash to the same range, so Pod 1 alone serves 800 users."
+      },
+      {
+        "id": "idle",
+        "label": "Idle pods",
+        "focus": [
+          "users",
+          "pod2",
+          "pod3"
+        ],
+        "note": "Pod 2 and Pod 3 receive only 15% and 5% and sit nearly empty."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "1000 Users",
+      "sublabel": "Distributed by hash key",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "800 users · overloaded",
+      "tag": "hotspot",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "150 users",
+      "pos": [
+        560,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "50 users",
+      "pos": [
+        560,
+        300
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Problem Situation",
+      "wraps": [
+        "users",
+        "pod1",
+        "pod2",
+        "pod3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-pod1",
+      "from": "users",
+      "to": "pod1",
+      "label": "80%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "users-pod2",
+      "from": "users",
+      "to": "pod2",
+      "label": "15%",
+      "labelDx": 80
+    },
+    {
+      "id": "users-pod3",
+      "from": "users",
+      "to": "pod3",
+      "label": "5%"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Cause",
+      "items": [
+        "Traffic concentration on specific hash values"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Solutions",
+      "items": [
+        "Increase minimumRingSize",
+        "Use multiple hash key combinations",
+        "Consider Bounded Load algorithm (not supported by Envoy)"
+      ]
+    }
+  ]
+}

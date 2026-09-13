@@ -1,0 +1,380 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Knative Serving 아키텍처",
+    "output": "ko-autoscaling-03-knative-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      740
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "외부 클라이언트"
+        },
+        "cloud": {
+          "label": "Ingress"
+        },
+        "backend": {
+          "label": "Knative 컴포넌트 / 파드"
+        },
+        "database": {
+          "label": "Knative 리소스(CRD)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "hot-path",
+        "label": "트래픽이 있을 때",
+        "focus": [
+          "client",
+          "gateway",
+          "qp1",
+          "app1"
+        ],
+        "note": "파드가 살아 있으면 Gateway가 요청을 Queue Proxy 사이드카를 거쳐 User Container로 바로 전달한다."
+      },
+      {
+        "id": "scale-to-zero",
+        "label": "Scale-to-Zero 경로",
+        "focus": [
+          "client",
+          "gateway",
+          "activator",
+          "autoscaler",
+          "qp1"
+        ],
+        "note": "파드가 0개면 Activator가 요청을 버퍼링하고 Autoscaler에 스케일업을 요청한 뒤, 파드가 준비되면 전달한다."
+      },
+      {
+        "id": "autoscale-loop",
+        "label": "오토스케일링 루프",
+        "focus": [
+          "qp1",
+          "qp2",
+          "autoscaler",
+          "controller"
+        ],
+        "note": "Queue Proxy가 보고한 동시성 메트릭으로 Autoscaler(KPA/HPA)가 스케일을 결정해 Controller에 전달한다."
+      },
+      {
+        "id": "resource-mgmt",
+        "label": "리소스 관리",
+        "focus": [
+          "controller",
+          "webhook",
+          "resources"
+        ],
+        "note": "Webhook이 Knative 리소스를 검증하고, Controller가 Service/Configuration/Revision/Route의 생명주기를 관리한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트 요청",
+      "sublabel": "HTTP",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "Kourier / Istio",
+      "pos": [
+        260,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "User Container",
+      "sublabel": "Revision v1",
+      "pos": [
+        740,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "User Container",
+      "sublabel": "Revision v2",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "qp1",
+      "type": "backend",
+      "label": "Queue Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        740,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "qp2",
+      "type": "backend",
+      "label": "Queue Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        960,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "activator",
+      "type": "backend",
+      "label": "Activator",
+      "sublabel": "요청 버퍼링",
+      "pos": [
+        480,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "autoscaler",
+      "type": "backend",
+      "label": "Autoscaler",
+      "sublabel": "KPA / HPA",
+      "pos": [
+        740,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Controller",
+      "sublabel": "리소스 생명주기 관리",
+      "pos": [
+        480,
+        490
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "backend",
+      "label": "Webhook",
+      "sublabel": "검증 / 기본값 설정",
+      "pos": [
+        480,
+        590
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "resources",
+      "type": "database",
+      "label": "Knative 리소스",
+      "sublabel": "Service → Configuration → Revision / Route",
+      "pos": [
+        80,
+        540
+      ],
+      "size": [
+        270,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Ingress Layer",
+      "wraps": [
+        "gateway"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Knative Serving 컨트롤 플레인",
+      "wraps": [
+        "activator",
+        "autoscaler",
+        "controller",
+        "webhook"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "app1",
+        "app2",
+        "qp1",
+        "qp2"
+      ],
+      "pad": 72
+    },
+    {
+      "kind": "region",
+      "label": "Pod (Revision v1)",
+      "wraps": [
+        "app1",
+        "qp1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod (Revision v2)",
+      "wraps": [
+        "app2",
+        "qp2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-gateway",
+      "from": "client",
+      "to": "gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-qp1",
+      "from": "gateway",
+      "to": "qp1",
+      "label": "트래픽이 있을 때",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-activator",
+      "from": "gateway",
+      "to": "activator",
+      "label": "Scale-to-Zero 시"
+    },
+    {
+      "id": "activator-qp1",
+      "from": "activator",
+      "to": "qp1",
+      "label": "파드 활성화 후 전달",
+      "variant": "dashed",
+      "fromSide": "top"
+    },
+    {
+      "id": "activator-autoscaler",
+      "from": "activator",
+      "to": "autoscaler",
+      "label": "스케일업 요청"
+    },
+    {
+      "id": "qp1-app1",
+      "from": "qp1",
+      "to": "app1"
+    },
+    {
+      "id": "qp2-app2",
+      "from": "qp2",
+      "to": "app2"
+    },
+    {
+      "id": "qp1-autoscaler",
+      "from": "qp1",
+      "to": "autoscaler",
+      "label": "동시성 메트릭 보고",
+      "labelDy": 24
+    },
+    {
+      "id": "qp2-autoscaler",
+      "from": "qp2",
+      "to": "autoscaler"
+    },
+    {
+      "id": "autoscaler-controller",
+      "from": "autoscaler",
+      "to": "controller",
+      "label": "스케일 결정",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "controller-resources",
+      "from": "controller",
+      "to": "resources",
+      "label": "관리"
+    },
+    {
+      "id": "webhook-resources",
+      "from": "webhook",
+      "to": "resources",
+      "label": "검증"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "요청 경로",
+      "items": [
+        "트래픽이 있으면 Gateway → Queue Proxy → User Container로 직접 전달",
+        "Scale-to-Zero 상태의 첫 요청은 Activator가 버퍼링하고 파드가 준비되면 전달"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "오토스케일링",
+      "items": [
+        "Queue Proxy 사이드카가 요청 큐잉·동시성 제한과 함께 실시간 동시성 메트릭을 보고",
+        "KPA는 동시 요청 수/RPS 기반으로 Scale-to-Zero 지원, HPA는 CPU/메모리 기반이며 Scale-to-Zero 미지원"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "컨트롤 플레인",
+      "items": [
+        "Controller는 Service, Configuration, Revision, Route의 생명주기와 하위 Deployment/Service/Ingress를 관리",
+        "Webhook은 리소스 생성/수정 시 유효성 검사와 기본값 설정을 수행"
+      ]
+    }
+  ]
+}

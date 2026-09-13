@@ -1,0 +1,339 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Detailed eBPF Architecture Diagram",
+    "locale": "en",
+    "output": "en-networking-cilium-02-ebpf-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "App"
+        },
+        "frontend": {
+          "label": "Tooling"
+        },
+        "security": {
+          "label": "Verifier"
+        },
+        "backend": {
+          "label": "Runtime"
+        },
+        "database": {
+          "label": "Maps"
+        },
+        "messagebus": {
+          "label": "Hooks"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "load-path",
+        "label": "Program load path",
+        "focus": [
+          "app",
+          "loader",
+          "verifier",
+          "jit",
+          "vm"
+        ],
+        "note": "A program handed over by the loader runs in the virtual machine only after passing the verifier and the JIT compiler."
+      },
+      {
+        "id": "hooks",
+        "label": "Hook attachment",
+        "focus": [
+          "vm",
+          "hooks-net",
+          "hooks-trace"
+        ],
+        "note": "The virtual machine attaches to networking, tracing and security hook points and runs the program when those events fire."
+      },
+      {
+        "id": "data-exchange",
+        "label": "Data via maps",
+        "focus": [
+          "app",
+          "vm",
+          "maps"
+        ],
+        "note": "eBPF maps are key-value stores that share data between kernel space and user space."
+      },
+      {
+        "id": "toolchain",
+        "label": "Compiler toolchain",
+        "focus": [
+          "toolchain",
+          "loader"
+        ],
+        "note": "Clang/LLVM compiles C source into eBPF bytecode, and BTF information provides CO-RE portability."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "Application",
+      "sublabel": "user-space program",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "loader",
+      "type": "frontend",
+      "label": "Loader libraries",
+      "sublabel": "libbpf · BCC · bpftrace",
+      "pos": [
+        250,
+        70
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "toolchain",
+      "type": "frontend",
+      "label": "Compiler toolchain",
+      "sublabel": "Clang → LLVM → BTF",
+      "pos": [
+        570,
+        70
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "verifier",
+      "type": "security",
+      "label": "eBPF Verifier",
+      "sublabel": "safety guarantee",
+      "pos": [
+        250,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "jit",
+      "type": "backend",
+      "label": "JIT Compiler",
+      "sublabel": "performance optimization",
+      "pos": [
+        520,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "vm",
+      "type": "backend",
+      "label": "eBPF Virtual Machine",
+      "sublabel": "program execution",
+      "pos": [
+        790,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "maps",
+      "type": "database",
+      "label": "eBPF maps",
+      "sublabel": "data store",
+      "pos": [
+        60,
+        440
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "hooks-net",
+      "type": "messagebus",
+      "label": "Networking hooks",
+      "sublabel": "XDP · TC · Socket · Cgroups",
+      "pos": [
+        1020,
+        270
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "hooks-trace",
+      "type": "messagebus",
+      "label": "Tracing & security hooks",
+      "sublabel": "Kprobes · Tracepoints · Perf · LSM",
+      "pos": [
+        1020,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "User Space",
+      "wraps": [
+        "app",
+        "loader",
+        "toolchain"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kernel Space",
+      "wraps": [
+        "verifier",
+        "jit",
+        "vm",
+        "maps",
+        "hooks-net",
+        "hooks-trace"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-loader",
+      "from": "app",
+      "to": "loader"
+    },
+    {
+      "id": "toolchain-to-loader",
+      "from": "toolchain",
+      "to": "loader",
+      "label": "eBPF bytecode",
+      "variant": "dashed"
+    },
+    {
+      "id": "loader-to-verifier",
+      "from": "loader",
+      "to": "verifier",
+      "label": "program load",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "verifier-to-jit",
+      "from": "verifier",
+      "to": "jit",
+      "label": "verified",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jit-to-vm",
+      "from": "jit",
+      "to": "vm",
+      "label": "optimized code",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vm-to-hooks-net",
+      "from": "vm",
+      "to": "hooks-net",
+      "label": "attach",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "vm-to-hooks-trace",
+      "from": "vm",
+      "to": "hooks-trace",
+      "label": "attach",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "vm-to-maps",
+      "from": "vm",
+      "to": "maps",
+      "label": "data exchange",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "app-to-maps",
+      "from": "app",
+      "to": "maps",
+      "label": "data exchange",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        135,
+        300
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Hook Points",
+      "items": [
+        "XDP — network driver level",
+        "Traffic Control — network stack",
+        "Socket filter — socket level",
+        "Cgroups — resource control",
+        "Kprobes/Uprobes — dynamic tracing",
+        "Tracepoints — static trace points",
+        "Perf Events — performance events",
+        "LSM — security module"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "eBPF Map Types",
+      "items": [
+        "HashMap (HASH)",
+        "Array (ARRAY)",
+        "LRU hash (LRU_HASH)",
+        "Ring buffer (RINGBUF)",
+        "Stack trace (STACK_TRACE)",
+        "Socket map (SOCKHASH)",
+        "Others (DEVMAP, PROG_ARRAY …)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "eBPF runtime",
+      "items": [
+        "Verifier — rejects infinite loops and invalid memory access",
+        "JIT compiler — converts bytecode to native machine code",
+        "Virtual machine — 11 registers, 512-byte stack, helper functions"
+      ]
+    }
+  ]
+}

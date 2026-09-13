@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 알림 및 이벤트 관리 흐름",
+    "output": "ko-eks-06-eks-monitoring-logging-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      700
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "AWS 서비스"
+        },
+        "backend": {
+          "label": "Kubernetes / OSS"
+        },
+        "messagebus": {
+          "label": "이벤트 · 메시지 버스"
+        },
+        "external": {
+          "label": "외부 알림 채널"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "aws-native",
+        "label": "AWS 네이티브 경로",
+        "focus": [
+          "src-cloudwatch",
+          "src-aws-events",
+          "cw-alarms",
+          "eventbridge",
+          "sns",
+          "lambda"
+        ],
+        "note": "CloudWatch 지표·로그는 CloudWatch 경보를 거쳐 SNS로, AWS 이벤트는 EventBridge를 거쳐 SNS와 Lambda로 전달된다."
+      },
+      {
+        "id": "prometheus",
+        "label": "Prometheus 경로",
+        "focus": [
+          "src-prometheus",
+          "alertmanager",
+          "chat-paging"
+        ],
+        "note": "Prometheus·사용자 정의 지표와 Loki 로그 알림을 Alertmanager가 라우팅·그룹화해 Slack, PagerDuty receiver로 보낸다."
+      },
+      {
+        "id": "event-router",
+        "label": "이벤트 라우터 경로",
+        "focus": [
+          "src-k8s-events",
+          "event-router",
+          "opsgenie"
+        ],
+        "note": "Kubernetes·애플리케이션 이벤트와 OpenSearch 로그를 사용자 정의 이벤트 라우터가 OpsGenie로 전달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src-cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch 지표 · 로그",
+      "sublabel": "지표 · 로그 기반",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "src-aws-events",
+      "type": "cloud",
+      "label": "AWS 이벤트",
+      "sublabel": "이벤트 기반",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "src-prometheus",
+      "type": "backend",
+      "label": "Prometheus 지표 · Loki 로그",
+      "sublabel": "사용자 정의 지표 포함",
+      "pos": [
+        40,
+        410
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "src-k8s-events",
+      "type": "backend",
+      "label": "Kubernetes · 애플리케이션 이벤트",
+      "sublabel": "OpenSearch 로그 포함",
+      "pos": [
+        40,
+        560
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "cw-alarms",
+      "type": "cloud",
+      "label": "CloudWatch 경보",
+      "sublabel": "임계값 초과 시 경보",
+      "pos": [
+        470,
+        110
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "eventbridge",
+      "type": "messagebus",
+      "label": "Amazon EventBridge",
+      "sublabel": "AWS 이벤트 버스",
+      "pos": [
+        470,
+        260
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Prometheus Alertmanager",
+      "sublabel": "route · group · receiver",
+      "pos": [
+        470,
+        410
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "event-router",
+      "type": "backend",
+      "label": "이벤트 라우터",
+      "sublabel": "사용자 정의 라우팅",
+      "pos": [
+        470,
+        560
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "Amazon SNS",
+      "sublabel": "이메일 · SQS 구독으로 팬아웃",
+      "pos": [
+        900,
+        110
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "lambda",
+      "type": "cloud",
+      "label": "AWS Lambda",
+      "sublabel": "사용자 정의 핸들러",
+      "pos": [
+        900,
+        260
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "chat-paging",
+      "type": "external",
+      "label": "Slack · PagerDuty",
+      "sublabel": "Alertmanager receiver",
+      "pos": [
+        900,
+        410
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "opsgenie",
+      "type": "external",
+      "label": "OpsGenie",
+      "sublabel": "온콜 알림",
+      "pos": [
+        900,
+        560
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "알림 소스",
+      "wraps": [
+        "src-cloudwatch",
+        "src-aws-events",
+        "src-prometheus",
+        "src-k8s-events"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "알림 처리",
+      "wraps": [
+        "cw-alarms",
+        "eventbridge",
+        "alertmanager",
+        "event-router"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "알림 채널",
+      "wraps": [
+        "sns",
+        "lambda",
+        "chat-paging",
+        "opsgenie"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cloudwatch-to-alarms",
+      "from": "src-cloudwatch",
+      "to": "cw-alarms",
+      "variant": "emphasis"
+    },
+    {
+      "id": "aws-events-to-eventbridge",
+      "from": "src-aws-events",
+      "to": "eventbridge"
+    },
+    {
+      "id": "prometheus-to-alertmanager",
+      "from": "src-prometheus",
+      "to": "alertmanager"
+    },
+    {
+      "id": "k8s-events-to-router",
+      "from": "src-k8s-events",
+      "to": "event-router"
+    },
+    {
+      "id": "alarms-to-sns",
+      "from": "cw-alarms",
+      "to": "sns",
+      "label": "alarm-actions",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eventbridge-to-lambda",
+      "from": "eventbridge",
+      "to": "lambda"
+    },
+    {
+      "id": "eventbridge-to-sns",
+      "from": "eventbridge",
+      "to": "sns",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          585,
+          220
+        ],
+        [
+          1005,
+          220
+        ]
+      ]
+    },
+    {
+      "id": "alertmanager-to-chat",
+      "from": "alertmanager",
+      "to": "chat-paging"
+    },
+    {
+      "id": "router-to-opsgenie",
+      "from": "event-router",
+      "to": "opsgenie"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "CloudWatch 경보",
+      "items": [
+        "ContainerInsights 지표(pod_cpu_utilization 등)에 임계값 경보 설정",
+        "--alarm-actions로 SNS 토픽에 알림 전달"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Prometheus Alertmanager",
+      "items": [
+        "route의 group_by · group_wait · repeat_interval로 알림 그룹화",
+        "receiver 설정으로 Slack 등 알림 채널에 라우팅"
+      ]
+    }
+  ]
+}

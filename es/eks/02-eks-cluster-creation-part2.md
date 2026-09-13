@@ -1,31 +1,33 @@
-# Parte 2: Creación de clusters con eksctl
+# Parte 2: Creación de clústeres con eksctl
 
-## Creación de un cluster usando eksctl
+## Creación de un clúster con eksctl
 
-eksctl es la forma más sencilla de crear y administrar clusters EKS. eksctl usa CloudFormation para crear clusters EKS y recursos relacionados.
+eksctl es la forma más sencilla de crear y administrar clústeres de EKS. eksctl utiliza CloudFormation para crear clústeres de EKS y recursos relacionados.
 
-El siguiente diagrama muestra el proceso de creación de un cluster EKS usando eksctl:
+El siguiente diagrama muestra el proceso de creación de un clúster de EKS con eksctl:
 
-![Proceso de creación de clusters con eksctl](../.gitbook/assets/eksctl_cluster_creation_process.png)
+![Diagrama del proceso de creación de clústeres con eksctl, que crea VPC, IAM, el control plane y el node group en orden mediante pilas de CloudFormation.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-0.png)
 
-### Creación básica de un cluster
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-0.html)
 
-Para crear la forma más básica de un cluster EKS, ejecuta el siguiente comando:
+### Creación básica de clústeres
+
+Para crear la forma más básica de un clúster de EKS, ejecute el siguiente comando:
 
 ```bash
 eksctl create cluster --name my-cluster --region us-west-2
 ```
 
-Este comando crea un cluster con la siguiente configuración predeterminada:
+Este comando crea un clúster con la siguiente configuración predeterminada:
 
-* 2 Nodes m5.large
-* Nueva VPC y subnets
+* 2 nodos m5.large
+* VPC y subredes nuevas
 * AMI predeterminada de Amazon Linux 2
 * Última versión de Kubernetes
 
-### Creación de un cluster usando un archivo de configuración
+### Creación de un clúster mediante un archivo de configuración
 
-Para configuraciones más complejas, puedes definir el cluster usando un archivo YAML:
+Para configuraciones más complejas, puede definir el clúster mediante un archivo YAML:
 
 ```yaml
 # cluster.yaml
@@ -98,7 +100,7 @@ cloudWatch:
     enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 ```
 
-Para crear un cluster usando este archivo de configuración, ejecuta el siguiente comando:
+Para crear un clúster con este archivo de configuración, ejecute el siguiente comando:
 
 ```bash
 eksctl create cluster -f cluster.yaml
@@ -106,11 +108,13 @@ eksctl create cluster -f cluster.yaml
 
 ### Creación de Managed Node Groups
 
-El siguiente diagrama muestra la arquitectura de Managed Node Group para un cluster EKS:
+El siguiente diagrama muestra la arquitectura de Managed Node Group para un clúster de EKS:
 
-![Arquitectura de EKS Managed Node Group](../.gitbook/assets/eks_managed_node_group_detailed.png)
+![Diagrama de arquitectura del control plane que administra un node group cuyo grupo de Auto Scaling inicia instancias de EC2 que ejecutan Pods.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-1.png)
 
-Para agregar un Managed Node Group a un cluster existente, ejecuta el siguiente comando:
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-1.html)
+
+Para agregar un Managed Node Group a un clúster existente, ejecute el siguiente comando:
 
 ```bash
 eksctl create nodegroup \
@@ -125,7 +129,7 @@ eksctl create nodegroup \
   --ssh-public-key my-key
 ```
 
-O puedes usar un archivo de configuración:
+O puede utilizar un archivo de configuración:
 
 ```yaml
 # nodegroup.yaml
@@ -153,13 +157,15 @@ managedNodeGroups:
 eksctl create nodegroup -f nodegroup.yaml
 ```
 
-### Creación de Fargate Profiles
+### Creación de perfiles de Fargate
 
-El siguiente diagrama muestra la arquitectura de EKS Fargate Profile:
+El siguiente diagrama muestra la arquitectura del perfil de Fargate de EKS:
 
-![Arquitectura de EKS Fargate Profile](../.gitbook/assets/eks_fargate_profile_architecture.png)
+![Diagrama de arquitectura que muestra Pods que coinciden con los selectores de namespace y etiquetas de un perfil de Fargate ubicados en microVM dedicadas.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-2.png)
 
-Para crear un Fargate Profile, ejecuta el siguiente comando:
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-2.html)
+
+Para crear un perfil de Fargate, ejecute el siguiente comando:
 
 ```bash
 eksctl create fargateprofile \
@@ -170,7 +176,7 @@ eksctl create fargateprofile \
   --labels env=fargate
 ```
 
-O puedes usar un archivo de configuración:
+O puede utilizar un archivo de configuración:
 
 ```yaml
 # fargate.yaml
@@ -194,9 +200,9 @@ fargate:
 eksctl create fargateprofile -f fargate.yaml
 ```
 
-### Actualización de un cluster
+### Actualización de un clúster
 
-Puedes actualizar un cluster existente usando eksctl:
+Puede actualizar un clúster existente con eksctl:
 
 ```bash
 # Upgrade cluster version
@@ -206,20 +212,22 @@ eksctl upgrade cluster --name=my-cluster --version=1.27
 eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup
 ```
 
-### Eliminación de un cluster
+### Eliminación de un clúster
 
-Puedes eliminar un cluster usando eksctl:
+Puede eliminar un clúster con eksctl:
 
 ```bash
 eksctl delete cluster --name=my-cluster --region=us-west-2
 ```
 
-## Administración del ciclo de vida de un cluster EKS
+## Administración del ciclo de vida del clúster de EKS
 
-El siguiente diagrama muestra el proceso general de administración del ciclo de vida para un cluster EKS:
+El siguiente diagrama muestra el proceso general de administración del ciclo de vida de un clúster de EKS:
 
-![Administración del ciclo de vida del cluster EKS](../.gitbook/assets/eks_cluster_lifecycle_management.png)
+![Diagrama del ciclo de vida de un clúster de EKS, desde la creación y configuración, pasando por las actualizaciones de versión, hasta la eliminación.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-3.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-3.html)
 
 ## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, intenta el [Cuestionario de creación de clusters EKS - Parte 2](../quizzes/eks/02-eks-cluster-creation-part2-quiz.md).
+Para comprobar lo que aprendió en este capítulo, pruebe el [Cuestionario de creación de clústeres de EKS - Parte 2](../quizzes/eks/02-eks-cluster-creation-part2-quiz.md).

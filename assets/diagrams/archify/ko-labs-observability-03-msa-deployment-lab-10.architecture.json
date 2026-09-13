@@ -1,0 +1,387 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MSA 서비스 맵",
+    "output": "ko-labs-observability-03-msa-deployment-lab-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      620
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "동기 요청 경로",
+        "focus": [
+          "client",
+          "gateway",
+          "order",
+          "payment",
+          "aurora"
+        ],
+        "note": "클라이언트 요청이 API Gateway를 거쳐 주문·결제 서비스로 라우팅되고, 두 서비스가 Aurora PostgreSQL에 기록한다."
+      },
+      {
+        "id": "event-path",
+        "label": "비동기 이벤트 경로",
+        "focus": [
+          "order",
+          "sqs",
+          "notification",
+          "payment",
+          "sns"
+        ],
+        "note": "order-service는 SQS로, payment-service는 SNS로 이벤트를 발행하고 notification-service가 SQS 메시지를 소비한다."
+      },
+      {
+        "id": "batch-path",
+        "label": "배치 분석",
+        "focus": [
+          "mwaa",
+          "analytics"
+        ],
+        "note": "Amazon MWAA가 스케줄에 따라 analytics-batch를 트리거한다."
+      },
+      {
+        "id": "telemetry-path",
+        "label": "텔레메트리 경로",
+        "focus": [
+          "order",
+          "payment",
+          "notification",
+          "otel",
+          "backends"
+        ],
+        "note": "각 서비스의 OTel SDK가 OpenTelemetry Agent로 트레이스를 내보내고, 에이전트가 관측성 백엔드로 전달한다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "사용자 요청",
+      "pos": [
+        240,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "API Gateway",
+      "sublabel": "Go / Gin :8080",
+      "pos": [
+        240,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "Java / Spring Boot :8080",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "Python / FastAPI :8000",
+      "pos": [
+        440,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification Service",
+      "sublabel": "Node.js / Express :3000",
+      "pos": [
+        640,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "analytics",
+      "type": "backend",
+      "label": "Analytics Batch",
+      "sublabel": "Python / Pandas",
+      "pos": [
+        840,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "backend",
+      "label": "OpenTelemetry Agent",
+      "sublabel": "워크로드 텔레메트리 수집",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        360,
+        60
+      ]
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "SNS",
+      "sublabel": "결제 이벤트",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "aurora",
+      "type": "database",
+      "label": "Aurora PostgreSQL",
+      "sublabel": "주문 · 결제 데이터",
+      "pos": [
+        440,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "sqs",
+      "type": "messagebus",
+      "label": "SQS",
+      "sublabel": "주문 이벤트",
+      "pos": [
+        640,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "mwaa",
+      "type": "cloud",
+      "label": "Amazon MWAA",
+      "sublabel": "분석 워크플로 스케줄",
+      "pos": [
+        840,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "backends",
+      "type": "cloud",
+      "label": "관측성 백엔드",
+      "sublabel": "메트릭 / 로그 / 트레이스",
+      "pos": [
+        1040,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "gateway",
+        "payment",
+        "order",
+        "notification",
+        "analytics",
+        "otel"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 서비스",
+      "wraps": [
+        "sns",
+        "aurora",
+        "sqs",
+        "mwaa",
+        "backends"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "HTTP",
+      "variant": "emphasis",
+      "labelAt": [
+        348,
+        280
+      ]
+    },
+    {
+      "id": "gateway-payment",
+      "from": "gateway",
+      "to": "payment",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-order",
+      "from": "gateway",
+      "to": "order",
+      "variant": "emphasis"
+    },
+    {
+      "id": "payment-aurora",
+      "from": "payment",
+      "to": "aurora"
+    },
+    {
+      "id": "order-aurora",
+      "from": "order",
+      "to": "aurora",
+      "label": "SQL",
+      "labelAt": [
+        548,
+        440
+      ]
+    },
+    {
+      "id": "payment-sns",
+      "from": "payment",
+      "to": "sns",
+      "label": "발행",
+      "labelAt": [
+        78,
+        440
+      ]
+    },
+    {
+      "id": "order-sqs",
+      "from": "order",
+      "to": "sqs",
+      "label": "발행"
+    },
+    {
+      "id": "sqs-notification",
+      "from": "sqs",
+      "to": "notification",
+      "label": "소비"
+    },
+    {
+      "id": "mwaa-analytics",
+      "from": "mwaa",
+      "to": "analytics",
+      "label": "스케줄 트리거"
+    },
+    {
+      "id": "payment-otel",
+      "from": "payment",
+      "to": "otel",
+      "variant": "dashed"
+    },
+    {
+      "id": "order-otel",
+      "from": "order",
+      "to": "otel",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "notification-otel",
+      "from": "notification",
+      "to": "otel",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "otel-backends",
+      "from": "otel",
+      "to": "backends",
+      "label": "OTLP",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "서비스 구성",
+      "items": [
+        "api-gateway: Go / Gin, API 라우팅·인증 (Manual SDK)",
+        "order-service: Python / FastAPI, 주문 CRUD",
+        "payment-service: Java / Spring Boot, 결제 처리",
+        "notification-service: Node.js / Express, 알림 발송",
+        "analytics-batch: Python / Pandas, 배치 분석"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "계측 방식",
+      "items": [
+        "order/analytics: opentelemetry-instrument 자동 계측",
+        "payment: javaagent 자동 계측",
+        "notification: @opentelemetry/auto-instrumentations-node"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "비동기 통합",
+      "items": [
+        "order-service → SQS 주문 이벤트 → notification-service 소비",
+        "payment-service → SNS 결제 이벤트 발행",
+        "MWAA 스케줄이 analytics-batch를 트리거"
+      ]
+    }
+  ]
+}

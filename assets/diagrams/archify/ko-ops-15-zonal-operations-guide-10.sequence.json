@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "KIP-392: 선호 replica 힌트와 로컬 읽기",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      600
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "데이터 반환 (동일 AZ)"
+        },
+        "return": {
+          "label": "리더의 리다이렉트 응답"
+        },
+        "default": {
+          "label": "Fetch 요청"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "consumer",
+      "type": "frontend",
+      "label": "Consumer",
+      "sublabel": "AZ-a · client.rack=AZ-a"
+    },
+    {
+      "id": "leader",
+      "type": "messagebus",
+      "label": "Leader Broker",
+      "sublabel": "AZ-b"
+    },
+    {
+      "id": "follower",
+      "type": "messagebus",
+      "label": "Follower Broker",
+      "sublabel": "AZ-a"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 300,
+      "label": "1. 리더가 선호 replica 정보를 제공"
+    },
+    {
+      "from": 325,
+      "to": 470,
+      "label": "2. 로컬 replica에서 읽기 · 없으면 leader 폴백"
+    }
+  ],
+  "messages": [
+    {
+      "id": "fetch-leader",
+      "from": "consumer",
+      "to": "leader",
+      "y": 200,
+      "label": "Fetch 요청 (client.rack=AZ-a 포함)",
+      "variant": "default"
+    },
+    {
+      "id": "preferred-replica",
+      "from": "leader",
+      "to": "consumer",
+      "y": 265,
+      "label": "선호 replica 힌트 (사용 가능한 경우)",
+      "variant": "return",
+      "note": "broker.rack과 client.rack 일치 여부 확인"
+    },
+    {
+      "id": "fetch-follower",
+      "from": "consumer",
+      "to": "follower",
+      "y": 360,
+      "label": "Fetch 요청 재전송",
+      "variant": "default"
+    },
+    {
+      "id": "data-return",
+      "from": "follower",
+      "to": "consumer",
+      "y": 430,
+      "label": "데이터 반환 · 복제 트래픽은 별도",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "consumer",
+      "from": 190,
+      "to": 445,
+      "type": "frontend"
+    },
+    {
+      "participant": "leader",
+      "from": 195,
+      "to": 272,
+      "type": "messagebus"
+    },
+    {
+      "participant": "follower",
+      "from": 355,
+      "to": 437,
+      "type": "messagebus"
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Full Mesh BGP Topology (Small Clusters)",
+    "locale": "en",
+    "output": "en-networking-calico-02-architecture-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "BIRD · AS 64512",
+      "pos": [
+        365,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "BIRD · AS 64512",
+      "pos": [
+        80,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "backend",
+      "label": "Node 3",
+      "sublabel": "BIRD · AS 64512",
+      "pos": [
+        650,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "node4",
+      "type": "backend",
+      "label": "Node 4",
+      "sublabel": "BIRD · AS 64512",
+      "pos": [
+        365,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Full Mesh BGP (under 50 nodes)",
+      "wraps": [
+        "node1",
+        "node2",
+        "node3",
+        "node4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1-n4",
+      "from": "node1",
+      "to": "node4",
+      "label": "iBGP",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        450,
+        182
+      ]
+    },
+    {
+      "id": "n2-n3",
+      "from": "node2",
+      "to": "node3",
+      "label": "iBGP"
+    },
+    {
+      "id": "n1-n2",
+      "from": "node1",
+      "to": "node2",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "n1-n3",
+      "from": "node1",
+      "to": "node3",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "n4-n2",
+      "from": "node4",
+      "to": "node2",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "n4-n3",
+      "from": "node4",
+      "to": "node3",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Full mesh rules",
+      "items": [
+        "Every node peers directly with every other node over iBGP (same AS 64512)",
+        "Sessions = N x (N-1) / 2 — 4 nodes means 6 sessions",
+        "Fits small clusters under 50 nodes; beyond that, use Route Reflectors"
+      ]
+    }
+  ]
+}

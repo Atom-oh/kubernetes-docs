@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "dm-verity Root Filesystem Integrity Verification",
+    "locale": "en",
+    "output": "en-eks-05-eks-security-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "read-path",
+        "label": "Block read and hashing",
+        "focus": [
+          "rootfs",
+          "read",
+          "hash"
+        ],
+        "note": "Every time a block is read from the root filesystem, its hash is computed at the block level."
+      },
+      {
+        "id": "verify-path",
+        "label": "Merkle Tree comparison",
+        "focus": [
+          "hash",
+          "merkle",
+          "verify"
+        ],
+        "note": "The computed hash is compared against the value stored in the Merkle Tree."
+      },
+      {
+        "id": "decision",
+        "label": "Allow / deny",
+        "focus": [
+          "verify",
+          "allow",
+          "deny"
+        ],
+        "note": "A matching hash allows access; a mismatch blocks access, stopping tampering."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "rootfs",
+      "type": "database",
+      "label": "Root Filesystem",
+      "sublabel": "read-only",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "read",
+      "type": "backend",
+      "label": "Read Block",
+      "sublabel": "block-level access",
+      "pos": [
+        270,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "hash",
+      "type": "backend",
+      "label": "Compute Hash",
+      "sublabel": "hash of the read block",
+      "pos": [
+        480,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "verify",
+      "type": "security",
+      "label": "Verify Hash",
+      "sublabel": "compare with stored hash",
+      "pos": [
+        690,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "allow",
+      "type": "backend",
+      "label": "Allow Access",
+      "sublabel": "block returned",
+      "pos": [
+        940,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "deny",
+      "type": "security",
+      "label": "Deny Access",
+      "sublabel": "tampering detected",
+      "pos": [
+        940,
+        290
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "merkle",
+      "type": "database",
+      "label": "Merkle Tree",
+      "sublabel": "hash store",
+      "pos": [
+        690,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "dm-verity operation",
+      "wraps": [
+        "read",
+        "hash",
+        "verify",
+        "allow",
+        "deny"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rootfs-to-read",
+      "from": "rootfs",
+      "to": "read",
+      "label": "block",
+      "variant": "emphasis"
+    },
+    {
+      "id": "read-to-hash",
+      "from": "read",
+      "to": "hash",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hash-to-verify",
+      "from": "hash",
+      "to": "verify",
+      "variant": "emphasis"
+    },
+    {
+      "id": "merkle-to-verify",
+      "from": "merkle",
+      "to": "verify",
+      "label": "stored hash",
+      "variant": "security"
+    },
+    {
+      "id": "verify-to-allow",
+      "from": "verify",
+      "to": "allow",
+      "label": "match",
+      "variant": "emphasis"
+    },
+    {
+      "id": "verify-to-deny",
+      "from": "verify",
+      "to": "deny",
+      "label": "mismatch",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Verification flow",
+      "items": [
+        "A hash is computed on every block read",
+        "It is compared with the hash stored in the Merkle Tree"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Protection",
+      "items": [
+        "Root filesystem integrity verified at boot",
+        "Runtime modification attempts detected and blocked",
+        "Prevents malicious code injection"
+      ]
+    }
+  ]
+}

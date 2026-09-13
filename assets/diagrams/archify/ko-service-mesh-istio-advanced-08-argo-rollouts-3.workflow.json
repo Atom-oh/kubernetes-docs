@@ -1,0 +1,275 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "AnalysisRun 판정 흐름",
+    "output": "public/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "measure-loop",
+        "label": "측정 루프",
+        "focus": [
+          "start",
+          "measure",
+          "check",
+          "allPassed"
+        ],
+        "note": "interval 30s · count 5 — 성공률이 95% 이상이면 다음 측정으로 넘어갑니다."
+      },
+      {
+        "id": "success-path",
+        "label": "전체 성공",
+        "focus": [
+          "allPassed",
+          "success"
+        ],
+        "note": "5회 측정이 모두 통과하면 Rollout이 다음 단계로 진행합니다."
+      },
+      {
+        "id": "failure-path",
+        "label": "실패와 롤백",
+        "focus": [
+          "check",
+          "failCount",
+          "failLimit",
+          "rollback"
+        ],
+        "note": "failureLimit 2 — 실패가 2회에 도달하면 AnalysisRun 전체 실패로 자동 롤백합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "backend": {
+          "label": "측정"
+        },
+        "security": {
+          "label": "판정"
+        },
+        "messagebus": {
+          "label": "실패 카운트"
+        },
+        "cloud": {
+          "label": "성공 종료"
+        },
+        "external": {
+          "label": "롤백"
+        }
+      }
+    },
+    "viewBox": [
+      1160,
+      480
+    ]
+  },
+  "lanes": [
+    {
+      "id": "loop",
+      "label": "AnalysisRun 측정 루프"
+    },
+    {
+      "id": "failure",
+      "label": "실패 처리 (failureLimit: 2)",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "measure",
+    "check",
+    "allPassed",
+    "success"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "success",
+      "rollback"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "success"
+      },
+      {
+        "from": "check",
+        "to": "rollback"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "loop",
+      "col": 0,
+      "type": "frontend",
+      "label": "AnalysisRun 시작",
+      "sublabel": "canary 단계 진입",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "measure",
+      "lane": "loop",
+      "col": 1,
+      "type": "backend",
+      "label": "30초마다 측정",
+      "sublabel": "Prometheus 성공률",
+      "tag": "interval 30s",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "check",
+      "lane": "loop",
+      "col": 2,
+      "type": "security",
+      "label": "성공률 >= 95%?",
+      "sublabel": "successCondition",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "allPassed",
+      "lane": "loop",
+      "col": 3,
+      "type": "security",
+      "label": "5회 모두 통과?",
+      "sublabel": "count 5",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "success",
+      "lane": "loop",
+      "col": 4,
+      "type": "cloud",
+      "label": "전체 성공",
+      "sublabel": "다음 단계 진행",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "failCount",
+      "lane": "failure",
+      "col": 2,
+      "type": "messagebus",
+      "label": "실패 카운트 증가",
+      "sublabel": "failure count++",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "failLimit",
+      "lane": "failure",
+      "col": 3,
+      "type": "security",
+      "label": "2회 실패?",
+      "sublabel": "failureLimit",
+      "width": 168,
+      "yOffset": -16
+    },
+    {
+      "id": "rollback",
+      "lane": "failure",
+      "col": 4,
+      "type": "external",
+      "label": "자동 롤백",
+      "sublabel": "AnalysisRun 전체 실패",
+      "width": 168,
+      "yOffset": -16
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "measure",
+      "role": "main"
+    },
+    {
+      "from": "measure",
+      "to": "check",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "allPassed",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "allPassed",
+      "to": "success",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "allPassed",
+      "to": "measure",
+      "label": "NO · 다음 측정",
+      "variant": "dashed",
+      "role": "return",
+      "via": [
+        [
+          730,
+          70
+        ],
+        [
+          328,
+          70
+        ]
+      ]
+    },
+    {
+      "from": "check",
+      "to": "failCount",
+      "label": "NO",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop",
+      "labelDy": 32
+    },
+    {
+      "from": "failCount",
+      "to": "failLimit",
+      "role": "branch"
+    },
+    {
+      "from": "failLimit",
+      "to": "rollback",
+      "label": "YES",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "failLimit",
+      "to": "measure",
+      "label": "NO · 재측정",
+      "variant": "dashed",
+      "role": "return",
+      "via": [
+        [
+          730,
+          326
+        ],
+        [
+          328,
+          326
+        ]
+      ],
+      "labelSegment": 2,
+      "labelDy": 52
+    }
+  ]
+}

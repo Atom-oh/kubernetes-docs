@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VictoriaMetrics vs Prometheus",
+    "output": "ko-observability-metrics-02-victoriametrics-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": { "label": "Prometheus (기준)" },
+        "database": { "label": "VictoriaMetrics" }
+      }
+    },
+    "views": [
+      { "id": "scale", "label": "아키텍처와 확장", "focus": ["p-arch", "v-arch"], "note": "Prometheus는 단일 노드라 수평 확장에 Thanos/Cortex가 필요하지만, VictoriaMetrics는 단일/클러스터 모드를 네이티브로 지원한다." },
+      { "id": "storage", "label": "압축률과 보존 기간", "focus": ["p-comp", "v-comp", "p-ret", "v-ret"], "note": "최대 7배 압축으로 디스크 사용량을 약 70% 줄이고, 장기 저장소로 보존 기간 제한을 없앤다." },
+      { "id": "query", "label": "쿼리 언어", "focus": ["p-ql", "v-ql"], "note": "MetricsQL은 PromQL과 완벽 호환되는 상위 호환 언어라 기존 쿼리를 그대로 쓸 수 있다." }
+    ]
+  },
+  "components": [
+    { "id": "p-arch", "type": "external", "label": "단일 노드", "sublabel": "아키텍처", "pos": [60, 90], "size": [220, 64] },
+    { "id": "p-comp", "type": "external", "label": "중간 압축률", "sublabel": "디스크 사용량 기준", "pos": [60, 230], "size": [220, 64] },
+    { "id": "p-ql", "type": "external", "label": "PromQL", "sublabel": "쿼리 언어", "pos": [60, 370], "size": [220, 64] },
+    { "id": "p-ret", "type": "external", "label": "15-30일 보존", "sublabel": "보존 기간", "pos": [60, 510], "size": [220, 64] },
+    { "id": "v-arch", "type": "database", "label": "단일 / 클러스터", "sublabel": "vmsingle | 클러스터 모드", "pos": [760, 90], "size": [220, 64] },
+    { "id": "v-comp", "type": "database", "label": "7x 압축률", "sublabel": "디스크 사용량 ~70% 절감", "pos": [760, 230], "size": [220, 64] },
+    { "id": "v-ql", "type": "database", "label": "MetricsQL", "sublabel": "PromQL 호환 상위 호환", "pos": [760, 370], "size": [220, 64] },
+    { "id": "v-ret", "type": "database", "label": "무제한 보존", "sublabel": "장기 저장소", "pos": [760, 510], "size": [220, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Prometheus", "wraps": ["p-arch", "p-comp", "p-ql", "p-ret"] },
+    { "kind": "region", "label": "VictoriaMetrics", "wraps": ["v-arch", "v-comp", "v-ql", "v-ret"] }
+  ],
+  "connections": [
+    { "id": "arch-map", "from": "p-arch", "to": "v-arch", "label": "확장 필요", "variant": "dashed" },
+    { "id": "comp-map", "from": "p-comp", "to": "v-comp", "label": "스토리지 절약", "variant": "emphasis" },
+    { "id": "ql-map", "from": "p-ql", "to": "v-ql", "label": "완벽 호환", "variant": "dashed" },
+    { "id": "ret-map", "from": "p-ret", "to": "v-ret", "label": "장기 저장", "variant": "dashed" }
+  ]
+}

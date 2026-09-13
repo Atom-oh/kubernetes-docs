@@ -1,0 +1,343 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio 문제 발생 시 확인해야 할 레이어",
+    "output": "public/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "app-and-sidecar",
+        "label": "1-2. Application · Sidecar",
+        "focus": [
+          "failure",
+          "checkApp",
+          "appLogs",
+          "checkSidecar",
+          "envoyConfig"
+        ],
+        "note": "kubectl logs로 애플리케이션과 istio-proxy 로그를 보고, istioctl proxy-config로 routes · clusters · listeners를 확인한다."
+      },
+      {
+        "id": "control-and-network",
+        "label": "3-4. Control Plane · Network",
+        "focus": [
+          "checkControlPlane",
+          "istiodStatus",
+          "checkNetwork",
+          "networkPolicy"
+        ],
+        "note": "istioctl proxy-status로 xDS 동기화, Istiod 로그와 인증서, NetworkPolicy와 mTLS 인증서를 점검한다."
+      },
+      {
+        "id": "crd-and-support",
+        "label": "5. CRD 설정 · Support",
+        "focus": [
+          "checkCrd",
+          "crdAnalyze",
+          "support"
+        ],
+        "note": "istioctl analyze로 VirtualService/DestinationRule을 검증하고, 원인이 없으면 istioctl bug-report로 Support 티켓을 연다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터"
+        },
+        "external": {
+          "label": "외부 · 참조"
+        },
+        "frontend": {
+          "label": "시작 · 사용자 단계"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "diagnose",
+      "label": "진단 순서 · 레이어별 판단"
+    },
+    {
+      "id": "actions",
+      "label": "확인 작업"
+    },
+    {
+      "id": "escalate",
+      "label": "원인 미확인 · 에스컬레이션",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "failure",
+    "checkApp",
+    "checkSidecar",
+    "checkControlPlane",
+    "checkNetwork",
+    "checkCrd",
+    "support"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "failure"
+    ],
+    "allowedTerminals": [
+      "appLogs",
+      "envoyConfig",
+      "istiodStatus",
+      "networkPolicy",
+      "crdAnalyze",
+      "support"
+    ],
+    "requiredPaths": [
+      {
+        "from": "failure",
+        "to": "support"
+      },
+      {
+        "from": "failure",
+        "to": "envoyConfig"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "failure",
+      "lane": "diagnose",
+      "col": 0,
+      "type": "security",
+      "label": "트래픽 실패",
+      "sublabel": "503 Service Unavailable",
+      "tag": "ERROR",
+      "width": 150
+    },
+    {
+      "id": "checkApp",
+      "lane": "diagnose",
+      "col": 1,
+      "type": "backend",
+      "label": "1. Application",
+      "sublabel": "문제?",
+      "width": 140
+    },
+    {
+      "id": "checkSidecar",
+      "lane": "diagnose",
+      "col": 2,
+      "type": "backend",
+      "label": "2. Sidecar",
+      "sublabel": "문제?",
+      "width": 120
+    },
+    {
+      "id": "checkControlPlane",
+      "lane": "diagnose",
+      "col": 3,
+      "type": "backend",
+      "label": "3. Control Plane",
+      "sublabel": "문제?",
+      "width": 146
+    },
+    {
+      "id": "checkNetwork",
+      "lane": "diagnose",
+      "col": 4,
+      "type": "backend",
+      "label": "4. Network",
+      "sublabel": "문제?",
+      "width": 120
+    },
+    {
+      "id": "checkCrd",
+      "lane": "diagnose",
+      "col": 5,
+      "type": "backend",
+      "label": "5. CRD 설정",
+      "sublabel": "문제?",
+      "width": 120
+    },
+    {
+      "id": "appLogs",
+      "lane": "actions",
+      "col": 1,
+      "type": "frontend",
+      "label": "Application 로그 확인",
+      "sublabel": "kubectl logs",
+      "width": 160
+    },
+    {
+      "id": "envoyConfig",
+      "lane": "actions",
+      "col": 2,
+      "type": "security",
+      "label": "Envoy 설정 확인",
+      "sublabel": "routes · clusters · listeners",
+      "tag": "로그 포함",
+      "width": 180
+    },
+    {
+      "id": "istiodStatus",
+      "lane": "actions",
+      "col": 3,
+      "type": "cloud",
+      "label": "Istiod 상태 확인",
+      "sublabel": "xDS 동기화 · 로그 · 인증서",
+      "width": 150
+    },
+    {
+      "id": "networkPolicy",
+      "lane": "actions",
+      "col": 4,
+      "type": "security",
+      "label": "NetworkPolicy 확인",
+      "sublabel": "파드 간 연결 · mTLS",
+      "width": 150
+    },
+    {
+      "id": "crdAnalyze",
+      "lane": "actions",
+      "col": 5,
+      "type": "database",
+      "label": "VirtualService/DestinationRule",
+      "sublabel": "istioctl analyze",
+      "width": 252
+    },
+    {
+      "id": "support",
+      "lane": "escalate",
+      "col": 5,
+      "type": "external",
+      "label": "알 수 없는 문제",
+      "sublabel": "Support 티켓",
+      "tag": "istioctl bug-report",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "failure",
+      "to": "checkApp",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "from": "checkApp",
+      "to": "checkSidecar",
+      "label": "NO",
+      "role": "main"
+    },
+    {
+      "from": "checkSidecar",
+      "to": "checkControlPlane",
+      "label": "NO",
+      "role": "main"
+    },
+    {
+      "from": "checkControlPlane",
+      "to": "checkNetwork",
+      "label": "NO",
+      "role": "main"
+    },
+    {
+      "from": "checkNetwork",
+      "to": "checkCrd",
+      "label": "NO",
+      "role": "main"
+    },
+    {
+      "from": "checkApp",
+      "to": "appLogs",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "from": "checkSidecar",
+      "to": "envoyConfig",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "from": "checkControlPlane",
+      "to": "istiodStatus",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "from": "checkNetwork",
+      "to": "networkPolicy",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "from": "checkCrd",
+      "to": "crdAnalyze",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "from": "checkCrd",
+      "to": "support",
+      "label": "NO",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "다섯 레이어를 순서대로",
+      "items": [
+        "Application → Sidecar → Control Plane → Network → CRD 설정 순으로 좁혀 간다",
+        "각 단계에서 문제가 확인되면 해당 확인 작업으로 내려간다",
+        "다섯 레이어 모두 원인이 없으면 Support 티켓으로 넘긴다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "단계별 명령어",
+      "items": [
+        "istioctl version · istioctl proxy-status · kubectl get pods -n istio-system",
+        "istioctl proxy-config routes / clusters / listeners / endpoints <pod>",
+        "kubectl logs <pod> -c istio-proxy · kubectl logs -n istio-system deploy/istiod",
+        "istioctl analyze -n <namespace> · istioctl bug-report"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenTelemetry Core Components",
+    "locale": "en",
+    "output": "en-observability-tracing-03-opentelemetry-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      560
+    ],
+    "views": [
+      {
+        "id": "app-instrumentation",
+        "label": "Application instrumentation",
+        "focus": [
+          "api",
+          "sdk",
+          "recv"
+        ],
+        "note": "Application code is instrumented with the OTel API; the SDK produces the signals and sends them to the pipeline over OTLP."
+      },
+      {
+        "id": "collector-pipeline",
+        "label": "Data pipeline",
+        "focus": [
+          "recv",
+          "proc",
+          "export"
+        ],
+        "note": "Receivers accept the data, Processors transform it, and Exporters send it on to the backends."
+      },
+      {
+        "id": "backend-fanout",
+        "label": "Backend fan-out",
+        "focus": [
+          "export",
+          "tempo",
+          "prom",
+          "loki",
+          "xray",
+          "dd"
+        ],
+        "note": "A single Exporters stage can send data to several backends at the same time."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "OTel API",
+      "sublabel": "Instrumentation interface",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sdk",
+      "type": "backend",
+      "label": "OTel SDK",
+      "sublabel": "Signal generation",
+      "pos": [
+        230,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "recv",
+      "type": "backend",
+      "label": "Receivers",
+      "sublabel": "Ingest data",
+      "pos": [
+        450,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "proc",
+      "type": "backend",
+      "label": "Processors",
+      "sublabel": "Transform data",
+      "pos": [
+        640,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "export",
+      "type": "backend",
+      "label": "Exporters",
+      "sublabel": "Send to backends",
+      "pos": [
+        830,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo",
+      "sublabel": "Traces",
+      "pos": [
+        1060,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metrics",
+      "pos": [
+        1060,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "Logs",
+      "pos": [
+        1060,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "xray",
+      "type": "external",
+      "label": "X-Ray",
+      "sublabel": "AWS",
+      "pos": [
+        1060,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dd",
+      "type": "external",
+      "label": "Datadog",
+      "sublabel": "SaaS",
+      "pos": [
+        1060,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application",
+      "wraps": [
+        "api",
+        "sdk"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Pipeline",
+      "wraps": [
+        "recv",
+        "proc",
+        "export"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Backends",
+      "wraps": [
+        "tempo",
+        "prom",
+        "loki",
+        "xray",
+        "dd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-sdk",
+      "from": "api",
+      "to": "sdk",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sdk-to-recv",
+      "from": "sdk",
+      "to": "recv",
+      "label": "OTLP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "recv-to-proc",
+      "from": "recv",
+      "to": "proc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proc-to-export",
+      "from": "proc",
+      "to": "export",
+      "variant": "emphasis"
+    },
+    {
+      "id": "export-to-tempo",
+      "from": "export",
+      "to": "tempo"
+    },
+    {
+      "id": "export-to-prom",
+      "from": "export",
+      "to": "prom"
+    },
+    {
+      "id": "export-to-loki",
+      "from": "export",
+      "to": "loki"
+    },
+    {
+      "id": "export-to-xray",
+      "from": "export",
+      "to": "xray"
+    },
+    {
+      "id": "export-to-dd",
+      "from": "export",
+      "to": "dd"
+    }
+  ]
+}

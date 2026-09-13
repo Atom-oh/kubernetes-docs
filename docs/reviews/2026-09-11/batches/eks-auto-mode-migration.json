@@ -1,0 +1,148 @@
+[
+  {
+    "path": "en/eks-auto-mode/09-migration-guide.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full migration/quiz audit: stage validation before capacity deletion, fail-closed single-node operations, correct Auto toggles/data/controller coexistence and capacity-first rollback.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-mng.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-enable-existing.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://karpenter.sh/docs/upgrading/compatibility/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/"
+    ],
+    "findings": [
+      "Replaced duplicatecompute-onlyAPIenabling withall3flags/no built-inpools/customNodeClass andspecificupdateIDpolling; preservesIAM/access prerequisites.",
+      "Account/clustercreatedAt/ARN/endpoint/groupidentitychecks; singleNodeUIDdrain,no bulkcontinuation/data-deletionflags. Point-in-timevsatomiclimitationexplicit.",
+      "MNGscalingbypassesPDB; requirecordonedemptyapplicationnodesandoriginalscaling/IaCcoordination; boundedunknown-statefailures.",
+      "Capacity-firstrollbackpreservesAutoNodesuntiloldReady/appplacement/data/trafficvalidated; noNodePool-firstdelete/globalKarpenterselector/blanketaffinityclear.",
+      "OfficialKarpentercoexistencecorrected in8quizzes; currentcompatibilityfloor,sharedCRDsretainedandoldfinalizersbeforecontrolleruninstall.",
+      "EBSdrivers/bindingrecreationvsinplaceadoption,LBbluegreentraffic+ownershipandmixednodeCoreDNSDeploymentretention documented.",
+      "ValidcompletecanaryDeployments andresource-countmapping; RunningnotReadiness,completedJobsnotfailure; costduringoverlap.",
+      "Historicalthresholds/1–2weekstabilization preservedasunverifiedplanningexamples.",
+      "Parent diagram followup: public/archmaps/en-eks-auto-mode-09-migration-guide-0.html andmatchingPNG shouldshowper-wavevalidationbefore scale/delete. Captions/prosecorrected;noassetwrites."
+    ],
+    "validation": [
+      "All4originalsfullyread1378lines;originalsnapshotspreserved.",
+      "4completeKubernetes1.36.2/Karpenter1.14.1objectsvalidated;NodeClassfieldscheckedagainstAWS.",
+      "41mockBash/jqcasespassed:identitymismatch/reenable/access,updateprogress/failed/cancelled/unknown/queryerror/120polltimeout,UID/group/drainfailure,uncordoned/activeorphanpods,owner/deletewait/restorecapacity,zero/stale/unavailablereplicas.",
+      "AWSUpdateClusterConfig/UpdateNodegroupConfig inputmodelsvalidated;mockedmutationsonly,nocloudclients/network.",
+      "Pairedfences,8quizkeysBBBBBCCB,Bash/YAMLsyntax,12localrefsandgitdiffcheck passed.",
+      "NoactualAWS/K8smutations/fullbuilds;IAM/app/data/trafficcapacity andconcurrencyassumptionsstated.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-migration/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/eks-auto-mode/09-migration-guide.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full migration/quiz audit: stage validation before capacity deletion, fail-closed single-node operations, correct Auto toggles/data/controller coexistence and capacity-first rollback.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-mng.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-enable-existing.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://karpenter.sh/docs/upgrading/compatibility/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/"
+    ],
+    "findings": [
+      "Replaced duplicatecompute-onlyAPIenabling withall3flags/no built-inpools/customNodeClass andspecificupdateIDpolling; preservesIAM/access prerequisites.",
+      "Account/clustercreatedAt/ARN/endpoint/groupidentitychecks; singleNodeUIDdrain,no bulkcontinuation/data-deletionflags. Point-in-timevsatomiclimitationexplicit.",
+      "MNGscalingbypassesPDB; requirecordonedemptyapplicationnodesandoriginalscaling/IaCcoordination; boundedunknown-statefailures.",
+      "Capacity-firstrollbackpreservesAutoNodesuntiloldReady/appplacement/data/trafficvalidated; noNodePool-firstdelete/globalKarpenterselector/blanketaffinityclear.",
+      "OfficialKarpentercoexistencecorrected in8quizzes; currentcompatibilityfloor,sharedCRDsretainedandoldfinalizersbeforecontrolleruninstall.",
+      "EBSdrivers/bindingrecreationvsinplaceadoption,LBbluegreentraffic+ownershipandmixednodeCoreDNSDeploymentretention documented.",
+      "ValidcompletecanaryDeployments andresource-countmapping; RunningnotReadiness,completedJobsnotfailure; costduringoverlap.",
+      "Historicalthresholds/1–2weekstabilization preservedasunverifiedplanningexamples.",
+      "Parent diagram followup: public/archmaps/ko-eks-auto-mode-09-migration-guide-0.html andmatchingPNG shouldshowper-wavevalidationbefore scale/delete. Captions/prosecorrected;noassetwrites."
+    ],
+    "validation": [
+      "All4originalsfullyread1378lines;originalsnapshotspreserved.",
+      "4completeKubernetes1.36.2/Karpenter1.14.1objectsvalidated;NodeClassfieldscheckedagainstAWS.",
+      "41mockBash/jqcasespassed:identitymismatch/reenable/access,updateprogress/failed/cancelled/unknown/queryerror/120polltimeout,UID/group/drainfailure,uncordoned/activeorphanpods,owner/deletewait/restorecapacity,zero/stale/unavailablereplicas.",
+      "AWSUpdateClusterConfig/UpdateNodegroupConfig inputmodelsvalidated;mockedmutationsonly,nocloudclients/network.",
+      "Pairedfences,8quizkeysBBBBBCCB,Bash/YAMLsyntax,12localrefsandgitdiffcheck passed.",
+      "NoactualAWS/K8smutations/fullbuilds;IAM/app/data/trafficcapacity andconcurrencyassumptionsstated.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-migration/final-validation.json"
+    ]
+  },
+  {
+    "path": "en/quizzes/eks-auto-mode/09-migration-guide-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full migration/quiz audit: stage validation before capacity deletion, fail-closed single-node operations, correct Auto toggles/data/controller coexistence and capacity-first rollback.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-mng.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-enable-existing.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://karpenter.sh/docs/upgrading/compatibility/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/"
+    ],
+    "findings": [
+      "Replaced duplicatecompute-onlyAPIenabling withall3flags/no built-inpools/customNodeClass andspecificupdateIDpolling; preservesIAM/access prerequisites.",
+      "Account/clustercreatedAt/ARN/endpoint/groupidentitychecks; singleNodeUIDdrain,no bulkcontinuation/data-deletionflags. Point-in-timevsatomiclimitationexplicit.",
+      "MNGscalingbypassesPDB; requirecordonedemptyapplicationnodesandoriginalscaling/IaCcoordination; boundedunknown-statefailures.",
+      "Capacity-firstrollbackpreservesAutoNodesuntiloldReady/appplacement/data/trafficvalidated; noNodePool-firstdelete/globalKarpenterselector/blanketaffinityclear.",
+      "OfficialKarpentercoexistencecorrected in8quizzes; currentcompatibilityfloor,sharedCRDsretainedandoldfinalizersbeforecontrolleruninstall.",
+      "EBSdrivers/bindingrecreationvsinplaceadoption,LBbluegreentraffic+ownershipandmixednodeCoreDNSDeploymentretention documented.",
+      "ValidcompletecanaryDeployments andresource-countmapping; RunningnotReadiness,completedJobsnotfailure; costduringoverlap.",
+      "Historicalthresholds/1–2weekstabilization preservedasunverifiedplanningexamples."
+    ],
+    "validation": [
+      "All4originalsfullyread1378lines;originalsnapshotspreserved.",
+      "4completeKubernetes1.36.2/Karpenter1.14.1objectsvalidated;NodeClassfieldscheckedagainstAWS.",
+      "41mockBash/jqcasespassed:identitymismatch/reenable/access,updateprogress/failed/cancelled/unknown/queryerror/120polltimeout,UID/group/drainfailure,uncordoned/activeorphanpods,owner/deletewait/restorecapacity,zero/stale/unavailablereplicas.",
+      "AWSUpdateClusterConfig/UpdateNodegroupConfig inputmodelsvalidated;mockedmutationsonly,nocloudclients/network.",
+      "Pairedfences,8quizkeysBBBBBCCB,Bash/YAMLsyntax,12localrefsandgitdiffcheck passed.",
+      "NoactualAWS/K8smutations/fullbuilds;IAM/app/data/trafficcapacity andconcurrencyassumptionsstated.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-migration/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks-auto-mode/09-migration-guide-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full migration/quiz audit: stage validation before capacity deletion, fail-closed single-node operations, correct Auto toggles/data/controller coexistence and capacity-first rollback.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-mng.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-enable-existing.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://karpenter.sh/docs/upgrading/compatibility/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/"
+    ],
+    "findings": [
+      "Replaced duplicatecompute-onlyAPIenabling withall3flags/no built-inpools/customNodeClass andspecificupdateIDpolling; preservesIAM/access prerequisites.",
+      "Account/clustercreatedAt/ARN/endpoint/groupidentitychecks; singleNodeUIDdrain,no bulkcontinuation/data-deletionflags. Point-in-timevsatomiclimitationexplicit.",
+      "MNGscalingbypassesPDB; requirecordonedemptyapplicationnodesandoriginalscaling/IaCcoordination; boundedunknown-statefailures.",
+      "Capacity-firstrollbackpreservesAutoNodesuntiloldReady/appplacement/data/trafficvalidated; noNodePool-firstdelete/globalKarpenterselector/blanketaffinityclear.",
+      "OfficialKarpentercoexistencecorrected in8quizzes; currentcompatibilityfloor,sharedCRDsretainedandoldfinalizersbeforecontrolleruninstall.",
+      "EBSdrivers/bindingrecreationvsinplaceadoption,LBbluegreentraffic+ownershipandmixednodeCoreDNSDeploymentretention documented.",
+      "ValidcompletecanaryDeployments andresource-countmapping; RunningnotReadiness,completedJobsnotfailure; costduringoverlap.",
+      "Historicalthresholds/1–2weekstabilization preservedasunverifiedplanningexamples."
+    ],
+    "validation": [
+      "All4originalsfullyread1378lines;originalsnapshotspreserved.",
+      "4completeKubernetes1.36.2/Karpenter1.14.1objectsvalidated;NodeClassfieldscheckedagainstAWS.",
+      "41mockBash/jqcasespassed:identitymismatch/reenable/access,updateprogress/failed/cancelled/unknown/queryerror/120polltimeout,UID/group/drainfailure,uncordoned/activeorphanpods,owner/deletewait/restorecapacity,zero/stale/unavailablereplicas.",
+      "AWSUpdateClusterConfig/UpdateNodegroupConfig inputmodelsvalidated;mockedmutationsonly,nocloudclients/network.",
+      "Pairedfences,8quizkeysBBBBBCCB,Bash/YAMLsyntax,12localrefsandgitdiffcheck passed.",
+      "NoactualAWS/K8smutations/fullbuilds;IAM/app/data/trafficcapacity andconcurrencyassumptionsstated.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-migration/final-validation.json"
+    ]
+  }
+]

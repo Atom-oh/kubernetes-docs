@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How Retry Works — Retrying Another Pod After a Failure",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      560
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "first-try",
+        "label": "First attempt fails",
+        "focus": [
+          "client",
+          "envoy",
+          "pod1"
+        ],
+        "note": "Envoy receives the client request and forwards it to Pod 1, which fails with a 503."
+      },
+      {
+        "id": "retry",
+        "label": "Retry on another Pod",
+        "focus": [
+          "envoy",
+          "pod2"
+        ],
+        "note": "The 503 matches the retryOn condition (5xx), so Envoy resends the same request to Pod 2."
+      },
+      {
+        "id": "success",
+        "label": "Client sees only success",
+        "focus": [
+          "pod2",
+          "envoy",
+          "client"
+        ],
+        "note": "Pod 2's 200 OK is returned to the client; the intermediate failure is never exposed to it."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "applies retries policy"
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "failure"
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "success"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 300,
+      "label": "First attempt"
+    },
+    {
+      "from": 320,
+      "to": 470,
+      "label": "Retry (within attempts: 3)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "request",
+      "from": "client",
+      "to": "envoy",
+      "y": 195,
+      "label": "Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "try1",
+      "from": "envoy",
+      "to": "pod1",
+      "y": 240,
+      "label": "Attempt 1"
+    },
+    {
+      "id": "fail503",
+      "from": "pod1",
+      "to": "envoy",
+      "y": 285,
+      "label": "503 Service Unavailable",
+      "variant": "return",
+      "note": "Matches retryOn: 5xx → retry on another Pod"
+    },
+    {
+      "id": "try2",
+      "from": "envoy",
+      "to": "pod2",
+      "y": 375,
+      "label": "Attempt 2 (same request)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ok200",
+      "from": "pod2",
+      "to": "envoy",
+      "y": 415,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "respond",
+      "from": "envoy",
+      "to": "client",
+      "y": 455,
+      "label": "200 OK",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 190,
+      "to": 462,
+      "type": "backend"
+    },
+    {
+      "participant": "pod1",
+      "from": 235,
+      "to": 292,
+      "type": "backend"
+    },
+    {
+      "participant": "pod2",
+      "from": 370,
+      "to": 422,
+      "type": "backend"
+    }
+  ]
+}

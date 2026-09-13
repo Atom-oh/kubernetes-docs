@@ -1,0 +1,248 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Upgrade Execution Workflow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start / finish"
+        },
+        "backend": {
+          "label": "Upgrade phase"
+        },
+        "security": {
+          "label": "Hard gate"
+        },
+        "external": {
+          "label": "Escalation"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pre-upgrade",
+        "label": "Pre-upgrade phases",
+        "focus": [
+          "begin",
+          "assessment",
+          "staging",
+          "preparation"
+        ],
+        "note": "Assess changelog, add-ons and third-party tools, rehearse the full upgrade in staging (retry on fail), then fix window, rollback and IaC."
+      },
+      {
+        "id": "execution-gate",
+        "label": "Execution and health gate",
+        "focus": [
+          "preparation",
+          "execution",
+          "gate",
+          "support"
+        ],
+        "note": "Upgrade control plane, then add-ons, then nodes. API server health is the one hard gate; if unhealthy, contact AWS Support."
+      },
+      {
+        "id": "validation",
+        "label": "Validation and completion",
+        "focus": [
+          "gate",
+          "validation",
+          "complete"
+        ],
+        "note": "With a healthy API server, validate workloads, network and storage (fix and retry on failure) before declaring the upgrade complete."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prepare",
+      "label": "Pre-upgrade"
+    },
+    {
+      "id": "execute",
+      "label": "Execution"
+    },
+    {
+      "id": "verify",
+      "label": "Validation"
+    },
+    {
+      "id": "escalation",
+      "label": "Escalation",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "begin",
+    "assessment",
+    "staging",
+    "preparation",
+    "execution",
+    "gate",
+    "validation",
+    "complete"
+  ],
+  "nodes": [
+    {
+      "id": "begin",
+      "lane": "prepare",
+      "col": 0,
+      "type": "frontend",
+      "label": "Begin Upgrade Process",
+      "width": 188
+    },
+    {
+      "id": "assessment",
+      "lane": "prepare",
+      "col": 1,
+      "type": "backend",
+      "label": "Assessment",
+      "sublabel": "Changelog, add-ons, third-party",
+      "width": 152
+    },
+    {
+      "id": "staging",
+      "lane": "prepare",
+      "col": 2,
+      "type": "backend",
+      "label": "Staging Test",
+      "sublabel": "Full upgrade rehearsal",
+      "tag": "retry on fail",
+      "width": 136
+    },
+    {
+      "id": "preparation",
+      "lane": "prepare",
+      "col": 3,
+      "type": "backend",
+      "label": "Preparation",
+      "sublabel": "Window, rollback, IaC",
+      "width": 136
+    },
+    {
+      "id": "execution",
+      "lane": "execute",
+      "col": 3,
+      "type": "backend",
+      "label": "Execution",
+      "sublabel": "Control plane → add-ons → nodes",
+      "width": 152
+    },
+    {
+      "id": "gate",
+      "lane": "execute",
+      "col": 4,
+      "type": "security",
+      "label": "API Server Healthy?",
+      "sublabel": "control-plane health check",
+      "width": 176
+    },
+    {
+      "id": "validation",
+      "lane": "verify",
+      "col": 4,
+      "type": "backend",
+      "label": "Validation",
+      "sublabel": "Workloads, network, storage",
+      "tag": "fix & retry",
+      "width": 140
+    },
+    {
+      "id": "complete",
+      "lane": "verify",
+      "col": 5,
+      "type": "frontend",
+      "label": "Upgrade Complete",
+      "width": 160
+    },
+    {
+      "id": "support",
+      "lane": "escalation",
+      "col": 5,
+      "type": "external",
+      "label": "Contact AWS Support",
+      "sublabel": "API server unhealthy",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "begin-assessment",
+      "from": "begin",
+      "to": "assessment"
+    },
+    {
+      "id": "assessment-staging",
+      "from": "assessment",
+      "to": "staging"
+    },
+    {
+      "id": "staging-preparation",
+      "from": "staging",
+      "to": "preparation"
+    },
+    {
+      "id": "preparation-execution",
+      "from": "preparation",
+      "to": "execution"
+    },
+    {
+      "id": "execution-gate",
+      "from": "execution",
+      "to": "gate"
+    },
+    {
+      "id": "gate-validation",
+      "from": "gate",
+      "to": "validation",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "validation-complete",
+      "from": "validation",
+      "to": "complete"
+    },
+    {
+      "id": "gate-support",
+      "from": "gate",
+      "to": "support",
+      "label": "no",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pre-upgrade",
+      "items": [
+        "Assessment: review the changelog, add-on compatibility and third-party tooling",
+        "Staging Test: full upgrade rehearsal, retried until it passes",
+        "Preparation: maintenance window, rollback plan and IaC changes"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Execution and the hard gate",
+      "items": [
+        "Order: control plane, then add-ons, then nodes",
+        "API server health is the single hard gate during execution",
+        "If the API server is not healthy, contact AWS Support"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Validation",
+      "items": [
+        "Check workloads, network and storage after the upgrade",
+        "Failures are fixed and validation is retried",
+        "The upgrade is complete only after validation passes"
+      ]
+    }
+  ]
+}

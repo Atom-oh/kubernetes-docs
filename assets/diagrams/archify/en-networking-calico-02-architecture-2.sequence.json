@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Felix Data Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1085,
+      666
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "datastore",
+      "type": "database",
+      "label": "Datastore/Typha",
+      "sublabel": "policy · endpoint state"
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "policy agent"
+    },
+    {
+      "id": "iptables",
+      "type": "security",
+      "label": "iptables/eBPF",
+      "sublabel": "firewall rules"
+    },
+    {
+      "id": "routing",
+      "type": "backend",
+      "label": "Routing Table",
+      "sublabel": "kernel routes"
+    },
+    {
+      "id": "netif",
+      "type": "external",
+      "label": "Network Interface",
+      "sublabel": "veth · tunnels"
+    }
+  ],
+  "segments": [
+    {
+      "from": 144,
+      "to": 288,
+      "label": "Initial sync"
+    },
+    {
+      "from": 310,
+      "to": 405,
+      "label": "Watch Loop — on change event"
+    },
+    {
+      "from": 428,
+      "to": 580,
+      "label": "On Pod creation"
+    }
+  ],
+  "messages": [
+    {
+      "id": "connect",
+      "from": "felix",
+      "to": "datastore",
+      "y": 166,
+      "label": "connect · start sync"
+    },
+    {
+      "id": "initial-state",
+      "from": "datastore",
+      "to": "felix",
+      "y": 200,
+      "label": "initial state",
+      "variant": "return"
+    },
+    {
+      "id": "program-rules",
+      "from": "felix",
+      "to": "iptables",
+      "y": 238,
+      "label": "program rules",
+      "variant": "emphasis",
+      "note": "rules derived from policy calculation"
+    },
+    {
+      "id": "update-routes",
+      "from": "felix",
+      "to": "routing",
+      "y": 272,
+      "label": "update routes"
+    },
+    {
+      "id": "change-event",
+      "from": "datastore",
+      "to": "felix",
+      "y": 340,
+      "label": "change event (policy · endpoint · IPPool)",
+      "variant": "dashed"
+    },
+    {
+      "id": "refresh-rules",
+      "from": "felix",
+      "to": "iptables",
+      "y": 380,
+      "label": "refresh rules · routes",
+      "variant": "emphasis",
+      "note": "applied after delta calculation"
+    },
+    {
+      "id": "cni-add",
+      "from": "netif",
+      "to": "felix",
+      "y": 457,
+      "label": "CNI call (ADD)"
+    },
+    {
+      "id": "create-veth",
+      "from": "felix",
+      "to": "netif",
+      "y": 493,
+      "label": "create veth pair"
+    },
+    {
+      "id": "add-route-policy",
+      "from": "felix",
+      "to": "routing",
+      "y": 529,
+      "label": "add route · policy rules"
+    },
+    {
+      "id": "return-ip",
+      "from": "felix",
+      "to": "netif",
+      "y": 565,
+      "label": "return IP address",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "felix",
+      "from": 162,
+      "to": 277,
+      "type": "backend"
+    },
+    {
+      "participant": "felix",
+      "from": 336,
+      "to": 385,
+      "type": "backend"
+    },
+    {
+      "participant": "felix",
+      "from": 453,
+      "to": 571,
+      "type": "backend"
+    }
+  ]
+}

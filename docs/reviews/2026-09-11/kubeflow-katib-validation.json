@@ -1,0 +1,447 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T20:58:49.335988+00:00",
+  "scope": {
+    "documents": 4,
+    "questions": 22,
+    "figures": 2
+  },
+  "baseline": "Katib0.19.0/Community26.03.1",
+  "nativeMedianStop": {
+    "status": "passed",
+    "sourceTag": "v0.19.0",
+    "sourceSha256": "b07b4500b62cce168be129b274dbba21759d4d11fce5f9a435e8946570261363",
+    "cases": [
+      {
+        "completedTrialAverages": [
+          1,
+          2
+        ],
+        "actualThreshold": null,
+        "statisticalMedian": 1.5,
+        "passed": true
+      },
+      {
+        "completedTrialAverages": [
+          1,
+          2,
+          100
+        ],
+        "actualThreshold": 34.333333333333336,
+        "statisticalMedian": 2,
+        "passed": true
+      },
+      {
+        "completedTrialAverages": [
+          1,
+          2,
+          3
+        ],
+        "actualThreshold": 2.0,
+        "statisticalMedian": 2,
+        "passed": true
+      }
+    ],
+    "settingsCasesPassed": 4,
+    "finding": "get_median_value calculates arithmetic mean of stored successful-trial averages, not statistical median; [1,2,100] => 34.333333333333336 versus median 2.",
+    "scope": "Unmodified pinned Python method; constructor skipped, preloaded trial history, network calls blocked. No gRPC/Kubernetes/cloud execution."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/kubeflow/04-katib.md",
+        "sha256": "b10bf182dd9c8625f9afbb30b0dce3fe166b543f3dc1af800d65bdb4674feac9",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-katib-—-하이퍼파라미터-튜닝과-automl"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "katib이란-무엇인가"
+          },
+          {
+            "tag": "h2",
+            "id": "탐색-알고리즘"
+          },
+          {
+            "tag": "h2",
+            "id": "experiment-스펙의-구조"
+          },
+          {
+            "tag": "h2",
+            "id": "조기-종료와-0-19-0의-medianstop-구현"
+          },
+          {
+            "tag": "h2",
+            "id": "experiment의-전체-실행-흐름"
+          },
+          {
+            "tag": "h2",
+            "id": "메트릭-수집"
+          },
+          {
+            "tag": "h2",
+            "id": "eks에서의-용량과-비용"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-근거"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "part-4-katib-—-하이퍼파라미터-튜닝과-automl",
+          "실습-환경-준비",
+          "katib이란-무엇인가",
+          "탐색-알고리즘",
+          "experiment-스펙의-구조",
+          "조기-종료와-0-19-0의-medianstop-구현",
+          "experiment의-전체-실행-흐름",
+          "메트릭-수집",
+          "eks에서의-용량과-비용",
+          "검증과-근거",
+          "다음-단계",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/kubeflow/04-katib.md",
+        "sha256": "993f899c0c91e6c63390af83b668fdbeaed47892acd4ab9e9c69228d2547a336",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-katib-—-hyperparameter-tuning-and-automl"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "what-katib-is"
+          },
+          {
+            "tag": "h2",
+            "id": "search-algorithms"
+          },
+          {
+            "tag": "h2",
+            "id": "anatomy-of-an-experiment"
+          },
+          {
+            "tag": "h2",
+            "id": "early-stopping-and-the-0-19-0-medianstop-implementation"
+          },
+          {
+            "tag": "h2",
+            "id": "how-an-experiment-runs-end-to-end"
+          },
+          {
+            "tag": "h2",
+            "id": "metrics-collection"
+          },
+          {
+            "tag": "h2",
+            "id": "capacity-and-cost-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-sources"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "part-4-katib-—-hyperparameter-tuning-and-automl",
+          "lab-environment-setup",
+          "what-katib-is",
+          "search-algorithms",
+          "anatomy-of-an-experiment",
+          "early-stopping-and-the-0-19-0-medianstop-implementation",
+          "how-an-experiment-runs-end-to-end",
+          "metrics-collection",
+          "capacity-and-cost-on-eks",
+          "validation-and-sources",
+          "next-steps",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/kubeflow/04-katib-quiz.md",
+        "sha256": "4b424af21757ac537406f616b0daebaff9a49e1ab19894d6c2f1be174c784e9f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-katib-—-하이퍼파라미터-튜닝과-automl-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-응용-문제"
+          }
+        ],
+        "renderedIds": [
+          "part-4-katib-—-하이퍼파라미터-튜닝과-automl-퀴즈",
+          "객관식-문제",
+          "단답형-문제",
+          "실습-응용-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/kubeflow/04-katib-quiz.md",
+        "sha256": "59a42f210a4da5b70ebb5866199ae142ce07f3cc29997047732f98ed214e89d4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-katib-—-hyperparameter-tuning-and-automl-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "hands-on-applied-question"
+          }
+        ],
+        "renderedIds": [
+          "part-4-katib-—-hyperparameter-tuning-and-automl-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions",
+          "hands-on-applied-question"
+        ]
+      }
+    ]
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "404bf8f58da520817d30694a094e17af6d926d29547038c4e15712afd10a1862"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "404bf8f58da520817d30694a094e17af6d926d29547038c4e15712afd10a1862"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "404bf8f58da520817d30694a094e17af6d926d29547038c4e15712afd10a1862"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "4aa6b4f1322412bf9c0d8c93f8e55caa81c538be42cd431c1143f64322882737"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "4aa6b4f1322412bf9c0d8c93f8e55caa81c538be42cd431c1143f64322882737"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "4aa6b4f1322412bf9c0d8c93f8e55caa81c538be42cd431c1143f64322882737"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "sources": [
+    {
+      "file": "manifests_v1beta1_installs_katib-standalone_katib-config.yaml",
+      "path": "manifests/v1beta1/installs/katib-standalone/katib-config.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/katib/v0.19.0/manifests/v1beta1/installs/katib-standalone/katib-config.yaml",
+      "status": 200
+    },
+    {
+      "file": "pkg_apis_controller_experiments_v1beta1_experiment_types.go",
+      "path": "pkg/apis/controller/experiments/v1beta1/experiment_types.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/katib/v0.19.0/pkg/apis/controller/experiments/v1beta1/experiment_types.go",
+      "status": 200
+    },
+    {
+      "file": "pkg_apis_controller_common_v1beta1_common_types.go",
+      "path": "pkg/apis/controller/common/v1beta1/common_types.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/katib/v0.19.0/pkg/apis/controller/common/v1beta1/common_types.go",
+      "status": 200
+    },
+    {
+      "file": "pkg_controller.v1beta1_experiment_experiment_controller.go",
+      "path": "pkg/controller.v1beta1/experiment/experiment_controller.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/katib/v0.19.0/pkg/controller.v1beta1/experiment/experiment_controller.go",
+      "status": 200
+    },
+    {
+      "file": "pkg_earlystopping_v1beta1_medianstop_service.py",
+      "path": "pkg/earlystopping/v1beta1/medianstop/service.py",
+      "url": "https://raw.githubusercontent.com/kubeflow/katib/v0.19.0/pkg/earlystopping/v1beta1/medianstop/service.py",
+      "status": 200
+    },
+    {
+      "file": "test_unit_v1beta1_earlystopping_test_medianstop_service.py",
+      "path": "test/unit/v1beta1/earlystopping/test_medianstop_service.py",
+      "url": "https://raw.githubusercontent.com/kubeflow/katib/v0.19.0/test/unit/v1beta1/earlystopping/test_medianstop_service.py",
+      "status": 200
+    },
+    {
+      "file": "examples_v1beta1_early-stopping_median-stop.yaml",
+      "path": "examples/v1beta1/early-stopping/median-stop.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/katib/v0.19.0/examples/v1beta1/early-stopping/median-stop.yaml",
+      "status": 200
+    },
+    {
+      "file": "examples_v1beta1_hp-tuning_random.yaml",
+      "path": "examples/v1beta1/hp-tuning/random.yaml",
+      "url": "https://raw.githubusercontent.com/kubeflow/katib/v0.19.0/examples/v1beta1/hp-tuning/random.yaml",
+      "status": 200
+    }
+  ],
+  "diagrams": [
+    {
+      "name": "ko-ai-ml-kubeflow-04-katib-0",
+      "layoutPassed": true,
+      "pngSha256": "a79f982cff7c6776ca5686f3a51d1f624d045a9c69bd7723d4177c595c4625a5",
+      "htmlSha256": "404bf8f58da520817d30694a094e17af6d926d29547038c4e15712afd10a1862"
+    },
+    {
+      "name": "en-ai-ml-kubeflow-04-katib-0",
+      "layoutPassed": true,
+      "pngSha256": "25d17ab8b4e5e25c2ca26ce8f41172decacdf368a557ed1dde3c79870a832706",
+      "htmlSha256": "4aa6b4f1322412bf9c0d8c93f8e55caa81c538be42cd431c1143f64322882737"
+    }
+  ],
+  "limitations": [
+    "Unmodified pinned function with preloaded history; no gRPC/Kubernetes/cloud calls or GPU/Experiment execution.",
+    "Source discrepancy is documented for v0.19.0; no claim about unreviewed later versions or modification of upstream code."
+  ]
+}

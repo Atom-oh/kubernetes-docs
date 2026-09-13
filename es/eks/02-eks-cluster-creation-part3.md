@@ -1,88 +1,92 @@
-# Parte 3: Creación de clusters con AWS Management Console y CLI
+# Parte 3: Creación de clústeres con AWS Management Console y CLI
 
-## Creación de un cluster usando AWS Management Console
+## Creación de un clúster mediante AWS Management Console
 
-Los pasos para crear un EKS cluster usando AWS Management Console son los siguientes:
+Los pasos para crear un clúster de EKS mediante AWS Management Console son los siguientes:
 
-![Flujo de creación de EKS Cluster mediante AWS Management Console](../.gitbook/assets/eks_console_cluster_creation_workflow.png)
+![Diagrama del flujo de trabajo de creación basada en consola, desde el inicio de sesión hasta la configuración del clúster, la revisión y creación, la adición de un grupo de nodos y la conexión.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-0.png)
 
-1. Inicia sesión en [AWS Management Console](https://console.aws.amazon.com/).
-2. Busca "EKS" o selecciona "Elastic Kubernetes Service" en la lista de servicios.
-3. En la página "Clusters", haz clic en el botón "Crear cluster".
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part3-0.html)
 
-### Configuración del cluster
+1. Inicie sesión en [AWS Management Console](https://console.aws.amazon.com/).
+2. Busque "EKS" o seleccione "Elastic Kubernetes Service" en la lista de servicios.
+3. En la página "Clusters", haga clic en el botón "Create cluster".
 
-4. En la página "Configurar cluster", ingresa la siguiente información:
-   * **Nombre del cluster**: Ingresa un nombre único para el cluster.
-   * **Versión de Kubernetes**: Selecciona la versión de Kubernetes que se usará.
-   * **Rol de servicio del cluster**: Crea un rol nuevo o selecciona un rol existente.
-   * **Tags**: Agrega tags si es necesario.
-   * Haz clic en el botón "Siguiente".
+### Configuración del clúster
 
-### Especificar networking
+4. En la página "Configure cluster", introduzca la siguiente información:
+   * **Nombre del clúster**: Introduzca un nombre único para el clúster.
+   * **Versión de Kubernetes**: Seleccione la versión de Kubernetes que desea utilizar.
+   * **Rol de servicio del clúster**: Cree un rol nuevo o seleccione un rol existente.
+   * **Etiquetas**: Añada etiquetas si es necesario.
+   * Haga clic en el botón "Next".
 
-5. En la página "Especificar networking", ingresa la siguiente información:
-   * **VPC**: Crea una VPC nueva o selecciona una VPC existente.
-   * **Subnets**: Selecciona las subnets que se usarán para el cluster. Al menos 2 subnets deben estar en diferentes Availability Zones.
-   * **Security groups**: Selecciona los security groups que se usarán para el cluster.
-   * **Acceso al endpoint del cluster**: Configura el acceso al endpoint del API server del cluster.
-     * **Public**: Se puede acceder al API server desde internet.
-     * **Private**: Solo se puede acceder al API server desde dentro de la VPC.
-     * **Public and Private**: Se puede acceder al API server tanto desde internet como desde dentro de la VPC.
-   * Haz clic en el botón "Siguiente".
+### Especificar la red
 
-### Configurar logging
+5. En la página "Specify networking", introduzca la siguiente información:
+   * **VPC**: Cree una VPC nueva o seleccione una VPC existente.
+   * **Subredes**: Seleccione las subredes que desea utilizar para el clúster. Al menos 2 subredes deben estar en diferentes zonas de disponibilidad.
+   * **Grupos de seguridad**: Seleccione los grupos de seguridad que desea utilizar para el clúster.
+   * **Acceso al endpoint del clúster**: Configure el acceso al endpoint del servidor de API del clúster.
+     * **Público**: Se puede acceder al servidor de API desde Internet.
+     * **Privado**: Solo se puede acceder al servidor de API desde la VPC.
+     * **Público y privado**: Se puede acceder al servidor de API tanto desde Internet como desde la VPC.
+   * Haga clic en el botón "Next".
 
-6. En la página "Configurar logging", ingresa la siguiente información:
-   * **Logging del control plane**: Selecciona los tipos de logs que se habilitarán.
-     * Logs del API server
-     * Audit logs
-     * Authenticator logs
-     * Controller manager logs
-     * Scheduler logs
-   * Haz clic en el botón "Siguiente".
+### Configurar el registro
 
-### Seleccionar add-ons
+6. En la página "Configure logging", introduzca la siguiente información:
+   * **Registro del plano de control**: Seleccione los tipos de registros que desea habilitar.
+     * Registros del servidor de API
+     * Registros de auditoría
+     * Registros del autenticador
+     * Registros del administrador de controladores
+     * Registros del programador
+   * Haga clic en el botón "Next".
 
-7. En la página "Seleccionar add-ons", ingresa la siguiente información:
-   * **Amazon VPC CNI**: Plugin CNI para networking de Pod.
-   * **CoreDNS**: Servicio DNS dentro del cluster.
+### Seleccionar complementos
+
+7. En la página "Select add-ons", introduzca la siguiente información:
+   * **Amazon VPC CNI**: Plugin de CNI para redes de Pod.
+   * **CoreDNS**: Servicio DNS dentro del clúster.
    * **kube-proxy**: Proporciona proxy de red y balanceo de carga.
-   * Haz clic en el botón "Siguiente".
+   * Haga clic en el botón "Next".
 
 ### Revisar y crear
 
-8. En la página "Revisar y crear", revisa la configuración y haz clic en el botón "Crear".
+8. En la página "Review and create", revise la configuración y haga clic en el botón "Create".
 
-Una vez que se complete la creación del cluster, puedes hacer clic en el botón "Agregar node group" para agregar un node group.
+Una vez finalizada la creación del clúster, puede hacer clic en el botón "Add node group" para añadir un grupo de nodos.
 
-### Agregar Node Group
+### Añadir grupo de nodos
 
-1. En la página "Configuración de node group", ingresa la siguiente información:
-   * **Nombre del node group**: Ingresa un nombre único para el node group.
-   * **Rol IAM del Node**: Crea un rol nuevo o selecciona un rol existente.
-   * Haz clic en el botón "Siguiente".
-2. En la página "Establecer configuración de compute y scaling", ingresa la siguiente información:
-   * **Tipo de AMI**: Selecciona el tipo de AMI que se usará para los nodes.
-   * **Tipo de instance**: Selecciona el tipo de EC2 instance que se usará para los nodes.
-   * **Tamaño de disco**: Especifica el tamaño de disco para los nodes.
-   * **Cantidad de nodes**: Especifica el número mínimo, máximo y deseado de nodes.
-   * Haz clic en el botón "Siguiente".
-3. En la página "Especificar networking", ingresa la siguiente información:
-   * **Subnets**: Selecciona las subnets que se usarán para el node group.
-   * **Configuración de acceso remoto**: Configura el acceso SSH.
-   * Haz clic en el botón "Siguiente".
-4. En la página "Revisar y crear", revisa la configuración y haz clic en el botón "Crear".
+1. En la página "Node group configuration", introduzca la siguiente información:
+   * **Nombre del grupo de nodos**: Introduzca un nombre único para el grupo de nodos.
+   * **Rol de IAM del nodo**: Cree un rol nuevo o seleccione un rol existente.
+   * Haga clic en el botón "Next".
+2. En la página "Set compute and scaling configuration", introduzca la siguiente información:
+   * **Tipo de AMI**: Seleccione el tipo de AMI que desea utilizar para los nodos.
+   * **Tipo de instancia**: Seleccione el tipo de instancia EC2 que desea utilizar para los nodos.
+   * **Tamaño del disco**: Especifique el tamaño del disco para los nodos.
+   * **Número de nodos**: Especifique el número mínimo, máximo y deseado de nodos.
+   * Haga clic en el botón "Next".
+3. En la página "Specify networking", introduzca la siguiente información:
+   * **Subredes**: Seleccione las subredes que desea utilizar para el grupo de nodos.
+   * **Configuración de acceso remoto**: Configure el acceso SSH.
+   * Haga clic en el botón "Next".
+4. En la página "Review and create", revise la configuración y haga clic en el botón "Create".
 
-## Creación de un cluster usando AWS CLI
+## Creación de un clúster mediante AWS CLI
 
-El proceso de creación de un EKS cluster usando AWS CLI consta de varios pasos. Este método es útil cuando se necesita más control.
+El proceso de creación de un clúster de EKS mediante AWS CLI consta de varios pasos. Este método es útil cuando se necesita más control.
 
-![Flujo de creación de EKS Cluster mediante AWS CLI](../.gitbook/assets/eks_cli_cluster_creation_workflow.png)
+![Diagrama del flujo de trabajo de AWS CLI que crea primero el rol de IAM, la VPC y el grupo de seguridad, luego el clúster y el grupo de nodos, y finalmente actualiza kubeconfig.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-1.png)
 
-### 1. Crear rol IAM del cluster
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part3-1.html)
 
-Un EKS cluster requiere un rol IAM que permita al Kubernetes control plane administrar recursos de AWS.
+### 1. Crear rol de IAM para el clúster
+
+Un clúster de EKS requiere un rol de IAM que permita al plano de control de Kubernetes administrar recursos de AWS.
 
 ```bash
 # Create role
@@ -107,9 +111,9 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
 ```
 
-### 2. Crear VPC y subnets
+### 2. Crear VPC y subredes
 
-Un EKS cluster requiere una VPC y subnets. Puedes usar una VPC existente o crear una nueva.
+Un clúster de EKS requiere una VPC y subredes. Puede utilizar una VPC existente o crear una nueva.
 
 ```bash
 # Create VPC
@@ -137,9 +141,9 @@ aws ec2 create-subnet \
   --output text
 ```
 
-### 3. Crear security group del cluster
+### 3. Crear grupo de seguridad del clúster
 
-Un EKS cluster requiere un security group.
+Un clúster de EKS requiere un grupo de seguridad.
 
 ```bash
 # Create security group
@@ -158,9 +162,9 @@ aws ec2 authorize-security-group-ingress \
   --cidr 0.0.0.0/0
 ```
 
-### 4. Crear EKS Cluster
+### 4. Crear clúster de EKS
 
-Ahora puedes crear el EKS cluster.
+Ahora puede crear el clúster de EKS.
 
 ```bash
 aws eks create-cluster \
@@ -170,7 +174,7 @@ aws eks create-cluster \
   --kubernetes-version 1.26
 ```
 
-Espera a que se complete la creación del cluster. Para verificar el estado del cluster, ejecuta el siguiente comando:
+Espere a que finalice la creación del clúster. Para comprobar el estado del clúster, ejecute el siguiente comando:
 
 ```bash
 aws eks describe-cluster \
@@ -178,9 +182,9 @@ aws eks describe-cluster \
   --query "cluster.status"
 ```
 
-### 5. Crear rol IAM del Node
+### 5. Crear rol de IAM para el nodo
 
-Los EKS nodes requieren un rol IAM para acceder a recursos de AWS.
+Los nodos de EKS requieren un rol de IAM para acceder a los recursos de AWS.
 
 ```bash
 # Create role
@@ -213,9 +217,9 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 ```
 
-### 6. Crear Node Group
+### 6. Crear grupo de nodos
 
-Ahora puedes crear el node group.
+Ahora puede crear el grupo de nodos.
 
 ```bash
 aws eks create-nodegroup \
@@ -228,7 +232,7 @@ aws eks create-nodegroup \
   --instance-types m5.large
 ```
 
-Espera a que se complete la creación del node group. Para verificar el estado del node group, ejecuta el siguiente comando:
+Espere a que finalice la creación del grupo de nodos. Para comprobar el estado del grupo de nodos, ejecute el siguiente comando:
 
 ```bash
 aws eks describe-nodegroup \
@@ -239,7 +243,7 @@ aws eks describe-nodegroup \
 
 ### 7. Configurar kubeconfig
 
-Debes configurar el archivo kubeconfig para acceder al cluster.
+Debe configurar el archivo kubeconfig para acceder al clúster.
 
 ```bash
 aws eks update-kubeconfig \
@@ -247,9 +251,9 @@ aws eks update-kubeconfig \
   --region us-west-2
 ```
 
-### 8. Verificar cluster
+### 8. Verificar el clúster
 
-Verifica que el cluster esté configurado correctamente.
+Verifique que el clúster esté configurado correctamente.
 
 ```bash
 kubectl get nodes
@@ -257,4 +261,4 @@ kubectl get nodes
 
 ## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, intenta resolver el [cuestionario Creación de EKS Cluster - Parte 3](../quizzes/eks/02-eks-cluster-creation-part3-quiz.md).
+Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario sobre la creación de clústeres de EKS - Parte 3](../quizzes/eks/02-eks-cluster-creation-part3-quiz.md).

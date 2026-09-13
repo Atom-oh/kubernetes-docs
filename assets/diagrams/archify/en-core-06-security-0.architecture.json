@@ -1,0 +1,393 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Security Architecture",
+    "locale": "en",
+    "output": "en-core-06-security-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Infrastructure layer"
+        },
+        "backend": {
+          "label": "API server"
+        },
+        "security": {
+          "label": "Security control"
+        },
+        "database": {
+          "label": "Data-at-rest protection"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "infra-to-api",
+        "label": "Infrastructure to API server",
+        "focus": [
+          "host",
+          "container",
+          "network",
+          "api"
+        ],
+        "note": "Host, container runtime, and network security form the foundation for API server security."
+      },
+      {
+        "id": "request-pipeline",
+        "label": "API request pipeline",
+        "focus": [
+          "api",
+          "auth",
+          "authz",
+          "admission",
+          "audit"
+        ],
+        "note": "Every API request passes authentication, authorization, and admission control; the audit policy decides what is logged."
+      },
+      {
+        "id": "workload-controls",
+        "label": "Workload security controls",
+        "focus": [
+          "authz",
+          "admission",
+          "network",
+          "container",
+          "rbac",
+          "podsec",
+          "netpol",
+          "imgsec"
+        ],
+        "note": "RBAC, Pod Security Standards, network policy, and image security derive from the cluster and infrastructure layers."
+      }
+    ],
+    "viewBox": [
+      1240,
+      720
+    ]
+  },
+  "components": [
+    {
+      "id": "host",
+      "type": "cloud",
+      "label": "Host Security",
+      "sublabel": "OS hardening",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "container",
+      "type": "cloud",
+      "label": "Container Runtime Security",
+      "pos": [
+        250,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "Network Security",
+      "sublabel": "Firewall",
+      "pos": [
+        480,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server Security",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        250,
+        170
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "encrypt",
+      "type": "database",
+      "label": "Data Encryption",
+      "sublabel": "etcd · secret management",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Authentication",
+      "sublabel": "identity verification",
+      "pos": [
+        250,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "authz",
+      "type": "security",
+      "label": "Authorization",
+      "sublabel": "RBAC · ABAC · Node · Webhook",
+      "pos": [
+        250,
+        370
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "admission",
+      "type": "security",
+      "label": "Admission Control",
+      "pos": [
+        250,
+        470
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "audit",
+      "type": "security",
+      "label": "Audit Logging",
+      "sublabel": "event record",
+      "pos": [
+        250,
+        570
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "netpol",
+      "type": "security",
+      "label": "Network Policy",
+      "sublabel": "NetworkPolicy",
+      "pos": [
+        1010,
+        170
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "imgsec",
+      "type": "security",
+      "label": "Image Security",
+      "sublabel": "image scanning · signing",
+      "pos": [
+        1010,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC",
+      "sublabel": "Role · RoleBinding",
+      "pos": [
+        1010,
+        370
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "podsec",
+      "type": "security",
+      "label": "Pod Security Standards",
+      "sublabel": "securityContext",
+      "pos": [
+        1010,
+        470
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Infrastructure Security",
+      "wraps": [
+        "host",
+        "container",
+        "network"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster Security",
+      "wraps": [
+        "api",
+        "encrypt",
+        "auth",
+        "authz",
+        "admission",
+        "audit"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Workload Security",
+      "wraps": [
+        "netpol",
+        "imgsec",
+        "rbac",
+        "podsec"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "host-api",
+      "from": "host",
+      "to": "api"
+    },
+    {
+      "id": "container-api",
+      "from": "container",
+      "to": "api"
+    },
+    {
+      "id": "network-api",
+      "from": "network",
+      "to": "api"
+    },
+    {
+      "id": "api-auth",
+      "from": "api",
+      "to": "auth",
+      "variant": "emphasis"
+    },
+    {
+      "id": "auth-authz",
+      "from": "auth",
+      "to": "authz",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authz-admission",
+      "from": "authz",
+      "to": "admission",
+      "variant": "emphasis"
+    },
+    {
+      "id": "admission-audit",
+      "from": "admission",
+      "to": "audit",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-encrypt",
+      "from": "api",
+      "to": "encrypt"
+    },
+    {
+      "id": "authz-rbac",
+      "from": "authz",
+      "to": "rbac"
+    },
+    {
+      "id": "admission-podsec",
+      "from": "admission",
+      "to": "podsec"
+    },
+    {
+      "id": "network-netpol",
+      "from": "network",
+      "to": "netpol"
+    },
+    {
+      "id": "container-imgsec",
+      "from": "container",
+      "to": "imgsec",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          345,
+          20
+        ],
+        [
+          1105,
+          20
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Infrastructure Security",
+      "items": [
+        "Covers host OS, container runtime, and network",
+        "Owned by the cluster administrator",
+        "Defended with firewalls, OS hardening, and container runtime security"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Cluster Security",
+      "items": [
+        "Covers API server, etcd, and kubelet",
+        "Defended with authentication, authorization, admission control, and encryption",
+        "API request events recorded according to the audit policy"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Workload Security",
+      "items": [
+        "Covers Pods, containers, and Services",
+        "Owned by the application developer",
+        "Defended with security contexts, network policy, and RBAC"
+      ]
+    }
+  ]
+}

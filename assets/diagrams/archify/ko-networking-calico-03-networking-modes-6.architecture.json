@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CrossSubnet 서브넷 판단 로직",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1000, 380],
+    "views": [
+      { "id": "same-subnet", "label": "같은 서브넷 경로", "focus": ["start", "check", "direct", "deliver"], "note": "출발지와 목적지 노드가 같은 서브넷이면 캡슐화 없이 Direct 라우팅으로 바로 전달한다." },
+      { "id": "cross-subnet", "label": "다른 서브넷 경로", "focus": ["start", "check", "encap", "deliver"], "note": "서브넷이 다르면 IPPool의 ipipMode 또는 vxlanMode 설정에 따라 IPIP 또는 VXLAN으로 캡슐화한다." }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": { "label": "패킷 송수신" },
+        "security": { "label": "서브넷 판단" },
+        "cloud": { "label": "Direct 라우팅" },
+        "messagebus": { "label": "IPIP/VXLAN 터널" }
+      }
+    }
+  },
+  "components": [
+    { "id": "start", "type": "frontend", "label": "패킷 전송", "sublabel": "출발지 노드의 Pod", "pos": [40, 160], "size": [150, 56] },
+    { "id": "check", "type": "security", "label": "같은 서브넷?", "sublabel": "출발지 노드 vs 목적지 노드", "pos": [290, 160], "size": [190, 56] },
+    { "id": "direct", "type": "cloud", "label": "Direct 전송", "sublabel": "캡슐화 없음", "pos": [590, 60], "size": [160, 56] },
+    { "id": "encap", "type": "messagebus", "label": "캡슐화", "sublabel": "IPIP 또는 VXLAN", "pos": [590, 260], "size": [160, 56] },
+    { "id": "deliver", "type": "frontend", "label": "패킷 전달", "sublabel": "목적지 노드의 Pod", "pos": [820, 160], "size": [150, 56] }
+  ],
+  "connections": [
+    { "id": "start-check", "from": "start", "to": "check" },
+    { "id": "check-direct", "from": "check", "to": "direct", "label": "Yes", "variant": "emphasis" },
+    { "id": "check-encap", "from": "check", "to": "encap", "label": "No" },
+    { "id": "direct-deliver", "from": "direct", "to": "deliver", "variant": "emphasis" },
+    { "id": "encap-deliver", "from": "encap", "to": "deliver" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "CrossSubnet 설정", "items": ["IPIP: ipipMode: CrossSubnet, vxlanMode: Never", "VXLAN: ipipMode: Never, vxlanMode: CrossSubnet", "EKS 권장: AZ 간 트래픽만 캡슐화"] },
+    { "dot": "emerald", "title": "모드별 처리량 (iperf3, MTU 1500)", "items": ["Direct 9.8 Gbps · 지연 35us", "IPIP 9.2 Gbps · 지연 42us", "VXLAN 8.5 Gbps · 지연 55us"] }
+  ]
+}

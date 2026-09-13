@@ -1,0 +1,60 @@
+[
+  {
+    "path": "en/eks/02-eks-cluster-creation-conclusion.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; aligned the conclusion with verified creation/network/security/AutoMode guidance and explicit ownership/validation criteria.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/"
+    ],
+    "findings": [
+      "Qualified tool tradeoffs and production suitability; added reproducibility/lifecycle ownership; local Terraform state does not inherently require extra infrastructure.",
+      "Removed mandatory public/private subnet and third-party policy assumptions; actual controller tags, usable IP planning, kubelet10250 and additive network policies.",
+      "Added PodIdentity/IRSA compute/SDK choice, EKSaccessentries/additiveRBAC and namespace isolation limits; default allAPI-data KMSv2 encryption1.28+ verifiedfresh officialguide.",
+      "Distinguished compute/capacity owners and replica versus node scaling; avoided duplicate autoscalers and AutoMode-managed components. PDBcoversapplicablevoluntaryevictions, notnodefailureguarantee.",
+      "Monitoring/notification/Spot/Graviton/limits/Fargate guidance nowconditionalonworkload,compatibility,ownership,costandactualdelivery.",
+      "Upgrade EKSsupport/compatibility, conditionalrollback,datarestore/RPO/RTO and AutoMode/Fargatestorage/LBownership aligned with reviewed concept chapters."
+    ],
+    "validation": [
+      "Everyoriginal217line read inthislocale; originalSHA/readrange saved.",
+      "Fresh officialMCP reads confirmed defaultAPI-dataenvelopeencryption and AutoMode built-in networking/DNS/storage/identity plusnode-firstconditionalrollback. Otherreferencesreusedfromsame-dateverifiedbatches.",
+      "Paired headings/bullets and6total localreference links pass; scoped gitdiffcheck passes. Noexecutablesamples, cloudchanges, provisioning or production-readiness claim. Evidence:/tmp/eks-creation-conclusion-audit/validation.json."
+    ]
+  },
+  {
+    "path": "ko/eks/02-eks-cluster-creation-conclusion.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; aligned the conclusion with verified creation/network/security/AutoMode guidance and explicit ownership/validation criteria.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/"
+    ],
+    "findings": [
+      "Qualified tool tradeoffs and production suitability; added reproducibility/lifecycle ownership; local Terraform state does not inherently require extra infrastructure.",
+      "Removed mandatory public/private subnet and third-party policy assumptions; actual controller tags, usable IP planning, kubelet10250 and additive network policies.",
+      "Added PodIdentity/IRSA compute/SDK choice, EKSaccessentries/additiveRBAC and namespace isolation limits; default allAPI-data KMSv2 encryption1.28+ verifiedfresh officialguide.",
+      "Distinguished compute/capacity owners and replica versus node scaling; avoided duplicate autoscalers and AutoMode-managed components. PDBcoversapplicablevoluntaryevictions, notnodefailureguarantee.",
+      "Monitoring/notification/Spot/Graviton/limits/Fargate guidance nowconditionalonworkload,compatibility,ownership,costandactualdelivery.",
+      "Upgrade EKSsupport/compatibility, conditionalrollback,datarestore/RPO/RTO and AutoMode/Fargatestorage/LBownership aligned with reviewed concept chapters."
+    ],
+    "validation": [
+      "Everyoriginal217line read inthislocale; originalSHA/readrange saved.",
+      "Fresh officialMCP reads confirmed defaultAPI-dataenvelopeencryption and AutoMode built-in networking/DNS/storage/identity plusnode-firstconditionalrollback. Otherreferencesreusedfromsame-dateverifiedbatches.",
+      "Paired headings/bullets and6total localreference links pass; scoped gitdiffcheck passes. Noexecutablesamples, cloudchanges, provisioning or production-readiness claim. Evidence:/tmp/eks-creation-conclusion-audit/validation.json."
+    ]
+  }
+]

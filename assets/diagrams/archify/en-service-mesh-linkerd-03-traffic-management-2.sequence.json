@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Timeout Behavior",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      720
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "timeout response (504)"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client"
+    },
+    {
+      "id": "proxy",
+      "type": "security",
+      "label": "linkerd-proxy",
+      "sublabel": "timeout: 5s"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Backend Service"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "Forward request — start timeout: 5s"
+    },
+    {
+      "from": 320,
+      "to": 430,
+      "label": "Normal response (within 5s)"
+    },
+    {
+      "from": 450,
+      "to": 600,
+      "label": "Timeout (exceeds 5s) — backend may keep processing"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "proxy",
+      "y": 195,
+      "label": "HTTP Request",
+      "variant": "emphasis",
+      "note": "linkerd-proxy starts the 5s timeout"
+    },
+    {
+      "id": "forward",
+      "from": "proxy",
+      "to": "service",
+      "y": 265,
+      "label": "Request",
+      "variant": "default"
+    },
+    {
+      "id": "ok-service",
+      "from": "service",
+      "to": "proxy",
+      "y": 355,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "ok-client",
+      "from": "proxy",
+      "to": "client",
+      "y": 405,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "timeout-504",
+      "from": "proxy",
+      "to": "client",
+      "y": 495,
+      "label": "504 Gateway Timeout",
+      "variant": "dashed",
+      "note": "5 seconds elapsed — backend may keep processing the request"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "proxy",
+      "from": 190,
+      "to": 505,
+      "type": "security"
+    },
+    {
+      "participant": "service",
+      "from": 260,
+      "to": 360,
+      "type": "backend"
+    },
+    {
+      "participant": "service",
+      "from": 460,
+      "to": 590,
+      "type": "backend"
+    }
+  ]
+}

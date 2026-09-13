@@ -1,7 +1,8 @@
 # Cilium eBPF Quiz
 
-> **Supported Version**: Cilium 1.17, Linux Kernel 4.19+
-> **Last Updated**: February 22, 2026
+> **Review baseline**: Cilium 1.20.1; Linux 5.10+ or documented equivalent backports; limit examples use Linux 6.12.
+> **2026-09-12**
+
 
 ## eBPF Basic Concepts
 
@@ -17,28 +18,34 @@
    <p><strong>Explanation</strong>: eBPF stands for Extended Berkeley Packet Filter, which is an extension of the original BPF technology.</p>
    </details>
 
-2. **Where do eBPF programs execute?**
-   - A) User Space
-   - B) Kernel Space
-   - C) Hypervisor
-   - D) Container Runtime
+2. **Where do the Linux eBPF programs in this guide execute when their hooks run?**
+   - A) User space only
+   - B) In the kernel
+   - C) In Hubble Relay
+   - D) In the container runtime process
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) Kernel Space</p>
-   <p><strong>Explanation</strong>: eBPF programs run safely inside the Linux kernel.</p>
+
+   **Answer: B) In the kernel**
+
+   These programs execute in the kernel through its supported interpreter or JIT path. Loaders and observers run in userspace. Kernel execution is not an absolute safety guarantee.
+
    </details>
 
-3. **What mechanism ensures the safety of eBPF programs?**
-   - A) Sandbox
-   - B) Virtual Machine
-   - C) Static Verifier
-   - D) Containerization
+3. **What does acceptance by the BPF verifier mean?**
+   - A) Kernel crashes are impossible
+   - B) The intended application policy has been proven correct
+   - C) The program passed checks for its type, memory access and execution constraints
+   - D) No further testing is needed
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: C) Static Verifier</p>
-   <p><strong>Explanation</strong>: The eBPF verifier checks program safety before it is loaded to prevent infinite loops or kernel crashes.</p>
+
+   **Answer: C) The program passed checks for its type, memory access and execution constraints**
+
+   The verifier constrains execution; verifier, JIT, helper and kernel bugs or incorrect program logic remain possible.
+
    </details>
 
 4. **What are the kernel events that eBPF programs can attach to called?**
@@ -53,92 +60,113 @@
    <p><strong>Explanation</strong>: eBPF programs are attached to various hook points in the kernel and execute when events occur.</p>
    </details>
 
-5. **What is used for data sharing between eBPF programs and user space applications?**
-   - A) Shared Memory
-   - B) Pipes
-   - C) BPF Maps
-   - D) Sockets
+5. **What mechanism shares state or events between BPF programs and userspace?**
+   - A) Environment variables
+   - B) Only ordinary disk files
+   - C) BPF maps
+   - D) Kubernetes annotations
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: C) BPF Maps</p>
-   <p><strong>Explanation</strong>: BPF Maps are key-value stores used to share data between eBPF programs and user space applications.</p>
+
+   **Answer: C) BPF maps**
+
+   Maps include key/value structures, event buffers and reference containers. Pins retain references, not map contents across reboot; reloading does not automatically reuse a map.
+
    </details>
 
 ## eBPF and Cilium
 
-6. **What is the main reason Cilium uses eBPF?**
-   - A) Implementing networking features without kernel modules
-   - B) Providing a better user interface
-   - C) Using less memory
-   - D) Easier installation process
+6. **Why can eBPF help implement Cilium's datapath?**
+   - A) Programmable kernel hooks and maps avoid a new custom module for every datapath change
+   - B) It removes every kernel-module dependency
+   - C) It automatically configures any cloud network
+   - D) It guarantees lower memory usage
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: A) Implementing networking features without kernel modules</p>
-   <p><strong>Explanation</strong>: Cilium uses eBPF to implement high-performance networking, load balancing, security policies, and other features without kernel modules.</p>
+
+   **Answer: A) Programmable kernel hooks and maps avoid a new custom module for every datapath change**
+
+   Cilium uses supported kernel facilities for forwarding, policy and service translation. Required kernel features and workload-specific testing remain necessary.
+
    </details>
 
-7. **Which is NOT a feature implemented using eBPF in Cilium?**
-   - A) Network policy enforcement
-   - B) Service load balancing
-   - C) Network packet encryption
-   - D) User authentication
+7. **Which statement correctly describes Cilium's WireGuard/IPsec encryption modes?**
+   - A) Every cryptographic operation is a BPF instruction
+   - B) No configuration or key operation is needed
+   - C) Every traffic path is always encrypted
+   - D) BPF integrates traffic with kernel WireGuard/IPsec facilities; coverage and key management depend on mode
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: D) User authentication</p>
-   <p><strong>Explanation</strong>: Cilium uses eBPF to implement network policy enforcement, service load balancing, and network packet processing, but user authentication is typically handled by other systems.</p>
+
+   **Answer: D) BPF integrates traffic with kernel WireGuard/IPsec facilities; coverage and key management depend on mode**
+
+   BPF steering and kernel encryption are different responsibilities. Node encryption does not automatically enable workload mTLS.
+
    </details>
 
-8. **Which eBPF feature does Cilium use to replace kube-proxy?**
-   - A) XDP (eXpress Data Path)
-   - B) TC (Traffic Control) BPF
-   - C) Socket BPF
-   - D) Tracing BPF
+8. **Which hooks can Cilium use for kube-proxy replacement?**
+   - A) Only XDP
+   - B) Only TC
+   - C) Only tracing probes
+   - D) Socket hooks, TC packet paths and optional XDP acceleration
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) TC (Traffic Control) BPF</p>
-   <p><strong>Explanation</strong>: Cilium primarily uses TC (Traffic Control) BPF programs to replace kube-proxy's service load balancing functionality.</p>
+
+   **Answer: D) Socket hooks, TC packet paths and optional XDP acceleration**
+
+   The path depends on traffic and configuration. Service translation can happen before packets exist at socket hooks, in packet paths or through supported XDP acceleration.
+
    </details>
 
-9. **Why is Cilium's eBPF-based load balancing superior to kube-proxy?**
-   - A) Supports more service types
-   - B) Better user interface
-   - C) Lower latency and higher throughput
-   - D) Easier configuration
+9. **How should a claim that a Cilium configuration is faster be evaluated?**
+   - A) Assume all BPF map lookups have guaranteed latency
+   - B) Measure the workload with protocol, routing, policy, encryption and proxy settings recorded
+   - C) Treat kernel execution alone as proof
+   - D) Compare only product names
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: C) Lower latency and higher throughput</p>
-   <p><strong>Explanation</strong>: Cilium's eBPF-based load balancing processes packets directly in kernel space, providing lower latency and higher throughput.</p>
+
+   **Answer: B) Measure the workload with protocol, routing, policy, encryption and proxy settings recorded**
+
+   Kernel and userspace components have workload-dependent costs. Synthetic results and hook choice do not guarantee application latency.
+
    </details>
 
-10. **Which is NOT a metric collected using eBPF in Cilium?**
-    - A) Network connection status
-    - B) Packet drop reasons
-    - C) Service response time
-    - D) User login time
+10. **Where can Hubble's HTTP observations come from?**
+    - A) Automatically decrypted arbitrary traffic
+    - B) Only CPU hardware counters
+    - C) A supported L7 proxy path combined with network-flow information
+    - D) Every packet regardless of settings
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: D) User login time</p>
-    <p><strong>Explanation</strong>: Cilium uses eBPF to collect network-related metrics such as network connection status, packet drop reasons, and service response time, but does not collect application-level metrics like user login time.</p>
+
+    **Answer: C) A supported L7 proxy path combined with network-flow information**
+
+    L7 visibility depends on proxy/policy/visibility settings. Flow records are not automatically application spans or arbitrary business metrics.
+
     </details>
 
 ## eBPF Programming
 
-11. **What language is primarily used to write eBPF programs?**
-    - A) Python
-    - B) Go
-    - C) C
-    - D) Rust
+11. **Which compiler/toolchain statement is correct?**
+    - A) Clang directly compiles both C and Rust source
+    - B) C commonly uses Clang's BPF backend; Rust uses its own toolchain ecosystem
+    - C) A host C syntax check proves kernel verifier acceptance
+    - D) BTF supplies missing kernel features
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: C) C</p>
-    <p><strong>Explanation</strong>: eBPF programs are primarily written in C and compiled to eBPF bytecode using the LLVM compiler.</p>
+
+    **Answer: B) C commonly uses Clang's BPF backend; Rust uses its own toolchain ecosystem**
+
+    Host syntax, BPF-target compilation, kernel verification and live behavior are separate checks. CO-RE does not create missing helpers or configuration.
+
     </details>
 
 12. **Which is NOT a framework for developing eBPF programs?**
@@ -165,16 +193,19 @@
     <p><strong>Explanation</strong>: eBPF supports various types of maps including hash maps, array maps, and LRU maps, but does not support graph maps.</p>
     </details>
 
-14. **What is the maximum number of instructions in an eBPF program?**
-    - A) 1,000
-    - B) 4,096
-    - C) 10,000
-    - D) Unlimited
+14. **Which statement matches the Linux 6.12 limits discussed in the guide?**
+    - A) All programs have a 4,096-instruction limit
+    - B) Every program below one million instructions is accepted
+    - C) There are no program or analysis limits
+    - D) The BPF-capable load path allows up to one million instructions, the unprivileged path 4,096, and verifier complexity is a separate limit
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) 4,096</p>
-    <p><strong>Explanation</strong>: eBPF programs are limited to a maximum of 4,096 instructions. This is a limit to ensure safety.</p>
+
+    **Answer: D) The BPF-capable load path allows up to one million instructions, the unprivileged path 4,096, and verifier complexity is a separate limit**
+
+    Program length and verifier exploration are different constraints. Capability/token, program-type and other checks can reject loading; unprivileged BPF is often disabled.
+
     </details>
 
 15. **What system call is used to load eBPF programs into the kernel?**
@@ -191,62 +222,79 @@
 
 ## eBPF Performance and Monitoring
 
-16. **What is the main benefit provided by XDP (eXpress Data Path)?**
-    - A) Better security
-    - B) Easier programming
-    - C) Lower latency
-    - D) Higher compatibility
+16. **What distinguishes native driver XDP from later skb-based processing?**
+    - A) It always bypasses every kernel subsystem
+    - B) It guarantees a fixed packet rate
+    - C) It can process a packet before skb allocation
+    - D) It works identically on every NIC and in generic mode
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: C) Lower latency</p>
-    <p><strong>Explanation</strong>: XDP processes packets at the network driver level, bypassing the kernel networking stack to provide very low latency.</p>
+
+    **Answer: C) It can process a packet before skb allocation**
+
+    Native XDP runs early in receive processing. Generic/offloaded modes and driver support differ; actual performance needs measurement.
+
     </details>
 
-17. **What tool is used to monitor the performance of eBPF programs in Cilium?**
-    - A) top
-    - B) bpftool
-    - C) htop
-    - D) iotop
+17. **Which bpftool command has the stated meaning?**
+    - A) bpftool -p map dump measures lookup latency
+    - B) bpftool prog profile id ID duration 10 cycles instructions requests profiling metrics
+    - C) bpftool prog load always attaches tracepoints
+    - D) bpftool prog show enables missing kernel features
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) bpftool</p>
-    <p><strong>Explanation</strong>: bpftool is a tool used to inspect and manage eBPF programs and maps, and is also used for performance monitoring.</p>
+
+    **Answer: B) bpftool prog profile id ID duration 10 cycles instructions requests profiling metrics**
+
+    Profiling requires metric names, permissions and kernel/PMU support. Pretty printing, loading and attachment are different operations.
+
     </details>
 
-18. **What is Cilium's eBPF-based network monitoring tool?**
-    - A) Prometheus
-    - B) Hubble
-    - C) Grafana
-    - D) Jaeger
+18. **What is Hubble in this context?**
+    - A) A kernel compiler
+    - B) A replacement for every application tracing SDK
+    - C) Cilium network observability using datapath and available proxy events
+    - D) An automatic policy synchronizer
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) Hubble</p>
-    <p><strong>Explanation</strong>: Hubble is Cilium's eBPF-based network monitoring tool that can observe and analyze network flows in real-time.</p>
+
+    **Answer: C) Cilium network observability using datapath and available proxy events**
+
+    Hubble observes flows and supported L7 events. Collection limits and filters affect the result; JSON alone is not a service-map visualization.
+
     </details>
 
-19. **What tool is used to find performance bottlenecks in eBPF programs?**
-    - A) strace
-    - B) ltrace
-    - C) perf
-    - D) gdb
+19. **What does the map-based lab count?**
+    - A) All execve attempts by unique executable path, without loss
+    - B) Successful execution events by short comm name, subject to capacity and measurement limits
+    - C) Only Pods in the default namespace
+    - D) All processes across every previous reboot
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: C) perf</p>
-    <p><strong>Explanation</strong>: perf is a Linux performance analysis tool used to find performance bottlenecks in eBPF programs.</p>
+
+    **Answer: B) Successful execution events by short comm name, subject to capacity and measurement limits**
+
+    sched_process_exec observes successful execution transitions. Names can collide; this host-wide example has bounded in-memory state and selected loss counters.
+
     </details>
 
-20. **What command is used for debugging eBPF programs in Cilium?**
-    - A) `cilium bpf`
-    - B) `cilium debug`
-    - C) `cilium monitor`
-    - D) `cilium trace`
+20. **Which agent-local command inspects service backend map entries?**
+    - A) cilium-dbg bpf lb list --backends
+    - B) cilium debug --all-kernels
+    - C) cilium policy trace --enable
+    - D) hubble compile bpf
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: A) `cilium bpf`</p>
-    <p><strong>Explanation</strong>: The `cilium bpf` command is used to inspect and debug Cilium's eBPF programs and maps.</p>
+
+    **Answer: A) cilium-dbg bpf lb list --backends**
+
+    Use cilium-dbg in the agent for the correct node. cilium-dbg map get displays userspace-cached content; use the appropriate decoder without modifying raw maps.
+
     </details>
+
+[Review the guide](../../../networking/cilium/02-ebpf.md).

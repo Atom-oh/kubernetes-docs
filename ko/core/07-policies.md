@@ -1,6 +1,6 @@
 # Kubernetes 정책
 
-> **지원 버전**: Kubernetes 1.32 - 1.34  
+> **지원 버전**: Kubernetes 1.35 - 1.37
 > **마지막 업데이트**: 2026년 2월 22일
 
 Kubernetes에서 정책은 클러스터와 워크로드의 동작을 제어하고 규제하는 규칙 집합입니다. 정책을 통해 보안, 리소스 사용, 네트워크 통신 등 다양한 측면을 관리할 수 있습니다. 이 장에서는 Kubernetes의 다양한 정책 유형과 이를 구현하는 방법, 그리고 Amazon EKS에서의 정책 관리에 대해 알아보겠습니다.
@@ -10,7 +10,7 @@ Kubernetes에서 정책은 클러스터와 워크로드의 동작을 제어하�
 이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구
-- kubectl v1.34 이상
+- API 서버와 마이너 버전 차이가 1 이내인 kubectl
 - 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
 - Kyverno CLI (선택 사항)
 - OPA Gatekeeper (선택 사항)
@@ -55,16 +55,18 @@ kubectl -n policy-demo get resourcequota,networkpolicy
 
 ## Kubernetes 정책 아키텍처
 
-![정책 유형(리소스/보안/네트워크/커스텀)이 구현 메커니즘(ResourceQuota·LimitRange, Pod Security Standards, NetworkPolicy, Admission Controllers, OPA Gatekeeper/Kyverno)으로 이어지고, 각 메커니즘이 클러스터·네임스페이스·포드 수준에 적용되는 3단 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-0.svg)
+![정책 유형(리소스/보안/네트워크/커스텀)이 구현 메커니즘(ResourceQuota·LimitRange, Pod Security Standards, Admission Controllers, NetworkPolicy, OPA Gatekeeper/Kyverno)으로 이어지고, 각 메커니즘이 클러스터·네임스페이스·Pod 수준에 적용되는 3단 구조를 보여준다.](../.gitbook/assets/ko-core-07-policies-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-0.html)
 
 ## 정책 유형 비교
 
 | 정책 유형 | 구현 메커니즘 | 적용 수준 | 주요 목적 | Kubernetes 버전 지원 |
 |----------|--------------|----------|----------|-------------------|
 | **리소스 정책** | ResourceQuota, LimitRange | 네임스페이스 | 리소스 사용 제한 및 관리 | 모든 버전 |
-| **보안 정책** | Pod Security Standards, PodSecurityPolicy(deprecated) | 포드, 네임스페이스 | 보안 컨텍스트 제한 | PSP: ~1.24, PSS: 1.22+ |
+| **보안 정책** | Pod Security Standards, Pod Security Admission (PSP 제거됨) | 포드, 네임스페이스 | 보안 컨텍스트 제한 | PSP 제거: 1.25; PSA Stable: 1.25 |
 | **네트워크 정책** | NetworkPolicy | 포드 | 네트워크 트래픽 제어 | 1.8+ |
-| **커스텀 정책** | OPA Gatekeeper, Kyverno | 클러스터, 네임스페이스, 포드 | 사용자 정의 정책 적용 | 모든 버전(애드온) |
+| **커스텀 정책** | OPA Gatekeeper, Kyverno | 클러스터, 네임스페이스, 포드 | 사용자 정의 정책 적용 | 설치한 엔진의 호환 버전에 따라 다름 |
 
 ## 리소스 정책
 
@@ -95,7 +97,7 @@ spec:
 
 ### LimitRange
 
-LimitRange는 네임스페이스 내의 개별 컨테이너나 포드에 대한 기본 리소스 제한과 요청을 설정합니다.
+LimitRange는 컨테이너 요청·제한의 기본값을 설정하고 컨테이너·파드·PVC의 범위를 검증합니다. Pod·PVC 항목은 요청·제한 기본값을 주입하지 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -147,7 +149,9 @@ Kubernetes에서는 다양한 유형의 정책을 구현할 수 있으며, 이�
 
 리소스 할당 정책은 포드와 컨테이너가 사용할 수 있는 CPU, 메모리 등의 리소스 양을 제어합니다.
 
-![포드의 리소스 요청·제한 설정이 QoS 클래스를 결정하고, 이 클래스가 리소스 부족 시 축출 순서를 정하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-1.svg)
+![Pod의 리소스 요청·제한 설정이 QoS를 결정하며, 노드 압력 축출은 QoS만의 고정 순서가 아니라 요청 초과 사용과 Pod 우선순위도 평가함을 보여준다.](../.gitbook/assets/ko-core-07-policies-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-1.html)
 
 ### 리소스 요청과 제한
 
@@ -171,12 +175,12 @@ spec:
         cpu: "500m"
 ```
 
-- **requests**: 컨테이너가 보장받을 최소 리소스 양
-- **limits**: 컨테이너가 사용할 수 있는 최대 리소스 양
+- **requests**: 스케줄링 예약량과 실행 중 리소스 배분 기준이며 실제 사용량은 더 낮을 수 있음
+- **limits**: 실행 중 제약: CPU는 스로틀링하고 메모리 초과는 OOM 종료를 유발할 수 있음
 
 리소스 요청과 제한을 설정하면 다음과 같은 이점이 있습니다:
 
-1. **리소스 보장**: 포드가 필요한 최소 리소스를 보장받음
+1. **리소스 보장**: 스케줄러가 요청 용량을 반영하며 가용성을 보장하는 것은 아님
 2. **리소스 격리**: 한 포드가 다른 포드의 리소스를 독점하는 것을 방지
 3. **효율적인 스케줄링**: 스케줄러가 노드의 리소스 용량을 고려하여 포드를 배치
 
@@ -184,20 +188,19 @@ spec:
 
 Kubernetes는 포드의 리소스 요청과 제한 설정에 따라 자동으로 QoS 클래스를 할당합니다:
 
-1. **Guaranteed**: 모든 컨테이너에 리소스 요청과 제한이 설정되어 있고, 요청과 제한이 동일한 경우
+1. **Guaranteed**: 컨테이너 수준 구성에서 모든 컨테이너의 CPU·메모리 요청이 각각 제한과 동일한 경우
 2. **Burstable**: 적어도 하나의 컨테이너에 리소스 요청이 설정되어 있지만, Guaranteed 조건을 충족하지 않는 경우
 3. **BestEffort**: 어떤 컨테이너에도 리소스 요청과 제한이 설정되어 있지 않은 경우
 
-QoS 클래스는 리소스 부족 시 포드 축출 순서를 결정합니다:
-1. BestEffort 포드가 가장 먼저 축출됨
-2. 그 다음으로 Burstable 포드가 축출됨
-3. Guaranteed 포드는 가장 마지막에 축출됨
+노드 압력 축출은 요청 초과 사용 여부, 파드 우선순위, 상대적 사용량을 반영합니다. 일반적으로 BestEffort가 Guaranteed보다 불리하지만 QoS만으로 고정 순서를 정하지는 않습니다. 파드 수준 리소스도 QoS에 영향을 주므로 [공식 QoS 기준](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)을 참고하세요.
 
 ## 포드 보안 정책
 
 포드 보안 정책(Pod Security Policy, PSP)은 Kubernetes 1.21 버전부터 사용 중단(deprecated)되었으며, 1.25 버전에서 완전히 제거되었습니다. 대신 포드 보안 표준(Pod Security Standards)과 포드 보안 어드미션(Pod Security Admission)이 도입되었습니다.
 
-![네임스페이스 레이블로 지정된 포드 보안 표준 수준을 포드 보안 어드미션이 검증하여 포드 생성 요청을 허용하거나 거부하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-2.svg)
+![네임스페이스 레이블로 지정된 Pod 보안 표준 수준을 Pod 보안 어드미션이 검증하여 Pod 생성 요청을 허용하거나 거부하는 과정을 보여준다.](../.gitbook/assets/ko-core-07-policies-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-2.html)
 
 ### 포드 보안 표준(Pod Security Standards)
 
@@ -231,7 +234,9 @@ metadata:
 
 네트워크 정책(Network Policy)은 포드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 Kubernetes 클러스터의 모든 포드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
 
-![NetworkPolicy가 선택자로 대상 포드를 지정하고 인그레스/이그레스 규칙을 통해 프론트엔드-API-데이터베이스 간 트래픽을 제어하는 방식을 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-3.svg)
+![api-allow NetworkPolicy가 podSelector, policyTypes, ingress·egress 규칙으로 구성되어 API Pod에 적용되고 프론트엔드에서 오는 인바운드와 데이터베이스로 가는 아웃바운드만 허용하며, 규칙의 from/to에 쓰이는 세 가지 선택자 유형을 보여준다.](../.gitbook/assets/ko-core-07-policies-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-3.html)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -265,11 +270,13 @@ spec:
 ```
 
 위 예시에서:
-- `api` 레이블이 있는 포드에 대한 네트워크 정책을 정의
-- `frontend` 레이블이 있는 포드에서 8080 포트로의 인바운드 트래픽만 허용
-- `database` 레이블이 있는 포드의 5432 포트로의 아웃바운드 트래픽만 허용
+- `app=api` 레이블이 있는 포드에 대한 네트워크 정책을 정의
+- `app=frontend` 레이블이 있는 포드에서 8080 포트로의 인바운드 트래픽만 허용
+- `app=database` 레이블이 있는 포드의 5432 포트로의 아웃바운드 트래픽만 허용
 
 네트워크 정책을 사용하려면 클러스터의 네트워크 플러그인이 네트워크 정책을 지원해야 합니다. Calico, Cilium, Antrea 등의 CNI 플러그인은 네트워크 정책을 지원합니다.
+
+namespaceSelector가 없는 podSelector는 정책의 네임스페이스 안에서 선택합니다. 표준 NetworkPolicy는 허용 규칙의 합집합이므로 다른 정책이 더 많은 트래픽을 허용할 수 있고 출발지 egress와 목적지 ingress 양쪽이 허용해야 합니다. 이 예시는 클러스터 DNS로의 TCP/UDP 53을 별도 허용하지 않으면 DNS도 차단합니다.
 
 ### 네트워크 정책 유형
 
@@ -305,7 +312,9 @@ ingress:
 
 리소스 쿼터(ResourceQuota)는 네임스페이스 내에서 사용할 수 있는 리소스의 총량을 제한합니다. 이를 통해 여러 팀이나 프로젝트가 클러스터 리소스를 공유할 때 한 팀이 모든 리소스를 독점하는 것을 방지할 수 있습니다.
 
-![ResourceQuota가 네임스페이스에 적용되고, 포드들이 쌓은 리소스 사용량과 새 포드 요청을 합산해 쿼터 초과 여부를 검증하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-4.svg)
+![ResourceQuota의 네 가지 쿼터 유형이 네임스페이스에 적용되고, Pod들이 쌓은 리소스 사용량과 새 Pod 요청을 합산해 쿼터 이내면 허용하고 초과하면 거부하는 검증 과정을 보여준다.](../.gitbook/assets/ko-core-07-policies-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-4.html)
 
 ```yaml
 apiVersion: v1
@@ -323,7 +332,7 @@ spec:
 ```
 
 위 예시에서:
-- `team-a` 네임스페이스는 최대 10개의 포드를 생성할 수 있음
+- `team-a` 네임스페이스는 종료 단계가 아닌 파드를 최대 10개 생성할 수 있음
 - 모든 포드의 CPU 요청 합계는 4 코어를 초과할 수 없음
 - 모든 포드의 메모리 요청 합계는 8Gi를 초과할 수 없음
 - 모든 포드의 CPU 제한 합계는 8 코어를 초과할 수 없음
@@ -353,28 +362,55 @@ spec:
 
 특정 우선순위 클래스의 포드에 대한 쿼터를 설정할 수도 있습니다:
 
+우선순위 클래스별로 별도의 쿼터를 사용하며 `pods.high` 같은 키는 없습니다. 파드 스케줄링 전에 해당 PriorityClass를 생성하세요.
+
 ```yaml
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: priority-class-quota
+  name: high-priority-quota
   namespace: team-c
 spec:
   hard:
-    pods: "10"
-    pods.high: "5"
-    pods.medium: "3"
-    pods.low: "2"
+    pods: "5"
   scopeSelector:
     matchExpressions:
     - operator: In
       scopeName: PriorityClass
-      values: ["high", "medium", "low"]
+      values: ["high"]
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: medium-priority-quota
+  namespace: team-c
+spec:
+  hard:
+    pods: "3"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values: ["medium"]
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: low-priority-quota
+  namespace: team-c
+spec:
+  hard:
+    pods: "2"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values: ["low"]
 ```
 
 ## LimitRange
 
-LimitRange는 네임스페이스 내에서 생성되는 개별 리소스(포드, 컨테이너 등)에 대한 기본 리소스 제한과 요청을 설정합니다. 이는 개발자가 명시적으로 리소스 요청과 제한을 설정하지 않은 경우에 적용됩니다.
+LimitRange는 누락된 컨테이너 요청·제한에 기본값을 적용하고 admission에서 최소·최대 값을 검증합니다. 기존 파드의 리소스를 변경하거나 Pod·PVC 항목에 기본값을 넣지는 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -414,7 +450,9 @@ LimitRange는 다음과 같은 리소스 유형에 적용할 수 있습니다:
 
 Kubernetes 생태계에는 더 복잡하고 유연한 정책을 구현할 수 있는 여러 정책 엔진이 있습니다.
 
-![API 서버의 어드미션 웹훅이 OPA Gatekeeper, Kyverno, Kubewarden 세 정책 엔진으로 요청을 전달하고, 각 엔진이 자체 정책 정의 방식과 검증/변경/생성 기능을 지원하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-5.svg)
+![API 서버가 호출한 어드미션 웹훅이 요청을 OPA Gatekeeper, Kyverno, Kubewarden 세 정책 엔진에 전달하고, 각 엔진이 ConstraintTemplate/Constraint, ClusterPolicy/Policy, ClusterAdmissionPolicy라는 자체 정책 정의 리소스를 사용하며 검증·변경(Kyverno는 생성까지) 정책 유형을 지원하는 구조를 보여준다.](../.gitbook/assets/ko-core-07-policies-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-5.html)
 
 ### OPA Gatekeeper
 
@@ -427,25 +465,27 @@ Gatekeeper는 다음과 같은 구성 요소로 이루어져 있습니다:
 
 ```yaml
 # ConstraintTemplate 예시
-apiVersion: templates.gatekeeper.sh/v1beta1
+apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
-  name: k8srequiredlabels
+  name: k8srequiredlabelkeys
 spec:
   crd:
     spec:
       names:
-        kind: K8sRequiredLabels
+        kind: K8sRequiredLabelKeys
       validation:
         openAPIV3Schema:
+          type: object
           properties:
             labels:
               type: array
-              items: string
+              items:
+                type: string
   targets:
     - target: admission.k8s.gatekeeper.sh
       rego: |
-        package k8srequiredlabels
+        package k8srequiredlabelkeys
         violation[{"msg": msg, "details": {"missing_labels": missing}}] {
           provided := {label | input.review.object.metadata.labels[label]}
           required := {label | label := input.parameters.labels[_]}
@@ -458,7 +498,7 @@ spec:
 ```yaml
 # Constraint 예시
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
+kind: K8sRequiredLabelKeys
 metadata:
   name: require-app-label
 spec:
@@ -481,14 +521,15 @@ kind: ClusterPolicy
 metadata:
   name: require-labels
 spec:
-  validationFailureAction: enforce
   rules:
   - name: check-for-labels
     match:
-      resources:
-        kinds:
-        - Pod
+      any:
+      - resources:
+          kinds:
+          - Pod
     validate:
+      failureAction: Enforce
       message: "The labels 'app' and 'owner' are required."
       pattern:
         metadata:
@@ -503,7 +544,7 @@ Kyverno는 다음과 같은 정책 유형을 지원합니다:
 2. **Mutate**: 리소스를 자동으로 수정
 3. **Generate**: 리소스가 생성될 때 다른 리소스를 자동으로 생성
 4. **Verify Images**: 이미지 서명을 검증
-5. **Clean Up**: 리소스가 삭제될 때 관련 리소스를 자동으로 정리
+5. **Clean Up**: CleanupPolicy/ClusterCleanupPolicy로 조건에 맞는 리소스를 일정에 따라 삭제하며 소유자 참조 기반 가비지 수집과는 별개
 
 ### Kubewarden
 
@@ -511,12 +552,13 @@ Kubewarden은 WebAssembly 기반의 정책 엔진으로, 다양한 프로그래�
 
 ```yaml
 # Kubewarden 정책 예시
-apiVersion: policies.kubewarden.io/v1alpha2
+apiVersion: policies.kubewarden.io/v1
 kind: ClusterAdmissionPolicy
 metadata:
   name: require-labels
 spec:
-  module: registry://ghcr.io/kubewarden/policies/require-labels:v0.1.0
+  module: "registry://ghcr.io/kubewarden/policies/safe-labels:<tested-tag>"
+  mutating: false
   rules:
   - apiGroups: [""]
     apiVersions: ["v1"]
@@ -525,16 +567,20 @@ spec:
     - CREATE
     - UPDATE
   settings:
-    required_labels:
+    mandatory_labels:
       - app
       - owner
 ```
+
+위 리소스보다 정책 엔진·CRD·정책 서버를 먼저 설치하세요. Gatekeeper 예시는 더 풍부한 라이브러리 `K8sRequiredLabels`와 충돌하지 않도록 `K8sRequiredLabelKeys`를 정의합니다. Kubewarden은 실제 배포된 검증 버전·다이제스트의 safe-labels와 `mandatory_labels` 설정을 사용하며 `<tested-tag>`는 자리 표시자입니다.
 
 ## Amazon EKS에서의 정책 관리
 
 Amazon EKS에서는 Kubernetes의 기본 정책 메커니즘과 함께 AWS의 다양한 서비스를 활용하여 정책을 관리할 수 있습니다.
 
-![AWS 서비스와 그 EKS 통합 지점이 포드 또는 클러스터 수준에 적용되고, Kubernetes 정책이 EKS 클러스터 내 네임스페이스와 포드에 적용되는 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-6.svg)
+![AWS Organizations·Config·Firewall Manager가 EKS 클러스터를 제한·감사·보호하고, IAM과 Security Groups가 Pod에 작용하며, Kubernetes 기본 정책이 클러스터·네임스페이스·Pod에 적용되는 구조를 보여준다.](../.gitbook/assets/ko-core-07-policies-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-6.html)
 
 ### AWS IAM과의 통합
 
@@ -549,9 +595,11 @@ eksctl create iamserviceaccount \
   --name my-service-account \
   --namespace default \
   --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+  --attach-policy-arn arn:aws:iam::123456789012:policy/ReadApplicationBucket \
   --approve
 ```
+
+참조한 고객 관리 정책을 먼저 생성하고 필요한 버킷·접두사 읽기로 제한하세요. 지원 컴퓨팅에서는 EKS Pod Identity도 사용할 수 있습니다. IAM은 AWS API 접근을 제어하며 Kubernetes 리소스 인가와 구분됩니다.
 
 ### AWS Security Groups for Pods
 
@@ -569,12 +617,14 @@ spec:
       app: web
   securityGroups:
     groupIds:
-      - sg-12345
+      - sg-0123456789abcdef0
 ```
+
+클러스터 VPC의 실제 보안 그룹 ID로 바꾸고 앱·DNS에 필요한 규칙을 설정하세요. 파드 보안 그룹에는 지원되는 VPC CNI 설정·IAM 권한·호환 컴퓨팅이 필요하며 Windows·EKS Auto Mode는 지원하지 않습니다.
 
 ### AWS Config 및 AWS Organizations
 
-AWS Config와 AWS Organizations를 사용하여 EKS 클러스터에 대한 조직 수준의 정책을 적용할 수 있습니다. 예를 들어, 특정 태그가 없는 EKS 클러스터를 생성하지 못하도록 제한할 수 있습니다.
+AWS Config는 리소스 준수 여부를 평가하며 자체적으로 CreateCluster를 거부하지 않습니다. Organizations 서비스 제어 정책(SCP)은 적용되는 멤버 계정·OU에서 필수 요청 태그가 없는 생성을 거부할 수 있습니다:
 
 ```json
 {
@@ -596,7 +646,7 @@ AWS Config와 AWS Organizations를 사용하여 EKS 클러스터에 대한 조�
 
 ### AWS Firewall Manager
 
-AWS Firewall Manager를 사용하여 여러 EKS 클러스터에 대한 네트워크 정책을 중앙에서 관리할 수 있습니다. 이를 통해 조직 전체에 일관된 보안 정책을 적용할 수 있습니다.
+Firewall Manager는 WAF, VPC 보안 그룹, Network Firewall, DNS Firewall 등의 AWS 보호 기능을 중앙 관리합니다. Kubernetes NetworkPolicy 객체를 동기화하는 서비스는 아니므로 Kubernetes·GitOps 정책 도구로 별도 관리하세요.
 
 ## 정책 모범 사례
 

@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana Mimir Overall Architecture",
+    "locale": "en",
+    "output": "en-observability-metrics-03-mimir-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "write-path",
+        "label": "Write Path",
+        "focus": [
+          "prometheus",
+          "distributor",
+          "ingester",
+          "storage"
+        ],
+        "note": "Prometheus remote_writes samples; the Distributor spreads them to Ingesters, which hold them in memory and upload blocks."
+      },
+      {
+        "id": "read-path",
+        "label": "Read Path",
+        "focus": [
+          "grafana",
+          "query-frontend",
+          "querier",
+          "ingester",
+          "store-gateway"
+        ],
+        "note": "The Query-frontend splits and caches queries; the Querier merges Ingester (recent) and Store-gateway (historical) results."
+      },
+      {
+        "id": "background",
+        "label": "Background Processes",
+        "focus": [
+          "compactor",
+          "storage",
+          "store-gateway"
+        ],
+        "note": "The Compactor merges small blocks into larger ones and applies retention; the Store-gateway reads those blocks."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "prometheus",
+      "type": "external",
+      "label": "Prometheus",
+      "sublabel": "×3 · remote_write",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "external",
+      "label": "Grafana",
+      "sublabel": "PromQL dashboards",
+      "pos": [
+        900,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "distributor",
+      "type": "backend",
+      "label": "Distributor",
+      "sublabel": "validate · distribute",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "query-frontend",
+      "type": "backend",
+      "label": "Query-frontend",
+      "sublabel": "split · cache",
+      "pos": [
+        900,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ingester",
+      "type": "backend",
+      "label": "Ingester",
+      "sublabel": "in-memory · recent data",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "querier",
+      "type": "backend",
+      "label": "Querier",
+      "sublabel": "result merging",
+      "pos": [
+        480,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "store-gateway",
+      "type": "backend",
+      "label": "Store-gateway",
+      "sublabel": "historical blocks",
+      "pos": [
+        900,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "compactor",
+      "type": "backend",
+      "label": "Compactor",
+      "sublabel": "merge · retention",
+      "pos": [
+        480,
+        460
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Object Storage",
+      "sublabel": "S3 / GCS / Azure Blob",
+      "pos": [
+        400,
+        610
+      ],
+      "size": [
+        330,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Grafana Mimir",
+      "wraps": [
+        "distributor",
+        "query-frontend",
+        "ingester",
+        "querier",
+        "store-gateway",
+        "compactor"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "prom-to-distributor",
+      "from": "prometheus",
+      "to": "distributor",
+      "label": "remote_write",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "distributor-to-ingester",
+      "from": "distributor",
+      "to": "ingester",
+      "label": "replicate samples",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ingester-to-storage",
+      "from": "ingester",
+      "to": "storage",
+      "label": "block upload",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "compactor-to-storage",
+      "from": "compactor",
+      "to": "storage",
+      "label": "compaction",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "store-gateway-to-storage",
+      "from": "store-gateway",
+      "to": "storage",
+      "label": "block read",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "grafana-to-qf",
+      "from": "grafana",
+      "to": "query-frontend",
+      "label": "PromQL",
+      "labelDy": 24
+    },
+    {
+      "id": "qf-to-querier",
+      "from": "query-frontend",
+      "to": "querier",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "querier-to-ingester",
+      "from": "querier",
+      "to": "ingester",
+      "label": "recent data"
+    },
+    {
+      "id": "querier-to-store-gateway",
+      "from": "querier",
+      "to": "store-gateway",
+      "label": "historical data",
+      "labelDy": -39
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Write Path",
+      "items": [
+        "Prometheus sends metrics via remote_write",
+        "Distributor validates tenant and distributes samples",
+        "Ingester stores in memory and periodically uploads blocks"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Read Path",
+      "items": [
+        "Query-frontend splits queries and caches",
+        "Querier queries Ingester (recent data) and Store-gateway (historical data)",
+        "Results are merged and returned"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Background Processes",
+      "items": [
+        "Compactor merges small blocks into larger blocks",
+        "Applies downsampling and retention policies"
+      ]
+    }
+  ]
+}

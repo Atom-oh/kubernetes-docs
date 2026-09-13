@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "AIOps Agent Architecture",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      650
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "trigger",
+        "label": "Alert intake",
+        "focus": [
+          "alertmanager",
+          "lambda"
+        ],
+        "note": "The Alertmanager webhook reaches Lambda through API Gateway; the handler extracts service, metric, and time range from the alert."
+      },
+      {
+        "id": "collect",
+        "label": "Telemetry collection",
+        "focus": [
+          "lambda",
+          "telemetry"
+        ],
+        "note": "CloudWatch Logs Insights, AMP PromQL, and X-Ray GetTraceSummaries are queried in order to gather evidence."
+      },
+      {
+        "id": "analyze",
+        "label": "AI analysis and notify",
+        "focus": [
+          "lambda",
+          "bedrock",
+          "sns",
+          "oncall"
+        ],
+        "note": "Alert, metrics, logs, and traces go to Bedrock Claude for analysis; the result is published to SNS and delivered by email."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "emphasis": {
+          "label": "headline call"
+        },
+        "default": {
+          "label": "query call"
+        },
+        "return": {
+          "label": "return"
+        },
+        "dashed": {
+          "label": "async email notify"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "alertmanager",
+      "type": "external",
+      "label": "AlertManager",
+      "sublabel": "webhook sender"
+    },
+    {
+      "id": "lambda",
+      "type": "backend",
+      "label": "Lambda",
+      "sublabel": "AIOps Agent"
+    },
+    {
+      "id": "telemetry",
+      "type": "database",
+      "label": "Telemetry",
+      "sublabel": "Logs · AMP · X-Ray"
+    },
+    {
+      "id": "bedrock",
+      "type": "cloud",
+      "label": "Bedrock",
+      "sublabel": "Claude"
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "SNS",
+      "sublabel": "alerts topic"
+    },
+    {
+      "id": "oncall",
+      "type": "external",
+      "label": "On-call team",
+      "sublabel": "email subscription"
+    }
+  ],
+  "segments": [
+    {
+      "from": 155,
+      "to": 205,
+      "label": "Alert intake"
+    },
+    {
+      "from": 220,
+      "to": 410,
+      "label": "Telemetry collection (sequential)"
+    },
+    {
+      "from": 425,
+      "to": 577,
+      "label": "AI analysis · notify"
+    }
+  ],
+  "messages": [
+    {
+      "id": "webhook",
+      "from": "alertmanager",
+      "to": "lambda",
+      "y": 180,
+      "label": "webhook (via API Gateway)",
+      "variant": "emphasis",
+      "note": "extract service · metric · time range"
+    },
+    {
+      "id": "logs-query",
+      "from": "lambda",
+      "to": "telemetry",
+      "y": 245,
+      "label": "Logs Insights query",
+      "variant": "default"
+    },
+    {
+      "id": "logs-result",
+      "from": "telemetry",
+      "to": "lambda",
+      "y": 275,
+      "label": "log results",
+      "variant": "return"
+    },
+    {
+      "id": "promql-query",
+      "from": "lambda",
+      "to": "telemetry",
+      "y": 305,
+      "label": "PromQL query (AMP)",
+      "variant": "default"
+    },
+    {
+      "id": "promql-result",
+      "from": "telemetry",
+      "to": "lambda",
+      "y": 335,
+      "label": "metric results",
+      "variant": "return"
+    },
+    {
+      "id": "trace-query",
+      "from": "lambda",
+      "to": "telemetry",
+      "y": 365,
+      "label": "GetTraceSummaries (X-Ray)",
+      "variant": "default"
+    },
+    {
+      "id": "trace-result",
+      "from": "telemetry",
+      "to": "lambda",
+      "y": 395,
+      "label": "trace results",
+      "variant": "return"
+    },
+    {
+      "id": "claude-invoke",
+      "from": "lambda",
+      "to": "bedrock",
+      "y": 455,
+      "label": "invoke Claude (alert + metrics·logs·traces)",
+      "variant": "emphasis",
+      "note": "system prompt: SRE expert"
+    },
+    {
+      "id": "analysis-result",
+      "from": "bedrock",
+      "to": "lambda",
+      "y": 500,
+      "label": "analysis result",
+      "variant": "return"
+    },
+    {
+      "id": "publish",
+      "from": "lambda",
+      "to": "sns",
+      "y": 535,
+      "label": "publish analysis",
+      "variant": "emphasis"
+    },
+    {
+      "id": "email",
+      "from": "sns",
+      "to": "oncall",
+      "y": 560,
+      "label": "email notification",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "lambda",
+      "from": 175,
+      "to": 542,
+      "type": "backend"
+    },
+    {
+      "participant": "telemetry",
+      "from": 240,
+      "to": 402,
+      "type": "database"
+    },
+    {
+      "participant": "bedrock",
+      "from": 450,
+      "to": 507,
+      "type": "cloud"
+    },
+    {
+      "participant": "sns",
+      "from": 530,
+      "to": 567,
+      "type": "messagebus"
+    }
+  ]
+}

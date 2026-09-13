@@ -1,66 +1,103 @@
 # Part 1: SageMaker Qwen PII Platform Architecture
 
-> **Last Updated**: September 2, 2026
+> **Last Updated**: September 12, 2026. The diagram is a target design; neither GPU training path executed in the historical AWS record.
 
-## Target Design
+GPU execution is blocked because the pinned PyTorch 2.8 DLC reached end of patch. First follow the supported-runtime upgrade requirements in the [execution chapter](03-sagemaker-mlflow-execution.md).
 
-The figure below is a **target design for a rerun, not evidence of completed training**. The September 1, 2026 validation did not execute either the SageMaker Training Job or the EKS GPU Job.
+![Target design: managed and EKS execution, candidate extraction, deterministic processing, aggregate tracking and owned-resource cleanup.](../../.gitbook/assets/en-ai-ml-sagemaker-ai-01-platform-architecture-0.png)
 
-![Target architecture showing the managed SageMaker AI path, an EKS alternative using the same source and data, Unified Studio governance, MLflow tracking, and resource teardown.](../../.gitbook/assets/en-ai-ml-sagemaker-ai-01-platform-architecture-0.png)
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-sagemaker-ai-01-platform-architecture-0.html)
 
-[🔍 View the interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-sagemaker-ai-01-platform-architecture-0.html)
+## 1. Responsibility and recording boundaries
 
-## Responsibility Boundaries
+| Component | Responsibility and limit |
+| --- | --- |
+| Synthetic generator | Configured 1,600/200/400 splits, 2,200 records; track generator, seed and hashes |
+| S3 / data delivery | Store source/data/artifacts; separately manage IAM, encryption, retention and transport |
+| Qwen + QLoRA | Adapter-training design for entity candidates; final replacement and complete detection are separate concerns |
+| Python processing/evaluation | Type/source checks, replacement/restoration and aggregates; it does not automatically recover entities the model missed |
+| MLflow | Compare configurations, versions and aggregates; verify server access and log/artifact contents |
+| Unified Studio | This experiment's governance choice, not a mandatory dependency of QLoRA, EKS or Training Jobs |
+| Inventory / teardown | Privately record identifiers, ownership and dependencies; export, clean up and verify |
 
-| Component | Responsibility | Safe to Record | Do Not Record |
-|---|---|---|---|
-| Synthetic data generator | deterministically generate 2,200 documents and answer TSV | seed, split counts, SHA-256, per-type counts | real customer PII |
-| Amazon S3 | hold source bundle, datasets, aggregate results, and adapter artifacts | object hashes and non-sensitive manifests | raw predictions in public paths |
-| SageMaker Unified Studio | govern projects, catalogs, and membership | project state and profile/blueprint configuration | an assumption that an unassigned role is an owner |
-| SageMaker AI Training Job | run isolated managed GPU training | hyperparameters, status, aggregate metrics | source text or token mappings |
-| Qwen + QLoRA | learn `TYPE<TAB>ORIGINAL` extraction | model ID, LoRA configuration, dependency versions | final masking behavior |
-| SageMaker MLflow App | compare experiments and track aggregate artifacts | configuration, hashes, aggregate F1/leakage | source text and raw completions |
-| EKS GPU Job | provide the Kubernetes alternative for the same contract | the same aggregate result schema | a long-lived cluster by default |
-| Resource Inventory & Teardown | inventory, export, delete, and verify resources | resource types and final counts | account IDs, ARNs, or presigned URLs |
+Control artifacts containing source text or token mappings. Replacement is reversible
+with its mapping and is not encryption. Logging policy is a design/contract, not
+proof that every library, callback, exception and automatic trace was tested.
+Resource IDs/ARNs can be necessary in private inventory, distinct from public reports.
 
-## One Experiment, Two Execution Paths
+## 2. A shared contract in different environments
 
-Both paths consume `config/experiment.yaml`, the same dataset hashes, one training entry point, and one evaluation implementation.
-
-| Decision | SageMaker AI + MLflow App | EKS GPU Job + MLflow on EKS |
-|---|---|---|
-| Operating model | managed Training Job and the current managed MLflow App | operate the cluster, GPU node, and MLflow server |
-| Isolation unit | Training Job | namespace + Kubernetes Job |
+| Aspect | SageMaker AI path | EKS path |
+| --- | --- | --- |
+| Execution | Managed Training Job | GPU Job/cluster prepared for this experiment |
 | Tracking | SageMaker MLflow App | ClusterIP MLflow |
-| Data delivery | S3 input channel | time-limited presigned URLs |
-| Shutdown | reclaim resources after the Training Job | export results, then delete the cluster |
-| Best fit | managed AWS operations and short experiment lifetime | EKS standardization, Kubernetes control, shared observability |
+| Data | S3 input channel | S3 SDK downloads with ServiceAccount-scoped AWS permissions |
+| Lifecycle | Distinguish job termination from cleanup of external Apps/buckets | Export results, then reclaim owned temporary resources |
 
-For comparable results, keep the model ID, seed, split hashes, dependency lock, QLoRA settings, and smoke/full step counts identical.
+A Training Job or namespace/Job boundary does not automatically complete security
+isolation. Verify actual IAM/service accounts, networking, storage, endpoint/MLflow
+access and container configuration. The EKS path uses workload identity through
+its ServiceAccount and the SDK credential chain. It does not put presigned bearer
+URLs in Pod environment values; it verifies input-manifest SHA-256 and bucket ownership.
 
-## Model and Fine-Tuning Scope
+Comparison requires configuration, split hashes, training/evaluation code and
+step counts, plus model/tokenizer revisions, image digests, transitive dependencies,
+CUDA/drivers/hardware and decoding settings. A fixed seed does not guarantee identical
+GPU results across environments. requirements.lock pins direct packages, not the
+entire transitive environment.
 
-The base model is `Qwen/Qwen3-30B-A3B-Instruct-2507`. The experiment updates adapters rather than all model weights.
+## 3. Model and proposed QLoRA settings
 
-| Setting | Value |
-|---|---|
-| Quantization | 4-bit NF4 with double quantization |
-| Compute dtype | `bfloat16` |
-| LoRA rank / alpha | `16` / `32` |
-| LoRA dropout | `0.05` |
-| Maximum sequence length | `1024` |
-| Smoke / full | `10` / `80` steps |
-| Maximum runtime | `10,800` seconds |
+The baseline is Qwen/Qwen3-30B-A3B-Instruct-2507. Its model card describes a
+**30.5B-total / 3.3B-active-parameter** MoE with non-thinking behavior.
+Active parameters do not represent all stored weights or required GPU memory.
+This is not presented as the latest model or as proven to fit a particular GPU.
 
-Model output is only an extraction candidate. Rows that fail the type whitelist or source-containment checks are rejected, and code outside the model performs replacement.
+The model repository revision observed during review was `0d7cf23991f47feeb3a57ecb4c9cee8ea4a17bfe`.
+The current loader/config uses the model ID without explicitly pinning that revision.
+Pin model/tokenizer revisions and artifacts before claiming reproducible execution.
 
-## Why Governance Comes Before Training
+| Setting | Proposed configuration |
+| --- | --- |
+| Quantization / compute | 4-bit NF4, double quantization / bfloat16 |
+| LoRA rank / alpha / dropout | 16 / 32 / 0.05 |
+| Sequence length | 1,024 |
+| Device batch / gradient accumulation | 1 / 8 |
+| Smoke / full | 10 / 80 steps |
+| Job runtime setting | 10,800 seconds |
 
-A Unified Studio project is a collaboration and resource-sharing boundary, while its project profile determines the available tools and blueprints. An automation role also needs project membership before it can manage that project. The design therefore enforces this order:
+These are not measurements of successful training, sufficient quality or GPU peak
+memory. A job deadline is not an end-to-end provisioning/tracking/storage lifetime
+or cost cap. QLoRA uses low-precision base weights and trains adapters; verify actual
+module coverage, optimizers, memory and model compatibility during execution.
 
-1. Verify permission to use the domain and project profile.
-2. Assign the execution role's group profile as owner membership when the project is created.
-3. Build a Training Job request only after the project and MLflow App are ready.
-4. On failure, run inventory-based teardown before creating GPU resources.
+## 4. Governance and execution readiness
 
-Next: [Part 2 — PII data and deterministic tokenization](02-pii-data-tokenization.md)
+This experiment checks intended domain/profile, caller membership and MLflow access
+before GPU submission. CreateProject membershipAssignments can carry ownership in
+the same request but do not guarantee atomic rollback of all provisioning.
+Project ACTIVE and required tool/environment readiness must also be checked separately.
+
+As historical attempts show, resources such as an App can exist before a project
+failure. Combine permission prechecks with post-creation inventory and compensation.
+Limit cleanup to this run's owned resources and do not infer current leftovers from
+old records. Follow the [Unified Studio chapter](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
+for identity and deletion boundaries.
+
+## Validation scope
+
+Configuration, trainer source, the public model card and historical reports were
+compared. The initial 30 local tests were followed by added tokenization, execution, and cleanup regression coverage.
+No model weights were downloaded; no GPU training, inference-quality evaluation or
+current AWS resource inspection was performed.
+
+## References
+
+- [Qwen model card](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507)
+- [QLoRA paper](https://arxiv.org/abs/2305.14314)
+- [Experiment configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/config/experiment.yaml)
+- [Recorded provisioning result](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json)
+
+[Next: PII data and tokenization](02-pii-data-tokenization.md)
+
+[Quiz](../../quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)

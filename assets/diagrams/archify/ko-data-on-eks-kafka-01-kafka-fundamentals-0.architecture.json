@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KafkaConsumer 파티션 할당 예시",
+    "output": "ko-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "produce",
+        "label": "프로듀서 쓰기",
+        "focus": [
+          "producer",
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "note": "프로듀서가 orders 토픽에 쓴 메시지는 파티션 단위로 서로 다른 브로커의 리더 레플리카에 분산 저장된다."
+      },
+      {
+        "id": "consume",
+        "label": "컨슈머 그룹 읽기",
+        "focus": [
+          "p0",
+          "p1",
+          "p2",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "자동 그룹 할당의 예시입니다. 한 소비자가 여러 파티션을 맡을 수 있으며 Share Groups와는 구분합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "producer",
+      "type": "external",
+      "label": "프로듀서",
+      "sublabel": "topic: orders",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "p0",
+      "type": "messagebus",
+      "label": "orders · Partition 0",
+      "sublabel": "Leader 레플리카",
+      "pos": [
+        360,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "messagebus",
+      "label": "orders · Partition 1",
+      "sublabel": "Leader 레플리카",
+      "pos": [
+        360,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "messagebus",
+      "label": "orders · Partition 2",
+      "sublabel": "Leader 레플리카",
+      "pos": [
+        360,
+        460
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "컨슈머 1",
+      "sublabel": "Partition 0 담당",
+      "pos": [
+        780,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "컨슈머 2",
+      "sublabel": "Partition 1 담당",
+      "pos": [
+        780,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "backend",
+      "label": "컨슈머 3",
+      "sublabel": "Partition 2 담당",
+      "pos": [
+        780,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "브로커 1",
+      "wraps": [
+        "p0"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "브로커 2",
+      "wraps": [
+        "p1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "브로커 3",
+      "wraps": [
+        "p2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "논리적 consumer group: order-processor",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "produce-p0",
+      "from": "producer",
+      "to": "p0",
+      "variant": "emphasis",
+      "label": "메시지 쓰기",
+      "labelAt": [
+        274,
+        220
+      ]
+    },
+    {
+      "id": "produce-p1",
+      "from": "producer",
+      "to": "p1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "produce-p2",
+      "from": "producer",
+      "to": "p2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fetch-p0",
+      "from": "p0",
+      "to": "c1"
+    },
+    {
+      "id": "fetch-p1",
+      "from": "p1",
+      "to": "c2",
+      "label": "3:3 할당 예시"
+    },
+    {
+      "id": "fetch-p2",
+      "from": "p2",
+      "to": "c3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Partitions",
+      "items": [
+        "쓰기는 leader로 전송",
+        "설정한 경우 follower fetch도 가능"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "KafkaConsumer",
+      "items": [
+        "그림은 3개 파티션과 3명 소비자의 예시",
+        "소비자 한 명이 여러 파티션을 맡을 수 있음"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/data-on-eks/spark/05-best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "CurrentHadoop3.5.0/S3ASDKv2providers+4runtimeartifacts,distinctSA/API/data/Historypermissions,RBACbinding/ownershiplimits,perrunNP20cases,crypto/UIboundary,nativePrometheus2differentendpoints,realforegroundHistoryconfig/replay.36questions32schemaobjects24fences;8nativeauthcases/noresolve,local337driver42executorseries/restored3jobs. NoEKS/S3/imagepush.",
+    "reviewedSha256": "e030e6dd84fa37f2c3c159df651f3a99c250b8d7b3fb7870c96ace3b8b94e353"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "CurrentHadoop3.5.0/S3ASDKv2providers+4runtimeartifacts,distinctSA/API/data/Historypermissions,RBACbinding/ownershiplimits,perrunNP20cases,crypto/UIboundary,nativePrometheus2differentendpoints,realforegroundHistoryconfig/replay.36questions32schemaobjects24fences;8nativeauthcases/noresolve,local337driver42executorseries/restored3jobs. NoEKS/S3/imagepush.",
+    "reviewedSha256": "1fd286894d86df2ea98eb3c5797336ec28babcda6e0649ec642d102e28d64cac"
+  },
+  {
+    "path": "en/data-on-eks/spark/05-best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "CurrentHadoop3.5.0/S3ASDKv2providers+4runtimeartifacts,distinctSA/API/data/Historypermissions,RBACbinding/ownershiplimits,perrunNP20cases,crypto/UIboundary,nativePrometheus2differentendpoints,realforegroundHistoryconfig/replay.36questions32schemaobjects24fences;8nativeauthcases/noresolve,local337driver42executorseries/restored3jobs. NoEKS/S3/imagepush.",
+    "reviewedSha256": "6eaaa959e38594b8f827939f8d9a0387b81c0a0b806998d315370cf37699d303"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "CurrentHadoop3.5.0/S3ASDKv2providers+4runtimeartifacts,distinctSA/API/data/Historypermissions,RBACbinding/ownershiplimits,perrunNP20cases,crypto/UIboundary,nativePrometheus2differentendpoints,realforegroundHistoryconfig/replay.36questions32schemaobjects24fences;8nativeauthcases/noresolve,local337driver42executorseries/restored3jobs. NoEKS/S3/imagepush.",
+    "reviewedSha256": "5614a7c3ab8a39b50c7902bf41b749eb92962d37e0a5395bf48d7e4adced2ff6"
+  }
+]

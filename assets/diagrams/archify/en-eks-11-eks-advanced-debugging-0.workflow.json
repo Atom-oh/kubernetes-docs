@@ -1,0 +1,277 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Decision Tree for Rapid Problem Identification",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Entry point"
+        },
+        "backend": {
+          "label": "Decision point"
+        },
+        "frontend": {
+          "label": "Diagnosis result"
+        },
+        "security": {
+          "label": "Infra-layer result"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "unreachable_path",
+        "label": "Unreachable path",
+        "focus": [
+          "start",
+          "q_access",
+          "q_kubectl",
+          "q_node",
+          "q_pod"
+        ],
+        "note": "If the service is unreachable, walk down the layers kubectl → nodes Ready → pods Running to narrow the cause."
+      },
+      {
+        "id": "infra_results",
+        "label": "Infrastructure results",
+        "focus": [
+          "q_kubectl",
+          "r_control_plane",
+          "q_node",
+          "r_node"
+        ],
+        "note": "kubectl failing points to the control plane; NotReady nodes point to a node issue. Check the AWS console and EC2 status."
+      },
+      {
+        "id": "reachable_path",
+        "label": "Reachable path",
+        "focus": [
+          "q_access",
+          "q_latency",
+          "q_specific_pods",
+          "q_intermittent"
+        ],
+        "note": "If the service responds but is slow or flaky, the cause splits into workload, cluster-wide, or network/DNS issues."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "reachable",
+      "label": "Service accessible"
+    },
+    {
+      "id": "triage",
+      "label": "Incident detected · first split"
+    },
+    {
+      "id": "unreachable",
+      "label": "Service unreachable"
+    },
+    {
+      "id": "infra",
+      "label": "Infrastructure-layer issue",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_access",
+    "q_kubectl",
+    "q_node",
+    "q_pod"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "triage",
+      "col": 0,
+      "type": "external",
+      "label": "Incident Detected",
+      "sublabel": "first 5-minute triage",
+      "width": 180
+    },
+    {
+      "id": "q_access",
+      "lane": "triage",
+      "col": 1,
+      "type": "backend",
+      "label": "Service Accessible?",
+      "sublabel": "check from the user side",
+      "width": 180
+    },
+    {
+      "id": "q_kubectl",
+      "lane": "unreachable",
+      "col": 2,
+      "type": "backend",
+      "label": "kubectl Working?",
+      "sublabel": "API server responds",
+      "width": 180
+    },
+    {
+      "id": "q_node",
+      "lane": "unreachable",
+      "col": 3,
+      "type": "backend",
+      "label": "Nodes Ready?",
+      "sublabel": "kubectl get nodes",
+      "width": 180
+    },
+    {
+      "id": "q_pod",
+      "lane": "unreachable",
+      "col": 4,
+      "type": "frontend",
+      "label": "Pods Running?",
+      "sublabel": "No → scheduling · Yes → app/config",
+      "width": 180
+    },
+    {
+      "id": "r_control_plane",
+      "lane": "infra",
+      "col": 2,
+      "type": "security",
+      "label": "Control Plane Issue",
+      "sublabel": "check AWS Console",
+      "width": 180
+    },
+    {
+      "id": "r_node",
+      "lane": "infra",
+      "col": 3,
+      "type": "security",
+      "label": "Node Issue",
+      "sublabel": "check EC2 status",
+      "width": 180
+    },
+    {
+      "id": "q_latency",
+      "lane": "reachable",
+      "col": 2,
+      "type": "backend",
+      "label": "Response Delayed?",
+      "sublabel": "performance degraded?",
+      "width": 180
+    },
+    {
+      "id": "q_specific_pods",
+      "lane": "reachable",
+      "col": 3,
+      "type": "frontend",
+      "label": "Specific Pods Only?",
+      "sublabel": "Yes → workload · No → cluster-wide",
+      "width": 180
+    },
+    {
+      "id": "q_intermittent",
+      "lane": "reachable",
+      "col": 4,
+      "type": "frontend",
+      "label": "Intermittent Errors?",
+      "sublabel": "Yes → network/DNS · No → normal",
+      "width": 180
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q_access",
+      "role": "main"
+    },
+    {
+      "from": "q_access",
+      "to": "q_kubectl",
+      "label": "No",
+      "role": "main",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "q_kubectl",
+      "to": "q_node",
+      "label": "Yes",
+      "role": "main"
+    },
+    {
+      "from": "q_node",
+      "to": "q_pod",
+      "label": "Yes",
+      "role": "main",
+      "route": "straight",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "q_kubectl",
+      "to": "r_control_plane",
+      "label": "No",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "q_node",
+      "to": "r_node",
+      "label": "No",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "q_access",
+      "to": "q_latency",
+      "label": "Yes",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "from": "q_latency",
+      "to": "q_specific_pods",
+      "label": "Yes",
+      "role": "branch",
+      "route": "straight",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "q_latency",
+      "to": "q_intermittent",
+      "label": "No",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Infrastructure-layer results",
+      "items": [
+        "kubectl not working → control plane issue: check the AWS Console",
+        "Nodes NotReady → node issue: check EC2 status"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Workload-layer results",
+      "items": [
+        "Pods not Running → scheduling issue: check events",
+        "Pods Running → app/config issue: check describe"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Reachable-path results",
+      "items": [
+        "Delay on specific pods only → workload issue: check pod logs",
+        "Delay everywhere → cluster-wide issue: check resources",
+        "Intermittent errors → network/DNS issue: check connectivity",
+        "No intermittent errors → normal state: continue monitoring"
+      ]
+    }
+  ]
+}

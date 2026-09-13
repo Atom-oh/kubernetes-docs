@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Federation: Hybrid and Multi-Cluster",
+    "locale": "en",
+    "output": "en-networking-calico-01-introduction-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "federation",
+        "label": "Federation path",
+        "focus": [
+          "calico-onprem",
+          "calico-aws",
+          "calico-gcp"
+        ],
+        "note": "Calico Federation links each cluster's Calico for unified policy and routing."
+      },
+      {
+        "id": "bgp-vpn",
+        "label": "Direct BGP / VPN",
+        "focus": [
+          "calico-onprem",
+          "calico-gcp"
+        ],
+        "note": "On-prem and GCP also peer directly over BGP / VPN."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "calico-onprem",
+      "type": "security",
+      "label": "Calico",
+      "sublabel": "policy + BGP routing",
+      "pos": [
+        60,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "workloads-onprem",
+      "type": "backend",
+      "label": "Workloads",
+      "sublabel": "pods",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "calico-aws",
+      "type": "security",
+      "label": "Calico",
+      "sublabel": "policy + routing",
+      "pos": [
+        430,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "workloads-aws",
+      "type": "backend",
+      "label": "Workloads",
+      "sublabel": "pods",
+      "pos": [
+        430,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "calico-gcp",
+      "type": "security",
+      "label": "Calico",
+      "sublabel": "policy + routing",
+      "pos": [
+        800,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "workloads-gcp",
+      "type": "backend",
+      "label": "Workloads",
+      "sublabel": "pods",
+      "pos": [
+        800,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster 1 (On-Prem)",
+      "wraps": [
+        "calico-onprem",
+        "workloads-onprem"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster 2 (AWS)",
+      "wraps": [
+        "calico-aws",
+        "workloads-aws"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster 3 (GCP)",
+      "wraps": [
+        "calico-gcp",
+        "workloads-gcp"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fed-onprem-aws",
+      "from": "calico-onprem",
+      "to": "calico-aws",
+      "label": "Federation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fed-aws-gcp",
+      "from": "calico-aws",
+      "to": "calico-gcp",
+      "label": "Federation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "bgp-vpn-onprem-gcp",
+      "from": "calico-onprem",
+      "to": "calico-gcp",
+      "label": "BGP / VPN",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          135,
+          60
+        ],
+        [
+          875,
+          60
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Federation",
+      "items": [
+        "Unified policy management across clusters",
+        "Cross-cluster service discovery",
+        "Consistent security posture"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Hybrid routing",
+      "items": [
+        "Direct BGP / VPN peering between on-prem and GCP",
+        "Gradual migration support"
+      ]
+    }
+  ]
+}

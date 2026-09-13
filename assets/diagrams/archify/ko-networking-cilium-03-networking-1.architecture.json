@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VXLAN 패킷 구조",
+    "output": "ko-networking-cilium-03-networking-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      360
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "외부 L2 헤더"
+        },
+        "cloud": {
+          "label": "외부 L3/L4 헤더"
+        },
+        "backend": {
+          "label": "VXLAN 헤더"
+        },
+        "frontend": {
+          "label": "원래 L2 프레임"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "outer",
+        "label": "외부 헤더",
+        "focus": [
+          "outer-eth",
+          "outer-ip"
+        ],
+        "note": "VTEP 사이의 물리 네트워크(언더레이)를 지나기 위해 덧씌우는 외부 이더넷·IP 헤더입니다."
+      },
+      {
+        "id": "vxlan",
+        "label": "VXLAN 헤더",
+        "focus": [
+          "vxlan-hdr"
+        ],
+        "note": "VNI로 최대 16,777,216개(2^24)의 논리 L2 세그먼트를 구분합니다."
+      },
+      {
+        "id": "inner",
+        "label": "원래 프레임",
+        "focus": [
+          "vxlan-hdr",
+          "inner-frame"
+        ],
+        "note": "내부 이더넷 헤더와 페이로드를 그대로 담아 대상 VTEP에서 복원합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "outer-eth",
+      "type": "external",
+      "label": "외부 이더넷 헤더",
+      "sublabel": "외부 MAC · 언더레이 L2",
+      "pos": [
+        30,
+        100
+      ],
+      "size": [
+        245,
+        72
+      ]
+    },
+    {
+      "id": "outer-ip",
+      "type": "cloud",
+      "label": "외부 IP 헤더 (보통 IPv4)",
+      "sublabel": "UDP 포트 8472 위에 전송",
+      "pos": [
+        320,
+        100
+      ],
+      "size": [
+        245,
+        72
+      ]
+    },
+    {
+      "id": "vxlan-hdr",
+      "type": "backend",
+      "label": "VXLAN 헤더 (VNI 포함)",
+      "sublabel": "VNI · 최대 2^24 세그먼트",
+      "pos": [
+        610,
+        100
+      ],
+      "size": [
+        245,
+        72
+      ],
+      "tag": "핵심 계층"
+    },
+    {
+      "id": "inner-frame",
+      "type": "frontend",
+      "label": "원래 이더넷 프레임",
+      "sublabel": "내부 이더넷 헤더 + 페이로드",
+      "pos": [
+        900,
+        100
+      ],
+      "size": [
+        245,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VXLAN 패킷 구조",
+      "wraps": [
+        "outer-eth",
+        "outer-ip",
+        "vxlan-hdr",
+        "inner-frame"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eth-to-ip",
+      "from": "outer-eth",
+      "to": "outer-ip"
+    },
+    {
+      "id": "ip-to-vxlan",
+      "from": "outer-ip",
+      "to": "vxlan-hdr"
+    },
+    {
+      "id": "vxlan-to-inner",
+      "from": "vxlan-hdr",
+      "to": "inner-frame",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "캡슐화",
+      "items": [
+        "소스 VTEP이 원래 L2 프레임을 VXLAN 헤더로 감싸 UDP 패킷으로 전송",
+        "Cilium 노드가 VTEP 역할 (tunnel: vxlan)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "VNI",
+      "items": [
+        "VXLAN Network Identifier로 논리 L2 세그먼트 식별",
+        "최대 16,777,216개(2^24) 세그먼트"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "캡슐 해제",
+      "items": [
+        "대상 VTEP이 외부 헤더와 VXLAN 헤더를 제거",
+        "원래 L2 프레임을 대상 엔드포인트로 전달"
+      ]
+    }
+  ]
+}

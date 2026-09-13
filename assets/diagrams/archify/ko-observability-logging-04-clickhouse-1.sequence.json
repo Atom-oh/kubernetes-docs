@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ClickHouse 로그 데이터 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      580
+    ],
+    "views": [
+      {
+        "id": "ingest",
+        "label": "수집",
+        "focus": [
+          "app",
+          "fb",
+          "kafka",
+          "ch"
+        ],
+        "note": "FluentBit이 로그를 Kafka에 버퍼링하고, ClickHouse가 Kafka Engine으로 읽어 MergeTree 테이블에 저장한다."
+      },
+      {
+        "id": "tiering",
+        "label": "계층화",
+        "focus": [
+          "ch",
+          "s3"
+        ],
+        "note": "TTL 정책(TO VOLUME 'cold')에 따라 오래된 파트가 S3 Cold 볼륨으로 이동한다."
+      }
+    ],
+    "column_fit": "spread"
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "애플리케이션",
+      "sublabel": "로그 생성"
+    },
+    {
+      "id": "fb",
+      "type": "backend",
+      "label": "FluentBit",
+      "sublabel": "수집기"
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka",
+      "sublabel": "선택 · 버퍼"
+    },
+    {
+      "id": "ch",
+      "type": "database",
+      "label": "ClickHouse",
+      "sublabel": "MergeTree"
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "Cold 볼륨"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 330,
+      "label": "수집 (Ingestion)"
+    },
+    {
+      "from": 350,
+      "to": 440,
+      "label": "계층화 (TTL)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "gen",
+      "from": "app",
+      "to": "fb",
+      "y": 190,
+      "label": "로그 생성"
+    },
+    {
+      "id": "buf",
+      "from": "fb",
+      "to": "kafka",
+      "y": 235,
+      "label": "버퍼링"
+    },
+    {
+      "id": "ingest",
+      "from": "kafka",
+      "to": "ch",
+      "y": 280,
+      "label": "Kafka Engine 수집",
+      "variant": "emphasis",
+      "note": "MergeTree 테이블에 저장"
+    },
+    {
+      "id": "tier",
+      "from": "ch",
+      "to": "s3",
+      "y": 400,
+      "label": "Cold 데이터 이동",
+      "variant": "dashed",
+      "note": "TTL 정책에 따라"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "fb",
+      "from": 185,
+      "to": 242,
+      "type": "backend"
+    },
+    {
+      "participant": "ch",
+      "from": 275,
+      "to": 410,
+      "type": "database"
+    },
+    {
+      "participant": "s3",
+      "from": 395,
+      "to": 410,
+      "type": "cloud"
+    }
+  ]
+}

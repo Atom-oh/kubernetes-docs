@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Gradual Migration via VM Registration",
+    "output": "en-service-mesh-istio-02-basic-concepts-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      320
+    ],
+    "views": [
+      {
+        "id": "phase1",
+        "label": "Phase 1: Legacy Environment",
+        "focus": [
+          "vm1"
+        ],
+        "note": "Start from a standalone VM monolith app running outside the mesh."
+      },
+      {
+        "id": "phase2",
+        "label": "Phase 2: VM Mesh Registration",
+        "focus": [
+          "vm1",
+          "vm2"
+        ],
+        "note": "Install Envoy on the VM and register it in the mesh with a WorkloadEntry, without modifying the app."
+      },
+      {
+        "id": "phase3",
+        "label": "Phase 3: Hybrid",
+        "focus": [
+          "vm2",
+          "vm3",
+          "k8s1"
+        ],
+        "note": "Move only some features to Kubernetes; the remaining VM module and new microservices talk over mTLS."
+      },
+      {
+        "id": "phase4",
+        "label": "Phase 4: Complete Migration",
+        "focus": [
+          "k8s1",
+          "k8s2"
+        ],
+        "note": "Every feature now runs as Kubernetes microservices and the migration is complete."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "vm1",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "Monolith App",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "vm2",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "Monolith App + Envoy",
+      "pos": [
+        290,
+        100
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "vm3",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "Legacy Module",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "k8s1",
+      "type": "backend",
+      "label": "K8s",
+      "sublabel": "New Microservices",
+      "pos": [
+        770,
+        100
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "k8s2",
+      "type": "backend",
+      "label": "K8s",
+      "sublabel": "All Microservices",
+      "pos": [
+        1040,
+        100
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Phase 1: Legacy Environment",
+      "wraps": [
+        "vm1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Phase 2: VM Mesh Registration",
+      "wraps": [
+        "vm2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Phase 3: Hybrid",
+      "wraps": [
+        "vm3",
+        "k8s1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Phase 4: Complete Migration",
+      "wraps": [
+        "k8s2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "register",
+      "from": "vm1",
+      "to": "vm2",
+      "label": "VM registration",
+      "variant": "emphasis"
+    },
+    {
+      "id": "partial",
+      "from": "vm2",
+      "to": "vm3",
+      "label": "Partial migration",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls",
+      "from": "vm3",
+      "to": "k8s1",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "complete",
+      "from": "k8s1",
+      "to": "k8s2",
+      "label": "Complete",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Benefits of VM Registration",
+      "items": [
+        "Integrate existing VM applications into the mesh without modification",
+        "Migrate to Kubernetes in stages",
+        "Maintain consistent security and observability during migration"
+      ]
+    }
+  ]
+}

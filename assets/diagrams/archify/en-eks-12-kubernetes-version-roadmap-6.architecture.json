@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 1.29 \"Mandala\" Enhancement Breakdown",
+    "locale": "en",
+    "output": "en-eks-12-kubernetes-version-roadmap-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "release",
+      "type": "cloud",
+      "label": "Kubernetes 1.29 \"Mandala\"",
+      "sublabel": "December 2023 · 49 enhancements",
+      "pos": [
+        50,
+        228
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable (GA)",
+      "sublabel": "11 · production-ready",
+      "pos": [
+        470,
+        78
+      ],
+      "size": [
+        230,
+        64
+      ],
+      "tag": "Key"
+    },
+    {
+      "id": "beta",
+      "type": "backend",
+      "label": "Beta",
+      "sublabel": "19 · enabled by default (On)",
+      "pos": [
+        470,
+        228
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "alpha",
+      "type": "backend",
+      "label": "Alpha",
+      "sublabel": "19 · disabled by default (Off)",
+      "pos": [
+        470,
+        378
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Distribution by maturity stage (49 total)",
+      "wraps": [
+        "stable",
+        "beta",
+        "alpha"
+      ],
+      "pad": 28
+    }
+  ],
+  "connections": [
+    {
+      "id": "release-to-stable",
+      "from": "release",
+      "to": "stable",
+      "variant": "emphasis"
+    },
+    {
+      "id": "release-to-beta",
+      "from": "release",
+      "to": "beta"
+    },
+    {
+      "id": "release-to-alpha",
+      "from": "release",
+      "to": "alpha"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Representative Stable (GA) features",
+      "items": [
+        "KMS v2 GA (KEP-3299) — Secrets encryption at rest with DEK caching",
+        "ReadWriteOncePod PV Access Mode GA (KEP-2485)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Representative Beta features",
+      "items": [
+        "Sidecar Containers introduced as Beta (KEP-753)",
+        "Pod Scheduling Readiness",
+        "Load Balancer IP Mode"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Representative Alpha features",
+      "items": [
+        "nftables kube-proxy mode",
+        "Node Log Query"
+      ]
+    }
+  ]
+}

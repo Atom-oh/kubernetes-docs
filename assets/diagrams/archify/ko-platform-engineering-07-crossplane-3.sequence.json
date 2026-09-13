@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "v2 XR 조정과 Connection Secret",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      724
+    ],
+    "animation": "trace",
+    "views": [],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    },
+    "output": "ko-platform-engineering-07-crossplane-3.html"
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "개발자",
+      "sublabel": "kubectl"
+    },
+    {
+      "id": "ns",
+      "type": "frontend",
+      "label": "개발자 Namespace",
+      "sublabel": "XR · Secret"
+    },
+    {
+      "id": "xp",
+      "type": "backend",
+      "label": "Crossplane",
+      "sublabel": "Core reconciler"
+    },
+    {
+      "id": "comp",
+      "type": "database",
+      "label": "Functions / Providers",
+      "sublabel": "렌더링 · AWS 조정"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS",
+      "sublabel": "provider-aws"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 548,
+      "label": "Claim 프로비저닝"
+    },
+    {
+      "from": 560,
+      "to": 630,
+      "label": "지속적 조정 (Continuous Reconciliation)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "apply",
+      "from": "dev",
+      "to": "ns",
+      "y": 182,
+      "label": "XR 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect",
+      "from": "ns",
+      "to": "xp",
+      "y": 216,
+      "label": "Namespaced XR 이벤트"
+    },
+    {
+      "id": "lookup",
+      "from": "xp",
+      "to": "comp",
+      "y": 256,
+      "label": "Composition Function 실행"
+    },
+    {
+      "id": "mrlist",
+      "from": "comp",
+      "to": "xp",
+      "y": 288,
+      "label": "원하는 MR 반환",
+      "variant": "return"
+    },
+    {
+      "id": "sg",
+      "from": "comp",
+      "to": "aws",
+      "y": 324,
+      "label": "SG / ingress rule 요청"
+    },
+    {
+      "id": "subnet",
+      "from": "comp",
+      "to": "aws",
+      "y": 358,
+      "label": "SubnetGroup 요청"
+    },
+    {
+      "id": "rds",
+      "from": "comp",
+      "to": "aws",
+      "y": 392,
+      "label": "RDS 요청 / 상태 조회",
+      "variant": "emphasis"
+    },
+    {
+      "id": "done",
+      "from": "aws",
+      "to": "comp",
+      "y": 426,
+      "label": "관찰된 리소스 상태",
+      "variant": "return"
+    },
+    {
+      "id": "secret",
+      "from": "xp",
+      "to": "ns",
+      "y": 462,
+      "label": "Function이 합성한 Secret 적용",
+      "variant": "security"
+    },
+    {
+      "id": "ready",
+      "from": "xp",
+      "to": "ns",
+      "y": 496,
+      "label": "관찰된 Ready 상태 반영",
+      "variant": "return"
+    },
+    {
+      "id": "get",
+      "from": "dev",
+      "to": "ns",
+      "y": 530,
+      "label": "XR 상태 조회"
+    },
+    {
+      "id": "drift",
+      "from": "comp",
+      "to": "aws",
+      "y": 582,
+      "label": "주기적 상태 조회",
+      "variant": "dashed"
+    },
+    {
+      "id": "correct",
+      "from": "comp",
+      "to": "aws",
+      "y": 616,
+      "label": "허용된 managementPolicies로 조정",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "xp",
+      "from": 211,
+      "to": 502,
+      "type": "backend"
+    },
+    {
+      "participant": "comp",
+      "from": 251,
+      "to": 294,
+      "type": "database"
+    },
+    {
+      "participant": "aws",
+      "from": 319,
+      "to": 432,
+      "type": "cloud"
+    },
+    {
+      "participant": "xp",
+      "from": 577,
+      "to": 622,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "비밀 처리",
+      "items": [
+        "v2 XR 자체의 native connection publication은 제거",
+        "P&T 0.10.10이 endpoint/username Secret을 합성",
+        "비밀번호는 사전 준비한 Secret 파일로 전달"
+      ]
+    }
+  ]
+}

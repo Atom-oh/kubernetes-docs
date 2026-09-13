@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "문제 해결 및 디버깅",
+    "output": "ko-eks-06-eks-monitoring-logging-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "문제 유형"
+        },
+        "backend": {
+          "label": "Kubernetes 도구"
+        },
+        "cloud": {
+          "label": "AWS 도구"
+        },
+        "frontend": {
+          "label": "네트워크 도구"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "k8s-path",
+        "label": "kubectl 도구 경로",
+        "focus": [
+          "cluster",
+          "workload",
+          "common",
+          "k8s"
+        ],
+        "note": "kubectl · debug · events · logs는 세 가지 문제 유형 모두에서 쓰이는 중심 도구다."
+      },
+      {
+        "id": "aws-path",
+        "label": "AWS 도구 경로",
+        "focus": [
+          "cluster",
+          "common",
+          "aws"
+        ],
+        "note": "컨트롤 플레인·노드 문제와 노드 NotReady는 AWS CLI와 CloudWatch로 확인한다."
+      },
+      {
+        "id": "net-path",
+        "label": "네트워크 도구 경로",
+        "focus": [
+          "cluster",
+          "workload",
+          "common",
+          "net"
+        ],
+        "note": "네트워킹·서비스 문제와 서비스 연결 문제는 Netshoot, tcpdump, dig, curl로 진단한다."
+      }
+    ],
+    "viewBox": [
+      1120,
+      680
+    ]
+  },
+  "components": [
+    {
+      "id": "cluster",
+      "type": "external",
+      "label": "클러스터 문제",
+      "sublabel": "컨트롤 플레인 · 노드 · 네트워킹 · 인증/인가",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "workload",
+      "type": "external",
+      "label": "워크로드 문제",
+      "sublabel": "파드 · 서비스 · 배포 · 리소스",
+      "pos": [
+        400,
+        440
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "common",
+      "type": "external",
+      "label": "일반적인 문제",
+      "sublabel": "ImagePullBackOff · CrashLoopBackOff 등",
+      "pos": [
+        800,
+        250
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes 도구",
+      "sublabel": "kubectl · debug · events · logs",
+      "pos": [
+        400,
+        250
+      ],
+      "size": [
+        270,
+        64
+      ],
+      "tag": "핵심 도구"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS 도구",
+      "sublabel": "AWS CLI · CloudWatch · CloudTrail · X-Ray",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "net",
+      "type": "frontend",
+      "label": "네트워크 도구",
+      "sublabel": "Netshoot · tcpdump · dig · curl",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        250,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cluster-k8s",
+      "from": "cluster",
+      "to": "k8s",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-aws",
+      "from": "cluster",
+      "to": "aws",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "cluster-net",
+      "from": "cluster",
+      "to": "net",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "workload-k8s",
+      "from": "workload",
+      "to": "k8s",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "workload-net",
+      "from": "workload",
+      "to": "net"
+    },
+    {
+      "id": "common-k8s",
+      "from": "common",
+      "to": "k8s",
+      "variant": "emphasis"
+    },
+    {
+      "id": "common-aws",
+      "from": "common",
+      "to": "aws",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "common-net",
+      "from": "common",
+      "to": "net",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          935,
+          560
+        ],
+        [
+          165,
+          560
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "클러스터 문제",
+      "items": [
+        "컨트롤 플레인 문제 → kubectl, AWS CLI, CloudWatch",
+        "노드 문제 → kubectl debug, AWS CLI",
+        "네트워킹 문제 → Netshoot, tcpdump"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "워크로드 문제",
+      "items": [
+        "파드 문제 → kubectl logs, kubectl debug",
+        "서비스 문제 → kubectl events, dig/nslookup, curl/wget"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "일반적인 문제",
+      "items": [
+        "ImagePullBackOff → kubectl events, kubectl logs",
+        "CrashLoopBackOff → kubectl logs, kubectl debug",
+        "노드 NotReady → AWS CLI, kubectl events",
+        "서비스 연결 문제 → Netshoot, tcpdump"
+      ]
+    }
+  ]
+}

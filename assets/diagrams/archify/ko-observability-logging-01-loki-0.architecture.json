@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Loki 컴포넌트 개요",
+    "output": "ko-observability-logging-01-loki-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      700
+    ],
+    "views": [
+      {
+        "id": "write-path",
+        "label": "쓰기 경로",
+        "focus": [
+          "agents",
+          "distributor",
+          "ingester",
+          "s3"
+        ],
+        "note": "로그 수집 에이전트의 스트림이 Distributor에서 검증·라우팅되고 Ingester가 청크를 만들어 S3로 플러시한다."
+      },
+      {
+        "id": "read-path",
+        "label": "읽기 경로",
+        "focus": [
+          "grafana",
+          "query-frontend",
+          "query-scheduler",
+          "querier",
+          "ingester",
+          "s3",
+          "cache"
+        ],
+        "note": "Grafana의 LogQL 쿼리가 Query Frontend와 Scheduler를 거쳐 Querier에서 Ingester·S3·캐시 결과를 병합한다."
+      },
+      {
+        "id": "backend",
+        "label": "백엔드 유지관리",
+        "focus": [
+          "compactor",
+          "s3"
+        ],
+        "note": "Compactor가 S3의 작은 청크를 병합하고 인덱스를 최적화하며 보존 정책을 적용한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "agents",
+      "type": "external",
+      "label": "로그 수집 에이전트",
+      "sublabel": "Promtail · FluentBit · Grafana Alloy",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "distributor",
+      "type": "backend",
+      "label": "Distributor",
+      "sublabel": "검증 · 레이블 정규화 · 속도 제한",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "ingester",
+      "type": "backend",
+      "label": "Ingester",
+      "sublabel": "청크 버퍼 · WAL",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "시각화",
+      "pos": [
+        880,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "query-frontend",
+      "type": "backend",
+      "label": "Query Frontend",
+      "sublabel": "쿼리 분할 · 결과 캐싱",
+      "pos": [
+        880,
+        180
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "query-scheduler",
+      "type": "backend",
+      "label": "Query Scheduler",
+      "sublabel": "쿼리 대기열",
+      "pos": [
+        880,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "querier",
+      "type": "backend",
+      "label": "Querier",
+      "sublabel": "LogQL 실행 · 결과 병합",
+      "pos": [
+        880,
+        460
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "compactor",
+      "type": "backend",
+      "label": "Compactor",
+      "sublabel": "청크 병합 · 보존 정책",
+      "pos": [
+        200,
+        580
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 Storage",
+      "sublabel": "객체 스토리지",
+      "pos": [
+        430,
+        580
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Redis / Memcached",
+      "sublabel": "결과 · 청크 캐시",
+      "pos": [
+        660,
+        580
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "쓰기 경로",
+      "wraps": [
+        "distributor",
+        "ingester"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "읽기 경로",
+      "wraps": [
+        "query-frontend",
+        "query-scheduler",
+        "querier"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "백엔드",
+      "wraps": [
+        "compactor",
+        "s3",
+        "cache"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "agents-to-distributor",
+      "from": "agents",
+      "to": "distributor",
+      "label": "로그 스트림 푸시",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "distributor-to-ingester",
+      "from": "distributor",
+      "to": "ingester",
+      "label": "일관된 해싱 라우팅",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ingester-to-s3",
+      "from": "ingester",
+      "to": "s3",
+      "label": "청크 플러시",
+      "variant": "emphasis"
+    },
+    {
+      "id": "grafana-to-frontend",
+      "from": "grafana",
+      "to": "query-frontend",
+      "label": "LogQL 쿼리",
+      "labelDy": 24
+    },
+    {
+      "id": "frontend-to-scheduler",
+      "from": "query-frontend",
+      "to": "query-scheduler"
+    },
+    {
+      "id": "scheduler-to-querier",
+      "from": "query-scheduler",
+      "to": "querier"
+    },
+    {
+      "id": "querier-to-ingester",
+      "from": "querier",
+      "to": "ingester",
+      "label": "실시간 데이터",
+      "variant": "dashed"
+    },
+    {
+      "id": "querier-to-s3",
+      "from": "querier",
+      "to": "s3",
+      "label": "과거 데이터",
+      "variant": "dashed"
+    },
+    {
+      "id": "querier-to-cache",
+      "from": "querier",
+      "to": "cache",
+      "label": "캐시 조회",
+      "variant": "dashed"
+    },
+    {
+      "id": "compactor-to-s3",
+      "from": "compactor",
+      "to": "s3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "쓰기 경로",
+      "items": [
+        "Distributor는 로그 스트림을 검증하고 레이블을 정규화하며 속도 제한을 적용한다",
+        "Ingester는 로그를 메모리에 버퍼링해 청크를 만들고 WAL을 관리하며 스토리지로 플러시한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "읽기 경로",
+      "items": [
+        "Query Frontend는 대용량 쿼리를 분할하고 결과를 캐싱한다",
+        "Querier는 Ingester의 실시간 데이터와 스토리지의 과거 데이터를 조회해 병합·중복 제거한다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "백엔드",
+      "items": [
+        "Compactor는 작은 청크를 큰 청크로 병합하고 인덱스를 최적화하며 보존 정책을 적용한다"
+      ]
+    }
+  ]
+}

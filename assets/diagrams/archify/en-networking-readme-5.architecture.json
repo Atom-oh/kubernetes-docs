@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CNI Plugin Components",
+    "output": "en-networking-readme-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [
+      969,
+      598
+    ]
+  },
+  "components": [
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "invokes CNI on Pod creation",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cni-agent",
+      "type": "backend",
+      "label": "CNI Agent/Daemon",
+      "sublabel": "runs on every node",
+      "pos": [
+        600,
+        190
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cni-binary",
+      "type": "backend",
+      "label": "CNI Binary",
+      "sublabel": "/opt/cni/bin/",
+      "pos": [
+        330,
+        320
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cni-config",
+      "type": "database",
+      "label": "CNI Config",
+      "sublabel": "/etc/cni/net.d/",
+      "pos": [
+        60,
+        450
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ipam",
+      "type": "backend",
+      "label": "IPAM Plugin",
+      "sublabel": "IP address management",
+      "pos": [
+        600,
+        450
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "CNI Plugin Architecture",
+      "wraps": [
+        "cni-agent",
+        "cni-binary",
+        "cni-config",
+        "ipam"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "kubelet-invoke",
+      "from": "kubelet",
+      "to": "cni-binary",
+      "label": "invoke",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-watch",
+      "from": "cni-agent",
+      "to": "cni-binary",
+      "label": "watch",
+      "variant": "dashed"
+    },
+    {
+      "id": "binary-read",
+      "from": "cni-binary",
+      "to": "cni-config",
+      "label": "read"
+    },
+    {
+      "id": "binary-ipam",
+      "from": "cni-binary",
+      "to": "ipam",
+      "label": "IPAM",
+      "variant": "emphasis"
+    }
+  ]
+}

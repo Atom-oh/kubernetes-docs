@@ -1,0 +1,143 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "How eBPF Works",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Dev stages"
+        },
+        "backend": {
+          "label": "Kernel processing"
+        },
+        "security": {
+          "label": "Verify"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "User space"
+    },
+    {
+      "id": "kernel",
+      "label": "Kernel space"
+    }
+  ],
+  "mainPath": [
+    "write",
+    "compile",
+    "load",
+    "verifier",
+    "jit",
+    "run"
+  ],
+  "nodes": [
+    {
+      "id": "write",
+      "lane": "user",
+      "col": 0,
+      "type": "frontend",
+      "label": "Write program",
+      "sublabel": "C / Rust",
+      "width": 128
+    },
+    {
+      "id": "compile",
+      "lane": "user",
+      "col": 1,
+      "type": "frontend",
+      "label": "Compile",
+      "sublabel": "bytecode"
+    },
+    {
+      "id": "load",
+      "lane": "user",
+      "col": 2,
+      "type": "backend",
+      "label": "bpf() syscall",
+      "sublabel": "load into kernel",
+      "width": 142
+    },
+    {
+      "id": "verifier",
+      "lane": "kernel",
+      "col": 3,
+      "type": "security",
+      "label": "Verifier",
+      "sublabel": "Verifier"
+    },
+    {
+      "id": "jit",
+      "lane": "kernel",
+      "col": 4,
+      "type": "backend",
+      "label": "JIT compile",
+      "sublabel": "native code",
+      "width": 118
+    },
+    {
+      "id": "run",
+      "lane": "kernel",
+      "col": 5,
+      "type": "backend",
+      "label": "Run program",
+      "sublabel": "at event hooks",
+      "width": 128
+    }
+  ],
+  "edges": [
+    {
+      "id": "write-compile",
+      "from": "write",
+      "to": "compile"
+    },
+    {
+      "id": "compile-load",
+      "from": "compile",
+      "to": "load"
+    },
+    {
+      "id": "load-verifier",
+      "from": "load",
+      "to": "verifier",
+      "label": "crosses boundary",
+      "variant": "emphasis"
+    },
+    {
+      "id": "verifier-jit",
+      "from": "verifier",
+      "to": "jit",
+      "label": "pass"
+    },
+    {
+      "id": "jit-run",
+      "from": "jit",
+      "to": "run"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Event hook targets",
+      "items": [
+        "Network packets · system calls",
+        "Function calls · tracepoints"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Safety net",
+      "items": [
+        "The verifier blocks infinite loops and memory violations upfront",
+        "Only verified code runs in the kernel"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "오버레이 네트워킹",
+    "output": "ko-networking-cilium-networking-concepts-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [960, 500],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": { "label": "컨테이너" },
+        "cloud": { "label": "오버레이 네트워크" },
+        "external": { "label": "물리 인터페이스" }
+      }
+    },
+    "views": [
+      { "id": "host-a-path", "label": "호스트 A 송신 경로", "focus": ["containerA", "overlayA", "ethA"], "note": "컨테이너 A의 패킷이 오버레이 네트워크를 거쳐 호스트의 eth0에서 캡슐화됩니다." },
+      { "id": "vxlan-tunnel", "label": "VXLAN 터널", "focus": ["ethA", "ethB"], "note": "캡슐화된 패킷은 물리 네트워크(eth0 192.168.1.10 → 192.168.1.11) 위의 VXLAN 터널로 상대 호스트에 전달됩니다." },
+      { "id": "host-b-path", "label": "호스트 B 수신 경로", "focus": ["ethB", "overlayB", "containerB"], "note": "호스트 B의 eth0에서 디캡슐화된 원본 패킷이 오버레이 네트워크를 통해 컨테이너 B에 전달됩니다." }
+    ]
+  },
+  "components": [
+    { "id": "containerA", "type": "backend", "label": "컨테이너 A", "sublabel": "IP: 10.0.0.2", "pos": [60, 80], "size": [170, 64] },
+    { "id": "overlayA", "type": "cloud", "label": "오버레이 네트워크", "sublabel": "10.0.0.0/24", "pos": [310, 80], "size": [180, 64] },
+    { "id": "ethA", "type": "external", "label": "eth0", "sublabel": "192.168.1.10", "pos": [570, 80], "size": [170, 64] },
+    { "id": "containerB", "type": "backend", "label": "컨테이너 B", "sublabel": "IP: 10.0.0.3", "pos": [60, 320], "size": [170, 64] },
+    { "id": "overlayB", "type": "cloud", "label": "오버레이 네트워크", "sublabel": "10.0.0.0/24", "pos": [310, 320], "size": [180, 64] },
+    { "id": "ethB", "type": "external", "label": "eth0", "sublabel": "192.168.1.11", "pos": [570, 320], "size": [170, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "호스트 A", "wraps": ["containerA", "overlayA", "ethA"] },
+    { "kind": "region", "label": "호스트 B", "wraps": ["containerB", "overlayB", "ethB"] }
+  ],
+  "connections": [
+    { "id": "a-to-overlay", "from": "containerA", "to": "overlayA" },
+    { "id": "overlay-to-ethA", "from": "overlayA", "to": "ethA", "label": "캡슐화" },
+    { "id": "vxlan", "from": "ethA", "to": "ethB", "label": "VXLAN 터널 (UDP 4789)", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelAt": [745, 232] },
+    { "id": "ethB-to-overlay", "from": "ethB", "to": "overlayB", "label": "디캡슐화" },
+    { "id": "overlay-to-b", "from": "overlayB", "to": "containerB" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "오버레이 네트워킹 특징", "items": ["여러 호스트에 걸쳐 있는 컨테이너 간 통신 지원", "VXLAN, GENEVE 등의 캡슐화 프로토콜 사용", "대규모 클러스터에 적합하며 Cilium, Calico, Flannel 등이 지원"] },
+    { "dot": "amber", "title": "작동 원리", "items": ["패킷 캡슐화: 원본 패킷을 새 헤더로 감쌈", "터널링: 물리 네트워크를 통해 목적지 호스트로 전송", "디캡슐화 후 원본 패킷을 목적지 컨테이너에 전달"] }
+  ]
+}

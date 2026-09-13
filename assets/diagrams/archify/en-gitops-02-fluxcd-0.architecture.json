@@ -1,0 +1,385 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FluxCD Architecture Overview",
+    "locale": "en",
+    "output": "en-gitops-02-fluxcd-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      660
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "sources",
+        "label": "Fetch sources",
+        "focus": [
+          "git",
+          "helm",
+          "oci",
+          "bucket",
+          "source"
+        ],
+        "note": "The Source Controller acquires artifacts from Git, Helm, OCI, and S3-compatible buckets."
+      },
+      {
+        "id": "reconcile",
+        "label": "Reconcile to cluster",
+        "focus": [
+          "source",
+          "kustomize",
+          "helmctl",
+          "cluster"
+        ],
+        "note": "The Kustomize and Helm controllers reconcile the artifacts into cluster resources."
+      },
+      {
+        "id": "automation",
+        "label": "Notifications and image automation",
+        "focus": [
+          "image-registry",
+          "reflector",
+          "image",
+          "git",
+          "notification",
+          "source",
+          "kustomize",
+          "helmctl"
+        ],
+        "note": "Events reach Notification. Reflector selects images; Automation edits marked YAML on a push branch. PR merging is separate."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git repository",
+      "sublabel": "GitRepository source",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "helm",
+      "type": "external",
+      "label": "Helm repository",
+      "sublabel": "HelmRepository source",
+      "pos": [
+        340,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "oci",
+      "type": "external",
+      "label": "OCI artifacts",
+      "sublabel": "OCIRepository source",
+      "pos": [
+        600,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "bucket",
+      "type": "external",
+      "label": "Object storage",
+      "sublabel": "Bucket source",
+      "pos": [
+        860,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "image",
+      "type": "backend",
+      "label": "Image Automation Controller",
+      "sublabel": "optional · edits marked fields",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "source",
+      "type": "backend",
+      "label": "Source Controller",
+      "sublabel": "Acquires artifacts",
+      "pos": [
+        560,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "kustomize",
+      "type": "backend",
+      "label": "Kustomize Controller",
+      "sublabel": "Applies Kustomizations",
+      "pos": [
+        290,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "helmctl",
+      "type": "backend",
+      "label": "Helm Controller",
+      "sublabel": "Manages HelmReleases",
+      "pos": [
+        830,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification Controller",
+      "sublabel": "events / Receivers",
+      "pos": [
+        560,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "Cluster resources",
+      "sublabel": "Namespaces · Deployments · Services · ConfigMaps",
+      "pos": [
+        545,
+        560
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "reflector",
+      "type": "backend",
+      "label": "Image Reflector Controller",
+      "sublabel": "optional · tags and policy",
+      "pos": [
+        70,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "image-registry",
+      "type": "external",
+      "label": "Image registry",
+      "sublabel": "ImageRepository",
+      "pos": [
+        70,
+        560
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "External sources",
+      "wraps": [
+        "git",
+        "helm",
+        "oci",
+        "bucket"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "FluxCD controllers",
+      "wraps": [
+        "image",
+        "source",
+        "kustomize",
+        "helmctl",
+        "notification",
+        "reflector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Destination resources",
+      "wraps": [
+        "cluster"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-source",
+      "from": "git",
+      "to": "source",
+      "label": "Fetch sources",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "helm-source",
+      "from": "helm",
+      "to": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "oci-source",
+      "from": "oci",
+      "to": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "bucket-source",
+      "from": "bucket",
+      "to": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "source-kustomize",
+      "from": "source",
+      "to": "kustomize",
+      "label": "Manifests",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "source-helmctl",
+      "from": "source",
+      "to": "helmctl",
+      "label": "Helm charts",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kustomize-cluster",
+      "from": "kustomize",
+      "to": "cluster",
+      "label": "apply",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "helmctl-cluster",
+      "from": "helmctl",
+      "to": "cluster",
+      "label": "release",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "source-events",
+      "from": "source",
+      "to": "notification",
+      "label": "events",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        660,
+        380
+      ]
+    },
+    {
+      "id": "kustomize-events",
+      "from": "kustomize",
+      "to": "notification",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "helmctl-events",
+      "from": "helmctl",
+      "to": "notification",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "image-git",
+      "from": "image",
+      "to": "git",
+      "label": "push branch",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        170,
+        188
+      ]
+    },
+    {
+      "id": "registry-reflector",
+      "from": "image-registry",
+      "to": "reflector",
+      "label": "tags / digest",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "reflector-automation",
+      "from": "reflector",
+      "to": "image",
+      "label": "ImagePolicy",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

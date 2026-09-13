@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How the Scheduler Works",
+    "output": "en-core-08-scheduling-preemption-eviction-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "watch",
+        "label": "Pod watch and selection",
+        "focus": [
+          "api",
+          "queue",
+          "scheduler"
+        ],
+        "note": "The scheduler watches the API server and picks unscheduled pods from the queue."
+      },
+      {
+        "id": "filter-score",
+        "label": "Filtering and scoring",
+        "focus": [
+          "scheduler",
+          "filter",
+          "score",
+          "bestnode"
+        ],
+        "note": "Filter plugins rule out nodes that cannot run the pod; score plugins rank the remaining nodes."
+      },
+      {
+        "id": "bind",
+        "label": "Binding",
+        "focus": [
+          "bestnode",
+          "binding",
+          "node"
+        ],
+        "note": "The highest-scoring node is selected, a binding is requested from the API server, and the pod lands on the node."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "emits pod creation events",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Scheduling Queue",
+      "sublabel": "pods awaiting scheduling",
+      "pos": [
+        320,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "runs the scheduling cycle",
+      "pos": [
+        600,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "backend",
+      "label": "Filter Plugins",
+      "sublabel": "rules out unfit nodes",
+      "pos": [
+        880,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "score",
+      "type": "backend",
+      "label": "Score Plugins",
+      "sublabel": "scores each node",
+      "pos": [
+        880,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "bestnode",
+      "type": "backend",
+      "label": "Best Node Selection",
+      "sublabel": "highest-scoring node",
+      "pos": [
+        600,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "binding",
+      "type": "backend",
+      "label": "Binding Request",
+      "sublabel": "updates binding via API server",
+      "pos": [
+        320,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "Node",
+      "sublabel": "runs the pod",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-queue",
+      "from": "api",
+      "to": "queue",
+      "label": "pod creation event",
+      "variant": "emphasis"
+    },
+    {
+      "id": "queue-scheduler",
+      "from": "queue",
+      "to": "scheduler",
+      "label": "pod selection",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scheduler-filter",
+      "from": "scheduler",
+      "to": "filter",
+      "label": "filtering",
+      "variant": "emphasis"
+    },
+    {
+      "id": "filter-score",
+      "from": "filter",
+      "to": "score",
+      "label": "filtered nodes",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "score-bestnode",
+      "from": "score",
+      "to": "bestnode",
+      "label": "node scores",
+      "variant": "emphasis"
+    },
+    {
+      "id": "bestnode-binding",
+      "from": "bestnode",
+      "to": "binding",
+      "label": "binding",
+      "variant": "emphasis"
+    },
+    {
+      "id": "binding-node",
+      "from": "binding",
+      "to": "node",
+      "label": "pod binding",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Filter Plugins",
+      "items": [
+        "NodeResourcesFit: checks node resource capacity",
+        "NodeName: checks the pod's nodeName field",
+        "NodeUnschedulable: checks node schedulability",
+        "TaintToleration: checks taints and tolerations"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Score Plugins",
+      "items": [
+        "NodeResourcesBalancedAllocation: considers resource usage balance",
+        "ImageLocality: considers image locality",
+        "InterPodAffinity: considers inter-pod affinity",
+        "NodeAffinity: considers node affinity"
+      ]
+    }
+  ]
+}

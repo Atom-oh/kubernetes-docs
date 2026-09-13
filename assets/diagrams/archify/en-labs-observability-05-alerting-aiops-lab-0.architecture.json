@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Alerting and AIOps Architecture Overview",
+    "locale": "en",
+    "output": "en-labs-observability-05-alerting-aiops-lab-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1290,
+      490
+    ],
+    "views": [
+      {
+        "id": "detect-route",
+        "label": "Detection and routing",
+        "focus": [
+          "alertmanager",
+          "cw-alarms",
+          "oncall",
+          "sns"
+        ],
+        "note": "AlertManager sends alerts to the OnCall webhook and SNS; CloudWatch Alarms publish to the SNS topic via alarm-actions."
+      },
+      {
+        "id": "ai-analysis",
+        "label": "AI analysis",
+        "focus": [
+          "alertmanager",
+          "sns",
+          "aiops",
+          "bedrock",
+          "investigations"
+        ],
+        "note": "SNS or the AlertManager webhook triggers the Lambda, which analyzes the root cause with Bedrock Claude and publishes the result back to SNS."
+      },
+      {
+        "id": "respond",
+        "label": "Response channels",
+        "focus": [
+          "oncall",
+          "sns",
+          "channels"
+        ],
+        "note": "Alerts and analysis reports reach responders through OnCall escalation and SNS subscriptions."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cw-alarms",
+      "type": "cloud",
+      "label": "CloudWatch Alarms",
+      "sublabel": "AWS resource metrics",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Prometheus AlertManager",
+      "sublabel": "PrometheusRule evaluation",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "SNS Topic",
+      "sublabel": "obs-lab-alerts",
+      "pos": [
+        310,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "oncall",
+      "type": "external",
+      "label": "Grafana OnCall",
+      "sublabel": "Incident management",
+      "pos": [
+        310,
+        360
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "investigations",
+      "type": "cloud",
+      "label": "CloudWatch Investigations",
+      "sublabel": "AI hypotheses · Console",
+      "pos": [
+        570,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "aiops",
+      "type": "backend",
+      "label": "AIOps Agent",
+      "sublabel": "Lambda",
+      "tag": "focal",
+      "pos": [
+        570,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "bedrock",
+      "type": "cloud",
+      "label": "Bedrock Claude",
+      "sublabel": "Root cause analysis",
+      "pos": [
+        810,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "channels",
+      "type": "external",
+      "label": "Response channels",
+      "sublabel": "Slack · Email · PagerDuty",
+      "pos": [
+        1050,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Alert detection",
+      "wraps": [
+        "cw-alarms",
+        "alertmanager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Notification routing",
+      "wraps": [
+        "sns",
+        "oncall"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AI analysis",
+      "wraps": [
+        "investigations",
+        "aiops",
+        "bedrock"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Response",
+      "wraps": [
+        "channels"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cw-to-investigations",
+      "from": "cw-alarms",
+      "to": "investigations",
+      "label": "investigate alarm",
+      "variant": "dashed"
+    },
+    {
+      "id": "cw-to-sns",
+      "from": "cw-alarms",
+      "to": "sns",
+      "label": "alarm-actions",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "am-to-oncall",
+      "from": "alertmanager",
+      "to": "oncall",
+      "label": "webhook",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "am-to-sns",
+      "from": "alertmanager",
+      "to": "sns",
+      "label": "sns_configs"
+    },
+    {
+      "id": "am-to-aiops",
+      "from": "alertmanager",
+      "to": "aiops",
+      "label": "webhook",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          135,
+          318
+        ],
+        [
+          655,
+          318
+        ]
+      ]
+    },
+    {
+      "id": "sns-to-aiops",
+      "from": "sns",
+      "to": "aiops",
+      "label": "trigger",
+      "variant": "emphasis",
+      "labelDy": 26
+    },
+    {
+      "id": "aiops-to-bedrock",
+      "from": "aiops",
+      "to": "bedrock",
+      "label": "InvokeModel",
+      "variant": "emphasis"
+    },
+    {
+      "id": "aiops-to-sns",
+      "from": "aiops",
+      "to": "sns",
+      "label": "publish analysis",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "sns-to-channels",
+      "from": "sns",
+      "to": "channels",
+      "label": "email subscription",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "oncall-to-channels",
+      "from": "oncall",
+      "to": "channels",
+      "label": "escalation"
+    }
+  ]
+}

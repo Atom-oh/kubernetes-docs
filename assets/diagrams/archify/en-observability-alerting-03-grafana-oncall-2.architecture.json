@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "On-Call Schedule Building Blocks",
+    "locale": "en",
+    "output": "en-observability-alerting-03-grafana-oncall-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Rotation"
+        },
+        "backend": {
+          "label": "Layers"
+        },
+        "security": {
+          "label": "Override"
+        },
+        "database": {
+          "label": "Final Schedule"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "rotation-to-primary",
+        "label": "Rotation → Primary",
+        "focus": [
+          "day-rotation",
+          "night-rotation",
+          "primary"
+        ],
+        "note": "Day and night rotations take turns filling the primary responder slot."
+      },
+      {
+        "id": "layers-to-final",
+        "label": "Layer Composition",
+        "focus": [
+          "primary",
+          "secondary",
+          "backup",
+          "final"
+        ],
+        "note": "Primary, secondary and backup layers stack into the final schedule."
+      },
+      {
+        "id": "override",
+        "label": "Override",
+        "focus": [
+          "vacation",
+          "temporary",
+          "final"
+        ],
+        "note": "Vacation replacements and temporary changes override the final schedule for a bounded period only."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "day-rotation",
+      "type": "cloud",
+      "label": "Day Rotation",
+      "sublabel": "rolling_users",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "night-rotation",
+      "type": "cloud",
+      "label": "Night Rotation",
+      "sublabel": "rolling_users",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "primary",
+      "type": "backend",
+      "label": "Primary Responder",
+      "sublabel": "Primary",
+      "pos": [
+        320,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "secondary",
+      "type": "backend",
+      "label": "Secondary Responder",
+      "sublabel": "Secondary",
+      "pos": [
+        320,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "backup",
+      "type": "backend",
+      "label": "Backup Responder",
+      "sublabel": "Backup",
+      "pos": [
+        320,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "final",
+      "type": "database",
+      "label": "Final Schedule",
+      "sublabel": "who is on call, resolved",
+      "pos": [
+        640,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "vacation",
+      "type": "security",
+      "label": "Vacation Replacement",
+      "sublabel": "overrides",
+      "pos": [
+        560,
+        460
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "temporary",
+      "type": "security",
+      "label": "Temporary Change",
+      "sublabel": "overrides",
+      "pos": [
+        760,
+        460
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Rotation",
+      "wraps": [
+        "day-rotation",
+        "night-rotation"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Layers",
+      "wraps": [
+        "primary",
+        "secondary",
+        "backup"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Override",
+      "wraps": [
+        "vacation",
+        "temporary"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "day-to-primary",
+      "from": "day-rotation",
+      "to": "primary",
+      "variant": "emphasis"
+    },
+    {
+      "id": "night-to-primary",
+      "from": "night-rotation",
+      "to": "primary",
+      "variant": "emphasis"
+    },
+    {
+      "id": "primary-to-final",
+      "from": "primary",
+      "to": "final",
+      "variant": "emphasis"
+    },
+    {
+      "id": "secondary-to-final",
+      "from": "secondary",
+      "to": "final"
+    },
+    {
+      "id": "backup-to-final",
+      "from": "backup",
+      "to": "final"
+    },
+    {
+      "id": "vacation-to-final",
+      "from": "vacation",
+      "to": "final",
+      "variant": "dashed",
+      "label": "time-boxed override",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "temporary-to-final",
+      "from": "temporary",
+      "to": "final",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

@@ -1,0 +1,173 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T07:16:50.846981+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/glossary.md",
+      "sha256": "90edb1deb2a74320721ab9a2f1e454c0eb231d3e36f7c1a72feea9219ec6f58d"
+    },
+    {
+      "path": "en/quizzes/networking/calico/glossary-quiz.md",
+      "sha256": "ffa2fc5faadeab3f5e0962697549234e043c3138268baac1f1cf90def0bd4013"
+    },
+    {
+      "path": "ko/networking/calico/glossary.md",
+      "sha256": "e661f8f70e18b0f415a3f80216d70fa4c1f4ad6ad13841993f013b4b34216302"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/glossary-quiz.md",
+      "sha256": "775926168e3c535c376fad8863596b3e884ccafab16ae0b980b979b6c3ae5f59"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc6996.txt",
+      "key": "27d55365dbcb",
+      "sha256": "fd4fdb8cec9de61bd4a37099a76d53a2723747ee382f019187d767b251547903",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/host-firewall.rst",
+      "key": "211b709e5a9a",
+      "sha256": "81ae0f18f036c3414ca6c909ec69f88fa50b43260b4cf9a2f17283781e844a35",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst",
+      "key": "32d588751973",
+      "sha256": "2817d5068db658d64ab3175f7197eddbb61ffb5e9016759b9dd3ad617899579c",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "key": "47d0fa2d6ec0",
+      "sha256": "608ef0b3a0fd0e39ca15044baf83a68f62ec635c50630c747005d920d8f0167d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/workloadendpoint",
+      "key": "fc991d1722cc",
+      "sha256": "7a8b46b37c544708854611bf483f2e92d06c8b8ddd6f208cabc12ccc4d9a7370",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/profile",
+      "key": "89d1fcba7d6d",
+      "sha256": "fa311482fb10b242a75c6faaa647b5bbdb05ec18ac32841dc75899328ad7abab",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/v2/cidrgroups_types.go",
+      "key": "86acec21b6d9",
+      "sha256": "511210ed722401768231f04ecb57015c3a87db1897b123977f858e3058bfb750",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/policy/api/cidr.go",
+      "key": "7e770cd7201a",
+      "sha256": "4d2c5dae60c38eadc65240a6ceb681699969bb5ee7df4c647154ffb82de52d7c",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/",
+      "key": "a89556024456",
+      "sha256": "a19dbf7898197bfcfde930ee546bbd056eddf48bc6ff554755fc730d809633d5",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/mtu",
+      "key": "dca46d8d81f4",
+      "sha256": "28fe97715ea851c75c6b1b6c3494b420bc5ff4648aa68505b56ac57e41484c18",
+      "raw": "/tmp/istio-foundation-sources/dca46d8d81f4.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/tier",
+      "key": "f764a1eb86af",
+      "sha256": "3bc43f84a197676eb2c61523f53b426173f2e782f3a32fc6c96b24d69558233a",
+      "raw": "/tmp/istio-foundation-sources/f764a1eb86af.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/networkpolicy",
+      "key": "72c09bf8ede0",
+      "sha256": "80a2a2aefa60687671a32b821dcfb6934cfb0f2c486c9f448e59449b7639d8f7",
+      "raw": "/tmp/istio-foundation-sources/72c09bf8ede0.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy",
+      "key": "7b7de74c5e4b",
+      "sha256": "b9706dc8127e2b7f62fde0cd3623fe56d5174ff2218b96b3117e9a5bbfad5dab",
+      "raw": "/tmp/istio-foundation-sources/7b7de74c5e4b.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy",
+      "key": "840092fbe105",
+      "sha256": "b44b3bd940171e01946c97fce0788df94bada4642b821c1a8271484bfec439b9",
+      "raw": "/tmp/istio-foundation-sources/840092fbe105.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/observability/view-flow-logs",
+      "key": "6fac19fcc17d",
+      "sha256": "163cd7755b0b6d9eb0a2682a237af4db409215e0faf397e550010ee0cf5ddf94",
+      "raw": "/tmp/istio-foundation-sources/6fac19fcc17d.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy",
+      "key": "eb4790c977ec",
+      "sha256": "390b67015e7a9b19925bf05697e1b3d5ac4d5759ccd8fa677869c16e03cb0d05",
+      "raw": "/tmp/istio-foundation-sources/eb4790c977ec.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/common/autoscale.go",
+      "key": "ddc8289cc1af",
+      "sha256": "1149d0ffd0df6e63ae2231fcecd9e256feb88a807f5ca513fdeef8540a3979d3",
+      "raw": "/tmp/istio-foundation-sources/ddc8289cc1af.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/ippool",
+      "key": "785bcc7771cb",
+      "sha256": "04aef50b0fb265bc70375b957a55e01f125f25c12e545ee48458cf2b0a4bb42f",
+      "raw": "/tmp/istio-foundation-sources/785bcc7771cb.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/installation/api",
+      "key": "71a9d6b0ffba",
+      "sha256": "32a485a3b17f70904b788b45b8320fcd5454be32bddd4462aa1fd061d7acfc30",
+      "raw": "/tmp/istio-foundation-sources/71a9d6b0ffba.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations",
+      "key": "d784db9e78d6",
+      "sha256": "c009618bb6ee8590a5621ee05768ca7031c96eb181d75da9608a4aa2356ea866",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    }
+  ],
+  "findings": [
+    "Original EN390/KO327 guide lines and166lines/10questions per quiz fully read.20questions retained. English Tier answer explanation reversed numeric order and is now corrected; Korean Felix/CNI and50nodeTypha assumptions corrected.",
+    "PrivateASNranges include16-bit64512–65534 and32-bit4200000000–4294967294. Fullmesh andreflector counts nowdistinguish totalnodes/clients/reflectors;100total2RR=197sessions. Typha actualoperator1.42.6smallclusterexceptionsandfloorN200+2formula retained.",
+    "MTUexamples conditionedon1500effectiveunderlay,withIPv4/IPv6VXLAN/WireGuard overheads andmixed-pathminimum;arbitrary1400WireGuard/universalperformanceclaimsremoved. LinuxvethcreationbelongsCNI,notFelix;Windows/hostNetworkexceptions included.",
+    "CalicoBGPoptionalprofile/BIRD1.6.8lineage,IPAMborrowing/defaultIPv6blocks/poolvsNodePodCIDR,WorkloadEndpointlabels/profilesnotfinalpolicylist clarified. DeprecatedProfilepolicy-rules andOSSAPI/L7/staged/GoldmaneWhiskerTechPreviewstatus corrected.",
+    "GNPscope selector-controlled;KOexamplelimitedcalico-glossary-demo namespace,hostendpointactivationprerequisitesexplicit. Pass/Log/Allow/Deny/defaultActionandpreDNAT/doNotTrack/applyOnForwardconditions clarified. RetainedKOtierfigureviewedandcaptioned asoneexamplepath,notmandatoryalltiers.",
+    "CurrentCiliumCIDRGroup(v2source)andcidrGroupRef/SelectorreplaceCiliumIPSet/onlyinlineCIDRmapping;noDNSdomainsinOSSNetworkSet. CiliumbuiltinBGPadsdoesnotprogramdatapath;hostfirewallnodeSelectorexists;WindowsBeta/CalicofullWindows/OSSIPsec/L7Enterprise-onlyunsubstantiatedrankingsremoved.",
+    "Englishrenamedsectionfragmentsreplacedwithcorrectrelativeguidepaths;officialresourceindexverified200. Metricsports andhealthlimits alignedwithreviewedoperationsguide."
+  ],
+  "checks": {
+    "schemaObjects": 6,
+    "bashBlocks": 1,
+    "quizAnswers": 20,
+    "figuresViewed": 1,
+    "figuresRetained": 1,
+    "figureNote": "KOtierfigureisonePass/Pass/Allowexample;captionexplicitlystatesearlyAllowterminationandcustomnames,notmandatoryalltiervisits."
+  },
+  "validation": [
+    "6releasedCalico/Kubernetesschemaobjects,1bashblock,20quizanswer/choicematches;KOtestGNPnamespaceexplicit.",
+    "OneKOtierfigureactuallyviewed/retainedwithcorrectedcaption;noassetorforeignproseedits.",
+    "4Markdown→Vuecompilationspass;completedCalico42filemechanicalscan173YAML/150shellblocks0errors;fullCalicoscopedgitdiffcheckclean.",
+    "Clean-envdocs:test118/118,0fail."
+  ],
+  "originals": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3 document_snapshots",
+  "limitations": [
+    "Glossarysemantics/schemasonly;notliveCalico/Ciliuminteroperabilityorbenchmarkvalidation.",
+    "Comparisontablesarefunctional,notresourceconversionrecipes.",
+    "KOHostEndpoint/BGPPeer/IPPoolYAMLareillustrativeshapeswithpreconditions,notappliedtosystems."
+  ]
+}

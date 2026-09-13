@@ -20,7 +20,9 @@
 
 현대적인 관측성(Observability)은 세 가지 핵심 축으로 구성됩니다:
 
-![메트릭, 로그, 트레이스라는 관측성의 세 데이터가 모두 알림 규칙으로 모이고, 이어서 알림 전송과 에스컬레이션으로 이어지는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-0.png)
+![메트릭, 로그, 트레이스라는 관측성의 세 데이터가 모두 알림 규칙으로 모이고, 이어서 알림 전송과 에스컬레이션으로 이어지는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-0.html)
 
 - **메트릭(Metrics)**: 시스템의 정량적 상태 (CPU, 메모리, 요청 수 등)
 - **로그(Logs)**: 이벤트의 상세한 기록
@@ -52,7 +54,9 @@
 
 알림은 다음과 같은 생명주기를 거칩니다:
 
-![알림이 비활성에서 시작해 대기, 발생, 통보, 확인, 조치, 해결을 거쳐 종료되며, 임계값 이내 복귀나 자동 해결 시 조기에 비활성 상태로 되돌아갈 수 있음을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-1.png)
+![알림이 비활성에서 시작해 대기, 발생, 통보, 확인, 조치, 해결을 거쳐 종료되며, 임계값 이내 복귀나 자동 해결 시 조기에 비활성 상태로 되돌아갈 수 있음을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-1.html)
 
 ### 1. Detection (감지)
 
@@ -89,7 +93,9 @@ groups:
 - **심각도 기반**: 심각도에 따라 다른 에스컬레이션 경로
 - **자동 에스컬레이션**: 정해진 규칙에 따라 자동 상위 보고
 
-![1차 담당자가 15분 내 응답하지 않으면 2차 담당자, 다시 없으면 팀 리드로 순차 상향되고, 끝까지 응답이 없으면 전체 팀에 알리는 시간 기반 에스컬레이션 경로를 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-2.png)
+![1차 담당자가 15분 내 응답하지 않으면 2차 담당자, 다시 없으면 팀 리드로 순차 상향되고, 끝까지 응답이 없으면 전체 팀에 알리는 시간 기반 에스컬레이션 경로를 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-2.html)
 
 ### 4. Resolution (해결)
 
@@ -121,7 +127,9 @@ Runbook: https://wiki.company.com/db-connection-exhausted
 
 너무 많은 알림은 오히려 중요한 알림을 놓치게 만듭니다.
 
-![과도한 알림이 무시와 누락, 인시던트, 더 많은 알림으로 이어지는 악순환과, 알림 정제와 그룹화, 정기 리뷰가 서로를 강화하는 해결책 순환을 나란히 대조한다.](../../.gitbook/assets/ko-observability-alerting-README-3.png)
+![과도한 알림이 알림 무시, 중요 알림 누락, 인시던트 발생, 더 많은 알림 추가로 이어지는 악순환과, 알림 정제가 적절한 임계값, 알림 그룹화, 정기적 리뷰로 이어져 서로를 강화하는 개선 순환을 나란히 대조하여 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-3.html)
 
 **알림 피로 방지 전략:**
 
@@ -195,7 +203,9 @@ annotations:
 
 알림은 다양한 기준에 따라 적절한 수신자에게 전달되어야 합니다:
 
-![알림이 심각도에 따라 전화·Slack·이메일 등 채널로 나뉘고, 다시 인프라·애플리케이션·데이터베이스·보안 담당 팀으로 갈라지는 2단계 라우팅 구조를 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-4.png)
+![알림이 심각도에 따라 전화·Slack·이메일 등 채널로 나뉘고, 다시 인프라·애플리케이션·데이터베이스·보안 담당 팀으로 갈라지는 2단계 라우팅 구조를 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-4.html)
 
 ### 라우팅 트리 설계
 
@@ -255,7 +265,9 @@ route:
 
 온콜(On-Call)은 지정된 기간 동안 시스템 문제에 대응할 책임을 가진 담당자를 의미합니다.
 
-![SRE 팀 네 명의 엔지니어가 7일 단위로 온콜을 순차적으로 이어받는 4주 로테이션 일정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-5.png)
+![SRE 팀 네 명의 엔지니어가 7일 단위로 온콜을 순차적으로 이어받는 4주 로테이션 일정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-5.html)
 
 ### 온콜 모범 사례
 
@@ -279,7 +291,9 @@ route:
 
 ### EKS 특화 알림 영역
 
-![EKS 클러스터의 알림 대상을 컨트롤 플레인, 데이터 플레인, 네트워킹, 스토리지 네 영역으로 나누고 각 영역의 핵심 감시 대상을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-6.png)
+![EKS 클러스터의 알림 대상을 컨트롤 플레인, 데이터 플레인, 네트워킹, 스토리지 네 영역으로 나누고 각 영역의 핵심 감시 대상을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-6.html)
 
 ### 계층별 알림 전략
 
@@ -418,7 +432,9 @@ EKS는 다양한 AWS 서비스와 통합되므로, 이에 대한 알림도 필�
 
 ### 솔루션 선택 가이드
 
-![온콜 관리 필요 여부, AWS 네이티브 선호, 예산과 기존 도구에 따라 CloudWatch Alarms, Alertmanager, Grafana OnCall, PagerDuty, OpsGenie 중 하나로 좁혀가는 선택 과정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-7.png)
+![온콜 관리 필요 여부, AWS 네이티브 선호, 예산과 기존 도구에 따라 CloudWatch Alarms, Alertmanager, Grafana OnCall, PagerDuty, OpsGenie 중 하나로 좁혀가는 선택 과정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-7.html)
 
 #### 상황별 권장 솔루션
 
@@ -432,7 +448,9 @@ EKS는 다양한 AWS 서비스와 통합되므로, 이에 대한 알림도 필�
 
 대부분의 프로덕션 환경에서는 여러 솔루션을 조합하여 사용합니다:
 
-![Prometheus와 CloudWatch의 알림이 Alertmanager로 모여 Grafana OnCall과 PagerDuty로 나뉘고, 다시 Slack, Email, SMS 채널로 전달되는 프로덕션 알림 구성을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-8.png)
+![Prometheus와 CloudWatch의 알림이 Alertmanager로 모여 Grafana OnCall과 PagerDuty로 나뉘고, 다시 Slack, Email, SMS 채널로 전달되는 프로덕션 알림 구성을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-8.html)
 
 **권장 아키텍처:**
 

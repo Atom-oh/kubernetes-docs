@@ -1,0 +1,363 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Resource Management and Governance",
+    "locale": "en",
+    "output": "en-eks-07-eks-cost-optimization-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      680
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Governance area"
+        },
+        "backend": {
+          "label": "K8s settings"
+        },
+        "cloud": {
+          "label": "AWS resource"
+        },
+        "external": {
+          "label": "Third-party tool"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "requests-limits",
+        "label": "Requests and Limits",
+        "focus": [
+          "gov",
+          "reqlim",
+          "requests",
+          "limits"
+        ],
+        "note": "Set requests and limits that match real usage and understand QoS classes."
+      },
+      {
+        "id": "namespace-quota",
+        "label": "Namespaces and Quotas",
+        "focus": [
+          "gov",
+          "nsquota",
+          "nssep",
+          "quota",
+          "limitrange"
+        ],
+        "note": "Separate by namespace and cap usage with ResourceQuota and LimitRange."
+      },
+      {
+        "id": "cost-allocation",
+        "label": "Cost Allocation and Tagging",
+        "focus": [
+          "gov",
+          "costalloc",
+          "tagging",
+          "labels",
+          "kubecost"
+        ],
+        "note": "Attribute costs with tags and labels and gain visibility with Kubecost."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gov",
+      "type": "security",
+      "label": "Resource Management and Governance",
+      "sublabel": "EKS cost control",
+      "pos": [
+        480,
+        40
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "reqlim",
+      "type": "security",
+      "label": "Resource Requests and Limits Optimization",
+      "pos": [
+        80,
+        170
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "requests",
+      "type": "backend",
+      "label": "Set Appropriate Resource Requests",
+      "sublabel": "requests · use VPA",
+      "pos": [
+        80,
+        290
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "limits",
+      "type": "backend",
+      "label": "Set Resource Limits",
+      "sublabel": "CPU · memory limits",
+      "pos": [
+        80,
+        380
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "nsquota",
+      "type": "security",
+      "label": "Namespaces and Resource Quotas",
+      "pos": [
+        480,
+        170
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "nssep",
+      "type": "backend",
+      "label": "Namespace-based Separation",
+      "sublabel": "per team · env · app",
+      "pos": [
+        480,
+        290
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "quota",
+      "type": "backend",
+      "label": "Set Resource Quotas",
+      "sublabel": "ResourceQuota",
+      "pos": [
+        480,
+        380
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "limitrange",
+      "type": "backend",
+      "label": "Set LimitRange",
+      "sublabel": "default container limits",
+      "pos": [
+        480,
+        470
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "costalloc",
+      "type": "security",
+      "label": "Cost Allocation and Tagging",
+      "pos": [
+        880,
+        170
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "tagging",
+      "type": "cloud",
+      "label": "Resource Tagging",
+      "sublabel": "AWS cost allocation tags",
+      "pos": [
+        880,
+        290
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "labels",
+      "type": "backend",
+      "label": "Kubernetes Labels and Annotations",
+      "sublabel": "labels · annotations",
+      "pos": [
+        880,
+        380
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "kubecost",
+      "type": "external",
+      "label": "Using Kubecost",
+      "sublabel": "cost visibility",
+      "pos": [
+        880,
+        470
+      ],
+      "size": [
+        260,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Requests and Limits",
+      "wraps": [
+        "reqlim",
+        "requests",
+        "limits"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "region",
+      "label": "Namespaces and Quotas",
+      "wraps": [
+        "nsquota",
+        "nssep",
+        "quota",
+        "limitrange"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "region",
+      "label": "Cost Allocation",
+      "wraps": [
+        "costalloc",
+        "tagging",
+        "labels",
+        "kubecost"
+      ],
+      "pad": 40
+    }
+  ],
+  "connections": [
+    {
+      "id": "gov-reqlim",
+      "from": "gov",
+      "to": "reqlim",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gov-nsquota",
+      "from": "gov",
+      "to": "nsquota",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gov-costalloc",
+      "from": "gov",
+      "to": "costalloc",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "reqlim-requests",
+      "from": "reqlim",
+      "to": "requests",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "reqlim-limits",
+      "from": "reqlim",
+      "to": "limits",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "nsquota-nssep",
+      "from": "nsquota",
+      "to": "nssep",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "nsquota-quota",
+      "from": "nsquota",
+      "to": "quota",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "nsquota-limitrange",
+      "from": "nsquota",
+      "to": "limitrange",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "costalloc-tagging",
+      "from": "costalloc",
+      "to": "tagging",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "costalloc-labels",
+      "from": "costalloc",
+      "to": "labels",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "costalloc-kubecost",
+      "from": "costalloc",
+      "to": "kubecost",
+      "fromSide": "left",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Understanding QoS Classes",
+      "items": [
+        "Guaranteed: request = limit (highest priority)",
+        "Burstable: request < limit",
+        "BestEffort: no request and limit (lowest priority)",
+        "Under resource pressure, BestEffort pods are evicted first, then Burstable"
+      ]
+    }
+  ]
+}

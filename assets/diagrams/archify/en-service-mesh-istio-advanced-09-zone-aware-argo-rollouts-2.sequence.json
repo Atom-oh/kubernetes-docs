@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Normal State — Zone-local Traffic",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      620
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "clientA",
+      "type": "external",
+      "label": "Client A",
+      "sublabel": "Zone A · us-east-1a"
+    },
+    {
+      "id": "envoyA",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "Zone A · distribute 100% local"
+    },
+    {
+      "id": "podA",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "zone=a · us-east-1a"
+    },
+    {
+      "id": "podB",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "zone=b · us-east-1b · not used"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 480,
+      "label": "Normal state: locality-aware routing keeps traffic zone-local"
+    }
+  ],
+  "messages": [
+    {
+      "id": "get-api",
+      "from": "clientA",
+      "to": "envoyA",
+      "y": 210,
+      "label": "GET /api",
+      "variant": "default",
+      "note": "Locality-aware routing · distribute: 100% local"
+    },
+    {
+      "id": "zone-local-request",
+      "from": "envoyA",
+      "to": "podA",
+      "y": 290,
+      "label": "Request (zone-local)",
+      "variant": "emphasis",
+      "note": "Processed within the same zone"
+    },
+    {
+      "id": "pod-response",
+      "from": "podA",
+      "to": "envoyA",
+      "y": 375,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "client-response",
+      "from": "envoyA",
+      "to": "clientA",
+      "y": 440,
+      "label": "Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoyA",
+      "from": 205,
+      "to": 447,
+      "type": "security"
+    },
+    {
+      "participant": "podA",
+      "from": 285,
+      "to": 382,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Zone B Pod",
+      "items": [
+        "Receives no requests in the normal state",
+        "distribute is set to 100% local, so no cross-zone traffic occurs"
+      ]
+    }
+  ]
+}

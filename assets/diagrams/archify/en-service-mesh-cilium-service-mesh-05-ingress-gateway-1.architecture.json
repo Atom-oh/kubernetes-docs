@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hybrid Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-05-ingress-gateway-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      560
+    ],
+    "views": [
+      {
+        "id": "l7-path",
+        "label": "ALB → Cilium Gateway (L7)",
+        "focus": [
+          "client",
+          "alb",
+          "ciliumgw",
+          "webapp",
+          "api"
+        ],
+        "note": "HTTP traffic accepted by the ALB is routed at L7 by the Cilium Gateway to the Web App and API Server."
+      },
+      {
+        "id": "l4-path",
+        "label": "NLB → Cilium LB (L4)",
+        "focus": [
+          "client",
+          "nlb",
+          "ciliumlb",
+          "grpc"
+        ],
+        "note": "Traffic accepted by the NLB is load-balanced at L4 by Cilium LB to the gRPC Service."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "External Client",
+      "sublabel": "Internet user",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "ALB",
+      "pos": [
+        270,
+        130
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "Network Load Balancer",
+      "sublabel": "NLB",
+      "pos": [
+        270,
+        380
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ciliumgw",
+      "type": "security",
+      "label": "Cilium Gateway",
+      "sublabel": "L7 routing",
+      "pos": [
+        560,
+        130
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ciliumlb",
+      "type": "security",
+      "label": "Cilium LB",
+      "sublabel": "L4 load balancing",
+      "pos": [
+        560,
+        380
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "webapp",
+      "type": "backend",
+      "label": "Web App",
+      "sublabel": "Web application",
+      "pos": [
+        830,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "API backend",
+      "pos": [
+        830,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "grpc",
+      "type": "backend",
+      "label": "gRPC Service",
+      "sublabel": "gRPC backend",
+      "pos": [
+        830,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Internet",
+      "wraps": [
+        "client"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS",
+      "wraps": [
+        "alb",
+        "nlb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Cluster",
+      "wraps": [
+        "ciliumgw",
+        "ciliumlb",
+        "webapp",
+        "api",
+        "grpc"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Cilium Layer",
+      "wraps": [
+        "ciliumgw",
+        "ciliumlb"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Applications",
+      "wraps": [
+        "webapp",
+        "api",
+        "grpc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-alb",
+      "from": "client",
+      "to": "alb",
+      "label": "HTTP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "client-nlb",
+      "from": "client",
+      "to": "nlb",
+      "label": "TCP"
+    },
+    {
+      "id": "alb-gw",
+      "from": "alb",
+      "to": "ciliumgw",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nlb-lb",
+      "from": "nlb",
+      "to": "ciliumlb"
+    },
+    {
+      "id": "gw-webapp",
+      "from": "ciliumgw",
+      "to": "webapp",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-api",
+      "from": "ciliumgw",
+      "to": "api"
+    },
+    {
+      "id": "lb-grpc",
+      "from": "ciliumlb",
+      "to": "grpc"
+    }
+  ]
+}

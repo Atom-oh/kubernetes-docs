@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How Custom Resources Work",
+    "output": "en-core-11-extending-kubernetes-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "kubectl apply",
+      "pos": [
+        430,
+        30
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "crd",
+      "type": "backend",
+      "label": "Custom Resource Definition",
+      "sublabel": "CustomResourceDefinition",
+      "pos": [
+        80,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cr",
+      "type": "backend",
+      "label": "Custom Resource Instance",
+      "sublabel": "kind: Backup",
+      "pos": [
+        700,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Registration",
+      "sublabel": "Exposes the new resource type",
+      "pos": [
+        80,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "val",
+      "type": "backend",
+      "label": "Validation",
+      "sublabel": "OpenAPI v3 schema",
+      "pos": [
+        700,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd Storage",
+      "sublabel": "Persists the instance",
+      "pos": [
+        1000,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes API Server",
+      "wraps": [
+        "crd",
+        "cr",
+        "api",
+        "val",
+        "etcd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-crd",
+      "from": "user",
+      "to": "crd",
+      "label": "1. Create/Update",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "user-cr",
+      "from": "user",
+      "to": "cr",
+      "label": "2. Create/Update",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "crd-cr",
+      "from": "crd",
+      "to": "cr",
+      "label": "Defines"
+    },
+    {
+      "id": "crd-api",
+      "from": "crd",
+      "to": "api",
+      "label": "Registers",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "cr-val",
+      "from": "cr",
+      "to": "val",
+      "label": "Validates",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "cr-etcd",
+      "from": "cr",
+      "to": "etcd",
+      "label": "Stores",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ]
+}

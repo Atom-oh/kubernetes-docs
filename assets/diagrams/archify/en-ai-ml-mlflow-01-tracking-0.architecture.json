@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MLflow: metadata and artifact paths",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1120,
+      500
+    ],
+    "views": [
+      {
+        "id": "proxy",
+        "label": "Server proxy",
+        "focus": [
+          "client",
+          "server",
+          "backend",
+          "artifact"
+        ],
+        "note": "Metadata and proxied artifacts use server APIs."
+      },
+      {
+        "id": "direct",
+        "label": "Direct artifacts",
+        "focus": [
+          "client",
+          "artifact"
+        ],
+        "note": "Direct URIs require client storage permissions."
+      },
+      {
+        "id": "browser",
+        "label": "Web UI",
+        "focus": [
+          "ui",
+          "server",
+          "backend"
+        ],
+        "note": "The browser calls HTTP APIs, not the SQL database directly."
+      }
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Stores"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "MLflow SDK client",
+      "sublabel": "training / evaluation",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Tracking server",
+      "sublabel": "metadata + artifact API",
+      "pos": [
+        410,
+        70
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "database",
+      "label": "SQL backend",
+      "sublabel": "experiments / runs / models",
+      "pos": [
+        830,
+        30
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "artifact",
+      "type": "database",
+      "label": "Artifact store",
+      "sublabel": "files / model weights",
+      "pos": [
+        830,
+        290
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Browser UI",
+      "sublabel": "HTTP API requests",
+      "pos": [
+        410,
+        270
+      ],
+      "size": [
+        230,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "metadata",
+      "from": "client",
+      "to": "server",
+      "label": "metadata / proxy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "db",
+      "from": "server",
+      "to": "backend",
+      "label": "SQL",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "proxy-file",
+      "from": "server",
+      "to": "artifact",
+      "label": "proxy files",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "ui-api",
+      "from": "ui",
+      "to": "server",
+      "label": "HTTP",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "dashed"
+    },
+    {
+      "id": "direct-file",
+      "from": "client",
+      "to": "artifact",
+      "label": "direct mode: client credentials",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Metadata",
+      "items": [
+        "New default: SQLite; choose an explicit production DB",
+        "Local SDK can use SQL without a separate HTTP server"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Artifact permissions",
+      "items": [
+        "Proxy: server permissions / direct: client permissions",
+        "Changing server flags does not rewrite existing artifact URIs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,304 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "KServe configuration and inference requests",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Client"
+        },
+        "backend": {
+          "label": "KServe component"
+        },
+        "cloud": {
+          "label": "Runtime unit (pods)"
+        },
+        "security": {
+          "label": "Deployment-mode decision"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "entry",
+        "label": "Resource configuration",
+        "focus": [
+          "request",
+          "isvc",
+          "predictor"
+        ],
+        "note": "Applying a spec is control-plane work; inference requests go to a running endpoint."
+      },
+      {
+        "id": "optional",
+        "label": "Optional components",
+        "focus": [
+          "predictor",
+          "transformer",
+          "explainer",
+          "mode"
+        ],
+        "note": "The transformer (pre/post-processing) and explainer (model explanations) are optional, added only when needed."
+      },
+      {
+        "id": "modes",
+        "label": "Deployment-mode branch",
+        "focus": [
+          "mode",
+          "knative",
+          "rawdep"
+        ],
+        "note": "Knative minReplicas defaults to 1; Standard uses the selected HPA/KEDA or external scaler."
+      },
+      {
+        "id": "inference",
+        "label": "Inference and response",
+        "focus": [
+          "client-call",
+          "model",
+          "response"
+        ],
+        "note": "Client requests reach model servers through configured network routes."
+      }
+    ],
+    "viewBox": [
+      1240,
+      776
+    ]
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "Operator / client"
+    },
+    {
+      "id": "isvc",
+      "label": "InferenceService"
+    },
+    {
+      "id": "optional",
+      "label": "Optional components"
+    },
+    {
+      "id": "serverless",
+      "label": "Knative"
+    },
+    {
+      "id": "raw",
+      "label": "Standard"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "isvc",
+    "predictor",
+    "mode",
+    "knative",
+    "model"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "client",
+      "col": 0,
+      "type": "external",
+      "label": "Apply definition",
+      "sublabel": "operator / API",
+      "width": 136
+    },
+    {
+      "id": "isvc",
+      "lane": "isvc",
+      "col": 1,
+      "type": "backend",
+      "label": "InferenceService",
+      "sublabel": "custom resource object",
+      "width": 136
+    },
+    {
+      "id": "predictor",
+      "lane": "isvc",
+      "col": 2,
+      "type": "backend",
+      "label": "Predictor spec",
+      "sublabel": "required · model server",
+      "width": 132
+    },
+    {
+      "id": "transformer",
+      "lane": "optional",
+      "col": 1,
+      "type": "backend",
+      "label": "Transformer",
+      "sublabel": "optional · pre/post-processing",
+      "width": 184
+    },
+    {
+      "id": "explainer",
+      "lane": "optional",
+      "col": 2,
+      "type": "backend",
+      "label": "Explainer",
+      "sublabel": "optional · model explanations",
+      "width": 184
+    },
+    {
+      "id": "mode",
+      "lane": "isvc",
+      "col": 3,
+      "type": "security",
+      "label": "Deployment mode",
+      "sublabel": "Knative / Standard",
+      "width": 148
+    },
+    {
+      "id": "knative",
+      "lane": "serverless",
+      "col": 4,
+      "type": "cloud",
+      "label": "Knative Service",
+      "sublabel": "zero requires configuration",
+      "width": 168
+    },
+    {
+      "id": "rawdep",
+      "lane": "raw",
+      "col": 3,
+      "type": "cloud",
+      "label": "Deployment / scaler",
+      "sublabel": "HPA / KEDA / external",
+      "width": 196
+    },
+    {
+      "id": "model",
+      "lane": "isvc",
+      "col": 5,
+      "type": "backend",
+      "label": "Ready model server",
+      "sublabel": "model load / inference",
+      "width": 196
+    },
+    {
+      "id": "response",
+      "lane": "client",
+      "col": 5,
+      "type": "external",
+      "label": "Response to client",
+      "sublabel": "inference result",
+      "width": 168
+    },
+    {
+      "id": "client-call",
+      "lane": "client",
+      "col": 4,
+      "type": "external",
+      "label": "Inference request",
+      "sublabel": "authenticated endpoint route",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-isvc",
+      "from": "request",
+      "to": "isvc"
+    },
+    {
+      "id": "isvc-predictor",
+      "from": "isvc",
+      "to": "predictor"
+    },
+    {
+      "id": "predictor-transformer",
+      "from": "predictor",
+      "to": "transformer",
+      "label": "optional",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "predictor-explainer",
+      "from": "predictor",
+      "to": "explainer",
+      "label": "optional",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "predictor-mode",
+      "from": "predictor",
+      "to": "mode"
+    },
+    {
+      "id": "mode-knative",
+      "from": "mode",
+      "to": "knative",
+      "label": "Knative",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mode-rawdep",
+      "from": "mode",
+      "to": "rawdep",
+      "label": "Standard",
+      "role": "branch"
+    },
+    {
+      "id": "knative-model",
+      "from": "knative",
+      "to": "model",
+      "route": "outside-right"
+    },
+    {
+      "id": "rawdep-model",
+      "from": "rawdep",
+      "to": "model",
+      "role": "branch"
+    },
+    {
+      "id": "model-response",
+      "from": "model",
+      "to": "response",
+      "label": "response",
+      "role": "return"
+    },
+    {
+      "id": "client-model",
+      "from": "client-call",
+      "to": "model",
+      "label": "HTTP / gRPC",
+      "role": "branch",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control and request paths",
+      "items": [
+        "Controllers process InferenceService specs; model servers run inference.",
+        "Transformer/explainer are optional and require protocol compatibility."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Knative",
+      "items": [
+        "minReplicas defaults to 1; zero needs additional conditions.",
+        "canaryTrafficPercent configures Knative revision traffic."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Standard",
+      "items": [
+        "Default HPA minimum 1; KEDA zero needs suitable activation signals",
+        "Startup/model-loading latency and EC2 charges can remain."
+      ]
+    }
+  ]
+}

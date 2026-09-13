@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray libraries and Kubernetes operations",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [
+      1150,
+      460
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "apps",
+      "type": "external",
+      "label": "Application code",
+      "sublabel": "Train / Tune / Serve / Core",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Ray runtime",
+      "sublabel": "tasks / actors / ObjectRefs",
+      "pos": [
+        420,
+        100
+      ],
+      "size": [
+        280,
+        80
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "cloud",
+      "label": "Ray Pods on Kubernetes",
+      "sublabel": "head / workers",
+      "pos": [
+        830,
+        100
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "KubeRay operator",
+      "sublabel": "RayCluster / RayJob / RayService",
+      "pos": [
+        730,
+        300
+      ],
+      "size": [
+        320,
+        80
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "calls",
+      "from": "apps",
+      "to": "core",
+      "label": "library / Core APIs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "runtime-in-pods",
+      "from": "core",
+      "to": "pods",
+      "label": "runs inside",
+      "variant": "emphasis"
+    },
+    {
+      "id": "reconcile",
+      "from": "operator",
+      "to": "pods",
+      "label": "reconcile resources",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Application",
+      "items": [
+        "Application selects libraries, work, and checkpoint policies",
+        "Framework-specific communication/controllers still exist above Core"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Infrastructure",
+      "items": [
+        "KubeRay does not automatically dispatch between ML libraries",
+        "Ray scheduling, Pod placement, and EC2 provisioning are separate"
+      ]
+    }
+  ]
+}

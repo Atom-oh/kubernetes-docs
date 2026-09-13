@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "컴퓨팅 비용 최적화 전략",
+    "output": "ko-eks-07-eks-cost-optimization-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1360,
+      500
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "비용 구성 요소"
+        },
+        "cloud": {
+          "label": "AWS 컴퓨팅 옵션"
+        },
+        "backend": {
+          "label": "Kubernetes 오토스케일러"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "instance-type",
+        "label": "인스턴스 유형 최적화",
+        "focus": [
+          "compute-cost",
+          "instance-type"
+        ],
+        "note": "워크로드에 맞는 인스턴스 패밀리를 고르고, 실제 사용량 기준으로 크기를 정하며, 최신 세대(M6i/M6g 등)를 우선 고려합니다."
+      },
+      {
+        "id": "spot",
+        "label": "스팟 인스턴스 활용",
+        "focus": [
+          "compute-cost",
+          "spot-instances"
+        ],
+        "note": "온디맨드 대비 최대 90% 저렴. 스테이트리스·내결함성·배치·CI/CD 워크로드에 적합하며 관리형 노드 그룹 또는 Karpenter로 프로비저닝합니다."
+      },
+      {
+        "id": "savings-plans",
+        "label": "Savings Plans 및 예약 인스턴스",
+        "focus": [
+          "compute-cost",
+          "savings-plans"
+        ],
+        "note": "Compute Savings Plans, EC2 Instance Savings Plans, 예약 인스턴스로 예측 가능한 사용량에 대해 약정 할인을 받습니다."
+      },
+      {
+        "id": "autoscaling",
+        "label": "자동 스케일링 최적화",
+        "focus": [
+          "compute-cost",
+          "autoscaling"
+        ],
+        "note": "Cluster Autoscaler 또는 Karpenter로 노드를, HPA와 VPA로 파드를 수요에 맞게 조정해 유휴 용량을 줄입니다."
+      },
+      {
+        "id": "fargate-vs-ec2",
+        "label": "Fargate vs EC2",
+        "focus": [
+          "compute-cost",
+          "fargate-vs-ec2"
+        ],
+        "note": "Fargate는 vCPU·메모리 사용량 기준으로, EC2는 노드 인스턴스 기준으로 과금되므로 워크로드 패턴에 따라 비용을 비교합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "compute-cost",
+      "type": "external",
+      "label": "컴퓨팅 비용 최적화",
+      "sublabel": "EKS 클러스터 최대 비용 항목",
+      "pos": [
+        580,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "instance-type",
+      "type": "cloud",
+      "label": "인스턴스 유형 최적화",
+      "sublabel": "패밀리 · 크기 · 세대",
+      "pos": [
+        35,
+        260
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "spot-instances",
+      "type": "cloud",
+      "label": "스팟 인스턴스 활용",
+      "sublabel": "워크로드 · MNG · Karpenter · 중단 처리",
+      "pos": [
+        295,
+        260
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "savings-plans",
+      "type": "cloud",
+      "label": "Savings Plans 및 예약 인스턴스",
+      "sublabel": "Compute SP · EC2 Instance SP · RI",
+      "pos": [
+        575,
+        260
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "autoscaling",
+      "type": "backend",
+      "label": "자동 스케일링 최적화",
+      "sublabel": "CA · Karpenter · HPA · VPA",
+      "pos": [
+        855,
+        260
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "fargate-vs-ec2",
+      "type": "cloud",
+      "label": "Fargate vs EC2 비용 비교",
+      "sublabel": "vCPU/메모리 과금 vs 노드 과금",
+      "pos": [
+        1115,
+        260
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cost-to-instance-type",
+      "from": "compute-cost",
+      "to": "instance-type"
+    },
+    {
+      "id": "cost-to-spot",
+      "from": "compute-cost",
+      "to": "spot-instances"
+    },
+    {
+      "id": "cost-to-savings-plans",
+      "from": "compute-cost",
+      "to": "savings-plans",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cost-to-autoscaling",
+      "from": "compute-cost",
+      "to": "autoscaling"
+    },
+    {
+      "id": "cost-to-fargate",
+      "from": "compute-cost",
+      "to": "fargate-vs-ec2"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "스팟 인스턴스 활용",
+      "items": [
+        "적합한 워크로드 유형: 스테이트리스, 내결함성, 배치 처리, CI/CD",
+        "관리형 노드 그룹(eksctl --spot) 또는 Karpenter NodePool(capacity-type: spot)",
+        "중단 처리: 여러 인스턴스 유형·가용 영역 분산, AWS Node Termination Handler"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Savings Plans 및 예약 인스턴스",
+      "items": [
+        "Compute Savings Plans",
+        "EC2 Instance Savings Plans",
+        "예약 인스턴스"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "자동 스케일링 최적화",
+      "items": [
+        "Cluster Autoscaler",
+        "Karpenter",
+        "Horizontal Pod Autoscaler",
+        "Vertical Pod Autoscaler"
+      ]
+    }
+  ]
+}

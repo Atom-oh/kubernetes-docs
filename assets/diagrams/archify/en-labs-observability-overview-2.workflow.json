@@ -1,0 +1,163 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Lab Sequence",
+    "locale": "en",
+    "output": "public/archmaps/en-labs-observability-overview-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "foundation",
+        "label": "Foundation (Parts 1-2)",
+        "focus": [
+          "p1",
+          "p2"
+        ],
+        "note": "Provision two EKS clusters and the AWS managed services, then deploy the OTel, Prometheus, Loki, Tempo, and Grafana stack."
+      },
+      {
+        "id": "workload",
+        "label": "Deploy and scale (Parts 3-4)",
+        "focus": [
+          "p2",
+          "p3",
+          "p4"
+        ],
+        "note": "Roll out the MSA as a canary with ArgoCD and Argo Rollouts, then drive k6 load to verify KEDA and Karpenter scaling."
+      },
+      {
+        "id": "operate",
+        "label": "Alerting and tracing (Parts 5-6)",
+        "focus": [
+          "p4",
+          "p5",
+          "p6"
+        ],
+        "note": "Handle alerts with Alertmanager, Grafana OnCall, and CloudWatch Investigations, then analyze traces with Tempo and TraceQL."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "AWS infrastructure"
+        },
+        "backend": {
+          "label": "Observability tooling"
+        },
+        "frontend": {
+          "label": "MSA application"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "roadmap",
+      "label": "Observability lab roadmap"
+    }
+  ],
+  "mainPath": [
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6"
+  ],
+  "nodes": [
+    {
+      "id": "p1",
+      "lane": "roadmap",
+      "col": 0,
+      "type": "cloud",
+      "label": "Infrastructure Setup",
+      "sublabel": "2 EKS · AWS managed services",
+      "tag": "Part 1 · 60 min",
+      "width": 168
+    },
+    {
+      "id": "p2",
+      "lane": "roadmap",
+      "col": 1,
+      "type": "backend",
+      "label": "Observability Stack",
+      "sublabel": "OTel · Prometheus · Grafana",
+      "tag": "Part 2 · 90 min",
+      "width": 168
+    },
+    {
+      "id": "p3",
+      "lane": "roadmap",
+      "col": 2,
+      "type": "frontend",
+      "label": "MSA Deploy & Canary",
+      "sublabel": "ArgoCD · Argo Rollouts · OTel",
+      "tag": "Part 3 · 60 min",
+      "width": 168
+    },
+    {
+      "id": "p4",
+      "lane": "roadmap",
+      "col": 3,
+      "type": "backend",
+      "label": "Load Test & Scaling",
+      "sublabel": "k6 · KEDA · Karpenter",
+      "tag": "Part 4 · 45 min",
+      "width": 168
+    },
+    {
+      "id": "p5",
+      "lane": "roadmap",
+      "col": 4,
+      "type": "backend",
+      "label": "Alerting & AIOps",
+      "sublabel": "Alertmanager · CW Investigations",
+      "tag": "Part 5 · 60 min",
+      "width": 168
+    },
+    {
+      "id": "p6",
+      "lane": "roadmap",
+      "col": 5,
+      "type": "backend",
+      "label": "Distributed Tracing",
+      "sublabel": "Tempo · TraceQL · correlation",
+      "tag": "Part 6 · 45 min",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "from": "p1",
+      "to": "p2",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p2",
+      "to": "p3",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p3",
+      "to": "p4",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p4",
+      "to": "p5",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p5",
+      "to": "p6",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ]
+}

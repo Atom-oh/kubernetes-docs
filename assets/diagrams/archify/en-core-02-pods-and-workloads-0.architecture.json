@@ -1,0 +1,304 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Structure",
+    "locale": "en",
+    "output": "en-core-02-pods-and-workloads-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      680
+    ],
+    "views": [
+      {
+        "id": "network",
+        "label": "Network",
+        "focus": [
+          "pod",
+          "podip",
+          "netns"
+        ],
+        "note": "All containers in the Pod share one Pod IP address and one network namespace."
+      },
+      {
+        "id": "containers",
+        "label": "Containers",
+        "focus": [
+          "pod",
+          "app",
+          "sidecar",
+          "init"
+        ],
+        "note": "The application and sidecar containers run together; the init container runs to completion before them."
+      },
+      {
+        "id": "storage",
+        "label": "Storage",
+        "focus": [
+          "pod",
+          "emptydir",
+          "configmap",
+          "secret",
+          "pvc"
+        ],
+        "note": "Volumes shared by the Pod's containers are defined as emptyDir, configMap, secret, or persistentVolumeClaim."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "cloud",
+      "label": "Pod",
+      "sublabel": "Smallest deployable unit",
+      "tag": "1 IP · 1 netns",
+      "pos": [
+        470,
+        280
+      ],
+      "size": [
+        160,
+        70
+      ]
+    },
+    {
+      "id": "podip",
+      "type": "frontend",
+      "label": "Pod IP Address",
+      "sublabel": "Unique within the cluster",
+      "pos": [
+        340,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "netns",
+      "type": "frontend",
+      "label": "Network Namespace",
+      "sublabel": "Shared by all containers",
+      "pos": [
+        580,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Container",
+      "sublabel": "Port 8080",
+      "pos": [
+        880,
+        150
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "Sidecar Container",
+      "sublabel": "Port 9090",
+      "pos": [
+        880,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "init",
+      "type": "backend",
+      "label": "Init Container",
+      "sublabel": "Runs before app containers",
+      "pos": [
+        880,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "emptydir",
+      "type": "database",
+      "label": "emptyDir Volume",
+      "sublabel": "Ephemeral shared storage",
+      "pos": [
+        100,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "configmap",
+      "type": "database",
+      "label": "configMap Volume",
+      "sublabel": "Configuration files",
+      "pos": [
+        320,
+        560
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "secret",
+      "type": "database",
+      "label": "secret Volume",
+      "sublabel": "Sensitive data",
+      "pos": [
+        560,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "database",
+      "label": "persistentVolumeClaim",
+      "sublabel": "Persistent storage",
+      "pos": [
+        780,
+        560
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Network",
+      "wraps": [
+        "podip",
+        "netns"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Containers",
+      "wraps": [
+        "app",
+        "sidecar",
+        "init"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage",
+      "wraps": [
+        "emptydir",
+        "configmap",
+        "secret",
+        "pvc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-podip",
+      "from": "pod",
+      "to": "podip",
+      "label": "assigns IP",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod-netns",
+      "from": "pod",
+      "to": "netns",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod-app",
+      "from": "pod",
+      "to": "app",
+      "label": "runs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-sidecar",
+      "from": "pod",
+      "to": "sidecar"
+    },
+    {
+      "id": "pod-init",
+      "from": "pod",
+      "to": "init",
+      "variant": "dashed"
+    },
+    {
+      "id": "pod-emptydir",
+      "from": "pod",
+      "to": "emptydir",
+      "label": "mounts",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-configmap",
+      "from": "pod",
+      "to": "configmap",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-secret",
+      "from": "pod",
+      "to": "secret",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Shared Context",
+      "items": [
+        "All containers in a Pod share the same network, IPC, and UTS namespaces",
+        "Each Pod has a unique IP address within the cluster"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Deployment Unit",
+      "items": [
+        "All containers in a Pod always run on the same node",
+        "A Pod is the atomic unit of deployment, scheduling, and replication"
+      ]
+    }
+  ]
+}

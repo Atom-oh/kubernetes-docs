@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI/ML 워크로드 배포",
+    "output": "ko-ai-ml-01-ai-ml-workloads-2.html",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "GPU 노드 스택"
+        },
+        "backend": {
+          "label": "ML 플랫폼 구성 요소"
+        },
+        "frontend": {
+          "label": "모델 서빙"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gpu-stack",
+        "label": "NVIDIA GPU 운영자",
+        "focus": [
+          "gpu-operator",
+          "driver",
+          "toolkit",
+          "device-plugin",
+          "dcgm"
+        ],
+        "note": "AL2023 NVIDIA AMI의 driver/toolkit 설치는 Operator에서 끄고 중복 owner를 피합니다."
+      },
+      {
+        "id": "kubeflow-stack",
+        "label": "Kubeflow",
+        "focus": [
+          "kubeflow",
+          "notebooks",
+          "training",
+          "pipelines-katib"
+        ],
+        "note": "현재 Kubeflow의 Trainer·Pipelines·Notebooks·Katib·KServe는 별도 API와 의존성을 가집니다."
+      },
+      {
+        "id": "serving-training",
+        "label": "서빙과 분산 훈련",
+        "focus": [
+          "kserve",
+          "serving-runtimes",
+          "mpi-operator"
+        ],
+        "note": "유지보수 runtime과 모델 형식을 확인하며 MPIJob은 설치된 Operator API에 맞춰 작성합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gpu-operator",
+      "type": "cloud",
+      "label": "NVIDIA GPU 운영자",
+      "sublabel": "Helm 차트로 설치",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "cloud",
+      "label": "NVIDIA 드라이버",
+      "sublabel": "AL2023 AMI에 사전 설치",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "toolkit",
+      "type": "cloud",
+      "label": "NVIDIA Container Toolkit",
+      "sublabel": "AL2023 AMI에 사전 설치",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "device-plugin",
+      "type": "cloud",
+      "label": "NVIDIA Device Plugin",
+      "sublabel": "GPU 리소스 노출",
+      "pos": [
+        740,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "dcgm",
+      "type": "cloud",
+      "label": "NVIDIA DCGM Exporter",
+      "sublabel": "GPU 모니터링 메트릭",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kubeflow",
+      "type": "backend",
+      "label": "Kubeflow",
+      "sublabel": "ML 플랫폼 / 개별 컴포넌트",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "notebooks",
+      "type": "backend",
+      "label": "Jupyter Notebooks",
+      "sublabel": "대화형 개발 환경",
+      "pos": [
+        300,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "training",
+      "type": "backend",
+      "label": "Trainer / 레거시 Jobs",
+      "sublabel": "분산 훈련 작업 실행",
+      "pos": [
+        520,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pipelines-katib",
+      "type": "backend",
+      "label": "Pipelines · Katib",
+      "sublabel": "ML 워크플로우 · 하이퍼파라미터 튜닝",
+      "pos": [
+        740,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kserve",
+      "type": "frontend",
+      "label": "KServe",
+      "sublabel": "모델 서빙 플랫폼",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "serving-runtimes",
+      "type": "frontend",
+      "label": "검증한 서빙 runtime",
+      "sublabel": "모델·장치·프로토콜 호환",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "mpi-operator",
+      "type": "backend",
+      "label": "MPI Operator",
+      "sublabel": "MPIJob으로 분산 훈련 실행",
+      "pos": [
+        740,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "gpu-operator",
+        "driver",
+        "toolkit",
+        "device-plugin",
+        "dcgm",
+        "kubeflow",
+        "notebooks",
+        "training",
+        "pipelines-katib",
+        "kserve",
+        "serving-runtimes",
+        "mpi-operator"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "GPU 계층 — owner별 구성",
+      "wraps": [
+        "driver",
+        "toolkit",
+        "device-plugin",
+        "dcgm"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Kubeflow 구성 요소",
+      "wraps": [
+        "notebooks",
+        "training",
+        "pipelines-katib"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "모델 서빙 옵션",
+      "wraps": [
+        "serving-runtimes"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "분산 훈련",
+      "wraps": [
+        "mpi-operator"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gpu-deploys",
+      "from": "gpu-operator",
+      "to": "driver",
+      "label": "소유권 확인",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kubeflow-provides",
+      "from": "kubeflow",
+      "to": "notebooks",
+      "label": "제공"
+    },
+    {
+      "id": "kserve-runtimes",
+      "from": "kserve",
+      "to": "serving-runtimes",
+      "label": "서빙 옵션",
+      "labelDy": 56
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "GPU 계층",
+      "items": [
+        "AL2023는 driver/toolkit을 제공; plugin과 관측성은 별도입니다.",
+        "GPU Operator와 standalone plugin은 관리 owner를 중복하지 않습니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "학습과 서빙",
+      "items": [
+        "KServe는 현재 이름이며 TorchServe는 유지보수 중단 상태입니다.",
+        "리소스 생성은 학습·추론 성공을 보장하지 않습니다."
+      ]
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # Kafka 핵심 개념 퀴즈
 
+> **검토 기준**: 2026-09-12, Kafka 4.3.1.
+
 이 퀴즈는 Kafka의 브로커/토픽/파티션 구조, 순서 보장, 컨슈머 그룹 리밸런싱, KRaft, 복제 및 내구성 설정에 대한 이해도를 테스트합니다.
 
 ## 객관식 문제
@@ -17,7 +19,7 @@
 **정답: C) 동일한 파티션 내에서만**
 
 **설명:**
-Kafka는 파티션 내부에서만 메시지 순서를 보장합니다. 하나의 토픽에 여러 파티션이 있으면, 프로듀서가 보낸 순서와 관계없이 서로 다른 파티션에 저장된 메시지 간의 상대적 순서는 보장되지 않습니다. 특정 엔티티(예: 주문 ID)의 이벤트 순서를 보장하려면 해당 엔티티를 식별하는 값을 메시지 키로 사용해 항상 같은 파티션으로 라우팅되도록 해야 합니다.
+파티션 로그의 기록 순서만 보장합니다. 같은 키를 같은 파티션으로 보내려면 serialization·partitioner·파티션 수가 일관되어야 하며, 파티션 증설이나 클라이언트 변경 시 매핑이 달라질 수 있습니다. 업무 발생 시각이나 소비자의 병렬 처리 순서는 별도 계약입니다.
 </details>
 
 2. ISR(In-Sync Replicas)이란 무엇을 의미하나요?
@@ -33,10 +35,10 @@ Kafka는 파티션 내부에서만 메시지 순서를 보장합니다. 하나�
 **정답: B) 리더와 충분히 동기화된 레플리카의 집합**
 
 **설명:**
-ISR(In-Sync Replicas)은 파티션의 리더 레플리카와 데이터가 충분히 동기화된 팔로워 레플리카(및 리더 자신)의 집합입니다. `acks=all`로 쓰기를 요청하면 ISR에 포함된 모든 레플리카가 메시지를 수신해야 쓰기가 성공한 것으로 간주됩니다. 팔로워가 리더를 따라가지 못하고 지연되면 ISR에서 제외되어, 장애 시 데이터 일관성을 지키기 위한 안전장치 역할을 합니다.
+ISR은 리더와 충분히 동기화된 복제본이며 리더 자신도 포함합니다. acks=all은 현재 ISR 전체의 승인을 기다리고 min.insync.replicas는 필요한 최소 ISR을 제한합니다. 승인과 매 레코드의 디스크 fsync는 같은 의미가 아닙니다.
 </details>
 
-3. Kafka 컨슈머의 `enable.auto.commit` 기본값은 무엇인가요?
+3. Kafka 4.3 Java KafkaConsumer의 enable.auto.commit 기본값은?
    - A) `false`
    - B) `true`
    - C) 브로커 설정에 따라 다름
@@ -49,12 +51,12 @@ ISR(In-Sync Replicas)은 파티션의 리더 레플리카와 데이터가 충분
 **정답: B) `true`**
 
 **설명:**
-`enable.auto.commit`의 기본값은 `true`이며, 이 경우 컨슈머는 `auto.commit.interval.ms`(기본 5초)마다 자동으로 오프셋을 커밋합니다. 편리하지만 메시지 처리가 완료되기 전에 오프셋이 커밋될 수 있어 장애 시 메시지 손실 위험이 있습니다. 처리 완료 후에만 커밋하려면 `enable.auto.commit=false`로 설정하고 `commitSync()` 또는 `commitAsync()`를 명시적으로 호출해야 합니다.
+Kafka 4.3 Java KafkaConsumer의 기본값은 true, 간격 기본값은 5000 ms입니다. 클라이언트 위치는 외부 업무 처리 완료와 다릅니다. 특히 비동기·병렬 처리에서는 완료되지 않은 레코드 뒤의 offset이 커밋되지 않도록 관리합니다. 수동 commit도 완료한 위치를 올바르게 계산해야 합니다.
 </details>
 
 4. 다음 중 컨슈머 그룹 리밸런싱을 유발하는 상황이 아닌 것은 무엇인가요?
    - A) 새 컨슈머가 그룹에 참여
-   - B) 컨슈머가 `session.timeout.ms` 내에 하트비트를 보내지 못함
+   - B) Classic 프로토콜의 컨슈머가 `session.timeout.ms` 내에 하트비트를 보내지 못함
    - C) 토픽의 파티션 수가 변경됨
    - D) 프로듀서가 `acks=all`로 메시지를 전송함
 
@@ -65,7 +67,7 @@ ISR(In-Sync Replicas)은 파티션의 리더 레플리카와 데이터가 충분
 **정답: D) 프로듀서가 `acks=all`로 메시지를 전송함**
 
 **설명:**
-리밸런싱은 컨슈머 그룹의 멤버십이나 구독 대상 토픽의 파티션 구성이 바뀔 때 발생합니다: 컨슈머의 참여/이탈, 하트비트 타임아웃, `max.poll.interval.ms` 초과, 파티션 수 변경 등이 대표적인 트리거입니다. 반면 `acks`는 프로듀서가 쓰기 완료를 확인하는 방식을 결정하는 설정으로, 컨슈머 그룹의 파티션 할당이나 리밸런싱과는 무관합니다.
+멤버십·구독 파티션 변화·heartbeat/poll timeout은 그룹 할당에 영향을 줍니다. Classic은 클라이언트 session.timeout.ms, consumer 프로토콜은 broker의 group.consumer.session.timeout.ms를 사용합니다. acks는 생산자의 승인 설정입니다.
 </details>
 
 5. KRaft(Kafka Raft metadata mode)가 프로덕션 사용 가능(GA)이 된 Kafka 버전은 언제부터인가요?
@@ -100,7 +102,7 @@ KRaft는 Kafka 2.8에서 초기 프리뷰(early access)로 처음 도입되었�
 Kafka 4.0(2025년 3월 출시)에서 ZooKeeper 기반 메타데이터 관리 모드가 완전히 제거되었습니다. 이 버전부터는 새로운 클러스터를 KRaft 모드로만 부트스트랩할 수 있으며, 기존 ZooKeeper 기반 클러스터는 Kafka 3.x에서 KRaft로 마이그레이션을 완료한 뒤에만 4.0으로 업그레이드할 수 있습니다.
 </details>
 
-7. 토픽을 `replication.factor=3`, `min.insync.replicas=2`로 설정하고 프로듀서가 `acks=all`을 사용할 때, 쓰기 가용성을 유지하면서 허용할 수 있는 최대 동시 브로커 장애 수는 몇 대인가요?
+7. 세 복제본이 모두 정상 ISR이고 controller quorum 등 다른 조건이 유지될 때, RF=3/min ISR=2/acks=all에서 쓰기 가용성을 유지할 수 있는 broker 장애 수는?
    - A) 0대
    - B) 1대
    - C) 2대
@@ -113,10 +115,10 @@ Kafka 4.0(2025년 3월 출시)에서 ZooKeeper 기반 메타데이터 관리 모
 **정답: B) 1대**
 
 **설명:**
-복제 팩터가 3이므로 파티션은 3개의 레플리카에 저장됩니다. `min.insync.replicas=2`는 ISR에 최소 2개의 레플리카가 남아 있어야 `acks=all` 쓰기가 성공한다는 의미입니다. 브로커 1대가 장애를 겪어도 나머지 2개의 레플리카가 ISR에 남아 있어 쓰기가 계속 성공합니다. 하지만 2대가 동시에 장애를 겪으면 ISR이 1개로 줄어 `min.insync.replicas` 조건을 만족하지 못해 프로듀서는 `NotEnoughReplicasException`을 받게 됩니다.
+처음 세 복제본이 모두 정상 ISR이고 controller quorum·네트워크·저장소 조건이 유지되는 경우의 답입니다. 한 broker 손실 후 두 ISR이 남으면 최소값을 만족하지만 leader 전환 중 오류와 재시도는 가능하며, 두 복제본 손실 시 쓰기 가용성은 유지되지 않습니다. RF=3만으로 임의의 두 장애에서 데이터 보존까지 보장하는 것은 아닙니다.
 </details>
 
-8. 프로듀서의 `acks` 설정 중 내구성이 가장 낮고 지연시간이 가장 짧은 값은 무엇인가요?
+8. broker 응답을 전혀 기다리지 않는 acks 설정은?
    - A) `acks=0`
    - B) `acks=1`
    - C) `acks=all`
@@ -129,7 +131,7 @@ Kafka 4.0(2025년 3월 출시)에서 ZooKeeper 기반 메타데이터 관리 모
 **정답: A) `acks=0`**
 
 **설명:**
-`acks=0`은 프로듀서가 브로커의 응답을 전혀 기다리지 않고 메시지를 전송한 즉시 성공으로 간주하는 설정입니다. 지연시간과 처리량 면에서는 가장 유리하지만, 네트워크 문제나 브로커 장애가 발생하면 메시지가 실제로 저장되었는지 알 수 없어 데이터 손실 위험이 가장 큽니다. 참고로 `acks=all`과 `acks=-1`은 동일한 의미이며, ISR의 모든 레플리카가 기록을 완료해야 성공으로 간주하는 가장 안전한 설정입니다.
+acks=0은 broker 응답을 기다리지 않아 저장 여부를 확인할 수 없고 반환 offset은 -1입니다. 모든 부하에서 지연·처리량이 가장 좋다고 보장하지 않습니다. 명시적 enable.idempotence=true와는 충돌합니다. acks=all과 -1은 같은 의미입니다.
 </details>
 
 9. KRaft 아키텍처에서 실제로 클러스터 메타데이터 변경(파티션 리더 선출, 토픽 생성 등)을 처리하는 단일 노드를 무엇이라고 부르나요?
@@ -145,10 +147,10 @@ Kafka 4.0(2025년 3월 출시)에서 ZooKeeper 기반 메타데이터 관리 모
 **정답: B) 액티브 컨트롤러(Active Controller)**
 
 **설명:**
-KRaft에서는 여러 컨트롤러 보터(일반적으로 3개 또는 5개, Raft 쿼럼을 위한 홀수 구성)가 메타데이터 로그 복제에 참여하며, 그중 하나가 Raft 합의를 통해 액티브 컨트롤러로 선출됩니다. 액티브 컨트롤러만이 실제로 클러스터 메타데이터 변경 작업을 처리하며, 장애가 발생하면 남은 보터들 사이에서 새로운 액티브 컨트롤러가 다시 선출됩니다.
+controller voter 중 하나가 active controller로 선출됩니다. 새 리더 선출에는 필요한 과반수와 통신이 유지되어야 합니다. 전용 controller 프로세스는 데이터 broker 역할을 수행하지 않을 수 있습니다.
 </details>
 
-10. `CooperativeStickyAssignor`를 사용하는 주된 목적은 무엇인가요?
+10. Classic 그룹 프로토콜의 CooperativeStickyAssignor를 사용하는 주된 목적은?
     - A) 프로듀서의 파티션 키 해싱 방식을 변경하기 위해
     - B) 리밸런싱 시 파티션 재배치를 최소화하여 리밸런싱 비용을 줄이기 위해
     - C) 컨트롤러 쿼럼의 보터 수를 동적으로 조정하기 위해
@@ -161,12 +163,12 @@ KRaft에서는 여러 컨트롤러 보터(일반적으로 3개 또는 5개, Raft
 **정답: B) 리밸런싱 시 파티션 재배치를 최소화하여 리밸런싱 비용을 줄이기 위해**
 
 **설명:**
-전통적인 Eager 리밸런싱 프로토콜은 리밸런싱이 시작되면 모든 컨슈머가 자신이 소유한 파티션을 반납한 뒤 처음부터 다시 할당받습니다. `CooperativeStickyAssignor`는 협력적(cooperative) 리밸런싱 프로토콜을 사용해, 실제로 이동이 필요한 파티션만 재할당하고 나머지 파티션은 기존 컨슈머가 계속 소유하도록 합니다. 이를 통해 리밸런싱 중 소비가 중단되는 파티션 수를 줄여 전체적인 처리량 저하를 완화합니다.
+CooperativeStickyAssignor는 Classic 그룹 프로토콜의 클라이언트 assignor입니다. 이동할 파티션을 점진적으로 재할당해 불필요한 중단을 줄입니다. 새 consumer 프로토콜은 서버 측 assignor를 사용하므로 이 클래스를 같은 설정 방법으로 적용하지 않습니다.
 </details>
 
 ## 단답형 문제
 
-11. KRaft 모드에서 클러스터 메타데이터가 저장되는 Kafka 내부 토픽의 이름은 무엇인가요?
+11. KRaft의 내부 메타데이터 Raft 로그 이름은?
 
 <details>
 
@@ -175,7 +177,7 @@ KRaft에서는 여러 컨트롤러 보터(일반적으로 3개 또는 5개, Raft
 **정답: `__cluster_metadata`**
 
 **설명:**
-KRaft 모드에서는 별도의 ZooKeeper 앙상블 대신, `__cluster_metadata`라는 내부 토픽에 클러스터 메타데이터(토픽/파티션 정보, ACL, 컨트롤러 상태 변경 이력 등)를 이벤트 로그 형태로 저장합니다. 컨트롤러 쿼럼의 보터들은 Raft 프로토콜을 통해 이 토픽을 복제하며, 브로커는 이 토픽을 구독해 최신 메타데이터를 반영합니다. 이는 Kafka가 자신의 핵심 저장 모델(파티션 로그)을 메타데이터 관리에도 재사용하는 설계입니다.
+__cluster_metadata는 KRaft의 내부 메타데이터 Raft 로그이며 보통 __cluster_metadata-0 디렉터리로 관찰됩니다. 일반 애플리케이션 토픽처럼 KafkaProducer/KafkaConsumer로 관리하는 대상이 아닙니다. controller와 broker는 메타데이터 복제·조회 경로로 상태를 반영합니다.
 </details>
 
 12. 프로듀서 설정 중 네트워크 재시도로 인한 메시지 중복 쓰기를 방지하기 위해 활성화하는 옵션의 이름은 무엇인가요?
@@ -187,7 +189,7 @@ KRaft 모드에서는 별도의 ZooKeeper 앙상블 대신, `__cluster_metadata`
 **정답: `enable.idempotence` (아이돔포턴트 프로듀서, `enable.idempotence=true`)**
 
 **설명:**
-`enable.idempotence=true`로 설정하면 프로듀서는 각 메시지에 순번(sequence number)과 프로듀서 ID를 부여하고, 브로커는 이를 이용해 동일한 메시지가 재시도로 인해 중복 저장되는 것을 감지하고 제거합니다. 이 옵션은 Kafka 내부(토픽 단위)에서의 정확히 한 번(exactly-once) 쓰기를 보장하는 기반이 되며, `transactional.id`와 결합하면 여러 파티션/토픽에 걸친 원자적 쓰기까지 확장할 수 있습니다.
+프로듀서 ID·epoch·sequence로 같은 전송의 재시도 중복을 방지합니다. 애플리케이션이 같은 업무 이벤트를 새 전송으로 다시 보내는 것까지 일반적으로 중복 제거하지 않습니다. 트랜잭션에는 안정적인 logical writer ID, fencing, 출력·입력 offset의 원자적 커밋과 read_committed 소비가 필요합니다.
 </details>
 
 13. 특정 파티션 키의 카디널리티(고유값 개수)가 낮아 트래픽이 소수의 파티션에 몰리는 현상을 무엇이라고 부르나요?
@@ -202,7 +204,7 @@ KRaft 모드에서는 별도의 ZooKeeper 앙상블 대신, `__cluster_metadata`
 핫 파티션은 파티션 키로 선택한 값의 고유값 개수(카디널리티)가 충분히 크지 않거나 특정 값의 빈도가 지나치게 높을 때 발생합니다. 예를 들어 전체 트래픽의 대부분이 소수의 대형 고객 ID로 몰리면, 해당 키로 라우팅되는 파티션만 과도한 부하를 받고 나머지 파티션은 유휴 상태가 됩니다. 이 문제는 컨슈머 병렬 처리의 이점을 무력화하므로, 키 설계 시 트래픽 분포를 사전에 검토해야 합니다.
 </details>
 
-14. 컨슈머가 `poll()` 호출 사이에 메시지 처리에 소요할 수 있는 최대 시간을 제어하며, 이를 초과하면 컨슈머가 그룹을 떠난 것으로 간주되어 리밸런싱이 트리거되는 설정의 이름은 무엇인가요?
+14. KafkaConsumer의 연속 poll() 호출 사이 허용 간격을 제한하는 설정은?
 
 <details>
 
@@ -211,7 +213,7 @@ KRaft 모드에서는 별도의 ZooKeeper 앙상블 대신, `__cluster_metadata`
 **정답: `max.poll.interval.ms`**
 
 **설명:**
-`max.poll.interval.ms`는 컨슈머가 연속된 `poll()` 호출 사이에 허용되는 최대 시간 간격을 지정합니다(기본값 5분). 한 번의 `poll()`로 가져온 레코드를 처리하는 데 이 시간을 초과하면, 브로커는 해당 컨슈머가 더 이상 살아있지 않다고 판단하고 그룹에서 제외한 뒤 리밸런싱을 트리거합니다. 이는 하트비트 스레드가 별도로 동작하는 `session.timeout.ms`와는 별개의 메커니즘으로, 처리 로직이 느린 경우 이 값을 늘리거나 `max.poll.records`를 줄여 배치 크기를 조정해야 합니다.
+기본값은 300000 ms입니다. 정적 멤버십(group.instance.id)에서는 초과 즉시 파티션을 재할당하지 않고 heartbeat 중단 후 session timeout도 관여합니다. 사용하는 Classic/consumer 프로토콜에 맞는 timeout을 확인하고 처리량·poll 크기·처리 모델을 함께 조정합니다.
 </details>
 
 ## 실습 문제
@@ -225,7 +227,7 @@ KRaft 모드에서는 별도의 ZooKeeper 앙상블 대신, `__cluster_metadata`
 **정답:**
 ```bash
 kafka-topics.sh --create \
-  --bootstrap-server localhost:9092 \
+  --bootstrap-server "$DOCS_BOOTSTRAP" \
   --topic events \
   --partitions 8 \
   --replication-factor 3 \
@@ -233,10 +235,10 @@ kafka-topics.sh --create \
 ```
 
 **설명:**
-`--partitions 8`은 토픽을 8개의 파티션으로 분할해 최대 8개의 컨슈머가 동시에 병렬 소비할 수 있게 합니다. `--replication-factor 3`은 각 파티션을 3개의 브로커에 복제하여 최대 2대의 브로커 장애까지 데이터를 보존합니다. `--config min.insync.replicas=2`는 `acks=all`로 쓸 때 최소 2개의 레플리카가 ISR에 남아 있어야 쓰기가 성공하도록 강제하여, 복제 팩터와 결합해 1대의 브로커 장애까지 쓰기 가용성을 유지합니다.
+이미 접근 가능한 3개 이상 broker와 필요한 인증을 전제로 합니다. 8개 파티션은 자동 파티션 할당 그룹에서 최대 8명의 활성 담당자를 허용하며, 한 소비자가 여러 파티션을 맡을 수도 있습니다. RF와 min ISR의 장애 허용은 실제 동기화 상태·quorum 등 조건을 만족할 때만 성립합니다.
 </details>
 
-16. 3개의 노드로 구성된 전용 KRaft 컨트롤러 쿼럼(브로커 역할 없이 컨트롤러 역할만 수행)의 `server.properties` 설정 예시를 작성하세요. (노드 ID는 90, 91, 92를 사용)
+16. Kafka 4.3.1의 전용 controller(node.id=90)에 세 controller endpoint를 discovery seed로 설정하는 동적 quorum 구성 발췌를 작성하고, seed와 voter 멤버십의 차이를 설명하세요.
 
 <details>
 
@@ -244,23 +246,22 @@ kafka-topics.sh --create \
 
 **정답:**
 ```properties
-# 각 컨트롤러 전용 노드의 server.properties (예: node.id=90인 노드)
+# Configuration excerpt for node 90; these DNS names must resolve in the deployment.
 process.roles=controller
 node.id=90
-
-controller.quorum.voters=90@kraft-controller-0:9093,91@kraft-controller-1:9093,92@kraft-controller-2:9093
-
-listeners=CONTROLLER://:9093
+controller.quorum.bootstrap.servers=controller-0.example.internal:9093,controller-1.example.internal:9093,controller-2.example.internal:9093
+listeners=CONTROLLER://controller-0.example.internal:9093
+advertised.listeners=CONTROLLER://controller-0.example.internal:9093
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
 controller.listener.names=CONTROLLER
-
-log.dirs=/var/lib/kafka/controller-data
+log.dirs=./controller-90-data
 ```
 
 **설명:**
-`process.roles=controller`로 설정하면 이 노드는 브로커 역할 없이 오직 컨트롤러 쿼럼의 보터로만 동작합니다. 대규모 클러스터에서는 이렇게 컨트롤러 역할을 브로커와 분리하면 메타데이터 처리 부하가 데이터 처리 부하와 경쟁하지 않아 안정성이 높아집니다. `controller.quorum.voters`에는 컨트롤러 쿼럼에 참여하는 모든 노드의 `node.id@host:port`를 나열해야 하며, 3개(또는 5개)의 홀수 구성으로 Raft 쿼럼 과반수를 계산할 수 있게 합니다.
+controller.quorum.bootstrap.servers는 quorum을 찾기 위한 seed 목록이지 voter 멤버십 선언이 아닙니다. 초기 format/bootstrap에서 cluster ID·directory ID·초기 voter를 맞춰야 합니다. 동적 quorum에서는 controller.quorum.voters를 설정하지 않습니다. DNS·listener·TLS/인증은 실제 환경에 맞춰야 하며 이 코드는 시작 가능한 전체 배포 명세가 아닌 설명용 발췌입니다.
 </details>
 
-17. 프로듀서 설정에서 `acks=all`, 아이돔포턴트 쓰기, 트랜잭션 ID를 모두 사용해 정확히 한 번(exactly-once) 쓰기를 구성하는 프로듀서 설정 예시(Java 프로퍼티 형식)를 작성하세요.
+17. Idempotence와 transactional ID를 사용하는 producer 설정 예시와, Kafka-to-Kafka exactly-once 처리에 추가로 필요한 절차를 설명하세요.
 
 <details>
 
@@ -268,16 +269,18 @@ log.dirs=/var/lib/kafka/controller-data
 
 **정답:**
 ```properties
-bootstrap.servers=broker1:9092,broker2:9092,broker3:9092
+bootstrap.servers=127.0.0.1:19092
+key.serializer=org.apache.kafka.common.serialization.StringSerializer
+value.serializer=org.apache.kafka.common.serialization.StringSerializer
 acks=all
 enable.idempotence=true
-transactional.id=order-producer-1
+transactional.id=orders-writer-1
 max.in.flight.requests.per.connection=5
-retries=2147483647
+delivery.timeout.ms=120000
 ```
 
 **설명:**
-`acks=all`은 ISR의 모든 레플리카가 메시지를 수신해야 성공으로 간주하도록 하고, `enable.idempotence=true`는 재시도로 인한 중복 쓰기를 제거합니다. `transactional.id`를 지정하면 프로듀서는 트랜잭셔널 프로듀서로 동작하며, `initTransactions()`, `beginTransaction()`, `commitTransaction()` API를 통해 여러 파티션에 걸친 쓰기를 원자적으로 처리할 수 있습니다. `retries`를 높게 설정해도 `enable.idempotence=true`이면 순서와 중복이 안전하게 관리되며, `max.in.flight.requests.per.connection`은 5 이하로 유지해야 순서 보장이 깨지지 않습니다.
+이 설정은 트랜잭션을 사용할 준비일 뿐 처리 코드를 대신하지 않습니다. initTransactions→beginTransaction→출력 send→sendOffsetsToTransaction(다음 입력 offset)→commitTransaction과 실패 시 abort/복구가 필요합니다. consumer는 auto commit을 끄고 read_committed를 사용합니다. 동시 writer는 고유한 transactional ID를 사용하며 delivery.timeout.ms 등 기한도 적용됩니다.
 </details>
 
 ---

@@ -1,33 +1,33 @@
-# Part 1: Prerequisites
+# Part 1: 前提条件
 
-Amazon EKS cluster を作成する方法はいくつかあります。この章では、さまざまな tools と方法を使用して EKS cluster を作成する方法を学びます。
+Amazon EKS クラスターを作成する方法はいくつかあります。この章では、さまざまなツールと方法を使用して EKS クラスターを作成する方法を学びます。
 
-## Table of Contents
+## 目次
 
-1. [Prerequisites](02-eks-cluster-creation-part1.md#prerequisites)
-2. [Creating a Cluster Using eksctl](02-eks-cluster-creation-part1.md#creating-a-cluster-using-eksctl)
-3. [Creating a Cluster Using AWS Management Console](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-management-console)
-4. [Creating a Cluster Using AWS CLI](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-cli)
-5. [Creating a Cluster Using Terraform](02-eks-cluster-creation-part1.md#creating-a-cluster-using-terraform)
+1. [前提条件](02-eks-cluster-creation-part1.md#prerequisites)
+2. [eksctl を使用したクラスターの作成](02-eks-cluster-creation-part1.md#creating-a-cluster-using-eksctl)
+3. [AWS Management Console を使用したクラスターの作成](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-management-console)
+4. [AWS CLI を使用したクラスターの作成](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-cli)
+5. [Terraform を使用したクラスターの作成](02-eks-cluster-creation-part1.md#creating-a-cluster-using-terraform)
 
-## Prerequisites
+## 前提条件
 
-EKS cluster を作成する前に、次の prerequisites が必要です。
+EKS クラスターを作成する前に、次の前提条件が必要です。
 
-### 1. AWS Account
+### 1. AWS アカウント
 
-有効な AWS account が必要です。AWS account を持っていない場合は、[AWS website](https://aws.amazon.com/) でサインアップできます。
+有効な AWS アカウントが必要です。AWS アカウントをお持ちでない場合は、[AWS ウェブサイト](https://aws.amazon.com/)で登録できます。
 
-### 2. IAM Permissions
+### 2. IAM 権限
 
-EKS cluster を作成および管理するには、次の IAM permissions が必要です。
+EKS クラスターを作成および管理するには、次の IAM 権限が必要です。
 
 * `eks:*`
 * `ec2:*`
 * `iam:*`
 * `cloudformation:*`
 
-administrator permissions がある場合、追加の permission settings は不要です。それ以外の場合は、次の IAM policy を user または role にアタッチする必要があります。
+管理者権限をお持ちの場合、追加の権限設定は必要ありません。それ以外の場合は、次の IAM ポリシーをユーザーまたはロールにアタッチする必要があります。
 
 ```json
 {
@@ -47,13 +47,13 @@ administrator permissions がある場合、追加の permission settings は不
 }
 ```
 
-### 3. Tool Installation
+### 3. ツールのインストール
 
-EKS cluster を作成および管理するには、次の tools をインストールする必要があります。
+EKS クラスターを作成および管理するには、次のツールをインストールする必要があります。
 
 #### AWS CLI
 
-AWS CLI は、command line から AWS services を制御するための統合 tool です。
+AWS CLI は、コマンドラインから AWS サービスを操作するための統合ツールです。
 
 **macOS**:
 
@@ -76,7 +76,7 @@ sudo ./aws/install
 https://awscli.amazonaws.com/AWSCLIV2.msi
 ```
 
-AWS CLI をインストールした後、次の command を実行して credentials を設定します。
+AWS CLI をインストールした後、次のコマンドを実行して認証情報を設定します。
 
 ```bash
 aws configure
@@ -84,7 +84,7 @@ aws configure
 
 #### kubectl
 
-kubectl は、Kubernetes clusters と通信するための command-line tool です。
+kubectl は、Kubernetes クラスターと通信するためのコマンドラインツールです。
 
 **macOS**:
 
@@ -110,7 +110,7 @@ curl -LO "https://dl.k8s.io/release/v1.26.0/bin/windows/amd64/kubectl.exe"
 
 #### eksctl
 
-eksctl は、EKS clusters を作成および管理するためのシンプルな CLI tool です。
+eksctl は、EKS クラスターを作成および管理するためのシンプルな CLI ツールです。
 
 **macOS**:
 
@@ -143,35 +143,37 @@ Expand-Archive -Path eksctl.zip -DestinationPath $env:USERPROFILE\.eksctl\bin
 $env:PATH += ";$env:USERPROFILE\.eksctl\bin"
 ```
 
-### 4. VPC and Subnets
+### 4. VPC とサブネット
 
-EKS cluster には VPC と subnets が必要です。既存の VPC を使用することも、新しいものを作成することもできます。EKS cluster 用の VPC は、次の要件を満たす必要があります。
+EKS クラスターには VPC とサブネットが必要です。既存の VPC を使用することも、新しい VPC を作成することもできます。EKS クラスター用の VPC は、次の要件を満たす必要があります。
 
-![EKS VPC Architecture](../.gitbook/assets/eks_vpc_architecture.png)
+![パブリックサブネット内のロードバランサー、NAT Gateway、および 2 つの Availability Zone にまたがるプライベートサブネット内のワーカーノードを配置した EKS VPC アーキテクチャ図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part1-0.png)
 
-* 少なくとも 2 つの subnets が異なる availability zones に存在する必要があります。
-* Subnets は internet access（NAT gateway または internet gateway 経由）を持つ必要があります。
-* Subnets には十分な IP addresses が必要です。
-* Subnets には適切な tags が必要です。
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part1-0.html)
 
-#### VPC Tags for EKS Cluster
+* 少なくとも 2 つのサブネットが異なるアベイラビリティーゾーンに存在する必要があります。
+* サブネットにはインターネットアクセスが必要です（NAT Gateway またはインターネットゲートウェイ経由）。
+* サブネットには十分な IP アドレスが必要です。
+* サブネットには適切なタグが必要です。
 
-EKS cluster が VPC と subnets を正しく使用できるようにするには、次の tags を適用する必要があります。
+#### EKS クラスター用 VPC タグ
 
-**VPC Tags**:
+EKS クラスターが VPC とサブネットを正しく使用できるようにするには、次のタグを適用する必要があります。
 
-* `kubernetes.io/cluster/<cluster-name>`: `shared` or `owned`
+**VPC タグ**:
 
-**Public Subnet Tags**:
+* `kubernetes.io/cluster/<cluster-name>`: `shared` または `owned`
 
-* `kubernetes.io/cluster/<cluster-name>`: `shared` or `owned`
+**パブリックサブネットタグ**:
+
+* `kubernetes.io/cluster/<cluster-name>`: `shared` または `owned`
 * `kubernetes.io/role/elb`: `1`
 
-**Private Subnet Tags**:
+**プライベートサブネットタグ**:
 
-* `kubernetes.io/cluster/<cluster-name>`: `shared` or `owned`
+* `kubernetes.io/cluster/<cluster-name>`: `shared` または `owned`
 * `kubernetes.io/role/internal-elb`: `1`
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するには、[EKS Cluster Creation - Part 1 Quiz](../quizzes/eks/02-eks-cluster-creation-part1-quiz.md) に挑戦してください。
+この章で学んだ内容を確認するには、[EKS クラスターの作成 - Part 1 クイズ](../quizzes/eks/02-eks-cluster-creation-part1-quiz.md)に挑戦してください。

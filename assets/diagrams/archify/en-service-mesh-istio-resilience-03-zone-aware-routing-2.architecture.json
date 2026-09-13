@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How It Works Without Pod AZ Labels",
+    "locale": "en",
+    "output": "en-service-mesh-istio-resilience-03-zone-aware-routing-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Istiod control plane"
+        },
+        "cloud": {
+          "label": "Workload Pod (no zone label)"
+        },
+        "frontend": {
+          "label": "Data plane sidecar"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "lookup",
+        "label": "1. Query Node labels",
+        "focus": [
+          "discovery",
+          "podA",
+          "podB",
+          "podC"
+        ],
+        "note": "Istiod reads the topology.kubernetes.io/zone label of the Node each Pod runs on. The Pods themselves carry no zone label."
+      },
+      {
+        "id": "locality",
+        "label": "2. Determine Pod Locality",
+        "focus": [
+          "discovery",
+          "eds"
+        ],
+        "note": "The Pod → Node mapping yields Pod A → us-east-1a and Pod C → us-east-1b, which is written into EDS as locality."
+      },
+      {
+        "id": "push",
+        "label": "3. xDS push",
+        "focus": [
+          "eds",
+          "envoy"
+        ],
+        "note": "EDS including locality information is pushed to the Envoy proxy over xDS."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "discovery",
+      "type": "backend",
+      "label": "Service Discovery",
+      "sublabel": "Pod → Node mapping",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "eds",
+      "type": "backend",
+      "label": "EDS generation",
+      "sublabel": "Includes locality info",
+      "pos": [
+        420,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "frontend",
+      "label": "Envoy Proxy",
+      "sublabel": "Locality-based routing",
+      "pos": [
+        780,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "podA",
+      "type": "cloud",
+      "label": "Pod A",
+      "sublabel": "No zone label",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "podB",
+      "type": "cloud",
+      "label": "Pod B",
+      "sublabel": "No zone label",
+      "pos": [
+        240,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "podC",
+      "type": "cloud",
+      "label": "Pod C",
+      "sublabel": "No zone label",
+      "pos": [
+        560,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istiod (Control Plane)",
+      "wraps": [
+        "discovery",
+        "eds"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 1 · topology.kubernetes.io/zone=us-east-1a",
+      "wraps": [
+        "podA",
+        "podB"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2 · topology.kubernetes.io/zone=us-east-1b",
+      "wraps": [
+        "podC"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "lookup-node1",
+      "from": "discovery",
+      "to": "podA",
+      "label": "1. Query Node labels",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          150,
+          210
+        ],
+        [
+          10,
+          210
+        ],
+        [
+          10,
+          370
+        ]
+      ]
+    },
+    {
+      "id": "lookup-node2",
+      "from": "discovery",
+      "to": "podC",
+      "label": "1. Query Node labels",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "labelSegment": 2,
+      "via": [
+        [
+          150,
+          250
+        ],
+        [
+          760,
+          250
+        ],
+        [
+          760,
+          370
+        ]
+      ]
+    },
+    {
+      "id": "locality-to-eds",
+      "from": "discovery",
+      "to": "eds",
+      "label": "2. Determine Pod Locality",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xds-push",
+      "from": "eds",
+      "to": "envoy",
+      "label": "3. xDS push",
+      "variant": "emphasis"
+    }
+  ]
+}

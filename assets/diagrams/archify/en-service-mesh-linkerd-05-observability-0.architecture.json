@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd Observability Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-linkerd-05-observability-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "metrics-path",
+        "label": "Metrics collection path",
+        "focus": [
+          "proxy",
+          "prom",
+          "metrics",
+          "web",
+          "graf"
+        ],
+        "note": "Proxy metrics are stored in Prometheus, shown directly in Grafana, and aggregated through the Metrics API for the Web Dashboard."
+      },
+      {
+        "id": "tap-stream",
+        "label": "Tap live stream",
+        "focus": [
+          "tap",
+          "web"
+        ],
+        "note": "The Tap API feeds the live request stream to the Tap view of the Web Dashboard."
+      },
+      {
+        "id": "external",
+        "label": "External integration (optional)",
+        "focus": [
+          "prom",
+          "ext-prom",
+          "ext-graf",
+          "proxy",
+          "jaeger"
+        ],
+        "note": "Metrics can be forwarded to an existing Prometheus/Grafana pair, and spans can be sent to Jaeger for distributed tracing."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "proxy",
+      "type": "backend",
+      "label": "Linkerd Proxy",
+      "sublabel": "Metrics collection",
+      "tag": "×3",
+      "pos": [
+        40,
+        520
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metrics storage",
+      "pos": [
+        300,
+        140
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "graf",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Visualization",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metrics API",
+      "sublabel": "Aggregation",
+      "pos": [
+        560,
+        220
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "tap",
+      "type": "backend",
+      "label": "Tap API",
+      "sublabel": "Real-time stream",
+      "pos": [
+        560,
+        380
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "Web Dashboard",
+      "sublabel": "UI",
+      "pos": [
+        800,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "ext-prom",
+      "type": "external",
+      "label": "External Prometheus",
+      "sublabel": "Existing metrics store",
+      "pos": [
+        1080,
+        140
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ext-graf",
+      "type": "external",
+      "label": "External Grafana",
+      "sublabel": "Existing dashboards",
+      "pos": [
+        1080,
+        300
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "external",
+      "label": "Jaeger",
+      "sublabel": "Distributed tracing",
+      "pos": [
+        1080,
+        520
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "proxy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Viz Extension",
+      "wraps": [
+        "prom",
+        "graf",
+        "metrics",
+        "tap",
+        "web"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "External (Optional)",
+      "wraps": [
+        "ext-prom",
+        "ext-graf",
+        "jaeger"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "proxy-to-prom",
+      "from": "proxy",
+      "to": "prom",
+      "label": ":4191 scrape",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prom-to-graf",
+      "from": "prom",
+      "to": "graf"
+    },
+    {
+      "id": "prom-to-metrics",
+      "from": "prom",
+      "to": "metrics",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metrics-to-web",
+      "from": "metrics",
+      "to": "web",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tap-to-web",
+      "from": "tap",
+      "to": "web"
+    },
+    {
+      "id": "prom-to-ext-prom",
+      "from": "prom",
+      "to": "ext-prom",
+      "label": "optional",
+      "variant": "dashed"
+    },
+    {
+      "id": "ext-prom-to-ext-graf",
+      "from": "ext-prom",
+      "to": "ext-graf",
+      "variant": "dashed"
+    },
+    {
+      "id": "proxy-to-jaeger",
+      "from": "proxy",
+      "to": "jaeger",
+      "label": "spans (optional)",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Golden Metrics",
+      "items": [
+        "Success rate: response_total{classification=\"success\"}",
+        "Request rate (RPS): request_total",
+        "Latency (p50/p95/p99): response_latency_ms_bucket"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Viz Dashboard Views",
+      "items": [
+        "Namespace · Deployments · Pods · TCP",
+        "Routes(ServiceProfile) · Topology",
+        "Tap: real-time request stream"
+      ]
+    }
+  ]
+}

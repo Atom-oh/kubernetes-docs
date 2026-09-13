@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "트래픽 관리 아키텍처",
+    "output": "ko-service-mesh-cilium-service-mesh-02-traffic-management-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "request-path", "label": "요청 경로", "focus": ["client", "http", "lb", "routing", "server"], "note": "클라이언트 요청은 L7 → L4 → L3 순서로 각 계층의 핵심 기능을 거쳐 서버에 도달한다." },
+      { "id": "l7-envoy", "label": "L7 · Envoy", "focus": ["http", "grpc", "tls", "headers"], "note": "Envoy 프록시가 HTTP/gRPC 라우팅, TLS 종료, 헤더 조작을 담당한다." },
+      { "id": "l4-ebpf", "label": "L4 · eBPF", "focus": ["lb", "ct", "nat", "dsr"], "note": "커널 eBPF가 로드 밸런싱, 커넥션 트래킹, NAT/SNAT, DSR을 처리한다." },
+      { "id": "l3-ebpf", "label": "L3 · eBPF", "focus": ["routing", "tunnel", "policy"], "note": "IP 라우팅, 터널/오버레이, 네트워크 정책이 L3에서 적용된다." }
+    ],
+    "legend": {
+      "entries": {
+        "external": { "label": "클라이언트 / 서버" },
+        "backend": { "label": "트래픽 관리 기능" },
+        "security": { "label": "네트워크 정책" }
+      }
+    }
+  },
+  "components": [
+    { "id": "client", "type": "external", "label": "클라이언트", "sublabel": "요청 시작", "pos": [30, 80], "size": [140, 60] },
+    { "id": "http", "type": "backend", "label": "HTTP 라우팅", "sublabel": "Envoy", "pos": [240, 80], "size": [180, 60] },
+    { "id": "grpc", "type": "backend", "label": "gRPC 라우팅", "pos": [240, 170], "size": [180, 44] },
+    { "id": "tls", "type": "backend", "label": "TLS 종료", "pos": [240, 230], "size": [180, 44] },
+    { "id": "headers", "type": "backend", "label": "헤더 조작", "pos": [240, 290], "size": [180, 44] },
+    { "id": "lb", "type": "backend", "label": "로드 밸런싱", "sublabel": "eBPF", "pos": [500, 80], "size": [180, 60] },
+    { "id": "ct", "type": "backend", "label": "커넥션 트래킹", "pos": [500, 170], "size": [180, 44] },
+    { "id": "nat", "type": "backend", "label": "NAT / SNAT", "pos": [500, 230], "size": [180, 44] },
+    { "id": "dsr", "type": "backend", "label": "Direct Server Return", "pos": [500, 290], "size": [180, 44] },
+    { "id": "routing", "type": "backend", "label": "IP 라우팅", "sublabel": "eBPF", "pos": [760, 80], "size": [180, 60] },
+    { "id": "tunnel", "type": "backend", "label": "터널 / 오버레이", "pos": [760, 170], "size": [180, 44] },
+    { "id": "policy", "type": "security", "label": "네트워크 정책", "pos": [760, 230], "size": [180, 44] },
+    { "id": "server", "type": "external", "label": "서버", "sublabel": "요청 도착", "pos": [1030, 80], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "L7 · Envoy", "wraps": ["http", "grpc", "tls", "headers"] },
+    { "kind": "region", "label": "L4 · eBPF", "wraps": ["lb", "ct", "nat", "dsr"] },
+    { "kind": "region", "label": "L3 · eBPF", "wraps": ["routing", "tunnel", "policy"] }
+  ],
+  "connections": [
+    { "id": "client-to-http", "from": "client", "to": "http", "label": "요청", "variant": "emphasis" },
+    { "id": "http-to-lb", "from": "http", "to": "lb", "variant": "emphasis" },
+    { "id": "lb-to-routing", "from": "lb", "to": "routing", "variant": "emphasis" },
+    { "id": "routing-to-server", "from": "routing", "to": "server", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "L7 설정 수단", "items": ["CiliumEnvoyConfig로 서비스별 Envoy 설정 정의", "CiliumNetworkPolicy의 L7 규칙", "Gateway API 통합"] }
+  ]
+}
