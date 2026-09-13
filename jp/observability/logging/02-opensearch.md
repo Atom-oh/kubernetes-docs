@@ -1,402 +1,284 @@
 # Amazon OpenSearch Service
 
-> **最終更新**: June 30, 2026
+> **最終更新**: September 13, 2026
+> **サンプルのベースライン**: プロビジョニング型 OpenSearch Service 3.5、Terraform 1.15.7/AWS provider 6.64.0、AWS for Fluent Bit 3.4.15 (Fluent Bit 5.0.9)。ローカル構成の確認のみを行っており、domain、collector、SAML session、またはデータ配信テストはデプロイしていません。
 
-Amazon OpenSearch Service は、リアルタイムのアプリケーション監視、ログ分析、Web サイト検索に使用されるフルマネージドの検索・分析サービスです。Elasticsearch からフォークされた OpenSearch を基盤とし、強力な全文検索機能を提供します。
+Amazon OpenSearch Service は検索クラスターを管理し、選択した OpenSearch と従来の Elasticsearch OSS バージョンをサポートします。この章では、VPC domain と従来の hot/UltraWarm/cold tier を扱います。Serverless collection と新しい optimized-instance storage option には、別個の構成、API、可用性要件があります。
 
-## 目次
-
-1. [概要](#overview)
-2. [アーキテクチャ](#architecture)
-3. [Domain の作成](#domain-creation)
-4. [Index 管理](#index-management)
-5. [データ取り込み](#data-ingestion)
-6. [OpenSearch Dashboards](#opensearch-dashboards)
-7. [セキュリティ設定](#security-configuration)
-8. [コスト最適化](#cost-optimization)
-9. [大規模ログ環境での制限事項](#limitations-in-large-scale-log-environments)
-10. [Loki との比較](#comparison-with-loki)
-
----
+<span id="table-of-contents"></span>
+<span id="opensearch-vs-elasticsearch"></span>
+<span id="amazon-opensearch-service-features"></span>
+<span id="key-use-cases"></span>
 
 ## 概要
 
-### OpenSearch と Elasticsearch
+OpenSearch は Apache-2.0 ライセンスの検索プロジェクトです。Elasticsearch 7.10 系統であることは、現在のすべての Elasticsearch client、plugin、または API との互換性を意味しません。Elastic の現在のソースライセンスの選択肢には、対象となるソース部分の AGPLv3 と SSPL/Elastic License 2.0 が含まれます。Elasticsearch を単一の不変のライセンスモデルとして扱うのではなく、正確な component と distribution を確認してください。
 
-OpenSearch は、AWS が Elasticsearch 7.10 をフォークして 2021 年に作成したオープンソースプロジェクトです。
+AWS のサポート表には現在、サポート対象バージョンとして OpenSearch 3.5 が掲載されています。以前の 2.11 の例は **2027 年 11 月 7 日まで標準サポートの対象です**。新しいバージョンが存在するだけでサポート対象外になるわけではありません。既存の domain では、バージョンアップグレードをリクエストする前に、サポートされるアップグレードパス、破壊的変更、snapshot、および client の互換性を確認してください。
 
-| 特徴 | OpenSearch | Elasticsearch |
-|----------------|-----------|---------------|
-| ライセンス | Apache 2.0 | SSPL/Elastic License |
-| マネージドサービス | Amazon OpenSearch Service | Elastic Cloud |
-| 互換性 | ES 7.10 API 互換 | 最新バージョン |
-| プラグイン | OpenSearch プラグイン | Elastic プラグイン |
-| ダッシュボード | OpenSearch Dashboards | Kibana |
+OpenSearch Service は、ログ分析、全文検索、aggregation、およびセキュリティ分析ワークフローをサポートできます。サービスを有効にすることや監査ログを保持すること自体は、compliance 要件を満たすものではありません。
 
-### Amazon OpenSearch Service の機能
-
-```
-+-------------------------------------------------------------+
-|               Amazon OpenSearch Service                      |
-+-------------------------------------------------------------+
-|  Fully managed        |  Multi-AZ deployment  |  Auto snapshots |
-|  Auto patching        |  Encryption (rest/transit) |  VPC integration |
-|  Fine-grained Access  |  SAML authentication  |  CloudWatch      |
-|  UltraWarm/Cold storage |  Serverless option  |  Cross-cluster   |
-+-------------------------------------------------------------+
-```
-
-### 主なユースケース
-
-1. **ログ分析**: アプリケーション、インフラストラクチャ、セキュリティログの分析
-2. **全文検索**: Web サイト、ドキュメント、製品の検索
-3. **セキュリティ分析**: SIEM、脅威検出、コンプライアンス
-4. **リアルタイム監視**: アプリケーションパフォーマンス監視
-5. **ビジネス分析**: クリックストリーム、ユーザー行動分析
-
----
+<span id="node-types"></span>
 
 ## アーキテクチャ
 
-### OpenSearch Cluster アーキテクチャ
+### OpenSearch クラスターアーキテクチャ
 
-```mermaid
-flowchart TB
-    subgraph Client["Clients"]
-        APP[Application]
-        FB[FluentBit]
-        KDF[Kinesis Data Firehose]
-    end
+![プロビジョニングされた domain への取り込みと、従来の hot/UltraWarm/cold storage フローの概念図。](../../.gitbook/assets/en-observability-logging-02-opensearch-0.png)
 
-    subgraph VPC["VPC"]
-        subgraph AZ1["AZ-a"]
-            MASTER1[Master Node]
-            DATA1[Data Node]
-            WARM1[UltraWarm Node]
-        end
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-0.html)
 
-        subgraph AZ2["AZ-b"]
-            MASTER2[Master Node]
-            DATA2[Data Node]
-            WARM2[UltraWarm Node]
-        end
+この図は概略図であり、正確な replica/AZ レイアウトやサイジング推奨ではありません。図の「Master」ラベルは専用の cluster-management role を意味します。AWS の構成フィールドでは引き続き `dedicated_master_*` を使用します。「Kinesis Data Firehose」は **Amazon Data Firehose** の旧称です。UltraWarm と cold storage はどちらも S3-backed storage を使用します。cold data はクエリの前に UltraWarm にアタッチする必要があります。
 
-        subgraph AZ3["AZ-c"]
-            MASTER3[Master Node]
-            DATA3[Data Node]
-        end
-    end
+| ロールまたは tier | 機能 |
+|---|---|
+| Dedicated cluster-manager node | クラスター状態、metadata、shard allocation を管理します。3 台が一般的な dedicated-manager 構成です。これらは data replica ではありません。 |
+| Data node / hot storage | indexing と querying を行います。EBS の可用性と制限は、選択した instance family によって異なります。 |
+| UltraWarm | S3 をバックエンドとする read-only index と、warm-node の cache/compute です。engine、instance、dedicated-manager の前提条件を確認してください。 |
+| Cold storage | 別の lifecycle を持つ、デタッチされた index storage です。クエリするには、選択した index を UltraWarm に再アタッチします。 |
 
-    subgraph Storage["Storage"]
-        EBS[(EBS)]
-        S3[(S3 - Cold Storage)]
-    end
+Multi-AZ with Standby には追加の topology および replica 要件があります。単に zone awareness を有効にしても、Standby が有効になったり、その可用性保証が確立されたりするわけではありません。VPC Encryption Controls や storage compatibility を含む、現在の instance 制限を確認してください。元の r6g/m6g サイズはサンプル入力であり、benchmark ではありません。
 
-    APP --> DATA1
-    FB --> DATA1
-    KDF --> DATA2
-
-    MASTER1 <--> MASTER2
-    MASTER2 <--> MASTER3
-    MASTER1 <--> MASTER3
-
-    DATA1 <--> DATA2
-    DATA1 --> WARM1
-    DATA2 --> WARM2
-
-    DATA1 --> EBS
-    DATA2 --> EBS
-    WARM1 --> S3
-    WARM2 --> S3
-
-    classDef master fill:#FF6B6B,stroke:#333,color:white
-    classDef data fill:#4ECDC4,stroke:#333,color:white
-    classDef warm fill:#FFE66D,stroke:#333
-    classDef storage fill:#95E1D3,stroke:#333
-
-    class MASTER1,MASTER2,MASTER3 master
-    class DATA1,DATA2 data
-    class WARM1,WARM2 warm
-    class EBS,S3 storage
-```
-
-### Node の種類
-
-> **参照**: AWS インスタンスタイプのパフォーマンスベンチマークについては、[AWS Instance Benchmark](https://benchmark.aws.atomai.click/) を参照してください。
-
-| Node タイプ | 役割 | 推奨インスタンス |
-|-----------|------|---------------------|
-| **Master** | Cluster 管理、Index メタデータ | m6g.large.search (3) |
-| **Data** | データストレージ、検索/Indexing | r6g.xlarge.search |
-| **UltraWarm** | 読み取り専用、コスト効率の高いストレージ | ultrawarm1.medium |
-| **Cold** | S3 ベースのアーカイブ | - |
+補足リソース: [AWS Instance Benchmark](https://benchmark.aws.atomai.click/)。サービスの capacity には、代表的な OpenSearch workload テストが引き続き必要です。
 
 ### データフロー
 
-```mermaid
-sequenceDiagram
-    participant App as Application
-    participant FB as FluentBit
-    participant OS as OpenSearch
-    participant EBS as EBS Storage
-    participant UW as UltraWarm
-    participant S3 as Cold Storage
+![日次 index の lifecycle の例: 取り込みから hot storage、次に ISM による UltraWarm と cold storage への移行。](../../.gitbook/assets/en-observability-logging-02-opensearch-1.png)
 
-    App->>FB: Send logs
-    FB->>OS: Bulk API call
-    OS->>EBS: Index (Hot)
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-1.html)
 
-    Note over OS,EBS: After 7 days
+7/30 日のラベルは、**index-age condition** の例であり、自動のデフォルト値や正確な event-age retention ではありません。ISM は定期的に実行され、migration は非同期です。日付ベースの indexing では、遅れて到着した event や再送された event が、古い read-only index を対象にする可能性があります。migration を有効にする前に、それらの routing または archive 方法を決定してください。
 
-    OS->>UW: Move to UltraWarm<br/>by ISM policy
-
-    Note over UW,S3: After 30 days
-
-    UW->>S3: Move to<br/>Cold storage
-```
-
----
+<span id="creation-via-aws-console"></span>
 
 ## Domain の作成
 
-### AWS Console からの作成
+### 前提条件
 
-```
-1. Access OpenSearch Service console
-2. Click "Create domain"
-3. Settings:
-   - Deployment type: Production
-   - Version: OpenSearch 2.x
-   - Data nodes: r6g.xlarge.search x 3
-   - Master nodes: m6g.large.search x 3
-   - EBS: gp3, 500GB per node
-   - Network: VPC access
-   - Encryption: Enable at-rest and in-transit encryption
-   - Enable Fine-grained access control
-```
+同じ VPC 内の異なる AZ にある 3 つの private subnet、到達可能な client security group、既存の service-linked role、承認済みの administrator/writer/reader IAM role を準備します。この例では異なる subnet ID を検証しますが、AZ、route、capacity、または所有権をリモートで検証するものではありません。
+
+Terraform profile は **IAM-signed API request** と IAM master role を使用します。Terraform state に内部 master password を置くことは避けています。ログを送信する前に、FGAC role mapping を構成してください。Browser SSO は、後で説明する別の access profile です。IAM-principal domain policy には SigV4 が必要であり、署名されていない SAML browser request を自動的に受け入れるものではありません。
 
 ### Terraform による作成
 
+この例では commercial AWS partition と Seoul Region を使用します。入力を一貫して置き換え、リージョンでの可用性を確認してください。apply すると resource が作成されます。この監査ではローカル検証のみを実行しました。
+
 ```hcl
-# opensearch.tf
-
-# VPC and subnet data
-data "aws_vpc" "main" {
-  tags = {
-    Name = "main-vpc"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.64.0"
+    }
   }
 }
 
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.main.id]
-  }
-  filter {
-    name   = "tag:Type"
-    values = ["private"]
+variable "region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+
+variable "account_id" {
+  type = string
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.account_id))
+    error_message = "Use the owning AWS account ID."
   }
 }
 
-# Security group
-resource "aws_security_group" "opensearch" {
-  name        = "opensearch-sg"
-  description = "Security group for OpenSearch domain"
-  vpc_id      = data.aws_vpc.main.id
+variable "vpc_id" {
+  type = string
+}
 
-  ingress {
-    description = "HTTPS from VPC"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.main.cidr_block]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "opensearch-sg"
+variable "subnet_ids" {
+  type = list(string)
+  validation {
+    condition     = length(var.subnet_ids) == 3 && length(distinct(var.subnet_ids)) == 3
+    error_message = "Provide three distinct subnet IDs, one in each intended AZ."
   }
 }
 
-# OpenSearch domain
-resource "aws_opensearch_domain" "main" {
-  domain_name    = "logs-production"
-  engine_version = "OpenSearch_2.11"
+variable "client_security_group_ids" {
+  type = set(string)
+}
+
+variable "admin_role_arn" {
+  type = string
+}
+
+variable "writer_role_arns" {
+  type = set(string)
+}
+
+variable "reader_role_arns" {
+  type    = set(string)
+  default = []
+}
+
+provider "aws" {
+  region = var.region
+}
+
+locals {
+  domain_name = "logs-production"
+  domain_arn  = "arn:aws:es:${var.region}:${var.account_id}:domain/${local.domain_name}"
+  log_types   = toset(["INDEX_SLOW_LOGS", "SEARCH_SLOW_LOGS", "ES_APPLICATION_LOGS", "AUDIT_LOGS"])
+  callers     = setunion(toset([var.admin_role_arn]), var.writer_role_arns, var.reader_role_arns)
+}
+
+resource "aws_security_group" "search" {
+  name_prefix = "logs-search-"
+  description = "OpenSearch HTTPS from approved client security groups"
+  vpc_id      = var.vpc_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "clients" {
+  for_each                     = var.client_security_group_ids
+  security_group_id            = aws_security_group.search.id
+  referenced_security_group_id = each.value
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "outbound" {
+  security_group_id = aws_security_group.search.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+}
+
+resource "aws_cloudwatch_log_group" "search" {
+  for_each          = local.log_types
+  name              = "/aws/opensearch/${local.domain_name}/${lower(each.value)}"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_resource_policy" "search" {
+  policy_name = "logs-production-opensearch"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "es.amazonaws.com" }
+      Action    = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource  = [for group in aws_cloudwatch_log_group.search : "${group.arn}:*"]
+      Condition = {
+        StringEquals = { "aws:SourceAccount" = var.account_id }
+        ArnEquals    = { "aws:SourceArn" = local.domain_arn }
+      }
+    }]
+  })
+}
+
+resource "aws_opensearch_domain" "logs" {
+  domain_name    = local.domain_name
+  engine_version = "OpenSearch_3.5"
 
   cluster_config {
-    instance_type            = "r6g.xlarge.search"
-    instance_count           = 3
-    zone_awareness_enabled   = true
-    dedicated_master_enabled = true
-    dedicated_master_type    = "m6g.large.search"
-    dedicated_master_count   = 3
-
+    instance_type                 = "r6g.xlarge.search"
+    instance_count                = 3
+    dedicated_master_enabled      = true
+    dedicated_master_type         = "m6g.large.search"
+    dedicated_master_count        = 3
+    zone_awareness_enabled        = true
+    multi_az_with_standby_enabled = false
     zone_awareness_config {
       availability_zone_count = 3
     }
-
-    # UltraWarm settings
     warm_enabled = true
     warm_type    = "ultrawarm1.medium.search"
     warm_count   = 2
-
-    # Cold Storage settings
     cold_storage_options {
       enabled = true
     }
   }
 
-  # EBS settings
   ebs_options {
     ebs_enabled = true
     volume_type = "gp3"
     volume_size = 500
-    iops        = 3000
-    throughput  = 250
   }
 
-  # VPC settings
   vpc_options {
-    subnet_ids         = slice(data.aws_subnets.private.ids, 0, 3)
-    security_group_ids = [aws_security_group.opensearch.id]
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [aws_security_group.search.id]
   }
 
-  # Encryption settings
   encrypt_at_rest {
     enabled = true
   }
-
   node_to_node_encryption {
     enabled = true
   }
-
   domain_endpoint_options {
     enforce_https       = true
-    tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
+    tls_security_policy = "Policy-Min-TLS-1-2-PFS-2023-10"
   }
-
-  # Fine-grained Access Control
   advanced_security_options {
     enabled                        = true
-    internal_user_database_enabled = true
+    internal_user_database_enabled = false
     master_user_options {
-      master_user_name     = "admin"
-      master_user_password = var.opensearch_master_password
+      master_user_arn = var.admin_role_arn
     }
   }
 
-  # Advanced settings
-  advanced_options = {
-    "rest.action.multi.allow_explicit_index" = "true"
-    "indices.fielddata.cache.size"           = "20"
-    "indices.query.bool.max_clause_count"    = "1024"
-  }
-
-  # Auto snapshots
-  snapshot_options {
-    automated_snapshot_start_hour = 23
-  }
-
-  # Logging
-  log_publishing_options {
-    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_index_slow.arn
-    log_type                 = "INDEX_SLOW_LOGS"
-    enabled                  = true
-  }
-
-  log_publishing_options {
-    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_search_slow.arn
-    log_type                 = "SEARCH_SLOW_LOGS"
-    enabled                  = true
-  }
-
-  log_publishing_options {
-    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_error.arn
-    log_type                 = "ES_APPLICATION_LOGS"
-    enabled                  = true
-  }
-
-  tags = {
-    Environment = "production"
-    Application = "logging"
-  }
-
-  depends_on = [aws_iam_service_linked_role.opensearch]
-}
-
-# CloudWatch log groups
-resource "aws_cloudwatch_log_group" "opensearch_index_slow" {
-  name              = "/aws/opensearch/logs-production/index-slow-logs"
-  retention_in_days = 30
-}
-
-resource "aws_cloudwatch_log_group" "opensearch_search_slow" {
-  name              = "/aws/opensearch/logs-production/search-slow-logs"
-  retention_in_days = 30
-}
-
-resource "aws_cloudwatch_log_group" "opensearch_error" {
-  name              = "/aws/opensearch/logs-production/error-logs"
-  retention_in_days = 30
-}
-
-# Service-linked role
-resource "aws_iam_service_linked_role" "opensearch" {
-  aws_service_name = "opensearchservice.amazonaws.com"
-}
-
-# CloudWatch log resource policy
-resource "aws_cloudwatch_log_resource_policy" "opensearch" {
-  policy_name = "opensearch-log-policy"
-
-  policy_document = jsonencode({
+  access_policies = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "es.amazonaws.com"
-        }
-        Action = [
-          "logs:PutLogEvents",
-          "logs:CreateLogStream"
-        ]
-        Resource = [
-          "${aws_cloudwatch_log_group.opensearch_index_slow.arn}:*",
-          "${aws_cloudwatch_log_group.opensearch_search_slow.arn}:*",
-          "${aws_cloudwatch_log_group.opensearch_error.arn}:*"
-        ]
-      }
-    ]
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { AWS = sort(tolist(local.callers)) }
+      Action    = ["es:ESHttp*"]
+      Resource  = "${local.domain_arn}/*"
+    }]
   })
+
+  dynamic "log_publishing_options" {
+    for_each = aws_cloudwatch_log_group.search
+    content {
+      cloudwatch_log_group_arn = log_publishing_options.value.arn
+      log_type                 = log_publishing_options.key
+      enabled                  = true
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_resource_policy.search]
 }
 
-# Outputs
-output "opensearch_endpoint" {
-  value = aws_opensearch_domain.main.endpoint
+output "domain_endpoint" {
+  value = aws_opensearch_domain.logs.endpoint
 }
 
-output "opensearch_dashboard_endpoint" {
-  value = aws_opensearch_domain.main.dashboard_endpoint
+output "dashboards_endpoint" {
+  value = aws_opensearch_domain.logs.dashboard_endpoint
 }
 ```
 
----
+初期サイズ、500GiB EBS volume、30 日の CloudWatch retention は説明用です。この profile は明示的に Standby **なし**の Multi-AZ を使用します。このリファレンスでは outbound security-group access は広範なままです。本番運用の前に、実際にサポートされる接続に対する egress restriction を設計してください。
+
+Domain access policy は、名前を指定した IAM role に HTTP operation を許可します。**FGAC** で index/cluster permission を制限する必要があります。URI ベースの IAM permission だけでは、bulk request body に埋め込まれた index name は制限されません。collector role には、意図した writer mapping のみを付与してください。
+
+プラットフォームの service-linked role は account-level dependency です。デプロイごとに同じ role を作成しようとするのではなく、それを所有する infrastructure state を通じて再利用または import してください。
+
+OpenSearch domain は、14 日間（最大 336）保持される毎時の automated snapshot を受け取ります。古い `automated_snapshot_start_hour` の例は、この OpenSearch profile ではなく、はるかに古い Elasticsearch バージョンに適用されます。Snapshot は recovery mechanism であり、テスト済みの retention/restore plan の代替ではありません。cluster status が red の場合、snapshot が実行されないことがあります。
+
+CloudWatch publishing では、domain configuration の前に scoped resource policy が必要です。slow-log destination を公開しても、すべての slow-log threshold が有効になるわけではありません。また、audit-log publishing はすべての audit event を構成するものではありません。対応する engine/audit setting は意図的に構成してください。ログ内の query と document content にも access および retention control が必要です。
+
+<span id="index-aliases"></span>
 
 ## Index 管理
 
-### Index Templates
+以下の主な collector は、`logs-production-YYYY.MM.DD` という名前の**日次 index**に書き込みます。template、ISM pattern、query の例はこの pattern を使用します。別の rollover 演習を後に示します。2 つの writer strategy を暗黙に組み合わせないでください。
 
-```json
+以下の request block は OpenSearch Dashboards Dev Tools の構文を使用します。これらはスタンドアロン JSON file でも、監査で実行される command でもありません。認可済みの data-plane client と目的の domain を使用してください。
+
+### Index Template
+
+```http
 PUT _index_template/logs-template
 {
-  "index_patterns": ["logs-*"],
+  "index_patterns": [
+    "logs-production-*"
+  ],
   "priority": 100,
   "template": {
     "settings": {
@@ -404,82 +286,118 @@ PUT _index_template/logs-template
       "number_of_replicas": 1,
       "refresh_interval": "5s",
       "index.codec": "best_compression",
-      "index.mapping.total_fields.limit": 2000,
-      "index.translog.durability": "async",
-      "index.translog.sync_interval": "30s"
+      "index.translog.durability": "request"
     },
     "mappings": {
+      "dynamic": false,
       "properties": {
         "@timestamp": {
           "type": "date"
         },
-        "level": {
+        "cluster_name": {
           "type": "keyword"
         },
-        "message": {
+        "environment": {
+          "type": "keyword"
+        },
+        "stream": {
+          "type": "keyword"
+        },
+        "log": {
           "type": "text",
-          "analyzer": "standard"
+          "index": false
         },
         "kubernetes": {
           "properties": {
-            "namespace": { "type": "keyword" },
-            "pod_name": { "type": "keyword" },
-            "container_name": { "type": "keyword" },
-            "labels": { "type": "object" }
+            "namespace_name": {
+              "type": "keyword"
+            },
+            "pod_name": {
+              "type": "keyword"
+            },
+            "container_name": {
+              "type": "keyword"
+            },
+            "host": {
+              "type": "keyword"
+            }
           }
         },
-        "trace_id": {
-          "type": "keyword"
-        },
-        "span_id": {
-          "type": "keyword"
-        },
-        "http": {
+        "app": {
           "properties": {
-            "method": { "type": "keyword" },
-            "status_code": { "type": "integer" },
-            "path": { "type": "keyword" },
-            "response_time_ms": { "type": "float" }
-          }
-        }
-      },
-      "dynamic_templates": [
-        {
-          "strings_as_keywords": {
-            "match_mapping_type": "string",
-            "mapping": {
-              "type": "keyword",
-              "ignore_above": 1024
+            "level": {
+              "type": "keyword"
+            },
+            "message": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "error_type": {
+              "type": "keyword"
+            },
+            "trace_id": {
+              "type": "keyword"
+            },
+            "span_id": {
+              "type": "keyword"
+            },
+            "request_id": {
+              "type": "keyword"
+            },
+            "http": {
+              "properties": {
+                "method": {
+                  "type": "keyword"
+                },
+                "status_code": {
+                  "type": "integer"
+                },
+                "path": {
+                  "type": "keyword"
+                },
+                "response_time_ms": {
+                  "type": "float"
+                }
+              }
             }
           }
         }
-      ]
+      }
     }
   }
 }
 ```
 
-### ISM (Index State Management) Policies
+Kubernetes filter は `kubernetes.namespace` ではなく `kubernetes.namespace_name` を生成します。Application JSON は、collector metadata から分離するため `app` の下にネストされています。Application は、文書化された field と unit を出力する必要があります。例では小文字の `app.level` と、`app.http.response_time_ms` の millisecond を使用しています。
 
-ISM ポリシーは Index のライフサイクルを自動的に管理します。
+collector enrichment 前の、説明用の 1 行 application record を次に示します。
 
 ```json
+{"level":"error","message":"request failed","error_type":"upstream_timeout","http":{"method":"GET","path":"/orders","status_code":503,"response_time_ms":1250}}
+```
+
+`message.keyword` subfield は `app.message.keyword` として明示的に定義されます。`text` mapping だけでは自動的に作成されません。`ignore_above` の上限を超えた値は、その subfield に index されません。任意の message ではなく、aggregation 用に上限のある `error_type` taxonomy を検討してください。
+
+`dynamic: false` は新しい mapped field を制限しますが、**未知の field を `_source` から削除しません**。生の `log` field は search index なしで保存されます。生データの重複、redaction、access を確認してください。`translog.durability: request` は、説明のない async/30s durability のトレードオフより安全なベースラインです。いずれの設定も、すべての storage または replica failure からの recovery を保証するものではありません。
+
+### ISM (Index State Management) Policy
+
+```http
 PUT _plugins/_ism/policies/logs-lifecycle
 {
   "policy": {
-    "description": "Log index lifecycle management",
+    "description": "Illustrative daily-index hot/warm/cold retention; confirm ownership and late-arrival handling.",
+    "schema_version": 1,
     "default_state": "hot",
     "states": [
       {
         "name": "hot",
-        "actions": [
-          {
-            "rollover": {
-              "min_index_age": "1d",
-              "min_primary_shard_size": "30gb"
-            }
-          }
-        ],
+        "actions": [],
         "transitions": [
           {
             "state_name": "warm",
@@ -493,13 +411,7 @@ PUT _plugins/_ism/policies/logs-lifecycle
         "name": "warm",
         "actions": [
           {
-            "warm_migration": {},
-            "replica_count": {
-              "number_of_replicas": 0
-            },
-            "force_merge": {
-              "max_num_segments": 1
-            }
+            "warm_migration": {}
           }
         ],
         "transitions": [
@@ -533,14 +445,17 @@ PUT _plugins/_ism/policies/logs-lifecycle
         "name": "delete",
         "actions": [
           {
-            "delete": {}
+            "cold_delete": {}
           }
-        ]
+        ],
+        "transitions": []
       }
     ],
     "ism_template": [
       {
-        "index_patterns": ["logs-*"],
+        "index_patterns": [
+          "logs-production-*"
+        ],
         "priority": 100
       }
     ]
@@ -548,41 +463,156 @@ PUT _plugins/_ism/policies/logs-lifecycle
 }
 ```
 
-### Index Aliases
+この policy は、新しく作成された一致する index にアタッチされます。既存の index には、意図的な policy-attachment operation が必要です。変更前に `_plugins/_ism/explain/INDEX` と policy version を確認してください。
 
-```json
-# Create alias for rollover
-PUT logs-production-000001
+各 action object には 1 つの action（サポートされる retry/timeout metadata を含む）が含まれます。managed `warm_migration`、`cold_migration`、および **`cold_delete`** は、self-managed ISM operation とは異なります。cold index には `cold_delete` が必要であり、ISM cold migration には明示的な timestamp field が必要です。warm migration、replica change、force merge を 1 つの action object にまとめないでください。
+
+ISM は通常、5～8 分ごとに job を評価し、cluster status が red の間は実行されません。index age は index creation から測定されます。90 日後の削除例は組織上の選択であり、普遍的な法的要件や正確な record 単位の expiry ではありません。削除を有効にする前に、late-data behavior、snapshot、recovery を検証してください。
+
+### Index Alias と Rollover
+
+この独立した演習では、prefix `rollover-logs-*` と writer alias を使用します。日次 collector configuration は変更しません。
+
+```http
+PUT _index_template/rollover-logs
 {
-  "aliases": {
-    "logs-production": {
-      "is_write_index": true
+  "index_patterns": [
+    "rollover-logs-*"
+  ],
+  "priority": 100,
+  "template": {
+    "settings": {
+      "number_of_shards": 3,
+      "number_of_replicas": 1,
+      "plugins.index_state_management.rollover_alias": "rollover-logs-write"
     },
-    "logs-production-read": {}
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "message": {
+          "type": "text"
+        }
+      }
+    }
   }
 }
 
-# Query alias
-GET _alias/logs-production
+PUT _plugins/_ism/policies/rollover-logs
+{
+  "policy": {
+    "description": "Independent rollover example; not attached to date-based collector indexes.",
+    "schema_version": 1,
+    "default_state": "write",
+    "states": [
+      {
+        "name": "write",
+        "actions": [
+          {
+            "rollover": {
+              "min_index_age": "1d",
+              "min_primary_shard_size": "30gb"
+            }
+          }
+        ],
+        "transitions": []
+      }
+    ],
+    "ism_template": [
+      {
+        "index_patterns": [
+          "rollover-logs-*"
+        ],
+        "priority": 100
+      }
+    ]
+  }
+}
 
-# Manual rollover (for testing)
-POST logs-production/_rollover
+PUT rollover-logs-000001
+{
+  "aliases": {
+    "rollover-logs-write": {
+      "is_write_index": true
+    }
+  }
+}
+
+POST rollover-logs-write/_doc
+{
+  "@timestamp": "2026-09-13T00:00:00Z",
+  "message": "synthetic rollover example"
+}
+
+GET _plugins/_ism/explain/rollover-logs-000001
+
+POST rollover-logs-write/_rollover
 {
   "conditions": {
     "max_age": "1d",
-    "max_primary_shard_size": "30gb"
+    "max_size": "90gb"
   }
 }
 ```
 
----
+自動 ISM rollover には、rollover alias setting、適切な番号付き index、write alias が必要です。alias が存在するだけでは、日付単位の writer がその alias を使用することはありません。
+
+ISM の `min_primary_shard_size: 30gb` は、単一の primary shard に関するものです。OpenSearch 3.5 の rollover REST parser は `max_age`、`max_docs`、`max_size` を受け入れます。`max_size` は replica を除く**合計 primary-shard storage**を測定します。したがって、90GB の REST 例は、primary-shard あたり 30GB の threshold と同じ条件ではありません。Rollover condition は代替条件であり、すべての threshold を同時に満たす必要はありません。
+
+<span id="direct-ingestion-from-fluentbit-to-opensearch"></span>
+<span id="fluentbit-daemonset-using-irsa"></span>
 
 ## データ取り込み
 
-### FluentBit から OpenSearch への直接取り込み
+### Fluent Bit からの直接取り込み
+
+次の 6 つの resource は、対象となる **Linux EC2 node** 用のリファレンス collector configuration を構成します。Fargate は platform log router を使用します。Windows およびその他の node platform には独自の path と deployment model が必要です。node log reader をデプロイする前に、host path、admission-policy exception、resource need を確認してください。
+
+実際の domain hostname、Region、IRSA role を設定してください。role の OIDC trust は `system:serviceaccount:logging:fluent-bit` と一致する必要があります。また、IAM/data-plane access と FGAC writer role も認可してください。Pod Identity は、互換性のある node/agent/SDK support がある場合にのみ代替手段になります。
 
 ```yaml
-# fluent-bit-configmap.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logging
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: logging
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/FluentBitOpenSearchRole
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fluent-bit-metadata
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - namespaces
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fluent-bit-metadata
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fluent-bit-metadata
+subjects:
+- kind: ServiceAccount
+  name: fluent-bit
+  namespace: logging
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -591,84 +621,66 @@ metadata:
 data:
   fluent-bit.conf: |
     [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
+        Flush          5
+        Log_Level      info
+        HTTP_Server    Off
+        storage.path   /buffers/storage
+        storage.sync   normal
 
     [INPUT]
-        Name              tail
-        Tag               kube.*
-        Path              /var/log/containers/*.log
-        Parser            docker
-        DB                /var/log/flb_kube.db
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+        Name               tail
+        Tag                kube.*
+        Path               /var/log/containers/*.log
+        Exclude_Path       /var/log/containers/fluent-bit-*_logging_fluent-bit-*.log
+        multiline.parser   docker, cri
+        DB                 /buffers/tail.db
+        Mem_Buf_Limit      50MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
 
     [FILTER]
         Name                kubernetes
         Match               kube.*
-        Kube_URL            https://kubernetes.default.svc:443
-        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
         Merge_Log           On
-        K8S-Logging.Parser  On
-        K8S-Logging.Exclude On
+        Merge_Log_Key       app
+        Keep_Log            On
+        Labels              Off
+        Annotations         Off
+        K8S-Logging.Parser  Off
+        K8S-Logging.Exclude Off
 
     [FILTER]
         Name    modify
-        Match   *
-        Add     cluster_name eks-production
-        Add     environment production
+        Match   kube.*
+        Set     cluster_name example-eks
+        Set     environment example
 
     [OUTPUT]
-        Name            opensearch
-        Match           *
-        Host            vpc-logs-production-xxxxx.ap-northeast-2.es.amazonaws.com
-        Port            443
-        TLS             On
-        AWS_Auth        On
-        AWS_Region      ap-northeast-2
-        Index           logs-production
-        Type            _doc
-        Logstash_Format On
-        Logstash_Prefix logs-production
-        Retry_Limit     5
-        Buffer_Size     5MB
-        Generate_ID     On
-        # Compression saves network costs
-        Compress        gzip
-
-  parsers.conf: |
-    [PARSER]
-        Name        docker
-        Format      json
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-
-    [PARSER]
-        Name        json
-        Format      json
-        Time_Key    timestamp
-        Time_Format %Y-%m-%dT%H:%M:%S.%LZ
-```
-
-### FluentBit DaemonSet（IRSA を使用）
-
-```yaml
-# fluent-bit-daemonset.yaml
+        Name                    opensearch
+        Match                   kube.*
+        Host                    REPLACE_WITH_DOMAIN_ENDPOINT
+        Port                    443
+        tls                     On
+        tls.verify              On
+        AWS_Auth                On
+        AWS_Region              ap-northeast-2
+        Suppress_Type_Name      On
+        Logstash_Format         On
+        Logstash_Prefix         logs-production
+        Time_Key                @timestamp
+        Generate_ID             On
+        Retry_Limit             5
+        Buffer_Size             5MB
+        Compress                gzip
+        storage.total_limit_size 1G
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: fluent-bit
   namespace: logging
-  labels:
-    app: fluent-bit
 spec:
   selector:
     matchLabels:
@@ -679,89 +691,140 @@ spec:
         app: fluent-bit
     spec:
       serviceAccountName: fluent-bit
+      nodeSelector:
+        kubernetes.io/os: linux
       tolerations:
-        - key: node-role.kubernetes.io/master
-          operator: Exists
-          effect: NoSchedule
-        - operator: Exists
-          effect: NoExecute
-        - operator: Exists
-          effect: NoSchedule
+      - operator: Exists
+        effect: NoSchedule
       containers:
-        - name: fluent-bit
-          image: public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.12
-          resources:
-            limits:
-              cpu: 500m
-              memory: 500Mi
-            requests:
-              cpu: 100m
-              memory: 100Mi
-          volumeMounts:
-            - name: varlog
-              mountPath: /var/log
-              readOnly: true
-            - name: varlibdockercontainers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
-            - name: fluent-bit-config
-              mountPath: /fluent-bit/etc/
-          env:
-            - name: AWS_REGION
-              value: ap-northeast-2
+      - name: fluent-bit
+        image: public.ecr.aws/aws-observability/aws-for-fluent-bit:3.4.15@sha256:88e1b56cedb230486afeca6eeb26c5f6bd59c48879d0054d1674d5a58838c607
+        args:
+        - -c
+        - /fluent-bit/custom/fluent-bit.conf
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log
+          readOnly: true
+        - name: buffers
+          mountPath: /buffers
+        - name: config
+          mountPath: /fluent-bit/custom
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        command:
+        - /fluent-bit/bin/fluent-bit
       volumes:
-        - name: varlog
-          hostPath:
-            path: /var/log
-        - name: varlibdockercontainers
-          hostPath:
-            path: /var/lib/docker/containers
-        - name: fluent-bit-config
-          configMap:
-            name: fluent-bit-config
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: fluent-bit
-  namespace: logging
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/FluentBitOpenSearchRole
+      - name: logs
+        hostPath:
+          path: /var/log
+          type: Directory
+      - name: buffers
+        hostPath:
+          path: /var/lib/fluent-bit-opensearch
+          type: DirectoryOrCreate
+      - name: config
+        configMap:
+          name: fluent-bit-config
+      - name: tmp
+        emptyDir: {}
 ```
 
-### Kinesis Data Firehose 経由の取り込み
+image index は pin されており、その Linux amd64/arm64 metadata を確認しました。この image の default CMD は entrypoint script です。この例では **native OpenSearch output** を使用して `/fluent-bit/bin/fluent-bit` を明示的に呼び出します。legacy Go output plugin を load したり、runtime で image をテストしたりしていません。
+
+重要な構成上の関係:
+
+- `multiline.parser docker, cri` はサポートされる container framing を処理します。Kubernetes filter は次に application JSON を `app` の下に merge します。
+- read-only の `/var/log` mount は log input 用です。Tail DB と filesystem buffer は別の書き込み可能な node path を使用します。これらは、その node/path が存続する間だけ Pod restart をまたいで保持されます。cross-node durable storage ではありません。
+- Metadata RBAC は Pod/namespace の read operation に限定されています。agent 自体が node log を読み取るため、その namespace、role、configuration を保護してください。
+- Application annotation は、この例で parsing を暗黙に上書きしたり log を除外したりできません。collector が生成する cluster/environment value は意図的に設定されます。feedback loop を減らすため、collector 自身の log をこの pipeline から除外してください。
+- `Suppress_Type_Name On` は、type を使用しない OpenSearch 2.x/3.x API に必要です。`Type _doc` は互換性のある代替ではありません。
+- `Logstash_Format On` は日付ベースの index name と `@timestamp` field を作成します。任意の rollover alias には書き込みません。
+- retry、`Generate_ID`、memory buffer、output の storage cap は、exactly-once または lossless delivery を保証するものではありません。partial bulk error、oversize line、restart offset、retry limit、disk pressure、late record をテストしてください。output cap はすべての node disk usage を制限するものではありません。
+
+保持される raw log には、`app` の下にも存在するデータが含まれることがあります。保存前に禁止された content を redaction し、rejected record を監視してください。request-body tracing を永続的な diagnostic setting として有効にしないでください。
+
+<span id="ingestion-via-kinesis-data-firehose"></span>
+
+### Amazon Data Firehose を介した取り込み
+
+Data Firehose は、buffering、retry、backup control を備えた代替の managed delivery path です。すべての workload に対して自動的に最も安価または最も単純な選択肢になるわけではありません。Terraform resource の名前は引き続き `aws_kinesis_firehose_delivery_stream` です。
+
+この任意の resource file は、上記の domain と、既存の承認済み delivery-role、subnet、security-group、private backup-bucket input を使用します。
 
 ```hcl
-# firehose.tf
-resource "aws_kinesis_firehose_delivery_stream" "opensearch" {
+variable "firehose_role_arn" {
+  type = string
+}
+
+variable "firehose_subnet_ids" {
+  type = list(string)
+}
+
+variable "firehose_security_group_ids" {
+  type = list(string)
+}
+
+variable "backup_bucket_arn" {
+  type = string
+}
+
+resource "aws_cloudwatch_log_group" "firehose" {
+  name              = "/aws/kinesisfirehose/logs-to-opensearch"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_stream" "firehose" {
+  name           = "opensearch-delivery"
+  log_group_name = aws_cloudwatch_log_group.firehose.name
+}
+
+resource "aws_kinesis_firehose_delivery_stream" "logs" {
   name        = "logs-to-opensearch"
   destination = "opensearch"
 
   opensearch_configuration {
-    domain_arn            = aws_opensearch_domain.main.arn
-    role_arn              = aws_iam_role.firehose.arn
-    index_name            = "logs"
+    domain_arn            = aws_opensearch_domain.logs.arn
+    role_arn              = var.firehose_role_arn
+    index_name            = "logs-production-firehose"
     index_rotation_period = "OneDay"
     buffering_interval    = 60
     buffering_size        = 5
     retry_duration        = 300
+    s3_backup_mode        = "FailedDocumentsOnly"
 
     vpc_config {
-      subnet_ids         = data.aws_subnets.private.ids
-      security_group_ids = [aws_security_group.firehose.id]
-      role_arn           = aws_iam_role.firehose_vpc.arn
+      subnet_ids         = var.firehose_subnet_ids
+      security_group_ids = var.firehose_security_group_ids
+      role_arn           = var.firehose_role_arn
     }
 
     cloudwatch_logging_options {
       enabled         = true
       log_group_name  = aws_cloudwatch_log_group.firehose.name
-      log_stream_name = "opensearch-delivery"
+      log_stream_name = aws_cloudwatch_log_stream.firehose.name
     }
 
     s3_configuration {
-      role_arn           = aws_iam_role.firehose.arn
-      bucket_arn         = aws_s3_bucket.backup.arn
-      prefix             = "failed/"
+      role_arn           = var.firehose_role_arn
+      bucket_arn         = var.backup_bucket_arn
+      prefix             = "opensearch-failed/"
       buffering_size     = 10
       buffering_interval = 400
       compression_format = "GZIP"
@@ -770,73 +833,92 @@ resource "aws_kinesis_firehose_delivery_stream" "opensearch" {
 }
 ```
 
----
+Delivery role には、関連する OpenSearch/FGAC、S3、CloudWatch、VPC/ENI permission と、必要な KMS permission が必要です。trust と deployer の `iam:PassRole` permission は別のものです。delivery role を domain の caller input と writer mapping に含め、port 443 への VPC connection を許可してください。
+
+`FailedDocumentsOnly` は backup mode を選択します。S3 prefix を `failed/` と名付けるだけでは選択されません。failure と private backup bucket からの replay をテストしてください。Firehose record には timestamp を含む index mapping と互換性のある schema が必要です。サービスは、ここで示した Kubernetes metadata/application envelope を自動的に作成しません。
+
+<span id="dashboard-access-setup"></span>
+<span id="create-index-pattern"></span>
+<span id="visualization-creation"></span>
 
 ## OpenSearch Dashboards
 
-### Dashboard アクセスの設定
+### Access と Index Pattern
 
-```bash
-# SSH tunnel (for dev/test)
-ssh -i key.pem -L 9200:vpc-logs-production-xxx.ap-northeast-2.es.amazonaws.com:443 ec2-user@bastion
+承認済みの VPC connectivity と、domain access policy に互換性のある authentication method を使用してください。通常の SSH tunnel だけでは、元の TLS hostname、SSO redirect、または SigV4 signing は保持されません。`https://localhost:9200` を動作しているように見せるために certificate verification を無効にしないでください。ALB は完全な native domain/Dashboards integration recipe ではありません。
 
-# Or access via ALB (recommended for production)
-```
+認証済み access を構成した後、`logs-production-*` の data view/index pattern を作成し、`@timestamp` を選択します。menu 名は Dashboards のバージョンと有効な experience によって異なります。
 
-### Index Pattern の作成
+### Search Query の例
 
-```
-1. Access OpenSearch Dashboards
-2. Management > Stack Management > Index Patterns
-3. Click "Create index pattern"
-4. Index pattern: logs-*
-5. Time field: @timestamp
-6. Click "Create index pattern"
-```
-
-### 検索クエリの例
-
-```json
-# Search error logs
-GET logs-*/_search
+```http
+GET logs-production-*/_search
 {
   "query": {
     "bool": {
-      "must": [
-        { "match": { "level": "error" } },
-        { "range": { "@timestamp": { "gte": "now-1h" } } }
-      ],
       "filter": [
-        { "term": { "kubernetes.namespace": "production" } }
+        {
+          "term": {
+            "app.level": "error"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1h"
+            }
+          }
+        },
+        {
+          "term": {
+            "kubernetes.namespace_name": "production"
+          }
+        }
       ]
     }
   },
   "sort": [
-    { "@timestamp": { "order": "desc" } }
+    {
+      "@timestamp": {
+        "order": "desc"
+      }
+    }
   ],
   "size": 100
 }
 
-# Aggregation query - errors by namespace
-GET logs-*/_search
+GET logs-production-*/_search
 {
   "size": 0,
   "query": {
-    "range": {
-      "@timestamp": { "gte": "now-24h" }
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "app.level": "error"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-24h"
+            }
+          }
+        }
+      ]
     }
   },
   "aggs": {
     "by_namespace": {
       "terms": {
-        "field": "kubernetes.namespace",
+        "field": "kubernetes.namespace_name",
         "size": 20
       },
       "aggs": {
-        "by_level": {
+        "by_type": {
           "terms": {
-            "field": "level",
-            "size": 5
+            "field": "app.error_type",
+            "size": 10
           }
         }
       }
@@ -844,108 +926,86 @@ GET logs-*/_search
   }
 }
 
-# Response time percentiles
-GET logs-*/_search
+GET logs-production-*/_search
 {
   "size": 0,
   "query": {
     "bool": {
-      "must": [
-        { "exists": { "field": "http.response_time_ms" } },
-        { "range": { "@timestamp": { "gte": "now-1h" } } }
+      "filter": [
+        {
+          "exists": {
+            "field": "app.http.response_time_ms"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1h"
+            }
+          }
+        }
       ]
     }
   },
   "aggs": {
     "response_time_percentiles": {
       "percentiles": {
-        "field": "http.response_time_ms",
-        "percents": [50, 75, 90, 95, 99]
+        "field": "app.http.response_time_ms",
+        "percents": [
+          50,
+          75,
+          90,
+          95,
+          99
+        ]
       }
     }
   }
 }
 ```
 
-### 可視化の作成
+これらの例では、完全一致の keyword/time condition に filter context を使用します。2 番目の query は、namespace を aggregation する前に実際に error を filter します。Terms aggregation は選択した top-N set を返し、分散近似や省略された bucket を含むことがあります。すべての namespace の完全な count ではありません。Percentile は近似値であり、mapped millisecond field を使用します。
 
-```
-# Pie Chart: Log level distribution
-1. Visualize > Create visualization > Pie
-2. Index pattern: logs-*
-3. Buckets > Split slices > Terms > level
-4. Save
+visualization には、`app.level`、`@timestamp` 上の time histogram、または明示的に mapping された `app.message.keyword`/`app.error_type` field を選択してください。dashboard 内で field name に言及しても、その mapping は作成されません。
 
-# Line Chart: Errors over time
-1. Visualize > Create visualization > Line
-2. Index pattern: logs-*
-3. Y-axis: Count
-4. X-axis: Date Histogram > @timestamp
-5. Add filter: level: error
-6. Save
+<span id="fine-grained-access-control-fgac"></span>
+<span id="document-level-security-dls"></span>
+<span id="field-level-security-fls"></span>
 
-# Data Table: Top error messages
-1. Visualize > Create visualization > Data table
-2. Index pattern: logs-*
-3. Bucket: Terms > message.keyword (Top 10)
-4. Add filter: level: error
-5. Save
-```
+## セキュリティ構成
 
----
+### Fine-Grained Access Control
 
-## セキュリティ設定
+Network access、domain resource policy、FGAC は別個の layer です。Terraform の IAM-principal policy には SigV4 が必要です。security-group rule も、成功した IAM request も、それだけで index access を許可するものではありません。
 
-### Fine-Grained Access Control (FGAC)
+administrator は、collector 用の writer role と namespace に制限した reader を定義できます。
 
-```json
-# Create role
-PUT _plugins/_security/api/roles/logs-reader
+```http
+PUT _plugins/_security/api/roles/logs-writer
 {
   "cluster_permissions": [
-    "cluster_composite_ops_ro"
+    "cluster_composite_ops"
   ],
   "index_permissions": [
     {
-      "index_patterns": ["logs-*"],
+      "index_patterns": [
+        "logs-production-*"
+      ],
       "allowed_actions": [
-        "read",
-        "search"
+        "create_index",
+        "write"
       ]
     }
   ]
 }
 
-# Role mapping (IAM role)
-PUT _plugins/_security/api/rolesmapping/logs-reader
+PUT _plugins/_security/api/rolesmapping/logs-writer
 {
   "backend_roles": [
-    "arn:aws:iam::123456789012:role/DeveloperRole"
-  ],
-  "users": [
-    "developer@example.com"
+    "arn:aws:iam::123456789012:role/FluentBitOpenSearchRole"
   ]
 }
 
-# Admin role
-PUT _plugins/_security/api/roles/logs-admin
-{
-  "cluster_permissions": [
-    "cluster_all"
-  ],
-  "index_permissions": [
-    {
-      "index_patterns": ["logs-*"],
-      "allowed_actions": ["indices_all"]
-    }
-  ]
-}
-```
-
-### Document-Level Security (DLS)
-
-```json
-# Role that can only access specific namespace
 PUT _plugins/_security/api/roles/team-a-logs
 {
   "cluster_permissions": [
@@ -953,266 +1013,157 @@ PUT _plugins/_security/api/roles/team-a-logs
   ],
   "index_permissions": [
     {
-      "index_patterns": ["logs-*"],
-      "dls": "{\"bool\": {\"must\": [{\"term\": {\"kubernetes.namespace\": \"team-a\"}}]}}",
-      "allowed_actions": ["read", "search"]
+      "index_patterns": [
+        "logs-production-*"
+      ],
+      "dls": "{\"term\":{\"kubernetes.namespace_name\":\"team-a\"}}",
+      "allowed_actions": [
+        "read"
+      ]
     }
+  ]
+}
+
+PUT _plugins/_security/api/rolesmapping/team-a-logs
+{
+  "backend_roles": [
+    "arn:aws:iam::123456789012:role/TeamAReaderRole"
   ]
 }
 ```
 
-### Field-Level Security (FLS)
+role ARN を承認済み identity に置き換えてください。その path を使用する場合、writer mapping には Firehose delivery role も含める必要があります。通常の reader に `cluster_all` や master role を付与しないでください。IAM backend-role mapping と internal/SAML username は異なる identity mechanism です。
 
-```json
-# Hide sensitive fields
-PUT _plugins/_security/api/roles/logs-restricted
+### Document-Level Security と Field-Level Security
+
+DLS は保存された field によって document を filter します。この例では、namespace metadata は信頼できる collector から提供される必要があります。application が提供する string は tenant identity の証明ではありません。
+
+より制限した reader の場合、以下の**結合された** role は namespace restriction を維持し、選択した response field のみを含めます。
+
+```http
+PUT _plugins/_security/api/roles/team-a-limited
 {
   "cluster_permissions": [
     "cluster_composite_ops_ro"
   ],
   "index_permissions": [
     {
-      "index_patterns": ["logs-*"],
-      "fls": ["~user_id", "~ip_address", "~session_token"],
-      "allowed_actions": ["read", "search"]
+      "index_patterns": [
+        "logs-production-*"
+      ],
+      "fls": [
+        "@timestamp",
+        "kubernetes.namespace_name",
+        "app.level",
+        "app.message"
+      ],
+      "allowed_actions": [
+        "read"
+      ],
+      "dls": "{\"term\":{\"kubernetes.namespace_name\":\"team-a\"}}"
     }
   ]
 }
 ```
 
-### SAML 認証の設定
+より広い access をすでに持つ identity に restricted role を追加するのではなく、意図した role mapping を使用してください。有効な role の完全な set を評価してください。raw `log` field は、そうでなければ隠される JSON field を重複する可能性があるため、この allowlist には意図的に含まれていません。
 
-```yaml
-# opensearch-security-config.yaml
-config:
-  dynamic:
-    authc:
-      saml_auth_domain:
-        enabled: true
-        order: 1
-        http_authenticator:
-          type: saml
-          challenge: true
-          config:
-            idp:
-              metadata_url: https://example.okta.com/app/xxx/sso/saml/metadata
-              entity_id: http://www.okta.com/xxx
-            sp:
-              entity_id: https://vpc-logs-production-xxx.ap-northeast-2.es.amazonaws.com
-            kibana_url: https://vpc-logs-production-xxx.ap-northeast-2.es.amazonaws.com/_dashboards
-            roles_key: Role
-            exchange_key: your-exchange-key
-        authentication_backend:
-          type: noop
+FLS は返される field を制御しますが、許可された message string の content は制御しません。`_source`、snapshot、log archive から情報を削除するものではありません。search、get、multi-search、aggregation access をテストし、そもそも禁止されたデータを log に記録しないようにしてください。
+
+### SAML Authentication の設定
+
+Managed OpenSearch Service SAML は、self-managed の `opensearch-security/config.yml` をアップロードするのではなく、**AWS domain configuration API** を通じて構成します。
+
+以下の local helper は、承認済み IdP XML を手作業で escape せずに serialize します。例の administrative group と role-attribute key を、レビュー済みの IdP configuration に置き換えてください。
+
+```python
+from pathlib import Path
+import json
+import xml.etree.ElementTree as ET
+
+metadata = Path("idp-metadata.xml").read_text(encoding="utf-8")
+root = ET.fromstring(metadata)
+if root.tag.rsplit("}", 1)[-1] != "EntityDescriptor" or not root.get("entityID"):
+    raise ValueError("Provide approved metadata for one IdP EntityDescriptor")
+options = {
+    "SAMLOptions": {
+        "Enabled": True,
+        "Idp": {"EntityId": root.get("entityID"), "MetadataContent": metadata},
+        "MasterBackendRole": "opensearch-admin",
+        "RolesKey": "Role",
+        "SessionTimeoutMinutes": 60,
+    }
+}
+Path("advanced-security-saml.json").write_text(json.dumps(options, indent=2) + "\n")
 ```
 
----
+```bash
+aws opensearch update-domain-config \
+  --domain-name logs-production --region ap-northeast-2 \
+  --advanced-security-options file://advanced-security-saml.json
+```
+
+これは payload の例であり、end-to-end SSO deployment ではありません。metadata trust、entity ID、certificate、ACS/Dashboards URL、mapping を検証してください。SAML browser traffic には、対応する domain access-policy design が必要です。`SAMLOptions` を有効にしても、その traffic が上記の IAM-only policy 用の SigV4 に変わるわけではありません。一貫した authentication profile に従い、既存の domain を変更する前に administrator recovery をテストしてください。
+
+<span id="storage-tiering"></span>
+<span id="cost-comparison-based-on-100gb-day"></span>
+<span id="index-optimization"></span>
+<span id="reserved-instances"></span>
 
 ## コスト最適化
 
-### ストレージ階層化
+### Storage と Index Setting
 
-```
-Hot (EBS gp3)    ->    UltraWarm    ->    Cold Storage (S3)
-     |                    |                    |
-  Day 0-7            Day 7-30            Day 30-90
-     |                    |                    |
- Fast queries        Read-only            Archive
- High cost          Medium cost          Low cost
-```
+選択した Region、node family/count、replica、EBS、warm-node compute/storage、cold storage、data-transfer/ingestion path の料金を見積もってください。以前の 100GB/day の金額合計と固定 savings percentage には、再現に十分な仮定がありませんでした。現在の budget や測定済みの比較として扱わないでください。
 
-### コスト比較（100GB/日を基準）
+Index compression、refresh interval、shard count、field mapping は、storage/CPU、search freshness、query capability、recovery cost のトレードオフになります。`index.codec` などの static option は creation template で設定します。static-setting change をすべての open production index に無差別に送信しないでください。text position の削除や field の無効化は query を壊す可能性があります。
 
-```
-+-----------------+--------------+--------------+--------------+
-|  Storage Tier   |  Retention   | Monthly Cost |  Cost per GB |
-+-----------------+--------------+--------------+--------------+
-| Hot (EBS gp3)   |    7 days    |   ~$500      |   $0.10/GB   |
-| UltraWarm       |   23 days    |   ~$350      |   $0.024/GB  |
-| Cold Storage    |   60 days    |   ~$120      |   $0.01/GB   |
-+-----------------+--------------+--------------+--------------+
-| Total (90-day)  |              |   ~$970/mo   |              |
-| Hot only        |   90 days    |  ~$2,700/mo  |              |
-| Savings         |              |  ~$1,730/mo  |    64% saved |
-+-----------------+--------------+--------------+--------------+
-```
+Reserved Instance の savings は、対象となる usage、Region、term、payment choice によって異なります。1 年という horizon だけでは購入を正当化できず、node discount がすべての storage/delivery charge をなくすわけでもありません。古い固定の 21/24/36% の数値ではなく、現在の料金と測定済みの需要を使用してください。
 
-### Index の最適化
+<span id="inverted-index-inefficiency"></span>
+<span id="aggregation-query-performance-degradation"></span>
+<span id="scaling-cost-issues"></span>
+<span id="clickhouse-migration-decision-criteria"></span>
 
-```json
-# Compression settings
-PUT logs-*/_settings
-{
-  "index": {
-    "codec": "best_compression"
-  }
-}
+## 大規模ログ環境における制限
 
-# Adjust refresh interval (during ingestion)
-PUT logs-*/_settings
-{
-  "index": {
-    "refresh_interval": "30s"
-  }
-}
+OpenSearch は、多くの aggregation と sort に inverted index と**column-oriented doc value**を組み合わせます。aggregation のために常にすべての完全な `_source` document を再読み込みするわけではありません。mapping、selectivity、shard、cache、segment layout、concurrent work が performance に影響します。
 
-# Disable unnecessary fields
-PUT _index_template/logs-optimized
-{
-  "index_patterns": ["logs-*"],
-  "template": {
-    "mappings": {
-      "_source": {
-        "enabled": true
-      },
-      "properties": {
-        "message": {
-          "type": "text",
-          "norms": false,
-          "index_options": "docs"
-        }
-      }
-    }
-  }
-}
-```
+元の OpenSearch/ClickHouse の latency と compression の数値には、再現可能な hardware、version、data、query がありませんでした。それらを普遍的な 100GB migration threshold や、全組織の query の 90% が 1 つの pattern を持つという主張に変えないでください。
 
-### Reserved Instances
+同じ data、retention、durability、concurrency 要件で、代表的な全文検索、filter、aggregation、investigative query を比較してください。ingest/backfill cost、schema evolution、permission、dashboard、operational skill、rollback を評価してください。dual-write experiment には reconciliation と cost control が必要です。固定の 2 週間または 2 か月の schedule は保証ではありません。
 
-```bash
-# RI purchase recommendations
-# - Purchase RI if planning to use for 1+ years
-# - All Upfront option is cheapest (up to 36% savings)
-# - Partial Upfront: 24% savings
-# - No Upfront: 21% savings
-```
-
----
-
-## 大規模ログ環境での制限事項
-
-OpenSearch は全文検索に優れていますが、ログ量が急速に増加すると構造的な制限が顕在化します。
-
-### Inverted Index の非効率性
-
-| 観点 | OpenSearch（Inverted Index） | ClickHouse（カラムナ） |
-|--------|---------------------------|---------------------|
-| **圧縮率** | 1.5～2 倍のサイズ増加（Index を含む） | 元データ比 5～10 倍の圧縮 |
-| **集計クエリ** | 全ドキュメントのスキャンが必要 | 高速なカラム単位のスキャン |
-| **ストレージコスト** | 高い（Index + 元データ） | 低い（カラム圧縮） |
-| **INSERT コスト** | Indexing による CPU オーバーヘッドが大きい | 軽量なカラム append |
-
-### 集計クエリのパフォーマンス低下
-
-ログ分析で頻繁に使用される集計クエリ（過去 1 時間の ERROR 数、Service ごとのエラー率など）では、OpenSearch は一致するすべてのドキュメントを読み取る必要があるため、データの増加に伴いパフォーマンスが急激に低下します。
-
-```
-Query: "Aggregate ERROR log count by service for the last hour"
-
-OpenSearch: Look up document IDs from index → Read each document → Aggregate
-           100GB scale: ~2s / 1TB scale: ~25s / 10TB scale: timeout
-
-ClickHouse: Scan only timestamp, level, service columns → Aggregate
-           100GB scale: ~0.3s / 1TB scale: ~1s / 10TB scale: ~8s
-```
-
-### スケーリングコストの問題
-
-| 1 日あたりのログ量 | OpenSearch 月額コスト（推定） | ClickHouse 月額コスト（推定） | 比率 |
-|-----------------|-------------------------------|-------------------------------|-------|
-| 100GB | ~$970 | ~$400 | 2.4x |
-| 500GB | ~$4,500 | ~$1,200 | 3.8x |
-| 1TB | ~$9,000 | ~$2,000 | 4.5x |
-| 10TB | ~$80,000+ | ~$10,000 | 8x+ |
-
-> **重要なポイント**: ログクエリパターンを分析すると、ほとんどの環境ではクエリの 90% 以上が「時間範囲 + フィールド条件」ベースです。このパターンは Inverted Index よりカラムナストレージの方がはるかに効率的です。
-
-### ClickHouse への移行判断基準
-
-OpenSearch を継続するか、ClickHouse への移行を検討するかは、以下の基準で判断してください。
-
-| 基準 | OpenSearch を継続 | ClickHouse を検討 |
-|----------|----------------|-------------------|
-| **1 日あたりのログ量** | 100GB 未満 | 100GB 超 |
-| **主なクエリパターン** | 全文検索（キーワードベース） | 時間範囲 + フィールド条件 |
-| **集計クエリの割合** | 低い（全体の 20% 未満） | 高い（全体の 50% 超） |
-| **コスト感度** | 低い | 高い |
-| **全文検索の必要性** | 必須（コア機能） | 任意（あれば便利） |
-| **チームの SQL 習熟度** | 低い | 高い |
-
-**移行時の考慮事項:**
-
-```
-Phase 1: Query Pattern Analysis (2 weeks)
-  └── Analyze actual query logs for full-text search vs field-condition query ratio
-
-Phase 2: Parallel Operation (1-2 months)
-  └── Dual-write same logs to both OpenSearch + ClickHouse
-  └── Compare query performance and costs
-
-Phase 3: Gradual Migration
-  └── Aggregation/dashboard queries → Migrate to ClickHouse first
-  └── Queries requiring full-text search → Keep OpenSearch or use ClickHouse tokenbf index
-```
-
----
+<span id="feature-comparison"></span>
+<span id="recommendations-by-use-case"></span>
+<span id="migration-considerations"></span>
 
 ## Loki との比較
 
-### 機能比較
+| 項目 | OpenSearch | Loki |
+|---|---|---|
+| Index/query model | Mapped field、inverted index、doc value、Query DSL、サポートされる SQL/PPL feature | Stream-label index、chunk scanning、LogQL pipeline/metric |
+| Text search | Analyzer、relevance、全文検索 query capability | 選択した stream と time range 内の text filtering/search |
+| Access control | Network/IAM/FGAC と構成された document/field control | 認証 gateway、tenant authorization、policy/operational control |
+| Cost と operation | プロビジョニング/managed model と workload に依存 | deployment mode、stream、object storage、cache、query に依存 |
+| Migration | mapping/query を再構築し、permission/data correctness を検証 | label/metadata/query を再設計し、permission/data correctness を検証 |
 
-| 機能 | OpenSearch | Loki |
-|---------|-----------|------|
-| **全文検索** | 優れている（Lucene ベース） | 制限あり（labels+grep） |
-| **クエリ言語** | Query DSL、SQL | LogQL |
-| **Indexing** | 全文 | labels のみ |
-| **ストレージコスト** | 高い | 低い（オブジェクトストレージ） |
-| **複雑な集計** | 優れている | 基本的 |
-| **Dashboard** | OpenSearch Dashboards | Grafana |
-| **運用の複雑さ** | 高い | 低い |
-| **スケーラビリティ** | 水平 | 水平 |
-| **マルチテナンシー** | FGAC | ネイティブ |
+どちらの製品も、自動的に compliance の選択肢、最も安価な選択肢、または運用が簡単な選択肢になるわけではありません。Loki は引き続き text search と derived metric をサポートします。migration は固定の 3～5× の cost や 60～80% の savings ルールに当てはめるのではなく、semantics と capability を変更します。
 
-### ユースケース別の推奨事項
+## 検証とリファレンス
 
-```
-OpenSearch recommended:
-+-- Full-text search is required
-+-- Complex analytics/aggregation queries needed
-+-- Compliance requirements (audit logs)
-+-- Security analytics (SIEM)
-+-- Migrating from existing ELK stack
+ローカルチェックは、Terraform resource configuration と公開済みの data/configuration contract を対象とします。live AWS authorization、Region でサポートされる SKU capacity、collector delivery、ISM transition/deletion、SAML authentication、または query performance を証明するものではありません。実行可能な layer を pull したり container を実行したりせずに、image index/configuration metadata を確認しました。
 
-Loki recommended:
-+-- Cost is top priority
-+-- Already using Grafana
-+-- Simple log search/filtering
-+-- Need Prometheus integration
-+-- Want to reduce operational burden
-```
-
-### 移行時の考慮事項
-
-```yaml
-# Migrating from Loki to OpenSearch
-considerations:
-  - Query rewriting needed (LogQL -> Query DSL)
-  - Dashboard rebuild (Grafana -> OpenSearch Dashboards)
-  - Index template/mapping design
-  - Expected cost increase (3-5x)
-  - Increased operational complexity
-
-# Migrating from OpenSearch to Loki
-considerations:
-  - Loss of full-text search capabilities
-  - Limited complex aggregation queries
-  - Existing dashboard/alert rebuild
-  - Cost savings (60-80%)
-  - Operational simplification
-```
-
----
+- [サービス/バージョンサポート](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html)
+- [サポートされる instance type](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html) と [Multi-AZ](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html)
+- [VPC access](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html)、[access policy](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ac.html)、[FGAC](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html)
+- [UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html)、[cold storage](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cold-storage.html)、[managed ISM](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ism.html)、[ISM policy reference](https://docs.opensearch.org/latest/im-plugin/ism/policies/)
+- [Rollover API](https://docs.opensearch.org/latest/api-reference/index-apis/rollover/) と [doc value](https://docs.opensearch.org/latest/field-types/mapping-parameters/doc-values/)
+- [Snapshot](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-snapshots.html)、[CloudWatch log](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html)、[SAML](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/saml.html)
+- [AWS for Fluent Bit release history](https://github.com/aws/aws-for-fluent-bit/blob/mainline/CHANGELOG.md) と [OpenSearch output configuration](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/opensearch.md)
+- [Data Firehose destination configuration](https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html)
+- [Current service pricing](https://aws.amazon.com/opensearch-service/pricing/)
+- [Elastic licensing FAQ](https://www.elastic.co/pricing/faq/licensing)
 
 ## クイズ
 
-[OpenSearch クイズ](../../quizzes/observability/logging/02-opensearch-quiz.md)で知識を確認しましょう。
+[OpenSearch クイズ](../../quizzes/observability/logging/02-opensearch-quiz.md)で、各区別を確認してください。

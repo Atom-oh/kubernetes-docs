@@ -1,580 +1,346 @@
 # 日志
 
-> **最后更新**: February 20, 2026
+> **最后更新**: September 13, 2026
 
-在 Kubernetes 环境中，有效的日志记录对于系统可观测性、故障排除和安全审计至关重要。本文档介绍日志记录基础、日志收集管道架构，以及 EKS 环境的日志记录策略。
+日志将应用程序行为、基础设施事件和审计证据连接起来。
+应一并设计事件 schema、采集所有权、投递失败行为、访问控制、
+保留和查询。仅选择 collector 或 backend 并不能保证完整记录、租户隔离或监管合规。
 
-## 目录
+## 日志基础
 
-1. [日志记录基础](#日志记录基础)
-2. [日志收集管道架构](#日志收集管道架构)
-3. [日志存储选择标准](#日志存储选择标准)
-4. [EKS 日志记录策略](#eks-日志记录策略)
-5. [解决方案比较](#解决方案比较)
+### 结构化记录仍需要解析
 
-***
+JSON 使字段明确且更易于验证/搜索，但它仍需要解码、
+时间戳/类型映射，以及对容器运行时分帧的正确处理。JSON 可能比纯文本更大，
+也不会自动移除敏感数据。除非经过测试的多行格式另有要求，
+否则每行生成一个事件。
 
-## 日志记录基础
-
-### 结构化日志
-
-结构化日志以一致的格式输出日志消息，使解析和分析更加容易。与非结构化文本日志不同，结构化日志由字段值对组成，能够实现更高效的搜索和筛选。
-
-#### 非结构化日志与结构化日志
-
-```plaintext
-# Unstructured log (difficult to parse)
-2025-02-15 10:23:45 ERROR Failed to connect to database: connection timeout after 30s
-
-# Structured log (JSON format)
-{
-  "timestamp": "2025-02-15T10:23:45.123Z",
-  "level": "ERROR",
-  "message": "Failed to connect to database",
-  "error": "connection timeout",
-  "timeout_seconds": 30,
-  "service": "user-api",
-  "pod": "user-api-7d4f8b9c6-x2k9m",
-  "namespace": "production",
-  "trace_id": "abc123def456"
-}
-```
-
-#### 结构化日志的优势
-
-| 优势                  | 描述                                               |
-| ------------------------ | --------------------------------------------------------- |
-| **搜索效率**    | 按特定字段快速筛选                         |
-| **一致性**          | 所有 Service 使用相同格式                           |
-| **关联分析** | 通过 trace\_id、request\_id 跟踪请求                 |
-| **自动化**           | 无需解析即可立即用于分析工具      |
-| **告警配置**  | 易于根据特定字段值创建告警规则 |
-
-### 日志级别
-
-日志级别表示消息的重要性和严重程度。正确使用日志级别对于有效的故障排除和减少噪声至关重要。
-
-| 级别     | 编号 | 用途                                  | 示例                                              |
-| --------- | ------ | ---------------------------------------- | ---------------------------------------------------- |
-| **TRACE** | 0      | 最详细的调试信息      | 函数进入/退出、变量值                 |
-| **DEBUG** | 1      | 开发期间的调试信息 | SQL 查询、请求参数                      |
-| **INFO**  | 2      | 常规运行信息          | Service 启动、请求完成                  |
-| **WARN**  | 3      | 潜在问题情况             | 发生重试、性能下降           |
-| **ERROR** | 4      | 发生错误（可恢复）             | API 调用失败、验证失败                 |
-| **FATAL** | 5      | 严重错误（不可恢复）           | Service 启动失败、缺少必需依赖项 |
-
-#### 按环境推荐的日志级别
-
-```yaml
-# Development environment
-LOG_LEVEL: DEBUG
-
-# Staging environment
-LOG_LEVEL: INFO
-
-# Production environment
-LOG_LEVEL: INFO  # or WARN (for high traffic)
-```
-
-### JSON 日志格式
-
-在 Kubernetes 环境中，JSON 格式是事实标准。大多数日志收集器和分析工具原生支持 JSON。
-
-#### 推荐的 JSON 字段
+此合成示例保留了其原始的 2025 时间戳，作为格式说明，
+而非关于当前事故的声明：
 
 ```json
 {
   "timestamp": "2025-02-15T10:23:45.123Z",
-  "level": "INFO",
-  "logger": "com.example.UserService",
-  "message": "User login successful",
-  "context": {
-    "user_id": "user-12345",
-    "session_id": "sess-abc123",
-    "ip_address": "10.0.1.50"
-  },
-  "kubernetes": {
-    "namespace": "production",
-    "pod": "user-api-7d4f8b9c6-x2k9m",
-    "container": "user-api",
-    "node": "ip-10-0-1-100.ec2.internal"
-  },
-  "trace": {
-    "trace_id": "abc123def456",
-    "span_id": "789ghi",
-    "parent_span_id": "456def"
-  }
+  "level": "ERROR",
+  "message": "Database connection timed out",
+  "service": "example-api",
+  "operation": "database.connect",
+  "timeout_ms": 30000,
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "span_id": "00f067aa0ba902b7"
 }
 ```
 
-#### 关键字段说明
+为便于阅读，展示了展开的 JSON。面向行的生成器可以按如下方式对其编码，
+包括包含换行符的消息：
 
-| 字段组    | 字段         | 描述                                         |
-| -------------- | ------------- | --------------------------------------------------- |
-| **基本**      | timestamp     | ISO 8601 格式的时间戳                           |
-|                | level         | 日志级别                                           |
-|                | message       | 人类可读的消息                              |
-| **上下文**    | context.\*    | 与业务逻辑相关的信息                  |
-| **Kubernetes** | kubernetes.\* | Pod、namespace 等 K8s 元数据                    |
-| **追踪**      | trace.\*      | 分布式追踪 ID（OpenTelemetry 集成） |
+```python
+import json
 
-***
 
-## 日志收集管道架构
+def encode_log(record):
+    # JSON escapes embedded newlines; append exactly one record delimiter.
+    return json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n"
+```
 
-### 架构概述
+这些是应用程序字段约定，而非 OTLP wire schema。请在相关位置配置
+collector/backend 映射至 OpenTelemetry 的 Timestamp、SeverityText/SeverityNumber、
+Body、Resource、Attributes 和 trace context。
+
+Trace ID 是 16-byte 值（在此表示中为 32 个十六进制字符）；
+span ID 为 8 bytes（16 个十六进制字符）。全零 ID 无效。请附加
+实际活动 context，而不是为每条日志生成一个无关的新 ID。没有 span 的启动/系统记录
+可以省略 trace context；这些字段并非每个 JSON log 的必填项。
+仅有正确的 ID 并不会创建 span，也不保证跨 Service 关联。
+
+仅采集实际所需的业务/context 字段。不要将原始
+session token、密码、客户数据、IP 或 request body 推荐为通用默认字段。
+带有身份信息的审计数据可能具有正当用途，但需要已定义的
+访问/保留/脱敏策略。对于路由，优先使用可信 collector metadata，而不要
+让应用程序 JSON 任意声明 tenant/namespace。
+
+### Severity 不是通用的 0–5 量表
+
+框架具有不同的名称和数值级别。请明确映射其含义。
+对于 OpenTelemetry log model，范围如下：
+
+| Severity | SeverityNumber |
+| --- | --- |
+| TRACE | 1–4 |
+| DEBUG | 5–8 |
+| INFO | 9–12 |
+| WARN | 13–16 |
+| ERROR | 17–20 |
+| FATAL | 21–24 |
+
+在该 model 中，零表示未指定的 Severity。ERROR 并不普遍
+表示可恢复，且仅凭标签无法决定重试/恢复策略。
+INFO 通常是生产运维的起点；审计/安全事件
+以及临时启用的调试需要各自的要求。仅为减少容量而将所有内容提高到 WARN
+可能会移除所需的证据。
+
+## 采集和处理
+
+下述层次是职责划分，并不一定是独立的进程。
+有意选择目标位置；这并不要求将每条
+记录复制到每个 backend。托管 EKS control-plane 记录通过 CloudWatch 进入，
+而非 worker-node 日志文件。
 
 ```mermaid
-flowchart TB
-    subgraph Sources["Log Sources"]
-        APP[Application Logs]
-        SYS[System Logs]
-        K8S[Kubernetes Events]
-        CTRL[Control Plane Logs]
-    end
-
-    subgraph Collection["Collection Layer"]
-        DS[DaemonSet Agent<br/>FluentBit/Promtail]
-        SC[Sidecar Container]
-        OTEL[OTEL Collector]
-    end
-
-    subgraph Processing["Processing Layer"]
-        PARSE[Parsing/Normalization]
-        ENRICH[Metadata Enrichment]
-        FILTER[Filtering/Sampling]
-        BUFFER[Buffering]
-    end
-
-    subgraph Storage["Storage Layer"]
-        LOKI[(Grafana Loki)]
-        OS[(OpenSearch)]
-        CW[(CloudWatch Logs)]
-        CH[(ClickHouse)]
-    end
-
-    subgraph Analysis["Analysis Layer"]
-        GRAFANA[Grafana]
-        KIBANA[OpenSearch Dashboards]
-        CWINSIGHTS[CloudWatch Insights]
-    end
-
-    APP --> DS
-    SYS --> DS
-    K8S --> OTEL
-    CTRL --> DS
-    APP --> SC
-
-    DS --> PARSE
-    SC --> PARSE
-    OTEL --> PARSE
-
-    PARSE --> ENRICH
-    ENRICH --> FILTER
-    FILTER --> BUFFER
-
-    BUFFER --> LOKI
-    BUFFER --> OS
-    BUFFER --> CW
-    BUFFER --> CH
-
-    LOKI --> GRAFANA
-    OS --> KIBANA
-    CW --> CWINSIGHTS
-    CH --> GRAFANA
-
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef collect fill:#2196F3,stroke:#333,color:white
-    classDef process fill:#FF9800,stroke:#333,color:white
-    classDef store fill:#9C27B0,stroke:#333,color:white
-    classDef analyze fill:#F44336,stroke:#333,color:white
-
-    class APP,SYS,K8S,CTRL source
-    class DS,SC,OTEL collect
-    class PARSE,ENRICH,FILTER,BUFFER process
-    class LOKI,OS,CW,CH store
-    class GRAFANA,KIBANA,CWINSIGHTS analyze
+flowchart LR
+    A["Application stdout / stderr"] --> R["Runtime CRI log files"]
+    R --> N["Collector on supported nodes"]
+    L["Application files"] --> S["Optional sidecar / file collector"]
+    N --> P["Parse, enrich, redact, buffer"]
+    S --> P
+    P --> B["Selected log backend"]
+    C["Managed EKS control plane"] --> W["CloudWatch Logs"]
+    W -->|"Optional subscription / export"| P
+    Q["Authorized query client"] -->|"Query"| B
+    B -->|"Results"| Q
 ```
 
-### 各层职责
+| 模式 | 适当用途和限制 |
+| --- | --- |
+| stdout/stderr + node collector | 常见的 Linux worker-node 路径；运行时文件和 collector 权限仍然很重要 |
+| File + sidecar | 旧版/仅文件应用程序或应用程序特定处理；需谨慎考虑共享 volume、启动/关闭和开销 |
+| Application/SDK push | 可直接携带结构化事件；buffering、authentication 和失败行为会影响应用程序 |
+| Managed platform router | 例如 EKS Fargate 的内置 log router；使用其支持的配置模型 |
 
-#### 1. 收集层
+DaemonSet 会根据 selector、affinity、toleration、
+OS 和 rollout 行为在符合条件的节点上调度。它并不能证明每个节点都有健康的 collector，
+或每个 container 都被包含。多个 collector/滚动重叠可能造成重复采集。
+sidecar 并不自动成为强多 tenant 安全边界。
 
-负责从日志源收集原始日志。
+### 默认 Linux 日志路径和生命周期
 
-| 方法          | 优势                                   | 劣势                     | 最适用场景                          |
-| --------------- | -------------------------------------------- | --------------------------------- | --------------------------------- |
-| **DaemonSet**   | 资源高效，集中式管理   | 每个节点仅一个                 | 大多数标准工作负载           |
-| **Sidecar**     | 按应用隔离，自定义处理 | 资源开销                 | 特殊日志格式、多租户 |
-| **直接推送** | 实时、灵活的传输                 | 需要修改应用 | 高性能要求     |
+常见默认布局为：
 
-#### 2. 处理层
+```text
+Runtime log files:
+  /var/log/pods/<namespace>_<pod>_<uid>/<container>/0.log
 
-对收集到的日志进行标准化并添加元数据。
+Compatibility symlinks pointing to those files:
+  /var/log/containers/<pod>_<namespace>_<container>-<container-id>.log
+```
 
-```yaml
-# FluentBit processing pipeline example
+Kubelet 指示运行时的 CRI 日志路径并管理 rotation。`podLogsDir` 可以
+更改默认路径，且特定 OS/runtime 的布局有所不同。请检查实际
+部署，而不是为每个 containerd workload 添加仅适用于 Docker 的 mount。
+`kubectl logs` 显示当前日志文件；保留时，`--previous` 可以访问上一个
+container 实例。它不是历史日志 archive。
+
+Rotation 限制本地文件；它并不实现集中保留或 backup。
+节点丢失、eviction 或 deletion 可能会在采集前移除记录。sidecar 的
+`emptyDir` 在同一 pod 内的 container 重启后仍然存在，但在 pod 删除后不会保留。
+collector offset database、queue 和 persistent storage 必须与
+输出 acknowledgment/retry 一并设计。Buffering 是有限的；retry 可能会重复记录。
+请在故障期间衡量丢失/重复、backlog、storage 耗尽和恢复。
+
+为每条记录选择一条主路由。一个既转发记录又将其写入 stdout 的 sidecar
+可能重复 node collector 路径。避免递归采集 collector 输出，
+或转发到同一已订阅的 source log group。
+
+### Fluent Bit 处理片段
+
+以下是**经典 Fluent Bit 配置**，不是 YAML。它仅说明
+filter：实际 input、CRI/multiline parser、tag 格式、
+RBAC/cache 访问、storage 和 output 应单独提供和验证。
+
+```text
+# Fluent Bit classic-format FILTER fragment, not YAML or a complete pipeline.
+# Requires matching tail input tags and CRI/Docker parsing.
 [FILTER]
-    Name         kubernetes
-    Match        kube.*
-    Kube_URL     https://kubernetes.default.svc:443
-    Merge_Log    On
-    K8S-Logging.Parser  On
+    Name               kubernetes
+    Match              kube.*
+    Kube_Tag_Prefix     kube.var.log.containers.
+    Merge_Log          On
+    Merge_Log_Key      app
+    Keep_Log           On
+    K8S-Logging.Parser  Off
+    Labels             Off
+    Annotations        Off
 
 [FILTER]
-    Name         modify
-    Match        *
-    Add          cluster_name eks-production
-    Add          environment production
-
-[FILTER]
-    Name         grep
-    Match        *
-    Exclude      log HealthCheck
+    Name               modify
+    Match              kube.*
+    Set                cluster_name example-cluster
+    Set                environment demo
 ```
 
-#### 3. 存储层
+`Merge_Log_Key app` 将解析后的应用程序字段与 collector metadata 分开保留。
+`Set` 会替换选定的可信 cluster/environment 值；`Add` 会使
+已存在的值保持不变。此片段不会隐式信任 workload 选择的 parser/annotation。
+请将 `Kube_Tag_Prefix` 与实际 input tag 匹配。
 
-存储并索引处理后的日志。存储方式因解决方案特性而异。
+使用 `Keep_Log On` 时，脱敏必须同时考虑原始 log 和解析后的
+副本。仅在经过测试的策略下移除原始副本。不要丢弃任何包含
+`HealthCheck` 的行：失败的 health check 可能正是所需的证据。仅在检查
+应用程序格式和失败情况后，过滤明确定义的常规事件。
 
-#### 4. 分析层
+本概述不会将不完整的 `latest`-image DaemonSet 呈现为完整
+安装。真实 collector 需要 pinned image、实际 configuration、
+service account/RBAC、正确的 mount、权限和资源。请遵循
+[collector 章节](05-collectors.md)了解部署详情，并验证其所选的
+platform/backend configuration。
 
-搜索并可视化已存储的日志。
+## EKS 日志路径
 
-***
+### Control-plane 日志
 
-## 日志存储选择标准
+EKS 可以将 `api`、`audit`、`authenticator`、`controllerManager` 和 `scheduler`
+记录直接发送到账户中的 CloudWatch Logs。它们服务于不同目的：
+API 诊断、审计事件、IAM authentication 诊断、controller 和
+scheduler 诊断。请选择运营/安全要求所需的类型。
 
-### 关键考量因素
+将此请求保存为 `control-plane-logging.json`：
 
-#### 1. 成本
-
-```
-Monthly log volume: Estimated cost based on 1TB (2025)
-
-+------------------+------------------+-----------------+
-|     Solution     |   Storage/GB     |   Query Cost    |
-+------------------+------------------+-----------------+
-| Loki (S3)        | $0.023 (S3)      | Free            |
-| OpenSearch       | $0.10-0.15       | Free            |
-| CloudWatch       | $0.50 (ingest)   | $0.005/GB scan  |
-| ClickHouse       | $0.023 (S3)      | Free            |
-+------------------+------------------+-----------------+
-```
-
-#### 2. 查询性能
-
-| 解决方案       | 实时查询 | 聚合 | 全文搜索 | 仪表板             |
-| -------------- | --------------- | ----------- | ---------------- | --------------------- |
-| **Loki**       | 优秀       | 良好        | 有限          | Grafana               |
-| **OpenSearch** | 优秀       | 优秀   | 优秀        | OpenSearch Dashboards |
-| **CloudWatch** | 良好            | 良好        | 良好             | CloudWatch Console    |
-| **ClickHouse** | 优秀       | 优秀   | 良好             | Grafana               |
-
-#### 3. 保留期限
-
-```yaml
-# Recommended retention policies
-regulatory_compliance:
-  financial: 7 years
-  healthcare: 6 years
-  general: 1 year
-
-operational:
-  hot_storage: 7-14 days    # Fast queries
-  warm_storage: 30-90 days  # Investigation
-  cold_storage: 1 year+     # Compliance
-```
-
-#### 4. 运维复杂度
-
-| 解决方案       | 安装 | 运维 | 可扩展性 |
-| -------------- | ------------ | ---------- | ----------- |
-| **Loki**       | 低          | 低        | 高        |
-| **OpenSearch** | 中          | 高       | 中      |
-| **CloudWatch** | 很低     | 很低   | 高        |
-| **ClickHouse** | 高         | 中     | 高        |
-
-***
-
-## EKS 日志记录策略
-
-### 日志收集模式
-
-#### 1. stdout/stderr 模式（推荐）
-
-通过容器标准输出/错误输出进行日志记录是默认的 Kubernetes 模式。
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-pod
-spec:
-  containers:
-  - name: app
-    image: myapp:1.0
-    # Application outputs logs to stdout/stderr
-    # kubelet saves to files in /var/log/containers/
-    # DaemonSet agent collects
-```
-
-**优势：**
-
-* Kubernetes 原生方式
-* 自动日志轮转管理（`/var/log/containers/`）
-* 可使用 `kubectl logs` 命令
-* 无需单独挂载 volume
-
-**日志文件位置：**
-
-```bash
-# Actual log files
-/var/log/containers/<pod-name>_<namespace>_<container-name>-<container-id>.log
-
-# Symbolic links
-/var/log/pods/<namespace>_<pod-name>_<pod-uid>/<container-name>/0.log
-```
-
-#### 2. Sidecar 模式
-
-需要基于文件的日志记录或特殊处理时使用。
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-with-sidecar
-spec:
-  containers:
-  - name: app
-    image: legacy-app:1.0
-    volumeMounts:
-    - name: log-volume
-      mountPath: /var/log/app
-
-  - name: log-collector
-    image: fluent/fluent-bit:latest
-    volumeMounts:
-    - name: log-volume
-      mountPath: /var/log/app
-      readOnly: true
-    - name: fluent-bit-config
-      mountPath: /fluent-bit/etc/
-
-  volumes:
-  - name: log-volume
-    emptyDir: {}
-  - name: fluent-bit-config
-    configMap:
-      name: fluent-bit-sidecar-config
-```
-
-**使用场景：**
-
-* 旧版应用（仅文件日志记录）
-* 多租户环境中的日志隔离
-* 每个应用需要特殊解析
-* 高安全性要求
-
-#### 3. DaemonSet 模式（最常见）
-
-每个节点上的一个 Agent 收集所有容器日志。
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: logging
-spec:
-  selector:
-    matchLabels:
-      app: fluent-bit
-  template:
-    metadata:
-      labels:
-        app: fluent-bit
-    spec:
-      serviceAccountName: fluent-bit
-      tolerations:
-      - operator: Exists  # Deploy on all nodes
-      containers:
-      - name: fluent-bit
-        image: public.ecr.aws/aws-observability/aws-for-fluent-bit:latest
-        volumeMounts:
-        - name: varlog
-          mountPath: /var/log
-          readOnly: true
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-        resources:
-          limits:
-            memory: 200Mi
-            cpu: 200m
-          requests:
-            memory: 100Mi
-            cpu: 100m
-      volumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
-```
-
-### EKS 控制平面日志
-
-EKS 控制平面日志将发送至 CloudWatch Logs。
-
-```bash
-# Enable control plane logging via AWS CLI
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-```
-
-| 日志类型              | 描述             | 建议         |
-| --------------------- | ----------------------- | ------------------- |
-| **api**               | API server 日志         | 必需            |
-| **audit**             | Kubernetes 审计日志   | 必需（安全） |
-| **authenticator**     | IAM 身份验证日志 | 推荐         |
-| **controllerManager** | Controller manager 日志 | 可选            |
-| **scheduler**         | Scheduler 日志          | 可选            |
-
-### Container Insights 日志记录
-
-```yaml
-# CloudWatch Agent ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cloudwatch-agent-config
-  namespace: amazon-cloudwatch
-data:
-  cwagentconfig.json: |
+```json
+{
+  "clusterLogging": [
     {
-      "logs": {
-        "metrics_collected": {
-          "kubernetes": {
-            "cluster_name": "my-cluster",
-            "metrics_collection_interval": 60
-          }
-        },
-        "force_flush_interval": 5
-      }
+      "types": [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler"
+      ],
+      "enabled": true
     }
+  ]
+}
+```
+```bash
+export AWS_REGION=ap-northeast-2
+export CLUSTER_NAME=my-cluster
+
+# Inspect the existing configuration before choosing a change.
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.logging'
+
+# This changes the cluster logging configuration and can incur log charges.
+aws eks update-cluster-config --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --logging file://control-plane-logging.json
+
+# Use the actual update ID from the response, then inspect status/errors.
+: "${UPDATE_ID:?Set the returned update ID}"
+aws eks describe-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --update-id "$UPDATE_ID"
 ```
 
-***
+日志更新是异步的。EKS 为更新记录每个 subnet 最多需要五个可用 IP 地址。
+请验证更新状态、已发出的 stream 以及 log-group 的保留/权限。投递尽力而为，
+通常在数分钟内完成；启用某个类型不会回填每个先前事件。
 
-## 解决方案比较
+审计事件遵循 audit policy 及其 level/stage/exclusion。它们并不能
+证明每个 request/body 都被记录，且仅启用 `audit` 并不
+建立合规性。node DaemonSet 不会读取托管 control-plane host。
+将 CloudWatch 记录转发到其他位置是一条独立的 subscription/export 路径，
+具有其自身的 encoding、IAM、投递和重复处理要求。
 
-### 功能对比表
+### Fargate 和 Container Insights
 
-| 功能                     | Loki       | OpenSearch     | CloudWatch     | ClickHouse     |
-| --------------------------- | ---------- | -------------- | -------------- | -------------- |
-| **安装复杂度** | 低        | 中         | 无（托管） | 高           |
-| **查询语言**          | LogQL      | Lucene/DQL     | Insights QL    | SQL            |
-| **全文搜索**        | 有限    | 优秀      | 良好           | 良好           |
-| **模式**                  | 无模式 | 无模式     | 无模式     | 已定义模式 |
-| **压缩**             | 高       | 中         | 不适用            | 很高      |
-| **实时尾随**       | 支持  | 支持      | 有限        | 支持      |
-| **告警**                | Grafana    | 内置       | 内置       | Grafana        |
-| **多租户**           | 支持  | 支持      | 支持      | 支持      |
-| **S3 后端**              | 原生     | 仅快照 | 不适用            | 原生         |
+EKS Fargate 提供由 `aws-observability` namespace 中 `aws-logging` 配置的、
+基于托管 Fluent Bit 的 router，具有文档说明的 5,300-character 限制及
+支持的 section/plugin 限制。不要在那里安装普通 host DaemonSet。
+请配置其目标权限并测试新 workload 日志。
+Auto Mode/mixed/Windows 环境也需要其支持的采集路径。
 
-### 按使用场景推荐的解决方案
+该 namespace 需要 `aws-observability: enabled` label。请按文档所述向
+Fargate pod execution role 授予目标权限。ConfigMap 更改
+仅适用于新 pod，而不适用于现有 pod；请规划受控 rollout 并验证投递。
 
-```
-+-------------------------------------+---------------------+
-|           Use Case                  |  Recommended        |
-+-------------------------------------+---------------------+
-| Cost optimization is top priority   | Loki + S3           |
-| Full-text search and analytics      | OpenSearch          |
-| AWS native, simple operations       | CloudWatch Logs     |
-| Large-scale analytics, SQL pref.    | ClickHouse          |
-| Existing Grafana stack              | Loki                |
-| Compliance requirements             | OpenSearch/CloudWatch|
-| Startup/small team                  | Loki or CloudWatch  |
-| Enterprise/complex analytics        | OpenSearch          |
-+-------------------------------------+---------------------+
-```
 
-### 成本模拟（基于每月 100GB 日志）
+CloudWatch Agent 的 `logs.metrics_collected.kubernetes` 会发出 Container Insights
+性能数据；仅此并不是应用程序 stdout/stderr 日志采集。
+Fluent Bit 或已配置的 OTel log 路径会单独处理应用程序日志。
+除非实际 workload/Operator 消费，否则 ConfigMap 没有作用。
+有关这些 model 和 configuration 边界，请参阅已审查的
+[CloudWatch 指南](../metrics/04-cloudwatch-metrics.md)。
 
-```
-Estimated monthly cost by solution:
+## Storage、retention 和成本决策
 
-Loki (S3 Simple Scalable):
-  +- S3 storage: $2.30
-  +- S3 requests: $0.50
-  +- EC2 (3x m5.large): $180
-  +- Total: ~$183
+| Backend | 设计问题 |
+| --- | --- |
+| Loki | LogQL、label-indexed stream/chunk 和受支持的 metadata/filter 路径；选择 label、tenancy/authentication、storage 和 query capacity |
+| OpenSearch | Search/aggregation API 和 mapping/index lifecycle；区分 self-managed、managed domain、UltraWarm 和 Serverless |
+| CloudWatch Logs | 托管 log group、IAM、retention 以及 Logs Insights QL/SQL/PPL；功能因 log class 和 Region 而异 |
+| ClickHouse | column-oriented SQL analytics、schema/order/partition/TTL 选择，以及选定的 self-managed 或 cloud storage model |
 
-OpenSearch (3x m5.large):
-  +- Instances: $300
-  +- EBS storage: $15
-  +- Total: ~$315
+OpenSearch 并不总是“仅 S3 snapshot”：UltraWarm 使用 S3 和 caching，
+而 Serverless 将 storage 与 compute 分离。CloudWatch 并非用户配置的
+S3 log backend，但支持独立的 export/delivery/integration 路径。产品的
+tenant identifier 或 sidecar 不能替代经 authentication 的路由和 backend
+access control。
 
-CloudWatch Logs:
-  +- Ingestion: $50
-  +- Storage: $3
-  +- Queries (estimated): $10
-  +- Total: ~$63
+全文 filtering、indexing 和 query latency 是不同的问题。请测试
+代表性 volume、query predicate、concurrency、cold data 和 recovery。
+避免无条件的“优秀/有限”排名、“schemaless 即无 schema”
+的断言，或没有测量 dataset/configuration 的 compression ratio。
 
-ClickHouse (self-hosted):
-  +- EC2 (3x m5.large): $180
-  +- S3 storage: $2.30
-  +- Total: ~$183
-```
+### Retention 需要针对实际记录制定策略
 
-> **注意**：实际成本可能会因查询模式、保留期限和区域而有很大差异。
+不要将 `financial` 映射为七年、`healthcare` 映射为六年，或将通用日志映射为
+一年，作为通用法律规则。确定适用的 record category、
+jurisdiction、contractual requirement、legal hold 和经批准的 owner policy。
+hot/warm/cold tier 是运营选择，而非已经满足这些义务的证据。
+在删除/访问计划中包括 replica、object version、backup 和 export，
+并单独测试恢复。
 
-### 决策流程图
+### 比较可比成本
 
-```mermaid
-flowchart TD
-    START[Choose Log Storage] --> Q1{Existing Grafana<br/>stack?}
+旧的 2025 表格混合了每 GB storage 和 ingestion 价格，并将 self-managed
+query 称为免费。后来的 100-GB 估算缺少可复现的 Region、小时数、
+retention、capacity 和 workload 基础。这些是说明性估算，而非
+生产测量；更改日期或仅更改一个价格并不能修复它们。
 
-    Q1 -->|Yes| Q2{Need full-text<br/>search?}
-    Q1 -->|No| Q3{Prefer AWS<br/>native?}
+比较 ingestion、retained/compressed byte 和 index overhead、replica、compute、
+query scan/capacity、storage request、network transfer、backup 和运营工作。
+object-store 价格只是其中一项。即使没有按 query 收取服务费用，
+query 也会消耗已预置的 CPU/memory/I/O。Loki 加 S3 并非保证的成本
+胜者，具名 backend 也不会自动适合合规。
 
-    Q2 -->|Yes| OS[OpenSearch]
-    Q2 -->|No| LOKI[Loki]
+1. 定义所需的 query、freshness、retention、access 和 recovery 目标。
+2. 筛选满足这些要求的部署 model。
+3. 重放代表性 data/query 以及故障/recovery 情况。
+4. 比较完整成本和运营所有权。
+5. 记录剩余假设，并在生产使用前验证它们。
 
-    Q3 -->|Yes| Q4{Analysis<br/>complexity?}
-    Q3 -->|No| Q5{Cost vs<br/>Features?}
+## 后续步骤和验证范围
 
-    Q4 -->|Simple| CW[CloudWatch Logs]
-    Q4 -->|Complex| OS
+Promtail 已于 **2026-03-02** 结束生命周期。对于新工作，请使用 Alloy 或其他受支持的 client，
+并为现有 Promtail deployment 规划迁移。引用的公告明确将 `lambda-promtail` 单独处理；
+请不要扩大弃用声明。
 
-    Q5 -->|Cost first| LOKI
-    Q5 -->|Features first| OS
+- [Loki](01-loki.md)
+- [OpenSearch](02-opensearch.md)
+- [CloudWatch Logs](03-cloudwatch-logs.md)
+- [ClickHouse](04-clickhouse.md)
+- [Collectors: Fluent Bit、Alloy 和 OpenTelemetry](05-collectors.md)
 
-    classDef decision fill:#FFE082,stroke:#333
-    classDef solution fill:#81C784,stroke:#333,color:white
+本审计检查了 source fact、示例 serialization/ID 以及 request/configuration
+结构。未运行 EKS 日志变更、collector deployment、tenant/storage provisioning、
+法律判定、生产成本测量或投递/recovery 测试。
 
-    class Q1,Q2,Q3,Q4,Q5 decision
-    class OS,LOKI,CW solution
-```
+## 参考资料
 
-***
+- [Kubernetes logging architecture](https://kubernetes.io/docs/concepts/cluster-administration/logging/)
+- [Kubelet legacy log symlinks](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/kuberuntime/legacy.go)
+- [DaemonSet behavior](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)
+- [Kubernetes audit policy](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
+- [OpenTelemetry logs data model](https://opentelemetry.io/docs/specs/otel/logs/data-model/)
+- [W3C Trace Context](https://www.w3.org/TR/trace-context/)
+- [EKS control-plane logging](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+- [EKS Fargate log router](https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html)
+- [Fluent Bit Kubernetes filter source documentation](https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/kubernetes.md)
+- [Fluent Bit modify filter](https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/modify.md)
+- [Loki architecture](https://grafana.com/docs/loki/latest/get-started/overview/)
+- [Promtail end of life](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [OpenSearch UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html)
+- [OpenSearch Serverless](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-overview.html)
+- [CloudWatch Logs query languages](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html)
+- [CloudWatch log classes](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html)
+- [ClickHouse overview](https://github.com/ClickHouse/ClickHouse)
 
-## 后续步骤
-
-有关各日志存储解决方案的详细信息，请参阅以下文档：
-
-* [Grafana Loki](01-loki.md) - 经济高效的日志聚合
-* [Amazon OpenSearch Service](02-opensearch.md) - 强大的搜索与分析
-* [CloudWatch Logs](03-cloudwatch-logs.md) - AWS 原生日志记录
-* [ClickHouse](04-clickhouse.md) - 高性能日志分析
-* [日志收集器比较](05-collectors.md) - FluentBit、Promtail、Alloy、OTEL
-
-***
-
-## 测验
-
-通过 [日志概览测验](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/observability/logging/README-quiz.md) 测试您的知识。
+[测验](../../quizzes/observability/logging/README-quiz.md)

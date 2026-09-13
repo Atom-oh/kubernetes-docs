@@ -1,10 +1,12 @@
 # CloudWatch Logs 测验
 
-测试您对 Amazon CloudWatch Logs 的理解。
+> **最后更新**: September 13, 2026
+
+[指南](../../../observability/logging/03-cloudwatch-logs.md)
 
 ---
 
-1. 以下哪项不是 EKS control plane logging 支持的日志类型？
+1. 以下哪项不是 EKS control-plane 日志类型？
 
    - A) api
    - B) audit
@@ -14,35 +16,33 @@
 <details>
 <summary>显示答案</summary>
 
-**答案：C) worker**
+**答案：C**
 
-**说明：**
-EKS control plane 支持 5 种日志类型：api、audit、authenticator、controllerManager 和 scheduler。Worker node 日志不属于 control plane 日志，必须通过 Container Insights 或 FluentBit 单独收集。
+这五种类型是 api、audit、authenticator、controllerManager 和 scheduler。Worker/application 日志以及 Auto Mode managed-component 交付属于独立路径。
 
 </details>
 
 ---
 
-2. CloudWatch Logs 定价结构中费用最高的项目是什么？
+2. 应如何比较 CloudWatch Logs 成本驱动因素？
 
-   - A) Storage
-   - B) Ingestion
-   - C) Query (Logs Insights)
-   - D) S3 Export
+   - A) Ingestion 始终是每月最大的费用
+   - B) Storage 始终免费
+   - C) 每条 S3 交付路径都免费
+   - D) 比较实际容量、retention、scans、class、Region 和下游费用
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Ingestion**
+**答案：D**
 
-**说明：**
-CloudWatch Logs 的数据摄取费用为 $0.50/GB，远高于存储费用（$0.03/GB/月）或查询费用（每扫描 GB $0.005）。因此，过滤不必要的日志对成本优化非常重要。
+仅凭每 GB ingested 的价格，无法与 GB-month storage 或重复 scan 容量进行排序比较。指南中的 $1,575 示例是假设性的算术计算，并非当前 Seoul 定价或完整账单。
 
 </details>
 
 ---
 
-3. CloudWatch Logs Insights 中用于提取特定字段的命令是什么？
+3. 哪个 Logs Insights QL 命令使用 glob 或正则表达式提取字段？
 
    - A) extract
    - B) parse
@@ -52,54 +52,51 @@ CloudWatch Logs 的数据摄取费用为 $0.50/GB，远高于存储费用（$0.0
 <details>
 <summary>显示答案</summary>
 
-**答案：B) parse**
+**答案：B**
 
-**说明：**
-在 CloudWatch Logs Insights 中，`parse` 命令从日志消息中提取与特定模式匹配的字段。示例：`parse @message '"level":"*"' as level`
+parse 提取字段；jsonParse 可以解析 JSON message。collector envelope 将 application 字段置于 log_processed 下。不要假定 glob 中任意 JSON key 的顺序。
 
 </details>
 
 ---
 
-4. 通过 Container Insights 收集的日志使用什么 log group 路径格式？
+4. 本指南中的手动 application collector 使用哪个 group？
 
-   - A) `/aws/eks/cluster-name/logs`
-   - B) `/aws/containerinsights/cluster-name/application`
-   - C) `/var/log/containers/cluster-name`
-   - D) `/kubernetes/cluster-name/logs`
+   - A) /aws/containerinsights/example-eks/application
+   - B) /aws/eks/example-eks/logs
+   - C) /var/log/containers/example-eks
+   - D) 每个 cluster 都使用一个不可变的通用 group 名称
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) `/aws/containerinsights/cluster-name/application`**
+**答案：A**
 
-**说明：**
-Container Insights 会在 `/aws/containerinsights/{cluster-name}/` 路径下创建 log group，包括 application、host、dataplane 和 performance log group。
+配置的 application group 与 control-plane 日志使用的 /aws/eks/example-eks/cluster 不同。该 group 会预先准备；collector 不会创建它或更改 retention。
 
 </details>
 
 ---
 
-5. CloudWatch Logs 中哪项功能可将日志传送到 Lambda functions 以进行实时日志处理？
+5. 关于 subscription delivery，哪项说法正确？
 
-   - A) Log Stream
-   - B) Metric Filter
-   - C) Subscription Filter
-   - D) Log Insight
+   - A) S3 bucket ARN 是直接的 subscription-filter destination
+   - B) CloudWatch subscription batches 可通过 Firehose 的 OpenSearch destination 工作
+   - C) subscription 可以发送到 Lambda、Kinesis 或 Firehose；通过 Firehose 归档到 S3 是单独的下游步骤
+   - D) Subscriptions 保证 exactly-once delivery，并回填全部历史记录
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Subscription Filter**
+**答案：C**
 
-**说明：**
-Subscription Filter 可将 log group 中的日志实时传送到其他服务（Lambda、Kinesis Data Firehose、Kinesis Data Streams）。您可以指定过滤模式，仅传送特定日志。
+destination API 和 input format 很重要。CloudWatch Logs→Firehose→OpenSearch 明确不受支持。Subscriptions 是异步且 at least once；export tasks 和 vended-log delivery 是不同的 API。
 
 </details>
 
 ---
 
-6. 用于将日志发送到 CloudWatch Logs 的 FluentBit OUTPUT plugin 名称是什么？
+6. CloudWatch Logs 的原生 C Fluent Bit output plugin 是什么？
 
    - A) cloudwatch
    - B) cloudwatch_logs
@@ -109,85 +106,80 @@ Subscription Filter 可将 log group 中的日志实时传送到其他服务（L
 <details>
 <summary>显示答案</summary>
 
-**答案：B) cloudwatch_logs**
+**答案：B**
 
-**说明：**
-FluentBit 的 CloudWatch Logs output plugin 名为 `cloudwatch_logs`。它默认包含在 AWS 提供的 `aws-for-fluent-bit` image 中。
-
-</details>
-
----
-
-7. 按时间段汇总日志数量的正确 CloudWatch Logs Insights query 是什么？
-
-   - A) `stats count(*) group by hour`
-   - B) `stats count(*) as log_count by bin(1h)`
-   - C) `select count(*) from logs group by hour`
-   - D) `aggregate count by time(1h)`
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) `stats count(*) as log_count by bin(1h)`**
-
-**说明：**
-在 CloudWatch Logs Insights 中，基于时间的聚合使用 `stats` 命令和 `bin()` function。`bin(1h)` 将数据分组为 1 小时间隔。
+cloudwatch_logs 是原生 plugin。cloudwatch 是较旧的 Go plugin。Credentials、实际的 ServiceAccount、output group 和 IAM policy 仍需要相匹配。
 
 </details>
 
 ---
 
-8. 以下哪项不是推荐的 CloudWatch Logs 成本优化策略？
+7. 哪个 QL query 按小时统计 events，并对生成的 time buckets 排序？
 
-   - A) 过滤不必要的日志（healthcheck 等）
-   - B) 按环境设置不同的保留期限
-   - C) 收集所有 DEBUG level 日志
-   - D) 将长期保留的日志归档到 S3
+   - A) stats count(*) group by hour
+   - B) stats count(*) as log_count by bin(1h) as bucket | sort bucket asc
+   - C) select count(*) from logs group by hour
+   - D) stats count(*) by bin(1h) | sort @message
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 收集所有 DEBUG level 日志**
+**答案：B**
 
-**说明：**
-DEBUG level 日志非常详细，会显著增加日志量。在生产环境中，仅收集 INFO level 及以上的日志有助于成本优化。
+stats 会更改可用的 output fields，因此应对其 bucket alias 排序。latency percentile function 是 pct，而不是 percentile；不区分大小写的 regex 在斜杠内使用 (?i)。
 
 </details>
 
 ---
 
-9. 在 CloudWatch Logs 中使用 Metric Filters 的主要目的是什么？
+8. 哪种 logging policy 作为默认的 cost-control 方法是不安全的？
 
-   - A) 将日志导出到 S3
-   - B) 根据日志模式创建 CloudWatch metrics
-   - C) 设置日志保留期限
-   - D) 配置日志加密
+   - A) 针对必须保留的 records 审查 filters
+   - B) 通过 log group 的单一 owner 设置 retention
+   - C) 无限期保留所有 DEBUG output，并不加区分地丢弃 security-relevant records 作为补偿
+   - D) 在更改设计前测量 ingestion 和 scans
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 根据日志模式创建 CloudWatch metrics**
+**答案：C**
 
-**说明：**
-Metric Filters 可检测日志中的特定模式（例如 ERROR），并创建 CloudWatch metrics。您可以基于这些 metrics 设置 CloudWatch Alarms 以接收通知。
+容量控制必须保留所需的 diagnostics 和 security records。ConfigMap 中的 LOG_LEVEL 仅在 application 使用它时才会生效。Retention 更改可能会删除数据。
 
 </details>
 
 ---
 
-10. 在 EKS cluster 上设置 Container Insights 时，IRSA (IAM Roles for Service Accounts) 不需要以下哪项权限？
+9. metric filter 的作用是什么，zero default 又意味着什么？
 
-    - A) logs:CreateLogGroup
-    - B) logs:PutLogEvents
-    - C) s3:PutObject
-    - D) cloudwatch:PutMetricData
+   - A) 它将每条 historical record 导出到 S3
+   - B) 它从新的匹配 logs 派生 metrics；当 logs 到达但没有 records 匹配时，默认值为 zero
+   - C) 即使没有 logs 到达，它也始终输出 zero
+   - D) 它支持每种 log class 中的所有功能
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) s3:PutObject**
+**答案：B**
 
-**说明：**
-基本的 Container Insights 设置不需要 S3 权限。只需要 CloudWatch Logs（logs:*）和 CloudWatch Metrics（cloudwatch:PutMetricData）权限。只有在设置单独将日志导出到 S3 时，才需要 S3 权限。
+本章在 $.log_processed.level 上使用 Standard-class JSON filter。没有传入 logs 时，数据可能缺失。该 alarm 检查两个 five-minute periods 中的 error count，而不是 error rate 或 Service health 的证明。
+
+</details>
+
+---
+
+10. 哪种 IAM/ownership 安排适用于手动 logs-only collector？
+
+   - A) 为所有 Pods 授予 administrator role
+   - B) 将 policy 附加到 cloudwatch-agent，同时部署无关的 ServiceAccount
+   - C) 仅使用 s3:PutObject
+   - D) 预先创建 group，在其 ARN 上授权 logs:CreateLogStream/logs:PutLogEvents，并映射实际的 collector ServiceAccount
+
+<details>
+<summary>显示答案</summary>
+
+**答案：D**
+
+手动 profile 使用 logging/fluent-bit-cloudwatch 和已批准的 IRSA trust。此路径不需要 PutMetricData 或宽泛的 logs:*。完整 observability chart 属于独立 profile，其 Fluent Bit Pods 使用 cloudwatch-agent。
 
 </details>

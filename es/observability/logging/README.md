@@ -1,580 +1,371 @@
-# Registro de logs
+# Logging
 
-> **Última actualización**: February 20, 2026
+> **Última actualización**: September 13, 2026
 
-El registro de logs eficaz en entornos Kubernetes es esencial para la visibilidad del sistema, la resolución de problemas y la auditoría de seguridad. Este documento cubre los fundamentos del registro de logs, la arquitectura del pipeline de recopilación de logs y las estrategias de registro de logs para entornos EKS.
+El logging (registro de eventos) conecta el comportamiento de las aplicaciones, los
+eventos de infraestructura y las evidencias de auditoría. Diseñe en conjunto el esquema
+de eventos, la titularidad de la recolección, el comportamiento ante fallos de entrega,
+el acceso, la retención y las consultas. La elección de un collector o de un backend por
+sí sola no garantiza registros completos, aislamiento entre tenants ni cumplimiento
+normativo.
 
-## Tabla de contenido
+## Fundamentos del logging
 
-1. [Fundamentos del registro de logs](#logging-fundamentals)
-2. [Arquitectura del pipeline de recopilación de logs](#log-collection-pipeline-architecture)
-3. [Criterios de selección de almacenamiento de logs](#log-storage-selection-criteria)
-4. [Estrategia de registro de logs de EKS](#eks-logging-strategy)
-5. [Comparación de soluciones](#solution-comparison)
+### Los registros estructurados siguen necesitando parseo
 
-***
+JSON hace explícitos los campos y facilita su validación y búsqueda, pero aún requiere
+decodificación, mapeo de marcas de tiempo y tipos, y un manejo correcto del framing del
+container runtime. JSON puede ocupar más que el texto plano y no elimina automáticamente
+los datos sensibles. Produzca un evento por línea, salvo que un formato multilínea ya
+probado exija lo contrario.
 
-## Fundamentos del registro de logs
-
-### Registro de logs estructurado
-
-El registro de logs estructurado genera mensajes de log en un formato coherente, lo que facilita el análisis y el procesamiento. A diferencia de los logs de texto no estructurados, los logs estructurados consisten en pares campo-valor que permiten búsquedas y filtrados mucho más eficientes.
-
-#### Logs no estructurados frente a estructurados
-
-```plaintext
-# Unstructured log (difficult to parse)
-2025-02-15 10:23:45 ERROR Failed to connect to database: connection timeout after 30s
-
-# Structured log (JSON format)
-{
-  "timestamp": "2025-02-15T10:23:45.123Z",
-  "level": "ERROR",
-  "message": "Failed to connect to database",
-  "error": "connection timeout",
-  "timeout_seconds": 30,
-  "service": "user-api",
-  "pod": "user-api-7d4f8b9c6-x2k9m",
-  "namespace": "production",
-  "trace_id": "abc123def456"
-}
-```
-
-#### Beneficios del registro de logs estructurado
-
-| Beneficio                  | Descripción                                               |
-| -------------------------- | --------------------------------------------------------- |
-| **Eficiencia de búsqueda** | Filtrado rápido por campos específicos                    |
-| **Consistencia**           | Mismo formato en todos los servicios                      |
-| **Análisis de correlación** | Seguimiento de solicitudes mediante trace\_id, request\_id |
-| **Automatización**         | Uso inmediato en herramientas de análisis sin procesamiento |
-| **Configuración de alertas** | Fácil creación de reglas de alerta basadas en valores de campos específicos |
-
-### Niveles de log
-
-Los niveles de log indican la importancia y la gravedad de los mensajes. El uso adecuado de los niveles de log es crucial para una resolución de problemas eficaz y la reducción del ruido.
-
-| Nivel     | Número | Propósito                                | Ejemplo                                              |
-| --------- | ------ | ---------------------------------------- | ---------------------------------------------------- |
-| **TRACE** | 0      | Información de depuración más detallada  | Entrada/salida de funciones, valores de variables    |
-| **DEBUG** | 1      | Información de depuración durante el desarrollo | Consultas SQL, parámetros de solicitud          |
-| **INFO**  | 2      | Información operativa general            | Inicio de Service, finalización de solicitudes       |
-| **WARN**  | 3      | Situaciones de posibles problemas        | Reintentos en curso, degradación del rendimiento     |
-| **ERROR** | 4      | Se produjo un error (recuperable)        | Error de llamada API, error de validación            |
-| **FATAL** | 5      | Error crítico (irrecuperable)            | Error al iniciar Service, dependencia requerida ausente |
-
-#### Niveles de log recomendados por entorno
-
-```yaml
-# Development environment
-LOG_LEVEL: DEBUG
-
-# Staging environment
-LOG_LEVEL: INFO
-
-# Production environment
-LOG_LEVEL: INFO  # or WARN (for high traffic)
-```
-
-### Formato de log JSON
-
-En entornos Kubernetes, el formato JSON es el estándar de facto. La mayoría de los recopiladores de logs y herramientas de análisis admiten JSON de forma nativa.
-
-#### Campos JSON recomendados
+Este ejemplo sintético conserva su marca de tiempo original de 2025 como ilustración del
+formato, no como afirmación sobre un incidente actual:
 
 ```json
 {
   "timestamp": "2025-02-15T10:23:45.123Z",
-  "level": "INFO",
-  "logger": "com.example.UserService",
-  "message": "User login successful",
-  "context": {
-    "user_id": "user-12345",
-    "session_id": "sess-abc123",
-    "ip_address": "10.0.1.50"
-  },
-  "kubernetes": {
-    "namespace": "production",
-    "pod": "user-api-7d4f8b9c6-x2k9m",
-    "container": "user-api",
-    "node": "ip-10-0-1-100.ec2.internal"
-  },
-  "trace": {
-    "trace_id": "abc123def456",
-    "span_id": "789ghi",
-    "parent_span_id": "456def"
-  }
+  "level": "ERROR",
+  "message": "Database connection timed out",
+  "service": "example-api",
+  "operation": "database.connect",
+  "timeout_ms": 30000,
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "span_id": "00f067aa0ba902b7"
 }
 ```
 
-#### Descripciones de los campos clave
+El JSON expandido se muestra para facilitar la lectura. Un productor orientado a líneas
+puede codificarlo así, incluidos los mensajes que contienen caracteres de nueva línea:
 
-| Grupo de campos | Campo         | Descripción                                         |
-| --------------- | ------------- | --------------------------------------------------- |
-| **Básico**      | timestamp     | Marca de tiempo en formato ISO 8601                 |
-|                | level         | Nivel de log                                        |
-|                | message       | Mensaje legible para las personas                   |
-| **Contexto**    | context.\*    | Información relacionada con la lógica de negocio    |
-| **Kubernetes** | kubernetes.\* | Metadatos de K8s como Pod y namespace               |
-| **Trace**      | trace.\*      | ID de trazado distribuido (integración con OpenTelemetry) |
+```python
+import json
 
-***
 
-## Arquitectura del pipeline de recopilación de logs
+def encode_log(record):
+    # JSON escapes embedded newlines; append exactly one record delimiter.
+    return json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n"
+```
 
-### Descripción general de la arquitectura
+Estas son convenciones de campos de la aplicación, no el esquema de transporte de OTLP.
+Configure el mapeo del collector o backend hacia Timestamp, SeverityText/SeverityNumber,
+Body, Resource, Attributes y el contexto de traza de OpenTelemetry cuando corresponda.
+
+Los trace ID son valores de 16 bytes (32 caracteres hexadecimales en esta representación);
+los span ID son de 8 bytes (16 caracteres hexadecimales). Los ID formados solo por ceros
+no son válidos. Adjunte el contexto activo real, no un ID nuevo y sin relación en cada log.
+Los registros de arranque o de sistema sin span pueden omitir el contexto de traza; esos
+campos no son obligatorios en todos los logs JSON. Los ID correctos por sí solos no crean
+spans ni garantizan la correlación entre servicios.
+
+Recolecte los campos de negocio o de contexto que realmente necesite. No recomiende tokens
+de sesión en bruto, contraseñas, datos de clientes, direcciones IP o cuerpos de peticiones
+como campos predeterminados universales. Los datos de auditoría que contienen identidades
+pueden tener un propósito legítimo, pero requieren una política definida de acceso,
+retención y redacción. Prefiera metadatos de un collector de confianza para el enrutamiento
+en lugar de permitir que el JSON de la aplicación declare un tenant o namespace arbitrario.
+
+### La severidad no es una escala universal de 0 a 5
+
+Los frameworks usan nombres y niveles numéricos distintos. Mapee su significado de forma
+explícita. Para el modelo de logs de OpenTelemetry, los rangos son:
+
+| Severity | SeverityNumber |
+| --- | --- |
+| TRACE | 1–4 |
+| DEBUG | 5–8 |
+| INFO | 9–12 |
+| WARN | 13–16 |
+| ERROR | 17–20 |
+| FATAL | 21–24 |
+
+En ese modelo, el cero representa severidad no especificada. ERROR no significa
+universalmente que el error sea recuperable, y una etiqueta por sí sola no decide la
+política de reintentos o recuperación. INFO suele ser un punto de partida para operaciones
+en producción; los eventos de auditoría y seguridad, así como la depuración habilitada
+temporalmente, tienen sus propios requisitos. Elevar todo a WARN solo para reducir volumen
+puede eliminar evidencias necesarias.
+
+## Recolección y procesamiento
+
+Las capas siguientes son responsabilidades, no necesariamente procesos separados. Los
+destinos se seleccionan de forma deliberada; esto no exige copiar cada registro a todos los
+backends. Los registros del control plane gestionado de EKS entran a través de CloudWatch,
+no de archivos de log de los nodos de trabajo.
 
 ```mermaid
-flowchart TB
-    subgraph Sources["Log Sources"]
-        APP[Application Logs]
-        SYS[System Logs]
-        K8S[Kubernetes Events]
-        CTRL[Control Plane Logs]
-    end
-
-    subgraph Collection["Collection Layer"]
-        DS[DaemonSet Agent<br/>FluentBit/Promtail]
-        SC[Sidecar Container]
-        OTEL[OTEL Collector]
-    end
-
-    subgraph Processing["Processing Layer"]
-        PARSE[Parsing/Normalization]
-        ENRICH[Metadata Enrichment]
-        FILTER[Filtering/Sampling]
-        BUFFER[Buffering]
-    end
-
-    subgraph Storage["Storage Layer"]
-        LOKI[(Grafana Loki)]
-        OS[(OpenSearch)]
-        CW[(CloudWatch Logs)]
-        CH[(ClickHouse)]
-    end
-
-    subgraph Analysis["Analysis Layer"]
-        GRAFANA[Grafana]
-        KIBANA[OpenSearch Dashboards]
-        CWINSIGHTS[CloudWatch Insights]
-    end
-
-    APP --> DS
-    SYS --> DS
-    K8S --> OTEL
-    CTRL --> DS
-    APP --> SC
-
-    DS --> PARSE
-    SC --> PARSE
-    OTEL --> PARSE
-
-    PARSE --> ENRICH
-    ENRICH --> FILTER
-    FILTER --> BUFFER
-
-    BUFFER --> LOKI
-    BUFFER --> OS
-    BUFFER --> CW
-    BUFFER --> CH
-
-    LOKI --> GRAFANA
-    OS --> KIBANA
-    CW --> CWINSIGHTS
-    CH --> GRAFANA
-
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef collect fill:#2196F3,stroke:#333,color:white
-    classDef process fill:#FF9800,stroke:#333,color:white
-    classDef store fill:#9C27B0,stroke:#333,color:white
-    classDef analyze fill:#F44336,stroke:#333,color:white
-
-    class APP,SYS,K8S,CTRL source
-    class DS,SC,OTEL collect
-    class PARSE,ENRICH,FILTER,BUFFER process
-    class LOKI,OS,CW,CH store
-    class GRAFANA,KIBANA,CWINSIGHTS analyze
+flowchart LR
+    A["Application stdout / stderr"] --> R["Runtime CRI log files"]
+    R --> N["Collector on supported nodes"]
+    L["Application files"] --> S["Optional sidecar / file collector"]
+    N --> P["Parse, enrich, redact, buffer"]
+    S --> P
+    P --> B["Selected log backend"]
+    C["Managed EKS control plane"] --> W["CloudWatch Logs"]
+    W -->|"Optional subscription / export"| P
+    Q["Authorized query client"] -->|"Query"| B
+    B -->|"Results"| Q
 ```
 
-### Responsabilidades de las capas
+| Patrón | Uso adecuado y límites |
+| --- | --- |
+| stdout/stderr + collector en el nodo | Ruta habitual en nodos de trabajo Linux; los archivos del runtime y los permisos del collector siguen importando |
+| Archivo + sidecar | Aplicaciones heredadas o que solo escriben a archivo, o procesamiento específico de la aplicación; el volumen compartido, el arranque/apagado y la sobrecarga requieren cuidado |
+| Envío desde la aplicación o el SDK | Puede transportar eventos estructurados directamente; el buffering, la autenticación y el comportamiento ante fallos afectan a la aplicación |
+| Router de plataforma gestionada | Por ejemplo, el log router integrado de EKS Fargate; usa su modelo de configuración soportado |
 
-#### 1. Capa de recopilación
+Un DaemonSet se programa en los nodos aptos según selectores, afinidad, taints tolerados,
+sistema operativo y comportamiento de despliegue. No demuestra que todos los nodos tengan
+un collector en buen estado ni que todos los contenedores estén incluidos. Varios collectors
+o un solapamiento durante un rolling update pueden duplicar la recolección. Un sidecar no es
+automáticamente un límite de seguridad sólido entre múltiples tenants.
 
-Responsable de recopilar logs sin procesar de las fuentes de logs.
+### Rutas de log predeterminadas en Linux y ciclo de vida
 
-| Método          | Ventajas                                   | Desventajas                     | Ideal para                       |
-| --------------- | ------------------------------------------ | --------------------------------- | --------------------------------- |
-| **DaemonSet**   | Uso eficiente de recursos, gestión centralizada | Solo uno por nodo              | La mayoría de las cargas de trabajo estándar |
-| **Sidecar**     | Aislamiento por aplicación, procesamiento personalizado | Sobrecarga de recursos | Formatos de log especiales, multi-tenant |
-| **Direct Push** | Entrega en tiempo real y flexible          | Requiere modificar la aplicación | Requisitos de alto rendimiento    |
+La disposición predeterminada habitual es:
 
-#### 2. Capa de procesamiento
+```text
+Runtime log files:
+  /var/log/pods/<namespace>_<pod>_<uid>/<container>/0.log
 
-Normaliza los logs recopilados y añade metadatos.
+Compatibility symlinks pointing to those files:
+  /var/log/containers/<pod>_<namespace>_<container>-<container-id>.log
+```
 
-```yaml
-# FluentBit processing pipeline example
+Kubelet dirige la ruta de logs CRI del runtime y gestiona la rotación. `podLogsDir` puede
+cambiar la ruta predeterminada, y las disposiciones específicas del sistema operativo o del
+runtime difieren. Inspeccione el despliegue real en lugar de añadir montajes exclusivos de
+Docker a todas las cargas de trabajo con containerd. `kubectl logs` expone el archivo de log
+actual; `--previous` puede acceder a una instancia anterior del contenedor cuando se conserva.
+No es un archivo histórico de logs.
+
+La rotación limita los archivos locales; no implementa retención central ni copias de
+seguridad. La pérdida, el desalojo o la eliminación de un nodo pueden eliminar registros antes
+de su recolección. El `emptyDir` de un sidecar sobrevive al reinicio de un contenedor dentro
+del mismo Pod, pero no a la eliminación del Pod. Las bases de datos de offsets del collector,
+las colas y el almacenamiento persistente deben diseñarse junto con la confirmación y los
+reintentos de la salida. El buffering es finito; los reintentos pueden duplicar registros.
+Mida la pérdida y duplicación de registros, el backlog, el agotamiento del almacenamiento y la
+recuperación en condiciones de fallo.
+
+Elija una ruta principal por registro. Un sidecar que reenvía registros y además los escribe
+en stdout puede duplicar la ruta del collector del nodo. Evite recolectar recursivamente la
+salida del collector o reenviar hacia el mismo log group de origen suscrito.
+
+### Fragmento de procesamiento de Fluent Bit
+
+Lo siguiente es **configuración clásica de Fluent Bit**, no YAML. Ilustra únicamente
+filtros: proporcione y valide por separado la entrada real, el parser CRI/multilínea, el
+formato de tag, el acceso a RBAC y caché, el almacenamiento y la salida.
+
+```text
+# Fluent Bit classic-format FILTER fragment, not YAML or a complete pipeline.
+# Requires matching tail input tags and CRI/Docker parsing.
 [FILTER]
-    Name         kubernetes
-    Match        kube.*
-    Kube_URL     https://kubernetes.default.svc:443
-    Merge_Log    On
-    K8S-Logging.Parser  On
+    Name               kubernetes
+    Match              kube.*
+    Kube_Tag_Prefix     kube.var.log.containers.
+    Merge_Log          On
+    Merge_Log_Key      app
+    Keep_Log           On
+    K8S-Logging.Parser  Off
+    Labels             Off
+    Annotations        Off
 
 [FILTER]
-    Name         modify
-    Match        *
-    Add          cluster_name eks-production
-    Add          environment production
-
-[FILTER]
-    Name         grep
-    Match        *
-    Exclude      log HealthCheck
+    Name               modify
+    Match              kube.*
+    Set                cluster_name example-cluster
+    Set                environment demo
 ```
 
-#### 3. Capa de almacenamiento
+`Merge_Log_Key app` mantiene los campos parseados de la aplicación separados de los
+metadatos del collector. `Set` reemplaza los valores de cluster y entorno de confianza
+elegidos; `Add` dejaría sin cambios un valor ya presente. En este fragmento, los parsers y
+las annotations seleccionados por la carga de trabajo no son de confianza implícita. Haga
+coincidir `Kube_Tag_Prefix` con los tags reales de la entrada.
 
-Almacena e indexa los logs procesados. Los métodos de almacenamiento varían según las características de la solución.
+Con `Keep_Log On`, la redacción debe tener en cuenta tanto el log original como la copia
+parseada. Elimine la copia en bruto solo bajo una política probada. No descarte cualquier
+línea que contenga `HealthCheck`: un health check que falla puede ser justo la evidencia que
+necesita. Filtre únicamente eventos rutinarios bien definidos, tras comprobar el formato de
+la aplicación y los casos de fallo.
 
-#### 4. Capa de análisis
+Esta descripción general no presenta un DaemonSet incompleto con imagen `latest` como una
+instalación completa. Un collector real requiere imágenes fijadas, una configuración real,
+service account y RBAC, montajes correctos, permisos y recursos. Siga el
+[capítulo de collectors](05-collectors.md) para los detalles de despliegue y valide la
+configuración de plataforma y backend elegida.
 
-Busca y visualiza los logs almacenados.
+## Rutas de logging en EKS
 
-***
+### Logs del control plane
 
-## Criterios de selección de almacenamiento de logs
+EKS puede enviar registros de `api`, `audit`, `authenticator`, `controllerManager` y
+`scheduler` directamente a CloudWatch Logs en la cuenta. Sirven a propósitos distintos:
+diagnóstico de la API, eventos de auditoría, diagnóstico de la autenticación IAM y
+diagnóstico del controller y del scheduler. Seleccione los tipos que requieran sus
+necesidades operativas y de seguridad.
 
-### Consideraciones clave
+Guarde esta petición como `control-plane-logging.json`:
 
-#### 1. Coste
-
-```
-Monthly log volume: Estimated cost based on 1TB (2025)
-
-+------------------+------------------+-----------------+
-|     Solution     |   Storage/GB     |   Query Cost    |
-+------------------+------------------+-----------------+
-| Loki (S3)        | $0.023 (S3)      | Free            |
-| OpenSearch       | $0.10-0.15       | Free            |
-| CloudWatch       | $0.50 (ingest)   | $0.005/GB scan  |
-| ClickHouse       | $0.023 (S3)      | Free            |
-+------------------+------------------+-----------------+
-```
-
-#### 2. Rendimiento de consultas
-
-| Solución       | Consulta en tiempo real | Agregación | Búsqueda de texto completo | Dashboard             |
-| -------------- | ----------------------- | ---------- | -------------------------- | --------------------- |
-| **Loki**       | Excelente               | Bueno      | Limitada                   | Grafana               |
-| **OpenSearch** | Excelente               | Excelente  | Excelente                  | OpenSearch Dashboards |
-| **CloudWatch** | Bueno                   | Bueno      | Bueno                      | CloudWatch Console    |
-| **ClickHouse** | Excelente               | Excelente  | Bueno                      | Grafana               |
-
-#### 3. Período de retención
-
-```yaml
-# Recommended retention policies
-regulatory_compliance:
-  financial: 7 years
-  healthcare: 6 years
-  general: 1 year
-
-operational:
-  hot_storage: 7-14 days    # Fast queries
-  warm_storage: 30-90 days  # Investigation
-  cold_storage: 1 year+     # Compliance
-```
-
-#### 4. Complejidad operativa
-
-| Solución       | Instalación | Operaciones | Escalabilidad |
-| -------------- | ---------- | ----------- | ------------- |
-| **Loki**       | Baja       | Baja        | Alta          |
-| **OpenSearch** | Media      | Alta        | Media         |
-| **CloudWatch** | Muy baja   | Muy baja    | Alta          |
-| **ClickHouse** | Alta       | Media       | Alta          |
-
-***
-
-## Estrategia de registro de logs de EKS
-
-### Patrones de recopilación de logs
-
-#### 1. Patrón stdout/stderr (recomendado)
-
-El registro de logs mediante la salida/error estándar del contenedor es el patrón predeterminado de Kubernetes.
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-pod
-spec:
-  containers:
-  - name: app
-    image: myapp:1.0
-    # Application outputs logs to stdout/stderr
-    # kubelet saves to files in /var/log/containers/
-    # DaemonSet agent collects
-```
-
-**Ventajas:**
-
-* Enfoque nativo de Kubernetes
-* Gestión automática de rotación de logs (`/var/log/containers/`)
-* Comando `kubectl logs` disponible
-* No se requiere un montaje de volumen independiente
-
-**Ubicaciones de archivos de log:**
-
-```bash
-# Actual log files
-/var/log/containers/<pod-name>_<namespace>_<container-name>-<container-id>.log
-
-# Symbolic links
-/var/log/pods/<namespace>_<pod-name>_<pod-uid>/<container-name>/0.log
-```
-
-#### 2. Patrón Sidecar
-
-Se utiliza cuando se requiere un registro basado en archivos o procesamiento especial.
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-with-sidecar
-spec:
-  containers:
-  - name: app
-    image: legacy-app:1.0
-    volumeMounts:
-    - name: log-volume
-      mountPath: /var/log/app
-
-  - name: log-collector
-    image: fluent/fluent-bit:latest
-    volumeMounts:
-    - name: log-volume
-      mountPath: /var/log/app
-      readOnly: true
-    - name: fluent-bit-config
-      mountPath: /fluent-bit/etc/
-
-  volumes:
-  - name: log-volume
-    emptyDir: {}
-  - name: fluent-bit-config
-    configMap:
-      name: fluent-bit-sidecar-config
-```
-
-**Casos de uso:**
-
-* Aplicaciones heredadas (solo registro en archivos)
-* Aislamiento de logs en entornos multi-tenant
-* Se requiere análisis especial por aplicación
-* Requisitos de alta seguridad
-
-#### 3. Patrón DaemonSet (más común)
-
-Un agente por nodo recopila todos los logs de contenedores.
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: logging
-spec:
-  selector:
-    matchLabels:
-      app: fluent-bit
-  template:
-    metadata:
-      labels:
-        app: fluent-bit
-    spec:
-      serviceAccountName: fluent-bit
-      tolerations:
-      - operator: Exists  # Deploy on all nodes
-      containers:
-      - name: fluent-bit
-        image: public.ecr.aws/aws-observability/aws-for-fluent-bit:latest
-        volumeMounts:
-        - name: varlog
-          mountPath: /var/log
-          readOnly: true
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-        resources:
-          limits:
-            memory: 200Mi
-            cpu: 200m
-          requests:
-            memory: 100Mi
-            cpu: 100m
-      volumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
-```
-
-### Registro de logs del Control Plane de EKS
-
-Los logs del Control Plane de EKS se envían a CloudWatch Logs.
-
-```bash
-# Enable control plane logging via AWS CLI
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-```
-
-| Tipo de log              | Descripción             | Recomendado         |
-| ------------------------ | ----------------------- | ------------------- |
-| **api**                  | Logs del servidor API   | Obligatorio         |
-| **audit**                | Logs de auditoría de Kubernetes | Obligatorio (seguridad) |
-| **authenticator**        | Logs de autenticación IAM | Recomendado       |
-| **controllerManager**    | Logs del controller manager | Opcional        |
-| **scheduler**            | Logs del scheduler      | Opcional            |
-
-### Registro de logs de Container Insights
-
-```yaml
-# CloudWatch Agent ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cloudwatch-agent-config
-  namespace: amazon-cloudwatch
-data:
-  cwagentconfig.json: |
+```json
+{
+  "clusterLogging": [
     {
-      "logs": {
-        "metrics_collected": {
-          "kubernetes": {
-            "cluster_name": "my-cluster",
-            "metrics_collection_interval": 60
-          }
-        },
-        "force_flush_interval": 5
-      }
+      "types": [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler"
+      ],
+      "enabled": true
     }
+  ]
+}
+```
+```bash
+export AWS_REGION=ap-northeast-2
+export CLUSTER_NAME=my-cluster
+
+# Inspect the existing configuration before choosing a change.
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.logging'
+
+# This changes the cluster logging configuration and can incur log charges.
+aws eks update-cluster-config --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --logging file://control-plane-logging.json
+
+# Use the actual update ID from the response, then inspect status/errors.
+: "${UPDATE_ID:?Set the returned update ID}"
+aws eks describe-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --update-id "$UPDATE_ID"
 ```
 
-***
+Las actualizaciones de logging son asíncronas. EKS documenta que se necesitan hasta cinco
+direcciones IP disponibles por subred para la actualización. Verifique el estado de la
+actualización, los streams emitidos y la retención y permisos del log group. La entrega es
+de mejor esfuerzo, normalmente en cuestión de minutos; habilitar un tipo no rellena
+retroactivamente los eventos anteriores.
 
-## Comparación de soluciones
+Los eventos de auditoría siguen la audit policy y sus niveles, etapas y exclusiones. No
+demuestran que cada petición o cuerpo se haya registrado, y habilitar `audit` por sí solo no
+establece cumplimiento normativo. El DaemonSet de los nodos no lee un host del control plane
+gestionado. Reenviar registros de CloudWatch a otro destino es una ruta separada de
+suscripción o exportación, con sus propios requisitos de codificación, IAM, entrega y manejo
+de duplicados.
 
-### Tabla de comparación de características
+### Fargate y Container Insights
 
-| Característica              | Loki       | OpenSearch     | CloudWatch     | ClickHouse     |
-| --------------------------- | ---------- | -------------- | -------------- | -------------- |
-| **Complejidad de instalación** | Baja    | Media          | Ninguna (gestionado) | Alta      |
-| **Lenguaje de consulta**    | LogQL      | Lucene/DQL     | Insights QL    | SQL            |
-| **Búsqueda de texto completo** | Limitada | Excelente      | Buena          | Buena          |
-| **Esquema**                 | Sin esquema | Sin esquema   | Sin esquema    | Esquema definido |
-| **Compresión**              | Alta       | Media          | N/A            | Muy alta       |
-| **Seguimiento en tiempo real** | Compatible | Compatible   | Limitado       | Compatible     |
-| **Alertas**                 | Grafana    | Integradas     | Integradas     | Grafana        |
-| **Multi-tenancy**           | Compatible | Compatible    | Compatible     | Compatible     |
-| **Backend S3**              | Nativo     | Solo snapshots | N/A            | Nativo         |
+EKS Fargate proporciona un router gestionado basado en Fluent Bit, configurado mediante
+`aws-logging` en el namespace `aws-observability`, con un límite documentado de 5.300
+caracteres y restricciones sobre las secciones y plugins soportados. Allí no se instala el
+DaemonSet habitual del host. Configure los permisos de su destino y pruebe los logs de nuevas
+cargas de trabajo. Los entornos de Auto Mode, mixtos o Windows también requieren sus rutas de
+recolección soportadas.
 
-### Soluciones recomendadas por caso de uso
+El namespace requiere la label `aws-observability: enabled`. Otorgue los permisos del destino
+al pod execution role de Fargate según la documentación. Los cambios en el ConfigMap se
+aplican a los Pods nuevos, no a los existentes; planifique un despliegue controlado y verifique
+la entrega.
 
-```
-+-------------------------------------+---------------------+
-|           Use Case                  |  Recommended        |
-+-------------------------------------+---------------------+
-| Cost optimization is top priority   | Loki + S3           |
-| Full-text search and analytics      | OpenSearch          |
-| AWS native, simple operations       | CloudWatch Logs     |
-| Large-scale analytics, SQL pref.    | ClickHouse          |
-| Existing Grafana stack              | Loki                |
-| Compliance requirements             | OpenSearch/CloudWatch|
-| Startup/small team                  | Loki or CloudWatch  |
-| Enterprise/complex analytics        | OpenSearch          |
-+-------------------------------------+---------------------+
-```
 
-### Simulación de costes (basada en 100 GB/mes de logs)
+El `logs.metrics_collected.kubernetes` del CloudWatch Agent emite datos de rendimiento de
+Container Insights; eso por sí solo no es recolección de logs de stdout/stderr de la
+aplicación. Fluent Bit o una ruta de logs de OTel configurada gestionan los logs de aplicación
+por separado. Un ConfigMap no tiene efecto a menos que la carga de trabajo u Operator real lo
+consuma. Consulte la [guía de CloudWatch](../metrics/04-cloudwatch-metrics.md) revisada para
+conocer esos límites de modelo y configuración.
 
-```
-Estimated monthly cost by solution:
+## Decisiones de almacenamiento, retención y coste
 
-Loki (S3 Simple Scalable):
-  +- S3 storage: $2.30
-  +- S3 requests: $0.50
-  +- EC2 (3x m5.large): $180
-  +- Total: ~$183
+| Backend | Preguntas de diseño |
+| --- | --- |
+| Loki | LogQL, streams y chunks indexados por labels y rutas soportadas de metadatos y filtros; elija labels, tenancy y autenticación, almacenamiento y capacidad de consulta |
+| OpenSearch | APIs de búsqueda y agregación, mappings y ciclo de vida de índices; distinga entre autogestionado, dominios gestionados, UltraWarm y Serverless |
+| CloudWatch Logs | Log groups gestionados, IAM, retención y QL/SQL/PPL de Logs Insights; las funciones varían según la clase de log y la Región |
+| ClickHouse | Analítica SQL orientada a columnas, decisiones de esquema, orden, partición y TTL, y el modelo de almacenamiento autogestionado o en la nube elegido |
 
-OpenSearch (3x m5.large):
-  +- Instances: $300
-  +- EBS storage: $15
-  +- Total: ~$315
+OpenSearch no se limita universalmente a “solo snapshots en S3”: UltraWarm usa S3 y caché, y
+Serverless separa almacenamiento y cómputo. CloudWatch no es un backend de logs en S3
+configurado por el usuario, pero admite rutas separadas de exportación, entrega e integración.
+El identificador de tenant de un producto o un sidecar no sustituyen al enrutamiento
+autenticado ni a los controles de acceso del backend.
 
-CloudWatch Logs:
-  +- Ingestion: $50
-  +- Storage: $3
-  +- Queries (estimated): $10
-  +- Total: ~$63
+El filtrado de texto completo, la indexación y la latencia de consulta son cuestiones
+distintas. Pruebe volúmenes representativos, predicados de consulta, concurrencia, datos fríos
+y recuperación. Evite las clasificaciones incondicionales de “excelente/limitado”, las
+afirmaciones de que “sin esquema significa que no hay esquema” o los ratios de compresión sin
+un conjunto de datos y una configuración medidos.
 
-ClickHouse (self-hosted):
-  +- EC2 (3x m5.large): $180
-  +- S3 storage: $2.30
-  +- Total: ~$183
-```
+### La retención requiere una política para los registros reales
 
-> **Nota**: Los costes reales pueden variar significativamente según los patrones de consulta, el período de retención y la región.
+No asigne `financial` a siete años, `healthcare` a seis años ni los logs generales a un año
+como reglas legales universales. Determine la categoría de registro aplicable, la jurisdicción,
+los requisitos contractuales, las retenciones legales y la política aprobada por el
+responsable. Los niveles hot, warm y cold son decisiones operativas, no evidencia de que se
+hayan cumplido esas obligaciones. Incluya réplicas, versiones de objetos, copias de seguridad
+y exportaciones en los planes de eliminación y acceso, y pruebe la restauración por separado.
 
-### Diagrama de flujo de decisión
+### Compare costes equivalentes
 
-```mermaid
-flowchart TD
-    START[Choose Log Storage] --> Q1{Existing Grafana<br/>stack?}
+La antigua tabla de 2025 mezclaba precios de almacenamiento y de ingesta por GB y calificaba
+como gratuitas las consultas autogestionadas. Las estimaciones posteriores de 100 GB carecían
+de una base reproducible de Región, horas, retención, capacidad y carga de trabajo. Eran
+estimaciones ilustrativas, no mediciones de producción; cambiar la fecha o un solo precio no
+las corregiría.
 
-    Q1 -->|Yes| Q2{Need full-text<br/>search?}
-    Q1 -->|No| Q3{Prefer AWS<br/>native?}
+Compare la ingesta, los bytes retenidos y comprimidos y la sobrecarga de índices, las réplicas,
+el cómputo, los escaneos y la capacidad de consulta, las peticiones de almacenamiento, la
+transferencia de red, las copias de seguridad y el trabajo operativo. El precio de un almacén
+de objetos es solo un término. Incluso sin un cargo por consulta, las consultas consumen la
+CPU, memoria y E/S aprovisionadas. Loki con S3 no es un ganador de coste garantizado, ni un
+backend concreto es automáticamente adecuado para el cumplimiento normativo.
 
-    Q2 -->|Yes| OS[OpenSearch]
-    Q2 -->|No| LOKI[Loki]
+1. Defina las consultas necesarias y los objetivos de frescura, retención, acceso y
+   recuperación.
+2. Preseleccione los modelos de despliegue que cumplan esos requisitos.
+3. Reproduzca datos y consultas representativos y casos de fallo y recuperación.
+4. Compare los costes completos y la titularidad operativa.
+5. Registre los supuestos pendientes y verifíquelos antes del uso en producción.
 
-    Q3 -->|Yes| Q4{Analysis<br/>complexity?}
-    Q3 -->|No| Q5{Cost vs<br/>Features?}
+## Próximos pasos y alcance de la validación
 
-    Q4 -->|Simple| CW[CloudWatch Logs]
-    Q4 -->|Complex| OS
+Promtail llegó al fin de su vida útil el **2026-03-02**. Use Alloy u otro cliente soportado
+para trabajos nuevos y planifique la migración de los despliegues existentes de Promtail. El
+aviso citado trata `lambda-promtail` de forma separada de manera explícita; no amplíe la
+afirmación de retirada.
 
-    Q5 -->|Cost first| LOKI
-    Q5 -->|Features first| OS
+- [Loki](01-loki.md)
+- [OpenSearch](02-opensearch.md)
+- [CloudWatch Logs](03-cloudwatch-logs.md)
+- [ClickHouse](04-clickhouse.md)
+- [Collectors: Fluent Bit, Alloy y OpenTelemetry](05-collectors.md)
 
-    classDef decision fill:#FFE082,stroke:#333
-    classDef solution fill:#81C784,stroke:#333,color:white
+Esta auditoría verificó los hechos de las fuentes, la serialización e ID de los ejemplos y la
+estructura de las peticiones y configuraciones. No se ejecutó ningún cambio de logging en EKS,
+despliegue de collector, aprovisionamiento de tenants o almacenamiento, determinación legal,
+medición de costes en producción ni prueba de entrega o recuperación.
 
-    class Q1,Q2,Q3,Q4,Q5 decision
-    class OS,LOKI,CW solution
-```
+## Referencias
 
-***
+- [Kubernetes logging architecture](https://kubernetes.io/docs/concepts/cluster-administration/logging/)
+- [Kubelet legacy log symlinks](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/kuberuntime/legacy.go)
+- [DaemonSet behavior](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)
+- [Kubernetes audit policy](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
+- [OpenTelemetry logs data model](https://opentelemetry.io/docs/specs/otel/logs/data-model/)
+- [W3C Trace Context](https://www.w3.org/TR/trace-context/)
+- [EKS control-plane logging](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+- [EKS Fargate log router](https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html)
+- [Fluent Bit Kubernetes filter source documentation](https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/kubernetes.md)
+- [Fluent Bit modify filter](https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/modify.md)
+- [Loki architecture](https://grafana.com/docs/loki/latest/get-started/overview/)
+- [Promtail end of life](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [OpenSearch UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html)
+- [OpenSearch Serverless](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-overview.html)
+- [CloudWatch Logs query languages](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html)
+- [CloudWatch log classes](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html)
+- [ClickHouse overview](https://github.com/ClickHouse/ClickHouse)
 
-## Próximos pasos
-
-Para obtener información detallada sobre cada solución de almacenamiento de logs, consulta los siguientes documentos:
-
-* [Grafana Loki](01-loki.md) - Agregación de logs rentable
-* [Amazon OpenSearch Service](02-opensearch.md) - Búsqueda y análisis potentes
-* [CloudWatch Logs](03-cloudwatch-logs.md) - Registro de logs nativo de AWS
-* [ClickHouse](04-clickhouse.md) - Análisis de logs de alto rendimiento
-* [Comparación de recopiladores de logs](05-collectors.md) - FluentBit, Promtail, Alloy, OTEL
-
-***
-
-## Cuestionario
-
-Pon a prueba tus conocimientos con el [Cuestionario de descripción general de Logging](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/observability/logging/README-quiz.md).
+[Quiz](../../quizzes/observability/logging/README-quiz.md)

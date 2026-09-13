@@ -1,8 +1,10 @@
 # ログコレクターの比較
 
-> **最終更新**: February 23, 2026
+> **最終更新**: September 13, 2026
 
-Kubernetes 環境でログを収集するためのさまざまなツールがあります。このドキュメントでは、FluentBit、Promtail、Grafana Alloy、OpenTelemetry Collector を詳細に比較し、各ツールの設定方法と最適化戦略を説明します。
+このガイドでは、Fluent Bit、Grafana Alloy、OpenTelemetry Collector を比較し、サポート終了となった Promtail インストールからの移行について説明します。想定上のメモリ使用量や毎秒イベント数のランキングではなく、実際の入力、出力プラグイン、デプロイ権限、障害時の挙動に基づいてコレクターを選択してください。
+
+構成のベースラインは **Fluent Bit 5.1.2**、**Alloy 1.19.2**、および **OpenTelemetry Collector Contrib 0.160.0** です。ディストリビューションのバージョン、含まれるコンポーネント、サポート対象プラットフォームは、別々に確認する必要があります。
 
 ## 目次
 
@@ -11,1502 +13,815 @@ Kubernetes 環境でログを収集するためのさまざまなツールがあ
 3. [Promtail](#promtail)
 4. [Grafana Alloy](#grafana-alloy)
 5. [OpenTelemetry Collector](#opentelemetry-collector)
-6. [比較と選定ガイド](#comparison-and-selection-guide)
-
----
+6. [比較と選定](#comparison-and-selection-guide)
 
 ## 概要
 
 ### ログコレクターの役割
 
-```mermaid
-flowchart LR
-    subgraph Sources["Log Sources"]
-        STDOUT[Container stdout]
-        FILE[Log Files]
-        JOURNAL[Systemd Journal]
-    end
+![ログソースは収集・処理を経て、設定済みのログ送信先へ渡されます。](../../.gitbook/assets/en-observability-logging-05-collectors-0.png)
 
-    subgraph Collector["Log Collector"]
-        INPUT[Input/Source]
-        PROCESS[Processing/Transform]
-        OUTPUT[Output/Sink]
-    end
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-0.html)
 
-    subgraph Destinations["Destinations"]
-        LOKI[Loki]
-        OS[OpenSearch]
-        CW[CloudWatch]
-        S3[S3]
-    end
+図は可能な送信先を示しています。すべてのコレクターがすべての送信先をネイティブにサポートすること、または複数の出力を有効にすることで、それらすべてにトランザクション配信が行われることを意味するものではありません。
 
-    STDOUT --> INPUT
-    FILE --> INPUT
-    JOURNAL --> INPUT
+### コア機能
 
-    INPUT --> PROCESS
-    PROCESS --> OUTPUT
+| 機能 | 確認事項 |
+|---|---|
+| 入力 | ファイル/API 権限、ローテーション、初回読み取り位置、ソースの所有権 |
+| パース | アプリケーション JSON やスタックトレースとは分離した、コンテナランタイムのフレーミング |
+| 変換/フィルター | 変更または破棄されるレコードとフィールド |
+| メタデータ | 正確な Pod/namespace の関連付けと、制御されたラベルのカーディナリティ |
+| バッファリング | メモリと永続ストレージ、容量、再試行、オーバーフローポリシー |
+| 出力 | 認証、TLS、テナントマッピング、確認応答、送信先の制限 |
 
-    OUTPUT --> LOKI
-    OUTPUT --> OS
-    OUTPUT --> CW
-    OUTPUT --> S3
+ソースごとに、意図した収集経路を1つだけ実行してください。同じファイルを複数のエージェントが読み取る場合、または同じ Pod をファイルリーダーと Kubernetes API リーダーが対象にする場合、ログが重複する可能性があります。オフセット、永続キュー、バックエンドへの取り込み成功は、それぞれ異なる状態です。
 
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef collector fill:#2196F3,stroke:#333,color:white
-    classDef dest fill:#9C27B0,stroke:#333,color:white
+| プラットフォーム | 収集時の考慮事項 |
+|---|---|
+| Linux Kubernetes ノード | ホストファイルエージェントにはノードログのマウントと許可された security context が必要です。journal の場所は異なります |
+| Windows ノード | サポート対象の Windows ビルド/設定と実際の Windows パスを使用してください。以下の Linux マニフェストは適用されません |
+| EKS Fargate | ホストファイル DaemonSet をインストールしないでください。マネージド Fargate ログルーター、または適切な API/アプリケーションベースの経路を使用します |
+| EKS Auto Mode | 利用可能なホストパスとアドオンのサポートを確認してください。マネージドコンポーネントが提供するログはアプリケーションの stdout とは異なります |
 
-    class STDOUT,FILE,JOURNAL source
-    class INPUT,PROCESS,OUTPUT collector
-    class LOKI,OS,CW,S3 dest
-```
-
-### 主な機能
-
-| 機能 | 説明 |
-|----------|-------------|
-| **Input** | さまざまなソースからログを読み取る |
-| **Parsing** | ログ形式を解釈して構造化する |
-| **Filtering** | 不要なログを除外する |
-| **Transform** | フィールドを追加、変更、削除する |
-| **Buffering** | 信頼性のための一時的な保存領域 |
-| **Output** | ログを送信先に送る |
-
----
+例では、**事前に存在するプライベートな mTLS 有効ログゲートウェイ**へ送信します。ゲートウェイは各エージェントのクライアント証明書を信頼し、その DNS 名に一致する証明書を提示し、Loki/OTLP パスをルーティングし、テナントポリシーを適用する必要があります。証明書、DNS、ゲートウェイ設定、NetworkPolicy は前提条件であり、これらのスニペットでは作成されません。
 
 ## FluentBit
 
 ### 概要
 
-FluentBit は CNCF プロジェクトであり、C で書かれた軽量なログプロセッサです。軽量版 Fluentd として始まりましたが、独立したプロジェクトへと発展しました。
+Fluent Bit は、graduated となった Fluentd エコシステムの C ベーステレメトリーエージェントです。現在のビルドはログ、メトリクス、トレース、OpenTelemetry プラグインをサポートしています。古い「トレースなし/OTLP なし」という比較は不正確です。選択したイメージに実際に含まれるプラグインを確認してください。
 
-```
-+---------------------------------------------------------+
-|                      FluentBit                           |
-+---------------------------------------------------------+
-|  Language: C                  Memory: ~10MB             |
-|  Performance: 100K+ events/s  Plugins: 100+ built-in    |
-|  License: Apache 2.0          CNCF: Graduated           |
-+---------------------------------------------------------+
-```
+Fluent Bit 5.1.2 と AWS for Fluent Bit は、それぞれバージョン管理される別のディストリビューションです。AWS イメージタグは、組み込み Fluent Bit のバージョンではありません。この例では、公式の上流イメージとそのマニフェストダイジェストを固定しています。以下でリンクする AWS 固有のガイドでは、独自にレビューしたイメージベースラインを使用しています。
 
 ### アーキテクチャ
 
-```mermaid
-flowchart LR
-    subgraph Input["Input Plugins"]
-        TAIL[tail]
-        SYSLOG[syslog]
-        TCP[tcp]
-        SYSTEMD[systemd]
-    end
+![概念上の Fluent Bit における入力、パーサー、フィルター、バッファリング、出力の責務。](../../.gitbook/assets/en-observability-logging-05-collectors-1.png)
 
-    subgraph Parser["Parser"]
-        JSON[json]
-        REGEX[regex]
-        DOCKER[docker]
-        CRI[cri]
-    end
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-1.html)
 
-    subgraph Filter["Filter Plugins"]
-        K8S[kubernetes]
-        MODIFY[modify]
-        GREP[grep]
-        LUA[lua]
-        MULTILINE[multiline]
-    end
-
-    subgraph Buffer["Buffer"]
-        MEM[Memory]
-        FS[Filesystem]
-    end
-
-    subgraph Output["Output Plugins"]
-        LOKI[loki]
-        ES[opensearch]
-        CW[cloudwatch_logs]
-        S3[s3]
-        KAFKA[kafka]
-    end
-
-    Input --> Parser
-    Parser --> Filter
-    Filter --> Buffer
-    Buffer --> Output
-```
+図は論理的な概要として扱ってください。バッファリングは exactly-once を保証するものではなく、フィルタリングによって元のコンテナログファイルが消去されるわけでもありません。ノードストレージを保護し、アプリケーション境界で機密データを制御してください。
 
 ### 完全な設定例
 
+これを `fluent-bit.conf` として保存します。コンテナログを収集し、`line_format`、`tenant_id`、`auto_kubernetes_labels` などのオプションを持つ**ネイティブ C の `loki` 出力**を使用します。別途開発された Go プラグインの `LineFormat`、`TenantID`、`BatchWait`、`BatchSize` の名前は、互換的に使用できません。
+
 ```ini
-# /fluent-bit/etc/fluent-bit.conf
-
 [SERVICE]
-    # Basic settings
-    Flush                     5
+    Flush                     2
     Grace                     30
-    Daemon                    off
+    Daemon                    Off
     Log_Level                 info
-
-    # Parser file
-    Parsers_File              parsers.conf
-
-    # HTTP server (metrics/healthcheck)
     HTTP_Server               On
     HTTP_Listen               0.0.0.0
     HTTP_Port                 2020
-
-    # Storage (buffering)
-    storage.path              /var/log/flb-storage/
+    Health_Check              On
+    storage.path              /var/lib/fluent-bit/storage
     storage.sync              normal
-    storage.checksum          off
-    storage.backlog.mem_limit 50M
-    storage.metrics           on
+    storage.checksum          On
+    storage.backlog.mem_limit 32M
 
-#---------------------------------------------
-# INPUT: Container log collection
-#---------------------------------------------
 [INPUT]
     Name                      tail
     Tag                       kube.*
     Path                      /var/log/containers/*.log
-    # Exclude kube-system
-    Exclude_Path              /var/log/containers/*_kube-system_*.log,/var/log/containers/*_kube-public_*.log
-    # Parser
+    Exclude_Path              /var/log/containers/fluent-bit-*_logging_*.log
     multiline.parser          docker, cri
-    # State DB
-    DB                        /var/log/flb_kube.db
+    DB                        /var/lib/fluent-bit/tail.db
     DB.locking                true
-    # Memory limit
-    Mem_Buf_Limit             50MB
-    # Skip long lines
+    Mem_Buf_Limit             32M
     Skip_Long_Lines           On
-    # Refresh interval
     Refresh_Interval          10
-    # Rotation wait
     Rotate_Wait               30
-    # Filesystem buffer
+    Read_From_Head            Off
     storage.type              filesystem
-    # Handle existing files
-    Read_from_Head            Off
 
-#---------------------------------------------
-# INPUT: System logs
-#---------------------------------------------
-[INPUT]
-    Name                      systemd
-    Tag                       host.systemd
-    Systemd_Filter            _SYSTEMD_UNIT=kubelet.service
-    Systemd_Filter            _SYSTEMD_UNIT=containerd.service
-    Systemd_Filter            _SYSTEMD_UNIT=docker.service
-    DB                        /var/log/flb_systemd.db
-    Read_From_Tail            On
-    Strip_Underscores         On
-
-#---------------------------------------------
-# FILTER: Add Kubernetes metadata
-#---------------------------------------------
 [FILTER]
     Name                      kubernetes
     Match                     kube.*
-    # API server settings
     Kube_URL                  https://kubernetes.default.svc:443
-    Kube_CA_File              /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    Kube_Token_File           /var/run/secrets/kubernetes.io/serviceaccount/token
     Kube_Tag_Prefix           kube.var.log.containers.
-    # Log merge
     Merge_Log                 On
     Merge_Log_Key             log_processed
-    # Auto-detect parser
-    K8S-Logging.Parser        On
-    K8S-Logging.Exclude       Off
-    # Use Kubelet (reduce API server load)
-    Use_Kubelet               On
-    Kubelet_Port              10250
-    # Labels/Annotations
+    Keep_Log                  On
+    K8S-Logging.Parser         Off
+    K8S-Logging.Exclude        Off
+    Use_Kubelet               Off
     Labels                    On
     Annotations               Off
-    # Buffer
-    Buffer_Size               0
 
-#---------------------------------------------
-# FILTER: Add/modify fields
-#---------------------------------------------
-[FILTER]
-    Name                      modify
-    Match                     *
-    # Add cluster info
-    Add                       cluster_name eks-production
-    Add                       environment production
-    Add                       region ap-northeast-2
-    # Remove unnecessary fields
-    Remove                    stream
-    Remove                    _p
-
-#---------------------------------------------
-# FILTER: Remove noise
-#---------------------------------------------
-[FILTER]
-    Name                      grep
-    Match                     kube.*
-    # Exclude health check logs
-    Exclude                   log healthcheck
-    Exclude                   log readiness
-    Exclude                   log liveness
-    Exclude                   log health
-    Exclude                   log /health
-    Exclude                   log /ready
-    Exclude                   log /live
-
-#---------------------------------------------
-# FILTER: Extract log level (for non-JSON)
-#---------------------------------------------
-[FILTER]
-    Name                      parser
-    Match                     kube.*
-    Key_Name                  log
-    Parser                    extract_level
-    Reserve_Data              True
-    Preserve_Key              True
-
-#---------------------------------------------
-# FILTER: Multiline handling
-#---------------------------------------------
-[FILTER]
-    Name                      multiline
-    Match                     kube.*
-    multiline.key_content     log
-    multiline.parser          java_multiline, python_multiline, go_multiline
-
-#---------------------------------------------
-# FILTER: Lua script (advanced processing)
-#---------------------------------------------
 [FILTER]
     Name                      lua
     Match                     kube.*
     script                    /fluent-bit/scripts/process.lua
     call                      process_log
+    protected_mode            On
 
-#---------------------------------------------
-# OUTPUT: Loki
-#---------------------------------------------
 [OUTPUT]
     Name                      loki
     Match                     kube.*
-    Host                      loki-gateway.loki.svc.cluster.local
-    Port                      80
-    Labels                    job=fluentbit, namespace=$kubernetes['namespace_name'], app=$kubernetes['labels']['app'], pod=$kubernetes['pod_name']
-    # Batch settings
-    BatchWait                 1
-    BatchSize                 1048576
-    # Line format
-    LineFormat                json
-    # Auto label extraction
-    AutoKubernetesLabels      off
-    # Retry
+    Host                      logs-gateway.logging.svc.cluster.local
+    Port                      443
+    tls                       On
+    tls.verify                On
+    tls.verify_hostname       On
+    tls.ca_file               /fluent-bit/tls/ca.crt
+    tls.crt_file              /fluent-bit/tls/tls.crt
+    tls.key_file              /fluent-bit/tls/tls.key
+    Labels                    job=fluent-bit,namespace=$kubernetes['namespace_name']
+    line_format               json
+    auto_kubernetes_labels    Off
     Retry_Limit               5
-    # Tenant (multi-tenancy)
-    TenantID                  default
-
-#---------------------------------------------
-# OUTPUT: CloudWatch Logs
-#---------------------------------------------
-[OUTPUT]
-    Name                      cloudwatch_logs
-    Match                     kube.*
-    region                    ap-northeast-2
-    log_group_name            /aws/containerinsights/${CLUSTER_NAME}/application
-    log_stream_prefix         ${HOST_NAME}-
-    auto_create_group         true
-    log_retention_days        30
-    # Compression
-    compress                  gzip
-    # Retry
-    retry_limit               5
-
-#---------------------------------------------
-# OUTPUT: S3 (backup/archive)
-#---------------------------------------------
-[OUTPUT]
-    Name                      s3
-    Match                     kube.*
-    region                    ap-northeast-2
-    bucket                    my-logs-backup
-    total_file_size           100M
-    upload_timeout            10m
-    s3_key_format             /logs/$TAG/%Y/%m/%d/%H/%M/%S
-    compression               gzip
-    content_type              application/gzip
+    storage.total_limit_size  1G
 ```
 
-### Parser の設定
+tail データベースと filesystem チャンクは、読み取り専用ログマウントではなく書き込み可能な状態マウントを使用します。既存のオフセットはデータベースから再開されます。`Read_From_Head Off` は、ファイルが最初に検出されたときに既存コンテンツをスキップします。変更する前に、意図的なバックフィルポリシーを選択してください。`Skip_Long_Lines On`、有限回数の再試行、有限のストレージではデータが破棄される場合があります。これらの状態を監視してください。
 
-```ini
-# /fluent-bit/etc/parsers.conf
+除外設定は、この例自身のコレクター Pod に一致します。namespace またはワークロード名が変わった場合は、namespace 内のすべてのアプリケーションを暗黙に除外するのではなく、この設定を調整してください。この構成では、Kubernetes annotation によりパーサー/除外ポリシーを上書きすることはできません。
 
-[PARSER]
-    Name        docker
-    Format      json
-    Time_Key    time
-    Time_Format %Y-%m-%dT%H:%M:%S.%L
-    Time_Keep   On
+この例ではメタデータに API server を使用するため、kubelet の `nodes/proxy` アクセスは必要ありません。`Use_Kubelet` を有効にする場合は、kubelet アドレス、認可、証明書、ネットワークアクセスを個別に確認してください。HTTP メトリクスリスナーは、コレクター UI/health endpoint を公開する許可ではありません。
 
-[PARSER]
-    Name        cri
-    Format      regex
-    Regex       ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
-    Time_Key    time
-    Time_Format %Y-%m-%dT%H:%M:%S.%L%z
-    Time_Keep   On
+他の送信先では、対応する出力とワークロードアイデンティティを意図的に選択してください。
 
-[PARSER]
-    Name        json
-    Format      json
-    Time_Key    timestamp
-    Time_Format %Y-%m-%dT%H:%M:%S.%LZ
+- [CloudWatch Logs](03-cloudwatch-logs.md): ネイティブの `cloudwatch_logs`、事前作成済みのロググループ、実際のエージェント ServiceAccount アイデンティティを使用します。サポートされない `compress` オプションを追加したり、作成/保持権限が存在すると仮定したりしないでください。
+- [OpenSearch](02-opensearch.md): ネイティブの `opensearch` 出力、選択したバックエンド用の正確な SigV4 service/Region、TLS、typeless API 設定を使用します。
+- S3: `s3` 出力専用の書き込み可能な `store_dir`、一意なオブジェクトキーポリシー、バケットプレフィックス権限を設定します。そのバッファリング/アップロード動作は、汎用 filesystem キューとは異なります。バックアップと呼ぶ前に、部分アップロード、再起動後の復旧、取得をテストしてください。
 
-[PARSER]
-    Name        extract_level
-    Format      regex
-    Regex       (?<level>(DEBUG|INFO|WARN|WARNING|ERROR|FATAL|CRITICAL))
+`systemd` 入力を追加する場合は、そのノード OS に存在する journal をマウントし、そのカーソルデータベースを書き込み可能に保ち、そのタグに一致する出力を追加してください。`Match kube.*` 出力しかない `host.systemd` 入力には配信経路がありません。ホストの journal/audit ファイルは EKS control-plane API audit logs ではありません。
 
-[PARSER]
-    Name        nginx
-    Format      regex
-    Regex       ^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")
-    Time_Key    time
-    Time_Format %d/%b/%Y:%H:%M:%S %z
+### パーサー設定
 
-[MULTILINE_PARSER]
-    Name          java_multiline
-    Type          regex
-    Flush_timeout 1000
-    Rule          "start_state"  "/^\d{4}-\d{2}-\d{2}|^\[?\d{4}[-\/]\d{2}[-\/]\d{2}/"  "cont"
-    Rule          "cont"         "/^[\s\t]+|^Caused by:|^[\w\.]+(Exception|Error)/"    "cont"
+Tail 入力に組み込まれた `docker, cri` multiline パーサーは、コンテナランタイムのフラグメントを再構成します。これはアプリケーションの Java/Python/Go スタックトレースを連結することとは異なります。
 
-[MULTILINE_PARSER]
-    Name          python_multiline
-    Type          regex
-    Flush_timeout 1000
-    Rule          "start_state"  "/^Traceback|^\d{4}-\d{2}-\d{2}/"  "cont"
-    Rule          "cont"         "/^\s+|^[A-Za-z]+Error:/"          "cont"
+| 形式 | アプローチ |
+|---|---|
+| Docker JSON エンベロープ | アプリケーション JSON より先にランタイムエンベロープをパースします |
+| CRI/containerd/CRI-O | timestamp、stream、partial/full マーカーをパースし、部分レコードを再構成します |
+| JSON アプリケーションログ | アプリケーションペイロードだけをパースします。不正な/プレーンテキストのレコードを保持するか明示的に処理します |
+| Nginx/logfmt/custom text | すべてのパーサーを無条件に連鎖させるのではなく、そのアプリケーション形式用のパーサーを選択します |
+| アプリケーションスタックトレース | stream 境界、サイズ、タイムアウト制限を備えたテスト済み multiline パーサーを使用します |
 
-[MULTILINE_PARSER]
-    Name          go_multiline
-    Type          regex
-    Flush_timeout 1000
-    Rule          "start_state"  "/^panic:|^goroutine \d+/"  "cont"
-    Rule          "cont"         "/^\s+/"                    "cont"
-```
+multiline **filter** を使用する場合は、再出力/順序に関するガイダンスに従ってください。再出力されたレコードを他のフィルターが再処理しないよう、それらより前に配置します。コンテナが交互に出力するケースや timestamp のない例外をテストしてください。汎用的な「行が日付で始まる」という式は、普遍的なスタックトレースパーサーではありません。
 
-### Lua スクリプトの例
+### Lua スクリプト例
+
+これを `process.lua` として保存します。ネストされたオブジェクト/配列を含む、パース済みアプリケーションオブジェクト内の選択したキーをマスキングし、未マスキングの raw 重複データを削除します。任意のテキストに含まれるすべてのシークレットや個人識別子を検出するものでは**ありません**。
 
 ```lua
--- /fluent-bit/scripts/process.lua
+-- Redacts selected structured keys; it is not a general PII detector.
+local sensitive = {
+    password = true, passwd = true, token = true, secret = true,
+    api_key = true, ["api-key"] = true, authorization = true
+}
 
-function process_log(tag, timestamp, record)
-    -- Normalize log level
-    if record["level"] then
-        record["level"] = string.upper(record["level"])
-    elseif record["log"] then
-        if string.match(record["log"], "ERROR") then
-            record["level"] = "ERROR"
-        elseif string.match(record["log"], "WARN") then
-            record["level"] = "WARN"
-        elseif string.match(record["log"], "DEBUG") then
-            record["level"] = "DEBUG"
-        else
-            record["level"] = "INFO"
+local function redact(value, depth)
+    if type(value) ~= "table" then
+        return value
+    end
+    if depth > 8 then
+        return "[DEPTH_LIMIT]"
+    end
+    for key, child in pairs(value) do
+        if type(key) == "string" and sensitive[string.lower(key)] then
+            value[key] = "***"
+        elseif type(child) == "table" then
+            value[key] = redact(child, depth + 1)
         end
     end
+    return value
+end
 
-    -- Mask sensitive information
-    if record["log"] then
-        record["log"] = string.gsub(record["log"], "password[=:][^%s]+", "password=***")
-        record["log"] = string.gsub(record["log"], "api[_-]?key[=:][^%s]+", "api_key=***")
-        record["log"] = string.gsub(record["log"], "token[=:][^%s]+", "token=***")
+function process_log(tag, timestamp, record)
+    local app = record["log_processed"]
+    if type(app) == "table" then
+        record["log_processed"] = redact(app, 0)
+        -- Do not retain an unredacted duplicate of the parsed application JSON.
+        record["log"] = nil
+        if type(app["level"]) == "string" then
+            record["level"] = string.upper(app["level"])
+        else
+            record["level"] = "UNKNOWN"
+        end
+    else
+        if type(record["log"]) ~= "string" then
+            record["log"] = "[NON_STRING_LOG]"
+        end
+        record["level"] = "UNKNOWN"
     end
-
-    -- Limit message length
-    if record["log"] and string.len(record["log"]) > 10000 then
-        record["log"] = string.sub(record["log"], 1, 10000) .. "...[TRUNCATED]"
-    end
-
-    return 1, timestamp, record
+    -- 2 changes the record while retaining the original Fluent Bit timestamp.
+    return 2, timestamp, record
 end
 ```
 
-### DaemonSet のデプロイ
+たとえば、`password` フィールドはマスキングされますが、`"message": "password=..."` のようなテキストは、資格情報として自動的に認識されません。プレーンテキストログはプレーンテキストのままです。この変換は fail-closed のセキュリティ境界ではありません。ソースファイル、ローカルストレージ、送信先を保護し、より強い保証が必要な場合はアプリケーションログの allowlist を使用してください。
+
+`return 2` は、レコードを変更しながら Fluent Bit の元の timestamp を保持します。型チェックにより、不正な boolean のログレベルによってコールバックがクラッシュすることを避けます。テストではネイティブ Lua インタープリターでこれらの変換を実行しました。完全な Fluent Bit コンテナは実行していません。
+
+### DaemonSet デプロイ
+
+以下を `fluent-bit-workload.yaml` として保存します。`logging` 内の `agent-gateway-client` Secret が必要で、`ca.crt`、`tls.crt`、`tls.key` を含んでいる必要があります。これらはデプロイメント固有の認証情報です。サンプルの秘密鍵を Git に貼り付けないでください。
 
 ```yaml
-# fluent-bit-daemonset.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: logging
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: log-collector-fluent-bit
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: log-collector-fluent-bit
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: log-collector-fluent-bit
+subjects:
+- kind: ServiceAccount
+  name: fluent-bit
+  namespace: logging
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: fluent-bit
   namespace: logging
-  labels:
-    app.kubernetes.io/name: fluent-bit
 spec:
   selector:
-    matchLabels:
+    matchLabels: &id001
       app.kubernetes.io/name: fluent-bit
   template:
     metadata:
-      labels:
-        app.kubernetes.io/name: fluent-bit
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "2020"
-        prometheus.io/path: "/api/v1/metrics/prometheus"
+      labels: *id001
     spec:
       serviceAccountName: fluent-bit
-      priorityClassName: system-node-critical
-      tolerations:
-        - operator: Exists
+      nodeSelector:
+        kubernetes.io/os: linux
+      terminationGracePeriodSeconds: 45
       containers:
-        - name: fluent-bit
-          image: public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.12
-          imagePullPolicy: IfNotPresent
-          ports:
-            - name: http
-              containerPort: 2020
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          readinessProbe:
-            httpGet:
-              path: /api/v1/health
-              port: http
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
-          env:
-            - name: HOST_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: CLUSTER_NAME
-              value: "eks-production"
-          volumeMounts:
-            - name: varlog
-              mountPath: /var/log
-              readOnly: true
-            - name: varlibdockercontainers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
-            - name: fluent-bit-config
-              mountPath: /fluent-bit/etc/
-            - name: fluent-bit-scripts
-              mountPath: /fluent-bit/scripts/
-            - name: flb-storage
-              mountPath: /var/log/flb-storage/
+      - name: fluent-bit
+        image: fluent/fluent-bit:5.1.2@sha256:d792375ca8e53be72fc25716c28f291f32c6fc6f4f31d12d0d14bc78cefe9226
+        command:
+        - /fluent-bit/bin/fluent-bit
+        args:
+        - -c
+        - /fluent-bit/etc/fluent-bit.conf
+        ports:
+        - name: metrics
+          containerPort: 2020
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: metrics
+          initialDelaySeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: metrics
+          initialDelaySeconds: 10
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log
+          readOnly: true
+        - name: state
+          mountPath: /var/lib/fluent-bit
+        - name: config
+          mountPath: /fluent-bit/etc
+          readOnly: true
+        - name: scripts
+          mountPath: /fluent-bit/scripts
+          readOnly: true
+        - name: tls
+          mountPath: /fluent-bit/tls
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
       volumes:
-        - name: varlog
-          hostPath:
-            path: /var/log
-        - name: varlibdockercontainers
-          hostPath:
-            path: /var/lib/docker/containers
-        - name: fluent-bit-config
-          configMap:
-            name: fluent-bit-config
-        - name: fluent-bit-scripts
-          configMap:
-            name: fluent-bit-scripts
-        - name: flb-storage
-          hostPath:
-            path: /var/log/flb-storage
-            type: DirectoryOrCreate
+      - name: logs
+        hostPath:
+          path: /var/log
+          type: Directory
+      - name: state
+        hostPath:
+          path: /var/lib/fluent-bit
+          type: DirectoryOrCreate
+      - name: config
+        configMap:
+          name: fluent-bit-config
+          items:
+          - key: fluent-bit.conf
+            path: fluent-bit.conf
+      - name: scripts
+        configMap:
+          name: fluent-bit-config
+          items:
+          - key: process.lua
+            path: process.lua
+      - name: tls
+        secret:
+          secretName: agent-gateway-client
+      - name: tmp
+        emptyDir:
+          sizeLimit: 32Mi
 ```
 
----
+先に示した設定/スクリプトファイルを保存してから、ワークロードを開始する前にそれらの ConfigMap を作成します。
+
+```bash
+kubectl create namespace logging --dry-run=client -o yaml |
+  kubectl apply -f -
+kubectl -n logging create configmap fluent-bit-config \
+  --from-file=fluent-bit.conf --from-file=process.lua \
+  --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -f fluent-bit-workload.yaml
+kubectl -n logging rollout status daemonset/fluent-bit
+```
+
+エージェントは、例のノードログパスを読み取り、専用の状態ディレクトリへ書き込むため root として動作します。追加 capabilities、権限昇格、書き込み可能な root filesystem はありません。HostPath を使用する場合も、適切なクラスター admission policy が必要です。実際のノード OS に合わせて、ファイル権限、SELinux/AppArmor、taint、ストレージを適合させてください。アプリケーションログエージェントを動作させ続けるだけのために、予約された system-critical PriorityClass を付与しないでください。
+
+45 秒の Pod 終了猶予期間は Fluent Bit の 30 秒の猶予期間を上回りますが、長期的な障害中に配信が成功する保証にはなりません。リソース制限は例示です。バックエンドの実レコード、tail オフセット、health、buffer/retry メトリクスを確認してください。Ready な Pod だけでは、取り込みが証明されません。
 
 ## Promtail
 
 ### 概要
 
-Promtail は Loki 専用に Grafana Labs が開発したログ収集エージェントです。Loki とともに使用するよう最適化されています。
-
-```
-+---------------------------------------------------------+
-|                       Promtail                           |
-+---------------------------------------------------------+
-|  Language: Go                  Memory: ~50MB            |
-|  Destination: Loki only        K8s integration: Native  |
-|  License: AGPL-3.0             Developer: Grafana Labs  |
-+---------------------------------------------------------+
-```
+**Promtail は 2026 年3月2日に EOL に達しました。**商用サポートと将来の更新は終了しています。既存のインストールは Alloy または他のサポート対象クライアントに移行してください。新規 Loki デプロイメントで Promtail を選択しないでください。発表された廃止には、別の `lambda-promtail` クライアントは含まれません。
 
 ### アーキテクチャ
 
 ```mermaid
-flowchart LR
-    subgraph Discovery["Service Discovery"]
-        K8S_SD[kubernetes_sd]
-        FILE_SD[file_sd]
-        STATIC[static]
-    end
-
-    subgraph Scrape["Scrape Targets"]
-        PODS[Pod Logs]
-        JOURNAL[Journal]
-        SYSLOG[Syslog]
-    end
-
-    subgraph Pipeline["Pipeline Stages"]
-        DOCKER[docker]
-        CRI[cri]
-        JSON[json]
-        REGEX[regex]
-        MULTILINE[multiline]
-        LABELS[labels]
-        TIMESTAMP[timestamp]
-        OUTPUT[output]
-    end
-
-    subgraph Push["Push to Loki"]
-        LOKI[Loki API]
-    end
-
-    Discovery --> Scrape
-    Scrape --> Pipeline
-    Pipeline --> Push
+flowchart TD
+    D["Legacy discovery and readers"] --> P["Parsing / multiline"]
+    P --> L["Labels / timestamp / output"]
+    L --> B["Loki push API"]
 ```
+
+これは歴史的なデータ経路であり、インストールの推奨ではありません。Loki リポジトリの[ライセンス例外](https://github.com/grafana/loki/blob/v2.9.4/LICENSING.md)では、Promtail ソースを含む `clients/` が Apache-2.0 の対象として挙げられています。Loki server の AGPL ラベルを、すべてのクライアントに適用しないでください。実際の artifact と依存関係のライセンスを確認してください。positions は読み取りを記録するものであり、バックエンド配信の確認済み状態ではありません。
 
 ### 完全な設定例
 
-```yaml
-# promtail-config.yaml
-server:
-  http_listen_port: 3101
-  grpc_listen_port: 0
-  log_level: info
+廃止された 2.9.4 イメージをデプロイする代わりに、移行入力として**既存の** `promtail.yaml` を使用します。
 
-# Position file (offset tracking)
-positions:
-  filename: /tmp/positions.yaml
-  sync_period: 10s
-  ignore_invalid_yaml: true
-
-# Loki client settings
-clients:
-  - url: http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push
-    tenant_id: default
-    batchwait: 1s
-    batchsize: 1048576
-    timeout: 10s
-    backoff_config:
-      min_period: 500ms
-      max_period: 5m
-      max_retries: 10
-    # External labels (added to all logs)
-    external_labels:
-      cluster: eks-production
-      environment: production
-
-# Scrape configs
-scrape_configs:
-  #-----------------------------------------
-  # Kubernetes pod logs
-  #-----------------------------------------
-  - job_name: kubernetes-pods
-    kubernetes_sd_configs:
-      - role: pod
-        namespaces:
-          names: []  # All namespaces
-
-    # Label rewriting
-    relabel_configs:
-      # Namespace
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-
-      # Pod name
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-
-      # Container name
-      - source_labels: [__meta_kubernetes_pod_container_name]
-        target_label: container
-
-      # App label
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        target_label: app
-
-      # App name (app.kubernetes.io/name)
-      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-        target_label: app
-        regex: (.+)
-
-      # Component
-      - source_labels: [__meta_kubernetes_pod_label_component]
-        target_label: component
-
-      # Node name
-      - source_labels: [__meta_kubernetes_pod_node_name]
-        target_label: node
-
-      # Set log file path
-      - source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
-        target_label: __path__
-        separator: /
-        replacement: /var/log/pods/*$1/*.log
-
-      # Exclude kube-system namespace
-      - source_labels: [__meta_kubernetes_namespace]
-        action: drop
-        regex: kube-system|kube-public
-
-      # Exclude by specific annotation
-      - source_labels: [__meta_kubernetes_pod_annotation_promtail_io_scrape]
-        action: drop
-        regex: "false"
-
-    # Pipeline stages
-    pipeline_stages:
-      # Docker/CRI log parsing
-      - cri: {}
-
-      # JSON parsing (if possible)
-      - json:
-          expressions:
-            level: level
-            message: message
-            timestamp: timestamp
-            trace_id: trace_id
-
-      # Extract labels
-      - labels:
-          level:
-
-      # Set timestamp
-      - timestamp:
-          source: timestamp
-          format: RFC3339Nano
-          fallback_formats:
-            - RFC3339
-            - "2006-01-02T15:04:05.999999999Z07:00"
-
-      # Normalize log level
-      - template:
-          source: level
-          template: '{{ ToUpper .Value }}'
-
-      # Output settings
-      - output:
-          source: message
-
-  #-----------------------------------------
-  # System journal logs
-  #-----------------------------------------
-  - job_name: journal
-    journal:
-      max_age: 12h
-      path: /var/log/journal
-      labels:
-        job: systemd-journal
-    relabel_configs:
-      - source_labels: [__journal__systemd_unit]
-        target_label: unit
-      - source_labels: [__journal__hostname]
-        target_label: hostname
-    pipeline_stages:
-      - labels:
-          unit:
-          hostname:
-
-  #-----------------------------------------
-  # Audit logs (special handling)
-  #-----------------------------------------
-  - job_name: audit-logs
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: audit
-          __path__: /var/log/audit/audit.log
-    pipeline_stages:
-      - regex:
-          expression: 'type=(?P<type>\w+).*msg=audit\((?P<timestamp>\d+\.\d+):(?P<id>\d+)\)'
-      - labels:
-          type:
-      - timestamp:
-          source: timestamp
-          format: Unix
-
-# Resource limits
-limits_config:
-  readline_rate: 100
-  readline_burst: 1000
-  readline_rate_enabled: true
-  max_streams: 10000
+```bash
+alloy convert --source-format=promtail \
+  --report=conversion-report.txt \
+  --output=config.alloy promtail.yaml
+alloy validate config.alloy
 ```
 
-### DaemonSet のデプロイ
+生成された設定と診断レポートを確認してください。通常のデプロイ手順として変換エラーを無視しないでください。コンバーターは、ほぼすべてのレガシー機能をサポートしますが、同一動作を無条件に保証するものではありません。
 
-```yaml
-# promtail-daemonset.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: promtail
-  namespace: loki
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: promtail
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: promtail
-    spec:
-      serviceAccountName: promtail
-      tolerations:
-        - operator: Exists
-      containers:
-        - name: promtail
-          image: grafana/promtail:2.9.4
-          args:
-            - -config.file=/etc/promtail/promtail.yaml
-            - -config.expand-env=true
-          ports:
-            - name: http-metrics
-              containerPort: 3101
-              protocol: TCP
-          env:
-            - name: HOSTNAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
-          volumeMounts:
-            - name: config
-              mountPath: /etc/promtail
-            - name: run
-              mountPath: /run/promtail
-            - name: containers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
-            - name: pods
-              mountPath: /var/log/pods
-              readOnly: true
-      volumes:
-        - name: config
-          configMap:
-            name: promtail-config
-        - name: run
-          hostPath:
-            path: /run/promtail
-        - name: containers
-          hostPath:
-            path: /var/lib/docker/containers
-        - name: pods
-          hostPath:
-            path: /var/log/pods
-```
+レビュー済みのレガシー設定は正常に変換されましたが、ツールはグローバルな読み取りレート制限が pipeline ごとの `stage.limit` 制限になること、Promtail 独自の tracing 設定には手動移行が必要な場合があること、Alloy は異なる self-metrics を出力することを警告しました。アラート/ダッシュボードを更新し、実データでそれらの変更を確認してください。
 
----
+### Pipeline Stage の詳細
+
+これらは**個別の概念**であり、すべてのパーサーを順番に実行するレシピではありません。
+
+| Promtail YAML | Alloy 相当 | 重要な違い |
+|---|---|---|
+| `cri` / `docker` | `stage.cri` / `stage.docker` | 実際のランタイムフレーミングを選択します |
+| `json`, `regex`, `logfmt` | 対応する `stage.*` | 正しいソースフィールドと不正データポリシーを選択します |
+| `template`, then `labels` | `stage.template`, then `stage.labels` | 値をラベルへコピーする前に正規化します |
+| `drop` | `stage.drop` | Promtail の YAML キーは `drop` であり、`stage.drop` ではありません |
+| `match` | `stage.match` | 意図した stream にだけ分岐を適用します |
+| `metrics` | `stage.metrics` | ラベルセット、idle series、メトリクス名をレビューします |
+| `timestamp`, `multiline` | 対応する stage | 時刻形式、stream の分離、制限された待機時間をテストします |
+| `output` | `stage.output` | 行を置換すると、相関に必要なフィールドを破棄する場合があります |
+| `pack` | `stage.pack` | JSON 行のパッキングは Loki の独立した structured-metadata 機能ではありません |
+
+デフォルトで、クライアント IP、注文 ID、trace ID、または任意のアプリケーションラベルすべてをインデックス化しないでください。Pod と filename のラベルにもカーディナリティコストがあります。ラベル、structured metadata、ログ本文のどれとして利用可能な状態を保つ必要があるかを決定してください。
+
+### DaemonSet デプロイ
+
+廃止されたワークロードを、選択した保守対象コレクターに置き換え、ソース/状態の移行を意図的に維持してください。`/tmp` 配下の positions ファイルは、古い read-only-root の例では永続的でも書き込み可能でもありません。`/run/promtail` へのマウントは、別の場所に書き込む設定を修正しません。
+
+古いリーダーの停止位置、新しいリーダーの開始位置、バックエンドチェックを調整してください。同じログに対して両方のリーダーを無期限に実行しないでください。変換の成功は、Secret mount、Kubernetes RBAC、journal path、状態移行、バックエンド配信を検証するものではありません。
 
 ## Grafana Alloy
 
 ### 概要
 
-Grafana Alloy は Grafana Agent の後継で、OpenTelemetry Collector ディストリビューションに基づいています。より柔軟な設定のために River 設定言語を使用します。
-
-```
-+---------------------------------------------------------+
-|                     Grafana Alloy                        |
-+---------------------------------------------------------+
-|  Language: Go                  Based on: OTEL Collector |
-|  Config: River (HCL-like)      Destinations: Multiple   |
-|  License: Apache 2.0           Developer: Grafana Labs  |
-+---------------------------------------------------------+
-```
+Alloy は、Prometheus と Loki コンポーネントを含む Grafana の OpenTelemetry Collector ディストリビューションです。その設定言語は、旧称 River の **Alloy configuration syntax** と呼ばれます。HCL に似ていますが、Terraform ファイルと互換的に使用できるものではありません。
 
 ### River 設定
 
-```river
-// alloy-config.river
+以下を `config.alloy` として保存します。この例では Linux CRI ログに対して**1つのファイルベース経路**を使用します。Pod Downward API の `spec.nodeName` から非シークレットの `NODE_NAME` を設定し、ノードログファイルをマウントし、書き込み可能で永続的な `--storage.path` を提供してください。
 
-// Logging settings
+```alloy
 logging {
-  level  = "info"
-  format = "logfmt"
+  level = "info"
 }
 
-//--------------------------------------------
-// Local file source
-//--------------------------------------------
+discovery.kubernetes "pods" {
+  role = "pod"
+  selectors {
+    role = "pod"
+    field = "spec.nodeName=" + sys.env("NODE_NAME")
+  }
+}
+
+discovery.relabel "pods" {
+  targets = discovery.kubernetes.pods.targets
+  rule {
+    source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+    regex = "logging;alloy"
+    action = "drop"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label = "namespace"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label = "pod"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label = "container"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+    target_label = "service_name"
+    regex = "(.+)"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+    separator = "/"
+    target_label = "__path__"
+    replacement = "/var/log/pods/*$1/*.log"
+  }
+}
+
 local.file_match "pods" {
-  path_targets = [{
-    __address__ = "localhost",
-    __path__    = "/var/log/pods/*/*/*.log",
-    job         = "kubernetes-pods",
-  }]
+  path_targets = discovery.relabel.pods.output
 }
 
-//--------------------------------------------
-// Loki source (file reading)
-//--------------------------------------------
 loki.source.file "pods" {
-  targets    = local.file_match.pods.targets
+  targets = local.file_match.pods.targets
   forward_to = [loki.process.pods.receiver]
-
   tail_from_end = true
 }
 
-//--------------------------------------------
-// Kubernetes discovery
-//--------------------------------------------
-discovery.kubernetes "pods" {
-  role = "pod"
-}
-
-//--------------------------------------------
-// Label rewriting
-//--------------------------------------------
-discovery.relabel "pods" {
-  targets = discovery.kubernetes.pods.targets
-
-  // Namespace
-  rule {
-    source_labels = ["__meta_kubernetes_namespace"]
-    target_label  = "namespace"
-  }
-
-  // Pod name
-  rule {
-    source_labels = ["__meta_kubernetes_pod_name"]
-    target_label  = "pod"
-  }
-
-  // Container name
-  rule {
-    source_labels = ["__meta_kubernetes_pod_container_name"]
-    target_label  = "container"
-  }
-
-  // App label
-  rule {
-    source_labels = ["__meta_kubernetes_pod_label_app"]
-    target_label  = "app"
-  }
-
-  // Exclude kube-system
-  rule {
-    source_labels = ["__meta_kubernetes_namespace"]
-    regex         = "kube-system"
-    action        = "drop"
-  }
-
-  // Set log path
-  rule {
-    source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
-    separator     = "/"
-    target_label  = "__path__"
-    replacement   = "/var/log/pods/*$1/*.log"
-  }
-}
-
-//--------------------------------------------
-// Loki source (Kubernetes)
-//--------------------------------------------
-loki.source.kubernetes "pods" {
-  targets    = discovery.relabel.pods.output
-  forward_to = [loki.process.pods.receiver]
-}
-
-//--------------------------------------------
-// Log processing pipeline
-//--------------------------------------------
 loki.process "pods" {
-  forward_to = [loki.write.default.receiver]
-
-  // CRI parsing
+  forward_to = [loki.write.logs.receiver]
   stage.cri {}
-
-  // Attempt JSON parsing
   stage.json {
     expressions = {
-      level     = "level",
-      message   = "message",
-      timestamp = "timestamp",
-      trace_id  = "trace_id",
+      level = "level",
     }
-    drop_malformed = true
+    drop_malformed = false
   }
-
-  // Extract labels
+  stage.template {
+    source = "level"
+    template = "{{ if .Value }}{{ $v := ToUpper .Value }}{{ if or (eq $v \"TRACE\") (eq $v \"DEBUG\") (eq $v \"INFO\") (eq $v \"WARN\") (eq $v \"WARNING\") (eq $v \"ERROR\") (eq $v \"FATAL\") (eq $v \"CRITICAL\") }}{{ $v }}{{ else }}UNKNOWN{{ end }}{{ else }}UNKNOWN{{ end }}"
+  }
   stage.labels {
     values = {
-      level = null,
+      level = "",
     }
   }
-
-  // Normalize level
-  stage.template {
-    source   = "level"
-    template = "{{ ToUpper .Value }}"
+  stage.label_drop {
+    values = ["filename"]
   }
-
-  // Set timestamp
-  stage.timestamp {
-    source = "timestamp"
-    format = "RFC3339Nano"
-    fallback_formats = [
-      "RFC3339",
-      "2006-01-02T15:04:05.999999999Z07:00",
-    ]
-  }
-
-  // Noise filtering
-  stage.drop {
-    expression = "healthcheck|readiness|liveness"
-    drop_counter_reason = "health_check"
-  }
-
-  // Output settings
-  stage.output {
-    source = "message"
-  }
+  // Retain the application line, including its trace ID; do not assume it is safe.
 }
 
-//--------------------------------------------
-// Loki output
-//--------------------------------------------
-loki.write "default" {
+loki.write "logs" {
   endpoint {
-    url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
-
-    tenant_id = "default"
-
-    basic_auth {
-      username = env("LOKI_USERNAME")
-      password = env("LOKI_PASSWORD")
+    url = "https://logs-gateway.logging.svc.cluster.local/loki/api/v1/push"
+    batch_wait = "1s"
+    batch_size = "1MiB"
+    tls_config {
+      ca_file = "/etc/alloy/tls/ca.crt"
+      cert_file = "/etc/alloy/tls/tls.crt"
+      key_file = "/etc/alloy/tls/tls.key"
+      insecure_skip_verify = false
     }
   }
-
   external_labels = {
-    cluster     = "eks-production",
-    environment = "production",
-  }
-}
-
-//--------------------------------------------
-// Metrics export
-//--------------------------------------------
-prometheus.exporter.self "alloy" {}
-
-prometheus.scrape "alloy" {
-  targets    = prometheus.exporter.self.alloy.targets
-  forward_to = [prometheus.remote_write.default.receiver]
-}
-
-prometheus.remote_write "default" {
-  endpoint {
-    url = "http://prometheus.monitoring.svc.cluster.local/api/v1/write"
+    cluster = "lab-cluster",
   }
 }
 ```
 
----
+設定された mTLS 証明書ファイルが存在する必要があります。Kubernetes discovery 権限と対応するゲートウェイポリシーは個別に適用してください。選択した Alloy バイナリでファイルを検証します。
+
+```bash
+alloy validate config.alloy
+```
+
+severity ラベルは既知のレベルと `UNKNOWN` に制限され、trace ID の検索にはアプリケーション行を引き続き利用できます。これはマスキング pipeline ではありません。filename ラベルは削除されます。Pod/container ラベルは維持され、保持期間/カーディナリティ制限に照らして引き続き評価する必要があります。
+
+API ベースの収集では、ファイルリーダー**ではなく** `loki.source.kubernetes` を使用し、CRI/Docker-envelope stage を削除してください。Kubernetes log API はアプリケーションログ行を提供します。1つの API collector は、ホストマウントなしでクラスターを収集できます。複数のインスタンスでは、意図的な target partitioning またはコンポーネントの参加を設定した Alloy clustering が必要です。単に replica を追加すると収集が重複する可能性があります。
+
+`env()` は、このレビュー済みリリースでは非推奨の関数のままです。非シークレット設定には `sys.env()` を使用してください。environment dump を通じた token の露出よりも、マウントされた credential file または secret-aware component を優先してください。
+
+Alloy の self-metrics は scrape できます。これらを Prometheus `/api/v1/write` に送信するには、有効な remote-write receiver または remote write 用に設計されたバックエンドも必要です。URL だけでは有効になりません。メトリクス/UI アクセスは非公開にしてください。デプロイメント向けに telemetry/reporting を明示的に設定してください。
+
+### Promtail からの移行
+
+ランタイムパース、discovery label、アプリケーションフィールド、offset、破棄レコードポリシー、クライアント認証、self-metric alert をそれぞれ独立して維持してください。未定義の discovery component を含む API-source の例や、既にデコードされた API ログに `stage.docker` parser を適用する例は、完全な移行ではありません。
+
+Alloy 1.19.2 には任意の Loki WAL がありますが、この機能は**experimental でありデフォルトでは無効**です。主要な例では有効にしていません。永続的な source position は耐久性のある acknowledgement queue ではありません。retry limit、source rotation、WAL retention があればそれを個別に評価してください。
 
 ## OpenTelemetry Collector
 
 ### 概要
 
-OpenTelemetry Collector は、ベンダー中立のテレメトリデータ収集、処理、エクスポートパイプラインです。
+OpenTelemetry はベンダー中立のテレメトリー pipeline を提供し、**2026年5月11日に CNCF Graduated project** になりました。必要な receiver/processor/exporter を含むディストリビューションを使用してください。core ディストリビューションにはすべての Contrib component が含まれているわけではありません。
 
-```
-+---------------------------------------------------------+
-|               OpenTelemetry Collector                    |
-+---------------------------------------------------------+
-|  Language: Go                  Destinations: Multiple   |
-|  Signals: Logs, Metrics, Traces                         |
-|  License: Apache 2.0           CNCF: Incubating         |
-+---------------------------------------------------------+
-```
+OTLP は Protobuf または JSON を使用できます。wire size は実際のフィールド、resource grouping、compression、transport に依存します。Filebeat/Fluentd も batch 処理できます。フィールド名を Protobuf tag に置き換えても、任意の JSON body または attribute-key string は除去されません。
 
-**OTLP Proto エンコーディングのパフォーマンス上の利点:**
-
-OpenTelemetry Collector は OTLP（OpenTelemetry Protocol）Proto エンコーディングを使用します。JSON と比べてフィールド名が数値タグに置き換えられるため、**送信サイズを 40～60% 削減**できます。
-
-| 指標 | Filebeat/Fluentd (JSON) | OTel Collector (OTLP Proto) | 改善 |
-|--------|------------------------|---------------------------|-------------|
-| **メッセージエンコーディング** | JSON（フィールド名を含む） | Proto（数値タグ） | サイズを 40～60% 削減 |
-| **バッチ送信** | 1,000 events = 1,000 messages | 1,000 events ≈ 7 messages (150/batch) | メッセージ数を 143 倍削減 |
-| **スループット** | 16.5 MB/s | 300 MB/s | 18 倍改善 |
-| **コア当たりのスループット** | 150 events/s (Fluentd) | 4,000 events/s | 26 倍改善 |
-
-> **実環境の事例**: KakaoPay Securities の Pallas v2 プロジェクトでは、Filebeat/Fluentd から OTel Collector へ移行した際、同一ハードウェアでスループットが 18 倍改善しました。
+条件付きの算術例として、ある pipeline が Kafka record ごとに1イベントを保存し、別の pipeline が record ごとに150イベントをパックする場合、後者では1,000イベントに約7レコードが必要です。これはネットワークリクエストの同等な削減や 18 倍の throughput 改善を証明するものではありません。対応するハードウェア、データ、送信先、耐久性設定で完全な pipeline をベンチマークしてください。
 
 ### アーキテクチャ
 
 ```mermaid
-flowchart LR
-    subgraph Receivers["Receivers"]
-        OTLP[otlp]
-        FILELOG[filelog]
-        K8SEVENTS[k8sevents]
-        SYSLOG[syslog]
-    end
-
-    subgraph Processors["Processors"]
-        BATCH[batch]
-        MEMORY[memory_limiter]
-        K8SATTR[k8sattributes]
-        FILTER[filter]
-        TRANSFORM[transform]
-    end
-
-    subgraph Exporters["Exporters"]
-        LOKI_EXP[loki]
-        OTLP_EXP[otlphttp]
-        DEBUG[debug]
-    end
-
-    Receivers --> Processors
-    Processors --> Exporters
+flowchart TD
+    F["Node log files"] --> R["filelog + container parser"]
+    R --> M["memory_limiter"]
+    M --> K["k8sattributes"]
+    K --> T["Resource / severity processing"]
+    T --> B["Batch"]
+    B --> Q["Persistent exporter queue"]
+    Q --> E["otlp_http/loki"]
+    E --> G["mTLS gateway → Loki OTLP"]
+    O["Persistent offsets"] -.-> R
+    S["file_storage"] -.-> Q
 ```
+
+Loki には OTLP endpoint を介して到達します。廃止された Collector `loki` exporter は Contrib 0.160.0 には存在しません。クラスター全体の Kubernetes event と集中 Syslog/OTLP receiver には、それぞれ独自の所有権とデプロイメントモデルが必要です。すべてのノードで event watcher を重複して実行しないでください。
 
 ### 完全な設定例
 
-```yaml
-# otel-collector-config.yaml
-receivers:
-  #-----------------------------------------
-  # OTLP receiver (gRPC/HTTP)
-  #-----------------------------------------
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
-      http:
-        endpoint: 0.0.0.0:4318
+以下を `otel.yaml` として保存します。Contrib の `container` operator をランタイムのパース/再構成とファイルパスの resource metadata に使用します。指定された Kubernetes association では、Pod UID は**resource attribute**である必要があります。単に `attributes.uid` を抽出するだけでは不十分です。
 
-  #-----------------------------------------
-  # File log receiver
-  #-----------------------------------------
+```yaml
+extensions:
+  file_storage/offsets:
+    directory: /var/lib/otelcol/offsets
+    create_directory: true
+  file_storage/queue:
+    directory: /var/lib/otelcol/queue
+    create_directory: true
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
   filelog:
-    include:
-      - /var/log/pods/*/*/*.log
-    exclude:
-      - /var/log/pods/*/otel-collector/*.log
+    include: [/var/log/pods/*/*/*.log]
+    exclude: [/var/log/pods/logging_otel-collector-*/*/*.log]
     start_at: end
     include_file_path: true
-    include_file_name: false
+    storage: file_storage/offsets
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 5m
     operators:
-      # CRI log parsing
-      - type: router
-        id: get-format
-        routes:
-          - output: parser-docker
-            expr: 'body matches "^\\\\{"'
-          - output: parser-cri
-            expr: 'body matches "^[^ Z]+ "'
-          - output: parser-containerd
-            expr: 'body matches "^[^ Z]+Z"'
-
-      - type: json_parser
-        id: parser-docker
-        output: extract-metadata
-
-      - type: regex_parser
-        id: parser-cri
-        regex: '^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
-        output: extract-metadata
-        timestamp:
-          parse_from: attributes.time
-          layout_type: gotime
-          layout: '2006-01-02T15:04:05.999999999Z07:00'
-
-      - type: regex_parser
-        id: parser-containerd
-        regex: '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
-        output: extract-metadata
-        timestamp:
-          parse_from: attributes.time
-          layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-
-      # Extract metadata from file path
-      - type: regex_parser
-        id: extract-metadata
-        regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<restart_count>\d+)\.log$'
-        parse_from: attributes["log.file.path"]
-        cache:
-          size: 128
-
-      # Move body
-      - type: move
-        from: attributes.log
-        to: body
-
-      # Stream attribute
-      - type: move
-        from: attributes.stream
-        to: attributes["log.iostream"]
-
-  #-----------------------------------------
-  # Kubernetes events receiver
-  #-----------------------------------------
-  k8s_events:
-    auth_type: serviceAccount
-    namespaces: [default, production, staging]
+      - type: container
+        id: container-parser
 
 processors:
-  #-----------------------------------------
-  # Memory limiter
-  #-----------------------------------------
   memory_limiter:
     check_interval: 1s
     limit_mib: 400
     spike_limit_mib: 100
-
-  #-----------------------------------------
-  # Batch processing
-  #-----------------------------------------
-  batch:
-    send_batch_size: 10000
-    send_batch_max_size: 11000
-    timeout: 5s
-
-  #-----------------------------------------
-  # Kubernetes attributes
-  #-----------------------------------------
   k8sattributes:
     auth_type: serviceAccount
-    passthrough: false
+    filter:
+      node_from_env_var: NODE_NAME
+    pod_association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
     extract:
       metadata:
         - k8s.namespace.name
         - k8s.pod.name
         - k8s.pod.uid
-        - k8s.deployment.name
         - k8s.node.name
         - k8s.container.name
-      labels:
-        - tag_name: app
-          key: app
-          from: pod
-        - tag_name: component
-          key: component
-          from: pod
-    pod_association:
-      - sources:
-          - from: resource_attribute
-            name: k8s.pod.uid
-
-  #-----------------------------------------
-  # Resource addition
-  #-----------------------------------------
-  resource:
+  resource/cluster:
     attributes:
-      - key: cluster
-        value: eks-production
-        action: insert
-      - key: environment
-        value: production
-        action: insert
-
-  #-----------------------------------------
-  # Filtering
-  #-----------------------------------------
-  filter:
-    logs:
-      exclude:
-        match_type: regexp
-        bodies:
-          - "healthcheck"
-          - "readiness"
-          - "liveness"
-        resource_attributes:
-          - key: k8s.namespace.name
-            value: "kube-system"
-
-  #-----------------------------------------
-  # Transform
-  #-----------------------------------------
-  transform:
+      - key: k8s.cluster.name
+        value: lab-cluster
+        action: upsert
+  transform/application:
+    error_mode: ignore
     log_statements:
       - context: log
         statements:
-          # Extract log level
-          - set(severity_text, "INFO") where severity_text == ""
-          - set(severity_text, ConvertCase(severity_text, "upper"))
-
-          # Attempt JSON parsing
-          - merge_maps(cache, ParseJSON(body), "insert") where IsMatch(body, "^\\\\{")
-          - set(body, cache["message"]) where cache["message"] != nil
-          - set(attributes["level"], cache["level"]) where cache["level"] != nil
+          - 'set(cache["app"], ParseJSON(body)) where IsString(body) and IsMatch(body, "^\\s*\\{")'
+          - 'set(severity_text, ConvertCase(cache["app"]["level"], "upper")) where IsMap(cache["app"]) and IsString(cache["app"]["level"])'
+          - 'set(severity_number, SEVERITY_NUMBER_ERROR) where severity_text == "ERROR"'
+          - 'set(severity_number, SEVERITY_NUMBER_WARN) where severity_text == "WARN" or severity_text == "WARNING"'
+          - 'set(severity_number, SEVERITY_NUMBER_INFO) where severity_text == "INFO"'
+          - 'set(severity_number, SEVERITY_NUMBER_DEBUG) where severity_text == "DEBUG"'
+          - 'set(severity_number, SEVERITY_NUMBER_TRACE) where severity_text == "TRACE"'
+          - 'set(severity_number, SEVERITY_NUMBER_FATAL) where severity_text == "FATAL" or severity_text == "CRITICAL"'
+  batch:
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+    timeout: 2s
 
 exporters:
-  #-----------------------------------------
-  # Loki output
-  #-----------------------------------------
-  loki:
-    endpoint: http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push
-    tenant_id: default
-    labels:
-      attributes:
-        k8s.namespace.name: namespace
-        k8s.pod.name: pod
-        k8s.container.name: container
-        app: app
-        level: level
-      resource:
-        cluster: cluster
-        environment: environment
-
-  #-----------------------------------------
-  # OTLP HTTP output (to other systems)
-  #-----------------------------------------
-  otlphttp:
-    endpoint: http://other-collector:4318
+  otlp_http/loki:
+    endpoint: https://logs-gateway.logging.svc.cluster.local/otlp
+    encoding: proto
+    compression: gzip
     tls:
-      insecure: true
-
-  #-----------------------------------------
-  # Debug output
-  #-----------------------------------------
-  debug:
-    verbosity: detailed
-    sampling_initial: 5
-    sampling_thereafter: 200
+      ca_file: /etc/otelcol/tls/ca.crt
+      cert_file: /etc/otelcol/tls/tls.crt
+      key_file: /etc/otelcol/tls/tls.key
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 128
+      storage: file_storage/queue
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 5m
 
 service:
+  extensions: [file_storage/offsets, file_storage/queue, health_check]
   telemetry:
     logs:
       level: info
     metrics:
-      address: 0.0.0.0:8888
-
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
   pipelines:
     logs:
-      receivers: [filelog, otlp, k8s_events]
-      processors: [memory_limiter, k8sattributes, resource, filter, transform, batch]
-      exporters: [loki]
-
-    logs/debug:
       receivers: [filelog]
-      processors: [memory_limiter]
-      exporters: [debug]
+      processors: [memory_limiter, k8sattributes, resource/cluster, transform/application, batch]
+      exporters: [otlp_http/loki]
 ```
+
+`NODE_NAME` Downward API 値、読み取り専用のノードログマウント、書き込み可能な `/var/lib/otelcol`、Kubernetes metadata RBAC、クライアント証明書マウントを提供してください。storage extension は、その書き込み可能 volume 内に独自のディレクトリを作成します。デプロイされた環境値で検証してください。
+
+```bash
+otelcol-contrib validate --config=otel.yaml
+```
+
+exporter は `/otlp` に `/v1/logs` を追加します。ゲートウェイと Loki の OTLP/structured-metadata サポートを適切に設定してください。`service.telemetry.metrics.readers` は、このベースラインにおける古い無効な `address` キーを置き換えます。
+
+`memory_limiter` は再試行可能エラーとともにデータを拒否し、garbage collection を要求できます。これはプロセスメモリ上限や絶対的な OOM 防止を保証するものではありません。上流の再試行動作が重要です。この file receiver は最大5分間再試行しますが、その後に失敗した batch は破棄される可能性があります。queue capacity、disk capacity、shutdown、バックエンド障害もテストが必要です。
+
+アプリケーション body は、プレーンテキストや不正な JSON を含めて保持されます。severity のパースは機密データの除去ではありません。未マスキングの production payload を collector log に不注意にコピーするような、並列の詳細 debug exporter を追加しないでください。
 
 ### Routing Connector
 
-OTel Collector の Routing Connector は、ログタイプに基づいてログを異なるパイプラインへルーティングできます。これにより、ログカテゴリごとに異なる処理ロジックと送信先を設定できます。
+この**独立したローカルルーティングのデモ**では、参照されるすべての component が定義され、fallback route が含まれています。OTLP producer は `resource.attributes["logtype"]` を提供します。アプリケーションの JSON body 内のフィールドは、自動的に resource attribute にはなりません。
 
 ```yaml
-# otel-collector-routing.yaml
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 127.0.0.1:4318
+
 connectors:
   routing:
+    default_pipelines: [logs/other]
     table:
-      - statement: route() where resource.attributes["logtype"] == "mysql"
+      - condition: resource.attributes["logtype"] == "mysql"
         pipelines: [logs/mysql]
-      - statement: route() where resource.attributes["logtype"] == "nginx"
+      - condition: resource.attributes["logtype"] == "nginx"
         pipelines: [logs/nginx]
-      - statement: route() where resource.attributes["logtype"] == "app"
+      - condition: resource.attributes["logtype"] == "app"
         pipelines: [logs/app]
+
+exporters:
+  file/mysql:
+    path: /var/lib/otelcol/routed/mysql.json
+  file/nginx:
+    path: /var/lib/otelcol/routed/nginx.json
+  file/app:
+    path: /var/lib/otelcol/routed/app.json
+  file/other:
+    path: /var/lib/otelcol/routed/other.json
 
 service:
   pipelines:
-    # Common ingestion pipeline
     logs/ingestion:
-      receivers: [filelog, otlp]
-      processors: [memory_limiter, k8sattributes, resource]
+      receivers: [otlp]
       exporters: [routing]
-
-    # MySQL-specific pipeline (slow query analysis)
     logs/mysql:
       receivers: [routing]
-      processors: [transform/mysql, batch]
-      exporters: [clickhouse/mysql]
-
-    # Nginx-specific pipeline (access log analysis)
+      exporters: [file/mysql]
     logs/nginx:
       receivers: [routing]
-      processors: [transform/nginx, batch]
-      exporters: [clickhouse/nginx]
-
-    # General app pipeline
+      exporters: [file/nginx]
     logs/app:
       receivers: [routing]
-      processors: [filter, transform, batch]
-      exporters: [clickhouse/app]
+      exporters: [file/app]
+    logs/other:
+      receivers: [routing]
+      exporters: [file/other]
 ```
 
-> **Kafka Topic の統合**: Routing Connector を使用すると、ログタイプごとに分離されていた Kafka Topic を単一 Topic + Collector 内ルーティングに置き換え、Kafka Topic 管理のオーバーヘッドを削減できます。
+この例を実行する前に、書き込み可能な出力ディレクトリを作成してください。receiver は loopback に bind し、送信先はローカルファイルです。production gateway や ClickHouse deployment ではありません。各実バックエンド、認証、ストレージポリシーを設定してからローカル出力を置き換えてください。
 
-### ログレベル別プールの分離（大規模環境）
+現在の connector は `statement: route() where ...` を受け付けます。これは検証済みであり、誤って削除済みとして扱われるものではありません。ここで使用している `condition` はより明確な形式です。デフォルトの `move` action は、一致したデータを後続の routing から削除します。`copy` は異なる fan-out 動作をします。一致しないレコードには意図した fallback が必要です。
 
-毎日 TB+ のログを処理する環境では、すべてのログを同じ優先度で扱うと、インシデント時に重要なログの収集が遅延する可能性があります。ログレベルごとに OTel Collector プールを分離し、異なる SLA を設定します。
+Kafka topic を統合すると、ACL、retention、partition、consumer ownership、障害分離が適切なままである場合にのみ、管理を単純化できる可能性があります。Collector 内の classification は broker isolation を置き換えるものではなく、fan-out を atomic にもしません。producer が制御する routing attribute は tenant authorization boundary ではありません。
 
-| プール | 目的 | SLA | スケーリング戦略 |
-|------|---------|-----|-----------------|
-| **Fast** | 重要なイベント、ERROR/FATAL | 2 分以内 | 高優先度で、常に予備リソースを確保 |
-| **Common** | 一般的な運用ログ（INFO/WARN） | 15 分以内 | デフォルトの自動スケーリング |
-| **Debug** | デバッグ（DEBUG/TRACE） | ベストエフォート | ピーク時にスケールダウン可能 |
+### ログレベルプールの分離（大規模環境）
 
-**設定例:**
+| プール | 目標例 | 必要な制御 |
+|---|---|---|
+| 高速: ERROR/FATAL | 2分以内に到着 | 予約済み capacity、適切な queue/partition 分離、計測された backlog |
+| 通常: INFO/WARN | 15分以内に到着 | 計測された autoscaling と制限された retention/queue |
+| Debug: DEBUG/TRACE | ベストエフォート | 明示的な drop/throttle ポリシーと破棄データの可視性 |
 
-```yaml
-# fast-pool (ERROR/FATAL only)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: otel-collector-fast
-spec:
-  replicas: 3
-  template:
-    spec:
-      containers:
-        - name: otel-collector
-          resources:
-            requests:
-              cpu: "2"
-              memory: "4Gi"
-            limits:
-              cpu: "4"
-              memory: "8Gi"
----
-# common-pool (INFO/WARN)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: otel-collector-common
-spec:
-  replicas: 5
-  template:
-    spec:
-      containers:
-        - name: otel-collector
-          resources:
-            requests:
-              cpu: "1"
-              memory: "2Gi"
----
-# debug-pool (DEBUG/TRACE)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: otel-collector-debug
-spec:
-  replicas: 2
-  template:
-    spec:
-      containers:
-        - name: otel-collector
-          resources:
-            requests:
-              cpu: 500m
-              memory: "1Gi"
-```
+これらは例示的な目標であり、計測済み SLA ではありません。3つの Deployment に名前を付けたり replica を割り当てたりするだけでは、データをルーティングしたり、共有され混雑した input queue を分離したりできません。観測された input size、processing、batching、retry に基づき、resource request と limit を設定してください。
 
-> **運用上のヒント**: Fast Pool は障害時にも稼働し続ける必要があるため、PriorityClass を `system-cluster-critical` レベルに設定し、専用ノードグループにデプロイしてください。
-
----
+一般的なロギングの推奨として予約済みの `system-cluster-critical`/`system-node-critical` class を使用するのではなく、クラスターに適した operator-owned PriorityClass を使用してください。専用ノード、priority、予備 capacity は、あらゆる障害時の可用性を保証するものではありません。
 
 ## 比較と選定ガイド
 
 ### 機能比較表
 
-| 機能 | FluentBit | Promtail | Grafana Alloy | OTEL Collector |
-|---------|-----------|----------|---------------|----------------|
-| **メモリ使用量** | ~10-50MB | ~50-100MB | ~50-100MB | ~50-100MB |
-| **CPU 使用量** | 低 | 中 | 中 | 中 |
-| **設定言語** | INI | YAML | River (HCL) | YAML |
-| **Kubernetes 統合** | 優秀 | 優秀 | 優秀 | 優秀 |
-| **複数行処理** | 優秀 | 優秀 | 優秀 | 良好 |
-| **JSON 解析** | 優秀 | 優秀 | 優秀 | 優秀 |
-| **Lua スクリプト** | サポート | 非サポート | 非サポート | 非サポート |
-| **WASM プラグイン** | サポート | 非サポート | 非サポート | 非サポート |
-| **Loki サポート** | 優秀 | ネイティブ | ネイティブ | 良好 |
-| **OpenSearch サポート** | ネイティブ | 非サポート | 非サポート | 良好 |
-| **CloudWatch サポート** | ネイティブ | 非サポート | 非サポート | 良好 |
-| **Metrics 収集** | サポート | 限定的 | 優秀 | 優秀 |
-| **Traces 収集** | 非サポート | 非サポート | 優秀 | ネイティブ |
-| **OTLP Proto サポート** | 非サポート | 非サポート | サポート | ネイティブ |
-| **コア当たりのスループット** | ~3,000 events/s | ~500 events/s | ~2,000 events/s | ~4,000 events/s |
-| **バッファリング** | メモリ/ファイル | メモリ | メモリ | メモリ |
+| 項目 | Fluent Bit | Promtail | Alloy | OTel Collector Contrib |
+|---|---|---|---|---|
+| ライフサイクル | 保守対象 | EOL; 移行 | 保守対象 | 保守対象 |
+| 設定 | Classic config / YAML | Legacy YAML | Alloy syntax | YAML |
+| シグナル | プラグイン依存の logs/metrics/traces | 主に Loki logs | Logs/metrics/traces | コンポーネント依存の logs/metrics/traces |
+| Loki 経路 | Native output | Legacy push client | Loki components | OTLP HTTP exporter |
+| AWS 出力 | Native plugin を利用可能 | 目的外 | 含まれる component/forwarding path を確認 | 含まれる AWS exporter を確認 |
+| 拡張性 | C/plugins、Lua filters、その他ビルド依存のオプション | Legacy pipeline stages | Components and pipelines | Receivers/processors/connectors/exporters |
+| 永続性 | Input chunks/state と output 固有の storage | Source positions; 制限付き client buffering | Positions; 任意の experimental Loki WAL | Offset とサポート対象 exporter queue 用の file storage |
+| リソース使用量 | 選択した設定を計測 | 過去の計測値のみ | 選択した設定を計測 | 選択した設定を計測 |
+
+ネイティブプラグインのサポートは、OTLP を2つ目の collector に転送することとは異なります。送信先がサポート対象か非サポートかを結論づける前に、インストールしたディストリビューションの実際の component list とバックエンド protocol を確認してください。
 
 ### ユースケース別の推奨事項
 
-```
-FluentBit recommended:
-+-- AWS environments (CloudWatch, OpenSearch)
-+-- Multiple destinations needed
-+-- Minimal resource usage required
-+-- Complex processing with Lua scripts
-+-- Legacy system integration
+- 既存の native output integration と、計測済みワークロードに適した node-agent footprint には Fluent Bit を評価してください。
+- Grafana/Loki/Prometheus のワークフローおよび Promtail 移行には、意図した1つの source ownership model で Alloy を評価してください。
+- 標準 OTLP と、その processor/connector を必要とするマルチベンダー pipeline には OTel Collector を評価してください。
+- Promtail は移行してください。既に動作していることだけを理由に維持するのは、サポートされる長期的な選択ではありません。
 
-Promtail recommended:
-+-- Loki-only environments
-+-- Simple configuration
-+-- Grafana stack standardization
-+-- Quick start
-
-Grafana Alloy recommended:
-+-- Grafana integrated environments (Loki + Prometheus + Tempo)
-+-- New projects (Promtail replacement)
-+-- River config language preference
-+-- Metrics + Logs + Traces integration
-
-OTEL Collector recommended:
-+-- Multi-vendor environments
-+-- Standardized telemetry pipeline
-+-- Existing OTEL instrumented code
-+-- Trace-centric environments
-```
-
-### 意思決定フロー
+### 判断フロー
 
 ```mermaid
 flowchart TD
-    START[Choose Log Collector] --> Q1{Loki-only<br/>destination?}
-
-    Q1 -->|Yes| Q2{Existing<br/>Promtail?}
-    Q1 -->|No| Q3{AWS<br/>environment?}
-
-    Q2 -->|Yes| PROMTAIL[Keep Promtail]
-    Q2 -->|No| ALLOY[Grafana Alloy]
-
-    Q3 -->|Yes| FLUENTBIT[FluentBit]
-    Q3 -->|No| Q4{Need OTEL<br/>standard?}
-
-    Q4 -->|Yes| OTEL[OTEL Collector]
-    Q4 -->|No| FLUENTBIT
-
-    classDef decision fill:#FFE082,stroke:#333
-    classDef solution fill:#81C784,stroke:#333,color:white
-
-    class Q1,Q2,Q3,Q4 decision
-    class PROMTAIL,ALLOY,FLUENTBIT,OTEL solution
+    A["Inventory sources, platforms and protocols"] --> M["Retire Promtail; choose maintained clients"]
+    M --> C["Compare Fluent Bit / Alloy / OTel components"]
+    C --> V["Validate parsing, metadata, retries and backend records"]
 ```
 
----
+## 参照資料と検証範囲
+
+- [Fluent Bit 5.1.2 のソースと機能](https://github.com/fluent/fluent-bit/tree/v5.1.2)
+- [ネイティブ Loki 出力オプション](https://github.com/fluent/fluent-bit/blob/v5.1.2/plugins/out_loki/loki.c)
+- [Promtail ライフサイクル](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [Alloy 移行](https://grafana.com/docs/alloy/latest/set-up/migrate/from-promtail/)
+- [Alloy Kubernetes API ソース](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.kubernetes/)
+- [Alloy Loki 出力/WAL](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.write/)
+- [Collector Contrib リリース](https://github.com/open-telemetry/opentelemetry-collector-releases/releases/tag/v0.160.0)
+- [Filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/receiver/filelogreceiver/README.md)
+- [Routing connector](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/connector/routingconnector/README.md)
+- [Memory limiter](https://github.com/open-telemetry/opentelemetry-collector/blob/v0.160.0/processor/memorylimiterprocessor/README.md)
+- [OpenTelemetry CNCF ステータス](https://www.cncf.io/projects/opentelemetry/)
+- [EKS Fargate logging](https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html)
+
+検証は、リリース済み Alloy/Collector の設定チェック、ローカルの合成ログ処理、Lua 変換テスト、公式 plugin/source contract、Kubernetes manifest の形式を対象としています。実際の Kubernetes metadata lookup、node-agent deployment、gateway mTLS、AWS 配信、HA、production load、throughput benchmark は実行していません。
 
 ## クイズ
 
-[ログコレクタークイズ](../../quizzes/observability/logging/05-collectors-quiz.md)で知識を確認しましょう。
+[ログコレクタークイズ](../../quizzes/observability/logging/05-collectors-quiz.md)で理解度を確認してください。

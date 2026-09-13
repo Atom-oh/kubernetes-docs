@@ -1,195 +1,167 @@
-# Cuestionario de resumen de logging
+# Cuestionario de visión general de Logging
 
-Pon a prueba tu comprensión de los conceptos básicos de logging.
+> **Última actualización**: September 13, 2026
 
----
+1. ¿Qué afirmación sobre los logs JSON estructurados es correcta?
 
-1. ¿Cuál NO es una ventaja principal del Structured Logging?
-
-   - A) Mayor eficiencia de búsqueda y filtrado
-   - B) Tamaño reducido del archivo de log
-   - C) Formato de log consistente
-   - D) Compatibilidad con herramientas de análisis automatizado
+   - A) No necesitan análisis
+   - B) Siempre usan menos bytes
+   - C) Los campos explícitos ayudan al análisis, pero la decodificación, el enmarcado y el mapeo de campos siguen siendo importantes
+   - D) Redactan automáticamente todos los datos confidenciales
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Tamaño reducido del archivo de log**
+**Respuesta: C**
 
-**Explicación:**
-El logging estructurado (especialmente el formato JSON) puede generar tamaños de archivo mayores que los logs de texto no estructurado. Esto se debe a que se agregan nombres de campos y delimitadores. Las ventajas reales del logging estructurado son la eficiencia de búsqueda, la consistencia y la compatibilidad con herramientas de automatización.
+Usa un esquema de eventos probado y normalmente un evento codificado por línea. JSON puede ser más grande que el texto sin formato, y tanto las copias sin procesar como las analizadas necesitan una política de gestión de datos.
+
+</details>
+
+2. ¿TRACE a FATAL están numerados universalmente del 0 al 5?
+
+   - A) No; los frameworks difieren, y OpenTelemetry usa rangos de severidad de 1 a 24 con 0 sin especificar
+   - B) Sí, en todos los lenguajes
+   - C) Sí, solo en Kubernetes
+   - D) FATAL siempre es 0
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A**
+
+Mapea el significado de la severidad en lugar de copiar una escala numérica inventada. Un nivel de log por sí solo no determina la capacidad de recuperación, y elevar todos los logs de producción a WARN puede perder evidencia.
+
+</details>
+
+3. ¿Cuál es la disposición predeterminada común de logs de contenedores en Linux?
+
+   - A) Archivos reales en /var/log/containers; enlaces simbólicos en /var/log/pods
+   - B) Archivos reales en /var/log/pods; enlaces simbólicos de compatibilidad en /var/log/containers
+   - C) Cada runtime escribe solo en /var/lib/docker
+   - D) kubectl logs contiene un archivo ilimitado
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B**
+
+Las rutas originales estaban invertidas. podLogsDir/OS/runtime puede cambiar la disposición. La rotación y --previous no crean un archivo histórico central.
+
+</details>
+
+4. ¿Qué se requiere para una comparación justa de costos de backend?
+
+   - A) Solo el precio en GB de S3
+   - B) Elegir siempre Loki para la factura más baja
+   - C) Asumir que las consultas autogestionadas son gratuitas
+   - D) Comparar ingesta, datos retenidos/indexados, cómputo, consultas, solicitudes, red, recuperación y operaciones con la misma carga de trabajo
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D**
+
+Las cifras antiguas de 2025 y 100 GB mezclaban unidades y carecían de una configuración reproducible. No eran resultados de producción medidos; actualizar solo la fecha no los corrige.
+
+</details>
+
+5. ¿Cómo se debe adjuntar el contexto de trace a un log?
+
+   - A) Generar ID no relacionados para cada registro
+   - B) Usar el contexto activo real; los ID de trace/span mostrados tienen 32/16 caracteres hexadecimales y no pueden ser todos cero
+   - C) Exigir ID de trace en cada registro de inicio
+   - D) Usar tokens de sesión como ID de span
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B**
+
+Los eventos sin trace son válidos. Los nombres de campos JSON requieren mapeo al modelo de destino; los ID por sí solos no crean traces distribuidos ni prueban correlación.
+
+</details>
+
+6. ¿Qué opción de procesamiento es más segura para el pipeline ilustrado?
+
+   - A) Descartar cada línea que contenga HealthCheck
+   - B) Confiar en JSON de la aplicación como identidad del tenant
+   - C) Separar los campos de la aplicación de los metadatos de confianza y validar la redacción/el filtrado, los offsets, los búferes y los reintentos
+   - D) Asumir que el almacenamiento en búfer evita todas las pérdidas y duplicados
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+El ejemplo de Fluent Bit es un fragmento de filtro de formato clásico. Keep_Log conserva otra copia para redactar. Las comprobaciones de estado fallidas pueden ser evidencia valiosa, y las garantías de entrega dependen de toda la ruta.
+
+</details>
+
+7. ¿Cómo se debe elegir la retención regulatoria?
+
+   - A) Según el tipo de registro aplicable, la jurisdicción, los contratos, las retenciones legales y la política aprobada
+   - B) Siete años para todos los logs financieros
+   - C) Seis años para todos los logs de atención médica
+   - D) Un backend con nombre prueba el cumplimiento
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A**
+
+Una etiqueta de industria no es una regla legal completa. Incluye réplicas, versiones de objetos, copias de seguridad y exportaciones en los planes de retención/eliminación/acceso, y prueba la restauración.
+
+</details>
+
+8. ¿Qué es cierto sobre sidecars y DaemonSets?
+
+   - A) Ambos garantizan el aislamiento de tenants
+   - B) emptyDir sobrevive a la eliminación de un pod
+   - C) Un DaemonSet prueba que se entregaron todos los logs de los nodos
+   - D) Los sidecars pueden ayudar a las aplicaciones solo de archivos; la programación, el almacenamiento compartido, el ciclo de vida y la seguridad aún necesitan validación
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D**
+
+emptyDir sobrevive a los reinicios de contenedores dentro de un pod, no a la eliminación de un pod. Los DaemonSets se dirigen a nodos elegibles y pueden tener superposición de despliegue; múltiples rutas pueden duplicar registros.
+
+</details>
+
+9. ¿Qué afirmación sobre almacenamiento/cliente es correcta?
+
+   - A) OpenSearch solo usa S3 para snapshots en todos los despliegues
+   - B) El diseño de Deployment/índice/consulta importa; UltraWarm usa S3/caché y Promtail necesita migración después de su EOL indicado
+   - C) Todas las clases de logs de CloudWatch tienen funcionalidades idénticas
+   - D) Una clasificación de compresión es válida sin un conjunto de datos
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B**
+
+Compara los modelos de despliegue reales y las necesidades de consulta. El EOL de Promtail es 2026-03-02; el aviso trata lambda-promtail por separado. Elegir un backend no garantiza el costo ni el cumplimiento.
+
+</details>
+
+10. ¿Qué establece habilitar el logging de auditoría del plano de control de EKS?
+
+   - A) Cada solicitud y cuerpo se registra sin pérdidas
+   - B) Los DaemonSets de worker leen el host administrado del servidor API
+   - C) Los registros de auditoría siguen una política y una ruta de entrega de CloudWatch de mejor esfuerzo que debe verificarse
+   - D) La recopilación de stdout de la aplicación se completa automáticamente
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+Comprueba el estado de actualización asíncrona, los streams reales y la retención/el acceso. Fargate usa su router administrado; los logs de rendimiento de Container Insights son distintos del stdout/stderr de la aplicación.
 
 </details>
 
 ---
 
-2. ¿Cuál es el nivel de log recomendado para entornos de producción?
-
-   - A) DEBUG
-   - B) TRACE
-   - C) INFO o WARN
-   - D) FATAL
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) INFO o WARN**
-
-**Explicación:**
-Los niveles INFO o WARN se recomiendan para entornos de producción. DEBUG o TRACE son demasiado detallados, lo que genera un volumen excesivo de logs, y usar solo FATAL puede omitir información operativa importante.
-
-</details>
-
----
-
-3. ¿Cuál es el patrón de recopilación de logs más recomendado en Kubernetes?
-
-   - A) Logging basado en archivos + Sidecar
-   - B) stdout/stderr + agente DaemonSet
-   - C) Transmisión directa a un servidor de logging remoto
-   - D) Almacenamiento de archivos locales con recopilación manual
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) stdout/stderr + agente DaemonSet**
-
-**Explicación:**
-En Kubernetes, el enfoque estándar es que los contenedores envíen logs a stdout/stderr y que los agentes implementados como DaemonSet recopilen logs desde `/var/log/containers/` en el nodo. Este enfoque tiene ventajas como la compatibilidad con el comando kubectl logs, la rotación automática y no requiere un volumen independiente.
-
-</details>
-
----
-
-4. ¿Qué solución se recomienda cuando la "optimización de costos" es la máxima prioridad para seleccionar el almacenamiento de logs?
-
-   - A) Amazon OpenSearch Service
-   - B) CloudWatch Logs
-   - C) Grafana Loki + S3
-   - D) Elasticsearch en EC2
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) Grafana Loki + S3**
-
-**Explicación:**
-Loki reduce significativamente los costos de almacenamiento al indexar solo las etiquetas, no el contenido de los logs. El uso de S3 como backend puede lograr costos de almacenamiento de tan solo $0.023 por GB.
-
-</details>
-
----
-
-5. ¿Cuáles son los campos obligatorios que se deben incluir en el formato de log JSON para el tracing distribuido?
-
-   - A) user_id, session_id
-   - B) trace_id, span_id
-   - C) request_id, response_time
-   - D) level, message
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) trace_id, span_id**
-
-**Explicación:**
-Para el tracing distribuido, se requieren trace_id (seguimiento de toda la solicitud) y span_id (identificación de operaciones individuales). Estos campos permiten rastrear el flujo de solicitudes entre varios servicios.
-
-</details>
-
----
-
-6. ¿Cuál NO es una función de la "Capa de procesamiento" en un pipeline de recopilación de logs?
-
-   - A) Análisis y normalización de logs
-   - B) Adición de metadatos de Kubernetes
-   - C) Almacenamiento e indexación de logs
-   - D) Filtrado y muestreo
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) Almacenamiento e indexación de logs**
-
-**Explicación:**
-El almacenamiento y la indexación de logs son responsabilidad de la "Capa de almacenamiento". La capa de procesamiento se encarga del análisis, la adición de metadatos, el filtrado, el buffering, etc.
-
-</details>
-
----
-
-7. ¿Cuál es el período de retención de logs recomendado para el cumplimiento normativo financiero?
-
-   - A) 30 días
-   - B) 1 año
-   - C) 7 años
-   - D) 90 días
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) 7 años**
-
-**Explicación:**
-Para el cumplimiento normativo financiero (por ejemplo, relacionado con SOX, PCI-DSS), generalmente se recomiendan 7 años de retención de logs. El sector sanitario (HIPAA) requiere 6 años y los logs operativos generales normalmente requieren alrededor de 1 año.
-
-</details>
-
----
-
-8. ¿Cuándo se deben recopilar logs utilizando el patrón Sidecar?
-
-   - A) Todas las cargas de trabajo estándar de Kubernetes
-   - B) Cuando las aplicaciones heredadas solo envían logs a archivos
-   - C) Entornos con recursos de CPU limitados
-   - D) Solo pods de un único contenedor
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Cuando las aplicaciones heredadas solo envían logs a archivos**
-
-**Explicación:**
-El patrón Sidecar se utiliza para aplicaciones heredadas (logging en archivos en lugar de stdout/stderr), aislamiento de logs en entornos multi-tenant y cuando se necesita procesamiento de formatos de log especiales. Dado que tiene sobrecarga de recursos, el enfoque DaemonSet es más eficiente para cargas de trabajo estándar.
-
-</details>
-
----
-
-9. ¿Qué solución de almacenamiento de logs es "excelente" tanto en rendimiento de consultas como en búsqueda de texto completo?
-
-   - A) Grafana Loki
-   - B) CloudWatch Logs
-   - C) Amazon OpenSearch Service
-   - D) ClickHouse
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) Amazon OpenSearch Service**
-
-**Explicación:**
-OpenSearch (fork de Elasticsearch) admite tanto potentes funciones de búsqueda de texto completo basadas en Lucene como consultas de agregación complejas. Loki tiene una búsqueda de texto completo limitada, mientras que CloudWatch y ClickHouse tienen capacidades moderadas de búsqueda de texto completo.
-
-</details>
-
----
-
-10. ¿Qué tipo de log debe habilitarse para la auditoría de seguridad en el logging del control plane de EKS?
-
-    - A) scheduler
-    - B) controllerManager
-    - C) audit
-    - D) api
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) audit**
-
-**Explicación:**
-Los logs de auditoría registran todas las solicitudes al servidor de API de Kubernetes. Son esenciales para las auditorías de seguridad y el cumplimiento normativo porque permiten rastrear quién hizo qué y cuándo. Los logs de API también son importantes, pero audit es el más crítico para fines de auditoría de seguridad.
-
-</details>
-
----
+[Volver a la guía](../../../observability/logging/README.md)

@@ -1,193 +1,185 @@
 # Grafana Loki クイズ
 
-Grafana Loki についての理解度を確認しましょう。
+> **最終更新**: September 13, 2026
+
+[ガイド](../../../observability/logging/01-loki.md)の Loki3.7.7/chart18.12.1 の例に基づいています。
 
 ---
 
-1. Loki が Elasticsearch よりもコスト効率に優れる主な理由は何ですか？
+1. Loki は TSDB/chunk モデルで主に何を index しますか？
 
-   - A) クエリパフォーマンスが高速である
-   - B) ログ内容ではなく label のみをインデックス化する
-   - C) より優れた圧縮アルゴリズムを使用する
-   - D) Cloud-native 設計である
+   - A) すべてのログ行のすべての単語
+   - B) Stream labels
+   - C) request ID のみ
+   - D) timestamp のみ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) ログ内容ではなく label のみをインデックス化する**
+**回答: B**
 
-**解説:**
-Loki はログ内容をインデックス化せず、メタデータ（label）のみをインデックス化します。これによりインデックスサイズが大幅に削減され、S3 のような低コストの object storage を使用できるため、Elasticsearch と比較して運用コストを 10 分の 1 に抑えられます。
+Labels により、scan する Stream を絞り込めます。これは固定の 10 倍のコスト優位性を証明するものでも、parsing/chunk-read のコストをなくすものでもありません。
 
 </details>
 
 ---
 
-2. Loki アーキテクチャで、ログデータをメモリにバッファリングして storage に保存するコンポーネントはどれですか？
+2. log Stream を buffer し、有効な場合は WAL に書き込み、chunk を flush する component はどれですか？
 
    - A) Distributor
-   - B) Querier
+   - B) Query frontend
    - C) Ingester
-   - D) Compactor
+   - D) Index gateway
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Ingester**
+**回答: C**
 
-**解説:**
-Ingester は Distributor からログデータを受信し、メモリにバッファリングして（chunk を作成）、WAL を管理し、chunk を storage にフラッシュします。また、リアルタイムクエリにも応答します。
+Ingester は最近のデータも提供します。WAL には persistent storage が必要であり、それだけで lossless-delivery や HA を保証するものではありません。
 
 </details>
 
 ---
 
-3. 本番 EKS 環境で推奨される Loki のデプロイモードはどれですか？
+3. この章で使用している現在の deployment guidance と一致する記述はどれですか？
 
-   - A) Monolithic mode
-   - B) Simple Scalable mode
-   - C) Microservices mode
-   - D) Standalone mode
+   - A) SSD はすべての production EKS cluster に対する恒久的な default である
+   - B) 任意の 3 つの Pod は 3-AZ resilience を保証する
+   - C) SingleBinary は唯一の chart18.12.1 mode 名である
+   - D) SSD は deprecated であり、production の scaling/HA guidance では明示的な operational planning を伴う Distributed が推奨される
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Simple Scalable mode**
+**回答: D**
 
-**解説:**
-Simple Scalable mode はスケーラビリティのために読み取り/書き込みパスを分離しつつ、Microservices mode よりも運用が簡単です。日次ログ量が 100GB から 10TB の大半の本番 EKS クラスターに適しています。
+SSD は Loki4.0 で削除予定です。capacity と availability は固定の GB/day table ではなく、workload、storage、topology、検証済みの failure handling に依存します。
 
 </details>
 
 ---
 
-4. 1 秒あたりのエラーログレートを計算する正しい LogQL クエリはどれですか？
+4. 5 分間にわたる、条件に一致する error log line の毎秒 rate を返す query はどれですか？
 
-   - A) `count({app="nginx"} |= "error")`
-   - B) `rate({app="nginx"} |= "error" [5m])`
+   - A) `rate({app="nginx"} |= "error" [5m])`
+   - B) `count({app="nginx"} |= "error")`
    - C) `sum({app="nginx"} |= "error")`
-   - D) `avg({app="nginx"} |= "error" [5m])`
+   - D) `increase(count_over_time({app="nginx"}[5m]))`
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) `rate({app="nginx"} |= "error" [5m])`**
+**回答: A**
 
-**解説:**
-`rate()` 関数は、指定した時間範囲における 1 秒あたりのログ行数を計算します。`[5m]` は 5 分間の範囲を意味します。`count()` はメトリクスクエリでこのようには使用せず、`sum()` と `avg()` もこのように単独では使用しません。
+これは Stream ごとの log-line rate であり、自動的に HTTP request error ratio になるわけではありません。LogQL には count vector aggregation がありますが、B は必要な metric-vector input を提供しません。
 
 </details>
 
 ---
 
-5. Loki の label 設計で避けるべき、高カーディナリティ label の例はどれですか？
+5. 調査のために一意の request ID が必要です。より適切な出発点は何ですか？
 
-   - A) namespace
-   - B) app
-   - C) pod_name
-   - D) environment
+   - A) query を高速化するためにすべての request ID を index する
+   - B) 必要な ID を access/privacy controls の下で log content または structured metadata に保持する
+   - C) すべての cluster/namespace labels を削除する
+   - D) total Stream は常に label cardinalities の積に等しいと仮定する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) pod_name**
+**回答: B**
 
-**解説:**
-pod_name は数千の一意な値を持つ可能性があるため、高カーディナリティ label になります。高カーディナリティ label は stream 数を大幅に増加させ、インデックスサイズの増大とメモリ使用量の増加につながります。namespace、app、environment は通常、値が数十個以下であるため、適切です。
+high-cardinality index values は多数の Stream を作成する可能性があります。structured metadata は redaction ではなく、cardinality の積は観測された組み合わせの上限にすぎません。
 
 </details>
 
 ---
 
-6. EKS で Loki の S3 backend にアクセスする際に推奨される認証方法はどれですか？
+6. IRSA の例では、ServiceAccount ownership の一貫性をどのように維持しますか？
 
-   - A) Access Key ID/Secret Access Key
-   - B) IAM Roles for Service Accounts (IRSA)
-   - C) EC2 Instance Profile
-   - D) AWS STS AssumeRole
+   - A) eksctl と Helm の両方で同じ ServiceAccount を作成する
+   - B) S3 access keys を Helm values に格納する
+   - C) eksctl --role-only を使用し、Helm が一致する annotation 付き ServiceAccount を作成する
+   - D) すべての node に bucket policy を付与し、authentication を無効にする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) IAM Roles for Service Accounts (IRSA)**
+**回答: C**
 
-**解説:**
-IRSA は IAM role を Kubernetes Service Account に関連付けるため、Access Key をコードや設定に保存する必要がなくなります。これは最も安全な推奨アプローチであり、EKS 環境でネイティブにサポートされています。
+role trust は、正確な cluster OIDC provider、audience、namespace/service-account subject と一致している必要があります。platform/SDK prerequisites を満たす場合は、Pod Identity も選択肢です。
 
 </details>
 
 ---
 
-7. JSON ログをパースした後に特定のフィールド値でフィルタリングする正しい LogQL 構文はどれですか？
+7. JSON field を filter し、parser failure を除外する query はどれですか？
 
-   - A) `{app="api"} | json | level="error"`
-   - B) `{app="api"} | json | filter level="error"`
-   - C) `{app="api"} | json | where level="error"`
-   - D) `{app="api"} | json | select level="error"`
+   - A) `{app="api"} | json | level="error" | __error__=""`
+   - B) `{app="api"} | json | where level="error"`
+   - C) `{app="api"} | json | select level="error"`
+   - D) `{app="api"} | json | filter level="error"`
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A) `{app="api"} | json | level="error"`**
+**回答: A**
 
-**解説:**
-LogQL では、JSON のパース後の label フィルターに `| field_name="value"` 形式を使用します。`filter`、`where`、`select` は LogQL の構文ではありません。
+LogQL では parsing 後に label-filter stage を使用します。unwrapped numeric metric の場合は、conversion error も除外するために unwrap の後に error filter を配置します。
 
 </details>
 
 ---
 
-8. Loki Compactor の主な役割では**ない**ものはどれですか？
+8. この TSDB deployment における Compactor の役割は何ですか？
 
-   - A) 小さな chunk をより大きな chunk にマージする
-   - B) 保持ポリシーを適用する（データ削除）
-   - C) クライアントからログを受信する
-   - D) インデックスの最適化
+   - A) gateway user を authenticate する
+   - B) すべての client push request を受信する
+   - C) ingestion 後ちょうど 31 日で、すべての log が expire することを保証する
+   - D) index file を compact し、retention が有効な場合にマーク済み chunk を非同期で削除する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) クライアントからログを受信する**
+**回答: D**
 
-**解説:**
-クライアントからログを受信するのは Distributor の役割です。Compactor はバックグラウンドで保存データを最適化し、保持ポリシーに従って古いデータを削除します。
+これは一般的な small-log-chunk merger ではありません。retention には互換性のある schema/index period、有効な processing、deletion store、durable marker state が必要です。31 日は policy の例です。
 
 </details>
 
 ---
 
-9. Loki で "rate limit exceeded" エラーが発生した場合、どの設定を調整すべきですか？
+9. ingestion429 response の後、最初に何を行うべきですか？
 
-   - A) max_streams_per_user
-   - B) ingestion_rate_mb, ingestion_burst_size_mb
-   - C) max_query_parallelism
-   - D) chunk_idle_period
+   - A) capacity を測定せずにすべての limit を増やす
+   - B) tenant byte rate/burst、per-stream rate、active-stream limit を区別してから、capacity/client retries を確認する
+   - C) query timeout のみを増やす
+   - D) すべての limit を恒久的に無効にする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) ingestion_rate_mb, ingestion_burst_size_mb**
+**回答: B**
 
-**解説:**
-"Rate limit exceeded" エラーは、ログの取り込みレートが制限を超えた場合に発生します。`ingestion_rate_mb`（1 秒あたりの最大取り込み量）と `ingestion_burst_size_mb`（バースト許容量）を増やすことで解決できます。
+ingestion-rate および burst limit は limits_config にあります。limit を増やすと backend が過負荷になる可能性があり、retry には backoff と上限を設けた loss/buffering policy が必要です。
 
 </details>
 
 ---
 
-10. Loki のパフォーマンスチューニングにおいて、Ingester の `chunk_idle_period` 設定は何を意味しますか？
+10. chunk_idle_period と /flush を正しく説明している記述はどれですか？
 
-    - A) chunk の作成から削除までの時間
-    - B) アイドル状態の stream がフラッシュされるまでの待機時間
-    - C) クエリのタイムアウト時間
-    - D) ログの保持期間
+   - A) どちらも read-only status endpoint である
+   - B) chunk_idle_period は log retention period である
+   - C) chunk_idle_period は idle flushing を制御し、POST /flush は flush を積極的に trigger する
+   - D) chunk_idle_period を短くすると常に total cost が下がる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) アイドル状態の stream がフラッシュされるまでの待機時間**
+**回答: C**
 
-**解説:**
-`chunk_idle_period` は、その stream に新しいログが届かなくなった際に、chunk を storage にフラッシュするまでの待機時間です。この値を小さくするとメモリ使用量は減りますが、小さな chunk が多数作成される可能性があります。
+idle time を短くすると、より多くの small chunk と object request が発生する可能性があります。flush operation は health check ではなく、readiness は end-to-end durability の証明ではありません。
 
 </details>

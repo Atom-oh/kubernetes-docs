@@ -1,193 +1,185 @@
 # Amazon OpenSearch Service 测验
 
-测试你对 Amazon OpenSearch Service 的理解。
+> **最后更新**: September 13, 2026
+
+基于[指南](../../../observability/logging/02-opensearch.md)中的托管域和收集器示例。
 
 ---
 
-1. Amazon OpenSearch Service 基于哪个开源项目？
+1. 下列哪项陈述正确区分了 OpenSearch 与 Amazon OpenSearch Service？
 
-   - A) Apache Solr
-   - B) Elasticsearch 7.10 分支
-   - C) 仅 Apache Lucene
-   - D) Splunk 开源版本
+   - A) 每个 Elasticsearch 客户端/插件都保持兼容
+   - B) AWS 会立即支持每个上游版本
+   - C) OpenSearch 是一个 Apache-2.0 项目；托管服务支持选定的引擎版本
+   - D) 该服务仅是一个 Kibana 托管产品
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Elasticsearch 7.10 分支**
+**答案: C**
 
-**解释：**
-OpenSearch 是 AWS 于 2021 年基于 Apache 2.0 许可证从 Elasticsearch 7.10 分支出来创建的开源项目。它的启动是为了应对 Elastic 的许可证变更（SSPL）。
+Elasticsearch 7.10 血统并不保证全面兼容。请检查 AWS 版本支持情况以及实际使用的客户端/插件。较早的 2.11 基线版本仍将获得标准支持，直至 2027 年 11 月 7 日。
 
 </details>
 
 ---
 
-2. 在 OpenSearch 集群中，哪种节点类型负责索引元数据管理和集群状态管理？
+2. 配置了专用 cluster-manager 节点时，哪个角色负责集群状态和分片分配管理？
 
-   - A) Data Node
-   - B) Master Node
-   - C) UltraWarm Node
-   - D) Coordinating Node
+   - A) 专用 cluster-manager 节点
+   - B) UltraWarm 存储
+   - C) 冷存储
+   - D) 日志收集器
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Master Node**
+**答案: A**
 
-**解释：**
-Master Node 负责集群管理任务，例如集群状态管理、索引创建/删除和分片分配决策。在生产环境中，建议使用 3 个专用 master node。
+AWS 配置字段仍使用 dedicated_master 名称。管理节点数量不同于数据副本数量，而且仅启用 Zone Awareness 并不会启用带 Standby 的 Multi-AZ。
 
 </details>
 
 ---
 
-3. OpenSearch 中具有成本效益的只读存储层是什么？
+3. 对于传统 UltraWarm 和冷存储，下列哪项陈述正确？
 
-   - A) Hot Storage
-   - B) Warm Storage
-   - C) UltraWarm
-   - D) Standard Storage
+   - A) UltraWarm 仅将所有内容存储在 EBS 上
+   - B) 两者均以 S3 为后端；查询前必须将冷索引附加到 UltraWarm
+   - C) 每个工作负载都恰好节省 75%
+   - D) 每种实例/引擎组合都支持这两个层级
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) UltraWarm**
+**答案: B**
 
-**解释：**
-UltraWarm 是基于 S3 的只读存储层，其成本约比 Hot storage (EBS) 低 75%。它适合存储不经常查询的历史日志数据。
+hot→UltraWarm→cold 策略需要满足相关服务前提条件并具备迁移容量。成本和查询延迟取决于工作负载；存储层级名称并不保证固定的节省比例。
 
 </details>
 
 ---
 
-4. ISM (Index State Management) 策略的主要用途是什么？
+4. 哪个 ISM 操作会从托管 OpenSearch Service 冷存储中删除索引？
 
-   - A) 管理索引安全设置
-   - B) 自动化索引生命周期（rollover、删除等）
-   - C) 优化索引查询
-   - D) 配置索引复制
+   - A) 每个存储层级中的 delete
+   - B) force_merge
+   - C) warm_migration
+   - D) cold_delete
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 自动化索引生命周期（rollover、删除等）**
+**答案: D**
 
-**解释：**
-ISM 策略会自动管理索引生命周期。它们可以自动执行索引 rollover、Hot→UltraWarm→Cold 转换，以及在保留期结束后删除索引。
+托管冷存储需要使用 cold_delete。策略在每个操作对象中使用一个操作，并且异步运行；示例中的 7/30/90 天索引年龄并不保证精确的事件年龄保留期。
 
 </details>
 
 ---
 
-5. 对于 OpenSearch，哪种日志收集方法最具成本效益且最容易管理？
+5. 应如何比较直接 Fluent Bit 传输和 Amazon Data Firehose？
 
-   - A) 在 EC2 上运行 Logstash
-   - B) FluentBit DaemonSet + 直接传输
-   - C) Kinesis Data Firehose
-   - D) Lambda 函数
+   - A) Firehose 始终是最便宜的选项
+   - B) 直接 Fluent Bit 无法向 AWS 进行身份验证
+   - C) 比较运营需求、Schema、缓冲/重试/备份、访问和实测成本
+   - D) 两者都会自动创建相同的 Kubernetes 元数据
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Kinesis Data Firehose**
+**答案: C**
 
-**解释：**
-Kinesis Data Firehose 是一项全托管服务，可自动执行缓冲、压缩和批处理。凭借内置的 S3 备份和错误处理，它具有较低的运维开销，并且适合大规模日志收集，具有成本效益。
+Firehose 提供托管传输路径，但需要角色、连接性以及兼容的记录。FailedDocumentsOnly 用于选择其备份模式；仅将前缀命名为 failed/ 并不能选择该行为。
 
 </details>
 
 ---
 
-6. 在 OpenSearch Fine-Grained Access Control (FGAC) 中，哪项功能会将日志访问权限限制为仅特定 namespace 的日志？
+6. 下列哪项陈述正确描述了 DLS 和 FLS？
 
-   - A) Field-Level Security (FLS)
-   - B) Document-Level Security (DLS)
-   - C) Index-Level Security
-   - D) Cluster-Level Security
+   - A) DLS 过滤文档；FLS 控制返回字段，同时有效角色和受信任的元数据仍然很重要
+   - B) FLS 会自动验证 Kubernetes namespace
+   - C) 仅基于 URI 的 IAM 会限制 bulk 请求正文中命名的每个索引
+   - D) 一条 security-group 规则会授予文档级读取访问权限
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Document-Level Security (DLS)**
+**答案: A**
 
-**解释：**
-Document-Level Security (DLS) 会将访问权限限制为仅匹配特定条件的文档。例如，可以使用条件 `kubernetes.namespace: "team-a"` 配置为仅访问特定团队的日志。
+该指南使用受信任的 kubernetes.namespace_name 元数据。受限角色不会取消已有的更宽泛授权。FLS 不会对允许的消息中包含的敏感文本进行脱敏，也不会删除已存储的数据/备份。
 
 </details>
 
 ---
 
-7. 在 OpenSearch 索引模板中，用于替代 `LowCardinality` 的 Elasticsearch/OpenSearch 字符串优化类型是什么？
+7. 哪种映射字符串类型支持精确匹配和常见字段聚合？
 
-   - A) text
+   - A) 不带子字段的 text
    - B) keyword
-   - C) analyzed_string
-   - D) compact_string
+   - C) 作为 OpenSearch 类型的 LowCardinality
+   - D) 仅未映射字段
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) keyword**
+**答案: B**
 
-**解释：**
-在 OpenSearch 中，低基数字符串字段（namespace、level 等）使用 `keyword` 类型。`text` 类型会被分词以用于全文搜索，而 `keyword` 则针对精确匹配和聚合进行了优化。
+Keyword 不同于经分析的 text，也不同于 ClickHouse LowCardinality。许多 keyword/数值聚合使用列式 doc values，因此并非在所有情况下都会扫描每个完整的 _source 文档。
 
 </details>
 
 ---
 
-8. OpenSearch 成本优化的正确存储分层顺序是什么？
+8. 使用 Logstash_Format On 和前缀 logs-production 时，图示中的 Fluent Bit 输出写入何处？
 
-   - A) Cold → UltraWarm → Hot
-   - B) Hot → Cold → UltraWarm
-   - C) Hot → UltraWarm → Cold
-   - D) UltraWarm → Hot → Cold
+   - A) 始终写入 rollover alias
+   - B) 自动写入 Serverless collection
+   - C) 直接写入分离的冷索引
+   - D) 基于日期的 logs-production-YYYY.MM.DD 索引
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Hot → UltraWarm → Cold**
+**答案: D**
 
-**解释：**
-数据首先存储在 Hot storage (EBS) 中以便快速查询，然后随着时间推移转移到 UltraWarm（只读），最后转移到 Cold Storage (S3) 以存储较旧的数据。成本将按此顺序降低。
+不会仅因存在 alias 就选择它。该指南将每日索引路径与 rollover-logs-* 分开，后者需要 rollover alias 设置、编号索引和 write alias。
 
 </details>
 
 ---
 
-9. 在 OpenSearch 中搜索特定时间范围内的错误日志时，正确的 Query DSL 是什么？
+9. 哪个 Query DSL 会筛选过去一小时内已映射的错误日志行？
 
-   - A) `{"query": {"match": {"level": "error", "time": "1h"}}}`
-   - B) `{"query": {"bool": {"must": [{"match": {"level": "error"}}, {"range": {"@timestamp": {"gte": "now-1h"}}}]}}}`
-   - C) `{"filter": {"level": "error", "time": "> now-1h"}}`
-   - D) `{"search": {"level": "error", "since": "1h"}}`
+   - A) `{"query":{"match":{"app.level":"error","time":"1h"}}}`
+   - B) `{"filter":{"app.level":"error","time":"last-hour"}}`
+   - C) `{"query":{"bool":{"filter":[{"term":{"app.level":"error"}},{"range":{"@timestamp":{"gte":"now-1h"}}}]}}}`
+   - D) `{"query":{"where":{"level":"error"}}}`
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) `{"query": {"bool": {"must": [{"match": {"level": "error"}}, {"range": {"@timestamp": {"gte": "now-1h"}}}]}}}`**
+**答案: C**
 
-**解释：**
-在 OpenSearch Query DSL 中，`bool` 查询用于组合多个条件。`must` 数组同时包含 `match`（文本匹配）和 `range`（时间范围）规范。
+示例映射将应用字段嵌套在 app 下，并使用 @timestamp。过滤上下文结合精确 keyword 匹配和时间范围，无需进行相关性评分。
 
 </details>
 
 ---
 
-10. 比较 OpenSearch 和 Loki 时，OpenSearch 更适合哪种使用场景？
+10. 为日志工作负载选择 OpenSearch、Loki 或 ClickHouse 的合理依据是什么？
 
-    - A) 将成本优化作为最高优先级的初创公司
-    - B) 需要全文搜索和复杂分析查询的场景
-    - C) 与现有 Grafana stack 集成
-    - D) 仅需要简单日志过滤的场景
+   - A) 通用的 100GB/day 切换阈值
+   - B) 每个组织都有相同查询组合的说法
+   - C) 固定的 3–5× 成本和 60–80% 节省规则
+   - D) 代表性查询，以及保留期、持久性、权限、运营能力和实测成本
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 需要全文搜索和复杂分析查询的场景**
+**答案: D**
 
-**解释：**
-OpenSearch 支持强大的基于 Lucene 的全文搜索功能和复杂的聚合查询。它适用于安全分析（SIEM）、合规性和复杂日志分析。对于成本优化或简单过滤，Loki 更适合。
+三者具有不同的索引/查询模型和运维权衡。应比较等效需求并验证迁移、对账和回滚；没有任何产品会自动实现合规或最低成本。
 
 </details>

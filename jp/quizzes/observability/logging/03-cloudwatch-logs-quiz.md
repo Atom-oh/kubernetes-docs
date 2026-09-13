@@ -1,10 +1,12 @@
 # CloudWatch Logs クイズ
 
-Amazon CloudWatch Logs の理解度を確認しましょう。
+> **最終更新**: September 13, 2026
+
+[ガイド](../../../observability/logging/03-cloudwatch-logs.md)
 
 ---
 
-1. EKS control plane logging でサポートされていないログタイプはどれですか？
+1. EKS control-plane のログタイプではないものはどれですか？
 
    - A) api
    - B) audit
@@ -14,35 +16,33 @@ Amazon CloudWatch Logs の理解度を確認しましょう。
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) worker**
+**回答: C**
 
-**解説:**
-EKS control plane は api、audit、authenticator、controllerManager、scheduler の 5 種類のログタイプをサポートしています。Worker node のログは control plane ログではないため、Container Insights または FluentBit を通じて個別に収集する必要があります。
+5つのタイプは、api、audit、authenticator、controllerManager、scheduler です。Worker/application logs と Auto Mode managed-component delivery は別の経路です。
 
 </details>
 
 ---
 
-2. CloudWatch Logs の料金体系で最も高額な項目はどれですか？
+2. CloudWatch Logs のコスト要因はどのように比較すべきですか？
 
-   - A) ストレージ
-   - B) 取り込み
-   - C) クエリ (Logs Insights)
-   - D) S3 Export
+   - A) 取り込みは常に月額料金の中で最大である
+   - B) ストレージは常に無料である
+   - C) すべての S3 配信経路は無料である
+   - D) 実際のボリューム、保持期間、スキャン、クラス、Region、下流の料金を比較する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 取り込み**
+**回答: D**
 
-**解説:**
-CloudWatch Logs の取り込み料金は $0.50/GB で、ストレージ ($0.03/GB/月) やクエリ ($0.005/GB スキャン) よりも大幅に高額です。そのため、コスト最適化のためには不要なログをフィルタリングすることが重要です。
+取り込み GB あたりの料金だけでは、GB-month ストレージや繰り返し発生するスキャンボリュームと比較して順位付けできません。ガイド内の $1,575 の例は仮定に基づく計算であり、現在の Seoul 料金や完全な請求額ではありません。
 
 </details>
 
 ---
 
-3. CloudWatch Logs Insights で特定のフィールドを抽出するコマンドは何ですか？
+3. glob または正規表現を使用してフィールドを抽出する Logs Insights QL コマンドはどれですか？
 
    - A) extract
    - B) parse
@@ -52,54 +52,51 @@ CloudWatch Logs の取り込み料金は $0.50/GB で、ストレージ ($0.03/G
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) parse**
+**回答: B**
 
-**解説:**
-CloudWatch Logs Insights では、`parse` コマンドでログメッセージから特定のパターンに一致するフィールドを抽出します。例: `parse @message '"level":"*"' as level`
+parse はフィールドを抽出します。jsonParse は JSON メッセージを解析できます。collector envelope は application fields を log_processed 配下に配置します。glob では任意の JSON key の順序を想定しないでください。
 
 </details>
 
 ---
 
-4. Container Insights を通じて収集されるログの Log Group パス形式は何ですか？
+4. このガイドの手動 application collector で使用されるグループはどれですか？
 
-   - A) `/aws/eks/cluster-name/logs`
-   - B) `/aws/containerinsights/cluster-name/application`
-   - C) `/var/log/containers/cluster-name`
-   - D) `/kubernetes/cluster-name/logs`
+   - A) /aws/containerinsights/example-eks/application
+   - B) /aws/eks/example-eks/logs
+   - C) /var/log/containers/example-eks
+   - D) すべての cluster は不変の共通グループ名を1つ使用する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) `/aws/containerinsights/cluster-name/application`**
+**回答: A**
 
-**解説:**
-Container Insights は、application、host、dataplane、performance の Log Group を含む `/aws/containerinsights/{cluster-name}/` パスの下に Log Group を作成します。
+設定された application group は、control-plane logs 用の /aws/eks/example-eks/cluster とは異なります。グループは先に準備されます。collector はグループを作成せず、保持期間も変更しません。
 
 </details>
 
 ---
 
-5. リアルタイムログ処理のために Lambda 関数へログを配信する CloudWatch Logs の機能は何ですか？
+5. subscription delivery について正しい記述はどれですか？
 
-   - A) Log Stream
-   - B) Metric Filter
-   - C) Subscription Filter
-   - D) Log Insight
+   - A) S3 bucket ARN は直接の subscription-filter destination である
+   - B) CloudWatch subscription batches は Firehose の OpenSearch destination を通じて機能する
+   - C) subscription は Lambda、Kinesis、または Firehose に送信できる。Firehose を経由した S3 archiving は別個の下流ステップである
+   - D) subscription は exactly-once delivery を保証し、すべての履歴を backfill する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Subscription Filter**
+**回答: C**
 
-**解説:**
-Subscription Filter は、Log Group から他のサービス (Lambda、Kinesis Data Firehose、Kinesis Data Streams) にログをリアルタイムで配信します。フィルタパターンを指定して、特定のログだけを配信できます。
+destination API と input format は重要です。CloudWatch Logs→Firehose→OpenSearch は明確にサポートされていません。subscription は非同期かつ at least once です。export tasks と vended-log delivery は別の API です。
 
 </details>
 
 ---
 
-6. CloudWatch Logs にログを送信する FluentBit OUTPUT plugin の名前は何ですか？
+6. CloudWatch Logs 用のネイティブ C Fluent Bit output plugin はどれですか？
 
    - A) cloudwatch
    - B) cloudwatch_logs
@@ -109,85 +106,80 @@ Subscription Filter は、Log Group から他のサービス (Lambda、Kinesis D
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) cloudwatch_logs**
+**回答: B**
 
-**解説:**
-FluentBit の CloudWatch Logs output plugin は `cloudwatch_logs` という名前です。AWS が提供する `aws-for-fluent-bit` イメージにデフォルトで含まれています。
-
-</details>
-
----
-
-7. CloudWatch Logs Insights で期間ごとにログ数を集計する正しいクエリはどれですか？
-
-   - A) `stats count(*) group by hour`
-   - B) `stats count(*) as log_count by bin(1h)`
-   - C) `select count(*) from logs group by hour`
-   - D) `aggregate count by time(1h)`
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) `stats count(*) as log_count by bin(1h)`**
-
-**解説:**
-CloudWatch Logs Insights では、時間ベースの集計に `stats` コマンドと `bin()` 関数を使用します。`bin(1h)` はデータを 1 時間間隔にグループ化します。
+cloudwatch_logs はネイティブ plugin です。cloudwatch は旧式の Go plugin を指します。Credentials、実際の ServiceAccount、output group、IAM policy も一致している必要があります。
 
 </details>
 
 ---
 
-8. CloudWatch Logs のコスト最適化で推奨されない戦略はどれですか？
+7. events を1時間ごとにカウントし、生成された time buckets をソートする QL query はどれですか？
 
-   - A) 不要なログのフィルタリング (healthcheck など)
-   - B) 環境ごとに異なる保持期間を設定する
-   - C) すべてのログを DEBUG レベルで収集する
-   - D) 長期保持ログを S3 にアーカイブする
+   - A) stats count(*) group by hour
+   - B) stats count(*) as log_count by bin(1h) as bucket | sort bucket asc
+   - C) select count(*) from logs group by hour
+   - D) stats count(*) by bin(1h) | sort @message
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) すべてのログを DEBUG レベルで収集する**
+**回答: B**
 
-**解説:**
-DEBUG レベルのログは非常に詳細であり、ログ量を大幅に増加させます。本番環境では、INFO レベル以上のみを収集するとコスト最適化に役立ちます。
+stats は利用可能な output fields を変更するため、その bucket alias をソートします。latency percentile function は percentile ではなく pct であり、大文字・小文字を区別しない regex はスラッシュ内で (?i) を使用します。
 
 </details>
 
 ---
 
-9. CloudWatch Logs で Metric Filter を使用する主な目的は何ですか？
+8. デフォルトの cost-control approach として安全ではない logging policy はどれですか？
 
-   - A) ログを S3 にエクスポートする
-   - B) ログパターンから CloudWatch metrics を作成する
-   - C) ログの保持期間を設定する
-   - D) ログの暗号化を設定する
+   - A) 保持が必要な records に対して filters を確認する
+   - B) log group の単一の owner を通じて retention を設定する
+   - C) すべての DEBUG output を無期限に保持し、その代償として security-relevant records を無差別に破棄する
+   - D) 設計を変更する前に ingestion と scans を測定する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) ログパターンから CloudWatch metrics を作成する**
+**回答: C**
 
-**解説:**
-Metric Filter は、ログ内の特定のパターン (例: ERROR) を検出し、CloudWatch metrics を作成します。これらの metrics に基づいて、通知を受け取るための CloudWatch Alarms を設定できます。
+volume controls は必要な diagnostics と security records を保持しなければなりません。ConfigMap の LOG_LEVEL は application がそれを使用する場合にのみ効果があります。retention の変更によりデータが削除されることがあります。
 
 </details>
 
 ---
 
-10. EKS cluster で Container Insights を設定する際、IRSA (IAM Roles for Service Accounts) に必要ではない権限はどれですか？
+9. metric filter の機能、および zero default の意味は何ですか？
 
-    - A) logs:CreateLogGroup
-    - B) logs:PutLogEvents
-    - C) s3:PutObject
-    - D) cloudwatch:PutMetricData
+   - A) すべての履歴 records を S3 にエクスポートする
+   - B) 新たに一致した logs から metrics を導出する。default zero は logs が到着したものの一致する records がない場合に適用される
+   - C) logs が到着しない場合でも常に zero を出力する
+   - D) すべての log class のすべての機能をサポートする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) s3:PutObject**
+**回答: B**
 
-**解説:**
-基本的な Container Insights の設定には S3 権限は必要ありません。必要なのは CloudWatch Logs (logs:*) と CloudWatch Metrics (cloudwatch:PutMetricData) の権限のみです。S3 権限が必要になるのは、S3 への個別のログエクスポートを設定する場合のみです。
+この章では、$.log_processed.level に対する Standard-class JSON filter を使用します。incoming logs がない場合、データが欠損することがあります。alarm は error rate や Service health の証明ではなく、2つの5分間の期間における error count を確認します。
+
+</details>
+
+---
+
+10. 手動 logs-only collector に適した IAM/ownership arrangement はどれですか？
+
+   - A) すべての Pods に administrator role を付与する
+   - B) 無関係な ServiceAccount をデプロイしながら cloudwatch-agent に policy をアタッチする
+   - C) s3:PutObject のみを使用する
+   - D) group を事前作成し、その ARN に対して logs:CreateLogStream/logs:PutLogEvents を許可し、実際の collector ServiceAccount をマッピングする
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: D**
+
+手動 profile では logging/fluent-bit-cloudwatch と承認済みの IRSA trust を使用します。この経路では PutMetricData や広範な logs:* は不要です。full observability chart は別の profile であり、その Fluent Bit Pods は cloudwatch-agent を使用します。
 
 </details>

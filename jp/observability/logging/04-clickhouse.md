@@ -1,1209 +1,712 @@
 # ClickHouse
 
-> **最終更新**: June 30, 2026
+> **最終更新**: September 13, 2026
 
-ClickHouse は、OLAP（Online Analytical Processing）ワークロード向けに最適化されたオープンソースのカラムナデータベースです。大規模なログ分析に優れたクエリ性能と圧縮率を提供します。
+ClickHouse はカラム型の分析データベースです。インジェストスキーマ、保持期間、運用モデルがワークロードに適合する場合、SQL フィルタリング、集計、結合を必要とするログワークロードに適しています。
 
 ## 目次
 
-1. [概要](04-clickhouse.md#overview)
-2. [アーキテクチャ](04-clickhouse.md#architecture)
-3. [Kubernetes Deployment](04-clickhouse.md#kubernetes-deployment)
-4. [ログ取り込みパイプライン](04-clickhouse.md#log-ingestion-pipeline)
-5. [SQL クエリ](04-clickhouse.md#sql-queries)
-6. [Grafana 統合](04-clickhouse.md#grafana-integration)
-7. [パフォーマンス最適化](04-clickhouse.md#performance-optimization)
-8. [S3 アーカイブと長期保持](04-clickhouse.md#s3-archiving-and-long-term-retention)
-9. [HyperDX（ClickHouse ネイティブビューア）](04-clickhouse.md#hyperdx-clickhouse-native-viewer)
-
-***
+1. [概要](#overview)
+2. [アーキテクチャ](#architecture)
+3. [Kubernetes デプロイ](#kubernetes-deployment)
+4. [ログインジェストパイプライン](#log-ingestion-pipeline)
+5. [SQL クエリ](#sql-queries)
+6. [Grafana 統合](#grafana-integration)
+7. [HyperDX](#hyperdx-clickhouse-native-viewer)
+8. [パフォーマンス最適化](#performance-optimization)
+9. [S3 アーカイブ](#s3-archiving-and-long-term-retention)
 
 ## 概要
 
 ### ClickHouse の機能
 
-| 機能                 | 説明                                       |
-| ----------------------- | ------------------------------------------------- |
-| **カラムナストレージ**    | 分析クエリ向けに最適化されたデータストレージ     |
-| **高圧縮**    | ストレージコストを削減する 10:1 以上の圧縮率 |
-| **高速クエリ**        | 数十億行を数秒でスキャン                  |
-| **SQL サポート**         | 標準 SQL でクエリを作成                     |
-| **水平スケーリング**  | シャーディングによる分散処理               |
-| **リアルタイム取り込み** | 1 秒あたり数百万行を取り込み                |
+| 機能 | 実際上の意味 |
+|---|---|
+| カラム型ストレージ | 各レコードのすべてのフィールドではなく、選択したカラムを読み取る |
+| 圧縮とコーデック | 繰り返し値と適切な順序付けによりストレージを削減できる場合がある。自身のデータで測定する |
+| SQL 分析 | ClickHouse SQL 関数、集計、結合を使用する。すべての SQL 方言をそのまま実装したものではない |
+| シャーディング | 行をサーバー間に分散する。ホットシャードを避けるキーを選択する |
+| レプリケーション | ReplicatedMergeTree は Keeper/ZooKeeper を通じてレプリカを調整する |
+| バッチインジェスト | 固定の rows/second レートを仮定するのではなく、insert 頻度とパート作成を制御する |
 
-### ログ分析に ClickHouse を選ぶ理由
+### ログ分析に ClickHouse を選択する理由
 
-```
-+-------------------------------------------------------------+
-|                    Log Analytics Requirements                |
-+-------------------------------------------------------------+
-|  [x] Large-scale data (TB+ per day)                         |
-|  [x] Complex aggregation queries (GROUP BY, JOIN)           |
-|  [x] SQL-based analysis                                     |
-|  [x] Low storage costs                                      |
-|  [x] Fast query response (seconds)                          |
-|  [x] BI tool integration                                    |
-+-------------------------------------------------------------+
-                          |
-              ClickHouse is a suitable choice
-```
+ログが構造化され、繰り返し行う分析クエリが中心の場合に ClickHouse を評価してください。代表的なフィルタ、テキスト検索、保持期間、同時リーダー、インジェストバーストをベンチマークします。10:1 を超える圧縮、数十億行を数秒でスキャンする性能、特定のコスト削減は、ワークロードに依存する結果であり、この構成での保証ではありません。
+
+このガイドでは、明示的なレビュー基準として **ClickHouse 26.3.33.24 LTS**、**Altinity Operator 0.27.3**、**Vector 0.58.0**、**Grafana ClickHouse datasource 4.21.2** を使用します。リリースが公開されていることは、任意の Kubernetes/EKS バージョン、StorageClass、またはその組み合わせが本番互換であることを証明しません。クラスタとアップグレードパスを別途検証してください。
 
 ### 他のソリューションとの比較
 
-| 項目                       | ClickHouse          | Elasticsearch  | Loki        |
-| -------------------------- | ------------------- | -------------- | ----------- |
-| **クエリ言語**         | SQL                 | Query DSL      | LogQL       |
-| **ストレージ方式**         | カラムナ            | ドキュメントベース | チャンクベース |
-| **圧縮率**      | 非常に高い           | 低い            | 高い        |
-| **全文検索**       | 制限あり             | 優れている      | 制限あり     |
-| **集計クエリ**    | 優れている           | 良好            | 基本的       |
-| **学習曲線**         | SQL に慣れていれば低い | 中程度         | 低い         |
-| **運用の複雑さ** | 中程度              | 高い           | 低い         |
+| システム | クエリとストレージモデル | 評価対象 |
+|---|---|---|
+| ClickHouse | カラム型テーブルに対する SQL | ソートキー、projection/index、集計、insert/merge の動作 |
+| OpenSearch / Elasticsearch | ドキュメント検索と分析 | テキスト分析、mapping、インデックス作成コスト、検索要件 |
+| Loki | ラベルインデックス付きログストリーム/chunk に対する LogQL | ラベルカーディナリティ、クエリスキャン、保持期間、運用モード |
 
-***
+圧縮率、クエリ速度、運用の複雑性について、普遍的な順位付けは避けてください。各システムには複数のデプロイモードとインデックス/クエリオプションがあります。同じデータ、クエリ、レプリカ、保持期間を比較してください。
 
 ## アーキテクチャ
 
-### ClickHouse Cluster アーキテクチャ
+### ClickHouse クラスタアーキテクチャ
 
-```mermaid
-flowchart TB
-    subgraph Collectors["Collectors"]
-        FB[FluentBit]
-        VECTOR[Vector]
-        OTEL[OTEL Collector]
-    end
+![オプションの Kafka、レプリカを持つ 3 つの ClickHouse シャード、coordination、ストレージ、およびクエリクライアントを含む概念的なログパイプライン。](../../.gitbook/assets/en-observability-logging-04-clickhouse-0.png)
 
-    subgraph Kafka["Message Queue (Optional)"]
-        KAFKA_TOPIC[Kafka Topic]
-    end
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-0.html)
 
-    subgraph ClickHouse["ClickHouse Cluster"]
-        subgraph Shard1["Shard 1"]
-            R1_1[Replica 1]
-            R1_2[Replica 2]
-        end
-        subgraph Shard2["Shard 2"]
-            R2_1[Replica 1]
-            R2_2[Replica 2]
-        end
-        subgraph Shard3["Shard 3"]
-            R3_1[Replica 1]
-            R3_2[Replica 2]
-        end
-        ZK[ZooKeeper/ClickHouse Keeper]
-    end
-
-    subgraph Storage["Storage"]
-        S3[(S3 - Cold Data)]
-        EBS[(EBS - Hot Data)]
-    end
-
-    subgraph Visualization["Visualization"]
-        GRAFANA[Grafana]
-        SUPERSET[Apache Superset]
-    end
-
-    FB --> KAFKA_TOPIC
-    VECTOR --> KAFKA_TOPIC
-    OTEL --> KAFKA_TOPIC
-
-    KAFKA_TOPIC --> R1_1
-    KAFKA_TOPIC --> R2_1
-    KAFKA_TOPIC --> R3_1
-
-    R1_1 <--> R1_2
-    R2_1 <--> R2_2
-    R3_1 <--> R3_2
-
-    ZK --> Shard1
-    ZK --> Shard2
-    ZK --> Shard3
-
-    R1_1 --> EBS
-    R2_1 --> EBS
-    R3_1 --> EBS
-
-    EBS --> S3
-
-    GRAFANA --> R1_1
-    GRAFANA --> R2_1
-    SUPERSET --> R3_1
-
-    classDef collector fill:#4CAF50,stroke:#333,color:white
-    classDef queue fill:#FF9800,stroke:#333,color:white
-    classDef ch fill:#FFEB3B,stroke:#333
-    classDef storage fill:#2196F3,stroke:#333,color:white
-    classDef viz fill:#9C27B0,stroke:#333,color:white
-
-    class FB,VECTOR,OTEL collector
-    class KAFKA_TOPIC queue
-    class R1_1,R1_2,R2_1,R2_2,R3_1,R3_2,ZK ch
-    class S3,EBS storage
-    class GRAFANA,SUPERSET viz
-```
+この図は、検証済みのキャパシティ計画ではなく、トポロジーを要約したものです。各 ClickHouse レプリカには**独自のデータボリューム**が必要です。EBS の記号は、6 つのレプリカが 1 つの書き込み可能な EBS ファイルシステムを共有することを意味しません。Keeper/ZooKeeper はレプリケーションと分散 DDL を調整します。ClickHouse クエリイニシエータと `Distributed` engine が分散クエリを実行します。Keeper はクエリルーターではありません。
 
 ### データフロー
 
-```mermaid
-sequenceDiagram
-    participant App as Application
-    participant FB as FluentBit
-    participant Kafka as Kafka (Optional)
-    participant CH as ClickHouse
-    participant S3 as S3 (Cold)
+![アプリケーションログデータは collector とオプションの Kafka を経て ClickHouse に流れ、明示的なストレージポリシーによりテーブルパートを S3 に移動できる。](../../.gitbook/assets/en-observability-logging-04-clickhouse-1.png)
 
-    App->>FB: Generate logs
-    FB->>Kafka: Buffering
-    Kafka->>CH: Kafka Engine ingestion
-    CH->>CH: Store in MergeTree table
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-1.html)
 
-    Note over CH: Based on TTL policy
+矢印はデータの移動を示します。Kafka-engine バリアントでは、ClickHouse consumer が Kafka をポーリングします。この図は、Kafka が insert を push することや、exactly-once 配信を保証することを意味しません。S3 の cold table part と独立した Parquet archive は異なる仕組みです。
 
-    CH->>S3: Move cold data
-```
-
-***
-
-## Kubernetes Deployment
+## Kubernetes デプロイ
 
 ### ClickHouse Operator のインストール
 
-```bash
-# Install Altinity ClickHouse Operator
-kubectl apply -f https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/operator/clickhouse-operator-install-bundle.yaml
+変動する `master` bundle を適用するのではなく、バージョン指定された公式 chart を使用します。
 
-# Verify installation
-kubectl get pods -n kube-system | grep clickhouse
+```bash
+helm upgrade --install clickhouse-operator \
+  https://github.com/Altinity/clickhouse-operator/releases/download/release-0.27.3/altinity-clickhouse-operator-0.27.3.tgz \
+  --namespace clickhouse-operator --create-namespace
+
+kubectl -n clickhouse-operator get deployments,pods
+kubectl get crd clickhouseinstallations.clickhouse.altinity.com \
+  clickhousekeeperinstallations.clickhouse-keeper.altinity.com
 ```
 
-### ClickHouse Cluster の定義
+適用前に、render された RBAC、監視対象 namespace、CRD のインストール/アップグレード動作を検査してください。ローカルレビューではこの chart を render し、公式リリース checksum を確認しました。Operator のインストールやクラスタに対する reconciliation の検証は行っていません。
+
+### ClickHouse クラスタ定義
+
+以下は、完全で安全なインストールではなく、**既存の必須依存関係を持つトポロジー例**です。
+
+- Namespace `clickhouse`、ServiceAccount `clickhouse-server`、適切な CSI-backed `gp3` StorageClass が存在している必要があります。StorageClass 名はローカルな選択です。EKS Auto Mode ストレージと従来の EBS CSI には、対応する provisioner と topology 設定が必要です。
+- `log-security` という名前のサイト所有 ClickHouseInstallationTemplate が、mount された Secret ファイル、account、TLS、probe、認証済み内部通信を構成する必要があります。その settings/mount が、以下の `logs-server` Pod template にも適用されることを確認してください。
+- 健全な `logs-keeper` ClickHouseKeeperInstallation が、意図した TLS endpoint と quorum をすでに提供している必要があります。
+- namespace `clickhouse` に、HTTPS 8443 を公開する `logs-clickhouse` という名前の内部 TLS Service を提供してください。その certificate は client DNS 名と一致する必要があります。実際に Operator が生成した selector と endpoint を確認してください。CHI 名だけでは、この特定の Service 名は作成されません。
+- 測定済みの要件から failure domain、disruption budget、resource を割り当ててください。以下の 3×2 レイアウトとレプリカごとの 100Gi/8Gi limit は例示であり、スループットまたは可用性の約束ではありません。
 
 ```yaml
-# clickhouse-cluster.yaml
-apiVersion: "clickhouse.altinity.com/v1"
-kind: "ClickHouseInstallation"
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
 metadata:
-  name: logs-cluster
+  name: logs-demo
   namespace: clickhouse
 spec:
+  # Required site-owned template: users, TLS, probes and internal authentication.
+  useTemplates:
+    - name: log-security
+  defaults:
+    templates:
+      podTemplate: logs-server
+      dataVolumeClaimTemplate: logs-data
   configuration:
     zookeeper:
-      nodes:
-        - host: zookeeper.clickhouse.svc.cluster.local
-          port: 2181
+      keeper:
+        name: logs-keeper
+        serviceType: replicas
     clusters:
-      - name: logs
+      - name: logscluster
+        secure: "yes"
+        insecure: "no"
         layout:
           shardsCount: 3
           replicasCount: 2
-        templates:
-          podTemplate: clickhouse-pod
-          volumeClaimTemplate: storage
-          serviceTemplate: svc-template
-
-    settings:
-      # Log analytics optimized settings
-      max_concurrent_queries: 100
-      max_connections: 4096
-      max_server_memory_usage_to_ram_ratio: 0.9
-      background_pool_size: 16
-      background_schedule_pool_size: 16
-
-    files:
-      config.d/storage.xml: |
-        <clickhouse>
-          <storage_configuration>
-            <disks>
-              <default>
-                <keep_free_space_bytes>10737418240</keep_free_space_bytes>
-              </default>
-              <s3>
-                <type>s3</type>
-                <endpoint>https://s3.ap-northeast-2.amazonaws.com/my-clickhouse-data/</endpoint>
-                <use_environment_credentials>true</use_environment_credentials>
-              </s3>
-            </disks>
-            <policies>
-              <tiered>
-                <volumes>
-                  <hot>
-                    <disk>default</disk>
-                  </hot>
-                  <cold>
-                    <disk>s3</disk>
-                  </cold>
-                </volumes>
-                <move_factor>0.2</move_factor>
-              </tiered>
-            </policies>
-          </storage_configuration>
-        </clickhouse>
-
-    users:
-      admin/password: "secure-password-here"
-      admin/networks/ip: "::/0"
-      admin/profile: default
-      admin/quota: default
-
-      readonly/password: "readonly-password"
-      readonly/networks/ip: "::/0"
-      readonly/profile: readonly
-      readonly/quota: default
-
-    profiles:
-      readonly/readonly: 1
-      default/max_memory_usage: 10000000000
-      default/max_execution_time: 300
-
   templates:
     podTemplates:
-      - name: clickhouse-pod
+      - name: logs-server
         spec:
+          serviceAccountName: clickhouse-server
           containers:
             - name: clickhouse
-              image: clickhouse/clickhouse-server:24.1
+              image: clickhouse/clickhouse-server:26.3.33.24
               resources:
                 requests:
                   cpu: "2"
-                  memory: "8Gi"
+                  memory: 4Gi
                 limits:
-                  cpu: "4"
-                  memory: "16Gi"
-              ports:
-                - name: http
-                  containerPort: 8123
-                - name: tcp
-                  containerPort: 9000
-                - name: interserver
-                  containerPort: 9009
-          affinity:
-            podAntiAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-                - weight: 100
-                  podAffinityTerm:
-                    labelSelector:
-                      matchLabels:
-                        clickhouse.altinity.com/cluster: logs
-                    topologyKey: topology.kubernetes.io/zone
-
+                  memory: 8Gi
     volumeClaimTemplates:
-      - name: storage
+      - name: logs-data
         spec:
-          accessModes:
-            - ReadWriteOnce
+          accessModes: [ReadWriteOnce]
           storageClassName: gp3
           resources:
             requests:
-              storage: 500Gi
-
-    serviceTemplates:
-      - name: svc-template
-        spec:
-          ports:
-            - name: http
-              port: 8123
-            - name: tcp
-              port: 9000
-          type: ClusterIP
+              storage: 100Gi
 ```
 
-### ZooKeeper（または ClickHouse Keeper）の Deployment
+`log_writer`、`log_reader`、管理用の identity を分離して使用します。Secret から credential/configuration ファイルを mount してください。password を ConfigMap、source code、shell command 引数、または広範な environment dump に置かないでください。account network と NetworkPolicy を、実際の collector/query/replica パスに制限してください。寛容な `::/0` user、期限切れの例示 certificate、または certificate verification の bypass をコピーしないでください。
 
-```yaml
-# zookeeper.yaml
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: zookeeper
-  namespace: clickhouse
-spec:
-  serviceName: zookeeper
-  replicas: 3
-  selector:
-    matchLabels:
-      app: zookeeper
-  template:
-    metadata:
-      labels:
-        app: zookeeper
-    spec:
-      containers:
-        - name: zookeeper
-          image: zookeeper:3.8
-          ports:
-            - containerPort: 2181
-              name: client
-            - containerPort: 2888
-              name: follower
-            - containerPort: 3888
-              name: election
-          env:
-            - name: ZOO_MY_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: ZOO_SERVERS
-              value: "server.1=zookeeper-0.zookeeper:2888:3888;2181 server.2=zookeeper-1.zookeeper:2888:3888;2181 server.3=zookeeper-2.zookeeper:2888:3888;2181"
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              cpu: 1
-              memory: 2Gi
-          volumeMounts:
-            - name: data
-              mountPath: /data
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: gp3
-        resources:
-          requests:
-            storage: 20Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: zookeeper
-  namespace: clickhouse
-spec:
-  ports:
-    - port: 2181
-      name: client
-  clusterIP: None
-  selector:
-    app: zookeeper
+TLS port の公開だけでは不十分です。certificate のロード、hostname/CA チェック、replica traffic、readiness probe を検証してください。security template、volume、依存関係をまとめてレビューするまで、このトポロジーを適用しないでください。ローカル CRD 検証は shape を確認しますが、admission、scheduling、TLS、Operator の動作は確認しません。
+
+### ZooKeeper（または ClickHouse Keeper）のデプロイ
+
+新規デプロイでは、ClickHouse Keeper と Operator の `ClickHouseKeeperInstallation` サポートを検討してください。固定した Operator は `zookeeper.keeper.name` を使用して CHK reference を解決でき、secure Keeper Service port は reconciliation 中に検出されます。構成の参照として、公式の [Keeper reference](https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/keeper_reference.md) と [TLS configuration example](https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/chk-examples/30-secure-cluster.yaml) を使用し、再利用前にその例の image/settings をレビューしてください。
+
+投票メンバー 3 台には、2 台の過半数が必要です。Persistent state、peer connectivity、certificate、failure domain をまたぐ scheduling には、引き続き検証が必要です。`zookeeper-0` のような Pod 名を、ZooKeeper image の数値 `ZOO_MY_ID` に渡さないでください。
+
+```bash
+kubectl -n clickhouse get chk logs-keeper
+kubectl -n clickhouse get chi logs-demo
+kubectl -n clickhouse get pods,pvc,services,endpointslices
+kubectl -n clickhouse get events --sort-by=.metadata.creationTimestamp
 ```
 
-***
-
-## ログ取り込みパイプライン
+## ログインジェストパイプライン
 
 ### Buffer → Store → Distributed の 3 層設計
 
-> **インタラクティブな可視化**: [ClickHouse 3-Tier Pipeline Animation](https://github.com/Atom-oh/kubernetes-docs/blob/main/assets/clickhouse-3tier-pipeline.html) で、Buffer → Store → Distributed のデータフローを視覚的に確認できます。
+これらは 3 つの独立した永続コピーではなく、engine の責務です。`MergeTree` は part を保存し、`ReplicatedMergeTree` はレプリケーションを追加し、`Distributed` は shard 間の read/insert をルーティングします。オプションの `Buffer` engine は、宛先 table に転送する前に process memory にデータを保持します。
 
-大規模なログ環境（1 日あたり TB 以上）では、INSERT リクエストの集中により多数の小さな Part が作成され、Merge のオーバーヘッドが急増します。Buffer engine を使用する 3 層設計がこの問題を解決します。
+一貫した宛先を使用します。各 shard では `logs.application_logs`、クラスタ全体の access には `logs.application_logs_distributed` を使用します。`IF NOT EXISTS` を付けて同じ Distributed table を 2 回作成しても、既存の table の宛先は変更されません。`SHOW CREATE TABLE` を検査し、慎重に migrate してください。
 
-```
-Buffer Table (Memory)  →  Store Table (ReplicatedMergeTree)  →  Distributed Table (Query Router)
-    Receives INSERTs          Actual data storage                   Client query entry point
-    Accumulates in memory     Flushes as large Parts                Distributes across shards
-```
+まず collector 側の batching を優先してください。ClickHouse asynchronous insert も別の選択肢です。有効な場合、`wait_for_async_insert=1` は buffer された insert が処理されるまで待機します。flush 前に acknowledge する mode では、配信/error feedback が弱まります。選択した engine、user settings、retry をまとめてテストしてください。以下の Vector 例では、synchronous batched insert と foreground Distributed forwarding を備えた writer profile を使用します。
 
-**Buffer Engine の役割:**
-
-* INSERT リクエストをメモリに蓄積し、条件（時間／行数／バイト数）を満たすと Store テーブルへフラッシュする
-* ピーク時の多数の小さな INSERT を大きな Part にバッチ化し、Merge のオーバーヘッドを最小化する
-* Part 数の急増による `Too many parts` エラーを防止する
+比較のみを目的として、このオプションの Buffer table は同じ local storage table を対象にします。
 
 ```sql
--- 1. Store table (actual data storage)
-CREATE TABLE logs.store_application_logs ON CLUSTER logs
-(
-    -- Schema same as application_logs
-    ...
-)
-ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/logs.store_application_logs', '{replica}')
-PARTITION BY (toYYYYMMDD(timestamp) * 100 + toHour(timestamp))
-ORDER BY (namespace, service, timestamp)
-TTL timestamp + INTERVAL 90 DAY
-SETTINGS
-    index_granularity = 8192,
-    ttl_only_drop_parts = 1;
-
--- 2. Buffer table (receives INSERTs)
-CREATE TABLE logs.buffer_application_logs AS logs.store_application_logs
+CREATE TABLE logs.application_logs_buffer ON CLUSTER logscluster
+AS logs.application_logs
 ENGINE = Buffer(
-    'logs',                    -- database
-    'store_application_logs',  -- target table
-    16,                        -- num_layers (parallel buffers)
-    1,                         -- min_time (seconds) - flush after minimum 1s
-    30,                        -- max_time (seconds) - flush after maximum 30s
-    500000,                    -- min_rows
-    5000000,                   -- max_rows
-    500000000,                 -- min_bytes (~500MB)
-    1000000000                 -- max_bytes (~1GB)
-);
-
--- 3. Distributed table (query entry point)
-CREATE TABLE logs.application_logs_distributed ON CLUSTER logs
-AS logs.store_application_logs
-ENGINE = Distributed(logs, logs, store_application_logs, rand());
+    logs, application_logs, 4,
+    1, 10,
+    1000, 10000,
+    1000000, 10000000);
 ```
 
-> **注記**: Buffer テーブルのデータはメモリ上に存在するため、ClickHouse が異常終了するとフラッシュされていないデータが失われる可能性があります。Kafka と併用する場合は、再処理によってデータを復旧できます。
+`Buffer` は、**すべての最小 threshold** に達したとき、または**いずれかの最大 threshold** に達したときに flush します。limit は buffer layer ごとに適用されます。4 layer × 10,000,000 bytes は大まかな threshold budget であり、process-memory cap ではありません。source block、copy、query、cache により memory が追加されます。crash によって unflushed row が失われる可能性があり、並べ替えられた block により replicated insert deduplication が機能しなくなる場合があります。default pipeline をこの例にルーティングしたり、durable Kafka replay protection と説明したりしないでください。
 
 ### ログテーブルスキーマ
 
-```sql
--- Create log table (production-optimized version)
-CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logs
-(
-    -- DoubleDelta CODEC: optimal compression for time-series timestamps
-    timestamp DateTime64(3) CODEC(DoubleDelta, LZ4),
-    date Date DEFAULT toDate(timestamp),
-    level LowCardinality(String),
-    message String,
-    logger String,
+クラスタ名 `logscluster`、Keeper、`{shard}`/`{replica}` macro を確認した後、管理用 identity で cluster DDL を実行します。
 
-    -- Kubernetes metadata
+```sql
+CREATE DATABASE IF NOT EXISTS logs ON CLUSTER logscluster;
+
+CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logscluster
+(
+    timestamp DateTime64(3, 'UTC') CODEC(Delta, ZSTD(1)),
+    date Date MATERIALIZED toDate(timestamp),
+    level LowCardinality(String),
     namespace LowCardinality(String),
+    service LowCardinality(String),
     pod_name String,
     container_name LowCardinality(String),
     node_name LowCardinality(String),
-
-    -- Trace information
+    message String CODEC(ZSTD(1)),
     trace_id String,
-    span_id String,
-
-    -- Additional fields
-    service LowCardinality(String),
-    environment LowCardinality(String),
-
-    -- Materialized columns: auto-extract frequently used fields from JSON at INSERT time
-    -- Enables direct column access without JSON parsing at query time → major performance gain
-    app_name String MATERIALIZED JSONExtractString(raw_json, 'app_name'),
-    error_code String MATERIALIZED JSONExtractString(raw_json, 'error_code'),
-    response_time Float64 MATERIALIZED JSONExtractFloat(raw_json, 'response_time_ms'),
-
-    -- JSON raw (optional)
-    raw_json String CODEC(ZSTD(3)),
-
-    INDEX idx_trace_id trace_id TYPE bloom_filter GRANULARITY 4,
-    INDEX idx_message message TYPE tokenbf_v1(10240, 3, 0) GRANULARITY 4
+    raw_json String CODEC(ZSTD(1)),
+    response_time_ms Nullable(Float64)
+        MATERIALIZED if(
+            JSONType(raw_json, 'response_time_ms') IN ('Int64', 'UInt64', 'Double'),
+            JSONExtract(raw_json, 'response_time_ms', 'Nullable(Float64)'),
+            NULL)
 )
-ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/logs.application_logs', '{replica}')
--- Hourly partitioning: finer granularity than monthly (toYYYYMM)
--- → Enables whole-Part deletion for TTL, more precise data management
-PARTITION BY (toYYYYMMDD(date) * 100 + toHour(timestamp))
+ENGINE = ReplicatedMergeTree(
+    '/clickhouse/logs-demo/tables/{shard}/application_logs', '{replica}')
+PARTITION BY date
 ORDER BY (namespace, service, timestamp)
-TTL date + INTERVAL 90 DAY
-SETTINGS
-    index_granularity = 8192,
-    -- Drop whole Parts: dramatically more efficient TTL processing vs row-level deletion
-    ttl_only_drop_parts = 1;
+TTL toDateTime(timestamp) + INTERVAL 90 DAY DELETE;
 
--- Create distributed table
-CREATE TABLE IF NOT EXISTS logs.application_logs_distributed ON CLUSTER logs
+CREATE TABLE IF NOT EXISTS logs.application_logs_distributed ON CLUSTER logscluster
 AS logs.application_logs
-ENGINE = Distributed(logs, logs, application_logs, rand());
+ENGINE = Distributed(
+    'logscluster', 'logs', 'application_logs',
+    cityHash64(namespace, service, pod_name));
 ```
 
-### Vector による取り込み
+collector は通常の 10 カラムを送信し、ClickHouse が `date` と nullable の `response_time_ms` を計算します。response time が欠落しているか数値以外の場合は `NULL` のままなので、request 以外の log がゼロ遅延 request としてカウントされません。`raw_json` は有効な application JSON であり、信頼できる Kubernetes metadata とは分離されています。application が secret や personal data を出力する可能性がある場合、インジェスト前に redaction を適用してください。
+
+日次 partition はこの例の保持期間管理に適していますが、常に最適であるとは限りません。Keeper path はこの installation 固有です。無関係な installation 間で再利用すると、replication identity が混在する可能性があります。`IF NOT EXISTS` は schema migration ではありません。
+
+**Secret process を通じてすでに provision 済みの SQL-managed account**については、参加するすべての server で grant/profile を構成してください。file-managed user には、`ALTER USER` が変更できると仮定するのではなく、同等の file-managed permission が必要です。
+
+```sql
+-- Users and credentials already exist through the site-owned secret configuration.
+GRANT INSERT ON logs.application_logs TO log_writer;
+GRANT INSERT ON logs.application_logs_distributed TO log_writer;
+GRANT SELECT ON logs.application_logs TO log_reader;
+GRANT SELECT ON logs.application_logs_distributed TO log_reader;
+
+CREATE SETTINGS PROFILE logs_readonly
+SETTINGS readonly = 1, max_execution_time = 60 CHANGEABLE_IN_READONLY;
+ALTER USER log_reader SETTINGS PROFILE logs_readonly;
+
+CREATE SETTINGS PROFILE logs_writer
+SETTINGS distributed_foreground_insert = 1, async_insert = 0;
+ALTER USER log_writer SETTINGS PROFILE logs_writer;
+```
+
+writer の foreground Distributed insert は shard forwarding を待ちますが、選択した replica quorum、普遍的な retry deduplication、またはあらゆる storage failure からの保護を意味するものではありません。quorum、failure/retry semantics、permission を個別にレビューしてください。Grafana reader は必要な query timeout setting を許可しつつ read-only に保ってください。
+
+### Vector によるインジェスト
+
+これは Vector **0.58.0 configuration file** です。DaemonSet、ServiceAccount/RBAC、read-only の `/var/log/pods` access、writable な `/var/lib/vector` は別途用意する必要があります。Downward API を使用して、Pod の `spec.nodeName` から非 secret の `VECTOR_SELF_NODE_NAME` を設定してください。この source は変数を自ら読み取るため、global environment interpolation は不要です。
+
+Secret key `password` を `/etc/vector/clickhouse-auth` に、trusted CA を `/etc/vector/clickhouse-tls/ca.crt` に mount します。Vector 0.58 では、以下の明示的な `SECRET[backend.key]` backend を使用します。古い `${CLICKHOUSE_PASSWORD}` interpolation が default で有効だと仮定しないでください。
 
 ```yaml
-# vector-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vector-config
-  namespace: logging
-data:
-  vector.yaml: |
-    sources:
-      kubernetes_logs:
-        type: kubernetes_logs
-        auto_partial_merge: true
-        ignore_older_secs: 600
+data_dir: /var/lib/vector
 
-    transforms:
-      parse_json:
-        type: remap
-        inputs:
-          - kubernetes_logs
-        source: |
-          # Attempt JSON parsing
-          parsed, err = parse_json(.message)
-          if err == null {
-            . = merge(., parsed)
-          }
+secret:
+  clickhouse_auth:
+    type: directory
+    path: /etc/vector/clickhouse-auth
+    remove_trailing_whitespace: true
 
-          # Normalize fields
-          .timestamp = .timestamp || now()
-          .level = .level || "INFO"
-          .namespace = .kubernetes.pod_namespace
-          .pod_name = .kubernetes.pod_name
-          .container_name = .kubernetes.container_name
-          .node_name = .kubernetes.pod_node_name
-          .service = .kubernetes.pod_labels.app || "unknown"
-          .environment = .kubernetes.pod_labels.environment || "unknown"
+sources:
+  kubernetes:
+    type: kubernetes_logs
+    auto_partial_merge: true
 
-      filter_noise:
-        type: filter
-        inputs:
-          - parse_json
-        condition: |
-          !includes(["kube-system", "kube-public"], .namespace) &&
-          !match(.message, r'healthcheck|readiness|liveness')
+transforms:
+  project:
+    type: remap
+    inputs: [kubernetes]
+    source: |
+      raw = string(.message) ?? ""
+      parsed, err = parse_json(raw)
+      app = if err == null && is_object(parsed) { object!(parsed) } else { {} }
+      namespace = string(.kubernetes.pod_namespace) ?? "unknown"
+      service = string(.kubernetes.pod_labels."app.kubernetes.io/name") ??
+        string(.kubernetes.pod_labels.app) ?? "unknown"
+      pod = string(.kubernetes.pod_name) ?? "unknown"
+      container = string(.kubernetes.container_name) ?? "unknown"
+      node = string(.kubernetes.pod_node_name) ?? "unknown"
+      event_time = if is_timestamp(.timestamp) { timestamp!(.timestamp) } else {
+        parse_timestamp(string(.timestamp) ?? "", format: "%+") ?? now()
+      }
+      . = {
+        "timestamp": event_time,
+        "level": downcase(string(app.level) ?? "unknown"),
+        "namespace": namespace,
+        "service": service,
+        "pod_name": pod,
+        "container_name": container,
+        "node_name": node,
+        "message": string(app.message) ?? raw,
+        "trace_id": string(app.trace_id) ?? "",
+        "raw_json": encode_json(app)
+      }
 
-    sinks:
-      clickhouse:
-        type: clickhouse
-        inputs:
-          - filter_noise
-        endpoint: http://clickhouse.clickhouse.svc.cluster.local:8123
-        database: logs
-        table: application_logs
-        auth:
-          strategy: basic
-          user: admin
-          password: ${CLICKHOUSE_PASSWORD}
-        encoding:
-          timestamp_format: unix
-        batch:
-          max_bytes: 10485760
-          max_events: 10000
-          timeout_secs: 5
-        compression: gzip
-        healthcheck:
-          enabled: true
+sinks:
+  clickhouse:
+    type: clickhouse
+    inputs: [project]
+    endpoint: https://logs-clickhouse.clickhouse.svc.cluster.local:8443
+    database: logs
+    table: application_logs_distributed
+    format: json_each_row
+    date_time_best_effort: true
+    skip_unknown_fields: false
+    auth:
+      strategy: basic
+      user: log_writer
+      password: "SECRET[clickhouse_auth.password]"
+    tls:
+      ca_file: /etc/vector/clickhouse-tls/ca.crt
+      verify_certificate: true
+      verify_hostname: true
+    batch:
+      max_events: 10000
+      timeout_secs: 2
+    buffer:
+      type: disk
+      max_size: 536870912
+      when_full: block
+    query_settings:
+      async_insert_settings:
+        enabled: false
 ```
 
-### FluentBit による取り込み
+transform は任意の application JSON を event root に merge するのではなく、固定 schema に project します。application 提供の `kubernetes`/`namespace` field が Kubernetes metadata を上書きすることはできません。不正な JSON でも `message` は読み取り可能なままで、parse 済み application object は `{}` になります。timestamp は collector event timestamp であり、信頼できない application が主張する event time ではありません。
 
-```yaml
-# fluent-bit-clickhouse.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: logging
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
+512MiB disk buffer には、実際に書き込み可能な persistent storage と capacity policy が必要です。backpressure は kubelet log rotation を無期限に止めることはありません。`kubernetes_logs` は end-to-end acknowledgement support を持たない best-effort file source です。sink に disk buffer があるからといって、exactly-once または guaranteed lossless delivery を主張しないでください。この host-log collection model は EKS Fargate node も対象にしません。
 
-    [INPUT]
-        Name              tail
-        Tag               kube.*
-        Path              /var/log/containers/*.log
-        Parser            docker
-        DB                /var/log/flb_kube.db
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+このレビューでは、environment/health check を行わずにこの configuration を compile し、10 件の synthetic VRL case を実行しました。実際の Kubernetes access、Secret mount、TLS handshake、ClickHouse delivery には、引き続き deployment validation が必要です。
 
-    [FILTER]
-        Name                kubernetes
-        Match               kube.*
-        Kube_URL            https://kubernetes.default.svc:443
-        Merge_Log           On
-        K8S-Logging.Parser  On
+### FluentBit によるインジェスト
 
-    [FILTER]
-        Name    modify
-        Match   *
-        Add     environment production
-        Add     cluster_name my-cluster
+Fluent Bit の HTTP output は、改行区切り JSON を ClickHouse の HTTP insert interface に送信できます。CRI/Docker framing、Kubernetes metadata、RBAC、writable な tail database/buffer を備えた、正しくインストール済みの collector を再利用してください。外側の CRI record は application JSON ではありません。
 
-    [OUTPUT]
-        Name          http
-        Match         *
-        Host          clickhouse.clickhouse.svc.cluster.local
-        Port          8123
-        URI           /?query=INSERT%20INTO%20logs.application_logs%20FORMAT%20JSONEachRow
-        Format        json_lines
-        json_date_key timestamp
-        json_date_format iso8601
-        Header        Authorization Basic YWRtaW46cGFzc3dvcmQ=
+HTTP output を使用する前に、各 record を上記の同じ 10 カラム contract に transform し、timestamp input parsing を一貫して構成してください。ネストされた `kubernetes`、任意の application key、間違った timestamp field を含む raw Kubernetes record は table schema ではありません。unknown column を無差別に drop して不一致を隠さないでください。
 
-  parsers.conf: |
-    [PARSER]
-        Name        docker
-        Format      json
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-```
+certificate verification を伴う HTTPS と、別途管理する writer credential を使用してください。選択した Fluent Bit version で HTTP output configuration に password string が必要な場合は、保護された Secret-backed configuration file を render してください。静的な Base64 `admin:password` header を公開しないでください。Vector path はここでの完全な normalization 例です。この節では、提供されていない Fluent Bit transform/DaemonSet がテスト済みであるとは主張しません。
 
 ### Kafka によるバッファリング（大規模環境）
 
-```sql
--- Kafka engine table
-CREATE TABLE IF NOT EXISTS logs.kafka_logs ON CLUSTER logs
-(
-    timestamp DateTime64(3),
-    level String,
-    message String,
-    namespace String,
-    pod_name String,
-    container_name String,
-    service String,
-    raw_json String
-)
-ENGINE = Kafka()
-SETTINGS
-    kafka_broker_list = 'kafka.kafka.svc.cluster.local:9092',
-    kafka_topic_list = 'logs',
-    kafka_group_name = 'clickhouse-consumer',
-    kafka_format = 'JSONEachRow',
-    kafka_num_consumers = 3,
-    kafka_max_block_size = 65536;
+Kafka は burst を吸収し、構成済みの retention 内で replay を提供できます。必要な outage window に対して authentication/TLS、replication、acknowledgement、disk capacity を provision してください。Kafka は、すべての loss または duplicate を自動的に防ぐものではありません。
 
--- Materialized View to store in actual table
-CREATE MATERIALIZED VIEW IF NOT EXISTS logs.kafka_to_logs ON CLUSTER logs
-TO logs.application_logs
-AS SELECT
-    timestamp,
-    toDate(timestamp) as date,
-    level,
-    message,
-    '' as logger,
-    namespace,
-    pod_name,
-    container_name,
-    '' as node_name,
-    '' as trace_id,
-    '' as span_id,
-    service,
-    'production' as environment,
-    raw_json
-FROM logs.kafka_logs;
-```
+ClickHouse Kafka engine は consumer group を通じて topic を消費し、materialized view が parse 済み row を**同じ** storage table に転送します。consumer 間で意図的な 1 つの group/partition assignment を維持し、すべての message をすべての shard に insert することを避け、lag、parser failure、reject された message を監視してください。credential は SQL 例ではなく、管理された server configuration に属します。
 
-***
+Kafka-engine table は、上記で使用した通常の default column をサポートしません。そこでは incoming field だけを定義し、destination/view で default/materialized value を計算してください。offset commit、downstream insert acknowledgement、retry behavior はまとめてテストする必要があります。durable processing の acknowledge が必要な場合は memory Buffer destination を避け、experimental Keeper-backed offset storage を無条件の production default として有効にしないでください。
 
 ## SQL クエリ
 
 ### 基本クエリ
 
+直近の error は、日付をまたいでも機能する相対 timestamp range を使用します。
+
 ```sql
--- Query recent error logs
-SELECT
-    timestamp,
-    namespace,
-    service,
-    message
+SELECT timestamp, namespace, service, pod_name, message
 FROM logs.application_logs_distributed
-WHERE level = 'ERROR'
-  AND timestamp >= now() - INTERVAL 1 HOUR
-ORDER BY timestamp DESC
-LIMIT 100;
-
--- Errors by service
-SELECT
-    service,
-    count() as error_count,
-    uniq(pod_name) as affected_pods
-FROM logs.application_logs_distributed
-WHERE level = 'ERROR'
-  AND date = today()
-GROUP BY service
-ORDER BY error_count DESC;
-
--- Log volume by time
-SELECT
-    toStartOfHour(timestamp) as hour,
-    count() as log_count,
-    sum(length(message)) as total_bytes
-FROM logs.application_logs_distributed
-WHERE date >= today() - 7
-GROUP BY hour
-ORDER BY hour;
+WHERE timestamp >= now() - INTERVAL 1 HOUR
+  AND namespace = 'production' AND level = 'error'
+ORDER BY timestamp DESC LIMIT 100;
 ```
+
+log event と正確に重複を除いた Pod 名をカウントします。
+
+```sql
+SELECT toStartOfMinute(timestamp) AS minute, service,
+       count() AS log_events, countIf(level = 'error') AS error_events,
+       round(100.0 * error_events / nullIf(log_events, 0), 2) AS error_log_percent
+FROM logs.application_logs_distributed
+WHERE timestamp >= now() - INTERVAL 1 HOUR
+  AND namespace = 'production'
+GROUP BY minute, service ORDER BY minute, service;
+
+SELECT namespace, service, uniqExact(pod_name) AS distinct_pods_with_logs
+FROM logs.application_logs_distributed
+WHERE timestamp >= now() - INTERVAL 1 HOUR
+GROUP BY namespace, service ORDER BY distinct_pods_with_logs DESC;
+```
+
+`error_log_percent` は error とマークされた**log event**の割合です。logging contract が request ごとに関連する record が 1 件であることを保証しない限り、HTTP request failure ratio ではありません。`uniqExact` は正確で、`uniq` は近似です。どちらの query も、現在稼働中の Pod 数ではなく、観測された log を示します。
 
 ### 高度な分析クエリ
 
 ```sql
--- Error rate trend (5-minute intervals)
-SELECT
-    toStartOfFiveMinutes(timestamp) as time_bucket,
-    service,
-    countIf(level = 'ERROR') as errors,
-    count() as total,
-    round(errors / total * 100, 2) as error_rate
+SELECT service, count(response_time_ms) AS measured_events,
+       quantileExact(0.95)(response_time_ms) AS p95_ms
 FROM logs.application_logs_distributed
-WHERE date = today()
-  AND namespace = 'production'
-GROUP BY time_bucket, service
-HAVING total > 100
-ORDER BY time_bucket, error_rate DESC;
+WHERE timestamp >= now() - INTERVAL 1 HOUR
+  AND namespace = 'production' AND isNotNull(response_time_ms)
+GROUP BY service;
 
--- Error message pattern analysis
-SELECT
-    extractAll(message, 'Exception|Error|Failed|Timeout')[1] as error_type,
-    count() as occurrences,
-    groupArray(10)(message) as sample_messages
+SELECT extract(message, '(TimeoutException|ConnectionError|OutOfMemoryError)') AS error_type,
+       count() AS log_events
 FROM logs.application_logs_distributed
-WHERE level = 'ERROR'
-  AND date >= today() - 7
-GROUP BY error_type
-ORDER BY occurrences DESC
-LIMIT 20;
+WHERE timestamp >= now() - INTERVAL 1 DAY AND level = 'error'
+GROUP BY error_type ORDER BY log_events DESC;
 
--- Pod restart pattern detection
-SELECT
-    namespace,
-    pod_name,
-    min(timestamp) as first_seen,
-    max(timestamp) as last_seen,
-    count() as log_count,
-    countIf(message LIKE '%CrashLoopBackOff%' OR message LIKE '%OOMKilled%') as crash_indicators
+SELECT timestamp, service, pod_name, message
 FROM logs.application_logs_distributed
-WHERE date >= today() - 1
-GROUP BY namespace, pod_name
-HAVING crash_indicators > 0
-ORDER BY crash_indicators DESC;
-
--- Slow request analysis (extract response_time from JSON logs)
-SELECT
-    service,
-    quantile(0.50)(JSONExtractFloat(raw_json, 'response_time_ms')) as p50,
-    quantile(0.90)(JSONExtractFloat(raw_json, 'response_time_ms')) as p90,
-    quantile(0.99)(JSONExtractFloat(raw_json, 'response_time_ms')) as p99,
-    count() as request_count
-FROM logs.application_logs_distributed
-WHERE date = today()
-  AND JSONHas(raw_json, 'response_time_ms')
-GROUP BY service
-ORDER BY p99 DESC;
-
--- Distributed tracing by trace_id
-SELECT
-    timestamp,
-    service,
-    pod_name,
-    span_id,
-    level,
-    message
-FROM logs.application_logs_distributed
-WHERE trace_id = 'abc123def456'
+WHERE timestamp >= now() - INTERVAL 1 DAY
+  AND trace_id = '0123456789abcdef0123456789abcdef'
 ORDER BY timestamp;
 ```
+
+latency aggregate には、数値の response time を持つ event だけが含まれます。`quantileExact` はこの限定された例の説明には有用ですが、大きな workload では大量の memory を消費する可能性があります。より大規模な workload には近似 aggregate を評価してください。`extract` は pattern に一致しない場合に空文字列を返し、明示的な unmatched group を残します。
+
+trace ID は 32 桁の 16 進文字の例であり、実際の trace ではありません。service 間での正しい propagation と matching field が前提条件です。機密性の高い query text、credential、customer identifier が無制限の log field にならないようにしてください。
 
 ### リアルタイムダッシュボードクエリ
 
 ```sql
--- Real-time log stream (live tailing)
-SELECT
-    timestamp,
-    level,
-    namespace,
-    service,
-    substring(message, 1, 200) as message_preview
+SELECT toStartOfHour(timestamp) AS hour, namespace,
+       count() AS log_events, sum(length(message)) AS message_bytes
 FROM logs.application_logs_distributed
-WHERE timestamp >= now() - INTERVAL 5 MINUTE
-ORDER BY timestamp DESC
-LIMIT 100;
+WHERE timestamp >= now() - INTERVAL 1 DAY
+GROUP BY hour, namespace ORDER BY hour;
 
--- Service status summary
-SELECT
-    service,
-    countIf(timestamp >= now() - INTERVAL 5 MINUTE) as logs_5m,
-    countIf(level = 'ERROR' AND timestamp >= now() - INTERVAL 5 MINUTE) as errors_5m,
-    countIf(level = 'ERROR' AND timestamp >= now() - INTERVAL 1 HOUR) as errors_1h
+SELECT namespace, pod_name, count() AS backoff_log_events
 FROM logs.application_logs_distributed
-WHERE date = today()
-GROUP BY service
-ORDER BY errors_5m DESC;
+WHERE timestamp >= now() - INTERVAL 1 DAY
+  AND positionCaseInsensitive(message, 'Back-off restarting failed container') > 0
+GROUP BY namespace, pod_name;
 ```
 
-***
+`message_bytes` は圧縮済み table storage や network billing ではなく、message text byte をカウントします。“Back-off” message の一致は log event をカウントするものであり、信頼できる container restart count ではありません。そのためには Kubernetes state metrics を使用してください。SQL の `SELECT` は snapshot query です。dashboard が定期的に refresh されるのは refresh interval によるもので、この query の特別な live-stream property によるものではありません。
 
 ## Grafana 統合
 
-### ClickHouse データソースのセットアップ
+### ClickHouse Datasource のセットアップ
+
+Grafana の deployment mechanism を使用して `grafana-clickhouse-datasource` **4.21.2** を install/pin し、その plugin の Grafana 要件を確認してください。provisioning template は scheme なしの hostname、数値の port、TLS を伴う HTTP protocol、`secureJsonData` 配下の credential を使用します。
 
 ```yaml
-# grafana-datasource.yaml
 apiVersion: 1
 datasources:
   - name: ClickHouse
+    uid: clickhouse-logs
     type: grafana-clickhouse-datasource
-    url: http://clickhouse.clickhouse.svc.cluster.local:8123
+    access: proxy
     jsonData:
-      defaultDatabase: logs
-      dialTimeout: 10s
-      queryTimeout: 300s
-      validateSql: true
+      host: logs-clickhouse.clickhouse.svc.cluster.local
+      port: 8443
       protocol: http
-    secureJsonData:
-      username: readonly
-      password: ${CLICKHOUSE_READONLY_PASSWORD}
+      secure: true
+      tlsSkipVerify: false
+      tlsAuthWithCACert: true
+      username: log_reader
+      defaultDatabase: logs
+      logs:
+        defaultDatabase: logs
+        defaultTable: application_logs_distributed
+        timeColumn: timestamp
+        levelColumn: level
+        messageColumn: message
+    # Filled by the file-to-file renderer before provisioning.
+    secureJsonData: {}
 ```
+
+provisioning **前**に空の credential map を設定してください。たとえば、次の file-to-file renderer は mount された password と CA を読み取ります。Python と PyYAML が必要です。secret を stdout に出力せず、Grafana provisioning 用にリテラルの `$` 文字を escape します。結果のファイル全体は ConfigMap や Git-tracked artifact ではなく、Secret として扱ってください。
+
+```python
+"""Render a complete Secret-backed provisioning file; requires PyYAML."""
+import os
+from pathlib import Path
+import sys
+import tempfile
+import yaml
+
+template, password_path, ca_path, output = map(Path, sys.argv[1:])
+config = yaml.safe_load(template.read_text())
+password = password_path.read_text().rstrip("\r\n")
+ca = ca_path.read_text()
+if not password or "-----BEGIN CERTIFICATE-----" not in ca:
+    raise ValueError("A nonempty password and PEM CA file are required")
+# Grafana provisioning expands $ variables even in quoted YAML scalars.
+# Escape literal dollars; do not interpolate secrets through process environment.
+config["datasources"][0]["secureJsonData"] = {
+    "password": password.replace("$", "$$"),
+    "tlsCACert": ca.replace("$", "$$"),
+}
+fd, temporary = tempfile.mkstemp(prefix=".clickhouse-", dir=output.parent)
+try:
+    with os.fdopen(fd, "w") as stream:
+        yaml.safe_dump(config, stream, sort_keys=False)
+    os.replace(temporary, output)
+finally:
+    if os.path.exists(temporary):
+        os.unlink(temporary)
+```
+
+```bash
+python3 render-grafana.py grafana-template.yaml \
+  /run/secrets/clickhouse/password /run/secrets/clickhouse/ca.crt \
+  /run/grafana-provisioning/clickhouse.yaml
+```
+
+target directory は保護された writable volume 上に存在する必要があります。Grafana process 用に file ownership/read permission を設定し、完成した file をその datasource provisioning directory に mount してください。Secret update だけでは Grafana が datasource を reload したことを証明しません。read-only account、CA validation、実際の query をテストしてください。“Save & test” だけでは、すべての query setting が許可されていることを証明できません。
 
 ### Grafana ダッシュボードパネル
 
-```json
-{
-  "panels": [
-    {
-      "title": "Log Volume",
-      "type": "timeseries",
-      "datasource": "ClickHouse",
-      "targets": [
-        {
-          "rawSql": "SELECT toStartOfMinute(timestamp) as time, count() as count FROM logs.application_logs_distributed WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
-          "format": "time_series"
-        }
-      ]
-    },
-    {
-      "title": "Error Rate by Service",
-      "type": "barchart",
-      "datasource": "ClickHouse",
-      "targets": [
-        {
-          "rawSql": "SELECT service, countIf(level='ERROR') as errors, count() as total, round(errors/total*100, 2) as error_rate FROM logs.application_logs_distributed WHERE $__timeFilter(timestamp) GROUP BY service ORDER BY error_rate DESC LIMIT 10",
-          "format": "table"
-        }
-      ]
-    },
-    {
-      "title": "Log Stream",
-      "type": "logs",
-      "datasource": "ClickHouse",
-      "targets": [
-        {
-          "rawSql": "SELECT timestamp as time, level, concat(namespace, '/', service) as labels, message as line FROM logs.application_logs_distributed WHERE $__timeFilter(timestamp) ORDER BY timestamp DESC LIMIT 500",
-          "format": "logs"
-        }
-      ]
-    }
-  ]
-}
+time-plus-number query には **Time series** を選択してください。
+
+```sql
+SELECT $__timeInterval(timestamp) AS time, count() AS log_events
+FROM logs.application_logs_distributed
+WHERE $__timeFilter(timestamp) AND namespace = 'production'
+GROUP BY time ORDER BY time;
 ```
+
+個々の record には、構成済みの timestamp、level、message column を持つ Logs/Explore を使用します。Grafana は SQL を送信する前に macro を展開します。`$__timeFilter` はそれ自体では実行可能な ClickHouse SQL ではありません。
 
 ### アラートルール
 
-```yaml
-# clickhouse-alert-rules.yaml
-apiVersion: 1
-groups:
-  - name: clickhouse-logs
-    rules:
-      - alert: HighErrorRate
-        expr: |
-          clickhouse_custom_query{query="SELECT countIf(level='ERROR')/count()*100 FROM logs.application_logs_distributed WHERE timestamp >= now() - INTERVAL 5 MINUTE"} > 5
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High error rate detected"
-          description: "Error rate is above 5% in the last 5 minutes"
+`clickhouse_custom_query{query="..."}` という Prometheus metric を作り出すのではなく、この datasource と Grafana Alerting を使用してください。
 
-      - alert: LogIngestionStopped
-        expr: |
-          clickhouse_custom_query{query="SELECT count() FROM logs.application_logs_distributed WHERE timestamp >= now() - INTERVAL 5 MINUTE"} == 0
-        for: 10m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Log ingestion stopped"
-          description: "No logs received in the last 10 minutes"
+```sql
+SELECT countIf(level = 'error') AS value
+FROM logs.application_logs_distributed
+WHERE $__timeFilter(timestamp) AND namespace = 'production';
 ```
 
-***
+単一の数値 row には Table format を選択し、次に Reduce/Last と「10 より上」のような threshold を設定します。evaluation interval、time range、pending period、contact policy を明示的に定義してください。10 は演習用の threshold であり、本番向けの推奨ではありません。Prometheus の `groups/rules/expr` を Grafana の alerting schema と混在させるのではなく、構成済み Grafana version から provisioning を export してください。
+
+row がインジェストされていない場合、`countIf` はゼロを返すことがあります。たとえば scheduled synthetic heartbeat を使用して、インジェストを別途監視してください。
+
+```sql
+SELECT $__timeInterval(timestamp) AS time, count() AS value
+FROM logs.application_logs_distributed
+WHERE $__timeFilter(timestamp) AND service = 'log-heartbeat'
+GROUP BY time ORDER BY time;
+```
+
+heartbeat が存在しない場合、この query は time-series row を返しません。No Data と execution error を意図的に構成し、ingestion lag を考慮して notification delivery をテストしてください。
 
 ## HyperDX（ClickHouse ネイティブビューア）
 
-HyperDX は ClickHouse を直接クエリするネイティブログビューアです。Grafana や Signoz とは異なり、ClickHouse のカラムナストレージ構造を直接活用することで、フィールド固有の検索に高いパフォーマンスを提供します。
-
 ### 主な利点
 
-| 機能                   | 説明                                                            |
-| ------------------------- | ---------------------------------------------------------------------- |
-| **フィールド固有検索** | `ServiceName:payment` 形式の検索は LIKE クエリより 20 倍以上高速 |
-| **ClickHouse ネイティブ**     | 別個のインデックスレイヤーなしで ClickHouse を直接クエリする           |
-| **自動スキーマ検出** | Buffer/Store/View 分離構造を自動的に認識する        |
-| **OTEL 互換**       | OpenTelemetry ログスキーマをネイティブにサポートする                            |
+HyperDX は ClickStack で使用される observability UI です。既存の ClickHouse table を使用して source を構成することをサポートしており、custom schema の使用は本質的に非サポートではありません。timestamp、message/body、severity、service、trace field を schema に明示的に map し、connection と制限された user を設定して、代表的な record に対して検索を検証してください。
+
+Buffer/Store/Distributed の naming convention を自動 source discovery と見なしたり、普遍的な 20× の速度向上を主張したりしないでください。HyperDX application/API release **2.38.0** と別バージョンの CLI は異なる artifact です。このガイドでは、custom cluster 上での新規 ClickStack deployment を規定せず、統合を実行したとは主張しません。
 
 ### ログビューアの比較
 
-| 機能                    | Grafana         | Signoz            | HyperDX         |
-| -------------------------- | --------------- | ----------------- | --------------- |
-| **ClickHouse ネイティブ**      | Plugin が必要 | 独自スキーマを強制 | ネイティブ          |
-| **フィールド検索速度**     | 良好            | 良好              | 優れている（20 倍） |
-| **カスタムスキーマ**          | サポート        | 制限あり           | 完全サポート    |
-| **Buffer/Store 構造** | 手動設定   | 非対応     | 自動検出   |
-| **Deployment**             | スタンドアロン      | スタンドアロン        | スタンドアロン        |
-| **ライセンス**                | AGPL-3.0        | カスタムライセンス    | MIT             |
+| ビューア | 評価すべき適合性 |
+|---|---|
+| Grafana + ClickHouse plugin | SQL、既存 dashboard、alerting、cross-datasource workflow |
+| HyperDX / ClickStack | 明示的に構成された source/schema による observability 検索と correlation |
+| SigNoz | 独自の observability ingestion/model と UI。ClickHouse も使用する |
 
-> **Signoz の制限**: Signoz は独自のスキーマを強制するため、Buffer → Store → Distributed の 3 層構造やカスタム Materialized カラムを使用する環境では制約が生じます。
-
-***
+各 component の実際の ingestion schema、authentication、query workflow、対応 release、license を比較してください。既存の ClickHouse database があるからといって、すべての observability UI がそのまま交換可能な frontend になるわけではありません。
 
 ## パフォーマンス最適化
 
 ### テーブル設計の最適化
 
-```sql
--- Optimized table design
-CREATE TABLE logs.optimized_logs
-(
-    -- Place frequently filtered columns first
-    timestamp DateTime64(3),
-    date Date DEFAULT toDate(timestamp),
+頻繁に使用する選択的 filter と locality に合わせて `ORDER BY` を選択してください。頻繁に query されるすべての column を先頭に置くという普遍的なルールではありません。`LowCardinality(String)` は、繰り返される namespace/service/level 値に役立つ場合があります。固定の普遍的な distinct-value cutoff を強制するのではなく、dictionary size と query behavior を評価してください。
 
-    -- LowCardinality for low cardinality columns
-    level LowCardinality(String),
-    namespace LowCardinality(String),
-    service LowCardinality(String),
-    environment LowCardinality(String) DEFAULT 'production',
+可能な限り細かく partition するのではなく、管理可能な retention と merge のために partition してください。90 日間の hourly partitioning では、24～48 だけでなく、およそ **2,160 個の hourly partition** が保持される可能性があります。late event が古い partition に書き込まれる場合もあります。
 
-    -- Regular columns
-    message String,
-    pod_name String,
-
-    -- Compression settings
-    raw_json String CODEC(ZSTD(3))
-)
-ENGINE = MergeTree()
--- Sort key matching query patterns
-PARTITION BY toYYYYMM(date)
-ORDER BY (namespace, service, level, timestamp)
--- TTL settings
-TTL date + INTERVAL 30 DAY DELETE,
-    date + INTERVAL 7 DAY TO VOLUME 'cold'
-SETTINGS
-    index_granularity = 8192,
-    min_bytes_for_wide_part = 10485760,
-    min_rows_for_wide_part = 10000;
-```
-
-### Parts の最適化
-
-ClickHouse の MergeTree engine は INSERT 時に Part を作成し、バックグラウンドでマージします。Part のサイズと数のバランスが、クエリ性能とシステムの安定性を決定します。
-
-**Part サイズのトレードオフ:**
-
-| Part の特性   | 大容量 + 少数の Parts       | 小容量 + 多数の Parts      |
-| --------------------- | ---------------------------- | ---------------------------- |
-| **Merge のオーバーヘッド**    | マージ中にメモリが急増   | 頻繁なマージ、CPU 負荷    |
-| **クエリ性能** | スキャンする Parts が少ない = 高速 | Part を開くオーバーヘッドが増加 |
-| **INSERT への影響**     | 大きなバッチが必要         | 小さなバッチが可能       |
-| **リスク**              | OOM の可能性              | `Too many parts` エラー       |
-
-**運用上の推奨事項:**
-
-| 項目                | 推奨値              |
-| ------------------- | ------------------------------ |
-| パーティションあたりの Parts | \~20 以下                  |
-| Part あたりのサイズ       | 2～3GB                          |
-| アクティブなパーティション   | 時間単位のパーティショニングで 24～48 |
-
-**モニタリングクエリ:**
+### パートの最適化
 
 ```sql
--- Check Part count and size per partition
-SELECT
-    database,
-    table,
-    partition,
-    count() AS part_count,
-    formatReadableSize(sum(bytes_on_disk)) AS total_size,
-    formatReadableSize(avg(bytes_on_disk)) AS avg_part_size,
-    min(modification_time) AS oldest_part,
-    max(modification_time) AS newest_part
+SELECT partition, count() AS active_parts,
+       sum(rows) AS rows, sum(bytes_on_disk) AS bytes_on_disk
 FROM system.parts
-WHERE active = 1
-  AND database = 'logs'
-GROUP BY database, table, partition
-ORDER BY part_count DESC
-LIMIT 20;
+WHERE active AND database = 'logs' AND table = 'application_logs'
+GROUP BY partition ORDER BY partition;
 
--- Detect Too many parts warnings
-SELECT
-    database,
-    table,
-    partition,
-    count() AS part_count
-FROM system.parts
-WHERE active = 1
-GROUP BY database, table, partition
-HAVING part_count > 300
-ORDER BY part_count DESC;
+SELECT database, table, is_readonly, is_session_expired,
+       queue_size, absolute_delay
+FROM system.replicas
+WHERE database = 'logs';
+
+SELECT database, table, is_blocked, error_count, last_exception
+FROM system.distribution_queue WHERE database = 'logs';
 ```
+
+これらの system-table query は、接続先 server を表します。クラスタ全体の operation では、関連するすべての replica/shard を検査してください。part の作成/merge、replication lag、Distributed queue を追跡します。小さな insert を batch 化してください。特定の part count や target part size は普遍的な threshold ではありません。過剰な小規模 insert の修正の代わりに、定期的な `OPTIMIZE FINAL` を避けてください。
 
 ### クエリの最適化
 
+適切な場合は timestamp と先頭の sort-key column で filter し、必要な column だけを選択して、`EXPLAIN`/query-log の read row と byte を検査してください。低い cardinality の label が常に最適な先頭 key であるとは限りません。実際の query mix をテストしてください。
+
+メインの log table には sampling expression が定義されていないため、そこに `SAMPLE 0.1` を追加するのは無効です。別の demonstration table では、primary/sort key に含まれる決定論的な unsigned sampling key を定義できます。
+
 ```sql
--- Use PREWHERE (filter optimization)
-SELECT *
-FROM logs.application_logs_distributed
-PREWHERE date = today()
-WHERE level = 'ERROR'
-  AND namespace = 'production'
-LIMIT 100;
-
--- Use WITH clause instead of subqueries
-WITH error_services AS (
-    SELECT service
-    FROM logs.application_logs_distributed
-    WHERE level = 'ERROR'
-      AND date = today()
-    GROUP BY service
-    HAVING count() > 100
+CREATE TABLE logs.sample_demo
+(
+    event_id UInt64,
+    message String
 )
-SELECT
-    l.service,
-    count() as log_count,
-    countIf(level = 'ERROR') as error_count
-FROM logs.application_logs_distributed l
-WHERE l.service IN (SELECT service FROM error_services)
-  AND l.date = today()
-GROUP BY l.service;
+ENGINE = MergeTree
+ORDER BY cityHash64(event_id)
+SAMPLE BY cityHash64(event_id);
 
--- Sampling for fast large-scale analysis
-SELECT
-    service,
-    count() * 10 as estimated_count  -- 10% sample
-FROM logs.application_logs_distributed
-SAMPLE 0.1
-WHERE date >= today() - 7
-GROUP BY service;
+SELECT count() * 10 AS estimated_events
+FROM logs.sample_demo SAMPLE 0.1;
 ```
 
-### システム設定の最適化
+fraction は sampling-key interval であり、有限の row set の厳密に 10% を約束するものではありません。加算的な count は適切に scale してください。average や percentile を 10 倍してはいけません。sampling は、問うべき内容に対しても代表的である必要があります。
 
-```xml
-<!-- config.d/performance.xml -->
-<clickhouse>
-    <!-- Query processing -->
-    <max_threads>16</max_threads>
-    <max_memory_usage>10000000000</max_memory_usage>
-    <max_bytes_before_external_group_by>5000000000</max_bytes_before_external_group_by>
-    <max_bytes_before_external_sort>5000000000</max_bytes_before_external_sort>
+### システム構成の最適化
 
-    <!-- Merge settings -->
-    <background_pool_size>16</background_pool_size>
-    <background_schedule_pool_size>16</background_schedule_pool_size>
+`max_threads` と `max_memory_usage` は query/user-profile setting です。任意の top-level server XML ではなく、profile または per-query setting に置いてください。server cache と background pool は、単一 query limit の外で追加 resource を消費します。Pod memory limit を設定する前に、同時 query、merge、ingest buffer を考慮してください。
 
-    <!-- Compression -->
-    <compression>
-        <case>
-            <min_part_size>10000000000</min_part_size>
-            <min_part_size_ratio>0.01</min_part_size_ratio>
-            <method>zstd</method>
-            <level>3</level>
-        </case>
-    </compression>
-
-    <!-- Caching -->
-    <mark_cache_size>5368709120</mark_cache_size>
-    <uncompressed_cache_size>8589934592</uncompressed_cache_size>
-</clickhouse>
-```
+setting を変更する前に、境界を定めた test workload を使用し、CPU throttling、memory、I/O、merge backlog、failure recovery を観察してください。低い query limit は process 全体を制限するものではありません。
 
 ### リソースガイドライン
 
-> **参照**: AWS インスタンスタイプのパフォーマンスベンチマークについては、[AWS Instance Benchmark](https://benchmark.aws.atomai.click/) を参照してください。ClickHouse のワークロード特性（CPU 集約型クエリ、大容量メモリキャッシュ、高ディスク I/O）に適合するインスタンスを選択してください。
+日次インジェスト byte、測定済み compression、保持日数、replication、query concurrency、ピーク時の merge/ingest overhead からサイズを決定します。例として、1TB/day を 5:1 に削減できた場合、圧縮データは約 200GB/day になり、90 日で replication と運用 headroom の前に約 18TB です。2 replica は保存コピーをおよそ 2 倍にします。この計算は測定済み capacity result や AWS bill ではありません。
 
-```yaml
-# Recommended settings by scale
-
-# Small (daily < 100GB)
-resources:
-  replicas: 3  # 1 shard, 3 replicas
-  cpu: 4
-  memory: 16Gi
-  storage: 500Gi (gp3)
-
-# Medium (daily 100GB - 1TB)
-resources:
-  shards: 3
-  replicas_per_shard: 2
-  cpu: 8
-  memory: 32Gi
-  storage: 2Ti (gp3)
-
-# Large (daily > 1TB)
-resources:
-  shards: 10+
-  replicas_per_shard: 2
-  cpu: 16
-  memory: 64Gi
-  storage: 5Ti+ (io2)
-  # S3 tiering required
-```
-
-***
+EKS では、EBS provisioned performance/capacity、cross-AZ traffic、node architecture、failure-domain placement、replacement capacity を含めてください。Fargate は node-based collector/ClickHouse deployment と同じ host-log/volume topology を提供しません。
 
 ## S3 アーカイブと長期保持
 
-TTL の期限切れ前にログデータを Parquet 形式で S3 にアーカイブすると、元のデータと比べてストレージコストを約 90% 削減できます。
-
 ### アーカイブパイプライン
 
+2 つの設計を分けてください。
+
+1. **Cold table storage:** ClickHouse が、構成済みの S3 disk/volume 上の自身の part と metadata を管理します。local metadata を保持し、選択した disk design で必要な場合は replica ごとに異なる object namespace を使用してください。live ClickHouse table が引き続き所有する object を、手動で lifecycle-delete しないでください。
+2. **独立した archive:** 選択した row を versioned かつ inventoried な Parquet object に export します。completeness、late-arrival handling、access control、restore/query test を個別に定義してください。
+
+cold storage では、`cold` volume を持つ server の storage policy を構成し、その policy を table 上で明示的に選択します。
+
+```sql
+-- Separate example: the server must already define the logs_tiered policy.
+CREATE TABLE logs.tiered_example
+(
+    timestamp DateTime,
+    message String
+)
+ENGINE = MergeTree
+ORDER BY timestamp
+TTL timestamp + INTERVAL 7 DAY TO VOLUME 'cold',
+    timestamp + INTERVAL 90 DAY DELETE
+SETTINGS storage_policy = 'logs_tiered';
 ```
-ClickHouse (Hot)  ──Before TTL──▶  S3 Parquet + ZSTD  ──▶  Query directly via S3 engine
-    90-day retention                  Long-term (unlimited)     No separate table definition needed
-```
+
+この例を作成する前に、`logs_tiered` が存在している必要があります。TTL work は asynchronous であり、正確な row ごとの deletion deadline ではありません。TTL clause で S3 permission や storage policy を作成することはできません。このレビューでは、S3 deployment ではなく policy の local-disk analogue を実行しました。
+
+server workload の AWS identity と bucket/prefix-scoped permission、private bucket control、encryption、適用される KMS permission を使用してください。単に `use_environment_credentials` を設定しても、ServiceAccount identity association が作成されるわけでも、使用する ClickHouse build が credential provider をサポートすることを証明するわけでもありません。
 
 ### S3 への直接アーカイブ
 
+以下の**過去の 2025 年 1 月の範囲**は syntax を示すものであり、benchmark でも、それらの record が 90 日 TTL 下に現在も存在するという主張でもありません。bucket、range、`RUN_ID` を、所有する archive job の値に置き換えてください。
+
 ```sql
--- Archive to S3 in Parquet format
+-- Historical January 2025 example; replace range and the unique owned export prefix.
 INSERT INTO FUNCTION s3(
-    'https://s3.ap-northeast-2.amazonaws.com/my-log-archive/logs/{_partition_id}/data.parquet',
-    'Parquet',
-    'timestamp DateTime64(3), level String, message String, namespace String, service String, raw_json String'
+    'https://EXAMPLE-ARCHIVE.s3.ap-northeast-2.amazonaws.com/logs/export-RUN_ID/{_partition_id}.parquet',
+    'Parquet'
 )
-SETTINGS s3_truncate_on_insert=0
-SELECT timestamp, level, message, namespace, service, raw_json
-FROM logs.application_logs
-WHERE date >= '2025-01-01' AND date < '2025-02-01';
+PARTITION BY toYYYYMMDD(timestamp)
+SELECT timestamp, level, namespace, service, pod_name, container_name,
+       node_name, message, trace_id, raw_json
+FROM logs.application_logs_distributed
+WHERE timestamp >= toDateTime64('2025-01-01 00:00:00', 3, 'UTC')
+  AND timestamp < toDateTime64('2025-02-01 00:00:00', 3, 'UTC')
+SETTINGS s3_truncate_on_insert = 0,
+         s3_create_new_file_on_insert = 0,
+         output_format_parquet_compression_method = 'zstd';
 ```
 
-### ウォーターマークベースの進捗追跡
+`PARTITION BY` は `{_partition_id}` の置換を提供します。Distributed source は意図した shard を対象にします。1 つの local replica だけを export しても、sharded cluster 全体を対象にすることはできません。実行ごとに新しい予約済み prefix を使用し、制御されていない共有 filename は決して使用しないでください。setting は overwrite/automatic extra file を拒否しますが、distributed lock を実装したり partial export を atomic にしたりするものではありません。
 
-大規模なアーカイブでは、ウォーターマークテーブルで進捗を追跡します。
+意図した Distributed topology を通じて、shard ごとに 1 つの authoritative copy を選択してください。すべての replica を union して二重カウントしないでください。成功を宣言したり source retention を変更したりする前に、export された row count、timestamp bound、schema、代表的な aggregate、読み取り可能な object を検証してください。
 
-```sql
--- Watermark table
-CREATE TABLE logs.archive_watermark
-(
-    partition_id String,
-    status Enum8('pending'=0, 'processing'=1, 'completed'=2, 'failed'=3),
-    started_at DateTime DEFAULT now(),
-    completed_at Nullable(DateTime),
-    row_count UInt64 DEFAULT 0,
-    error_message String DEFAULT ''
-)
-ENGINE = MergeTree()
-ORDER BY (partition_id);
-```
+### Watermark ベースの進捗追跡
 
-**アーカイブ遅延戦略:**
+watermark は progress record であり、completeness の証明ではありません。単純な MergeTree table は unique job key や compare-and-swap lock を強制しません。同時 job には、single owner または外部の transactional lease/state store を使用してください。
 
-* Merge の完了を待機: 2 日（Part のマージが安定するまで）
-* 再処理バッファ: 1 日（データ修正または再取り込みの可能性に備える）
-* **合計遅延: 3 日** — パーティション作成から 3 日経過後にのみデータをアーカイブする
+job ID、source cluster/table/schema version、排他的な time range、shard coverage、output prefix/object manifest、validation result を記録してください。すべての期待する output が確認されてから completion をマークします。明示的な ownership policy の下で partial export を retry し、読み取り時には重複する range の重複を除去してください。
+
+actual data に基づいて late-arrival delay を選択してください。固定の「3 日後に merge する」という仮定では、古い partition への write が閉じることも、すべての遅延 event が到着することも保証されません。correction/replay を明示的に処理し、export が失敗した後は直前に成功した watermark を保持してください。
 
 ### アーカイブ済みデータを直接クエリする
 
-個別のテーブルを作成せずに、S3 内のアーカイブ済み Parquet ファイルを直接クエリできます。
-
 ```sql
--- Query S3 archive directly (no table creation needed)
-SELECT
-    toStartOfHour(timestamp) AS hour,
-    level,
-    count() AS log_count
+SELECT namespace, service, count() AS log_events
 FROM s3(
-    'https://s3.ap-northeast-2.amazonaws.com/my-log-archive/logs/*/data.parquet',
+    'https://EXAMPLE-ARCHIVE.s3.ap-northeast-2.amazonaws.com/logs/export-RUN_ID/*.parquet',
     'Parquet'
 )
-WHERE timestamp >= '2025-01-15' AND timestamp < '2025-01-16'
-GROUP BY hour, level
-ORDER BY hour;
+WHERE timestamp >= toDateTime64('2025-01-01 00:00:00', 3, 'UTC')
+  AND timestamp < toDateTime64('2025-02-01 00:00:00', 3, 'UTC')
+GROUP BY namespace, service;
 ```
 
-> **コストへの影響**: 生ログ 1TB → S3 Parquet + ZSTD 圧縮 ≈ 100GB（90% 削減）。S3 Standard の料金では、長期保持のコストは月額 \~$2.3/TB です。
+完了し、検証済みの export prefix だけを query してください。restore が必要な archive class は、通常の S3 read の前に restore する必要があります。選択した Region、保存 byte、storage class、request/retrieval charge、replication、retention を使用してコストを見積もってください。普遍的な「90% compression」や「raw TB-month あたり $2.3」という数値は、これらの仮定を隠してしまいます。
 
-***
+## 参照資料と検証範囲
+
+- [ClickHouse LTS リリース](https://github.com/ClickHouse/ClickHouse/releases/tag/v26.3.33.24-lts)
+- [Altinity Operator リリース](https://github.com/Altinity/clickhouse-operator/releases/tag/release-0.27.3)
+- [Buffer engine と制限事項](https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/engines/table-engines/special/buffer.md)
+- [Kafka engine](https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/engines/table-engines/integrations/kafka.md)
+- [Sampling](https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/sql-reference/statements/select/sample.md)
+- [S3 table function](https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/sql-reference/table-functions/s3.md)
+- [Vector ClickHouse sink](https://vector.dev/docs/reference/configuration/sinks/clickhouse/)
+- [Vector Kubernetes source](https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/)
+- [Vector secret backend](https://vector.dev/docs/reference/configuration/secrets/)
+- [Grafana ClickHouse configuration](https://github.com/grafana/clickhouse-datasource/blob/v4.21.2/docs/sources/configure.md)
+- [Grafana ClickHouse alerting](https://github.com/grafana/clickhouse-datasource/blob/v4.21.2/docs/sources/alerting.md)
+- [HyperDX source](https://github.com/hyperdxio/hyperdx)
+
+ネイティブのローカルチェックは、SQL parsing、synthetic schema/query behavior、Vector transform、Operator chart rendering、schema/configuration contract を対象にします。これらは cluster compatibility、HA/failover、実際の Kafka/S3 ingestion、IAM、TLS、本番 capacity を確立するものではありません。この設計を使用する前に、デプロイ済み環境に対してそれらを検証してください。
 
 ## クイズ
 
-[ClickHouse クイズ](../../quizzes/observability/logging/04-clickhouse-quiz.md)で理解度を確認しましょう。
+[ClickHouse クイズ](../../quizzes/observability/logging/04-clickhouse-quiz.md)で理解度を確認してください。
