@@ -3,8 +3,9 @@
     "path": "ko/ai-ml/mlflow/README.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "266c1dc0037bb8c65de4478d76ed5402269f9fc6b0afce42ab836d375be8e91d",
-    "summary": "Full read +3.16.0primarysource/nativeSQLite/APIchecks; defaults/localandremote/directartifact/UIpaths/LoggedModel/tracinghistory/privacy corrected; 6MDcompiles/4figures/12responsive cases."
+    "reviewedSha256": "016f87e6b052d45fddd4b0caa2a41ab06e04d8fa19d7a46e7ba401b5dc628dca",
+    "summary": "Full read +3.16.0primarysource/nativeSQLite/APIchecks; defaults/localandremote/directartifact/UIpaths/LoggedModel/tracinghistory/privacy corrected; 6MDcompiles/4figures/12responsive cases.",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/ai-ml/mlflow/01-tracking.md",

@@ -54,7 +54,8 @@
       "Javaencoderactualclass/MDCwhitelist/JSONnewlinevalidated;agentpropagationprereqexplicit.",
       "TwoexistingKOdiagramsnowreflecttruecollectionpathsandhypothesisverification;compactlayoutandPNGrefreshcomplete."
     ],
-    "reviewedSha256": "d9cef4f76b1268f06ebbbbdd9209881044aaea32e4e83d6122f7a1df69f2258c"
+    "reviewedSha256": "3bf9cd58677d3252f77145c833f7361c8ab2b7012e498ff93d02277aa2b3921c",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ops/08-observability-analysis-quiz.md",
@@ -168,7 +169,8 @@
       "Javaencoderactualclass/MDCwhitelist/JSONnewlinevalidated;agentpropagationprereqexplicit.",
       "TwoexistingKOdiagramsnowreflecttruecollectionpathsandhypothesisverification;compactlayoutandPNGrefreshcomplete."
     ],
-    "reviewedSha256": "a24c422d3e81ac210ec34712ba83e80fe3fbf93d527355f057bc2a5629f10bc3"
+    "reviewedSha256": "ed710a0bc2ca332faf1c7532e1a4a01d7c93b1f2c5d1e3fbbcfca2449e7d80e8",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/08-observability-analysis-quiz.md",

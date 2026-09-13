@@ -18,7 +18,8 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed state backends/ForSt/keyedstate andsharedSSTretention;completeIRSA/S3plugin/schemafixtures withSDKv1EOSlimit;demo2sapplicationoverride;freshsnapshotCRretention;compiledKafka2.2andIceberg2.1realAPIhelpers;SQLtime-attributepositive/negativeplans;transactionprefix/timeout/pooling/non-globalatomicity;lateevents;30questions2figures.",
-    "reviewedSha256": "6b11f1263c796f4ae3f899b3f3ea9a0a1fb749d8bb7e2050f0a27045bd68ddd1"
+    "reviewedSha256": "75de54b986f0b72ea28068dc42d9c17d5eafccf27de1d77206a73756e81d0798",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",

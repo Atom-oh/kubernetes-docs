@@ -45,7 +45,8 @@
       "docs/reviews/2026-09-11/ops-troubleshooting-validation.json",
       "docs/reviews/2026-09-11/ops-troubleshooting-diagrams-validation.json"
     ],
-    "reviewedSha256": "09d18eeec1b36b78c1d2896d95e9d9f74c91f9a344004f6a9ee35a0d37b97b9a"
+    "reviewedSha256": "12d8f8ea40f1c1d6aaf3275a04ac36c5b647906c0c61e75c0ff06865e5f41add",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ops/16-troubleshooting-playbook-quiz.md",
@@ -141,7 +142,8 @@
       "docs/reviews/2026-09-11/ops-troubleshooting-validation.json",
       "docs/reviews/2026-09-11/ops-troubleshooting-diagrams-validation.json"
     ],
-    "reviewedSha256": "ae6314a1ed97a48cddb44de0d196656a802ac961c6239b6ad1e1995d0fed80b2"
+    "reviewedSha256": "afe2a019b7168c1bfc9642cbe5d8492e364341e0fe99ec305a43d345786eb905",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/16-troubleshooting-playbook-quiz.md",

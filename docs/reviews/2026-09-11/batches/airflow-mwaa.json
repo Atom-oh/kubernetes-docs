@@ -18,7 +18,8 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed provisioned MWAA3.3.1/Python3.12: actual availability dates and shared responsibility/VPC; startup scripts; version constraints; access entries plus namespace RoleBinding; complete KPO smoke DAG and kubeconfig credential handling; removed unsupported savings/lag/PyPI-only claims; 24quiz answers and 2figures corrected.",
-    "reviewedSha256": "a8a8482c7744e2f6f4cc1960d162f1f5f506ea64f121ee4491cb3f530e72fd41"
+    "reviewedSha256": "fd6d8662f1365b3d5522d3971f54ed1130a15c5c28745585919f2241b893e6ae",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",

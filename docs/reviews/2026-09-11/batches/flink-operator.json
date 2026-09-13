@@ -18,7 +18,8 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed Operator1.15/Flink2.2.1: cert-manager requirement and scoped chart/jobRBAC;digest-pinned image;bundled stateless example;Runningcondition/stalegeneration limits;stateful/S3prerequisites;fallback/inplacescaling;currentautoscalerkeys/edge ratios/backlogtarget/memorypressure/alignment;40quizanswers/2figures.",
-    "reviewedSha256": "8909c5a29c2963dc90d06fc6fe0f448560c783ad470632756e4641c3e6527e36"
+    "reviewedSha256": "a3606f4c83119c049b1b768d720a7805f01ef74117166e1d431a72d620fb7448",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",

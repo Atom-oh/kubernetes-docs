@@ -141,7 +141,7 @@
       "PromQLcountReadyfalse/Pendingcounts0gaugevalues;podrestartsnotreschedules;AutoModecontrollercountersnotassumedincluster;before30moffset1hactual[t-90,t-60]not[t-60,t-30];histogramsumleandscopezero traffic/emptyerror/cohorts;72hnotfullweek;partialdashboardJSON/YAMLnotcompleteimport.",
       "QuizzesVeleroexcludednamespaceclaimverify,skiponeminorwordingambiguousshouldskipzero/upnextone,Nodeversionmax2outdated,DaemonSeteligibleNodes/notallnodes/drainignoredoesnotdeleteorwaitReadyrecreate,PBDisnotuptimeguarantee."
     ],
-    "reviewedSha256": "93f7b94180b25d80220b15e8e1a4724014f6b99459d75d7ed9b2c71433a351f3",
+    "reviewedSha256": "e6f967664969eba599189831c555b637e4c94ed96b647749ca4259fae8d2457d",
     "findings": [
       "ReplacedstaleN-3/fourreleasepolicy,2025matrix/featuretimelines,incorrectdeprecationpolicyandextendedfee;officialupstream3minor,EKS14+12months,extended$.60TOTAL.",
       "SeparatedpureAutoModeDNSsystemserviceandservice-managedcapabilitiesfromstandard/mixednodes;removedEC2NodeClassAMIcontrolandmandatoryaws-node/kube-proxy/CoreDNSDeployment checks.",
@@ -156,7 +156,8 @@
       "ArgoAppSetGoTemplate/manualsync/labels/Projectprereqs/native2renders+missingkey;preserveResourcesOnDeletionpreventsselectorchangecascadebutownershiphandoffrequired;app rollback historyIDnotSHA.",
       "BlueGreenstateful/dualwriter/consumer/DNSrisks,sharedNLBtargetregistrationandAutoTGBdeletionownership;noimmediatedestroy/forceddrainautomation/zero-downtimeguarantees.",
       "PromQLgaugevaluesnotcounts,Readyfalse+unknown,Pendingzeros,missingerrors/zerotraffic/crossclusterP99;[30m]offset1his90–60minago,72hnotweeklycoverage."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/11-upgrade-operations-quiz.md",

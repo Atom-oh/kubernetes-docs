@@ -50,7 +50,7 @@
       "ops-tekton-diagrams-validation.json",
       "archmap-mobile-validation.json"
     ],
-    "reviewedSha256": "09a5736d75274b8c434bb0705e0a81b50299fad54aa32d0a44064c337ef3c356",
+    "reviewedSha256": "044c10429fe64a6c4dc19c74d8c91366f38832a736d2e6c0c8dc296ebf87e886",
     "findings": [
       "Replaced stale releases and nonexistent Helm repository with pinned official1.16/0.37/0.29/0.72 manifests; corrected Dashboard readonly/full and current feature flags.",
       "Corrected definition-vs-execution, typed Results, namespace-local references and PVC/trust-boundary guidance.",
@@ -62,7 +62,8 @@
       "Replaced destructive all-cluster cleanup snippets with scope/terminal/completion/retention/archive-aware review; documented actualPVCautocleanupmodes.",
       "Updated metric names/statuses/port, weighted duration calculation, noncancelled failure ratio and absence alerts; removed false no-webhook-event outage claims.",
       "Updated both quizzes and12diagrams; fixed mobile toolbar clipping insharedproductionbuildnormalizer."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ops/14-tekton-pipelines-quiz.md",
@@ -180,7 +181,7 @@
       "ops-tekton-diagrams-validation.json",
       "archmap-mobile-validation.json"
     ],
-    "reviewedSha256": "529bd6de40be64d4794955fad210f50823a3bffe26fddb93bb6a75d4402be1ee",
+    "reviewedSha256": "1cc594456fc179424837001035a01b7866e53ae343977004aede00248bc88970",
     "findings": [
       "Replaced stale releases and nonexistent Helm repository with pinned official1.16/0.37/0.29/0.72 manifests; corrected Dashboard readonly/full and current feature flags.",
       "Corrected definition-vs-execution, typed Results, namespace-local references and PVC/trust-boundary guidance.",
@@ -192,7 +193,8 @@
       "Replaced destructive all-cluster cleanup snippets with scope/terminal/completion/retention/archive-aware review; documented actualPVCautocleanupmodes.",
       "Updated metric names/statuses/port, weighted duration calculation, noncancelled failure ratio and absence alerts; removed false no-webhook-event outage claims.",
       "Updated both quizzes and12diagrams; fixed mobile toolbar clipping insharedproductionbuildnormalizer."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/14-tekton-pipelines-quiz.md",

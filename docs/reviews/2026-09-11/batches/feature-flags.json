@@ -35,7 +35,8 @@
       "23figures9/9composition+4viewportchecks;allvisuallyinspected,finalchangedfiguresreinspected;23PNGsregeneratedanddecoded.",
       "Full-sitefinalbuildandsource-to-generatedlocaleupdatesstillpendingglobal_audit."
     ],
-    "reviewedSha256": "dacf16bf409c0b32d9f6b99c9bec61b3910e4787d2ad07211a52c80b6f816231"
+    "reviewedSha256": "7c89614b83d05327cf85c15fe58f153bf5a729ec9f364e62baf059901797d7a5",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/gitops/05-feature-flags-quiz.md",
@@ -111,7 +112,8 @@
       "23figures9/9composition+4viewportchecks;allvisuallyinspected,finalchangedfiguresreinspected;23PNGsregeneratedanddecoded.",
       "Full-sitefinalbuildandsource-to-generatedlocaleupdatesstillpendingglobal_audit."
     ],
-    "reviewedSha256": "5cf7966e57b02456552df44fd3accd9735ce3e1f947205f22af17d7284943cfe"
+    "reviewedSha256": "694c19180f691f6630c9f739d85029e44b9c5f4c87185f06daa892fd3575e3e7",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/gitops/05-feature-flags-quiz.md",

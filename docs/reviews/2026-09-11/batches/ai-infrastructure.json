@@ -3,17 +3,19 @@
     "path": "ko/ai-ml/06-ai-infrastructure.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "44938780ddea89080385667f35f64e70257b4a2e2e3b4d11f444d9d4914373b4",
+    "reviewedSha256": "60e398123f4f0e0802dd2e4e3a63bca2efc7715279b9efec409e63cef66c02f0",
     "summary": "Allprose/58uniqueblocksreviewed;updatedJARK/DRA/OAuth/MCP/storage/EFA/PromQL;nativeauth3cases/Argo6bodies/3promqlassertions/2schemas/3charts/6figures18responsivepassed.",
-    "validationReport": "docs/reviews/2026-09-11/ai-infrastructure-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/ai-infrastructure-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/ai-ml/06-ai-infrastructure.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "3b0a3283b947c59c7474674a1e93c4cca7228f1b18c0d8297d1d9cdc6503c9b5",
+    "reviewedSha256": "571e8fa6bcc77877e92cc4ddc1765d37b81ab1d9bc7488d8eb0b565c3afcc699",
     "summary": "Allprose/58uniqueblocksreviewed;updatedJARK/DRA/OAuth/MCP/storage/EFA/PromQL;nativeauth3cases/Argo6bodies/3promqlassertions/2schemas/3charts/6figures18responsivepassed.",
-    "validationReport": "docs/reviews/2026-09-11/ai-infrastructure-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/ai-infrastructure-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ai-ml/06-ai-infrastructure-quiz.md",
