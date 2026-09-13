@@ -1,38 +1,38 @@
 # コンテナイメージセキュリティ
 
 > **最終更新**: September 13, 2026
-> **検証ベースライン**: Trivy 0.74.0、Trivy Operator 0.34.0/chart 0.36.0、Cosign 3.1.3、Kyverno 1.19.1、Connaisseur 3.12.0/chart 2.12.0。これらは CLI/設定のベースラインであり、すべての Kubernetes バージョンにわたるデプロイテストを主張するものではありません。
+> **検証基準**: Trivy 0.74.0、Trivy Operator 0.34.0/chart 0.36.0、Cosign 3.1.3、Kyverno 1.19.1、Connaisseur 3.12.0/chart 2.12.0。CLI/設定の基準で、全Kubernetes版にまたがるデプロイテストの主張ではありません。
 
-イメージセキュリティは、**ビルド、スキャン、デプロイされた成果物が同一であること**を確認することから始まります。スキャンは既知の脆弱性と設定上の問題を特定し、署名は署名者を digest に結び付けます。いずれもアプリケーションの安全性を保証するものではありません。
+イメージセキュリティは**ビルド、スキャン、デプロイした成果物が同一である**ことの確認から始まります。スキャンは既知脆弱性/設定問題を見つけ、署名は署名者とdigestを結び付けます。どちらもアプリの安全性は保証しません。
 
 ## 目次
 
-1. [イメージスキャンの概要](#image-scanning-overview)
+1. [イメージスキャン概要](#image-scanning-overview)
 2. [Trivy](#trivy)
-3. [Amazon ECR イメージスキャン](#amazon-ecr-image-scanning)
-4. [Cosign/Sigstore によるイメージ署名](#image-signing-with-cosignsigstore)
-5. [Admission Control におけるイメージ検証](#image-verification-in-admission-control)
+3. [Amazon ECRイメージスキャン](#amazon-ecr-image-scanning)
+4. [Cosign/Sigstoreでの署名](#image-signing-with-cosignsigstore)
+5. [Admission Controlでの検証](#image-verification-in-admission-control)
 6. [サプライチェーンセキュリティ](#supply-chain-security)
-7. [ベースイメージの選択](#base-image-selection)
-8. [イメージレジストリのベストプラクティス](#image-registry-best-practices)
-9. [CI/CD パイプライン統合](#cicd-pipeline-integration)
+7. [ベースイメージ選択](#base-image-selection)
+8. [イメージregistryのベストプラクティス](#image-registry-best-practices)
+9. [CI/CDパイプライン統合](#cicd-pipeline-integration)
 
 <span id="shift-left-security"></span>
 <span id="scan-targets"></span>
 
-## イメージスキャンの概要
+## イメージスキャン概要 {#image-scanning-overview}
 
-Shift-left は IDE、PR、ビルドでチェックを導入します。新しい CVE はリリース後に出現するため、レジストリの再スキャンとランタイム検出は引き続き別個の要件です。
+シフトレフトはIDE、PR、buildへ確認を導入します。release後にも新CVEが現れるためregistry再スキャンとruntime検出は別要件として残ります。
 
-| 対象 | チェック | ツール例 |
+| 対象 | 確認 | ツール例 |
 |---|---|---|
-| OS/言語パッケージ | 識別、データベースの鮮度、修正済みバージョン、VEX の判断 | Trivy、Grype |
-| IaC/Dockerfile | 非 root 実行、権限、設定 | Trivy misconfig、Checkov |
-| シークレット | イメージレイヤーまたはソース内の認証情報 | Trivy secret、TruffleHog |
-| ライセンス/SBOM | コンポーネントおよびライセンス検出の網羅性 | Syft、Trivy |
-| ランタイムの動作 | 実行中の syscall、プロセス、ネットワーク | Falco などの別ツール |
+| OS/言語package | 識別、DB経過時間、修正版、VEX判断 | Trivy、Grype |
+| IaC/Dockerfile | 非root実行、権限、設定 | Trivy misconfig、Checkov |
+| Secret | image layerやsource内認証情報 | Trivy secret、TruffleHog |
+| License/SBOM | component/license検出範囲 | Syft、Trivy |
+| Runtime動作 | 稼働syscall、process、network | Falcoなど別ツール |
 
-フローは `source checks → build once → scan that artifact → push → sign/verify digest → admission checks → rescan` です。組織は重大度ゲートを定義し、例外には所有者、根拠、有効期限を付与します。
+流れは`source checks → build once → scan that artifact → push → sign/verify digest → admission checks → rescan`です。組織が重大度の判定条件を定め、例外に所有者、理由、期限を付けます。
 
 <span id="trivy-installation"></span>
 <span id="image-scanning"></span>
@@ -40,11 +40,11 @@ Shift-left は IDE、PR、ビルドでチェックを導入します。新しい
 <span id="trivy-configuration-file"></span>
 <span id="trivy-operator-kubernetes-integration"></span>
 
-## Trivy
+## Trivy {#trivy}
 
 ### インストールとスキャン
 
-オペレーティングシステム/CPU アーキテクチャ向けの公式リリースパッケージと、その checksum を検証してください。Linux ARM64 に amd64 バイナリをインストールしたり、廃止された apt-key 手順を使用したりしないでください。自動化では CLI/action のバージョンを固定してください。
+OS/CPU architectureに合う公式packageとchecksumを確認します。Linux ARM64にamd64を入れたり廃止apt-key手順を使ったりしないでください。自動化ではCLI/action版を固定します。
 
 ```bash
 trivy --version
@@ -59,7 +59,7 @@ trivy config ./k8s/
 trivy config ./charts/my-app/ --helm-values ./charts/my-app/values.yaml
 ```
 
-`IMAGE_REF` は実際の digest を必要とする意図的なプレースホルダーです。`--scanners config` ではなく `misconfig` を使用してください。`--ignore-unfixed` は修正のない脆弱性を隠すため、デフォルトゲートで無差別に有効にしないでください。レジストリ、脆弱性/Java データベース、チェックバンドルのネットワーク/キャッシュ要件を確認してください。`trivy config` には `--offline-scan` オプションはありません。
+`IMAGE_REF`は実digestが必要な意図的placeholderです。`--scanners config`でなく`misconfig`を使います。`--ignore-unfixed`は修正なし脆弱性を隠すのでdefault gateで無差別に使いません。registry、脆弱性/Java DB、check bundleのnetwork/cache要件を確認します。`trivy config`に`--offline-scan`はありません。
 
 ### 設定と例外
 
@@ -81,7 +81,7 @@ vulnerability:
   ignore-unfixed: false
 ```
 
-これはイメージ/ファイルシステムスキャンのベースラインです。サポートされない vulnerability.type やトップレベルの ignore リストを追加しないでください。シークレットと脆弱性の例外を区別し、.trivyignore/サポート対象の ignore-policy 形式で例外を管理してください。例の .trivyignore にはデフォルト除外はありません。
+image/filesystemスキャンの基準です。未対応vulnerability.typeやtop-level ignore一覧を加えません。.trivyignore/対応ignore-policy形式でsecretと脆弱性の例外を区別して管理します。例の.trivyignoreにdefault除外はありません。
 
 <span id="trivy-overview"></span>
 
@@ -94,24 +94,24 @@ helm upgrade --install trivy-operator aqua/trivy-operator   --version 0.36.0 --n
 kubectl get vulnerabilityreports -A
 ```
 
-Chart 0.36.0 は application 0.34.0 をデプロイします。[values ファイル](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml)では ignoreUnfixed:false を明示的に設定しています。レポートは Operator が生成した結果です。スキャンの証拠として、捏造した CVE/package-version manifest を適用しないでください。実際のレポートスキーマ、監視対象の namespace、レジストリ認証情報、scan-Job 権限、リソースを確認してください。この監査では Chart のレンダリングのみを実行しました。
+chart 0.36.0はapp 0.34.0を導入します。[values](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml)はignoreUnfixed:falseを明示します。reportはoperator生成結果です。架空CVE/package版manifestをscan証拠として適用しないでください。実report schema、監視namespace、registry認証情報、scan-Job権限、resourceを確認します。監査はchart renderだけです。
 
 <span id="basic-scanning-vs-enhanced-scanning"></span>
 <span id="enabling-enhanced-scanning"></span>
 <span id="retrieving-scan-results"></span>
 <span id="notifications-via-eventbridge"></span>
 
-## Amazon ECR イメージスキャン
+## Amazon ECRイメージスキャン {#amazon-ecr-image-scanning}
 
-| プロパティ | Basic | Enhanced |
+| 特性 | Basic | Enhanced |
 |---|---|---|
-| 現在のエンジン | AWS ネイティブスキャナー | Amazon Inspector |
-| 対象範囲 | OS パッケージの脆弱性 | OS およびサポート対象の言語パッケージ |
-| 頻度 | 手動または push 時スキャン | push 時スキャンまたは継続的 |
+| 現エンジン | AWSネイティブscanner | Amazon Inspector |
+| 範囲 | OS package脆弱性 | OSと対応言語package |
+| 頻度 | 手動またはscan-on-push | scan-on-pushまたはcontinuous |
 | 結果 | imageScanFindings.findings | imageScanFindings.enhancedFindings |
-| イベント | ECR Basic スキャン完了 | Inspector2 スキャン/検出イベント |
+| イベント | ECR basic-scan完了 | Inspector2 scan/finding |
 
-古い Clair の説明と現在の Basic エンジンを区別してください。スキャンモードを切り替えると、既存の結果の可視性が変わることがあります。Enhanced の対象範囲はリポジトリフィルター、再スキャン期間、サポート対象イメージの条件に依存します。すべてのイメージが永久にスキャンされるわけではありません。アーカイブ済みイメージは、スキャン前に復元する必要があります。
+旧Clair説明と現Basicを区別します。mode切り替えで既存結果の可視性が変わり得ます。Enhanced範囲はrepository filter、再scan期間、対応image基準に依存し、全imageを永久scanしません。アーカイブimageは復元後にscanします。
 
 ```bash
 aws ecr put-registry-scanning-configuration --scan-type ENHANCED --rules '[
@@ -122,13 +122,13 @@ aws ecr put-registry-scanning-configuration --scan-type ENHANCED --rules '[
 aws ecr describe-image-scan-findings --repository-name production/my-app   --image-id imageDigest=sha256:REPLACE_WITH_64_HEX_DIGEST   --query 'imageScanFindings.enhancedFindings[?severity==`CRITICAL`]'
 ```
 
-この設定コマンドはレジストリ設定を書き込みますが、この監査では実行していません。DescribeImages の古い Basic サマリーに依存せず、DescribeImageScanFindings を使用してください。ECR スキャンを有効にしても、脆弱なイメージの push、pull、デプロイが自動的にブロックされるわけではありません。
+設定コマンドはregistryを書き換え、監査では実行していません。DescribeImagesの旧Basic要約に頼らずDescribeImageScanFindingsを使います。ECR scan有効化は脆弱imageのpush/pull/deployを自動ブロックしません。
 
-### Inspector アラートと権限
+### Inspectorアラートと権限
 
-Enhanced の検出結果は、source aws.inspector2、detail-type Inspector2 Finding、detail.severity/status/resources[].type でフィルタリングしてください。これを Basic ECR Image Scan および finding-severity-counts と混在させないでください。数値がゼロのフィールドも存在します。exists:true は脆弱性数が正であることを意味しません。
+Enhanced findingはsource aws.inspector2、detail-type Inspector2 Finding、detail.severity/status/resources[].typeで絞ります。Basic ECR Image Scan/finding-severity-countsと混ぜません。数値0のfieldも存在するためexists:trueは正の脆弱性数を意味しません。
 
-[完全な CloudFormation の例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml)は、暗号化された SNS topic を EventBridge 実行ロールに接続します。これは、IAM 委任を許可するポリシーを持つ、同一アカウント/Region の既存の対称 customer-managed KMS key を必要とします。承認済み SNS コンシューマーの subscription は別途必要です。現在の EventBridge は SNS target の実行ロールをサポートしています。event-bus KMS の SourceArn/SourceAccount 条件を、暗号化された SNS への直接のサービスプリンシパル経路にコピーしないでください。この template は cfn-lint に合格しましたが、実際の配信、KMS 認可、再試行にはデプロイ環境でのテストが必要です。
+[完全CloudFormation例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml)は暗号化SNSとEventBridge実行roleを接続します。IAM委任を許すpolicyを持つ同account/Regionの既存対称customer-managed KMSが必要で、承認SNS購読は別です。現EventBridgeはSNS targetの実行roleをサポートします。event-bus KMSのSourceArn/SourceAccount条件を、service principalから暗号化SNSへの直接経路へコピーしません。templateはcfn-lint通過済みですが、実配信、KMS認可、retryは環境でのテストが必要です。
 
 <span id="cosign-overview"></span>
 <span id="cosign-installation"></span>
@@ -136,11 +136,13 @@ Enhanced の検出結果は、source aws.inspector2、detail-type Inspector2 Fin
 <span id="keyless-signing-oidc-based"></span>
 <span id="github-actions-integration"></span>
 
-## Cosign/Sigstore によるイメージ署名
+
+
+## Cosign/Sigstoreによるイメージ署名 {#image-signing-with-cosignsigstore}
 
 ### 署名順序と信頼
 
-通常のレジストリフローでは、イメージを push し、その digest を取得して、その digest に署名します。信頼できる key または厳密な OIDC issuer/identity、digest、および必要な透明性/timestamp の証拠を検証してください。署名だけでは、承認済みの署名者や脆弱性がないことを確立できません。
+通常registryフローはimageをpushしdigestを取得して署名します。信頼鍵または正確なOIDC issuer/identity、digest、必要な透明性/時刻証拠を検証します。署名だけでは承認署名者や脆弱性不在は成立しません。
 
 ```bash
 cosign version
@@ -149,22 +151,22 @@ cosign sign --key cosign.key "$IMAGE_REF"
 cosign verify --key cosign.pub "$IMAGE_REF"
 ```
 
-private key を commit しないでください。credential manager/KMS または同等の管理を通じて、そのライフサイクルを管理してください。keyless GitHub Actions は id-token:write と Actions OIDC 環境を使用します。GITHUB_TOKEN はレジストリ/API 認証情報であり、OIDC ID token 自体ではありません。
+秘密鍵をcommitしません。認証情報管理/KMSなどでlifecycleを管理します。Keyless GitHub Actionsはid-token:writeとActions OIDC環境を使います。GITHUB_TOKENはregistry/API認証情報で、OIDC ID token自身ではありません。
 
 ```bash
 cosign sign --yes "$IMAGE_REF"
 cosign verify   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'   "$IMAGE_REF"
 ```
 
-identity を承認済み workflow に置き換えてください。--certificate-identity-regexp は glob ではなく正規表現を受け取ります。`https://github.com/org/repo/*` のような寛容な式より、厳密な identity またはアンカー付き regexp を優先してください。Cosign 3 の bundle/OCI-referrer の下流 verifier との互換性を確認してください。
+identityを承認workflowへ置換します。--certificate-identity-regexpはglobでなく正規表現です。`https://github.com/org/repo/*`など寛容式より正確IDかアンカー付きregexを優先します。Cosign 3 bundle/OCI-referrerと下流verifierの互換性を確認します。
 
 <span id="kyverno-imageverify"></span>
 
-## Admission Control におけるイメージ検証
+## Admission Controlでのイメージ検証 {#image-verification-in-admission-control}
 
-Kyverno 1.19.1 は ClusterPolicy が非推奨であると警告します。新しい例では policies.kyverno.io/v1 の ValidatingPolicy および ImageValidatingPolicy を使用します。従来の verifyImages rule は、新しい policy kind の名前ではありません。
+Kyverno 1.19.1はClusterPolicy非推奨を警告します。新例はpolicies.kyverno.io/v1のValidatingPolicyとImageValidatingPolicyです。旧verifyImages ruleは新policy kind名ではありません。
 
-### レジストリと digest のポリシー
+### Registryとdigestのポリシー
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -196,9 +198,9 @@ spec:
       message: All container images must use the approved repository and a SHA-256 digest.
 ```
 
-これは通常のコンテナ、init コンテナ、ephemeral コンテナ、および pods/ephemeralcontainers の更新を対象にします。example-org を承認済みのリポジトリに置き換えてください。digest 形式はコンテンツアドレスを固定します。署名または脆弱性の検証を実行するものではありません。
+pods/ephemeralcontainers更新を含み、通常/init/ephemeral containerを対象にします。example-orgを承認repositoryへ置換します。digest形式は内容アドレスを固定し、署名/脆弱性を検証しません。
 
-### Workflow 署名ポリシー
+### Workflow署名ポリシー
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -249,15 +251,15 @@ spec:
       message: Image signature must match the approved workflow and transparency proof.
 ```
 
-matchImageReferences 外のイメージはイメージ検証でスキップされる可能性があるため、レジストリポリシーも適用してください。namespace の例外、PolicyException へのアクセス、webhook の可用性/timeouts、レジストリ認証情報、TLS trust を設計してから、実際の admission request をテストしてください。署名ポリシーは CRD schema に対してチェックされました。これは、実際のレジストリ/Fulcio/Rekor 検証の証拠ではありません。本番の例では透明性チェックを無効にしません。
+matchImageReferences外は検証をskipされ得るためregistry policyも適用します。namespace例外、PolicyException権限、Webhook可用性/timeout、registry認証情報、TLS信頼を設計し、実admissionをテストします。署名policyはCRD schema確認で、実registry/Fulcio/Rekor検証の証拠ではありません。本番例は透明性確認を無効にしません。
 
 <span id="connaisseur"></span>
 
-### Connaisseur の代替手段 — 従来の署名パス
+### Connaisseurという代替 — 旧署名経路
 
-**Connaisseur 3.12.0 はデフォルトの Cosign 3 bundle のコンシューマーではありません。**これは legacy signature tag および SimpleSigning payload を伴う cosign/v2 検証パスを使用します。別の互換性 producer を使用してください。[従来の署名スクリプト](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)は、透明性の upload/verification を維持しながら、Cosign 3.1.3 の `--new-bundle-format=false --registry-referrers-mode=legacy` を明示的に設定します。付属の signing config は、従来の verifier の log format 用に Rekor v1 を明示的に選択します。実際に承認された key と digest を指定してください。このパスは secure-build.yaml のデフォルト bundle format とは別です。その workflow のデフォルト出力を Connaisseur に直接渡さないでください。従来の flag は非推奨であるため、producer/verifier を協調して移行する計画を立ててください。CLI オプションと両方の source contract はチェック済みですが、レジストリ/署名統合は実行していません。
+**Connaisseur 3.12.0は既定Cosign 3 bundleを利用しません。** 旧署名tagとSimpleSigning payloadのcosign/v2検証を使います。別の互換producerを使用します。[旧方式署名スクリプト](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)はCosign 3.1.3で`--new-bundle-format=false --registry-referrers-mode=legacy`を明示し、透明性upload/検証を維持します。付属署名設定は旧verifierのlog形式にRekor v1を明示選択します。実承認鍵とdigestを渡します。secure-build.yamlの既定bundleとは別で、その出力を直接Connaisseurへ渡しません。legacy flagは非推奨なのでproducer/verifier協調移行を計画します。CLI optionと両source契約は確認しましたがregistry/署名統合は実行していません。
 
-Connaisseur 3.12.0/chart 2.12.0 も別の選択肢です。[values の例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)では、validator と policy は application 配下にあり、deny は明示的に定義された static validator です。含まれる public key は実際の trust key に置き換える必要がある合成テスト key です。
+Connaisseur 3.12.0/chart 2.12.0も選択肢です。[values例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)ではvalidators/policyはapplication下、denyは明示static validatorです。同梱公開鍵は合成test keyで、実信頼鍵へ置換が必要です。
 
 ```bash
 helm repo add connaisseur https://sse-secure-systems.github.io/connaisseur/charts
@@ -265,15 +267,15 @@ helm upgrade --install connaisseur connaisseur/connaisseur   --version 2.12.0 --
 kubectl label namespace production securesystemsengineering.connaisseur/webhook=validate
 ```
 
-この例は namespaced-validation の validate mode を使用し、その label を持つ namespace のみをチェックします。namespace label を変更できる identity はこの選択を迂回できるため、その権限を管理してください。Kyverno と Connaisseur は代替手段であり、両方をインストールする要件ではありません。Helm rendering は実際の署名 allow/deny テストの代わりにはなりません。
+例はnamespaced-validationのvalidateを使い、そのlabelがあるnamespaceだけ確認します。namespace label変更権限があるIDは選択を迂回できるため管理します。KyvernoとConnaisseurは代替で両方必須ではありません。Helm renderは実署名allow/denyテストを代替しません。
 
 <span id="sbom-software-bill-of-materials-generation"></span>
 <span id="sbom-based-vulnerability-scanning"></span>
 <span id="slsa-supply-chain-levels-for-software-artifacts"></span>
 
-## サプライチェーンセキュリティ
+## サプライチェーンセキュリティ {#supply-chain-security}
 
-### SBOM と attestation
+### SBOMとアテステーション
 
 ```bash
 syft "$IMAGE_REF" -o spdx-json=sbom.spdx.json
@@ -285,34 +287,34 @@ cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$IMAGE_REF"
 cosign verify-attestation --type spdxjson   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' "$IMAGE_REF"
 ```
 
-Syft/Trivy の生成コマンドは代替手段です。SBOM はツールが検出したものを棚卸しします。完全性と安全性は保証されません。cosign attach sbom は非推奨であり、プレーンな attachment は署名付き attestation とは異なります。predicate の内容、subject digest、署名者、検証時刻、ポリシーをまとめて検証してください。
+Syft/Trivy生成コマンドは選択肢です。SBOMは検出内容の一覧で、完全性/安全性は保証しません。cosign attach sbomは非推奨で、単純添付と署名attestationは異なります。predicate内容、subject digest、署名者、検証時刻、policyを一緒に検証します。
 
-### SLSA provenance
+### SLSA来歴情報
 
-provenance は、ビルド入力、builder、成果物間の関係を記録します。生成 action を呼び出しても、SLSA Build Level 3 を自動的に満たすわけではありません。関連する isolation、provenance 偽造耐性、source-policy の要件を別途評価してください。
+来歴はbuild入力、builder、成果物の関係を記録します。生成action実行だけでSLSA Build Level 3は満たされません。関連分離、来歴偽造耐性、source policy要件を別評価します。
 
-既存の slsa-github-generator reusable workflow では、サポート対象の toolchain と caller 要件を確認してください。以下の新しい workflow では現在の actions/attest を使用します。attest-build-provenance の version 4 は wrapper です。新しい実装は actions/attest に移行するよう案内されています。public repository と private repository で異なる GitHub-plan および Sigstore-trust-root を確認してください。
+既存slsa-github-generator再利用workflowでは対応toolchainとcaller要件を確認します。下の新workflowは現actions/attestを使います。attest-build-provenance v4はwrapperで、新実装はactions/attestが案内されています。public/private repositoryのGitHub planとSigstore trust rootの違いを確認します。
 
 <span id="image-type-comparison"></span>
 <span id="using-distroless-images"></span>
 <span id="using-chainguard-images"></span>
 <span id="alpine-security-hardening"></span>
 
-## ベースイメージの選択
+## ベースイメージ選択 {#base-image-selection}
 
-| イメージ | 特性 | 確認事項 |
+| イメージ | 特性 | 確認 |
 |---|---|---|
-| Distroless | 標準 runtime では shell/package manager を省略 | debug variant、library、アプリケーション依存関係は異なる |
-| Alpine | 小さな musl ベースのディストリビューション | glibc 互換性、保守期間、実際の digest |
-| Chainguard | 異なる最小 runtime と dev variant | runtime イメージに shell/pip が含まれると想定しない |
-| Ubuntu/Debian | より幅広いパッケージ/ツールの選択肢 | サイズだけでは脆弱性数は決まらない |
-| Scratch | 空のベースイメージ | コピーされた binary、CA file、アプリケーション依存関係にも脆弱性があり得る |
+| Distroless | 標準runtimeはshell/package managerなし | debug版、library、アプリ依存は異なる |
+| Alpine | 小さなmuslベース配布 | glibc互換性、保守寿命、実digest |
+| Chainguard | 最小runtimeとdev版が別 | runtimeにshell/pipがあると思わない |
+| Ubuntu/Debian | 広いpackage/tool選択 | サイズだけで脆弱性数は決まらない |
+| Scratch | 空のbase | コピーbinary、CAファイル、アプリ依存に脆弱性が残り得る |
 
-古い Go 1.22/Alpine 3.19 の例を、現在サポートされているベースラインと誤認しないでください。更新時には保守状況、OS EOL、CPU ABI、digest、スキャン結果を確認してください。Distroless は build stage から binary を受け取ります。Chainguard Python パターンに従い、dev stage で dependency/venv を準備し、それらを runtime にコピーしてください。このドキュメントでは Dockerfile のビルドや脆弱性数の比較を実行していません。
+旧Go 1.22/Alpine 3.19例を現在の対応基準と誤解しないでください。更新時は保守、OS EOL、CPU ABI、digest、scan結果を確認します。Distrolessにはbuild段階からbinaryを渡し、Chainguard Pythonはdevで依存/venvを準備してruntimeへコピーします。本文ではDockerfile buildや脆弱性数比較を実行していません。
 
 ### 最小ベースイメージのビルド例
 
-[完全なビルドコンテキスト](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/image-security/base-images)には、固定メッセージを出力する Go/Python プログラムと 3 つの Dockerfile が含まれます。パターンを比較する Dockerfile を選択してください。これらは web-server の例ではありません。base-index digest と amd64/arm64 の可用性は確認しましたが、コンテナのビルド/ランタイムは実行していません。
+[完全build context](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/image-security/base-images)は固定メッセージを出すGo/Pythonと3 Dockerfileです。1つ選んでパターンを比較します。web server例ではありません。base-index digestとamd64/arm64提供は確認し、container build/runtimeは実行していません。
 
 **Dockerfile.distroless**
 
@@ -353,32 +355,34 @@ USER 10001:10001
 ENTRYPOINT ["python3", "/app/app.py"]
 ```
 
-アプリケーションは Go 1.27.1 と Python 3.12 で直接実行され、3 つの Dockerfile はすべて HIGH/CRITICAL の設定チェックに合格しました。この fixture の Python requirements は空です。実際の dependency を追加するには、lock/hash、builder/runtime ABI チェック、脆弱性スキャンが必要です。Alpine apk リポジトリとベース digest の更新は別途管理してください。
+アプリはGo 1.27.1/Python 3.12で直接実行し、全3 DockerfileがHIGH/CRITICAL設定確認を通過しました。このfixtureのPython requirementsは空です。実依存追加にはlock/hash、builder/runtime ABI確認、脆弱性scanが必要です。Alpine apk repositoryとbase digest更新は別管理します。
 
 <span id="using-private-registries"></span>
 <span id="image-pull-policies"></span>
 <span id="immutable-tag-policy-kyverno"></span>
 
-## イメージレジストリのベストプラクティス
+## イメージregistryのベストプラクティス {#image-registry-best-practices}
 
-- Private イメージには承認済みの pull identity が必要です。ECR kubelet/node/Fargate 実行ロールはアプリケーションの Pod Identity とは異なります。
-- 外部レジストリでは、有効な kubernetes.io/dockerconfigjson Secret と ServiceAccount imagePullSecrets を使用できます。Base64 は暗号化ではありません。
-- imagePullPolicy:Always はレジストリ参照のチェックを制御するものであり、署名検証を行うものではありません。digest pinning、admission 検証、スキャンゲートを別途設定してください。
-- latest のみを禁止するパターンでは、タグの省略や init/ephemeral イメージを見逃す可能性があります。上記のレジストリ/digest ポリシーでスコープをテストしてください。
-- 意図的に public とされたイメージの anonymous pull は、必ずしも脆弱性ではありません。機密性、push 権限、provenance、rate limit、ライセンス要件を分けて扱ってください。
-- retention/garbage collection によってアクティブな digest や必要な署名/attestation referrer が削除されないようにし、復旧をテストしてください。
+- private imageは承認pull IDが必要。ECR kubelet/node/Fargate実行roleはアプリPod Identityと異なる。
+- 外部registryは有効なkubernetes.io/dockerconfigjson SecretとServiceAccount imagePullSecretsを使える。Base64は暗号化ではない。
+- imagePullPolicy:Alwaysはregistry参照確認で、署名検証ではない。digest固定、admission検証、scan gateを別設定。
+- latest禁止だけでは省略tagやinit/ephemeralを見逃し得る。上のregistry/digest policyで範囲をテスト。
+- 意図的public imageの匿名pullは本質的脆弱性ではない。機密性、push権限、来歴、rate limit、licenseを分ける。
+- 保持/GCで使用中digestや必要署名/attestation referrerを消さないようにし、復旧をテスト。
 
 <span id="complete-image-security-pipeline"></span>
 
-## CI/CD パイプライン統合
 
-アプリケーションリポジトリの .github/workflows/secure-build.yaml に配置する前に、[完全な workflow ファイル](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/secure-build.yaml)を確認してください。実際の Dockerfile と build context が前提条件です。想定される特性は次のとおりです。
 
-1. PR スキャンでは、レジストリ公開/OIDC 署名を行わない read-only Job を使用します。
-2. main-push release Job は一度だけビルドし、そのローカルイメージをスキャンします。
-3. 再ビルドせずに push し、RepoDigest を取得します。
-4. 署名、検証、SBOM attestation、provenance は同じ digest を使用します。
-5. Actions はレビュー済みの commit SHA に固定され、別の artifact-storage record は無効化されます。
+## CI/CDパイプライン統合 {#cicd-pipeline-integration}
+
+アプリrepositoryの.github/workflows/secure-build.yamlへ置く前に[完全workflow](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/secure-build.yaml)を確認します。実Dockerfileとcontextが前提です。意図する特性:
+
+1. PR scanはregistry公開/OIDC署名なしのread-only job。
+2. main-push release jobは1度だけbuildし、そのlocal imageをscan。
+3. 再buildせずpushしRepoDigestを取得。
+4. 署名、検証、SBOM attestation、来歴に同じdigestを使用。
+5. Actionはreview済みcommit SHA固定。別artifact-storage記録は無効。
 
 ```yaml
 name: Secure Image Build
@@ -503,33 +507,33 @@ jobs:
           create-storage-record: false
 ```
 
-GHCR package permissions、Actions OIDC、attestation-plan のサポート、ネットワークアクセスを設定してください。Workflow YAML/action input と shell 構文はチェックしましたが、GitHub-runner での build/push/sign/attest workflow は実行していません。SBOM/署名の失敗を無視したり、空の digest を後続に渡したりしないでください。SARIF upload を追加する場合は、fork PR の security-events 権限と、スキャン失敗後も結果を保持する方法を別途扱ってください。
+GHCR package権限、Actions OIDC、attestation plan対応、networkを設定します。YAML/action入力とshell構文は確認しましたがGitHub runnerのbuild/push/sign/attestは実行していません。SBOM/署名失敗を無視したり空digestを渡したりしません。SARIF追加時はfork PRのsecurity-events権限とscan失敗後の結果保持を別対応します。
 
-## 実施したチェックと制限
+## 実施した確認と限界
 
-- Trivy 0.74: 2 つの合成シークレットケースと、2 つの Dockerfile 非 root チェック。実際の CVE データベースまたはリモートイメージスキャンは未実施です。
-- Cosign 3.1.3: 有効/改ざん済みの合成ローカル key/blob の検証。private fixture で透明性を省略したことは、本番のレジストリ/OIDC 検証の証拠ではありません。
-- Kyverno 1.19.1: init/ephemeral コンテナを含む 6 つの CEL レジストリ/digest object ケースと、2 つの固定 CRD schema。実際の admission またはネットワーク署名検証は未実施です。
-- Trivy Operator/Connaisseur の Helm rendering、合成 ECR API-model/JMESPath fixture、CloudFormation lint、actionlint を実行しました。AWS リソース、通知、レジストリ push は実行していません。
+- Trivy 0.74: 合成secret 2ケースとDockerfile非root確認2件。実CVE DB/remote image scanなし。
+- Cosign 3.1.3: 合成local key/blobの正常/改変検証。private fixtureで透明性を省略しても本番registry/OIDC検証の証拠ではない。
+- Kyverno 1.19.1: init/ephemeralを含むCEL registry/digest 6ケースと固定CRD schema 2つ。実admission/network署名検証なし。
+- Trivy Operator/Connaisseur render、合成ECR API-model/JMESPath fixture、CloudFormation lint、actionlintを実行。AWS resource、通知、registry pushは実行していない。
 
 <span id="summary"></span>
 <span id="recommendations"></span>
 
 ## 参考資料
 
-- [Trivy リリース](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0)
-- [Trivy ドキュメント](https://aquasecurity.github.io/trivy/)
-- [Trivy Operator Chart](https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm)
-- [ECR スキャン](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html)
-- [Inspector イベントスキーマ](https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html)
-- [EventBridge target 認可](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
-- [SNS KMS 互換性](https://docs.aws.amazon.com/sns/latest/dg/sns-key-management.html)
+- [Trivyリリース](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0)
+- [Trivyドキュメント](https://aquasecurity.github.io/trivy/)
+- [Trivy Operatorチャート](https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm)
+- [ECRスキャン](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html)
+- [Inspectorイベントschema](https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html)
+- [EventBridge target認可](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
+- [SNS KMS互換性](https://docs.aws.amazon.com/sns/latest/dg/sns-key-management.html)
 - [Cosign 3.1.3](https://github.com/sigstore/cosign/releases/tag/v3.1.3)
-- [Sigstore 検証](https://docs.sigstore.dev/cosign/verifying/verify/)
-- [Kyverno CEL 移行](https://kyverno.io/docs/guides/migration-to-cel/)
+- [Sigstore検証](https://docs.sigstore.dev/cosign/verifying/verify/)
+- [Kyverno CEL移行](https://kyverno.io/docs/guides/migration-to-cel/)
 - [Kyverno ImageValidatingPolicy](https://kyverno.io/docs/policy-types/image-validating-policy/)
-- [Connaisseur の namespaced validation](https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md)
-- [SLSA 要件](https://slsa.dev/spec/v1.2/build-requirements)
+- [Connaisseur名前空間検証](https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md)
+- [SLSA要件](https://slsa.dev/spec/v1.2/build-requirements)
 - [GitHub attest action](https://github.com/actions/attest/tree/v4.2.2)
 - [Distroless](https://github.com/GoogleContainerTools/distroless)
 - [Chainguard Python](https://images.chainguard.dev/directory/image/python/overview)

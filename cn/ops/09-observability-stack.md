@@ -1,1299 +1,575 @@
-# Observability Stack 运维：Loki、Tempo、Prometheus 配置指南
+# 可观测性技术栈配置与运维
 
-> **支持版本**: Loki 3.x, Tempo 2.x, Prometheus 2.x, Grafana 10.x, Amazon Managed Prometheus
-> **最后更新**: February 23, 2026
+> **最后更新**：2026 年 9 月 11 日：Loki 3.7.7、Tempo 3.0.3、Alloy 1.19.2，
+> OpenTelemetry Collector Contrib 0.160.0、kube-prometheus-stack 90.1.1。
 
-< [上一篇：Observability 分析](./08-observability-analysis.md) | [目录](./README.md) | [下一篇：资源优化](./10-resource-optimization.md) >
+本章配置采集、存储、权限、保留策略和跨信号导航。
+使用上一章的[完整 Go/Python 插桩和 Java JSON 日志示例](./08-observability-analysis.md)。
+仅安装 Grafana 不会关联这三种信号。
 
----
+## 范围和前提条件
 
-## 目录
+| 信号 | 采集路径 | 存储和查询 |
+|---|---|---|
+| 日志 | 应用 JSON stdout → Alloy Kubernetes 日志 API 源 | Loki → Grafana |
+| 追踪 | 应用 OTLP → Collector → Tempo | Tempo → Grafana |
+| 指标 | Prometheus 抓取；可选远程写入 Tempo 生成的指标 | Prometheus；可选 AMP |
 
-- [Observability Stack 架构](#observability-stack-architecture)
-- [Loki 运维指南](#loki-operations-guide)
-- [Tempo 运维指南](#tempo-operations-guide)
-- [Prometheus/AMP 运维](#prometheusamazon-managed-prometheus-operations)
-- [Grafana 集成](#grafana-integration)
+示例使用 `observability` 命名空间。准备该命名空间、Prometheus Operator CRD 和可用的 `gp3` StorageClass。EKS Auto Mode 与普通 EBS CSI 驱动使用不同的 StorageClass 预置器；类名匹配不能证明兼容。S3 桶和 IRSA 角色是独立前提条件。替换账户、角色、桶和工作区占位符。按用途使用独立桶并阻止公有访问。将 Loki/Tempo 角色限制到所需桶列举和对象读取/写入/删除操作；使用 SSE-KMS 时包含所选 KMS 密钥权限。
 
----
+这些设置是配置起点。内部未经身份验证的 HTTP、Kafka 连接、资源大小和保留期不是通用生产默认值。应验证环境中的网络访问、TLS/身份验证、容量和恢复。`ClusterIP` 不提供身份验证。
 
-## Observability Stack 架构
-
-### 全栈概览
-
-生产级 observability stack 将 **metrics**、**logs** 和 **traces** 合并到一个统一平台中。LGTM stack（Loki、Grafana、Tempo、Mimir/Prometheus）通过高性价比存储和强大的关联功能提供这种能力。
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        Observability Data Sources                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Applications    │    Kubernetes    │    Infrastructure    │    AWS Services │
-│  (instrumented)  │    (pods/nodes)  │    (load balancers)  │    (EKS, RDS)   │
-└────────┬─────────┴────────┬─────────┴─────────┬────────────┴────────┬───────┘
-         │                  │                   │                     │
-         ▼                  ▼                   ▼                     ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Collection Layer                                   │
-├──────────────────┬──────────────────┬──────────────────┬────────────────────┤
-│  OTEL Collector  │  Promtail/Alloy  │  Prometheus      │  CloudWatch Agent  │
-│  (traces+metrics)│  (logs)          │  (metrics)       │  (AWS metrics)     │
-└────────┬─────────┴────────┬─────────┴────────┬─────────┴────────┬───────────┘
-         │                  │                  │                  │
-         ▼                  ▼                  ▼                  ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Storage Layer                                      │
-├──────────────────┬──────────────────┬───────────────────────────────────────┤
-│  Grafana Tempo   │  Grafana Loki    │  Amazon Managed Prometheus (AMP)      │
-│  (traces → S3)   │  (logs → S3)     │  (metrics → AWS managed storage)      │
-└────────┬─────────┴────────┬─────────┴────────┬──────────────────────────────┘
-         │                  │                  │
-         └──────────────────┼──────────────────┘
-                            ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Visualization Layer                                │
-│                              Grafana                                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │ Dashboards  │  │  Explore    │  │   Alerts    │  │   Correlations      │ │
-│  │ (metrics)   │  │  (logs)     │  │  (all)      │  │   (trace↔log↔metric)│ │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 组件角色
-
-| 组件 | 角色 | 数据类型 | 存储后端 |
-|-----------|------|-----------|-----------------|
-| **Prometheus/AMP** | Metrics 采集与存储 | 时间序列 metrics | AMP（托管）或本地 TSDB |
-| **Loki** | Log 聚合与查询 | Log streams | S3（chunks + index） |
-| **Tempo** | 分布式 trace 存储 | Trace spans | S3（trace blocks） |
-| **Grafana** | 统一可视化 | 所有数据类型 | PostgreSQL/MySQL（metadata） |
-| **OTEL Collector** | Telemetry 采集/路由 | Traces, metrics, logs | N/A（透传） |
-| **Promtail/Alloy** | Log 传送 | Logs | N/A（透传） |
-
-### 存储架构选择
-
-| 存储选项 | 使用场景 | 成本 | 性能 | 运维 |
-|----------------|----------|------|-------------|------------|
-| **S3（推荐）** | 生产 workloads | 低 | 高（配合缓存） | 极少 |
-| **EBS gp3** | 小型 clusters、测试 | 中 | 非常高 | 中等 |
-| **EFS** | 共享存储需求 | 高 | 中 | 低 |
-| **DynamoDB** | Loki index（legacy） | 可变 | 高 | 低 |
-
-**EKS 推荐架构**：
-- **Loki**：S3 用于 chunks 和 TSDB index
-- **Tempo**：S3 用于 trace blocks
-- **Prometheus**：Remote write 到 AMP（150 天保留期）
-- **Grafana**：Managed Amazon Grafana 或使用 RDS backend 的自托管 Grafana
-
----
-
-## Loki 运维指南
-
-### 部署模式
-
-Loki 根据规模需求支持多种部署模式：
-
-| 模式 | 组件 | 规模 | 使用场景 |
-|------|------------|-------|----------|
-| **Monolithic** | 单个 binary | < 100GB/day | 开发、小型 clusters |
-| **SimpleScalable** | Read/Write/Backend | 100GB-1TB/day | 大多数生产 workloads |
-| **Distributed** | 全部分离 | > 1TB/day | 大规模、多租户 |
-
-### Helm 安装：SimpleScalable 模式
+Chart 版本不同于应用版本。Loki 和 Tempo 示例使用当前 `grafana-community` 仓库。向旧 `grafana/tempo` 单体 chart 提供分布式 values，不会将其变为分布式部署。
 
 ```bash
-# Add Grafana Helm repository
+helm repo add grafana-community https://grafana-community.github.io/helm-charts
 helm repo add grafana https://grafana.github.io/helm-charts
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-
-# Create namespace
-kubectl create namespace loki
-
-# Install with custom values
-helm upgrade --install loki grafana/loki \
-  --namespace loki \
-  --version 6.6.0 \
-  --values loki-values.yaml
 ```
 
-**完整生产 values.yaml（SimpleScalable）**：
+## Loki：部署模式和 S3 存储
+
+Loki 为流标签建立索引，并将日志内容存储在块中。内容搜索仍需读取所选流的数据，因此标签选择、时间范围和块/索引缓存影响查询成本。压缩比及固定日数据量阈值需要工作负载专属测量。
+
+| 模式 | 用途和约束 |
+|---|---|
+| 单体 | 组件位于一个进程；高可用需要共享对象存储、复制和路由 |
+| SimpleScalable | 分离读/写/后端目标；已弃用，计划在 Loki 4.0 移除 |
+| 分布式 | 独立组件；增加网络、环、查询路径和存储运维 |
+
+示例使用分布式模式，包含三个 ingester 和一个 compactor。`zoneAwareReplication: false` 表示仅有三个副本不能保证可用区隔离。应一并验证可用区/节点放置、法定人数、PDB 和滚动更新。为减小初始验证占用，缓存被禁用；通过生产负载测试选择缓存容量。
+
+模式日期适用于新存储。不要替换现有安装的历史模式条目：应保留它们，并遵循添加未来日期条目的流程。`auth_enabled: false` 为此内部示例选择单一 `fake` 租户。启用多租户不会添加用户身份验证；身份验证代理必须验证并设置租户标头。
 
 ```yaml
-# loki-values.yaml - SimpleScalable mode for EKS
+# loki-values.yaml
+deploymentMode: Distributed
 loki:
-  # Authentication disabled for internal use
+  image:
+    tag: 3.7.7
   auth_enabled: false
-
-  # Schema configuration - TSDB is recommended for new deployments
+  commonConfig:
+    replication_factor: 3
   schemaConfig:
     configs:
-      - from: "2024-01-01"
-        store: tsdb
-        object_store: s3
-        schema: v13
-        index:
-          prefix: loki_index_
-          period: 24h
-
-  # Storage configuration for S3
+    - from: '2026-09-01'
+      store: tsdb
+      object_store: s3
+      schema: v13
+      index:
+        prefix: loki_index_
+        period: 24h
   storage:
     type: s3
     bucketNames:
-      chunks: my-loki-chunks-bucket
-      ruler: my-loki-ruler-bucket
-      admin: my-loki-admin-bucket
+      chunks: REPLACE_WITH_UNIQUE_LOKI_CHUNKS_BUCKET
+      ruler: REPLACE_WITH_UNIQUE_LOKI_RULER_BUCKET
     s3:
-      region: us-west-2
-      # Use IRSA for authentication (recommended)
-      # insecure: false
-      # s3ForcePathStyle: false
-
-  # Ingester configuration
+      region: ap-northeast-2
   ingester:
     chunk_encoding: snappy
-    chunk_idle_period: 30m
-    chunk_block_size: 262144
-    chunk_retain_period: 1m
-    max_transfer_retries: 0
-    wal:
-      enabled: true
-      dir: /var/loki/wal
-
-  # Limits configuration
-  limits_config:
-    enforce_metric_name: false
-    reject_old_samples: true
-    reject_old_samples_max_age: 168h
-    max_cache_freshness_per_query: 10m
-    split_queries_by_interval: 15m
-    # Per-tenant limits
-    ingestion_rate_mb: 10
-    ingestion_burst_size_mb: 20
-    max_streams_per_user: 10000
-    max_line_size: 256kb
-    max_entries_limit_per_query: 5000
-    max_query_parallelism: 32
-
-  # Compactor configuration
   compactor:
-    working_directory: /var/loki/compactor
-    shared_store: s3
-    compaction_interval: 10m
     retention_enabled: true
-    retention_delete_delay: 2h
-    retention_delete_worker_count: 150
     delete_request_store: s3
-
-  # Query scheduler
-  query_scheduler:
-    max_outstanding_requests_per_tenant: 2048
-
-  # Frontend configuration
-  frontend:
-    max_outstanding_per_tenant: 2048
-    compress_responses: true
-
-  # Ruler configuration for alerting
-  rulerConfig:
-    storage:
-      type: s3
-      s3:
-        bucketnames: my-loki-ruler-bucket
-        region: us-west-2
-    alertmanager_url: http://alertmanager.monitoring:9093
-
-# Deployment mode
-deploymentMode: SimpleScalable
-
-# Backend (compactor + ruler)
-backend:
-  replicas: 2
-  persistence:
-    size: 10Gi
-    storageClass: gp3
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 2
-      memory: 4Gi
-
-# Read path (query-frontend + querier)
-read:
-  replicas: 3
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 2
-      memory: 4Gi
-  autoscaling:
-    enabled: true
-    minReplicas: 3
-    maxReplicas: 10
-    targetCPUUtilizationPercentage: 80
-
-# Write path (distributor + ingester)
-write:
-  replicas: 3
-  persistence:
-    size: 50Gi
-    storageClass: gp3
-  resources:
-    requests:
-      cpu: 500m
-      memory: 2Gi
-    limits:
-      cpu: 2
-      memory: 8Gi
-  autoscaling:
-    enabled: true
-    minReplicas: 3
-    maxReplicas: 10
-    targetCPUUtilizationPercentage: 80
-
-# Gateway (nginx)
-gateway:
-  enabled: true
-  replicas: 2
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-
-# Service account for IRSA
+    retention_delete_delay: 2h
+  limits_config:
+    retention_period: 720h
+    allow_structured_metadata: true
+  analytics:
+    reporting_enabled: false
 serviceAccount:
   create: true
   name: loki
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/LokiS3Role
-
-# Monitoring
-monitoring:
-  selfMonitoring:
-    enabled: true
-    grafanaAgent:
-      installOperator: false
-  serviceMonitor:
-    enabled: true
-    labels:
-      release: prometheus
-
-# Disable test pods
-test:
-  enabled: false
-```
-
-### Distributed 模式 values.yaml
-
-适用于大规模部署（> 1TB/day）：
-
-```yaml
-# loki-distributed-values.yaml
-loki:
-  auth_enabled: true  # Required for multi-tenant
-
-  schemaConfig:
-    configs:
-      - from: "2024-01-01"
-        store: tsdb
-        object_store: s3
-        schema: v13
-        index:
-          prefix: loki_index_
-          period: 24h
-
-  storage:
-    type: s3
-    bucketNames:
-      chunks: my-loki-chunks-bucket
-      ruler: my-loki-ruler-bucket
-    s3:
-      region: us-west-2
-
-deploymentMode: Distributed
-
-# Individual component scaling
-distributor:
-  replicas: 3
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-  autoscaling:
-    enabled: true
-    minReplicas: 3
-    maxReplicas: 20
-
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/docs-loki-s3
+singleBinary:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
 ingester:
-  replicas: 6
+  replicas: 3
+  zoneAwareReplication:
+    enabled: false
   persistence:
     enabled: true
-    size: 100Gi
-    storageClass: gp3
-  resources:
-    requests:
-      cpu: 1
-      memory: 4Gi
-  autoscaling:
-    enabled: true
-    minReplicas: 6
-    maxReplicas: 30
-
+    claims:
+    - name: data
+      accessModes: &id001
+      - ReadWriteOnce
+      size: 20Gi
+      storageClass: gp3
+distributor:
+  replicas: 2
 querier:
-  replicas: 4
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-  autoscaling:
-    enabled: true
-    minReplicas: 4
-    maxReplicas: 20
-
+  replicas: 2
 queryFrontend:
   replicas: 2
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-
+queryScheduler:
+  replicas: 2
+indexGateway:
+  replicas: 2
 compactor:
   replicas: 1
   persistence:
     enabled: true
-    size: 20Gi
-  resources:
-    requests:
-      cpu: 1
-      memory: 2Gi
-
-ruler:
+    claims:
+    - name: data
+      accessModes: *id001
+      size: 20Gi
+      storageClass: gp3
+gateway:
   enabled: true
   replicas: 2
-  resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+sidecar:
+  rules:
+    enabled: false
 ```
 
-### Log 采集：Promtail vs Grafana Alloy
-
-| 功能 | Promtail | Grafana Alloy |
-|---------|----------|---------------|
-| **范围** | 仅 Loki | OTEL-native（logs、metrics、traces） |
-| **配置** | Promtail-specific | River language（声明式） |
-| **处理** | Pipeline stages | Flow components |
-| **内存使用** | 较低 | 较高（功能更多） |
-| **未来方向** | 维护模式 | 积极开发 |
-
-**Promtail DaemonSet 配置**：
-
-```yaml
-# promtail-values.yaml
-config:
-  clients:
-    - url: http://loki-gateway.loki.svc:80/loki/api/v1/push
-      tenant_id: default
-      batchwait: 1s
-      batchsize: 1048576
-      timeout: 10s
-
-  positions:
-    filename: /run/promtail/positions.yaml
-
-  scrape_configs:
-    # Kubernetes pod logs
-    - job_name: kubernetes-pods
-      kubernetes_sd_configs:
-        - role: pod
-      pipeline_stages:
-        - cri: {}
-        - labeldrop:
-            - filename
-            - stream
-        - match:
-            selector: '{app="nginx"}'
-            stages:
-              - regex:
-                  expression: '^(?P<remote_addr>[\d\.]+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<request>[^"]+)" (?P<status>\d+) (?P<body_bytes_sent>\d+)'
-              - labels:
-                  status:
-        - match:
-            selector: '{app=~"java-.*"}'
-            stages:
-              - multiline:
-                  firstline: '^\d{4}-\d{2}-\d{2}'
-                  max_lines: 128
-                  max_wait_time: 3s
-      relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_node_name]
-          target_label: node
-        - source_labels: [__meta_kubernetes_namespace]
-          target_label: namespace
-        - source_labels: [__meta_kubernetes_pod_name]
-          target_label: pod
-        - source_labels: [__meta_kubernetes_pod_container_name]
-          target_label: container
-        - source_labels: [__meta_kubernetes_pod_label_app]
-          target_label: app
-        - source_labels: [__meta_kubernetes_pod_label_version]
-          target_label: version
-        # Drop pods without app label
-        - source_labels: [__meta_kubernetes_pod_label_app]
-          action: drop
-          regex: ''
-
-    # System logs
-    - job_name: journal
-      journal:
-        max_age: 12h
-        labels:
-          job: systemd-journal
-      relabel_configs:
-        - source_labels: [__journal__systemd_unit]
-          target_label: unit
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
-
-tolerations:
-  - operator: Exists
-
-serviceMonitor:
-  enabled: true
+```bash
+helm template loki grafana-community/loki --version 18.12.2   --namespace observability -f loki-values.yaml > loki-rendered.yaml
+helm upgrade --install loki grafana-community/loki --version 18.12.2   --namespace observability -f loki-values.yaml
 ```
 
-**Grafana Alloy 配置**（推荐用于新部署）：
+对于 chart 18.12.2，通过 `persistence.claims` 配置 ingester 和 compactor PVC。替换列表时包含 `accessModes`。检查渲染的 `volumeClaimTemplates` 和实际 PVC 绑定，不要只看 Helm 退出状态。网关 Service 使用端口 **80**；Loki 进程 HTTP 端口为 **3100**。
+
+### 保留策略
+
+同时配置采用 24 小时索引周期的 TSDB v13 模式、`compactor.retention_enabled`、`delete_request_store` 和 `limits_config.retention_period`。删除是异步的，并遵循 `retention_delete_delay`。重启时保留 compactor 删除标记和状态。不要假定更改保留期会追溯性地重组现有数据。
+
+每租户覆盖设置位于 chart 的 `loki.runtimeConfig.overrides`。单租户示例使用 `fake`。以下片段将默认 30 天覆盖为七天；仅在检查保留要求后应用。
 
 ```yaml
-# alloy-config.yaml (River language)
+loki:
+  runtimeConfig:
+    overrides:
+      fake:
+        retention_period: 168h
+```
+
+桶范围的对象生命周期到期可能损坏索引、删除请求和 ruler 配置。如果需要生命周期兜底，应将范围限制到块前缀，并将到期时间设为长于保留期加删除延迟。单独评估版本控制/备份成本和删除要求；启用版本控制不是恢复测试。
+
+## Alloy 日志采集和标签
+
+Promtail 于 2026-03-02 结束生命周期。新示例使用 Alloy。此配置通过 Kubernetes 日志 API 读取[上一章](./08-observability-analysis.md)中 `observability` 内的 `app=correlation-api` Pod。它不跟踪节点文件，不需要 hostPath 挂载或 `stage.cri`。
+
+使用 `Recreate` 的单副本 Deployment 避免稳态和滚动发布期间重复采集。它不具备高可用，更新可能中断采集。扩展时，应同时配置 Alloy 集群和源的集群支持，或按节点限制目标。若 DaemonSet 每个 Pod 都发现所有应用 Pod，就会重复采集。
+
+```yaml
+# alloy-rbac.yaml
 apiVersion: v1
-kind: ConfigMap
+kind: ServiceAccount
 metadata:
-  name: alloy-config
-  namespace: monitoring
-data:
-  config.alloy: |
-    // Kubernetes discovery
-    discovery.kubernetes "pods" {
-      role = "pod"
-    }
-
-    // Relabel for Kubernetes metadata
-    discovery.relabel "pods" {
-      targets = discovery.kubernetes.pods.targets
-
-      rule {
-        source_labels = ["__meta_kubernetes_namespace"]
-        target_label  = "namespace"
-      }
-      rule {
-        source_labels = ["__meta_kubernetes_pod_name"]
-        target_label  = "pod"
-      }
-      rule {
-        source_labels = ["__meta_kubernetes_pod_container_name"]
-        target_label  = "container"
-      }
-      rule {
-        source_labels = ["__meta_kubernetes_pod_label_app"]
-        target_label  = "app"
-      }
-      // Drop pods without app label
-      rule {
-        source_labels = ["__meta_kubernetes_pod_label_app"]
-        action        = "drop"
-        regex         = ""
-      }
-    }
-
-    // Log collection
-    loki.source.kubernetes "pods" {
-      targets    = discovery.relabel.pods.output
-      forward_to = [loki.process.default.receiver]
-    }
-
-    // Log processing pipeline
-    loki.process "default" {
-      forward_to = [loki.write.default.receiver]
-
-      // Parse JSON logs
-      stage.json {
-        expressions = {
-          level   = "level",
-          message = "msg",
-          trace_id = "trace_id",
-        }
-      }
-
-      // Add trace_id label for correlation
-      stage.labels {
-        values = {
-          level = "",
-        }
-      }
-
-      // Structured metadata for trace correlation
-      stage.structured_metadata {
-        values = {
-          trace_id = "",
-        }
-      }
-    }
-
-    // Write to Loki
-    loki.write "default" {
-      endpoint {
-        url = "http://loki-gateway.loki.svc:80/loki/api/v1/push"
-        tenant_id = "default"
-      }
-    }
+  name: alloy-logs
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: alloy-logs
+  namespace: observability
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alloy-logs
+  namespace: observability
+subjects:
+  - kind: ServiceAccount
+    name: alloy-logs
+    namespace: observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: alloy-logs
 ```
 
-### Label 设计策略
+```alloy
+// logs.alloy
+// Kubernetes API log source: configure its ServiceAccount permissions first.
+discovery.kubernetes "application" {
+  role = "pod"
+  namespaces {
+    names = ["observability"]
+  }
+  selectors {
+    role  = "pod"
+    label = "app=correlation-api"
+  }
+}
 
-Labels 对查询性能至关重要。Loki 只索引 labels，不索引 log 内容。
+discovery.relabel "application_logs" {
+  targets = discovery.kubernetes.application.targets
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    target_label  = "service_name"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label  = "container"
+  }
+}
 
-**推荐 Labels**：
+loki.source.kubernetes "application" {
+  targets    = discovery.relabel.application_logs.output
+  forward_to = [loki.process.application.receiver]
+}
 
-| Label | Cardinality | 用途 |
-|-------|-------------|---------|
-| `namespace` | 低（10-50） | 环境/team 隔离 |
-| `app` | 低（50-200） | Application 识别 |
-| `container` | 低 | Container 区分 |
-| `node` | 中 | Node 级调试 |
-| `level` | 非常低（5） | Log 严重性过滤 |
+loki.process "application" {
+  stage.json {
+    expressions = {
+      level = "level",
+    }
+  }
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+  // Keep the complete JSON body, including trace_id/span_id. They are not
+  // indexed stream labels and remain available for parsing/correlation.
+  forward_to = [loki.write.backend.receiver]
+}
 
-**应避免的高 Cardinality Labels**：
-
-| Label | 问题 | 替代方案 |
-|-------|---------|-------------|
-| `pod` | 每次重启都会变化 | 使用 structured metadata |
-| `request_id` | 每个 request 唯一 | 存入 log line，使用 filter |
-| `user_id` | 数百万个值 | 存入 log line |
-| `trace_id` | 每个 trace 唯一 | 使用 structured metadata |
-| `timestamp` | 永远不要用作 label | Loki 内置 |
-
-**Structured Metadata**（Loki 3.x）：
-
-```yaml
-# Use structured metadata for high-cardinality data
-stage.structured_metadata {
-  values = {
-    trace_id = "",
-    request_id = "",
-    user_id = "",
+loki.write "backend" {
+  endpoint {
+    url = "http://loki-gateway.observability.svc:80/loki/api/v1/push"
   }
 }
 ```
 
-### Retention Policy 配置
-
-**全局 Retention**：
+将这些 values 保存为 `alloy-values.yaml`，并通过 `--set-file` 注入前面的文件。这样避免在 YAML 字符串内重复 Alloy 配置。
 
 ```yaml
-loki:
-  compactor:
-    retention_enabled: true
-    retention_delete_delay: 2h
-    retention_delete_worker_count: 150
-
-  limits_config:
-    retention_period: 720h  # 30 days global default
+controller:
+  type: deployment
+  replicas: 1
+  updateStrategy:
+    type: Recreate
+alloy:
+  enableReporting: false
+  configMap:
+    content: ''
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+rbac:
+  create: false
+serviceAccount:
+  create: false
+  name: alloy-logs
+crds:
+  create: false
 ```
-
-**按 Tenant 的 Retention**：
-
-```yaml
-loki:
-  limits_config:
-    retention_period: 720h  # Default 30 days
-
-  # Per-tenant overrides
-  overrides:
-    production:
-      retention_period: 2160h  # 90 days for production
-    development:
-      retention_period: 168h   # 7 days for development
-    compliance:
-      retention_period: 8760h  # 365 days for compliance logs
-```
-
-**Stream 级 Retention**（Loki 3.x）：
-
-```yaml
-limits_config:
-  retention_stream:
-    - selector: '{namespace="kube-system"}'
-      priority: 1
-      period: 168h  # 7 days for system logs
-    - selector: '{app="audit-service"}'
-      priority: 2
-      period: 8760h  # 1 year for audit logs
-```
-
-### Index 与 Chunk 优化
-
-**TSDB Index 配置**（推荐）：
-
-```yaml
-loki:
-  schemaConfig:
-    configs:
-      - from: "2024-01-01"
-        store: tsdb  # Modern index format
-        object_store: s3
-        schema: v13
-        index:
-          prefix: loki_index_
-          period: 24h
-```
-
-**Chunk 优化**：
-
-```yaml
-loki:
-  ingester:
-    # Compression - snappy offers best balance
-    chunk_encoding: snappy  # Options: none, gzip, lz4-64k, snappy, lz4-256k, lz4-1M, lz4, flate, zstd
-
-    # Chunk timing
-    chunk_idle_period: 30m      # Flush chunks after 30m of inactivity
-    chunk_retain_period: 1m     # Keep chunks in memory after flush
-    max_chunk_age: 2h           # Maximum chunk age before forced flush
-
-    # Chunk sizing
-    chunk_target_size: 1572864  # Target ~1.5MB chunks
-    chunk_block_size: 262144    # 256KB blocks
-
-    # WAL for durability
-    wal:
-      enabled: true
-      dir: /var/loki/wal
-      replay_memory_ceiling: 4GB
-```
-
-**Compression 对比**：
-
-| 算法 | 压缩率 | CPU 使用量 | 查询速度 |
-|-----------|-------------------|-----------|-------------|
-| none | 1.0x | 最低 | 最快 |
-| snappy | 2-3x | 低 | 快 |
-| lz4 | 2-4x | 低 | 快 |
-| gzip | 4-6x | 中 | 中 |
-| zstd | 4-7x | 中 | 中 |
-
-### LogQL 查询模式
-
-**基础查询**：
-
-```logql
-# Filter by labels
-{namespace="production", app="api-gateway"}
-
-# Filter by content
-{namespace="production"} |= "error"
-{namespace="production"} |~ "error|warn"
-{namespace="production"} != "healthcheck"
-
-# JSON parsing
-{app="api-service"} | json | status >= 400
-
-# Line format extraction
-{app="nginx"} | pattern `<ip> - - [<_>] "<method> <path> <_>" <status> <size>`
-```
-
-**聚合查询**：
-
-```logql
-# Error rate over time
-sum(rate({app="api-gateway"} |= "error" [5m])) by (namespace)
-
-# Top 10 error paths
-topk(10, sum by (path) (
-  count_over_time({app="nginx"} | json | status >= 500 [1h])
-))
-
-# Latency percentiles from logs
-quantile_over_time(0.99,
-  {app="api-service"}
-  | json
-  | unwrap duration
-  [5m]
-) by (endpoint)
-
-# Bytes processed per namespace
-sum by (namespace) (bytes_over_time({namespace=~".+"} [1h]))
-```
-
-**性能查询**：
-
-```logql
-# Request duration analysis
-{app="api-service"}
-| json
-| duration > 1s
-| line_format "{{.method}} {{.path}} took {{.duration}}"
-
-# Error context with surrounding lines
-{app="payment-service"} |= "PaymentFailed"
-| json
-| line_format "{{.timestamp}} [{{.level}}] {{.message}} trace={{.trace_id}}"
-```
-
-### Alert Rule 配置
-
-**Ruler 设置**：
-
-```yaml
-# loki-ruler-config.yaml
-loki:
-  rulerConfig:
-    storage:
-      type: s3
-      s3:
-        bucketnames: my-loki-ruler-bucket
-        region: us-west-2
-    rule_path: /var/loki/rules
-    alertmanager_url: http://alertmanager.monitoring.svc:9093
-    ring:
-      kvstore:
-        store: memberlist
-    enable_api: true
-    enable_alertmanager_v2: true
-```
-
-**Alert Rules ConfigMap**：
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: loki-alerting-rules
-  namespace: loki
-  labels:
-    loki_rule: "true"
-data:
-  error-alerts.yaml: |
-    groups:
-      - name: application-errors
-        interval: 1m
-        rules:
-          - alert: HighErrorRate
-            expr: |
-              sum(rate({app=~".+"} |= "error" [5m])) by (namespace, app)
-              / sum(rate({app=~".+"} [5m])) by (namespace, app)
-              > 0.05
-            for: 5m
-            labels:
-              severity: warning
-            annotations:
-              summary: "High error rate in {{ $labels.app }}"
-              description: "Error rate is {{ $value | humanizePercentage }} in {{ $labels.namespace }}/{{ $labels.app }}"
-              runbook_url: "https://wiki.example.com/runbooks/high-error-rate"
-
-          - alert: CriticalErrorSpike
-            expr: |
-              sum(rate({app=~".+"} |= "CRITICAL" [1m])) by (namespace, app) > 10
-            for: 1m
-            labels:
-              severity: critical
-            annotations:
-              summary: "Critical error spike in {{ $labels.app }}"
-              description: "{{ $value }} critical errors per second in {{ $labels.namespace }}/{{ $labels.app }}"
-
-          - alert: PodCrashLoopDetected
-            expr: |
-              count_over_time({namespace=~".+", container=~".+"}
-                |= "CrashLoopBackOff" [5m]) > 5
-            for: 2m
-            labels:
-              severity: warning
-            annotations:
-              summary: "Pod crash loop detected"
-              description: "CrashLoopBackOff detected in logs"
-
-      - name: security-alerts
-        interval: 30s
-        rules:
-          - alert: AuthenticationFailures
-            expr: |
-              sum(count_over_time(
-                {app=~".*auth.*"} |= "authentication failed" [5m]
-              )) by (app) > 50
-            for: 2m
-            labels:
-              severity: warning
-            annotations:
-              summary: "High authentication failure rate"
-              description: "{{ $value }} authentication failures in {{ $labels.app }}"
-
-          - alert: SuspiciousActivity
-            expr: |
-              count_over_time({namespace="production"}
-                |~ "SQL injection|XSS|unauthorized" [5m]) > 0
-            labels:
-              severity: critical
-            annotations:
-              summary: "Suspicious activity detected"
-              description: "Potential security threat detected in production logs"
-
-      - name: performance-alerts
-        interval: 1m
-        rules:
-          - alert: SlowRequests
-            expr: |
-              quantile_over_time(0.95,
-                {app="api-gateway"}
-                | json
-                | unwrap response_time_ms [5m]
-              ) > 5000
-            for: 5m
-            labels:
-              severity: warning
-            annotations:
-              summary: "Slow API response times"
-              description: "95th percentile response time is {{ $value }}ms"
-```
-
----
-
-## Tempo 运维指南
-
-### 架构概览
-
-Tempo 是一个分布式 tracing backend，不建立索引，直接将 traces 存储在 object storage 中。它依赖 trace ID lookup 和 service graphs 来进行发现。
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Trace Data Flow                               │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Applications ──► OTEL Collector ──► Tempo Distributor          │
-│  (instrumented)   (sampling)         (validation)                │
-│                                           │                      │
-│                                           ▼                      │
-│                                      Tempo Ingester              │
-│                                      (batching)                  │
-│                                           │                      │
-│                                           ▼                      │
-│                                      S3 Storage                  │
-│                                      (trace blocks)              │
-│                                           │                      │
-│                                           ▼                      │
-│  Grafana ◄────────────────────── Tempo Querier                  │
-│  (visualization)                  (trace lookup)                 │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Helm 安装
 
 ```bash
-# Install Tempo
-helm upgrade --install tempo grafana/tempo \
-  --namespace tempo \
-  --create-namespace \
-  --version 1.10.0 \
-  --values tempo-values.yaml
+kubectl apply -f alloy-rbac.yaml
+helm upgrade --install alloy grafana/alloy --version 1.12.1   --namespace observability -f alloy-values.yaml   --set-file alloy.configMap.content=logs.alloy
 ```
 
-**完整生产 values.yaml**：
+优先使用 `namespace`、`service_name` 和 `container` 等取值有界标签。将 `trace_id` 和 `request_id` 保留在 JSON 内容或结构化元数据中。Pod 名称并非一律禁止，但生命周期和变动影响流数量。标签组合的乘积很重要；固定标签数不是安全保证。此示例保留完整 JSON 行，并额外为 `level` 建立索引。在应用或采集层规范化无界 level 值并移除个人数据。
+
+### LogQL 和日志警报
+
+数值聚合前，移除 JSON 解析错误和无效数值字段。以下延迟字段以毫秒计。`rate` 统计每秒日志行数；每秒字节数使用 `bytes_rate`。
+
+```logql
+{service_name="correlation-api"} | json | __error__="" | level="ERROR"
+```
+
+```logql
+sum(rate({service_name="correlation-api"}[5m]))
+```
+
+```logql
+sum(bytes_rate({service_name="correlation-api"}[5m]))
+```
+
+```logql
+avg_over_time({service_name="correlation-api"} | json | latency_ms >= 0 | __error__="" | unwrap latency_ms | __error__="" [5m])
+```
+
+```logql
+quantile_over_time(0.95, {service_name="correlation-api"} | json | latency_ms >= 0 | __error__="" | unwrap latency_ms | __error__="" [5m])
+```
+
+Loki Ruler 评估 LogQL 规则并向 Alertmanager 发送警报。将 LogQL 放入 PrometheusRule，或添加任意 `loki_rule` ConfigMap 标签，不会加载规则。上方基线的 ruler 副本数为零。测试评估前，配置 ruler 部署、规则存储/API 或挂载、评估间隔和 Alertmanager 端点。
+
+出现通用 `"error"` 或 `"unauthorized"` 文本不能证明发生故障或攻击。检查 kube-state-metrics 容器状态中的 CrashLoopBackOff，不要依赖应用日志。比例警报需要匹配的分子/分母范围、解析错误处理、零流量处理及错误序列缺失行为。将其接入[警报路由和抑制测试](./07-observability-alerts.md)。
+
+## Tempo 3：单体与分布式运维
+
+Tempo 支持按 trace ID 查找和 TraceQL 属性搜索。metrics-generator 从选定追踪派生指标；它不是启用搜索的开关。
+
+| 组件 | Tempo 3 分布式职责 |
+|---|---|
+| Distributor | 将收到的 span 写入 Kafka |
+| Block-builder | 消费 Kafka 并创建对象存储块 |
+| Live-store | 提供近期数据查询 |
+| Backend-scheduler / backend-worker | 块维护、压缩整理和保留 |
+| Query-frontend / querier | 查询近期数据和对象存储 |
+
+2.x ingester、compactor 目标及可扩展单二进制模式已移除。单体单进程模式不需要 Kafka。增加其 `replicas` 不是转为分布式高可用的受支持方法。
+
+### 单实例实验
+
+`tempo-lab-values.yaml` 使用本地 PVC，不使用 Kafka。进程/PVC 故障可中断可用性；不要将此配置与分布式 S3 部署 values 混用。对于 chart 3.0.0，使用 `null` 禁用各 Jaeger 协议，不要移除父项，否则会破坏 chart 渲染。Service 可保留旧端口；根据实际接收器配置和网络策略限制访问。
 
 ```yaml
-# tempo-values.yaml
+# tempo-lab-values.yaml
+replicas: 1
 tempo:
-  # Multitenancy (optional)
-  multitenancyEnabled: false
-
-  # Storage configuration
-  storage:
-    trace:
-      backend: s3
-      s3:
-        bucket: my-tempo-traces-bucket
-        endpoint: s3.us-west-2.amazonaws.com
-        region: us-west-2
-        # IRSA handles authentication
-      wal:
-        path: /var/tempo/wal
-      block:
-        version: vParquet4  # Latest format
-      pool:
-        max_workers: 100
-        queue_depth: 10000
-
-  # Receiver configuration
+  tag: 3.0.3
+  reportingEnabled: false
+  retention: 336h
   receivers:
+    jaeger:
+      protocols:
+        grpc: null
+        thrift_binary: null
+        thrift_compact: null
+        thrift_http: null
     otlp:
       protocols:
         grpc:
-          endpoint: "0.0.0.0:4317"
+          endpoint: 0.0.0.0:4317
         http:
-          endpoint: "0.0.0.0:4318"
-    jaeger:
-      protocols:
-        thrift_http:
-          endpoint: "0.0.0.0:14268"
-        grpc:
-          endpoint: "0.0.0.0:14250"
-    zipkin:
-      endpoint: "0.0.0.0:9411"
-
-  # Distributor configuration
-  distributor:
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-          http:
-    log_received_spans:
-      enabled: false
-
-  # Ingester configuration
-  ingester:
-    max_block_duration: 5m
-    max_block_bytes: 1073741824  # 1GB
-    flush_check_period: 10s
-    trace_idle_period: 10s
-    lifecycler:
-      ring:
-        kvstore:
-          store: memberlist
-        replication_factor: 3
-
-  # Compactor configuration
-  compactor:
-    compaction:
-      block_retention: 336h  # 14 days
-      compacted_block_retention: 1h
-      compaction_window: 1h
-      max_compaction_objects: 6
-      max_block_bytes: 107374182400  # 100GB
-      retention_concurrency: 10
-
-  # Querier configuration
-  querier:
-    frontend_worker:
-      frontend_address: tempo-query-frontend:9095
-    max_concurrent_queries: 20
-    search:
-      external_endpoints: []
-      prefer_self: 10
-    trace_by_id:
-      query_timeout: 30s
-
-  # Query frontend
-  query_frontend:
-    max_retries: 2
-    search:
-      concurrent_jobs: 1000
-      target_bytes_per_job: 104857600
-    trace_by_id:
-      hedge_requests_at: 2s
-      hedge_requests_up_to: 2
-
-  # Metrics generator (for RED metrics from traces)
-  metrics_generator:
-    registry:
-      external_labels:
-        source: tempo
-        cluster: production
+          endpoint: 0.0.0.0:4318
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+  metricsGenerator:
+    enabled: true
     storage:
-      path: /var/tempo/generator/wal
+      path: /var/tempo/metrics
       remote_write:
-        - url: http://prometheus:9090/api/v1/write
-          send_exemplars: true
-    processor:
-      service_graphs:
-        dimensions:
-          - service.namespace
-          - http.method
-        histogram_buckets: [0.1, 0.25, 0.5, 1, 2.5, 5, 10]
-        max_items: 10000
-        wait: 10s
-        workers: 10
-      span_metrics:
-        dimensions:
-          - service.name
-          - span.name
-          - span.kind
-          - status.code
-        histogram_buckets: [0.002, 0.004, 0.008, 0.016, 0.032, 0.064, 0.128, 0.256, 0.512, 1.024, 2.048, 4.096, 8.192, 16.384]
-
-  # Overrides
+      - url: http://prometheus-kube-prometheus-prometheus.observability.svc:9090/api/v1/write
+        send_exemplars: true
   overrides:
     defaults:
       metrics_generator:
         processors:
-          - service-graphs
-          - span-metrics
+        - service-graphs
+        - span-metrics
+persistence:
+  enabled: true
+  storageClassName: gp3
+  size: 20Gi
+```
 
-# Global settings
-global:
-  clusterDomain: cluster.local
+```bash
+helm upgrade --install tempo grafana-community/tempo --version 3.0.0   --namespace observability -f tempo-lab-values.yaml
+```
 
-# Service account for IRSA
+### 供审核的分布式配置
+
+此文件是单实例 chart 的替代方案，不是其覆盖配置。Kafka 和 S3 必须已存在。示例在隔离验证环境中使用内部 Kafka 端点。先对照 Tempo 3.0.3 客户端支持确认生产 Kafka TLS/身份验证要求。此版本的 `ingest.kafka` 不支持任意 `tls` 或 MSK IAM 字段。SASL 用户名/密码支持不意味着传输加密。
+
+默认 `partitions_per_instance: 1` 下，三个 Kafka 分区需要三个 block-builder。此 chart 示例也使用三个 live-store。更改 `auto_create_topic_default_partitions` 不会调整现有主题大小。禁用自动创建时，单独配置实际分区数、复制、最小 ISR、保留期和容量。向 block-builder/live-store values 添加不受支持的 `persistence` 键不会创建 PVC。根据 chart 的实际存储行为和 Kafka 重放窗口测试恢复。
+
+```yaml
+# tempo-distributed-values.yaml
+reportingEnabled: false
+multitenancyEnabled: false
+tempo:
+  image:
+    tag: 3.0.3
+ingest:
+  kafka:
+    address: kafka.kafka.svc.cluster.local:9092
+    topic: tempo-traces
+    auto_create_topic_enabled: false
+    auto_create_topic_default_partitions: 3
+blockBuilder:
+  replicas: 3
+liveStore:
+  replicas: 3
+backendScheduler:
+  enabled: true
+  config:
+    provider:
+      compaction:
+        compaction:
+          block_retention: 336h
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: gp3
+backendWorker:
+  replicas: 2
+  podDisruptionBudget:
+    enabled: true
+distributor:
+  replicas: 2
+querier:
+  replicas: 2
+queryFrontend:
+  replicas: 2
+traces:
+  otlp:
+    grpc:
+      enabled: true
+    http:
+      enabled: true
+storage:
+  trace:
+    backend: s3
+    s3:
+      bucket: REPLACE_WITH_UNIQUE_TEMPO_BUCKET
+      endpoint: s3.ap-northeast-2.amazonaws.com
+      region: ap-northeast-2
 serviceAccount:
   create: true
   name: tempo
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/TempoS3Role
-
-# Component resources
-distributor:
-  replicas: 2
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: 1
-      memory: 1Gi
-
-ingester:
-  replicas: 3
-  persistence:
-    enabled: true
-    size: 50Gi
-    storageClass: gp3
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 2
-      memory: 4Gi
-
-querier:
-  replicas: 2
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: 1
-      memory: 2Gi
-
-queryFrontend:
-  replicas: 2
-  resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
-
-compactor:
-  replicas: 1
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 2
-      memory: 4Gi
-
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/docs-tempo-s3
 metricsGenerator:
   enabled: true
-  replicas: 1
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-
-# Monitoring
-serviceMonitor:
+  kind: StatefulSet
+  persistence:
+    enabled: true
+    storageClass: gp3
+    size: 20Gi
+  config:
+    storage:
+      remote_write:
+      - url: http://prometheus-kube-prometheus-prometheus.observability.svc:9090/api/v1/write
+        send_exemplars: true
+overrides:
+  defaults:
+    metrics_generator:
+      processors:
+      - service-graphs
+      - span-metrics
+gateway:
   enabled: true
-  labels:
-    release: prometheus
 ```
 
-### OTEL Collector 配置
-
-**完整 ConfigMap**：
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: otel-collector-config
-  namespace: monitoring
-data:
-  otel-collector.yaml: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-            max_recv_msg_size_mib: 4
-          http:
-            endpoint: 0.0.0.0:4318
-
-      # Kubernetes events as traces (optional)
-      k8s_events:
-        namespaces: [default, production]
-
-    processors:
-      # Memory limiter to prevent OOM
-      memory_limiter:
-        check_interval: 1s
-        limit_mib: 1500
-        spike_limit_mib: 512
-
-      # Batch processing
-      batch:
-        send_batch_size: 10000
-        send_batch_max_size: 11000
-        timeout: 10s
-
-      # Resource detection for Kubernetes
-      resourcedetection:
-        detectors: [env, eks, ec2]
-        timeout: 5s
-        override: false
-
-      # Add Kubernetes metadata
-      k8sattributes:
-        auth_type: serviceAccount
-        passthrough: false
-        extract:
-          metadata:
-            - k8s.namespace.name
-            - k8s.pod.name
-            - k8s.pod.uid
-            - k8s.deployment.name
-            - k8s.node.name
-          labels:
-            - tag_name: app
-              key: app
-              from: pod
-            - tag_name: version
-              key: version
-              from: pod
-        pod_association:
-          - sources:
-              - from: resource_attribute
-                name: k8s.pod.ip
-          - sources:
-              - from: resource_attribute
-                name: k8s.pod.uid
-
-      # Tail-based sampling (process after batch)
-      tail_sampling:
-        decision_wait: 30s
-        num_traces: 100000
-        expected_new_traces_per_sec: 1000
-        policies:
-          # Always sample errors
-          - name: errors-policy
-            type: status_code
-            status_code:
-              status_codes: [ERROR]
-
-          # Always sample slow traces (> 2s)
-          - name: latency-policy
-            type: latency
-            latency:
-              threshold_ms: 2000
-
-          # Sample 10% of successful traces
-          - name: probabilistic-policy
-            type: probabilistic
-            probabilistic:
-              sampling_percentage: 10
-
-          # Always sample specific services
-          - name: critical-services
-            type: string_attribute
-            string_attribute:
-              key: service.name
-              values: [payment-service, order-service]
-              enabled_regex_matching: false
-              invert_match: false
-
-          # Rate limiting fallback
-          - name: rate-limiting
-            type: rate_limiting
-            rate_limiting:
-              spans_per_second: 1000
-
-      # Attributes processing
-      attributes:
-        actions:
-          - key: environment
-            value: production
-            action: insert
-          - key: db.statement
-            action: hash  # Hash sensitive data
-          - key: http.request.header.authorization
-            action: delete  # Remove auth headers
-
-    exporters:
-      # Export to Tempo
-      otlp/tempo:
-        endpoint: tempo-distributor.tempo.svc:4317
-        tls:
-          insecure: true
-        retry_on_failure:
-          enabled: true
-          initial_interval: 5s
-          max_interval: 30s
-          max_elapsed_time: 300s
-
-      # Export metrics to Prometheus
-      prometheus:
-        endpoint: 0.0.0.0:8889
-        namespace: otel
-        const_labels:
-          source: otel-collector
-
-      # Debug logging (disable in production)
-      # debug:
-      #   verbosity: detailed
-
-    extensions:
-      health_check:
-        endpoint: 0.0.0.0:13133
-      pprof:
-        endpoint: 0.0.0.0:1777
-      zpages:
-        endpoint: 0.0.0.0:55679
-
-    service:
-      extensions: [health_check, pprof, zpages]
-      pipelines:
-        traces:
-          receivers: [otlp]
-          processors: [memory_limiter, resourcedetection, k8sattributes, batch, tail_sampling, attributes]
-          exporters: [otlp/tempo]
-        metrics:
-          receivers: [otlp]
-          processors: [memory_limiter, batch]
-          exporters: [prometheus]
-      telemetry:
-        logs:
-          level: info
-        metrics:
-          address: 0.0.0.0:8888
+```bash
+helm template tempo grafana-community/tempo-distributed --version 3.5.1   --namespace observability -f tempo-distributed-values.yaml > tempo-rendered.yaml
 ```
 
-**OTEL Collector Deployment**：
+显式设置 `backendWorker.podDisruptionBudget.enabled`，以避免 3.5.1 PDB 模板缺失默认值。渲染仍不测试 Kafka 连通性、S3 权限、调度或端到端写入/查询。分布式写入使用 `tempo-distributor:4318`，查询使用 `tempo-query-frontend:3200`；更新下方 Collector 和 Grafana 的两个实验 URL。
+
+### 从 2.x 迁移到 3.x
+
+对于单体模式，审核 `tempo-cli migrate config --mode=monolithic` 的输出。对于分布式模式，采用并行部署、验证和流量迁移。移除 `ingester`、`ingester_client`、`compactor`、`metrics_generator_client` 和已移除的 `local_blocks` 配置。历史存储必须使用 vParquet4 或更新的块。
+
+不要同时启用两个压缩整理系统操作共享存储。在 3.x 默认配置及每个租户覆盖中设置 `compaction_disabled`，停止 2.x compactor 后再移除它。租户覆盖不会简单继承省略的默认字段。切换流量前，验证历史和新的 trace ID。TraceQL 指标存在 RF1 块覆盖等迁移约束；历史追踪可用不自动意味着历史指标覆盖相同。
+
+## Collector 和采样
+
+此配置在一个 Collector 中验证尾部采样。应用必须在资源中设置 `service.name`。它不会自动添加 Kubernetes 元数据；添加 k8sattributes 需要 Pod 关联策略和独立 RBAC。Kubernetes 事件属于日志信号；`k8s_events` 不是追踪接收器。
+
+敏感属性删除发生在尾部缓冲之前。它仅覆盖所列键，不覆盖所有可能含敏感数据的日志、事件或属性。仅对 `db.statement` 哈希不能确保隐私或密钥保护。
 
 ```yaml
+# collector.yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 768
+    spike_limit_mib: 128
+  attributes/remove-secrets:
+    actions:
+      - key: http.request.header.authorization
+        action: delete
+      - key: db.statement
+        action: delete
+      - key: db.query.text
+        action: delete
+  tail_sampling:
+    decision_wait: 30s
+    num_traces: 20000
+    expected_new_traces_per_sec: 500
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: slow
+        type: latency
+        latency:
+          threshold_ms: 2000
+      - name: baseline
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+  batch:
+    send_batch_size: 512
+    send_batch_max_size: 1024
+    timeout: 1s
+exporters:
+  otlphttp/tempo:
+    endpoint: http://tempo.observability.svc:4318
+    retry_on_failure:
+      enabled: true
+    sending_queue:
+      enabled: true
+      queue_size: 1000
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/remove-secrets, tail_sampling, batch]
+      exporters: [otlphttp/tempo]
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+```
+
+```yaml
+# collector-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: otel-collector
-  namespace: monitoring
+  namespace: observability
 spec:
-  replicas: 2
+  replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: otel-collector
@@ -1302,829 +578,400 @@ spec:
       labels:
         app: otel-collector
     spec:
-      serviceAccountName: otel-collector
+      automountServiceAccountToken: false
       containers:
-        - name: otel-collector
-          image: otel/opentelemetry-collector-contrib:0.100.0
-          command:
-            - "/otelcol-contrib"
-            - "--config=/etc/otel/otel-collector.yaml"
-          ports:
-            - containerPort: 4317  # OTLP gRPC
-            - containerPort: 4318  # OTLP HTTP
-            - containerPort: 8888  # Metrics
-            - containerPort: 8889  # Prometheus exporter
-            - containerPort: 13133 # Health check
+        - name: collector
+          image: otel/opentelemetry-collector-contrib:0.160.0
+          args: ["--config=/etc/otel/collector.yaml"]
           resources:
             requests:
-              cpu: 500m
-              memory: 1Gi
+              cpu: 250m
+              memory: 512Mi
             limits:
-              cpu: 2
-              memory: 4Gi
-          volumeMounts:
-            - name: config
-              mountPath: /etc/otel
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 13133
+              memory: 1Gi
+          ports:
+            - {name: otlp-grpc, containerPort: 4317}
+            - {name: otlp-http, containerPort: 4318}
+            - {name: metrics, containerPort: 8888}
+            - {name: health, containerPort: 13133}
           readinessProbe:
             httpGet:
               path: /
-              port: 13133
+              port: health
+          livenessProbe:
+            httpGet:
+              path: /
+              port: health
+          volumeMounts:
+            - {name: config, mountPath: /etc/otel, readOnly: true}
       volumes:
         - name: config
           configMap:
-            name: otel-collector-config
-```
-
-### Sampling 策略
-
-#### Head-Based Sampling
-
-在源端（application 或第一个 collector）应用：
-
-**Probabilistic Sampling**：
-
-```yaml
-# In application SDK or collector
-processors:
-  probabilistic_sampler:
-    sampling_percentage: 10  # Sample 10% of traces
-    hash_seed: 22
-```
-
-**Rate Limiting**：
-
-```yaml
-processors:
-  rate_limiting:
-    spans_per_second: 1000  # Maximum 1000 spans/sec
-```
-
-#### Tail-Based Sampling
-
-在看到完整 trace 后应用：
-
-```yaml
-processors:
-  tail_sampling:
-    decision_wait: 30s
-    num_traces: 100000
-    policies:
-      # Error-based: always capture errors
-      - name: error-policy
-        type: status_code
-        status_code:
-          status_codes: [ERROR, UNSET]
-
-      # Latency-based: capture slow traces
-      - name: latency-policy
-        type: latency
-        latency:
-          threshold_ms: 2000
-
-      # Attribute-based: specific operations
-      - name: database-queries
-        type: string_attribute
-        string_attribute:
-          key: db.system
-          values: [postgresql, mysql, mongodb]
-
-      # Composite policy
-      - name: composite-policy
-        type: composite
-        composite:
-          max_total_spans_per_second: 1000
-          policy_order: [error-policy, latency-policy, probabilistic-fallback]
-          composite_sub_policy:
-            - name: error-policy
-              type: status_code
-              status_code:
-                status_codes: [ERROR]
-            - name: latency-policy
-              type: latency
-              latency:
-                threshold_ms: 1000
-            - name: probabilistic-fallback
-              type: probabilistic
-              probabilistic:
-                sampling_percentage: 5
-          rate_allocation:
-            - policy: error-policy
-              percent: 50
-            - policy: latency-policy
-              percent: 30
-            - policy: probabilistic-fallback
-              percent: 20
-```
-
-### TraceQL 查询示例
-
-**基础查询**：
-
-```
-# Find trace by ID
-{ trace:id = "abc123" }
-
-# Find traces by service name
-{ resource.service.name = "api-gateway" }
-
-# Find traces with errors
-{ status = error }
-
-# Find traces by span name
-{ name = "HTTP GET /api/users" }
-
-# Find slow database queries
-{ span.db.system = "postgresql" && duration > 100ms }
-```
-
-**高级查询**：
-
-```
-# Find traces with specific attribute patterns
-{ resource.service.name =~ "order-.*" && span.http.status_code >= 500 }
-
-# Duration analysis
-{ duration > 2s && resource.service.name = "payment-service" }
-
-# Find traces with specific span hierarchy
-{ resource.service.name = "api-gateway" } >> { resource.service.name = "order-service" }
-
-# Aggregate queries
-{ resource.service.name = "api-gateway" } | rate()
-
-# Count by status
-{ } | count() by (status)
-
-# Histogram of durations
-{ resource.service.name = "api-gateway" } | histogram_over_time(duration)
-```
-
-### Service Graph 配置
-
-```yaml
-# In Tempo config
-tempo:
-  metrics_generator:
-    processor:
-      service_graphs:
-        dimensions:
-          - service.namespace
-          - http.method
-          - http.target
-        histogram_buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
-        max_items: 10000
-        wait: 10s
-        workers: 10
-```
-
-### Trace-to-Log 集成
-
-**Application-Side 配置（Java）**：
-
-```java
-// Add trace ID to MDC for logging
-import io.opentelemetry.api.trace.Span;
-import org.slf4j.MDC;
-
-public class TracingFilter implements Filter {
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
-        Span currentSpan = Span.current();
-        String traceId = currentSpan.getSpanContext().getTraceId();
-        String spanId = currentSpan.getSpanContext().getSpanId();
-
-        MDC.put("trace_id", traceId);
-        MDC.put("span_id", spanId);
-        try {
-            chain.doFilter(request, response);
-        } finally {
-            MDC.remove("trace_id");
-            MDC.remove("span_id");
-        }
-    }
-}
-```
-
-**Logback 配置**：
-
-```xml
-<configuration>
-  <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-      <includeMdcKeyName>trace_id</includeMdcKeyName>
-      <includeMdcKeyName>span_id</includeMdcKeyName>
-    </encoder>
-  </appender>
-
-  <root level="INFO">
-    <appender-ref ref="JSON"/>
-  </root>
-</configuration>
-```
-
-**Grafana Data Source 配置**：
-
-```yaml
-# In Grafana datasource provisioning
-apiVersion: 1
-datasources:
-  - name: Tempo
-    type: tempo
-    url: http://tempo-query-frontend.tempo.svc:3100
-    jsonData:
-      tracesToLogs:
-        datasourceUid: loki
-        tags: ['app', 'namespace']
-        mappedTags: [{ key: 'service.name', value: 'app' }]
-        mapTagNamesEnabled: true
-        spanStartTimeShift: '-1h'
-        spanEndTimeShift: '1h'
-        filterByTraceID: true
-        filterBySpanID: false
-        lokiSearch: true
-      tracesToMetrics:
-        datasourceUid: prometheus
-        tags: [{ key: 'service.name', value: 'service' }]
-        queries:
-          - name: 'Request rate'
-            query: 'sum(rate(http_server_requests_seconds_count{$$__tags}[5m]))'
-          - name: 'Error rate'
-            query: 'sum(rate(http_server_requests_seconds_count{$$__tags,status=~"5.."}[5m]))'
-      serviceMap:
-        datasourceUid: prometheus
-```
-
-### Span Metrics Generator
-
-从 trace 数据生成 RED（Rate、Errors、Duration）metrics：
-
-```yaml
-tempo:
-  metrics_generator:
-    registry:
-      external_labels:
-        source: tempo
-        cluster: production
-    storage:
-      path: /var/tempo/generator/wal
-      remote_write:
-        - url: http://prometheus:9090/api/v1/write
-          send_exemplars: true
-    processor:
-      span_metrics:
-        dimensions:
-          - service.name
-          - span.name
-          - span.kind
-          - status.code
-          - http.method
-          - http.status_code
-        histogram_buckets: [0.002, 0.004, 0.008, 0.016, 0.032, 0.064, 0.128, 0.256, 0.512, 1.024, 2.048, 4.096, 8.192, 16.384]
-        intrinsic_dimensions:
-          service: true
-          span_name: true
-          span_kind: true
-          status_code: true
-          status_message: false
-```
-
-**生成的 Metrics**：
-
-```promql
-# Request rate by service
-sum(rate(traces_spanmetrics_calls_total[5m])) by (service)
-
-# Error rate
-sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m])) by (service)
-/ sum(rate(traces_spanmetrics_calls_total[5m])) by (service)
-
-# Latency percentiles
-histogram_quantile(0.99, sum(rate(traces_spanmetrics_latency_bucket[5m])) by (le, service))
-```
-
+            name: otel-collector
 ---
-
-## Prometheus/Amazon Managed Prometheus 运维
-
-### AMP Workspace Terraform
-
-```hcl
-# amp.tf
-resource "aws_prometheus_workspace" "main" {
-  alias = "eks-production-metrics"
-
-  logging_configuration {
-    log_group_arn = "${aws_cloudwatch_log_group.amp.arn}:*"
-  }
-
-  tags = {
-    Environment = "production"
-    ManagedBy   = "terraform"
-  }
-}
-
-resource "aws_cloudwatch_log_group" "amp" {
-  name              = "/aws/prometheus/eks-production"
-  retention_in_days = 30
-}
-
-# IAM role for remote write
-resource "aws_iam_role" "prometheus_remote_write" {
-  name = "prometheus-remote-write-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Federated = module.eks.oidc_provider_arn
-        }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "${module.eks.oidc_provider}:sub" = "system:serviceaccount:monitoring:prometheus"
-            "${module.eks.oidc_provider}:aud" = "sts.amazonaws.com"
-          }
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "prometheus_remote_write" {
-  role       = aws_iam_role.prometheus_remote_write.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"
-}
-
-# Output for Prometheus configuration
-output "amp_workspace_endpoint" {
-  value = aws_prometheus_workspace.main.prometheus_endpoint
-}
-
-output "prometheus_role_arn" {
-  value = aws_iam_role.prometheus_remote_write.arn
-}
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: observability
+spec:
+  selector:
+    app: otel-collector
+  ports:
+    - {name: otlp-grpc, port: 4317, targetPort: otlp-grpc}
+    - {name: otlp-http, port: 4318, targetPort: otlp-http}
+    - {name: metrics, port: 8888, targetPort: metrics}
 ```
 
-### Remote Write 配置
+```bash
+kubectl create configmap otel-collector --namespace observability   --from-file=collector.yaml --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -f collector-deployment.yaml
+```
+
+Collector Contrib 0.160.0 使用 `service.telemetry.metrics.readers` 配置内部指标。不要保留旧 `metrics.address`、不存在的独立 `rate_limiting` 处理器或已移除的 `loki` 导出器。清单连接 ConfigMap、Service 和端口。此单实例实验使用 `Recreate`；更新可能丢失缓冲追踪和内存队列。
+
+| 设置 | 含义 |
+|---|---|
+| 头部采样 | 在开始时决定；不能根据尚未知晓的最终错误/延迟选择 |
+| 尾部采样 | 根据 `decision_wait` 内收到的 span 决定；不保证完整性 |
+| 错误/延迟/基线策略 | 此处按 OR 组合；独立限速策略不是全局上限 |
+| `spans_per_second` | 每秒 span 数，不是 trace 数；不是独立处理器 |
+| `num_traces` | 待决追踪缓冲容量；溢出、迟到数据和重启可能丢失 span |
+| `send_batch_size` | 发送触发值；`send_batch_max_size` 是批大小上限 |
+
+多个尾部采样器需要按 trace ID 路由，确保同一追踪的所有 span 到达同一采样器。普通随机 Service 均衡可拆散追踪。尾部采样无法恢复头部丢弃的 span。队列限制、迟到 span 和接收失败使其不能保证保留每条错误追踪。`UNSET` 不是错误状态；包含它可能保留大量正常 span。服务图和生成指标受采样影响；需要完整请求总体测量时，使用独立插桩指标。
+
+## TraceQL、服务图和日志关联
+
+这些是单条追踪搜索查询。`span:duration` 测量一个 span，不是整个追踪。HTTP 属性取决于 SDK 语义约定版本：上一章已测试 Go 示例使用 `http.response.status_code`，而默认 Python 插桩使用 `http.status_code`。
+
+```traceql
+{ resource.service.name = "correlation-api" && span:status = error }
+```
+
+```traceql
+{ resource.service.name = "correlation-api" && span:duration > 2s }
+```
+
+```traceql
+{ resource.service.name = "api-gateway" } >> { resource.service.name = "order-service" }
+```
+
+```traceql
+{ resource.service.name = "correlation-api" } | by(span:status) | count() > 1
+```
+
+`>>` 表示后代；`>` 表示直接子级。`| by(...) | count()` 聚合 span 集合。`rate()` 等 TraceQL 指标函数返回时间序列，不同于单条追踪搜索。对已知 ID 使用 Grafana trace ID 模式或 Tempo 追踪 API；不要使用 `{ trace:id = "abc123" }` 这样的无效内在属性和不完整 ID。
+
+Tempo 示例在部署配置和覆盖设置中同时连接 service-graphs 和 span-metrics，再将结果发送到 Prometheus 远程写入接收器。服务图需要适当的客户端/服务器 SpanKind 及一致服务名。添加原始 `http.target`、完整 URL 或用户 ID 作为维度可能导致基数膨胀。
+
+复用已测试的 [Java MDC/Logback 和 Go/Python 追踪/样例示例](./08-observability-analysis.md)。`is_recording()` 为 false 时仍可能存在有效的未采样上下文。没有 span 时不要丢弃普通日志，也不要用 `MDC.clear()` 清除无关 MDC 值。
+
+## Prometheus 和 Grafana
+
+以下 kube-prometheus-stack values 为 Tempo 生成指标启用远程写入接收器和样例存储。将接收器限制为 Tempo 等可信发送方。应用指标仍需要抓取目标/ServiceMonitor，以及上一章 `correlation-api` 使用的指标/标签约定。
+
+Grafana 使用显式 `prometheus`、`loki` 和 `tempo` UID、`tracesToLogsV2`、容忍空白的 32 字符小写 trace ID 正则表达式，以及预置配置中的 `$` 转义。`serviceMap` 目标必须实际包含生成的服务图指标。
 
 ```yaml
-# prometheus-values.yaml with AMP remote write
+# prometheus-values.yaml
 prometheus:
   prometheusSpec:
-    # Remote write to AMP
-    remoteWrite:
-      - url: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/api/v1/remote_write
-        sigv4:
-          region: us-west-2
-        queueConfig:
-          maxSamplesPerSend: 1000
-          maxShards: 200
-          capacity: 2500
-          batchSendDeadline: 5s
-          minBackoff: 100ms
-          maxBackoff: 5s
-        writeRelabelConfigs:
-          # Drop high-cardinality metrics
-          - sourceLabels: [__name__]
-            regex: 'go_.*|process_.*'
-            action: drop
-          # Keep only needed labels
-          - regex: 'pod_template_hash|controller_revision_hash'
-            action: labeldrop
-
-    # WAL configuration for reliability
+    enableFeatures:
+    - exemplar-storage
+    exemplars:
+      maxSize: 100000
+    enableRemoteWriteReceiver: true
+    retention: 7d
     walCompression: true
-
-    # Retention for local storage (before remote write)
-    retention: 2h
-    retentionSize: 10GB
-
-    # Resources
-    resources:
-      requests:
-        cpu: 500m
-        memory: 2Gi
-      limits:
-        cpu: 2
-        memory: 8Gi
-
-    # Storage for WAL
     storageSpec:
       volumeClaimTemplate:
         spec:
           storageClassName: gp3
-          accessModes: ["ReadWriteOnce"]
+          accessModes:
+          - ReadWriteOnce
           resources:
             requests:
               storage: 50Gi
-
-  # Service account with IRSA
-  serviceAccount:
-    create: true
-    name: prometheus
-    annotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/prometheus-remote-write-role
-```
-
-### Recording Rules 优化
-
-```yaml
-# recording-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: recording-rules
-  namespace: monitoring
-spec:
-  groups:
-    - name: kubernetes.rules
-      interval: 30s
-      rules:
-        # Pre-aggregate CPU usage
-        - record: namespace:container_cpu_usage_seconds_total:sum_rate
-          expr: |
-            sum by (namespace) (
-              rate(container_cpu_usage_seconds_total{container!="",pod!=""}[5m])
-            )
-
-        # Pre-aggregate memory usage
-        - record: namespace:container_memory_working_set_bytes:sum
-          expr: |
-            sum by (namespace) (
-              container_memory_working_set_bytes{container!="",pod!=""}
-            )
-
-        # Pre-aggregate network traffic
-        - record: namespace:container_network_receive_bytes_total:sum_rate
-          expr: |
-            sum by (namespace) (
-              rate(container_network_receive_bytes_total[5m])
-            )
-
-    - name: application.rules
-      interval: 30s
-      rules:
-        # Request rate by service
-        - record: service:http_requests_total:rate5m
-          expr: |
-            sum by (service, namespace) (
-              rate(http_requests_total[5m])
-            )
-
-        # Error rate by service
-        - record: service:http_requests_errors:rate5m
-          expr: |
-            sum by (service, namespace) (
-              rate(http_requests_total{status=~"5.."}[5m])
-            )
-
-        # Latency percentiles
-        - record: service:http_request_duration_seconds:p99
-          expr: |
-            histogram_quantile(0.99,
-              sum by (service, namespace, le) (
-                rate(http_request_duration_seconds_bucket[5m])
-              )
-            )
-
-        - record: service:http_request_duration_seconds:p95
-          expr: |
-            histogram_quantile(0.95,
-              sum by (service, namespace, le) (
-                rate(http_request_duration_seconds_bucket[5m])
-              )
-            )
-
-        - record: service:http_request_duration_seconds:p50
-          expr: |
-            histogram_quantile(0.50,
-              sum by (service, namespace, le) (
-                rate(http_request_duration_seconds_bucket[5m])
-              )
-            )
-```
-
-### 长期 Retention：Thanos vs AMP
-
-| 功能 | Thanos | Amazon Managed Prometheus |
-|---------|--------|---------------------------|
-| **Retention** | 无限（S3） | 150 天 |
-| **Scaling** | 手动 | 自动 |
-| **Cost** | S3 + compute | 按摄入和查询的 sample 计费 |
-| **Operations** | 高（多个组件） | 无（托管） |
-| **Query Federation** | Native（Querier） | Cross-workspace queries |
-| **Downsampling** | 自动（5m、1h） | 不支持 |
-| **Global View** | 多 cluster native | 跨 region 需要设置 |
-| **HA** | 内置 deduplication | 托管 |
-
-**何时选择 Thanos**：
-- 需要 >150 天 retention
-- 需要 downsampling 以优化成本
-- Multi-cloud 或 hybrid 部署
-- 复杂 federation 需求
-
-**何时选择 AMP**：
-- 希望零运维开销
-- 150 天 retention 足够
-- AWS-native stack
-- 可预测、基于使用量的定价
-
-### Multi-Cluster Federation
-
-**使用 AMP**：
-
-```yaml
-# Each cluster writes to shared AMP workspace with cluster label
-prometheus:
-  prometheusSpec:
-    externalLabels:
-      cluster: production-us-west-2
-    remoteWrite:
-      - url: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-shared/api/v1/remote_write
-        sigv4:
-          region: us-west-2
-```
-
-**跨 clusters 查询**：
-
-```promql
-# Aggregate CPU across all clusters
-sum by (cluster) (
-  namespace:container_cpu_usage_seconds_total:sum_rate
-)
-
-# Compare error rates between clusters
-sum by (cluster, service) (
-  service:http_requests_errors:rate5m
-)
-```
-
----
-
-## Grafana 集成
-
-### Datasource Provisioning
-
-```yaml
-# grafana-datasources.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-datasources
-  namespace: monitoring
-  labels:
-    grafana_datasource: "1"
-data:
-  datasources.yaml: |
-    apiVersion: 1
+grafana:
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: '1'
+      searchNamespace: observability
     datasources:
-      # Amazon Managed Prometheus
-      - name: AMP
-        type: prometheus
-        uid: prometheus
-        url: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-xxxxxxxx/
-        access: proxy
-        isDefault: true
-        jsonData:
-          httpMethod: POST
-          sigV4Auth: true
-          sigV4AuthType: default
-          sigV4Region: us-west-2
-        editable: false
-
-      # Loki
-      - name: Loki
-        type: loki
-        uid: loki
-        url: http://loki-gateway.loki.svc:80
-        access: proxy
-        jsonData:
-          maxLines: 1000
-          derivedFields:
-            - datasourceUid: tempo
-              matcherRegex: '"trace_id":"(\w+)"'
-              name: TraceID
-              url: '$${__value.raw}'
-        editable: false
-
-      # Tempo
-      - name: Tempo
-        type: tempo
-        uid: tempo
-        url: http://tempo-query-frontend.tempo.svc:3100
-        access: proxy
-        jsonData:
-          httpMethod: GET
-          tracesToLogs:
-            datasourceUid: loki
-            tags: ['app', 'namespace', 'pod']
-            mappedTags: [{ key: 'service.name', value: 'app' }]
-            mapTagNamesEnabled: true
-            spanStartTimeShift: '-1h'
-            spanEndTimeShift: '1h'
-            filterByTraceID: true
-            lokiSearch: true
-          tracesToMetrics:
-            datasourceUid: prometheus
-            tags: [{ key: 'service.name', value: 'service' }]
-            queries:
-              - name: 'Request rate'
-                query: 'sum(rate(http_server_requests_seconds_count{$$__tags}[5m]))'
-              - name: 'Error rate'
-                query: 'sum(rate(http_server_requests_seconds_count{$$__tags,status=~"5.."}[5m]))'
-              - name: 'P99 latency'
-                query: 'histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{$$__tags}[5m])) by (le))'
-          serviceMap:
-            datasourceUid: prometheus
-          nodeGraph:
-            enabled: true
-          lokiSearch:
-            datasourceUid: loki
-        editable: false
+      enabled: true
+      defaultDatasourceEnabled: false
+      alertmanager:
+        enabled: false
+  additionalDataSources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus-kube-prometheus-prometheus.observability.svc:9090
+    jsonData:
+      httpMethod: POST
+      exemplarTraceIdDestinations:
+      - name: trace_id
+        datasourceUid: tempo
+        urlDisplayLabel: View trace
+    isDefault: true
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki-gateway.observability.svc:80
+    jsonData:
+      derivedFields:
+      - name: TraceID
+        matcherRegex: '"trace_id"\s*:\s*"([0-9a-f]{32})"'
+        datasourceUid: tempo
+        url: $${__value.raw}
+        urlDisplayLabel: View trace
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo.observability.svc:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        tags:
+        - key: service.name
+          value: service_name
+        filterByTraceID: true
+        filterBySpanID: false
+        customQuery: false
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        tags:
+        - key: service.name
+          value: service
+        queries:
+        - name: Request rate
+          query: sum(rate(http_requests_total{$$__tags}[5m]))
+      serviceMap:
+        datasourceUid: prometheus
 ```
 
-### Loki 到 Tempo：Derived Fields
-
-在 Loki datasource 中配置，以将 trace IDs 链接到 Tempo：
-
-```yaml
-jsonData:
-  derivedFields:
-    # JSON logs with trace_id field
-    - datasourceUid: tempo
-      matcherRegex: '"trace_id":"([a-f0-9]+)"'
-      name: TraceID
-      url: '$${__value.raw}'
-      urlDisplayLabel: 'View Trace'
-
-    # Structured logs with traceID field
-    - datasourceUid: tempo
-      matcherRegex: 'traceID=([a-f0-9]+)'
-      name: TraceID
-      url: '$${__value.raw}'
-
-    # OpenTelemetry format
-    - datasourceUid: tempo
-      matcherRegex: 'trace_id=([a-f0-9]{32})'
-      name: TraceID
-      url: '$${__value.raw}'
+```bash
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability -f prometheus-values.yaml
 ```
 
-### Tempo 到 Loki：Trace-to-Logs
+样例需要插桩中的 trace/span 关联、OpenMetrics 暴露格式、Prometheus 存储支持和 Grafana UID 映射。仅 HTTP/2 或直方图配置不会创建样例。采样、保留、租户或权限仍可能使链接的追踪不可用。
 
-```yaml
-jsonData:
-  tracesToLogs:
-    datasourceUid: loki
-    tags: ['app', 'namespace', 'pod', 'container']
-    mappedTags:
-      - key: 'service.name'
-        value: 'app'
-      - key: 'k8s.namespace.name'
-        value: 'namespace'
-      - key: 'k8s.pod.name'
-        value: 'pod'
-    mapTagNamesEnabled: true
-    spanStartTimeShift: '-5m'
-    spanEndTimeShift: '5m'
-    filterByTraceID: true
-    filterBySpanID: false
-    lokiSearch: true
-```
+仪表板自动化时，将仪表板 JSON 本身放入选定 ConfigMap 值。不要使用 API 响应的 `dashboard` 包装层，也不要将提供程序 YAML 当作仪表板 JSON。这些 values 选择 `observability` 中带 `grafana_dashboard: "1"` 的 ConfigMap。避免将手动管理的提供程序/挂载与重叠 Sidecar 设置混用。上一章的完整仪表板 JSON 可放入此 ConfigMap。
 
-### Exemplars 设置
+## AMP：分离写入和读取权限
 
-**Prometheus 配置**：
+AMP 提供兼容 Prometheus 的存储和查询。没有配置的采集器或托管抓取器，它不会采集集群指标。以下 Terraform 创建工作区及独立 IRSA 写入/读取角色；EKS OIDC 提供程序必须已存在。没有独立采集路径，CloudWatch 指标不会自动包含在内。
 
-```yaml
-prometheus:
-  prometheusSpec:
-    enableFeatures:
-      - exemplar-storage
-    exemplars:
-      maxSize: 100000
-```
+```hcl
+# amp.tf
+terraform {
+  required_version = ">= 1.15.0, < 2.0.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.64.0"
+    }
+  }
+}
 
-**Application Instrumentation（Java）**：
+provider "aws" {
+  region = var.region
+}
 
-```java
-// Micrometer with OpenTelemetry exemplars
-@Bean
-public MeterRegistryCustomizer<PrometheusMeterRegistry> exemplarCustomizer() {
-    return registry -> {
-        registry.config().meterFilter(new MeterFilter() {
-            @Override
-            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                return DistributionStatisticConfig.builder()
-                    .percentilesHistogram(true)
-                    .build()
-                    .merge(config);
-            }
-        });
-    };
+variable "region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+
+variable "oidc_provider_arn" {
+  type = string
+}
+
+variable "oidc_issuer" {
+  type        = string
+  description = "EKS OIDC issuer without https:// or a trailing slash."
+  validation {
+    condition     = can(regex("^oidc\\.eks\\.[a-z0-9-]+\\.amazonaws\\.com/id/[A-Za-z0-9]+$", var.oidc_issuer))
+    error_message = "Use the cluster's exact OIDC issuer host/path without https://."
+  }
+}
+
+resource "aws_prometheus_workspace" "docs" {
+  alias = "docs-observability"
+}
+
+locals {
+  clients = {
+    writer = {
+      service_account = "prometheus-amp"
+      actions         = ["aps:RemoteWrite"]
+    }
+    reader = {
+      service_account = "grafana-amp"
+      actions         = ["aps:QueryMetrics", "aps:GetLabels", "aps:GetSeries", "aps:GetMetricMetadata"]
+    }
+  }
+}
+
+resource "aws_iam_role" "amp" {
+  for_each = local.clients
+  name     = "docs-amp-${each.key}"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = var.oidc_provider_arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${var.oidc_issuer}:sub" = "system:serviceaccount:observability:${each.value.service_account}"
+          "${var.oidc_issuer}:aud" = "sts.amazonaws.com"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "amp" {
+  for_each = local.clients
+  role     = aws_iam_role.amp[each.key].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = each.value.actions
+      Resource = aws_prometheus_workspace.docs.arn
+    }]
+  })
+}
+
+output "workspace_id" {
+  value = aws_prometheus_workspace.docs.id
+}
+
+output "workspace_endpoint" {
+  value = aws_prometheus_workspace.docs.prometheus_endpoint
+}
+
+output "client_role_arns" {
+  value = { for k, v in aws_iam_role.amp : k => v.arn }
 }
 ```
 
-**在 Grafana 中使用 Exemplars 查询**：
+`oidc_provider_arn` 和不带协议的 `oidc_issuer` 必须标识同一 EKS 集群。写入方信任 `observability:prometheus-amp`，读取方信任 `observability:grafana-amp`，两者均约束 `aud=sts.amazonaws.com`。策略仅针对该工作区 ARN。具有 RemoteWrite 但没有 QueryMetrics 的 Grafana 角色无法查询指标。
 
-```promql
-# Enable exemplars in panel options, then query
-histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
-```
-
-### Dashboard Provisioning 自动化
+以下是 `prometheus-values.yaml` 的核心 AMP 覆盖配置。Helm 替换整个 `additionalDataSources` 列表，因此添加 AMP 前保留三个基础条目。示例继续同时使用本地 Prometheus。
 
 ```yaml
-# grafana-dashboard-provisioning.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-dashboard-provider
-  namespace: monitoring
-data:
-  dashboards.yaml: |
-    apiVersion: 1
-    providers:
-      - name: 'default'
-        orgId: 1
-        folder: 'Kubernetes'
-        folderUid: 'kubernetes'
-        type: file
-        disableDeletion: false
-        editable: true
-        updateIntervalSeconds: 30
-        options:
-          path: /var/lib/grafana/dashboards/kubernetes
-
-      - name: 'applications'
-        orgId: 1
-        folder: 'Applications'
-        folderUid: 'applications'
-        type: file
-        disableDeletion: false
-        editable: true
-        updateIntervalSeconds: 30
-        options:
-          path: /var/lib/grafana/dashboards/applications
-
-      - name: 'slos'
-        orgId: 1
-        folder: 'SLOs'
-        folderUid: 'slos'
-        type: file
-        disableDeletion: false
-        editable: true
-        updateIntervalSeconds: 30
-        options:
-          path: /var/lib/grafana/dashboards/slos
+prometheus:
+  serviceAccount:
+    create: true
+    name: prometheus-amp
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/docs-amp-writer
+  prometheusSpec:
+    replicas: 2
+    replicaExternalLabelName: __replica__
+    externalLabels:
+      cluster: production-seoul-prometheus
+    remoteWrite:
+    - url: https://aps-workspaces.ap-northeast-2.amazonaws.com/workspaces/REPLACE_WORKSPACE_ID/api/v1/remote_write
+      sigv4:
+        region: ap-northeast-2
+      queueConfig:
+        maxSamplesPerSend: 1000
+        capacity: 5000
+        maxShards: 20
+grafana:
+  serviceAccount:
+    create: true
+    name: grafana-amp
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/docs-amp-reader
+  env:
+    GF_AUTH_SIGV4_AUTH_ENABLED: 'true'
+  additionalDataSources:
+  - name: AMP
+    uid: amp
+    type: prometheus
+    access: proxy
+    url: https://aps-workspaces.ap-northeast-2.amazonaws.com/workspaces/REPLACE_WORKSPACE_ID/
+    jsonData:
+      httpMethod: POST
+      sigV4Auth: true
+      sigV4AuthType: default
+      sigV4Region: ap-northeast-2
 ```
 
-**Dashboard ConfigMap 示例**：
+将片段保存为 `amp-overlay.yaml`，再使用已安装 PyYAML 的 Python 显式组装数据源列表。此程序仅合并该列表，不重新实现 Helm 通用合并行为。应用前替换 IAM 角色 ARN 和工作区端点。
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-dashboard-k8s-overview
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "1"
-data:
-  k8s-overview.json: |
-    {
-      "uid": "k8s-overview",
-      "title": "Kubernetes Overview",
-      "tags": ["kubernetes"],
-      "timezone": "browser",
-      "panels": [
-        {
-          "title": "Cluster CPU Usage",
-          "type": "timeseries",
-          "datasource": { "uid": "prometheus" },
-          "targets": [
-            {
-              "expr": "sum(namespace:container_cpu_usage_seconds_total:sum_rate)",
-              "legendFormat": "Total CPU"
-            }
-          ]
-        }
-      ]
-    }
+```python
+import yaml
+from pathlib import Path
+
+base = yaml.safe_load(Path("prometheus-values.yaml").read_text())
+overlay = yaml.safe_load(Path("amp-overlay.yaml").read_text())
+overlay["grafana"]["additionalDataSources"] = (
+    base["grafana"]["additionalDataSources"]
+    + overlay["grafana"]["additionalDataSources"]
+)
+Path("amp-values.yaml").write_text(yaml.safe_dump(overlay, sort_keys=False))
 ```
+
+```bash
+helm template prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability   -f prometheus-values.yaml -f amp-values.yaml > amp-rendered.yaml
+```
+
+### 高可用、队列和保留
+
+AMP 高可用去重使用 `cluster` 和 `__replica__`。相同数据的副本需要相同 `cluster` 及不同 `__replica__` 值。将抓取覆盖不同的独立 Prometheus 实例归入同一高可用组可能丢失数据。检查与指标自身 `cluster` 标签的冲突。跨集群规划工作区和高可用组标签；独立工作区不会自动联邦化。
+
+队列分片数和容量影响吞吐量与内存。WAL 和重试不是无限缓冲或交付保证。本地保留七天不保证可以重放七天远程写入中断的数据。监控积压、失败、拒绝和 WAL 行为，并测试恢复。命名空间保留过滤器可能移除没有该标签的节点/集群指标；`labeldrop` 可能使原本不同的序列冲突。记录规则添加聚合序列，不会自动降低源基数。
+
+AMP 工作区保留期可配置，最长 1,095 天。声称 150 天是必须使用 Thanos 才能突破的硬限制是不正确的。延长保留期不能恢复已过期指标。
+
+| 领域 | AMP | Thanos |
+|---|---|---|
+| 存储和运维 | 托管存储；用户仍负责采集、IAM、配额、成本和规则 | 运维对象存储集成及 query/store/compactor 组件 |
+| 保留 | 工作区配置和服务限制 | Compactor 策略、对象存储和预算 |
+| 高可用与多集群 | 显式高可用标签和工作区设计 | 副本标签、去重和存储连接 |
+| 降采样 | 不要假定具有 Thanos 式自动降采样 | 审核 compactor 分辨率/保留和查询行为 |
+
+SigV4 验证 AWS 请求；不替代 TLS 加密。同时验证 Grafana 进程 SigV4 启用、凭证、IRSA 信任和工作区查询权限。Amazon Managed Grafana 与自托管 Grafana 使用不同角色配置流程。
+
+## 应用后
+
+1. 检查渲染的镜像、PVC、Service 端口、ConfigMap 挂载和 ServiceAccount。
+2. 在各自后端查询一条日志、一条追踪和一个直接插桩指标。
+3. 检查 Grafana 追踪到日志、日志到追踪和样例链接，包括租户及时间范围。
+4. 在生产环境之外测试 Collector 重启、Kafka 重放、S3 权限失败和远程写入中断/恢复。
+5. 观察 Loki 保留删除、Tempo 块维护、警告、配额和成本。
+
+本次审查使用固定版本 chart 渲染、原生 Loki/Tempo/Collector/Alloy 配置解析器、渲染后的 PVC/Service/身份检查和 Terraform 模拟测试。未部署 EKS/Kafka/S3，也未证明实际 Grafana 登录及 AWS 读写访问成功。
+
+## 官方参考资料
+
+- [Loki 部署模式](https://grafana.com/docs/loki/latest/get-started/deployment-modes/)
+- [Loki 保留策略](https://grafana.com/docs/loki/latest/operations/storage/retention/)
+- [Grafana 社区 Helm chart](https://github.com/grafana-community/helm-charts)
+- [Promtail 生命周期](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [Tempo 3 迁移](https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/)
+- [Tempo 3.0.3 Kafka 配置](https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go)
+- [Collector 尾部采样](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor)
+- [Collector 批处理器](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/batchprocessor)
+- [AMP 工作区配置](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html)
+- [AMP 高可用](https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html)
 
 ---
 
-## 相关文档
-
-- [Monitoring Stack 概览](../observability/README.md) - VictoriaMetrics、Prometheus 和 Grafana 基础
-- [Logging Stack 概览](../observability/logging/README.md) - Loki 和 Tempo 介绍
-
----
-
-< [上一篇：Observability 分析](./08-observability-analysis.md) | [目录](./README.md) | [下一篇：资源优化](./10-resource-optimization.md) >
+< [上一篇：可观测性分析](./08-observability-analysis.md) | [目录](./README.md) | [下一篇：资源优化](./10-resource-optimization.md) >

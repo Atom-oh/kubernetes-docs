@@ -1,201 +1,147 @@
-# Istio ロギング
+# Istioログ記録
 
-> **サポート対象バージョン**: Istio 1.28
-> **最終更新**: February 19, 2026
+> **対応バージョン**: Istio 1.31
+> **最終更新**: September 11, 2026
 
-Istio のロギング機能により、service mesh 内のすべてのアクティビティを記録および分析できます。トラフィック分析、デバッグ、セキュリティ監査には、Access Log、Envoy ログ、構造化ログを使用します。
+> **検証範囲**: 演習設定は公式資料とオフライン検証器で確認し、クラスターはデプロイしていません。名前空間、ID、ストレージ、バックエンド、負荷の前提は各例で示し、対象環境で検証する必要があります。
+
+設定したアクセスログは観測要求/接続のメタデータを記録します。Envoy/istiod診断やアプリログとは別で、全メッシュ活動や要求/応答本文全体は取得しません。例はサイドカー用です。ambient L7ログにはwaypoint接続が必要で、ztunnelには別L4ログがあります。
 
 ## 目次
 
-1. [ロギングの概要](#logging-overview)
-2. [Access Log の設定](#access-log-configuration)
-3. [Telemetry API によるログのカスタマイズ](#log-customization-with-telemetry-api)
-4. [ログのフィルタリングとサンプリング](#log-filtering-and-sampling)
-5. [Envoy ログレベルの調整](#envoy-log-level-adjustment)
-6. [Promtail + Loki の統合](#promtail--loki-integration)
-7. [Grafana ログダッシュボード](#grafana-log-dashboard)
-8. [Metrics/Traces とのログ統合](#log-integration-with-metricstraces)
-9. [パフォーマンスの最適化](#performance-optimization)
+1. [ログ記録概要](#logging-overview)
+2. [アクセスログ設定](#access-log-configuration)
+3. [Telemetry APIによるログカスタマイズ](#log-customization-with-telemetry-api)
+4. [ログフィルタリングとサンプリング](#log-filtering-and-sampling)
+5. [Envoyログレベル調整](#envoy-log-level-adjustment)
+6. [Alloy + Loki統合](#alloy--loki-integration)
+7. [Grafanaログダッシュボード](#grafana-log-dashboard)
+8. [メトリクス/トレースとのログ統合](#log-integration-with-metricstraces)
+9. [性能最適化](#performance-optimization)
 10. [トラブルシューティング](#troubleshooting)
 
-## ロギングの概要
+## ログ記録概要 {#logging-overview}
 
-### Istio のログレイヤー
+### Istioログのレイヤー
 
-```mermaid
-flowchart TD
-    subgraph "Application Pod"
-        App[Application Container]
-        Envoy[Envoy Proxy]
-        App --> Envoy
-    end
-
-    subgraph "Istio Control Plane"
-        Istiod[istiod]
-        TelemetryAPI[Telemetry API]
-    end
-
-    subgraph "Log Collection"
-        Promtail[Promtail Agent]
-        FluentBit[Fluent Bit]
-        OTELCol[OpenTelemetry Collector]
-    end
-
-    subgraph "Log Storage & Query"
-        Loki[Grafana Loki]
-        ES[Elasticsearch]
-    end
-
-    subgraph "Visualization"
-        Grafana[Grafana]
-    end
-
-    Envoy -->|Access Logs| Promtail
-    Envoy -->|Access Logs| FluentBit
-    Envoy -->|OTLP Logs| OTELCol
-
-    Istiod -->|Configure| Envoy
-    TelemetryAPI -.->|Apply Config| Istiod
-
-    Promtail --> Loki
-    FluentBit --> ES
-    OTELCol --> Loki
-
-    Loki --> Grafana
-    ES --> Grafana
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istioComponent fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef logCollector fill:#00D9FF,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    class App k8sComponent;
-    class Envoy,Istiod,TelemetryAPI istioComponent;
-    class Promtail,FluentBit,OTELCol logCollector;
-    class Loki,ES storage;
-    class Grafana visualization;
-```
+Envoy → 構造化標準出力 → Alloy Kubernetesログ収集 → Loki → Grafana。代替としてEnvoy OTLPアクセスログproviderがOpenTelemetry Collectorへ送ります。同じログは重複を避け1経路を選びます。Istiodが選択Telemetry/provider設定を配布します。
 
 ### ログの種類
 
-1. **Access Log**: すべての HTTP/TCP リクエスト/レスポンスを記録します
-2. **Envoy Proxy Log**: Envoy の内部操作ログ
-3. **Istiod Log**: control plane のログ
-4. **Application Log**: Application 独自のログ
+1. **アクセスログ**: 設定したHTTP要求/TCP接続メタデータ
+2. **Envoyプロキシログ**: Envoy内部動作ログ
+3. **Istiodログ**: コントロールプレーンログ
+4. **アプリケーションログ**: アプリ自身のログ
 
-## Access Log の設定
+## アクセスログ設定 {#access-log-configuration}
 
-### 1. MeshConfig でグローバル Access Log を有効化
+### 1. アクセスログproviderの定義
+
+`istioctl install -f logging-install.yaml`で以下のprovider定義の1つを既存Istio設定にマージします。他のメッシュ設定/providerを保持します。導入入力で、Kubernetes IstioOperatorリソースではありません。下のTelemetryで導入providerを選択します。textとJSONは代替形式です。
 
 #### 基本テキスト形式
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    accessLogFile: /dev/stdout
-    accessLogFormat: |
-      [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%"
-      %RESPONSE_CODE% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT% %DURATION%
-      "%REQ(X-FORWARDED-FOR)%" "%REQ(USER-AGENT)%" "%REQ(X-REQUEST-ID)%"
-      "%REQ(:AUTHORITY)%" "%UPSTREAM_HOST%"
+  name: logging
+spec:
+  meshConfig:
+    extensionProviders:
+    - name: mesh-text
+      envoyFileAccessLog:
+        path: /dev/stdout
+        logFormat:
+          text: '[%START_TIME%] "%REQ(:METHOD)% %REQ_WITHOUT_QUERY(:PATH)% %PROTOCOL%" %RESPONSE_CODE%
+            %RESPONSE_FLAGS% %DURATION% trace=%TRACE_ID% request=%REQ(X-REQUEST-ID)%'
 ```
 
-**適用**:
-```bash
-kubectl rollout restart deployment -n istio-system istiod
-
-# Or restart existing pods
-kubectl rollout restart deployment -n <namespace> <deployment-name>
-```
-
-#### JSON 形式（構造化ログ）
+#### JSON形式（Loki例で使用）
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    accessLogFile: /dev/stdout
-    accessLogEncoding: JSON
-    accessLogFormat: |
-      {
-        "start_time": "%START_TIME%",
-        "method": "%REQ(:METHOD)%",
-        "path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
-        "protocol": "%PROTOCOL%",
-        "response_code": "%RESPONSE_CODE%",
-        "response_flags": "%RESPONSE_FLAGS%",
-        "bytes_received": "%BYTES_RECEIVED%",
-        "bytes_sent": "%BYTES_SENT%",
-        "duration": "%DURATION%",
-        "upstream_service_time": "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%",
-        "x_forwarded_for": "%REQ(X-FORWARDED-FOR)%",
-        "user_agent": "%REQ(USER-AGENT)%",
-        "request_id": "%REQ(X-REQUEST-ID)%",
-        "authority": "%REQ(:AUTHORITY)%",
-        "upstream_host": "%UPSTREAM_HOST%",
-        "upstream_cluster": "%UPSTREAM_CLUSTER%",
-        "upstream_local_address": "%UPSTREAM_LOCAL_ADDRESS%",
-        "downstream_local_address": "%DOWNSTREAM_LOCAL_ADDRESS%",
-        "downstream_remote_address": "%DOWNSTREAM_REMOTE_ADDRESS%",
-        "requested_server_name": "%REQUESTED_SERVER_NAME%",
-        "route_name": "%ROUTE_NAME%"
-      }
+  name: logging
+spec:
+  meshConfig:
+    extensionProviders:
+    - name: mesh-json
+      envoyFileAccessLog:
+        path: /dev/stdout
+        logFormat:
+          labels:
+            log_type: access
+            start_time: '%START_TIME%'
+            method: '%REQ(:METHOD)%'
+            path: '%REQ_WITHOUT_QUERY(X-ENVOY-ORIGINAL-PATH?:PATH)%'
+            protocol: '%PROTOCOL%'
+            response_code: '%RESPONSE_CODE%'
+            response_code_details: '%RESPONSE_CODE_DETAILS%'
+            response_flags: '%RESPONSE_FLAGS%'
+            bytes_received: '%BYTES_RECEIVED%'
+            bytes_sent: '%BYTES_SENT%'
+            duration: '%DURATION%'
+            request_id: '%REQ(X-REQUEST-ID)%'
+            trace_id: '%TRACE_ID%'
+            authority: '%REQ(:AUTHORITY)%'
+            upstream_host: '%UPSTREAM_HOST%'
+            upstream_cluster: '%UPSTREAM_CLUSTER%'
+            route_name: '%ROUTE_NAME%'
+            downstream_tls_version: '%DOWNSTREAM_TLS_VERSION%'
+            peer_uri_san: '%DOWNSTREAM_PEER_URI_SAN%'
 ```
 
-### 2. Telemetry API によるきめ細かな制御
+provider形式がJSONフィールドを作り、Telemetryフィルターが記録イベントを選びます。ログの`duration`はミリ秒、CELの`request.duration`は期間値です。`trace_id`はトレースが提供する実アクティブID、`request_id`は別の要求相関値です。クエリ文字列は省略します。追加ヘッダーは記録前に確認します。
 
-Telemetry API では、namespace または workload ごとにログを制御できます。
+ログ更新はプロキシ設定として配信され、全istiod/ワークロード再起動は通常の有効化手順ではありません。実効リスナーとテスト要求を確認します。後述のbootstrapログレベル変更には選択プロキシのロールアウトが必要です。
 
-#### Mesh 全体で JSON Access Log を有効化
+### 2. Telemetry APIによる細粒度制御
+
+Telemetryは名前空間/ワークロードごとにログを選びます。例は選択肢であり、名前空間ごとにセレクターなしリソースが1つになるようマージします。このガイドはサービス受信ログにSERVERを使い、client/server重複ホップ計上を避けます。Gateway/送信診断は別CLIENTポリシーを使えますが、サービス要求レート計算に混ぜてはいけません。`mesh-text`の場合は`mesh-json`の代わりにそのproviderを選びます。
+
+#### メッシュ全体のJSONアクセスログ有効化
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: mesh-logging
   namespace: istio-system
 spec:
   accessLogging:
-  - providers:
-    - name: envoy
-    # JSON format with all fields
-    filter:
-      expression: "true"  # Log all requests
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
 ```
 
-#### namespace ごとのログ設定
+#### 名前空間ごとのログ設定
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: production-logging
   namespace: production
 spec:
   accessLogging:
-  - providers:
-    - name: envoy
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
     # Log only errors and slow requests
     filter:
       expression: |
         response.code >= 400 ||
-        duration > 1000
+        request.duration > duration("1s")
 ```
 
-#### workload ごとの詳細ログ
+#### ワークロードごとの詳細ログ
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: payment-service-logging
@@ -205,102 +151,183 @@ spec:
     matchLabels:
       app: payment-service
   accessLogging:
-  - providers:
-    - name: envoy
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
     # Log all requests + additional custom fields
     filter:
       expression: "true"
 ```
 
-## Telemetry API によるログのカスタマイズ
+## Telemetry APIによるログカスタマイズ {#log-customization-with-telemetry-api}
 
-### カスタムログプロバイダー
+### カスタムログprovider
 
-#### 1. OpenTelemetry 経由でログを送信
+#### 1. OpenTelemetry経由で送信
+
+同じ標準出力をAlloyで集める代替です。providerを導入して名前空間Telemetryで選びます。
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
+  name: logging
+spec:
+  meshConfig:
     extensionProviders:
     - name: otel-logging
       envoyOtelAls:
-        service: opentelemetry-collector.observability.svc.cluster.local
+        service: otel-collector.observability.svc.cluster.local
         port: 4317
         logFormat:
+          text: '%REQ(:METHOD)% %REQ_WITHOUT_QUERY(:PATH)% %RESPONSE_CODE%'
           labels:
-            start_time: "%START_TIME%"
-            method: "%REQ(:METHOD)%"
-            path: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
-            protocol: "%PROTOCOL%"
-            response_code: "%RESPONSE_CODE%"
-            response_flags: "%RESPONSE_FLAGS%"
-            duration: "%DURATION%"
-            upstream_host: "%UPSTREAM_HOST%"
-            user_agent: "%REQ(USER-AGENT)%"
-            request_id: "%REQ(X-REQUEST-ID)%"
----
-apiVersion: telemetry.istio.io/v1alpha1
+            log_type: access
+            start_time: '%START_TIME%'
+            method: '%REQ(:METHOD)%'
+            path: '%REQ_WITHOUT_QUERY(X-ENVOY-ORIGINAL-PATH?:PATH)%'
+            protocol: '%PROTOCOL%'
+            response_code: '%RESPONSE_CODE%'
+            response_code_details: '%RESPONSE_CODE_DETAILS%'
+            response_flags: '%RESPONSE_FLAGS%'
+            bytes_received: '%BYTES_RECEIVED%'
+            bytes_sent: '%BYTES_SENT%'
+            duration: '%DURATION%'
+            request_id: '%REQ(X-REQUEST-ID)%'
+            trace_id: '%TRACE_ID%'
+            authority: '%REQ(:AUTHORITY)%'
+            upstream_host: '%UPSTREAM_HOST%'
+            upstream_cluster: '%UPSTREAM_CLUSTER%'
+            route_name: '%ROUTE_NAME%'
+            downstream_tls_version: '%DOWNSTREAM_TLS_VERSION%'
+            peer_uri_san: '%DOWNSTREAM_PEER_URI_SAN%'
+```
+
+```yaml
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: otel-access-logging
-  namespace: istio-system
-spec:
-  accessLogging:
-  - providers:
-    - name: otel-logging
-```
-
-#### 2. ファイルにログを保存（Sidecar のボリューム共有）
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: file-logging
   namespace: production
 spec:
   accessLogging:
-  - providers:
-    - name: envoy-file-logger
----
-apiVersion: v1
-kind: ConfigMap
+  - match:
+      mode: SERVER
+    providers:
+    - name: otel-logging
+```
+
+[トレースガイド](02-tracing.md)のcollectorはOTLP receiver、memory limiter、batch processorを定義済みです。このlogs pipeline/exporterをマージして再読み込み/再デプロイします。Loki 3.7.7は`/otlp/v1/logs`でOTLP/HTTPを受け、exporterが`/v1/logs`を追加します。TSDB v13は構造化メタデータ対応です。OTLP属性は標準出力JSON本文でなくメタデータになるため、`| json`例を無条件再利用せずクエリを調整します。
+
+```yaml
+exporters:
+  otlp_http/loki:
+    endpoint: http://loki.observability.svc.cluster.local:3100/otlp
+service:
+  pipelines:
+    logs:
+      receivers:
+      - otlp
+      processors:
+      - memory_limiter
+      - batch
+      exporters:
+      - otlp_http/loki
+```
+
+#### 2. ファイルログと共有ボリューム
+
+providerのファイルパスだけではボリュームを作成/マウントしません。任意Pod例は注入プロキシに上限付き`emptyDir`をマウントします。アプリイメージを置き換えてください。別readerが同じボリュームをマウントしローテーション/送信を扱う必要があります。ファイルは`kubectl logs`に出ず、`emptyDir`はPodとともに失われます。主収集例は標準出力を使います。
+
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
+  name: logging
+spec:
+  meshConfig:
     extensionProviders:
     - name: envoy-file-logger
       envoyFileAccessLog:
         path: /var/log/istio/access.log
         logFormat:
           labels:
-            timestamp: "%START_TIME%"
-            method: "%REQ(:METHOD)%"
-            path: "%REQ(:PATH)%"
-            status: "%RESPONSE_CODE%"
+            log_type: access
+            start_time: '%START_TIME%'
+            method: '%REQ(:METHOD)%'
+            path: '%REQ_WITHOUT_QUERY(X-ENVOY-ORIGINAL-PATH?:PATH)%'
+            protocol: '%PROTOCOL%'
+            response_code: '%RESPONSE_CODE%'
+            response_code_details: '%RESPONSE_CODE_DETAILS%'
+            response_flags: '%RESPONSE_FLAGS%'
+            bytes_received: '%BYTES_RECEIVED%'
+            bytes_sent: '%BYTES_SENT%'
+            duration: '%DURATION%'
+            request_id: '%REQ(X-REQUEST-ID)%'
+            trace_id: '%TRACE_ID%'
+            authority: '%REQ(:AUTHORITY)%'
+            upstream_host: '%UPSTREAM_HOST%'
+            upstream_cluster: '%UPSTREAM_CLUSTER%'
+            route_name: '%ROUTE_NAME%'
+            downstream_tls_version: '%DOWNSTREAM_TLS_VERSION%'
+            peer_uri_san: '%DOWNSTREAM_PEER_URI_SAN%'
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: file-logging-example
+  namespace: production
+  labels:
+    app: file-logging-example
+  annotations:
+    sidecar.istio.io/inject: 'true'
+    sidecar.istio.io/userVolumeMount: '[{"name":"istio-logs","mountPath":"/var/log/istio"}]'
+spec:
+  securityContext:
+    fsGroup: 1337
+  containers:
+  - name: app
+    image: registry.example.com/team/app:REPLACE_WITH_TESTED_TAG
+  volumes:
+  - name: istio-logs
+    emptyDir:
+      sizeLimit: 100Mi
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: file-logging
+  namespace: production
+spec:
+  selector:
+    matchLabels:
+      app: file-logging-example
+  accessLogging:
+  - match:
+      mode: SERVER
+    providers:
+    - name: envoy-file-logger
 ```
 
 ### ログ形式のカスタマイズ
 
-#### CEL 式を使用した動的フィールド
+#### CELによるイベントフィルタリング
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: custom-log-format
   namespace: production
 spec:
   accessLogging:
-  - providers:
-    - name: envoy
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
     filter:
       expression: "true"
 ```
@@ -309,53 +336,59 @@ spec:
 
 | 変数 | 説明 | 例 |
 |----------|-------------|---------|
-| `request.method` | HTTP メソッド | GET, POST |
-| `request.path` | リクエストパス | /api/v1/users |
-| `request.url_path` | URL パス（クエリを除く） | /api/v1/users |
-| `request.headers` | リクエストヘッダー | `request.headers['user-agent']` |
-| `response.code` | HTTP ステータスコード | 200, 404, 500 |
-| `response.headers` | レスポンスヘッダー | `response.headers['content-type']` |
-| `response.flags` | Envoy レスポンスフラグ | UH, UF, URX |
-| `duration` | リクエスト時間（ms） | 123 |
-| `connection.mtls` | mTLS の使用状況 | true, false |
-| `source.principal` | 送信元 Service Account | spiffe://... |
-| `destination.principal` | 宛先 Service Account | spiffe://... |
+| `request.method` | HTTPメソッド | GET, POST |
+| `request.path` | 要求パス | /api/v1/users |
+| `request.url_path` | URLパス（クエリを除く） | /api/v1/users |
+| `request.headers` | 要求ヘッダー | `request.headers['user-agent']` |
+| `response.code` | HTTP状態コード | 200, 404, 500 |
+| `response.headers` | 応答ヘッダー | `response.headers['content-type']` |
+| `response.flags` | 整数ビットマスク | `response.flags != 0` |
+| `request.duration` | 要求の期間値 | `duration("1s")` |
+| `connection.mtls` | mTLS使用 | true, false |
+| `connection.uri_san_peer_certificate` | 存在する場合の下流ピアURI SAN | spiffe://... |
+| `connection.uri_san_local_certificate` | 下流ローカル証明書URI SAN | spiffe://... |
 
-## ログのフィルタリングとサンプリング
+## ログフィルタリングとサンプリング {#log-filtering-and-sampling}
 
-### 1. 条件付きロギング
+### 1. 条件付きログ
 
-#### エラーと低速なリクエストのみをログに記録
+#### エラーと遅い要求だけを記録
+
+HTTP属性フィルターはHTTP通信に適用します。TCPログは接続属性か、HTTPフィールド欠損を明示的に扱う式を使います。CELはイベントを選択し、JSON形式は定義しません。
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: error-slow-logging
   namespace: production
 spec:
   accessLogging:
-  - providers:
-    - name: envoy
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
     filter:
       expression: |
         response.code >= 400 ||
         response.code == 0 ||
-        duration > 1000
+        request.duration > duration("1s")
 ```
 
-#### 特定のパスを除外
+#### 特定パスの除外
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: filter-health-checks
   namespace: production
 spec:
   accessLogging:
-  - providers:
-    - name: envoy
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
     filter:
       expression: |
         !(request.url_path.startsWith('/health') ||
@@ -364,109 +397,113 @@ spec:
           request.url_path == '/metrics')
 ```
 
-#### HTTP メソッドのフィルタリング
+#### HTTPメソッドのフィルタリング
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: critical-methods-only
   namespace: production
 spec:
   accessLogging:
-  - providers:
-    - name: envoy
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
     filter:
       expression: |
         request.method in ['POST', 'PUT', 'DELETE', 'PATCH']
 ```
 
-#### 非 mTLS トラフィックのみをログに記録（セキュリティ監査）
+#### 非mTLS通信だけ記録（セキュリティ監査）
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: non-mtls-logging
   namespace: production
 spec:
   accessLogging:
-  - providers:
-    - name: envoy
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
     filter:
       expression: |
         !connection.mtls
 ```
 
-### 2. サンプリング
+### 2. Collectorでのサンプリング
 
-#### 確率的サンプリング（10% をログに記録）
+Alloyの対応`stage.sampling`を使います。Telemetry CELに文書化された`random()`サンプリング関数はありません。均一10%保持には`loki.process`内へ次のstageを加えます。
 
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: sampled-logging
-  namespace: production
-spec:
-  accessLogging:
-  - providers:
-    - name: envoy
-    filter:
-      expression: |
-        random() < 0.1  # 10% sampling
+```alloy
+stage.sampling {
+  rate = 0.1
+  drop_counter_reason = "uniform_sampling"
+}
 ```
 
-#### 条件付き + サンプリング（エラーは 100%、通常時は 1%）
+成功かつ1秒未満のアクセスログを1%保持し、エラー/遅い/未分類ログを保持するには、JSON providerの整数フィールドを解析し、一時ラベルで分類、サンプル後に書き込み前にラベルを消します。主process stageをこの代替に置換し、`forward_to`は保持します。
 
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: smart-sampling
-  namespace: production
-spec:
-  accessLogging:
-  - providers:
-    - name: envoy
-    filter:
-      expression: |
-        response.code >= 400 ||
-        duration > 2000 ||
-        random() < 0.01
+```alloy
+stage.json {
+  expressions = { log_type = "log_type", response_code = "response_code", duration = "duration" }
+}
+stage.labels {
+  values = { log_type = "log_type", sample_status = "response_code", sample_duration_ms = "duration" }
+}
+stage.match {
+  selector = "{log_type=\"access\", sample_status=~\"[123][0-9]{2}\", sample_duration_ms=~\"[0-9]{1,3}\"}"
+  stage.sampling {
+    rate = 0.01
+    drop_counter_reason = "normal_access_sampled"
+  }
+}
+stage.label_drop {
+  values = ["sample_status", "sample_duration_ms"]
+}
 ```
 
-### 3. namespace ごとに異なるロギング
+`stage.match`はstreamセレクターと行フィルター対応で、完全なLogQLラベルフィルターパイプラインではありません。一時durationラベルはLokiへ届きません。Collectorサンプリングは取り込み/保存を減らし、プロキシ生成費用は減らしません。保持ログの件数、分位数、エラー率には偏りがあります。全通信SLIには未サンプリングIstioメトリクスを使います。下のダッシュボード/アラートは未サンプリングアクセスログが必要です。
+
+### 3. 名前空間別のログ設定
 
 ```yaml
 # Production: Log only errors
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: production-logging
   namespace: production
 spec:
   accessLogging:
-  - providers:
-    - name: envoy
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
     filter:
       expression: "response.code >= 400"
 ---
 # Staging: Log all requests
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: staging-logging
   namespace: staging
 spec:
   accessLogging:
-  - providers:
-    - name: envoy
+  - match:
+      mode: SERVER
+    providers:
+    - name: mesh-json
     filter:
       expression: "true"
 ---
 # Development: Disable logging
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: dev-logging
@@ -476,11 +513,11 @@ spec:
   - disabled: true
 ```
 
-## Envoy ログレベルの調整
+## Envoyログレベル調整 {#envoy-log-level-adjustment}
 
-### ログレベルを動的に変更
+### ログレベルの動的変更
 
-#### Envoy 全体のログレベル
+#### Envoy全体のログレベル
 
 ```bash
 # Change to Debug level
@@ -493,7 +530,7 @@ istioctl proxy-config log <pod-name> -n <namespace> --level info
 istioctl proxy-config log <pod-name> -n <namespace> --level warning
 ```
 
-#### コンポーネントごとのログレベル
+#### コンポーネント別ログレベル
 
 ```bash
 # Debug HTTP connections only
@@ -507,42 +544,49 @@ istioctl proxy-config log <pod-name> -n <namespace> \
   --level http:debug,router:info,upstream:debug,connection:trace
 ```
 
-### 主要な Envoy ログコンポーネント
+`istioctl proxy-config log <pod-name> -n <namespace>`でその版の対応コンポーネントを列挙します。全ビルドが下の全例を公開するわけではありません。
 
-| コンポーネント | 説明 | ユースケース |
+### 主なEnvoyログコンポーネント
+
+| コンポーネント | 説明 | 用途 |
 |-----------|-------------|----------|
-| `admin` | Admin インターフェイス | Admin API のデバッグ |
-| `aws` | AWS 統合 | AWS service の問題 |
-| `connection` | TCP 接続 | 接続問題のデバッグ |
-| `filter` | HTTP フィルター | フィルターチェーンの分析 |
-| `forward_proxy` | Forward proxy | Proxy 動作の追跡 |
-| `grpc` | gRPC | gRPC 通信の問題 |
-| `hc` | Health check | Health check の失敗 |
-| `http` | HTTP | HTTP リクエスト/レスポンスの追跡 |
-| `http2` | HTTP/2 | HTTP/2 プロトコルの問題 |
-| `jwt` | JWT 認証 | JWT トークンの検証 |
-| `lua` | Lua スクリプト | Lua フィルターのデバッグ |
-| `main` | メインロジック | Envoy の一般的な操作 |
-| `router` | ルーティング | ルーティング決定の追跡 |
-| `runtime` | Runtime 設定 | 動的設定の変更 |
-| `upstream` | Upstream cluster | Backend 接続の問題 |
-| `client` | HTTP クライアント | 送信リクエスト |
-| `pool` | 接続プール | 接続プールの管理 |
-| `rbac` | RBAC フィルター | 権限問題のデバッグ |
+| `admin` | 管理インターフェース | 管理APIデバッグ |
+| `aws` | AWS統合 | AWSサービス問題 |
+| `connection` | TCP接続 | 接続問題のデバッグ |
+| `filter` | HTTPフィルター | フィルターチェーン分析 |
+| `forward_proxy` | フォワードプロキシ | プロキシ動作追跡 |
+| `grpc` | gRPC | gRPC通信問題 |
+| `hc` | ヘルスチェック | ヘルスチェック失敗 |
+| `http` | HTTP | HTTP要求/応答追跡 |
+| `http2` | HTTP/2 | HTTP/2プロトコル問題 |
+| `jwt` | JWT認証 | JWT検証 |
+| `lua` | Luaスクリプト | Luaフィルターデバッグ |
+| `main` | 主ロジック | 一般的Envoy動作 |
+| `router` | ルーティング | 経路判断追跡 |
+| `runtime` | ランタイム設定 | 動的設定変更 |
+| `upstream` | 上流クラスター | backend接続問題 |
+| `client` | HTTPクライアント | 送信要求 |
+| `pool` | 接続プール | 接続プール管理 |
+| `rbac` | RBACフィルター | 権限問題のデバッグ |
 
 ### 永続的なログレベル設定
+
+導入valuesをマージし選択プロキシをロールアウトします。一時変更前に既存レベルを確認し、後で戻します。ログレベルはアクセスログを有効にしません。
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
+metadata:
+  name: proxy-log-levels
 spec:
-  meshConfig:
-    defaultConfig:
-      proxyLogLevel: "info"  # Default level
-      componentLogLevel: "http:debug,router:info,upstream:debug"
+  values:
+    global:
+      proxy:
+        logLevel: info
+        componentLogLevel: http:debug,router:info,upstream:debug
 ```
 
-### 特定の workload にのみ Debug ログを適用
+### 特定ワークロードだけにデバッグログを適用
 
 ```yaml
 apiVersion: v1
@@ -555,14 +599,20 @@ metadata:
 spec:
   containers:
   - name: app
-    image: my-app:latest
+    image: registry.example.com/team/my-app:REPLACE_WITH_TESTED_TAG
 ```
 
-## Promtail + Loki の統合
 
-### 1. Grafana Loki をインストール
 
-#### Loki Deployment（シンプルなスケーラブルモード）
+## Alloy + Loki統合 {#alloy--loki-integration}
+
+Promtailは**March 2, 2026**にサポート終了しました。新デプロイはAlloyなど対応クライアントを使います。例は旧PromtailファイルtailをAlloy Kubernetes APIログ収集へ置換し、Dockerパス、特権コンテナ、ノードFSマウントは不要です。
+
+### 1. Lokiのインストール（単一バイナリ）
+
+Loki 3.7.7、TSDB v13、ファイルシステム保存の、新規1レプリカ/1テナント例です。Simple Scalableでなく**単一バイナリ**です。先に`observability`を作ります。EKSでは動作するEBS CSIと`gp3`クラスが必要です。他環境は永続StorageClassを使います。FargateはEBSをマウントできないため、適切なEC2ノードか対応外部Lokiサービスを使います。
+
+`auth_enabled: false`ではネットワークアクセスがテナントログへのアクセスになります。エンドポイントを非公開に保ち、本番は対応認証Gateway/TLSを設定します。既存Loki更新では過去schemaを保持します。下の2024開始日は有効で、リリース日ではありません。Compactor保持には永続状態と`delete_request_store`が必要です。
 
 ```yaml
 apiVersion: v1
@@ -573,11 +623,9 @@ metadata:
 data:
   loki.yaml: |
     auth_enabled: false
-
     server:
       http_listen_port: 3100
       grpc_listen_port: 9096
-
     common:
       path_prefix: /loki
       storage:
@@ -588,7 +636,6 @@ data:
       ring:
         kvstore:
           store: inmemory
-
     schema_config:
       configs:
       - from: 2024-01-01
@@ -598,9 +645,8 @@ data:
         index:
           prefix: index_
           period: 24h
-
     limits_config:
-      retention_period: 168h  # 7 days
+      retention_period: 168h
       ingestion_rate_mb: 16
       ingestion_burst_size_mb: 32
       max_query_length: 721h
@@ -609,14 +655,13 @@ data:
       max_global_streams_per_user: 0
       reject_old_samples: true
       reject_old_samples_max_age: 168h
-
     compactor:
       working_directory: /loki/compactor
       compaction_interval: 10m
       retention_enabled: true
       retention_delete_delay: 2h
       retention_delete_worker_count: 150
-
+      delete_request_store: filesystem
     querier:
       max_concurrent: 4
 ---
@@ -626,7 +671,7 @@ metadata:
   name: loki
   namespace: observability
 spec:
-  serviceName: loki
+  serviceName: loki-headless
   replicas: 1
   selector:
     matchLabels:
@@ -635,10 +680,11 @@ spec:
     metadata:
       labels:
         app: loki
+        sidecar.istio.io/inject: 'false'
     spec:
       containers:
       - name: loki
-        image: grafana/loki:2.9.4
+        image: grafana/loki:3.7.7
         args:
         - -config.file=/etc/loki/loki.yaml
         ports:
@@ -658,10 +704,21 @@ spec:
           limits:
             cpu: 2000m
             memory: 4Gi
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
       volumes:
       - name: config
         configMap:
           name: loki-config
+      securityContext:
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        runAsNonRoot: true
   volumeClaimTemplates:
   - metadata:
       name: storage
@@ -689,188 +746,234 @@ spec:
     port: 9096
     targetPort: 9096
   type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-headless
+  namespace: observability
+spec:
+  clusterIP: None
+  selector:
+    app: loki
+  ports:
+  - name: http
+    port: 3100
+    targetPort: http
 ```
 
-### 2. Promtail をインストール（Istio Access Log の収集）
+### 2. AlloyでPodログを収集
+
+RoleBinding適用前に下のアプリ名前空間を作るか、検出とBindingを既存名前空間に絞ります。AlloyはそれらだけでPodメタデータと`pods/log`を読みます。APIソースはCRI/Docker枠なしの内容を受け取ります。ファイルソースならランタイム解析とノードローカルファイルパスが必要です。
+
+1レプリカ例はinitを除き、サイドカー、istiod、アプリログを集めます。ラベルはnamespace/pod/container/app/versionと限定`log_type`だけです。request ID、trace ID、path、durationはフィールドで、Loki索引ラベルではありません。上のJSON providerは`log_type="access"`を出し、同一コンテナ内のアクセスログと診断を区別します。
 
 ```yaml
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alloy
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: alloy-pod-logs
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ''
+  resources:
+  - pods/log
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alloy-pod-logs
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy-pod-logs
+subjects:
+- kind: ServiceAccount
+  name: alloy
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alloy-pod-logs
+  namespace: app
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy-pod-logs
+subjects:
+- kind: ServiceAccount
+  name: alloy
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alloy-pod-logs
+  namespace: production
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy-pod-logs
+subjects:
+- kind: ServiceAccount
+  name: alloy
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alloy-pod-logs
+  namespace: staging
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy-pod-logs
+subjects:
+- kind: ServiceAccount
+  name: alloy
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alloy-pod-logs
+  namespace: istio-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy-pod-logs
+subjects:
+- kind: ServiceAccount
+  name: alloy
+  namespace: observability
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: promtail-config
+  name: alloy-config
   namespace: observability
 data:
-  promtail.yaml: |
-    server:
-      http_listen_port: 3101
+  config.alloy: |
+    discovery.kubernetes "pods" {
+      role = "pod"
+      namespaces {
+        names = ["default", "app", "production", "staging", "istio-system"]
+      }
+    }
 
-    clients:
-    - url: http://loki:3100/loki/api/v1/push
-      backoff_config:
-        min_period: 1s
-        max_period: 5m
-        max_retries: 10
+    discovery.relabel "logs" {
+      targets = discovery.kubernetes.pods.targets
+      rule {
+        source_labels = ["__meta_kubernetes_pod_phase"]
+        regex = "Running"
+        action = "keep"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        regex = "istio-init"
+        action = "drop"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label = "namespace"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label = "pod"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label = "container"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+        target_label = "app"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_version"]
+        target_label = "version"
+      }
+    }
 
-    positions:
-      filename: /tmp/positions.yaml
+    loki.source.kubernetes "pods" {
+      targets = discovery.relabel.logs.output
+      forward_to = [loki.process.logs.receiver]
+    }
 
-    scrape_configs:
-    # Istio Envoy Access Logs
-    - job_name: istio-accesslog
-      pipeline_stages:
-      # JSON parsing
-      - json:
-          expressions:
-            start_time: start_time
-            method: method
-            path: path
-            protocol: protocol
-            response_code: response_code
-            response_flags: response_flags
-            duration: duration
-            bytes_received: bytes_received
-            bytes_sent: bytes_sent
-            upstream_host: upstream_host
-            user_agent: user_agent
-            request_id: request_id
+    loki.process "logs" {
+      stage.json {
+        expressions = { log_type = "log_type" }
+      }
+      stage.labels {
+        values = { log_type = "log_type" }
+      }
+      forward_to = [loki.write.local.receiver]
+    }
 
-      # Timestamp parsing
-      - timestamp:
-          source: start_time
-          format: "2006-01-02T15:04:05.000Z"
-
-      # Add labels
-      - labels:
-          method:
-          path:
-          response_code:
-          response_flags:
-
-      # Convert duration to number
-      - metrics:
-          request_duration_ms:
-            type: Histogram
-            description: "HTTP request duration"
-            source: duration
-            config:
-              buckets: [10, 50, 100, 500, 1000, 5000]
-
-      kubernetes_sd_configs:
-      - role: pod
-
-      relabel_configs:
-      # Select only Istio proxy containers
-      - source_labels: [__meta_kubernetes_pod_container_name]
-        action: keep
-        regex: istio-proxy
-
-      # Namespace label
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-
-      # Pod name label
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-
-      # Service label
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        target_label: app
-
-      # Version label
-      - source_labels: [__meta_kubernetes_pod_label_version]
-        target_label: version
-
-    # Istio Pilot/Istiod Logs
-    - job_name: istio-control-plane
-      kubernetes_sd_configs:
-      - role: pod
-        namespaces:
-          names:
-          - istio-system
-
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        action: keep
-        regex: istiod
-
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-
-      - source_labels: [__meta_kubernetes_pod_container_name]
-        target_label: container
-
-    # Application Logs
-    - job_name: kubernetes-pods
-      pipeline_stages:
-      # Try parsing JSON logs
-      - json:
-          expressions:
-            level: level
-            timestamp: timestamp
-            logger: logger
-            message: message
-
-      - labels:
-          level:
-          logger:
-
-      kubernetes_sd_configs:
-      - role: pod
-
-      relabel_configs:
-      # Exclude Istio proxy
-      - source_labels: [__meta_kubernetes_pod_container_name]
-        action: drop
-        regex: istio-proxy
-
-      # Exclude Istio init
-      - source_labels: [__meta_kubernetes_pod_container_name]
-        action: drop
-        regex: istio-init
-
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-
-      - source_labels: [__meta_kubernetes_pod_container_name]
-        target_label: container
+    loki.write "local" {
+      endpoint {
+        url = "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+        batch_wait = "1s"
+        batch_size = "1MiB"
+        min_backoff_period = "500ms"
+        max_backoff_period = "5m"
+        max_backoff_retries = 10
+        remote_timeout = "10s"
+      }
+    }
 ---
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  name: promtail
+  name: alloy
   namespace: observability
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: promtail
+      app: alloy
   template:
     metadata:
       labels:
-        app: promtail
+        app: alloy
+        sidecar.istio.io/inject: 'false'
     spec:
-      serviceAccountName: promtail
+      serviceAccountName: alloy
       containers:
-      - name: promtail
-        image: grafana/promtail:2.9.4
+      - name: alloy
+        image: grafana/alloy:v1.19.2
         args:
-        - -config.file=/etc/promtail/promtail.yaml
+        - run
+        - --server.http.listen-addr=0.0.0.0:12345
+        - --storage.path=/var/lib/alloy
+        - /etc/alloy/config.alloy
+        ports:
+        - containerPort: 12345
+          name: http-metrics
         volumeMounts:
         - name: config
-          mountPath: /etc/promtail
-        - name: varlog
-          mountPath: /var/log
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
+          mountPath: /etc/alloy
           readOnly: true
-        ports:
-        - containerPort: 3101
-          name: http-metrics
+        - name: state
+          mountPath: /var/lib/alloy
         resources:
           requests:
             cpu: 100m
@@ -881,122 +984,71 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: promtail-config
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: promtail
-  namespace: observability
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: promtail
-rules:
-- apiGroups: [""]
-  resources:
-  - nodes
-  - nodes/proxy
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "watch", "list"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: promtail
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: promtail
-subjects:
-- kind: ServiceAccount
-  name: promtail
-  namespace: observability
+          name: alloy-config
+      - name: state
+        emptyDir:
+          sizeLimit: 256Mi
 ```
 
-### 3. LogQL クエリの例
+API収集はFargateアプリPodのDaemonSet制限も避けますが、ノードログは収集しません。Kubernetes API/kubelet負荷が増えるため、大規模環境はノードローカル収集か対象所有権を調整したAlloy clusteringを評価します。全Podをtailする同一レプリカを単純追加しないでください。例の`emptyDir`状態と有限再試行は再起動/停止時の無損失配信を保証しません。本番は永続バッファ/WALと復旧テストを設定します。
+
+### 3. LogQLクエリ例
+
+標準出力JSON providerと未サンプリングSERVERアクセスログを使います。コンテナセレクターだけではプロキシ診断も含むため、`log_type="access"`で選択します。TCP接続ログはHTTP要求でないので、HTTP統計は空/`-`メソッドも除外します。数値比較は数値を使い、`__error__=""`で解析/変換失敗を集約前に除外します。
 
 #### 基本クエリ
 
 ```logql
-# All logs from a specific namespace
 {namespace="production"}
 
-# Logs from a specific app
 {app="payment-service"}
 
-# Only Istio access logs
-{container="istio-proxy"}
+{container="istio-proxy",log_type="access"}
 
-# Only error logs
-{namespace="production"} |= "error" or "ERROR"
+{namespace="production"} |~ "(?i)error"
 
-# Only 5xx responses
-{namespace="production"} | json | response_code >= "500"
+{container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | response_code >= 500 | response_code < 600 | __error__=""
 ```
 
 #### 高度なフィルタリング
 
 ```logql
-# Only HTTP POST requests
-{container="istio-proxy"}
-| json
-| method="POST"
+{container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | method="POST" | __error__=""
 
-# Slow requests (> 1 second)
-{container="istio-proxy"}
-| json
-| duration > 1000
+{container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | duration > 1000 | __error__=""
 
-# Detect circuit breaker activation
-{container="istio-proxy"}
-| json
-| response_flags =~ ".*UO.*|.*URX.*"
+{container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | response_flags=~".*UO.*" | __error__=""
 
-# Traffic not using mTLS
-{container="istio-proxy"}
-| json
-| connection_security_policy="none"
+{container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | response_flags=~".*URX.*" | __error__=""
 
-# Specific path pattern
-{container="istio-proxy"}
-| json
-| path =~ "/api/v1/.*"
+{container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | downstream_tls_version=~"(-)?" | __error__=""
+
+{container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | path=~"/api/v1/.*" | __error__=""
 ```
+
+`UO`は上流超過、`URX`は再試行/接続試行の枯渇です。`downstream_tls_version`は記録接続の平文/TLSを識別し、`peer_uri_san`は利用可能なら認証済みピア情報を提供します。どちらも普遍的TLSハンドシェイク失敗カウンターではなく、HTTPアクセス記録の前に失敗することもあります。旧`connection_security_policy`クエリはこのログにないメトリクスラベルを参照していました。
 
 #### 集約と統計
 
 ```logql
-# Request rate by service (RPS)
-sum(rate({container="istio-proxy"} | json [1m])) by (app)
+sum by (namespace, app) (rate({container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | __error__="" [5m]))
 
-# Response code distribution
-sum(count_over_time({container="istio-proxy"} | json [5m])) by (response_code)
+sum by (response_code) (count_over_time({container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | __error__="" [5m]))
 
-# P95 latency
-quantile_over_time(0.95, {container="istio-proxy"} | json | unwrap duration [5m])
+quantile_over_time(0.95, {container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | unwrap duration | __error__="" [5m]) by (namespace, app)
 
-# Error rate
-sum(rate({container="istio-proxy"} | json | response_code >= "500" [5m]))
-/
-sum(rate({container="istio-proxy"} | json [5m]))
+sum by (namespace, app) (rate({container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | response_code >= 500 | response_code < 600 | __error__="" [5m])) / sum by (namespace, app) (rate({container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | __error__="" [5m]))
 
-# Average response time
-avg_over_time({container="istio-proxy"} | json | unwrap duration [5m])
+avg_over_time({container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | unwrap duration | __error__="" [5m]) by (namespace, app)
 ```
 
-## Grafana ログダッシュボード
+保持したログエントリを記述します。選択ログ、サンプリング、配信喪失、異なる呼び出し経路、Gatewayログが結果に影響します。サービス全体SLOにはメトリクス章の標準メトリクスを使います。
 
-### 1. Loki Datasource を追加
+## Grafanaログダッシュボード {#grafana-log-dashboard}
+
+### 1. Lokiデータソース追加
+
+ファイルをGrafanaの`provisioning/datasources`へマウントするか、チャートの対応設定を使います。ConfigMapだけでは自動消費されません。`tempo` UIDは既存Tempoを参照する必要があります。相関にはJSON providerの`trace_id`を使い、要求UUIDはtrace IDではありません。空IDではリンクは作られません。
 
 ```yaml
 apiVersion: v1
@@ -1009,360 +1061,417 @@ data:
     apiVersion: 1
     datasources:
     - name: Loki
+      uid: loki
       type: loki
       access: proxy
-      url: http://loki:3100
+      url: http://loki.observability.svc.cluster.local:3100
       jsonData:
         maxLines: 1000
         derivedFields:
-        # Extract Trace ID
         - datasourceUid: tempo
-          matcherRegex: "request_id\":\"([^\"]+)"
+          matcherRegex: '"trace_id"\s*:\s*"([0-9a-fA-F]{32})"'
           name: TraceID
-          url: '$${__value.raw}'
-        # Metric integration
-        - datasourceUid: prometheus
-          matcherRegex: "app\":\"([^\"]+)"
-          name: Metrics
-          url: '/d/istio-service?var-service=$${__value.raw}'
+          url: $${__value.raw}
+          urlDisplayLabel: View trace
 ```
 
-### 2. Istio Access Log ダッシュボード
+### 2. Istioアクセスログダッシュボード
 
-#### ダッシュボード JSON
+#### ダッシュボードJSON
+
+以下のオブジェクトをインポートするかdashboard provider経由でマウントします。HTTP APIラッパーでなくファイルです。UID `loki`と`prometheus`が必要で、ログ`app`ラベルとcanonical-service値を合わせます。ヒートマップは実Prometheusヒストグラムバケットを使い、生ログdurationには`le`バケットラベルがありません。
 
 ```json
 {
-  "dashboard": {
-    "title": "Istio Access Logs",
-    "tags": ["istio", "logs"],
-    "timezone": "browser",
-    "panels": [
-      {
-        "title": "Request Rate by Service",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "sum(rate({container=\"istio-proxy\"} | json [1m])) by (app)",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
-      },
-      {
-        "title": "Response Code Distribution",
-        "type": "piechart",
-        "targets": [
-          {
-            "expr": "sum(count_over_time({container=\"istio-proxy\"} | json [5m])) by (response_code)",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
-      },
-      {
-        "title": "P50/P95/P99 Latency",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "quantile_over_time(0.50, {container=\"istio-proxy\", app=\"$service\"} | json | unwrap duration [1m])",
-            "legendFormat": "P50",
-            "refId": "A"
-          },
-          {
-            "expr": "quantile_over_time(0.95, {container=\"istio-proxy\", app=\"$service\"} | json | unwrap duration [1m])",
-            "legendFormat": "P95",
-            "refId": "B"
-          },
-          {
-            "expr": "quantile_over_time(0.99, {container=\"istio-proxy\", app=\"$service\"} | json | unwrap duration [1m])",
-            "legendFormat": "P99",
-            "refId": "C"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
-      },
-      {
-        "title": "Error Rate",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "sum(rate({container=\"istio-proxy\"} | json | response_code >= \"500\" [5m])) / sum(rate({container=\"istio-proxy\"} | json [5m]))",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16}
-      },
-      {
-        "title": "Top 10 Slowest Requests",
-        "type": "table",
-        "targets": [
-          {
-            "expr": "topk(10, avg_over_time({container=\"istio-proxy\", app=\"$service\"} | json | unwrap duration [5m])) by (path, method)",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20}
-      },
-      {
-        "title": "Error Logs",
-        "type": "logs",
-        "targets": [
-          {
-            "expr": "{container=\"istio-proxy\", app=\"$service\"} | json | response_code >= \"400\"",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}
-      },
-      {
-        "title": "Circuit Breaker Events",
-        "type": "logs",
-        "targets": [
-          {
-            "expr": "{container=\"istio-proxy\"} | json | response_flags =~ \".*UO.*|.*URX.*\"",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28}
-      },
-      {
-        "title": "Request Duration Heatmap",
-        "type": "heatmap",
-        "targets": [
-          {
-            "expr": "sum(rate({container=\"istio-proxy\", app=\"$service\"} | json | unwrap duration [1m])) by (le)",
-            "format": "heatmap",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 36}
-      }
-    ],
-    "templating": {
-      "list": [
+  "title": "Istio Access Logs",
+  "tags": [
+    "istio",
+    "logs"
+  ],
+  "timezone": "browser",
+  "panels": [
+    {
+      "title": "Logged HTTP Request Rate",
+      "type": "timeseries",
+      "targets": [
         {
-          "name": "namespace",
-          "type": "query",
-          "query": "label_values({container=\"istio-proxy\"}, namespace)",
-          "datasource": "Loki"
+          "expr": "sum by (namespace, app) (rate({container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | __error__=\"\" [5m]))",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      }
+    },
+    {
+      "title": "Response Code Distribution",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (response_code) (count_over_time({container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | __error__=\"\" [5m]))",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      }
+    },
+    {
+      "title": "P50/P95/P99 Latency",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.5, {container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | unwrap duration | __error__=\"\" [5m]) by (namespace, app)",
+          "legendFormat": "P50",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
         },
         {
-          "name": "service",
-          "type": "query",
-          "query": "label_values({container=\"istio-proxy\", namespace=\"$namespace\"}, app)",
-          "datasource": "Loki"
+          "expr": "quantile_over_time(0.95, {container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | unwrap duration | __error__=\"\" [5m]) by (namespace, app)",
+          "legendFormat": "P95",
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        },
+        {
+          "expr": "quantile_over_time(0.99, {container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | unwrap duration | __error__=\"\" [5m]) by (namespace, app)",
+          "legendFormat": "P99",
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
         }
-      ]
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      }
+    },
+    {
+      "title": "HTTP Error Fraction in Retained Logs",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum by (namespace, app) (rate({container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | response_code >= 500 | response_code < 600 | __error__=\"\" [5m])) / sum by (namespace, app) (rate({container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | __error__=\"\" [5m]))",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      }
+    },
+    {
+      "title": "Top 10 Routes by Average Logged Duration",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "topk(10, avg_over_time({container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | unwrap duration | __error__=\"\" [5m]) by (namespace, app, route_name, method))",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "id": 5,
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      }
+    },
+    {
+      "title": "Error Logs",
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | response_code >= 400 | __error__=\"\"",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "id": 6,
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      }
+    },
+    {
+      "title": "Upstream Overflow Events",
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{container=\"istio-proxy\",log_type=\"access\",namespace=\"$namespace\",app=\"$service\"} | json | method!=\"\" | method!=\"-\" | response_flags=~\".*UO.*\" | __error__=\"\"",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 7,
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      }
+    },
+    {
+      "title": "HTTP Duration Histogram (Prometheus)",
+      "type": "heatmap",
+      "targets": [
+        {
+          "expr": "sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter=\"destination\",destination_workload_namespace=\"$namespace\",destination_canonical_service=\"$service\"}[5m]))",
+          "format": "heatmap",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 8,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
     }
-  }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "type": "query",
+        "query": "label_values({container=\"istio-proxy\"}, namespace)",
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        }
+      },
+      {
+        "name": "service",
+        "type": "query",
+        "query": "label_values({container=\"istio-proxy\", namespace=\"$namespace\"}, app)",
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        }
+      }
+    ]
+  },
+  "uid": "istio-access-logs"
 }
 ```
 
-### 3. Grafana Alert の設定
+### 3. Loki Rulerアラート
+
+Prometheus型の`groups`/`alert`/`expr` YAMLはLoki ruler設定です。Grafana管理アラートは文書化されたUID、condition、query-data形式を使うため、そちらではGrafanaからエクスポートします。Loki評価ではConfigMapを作り、ruler設定を`loki.yaml`へ、ボリューム断片を既存StatefulSetへマージし、設定/ストレージマウントを保持します。設定先のAlertmanagerは存在する必要があります。
 
 ```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-alerting
+  name: loki-rules
   namespace: observability
 data:
-  alerting.yaml: |
+  istio-logging-alerts.yaml: |
     groups:
     - name: istio-logging-alerts
       interval: 1m
       rules:
-      # High error rate
-      - alert: HighErrorRate
-        expr: |
-          sum(rate({container="istio-proxy"} | json | response_code >= "500" [5m]))
-          /
-          sum(rate({container="istio-proxy"} | json [5m]))
-          > 0.05
+      - alert: HighHTTPErrorFractionInLogs
+        expr: sum by (namespace, app) (rate({container="istio-proxy",log_type="access"} | json | method!=""
+          | method!="-" | response_code >= 500 | response_code < 600 | __error__="" [5m])) / sum by (namespace,
+          app) (rate({container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | __error__=""
+          [5m])) > 0.05
         for: 2m
         labels:
-          severity: critical
+          severity: warning
         annotations:
-          summary: "High error rate detected"
-          description: "Error rate is {{ $value | humanizePercentage }}"
-
-      # Circuit Breaker triggered
-      - alert: CircuitBreakerTriggered
-        expr: |
-          count_over_time({container="istio-proxy"}
-            | json
-            | response_flags =~ ".*UO.*|.*URX.*" [1m])
-          > 10
+          summary: Retained HTTP logs show more than 5% server errors
+      - alert: CircuitBreakerOverflow
+        expr: sum by (namespace, app) (count_over_time({container="istio-proxy",log_type="access"} | json
+          | method!="" | method!="-" | response_flags=~".*UO.*" | __error__="" [1m])) > 10
         for: 1m
         labels:
           severity: warning
         annotations:
-          summary: "Circuit breaker triggered"
-          description: "Circuit breaker has been triggered {{ $value }} times"
-
-      # Slow requests
-      - alert: SlowRequests
-        expr: |
-          quantile_over_time(0.95,
-            {container="istio-proxy"}
-            | json
-            | unwrap duration [5m])
-          > 2000
+          summary: Upstream overflow events in access logs
+      - alert: SlowLoggedRequests
+        expr: quantile_over_time(0.95, {container="istio-proxy",log_type="access"} | json | method!="" | method!="-"
+          | unwrap duration | __error__="" [5m]) by (namespace, app) > 2000
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "P95 latency too high"
-          description: "P95 latency is {{ $value }}ms"
-
-      # Non-mTLS traffic
-      - alert: NonMTLSTraffic
-        expr: |
-          count_over_time({container="istio-proxy"}
-            | json
-            | connection_security_policy="none" [5m])
-          > 0
+          summary: P95 of logged HTTP durations exceeds 2000ms
+      - alert: PlaintextHTTPObserved
+        expr: sum by (namespace, app) (count_over_time({container="istio-proxy",log_type="access"} | json
+          | method!="" | method!="-" | downstream_tls_version=~"(-)?" | __error__="" [5m])) > 0
         for: 1m
         labels:
           severity: warning
         annotations:
-          summary: "Non-mTLS traffic detected"
-          description: "{{ $value }} requests without mTLS in the last 5 minutes"
+          summary: HTTP access logs show a plaintext downstream connection
 ```
-
-## Metrics/Traces とのログ統合
-
-### 1. ログから Trace へ移動
-
-Grafana では、Loki ログから直接移動して、特定のリクエストの Trace を表示できます。
 
 ```yaml
-# Loki datasource configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-datasources
-  namespace: observability
-data:
-  loki.yaml: |
-    apiVersion: 1
-    datasources:
-    - name: Loki
-      type: loki
-      jsonData:
-        derivedFields:
-        - datasourceUid: tempo
-          matcherRegex: '"request_id":"([^"]+)"'
-          name: TraceID
-          url: '$${__value.raw}'
-          urlDisplayLabel: 'View Trace'
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /etc/loki/rules
+  rule_path: /loki/ruler-scratch
+  alertmanager_url: http://alertmanager.observability.svc.cluster.local:9093
+  ring:
+    kvstore:
+      store: inmemory
+  enable_api: true
 ```
-
-**使用方法**:
-1. Grafana Explore で Loki ログを表示します
-2. ログエントリの「View Trace」リンクをクリックします
-3. 自動的に Tempo に移動し、対応する Trace を表示します
-
-### 2. Metrics からログへドリルダウン
 
 ```yaml
-# Prometheus datasource configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-datasources
-  namespace: observability
-data:
-  prometheus.yaml: |
-    apiVersion: 1
-    datasources:
-    - name: Prometheus
-      type: prometheus
-      jsonData:
-        exemplarTraceIdDestinations:
-        - datasourceUid: tempo
-          name: TraceID
-```
-
-### 3. 統合ダッシュボードの例
-
-```json
-{
-  "panels": [
-    {
-      "title": "Request Rate (Metric)",
-      "type": "timeseries",
-      "datasource": "Prometheus",
-      "targets": [
-        {
-          "expr": "rate(istio_requests_total{app=\"$service\"}[1m])"
-        }
-      ],
-      "links": [
-        {
-          "title": "View Logs",
-          "url": "/explore?left={\"datasource\":\"Loki\",\"queries\":[{\"expr\":\"{app=\\\"${service}\\\"}\"}]}"
-        }
-      ]
-    },
-    {
-      "title": "Recent Logs",
-      "type": "logs",
-      "datasource": "Loki",
-      "targets": [
-        {
-          "expr": "{container=\"istio-proxy\", app=\"$service\"} | json"
-        }
-      ]
-    }
-  ]
-}
-```
-
-## パフォーマンスの最適化
-
-### 1. ログ量を削減
-
-#### 条件付きロギングで 50～90% 削減
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: optimized-logging
-  namespace: production
 spec:
-  accessLogging:
-  - providers:
-    - name: envoy
-    filter:
-      expression: |
-        response.code >= 400 ||
-        duration > 1000 ||
-        random() < 0.01  # Sample only 1% of normal requests
+  template:
+    spec:
+      containers:
+      - name: loki
+        volumeMounts:
+        - name: loki-rules
+          mountPath: /etc/loki/rules
+          readOnly: true
+      volumes:
+      - name: loki-rules
+        configMap:
+          name: loki-rules
+          items:
+          - key: istio-logging-alerts.yaml
+            path: fake/istio-logging-alerts.yaml
 ```
 
-#### Health check の除外で 30～50% 削減
+単一テナントLokiのIDは`fake`なので、ローカルルールを`fake/`下に置きます。ローカルルールストレージはruler APIでは読み取り専用です。アラートには全アクセスログストリームが必要で、エラーのみ/サンプル済みでは偏りのない比率や遅延分位数になりません。no-dataと配信失敗監視は別計画です。
+
+
+
+## メトリクス/トレースとのログ統合 {#log-integration-with-metricstraces}
+
+### 1. ログからトレースへ移動
+
+上のLokiデータソースの`trace_id`派生フィールドを使います。トレースが有効でIDがあり、同じトレースをTempoが保持する時だけリンクします。要求の`x-request-id`はW3C trace IDと交換できません。サンプリングや保持により、有効ログがあってもトレースを取得できない場合があります。
+
+### 2. メトリクス相関
+
+Prometheusエグゼンプラーは実trace-IDラベルがあると**メトリクスからトレース**へリンクし、ログへのリンクは作りません。`exemplarTraceIdDestinations.name`を架空`TraceID`でなく、観測ラベル（通常`trace_id`）へ合わせます。メトリクス→ログには一致namespace/serviceラベルのGrafana correlations/data linksを設定します。データソース設定だけでエグゼンプラーは生まれません。
+
+### 3. 統合ダッシュボードクエリ
+
+全通信要求レートにはPrometheus、選択ワークロードのアクセス記録にはLokiパネルを使います。変数を一貫させます。Istioは普遍的`app`ラベルでなく`destination_canonical_service`/workload namespaceを使います。
+
+```promql
+sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="$namespace",destination_canonical_service="$service"}[5m]))
+```
+
+```logql
+{container="istio-proxy",log_type="access",namespace="$namespace",app="$service"} | json | __error__=""
+```
+
+未エンコードJSONをURLへ埋め込まず、Grafana生成Exploreリンクかcorrelationsを使います。Lokiのappとメトリクスのserviceが同じワークロードを識別することを確認します。
+
+## 性能最適化 {#performance-optimization}
+
+### 1. ログ量削減
+
+フィルター/Alloyサンプリング選択前に、ヘルスチェック、エラー、通常通信の実割合を測ります。普遍的50–90%や30–50%削減はありません。プロキシ側フィルターは生成ログ、collector側サンプルは下流取り込み/保存を減らします。全通信メトリクスと重要監査イベントはサンプルログから独立させます。
+
+HTTPヘルスパス除外は既存Telemetryフィルターへマージできます。TCPログではHTTPフィールド欠損を考慮します。
 
 ```yaml
 filter:
-  expression: |
-    !(request.url_path.startsWith('/health') ||
-      request.url_path.startsWith('/ready') ||
-      request.url_path.startsWith('/live') ||
-      request.url_path == '/metrics' ||
-      request.url_path == '/favicon.ico')
+  expression: '!has(request.url_path) || !(request.url_path.startsWith("/health") || request.url_path.startsWith("/ready")
+    || request.url_path.startsWith("/live") || request.url_path == "/metrics" || request.url_path == "/favicon.ico")'
 ```
 
-### 2. Loki のパフォーマンスチューニング
+### 2. Loki性能調整
 
 ```yaml
 limits_config:
-  # Chunk size optimization
+  # Ingestion limits; these do not directly set chunk size
   ingestion_rate_strategy: global
-  ingestion_rate_mb: 32  # Default: 4
-  ingestion_burst_size_mb: 64  # Default: 6
+  ingestion_rate_mb: 32  # Example, size for the workload
+  ingestion_burst_size_mb: 64  # Example burst budget
 
   # Query performance
   max_query_parallelism: 32
@@ -1378,92 +1487,70 @@ limits_config:
   max_label_value_length: 2048
 ```
 
-### 3. Promtail の最適化
+### 3. Alloyバッチ処理と再試行
 
-```yaml
-# Batching configuration
-clients:
-- url: http://loki:3100/loki/api/v1/push
-  batchwait: 1s
-  batchsize: 1048576  # 1MB
-
-  # Retry configuration
-  backoff_config:
-    min_period: 500ms
-    max_period: 5m
-    max_retries: 10
-
-  # Timeout
-  timeout: 10s
+```alloy
+// loki.write endpoint fragment: merge with the endpoint's existing URL.
+batch_wait = "1s"
+batch_size = "1MiB"
+min_backoff_period = "500ms"
+max_backoff_period = "5m"
+max_backoff_retries = 10
+remote_timeout = "10s"
 ```
 
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
-### Access Log が表示されない
+### アクセスログが見えない
+
+実効動的リスナー、選択provider、既知テスト要求を確認します。内部プロキシログはアクセスログ設定を証明せず、最初のコンテナログ行がJSONとは限りません。
 
 ```bash
-# 1. Check MeshConfig
-kubectl get configmap istio -n istio-system -o yaml | grep -A 5 accessLog
-
-# 2. Check Telemetry resources
 kubectl get telemetry -A
-
-# 3. Verify log generation in Envoy
-kubectl logs -n <namespace> <pod-name> -c istio-proxy | head -20
-
-# 4. Check Envoy configuration
-istioctl proxy-config bootstrap <pod-name> -n <namespace> -o json | \
-  jq '.bootstrap.staticResources.listeners[].accessLog'
+istioctl proxy-config listeners <pod-name> -n <namespace> -o json | \
+  jq '.. | objects | select(has("accessLog")) | .accessLog'
+kubectl logs <pod-name> -n <namespace> -c istio-proxy --tail=100 | \
+  jq -R 'fromjson? | select(.log_type == "access")'
 ```
 
-### JSON 解析の失敗
+### Collector/ストレージへの配信失敗
+
+Alloyの対象検出、RoleBinding、Podログ権限を確認します。APIソースにホストログファイルは不要です。自身のログ/メトリクスで破棄/再試行バッチを調べ、range-queryエンドポイントでLokiログを照会します。port-forwardは別ターミナルで実行します。
 
 ```bash
-# 1. Check log format
-kubectl logs -n <namespace> <pod-name> -c istio-proxy | head -1
-
-# 2. Check accessLogEncoding
-kubectl get configmap istio -n istio-system -o yaml | grep accessLogEncoding
-
-# 3. Manually test JSON parsing
-kubectl logs -n <namespace> <pod-name> -c istio-proxy | head -1 | jq .
-```
-
-### Promtail がログを収集しない
-
-```bash
-# 1. Check Promtail logs
-kubectl logs -n observability daemonset/promtail
-
-# 2. Check Promtail metrics
-kubectl port-forward -n observability daemonset/promtail 3101:3101
-curl http://localhost:3101/metrics | grep promtail_
-
-# 3. Verify data is reaching Loki
+kubectl logs -n observability deployment/alloy --tail=100
+kubectl port-forward -n observability deployment/alloy 12345:12345
+# Another terminal:
+curl -fsS http://localhost:12345/metrics | rg 'loki_(write|process)_'
+# Separate terminal:
 kubectl port-forward -n observability svc/loki 3100:3100
-curl -G -s "http://localhost:3100/loki/api/v1/query" --data-urlencode 'query={job="istio-accesslog"}' | jq .
 ```
-
-### ログ量が多すぎる
 
 ```bash
-# 1. Check log volume by namespace
-kubectl top pods -n <namespace> --containers | grep istio-proxy
-
-# 2. Check number of log streams
-curl -G -s "http://localhost:3100/loki/api/v1/labels" | jq '.data | length'
-
-# 3. Find services generating the most logs
-# LogQL:
-topk(10, sum(count_over_time({container="istio-proxy"} [1h])) by (app))
+curl -fsSG http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={container="istio-proxy",log_type="access"}' \
+  --data-urlencode 'limit=20' | jq '.data.result'
 ```
+
+### ログ量とカーディナリティ
+
+`kubectl top`はリソース消費で、ログ量ではありません。保持ログからバイトレートを数え、限定時間の実ストリーム集合を調べます。`/labels`はラベル名数でストリーム数ではありません。大規模環境で無制限・高カーディナリティ`/series`照会を避けます。
+
+```logql
+topk(10, sum by (namespace, app) (bytes_rate({container="istio-proxy"} [5m])))
+
+topk(10, sum by (namespace, app) (count_over_time({container="istio-proxy"} [1h])))
+```
+
+数値フィルター前に解析フィールドを確認します。`unwrap`後、集約前に`__error__`を除外します。サンプリング/フィルター/喪失したエントリは保持ログから再構成できません。
 
 ## 参考資料
 
-- [Istio Access Logging](https://istio.io/latest/docs/tasks/observability/logs/access-log/)
+- [Istioアクセスログ](https://istio.io/latest/docs/tasks/observability/logs/access-log/)
 - [Telemetry API](https://istio.io/latest/docs/reference/config/telemetry/)
-- [Envoy Access Logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
-- [Grafana Loki ドキュメント](https://grafana.com/docs/loki/latest/)
-- [Promtail の設定](https://grafana.com/docs/loki/latest/send-data/promtail/)
-- [LogQL クエリ言語](https://grafana.com/docs/loki/latest/query/)
-- [CEL 式言語](https://github.com/google/cel-spec)
+- [Envoyアクセスログ](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
+- [Grafana Lokiドキュメント](https://grafana.com/docs/loki/latest/)
+- [Alloy Kubernetesログソース](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.kubernetes/)
+- [Promtailライフサイクル](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [LogQLクエリ言語](https://grafana.com/docs/loki/latest/query/)
+- [CEL式言語](https://github.com/google/cel-spec)

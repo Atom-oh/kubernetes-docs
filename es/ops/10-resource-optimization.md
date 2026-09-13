@@ -1,1911 +1,873 @@
-# Optimización de recursos: Requests/Limits, ajuste de JVM, guía específica por framework
+# Optimización de recursos: requests, limits y runtimes de lenguaje
 
-> **Versiones compatibles**: Kubernetes 1.28+, Java 17+, Python 3.11+, Node.js 20+, Go 1.21+
-> **Última actualización**: February 21, 2026
+> **Última actualización**: 11 de septiembre de 2026. Ejemplos comprobados con esquemas Kubernetes 1.36,
+> Java 21 / Spring Boot 4.1.1, Python 3.12 / Gunicorn 26.2.0,
+> Node.js 24.21, Go 1.27.1 y Rust 1.98 / Tokio 1.53.1.
 
-< [Anterior: Operaciones del Stack de observabilidad](./09-observability-stack.md) | [Tabla de contenidos](./README.md) | [Siguiente: Actualizaciones de EKS](./11-upgrade-operations.md) >
+No dimensione cargas solo por el lenguaje o un porcentaje fijo. Mida los SLO de rendimiento y latencia bajo carga representativa, arranque, reinicio, GC y fallos. Ajuste requests, limits, réplicas y concurrencia del runtime conjuntamente. Los porcentajes y umbrales son puntos de partida de pruebas, no garantías de rendimiento.
 
----
+## 1. Requests, limits y QoS
 
-## Tabla de contenidos
+| Recurso | Requests | Limits |
+|---|---|---|
+| CPU | Contabilización para planificación y peso relativo bajo contención | La cuota CPU de cgroup Linux puede restringir la ejecución |
+| Memoria | Contabilización para planificación | La presión de asignación puede causar OOM del cgroup si la recuperación de memoria no basta |
+| Sin especificar | Siguen importando los valores de admisión y políticas superiores | Puede no haber límite de contenedor, pero sí de nodo/cgroup antecesor |
 
-- [Fundamentos de configuración de recursos](#fundamentos-de-configuración-de-recursos)
-- [Cálculo óptimo de recursos](#cálculo-óptimo-de-recursos)
-- [Optimización de workloads JVM](#optimización-de-workloads-jvm)
-- [Workloads de Python/Node.js](#workloads-de-pythonnodejs)
-- [Workloads de Go/Rust](#workloads-de-gorust)
-- [Dashboards de monitoreo de recursos](#dashboards-de-monitoreo-de-recursos)
-- [Optimización de recursos en Auto Mode](#optimización-de-recursos-en-auto-mode)
+Un request no fija CPU física ni preasigna memoria, y no garantiza rendimiento. Si solo se proporciona un limit y ningún valor de admisión establece el request, Kubernetes copia el limit al request. Inspeccione el Pod admitido tras LimitRange y otras políticas.
 
----
-
-## Fundamentos de configuración de recursos
-
-### Requests vs Limits
-
-Comprender la diferencia entre requests y limits es fundamental para una gestión adecuada de recursos en Kubernetes.
-
-| Aspecto | Requests | Limits |
-|--------|----------|--------|
-| **Propósito** | Garantía de scheduling | Máximo permitido |
-| **Scheduler** | Se usa para ubicar en Nodes | No se usa |
-| **Aplicación** | Suave (reservado) | Estricta (aplicada por cgroups) |
-| **Overcommit** | Puede superar el request | No puede superar el limit |
-| **OOM Kill** | No se activa | Activa OOM cuando se supera |
-| **Throttling** | No se aplica | CPU limitado al llegar al limit |
+Estos ejemplos usan recursos por contenedor, no por Pod. Cree primero `resource-demo` y compare QoS sin un LimitRange que inyecte valores. Guaranteed requiere requests/limits positivos e iguales de CPU y memoria, y las condiciones aplicables a contenedores ordinarios e init.
 
 ```yaml
-# Resource configuration example
+# qos-pods.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: resource-demo
+  name: guaranteed
+  namespace: resource-demo
 spec:
   containers:
-    - name: app
-      image: myapp:latest
-      resources:
-        requests:
-          cpu: "500m"      # 0.5 CPU cores guaranteed
-          memory: "512Mi"  # 512 MiB guaranteed
-        limits:
-          cpu: "1000m"     # Max 1 CPU core
-          memory: "1Gi"    # Max 1 GiB, OOM killed if exceeded
-```
-
-### Clases de Quality of Service (QoS)
-
-Kubernetes asigna clases QoS según la configuración de recursos:
-
-| Clase QoS | Criterios | Prioridad OOM | Caso de uso |
-|-----------|----------|--------------|----------|
-| **Guaranteed** | requests = limits para todos los containers | Más baja (último en ser eliminado) | Workloads críticos |
-| **Burstable** | requests < limits o configuración parcial | Media | La mayoría de las aplicaciones |
-| **BestEffort** | Sin requests ni limits | Más alta (primero en ser eliminado) | Batch jobs, Pods de desarrollo |
-
-```yaml
-# Guaranteed QoS - requests equal limits
-apiVersion: v1
-kind: Pod
-metadata:
-  name: guaranteed-pod
-spec:
-  containers:
-    - name: critical-app
-      resources:
-        requests:
-          cpu: "1"
-          memory: "1Gi"
-        limits:
-          cpu: "1"
-          memory: "1Gi"
+  - name: app
+    image: ghcr.io/stefanprodan/podinfo:6.15.0@sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da
+    resources:
+      requests:
+        cpu: 500m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
 ---
-# Burstable QoS - requests less than limits
 apiVersion: v1
 kind: Pod
 metadata:
-  name: burstable-pod
+  name: burstable
+  namespace: resource-demo
 spec:
   containers:
-    - name: normal-app
-      resources:
-        requests:
-          cpu: "500m"
-          memory: "512Mi"
-        limits:
-          cpu: "2"
-          memory: "2Gi"
+  - name: app
+    image: ghcr.io/stefanprodan/podinfo:6.15.0@sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
 ---
-# BestEffort QoS - no resource specifications
 apiVersion: v1
 kind: Pod
 metadata:
-  name: besteffort-pod
+  name: besteffort
+  namespace: resource-demo
 spec:
   containers:
-    - name: batch-job
-      image: batch:latest
-      # No resources specified
+  - name: app
+    image: ghcr.io/stefanprodan/podinfo:6.15.0@sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da
+    resources: {}
 ```
 
-### CPU Throttling y ancho de banda CFS
+BestEffort no tiene requests ni limits de CPU/memoria; otras configuraciones pueden ser Burstable. Revise reglas por versión al usar recursos Pod o contabilización de sidecars/init.
 
-Linux usa Completely Fair Scheduler (CFS) para la gestión de CPU:
+QoS no es un orden absoluto de expulsión. Bajo presión de memoria, kubelet considera si el uso supera requests, Pod Priority y el uso relativo a requests. Guaranteed y Burstable dentro de requests suelen considerarse después, pero Guaranteed no siempre es la última víctima. Distinga expulsión DiskPressure de OOM por límite de contenedor. OOMKilled normalmente es una razón de terminación de contenedor, no una fase Pod. Puede terminar un proceso individual; si sale PID 1, la política de reinicio determina qué ocurre con el contenedor.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    CFS Bandwidth Control                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  CPU Limit = 1000m (1 core)                                     │
-│                                                                  │
-│  CFS Period: 100ms (default)                                    │
-│  CFS Quota:  100ms (limit * period)                             │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │ 100ms period                                              │   │
-│  │ ┌─────────────┐                                          │   │
-│  │ │   100ms     │ quota exhausted → THROTTLED              │   │
-│  │ │   running   │                                          │   │
-│  │ └─────────────┘────────────────────────────────────────  │   │
-│  │ 0            100ms                              200ms     │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  With 500m limit:                                               │
-│  CFS Quota: 50ms → Can only use 50ms per 100ms period          │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
+### Cuota CPU y límites de memoria
 
-**Impacto del throttling**:
+cgroup v1 usa `cpu.cfs_quota_us` / `cpu.cfs_period_us`; v2 usa `cpu.max`. 100ms es un período habitual, no universal. Con 500m y un período de 100ms, todos los hilos comparten 50ms de ejecución agregada. El throttling puede afectar a latencia y rendimiento. La proporción de períodos limitados mide períodos que contienen throttling, no tiempo CPU perdido.
 
-- El CPU throttling causa **picos de latencia**, no una reducción del throughput
-- Las aplicaciones pueden parecer lentas incluso cuando la CPU promedio es baja
-- Las aplicaciones intensivas en GC se ven especialmente afectadas
-- Configura limits 20-50% por encima del pico observado para evitar throttling
+Un límite de memoria no es un límite del heap. Distinga `memory.limit_in_bytes` de cgroup v1 y `memory.max` de v2. Considere RSS, asignación nativa, pilas, caché de páginas y emptyDir en memoria. Un liveness probe que reinicie cerca de un umbral puede ocultar la causa y crear bucles; no es una solución OOM general.
 
-**Detección de throttling**:
+Eliminar un limit CPU puede reducir el throttling de cuota de ese contenedor, pero no elimina contención, cuotas antecesoras ni límites del nodo. Evalúe conjuntamente requests, prioridad, aislamiento, políticas y SLO.
 
-```promql
-# Throttled seconds per second (should be 0)
-rate(container_cpu_cfs_throttled_seconds_total[5m])
+### Valores predeterminados y presupuestos de namespace
 
-# Throttle percentage
-rate(container_cpu_cfs_throttled_periods_total[5m])
-/ rate(container_cpu_cfs_periods_total[5m]) * 100
-```
-
-### Comportamiento de OOMKill de memoria
-
-Cuando un container supera su memory limit:
-
-1. El kernel envía SIGKILL (no se puede capturar)
-2. El container termina inmediatamente
-3. El estado del Pod muestra `OOMKilled`
-4. Kubernetes reinicia el container según `restartPolicy`
+LimitRange controla valores de admisión y restricciones por recurso. ResourceQuota controla presupuestos de admisión del namespace para requests, limits y objetos. No miden ni limitan directamente CPU real o coste. Cree `production` antes de aplicar estas políticas.
 
 ```yaml
-# OOMKill-resistant configuration
+# namespace-policy.yaml
 apiVersion: v1
-kind: Pod
+kind: LimitRange
 metadata:
-  name: memory-safe
+  name: defaults
+  namespace: production
 spec:
-  containers:
-    - name: app
-      resources:
-        requests:
-          memory: "1Gi"   # Scheduling amount
-        limits:
-          memory: "1.5Gi" # 50% headroom for spikes
-      # Use memory-based liveness probe
-      livenessProbe:
-        exec:
-          command:
-            - /bin/sh
-            - -c
-            - "[ $(cat /sys/fs/cgroup/memory/memory.usage_in_bytes) -lt 1400000000 ]"
-        periodSeconds: 10
-```
-
-### Anti-patrones comunes
-
-| Anti-patrón | Problema | Solución |
-|--------------|---------|----------|
-| **Sin limits** | Vecino ruidoso, inestabilidad del Node | Configura siempre memory limits |
-| **Limits = requests = máximo observado** | Sobreaprovisionamiento, recursos desperdiciados | Configura requests en p70, limits en p99 |
-| **CPU limits en apps sensibles a la latencia** | El throttling causa picos de latencia | Considera quitar CPU limits |
-| **Memory limit = JVM heap** | OOMKill por memoria non-heap | Limit = heap + 25% de overhead |
-| **Misma config para todos los workloads** | Recursos no ajustados | Perfila cada tipo de workload |
-| **requests >> uso real** | Fallos de scheduling, desperdicio | Usa recomendaciones de VPA |
-
-**Dimensionamiento correcto de recursos**:
-
-```yaml
-# Anti-pattern: Oversized resources
-resources:
-  requests:
-    cpu: "4"
-    memory: "8Gi"
   limits:
-    cpu: "4"
-    memory: "8Gi"
-# Actual usage: 500m CPU, 1Gi memory → 87% waste
-
-# Better: Right-sized based on profiling
-resources:
-  requests:
-    cpu: "500m"      # p70 usage
-    memory: "1Gi"    # p70 usage
-  limits:
-    cpu: "1500m"     # p99 usage + headroom
-    memory: "1.5Gi"  # p99 usage + 25% headroom
+  - type: Container
+    default:
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 128Mi
+    min:
+      memory: 16Mi
+    max:
+      memory: 4Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: budget
+  namespace: production
+spec:
+  hard:
+    requests.cpu: '8'
+    requests.memory: 16Gi
+    limits.memory: 32Gi
+    pods: '20'
 ```
 
----
+## 2. Medición y VPA
 
-## Cálculo óptimo de recursos
+Observe distribuciones, picos, coste de arranque y crecimiento de memoria durante un período representativo. Requests P70 y limits P99 son hipótesis, no valores universales. GC, carga de modelos, JIT, criptografía, sidecars y entradas por lotes varían incluso dentro de un lenguaje. No oculte fugas aumentando límites ni clasifique automáticamente Pods de reserva/recuperación inactivos como desperdicio.
 
-### Vertical Pod Autoscaler (VPA)
-
-VPA analiza el uso histórico de recursos y proporciona recomendaciones:
+Use el [capítulo de escalado](./06-scaling-strategies.md) para instalar VPA y Goldilocks fijados. Goldilocks crea/muestra VPA para namespaces/cargas seleccionados; instalarlo no optimiza todo. Este VPA observa el Deployment `resource-java` posterior.
 
 ```yaml
-# vpa-recommender.yaml
+# vpa.yaml
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: api-server-vpa
+  name: resource-java
   namespace: production
 spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: api-server
+    name: resource-java
   updatePolicy:
-    updateMode: "Off"  # Recommendation only, no auto-updates
+    updateMode: 'Off'
   resourcePolicy:
     containerPolicies:
-      - containerName: api-server
-        minAllowed:
-          cpu: 100m
-          memory: 128Mi
-        maxAllowed:
-          cpu: 4
-          memory: 8Gi
-        controlledResources: ["cpu", "memory"]
-        controlledValues: RequestsAndLimits
+    - containerName: app
+      controlledValues: RequestsOnly
+      minAllowed:
+        cpu: 100m
+        memory: 256Mi
+      maxAllowed:
+        cpu: '4'
+        memory: 4Gi
 ```
 
-**Modos de actualización de VPA**:
+`Off` solo recomienda. `target` recomienda un request; los límites inferior/superior describen el intervalo recomendado. No trate upperBound directamente como limit de memoria ni uncappedTarget como valor aplicado. `RequestsAndLimits` puede ajustar limits conservando una proporción existente; no copia upperBound a limits.
 
-| Modo | Comportamiento | Caso de uso |
-|------|----------|----------|
-| `Off` | Solo recomendaciones | Análisis de producción |
-| `Initial` | Se establece solo al crear Pods | Workloads con estado |
-| `Recreate` | Desaloja y recrea Pods | Stateless, tolera reinicios |
-| `Auto` | Recreate con soporte in-place futuro | Preparado para el futuro |
+En VPA 1.7.1, `Auto` obsoleto se comporta como `Recreate`. Revise requisitos de `InPlaceOrRecreate`/`InPlace` y soporte in-place Kubernetes. `Initial` sigue cambiando requests en Pods nuevos y, por tanto, el denominador de utilización HPA. No está automáticamente libre de conflictos con HPA.
 
-**Lectura de recomendaciones de VPA**:
+Si un Pod sostiene 200 RPS con el SLO requerido, 1,000 RPS necesitan cinco Pods en estado estable. Mantenerlo tras perder uno requiere al menos seis. No garantiza soportar la pérdida de una AZ completa. Distinga añadir 20% de capacidad de dejar 20% sin usar; lo segundo requiere `ceil(1000 / (200 × 0.8)) = 7`.
 
-```bash
-# Get VPA recommendations
-kubectl describe vpa api-server-vpa
+## 3. JVM: heap y memoria del contenedor
 
-# Output example:
-# Recommendation:
-#   Container Recommendations:
-#     Container Name: api-server
-#     Lower Bound:
-#       Cpu:     250m
-#       Memory:  512Mi
-#     Target:            # Use this for requests
-#       Cpu:     500m
-#       Memory:  1Gi
-#     Uncapped Target:   # Without min/max constraints
-#       Cpu:     500m
-#       Memory:  1Gi
-#     Upper Bound:       # Use this for limits
-#       Cpu:     2
-#       Memory:  2Gi
+`MaxRAMPercentage` es una entrada de la ergonomía del heap basada en memoria detectada. 75% no es universalmente óptimo ni un redimensionador que siga inmediatamente cambios del limit Pod. También importan `-Xmx`, `-XX:MaxRAM` y la ergonomía de heaps pequeños. Metaspace, caché de código, pilas, buffers directos, JNI y asignadores consumen fuera del heap. Un 25% fijo no garantiza capacidad suficiente fuera de él.
+
+La JVM no lee automáticamente `JAVA_OPTS`; el entrypoint debe pasarlo al comando. El ejemplo usa `JAVA_TOOL_OPTIONS`, reconocido por la JVM, y `java -jar` explícito. 60% es un punto inicial de perfilado.
+
+El ejemplo completo Spring Boot se compiló con Java 21 y Boot 4.1.1. Guarde los archivos en las rutas indicadas.
+
+```xml
+<!-- java/pom.xml -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.1</version>
+    <relativePath/>
+  </parent>
+  <groupId>example</groupId>
+  <artifactId>resource-api</artifactId>
+  <version>1.0.0</version>
+  <properties>
+    <java.version>21</java.version>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>
 ```
 
-### Dashboard de Goldilocks
+```java
+// java/src/main/java/example/ResourceApi.java
+package example;
 
-Goldilocks crea VPAs para todos los deployments y proporciona un dashboard:
+import java.util.Map;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-```bash
-# Install Goldilocks
-helm repo add fairwinds-stable https://charts.fairwinds.com/stable
-helm install goldilocks fairwinds-stable/goldilocks \
-  --namespace goldilocks \
-  --create-namespace
+@SpringBootApplication
+@RestController
+public class ResourceApi {
+    private final Timer workTimer;
 
-# Enable for a namespace
-kubectl label namespace production goldilocks.fairwinds.com/enabled=true
+    public ResourceApi(MeterRegistry registry) {
+        workTimer = Timer.builder("demo.work")
+                .description("Synthetic work duration")
+                .publishPercentileHistogram()
+                .register(registry);
+    }
 
-# Access dashboard
-kubectl port-forward -n goldilocks svc/goldilocks-dashboard 8080:80
+    @GetMapping("/work")
+    public Map<String, String> work() {
+        return workTimer.record(() -> Map.of("status", "ok"));
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(ResourceApi.class, args);
+    }
+}
 ```
-
-### Análisis de recursos con PromQL
-
-**Análisis de CPU (objetivo: 70-80% de utilización)**:
-
-```promql
-# Current CPU utilization percentage
-sum(rate(container_cpu_usage_seconds_total{namespace="production", container!=""}[5m]))
-by (pod, container)
-/
-sum(kube_pod_container_resource_requests{namespace="production", resource="cpu"})
-by (pod, container)
-* 100
-
-# P95 CPU usage over 7 days
-quantile_over_time(0.95,
-  sum(rate(container_cpu_usage_seconds_total{namespace="production", container!=""}[5m]))
-  by (pod, container)[7d:1h]
-)
-
-# Recommended CPU request (P70)
-quantile_over_time(0.70,
-  sum(rate(container_cpu_usage_seconds_total{namespace="production", container!=""}[5m]))
-  by (pod, container)[7d:1h]
-)
-
-# Recommended CPU limit (P99 + 20%)
-quantile_over_time(0.99,
-  sum(rate(container_cpu_usage_seconds_total{namespace="production", container!=""}[5m]))
-  by (pod, container)[7d:1h]
-) * 1.2
-```
-
-**Análisis de memoria (objetivo: 80% de utilización máxima)**:
-
-```promql
-# Current memory utilization
-sum(container_memory_working_set_bytes{namespace="production", container!=""})
-by (pod, container)
-/
-sum(kube_pod_container_resource_requests{namespace="production", resource="memory"})
-by (pod, container)
-* 100
-
-# P95 memory usage over 7 days
-quantile_over_time(0.95,
-  sum(container_memory_working_set_bytes{namespace="production", container!=""})
-  by (pod, container)[7d:1h]
-)
-
-# Recommended memory request (P80)
-quantile_over_time(0.80,
-  sum(container_memory_working_set_bytes{namespace="production", container!=""})
-  by (pod, container)[7d:1h]
-)
-
-# Recommended memory limit (P99 + 25%)
-quantile_over_time(0.99,
-  sum(container_memory_working_set_bytes{namespace="production", container!=""})
-  by (pod, container)[7d:1h]
-) * 1.25
-```
-
-### Cálculo de réplicas mínimas
-
-```promql
-# Required replicas for target CPU utilization (70%)
-ceil(
-  sum(rate(container_cpu_usage_seconds_total{namespace="production", container="api-server"}[5m]))
-  /
-  (0.70 * avg(kube_pod_container_resource_requests{namespace="production", container="api-server", resource="cpu"}))
-)
-
-# Required replicas based on request rate (100 req/s per pod target)
-ceil(
-  sum(rate(http_requests_total{namespace="production", service="api-server"}[5m]))
-  / 100
-)
-```
-
-### Checklist de dimensionamiento de recursos
-
-| Tipo de workload | CPU Request | CPU Limit | Memory Request | Memory Limit |
-|---------------|-------------|-----------|----------------|--------------|
-| **API Service** | Uso P70 | P99 + 50% o ninguno | Uso P80 | P99 + 25% |
-| **Worker/Consumer** | Uso P70 | P99 + 20% | Uso P80 | P99 + 25% |
-| **Aplicación JVM** | Uso P70 | P99 + 50% | Heap + 40% | Heap + 50% |
-| **ML Inference** | Uso P70 | P99 + 100% | Tamaño del modelo + 50% | Tamaño del modelo + 100% |
-| **Batch Job** | Uso promedio | 2x promedio | Uso pico | Pico + 20% |
-| **Sidecar (envoy)** | 100m | 500m | 128Mi | 256Mi |
-
----
-
-## Optimización de workloads JVM
-
-### Modelo de memoria de JVM en containers
-
-Comprender la memoria de JVM es fundamental para dimensionar containers correctamente:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Container Memory Limit                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │                    JVM Process Memory                      │  │
-│  │                                                            │  │
-│  │  ┌─────────────────────────────────────────────────────┐  │  │
-│  │  │              Heap Memory (MaxRAMPercentage)          │  │  │
-│  │  │  ┌─────────────┐  ┌─────────────┐  ┌────────────┐   │  │  │
-│  │  │  │    Eden     │  │  Survivor   │  │   Old Gen  │   │  │  │
-│  │  │  │   Space     │  │   Spaces    │  │            │   │  │  │
-│  │  │  └─────────────┘  └─────────────┘  └────────────┘   │  │  │
-│  │  └─────────────────────────────────────────────────────┘  │  │
-│  │                                                            │  │
-│  │  ┌─────────────────────────────────────────────────────┐  │  │
-│  │  │           Non-Heap Memory (~25% overhead)            │  │  │
-│  │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐  │  │  │
-│  │  │  │ Metaspace│ │  Code    │ │  Thread  │ │ Native │  │  │  │
-│  │  │  │          │ │  Cache   │ │  Stacks  │ │ Memory │  │  │  │
-│  │  │  └──────────┘ └──────────┘ └──────────┘ └────────┘  │  │  │
-│  │  └─────────────────────────────────────────────────────┘  │  │
-│  │                                                            │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  Remaining: Kernel buffers, page cache                          │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-
-Memory Limit = Heap (MaxRAMPercentage) + Non-Heap Overhead (~25%)
-             = Heap * 1.25 to Heap * 1.40
-```
-
-### Configuración de MaxRAMPercentage
-
-**Por qué 75% es óptimo**:
-
-| Porcentaje | Tamaño de heap (container de 1Gi) | Non-Heap disponible | Riesgo |
-|------------|---------------------------|-------------------|------|
-| 50% | 512Mi | 512Mi | Heap subutilizado |
-| 75% | 768Mi | 256Mi | Equilibrio óptimo |
-| 80% | 819Mi | 205Mi | Riesgo OOM leve |
-| 90% | 921Mi | 102Mi | Riesgo OOM alto |
-
-```bash
-# JVM arguments for containers
-JAVA_OPTS="-XX:+UseContainerSupport \
-           -XX:MaxRAMPercentage=75.0 \
-           -XX:InitialRAMPercentage=50.0 \
-           -XX:MinRAMPercentage=50.0"
-```
-
-### UseContainerSupport
-
-Java 11+ detecta automáticamente los limits del container con `-XX:+UseContainerSupport` (habilitado de forma predeterminada):
-
-```bash
-# Verify container detection
-java -XX:+PrintFlagsFinal -version | grep -i container
-# Output: bool UseContainerSupport = true
-
-# Check detected memory
-java -XshowSettings:system -version 2>&1 | grep -A5 "Operating System"
-```
-
-### Selección del algoritmo de GC
-
-| Algoritmo | Mejor para | Tamaño de heap | Objetivo de pausa | Overhead de CPU |
-|-----------|----------|-----------|--------------|--------------|
-| **G1GC** | Uso general | 4-64GB | 200ms | Medio |
-| **ZGC** | Baja latencia | 8GB-16TB | <10ms | Mayor |
-| **Shenandoah** | Baja latencia | Cualquiera | <10ms | Mayor |
-| **ParallelGC** | Throughput | Pequeño-mediano | No garantizado | Menor |
-| **SerialGC** | Heaps pequeños | <100MB | No aplicable | El más bajo |
-
-**Configuración de G1GC** (predeterminada recomendada):
-
-```bash
-JAVA_OPTS="-XX:+UseG1GC \
-           -XX:MaxGCPauseMillis=200 \
-           -XX:G1HeapRegionSize=16m \
-           -XX:G1ReservePercent=10 \
-           -XX:ParallelGCThreads=4 \
-           -XX:ConcGCThreads=2"
-```
-
-**Configuración de ZGC** (baja latencia):
-
-```bash
-JAVA_OPTS="-XX:+UseZGC \
-           -XX:+ZGenerational \
-           -XX:SoftMaxHeapSize=6g \
-           -XX:ZCollectionInterval=0"
-```
-
-**Configuración de Shenandoah**:
-
-```bash
-JAVA_OPTS="-XX:+UseShenandoahGC \
-           -XX:ShenandoahGCHeuristics=adaptive \
-           -XX:ShenandoahGuaranteedGCInterval=30000"
-```
-
-### CPU Shares vs CFS Quota
-
-Los threads de GC de JVM se ven afectados por las restricciones de CPU:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   CPU Limit Impact on GC                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  CPU Limit: 2 cores                                             │
-│  Default GC Threads: min(cores, 8) = 2                          │
-│                                                                  │
-│  Problem: GC threads compete with application threads           │
-│                                                                  │
-│  Timeline during GC:                                            │
-│  ├────────────────────────────────────────────────────────────┤ │
-│  │ App │ GC │ App │ GC │ App │ GC │ App │ Throttled │ App │   │ │
-│  ├────────────────────────────────────────────────────────────┤ │
-│  │                  CFS Period (100ms)                        │ │
-│                                                                  │
-│  Solution: Higher CPU limit or explicit GC thread control       │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Configuración explícita de threads de GC**:
-
-```bash
-# For CPU limit of 2 cores
-JAVA_OPTS="-XX:ParallelGCThreads=2 \
-           -XX:ConcGCThreads=1 \
-           -XX:+UseContainerSupport"
-
-# For CPU limit of 4 cores
-JAVA_OPTS="-XX:ParallelGCThreads=4 \
-           -XX:ConcGCThreads=2 \
-           -XX:+UseContainerSupport"
-```
-
-### Configuración de JMX Exporter
 
 ```yaml
-# jmx-exporter-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: jmx-exporter-config
-data:
-  jmx-config.yaml: |
-    startDelaySeconds: 0
-    ssl: false
-    lowercaseOutputName: true
-    lowercaseOutputLabelNames: true
-    rules:
-      # JVM memory
-      - pattern: 'java.lang<type=Memory><HeapMemoryUsage>(\w+)'
-        name: jvm_memory_heap_$1_bytes
-        type: GAUGE
-
-      - pattern: 'java.lang<type=Memory><NonHeapMemoryUsage>(\w+)'
-        name: jvm_memory_nonheap_$1_bytes
-        type: GAUGE
-
-      # Memory pools
-      - pattern: 'java.lang<type=MemoryPool, name=(.+)><Usage>(\w+)'
-        name: jvm_memory_pool_$2_bytes
-        labels:
-          pool: $1
-        type: GAUGE
-
-      # GC metrics
-      - pattern: 'java.lang<type=GarbageCollector, name=(.+)><CollectionCount>'
-        name: jvm_gc_collection_count
-        labels:
-          gc: $1
-        type: COUNTER
-
-      - pattern: 'java.lang<type=GarbageCollector, name=(.+)><CollectionTime>'
-        name: jvm_gc_collection_time_ms
-        labels:
-          gc: $1
-        type: COUNTER
-
-      # Threading
-      - pattern: 'java.lang<type=Threading><ThreadCount>'
-        name: jvm_threads_current
-        type: GAUGE
-
-      - pattern: 'java.lang<type=Threading><DaemonThreadCount>'
-        name: jvm_threads_daemon
-        type: GAUGE
-
-      - pattern: 'java.lang<type=Threading><PeakThreadCount>'
-        name: jvm_threads_peak
-        type: GAUGE
-
-      # Class loading
-      - pattern: 'java.lang<type=ClassLoading><LoadedClassCount>'
-        name: jvm_classes_loaded
-        type: GAUGE
-
-      # CPU
-      - pattern: 'java.lang<type=OperatingSystem><ProcessCpuLoad>'
-        name: jvm_process_cpu_load
-        type: GAUGE
-
-      - pattern: 'java.lang<type=OperatingSystem><SystemCpuLoad>'
-        name: jvm_system_cpu_load
-        type: GAUGE
-
-      # Buffer pools
-      - pattern: 'java.nio<type=BufferPool, name=(.+)><(\w+)>'
-        name: jvm_buffer_pool_$2
-        labels:
-          pool: $1
-        type: GAUGE
-```
-
-### Profiling con JFR en Kubernetes
-
-```yaml
-# Enable JFR in deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: java-app
-spec:
-  template:
-    spec:
-      containers:
-        - name: app
-          env:
-            - name: JAVA_OPTS
-              value: >-
-                -XX:StartFlightRecording=name=continuous,settings=default,maxsize=100m,maxage=1h,dumponexit=true,filename=/tmp/jfr/recording.jfr
-                -XX:FlightRecorderOptions=stackdepth=256
-          volumeMounts:
-            - name: jfr-data
-              mountPath: /tmp/jfr
-      volumes:
-        - name: jfr-data
-          emptyDir:
-            sizeLimit: 200Mi
-```
-
-**Disparar un dump de JFR**:
-
-```bash
-# Connect to container and dump JFR
-kubectl exec -it java-app-xxx -- jcmd 1 JFR.dump name=continuous filename=/tmp/jfr/dump.jfr
-
-# Copy JFR file locally
-kubectl cp java-app-xxx:/tmp/jfr/dump.jfr ./dump.jfr
-```
-
-### Spring Boot Actuator + Micrometer
-
-```yaml
-# application.yaml
+# java/src/main/resources/application.yaml
+spring:
+  application:
+    name: resource-api
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
+        include: health,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: never
       probes:
+        enabled: true
+  prometheus:
+    metrics:
+      export:
         enabled: true
   metrics:
     tags:
       application: ${spring.application.name}
-      environment: ${ENVIRONMENT:development}
-    export:
-      prometheus:
-        enabled: true
-        step: 30s
     distribution:
       percentiles-histogram:
         http.server.requests: true
-      percentiles:
-        http.server.requests: 0.5, 0.75, 0.95, 0.99
+        jvm.gc.pause: true
       slo:
-        http.server.requests: 100ms, 500ms, 1000ms, 2000ms
+        http.server.requests: 10ms,50ms,100ms,500ms,1s
 ```
 
-**Dependencias de pom.xml**:
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>io.micrometer</groupId>
-        <artifactId>micrometer-registry-prometheus</artifactId>
-    </dependency>
-</dependencies>
+```bash
+mvn -f java/pom.xml package
+java -jar java/target/resource-api-1.0.0.jar
 ```
 
-### YAML completo de Deployment para JVM
+El proyecto mínimo no incluye wrapper; use `mvn package` salvo que añada uno. La imagen debe contener el jar compilado en `/app/resource-api.jar` y un runtime compatible con Java 21. La imagen `registry.example.com` es un marcador que sustituir. Crear el namespace, construir la imagen y acceder al registro son requisitos separados. Las rutas readiness/liveness coinciden con endpoints Actuator reales.
 
 ```yaml
+# java-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: java-api-service
+  name: resource-java
   namespace: production
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: java-api-service
+      app: resource-java
   template:
     metadata:
       labels:
-        app: java-api-service
-        version: v1
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
-        prometheus.io/path: "/actuator/prometheus"
+        app: resource-java
     spec:
-      serviceAccountName: java-api-service
+      terminationGracePeriodSeconds: 30
       containers:
-        - name: api-service
-          image: myregistry/java-api-service:v1.0.0
-          ports:
-            - name: http
-              containerPort: 8080
-            - name: jmx
-              containerPort: 9090
-          env:
-            - name: JAVA_OPTS
-              value: >-
-                -XX:+UseContainerSupport
-                -XX:MaxRAMPercentage=75.0
-                -XX:InitialRAMPercentage=50.0
-                -XX:+UseG1GC
-                -XX:MaxGCPauseMillis=200
-                -XX:ParallelGCThreads=2
-                -XX:ConcGCThreads=1
-                -XX:+HeapDumpOnOutOfMemoryError
-                -XX:HeapDumpPath=/tmp/heapdump
-                -Djava.security.egd=file:/dev/./urandom
-            - name: SPRING_PROFILES_ACTIVE
-              value: "kubernetes"
-            - name: ENVIRONMENT
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-          resources:
-            requests:
-              cpu: "500m"
-              memory: "1Gi"
-            limits:
-              cpu: "2"          # Higher for GC headroom
-              memory: "1536Mi"  # Heap (75% of 1Gi) + 50% overhead
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 3
-          startupProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 30  # 150 seconds max startup
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            - name: heap-dumps
-              mountPath: /tmp/heapdump
+      - name: app
+        image: registry.example.com/team/resource-java:1.0.0
+        command:
+        - java
+        - -jar
+        - /app/resource-api.jar
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=60.0 -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError
+            -XX:HeapDumpPath=/diagnostics
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: '2'
+            memory: 2Gi
+        ports:
+        - name: http
+          containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: http
+          periodSeconds: 5
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: http
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: http
+          periodSeconds: 5
+        volumeMounts:
+        - name: diagnostics
+          mountPath: /diagnostics
       volumes:
-        - name: tmp
-          emptyDir: {}
-        - name: heap-dumps
-          emptyDir:
-            sizeLimit: 2Gi
+      - name: diagnostics
+        emptyDir:
+          sizeLimit: 3Gi
       topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              app: java-api-service
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: resource-java
 ```
 
-### Panels de dashboard JVM en Grafana
+La ruta de configuración Prometheus es `management.prometheus.metrics.export`. No exponga indiscriminadamente métricas y detalles de salud. Solo las métricas que publican histogramas admiten consultas `_bucket`; promediar percentiles calculados por clientes entre Pods no produce un percentil global. Un Timer Micrometer ya aporta count/sum, por lo que no hace falta un Counter duplicado para la misma medición.
 
-```json
-{
-  "title": "JVM Memory",
-  "type": "timeseries",
-  "targets": [
-    {
-      "expr": "jvm_memory_used_bytes{application=\"$application\", area=\"heap\"}",
-      "legendFormat": "Heap Used"
-    },
-    {
-      "expr": "jvm_memory_max_bytes{application=\"$application\", area=\"heap\"}",
-      "legendFormat": "Heap Max"
-    },
-    {
-      "expr": "jvm_memory_committed_bytes{application=\"$application\", area=\"heap\"}",
-      "legendFormat": "Heap Committed"
-    }
-  ]
-}
+HeapDumpOnOutOfMemoryError maneja Java OOME de la JVM. SIGKILL del kernel no ejecuta hooks de heap dump o cierre. Los diagnósticos en emptyDir desaparecen al borrar el Pod; gestione colisiones de nombres y falta de disco. Los heap dumps pueden contener datos sensibles: restrinja acceso y retención. `ScheduleAnyway` expresa una preferencia, no distribución estricta entre AZ.
+
+### GC y CPU
+
+| Opción | Qué validar |
+|---|---|
+| G1 | Punto inicial habitual; objetivos de pausa no garantizan latencia máxima |
+| ZGC | Comportamiento generacional específico del JDK y presupuesto CPU/memoria |
+| Shenandoah | Disponibilidad en la distribución y versión JDK elegidas |
+| Parallel / Serial | Comparar según necesidades de rendimiento o heap pequeño |
+
+Java 21 admite ZGC generacional con `-XX:+UseZGC -XX:+ZGenerational`. Pasó a ser predeterminado en Java 23; Java 24 eliminó el modo no generacional y dejó obsoleto el selector. Distinga una advertencia de obsolescencia en Java 25 de su futura eliminación. No copie el flag a Java 17. En JDK actuales exclusivamente generacionales, use `-XX:+UseZGC` y verifique el arranque en la versión exacta. Las cifras fijas de GC requieren benchmarks.
+
+`availableProcessors()` no siempre es el número de trabajadores GC. Importan cuota, afinidad, versión JDK y ergonomía del recolector. Añadir hilos GC puede agotar antes una cuota CPU pequeña. Para arranque lento, use startupProbe y mida JIT/GC/CPU.
+
+### JMX y JFR
+
+Incluya el jar JMX exporter 1.6.0 en la imagen, u obtenga el artefacto oficial y verifique su checksum. La configuración se probó con MBeans reales de memoria, hilos y GC. JMX y Micrometer usan nombres distintos; no los mezcle silenciosamente en dashboards. GC CollectionTime se convierte de milisegundos a segundos.
+
+```yaml
+# jmx-config.yaml
+startDelaySeconds: 0
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+includeObjectNames:
+  - "java.lang:type=Memory"
+  - "java.lang:type=Threading"
+  - "java.lang:type=GarbageCollector,name=*"
+rules:
+  - pattern: 'java.lang<type=Memory><HeapMemoryUsage>(used|committed|max)'
+    name: demo_jmx_heap_$1_bytes
+    type: GAUGE
+  - pattern: 'java.lang<type=Threading><>ThreadCount'
+    name: demo_jmx_threads
+    type: GAUGE
+  - pattern: 'java.lang<name=(.+), type=GarbageCollector><>CollectionCount'
+    name: demo_jmx_gc_collections_total
+    labels:
+      gc: "$1"
+    type: COUNTER
+  - pattern: 'java.lang<name=(.+), type=GarbageCollector><>CollectionTime'
+    name: demo_jmx_gc_collection_seconds_total
+    valueFactor: 0.001
+    labels:
+      gc: "$1"
+    type: COUNTER
 ```
 
-**Métricas JVM clave para monitorear**:
-
-```promql
-# Heap utilization
-jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} * 100
-
-# GC pause time (p99)
-histogram_quantile(0.99, sum(rate(jvm_gc_pause_seconds_bucket[5m])) by (le, gc, cause))
-
-# GC frequency
-sum(rate(jvm_gc_pause_seconds_count[5m])) by (gc, cause)
-
-# GC overhead (time spent in GC)
-sum(rate(jvm_gc_pause_seconds_sum[5m])) / sum(rate(process_cpu_seconds_total[5m])) * 100
-
-# Thread count
-jvm_threads_live_threads
-
-# Class loading
-rate(jvm_classes_loaded_classes_total[5m])
+```bash
+java -javaagent:jmx_prometheus_javaagent-1.6.0.jar=127.0.0.1:9404:jmx-config.yaml   -jar java/target/resource-api-1.0.0.jar
 ```
 
----
+El comando local se vincula a loopback. Recoger desde otro Pod necesita puerto de métricas explícito, ServiceMonitor y controles. La JVM no arranca si falta el jar del agente. NMT requiere `-XX:NativeMemoryTracking=summary` al arrancar; no contabiliza completamente RSS de todas las asignaciones de bibliotecas nativas externas.
 
-## Workloads de Python/Node.js
+La captura JFR en vivo requiere herramientas JDK, permisos adecuados del mismo usuario, soporte de attach y destino escribible. Sustituya `PID` por el proceso Java en vez de asumir PID 1.
 
-### Optimización de Python (Gunicorn)
+```bash
+jcmd PID VM.native_memory summary
+jcmd PID JFR.start name=profile settings=profile duration=60s filename=/diagnostics/profile.jfr
+jfr summary /diagnostics/profile.jfr
+```
 
-**Cálculo de workers**:
+Al copiar desde un contenedor, considere el contenedor elegido y la disponibilidad de `tar` para `kubectl cp`. Copie cuando finalice la grabación; reemplazar proceso/Pod no garantiza que sobrevivan archivos heap o JFR.
+
+## 4. Python: workers y perfilado
+
+Aplicar `2 × CPU + 1` al `multiprocessing.cpu_count()` del host puede sobrepasar la cuota del contenedor. Pruebe CPU/IO, GIL/extensiones nativas, RSS por worker y concurrencia. No hay fórmula universal de workers por CPU. Este ejemplo Flask WSGI lee realmente `WEB_CONCURRENCY` y empieza con un worker y dos hilos.
+
+```text
+# python/requirements.txt
+Flask==3.1.3
+gunicorn==26.2.0
+```
 
 ```python
-# workers = (2 * CPU) + 1
-# For CPU-bound: workers = CPU cores
-# For I/O-bound: workers = (2 * CPU) + 1
-
-# For 500m CPU request (0.5 cores):
-# workers = (2 * 0.5) + 1 = 2 workers
-
-# For 2 CPU request:
-# workers = (2 * 2) + 1 = 5 workers
-```
-
-**Configuración de Gunicorn**:
-
-```python
-# gunicorn.conf.py
-import multiprocessing
-import os
-
-# Get CPU limit from cgroup
-def get_cpu_limit():
-    try:
-        with open('/sys/fs/cgroup/cpu/cpu.cfs_quota_us') as f:
-            quota = int(f.read())
-        with open('/sys/fs/cgroup/cpu/cpu.cfs_period_us') as f:
-            period = int(f.read())
-        if quota > 0:
-            return quota / period
-    except:
-        pass
-    return multiprocessing.cpu_count()
-
-cpu_limit = get_cpu_limit()
-workers = int((2 * cpu_limit) + 1)
-threads = 2  # Per worker
-worker_class = 'gthread'
-worker_connections = 1000
-
-# Timeouts
-timeout = 30
-graceful_timeout = 30
-keepalive = 2
-
-# Server socket
-bind = '0.0.0.0:8000'
-backlog = 2048
-
-# Process naming
-proc_name = 'gunicorn-app'
-
-# Logging
-accesslog = '-'
-errorlog = '-'
-loglevel = 'info'
-access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
-
-# Memory management
-max_requests = 1000
-max_requests_jitter = 50
-```
-
-**Profiling de memoria con tracemalloc**:
-
-```python
-# memory_profiler.py
-import tracemalloc
-import linecache
-import os
-
-def display_top(snapshot, key_type='lineno', limit=10):
-    """Display top memory-consuming lines."""
-    snapshot = snapshot.filter_traces((
-        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
-        tracemalloc.Filter(False, "<unknown>"),
-    ))
-    top_stats = snapshot.statistics(key_type)
-
-    print(f"Top {limit} memory consumers:")
-    for index, stat in enumerate(top_stats[:limit], 1):
-        frame = stat.traceback[0]
-        print(f"#{index}: {frame.filename}:{frame.lineno}: {stat.size / 1024:.1f} KiB")
-        line = linecache.getline(frame.filename, frame.lineno).strip()
-        if line:
-            print(f"    {line}")
-
-# Enable in Flask app
+# python/app.py
 from flask import Flask
-app = Flask(__name__)
 
-@app.before_first_request
-def start_tracing():
-    if os.environ.get('ENABLE_MEMORY_PROFILING'):
-        tracemalloc.start()
 
-@app.route('/debug/memory')
-def memory_snapshot():
-    if tracemalloc.is_tracing():
-        snapshot = tracemalloc.take_snapshot()
-        display_top(snapshot)
-        return "Memory snapshot logged"
-    return "Memory profiling not enabled"
+def create_app():
+    app = Flask(__name__)
+
+    @app.get("/health/live")
+    @app.get("/health/ready")
+    def health():
+        # Process-only health for this minimal example.
+        return {"status": "ok"}
+
+    return app
 ```
 
-**Deployment de Kubernetes para Python**:
+```python
+# python/gunicorn.conf.py
+import os
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: python-api-service
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: python-api-service
-  template:
-    metadata:
-      labels:
-        app: python-api-service
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8000"
-        prometheus.io/path: "/metrics"
-    spec:
-      containers:
-        - name: api-service
-          image: myregistry/python-api:v1.0.0
-          command: ["gunicorn"]
-          args:
-            - "--config"
-            - "gunicorn.conf.py"
-            - "app:create_app()"
-          ports:
-            - name: http
-              containerPort: 8000
-          env:
-            - name: PYTHONUNBUFFERED
-              value: "1"
-            - name: PYTHONDONTWRITEBYTECODE
-              value: "1"
-            - name: WEB_CONCURRENCY
-              value: "3"  # Override calculated workers if needed
-          resources:
-            requests:
-              cpu: "500m"
-              memory: "512Mi"
-            limits:
-              cpu: "1500m"
-              memory: "768Mi"
-          livenessProbe:
-            httpGet:
-              path: /health/live
-              port: 8000
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health/ready
-              port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 5
+
+def positive_int(name, default):
+    value = os.environ.get(name, str(default))
+    if not value.isdecimal() or int(value) < 1:
+        raise ValueError(f"{name} must be a positive integer")
+    return int(value)
+
+
+bind = os.environ.get("HTTP_BIND", "0.0.0.0:8000")
+workers = positive_int("WEB_CONCURRENCY", 1)
+threads = positive_int("GUNICORN_THREADS", 2)
+worker_class = "gthread"  # WSGI Flask, not an ASGI worker.
+control_socket_disable = True  # No local administration socket in this example.
+preload_app = False
+timeout = 30
+graceful_timeout = 25
+keepalive = 5
+max_requests = 1000
+max_requests_jitter = 100
+accesslog = "-"
+errorlog = "-"
+loglevel = "info"
 ```
-
-### Optimización de Node.js
-
-**Configuración de memoria de V8**:
 
 ```bash
-# --max-old-space-size in MB
-# Rule: 75% of container memory limit
-# For 1Gi limit: 768MB (1024 * 0.75)
-NODE_OPTIONS="--max-old-space-size=768"
+python -m venv .venv
+.venv/bin/python -m pip install -r python/requirements.txt
+WEB_CONCURRENCY=2 GUNICORN_THREADS=2   .venv/bin/python -m gunicorn --chdir python   --config python/gunicorn.conf.py 'app:create_app()'
 ```
 
-**UV_THREADPOOL_SIZE**:
+Los endpoints de salud solo comprueban el proceso de ejemplo. Implemente readiness de dependencias. No use el hook Flask eliminado `before_first_request`. El socket local de administración de Gunicorn 26 está desactivado en este ejemplo mínimo.
+
+Distinga Flask WSGI de aplicaciones ASGI como FastAPI. Gunicorn 26 también tiene un worker ASGI; si usa Uvicorn, distinga `uvicorn.workers` obsoleto del paquete separado `uvicorn-worker`. No aplique ajustes gthread sin cambios a ASGI. Evalúe los beneficios copy-on-write de preload junto con hilos/conexiones/clientes inicializados antes de fork. Reciclar workers no corrige la causa de una fuga.
+
+tracemalloc observa asignaciones Python registradas, no todo el uso nativo/RSS. Lo siguiente es diagnóstico local explícito, no un endpoint HTTP público de depuración.
+
+```python
+# python/profile_allocations.py
+import tracemalloc
+
+
+def profile_allocation_delta(workload):
+    """Run an explicit local diagnostic; this is not an HTTP debug endpoint."""
+    tracemalloc.start(10)
+    try:
+        before = tracemalloc.take_snapshot()
+        result = workload()
+        after = tracemalloc.take_snapshot()
+        for statistic in after.compare_to(before, "lineno")[:10]:
+            print(statistic)
+        return result
+    finally:
+        tracemalloc.stop()
+
+
+if __name__ == "__main__":
+    profile_allocation_delta(lambda: [bytearray(1024) for _ in range(100)])
+```
+
+## 5. Node.js: old space y memoria de proceso
+
+`--max-old-space-size` se mide en MiB y controla old space de V8. No limita RSS: la generación joven, memoria externa/Buffer y nativa también necesitan capacidad. Con varios procesos worker, presupueste cada heap. Node.js 20 llegó a EOL en abril de 2026, por lo que los nuevos ejemplos usan Node.js 24 compatible.
+
+Este ejemplo de un proceso implementa salud, observación de memoria y SIGTERM. Llamadas repetidas `global.gc()` basadas solo en un porcentaje no son una optimización general. Node 24 probado acepta `--expose-gc` en NODE_OPTIONS; eso no demuestra beneficio productivo de forzar GC.
+
+```javascript
+// node/server.cjs
+const http = require('node:http');
+
+const port = Number(process.env.PORT || 3000);
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  throw new Error('PORT must be an integer between 1 and 65535');
+}
+let draining = false;
+const server = http.createServer((req, res) => {
+  if (!['/health/live', '/health/ready'].includes(req.url)) {
+    res.writeHead(404).end();
+    return;
+  }
+  const status = draining && req.url === '/health/ready' ? 503 : 200;
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ status: status === 200 ? 'ok' : 'draining' }));
+});
+server.listen(port, process.env.HTTP_HOST || '0.0.0.0');
+
+const monitor = setInterval(() => {
+  const { rss, heapUsed, heapTotal, external, arrayBuffers } = process.memoryUsage();
+  console.log(JSON.stringify({ rss, heapUsed, heapTotal, external, arrayBuffers }));
+}, 30000);
+monitor.unref();
+
+function shutdown() {
+  if (draining) return;
+  draining = true;
+  clearInterval(monitor);
+  server.close(() => process.exit(0));
+  setTimeout(() => {
+    server.closeAllConnections();
+    process.exit(1);
+  }, 10000).unref();
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+```
 
 ```bash
-# Default: 4 threads
-# For I/O-heavy apps: CPU cores * 2
-# Max: 1024
-UV_THREADPOOL_SIZE=8
+NODE_OPTIONS="--max-old-space-size=512" node node/server.cjs
 ```
 
-**Cluster Mode para múltiples cores**:
+`UV_THREADPOOL_SIZE` afecta a operaciones que usan el pool libuv, como E/S de archivos, parte de DNS y criptografía. No cubre toda E/S de red. Más hilos pueden aumentar memoria de pilas y operaciones concurrentes. Establézcalo antes del arranque y pruebe la carga real.
 
-```javascript
-// cluster.js
-const cluster = require('cluster');
-const os = require('os');
-const fs = require('fs');
+Si usa Node cluster, prefiera `isPrimary` y limite explícitamente workers. No asuma que `os.cpus().length`, PM2 `instances: max` o `availableParallelism()` sean fórmulas exactas para toda cuota cgroup. Los bucles de reinicio necesitan backoff y no deben recrear workers durante el cierre. Combinar réplicas Pod y de proceso multiplica workers y presupuestos de memoria.
 
-// Get CPU limit from cgroup
-function getCpuLimit() {
-  try {
-    const quota = parseInt(fs.readFileSync('/sys/fs/cgroup/cpu/cpu.cfs_quota_us', 'utf8'));
-    const period = parseInt(fs.readFileSync('/sys/fs/cgroup/cpu/cpu.cfs_period_us', 'utf8'));
-    if (quota > 0) {
-      return Math.ceil(quota / period);
-    }
-  } catch (e) {
-    // Fallback to OS CPU count
-  }
-  return os.cpus().length;
-}
+## 6. Go y Rust
 
-const numCPUs = getCpuLimit();
+### Go
 
-if (cluster.isMaster) {
-  console.log(`Master ${process.pid} starting ${numCPUs} workers`);
+Go 1.25 introdujo GOMAXPROCS predeterminado consciente de cgroups en Linux. Importan la versión de lenguaje de `go.mod` y los valores de compatibilidad GODEBUG; use `go 1.25.0` o posterior para esos valores. Este ejemplo se probó con Go 1.27.1. Establecer GOMAXPROCS explícitamente o llamar a `runtime.GOMAXPROCS(n)` positivo desactiva actualizaciones automáticas. Consultarlo con `runtime.GOMAXPROCS(0)` no lo cambia.
 
-  for (let i = 0; i < numCPUs; i++) {
-    cluster.fork();
-  }
+El runtime actual redondea la cuota hacia arriba y considera CPU lógicas y afinidad. Generalmente no elige menos de dos cuando esas cantidades permiten dos, por lo que `500m always means 1` es incorrecto. No equipare versión/redondeo de automaxprocs con los valores integrados de Go ni active ambos a ciegas. Requests CPU no son cuota.
 
-  cluster.on('exit', (worker, code, signal) => {
-    console.log(`Worker ${worker.process.pid} died. Restarting...`);
-    cluster.fork();
-  });
-} else {
-  require('./app');
-}
+```text
+// go/go.mod
+module example.com/resource-probe
+
+go 1.25.0
 ```
-
-**Detección de memory leaks**:
-
-```javascript
-// memory-monitor.js
-const v8 = require('v8');
-
-class MemoryMonitor {
-  constructor(options = {}) {
-    this.threshold = options.threshold || 0.85; // 85% of limit
-    this.interval = options.interval || 30000;  // 30 seconds
-    this.maxHeap = this.getMaxHeap();
-  }
-
-  getMaxHeap() {
-    const heapStats = v8.getHeapStatistics();
-    return heapStats.heap_size_limit;
-  }
-
-  checkMemory() {
-    const heapStats = v8.getHeapStatistics();
-    const used = heapStats.used_heap_size;
-    const total = heapStats.total_heap_size;
-    const limit = heapStats.heap_size_limit;
-    const utilization = used / limit;
-
-    console.log(JSON.stringify({
-      level: utilization > this.threshold ? 'warn' : 'info',
-      message: 'memory_stats',
-      heap_used_mb: Math.round(used / 1024 / 1024),
-      heap_total_mb: Math.round(total / 1024 / 1024),
-      heap_limit_mb: Math.round(limit / 1024 / 1024),
-      utilization_percent: Math.round(utilization * 100),
-    }));
-
-    if (utilization > this.threshold) {
-      console.warn(`High memory utilization: ${Math.round(utilization * 100)}%`);
-      // Optionally trigger GC if exposed
-      if (global.gc) {
-        console.log('Triggering garbage collection');
-        global.gc();
-      }
-    }
-
-    return { used, total, limit, utilization };
-  }
-
-  start() {
-    this.timer = setInterval(() => this.checkMemory(), this.interval);
-    return this;
-  }
-
-  stop() {
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
-  }
-}
-
-module.exports = MemoryMonitor;
-```
-
-**Deployment de Kubernetes para Node.js**:
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nodejs-api-service
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: nodejs-api-service
-  template:
-    metadata:
-      labels:
-        app: nodejs-api-service
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "3000"
-        prometheus.io/path: "/metrics"
-    spec:
-      containers:
-        - name: api-service
-          image: myregistry/nodejs-api:v1.0.0
-          ports:
-            - name: http
-              containerPort: 3000
-          env:
-            - name: NODE_ENV
-              value: "production"
-            - name: NODE_OPTIONS
-              value: "--max-old-space-size=768 --expose-gc"
-            - name: UV_THREADPOOL_SIZE
-              value: "8"
-          resources:
-            requests:
-              cpu: "500m"
-              memory: "512Mi"
-            limits:
-              cpu: "1500m"
-              memory: "1Gi"
-          livenessProbe:
-            httpGet:
-              path: /health/live
-              port: 3000
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health/ready
-              port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 5
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh", "-c", "sleep 5"]
-```
-
----
-
-## Workloads de Go/Rust
-
-### Optimización de Go
-
-**automaxprocs para CPU consciente del container**:
 
 ```go
-// main.go
+// go/main.go
 package main
 
 import (
-    "log"
-    _ "go.uber.org/automaxprocs" // Automatically sets GOMAXPROCS
+	"encoding/json"
+	"os"
+	"runtime"
+	"runtime/debug"
 )
 
 func main() {
-    // GOMAXPROCS is automatically set based on container CPU limit
-    log.Println("Starting application...")
+	var memory runtime.MemStats
+	runtime.ReadMemStats(&memory)
+	// A negative value queries the current setting without changing it.
+	limit := debug.SetMemoryLimit(-1)
+	result := map[string]any{
+		"gomaxprocs":           runtime.GOMAXPROCS(0),
+		"goroutines":           runtime.NumGoroutine(),
+		"go_managed_bytes":     memory.Sys - memory.HeapReleased,
+		"go_soft_memory_limit": limit,
+		"runtime_version":      runtime.Version(),
+	}
+	if err := json.NewEncoder(os.Stdout).Encode(result); err != nil {
+		panic(err)
+	}
 }
 ```
-
-**Configuración de GOMEMLIMIT** (Go 1.19+):
 
 ```bash
-# Set soft memory limit
-# Recommendation: 90% of container memory limit
-# For 1Gi limit: GOMEMLIMIT=900MiB
-GOMEMLIMIT=900MiB
-GOGC=100  # Default garbage collection target percentage
+go -C go build -o resource-probe .
+GOMEMLIMIT=450MiB ./go/resource-probe
 ```
 
-**Buenas prácticas para aplicaciones Go**:
+GOMEMLIMIT es un límite flexible de memoria gestionada por Go, aproximadamente `MemStats.Sys - HeapReleased`. No es un techo RSS de todo el proceso que incluya cgo, mmap o bibliotecas externas. El runtime puede superarlo para limitar coste GC. Establecerlo al 80–90% de memoria del contenedor no garantiza evitar OOM; muy por debajo del heap vivo puede causar GC excesivo. El programa solo informa ajustes, no lee ni modifica cgroups.
 
-```go
-// config.go
-package main
+### Rust
 
-import (
-    "os"
-    "runtime"
-    "runtime/debug"
-)
+No tener GC no hace deterministas memoria o latencia. Observe asignador, fragmentación, trabajo concurrente, buffers, tareas bloqueantes y planificación del SO. Evalúe cambios como jemalloc según perfiles y soporte, sin asumir una mejora universal.
 
-func configureRuntime() {
-    // Set GOMAXPROCS from environment or use automaxprocs
-    if maxprocs := os.Getenv("GOMAXPROCS"); maxprocs == "" {
-        // Let automaxprocs handle it
-    }
+Este pequeño programa Tokio valida ajustes del runtime; no es un servidor HTTP. `worker_threads()` explícito prevalece sobre el entorno, por lo que se omite. El número de hilos worker no limita `spawn_blocking` ni hilos de bibliotecas externas.
 
-    // Configure memory limit
-    if memlimit := os.Getenv("GOMEMLIMIT"); memlimit != "" {
-        // Already set via environment
-    } else {
-        // Set programmatically (90% of cgroup limit)
-        limit := getMemoryLimit()
-        if limit > 0 {
-            debug.SetMemoryLimit(int64(float64(limit) * 0.9))
-        }
-    }
+```toml
+# rust/Cargo.toml
+[package]
+name = "resource-probe"
+version = "0.1.0"
+edition = "2024"
 
-    // Configure GC
-    debug.SetGCPercent(100) // Default, can tune based on workload
-}
-
-func getMemoryLimit() uint64 {
-    // Read from cgroup v2
-    data, err := os.ReadFile("/sys/fs/cgroup/memory.max")
-    if err != nil {
-        return 0
-    }
-    // Parse and return
-    var limit uint64
-    fmt.Sscanf(string(data), "%d", &limit)
-    return limit
-}
-
-// Expose runtime metrics
-func getRuntimeMetrics() map[string]interface{} {
-    var m runtime.MemStats
-    runtime.ReadMemStats(&m)
-
-    return map[string]interface{}{
-        "goroutines":     runtime.NumGoroutine(),
-        "heap_alloc":     m.HeapAlloc,
-        "heap_sys":       m.HeapSys,
-        "heap_idle":      m.HeapIdle,
-        "heap_inuse":     m.HeapInuse,
-        "stack_inuse":    m.StackInuse,
-        "gc_pause_ns":    m.PauseNs[(m.NumGC+255)%256],
-        "gc_num":         m.NumGC,
-        "gomaxprocs":     runtime.GOMAXPROCS(0),
-    }
-}
-```
-
-**Eficiencia de recursos de Go**:
-
-| Métrica | Go | Java | Python | Node.js |
-|--------|-----|------|--------|---------|
-| Huella de memoria | ~10-50MB | ~200-500MB | ~50-150MB | ~50-150MB |
-| Tiempo de inicio | ~50ms | ~2-10s | ~500ms | ~200ms |
-| Overhead de container | Mínimo | 25-40% | 10-20% | 10-20% |
-| Memoria recomendada | Real + 20% | Heap + 40% | Real + 30% | Heap + 30% |
-
-**Deployment de Kubernetes para Go**:
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: go-api-service
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: go-api-service
-  template:
-    metadata:
-      labels:
-        app: go-api-service
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
-        prometheus.io/path: "/metrics"
-    spec:
-      containers:
-        - name: api-service
-          image: myregistry/go-api:v1.0.0
-          ports:
-            - name: http
-              containerPort: 8080
-          env:
-            - name: GOMEMLIMIT
-              value: "450MiB"  # 90% of 512Mi limit
-            - name: GOGC
-              value: "100"
-          resources:
-            requests:
-              cpu: "100m"     # Go is efficient
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          livenessProbe:
-            httpGet:
-              path: /health/live
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health/ready
-              port: 8080
-            initialDelaySeconds: 3
-            periodSeconds: 5
-```
-
-### Optimización de Rust
-
-**Ventaja de no tener GC**:
-
-Rust no tiene garbage collector, lo que proporciona:
-- Uso de memoria determinista
-- Sin pausas de GC
-- Latencia consistente
-- Menor overhead de memoria
-
-**Configuración de jemalloc**:
-
-```rust
-// Cargo.toml
 [dependencies]
-tikv-jemallocator = "0.5"
-
-// main.rs
-#[global_allocator]
-static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+tokio = { version = "=1.53.1", features = ["rt-multi-thread", "time"] }
 ```
 
-**Configuración del runtime de Tokio**:
-
 ```rust
-// main.rs
+// rust/src/main.rs
+use std::time::Duration;
 use tokio::runtime::Builder;
 
-fn main() {
-    // Configure based on container CPU limit
-    let cpu_limit = get_cpu_limit();
-
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Without worker_threads(), Tokio can honor TOKIO_WORKER_THREADS.
+    // This example rejects invalid values before building the runtime.
+    if let Ok(value) = std::env::var("TOKIO_WORKER_THREADS") {
+        let workers: usize = value.parse()?;
+        if workers == 0 {
+            return Err("TOKIO_WORKER_THREADS must be positive".into());
+        }
+    }
     let runtime = Builder::new_multi_thread()
-        .worker_threads(cpu_limit)
-        .thread_stack_size(2 * 1024 * 1024) // 2MB stack per thread
-        .enable_all()
-        .build()
-        .unwrap();
-
+        .enable_time()
+        .build()?;
+    println!("worker_threads={}", runtime.metrics().num_workers());
     runtime.block_on(async {
-        // Application code
+        tokio::time::sleep(Duration::from_millis(10)).await;
     });
-}
-
-fn get_cpu_limit() -> usize {
-    // Read from cgroup
-    std::fs::read_to_string("/sys/fs/cgroup/cpu/cpu.cfs_quota_us")
-        .ok()
-        .and_then(|quota| quota.trim().parse::<i64>().ok())
-        .filter(|&q| q > 0)
-        .zip(
-            std::fs::read_to_string("/sys/fs/cgroup/cpu/cpu.cfs_period_us")
-                .ok()
-                .and_then(|period| period.trim().parse::<i64>().ok())
-        )
-        .map(|(quota, period)| (quota / period) as usize)
-        .unwrap_or_else(num_cpus::get)
-        .max(1)
+    Ok(())
 }
 ```
 
-**Deployment de Kubernetes para Rust**:
+```bash
+cargo build --manifest-path rust/Cargo.toml
+TOKIO_WORKER_THREADS=2 ./rust/target/debug/resource-probe
+```
+
+En proyectos nuevos sin lockfile, ejecute `cargo build`, revise y confirme el lockfile. Las compilaciones reproducibles posteriores pueden usar `--locked`. Use colas/concurrencia acotadas, no tareas async intensivas en CPU ilimitadas. No publique rankings por lenguaje de memoria/arranque/velocidad sin benchmarks comparables.
+
+## 7. PromQL y alertas
+
+Las reglas suponen `job="kubelet"`, `metrics_path="/metrics/cadvisor"` y series agregadas `cpu="total"` de kube-prometheus-stack, además de kube-state-metrics. Adapte la agregación a recogida por CPU y los selectores al contrato real de etiquetas.
+
+El ejemplo usa max por contenedor para no sumar observaciones duplicadas. Inspeccione ventanas de reinicio donde varios IDs runtime se solapan con el mismo nombre Pod/contenedor; no son datos precisos de facturación CPU. Varios clústeres necesitan una etiqueta `cluster` real en recogida/remote-write; PromQL no inventa una identidad ausente.
+
+Las reglas ordenadas alinean denominadores request/limit y excluyen cero. Working set no predice OOM exactamente; investigue caché de páginas y recuperación de memoria. La última razón de terminación es un gauge, así que `increase(reason)` no cuenta OOM. La alerta combina reinicio reciente y última razón OOM; no cuenta todos los OOM del intervalo.
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: rust-api-service
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: rust-api-service
-  template:
-    metadata:
-      labels:
-        app: rust-api-service
-    spec:
-      containers:
-        - name: api-service
-          image: myregistry/rust-api:v1.0.0
-          ports:
-            - name: http
-              containerPort: 8080
-          env:
-            - name: RUST_LOG
-              value: "info"
-            - name: TOKIO_WORKER_THREADS
-              value: "2"
-          resources:
-            requests:
-              cpu: "50m"      # Rust is very efficient
-              memory: "64Mi"
-            limits:
-              cpu: "500m"
-              memory: "256Mi"
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 3
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8080
-            initialDelaySeconds: 2
-            periodSeconds: 5
-```
-
-### Comparación de recursos en lenguajes compilados
-
-| Aspecto | Go | Rust | C++ |
-|--------|-----|------|-----|
-| **Modelo de memoria** | GC (concurrente) | Ownership (sin GC) | Manual |
-| **Tiempo de inicio** | ~50ms | ~10ms | ~10ms |
-| **Overhead de memoria** | Bajo | Mínimo | Mínimo |
-| **Eficiencia de CPU** | Muy alta | La más alta | La más alta |
-| **Dimensionamiento de requests** | Real * 1.2 | Real * 1.1 | Real * 1.1 |
-| **Ajuste en container** | Excelente | El mejor | Bueno |
-
----
-
-## Dashboards de monitoreo de recursos
-
-### Detección de CPU throttling
-
-```promql
-# Throttled time per second (should be near 0)
-sum(rate(container_cpu_cfs_throttled_seconds_total{namespace="production"}[5m]))
-by (pod, container)
-
-# Throttle percentage (target: < 5%)
-sum(rate(container_cpu_cfs_throttled_periods_total{namespace="production"}[5m]))
-by (pod, container)
-/
-sum(rate(container_cpu_cfs_periods_total{namespace="production"}[5m]))
-by (pod, container)
-* 100
-
-# Pods with high throttling
-topk(10,
-  sum(rate(container_cpu_cfs_throttled_seconds_total{namespace="production"}[5m]))
-  by (pod, container)
-)
-```
-
-### Monitoreo de presión de memoria
-
-```promql
-# Memory utilization percentage
-sum(container_memory_working_set_bytes{namespace="production", container!=""})
-by (pod, container)
-/
-sum(kube_pod_container_resource_limits{namespace="production", resource="memory"})
-by (pod, container)
-* 100
-
-# Near OOM pods (> 90% of limit)
-(
-  sum(container_memory_working_set_bytes{namespace="production"}) by (pod, container)
-  /
-  sum(kube_pod_container_resource_limits{namespace="production", resource="memory"}) by (pod, container)
-) > 0.9
-
-# OOMKill events
-increase(kube_pod_container_status_restarts_total{namespace="production"}[1h])
-* on (pod, container) group_left()
-kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} > 0
-```
-
-### Requests vs uso real
-
-```promql
-# CPU over-provisioning ratio (target: < 2x)
-sum(kube_pod_container_resource_requests{namespace="production", resource="cpu"})
-by (pod, container)
-/
-sum(rate(container_cpu_usage_seconds_total{namespace="production", container!=""}[5m]))
-by (pod, container)
-
-# Memory over-provisioning ratio (target: < 1.5x)
-sum(kube_pod_container_resource_requests{namespace="production", resource="memory"})
-by (pod, container)
-/
-sum(container_memory_working_set_bytes{namespace="production", container!=""})
-by (pod, container)
-
-# Namespace-level waste
-sum(kube_pod_container_resource_requests{namespace="production", resource="cpu"})
--
-sum(rate(container_cpu_usage_seconds_total{namespace="production", container!=""}[5m]))
-```
-
-### Detección de sobreaprovisionamiento
-
-```promql
-# Top over-provisioned deployments by CPU
-topk(10,
-  sum by (deployment) (
-    label_replace(
-      kube_pod_container_resource_requests{namespace="production", resource="cpu"},
-      "deployment", "$1", "pod", "(.+)-[a-f0-9]+-[a-z0-9]+"
-    )
-  )
-  /
-  sum by (deployment) (
-    label_replace(
-      rate(container_cpu_usage_seconds_total{namespace="production", container!=""}[5m]),
-      "deployment", "$1", "pod", "(.+)-[a-f0-9]+-[a-z0-9]+"
-    )
-  )
-)
-
-# Top over-provisioned deployments by memory
-topk(10,
-  sum by (deployment) (
-    label_replace(
-      kube_pod_container_resource_requests{namespace="production", resource="memory"},
-      "deployment", "$1", "pod", "(.+)-[a-f0-9]+-[a-z0-9]+"
-    )
-  )
-  /
-  sum by (deployment) (
-    label_replace(
-      container_memory_working_set_bytes{namespace="production", container!=""},
-      "deployment", "$1", "pod", "(.+)-[a-f0-9]+-[a-z0-9]+"
-    )
-  )
-)
-```
-
-### Ejemplos de panels de Grafana
-
-**Panel de eficiencia de CPU**:
-
-```json
-{
-  "title": "CPU Efficiency by Deployment",
-  "type": "bargauge",
-  "targets": [
-    {
-      "expr": "sum by (deployment) (rate(container_cpu_usage_seconds_total{namespace=\"production\"}[5m])) / sum by (deployment) (kube_pod_container_resource_requests{namespace=\"production\", resource=\"cpu\"}) * 100",
-      "legendFormat": "{{deployment}}"
-    }
-  ],
-  "fieldConfig": {
-    "defaults": {
-      "thresholds": {
-        "steps": [
-          { "color": "red", "value": 0 },
-          { "color": "yellow", "value": 50 },
-          { "color": "green", "value": 70 },
-          { "color": "red", "value": 100 }
-        ]
-      },
-      "unit": "percent",
-      "max": 150
-    }
-  }
-}
-```
-
-**Heatmap de utilización de memoria**:
-
-```json
-{
-  "title": "Memory Utilization Heatmap",
-  "type": "heatmap",
-  "targets": [
-    {
-      "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"production\"}) / sum by (pod) (kube_pod_container_resource_limits{namespace=\"production\", resource=\"memory\"}) * 100",
-      "legendFormat": "{{pod}}"
-    }
-  ],
-  "options": {
-    "calculate": false,
-    "cellGap": 1,
-    "color": {
-      "scheme": "RdYlGn",
-      "reverse": true
-    }
-  }
-}
-```
-
-### Reglas de alertas
-
-```yaml
+# resource-rules.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: resource-alerts
-  namespace: monitoring
+  name: resource-review
+  namespace: observability
+  labels:
+    release: prometheus
 spec:
   groups:
-    - name: resource.rules
-      rules:
-        - alert: HighCPUThrottling
-          expr: |
-            sum(rate(container_cpu_cfs_throttled_periods_total{namespace="production"}[5m]))
-            by (pod, container)
-            /
-            sum(rate(container_cpu_cfs_periods_total{namespace="production"}[5m]))
-            by (pod, container)
-            > 0.25
-          for: 15m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High CPU throttling for {{ $labels.pod }}/{{ $labels.container }}"
-            description: "CPU throttling is {{ $value | humanizePercentage }} for the past 15 minutes. Consider increasing CPU limits."
-
-        - alert: HighMemoryUtilization
-          expr: |
-            sum(container_memory_working_set_bytes{namespace="production", container!=""})
-            by (pod, container)
-            /
-            sum(kube_pod_container_resource_limits{namespace="production", resource="memory"})
-            by (pod, container)
-            > 0.9
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High memory utilization for {{ $labels.pod }}/{{ $labels.container }}"
-            description: "Memory utilization is {{ $value | humanizePercentage }}. Risk of OOMKill."
-
-        - alert: PodOOMKilled
-          expr: |
-            increase(kube_pod_container_status_restarts_total{namespace="production"}[1h]) > 0
-            and on (pod, container)
-            kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
-          labels:
-            severity: critical
-          annotations:
-            summary: "Pod {{ $labels.pod }} was OOMKilled"
-            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} was terminated due to OOM. Increase memory limits."
-
-        - alert: ResourceOverProvisioning
-          expr: |
-            sum(kube_pod_container_resource_requests{namespace="production", resource="cpu"})
-            by (namespace)
-            /
-            sum(rate(container_cpu_usage_seconds_total{namespace="production", container!=""}[1h]))
-            by (namespace)
-            > 3
-          for: 24h
-          labels:
-            severity: info
-          annotations:
-            summary: "Resources over-provisioned in {{ $labels.namespace }}"
-            description: "CPU requests are {{ $value }}x actual usage. Consider right-sizing."
-
-        - alert: ResourceUnderProvisioning
-          expr: |
-            sum(rate(container_cpu_usage_seconds_total{namespace="production", container!=""}[5m]))
-            by (pod, container)
-            >
-            sum(kube_pod_container_resource_requests{namespace="production", resource="cpu"})
-            by (pod, container)
-            * 0.9
-          for: 30m
-          labels:
-            severity: warning
-          annotations:
-            summary: "CPU under-provisioned for {{ $labels.pod }}"
-            description: "CPU usage is consistently above 90% of request. Consider increasing requests."
+  - name: resource-review
+    interval: 1m
+    rules:
+    - record: resource:cpu_cores:rate5m
+      expr: max by (cluster, namespace, pod, container) (rate(container_cpu_usage_seconds_total{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",pod!="",cpu="total"}[5m]))
+    - record: resource:cpu_requests:cores
+      expr: max by (cluster, namespace, pod, container) (kube_pod_container_resource_requests{resource="cpu",unit="core"})
+    - record: resource:memory_working_set:bytes
+      expr: max by (cluster, namespace, pod, container) (container_memory_working_set_bytes{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",pod!=""})
+    - record: resource:memory_limit:bytes
+      expr: max by (cluster, namespace, pod, container) (kube_pod_container_resource_limits{resource="memory",unit="byte"})
+    - record: resource:cpu_request_ratio
+      expr: resource:cpu_cores:rate5m / (resource:cpu_requests:cores > 0)
+    - record: resource:memory_limit_ratio
+      expr: resource:memory_working_set:bytes / (resource:memory_limit:bytes > 0)
+    - record: resource:cfs_throttled:rate5m
+      expr: max by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",pod!=""}[5m]))
+    - record: resource:cfs_periods:rate5m
+      expr: max by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{job="kubelet",metrics_path="/metrics/cadvisor",container!="",container!="POD",pod!=""}[5m]))
+    - record: resource:cfs_throttled_period_ratio
+      expr: resource:cfs_throttled:rate5m / (resource:cfs_periods:rate5m > 0)
+    - record: resource:recent_restart_last_oom
+      expr: (max by (cluster, namespace, pod, container) (increase(kube_pod_container_status_restarts_total[5m]))
+        > 0) and on (cluster, namespace, pod, container) (max by (cluster, namespace,
+        pod, container) (kube_pod_container_status_last_terminated_reason{reason="OOMKilled"})
+        == 1)
+    - record: cluster:pending_pods:count
+      expr: sum by (cluster) (max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending"}))
+    - record: node:pods:count
+      expr: count by (cluster, node) (max by (cluster, node, namespace, pod) (kube_pod_info{node!=""}))
+    - alert: HighCPUThrottledPeriodRatio
+      expr: resource:cfs_throttled_period_ratio > 0.25
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: HighCPUThrottledPeriodRatio
+        description: A high fraction of quota periods were throttled; correlate with
+          latency and throughput.
+    - alert: MemoryWorkingSetNearLimit
+      expr: resource:memory_limit_ratio > 0.9
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: MemoryWorkingSetNearLimit
+        description: Working set is near the configured limit; this is not an exact
+          OOM prediction.
+    - alert: RecentRestartWithLastReasonOOM
+      expr: resource:recent_restart_last_oom > 0
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: RecentRestartWithLastReasonOOM
+        description: A recent restart has OOMKilled as its last recorded reason; inspect
+          termination state.
 ```
 
----
+Haga coincidir `release: prometheus` y namespace `observability` con su selector de reglas. Los umbrales son ejemplos. Una proporción alta de períodos limitados no prescribe automáticamente un limit mayor; correlacione latencia, rendimiento, concurrencia y contención de nodo.
 
-## Optimización de recursos en Auto Mode
+`cluster:pending_pods:count` suma el gauge de fase 0/1. `count(kube_pod_status_phase{phase="Pending"})` también cuenta muestras cero. Pending puede incluir Pods ya programados esperando imágenes/almacenamiento; no equivale a recursos insuficientes. `node:pods:count` ya cuenta por nodo; no lo divida por el número de nodos del clúster.
 
-### Bin-packing de tipos de instancia
+Para agregar por Deployment, use la relación Pod→ReplicaSet→Deployment de kube-state-metrics o reglas validadas, no regex de nombres Pod. Evalúe rollouts, festivos, reserva y SLO en dimensionamiento a largo plazo; observar poco uso no es una política automática de expulsión.
 
-EKS Auto Mode selecciona automáticamente tipos de instancia según los requisitos de Pods pendientes:
+### Consultas y dashboards JVM
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                  Auto Mode Bin-Packing                           │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Pending Pods:                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
-│  │ 500m CPU │ │ 1 CPU    │ │ 2 CPU    │ │ 500m CPU │           │
-│  │ 512Mi    │ │ 2Gi      │ │ 4Gi      │ │ 1Gi      │           │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
-│                                                                  │
-│  Total: 4 CPU, 7.5Gi Memory                                     │
-│                                                                  │
-│  Auto Mode Selection:                                           │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  m6i.xlarge (4 vCPU, 16 GiB)                               │ │
-│  │  ┌────┐ ┌────┐ ┌────────┐ ┌────┐ ┌─────────────────────┐  │ │
-│  │  │Pod1│ │Pod2│ │  Pod3  │ │Pod4│ │    Headroom         │  │ │
-│  │  └────┘ └────┘ └────────┘ └────┘ └─────────────────────┘  │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+Las consultas se dirigen a JVM con la configuración Micrometer anterior. Distinga procesos por la etiqueta instance y verifique nombres en scrapes reales.
+
+```promql
+sum by (instance, application) (jvm_memory_used_bytes{area="heap"})
+/
+sum by (instance, application) (jvm_memory_max_bytes{area="heap"} > 0)
 ```
 
-### Sobreaprovisionamiento para escalado rápido
+```promql
+histogram_quantile(0.99,
+  sum by (le, instance, application) (rate(jvm_gc_pause_seconds_bucket[5m]))
+)
+```
 
-Configura sobreaprovisionamiento para scheduling de Pods más rápido:
+```promql
+sum by (instance, application) (rate(jvm_gc_pause_seconds_sum[5m]))
+```
+
+```promql
+rate(jvm_classes_loaded_count_classes_total[5m])
+```
+
+La tasa de `jvm_gc_pause_seconds_sum` mide segundos de pausa por segundo de reloj. Dividirla por CPU del proceso no produce un porcentaje válido de CPU GC ni captura todo el trabajo GC concurrente. `jvm_classes_loaded_classes` es un gauge de clases actualmente cargadas; el contador acumulativo Micrometer probado es `jvm_classes_loaded_count_classes_total`. Revise exposición real al cambiar JDK/bibliotecas.
+
+Use los UID explícitos y el aprovisionamiento del [capítulo anterior](./09-observability-stack.md). Muestre proporciones con percentunit, o multiplique por 100 y use percent. No trate gauges brutos de utilización como buckets de histograma en un heatmap. No describa un fragmento parcial JSON de panel como dashboard completo importable.
+
+## 8. EKS Auto Mode y capacidad de reserva
+
+Considere requests, Node allocatable real, sobrecarga DaemonSet/sistema/Pod, puertos, volúmenes, topología y taints. Una instancia de 4 vCPU no necesariamente expone cuatro CPU asignables a aplicaciones. Las grandes no siempre son más eficientes ni las pequeñas más baratas. Evalúe impacto de fallos, disponibilidad, precio y fragmentación.
+
+Los NodePools Auto Mode usan `karpenter.sh/v1`; el grupo NodeClass es `eks.amazonaws.com`. El ejemplo referencia un NodeClass Auto Mode `default` existente. Valide por separado NodeClass, subredes, rol IAM y disponibilidad regional de instancias.
 
 ```yaml
-# Pause pods for capacity reservation
+# auto-nodepool.yaml
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: resource-demo
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      requirements:
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values:
+        - m7i.large
+        - m7i.xlarge
+        - m7i.2xlarge
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 5m
+```
+
+La consolidación considera requests, viabilidad de planificación, precio y restricciones de interrupción; CPU observada por debajo del 30% no garantiza consolidación. Los PDB no impiden toda terminación ni garantizan terminación forzada sin interrupción. Un limit sobredimensionado no se reserva automáticamente por el scheduler ordinario si el request no cambia.
+
+Los Pods de relleno pueden favorecer capacidad de reserva para tareas prioritarias. Prioridad -1 está por debajo de la predeterminada 0, no es la mínima posible. `preemptionPolicy: Never` impide que el Pod de relleno desplace a otros; no evita que él sea desplazado. No es una EC2 Capacity Reservation ni garantía de disponibilidad; topología, taints y forma de recursos deben ajustarse a la carga real.
+
+```yaml
+# capacity-buffer.yaml
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
-  name: overprovisioning
-value: -1  # Lowest priority, evicted first
+  name: capacity-buffer
+value: -1
 preemptionPolicy: Never
 globalDefault: false
-description: "Reserved capacity for quick scaling"
+description: Lower priority placeholder capacity; not a reservation guarantee.
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: overprovisioning
-  namespace: kube-system
+  name: capacity-buffer
+  namespace: production
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: overprovisioning
+      app: capacity-buffer
   template:
     metadata:
       labels:
-        app: overprovisioning
+        app: capacity-buffer
     spec:
-      priorityClassName: overprovisioning
+      priorityClassName: capacity-buffer
       containers:
-        - name: pause
-          image: registry.k8s.io/pause:3.9
-          resources:
-            requests:
-              cpu: "2"
-              memory: "4Gi"
+      - name: pause
+        image: registry.k8s.io/pause:3.10.2
+        resources:
+          requests:
+            cpu: '2'
+            memory: 4Gi
 ```
 
-### Consolidación de Nodes
+## Secuencia de despliegue y límites de validación
 
-Monitorea y optimiza la utilización de Nodes:
+1. Mida latencia, rendimiento, cuotas, memoria total y causas de reinicio con carga representativa.
+2. Use VPA y observaciones para proponer requests, considerando HPA y concurrencia conjuntamente.
+3. Pruebe arranque, picos, fallos y reinicios fuera de producción antes de ajustar limits y margen.
+4. Observe SLO, coste, ubicación e interrupción durante un canary; conserve la configuración de reversión.
 
-```promql
-# Node CPU utilization
-sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))
-by (node)
-/
-sum(kube_node_status_allocatable{resource="cpu"})
-by (node)
-* 100
+La validación ejecutó localmente métricas Java/Spring/JMX, JFR/NMT, salud y SIGTERM de Gunicorn/Node, informes runtime Go y configuración de workers Tokio. Los casos PromQL cubrieron scrapes duplicados, varios clústeres, denominadores cero, estado OOM histórico y gauges Pending 0/1. No se desplegó EKS, no se modificaron cuotas cgroup, no se forzó OOM ni se midió rendimiento.
 
-# Node memory utilization
-sum(container_memory_working_set_bytes{container!=""})
-by (node)
-/
-sum(kube_node_status_allocatable{resource="memory"})
-by (node)
-* 100
+## Referencias oficiales
 
-# Under-utilized nodes (candidates for consolidation)
-(
-  sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (node)
-  /
-  sum(kube_node_status_allocatable{resource="cpu"}) by (node)
-) < 0.3
-and
-(
-  sum(container_memory_working_set_bytes{container!=""}) by (node)
-  /
-  sum(kube_node_status_allocatable{resource="memory"}) by (node)
-) < 0.3
-```
-
-### Métricas de eficiencia a nivel de cluster
-
-```promql
-# Overall cluster CPU efficiency
-sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))
-/
-sum(kube_node_status_allocatable{resource="cpu"})
-* 100
-
-# Overall cluster memory efficiency
-sum(container_memory_working_set_bytes{container!=""})
-/
-sum(kube_node_status_allocatable{resource="memory"})
-* 100
-
-# Request vs capacity efficiency
-sum(kube_pod_container_resource_requests{resource="cpu"})
-/
-sum(kube_node_status_allocatable{resource="cpu"})
-* 100
-
-# Waste: allocated but unused
-(
-  sum(kube_pod_container_resource_requests{resource="cpu"})
-  -
-  sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))
-)
-/
-sum(kube_node_status_allocatable{resource="cpu"})
-* 100
-```
-
-### Recomendaciones de optimización para Auto Mode
-
-| Escenario | Recomendación | Comportamiento de Auto Mode |
-|----------|----------------|-------------------|
-| Muchos Pods pequeños | Usa tipos de instancia más pequeños | Selecciona automáticamente una mezcla adecuada |
-| Pocos Pods grandes | Permite instancias más grandes | Aprovisiona instancias grandes |
-| Workload variable | Habilita sobreaprovisionamiento | Mantiene capacidad de buffer |
-| Optimización de costos | Spot instances | Diversifica entre pools |
-| Sensible a la latencia | Ubicación en la misma AZ | Respeta las restricciones de topología |
-
-**Mejores prácticas para Auto Mode**:
-
-1. **Configura resource requests precisos**: Auto Mode usa requests para las decisiones de scheduling
-2. **Evita limits excesivos**: Limits altos pueden fragmentar Nodes
-3. **Usa topology spread**: Distribuye Pods entre zonas
-4. **Configura PodDisruptionBudgets**: Permite consolidación segura
-5. **Monitorea la eficiencia de bin-packing**: Realiza seguimiento de la utilización de Nodes
+- [Recursos Kubernetes](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+- [Expulsión por presión del nodo](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)
+- [GOMAXPROCS de Go consciente de contenedores](https://go.dev/blog/container-aware-gomaxprocs)
+- [Guía GC de Go](https://go.dev/doc/gc-guide)
+- [Opciones Java 21](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)
+- [JEP 474](https://openjdk.org/jeps/474)
+- [JEP 490](https://openjdk.org/jeps/490)
+- [Propiedades Spring Boot](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
+- [JMX exporter 1.6.0](https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0)
+- [Ajustes Gunicorn](https://gunicorn.org/reference/settings/)
+- [Historial de cambios Flask](https://flask.palletsprojects.com/en/stable/changes/)
+- [CLI Node.js 24](https://nodejs.org/download/release/v24.21.0/docs/api/cli.html)
+- [Constructor del runtime Tokio](https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html)
 
 ---
 
-## Documentación relacionada
-
-- [Operaciones del Stack de observabilidad](./09-observability-stack.md) - Configuración de monitoreo y alertas
-- [Actualizaciones de EKS](./11-upgrade-operations.md) - Procedimientos de actualización de clusters
-
----
-
-< [Anterior: Operaciones del Stack de observabilidad](./09-observability-stack.md) | [Tabla de contenidos](./README.md) | [Siguiente: Actualizaciones de EKS](./11-upgrade-operations.md) >
+< [Anterior: Stack de observabilidad](./09-observability-stack.md) | [Índice](./README.md) | [Siguiente: Actualizaciones EKS](./11-upgrade-operations.md) >

@@ -1,680 +1,172 @@
-# Linkerd トラフィック管理
+# Linkerdトラフィック管理
 
-> **サポート対象バージョン**: Linkerd 2.16+
-> **最終更新**: February 22, 2026
+> **最終更新**: September 11, 2026 · Linkerd edge-26.9.1 · Gateway API 1.5.1 · Flagger 1.45.0
 
-## 概要
+現在のLinkerd routingはGateway APIと対応アノテーションを使います。ServiceProfileは互換インターフェースとして残り、TrafficSplit/linkerd-smiは非推奨です。これらは交換可能ではありません。同じServiceの既存ServiceProfileは送信HTTPRouteに優先し、新しい再試行/timeout/failure-accrual設定の反映を妨げます。
 
-Linkerd は、ServiceProfile、TrafficSplit、HTTPRoute などを通じて、サービス間トラフィックをきめ細かく制御できます。このドキュメントでは、リトライ、タイムアウト、トラフィック分割、カナリアデプロイメントを含むトラフィック管理機能について詳しく説明します。
+以下は既存のテスト済みアプリの独立演習です。[導入前提](01-installation.md)、適切な名前空間参加、宣言Service/container port、準備済みendpointを前提とします。レビューではcluster導入、通信移行、本番負荷テストを実行していません。
 
 ## トラフィック管理アーキテクチャ
 
-```mermaid
-graph TB
-    subgraph "Traffic Management Components"
-        SP[ServiceProfile<br/>Per-route Config]
-        TS[TrafficSplit<br/>Traffic Distribution]
-        HR[HTTPRoute<br/>Gateway API]
-    end
+| ポリシー経路 | 役割 | 重要な境界 |
+|---|---|---|
+| Service親HTTPRoute | メッシュcallerからの送信routing/信頼性 | Client参加とHTTP検査可能性が必要 |
+| Server親HTTPRoute | 受信認可の一致 | 接続とpolicyの役割が異なる |
+| ServiceProfile | 従来のroute metrics/retry/timeout | 同じServiceの新policy経路を上書き |
+| TrafficSplit | 旧SMI重み付きrouting | 非推奨拡張/CRDが必要 |
 
-    subgraph "Proxy Features"
-        LB[Load Balancing<br/>EWMA]
-        RT[Retries]
-        TO[Timeouts]
-        CB[Circuit Breaking<br/>Failure Isolation]
-    end
+Serviceベースpolicyは検出に依存します。直接Pod IP/headless、未参加caller、アプリ開始の不透明TLSに同じL7動作が自動適用されるわけではありません。ID、認可、routingは別制御です。
 
-    subgraph "Destination Controller"
-        DEST[Endpoint Discovery]
-        POLICY[Policy Distribution]
-    end
+## 現在のHTTPRouteルーティング
 
-    SP --> DEST
-    TS --> DEST
-    HR --> DEST
-    DEST --> POLICY
-    POLICY --> LB
-    POLICY --> RT
-    POLICY --> TO
-    POLICY --> CB
-```
+### Serviceと重み付きルーティング
 
-## ServiceProfile
-
-ServiceProfile は Linkerd の中核となるトラフィック管理リソースであり、Service ごとのルートを定義し、各ルートのリトライ、タイムアウト、メトリクスを設定します。
-
-### ServiceProfile の構造
+app:web、version:stable/canaryラベルで8080に待受し、適切なreadinessを持つstable/canary Deploymentを準備します。下の名前空間は新しい適格Podを参加させ、アプリはデプロイしません。
 
 ```yaml
-apiVersion: linkerd.io/v1alpha2
-kind: ServiceProfile
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: web-service.my-app.svc.cluster.local
-  namespace: my-app
-spec:
-  # Route definitions
-  routes:
-  - name: GET /api/users
-    condition:
-      method: GET
-      pathRegex: /api/users(/.*)?
-    # This route is retryable
-    isRetryable: true
-    # Timeout setting
-    timeout: 5s
-
-  - name: POST /api/orders
-    condition:
-      method: POST
-      pathRegex: /api/orders
-    # POST requests are not retried by default
-    isRetryable: false
-    timeout: 10s
-
-  - name: GET /health
-    condition:
-      method: GET
-      pathRegex: /health
-    isRetryable: true
-    timeout: 1s
-
-  # Retry budget (retry ratio relative to total requests)
-  retryBudget:
-    retryRatio: 0.2          # Max 20% additional requests
-    minRetriesPerSecond: 10  # Minimum retries per second
-    ttl: 10s                 # Budget reset period
-```
-
-### ルート条件
-
-```yaml
-# HTTP method and path matching
-routes:
-- name: user-read
-  condition:
-    method: GET
-    pathRegex: /api/v1/users/[^/]+
-
-- name: user-list
-  condition:
-    method: GET
-    pathRegex: /api/v1/users$
-
-- name: user-create
-  condition:
-    method: POST
-    pathRegex: /api/v1/users
-
-- name: user-update
-  condition:
-    method: PUT
-    pathRegex: /api/v1/users/[^/]+
-
-- name: user-delete
-  condition:
-    method: DELETE
-    pathRegex: /api/v1/users/[^/]+
-```
-
-### ServiceProfile の自動生成
-
-```bash
-# Generate ServiceProfile from Swagger/OpenAPI
-linkerd profile --open-api swagger.yaml web-service.my-app.svc.cluster.local
-
-# Generate ServiceProfile from live traffic (using tap)
-linkerd viz profile --tap deploy/web-service -n my-app --tap-duration 60s
-
-# Generate ServiceProfile from protobuf
-linkerd profile --proto service.proto web-service.my-app.svc.cluster.local
-```
-
-### 詳細な例
-
-```yaml
-apiVersion: linkerd.io/v1alpha2
-kind: ServiceProfile
-metadata:
-  name: api-gateway.production.svc.cluster.local
-  namespace: production
-spec:
-  routes:
-  # User authentication - requires fast response
-  - name: POST /auth/login
-    condition:
-      method: POST
-      pathRegex: /auth/login
-    isRetryable: false  # Don't retry auth requests (prevent duplicate logins)
-    timeout: 3s
-
-  # User profile retrieval - cacheable, retryable
-  - name: GET /users/profile
-    condition:
-      method: GET
-      pathRegex: /users/[^/]+/profile
-    isRetryable: true
-    timeout: 2s
-
-  # Order creation - not idempotent, risky to retry
-  - name: POST /orders
-    condition:
-      method: POST
-      pathRegex: /orders
-    isRetryable: false
-    timeout: 30s  # Payment processing takes time
-
-  # Order retrieval - safe operation
-  - name: GET /orders
-    condition:
-      method: GET
-      pathRegex: /orders(/.*)?
-    isRetryable: true
-    timeout: 5s
-
-  # Health check - fast response required
-  - name: health-check
-    condition:
-      method: GET
-      pathRegex: /(health|ready|live)
-    isRetryable: true
-    timeout: 500ms
-
-  retryBudget:
-    retryRatio: 0.2
-    minRetriesPerSecond: 10
-    ttl: 10s
-```
-
-## リトライ
-
-Linkerd は、一時的な障害を克服するために失敗したリクエストを自動的にリトライします。
-
-### リトライの動作
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Proxy as linkerd-proxy
-    participant Service as Backend Service
-
-    Client->>Proxy: HTTP Request
-    Proxy->>Service: Request #1
-    Service-->>Proxy: 503 Service Unavailable
-
-    Note over Proxy: Check retry conditions<br/>- isRetryable: true<br/>- Budget available
-
-    Proxy->>Service: Request #2 (retry)
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-```
-
-### リトライ条件
-
-```yaml
-# Conditions for retry to occur
-# 1. ServiceProfile has isRetryable: true
-# 2. Response is a retryable status code
-#    - 5xx server errors
-#    - Connection failures
-#    - Timeouts
-# 3. Retry budget has capacity
-
-routes:
-- name: GET /api/data
-  condition:
-    method: GET
-    pathRegex: /api/data
-  isRetryable: true  # This route is retryable
-```
-
-### リトライバジェット
-
-```yaml
-# Retry budget configuration
-retryBudget:
-  # Additional retry ratio relative to original requests
-  # 0.2 = max 20 additional retries per 100 requests
-  retryRatio: 0.2
-
-  # Minimum retries when traffic is low
-  # Enables retries even under low traffic
-  minRetriesPerSecond: 10
-
-  # Budget reset period
-  ttl: 10s
-```
-
-### リトライのモニタリング
-
-```bash
-# Check retry metrics
-linkerd viz stat deploy/my-service -n my-app
-
-# Check retries per route
-linkerd viz routes deploy/my-service -n my-app
-
-# Expected output:
-# ROUTE                       SERVICE   SUCCESS   RPS  LATENCY_P50  LATENCY_P95  LATENCY_P99
-# GET /api/users              my-app    95.00%   100       10ms         50ms        100ms
-# POST /api/orders            my-app    99.50%    50       20ms        100ms        200ms
-# [RETRIES]                   my-app     5.00%    10        -            -            -
-```
-
-## タイムアウト
-
-タイムアウトでは、指定した時間内に完了しないリクエストを失敗として扱います。
-
-### ルートごとのタイムアウト
-
-```yaml
-apiVersion: linkerd.io/v1alpha2
-kind: ServiceProfile
-metadata:
-  name: backend.my-app.svc.cluster.local
-  namespace: my-app
-spec:
-  routes:
-  # API requiring fast response
-  - name: GET /api/quick
-    condition:
-      method: GET
-      pathRegex: /api/quick
-    timeout: 100ms
-    isRetryable: true
-
-  # Normal API
-  - name: GET /api/normal
-    condition:
-      method: GET
-      pathRegex: /api/normal
-    timeout: 5s
-    isRetryable: true
-
-  # Slow operations (file processing, etc.)
-  - name: POST /api/process
-    condition:
-      method: POST
-      pathRegex: /api/process
-    timeout: 60s
-    isRetryable: false
-
-  # Streaming (no timeout)
-  - name: GET /api/stream
-    condition:
-      method: GET
-      pathRegex: /api/stream
-    # No timeout specified = no timeout
-```
-
-### タイムアウトの動作
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Proxy as linkerd-proxy
-    participant Service as Backend Service
-
-    Client->>Proxy: HTTP Request
-    Note over Proxy: Start timeout: 5s
-    Proxy->>Service: Request
-
-    alt Normal response (within 5s)
-        Service-->>Proxy: 200 OK
-        Proxy-->>Client: 200 OK
-    else Timeout (exceeds 5s)
-        Note over Proxy: 5 seconds elapsed
-        Proxy-->>Client: 504 Gateway Timeout
-        Note over Service: Request may continue processing
-    end
-```
-
-## ロードバランシング
-
-Linkerd は、インテリジェントなロードバランシングのために EWMA（指数加重移動平均）アルゴリズムを使用します。
-
-### EWMA アルゴリズム
-
-```mermaid
-graph LR
-    subgraph "EWMA Load Balancing"
-        REQ[New Request]
-        LB[Load Balancer]
-        E1[Endpoint 1<br/>Latency: 10ms<br/>Score: 0.1]
-        E2[Endpoint 2<br/>Latency: 50ms<br/>Score: 0.5]
-        E3[Endpoint 3<br/>Latency: 20ms<br/>Score: 0.2]
-    end
-
-    REQ --> LB
-    LB -->|Selected| E1
-    LB -.->|Waiting| E2
-    LB -.->|Waiting| E3
-```
-
-**EWMA の特性:**
-
-| 特性 | 説明 |
-|----------------|-------------|
-| レイテンシベース | より高速な応答時間の Endpoint を優先します |
-| リアルタイム適応 | Endpoint の状態変化に素早く適応します |
-| 公平な分散 | 新しい Endpoint にトラフィックを受信する機会を与えます |
-| 自動回避 | 低速な Endpoint へのトラフィックを自動的に削減します |
-
-### ロードバランシングのモニタリング
-
-```bash
-# Check traffic distribution per endpoint
-linkerd viz stat deploy/my-service -n my-app --to deploy/backend
-
-# Check per-pod status
-linkerd viz stat po -n my-app
-
-# Check real-time request flow
-linkerd viz top deploy/my-service -n my-app
-```
-
-## TrafficSplit (SMI)
-
-TrafficSplit は、SMI（Service Mesh Interface）標準に準拠したトラフィック分割リソースです。
-
-### 基本構造
-
-```yaml
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
-metadata:
-  name: my-service-split
-  namespace: my-app
-spec:
-  # Service to split traffic
-  service: my-service
-
-  # Backend services and weights
-  backends:
-  - service: my-service-v1
-    weight: 90   # 90% traffic
-  - service: my-service-v2
-    weight: 10   # 10% traffic
-```
-
-### カナリアデプロイメント
-
-```mermaid
-graph TB
-    subgraph "Canary Deployment"
-        SVC[my-service<br/>Traffic Entry Point]
-        V1[my-service-v1<br/>Stable: 90%]
-        V2[my-service-v2<br/>Canary: 10%]
-    end
-
-    SVC -->|90%| V1
-    SVC -->|10%| V2
-```
-
-**段階的カナリアデプロイメント:**
-
-```yaml
-# Stage 1: Initial canary (1%)
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
-metadata:
-  name: web-split
-  namespace: production
-spec:
-  service: web
-  backends:
-  - service: web-stable
-    weight: 99
-  - service: web-canary
-    weight: 1
-
+  name: route-demo
+  annotations:
+    linkerd.io/inject: enabled
 ---
-# Stage 2: Expand (10%)
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
-metadata:
-  name: web-split
-  namespace: production
-spec:
-  service: web
-  backends:
-  - service: web-stable
-    weight: 90
-  - service: web-canary
-    weight: 10
-
----
-# Stage 3: Expand (50%)
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
-metadata:
-  name: web-split
-  namespace: production
-spec:
-  service: web
-  backends:
-  - service: web-stable
-    weight: 50
-  - service: web-canary
-    weight: 50
-
----
-# Stage 4: Complete (100%)
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
-metadata:
-  name: web-split
-  namespace: production
-spec:
-  service: web
-  backends:
-  - service: web-stable
-    weight: 0
-  - service: web-canary
-    weight: 100
-```
-
-### TrafficSplit Service の設定
-
-```yaml
-# Apex service (traffic entry point)
 apiVersion: v1
 kind: Service
 metadata:
   name: web
-  namespace: production
-spec:
-  selector:
-    app: web  # Not actually used (TrafficSplit handles routing)
-  ports:
-  - port: 80
-    targetPort: 8080
-
----
-# Stable version service
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-stable
-  namespace: production
+  namespace: route-demo
 spec:
   selector:
     app: web
     version: stable
   ports:
-  - port: 80
+  - name: http
+    port: 80
     targetPort: 8080
-
+    appProtocol: http
 ---
-# Canary version service
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-stable
+  namespace: route-demo
+spec:
+  selector:
+    app: web
+    version: stable
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    appProtocol: http
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: web-canary
-  namespace: production
+  namespace: route-demo
 spec:
   selector:
     app: web
     version: canary
   ports:
-  - port: 80
+  - name: http
+    port: 80
     targetPort: 8080
-
----
-# Stable Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-stable
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: web
-      version: stable
-  template:
-    metadata:
-      labels:
-        app: web
-        version: stable
-    spec:
-      containers:
-      - name: web
-        image: myapp:v1.0.0
-
----
-# Canary Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-canary
-  namespace: production
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: web
-      version: canary
-  template:
-    metadata:
-      labels:
-        app: web
-        version: canary
-    spec:
-      containers:
-      - name: web
-        image: myapp:v1.1.0
+    appProtocol: http
 ```
 
-### TrafficSplit のモニタリング
-
-```bash
-# Check TrafficSplit status
-kubectl get trafficsplit -n production
-
-# Traffic statistics per version
-linkerd viz stat deploy -n production
-
-# Expected output:
-# NAME         MESHED   SUCCESS   RPS  LATENCY_P50  LATENCY_P95
-# web-stable   3/3      99.50%   900       10ms         50ms
-# web-canary   1/1      98.00%   100       15ms         80ms
-```
-
-## HTTPRoute (Gateway API)
-
-Linkerd 2.14+ は Gateway API の HTTPRoute をサポートします。
-
-### HTTPRoute の基本構造
+apex ServiceはKubernetes/default routing用に**stable** Podを選びます。selectorは未使用ではありません。未参加などpolicy外通信にも意図的backendが必要です。HTTPRouteは適格メッシュclientをbackend Serviceへ送ります。
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: web-route
-  namespace: my-app
+  namespace: route-demo
 spec:
   parentRefs:
-  - name: web
+  - group: ''
     kind: Service
-    group: core
+    name: web
     port: 80
-
   rules:
-  # Header-based routing
-  - matches:
-    - headers:
-      - name: x-version
-        value: beta
-    backendRefs:
-    - name: web-beta
-      port: 80
-
-  # Default routing
   - backendRefs:
     - name: web-stable
       port: 80
+      weight: 90
+    - name: web-canary
+      port: 80
+      weight: 10
 ```
 
-### 高度な HTTPRoute 設定
+group:""がService参照の正規core groupです。Linkerdの一部経路に旧core別名は残りますが、移植可能Gateway APIでは空groupを使います。参照80はService portで、container 8080ではありません。
+
+重みは非負の相対値で、利用可能な正の合計が必要です。90/10と9/1は同じ比率で、合計100は不要です。routing設定であり、短時間の正確な件数、等しい接続、対応レプリカ数の保証ではありません。
+
+```bash
+kubectl -n route-demo get httproute web-route -o yaml
+kubectl -n route-demo get endpointslices.discovery.k8s.io \
+  -l kubernetes.io/service-name=web-stable -o yaml
+linkerd diagnostics policy -n route-demo svc/web 80 -o json
+linkerd viz stat deploy/client -n route-demo --to svc/web
+linkerd viz stat pods -n route-demo
+```
+
+Accepted/ResolvedRefs、実controller policy、実client通信を確認します。controllerのpolicy表示は全proxyが反映済みの証明ではありません。
+
+### ヘッダーとパス
+
+以下はweb-routeの**代替置換**で、重み付きdefaultの前にcanary群ヘッダーを加えます。
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: api-route
-  namespace: production
+  name: web-route
+  namespace: route-demo
 spec:
   parentRefs:
-  - name: api-gateway
+  - group: ''
     kind: Service
-    group: core
+    name: web
     port: 80
-
   rules:
-  # Canary: requests with specific header
   - matches:
     - headers:
-      - name: x-canary
-        value: "true"
+      - name: x-release-track
+        type: Exact
+        value: canary
     backendRefs:
-    - name: api-canary
+    - name: web-canary
       port: 80
-
-  # Beta users: cookie-based
-  - matches:
-    - headers:
-      - name: cookie
-        value: "beta=true"
-    backendRefs:
-    - name: api-beta
-      port: 80
-
-  # A/B testing: weight-based splitting
   - backendRefs:
-    - name: api-v1
+    - name: web-stable
       port: 80
-      weight: 80
-    - name: api-v2
+      weight: 90
+    - name: web-canary
       port: 80
-      weight: 20
+      weight: 10
+```
 
----
-# Path-based routing
-apiVersion: gateway.networking.k8s.io/v1beta1
+ヘッダー値は認証済みIDではありません。未信頼clientもx-release-track/x-debugを設定できるため、特権/debug backendには別認可を使います。Cookie:beta=true完全一致はヘッダー全体だけに一致し、複数cookieのどこかにある値の一致ではありません。認可された群の信号を正規化するか意図的cookie解析を実装し、完全一致から汎用cookie意味を主張しないでください。
+
+別途準備したServiceのパスrouting例:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: path-route
-  namespace: production
+  name: frontend-paths
+  namespace: route-demo
 spec:
   parentRefs:
-  - name: frontend
+  - group: ''
     kind: Service
-    group: core
+    name: frontend
     port: 80
-
   rules:
-  # /api/* -> api-service
   - matches:
     - path:
         type: PathPrefix
@@ -682,8 +174,6 @@ spec:
     backendRefs:
     - name: api-service
       port: 80
-
-  # /static/* -> static-service
   - matches:
     - path:
         type: PathPrefix
@@ -691,377 +181,474 @@ spec:
     backendRefs:
     - name: static-service
       port: 80
-
-  # Everything else -> web-service
   - backendRefs:
-    - name: web-service
+    - name: web-stable
       port: 80
 ```
 
-## サーキットブレーカー（障害分離）
+1エントリ内の一致はANDです。代替エントリ/ルールと競合routeはGateway API優先順位に従います。別HTTPRoute間の競合がファイル順だけで解決すると想定しないでください。
 
-Linkerd は failure accrual を通じてサーキットブレーカーパターンを実装します。
 
-### Failure Accrual の動作
+## 再試行とタイムアウト
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed: Normal State
-    Closed --> Open: Consecutive Failures Exceed Threshold
-    Open --> HalfOpen: Backoff Time Elapsed
-    HalfOpen --> Closed: Probe Succeeds
-    HalfOpen --> Open: Probe Fails
-```
+再試行は任意有効化の送信動作で、失敗回復の自動保証ではありません。実操作を安全に再実行できる場合だけ使います。reset/error/timeoutではサーバー側書込結果が不明になり得ます。アプリ冪等性とclient再試行は別制御が必要です。
 
-**動作:**
-
-| 状態 | 説明 |
-|-------|-------------|
-| Closed | 通常動作。すべてのリクエストを転送します |
-| Open | Endpoint にリクエストを転送しません |
-| Half-Open | 定期的にプローブリクエストを送信します |
-
-### サーキットブレーカーの設定
+retry-demoの既存Service apiに対し、GET /api/readと配下だけに再試行を設定し、他は転送fallbackにします。
 
 ```yaml
-# Currently Linkerd uses automatic failure accrual
-# Excludes endpoints temporarily on consecutive failures
-
-# Automatic behavior at proxy level:
-# - Exclude endpoint after 5 consecutive connection failures
-# - Retry with exponential backoff
-# - Return to normal state on success
-```
-
-### 障害分離のモニタリング
-
-```bash
-# Check endpoint status
-linkerd viz stat po -n my-app
-
-# Check failure rate
-linkerd viz routes deploy/my-service -n my-app
-
-# Real-time failure monitoring
-linkerd viz tap deploy/my-service -n my-app --method GET --path /api
-```
-
-## Flagger による自動カナリアデプロイメント
-
-Flagger は Linkerd と統合し、自動カナリアデプロイメントを提供します。
-
-### Flagger のインストール
-
-```bash
-# Install Flagger CRDs
-kubectl apply -f https://raw.githubusercontent.com/fluxcd/flagger/main/artifacts/flagger/crd.yaml
-
-# Install Flagger (with Linkerd support)
-helm repo add flagger https://flagger.app
-helm upgrade -i flagger flagger/flagger \
-  --namespace linkerd-viz \
-  --set meshProvider=linkerd \
-  --set metricsServer=http://prometheus.linkerd-viz:9090
-```
-
-### Canary リソース定義
-
-```yaml
-apiVersion: flagger.app/v1beta1
-kind: Canary
-metadata:
-  name: web
-  namespace: production
-spec:
-  # Target Deployment
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web
-
-  # Auto-generated service
-  service:
-    port: 80
-    targetPort: 8080
-
-  # Analysis configuration
-  analysis:
-    # Analysis interval
-    interval: 30s
-    # Required successful iterations before promotion
-    threshold: 5
-    # Maximum allowed failures
-    maxWeight: 50
-    # Weight increment per step
-    stepWeight: 10
-
-    # Success criteria
-    metrics:
-    - name: request-success-rate
-      # Requires 99%+ success rate
-      thresholdRange:
-        min: 99
-      interval: 1m
-
-    - name: request-duration
-      # p99 latency must be 500ms or less
-      thresholdRange:
-        max: 500
-      interval: 1m
-
-    # Webhooks (additional validation)
-    webhooks:
-    - name: load-test
-      url: http://flagger-loadtester.test/
-      timeout: 5s
-      metadata:
-        type: cmd
-        cmd: "hey -z 1m -q 10 -c 2 http://web-canary.production:80/"
-```
-
-### Flagger のデプロイフロー
-
-```mermaid
-graph TB
-    subgraph "Flagger Canary Flow"
-        START[Detect Deployment Change]
-        INIT[Initialize Canary<br/>0% Traffic]
-        ANALYZE[Analyze Metrics]
-        STEP[Increase Traffic<br/>+10%]
-        CHECK{Success Criteria<br/>Met?}
-        PROMOTE[Promotion<br/>100% Canary]
-        ROLLBACK[Rollback<br/>0% Canary]
-        END[Complete]
-    end
-
-    START --> INIT
-    INIT --> ANALYZE
-    ANALYZE --> CHECK
-    CHECK -->|Yes| STEP
-    CHECK -->|No| ROLLBACK
-    STEP --> |Below 50%| ANALYZE
-    STEP --> |Reached 50%| PROMOTE
-    PROMOTE --> END
-    ROLLBACK --> END
-```
-
-### Flagger メトリクステンプレート
-
-```yaml
-apiVersion: flagger.app/v1beta1
-kind: MetricTemplate
-metadata:
-  name: linkerd-success-rate
-  namespace: linkerd-viz
-spec:
-  provider:
-    type: prometheus
-    address: http://prometheus.linkerd-viz:9090
-  query: |
-    sum(rate(response_total{
-      namespace="{{ namespace }}",
-      deployment=~"{{ target }}",
-      classification!="failure"
-    }[{{ interval }}]))
-    /
-    sum(rate(response_total{
-      namespace="{{ namespace }}",
-      deployment=~"{{ target }}"
-    }[{{ interval }}]))
-    * 100
-
----
-apiVersion: flagger.app/v1beta1
-kind: MetricTemplate
-metadata:
-  name: linkerd-request-duration
-  namespace: linkerd-viz
-spec:
-  provider:
-    type: prometheus
-    address: http://prometheus.linkerd-viz:9090
-  query: |
-    histogram_quantile(0.99,
-      sum(rate(response_latency_ms_bucket{
-        namespace="{{ namespace }}",
-        deployment=~"{{ target }}"
-      }[{{ interval }}])) by (le)
-    )
-```
-
-### Flagger のモニタリング
-
-```bash
-# Check Canary status
-kubectl get canary -n production
-
-# Detailed status
-kubectl describe canary web -n production
-
-# Flagger logs
-kubectl logs -n linkerd-viz deploy/flagger -f
-
-# Check events
-kubectl get events -n production --field-selector involvedObject.kind=Canary
-```
-
-## ヘッダーベースルーティング
-
-### デバッグヘッダールーティング
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: debug-route
-  namespace: my-app
+  name: api-read
+  namespace: retry-demo
+  annotations:
+    retry.linkerd.io/http: gateway-error
+    retry.linkerd.io/limit: '2'
+    retry.linkerd.io/timeout: 400ms
+    timeout.linkerd.io/request: 2s
 spec:
   parentRefs:
-  - name: api-service
+  - group: ''
     kind: Service
-    group: core
+    name: api
     port: 80
-
   rules:
-  # Debug mode
   - matches:
-    - headers:
-      - name: x-debug
-        value: "true"
+    - method: GET
+      path:
+        type: PathPrefix
+        value: /api/read
     backendRefs:
-    - name: api-debug
+    - name: api
       port: 80
-
-  # Specific user testing
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: api-default
+  namespace: retry-demo
+spec:
+  parentRefs:
+  - group: ''
+    kind: Service
+    name: api
+    port: 80
+  rules:
   - matches:
-    - headers:
-      - name: x-user-id
-        value: "test-user-123"
+    - path:
+        type: PathPrefix
+        value: /
     backendRefs:
-    - name: api-test
-      port: 80
-
-  # Default
-  - backendRefs:
-    - name: api-stable
+    - name: api
       port: 80
 ```
 
-## トラフィック管理のベストプラクティス
+**親Serviceに再試行アノテーションがない**こと、競合ServiceProfileがないこと、未信頼の要求別policy上書きが無効であることが必要です。そうでなければfallbackが再試行を継承し得ます。実効policyとwrite要求を別測定します。書込転送は全レイヤーで再試行無効という証拠ではありません。
 
-### 1. ServiceProfile 定義戦略
+最大2再試行（計3試行）、400ms retry timeout、2s要求全体timeoutを設定します。要求期限は試行予算を含み、全再試行前に終了する場合があります。現参照では64KiB超のbodyを持つ要求は再試行されません。
+
+**edge-26.9.1でretry.linkerd.io/limit:"0"を無効化スイッチにしないでください。** [リリースparser](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/policy-controller/k8s/index/src/outbound/index/http.rs)は0を未指定へ変換し、条件があれば1再試行へfallbackします。空HTTP retry-conditionも対応する無再試行policyではありません。混在メソッドServiceのdefaultには再試行を置かず、意図するread routeだけに付けます。
+
+route再試行アノテーションはService設定をグループとして上書きし、timeoutも同様です。ServiceProfileはこれらより優先します。明示有効化すればl5d-*要求ヘッダーを尊重できますが、未信頼clientからpolicy上書きを受けず、認証として扱わないでください。
+
+### 期限の範囲
+
+| 設定 | 範囲 |
+|---|---|
+| timeout.linkerd.io/request | 要求/応答ストリーム全体 |
+| timeout.linkerd.io/response | backend応答が進行中の時間 |
+| timeout.linkerd.io/idle | ストリーム非活動時間 |
+| retry.linkerd.io/timeout | retry policy/limitに従う再試行可能な試行のtimeout |
+| ServiceProfile route timeout | 再試行を含む従来route全体の待機 |
+
+通常request/response/idle timeoutはretry timeoutではありません。timeoutは業務処理キャンセルの証明ではありません。応答header/body開始後は新HTTPエラーでなくstream終了/resetになる場合があります。
+
+![応答ヘッダー確定前のHTTP期限の代替結果。時間内は成功、timeoutは504を返し得る。client timeoutはbackend停止の証明ではない。](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-2.png)
+
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-03-traffic-management-2.html)
+
+「同期」「非同期」「ファイルアップロード」ラベルだけで5/60/600秒を指定しないでください。アプリ全体期限、処理/streaming、client/server取消意味から始めます。1つのpolicy timeout省略は他アプリ/転送/proxy/LB制限をなくしません。
+
+## ServiceProfile: 対応する互換設定
+
+ServiceProfileは引き続き対応しますが、新機能開発はGateway APIへ移っています。この**独立したprofile-demo演習**は有効な旧route一致と明示write再試行不可を示します。
 
 ```yaml
-# Define ServiceProfile for all major routes
 apiVersion: linkerd.io/v1alpha2
 kind: ServiceProfile
 metadata:
-  name: critical-service.production.svc.cluster.local
-  namespace: production
+  name: api.profile-demo.svc.cluster.local
+  namespace: profile-demo
 spec:
   routes:
-  # Read operations: retryable, short timeout
-  - name: read-operations
+  - name: read-users
     condition:
-      method: GET
-      pathRegex: /api/.*
+      all:
+      - method: GET
+      - pathRegex: ^/api/users(/.*)?$
     isRetryable: true
     timeout: 5s
-
-  # Write operations: not retryable, longer timeout
-  - name: write-operations
+  - name: write-api
     condition:
-      method: POST|PUT|DELETE
-      pathRegex: /api/.*
+      all:
+      - any:
+        - method: POST
+        - method: PUT
+        - method: PATCH
+        - method: DELETE
+      - pathRegex: ^/api/.*$
     isRetryable: false
-    timeout: 30s
-
-  # Health checks: very short timeout
+    timeout: 10s
   - name: health
     condition:
-      method: GET
-      pathRegex: /(health|ready|live)
-    timeout: 500ms
-
+      all:
+      - method: GET
+      - pathRegex: ^/(health|ready|live)$
+    isRetryable: false
+    timeout: 1s
+  - name: stream
+    condition:
+      all:
+      - method: GET
+      - pathRegex: ^/stream$
+    isRetryable: false
   retryBudget:
     retryRatio: 0.2
     minRetriesPerSecond: 10
     ttl: 10s
 ```
 
-### 2. 段階的トラフィック移行
+methodは正確なHTTPメソッドで正規表現ではありません。POST|PUT|DELETEは和集合ではありません。明示any/all条件か別routeを使い、適切ならPATCHも含めます。route選択と応答分類はアプリに合わせます。retryableフラグは運用者の安全宣言で、自動的な冪等性証明ではありません。
+
+isRetryable:falseは一致routeのServiceProfile再試行を無効にし、SDK/client/他中継の再試行は止めません。stream routeのprofile timeout省略は、そのフィールドからのtimeoutなしを意味し、end-to-end無制限ではありません。
+
+### 再試行予算
+
+retryRatio:0.2は比例枠、minRetriesPerSecond:10は独立追加枠なので、低通信時に**厳格な20%上限ではありません**。ttlは予算計算の参照/保持期間で定期リセットではありません。実再試行はroute適格性、応答分類、バッファ、期限、endpointにも依存します。
+
+![適格要求の初回失敗後、許可された再試行が成功するServiceProfile例。成功保証でも最終結果だけ測ればよいという意味でもない。](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-1.png)
+
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-03-traffic-management-1.html)
+
+生の失敗試行、追加上流配信、最終結果を別観測します。図は成功再試行の1例で、全失敗を隠す約束ではありません。
+
+### Profile生成と観測
 
 ```bash
-# Automated canary deployment script
-#!/bin/bash
-
-SERVICE="web"
-NAMESPACE="production"
-
-# Progressive traffic shift
-for weight in 1 5 10 25 50 75 100; do
-  echo "Setting canary weight to ${weight}%"
-
-  cat <<EOF | kubectl apply -f -
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
-metadata:
-  name: ${SERVICE}-split
-  namespace: ${NAMESPACE}
-spec:
-  service: ${SERVICE}
-  backends:
-  - service: ${SERVICE}-stable
-    weight: $((100 - weight))
-  - service: ${SERVICE}-canary
-    weight: ${weight}
-EOF
-
-  # Wait for metric collection
-  sleep 60
-
-  # Check success rate
-  SUCCESS_RATE=$(linkerd viz stat deploy/${SERVICE}-canary -n ${NAMESPACE} -o json | jq '.success_rate')
-
-  if (( $(echo "$SUCCESS_RATE < 0.95" | bc -l) )); then
-    echo "Success rate too low: ${SUCCESS_RATE}. Rolling back..."
-    # Rollback logic
-    break
-  fi
-done
+# SERVICE is the short Service name; the CLI adds the namespace/domain.
+linkerd profile -n profile-demo --open-api swagger.yaml api > api-openapi-profile.yaml
+linkerd profile -n profile-demo --proto service.proto api > api-proto-profile.yaml
+# Requires actual Viz tap traffic; the final Service argument is mandatory.
+linkerd viz profile -n profile-demo api --tap deploy/api --tap-duration 60s \
+  > api-observed-profile.yaml
+# For offline generation with default assumptions, use --ignore-cluster.
 ```
 
-### 3. タイムアウトのチューニング
+native CLIは短いService名が必要で、元のFQDN引数は拒否されます。tapにも最後のService引数が必要です。OpenAPI/protobuf/tap出力はレビューします。観測通信は完全route一覧ではなく、生成pathは高cardinalityになり得ます。生成は全操作の再試行安全性を証明しません。
+
+```bash
+linkerd viz routes service/api -n profile-demo -o wide
+linkerd viz routes deploy/client -n profile-demo --to svc/api -o wide
+linkerd viz stat deploy/client -n profile-demo --to svc/api
+```
+
+viz routesはServiceProfile向け表示です。実版のwide/JSON出力と文書化されたmetricsを使います。旧架空[RETRIES]行と推測top-level .success_rateは信頼できる自動化インターフェースではありません。
+
+
+## 負荷分散と障害の蓄積
+
+HTTP要求は遅延対応EWMA、TCPは接続粒度で分散します。正常/速い候補を優先しますが、全要求が表示scoreの世界最小を決定的に選ぶ主張ではありません。Pod別とsource→Service統計は異なる集約です。
+
+### 任意有効化のサーキットブレーカー
+
+現HTTP failure accrualは**Serviceに設定しなければ無効**です。同ServiceのServiceProfileと非互換です。別circuit-demoの準備済みapi workload用です。
 
 ```yaml
-# Timeout guidelines by service type
-routes:
-# Synchronous API: 1-5 seconds
-- name: sync-api
-  timeout: 5s
-
-# Asynchronous processing: 30-60 seconds
-- name: async-process
-  timeout: 60s
-
-# File upload: 5-10 minutes
-- name: file-upload
-  timeout: 600s
-
-# Streaming: no timeout
-- name: streaming
-  # No timeout specified
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: circuit-demo
+  annotations:
+    balancer.linkerd.io/failure-accrual: consecutive
+    balancer.linkerd.io/failure-accrual-consecutive-max-failures: '7'
+    balancer.linkerd.io/failure-accrual-consecutive-min-penalty: 1s
+    balancer.linkerd.io/failure-accrual-consecutive-max-penalty: 1m
+spec:
+  selector:
+    app: api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    appProtocol: http
 ```
 
-## 次のステップ
+consecutiveの既定しきい値は7で、自動的な接続失敗5回ではありません。対応HTTP/gRPC応答失敗を追跡し、全TCP接続エラーへの一般論ではありません。選択版には成功率/レート制限を扱うunified policyもあり、使用前に別パラメーターを確認します。
 
-- [セキュリティ](./04-security.md): mTLS と認可ポリシー
-- [可観測性](./05-observability.md): メトリクスとダッシュボード
-- [マルチクラスター](./06-multi-cluster.md): クラスター間トラフィック管理
+| 状態 | 意味 |
+|---|---|
+| Available | Load balancerがendpointを選択可能 |
+| Unavailable | 可能なら通常要求を他へ送る |
+| Probation | Backoff後、実アプリ要求で復旧を試す |
+
+Probationは定期的にKubernetes health probeを作りません。適格アプリ通信がなければ/ready成功だけではendpointは戻りません。Backoffは設定時間とジッターを含みます。全利用可能先が失敗すると要求も失敗し得て、または別設定backendが選択されます。
+
+```bash
+linkerd diagnostics policy -n circuit-demo svc/api 80 -o json
+linkerd viz stat pods -n circuit-demo
+linkerd viz stat deploy/client -n circuit-demo --to svc/api
+```
+
+Pod準備や集約成功だけでなく実policyと結果を確認します。outbound_http_balancer_endpointsはready/pending数を区別し、pendingはfailure accrualだけの診断ではありません。
+
+## 旧TrafficSplitとSMI
+
+TrafficSplit/linkerd-smiは非推奨で別拡張/CRDが必要です。現在の通常導入にYAMLを適用するだけではその処理は提供されません。新規は対応Gateway APIを優先し、既存SMIは移行を計画します。
+
+![相対重み90/10の旧SMI例。メッシュclient proxyがroutingし、apex Service自身が重みを実装するのではない。新例はGateway API。](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-4.png)
+
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-03-traffic-management-4.html)
+
+旧resourceのserviceはapex Serviceを指定し、backendは相対重みを持ちます。既存設定の理解には有用ですが、上の現行例はHTTPRouteです。未参加/fallbackにはService selectorも重要で、policy外callerへ誤ってcanaryを公開しないようにします。
+
+手動段階変更では99/1、90/10、50/50などを1段階ずつ実通信/エラー/遅延でレビューします。同名リソースを1ファイルに複数適用して時間付きrolloutと考えないでください。最後の適用状態が残ります。
+
+### 明示的な手動ロールバック
+
+**手動所有route-demo例に限り**、stableだけの状態をweb-stable-only.yamlとして保存します。
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web-route
+  namespace: route-demo
+spec:
+  parentRefs:
+  - group: ''
+    kind: Service
+    name: web
+    port: 80
+  rules:
+  - backendRefs:
+    - name: web-stable
+      port: 80
+      weight: 100
+    - name: web-canary
+      port: 80
+      weight: 0
+```
+
+```bash
+# Review the target context and this manually owned route before applying.
+kubectl apply -f web-stable-only.yaml
+kubectl -n route-demo get httproute web-route -o yaml
+```
+
+変更後にcontroller受付、stable準備、実client結果を確認します。旧shellループは「Rolling back」と表示してbreakしただけで重みを戻しておらず、確実なno-data/error処理もありませんでした。自動化は実delivery controllerを使い、Flagger所有routeを裏で手動上書きしないでください。
+
+## Flaggerの段階的デリバリー
+
+### バージョンを定めたコントローラーと所有権
+
+Flagger/chart 1.45.0、選択Linkerd/Gateway API、既存Viz Prometheusを使います。リリースfactoryはmeshProvider:linkerdをまだSMI routerへ対応付けます。現HTTPRouteには**gatewayapi:v1**を使い、bare/無関係なprovider文字列は同等ではありません。
+
+flagger-values.yamlとして保存します。
+
+```yaml
+image:
+  tag: 1.45.0
+meshProvider: gatewayapi:v1
+metricsServer: http://prometheus.linkerd-viz.svc.cluster.local:9090
+crd:
+  create: true
+prometheus:
+  install: false
+podAnnotations:
+  linkerd.io/inject: enabled
+linkerdAuthPolicy:
+  create: true
+  namespace: linkerd-viz
+```
+
+```bash
+helm repo add flagger https://flagger.app
+helm repo update flagger
+helm template flagger flagger/flagger --version 1.45.0 \
+  -n flagger-system -f flagger-values.yaml > flagger-rendered.yaml
+# Review existing CRD ownership, RBAC, injection and Prometheus access first.
+helm upgrade --install flagger flagger/flagger --version 1.45.0 \
+  -n flagger-system --create-namespace -f flagger-values.yaml \
+  --wait --timeout 10m
+```
+
+チャートは要求時だけFlagger CRDを作ります。crd.create前に既存所有権を確認します。controller Podはメッシュ参加し、Linkerd認可はcontroller ServiceAccountで既存Viz prometheus-admin Serverを対象にします。外部Prometheusは独自scrape、ID/認証、認可設計が必要です。
+
+### アプリと分析の設計例
+
+progressive-demoに8080 HTTP宣言、動作readiness、テスト済みイメージ、十分な容量の既存Deployment webを準備します。Canary適用はDeployment/ServiceライフサイクルをFlaggerへ委任し、primary Deploymentとapex/primary/canary Serviceを作り、分析間は元targetを0へ縮小できます。前の手動stable/canaryとは別です。
+
+Service親HTTPRouteを使うcallerはメッシュ参加が必要です。apexへの管理された通信でroutingを検証します。canary Serviceへの直接負荷はその版のテストに有用ですが、重み付きapex判断を迂回します。
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: progressive-demo
+  annotations:
+    linkerd.io/inject: enabled
+---
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: web
+  namespace: progressive-demo
+spec:
+  provider: gatewayapi:v1
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web
+  progressDeadlineSeconds: 600
+  service:
+    port: 80
+    targetPort: 8080
+    gatewayRefs:
+    - group: ''
+      kind: Service
+      name: web
+      namespace: progressive-demo
+      port: 80
+  analysis:
+    interval: 30s
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+    - name: linkerd-completed-responses
+      templateRef:
+        name: completed-responses
+        namespace: progressive-demo
+      thresholdRange:
+        min: 20
+      interval: 1m
+    - name: linkerd-http-availability
+      templateRef:
+        name: http-availability
+        namespace: progressive-demo
+      thresholdRange:
+        min: 99
+        max: 100
+      interval: 1m
+    - name: linkerd-ttfb-p99-ms
+      templateRef:
+        name: ttfb-p99-ms
+        namespace: progressive-demo
+      thresholdRange:
+        min: 0
+        max: 500
+      interval: 1m
+```
+
+gatewayRefsは意図的にServiceを指し、v1 routerが親参照を保持します。生成routeより優先するServiceProfileがあってはいけません。同じHTTPRouteを他controller/手動ループに所有させないでください。
+
+threshold:5は失敗確認の打ち切り、maxWeight:50は分析中canary通信上限、stepWeight:10はパーセントポイント増分です。成功確認5回必須や失敗50回許容ではありません。記録失敗上限や他失敗条件後の調整でrollbackし、即時保証ではありません。
+
+
+### 明示的なLinkerdメトリクステンプレート
+
+Canary分析有効化前にMetricTemplateを作ります。カスタム名で、Gateway API router設定と交換可能でないprovider固有の組み込みrequest-success-rate/request-duration observerを避けます。
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: completed-responses
+  namespace: progressive-demo
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz.svc.cluster.local:9090
+  query: sum(increase(response_total{namespace="{{ namespace }}",deployment="{{ target }}",direction="inbound"}[{{
+    interval }}]))
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: http-availability
+  namespace: progressive-demo
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz.svc.cluster.local:9090
+  query: |-
+    (100 * (sum(rate(response_total{namespace="{{ namespace }}",deployment="{{ target }}",direction="inbound",classification="success"}[{{ interval }}])) or vector(0)) / sum(rate(response_total{namespace="{{ namespace }}",deployment="{{ target }}",direction="inbound"}[{{ interval }}])))
+    and on() (sum(rate(response_total{namespace="{{ namespace }}",deployment="{{ target }}",direction="inbound"}[{{ interval }}])) > 0)
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: ttfb-p99-ms
+  namespace: progressive-demo
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.linkerd-viz.svc.cluster.local:9090
+  query: |-
+    histogram_quantile(0.99,
+      sum by (le) (rate(response_latency_ms_bucket{namespace="{{ namespace }}",deployment="{{ target }}",direction="inbound"}[{{ interval }}]))
+    )
+```
+
+Viz scrapeがnamespace/deploymentラベルを供給する前提で、対象Deploymentの受信完了応答を意図的に選びます。実Prometheusで確認します。共有/連携backendは適切なcluster範囲と重複排除が必要で、なければ同名workloadが混ざります。
+
+各確認の目的は異なります。
+
+- completed-responsesは参照窓内に最低20完了応答を要求。increaseは外挿カウンター推定で正確な監査ログ件数ではない。確定/エラー観測を含み、業務成功や一意ユーザー要求数ではない。
+- http-availabilityは成功系列なしの全失敗窓でも0を返す。正の合計を要求するため欠損/アイドルを100%正常と通さない。
+- ttfb-p99-msは最初のバイトまでのresponse_latency_msヒストグラムを**ミリ秒**で使用。完全応答時間ではない。リリースproxyは最初の利用可能body frame時、body破棄時にはfallbackで記録し、通常stream全体終了を待たない。最終応答分類/計数は別で、ヒストグラムと応答カウンターは同時に現れるとは限らない。
+
+各queryは1結果へ集約します。リリースPrometheus providerは空/NaNを拒否し、availability/latencyの明示上下限は無限大通過も防ぎます。1queryで全欠損/古いtelemetryを識別できる約束ではありません。鮮度、scrape health、targetラベル、窓を別確認します。
+
+### トラフィック、フック、観測
+
+意味ある分析には持続する代表通信が必要です。例は負荷生成器/アプリを導入しません。任意のpre-rollout acceptance/rollout load-test webhookには別途デプロイした互換非公開endpoint、認証/ネットワークpolicy、有限実行、テストの意味が必要です。未作成ServiceのWebhook URLを貼らないでください。
+
+```bash
+kubectl -n progressive-demo get canary web
+kubectl -n progressive-demo describe canary web
+kubectl -n progressive-demo get httproute web -o yaml
+kubectl -n progressive-demo get deployments,services
+kubectl -n flagger-system logs deployment/flagger --tail=200
+kubectl -n progressive-demo get events \
+  --field-selector involvedObject.kind=Canary
+```
+
+生成web-primary/web-canary、apex HTTPRoute、実endpoint、controllerイベント、実metric値を確認します。直接canary正常でもapex通信が意図分割に従う証明ではありません。
+
+rollbackは後続routingとdeployment状態を変え、コミット済み書込を取り消したり進行中要求の停止を証明したりしません。アプリデータ/副作用の復旧を別定義します。
+
+## 運用チェックリスト
+
+- 所有権を明示する: 手動HTTPRoute、Flagger、旧SMI controllerのいずれか。
+- HTTPRouteアノテーションが無視されたように見える時はServiceProfile優先を確認。
+- 検証済みの安全に再実行できる操作だけ再試行を有効にし、期限と追加試行の証拠を持つ。
+- controllerが受理したpolicyとメッシュcallerからの観測結果を両方確認。
+- endpoint準備、遅延、生失敗、最終結果、telemetry可用性を一緒に監視。
+- 容量、負荷生成、アプリイメージ、rollbackは環境固有前提で、本文の本番検証済み保証としない。
 
 ## 参考資料
 
-- [Linkerd トラフィック管理](https://linkerd.io/2/features/traffic-split/)
-- [ServiceProfile リファレンス](https://linkerd.io/2/reference/service-profiles/)
-- [SMI TrafficSplit 仕様](https://github.com/servicemeshinterface/smi-spec/blob/main/apis/traffic-split/v1alpha2/traffic-split.md)
-- [Flagger ドキュメント](https://flagger.app/tutorials/linkerd-progressive-delivery/)
+- [Linkerd HTTPRoute参照](https://linkerd.io/docs/reference/httproute/)
+- [再試行](https://linkerd.io/docs/reference/retries/)と[タイムアウト](https://linkerd.io/docs/reference/timeouts/)
+- [ServiceProfile](https://linkerd.io/docs/reference/service-profiles/)
+- [サーキットブレーカー](https://linkerd.io/docs/reference/circuit-breaking/)
+- [負荷分散](https://linkerd.io/docs/features/load-balancing/)
+- [トラフィック分割とSMI非推奨化](https://linkerd.io/docs/features/traffic-split/)
+- [Proxyメトリクス](https://linkerd.io/docs/reference/proxy-metrics/)
+- [リリースの応答メトリクス時刻実装](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/http/metrics/src/requests/service.rs)
+- [Flagger 1.45.0 Gateway API router](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/router/gateway_api.go)
+- [Flagger 1.45.0 provider選択](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/router/factory.go)
+- [Flagger 1.45.0メトリクス評価](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/controller/scheduler_metrics.go)
+- [トラフィック管理クイズ](../../quizzes/service-mesh/linkerd/traffic-management.md)

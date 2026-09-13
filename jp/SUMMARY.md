@@ -130,27 +130,14 @@
   * [パート 6: MSK 統合](data-on-eks/kafka/06-msk-integration.md)
   * [パート 7: モニタリング](data-on-eks/kafka/07-monitoring.md)
   * [パート 8: ベストプラクティス](data-on-eks/kafka/08-best-practices.md)
-* [EKS 上の Spark 詳細解説](data-on-eks/spark/README.md)
-  * [パート 1: Kubernetes 上の Spark の基礎](data-on-eks/spark/01-spark-fundamentals.md)
-  * [パート 2: Spark Operator](data-on-eks/spark/02-spark-operator.md)
-  * [パート 3: Amazon EMR on EKS](data-on-eks/spark/03-emr-on-eks.md)
-  * [パート 4: パフォーマンスとコストのチューニング](data-on-eks/spark/04-performance-tuning.md)
-  * [パート 5: ベストプラクティスとセキュリティ](data-on-eks/spark/05-best-practices.md)
-* [EKS 上の Airflow 詳細解説](data-on-eks/airflow/README.md)
-  * [パート 1: Kubernetes 上の Airflow アーキテクチャ](data-on-eks/airflow/01-architecture.md)
-  * [パート 2: Helm デプロイと Executor の選択](data-on-eks/airflow/02-helm-deployment.md)
-  * [パート 3: DAG パターンと KubernetesPodOperator](data-on-eks/airflow/03-dag-patterns.md)
-  * [パート 4: Amazon MWAA 統合](data-on-eks/airflow/04-mwaa-integration.md)
-  * [パート 5: 運用とセキュリティ](data-on-eks/airflow/05-operations.md)
-* [EKS 上の Flink 詳細解説](data-on-eks/flink/README.md)
-  * [パート 1: Kubernetes 上の Flink アーキテクチャ](data-on-eks/flink/01-architecture.md)
-  * [パート 2: Flink Kubernetes Operator](data-on-eks/flink/02-flink-kubernetes-operator.md)
-  * [パート 3: 状態、チェックポイント、ストリーミングパターン](data-on-eks/flink/03-state-checkpointing-streaming.md)
-  * [パート 4: 運用、高可用性、Managed Flink](data-on-eks/flink/04-operations-ha.md)
+  * [Kafka ベンチマークパート 9（英語ガイド）](data-on-eks/kafka/09-kafka-benchmark.md)
 
 ## ネットワーキング
 
 * [ネットワーキングの概要](networking/README.md)
+  * [ネットワーク基礎パート 1（英語ガイド）](basics/06-network-fundamentals-part1.md)
+  * [ネットワーク基礎パート 2（英語ガイド）](basics/06-network-fundamentals-part2.md)
+  * [ネットワーク基礎パート 3（英語ガイド）](basics/06-network-fundamentals-part3.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Cilium 詳細解説](networking/cilium/README.md)
   * [パート 1: 導入](networking/cilium/01-introduction.md)
@@ -267,14 +254,6 @@
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
 
-## コンテナレジストリ
-
-* [コンテナレジストリの概要](container-registry/README.md)
-* [Docker Hub](container-registry/01-docker-hub.md)
-* [Amazon ECR](container-registry/02-amazon-ecr.md)
-* [Harbor](container-registry/03-harbor.md)
-* [コンテナレジストリのベストプラクティス](container-registry/04-best-practices.md)
-
 ## プラットフォームエンジニアリング
 
 * [プラットフォームエンジニアリングの概要](platform-engineering/00-platform-engineering-overview.md)
@@ -303,7 +282,7 @@
     * [セキュリティ](gitops/argocd/07-security.md)
     * [通知](gitops/argocd/08-notifications.md)
     * [ベストプラクティス](gitops/argocd/09-best-practices.md)
-    * [Rollouts 実験の詳細解説](gitops/argocd/10-rollouts-experiment.md)
+
   * [FluxCD](gitops/02-fluxcd.md)
   * [GitOps ツールの比較](gitops/03-gitops-comparison.md)
   * [Flagger による段階的デリバリー](gitops/04-flagger.md)
@@ -367,7 +346,8 @@
   * [ストレージラボ](labs/core/04-storage-lab.md)
   * [ConfigMap と Secret ラボ](labs/core/05-configuration-secrets-lab.md)
   * [EKS クラスター作成ラボ](labs/eks/01-eks-cluster-creation-lab.md)
-  * [オブザーバビリティのエンドツーエンドラボ](lab-guides/labs/observability-end-to-end/README.md)
+
+  * オブザーバビリティのエンドツーエンドラボ
     * [ラボシリーズの導入](labs/observability/README.md)
     * [パート 1: インフラストラクチャのセットアップ](labs/observability/01-infrastructure-setup-lab.md)
     * [パート 2: オブザーバビリティスタック](labs/observability/02-observability-stack-lab.md)
@@ -476,20 +456,8 @@
   * [パート 6: MSK 統合クイズ](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
   * [パート 7: モニタリングクイズ](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [パート 8: ベストプラクティスクイズ](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
-  * [パート 1: Kubernetes 上の Spark の基礎クイズ](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
-  * [パート 2: Spark Operator クイズ](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
-  * [パート 3: Amazon EMR on EKS クイズ](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
-  * [パート 4: パフォーマンスとコストのチューニングクイズ](quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
-  * [パート 5: ベストプラクティスとセキュリティクイズ](quizzes/data-on-eks/spark/05-best-practices-quiz.md)
-  * [パート 1: Kubernetes 上の Airflow アーキテクチャクイズ](quizzes/data-on-eks/airflow/01-architecture-quiz.md)
-  * [パート 2: Helm デプロイと Executor の選択クイズ](quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
-  * [パート 3: DAG パターンと KubernetesPodOperator クイズ](quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
-  * [パート 4: Amazon MWAA 統合クイズ](quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
-  * [パート 5: 運用とセキュリティクイズ](quizzes/data-on-eks/airflow/05-operations-quiz.md)
-  * [パート 1: Kubernetes 上の Flink アーキテクチャクイズ](quizzes/data-on-eks/flink/01-architecture-quiz.md)
-  * [パート 2: Flink Kubernetes Operator クイズ](quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
-  * [パート 3: 状態、チェックポイント、ストリーミングパターンクイズ](quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
-  * [パート 4: 運用、高可用性、Managed Flink クイズ](quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
+  * [Kafka ベンチマークパート 9 クイズ（英語）](quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+
 * ネットワーキング
   * [ネットワーキングの概要クイズ](quizzes/networking/00-networking-overview-quiz.md)
   * [VPC CNI クイズ](quizzes/networking/01-vpc-cni-quiz.md)
@@ -555,11 +523,7 @@
   * [cert-manager クイズ](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescape クイズ](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE クイズ](quizzes/security/12-spiffe-spire-quiz.md)
-* コンテナレジストリ
-  * [Docker Hub クイズ](quizzes/container-registry/01-docker-hub-quiz.md)
-  * [Amazon ECR クイズ](quizzes/container-registry/02-amazon-ecr-quiz.md)
-  * [Harbor クイズ](quizzes/container-registry/03-harbor-quiz.md)
-  * [コンテナレジストリのベストプラクティスクイズ](quizzes/container-registry/04-best-practices-quiz.md)
+
 * GitOps
   * [ArgoCD クイズ](quizzes/gitops/01-argocd-quiz.md)
   * ArgoCD 詳細クイズ

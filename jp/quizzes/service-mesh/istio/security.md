@@ -1,39 +1,42 @@
 # セキュリティクイズ
 
-> **対応バージョン**: Istio 1.28.0 **EKS バージョン**: 1.34 (Kubernetes 1.28+) **最終更新**: February 23, 2026
+> **最終更新**: September 11, 2026 · Istio 1.31 · Kubernetes 1.32–1.36（EKS標準サポート: 1.34–1.36）。[インストール対応表](../../../service-mesh/istio/01-installation.md)を参照してください。
 
-このクイズでは、Istio のセキュリティ機能に関する理解度を確認します。
+サイドカー例でIstioセキュリティを確認するクイズです。各問は独立シナリオであり、同じワークロードに全ALLOWポリシーを組み合わせないでください。AmbientのHTTP/JWTポリシーにはwaypointの`targetRefs`が必要で、PeerAuthentication `DISABLE`は非対応です。指定ワークロード、ServiceAccount、ポート、IDは実デプロイと一致する必要があります。
 
-## 選択問題（1～5）
+## 選択問題（1-5）
 
-### 問題 1: PeerAuthentication モード
+### 問1: PeerAuthenticationモード
 
-PeerAuthentication における **PERMISSIVE** mTLS モードを正しく説明しているのはどれですか？
+PeerAuthenticationの**PERMISSIVE** mTLSモードを正しく説明するものはどれですか？
 
-A. mTLS と平文トラフィックの両方を許可する B. mTLS のみを許可し、平文を拒否する C. すべてのトラフィックを拒否する D. mTLS を無効にする
+A. mTLSと平文の両方を許可する\
+B. mTLSのみ許可し平文を拒否する\
+C. 全通信を拒否する\
+D. mTLSを無効にする
 
 <details>
 
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: A**
+**正解: A**
 
-PERMISSIVE モードは、段階的な移行をサポートするために **mTLS と平文トラフィックの両方を許可**します。
+PERMISSIVEは段階的移行のため**mTLSと平文の両方を許可**します。
 
 **解説:**
 
-**PeerAuthentication mTLS モード:**
+**PeerAuthenticationのmTLSモード:**
 
-| モード           | 説明                    | 使用シナリオ                          |
+| モード | 説明 | 使用シナリオ |
 | -------------- | ------------------------------ | ------------------------------------- |
-| **PERMISSIVE** | mTLS + 平文の両方を許可   | 段階的な移行、混在環境 |
-| **STRICT**     | mTLS のみを許可               | 本番環境のセキュリティ強化         |
-| **DISABLE**    | mTLS を無効化（平文のみ） | デバッグ、レガシーシステム             |
+| **PERMISSIVE** | mTLS + 平文の両方を許可 | 段階的移行、混在環境 |
+| **STRICT** | mTLSだけ許可 | 本番のセキュリティ強化 |
+| **DISABLE** | 選択した受信側でメッシュmTLSを無効化 | 明示的なレガシー例外 |
 
-**PERMISSIVE モードの例:**
+**PERMISSIVEモード例:**
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -50,10 +53,10 @@ Client A (Istio Sidecar) -> [mTLS] -> Server (PERMISSIVE)  Allowed
 Client B (No Sidecar)    -> [Plaintext] -> Server (PERMISSIVE)  Allowed
 ```
 
-**STRICT モードとの比較:**
+**STRICTとの比較:**
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: strict-mtls
@@ -78,21 +81,21 @@ Step 2: Inject Sidecars to all services
 Step 3: STRICT (Enforce mTLS)
 ```
 
-**参照:**
+**参考資料:**
 
-* [PeerAuthentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/04-peer-authentication.md)
+* [PeerAuthentication](../../../service-mesh/istio/security/01-mtls.md)
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 
 </details>
 
 ***
 
-### 問題 2: AuthorizationPolicy アクション
+### 問2: AuthorizationPolicyアクション
 
-次の AuthorizationPolicy 設定は何を意味しますか？
+これが名前空間内のワークロードを選ぶ唯一のAuthorizationPolicyなら、何を意味しますか？
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
@@ -100,29 +103,32 @@ spec:
   {}
 ```
 
-A. すべてのリクエストを許可する B. すべてのリクエストを拒否する C. ポリシーを適用しない D. mTLS のみを許可する
+A. 全要求を許可する\
+B. 全要求を拒否する\
+C. ポリシーを適用しない\
+D. mTLSだけ許可する
 
 <details>
 
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B**
+**正解: B**
 
-空の spec を持つ AuthorizationPolicy は、**すべてのリクエストを拒否**します（デフォルト拒否）。
+空specは一致ルールなしのALLOWがデフォルトとなり、このポリシー単体は**全要求を拒否**します。他の一致ALLOWは例外を提供できますが、明示DENY-allはALLOWで上書きできません。
 
 **解説:**
 
-**AuthorizationPolicy のデフォルト動作:**
+**AuthorizationPolicyのデフォルト動作:**
 
-1. **ポリシーが存在しない**: すべてのリクエストを許可
-2. **空の spec（例のようなもの）**: すべてのリクエストを拒否
-3. **ルールあり**: ルールに基づいて許可／拒否
+1. **ポリシーなし**: 全要求を許可
+2. **空spec（例のような場合）**: 全要求を拒否
+3. **ルールあり**: ルールに基づいて許可/拒否
 
 **デフォルト拒否パターン:**
 
 ```yaml
 # Step 1: Deny all requests
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
@@ -131,7 +137,7 @@ spec: {}  # Empty spec = deny all requests
 
 ---
 # Step 2: Selectively allow only what's needed
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-frontend
@@ -150,34 +156,15 @@ spec:
         methods: ["GET", "POST"]
 ```
 
-**AuthorizationPolicy のアクション種別:**
+**評価:** CUSTOM → DENY → ALLOW。一致するCUSTOM providerが許可し、次に一致DENYがあれば拒否します。該当ALLOWがあれば最低1ルールに一致する必要があります。該当ALLOWがなければこの段階は許可します。ルールとALLOWポリシーは和集合で、追加制約の順序付きリストではありません。AUDITは設定した監査プラグイン用に一致要求をマークします。第4の適用段階ではなく、単体でログ記録もしません。
 
-| action     | 説明           | 優先度    |
-| ---------- | --------------------- | ----------- |
-| **DENY**   | 明示的な拒否         | 1（最高） |
-| **ALLOW**  | 明示的な許可        | 2           |
-| **AUDIT**  | ログのみ              | 3           |
-| **CUSTOM** | 外部認証サービス | 4           |
-
-**評価順序:**
-
-```
-1. Evaluate DENY policies -> If matched, immediately deny
-   | (pass)
-2. Evaluate ALLOW policies -> If matched, allow
-   | (no match)
-3. Default behavior
-   - If any ALLOW policy exists -> Deny
-   - If no ALLOW policy exists -> Allow
-```
-
-**実践例:**
+**実用例:**
 
 ```yaml
 # Scenario: Restrict HTTP methods
 ---
 # DENY: Prohibit DELETE
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-delete
@@ -193,7 +180,7 @@ spec:
 
 ---
 # ALLOW: Only allow GET, POST
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-read-write
@@ -211,7 +198,7 @@ spec:
         methods: ["GET", "POST"]
 ```
 
-**テスト:**
+**テスト:** ServiceAccount `frontend`を使うメッシュ参加済みフロントエンドから実行し、バックエンドのHTTPプロトコル/ポート検出を設定します。
 
 ```bash
 # GET request -> Matches ALLOW policy -> Allowed
@@ -227,31 +214,36 @@ curl -X DELETE http://backend/api
 curl -X PUT http://backend/api
 ```
 
-**参照:**
+**参考資料:**
 
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+* [認可ポリシー](../../../service-mesh/istio/security/03-authorization.md)
 
 </details>
 
 ***
 
-### 問題 3: JWT 認証
+### 問3: JWT認証
 
-RequestAuthentication で JWT トークンの検証に使用するフィールドはどれですか？
+RequestAuthenticationでJWTを検証するフィールドはどれですか？
 
-A. issuer と audiences B. principals と namespaces C. methods と paths D. hosts と ports
+A. issuerとaudiences\
+B. principalsとnamespaces\
+C. methodsとpaths\
+D. hostsとports
 
 <details>
 
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: A**
+**正解: A**
 
-RequestAuthentication は **issuer** フィールドと **audiences** フィールドを使用して JWT トークンを検証します。
+RequestAuthenticationは**issuer**と**audiences**でJWTを検証します。
 
 **解説:**
 
-**JWT トークン構造:**
+トークンがある場合、署名、issuer、audience、時刻の検査を通過する必要があります。RequestAuthentication単体はトークン欠損を許すため、AuthorizationPolicyで`requestPrincipals`を必須にします。以下の時刻値は期限切れの過去例で、使用可能トークンではありません。
+
+**JWT構造:**
 
 ```
 Header.Payload.Signature
@@ -266,10 +258,10 @@ Payload example:
 }
 ```
 
-**RequestAuthentication 設定:**
+**RequestAuthentication設定:**
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
@@ -286,30 +278,19 @@ spec:
     forwardOriginalToken: true
 ```
 
-**JWT 検証プロセス:**
+**JWT検証処理:**
 
-```mermaid
-flowchart LR
-    Request[Client Request] --> Header{Authorization<br/>header exists?}
-    Header -->|No| NoToken[No token<br/>Skip validation]
-    Header -->|Yes| Extract[Extract JWT]
-    Extract --> Decode[Decode token]
-    Decode --> ValidateIss{Validate issuer}
-    ValidateIss -->|Fail| Reject[Reject<br/>401 Unauthorized]
-    ValidateIss -->|Pass| ValidateAud{Validate audiences}
-    ValidateAud -->|Fail| Reject
-    ValidateAud -->|Pass| ValidateSig{Validate signature<br/>JWKS}
-    ValidateSig -->|Fail| Reject
-    ValidateSig -->|Pass| ValidateExp{Validate expiration}
-    ValidateExp -->|Expired| Reject
-    ValidateExp -->|Valid| Allow[Allow]
-```
+![サイドカーが受信JWTのissuer、audiences、JWKS署名、有効期限を順に確認し、失敗なら401 Unauthorizedで拒否、全4確認の通過後のみ通すフローチャート。](../../../.gitbook/assets/en-quizzes-service-mesh-istio-security-0.png)
 
-**OIDC プロバイダーとの統合:**
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-security-0.html)
+
+図は存在するトークンの検証を説明し、認可や欠損トークン処理ではありません。以下のprovider例は選択肢です。アプリが期待するトークンタイプとaudienceを設定します。
+
+**OIDCプロバイダーとの統合:**
 
 ```yaml
 # Google OAuth2 example
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: google-jwt
@@ -322,7 +303,7 @@ spec:
 
 ---
 # Keycloak example
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: keycloak-jwt
@@ -334,11 +315,11 @@ spec:
     - "myapp"
 ```
 
-**AuthorizationPolicy との組み合わせ:**
+**AuthorizationPolicyとの併用:**
 
 ```yaml
 # 1. RequestAuthentication: Validate JWT
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
@@ -349,10 +330,11 @@ spec:
   jwtRules:
   - issuer: "https://auth.example.com"
     jwksUri: "https://auth.example.com/.well-known/jwks.json"
+    audiences: ["api.example.com"]
 
 ---
 # 2. AuthorizationPolicy: Only allow authenticated requests
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: require-jwt
@@ -364,26 +346,11 @@ spec:
   rules:
   - from:
     - source:
-        requestPrincipals: ["*"]  # Only requests with JWT
+        requestPrincipals: ["https://auth.example.com/*"]  # Verified issuer + method in the same rule
     to:
     - operation:
         methods: ["GET", "POST"]
 
----
-# 3. AuthorizationPolicy: Only allow specific issuer
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: require-specific-issuer
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        requestPrincipals: ["https://auth.example.com/*"]
 ```
 
 **テスト:**
@@ -391,133 +358,50 @@ spec:
 ```bash
 # Request without JWT -> Passes RequestAuthentication, denied by AuthorizationPolicy
 curl http://backend/api
-# 401 Unauthorized
+# 403 Forbidden
 
 # Request with valid JWT
-TOKEN="eyJhbGc..."
+read -rsp "Test access token: " TOKEN; echo
 curl -H "Authorization: Bearer $TOKEN" http://backend/api
+unset TOKEN
 # 200 OK
 ```
 
-**参照:**
+**参考資料:**
 
-* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/03-request-authentication.md)
+* [リクエスト認証](../../../service-mesh/istio/security/02-authentication.md)
 
 </details>
 
 ***
 
-### 問題 4: mTLS 証明書管理
+### 問4: mTLS証明書管理
 
-Istio における mTLS 証明書のデフォルト有効期間はどれですか？
+IstioのmTLS証明書のデフォルト有効期間は何ですか？
 
-A. 1 時間 B. 24 時間 C. 7 日 D. 90 日
+A. 1時間\
+B. 24時間\
+C. 7日\
+D. 90日
 
 <details>
 
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: B**
+**正解: B**
 
-Istio の mTLS 証明書のデフォルト有効期間は **24 時間**で、自動更新されます。
+IstioのmTLS証明書のデフォルト有効期間は**24時間**で、自動更新されます。
 
 **解説:**
 
-**Istio 証明書管理:**
+エージェントはデフォルトで24時間のリーフ証明書を要求し、ジッターを伴って寿命の約半分で更新します（`SECRET_GRACE_PERIOD_RATIO=0.5`）。Istiodまたは選択した外部CAが要求に署名し、エージェントがSDSでEnvoyへ渡します。ルート/中間の寿命は別です。デフォルト自己署名ルートはワークロードのリーフへ直接署名し、中間階層は管理者の選択です。
 
-```yaml
-# Istiod configuration (defaults)
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    certificates:
-    - secretName: dns.example-service-account
-      dnsNames:
-      - example.com
-```
-
-**デフォルト設定:**
-
-* **証明書の有効期間**: 24 時間（1 日）
-* **更新タイミング**: 有効期限の 8 時間前
-* **更新方法**: 自動（Istiod が管理）
-* **証明書形式**: X.509
-
-**証明書ライフサイクル:**
-
-```mermaid
-sequenceDiagram
-    autonumber
-    box rgba(0, 199, 183, 0.1) Pod
-    participant Envoy as Envoy Sidecar
-    end
-    box rgba(255, 153, 0, 0.1) Control Plane
-    participant Istiod as Istiod (CA)
-    end
-
-    Note over Envoy,Istiod: T=0 hours: Initial certificate issuance
-    Istiod->>+Envoy: Issue new certificate
-    Note right of Envoy: Validity: 24 hours<br/>Format: X.509<br/>Contains SPIFFE ID
-
-    rect rgba(144, 238, 144, 0.1)
-        Note over Envoy: T=0~16 hours: Certificate in use
-    end
-
-    Note over Envoy,Istiod: T=16 hours: Auto-renewal starts (8 hours before expiry)
-    Envoy->>Istiod: Request new certificate (CSR)
-    activate Istiod
-    Note right of Istiod: Validate SPIFFE ID<br/>Generate new certificate
-    Istiod->>Envoy: Issue new certificate
-    deactivate Istiod
-
-    Envoy->>Envoy: Certificate rotation (Hot Reload)
-    Note right of Envoy: Apply new certificate<br/>without downtime
-
-    rect rgba(144, 238, 144, 0.1)
-        Note over Envoy: T=16~24 hours: Using new certificate
-    end
-
-    Note over Envoy,Istiod: T=24 hours: Previous certificate expires (no impact)
-    deactivate Envoy
-```
-
-**証明書の確認:**
+ディスク上の`/etc/certs`ファイルや固定SDS配列順序を想定せず、公開証明書を確認します。
 
 ```bash
-# Check pod's mTLS certificate
-istioctl proxy-config secret <pod-name> -o json
-
-# Example output:
-{
-  "name": "default",
-  "tlsCertificate": {
-    "certificateChain": {
-      "inlineBytes": "LS0tLS1CRU..."
-    },
-    "privateKey": {
-      "inlineBytes": "LS0tLS1CRU..."
-    }
-  },
-  "validationContext": {
-    "trustedCa": {
-      "inlineBytes": "LS0tLS1CRU..."
-    }
-  }
-}
-
-# Decode certificate contents
-kubectl exec <pod-name> -c istio-proxy -- \
-  openssl x509 -text -noout -in /etc/certs/cert-chain.pem
-
-# Example output:
-Certificate:
-    Validity
-        Not Before: Jan 20 00:00:00 2025 GMT
-        Not After : Jan 21 00:00:00 2025 GMT  # 24 hours later
-    Subject: O=cluster.local
-    X509v3 Subject Alternative Name:
-        URI:spiffe://cluster.local/ns/default/sa/myapp
+istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
+  base64 -d | openssl x509 -noout -dates -issuer -ext subjectAltName
 ```
 
 **有効期間のカスタマイズ:**
@@ -533,82 +417,34 @@ spec:
         SECRET_TTL: "48h"  # Extend to 48 hours
 ```
 
-**証明書更新が失敗するシナリオ:**
+これは`istioctl install -f`の入力断片で、クラスター内Operatorリソースではありません。発行者が要求48時間TTLを制限する場合があります。発行証明書を確認し、ブートストラップ設定変更時に選択プロキシをローテーションします。
 
-```bash
-# Check Istiod logs
-kubectl logs -n istio-system -l app=istiod
-
-# Common issues:
-# 1. Communication issues between Istiod and Envoy
-# 2. RBAC permission issues
-# 3. Blocked by network policies
-
-# Manually trigger certificate renewal
-kubectl delete pod <pod-name>  # Pod restart reissues certificate
-```
-
-**SPIFFE ID:**
-
-```
-Istio's mTLS certificates follow the SPIFFE (Secure Production Identity Framework For Everyone) standard.
-
-Format: spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
-Example: spiffe://cluster.local/ns/default/sa/frontend
-```
-
-**CA 階層:**
-
-```
-Root CA (Istiod)
-  +- Intermediate CA (auto-generated)
-  |   +- frontend Pod certificate (24 hours)
-  |   +- backend Pod certificate (24 hours)
-  |   +- database Pod certificate (24 hours)
-  +- ...
-```
-
-**外部 CA 統合:**
-
-```yaml
-# Using external CA with Cert-Manager
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  components:
-    pilot:
-      k8s:
-        env:
-        - name: EXTERNAL_CA
-          value: ISTIOD_RA_KUBERNETES_API
-```
-
-**参照:**
-
-* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Certificate Management](../../../service-mesh/istio/03-architecture.md#certificate-management)
+更新失敗時は再起動前にエージェント/istiodログ、CA接続、トークン認証、時刻同期、信頼バンドルを調べます。再起動だけでは期限切れCAは直りません。cert-manager統合には**istio-csr**とそのインストール前提条件が必要です。`EXTERNAL_CA=ISTIOD_RA_KUBERNETES_API`だけではcert-manager設定になりません。[証明書ライフサイクルガイド](../../../service-mesh/istio/security/01-mtls.md)を参照します。
 
 </details>
 
 ***
 
-### 問題 5: Service Account ベースの認証
+### 問5: Service Accountベースの認証
 
-Istio でサービス間認証に使用されるアイデンティティはどれですか？
+Istioのサービス間認証に使うIDはどれですか？
 
-A. Pod 名 B. Service 名 C. Service Account D. Namespace 名
+A. Pod名\
+B. Service名\
+C. Service Account\
+D. 名前空間名
 
 <details>
 
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答: C**
+**正解: C**
 
-Istio は **Service Account** に基づいてサービス間アイデンティティを管理します。
+Istioは**Service Account**に基づいてサービス間IDを管理します。
 
 **解説:**
 
-**Service Account ベースのアイデンティティ:**
+**Service AccountベースのID:**
 
 ```yaml
 # 1. Create Service Account
@@ -624,16 +460,23 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  namespace: default
 spec:
+  selector:
+    matchLabels:
+      app: frontend
   template:
+    metadata:
+      labels:
+        app: frontend
     spec:
       serviceAccountName: frontend  # Used as identity
       containers:
       - name: frontend
-        image: frontend:v1
+        image: registry.example.com/team/frontend:REPLACE_WITH_TESTED_TAG
 ```
 
-**SPIFFE ID 形式:**
+**SPIFFE ID形式:**
 
 ```
 spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
@@ -643,10 +486,10 @@ spiffe://cluster.local/ns/default/sa/frontend
 spiffe://cluster.local/ns/production/sa/backend
 ```
 
-**AuthorizationPolicy での Service Account の使用:**
+**AuthorizationPolicyでService Accountを使用:**
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
@@ -674,16 +517,18 @@ spec:
         - "cluster.local/ns/default/sa/admin"
 ```
 
-**Service Account と Pod／Service 名の比較:**
+上のイメージはアプリのプレースホルダーです。Kubernetes RBACはKubernetes APIアクセスを管理し、メッシュ通信権限を自動付与しません。Istio認可は認証済みServiceAccount IDを別に使います。principalには名前空間と信頼ドメインも含まれます。
 
-| 項目                 | Service Account         | Pod 名            | Service 名    |
+**Service AccountとPod/Service名の比較:**
+
+| 項目 | Service Account | Pod名 | Service名 |
 | -------------------- | ----------------------- | ------------------- | --------------- |
-| **安定性**        | 安定                  | 動的に変化 | 安定          |
-| **セキュリティ**         | 証明書ベース       | 信頼できない     | 信頼できない |
-| **RBAC 統合** | Kubernetes RBAC         | 不可能        | 不可能    |
-| **mTLS**             | 証明書に含まれる | 含まれない        | 含まれない    |
+| **安定性** | 安定 | 動的に変化 | 安定 |
+| **セキュリティ** | 証明書ベース | 信頼できない | 信頼できない |
+| **RBAC統合** | Kubernetes RBAC | 不可 | 不可 |
+| **mTLS** | 証明書に含まれる | 含まれない | 含まれない |
 
-**実践例: 3 層アプリケーション:**
+**実用例: 3層アプリケーション:**
 
 ```yaml
 # Frontend -> Backend only allowed
@@ -710,7 +555,7 @@ metadata:
 
 ---
 # Backend policy: Only allow Frontend access
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
@@ -727,7 +572,7 @@ spec:
 
 ---
 # Database policy: Only allow Backend access
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: database-policy
@@ -743,7 +588,7 @@ spec:
         principals: ["cluster.local/ns/app/sa/backend"]
 ```
 
-**Service Account の確認:**
+**Service Accountの確認:**
 
 ```bash
 # Check pod's Service Account
@@ -751,18 +596,18 @@ kubectl get pod <pod-name> -o jsonpath='{.spec.serviceAccountName}'
 
 # Check SPIFFE ID in mTLS certificate
 istioctl proxy-config secret <pod-name> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -text -noout | grep URI
 
 # Output:
 # URI:spiffe://cluster.local/ns/default/sa/frontend
 ```
 
-**Namespace をまたぐ通信:**
+**名前空間をまたぐ通信:**
 
 ```yaml
 # Allow production namespace's frontend -> staging namespace's backend access
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
@@ -781,691 +626,74 @@ spec:
         - "production"
 ```
 
-**参照:**
+**参考資料:**
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+* [認可ポリシー](../../../service-mesh/istio/security/03-authorization.md)
 
 </details>
 
 ***
 
-## 記述問題（6～10）
+## 短答問題（6-10）
 
-### 問題 6: デフォルト拒否セキュリティポリシーの実装
+### 問6: デフォルト拒否のセキュリティポリシー実装
 
-Kubernetes クラスターで Istio を使用し、**デフォルト拒否**セキュリティポリシーを実装する手順を段階的に説明してください。**必須リソース**（PeerAuthentication、AuthorizationPolicy）と例外処理の方法を含めてください。
+KubernetesクラスターでIstioによる**デフォルト拒否**ポリシーを実装する手順を説明してください。**必要リソース**（PeerAuthentication、AuthorizationPolicy）と**例外処理**を含めてください。
 
 <details>
 
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答:**
-
-**デフォルト拒否セキュリティポリシーの実装:**
-
-***
-
-**ステップ 1: mTLS STRICT モードを有効化**
-
-すべてのサービス間通信で mTLS を使用するよう強制します:
+1. 実呼び出し元、ServiceAccount、ワークロードポート、アプリプロトコルを把握します。メッシュへ参加させ、互換性確認後に名前空間の`STRICT`を適用します。PeerAuthentication単体は呼び出し元を認可しません。
+2. 名前空間の基準として空ALLOWを適用し、必要な呼び出し関係に明示ルールを追加します。例外を設ける場合、`rules: [{}]`の`DENY`を使わないでください。
+3. 例は名前空間`app`、一致する`app`ラベルとServiceAccountを持つメッシュ参加済みfrontend/backend/database、HTTP 8080、PostgreSQL 5432、`istio-system`のゲートウェイServiceAccount `istio-ingressgateway`を前提とします。実Gateway PodからIDを確認してください。ゲートウェイServiceはHTTPS 443を**ワークロードポート8443**へ対応付け、AuthorizationPolicyはそのポートを使います。`myapp.example.com/api/*`のTLS終端とVirtualServiceは別途設定します。
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT  # Enforce mTLS
-```
-
-**スコープ:**
-
-* `istio-system` Namespace にデプロイ -> メッシュ全体に適用
-* 特定の Namespace にデプロイ -> その Namespace のみに適用
-* selector を使用 -> 特定の workload のみに適用
-
-***
-
-**ステップ 2: すべてのトラフィックを拒否（デフォルト拒否）**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all
-  namespace: default
-spec: {}  # Empty spec = deny all requests
-```
-
-**このポリシーの適用後:**
-
-* すべてのインバウンドトラフィックが拒否される
-* サービス間通信がブロックされる
-* 外部アクセスがブロックされる
-
-***
-
-**ステップ 3: 必要な通信を選択的に許可**
-
-**例 1: Frontend -> Backend 通信を許可**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-frontend-to-backend
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend  # Apply to Backend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/default/sa/frontend"  # Only allow Frontend
-    to:
-    - operation:
-        methods: ["GET", "POST"]
-        paths: ["/api/*"]
-```
-
-**例 2: Backend -> Database 通信を許可**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-backend-to-database
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: database
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/default/sa/backend"
-    to:
-    - operation:
-        ports: ["5432"]  # PostgreSQL port
-```
-
-***
-
-**ステップ 4: Ingress Gateway ポリシー**
-
-外部トラフィックを許可するには Ingress Gateway 用のポリシーが必要です:
-
-```yaml
-# Allow traffic to Ingress Gateway
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-ingress
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      istio: ingressgateway
-  action: ALLOW
-  rules:
-  - to:
-    - operation:
-        ports: ["80", "443"]
-
----
-# Allow Ingress Gateway -> Frontend
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-gateway-to-frontend
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: frontend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
-```
-
-***
-
-**ステップ 5: ヘルスチェックと Readiness Probe の例外**
-
-Kubernetes のヘルスチェックがブロックされないように例外を処理します:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-health-checks
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  # Allow Kubernetes health checks
-  - to:
-    - operation:
-        paths: ["/health", "/ready"]
-        methods: ["GET"]
-```
-
-または、PeerAuthentication で特定のポートを除外します:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: default
+  namespace: app
 spec:
   mtls:
     mode: STRICT
-  portLevelMtls:
-    8080:
-      mode: DISABLE  # Disable mTLS for health check port
-```
-
-***
-
-**ステップ 6: 監視とロギングの例外**
-
-Prometheus によるメトリクス収集を許可します:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
+---
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-prometheus
-  namespace: default
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        namespaces: ["istio-system"]
-        principals: ["cluster.local/ns/istio-system/sa/prometheus"]
-    to:
-    - operation:
-        paths: ["/stats/prometheus"]
-        methods: ["GET"]
-```
-
-***
-
-**完全な例: 3 層アプリケーション**
-
-```yaml
-# 1. mTLS STRICT
----
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: production
-spec:
-  mtls:
-    mode: STRICT
-
-# 2. Deny-by-default
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all
-  namespace: production
+  name: default-deny
+  namespace: app
 spec: {}
-
-# 3. Ingress -> Frontend
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-ingress-to-frontend
-  namespace: production
+  name: ingress-public-api
+  namespace: istio-system
 spec:
   selector:
     matchLabels:
-      app: frontend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
-
-# 4. Frontend -> Backend
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-frontend-to-backend
-  namespace: production
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/production/sa/frontend"]
-    to:
-    - operation:
-        methods: ["GET", "POST", "PUT", "DELETE"]
-        paths: ["/api/*"]
-
-# 5. Backend -> Database
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-backend-to-database
-  namespace: production
-spec:
-  selector:
-    matchLabels:
-      app: database
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/production/sa/backend"]
-
-# 6. Health Checks
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-health-checks
-  namespace: production
-spec:
+      istio: ingressgateway
   action: ALLOW
   rules:
   - to:
     - operation:
-        paths: ["/health", "/ready", "/live"]
-
-# 7. Prometheus metrics
+        ports:
+        - '8443'
+        hosts:
+        - myapp.example.com
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-prometheus
-  namespace: production
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        namespaces: ["istio-system"]
-    to:
-    - operation:
-        paths: ["/stats/prometheus"]
-```
-
-***
-
-**テストと検証:**
-
-```bash
-# 1. Frontend -> Backend (allowed)
-kubectl exec -it <frontend-pod> -- curl http://backend/api
-# 200 OK
-
-# 2. Direct Database access (denied)
-kubectl exec -it <frontend-pod> -- curl http://database:5432
-# 403 RBAC: access denied
-
-# 3. External direct Backend access (denied)
-curl http://<ingress-gateway>/backend
-# 403 RBAC: access denied
-
-# 4. Normal path (allowed)
-curl http://<ingress-gateway>/frontend
-# 200 OK
-```
-
-***
-
-**ベストプラクティス:**
-
-1. **段階的な適用**:
-   * まず mTLS を PERMISSIVE モードで有効化する
-   * すべての Service に Sidecar が inject されていることを確認する
-   * STRICT モードに切り替える
-   * デフォルト拒否ポリシーを適用する
-2. **最小権限の原則**:
-   * 必要最小限の通信のみを許可する
-   * HTTP メソッドを制限する（GET のみ、POST のみなど）
-   * パスを制限する（/api/\* のみなど）
-3. **例外処理**:
-   * ヘルスチェックの例外を必ず処理する
-   * 監視システムのアクセスを許可する
-   * Ingress Gateway ポリシーを設定する
-4. **テスト**:
-   * 各ポリシー適用後にテストする
-   * 副作用（ログ、メトリクス）を確認する
-   * ロールバック計画を準備する
-
-**参照:**
-
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
-* [PeerAuthentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/04-peer-authentication.md)
-
-</details>
-
-***
-
-### 問題 7: JWT + mTLS 二重認証
-
-Istio で **エンドユーザー認証（JWT）**と**サービス間認証（mTLS）**を組み合わせて使用するシナリオを実装してください。OAuth2/OIDC プロバイダー（例: Keycloak）との統合方法を含めてください。
-
-<details>
-
-<summary>回答を表示</summary>
-
-**回答:**
-
-**JWT + mTLS 二重認証アーキテクチャ:**
-
-```
-User
-  | (JWT Token)
-Ingress Gateway (Validate JWT with RequestAuthentication)
-  | (mTLS)
-Frontend (Validate mTLS with PeerAuthentication)
-  | (mTLS)
-Backend
-```
-
-***
-
-**ステップ 1: Keycloak のセットアップ**
-
-```bash
-# Create Keycloak Realm
-Realm: myrealm
-
-# Create Client
-Client ID: myapp
-Access Type: confidential
-Valid Redirect URIs: http://myapp.example.com/*
-
-# Get JWKS URI
-https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
-```
-
-***
-
-**ステップ 2: mTLS を有効化（サービス間認証）**
-
-```yaml
-# Apply STRICT mTLS to entire mesh
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT
-```
-
-***
-
-**ステップ 3: JWT 認証を設定（エンドユーザー認証）**
-
-```yaml
-# Validate JWT at Ingress Gateway
-apiVersion: security.istio.io/v1beta1
-kind: RequestAuthentication
-metadata:
-  name: jwt-ingress
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      istio: ingressgateway
-  jwtRules:
-  - issuer: "https://keycloak.example.com/realms/myrealm"
-    jwksUri: "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs"
-    audiences:
-    - "myapp"
-    forwardOriginalToken: true  # Forward JWT to backend
-    outputPayloadToHeader: "x-jwt-payload"  # Extract payload to header
-```
-
-***
-
-**ステップ 4: AuthorizationPolicy を設定**
-
-**Ingress Gateway ポリシー**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: ingress-jwt-policy
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      istio: ingressgateway
-  action: ALLOW
-  rules:
-  # Only allow requests with JWT
-  - from:
-    - source:
-        requestPrincipals: ["*"]
-    to:
-    - operation:
-        paths: ["/api/*", "/app/*"]
-
-  # Allow health checks without JWT
-  - to:
-    - operation:
-        paths: ["/health", "/ready"]
-```
-
-**Backend ポリシー**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: backend-jwt-mtls-policy
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  # 1. mTLS: Only allow Frontend Service Account
-  # 2. JWT: Must have valid JWT
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-        requestPrincipals: ["https://keycloak.example.com/realms/myrealm/*"]
-    to:
-    - operation:
-        methods: ["GET", "POST"]
-```
-
-***
-
-**ステップ 5: ロールベースアクセス制御**
-
-JWT claim に基づくきめ細かな認可:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: backend-rbac
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  # Only Admin role allowed for DELETE
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-        requestPrincipals: ["*"]
-    when:
-    - key: request.auth.claims[roles]
-      values: ["admin"]
-    to:
-    - operation:
-        methods: ["DELETE"]
-        paths: ["/api/admin/*"]
-
-  # User role only allowed GET, POST
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-        requestPrincipals: ["*"]
-    when:
-    - key: request.auth.claims[roles]
-      values: ["user"]
-    to:
-    - operation:
-        methods: ["GET", "POST"]
-        paths: ["/api/users/*"]
-```
-
-***
-
-**ステップ 6: JWT ペイロードの利用**
-
-Backend で JWT ペイロードを使用します:
-
-```yaml
-# EnvoyFilter to pass JWT claims as headers
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: jwt-claim-to-header
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: GATEWAY
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-            subFilter:
-              name: "envoy.filters.http.jwt_authn"
-    patch:
-      operation: INSERT_AFTER
-      value:
-        name: envoy.lua
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              local payload = request_handle:headers():get("x-jwt-payload")
-              if payload then
-                -- Base64 decode and JSON parse
-                local json = require("json")
-                local decoded = json.decode(payload)
-
-                -- Pass user info as headers
-                request_handle:headers():add("x-user-id", decoded.sub)
-                request_handle:headers():add("x-user-email", decoded.email)
-                request_handle:headers():add("x-user-roles", table.concat(decoded.roles, ","))
-              end
-            end
-```
-
-***
-
-**ステップ 7: 完全な例**
-
-**Ingress Gateway**
-
-```yaml
----
-# JWT validation
-apiVersion: security.istio.io/v1beta1
-kind: RequestAuthentication
-metadata:
-  name: jwt-ingress
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      istio: ingressgateway
-  jwtRules:
-  - issuer: "https://keycloak.example.com/realms/myrealm"
-    jwksUri: "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs"
-    audiences: ["myapp"]
-    forwardOriginalToken: true
-
----
-# Require JWT
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: require-jwt
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      istio: ingressgateway
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        requestPrincipals: ["*"]
-```
-
-**Frontend**
-
-```yaml
----
-# mTLS STRICT
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: frontend-mtls
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: frontend
-  mtls:
-    mode: STRICT
-
----
-# Only allow Ingress Gateway access
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: frontend-policy
-  namespace: default
+  namespace: app
 spec:
   selector:
     matchLabels:
@@ -1474,34 +702,23 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
-        requestPrincipals: ["*"]
-```
-
-**Backend**
-
-```yaml
+        principals:
+        - cluster.local/ns/istio-system/sa/istio-ingressgateway
+    to:
+    - operation:
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-# mTLS STRICT
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: backend-mtls
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  mtls:
-    mode: STRICT
-
----
-# Only allow Frontend access + Require JWT
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
-  namespace: default
+  namespace: app
 spec:
   selector:
     matchLabels:
@@ -1510,288 +727,302 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-        requestPrincipals: ["https://keycloak.example.com/realms/myrealm/*"]
+        principals:
+        - cluster.local/ns/app/sa/frontend
+    to:
+    - operation:
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: database-policy
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: database
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/app/sa/backend
+    to:
+    - operation:
+        ports:
+        - '5432'
 ```
 
-***
-
-**テスト:**
+4. サイドカーのデフォルトプローブ書き換えを保持します。kubeletのHTTP/TCP/gRPCプローブはエージェント（通常15020）経由です。HTTP ALLOWパスは平文をSTRICTに通しません。従来のヘルスエンドポイントに平文例外が必要なら、`portLevelMtls`にはワークロードセレクターとワークロードポートが必要で、認可/ネットワーク制限も必要です。汎用ヘルス修正としてアプリポートのmTLSを無効にしないでください。
+5. エージェント/Envoyメトリクスポート（15020/15090）は、捕捉されるアプリメトリクスのエンドポイントとは別です。保護されたアプリメトリクスには、ワークロード、実ポート/パス、mTLS認証済みPrometheus principalに限定したALLOWを設定します。エージェントメトリクスではスクレイプとネットワークアクセスを設定します。アプリ受信通信のAuthorizationPolicyだけでは不十分です。
+6. 実効設定と許可/拒否両方の通信を検証します。
 
 ```bash
-# 1. Get token from Keycloak
-TOKEN=$(curl -X POST \
-  "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/token" \
-  -d "client_id=myapp" \
-  -d "client_secret=<secret>" \
-  -d "grant_type=password" \
-  -d "username=user@example.com" \
-  -d "password=password123" \
-  | jq -r '.access_token')
-
-# 2. Call API with JWT
-curl -H "Authorization: Bearer $TOKEN" \
-  http://myapp.example.com/api/users
-
-# 3. Call without JWT (fails)
-curl http://myapp.example.com/api/users
-# 401 Unauthorized
-
-# 4. Invalid JWT (fails)
-curl -H "Authorization: Bearer invalid-token" \
-  http://myapp.example.com/api/users
-# 401 Unauthorized
+istioctl analyze -n app
+istioctl proxy-config secret <backend-pod> -n app
+istioctl proxy-config clusters <frontend-pod> -n app -o json
+istioctl x authz check <backend-pod>.app
+# Run from the indicated application containers with the test clients installed.
+kubectl exec <frontend-pod> -n app -c frontend -- curl -i http://backend:8080/api/users
+kubectl exec <frontend-pod> -n app -c frontend -- pg_isready -h database -p 5432
+kubectl exec <backend-pod> -n app -c backend -- pg_isready -h database -p 5432
 ```
 
-***
-
-**セキュリティ上の利点:**
-
-1. **二重認証**:
-   * JWT: エンドユーザーのアイデンティティを検証
-   * mTLS: サービスのアイデンティティを検証
-2. **多層防御**:
-   * Gateway で JWT を検証
-   * サービス間の mTLS による暗号化通信
-   * AuthorizationPolicy によるきめ細かな認可
-3. **ロールベースアクセス制御（RBAC）**:
-   * JWT claim に基づく認可管理
-   * 動的な権限更新（Keycloak で管理）
-
-**参照:**
-
-* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/03-request-authentication.md)
-* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+Frontend → backendはアプリへ届き、frontend → databaseはHTTP 403でなくTCP層で失敗するべきです。Backend → databaseはPostgreSQLに到達するべきで、DB認証情報は別チェックです。経路不足では認可テストが意図したバックエンドに達する前に404になる場合があります。名前空間を指定したPod、アプリコンテナ、実テストクライアントを使います。[認可](../../../service-mesh/istio/security/03-authorization.md)と[ヘルスチェック](https://istio.io/latest/docs/ops/configuration/mesh/app-health-check/)を参照してください。
 
 </details>
 
 ***
 
-### 問題 8: 外部 Service アクセス制御
+### 問7: JWT + mTLSの二重認証
 
-Istio で **Egress トラフィック**を制御し、特定の外部 Service へのアクセスのみを許可する方法を説明してください。**ServiceEntry**、**VirtualService**、**AuthorizationPolicy** を使用した完全な例を含めてください。
+Istioで **エンドユーザー認証（JWT）** と **サービス間認証（mTLS）** を併用するシナリオを実装してください。KeycloakなどOAuth2/OIDCプロバイダーとの統合方法も含めてください。
 
 <details>
 
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答:**
+Keycloak realm `myrealm`、OIDCクライアント、明示API audience `myapp`を設定します。PKCE付き認可コードフローと正確なHTTPSリダイレクトURIを使います。クライアントタイプ/認証はアプリがシークレットを保管できるかによります。Keycloakロールは通常`realm_access.roles`に現れます。audience mapper/client scopeでAPIトークンに期待する`aud`を持たせます。
 
-**Egress トラフィック制御戦略:**
+`requestPrincipals`や`request.auth.claims`を評価する全プロキシに独自RequestAuthenticationが必要です。ゲートウェイでJWTを検証してもfrontend/backendでの要求IDは成立しません。`forwardOriginalToken`はその転送要求のトークンを保持し、**frontendアプリが新たなbackend要求へAuthorizationを伝播する必要があります**。
 
-***
-
-**ステップ 1: Egress トラフィックのデフォルトモードを確認**
-
-Istio は 2 つの Egress モードをサポートします:
+以下は問6の関連ポリシーを置き換えます。ロール限定backendルールの隣に広いALLOWを残さないでください。ALLOWは和集合です。デプロイとHTTPSゲートウェイの前提条件は問6と同じです。
 
 ```yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: app
 spec:
-  meshConfig:
-    outboundTrafficPolicy:
-      mode: REGISTRY_ONLY  # or ALLOW_ANY
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: default-deny
+  namespace: app
+spec: {}
+---
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: jwt-ingress
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  jwtRules:
+  - issuer: https://keycloak.example.com/realms/myrealm
+    jwksUri: https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
+    audiences:
+    - myapp
+    forwardOriginalToken: true
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: ingress-public-api
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        ports:
+        - '8443'
+        hosts:
+        - myapp.example.com
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
+        - DELETE
+    from:
+    - source:
+        requestPrincipals:
+        - https://keycloak.example.com/realms/myrealm/*
+---
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: jwt-frontend
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  jwtRules:
+  - issuer: https://keycloak.example.com/realms/myrealm
+    jwksUri: https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
+    audiences:
+    - myapp
+    forwardOriginalToken: true
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: frontend-policy
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/istio-system/sa/istio-ingressgateway
+        requestPrincipals:
+        - https://keycloak.example.com/realms/myrealm/*
+    to:
+    - operation:
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
+        - DELETE
+---
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: jwt-backend
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  jwtRules:
+  - issuer: https://keycloak.example.com/realms/myrealm
+    jwksUri: https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
+    audiences:
+    - myapp
+    forwardOriginalToken: true
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: backend-policy
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/app/sa/frontend
+        requestPrincipals:
+        - https://keycloak.example.com/realms/myrealm/*
+    to:
+    - operation:
+        ports:
+        - '8080'
+        paths:
+        - /api/users/*
+        methods:
+        - GET
+        - POST
+    when:
+    - key: request.auth.claims[realm_access][roles]
+      values:
+      - user
+      - admin
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/app/sa/frontend
+        requestPrincipals:
+        - https://keycloak.example.com/realms/myrealm/*
+    to:
+    - operation:
+        ports:
+        - '8080'
+        methods:
+        - DELETE
+        paths:
+        - /api/admin/*
+    when:
+    - key: request.auth.claims[realm_access][roles]
+      values:
+      - admin
 ```
 
-**モード比較:**
+スカラーclaimをヘッダーとして必要とするアプリには、RequestAuthenticationの実験的`outputClaimToHeaders`があります。例えば`header: x-user-id`と`claim: sub`です。認可には検証済みJWT claimを使い、呼び出し元提供のIDヘッダーを信頼しないでください。`outputPayloadToHeader`はエンコードされたペイロードを含み、Envoy Luaランタイムには任意の`require("json")`モジュールはありません。ロール配列は無条件でヘッダーへ連結せず、claimとして照合します。
 
-| モード               | 説明                                    | セキュリティ |
-| ------------------ | ---------------------------------------------- | -------- |
-| **ALLOW\_ANY**     | すべての外部トラフィックを許可（デフォルト）           | 低      |
-| **REGISTRY\_ONLY** | ServiceEntry に登録された Service のみを許可 | 高     |
-
-**REGISTRY\_ONLY モードへの切り替え:**
+設定したログインフローでテストトークンを取得し、HTTPSをテストします。クイズコマンドにパスワード/クライアントシークレットを埋め込まないでください。
 
 ```bash
-istioctl install --set meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
+read -rsp "Test access token: " TOKEN; echo
+curl -i -H "Authorization: Bearer $TOKEN" https://myapp.example.com/api/users/test
+unset TOKEN
+curl -i https://myapp.example.com/api/users/test
+# No JWT: 403 from AuthorizationPolicy.
+curl -i -H "Authorization: Bearer invalid-token" https://myapp.example.com/api/users/test
+# Invalid JWT: 401 from RequestAuthentication.
 ```
+
+誤ったServiceAccount、有効だが違うaudience、権限不足ロールのトークンもテストします。JWTロール変更は発行済みトークンの即時失効ではありません。トークン寿命と発行者/アプリの失効機構が重要です。[認証](../../../service-mesh/istio/security/02-authentication.md)と[Keycloak grant types](https://www.keycloak.org/securing-apps/oidc-layers)を参照します。
+
+</details>
 
 ***
 
-**ステップ 2: ServiceEntry で外部 Service を登録**
+### 問8: 外部サービスのアクセス制御
 
-**例 1: HTTPS API（GitHub）**
+Istioで**Egress通信**を制御し、特定の外部サービスだけにアクセスを許す方法を説明してください。**ServiceEntry**、**VirtualService**、**AuthorizationPolicy**を使う完全な例を含めてください。
+
+<details>
+
+<summary>解答を表示</summary>
+
+`ALLOW_ANY`は未知の宛先へ転送し、`REGISTRY_ONLY`はプロキシのレジストリにない宛先を拒否します。レジストリにはServiceEntryに加えてKubernetesサービスも含まれます。どちらもファイアウォールではなく、独立したネットワーク制限がなければアプリはプロキシを迂回できます。メッシュ設定は既存インストールvaluesを通じて適用し、1フィールドの断片で`istio` ConfigMap全体を置き換えないでください。
+
+AuthorizationPolicyは選択プロキシが受信する通信を評価します。クライアントサイドカーの名前空間ポリシーは送信ACLではありません。ID/メソッド/パス制御には、メッシュmTLSを終端するEgress Gateway経由にし、そこで認可してから外部サーバーへのTLSを開始します。アプリはサイドカーへHTTPを送り、HTTPSパススルーではHTTPパス/メソッドが見えません。
+
+前提条件は`app`のメッシュ参加クライアント、`istio: egressgateway`ラベル付き専用Egress Gateway、443をワークロード8443へ対応付けるService `istio-egressgateway.istio-system.svc.cluster.local`、他の広いGateway ALLOWがないことです。インストール済みプロキシの公開CA信頼でGitHub証明書を検証する必要があります。
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: github-api
-  namespace: default
+  namespace: app
 spec:
   hosts:
   - api.github.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
   location: MESH_EXTERNAL
   resolution: DNS
-```
-
-**例 2: HTTP API（httpbin）**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: httpbin-ext
-  namespace: default
-spec:
-  hosts:
-  - httpbin.org
   ports:
   - number: 80
+    targetPort: 443
     name: http
     protocol: HTTP
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
-```
-
-**例 3: 特定の IP アドレス**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: external-database
-  namespace: default
-spec:
-  hosts:
-  - database.external.com
-  addresses:
-  - 203.0.113.10  # Specific IP
-  ports:
-  - number: 5432
-    name: postgres
-    protocol: TCP
-  location: MESH_EXTERNAL
-  resolution: STATIC
-  endpoints:
-  - address: 203.0.113.10
-```
-
-***
-
-**ステップ 3: VirtualService でトラフィックを制御**
-
-**タイムアウトとリトライの設定**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: github-api-vs
-  namespace: default
-spec:
-  hosts:
-  - api.github.com
-  http:
-  - timeout: 10s
-    retries:
-      attempts: 3
-      perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
-    route:
-    - destination:
-        host: api.github.com
-```
-
-**ヘッダーを追加（API Key）**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: external-api-vs
-  namespace: default
-spec:
-  hosts:
-  - api.example.com
-  http:
-  - headers:
-      request:
-        add:
-          X-API-Key: "my-secret-key"
-    route:
-    - destination:
-        host: api.example.com
-```
-
-***
-
-**ステップ 4: AuthorizationPolicy によるアクセス制御**
-
-**特定の Service Account のみを許可**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-github-api
-  namespace: default
-spec:
-  action: ALLOW
-  rules:
-  # Only allow Backend Service Account to access GitHub API
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/backend"]
-    to:
-    - operation:
-        hosts: ["api.github.com"]
-```
-
-**特定のパスのみを許可**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-specific-api
-  namespace: default
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/backend"]
-    to:
-    - operation:
-        hosts: ["api.example.com"]
-        paths: ["/v1/data", "/v1/status"]
-        methods: ["GET"]
-```
-
-***
-
-**ステップ 5: Egress Gateway の使用（任意）**
-
-Egress を一元的に制御します:
-
-```yaml
-# Deploy Egress Gateway
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  components:
-    egressGateways:
-    - name: istio-egressgateway
-      enabled: true
-      k8s:
-        replicas: 2
-
 ---
-# Define Gateway
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: egress-gateway
-  namespace: default
+  name: github-egress
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
@@ -1803,562 +1034,223 @@ spec:
     hosts:
     - api.github.com
     tls:
-      mode: PASSTHROUGH  # Pass TLS traffic through
-
+      mode: ISTIO_MUTUAL
 ---
-# DestinationRule
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: egress-gateway-dr
-  namespace: default
+  name: to-egress
+  namespace: app
 spec:
   host: istio-egressgateway.istio-system.svc.cluster.local
-  subsets:
-  - name: github
-
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+      sni: api.github.com
 ---
-# VirtualService: Pod -> Egress Gateway
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: github-through-egress
-  namespace: default
+  namespace: app
 spec:
   hosts:
   - api.github.com
   gateways:
-  - mesh  # From Sidecar
-  - egress-gateway
+  - mesh
+  - istio-system/github-egress
   http:
   - match:
     - gateways:
-      - mesh  # Starting from Pod
-      port: 443
+      - mesh
+      port: 80
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
-        subset: github
         port:
           number: 443
   - match:
     - gateways:
-      - egress-gateway  # From Egress Gateway
+      - istio-system/github-egress
       port: 443
-    route:
-    - destination:
-        host: api.github.com
-        port:
-          number: 443
-```
-
-**トラフィックフロー:**
-
-```
-Pod -> Sidecar -> Egress Gateway -> External Service
-```
-
-***
-
-**ステップ 6: 完全な例**
-
-**シナリオ**: Backend Service の GitHub API へのアクセスのみを許可
-
-```yaml
-# 1. Set REGISTRY_ONLY mode
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    outboundTrafficPolicy:
-      mode: REGISTRY_ONLY
-
-# 2. GitHub API ServiceEntry
----
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: github-api
-  namespace: default
-spec:
-  hosts:
-  - api.github.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
-
-# 3. VirtualService: Timeout and retry
----
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: github-api-vs
-  namespace: default
-spec:
-  hosts:
-  - api.github.com
-  http:
-  - timeout: 30s
+    timeout: 10s
     retries:
-      attempts: 3
-      perTryTimeout: 10s
-      retryOn: 5xx,reset,connect-failure
+      attempts: 2
+      perTryTimeout: 3s
+      retryOn: connect-failure,reset
     route:
     - destination:
         host: api.github.com
         port:
-          number: 443
-
-# 4. AuthorizationPolicy: Only allow Backend
+          number: 80
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: github-origin-tls
+  namespace: istio-system
+spec:
+  host: api.github.com
+  workloadSelector:
+    matchLabels:
+      istio: egressgateway
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.github.com
+      subjectAltNames:
+      - api.github.com
+---
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-backend-github
-  namespace: default
+  name: github-egress-allow
+  namespace: istio-system
 spec:
+  selector:
+    matchLabels:
+      istio: egressgateway
   action: ALLOW
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/default/sa/backend"]
+        principals:
+        - cluster.local/ns/app/sa/backend
     to:
     - operation:
-        hosts: ["api.github.com"]
-        methods: ["GET", "POST"]
-
-# 5. Deny-by-default (block all other egress)
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all-egress
-  namespace: default
-spec:
-  action: DENY
-  rules:
-  - to:
-    - operation:
-        hosts: ["*"]
+        hosts:
+        - api.github.com
+        methods:
+        - GET
+        paths:
+        - /users/*
+        ports:
+        - '8443'
 ```
 
-***
-
-**テスト:**
+メッシュクライアントは`http://api.github.com/users/octocat`を呼びます。サイドカーはISTIO_MUTUALでゲートウェイへ接続します。ゲートウェイHTTPリスナーはbackend ServiceAccountとGET `/users/*`を強制し、port 80 → targetPort 443でGitHubへHTTPSを送れます。例の再試行はこの冪等GET用途向けで、任意の副作用API向けではありません。
 
 ```bash
-# 1. Call GitHub API from Backend (allowed)
-kubectl exec -it <backend-pod> -- \
-  curl -I https://api.github.com/users/octocat
-# 200 OK
-
-# 2. Call GitHub API from Frontend (denied)
-kubectl exec -it <frontend-pod> -- \
-  curl -I https://api.github.com/users/octocat
-# Connection refused
-
-# 3. Call other external service from Backend (denied)
-kubectl exec -it <backend-pod> -- \
-  curl -I https://google.com
-# Connection refused (No ServiceEntry)
+kubectl exec <backend-pod> -n app -c backend -- curl -i http://api.github.com/users/octocat
+kubectl exec <frontend-pod> -n app -c frontend -- curl -i http://api.github.com/users/octocat
+# Gateway should reject the second caller with HTTP 403.
+istioctl proxy-config clusters <egress-pod> -n istio-system --fqdn api.github.com -o json
+istioctl x authz check <egress-pod>.istio-system
 ```
 
-***
+プライベート外部DBは、明示エンドポイント/アドレスとTCP 5432のSTATIC ServiceEntryを使います。TLS/DB認証はそのプロトコル向けに設計します。HTTP専用サービスはHTTP ServiceEntryを使えますが、機密データには暗号化が必要です。API認証情報はアプリか、Secretに基づく対応署名/認証コンポーネントに保存します。VirtualServiceのヘッダーリテラルは読み取り可能な設定で、シークレットストレージではありません。
 
-**監視:**
-
-```bash
-# Check egress traffic
-kubectl exec -it <backend-pod> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep upstream_cx_total
-
-# Check ServiceEntry
-istioctl proxy-config clusters <backend-pod> | grep github
-```
-
-***
-
-**セキュリティ上の利点:**
-
-1. **許可リスト方式**: ServiceEntry に登録された Service へのアクセスのみを許可
-2. **Service Account ベースの制御**: 特定の Service だけが外部 API を呼び出せる
-3. **監査とロギング**: すべての Egress トラフィックをログに記録できる
-4. **一元管理**: Egress Gateway を通じてすべての外部トラフィックを監視
-
-**参照:**
-
-* [ServiceEntry](https://istio.io/latest/docs/reference/config/networking/service-entry/)
-* [Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
+最後にCNI NetworkPolicy/ファイアウォールで経路を強制します。クライアントは必要メッシュサービス、DNS、istiod、Egress Gatewayへは届きますが、任意のインターネットIPへは届かないようにし、ゲートウェイに必要な外部アクセスを与えます。IPv4/IPv6、迂回/除外ポート、特権ワークロードを考慮します。標準NetworkPolicyはDNS名をフィルターしません。必要なら対応FQDN制御を使います。承認経路だけでなく直接IP/HTTPS迂回もテストします。[Egress制御](../../../service-mesh/istio/traffic-management/11-egress-control.md)と[TLS開始](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway-tls-origination/)を参照してください。
 
 </details>
 
 ***
 
-### 問題 9: セキュリティ監査とロギング
+### 問9: セキュリティ監査とログ
 
-Istio でセキュリティ関連イベントを**監査**してログに記録する方法を説明してください。**AuthorizationPolicy の AUDIT アクション**と**Access Log**設定を含めてください。
+Istioのセキュリティ関連イベントを**監査**・記録する方法を説明してください。**AuthorizationPolicyのAUDITアクション**と**アクセスログ**設定を含めてください。
 
 <details>
 
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答:**
-
-**Istio セキュリティ監査とロギング戦略:**
-
-***
-
-**1. AuthorizationPolicy AUDIT アクション**
-
-AUDIT アクションはトラフィックをブロックせずにログに記録します。
-
-**基本 AUDIT ポリシー**
+`AUDIT`は**インストール済み監査プラグイン**用に一致要求をマークします。プラグインなしではログ効果はなく、通信の許可/拒否もしません。例は順序付き2条件でなく、DELETEとadminパスの論理積を監査します。
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: audit-all-requests
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: AUDIT
-  rules:
-  - {}  # Audit all requests
-```
-
-**特定の条件のみを監査**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: audit-sensitive-operations
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: AUDIT
-  rules:
-  # Audit DELETE operations
-  - to:
-    - operation:
-        methods: ["DELETE"]
-
-  # Audit Admin API access
-  - to:
-    - operation:
-        paths: ["/api/admin/*"]
-
-  # Audit external IP access
-  - from:
-    - source:
-        notNamespaces: ["default", "production"]
-```
-
-***
-
-**2. Access Logging を有効化**
-
-**メッシュ全体の Access Logging を有効化**
-
-```yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    accessLogFile: /dev/stdout
-    accessLogEncoding: JSON
-    accessLogFormat: |
-      {
-        "start_time": "%START_TIME%",
-        "method": "%REQ(:METHOD)%",
-        "path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
-        "protocol": "%PROTOCOL%",
-        "response_code": "%RESPONSE_CODE%",
-        "response_flags": "%RESPONSE_FLAGS%",
-        "bytes_received": "%BYTES_RECEIVED%",
-        "bytes_sent": "%BYTES_SENT%",
-        "duration": "%DURATION%",
-        "upstream_service_time": "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%",
-        "x_forwarded_for": "%REQ(X-FORWARDED-FOR)%",
-        "user_agent": "%REQ(USER-AGENT)%",
-        "request_id": "%REQ(X-REQUEST-ID)%",
-        "authority": "%REQ(:AUTHORITY)%",
-        "upstream_host": "%UPSTREAM_HOST%",
-        "upstream_cluster": "%UPSTREAM_CLUSTER%",
-        "upstream_local_address": "%UPSTREAM_LOCAL_ADDRESS%",
-        "downstream_local_address": "%DOWNSTREAM_LOCAL_ADDRESS%",
-        "downstream_remote_address": "%DOWNSTREAM_REMOTE_ADDRESS%",
-        "requested_server_name": "%REQUESTED_SERVER_NAME%",
-        "route_name": "%ROUTE_NAME%"
-      }
-```
-
-**特定の Namespace のみに適用**
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: access-logging
-  namespace: production
-spec:
-  accessLogging:
-  - providers:
-    - name: envoy
-```
-
-***
-
-**3. セキュリティ監査向けのカスタムログフィルター**
-
-**mTLS 情報を含める**
-
-```yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    accessLogFile: /dev/stdout
-    accessLogFormat: |
-      [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%"
-      %RESPONSE_CODE% %RESPONSE_FLAGS%
-      %BYTES_RECEIVED% %BYTES_SENT% %DURATION%
-      "%REQ(X-FORWARDED-FOR)%" "%REQ(USER-AGENT)%"
-      "%REQ(X-REQUEST-ID)%" "%REQ(:AUTHORITY)%"
-      "%UPSTREAM_HOST%" "%DOWNSTREAM_REMOTE_ADDRESS%"
-      mtls=%DOWNSTREAM_PEER_ISSUER% peer=%DOWNSTREAM_PEER_URI_SAN%
-```
-
-**認可情報を含める**
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: security-audit-logging
-  namespace: default
-spec:
-  accessLogging:
-  - providers:
-    - name: envoy
-    filter:
-      expression: response.code >= 400  # Log only errors
-```
-
-***
-
-**4. 外部ロギングシステムとの統合**
-
-**FluentBit を使用して CloudWatch に送信**
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: istio-system
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Log_Level     info
-
-    [INPUT]
-        Name              tail
-        Path              /var/log/containers/*istio-proxy*.log
-        Parser            docker
-        Tag               istio.proxy
-        Refresh_Interval  5
-
-    [FILTER]
-        Name    parser
-        Match   istio.proxy
-        Parser  istio-access-log
-
-    [OUTPUT]
-        Name cloudwatch_logs
-        Match   istio.proxy
-        region  us-east-1
-        log_group_name  /aws/eks/istio/access-logs
-        log_stream_prefix proxy-
-        auto_create_group true
-```
-
-**Elasticsearch 統合**
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: elasticsearch-logging
-  namespace: default
-spec:
-  accessLogging:
-  - providers:
-    - name: envoy
-    filter:
-      expression: |
-        response.code >= 400 ||
-        request.headers['x-audit'] == 'true'
-```
-
-***
-
-**5. 完全なセキュリティ監査設定**
-
-```yaml
-# 1. AUDIT Policy: Audit sensitive operations
----
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: audit-sensitive
-  namespace: production
+  namespace: app
 spec:
   selector:
     matchLabels:
       app: backend
   action: AUDIT
   rules:
-  # DELETE operations
   - to:
     - operation:
-        methods: ["DELETE"]
+        methods:
+        - DELETE
+        paths:
+        - /api/admin/*
+```
 
-  # Admin API
-  - to:
-    - operation:
-        paths: ["/api/admin/*"]
+アクセスログは別です。`istioctl install -f`でこのカスタムproviderを既存Istio設定にマージし（他provider/設定を保持）、選択backendだけで有効にします。形式からクエリ文字列、bearer token、完全JWTペイロードを意図的に除外します。
 
-  # Access from outside production
-  - from:
-    - source:
-        notNamespaces: ["production"]
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    extensionProviders:
+    - name: security-json
+      envoyFileAccessLog:
+        path: /dev/stdout
+        logFormat:
+          labels:
+            start_time: '%START_TIME%'
+            method: '%REQ(:METHOD)%'
+            path: '%REQ_WITHOUT_QUERY(:PATH)%'
+            response_code: '%RESPONSE_CODE%'
+            response_code_details: '%RESPONSE_CODE_DETAILS%'
+            response_flags: '%RESPONSE_FLAGS%'
+            peer: '%DOWNSTREAM_PEER_URI_SAN%'
+            request_id: '%REQ(X-REQUEST-ID)%'
+```
 
-# 2. DENY Policy: Actually block
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
+```yaml
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
 metadata:
-  name: deny-unauthorized
-  namespace: production
+  name: backend-security
+  namespace: app
 spec:
   selector:
     matchLabels:
       app: backend
-  action: DENY
-  rules:
-  # Block admin access from outside production
-  - from:
-    - source:
-        notNamespaces: ["production"]
-    to:
-    - operation:
-        paths: ["/api/admin/*"]
-
-# 3. Access Logging: JSON format
----
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: security-logging
-  namespace: production
-spec:
   accessLogging:
   - providers:
-    - name: envoy
+    - name: security-json
     filter:
-      expression: |
-        response.code >= 400 ||
-        request.method == "DELETE" ||
-        request.url_path.startsWith("/api/admin")
+      expression: response.code >= 400 || request.method == "DELETE" || request.url_path.startsWith("/api/admin/")
+  metrics:
+  - providers:
+    - name: prometheus
+    overrides:
+    - match:
+        metric: REQUEST_COUNT
+        mode: SERVER
+      tagOverrides:
+        security_operation:
+          value: 'request.url_path.startsWith("/api/admin/") ? "admin" : "other"'
 ```
 
-***
+Telemetryは要求数に値の限定された`security_operation`ディメンション（`admin`/`other`）も追加します。`request_method`と生URLパスは標準Istioメトリクスラベルではありません。カーディナリティと機密情報のため完全URLラベルは避けます。AUDITプラグインなしでもエラー、DELETE、adminアクセスは記録します。全要求を有効にするにはフィルターを省略し、名前空間全体にはセレクターを省略します。ルート名前空間のセレクターなしポリシーはメッシュ全体です。
 
-**6. ログ分析クエリ**
+CloudWatchには、ノードログマウント、CRI/containerd解析、`log`フィールドのJSON解析、IAM認証情報、CloudWatch出力を持つ対応EKSログエージェントまたはFluent Bit DaemonSetをデプロイ・設定します。ConfigMap単体はエージェントを起動しません。Elasticsearch/OpenSearchにはその宛先用collector出力を使います。provider `envoy`のTelemetryは標準出力へ書き、Elasticsearchを設定しません。FargateはノードDaemonSetでなく対応ログ機構が必要です。
 
-**Prometheus クエリ**
-
-```promql
-# Authorization deny count
-sum(rate(
-  envoy_http_rbac_denied_total[5m]
-)) by (namespace, pod)
-
-# AUDIT action trigger count
-sum(rate(
-  envoy_http_rbac_logged_total[5m]
-)) by (namespace, pod)
-
-# 403 Forbidden responses
-sum(rate(
-  istio_requests_total{
-    response_code="403"
-  }[5m]
-)) by (destination_service_name)
-```
-
-**CloudWatch Insights クエリ**
+構造化JSONフィールド取り込み後、CloudWatch Logs Insightsクエリを個別に実行します。
 
 ```sql
-# Audit DELETE operations
-fields @timestamp, method, path, response_code, downstream_remote_address
+fields @timestamp, method, path, response_code, peer
 | filter method = "DELETE"
 | sort @timestamp desc
 | limit 100
-
-# Admin API access
-fields @timestamp, path, response_code, downstream_remote_address, user_agent
-| filter path like /api/admin/
-| sort @timestamp desc
-
-# Failed Authorization
-fields @timestamp, path, response_code, response_flags
-| filter response_code = 403
-| stats count() by bin(5m)
 ```
 
-***
-
-**7. Grafana ダッシュボード**
-
-```yaml
-# Panel 1: Authorization deny rate
-rate(envoy_http_rbac_denied_total[5m])
-
-# Panel 2: AUDIT log trend
-rate(envoy_http_rbac_logged_total[5m])
-
-# Panel 3: 403 response distribution
-sum by (destination_service_name) (
-  rate(istio_requests_total{response_code="403"}[5m])
-)
-
-# Panel 4: Sensitive operations (DELETE)
-sum by (destination_service_name) (
-  rate(istio_requests_total{request_method="DELETE"}[5m])
-)
+```sql
+fields @timestamp, path, response_code, response_code_details
+| filter path like /^\/api\/admin\//
+| filter response_code = "403"
+| stats count() by bin(5m), response_code_details
 ```
 
-***
+403はアプリ、JWT認可、外部providerが返す場合があります。Istioが原因とする前に`response_code_details`、プロキシRBACログ、実効ポリシーを調べます。`envoy_http_rbac_logged_total`を組み込みAUDITカウンターと想定しないでください。実RBAC/実験的dry-run統計はプロキシ設定と命名に依存するため、公開系列を確認します。
 
-**8. アラート設定**
+Grafanaでは標準destination報告の403レートとカスタムadminディメンションを描画できます。インストール済みPrometheus Operatorが選択するPrometheusRuleで後者にアラートを設定できます。
 
 ```yaml
-# PrometheusRule
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -2367,392 +1259,59 @@ metadata:
 spec:
   groups:
   - name: istio-security
-    interval: 30s
     rules:
-    # High Authorization deny rate
-    - alert: HighAuthorizationDenyRate
-      expr: |
-        sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace)
-        > 10
+    - alert: AdminHTTP403Responses
+      expr: sum(rate(istio_requests_total{reporter="destination",security_operation="admin",response_code="403"}[5m]))
+        > 0
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High authorization deny rate in {{ $labels.namespace }}"
-        description: "{{ $value }} denials per second"
-
-    # Unauthorized Admin API access attempt
-    - alert: UnauthorizedAdminAccess
-      expr: |
-        sum(rate(istio_requests_total{
-          request_url_path=~"/api/admin/.*",
-          response_code="403"
-        }[5m])) > 0
-      for: 1m
-      labels:
-        severity: critical
-      annotations:
-        summary: "Unauthorized admin API access attempt"
+        summary: Admin API returned HTTP 403; inspect response_code_details to identify
+          the cause
 ```
 
-***
-
-**ベストプラクティス:**
-
-1. **先に AUDIT、後で DENY**:
-   * 新しいポリシーは AUDIT から開始する
-   * ログを分析してから DENY に切り替える
-2. **選択的なロギング**:
-   * すべてのトラフィックをログに記録するとコストが増加する
-   * 機微な操作のみをログに記録する
-3. **ログ保持**:
-   * セキュリティ監査: 最低 90 日間
-   * コンプライアンス: 1 年以上
-4. **リアルタイムアラート**:
-   * 未認可アクセス試行に即時アラートを出す
-   * 異常なパターンを検出する
-
-**参照:**
-
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
-* [Access Logging](../../../service-mesh/istio/observability/03-logging.md)
+新ポリシーを強制する前に、ALLOW/DENYの実験的`istio.io/dry-run: "true"`アノテーションでシャドー判断を報告できます。AUDITとは異なり、診断出力は安定APIではありません。保持、アクセス制御、機密情報のマスキングは実組織/法的要件に合わせます。普遍的な90日/1年の保持義務はありません。[アクセスログ](https://istio.io/latest/docs/tasks/observability/logs/access-log/)と[認可dry-run](https://istio.io/latest/docs/tasks/security/authorization/authz-dry-run/)を参照してください。
 
 </details>
 
 ***
 
-### 問題 10: ゼロトラストネットワークの実装
+### 問10: ゼロトラストネットワークの実装
 
-Istio を使用して**ゼロトラストネットワーク**の原則を実装する方法を説明してください。**mTLS STRICT**、**デフォルト拒否**、**最小権限**の原則を適用する完全な例を含めてください。
+Istioで**ゼロトラストネットワーク**原則を実装する方法を説明してください。**mTLS STRICT**、**デフォルト拒否**、**最小権限**を適用する完全な例を含めてください。
 
 <details>
 
-<summary>回答を表示</summary>
+<summary>解答を表示</summary>
 
-**回答:**
+ゼロトラストは認証済みID、明示的最小権限認可、ワークロード侵害時にも有効な制御を組み合わせます。Istioはデータプレーンが捕捉する通信を保護し、Kubernetes RBAC、アドミッションポリシー、ネットワーク分離、アプリ認可を代替しません。
 
-**ゼロトラストネットワークの原則:**
-
-1. **決して信頼せず、常に検証する**: すべての通信を検証する
-2. **最小権限**: 必要最小限の権限のみを付与する
-3. **侵害を前提とする**: 侵害を想定して設計する
-
-***
-
-**Istio ゼロトラストアーキテクチャ:**
+1. frontend/backend/databaseに別ServiceAccountを与え、互いのアカウントを自由に使用できないようにします。メッシュ参加、信頼ドメイン、証明書発行/更新を確認します。
+2. 対象名前空間にSTRICTと空ALLOW基準を適用します。`default`のポリシーは`app`を自動カバーしません。ルート名前空間基準は影響が広く、明示的なゲートウェイ/運用例外が必要です。
+3. gateway → frontend → backend → databaseだけを許可します。問6と同じデプロイ前提で、完全な通信ポリシー群は以下です。
 
 ```yaml
-# 1. mTLS STRICT (Only encrypted communication allowed)
-# 2. Deny-by-default (Deny all traffic by default)
-# 3. Explicit Allow (Explicitly allow required communication only)
-# 4. Identity-based (Based on Service Account)
-# 5. Fine-grained (Path/method level control)
-```
-
-***
-
-**ステップ 1: mTLS STRICT モード**
-
-すべてのサービス間通信を暗号化します:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
-  namespace: istio-system
+  namespace: app
 spec:
   mtls:
     mode: STRICT
-```
-
-**検証:**
-
-```bash
-# Check mTLS status
-istioctl authn tls-check <pod-name>.<namespace>
-
-# Output:
-# HOST:PORT                            STATUS     SERVER     CLIENT     AUTHN POLICY
-# backend.default.svc.cluster.local    OK         mTLS       mTLS       default/default
-```
-
-***
-
-**ステップ 2: デフォルト拒否ポリシー**
-
-**グローバル拒否ポリシー**
-
-```yaml
-# Apply to all Namespaces
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: deny-all
-  namespace: default
-spec: {}
-
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all
-  namespace: production
-spec: {}
-```
-
-***
-
-**ステップ 3: 最小権限**
-
-**シナリオ: 3 層 Web アプリケーション**
-
-```
-User -> Ingress Gateway -> Frontend -> Backend -> Database
-```
-
-**Service Account を作成**
-
-```yaml
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: frontend
-  namespace: app
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: backend
-  namespace: app
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: database
-  namespace: app
-```
-
-**Ingress Gateway -> Frontend**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-ingress-to-frontend
-  namespace: app
-spec:
-  selector:
-    matchLabels:
-      app: frontend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
-```
-
-**Frontend -> Backend**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-frontend-to-backend
-  namespace: app
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/app/sa/frontend"
-    to:
-    - operation:
-        methods: ["GET", "POST", "PUT"]  # Exclude DELETE
-        paths: ["/api/v1/*"]  # Only v1 API
-        ports: ["8080"]  # Specific port only
-```
-
-**Backend -> Database**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-backend-to-database
-  namespace: app
-spec:
-  selector:
-    matchLabels:
-      app: database
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/app/sa/backend"
-    to:
-    - operation:
-        ports: ["5432"]  # PostgreSQL only
-```
-
-***
-
-**ステップ 4: Namespace の分離**
-
-他の Namespace からのアクセスをブロックします:
-
-```yaml
-# Block Production -> Staging
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-cross-namespace
-  namespace: production
-spec:
-  action: DENY
-  rules:
-  - from:
-    - source:
-        notNamespaces: ["production", "istio-system"]
-```
-
-***
-
-**ステップ 5: 時間ベースのアクセス制御**
-
-EnvoyFilter で時間ベースの制御を実装します:
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: time-based-access
-  namespace: app
-spec:
-  workloadSelector:
-    labels:
-      app: backend
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.lua
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              local hour = tonumber(os.date("%H"))
-              -- Allow only business hours (9AM-6PM)
-              if hour < 9 or hour >= 18 then
-                request_handle:respond(
-                  {[":status"] = "403"},
-                  "Access denied outside business hours"
-                )
-              end
-            end
-```
-
-***
-
-**ステップ 6: Egress トラフィック制御**
-
-外部 Service へのアクセスを制限します:
-
-```yaml
-# REGISTRY_ONLY mode
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    outboundTrafficPolicy:
-      mode: REGISTRY_ONLY
-
----
-# Register only approved external services
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: allowed-external-api
-  namespace: app
-spec:
-  hosts:
-  - api.approved-vendor.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
-
----
-# Only allow Backend to access external API
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-backend-egress
-  namespace: app
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/app/sa/backend"]
-    to:
-    - operation:
-        hosts: ["api.approved-vendor.com"]
-```
-
-***
-
-**ステップ 7: 完全なゼロトラスト設定**
-
-```yaml
-# ========================================
-# 1. mTLS STRICT (Entire mesh)
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT
-
-# ========================================
-# 2. Deny-by-default (Each Namespace)
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all
+  name: default-deny
   namespace: app
 spec: {}
-
-# ========================================
-# 3. Ingress Gateway Policy
-# ========================================
 ---
-# Only allow external traffic to Gateway Pod
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-external
+  name: ingress-public-api
   namespace: istio-system
 spec:
   selector:
@@ -2762,13 +1321,17 @@ spec:
   rules:
   - to:
     - operation:
-        ports: ["80", "443"]
-
-# ========================================
-# 4. Frontend Policy (Least privilege)
-# ========================================
+        ports:
+        - '8443'
+        hosts:
+        - myapp.example.com
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: frontend-policy
@@ -2779,17 +1342,21 @@ spec:
       app: frontend
   action: ALLOW
   rules:
-  # Only allow Ingress Gateway
   - from:
     - source:
         principals:
-        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
-
-# ========================================
-# 5. Backend Policy (Fine-grained control)
-# ========================================
+        - cluster.local/ns/istio-system/sa/istio-ingressgateway
+    to:
+    - operation:
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
@@ -2800,21 +1367,21 @@ spec:
       app: backend
   action: ALLOW
   rules:
-  # Only allow Frontend
   - from:
     - source:
-        principals: ["cluster.local/ns/app/sa/frontend"]
+        principals:
+        - cluster.local/ns/app/sa/frontend
     to:
     - operation:
-        methods: ["GET", "POST", "PUT"]
-        paths: ["/api/v1/users/*", "/api/v1/data/*"]
-        ports: ["8080"]
-
-# ========================================
-# 6. Database Policy (Most restrictive)
-# ========================================
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: database-policy
@@ -2825,153 +1392,56 @@ spec:
       app: database
   action: ALLOW
   rules:
-  # Only allow Backend
   - from:
     - source:
-        principals: ["cluster.local/ns/app/sa/backend"]
+        principals:
+        - cluster.local/ns/app/sa/backend
     to:
     - operation:
-        ports: ["5432"]
-
-# ========================================
-# 7. Health Check Exception
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-health-checks
-  namespace: app
-spec:
-  action: ALLOW
-  rules:
-  - to:
-    - operation:
-        paths: ["/health", "/ready", "/live"]
-        methods: ["GET"]
-
-# ========================================
-# 8. Prometheus Metrics Exception
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-prometheus
-  namespace: app
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        namespaces: ["istio-system"]
-        principals: ["cluster.local/ns/istio-system/sa/prometheus"]
-    to:
-    - operation:
-        paths: ["/stats/prometheus"]
-
-# ========================================
-# 9. Egress Control
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all-egress
-  namespace: app
-spec:
-  action: DENY
-  rules:
-  - to:
-    - operation:
-        hosts: ["*"]
-
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-backend-egress
-  namespace: app
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/app/sa/backend"]
-    to:
-    - operation:
-        hosts: ["api.approved-vendor.com"]
+        ports:
+        - '5432'
 ```
 
-***
-
-**ステップ 8: 検証と監視**
+4. 名前空間分離が必要なら認証済み名前空間/principalで一致させます。`production`を選択し`notNamespaces: [production, istio-system]`を持つDENYは、production → stagingでなく**他の呼び出し元からproductionへの通信**を遮断します。Gatewayと運用者を考慮します。DENYはALLOWより優先されます。
+5. 営業時間に依存するアクセスには、明示タイムゾーン、時刻源、失敗方針を持つアプリ認可か設定済みCUSTOM外部認可providerを使います。挿入位置/タイムゾーン不明のLua `os.date()`確認では完全な認可設計ではありません。CUSTOMで許可されてもDENY/ALLOWを通る必要があります。
+6. 問8のGatewayパターンとネットワーク制御でEgressを強制します。REGISTRY_ONLYも`deny-all-egress`という名のサイドカーポリシーもファイアウォールではありません。全ホストに一致する受信DENYはアプリ通信を遮断し、ALLOWで戻せません。
+7. プローブ書き換えを保持し、正しいポートへのスクレイプを設計して問6の必要例外だけを追加します。エンドユーザー認可には問7のJWT検証とホップごとのトークン伝播を使います。問9のログ/アラートとmTLS章の証明書期限監視を行います。
+8. 変更ごとに実ポリシーを確認し、意図した許可/拒否表、TCP DBアクセス、Egress迂回をテストします。
 
 ```bash
-# 1. mTLS validation
-istioctl authn tls-check <pod-name>.<namespace>
-
-# 2. Authorization test
-# Frontend -> Backend (allowed)
-kubectl exec -it <frontend-pod> -n app -- \
-  curl http://backend:8080/api/v1/users
-
-# Frontend -> Database (denied)
-kubectl exec -it <frontend-pod> -n app -- \
-  curl http://database:5432
-
-# 3. Prometheus query
-# Authorization deny count
-sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace, pod)
-
-# 4. Grafana dashboard
-# - mTLS connection count
-# - Authorization deny rate
-# - Service-to-service communication matrix
+istioctl analyze -n app
+istioctl proxy-config secret <backend-pod> -n app
+istioctl proxy-config clusters <frontend-pod> -n app -o json
+istioctl x authz check <backend-pod>.app
+# Run from the indicated application containers with the test clients installed.
+kubectl exec <frontend-pod> -n app -c frontend -- curl -i http://backend:8080/api/users
+kubectl exec <frontend-pod> -n app -c frontend -- pg_isready -h database -p 5432
+kubectl exec <backend-pod> -n app -c backend -- pg_isready -h database -p 5432
 ```
 
-***
-
-**ゼロトラストチェックリスト:**
-
-* mTLS STRICT モード（すべての通信を暗号化）
-* デフォルト拒否（デフォルトですべてを拒否）
-* 明示的な許可（必要なものだけを許可）
-* Service Account ベースのアイデンティティ
-* 最小権限（メソッド／パス／ポートを制限）
-* Namespace の分離
-* Egress トラフィック制御
-* ヘルスチェック例外の処理
-* 監視と監査
-* 定期的なポリシーレビュー
-
-**参照:**
-
-* [Zero Trust with Istio](https://istio.io/latest/blog/2021/zero-trust/)
-* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+クイズ得点は本番準備の証拠ではありません。実環境のワークロードID割り当て、ネットワーク迂回経路、発行者信頼、最小権限ルール、可観測性、ロールバック、アプリ自身の権限を確認します。[セキュリティ概念](https://istio.io/latest/docs/concepts/security/)と[認可](../../../service-mesh/istio/security/03-authorization.md)を参照してください。
 
 </details>
 
 ***
 
-## スコア計算
+## 得点計算
 
-* 選択問題 1～5: 各 10 点（合計 50 点）
-* 記述問題 6～10: 各 10 点（合計 50 点）
-* **合計: 100 点**
+* 選択問題1-5: 各10点（合計50点）
+* 短答問題6-10: 各10点（合計50点）
+* **合計: 100点**
 
 **評価基準:**
 
-* 90～100 点: 優秀（Istio セキュリティエキスパート）
-* 80～89 点: 良好（本番セキュリティ設定の準備完了）
-* 70～79 点: 平均（追加学習を推奨）
-* 60～69 点: 平均以下（基本概念の復習が必要）
-* 0～59 点: 再学習が必要
+* 90-100点: このクイズのトピックを非常によく理解
+* 80-89点: よく理解。実デプロイは別途検証
+* 70-79点: 平均的（追加学習を推奨）
+* 60-69点: 平均未満（基本概念の復習が必要）
+* 0-59点: 再学習が必要
 
-## 学習リソース
+## 学習資料
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
-* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/03-request-authentication.md)
-* [Peer Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/04-peer-authentication.md)
+* [認可ポリシー](../../../service-mesh/istio/security/03-authorization.md)
+* [リクエスト認証](../../../service-mesh/istio/security/02-authentication.md)
+* [ピア認証](../../../service-mesh/istio/security/01-mtls.md)

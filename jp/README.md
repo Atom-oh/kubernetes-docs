@@ -12,7 +12,7 @@
 - [学習教材の目次](#table-of-contents) - トピック別の学習教材
 - [クイズ集](./quizzes/README.md) - トピック別のクイズ
 
-## 目次
+## 目次 {#table-of-contents}
 
 ### ニュース
 - [週刊ニュース](./news/README.md) - 最新の Kubernetes/EKS エコシステムニュースダイジェスト
@@ -139,9 +139,14 @@
    - [パート 6: MSK Integration](./data-on-eks/kafka/06-msk-integration.md) | [クイズ](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [パート 7: Monitoring](./data-on-eks/kafka/07-monitoring.md) | [クイズ](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [パート 8: Best Practices](./data-on-eks/kafka/08-best-practices.md) | [クイズ](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+   - [Kafka ベンチマークパート 9（英語ガイド）](./data-on-eks/kafka/09-kafka-benchmark.md)
+   - [Kafka ベンチマークパート 9 クイズ（英語）](./quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
 
 ### Networking
 1. [Networking 概要](./networking/README.md) | [クイズ](./quizzes/networking/00-networking-overview-quiz.md)
+   - [ネットワーク基礎パート 1（英語ガイド）](./basics/06-network-fundamentals-part1.md)
+   - [ネットワーク基礎パート 2（英語ガイド）](./basics/06-network-fundamentals-part2.md)
+   - [ネットワーク基礎パート 3（英語ガイド）](./basics/06-network-fundamentals-part3.md)
 2. [VPC CNI](./networking/01-vpc-cni.md) | [クイズ](./quizzes/networking/01-vpc-cni-quiz.md)
 3. **Cilium 詳細解説**
    - [Cilium 入門](./networking/cilium/README.md)
@@ -205,13 +210,6 @@
 10. [cert-manager](./security/10-cert-manager.md) | [クイズ](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [クイズ](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [クイズ](./quizzes/security/12-spiffe-spire-quiz.md)
-
-### Container Registry
-1. [Container Registry 概要](./container-registry/README.md)
-2. [Docker Hub](./container-registry/01-docker-hub.md) | [クイズ](./quizzes/container-registry/01-docker-hub-quiz.md)
-3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [クイズ](./quizzes/container-registry/02-amazon-ecr-quiz.md)
-4. [Harbor](./container-registry/03-harbor.md) | [クイズ](./quizzes/container-registry/03-harbor-quiz.md)
-5. [Container Registry Best Practices](./container-registry/04-best-practices.md) | [クイズ](./quizzes/container-registry/04-best-practices-quiz.md)
 
 ### Platform Engineering
 0. [Platform Engineering 概要](./platform-engineering/00-platform-engineering-overview.md) | [クイズ](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)

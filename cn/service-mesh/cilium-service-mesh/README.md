@@ -1,329 +1,148 @@
-# Cilium Service Mesh 概述
+# Cilium 服务网格概述
 
-> **支持版本**: Cilium 1.16+, Kubernetes 1.28+
-> **最后更新**: February 22, 2026
+> **最后更新**：2026 年 9 月 11 日 · Cilium/chart 1.20.1 · CLI 0.20.0 · Hubble CLI 1.19.4
 
-## 简介
+Cilium 结合 Kubernetes 网络、eBPF 策略/负载均衡及可选应用层代理功能。选定 L7 流量由 Cilium Envoy 集成处理；移除每应用 Sidecar 不会移除代理、内核要求或运维组件。
 
-Cilium Service Mesh 是一种基于 eBPF 的无 Sidecar 服务网格解决方案。与传统的 Sidecar 代理方法不同，Cilium Service Mesh 利用 Linux kernel 的 eBPF 技术处理网络流量，并在每个节点使用单个共享的 Envoy 代理来提供 L7 功能。
+## 架构和安全边界
 
-### 核心价值主张
+![与 Istio Sidecar 模式的逻辑比较：Cilium 使用 eBPF 数据路径，并将选定 L7 流量重定向到共享 Envoy。这不是加密/性能保证，也不是 Istio Ambient 模式图。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-readme-0.png)
 
-Cilium Service Mesh 的核心价值在于提供一个**统一的网络和服务网格平台**：
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-readme-0.html)
 
-1. **资源效率**：无需承担 Sidecar 代理开销即可使用服务网格功能
-2. **低延迟**：通过 eBPF 实现内核级数据包处理
-3. **简化运维**：将 CNI 和服务网格集成到单个组件中
-4. **渐进式采用**：现有 Cilium CNI 用户可以轻松扩展至服务网格
-5. **强大安全性**：基于 SPIFFE 的身份和透明 mTLS 支持
+Envoy 可作为 Cilium 代理旁的进程运行，也可作为独立管理的 `cilium-envoy` DaemonSet。所选 chart 的常规渲染配置使用专用 DaemonSet。实际放置和 L7 跳数取决于启用的功能/策略；并非每个数据包都经过 Envoy。
 
-## Sidecar 与无 Sidecar 架构
+| 组件 | 作用 |
+|---|---|
+| Cilium agent | 节点数据路径、端点身份和策略执行 |
+| Cilium operator | 所选模式的 IPAM 及其他集群/控制器职责 |
+| Envoy | 匹配的 L7 策略、入口和 Gateway API 处理 |
+| Hubble | 流观测；L7 记录需要相关代理可见性 |
+| Hubble Relay / UI | 额外聚合和可视化组件 |
+| SPIRE（配置后） | beta 双向身份验证功能的身份基础设施 |
 
-```mermaid
-graph TB
-    subgraph "Traditional Sidecar Approach (Istio)"
-        direction TB
-        P1A[Pod A]
-        S1A[Sidecar Proxy A]
-        P1B[Pod B]
-        S1B[Sidecar Proxy B]
+### 双向身份验证不等于自动流量加密
 
-        P1A --> S1A
-        S1A --> S1B
-        S1B --> P1B
-    end
+Cilium 1.20.1 文档将**带外双向身份验证标为 beta 且未完成**。基于 mTLS 的身份握手在代理之间带外执行，针对 Cilium 安全身份。这不会将每个应用连接封装为与 Istio 或 Linkerd 工作负载代理相同的 TLS 传输模型。
 
-    subgraph "Cilium Service Mesh Approach"
-        direction TB
-        P2A[Pod A]
-        P2B[Pod B]
-        eBPF1[eBPF Datapath]
-        NodeEnvoy[Node Envoy<br/>L7 Processing]
+WireGuard/IPsec 是独立加密机制，各有受支持模式和范围。WireGuard 不是 TLS，仅启用 SPIRE 不会加密应用数据或为每个端点激活身份验证规则。所选版本还说明，双向身份验证不兼容 ClusterMesh 或外部网格 mTLS 方案。
 
-        P2A --> eBPF1
-        eBPF1 --> NodeEnvoy
-        NodeEnvoy --> eBPF1
-        eBPF1 --> P2B
-    end
-```
+Cilium 1.20.1 还提供独立的 [ztunnel 透明加密 beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)，通过 `encryption.type: ztunnel` 选择。它以命名空间纳管提供 TCP 工作负载 mTLS；两端均必须纳管。它排除 ClusterMesh 和主机网络 Pod，发布指南警告：除针对 HBONE 端口 15008 外，普通 L4 策略在此路径不工作。这是独立部署选择，有自己的 CA/引导要求。
 
-### 架构对比图
+采用此 beta 路径前，审核[安全指南](03-security.md)和发布安全模型/限制。将路由、身份验证、授权和加密视为不同要求。
 
-```mermaid
-flowchart LR
-    subgraph "Sidecar-based (Istio)"
-        direction TB
-        AppA1[App Container] --> ProxyA1[Envoy Sidecar]
-        ProxyA1 --> Network1[Network]
-        Network1 --> ProxyB1[Envoy Sidecar]
-        ProxyB1 --> AppB1[App Container]
-    end
+Cilium 也可为 Istio 部署提供底层 CNI。此网络集成不意味着身份验证机制可互换；审核模式专属套接字负载均衡、CNI 共存和 L7 策略所有权。
 
-    subgraph "eBPF-based (Cilium)"
-        direction TB
-        AppA2[App Container] --> eBPF2[eBPF<br/>L3/L4]
-        eBPF2 --> SharedProxy[Shared Envoy<br/>L7 Only]
-        SharedProxy --> eBPF3[eBPF<br/>L3/L4]
-        eBPF3 --> AppB2[App Container]
-    end
-```
+## 比较能力和实测成本
 
-## 服务网格对比
+| 主题 | Cilium | Istio | Linkerd |
+|---|---|---|---|
+| 数据平面模型 | eBPF 加处理选定 L7 工作的共享 Envoy | Sidecar 模式，或 Ambient ztunnel/waypoint 角色 | 每 Pod 代理，包括原生 Sidecar 放置 |
+| Pod 网络 | 根据模式提供 CNI 或与 CNI 链接 | 需要底层 Pod 网络；其 CNI 重定向网格流量 | 需要底层 Pod 网络；可选 CNI 重定向网格流量 |
+| 策略 | Kubernetes/Cilium 网络策略和 L7 功能 | 网格授权/路由，另有独立网络策略层 | Server/路由授权和出站路由，不是仅 L4 策略 |
+| Gateway API | 选择启用的控制器及文档规定的一致性/功能 | 网关和网格路由角色 | 支持以 Service/Server 为父对象的路由角色 |
+| 安全 | 带外身份验证及独立加密；另有受限制的 ztunnel mTLS beta | 工作负载网格 mTLS 加策略 | 工作负载网格 mTLS 加策略 |
 
-| 功能 | Cilium Service Mesh | Istio | Linkerd |
-|---------|---------------------|-------|---------|
-| **架构** | eBPF + Node Envoy | Sidecar Envoy | Sidecar linkerd2-proxy |
-| **代理** | 每个节点 1 个（仅 L7） | 每个 Pod 1 个 | 每个 Pod 1 个 |
-| **内存开销** | 低（~50-100MB/节点） | 高（~50MB/Pod） | 中（~20MB/Pod） |
-| **CPU 开销** | 非常低 | 高 | 中 |
-| **延迟** | ~0.1-0.5ms | ~1-3ms | ~0.5-1ms |
-| **L4 处理** | eBPF（内核） | Envoy（用户空间） | linkerd2-proxy |
-| **L7 处理** | Envoy | Envoy | linkerd2-proxy |
-| **mTLS** | 透明（eBPF/WireGuard） | Sidecar Envoy | linkerd2-proxy |
-| **CNI 集成** | 原生 | 需要单独的 CNI | 需要单独的 CNI |
-| **安装复杂度** | 低 | 高 | 中 |
-| **Gateway API** | 完全支持 | 完全支持 | 部分支持 |
-| **网络策略** | CiliumNetworkPolicy（L3-L7） | AuthorizationPolicy | Server（L4） |
-| **可观测性** | Hubble（原生） | Kiali、Jaeger | Linkerd Viz |
+没有产品拥有独立于工作负载和配置的通用 CPU、内存或延迟排名。旧的固定每节点/每 Pod 数值和 100 Pod 内存图不是有来源的基准测试，且遗漏组件、节点数和工作负载细节。针对同一基线比较实测增量成本，包括代理、控制器、遥测和身份基础设施。
 
-### 资源使用对比
+Cilium 网络模型和所需 L7 功能适合环境时，尤其已有 Cilium 运维经验时，它可能很有用。评估 CNI 迁移、内核/平台支持、共享节点故障影响、安全要求和现有策略依赖。“无 Sidecar”和“eBPF”都不能证明金融/实时工作负载达到延迟或成本目标。
 
-```mermaid
-graph LR
-    subgraph "Memory Usage for 100 Pod Cluster"
-        direction TB
-        Cilium["Cilium SM<br/>~500MB total<br/>(~100MB per node)"]
-        Istio["Istio<br/>~5GB total<br/>(~50MB per Pod)"]
-        Linkerd["Linkerd<br/>~2GB total<br/>(~20MB per Pod)"]
-    end
-```
+更广泛能力边界参阅持续维护的[服务网格比较](../istio/comparison/01-service-mesh-comparison.md)。
 
-## 何时选择 Cilium Service Mesh
+## 版本和平台前提条件
 
-### 适用场景
+对于所选版本：
 
-1. **已在使用 Cilium CNI**
-   - 利用现有的 Cilium 投资
-   - 无需额外组件即可启用服务网格功能
-   - 统一运维和监控
-
-2. **资源效率至关重要**
-   - 在大型集群中消除 Sidecar 开销
-   - 需要优化节点资源
-   - 成本降低很重要
-
-3. **低延迟必不可少**
-   - 高性能工作负载
-   - 实时应用程序
-   - 金融/交易系统
-
-4. **希望简化运维**
-   - 使用单个组件提供 CNI + 服务网格
-   - 无需管理 Sidecar 注入
-   - 简化升级和故障排查
-
-### 不适用场景
-
-1. **已有大量 Istio 投资**
-   - 已实施复杂的 Istio 策略
-   - 依赖 Istio 特定功能
-
-2. **需要广泛的 Envoy 扩展**
-   - 每个 Sidecar 的自定义过滤器
-   - 精细的每 Pod 代理设置
-
-3. **复杂的多集群网格**
-   - 需要 Istio 成熟的多集群功能
-
-## 前置条件
-
-### 验证 Cilium CNI 安装
-
-Cilium Service Mesh 要求先安装 Cilium CNI：
+- 通用 Kubernetes 端到端兼容列表为 **1.33–1.36**。发布的 EKS CI 文件列出 **1.33–1.35**，默认 1.35。这是不同证据集；更新/未列出提供商组合需要单独验证。
+- Helm chart 宽松的 `kubeVersion >=1.21.0-0` 不是已测试支持矩阵，较新 Kubernetes 版本不会自动被覆盖。
+- 主机需要受支持 AMD64/AArch64 Linux，通常为内核 5.10 或更新版本，或文档规定的等效回移版本。L7 重定向及其他高级功能有额外内核/模块要求。
+- 此 Cilium 版本的 Gateway API 参考为 **v1.6.1**。更改前检查必需/可选 CRD 和 1.20 TLSRoute 升级说明；不要未经兼容性审核就替换为目录最新版。
 
 ```bash
-# Check Cilium status
-cilium status
-
-# Expected output
-    /¯¯\
- /¯¯\__/¯¯\    Cilium:             OK
- \__/¯¯\__/    Operator:           OK
- /¯¯\__/¯¯\    Envoy DaemonSet:    OK
- \__/¯¯\__/    Hubble Relay:       OK
-    \__/       ClusterMesh:        disabled
-
-# Check Cilium version
+cilium version --client
 cilium version
+cilium status --wait --wait-duration 5m
+kubectl -n kube-system get daemonset cilium
+# For the dedicated Envoy mode selected below:
+kubectl -n kube-system get daemonset cilium-envoy
 ```
 
-### 在 EKS 上安装 Cilium
+CLI 自身版本与运行中 Cilium 镜像版本是不同信息。保留完整状态输出和失败；grep 匹配“Envoy”或“Hubble”不能证明就绪。嵌入模式下没有专用 Envoy DaemonSet 可能符合预期。
 
-```bash
-# Add Helm repository
-helm repo add cilium https://helm.cilium.io/
-helm repo update
+### EKS 安装选择
 
-# Install Cilium on EKS (with service mesh features)
-helm install cilium cilium/cilium --version 1.16.0 \
-  --namespace kube-system \
-  --set eni.enabled=true \
-  --set ipam.mode=eni \
-  --set egressMasqueradeInterfaces=eth0 \
-  --set routingMode=native \
-  --set kubeProxyReplacement=true \
-  --set loadBalancer.algorithm=maglev \
-  --set envoy.enabled=true \
-  --set hubble.enabled=true \
-  --set hubble.relay.enabled=true \
-  --set hubble.ui.enabled=true
-```
+| 模式/平台 | 必须区分的内容 |
+|---|---|
+| Cilium AWS ENI 模式 | Cilium 管理 ENI IPAM/原生路由；需要 IAM、路由和节点/Pod 纳管规划。通用 1.20.1 ENI 参考记录 IPv6 Beta，但 EKS 安装页面仍称仅 IPv4；此处使用 IPv4 示例，单独验证平台专属 IPv6 前提条件/支持 |
+| AWS VPC CNI 链式模式 | AWS VPC CNI 保留接口/IPAM 职责；Cilium 随后附加数据路径；必须评估高级 L7/IPsec 限制 |
+| EKS Fargate | 不支持替代 CNI；必须使用 AWS VPC CNI |
+| EKS Auto Mode | 不支持替代 CNI 和网络策略插件 |
+| EKS Hybrid Nodes | 遵循独立 AWS 支持的 Cilium 版本/配置/能力指南，不使用 EC2 ENI 参数 |
 
-### 必需组件
+AWS 对 EC2 节点 CNI 的支持限于 Amazon VPC CNI；其他兼容 CNI 需要自身运维/厂商支持。不能从通用 Cilium 兼容表推断独立 Hybrid Nodes 支持边界。
 
-| 组件 | 角色 | 是否必需 |
-|-----------|------|----------|
-| Cilium Agent | eBPF 程序管理、策略实施 | 必需 |
-| Cilium Operator | CRD 管理、IPAM | 必需 |
-| Envoy (cilium-envoy) | L7 代理处理 | 服务网格必需 |
-| Hubble | 可观测性 | 推荐 |
-| Hubble Relay | UI/CLI 连接 | 推荐 |
-| Hubble UI | 可视化 | 可选 |
+一行 Helm install 不是现有 AWS VPC CNI 集群的迁移计划。应通过经过测试的流程处理 API 引导访问、kube-proxy 替代、CNI 所有权、IAM、节点就绪污点和原有未管理 Pod 的重建。本次审计未创建集群或替换 CNI。
 
-## 启用服务网格功能
+## 启用所选功能
 
-### 基本启用
+对于已正确安装的 Cilium 部署，将此功能覆盖配置保存为 `cilium-mesh-features.yaml`：
 
 ```yaml
-# values.yaml
+l7Proxy: true
 envoy:
   enabled: true
-
-# Default configuration for L7 proxy policy enforcement
-proxy:
-  enabled: true
-```
-
-### 完整服务网格配置
-
-```yaml
-# values.yaml - Full service mesh features
-envoy:
-  enabled: true
-  resources:
-    limits:
-      cpu: 2000m
-      memory: 2Gi
-    requests:
-      cpu: 100m
-      memory: 256Mi
-
-# Hubble observability
 hubble:
   enabled: true
   relay:
     enabled: true
   ui:
     enabled: true
-  metrics:
-    enabled:
-      - dns
-      - drop
-      - tcp
-      - flow
-      - icmp
-      - http
+```
 
-# Mutual authentication (mTLS)
+受支持 L7 标志为 `l7Proxy`；`proxy.enabled` 不是其替代。原生 chart 检查确认 `proxy.enabled:false` 仍启用 L7，而 `l7Proxy:false` 禁用它。
+
+```bash
+set -euo pipefail
+umask 077
+helm repo add cilium https://helm.cilium.io/
+helm repo update cilium
+# Preview only: reviewed-cni-values.yaml must describe the existing intended CNI mode.
+helm template cilium cilium/cilium --version 1.20.1 \
+  --namespace kube-system --kube-version 1.35.0 \
+  -f reviewed-cni-values.yaml -f cilium-mesh-features.yaml \
+  > cilium-mesh-rendered.yaml
+```
+
+此操作预览示例兼容 Kubernetes 版本，并与安装已审核 CNI values 合并。检查结果，在现有所有者管理下遵循该版本受支持升级流程。它不是完整 CNI 安装，也不是更改网络模式的许可。
+
+| 可选能力 | 额外要求 |
+|---|---|
+| Gateway API | kube-proxy 替代、L7 代理、必需 v1.6.1 CRD 及适当负载均衡器/主机网络设计 |
+| Ingress 控制器 | 其受支持配置和暴露模型；不会自动处理所有网格流量 |
+| Hubble 指标 | 所选指标族和已配置采集器；Relay/UI 本身不创建 Prometheus |
+| 双向身份验证 | beta 审查、显式启用、SPIRE/存储/连通性、适用身份验证策略和单独评估的加密 |
+
+对于**隔离的 beta 身份验证评估**，必须包含旧示例缺失的顶层标志：
+
+```yaml
 authentication:
+  enabled: true
   mutual:
     spire:
       enabled: true
       install:
         enabled: true
-
-# Ingress Controller
-ingressController:
-  enabled: true
-  loadbalancerMode: shared
-
-# Gateway API
-gatewayAPI:
-  enabled: true
 ```
 
-## 文档结构
+没有 `authentication.enabled:true` 时，chart 拒绝 SPIRE 集成。提供的 SPIRE 服务器默认使用持久存储，因此合适 PVC 预置是前提。此片段不确立生产安全、跨集群身份验证或加密应用流量。
 
-本节的组织如下：
+## L7 策略和观测示例
 
-| 文档 | 描述 |
-|----------|-------------|
-| [架构](./01-architecture.md) | eBPF 数据路径、Node Envoy、CRD 模型 |
-| [流量管理](./02-traffic-management.md) | L7 路由、负载均衡、流量拆分 |
-| [安全](./03-security.md) | mTLS、网络策略、加密 |
-| [可观测性](./04-observability.md) | Hubble、指标、服务地图 |
-| [Ingress 与 Gateway](./05-ingress-gateway.md) | Ingress Controller、Gateway API |
-| [最佳实践](./06-best-practices.md) | 生产部署、迁移、调优 |
+在 `bookinfo` 中准备 Cilium 管理、带 `app:productpage` 标签的 HTTP 应用，以及同命名空间 Cilium 管理、带 `app:frontend` 标签的客户端。若使用 Bookinfo，部署其完整必需应用依赖；仅 productpage Deployment 不是完整 Bookinfo 应用。使用已验证镜像和适合应用的就绪检查。
 
-## 快速开始
-
-### 1. 验证服务网格功能
-
-```bash
-# Check Envoy DaemonSet
-kubectl get daemonset -n kube-system cilium-envoy
-
-# Check Cilium service mesh status
-cilium status | grep -E "Envoy|Hubble"
-```
-
-### 2. 部署示例应用程序
+以下策略选择该端点，并允许所示客户端/方法/路径组合。它不创建任一工作负载：
 
 ```yaml
-# bookinfo.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: bookinfo
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: productpage
-  namespace: bookinfo
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: productpage
-  template:
-    metadata:
-      labels:
-        app: productpage
-    spec:
-      containers:
-      - name: productpage
-        image: docker.io/istio/examples-bookinfo-productpage-v1:1.18.0
-        ports:
-        - containerPort: 9080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: productpage
-  namespace: bookinfo
-spec:
-  selector:
-    app: productpage
-  ports:
-  - port: 9080
-    targetPort: 9080
-```
-
-### 3. 应用 L7 策略
-
-```yaml
-# l7-policy.yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -332,45 +151,56 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: productpage
+      k8s:app: productpage
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:app: frontend
+        k8s:io.kubernetes.pod.namespace: bookinfo
     toPorts:
     - ports:
-      - port: "9080"
+      - port: '9080'
         protocol: TCP
       rules:
         http:
         - method: GET
-          path: "/productpage"
+          path: ^/productpage$
         - method: GET
-          path: "/health"
+          path: ^/health$
 ```
 
-### 4. 观察流量
+通过策略所有者应用前，评估其他策略及预期默认拒绝效果。示例允许两条路径，不是完整浏览器流程所需全部静态资源或依赖。身份验证/加密与此 L7 允许策略独立。
 
 ```bash
-# Observe L7 traffic with Hubble CLI
-hubble observe --namespace bookinfo -f
+# Keep this terminal running; configure the intended kube context first.
+cilium hubble port-forward --port-forward 4245
 
-# Filter HTTP requests
-hubble observe --namespace bookinfo --protocol http
-
-# Check inter-service flows
-hubble observe --namespace bookinfo --to-service productpage
+# In another terminal, use the selected Hubble CLI:
+hubble status --server localhost:4245
+hubble observe --server localhost:4245 --namespace bookinfo --protocol http --follow
+# Service-name filters are an alternative to --namespace in this CLI.
+hubble observe --server localhost:4245 --to-service bookinfo/productpage
 ```
 
-## 后续步骤
+所选 Hubble CLI 拒绝组合 `--namespace` 和 `--to-service`。使用命名空间观测，或带命名空间的服务名前缀。L7 记录需要实际匹配流量和代理可见性；L7 代理前发生的丢弃可能需要更广流/丢弃检查。未观察到流不能证明应用路径被允许、被拒绝或健康。
 
-1. **[架构](./01-architecture.md)**：了解 Cilium Service Mesh 的内部工作原理。
-2. **[流量管理](./02-traffic-management.md)**：配置 L7 路由和流量控制。
-3. **[安全](./03-security.md)**：设置 mTLS 和 L7 网络策略。
+## 文档结构和参考资料
 
-## 参考资料
+| 指南 | 范围 |
+|---|---|
+| [架构](01-architecture.md) | 数据路径、Envoy 和 API 模型 |
+| [流量管理](02-traffic-management.md) | 路由和负载均衡 |
+| [安全](03-security.md) | 策略、身份验证和加密边界 |
+| [可观测性](04-observability.md) | Hubble 和指标 |
+| [Ingress/Gateway](05-ingress-gateway.md) | 外部流量和 Gateway API |
+| [最佳实践](06-best-practices.md) | 运维、迁移和验证 |
 
-- [Cilium 官方文档](https://docs.cilium.io/)
-- [Cilium Service Mesh 指南](https://docs.cilium.io/en/stable/network/servicemesh/)
-- [eBPF 简介](https://ebpf.io/)
-- [Gateway API 文档](https://gateway-api.sigs.k8s.io/)
+- [发布的 Kubernetes 兼容性](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/compatibility.rst)
+- [系统要求](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst)
+- [Cilium 网络与 Istio](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst)
+- [Envoy 模式](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/proxy/envoy.rst)
+- [双向身份验证限制](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Gateway API 前提条件](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/installation.rst)
+- [EKS ENI 要求](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst)和 [AWS VPC CNI 链式模式](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/cni-chaining-aws-cni.rst)
+- [EKS 替代 CNI](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)和 [Hybrid Nodes CNI](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Cilium 1.20.1 ENI IPAM / IPv6 Beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst)

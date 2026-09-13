@@ -1,307 +1,188 @@
-# Tekton Pipelines
-> **支持版本**: Tekton Pipelines v0.62+, Tekton Triggers v0.28+
-> **最后更新**: June 2025
+# Tekton Pipelines：Kubernetes 原生 CI
 
-< [上一篇：FinOps 成本可视化平台](./13-finops-cost-platform.md) | [目录](./README.md) | [下一篇：无] >
+> **最后更新**：2026 年 9 月 12 日。Pipelines 1.16.0、Triggers 0.37.0、Chains 0.29.0、Dashboard 0.72.0、tkn 0.46.0。
+> **验证**：发布 CRD 模式、Task 依赖、本地脚本和模拟程序。未执行真实 EKS 安装、镜像构建/推送、KMS 签名、外部 webhook 或通知。
 
----
+< [上一篇：FinOps](./13-finops-cost-platform.md) | [目录](./README.md) | [下一篇：可用区运维](./15-zonal-operations-guide.md) >
 
 ## 概述
 
-Tekton 是一个 Kubernetes-native、开源的 CI/CD 系统构建框架。与那些把 Kubernetes 作为事后补充接入的传统 CI 平台不同，Tekton 将 pipelines 作为一等 Kubernetes resources 运行：每个 Task 都是一个 Pod，每个 Step 都是一个 container，每个 Pipeline 都由监听 Custom Resource Definitions (CRDs) 的自定义 controllers 编排。这使 Tekton 天然具备可移植性、可扩展性，并与 Kubernetes 生态系统深度集成。
+Tekton 通过 Kubernetes API 定义 Task、Pipeline 及其执行。操作员仍管理控制器、工作节点容量、存储、升级和访问。其他 CI 系统也可支持 Kubernetes 执行器、自动扩缩容和证明；应避免声称独家支持或零运维成本。
 
-Tekton 最初诞生于 Google，是 Knative 项目（具体是 `knative/build`）的一部分，随后于 2019 年捐赠给 Continuous Delivery Foundation (CDF)，与 Jenkins、Jenkins X 和 Spinnaker 并列。它已毕业成为成熟的 CDF 项目，并且通过与 Sigstore、in-toto 等项目的集成成为 CNCF 生态参与者。
+此示例为**获准仓库的受保护 main 分支**运行 Go 应用 CI：克隆 → 并行 vet/test → 发布候选镜像 → 基于摘要扫描。Chains 处理和密码学验证先于单独审核的 GitOps 更改。外部 fork PR 不得共享此 Pipeline 的 IRSA 角色、PVC 或签名权限。
 
-### 为什么选择 Tekton 而不是传统 CI/CD？
+## 1. 执行模型
 
-传统 CI/CD 系统（Jenkins、GitHub Actions、GitLab CI）作为集中式服务运行，并将工作分发到 runners。这种模型在 Kubernetes 环境中会带来若干挑战：
+| 组件 | 作用 |
+| --- | --- |
+| Task / Pipeline | 可复用工作和依赖定义 |
+| TaskRun / PipelineRun | 带参数和状态的执行 |
+| Step / Sidecar | 顺序工作 / 支撑服务，通常位于 TaskRun Pod 内 |
+| Workspace / Result | 卷绑定 / 小型输出值；不是独立 CRD |
 
-- **基础设施重复**：Jenkins controller 与 Kubernetes cluster 并行运行，需要单独考虑可用性、存储和扩缩容。
-- **Secret 蔓延**：CI 平台需要自己的凭证存储，重复了 Kubernetes 已经通过 Secrets、IRSA 和 Pod Identity 管理的内容。
-- **有限的 Kubernetes 感知能力**：外部 CI 系统缺少对 Kubernetes APIs 的原生访问，需要配置 kubectl 并分发 kubeconfig。
-- **Vendor lock-in**：Pipeline 定义与 CI 平台专有的 YAML 或 Groovy DSL 紧密耦合。
+Task 定义本身不是 Pod：执行 TaskRun 才创建 Pod。Result 支持字符串、数组和对象类型；大型报告使用制品存储。同一 Pod 的 Step 共享网络和卷，因此不能在彼此不可信代码之间构成强边界。
 
-Tekton 通过将 pipelines 定义为 Kubernetes CRDs 来消除这些问题。cluster 同时是执行环境和编排层。
+![定义、执行、Workspace/Result 字段及独立 Chains 处理](../.gitbook/assets/en-ops-14-tekton-pipelines-0.png)
 
-### Tekton 与其他 CI/CD 平台对比
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-0.html)
 
-| 功能 | Tekton | Jenkins | GitHub Actions | GitLab CI |
-|---------|--------|---------|----------------|-----------|
-| **运行时** | Kubernetes-native (CRDs) | 基于 JVM 的 controller | GitHub 托管 / self-hosted runners | GitLab 托管 / self-hosted runners |
-| **Pipeline 定义** | Kubernetes YAML | Groovy (Jenkinsfile) | GitHub YAML | GitLab YAML |
-| **可扩展性** | 随 Kubernetes 扩展（每个 TaskRun 一个 Pod） | 需要 agent 管理 | Runner autoscaling | Runner autoscaling |
-| **可移植性** | 任意 Kubernetes cluster | 任意带 JVM 的 server | GitHub 生态系统 | GitLab 生态系统 |
-| **供应链安全** | Tekton Chains (SLSA, Sigstore) | 需要插件 | Artifact attestations | Dependency scanning |
-| **事件处理** | Tekton Triggers (webhooks, CEL) | Webhook + 插件 | 原生 GitHub 事件 | 原生 GitLab 事件 |
-| **UI/Dashboard** | Tekton Dashboard（可选） | Jenkins UI（内置） | GitHub UI（内置） | GitLab UI（内置） |
-| **Secret 管理** | Kubernetes Secrets, IRSA, CSI driver | Jenkins Credentials | GitHub Secrets | GitLab CI Variables |
-| **学习曲线** | 中等（需要 Kubernetes 知识） | 高（Groovy、插件生态） | 低（熟悉的 YAML） | 低（熟悉的 YAML） |
-| **成本** | 免费（仅计算资源） | 免费（基础设施维护） | 按分钟计费（托管） | 按分钟计费（托管） |
+![API 服务器、控制器、webhook 和使用每次运行独立 Workspace 的 TaskRun Pod](../.gitbook/assets/en-ops-14-tekton-pipelines-1.png)
 
-### 学习目标
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-1.html)
 
-完成本指南后，你将能够：
+## 2. 安装和执行权限
 
-- 理解 Tekton 的架构，以及其 CRDs 如何映射到 CI/CD 概念
-- 在 Amazon EKS 上安装并配置 Tekton Pipelines、Triggers、Dashboard 和 Chains
-- 编写可复用的 Tasks，包含 Step 组合、script 执行、results 和 sidecars
-- 构建包含并行执行、条件逻辑和 finally blocks 的多阶段 Pipelines
-- 使用 Tekton Triggers 配置基于 webhook 的自动 pipeline 触发
-- 使用 Tekton Chains 实现供应链安全，包括 OCI image signing 和 SLSA provenance
-- 将 Tekton (CI) 与 ArgoCD (CD) 集成，形成完整的基于 GitOps 的 CI/CD 架构
-- 在生产环境中通过清理策略、监控和故障排查策略运行 Tekton
+### 2.1 版本和安装路径
 
----
+官方最低安装要求为 Kubernetes 1.28，而本章安全字段和模式验证针对 Kubernetes 1.36。上游最低要求不是当前受支持 EKS 版本建议。Dashboard 0.72.0 明确支持 Pipelines 1.15 LTS/1.16 和 Triggers 0.37 LTS。
 
-## 1. Tekton 架构
-
-Tekton 使用一组 Custom Resource Definitions (CRDs) 扩展 Kubernetes API，用于建模 CI/CD 概念。Tekton controller 监听这些 CRDs，并将期望状态调谐为 Pods 和 containers。
-
-### 1.1 核心 CRDs
-
-```mermaid
-graph TB
-    subgraph "Tekton CRD Hierarchy"
-        Pipeline["Pipeline<br/>(Defines ordered Tasks)"]
-        PipelineRun["PipelineRun<br/>(Executes a Pipeline)"]
-        Task["Task<br/>(Defines Steps)"]
-        TaskRun["TaskRun<br/>(Executes a Task)"]
-        Step["Step<br/>(Single container action)"]
-        Workspace["Workspace<br/>(Shared volume)"]
-        Result["Result<br/>(Output value)"]
-    end
-
-    PipelineRun -->|"creates"| TaskRun
-    PipelineRun -->|"references"| Pipeline
-    Pipeline -->|"contains"| Task
-    TaskRun -->|"references"| Task
-    Task -->|"contains"| Step
-    Task -->|"declares"| Workspace
-    Task -->|"produces"| Result
-    Pipeline -->|"declares"| Workspace
-
-    subgraph "Kubernetes Resources"
-        Pod["Pod"]
-        Container["Container"]
-        PVC["PersistentVolumeClaim"]
-    end
-
-    TaskRun -->|"creates"| Pod
-    Step -->|"maps to"| Container
-    Workspace -->|"backed by"| PVC
-```
-
-**Task**：一个可复用、可参数化的工作单元。每个 Task 定义一个或多个 Steps，这些 Steps 在单个 Pod 内的 containers 中按顺序执行。Tasks 还会声明 Workspaces（用于共享数据）和 Results（用于输出值）。
-
-**TaskRun**：使用具体参数值和 workspace bindings 实例化的 Task。创建 TaskRun 会使 controller 启动一个 Pod 来执行该 Task 的 Steps。
-
-**Pipeline**：Tasks 的有序集合。Pipelines 定义执行顺序（顺序、并行或基于 DAG）、Tasks 之间的参数传递、条件执行（when expressions）以及用于清理的 finally blocks。
-
-**PipelineRun**：Pipeline 的实例化。创建 PipelineRun 会使 controller 为 Pipeline 中的每个 Task 创建 TaskRuns。
-
-**Workspace**：在 Steps（Task 内）之间或 Tasks（Pipeline 内）之间共享数据的机制。Workspaces 可以由 PersistentVolumeClaims、ConfigMaps、Secrets 或 emptyDir volumes 支撑。
-
-**Result**：由 Task 生成、可供 Pipeline 中下游 Tasks 消费的字符串值。Results 会写入 `/tekton/results/<name>`，并存储在 TaskRun status 中。
-
-### 1.2 Controller 架构
-
-```mermaid
-graph LR
-    subgraph "Tekton Components"
-        Controller["tekton-pipelines-controller<br/>(Reconciliation loop)"]
-        Webhook["tekton-pipelines-webhook<br/>(Admission + validation)"]
-        Chains["tekton-chains-controller<br/>(Signing + attestation)"]
-        Triggers["tekton-triggers-controller<br/>(Event processing)"]
-        Dashboard["tekton-dashboard<br/>(Web UI)"]
-    end
-
-    subgraph "Kubernetes API Server"
-        API["kube-apiserver"]
-    end
-
-    subgraph "Storage"
-        ETCD["etcd<br/>(CRD state)"]
-        OCI["OCI Registry<br/>(Signed images)"]
-        S3["S3 / Cloud Storage<br/>(Logs, artifacts)"]
-    end
-
-    API --> ETCD
-    Controller -->|"watches CRDs"| API
-    Webhook -->|"validates CRDs"| API
-    Chains -->|"watches TaskRuns"| API
-    Chains -->|"signs + attests"| OCI
-    Triggers -->|"creates PipelineRuns"| API
-    Dashboard -->|"reads CRDs"| API
-
-    User["User / Webhook"] -->|"POST event"| Triggers
-    User -->|"kubectl apply"| API
-```
-
-**tekton-pipelines-controller**：核心 reconciliation controller。它监听新的 PipelineRun 和 TaskRun resources，创建用于执行的 Pods，监控 container 完成情况，传播 results，并更新 status。
-
-**tekton-pipelines-webhook**：一个 admission webhook，在 Tekton CRDs 持久化之前对其进行验证和变更。它强制执行 schema 正确性并应用默认值。
-
-**tekton-chains-controller**：一个独立 controller，监听 TaskRun 完成事件，自动签名 OCI images，生成 SLSA provenance attestations，并将它们存储到 OCI registries 或 transparency logs 中。
-
-**tekton-triggers-controller**：处理传入的 webhook events（来自 GitHub、GitLab 等），评估 interceptors 和 CEL expressions，并根据 TriggerTemplate 定义创建 PipelineRun resources。
-
-**tekton-dashboard**：一个可选的 Web UI，用于查看 PipelineRuns、TaskRuns、logs 和 cluster resources。
-
-### 1.3 Tekton Chains 与供应链安全
-
-Tekton Chains 是专用于软件供应链安全的组件。当 TaskRun 完成时，Chains 会自动：
-
-1. **签名 OCI images**：使用 Cosign (Sigstore) 对 TaskRun 生成的 OCI images 进行签名
-2. **生成 SLSA provenance**：记录构建了什么、来自什么 source、使用哪个 builder
-3. **存储 attestations**：将 attestations 作为 image signatures 存储在 OCI registry 中，或存储在 transparency logs (Rekor) 中
-4. **生成 in-toto attestation**：生成将 source materials 与 build outputs 关联起来的元数据
-
-这提供了防篡改记录，下游消费者（admission controllers、policy engines）可以在部署 images 之前进行验证。
-
----
-
-## 2. EKS 安装与配置
-
-### 2.1 前提条件
-
-安装 Tekton 之前，请确保你的 EKS cluster 满足以下要求：
+这是固定版本的手动安装示例。官方指南也推荐 Tekton Operator 用于生产生命周期管理。混合手动 apply 和 Operator 管理资源前，应选择所有者。这些命令更改真实集群；应审核所有权，不要盲目强制解决冲突。
 
 ```bash
-# Verify cluster version (1.28+)
-kubectl version --short
-
-# Verify cluster has sufficient capacity
-# Tekton controllers need ~500m CPU and ~512Mi memory total
-kubectl top nodes
-
-# Ensure the cluster has a default StorageClass for Workspaces
+kubectl version -o yaml
 kubectl get storageclass
+
+curl --fail --location \
+  https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.16.0/release.yaml \
+  -o pipelines-release.yaml
+kubectl apply --server-side --field-manager=tekton-install -f pipelines-release.yaml
+kubectl wait --for=condition=Established --timeout=120s \
+  crd/tasks.tekton.dev crd/taskruns.tekton.dev \
+  crd/pipelines.tekton.dev crd/pipelineruns.tekton.dev
+kubectl -n tekton-pipelines wait deployment --all \
+  --for=condition=Available --timeout=300s
+
+kubectl apply --server-side -f \
+  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/release.yaml
+kubectl apply --server-side -f \
+  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/interceptors.yaml
+kubectl apply --server-side -f \
+  https://infra.tekton.dev/tekton-releases/chains/previous/v0.29.0/release.yaml
+kubectl apply --server-side -f \
+  https://infra.tekton.dev/tekton-releases/dashboard/previous/v0.72.0/release.yaml
+kubectl -n tekton-pipelines port-forward service/tekton-dashboard 9097:9097
 ```
 
-### 2.2 Tekton Pipelines 安装
+`release.yaml` 安装只读 Dashboard；`release-full.yaml` 包含写入功能。只读模式不验证用户身份，也不会自动执行每命名空间的用户权限。对运维暴露前，验证身份验证代理/OIDC 和访问模型。内部 ALB 不是身份验证。Cognito 集成需要实际 HTTPS 监听器、Cognito/OIDC 端点和 Secret。
 
-```bash
-# Install Tekton Pipelines (core)
-kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.62.2/release.yaml
+`https://tekton.dev/helm-charts` 不是本示例可用的官方 chart 仓库。不要安装此前不存在的 chart 和 values。
 
-# Verify installation
-kubectl get pods -n tekton-pipelines --watch
-```
+### 2.2 当前配置含义
 
-预期输出：
+| 设置 | 当前含义 |
+| --- | --- |
+| `feature-flags.coschedule: workspaces` | 共同调度共享 PVC Workspace 的 TaskRun；此 RWO 示例应保留 |
+| `disable-affinity-assistant` | v0.68 后移除的旧标志 |
+| `set-security-context: true` | 1.16 中 Tekton 注入容器的默认值；用户 Step 需要自己的兼容上下文 |
+| `results-from: termination-message` | 默认路径，受 Kubernetes 终止消息限制 |
+| `max-result-size` | 适用于 `sidecar-logs`；仅更改它不会扩大默认终止消息 |
+| 默认超时 | 在 `config-defaults` 中管理；此示例显式设置 PipelineRun 超时 |
 
-```
-NAME                                           READY   STATUS    RESTARTS   AGE
-tekton-pipelines-controller-7f6d5b8bc4-xxxxx   1/1     Running   0          30s
-tekton-pipelines-webhook-6c9b5d7d8f-xxxxx      1/1     Running   0          30s
-```
+`running-in-environment-with-injected-sidecars` 不是 Workspace 隔离，`keep-pod-on-cancel` 不是 PipelineRun 保留 TTL。不要用小片段替换完整 ConfigMap。
 
-配置 Tekton Pipelines feature flags：
+### 2.3 分离 ServiceAccount 和 IAM 角色
+
+控制器使用 `tekton-pipelines` / `tekton-chains`；构建使用 `tekton-builds`。简单 Task/Pipeline 名称引用在同一命名空间解析。共享命名空间中的 Task 不能仅按名称引用。
+
+先创建 IAM 角色。每个 IRSA 信任策略必须约束现有集群 OIDC 提供程序、`aud=sts.amazonaws.com` 及确切 `sub=system:serviceaccount:tekton-builds:<SA name>`。预先创建 ECR 仓库；构建不需要 `CreateRepository`。尽管名为 `ci-readonly`，本示例中它没有 Kubernetes API Role：它是默认无特权执行账户。
+
+**`service-accounts.yaml`**
 
 ```yaml
-# tekton-pipelines-feature-flags.yaml
 apiVersion: v1
-kind: ConfigMap
+kind: Namespace
 metadata:
-  name: feature-flags
-  namespace: tekton-pipelines
-data:
-  # Enable Step-level resource requirements
-  disable-affinity-assistant: "true"
-  # Enable alpha API features (required for some Chains features)
-  enable-api-fields: "beta"
-  # Set result extraction method
-  results-from: "termination-message"
-  # Enable Workspace isolation
-  running-in-environment-with-injected-sidecars: "true"
-  # Set default timeout (1 hour)
-  default-timeout-minutes: "60"
-  # Enable larger results (4096 bytes max by default)
-  max-result-size: "4096"
-  # Enable Kubernetes events for PipelineRuns
-  send-cloudevents-for-runs: "false"
-```
-
-```bash
-kubectl apply -f tekton-pipelines-feature-flags.yaml
-```
-
-### 2.3 Tekton Triggers 安装
-
-```bash
-# Install Tekton Triggers
-kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/previous/v0.28.0/release.yaml
-
-# Install Tekton Triggers Interceptors (required for GitHub/GitLab webhooks)
-kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/previous/v0.28.0/interceptors.yaml
-
-# Verify installation
-kubectl get pods -n tekton-pipelines -l app.kubernetes.io/part-of=tekton-triggers
-```
-
-### 2.4 Tekton Dashboard 安装
-
-```bash
-# Install Tekton Dashboard (read-only mode for production)
-kubectl apply --filename https://storage.googleapis.com/tekton-releases/dashboard/previous/v0.46.0/release-full.yaml
-
-# Verify installation
-kubectl get pods -n tekton-pipelines -l app.kubernetes.io/part-of=tekton-dashboard
-```
-
-通过 internal ALB Ingress 暴露 Dashboard：
-
-```yaml
-# tekton-dashboard-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+  name: tekton-builds
+---
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: tekton-dashboard
-  namespace: tekton-pipelines
+  name: ci-readonly
+  namespace: tekton-builds
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ci-image-push
+  namespace: tekton-builds
   annotations:
-    alb.ingress.kubernetes.io/scheme: internal
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/abc-123
-    alb.ingress.kubernetes.io/group.name: internal-services
-spec:
-  ingressClassName: alb
-  rules:
-    - host: tekton.internal.mycompany.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: tekton-dashboard
-                port:
-                  number: 9097
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/tekton-candidate-push
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ci-image-read
+  namespace: tekton-builds
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/tekton-candidate-read
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ci-triggers
+  namespace: tekton-builds
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ci-triggers
+  namespace: tekton-builds
+rules:
+  - apiGroups: [triggers.tekton.dev]
+    resources: [eventlisteners, triggers, triggerbindings, triggertemplates, interceptors]
+    verbs: [get, list, watch]
+  - apiGroups: [tekton.dev]
+    resources: [pipelineruns]
+    verbs: [create]
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [secrets]
+    resourceNames: [github-webhook]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ci-triggers
+  namespace: tekton-builds
+subjects:
+  - kind: ServiceAccount
+    name: ci-triggers
+    namespace: tekton-builds
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ci-triggers
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ci-triggers-interceptors
+rules:
+  - apiGroups: [triggers.tekton.dev]
+    resources: [clusterinterceptors, clustertriggerbindings]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ci-triggers-interceptors
+subjects:
+  - kind: ServiceAccount
+    name: ci-triggers
+    namespace: tekton-builds
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ci-triggers-interceptors
 ```
 
-### 2.5 Tekton Chains 安装
-
-```bash
-# Install Tekton Chains
-kubectl apply --filename https://storage.googleapis.com/tekton-releases/chains/previous/v0.22.1/release.yaml
-
-# Verify installation
-kubectl get pods -n tekton-chains
-```
-
-### 2.6 ECR 和 S3 的 IRSA 配置
-
-向 ECR 推送 images 或向 S3 上传 artifacts 的 Tekton Tasks 需要 IAM 权限。使用 IAM Roles for Service Accounts (IRSA) 授予最小权限访问。
-
-```bash
-# Create OIDC provider (skip if already configured)
-eksctl utils associate-iam-oidc-provider \
-  --cluster my-eks-cluster \
-  --region us-east-1 \
-  --approve
-```
-
-**ECR Push IAM Policy：**
+**`ecr-push-policy.json`**
 
 ```json
 {
@@ -309,10 +190,11 @@ eksctl utils associate-iam-oidc-provider \
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken"
-      ],
-      "Resource": "*"
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {"aws:RequestedRegion": "ap-northeast-2"}
+      }
     },
     {
       "Effect": "Allow",
@@ -320,21 +202,18 @@ eksctl utils associate-iam-oidc-provider \
         "ecr:BatchCheckLayerAvailability",
         "ecr:GetDownloadUrlForLayer",
         "ecr:BatchGetImage",
-        "ecr:PutImage",
         "ecr:InitiateLayerUpload",
         "ecr:UploadLayerPart",
         "ecr:CompleteLayerUpload",
-        "ecr:DescribeRepositories",
-        "ecr:CreateRepository",
-        "ecr:TagResource"
+        "ecr:PutImage"
       ],
-      "Resource": "arn:aws:ecr:us-east-1:123456789012:repository/*"
+      "Resource": "arn:aws:ecr:ap-northeast-2:123456789012:repository/myapp-candidates"
     }
   ]
 }
 ```
 
-**S3 Artifact Upload IAM Policy：**
+**`ecr-read-policy.json`**
 
 ```json
 {
@@ -342,2090 +221,1085 @@ eksctl utils associate-iam-oidc-provider \
   "Statement": [
     {
       "Effect": "Allow",
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {"aws:RequestedRegion": "ap-northeast-2"}
+      }
+    },
+    {
+      "Effect": "Allow",
       "Action": [
-        "s3:PutObject",
-        "s3:GetObject",
-        "s3:ListBucket"
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
       ],
-      "Resource": [
-        "arn:aws:s3:::my-tekton-artifacts",
-        "arn:aws:s3:::my-tekton-artifacts/*"
-      ]
+      "Resource": "arn:aws:ecr:ap-northeast-2:123456789012:repository/myapp-candidates"
     }
   ]
 }
 ```
 
-创建带 IRSA annotation 的 ServiceAccount：
+将推送策略附加到 `tekton-candidate-push`，读取策略附加到 `tekton-candidate-read`。替换所有位置的账户、区域和仓库。`GetAuthorizationToken` 不支持仓库级资源范围，因此将其单列并按请求区域约束。
 
-```bash
-# Create IAM role and ServiceAccount for Tekton builds
-eksctl create iamserviceaccount \
-  --cluster my-eks-cluster \
-  --namespace tekton-builds \
-  --name tekton-build-sa \
-  --attach-policy-arn arn:aws:iam::123456789012:policy/TektonECRPush \
-  --attach-policy-arn arn:aws:iam::123456789012:policy/TektonS3Artifacts \
-  --approve \
-  --override-existing-serviceaccounts
-```
+IRSA 验证 Pod 内的 AWS SDK/CLI 调用。kubelet 拉取 ECR 镜像通过独立路径使用节点角色、Fargate 执行角色或 imagePullSecrets。仅 Task IRSA 注解不能修复 ImagePullBackOff。
 
-验证 annotation：
+## 3. 完整 Task 定义
 
-```bash
-kubectl get sa tekton-build-sa -n tekton-builds -o yaml
-# Should show: eks.amazonaws.com/role-arn annotation
-```
+这六个 Task 构成一致示例。源仓库必须包含 Go 模块、测试和 Dockerfile。将 checkout 固定的 `myorg/myapp` URL 替换为获准仓库，并匹配 Trigger 允许列表。不要接受 webhook 输入中的任意 Git URL 或 shell 命令。
 
----
+Tekton 替换是文本替换。通过环境变量或参数传递 params，不要插入脚本正文。验证完整 40 字符提交。ECR 身份验证文件使用 Task 本地 `emptyDir`；不要写入只读 Secret 卷，也不要假定另一 Step 镜像中的工具在本 Step 存在。
 
-## 3. Task 编写
+Rootless BuildKit 需要经过验证的专用构建环境，具备用户命名空间、挂载和适当 seccomp/AppArmor 配置。`Unconfined` 和 `--oci-worker-no-process-sandbox` 是明确安全权衡，会被受限命名空间策略拒绝。它们不是普遍安全的默认值。外部 PR 使用独立环境。
 
-Tasks 是 Tekton 中的基础构建块。设计良好的 Task 可复用、可参数化，并产生有意义的 results。
-
-### 3.1 Step 组合
-
-Task 中的每个 Step 都作为同一 Pod 内的一个 container 运行。Steps 按顺序执行，共享同一个 network namespace 和 Workspace volumes。
+**`tasks.yaml`**
 
 ```yaml
-# task-go-build.yaml
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: go-build
-  labels:
-    app.kubernetes.io/version: "1.0"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.62.0"
-    tekton.dev/categories: Build
-    tekton.dev/tags: go, build
-    tekton.dev/displayName: "Go Build and Test"
+  name: checkout
+  namespace: tekton-builds
 spec:
-  description: >
-    Builds and tests a Go application, producing a binary artifact.
   params:
-    - name: package
-      type: string
-      description: "Go package path to build"
-      default: "./cmd/server"
-    - name: go-version
-      type: string
-      description: "Go version to use"
-      default: "1.22"
-    - name: goos
-      type: string
-      description: "Target operating system"
-      default: "linux"
-    - name: goarch
-      type: string
-      description: "Target architecture"
-      default: "amd64"
-    - name: flags
-      type: string
-      description: "Go build flags"
-      default: "-v"
-    - name: ldflags
-      type: string
-      description: "Go linker flags"
-      default: ""
+  - name: revision
+    type: string
   workspaces:
-    - name: source
-      description: "Workspace containing Go source code"
-    - name: go-cache
-      description: "Go module and build cache"
-      optional: true
+  - name: source
   results:
-    - name: binary-path
-      description: "Path to the built binary"
-    - name: test-passed
-      description: "Whether tests passed (true/false)"
-    - name: binary-sha256
-      description: "SHA256 hash of the built binary"
+  - name: CHAINS-GIT_URL
+    type: string
+  - name: CHAINS-GIT_COMMIT
+    type: string
   steps:
-    - name: unit-test
-      image: golang:$(params.go-version)
-      workingDir: $(workspaces.source.path)
-      env:
-        - name: GOMODCACHE
-          value: "$(workspaces.go-cache.path)/mod"
-        - name: GOCACHE
-          value: "$(workspaces.go-cache.path)/build"
-      script: |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        echo "Running unit tests..."
-        go test -race -coverprofile=coverage.out ./...
-        COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
-        echo "Test coverage: ${COVERAGE}"
-        printf "true" > $(results.test-passed.path)
-
-    - name: build
-      image: golang:$(params.go-version)
-      workingDir: $(workspaces.source.path)
-      env:
-        - name: GOOS
-          value: "$(params.goos)"
-        - name: GOARCH
-          value: "$(params.goarch)"
-        - name: CGO_ENABLED
-          value: "0"
-        - name: GOMODCACHE
-          value: "$(workspaces.go-cache.path)/mod"
-        - name: GOCACHE
-          value: "$(workspaces.go-cache.path)/build"
-      script: |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        OUTPUT_PATH="$(workspaces.source.path)/output/app"
-        mkdir -p "$(dirname ${OUTPUT_PATH})"
-
-        echo "Building $(params.package)..."
-        go build $(params.flags) \
-          -ldflags "$(params.ldflags)" \
-          -o "${OUTPUT_PATH}" \
-          "$(params.package)"
-
-        HASH=$(sha256sum "${OUTPUT_PATH}" | awk '{print $1}')
-        echo "Binary built: ${OUTPUT_PATH} (SHA256: ${HASH})"
-
-        printf "%s" "${OUTPUT_PATH}" > $(results.binary-path.path)
-        printf "%s" "${HASH}" > $(results.binary-sha256.path)
-```
-
-### 3.2 Script 执行
-
-Steps 可以运行 inline scripts 来处理复杂逻辑。`script` 字段接受 container image 中可用的任何解释器。
-
-```yaml
-# task-security-scan.yaml
-apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: trivy-image-scan
-spec:
-  description: "Scans a container image for vulnerabilities using Trivy"
-  params:
-    - name: image-url
-      type: string
-      description: "Full image URL including tag or digest"
-    - name: severity-threshold
-      type: string
-      description: "Minimum severity to report (CRITICAL, HIGH, MEDIUM, LOW)"
-      default: "HIGH,CRITICAL"
-    - name: exit-code
-      type: string
-      description: "Exit code when vulnerabilities found (0=warn, 1=fail)"
-      default: "1"
-  workspaces:
-    - name: trivy-cache
-      description: "Cache for Trivy vulnerability database"
-      optional: true
-  results:
-    - name: vulnerability-count
-      description: "Number of vulnerabilities found"
-    - name: scan-result
-      description: "PASS or FAIL"
-  steps:
-    - name: scan
-      image: aquasec/trivy:0.53.0
-      env:
-        - name: TRIVY_CACHE_DIR
-          value: "$(workspaces.trivy-cache.path)"
-      script: |
-        #!/usr/bin/env sh
-        set -uo pipefail
-
-        echo "Scanning image: $(params.image-url)"
-        echo "Severity threshold: $(params.severity-threshold)"
-
-        trivy image \
-          --severity "$(params.severity-threshold)" \
-          --format json \
-          --output /tmp/trivy-report.json \
-          --exit-code 0 \
-          "$(params.image-url)"
-
-        VULN_COUNT=$(cat /tmp/trivy-report.json | \
-          grep -o '"VulnerabilityID"' | wc -l || echo "0")
-
-        printf "%s" "${VULN_COUNT}" > $(results.vulnerability-count.path)
-
-        if [ "${VULN_COUNT}" -gt "0" ]; then
-          echo "Found ${VULN_COUNT} vulnerabilities"
-          trivy image \
-            --severity "$(params.severity-threshold)" \
-            --format table \
-            "$(params.image-url)"
-          printf "FAIL" > $(results.scan-result.path)
-          exit $(params.exit-code)
-        else
-          echo "No vulnerabilities found"
-          printf "PASS" > $(results.scan-result.path)
-        fi
-```
-
-### 3.3 Tasks 之间传递 Results
-
-一个 Task 的 results 可以通过 `$(tasks.<taskName>.results.<resultName>)` 语法被 Pipeline 中的下游 Tasks 引用。Results 默认限制为 4096 bytes。
-
-```yaml
-# task-generate-tag.yaml
-apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: generate-image-tag
-spec:
-  description: "Generates a deterministic image tag from git commit and timestamp"
-  params:
-    - name: image-base
-      type: string
-      description: "Base image URL (registry/repository)"
-  workspaces:
-    - name: source
-      description: "Workspace containing git repository"
-  results:
-    - name: image-tag
-      description: "Generated image tag"
-    - name: image-url
-      description: "Full image URL with tag"
-    - name: short-sha
-      description: "Short git commit SHA"
-  steps:
-    - name: generate
-      image: alpine/git:2.43.0
-      workingDir: $(workspaces.source.path)
-      script: |
-        #!/usr/bin/env sh
-        set -euo pipefail
-        SHORT_SHA=$(git rev-parse --short HEAD)
-        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-        TAG="${SHORT_SHA}-${TIMESTAMP}"
-
-        printf "%s" "${TAG}" > $(results.image-tag.path)
-        printf "%s" "$(params.image-base):${TAG}" > $(results.image-url.path)
-        printf "%s" "${SHORT_SHA}" > $(results.short-sha.path)
-
-        echo "Generated tag: ${TAG}"
-        echo "Full image URL: $(params.image-base):${TAG}"
-```
-
-### 3.4 Sidecars
-
-Sidecars 是与 Steps 一起运行的长生命周期 containers，适用于 Docker daemon、集成测试数据库或缓存等服务。
-
-```yaml
-# task-integration-test.yaml
-apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: integration-test-with-postgres
-spec:
-  description: "Runs integration tests against a PostgreSQL sidecar"
-  params:
-    - name: go-version
-      type: string
-      default: "1.22"
-    - name: postgres-version
-      type: string
-      default: "16"
-    - name: test-packages
-      type: string
-      default: "./internal/integration/..."
-  workspaces:
-    - name: source
-  sidecars:
-    - name: postgres
-      image: postgres:$(params.postgres-version)
-      env:
-        - name: POSTGRES_DB
-          value: "testdb"
-        - name: POSTGRES_USER
-          value: "testuser"
-        - name: POSTGRES_PASSWORD
-          value: "testpassword"
-      ports:
-        - containerPort: 5432
-      readinessProbe:
-        exec:
-          command: ["pg_isready", "-U", "testuser", "-d", "testdb"]
-        initialDelaySeconds: 5
-        periodSeconds: 2
-  steps:
-    - name: wait-for-postgres
-      image: postgres:$(params.postgres-version)
-      script: |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        echo "Waiting for PostgreSQL to become ready..."
-        for i in $(seq 1 30); do
-          if pg_isready -h localhost -U testuser -d testdb; then
-            echo "PostgreSQL is ready"
-            exit 0
-          fi
-          sleep 2
-        done
-        echo "PostgreSQL failed to start"
+  - name: checkout
+    image: golang:1.27.1
+    script: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      if [[ ! "$REVISION" =~ ^[0-9a-f]{40}$ ]]; then
+        echo "Expected a full commit SHA" >&2
         exit 1
-
-    - name: run-tests
-      image: golang:$(params.go-version)
-      workingDir: $(workspaces.source.path)
-      env:
-        - name: DATABASE_URL
-          value: "postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable"
-      script: |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        echo "Running integration tests..."
-        go test -v -count=1 -timeout 10m $(params.test-packages)
-        echo "Integration tests passed"
-```
-
-### 3.5 来自 Tekton Hub 的可复用 Tasks
-
-[Tekton Hub](https://hub.tekton.dev) 提供了由社区维护的可复用 Tasks catalog。可以将它们直接安装到你的 cluster 中：
-
-```bash
-# Install the git-clone Task (official catalog)
-kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/git-clone/0.9/git-clone.yaml
-
-# Install the kaniko Task (for building images without Docker daemon)
-kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/kaniko/0.7/kaniko.yaml
-
-# Install the kubernetes-actions Task (for kubectl operations)
-kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/kubernetes-actions/0.2/kubernetes-actions.yaml
-```
-
-验证已安装的 Tasks：
-
-```bash
-kubectl get tasks -n tekton-builds
-```
-
-### 3.6 完整 Build-Push Task（Kaniko + ECR）
-
-此 Task 使用 Kaniko（无需 Docker daemon）构建 container image，并将其推送到 Amazon ECR：
-
-```yaml
-# task-kaniko-ecr-build.yaml
-apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: kaniko-ecr-build
-spec:
-  description: >
-    Builds a container image with Kaniko and pushes to Amazon ECR.
-    Requires an IRSA-annotated ServiceAccount with ECR push permissions.
-  params:
-    - name: image
-      type: string
-      description: "Full ECR image URL (without tag)"
-    - name: tag
-      type: string
-      description: "Image tag"
-      default: "latest"
-    - name: dockerfile
-      type: string
-      description: "Path to Dockerfile relative to workspace root"
-      default: "Dockerfile"
-    - name: context
-      type: string
-      description: "Build context directory relative to workspace root"
-      default: "."
-    - name: build-args
-      type: array
-      description: "List of build arguments"
-      default: []
-    - name: cache-repo
-      type: string
-      description: "ECR repository for layer caching (empty to disable)"
-      default: ""
-  workspaces:
-    - name: source
-      description: "Workspace containing Dockerfile and source code"
-    - name: dockerconfig
-      description: "Docker config.json for registry authentication"
-      optional: true
-  results:
-    - name: image-url
-      description: "Full image URL with tag"
-    - name: image-digest
-      description: "Image digest (sha256)"
-  steps:
-    - name: ecr-login
-      image: amazon/aws-cli:2.17.0
-      script: |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        REGION=$(echo "$(params.image)" | cut -d'.' -f4)
-        ACCOUNT=$(echo "$(params.image)" | cut -d'.' -f1)
-
-        echo "Logging into ECR: ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com"
-        aws ecr get-login-password --region "${REGION}" | \
-          docker-credential-ecr-login login \
-            --username AWS \
-            --password-stdin \
-            "${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com"
-
-        mkdir -p /kaniko/.docker
-        aws ecr get-login-password --region "${REGION}" | \
-          python3 -c "
-        import sys, json, base64
-        password = sys.stdin.read().strip()
-        auth = base64.b64encode(f'AWS:{password}'.encode()).decode()
-        registry = '${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com'
-        config = {'auths': {registry: {'auth': auth}}}
-        json.dump(config, open('/kaniko/.docker/config.json', 'w'))
-        "
-      volumeMounts:
-        - name: kaniko-config
-          mountPath: /kaniko/.docker
-
-    - name: build-and-push
-      image: gcr.io/kaniko-project/executor:v1.23.2
-      args:
-        - --dockerfile=$(workspaces.source.path)/$(params.dockerfile)
-        - --context=$(workspaces.source.path)/$(params.context)
-        - --destination=$(params.image):$(params.tag)
-        - --digest-file=$(results.image-digest.path)
-        - --snapshotMode=redo
-        - --compressed-caching=false
-        - --use-new-run
-      volumeMounts:
-        - name: kaniko-config
-          mountPath: /kaniko/.docker
-  volumes:
-    - name: kaniko-config
-      emptyDir: {}
+      fi
+      cd "$SOURCE"
+      git init .
+      git config credential.helper ''
+      git remote add origin "$REPOSITORY"
+      git -c protocol.file.allow=never fetch --depth=1 origin "$REVISION"
+      git -c advice.detachedHead=false checkout --detach FETCH_HEAD
+      test "$(git rev-parse HEAD)" = "$REVISION"
+      printf '%s' "$REPOSITORY" > "$GIT_URL_RESULT"
+      printf '%s' "$REVISION" > "$GIT_COMMIT_RESULT"
+    env:
+    - name: REVISION
+      value: $(params.revision)
+    - name: REPOSITORY
+      value: https://github.com/myorg/myapp.git
+    - name: SOURCE
+      value: $(workspaces.source.path)
+    - name: GIT_URL_RESULT
+      value: $(results.CHAINS-GIT_URL.path)
+    - name: GIT_COMMIT_RESULT
+      value: $(results.CHAINS-GIT_COMMIT.path)
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
   stepTemplate:
     securityContext:
-      runAsUser: 0
-```
-
+      runAsUser: 1000
+      runAsGroup: 1000
 ---
-
-## 4. Pipeline 构建
-
-Pipelines 将多个 Tasks 编排为有向无环图 (DAG)。Tasks 可以根据显式依赖并行、条件性或顺序运行。
-
-### 4.1 Task 排序与并行执行
-
-```mermaid
-graph LR
-    Clone["git-clone"] --> Lint["lint"]
-    Clone --> Test["unit-test"]
-    Lint --> Build["build-image"]
-    Test --> Build
-    Build --> Scan["security-scan"]
-    Scan --> Deploy["deploy"]
-
-    style Clone fill:#e1f5fe
-    style Lint fill:#fff3e0
-    style Test fill:#fff3e0
-    style Build fill:#e8f5e9
-    style Scan fill:#fce4ec
-    style Deploy fill:#f3e5f5
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-vet
+  namespace: tekton-builds
+spec:
+  params: []
+  workspaces:
+  - name: source
+  results: []
+  steps:
+  - name: vet
+    image: golang:1.27.1
+    script: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd "$SOURCE"
+      go vet ./...
+    env:
+    - name: SOURCE
+      value: $(workspaces.source.path)
+    - name: GOCACHE
+      value: /tmp/go-build
+    - name: GOMODCACHE
+      value: /tmp/go-mod
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+  stepTemplate:
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-test
+  namespace: tekton-builds
+spec:
+  params: []
+  workspaces:
+  - name: source
+  results: []
+  steps:
+  - name: test
+    image: golang:1.27.1
+    script: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd "$SOURCE"
+      go test -count=1 -race -coverprofile=/tmp/coverage.out ./...
+      go tool cover -func=/tmp/coverage.out
+    env:
+    - name: SOURCE
+      value: $(workspaces.source.path)
+    - name: GOCACHE
+      value: /tmp/go-build
+    - name: GOMODCACHE
+      value: /tmp/go-mod
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+  stepTemplate:
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: build-image
+  namespace: tekton-builds
+spec:
+  params:
+  - name: image
+    type: string
+  - name: revision
+    type: string
+  - name: region
+    type: string
+  workspaces:
+  - name: source
+  results:
+  - name: IMAGE_URL
+    type: string
+  - name: IMAGE_DIGEST
+    type: string
+  steps:
+  - name: ecr-token
+    image: public.ecr.aws/aws-cli/aws-cli:2.36.44
+    script: |
+      #!/bin/bash
+      set -euo pipefail
+      umask 077
+      aws ecr get-authorization-token --region "$AWS_REGION" \
+        --query 'authorizationData[0].authorizationToken' --output text > /auth/token
+    env:
+    - name: AWS_REGION
+      value: $(params.region)
+    - name: AWS_DEFAULT_REGION
+      value: $(params.region)
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+    volumeMounts:
+    - name: auth
+      mountPath: /auth
+  - name: docker-config
+    image: python:3.12.13-slim
+    script: |
+      #!/usr/bin/env python3
+      import base64, json, os, re
+      from pathlib import Path
+      image, region = os.environ["IMAGE"], os.environ["REGION"]
+      match = re.fullmatch(r"([0-9]{12})\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com/([a-z0-9][a-z0-9._/-]*)", image)
+      if not match or match.group(2) != region or ".." in match.group(3):
+          raise SystemExit("Use a private ECR repository in the configured region")
+      token = Path("/auth/token").read_text().strip()
+      decoded = base64.b64decode(token, validate=True)
+      if not decoded.startswith(b"AWS:") or len(decoded) <= 4:
+          raise SystemExit("Invalid ECR authorization token")
+      Path("/auth/config.json").write_text(json.dumps({"auths": {image.split("/")[0]: {"auth": token}}}))
+      Path("/auth/config.json").chmod(0o600)
+      Path("/auth/token").unlink()
+    env:
+    - name: IMAGE
+      value: $(params.image)
+    - name: REGION
+      value: $(params.region)
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+    volumeMounts:
+    - name: auth
+      mountPath: /auth
+  - name: build-and-push
+    image: moby/buildkit:v0.33.0-rootless
+    script: |
+      #!/bin/sh
+      set -eu
+      case "$REVISION" in *[!0-9a-f]*|"") echo "Invalid commit tag" >&2; exit 1;; esac
+      test "${#REVISION}" -eq 40
+      buildctl-daemonless.sh build \
+        --frontend dockerfile.v0 \
+        --local "context=$SOURCE" --local "dockerfile=$SOURCE" \
+        --output "type=image,name=$IMAGE:$REVISION,push=true" \
+        --metadata-file /build-result/metadata.json
+    env:
+    - name: SOURCE
+      value: $(workspaces.source.path)
+    - name: IMAGE
+      value: $(params.image)
+    - name: REVISION
+      value: $(params.revision)
+    - name: DOCKER_CONFIG
+      value: /auth
+    - name: BUILDKITD_FLAGS
+      value: --oci-worker-no-process-sandbox
+    computeResources:
+      requests:
+        cpu: '1'
+        memory: 1Gi
+      limits:
+        memory: 4Gi
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      seccompProfile:
+        type: Unconfined
+      appArmorProfile:
+        type: Unconfined
+    volumeMounts:
+    - name: auth
+      mountPath: /auth
+      readOnly: true
+    - name: buildkit-state
+      mountPath: /home/user/.local/share/buildkit
+    - name: build-result
+      mountPath: /build-result
+  - name: record-digest
+    image: python:3.12.13-slim
+    script: |
+      #!/usr/bin/env python3
+      import json, os, re
+      from pathlib import Path
+      data = json.loads(Path("/build-result/metadata.json").read_text())
+      digest = data.get("containerimage.digest", "")
+      if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+          raise SystemExit("BuildKit did not return an image digest")
+      Path(os.environ["URL_RESULT"]).write_text(os.environ["IMAGE"])
+      Path(os.environ["DIGEST_RESULT"]).write_text(digest)
+    env:
+    - name: IMAGE
+      value: $(params.image)
+    - name: URL_RESULT
+      value: $(results.IMAGE_URL.path)
+    - name: DIGEST_RESULT
+      value: $(results.IMAGE_DIGEST.path)
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+    volumeMounts:
+    - name: build-result
+      mountPath: /build-result
+      readOnly: true
+  volumes:
+  - name: auth
+    emptyDir: {}
+  - name: buildkit-state
+    emptyDir: {}
+  - name: build-result
+    emptyDir: {}
+  stepTemplate:
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: scan-image
+  namespace: tekton-builds
+spec:
+  params:
+  - name: image
+    type: string
+  - name: digest
+    type: string
+  - name: region
+    type: string
+  workspaces: []
+  results: []
+  steps:
+  - name: ecr-token
+    image: public.ecr.aws/aws-cli/aws-cli:2.36.44
+    script: |
+      #!/bin/bash
+      set -euo pipefail
+      umask 077
+      aws ecr get-authorization-token --region "$AWS_REGION" \
+        --query 'authorizationData[0].authorizationToken' --output text > /auth/token
+    env:
+    - name: AWS_REGION
+      value: $(params.region)
+    - name: AWS_DEFAULT_REGION
+      value: $(params.region)
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+    volumeMounts:
+    - name: auth
+      mountPath: /auth
+  - name: docker-config
+    image: python:3.12.13-slim
+    script: |
+      #!/usr/bin/env python3
+      import base64, json, os, re
+      from pathlib import Path
+      image, region = os.environ["IMAGE"], os.environ["REGION"]
+      match = re.fullmatch(r"([0-9]{12})\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com/([a-z0-9][a-z0-9._/-]*)", image)
+      if not match or match.group(2) != region or ".." in match.group(3):
+          raise SystemExit("Use a private ECR repository in the configured region")
+      token = Path("/auth/token").read_text().strip()
+      decoded = base64.b64decode(token, validate=True)
+      if not decoded.startswith(b"AWS:") or len(decoded) <= 4:
+          raise SystemExit("Invalid ECR authorization token")
+      Path("/auth/config.json").write_text(json.dumps({"auths": {image.split("/")[0]: {"auth": token}}}))
+      Path("/auth/config.json").chmod(0o600)
+      Path("/auth/token").unlink()
+    env:
+    - name: IMAGE
+      value: $(params.image)
+    - name: REGION
+      value: $(params.region)
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+    volumeMounts:
+    - name: auth
+      mountPath: /auth
+  - name: scan
+    image: aquasec/trivy:0.74.0
+    script: |
+      #!/bin/sh
+      set -eu
+      trivy image --scanners vuln --severity HIGH,CRITICAL \
+        --exit-code 1 --format json --output /tmp/trivy-report.json "$IMAGE@$DIGEST"
+    env:
+    - name: IMAGE
+      value: $(params.image)
+    - name: DIGEST
+      value: $(params.digest)
+    - name: DOCKER_CONFIG
+      value: /auth
+    - name: TRIVY_CACHE_DIR
+      value: /tmp/trivy-cache
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+    volumeMounts:
+    - name: auth
+      mountPath: /auth
+      readOnly: true
+  volumes:
+  - name: auth
+    emptyDir: {}
+  stepTemplate:
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: report-status
+  namespace: tekton-builds
+spec:
+  params:
+  - name: run
+    type: string
+  - name: status
+    type: string
+  workspaces: []
+  results: []
+  steps:
+  - name: report
+    image: python:3.12.13-slim
+    script: |
+      #!/usr/bin/env python3
+      import json, os
+      print(json.dumps({"pipelineRun": os.environ["RUN"], "status": os.environ["STATUS"]}))
+    env:
+    - name: RUN
+      value: $(params.run)
+    - name: STATUS
+      value: $(params.status)
+    computeResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+  stepTemplate:
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
 ```
 
-在上图中，`lint` 和 `unit-test` 会在 `git-clone` 完成后并行运行。`build-image` 会等待二者都成功。这通过在 Pipeline spec 中使用 `runAfter` 实现。
+原始 Google Kaniko 仓库已归档；新示例使用 BuildKit 0.33.0。Rootless 不保证完整进程隔离。生产前验证并固定镜像摘要/平台，在实际节点测试可写路径和安全上下文。
 
-### 4.2 使用 When Expressions 进行条件执行
+扫描器发现问题时退出码 1，以及其他错误码，均使 Task 失败。缺失报告不得变为“零漏洞”。`/tmp/trivy-report.json` 是临时文件；若需要长期保留，应在执行清理前导出到获准制品存储。
 
-When expressions 允许根据参数值或前序 Tasks 的 results 跳过 Tasks：
+## 4. Pipeline 和执行
 
-```yaml
-# When expression examples (used within Pipeline tasks)
-when:
-  - input: "$(params.run-security-scan)"
-    operator: in
-    values: ["true"]
-  - input: "$(tasks.unit-test.results.test-passed)"
-    operator: in
-    values: ["true"]
-```
+![克隆、并行测试/vet、候选镜像发布/扫描，以及尽力执行的最终报告](../.gitbook/assets/en-ops-14-tekton-pipelines-2.png)
 
-### 4.3 Finally Tasks
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-2.html)
 
-Finally Tasks 无论 Pipeline 成功还是失败都会执行，类似代码中的 `try/finally`。它们非常适合清理、通知和状态报告。
-
-### 4.4 完整 CI/CD Pipeline
-
-以下 Pipeline 实现完整 CI/CD 工作流：clone、test、build、push、scan 和 deploy。
+**`pipeline.yaml`**
 
 ```yaml
-# pipeline-ci-cd.yaml
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  name: application-ci-cd
-  labels:
-    app.kubernetes.io/version: "1.0"
+  name: trusted-image-ci
+  namespace: tekton-builds
 spec:
-  description: >
-    Complete CI/CD pipeline: clones source, runs tests, builds and pushes
-    a container image to ECR, scans for vulnerabilities, and deploys to
-    the target environment.
   params:
-    - name: git-url
+    - name: revision
       type: string
-      description: "Git repository URL"
-    - name: git-revision
+    - name: image
       type: string
-      description: "Git revision (branch, tag, or commit SHA)"
-      default: "main"
-    - name: image-registry
+    - name: region
       type: string
-      description: "ECR registry URL (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com)"
-    - name: image-name
-      type: string
-      description: "Image repository name"
-    - name: dockerfile
-      type: string
-      description: "Path to Dockerfile"
-      default: "Dockerfile"
-    - name: deploy-environment
-      type: string
-      description: "Target deployment environment"
-      default: "staging"
-    - name: deploy-namespace
-      type: string
-      description: "Kubernetes namespace to deploy into"
-      default: "staging"
-    - name: run-security-scan
-      type: string
-      description: "Whether to run security scan (true/false)"
-      default: "true"
-
+      default: ap-northeast-2
   workspaces:
-    - name: shared-workspace
-      description: "Shared workspace for source code and build artifacts"
-    - name: git-credentials
-      description: "Git credentials (SSH key or token)"
-      optional: true
-    - name: docker-credentials
-      description: "Docker registry credentials"
-      optional: true
-
+    - name: source
+  results:
+    - name: CHAINS-GIT_URL
+      value: $(tasks.clone.results.CHAINS-GIT_URL)
+    - name: CHAINS-GIT_COMMIT
+      value: $(tasks.clone.results.CHAINS-GIT_COMMIT)
+    - name: IMAGE_URL
+      value: $(tasks.build.results.IMAGE_URL)
+    - name: IMAGE_DIGEST
+      value: $(tasks.build.results.IMAGE_DIGEST)
   tasks:
-    # ---- Stage 1: Clone ----
     - name: clone
       taskRef:
-        name: git-clone
+        name: checkout
       params:
-        - name: url
-          value: "$(params.git-url)"
         - name: revision
-          value: "$(params.git-revision)"
-        - name: deleteExisting
-          value: "true"
-      workspaces:
-        - name: output
-          workspace: shared-workspace
-        - name: ssh-directory
-          workspace: git-credentials
-
-    # ---- Stage 2: Test + Lint (parallel) ----
-    - name: unit-test
-      taskRef:
-        name: go-build
-      runAfter:
-        - clone
-      params:
-        - name: package
-          value: "./..."
+          value: $(params.revision)
       workspaces:
         - name: source
-          workspace: shared-workspace
-
+          workspace: source
     - name: lint
+      runAfter: [clone]
       taskRef:
-        name: golangci-lint
-      runAfter:
-        - clone
-      params:
-        - name: flags
-          value: "--timeout=5m"
+        name: go-vet
       workspaces:
         - name: source
-          workspace: shared-workspace
-
-    # ---- Stage 3: Generate Tag ----
-    - name: generate-tag
+          workspace: source
+    - name: test
+      runAfter: [clone]
       taskRef:
-        name: generate-image-tag
-      runAfter:
-        - clone
-      params:
-        - name: image-base
-          value: "$(params.image-registry)/$(params.image-name)"
+        name: go-test
       workspaces:
         - name: source
-          workspace: shared-workspace
-
-    # ---- Stage 4: Build and Push ----
-    - name: build-push
+          workspace: source
+    - name: build
+      runAfter: [lint, test]
       taskRef:
-        name: kaniko-ecr-build
-      runAfter:
-        - unit-test
-        - lint
-        - generate-tag
+        name: build-image
       params:
         - name: image
-          value: "$(params.image-registry)/$(params.image-name)"
-        - name: tag
-          value: "$(tasks.generate-tag.results.image-tag)"
-        - name: dockerfile
-          value: "$(params.dockerfile)"
+          value: $(params.image)
+        - name: revision
+          value: $(tasks.clone.results.CHAINS-GIT_COMMIT)
+        - name: region
+          value: $(params.region)
       workspaces:
         - name: source
-          workspace: shared-workspace
-
-    # ---- Stage 5: Security Scan (conditional) ----
-    - name: security-scan
+          workspace: source
+    - name: scan
+      runAfter: [build]
       taskRef:
-        name: trivy-image-scan
-      runAfter:
-        - build-push
-      when:
-        - input: "$(params.run-security-scan)"
-          operator: in
-          values: ["true"]
+        name: scan-image
       params:
-        - name: image-url
-          value: "$(tasks.build-push.results.image-url)"
-        - name: severity-threshold
-          value: "HIGH,CRITICAL"
-        - name: exit-code
-          value: "1"
-
-    # ---- Stage 6: Deploy ----
-    - name: deploy
-      taskRef:
-        name: kubernetes-deploy
-      runAfter:
-        - security-scan
-      params:
-        - name: image-url
-          value: "$(tasks.build-push.results.image-url)"
-        - name: namespace
-          value: "$(params.deploy-namespace)"
-        - name: environment
-          value: "$(params.deploy-environment)"
-      workspaces:
-        - name: source
-          workspace: shared-workspace
-
+        - name: image
+          value: $(tasks.build.results.IMAGE_URL)
+        - name: digest
+          value: $(tasks.build.results.IMAGE_DIGEST)
+        - name: region
+          value: $(params.region)
   finally:
-    # ---- Cleanup and Notification ----
-    - name: notify-slack
+    - name: report
       taskRef:
-        name: send-slack-notification
+        name: report-status
       params:
-        - name: webhook-url-secret
-          value: "slack-webhook"
-        - name: webhook-url-secret-key
-          value: "url"
-        - name: message
-          value: >
-            Pipeline $(context.pipelineRun.name) for
-            $(params.image-name):$(tasks.generate-tag.results.image-tag)
-            completed with status: $(tasks.status)
-
-    - name: cleanup-workspace
-      taskRef:
-        name: cleanup
-      workspaces:
-        - name: source
-          workspace: shared-workspace
+        - name: run
+          value: $(context.pipelineRun.name)
+        - name: status
+          value: $(tasks.status)
 ```
 
-### 4.5 运行 Pipeline
-
-创建 PipelineRun 以执行 Pipeline：
+**`pipelinerun.yaml`**
 
 ```yaml
-# pipelinerun-example.yaml
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  generateName: app-ci-cd-run-
+  generateName: trusted-image-ci-
   namespace: tekton-builds
-  labels:
-    tekton.dev/pipeline: application-ci-cd
-    app: my-service
 spec:
   pipelineRef:
-    name: application-ci-cd
+    name: trusted-image-ci
   params:
-    - name: git-url
-      value: "git@github.com:myorg/my-service.git"
-    - name: git-revision
-      value: "main"
-    - name: image-registry
-      value: "123456789012.dkr.ecr.us-east-1.amazonaws.com"
-    - name: image-name
-      value: "my-service"
-    - name: deploy-environment
-      value: "staging"
-    - name: deploy-namespace
-      value: "staging"
+    - name: revision
+      value: REPLACE_WITH_FULL_40_CHARACTER_COMMIT_SHA
+    - name: image
+      value: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/myapp-candidates
   workspaces:
-    - name: shared-workspace
+    - name: source
       volumeClaimTemplate:
         spec:
-          accessModes:
-            - ReadWriteOnce
+          accessModes: [ReadWriteOnce]
+          storageClassName: gp3
           resources:
             requests:
-              storage: 5Gi
-          storageClassName: gp3
-    - name: git-credentials
-      secret:
-        secretName: git-ssh-key
+              storage: 10Gi
   taskRunTemplate:
-    serviceAccountName: tekton-build-sa
+    serviceAccountName: ci-readonly
+    podTemplate:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+  taskRunSpecs:
+    - pipelineTaskName: build
+      serviceAccountName: ci-image-push
+    - pipelineTaskName: scan
+      serviceAccountName: ci-image-read
   timeouts:
-    pipeline: "1h0m0s"
-    tasks: "45m0s"
-    finally: "15m0s"
+    pipeline: 1h
+    tasks: 50m
+    finally: 5m
 ```
 
 ```bash
-# Create the PipelineRun
-kubectl create -f pipelinerun-example.yaml
-
-# Watch the execution
-kubectl get pipelineruns -n tekton-builds --watch
-
-# View logs for a specific TaskRun
-kubectl logs -n tekton-builds -l tekton.dev/pipelineRun=app-ci-cd-run-xxxxx --all-containers -f
+kubectl apply -f service-accounts.yaml
+kubectl apply -f tasks.yaml -f pipeline.yaml
+# Replace the commit placeholder and provision the referenced IAM roles first.
+kubectl create -f pipelinerun.yaml
+tkn pipelinerun logs --last -n tekton-builds --follow --exit-with-pipelinerun-error
 ```
 
----
+每次执行创建新 PVC。ReadWriteOnce 允许同节点多个 Pod 访问，但不是多节点 RWX。emptyDir 不是跨不同 TaskRun Pod 的共享存储。按信任级别分离缓存，并协调并发写入方。
 
-## 5. Tekton Triggers
+`finally` 在普通 Task 后运行，但并非无条件执行。引用缺失 Result 可导致跳过；取消模式、总超时、资源失败和无法解析的引用也可阻止执行。此示例仅报告运行名称和 `tasks.status`，避免引用可能从未产生的镜像 Result。不要假定多个 finally Task 的顺序。
 
-Tekton Triggers 支持响应外部事件自动执行 Pipeline，例如 Git pushes、pull requests 或任何基于 webhook 的事件。
+## 5. Webhook 和 Trigger
 
-### 5.1 Trigger 架构
+此 Trigger 先验证 GitHub HMAC，再检查**仓库、分支、删除状态和完整 SHA**。Git URL、ECR 路径、Task 名称和 ServiceAccount 保持固定在可信定义中。不要将外部 PR 事件接入此模板。HMAC 验证交付来源；不授权 PR 代码部署。
 
-```mermaid
-graph LR
-    GH["GitHub Webhook"] -->|"POST /hooks"| EL["EventListener<br/>(Service + Pod)"]
-    EL --> I["Interceptor<br/>(GitHub validation)"]
-    I --> CEL["CEL Filter<br/>(branch, action)"]
-    CEL --> TB["TriggerBinding<br/>(Extract params)"]
-    TB --> TT["TriggerTemplate<br/>(PipelineRun template)"]
-    TT -->|"creates"| PR["PipelineRun"]
+![验证交付及仓库/分支过滤后，为获准提交创建固定 PipelineRun](../.gitbook/assets/en-ops-14-tekton-pipelines-3.png)
 
-    style GH fill:#e1f5fe
-    style EL fill:#fff3e0
-    style I fill:#fce4ec
-    style CEL fill:#fce4ec
-    style TB fill:#e8f5e9
-    style TT fill:#e8f5e9
-    style PR fill:#f3e5f5
-```
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-3.html)
 
-**EventListener**：一个 Kubernetes Service，用于接收传入的 webhook HTTP requests，并通过 Triggers 路由它们。
-
-**TriggerBinding**：使用 JSONPath expressions 从传入的 event payload 中提取参数值。
-
-**TriggerTemplate**：用于创建 Tekton resources（通常是 PipelineRuns）的模板，其参数由 TriggerBinding 填充。
-
-**Interceptor**：一个处理步骤，用于验证、过滤和转换传入事件。内置 interceptors 包括 GitHub（webhook signature validation）、GitLab、Bitbucket 和 CEL（Common Expression Language，用于过滤）。
-
-### 5.2 TriggerBinding
+**`triggers.yaml`**
 
 ```yaml
-# triggerbinding-github-push.yaml
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: trusted-github
+  namespace: tekton-builds
+spec:
+  serviceAccountName: ci-triggers
+  triggers:
+    - name: protected-main-push
+      interceptors:
+        - ref:
+            name: github
+          params:
+            - name: secretRef
+              value:
+                secretName: github-webhook
+                secretKey: token
+            - name: eventTypes
+              value: [push]
+        - ref:
+            name: cel
+          params:
+            - name: filter
+              value: >-
+                body.repository.full_name == 'myorg/myapp' &&
+                body.ref == 'refs/heads/main' &&
+                body.deleted == false &&
+                body.after.matches('^[0-9a-f]{40}$')
+      bindings:
+        - ref: trusted-commit
+      template:
+        ref: trusted-image-ci
+---
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerBinding
 metadata:
-  name: github-push-binding
+  name: trusted-commit
   namespace: tekton-builds
 spec:
   params:
-    - name: git-url
-      value: "$(body.repository.ssh_url)"
-    - name: git-revision
-      value: "$(body.after)"
-    - name: git-branch
-      value: "$(body.ref)"
-    - name: repository-name
-      value: "$(body.repository.name)"
-    - name: repository-full-name
-      value: "$(body.repository.full_name)"
-    - name: pusher-name
-      value: "$(body.pusher.name)"
-    - name: commit-message
-      value: "$(body.head_commit.message)"
+    - name: revision
+      value: $(body.after)
 ---
-# triggerbinding-github-pr.yaml
-apiVersion: triggers.tekton.dev/v1beta1
-kind: TriggerBinding
-metadata:
-  name: github-pr-binding
-  namespace: tekton-builds
-spec:
-  params:
-    - name: git-url
-      value: "$(body.pull_request.head.repo.ssh_url)"
-    - name: git-revision
-      value: "$(body.pull_request.head.sha)"
-    - name: git-branch
-      value: "$(body.pull_request.head.ref)"
-    - name: pr-number
-      value: "$(body.pull_request.number)"
-    - name: pr-title
-      value: "$(body.pull_request.title)"
-    - name: repository-name
-      value: "$(body.repository.name)"
-    - name: action
-      value: "$(body.action)"
-```
-
-### 5.3 TriggerTemplate
-
-```yaml
-# triggertemplate-ci-cd.yaml
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
 metadata:
-  name: ci-cd-trigger-template
+  name: trusted-image-ci
   namespace: tekton-builds
 spec:
   params:
-    - name: git-url
-      description: "Git repository URL"
-    - name: git-revision
-      description: "Git commit SHA"
-    - name: git-branch
-      description: "Git branch reference"
-    - name: repository-name
-      description: "Repository name"
+    - name: revision
   resourcetemplates:
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
       metadata:
-        generateName: "$(tt.params.repository-name)-run-"
+        generateName: trusted-image-ci-
         namespace: tekton-builds
-        labels:
-          tekton.dev/pipeline: application-ci-cd
-          triggers.tekton.dev/trigger: github-push
-          app: "$(tt.params.repository-name)"
-        annotations:
-          tekton.dev/git-branch: "$(tt.params.git-branch)"
       spec:
         pipelineRef:
-          name: application-ci-cd
+          name: trusted-image-ci
         params:
-          - name: git-url
-            value: "$(tt.params.git-url)"
-          - name: git-revision
-            value: "$(tt.params.git-revision)"
-          - name: image-registry
-            value: "123456789012.dkr.ecr.us-east-1.amazonaws.com"
-          - name: image-name
-            value: "$(tt.params.repository-name)"
-          - name: deploy-environment
-            value: "staging"
-          - name: deploy-namespace
-            value: "staging"
+          - name: revision
+            value: $(tt.params.revision)
+          - name: image
+            value: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/myapp-candidates
         workspaces:
-          - name: shared-workspace
+          - name: source
             volumeClaimTemplate:
               spec:
-                accessModes:
-                  - ReadWriteOnce
+                accessModes: [ReadWriteOnce]
+                storageClassName: gp3
                 resources:
                   requests:
-                    storage: 5Gi
-                storageClassName: gp3
-          - name: git-credentials
-            secret:
-              secretName: git-ssh-key
+                    storage: 10Gi
         taskRunTemplate:
-          serviceAccountName: tekton-build-sa
+          serviceAccountName: ci-readonly
+          podTemplate:
+            automountServiceAccountToken: false
+            securityContext:
+              fsGroup: 1000
+        taskRunSpecs:
+          - pipelineTaskName: build
+            serviceAccountName: ci-image-push
+          - pipelineTaskName: scan
+            serviceAccountName: ci-image-read
         timeouts:
-          pipeline: "1h0m0s"
+          pipeline: 1h
+          tasks: 50m
+          finally: 5m
 ```
 
-### 5.4 带 Interceptors 的 EventListener
+`github-webhook` Secret 的 `token` 必须匹配 GitHub webhook 密钥。从受保护存储提供，绝不放入 Git。单独配置外部 HTTPS 端点及交付重试/去重策略。EventListener 默认具有内部 Service；仅此 YAML 不创建互联网端点。
+
+在 TLS 终止及网关/Ingress 处理过程中保留原始正文，以便 HMAC 验证。为回调应用适当身份验证、限速、可用性和固定路由。安静时段不自动意味着 webhook 故障：检查实际交付结果及 EventListener 处理错误。
+
+不要假定 `head_commit` 总存在，也不要仅用一个拆分元素截断 `refs/heads/feature/a`。文件变更过滤器必须考虑新增、修改、删除路径及载荷限制。此示例不虚构业务专属路径过滤器。
+
+## 6. Chains 和签名验证
+
+### 6.1 CI 成功与签名完成相互独立
+
+Chains 是处理已完成 TaskRun/PipelineRun 的独立控制器。仅镜像签名不能证明完整测试和扫描成功。`chains.tekton.dev/signed=true` 既不是部署批准，也不是密码学验证。
+
+Pipeline 级来源证明在 Pipeline 完成后创建。在 Pipeline 内等待自身证明，可能与此顺序冲突。此示例在 CI 完成后采用独立验证和晋级流程。
+
+![检查 CI 成功，验证 Chains 签名/来源证明，仅晋级获准摘要](../.gitbook/assets/en-ops-14-tekton-pipelines-4.png)
+
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-4.html)
+
+### 6.2 KMS 配置
+
+使用现有非对称 `SIGN_VERIFY` KMS 密钥。替换密钥 ARN 和 `builder.id`。在 **Chains 控制器 ServiceAccount `tekton-chains/tekton-chains-controller`** 上配置独立 IRSA 角色，具有候选仓库 ECR 写入及下方 KMS 权限。给构建 Pod IRSA 角色不会让控制器获得这些凭证。
+
+当前 OCI 后端使用 Kubernetes 凭证查找及默认/ECR 凭证辅助程序链。配置控制器环境中的 AWS 身份，并验证实际签名上传。构建 Task 的 `/auth` emptyDir 不是 Chains 可读的共享 Secret。
+
+**`chains-kms-policy.json`**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["kms:Sign", "kms:GetPublicKey", "kms:DescribeKey"],
+    "Resource": "arn:aws:kms:ap-northeast-2:123456789012:key/REPLACE_KEY_ID"
+  }]
+}
+```
+
+**`chains-config.yaml`**
 
 ```yaml
-# eventlistener-github.yaml
-apiVersion: triggers.tekton.dev/v1beta1
-kind: EventListener
-metadata:
-  name: github-listener
-  namespace: tekton-builds
-spec:
-  serviceAccountName: tekton-triggers-sa
-  triggers:
-    # Trigger 1: Push to main branch
-    - name: github-push-main
-      interceptors:
-        - ref:
-            name: "github"
-          params:
-            - name: "secretRef"
-              value:
-                secretName: github-webhook-secret
-                secretKey: token
-            - name: "eventTypes"
-              value: ["push"]
-        - ref:
-            name: "cel"
-          params:
-            - name: "filter"
-              value: >
-                body.ref == 'refs/heads/main' &&
-                !body.head_commit.message.contains('[skip ci]')
-            - name: "overlays"
-              value:
-                - key: truncated-sha
-                  expression: "body.after.truncate(7)"
-      bindings:
-        - ref: github-push-binding
-      template:
-        ref: ci-cd-trigger-template
-
-    # Trigger 2: Pull request opened or synchronized
-    - name: github-pr
-      interceptors:
-        - ref:
-            name: "github"
-          params:
-            - name: "secretRef"
-              value:
-                secretName: github-webhook-secret
-                secretKey: token
-            - name: "eventTypes"
-              value: ["pull_request"]
-        - ref:
-            name: "cel"
-          params:
-            - name: "filter"
-              value: >
-                body.action in ['opened', 'synchronize'] &&
-                !body.pull_request.draft
-      bindings:
-        - ref: github-pr-binding
-      template:
-        ref: ci-cd-trigger-template
-
-  resources:
-    kubernetesResource:
-      spec:
-        template:
-          spec:
-            serviceAccountName: tekton-triggers-sa
-            containers: []
-          metadata:
-            labels:
-              app: tekton-triggers-eventlistener
----
-# ServiceAccount for Tekton Triggers
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: tekton-triggers-sa
-  namespace: tekton-builds
----
-# RBAC: Allow Triggers to create PipelineRuns
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: tekton-triggers-role
-  namespace: tekton-builds
-rules:
-  - apiGroups: ["triggers.tekton.dev"]
-    resources: ["eventlisteners", "triggerbindings", "triggertemplates", "triggers"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["tekton.dev"]
-    resources: ["pipelineresources", "pipelineruns", "taskruns"]
-    verbs: ["create"]
-  - apiGroups: [""]
-    resources: ["configmaps", "secrets"]
-    verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: tekton-triggers-rolebinding
-  namespace: tekton-builds
-subjects:
-  - kind: ServiceAccount
-    name: tekton-triggers-sa
-roleRef:
-  kind: Role
-  name: tekton-triggers-role
-  apiGroup: rbac.authorization.k8s.io
-```
-
-### 5.5 暴露 EventListener
-
-```yaml
-# eventlistener-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: tekton-triggers-webhook
-  namespace: tekton-builds
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/abc-123
-    alb.ingress.kubernetes.io/healthcheck-path: /live
-spec:
-  ingressClassName: alb
-  rules:
-    - host: tekton-hooks.mycompany.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: el-github-listener
-                port:
-                  number: 8080
-```
-
-在 GitHub 中配置 webhook：
-
-```
-Payload URL:    https://tekton-hooks.mycompany.com
-Content type:   application/json
-Secret:         <same value as github-webhook-secret>
-Events:         Pushes, Pull requests
-```
-
-### 5.6 GitLab Interceptor 示例
-
-对于 GitLab webhooks，替换 GitHub interceptor：
-
-```yaml
-interceptors:
-  - ref:
-      name: "gitlab"
-    params:
-      - name: "secretRef"
-        value:
-          secretName: gitlab-webhook-secret
-          secretKey: token
-      - name: "eventTypes"
-        value: ["Push Hook", "Merge Request Hook"]
-  - ref:
-      name: "cel"
-    params:
-      - name: "filter"
-        value: >
-          (header.match('X-Gitlab-Event', 'Push Hook') &&
-           body.ref == 'refs/heads/main') ||
-          (header.match('X-Gitlab-Event', 'Merge Request Hook') &&
-           body.object_attributes.action in ['open', 'update'])
-```
-
----
-
-## 6. Tekton Chains（供应链安全）
-
-Tekton Chains 为你的 CI/CD pipelines 提供自动化供应链安全。它观察 TaskRun 完成情况，并自动生成关于构建了什么、如何构建、从什么 source 构建的加密 attestations。
-
-### 6.1 Chains 工作原理
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Git as Git Repository
-    participant Tekton as Tekton Pipeline
-    participant Chains as Tekton Chains
-    participant ECR as Amazon ECR
-    participant Rekor as Rekor (Transparency Log)
-
-    Dev->>Git: Push code
-    Git->>Tekton: Webhook trigger
-    Tekton->>Tekton: Build image (TaskRun)
-    Tekton->>ECR: Push image
-    Tekton->>Tekton: TaskRun completes
-    Chains->>Tekton: Observe TaskRun completion
-    Chains->>Chains: Generate SLSA provenance
-    Chains->>Chains: Sign with Cosign
-    Chains->>ECR: Store signature + attestation
-    Chains->>Rekor: Upload to transparency log
-    Note over ECR: Image now has:<br/>1. Image layers<br/>2. Cosign signature<br/>3. SLSA provenance attestation
-```
-
-### 6.2 Chains 配置
-
-```yaml
-# tekton-chains-config.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: chains-config
   namespace: tekton-chains
 data:
-  # Artifact storage (oci = store in OCI registry alongside image)
-  artifacts.taskrun.format: "in-toto"
-  artifacts.taskrun.storage: "oci"
-  artifacts.taskrun.signer: "x509"
-
-  artifacts.oci.format: "simplesigning"
-  artifacts.oci.storage: "oci"
-  artifacts.oci.signer: "x509"
-
-  # SLSA provenance configuration
-  artifacts.pipelinerun.format: "in-toto"
-  artifacts.pipelinerun.storage: "oci"
-  artifacts.pipelinerun.signer: "x509"
-
-  # Sigstore configuration
-  sigstore.fulcio.enabled: "false"
-  # For keyless signing with Fulcio (recommended for production):
-  # sigstore.fulcio.enabled: "true"
-  # sigstore.fulcio.address: "https://fulcio.sigstore.dev"
-  # sigstore.rekor.url: "https://rekor.sigstore.dev"
-
-  # Transparency log
-  transparency.enabled: "true"
-  transparency.url: "https://rekor.sigstore.dev"
+  artifacts.taskrun.storage: ""
+  artifacts.pipelinerun.format: slsa/v2alpha3
+  artifacts.pipelinerun.storage: oci
+  artifacts.pipelinerun.signer: kms
+  artifacts.oci.format: simplesigning
+  artifacts.oci.storage: oci
+  artifacts.oci.signer: kms
+  signers.kms.kmsref: awskms:///arn:aws:kms:ap-northeast-2:123456789012:key/REPLACE_KEY_ID
+  signers.x509.fulcio.enabled: "false"
+  transparency.enabled: "false"
+  storage.oci.encoding-format: dsse
+  builder.id: https://ci.example.com/tekton/trusted-image-ci
+  builddefinition.buildtype: https://tekton.dev/chains/v2/slsa
 ```
 
-### 6.3 Signing Key 设置
+格式器名称 `slsa/v1` 不意味着 SLSA provenance v1.0。当前 Chains 中，`slsa/v1` / `in-toto` 映射到 v0.2，`slsa/v2alpha3` / `slsa/v2alpha4` 映射到 v1.0。此示例使用 Pipeline 级 `slsa/v2alpha3`，禁用重复 Task 级来源证明存储，并单独启用镜像签名。
 
-对于基于 key 的 signing（非 keyless），生成 Cosign key pair，并将其存储为 Kubernetes Secret：
+`storage.oci.encoding-format: dsse` 保留旧 `.sig` / `.att` 存储。0.29 版本的 `sigstore-bundle` 使用 OCI 1.1 referrer；应同时更改存储和验证工具。此处禁用 Rekor 上传，因此验证显式遵循内部公钥策略。如需要透明性，应单独配置，包括审核暴露的构建元数据。
+
+无密钥签名要求实际 Fulcio 服务信任的签发者和有效工作负载令牌。在 EKS Pod 上设置 GitHub Actions 签发者字符串不会提供身份验证。仅签名和证明不能确立特定 SLSA 级别。
+
+### 6.3 独立验证执行和制品
+
+此脚本检查**从可信 API 读取的** PipelineRun，确认 CI 成功、Chains 处理完成，以及获准仓库、提交和镜像输出。它不验证签名。还必须执行后续 Cosign 检查及来源证明策略审查。
+
+**`check_run.py`**
+
+```python
+"""Check trusted API output before separate cryptographic artifact verification."""
+import argparse
+import json
+import re
+from pathlib import Path
+
+
+def check(run, repository, revision, image):
+    if run.get("kind") != "PipelineRun" or run.get("apiVersion") != "tekton.dev/v1":
+        raise ValueError("Expected a tekton.dev/v1 PipelineRun")
+    metadata = run.get("metadata", {})
+    if metadata.get("namespace") != "tekton-builds" or not metadata.get("uid"):
+        raise ValueError("Unexpected namespace or missing run UID")
+    if run.get("spec", {}).get("pipelineRef", {}).get("name") != "trusted-image-ci":
+        raise ValueError("Unexpected pipeline")
+    succeeded = [c for c in run.get("status", {}).get("conditions", []) if c.get("type") == "Succeeded"]
+    if len(succeeded) != 1 or succeeded[0].get("status") != "True":
+        raise ValueError("CI has not succeeded")
+    if not run.get("status", {}).get("completionTime"):
+        raise ValueError("CI completion time is missing")
+    if metadata.get("annotations", {}).get("chains.tekton.dev/signed") != "true":
+        raise ValueError("Chains has not completed; retry later with a fresh API read")
+    results = {}
+    for result in run.get("status", {}).get("results", []):
+        if result["name"] in results:
+            raise ValueError("Duplicate result")
+        results[result["name"]] = result["value"]
+    if not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise ValueError("Expected full source revision")
+    expected = {"CHAINS-GIT_URL": repository, "CHAINS-GIT_COMMIT": revision, "IMAGE_URL": image}
+    if any(results.get(k) != v for k, v in expected.items()):
+        raise ValueError("Run outputs do not match the approved source and repository")
+    digest = results.get("IMAGE_DIGEST", "")
+    if not isinstance(digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+        raise ValueError("Missing or invalid image digest")
+    return image + "@" + digest
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--run", type=Path, required=True)
+    parser.add_argument("--repository", required=True)
+    parser.add_argument("--revision", required=True)
+    parser.add_argument("--image", required=True)
+    args = parser.parse_args()
+    try:
+        print(check(json.loads(args.run.read_text()), args.repository, args.revision, args.image))
+    except (ValueError, KeyError, TypeError) as error:
+        parser.exit(1, f"Run gate failed: {error}\n")
+```
 
 ```bash
-# Generate a Cosign signing key pair
-cosign generate-key-pair k8s://tekton-chains/signing-secrets
+set -euo pipefail
+DOCS_RUN="REPLACE_PIPELINERUN_NAME"
+DOCS_REVISION="REPLACE_WITH_FULL_40_CHARACTER_COMMIT_SHA"
+DOCS_IMAGE="123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/myapp-candidates"
+kubectl -n tekton-builds get pipelinerun "$DOCS_RUN" -o json > run.json
+DOCS_IMAGE_REF="$(python3 check_run.py --run run.json \
+  --repository https://github.com/myorg/myapp.git \
+  --revision "$DOCS_REVISION" --image "$DOCS_IMAGE")"
+
+# chains.pub must be the independently trusted public key for the configured KMS key.
+# Registry read authentication must already be configured.
+# Explicit private-key policy: verify signatures, without requiring a Rekor entry.
+cosign verify --key chains.pub --insecure-ignore-tlog=true "$DOCS_IMAGE_REF" \
+  > verified-signature.json
+cosign verify-attestation --key chains.pub --insecure-ignore-tlog=true \
+  --type https://slsa.dev/provenance/v1 "$DOCS_IMAGE_REF" \
+  > verified-attestations.json
 ```
 
-这会在 `tekton-chains` namespace 中创建一个名为 `signing-secrets` 的 Secret，其中包含 private key。public key 会输出到 `cosign.pub`。
+`--insecure-ignore-tlog` 是显式选择不要求公共 Rekor 条目。针对可信密钥的签名验证仍启用。若组织策略要求透明性验证，应配置该验证链，不使用此例外。
 
-对于使用 AWS KMS 的生产环境：
+对已验证证明的 subject 摘要、`runDetails.builder.id`、`buildDefinition.buildType`、确切源 URI/提交及获准 Task/Pipeline 定义应用策略。任意生成者的有效签名或另一构建的证明均不足。上述命令不会自动实现组织专属检查。
+
+为相同可信密钥/身份、摘要和来源条件单独配置准入验证。不要应用不完整 `BEGIN PUBLIC KEY ...` 占位符，也不要比较不存在的 predicate 字段。检查安装版本的当前 Kyverno ImageValidatingPolicy 和仓库身份验证，再测试正确/错误密钥、来源及无签名镜像的接受和拒绝情况。
+
+## 7. GitOps 交接
+
+使用已验证的 `repository@sha256:...` 更新实际 Kustomize/Helm 配置。本章不包含自动推送、创建或合并 PR 的 Task。所有者或另行获准的晋级流程编辑固定仓库/文件，在 CI 和审查后合并。避免 Tekton kubectl 部署和 ArgoCD 同时管理相同清单。
+
+![审核基于已验证摘要的 GitOps 更改；ArgoCD 同步清单，kubelet 拉取镜像](../.gitbook/assets/en-ops-14-tekton-pipelines-5.png)
+
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-14-tekton-pipelines-5.html)
 
 ```bash
-# Create a KMS key for signing
-aws kms create-key \
-  --description "Tekton Chains image signing key" \
-  --key-usage SIGN_VERIFY \
-  --key-spec ECC_NIST_P256 \
-  --tags TagKey=Purpose,TagValue=tekton-chains
-
-# Use KMS key with Cosign
-cosign generate-key-pair --kms awskms:///arn:aws:kms:us-east-1:123456789012:key/abc-123
+# In a reviewed checkout with the Kustomize CLI installed:
+cd overlays/production
+kustomize edit set image "myapp=$DOCS_IMAGE_REF"
+kustomize build . > /tmp/rendered-myapp.yaml
+git diff -- kustomization.yaml
+# Run repository checks and submit the focused change for review.
 ```
 
-更新 Chains config 以使用 KMS：
+使用 `cut -d: -f1/2` 拆分镜像引用会破坏仓库端口和摘要。向工具传递完整引用。通过可信路径预置 SSH known_hosts；未经验证的 ssh-keyscan 结果不是信任锚。复制到一个 Step 主目录的凭证不会自动与另一个共享。
 
-```yaml
-# chains-config-kms.yaml (merge with chains-config)
-data:
-  sigstore.kms: "awskms:///arn:aws:kms:us-east-1:123456789012:key/abc-123"
+ArgoCD 同步 Git 清单；kubelet/容器运行时拉取应用镜像。将应用健康检查与同步完成分开。回滚不会自动恢复数据或模式更改。
+
+## 8. 运维和清理
+
+### 8.1 执行记录和 PVC
+
+`keep` 和 `keep-since` 是 tkn 删除命令等工具的选项，不是内置 PipelineRun TTL 字段。tkn 0.46.0 `pipelinerun delete` 没有 `--dry-run`。删除前检查日志、扫描报告、签名/来源证明和审计数据保留要求。不要在没有年龄策略时删除所有成功 Pod。
+
+此工具在一个命名空间中打印**仅供审查的候选项**：完成超过七天的成功运行，以及超过十四天的失败运行。它使用完成时间，不是创建时间，并要求 Chains 和归档确认。`ci.example.com/archive-complete` 是操作员在实际归档成功后记录的注解，不是 Tekton 自动字段。脚本不调用 Kubernetes API，也不删除任何内容。
+
+**`cleanup_candidates.py`**
+
+```python
+"""Print names for review; this script never deletes Kubernetes objects."""
+import argparse
+import json
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+
+def timestamp(value):
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("Timezone required")
+    return parsed.astimezone(timezone.utc)
+
+
+def candidates(document, now, namespace):
+    if now.tzinfo is None:
+        raise ValueError("Timezone required")
+    result, skipped = [], []
+    for obj in document.get("items", []):
+        meta, status = obj.get("metadata", {}), obj.get("status", {})
+        name = meta.get("name", "<unnamed>")
+        conditions = [c for c in status.get("conditions", []) if c.get("type") == "Succeeded"]
+        annotations = meta.get("annotations", {})
+        if (obj.get("kind") != "PipelineRun" or meta.get("namespace") != namespace
+                or not meta.get("uid") or len(conditions) != 1
+                or conditions[0].get("status") not in ("True", "False")):
+            skipped.append({"name": name, "reason": "not a terminal run in the selected namespace"})
+            continue
+        if annotations.get("ci.example.com/retain") == "true":
+            skipped.append({"name": name, "reason": "retention hold"})
+            continue
+        if (annotations.get("chains.tekton.dev/signed") != "true"
+                or annotations.get("ci.example.com/archive-complete") != "true"):
+            skipped.append({"name": name, "reason": "Chains processing or archive acknowledgement incomplete"})
+            continue
+        try:
+            completed = timestamp(status["completionTime"])
+        except (ValueError, KeyError, TypeError, AttributeError):
+            skipped.append({"name": name, "reason": "invalid completion time"})
+            continue
+        retention_days = 7 if conditions[0]["status"] == "True" else 14
+        if completed < now - timedelta(days=retention_days):
+            result.append({"namespace": namespace, "name": name, "uid": meta["uid"],
+                           "completed": completed.isoformat(), "retentionDays": retention_days})
+    return {"mode": "review-only", "candidates": result, "skipped": skipped}
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--namespace", default="tekton-builds")
+    parser.add_argument("--now", default=datetime.now(timezone.utc).isoformat())
+    args = parser.parse_args()
+    print(json.dumps(candidates(json.loads(args.input.read_text()), timestamp(args.now), args.namespace), indent=2))
 ```
-
-### 6.4 SLSA Provenance
-
-Tekton Chains 会自动生成 [SLSA](https://slsa.dev/) (Supply-chain Levels for Software Artifacts) provenance attestations。provenance 会记录：
-
-- **Builder**：哪个 Tekton Task/Pipeline 生成了 artifact
-- **Source**：git repository、branch 和 commit
-- **Build configuration**：Pipeline parameters 和 Task steps
-- **Materials**：输入 artifacts（source code、base images）
-- **Output**：构建生成的 artifact（image digest）
-
-构建后验证 provenance：
 
 ```bash
-# Verify image signature
-cosign verify \
-  --key cosign.pub \
-  123456789012.dkr.ecr.us-east-1.amazonaws.com/my-service:abc1234-20250622-120000
-
-# Verify and view SLSA provenance attestation
-cosign verify-attestation \
-  --key cosign.pub \
-  --type slsaprovenance \
-  123456789012.dkr.ecr.us-east-1.amazonaws.com/my-service:abc1234-20250622-120000 | \
-  jq -r '.payload' | base64 -d | jq .
+kubectl -n tekton-builds get pipelineruns -o json > runs.json
+python3 cleanup_candidates.py --input runs.json --namespace tekton-builds
 ```
 
-SLSA provenance 输出示例（已缩略）：
+PVC 生命周期取决于 `coschedule`。
 
-```json
-{
-  "_type": "https://in-toto.io/Statement/v0.1",
-  "predicateType": "https://slsa.dev/provenance/v0.2",
-  "subject": [
-    {
-      "name": "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-service",
-      "digest": {
-        "sha256": "a1b2c3d4e5f6..."
-      }
-    }
-  ],
-  "predicate": {
-    "builder": {
-      "id": "https://tekton.dev/chains/v2"
-    },
-    "buildType": "tekton.dev/v1beta1/TaskRun",
-    "invocation": {
-      "configSource": {},
-      "parameters": {
-        "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-service",
-        "tag": "abc1234-20250622-120000"
-      }
-    },
-    "buildConfig": {
-      "steps": [
-        { "entryPoint": "...", "image": "gcr.io/kaniko-project/executor:v1.23.2" }
-      ]
-    },
-    "materials": [
-      {
-        "uri": "git+https://github.com/myorg/my-service.git",
-        "digest": { "sha1": "abc1234..." }
-      }
-    ]
-  }
-}
-```
+| 模式 | 完成后的 volumeClaimTemplate PVC |
+| --- | --- |
+| `workspaces` | 默认保留；Run 注解 `tekton.dev/auto-cleanup-pvc: "true"` 启用完成时清理 |
+| `pipelineruns`, `isolate-pipelinerun` | 完成时清理 |
+| `disabled` | 所有者引用 GC；删除 Run 时验证删除行为 |
 
-### 6.5 使用 Kyverno 进行策略执行
+直接绑定到 Workspace 的现有 PVC 不会被该注解删除。仍需归档的数据不要启用自动清理。将 TaskRun 归类为孤立资源前，检查 ownerReferences。
 
-使用 Kyverno 强制要求只有带有效 provenance 的 signed images 才能部署：
+### 8.2 监控
+
+Pipelines 1.16 通过 OpenTelemetry 导出指标。在 `config-observability` 中设置 `metrics-protocol: prometheus` 时，控制器 Service 端口名为 **`http-metrics`**。同时匹配 ServiceMonitor 选择和 Prometheus 选择。
+
+**`servicemonitor.yaml`**
 
 ```yaml
-# kyverno-verify-image-signature.yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: verify-tekton-chains-signature
-  annotations:
-    policies.kyverno.io/title: Verify Tekton Chains Image Signature
-    policies.kyverno.io/category: Supply Chain Security
-    policies.kyverno.io/severity: critical
-spec:
-  validationFailureAction: Enforce
-  webhookTimeoutSeconds: 30
-  rules:
-    - name: verify-image-signature
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - tekton-pipelines
-                - tekton-chains
-      verifyImages:
-        - imageReferences:
-            - "123456789012.dkr.ecr.us-east-1.amazonaws.com/*"
-          attestors:
-            - entries:
-                - keys:
-                    publicKeys: |-
-                      -----BEGIN PUBLIC KEY-----
-                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
-                      -----END PUBLIC KEY-----
-          attestations:
-            - type: https://slsa.dev/provenance/v0.2
-              conditions:
-                - all:
-                    - key: "{{ builder.id }}"
-                      operator: Equals
-                      value: "https://tekton.dev/chains/v2"
-```
-
----
-
-## 7. ArgoCD + Tekton 集成
-
-最有效的生产架构会将 CI（build、test、push）与 CD（deploy）分离。Tekton 负责 CI，而 ArgoCD 通过 GitOps 负责 CD。这种分离提供清晰的所有权、独立扩展能力以及可靠的审计轨迹。
-
-### 7.1 CI/CD 分离架构
-
-```mermaid
-graph TB
-    subgraph "CI - Tekton"
-        Push["Developer Push"] --> Trigger["Tekton Triggers"]
-        Trigger --> Pipeline["Tekton Pipeline"]
-        Pipeline --> Clone["git-clone"]
-        Clone --> Test["unit-test + lint"]
-        Test --> Build["kaniko-build"]
-        Build --> Scan["trivy-scan"]
-        Scan --> Sign["Tekton Chains<br/>(sign + attest)"]
-        Sign --> ECR["ECR<br/>(image + signature)"]
-    end
-
-    subgraph "Handoff"
-        Sign --> UpdateManifest["Update GitOps Repo<br/>(image tag)"]
-    end
-
-    subgraph "CD - ArgoCD"
-        UpdateManifest --> GitOps["GitOps Repository"]
-        GitOps --> Argo["ArgoCD"]
-        Argo --> Verify["Kyverno Verify<br/>(signature check)"]
-        Verify --> Deploy["Deploy to Cluster"]
-    end
-
-    style Push fill:#e1f5fe
-    style ECR fill:#e8f5e9
-    style GitOps fill:#fff3e0
-    style Deploy fill:#f3e5f5
-```
-
-### 7.2 GitOps Repository 更新 Task
-
-成功构建后，Tekton 会更新 GitOps repository 中的 image tag。ArgoCD 检测到变更并调谐 deployment。
-
-```yaml
-# task-update-gitops-repo.yaml
-apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: update-gitops-repo
-spec:
-  description: >
-    Updates the image tag in a GitOps repository, triggering ArgoCD
-    to reconcile and deploy the new version.
-  params:
-    - name: gitops-repo-url
-      type: string
-      description: "GitOps repository SSH URL"
-    - name: gitops-branch
-      type: string
-      description: "Branch to update"
-      default: "main"
-    - name: image-name
-      type: string
-      description: "Application name (matches directory in gitops repo)"
-    - name: new-image-url
-      type: string
-      description: "Full image URL with new tag"
-    - name: environment
-      type: string
-      description: "Target environment (staging, production)"
-      default: "staging"
-    - name: author-name
-      type: string
-      default: "Tekton CI"
-    - name: author-email
-      type: string
-      default: "tekton@mycompany.com"
-  workspaces:
-    - name: ssh-directory
-      description: "SSH credentials for git push"
-  steps:
-    - name: update-and-push
-      image: alpine/git:2.43.0
-      script: |
-        #!/usr/bin/env sh
-        set -euo pipefail
-
-        # Configure SSH
-        mkdir -p ~/.ssh
-        cp $(workspaces.ssh-directory.path)/id_rsa ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-        # Clone the GitOps repository
-        WORK_DIR="/tmp/gitops"
-        git clone --branch "$(params.gitops-branch)" \
-          --single-branch --depth 1 \
-          "$(params.gitops-repo-url)" "${WORK_DIR}"
-        cd "${WORK_DIR}"
-
-        # Update the image tag in the Kustomize overlay
-        OVERLAY_DIR="overlays/$(params.environment)/$(params.image-name)"
-        if [ -f "${OVERLAY_DIR}/kustomization.yaml" ]; then
-          echo "Updating Kustomize overlay..."
-          cd "${OVERLAY_DIR}"
-
-          # Extract registry/repo and tag from full URL
-          IMAGE_REF=$(echo "$(params.new-image-url)" | cut -d':' -f1)
-          IMAGE_TAG=$(echo "$(params.new-image-url)" | cut -d':' -f2)
-
-          # Use kustomize edit to update the image
-          kustomize edit set image "${IMAGE_REF}:${IMAGE_TAG}"
-          cd "${WORK_DIR}"
-        else
-          echo "ERROR: Overlay directory not found: ${OVERLAY_DIR}"
-          exit 1
-        fi
-
-        # Commit and push
-        git config user.name "$(params.author-name)"
-        git config user.email "$(params.author-email)"
-        git add -A
-        git diff --cached --quiet && {
-          echo "No changes to commit"
-          exit 0
-        }
-        git commit -m "chore($(params.environment)): update $(params.image-name) to $(params.new-image-url)
-
-        Triggered by Tekton PipelineRun
-        Image: $(params.new-image-url)"
-
-        git push origin "$(params.gitops-branch)"
-        echo "GitOps repository updated successfully"
-```
-
-### 7.3 带 GitOps Handoff 的完整 CI Pipeline
-
-将 GitOps 更新作为 CI Pipeline 中的最后一步添加：
-
-```yaml
-# Add to the pipeline-ci-cd.yaml tasks list (after security-scan)
-    - name: update-gitops
-      taskRef:
-        name: update-gitops-repo
-      runAfter:
-        - security-scan
-      params:
-        - name: gitops-repo-url
-          value: "git@github.com:myorg/k8s-gitops.git"
-        - name: gitops-branch
-          value: "main"
-        - name: image-name
-          value: "$(params.image-name)"
-        - name: new-image-url
-          value: "$(tasks.build-push.results.image-url)"
-        - name: environment
-          value: "$(params.deploy-environment)"
-      workspaces:
-        - name: ssh-directory
-          workspace: git-credentials
-```
-
-### 7.4 ArgoCD Application 配置
-
-```yaml
-# argocd-application.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: my-service-staging
-  namespace: argocd
-  annotations:
-    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: ci-cd-notifications
-    notifications.argoproj.io/subscribe.on-sync-failed.slack: ci-cd-alerts
-spec:
-  project: default
-  source:
-    repoURL: git@github.com:myorg/k8s-gitops.git
-    targetRevision: main
-    path: overlays/staging/my-service
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: staging
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - PruneLast=true
-    retry:
-      limit: 3
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
-```
-
-### 7.5 端到端工作流摘要
-
-1. **Developer pushes** 代码到应用 repository
-2. **GitHub webhook** 触发到 Tekton Triggers
-3. **EventListener** 接收事件，验证 signature，并使用 CEL 过滤
-4. **PipelineRun** 被自动创建
-5. **Tekton Pipeline** 运行：clone、test、lint、build、push 到 ECR、security scan
-6. **Tekton Chains** 签名 image 并生成 SLSA provenance
-7. **GitOps update Task** 将新的 image tag 提交到 GitOps repository
-8. **ArgoCD** 检测变更并同步 deployment
-9. **Kyverno** 在允许 Pod 运行前验证 image signature
-10. **新版本** 被部署到 cluster
-
----
-
-## 8. 生产运维
-
-### 8.1 PipelineRun 清理策略
-
-PipelineRuns 和 TaskRuns 会在 cluster 中累积并消耗 etcd 存储。配置自动清理：
-
-```yaml
-# tekton-pruner-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: config-leader-election
-  namespace: tekton-pipelines
-data: {}
----
-# CronJob-based cleanup (recommended for fine-grained control)
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: tekton-cleanup
-  namespace: tekton-pipelines
-spec:
-  schedule: "0 2 * * *"  # Daily at 2:00 AM UTC
-  concurrencyPolicy: Forbid
-  jobTemplate:
-    spec:
-      backoffLimit: 1
-      activeDeadlineSeconds: 600
-      template:
-        spec:
-          serviceAccountName: tekton-cleanup-sa
-          restartPolicy: OnFailure
-          containers:
-            - name: cleanup
-              image: bitnami/kubectl:1.30
-              command:
-                - /bin/bash
-                - -c
-                - |
-                  set -euo pipefail
-
-                  # Delete completed PipelineRuns older than 7 days
-                  echo "Cleaning up PipelineRuns older than 7 days..."
-                  kubectl get pipelineruns -A \
-                    -o jsonpath='{range .items[?(@.status.completionTime)]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.status.completionTime}{"\n"}{end}' | \
-                  while IFS=$'\t' read -r ns name completed; do
-                    if [ "$(date -d "${completed}" +%s)" -lt "$(date -d '7 days ago' +%s)" ]; then
-                      echo "Deleting PipelineRun ${ns}/${name} (completed: ${completed})"
-                      kubectl delete pipelinerun "${name}" -n "${ns}" --wait=false
-                    fi
-                  done
-
-                  # Delete orphaned TaskRuns older than 7 days
-                  echo "Cleaning up orphaned TaskRuns..."
-                  kubectl get taskruns -A \
-                    -o jsonpath='{range .items[?(@.status.completionTime)]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.status.completionTime}{"\n"}{end}' | \
-                  while IFS=$'\t' read -r ns name completed; do
-                    if [ "$(date -d "${completed}" +%s)" -lt "$(date -d '7 days ago' +%s)" ]; then
-                      echo "Deleting TaskRun ${ns}/${name} (completed: ${completed})"
-                      kubectl delete taskrun "${name}" -n "${ns}" --wait=false
-                    fi
-                  done
-
-                  # Clean up completed Pods from Tekton builds
-                  echo "Cleaning up completed build Pods..."
-                  kubectl delete pods -A \
-                    -l app.kubernetes.io/managed-by=tekton-pipelines \
-                    --field-selector=status.phase=Succeeded \
-                    --wait=false || true
-
-                  echo "Cleanup complete"
-              resources:
-                requests: { cpu: "100m", memory: "128Mi" }
-                limits:   { cpu: "500m", memory: "256Mi" }
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: tekton-cleanup-sa
-  namespace: tekton-pipelines
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: tekton-cleanup
-rules:
-  - apiGroups: ["tekton.dev"]
-    resources: ["pipelineruns", "taskruns"]
-    verbs: ["get", "list", "delete"]
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "delete"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: tekton-cleanup
-subjects:
-  - kind: ServiceAccount
-    name: tekton-cleanup-sa
-    namespace: tekton-pipelines
-roleRef:
-  kind: ClusterRole
-  name: tekton-cleanup
-  apiGroup: rbac.authorization.k8s.io
-```
-
-### 8.2 Resource 管理
-
-为 Tekton controllers 和 build Pods 配置 resource requests 与 limits：
-
-```yaml
-# tekton-controller-resources.yaml
-# Patch the Tekton controller deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: tekton-pipelines-controller
-  namespace: tekton-pipelines
-spec:
-  template:
-    spec:
-      containers:
-        - name: tekton-pipelines-controller
-          resources:
-            requests:
-              cpu: "200m"
-              memory: "256Mi"
-            limits:
-              cpu: "1000m"
-              memory: "1Gi"
-```
-
-使用 LimitRange 为 TaskRun Pods 设置默认 resource limits：
-
-```yaml
-# tekton-builds-limitrange.yaml
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: tekton-build-limits
-  namespace: tekton-builds
-spec:
-  limits:
-    - type: Container
-      default:
-        cpu: "500m"
-        memory: "512Mi"
-      defaultRequest:
-        cpu: "100m"
-        memory: "128Mi"
-      max:
-        cpu: "4"
-        memory: "8Gi"
-    - type: PersistentVolumeClaim
-      max:
-        storage: "20Gi"
-```
-
-设置 ResourceQuota 以限制总构建资源消耗：
-
-```yaml
-# tekton-builds-quota.yaml
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: tekton-build-quota
-  namespace: tekton-builds
-spec:
-  hard:
-    requests.cpu: "16"
-    requests.memory: "32Gi"
-    limits.cpu: "32"
-    limits.memory: "64Gi"
-    persistentvolumeclaims: "20"
-    pods: "50"
-```
-
-### 8.3 使用 Prometheus 监控
-
-Tekton 在 controller 的 `:9090/metrics` endpoint 暴露 Prometheus metrics。配置 ServiceMonitor 进行抓取：
-
-```yaml
-# tekton-servicemonitor.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: tekton-pipelines
-  namespace: monitoring
+  namespace: observability
   labels:
     release: prometheus
 spec:
   namespaceSelector:
-    matchNames:
-      - tekton-pipelines
+    matchNames: [tekton-pipelines]
   selector:
     matchLabels:
       app.kubernetes.io/component: controller
       app.kubernetes.io/part-of: tekton-pipelines
   endpoints:
-    - port: metrics
-      interval: 30s
+    - port: http-metrics
       path: /metrics
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: tekton-triggers
-  namespace: monitoring
-  labels:
-    release: prometheus
-spec:
-  namespaceSelector:
-    matchNames:
-      - tekton-pipelines
-  selector:
-    matchLabels:
-      app.kubernetes.io/component: controller
-      app.kubernetes.io/part-of: tekton-triggers
-  endpoints:
-    - port: metrics
       interval: 30s
+      honorLabels: true
 ```
 
-需要监控的关键 Tekton metrics：
-
-| Metric | 描述 | 告警阈值 |
-|--------|-------------|-----------------|
-| `tekton_pipelines_controller_pipelinerun_duration_seconds` | PipelineRun 执行时长 | > 30 分钟 |
-| `tekton_pipelines_controller_pipelinerun_count` | 按 status 统计的 PipelineRun 总数 | 高失败率 |
-| `tekton_pipelines_controller_taskrun_duration_seconds` | TaskRun 执行时长 | > 15 分钟 |
-| `tekton_pipelines_controller_taskrun_count` | 按 status 统计的 TaskRun 总数 | 高失败率 |
-| `tekton_pipelines_controller_running_pipelineruns_count` | 当前运行中的 PipelineRuns | > 20 并发 |
-| `tekton_pipelines_controller_client_latency` | API server 请求延迟 | > 5 秒 |
-| `tekton_triggers_eventlistener_event_count` | 传入 webhook events | 降至 0（表示 webhook 失败） |
-
-用于告警的 PrometheusRule：
+**`monitoring-rules.yaml`**
 
 ```yaml
-# tekton-alerts.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: tekton-pipelines-alerts
-  namespace: monitoring
-  labels:
-    release: prometheus
-spec:
-  groups:
-    - name: tekton-pipelines
-      interval: 60s
-      rules:
-        - alert: TektonPipelineRunHighFailureRate
-          expr: |
-            (
-              sum(rate(tekton_pipelines_controller_pipelinerun_count{status="failed"}[1h]))
-              /
-              sum(rate(tekton_pipelines_controller_pipelinerun_count[1h]))
-            ) > 0.3
-          for: 15m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High PipelineRun failure rate (> 30%)"
-            description: "More than 30% of PipelineRuns have failed in the last hour."
-
-        - alert: TektonPipelineRunStuck
-          expr: |
-            tekton_pipelines_controller_running_pipelineruns_count > 0
-            and
-            tekton_pipelines_controller_pipelinerun_duration_seconds{status="running"} > 3600
-          for: 10m
-          labels:
-            severity: critical
-          annotations:
-            summary: "PipelineRun stuck for over 1 hour"
-            description: "A PipelineRun has been running for more than 1 hour and may be stuck."
-
-        - alert: TektonControllerDown
-          expr: |
-            absent(up{job="tekton-pipelines-controller"} == 1)
-          for: 5m
-          labels:
-            severity: critical
-          annotations:
-            summary: "Tekton Pipelines controller is down"
-            description: "The Tekton Pipelines controller has been unreachable for 5 minutes."
-
-        - alert: TektonWebhookEventsDropped
-          expr: |
-            rate(tekton_triggers_eventlistener_event_count[5m]) == 0
-            and
-            tekton_triggers_eventlistener_event_count > 0
-          for: 30m
-          labels:
-            severity: warning
-          annotations:
-            summary: "No webhook events received for 30 minutes"
-            description: "The Tekton EventListener has not received any events. Verify webhook configuration."
+groups:
+  - name: tekton-ci
+    rules:
+      - record: tekton:completed_duration_seconds:mean1h
+        expr: |
+          sum(rate(tekton_pipelines_controller_pipelinerun_duration_seconds_sum[1h]))
+          /
+          sum(rate(tekton_pipelines_controller_pipelinerun_duration_seconds_count[1h]))
+      - alert: TektonCompletedRunFailureRatio
+        expr: |
+          (
+            sum(increase(tekton_pipelines_controller_pipelinerun_total{status="failed"}[1h]))
+            /
+            sum(increase(tekton_pipelines_controller_pipelinerun_total{status=~"success|failed"}[1h]))
+            > 0.30
+          )
+          and
+          (
+            sum(increase(tekton_pipelines_controller_pipelinerun_total{status=~"success|failed"}[1h])) >= 10
+          )
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 30% failed among at least 10 completed non-cancelled CI runs"
+      - alert: TektonControllerMetricsUnavailable
+        expr: |
+          absent(up{namespace="tekton-pipelines",service="tekton-pipelines-controller",endpoint="http-metrics"} == 1)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No healthy scrape target for the Tekton controller"
 ```
 
-### 8.4 日志管理
+文件使用普通 Prometheus 规则格式；使用 Operator 时放入 `PrometheusRule.spec`。当前完成计数使用 `pipelinerun_total`；活动计数使用 `running_pipelineruns`。计数器状态为 `success`、`failed` 和 `cancelled`，且计数器无命名空间标签。此示例比较集群范围成功/失败，排除取消。
 
-将 Tekton build logs 转发到集中式日志系统：
+通过**直方图 sum 总和除以 count 总和**计算平均持续时间。对各序列平均值求平均不是总体平均值。带 `status=running` 的已完成持续时间指标不提供活动运行的已逝时长。检查实际 Run startTime、条件和 Pod 状态。
 
-```yaml
-# fluentbit-tekton-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-tekton
-  namespace: logging
-data:
-  tekton-pipelines.conf: |
-    [INPUT]
-        Name              tail
-        Tag               tekton.*
-        Path              /var/log/containers/*tekton-pipelines*.log
-        Parser            docker
-        DB                /var/log/flb_tekton.db
-        Mem_Buf_Limit     5MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
-
-    [FILTER]
-        Name              kubernetes
-        Match             tekton.*
-        Kube_URL          https://kubernetes.default.svc:443
-        Kube_Tag_Prefix   tekton.var.log.containers.
-        Merge_Log         On
-        Keep_Log          Off
-        K8S-Logging.Parser On
-
-    [FILTER]
-        Name              modify
-        Match             tekton.*
-        Add               log_source tekton-pipelines
-
-    [OUTPUT]
-        Name              opensearch
-        Match             tekton.*
-        Host              opensearch.logging.svc
-        Port              9200
-        Index             tekton-logs
-        Type              _doc
-        Logstash_Format   On
-        Logstash_Prefix   tekton
-        Retry_Limit       5
-```
-
-### 8.5 故障排查指南
-
-| 症状 | 可能原因 | 解决方法 |
-|---------|---------------|------------|
-| PipelineRun 卡在 `Running` | Pod 调度失败或 Step 挂起 | 检查 TaskRun Pod 的 `kubectl describe pod`；查找 resource quota 耗尽或 node affinity 问题 |
-| TaskRun 因 `ImagePullBackOff` 失败 | image reference 不正确或缺少 registry credentials | 验证 image URL，并确认 ServiceAccount 有 imagePullSecrets 或 IRSA annotation |
-| Workspace volume 未挂载 | PVC provisioning 失败或缺少 StorageClass | 在 build namespace 中检查 `kubectl get pvc`；验证 StorageClass 存在且容量可用 |
-| EventListener 未收到事件 | Webhook URL 配置错误或 Ingress 问题 | 验证 Ingress 健康；检查 EventListener Pod 的 `kubectl logs`；使用 `curl -X POST` 测试 |
-| Chains 未签名 images | Chains controller 未配置或缺少 signing key | 检查 `kubectl logs -n tekton-chains`；验证 `signing-secrets` Secret 存在；检查 `chains-config` ConfigMap |
-| Results 过大 | Result 超过 4096-byte 限制 | 使用 Workspaces 而不是 Results 在 Tasks 之间传递大数据 |
-| Build 磁盘耗尽 | Workspace PVC 对 build cache 来说太小 | 增加 PipelineRun workspace volumeClaimTemplate 中的 PVC 大小 |
-| Parallel Tasks 成为瓶颈 | 过多并发 PipelineRuns 超出 node capacity | 设置 ResourceQuota limits；使用 PriorityClasses 确保关键 builds 优先调度 |
-
-常用调试命令：
+### 8.3 故障排除和日志
 
 ```bash
-# View PipelineRun status and conditions
-kubectl get pipelinerun <name> -n tekton-builds -o yaml | \
-  yq '.status.conditions'
-
-# View TaskRun logs (all steps)
-kubectl logs -n tekton-builds \
-  -l tekton.dev/pipelineRun=<pipelinerun-name> \
-  --all-containers --timestamps
-
-# View specific Step logs
-kubectl logs -n tekton-builds <taskrun-pod-name> -c step-<step-name>
-
-# List all running PipelineRuns
-kubectl get pipelineruns -A --field-selector=status.conditions[0].reason=Running
-
-# Describe a failed TaskRun for error details
-kubectl describe taskrun <name> -n tekton-builds
-
-# Check Tekton controller logs for reconciliation errors
-kubectl logs -n tekton-pipelines deployment/tekton-pipelines-controller \
-  --tail=100 --since=10m
-
-# Check Chains controller logs
-kubectl logs -n tekton-chains deployment/tekton-chains-controller \
-  --tail=50 --since=10m
-
-# Verify EventListener is healthy
-kubectl get eventlisteners -n tekton-builds
-kubectl logs -n tekton-builds -l eventlistener=github-listener --tail=50
+tkn pipelinerun describe "$DOCS_RUN" -n tekton-builds
+tkn pipelinerun logs "$DOCS_RUN" -n tekton-builds --log-failed
+tkn pipelinerun logs "$DOCS_RUN" -n tekton-builds --task build
+kubectl -n tekton-builds get pipelinerun "$DOCS_RUN" -o yaml
+kubectl -n tekton-builds describe pod -l "tekton.dev/pipelineRun=$DOCS_RUN"
+kubectl -n tekton-pipelines logs deployment/tekton-pipelines-controller --tail=100
+kubectl -n tekton-chains logs deployment/tekton-chains-controller --tail=100
 ```
 
----
+`--last` 选择最近运行，不是最近失败运行。从 JSON 读取条件，不使用不受支持的 CRD 条件字段选择器。查询 Loki/Alloy 实际采集的命名空间和 PipelineRun 标签。仅采集控制器命名空间文件会遗漏在 `tekton-builds` 运行的构建。
 
-## 9. 最佳实践
+对于 Pending Pod，检查配额、节点、PVC 和调度事件。在 YAML 中将 gp3 RWO 改为 RWX，不会让其像 EFS 一样工作。更长超时不能修复过大 Result、权限、缺失 Task 或缺失工具。
 
-### 9.1 Task 复用模式
+## 9. 复用和运维选择
 
-1. **保持 Tasks 小而专注。** 一个 Task 应该只把一件事做好（clone、build、scan、deploy）。避免将 build、test 和 deploy 合并到一个 500 行 script 中的单体 Tasks。小 Tasks 可在 Pipelines 之间复用，并且更容易调试。
-
-2. **对所有内容参数化。** 对 image versions、flags、thresholds 和 paths 使用 params。这使 Tasks 无需修改即可跨项目复用。
-
-3. **将内部 Tasks 发布到共享 namespace。** 为组织级可复用 Tasks 创建 `tekton-catalog` namespace。团队按名称引用它们，而不是复制 YAML。
-
-4. **固定 Step 中的 image tags。** 永远不要在 Step images 中使用 `latest` tags。固定到具体版本（例如 `golang:1.22.4`、`kaniko:v1.23.2`），以确保可复现 builds。
-
-5. **使用 Results 传递轻量数据。** 通过 Results 传递 commit SHAs、image tags 和 status flags。对 source code 和 build artifacts 等大数据使用 Workspaces。
-
-### 9.2 安全
-
-1. **使用 IRSA 而不是长期凭证。** 永远不要将 AWS access keys 存储为 Kubernetes Secrets。对 ECR、S3 和 KMS 访问使用带 IRSA annotation 的 ServiceAccounts。
-
-2. **尽可能以非 root 运行 build containers。** 在 Task stepTemplate 中设置 `securityContext.runAsNonRoot: true`。Kaniko 需要 root，但大多数其他 Steps 不需要。
-
-3. **隔离 build namespaces。** 在专用 namespace 中运行 Tekton builds，并使用 NetworkPolicies 将 egress 限制为仅必要 registries 和 APIs。
-
-4. **定期轮换 webhook secrets。** 使用 CronJob 或 external secret manager 轮换 GitHub/GitLab webhook secrets，并更新对应的 Kubernetes Secrets。
-
-5. **为所有生产 builds 启用 Tekton Chains。** 供应链安全不是可选项。部署到生产环境的每个 image 都应具有可验证的 signature 和 SLSA provenance。
-
-```yaml
-# network-policy-tekton-builds.yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: tekton-builds-egress
-  namespace: tekton-builds
-spec:
-  podSelector: {}
-  policyTypes:
-    - Egress
-  egress:
-    # Allow DNS
-    - to: []
-      ports:
-        - protocol: UDP
-          port: 53
-        - protocol: TCP
-          port: 53
-    # Allow HTTPS to ECR, GitHub, and package registries
-    - to: []
-      ports:
-        - protocol: TCP
-          port: 443
-    # Allow access to Kubernetes API server
-    - to:
-        - ipBlock:
-            cidr: 172.20.0.1/32  # Adjust to your cluster API server IP
-      ports:
-        - protocol: TCP
-          port: 443
-```
-
-### 9.3 性能优化
-
-1. **为 Go modules、npm packages 和 Maven repositories 使用 Workspace caching。** 由 PVCs 支撑的持久 Workspaces 可以避免每次 build 都重新下载依赖。
-
-```yaml
-# Reusable PVC for Go module cache
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: go-module-cache
-  namespace: tekton-builds
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  storageClassName: gp3
-```
-
-2. **启用 Kaniko layer caching。** 使用 ECR repository 作为 layer cache，以加速多阶段 Docker builds：
-
-```yaml
-# In the kaniko build step args
-- --cache=true
-- --cache-repo=123456789012.dkr.ecr.us-east-1.amazonaws.com/kaniko-cache
-- --cache-ttl=168h  # 7 days
-```
-
-3. **禁用 affinity assistant。** affinity assistant 会确保 Workspace PVCs 与 Pods 位于同一位置，但它会限制并行性。使用 `ReadWriteMany` PVCs 或 `emptyDir` workspaces 时，请禁用它：
-
-```yaml
-# In feature-flags ConfigMap
-disable-affinity-assistant: "true"
-```
-
-4. **为 build workloads 使用 node selectors。** 将 build Pods 调度到具有快速本地存储和高 CPU 的专用 node groups：
-
-```yaml
-# In PipelineRun taskRunTemplate
-taskRunTemplate:
-  podTemplate:
-    nodeSelector:
-      node-role.kubernetes.io/build: "true"
-    tolerations:
-      - key: "build-workload"
-        operator: "Equal"
-        value: "true"
-        effect: "NoSchedule"
-```
-
-5. **设置严格 timeouts。** 防止失控 builds 无限期消耗资源。设置 Pipeline-level、Task-level 和 finally-block timeouts。
-
-### 9.4 成本优化
-
-1. **为 build nodes 使用 Spot instances。** Build workloads 天然可中断。使用 Karpenter 和仅 Spot 的 NodePool 来承载 build Pods：
-
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: tekton-builds
-spec:
-  template:
-    spec:
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values: ["m6i.xlarge", "m6a.xlarge", "m5.xlarge"]
-      taints:
-        - key: build-workload
-          value: "true"
-          effect: NoSchedule
-  limits:
-    cpu: "64"
-    memory: "128Gi"
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 30s
-```
-
-2. **将 build 基础设施扩缩到零。** 当没有活动 PipelineRuns 时，Karpenter 会 drain 并终止 build nodes。空闲期间计算成本为零。
-
-3. **积极清理 PVCs。** 在 PipelineRuns 中使用 `volumeClaimTemplate`，而不是预置 PVCs。PipelineRun 被垃圾回收时，PVC 会自动删除。
-
-4. **合理调整 Step resource requests。** 分析你的 builds，并设置准确的 CPU/memory requests。过度配置的 build containers 会浪费 node resources。
-
----
+- **Sidecar**：使用数据库就绪和真实连接检查。休眠不是就绪证据。检查安装版本的原生 Sidecar 功能设置和终止行为。
+- **StepAction**：功能在 1.16 稳定，但该版本存储 API 仍为 `tekton.dev/v1beta1`。将实际工具、凭证和结果路径连接到使用它的 Task。
+- **目录**：Hub 服务弃用与 CLI 内部化不同。tkn 0.46 的 Hub 命令不保证服务长期可用。以固定提交或已验证 OCI bundle 摘要管理获准定义，并限制解析器访问。
+- **网络**：NetworkPolicy `to: []` 配合 TCP 443 允许该端口访问所有目的地；不是 ECR/GitHub 域名允许列表。通过实际 CNI/代理/VPC 设计限制所需 DNS、STS/ECR/S3、仓库和 API 路径。
+- **Spot 和成本**：Karpenter 使用 `karpenter.sh/capacity-type: spot`；EKS 托管节点组使用实际 `eks.amazonaws.com/capacityType` 标签。考虑中断、重试、配额和存储。没有运行中的构建 Pod 不意味着总成本为零。
+- **缓存**：测量工作负载专属复用。不要承诺普遍 40–60% 提升。不同信任级别不得共享可写缓存。
 
 ## 10. 参考资料
 
-### 外部参考
-
-- [Tekton Documentation](https://tekton.dev/docs/) - 官方 Tekton 项目文档
-- [Tekton Hub](https://hub.tekton.dev/) - 可复用 Tasks 和 Pipelines 的 catalog
-- [Tekton Chains Documentation](https://tekton.dev/docs/chains/) - 使用 Tekton 实现供应链安全
-- [SLSA Framework](https://slsa.dev/) - Supply-chain Levels for Software Artifacts
-- [Sigstore / Cosign](https://docs.sigstore.dev/) - Container image signing 与 verification
-- [CD Foundation](https://cd.foundation/) - Continuous Delivery Foundation（Tekton 的归属组织）
-- [Kaniko](https://github.com/GoogleContainerTools/kaniko) - 无需 Docker daemon 的 container image builds
-- [in-toto Attestation Framework](https://in-toto.io/) - 软件供应链 attestation
-
-### 内部参考
-
-- [CI Pipelines (GitLab Runner, GitHub Actions on EKS)](./03-ci-pipelines.md) - 基于 EKS 的 CI runner 基础设施
-- [ArgoCD Installation](../gitops/argocd/01-installation.md) - ArgoCD 设置与配置
-- [Image Security](../security/07-image-security.md) - Container image scanning、signing 和 admission policies
-- [GitOps Multi-Cluster](./04-gitops-multi-cluster.md) - 使用 ArgoCD 进行多 cluster deployment
-- [Secrets Management](../security/05-secrets-management.md) - Kubernetes secret 处理最佳实践
-- [Kyverno Policy Management](../security/01-kyverno-policy-management.md) - Kubernetes 的策略执行
+- [Pipelines 1.16.0](https://github.com/tektoncd/pipeline/releases/tag/v1.16.0)
+- [Triggers 0.37.0](https://github.com/tektoncd/triggers/releases/tag/v0.37.0)
+- [Chains 0.29.0](https://github.com/tektoncd/chains/releases/tag/v0.29.0)
+- [Dashboard 0.72.0](https://github.com/tektoncd/dashboard/releases/tag/v0.72.0)
+- [Pipelines 安全模型](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/security/README.md)
+- [亲和性和 PVC 生命周期](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/affinityassistants.md)
+- [Pipelines 指标](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/metrics.md)
+- [Chains 配置](https://github.com/tektoncd/chains/blob/v0.29.0/docs/config.md)
+- [SLSA 格式器和类型提示](https://github.com/tektoncd/chains/blob/v0.29.0/docs/slsa-provenance.md)
+- [BuildKit rootless 要求](https://github.com/moby/buildkit/blob/v0.33.0/docs/rootless.md)
+- [Cosign 3.1.3](https://github.com/sigstore/cosign/releases/tag/v3.1.3)
+- [CI 基础设施](./03-ci-pipelines.md)
+- [GitOps 多集群](./04-gitops-multi-cluster.md)
+- [可观测性技术栈](./09-observability-stack.md)

@@ -1,424 +1,120 @@
 # Seguridad de Linkerd
 
-> **Versiones compatibles**: Linkerd 2.16+
-> **Última actualización**: February 22, 2026
+> **Última actualización**: September 11, 2026 · Linkerd edge-26.9.1 · Ejemplos de cert-manager comprobados con 1.21.1
 
-## Descripción general
-
-Linkerd considera la seguridad un valor fundamental y aplica mTLS automáticamente sin ninguna configuración. Este documento proporciona explicaciones detalladas sobre mTLS automático, el sistema de identidad de workload, las políticas de autorización, la gestión de certificados y la integración con CA externas.
+Linkerd proporciona autenticación de cargas de trabajo, cifrado de transporte y autorización entrante para el tráfico gestionado por sus proxies. La incorporación, las políticas, el ciclo de vida de los certificados y la seguridad de la aplicación siguen necesitando un diseño explícito. Utilice la combinación compatible de Kubernetes/Gateway API de la [guía de instalación](01-installation.md); los ejemplos de aquí presuponen esa instalación y cargas de trabajo de aplicaciones existentes.
 
 ## Arquitectura de seguridad
 
-```mermaid
-graph TB
-    subgraph "Security Components"
-        subgraph "Control Plane"
-            ID[Identity Controller<br/>Certificate Issuance]
-            POL[Policy Controller<br/>Authorization Policies]
-        end
+![Cadena lógica de firma y funciones del plano de control. La raíz firma un emisor; el servicio Identity utiliza ese emisor para firmar certificados de cargas de trabajo. El dibujo no implica que la clave privada de la raíz deba almacenarse en el clúster.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-0.png)
 
-        subgraph "Data Plane"
-            P1[Proxy 1<br/>mTLS Termination]
-            P2[Proxy 2<br/>mTLS Termination]
-        end
-    end
-
-    subgraph "Certificate Chain"
-        TA[Trust Anchor<br/>Root CA]
-        II[Identity Issuer<br/>Intermediate CA]
-        WC[Workload Certs<br/>Per Proxy]
-    end
-
-    TA --> II
-    II --> WC
-    ID --> P1
-    ID --> P2
-    POL --> P1
-    POL --> P2
-    P1 <-->|mTLS| P2
-```
+[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-04-security-0.html)
 
 ## mTLS automático
 
-La funcionalidad de seguridad más potente de Linkerd cifra automáticamente todo el tráfico de la malla sin ninguna configuración.
+Linkerd utiliza automáticamente mTLS para tráfico TCP apto entre Pods de la malla. Ambos proxies deben participar, confiar en la cadena de certificados y recibir el tráfico. Los puertos omitidos eluden el proxy; UDP queda fuera de este mecanismo TCP. El tráfico hacia o desde endpoints ajenos a la malla no adquiere mTLS de Linkerd simplemente porque un endpoint tenga un proxy.
 
-### Cómo funciona mTLS
+Para una aplicación que habla HTTP sin cifrar, el proxy saliente autentica al proxy de destino y cifra el salto de red; el proxy receptor autentica al cliente y reenvía HTTP a su aplicación local. El TLS originado en la aplicación puede permanecer cifrado a través de la malla: Linkerd no descifra automáticamente todos los flujos TLS externos u opacos.
 
-```mermaid
-sequenceDiagram
-    participant App1 as Application A
-    participant P1 as Proxy A
-    participant P2 as Proxy B
-    participant App2 as Application B
+| Propiedad | Significado y límite |
+|---|---|
+| Cifrado transparente | No se requiere una implementación TLS de la aplicación para el salto apto entre proxies |
+| Autenticación mutua | Los proxies autentican identidades de cargas de trabajo, no usuarios finales |
+| TLS 1.3 | Protocolo TLS de la malla de la versión seleccionada |
+| Renovación automática de certificados finales | Los proxies normalmente renuevan sus certificados de cargas de trabajo de corta duración |
+| Ciclo de vida de raíz/emisor | Credenciales separadas que siguen necesitando rotación y monitorización |
 
-    App1->>P1: Plain HTTP
-    Note over P1: Check if destination is in mesh
-    P1->>P1: Initialize TLS with certificate
-    P1->>P2: mTLS Handshake
-    Note over P1,P2: Mutual SPIFFE ID verification
-    P1->>P2: Encrypted Request
-    P2->>P2: TLS Termination
-    P2->>App2: Plain HTTP
-    App2-->>P2: Plain HTTP Response
-    P2-->>P1: Encrypted Response
-    P1-->>App1: Plain HTTP Response
-```
+De forma predeterminada, Linkerd acepta texto sin cifrar de orígenes ajenos a la malla. Las políticas de autorización pueden rechazarlo. Por tanto, «mTLS habilitado» es distinto de «todo acceso entrante requiere una identidad autenticada de la malla». Las políticas de red y los controles de admisión también deben cubrir las rutas que eluden u omiten el proxy.
 
-### Características de mTLS
-
-| Característica | Descripción |
-|----------------|-------------|
-| Configuración cero | Se habilita automáticamente sin ninguna configuración |
-| Cifrado transparente | No se requieren cambios en el código de la aplicación |
-| Autenticación mutua | Se autentican tanto el cliente como el servidor |
-| Renovación automática | Renovación automática de certificados antes de su vencimiento |
-| TLS 1.3 | Utiliza el protocolo TLS más reciente |
-
-### Comprobación del estado de mTLS
+### Observar el cifrado y la identidad
 
 ```bash
-# Check mesh traffic encryption status
-linkerd viz edges deploy -n my-app
-
-# Expected output:
-# SRC          DST          SRC_NS    DST_NS    SECURED
-# web          api          my-app    my-app    √
-# api          database     my-app    my-app    √
-# ingress      web          ingress   my-app    √
-
-# Check individual connection status
-linkerd viz tap deploy/web -n my-app
-
-# TLS status is displayed:
-# req id=0:0 proxy=out src=10.0.0.1:54321 dst=10.0.0.2:80 tls=true :method=GET :path=/api
+linkerd check --proxy
+linkerd viz edges deploy -n production
+linkerd viz tap deploy/api -n production --method GET
+linkerd identity -n production -l app=api
+kubectl -n production get pods -l app=api \
+  -o custom-columns=NAME:.metadata.name,SERVICEACCOUNT:.spec.serviceAccountName
 ```
 
-### Manejo del tráfico ajeno a la malla
+`viz edges` informa de las aristas observadas entre recursos y su estado de seguridad; no es un inventario de todas las conexiones posibles o inactivas. `tap` muestra tráfico observado compatible, no una auditoría completa de paquetes/seguridad. Su visualización no es la misma interfaz que los valores de etiquetas TLS de Prometheus. Compruebe tanto el tráfico aceptado como el denegado deliberadamente desde las identidades de cliente previstas.
 
-```mermaid
-graph LR
-    subgraph "External"
-        EXT[External Client<br/>Outside Mesh]
-    end
+`linkerd identity` recupera certificados públicos de Pods seleccionados mediante reenvío de puertos. Inspeccione sus SAN, emisor y validez. Esto evita suponer que un certificado final emitido está disponible en una ruta de archivo fija dentro de la imagen del proxy.
 
-    subgraph "Mesh"
-        P1[Proxy<br/>Inside Mesh]
-        APP[Application]
-    end
+## Identidad de cargas de trabajo
 
-    EXT -->|Plain HTTP| P1
-    P1 -->|Plain HTTP| APP
+Para la ruta estándar de identidad de Kubernetes, Linkerd utiliza esta identidad con formato DNS:
 
-    style EXT fill:#ffcdd2
-    style P1 fill:#c8e6c9
+```text
+<service-account>.<namespace>.serviceaccount.identity.<control-plane-namespace>.<trust-domain>
+
+web.production.serviceaccount.identity.linkerd.cluster.local
+api.production.serviceaccount.identity.linkerd.cluster.local
 ```
 
-El tráfico desde fuera de la malla se detecta automáticamente y se procesa como texto sin formato:
+Los ejemplos utilizan el espacio de nombres del plano de control `linkerd` y el dominio de confianza `cluster.local`. El nombre común del certificado raíz no es en sí el ajuste de dominio de confianza de la carga de trabajo. Esto no es la URI de estilo Istio `spiffe://.../ns/.../sa/...` mostrada anteriormente aquí. Varios Pods con el mismo ServiceAccount comparten una identidad de autorización, aunque sus claves privadas/certificados son independientes.
 
-```bash
-# Check non-mesh traffic
-linkerd viz tap deploy/web -n my-app --method GET
+El proxy genera su clave y CSR, y envía el CSR con su token proyectado de ServiceAccount a Identity. Identity valida el token mediante TokenReview de Kubernetes, comprueba la identidad solicitada y firma con la clave **del emisor**. La raíz firma el emisor; no firma cada solicitud del proxy. La clave privada no se deriva del token de ServiceAccount.
 
-# tls=false indicates traffic from outside mesh
-# req id=0:0 proxy=in src=10.0.1.100:54321 dst=10.0.0.2:80 tls=false
-```
+Los certificados predeterminados de cargas de trabajo duran unas 24 horas y se renuevan antes de caducar. Una solicitud de certificado no genera un ServiceAccount de Kubernetes nuevo y una renovación no demuestra que todas las claves roten en cada actualización. Consulte la [guía de arquitectura](02-architecture.md) para el ciclo de vida.
 
-## Sistema de identidad de workload
+## Políticas de autorización
 
-Linkerd utiliza un sistema de identidad compatible con SPIFFE para asignar identidades únicas a cada workload.
+Estos recursos pertenecen a la API `policy.linkerd.io` de Linkerd. `AuthorizationPolicy` no es un recurso de Gateway API; se introdujo en Linkerd 2.12. Puede dirigirse a rutas que utilizan definiciones de Gateway API.
 
-### Formato de ID SPIFFE
+| Recurso | Función |
+|---|---|
+| Server | Selecciona un puerto entrante declarado en Pods coincidentes de su espacio de nombres |
+| HTTPRoute/GRPCRoute asociado a Server | Selecciona un subconjunto de solicitudes entrantes |
+| MeshTLSAuthentication | Describe las identidades de malla permitidas |
+| NetworkAuthentication | Describe las redes IP de clientes permitidas; no proporciona mTLS |
+| AuthorizationPolicy | Concede acceso a un destino cuando coinciden sus requisitos de autenticación |
+| ServerAuthorization | Concesión anterior solo para Server; compatible como `v1beta1` en los CRD seleccionados |
 
-```
-spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
+`ServerAuthorization` y `AuthorizationPolicy` son mecanismos de concesión alternativos, no una canalización secuencial. Varias concesiones pueden ampliar el acceso; varias `requiredAuthenticationRefs` dentro de una AuthorizationPolicy deben coincidir **todas**. Una AuthorizationPolicy dirigida a un espacio de nombres cubre destinos de políticas definidos en ese espacio de nombres, no una política automática para cada puerto no declarado.
 
-# Examples:
-spiffe://root.linkerd.cluster.local/ns/production/sa/web-server
-spiffe://root.linkerd.cluster.local/ns/production/sa/api-gateway
-spiffe://root.linkerd.cluster.local/ns/database/sa/postgres
-```
+Los Servers no deben seleccionar pares de Pod/puerto superpuestos. Declare el puerto de la aplicación en la especificación del Pod. Un Server deniega de forma predeterminada el tráfico que no coincide incluso si la política predeterminada del espacio de nombres es permisiva. `accessPolicy: audit` puede ayudar a observar tráfico no coincidente durante la preparación, pero lo permite y no aplica una restricción.
 
-### Proceso de emisión de identidad
+### Política predeterminada
 
-```mermaid
-sequenceDiagram
-    participant Pod as Pod/Proxy
-    participant SA as ServiceAccount
-    participant ID as Identity Controller
-    participant CA as Trust Anchor
-
-    Note over Pod: Pod starts
-    Pod->>SA: Obtain ServiceAccount token
-    Pod->>Pod: Generate CSR (with SPIFFE ID)
-    Pod->>ID: Send CSR + SA token
-
-    ID->>ID: Validate SA token
-    ID->>ID: Validate Pod info
-    ID->>ID: Generate SPIFFE ID
-    ID->>CA: Certificate signing request
-    CA-->>ID: Signed certificate
-
-    ID-->>Pod: Workload certificate
-    Note over Pod: Valid for 24 hours
-```
-
-### Verificación de identidad
-
-```bash
-# Check Pod's SPIFFE ID
-kubectl exec -n my-app deploy/web -c linkerd-proxy -- \
-  cat /var/run/linkerd/identity/end-entity.crt | \
-  openssl x509 -noout -text | grep URI
-
-# Example output:
-# URI:spiffe://root.linkerd.cluster.local/ns/my-app/sa/web
-
-# Check issuance in Identity Controller logs
-kubectl logs -n linkerd deploy/linkerd-identity | grep "issued"
-```
-
-## Política de autorización
-
-Linkerd proporciona control de acceso detallado mediante Server, ServerAuthorization y AuthorizationPolicy.
-
-### Modelo de políticas
-
-```mermaid
-graph TB
-    subgraph "Authorization Model"
-        SRV[Server<br/>Define Inbound Port]
-        SA[ServerAuthorization<br/>Define Access Rights]
-        AP[AuthorizationPolicy<br/>Apply Policy]
-    end
-
-    subgraph "Policy Modes"
-        DENY[default-deny<br/>Explicit Allow Only]
-        ALLOW[default-allow<br/>Explicit Deny Only]
-    end
-
-    SRV --> SA
-    SA --> AP
-    AP --> DENY
-    AP --> ALLOW
-```
-
-### Recurso Server
-
-Server define el tráfico entrante para Pods específicos.
+Esta anotación configura proxies recién creados en un espacio de nombres incorporado:
 
 ```yaml
-apiVersion: policy.linkerd.io/v1beta2
-kind: Server
-metadata:
-  name: web-http
-  namespace: production
-spec:
-  # Target Pod selection
-  podSelector:
-    matchLabels:
-      app: web
-
-  # Port specification
-  port: 8080
-  # Or specify by name
-  # port: http
-
-  # Protocol (HTTP/1, HTTP/2, gRPC, opaque)
-  proxyProtocol: HTTP/1
-
----
-# gRPC server
-apiVersion: policy.linkerd.io/v1beta2
-kind: Server
-metadata:
-  name: api-grpc
-  namespace: production
-spec:
-  podSelector:
-    matchLabels:
-      app: api
-  port: 9090
-  proxyProtocol: gRPC
-
----
-# TCP (opaque) server
-apiVersion: policy.linkerd.io/v1beta2
-kind: Server
-metadata:
-  name: database-tcp
-  namespace: database
-spec:
-  podSelector:
-    matchLabels:
-      app: postgres
-  port: 5432
-  proxyProtocol: opaque
-```
-
-### Recurso ServerAuthorization
-
-ServerAuthorization define los derechos de acceso a un Server.
-
-```yaml
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: web-authz
-  namespace: production
-spec:
-  # Target Server
-  server:
-    name: web-http
-
-  # Allowed clients
-  client:
-    # Mesh internal mTLS clients
-    meshTLS:
-      # Allow specific ServiceAccounts only
-      serviceAccounts:
-        - name: api-gateway
-          namespace: production
-        - name: monitoring
-          namespace: monitoring
-
----
-# Allow access from multiple namespaces
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: api-authz
-  namespace: production
-spec:
-  server:
-    name: api-grpc
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: web
-          namespace: production
-        - name: mobile-backend
-          namespace: mobile
-        - name: admin-service
-          namespace: admin
-
----
-# Allow all mesh clients
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: public-api-authz
-  namespace: production
-spec:
-  server:
-    name: public-api
-  client:
-    meshTLS:
-      identities:
-        - "*"  # Allow all mesh IDs
-
----
-# Allow unauthenticated clients (health checks, etc.)
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: health-authz
-  namespace: production
-spec:
-  server:
-    name: health-server
-  client:
-    unauthenticated: true
-```
-
-### AuthorizationPolicy (Gateway API)
-
-Linkerd 2.14+ también admite AuthorizationPolicy de Gateway API.
-
-```yaml
-apiVersion: policy.linkerd.io/v1alpha1
-kind: AuthorizationPolicy
-metadata:
-  name: web-policy
-  namespace: production
-spec:
-  # Target workload
-  targetRef:
-    group: core
-    kind: Namespace
-    name: production
-
-  # Required authentication
-  requiredAuthenticationRefs:
-    - name: mesh-tls
-      kind: MeshTLSAuthentication
-      group: policy.linkerd.io
-
----
-apiVersion: policy.linkerd.io/v1alpha1
-kind: MeshTLSAuthentication
-metadata:
-  name: mesh-tls
-  namespace: production
-spec:
-  # Allowed identities
-  identities:
-    - "spiffe://root.linkerd.cluster.local/ns/production/*"
-    - "spiffe://root.linkerd.cluster.local/ns/monitoring/*"
-```
-
-### Configuración del modo de políticas
-
-#### Denegación predeterminada (recomendado)
-
-Deniegue todo el tráfico de forma predeterminada y permita únicamente el tráfico autorizado explícitamente:
-
-```yaml
-# Apply default-deny to namespace
 apiVersion: v1
 kind: Namespace
 metadata:
   name: production
   annotations:
+    linkerd.io/inject: enabled
     config.linkerd.io/default-inbound-policy: deny
 ```
 
-```bash
-# Or global configuration
-linkerd install --set policyController.defaultPolicy=deny | kubectl apply -f -
+Cambiar la anotación del espacio de nombres no actualiza el valor predeterminado ya inicializado en los proxies existentes. Coordine despliegues específicos por carga de trabajo y verifique la disponibilidad. Los CRD de políticas dinámicas son un mecanismo independiente y pueden actualizar políticas sin sustituir todos los Pods.
 
-# Configure with Helm
-helm install linkerd-control-plane linkerd/linkerd-control-plane \
-  --set policyController.defaultPolicy=deny
-```
-
-#### Permisión predeterminada
-
-Permita todo el tráfico de forma predeterminada (compatible con el comportamiento existente):
+El valor Helm para todo el clúster es `proxy.defaultInboundPolicy`, no `policyController.defaultPolicy`. Combínelo con los valores completos de instalación, conservando la configuración de CA y la responsabilidad de gestión de la versión:
 
 ```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: legacy-app
-  annotations:
-    config.linkerd.io/default-inbound-policy: all-unauthenticated
+proxy:
+  defaultInboundPolicy: deny
 ```
 
-#### Opciones de modo de políticas
+| Valor predeterminado | Significado |
+|---|---|
+| all-unauthenticated | Permite tráfico sin exigir autenticación de malla; valor predeterminado de instalación |
+| all-authenticated | Requiere clientes autenticados de la malla, incluidos clientes multiclúster con confianza apropiada |
+| cluster-authenticated | Requiere clientes autenticados del mismo clúster |
+| cluster-unauthenticated | Permite clientes del ámbito de red del clúster configurado sin exigir autenticación de malla |
+| deny | Deniega tráfico no coincidente, sujeto a políticas explícitas y al tratamiento documentado de sondas |
+| audit | Permite tráfico no coincidente mientras registra evidencia de auditoría |
 
-| Modo | Descripción |
-|------|-------------|
-| `deny` | Deniega todo el tráfico (default-deny) |
-| `all-unauthenticated` | Permite todo el tráfico |
-| `all-authenticated` | Permite únicamente tráfico mTLS de la malla |
-| `cluster-unauthenticated` | Permite tráfico interno del cluster |
-| `cluster-authenticated` | Permite únicamente tráfico mTLS interno del cluster |
+El ámbito de clúster no es una identidad de usuario final ni un límite de autorización de la aplicación. Verifique las redes configuradas y las direcciones de origen visibles en el proxy.
 
-### Ejemplo práctico: política de microservicios
+### Ejemplo de microservicios
+
+Para estos recursos de ejemplo separados, prepare cargas de trabajo frontend/API/PostgreSQL incorporadas a la malla en `production`, con `app: frontend/api/postgres`, los puertos declarados a continuación y sus ServiceAccounts correspondientes. Prepare la carga de trabajo de ingreso incorporada a la malla con ServiceAccount `edge-gateway` en el espacio de nombres `ingress`; ese nombre por sí solo no instala ni autentica un gateway.
 
 ```yaml
-# 1. Frontend - accessible only from ingress
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
   name: frontend-http
@@ -429,25 +125,24 @@ spec:
       app: frontend
   port: 8080
   proxyProtocol: HTTP/1
-
+  accessPolicy: deny
 ---
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
 metadata:
-  name: frontend-authz
+  name: frontend-from-gateway
   namespace: production
 spec:
-  server:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
     name: frontend-http
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: ingress-nginx
-          namespace: ingress-nginx
-
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: edge-gateway
+    namespace: ingress
 ---
-# 2. API Server - accessible only from frontend
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
   name: api-http
@@ -458,25 +153,24 @@ spec:
       app: api
   port: 8080
   proxyProtocol: HTTP/1
-
+  accessPolicy: deny
 ---
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
 metadata:
-  name: api-authz
+  name: api-from-frontend
   namespace: production
 spec:
-  server:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
     name: api-http
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: frontend
-          namespace: production
-
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: frontend
+    namespace: production
 ---
-# 3. Database - accessible only from API server
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
   name: database-tcp
@@ -487,216 +181,167 @@ spec:
       app: postgres
   port: 5432
   proxyProtocol: opaque
-
+  accessPolicy: deny
 ---
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: database-from-api
+  namespace: production
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: database-tcp
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: api
+    namespace: production
+```
+
+La cadena de llamadas prevista es gateway → frontend → API → base de datos. Un nombre de ServiceAccount en YAML no basta: el cliente debe presentar la identidad autenticada de esa cuenta. Verifique que ninguna concesión más amplia de espacio de nombres/Server permita también clientes no deseados.
+
+Linkerd normalmente añade autorizaciones para sondas HTTP de estado/disponibilidad declaradas cuando no hay una ruta explícita asociada al Server. Cuando se asocian recursos HTTPRoute/GRPCRoute, esas concesiones predeterminadas de sondas no se crean; modele explícitamente las rutas de sondas necesarias y su acceso limitado. No conceda acceso sin autenticar a todo un puerto de negocio solo para que una sonda tenga éxito.
+
+Como referencia, esta **concesión heredada alternativa** equivale a la concesión de la API para el cliente frontend. No necesita combinarse con la AuthorizationPolicy anterior:
+
+```yaml
+apiVersion: policy.linkerd.io/v1beta1
 kind: ServerAuthorization
 metadata:
-  name: database-authz
+  name: api-from-frontend-legacy
   namespace: production
 spec:
   server:
-    name: database-tcp
+    name: api-http
   client:
     meshTLS:
       serviceAccounts:
-        - name: api
-          namespace: production
+      - name: frontend
+        namespace: production
+```
 
----
-# 4. Monitoring - Prometheus collects metrics from all services
-apiVersion: policy.linkerd.io/v1beta2
+La versión seleccionada no sirve `ServerAuthorization/v1beta2`; no deduzca la versión de API de un recurso a partir de la versión de Server. `client.unauthenticated:true` permite clientes sin autenticación de malla, mientras que `meshTLS.identities:["*"]` sigue exigiendo una identidad de malla y concede acceso de forma muy amplia.
+
+### Puertos de métricas y verificación
+
+Para un **puerto de métricas de aplicación 9091** declarado explícitamente en el Pod de API, una concesión de ejemplo es:
+
+```yaml
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
-  name: metrics-server
+  name: api-app-metrics
   namespace: production
 spec:
   podSelector:
     matchLabels:
-      linkerd.io/control-plane-ns: linkerd
-  port: 4191
+      app: api
+  port: 9091
   proxyProtocol: HTTP/1
-
+  accessPolicy: deny
 ---
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
 metadata:
-  name: metrics-authz
+  name: metrics-from-prometheus
   namespace: production
 spec:
-  server:
-    name: metrics-server
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: prometheus
-          namespace: monitoring
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: api-app-metrics
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: monitoring
 ```
+
+Esto es distinto del puerto de administración del propio proxy, normalmente **4191**. La configuración de proxy-init excluye los puertos de administración/control de la interceptación entrante ordinaria. Por tanto, un Server en 4191 no convierte ese endpoint en un puerto de aplicación protegido con mTLS. Utilice los controles reales de clúster/red y rutas de acceso restringidas para endpoints de gestión.
+
+```bash
+kubectl -n production get servers,authorizationpolicies,serverauthorizations
+kubectl -n production get server api-http -o yaml
+# Set this to an actual selected API Pod.
+api_pod=api-example-pod
+linkerd diagnostics policy -n production "pod/$api_pod" 8080 -o json
+linkerd viz authz deploy/api -n production
+```
+
+Un rechazo conocido de política HTTP normalmente produce HTTP 403; el tráfico opaco/TCP puede rechazarse a nivel de conexión. Una política modificada puede interrumpir conexiones existentes. Los eventos `Forbidden` de Kubernetes no son un registro automático por solicitud de las denegaciones de autorización del proxy. Utilice diagnósticos de políticas y las métricas de autorización HTTP/TCP apropiadas.
+
 
 ## Gestión de certificados
 
-### Jerarquía de certificados
+| Credencial | Propósito | Consideraciones de gestión predeterminada/manual |
+|---|---|---|
+| Paquete de certificados del ancla de confianza | Raíces públicas aceptadas por la malla | Normalmente ConfigMap `linkerd-identity-trust-roots`, clave `ca-bundle.crt` |
+| Certificado/clave del emisor de identidad | CA intermedia utilizada por Identity para firmar certificados de cargas de trabajo | Secret `linkerd-identity-issuer`; los nombres de las claves dependen del esquema del emisor |
+| Certificado/clave de la carga de trabajo | Credencial TLS por proxy | Certificado final de corta duración, renovado automáticamente por el proxy |
 
-```mermaid
-graph TB
-    subgraph "Certificate Hierarchy"
-        TA[Trust Anchor<br/>Root CA<br/>Validity: 1-10 years]
-        II[Identity Issuer<br/>Intermediate CA<br/>Validity: 1 year]
-        WC1[Workload Cert<br/>Validity: 24 hours]
-        WC2[Workload Cert<br/>Validity: 24 hours]
-    end
+La raíz y el emisor generados de forma predeterminada por la CLI caducan después de un año; los certificados finales de cargas de trabajo normalmente duran 24 horas. Es posible elegir manualmente una raíz de diez años, pero no es una recomendación universal ni el valor predeterminado de instalación. Elija duraciones y antelación de renovación según la política de CA y el proceso de recuperación, y siga todos los certificados de la cadena.
 
-    TA --> II
-    II --> WC1
-    II --> WC2
+Las credenciales de raíz/emisor proporcionadas a Linkerd requieren **ECDSA P-256**. La [guía de instalación](01-installation.md) incluye parámetros explícitos de generación y tratamiento local de claves privadas. Mantenga la clave de firma raíz separada del paquete público de confianza; un ConfigMap público nunca debe contener esa clave.
 
-    style TA fill:#ffeb3b
-    style II fill:#03a9f4
-    style WC1 fill:#4caf50
-    style WC2 fill:#4caf50
-```
-
-### Gestión de Trust Anchor
+### Leer las credenciales públicas efectivas
 
 ```bash
-# Create Trust Anchor (step CLI)
-step certificate create root.linkerd.cluster.local ca.crt ca.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h  # 10 years
+set -euo pipefail
+umask 077
+# Public trust bundle: ConfigMap data is not base64-encoded.
+kubectl -n linkerd get configmap linkerd-identity-trust-roots -o json \
+  | jq -er '.data["ca-bundle.crt"] | select(length > 0)' > current-trust.pem
+# Select only public certificate data from the issuer Secret, never its key.
+kubectl -n linkerd get secret linkerd-identity-issuer -o json \
+  | jq -er '(.data["tls.crt"] // .data["crt.pem"]) | select(length > 0)' \
+  | base64 -d > current-issuer.pem
 
-# Check current Trust Anchor expiration
-kubectl get secret linkerd-identity-trust-roots -n linkerd -o json | \
-  jq -r '.data["ca-bundle.crt"]' | base64 -d | \
-  openssl x509 -noout -enddate
-
-# Store Trust Anchor as Secret
-kubectl create secret generic linkerd-identity-trust-roots \
-  --from-file=ca-bundle.crt=ca.crt \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
+# Show every certificate in a multi-root bundle, not only its first entry.
+openssl crl2pkcs7 -nocrl -certfile current-trust.pem \
+  | openssl pkcs7 -print_certs -text -noout
+openssl x509 -in current-issuer.pem -noout -subject -issuer -dates
+# Nonzero exit means expiration is within this window or parsing failed.
+openssl x509 -in current-issuer.pem -noout -checkend 86400
 ```
 
-### Gestión de Identity Issuer
+Con el esquema predeterminado `linkerd.io/tls`, el Secret del emisor utiliza `crt.pem`/`key.pem`; `kubernetes.io/tls` utiliza `tls.crt`/`tls.key`. El comando selecciona únicamente datos de certificados públicos. Compruebe el esquema configurado y el responsable del recurso antes de cambiar nada.
+
+Inspeccione todas las raíces de un paquete. `openssl x509` por sí solo examina únicamente el primer certificado; no es una auditoría completa de caducidad de varias raíces. Verifique la cadena del emisor respecto a las anclas de confianza previstas, además de las fechas, y proporcione certificados intermedios cuando la cadena los requiera. Un fallo de análisis o lectura de API debe notificarse como fallo, no como «certificado sano».
+
+### Renovación del emisor sin cambiar el ancla de confianza
+
+Actualice el emisor mediante su responsable: valores completos de certificados Helm/CLI para un Secret gestionado por Linkerd, o el controlador de certificados para un Secret gestionado. Identity observa sus archivos de emisor montados, valida la sustitución y recarga un emisor válido; un reinicio general del Deployment Identity no es un paso obligatorio en cada renovación.
 
 ```bash
-# Create Issuer certificate
-step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
-  --profile intermediate-ca \
-  --ca ca.crt \
-  --ca-key ca.key \
-  --no-password \
-  --insecure \
-  --not-after=8760h  # 1 year
-
-# Check Issuer certificate expiration
-kubectl get secret linkerd-identity-issuer -n linkerd -o json | \
-  jq -r '.data["tls.crt"]' | base64 -d | \
-  openssl x509 -noout -enddate
-
-# Update Issuer Secret
-kubectl create secret tls linkerd-identity-issuer \
-  --cert=issuer.crt \
-  --key=issuer.key \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n linkerd get events --field-selector reason=IssuerUpdated
+kubectl -n linkerd get events --field-selector reason=IssuerUpdateSkipped
+kubectl -n linkerd logs deployment/linkerd-identity -c identity --tail=100
+linkerd check --proxy
+linkerd identity -n production -l app=api
 ```
 
-### Rotación de certificados
+`IssuerUpdated` confirma que Identity aceptó una actualización. Investigue `IssuerUpdateSkipped` o los errores de validación. Los certificados finales existentes de los proxies pueden seguir firmados por el emisor anterior hasta su renovación normal; esto es esperable mientras ambas cadenas sigan siendo válidas. Sustituir inmediatamente todos los certificados finales es una operación coordinada de cargas de trabajo independiente.
 
-#### Rotación de Trust Anchor (sin tiempo de inactividad)
+### Rotación del ancla de confianza
 
-```bash
-# 1. Create new Trust Anchor
-step certificate create root.linkerd.cluster.local ca-new.crt ca-new.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h
+Sustituir una raíz necesita una transición por etapas. El procedimiento para una raíz sana no es un método de recuperación garantizado para una raíz que ya ha caducado.
 
-# 2. Create bundle (existing + new)
-cat ca.crt ca-new.crt > ca-bundle.crt
+1. Inventaríe el paquete de raíces activo, la cadena del emisor, los recursos gestionados y todos los consumidores, incluidos proxies del plano de control, cargas de trabajo, cargas de trabajo externas y clústeres vinculados. Confirme la capacidad/disponibilidad para el despliegue previsto.
+2. Genere la nueva raíz y conserve el **paquete público antiguo+nuevo**. Actualice el paquete mediante su responsable real.
+3. Distribuya ese paquete con ambas raíces a todos los consumidores antes de cambiar el emisor. Los proxies reciben la confianza mediante la configuración de instalación/inyección; escribir un ConfigMap por sí solo no demuestra que los procesos existentes lo hayan recargado.
+4. Verifique la distribución mediante `linkerd check --proxy` y comprobaciones de cargas de trabajo/entre clústeres. Después emita y cargue un emisor firmado por la raíz nueva.
+5. Permita o coordine deliberadamente la renovación de certificados finales y verifique que todos los clientes/servidores pertinentes utilicen la cadena nueva. Una espera fija o solo un despliegue exitoso del controlador no bastan.
+6. Elimine la raíz antigua mediante el responsable del paquete, propague el paquete final a todos los consumidores y vuelva a verificar las conexiones y la confianza.
 
-# 3. Update Trust Anchor Secret
-kubectl create secret generic linkerd-identity-trust-roots \
-  --from-file=ca-bundle.crt=ca-bundle.crt \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
+Conserve el material de reversión y monitorice cada etapa. Reinicie únicamente controladores de cargas de trabajo de la malla revisados, con tratamiento apropiado de disponibilidad/interrupciones; un bucle de Deployments de todos los espacios de nombres omite otros tipos de cargas de trabajo y puede interrumpir cargas sin relación. Este documento no afirma que una rotación no probada carezca de interrupciones.
 
-# 4. Reissue Issuer with new Trust Anchor
-step certificate create identity.linkerd.cluster.local issuer-new.crt issuer-new.key \
-  --profile intermediate-ca \
-  --ca ca-new.crt \
-  --ca-key ca-new.key \
-  --no-password \
-  --insecure \
-  --not-after=8760h
+## Gestión externa de certificados
 
-# 5. Update Issuer Secret
-kubectl create secret tls linkerd-identity-issuer \
-  --cert=issuer-new.crt \
-  --key=issuer-new.key \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
+### Renovación del emisor con cert-manager
 
-# 6. Restart Identity Controller
-kubectl rollout restart deploy/linkerd-identity -n linkerd
-
-# 7. Restart all proxies (progressively)
-for ns in $(kubectl get ns -o name | cut -d/ -f2); do
-  kubectl rollout restart deploy -n $ns
-  sleep 30
-done
-
-# 8. Remove old Trust Anchor (after all proxies renewed)
-cp ca-new.crt ca-bundle.crt
-kubectl create secret generic linkerd-identity-trust-roots \
-  --from-file=ca-bundle.crt=ca-bundle.crt \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
-```
-
-#### Supervisión de la rotación automática
-
-```bash
-# Certificate expiration alert script
-#!/bin/bash
-
-DAYS_WARNING=30
-
-# Check Trust Anchor
-TRUST_ANCHOR_EXPIRY=$(kubectl get secret linkerd-identity-trust-roots -n linkerd -o json | \
-  jq -r '.data["ca-bundle.crt"]' | base64 -d | \
-  openssl x509 -noout -enddate | cut -d= -f2)
-
-TRUST_ANCHOR_EPOCH=$(date -d "$TRUST_ANCHOR_EXPIRY" +%s)
-NOW_EPOCH=$(date +%s)
-DAYS_LEFT=$(( (TRUST_ANCHOR_EPOCH - NOW_EPOCH) / 86400 ))
-
-if [ $DAYS_LEFT -lt $DAYS_WARNING ]; then
-  echo "WARNING: Trust Anchor expires in $DAYS_LEFT days"
-fi
-
-# Check Issuer
-ISSUER_EXPIRY=$(kubectl get secret linkerd-identity-issuer -n linkerd -o json | \
-  jq -r '.data["tls.crt"]' | base64 -d | \
-  openssl x509 -noout -enddate | cut -d= -f2)
-
-ISSUER_EPOCH=$(date -d "$ISSUER_EXPIRY" +%s)
-ISSUER_DAYS_LEFT=$(( (ISSUER_EPOCH - NOW_EPOCH) / 86400 ))
-
-if [ $ISSUER_DAYS_LEFT -lt $DAYS_WARNING ]; then
-  echo "WARNING: Identity Issuer expires in $ISSUER_DAYS_LEFT days"
-fi
-```
-
-## Integración con CA externas
-
-### Integración con cert-manager
+Este ejemplo presupone un certificado de CA validado y existente y una clave de firma ECDSA P-256 en el Secret `linkerd-trust-anchor` del espacio de nombres `linkerd`. Un CA Issuer de cert-manager conserva esa clave de firma en el clúster; elija otra integración de CA si no encaja con el modelo de confianza. La versión de cert-manager elegida debe admitir la versión de Kubernetes del clúster.
 
 ```yaml
-# cert-manager Issuer configuration
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -705,56 +350,7 @@ metadata:
 spec:
   ca:
     secretName: linkerd-trust-anchor
-
 ---
-# Automatic Identity Issuer certificate issuance
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: linkerd-identity-issuer
-  namespace: linkerd
-spec:
-  secretName: linkerd-identity-issuer
-  duration: 8760h  # 1 year
-  renewBefore: 720h  # Renew 30 days before
-  issuerRef:
-    name: linkerd-trust-anchor
-    kind: Issuer
-  commonName: identity.linkerd.cluster.local
-  isCA: true
-  privateKey:
-    algorithm: ECDSA
-    size: 256
-  usages:
-    - cert sign
-    - crl sign
-    - server auth
-    - client auth
-```
-
-### Integración con Vault
-
-```yaml
-# Vault PKI configuration
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: vault-issuer
-  namespace: linkerd
-spec:
-  vault:
-    path: pki_int/sign/linkerd-identity
-    server: https://vault.example.com
-    auth:
-      kubernetes:
-        role: linkerd-issuer
-        mountPath: /v1/auth/kubernetes
-        secretRef:
-          name: vault-token
-          key: token
-
----
-# Issue Identity Issuer certificate from Vault
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -765,128 +361,90 @@ spec:
   duration: 8760h
   renewBefore: 720h
   issuerRef:
-    name: vault-issuer
+    name: linkerd-trust-anchor
     kind: Issuer
+    group: cert-manager.io
   commonName: identity.linkerd.cluster.local
   isCA: true
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+  - cert sign
+  - crl sign
+  - server auth
+  - client auth
 ```
 
-### Configuración de Helm para CA externas
+El emisor es una CA porque firma los certificados finales de cargas de trabajo. `rotationPolicy: Always` hace explícita la rotación de claves. Aquí 8760h son 365 días y `renewBefore:720h` significa renovación **30 días antes de la caducidad**, no cada 30 días. Asegúrese de que la CA superior siga siendo válida el tiempo suficiente: el CA Issuer no impone automáticamente todas las restricciones de duración de cadena/longitud de ruta, y actualizar su Secret de CA no vuelve a emitir automáticamente todos los certificados dependientes.
+
+```bash
+kubectl -n linkerd get issuer linkerd-trust-anchor
+kubectl -n linkerd get certificate linkerd-identity-issuer
+kubectl -n linkerd describe certificate linkerd-identity-issuer
+# Inspect public certificate contents and effective issuer loading as above.
+```
+
+El Certificate debe estar Ready, su Secret debe tener las claves/cadena esperadas e Identity debe aceptarlo antes de que esta sea una integración funcional.
+
+### Elegir explícitamente quién gestiona el paquete de confianza
+
+**Opción A: cert-manager gestiona el emisor; Helm gestiona el paquete público de confianza.** Guarde esto como `managed-issuer-values.yaml` y proporcione el paquete raíz mediante los valores completos y revisados del chart:
 
 ```yaml
-# values.yaml
+identity:
+  externalCA: false
+  issuer:
+    scheme: kubernetes.io/tls
+```
+
+```bash
+# Merge into the complete reviewed values from the installation guide.
+# In this option, Helm owns the public trust bundle; cert-manager owns the issuer.
+helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
+  --version 2026.9.1 -n linkerd \
+  -f reviewed-values.yaml -f managed-issuer-values.yaml \
+  --set-file identityTrustAnchorsPEM=ca.crt > reviewed-control-plane.yaml
+```
+
+Con `kubernetes.io/tls`, el chart espera que exista el Secret del emisor en vez de crear uno con formato Linkerd. Con `externalCA:false`, Helm sigue creando el ConfigMap público de confianza. Revise los objetos renderizados y su gestión existente antes de un despliegue mediante el flujo de instalación.
+
+**Opción B: un controlador externo también gestiona el ConfigMap de confianza.** En ese modelo distinto de gestión:
+
+```yaml
 identity:
   externalCA: true
   issuer:
     scheme: kubernetes.io/tls
 ```
 
-```bash
-# Install with external CA mode
-helm install linkerd-control-plane linkerd/linkerd-control-plane \
-  -n linkerd \
-  --set identity.externalCA=true \
-  --set-file identityTrustAnchorsPEM=ca.crt
-```
+`identity.externalCA:true` significa que el chart **no** crea `linkerd-identity-trust-roots`. Un controlador externo como trust-manager debe proporcionar ese ConfigMap en el espacio de nombres del plano de control con `ca-bundle.crt`. Pasar únicamente `identityTrustAnchorsPEM` y omitir el ConfigMap externo no completa esta configuración.
 
-## Seguridad de red frente a seguridad de aplicaciones
+Para la rotación gestionada de raíces, conserve el **certificado público** anterior en el paquete de superposición, coordine la renovación del emisor y los despliegues de consumidores, y después retírelo. No copie un Secret de CA completo solo para conservar su certificado público. cert-manager/trust-manager no automatizan todos los reinicios de cargas de trabajo y transiciones de confianza.
 
-### Capas de seguridad
+### Límite de la integración con Vault
 
-```mermaid
-graph TB
-    subgraph "Security Layers"
-        subgraph "Network Level (Linkerd)"
-            MTLS[mTLS Encryption]
-            AUTHZ[Service Authorization]
-            ID[Workload Identity]
-        end
+Vault puede participar en el diseño de CA, pero una receta ordinaria de firma de certificados finales PKI `sign/<role>` no es un flujo completo de emisor de Linkerd. Linkerd requiere un certificado de CA intermedia real; establecer `isCA:true` en un recurso Certificate por sí solo no demuestra que el endpoint de Vault conceda esa capacidad.
 
-        subgraph "Application Level"
-            JWT[JWT/OAuth]
-            RBAC[Application RBAC]
-            INPUT[Input Validation]
-        end
-    end
+Verifique el endpoint de firma y la correspondencia de solicitudes/respuestas de la integración seleccionada. Vault documenta `root/sign-intermediate` con privilegios y endpoints de firma intermedia específicos del emisor; el permiso para utilizarlos concede capacidad de emisión de CA y necesita un rol/política restringido deliberadamente. Valide también ECDSA P-256, la cadena devuelta, la duración del emisor, la confianza del servidor Vault y el comportamiento de renovación.
 
-    MTLS --> JWT
-    AUTHZ --> RBAC
-    ID --> INPUT
-```
+Para la autenticación de cert-manager, prefiera el flujo documentado de tokens ServiceAccount de corta duración cuando corresponda, con el RBAC de TokenRequest necesario, la configuración de autenticación Kubernetes/JWT de Vault y las audiencias. Un Secret llamado `vault-token` no basta por sí solo. El antiguo YAML omitía estos requisitos y una ruta demostrada de emisión de CA intermedia, por lo que no se presenta como una receta de despliegue probada.
 
-| Capa | Rol de Linkerd | Rol de la aplicación |
-|-------|--------------|------------------|
-| Cifrado de transporte | mTLS (automático) | HTTPS (opcional) |
-| Autenticación de Service | ID SPIFFE | Claves API, JWT |
-| Autorización de Service | ServerAuthorization | RBAC, comprobaciones de permisos |
-| Validación de datos | - | Validación y sanitización de entradas |
+## Seguridad de la aplicación y monitorización
 
-### Ejemplo de defensa en profundidad
+| Responsabilidad | Aportación de Linkerd | Controles adicionales |
+|---|---|---|
+| Salto de red | mTLS entre proxies aptos | TLS para otros saltos, restricciones de red y exposición de endpoints |
+| Autenticación de cargas de trabajo | Identidad de malla derivada de ServiceAccount | Autenticación de usuarios finales/clientes de API y validación de tokens |
+| Acceso a servicios | Políticas de autorización entrante | Roles de aplicación, autorización de inquilinos y objetos |
+| Tratamiento de datos | No valida entradas de negocio | Validación de entradas, tratamiento de salidas y protección de datos |
 
-```yaml
-# Linkerd: Service-level authorization
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: api-authz
-  namespace: production
-spec:
-  server:
-    name: api-server
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: web
-          namespace: production
+Una identidad frontend permitida no demuestra que su cliente sea administrador. Las aplicaciones deben validar las credenciales de usuario y los permisos de negocio, además de las entradas.
 
----
-# Application: JWT-based user authorization (pseudocode)
-# @app.route('/api/admin')
-# @require_role('admin')  # Application-level RBAC
-# def admin_endpoint():
-#     # Linkerd handles service authentication
-#     # Application handles user authorization only
-#     return handle_admin_request()
-```
+### Alertas de seguridad significativas
 
-## Supervisión de seguridad
-
-### Detección de infracciones de políticas
-
-```bash
-# Check denied requests
-linkerd viz tap deploy/api -n production | grep "forbidden"
-
-# Check policy events
-kubectl get events -n production --field-selector reason=Forbidden
-
-# Check authorization failures in proxy logs
-kubectl logs deploy/api -n production -c linkerd-proxy | grep "authorization"
-```
-
-### Supervisión del estado de certificados
-
-```bash
-# Check certificate status with linkerd check
-linkerd check --proxy
-
-# Expected output:
-# linkerd-identity
-# ----------------
-# √ certificate config is valid
-# √ trust anchors are using supported crypto algorithm
-# √ trust anchors are within their validity period
-# √ trust anchors are valid for at least 60 days
-# √ issuer cert is using supported crypto algorithm
-# √ issuer cert is within its validity period
-# √ issuer cert is valid for at least 60 days
-# √ issuer cert is issued by the trust anchor
-
-# Monitor with Prometheus metrics
-# identity_cert_expiration_timestamp_seconds
-```
-
-### Reglas de alerta de Prometheus
+Las reglas siguientes requieren Prometheus Operator y un Prometheus que seleccione este PrometheusRule, además de recopilaciones que conserven las etiquetas mostradas de namespace/deployment e identidad TLS del proxy. Revise el ámbito de destinos y clústeres para backends compartidos.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -898,37 +456,56 @@ spec:
   groups:
   - name: linkerd-security
     rules:
-    - alert: LinkerdIdentityCertExpiringSoon
-      expr: |
-        identity_cert_expiration_timestamp_seconds - time() < 86400 * 7
-      for: 1h
+    - alert: LinkerdWorkloadCertificateExpiring
+      expr: identity_cert_expiration_timestamp_seconds{namespace="production"} - time() < 3600
+      for: 10m
       labels:
         severity: warning
       annotations:
-        summary: "Linkerd identity certificate expiring soon"
-        description: "Certificate will expire in less than 7 days"
-
-    - alert: LinkerdMTLSDisabled
-      expr: |
-        sum(response_total{tls="false", direction="inbound"})
-        / sum(response_total{direction="inbound"}) > 0.1
+        summary: Proxy workload certificate has less than one hour remaining
+    - alert: LinkerdIssuerCertificateExpiring
+      expr: issuer_cert_ttl_seconds{job="linkerd-controller",component="identity"} < 86400
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Identity issuer has less than one day remaining
+    - alert: LinkerdInboundHTTPWithoutMeshIdentity
+      expr: |-
+        ((sum(rate(response_total{namespace="production",deployment="api",direction="inbound"}[5m])) - (sum(rate(response_total{namespace="production",deployment="api",direction="inbound",tls="true",client_id!=""}[5m])) or vector(0))) / sum(rate(response_total{namespace="production",deployment="api",direction="inbound"}[5m])) > 0.10)
+        and on() (sum(rate(response_total{namespace="production",deployment="api",direction="inbound"}[5m])) > 0)
       for: 5m
       labels:
-        severity: critical
+        severity: warning
       annotations:
-        summary: "High percentage of non-mTLS traffic"
-        description: "More than 10% of inbound traffic is not encrypted"
+        summary: More than 10% of observed API HTTP responses lack authenticated mesh client identity
+    - alert: LinkerdInboundHTTPAuthorizationDenied
+      expr: sum(rate(inbound_http_authz_deny_total{namespace="production",deployment="api"}[5m])) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: API inbound HTTP authorization denials observed
 ```
 
-## Próximos pasos
+`identity_cert_expiration_timestamp_seconds` mide la **hora absoluta de caducidad de un certificado final del proxy**. Una advertencia de siete días coincidiría siempre con un certificado final predeterminado sano de 24 horas. `issuer_cert_ttl_seconds` del controlador ya es una duración restante; no le reste `time()`. Su selector utiliza las etiquetas predeterminadas de trabajo/componente del controlador Viz; esa recopilación no añade una etiqueta de espacio de nombres. Adapte el selector si un recopilador personalizado cambia esas etiquetas. Ajuste los umbrales a las duraciones configuradas de credenciales y al intervalo de renovación esperado, y monitorice por separado las raíces públicas y la disponibilidad de recopilación.
 
-- [Observabilidad](./05-observability.md): Métricas y dashboards
-- [Multi-cluster](./06-multi-cluster.md): Seguridad entre clusters
-- [Mejores prácticas](./07-best-practices.md): Configuración de seguridad para producción
+Para el proxy seleccionado, las etiquetas TLS incluyen `true`, `no_identity`, `disabled` y `opaque`; la consulta original `tls="false"` no coincidía con las series previstas. `tls="true"` por sí solo también puede carecer de identidad de cliente. El ejemplo compara las respuestas HTTP entrantes completadas de la API con aquellas que tienen tanto TLS como un `client_id` autenticado no vacío, utilizando tasas y una condición de tráfico positivo.
 
-## Referencias
+Esta proporción **no es un porcentaje de todos los bytes de red ni de todo el tráfico sin cifrar**. No cubre rutas omitidas ni TCP opaco y depende de conservar etiquetas de identidad. Las sondas previstas o las rutas deliberadamente sin autenticación necesitan su propio ámbito/base de referencia. Para tráfico completamente autenticado sin una serie sin autenticar, la proporción subyacente es cero y esta alerta no se activa. La ausencia de tráfico o de datos no demuestra seguridad.
 
-- [Seguridad de Linkerd](https://linkerd.io/2/features/automatic-mtls/)
-- [Política de autorización](https://linkerd.io/2/features/server-policy/)
-- [Gestión de certificados](https://linkerd.io/2/tasks/automatically-rotating-control-plane-tls-credentials/)
-- [SPIFFE](https://spiffe.io/)
+Los contadores de denegación de autorización HTTP son distintos de los fallos de inicio de sesión de la aplicación. Utilice los contadores de autorización TCP para conexiones opacas y no deduzca «sin denegaciones» de una recopilación ausente. Los registros/métricas del modo auditoría registran tráfico no coincidente permitido, no rechazos aplicados.
+
+## Siguientes pasos y referencias
+
+- [Observabilidad](05-observability.md), [multiclúster](06-multi-cluster.md), [buenas prácticas](07-best-practices.md), [cuestionario de seguridad](../../quizzes/service-mesh/linkerd/security.md)
+- [mTLS automático](https://linkerd.io/docs/features/automatic-mtls/)
+- [Comportamiento de autorización](https://linkerd.io/docs/features/server-policy/) y [referencia de API](https://linkerd.io/docs/reference/authorization-policy/)
+- [CLI de identidad](https://linkerd.io/docs/reference/cli/identity/)
+- [Rotación manual de credenciales](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/)
+- [Rotación gestionada de credenciales](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/)
+- [Métricas del proxy](https://linkerd.io/docs/reference/proxy-metrics/)
+- [Implementación publicada de recarga de Identity/métricas del emisor](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/pkg/identity/service.go)
+- [Gestión de credenciales del chart publicado](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/templates/identity.yaml)
+- [CA Issuer de cert-manager](https://cert-manager.io/docs/configuration/ca/) y [autenticación de Vault](https://cert-manager.io/docs/configuration/vault/)
+- [Firma intermedia de Vault](https://developer.hashicorp.com/vault/api-docs/secret/pki#sign-intermediate)

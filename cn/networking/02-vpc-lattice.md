@@ -1,1596 +1,937 @@
 # VPC Lattice
 
-Amazon VPC Lattice 是一项 AWS 应用程序网络服务，可让您在不同的 VPC 和账户之间安全地连接和管理服务。本文档介绍 VPC Lattice 的概念、架构、与 Amazon EKS 的集成方法以及最佳实践。
+Amazon VPC Lattice 连接跨 VPC 和 AWS 账户的应用。本章介绍资源模型、EKS 集成、路由、IAM 授权、监控和故障排除。
+
+> **最后更新**：2026 年 9 月 11 日，依据 AWS Gateway API Controller **v2.1.3** 和 Gateway API **v1.5.0**。示例介绍配置和验证步骤；本次审查未将其部署到 AWS 账户。
 
 ## 目录
 
-1. [概述](#overview)
-2. [架构](#architecture)
-3. [EKS 与 VPC Lattice 集成](#eks-and-vpc-lattice-integration)
-4. [安装与配置](#installation-and-configuration)
-5. [服务管理](#service-management)
-6. [路由与流量管理](#routing-and-traffic-management)
-7. [安全与身份验证](#security-and-authentication)
-8. [监控与日志记录](#monitoring-and-logging)
-9. [最佳实践](#best-practices)
-10. [故障排除](#troubleshooting)
-11. [结论](#conclusion)
+- [概述](#overview)
+- [架构](#architecture)
+- [EKS 与 VPC Lattice 集成](#eks-and-vpc-lattice-integration)
+- [安装与配置](#installation-and-configuration)
+- [服务管理](#service-management)
+- [路由与流量管理](#routing-and-traffic-management)
+- [安全与身份验证](#security-and-authentication)
+- [监控与日志](#monitoring-and-logging)
+- [最佳实践](#best-practices)
+- [故障排除](#troubleshooting)
+- [参考资料](#references)
 
-## 概述
+## 概述 {#overview}
 
 ### 什么是 VPC Lattice？
 
-Amazon VPC Lattice 是一项完全托管的应用程序网络服务，用于实现服务到服务的连接、安全性和监控。主要功能包括：
+VPC Lattice 提供应用联网能力，无需在每个应用旁运行代理。**服务网络**将服务和资源配置分组，并连接到获授权的使用方。服务提供监听器、路由规则、目标组和服务 DNS 名称。
 
-- **Service Network**：连接多个 VPC 和账户中服务的逻辑边界
-- **Service Discovery**：自动发现 Service Network 内的服务
-- **Traffic Management**：支持路由规则、加权路由和基于路径的路由
-- **Authentication and Authorization**：通过 AWS IAM 和资源策略进行访问控制
-- **Observability**：集成的监控、日志记录和追踪功能
+当前产品还通过资源网关连接**资源配置**，包括使用 TCP 的 RDS 数据库等资源。此资源访问模型与由目标组支持的 HTTP 服务不同；服务网络/服务 IAM 身份验证策略不授权资源配置流量。由 PrivateLink 提供支持的**服务网络 VPC 端点**可以让经对等连接、Transit Gateway、Direct Connect 或 VPN 到达的客户端进行访问。仅有直接 VPC 关联不会将访问扩展到中转网关或对等连接后的客户端。
 
-### 主要使用场景
+典型用途包括跨账户应用 API、EKS 与其他计算服务之间的通信，以及共享数据资源访问。关联、路由、安全组、身份验证和应用授权仍需配置。
 
-1. **微服务架构**：简化并保护微服务之间的通信
-2. **多账户环境**：多个 AWS 账户之间服务的安全通信
-3. **混合工作负载**：容器化与非容器化工作负载之间的通信
-4. **Service Mesh 替代方案**：提供轻量级 Service Mesh 功能以降低复杂性
-5. **多集群连接**：简化多个 EKS 集群之间的服务通信
+### 与其他服务比较
 
-### VPC Lattice 与其他服务的比较
+| 服务 | 主要职责 | 重要区别 |
+|---|---|---|
+| VPC Lattice | 私有应用和资源连接 | HTTP/HTTPS/gRPC 服务路由及独立的 TLS/TCP 资源能力；不是互联网 API 入口 |
+| API Gateway | 托管 API 端点和 API 管理 | REST、HTTP 或 WebSocket API 的功能不同；GraphQL 不是独立的 API Gateway API 类型 |
+| AWS App Mesh | 基于 Envoy 的服务网格 | AWS 将于 **2026-09-30** 终止支持；截至本次审查，该日期尚未到来。应规划迁移，而非全新安装 |
+| Transit Gateway | 使用 IP 路由的网络连接 | 连接网络；不能替代各服务的 HTTP 路由和授权 |
+| Istio / Linkerd / Cilium | 使用各自数据平面实现的网格能力 | 功能和运维成本不同。并非所有网格架构都必须使用 Sidecar |
 
-#### VPC Lattice 与 API Gateway
+VPC Lattice 免除了运维其托管数据平面的需要，但不承诺总成本更低或网格功能完全相同。应针对实际工作负载比较请求/数据/资源费用、控制器运维、身份要求、重试、路由功能和可观测性。参阅 [Istio–Lattice 比较](../service-mesh/istio/comparison/02-istio-vs-lattice.md)。
 
-| 功能 | VPC Lattice | API Gateway |
-|---------|------------|------------|
-| 主要用途 | 内部服务到服务通信 | 外部 API 暴露 |
-| 网络位置 | VPC 内部 | 连接互联网 |
-| 协议 | HTTP/HTTPS、gRPC | HTTP/HTTPS、WebSocket、REST、GraphQL |
-| 身份验证 | AWS IAM、资源策略 | IAM、Lambda authorizer、Cognito |
-| 可扩展性 | 自动扩展 | 自动扩展 |
-| 定价 | 按小时 + 数据吞吐量 | 请求数量 + 数据吞吐量 |
+## 架构 {#architecture}
 
-#### VPC Lattice 与 AWS App Mesh
+### 组件与流量流程
 
-| 功能 | VPC Lattice | AWS App Mesh |
-|---------|------------|-------------|
-| 架构 | 托管服务 | 基于 Sidecar proxy |
-| 复杂性 | 低 | 中 |
-| 协议 | HTTP/HTTPS、gRPC | HTTP/HTTPS、gRPC、TCP |
-| Service Discovery | 内置 | AWS Cloud Map 集成 |
-| 流量控制 | 基本路由规则 | 高级流量控制 |
-| 可观测性 | CloudWatch 集成 | 通过 Envoy 提供详细指标 |
+| 组件 | 职责 |
+|---|---|
+| 服务网络 | 逻辑分组和关联；可选的 IAM 授权边界 |
+| 服务 | 具有自身 DNS 名称的应用端点 |
+| 监听器和规则 | 属于**服务**；选择操作和目标组 |
+| 目标组 | 已注册的实例、IP、Lambda 或 ALB 目标，行为因目标类型而异 |
+| VPC 关联 | 允许关联 VPC 中的客户端在安全控制约束下访问网络 |
+| 服务网络 VPC 端点 | 基于 PrivateLink 的访问，包括受支持的中转/本地网络路径 |
+| 资源配置 / 资源网关 | 独立的资源访问模型，包括 TCP/数据库资源 |
 
-#### VPC Lattice 与 Transit Gateway
+![两个 AWS 账户中的三个 VPC 关联到一个服务网络，其服务使用目标组连接 EC2、EKS 和 Lambda 工作负载。](../.gitbook/assets/en-networking-02-vpc-lattice-1.png)
 
-| 功能 | VPC Lattice | Transit Gateway |
-|---------|------------|----------------|
-| 主要用途 | 服务到服务通信 | VPC 到 VPC 的网络连接 |
-| 抽象级别 | 服务级别 | 网络级别 |
-| 协议 | 应用层 (L7) | 网络层 (L3) |
-| 路由 | 基于服务名称 | 基于 IP |
-| 安全性 | 服务级别策略 | 安全组、NACL |
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-1.html)
 
-## 架构
+图中展示的是逻辑关联，而非单一路由器进程。访问还取决于网络可达性和适用策略。请求解析**服务的** DNS 名称，到达其监听器，通过适用的授权检查，再根据监听器规则路由到目标。目标组描述目的地，并非额外的应用跳点。
 
-### VPC Lattice 组件
-
-VPC Lattice 由以下主要组件构成：
-
-1. **Service Network**：用于服务到服务通信的逻辑边界
-2. **Service**：表示应用程序或微服务的端点
-3. **Target Group**：将流量路由到 Service 的一组目标
-4. **Listener**：处理到 Service 的连接请求的进程
-5. **Rule**：定义 Listener 如何路由流量
-6. **VPC Association**：将 VPC 连接到 Service Network
-
-```mermaid
-flowchart TD
-    Client[Client] -->|Request| ServiceNetwork[VPC Lattice Service Network]
-    ServiceNetwork -->|Routing Rules| Service1[Service 1]
-    ServiceNetwork -->|Routing Rules| Service2[Service 2]
-    ServiceNetwork -->|Routing Rules| Service3[Service 3]
-
-    Service1 -->|Target Group| Target11[Pod 1.1]
-    Service1 -->|Target Group| Target12[Pod 1.2]
-
-    Service2 -->|Target Group| Target21[Pod 2.1]
-
-    Service3 -->|Target Group| Target31[Pod 3.1]
-    Service3 -->|Target Group| Target32[Pod 3.2]
-
-    subgraph VPC1[VPC 1]
-        Target11
-        Target12
-    end
-
-    subgraph VPC2[VPC 2]
-        Target21
-    end
-
-    subgraph VPC3[VPC 3]
-        Target31
-        Target32
-    end
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class Client userApp;
-    class ServiceNetwork,Service1,Service2,Service3 awsService;
-    class Target11,Target12,Target21,Target31,Target32 k8sComponent;
-```
-
-### Service Network 架构
-
-Service Network 是 VPC Lattice 的核心组件，可连接多个 VPC 和账户中的服务。
-
-```mermaid
-flowchart LR
-    subgraph AccountA["Account A"]
-        A[VPC 1]
-        B[VPC 2]
-    end
-
-    subgraph AccountB["Account B"]
-        C[VPC 3]
-    end
-
-    A -->|VPC Association| SN[Service Network]
-    B -->|VPC Association| SN
-    C -->|VPC Association| SN
-
-    SN -->|Service Registration| S1[Service 1]
-    SN -->|Service Registration| S2[Service 2]
-    SN -->|Service Registration| S3[Service 3]
-
-    S1 -->|Target Group| TG1[Target Group 1]
-    S2 -->|Target Group| TG2[Target Group 2]
-    S3 -->|Target Group| TG3[Target Group 3]
-
-    TG1 -->|Target| T1[EC2 Instance]
-    TG2 -->|Target| T2[EKS Pod]
-    TG3 -->|Target| T3[Lambda Function]
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class A,B,C default;
-    class SN,S1,S2,S3,TG1,TG2,TG3,T1,T3 awsService;
-    class T2 k8sComponent;
-```
-
-### 流量流向
-
-VPC Lattice 中的流量流向如下：
-
-1. Client 向 VPC Lattice Service DNS 名称发送请求
-2. VPC Lattice 接收请求，并根据 Listener 规则进行处理
-3. Listener 规则将请求路由到适当的 Target Group
-4. Target Group 将请求转发给已注册的目标（EC2、EKS Pod、Lambda 等）
-5. 目标处理响应并将其返回给 Client
-
-```mermaid
-sequenceDiagram
-    participant Client as Client
-    participant VPCLattice as VPC Lattice
-    participant Service as Service
-    participant TargetGroup as Target Group
-    participant Target as Target (EKS Pod)
-
-    Client->>VPCLattice: Request (service-name.vpc-lattice-svcs.region.on.aws)
-    VPCLattice->>Service: Process request and apply listener rules
-    Service->>TargetGroup: Route to appropriate target group
-    TargetGroup->>Target: Forward request to target
-    Target->>TargetGroup: Return response
-    TargetGroup->>Service: Forward response
-    Service->>VPCLattice: Process response
-    VPCLattice->>Client: Return response
-```
-
-### Service Discovery
-
-VPC Lattice 会在 Service Network 内自动提供 Service Discovery：
-
-1. 每个 Service 都有唯一的 DNS 名称（`service-name.vpc-lattice-svcs.region.on.aws`）
-2. Client 使用此 DNS 名称访问 Service
-3. VPC Lattice 处理 DNS 解析和路由
-4. 可从连接到 Service Network 的所有 VPC 访问 Service
+使用 `get-service --query dnsEntry` 或控制器的路由注解发现真实域名。不要根据服务名称和服务网络 ID 拼接域名。分配的名称包含服务专属标识符；重新创建服务可能改变该名称。
 
 ### 安全模型
 
-VPC Lattice 提供以下安全机制：
+网络访问、IAM 授权和加密是独立控制。`AWS_IAM` 要求受支持的签名请求和适当策略。`NONE` 在该特定层禁用 IAM 身份验证；它不会绕过另一层的 IAM 策略、安全组或应用授权。HTTPS 保护客户端到 Lattice 的流量。除非显式配置后端 TLS，否则后端 HTTP 仍为明文。
 
-1. **网络隔离**：Service Network 提供逻辑隔离的环境
-2. **身份验证和授权**：通过 AWS IAM 进行 Service 访问控制
-3. **资源策略**：对 Service 和 Service Network 进行细粒度访问控制
-4. **TLS 加密**：对服务到服务通信进行加密
-5. **VPC Security Groups**：为目标提供额外的安全层
+## EKS 与 VPC Lattice 集成 {#eks-and-vpc-lattice-integration}
 
-## EKS 与 VPC Lattice 集成
+AWS Gateway API Controller 将 Kubernetes 资源协调为 VPC Lattice 资源：
 
-### 集成架构
+| Kubernetes 资源 | Lattice 中的含义 |
+|---|---|
+| GatewayClass | 选择 `application-networking.k8s.aws/gateway-api-controller` |
+| Gateway | 通过 **Gateway 名称**引用服务网络，不包含命名空间 |
+| HTTPRoute / GRPCRoute | 创建具有自身域名和监听器/路由配置的服务 |
+| 后端 Service 及其端点 | 定义目标组和注册的 Pod 端点 |
+| TargetGroupPolicy | 配置目标组的协议和健康检查 |
+| IAMAuthPolicy | 将身份验证策略附加到 Gateway 的网络或 Route 的服务 |
+| AccessLogPolicy | 配置目标资源的访问日志目的地 |
 
-Amazon EKS 与 VPC Lattice 的集成由以下组件构成：
+两个同名 Gateway 即使位于不同 Kubernetes 命名空间，也可能引用同一服务网络。仅创建 Gateway **不会**创建网络或一个共享入口 IP。网络可以由外部管理，简单场景下可使用控制器的 `defaultServiceNetwork` 选项，也可使用控制器的 ServiceNetwork CRD。为每个云资源选择一个管理方。
 
-1. **AWS Gateway API Controller**：将 Kubernetes Gateway API 转换为 VPC Lattice 资源
-2. **Kubernetes Gateway API**：用于 Service 路由的标准 Kubernetes API
-3. **VPC Lattice Service Network**：EKS 集群连接到的 Service Network
-4. **VPC Lattice Service**：映射到 Kubernetes Service 的 VPC Lattice Service
-5. **VPC Lattice Target Group**：映射到 Kubernetes Pod 的 Target Group
+以下示例使用外部管理的网络和 VPC 关联。不设置 `defaultServiceNetwork`，也不为该关联附加 VpcAssociationPolicy。若采用基于 CRD 的模型，应将网络、VPC 关联和授权作为独立资源管理；不要再用 CloudFormation 管理同一批资源。
 
-```mermaid
-flowchart LR
-    subgraph EKS["EKS Cluster"]
-        A[Gateway API Controller]
-        B[Gateway API Resources]
-        C[Kubernetes Service]
-        D[Kubernetes Pod]
-
-        A -->|Transform| B
-        B -->|Reference| C
-        C -->|Select| D
-    end
-
-    subgraph Client["Client in Another VPC"]
-        H[Application]
-    end
-
-    G[VPC Lattice<br/>Service Network]
-    E[VPC Lattice Service]
-    F[VPC Lattice Target Group]
-
-    A -->|Create/Manage| E
-    E -->|Routing| F
-    F -->|Register| D
-    G -->|Contains| E
-    H -->|Request| E
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class A,B,C,D k8sComponent;
-    class G,E,F awsService;
-    class H userApp;
-```
-
-### 集成的优势
-
-将 EKS 与 VPC Lattice 集成可提供以下优势：
-
-1. **标准化 API**：通过 Kubernetes Gateway API 实现一致的 Service 管理
-2. **跨集群通信**：多个 EKS 集群之间的无缝通信
-3. **混合工作负载**：EKS Pod 与非容器化工作负载之间的通信
-4. **集中管理**：从 AWS 控制台管理所有 Service Network
-5. **统一可观测性**：通过 CloudWatch 和 CloudTrail 集成监控和日志记录
-6. **简化的 Service Mesh**：无需 Sidecar 即可提供 Service Mesh 功能
-
-### VPC Lattice 作为 Service Mesh 替代方案
-
-VPC Lattice 可以作为传统 Service Mesh（Istio、Linkerd 等）的替代方案，原因如下：
-
-1. **低复杂性**：无需 Sidecar proxy 即可提供 Service Mesh 功能
-2. **降低管理开销**：由 AWS 提供的完全托管服务
-3. **资源效率**：无需 Sidecar proxy，从而降低资源使用量
-4. **AWS Service 集成**：与 AWS Service 生态系统无缝集成
-
-| 功能 | VPC Lattice | 传统 Service Mesh |
-|---------|------------|-----------------|
-| Service Discovery | 内置 | 需要单独配置 |
-| 流量路由 | 支持 | 支持 |
-| 流量拆分 | 支持 | 支持 |
-| 详细流量控制 | 有限 | 广泛 |
-| Sidecar Proxy | 不需要 | 需要 |
-| 管理复杂性 | 低 | 高 |
-| 资源开销 | 低 | 高 |
-| 可观测性 | CloudWatch 集成 | 支持各种工具 |
-## 安装与配置
+## 安装与配置 {#installation-and-configuration}
 
 ### 前提条件
 
-将 VPC Lattice 与 EKS 集成的前提条件：
+控制器的 v2.1 升级指南要求 **Kubernetes 1.31 或更高版本**以及 Gateway API **1.5 或更高版本**。本示例固定到 v2.1 构建时使用的版本 **1.5.0**。此最低要求不是 EKS 支持矩阵，也不能证明与每个更新的 Gateway API 发布版本兼容。更改 Gateway API CRD 前，请检查 EKS 版本生命周期及所有共享这些 CRD 的控制器。尤其是 Gateway API 1.5 引入 TLSRoute 存储/API 转换后，v2.0 控制器可能失败。
 
-1. **Amazon EKS Cluster**：Kubernetes 版本 1.23 或更高版本
-2. **IAM 权限**：创建和管理 VPC Lattice 资源的权限
-3. **VPC 设置**：具有私有子网的 VPC
-4. **AWS CLI**：最新版本的 AWS CLI
-5. **kubectl**：最新版本的 kubectl
-6. **Helm**：（可选）用于安装 AWS Gateway API Controller 的 Helm 3
-
-### 安装 AWS Gateway API Controller
-
-AWS Gateway API Controller 负责将 Kubernetes Gateway API 资源转换为 VPC Lattice 资源。
-
-#### 使用 Helm 安装
+使用受支持的 EKS 集群、匹配的 `kubectl`、Helm、AWS CLI v2，以及有权配置目标资源的操作员角色。示例后端假定使用 Linux Pod，且其 IP 可由 VPC Lattice 访问。请确认集群的 CNI、子网容量、端点就绪状态、DNS 和网络策略配置。
 
 ```bash
-# Add Helm repository
-helm repo add eks https://aws.github.io/eks-charts
-helm repo update
-
-# Install AWS Gateway API Controller
-helm install gateway-api-controller eks/aws-gateway-controller \
-  --namespace aws-gateway-controller \
-  --create-namespace \
-  --set serviceAccount.create=true \
-  --set serviceAccount.name=aws-gateway-controller \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::<AWS_ACCOUNT_ID>:role/AmazonGatewayControllerRole
+export AWS_REGION=us-west-2
+export CLUSTER_NAME=my-cluster
+export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+export VPC_ID="$(aws eks describe-cluster --name "$CLUSTER_NAME" \
+  --query 'cluster.resourcesVpcConfig.vpcId' --output text)"
+export NETWORK_NAME=my-network
+export ASSOCIATION_SG_ID=sg-0123456789abcdef0
+kubectl config current-context
+kubectl version
 ```
 
-#### 使用 YAML Manifests 安装
+替换示例安全组 ID。VPC 关联安全组必须允许**获准的客户端**访问 TCP 443。后端 Pod/节点安全组必须允许适用的 Lattice 托管前缀列表访问实际后端/健康检查端口，此处为 TCP 8080。检查真实 Pod ENI 或节点 ENI 上附加的安全组，不要假定每个节点都使用 EKS 集群安全组。还应允许 EKS 控制平面通过所需端口访问控制器 webhook。不要向整个互联网开放所有端口。
 
-1. Service account 和 RBAC 设置：
+### IAM 角色设置
 
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: aws-gateway-controller
-  namespace: aws-gateway-controller
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::<AWS_ACCOUNT_ID>:role/AmazonGatewayControllerRole
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: aws-gateway-controller
-rules:
-- apiGroups: ["gateway.networking.k8s.io"]
-  resources: ["gatewayclasses", "gateways", "httproutes"]
-  verbs: ["get", "list", "watch", "update", "patch"]
-- apiGroups: [""]
-  resources: ["services", "secrets", "namespaces"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["events"]
-  verbs: ["create", "patch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: aws-gateway-controller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: aws-gateway-controller
-subjects:
-- kind: ServiceAccount
-  name: aws-gateway-controller
-  namespace: aws-gateway-controller
-```
+**控制器角色**管理云资源。**调用方角色**为应用请求签名，并需要 `vpc-lattice-svcs:Invoke`；两者是不同角色。
 
-2. Controller Deployment：
+在受支持的节点上使用 EKS Pod Identity，或使用 IRSA。下方 IRSA 示例假定集群的 IAM OIDC 提供程序已存在，并创建专用服务账户。对于 Pod Identity，应使用当前 EKS 插件，为相同命名空间/服务账户创建关联，并配置适当的信任策略；不要在同一示例中同时依赖 IRSA 注解。
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: aws-gateway-controller
-  namespace: aws-gateway-controller
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: aws-gateway-controller
-  template:
-    metadata:
-      labels:
-        app: aws-gateway-controller
-    spec:
-      serviceAccountName: aws-gateway-controller
-      containers:
-      - name: controller
-        image: public.ecr.aws/aws-application-networking-k8s/aws-gateway-controller:v1.0.0
-        args:
-        - --health-probe-bind-address=:8081
-        - --metrics-bind-address=:8080
-        - --leader-elect
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 10m
-            memory: 64Mi
-```
-
-### IAM Role 设置
-
-AWS Gateway API Controller 需要适当的 IAM 权限来管理 VPC Lattice 资源。
-
-#### IRSA（Service Account 的 IAM Role）设置
+此发布版本推荐的控制器策略包含宽泛的 `vpc-lattice:*` 以及日志/标记权限。应将其视为上游起点，**而非最小权限策略**。审核资源范围和启用的功能，保留受限的服务相关角色条件，并在创建前保存审核后的策略。后续运行应复用现有已审核策略 ARN，避免创建重复策略。
 
 ```bash
-# Create IAM policy
-cat <<EOF > vpc-lattice-policy.json
+curl --fail --location --output controller-policy-upstream.json \
+  https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/files/controller-installation/recommended-inline-policy.json
+
+# Use the policy reviewed for this account and the enabled controller features.
+export REVIEWED_POLICY_FILE=controller-policy-reviewed.json
+test -s "$REVIEWED_POLICY_FILE"
+export CONTROLLER_POLICY_ARN="$(aws iam create-policy \
+  --policy-name VPCLatticeControllerPolicy \
+  --policy-document "file://$REVIEWED_POLICY_FILE" \
+  --query Policy.Arn --output text)"
+
+# Prerequisite: this cluster's IAM OIDC provider already exists.
+eksctl create iamserviceaccount \
+  --cluster "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --namespace aws-application-networking-system \
+  --name gateway-api-controller \
+  --attach-policy-arn "$CONTROLLER_POLICY_ARN" \
+  --approve
+```
+
+现有服务账户需要有计划的所有权/角色迁移；示例不会自动覆盖它。
+
+### 安装已发布的控制器
+
+```bash
+curl --fail --location --output gateway-api-v1.5.0.yaml \
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
+# Inspect changes first if any Gateway API controller is already installed.
+kubectl apply --server-side -f gateway-api-v1.5.0.yaml
+
+helm pull oci://public.ecr.aws/aws-application-networking-k8s/aws-gateway-controller-chart \
+  --version v2.1.3
+helm show crds ./aws-gateway-controller-chart-v2.1.3.tgz > lattice-crds.yaml
+kubectl apply --server-side -f lattice-crds.yaml
+
+helm install gateway-api-controller ./aws-gateway-controller-chart-v2.1.3.tgz \
+  --namespace aws-application-networking-system --create-namespace \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=gateway-api-controller \
+  --set-string awsRegion="$AWS_REGION" \
+  --set-string awsAccountId="$AWS_ACCOUNT_ID" \
+  --set-string clusterVpcId="$VPC_ID" \
+  --set-string clusterName="$CLUSTER_NAME" \
+  --wait --timeout 5m
+
+kubectl -n aws-application-networking-system get pods
+kubectl -n aws-application-networking-system logs \
+  -l control-plane=gateway-api-controller -c manager --tail=100
+```
+
+对于现有 Helm 发布，使用经过审核且包含已保存 values 的 `helm upgrade` 计划。Helm 不会自动升级 `crds/` 中的 CRD；请单独审核其更改。不要为了让升级通过而删除共享 Gateway API CRD 或准入策略。
+
+对于基于清单的交付，使用 `helm template --include-crds` 渲染**同一个 chart**，采用相同 values 和服务账户选择，然后审核并应用生成的清单。这样可以保留发布版本的 RBAC、EndpointSlice 监视、领导者选举权限和 webhook 配置。不要使用过时的手写 v1.0 部署。除非显式提供证书或通过 cert-manager 选项管理，否则 chart 会生成 webhook 证书；升级期间应保持 webhook Secret 与 CA 捆绑包一致，不要单独重新生成其中之一。
+
+### 创建服务网络
+
+为同一网络选择 **CLI 或 CloudFormation**，不要同时使用两者。CLI 示例创建 `AWS_IAM` 网络。在适用的 Allow 策略安装并传播完成前，请求会被拒绝。
+
+将以下内容保存为 `api-auth-policy.json`，替换账户和调用方角色。网络策略特意仅允许此演示的 `/api` 端点及子路径。生产网络需要审核过的策略，以覆盖预期服务和调用方。
+
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "vpc-lattice:*",
-        "ec2:DescribeVpcs",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeSecurityGroups",
-        "elasticloadbalancing:DescribeTargetGroups",
-        "elasticloadbalancing:DescribeTargetHealth",
-        "elasticloadbalancing:RegisterTargets",
-        "elasticloadbalancing:DeregisterTargets"
-      ],
-      "Resource": "*"
+      "Principal": {
+        "AWS": "arn:aws:iam::123456789012:role/MyAppRole"
+      },
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "vpc-lattice-svcs:RequestPath": [
+            "/api",
+            "/api/*"
+          ]
+        }
+      }
     }
   ]
 }
-EOF
-
-aws iam create-policy \
-  --policy-name AmazonGatewayControllerPolicy \
-  --policy-document file://vpc-lattice-policy.json
-
-# Create IAM role and associate with service account
-eksctl create iamserviceaccount \
-  --name aws-gateway-controller \
-  --namespace aws-gateway-controller \
-  --cluster <CLUSTER_NAME> \
-  --attach-policy-arn arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AmazonGatewayControllerPolicy \
-  --approve \
-  --override-existing-serviceaccounts
 ```
-
-### 创建 VPC Lattice Service Network
-
-可以通过 AWS Management Console、AWS CLI 或 AWS CloudFormation 创建 VPC Lattice Service Network。
-
-#### 使用 AWS CLI 创建
 
 ```bash
-# Create service network
-aws vpc-lattice create-service-network \
-  --name my-service-network \
-  --auth-type AWS_IAM
+aws vpc-lattice create-service-network --name "$NETWORK_NAME" \
+  --auth-type AWS_IAM > service-network.json
+export SERVICE_NETWORK_ID="$(python3 -c \
+  'import json; print(json.load(open("service-network.json"))["id"])')"
+export SERVICE_NETWORK_ARN="$(python3 -c \
+  'import json; print(json.load(open("service-network.json"))["arn"])')"
 
-# Store service network ID
-SERVICE_NETWORK_ID=$(aws vpc-lattice list-service-networks \
-  --query "items[?name=='my-service-network'].id" \
-  --output text)
-
-# Associate VPC with service network
 aws vpc-lattice create-service-network-vpc-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --vpc-identifier <VPC_ID> \
-  --security-group-ids <SECURITY_GROUP_ID>
+  --service-network-identifier "$SERVICE_NETWORK_ID" \
+  --vpc-identifier "$VPC_ID" --security-group-ids "$ASSOCIATION_SG_ID"
+
+# Save the reviewed policy below as api-auth-policy.json, then compact it.
+python3 -c 'import json; print(json.dumps(json.load(open("api-auth-policy.json")),separators=(",",":")))' \
+  > api-auth-policy.compact.json
+aws vpc-lattice put-auth-policy --resource-identifier "$SERVICE_NETWORK_ID" \
+  --policy file://api-auth-policy.compact.json
+aws vpc-lattice get-service-network --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice get-auth-policy --resource-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice list-service-network-vpc-associations \
+  --service-network-identifier "$SERVICE_NETWORK_ID"
 ```
 
-#### 使用 AWS CloudFormation 创建
+暴露路由前，验证关联为 `ACTIVE`、网络仍具有 `authType: AWS_IAM`，且 `get-auth-policy` 返回预期策略。策略传播可能需要几分钟。
+
+等效的**网络和关联** CloudFormation 模板如下：
 
 ```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Description: VPC Lattice service network and client VPC association
+Parameters:
+  NetworkName:
+    Type: String
+    Default: my-network
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+    Description: Must match the Kubernetes Gateway name
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC containing the intended clients
+  AssociationSecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: Existing security groups allowing approved clients on listener ports
 Resources:
-  MyServiceNetwork:
+  ServiceNetwork:
     Type: AWS::VpcLattice::ServiceNetwork
     Properties:
-      Name: my-service-network
+      Name: {Ref: NetworkName}
       AuthType: AWS_IAM
-
-  MyVpcAssociation:
+  ClientAssociation:
     Type: AWS::VpcLattice::ServiceNetworkVpcAssociation
     Properties:
-      ServiceNetworkIdentifier: !Ref MyServiceNetwork
-      VpcIdentifier: !Ref MyVPC
-      SecurityGroupIds:
-        - !Ref MySecurityGroup
+      ServiceNetworkIdentifier: {Ref: ServiceNetwork}
+      VpcIdentifier: {Ref: VpcId}
+      SecurityGroupIds: {Ref: AssociationSecurityGroupIds}
+Outputs:
+  ServiceNetworkArn:
+    Description: ARN used for authorization and sharing
+    Value: {Fn::GetAtt: [ServiceNetwork, Arn]}
+  ServiceNetworkId:
+    Description: ID used with VPC Lattice API operations
+    Value: {Fn::GetAtt: [ServiceNetwork, Id]}
 ```
 
-### 配置 Gateway API 资源
+此模板不附加身份验证策略。请在同一所有权模型中添加身份验证策略资源，或在测试请求前显式应用审核后的网络策略。从堆栈输出获取网络 ID/ARN。部署前验证模板并检查变更集；示例不创建 VPC 或其安全组。
 
-配置 Kubernetes Gateway API 资源以与 VPC Lattice 集成。
+### Gateway 和应用
 
-#### 1. 创建 GatewayClass
-
-GatewayClass 定义 Gateway 资源的实现。
+将其保存为 `gateway.yaml` 并应用。Gateway 名称必须与上面创建的 `my-network` 匹配。
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lattice-demo
+---
+apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: amazon-vpc-lattice
 spec:
   controllerName: application-networking.k8s.aws/gateway-api-controller
-```
-
-#### 2. 创建 Gateway
-
-Gateway 定义流量如何进入集群。
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
-metadata:
-  name: my-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
-spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
-  - name: http
-    port: 80
-    protocol: HTTP
-```
-
-#### 3. 创建 HTTPRoute
-
-HTTPRoute 定义 HTTP 流量如何路由到 Service。
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: my-http-route
-  namespace: default
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: my-service
-      port: 8080
-```
-
-### Service 和 Pod 配置
-
-配置 Kubernetes Service 和 Pod 以与 VPC Lattice 集成。
-
-#### 1. 创建 Service
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-  namespace: default
-spec:
-  selector:
-    app: my-app
-  ports:
-  - port: 8080
-    targetPort: 8080
-  type: ClusterIP
-```
-
-#### 2. 创建 Deployment
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-  namespace: default
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: my-app
-  template:
-    metadata:
-      labels:
-        app: my-app
-    spec:
-      containers:
-      - name: my-container
-        image: nginx:latest
-        ports:
-        - containerPort: 8080
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 10
-```
-
-## 服务管理
-
-### 创建 VPC Lattice Service
-
-VPC Lattice Service 可以直接通过 AWS Management Console、AWS CLI 或 AWS CloudFormation 创建，也可以通过 Kubernetes Gateway API 间接创建。
-
-#### 使用 AWS CLI 直接创建
-
-```bash
-# Create target group
-aws vpc-lattice create-target-group \
-  --name my-target-group \
-  --type INSTANCE \
-  --config '{"port":80,"protocol":"HTTP","vpcIdentifier":"<VPC_ID>","healthCheck":{"enabled":true,"protocol":"HTTP","path":"/health","port":80,"healthCheckIntervalSeconds":30,"healthCheckTimeoutSeconds":5,"healthyThresholdCount":5,"unhealthyThresholdCount":2}}'
-
-# Store target group ID
-TARGET_GROUP_ID=$(aws vpc-lattice list-target-groups \
-  --query "items[?name=='my-target-group'].id" \
-  --output text)
-
-# Create service
-aws vpc-lattice create-service \
-  --name my-service \
-  --auth-type AWS_IAM
-
-# Store service ID
-SERVICE_ID=$(aws vpc-lattice list-services \
-  --query "items[?name=='my-service'].id" \
-  --output text)
-
-# Create listener
-aws vpc-lattice create-listener \
-  --service-identifier $SERVICE_ID \
-  --name my-listener \
-  --protocol HTTP \
-  --port 80 \
-  --default-action '{"forward":{"targetGroups":[{"targetGroupIdentifier":"'$TARGET_GROUP_ID'"}]}}'
-
-# Associate service with service network
-aws vpc-lattice create-service-network-service-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --service-identifier $SERVICE_ID
-```
-
-#### 使用 Kubernetes Gateway API 间接创建
-
-创建 Gateway API 资源时，AWS Gateway API Controller 会自动创建 VPC Lattice 资源。
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
-metadata:
-  name: my-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
-spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
-  - name: http
-    port: 80
-    protocol: HTTP
 ---
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: my-http-route
-  namespace: default
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: my-service
-      port: 8080
-```
-
-### Service Discovery 和访问
-
-VPC Lattice Service 会被自动分配 DNS 名称，并且可在 Service Network 内发现。
-
-#### DNS 名称格式
-
-```
-<service-name>.<service-network-id>.vpc-lattice-svcs.<region>.on.aws
-```
-
-#### Service 访问示例
-
-```bash
-# Query service DNS name
-SERVICE_DNS=$(aws vpc-lattice get-service \
-  --service-identifier $SERVICE_ID \
-  --query "dnsEntry.domainName" \
-  --output text)
-
-# Access service
-curl -v http://$SERVICE_DNS/api
-```
-
-### 更新和删除 Service
-
-#### 使用 AWS CLI 更新 Service
-
-```bash
-# Update service
-aws vpc-lattice update-service \
-  --service-identifier $SERVICE_ID \
-  --auth-type NONE
-
-# Update listener
-aws vpc-lattice update-listener \
-  --service-identifier $SERVICE_ID \
-  --listener-identifier <LISTENER_ID> \
-  --default-action '{"forward":{"targetGroups":[{"targetGroupIdentifier":"'$TARGET_GROUP_ID'","weight":100}]}}'
-```
-
-#### 使用 AWS CLI 删除 Service
-
-```bash
-# Dissociate from service network
-aws vpc-lattice delete-service-network-service-association \
-  --service-network-service-association-identifier <ASSOCIATION_ID>
-
-# Delete listener
-aws vpc-lattice delete-listener \
-  --service-identifier $SERVICE_ID \
-  --listener-identifier <LISTENER_ID>
-
-# Delete service
-aws vpc-lattice delete-service \
-  --service-identifier $SERVICE_ID
-
-# Delete target group
-aws vpc-lattice delete-target-group \
-  --target-group-identifier $TARGET_GROUP_ID
-```
-
-#### 使用 Kubernetes Gateway API 进行 Service 管理
-
-更新或删除 Gateway API 资源时，AWS Gateway API Controller 会自动更新或删除 VPC Lattice 资源。
-
-```bash
-# Update HTTPRoute
-kubectl apply -f updated-http-route.yaml
-
-# Delete HTTPRoute
-kubectl delete httproute my-http-route
-
-# Delete Gateway
-kubectl delete gateway my-gateway
-```
-
-## 路由与流量管理
-
-### 基本路由
-
-VPC Lattice 提供多种路由选项，包括基于路径的路由、基于 Header 的路由和加权路由。
-
-#### 基于路径的路由
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: path-based-route
-  namespace: default
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api/v1
-    backendRefs:
-    - name: service-v1
-      port: 8080
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api/v2
-    backendRefs:
-    - name: service-v2
-      port: 8080
-```
-
-#### 基于 Header 的路由
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: header-based-route
-  namespace: default
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - headers:
-      - name: "version"
-        value: "v1"
-    backendRefs:
-    - name: service-v1
-      port: 8080
-  - matches:
-    - headers:
-      - name: "version"
-        value: "v2"
-    backendRefs:
-    - name: service-v2
-      port: 8080
-```
-
-### 流量拆分和 Canary Deployment
-
-VPC Lattice 通过加权路由支持流量拆分和 Canary Deployment。
-
-#### 使用 AWS CLI 进行加权路由
-
-```bash
-# Set up weighted routing
-aws vpc-lattice update-listener \
-  --service-identifier $SERVICE_ID \
-  --listener-identifier <LISTENER_ID> \
-  --default-action '{
-    "forward": {
-      "targetGroups": [
-        {
-          "targetGroupIdentifier": "'$TARGET_GROUP_ID_V1'",
-          "weight": 80
-        },
-        {
-          "targetGroupIdentifier": "'$TARGET_GROUP_ID_V2'",
-          "weight": 20
-        }
-      ]
-    }
-  }'
-```
-
-#### 使用 Kubernetes Gateway API 进行加权路由
-
-目前，Kubernetes Gateway API 不直接支持加权路由，但 AWS Gateway API Controller 通过 annotations 支持此功能。
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: weighted-route
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/traffic-weights: |
-      {
-        "service-v1": 80,
-        "service-v2": 20
-      }
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: service-v1
-      port: 8080
-    - name: service-v2
-      port: 8080
-```
-
-### 健康检查配置
-
-VPC Lattice 支持对 Target Group 进行健康检查。
-
-#### 使用 AWS CLI 进行健康检查配置
-
-```bash
-# Update health check configuration
-aws vpc-lattice update-target-group \
-  --target-group-identifier $TARGET_GROUP_ID \
-  --health-check '{
-    "enabled": true,
-    "protocol": "HTTP",
-    "path": "/health",
-    "port": 8080,
-    "healthCheckIntervalSeconds": 30,
-    "healthCheckTimeoutSeconds": 5,
-    "healthyThresholdCount": 5,
-    "unhealthyThresholdCount": 2,
-    "matcher": {
-      "httpCode": "200-299"
-    }
-  }'
-```
-
-#### 使用 Kubernetes Gateway API 进行健康检查配置
-
-AWS Gateway API Controller 通过 annotations 支持健康检查配置。
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: health-check-route
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/health-check: |
-      {
-        "enabled": true,
-        "protocol": "HTTP",
-        "path": "/health",
-        "port": 8080,
-        "intervalSeconds": 30,
-        "timeoutSeconds": 5,
-        "healthyThresholdCount": 5,
-        "unhealthyThresholdCount": 2,
-        "matcher": {
-          "httpCode": "200-299"
-        }
-      }
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: my-service
-      port: 8080
-```
-## 安全与身份验证
-
-### 身份验证方法
-
-VPC Lattice 支持以下身份验证方法：
-
-1. **AWS IAM**：使用 AWS Identity and Access Management 进行身份验证
-2. **无身份验证**：允许所有请求，无需身份验证
-
-#### 配置 AWS IAM 身份验证
-
-```bash
-# Create service with IAM authentication
-aws vpc-lattice create-service \
-  --name my-service \
-  --auth-type AWS_IAM
-```
-
-#### 使用 Kubernetes Gateway API 配置 IAM 身份验证
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: my-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
-    application-networking.k8s.aws/auth-type: "AWS_IAM"
-spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
-  - name: http
-    port: 80
-    protocol: HTTP
-```
-
-### 资源策略
-
-VPC Lattice 通过资源策略为 Service 和 Service Network 提供细粒度访问控制。
-
-#### 设置 Service 资源策略
-
-```bash
-# Set service resource policy
-aws vpc-lattice put-resource-policy \
-  --resource-arn arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:service/<SERVICE_ID> \
-  --policy '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "AWS": "arn:aws:iam::<ACCOUNT_ID>:role/MyRole"
-        },
-        "Action": "vpc-lattice:Invoke",
-        "Resource": "arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:service/<SERVICE_ID>"
-      }
-    ]
-  }'
-```
-
-#### 设置 Service Network 资源策略
-
-```bash
-# Set service network resource policy
-aws vpc-lattice put-resource-policy \
-  --resource-arn arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:servicenetwork/<SERVICE_NETWORK_ID> \
-  --policy '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "AWS": "arn:aws:iam::<ACCOUNT_ID>:role/MyRole"
-        },
-        "Action": [
-          "vpc-lattice:CreateServiceNetworkVpcAssociation",
-          "vpc-lattice:CreateServiceNetworkServiceAssociation"
-        ],
-        "Resource": "arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:servicenetwork/<SERVICE_NETWORK_ID>"
-      }
-    ]
-  }'
-```
-
-### 跨账户访问
-
-VPC Lattice 通过 Service Network 支持多个 AWS 账户中 Service 之间的通信。
-
-#### 跨账户共享 Service Network
-
-1. 使用 AWS RAM (Resource Access Manager) 共享 Service Network：
-
-```bash
-# Share service network
-aws ram create-resource-share \
-  --name my-service-network-share \
-  --resource-arns arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:servicenetwork/<SERVICE_NETWORK_ID> \
-  --principals arn:aws:organizations::o-<ORGANIZATION_ID>:organization
-
-# Or share with specific account
-aws ram create-resource-share \
-  --name my-service-network-share \
-  --resource-arns arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:servicenetwork/<SERVICE_NETWORK_ID> \
-  --principals <TARGET_ACCOUNT_ID>
-```
-
-2. 在目标账户中接受共享的 Service Network：
-
-```bash
-# Accept share invitation
-aws ram accept-resource-share-invitation \
-  --resource-share-invitation-arn arn:aws:ram:<REGION>:<ACCOUNT_ID>:resource-share-invitation/<INVITATION_ID>
-```
-
-3. 在目标账户中将 VPC 连接到共享的 Service Network：
-
-```bash
-# VPC association
-aws vpc-lattice create-service-network-vpc-association \
-  --service-network-identifier <SERVICE_NETWORK_ID> \
-  --vpc-identifier <VPC_ID> \
-  --security-group-ids <SECURITY_GROUP_ID>
-```
-
-### TLS 配置
-
-VPC Lattice 支持对 Service 使用 TLS 加密。
-
-#### 使用 AWS CLI 进行 TLS 配置
-
-```bash
-# Create or import ACM certificate
-CERTIFICATE_ARN=$(aws acm request-certificate \
-  --domain-name my-service.example.com \
-  --validation-method DNS \
-  --query CertificateArn \
-  --output text)
-
-# Create TLS listener
-aws vpc-lattice create-listener \
-  --service-identifier $SERVICE_ID \
-  --name my-tls-listener \
-  --protocol HTTPS \
-  --port 443 \
-  --tls '{
-    "certificateArn": "'$CERTIFICATE_ARN'",
-    "mode": "STRICT"
-  }' \
-  --default-action '{
-    "forward": {
-      "targetGroups": [
-        {
-          "targetGroupIdentifier": "'$TARGET_GROUP_ID'"
-        }
-      ]
-    }
-  }'
-```
-
-#### 使用 Kubernetes Gateway API 进行 TLS 配置
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
-metadata:
-  name: my-tls-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
+  name: my-network
+  namespace: lattice-demo
 spec:
   gatewayClassName: amazon-vpc-lattice
   listeners:
   - name: https
-    port: 443
     protocol: HTTPS
+    port: 443
     tls:
       mode: Terminate
       certificateRefs:
-      - kind: Secret
-        name: my-tls-cert
+      - name: unused
 ```
 
-## 监控与日志记录
+`certificateRefs: [{name: unused}]` 遵循此控制器文档中的配置：它满足 Gateway API TLS 配置要求，但此控制器不会在此读取 Kubernetes TLS Secret。没有自定义主机名时，Lattice 为生成的域名提供证书。这是**控制器专属行为**，并非可移植的证书管理方法。
 
-### CloudWatch 指标
-
-VPC Lattice 提供各种 CloudWatch 指标来监控 Service 性能和状态。
-
-#### 关键指标
-
-| 指标名称 | 描述 | 维度 |
-|------------|------|------|
-| RequestCount | 已处理请求的数量 | ServiceId、ServiceName、TargetGroupId |
-| HTTP_4XX_Count | 4XX HTTP 响应代码的数量 | ServiceId、ServiceName、TargetGroupId |
-| HTTP_5XX_Count | 5XX HTTP 响应代码的数量 | ServiceId、ServiceName、TargetGroupId |
-| ProcessedBytes | 已处理字节数 | ServiceId、ServiceName、TargetGroupId |
-| TargetProcessingTime | 目标处理时间（毫秒） | ServiceId、ServiceName、TargetGroupId |
-| HealthyTargetCount | 健康目标的数量 | TargetGroupId |
-| UnhealthyTargetCount | 不健康目标的数量 | TargetGroupId |
-
-#### 创建 CloudWatch Dashboard
-
-```bash
-# Create CloudWatch dashboard
-aws cloudwatch put-dashboard \
-  --dashboard-name VPCLatticeMonitoring \
-  --dashboard-body '{
-    "widgets": [
-      {
-        "type": "metric",
-        "x": 0,
-        "y": 0,
-        "width": 12,
-        "height": 6,
-        "properties": {
-          "metrics": [
-            ["AWS/VpcLattice", "RequestCount", "ServiceName", "my-service"]
-          ],
-          "period": 60,
-          "stat": "Sum",
-          "region": "<REGION>",
-          "title": "Request Count"
-        }
-      },
-      {
-        "type": "metric",
-        "x": 12,
-        "y": 0,
-        "width": 12,
-        "height": 6,
-        "properties": {
-          "metrics": [
-            ["AWS/VpcLattice", "HTTP_4XX_Count", "ServiceName", "my-service"],
-            ["AWS/VpcLattice", "HTTP_5XX_Count", "ServiceName", "my-service"]
-          ],
-          "period": 60,
-          "stat": "Sum",
-          "region": "<REGION>",
-          "title": "Error Count"
-        }
-      }
-    ]
-  }'
-```
-
-### CloudWatch 告警
-
-为 VPC Lattice 指标设置 CloudWatch 告警，以便及早发现问题。
-
-```bash
-# Create 5XX error alarm
-aws cloudwatch put-metric-alarm \
-  --alarm-name VPCLattice-5XX-Errors \
-  --alarm-description "Alarm when 5XX errors exceed threshold" \
-  --metric-name HTTP_5XX_Count \
-  --namespace AWS/VpcLattice \
-  --dimensions Name=ServiceName,Value=my-service \
-  --statistic Sum \
-  --period 60 \
-  --evaluation-periods 5 \
-  --threshold 10 \
-  --comparison-operator GreaterThanThreshold \
-  --alarm-actions arn:aws:sns:<REGION>:<ACCOUNT_ID>:my-alert-topic
-```
-
-### 访问日志记录
-
-VPC Lattice 可以将 Service 的访问日志发送到 Amazon S3、Amazon CloudWatch Logs 或 Amazon Kinesis Data Firehose。
-
-#### 配置 S3 访问日志记录
-
-```bash
-# Create S3 bucket
-aws s3 mb s3://vpc-lattice-access-logs-<ACCOUNT_ID>
-
-# Set bucket policy
-aws s3api put-bucket-policy \
-  --bucket vpc-lattice-access-logs-<ACCOUNT_ID> \
-  --policy '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "Service": "delivery.logs.amazonaws.com"
-        },
-        "Action": "s3:PutObject",
-        "Resource": "arn:aws:s3:::vpc-lattice-access-logs-<ACCOUNT_ID>/*",
-        "Condition": {
-          "StringEquals": {
-            "s3:x-amz-acl": "bucket-owner-full-control"
-          }
-        }
-      }
-    ]
-  }'
-
-# Enable access logging
-aws vpc-lattice create-access-log-subscription \
-  --resource-identifier $SERVICE_ID \
-  --destination-arn arn:aws:s3:::vpc-lattice-access-logs-<ACCOUNT_ID> \
-  --destination-name my-s3-logs
-```
-
-#### 配置 CloudWatch Logs 访问日志记录
-
-```bash
-# Create log group
-aws logs create-log-group \
-  --log-group-name /aws/vpc-lattice/my-service
-
-# Enable access logging
-aws vpc-lattice create-access-log-subscription \
-  --resource-identifier $SERVICE_ID \
-  --destination-arn arn:aws:logs:<REGION>:<ACCOUNT_ID>:log-group:/aws/vpc-lattice/my-service \
-  --destination-name my-cloudwatch-logs
-```
-
-### AWS X-Ray 集成
-
-VPC Lattice 与 AWS X-Ray 集成，以支持分布式追踪。
-
-#### 启用 X-Ray 追踪
-
-```bash
-# Enable X-Ray tracing
-aws vpc-lattice update-service \
-  --service-identifier $SERVICE_ID \
-  --auth-type AWS_IAM \
-  --tracing-config '{
-    "enabled": true
-  }'
-```
-
-#### 使用 Kubernetes Gateway API 启用 X-Ray 追踪
+将以下内容保存为 `stable.yaml`。它将 NGINX 配置为实际监听 8080 并提供 `/health`；仅声明 `containerPort` 不能实现其中任何一项。
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: my-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
-    application-networking.k8s.aws/xray-tracing: "enabled"
+  name: service-stable
+  namespace: lattice-demo
+data:
+  nginx.conf: |
+    worker_processes 1;
+    pid /tmp/nginx.pid;
+    error_log stderr notice;
+    events { worker_connections 1024; }
+    http {
+        access_log /dev/stdout;
+        default_type application/json;
+        client_body_temp_path /tmp/client_temp;
+        proxy_temp_path /tmp/proxy_temp;
+        fastcgi_temp_path /tmp/fastcgi_temp;
+        uwsgi_temp_path /tmp/uwsgi_temp;
+        scgi_temp_path /tmp/scgi_temp;
+        server {
+            listen 8080;
+            location = /health { return 200 '{"status":"ok"}\n'; }
+            location = /api { return 200 '{"version":"stable"}\n'; }
+            location /api/ { return 200 '{"version":"stable"}\n'; }
+            location / { return 404 '{"error":"not found"}\n'; }
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-stable
+  namespace: lattice-demo
 spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
+  replicas: 2
+  selector:
+    matchLabels: &id001
+      app: lattice-demo
+      version: stable
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: app
+        image: nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
+        command:
+        - nginx
+        args:
+        - -c
+        - /etc/lattice/nginx.conf
+        - -g
+        - daemon off;
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 250m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: config
+          mountPath: /etc/lattice
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config
+        configMap:
+          name: service-stable
+      - name: tmp
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-stable
+  namespace: lattice-demo
+spec:
+  selector:
+    app: lattice-demo
+    version: stable
+  ports:
   - name: http
-    port: 80
+    port: 8080
+    targetPort: http
+```
+
+根据相同的三个对象创建 `canary.yaml`，将每个 `service-stable` 名称改为 `service-canary`，将选择器和模板中的两个 `version: stable` 标签改为 `version: canary`，并将 JSON 响应值 `"stable"` 改为 `"canary"`。保持 `app: lattice-demo`、端口和健康端点不变。在 `lattice-demo` 中应用两个文件。固定的镜像具有 Linux AMD64 和 ARM64 变体。资源请求和副本数是演示设置，并非测量得到的生产容量配置。
+
+保存并应用以下 `TargetGroupPolicy`；创建针对 `service-canary` 的等效 `canary-health` 策略。
+
+```yaml
+apiVersion: application-networking.k8s.aws/v1alpha1
+kind: TargetGroupPolicy
+metadata:
+  name: stable-health
+  namespace: lattice-demo
+spec:
+  targetRef:
+    group: ''
+    kind: Service
+    name: service-stable
+  protocol: HTTP
+  protocolVersion: HTTP1
+  healthCheck:
+    enabled: true
     protocol: HTTP
+    protocolVersion: HTTP1
+    port: 8080
+    path: /health
+    intervalSeconds: 30
+    timeoutSeconds: 5
+    healthyThresholdCount: 2
+    unhealthyThresholdCount: 2
+    statusMatch: '200'
 ```
 
-## 最佳实践
+CRD 使用 `intervalSeconds`、`timeoutSeconds` 和 `statusMatch`。AWS CLI 使用不同字段名，后文会展示。更改协议/版本可能替换目标组；删除策略会还原其设置，包括默认 HTTP/HTTP1 行为。
 
-### 设计与架构
+## 服务管理 {#service-management}
 
-1. **Service Network 设计**
-   - 按逻辑边界划分 Service Network
-   - 按环境（开发、预发布、生产）划分 Service Network
-   - 根据安全要求划分 Service Network
+### 通过 HTTPRoute 创建服务
 
-2. **Service 命名约定**
-   - 使用一致的命名约定
-   - 在名称中包含环境、服务类型和版本
-   - 示例：`<env>-<service-name>-<version>`
+将其保存为 `api-route.yaml`。同时将下面的 IAMAuthPolicy 保存为 `api-iam.yaml`。先应用应用程序和健康策略，再应用路由和身份验证策略。在协调过程创建并保护路由服务时，保持网络级 `AWS_IAM` 策略启用。
 
-3. **Target Group 设计**
-   - 将具有相似特征的目标放在同一 Target Group 中
-   - 优化健康检查路径和间隔
-   - 设置适当的不健康阈值
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: api
+  namespace: lattice-demo
+spec:
+  parentRefs:
+  - name: my-network
+    sectionName: https
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    backendRefs:
+    - name: service-stable
+      port: 8080
+      weight: 90
+    - name: service-canary
+      port: 8080
+      weight: 10
+```
 
-### 性能优化
+```yaml
+apiVersion: application-networking.k8s.aws/v1alpha1
+kind: IAMAuthPolicy
+metadata:
+  name: api-caller
+  namespace: lattice-demo
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: api
+  policy: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:role/MyAppRole"},"Action":"vpc-lattice-svcs:Invoke","Resource":"*","Condition":{"StringLike":{"vpc-lattice-svcs:RequestPath":["/api","/api/*"]}}}]}'
+```
 
-1. **健康检查优化**
-   - 设置适当的健康检查间隔（不要过短）
-   - 实现轻量级健康检查端点
-   - 配置健康检查路径以验证关键依赖项
+`spec.policy` 是 JSON **字符串**。此 CRD 在目标服务上启用 `AWS_IAM`；身份验证类型注解或包含策略的 ConfigMap 不能替代它。以 `Gateway` 为目标的策略会管理网络策略，因此本示例中不能让它与外部管理的网络策略争夺管理权。
 
-2. **连接复用**
-   - 实现客户端连接池
-   - 使用 Keep-Alive Header
-   - 优化连接超时
-
-3. **缓存策略**
-   - 为静态内容实现客户端缓存
-   - 优化 Cache-Control Header
-   - 在需要时集成 CDN
-
-### 安全加固
-
-1. **最小权限原则**
-   - 仅授予所需的最小权限
-   - 创建特定于 Service 的 IAM 策略
-   - 定期进行权限审查和审计
-
-2. **网络安全**
-   - 使用安全组限制流量
-   - 仅开放所需端口
-   - 考虑使用 VPC endpoint
-
-3. **加密**
-   - 对传输中的数据使用 TLS 加密
-   - 使用最新的 TLS 版本和密码套件
-   - 配置自动证书续订
-
-### 监控与可观测性
-
-1. **全面监控**
-   - 为所有 Service 创建 CloudWatch Dashboard
-   - 为关键指标设置告警
-   - 实现日志分析和异常检测
-
-2. **日志记录策略**
-   - 为所有 Service 启用访问日志记录
-   - 设置日志保留策略
-   - 集成日志分析工具
-
-3. **分布式追踪**
-   - 启用 X-Ray 追踪
-   - 实现 Service 之间的 Trace 关联
-   - 分析和可视化 Trace 数据
-
-### 成本优化
-
-1. **资源使用监控**
-   - 跟踪 Service 和 Target Group 的使用情况
-   - 识别并删除未使用的资源
-   - 使用成本分配标签
-
-2. **流量优化**
-   - 减少不必要的请求
-   - 优化响应大小
-   - 实现批处理（如可行）
-
-3. **自动扩展**
-   - 根据流量模式自动扩展目标
-   - 实现计划扩展（适用于可预测的流量模式）
-   - 优化扩展阈值
-
-## 故障排除
-
-### 常见问题与解决方案
-
-#### 1. 连接问题
-
-**问题**：Client 无法连接到 VPC Lattice Service
-
-**解决方案**：
-- 检查 VPC 与 Service Network 之间的连接
-- 验证安全组规则
-- 检查 DNS 解析
-- 检查目标状态
+检查 `Accepted` / `ResolvedRefs`、策略状态、相关 AWS 资源状态和后端就绪状态。`kubectl apply` 成功不能证明云资源协调或日志交付成功。
 
 ```bash
-# Check VPC association
+kubectl -n lattice-demo get gateway my-network -o yaml
+kubectl -n lattice-demo get httproute api -o yaml
+kubectl -n lattice-demo get iamauthpolicy api-caller -o yaml
+kubectl -n lattice-demo get endpointslices \
+  -l kubernetes.io/service-name=service-stable
+kubectl -n lattice-demo rollout status deployment/service-stable --timeout=120s
+kubectl -n lattice-demo rollout status deployment/service-canary --timeout=120s
+
+export SERVICE_DNS="$(kubectl -n lattice-demo get httproute api \
+  -o jsonpath='{.metadata.annotations.application-networking\.k8s\.aws/lattice-assigned-domain-name}')"
+test -n "$SERVICE_DNS"
+# A caller inside the associated VPC, with MyAppRole credentials, runs:
+lattice-client/bin/python lattice_get.py --region "$AWS_REGION" "https://${SERVICE_DNS}/api"
+```
+
+运行最后一条命令前，设置下一节中的签名客户端。使用**调用方角色**凭证，从获授权的网络位置运行它。工作站不仅需要 AWS 凭证，还需要适当的网络路径。
+
+### 签名 HTTPS 客户端
+
+将其保存为 `lattice_get.py`。它使用默认 AWS 凭证提供程序链，为每次请求冻结凭证，针对 **`vpc-lattice-svcs`** 签名，并按 VPC Lattice 要求设置 **`UNSIGNED-PAYLOAD`**。它验证 TLS，不会携带过期签名跟随重定向，也不会自动重试请求。
+
+```python
+import argparse
+import ssl
+import sys
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
+from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_opener
+
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
+from botocore.exceptions import BotoCoreError
+from botocore.session import Session
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def signed_request(url: str, region: str, credentials) -> Request:
+    parts = urlsplit(url)
+    if (parts.scheme != "https" or not parts.hostname or parts.username
+            or parts.password or parts.fragment):
+        raise ValueError("Use an HTTPS URL without user info or a fragment")
+    request = AWSRequest(method="GET", url=url, headers={
+        "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
+    })
+    request.context["payload_signing_enabled"] = False
+    SigV4Auth(credentials, "vpc-lattice-svcs", region).add_auth(request)
+    return Request(url, method="GET", headers=dict(request.headers.items()))
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--region", required=True)
+    parser.add_argument("url")
+    args = parser.parse_args()
+    try:
+        provider = Session().get_credentials()
+        if provider is None:
+            raise ValueError("No AWS credentials available")
+        request = signed_request(args.url, args.region, provider.get_frozen_credentials())
+        opener = build_opener(NoRedirect(), HTTPSHandler(context=ssl.create_default_context()))
+        with opener.open(request, timeout=10) as response:
+            print(response.status)
+            print(response.read(1048576).decode("utf-8", errors="replace"))
+        return 0
+    except HTTPError as exc:
+        print(f"HTTP {exc.code}; check the policy and access logs", file=sys.stderr)
+    except (URLError, BotoCoreError, ValueError) as exc:
+        print(f"Request failed: {type(exc).__name__}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+```bash
+python3.12 -m venv lattice-client
+lattice-client/bin/python -m pip install 'botocore==1.43.93'
+lattice-client/bin/python lattice_get.py --region "$AWS_REGION" "https://${SERVICE_DNS}/api"
+```
+
+此仅支持 GET 的示例已使用 Python 3.12 和 botocore 1.43.93 检查。工作负载应使用已配置的 Pod Identity 或 IRSA 凭证。不要将静态凭证或签名标头复制到清单、日志或支持工单。VPC Lattice 也支持 SigV4A；本示例使用区域 SigV4。
+
+### 直接 AWS API 管理
+
+以下是独立管理资源的**替代方案**。使用可达且稳定的后端 IP，在 8080 上提供 HTTP 和 `/health`；临时 Pod IP 需要控制器跟踪替换。不要手动更改 HTTPRoute 拥有的服务并指望控制器保留更改。
+
+```bash
+# Separate API-managed example; do not use for controller-managed resources.
+export TARGET_IP=10.0.1.25
+export TARGET_GROUP_ID="$(aws vpc-lattice create-target-group \
+  --name api-manual --type IP \
+  --config "{\"port\":8080,\"protocol\":\"HTTP\",\"protocolVersion\":\"HTTP1\",\"vpcIdentifier\":\"${VPC_ID}\"}" \
+  --query id --output text)"
+aws vpc-lattice register-targets --target-group-identifier "$TARGET_GROUP_ID" \
+  --targets "id=$TARGET_IP,port=8080"
+export SERVICE_ID="$(aws vpc-lattice create-service \
+  --name api-manual --auth-type AWS_IAM --query id --output text)"
+aws vpc-lattice put-auth-policy --resource-identifier "$SERVICE_ID" \
+  --policy file://api-auth-policy.compact.json
+export LISTENER_ID="$(aws vpc-lattice create-listener \
+  --service-identifier "$SERVICE_ID" --name https --protocol HTTPS --port 443 \
+  --default-action "{\"forward\":{\"targetGroups\":[{\"targetGroupIdentifier\":\"${TARGET_GROUP_ID}\",\"weight\":1}]}}" \
+  --query id --output text)"
+aws vpc-lattice create-service-network-service-association \
+  --service-identifier "$SERVICE_ID" --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice list-targets --target-group-identifier "$TARGET_GROUP_ID"
+aws vpc-lattice get-service --service-identifier "$SERVICE_ID" --query dnsEntry
+```
+
+等待目标健康且关联激活后，再调用发现的 HTTPS 域名。此示例使用生成域名的 AWS 托管证书，并非自定义域名。
+
+### 更新和删除服务
+
+对于 Kubernetes 管理的资源，更改 Route、后端工作负载或策略清单，并验证协调。对于 API 管理的资源，使用相应更新 API 并检查结果状态。从响应中获取资源 ID，不要选择账户中的第一个服务。
+
+移除前，识别所有使用方、网络关联、监听器/规则、目标组引用和所有权。按依赖顺序移除特定路由/服务关联和服务资源，然后移除不再使用的目标组。共享 Gateway/网络可能影响其他命名空间或账户。保留控制器，直至终结器处理和云资源清理完成；不要使用无差别删除。
+
+**删除 IAMAuthPolicy 会先在目标上禁用 IAM 身份验证（`NONE`），再分离策略。** 这不是拒绝访问或安全回滚授权的方法。移除服务时保留限制性策略，并验证剩余网络/服务控制。
+
+## 路由与流量管理 {#routing-and-traffic-management}
+
+### 路径和标头匹配
+
+上面的路由匹配 `/api` 及其路径子树。要添加显式的基于标头的金丝雀规则，请将**同一个** HTTPRoute 替换为：
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: api
+  namespace: lattice-demo
+spec:
+  parentRefs:
+  - name: my-network
+    sectionName: https
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+      headers:
+      - name: x-version
+        value: canary
+    backendRefs:
+    - name: service-canary
+      port: 8080
+      weight: 1
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    backendRefs:
+    - name: service-stable
+      port: 8080
+      weight: 90
+    - name: service-canary
+      port: 8080
+      weight: 10
+```
+
+控制器文档说明：路径匹配不区分大小写，每条规则允许一个方法匹配，最多五个标头匹配，不支持查询参数匹配。不要假定所有 Gateway API 过滤器或匹配均已实现。单独的 HTTPRoute 会创建另一个 Lattice 服务/域名，而不是自动为第一个服务添加规则。
+
+### 加权路由
+
+`backendRefs.weight: 90` 和 `10` 是原生 Gateway API 配置；无需加权路由注解。它们表示相对分布，不是十次请求的精确结果。提高金丝雀权重前，应在适当样本上验证两个版本的端点、健康状况、错误和延迟。
+
+对于独立管理的 AWS 资源：
+
+```bash
+# TG_STABLE and TG_CANARY are existing target groups managed by this API workflow.
+aws vpc-lattice create-rule --service-identifier "$SERVICE_ID" \
+  --listener-identifier "$LISTENER_ID" --name api-canary --priority 10 \
+  --match '{"httpMatch":{"pathMatch":{"match":{"prefix":"/api"},"caseSensitive":false}}}' \
+  --action "{\"forward\":{\"targetGroups\":[{\"targetGroupIdentifier\":\"${TG_STABLE}\",\"weight\":90},{\"targetGroupIdentifier\":\"${TG_CANARY}\",\"weight\":10}]}}"
+```
+
+CLI 前缀匹配是词法前缀匹配；应单独审核其边界行为，不能等同于 Kubernetes `PathPrefix` 语义。路由匹配不是授权边界。不要用路径路由测试证明 IAM 策略覆盖所有规范化或编码后的路径变体。
+
+### 健康检查
+
+Kubernetes 示例使用 `TargetGroupPolicy`。等效的 API 更新如下：
+
+```bash
+aws vpc-lattice update-target-group --target-group-identifier "$TARGET_GROUP_ID" \
+  --health-check '{"enabled":true,"protocol":"HTTP","protocolVersion":"HTTP1","port":8080,"path":"/health","healthCheckIntervalSeconds":30,"healthCheckTimeoutSeconds":5,"healthyThresholdCount":2,"unhealthyThresholdCount":2,"matcher":{"httpCode":"200"}}'
+```
+
+健康检查根据阈值评估就绪状态；不保证可用性或零停机。HTTP1 目标组默认启用健康检查，而 HTTP2 需要显式考虑。gRPC 目标使用 HTTP1/HTTP2 健康检查，Lambda/ALB 目标类型有不同的健康检查行为。请检查当前目标类型文档，不要将 Pod 示例应用于所有目标。
+
+## 安全与身份验证 {#security-and-authentication}
+
+### 身份验证策略和调用方权限
+
+`put-auth-policy` / `get-auth-policy` 管理调用授权。`put-resource-policy` 是另一种管理/共享 API。调用方应使用 **`vpc-lattice-svcs:Invoke`** 操作。
+
+当网络和服务都使用 `AWS_IAM` 时，调用方身份策略和**两个**适用的身份验证策略都必须允许访问。显式 Deny 优先。一个资源上的 `NONE` 不会取消另一个资源的 IAM 要求。直接访问 Kubernetes ClusterIP/Pod IP 的流量绕过 Lattice 身份验证；应以适当的网络和应用控制保护这些路径。
+
+`StringEquals` 不会将 `/api/*` 解释为通配符。示例使用 `StringLike`，同时包含 `/api` 和 `/api/*`。IAM 条件匹配及应用路径规范化可能不同于控制器路由。对于管理功能，优先使用仅限管理角色访问的专用服务，并保留应用授权；不要添加宽泛的通用 Allow 并假定路径通配符能保护所有别名。
+
+### 跨账户访问
+
+RAM 共享允许与共享实体建立关联；其本身不授予应用调用权限。网络/服务身份验证策略、调用方权限、关联安全组和网络路径仍须允许请求。
+
+```bash
+# Owner account: choose a verified account ID or the actual Organizations ARN.
+export CONSUMER_ACCOUNT_ID=111122223333
+aws ram create-resource-share --name lattice-network-share \
+  --resource-arns "$SERVICE_NETWORK_ARN" --principals "$CONSUMER_ACCOUNT_ID"
+
+# Consumer account: inspect invitations only when the sharing mode requires one.
+aws ram get-resource-share-invitations
+# After verifying the owner, resources, and intended permissions:
+aws ram accept-resource-share-invitation \
+  --resource-share-invitation-arn "$VERIFIED_INVITATION_ARN"
+
+# Run with consumer credentials and that account's VPC/security group values.
+aws vpc-lattice create-service-network-vpc-association \
+  --service-network-identifier "$SERVICE_NETWORK_ARN" \
+  --vpc-identifier "$CONSUMER_VPC_ID" \
+  --security-group-ids "$CONSUMER_ASSOCIATION_SG_ID"
+```
+
+启用 Organizations 共享时，组织内使用方无需邀请即可获得访问权限。其他受支持的共享安排需要接受邀请。要与组织或 OU 共享，应使用 **Organizations 提供的真实 ARN**，其中包含管理账户标识符，不要用成员账户 ID 拼接。
+
+所有者可以共享服务、网络和资源配置，不能将单个 IAM 角色作为 RAM 使用方。停止共享会阻止新关联，但**不会移除现有关联**。撤销访问时请显式审核现有关联。
+
+### TLS 和自定义域名
+
+示例 Gateway 仅暴露 HTTPS。对于自定义主机名，应使用该主机名创建服务，获取匹配的 ACM 证书，并将 DNS 配置为实际分配的域名。每个服务仅支持一个自定义域名，且服务创建后不能更改。
+
+对于控制器，设置 HTTPRoute 的 `spec.hostnames` 和 Gateway 监听器的 `tls.options["application-networking.k8s.aws/certificate-arn"]`，或使用文档中的 ACM 发现功能。不要将私钥放入注解。ExternalDNS 自动化还需要其控制器、权限和 DNSEndpoint CRD；仅设置主机名不能证明 DNS 记录已存在。
+
+```bash
+# For an API-managed service created with the required custom domain name:
+aws vpc-lattice update-service --service-identifier "$SERVICE_ID" \
+  --certificate-arn "$ACM_CERTIFICATE_ARN"
+# Create an HTTPS listener separately if the service does not already have one.
+# create-listener uses --protocol HTTPS; there is no --tls mode=STRICT option.
+```
+
+面向客户端的 HTTPS 与后端 TLS 相互独立。设置 `protocol: HTTPS` 的后端 `TargetGroupPolicy` 还需要后端实际使用 TLS，以及兼容的 HTTPS 健康检查。VPC Lattice **不验证后端证书**；它加密连接，但不验证后端的证书身份。如果这符合预期设计，可使用独立的 TLSRoute/TLS 透传模型，并审核其功能限制。
+
+## 监控与日志 {#monitoring-and-logging}
+
+### CloudWatch 指标、仪表板和警报
+
+服务指标使用 **`AWS/VpcLattice`** 命名空间：
+
+| 指标 | 含义 / 统计量 |
+|---|---|
+| `TotalRequestCount` | 请求数；`Sum` |
+| `HTTPCode_4XX_Count` | 4xx 响应数；`Sum` |
+| `HTTPCode_5XX_Count` | 5xx 响应数；`Sum` |
+| `RequestTime` | 请求持续时间，单位为**毫秒**；平均值或合适的百分位数 |
+
+服务指标使用 `Service` 维度，可选配 `AvailabilityZone`；目标组指标使用 `TargetGroup`。`ServiceName=my-service` 这样的名称不能标识这些指标。发现实际维度值/维度集：
+
+```bash
+aws cloudwatch list-metrics --namespace AWS/VpcLattice \
+  --metric-name HTTPCode_5XX_Count --dimensions Name=Service > metrics.json
+python3 - <<'PY'
+import json
+for metric in json.load(open("metrics.json"))["Metrics"]:
+    print(json.dumps(metric["Dimensions"]))
+PY
+```
+
+流量产生指标后，选择目标服务的**整个服务范围**维度数组，并保存为 `service-dimensions.json`。不要随意选择第一个结果，也不要混合可用区指标和聚合指标。对照所观察的服务验证标识符。使用以下内容构建 `dashboard.json`：
+
+```python
+import json
+import os
+
+dimensions = json.load(open("service-dimensions.json"))
+if {d["Name"] for d in dimensions} != {"Service"}:
+    raise ValueError("Select the service-wide metric, without AvailabilityZone")
+pairs = [item for d in dimensions for item in (d["Name"], d["Value"])]
+dashboard = {"widgets": [{
+    "type": "metric", "width": 12, "height": 6,
+    "properties": {
+        "title": "VPC Lattice requests and errors",
+        "region": os.environ["AWS_REGION"], "period": 60, "stat": "Sum",
+        "metrics": [["AWS/VpcLattice", name, *pairs] for name in
+                    ("TotalRequestCount", "HTTPCode_4XX_Count", "HTTPCode_5XX_Count")],
+    },
+}]}
+with open("dashboard.json", "w") as output:
+    json.dump(dashboard, output)
+```
+
+```bash
+aws cloudwatch put-dashboard --dashboard-name VPCLattice \
+  --dashboard-body file://dashboard.json
+aws cloudwatch put-metric-alarm --alarm-name LatticeApi5xx \
+  --namespace AWS/VpcLattice --metric-name HTTPCode_5XX_Count \
+  --dimensions file://service-dimensions.json \
+  --statistic Sum --period 60 --evaluation-periods 3 --datapoints-to-alarm 2 \
+  --threshold 5 --comparison-operator GreaterThanThreshold \
+  --treat-missing-data missing
+```
+
+该警报表示**三个周期中有两个周期每分钟 5xx 响应超过五次**，并非 5% 错误率。如果需要通知，请单独配置审核过的警报操作。缺失数据的处理方式是显式选择的：指标在流量开始后才发布，不能默默将 NoData 视为健康证明。仪表板和警报设置只是示例，并非工作负载专属 SLO。
+
+### 访问日志
+
+对于 CloudWatch Logs，使用现有目的地，或创建带保留策略的专用日志组：
+
+```bash
+export LOG_GROUP=/aws/vendedlogs/vpc-lattice/api
+aws logs create-log-group --log-group-name "$LOG_GROUP"
+aws logs put-retention-policy --log-group-name "$LOG_GROUP" --retention-in-days 30
+export LOG_DESTINATION_ARN="arn:aws:logs:${AWS_REGION}:${AWS_ACCOUNT_ID}:log-group:${LOG_GROUP}:*"
+
+# API-managed service only; for an HTTPRoute use AccessLogPolicy below instead.
+aws vpc-lattice create-access-log-subscription \
+  --resource-identifier "$SERVICE_ID" --destination-arn "$LOG_DESTINATION_ARN"
+```
+
+执行设置的主体还需要文档规定的日志交付权限。当其具有必要权限时，AWS 可以创建/更新日志资源策略；否则应预先配置。验证 `delivery.logs.amazonaws.com` 权限及源账户/源 ARN 条件。
+
+对于 Kubernetes 管理的路由，使用以下配置，**替代**与之争夺管理权的 CLI 创建订阅：
+
+```yaml
+apiVersion: application-networking.k8s.aws/v1alpha1
+kind: AccessLogPolicy
+metadata:
+  name: api-logs
+  namespace: lattice-demo
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: api
+  destinationArn: arn:aws:logs:us-west-2:123456789012:log-group:/aws/vendedlogs/vpc-lattice/api:*
+```
+
+替换 ARN，并确认策略状态和实际交付的事件。策略可将 Gateway 作为目标获取网络日志，或将 Route 作为目标获取服务日志。对于每个目标，每种受支持的目的地类型可有一个目的地。
+
+对于 S3，使用经过审核的目标桶，配置阻止公有访问、加密、保留/生命周期规则和适当的交付权限：
+
+```bash
+# Existing reviewed destination bucket; no policy is overwritten by this snippet.
+aws vpc-lattice create-access-log-subscription \
+  --resource-identifier "$SERVICE_ID" --destination-arn "$LOG_BUCKET_ARN"
+```
+
+S3 交付要求为 `delivery.logs.amazonaws.com` 配置文档规定的 `s3:GetBucketAcl` 和 `s3:PutObject` 权限、交付前缀、`aws:SourceAccount` 和 `aws:SourceArn` 条件。现有策略必须合并，不能覆盖。SSE-KMS 需要受支持的客户托管密钥及其交付密钥策略。`--destination-name` 不是访问日志订阅参数。
+
+### 日志分析和追踪
+
+HTTP 服务访问日志包含 `sourceIpPort`、`requestMethod`、`requestPath`、`responseCode`、`durationMS`、`callerPrincipal` 和 `authDeniedReason` 等字段。资源/TCP 日志具有不同模式。
+
+```bash
+END_TIME="$(python3 -c 'import time; print(int(time.time()))')"
+START_TIME="$((END_TIME - 3600))"
+QUERY_ID="$(aws logs start-query --log-group-name "$LOG_GROUP" \
+  --start-time "$START_TIME" --end-time "$END_TIME" \
+  --query-string 'fields @timestamp, sourceIpPort, requestMethod, requestPath, responseCode, durationMS, callerPrincipal, authDeniedReason | filter responseCode >= 400 | sort @timestamp desc | limit 100' \
+  --query queryId --output text)"
+aws logs get-query-results --query-id "$QUERY_ID"
+# Repeat get-query-results until Complete; Failed/Cancelled/Timeout are errors.
+```
+
+VPC Lattice 没有 `update-service --tracing-config` 选项，也没有能自动为应用添加 X-Ray 插桩的控制器注解。应使用 OpenTelemetry/ADOT 或适当的追踪 SDK 为应用插桩，传播追踪上下文，并配置导出/采样。将应用追踪与访问日志和请求 ID 关联；客户端提供的请求 ID 不是经过验证的身份。
+
+## 最佳实践 {#best-practices}
+
+- **设计和所有权：** 使用明确的网络/服务命名和环境边界。考虑跨命名空间的同名 Gateway、共享网络使用方、配额，以及每个策略和关联的所有权。
+- **部署：** 保持稳定版和金丝雀后端可独立选择。调整权重前检查端点、目标健康状况和授权。记录回滚标准并保留最近已知的配置。
+- **性能：** 使用有界超时和适当的连接复用。让健康端点轻量且有意义。仅在应用语义允许时缓存或批处理。私有 Lattice 服务不会仅因启用缓存就变成 CDN 源站。
+- **安全：** 分离管理和调用方角色；不要将凭证放入清单。测试允许和拒绝的角色、根路径和子路径、直接后端访问及 TLS 行为。不要通过删除 IAM 策略 CRD 来拒绝流量。
+- **可观测性：** 分别监控请求数、错误数/率、延迟、目标健康状况和缺失遥测。按要求保留访问日志，并显式为应用追踪插桩。
+- **成本：** 审核所选模型在当前区域的服务/资源、请求、数据处理、端点和日志费用。使用标签，仅移除确认未使用的资源，并将后端自动扩缩容容量规划与托管 Lattice 数据平面分开。
+
+## 故障排除 {#troubleshooting}
+
+使用控制器注解/状态和 AWS 清单中的标识符。不要假定直接 API 示例中的 `$SERVICE_ID` 就是 Kubernetes 路由的服务。
+
+```bash
 aws vpc-lattice list-service-network-vpc-associations \
-  --service-network-identifier $SERVICE_NETWORK_ID
-
-# Check target status
-aws vpc-lattice list-targets \
-  --target-group-identifier $TARGET_GROUP_ID
+  --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice list-service-network-service-associations \
+  --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice get-service --service-identifier "$SERVICE_ID"
+aws vpc-lattice get-auth-policy --resource-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice get-auth-policy --resource-identifier "$SERVICE_ID"
+aws vpc-lattice list-listeners --service-identifier "$SERVICE_ID"
+aws vpc-lattice list-rules --service-identifier "$SERVICE_ID" \
+  --listener-identifier "$LISTENER_ID"
+aws vpc-lattice get-target-group --target-group-identifier "$TARGET_GROUP_ID"
+aws vpc-lattice list-targets --target-group-identifier "$TARGET_GROUP_ID"
 ```
 
-#### 2. 身份验证问题
+| 症状 | 检查项 |
+|---|---|
+| DNS/连接失败 | 实际分配的 DNS、客户端 VPC 关联或端点路径、关联状态、安全组、NACL、Pod 可达性 |
+| 403/身份验证失败 | 调用方角色、凭证过期及签名区域/服务、`UNSIGNED-PAYLOAD`、两个身份验证层、传播、拒绝原因日志字段 |
+| 路由或版本错误 | Route 条件、监听器/规则优先级和匹配、目标组成员、权重、不同 Route 的域名 |
+| 目标不健康 | 实际监听端口、`/health`、HTTP 与 HTTPS、就绪状态、安全组、目标类型和健康检查阈值 |
+| 无日志/指标 | 目的地权限和交付状态、正确的指标维度、初始流量、保留策略、查询状态 |
+| 控制器协调失败 | `manager` 日志、IAM 角色、EndpointSlice、CRD 版本兼容性、webhook 和领导者选举状态 |
 
-**问题**：Client 收到身份验证错误
-
-**解决方案**：
-- 验证 IAM 策略和权限
-- 检查资源策略
-- 检查签名版本和 Header
-- 检查临时凭证是否过期
+使用有界指标时间区间，不依赖仅 GNU 支持的 `date -d`：
 
 ```bash
-# Check resource policy
-aws vpc-lattice get-resource-policy \
-  --resource-arn arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:service/<SERVICE_ID>
+export METRIC_END="$(python3 -c 'from datetime import datetime,timezone; print(datetime.now(timezone.utc).isoformat())')"
+export METRIC_START="$(python3 -c 'from datetime import datetime,timedelta,timezone; print((datetime.now(timezone.utc)-timedelta(hours=1)).isoformat())')"
+aws cloudwatch get-metric-statistics --namespace AWS/VpcLattice \
+  --metric-name HTTPCode_5XX_Count --dimensions file://service-dimensions.json \
+  --start-time "$METRIC_START" --end-time "$METRIC_END" \
+  --period 60 --statistics Sum
 ```
 
-#### 3. 路由问题
+发生 AWS 服务事件时，查询 AWS Health 和相关账户事件。账户专属 API 访问和支持操作取决于适用计划和端点。支持案例应包含审核后的资源 ID、时间范围、故障症状和脱敏日志。为账户选择当前服务/类别/严重性选项；不要粘贴硬编码的 `urgent` 案例创建命令。
 
-**问题**：请求被路由到错误的目标
+## 参考资料 {#references}
 
-**解决方案**：
-- 检查 Listener 规则和优先级
-- 检查路径模式和匹配条件
-- 检查 Target Group 配置
-- 检查加权路由设置
-
-```bash
-# Check listener rules
-aws vpc-lattice list-listeners \
-  --service-identifier $SERVICE_ID
-
-# Check target group
-aws vpc-lattice get-target-group \
-  --target-group-identifier $TARGET_GROUP_ID
-```
-
-#### 4. 健康检查失败
-
-**问题**：目标未通过健康检查
-
-**解决方案**：
-- 检查健康检查端点的可用性
-- 检查健康检查配置
-- 检查目标应用程序日志
-- 检查网络连接
-
-```bash
-# Check health check configuration
-aws vpc-lattice get-target-group \
-  --target-group-identifier $TARGET_GROUP_ID \
-  --query "config.healthCheck"
-
-# Check target status
-aws vpc-lattice list-targets \
-  --target-group-identifier $TARGET_GROUP_ID
-```
-
-### 日志记录与调试
-
-#### 1. 访问日志分析
-
-您可以分析 VPC Lattice 访问日志来诊断问题。
-
-```bash
-# Download access logs from S3
-aws s3 cp s3://vpc-lattice-access-logs-<ACCOUNT_ID>/ . --recursive
-
-# Query access logs from CloudWatch Logs
-aws logs start-query \
-  --log-group-name /aws/vpc-lattice/my-service \
-  --start-time $(date -d '1 hour ago' +%s) \
-  --end-time $(date +%s) \
-  --query-string 'fields @timestamp, client_ip, request_path, status_code, request_processing_time | filter status_code >= 400'
-```
-
-#### 2. CloudWatch 指标分析
-
-您可以分析 CloudWatch 指标来诊断性能问题。
-
-```bash
-# Query request count metrics
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/VpcLattice \
-  --metric-name RequestCount \
-  --dimensions Name=ServiceName,Value=my-service \
-  --start-time $(date -d '1 hour ago' -u +%Y-%m-%dT%H:%M:%SZ) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  --period 60 \
-  --statistics Sum
-
-# Query error metrics
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/VpcLattice \
-  --metric-name HTTP_5XX_Count \
-  --dimensions Name=ServiceName,Value=my-service \
-  --start-time $(date -d '1 hour ago' -u +%Y-%m-%dT%H:%M:%SZ) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  --period 60 \
-  --statistics Sum
-```
-
-#### 3. X-Ray Trace 分析
-
-您可以使用 AWS X-Ray 分析分布式 Trace。
-
-```bash
-# Query X-Ray traces
-aws xray get-service-graph \
-  --start-time $(date -d '1 hour ago' +%s) \
-  --end-time $(date +%s)
-
-# Query specific trace
-aws xray batch-get-traces \
-  --trace-ids <TRACE_ID>
-```
-
-### AWS Support 和故障排除工具
-
-#### 1. 创建 AWS Support Case
-
-对于严重问题，您可以创建 AWS Support Case。
-
-```bash
-# Create AWS support case
-aws support create-case \
-  --subject "VPC Lattice Connectivity Issue" \
-  --service-code vpc-lattice \
-  --category-code connectivity \
-  --severity-code urgent \
-  --communication-body "We are experiencing connectivity issues with our VPC Lattice service. Service ID: $SERVICE_ID" \
-  --language en
-```
-
-#### 2. AWS 资源运行状况检查
-
-您可以通过 AWS Health Dashboard 检查 AWS Service 状态。
-
-```bash
-# Check AWS Health events
-aws health describe-events \
-  --filter 'eventTypeCategories=issue,scheduledChange,accountNotification' \
-  --region <REGION>
-```
-
-## 结论
-
-Amazon VPC Lattice 是一项 AWS 应用程序网络服务，可让您在不同的 VPC 和账户之间安全地连接和管理服务。通过与 EKS 集成，它以简化的方式在 Kubernetes 环境中提供 Service Mesh 功能。
-
-本文档涵盖以下内容：
-
-1. **概述**：VPC Lattice 的概念、主要使用场景以及与其他服务的比较
-2. **架构**：VPC Lattice 组件、Service Network 架构和流量流向
-3. **EKS 与 VPC Lattice 集成**：通过 AWS Gateway API Controller 集成及其优势
-4. **安装与配置**：AWS Gateway API Controller 安装、IAM Role 设置和 Service Network 创建
-5. **服务管理**：VPC Lattice Service 的创建、发现、访问、更新和删除
-6. **路由与流量管理**：基本路由、流量拆分、Canary Deployment 和健康检查
-7. **安全与身份验证**：身份验证方法、资源策略、跨账户访问和 TLS 配置
-8. **监控与日志记录**：CloudWatch 指标、告警、访问日志记录和 X-Ray 集成
-9. **最佳实践**：设计、性能、安全、监控和成本优化
-10. **故障排除**：常见问题与解决方案、日志记录与调试
-
-有效实施和管理 VPC Lattice 可降低微服务架构的复杂性、增强服务到服务通信的安全性并提高可观测性。作为 AWS 托管服务，它在最大限度减少运营开销的同时提供 Service Mesh 的优势。
-
-## 参考资料
-
-- [Amazon VPC Lattice 官方文档](https://docs.aws.amazon.com/vpc-lattice/)
-- [AWS Gateway API Controller 官方文档](https://github.com/aws/aws-application-networking-k8s)
-- [Kubernetes Gateway API 文档](https://gateway-api.sigs.k8s.io/)
-- [Amazon EKS Workshop - VPC Lattice](https://www.eksworkshop.com/networking/vpc-lattice/)
-- [AWS 博客 - VPC Lattice 简介](https://aws.amazon.com/blogs/aws/amazon-vpc-lattice-a-new-application-networking-service/)
-- [AWS 博客 - EKS 与 VPC Lattice 集成](https://aws.amazon.com/blogs/containers/amazon-eks-and-vpc-lattice-integration/)
-- [AWS re:Invent 2022 - VPC Lattice 课程](https://www.youtube.com/watch?v=bGHZlJGQl1I)
-- [AWS Samples - VPC Lattice 示例](https://github.com/aws-samples/aws-vpc-lattice-examples)
+- [VPC Lattice 概述](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
+- [服务网络关联](https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-network-associations.html)
+- [控制器 v2.1.3 安装](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/deploy.md)
+- [控制器 v2.1 升级要求](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/upgrading-v2-0-x-to-v2-1-y.md)
+- [控制器 API 参考](https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs/api-types)
+- [控制器 HTTPS 和后端 TLS](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/https.md)
+- [VPC Lattice 身份验证策略](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
+- [请求签名](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html)
+- [共享实体](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sharing.html)
+- [CloudWatch 指标](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-cloudwatch.html)
+- [访问日志](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
+- [CloudWatch Logs 交付权限](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-CWL.html)
+- [S3 交付权限](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-S3.html)
 
 ## 测验
 
-为测试您在本章所学的内容，请尝试 [VPC Lattice 测验](../quizzes/networking/02-vpc-lattice-quiz.md)。
+通过 [VPC Lattice 测验](../quizzes/networking/02-vpc-lattice-quiz.md)检验您的理解。

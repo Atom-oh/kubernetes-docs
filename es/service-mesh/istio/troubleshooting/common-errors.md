@@ -1,525 +1,270 @@
-# Errores comunes de Istio y soluciones
+# Errores habituales de Istio y sus soluciones
 
-> **Versión compatible**: Istio 1.28
-> **Última actualización**: February 19, 2026
+> **Última actualización**: September 11, 2026 · Comprobaciones de CLI/configuración: Istio 1.31.0
 
-Este documento resume los errores más comunes encontrados al usar Istio y sus soluciones.
+Empiece por el fallo observado, la configuración efectiva y el modo de la carga de trabajo. Los comandos siguientes son ejemplos de diagnóstico, no instrucciones para restablecer la malla. Consulte las [indicaciones de compatibilidad de instalación](../01-installation.md) para su versión de Kubernetes/EKS.
 
-## Tabla de contenido
+Los ejemplos utilizan un espacio de nombres de aplicación existente app, un Deployment/Service myapp en el puerto 8080, un espacio de nombres de ingreso istio-ingress y el sufijo DNS predeterminado del clúster. Sustitúyalos por recursos y dominios reales. Los bloques YAML de Deployment son **fragmentos de fusión estratégica para un Deployment existente**, no aplicaciones nuevas completas. En esta revisión no se desplegó ningún clúster ni se probaron cargas de trabajo de producción.
 
-1. [Connection Errors During Pod Termination](#connection-errors-during-pod-termination)
-2. [Sidecar Injection Issues](#sidecar-injection-issues)
-3. [mTLS Connection Failure](#mtls-connection-failure)
-4. [VirtualService Routing Failure](#virtualservice-routing-failure)
-5. [Gateway Configuration Issues](#gateway-configuration-issues)
-6. [Memory and Performance Issues](#memory-and-performance-issues)
-7. [Certificate Expiration](#certificate-expiration)
-8. [DNS Resolution Failure](#dns-resolution-failure)
-9. [Envoy Initialization Timeout](#envoy-initialization-timeout)
-10. [Debugging Tools](#debugging-tools)
+```bash
+NS=app
+GW_NS=istio-ingress
+ISTIO_NS=istio-system
+: "${POD:?Set the exact application Pod name}"
+kubectl config current-context
+istioctl version
+kubectl -n "$NS" get pod "$POD" -o wide
+```
 
-## Errores de conexión durante la terminación de un Pod
+## Índice
+
+1. [Errores de conexión durante la terminación de Pods](#connection-errors-during-pod-termination)
+2. [Problemas de inyección de sidecars](#sidecar-injection-issues)
+3. [Fallo de conexión mTLS](#mtls-connection-failure)
+4. [Fallo de enrutamiento de VirtualService](#virtualservice-routing-failure)
+5. [Problemas de configuración de Gateway](#gateway-configuration-issues)
+6. [Problemas de memoria y rendimiento](#memory-and-performance-issues)
+7. [Caducidad de certificados](#certificate-expiration)
+8. [Fallo de resolución DNS](#dns-resolution-failure)
+9. [Tiempo de espera de inicialización de Envoy agotado](#envoy-initialization-timeout)
+10. [Herramientas de depuración](#debugging-tools)
+
+## Errores de conexión durante la terminación de Pods {#connection-errors-during-pod-termination}
 
 ### Descripción del problema
 
-Cuando un Pod termina, el Sidecar de Envoy termina antes que la aplicación, lo que provoca errores de conexión.
-
-**Síntomas**:
-```
-Connection reset by peer
-Broken pipe
-EOF
-HTTP 503 Service Unavailable
-```
+Durante el apagado pueden producirse reinicios de conexión, tuberías rotas, EOF y HTTP 503. Por sí solos no demuestran que Envoy haya terminado primero. Correlacione los registros de aplicación/proxy, las marcas de respuesta, el momento de eliminación del Pod y los cambios de EndpointSlice.
 
 ### Causa raíz
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8s as Kubernetes
-    participant App as Application
-    participant Envoy as Envoy Proxy
-    participant Client as Client
+Los contenedores de aplicación tradicionales y un sidecar incluido en containers no tienen un orden de apagado garantizado. Un proxy puede terminar mientras la aplicación aún lo necesita; la aplicación también puede dejar de aceptar trabajo antes de que terminen las solicitudes existentes. En cambio, los sidecars nativos de Kubernetes utilizan initContainers con restartPolicy:Always y terminan después de los contenedores principales.
 
-    Note over K8s,Client: Pod termination starts (kubectl delete pod)
-
-    K8s->>App: Send SIGTERM
-    K8s->>Envoy: Send SIGTERM
-
-    rect rgb(255, 200, 200)
-        Note over Envoy: Problem: Envoy terminates first
-        Envoy->>Envoy: Starts terminating immediately
-    end
-
-    Client->>Envoy: Send request
-    Envoy-->>Client: Connection refused
-
-    rect rgb(200, 255, 200)
-        Note over App: App is still running
-        App->>App: Processing requests...
-    end
-
-    Note over K8s: After 30 seconds (terminationGracePeriodSeconds)
-    K8s->>App: SIGKILL (force termination)
-    K8s->>Envoy: SIGKILL (force termination)
-```
-
-**Causas raíz**:
-1. Envoy y la aplicación reciben SIGTERM simultáneamente
-2. Envoy termina más rápido que la aplicación
-3. La aplicación sigue procesando solicitudes, pero Envoy ya ha terminado, lo que provoca un fallo de conexión
+El período de gracia del Pod incluye la ejecución de preStop. No siempre es de 30 segundos y los procesos que ya terminaron no se vuelven a matar después. Las actualizaciones de endpoints, la propagación del equilibrador de carga y las conexiones de larga duración pueden crear ventanas de fallo adicionales.
 
 ### Soluciones
 
-#### Método 1: Configurar el Hook preStop de Envoy Proxy (recomendado)
+#### Método 1: presupuestar el apagado de la aplicación y del proxy
 
-Configure un Hook preStop para el contenedor Istio Proxy a fin de esperar hasta que se cierren todas las conexiones activas.
+Esta anotación configura el drenaje del proxy; **no** instala un hook preStop ni espera incondicionalmente a todas las solicitudes activas:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: myapp
+  namespace: app
 spec:
   template:
     metadata:
       annotations:
-        # Envoy waits for active connections to close
         proxy.istio.io/config: |
           terminationDrainDuration: 30s
-    spec:
-      terminationGracePeriodSeconds: 60
-      containers:
-      - name: myapp
-        image: myapp:latest
-        ports:
-        - containerPort: 8080
-```
-
-**Cómo funciona**:
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8s as Kubernetes
-    participant App as Application
-    participant Envoy as Envoy Proxy
-    participant Client as Client
-
-    Note over K8s,Client: Pod termination starts
-
-    K8s->>App: Send SIGTERM
-    K8s->>Envoy: Send SIGTERM
-
-    rect rgb(200, 255, 200)
-        Note over Envoy: Enters Drain mode
-        Envoy->>Envoy: Reject new connections<br/>Maintain existing connections<br/>Wait 30 seconds
-    end
-
-    Client->>Envoy: Send request
-    Envoy->>App: Forward request
-    App->>Envoy: Response
-    Envoy->>Client: Normal response
-
-    Note over Envoy: Confirm active connections closed
-    Envoy->>Envoy: Normal termination
-
-    Note over App: App also terminates normally
-    App->>App: Graceful Shutdown
-```
-
-#### Método 2: Controlar el comportamiento de terminación de Envoy con una anotación de Pod
-
-Puede ajustar con precisión el comportamiento de terminación de Envoy para cada Pod.
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-spec:
-  template:
-    metadata:
-      annotations:
-        # Envoy waits for application startup
-        proxy.istio.io/config: |
           holdApplicationUntilProxyStarts: true
-          terminationDrainDuration: 30s
-        # Envoy termination timeout
-        sidecar.istio.io/terminationGracePeriodSeconds: "60"
+      labels: {}
     spec:
       terminationGracePeriodSeconds: 60
-      containers:
-      - name: myapp
-        image: myapp:latest
 ```
 
-**Explicación de la configuración**:
-- `holdApplicationUntilProxyStarts: true`: Envoy se inicia antes que la aplicación
-- `terminationDrainDuration: 30s`: Envoy drena durante 30 segundos al terminar
-- `terminationGracePeriodSeconds: 60`: Período total de gracia para la terminación del Pod
+Los valores de 30/60 segundos son ejemplos, no mínimos universales. Presupueste conjuntamente el apagado de la aplicación, los hooks y el drenaje del proxy. holdApplicationUntilProxyStarts se refiere al **inicio**, no al orden de apagado. Los cambios de ProxyConfig requieren Pods nuevos para surtir efecto.
 
-#### Método 3: Configuración global (IstioOperator)
+En 1.31, la ruta ordinaria terminationDrainDuration se basa en el tiempo. Cuando EXIT_ON_ZERO_ACTIVE_CONNECTIONS está habilitado, el agente espera en su lugar el período mínimo de drenaje y consulta los recuentos de conexiones de los listeners descendentes; esa ruta no utiliza el temporizador de drenaje ordinario como límite superior fijo. Siguen aplicándose los límites de gracia de Kubernetes y la ausencia o los errores de estadísticas. Valide el comportamiento elegido con conexiones representativas.
 
-Aplique una política de terminación coherente en todo el clúster.
+#### Método 2: considerar el orden de sidecars nativos
+
+Para una combinación compatible de Kubernetes/Istio, esta anotación selecciona la inyección nativa para Pods recién creados aptos para inyección:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: app
+spec:
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/nativeSidecar: 'true'
+      labels: {}
+    spec: {}
+```
+
+La función de Kubernetes es estable desde 1.33; la anotación de sidecars nativos de Istio está documentada como Alpha. Verifique los initContainers realmente inyectados y el comportamiento de apagado de la aplicación. El orden por sí solo no garantiza cero solicitudes fallidas ni espera indefinidamente más allá del período de gracia del Pod. Las cargas de trabajo Ambient no tienen un Envoy por Pod que pueda configurarse así.
+
+No existe una anotación documentada sidecar.istio.io/terminationGracePeriodSeconds. Establezca el campo real spec.terminationGracePeriodSeconds.
+
+#### Método 3: valores predeterminados de toda la instalación
+
+Lo siguiente es una **entrada de instalación de istioctl**, no un recurso que deba reconciliar el operador de Istio integrado en el clúster que fue eliminado:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
-metadata:
-  name: istio-controlplane
 spec:
   meshConfig:
     defaultConfig:
       terminationDrainDuration: 30s
       holdApplicationUntilProxyStarts: true
-  values:
-    global:
-      proxy:
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - |
-                # Start Envoy drain
-                curl -X POST http://localhost:15000/drain_listeners?graceful
-                # Wait for active connections
-                while [ $(netstat -plunt | grep tcp | grep -v TIME_WAIT | wc -l | xargs) -ne 0 ]; do
-                  sleep 1;
-                done
 ```
 
-**Configuración recomendada**:
-- `terminationDrainDuration`: 30 segundos (tiempo de drenaje de conexiones activas)
-- `terminationGracePeriodSeconds`: 60 segundos (período de gracia antes de SIGKILL)
-- Envoy comprueba las conexiones activas y realiza un apagado ordenado
+Revise el cambio renderizado con el responsable de la instalación y despliegue deliberadamente las cargas de trabajo afectadas. El antiguo bucle preStop de shell/netstat no tenía límite, contaba sockets en escucha y presuponía que había utilidades en la imagen del proxy. No esperaba de forma fiable a que terminara el trabajo de la aplicación.
 
 ### Método de verificación
 
 ```bash
-# 1. Check logs during pod termination
-kubectl logs -f <pod-name> -c istio-proxy --previous
-
-# 2. Check connection status during termination
-kubectl exec <pod-name> -c istio-proxy -- netstat -an | grep ESTABLISHED
-
-# 3. Check termination events
-kubectl get events --field-selector involvedObject.name=<pod-name>
+kubectl -n "$NS" get pod "$POD" -o json
+kubectl -n "$NS" logs -f "$POD" -c istio-proxy
+kubectl -n "$NS" get events --field-selector "involvedObject.name=$POD"
+kubectl -n "$NS" get endpointslices.discovery.k8s.io \
+  -l kubernetes.io/service-name=myapp -o yaml
 ```
 
-### Prácticas recomendadas
+Capture los registros mientras el Pod aún exista. --previous recupera una instancia anterior del contenedor en el mismo Pod; no significa «contenedor actual mientras termina» ni recupera registros arbitrarios de Pods eliminados.
+
+### Buenas prácticas
+
+Implemente el tratamiento de SIGTERM en la aplicación y un contrato real de disponibilidad. Crear /tmp/not-ready no cambia nada salvo que la aplicación o la sonda lo lea. Un retraso preStop acotado puede proporcionar tiempo de propagación, pero no demuestra la convergencia de endpoints ni sustituye el apagado ordenado de la aplicación. No existe una prohibición universal de usar sleep en la aplicación ni un mínimo universal de 60 segundos. Mida los fallos HTTP/no HTTP sin ocultarlos y con reintentos de escritura deshabilitados; consulte la [comparación de despliegues](../comparison/03-sidecar-vs-ambient.md).
+
+## Problemas de inyección de sidecars {#sidecar-injection-issues}
+
+### Problema 1: no se inyecta el sidecar
+
+Compruebe las ubicaciones de sidecars regulares y nativos antes de concluir que falta un proxy:
+
+```bash
+kubectl -n "$NS" get pod "$POD" -o jsonpath='{.spec.containers[*].name}{"\n"}{.spec.initContainers[*].name}{"\n"}'
+kubectl get namespace "$NS" --show-labels
+kubectl -n "$NS" get deployment myapp -o yaml
+istioctl x check-inject "$POD" -n "$NS"
+kubectl get mutatingwebhookconfigurations
+kubectl -n "$ISTIO_NS" get pods -l app=istiod --show-labels
+kubectl -n "$ISTIO_NS" logs -l app=istiod --all-containers=true --tail=200
+```
+
+La incorporación a Ambient carece deliberadamente de un sidecar de aplicación istio-proxy. Para modo sidecar, inspeccione la revisión/etiqueta del espacio de nombres, las etiquetas de plantilla del Pod, hostNetwork, los selectores de webhook y los eventos de admisión. La inyección automática excluye Pods con red del host y determinados espacios de nombres del sistema.
+
+Utilice la revisión/etiqueta de la instalación prevista o la etiqueta de inyección heredada siguiendo la [guía de inyección](../advanced/07-sidecar-injection.md). No combine selecciones contradictorias de istio-injection e istio.io/rev. Las etiquetas afectan a Pods recién creados; no modifican un Pod existente. Recree únicamente la carga de trabajo prevista mediante su responsable de despliegue tras revisar el efecto.
+
+La anulación preferida por Pod es una **etiqueta** bajo la plantilla de Pod de la carga de trabajo:
 
 ```yaml
-# Recommended configuration template
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: myapp
+  namespace: app
+spec:
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        sidecar.istio.io/inject: 'true'
+    spec: {}
+```
+
+La anotación correspondiente está obsoleta. Una etiqueta false puede ser una exclusión deliberada, no un error que deba sobrescribirse a ciegas. Una etiqueta true tampoco evita todas las restricciones de selección de webhook o plataforma. Istiod sirve la inyección; el antiguo selector de registros app=sidecar-injector no identifica el inyector integrado actual.
+
+### Problema 2: escasez de recursos del sidecar
+
+Inspeccione las razones de terminación del contenedor, los eventos, el uso y la limitación de CPU. OOMKilled puede indicar un problema con el límite de memoria; CrashLoopBackOff es un estado de reinicio/espera progresiva con muchas causas posibles. Un error de validación de runAsNonRoot/usuario no numérico es un problema de contexto de seguridad/imagen y no se soluciona con más RAM.
+
+Si las mediciones justifican un cambio de recursos, establezca conjuntamente solicitudes y límites en la plantilla de Pod. Estas cantidades de ejemplo necesitan dimensionamiento específico de la carga de trabajo:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: app
 spec:
   template:
     metadata:
       annotations:
-        # Envoy termination behavior control
-        proxy.istio.io/config: |
-          holdApplicationUntilProxyStarts: true
-          terminationDrainDuration: 30s
-    spec:
-      terminationGracePeriodSeconds: 60
-      containers:
-      - name: myapp
-        image: myapp:latest
-        ports:
-        - containerPort: 8080
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          periodSeconds: 5
-          successThreshold: 1
-          failureThreshold: 3
-        # Optional: application graceful shutdown
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - |
-                # Disable readiness (optional)
-                touch /tmp/not-ready
-                # Wait for application requests to complete
-                sleep 5
+        sidecar.istio.io/proxyCPU: 200m
+        sidecar.istio.io/proxyCPULimit: 1000m
+        sidecar.istio.io/proxyMemory: 256Mi
+        sidecar.istio.io/proxyMemoryLimit: 512Mi
+      labels: {}
+    spec: {}
 ```
 
-**Lista de comprobación**:
-- **Configure terminationDrainDuration de Envoy** (¡lo más importante!)
-- **holdApplicationUntilProxyStarts: true** (garantiza el orden de inicio)
-- **Configure terminationGracePeriodSeconds con un valor suficiente** (mínimo 60 segundos)
-- Configure ReadinessProbe (transición rápida a no saludable durante la terminación)
-- Implemente el apagado ordenado de la aplicación (opcional)
-- Configure la monitorización y el registro
+Valide los ajustes de recursos recién inyectados y los LimitRange/ResourceQuota del espacio de nombres. Evite sobrescribir los ajustes de seguridad de la imagen solo para superar la admisión.
 
-**Puntos clave**:
-- **¡No agregue sleep al contenedor de la aplicación!**
-- **Configure Envoy para realizar un apagado ordenado en modo de drenaje.**
-
-## Problemas de inyección de Sidecar
-
-### Problema 1: Sidecar no inyectado
-
-**Síntomas**:
-```bash
-kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].name}'
-# Output: myapp (no istio-proxy)
-```
-
-**Causas y soluciones**:
-
-#### 1. Falta la etiqueta de Namespace
-
-```bash
-# Check
-kubectl get namespace <namespace> --show-labels
-
-# Solution
-kubectl label namespace <namespace> istio-injection=enabled
-```
-
-#### 2. Inyección deshabilitada mediante una anotación de Pod
-
-```yaml
-# Incorrect configuration
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    sidecar.istio.io/inject: "false"  # <- Injection disabled
-```
-
-**Solución**:
-```yaml
-# Correct configuration
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    sidecar.istio.io/inject: "true"
-```
-
-#### 3. Verificar el funcionamiento de Istio Sidecar Injector
-
-```bash
-# Check sidecar injector webhook
-kubectl get mutatingwebhookconfigurations
-
-# Check Istio injector logs
-kubectl logs -n istio-system -l app=sidecar-injector
-```
-
-### Problema 2: Falta de recursos de Sidecar
-
-**Síntomas**:
-```
-OOMKilled
-CrashLoopBackOff
-Error: container has runAsNonRoot and image has non-numeric user
-```
-
-**Solución**:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    sidecar.istio.io/proxyCPU: "200m"
-    sidecar.istio.io/proxyMemory: "256Mi"
-    sidecar.istio.io/proxyCPULimit: "1000m"
-    sidecar.istio.io/proxyMemoryLimit: "512Mi"
-spec:
-  containers:
-  - name: myapp
-    image: myapp:latest
-```
-
-## Fallo de conexión mTLS
+## Fallo de conexión mTLS {#mtls-connection-failure}
 
 ### Descripción del problema
 
-**Síntomas**:
-```
-upstream connect error or disconnect/reset before headers
-503 Service Unavailable
-SSL routines:OPENSSL_internal:WRONG_VERSION_NUMBER
-```
+Los errores de conexión ascendente, los 503 y WRONG_VERSION_NUMBER pueden tener causas de TLS, protocolo, endpoints o red. PeerAuthentication controla el **mTLS entrante aceptado**. Los ajustes TLS de DestinationRule controlan el TLS saliente del Envoy del cliente. Establecer la PeerAuthentication del cliente en STRICT no obliga por sí solo a ese cliente a originar mTLS.
 
-### Causa 1: Incompatibilidad en el modo PeerAuthentication
+### PeerAuthentication y DestinationRule
 
-```mermaid
-flowchart TD
-    Client[Client Service<br/>mTLS STRICT]
-    Server[Server Service<br/>mTLS DISABLE]
+Con mTLS automático habilitado y sin una anulación TLS explícita de DestinationRule, Istio selecciona mTLS de cargas de trabajo para endpoints conocidos de la malla. Una anulación DISABLE explícita puede entrar en conflicto con un destino que requiere STRICT. Elimine una anulación no intencionada mediante su responsable o utilice ISTIO_MUTUAL para un destino Istio-mTLS configurado deliberadamente; no lo fuerce en servicios externos arbitrarios TLS/sin cifrar.
 
-    Client -->|mTLS connection attempt| Server
-    Server -.->|Requires plaintext connection| Client
-
-    Error[503 Error<br/>upstream connect error]
-
-    Server -.-> Error
-
-    classDef error fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    class Error error;
-```
-
-**Solución**:
+La siguiente política sin selector se aplica al **espacio de nombres app** cuando sus clientes estén preparados para la aplicación estricta:
 
 ```yaml
-# Apply consistent mTLS policy across namespace
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT  # All services STRICT mode
-```
-
-### Causa 2: Conflicto entre DestinationRule y PeerAuthentication
-
-```yaml
-# Incorrect example
----
-apiVersion: security.istio.io/v1
-kind: PeerAuthentication
-metadata:
-  name: default
+  namespace: app
 spec:
   mtls:
     mode: STRICT
----
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: myapp
-spec:
-  host: myapp
-  trafficPolicy:
-    tls:
-      mode: DISABLE  # <- Conflict!
 ```
 
-**Solución**:
-```yaml
-# Correct example
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: myapp
-spec:
-  host: myapp
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL  # Matches PeerAuthentication
-```
+Una política sin selector en el espacio de nombres raíz configurado (normalmente istio-system) tiene ámbito de toda la malla, no solo de los servicios de ese espacio de nombres. Revise el impacto de la migración antes de aplicarla. Ambient no permite deshabilitar su mTLS de transporte mediante PeerAuthentication DISABLE. La autenticación y AuthorizationPolicy son independientes; un 403 no es automáticamente un fallo TLS.
 
 ### Comandos de depuración
 
 ```bash
-# 1. Check mTLS status
-istioctl x describe pod <pod-name> -n <namespace>
-
-# 2. Check PeerAuthentication policies
-kubectl get peerauthentication -A
-
-# 3. Check DestinationRule TLS settings
-kubectl get destinationrule -A -o yaml | grep -A 5 "tls:"
-
-# 4. Check Envoy cluster TLS settings
-istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn <service-name>
+istioctl x describe pod "$POD" -n "$NS"
+kubectl get peerauthentication -A -o yaml
+kubectl get destinationrule -A -o yaml
+istioctl proxy-config clusters "$POD" -n "$NS" \
+  --fqdn myapp.app.svc.cluster.local -o json
+istioctl proxy-config secret "$POD" -n "$NS"
 ```
 
-## Fallo de enrutamiento de VirtualService
+Utilice el proxy cliente pertinente para la configuración del clúster saliente y el proxy receptor para la política entrante. El comando experimental describe es una ayuda de diagnóstico, no una prueba de que todas las rutas estén cifradas. Inspeccione la validez de los certificados, la identidad, el dominio de confianza, el socket de transporte real y las marcas de respuesta. Los diagnósticos de waypoint y ztunnel difieren; consulte la [guía de mTLS](../security/01-mtls.md).
 
-### Problema 1: El tráfico no se enruta
+## Fallo de enrutamiento de VirtualService {#virtualservice-routing-failure}
 
-**Síntomas**:
-```
-404 Not Found
-default backend - 404
-```
+### Problema 1: el tráfico no se enruta
 
-**Causas y soluciones**:
+Un 404 puede proceder de Envoy o de la aplicación. Identifique su origen y los detalles de respuesta antes de cambiar rutas. Un VirtualService con hosts:myapp.example.com que enruta al Service interno myapp es **válido** cuando está asociado al gateway apropiado y coincide con el Host/authority de la solicitud. El host de frontend y el nombre del servicio backend no tienen que ser idénticos.
 
-#### Coincidencia de Host incorrecta
+Para tráfico de malla, coincida con el host de servicio solicitado; para tráfico de ingreso, coincida con el dominio admitido por el gateway y asocie el VirtualService a ese gateway. Los nombres de destino cortos se resuelven respecto al espacio de nombres del recurso de configuración, por lo que los FQDN explícitos reducen la ambigüedad entre espacios de nombres.
+
+### Problema 2: subconjunto no encontrado o sin hosts ascendentes sanos
+
+Este par completo muestra el enrutamiento de malla a un subconjunto con nombre:
 
 ```yaml
-# Incorrect example
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: app
 spec:
   hosts:
-  - myapp.example.com  # <- DNS name
+  - myapp.app.svc.cluster.local
   http:
   - route:
     - destination:
-        host: myapp  # <- Kubernetes Service name
-```
-
-**Solución**:
-```yaml
-# Correct example
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: myapp
-  namespace: default
-spec:
-  hosts:
-  - myapp  # Exactly matches Kubernetes Service name
-  - myapp.default.svc.cluster.local  # Also add FQDN
-  http:
-  - route:
-    - destination:
-        host: myapp
-```
-
-### Problema 2: Subset no encontrado
-
-**Síntomas**:
-```
-no healthy upstream
-subset not found
-```
-
-**Causa**:
-```yaml
-# VirtualService exists but DestinationRule is missing
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: myapp
-spec:
-  http:
-  - route:
-    - destination:
-        host: myapp
-        subset: v1  # <- Subset not defined
-```
-
-**Solución**:
-```yaml
-# Add DestinationRule
+        host: myapp.app.svc.cluster.local
+        subset: v1
+        port:
+          number: 8080
+    retries:
+      attempts: 0
+---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
+  namespace: app
 spec:
-  host: myapp
+  host: myapp.app.svc.cluster.local
   subsets:
   - name: v1
     labels:
@@ -529,99 +274,53 @@ spec:
       version: v2
 ```
 
+El Service debe seleccionar realmente endpoints listos etiquetados con version:v 1. Un nombre de subconjunto DestinationRule coincidente por sí solo no crea Pods, corrige un selector de Service ni hace sanos los endpoints. Compruebe el puerto del Service de destino, la selección de protocolo, la visibilidad de políticas y las rutas competidoras. Los ejemplos de espacio de nombres/host anteriores presuponen el sufijo predeterminado cluster.local.
+
 ### Depuración
 
 ```bash
-# 1. Validate VirtualService
-istioctl analyze -n <namespace>
-
-# 2. Check routing rules
-istioctl proxy-config routes <pod-name> -n <namespace>
-
-# 3. Check VirtualService status
-kubectl get virtualservice <name> -n <namespace> -o yaml
+istioctl analyze -n "$NS"
+istioctl proxy-config routes "$POD" -n "$NS"
+istioctl proxy-config endpoints "$POD" -n "$NS"
+kubectl -n "$NS" get svc myapp -o yaml
+kubectl -n "$NS" get pods -l app=myapp --show-labels
+kubectl -n "$NS" get endpointslices.discovery.k8s.io \
+  -l kubernetes.io/service-name=myapp -o yaml
 ```
 
-## Problemas de configuración de Gateway
+Analyze es una ayuda de configuración estática; inspeccione la ruta/clúster/endpoints efectivos del proxy que realmente transporta la solicitud. La propagación de configuración no es instantánea. Una solicitud de ingreso enrutada a un Service no hereda automáticamente la selección de subconjunto de otro VirtualService exclusivo de la malla.
 
-### Problema 1: El tráfico no llega al Gateway
 
-**Síntomas**:
-```bash
-curl: (7) Failed to connect to example.com port 443: Connection refused
-```
+## Problemas de configuración de Gateway {#gateway-configuration-issues}
 
-**Causas y soluciones**:
+### Problema 1: el tráfico no llega al gateway
 
-#### 1. Comprobar el Service de Gateway
+Una conexión rechazada o un tiempo de espera agotado antes de recibir una respuesta HTTP puede indicar problemas de DNS, discrepancias de listener/puerto de Service, destinos del equilibrador de carga ausentes o filtrado de red. Localice primero el Deployment/Service real del gateway; su espacio de nombres y nombre dependen del método de instalación.
 
 ```bash
-# Check Gateway Service status
-kubectl get svc -n istio-system istio-ingressgateway
-
-# Check External IP
-kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+kubectl -n "$GW_NS" get svc,pods --show-labels
+kubectl -n "$GW_NS" get gateways.networking.istio.io -o yaml
+kubectl -n "$NS" get virtualservice -o yaml
+# For installations using Kubernetes Gateway API instead:
+kubectl get gatewayclasses.gateway.networking.k8s.io
+kubectl -n "$GW_NS" get gateways.gateway.networking.k8s.io -o yaml
+kubectl -n "$NS" get httproutes.gateway.networking.k8s.io -o yaml
 ```
 
-#### 2. Verificar la conexión entre Gateway y VirtualService
+Inspeccione los campos ingress de loadBalancer del Service: los proveedores pueden publicar una IP, un nombre de host o ambos. En EKS compruebe también el estado y tipo de destinos del equilibrador de carga, los grupos de seguridad y la ruta de red utilizando la configuración real del controlador; reiniciar Istiod no repara un destino AWS no sano.
 
-```yaml
-# Incorrect example
----
-apiVersion: networking.istio.io/v1
-kind: Gateway
-metadata:
-  name: myapp-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "example.com"
----
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: myapp
-spec:
-  hosts:
-  - "example.com"
-  gateways:
-  - my-gateway  # <- Gateway name typo!
-```
+Istio Gateway (networking.istio.io) y Kubernetes Gateway API (gateway.networking.k 8s.io) son recursos diferentes. Para Gateway API inspeccione Accepted, Programmed y condiciones de los padres de HTTPRoute como ResolvedRefs, junto con los eventos del controlador. Una errata en el nombre del gateway, una discrepancia de listener o una asociación de ruta denegada requieren una solución distinta de un fallo de conectividad externa.
 
-**Solución**:
-```yaml
-# Correct example
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: myapp
-spec:
-  hosts:
-  - "example.com"
-  gateways:
-  - myapp-gateway  # Exactly matches Gateway name
-```
+### Problema 2: HTTPS y asociación de rutas
 
-### Problema 2: Error de certificado HTTPS
-
-**Síntomas**:
-```
-SSL certificate problem: self signed certificate
-```
-
-**Solución**:
+Este ejemplo utiliza la **API Gateway de Istio**. Sustituya el selector por las etiquetas reales de los Pods del gateway, utilice un dominio propio y un certificado válido, y asegúrese de que el Service del Deployment exponga 443. Utiliza el mismo subconjunto de backend definido en la sección anterior:
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: myapp-gateway
+  namespace: istio-ingress
 spec:
   selector:
     istio: ingressgateway
@@ -632,130 +331,146 @@ spec:
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      credentialName: myapp-tls-secret  # <- Specify exact Secret name
+      credentialName: myapp-tls-secret
     hosts:
-    - "example.com"
+    - myapp.example.com
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: myapp-ingress
+  namespace: app
+spec:
+  hosts:
+  - myapp.example.com
+  http:
+  - route:
+    - destination:
+        host: myapp.app.svc.cluster.local
+        subset: v1
+        port:
+          number: 8080
+    retries:
+      attempts: 0
+  gateways:
+  - istio-ingress/myapp-gateway
 ```
+
+Aquí SIMPLE termina el TLS descendente, por lo que la ruta utiliza http. En cambio, un listener TLS PASSTHROUGH necesita enrutamiento TLS/SNI apropiado. No mezcle un listener con terminación y solo una ruta tls ni espere coincidencia de rutas HTTP dentro de tráfico opaco de paso directo.
+
+credentialName se refiere a una credencial accesible para la carga de trabajo del gateway. En este ejemplo, el Pod del gateway y el Secret TLS están en istio-ingress:
 
 ```bash
-# Create TLS Secret
-kubectl create secret tls myapp-tls-secret \
-  --cert=path/to/cert.pem \
-  --key=path/to/key.pem \
-  -n istio-system
+kubectl -n "$GW_NS" create secret tls myapp-tls-secret   --cert=path/to/fullchain.pem   --key=path/to/key.pem
 ```
 
-## Problemas de memoria y rendimiento
+Utilice el proceso de renovación del responsable actual del certificado si ese Secret ya está gestionado. Este comando no obtiene un certificado ni hace confiable a un emisor autofirmado. Compruebe la coincidencia de dominio/SAN, la cadena servida, la caducidad, la confianza del cliente y el estado de SDS del gateway. El espacio de nombres de un objeto de configuración Gateway independiente no sustituye universalmente al espacio de nombres de credenciales de la carga de trabajo del gateway.
 
-### Problema 1: Aumento del uso de memoria de Envoy
+## Problemas de memoria y rendimiento {#memory-and-performance-issues}
 
-**Síntomas**:
-```
-OOMKilled
-Memory usage > 1GB per pod
-```
+### Problema 1: aumento del consumo de memoria de Envoy
 
-**Causas**:
-- Se crean demasiados listeners/clusters
-- ConfigMap/Secret grandes
-- Fuga de memoria
+Compare la memoria/CPU real del contenedor, los límites, las conexiones, las rutas/clústeres/listeners y la cardinalidad de telemetría. Un ConfigMap o Secret grande sin relación no se carga automáticamente en todos los proxies; solo la configuración y los datos consumidos por ese proxy pueden explicar su consumo. Una fuga de memoria requiere evidencia específica de la versión.
 
-**Solución**:
+Cuando predomina la configuración no utilizada, un recurso Sidecar con ámbito limitado puede restringir la configuración importada por una carga de trabajo **sidecar** seleccionada:
 
 ```yaml
-# Limit scope with Sidecar resource
 apiVersion: networking.istio.io/v1
 kind: Sidecar
 metadata:
-  name: default
-  namespace: default
+  name: myapp-scope
+  namespace: app
 spec:
+  workloadSelector:
+    labels:
+      app: myapp
   egress:
   - hosts:
-    - "./*"  # Same namespace only
-    - "istio-system/*"  # istio-system only
+    - ./*
+    - istio-system/*
 ```
 
-```yaml
-# Envoy resource limits
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    sidecar.istio.io/proxyMemory: "512Mi"
-    sidecar.istio.io/proxyMemoryLimit: "1Gi"
-```
+Este ejemplo incluye únicamente servicios de app e istio-system. Inventaríe las dependencias reales entre espacios de nombres/externas antes de limitar las importaciones y evite selectores Sidecar superpuestos. Esto delimita configuración, no es un cortafuegos de salida ni una política de waypoint de ambient. Dimensione las solicitudes/límites de memoria según el comportamiento observado utilizando las anotaciones de plantilla de Pod mostradas antes.
 
-### Problema 2: Latencia alta
+### Problema 2: latencia alta
 
-**Síntomas**:
-- Latencia P99 > 1 segundo
-- Errores de timeout frecuentes
+Un P99 superior a un segundo solo es un síntoma respecto a un presupuesto definido de carga de trabajo. Compruebe el tiempo de la aplicación, la latencia ascendente, la saturación, la limitación de CPU, los grupos de conexiones, el contenido y la amplificación por reintentos antes de cambiar tiempos de espera.
 
-**Solución**:
+Lo siguiente es una **alternativa** al VirtualService myapp anterior que añade un plazo de ruta de cinco segundos con los reintentos deshabilitados explícitamente:
 
 ```yaml
-# Set timeout in VirtualService
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: app
 spec:
+  hosts:
+  - myapp.app.svc.cluster.local
   http:
   - route:
     - destination:
-        host: myapp
-    timeout: 5s  # Total request timeout
+        host: myapp.app.svc.cluster.local
+        subset: v1
+        port:
+          number: 8080
     retries:
-      attempts: 3
-      perTryTimeout: 2s  # Timeout per retry
+      attempts: 0
+    timeout: 5s
 ```
 
-## Expiración de certificados
+Un plazo limita la espera; no acelera el backend. Los reintentos a ciegas pueden amplificar la sobrecarga y repetir escrituras ambiguas. Si los reintentos son apropiados para una operación idempotente concreta, presupuéstelos explícitamente dentro del plazo de extremo a extremo y mida los intentos reales. Consulte [Reintentos y tiempos de espera](../traffic-management/05-retry-timeout.md).
+
+## Caducidad de certificados {#certificate-expiration}
 
 ### Descripción del problema
 
-**Síntomas**:
-```
-x509: certificate has expired
-SSL handshake failed
-```
+La caducidad de x 509 y los fallos de negociación pueden afectar al certificado final de la carga de trabajo, a una CA firmante intermedia/raíz, a un certificado de ingreso o a un desfase de reloj. Los períodos de validez dependen de la CA/proveedor y la configuración; «diez años» o «24 horas» no son un diagnóstico universal.
 
-**Causas**:
-- El certificado de Istio CA expiró (valor predeterminado: 10 años)
-- El certificado de Workload expiró (valor predeterminado: 24 horas, renovación automática)
+### Diagnóstico y recuperación
 
-**Solución**:
+Inspeccione el paquete público de confianza real y los certificados de cargas de trabajo cargados:
 
 ```bash
-# 1. Check CA certificate
-kubectl get secret istio-ca-secret -n istio-system -o jsonpath='{.data.ca-cert\.pem}' | base64 -d | openssl x509 -noout -dates
-
-# 2. Check workload certificates
-istioctl proxy-config secret <pod-name> -n <namespace>
-
-# 3. Regenerate CA certificate
-istioctl x ca root
+# Public trust bundle, not a private CA key.
+kubectl -n "$NS" get configmap istio-ca-root-cert \
+  -o jsonpath='{.data.root-cert\.pem}' > root-cert.pem
+openssl crl2pkcs7 -nocrl -certfile root-cert.pem |
+  openssl pkcs7 -print_certs -text -noout
+istioctl proxy-config secret "$POD" -n "$NS"
+kubectl -n "$ISTIO_NS" logs -l app=istiod --all-containers=true --tail=200
 ```
 
-## Fallo de resolución de DNS
+El ConfigMap de confianza estándar puede diferir con una integración personalizada; inspeccione el proveedor de CA configurado. La inspección PKCS7 muestra todos los certificados del paquete PEM, no solo el primero. Correlacione la validez con la hora UTC actual, los errores de CA/CSR, los tokens de identidad, la accesibilidad de Istiod/SDS y el proceso de renovación de certificados.
+
+istioctl 1.31 no tiene el comando x ca root. No elimine ni regenere una CA solo porque haya caducado un certificado final: una sustitución no planificada de la raíz de confianza puede interrumpir todas las cargas de trabajo dependientes. Repare el problema real de renovación/conectividad/proveedor y utilice el procedimiento compatible de rotación de CA con la superposición de confianza requerida. Reinicie únicamente las cargas de trabajo específicamente afectadas cuando el proceso de recuperación lo requiera.
+
+## Fallo de resolución DNS {#dns-resolution-failure}
 
 ### Descripción del problema
 
-**Síntomas**:
-```
-no such host
-DNS resolution failed
+Ante un host inexistente o una consulta cuyo tiempo de espera se agota, distinga entre DNS de la aplicación, CoreDNS/DNS ascendente, existencia del Service/sufijos de búsqueda y captura DNS de Istio.
+
+```bash
+kubectl -n kube-system get svc kube-dns
+kubectl -n kube-system get pods -l k8s-app=kube-dns
+kubectl -n kube-system get endpointslices.discovery.k8s.io \
+  -l kubernetes.io/service-name=kube-dns
+# Run from the affected app container only if it includes these tools.
+kubectl -n "$NS" exec "$POD" -c myapp -- cat /etc/resolv.conf
+kubectl -n "$NS" exec "$POD" -c myapp -- nslookup myapp.app.svc.cluster.local
 ```
 
-**Solución**:
+No suponga que la imagen mínima de aplicación o proxy incluye utilidades de diagnóstico. Utilice un contenedor de diagnóstico aprobado cuando sea necesario. Compruebe NetworkPolicy para UDP/TCP 53, la accesibilidad del nodo/resolvedor y la configuración dnsPolicy/búsqueda del Pod afectado.
+
+Un ServiceEntry registra un servicio externo en Istio; no repara CoreDNS, crea un registro DNS público ni hace resoluble un nombre de host ascendente no resuelto:
 
 ```yaml
-# Register external service with ServiceEntry
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api
+  namespace: app
 spec:
   hosts:
   - api.example.com
@@ -767,101 +482,109 @@ spec:
   resolution: DNS
 ```
 
-## Timeout de inicialización de Envoy
+Sustituya api.example.com por el nombre de host externo real. La resolución DNS determina los endpoints ascendentes. Según el modo, la versión y la configuración, la captura DNS/asignación de IP de Istio puede responder a nombres de servicios con direcciones sintéticas; eso tampoco demuestra que el endpoint ascendente real se resuelva o sea accesible. Consulte las [indicaciones de captura DNS](../advanced/04-dns-cache.md). Para una aplicación que ya envía HTTPS, declarar HTTPS aquí no requiere añadir una segunda capa de origen TLS.
+
+## Tiempo de espera de inicialización de Envoy agotado {#envoy-initialization-timeout}
 
 ### Descripción del problema
 
-**Síntomas**:
-```
-waiting for Envoy proxy to be ready
-Readiness probe failed
-```
+«Esperando a que el proxy Envoy esté listo» puede deberse a conectividad xDS/CA, configuración rechazada, recursos, problemas de certificados/tokens o ajustes de arranque. Compruebe los estados de Pod/contenedores de inicialización, los registros de proxy/Istiod, los eventos y proxy-status antes de aumentar los retrasos de sondas.
 
-**Solución**:
+holdApplicationUntilProxyStarts retrasa el inicio de la aplicación hasta que el proxy esté listo; no repara un Envoy que no puede estarlo. Una readinessProbe con solo initialDelaySeconds no es válida porque no tiene una acción de sonda.
+
+Si la aplicación realmente implementa /ready en 8080, este fragmento proporciona un contrato concreto de inicio/disponibilidad:
 
 ```yaml
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  annotations:
-    proxy.istio.io/config: |
-      holdApplicationUntilProxyStarts: true
+  name: myapp
+  namespace: app
 spec:
-  containers:
-  - name: myapp
-    image: myapp:latest
-    readinessProbe:
-      initialDelaySeconds: 10  # Wait for Envoy initialization
+  template:
+    metadata:
+      annotations:
+        proxy.istio.io/config: |
+          holdApplicationUntilProxyStarts: true
+      labels: {}
+    spec:
+      containers:
+      - name: myapp
+        startupProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          periodSeconds: 2
+          failureThreshold: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 3
 ```
 
-## Herramientas de depuración
+Adapte la acción y los umbrales a la aplicación. StartupProbe controla la tolerancia de inicio; la disponibilidad controla la elegibilidad de endpoints. Ninguno corrige una accesibilidad de Istiod rota. Inspeccione las reescrituras de sondas inyectadas y los ajustes efectivos de disponibilidad del proxy antes de atribuir un fallo de sonda de aplicación a la inicialización de Envoy.
+
+## Herramientas de depuración {#debugging-tools}
 
 ### Comandos de istioctl
 
 ```bash
-# 1. Analyze pod status
-istioctl x describe pod <pod-name> -n <namespace>
-
-# 2. Validate configuration
 istioctl analyze -A
+istioctl proxy-status
+istioctl proxy-config all "$POD" -n "$NS"
+istioctl proxy-config log "$POD" -n "$NS"
+# Temporarily change levels only on the selected Envoy.
+istioctl proxy-config log "$POD" -n "$NS" --level http:debug
+# Restore the previously recorded levels afterwards; --reset restores defaults.
+istioctl bug-report --include "$NS" --duration 10m
 
-# 3. Check Envoy configuration
-istioctl proxy-config all <pod-name> -n <namespace>
-
-# 4. Change Envoy log level
-istioctl proxy-config log <pod-name> --level debug
-
-# 5. Generate bug report
-istioctl bug-report
+# Ambient has ztunnel diagnostics; Envoy commands apply to waypoints.
+istioctl ztunnel-config workloads -n "$ISTIO_NS"
+istioctl ztunnel-config certificates -n "$ISTIO_NS"
 ```
+
+Los comandos experimentales pueden cambiar y no sustituyen la verificación del tráfico. Registre los niveles de log antes de una depuración temporal y restáurelos después; reset significa los valores predeterminados, que pueden diferir de ajustes personalizados anteriores. Limite la duración del diagnóstico y revise la configuración/datos de registros recopilados antes de compartir un archivo de informe de errores.
 
 ### API de administración de Envoy
 
-```bash
-# Port-forward to Envoy admin port
-kubectl port-forward <pod-name> 15000:15000
-
-# 1. Check cluster status
-curl localhost:15000/clusters
-
-# 2. Check statistics
-curl localhost:15000/stats/prometheus
-
-# 3. Configuration dump
-curl localhost:15000/config_dump
-
-# 4. Change logging level
-curl -X POST localhost:15000/logging?level=debug
-```
-
-### Comprobación de logs comunes
+Reenvíe únicamente a la interfaz de bucle local:
 
 ```bash
-# Application logs
-kubectl logs <pod-name> -c <container-name>
+# Keep this command running; use a second terminal for the HTTP requests.
+kubectl -n "$NS" port-forward --address 127.0.0.1 "$POD" 15000:15000
 
-# Envoy logs
-kubectl logs <pod-name> -c istio-proxy
-
-# Previous container logs (if restarted)
-kubectl logs <pod-name> -c istio-proxy --previous
-
-# Real-time logs
-kubectl logs -f <pod-name> -c istio-proxy
 ```
+
+En otra terminal:
+
+```bash
+curl --fail --silent --show-error http://127.0.0.1:15000/clusters
+curl --fail --silent --show-error http://127.0.0.1:15000/stats/prometheus
+curl --fail --silent --show-error http://127.0.0.1:15000/config_dump
+```
+
+Estos comandos se aplican a Envoy, incluidos sidecars y waypoints, no a la interfaz de administración distinta de ztunnel. Cierre el reenvío de puertos al terminar. Para cambios de registro, prefiera el comando istioctl para el proxy seleccionado mostrado arriba y restaure después los niveles registrados.
+
+### Comprobación habitual de registros
+
+```bash
+kubectl -n "$NS" logs "$POD" -c myapp
+kubectl -n "$NS" logs "$POD" -c istio-proxy
+# Only when that container has a prior instance in this same Pod:
+kubectl -n "$NS" logs "$POD" -c istio-proxy --previous
+kubectl -n "$NS" logs -f "$POD" -c istio-proxy
+```
+
+Recopilar registros de un Pod actual/en ejecución no proporciona retención para Pods eliminados. Conserve la hora de la solicitud, el ID de traza/solicitud, las marcas de respuesta y los cambios pertinentes de endpoints/configuración junto con las pruebas del incidente.
 
 ## Referencias
 
-### Documentación oficial
-- [Guía de depuración de Istio](https://istio.io/latest/docs/ops/diagnostic-tools/)
-- [Preguntas frecuentes de Istio](https://istio.io/latest/about/faq/)
-- [Problemas comunes](https://istio.io/latest/docs/ops/common-problems/)
-
-### Documentación relacionada
-- [Observabilidad](../observability/README.md)
-- [Seguridad](../security/README.md)
-- [Gestión de tráfico](../traffic-management/README.md)
-
----
-
-**Última actualización**: November 27, 2025
+- [Solución de problemas de inyección](https://istio.io/latest/docs/ops/common-problems/injection/) y [configuración de inyección](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
+- [Problemas de red](https://istio.io/latest/docs/ops/common-problems/network-issues/) y [dirección TLS/mTLS automático](https://istio.io/latest/docs/ops/configuration/traffic-management/tls-configuration/)
+- [Anotaciones de Istio](https://istio.io/latest/docs/reference/config/annotations/) y [código de apagado del proxy de la versión 1.31](https://github.com/istio/istio/blob/1.31.0/pkg/envoy/agent.go)
+- [Terminación de Pods de Kubernetes](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/) y [sidecars nativos](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
+- [Diagnósticos de proxies](https://istio.io/latest/docs/ops/diagnostic-tools/proxy-cmd/), [integración de CA](https://istio.io/latest/docs/tasks/security/cert-management/plugin-ca-cert/) e [ingreso seguro](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/)
+- [Diagnóstico DNS de Kubernetes](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/) y [proxy DNS de Istio](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [Observabilidad](../observability/README.md), [Seguridad](../security/README.md), [Gestión del tráfico](../traffic-management/README.md)

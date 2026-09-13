@@ -1,9 +1,11 @@
 # Istio 术语表
 
-> **支持的版本**: Istio 1.28+
-> **最后更新**: February 23, 2026
+> **已审查版本**：Istio 1.31.0
+> **最近更新**：September 13, 2026
 
-本术语表按字母顺序整理了与 Istio 和 Service Mesh 相关的关键术语。
+本术语表按分组参考章节整理 Istio 和服务网格相关的主要术语。
+
+> **参考语言**：下方指向 Architecture 和 DestinationRule 章节的链接使用持续维护的英文指南，供相关译文尚未同步时查阅当前参考内容。
 
 ## 目录
 
@@ -18,115 +20,126 @@
 
 ---
 
-## A-C
+## A-C {#a-c}
 
-### Ambient Mode
+### AuthorizationPolicy {#authorizationpolicy}
 
-Istio 1.20+ 中引入的一种新数据平面模式，无需 Sidecar Proxy 即可提供 service mesh 功能。
+一种 Istio 安全策略，为选定的工作负载或目标资源定义 ALLOW、DENY、CUSTOM 或 AUDIT 行为。身份验证与授权是不同的机制；waypoint 策略使用 targetRefs。
 
-**特性**:
+### 控制平面 {#control-plane}
+
+由 istiod 实现的配置、服务发现和身份管理层。应用载荷通过数据平面代理流动，而不是通过 istiod。
+
+### Ambient 模式 {#ambient-mode}
+
+一种无需 Sidecar 代理即可提供服务网格功能的数据平面模式，首次于 Istio 1.18 以 alpha 形式发布，自 Istio 1.24 起正式可用。
+
+**功能**：
 - 无需 Sidecar 容器
-- 在节点级别使用 ztunnel
-- 提升资源效率
+- 在节点层面使用 ztunnel
+- 提高资源效率
 - 分离 L4 和 L7 功能
 
-**相关文档**: [Ambient Mode](advanced/01-ambient-mode.md)
+**相关文档**：[Ambient 模式](advanced/01-ambient-mode.md)
 
 ---
 
-### Certificate Authority (CA)
+### 证书颁发机构（CA） {#certificate-authority-ca}
 
-为服务之间的 mTLS 通信签发和管理证书的机构。
+为服务间 mTLS 通信颁发并管理证书的机构。
 
-**在 Istio 中的角色**:
+**在 Istio 中的角色**：
 - Istiod 的 Citadel 功能承担 CA 角色
-- 基于 SPIFFE ID 签发证书
+- 根据 SPIFFE ID 颁发证书
 - 自动续订证书（默认 TTL：24 小时）
 
-**相关术语**: [Citadel](#citadel), [SPIFFE](#spiffe), [mTLS](#mtls)
+**相关术语**：[Citadel](#citadel)、[SPIFFE](#spiffe-secure-production-identity-framework-for-everyone)、[mTLS](#mtls-mutual-tls)
 
 ---
 
-### Circuit Breaker
+### 熔断器
 
-一种阻止请求发送到故障服务的模式，用于防止故障蔓延至整个系统。
+一种阻断发往故障服务的请求、以防故障传播到整个系统的模式。
 
-**工作方式**:
-1. **Closed**: 正常运行
-2. **Open**: 连续失败后阻止请求
-3. **Half-Open**: 一段时间后允许部分请求通过
+**工作原理**：
+1. **Closed（关闭）**：正常运行
+2. **Open（打开）**：连续故障后阻断请求
+3. **Half-Open（半开）**：经过一定时间后允许部分请求
 
-**Istio 实现**:
+**Istio 实现**：连接池熔断和针对单个端点的异常剔除，不会直接暴露上述三状态的状态机。
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-1
 spec:
+  host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-**相关文档**: [Circuit Breaker](traffic-management/07-circuit-breaker.md)
+**相关文档**：[熔断器](traffic-management/07-circuit-breaker.md)
 
 ---
 
-### Citadel
+### Citadel {#citadel}
 
-Istio 1.4 之前独立存在的安全组件。现在已集成到 Istiod 中。
+在包括 Istio 1.4 在内的早期版本中独立存在的安全组件，现已集成到 Istiod。
 
-**主要功能**:
-- Certificate Authority (CA) 管理
-- SPIFFE ID 签发和管理
-- X.509 证书生成和续订
+**主要功能**：
+- 证书颁发机构（CA）管理
+- SPIFFE ID 的签发与管理
+- X.509 证书生成与续订
 
-**当前状态**: 在 Istio 1.5+ 中作为 Istiod 的内部功能存在
+**当前状态**：在 Istio 1.5+ 中作为 Istiod 内部功能存在
 
-**相关术语**: [Istiod](#istiod), [Certificate Authority](#certificate-authority-ca)
+**相关术语**：[Istiod](#istiod)、[证书颁发机构](#certificate-authority-ca)
 
 ---
 
-### CDS (Cluster Discovery Service)
+### CDS（集群发现服务） {#cds-cluster-discovery-service}
 
-xDS API 之一，使 Envoy 能够动态接收上游服务（cluster）的配置。
+xDS API 之一，使 Envoy 能动态接收上游服务（集群）的配置。
 
-**提供的信息**:
-- Cluster 名称和类型
+**提供的信息**：
+- 集群名称和类型
 - 负载均衡策略
 - 健康检查设置
-- Circuit Breaker 设置
+- 熔断器设置
 - TLS 设置
 
-**相关术语**: [xDS](#xds), [Envoy](#envoy)
+**相关术语**：[xDS](#xds-discovery-service)、[Envoy](#envoy-proxy)
 
 ---
 
-## D-F
+## D-F {#d-f}
 
-### Data Plane
+### 数据平面
 
-Service Mesh 中处理实际流量的层。
+服务网格中处理实际流量的层。
 
-**Istio 的 Data Plane**:
-- Envoy Proxy（Sidecar 或 Ambient Mode）
-- 处理所有入站/出站流量
+**Istio 的数据平面**：
+- Envoy sidecar，或 ambient ztunnel 加可选的 L7 waypoint
+- 处理已加入网格的流量；仍受排除规则和协议限制约束
 - mTLS 加密/解密
 - 指标收集
 
-**相关术语**: [Control Plane](#control-plane), [Envoy](#envoy)
+**相关术语**：[控制平面](#control-plane)、[Envoy](#envoy-proxy)
 
 ---
 
 ### DestinationRule
 
-一种 Istio CRD，用于定义由 VirtualService 路由的流量策略。
+定义由 VirtualService 路由的流量所用策略的 Istio CRD。
 
-**主要功能**:
-- Subset 定义（版本、区域等）
+**主要功能**：
+- 定义子集（版本、区域等）
 - 负载均衡策略
-- Connection Pool 设置
-- Circuit Breaker 设置
+- 连接池设置
+- 熔断器设置
 - TLS 设置
 
 ```yaml
@@ -145,40 +158,36 @@ spec:
       version: v2
 ```
 
-**相关文档**: [DestinationRule](traffic-management/03-destination-rule.md)
+**相关文档**：[DestinationRule](traffic-management/03-destination-rule.md)
 
 ---
 
-### eBPF (Extended Berkeley Packet Filter)
+### eBPF（扩展伯克利包过滤器） {#ebpf-extended-berkeley-packet-filter}
 
-一种允许程序在 Linux kernel 中安全运行的技术。
+一种允许程序在 Linux 内核中安全运行的技术。
 
-**在 Istio 中的使用方式**:
-- Ambient Mode 的核心技术
-- 替代 iptables（性能更快）
-- 通过 CNI plugin 拦截流量
-- 无需 Init Container
+Istio 可以与 Cilium 等基于 eBPF 的主 CNI 共存。Istio CNI 是单独的链式插件/节点代理，负责配置重定向；ambient 不要求 eBPF，也不会替代主 CNI。
 
-**优势**:
+**优势**：
 - 低开销
-- kernel 级处理
+- 内核级处理
 - 动态编程能力
 
-**相关术语**: [Ambient Mode](#ambient-mode), [iptables](#iptables)
+**相关术语**：[Ambient 模式](#ambient-mode)、[iptables](#iptables)
 
 ---
 
-### EDS (Endpoint Discovery Service)
+### EDS（端点发现服务） {#eds-endpoint-discovery-service}
 
-xDS API 之一，用于动态提供 cluster 中的实际 endpoint（Pod IP）。
+xDS API 之一，动态提供一个集群中的实际端点（Pod IP）。
 
-**提供的信息**:
-- Endpoint IP 地址和端口
+**提供的信息**：
+- 端点 IP 地址和端口
 - 健康状态
 - 负载均衡权重
-- locality 信息
+- 位置（Locality）信息
 
-**示例**:
+**示例**：
 ```json
 {
   "cluster_name": "outbound|9080||reviews",
@@ -193,59 +202,59 @@ xDS API 之一，用于动态提供 cluster 中的实际 endpoint（Pod IP）。
 }
 ```
 
-**相关术语**: [xDS](#xds), [CDS](#cds-cluster-discovery-service)
+**相关术语**：[xDS](#xds-discovery-service)、[CDS](#cds-cluster-discovery-service)
 
 ---
 
-### Envoy Proxy
+### Envoy 代理 {#envoy-proxy}
 
-构成 Istio Data Plane 的高性能 L7 proxy。
+构成 Istio 数据平面的高性能 L7 代理。
 
-**历史**:
-- 由 Matt Klein 于 2016 年在 Lyft 开发
-- 2017 年成为 CNCF Incubating 项目
-- 2018 年成为 CNCF Graduated 项目
+**历史**：
+- 2016 年由 Lyft 的 Matt Klein 开发
+- 2017 年成为 CNCF 孵化项目
+- 2018 年成为 CNCF 毕业项目
 
-**主要特性**:
-- 使用 C++ 编写的高性能 proxy
+**主要特性**：
+- 用 C++ 编写的高性能代理
 - 通过 xDS API 动态配置
-- 支持 HTTP/1.1、HTTP/2、gRPC
+- 支持 HTTP/1.1、HTTP/2 和 gRPC
 - 丰富的可观测性
 
-**组件**:
-- Listeners: 端口监听
-- Filters: 请求/响应处理
-- Routers: 路由决策
-- Clusters: 上游服务
+**组件**：
+- Listener：侦听端口
+- Filter：处理请求/响应
+- Router：决定路由
+- Cluster：上游服务
 
-**相关文档**: [Architecture - Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
+**相关文档**：[架构 - Envoy 代理](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#data-plane-envoy-proxy)
 
 ---
 
-## G-I
+## G-I {#g-i}
 
 ### Galley
 
-Istio 1.4 之前独立存在的配置验证组件。现在已集成到 Istiod 中。
+在包括 Istio 1.4 在内的早期版本中独立存在的配置验证组件，现已集成到 Istiod。
 
-**主要功能**:
-- Istio 配置验证
-- Kubernetes 资源处理
-- 配置部署前的错误检查
+**主要功能**：
+- 验证 Istio 配置
+- 处理 Kubernetes 资源
+- 在部署配置前检查错误
 
-**当前状态**: 在 Istio 1.5+ 中作为 Istiod 的内部功能存在
+**当前状态**：在 Istio 1.5+ 中作为 Istiod 内部功能存在
 
-**相关术语**: [Istiod](#istiod)
+**相关术语**：[Istiod](#istiod)
 
 ---
 
 ### Gateway
 
-一种 Istio CRD，用于定义进入 Service Mesh 的外部流量入口点。
+定义外部流量进入服务网格的入口的 Istio CRD。
 
-**类型**:
-1. **Ingress Gateway**: 外部到内部流量
-2. **Egress Gateway**: 内部到外部流量
+**类型**：
+1. **Ingress Gateway**：从外部到内部的流量
+2. **Egress Gateway**：从内部到外部的流量
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -264,56 +273,56 @@ spec:
     - "example.com"
 ```
 
-**相关文档**: [Gateway and VirtualService](traffic-management/01-gateway-virtualservice.md)
+**相关文档**：[Gateway 和 VirtualService](traffic-management/01-gateway-virtualservice.md)
 
 ---
 
 ### gRPC
 
-由 Google 开发的高性能 RPC（远程过程调用）框架。
+Google 开发的高性能 RPC（远程过程调用）框架。
 
-**与 Istio 的关系**:
+**与 Istio 的关系**：
 - xDS API 基于 gRPC
 - 用于 Istiod 与 Envoy 之间的通信
 - 基于 HTTP/2（支持多路复用）
 
-**优势**:
-- 双向流
+**优势**：
+- 双向流式传输
 - 低延迟
 - 使用 Protocol Buffers
 
-**相关术语**: [xDS](#xds)
+**相关术语**：[xDS](#xds-discovery-service)
 
 ---
 
-### Identity
+### 身份 {#identity}
 
-表示 Service Mesh 中 workload 的身份。
+表示服务网格内工作负载的身份。
 
-**Istio 的 Identity**:
+**Istio 的身份**：
 - 使用 SPIFFE ID 格式
 - 基于 Kubernetes ServiceAccount
 - 由 X.509 证书证明
 
-**示例**:
+**示例**：
 ```
 spiffe://cluster.local/ns/default/sa/reviews
 ```
 
-**相关术语**: [SPIFFE](#spiffe), [mTLS](#mtls)
+**相关术语**：[SPIFFE](#spiffe-secure-production-identity-framework-for-everyone)、[mTLS](#mtls-mutual-tls)
 
 ---
 
-### iptables
+### iptables {#iptables}
 
-Linux 中控制网络流量的 firewall 工具。
+在 Linux 中控制网络流量的防火墙工具。
 
-**在 Istio 中的角色**:
-- istio-init container 设置 iptables 规则
+**在 Istio 中的作用**：
+- istio-init 或 Istio CNI 节点代理配置流量重定向
 - 将所有 Pod 流量重定向到 Envoy
-- 使用 NAT table（PREROUTING、OUTPUT chain）
+- 使用 NAT 表（PREROUTING、OUTPUT 链）
 
-**关键规则**:
+**简化规则（仅作说明，不是安装脚本）**：
 ```bash
 # Outbound: All traffic except Envoy -> 15001
 iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner 1337 -j REDIRECT --to-port 15001
@@ -322,71 +331,74 @@ iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner 1337 -j REDIRECT --to-po
 iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
 ```
 
-**替代方案**: eBPF（Ambient Mode）
+**替代配置方式**：Istio CNI 在节点级执行需要特权的网络配置。
 
-**相关文档**: [Architecture - iptables](03-architecture.md#iptables-and-traffic-interception)
+**相关文档**：[架构 - iptables](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#iptables-and-traffic-interception)
 
 ---
 
-### Istiod
+### Istiod {#istiod}
 
-Istio 1.5+ 中统一的 Control Plane 组件。
+Istio 1.5+ 中统一的控制平面组件。
 
-**集成功能**:
-- **Pilot**: Service Discovery、Traffic Management
-- **Citadel**: Certificate Authority、Identity
-- **Galley**: Configuration Validation
+**集成的功能**：
+- **Pilot**：服务发现、流量管理
+- **Citadel**：证书颁发机构、身份
+- **Galley**：配置验证
 
-**运行方式**:
-- 单个 Go binary: `pilot-discovery`
-- 所有功能在单个 process 中运行
+**运行方式**：
+- 单一 Go 二进制文件：`pilot-discovery`
+- 所有功能在同一进程中运行
 - 默认端口：15012（xDS）、15017（Webhook）
 
-**优势**:
-- 降低复杂性
+**优势**：
+- 降低复杂度
 - 简化运维
 - 提高资源效率
 
-**相关文档**: [Architecture - Istiod](03-architecture.md#control-plane-istiod)
+**相关文档**：[架构 - Istiod](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#control-plane-istiod)
 
 ---
 
-## J-L
+## J-L {#j-l}
 
-### LDS (Listener Discovery Service)
+### LDS（侦听器发现服务） {#lds-listener-discovery-service}
 
-xDS API 之一，使 Envoy 能够动态接收要监听的端口和 filter chain。
+xDS API 之一，使 Envoy 能动态接收需要侦听的端口和过滤器链。
 
-**提供的信息**:
-- Listener 地址和端口
+**提供的信息**：
+- 侦听器地址和端口
 - 协议（HTTP、TCP）
-- Filter chain 配置
+- 过滤器链配置
 - TLS 设置
 
-**Istio 的默认 Listeners**:
-- `0.0.0.0:15001`: 出站 TCP
-- `0.0.0.0:15006`: 入站 TCP
-- `0.0.0.0:15021`: 健康检查
-- `0.0.0.0:15090`: Prometheus 指标
+**Istio 的默认侦听器**：
+- `0.0.0.0:15001`：出站 TCP
+- `0.0.0.0:15006`：入站 TCP
+- `0.0.0.0:15021`：健康检查
+- `0.0.0.0:15090`：Prometheus 指标
 
-**相关术语**: [xDS](#xds), [Envoy](#envoy)
+**相关术语**：[xDS](#xds-discovery-service)、[Envoy](#envoy-proxy)
 
 ---
 
-### Locality-aware Load Balancing
+### 位置感知负载均衡 {#locality-aware-load-balancing}
 
-一种考虑 locality（Region、Zone）信息的负载均衡方法。
+一种考虑位置（区域、可用区）信息的负载均衡方式。
 
-**优先级**:
-1. 同一 Zone 内的 endpoints
-2. 同一 Region 中的不同 Zone
-3. 不同 Region
+**优先顺序**：
+1. 同一可用区内的端点
+2. 同一区域内的其他可用区
+3. 其他区域
 
-**配置示例**:
+**配置示例**：
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-2
 spec:
+  host: reviews
   trafficPolicy:
     loadBalancer:
       localityLbSetting:
@@ -398,43 +410,43 @@ spec:
             "us-west/zone-1b/*": 20
 ```
 
-**相关文档**: [Zone Aware Routing](resilience/03-zone-aware-routing.md)
+**相关文档**：[分区感知路由](resilience/03-zone-aware-routing.md)
 
 ---
 
-## M-O
+## M-O {#m-o}
 
 ### Mixer
 
-Istio 1.4 之前存在的 policy 和 telemetry 组件。
+在包括 Istio 1.4 在内的早期版本中存在的策略和遥测组件。
 
-**主要功能**:
-- Policy enforcement（Rate Limiting、Access Control）
-- Telemetry 收集
+**主要功能**：
+- 策略执行（速率限制、访问控制）
+- 遥测收集
 
-**移除原因**:
-- 性能开销（每个请求都要调用 Mixer）
+**移除原因**：
+- 性能开销（每个请求都调用 Mixer）
 - 架构复杂
 
-**当前状态**: 在 Istio 1.5+ 中完全移除（功能迁移至 Envoy）
+**当前状态**：在 1.5 迁移期间弃用；剩余的 Mixer 功能在 1.8 中移除
 
-**相关术语**: [Istiod](#istiod)
+**相关术语**：[Istiod](#istiod)
 
 ---
 
-### mTLS (Mutual TLS)
+### mTLS（双向 TLS） {#mtls-mutual-tls}
 
-一种 client 和 server 相互认证的双向 TLS 通信方式。
+一种客户端与服务器相互验证身份的双向 TLS 通信方式。
 
-**Istio 的 mTLS**:
-- 自动签发和续订证书
-- 基于 SPIFFE ID 的认证
-- 默认加密：AES-256-GCM
+**Istio 的 mTLS**：
+- 自动颁发和续订证书
+- 基于 SPIFFE ID 的身份验证
+- TLS 密码套件通过协商确定，并不固定为 AES-256-GCM
 
-**模式**:
-1. **STRICT**: 仅允许 mTLS
-2. **PERMISSIVE**: 允许 mTLS + plaintext（用于迁移）
-3. **DISABLE**: 仅允许 plaintext
+**模式**：
+1. **STRICT**：仅允许 mTLS
+2. **PERMISSIVE**：允许 mTLS 和明文（用于迁移）
+3. **DISABLE**：在 sidecar 模式下禁用 Istio 传输层 mTLS；ambient 不支持此模式
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -446,98 +458,73 @@ spec:
     mode: STRICT
 ```
 
-**相关文档**: [mTLS](security/01-mtls.md)
+**相关文档**：[mTLS](security/01-mtls.md)
 
 ---
 
-### Outlier Detection
+### 异常端点检测
 
-一种自动排除表现异常的 endpoint 的功能。
+自动排除表现异常的端点的功能。
 
-**检测条件**:
+**检测条件**：
 - 连续错误次数
 - 错误率
-- 响应延迟
+- 连接失败/超时；延迟本身不是异常端点剔除阈值
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-3
 spec:
+  host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
 
-**相关文档**: [Outlier Detection](resilience/01-outlier-detection.md)
+**相关文档**：[异常端点检测](resilience/01-outlier-detection.md)
 
 ---
 
-## P-R
+## P-R {#p-r}
 
-### Downstream
+### 下游（Downstream） {#downstream}
 
-从 Envoy 的视角来看，指的是**发送请求的一方**。也就是向 Envoy 发起连接的 client。
+从 Envoy 的视角看，这是指**发送请求的一方**，即向 Envoy 发起连接的客户端。
 
-**Envoy 的 Downstream**:
-- 进入 Envoy 的连接（Inbound）
-- 发送请求的 client
-- Listener 接收的连接
+**Envoy 的下游**：
+- 进入 Envoy 的连接（入站）
+- 发送请求的客户端
+- 侦听器接收的连接
 
-**流量流向**:
+**流量路径**：
 ```
 Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 ```
 
-**示例场景**:
+**示例场景**：
 
-#### 1. Sidecar Mode - Outbound Request
+#### 1. Sidecar 模式 - 出站请求
 
-```mermaid
-flowchart LR
-    App[Application<br/>Downstream]
-    Envoy[Envoy Sidecar]
-    Backend[Backend Service<br/>Upstream]
+![在 sidecar 模式下，应用（下游）向同一 Pod 中的 Envoy sidecar 发送请求，Envoy 将请求转发到后端服务（上游）。](../../.gitbook/assets/en-service-mesh-istio-glossary-0.png)
 
-    App -->|"Send Request<br/>(Downstream -> Envoy)"| Envoy
-    Envoy -->|"Forward Request<br/>(Envoy -> Upstream)"| Backend
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-0.html)
 
-    classDef downstream fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef proxy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef upstream fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
+**视角**：
+- **从 Envoy 看**：应用是下游（发送请求）
+- **从 Envoy 看**：后端服务是上游（接收请求）
 
-    class App downstream;
-    class Envoy proxy;
-    class Backend upstream;
-```
+#### 2. Ingress Gateway - 外部请求
 
-**视角**:
-- **从 Envoy 的视角**: Application 是 Downstream（发送请求）
-- **从 Envoy 的视角**: Backend service 是 Upstream（接收请求）
+![从 Ingress Gateway 的 Envoy 视角看，外部客户端是下游，其路由目标内部服务是上游。](../../.gitbook/assets/en-service-mesh-istio-glossary-1.png)
 
-#### 2. Ingress Gateway - External Request
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-1.html)
 
-```mermaid
-flowchart LR
-    Client[External Client<br/>Downstream]
-    Gateway[Ingress Gateway<br/>Envoy]
-    Service[Internal Service<br/>Upstream]
-
-    Client -->|"HTTP Request<br/>(Downstream -> Envoy)"| Gateway
-    Gateway -->|"Routing<br/>(Envoy -> Upstream)"| Service
-
-    classDef downstream fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef proxy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef upstream fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Client downstream;
-    class Gateway proxy;
-    class Service upstream;
-```
-
-**与 Downstream 相关的 Envoy 配置**:
+**与下游相关的 Envoy 配置**：
 
 ```yaml
 # Listener - Receive Downstream connections
@@ -545,18 +532,22 @@ apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: downstream-config
+  namespace: default
 spec:
+  workloadSelector:
+    labels:
+      app: reviews
   configPatches:
   - applyTo: LISTENER
+    match:
+      context: SIDECAR_INBOUND
     patch:
       operation: MERGE
       value:
         per_connection_buffer_limit_bytes: 32768  # Downstream buffer
-        listener_filters:
-        - name: envoy.filters.listener.tls_inspector
 ```
 
-**Downstream 指标**:
+**下游指标**：
 ```bash
 # Downstream connection count
 envoy_listener_downstream_cx_active
@@ -568,27 +559,27 @@ envoy_http_downstream_rq_total
 envoy_http_downstream_rq_time
 ```
 
-**相关术语**: [Upstream](#upstream), [Envoy](#envoy-proxy), [Listener](#lds-listener-discovery-service)
+**相关术语**：[上游](#upstream)、[Envoy](#envoy-proxy)、[侦听器](#lds-listener-discovery-service)
 
 ---
 
-### Upstream
+### 上游（Upstream） {#upstream}
 
-从 Envoy 的视角来看，指的是**接收请求的一方**。也就是 Envoy 向其发起连接的 backend service。
+从 Envoy 的视角看，这是指**接收请求的一方**，即 Envoy 向其发起连接的后端服务。
 
-**Envoy 的 Upstream**:
-- 从 Envoy 发出的连接（Outbound）
-- 处理请求的 backend service
-- 由 Cluster 管理的 endpoints
+**Envoy 的上游**：
+- 从 Envoy 发出的连接（出站）
+- 处理请求的后端服务
+- 由 Cluster 管理的端点
 
-**流量流向**:
+**流量路径**：
 ```
 Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 ```
 
-**Upstream 组件**:
+**上游组件**：
 
-#### 1. Cluster (Upstream Group)
+#### 1. Cluster（上游组）
 
 ```yaml
 # Define Upstream Cluster with DestinationRule
@@ -608,11 +599,11 @@ spec:
         http1MaxPendingRequests: 50
         http2MaxRequests: 100
     outlierDetection:
-      consecutiveErrors: 5        # Upstream failure detection
+      consecutive5xxErrors: 5        # Upstream failure detection
       interval: 30s
 ```
 
-#### 2. Endpoint (Actual Upstream Instance)
+#### 2. Endpoint（实际的上游实例）
 
 ```bash
 # Check upstream endpoints
@@ -625,11 +616,13 @@ istioctl proxy-config endpoints <pod-name> | grep reviews
 # 10.244.3.12:9080      UNHEALTHY   outbound|9080||reviews.default.svc.cluster.local
 ```
 
-**Upstream 流量策略**:
+**上游流量策略**：
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-4
 spec:
   host: reviews
   trafficPolicy:
@@ -652,24 +645,24 @@ spec:
 
     # Upstream Circuit Breaker
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 10s
       baseEjectionTime: 30s
 ```
 
-**Upstream 与 Downstream 对比**:
+**上游与下游比较**：
 
-| 项目 | Downstream | Upstream |
+| 项目 | 下游 | 上游 |
 |------|-----------|----------|
-| **方向** | 进入 Envoy（Inbound） | 从 Envoy 发出（Outbound） |
-| **角色** | 发送请求（Client） | 接收请求（Server） |
+| **方向** | 进入 Envoy（入站） | 离开 Envoy（出站） |
+| **角色** | 发送请求（客户端） | 接收请求（服务器） |
 | **Envoy 配置** | Listener、Filter Chain | Cluster、Endpoint |
-| **示例** | 外部用户、其他服务 | Backend API、Database |
-| **指标** | `downstream_cx_*`, `downstream_rq_*` | `upstream_cx_*`, `upstream_rq_*` |
+| **示例** | 外部用户、其他服务 | 后端 API、数据库 |
+| **指标** | `downstream_cx_*`、`downstream_rq_*` | `upstream_cx_*`、`upstream_rq_*` |
 
-**实际示例**:
+**实际示例**：
 
-#### 场景 1: Service A -> Service B 调用
+#### 场景 1：Service A -> Service B 调用
 
 ```
 +---------------------------------------------------------+
@@ -692,15 +685,15 @@ spec:
 +---------------------------------------------------------+
 ```
 
-**Service A 的 Envoy 视角**:
-- Downstream: Service A 的 application
-- Upstream: Service B
+**Service A 的 Envoy 视角**：
+- 下游：Service A 的应用
+- 上游：Service B
 
-**Service B 的 Envoy 视角**:
-- Downstream: Service A 的 Envoy
-- Upstream: Service B 的 application（本地）
+**Service B 的 Envoy 视角**：
+- 下游：Service A 的 Envoy
+- 上游：Service B 的应用（本地）
 
-#### 场景 2: Ingress Gateway
+#### 场景 2：Ingress Gateway
 
 ```
 External Client (Downstream)
@@ -710,14 +703,14 @@ Ingress Gateway (Envoy)
 Internal Service (Upstream)
 ```
 
-**Upstream 指标**:
+**上游指标**：
 
 ```bash
 # Upstream connection count
 envoy_cluster_upstream_cx_active
 
-# Upstream request success rate
-envoy_cluster_upstream_rq_success_rate
+# Upstream request counter; derive success/error rates from response-class counters
+envoy_cluster_upstream_rq_total
 
 # Upstream response time
 envoy_cluster_upstream_rq_time
@@ -726,14 +719,16 @@ envoy_cluster_upstream_rq_time
 envoy_cluster_health_check_success
 
 # Upstream Circuit Breaker
-envoy_cluster_circuit_breakers_default_remaining
+envoy_cluster_circuit_breakers_default_remaining_rq
 ```
 
-**Upstream 健康检查**:
+**被动上游健康检测**：主动健康检查统计需要单独配置。
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-5
 spec:
   host: reviews
   trafficPolicy:
@@ -746,7 +741,7 @@ spec:
       maxEjectionPercent: 50
 ```
 
-**调试**:
+**调试**：
 
 ```bash
 # 1. Check upstream cluster
@@ -764,102 +759,123 @@ istioctl proxy-config all <pod-name> -o json | \
   jq '.configs[] | select(.["@type"] | contains("ClustersConfigDump"))'
 ```
 
-**相关术语**: [Downstream](#downstream), [Envoy](#envoy-proxy), [Cluster](#cds-cluster-discovery-service), [Endpoint](#eds-endpoint-discovery-service)
+**相关术语**：[下游](#downstream)、[Envoy](#envoy-proxy)、[Cluster](#cds-cluster-discovery-service)、[Endpoint](#eds-endpoint-discovery-service)
 
 ---
 
 ### Pilot
 
-Istio 1.4 之前独立存在的流量管理组件。现在已集成到 Istiod 中。
+在包括 Istio 1.4 在内的早期版本中独立存在的流量管理组件，现已集成到 Istiod。
 
-**主要功能**:
-- Service Discovery
-- Traffic Management（VirtualService、DestinationRule 处理）
-- xDS Server
+**主要功能**：
+- 服务发现
+- 流量管理（处理 VirtualService、DestinationRule）
+- xDS 服务器
 
-**当前状态**: 在 Istio 1.5+ 中作为 Istiod 的内部功能存在
+**当前状态**：在 Istio 1.5+ 中作为 Istiod 内部功能存在
 
-**相关术语**: [Istiod](#istiod), [xDS](#xds)
+**相关术语**：[Istiod](#istiod)、[xDS](#xds-discovery-service)
 
 ---
 
-### RDS (Route Discovery Service)
+### RDS（路由发现服务）
 
-xDS API 之一，用于动态提供 HTTP 路由规则。
+xDS API 之一，动态提供 HTTP 路由规则。
 
-**提供的信息**:
-- 路由匹配规则（path、headers 等）
+**提供的信息**：
+- 路由匹配规则（路径、请求头等）
 - 基于权重的路由
 - 重定向和重写规则
-- Timeout 和 Retry 设置
+- 超时和重试设置
 
-**与 VirtualService 的关系**:
+**与 VirtualService 的关系**：
 - VirtualService -> 由 Istiod 转换 -> RDS 配置
 
-**相关术语**: [xDS](#xds), [VirtualService](#virtualservice)
+**相关术语**：[xDS](#xds-discovery-service)、[VirtualService](#virtualservice)
 
 ---
 
-### Rate Limiting
+### 速率限制
 
-一种限制单位时间内允许请求数量的功能。
+限制单位时间内允许的请求数量的功能。
 
-**实现方式**:
-1. **Local Rate Limiting**: 由 Envoy 在本地处理
-2. **Global Rate Limiting**: 使用外部 Rate Limit service
+**实现方式**：
+1. **本地速率限制**：由 Envoy 在本地处理
+2. **全局速率限制**：使用外部速率限制服务
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: filter-local-ratelimit
+  namespace: default
 spec:
+  workloadSelector:
+    labels:
+      app: reviews
   configPatches:
   - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 100
             tokens_per_fill: 100
             fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
 ```
 
-**相关文档**: [Rate Limiting](resilience/02-rate-limiting.md)
+**相关文档**：[速率限制](resilience/02-rate-limiting.md)
 
 ---
 
-## S-U
+## S-U {#s-u}
 
-### SDS (Secret Discovery Service)
+### SDS（秘密发现服务）
 
-xDS API 之一，用于动态提供 TLS certificate 和 key。
+xDS API 之一，动态提供 TLS 证书和密钥。
 
-**提供的信息**:
-- X.509 certificate
-- Private Key
-- CA Root Certificate
+**提供的信息**：
+- X.509 证书
+- 私钥
+- CA 根证书
 
-**优势**:
-- 无需 file system
-- 自动续订 certificate
-- 零停机续订
+**优势**：
+- 不需要文件系统
+- 自动续订证书
+- 无停机续订
 
-**相关术语**: [xDS](#xds), [mTLS](#mtls)
+**相关术语**：[xDS](#xds-discovery-service)、[mTLS](#mtls-mutual-tls)
 
 ---
 
-### Service Entry
+### Service Entry {#service-entry}
 
-一种 Istio CRD，用于将 Service Mesh 外部的 service 注册到 mesh 中。
+将服务网格外部的服务注册到网格中的 Istio CRD。
 
-**使用场景**:
-- 外部 API access control
-- 对外部 service 应用 Istio 功能（Retry、Timeout 等）
-- Egress Gateway 集成
+**使用场景**：
+- 外部 API 访问控制
+- 将 Istio 功能应用到外部服务（重试、超时等）
+- 与 Egress Gateway 集成
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -877,349 +893,134 @@ spec:
   resolution: DNS
 ```
 
-**相关文档**: [ServiceEntry](traffic-management/12-service-entry.md)
+**相关文档**：[ServiceEntry](traffic-management/12-service-entry.md)
 
 ---
 
-### Service Mesh
+### 服务网格
 
-用于管理微服务之间通信的基础设施层。
+管理微服务之间通信的基础设施层。
 
-**核心特性**:
+**核心功能**：
 - 流量管理（路由、负载均衡）
-- 安全性（mTLS、认证/授权）
+- 安全（mTLS、身份验证/授权）
 - 可观测性（指标、日志、追踪）
-- 弹性（Retry、Circuit Breaker）
+- 弹性（重试、熔断器）
 
-**主要实现**:
+**主要实现**：
 - Istio
 - Linkerd
 - Consul Connect
-- AWS App Mesh
+- AWS App Mesh（[支持于 September 30, 2026 结束](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)）
 
 ---
 
-### SigV4 (AWS Signature Version 4)
+### SigV4（AWS 签名版本 4）
 
-用于验证 AWS API 请求的签名协议。
+用于验证 AWS API 请求身份的签名协议。
 
-**工作方式**:
+**工作原理**：
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client
-    participant Envoy as Envoy Proxy
-    participant AWS as AWS Service
+![时序图展示 Envoy 如何使用 AWS SigV4 凭据透明地为客户端出站请求签名，再将其转发到 AWS 服务并返回响应。](../../.gitbook/assets/en-service-mesh-istio-glossary-2.png)
 
-    Client->>Envoy: HTTP Request
-    Envoy->>Envoy: Load AWS Credentials
-    Envoy->>Envoy: Generate SigV4 Signature<br/>HMAC-SHA256
-    Envoy->>AWS: Add Authorization Header<br/>AWS4-HMAC-SHA256
-    AWS->>AWS: Verify Signature
-    AWS->>Envoy: Response
-    Envoy->>Client: Response
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-2.html)
 
-**签名组件**:
+**签名组成**：
 
-1. **Canonical Request**: 请求的标准化格式
-   - HTTP method
-   - URI path
-   - Query string
-   - Headers
-   - Payload hash
+1. **Canonical Request**：请求的标准化格式
+   - HTTP 方法
+   - URI 路径
+   - 查询字符串
+   - 请求头
+   - 载荷哈希
 
-2. **String to Sign**: 要签名的字符串
-   - Algorithm: `AWS4-HMAC-SHA256`
-   - Timestamp
-   - Credential Scope
-   - Canonical Request hash
+2. **String to Sign**：待签名的字符串
+   - 算法：`AWS4-HMAC-SHA256`
+   - 时间戳
+   - 凭据范围
+   - Canonical Request 哈希
 
-3. **Signing Key**: Signing key 计算
+3. **Signing Key**：计算签名密钥
    ```
    HMAC(HMAC(HMAC(HMAC("AWS4" + SecretKey, Date), Region), Service), "aws4_request")
    ```
 
-4. **Signature**: 最终签名
+4. **Signature**：最终签名
    ```
    HMAC(SigningKey, StringToSign)
    ```
 
-**与 Istio 集成**:
+**与 Istio 集成**：
 
-#### 1. 通过 EnvoyFilter 进行 SigV4 认证
+AWS SDK 和 AWS CLI 使用 IRSA 或 EKS Pod Identity 提供的临时凭据为 HTTPS 请求签名。这使签名与工作负载的 AWS 权限关联。Istio mTLS 身份与 AWS IAM 身份是分离的。
 
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: aws-sigv4-filter
-  namespace: istio-system
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_OUTBOUND
-      listener:
-        filterChain:
-          filter:
-            name: envoy.filters.network.http_connection_manager
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.aws_request_signing
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.aws_request_signing.v3.AwsRequestSigning
-          service_name: s3
-          region: us-west-2
-          use_unsigned_payload: false
-          match_excluded_headers:
-          - prefix: x-envoy
-```
+Envoy 的 `aws_request_signing` HTTP 过滤器是一种高级替代方案。它需要包含该扩展的 Envoy 构建、**代理容器**可用的凭据、正确的 AWS 服务/区域，以及仅匹配预期 AWS 目标的过滤器条件。应将其插在 router 之前、任何影响签名的请求头/路径重写之后。应用发起的 HTTPS 对此 HTTP 过滤器是不透明的：Envoy 无法在加密的 TLS 内添加签名。代理签名设计必须向签名代理提供 HTTP，并在上游发起经过验证的 TLS；避免双重 TLS 发起，或将未签名的 HTTP 暴露到预期的本地代理路径之外。
 
-#### 2. 与 External Authorization 集成
+上图描述的是这种显式配置的签名代理路径，而不是 Istio 的默认能力。仅在应用 ServiceAccount 上添加 IRSA 注解，不能证明 gateway 或 sidecar 已具备所需的凭据环境和令牌挂载。
 
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: RequestAuthentication
-metadata:
-  name: aws-auth
-  namespace: default
-spec:
-  jwtRules:
-  - issuer: "https://sts.amazonaws.com"
-    audiences:
-    - "sts.amazonaws.com"
-    jwksUri: "https://sts.amazonaws.com/.well-known/jwks"
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: require-aws-auth
-  namespace: default
-spec:
-  action: CUSTOM
-  provider:
-    name: aws-sigv4-authorizer
-  rules:
-  - to:
-    - operation:
-        paths: ["/api/*"]
-```
+**身份验证不等同于 JWT 验证**：
 
-**使用场景**:
+SigV4 是 HMAC 请求签名，不是 JWT。`https://sts.amazonaws.com/.well-known/jwks` 不是用于验证 AWS API 签名的 JWT 颁发者端点。Istio RequestAuthentication 验证来自真实 OIDC 颁发者的 JWT。CUSTOM AuthorizationPolicy 还需要一个已配置、实现外部授权的 `extensionProviders` 服务；没有该实现，就不能验证 SigV4。访问 AWS API 时，应优先使用经 IAM 身份验证的 AWS 端点或 AWS SDK。
 
-#### 场景 1: S3 访问
-
-```yaml
-# Register S3 with ServiceEntry
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: s3-external
-spec:
-  hosts:
-  - "*.s3.amazonaws.com"
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
----
-# Configure TLS with DestinationRule
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: s3-external
-spec:
-  host: "*.s3.amazonaws.com"
-  trafficPolicy:
-    tls:
-      mode: SIMPLE
-```
-
-**应用程序代码**:
-```python
-import requests
-
-# Envoy automatically adds SigV4 signature
-response = requests.get("https://my-bucket.s3.us-west-2.amazonaws.com/object.txt")
-print(response.text)
-```
-
-#### 场景 2: API Gateway 集成
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: aws-api-gateway
-spec:
-  hosts:
-  - api.example.com
-  http:
-  - match:
-    - uri:
-        prefix: "/api"
-    route:
-    - destination:
-        host: my-api.execute-api.us-west-2.amazonaws.com
-        port:
-          number: 443
-```
-
-#### 场景 3: DynamoDB 访问
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: dynamodb-sigv4
-spec:
-  configPatches:
-  - applyTo: HTTP_FILTER
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.aws_request_signing
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.aws_request_signing.v3.AwsRequestSigning
-          service_name: dynamodb
-          region: us-west-2
-          host_rewrite: dynamodb.us-west-2.amazonaws.com
-```
-
-**提供 AWS credentials 的方法**:
-
-1. **ServiceAccount + IRSA（推荐）**:
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: app-sa
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/app-role
-```
-
-2. **EC2 Instance Profile**:
-   - 自动使用分配给 node 的 IAM role
-
-3. **Environment Variables**:
-```yaml
-env:
-- name: AWS_ACCESS_KEY_ID
-  valueFrom:
-    secretKeyRef:
-      name: aws-credentials
-      key: access-key-id
-- name: AWS_SECRET_ACCESS_KEY
-  valueFrom:
-    secretKeyRef:
-      name: aws-credentials
-      key: secret-access-key
-```
-
-**安全注意事项**:
-
-1. **Credential Rotation**:
-   - 使用 IRSA 自动轮换
-   - 默认 TTL：1 小时
-
-2. **最小权限原则**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": "arn:aws:s3:::my-bucket/*"
-    }
-  ]
-}
-```
-
-3. **Audit Logging**:
-   - 通过 CloudTrail 记录所有 API 调用
-   - 与 Istio Access Log 集成
-
-**调试**:
+**只读验证示例**（工作负载中已安装 AWS CLI，并使用预期 IAM 角色）：
 
 ```bash
-# Check SigV4 signature in Envoy logs
-kubectl logs <pod-name> -c istio-proxy | grep aws_request_signing
-
-# Check Authorization header
-kubectl exec -it <pod-name> -c istio-proxy -- \
-  curl -v localhost:15000/config_dump | jq '.configs[] | select(.["@type"] == "type.googleapis.com/envoy.admin.v3.ClustersConfigDump")'
-
-# Test AWS API call
-kubectl exec -it <pod-name> -- \
-  curl -v https://my-bucket.s3.amazonaws.com/test.txt
+aws sts get-caller-identity
+aws s3api head-object --bucket my-bucket --key object.txt --region us-west-2
 ```
 
-**性能影响**:
+**运维注意事项**：
 
-| 操作 | 延迟 |
-|-----------|---------|
-| SigV4 签名计算 | ~1-2ms |
-| Credential 加载（cache） | ~0.1ms |
-| Credential 加载（IRSA） | ~50ms（首次请求） |
-| 总开销 | ~1-3ms |
+- 只向工作负载授予必需的 AWS 操作和资源权限。避免依赖共享节点实例角色。
+- 确认所选凭据提供程序支持临时凭据及刷新。会话时长可配置，并非一律为一小时。
+- CloudTrail 管理事件和数据事件的覆盖范围不同；S3 对象访问需要配置相应的数据事件。
+- 检查代理配置以确认过滤器放置位置。配置转储不会显示每个实际请求的 Authorization 请求头，通过 HTTPS 执行未签名的 curl 也不是 SigV4 测试。
+- 根据实际请求大小测量签名、缓冲及凭据获取开销；不保证固定的毫秒级开销。
 
-**替代方案对比**:
+**相关术语**：[AuthorizationPolicy](#authorizationpolicy)、[ServiceEntry](#service-entry)、[EnvoyFilter](advanced/03-envoy-filter.md)
 
-| 方法 | 优势 | 劣势 |
-|--------|------------|---------------|
-| **SigV4 (Envoy)** | 无需更改 application code | 需要 Envoy 配置 |
-| **AWS SDK** | 灵活控制 | 所有 app 都需要 SDK |
-| **API Gateway** | 托管解决方案 | 额外成本 |
-
-**相关术语**: [AuthorizationPolicy](#authorizationpolicy), [ServiceEntry](#service-entry), [EnvoyFilter](advanced/03-envoy-filter.md)
-
-**参考资料**:
-- [AWS Signature Version 4](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)
-- [Envoy AWS Request Signing](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/aws_request_signing_filter)
-- [AWS Integration](04-aws-integration.md)
+**参考资料**：
+- [AWS 签名版本 4](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)
+- [Envoy AWS 请求签名](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/aws_request_signing_filter)
+- [AWS 集成](04-aws-integration.md)
 
 ---
 
 ### Sidecar
 
-一种与 application container 一同部署的 helper container 模式。
+与应用容器一同部署的辅助容器模式。
 
-**Istio 的 Sidecar**:
-- Container 名称：`istio-proxy`
-- Image：`istio/proxyv2`
-- 运行 Envoy Proxy
-- 拦截所有流量（iptables 或 eBPF）
+**Istio 的 Sidecar**：
+- 容器名称：`istio-proxy`
+- 镜像：`istio/proxyv2`
+- 运行 Envoy 代理
+- 通过初始化容器或 Istio CNI 重定向拦截所配置的流量
 
-**注入方式**:
-1. **Automatic**: Namespace label
-2. **Manual**: `istioctl kube-inject`
+**注入方式**：
+1. **自动**：命名空间标签
+2. **手动**：`istioctl kube-inject`
 
 ```yaml
+apiVersion: v1
+kind: Namespace
 metadata:
+  name: example-mesh
   labels:
     istio-injection: enabled  # Automatic injection
 ```
 
-**相关文档**: [Sidecar Injection](advanced/07-sidecar-injection.md)
+**相关文档**：[Sidecar 注入](advanced/07-sidecar-injection.md)
 
 ---
 
-### Sidecar Resource
+### Sidecar 资源
 
-一种 Istio CRD，用于限制 Envoy 接收的 service 信息。
+限制 Envoy 接收的服务信息的 Istio CRD。
 
-**目的**:
+**目的**：
 - 降低内存使用量
 - 缩短配置推送时间
-- 网络隔离
+- 限定配置范围；不是网络安全边界
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1234,24 +1035,23 @@ spec:
     - "istio-system/*"
 ```
 
-**效果**:
-- 之前：1000 个 service -> 500 MB memory
-- 之后：10 个 service -> 80 MB memory
+**效果**：
+- 减少导入的服务可以降低内存和配置处理开销；应测量实际节省量。
 
-**相关文档**: [Architecture - Sidecar Resource](03-architecture.md#optimization-through-sidecar-resource)
+**相关文档**：[架构 - Sidecar 资源](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#optimization-with-sidecar-resource)
 
 ---
 
-### SPIFFE (Secure Production Identity Framework for Everyone)
+### SPIFFE（面向所有人的安全生产身份框架） {#spiffe-secure-production-identity-framework-for-everyone}
 
-一种用于在 cloud-native 环境中证明 workload identity 的标准。
+用于在云原生环境中证明工作负载身份的标准。
 
-**SPIFFE ID 格式**:
+**SPIFFE ID 格式**：
 ```
 spiffe://trust-domain/path
 ```
 
-**Istio 示例**:
+**Istio 示例**：
 ```
 spiffe://cluster.local/ns/default/sa/reviews
   |         |           |     |      |    |
@@ -1263,27 +1063,30 @@ spiffe://cluster.local/ns/default/sa/reviews
   +---------------------------------------- Protocol
 ```
 
-**组件**:
-- **SPIFFE ID**: Workload identifier
-- **SVID (SPIFFE Verifiable Identity Document)**: X.509 certificate
+**组成**：
+- **SPIFFE ID**：工作负载标识符
+- **SVID（SPIFFE 可验证身份文档）**：X.509-SVID 或 JWT-SVID；Istio mTLS 使用 X.509-SVID
 
-**相关术语**: [Identity](#identity), [mTLS](#mtls)
+**相关术语**：[身份](#identity)、[mTLS](#mtls-mutual-tls)
 
 ---
 
-### Subset
+### 子集
 
-在 DestinationRule 中定义的 service 逻辑分组。
+在 DestinationRule 中定义的服务逻辑分组。
 
-**常见用途**:
+**常见用途**：
 - 按版本：`v1`、`v2`、`v3`
 - 按部署阶段：`stable`、`canary`、`test`
-- 按 Region：`us-west`、`us-east`、`eu-central`
+- 按区域：`us-west`、`us-east`、`eu-central`
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
+metadata:
+  name: glossary-example-6
 spec:
+  host: reviews
   subsets:
   - name: v1
     labels:
@@ -1293,30 +1096,30 @@ spec:
       version: v2
 ```
 
-**相关文档**: [DestinationRule - Subset Concept](traffic-management/03-destination-rule.md#subset-concept)
+**相关文档**：[DestinationRule - 子集概念](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/03-destination-rule#subset-concept)
 
 ---
 
-## V-Z
+## V-Z {#v-z}
 
-### Waypoint Proxy
+### Waypoint 代理 {#waypoint-proxy}
 
-一种可选 proxy，在 Ambient Mode 中提供 L7 功能。
+在 Ambient 模式下提供 L7 功能的可选代理。
 
-**角色**:
-- 按 Service Account 或 Namespace 部署
-- 基于 Envoy Proxy
-- 专用于 L7 流量管理功能
+**作用**：
+- 通过命名空间、Service 或 Pod 标签选择；不会自动按 ServiceAccount 配置
+- 基于 Envoy 代理
+- 专注于 L7 流量管理功能
 - 与 ztunnel 协同工作
 
-**提供的功能**:
-- L7 路由（基于 Path、Header）
-- Retry 和 Timeout
-- Circuit Breaker
-- Fault Injection
-- Header 操作
+**提供的功能**：
+- L7 路由（基于路径、请求头）
+- 重试和超时
+- 熔断器
+- 故障注入
+- 请求头操作
 
-**部署示例**:
+**部署示例**：
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -1331,25 +1134,27 @@ spec:
     protocol: HBONE
 ```
 
-**特性**:
+**特性**：
 - ztunnel 仅处理 L4，waypoint 处理 L7
-- 仅为需要的 service 选择性使用
-- 比 Sidecar 更具资源效率（共享方式）
-- 按 Service Account 或 Namespace 部署
+- 仅为需要的服务选择性使用
+- 比 Sidecar 更节省资源（共享方式）
+- 通过命名空间、Service 或 Pod 标签选择；不会自动按 ServiceAccount 配置
 
-**相关术语**: [Ambient Mode](#ambient-mode), [ztunnel](#ztunnel-zero-trust-tunnel)
+**相关术语**：[Ambient 模式](#ambient-mode)、[ztunnel](#ztunnel-zero-trust-tunnel)
 
 ---
 
-### VirtualService
+创建 waypoint 后，需为目标服务启用它，例如 `kubectl label service reviews istio.io/use-waypoint=reviews-waypoint --overwrite`。仅部署 Gateway 不会使流量通过它。
 
-一种 Istio CRD，用于定义流量在 Service Mesh 中的路由方式。
+### VirtualService {#virtualservice}
 
-**主要功能**:
-- 基于 URI、headers、query parameters 的路由
+定义服务网格内流量如何路由的 Istio CRD。
+
+**主要功能**：
+- 基于 URI、请求头和查询参数的路由
 - 基于权重的流量分配
-- Retry 和 Timeout 设置
-- Fault Injection
+- 重试和超时设置
+- 故障注入
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1373,27 +1178,29 @@ spec:
         subset: v1
 ```
 
-**相关文档**: [Gateway and VirtualService](traffic-management/01-gateway-virtualservice.md)
+**相关文档**：[Gateway 和 VirtualService](traffic-management/01-gateway-virtualservice.md)
 
 ---
 
-### WASM (WebAssembly)
+### WASM（WebAssembly）
 
-一种设计用于在 web browser 中运行的 binary instruction format。在 Istio 中，它用于扩展 Envoy proxy 的功能。
+一种为在 Web 浏览器中运行而设计的二进制指令格式。在 Istio 中，用于扩展 Envoy 代理的功能。
 
-**在 Istio 中的使用方式**:
-- 作为 Envoy Filter 添加 custom logic
+**在 Istio 中的用途**：
+- 以 Envoy Filter 形式添加自定义逻辑
 - 无需重新部署即可动态扩展功能
 - 可使用多种语言编写（Rust、C++、Go 等）
-- 在 sandbox environment 中安全运行
+- 在沙箱环境中安全运行
 
-**主要使用场景**:
-1. **Custom Authentication/Authorization**: 实现复杂业务逻辑
-2. **Request/Response Transformation**: Header 操作、payload 转换
-3. **Advanced Routing**: custom routing logic
-4. **Metric Collection**: specialized telemetry
+**主要使用场景**：
+1. **自定义身份验证/授权**：实现复杂业务逻辑
+2. **请求/响应转换**：请求头操作、载荷转换
+3. **高级路由**：自定义路由逻辑
+4. **指标收集**：专用遥测
 
-**WASM Plugin 示例**:
+下面的镜像仓库 URL、摘要、凭据和 pluginConfig 字段是您自行构建插件的占位内容；Istio 不提供这些示例镜像，也不会解释插件特有的选项。file:// 模块必须存在于代理容器内部。
+
+**WASM 插件示例**：
 ```yaml
 apiVersion: extensions.istio.io/v1alpha1
 kind: WasmPlugin
@@ -1411,9 +1218,9 @@ spec:
     validate_endpoint: "https://auth.example.com/validate"
 ```
 
-**部署方式**:
+**部署方式**：
 
-#### 1. 通过 OCI Registry 部署（推荐）
+#### 1. 通过 OCI 镜像仓库部署（推荐）
 
 ```yaml
 apiVersion: extensions.istio.io/v1alpha1
@@ -1421,7 +1228,7 @@ kind: WasmPlugin
 metadata:
   name: rate-limiter
 spec:
-  url: oci://docker.io/istio/rate-limit:1.0.0
+  url: oci://ghcr.io/my-org/rate-limit:v1.0.0
   imagePullPolicy: Always
   imagePullSecret: registry-credential
 ```
@@ -1435,7 +1242,7 @@ metadata:
   name: custom-filter
 spec:
   url: https://example.com/filters/custom-filter.wasm
-  sha256: "8a8c3b5e..."
+  # Add sha256: with the actual 64-character module digest before deployment
 ```
 
 #### 3. 本地文件部署
@@ -1449,66 +1256,42 @@ spec:
   url: file:///etc/istio/filters/custom.wasm
 ```
 
-**WASM 开发示例（Rust）**:
+**WASM 开发示例（Rust）**：
 
 ```rust
 use proxy_wasm::traits::*;
 use proxy_wasm::types::*;
 
-#[no_mangle]
-pub fn _start() {
-    proxy_wasm::set_log_level(LogLevel::Trace);
+proxy_wasm::main! {{
     proxy_wasm::set_http_context(|_, _| -> Box<dyn HttpContext> {
         Box::new(CustomFilter)
     });
-}
+}}
 
 struct CustomFilter;
+impl Context for CustomFilter {}
 
 impl HttpContext for CustomFilter {
-    fn on_http_request_headers(&mut self, _: usize) -> Action {
-        // API Key validation
-        match self.get_http_request_header("x-api-key") {
-            Some(key) if key == "secret-key" => {
-                Action::Continue
-            }
-            _ => {
-                self.send_http_response(
-                    403,
-                    vec![("content-type", "text/plain")],
-                    Some(b"Forbidden: Invalid API Key"),
-                );
-                Action::Pause
-            }
-        }
+    fn on_http_request_headers(&mut self, _: usize, _: bool) -> Action {
+        // Demonstrate header mutation, not production API-key authentication.
+        self.set_http_request_header("x-mesh-demo", Some("wasm"));
+        Action::Continue
     }
 }
 ```
 
-**构建和部署**:
+**构建和部署前提**：
+
+使用 Rust `cdylib` crate，配置兼容的 `proxy-wasm` 依赖并锁定依赖版本。上面的回调遵循[官方 Rust SDK 示例](https://github.com/proxy-wasm/proxy-wasm-rust-sdk/tree/main/examples/http_headers)。安装 `wasm32-unknown-unknown` 目标，构建模块，并将生成的 `.wasm` 打包到受支持的 OCI Wasm 镜像中，然后再通过 WasmPlugin 引用。没有 Dockerfile 的通用 `docker build` 命令不会完成这项打包。
 
 ```bash
-# 1. Build WASM (Rust)
+rustup target add wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
-
-# 2. Package as OCI image
-docker build -t ghcr.io/my-org/custom-auth:v1.0.0 .
-docker push ghcr.io/my-org/custom-auth:v1.0.0
-
-# 3. Apply WasmPlugin
-kubectl apply -f wasmplugin.yaml
 ```
 
-**性能特征**:
+应针对具体插件测量启动时间、内存和每请求开销。Wasm 在代理进程内的运行时沙箱中执行；它不是独立进程，也不构成无条件的安全/性能保证。
 
-| 指标 | 值 |
-|--------|-------|
-| 启动时间 | ~1-5ms |
-| 内存开销 | 每个 filter ~100KB |
-| 执行开销 | 每个请求 ~0.1-1ms |
-| Sandbox 隔离 | 保证 |
-
-**Ambient Mode 支持**:
+**Ambient 模式支持**：
 
 ```yaml
 apiVersion: extensions.istio.io/v1alpha1
@@ -1516,14 +1299,15 @@ kind: WasmPlugin
 metadata:
   name: waypoint-filter
 spec:
-  selector:
-    matchLabels:
-      gateway.networking.k8s.io/gateway-name: reviews-waypoint
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: reviews-waypoint
   url: oci://ghcr.io/filters/custom:latest
   phase: AUTHN
 ```
 
-**调试**:
+**调试**：
 
 ```bash
 # Check WASM plugin status
@@ -1533,167 +1317,169 @@ kubectl get wasmplugin -A
 kubectl logs <pod-name> -c istio-proxy | grep wasm
 
 # Check WASM module load
-istioctl proxy-config all <pod-name> -o json | jq '.configs[] | select(.name | contains("wasm"))'
+istioctl proxy-config all <pod-name> -o json | jq '.. | objects | select(has("@type")) | select(.["@type"] | test("wasm"; "i"))'
 ```
 
-**安全注意事项**:
-1. **Sandbox 隔离**: WASM module 在与 Envoy process 隔离的 environment 中运行
-2. **Resource Limits**: 可以配置 CPU 和 memory limit
-3. **Signature Verification**: 使用 SHA256 hash 进行完整性检查
-4. **最小权限**: 仅授予必要权限
+**安全注意事项**：
+1. **沙箱隔离**：Envoy 内部的运行时沙箱；应审查插件信任和资源使用
+2. **资源限制**：可配置 CPU 和内存限制
+3. **完整性验证**：SHA256 检查内容；不会验证发布者身份
+4. **最小权限**：仅授予必要权限
 
-**优势**:
-- 高性能（native code 级别）
-- 安全的 sandbox execution
+**优势**：
+- 高性能（原生代码级别）
+- 安全的沙箱执行
 - 无需重新部署即可更新
-- 多语言支持
-- 标准 OCI image format
+- 支持多种语言
+- 标准 OCI 镜像格式
 
-**限制**:
-- 部分 system call 受限
-- file I/O 有限
-- network call 仅能通过 Envoy API
+**限制**：
+- 部分系统调用受限
+- 文件 I/O 受限
+- 网络调用只能通过 Envoy API
 
-**相关术语**: [Envoy](#envoy-proxy), [Waypoint Proxy](#waypoint-proxy), [Ambient Mode](#ambient-mode)
+**相关术语**：[Envoy](#envoy-proxy)、[Waypoint 代理](#waypoint-proxy)、[Ambient 模式](#ambient-mode)
 
-**参考资料**:
-- [Istio WASM Plugin](https://istio.io/latest/docs/concepts/wasm/)
+**参考资料**：
+- [Istio WASM 插件](https://istio.io/latest/docs/reference/config/proxy_extensions/wasm-plugin/)
 - [Proxy-Wasm SDK](https://github.com/proxy-wasm)
-- [WebAssembly Official Site](https://webassembly.org/)
-- [Ambient Mode - WASM](advanced/01-ambient-mode.md#wasm-plugin)
+- [WebAssembly 官方网站](https://webassembly.org/)
+- [Ambient 模式 - WASM](https://istio.io/latest/docs/ambient/usage/extend-waypoint-wasm/)
 
 ---
 
-### xDS (Discovery Service)
+### xDS（发现服务） {#xds-discovery-service}
 
-用于动态配置 Envoy Proxy 的一组 API。
+用于动态配置 Envoy 代理的一组 API。
 
-**“xDS”的含义**:
-- `x`: 表示多种类型的变量
-- `DS`: Discovery Service
+**“xDS”的含义**：
+- `x`：代表不同类型的变量
+- `DS`：发现服务
 
-**xDS API 类型**:
+**xDS API 类型**：
 
-| API | 名称 | 角色 |
+| API | 名称 | 作用 |
 |-----|------|------|
-| **LDS** | Listener Discovery Service | 监听端口和 filter chain |
-| **RDS** | Route Discovery Service | HTTP 路由规则 |
-| **CDS** | Cluster Discovery Service | 上游 service 配置 |
-| **EDS** | Endpoint Discovery Service | 实际 Pod IP 列表 |
-| **SDS** | Secret Discovery Service | TLS certificate 和 key |
+| **LDS** | 侦听器发现服务 | 侦听端口和过滤器链 |
+| **RDS** | 路由发现服务 | HTTP 路由规则 |
+| **CDS** | 集群发现服务 | 上游服务配置 |
+| **EDS** | 端点发现服务 | 实际 Pod IP 列表 |
+| **SDS** | 秘密发现服务 | TLS 证书和密钥 |
 
-**通信方式**:
-- Protocol: gRPC
-- Port: 15012（Istiod）
-- 双向流
+**通信方式**：
+- 协议：gRPC
+- 端口：15012（Istiod）
+- 双向流式传输
 
-**顺序**:
+**顺序**：
 ```
-Envoy Start -> LDS -> CDS -> EDS -> RDS -> SDS
+Agent bootstraps identity -> Envoy subscribes to ADS resources
+Istiod pushes LDS/CDS/EDS/RDS updates; local agent serves SDS certificates
 ```
 
-**相关文档**: [Architecture - xDS API Communication](03-architecture.md#xds-api-communication)
+**相关文档**：[架构 - xDS API 通信](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#xds-api-communication)
 
 ---
 
-### Zone
+### Zone（可用区）
 
-表示 Kubernetes Availability Zone。
+表示 Kubernetes 可用区。
 
-**Label 格式**:
+**标签格式**：
 ```yaml
 topology.kubernetes.io/zone: us-west-1a
 ```
 
-**在 Istio 中的使用方式**:
-- Locality-aware Load Balancing
-- Zone Aware Routing
-- 同 Zone 优先路由
+**在 Istio 中的用途**：
+- 位置感知负载均衡
+- 分区感知路由
+- 同可用区优先路由
 
-**相关术语**: [Locality-aware Load Balancing](#locality-aware-load-balancing)
+**相关术语**：[位置感知负载均衡](#locality-aware-load-balancing)
 
 ---
 
-### ztunnel (Zero Trust Tunnel)
+### ztunnel（零信任隧道） {#ztunnel-zero-trust-tunnel}
 
-Ambient Mode 的核心组件，是运行在 node level 的轻量级 L4 proxy。
+Ambient 模式的核心组件，是在节点级运行的轻量 L4 代理。
 
-**角色**:
-- 作为 DaemonSet 部署在每个 node 上
+**作用**：
+- 以 DaemonSet 形式部署到每个节点
 - 处理所有 Pod 的 L4 流量
-- 无需 Sidecar 即可提供 service mesh 功能
-- 与 CNI plugin 集成
+- 无需 Sidecar 即可提供服务网格功能
+- 与 CNI 插件集成
 
-**提供的功能**:
-- **mTLS**: 自动加密/解密
-- **L4 Telemetry**: 指标收集
-- **Identity**: 基于 Service Account 的认证
-- **L4 Load Balancing**: 基础负载均衡
+**提供的功能**：
+- **mTLS**：自动加密/解密
+- **L4 遥测**：指标收集
+- **身份**：基于 ServiceAccount 的身份验证
+- **L4 负载均衡**：基本负载均衡
 
-**技术特性**:
-- 使用 Rust 编写（高性能）
-- 基于 eBPF 的流量重定向
-- 无需 Init Container
-- 资源使用量低（每个 node 约 50MB）
+**技术特性**：
+- 用 Rust 编写（高性能）
+- 由 Istio CNI 管理流量重定向
+- 不需要初始化容器
+- 共享 L4 代理资源；根据测得的节点工作负载进行容量配置
 
-**部署示例**:
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: ztunnel
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      app: ztunnel
-  template:
-    spec:
-      hostNetwork: true
-      containers:
-      - name: istio-proxy
-        image: istio/ztunnel:1.28.0
-        securityContext:
-          privileged: true
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
+**部署示例**：
+```bash
+# Use the reviewed istioctl version and the complete ambient installation profile
+istioctl install --set profile=ambient
+kubectl rollout status daemonset/ztunnel -n istio-system
 ```
 
-**Namespace 激活**:
+对于现有 sidecar 工作负载，应先移除注入/修订标签并重启 Pod，以移除 sidecar，然后再加入 ambient；新的无 sidecar 工作负载不需要重启。
+
+**启用命名空间**：
 ```bash
 # Enable Ambient Mode
-kubectl label namespace default istio.io/dataplane-mode=ambient
+kubectl label namespace default istio-injection- istio.io/rev-
+kubectl label namespace default istio.io/dataplane-mode=ambient --overwrite
 ```
 
-**优势**:
-- 与 Sidecar 相比，内存减少 86%
-- 无需重启 Pod
-- 应用程序透明
-- 初始延迟最小化
+**优势**：
+- 潜在的内存节省取决于节点/工作负载和 waypoint 容量
+- 不需要重启 Pod
+- 对应用透明
+- 尽量降低初始延迟
 
-**限制**:
-- L7 功能需要 Waypoint Proxy
-- 需要兼容 eBPF 的 kernel（Linux 4.20+）
+**限制**：
+- L7 功能需要 Waypoint 代理
+- 需要受支持的 Linux Kubernetes 平台、主 CNI，以及满足 Istio CNI 的前提条件
 
-**相关术语**: [Ambient Mode](#ambient-mode), [Waypoint Proxy](#waypoint-proxy), [eBPF](#ebpf-extended-berkeley-packet-filter)
+**相关术语**：[Ambient 模式](#ambient-mode)、[Waypoint 代理](#waypoint-proxy)、[eBPF](#ebpf-extended-berkeley-packet-filter)
 
 ---
 
 ## 参考资料
 
 ### 官方文档
-- [Istio Glossary](https://istio.io/latest/docs/reference/glossary/)
-- [Envoy Terminology](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/intro/terminology)
-- [SPIFFE Specification](https://github.com/spiffe/spiffe/tree/main/standards)
+- [Istio 术语表](https://istio.io/latest/docs/reference/glossary/)
+- [Envoy 术语](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/intro/terminology)
+- [SPIFFE 规范](https://github.com/spiffe/spiffe/tree/main/standards)
 
 ### 相关文档
-- [Istio Architecture](03-architecture.md)
-- [Traffic Management](traffic-management/README.md)
-- [Security](security/README.md)
-- [Observability](observability/README.md)
+- [Istio 架构](03-architecture.md)
+- [流量管理](traffic-management/README.md)
+- [安全](security/README.md)
+- [可观测性](observability/README.md)
 
 ---
 
-**最后更新**: November 24, 2025
+**最近更新**：September 13, 2026
+
+- [Destination Rule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [安装 Istio CNI 节点代理](https://istio.io/latest/docs/setup/additional-setup/cni/)
+- [Ztunnel 流量重定向](https://istio.io/latest/docs/ambient/architecture/traffic-redirection/)
+- [使用 istioctl 安装](https://istio.io/latest/docs/ambient/install/istioctl/)
+- [配置 waypoint 代理](https://istio.io/latest/docs/ambient/usage/waypoint/)
+- [使用 Envoy 启用速率限制](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
+- [Wasm 插件](https://istio.io/latest/docs/reference/config/proxy_extensions/wasm-plugin/)
+- [Proxy-Wasm Rust SDK HTTP 示例](https://raw.githubusercontent.com/proxy-wasm/proxy-wasm-rust-sdk/main/examples/http_headers/src/lib.rs)
+- [API 请求的 AWS 签名版本 4 - AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv.html)
+- [AWS 请求签名](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/aws_request_signing_filter)
+- [统计信息](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)
+- [Istio 1.8 变更说明](https://istio.io/latest/news/releases/1.8.x/announcing-1.8/change-notes/)
+- [什么是 AWS App Mesh？- AWS App Mesh](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)
+
+- [CloudTrail 数据事件覆盖范围](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html)

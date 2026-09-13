@@ -1,11 +1,13 @@
-# Detección de valores atípicos (Outlier Detection)
+# Detección de valores atípicos
 
-Outlier Detection es una forma del patrón Circuit Breaker que detecta automáticamente instancias de servicio con comportamiento anómalo y las elimina del conjunto de tráfico.
+> **Última actualización**: September 11, 2026 · Istio 1.31. Ejemplos de sidecar independientes; cree los espacios de nombres indicados y cargas de trabajo/endpoints reales antes de probar. Los ejemplos para el mismo host son alternativas. Los valores son ilustrativos y no se han probado bajo carga.
 
-## Tabla de contenido
+La detección de valores atípicos es una forma del patrón de disyuntor que detecta automáticamente instancias de servicio con comportamiento anómalo y las elimina del grupo de tráfico.
+
+## Índice
 
 1. [Descripción general](#overview)
-2. [Cómo funciona](#how-it-works)
+2. [Funcionamiento](#how-it-works)
 3. [Configuración básica](#basic-configuration)
 4. [Configuración avanzada](#advanced-configuration)
 5. [Protección de servicios externos (ServiceEntry)](#protecting-external-services-serviceentry)
@@ -13,102 +15,34 @@ Outlier Detection es una forma del patrón Circuit Breaker que detecta automáti
 7. [Monitorización](#monitoring)
 8. [Solución de problemas](#troubleshooting)
 
-## Descripción general
+## Descripción general {#overview}
 
-Outlier Detection elimina automáticamente instancias en las siguientes situaciones:
+La detección de valores atípicos es pasiva y local a cada proxy observador. Con visibilidad HTTP, cuenta las respuestas ascendentes que cumplen los criterios y/o los fallos locales de conexión. No utiliza un umbral de latencia de DestinationRule ni envía sondas periódicas de recuperación. La expulsión cambia la elegibilidad para el equilibrio de carga de ese proxy; no elimina un Pod ni repara el servicio.
 
-```mermaid
-flowchart TB
-    Request[Client Request]
 
-    subgraph LoadBalancer["Load Balancer"]
-        LB[Envoy Proxy<br/>Outlier Detection]
-    end
+### Funciones principales
 
-    subgraph HealthyPods["Healthy Pods"]
-        P1[Pod 1<br/>Response Time: 50ms<br/>Error Rate: 0%]
-        P2[Pod 2<br/>Response Time: 60ms<br/>Error Rate: 1%]
-    end
+1. **Detección**: cuenta los fallos HTTP o de transporte consecutivos configurados.
+2. **Expulsión**: excluye un host si lo permiten el límite de expulsión y su aplicación.
+3. **Reincorporación**: vuelve a hacer elegible al host después de su período de expulsión; la recuperación real sigue requiriendo tráfico exitoso.
 
-    subgraph UnhealthyPods["Unhealthy Pods"]
-        P3[Pod 3<br/>Response Time: 5000ms<br/>Error Rate: 80%]
-    end
+## Funcionamiento {#how-it-works}
 
-    Request --> LB
-    LB -->|Send Traffic| P1
-    LB -->|Send Traffic| P2
-    LB -.->|Ejected| P3
+### Proceso de detección de valores atípicos
 
-    P3 -.->|Recovery Attempt After 30s| LB
+Un éxito reinicia la secuencia de errores consecutivos correspondiente. Un fallo que cumpla los criterios y alcance el umbral puede activar la expulsión inmediatamente, sin esperar a `interval`. La duración de expulsión aumenta con las expulsiones repetidas (duración base × multiplicador, limitada por Envoy); no se trata de una sonda fija de 30 segundos ni de una duplicación exponencial.
 
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef healthy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class LB lb;
-    class P1,P2 healthy;
-    class P3 unhealthy;
-```
-
-### Características principales
-
-1. **Detección automática**: supervisa automáticamente la tasa de errores, la latencia y los fallos de respuesta
-2. **Expulsión automática**: elimina automáticamente del tráfico cuando se supera el umbral
-3. **Recuperación automática**: intenta automáticamente la recuperación después de un tiempo establecido
-
-## Cómo funciona
-
-### Proceso de Outlier Detection
-
-```mermaid
-flowchart LR
-    Start[Request Start]
-    Check{Check for<br/>Errors}
-    Count[Increment<br/>Error Count]
-    Threshold{Threshold<br/>Exceeded?}
-    Eject[Eject<br/>Instance]
-    Normal[Normal<br/>Processing]
-    Wait[Wait Period]
-    Retry[Recovery<br/>Attempt]
-
-    Start --> Check
-    Check -->|Error| Count
-    Check -->|Success| Normal
-    Count --> Threshold
-    Threshold -->|Yes| Eject
-    Threshold -->|No| Normal
-    Eject --> Wait
-    Wait --> Retry
-    Retry --> Start
-
-    %% Style definitions
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef eject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Start start;
-    class Check,Threshold decision;
-    class Count,Wait,Retry process;
-    class Eject eject;
-    class Normal process;
-```
 
 ### Métodos de detección
 
 | Método | Descripción | Escenario de uso |
 |--------|-------------|--------------|
-| **Errores consecutivos** | Detecta errores 5xx consecutivos | Fallo de la aplicación |
-| **Errores de gateway** | Detecta errores 502, 503, 504 | Sobrecarga del Service |
-| **Fallos de conexión** | Detecta fallos de conexión TCP | Problemas de red |
-| **Latencia** | Se supera el umbral de tiempo de respuesta | Degradación del rendimiento |
+| **Errores consecutivos** | Detectar errores 5xx consecutivos | Fallo de aplicación |
+| **Errores de gateway** | Detectar errores 502, 503, 504 | Sobrecarga del servicio |
+| **Fallos de conexión** | Detectar fallos de conexión TCP | Problemas de red |
+| **Latencia** | No es un umbral de valores atípicos de DestinationRule | Observar la latencia; configurar por separado tiempos de espera de aplicación/ruta |
 
-## Configuración básica
+## Configuración básica {#basic-configuration}
 
 ### Detección basada en errores consecutivos
 
@@ -122,89 +56,88 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      # Consecutive error threshold
-      consecutiveErrors: 5
-
-      # Analysis interval (evaluate every 30 seconds)
+      consecutive5xxErrors: 5
       interval: 30s
-
-      # Ejection time (30 seconds)
       baseEjectionTime: 30s
-
-      # Maximum ejection percentage (50%)
       maxEjectionPercent: 50
-
-      # Minimum request count (evaluate only when 10+ requests)
-      minHealthPercent: 50
+      minHealthPercent: 0
 ```
 
-### Descripciones de parámetros clave
+### Descripción de los parámetros principales
 
-#### consecutiveErrors
-- **Descripción**: umbral para ocurrencias de errores consecutivos
-- **Predeterminado**: 5
-- **Recomendado**: 3-10 (según las características del Service)
+#### consecutive5xxErrors
+- **Descripción**: umbral de ocurrencias de errores consecutivos
+- **Valor predeterminado**: 5
+- **Intervalo de ajuste ilustrativo**: 3-10 (según las características del servicio)
 
 ```yaml
 # Sensitive service (fast detection)
-consecutiveErrors: 3
+consecutive5xxErrors: 3
 
 # General service
-consecutiveErrors: 5
+---
+consecutive5xxErrors: 5
 
 # Lenient setting (prevent false positives)
-consecutiveErrors: 10
+---
+consecutive5xxErrors: 10
 ```
 
 #### interval
-- **Descripción**: intervalo de análisis de Outlier Detection
-- **Predeterminado**: 10s
-- **Recomendado**: 10s-60s
+- **Descripción**: intervalo del barrido periódico de expulsiones; la detección de errores consecutivos se ejecuta inmediatamente
+- **Valor predeterminado**: 10s
+- **Intervalo de ajuste ilustrativo**: 10s-60s
 
 ```yaml
 # Fast detection (high load)
 interval: 10s
 
 # General case
+---
 interval: 30s
 
 # Stable service
+---
 interval: 60s
 ```
 
 #### baseEjectionTime
-- **Descripción**: tiempo mínimo durante el que una instancia se expulsa
-- **Predeterminado**: 30s
-- **Recomendado**: 30s-300s
+- **Descripción**: tiempo mínimo durante el que se expulsa una instancia
+- **Valor predeterminado**: 30s
+- **Intervalo de ajuste ilustrativo**: 30s-300s
 
 ```yaml
 # Fast recovery attempt
 baseEjectionTime: 30s
 
 # General case
+---
 baseEjectionTime: 60s
 
 # Cautious recovery
+---
 baseEjectionTime: 300s
 ```
 
 #### maxEjectionPercent
-- **Descripción**: porcentaje máximo de instancias que se pueden expulsar simultáneamente
-- **Predeterminado**: 10%
-- **Recomendado**: 10%-50%
+- **Descripción**: porcentaje máximo de instancias que pueden expulsarse simultáneamente
+- **Valor predeterminado**: 10%
+- **Intervalo de ajuste ilustrativo**: 10%-50%
 
 ```yaml
 # Conservative (stability first)
 maxEjectionPercent: 10
 
 # Balanced setting
+---
 maxEjectionPercent: 30
 
 # Aggressive (quality first)
+---
 maxEjectionPercent: 50
 ```
 
-## Configuración avanzada
+## Configuración avanzada {#advanced-configuration}
 
 ### Detección basada en errores de gateway
 
@@ -213,44 +146,38 @@ apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-gateway-errors
+  namespace: default
 spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      # Consecutive gateway errors
       consecutiveGatewayErrors: 3
-
-      # Respond sensitively to 502, 503, 504 errors
       interval: 10s
       baseEjectionTime: 60s
-
-      # Eject faster for gateway errors
       maxEjectionPercent: 50
+      minHealthPercent: 0
 ```
 
-### Prevención de Split Brain
+### Umbral de pánico del grupo sano
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: reviews-split-brain-safe
+  name: reviews-panic-threshold-example
+  namespace: default
 spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
-
-      # Maintain minimum healthy instance percentage
       minHealthPercent: 50
-
-      # Limit maximum ejection percentage
       maxEjectionPercent: 30
 ```
 
-**Importante**: use `minHealthPercent` y `maxEjectionPercent` juntos para evitar que se expulsen todas las instancias.
+`minHealthPercent: 50` es una elección de apertura ante fallos/pánico: por debajo del umbral de hosts sanos, el proxy también puede utilizar hosts no sanos. No es un número mínimo de solicitudes, una garantía de capacidad sana ni prevención de cerebro dividido. El valor predeterminado de Istio es 0; otros ejemplos utilizan 0 para deshabilitar este umbral de pánico. El límite de expulsión no hace que los endpoints restantes estén sanos.
 
 ### Detección basada en fallos de conexión
 
@@ -259,6 +186,7 @@ apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-connection-errors
+  namespace: default
 spec:
   host: reviews
   trafficPolicy:
@@ -268,79 +196,34 @@ spec:
       http:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 2
-
     outlierDetection:
-      # Detect consecutive connection failures
       consecutiveLocalOriginFailures: 5
-
       interval: 10s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
+      splitExternalLocalOriginErrors: true
+      minHealthPercent: 0
 ```
 
 ### Detección basada en la tasa de éxito (avanzada)
 
-```yaml
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: reviews-success-rate
-spec:
-  host: reviews
-  trafficPolicy:
-    outlierDetection:
-      # Minimum requests needed for analysis
-      splitExternalLocalOriginErrors: true
+Envoy tiene detección estadística de tasa de éxito, con parámetros de número mínimo de hosts/volumen de solicitudes y desviación; no es simplemente «por debajo del 95%». La API DestinationRule de Istio 1.31 no expone `enforcingConsecutiveErrors`/`enforcingSuccessRate` ni esos umbrales estadísticos. La [implementación publicada](https://github.com/istio/istio/blob/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go) deshabilita explícitamente la aplicación basada en tasa de éxito. `splitExternalLocalOriginErrors` separa clases de errores; no es un número mínimo de solicitudes. Utilice aquí los campos compatibles de errores consecutivos. Los cambios avanzados con EnvoyFilter requieren configuración específica de la versión y validación durante la ejecución.
 
-      # Success rate threshold (eject if below 95%)
-      consecutiveErrors: 5
-      interval: 30s
-      baseEjectionTime: 60s
+## Protección de servicios externos (ServiceEntry) {#protecting-external-services-serviceentry}
 
-      # Minimum request count
-      enforcingConsecutiveErrors: 100
-      enforcingSuccessRate: 100
-```
-
-## Protección de servicios externos (ServiceEntry)
-
-Registre las API externas o los sistemas heredados como ServiceEntry y aplique Outlier Detection para evitar la propagación de fallos.
+Registre API externas o sistemas heredados como ServiceEntry y aplique detección de valores atípicos para evitar la propagación de fallos.
 
 ### Arquitectura de protección de API externas
 
-```mermaid
-flowchart LR
-    subgraph "Kubernetes Cluster"
-        App[Application Pod]
-        Envoy[Envoy Proxy<br/>Outlier Detection]
-    end
+![El sidecar Envoy de un pod de aplicación aplica detección de valores atípicos a tres instancias de API externa registradas como ServiceEntry, continúa enviando tráfico a las dos instancias sanas y expulsa la que devuelve errores.](../../../.gitbook/assets/en-service-mesh-istio-resilience-01-outlier-detection-2.png)
 
-    subgraph "External Services"
-        API1[External API<br/>Instance 1<br/>Healthy]
-        API2[External API<br/>Instance 2<br/>Errors]
-        API3[External API<br/>Instance 3<br/>Healthy]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-01-outlier-detection-2.html)
 
-    App --> Envoy
-    Envoy -->|Send Traffic| API1
-    Envoy -.->|Ejected| API2
-    Envoy -->|Send Traffic| API3
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class App,Envoy k8sComponent;
-    class API1,API3 external;
-    class API2 unhealthy;
-```
+Estos ejemplos de API externas con visibilidad HTTP requieren que la aplicación llame al **puerto HTTP 80** y que el sidecar origine TLS hacia el puerto de destino 443. Establecen SNI/SAN y utilizan el almacén de confianza del sistema operativo del proxy; monte un paquete de CA apropiado para una CA privada. El tráfico de la aplicación al sidecar va sin cifrar, por lo que esto no es adecuado cuando ese tramo también debe estar cifrado. Para HTTPS originado en la aplicación, utilice paso directo sin otra capa TLS SIMPLE; Envoy verá entonces fallos de transporte, no estado/latencia HTTP ni reglas de reintento HTTP. Verifique la incorporación, el enrutamiento y la validación de certificados antes de enviar credenciales. Los hosts/IP siguientes son ejemplos, no servicios aprovisionados; sustitúyalos por endpoints autorizados.
 
 ### Ejemplo 1: API externa única (basada en DNS)
 
 ```yaml
-# Register external REST API service
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
@@ -349,20 +232,14 @@ metadata:
 spec:
   hosts:
   - api.payment-provider.com
-
-  # DNS-based load balancing
   resolution: DNS
-
-  # HTTPS port
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-
-  # External service
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
 ---
-# Apply Outlier Detection
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -370,13 +247,7 @@ metadata:
   namespace: payment
 spec:
   host: api.payment-provider.com
-
   trafficPolicy:
-    # TLS configuration
-    tls:
-      mode: SIMPLE
-
-    # Connection Pool (Circuit Breaker)
     connectionPool:
       tcp:
         maxConnections: 100
@@ -386,52 +257,87 @@ spec:
         http2MaxRequests: 100
         maxRequestsPerConnection: 10
         maxRetries: 3
-
-    # Outlier Detection
     outlierDetection:
-      # Detect external API quickly
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       consecutiveGatewayErrors: 2
-
-      # Evaluate every 10 seconds
       interval: 10s
-
-      # Eject for 30 seconds
       baseEjectionTime: 30s
-
-      # Allow up to 50% ejection
       maxEjectionPercent: 50
-
-      # Also detect local errors (timeout, connection failure)
       splitExternalLocalOriginErrors: true
       consecutiveLocalOriginFailures: 3
+      minHealthPercent: 0
+    portLevelSettings:
+    - port:
+        number: 80
+      tls:
+        mode: SIMPLE
+        sni: api.payment-provider.com
+        subjectAltNames:
+        - api.payment-provider.com
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: external-payment-api
+  namespace: payment
+spec:
+  hosts:
+  - api.payment-provider.com
+  http:
+  - name: no-retries
+    route:
+    - destination:
+        host: api.payment-provider.com
+        port:
+          number: 80
+    retries:
+      attempts: 0
+    timeout: 5s
 ```
 
 **Ejemplo de uso**:
 ```go
-// Go application code
-func processPayment(ctx context.Context, amount float64) error {
-    // Istio automatically routes to api.payment-provider.com
-    // On error, automatically retries to another instance
-    resp, err := http.Post(
-        "https://api.payment-provider.com/v1/charge",
-        "application/json",
-        bytes.NewBuffer(paymentData),
-    )
+package payment
 
-    if err != nil {
-        // Outlier Detection triggers after 3 consecutive errors
-        return fmt.Errorf("payment failed: %w", err)
+import (
+    "bytes"
+    "context"
+    "fmt"
+    "io"
+    "net/http"
+    "time"
+)
+
+var paymentClient = &http.Client{
+    Timeout: 5 * time.Second,
+    CheckRedirect: func(req *http.Request, via []*http.Request) error {
+        return http.ErrUseLastResponse
+    },
+}
+
+// payload, authentication and payment-provider idempotency are application concerns.
+// Requires the port80-to443 sidecar TLS-origination policy above.
+func processPayment(ctx context.Context, payload []byte) error {
+    req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+        "http://api.payment-provider.com/v1/charge", bytes.NewReader(payload))
+    if err != nil { return err }
+    req.Header.Set("Content-Type", "application/json")
+    resp, err := paymentClient.Do(req)
+    if err != nil { return fmt.Errorf("payment transport failed: %w", err) }
+    defer resp.Body.Close()
+    _, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<20))
+    if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+        return fmt.Errorf("payment endpoint returned HTTP %d", resp.StatusCode)
     }
-
     return nil
 }
 ```
 
-### Ejemplo 2: Varios endpoints de API externa
+La detección de valores atípicos afecta a la selección posterior del host; no reintenta ni deduplica un pago. El VirtualService deshabilita explícitamente los reintentos de la malla. Un nombre DNS puede exponer un solo host de Envoy; la expulsión no garantiza que exista otro endpoint del proveedor. Un error de transporte no establece si la transacción remota se confirmó.
+
+### Ejemplo 2: varios endpoints de API externa
 
 ```yaml
-# External API endpoints across multiple regions
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
@@ -440,28 +346,26 @@ metadata:
 spec:
   hosts:
   - weather.api.com
-
-  # Static IP address specification
   resolution: STATIC
-
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
-
-  # Multiple endpoints
   endpoints:
   - address: 203.0.113.10
     labels:
       region: us-east-1
+    locality: us-east-1
   - address: 203.0.113.20
     labels:
       region: us-west-2
+    locality: us-west-2
   - address: 203.0.113.30
     labels:
       region: eu-central-1
+    locality: eu-central-1
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -470,15 +374,9 @@ metadata:
   namespace: weather
 spec:
   host: weather.api.com
-
   trafficPolicy:
-    tls:
-      mode: SIMPLE
-
-    # Load balancer configuration
     loadBalancer:
       simple: LEAST_REQUEST
-
     connectionPool:
       tcp:
         maxConnections: 50
@@ -486,26 +384,49 @@ spec:
       http:
         http1MaxPendingRequests: 20
         maxRequestsPerConnection: 5
-
     outlierDetection:
-      # Adjust for external API characteristics
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       consecutiveGatewayErrors: 3
       consecutiveLocalOriginFailures: 5
-
       interval: 30s
       baseEjectionTime: 60s
-
-      # Eject up to 1 per region
-      maxEjectionPercent: 33  # 1 out of 3
-
+      maxEjectionPercent: 33
       splitExternalLocalOriginErrors: true
+      minHealthPercent: 0
+    portLevelSettings:
+    - port:
+        number: 80
+      tls:
+        mode: SIMPLE
+        sni: weather.api.com
+        subjectAltNames:
+        - weather.api.com
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: external-weather-api
+  namespace: weather
+spec:
+  hosts:
+  - weather.api.com
+  http:
+  - name: no-retries
+    route:
+    - destination:
+        host: weather.api.com
+        port:
+          number: 80
+    retries:
+      attempts: 0
+    timeout: 5s
 ```
 
-### Ejemplo 3: Protección de base de datos heredada
+Las tres IP de documentación representan miembros de un grupo ascendente. `maxEjectionPercent` es un límite del grupo, no «uno por región». Las etiquetas son metadatos; `locality` proporciona la topología. El redondeo, el número de hosts descubiertos y las expulsiones actuales afectan a lo que realmente se elimina.
+
+### Ejemplo 3: protección de una base de datos heredada
 
 ```yaml
-# External PostgreSQL database
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
@@ -514,14 +435,11 @@ metadata:
 spec:
   hosts:
   - legacy-db.company.internal
-
   resolution: DNS
-
   ports:
   - number: 5432
     name: tcp-postgres
     protocol: TCP
-
   location: MESH_EXTERNAL
 ---
 apiVersion: networking.istio.io/v1
@@ -531,33 +449,26 @@ metadata:
   namespace: database
 spec:
   host: legacy-db.company.internal
-
   trafficPolicy:
     connectionPool:
       tcp:
         maxConnections: 50
         connectTimeout: 10s
-
     outlierDetection:
-      # Detect database cautiously
-      consecutiveErrors: 10
-
-      # TCP connection failure detection
+      consecutive5xxErrors: 10
       consecutiveLocalOriginFailures: 5
-
       interval: 60s
-      baseEjectionTime: 300s  # 5 minutes
-
-      # Be conservative for database
+      baseEjectionTime: 300s
       maxEjectionPercent: 20
-
       splitExternalLocalOriginErrors: true
+      minHealthPercent: 0
 ```
+
+Este ejemplo TCP observa fallos de conexión/transporte, no errores SQL, bloqueos ni latencia de consultas. Asegúrese de que el ServiceEntry identifique inequívocamente el destino; los puertos TCP compartidos pueden necesitar un diseño de captura DNS/VIP. No elige un primario de base de datos con capacidad de escritura ni hace segura la conmutación de réplicas.
 
 ### Ejemplo 4: API externa con reintentos
 
 ```yaml
-# External RESTful API
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
@@ -566,14 +477,12 @@ metadata:
 spec:
   hosts:
   - maps.googleapis.com
-
   resolution: DNS
-
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
 ---
 apiVersion: networking.istio.io/v1
@@ -584,16 +493,42 @@ metadata:
 spec:
   hosts:
   - maps.googleapis.com
-
   http:
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
+    route:
+    - destination:
+        host: maps.googleapis.com
+        port:
+          number: 80
+    retries:
+      attempts: 0
+    timeout: 5s
   - timeout: 5s
     retries:
       attempts: 3
       perTryTimeout: 2s
-      retryOn: 5xx,reset,connect-failure,refused-stream
+      retryOn: gateway-error,connect-failure,refused-stream
     route:
     - destination:
         host: maps.googleapis.com
+        port:
+          number: 80
+    name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: maps.googleapis.com
+        port:
+          number: 80
+    retries:
+      attempts: 0
+    timeout: 5s
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -602,11 +537,7 @@ metadata:
   namespace: location
 spec:
   host: maps.googleapis.com
-
   trafficPolicy:
-    tls:
-      mode: SIMPLE
-
     connectionPool:
       tcp:
         maxConnections: 100
@@ -615,25 +546,30 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 10
         maxRetries: 3
-
     outlierDetection:
-      # Fast detection
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       consecutiveGatewayErrors: 2
       consecutiveLocalOriginFailures: 3
-
       interval: 10s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
-
-      # Track local errors (timeout, connection failure) separately
       splitExternalLocalOriginErrors: true
+      minHealthPercent: 0
+    portLevelSettings:
+    - port:
+        number: 80
+      tls:
+        mode: SIMPLE
+        sni: maps.googleapis.com
+        subjectAltNames:
+        - maps.googleapis.com
 ```
 
-### Ejemplo 5: Servicio externo con limitación de tasa
+El ejemplo de geocodificación solo reintenta lecturas idempotentes que coinciden. Llame a la ruta del puerto HTTP 80 para que el proxy pueda ver el método; el paso directo HTTPS no puede utilizar esta política HTTP. Tres reintentos más el intento inicial no caben todos si cada intento dura 2s dentro del tiempo de espera total de 5s.
+
+### Ejemplo 5: servicio externo con limitación de tasa
 
 ```yaml
-# External API with Rate Limiting
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
@@ -642,31 +578,21 @@ metadata:
 spec:
   hosts:
   - api.third-party.com
-
   resolution: DNS
-
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
 ---
-# Rate Limiting configuration
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ratelimit-config
   namespace: api
 data:
-  config.yaml: |
-    domain: external-api-ratelimit
-    descriptors:
-    - key: destination_cluster
-      value: outbound|443||api.third-party.com
-      rate_limit:
-        unit: second
-        requests_per_unit: 100
+  config.yaml: "domain: external-api-ratelimit\ndescriptors:\n- key: destination_cluster\n  value: outbound|80||api.third-party.com\n  rate_limit:\n    unit: second\n    requests_per_unit: 100\n"
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -675,11 +601,7 @@ metadata:
   namespace: api
 spec:
   host: api.third-party.com
-
   trafficPolicy:
-    tls:
-      mode: SIMPLE
-
     connectionPool:
       tcp:
         maxConnections: 100
@@ -687,23 +609,49 @@ spec:
         http1MaxPendingRequests: 50
         http2MaxRequests: 100
         maxRequestsPerConnection: 10
-
     outlierDetection:
-      # Detect quickly when rate limit exceeded
-      consecutiveErrors: 3
-      consecutiveGatewayErrors: 2  # 429 Too Many Requests
-
+      consecutive5xxErrors: 3
+      consecutiveGatewayErrors: 2
       interval: 10s
-      baseEjectionTime: 60s  # Wait for rate limit reset
+      baseEjectionTime: 60s
       maxEjectionPercent: 50
-
       splitExternalLocalOriginErrors: true
       consecutiveLocalOriginFailures: 3
+      minHealthPercent: 0
+    portLevelSettings:
+    - port:
+        number: 80
+      tls:
+        mode: SIMPLE
+        sni: api.third-party.com
+        subjectAltNames:
+        - api.third-party.com
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: external-rate-limited-api
+  namespace: api
+spec:
+  hosts:
+  - api.third-party.com
+  http:
+  - name: no-retries
+    route:
+    - destination:
+        host: api.third-party.com
+        port:
+          number: 80
+    retries:
+      attempts: 0
+    timeout: 5s
 ```
 
-### Prácticas recomendadas de Outlier Detection para servicios externos
+El ConfigMap es únicamente un fragmento de configuración del servicio de limitación de tasa. Debe montarse en un servicio compatible en ejecución con su almacén de respaldo, el filtro de limitación de tasa saliente de Envoy y un descriptor `destination_cluster` coincidente. Por sí solo no aplica nada. Los errores de gateway son 502/503/504, no 429; la detección estándar de 5xx no trata 429 como un error de gateway. El tiempo de expulsión no se sincroniza con el restablecimiento de cuota del proveedor. Prefiera un tratamiento consciente de las cuotas y Retry-After/esperas progresivas de la aplicación a expulsar todos los hosts sanos limitados por cuota.
 
-#### 1. Distinguir los tipos de error
+### Buenas prácticas de detección de valores atípicos de servicios externos
+
+#### 1. Distinguir los tipos de errores
 
 ```yaml
 outlierDetection:
@@ -711,7 +659,7 @@ outlierDetection:
   consecutiveGatewayErrors: 2  # Detect quickly
 
   # 5xx errors (500, 501, etc.)
-  consecutiveErrors: 3
+  consecutive5xxErrors: 3
 
   # Local errors (timeout, connection failure)
   consecutiveLocalOriginFailures: 3
@@ -721,43 +669,98 @@ outlierDetection:
 ```
 
 **Importante**: al establecer `splitExternalLocalOriginErrors: true`:
-- **Fallos de origen local**: timeout de conexión, fallo de DNS, conexión rechazada
-- **Fallos upstream**: errores 5xx devueltos por la API externa
+- **Fallos de origen local**: tiempo de espera/reinicio/rechazo de conexión atribuido a un host ascendente; un fallo de resolución DNS puede dejar sin host que expulsar
+- **Fallos ascendentes**: errores 5xx devueltos por la API externa
 
-Estos se contabilizan por separado para una detección más precisa.
+Se cuentan por separado para una detección más precisa.
 
-#### 2. Configuración de timeout
+#### 2. Configuración de tiempos de espera
 
 ```yaml
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-api
+  namespace: default
+spec:
+  hosts:
+  - api.external.com
+  location: MESH_EXTERNAL
+  resolution: DNS
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
+---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: external-api
+  namespace: default
 spec:
   hosts:
   - api.external.com
   http:
-  - timeout: 5s  # Overall request timeout
-    retries:
-      attempts: 3
-      perTryTimeout: 2s  # Per-retry timeout
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
     route:
     - destination:
         host: api.external.com
+        port:
+          number: 80
+    retries:
+      attempts: 0
+    timeout: 5s
+  - timeout: 5s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream
+    route:
+    - destination:
+        host: api.external.com
+        port:
+          number: 80
+    name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: api.external.com
+        port:
+          number: 80
+    retries:
+      attempts: 0
+    timeout: 5s
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-api
+  namespace: default
 spec:
   host: api.external.com
   trafficPolicy:
     connectionPool:
       tcp:
-        connectTimeout: 3s  # TCP connection timeout
+        connectTimeout: 3s
     outlierDetection:
-      consecutiveLocalOriginFailures: 3  # Timeout also counts
+      consecutiveLocalOriginFailures: 3
       splitExternalLocalOriginErrors: true
+      minHealthPercent: 0
+    portLevelSettings:
+    - port:
+        number: 80
+      tls:
+        mode: SIMPLE
+        sni: api.external.com
+        subjectAltNames:
+        - api.external.com
 ```
 
 #### 3. Monitorización de servicios externos
@@ -766,16 +769,17 @@ spec:
 # Outlier Detection metrics
 # 1. Ejected external endpoints
 envoy_cluster_outlier_detection_ejections_active{
-  cluster_name=~"outbound.*api\\.external\\.com.*"
+  namespace="default", cluster_name=~"outbound.*api\\.external\\.com.*"
 }
 
 # 2. Local errors (timeout, connection failure)
 rate(envoy_cluster_upstream_rq_timeout{
-  cluster_name=~"outbound.*api\\.external\\.com.*"
+  namespace="default", cluster_name=~"outbound.*api\\.external\\.com.*"
 }[5m])
 
 # 3. External API 5xx errors
 rate(istio_requests_total{
+  reporter="source", source_workload_namespace="default",
   destination_service="api.external.com",
   response_code=~"5.."
 }[5m])
@@ -783,12 +787,16 @@ rate(istio_requests_total{
 # 4. External API response time
 histogram_quantile(0.95,
   sum(rate(istio_request_duration_milliseconds_bucket{
+    reporter="source", source_workload_namespace="default",
     destination_service="api.external.com"
   }[5m])) by (le)
 )
 ```
 
 #### 4. Configuración de alertas
+
+Este es un fragmento de archivo de reglas de Prometheus, no un recurso de Kubernetes. Móntelo/selecciónelo en Prometheus (o envuelva los grupos en un PrometheusRule seleccionado). Los umbrales requieren tratamiento del volumen de tráfico, la ausencia de datos y el estado de la recopilación; no son SLO validados. La latencia siguiente está en milisegundos y las tasas son por segundo.
+
 
 ```yaml
 # Prometheus Alert Rules
@@ -800,11 +808,13 @@ groups:
   - alert: ExternalAPIHighErrorRate
     expr: |
       (sum(rate(istio_requests_total{
+        reporter="source", source_workload_namespace="default",
         destination_service=~".*external.*",
         response_code=~"5.."
       }[5m])) by (destination_service)
       /
       sum(rate(istio_requests_total{
+        reporter="source", source_workload_namespace="default",
         destination_service=~".*external.*"
       }[5m])) by (destination_service))
       * 100 > 5
@@ -819,7 +829,7 @@ groups:
   - alert: ExternalAPIInstanceEjected
     expr: |
       envoy_cluster_outlier_detection_ejections_active{
-        cluster_name=~"outbound.*external.*"
+        namespace="default", cluster_name=~"outbound.*external.*"
       } > 0
     for: 1m
     labels:
@@ -832,7 +842,7 @@ groups:
   - alert: ExternalAPIHighTimeout
     expr: |
       rate(envoy_cluster_upstream_rq_timeout{
-        cluster_name=~"outbound.*external.*"
+        namespace="default", cluster_name=~"outbound.*external.*"
       }[5m]) > 0.1
     for: 2m
     labels:
@@ -844,6 +854,9 @@ groups:
 
 #### 5. Solución de problemas
 
+Ejecute el diagnóstico en el proxy que realiza la llamada. El comando de conectividad requiere curl en un contenedor autorizado de aplicación/prueba y un endpoint de estado real de solo lectura; ejecutar curl dentro de `istio-proxy` puede eludir la ruta de tráfico de la aplicación. Estas consultas genéricas de monitorización se refieren al ejemplo independiente `default`/`api.external.com`; ajuste el ámbito para los demás ejemplos.
+
+
 ```bash
 # 1. Check ServiceEntry
 kubectl get serviceentry -A
@@ -854,125 +867,159 @@ istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn api.external.com
   jq '.[] | {name: .name, outlierDetection: .outlierDetection}'
 
 # 3. Test external API connection
-kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
-  curl -v https://api.external.com/health
+kubectl exec <client-pod> -n default -c <app-container> -- \
+  curl --max-time 5 -v http://api.external.com/health
 
 # 4. Check Envoy statistics
-kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep "outbound.*external"
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep "outbound.*external"
 
 # 5. Outlier Detection status
-kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
-  curl localhost:15000/clusters | grep -A 20 "outbound|443||api.external.com"
+istioctl x envoy-stats <pod-name> -n <namespace> --type clusters
 ```
 
 ### Escenarios de fallo de servicios externos
 
-#### Escenario 1: Fallo temporal de API externa
+#### Escenario 1: fallo temporal de API externa
 
 ```yaml
 # Configuration: Fast detection and recovery
 outlierDetection:
-  consecutiveErrors: 3           # 3 consecutive errors
+  consecutive5xxErrors: 3           # 3 consecutive errors
   consecutiveGatewayErrors: 2    # 2 gateway errors
   interval: 10s                  # Evaluate every 10 seconds
   baseEjectionTime: 30s          # Recovery attempt after 30 seconds
   maxEjectionPercent: 50         # Maximum 50% ejection
 ```
 
-**Resultado**:
-1. La API externa devuelve errores 502/503
-2. Expulsión inmediata después de 2 errores consecutivos
-3. Intento de recuperación automático después de 30 segundos
-4. Si la recuperación falla, se expulsa durante otros 30 segundos (backoff exponencial)
+**Comportamiento esperado, sujeto a los límites efectivos**:
 
-#### Escenario 2: API externa completamente caída
+1. Las respuestas 502/503 que cumplen los criterios cuentan para el umbral de gateway.
+2. Alcanzar dos fallos de gateway consecutivos puede expulsar al host si lo permiten la aplicación y el límite.
+3. El host vuelve a ser elegible después de su período de expulsión; aquí no se configura ninguna sonda activa.
+4. Las expulsiones repetidas aumentan la duración mediante el multiplicador/límite de Envoy. Volver al grupo no demuestra que el proveedor se haya recuperado.
+
+#### Escenario 2: caída completa de la API externa
 
 ```yaml
-# Configuration: Failover to multiple endpoints
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api-ha
+  namespace: default
 spec:
   hosts:
   - api.external.com
   resolution: STATIC
   endpoints:
-  - address: 203.0.113.10    # Primary
+  - address: 203.0.113.10
     labels:
       tier: primary
-  - address: 203.0.113.20    # Secondary
+  - address: 203.0.113.20
     labels:
       tier: secondary
-  - address: 203.0.113.30    # Tertiary
+  - address: 203.0.113.30
     labels:
       tier: tertiary
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
+  location: MESH_EXTERNAL
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-api-ha
+  namespace: default
 spec:
   host: api.external.com
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       consecutiveLocalOriginFailures: 3
       interval: 10s
       baseEjectionTime: 60s
-      maxEjectionPercent: 66  # Allow ejecting up to 2 out of 3
-      minHealthPercent: 33    # Keep at least 1
+      maxEjectionPercent: 66
+      minHealthPercent: 0
+      splitExternalLocalOriginErrors: true
+    portLevelSettings:
+    - port:
+        number: 80
+      tls:
+        mode: SIMPLE
+        sni: api.external.com
+        subjectAltNames:
+        - api.external.com
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: external-api-ha
+  namespace: default
+spec:
+  hosts:
+  - api.external.com
+  http:
+  - name: no-retries
+    route:
+    - destination:
+        host: api.external.com
+        port:
+          number: 80
+    retries:
+      attempts: 0
+    timeout: 5s
 ```
 
-**Resultado**:
-1. El endpoint principal se cae → se expulsa
-2. El tráfico pasa automáticamente al endpoint secundario
-3. Si el secundario también falla, pasa al terciario
-4. El principal se vuelve a incluir automáticamente después de 60 segundos cuando se recupera
+**Interpretación**:
 
-## Ejemplos prácticos
+Los tres endpoints son miembros de un grupo. Las etiquetas `tier: primary/secondary/tertiary` no definen prioridades de conmutación por error; el equilibrio de carga normal puede seleccionar cualquier endpoint elegible. Un endpoint fallido puede expulsarse localmente y seleccionarse otro, pero el enrutamiento no puede reparar un servicio externo completamente fallido. `minHealthPercent: 0` deshabilita el uso de hosts no sanos en modo pánico; el límite porcentual no garantiza que sobreviva uno sano. Utilice prioridades de localidad diseñadas explícitamente o un mecanismo de conmutación de la aplicación/proveedor si necesita conmutación ordenada. Las IP de documentación deben sustituirse antes de cualquier prueba de conectividad.
 
-### Ejemplo 1: Cadena de microservicios
+## Ejemplos prácticos {#practical-examples}
+
+### Ejemplo 1: cadena de microservicios
 
 ```yaml
-# Frontend → Backend → Database
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: backend-outlier
+  namespace: default
 spec:
   host: backend
   trafficPolicy:
     outlierDetection:
-      # Fast detection for backend service
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 10s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
+      minHealthPercent: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: database-outlier
+  namespace: default
 spec:
   host: database
   trafficPolicy:
     outlierDetection:
-      # Cautious detection for database
-      consecutiveErrors: 10
+      consecutive5xxErrors: 10
       interval: 60s
       baseEjectionTime: 300s
       maxEjectionPercent: 20
+      minHealthPercent: 0
 ```
 
-### Ejemplo 2: Uso con Canary Deployment
+### Ejemplo 2: uso con despliegue canary
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-canary
+  namespace: default
 spec:
   hosts:
   - reviews
@@ -986,11 +1033,14 @@ spec:
         host: reviews
         subset: v2
       weight: 10
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
+  namespace: default
 spec:
   host: reviews
   subsets:
@@ -1001,21 +1051,24 @@ spec:
     labels:
       version: v2
     trafficPolicy:
-      # Strict detection for canary version
       outlierDetection:
-        consecutiveErrors: 3
+        consecutive5xxErrors: 3
         interval: 10s
         baseEjectionTime: 60s
-        maxEjectionPercent: 100  # Allow full ejection for canary
+        maxEjectionPercent: 100
+        minHealthPercent: 0
 ```
 
-### Ejemplo 3: Deployment multirregional
+Expulsar todos los endpoints v2 no transfiere su peso de ruta del 10% a v1. Las solicitudes seleccionadas para un subconjunto canary vacío pueden fallar; un controlador de despliegue debe cambiar el peso de la ruta/revertir según el estado observado. Las etiquetas de las cargas de trabajo deben coincidir con ambos subconjuntos.
+
+### Ejemplo 3: despliegue multirregión
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: api-multi-region
+  namespace: default
 spec:
   host: api
   trafficPolicy:
@@ -1025,28 +1078,29 @@ spec:
         distribute:
         - from: us-east-1/*
           to:
-            "us-east-1/*": 80
-            "us-west-2/*": 20
-
+            us-east-1/*: 80
+            us-west-2/*: 20
     outlierDetection:
-      # Be more lenient for cross-region
-      consecutiveErrors: 10
+      consecutive5xxErrors: 10
       interval: 60s
       baseEjectionTime: 120s
       maxEjectionPercent: 30
+      minHealthPercent: 0
 ```
 
-### Ejemplo 4: Connection Pool + Outlier Detection
+Esta política 80/20 envía tráfico deliberadamente a ambas regiones sanas. No es una conmutación a una reserva y requiere metadatos reales de localidad de región, conectividad entre regiones y capacidad. Un nombre de región por sí solo no crea una malla multiclúster.
+
+### Ejemplo 4: grupo de conexiones + detección de valores atípicos
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-full-protection
+  namespace: default
 spec:
   host: reviews
   trafficPolicy:
-    # Connection Pool (Circuit Breaker)
     connectionPool:
       tcp:
         maxConnections: 100
@@ -1054,78 +1108,133 @@ spec:
         http1MaxPendingRequests: 50
         http2MaxRequests: 100
         maxRequestsPerConnection: 2
-
-    # Outlier Detection
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       consecutiveGatewayErrors: 3
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
-      minHealthPercent: 50
+      minHealthPercent: 0
 ```
 
-## Monitorización
+## Monitorización {#monitoring}
 
 ### Métricas de Prometheus
 
-```yaml
-# Grafana Dashboard Prometheus queries
+Habilite las estadísticas opcionales del proxy y las etiquetas de recopilación como se describe en la [descripción general de resiliencia](README.md#resilience-metrics). Estos ejemplos conservan `pod`/`cluster_name` de cada proxy; sumar las expulsiones entre clientes no cuenta Pods de servidor distintos. El arranque de Istio publicado utiliza `cluster_name`; verifique las etiquetas después del reetiquetado de su recopilador. Los contadores `enforced_*` cuentan expulsiones reales, mientras que `detected_*` pueden aumentar cuando un límite bloquea la expulsión.
 
-# 1. Number of ejected instances
-envoy_cluster_outlier_detection_ejections_active
+```promql
+# Current ejections, not a cumulative event counter
+envoy_cluster_outlier_detection_ejections_active{namespace="default"}
 
-# 2. Total ejection count
-rate(envoy_cluster_outlier_detection_ejections_total[5m])
+# Enforced ejection events per second
+rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="default"}[5m])
 
-# 3. Ejection percentage
-(envoy_cluster_outlier_detection_ejections_active
- /
- envoy_cluster_membership_healthy) * 100
+# Percentage of the total observed pool, excluding zero-size pools
+100 * envoy_cluster_outlier_detection_ejections_active{namespace="default"} /
+(envoy_cluster_membership_total{namespace="default"} > 0)
 
-# 4. Ejections due to consecutive 5xx errors
-rate(envoy_cluster_outlier_detection_ejections_consecutive_5xx[5m])
-
-# 5. Ejections due to gateway errors
-rate(envoy_cluster_outlier_detection_ejections_consecutive_gateway_failure[5m])
+rate(envoy_cluster_outlier_detection_ejections_enforced_consecutive_5xx{namespace="default"}[5m])
+rate(envoy_cluster_outlier_detection_ejections_enforced_consecutive_gateway_failure{namespace="default"}[5m])
+rate(envoy_cluster_outlier_detection_ejections_enforced_consecutive_local_origin_failure{namespace="default"}[5m])
 ```
 
-### Ejemplo de dashboard de Grafana
+### Ejemplo de panel de Grafana
+
+Guarde este objeto de panel mediante el flujo de [aprovisionamiento de paneles mediante archivos](../observability/04-dashboards.md). Espera el UID de fuente de datos `prometheus` y etiquetas reales `namespace`/`pod`/`cluster_name`. Un ConfigMap por sí solo no carga paneles.
 
 ```json
 {
-  "dashboard": {
-    "title": "Istio Outlier Detection",
-    "panels": [
-      {
-        "title": "Ejected Instances",
-        "targets": [
-          {
-            "expr": "envoy_cluster_outlier_detection_ejections_active",
-            "legendFormat": "{{cluster_name}}"
-          }
-        ]
+  "uid": "istio-outlier-detection",
+  "title": "Istio Outlier Detection",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Ejected Hosts",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
       },
-      {
-        "title": "Ejection Rate",
-        "targets": [
-          {
-            "expr": "rate(envoy_cluster_outlier_detection_ejections_total[5m])",
-            "legendFormat": "{{cluster_name}}"
-          }
-        ]
+      "targets": [
+        {
+          "expr": "envoy_cluster_outlier_detection_ejections_active{namespace=\"default\"}",
+          "legendFormat": "{{pod}} / {{cluster_name}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 8
       },
-      {
-        "title": "Ejection Percentage",
-        "targets": [
-          {
-            "expr": "(envoy_cluster_outlier_detection_ejections_active / envoy_cluster_membership_healthy) * 100",
-            "legendFormat": "{{cluster_name}}"
-          }
-        ]
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
       }
-    ]
-  }
+    },
+    {
+      "id": 2,
+      "title": "Enforced Ejections per Second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace=\"default\"}[5m])",
+          "legendFormat": "{{pod}} / {{cluster_name}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Ejected Pool Percentage",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "100 * envoy_cluster_outlier_detection_ejections_active{namespace=\"default\"} / (envoy_cluster_membership_total{namespace=\"default\"} > 0)",
+          "legendFormat": "{{pod}} / {{cluster_name}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        }
+      }
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
 }
 ```
 
@@ -1133,16 +1242,15 @@ rate(envoy_cluster_outlier_detection_ejections_consecutive_gateway_failure[5m])
 
 ```bash
 # Check Envoy statistics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep outlier
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep outlier
 
 # Key metrics:
 # envoy_cluster_outlier_detection_ejections_active: Currently ejected instances
-# envoy_cluster_outlier_detection_ejections_total: Total ejection count
-# envoy_cluster_outlier_detection_ejections_consecutive_5xx: Ejections due to 5xx errors
+# envoy_cluster_outlier_detection_ejections_enforced_total: Total ejection count
+# envoy_cluster_outlier_detection_ejections_enforced_consecutive_5xx: Ejections due to 5xx errors
 ```
 
-### Verificación en Kiali
+### Verificar en Kiali
 
 ```bash
 # Access Kiali
@@ -1150,13 +1258,13 @@ istioctl dashboard kiali
 
 # Things to check:
 # 1. Graph → Select service → Traffic tab
-# 2. Unhealthy instances shown in red
+# 2. Graph health is aggregate telemetry, not every caller proxy’s ejection state
 # 3. Check Outlier Detection metrics
 ```
 
-## Solución de problemas
+## Solución de problemas {#troubleshooting}
 
-### Outlier Detection no funciona
+### La detección de valores atípicos no funciona
 
 ```bash
 # 1. Check DestinationRule
@@ -1170,86 +1278,69 @@ istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn <service-fqdn> -
 # 3. Check Envoy logs
 kubectl logs -n <namespace> <pod-name> -c istio-proxy | grep outlier
 
-# 4. Check Pilot logs
-kubectl logs -n istio-system -l app=istiod | grep outlier
+# 4. Validate control-plane configuration (istiod does not perform per-proxy ejections)
+istioctl analyze -n <namespace>
 ```
 
 ### Se expulsan demasiadas instancias
 
-```yaml
-# Solution 1: Adjust maxEjectionPercent
-outlierDetection:
-  maxEjectionPercent: 30  # Reduce from 50 to 30
-
-# Solution 2: Increase consecutiveErrors
-outlierDetection:
-  consecutiveErrors: 10  # Increase from 5 to 10
-
-# Solution 3: Increase interval
-outlierDetection:
-  interval: 60s  # Increase from 30s to 60s
-```
-
-### Split Brain (todas las instancias expulsadas)
+Inspeccione los contadores de expulsión aplicada/detectada/desbordamiento, la capacidad restante y los tipos de error reales antes de cambiar los umbrales. Aumente un umbral de errores consecutivos si la aplicación puede tolerar los fallos observados; reduzca el límite solo con una decisión explícita sobre la disponibilidad. Aumentar `interval` no retrasa la expulsión inmediata por errores consecutivos.
 
 ```yaml
-# Solution: Set minHealthPercent
+# DestinationRule trafficPolicy fragment; illustrative values
 outlierDetection:
-  consecutiveErrors: 5
+  consecutive5xxErrors: 10
   interval: 30s
   baseEjectionTime: 30s
-  maxEjectionPercent: 50
-  minHealthPercent: 50  # Keep at least 50%
+  maxEjectionPercent: 30
+  minHealthPercent: 0
 ```
 
-### Recuperación demasiado lenta después de la expulsión
+### No hay hosts ascendentes sanos
 
-```yaml
-# Solution: Decrease baseEjectionTime
-outlierDetection:
-  baseEjectionTime: 15s  # Reduce from 30s to 15s
-```
+Esto no es un caso de cerebro dividido de base de datos. Compruebe la disponibilidad, el descubrimiento, el enrutamiento, el estado de los endpoints y las expulsiones locales del cliente. Establecer `minHealthPercent: 50` puede permitir el uso de hosts no sanos ante fallos; no los restaura. Un subconjunto canary expulsado al 100% puede requerir revertir la ruta. Utilice el estado efectivo de endpoints/clústeres, no solo el YAML de DestinationRule ni un icono de Kiali.
+
+### Recuperación demasiado lenta tras la expulsión
+
+Revise el historial de expulsiones repetidas y el límite efectivo de duración de Envoy. Reducir `baseEjectionTime` puede hacer que el tráfico vuelva antes a un host no sano; no es una reparación. La comprobación activa del estado es una función independiente y este DestinationRule no la habilita.
 
 ### Falsos positivos por errores temporales
 
-```yaml
-# Solution: Increase consecutiveErrors + interval
-outlierDetection:
-  consecutiveErrors: 10  # Increase threshold
-  interval: 60s          # Increase analysis interval
-```
+Distinga los fallos de conexión de los fallos de aplicación y compruebe si los reintentos los amplifican. Un 5xx puede ser una respuesta intencionada, mientras que una respuesta lenta pero exitosa por sí sola no es un valor atípico basado en latencia. Limite el ámbito del despliegue y verifique la configuración modificada del proxy; los registros predeterminados no tienen por qué contener eventos de valores atípicos.
 
-## Prácticas recomendadas
+## Buenas prácticas
 
-### 1. Configuración por tipo de Service
+### 1. Configuración por tipo de servicio
 
 ```yaml
 # Critical service (fast detection)
 outlierDetection:
-  consecutiveErrors: 3
+  consecutive5xxErrors: 3
   interval: 10s
   baseEjectionTime: 30s
   maxEjectionPercent: 50
 
 # General service
+---
 outlierDetection:
-  consecutiveErrors: 5
+  consecutive5xxErrors: 5
   interval: 30s
   baseEjectionTime: 60s
   maxEjectionPercent: 30
 
 # Stable service (lenient settings)
+---
 outlierDetection:
-  consecutiveErrors: 10
+  consecutive5xxErrors: 10
   interval: 60s
   baseEjectionTime: 120s
   maxEjectionPercent: 20
 ```
 
-### 2. Usar siempre con Connection Pool
+### 2. Combinar con grupos de conexiones cuando sea necesario
 
 ```yaml
-# Always use with Connection Pool
+# Independent limits; size against measured caller/endpoint capacity
 trafficPolicy:
   connectionPool:
     tcp:
@@ -1257,37 +1348,17 @@ trafficPolicy:
     http:
       http1MaxPendingRequests: 50
   outlierDetection:
-    consecutiveErrors: 5
+    consecutive5xxErrors: 5
     interval: 30s
 ```
 
-### 3. Establecer el porcentaje mínimo de instancias saludables
+### 3. Elegir deliberadamente el comportamiento de pánico
 
-```yaml
-# Prevent Split Brain
-outlierDetection:
-  minHealthPercent: 50  # Keep at least 50%
-  maxEjectionPercent: 30
-```
+`minHealthPercent: 0` es el valor predeterminado de Istio y deshabilita el umbral de pánico de hosts no sanos. Los valores distintos de cero permiten equilibrar disponibilidad y aislamiento; no garantizan que algunos hosts sigan sanos. Los disyuntores de grupos de conexiones y la detección de valores atípicos son controles independientes.
 
 ### 4. Despliegue gradual
 
-```yaml
-# Phase 1: Observation mode (no ejection)
-outlierDetection:
-  consecutiveErrors: 5
-  interval: 30s
-  baseEjectionTime: 30s
-  maxEjectionPercent: 0  # No ejection
-
-# Phase 2: Minor ejection
-outlierDetection:
-  maxEjectionPercent: 10
-
-# Phase 3: Normal operation
-outlierDetection:
-  maxEjectionPercent: 30
-```
+Recopile una base de referencia, verifique las políticas efectivas de malla/espacio de nombres/carga de trabajo y aplique después un ajuste medido a un grupo de prueba aislado; amplíelo solo tras validar. No utilice `maxEjectionPercent: 0` como interruptor de solo monitorización: en la [implementación de Istio 1.31](https://github.com/istio/istio/blob/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go), solo los valores mayores que 0 establecen el campo de Envoy, por lo que 0 deja el valor predeterminado de Envoy en vez de deshabilitar las expulsiones. Los ajustes omitidos también pueden heredar un valor predeterminado de la malla. Observe los eventos aplicados reales y los endpoints restantes antes de ampliar el despliegue.
 
 ### 5. Monitorización y alertas
 
@@ -1297,17 +1368,17 @@ groups:
 - name: istio_outlier_detection
   rules:
   - alert: HighEjectionRate
-    expr: rate(envoy_cluster_outlier_detection_ejections_total[5m]) > 0.1
+    expr: rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="default"}[5m]) > 0.1
     for: 5m
     labels:
       severity: warning
     annotations:
       summary: "High outlier ejection rate"
-      description: "{{ $labels.cluster_name }} has ejection rate > 0.1 req/s"
+      description: "{{ $labels.cluster_name }} has enforced ejection rate > 0.1 events/s"
 ```
 
 ## Referencias
 
-- [Istio Outlier Detection](https://istio.io/latest/docs/reference/config/networking/destination-rule/#OutlierDetection)
-- [Envoy Outlier Detection](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
-- [Circuit Breaking](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
+- [Detección de valores atípicos de Istio](https://istio.io/latest/docs/reference/config/networking/destination-rule/#OutlierDetection)
+- [Detección de valores atípicos de Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [Disyuntores](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
