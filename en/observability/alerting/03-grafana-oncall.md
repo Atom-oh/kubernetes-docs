@@ -1,6 +1,6 @@
 # Grafana OnCall
 
-> **Last Updated**: February 20, 2026
+> **Last Updated**: September 13, 2026
 
 ## Table of Contents
 
@@ -21,7 +21,9 @@
 
 ## Grafana OnCall Overview
 
-Grafana OnCall is an open-source on-call management tool that provides alert routing, on-call schedule management, and escalation policies. It is available as SaaS through Grafana Cloud or can be self-hosted.
+**Grafana OnCall OSS was archived on 2026-03-24.** Its repository moved to `grafana-cold-storage/oncall` and is read-only. This chapter supports review/migration of existing installations; it is not a recommendation for a new production OSS deployment. Check maintained Grafana Cloud IRM features, APIs and plans separately.
+
+The reviewed archived source is `af0fbd40558c9a63bcf438589894c440fc434a54`. The latest release is labelled v1.16.11, while that source's Helm chart/appVersion is1.15.6; these are not interchangeable version identifiers. Examples were checked against this source and official OnCall API documentation. No actual OnCall account creation, API writes or notifications were performed.
 
 ### Key Features
 
@@ -30,20 +32,17 @@ Grafana OnCall is an open-source on-call management tool that provides alert rou
 3. **Alert Grouping**: Consolidate related alerts
 4. **Various Integrations**: Alertmanager, Grafana, CloudWatch, Webhook
 5. **ChatOps**: Slack, MS Teams, Telegram integration
-6. **Mobile App**: iOS/Android push notifications
+6. **Notification channels**: availability depends on the deployment, integrations and user rules
 
 ### Grafana OnCall vs PagerDuty vs OpsGenie
 
-| Feature | Grafana OnCall | PagerDuty | OpsGenie |
-|---------|----------------|-----------|----------|
-| **Type** | Open Source/SaaS | SaaS | SaaS |
-| **Cost** | Free(OSS)/Paid(Cloud) | Paid | Paid |
-| **Self-Hosting** | Yes | No | No |
-| **Grafana Integration** | Native | Plugin | Plugin |
-| **On-Call Schedule** | Yes | Advanced | Advanced |
-| **Escalation** | Yes | Advanced | Advanced |
-| **Analytics/Reporting** | Basic | Advanced | Advanced |
-| **Enterprise Support** | Paid | Included | Included |
+| Option | Current review basis |
+|---|---|
+| OnCall OSS | Archived existing installation; dependency, recovery and migration ownership |
+| Grafana Cloud IRM / PagerDuty | Verify maintenance, required channels/schedules/APIs, regions and contract terms |
+| Opsgenie | End of sale2025-06-04; service/support end scheduled2027-04-05. Existing users need a migration plan |
+
+Do not select a product using fixed integration counts, old prices or subjective basic/advanced rankings.
 
 ---
 
@@ -51,13 +50,17 @@ Grafana OnCall is an open-source on-call management tool that provides alert rou
 
 ### Grafana OnCall Components
 
-![Architecture diagram showing alert sources feeding a central Alert Engine that reads and writes PostgreSQL and Redis/Celery state, drives routing, escalation chains, and schedules to build alert groups, which fan out to notification channels.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png)
+These are logical responsibilities, not necessarily separate Deployments. Inspect the installed profile for database.type, broker.type, Redis, engine/Celery placement and plugin connectivity.
+
+
+
+![Logical components of an archived OnCall installation, with configured database/broker/cache roles and conditional channel availability.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-0.html)
 
 ### Alert Processing Flow
 
-![Sequence of an alert flowing from its source through OnCall routing and an escalation chain to the on-call responder, escalating to the next responder when nobody responds, then ending with acknowledgement and a status update back to the source.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png)
+![HTTP receipt and background routing are separate from human acknowledgment; no automatic source-rule update is implied.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-1.html)
 
@@ -67,216 +70,35 @@ Grafana OnCall is an open-source on-call management tool that provides alert rou
 
 ### Installation via Helm (EKS)
 
-```bash
-# Add Helm repository
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
+Inventory the existing release/chart/image digests, database, broker, Grafana plugin, authentication and channel dependencies before considering changes. Compare helm list, workload images and protected helm get values/manifest output. Values/manifests can contain real credentials: store them privately, not in chat, Git or build logs.
 
-# Create namespace
-kubectl create namespace oncall
-
-# Install after creating values.yaml
-helm install oncall grafana/oncall \
-  --namespace oncall \
-  -f oncall-values.yaml
-```
+The archived chart includes old cert-manager, ingress-nginx and database dependencies. Do not mix unrelated current Grafana charts with archived source versions or treat a simple helm install command as evidence of current security support.
 
 ### Basic values.yaml Configuration
 
-```yaml
-# oncall-values.yaml
-base_url: oncall.example.com
+These are actual keys in the inspected archived chart. They distinguish settings that the old examples could silently ignore or misinterpret.
 
-# Database settings
-database:
-  type: postgresql
+| Responsibility | Archived chart key |
+|---|---|
+| API/engine replicas | `engine.replicaCount`, not `oncall.replicaCount` |
+| URL | `base_url` plus `base_url_protocol` |
+| Additional environment | `env` map, not a raw Kubernetes env list |
+| External PostgreSQL | `externalPostgresql.db_name`, `existingSecret`, `passwordKey`, TLS options |
+| External Redis | `externalRedis.existingSecret`, `passwordKey`, `ssl_options` |
+| Application encryption keys | `oncall.secrets.existingSecret`, `secretKey`, `mirageSecretKey` |
+| Telegram/Twilio | Nested `oncall.telegram` and `oncall.twilio` settings |
 
-postgresql:
-  enabled: true
-  auth:
-    database: oncall
-    username: oncall
-    password: "secure-password"
-  primary:
-    persistence:
-      enabled: true
-      size: 10Gi
-
-# Redis settings
-redis:
-  enabled: true
-  architecture: standalone
-  auth:
-    enabled: true
-    password: "redis-password"
-
-# Celery workers
-celery:
-  replicaCount: 2
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-    limits:
-      memory: 512Mi
-      cpu: 500m
-
-# API server
-oncall:
-  replicaCount: 2
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 200m
-    limits:
-      memory: 1Gi
-      cpu: 1000m
-
-# Ingress settings
-ingress:
-  enabled: true
-  className: alb
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:xxx:certificate/xxx
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-  hosts:
-    - host: oncall.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-
-# Grafana integration
-grafana:
-  enabled: false  # When using existing Grafana
-
-# Environment variables
-env:
-  - name: SECRET_KEY
-    valueFrom:
-      secretKeyRef:
-        name: oncall-secrets
-        key: secret-key
-  - name: DJANGO_SETTINGS_MODULE
-    value: settings.hobby
-```
+Defaults enable MariaDB, RabbitMQ, Redis, Grafana, ingress-nginx, cert-manager and other components. Changing database.type to PostgreSQL does not automatically disable MariaDB or unrelated dependencies. settings.hobby and generic Firebase YAML are not validated production profiles.
 
 ### Production values.yaml
 
-```yaml
-# oncall-production-values.yaml
-base_url: oncall.example.com
+More replicas alone do not eliminate single points of failure. Test engine, Celery, scheduler/beat, database, broker/cache, plugin, notification provider, DNS and certificate failures, including queue durability, duplicate work, retries and recovery. Distinguish RabbitMQ broker responsibilities from Redis and inspect the actual broker.type.
 
-# External PostgreSQL (RDS)
-database:
-  type: postgresql
-
-externalPostgresql:
-  host: oncall-db.xxx.ap-northeast-2.rds.amazonaws.com
-  port: 5432
-  db: oncall
-  user: oncall
-  password:
-    secretName: oncall-db-secret
-    secretKey: password
-
-postgresql:
-  enabled: false
-
-# External Redis (ElastiCache)
-externalRedis:
-  host: oncall-redis.xxx.cache.amazonaws.com
-  port: 6379
-  password:
-    secretName: oncall-redis-secret
-    secretKey: password
-
-redis:
-  enabled: false
-
-# Celery workers (HA)
-celery:
-  replicaCount: 3
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 250m
-    limits:
-      memory: 1Gi
-      cpu: 1000m
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: celery
-            topologyKey: kubernetes.io/hostname
-
-# API server (HA)
-oncall:
-  replicaCount: 3
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 500m
-    limits:
-      memory: 2Gi
-      cpu: 2000m
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: oncall
-            topologyKey: kubernetes.io/hostname
-
-# Telegram/Twilio settings (for phone/SMS)
-telegramPolling:
-  enabled: true
-
-twilio:
-  enabled: true
-  accountSid:
-    secretName: twilio-secret
-    secretKey: account-sid
-  authToken:
-    secretName: twilio-secret
-    secretKey: auth-token
-  phoneNumber:
-    secretName: twilio-secret
-    secretKey: phone-number
-```
+The existing deployment owner must review DB/Redis TLS verification, role-specific secret delivery, network access, backup/restore and migration. An internet-facing ALB or an external database hostname does not make a configuration production-ready. This audit did not deploy EKS, test HA or exercise real notification providers.
 
 ### Creating Secrets
 
-```bash
-# OnCall secrets
-kubectl create secret generic oncall-secrets \
-  --namespace oncall \
-  --from-literal=secret-key=$(openssl rand -base64 32)
-
-# Database secret
-kubectl create secret generic oncall-db-secret \
-  --namespace oncall \
-  --from-literal=password='db-password'
-
-# Redis secret
-kubectl create secret generic oncall-redis-secret \
-  --namespace oncall \
-  --from-literal=password='redis-password'
-
-# Twilio secret (for phone/SMS)
-kubectl create secret generic twilio-secret \
-  --namespace oncall \
-  --from-literal=account-sid='ACxxx' \
-  --from-literal=auth-token='xxx' \
-  --from-literal=phone-number='+1234567890'
-```
+Do not pass actual values through --from-literal arguments or plaintext Helm values. Use approved secret stores/protected files, and manage existing encryption keys together with database backups. Blindly changing an existing installation's Mirage key/IV can prevent decryption of stored data. Public API tokens, integration webhook URLs and Slack/Twilio/Telegram credentials have different permissions and rotation requirements.
 
 ---
 
@@ -284,92 +106,45 @@ kubectl create secret generic twilio-secret \
 
 ### Alertmanager Integration
 
-```yaml
-# Alertmanager configuration
-receivers:
-  - name: 'grafana-oncall'
-    webhook_configs:
-      - url: 'https://oncall.example.com/api/v1/webhook/<integration-id>/'
-        send_resolved: true
-        http_config:
-          bearer_token: '<integration-token>'
+Use the **full generated URL for the selected integration type**. The URL itself may be a secret, so store it in a protected file. Do not invent an `/api/v1/webhook/<id>/` path and combine it with a public API token. The following Alertmanager configuration defines current matchers and both receivers; it was not used to send notifications.
 
+```yaml
+# Materialize the generated integration URL in this protected file.
+# This example is not enabled or contacted during the documentation audit.
 route:
-  receiver: 'default'
+  receiver: no-page
+  group_by: [alertname, cluster, namespace, service]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
   routes:
-    - match:
-        severity: critical
-      receiver: 'grafana-oncall'
-    - match:
-        severity: warning
-      receiver: 'grafana-oncall'
+    - matchers: ['severity=~"critical|warning"']
+      receiver: oncall
+receivers:
+  - name: no-page
+  - name: oncall
+    webhook_configs:
+      - url_file: /etc/oncall/integration-url
+        send_resolved: true
 ```
+
+amtool0.34 validated syntax and four critical/warning/info/fallback routing cases. send_resolved forwards source resolution messages; it does not make manual OnCall resolution change the source rule automatically.
 
 ### Grafana Alerting Integration
 
-```yaml
-# Grafana alerting configuration (grafana.ini)
-[unified_alerting]
-enabled = true
-
-[alerting]
-enabled = false
-
-# Contact Point setup (in Grafana UI)
-# 1. Alerting > Contact points
-# 2. New contact point
-# 3. Integration: Grafana OnCall
-# 4. URL: https://oncall.example.com
-# 5. Select Integration
-```
+Check the supported contact point and generated integration for the installed Grafana/OnCall plugin versions. INI settings, provisioning YAML and UI APIs are distinct; the old example incorrectly labelled INI as YAML. Grafana Alerting rule/notification state and OnCall alert-group state are also separate.
 
 ### CloudWatch Integration
 
-```bash
-# Create SNS Topic
-aws sns create-topic --name cloudwatch-to-oncall
-
-# SNS subscription (OnCall Webhook)
-aws sns subscribe \
-  --topic-arn arn:aws:sns:ap-northeast-2:123456789012:cloudwatch-to-oncall \
-  --protocol https \
-  --notification-endpoint https://oncall.example.com/api/v1/webhook/<integration-id>/
-
-# Connect CloudWatch Alarm to SNS
-aws cloudwatch put-metric-alarm \
-  --alarm-name "HighCPU" \
-  --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:cloudwatch-to-oncall \
-  ...
-```
+Use the CloudWatch-specific integration's SNS confirmation, signature and payload handling requirements. Subscribing SNS to any generic webhook does not guarantee compatibility. Test ALARM/OK/INSUFFICIENT_DATA transitions, confirmation, duplicates/retries, topic/endpoint permissions and actual delivery. This audit created no SNS subscription or alarm action.
 
 ### Webhook Integration
 
-```python
-# Custom alert sending example
-import requests
+A generic webhook payload must match explicitly configured parsing, grouping and resolution templates. Sending alert_uid, state and labels does not make every integration interpret them identically. Serialize JSON properly and design HTTPS verification, timeouts, error handling and retry/deduplication behavior. Keep URLs, tokens and personal data out of logs.
 
-webhook_url = "https://oncall.example.com/api/v1/webhook/<integration-id>/"
-token = "<integration-token>"
+The public API uses the documented **raw Authorization token**; do not add Bearer automatically. Grafana service-account-token authentication also requires X-Grafana-URL. The API origin and integration webhook are separate authentication paths.
 
-alert = {
-    "alert_uid": "unique-alert-id",
-    "title": "High CPU Usage",
-    "message": "CPU usage is above 90% on production server",
-    "state": "alerting",  # alerting, ok
-    "severity": "critical",  # critical, warning, info
-    "link": "https://grafana.example.com/d/xxx",
-    "labels": {
-        "environment": "production",
-        "service": "api-server"
-    }
-}
-
-response = requests.post(
-    webhook_url,
-    json=alert,
-    headers={"Authorization": f"Bearer {token}"}
-)
-```
+The [read-only inventory tool](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/oncall) uses GET only and validates pagination origin/collection/count, TLS, redirects and file permissions. Its output may contain secret integration URLs and personal data; it is not a complete database/key/history backup or atomic migration snapshot. Twelve local TLS fixture tests passed without querying a real account.
 
 ---
 
@@ -377,104 +152,65 @@ response = requests.post(
 
 ### Schedule Concept
 
-![Diagram showing how day and night rotations feed layered responders (primary, secondary, backup), and temporary overrides, all resolving into one final on-call schedule.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png)
+Review time zone, shift priority and overrides together. Naming layers primary/secondary does not configure backup escalation automatically. Inspect final responders in the API/UI and test gaps, overlaps, DST and handoff boundaries.
+
+![Shift IDs, priorities, time zones and overrides determine the final schedule; backup escalation requires a separate policy.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-2.html)
 
 ### Creating Schedule (API)
 
-```bash
-# Create schedule
-curl -X POST https://oncall.example.com/api/v1/schedules/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "SRE Team On-Call",
-    "team_id": "<team-id>",
-    "time_zone": "Asia/Seoul",
-    "type": "web",
-    "shifts": [
-      {
-        "type": "rolling_users",
-        "start": "2025-02-17T09:00:00",
-        "duration": 604800,
-        "frequency": "weekly",
-        "interval": 1,
-        "rolling_users": [
-          ["<user-id-1>"],
-          ["<user-id-2>"],
-          ["<user-id-3>"]
-        ]
-      }
-    ]
-  }'
+A web schedule's `shifts` contains **IDs of existing shifts**, not nested shift objects. Create a shift under `/api/v1/on_call_shifts/`, then attach its returned ID to a web schedule at `/api/v1/schedules/`. These are operator-reviewed request examples requiring real IDs/dates; no writes were performed.
+
+```json
+{
+  "name": "Illustrative weekly rotation",
+  "type": "rolling_users",
+  "time_zone": "Asia/Seoul",
+  "start": "2026-09-14T09:00:00",
+  "duration": 604800,
+  "frequency": "weekly",
+  "interval": 1,
+  "week_start": "MO",
+  "start_rotation_from_user_index": 0,
+  "rolling_users": [
+    ["REPLACE_WITH_USER_ID_A"],
+    ["REPLACE_WITH_USER_ID_B"]
+  ]
+}
 ```
+
+```json
+{
+  "name": "Illustrative SRE schedule",
+  "type": "web",
+  "time_zone": "Asia/Seoul",
+  "shifts": ["REPLACE_WITH_EXISTING_SHIFT_ID"]
+}
+```
+
 
 ### Rotation Types
 
-```yaml
-# Weekly rotation
-weekly-rotation:
-  type: rolling_users
-  start: "2025-02-17T09:00:00"
-  duration: 604800  # 7 days (seconds)
-  frequency: weekly
-  interval: 1
-  rolling_users:
-    - [user-1]
-    - [user-2]
-    - [user-3]
+Weekly recurrence requires `week_start`, a positive `interval` and the starting user index for rolling_users. Daily/weekly/hourly recurrence is not equivalent to changing duration alone. The source validator accepts start as `YYYY-MM-DDTHH:MM:SS` with a separate time_zone; do not copy the old offset-bearing string. The JSON dates are illustrative samples, not operational schedules.
 
-# Daily rotation
-daily-rotation:
-  type: rolling_users
-  start: "2025-02-17T09:00:00"
-  duration: 86400  # 1 day (seconds)
-  frequency: daily
-  interval: 1
-  rolling_users:
-    - [user-1]
-    - [user-2]
-
-# Shift rotation (8 hours x 3)
-shift-rotation:
-  shifts:
-    - type: rolling_users
-      start: "2025-02-17T00:00:00"
-      duration: 28800  # 8 hours
-      frequency: daily
-      rolling_users:
-        - [night-shift-1]
-        - [night-shift-2]
-    - type: rolling_users
-      start: "2025-02-17T08:00:00"
-      duration: 28800
-      frequency: daily
-      rolling_users:
-        - [day-shift-1]
-        - [day-shift-2]
-    - type: rolling_users
-      start: "2025-02-17T16:00:00"
-      duration: 28800
-      frequency: daily
-      rolling_users:
-        - [evening-shift-1]
-        - [evening-shift-2]
-```
+Nineteen checks execute actual upstream pure validators and inspect serializer fields. They do not prove database user/shift existence or final calendar assignments.
 
 ### Override Settings
 
-```bash
-# Change responder for specific period
-curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "start": "2025-02-25T09:00:00+09:00",
-    "end": "2025-02-28T09:00:00+09:00",
-    "user_id": "<replacement-user-id>"
-  }'
+In this source, an override is a separate `/api/v1/on_call_shifts/` type, not the old assumed `/schedules/<id>/overrides/` request. Connect it to the intended schedule while preserving existing shift IDs. Verify the installed API's association/priority behavior and inspect final responders in a bounded test period.
+
+```json
+{
+  "name": "Illustrative temporary replacement",
+  "type": "override",
+  "time_zone": "Asia/Seoul",
+  "start": "2026-09-15T09:00:00",
+  "duration": 28800,
+  "users": ["REPLACE_WITH_EXISTING_USER_ID"]
+}
 ```
+
 
 ---
 
@@ -482,143 +218,37 @@ curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides
 
 ### Escalation Chain Structure
 
-![Four-step escalation chain in which each step waits 15 minutes for a response before escalating from the current on-call to the secondary on-call, the team lead and finally the entire team, with any timely response resolving the alert.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png)
+Acknowledge, Resolve and Silence are different states. Acknowledgment does not fix the underlying problem or deactivate the source rule. Verify wait, stop and re-page conditions using the actual policy and integration state. The diagram's15-minute windows are illustrative policy, not a product guarantee.
+
+![Illustrative wait and notification steps lead to acknowledgment; acknowledgment is not source resolution.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-3.html)
 
 ### Creating Escalation Chain
 
-```bash
-# Create escalation chain
-curl -X POST https://oncall.example.com/api/v1/escalation_chains/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Production Critical",
-    "team_id": "<team-id>"
-  }'
+Verify existing chain, schedule and user IDs and permissions; review create/update requests separately. This is **one wait step** for /api/v1/escalation_policies/, not a complete chain-creation request. The inspected source accepts wait durations from one minute to24hours, expressed as seconds.
 
-# Add escalation policy
-curl -X POST https://oncall.example.com/api/v1/escalation_policies/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "escalation_chain_id": "<chain-id>",
-    "position": 0,
-    "type": "notify_on_call_from_schedule",
-    "notify_on_call_from_schedule": "<schedule-id>",
-    "important": true
-  }'
-
-# Add wait step
-curl -X POST https://oncall.example.com/api/v1/escalation_policies/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "escalation_chain_id": "<chain-id>",
-    "position": 1,
-    "type": "wait",
-    "duration": 900
-  }'
-
-# Add secondary escalation
-curl -X POST https://oncall.example.com/api/v1/escalation_policies/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "escalation_chain_id": "<chain-id>",
-    "position": 2,
-    "type": "notify_persons",
-    "persons_to_notify": ["<user-id-1>", "<user-id-2>"],
-    "important": true
-  }'
+```json
+{
+  "escalation_chain_id": "REPLACE_WITH_EXISTING_CHAIN_ID",
+  "position": 1,
+  "type": "wait",
+  "duration": 900
+}
 ```
+
 
 ### Escalation Policy Types
 
-```yaml
-escalation-policy-types:
-  # Notify current on-call from schedule
-  - type: notify_on_call_from_schedule
-    notify_on_call_from_schedule: "<schedule-id>"
-    important: true  # Important notification (send via all channels)
+The source serializer supports schedule/user/team/group notification, waits, time/count conditions, custom webhooks and feature-enabled incident declaration. The custom webhook reference is action_to_trigger; do not assume the old webhook_id or a universal repeat_after field. declare_incident exists but requires organization feature enablement.
 
-  # Notify specific users
-  - type: notify_persons
-    persons_to_notify:
-      - "<user-id-1>"
-      - "<user-id-2>"
+important:true selects the user's configured **important notification rules**; it does not unconditionally fan out to every channel. Review per-user default/important rule order, waits, channels and actual availability.
 
-  # Notify user group
-  - type: notify_user_group
-    group_to_notify: "<group-id>"
-
-  # Wait time
-  - type: wait
-    duration: 900  # 15 minutes (seconds)
-
-  # Notify next on-call responder
-  - type: notify_on_call_from_schedule
-    notify_on_call_from_schedule: "<schedule-id>"
-    notify_if_time_from_start_matches: true
-
-  # Repeat previous steps
-  - type: repeat_escalation
-    repeat_after: 3600  # Repeat after 1 hour
-
-  # Trigger webhook
-  - type: trigger_webhook
-    webhook_id: "<webhook-id>"
-```
 
 ### Escalation Chains by Severity
 
-```yaml
-# For Critical alerts
-critical-chain:
-  policies:
-    - position: 0
-      type: notify_on_call_from_schedule
-      schedule: primary-oncall
-      important: true
-    - position: 1
-      type: wait
-      duration: 300  # 5 minutes
-    - position: 2
-      type: notify_persons
-      persons: [secondary-oncall, team-lead]
-      important: true
-    - position: 3
-      type: wait
-      duration: 300
-    - position: 4
-      type: notify_user_group
-      group: entire-team
-    - position: 5
-      type: repeat_escalation
-      repeat_after: 1800  # 30 minutes
+Agree on severity-specific purpose, response windows, backups, work hours and re-page behavior. Notifying the same schedule again does not always mean notifying a different next responder. Verify actual repeat/conditional-step API fields and prevent duplicate paging for one incident. Real phone/SMS/webhook delivery requires an approved test path and was not exercised here.
 
-# For Warning alerts
-warning-chain:
-  policies:
-    - position: 0
-      type: notify_on_call_from_schedule
-      schedule: primary-oncall
-      important: false  # Non-important (Slack only)
-    - position: 1
-      type: wait
-      duration: 900  # 15 minutes
-    - position: 2
-      type: notify_on_call_from_schedule
-      schedule: primary-oncall
-      important: true
-    - position: 3
-      type: wait
-      duration: 900
-    - position: 4
-      type: notify_persons
-      persons: [team-lead]
-```
 
 ---
 
@@ -626,68 +256,37 @@ warning-chain:
 
 ### Route Settings
 
-![Flowchart showing how routing decisions branch on the integration type — Alertmanager labels, Grafana folders, or CloudWatch namespaces — to select a critical, infra, default, low-priority, or DBA escalation chain.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png)
+Check each integration's actual payload, route ordering and default route for unmatched events. Alertmanager, Grafana and CloudWatch payloads differ; a regex matching arbitrary message text can misroute. Test normal, missing, malformed and conflicting cases.
+
+![Illustrative integration-specific routes with configured order, fallback and nested Slack channel settings.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-4.html)
 
 ### Creating Routes
 
-```bash
-# Create route
-curl -X POST https://oncall.example.com/api/v1/routes/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "integration_id": "<integration-id>",
-    "routing_regex": "\"severity\":\\s*\"critical\"",
-    "position": 0,
-    "escalation_chain_id": "<critical-chain-id>",
-    "slack_channel_id": "<critical-channel-id>"
-  }'
+This example uses fields present in the inspected route serializer. Slack uses nested slack.channel_id/enabled, not the old flat slack_channel_id. Real integration/chain/channel IDs and authorization are required. The regex is illustrative for a specific payload, not a universal provider template.
 
-# Team-based route
-curl -X POST https://oncall.example.com/api/v1/routes/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "integration_id": "<integration-id>",
-    "routing_regex": "\"team\":\\s*\"infra\"",
-    "position": 1,
-    "escalation_chain_id": "<infra-chain-id>",
-    "slack_channel_id": "<infra-channel-id>"
-  }'
+```json
+{
+  "integration_id": "REPLACE_WITH_EXISTING_INTEGRATION_ID",
+  "routing_type": "regex",
+  "routing_regex": "\"severity\"\\s*:\\s*\"critical\"",
+  "position": 0,
+  "escalation_chain_id": "REPLACE_WITH_EXISTING_CHAIN_ID",
+  "slack": {
+    "channel_id": "REPLACE_WITH_EXISTING_SLACK_CHANNEL_ID",
+    "enabled": true
+  }
+}
 ```
+
 
 ### Alert Grouping Configuration
 
-```yaml
-# Define grouping rules in Integration settings
-grouping:
-  # Grouping key criteria
-  grouping_key: "{{ payload.labels.alertname }}-{{ payload.labels.namespace }}"
+Include appropriate cluster/environment/namespace/service scope in grouping keys to avoid collisions. Too few fields merge unrelated incidents; unbounded IDs fragment groups. The old mixed group_wait/group_interval/resolve_timeout YAML was not a universal OnCall integration schema. Distinguish Alertmanager timers from OnCall grouping/resolution templates.
 
-  # Grouping time window
-  group_wait: 30s     # First alert wait
-  group_interval: 5m   # Additional alert wait
-  resolve_timeout: 5m  # Resolution wait
+Choose template variables from the actual integration payload. payload.labels is not guaranteed or universally at the top level of Alertmanager requests. Escape JSON correctly and do not treat user input as trusted code.
 
-# Template examples
-templates:
-  grouping_key: |
-    {% if payload.labels %}
-      {{ payload.labels.alertname }}-{{ payload.labels.namespace }}
-    {% else %}
-      {{ payload.alert_uid }}
-    {% endif %}
-
-  title: |
-    [{{ payload.status | upper }}] {{ payload.labels.alertname }}
-
-  message: |
-    **Severity:** {{ payload.labels.severity }}
-    **Namespace:** {{ payload.labels.namespace }}
-    **Description:** {{ payload.annotations.description }}
-```
 
 ---
 
@@ -695,90 +294,31 @@ templates:
 
 ### Slack Integration
 
-```bash
-# Slack App setup (in OnCall UI)
-# 1. Settings > ChatOps > Slack
-# 2. Install Slack App
-# 3. Grant permissions
+Verify the installed Slack app's OAuth/signing secrets, scopes and workspace connection. Reference discovered slack_channels through the route's nested Slack settings; do not assume the old POST /slack_channels example creates/connects a channel. App installation and user actions require a separate authorized operating procedure and were not performed here.
 
-# Connect Slack channel (API)
-curl -X POST https://oncall.example.com/api/v1/slack_channels/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "slack_id": "C1234567890",
-    "integration_id": "<integration-id>"
-  }'
-```
 
 ### Slack Commands
 
-```bash
-# Available commands in Slack
-/oncall                    # Check current on-call responder
-/oncall schedule           # View schedule
-/oncall escalate           # Escalate alert
-/oncall ack                # Acknowledge alert
-/oncall resolve            # Resolve alert
-/oncall silence 2h         # Silence for 2 hours
-/oncall unsilence          # Remove silence
-```
+The old /oncall ack, /oncall resolve and /oncall silence list was not established by the inspected source. It uses a configurable root command and /grafana examples. Check the installed app's current help/documentation and buttons; slash commands are not Bash commands.
+
 
 ### Slack Workflow
 
-![Sequence diagram of a Slack-based ChatOps workflow: an alert posts to a channel with action buttons, and a user's Acknowledge or Resolve click round-trips through Slack to update OnCall's alert status, with a resolve also notifying the alert source.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png)
+Acknowledge/Resolve/Silence buttons change OnCall state through an authorized user action. Delivery acknowledgment, Slack-message updates and the source monitor's state are separate; do not assume automatic reverse status updates.
+
+![Authorized Slack actions update OnCall and messages; source-monitor state has a separate lifecycle.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-5.html)
 
 ### MS Teams Integration
 
-```yaml
-# MS Teams Connector setup
-ms-teams:
-  # 1. Add Incoming Webhook connector to MS Teams channel
-  # 2. Copy Webhook URL
-  # 3. Set up Outgoing Webhook in OnCall
+Verify Microsoft's currently supported webhook/workflow and card format. Do not copy an old Office connector URL and MessageCard JSON as a universal new integration. An outgoing webhook is not installed merely by writing YAML; its template context, authentication, payload, delivery and failures need actual configuration. No Teams messages were sent.
 
-  outgoing-webhook:
-    url: "https://outlook.office.com/webhook/xxx"
-    headers:
-      Content-Type: "application/json"
-    template: |
-      {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "{{ 'FF0000' if alert.severity == 'critical' else 'FFA500' }}",
-        "summary": "{{ alert.title }}",
-        "sections": [{
-          "activityTitle": "{{ alert.title }}",
-          "facts": [
-            {"name": "Severity", "value": "{{ alert.severity }}"},
-            {"name": "Status", "value": "{{ alert.status }}"}
-          ],
-          "markdown": true
-        }]
-      }
-```
 
 ### Telegram Integration
 
-```bash
-# Telegram Bot setup
-# 1. Create bot with @BotFather
-# 2. Get Bot Token
-# 3. Enter Token in OnCall settings
+The archived chart uses nested oncall.telegram token/existingSecret/tokenKey settings and separate telegramPolling. The old top-level telegram.enabled block labelled Bash was not a correct Helm configuration. Verify bot credentials, webhook/polling ownership, user linking and current availability. No bot creation or user messages were performed.
 
-# Enable Telegram in values.yaml
-telegram:
-  enabled: true
-  token:
-    secretName: telegram-secret
-    secretKey: bot-token
-
-# Connect user
-# 1. User sends /start message to bot
-# 2. Verify Telegram connection in OnCall UI
-```
 
 ---
 
@@ -786,28 +326,15 @@ telegram:
 
 ### Incident Response Management
 
-Grafana IRM (formerly Grafana Incident) is an incident management tool that integrates with OnCall to manage the entire workflow from alerts to incidents.
+Distinguish maintained Grafana Cloud IRM alerting/on-call/incident capabilities from archived OnCall OSS. IRM is not simply a rename of Grafana Incident, nor a guarantee of identical OSS APIs, permissions or feature coverage. Verify the destination's current features, contract, retention and export/import support.
 
-![Architecture diagram showing an alert escalating within Grafana OnCall and, on high severity, handing off to Grafana IRM, which carries it through incident creation, investigation, resolution, and post-mortem.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png)
+![Incident linkage requires an enabled feature and configured step; alert-group and incident states remain distinct.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-6.html)
 
 ### Automatic Incident Creation
 
-```yaml
-# IRM integration in escalation policy
-escalation-policy:
-  - position: 0
-    type: notify_on_call_from_schedule
-    schedule: primary-oncall
-  - position: 1
-    type: wait
-    duration: 300
-  - position: 2
-    type: declare_incident  # Auto-create incident
-    severity: major
-    title_template: "{{ alert_group.title }}"
-```
+The inspected source contains a real declare_incident step, but validates organization feature enablement. Adding arbitrary severity/title_template YAML does not configure an incident integration. Distinguish alert groups, incidents, acknowledgment, resolution and postmortems, and verify ownership/state transitions in an approved test.
 
 ---
 
@@ -815,42 +342,19 @@ escalation-policy:
 
 ### Mobile App Features
 
-1. **Push Notifications**: Receive alerts instantly
-2. **Alert Management**: Acknowledge, Resolve, Silence
-3. **Schedule View**: View on-call schedules
-4. **Team Status**: Check team member on-call status
+Supported app/deployment combinations can offer alert feeds, state actions, schedules and notifications, subject to backend connectivity, OS permissions, network and user rules. Immediate delivery or working push on every self-hosted installation is not guaranteed.
+
 
 ### Mobile App Configuration
 
-```yaml
-# Configuration for mobile push notifications
-mobile:
-  # Automatic setup when using Grafana Cloud
-  # For self-hosted, Firebase configuration required
+The old mobile.firebase block is not a key in the inspected archived chart. An arbitrary Firebase service-account file does not establish working push. Check current mobile/Cloud Connection availability and the migration destination's supported mechanism. No Firebase project/account or push notification was created.
 
-  firebase:
-    enabled: true
-    credentials:
-      secretName: firebase-credentials
-      secretKey: service-account.json
-
-# User notification preferences
-user-preferences:
-  notification-rules:
-    - type: default
-      important: true  # Important notifications
-      methods:
-        - push
-        - slack
-    - type: default
-      important: false  # Normal notifications
-      methods:
-        - slack
-```
 
 ### Notification Channel Priority
 
-![Flowchart showing that an important alert fans out to every notification channel — push, phone, SMS, Slack, and email — while a default-priority alert reaches only Slack and email.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png)
+Important/default selects separate personal notification-rule sets. Their order, waits, channels and availability apply; important does not mean simultaneous delivery to all channels. Test delivery, acknowledgment and escalation behavior.
+
+![Important and default select configured personal notification rules, not an unconditional all-channel fan-out.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-7.html)
 
@@ -862,51 +366,29 @@ user-preferences:
 
 ### Feature Comparison
 
-| Feature | Grafana OnCall | PagerDuty | OpsGenie |
-|---------|----------------|-----------|----------|
-| **Price** | OSS Free / Cloud Paid | $21-41/user/month | $9-29/user/month |
-| **Self-Hosting** | Yes | No | No |
-| **On-Call Schedule** | Yes | Advanced | Advanced |
-| **Escalation** | Yes | Advanced | Advanced |
-| **Integrations** | 30+ | 700+ | 200+ |
-| **Analytics/Reporting** | Basic | Advanced | Advanced |
-| **Grafana Integration** | Native | Plugin | Plugin |
-| **AIOps** | Basic | Advanced | Medium |
-| **Status Page** | No | Yes | Yes |
-| **Mobile App** | Yes | Yes | Yes |
-| **SSO/SAML** | Yes | Yes | Yes |
+Compare the same requirements against actual plans, usage and contracts. Old per-user prices, integration counts and basic/advanced rankings are not current selection evidence. Check schedules/overrides, conditional escalation, SSO, retention, API permissions, channel/country limits, support and migration cost. OnCall OSS is archived, and Opsgenie requires migration planning against its announced lifecycle.
+
 
 ### Migration Considerations
 
-![Flowchart of the migration decision from PagerDuty or OpsGenie: cost reduction, Grafana Stack usage, self-hosting preference, and feature sufficiency each gate whether a team migrates to Grafana OnCall or keeps its current tool.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png)
+The default direction is no longer a new migration from PagerDuty/Opsgenie into OnCall OSS. Inventory existing OnCall/ending-tool data and dependencies, then validate a maintained destination's feature differences and recovery. Free code does not eliminate hosting, operations, support or communication costs.
+
+![Inventory, backup, contract review, delivery/recovery tests and controlled cutover to a maintained destination.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-8.html)
 
 ### Migration Checklist
 
-```yaml
-migration-checklist:
-  before:
-    - [ ] Document current schedules
-    - [ ] Document escalation policies
-    - [ ] Verify integration list
-    - [ ] Backup alert templates
+- [ ] Inventory users/teams, schedules/time zones/overrides, chains/routes, templates and integrations
+- [ ] Prepare separate database/key/configuration/history backups and recovery tests
+- [ ] Verify destination features, ID mapping, permissions, privacy and retention
+- [ ] Test synthetic firing/resolved/missing/retry/duplicate/no-response/handoff cases
+- [ ] Prevent duplicate paging during parallel operation; define ownership, cutover and rollback criteria
+- [ ] Switch source URLs/tokens in an approved sequence and retire unnecessary access after validation
+- [ ] Complete responder training and operational handoff
 
-  during:
-    - [ ] Install and configure OnCall
-    - [ ] Create teams/users
-    - [ ] Recreate schedules
-    - [ ] Set up escalation chains
-    - [ ] Connect integrations
-    - [ ] Send test alerts
+A fixed one-to-two-week overlap is not a guarantee, and API inventory is not a complete backup.
 
-  after:
-    - [ ] Run in parallel (1-2 weeks)
-    - [ ] Verify alert reception
-    - [ ] Verify escalation behavior
-    - [ ] Disable old system
-    - [ ] Team training
-```
 
 ---
 
@@ -914,98 +396,33 @@ migration-checklist:
 
 ### On-Call Schedule Design
 
-```yaml
-best-practices-schedule:
-  # 1. Appropriate rotation cycle
-  rotation:
-    - Weekly rotation recommended (prevent burnout)
-    - Rotate among at least 3-4 people
-    - Provide shadowing period for new hires
+Agree schedules using actual time zones, holidays, handoffs, backups and staffing. Weekly shifts,09:00 handoffs or a minimum of three/four people are not universal answers. Transfer ongoing incidents, expiring silences and coverage gaps.
 
-  # 2. Backup responder
-  backup:
-    - Always designate secondary responder
-    - Auto-override for vacations
-
-  # 3. Handoff time
-  handoff:
-    - Handoff during business hours (09:00 recommended)
-    - Conduct handoff meeting
-    - Transfer ongoing issues
-```
 
 ### Escalation Design
 
-```yaml
-best-practices-escalation:
-  # 1. Appropriate wait times
-  wait-times:
-    critical: 5-10 minutes
-    warning: 15-30 minutes
-    info: 1 hour
+Document severity-specific actions/response goals, backup/management paths, re-page and stop conditions. Interrupting pages need actionable responses; non-urgent information can use another path. Important does not guarantee phone/SMS delivery.
 
-  # 2. Clear escalation path
-  escalation-path:
-    - 1st: Current on-call
-    - 2nd: Backup on-call
-    - 3rd: Team lead
-    - 4th: Entire team
-
-  # 3. Alert fatigue prevention
-  fatigue-prevention:
-    - Non-important alerts via Slack only
-    - Phone only for Critical outside business hours
-    - Adjust repeat alert intervals
-```
 
 ### Alert Quality Management
 
-```yaml
-best-practices-alerts:
-  # 1. Only actionable alerts
-  actionable:
-    - Include response method in all alerts
-    - Runbook link required
-    - Regularly remove unnecessary alerts
+Review repetition, false positives, missed events, delivery failures and actual response outcomes. Recheck data and state transitions after changing filters/templates/grouping/source URLs, and retain a safe restoration path.
 
-  # 2. Appropriate severity
-  severity:
-    - Critical: Immediate response needed
-    - Warning: Response within business hours
-    - Info: For reference only
-
-  # 3. Regular review
-  review:
-    - Weekly alert review meeting
-    - Monthly on-call retrospective
-    - Quarterly policy improvement
-```
 
 ### On-Call Wellness
 
-```yaml
-oncall-wellness:
-  # 1. Appropriate compensation
-  compensation:
-    - Pay on-call allowance
-    - Extra compensation for nights/weekends
-    - Provide compensatory time off
+Agree workload, compensation, recovery time and responsibilities with the team. Reduce recurring incident causes and improve runbooks, automation and handoff. Specific shift/recovery durations are contextual operating policies.
 
-  # 2. Workload management
-  workload:
-    - Minimize other work during on-call
-    - Ensure recovery time after on-call
-    - Monitor alert count
-
-  # 3. Continuous improvement
-  improvement:
-    - Fix root cause of recurring alerts
-    - Introduce automation
-    - Improve runbooks
-```
 
 ---
 
 ## Quiz
 
 Test your knowledge with the [Grafana OnCall Quiz](../../quizzes/observability/alerting/03-grafana-oncall-quiz.md).
+
+## References
+
+- [OnCall OSS lifecycle](https://grafana.com/docs/oncall/latest/)
+- [OnCall API reference](https://grafana.com/docs/oncall/latest/oncall-api-reference/)
+- [Archived source contract](https://github.com/grafana-cold-storage/oncall/tree/af0fbd40558c9a63bcf438589894c440fc434a54)
+- [Opsgenie lifecycle](https://www.atlassian.com/software/opsgenie)

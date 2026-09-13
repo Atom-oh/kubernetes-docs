@@ -2,209 +2,125 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "알림 채널 우선순위",
-    "output": "public/archmaps/ko-observability-alerting-03-grafana-oncall-7.html",
-    "animation": "trace",
+    "title": "개인 알림 규칙 세트",
     "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "important-path",
-        "label": "Important 알림",
-        "focus": [
-          "fired",
-          "importance",
-          "allChannels",
-          "push",
-          "phone",
-          "sms",
-          "slack",
-          "email"
-        ],
-        "note": "Important 알림은 Push·Phone Call·SMS·Slack·Email 모든 채널로 전달됩니다."
-      },
-      {
-        "id": "default-path",
-        "label": "Default 알림",
-        "focus": [
-          "fired",
-          "importance",
-          "defaultChannels",
-          "slack",
-          "email"
-        ],
-        "note": "Default 알림은 Slack과 Email 기본 채널로만 전달됩니다."
+    "animation": "trace",
+    "output": "ko-observability-alerting-03-grafana-oncall-7.html",
+    "legend": {
+      "entries": {
+        "messagebus": {
+          "label": "통보 단계"
+        },
+        "security": {
+          "label": "판단"
+        },
+        "backend": {
+          "label": "설정 / 작업"
+        },
+        "external": {
+          "label": "서비스 / 결과"
+        }
       }
-    ]
+    }
   },
   "lanes": [
     {
-      "id": "route",
-      "label": "알림 라우팅"
+      "id": "main",
+      "label": "설정한 흐름"
     },
     {
-      "id": "channels",
-      "label": "알림 채널"
-    },
-    {
-      "id": "default",
-      "label": "Default 알림"
+      "id": "lower",
+      "label": "대안"
     }
   ],
   "mainPath": [
-    "fired",
-    "importance",
-    "allChannels"
+    "alert",
+    "choose",
+    "important",
+    "deliver"
   ],
-  "semanticChecks": {
-    "allowedRoots": [
-      "fired"
-    ],
-    "requiredPaths": [
-      {
-        "from": "fired",
-        "to": "push"
-      },
-      {
-        "from": "fired",
-        "to": "email"
-      },
-      {
-        "from": "defaultChannels",
-        "to": "slack"
-      }
-    ]
-  },
   "nodes": [
     {
-      "id": "fired",
-      "lane": "route",
+      "id": "alert",
+      "lane": "main",
       "col": 0,
       "type": "messagebus",
-      "label": "알림 발생",
-      "width": 140
+      "label": "통보 step",
+      "sublabel": "설정한 수신자",
+      "width": 195
     },
     {
-      "id": "importance",
-      "lane": "route",
+      "id": "choose",
+      "lane": "main",
       "col": 1,
       "type": "security",
-      "label": "중요도?",
-      "width": 150
+      "label": "Important?",
+      "sublabel": "규칙 세트 선택",
+      "width": 195
     },
     {
-      "id": "allChannels",
-      "lane": "route",
+      "id": "important",
+      "lane": "main",
       "col": 2,
       "type": "backend",
-      "label": "모든 채널",
-      "tag": "IMPORTANT",
-      "width": 150
+      "label": "중요 규칙",
+      "sublabel": "사용자 정의 순서",
+      "width": 195
     },
     {
-      "id": "push",
-      "lane": "channels",
-      "col": 1,
-      "type": "frontend",
-      "label": "Push Notification",
-      "width": 176
-    },
-    {
-      "id": "phone",
-      "lane": "channels",
+      "id": "default",
+      "lane": "lower",
       "col": 2,
-      "type": "frontend",
-      "label": "Phone Call",
-      "width": 130
+      "type": "backend",
+      "label": "기본 규칙",
+      "sublabel": "사용자 정의 순서",
+      "width": 195
     },
     {
-      "id": "sms",
-      "lane": "channels",
+      "id": "deliver",
+      "lane": "main",
       "col": 3,
-      "type": "frontend",
-      "label": "SMS"
-    },
-    {
-      "id": "slack",
-      "lane": "channels",
-      "col": 4,
       "type": "external",
-      "label": "Slack"
-    },
-    {
-      "id": "email",
-      "lane": "channels",
-      "col": 5,
-      "type": "external",
-      "label": "Email"
-    },
-    {
-      "id": "defaultChannels",
-      "lane": "default",
-      "col": 0,
-      "type": "backend",
-      "label": "기본 채널만",
-      "tag": "DEFAULT",
-      "width": 200
+      "label": "설정한 전달",
+      "sublabel": "채널 + 대기",
+      "width": 195
     }
   ],
   "edges": [
     {
-      "from": "fired",
-      "to": "importance",
-      "role": "main"
+      "from": "alert",
+      "to": "choose"
     },
     {
-      "from": "importance",
-      "to": "allChannels",
-      "label": "Important",
-      "variant": "emphasis",
-      "role": "main"
+      "from": "choose",
+      "to": "important",
+      "label": "true"
     },
     {
-      "from": "importance",
-      "to": "defaultChannels",
-      "label": "Default",
+      "from": "choose",
+      "to": "default",
+      "label": "false",
       "role": "branch"
     },
     {
-      "from": "allChannels",
-      "to": "push",
-      "variant": "emphasis",
-      "role": "main"
+      "from": "important",
+      "to": "deliver"
     },
     {
-      "from": "allChannels",
-      "to": "phone",
-      "variant": "emphasis",
+      "from": "default",
+      "to": "deliver",
       "role": "branch"
-    },
+    }
+  ],
+  "cards": [
     {
-      "from": "allChannels",
-      "to": "sms",
-      "variant": "emphasis",
-      "role": "branch"
-    },
-    {
-      "from": "allChannels",
-      "to": "slack",
-      "variant": "emphasis",
-      "role": "branch"
-    },
-    {
-      "from": "allChannels",
-      "to": "email",
-      "variant": "emphasis",
-      "role": "branch"
-    },
-    {
-      "from": "defaultChannels",
-      "to": "slack",
-      "role": "branch"
-    },
-    {
-      "from": "defaultChannels",
-      "to": "email",
-      "role": "branch"
+      "dot": "cyan",
+      "title": "전체 채널 스위치가 아님",
+      "items": [
+        "Important는 설정한 중요 개인 규칙을 선택",
+        "기본 규칙이 항상 Slack 전용은 아님",
+        "제공자 사용 가능 여부·실제 전달 시험 필요"
+      ]
     }
   ]
 }

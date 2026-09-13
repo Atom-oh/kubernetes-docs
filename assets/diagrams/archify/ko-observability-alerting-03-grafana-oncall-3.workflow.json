@@ -3,7 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "에스컬레이션 체인 구조",
-    "output": "public/archmaps/ko-observability-alerting-03-grafana-oncall-3.html",
+    "output": "ko-observability-alerting-03-grafana-oncall-3.html",
     "animation": "trace",
     "quality_profile": "showcase",
     "views": [
@@ -30,14 +30,14 @@
       },
       {
         "id": "resolution",
-        "label": "해결 경로",
+        "label": "확인 경로",
         "focus": [
           "step1",
           "step2",
           "step3",
           "resolved"
         ],
-        "note": "어느 단계에서든 15분 내 응답이 확인되면 에스컬레이션이 멈추고 알림이 해결됩니다."
+        "note": "확인은 상태·정책에 따라 에스컬레이션을 중단/대기시키며 소스 조건을 해결하지 않습니다."
       }
     ],
     "legend": {
@@ -61,7 +61,7 @@
     },
     {
       "id": "done",
-      "label": "해결"
+      "label": "확인"
     }
   ],
   "mainPath": [
@@ -140,8 +140,9 @@
       "lane": "done",
       "col": 5,
       "type": "external",
-      "label": "알림 해결",
-      "width": 140
+      "label": "확인됨",
+      "width": 140,
+      "sublabel": "소스 해결과 별도"
     }
   ],
   "edges": [
@@ -197,20 +198,19 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "체인 구성 (escalation_policies)",
+      "title": "예시 정책",
       "items": [
-        "position 0 · notify_on_call_from_schedule · important: true",
-        "position 1 · wait · duration 900 (15분)",
-        "position 2 · notify_persons · 2차 담당자 목록"
+        "notify_on_call_from_schedule → wait900s → configured target",
+        "대기·대상 순서는 조직별로 결정"
       ]
     },
     {
       "dot": "emerald",
-      "title": "동작 원칙",
+      "title": "상태 구분",
       "items": [
-        "각 단계는 15분(wait 900초) 동안 응답을 기다린 뒤 다음 단계로 넘어감",
-        "어느 단계에서든 응답이 확인되면 알림이 해결되고 체인이 멈춤",
-        "마지막 단계(전체 팀)까지 무응답이면 체인이 종료됨"
+        "확인·해결·무음은 다른 동작",
+        "반복·다음 대상은 명시적 설정 필요",
+        "응답만으로 실제 장애가 해결된다고 보장하지 않음"
       ]
     }
   ]

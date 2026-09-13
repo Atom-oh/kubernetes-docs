@@ -1,0 +1,15 @@
+{
+  "name": "Illustrative weekly rotation",
+  "type": "rolling_users",
+  "time_zone": "Asia/Seoul",
+  "start": "2026-09-14T09:00:00",
+  "duration": 604800,
+  "frequency": "weekly",
+  "interval": 1,
+  "week_start": "MO",
+  "start_rotation_from_user_index": 0,
+  "rolling_users": [
+    ["REPLACE_WITH_USER_ID_A"],
+    ["REPLACE_WITH_USER_ID_B"]
+  ]
+}

@@ -39,12 +39,12 @@
         "focus": [
           "user",
           "slack",
-          "oncall",
-          "alert"
+          "oncall"
         ],
-        "note": "Resolve also updates status and message, and additionally notifies the alert source."
+        "note": "An authorized Resolve action updates OnCall and its message; source-rule changes need a separate integration."
       }
-    ]
+    ],
+    "output": "en-observability-alerting-03-grafana-oncall-5.html"
   },
   "participants": [
     {
@@ -154,14 +154,6 @@
       "y": 514,
       "label": "Update message",
       "variant": "return"
-    },
-    {
-      "id": "res-notify",
-      "from": "oncall",
-      "to": "alert",
-      "y": 551,
-      "label": "Resolution notification",
-      "variant": "dashed"
     }
   ],
   "activations": [
@@ -182,6 +174,17 @@
       "from": 472,
       "to": 558,
       "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Do not conflate states",
+      "items": [
+        "Acknowledgment is not resolution",
+        "A source can remain firing after a manual OnCall action",
+        "Use the installed app's real commands, buttons and permissions"
+      ]
     }
   ]
 }

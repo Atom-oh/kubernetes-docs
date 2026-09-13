@@ -2,343 +2,168 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Grafana OnCall Components",
-    "locale": "en",
-    "output": "en-observability-alerting-03-grafana-oncall-0.html",
+    "title": "Archived OnCall: Logical Components",
     "quality_profile": "showcase",
     "animation": "trace",
-    "views": [
-      {
-        "id": "alert-path",
-        "label": "Alert processing path",
-        "focus": [
-          "sources",
-          "api",
-          "engine",
-          "routes",
-          "escalation",
-          "schedules",
-          "groups",
-          "channels"
-        ],
-        "note": "An alert passes through the API Server and Alert Engine, then routing, escalation, and schedules before reaching a notification channel."
-      },
-      {
-        "id": "state",
-        "label": "Data storage",
-        "focus": [
-          "engine",
-          "postgres",
-          "redis",
-          "celery"
-        ],
-        "note": "The Alert Engine persists state in PostgreSQL and Redis, and Celery Workers process background jobs through Redis."
-      },
-      {
-        "id": "features",
-        "label": "Features",
-        "focus": [
-          "routes",
-          "escalation",
-          "schedules",
-          "groups"
-        ],
-        "note": "Routes, Escalation Chains, Schedules, and Alert Groups are the core on-call management features."
-      }
-    ]
+    "output": "en-observability-alerting-03-grafana-oncall-0.html",
+    "locale": "en"
   },
   "components": [
     {
       "id": "sources",
       "type": "external",
-      "label": "Alert Sources",
-      "sublabel": "Alertmanager · Grafana · CloudWatch · Webhook",
+      "label": "Integrations",
+      "sublabel": "type-specific payload",
       "pos": [
-        20,
-        210
+        40,
+        150
       ],
       "size": [
-        240,
-        64
-      ]
-    },
-    {
-      "id": "api",
-      "type": "backend",
-      "label": "API Server",
-      "sublabel": "Receives alerts",
-      "pos": [
-        320,
-        210
-      ],
-      "size": [
-        140,
-        64
+        215,
+        70
       ]
     },
     {
       "id": "engine",
       "type": "backend",
-      "label": "Alert Engine",
-      "sublabel": "Processes alerts",
+      "label": "OnCall engine",
+      "sublabel": "API, groups, routes",
       "pos": [
-        520,
-        210
+        320,
+        150
       ],
       "size": [
-        140,
-        64
+        215,
+        70
       ]
     },
     {
-      "id": "postgres",
-      "type": "database",
-      "label": "PostgreSQL",
-      "sublabel": "Persistent store",
+      "id": "broker",
+      "type": "messagebus",
+      "label": "Configured broker",
+      "sublabel": "RabbitMQ by default",
       "pos": [
-        770,
-        130
+        600,
+        150
       ],
       "size": [
-        140,
-        64
+        215,
+        70
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Celery workers",
+      "sublabel": "scheduled policy work",
+      "pos": [
+        880,
+        150
+      ],
+      "size": [
+        215,
+        70
+      ]
+    },
+    {
+      "id": "channels",
+      "type": "external",
+      "label": "Configured channels",
+      "sublabel": "availability varies",
+      "pos": [
+        1120,
+        150
+      ],
+      "size": [
+        215,
+        70
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database",
+      "sublabel": "MySQL or PostgreSQL",
+      "pos": [
+        320,
+        370
+      ],
+      "size": [
+        215,
+        70
       ]
     },
     {
       "id": "redis",
       "type": "database",
       "label": "Redis",
-      "sublabel": "Cache · job queue",
+      "sublabel": "configured cache/state role",
       "pos": [
-        770,
-        290
+        880,
+        370
       ],
       "size": [
-        140,
-        64
-      ]
-    },
-    {
-      "id": "celery",
-      "type": "backend",
-      "label": "Celery Workers",
-      "sublabel": "Background jobs",
-      "pos": [
-        970,
-        290
-      ],
-      "size": [
-        150,
-        64
-      ]
-    },
-    {
-      "id": "routes",
-      "type": "backend",
-      "label": "Routes",
-      "sublabel": "Alert routing",
-      "pos": [
-        320,
-        470
-      ],
-      "size": [
-        140,
-        64
-      ]
-    },
-    {
-      "id": "escalation",
-      "type": "backend",
-      "label": "Escalation Chains",
-      "sublabel": "Escalation policy",
-      "pos": [
-        520,
-        470
-      ],
-      "size": [
-        160,
-        64
-      ]
-    },
-    {
-      "id": "schedules",
-      "type": "backend",
-      "label": "Schedules",
-      "sublabel": "On-call schedules",
-      "pos": [
-        740,
-        470
-      ],
-      "size": [
-        140,
-        64
-      ]
-    },
-    {
-      "id": "groups",
-      "type": "backend",
-      "label": "Alert Groups",
-      "sublabel": "Alert grouping",
-      "pos": [
-        940,
-        470
-      ],
-      "size": [
-        140,
-        64
-      ]
-    },
-    {
-      "id": "channels",
-      "type": "external",
-      "label": "Notification Channels",
-      "sublabel": "Slack · Teams · Phone · SMS · Email · Mobile",
-      "pos": [
-        890,
-        650
-      ],
-      "size": [
-        240,
-        64
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Grafana OnCall",
-      "wraps": [
-        "api",
-        "engine",
-        "postgres",
-        "redis",
-        "celery",
-        "routes",
-        "escalation",
-        "schedules",
-        "groups"
-      ],
-      "pad": 44
-    },
-    {
-      "kind": "security-group",
-      "label": "Core Components",
-      "wraps": [
-        "api",
-        "engine"
-      ]
-    },
-    {
-      "kind": "security-group",
-      "label": "Data storage",
-      "wraps": [
-        "postgres",
-        "redis",
-        "celery"
-      ]
-    },
-    {
-      "kind": "security-group",
-      "label": "Features",
-      "wraps": [
-        "routes",
-        "escalation",
-        "schedules",
-        "groups"
+        215,
+        70
       ]
     }
   ],
   "connections": [
     {
-      "id": "sources-to-api",
+      "id": "source-engine",
       "from": "sources",
-      "to": "api",
-      "label": "send alerts",
-      "variant": "emphasis"
-    },
-    {
-      "id": "api-to-engine",
-      "from": "api",
       "to": "engine",
       "variant": "emphasis"
     },
     {
-      "id": "engine-to-routes",
+      "id": "engine-broker",
       "from": "engine",
-      "to": "routes",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "to": "broker"
     },
     {
-      "id": "routes-to-escalation",
-      "from": "routes",
-      "to": "escalation",
-      "variant": "emphasis"
+      "id": "broker-worker",
+      "from": "broker",
+      "to": "worker"
     },
     {
-      "id": "escalation-to-schedules",
-      "from": "escalation",
-      "to": "schedules",
-      "variant": "emphasis"
-    },
-    {
-      "id": "schedules-to-groups",
-      "from": "schedules",
-      "to": "groups",
-      "variant": "emphasis"
-    },
-    {
-      "id": "groups-to-channels",
-      "from": "groups",
+      "id": "worker-channel",
+      "from": "worker",
       "to": "channels",
-      "label": "notify",
-      "variant": "emphasis",
-      "labelDy": 24
+      "variant": "emphasis"
     },
     {
-      "id": "engine-to-postgres",
+      "id": "engine-db",
       "from": "engine",
-      "to": "postgres"
+      "to": "db"
     },
     {
-      "id": "engine-to-redis",
-      "from": "engine",
+      "id": "worker-db",
+      "from": "worker",
+      "to": "db",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "worker-redis",
+      "from": "worker",
       "to": "redis"
-    },
-    {
-      "id": "celery-to-redis",
-      "from": "celery",
-      "to": "redis",
-      "variant": "dashed"
     }
   ],
   "cards": [
     {
-      "dot": "orange",
-      "title": "Alert intake",
-      "items": [
-        "Receives alerts via Alertmanager, Grafana Alerting, CloudWatch, and Webhook integrations",
-        "The API Server receives them and the Alert Engine processes them"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "On-call management features",
-      "items": [
-        "Routes direct alerts to the right place",
-        "Escalation Chains provide time-based automatic escalation",
-        "Schedules manage rotations, overrides, and holidays",
-        "Alert Groups consolidate related alerts"
-      ]
-    },
-    {
       "dot": "cyan",
-      "title": "Notification Channels",
+      "title": "Logical responsibilities",
       "items": [
-        "ChatOps integration with Slack and MS Teams",
-        "Phone call, SMS, and email notifications",
-        "iOS/Android mobile app push notifications"
+        "Groups, routes and schedules are not necessarily separate Deployments",
+        "Database, broker and Redis roles depend on the installed profile"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Lifecycle and availability",
+      "items": [
+        "OSS archived 2026-03-24; review existing deployments and migration",
+        "Replica count does not prove delivery or remove all failure points"
       ]
     }
   ]
