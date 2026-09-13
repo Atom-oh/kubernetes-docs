@@ -45,7 +45,7 @@
           "email-sms",
           "lambda-http"
         ],
-        "note": "On ALARM, SNS, Auto Scaling, EC2 Actions, and Systems Manager actions fire, and SNS forwards to the notification channels."
+        "note": "Attach only actions supported by the alarm type and state. Arbitrary SSM Automation needs a separate path such as EventBridge."
       }
     ]
   },
@@ -180,7 +180,7 @@
       "id": "ssm",
       "type": "cloud",
       "label": "Systems Manager",
-      "sublabel": "run SSM Automation",
+      "sublabel": "create an OpsItem",
       "pos": [
         880,
         390
@@ -329,6 +329,16 @@
       "from": "sns",
       "to": "lambda-http",
       "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Action scope",
+      "items": [
+        "Direct SSM path: OpsItem, not an Automation runbook",
+        "Anomaly alarms cannot scale; metric math cannot directly mutate EC2"
+      ]
     }
   ]
 }

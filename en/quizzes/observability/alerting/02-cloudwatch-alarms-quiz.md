@@ -1,10 +1,10 @@
 # CloudWatch Alarms Quiz
 
-A quiz to test your understanding of CloudWatch Alarms.
+A quiz about classic CloudWatch metric alarms and composite alarms, reviewed against official documentation on 2026-09-13.
 
 ---
 
-1. What are the three states of a CloudWatch Alarm?
+1. What are the three states of a classic CloudWatch metric alarm?
    - A) Active, Inactive, Pending
    - B) OK, ALARM, INSUFFICIENT_DATA
    - C) Normal, Warning, Critical
@@ -48,7 +48,7 @@ For example, with evaluation-periods=3 and datapoints-to-alarm=2, it means "ALAR
 
 ---
 
-3. What is the correct expression to calculate ALB error rate in CloudWatch Metric Math?
+3. What is the basic ratio for ALB target error rate when requests are positive in CloudWatch Metric Math?
    - A) `errors + requests`
    - B) `(errors / requests) * 100`
    - C) `errors - requests`
@@ -60,7 +60,7 @@ For example, with evaluation-periods=3 and datapoints-to-alarm=2, it means "ALAR
 **Answer: B) `(errors / requests) * 100`**
 
 **Explanation:**
-Error Rate is calculated by dividing the number of errors by the total number of requests and multiplying by 100 to get a percentage. CloudWatch Metric Math allows combining multiple metrics for such calculations, and the result can be used as an alarm condition.
+Error Rate is calculated by dividing the number of errors by the total number of requests and multiplying by 100 to get a percentage. The denominator counts requests forwarded to targets, not every ALB-generated failure. Define zero-request, missing-5xx, and missing-collection handling separately.
 
 ```
 errors = HTTPCode_Target_5XX_Count
@@ -102,7 +102,7 @@ Composite Alarms do not define their own metrics. Instead, they combine the stat
 **Answer: B) Uses machine learning to learn expected metric ranges and alerts when they are exceeded**
 
 **Explanation:**
-CloudWatch Anomaly Detection uses machine learning algorithms to analyze historical metric data and learns patterns such as time-of-day and day-of-week variations. Based on this, it generates an expected band, and when actual metric values fall outside this range, they are detected as anomalies. The `ANOMALY_DETECTION_BAND(metric, stddev)` function can be used to adjust the standard deviation multiplier.
+CloudWatch Anomaly Detection uses machine learning algorithms to analyze historical metric data and learns patterns such as time-of-day and day-of-week variations. Based on this, it generates an expected band, and when actual metric values fall outside this range, they are detected as anomalies. The `ANOMALY_DETECTION_BAND(metric, stddev)` parameter controls band width; it does not guarantee a fixed 95% or 99.7% confidence interval.
 
 </details>
 
@@ -124,16 +124,16 @@ The meanings of `treat-missing-data` option values:
 - `notBreaching`: Treat missing data as not violating the threshold (consider as OK)
 - `breaching`: Treat missing data as violating the threshold (consider as ALARM)
 - `ignore`: Maintain current state
-- `missing`: Transition to INSUFFICIENT_DATA state
+- `missing`: INSUFFICIENT_DATA when all evaluation data is missing
 
-Generally, `notBreaching` is recommended to prevent unnecessary alerts due to missing data.
+Choose by metric semantics. `notBreaching` can suit sparse error counts but can hide a missing heartbeat. Use `missing` for alarms with EC2 mutation actions and trigger them only in ALARM. Sufficient extra real points take precedence over missing-data fill.
 
 </details>
 
 ---
 
 7. Which action CANNOT be directly executed as a CloudWatch Alarm Action?
-   - A) EC2 instance stop/start/reboot
+   - A) EC2 instance stop/terminate/reboot/recover
    - B) Auto Scaling policy trigger
    - C) Send message to SNS topic
    - D) EKS pod restart
@@ -145,11 +145,11 @@ Generally, `notBreaching` is recommended to prevent unnecessary alerts due to mi
 
 **Explanation:**
 CloudWatch Alarm Actions can directly execute the following AWS native operations:
-- EC2 Actions: Stop, start, reboot, recover, terminate
+- EC2 Actions: Stop, reboot, recover, terminate (start is not a direct action)
 - Auto Scaling Actions: Trigger scale out/in policies
 - SNS Actions: Send messages to topics
 
-EKS pod restart is not directly supported and must be implemented indirectly through the SNS -> Lambda -> Kubernetes API chain.
+EKS pod restart is not directly supported and requires a separately authorized Lambda/workflow and Kubernetes API path.
 
 </details>
 
@@ -168,7 +168,7 @@ EKS pod restart is not directly supported and must be implemented indirectly thr
 
 **Explanation:**
 Key EKS metrics in Container Insights:
-- `pod_number_of_container_restarts`: Container restart count within a pod
+- `pod_number_of_container_restarts`: Cumulative container restart count for a Pod; requires ClusterName, Namespace, and PodName
 - `pod_cpu_utilization`: Pod CPU utilization
 - `pod_memory_utilization`: Pod memory utilization
 - `node_cpu_utilization`: Node CPU utilization
@@ -182,7 +182,7 @@ These metrics are available in the `ContainerInsights` namespace.
 
 9. Which is NOT a recommended practice for CloudWatch Alarms cost optimization?
    - A) Use Standard Resolution (60 seconds) for non-critical alerts
-   - B) Consolidate multiple Metric Alarms into Composite Alarms
+   - B) Account for evaluated metrics and retained child-alarm charges
    - C) Use High Resolution (10 seconds) for all alerts
    - D) Regularly delete unused alarms
 
@@ -192,12 +192,7 @@ These metrics are available in the `ContainerInsights` namespace.
 **Answer: C) Use High Resolution (10 seconds) for all alerts**
 
 **Explanation:**
-High Resolution alarms cost 3x more than Standard Resolution ($0.30 vs $0.10/alarm/month). For cost optimization:
-- Use High Resolution only for Critical alerts
-- Use Standard Resolution for Warning/Info alerts
-- Consolidate related alarms into Composite Alarms
-- Regularly delete unused alarms
-- Use Anomaly Detection only when needed (additional cost of $0.30/metric/month)
+Choose high resolution only when latency requirements and collected resolution justify it. 60 seconds is standard resolution. A composite retains its child alarms and adds charges; reducing notification noise does not automatically lower cost. An anomaly alarm includes the evaluated metric and the upper/lower band metrics. Check current pricing for the actual Region.
 
 </details>
 

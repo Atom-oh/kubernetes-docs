@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-preset="classic">
+<html lang="ko" data-theme="dark" data-preset="classic">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5348,7 +5351,7 @@
           <h3>Composite Alarm 규칙</h3>
         </div>
         <ul>
-          <li>&bull; ALARM(HighCPU) AND ALARM(HighMemory) OR ALARM(HighDisk)</li>
+          <li>&bull; (ALARM(&quot;HighCPU&quot;) AND ALARM(&quot;HighMemory&quot;)) OR ALARM(&quot;HighDisk&quot;)</li>
           <li>&bull; 알림 액션은 Composite Alarm에만 연결한다 (alarm-actions: critical-alerts, ok-actions: alerts)</li>
         </ul>
       </div>
@@ -7145,7 +7148,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

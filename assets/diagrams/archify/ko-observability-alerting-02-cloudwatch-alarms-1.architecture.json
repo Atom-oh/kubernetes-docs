@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch Alarm 알림 상태 전이",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1150,
+      600
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "threshold",
+        "label": "임계값 평가",
+        "focus": [
+          "created",
+          "insufficient",
+          "ok",
+          "alarm"
+        ],
+        "note": "기존 Metric Alarm은 INSUFFICIENT_DATA에서 시작한 뒤 실제 데이터를 평가합니다."
+      },
+      {
+        "id": "missing",
+        "label": "데이터 부족",
+        "focus": [
+          "ok",
+          "alarm",
+          "insufficient"
+        ],
+        "note": "별표 전이는 treat-missing-data=missing이며 전체 평가 데이터가 누락된 경우입니다. 다른 정책은 아래 카드와 같습니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "created",
+      "type": "external",
+      "label": "알람 생성",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "insufficient",
+      "type": "cloud",
+      "label": "INSUFFICIENT_DATA",
+      "sublabel": "최초 상태 / 전체 누락*",
+      "pos": [
+        370,
+        250
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "ok",
+      "type": "backend",
+      "label": "OK",
+      "sublabel": "정상 평가",
+      "pos": [
+        820,
+        70
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "alarm",
+      "type": "security",
+      "label": "ALARM",
+      "sublabel": "위반 평가",
+      "pos": [
+        820,
+        445
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "create",
+      "from": "created",
+      "to": "insufficient",
+      "label": "최초 상태"
+    },
+    {
+      "id": "enough-good",
+      "from": "insufficient",
+      "to": "ok",
+      "label": "정상 평가",
+      "fromSide": "top"
+    },
+    {
+      "id": "enough-bad",
+      "from": "insufficient",
+      "to": "alarm",
+      "label": "위반 평가",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "breach",
+      "from": "ok",
+      "to": "alarm",
+      "label": "위반",
+      "variant": "emphasis",
+      "labelAt": [
+        890,
+        280
+      ]
+    },
+    {
+      "id": "recover",
+      "from": "alarm",
+      "to": "ok",
+      "label": "복구",
+      "fromSide": "right"
+    },
+    {
+      "id": "missing-ok",
+      "from": "ok",
+      "to": "insufficient",
+      "label": "전체 누락*",
+      "variant": "dashed"
+    },
+    {
+      "id": "missing-alarm",
+      "from": "alarm",
+      "to": "insufficient",
+      "label": "전체 누락*",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "누락 데이터 정책",
+      "items": [
+        "missing + 전체 누락: INSUFFICIENT_DATA; 실제 데이터가 충분하면 먼저 사용",
+        "notBreaching: 정상으로 채움 / breaching: 위반으로 채움",
+        "ignore: 상태 유지; 모든 누락을 장애 또는 정상으로 단정하지 않음"
+      ]
+    }
+  ]
+}

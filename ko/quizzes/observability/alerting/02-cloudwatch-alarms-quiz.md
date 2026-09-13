@@ -1,10 +1,10 @@
 # CloudWatch Alarms 퀴즈
 
-CloudWatch Alarms에 대한 이해도를 테스트하는 퀴즈입니다.
+기존 CloudWatch Metric Alarm과 Composite Alarm을 다루는 퀴즈입니다. 2026-09-13 공식 문서로 검토했습니다.
 
 ---
 
-1. CloudWatch Alarm의 세 가지 상태는 무엇인가요?
+1. 기존 CloudWatch Metric Alarm의 세 가지 상태는 무엇인가요?
    - A) Active, Inactive, Pending
    - B) OK, ALARM, INSUFFICIENT_DATA
    - C) Normal, Warning, Critical
@@ -48,7 +48,7 @@ CloudWatch Alarm은 세 가지 상태를 가집니다:
 
 ---
 
-3. CloudWatch Metric Math에서 ALB의 오류율을 계산하는 올바른 표현식은?
+3. CloudWatch Metric Math에서 ALB의 오류율을 계산하는 요청이 양수일 때의 기본 비율 표현식은?
    - A) `errors + requests`
    - B) `(errors / requests) * 100`
    - C) `errors - requests`
@@ -60,7 +60,7 @@ CloudWatch Alarm은 세 가지 상태를 가집니다:
 **정답: B) `(errors / requests) * 100`**
 
 **설명:**
-오류율(Error Rate)은 오류 수를 전체 요청 수로 나눈 후 100을 곱하여 백분율로 계산합니다. CloudWatch Metric Math에서는 여러 메트릭을 조합하여 이러한 계산을 수행할 수 있으며, 결과를 알림 조건으로 사용할 수 있습니다.
+오류율(Error Rate)은 오류 수를 전체 요청 수로 나눈 후 100을 곱하여 백분율로 계산합니다. 분모는 target으로 전달한 요청이며 ALB 자체 오류까지 포함하지 않습니다. 0 요청·미발행 5xx 처리와 수집 중단 감시는 별도로 정의해야 합니다.
 
 ```
 errors = HTTPCode_Target_5XX_Count
@@ -102,7 +102,7 @@ Composite Alarm은 자체 메트릭을 정의하지 않습니다. 대신 기존 
 **정답: B) 기계 학습을 사용하여 메트릭의 예상 범위를 학습하고 벗어나면 알림**
 
 **설명:**
-CloudWatch Anomaly Detection은 기계 학습 알고리즘을 사용하여 메트릭의 과거 데이터를 분석하고, 시간대별, 요일별 패턴 등을 학습합니다. 이를 바탕으로 예상 범위(expected band)를 생성하고, 실제 메트릭 값이 이 범위를 벗어나면 이상치로 감지합니다. `ANOMALY_DETECTION_BAND(metric, stddev)` 함수로 표준편차 배수를 조정할 수 있습니다.
+CloudWatch Anomaly Detection은 기계 학습 알고리즘을 사용하여 메트릭의 과거 데이터를 분석하고, 시간대별, 요일별 패턴 등을 학습합니다. 이를 바탕으로 예상 범위(expected band)를 생성하고, 실제 메트릭 값이 이 범위를 벗어나면 이상치로 감지합니다. `ANOMALY_DETECTION_BAND(metric, stddev)`의 폭 조절 값은 고정 95%·99.7% 신뢰구간을 보장하지 않습니다.
 
 </details>
 
@@ -124,16 +124,16 @@ CloudWatch Anomaly Detection은 기계 학습 알고리즘을 사용하여 메�
 - `notBreaching`: 누락된 데이터를 임계값을 위반하지 않은 것으로 처리 (OK로 간주)
 - `breaching`: 누락된 데이터를 임계값을 위반한 것으로 처리 (ALARM으로 간주)
 - `ignore`: 현재 상태 유지
-- `missing`: INSUFFICIENT_DATA 상태로 전환
+- `missing`: 평가 데이터가 모두 누락되면 INSUFFICIENT_DATA
 
-일반적으로 `notBreaching`이 권장되며, 데이터 누락으로 인한 불필요한 알림을 방지합니다.
+메트릭 의미에 따라 선택합니다. 희소 오류 수에는 `notBreaching`이 적합할 수 있지만 heartbeat에 일괄 적용하면 장애를 숨깁니다. EC2 변경 액션에는 `missing`을 사용하고 ALARM에서만 실행합니다. 추가 실제 데이터로 충분히 평가할 수 있으면 누락값 대체를 사용하지 않습니다.
 
 </details>
 
 ---
 
 7. CloudWatch Alarm Action으로 직접 실행할 수 없는 것은?
-   - A) EC2 인스턴스 중지/시작/재부팅
+   - A) EC2 인스턴스 중지/종료/재부팅/복구
    - B) Auto Scaling 정책 트리거
    - C) SNS 토픽으로 메시지 전송
    - D) EKS 파드 재시작
@@ -145,11 +145,11 @@ CloudWatch Anomaly Detection은 기계 학습 알고리즘을 사용하여 메�
 
 **설명:**
 CloudWatch Alarm Action은 다음과 같은 AWS 네이티브 작업을 직접 실행할 수 있습니다:
-- EC2 Actions: 중지, 시작, 재부팅, 복구, 종료
+- EC2 Actions: 중지, 재부팅, 복구, 종료 (start는 직접 지원하지 않음)
 - Auto Scaling Actions: 스케일 아웃/인 정책 트리거
 - SNS Actions: 토픽으로 메시지 전송
 
-EKS 파드 재시작은 직접 지원되지 않으며, SNS → Lambda → Kubernetes API 체인을 통해 간접적으로 구현해야 합니다.
+EKS 파드 재시작은 직접 지원되지 않으며, 별도로 권한을 제한한 Lambda/워크플로우와 Kubernetes API 경로를 구현해야 합니다.
 
 </details>
 
@@ -168,7 +168,7 @@ EKS 파드 재시작은 직접 지원되지 않으며, SNS → Lambda → Kubern
 
 **설명:**
 Container Insights의 주요 EKS 메트릭:
-- `pod_number_of_container_restarts`: 파드 내 컨테이너 재시작 횟수
+- `pod_number_of_container_restarts`: Pod의 누적 컨테이너 재시작 수; ClusterName·Namespace·PodName 전체 차원 필요
 - `pod_cpu_utilization`: 파드 CPU 사용률
 - `pod_memory_utilization`: 파드 메모리 사용률
 - `node_cpu_utilization`: 노드 CPU 사용률
@@ -182,7 +182,7 @@ Container Insights의 주요 EKS 메트릭:
 
 9. CloudWatch Alarms 비용 최적화를 위한 권장 사항으로 올바르지 않은 것은?
    - A) 중요하지 않은 알림은 Standard Resolution(60초) 사용
-   - B) 여러 Metric Alarm을 Composite Alarm으로 통합
+   - B) metric math 식의 평가 메트릭 수와 child alarm 비용 확인
    - C) 모든 알림에 High Resolution(10초) 사용
    - D) 사용하지 않는 알림 정기적 삭제
 
@@ -192,12 +192,7 @@ Container Insights의 주요 EKS 메트릭:
 **정답: C) 모든 알림에 High Resolution(10초) 사용**
 
 **설명:**
-High Resolution 알림은 Standard Resolution보다 3배 비쌉니다 ($0.30 vs $0.10/알림/월). 비용 최적화를 위해:
-- Critical 알림에만 High Resolution 사용
-- Warning/Info 알림은 Standard Resolution 사용
-- 여러 관련 알림을 Composite Alarm으로 통합
-- 사용하지 않는 알림 정기적 삭제
-- Anomaly Detection은 필요한 경우에만 사용 (추가 비용 $0.30/메트릭/월)
+고해상도는 필요한 지연과 실제 데이터 해상도에 맞춰 선택합니다. 60초는 표준 해상도입니다. Composite Alarm은 원본 child alarm을 유지하므로 추가 과금되며, 알림 소음 감소가 자동 비용 절감은 아닙니다. Anomaly Detection alarm은 평가 메트릭과 상·하한 band 메트릭 비용을 포함합니다. 리전별 최신 요금표를 확인하세요.
 
 </details>
 

@@ -27,9 +27,32 @@
           "normal",
           "anomalyAlert"
         ],
-        "note": "현재 메트릭을 Band와 비교해 범위 이내면 Normal, 벗어나면 Anomaly Alert로 판정합니다."
+        "note": "범위 이탈 datapoint를 M-of-N 설정으로 평가합니다. 단일 이탈이 항상 즉시 ALARM은 아닙니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리"
+        },
+        "database": {
+          "label": "메트릭 데이터"
+        },
+        "security": {
+          "label": "판정"
+        },
+        "cloud": {
+          "label": "클라우드 구성요소"
+        },
+        "external": {
+          "label": "알림"
+        },
+        "messagebus": {
+          "label": "이벤트 버스"
+        }
+      }
+    }
   },
   "lanes": [
     {
@@ -182,11 +205,11 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "Band 폭 (표준편차 배수)",
+      "title": "예상 범위 폭",
       "items": [
-        "ANOMALY_DETECTION_BAND(m1, 2) — 2 표준편차, 약 95% 신뢰구간 (기본값)",
-        "ANOMALY_DETECTION_BAND(m1, 3) — 3 표준편차, 약 99.7% 신뢰구간",
-        "ANOMALY_DETECTION_BAND(m1, 1) — 1 표준편차, 더 민감한 탐지"
+        "ANOMALY_DETECTION_BAND(m1, 2): 기본 폭",
+        "값이 크면 넓은 범위; 95%·99.7% 신뢰구간 보장 아님",
+        "알림은 설정한 M-of-N 및 누락 데이터 정책으로 평가"
       ]
     },
     {

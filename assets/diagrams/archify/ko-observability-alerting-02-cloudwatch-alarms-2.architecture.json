@@ -148,7 +148,7 @@
       "dot": "orange",
       "title": "Composite Alarm 규칙",
       "items": [
-        "ALARM(HighCPU) AND ALARM(HighMemory) OR ALARM(HighDisk)",
+        "(ALARM(\"HighCPU\") AND ALARM(\"HighMemory\")) OR ALARM(\"HighDisk\")",
         "알림 액션은 Composite Alarm에만 연결한다 (alarm-actions: critical-alerts, ok-actions: alerts)"
       ]
     }

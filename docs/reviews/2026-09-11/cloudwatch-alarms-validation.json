@@ -1,0 +1,3197 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T13:34:47.174700+00:00",
+  "scope": "Full original paired CloudWatch Alarms guide/quiz review and bounded local verification. Independent integration review is separate.",
+  "originalRead": [
+    {
+      "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+      "sha256": "a7136479680d9947aa205b1436c49b132e3f1f122912e086643a749cea88a799",
+      "lines": 1122
+    },
+    {
+      "path": "en/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+      "sha256": "33010acd646a47dddc0c5fa4198d98be5c3c1879be2bdac708ff64e8df8d4e34",
+      "lines": 242
+    },
+    {
+      "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+      "sha256": "12b97405d52516f140b720d9671ce3959253806f8aa3d3b1d21c84a0aaa6e56a",
+      "lines": 1122
+    },
+    {
+      "path": "ko/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+      "sha256": "4ddde572080cdd6b788e285c634bf108bb40403beb65b76583a1ae13e005988a",
+      "lines": 242
+    }
+  ],
+  "originalLines": 2728,
+  "findings": [
+    "Corrected classic metric alarm initial state, conditional missing-data evaluation, M-of-N, percentile flag and high-resolution meaning; scoped new PromQL and log alarm types separately.",
+    "Clarified ALB target error ratio, zero-request/missing-5xx handling and collection gaps; SEARCH is graph-only and classic math alarms need a single result series.",
+    "Replaced temporary set-alarm-state maintenance control with documented ActionsSuppressor prerequisite; CWAgent examples require exact published dimensions.",
+    "Replaced nonexistent default SNS severity attributes with MessageBody/NewStateValue filtering; documented subscription confirmation and scoped Lambda invocation policies; removed unchecked secret-in-environment Slack sender.",
+    "Actual AWS Event Ruler rejects the old nested metricStat filter. Exact alarm/account/Region matching passes14localcases and does not miss INSUFFICIENT_DATA-to-ALARM.",
+    "Replaced alarm-name-driven reboot/redeploy with a tested inspection-only EventBridge normalizer; actual dimensions are an object; expression/composite/recovery cases handled.",
+    "Removed stale add-on version/unpinned Fluentd installation; distinguished create/update, Pod Identity and metric paths. Fixed full restart dimensions, cumulative Maximum semantics and Pod-vs-node memory denominator.",
+    "Corrected direct EC2 actions (no start), missing-data behavior, and unsupported direct SSM Automation ARN; explicit scoped EventBridge/runbook path required.",
+    "Pricing scoped to official US East examples; composite child costs remain; anomaly metric+bands charged;60secondsstandard. Read-only inventory replaces stale-date deletion.",
+    "Removed invalid AMP credential/query bridge; distinguished AMP native alert rules/receivers, CloudWatch OTLP PromQL alarms, and carefully scoped metric republishing.",
+    "Pairedquizanswers20preserved/reconciled;12diagramtriplesrepairedandindividuallyinspected;state/costlayoutrefinementsverifiedagain."
+  ],
+  "sources": [
+    {
+      "key": "alarms",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Alarms.html",
+      "status": 200,
+      "bytes": 23324,
+      "sha256": "7781216743549e57f494e6deef96d10157ca15d6284a936ccf8da2677f052d9a"
+    },
+    {
+      "key": "put-metric",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html",
+      "status": 200,
+      "bytes": 72686,
+      "sha256": "44456a75a3e74d0225b3e385d5b1888229f8a1cdaab2f241e95dd09dad47a97b"
+    },
+    {
+      "key": "put-composite",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutCompositeAlarm.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutCompositeAlarm.html",
+      "status": 200,
+      "bytes": 36959,
+      "sha256": "43ebc2ca8aaffe6940067ba8f23caa15473efb2b6e622954be4ccb2ae32c71c0"
+    },
+    {
+      "key": "math",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html",
+      "status": 200,
+      "bytes": 82889,
+      "sha256": "33c6d4e4cfd1b09ff5dda8c0f7fa067b60c97dfd0b2a275ad5fa475112b1c83e"
+    },
+    {
+      "key": "events",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-and-eventbridge.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-and-eventbridge.html",
+      "status": 200,
+      "bytes": 58105,
+      "sha256": "7d04ca1b1a13a24c095330e9ad23a343e67b799438aa99fffb92e9c7947e2628"
+    },
+    {
+      "key": "container-metrics",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html",
+      "status": 200,
+      "bytes": 47291,
+      "sha256": "0ad3a8bee3328be447f33fb594bb1404d0ba7c41923bddb6e512b06431329b42"
+    },
+    {
+      "key": "anomaly",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Anomaly_Detection.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Anomaly_Detection.html",
+      "status": 200,
+      "bytes": 22986,
+      "sha256": "6788089fd17fed1d0f81129063c933ba0a908d349aa1f956ef20572cfd45df7f"
+    },
+    {
+      "key": "pricing",
+      "url": "https://aws.amazon.com/cloudwatch/pricing/",
+      "finalURL": "https://aws.amazon.com/cloudwatch/pricing/",
+      "status": 200,
+      "bytes": 603991,
+      "sha256": "ad5d6fa11a03867770e7c1aabc2d858360063de1d41f7fb087fbd2f05c385efd"
+    },
+    {
+      "key": "sns-schema",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html",
+      "status": 200,
+      "bytes": 35446,
+      "sha256": "a4f035eca3d023520cc1ca55977bd740c7ef16225f7ac9407174bd4c97c8200e"
+    },
+    {
+      "key": "filter-scope",
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/sns-message-filtering-scope.html",
+      "finalURL": "https://docs.aws.amazon.com/sns/latest/dg/sns-message-filtering-scope.html",
+      "status": 200,
+      "bytes": 12565,
+      "sha256": "b907595cd72ce7d9d822404d3d080e006287054c05dcd7850b124e3ad9667823"
+    },
+    {
+      "key": "addon",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "status": 200,
+      "bytes": 109951,
+      "sha256": "d2462be4d4b563d98d33fd8e36ae1ac75769965f81f9a52b4da7abf826b9a85f"
+    },
+    {
+      "key": "promql-current",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-promql.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-promql.html",
+      "status": 200,
+      "bytes": 14641,
+      "sha256": "2901af8227ac0d9cd37dfaaa770b0529503fc9005cbb1777d4a5161213e02c6e"
+    },
+    {
+      "key": "logs-current",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Alarm-On-Logs.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Alarm-On-Logs.html",
+      "status": 200,
+      "bytes": 36272,
+      "sha256": "64e9fa88b32a1f68449f47764eaebb8ae386dfa037437f6aff5f309792c95480"
+    },
+    {
+      "key": "missing",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html",
+      "status": 200,
+      "bytes": 37068,
+      "sha256": "ef2ad30ab7088b0beb0d12969edc25250f6db1d365add37a8de58266320dc474"
+    },
+    {
+      "key": "concepts",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-concepts.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-concepts.html",
+      "status": 200,
+      "bytes": 11872,
+      "sha256": "10d63e63c2d1068e853fdd491372299d6f5e0cd64a073b4ad28483916cc883bb"
+    },
+    {
+      "key": "set-state",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_SetAlarmState.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_SetAlarmState.html",
+      "status": 200,
+      "bytes": 20438,
+      "sha256": "d7f089b117a5da30225624f0627f75e2cc5d83ac863d7ac7f47d2c23d914eca9"
+    },
+    {
+      "key": "lambda-sns-permissions",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html",
+      "finalURL": "https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html",
+      "status": 200,
+      "bytes": 20353,
+      "sha256": "32fdaf5f008319f2df853f19f862d78e4f5a9f5fcfbd0221fd6fcdf36eea07a8"
+    },
+    {
+      "key": "lambda-event-permissions",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html",
+      "finalURL": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html",
+      "status": 200,
+      "bytes": 34853,
+      "sha256": "b7725438809c3acfb03221bd4ad82ce1a5157fd9b3ee56ab39faa0faaa6b2453"
+    },
+    {
+      "key": "cloudwatch-chat",
+      "url": "https://docs.aws.amazon.com/chatbot/latest/adminguide/what-is.html",
+      "finalURL": "https://docs.aws.amazon.com/chatbot/latest/adminguide/what-is.html",
+      "status": 200,
+      "bytes": 21792,
+      "sha256": "fd2cc594c54d32f043e260a30438b7502d551bc39a093bae30bd048e32cce528"
+    },
+    {
+      "key": "amp-receivers",
+      "url": "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-alertmanager-receiver.html",
+      "finalURL": "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-alertmanager-receiver.html",
+      "status": 200,
+      "sha256": "b4a423c5b3b78c918b3231babb790e14407b015d8161030b88441d276fb31a86"
+    }
+  ],
+  "excludedSourceProbes": [
+    {
+      "key": "promql",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-PromQL-alarms.html",
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/",
+      "status": 200,
+      "bytes": 1157,
+      "sha256": "4eccd2235706c5b699abad8d83e21895f8ba7e8a23e6ee25acbd0801a1234ffa"
+    },
+    {
+      "key": "amp-rules",
+      "url": "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-ruler.html",
+      "finalURL": "https://docs.aws.amazon.com/prometheus/latest/userguide/",
+      "status": 200,
+      "bytes": 1219,
+      "sha256": "f0283a5a79a2441cb380b82e50fad326e0ce760785d16fcf6e44eda8a0f6b389"
+    }
+  ],
+  "native": {
+    "exampleValidation": {
+      "status": "passed",
+      "sdk": {
+        "boto3": "1.43.93",
+        "botocore": "1.43.93"
+      },
+      "requests": [
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 0,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighCPUUtilization",
+            "AlarmDescription": "CPU usage exceeds 80%",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 80.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ],
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ],
+            "OKActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ],
+            "TreatMissingData": "missing"
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 2,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighErrorRate",
+            "AlarmDescription": "Error rate exceeds 5%",
+            "Metrics": [
+              {
+                "Id": "errors",
+                "MetricStat": {
+                  "Metric": {
+                    "Namespace": "AWS/ApplicationELB",
+                    "MetricName": "HTTPCode_Target_5XX_Count",
+                    "Dimensions": [
+                      {
+                        "Name": "LoadBalancer",
+                        "Value": "app/my-alb/1234567890"
+                      }
+                    ]
+                  },
+                  "Period": 300,
+                  "Stat": "Sum"
+                },
+                "ReturnData": false
+              },
+              {
+                "Id": "requests",
+                "MetricStat": {
+                  "Metric": {
+                    "Namespace": "AWS/ApplicationELB",
+                    "MetricName": "RequestCount",
+                    "Dimensions": [
+                      {
+                        "Name": "LoadBalancer",
+                        "Value": "app/my-alb/1234567890"
+                      }
+                    ]
+                  },
+                  "Period": 300,
+                  "Stat": "Sum"
+                },
+                "ReturnData": false
+              },
+              {
+                "Id": "error_rate",
+                "Expression": "IF(requests > 0, 100 * FILL(errors, 0) / requests, 0)",
+                "ReturnData": true
+              }
+            ],
+            "Threshold": 5.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighCPU",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 80.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighMemory",
+            "MetricName": "mem_used_percent",
+            "Namespace": "CWAgent",
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 85.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighDisk",
+            "MetricName": "disk_used_percent",
+            "Namespace": "CWAgent",
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 90.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "service": "cloudwatch",
+          "operation": "PutCompositeAlarm",
+          "parameters": {
+            "AlarmName": "ServerResourceCritical",
+            "AlarmDescription": "Server resources are critical",
+            "AlarmRule": "(ALARM(\"HighCPU\") AND ALARM(\"HighMemory\")) OR ALARM(\"HighDisk\")",
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:critical-alerts"
+            ],
+            "OKActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 6,
+          "service": "cloudwatch",
+          "operation": "PutCompositeAlarm",
+          "parameters": {
+            "AlarmName": "ProductionAlerts",
+            "AlarmRule": "ALARM(\"HighCPU\")",
+            "ActionsSuppressor": "MaintenanceMode",
+            "ActionsSuppressorWaitPeriod": 60,
+            "ActionsSuppressorExtensionPeriod": 60,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 7,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "CPUAnomalyDetection",
+            "AlarmDescription": "CPU usage is anomalous",
+            "Metrics": [
+              {
+                "Id": "m1",
+                "MetricStat": {
+                  "Metric": {
+                    "Namespace": "AWS/EC2",
+                    "MetricName": "CPUUtilization",
+                    "Dimensions": [
+                      {
+                        "Name": "InstanceId",
+                        "Value": "i-1234567890abcdef0"
+                      }
+                    ]
+                  },
+                  "Period": 300,
+                  "Stat": "Average"
+                },
+                "ReturnData": true
+              },
+              {
+                "Id": "ad1",
+                "Expression": "ANOMALY_DETECTION_BAND(m1, 2)",
+                "ReturnData": true
+              }
+            ],
+            "ThresholdMetricId": "ad1",
+            "ComparisonOperator": "LessThanLowerOrGreaterThanUpperThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 9,
+          "service": "cloudwatch",
+          "operation": "PutAnomalyDetector",
+          "parameters": {
+            "Namespace": "AWS/EC2",
+            "MetricName": "CPUUtilization",
+            "Stat": "Average",
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ],
+            "Configuration": {
+              "ExcludedTimeRanges": [
+                {
+                  "StartTime": "2025-02-15T00:00:00Z",
+                  "EndTime": "2025-02-15T06:00:00Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "service": "sns",
+          "operation": "CreateTopic",
+          "parameters": {
+            "Name": "eks-alerts"
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "service": "sns",
+          "operation": "Subscribe",
+          "parameters": {
+            "TopicArn": "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts",
+            "Protocol": "email",
+            "Endpoint": "team@example.com"
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "service": "sns",
+          "operation": "Subscribe",
+          "parameters": {
+            "TopicArn": "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts",
+            "Protocol": "sms",
+            "Endpoint": "$VERIFIED_SMS_NUMBER"
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "service": "sns",
+          "operation": "Subscribe",
+          "parameters": {
+            "TopicArn": "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts",
+            "Protocol": "lambda",
+            "Endpoint": "arn:aws:lambda:ap-northeast-2:123456789012:function:alert-handler"
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 11,
+          "service": "sns",
+          "operation": "SetSubscriptionAttributes",
+          "parameters": {
+            "SubscriptionArn": "$SUBSCRIPTION_ARN",
+            "AttributeName": "FilterPolicyScope",
+            "AttributeValue": "MessageBody"
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 11,
+          "service": "sns",
+          "operation": "SetSubscriptionAttributes",
+          "parameters": {
+            "SubscriptionArn": "$SUBSCRIPTION_ARN",
+            "AttributeName": "FilterPolicy",
+            "AttributeValue": "{\"NewStateValue\": [\"ALARM\"]}"
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 12,
+          "service": "events",
+          "operation": "PutRule",
+          "parameters": {
+            "Name": "CloudWatchAlarmStateChange",
+            "EventPattern": "{\n    \"source\": [\"aws.cloudwatch\"],\n    \"detail-type\": [\"CloudWatch Alarm State Change\"],\n    \"detail\": {\n      \"state\": {\n        \"value\": [\"ALARM\"]\n      }\n    }\n  }"
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 12,
+          "service": "events",
+          "operation": "PutTargets",
+          "parameters": {
+            "Rule": "CloudWatchAlarmStateChange",
+            "Targets": [
+              {
+                "Id": "AlertHandler",
+                "Arn": "arn:aws:lambda:ap-northeast-2:123456789012:function:alert-handler"
+              }
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 15,
+          "service": "eks",
+          "operation": "DescribeAddonVersions",
+          "parameters": {
+            "addonName": "amazon-cloudwatch-observability",
+            "kubernetesVersion": "$KUBERNETES_VERSION"
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 15,
+          "service": "cloudwatch",
+          "operation": "ListMetrics",
+          "parameters": {
+            "Namespace": "ContainerInsights",
+            "MetricName": "pod_number_of_container_restarts",
+            "Dimensions": [
+              {
+                "Name": "ClusterName",
+                "Value": "my-cluster"
+              }
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 16,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EKS-Node-HighCPU",
+            "MetricName": "node_cpu_utilization",
+            "Namespace": "ContainerInsights",
+            "Dimensions": [
+              {
+                "Name": "ClusterName",
+                "Value": "my-cluster"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 80.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 16,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EKS-Pod-HighMemory",
+            "MetricName": "pod_memory_utilization_over_pod_limit",
+            "Namespace": "ContainerInsights",
+            "Dimensions": [
+              {
+                "Name": "ClusterName",
+                "Value": "my-cluster"
+              },
+              {
+                "Name": "Namespace",
+                "Value": "production"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 85.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 16,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EKS-Pod-Restarts",
+            "MetricName": "pod_number_of_container_restarts",
+            "Namespace": "ContainerInsights",
+            "Dimensions": [
+              {
+                "Name": "ClusterName",
+                "Value": "my-cluster"
+              },
+              {
+                "Name": "Namespace",
+                "Value": "production"
+              },
+              {
+                "Name": "PodName",
+                "Value": "my-pod"
+              }
+            ],
+            "Statistic": "Maximum",
+            "Period": 300,
+            "Threshold": 3.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 1,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 17,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EC2-SystemCheckFailed",
+            "MetricName": "StatusCheckFailed_System",
+            "Namespace": "AWS/EC2",
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ],
+            "Statistic": "Maximum",
+            "Period": 60,
+            "Threshold": 1.0,
+            "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+            "EvaluationPeriods": 2,
+            "TreatMissingData": "missing",
+            "AlarmActions": [
+              "arn:aws:automate:ap-northeast-2:ec2:recover"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 17,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EC2-LowUtilization-Stop",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 3600,
+            "Threshold": 5.0,
+            "ComparisonOperator": "LessThanThreshold",
+            "EvaluationPeriods": 24,
+            "TreatMissingData": "missing",
+            "AlarmActions": [
+              "arn:aws:automate:ap-northeast-2:ec2:stop"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 18,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "ASG-ScaleOut",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Dimensions": [
+              {
+                "Name": "AutoScalingGroupName",
+                "Value": "my-asg"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 70.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:autoscaling:ap-northeast-2:123456789012:scalingPolicy:xxx:autoScalingGroupName/my-asg:policyName/scale-out"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 18,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "ASG-ScaleIn",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Dimensions": [
+              {
+                "Name": "AutoScalingGroupName",
+                "Value": "my-asg"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 30.0,
+            "ComparisonOperator": "LessThanThreshold",
+            "EvaluationPeriods": 3,
+            "AlarmActions": [
+              "arn:aws:autoscaling:ap-northeast-2:123456789012:scalingPolicy:xxx:autoScalingGroupName/my-asg:policyName/scale-in"
+            ]
+          }
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 20,
+          "service": "cloudwatch",
+          "operation": "DescribeAlarms",
+          "parameters": {
+            "AlarmTypes": [
+              "MetricAlarm"
+            ],
+            "StateValue": "INSUFFICIENT_DATA"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 0,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighCPUUtilization",
+            "AlarmDescription": "CPU usage exceeds 80%",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 80.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ],
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ],
+            "OKActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ],
+            "TreatMissingData": "missing"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 2,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighErrorRate",
+            "AlarmDescription": "Error rate exceeds 5%",
+            "Metrics": [
+              {
+                "Id": "errors",
+                "MetricStat": {
+                  "Metric": {
+                    "Namespace": "AWS/ApplicationELB",
+                    "MetricName": "HTTPCode_Target_5XX_Count",
+                    "Dimensions": [
+                      {
+                        "Name": "LoadBalancer",
+                        "Value": "app/my-alb/1234567890"
+                      }
+                    ]
+                  },
+                  "Period": 300,
+                  "Stat": "Sum"
+                },
+                "ReturnData": false
+              },
+              {
+                "Id": "requests",
+                "MetricStat": {
+                  "Metric": {
+                    "Namespace": "AWS/ApplicationELB",
+                    "MetricName": "RequestCount",
+                    "Dimensions": [
+                      {
+                        "Name": "LoadBalancer",
+                        "Value": "app/my-alb/1234567890"
+                      }
+                    ]
+                  },
+                  "Period": 300,
+                  "Stat": "Sum"
+                },
+                "ReturnData": false
+              },
+              {
+                "Id": "error_rate",
+                "Expression": "IF(requests > 0, 100 * FILL(errors, 0) / requests, 0)",
+                "ReturnData": true
+              }
+            ],
+            "Threshold": 5.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighCPU",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 80.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighMemory",
+            "MetricName": "mem_used_percent",
+            "Namespace": "CWAgent",
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 85.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "HighDisk",
+            "MetricName": "disk_used_percent",
+            "Namespace": "CWAgent",
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 90.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "service": "cloudwatch",
+          "operation": "PutCompositeAlarm",
+          "parameters": {
+            "AlarmName": "ServerResourceCritical",
+            "AlarmDescription": "Server resources are critical",
+            "AlarmRule": "(ALARM(\"HighCPU\") AND ALARM(\"HighMemory\")) OR ALARM(\"HighDisk\")",
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:critical-alerts"
+            ],
+            "OKActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 6,
+          "service": "cloudwatch",
+          "operation": "PutCompositeAlarm",
+          "parameters": {
+            "AlarmName": "ProductionAlerts",
+            "AlarmRule": "ALARM(\"HighCPU\")",
+            "ActionsSuppressor": "MaintenanceMode",
+            "ActionsSuppressorWaitPeriod": 60,
+            "ActionsSuppressorExtensionPeriod": 60,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 7,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "CPUAnomalyDetection",
+            "AlarmDescription": "CPU usage is anomalous",
+            "Metrics": [
+              {
+                "Id": "m1",
+                "MetricStat": {
+                  "Metric": {
+                    "Namespace": "AWS/EC2",
+                    "MetricName": "CPUUtilization",
+                    "Dimensions": [
+                      {
+                        "Name": "InstanceId",
+                        "Value": "i-1234567890abcdef0"
+                      }
+                    ]
+                  },
+                  "Period": 300,
+                  "Stat": "Average"
+                },
+                "ReturnData": true
+              },
+              {
+                "Id": "ad1",
+                "Expression": "ANOMALY_DETECTION_BAND(m1, 2)",
+                "ReturnData": true
+              }
+            ],
+            "ThresholdMetricId": "ad1",
+            "ComparisonOperator": "LessThanLowerOrGreaterThanUpperThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:alerts"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 9,
+          "service": "cloudwatch",
+          "operation": "PutAnomalyDetector",
+          "parameters": {
+            "Namespace": "AWS/EC2",
+            "MetricName": "CPUUtilization",
+            "Stat": "Average",
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ],
+            "Configuration": {
+              "ExcludedTimeRanges": [
+                {
+                  "StartTime": "2025-02-15T00:00:00Z",
+                  "EndTime": "2025-02-15T06:00:00Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "service": "sns",
+          "operation": "CreateTopic",
+          "parameters": {
+            "Name": "eks-alerts"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "service": "sns",
+          "operation": "Subscribe",
+          "parameters": {
+            "TopicArn": "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts",
+            "Protocol": "email",
+            "Endpoint": "team@example.com"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "service": "sns",
+          "operation": "Subscribe",
+          "parameters": {
+            "TopicArn": "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts",
+            "Protocol": "sms",
+            "Endpoint": "$VERIFIED_SMS_NUMBER"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "service": "sns",
+          "operation": "Subscribe",
+          "parameters": {
+            "TopicArn": "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts",
+            "Protocol": "lambda",
+            "Endpoint": "arn:aws:lambda:ap-northeast-2:123456789012:function:alert-handler"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 11,
+          "service": "sns",
+          "operation": "SetSubscriptionAttributes",
+          "parameters": {
+            "SubscriptionArn": "$SUBSCRIPTION_ARN",
+            "AttributeName": "FilterPolicyScope",
+            "AttributeValue": "MessageBody"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 11,
+          "service": "sns",
+          "operation": "SetSubscriptionAttributes",
+          "parameters": {
+            "SubscriptionArn": "$SUBSCRIPTION_ARN",
+            "AttributeName": "FilterPolicy",
+            "AttributeValue": "{\"NewStateValue\": [\"ALARM\"]}"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 12,
+          "service": "events",
+          "operation": "PutRule",
+          "parameters": {
+            "Name": "CloudWatchAlarmStateChange",
+            "EventPattern": "{\n    \"source\": [\"aws.cloudwatch\"],\n    \"detail-type\": [\"CloudWatch Alarm State Change\"],\n    \"detail\": {\n      \"state\": {\n        \"value\": [\"ALARM\"]\n      }\n    }\n  }"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 12,
+          "service": "events",
+          "operation": "PutTargets",
+          "parameters": {
+            "Rule": "CloudWatchAlarmStateChange",
+            "Targets": [
+              {
+                "Id": "AlertHandler",
+                "Arn": "arn:aws:lambda:ap-northeast-2:123456789012:function:alert-handler"
+              }
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 15,
+          "service": "eks",
+          "operation": "DescribeAddonVersions",
+          "parameters": {
+            "addonName": "amazon-cloudwatch-observability",
+            "kubernetesVersion": "$KUBERNETES_VERSION"
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 15,
+          "service": "cloudwatch",
+          "operation": "ListMetrics",
+          "parameters": {
+            "Namespace": "ContainerInsights",
+            "MetricName": "pod_number_of_container_restarts",
+            "Dimensions": [
+              {
+                "Name": "ClusterName",
+                "Value": "my-cluster"
+              }
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 16,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EKS-Node-HighCPU",
+            "MetricName": "node_cpu_utilization",
+            "Namespace": "ContainerInsights",
+            "Dimensions": [
+              {
+                "Name": "ClusterName",
+                "Value": "my-cluster"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 80.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 16,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EKS-Pod-HighMemory",
+            "MetricName": "pod_memory_utilization_over_pod_limit",
+            "Namespace": "ContainerInsights",
+            "Dimensions": [
+              {
+                "Name": "ClusterName",
+                "Value": "my-cluster"
+              },
+              {
+                "Name": "Namespace",
+                "Value": "production"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 85.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 16,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EKS-Pod-Restarts",
+            "MetricName": "pod_number_of_container_restarts",
+            "Namespace": "ContainerInsights",
+            "Dimensions": [
+              {
+                "Name": "ClusterName",
+                "Value": "my-cluster"
+              },
+              {
+                "Name": "Namespace",
+                "Value": "production"
+              },
+              {
+                "Name": "PodName",
+                "Value": "my-pod"
+              }
+            ],
+            "Statistic": "Maximum",
+            "Period": 300,
+            "Threshold": 3.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 1,
+            "AlarmActions": [
+              "arn:aws:sns:ap-northeast-2:123456789012:eks-alerts"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 17,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EC2-SystemCheckFailed",
+            "MetricName": "StatusCheckFailed_System",
+            "Namespace": "AWS/EC2",
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ],
+            "Statistic": "Maximum",
+            "Period": 60,
+            "Threshold": 1.0,
+            "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+            "EvaluationPeriods": 2,
+            "TreatMissingData": "missing",
+            "AlarmActions": [
+              "arn:aws:automate:ap-northeast-2:ec2:recover"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 17,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "EC2-LowUtilization-Stop",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-1234567890abcdef0"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 3600,
+            "Threshold": 5.0,
+            "ComparisonOperator": "LessThanThreshold",
+            "EvaluationPeriods": 24,
+            "TreatMissingData": "missing",
+            "AlarmActions": [
+              "arn:aws:automate:ap-northeast-2:ec2:stop"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 18,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "ASG-ScaleOut",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Dimensions": [
+              {
+                "Name": "AutoScalingGroupName",
+                "Value": "my-asg"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 70.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "EvaluationPeriods": 2,
+            "AlarmActions": [
+              "arn:aws:autoscaling:ap-northeast-2:123456789012:scalingPolicy:xxx:autoScalingGroupName/my-asg:policyName/scale-out"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 18,
+          "service": "cloudwatch",
+          "operation": "PutMetricAlarm",
+          "parameters": {
+            "AlarmName": "ASG-ScaleIn",
+            "MetricName": "CPUUtilization",
+            "Namespace": "AWS/EC2",
+            "Dimensions": [
+              {
+                "Name": "AutoScalingGroupName",
+                "Value": "my-asg"
+              }
+            ],
+            "Statistic": "Average",
+            "Period": 300,
+            "Threshold": 30.0,
+            "ComparisonOperator": "LessThanThreshold",
+            "EvaluationPeriods": 3,
+            "AlarmActions": [
+              "arn:aws:autoscaling:ap-northeast-2:123456789012:scalingPolicy:xxx:autoScalingGroupName/my-asg:policyName/scale-in"
+            ]
+          }
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 20,
+          "service": "cloudwatch",
+          "operation": "DescribeAlarms",
+          "parameters": {
+            "AlarmTypes": [
+              "MetricAlarm"
+            ],
+            "StateValue": "INSUFFICIENT_DATA"
+          }
+        }
+      ],
+      "shell": [
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 0,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 2,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 6,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 7,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 9,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 11,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 12,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 15,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 16,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 17,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 18,
+          "status": "passed"
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 20,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 0,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 2,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 4,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 6,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 7,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 9,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 10,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 11,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 12,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 15,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 16,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 17,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 18,
+          "status": "passed"
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "block": 20,
+          "status": "passed"
+        }
+      ],
+      "semanticContracts": [
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "--metric-name pod_memory_utilization_over_pod_limit",
+          "expectedPresent": true
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "--dimensions Name=ClusterName,Value=my-cluster Name=Namespace,Value=production Name=PodName,Value=my-pod",
+          "expectedPresent": true
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "--attribute-value MessageBody",
+          "expectedPresent": true
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "reboot_instances(",
+          "expectedPresent": false
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "automation-definition/CleanupDisk",
+          "expectedPresent": false
+        },
+        {
+          "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "--addon-version v1.2.0",
+          "expectedPresent": false
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "--metric-name pod_memory_utilization_over_pod_limit",
+          "expectedPresent": true
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "--dimensions Name=ClusterName,Value=my-cluster Name=Namespace,Value=production Name=PodName,Value=my-pod",
+          "expectedPresent": true
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "--attribute-value MessageBody",
+          "expectedPresent": true
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "reboot_instances(",
+          "expectedPresent": false
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "automation-definition/CleanupDisk",
+          "expectedPresent": false
+        },
+        {
+          "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+          "check": "--addon-version v1.2.0",
+          "expectedPresent": false
+        }
+      ],
+      "scope": "Local botocore request shape/enums, Bash syntax, Python AST, JSON/YAML parsing and explicit source-supported semantic contracts; no AWS request, alarm evaluation, or notification."
+    },
+    "normalizer": {
+      "tests": 9,
+      "command": "python3 -m unittest discover -s examples/observability/cloudwatch-alarms/tests -v",
+      "status": "passed",
+      "scope": "Pure local synthetic events;noAWSrequests"
+    },
+    "eventRuler": {
+      "status": "passed",
+      "version": "2.2.0",
+      "results": [
+        {
+          "language": "en",
+          "cases": 7,
+          "output": "Previous pattern rejected: Unrecognized match type metricStat\nPASS 7 native Event Ruler cases"
+        },
+        {
+          "language": "ko",
+          "cases": 7,
+          "output": "Previous pattern rejected: Unrecognized match type metricStat\nPASS 7 native Event Ruler cases"
+        }
+      ],
+      "originalDefect": "Original array-of-object metricStat filter is rejected by actual RuleCompiler as Unrecognized match type metricStat",
+      "scope": "Actual AWS Event Ruler local matchesRule; no EventBridge API or notifications."
+    },
+    "terraform": {
+      "provider": "hashicorp/aws6.64.0",
+      "results": {
+        "en": {
+          "format_version": "1.0",
+          "valid": true,
+          "error_count": 0,
+          "warning_count": 0,
+          "diagnostics": []
+        },
+        "ko": {
+          "format_version": "1.0",
+          "valid": true,
+          "error_count": 0,
+          "warning_count": 0,
+          "diagnostics": []
+        }
+      },
+      "scope": "Native terraform validate with cached provider;noinit/plan/apply"
+    }
+  },
+  "markdown": {
+    "status": "passed",
+    "files": [
+      {
+        "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+        "originalLines": 1122,
+        "originalHash": "a7136479680d9947aa205b1436c49b132e3f1f122912e086643a749cea88a799",
+        "sha256": "e8aed3e0e439e300a9df749e53fe27fa5ca70199b2090230d08c0578dd6b3030",
+        "originalIds": 56,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png",
+            "exists": true
+          },
+          {
+            "target": "../../quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "answers": [],
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+        "originalLines": 242,
+        "originalHash": "33010acd646a47dddc0c5fa4198d98be5c3c1879be2bdac708ff64e8df8d4e34",
+        "sha256": "e491ca11d9df39a07ad24c4be9e0ab56c2a4a00c347532d502a7dcf64d2350e0",
+        "originalIds": 2,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [],
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "answers": [
+          "B",
+          "B",
+          "B",
+          "D",
+          "B",
+          "C",
+          "D",
+          "B",
+          "C",
+          "B"
+        ],
+        "passed": true
+      },
+      {
+        "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+        "originalLines": 1122,
+        "originalHash": "12b97405d52516f140b720d9671ce3959253806f8aa3d3b1d21c84a0aaa6e56a",
+        "sha256": "86976df9bd6b0ea837cd72c9669e89050e3a832d2e55cb7a0474b959bb03abaf",
+        "originalIds": 56,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-0.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-1.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-2.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-3.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-4.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-5.png",
+            "exists": true
+          },
+          {
+            "target": "../../quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "answers": [],
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+        "originalLines": 242,
+        "originalHash": "4ddde572080cdd6b788e285c634bf108bb40403beb65b76583a1ae13e005988a",
+        "sha256": "119821fc83d70e969a4a7b9eae5855d39c404e5fc21f05f8c1aa9041958f5933",
+        "originalIds": 2,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [],
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "answers": [
+          "B",
+          "B",
+          "B",
+          "D",
+          "B",
+          "C",
+          "D",
+          "B",
+          "C",
+          "B"
+        ],
+        "passed": true
+      }
+    ],
+    "quizParity": true,
+    "scope": "Actual VitePress/Vue compile, current fragments, original anchors and 10-question parity; no site build."
+  },
+  "delivery": [
+    {
+      "stem": "en-observability-alerting-02-cloudwatch-alarms-0",
+      "spec": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-02-cloudwatch-alarms-1",
+      "spec": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-1.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-02-cloudwatch-alarms-2",
+      "spec": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-2.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-02-cloudwatch-alarms-3",
+      "spec": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-3.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-02-cloudwatch-alarms-4",
+      "spec": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-4.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-02-cloudwatch-alarms-5",
+      "spec": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-5.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-02-cloudwatch-alarms-0",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-02-cloudwatch-alarms-1",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-1.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-02-cloudwatch-alarms-2",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-2.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-02-cloudwatch-alarms-3",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-3.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-02-cloudwatch-alarms-4",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-4.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-02-cloudwatch-alarms-5",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-5.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 914,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 914,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 914,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 61449,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 613,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 613,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 613,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48084,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51190,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 994,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 994,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 994,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53273,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 912,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 912,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 912,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53423,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 623,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 623,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 623,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56174,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60549,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 422,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 422,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 422,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47788,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 606,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 606,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 606,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51110,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 650,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 650,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 650,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52781,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 668,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 668,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 668,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52603,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 425,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 425,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 425,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55614,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "36 final viewer cases at375/768/1920; state/cost refinements replaced prior cases;12SVGexports; allHTTPfonts blocked deliberately; no analytics."
+  },
+  "desktop": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      }
+    ],
+    "hashes": [
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "sha256": "095a71bca33cdfd8f4496686a38bc0bd04ef5d3d5c58e8d7e646aee2ac0c93a6"
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "sha256": "aece0422a39e1aacc5f54293acec95982b4ad8e4a6a51824510c2325e7d546a0"
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "sha256": "017cb1ee8a2704e8a2fd18adf4539ef408d01ec5cc37d728cb4b3dc510f262d1"
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "sha256": "7c630faefe908f21a4dffc3d6ddb4c436f9fcbe87d9fa8d590171cd918033ffa"
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "sha256": "5aefe708428f3a95e21970abca6ff7bff2fa7a80c37503eb07d2ef7e4b0c1607"
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "sha256": "45326005819e70c08d9e41a3dd3133dff2acb61a1fc70523560f94603b3579b4"
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "sha256": "cc5c1a932142a703fb50af15d6d2761e081ec2ee6d5edca36bd8270342d5ef7c"
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "sha256": "856fb4858a32f8f18d635502a6e5ce938adf06f8fdd8a644cd33a453aa7e38ea"
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "sha256": "eb6e2eaf69b1b9b75ae998420447d4a34e610faf8f197703b4ec458b3539a548"
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "sha256": "c61e7567cbd4f59be06f89fb8a38f194f3f6924b7ba211cfa5528fc85c20635d"
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "sha256": "e28cbc5771e07da500a860556cf0a88ef59922d95ceab18c359b8dec31c0bd5e"
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "sha256": "b4cccd656dbdf04af9f1556fe238f9586b089810f16ba8f361d0347ad03c4a28"
+      }
+    ]
+  },
+  "individualPNGInspection": {
+    "count": 12,
+    "refinementsReinspected": 4,
+    "method": "Each final EN/KO PNG inspected with image tool; state graph made explicit and repeated pricing removed from cost map to fit desktop."
+  },
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-0.architecture.json",
+      "sha256": "80501e7cdb0096e8dbb2c1eeededb19985eea6795e01e086eb15bd6f4f3b2f52"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-1.architecture.json",
+      "sha256": "cfbc0a6a8d583352fbe681e8668b9bf45a5d86f7bec79280f3959e3a07c55ae1"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-2.architecture.json",
+      "sha256": "9bd6626a9284fe9ae960067e2f65b8cb8e25f702546bfef2e43aa64f1c8c3809"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-3.workflow.json",
+      "sha256": "36f421dca4203ad5ffedd87b4851bcf1c719fd6d1578fc64990d642241d7fd47"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-4.workflow.json",
+      "sha256": "3141b03a9698d051735b2b4ccee3ee540301ba8d107e8f335dfcae97e75292b8"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-5.architecture.json",
+      "sha256": "7cb0a3d3d4997e574478f28b562d537f5e1d524e09d32ae8bae332f673b6f5cf"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-0.architecture.json",
+      "sha256": "cc8fa065bcec32c7d63996b855ba46d366b8fd2d947eb8a3e78832124637a8a5"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-1.architecture.json",
+      "sha256": "ea2a266e1fd6701bf602da5005fce4eb2c3df7cbe81bc8b424d10210383c5428"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-2.architecture.json",
+      "sha256": "8a750c9524f024449e6781052495811406f437e172ffd74a64fd85e5139ed8a7"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-3.workflow.json",
+      "sha256": "685c364c213dacffd9fffed6094866eab463a7b35d8687ce3d9c607fc1b2d27b"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-4.workflow.json",
+      "sha256": "27f4290de044c9d23093fb92e9e0223a7c0ef98769552a1ec0db5499a9f92782"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-5.architecture.json",
+      "sha256": "886b74e0538d7c9f6d124d10eae75e2640aab956b3e92e717a7eaadcf1811e5d"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png",
+      "sha256": "49e1d100a09b377e355dca0765d6e22dcbcf4b7d742d9d03a51aaf63ee157845"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png",
+      "sha256": "94fbcf343be51f18da4bc7f60064320f546d4c6b3d49d60381cbd11f27f22cac"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png",
+      "sha256": "f0747eb4049b8db899a87ce239b1f64f0c2c22fb07b9960a1ea53d1409def410"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png",
+      "sha256": "df7dfb84ec12eacc978afea44234fbad99b0991fe03d2b911ea82f09b65d577c"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png",
+      "sha256": "ab6052235feb5a9c5f00c2d17e7484f9fdf4ecc7ab0867787982b60ee2dd89e2"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png",
+      "sha256": "ff9022cafeadff7b3a3241ad75d9066c9a3a9f65e235c8c55c1105a6856cb3e0"
+    },
+    {
+      "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+      "sha256": "e8aed3e0e439e300a9df749e53fe27fa5ca70199b2090230d08c0578dd6b3030"
+    },
+    {
+      "path": "en/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+      "sha256": "e491ca11d9df39a07ad24c4be9e0ab56c2a4a00c347532d502a7dcf64d2350e0"
+    },
+    {
+      "path": "examples/observability/cloudwatch-alarms/README.md",
+      "sha256": "0c01dd4ac6abcdd20da034695d197d47c70c7a21ed3a081c6ecab8ccbb45c243"
+    },
+    {
+      "path": "examples/observability/cloudwatch-alarms/event_normalizer.py",
+      "sha256": "aebd02d31e300d56bc4c43b4b91dfba9e6faeea6791923942d350ac7538700a5"
+    },
+    {
+      "path": "examples/observability/cloudwatch-alarms/tests/test_event_normalizer.py",
+      "sha256": "738f3e636db6fbabc6160cba55d64723a6a58e9c0e03d03590b62559d5a6db70"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-0.png",
+      "sha256": "3db8a84d49b4b2b381aa8d99c7aaeb7ac3fcd02c74e04366d33da63e8d812680"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-1.png",
+      "sha256": "5b243ed95a718da6837a28034057905849021c3ef7aea98c6e484f2b9ff28b86"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-2.png",
+      "sha256": "7ec1d868b506b9af119f6ea845f858a25eec6a2eaa3ac69bf99be6a785a1dcaa"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-3.png",
+      "sha256": "acbb566ab6620635de262bfd651f77f8a5af7ab3da870a541431f1bb8eecf3c0"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-4.png",
+      "sha256": "b8a4e5b2e57898134238f9fd2e6ccc68989c202af9aee4c7cd33b0142792345b"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-5.png",
+      "sha256": "35e2b1e88cadb07d1b6c1c532e461085ec3ff27d9596a44d02d03fa60c762285"
+    },
+    {
+      "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+      "sha256": "86976df9bd6b0ea837cd72c9669e89050e3a832d2e55cb7a0474b959bb03abaf"
+    },
+    {
+      "path": "ko/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+      "sha256": "119821fc83d70e969a4a7b9eae5855d39c404e5fc21f05f8c1aa9041958f5933"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-0.html",
+      "sha256": "7bd5885d8f58f6e8d6a8f1b34c46fbc8366331892854a31671e1a5d23d74ead4"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-1.html",
+      "sha256": "10897dab712d8dae96784e59a9f6f1979dbb259f2f58f4659cb577a02d4207c1"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-2.html",
+      "sha256": "7c4577f203efe89fe073d999292ee7912f418dc03029ce585340c0848e0ef9f3"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-3.html",
+      "sha256": "927cd8a396f1f9191c0d6c4ae6f1222b7778f091599fbb6a3b2413a61bd1c4db"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-4.html",
+      "sha256": "fabac5f89dde72471eb89427b23c17fb7ac07ad24d242f7a53eb280c73fc6685"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-5.html",
+      "sha256": "42afe881d4acaf4ad2e790a357e833391365b3a3e1020184d308ae4cdc9ad382"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-0.html",
+      "sha256": "f0eeb413871db0c6113f3a61f8fa416cb487498c0a092f5877d352cdf29ecafc"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-1.html",
+      "sha256": "8ed218431285b3f3a00a0e9524c98a602541237dcfb4176972beac39c3431579"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-2.html",
+      "sha256": "a16320d2b6b75df605217bdc835ccd4c8545612a35c61d33b39420f0134bd30d"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-3.html",
+      "sha256": "9653662548b02d8e5b390e41847e34799c8606e3546f5ad37f63e8fcacee6f75"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-4.html",
+      "sha256": "89b43037cde8967f358292a69aeec3021f002c9878293caf763a6e43901e8dbe"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-5.html",
+      "sha256": "274f8e79f0c43880d41ac0fc1525fb807b220d19748127d9c5bea08969c7cfda"
+    }
+  ],
+  "retiredSpecs": [
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-1.lifecycle.json",
+      "replacedBy": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-1.architecture.json",
+      "reason": "State map now has explicit transitions only; removes implicit lifecycle rail and empty outcomes lane."
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-1.lifecycle.json",
+      "replacedBy": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-1.architecture.json",
+      "reason": "State map now has explicit transitions only; removes implicit lifecycle rail and empty outcomes lane."
+    }
+  ],
+  "sourcePreservation": [
+    "All original guide section headings retained; obsolete Slack sender and name-triggered recovery replaced by current integration requirements and tested event inspection.",
+    "AMP republishing section retains operational purpose with explicit alternatives and validation requirements; unsafe unvalidated bridge code removed.",
+    "Legacy Markdown anchors and all20quizanswers checked with native VitePress/Vue compilation."
+  ],
+  "limits": [
+    "No AWS resources, notification delivery, CloudWatch evaluator, cluster enforcement or actual billing execution tested.",
+    "botocore shape/enums and local semantic checks do not prove service-side acceptance or metric availability.",
+    "AWS official pages disagree about DynamoDB missing-data overrides; no blanket DynamoDB claim is added.",
+    "Browser MCP unavailable because configured Chrome is absent; actual installed Playwright/Chromium used with offline fonts.",
+    "Full VitePress build runs only in GitHub ARM CI."
+  ],
+  "legendFollowup": {
+    "finding": "CLOUDWATCH-R1-001",
+    "change": "FourworkflowlegendsnownameProcessing/Metricdata/Decision/Lambdafunctions/AWSservicesinappropriateauthorlanguage;topologyunchanged.",
+    "responsiveCases": 12,
+    "desktopCases": 16,
+    "individualPNGReinspection": 4,
+    "scope": "Onlylegendlabelsandgeneratedartifactschanged;document/code/nativecontractsunchanged."
+  }
+}
