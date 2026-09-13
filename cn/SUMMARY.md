@@ -130,27 +130,14 @@
   * [第 6 部分：MSK 集成](data-on-eks/kafka/06-msk-integration.md)
   * [第 7 部分：监控](data-on-eks/kafka/07-monitoring.md)
   * [第 8 部分：最佳实践](data-on-eks/kafka/08-best-practices.md)
-* [EKS 上的 Spark 深入探讨](data-on-eks/spark/README.md)
-  * [第 1 部分：Kubernetes 上的 Spark 基础](data-on-eks/spark/01-spark-fundamentals.md)
-  * [第 2 部分：Spark Operator](data-on-eks/spark/02-spark-operator.md)
-  * [第 3 部分：EKS 上的 Amazon EMR](data-on-eks/spark/03-emr-on-eks.md)
-  * [第 4 部分：性能与成本调优](data-on-eks/spark/04-performance-tuning.md)
-  * [第 5 部分：最佳实践与安全](data-on-eks/spark/05-best-practices.md)
-* [EKS 上的 Airflow 深入探讨](data-on-eks/airflow/README.md)
-  * [第 1 部分：Kubernetes 上的 Airflow 架构](data-on-eks/airflow/01-architecture.md)
-  * [第 2 部分：Helm 部署与 Executor 选择](data-on-eks/airflow/02-helm-deployment.md)
-  * [第 3 部分：DAG 模式与 KubernetesPodOperator](data-on-eks/airflow/03-dag-patterns.md)
-  * [第 4 部分：Amazon MWAA 集成](data-on-eks/airflow/04-mwaa-integration.md)
-  * [第 5 部分：运维与安全](data-on-eks/airflow/05-operations.md)
-* [EKS 上的 Flink 深入探讨](data-on-eks/flink/README.md)
-  * [第 1 部分：Kubernetes 上的 Flink 架构](data-on-eks/flink/01-architecture.md)
-  * [第 2 部分：Flink Kubernetes Operator](data-on-eks/flink/02-flink-kubernetes-operator.md)
-  * [第 3 部分：状态、Checkpoint 与流处理模式](data-on-eks/flink/03-state-checkpointing-streaming.md)
-  * [第 4 部分：运维、高可用性与托管 Flink](data-on-eks/flink/04-operations-ha.md)
+  * [Kafka 基准测试第 9 部分（英文指南）](data-on-eks/kafka/09-kafka-benchmark.md)
 
 ## 网络
 
 * [网络概览](networking/README.md)
+  * [网络基础第 1 部分（英文指南）](basics/06-network-fundamentals-part1.md)
+  * [网络基础第 2 部分（英文指南）](basics/06-network-fundamentals-part2.md)
+  * [网络基础第 3 部分（英文指南）](basics/06-network-fundamentals-part3.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Cilium 深入探讨](networking/cilium/README.md)
   * [第 1 部分：简介](networking/cilium/01-introduction.md)
@@ -267,14 +254,6 @@
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
 
-## 容器镜像仓库
-
-* [容器镜像仓库概览](container-registry/README.md)
-* [Docker Hub](container-registry/01-docker-hub.md)
-* [Amazon ECR](container-registry/02-amazon-ecr.md)
-* [Harbor](container-registry/03-harbor.md)
-* [容器镜像仓库最佳实践](container-registry/04-best-practices.md)
-
 ## 平台工程
 
 * [平台工程概览](platform-engineering/00-platform-engineering-overview.md)
@@ -303,7 +282,7 @@
     * [安全](gitops/argocd/07-security.md)
     * [通知](gitops/argocd/08-notifications.md)
     * [最佳实践](gitops/argocd/09-best-practices.md)
-    * [Rollouts 实验深入探讨](gitops/argocd/10-rollouts-experiment.md)
+
   * [FluxCD](gitops/02-fluxcd.md)
   * [GitOps 工具对比](gitops/03-gitops-comparison.md)
   * [Flagger 渐进式交付](gitops/04-flagger.md)
@@ -367,7 +346,8 @@
   * [存储实验](labs/core/04-storage-lab.md)
   * [ConfigMap 和 Secret 实验](labs/core/05-configuration-secrets-lab.md)
   * [EKS 集群创建实验](labs/eks/01-eks-cluster-creation-lab.md)
-  * [端到端可观测性实验](lab-guides/labs/observability-end-to-end/README.md)
+
+  * 端到端可观测性实验
     * [实验系列简介](labs/observability/README.md)
     * [第 1 部分：基础设施设置](labs/observability/01-infrastructure-setup-lab.md)
     * [第 2 部分：可观测性技术栈](labs/observability/02-observability-stack-lab.md)
@@ -394,7 +374,7 @@
   * [策略测验](quizzes/core/07-policies-quiz.md)
   * [调度、抢占与驱逐测验](quizzes/core/08-scheduling-preemption-eviction-quiz.md)
   * [集群管理测验](quizzes/core/09-cluster-administration-quiz.md)
-  * [Kubernetes 中的 Windows 测验](quizzes/core/10-windows-in-kubernetes-quiz.md)
+
   * [扩展 Kubernetes 测验](quizzes/core/11-extending-kubernetes-quiz.md)
 * 调度
   * [自定义调度器测验 - 第 1 部分](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
@@ -476,20 +456,8 @@
   * [第 6 部分：MSK 集成测验](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
   * [第 7 部分：监控测验](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [第 8 部分：最佳实践测验](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
-  * [第 1 部分：Kubernetes 上的 Spark 基础测验](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
-  * [第 2 部分：Spark Operator 测验](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
-  * [第 3 部分：EKS 上的 Amazon EMR 测验](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
-  * [第 4 部分：性能与成本调优测验](quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
-  * [第 5 部分：最佳实践与安全测验](quizzes/data-on-eks/spark/05-best-practices-quiz.md)
-  * [第 1 部分：Kubernetes 上的 Airflow 架构测验](quizzes/data-on-eks/airflow/01-architecture-quiz.md)
-  * [第 2 部分：Helm 部署与 Executor 选择测验](quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
-  * [第 3 部分：DAG 模式与 KubernetesPodOperator 测验](quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
-  * [第 4 部分：Amazon MWAA 集成测验](quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
-  * [第 5 部分：运维与安全测验](quizzes/data-on-eks/airflow/05-operations-quiz.md)
-  * [第 1 部分：Kubernetes 上的 Flink 架构测验](quizzes/data-on-eks/flink/01-architecture-quiz.md)
-  * [第 2 部分：Flink Kubernetes Operator 测验](quizzes/data-on-eks/flink/02-operator.md)
-  * [第 3 部分：状态、Checkpoint 与流处理模式测验](quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
-  * [第 4 部分：运维、高可用性与托管 Flink 测验](quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
+  * [Kafka 基准测试第 9 部分测验（英文）](quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+
 * 网络
   * [网络概览测验](quizzes/networking/00-networking-overview-quiz.md)
   * [VPC CNI 测验](quizzes/networking/01-vpc-cni-quiz.md)
@@ -555,11 +523,7 @@
   * [cert-manager 测验](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescape 测验](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE 测验](quizzes/security/12-spiffe-spire-quiz.md)
-* 容器镜像仓库
-  * [Docker Hub 测验](quizzes/container-registry/01-docker-hub-quiz.md)
-  * [Amazon ECR 测验](quizzes/container-registry/02-amazon-ecr-quiz.md)
-  * [Harbor 测验](quizzes/container-registry/03-harbor-quiz.md)
-  * [容器镜像仓库最佳实践测验](quizzes/container-registry/04-best-practices-quiz.md)
+
 * GitOps
   * [ArgoCD 测验](quizzes/gitops/01-argocd-quiz.md)
   * ArgoCD 详细测验

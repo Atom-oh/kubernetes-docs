@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/security/09-opa-gatekeeper.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "df303cb8988acef4d9777755e2ab0d2ea294d260aa1656ab39e14135705e1a46",
+    "summary": "Full3338original-line/24quizreview;Gator3.23.1native33policycases+3modes,8CRD+2metricsbindings,nativeModifySet5assertions,54example/licensefiles,2figures6browser2SVG95aliases; noK8sdeployment. Four extractedMarkdownCTs also passednativeGator; quiznaming/comparisonaligned.",
+    "validationReport": "docs/reviews/2026-09-11/gatekeeper-validation.json"
+  },
+  {
+    "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "46e84c6ac40738cd384cb395032d2e122544765213e2ff8ec04d4d237456123d",
+    "summary": "Full3338original-line/24quizreview;Gator3.23.1native33policycases+3modes,8CRD+2metricsbindings,nativeModifySet5assertions,54example/licensefiles,2figures6browser2SVG95aliases; noK8sdeployment. Four extractedMarkdownCTs also passednativeGator; quiznaming/comparisonaligned.",
+    "validationReport": "docs/reviews/2026-09-11/gatekeeper-validation.json"
+  },
+  {
+    "path": "en/security/09-opa-gatekeeper.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "aaca3958a9d1588368de04ca63e8dd9cb70a863adcb13cb10b2fb8adf2e7e43d",
+    "summary": "Full3338original-line/24quizreview;Gator3.23.1native33policycases+3modes,8CRD+2metricsbindings,nativeModifySet5assertions,54example/licensefiles,2figures6browser2SVG95aliases; noK8sdeployment. Four extractedMarkdownCTs also passednativeGator; quiznaming/comparisonaligned.",
+    "validationReport": "docs/reviews/2026-09-11/gatekeeper-validation.json"
+  },
+  {
+    "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "010aeff3eb88670f8c54f22a107a8608cb3035289de817b5c4fa5215e062b884",
+    "summary": "Full3338original-line/24quizreview;Gator3.23.1native33policycases+3modes,8CRD+2metricsbindings,nativeModifySet5assertions,54example/licensefiles,2figures6browser2SVG95aliases; noK8sdeployment. Four extractedMarkdownCTs also passednativeGator; quiznaming/comparisonaligned.",
+    "validationReport": "docs/reviews/2026-09-11/gatekeeper-validation.json"
+  }
+]

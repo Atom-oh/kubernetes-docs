@@ -1,6 +1,7 @@
 # Lab Guide
 
-> **Last Updated**: February 22, 2026
+
+> **Last Updated**: September 13, 2026
 
 This section provides hands-on lab guides for practicing Kubernetes and related technologies. Each lab includes step-by-step instructions and verification methods, allowing you to confirm what you learned in theory in a real environment.
 
@@ -16,8 +17,8 @@ This section provides hands-on lab guides for practicing Kubernetes and related 
 | 6 | [Storage Lab](core/04-storage-lab.md) | Intermediate | kubectl, K8s cluster |
 | 7 | [ConfigMap and Secret Lab](core/05-configuration-secrets-lab.md) | Beginner | kubectl, K8s cluster |
 | 8 | [EKS Cluster Creation Lab](eks/01-eks-cluster-creation-lab.md) | Intermediate | AWS CLI, eksctl |
-| 9 | [Observability E2E: Series Introduction](observability/README.md) | Advanced | AWS account, Terraform, Helm |
-| 10 | [Observability E2E: Infrastructure Setup](observability/01-infrastructure-setup-lab.md) | Intermediate | Part 0 completed |
+| 9 | [Observability E2E: Series Introduction](observability/README.md) | Advanced | Approved AWS environment, Helm, Python |
+| 10 | [Observability E2E: Infrastructure Setup](observability/01-infrastructure-setup-lab.md) | Intermediate | Series introduction and networking ready |
 | 11 | [Observability E2E: Observability Stack](observability/02-observability-stack-lab.md) | Advanced | Part 1 completed |
 | 12 | [Observability E2E: MSA Deployment and Canary](observability/03-msa-deployment-lab.md) | Advanced | Part 2 completed |
 | 13 | [Observability E2E: Load Testing and Autoscaling](observability/04-load-testing-scaling-lab.md) | Intermediate | Part 3 completed |
@@ -38,15 +39,11 @@ This section provides hands-on lab guides for practicing Kubernetes and related 
 - Docker Desktop or Docker Engine
 
 ### Kubernetes Environment (for Core Labs)
-```bash
-# Install and start minikube
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-sudo install minikube-linux-amd64 /usr/local/bin/minikube
-minikube start
+Install tools for your OS/CPU architecture and follow each lab’s cluster/version requirements. Do not install a Linux AMD64 binary unchanged on macOS or ARM.
 
-# Install kubectl
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-sudo install kubectl /usr/local/bin/kubectl
+```bash
+kubectl version --client
+kubectl config current-context
 ```
 
 ### AWS Environment (for EKS Labs)

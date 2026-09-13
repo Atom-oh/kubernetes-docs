@@ -1,0 +1,744 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T07:00:57.625660+00:00",
+  "deploymentRun": 34743708796,
+  "mergeCommit": "e14ab48c9c9b5111a95e50e6306a182e82693e98",
+  "includedPRs": [
+    269
+  ],
+  "pages": [
+    {
+      "path": "ko/labs/observability/05-alerting-aiops-lab.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/05-alerting-aiops-lab",
+      "status": 200,
+      "sha256": "d7c698c2427dee3e215f0e877d347e514002c63d56e1c6a791e560c9907efb46",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-05-alerting-aiops-lab-0.8SCeDAT3.png",
+          "status": 200,
+          "sha256": "99c03aae2a7efae1de580e57ec40d7c5ec6b9e0f24523fe547ed8c04793d402b",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-05-alerting-aiops-lab-10.Ctyo0rwC.png",
+          "status": 200,
+          "sha256": "4efbdf6ab51bbcf7a4525a1fdd9da8712ad224f0e7006f2e6c95b075d864b9ee",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-05-alerting-aiops-lab-2.ClS5vzkD.png",
+          "status": 200,
+          "sha256": "86e3021fed972ee4122515f6876862a56fd55d1435a03f83c850fd1dd1947e9d",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-05-alerting-aiops-lab-1.Ib4bjudi.png",
+          "status": 200,
+          "sha256": "6c27ffdc711aa21045c8c8bd89a816545a2c69db74409528325f8e3e9c12927c",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-05-alerting-aiops-lab-3.Bpv6VQx0.png",
+          "status": 200,
+          "sha256": "218fc66dcc929800d1ded7ace19d957f8d9e8ac9ef04732cbc6acc358abd41d4",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 468335,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "ko/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/labs/05-alerting-aiops-quiz",
+      "status": 200,
+      "sha256": "7b952d74605ac58085adc0f9665a87e1fcb1fa0cc7e5fe4299fdd864a7decd4a",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 447102,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/labs/observability/05-alerting-aiops-lab.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/labs/observability/05-alerting-aiops-lab",
+      "status": 200,
+      "sha256": "922eee5a5e2467a12225aae3abf63ff678998b5e3e3315473b01e5ec7391f384",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-05-alerting-aiops-lab-0.DDO-YqiN.png",
+          "status": 200,
+          "sha256": "93e1a687e67a95106f37e2dc5af7cc3e8e7e65de28b9812462ff79333b4eee61",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-05-alerting-aiops-lab-10.BofPlpr2.png",
+          "status": 200,
+          "sha256": "a3377042cb6b0ab0746b8cc5e1177b741aacc611a997c2a8747926bcab9d1071",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-05-alerting-aiops-lab-2._IBUaTZW.png",
+          "status": 200,
+          "sha256": "9114c310a5a082d443df7c1acc407b0d7619313b39ba6ab8bacca1a08ff9bc62",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-05-alerting-aiops-lab-1.Vhl3hAbF.png",
+          "status": 200,
+          "sha256": "0337f3bde176cb33fc406711d708e1db6d9092ffc4c7c12d9c380f448f5037ca",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-05-alerting-aiops-lab-3.BwFmUiDN.png",
+          "status": 200,
+          "sha256": "0775b4c0fb9d0d739814518cadffb9c0f72fc5a918cfa890145171e6c60ab4cf",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 465206,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/labs/05-alerting-aiops-quiz",
+      "status": 200,
+      "sha256": "b27a9d95f0347302bbaad5aca5089d22da580e30f51f4d26db4107c3f8d03e9f",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 445931,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    }
+  ],
+  "viewers": [
+    {
+      "name": "ko-labs-observability-05-alerting-aiops-lab-0.html",
+      "status": 200,
+      "bytes": 713547,
+      "sha256": "fb69fda155dd2b09617a13ddd638e4c2aa8b3b786fbf5a18b0c86f0a567b9944"
+    },
+    {
+      "name": "ko-labs-observability-05-alerting-aiops-lab-10.html",
+      "status": 200,
+      "bytes": 719114,
+      "sha256": "23253ba74243941ff7c877a505e2981402821f0f5ba9fab7b3a834918c537ee6"
+    },
+    {
+      "name": "ko-labs-observability-05-alerting-aiops-lab-2.html",
+      "status": 200,
+      "bytes": 714242,
+      "sha256": "99f61c8854ad043e1133e5f8ce13fccd6e4b09397d17db112c25c287650461f2"
+    },
+    {
+      "name": "ko-labs-observability-05-alerting-aiops-lab-1.html",
+      "status": 200,
+      "bytes": 710285,
+      "sha256": "9d00fe73a0f47f36764beb4ec3cfc771f168d71ba57c8bbf39bc4fcf31a055de"
+    },
+    {
+      "name": "ko-labs-observability-05-alerting-aiops-lab-3.html",
+      "status": 200,
+      "bytes": 707709,
+      "sha256": "7d44fdbc51613ac7a6453816c048be005ef79a4ae538f2fe5b160edcadfc2bd6"
+    },
+    {
+      "name": "en-labs-observability-05-alerting-aiops-lab-0.html",
+      "status": 200,
+      "bytes": 713528,
+      "sha256": "691ef4638b01425e8b7e6c93437e9524769b805b40df2060899ffd3c159a4e34"
+    },
+    {
+      "name": "en-labs-observability-05-alerting-aiops-lab-10.html",
+      "status": 200,
+      "bytes": 719031,
+      "sha256": "787a3c54ce930e72bb63ac60e33cdc1ba6166c81f6851cb38f88bd5e352e4e71"
+    },
+    {
+      "name": "en-labs-observability-05-alerting-aiops-lab-2.html",
+      "status": 200,
+      "bytes": 714232,
+      "sha256": "8d820491583e636dcbe0484d49719b373cec8954b5c972e8a508e06cba40267a"
+    },
+    {
+      "name": "en-labs-observability-05-alerting-aiops-lab-1.html",
+      "status": 200,
+      "bytes": 709845,
+      "sha256": "d6a8d1699bd06a5386da2510e130575a632825c6a8e7b51ca2175c5692b52b7c"
+    },
+    {
+      "name": "en-labs-observability-05-alerting-aiops-lab-3.html",
+      "status": 200,
+      "bytes": 707583,
+      "sha256": "8fd1f5285df8f2576cfe6a0529fc1a4642478a71a2dc40cb94a1563d9e9fab3d"
+    }
+  ],
+  "scope": "HTTP source and exact hashed PNG comparison; no analytics events or real application execution.",
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 715,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 715,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 715,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55806,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52346,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-10.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 781,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-10.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 781,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-10.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 781,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60939,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 780,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 780,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 780,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56594,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 647,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 647,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-05-alerting-aiops-lab-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 647,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49672,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 517,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 517,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 517,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55102,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 401,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 401,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 401,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51636,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-10.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 658,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-10.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 658,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-10.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 658,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60809,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 500,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 500,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 500,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56078,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 459,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 459,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-05-alerting-aiops-lab-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 459,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49300,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "30caseson10fetchedproductionviewers; motion/reduced-motion/visibility/theme/guided controls and10SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  }
+}

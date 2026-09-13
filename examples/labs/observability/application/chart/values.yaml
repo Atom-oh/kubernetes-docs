@@ -1,0 +1,40 @@
+image:
+  repository: ''
+  tag: ''
+  pullPolicy: IfNotPresent
+region: ''
+eventTopicArn: ''
+databaseSecret: lab-database
+collectorEndpoint: http://lab-agent.observability.svc.cluster.local:4318/v1/traces
+notificationQueueURL: ''
+analyticsQueueURL: ''
+monitorRelease: lab-service-monitoring
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 384Mi
+roles:
+  api-gateway:
+    replicas: 1
+  order-service:
+    replicas: 2
+  payment-service:
+    replicas: 5
+  notification:
+    replicas: 1
+  analytics:
+    replicas: 1
+scaling:
+  enabled: true
+  maxReplicas: 5
+rollouts:
+  enabled: true
+  prometheusURL: http://lab-service-monitoring-prometheus.monitoring.svc.cluster.local:9090
+roleArns:
+  order-service: ''
+  payment-service: ''
+  notification: ''
+  analytics: ''

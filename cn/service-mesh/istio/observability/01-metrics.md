@@ -1,93 +1,54 @@
 # Istio 指标
 
-> **支持的版本**: Istio 1.28
-> **最后更新**: February 19, 2026
+> **支持版本**：Istio 1.31
+> **最后更新**：2026 年 9 月 11 日
 
-Istio 会自动收集 Service Mesh（服务网格）中所有流量的指标，并与 Prometheus 和 OpenTelemetry 等各种后端集成，以提供全面的可观测性。
+> **验证范围**：这些实验配置依据官方参考和离线验证器检查，未部署集群。各示例注明命名空间、身份、存储、后端和负载假设，必须针对目标环境验证。
+
+Istio 代理为观测流量生成指标。本指南涵盖 Sidecar/Envoy HTTP 和 TCP 指标，以及通过 Prometheus 或 OpenTelemetry Collector 抓取。Ambient ztunnel 具有不同 L4 指标；HTTP 指标需要 waypoint。
 
 ## 目录
 
 1. [指标概述](#metrics-overview)
 2. [Istio 标准指标](#istio-standard-metrics)
-3. [Circuit Breaker 指标](#circuit-breaker-metrics)
-4. [弹性指标](#resilience-metrics)
+3. [断路器指标](#circuit-breaker-metrics)
+4. [韧性指标](#resilience-metrics)
 5. [OpenTelemetry 集成](#opentelemetry-integration)
 6. [Prometheus 集成](#prometheus-integration)
-7. [使用 Telemetry API 进行自定义](#customization-with-telemetry-api)
+7. [使用 Telemetry API 自定义](#customization-with-telemetry-api)
 8. [实用指标查询](#practical-metric-queries)
 9. [指标优化](#metrics-optimization)
 10. [故障排除](#troubleshooting)
 
-## 指标概述
+## 指标概述 {#metrics-overview}
 
 ### 黄金信号
 
-Istio 会根据 Google 的 SRE 原则自动收集黄金信号：
+结合代理遥测和节点/容器导出器测量黄金信号：
 
 1. **延迟**：请求处理时间
 2. **流量**：系统吞吐量（RPS、带宽）
 3. **错误**：失败率和错误类型
-4. **饱和度**：资源利用率
+4. **饱和度**：队列/连接压力，加 Kubernetes 导出器提供的 CPU/内存
 
-### 指标收集架构
+### 指标采集架构
 
-```mermaid
-flowchart TD
-    subgraph "Application Pods"
-        App1[App Container]
-        Envoy1[Envoy Sidecar]
-        App1 -.-> Envoy1
-    end
+Envoy 暴露 Prometheus 指标 → Prometheus 直接抓取，或 OpenTelemetry Collector Prometheus 接收器抓取 → 配置的指标后端 → Grafana/Kiali。Istio OpenTelemetry 扩展提供程序配置追踪；不是 OTLP 指标发送器。
 
-    subgraph "Istio Control Plane"
-        Istiod[istiod]
-        Telemetry[Telemetry Config]
-    end
-
-    subgraph "Metrics Backend"
-        Prometheus[Prometheus]
-        OTEL[OpenTelemetry<br/>Collector]
-    end
-
-    subgraph "Visualization"
-        Grafana[Grafana]
-        Kiali[Kiali]
-    end
-
-    Envoy1 -->|Scrape /stats/prometheus| Prometheus
-    Envoy1 -->|Push Metrics| OTEL
-    Istiod -->|Configure| Envoy1
-    Telemetry -.->|Applied by| Istiod
-
-    Prometheus --> Grafana
-    Prometheus --> Kiali
-    OTEL --> Prometheus
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istioComponent fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoring fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    class App1 k8sComponent;
-    class Envoy1,Istiod,Telemetry istioComponent;
-    class Prometheus,OTEL monitoring;
-    class Grafana,Kiali visualization;
-```
-
-## Istio 标准指标
+## Istio 标准指标 {#istio-standard-metrics}
 
 ### HTTP/gRPC 指标
 
-Istio 会为所有 HTTP/gRPC 流量生成以下指标：
+Envoy 为识别出的 HTTP/gRPC 流量生成这些指标。每个报告代理都会输出指标，因此应针对具体问题选择一个报告方。目标报告避免重复观察一个跳点，而从未到达目标的上游失败需要源报告。按命名空间（及适用集群）对服务名分组。
 
 #### istio_requests_total
 
-**类型**：Counter
-**描述**：已处理请求的总数
+**类型**：计数器
+**描述**：已处理请求总数
 
 ```promql
 istio_requests_total{
-  reporter="source",  # or "destination"
+  reporter="destination",  # Peer security policy populated at destination
   source_workload="productpage-v1",
   source_workload_namespace="default",
   source_principal="spiffe://cluster.local/ns/default/sa/bookinfo-productpage",
@@ -118,17 +79,17 @@ istio_requests_total{
 **关键标签**：
 - `response_code`：HTTP 状态码（200、404、500 等）
 - `response_flags`：Envoy 响应标志
-  - `UH`：上游连接失败
+  - `UH`：没有健康上游
   - `UF`：上游连接失败
-  - `UR`：上游请求超时
+  - `UR`：上游远程重置；`UT`：上游请求超时
   - `DC`：下游连接终止
   - `LR`：本地重置
-  - `URX`：被 Circuit Breaker 拒绝
-- `connection_security_policy`：mTLS 状态（`mutual_tls`、`none`）
+  - `URX`：超过上游重试限制（或 TCP 最大连接尝试次数）
+- `connection_security_policy`：mTLS 状态（`mutual_tls`、`none`；源报告可为 `unknown`）
 
 #### istio_request_duration_milliseconds
 
-**类型**：Histogram
+**类型**：直方图
 **描述**：请求处理时间（毫秒）
 
 ```promql
@@ -142,24 +103,24 @@ istio_request_duration_milliseconds_count          # Total request count
 
 #### istio_request_bytes
 
-**类型**：Histogram
+**类型**：直方图
 **描述**：请求正文大小（字节）
 
 ```promql
-istio_request_bytes_bucket{le="1024"}   # 1KB or less
-istio_request_bytes_bucket{le="10240"}  # 10KB or less
+istio_request_bytes_bucket  # Inspect actual le bounds
+istio_request_bytes_bucket{le="+Inf"}  # All body sizes
 istio_request_bytes_sum
 istio_request_bytes_count
 ```
 
 #### istio_response_bytes
 
-**类型**：Histogram
+**类型**：直方图
 **描述**：响应正文大小（字节）
 
 ```promql
-istio_response_bytes_bucket{le="1024"}
-istio_response_bytes_bucket{le="10240"}
+istio_response_bytes_bucket
+istio_response_bytes_bucket{le="+Inf"}
 istio_response_bytes_sum
 istio_response_bytes_count
 ```
@@ -168,8 +129,8 @@ istio_response_bytes_count
 
 #### istio_tcp_connections_opened_total
 
-**类型**：Counter
-**描述**：已打开 TCP 连接的数量
+**类型**：计数器
+**描述**：已打开 TCP 连接数
 
 ```promql
 istio_tcp_connections_opened_total{
@@ -181,40 +142,40 @@ istio_tcp_connections_opened_total{
 
 #### istio_tcp_connections_closed_total
 
-**类型**：Counter
-**描述**：已关闭 TCP 连接的数量
+**类型**：计数器
+**描述**：已关闭 TCP 连接数
 
 #### istio_tcp_sent_bytes_total
 
-**类型**：Counter
-**描述**：已发送的字节数
+**类型**：计数器
+**描述**：发送字节数
 
 #### istio_tcp_received_bytes_total
 
-**类型**：Counter
-**描述**：已接收的字节数
+**类型**：计数器
+**描述**：接收字节数
 
-## Circuit Breaker 指标
+## 断路器指标 {#circuit-breaker-metrics}
 
-用于监控 Circuit Breaker 和 Outlier Detection 行为的关键指标。
+抓取前通过 `proxyStatsMatcher` 启用所需 Envoy 统计。默认 Istio 引导配置提取 `cluster_name`；自定义引导可能改变标签。断路器 `_open` 指标是 0/1 gauge，不是事件计数器。部分计数器仅在有流量后出现。
 
-### 关键 Circuit Breaker 指标
+### 关键断路器指标
 
 #### 1. 上游连接池溢出
 
 ```promql
 # Requests rejected due to connection pool overflow
-envoy_cluster_upstream_rq_pending_overflow{
+envoy_cluster_upstream_cx_overflow{
   cluster_name="outbound|80||httpbin.default.svc.cluster.local"
 }
 ```
 
 **含义**：超过 `maxConnections` 限制
 
-#### 2. Circuit Breaker 开启（上游请求被拒绝）
+#### 2. 断路器打开（Gauge）
 
 ```promql
-# Requests rejected by circuit breaker
+# Gauge: 1 at capacity, 0 below limit
 envoy_cluster_circuit_breakers_default_rq_open{
   cluster_name="outbound|80||httpbin.default.svc.cluster.local"
 }
@@ -229,7 +190,7 @@ envoy_cluster_upstream_rq_pending_overflow{
 }
 ```
 
-**含义**：超过 `http1MaxPendingRequests` 或 `http2MaxRequests`
+**含义**：待处理/活动请求断路拒绝。检查 `rq_pending_open`、`rq_open` 和生成阈值，区分队列压力与活动请求限制。
 
 #### 4. 重试预算耗尽
 
@@ -240,92 +201,74 @@ envoy_cluster_upstream_rq_retry_overflow{
 }
 ```
 
-#### 5. 通过响应标志检测 Circuit Breaker
+#### 5. 通过响应标志检测断路器
 
 ```promql
 # Requests rejected by circuit breaker (response_flags="UO")
-sum(rate(istio_requests_total{
+sum(rate(istio_requests_total{reporter="source",
   response_flags=~".*UO.*",
   destination_service="httpbin.default.svc.cluster.local"
 }[5m]))
 ```
 
 **响应标志详情**：
-- `UO`：上游溢出（Circuit Breaker 开启）
-- `URX`：被 Circuit Breaker 拒绝
+- `UO`：上游溢出（断路器打开）
+- `URX`：超过上游重试限制（或 TCP 最大连接尝试次数）
 - `UF`：上游连接失败
-- `UH`：没有健康的上游
+- `UH`：没有健康上游
 
-### Circuit Breaker 监控仪表板查询
+### 断路器监控仪表板查询
 
 ```promql
-# 1. Circuit breaker trigger rate
-sum(rate(envoy_cluster_circuit_breakers_default_rq_open[5m])) by (cluster_name)
-/
-sum(rate(envoy_cluster_upstream_rq_total[5m])) by (cluster_name)
-* 100
+# Fraction of observed samples at capacity over five minutes (%).
+100 * avg_over_time(envoy_cluster_circuit_breakers_default_rq_open[5m])
 
-# 2. Connection pool utilization
-envoy_cluster_upstream_cx_active{cluster_name="outbound|80||httpbin.default.svc.cluster.local"}
-/
-envoy_cluster_circuit_breakers_default_cx_max{cluster_name="outbound|80||httpbin.default.svc.cluster.local"}
-* 100
+# Active connections and pending requests (per proxy/cluster).
+envoy_cluster_upstream_cx_active
+envoy_cluster_upstream_rq_pending_active
 
-# 3. Pending request utilization
-envoy_cluster_upstream_rq_pending_active{cluster_name="outbound|80||httpbin.default.svc.cluster.local"}
-/
-envoy_cluster_circuit_breakers_default_rq_pending_max{cluster_name="outbound|80||httpbin.default.svc.cluster.local"}
-* 100
-
-# 4. Requests rejected by circuit breaker
-sum(increase(envoy_cluster_upstream_rq_pending_overflow[5m])) by (cluster_name)
+# Rejected request events over five minutes.
+sum by (namespace, pod, cluster_name) (
+  increase(envoy_cluster_upstream_rq_pending_overflow[5m])
+)
 ```
 
-### Circuit Breaker 告警规则
+没有标准 `circuit_breakers_default_cx_max` 或 `rq_pending_max` gauge。应从生成集群配置读取限制。可选 `remaining_cx`/`remaining_pending` gauge 需要 Envoy `track_remaining`；仅包含指标名不会启用。利用率分母必须来自已知匹配的配置限制。
+
+### 断路器警报规则
 
 ```yaml
 groups:
 - name: istio_circuit_breaker
-  interval: 30s
   rules:
-  - alert: CircuitBreakerOpen
-    expr: |
-      rate(envoy_cluster_circuit_breakers_default_rq_open[1m]) > 0
+  - alert: CircuitBreakerAtCapacity
+    expr: envoy_cluster_circuit_breakers_default_rq_open == 1
     for: 1m
     labels:
       severity: warning
     annotations:
-      summary: "Circuit breaker opened for {{ $labels.cluster_name }}"
-      description: "Circuit breaker has opened for cluster {{ $labels.cluster_name }}"
-
-  - alert: HighConnectionPoolUsage
-    expr: |
-      (envoy_cluster_upstream_cx_active
-      /
-      envoy_cluster_circuit_breakers_default_cx_max) > 0.8
-    for: 5m
+      summary: Request breaker remains at capacity for {{ $labels.cluster_name }}
+  - alert: ConnectionPoolOverflow
+    expr: rate(envoy_cluster_upstream_cx_overflow[5m]) > 0
+    for: 2m
     labels:
       severity: warning
     annotations:
-      summary: "High connection pool usage for {{ $labels.cluster_name }}"
-      description: "Connection pool usage is above 80% for {{ $labels.cluster_name }}"
-
+      summary: Connection limit exceeded for {{ $labels.cluster_name }}
   - alert: PendingRequestsOverflow
-    expr: |
-      rate(envoy_cluster_upstream_rq_pending_overflow[5m]) > 0
+    expr: rate(envoy_cluster_upstream_rq_pending_overflow[5m]) > 0
     for: 2m
     labels:
-      severity: critical
+      severity: warning
     annotations:
-      summary: "Pending requests overflow for {{ $labels.cluster_name }}"
-      description: "Requests are being rejected due to pending queue overflow"
+      summary: Request circuit-breaking rejection for {{ $labels.cluster_name }}
 ```
 
-## 弹性指标
+## 韧性指标 {#resilience-metrics}
 
-### Outlier Detection 指标
+### 异常检测指标
 
-#### 1. 被驱逐的主机
+#### 1. 被剔除主机
 
 ```promql
 # Number of hosts ejected by outlier detection
@@ -334,24 +277,26 @@ envoy_cluster_outlier_detection_ejections_active{
 }
 ```
 
-#### 2. 驱逐事件
+#### 2. 剔除事件
 
 ```promql
 # Ejection event rate
-rate(envoy_cluster_outlier_detection_ejections_total[5m])
+rate(envoy_cluster_outlier_detection_ejections_enforced_total[5m])
 ```
 
-**按驱逐类型**：
+**按剔除类型**：
 ```promql
 # Consecutive 5xx errors
-envoy_cluster_outlier_detection_ejections_consecutive_5xx
+envoy_cluster_outlier_detection_ejections_enforced_consecutive_5xx
 
 # Success rate based
-envoy_cluster_outlier_detection_ejections_success_rate
+envoy_cluster_outlier_detection_ejections_enforced_success_rate
 
 # Failure percentage based
-envoy_cluster_outlier_detection_ejections_failure_percentage
+envoy_cluster_outlier_detection_ejections_enforced_failure_percentage
 ```
+
+检测到的剔除与实际执行剔除不同：执行概率或最大剔除百分比可能阻止剔除，使检测到的异常主机仍提供服务。部分 Envoy 算法不由 Istio DestinationRule 暴露；缺失序列不能证明配置算法健康。
 
 ### 重试指标
 
@@ -372,226 +317,237 @@ rate(envoy_cluster_upstream_rq_retry_overflow[5m])
 
 ```promql
 # Requests that timed out
-sum(rate(istio_requests_total{
+sum(rate(istio_requests_total{reporter="source",
   response_flags=~".*UT.*"
 }[5m])) by (destination_service)
 
 # Timeout rate
-sum(rate(istio_requests_total{response_flags=~".*UT.*"}[5m]))
+sum(rate(istio_requests_total{reporter="source",response_flags=~".*UT.*"}[5m]))
 /
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="source"}[5m]))
 * 100
 ```
 
-## OpenTelemetry 集成
+## OpenTelemetry 集成 {#opentelemetry-integration}
 
-### OpenTelemetry Collector 配置
+### 用于 Istio 指标的 Prometheus 接收器
 
-Istio 可以通过 OpenTelemetry 协议导出指标。
+Istio `opentelemetry` 扩展提供程序导出**追踪**。采集标准网格指标时，保留 Prometheus 指标提供程序，让 OpenTelemetry Collector 的 **Prometheus 接收器抓取**暴露端点。Collector 随后可经 OTLP 向支持指标的后端导出；Tempo 是追踪后端，不是指标目的地。
 
-#### 1. MeshConfig 配置
+此示例使用 Collector Contrib 0.160.0 和 Prometheus 导出器，提供可观察演示路径。先创建 `observability` 命名空间。使用一个副本，因为相同抓取配置的副本会重复每个目标；生产扩展需要目标分配/分片。ServiceAccount 仅可读取 Pod，满足 Pod 发现任务要求。配置明文代理指标 15090 和 istiod 15014 的网络访问；此示例不抓取应用指标或 Ambient ztunnel。
 
 ```yaml
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing: {} # Tracing configuration
-    extensionProviders:
-    - name: otel
-      opentelemetry:
-        service: opentelemetry-collector.observability.svc.cluster.local
-        port: 4317
-    - name: otel-tracing
-      opentelemetry:
-        service: opentelemetry-collector.observability.svc.cluster.local
-        port: 4317
-        resource_detectors:
-          environment: {}
-```
-
-#### 2. 使用 Telemetry API 启用 OpenTelemetry
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
+kind: ServiceAccount
 metadata:
   name: otel-metrics
-  namespace: istio-system
-spec:
-  metrics:
-  - providers:
-    - name: otel
-    overrides:
-    - match:
-        metric: ALL_METRICS
-      mode: CLIENT_AND_SERVER
-```
-
-#### 3. 部署 OpenTelemetry Collector
-
-```yaml
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-metrics-pod-reader
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-metrics-pod-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-metrics-pod-reader
+subjects:
+- kind: ServiceAccount
+  name: otel-metrics
+  namespace: observability
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: otel-collector-config
+  name: otel-metrics-config
   namespace: observability
 data:
   config.yaml: |
     receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-
+      prometheus:
+        config:
+          global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+          scrape_configs:
+          - job_name: envoy-stats
+            metrics_path: /stats/prometheus
+            kubernetes_sd_configs:
+            - role: pod
+            relabel_configs:
+            - source_labels:
+              - __meta_kubernetes_pod_phase
+              action: keep
+              regex: Running
+            - source_labels:
+              - __meta_kubernetes_pod_container_name
+              - __meta_kubernetes_pod_container_port_name
+              action: keep
+              regex: istio-proxy;.*-envoy-prom
+            - source_labels:
+              - __meta_kubernetes_namespace
+              target_label: namespace
+            - source_labels:
+              - __meta_kubernetes_pod_name
+              target_label: pod
+          - job_name: istiod
+            metrics_path: /metrics
+            kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                - istio-system
+            relabel_configs:
+            - source_labels:
+              - __meta_kubernetes_pod_label_app
+              - __meta_kubernetes_pod_container_port_name
+              action: keep
+              regex: istiod;http-monitoring
+            - source_labels:
+              - __meta_kubernetes_namespace
+              target_label: namespace
+            - source_labels:
+              - __meta_kubernetes_pod_name
+              target_label: pod
     processors:
-      batch:
-        timeout: 10s
-        send_batch_size: 1024
-
       memory_limiter:
         check_interval: 1s
         limit_mib: 512
-
-      # Add additional attributes to Istio metrics
-      attributes:
-        actions:
-        - key: cluster.name
-          value: production
-          action: insert
-
+      batch:
+        timeout: 10s
+        send_batch_size: 1024
     exporters:
       prometheus:
-        endpoint: "0.0.0.0:8889"
-        namespace: istio
+        endpoint: 0.0.0.0:8889
         const_labels:
           environment: production
-
-      otlp:
-        endpoint: tempo:4317
-        tls:
-          insecure: true
-
-      logging:
-        loglevel: debug
-
+      debug:
+        verbosity: basic
     service:
       pipelines:
         metrics:
-          receivers: [otlp]
-          processors: [memory_limiter, batch, attributes]
-          exporters: [prometheus, logging]
-        traces:
-          receivers: [otlp]
-          processors: [memory_limiter, batch]
-          exporters: [otlp, logging]
+          receivers:
+          - prometheus
+          processors:
+          - memory_limiter
+          - batch
+          exporters:
+          - prometheus
+          - debug
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: otel-collector
+  name: otel-metrics
   namespace: observability
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: otel-collector
+      app: otel-metrics
   template:
     metadata:
       labels:
-        app: otel-collector
+        app: otel-metrics
+      annotations:
+        sidecar.istio.io/inject: 'false'
     spec:
+      serviceAccountName: otel-metrics
       containers:
       - name: otel-collector
-        image: otel/opentelemetry-collector-contrib:0.96.0
+        image: otel/opentelemetry-collector-contrib:0.160.0
         args:
         - --config=/etc/otel/config.yaml
         ports:
-        - containerPort: 4317  # OTLP gRPC
-          name: otlp-grpc
-        - containerPort: 4318  # OTLP HTTP
-          name: otlp-http
-        - containerPort: 8889  # Prometheus metrics
+        - containerPort: 8889
           name: prometheus
         volumeMounts:
         - name: config
           mountPath: /etc/otel
+          readOnly: true
         resources:
           requests:
             cpu: 200m
             memory: 512Mi
           limits:
             cpu: 1000m
-            memory: 2Gi
+            memory: 1Gi
       volumes:
       - name: config
         configMap:
-          name: otel-collector-config
+          name: otel-metrics-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: opentelemetry-collector
+  name: otel-metrics
   namespace: observability
+  labels:
+    app: otel-metrics
 spec:
   selector:
-    app: otel-collector
+    app: otel-metrics
   ports:
-  - name: otlp-grpc
-    port: 4317
-    targetPort: 4317
-  - name: otlp-http
-    port: 4318
-    targetPort: 4318
   - name: prometheus
     port: 8889
-    targetPort: 8889
+    targetPort: prometheus
 ```
 
-#### 4. Prometheus ServiceMonitor 配置
+已退役 `logging` 导出器由 `debug` 替代。验证后移除诊断导出。不添加 `namespace: istio` 前缀，避免给现有指标名再加一个 `istio_`。复用 Kiali 仪表板前检查 Collector 输出标签/名称。使用 Prometheus Operator 时，选择带标签的 Service：
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: otel-collector
+  name: otel-metrics
   namespace: observability
 spec:
   selector:
     matchLabels:
-      app: otel-collector
+      app: otel-metrics
   endpoints:
   - port: prometheus
     interval: 15s
     path: /metrics
+    honorLabels: true
 ```
 
-### OpenTelemetry 指标验证
+Prometheus 资源必须选择此 ServiceMonitor 及其命名空间。`honorLabels` 保留原始目标 `job`/`instance`；Collector 必须是可信来源。相同序列只使用此 Collector 路径或下方直接代理抓取，不要同时使用。此 ServiceMonitor 不安装 Prometheus。
+
+### 验证采集
 
 ```bash
-# 1. Check OpenTelemetry Collector logs
-kubectl logs -n observability deployment/otel-collector
-
-# 2. Check Collector metrics
-kubectl port-forward -n observability svc/opentelemetry-collector 8889:8889
-curl http://localhost:8889/metrics
-
-# 3. Verify Envoy is sending metrics
-istioctl proxy-config log deploy/productpage-v1 --level debug
-kubectl logs -n default deploy/productpage-v1 -c istio-proxy | grep -i otel
+kubectl logs -n observability deployment/otel-metrics
+# Keep this running in one terminal.
+kubectl port-forward -n observability svc/otel-metrics 8889:8889
 ```
 
-## Prometheus 集成
+```bash
+# In a second terminal, after generating test mesh traffic:
+curl -fsS http://localhost:8889/metrics | rg '^istio_'
+```
+
+追踪 OTLP 接收器和导出器在[追踪章节](02-tracing.md)单独配置；代理调试日志不能证明指标交付。
+
+## Prometheus 集成 {#prometheus-integration}
 
 ### Prometheus 配置
 
-#### 1. Prometheus ConfigMap
+在已安装、具有 Pod list/watch 权限的 Prometheus 服务器中使用以下配置。仅 ConfigMap 不部署或重新加载 Prometheus。这些 Pod 发现任务保留 Kubernetes 发现地址（含 IPv6），并精确选择 Envoy 指标端口或 istiod 监控端口。它们包含 Sidecar 和网关，因此独立网关任务会重复序列。已移除 Mixer `istio-telemetry` Service 不是抓取目标。
 
 ```yaml
 apiVersion: v1
@@ -604,71 +560,53 @@ data:
     global:
       scrape_interval: 15s
       evaluation_interval: 15s
-
     scrape_configs:
-    # Istio mesh metrics
-    - job_name: 'istio-mesh'
-      kubernetes_sd_configs:
-      - role: endpoints
-        namespaces:
-          names:
-          - istio-system
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-        action: keep
-        regex: istio-telemetry;prometheus
-
-    # Envoy sidecar metrics
-    - job_name: 'envoy-stats'
+    - job_name: envoy-stats
       metrics_path: /stats/prometheus
       kubernetes_sd_configs:
       - role: pod
       relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_container_port_name]
+      - source_labels:
+        - __meta_kubernetes_pod_phase
         action: keep
-        regex: '.*-envoy-prom'
-      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-        action: replace
-        regex: ([^:]+)(?::\d+)?;(\d+)
-        replacement: $1:15020
-        target_label: __address__
-      - action: labeldrop
-        regex: __meta_kubernetes_pod_label_(.+)
-      - source_labels: [__meta_kubernetes_namespace]
-        action: replace
+        regex: Running
+      - source_labels:
+        - __meta_kubernetes_pod_container_name
+        - __meta_kubernetes_pod_container_port_name
+        action: keep
+        regex: istio-proxy;.*-envoy-prom
+      - source_labels:
+        - __meta_kubernetes_namespace
         target_label: namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        action: replace
-        target_label: pod_name
-
-    # Istiod metrics
-    - job_name: 'istiod'
+      - source_labels:
+        - __meta_kubernetes_pod_name
+        target_label: pod
+    - job_name: istiod
+      metrics_path: /metrics
       kubernetes_sd_configs:
-      - role: endpoints
+      - role: pod
         namespaces:
           names:
           - istio-system
       relabel_configs:
-      - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+      - source_labels:
+        - __meta_kubernetes_pod_label_app
+        - __meta_kubernetes_pod_container_port_name
         action: keep
         regex: istiod;http-monitoring
-
-    # Istio gateways
-    - job_name: 'istio-gateway'
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_istio]
-        action: keep
-        regex: ingressgateway|egressgateway
-      - source_labels: [__address__]
-        action: replace
-        regex: ([^:]+)(?::\d+)?
-        replacement: $1:15020
-        target_label: __address__
+      - source_labels:
+        - __meta_kubernetes_namespace
+        target_label: namespace
+      - source_labels:
+        - __meta_kubernetes_pod_name
+        target_label: pod
 ```
 
-#### 2. 使用 ServiceMonitor 自动抓取
+仅代理抓取使用 15090 `/stats/prometheus`。默认合并代理/应用指标使用 15020 `/stats/prometheus` 和 `prometheus.io` 注解，需要不同且不重复的抓取任务。代理证书指标需要该代理端点。即使应用流量使用 STRICT mTLS，这些指标监听器仍为明文；限制其网络暴露。抓取独立应用端点遵循自身身份验证策略。
+
+### Prometheus Operator 替代方案
+
+使用这些资源替代手动任务。确保 Prometheus 资源选择其标签/命名空间。`namespaceSelector.any: true` 让 PodMonitor 检查应用命名空间；`port: http-envoy-prom` 选择实际指标容器端口。自定义网关应调整端口名。ServiceMonitor 选择 Service，不是 Deployment 标签。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -676,43 +614,41 @@ kind: ServiceMonitor
 metadata:
   name: istio-component-monitor
   namespace: istio-system
-  labels:
-    monitoring: istio-components
 spec:
   selector:
-    matchExpressions:
-    - key: istio
-      operator: In
-      values:
-      - pilot
+    matchLabels:
+      app: istiod
   endpoints:
   - port: http-monitoring
     interval: 15s
+    path: /metrics
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
   name: envoy-stats-monitor
   namespace: istio-system
-  labels:
-    monitoring: istio-proxies
 spec:
+  namespaceSelector:
+    any: true
   selector:
     matchExpressions:
     - key: istio-prometheus-ignore
       operator: DoesNotExist
   podMetricsEndpoints:
-  - path: /stats/prometheus
+  - port: http-envoy-prom
+    path: /stats/prometheus
     interval: 15s
     relabelings:
-    - sourceLabels: [__meta_kubernetes_pod_container_port_name]
+    - sourceLabels:
+      - __meta_kubernetes_pod_container_name
       action: keep
-      regex: '.*-envoy-prom'
+      regex: istio-proxy
 ```
 
 ### Prometheus 查询优化
 
-```promql
+```yaml
 # Recording Rules to pre-compute frequently used queries
 groups:
 - name: istio_recording_rules
@@ -721,37 +657,39 @@ groups:
   # Request rate by service
   - record: istio:service:request_rate:5m
     expr: |
-      sum(rate(istio_requests_total[5m])) by (destination_service_name, destination_service_namespace)
+      sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 
   # Error rate by service
   - record: istio:service:error_rate:5m
     expr: |
-      sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (destination_service_name)
+      sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m])) by (destination_service_name, destination_service_namespace)
       /
-      sum(rate(istio_requests_total[5m])) by (destination_service_name)
+      sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 
   # P95 latency by service
   - record: istio:service:latency_p95:5m
     expr: |
       histogram_quantile(0.95,
-        sum(rate(istio_request_duration_milliseconds_bucket[5m]))
-        by (destination_service_name, le)
+        sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m]))
+        by (destination_service_name, destination_service_namespace, le)
       )
 
-  # Circuit breaker trigger rate
-  - record: istio:circuit_breaker:open_rate:1m
+  # Circuit breaker state gauge
+  - record: istio:circuit_breaker:at_capacity
     expr: |
-      rate(envoy_cluster_circuit_breakers_default_rq_open[1m])
+      envoy_cluster_circuit_breakers_default_rq_open
 ```
 
-## 使用 Telemetry API 进行自定义
+## 使用 Telemetry API 自定义 {#customization-with-telemetry-api}
 
 ### 指标自定义
 
 #### 1. 仅启用特定指标
 
+覆盖按顺序评估。先禁用 ALL_METRICS，再重新启用两个所需 HTTP 指标。`mode` 位于 `match` 内。将相关设置合并为每个选择范围一个 Telemetry，不要同时应用所有独立示例。
+
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: custom-metrics
@@ -761,26 +699,26 @@ spec:
   - providers:
     - name: prometheus
     overrides:
-    # Enable only request metrics
+    - match:
+        metric: ALL_METRICS
+        mode: CLIENT_AND_SERVER
+      disabled: true
     - match:
         metric: REQUEST_COUNT
-      mode: CLIENT_AND_SERVER
+        mode: CLIENT_AND_SERVER
+      disabled: false
     - match:
         metric: REQUEST_DURATION
-      mode: CLIENT_AND_SERVER
-    # Disable TCP metrics
-    - match:
-        metric: TCP_OPENED_CONNECTIONS
-      disabled: true
-    - match:
-        metric: TCP_CLOSED_CONNECTIONS
-      disabled: true
+        mode: CLIENT_AND_SERVER
+      disabled: false
 ```
 
 #### 2. 添加自定义标签
 
+在 HTTP 指标上使用取值有界的 CEL 表达式。请求 ID、任意 User-Agent 值和时间标头会创建无界标签。`x-envoy-upstream-service-time` 是持续时间，不是上游集群身份。CEL 不使用示例中 shell 风格 `| split()` 语法。
+
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: custom-tags
@@ -791,25 +729,20 @@ spec:
     - name: prometheus
     overrides:
     - match:
-        metric: ALL_METRICS
+        metric: REQUEST_COUNT
       tagOverrides:
-        # Add request headers as labels
-        request_id:
-          value: "request.headers['x-request-id']"
-        user_agent:
-          value: "request.headers['user-agent']"
-        # Add response headers as labels
-        upstream_cluster:
-          value: "response.headers['x-envoy-upstream-service-time']"
-        # Custom attributes
         api_version:
-          value: "request.path | split('/')[2]"
+          value: 'request.url_path.startsWith("/api/v1/") ? "v1" : (request.url_path.startsWith("/api/v2/")
+            ? "v2" : "other")'
+        request_method:
+          value: 'request.method in ["GET", "POST", "PUT", "DELETE"] ? request.method
+            : "OTHER"'
 ```
 
-#### 3. Namespace 专用指标配置
+#### 3. 命名空间专属指标配置
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: namespace-metrics
@@ -824,13 +757,13 @@ spec:
         mode: CLIENT_AND_SERVER
       tagOverrides:
         environment:
-          value: "production"
+          value: '"production"'
 ```
 
-#### 4. 通过禁用指标提升性能
+#### 4. 通过禁用指标提高性能
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: disable-tcp-metrics
@@ -855,7 +788,9 @@ spec:
       disabled: true
 ```
 
-## 实用指标查询
+## 实用指标查询 {#practical-metric-queries}
+
+基于 HTTP 状态的错误比例不能捕获每个 gRPC 失败。对于 gRPC，检查 `grpc_response_status` 及应用失败定义；HTTP 200 可承载非零 gRPC 状态。
 
 ### 黄金信号仪表板
 
@@ -864,84 +799,83 @@ spec:
 ```promql
 # P50 latency
 histogram_quantile(0.50,
-  sum(rate(istio_request_duration_milliseconds_bucket{
-    destination_service_name="reviews"
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m])) by (le)
 )
 
 # P95 latency
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket{
-    destination_service_name="reviews"
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m])) by (le)
 )
 
 # P99 latency
 histogram_quantile(0.99,
-  sum(rate(istio_request_duration_milliseconds_bucket{
-    destination_service_name="reviews"
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m])) by (le)
 )
 
 # Average latency by service
-sum(rate(istio_request_duration_milliseconds_sum{reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_request_duration_milliseconds_sum{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 /
-sum(rate(istio_request_duration_milliseconds_count{reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_request_duration_milliseconds_count{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 ```
 
 #### 2. 流量
 
 ```promql
 # Request rate by service (RPS)
-sum(rate(istio_requests_total{reporter="destination"}[1m])) by (destination_service_name)
+sum(rate(istio_requests_total{reporter="destination"}[1m])) by (destination_service_name, destination_service_namespace)
 
 # Total request rate
 sum(rate(istio_requests_total{reporter="destination"}[1m]))
 
 # Inbound traffic by service (bytes/sec)
-sum(rate(istio_request_bytes_sum{reporter="destination"}[1m])) by (destination_service_name)
+sum(rate(istio_request_bytes_sum{reporter="destination"}[1m])) by (destination_service_name, destination_service_namespace)
 
 # Outbound traffic by service (bytes/sec)
-sum(rate(istio_response_bytes_sum{reporter="destination"}[1m])) by (destination_service_name)
+sum(rate(istio_response_bytes_sum{reporter="destination"}[1m])) by (destination_service_name, destination_service_namespace)
 
-# Request distribution by HTTP method
-sum(rate(istio_requests_total{reporter="destination"}[5m])) by (request_protocol, destination_service_name)
+# Request distribution by protocol (not HTTP method)
+sum(rate(istio_requests_total{reporter="destination"}[5m])) by (request_protocol, destination_service_name, destination_service_namespace)
 ```
 
 #### 3. 错误
 
 ```promql
 # Error rate (5xx errors)
-sum(rate(istio_requests_total{response_code=~"5..", reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_requests_total{response_code=~"5..", reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 /
-sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 * 100
 
 # Separate 4xx vs 5xx
-sum(rate(istio_requests_total{response_code=~"4..", reporter="destination"}[5m])) by (destination_service_name)
-sum(rate(istio_requests_total{response_code=~"5..", reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_requests_total{response_code=~"4..", reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
+sum(rate(istio_requests_total{response_code=~"5..", reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 
 # Track specific error codes
-sum(rate(istio_requests_total{response_code="503", reporter="destination"}[5m])) by (destination_service_name)
+sum(rate(istio_requests_total{response_code="503", reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 
 # Analyze error types via response flags
-sum(rate(istio_requests_total{response_flags!~"-", reporter="destination"}[5m])) by (response_flags, destination_service_name)
+sum(rate(istio_requests_total{response_flags!~"-", reporter="destination"}[5m])) by (response_flags, destination_service_name, destination_service_namespace)
 ```
 
 #### 4. 饱和度
 
 ```promql
-# Connection pool utilization
-(envoy_cluster_upstream_cx_active / envoy_cluster_circuit_breakers_default_cx_max) * 100
+# Connection count and breaker state (not a utilization percentage).
+envoy_cluster_upstream_cx_active
+envoy_cluster_circuit_breakers_default_cx_open
 
-# Active request count
+# Active and pending requests.
 envoy_cluster_upstream_rq_active
-
-# Pending request count
 envoy_cluster_upstream_rq_pending_active
 
-# Envoy memory usage
-envoy_server_memory_allocated / envoy_server_memory_heap_size * 100
+# Allocated proxy memory in bytes; compare with the container memory limit separately.
+envoy_server_memory_allocated
 ```
 
 ### mTLS 监控
@@ -962,40 +896,40 @@ sum(rate(istio_requests_total{
   reporter="destination"
 }[5m])) by (source_workload, destination_workload)
 
-# mTLS authentication failures
-sum(rate(istio_requests_total{
-  response_code="401",
-  connection_security_policy="mutual_tls"
-}[5m])) by (destination_service_name)
+# HTTP 401 observed on authenticated mesh traffic; this is not a TLS handshake failure.
+sum by (destination_service_name, destination_service_namespace) (
+  rate(istio_requests_total{reporter="destination",response_code="401",connection_security_policy="mutual_tls"}[5m])
+)
 ```
 
-### Service Mesh 健康仪表板
+### 服务网格健康仪表板
 
 ```promql
-# 1. Control plane status
+# Scrape health, not a complete control-plane health check.
 up{job="istiod"}
 
-# 2. Pilot push errors
-rate(pilot_xds_push_errors[5m])
+# Istiod xDS build/send error rate, by type.
+sum by (type) (rate(pilot_xds_pushes{type=~".*(builderr|senderr)"}[5m]))
 
-# 3. Envoy configuration update delays
-rate(pilot_xds_pushes[5m])
+# Configuration convergence time, seconds (not push count).
+histogram_quantile(0.95,
+  sum by (le) (rate(pilot_proxy_convergence_time_bucket[5m]))
+)
 
-# 4. Envoy proxy version distribution
-count(envoy_server_version) by (envoy_server_version)
-
-# 5. Detect stale proxies (older than 24 hours)
-(time() - envoy_server_uptime) > 86400
+# Recently started Envoy process; uptime is elapsed seconds, not a timestamp.
+envoy_server_uptime < 300
 ```
 
-## 指标优化
+使用 `istioctl version` 检查实际代理版本，用 `istioctl proxy-status` 诊断同步/NACK。进程年龄不衡量配置新鲜度，Envoy 数值版本 gauge 也不是版本标签分布。mTLS 失败应按 [mTLS 指南](../security/01-mtls.md)检查 TLS 验证计数器和证书。
+
+## 指标优化 {#metrics-optimization}
 
 ### 解决高基数问题
 
-#### 1. 移除不必要的标签
+#### 1. 移除不必要标签
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: reduce-cardinality
@@ -1018,7 +952,7 @@ spec:
 #### 2. 规范化标签值
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: normalize-labels
@@ -1032,16 +966,13 @@ spec:
         metric: REQUEST_COUNT
       tagOverrides:
         # Normalize HTTP methods (GET, POST, PUT, DELETE, OTHER)
-        request_protocol:
-          value: |
-            request.protocol == "http" ?
-              (request.method in ["GET", "POST", "PUT", "DELETE"] ? request.method : "OTHER")
-              : request.protocol
+        request_method:
+          value: 'request.method in ["GET", "POST", "PUT", "DELETE"] ? request.method : "OTHER"'
 ```
 
-### 指标采样
+### 选择 Envoy 统计
 
-通过 Envoy 统计信息采样降低内存和 CPU 使用量：
+`proxyStatsMatcher` 选择创建哪些 Envoy 统计；不采样请求。仅包含所需指标族，保留必要的现有匹配，并在更改引导设置后滚动更新选定代理。此示例启用前述查询所需统计：
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -1057,16 +988,18 @@ spec:
         - ".*upstream_rq_pending_overflow.*"
         - ".*circuit_breakers.*"
         - ".*outlier_detection.*"
+        - ".*upstream_cx_(active|overflow).*"
+        - ".*upstream_rq_(active|retry|pending).*"
 ```
 
 ### Prometheus 性能调优
 
+Prometheus 默认抓取间隔为 1 分钟；15s/30s 是有意选择。这是需与现有抓取任务合并的配置片段。`metric_relabel_configs` 位于各抓取任务内，丢弃样本，不只是标签。必须为所选后端配置远程写入端点、身份验证/TLS 和持久化。
+
 ```yaml
 global:
-  scrape_interval: 30s  # Default: 15s
+  scrape_interval: 30s
   evaluation_interval: 30s
-
-# Separate long-term storage with remote write
 remote_write:
 - url: http://victoria-metrics:8428/api/v1/write
   queue_config:
@@ -1074,17 +1007,39 @@ remote_write:
     max_shards: 5
     min_shards: 1
     max_samples_per_send: 5000
-
-# Remove unnecessary labels with metric relabeling
-metric_relabel_configs:
-- source_labels: [__name__]
-  regex: 'istio_tcp_.*'
-  action: drop  # Remove TCP metrics
+scrape_configs:
+- job_name: envoy-stats
+  metrics_path: /stats/prometheus
+  kubernetes_sd_configs:
+  - role: pod
+  relabel_configs:
+  - source_labels:
+    - __meta_kubernetes_pod_phase
+    action: keep
+    regex: Running
+  - source_labels:
+    - __meta_kubernetes_pod_container_name
+    - __meta_kubernetes_pod_container_port_name
+    action: keep
+    regex: istio-proxy;.*-envoy-prom
+  - source_labels:
+    - __meta_kubernetes_namespace
+    target_label: namespace
+  - source_labels:
+    - __meta_kubernetes_pod_name
+    target_label: pod
+  metric_relabel_configs:
+  - source_labels:
+    - __name__
+    regex: istio_tcp_.*
+    action: drop
 ```
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
-### 未收集指标时
+exec/curl 示例要求代理镜像包含 curl。否则使用 `kubectl port-forward pod/<pod-name> 15090:15090`（代理端点使用 15020），并从第二终端查询。此处 Telemetry 示例针对 Envoy；Ambient L7 策略使用 waypoint 附加，并单独采集 ztunnel L4 指标。
+
+### 未采集到指标时
 
 #### 1. 检查 Envoy 指标端点
 
@@ -1115,7 +1070,7 @@ kubectl get telemetry -A
 kubectl describe telemetry <name> -n <namespace>
 
 # Check if reflected in Envoy config
-istioctl proxy-config log <pod-name> -o json | jq '.stats'
+istioctl proxy-config listeners <pod-name> -n <namespace> -o json
 ```
 
 ### 指标标签缺失时
@@ -1133,20 +1088,17 @@ kubectl get servicemonitor,podmonitor -n istio-system
 
 ### 指标基数爆炸
 
+在另一终端端口转发 Prometheus 后，查询活动序列和 TSDB 统计。统计指标名称不等于统计时间序列。TSDB 状态端点也报告每标签/值基数。
+
 ```bash
-# 1. Check metric cardinality
-kubectl exec -it -n istio-system <prometheus-pod> -- sh -c \
-  'wget -O- "http://localhost:9090/api/v1/label/__name__/values" 2>/dev/null' | \
-  jq '.data | length'
-
-# 2. Check time series count for specific metrics
-curl http://localhost:9090/api/v1/query?query='count(istio_requests_total)%20by%20(__name__)'
-
-# 3. Check cardinality by label
-count by (__name__, le) (istio_request_duration_milliseconds_bucket)
+curl -fsS http://localhost:9090/api/v1/status/tsdb | jq '.data'
+curl -fsSG http://localhost:9090/api/v1/query \
+  --data-urlencode 'query=count(istio_requests_total)' | jq '.data.result'
+curl -fsSG http://localhost:9090/api/v1/query \
+  --data-urlencode 'query=topk(10, count by (__name__) ({__name__=~"istio_.*"}))' | jq '.data.result'
 ```
 
-### Circuit Breaker 指标不可见时
+### 断路器指标不可见时
 
 ```bash
 # 1. Check Envoy cluster statistics
@@ -1166,6 +1118,6 @@ istioctl analyze -n <namespace>
 - [Istio 指标](https://istio.io/latest/docs/reference/config/metrics/)
 - [Istio 可观测性](https://istio.io/latest/docs/tasks/observability/)
 - [Prometheus 查询示例](https://prometheus.io/docs/prometheus/latest/querying/examples/)
-- [Envoy 统计信息](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)
+- [Envoy 统计](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)
 - [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)
 - [Grafana Istio 仪表板](https://grafana.com/grafana/dashboards/?search=istio)

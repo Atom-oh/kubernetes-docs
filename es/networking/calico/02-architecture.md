@@ -1,42 +1,45 @@
 # Parte 2: Arquitectura
 
-> **Versiones compatibles**: Calico v3.29+ / Kubernetes 1.28+ **Última actualización**: February 23, 2026
+> **Base de revisión**: Calico Open Source 3.32.2 / operator 1.42.6; Calico 3.32 se prueba con Kubernetes 1.34–1.36.
+> **Última actualización**: 12 de septiembre de 2026. Los ejemplos son referencias de configuración, no validación en un clúster real.
 
 ## Descripción general
 
-Esta sección ofrece una exploración detallada de la arquitectura de Calico. Comprender cómo funciona e interactúa cada componente es esencial para implementar, solucionar problemas y optimizar Calico eficazmente en entornos de producción.
+Esta sección profundiza en la arquitectura de Calico. Comprender el funcionamiento e interacción de sus componentes es esencial para desplegarlo, diagnosticarlo y optimizarlo eficazmente en producción.
 
-## Diagrama completo de la arquitectura
+## Diagrama de arquitectura completa
 
-![Plano de control de Kubernetes, plano de control de Calico (servidor API, kube-controllers, Typha) y un nodo worker donde Felix programa el plano de datos local y confd/BIRD distribuyen rutas a través de la malla BGP de nodos.](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
+![Distribución simplificada de estado desde Kubernetes API y Typha hacia Felix y la configuración BGP, omitiendo componentes intermedios.](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-0.html)
 
+Es un esquema simplificado del estado de control. La conexión BIRD omite confd, que genera su configuración; Typha no es una API directa de configuración BIRD. La presencia de BIRD/confd y Typha depende del modo, y no se muestran todos los componentes de control.
+
 ## Felix: el agente de Calico
 
-Felix es el agente principal de Calico que se ejecuta en cada nodo del clúster. Es responsable de programar rutas y ACL (listas de control de acceso) en el host para proporcionar la conectividad deseada y la aplicación de políticas de red.
+Felix se ejecuta en el agente de nodo de Calico y programa rutas, interfaces y políticas pertinentes en el kernel. En la red Linux completa, el runtime invoca CNI y los plugins CNI/IPAM crean interfaces y asignan direcciones. Felix observa cambios de endpoints de forma asíncrona; no atiende directamente una llamada CNI ADD. Los componentes exactos dependen del operador, plataforma y modo.
 
 ### Responsabilidades de Felix
 
-![Diagrama que muestra el Datastore Watcher de Felix distribuyendo actualizaciones a sus administradores de rutas, ACL, interfaces e IPAM, que a su vez programan la tabla de enrutamiento del nodo, las reglas de iptables, los conjuntos de IP y las interfaces de red.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-1.svg)
+CNI/IPAM Linux crea interfaces y direcciones de Pods. Felix reconcilia endpoints y políticas del kernel. Servir salud HTTP e informar estado al datastore son funciones separadas.
 
 ### Funciones principales
 
-1. **Programación de rutas**: Administra las rutas para bloques CIDR de Pod
-2. **Aplicación de ACL**: Programa reglas de iptables/nftables/eBPF para políticas de red
-3. **Administración de interfaces**: Configura las interfaces de endpoint de carga de trabajo
-4. **Informes de estado**: Informa el estado de nodos y endpoints al datastore
-5. **Coordinación de IPAM**: Administra la asignación de direcciones IP para las cargas de trabajo locales
+1. **Programación de rutas**: Reconcilia rutas de cargas y túneles; en BGP, el protocolo kernel de BIRD también instala rutas aprendidas
+2. **Aplicación de ACL**: Programa reglas iptables/nftables/eBPF de políticas
+3. **Gestión de interfaces**: Reconcilia estado y ajustes del kernel; crear veth Linux pertenece a CNI
+4. **Informes de salud**: Informa al datastore sobre nodos y endpoints
+5. **Reconciliación de endpoints**: Observa su estado y programa políticas/rutas; CNI/IPAM asigna direcciones y crea interfaces
 
-### Opciones de plano de datos de Felix
+### Opciones del plano de datos de Felix
 
-Felix admite múltiples backends de plano de datos:
+Felix admite varios backends:
 
-| Plano de datos   | Descripción                | Ideal para                                  |
+| Plano de datos | Descripción | Uso apropiado |
 | ------------ | -------------------------- | ------------------------------------------- |
-| **iptables** | Firewall tradicional de Linux | Compatibilidad, implementaciones maduras           |
-| **nftables** | Firewall moderno de Linux      | Kernels más recientes, mejor rendimiento           |
-| **eBPF**     | Programable dentro del kernel     | Máximo rendimiento, reemplazo de kube-proxy |
+| **iptables** | Firewall Linux tradicional | Compatibilidad y despliegues maduros |
+| **nftables** | Implementación nativa | Comprobar kernel, plataforma y funciones compatibles |
+| **eBPF** | Programable dentro del kernel | Gestión opcional de Service; requiere migración coordinada y funciones soportadas |
 
 ### Recurso FelixConfiguration
 
@@ -46,109 +49,70 @@ kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  # Logging configuration
   logSeverityScreen: Info
-  logSeverityFile: Warning
-  logFilePath: /var/log/calico/felix.log
-
-  # Data plane selection
-  bpfEnabled: false                    # Set true for eBPF data plane
-  bpfDataIfacePattern: ^((en|wl|eth).*|bond[0-9]+)$
-  bpfConnectTimeLoadBalancingEnabled: true
-  bpfExternalServiceMode: Tunnel
-
-  # iptables configuration
-  iptablesBackend: Auto               # Auto, Legacy, NFT
-  iptablesRefreshInterval: 90s
-  iptablesPostWriteCheckIntervalSecs: 1
-  iptablesLockFilePath: /run/xtables.lock
-  iptablesLockTimeoutSecs: 0
-  iptablesLockProbeIntervalMillis: 50
-
-  # Performance tuning
-  ipipMTU: 1440
-  vxlanMTU: 1410
-  wireguardMTU: 1420
-
-  # Health and metrics
   healthEnabled: true
   healthPort: 9099
   prometheusMetricsEnabled: true
   prometheusMetricsPort: 9091
-  prometheusGoMetricsEnabled: true
-  prometheusProcessMetricsEnabled: true
-
-  # Policy configuration
-  defaultEndpointToHostAction: Drop
-  failsafeInboundHostPorts:
-    - protocol: TCP
-      port: 22
-    - protocol: UDP
-      port: 68
-  failsafeOutboundHostPorts:
-    - protocol: UDP
-      port: 53
-    - protocol: UDP
-      port: 67
-
-  # Interface configuration
-  interfacePrefix: cali
-  chainInsertMode: Insert
-
-  # Reporting
-  reportingIntervalSecs: 30
-  reportingTTLSecs: 90
+  reportingInterval: 30s
+  reportingTTL: 90s
 ```
 
-### Estructura de reglas de iptables de Felix
+Este ejemplo mínimo usa campos aceptados por Calico 3.32.2. Aplique cambios mediante el propietario; no es una migración de dataplane ni una receta de rendimiento. El host de salud predeterminado es localhost. Activar métricas no configura el scrape ni justifica exposición pública.
 
-Felix organiza las reglas de iptables en cadenas para un procesamiento eficiente:
+| Aspecto | Propietario / interpretación correcta |
+|---|---|
+| Plano de datos Linux | `Installation.spec.calicoNetwork.linuxDataplane` del operador elige `Iptables`, `Nftables` o `BPF` compatibles |
+| `bpfEnabled` | Ajuste de bajo nivel; coordine transición, kube-proxy y acceso API, no lo modifique aisladamente |
+| `iptablesBackend: NFT` | Elige herramientas iptables-nft, no el dataplane nftables nativo |
+| Balanceo al conectar | Campo actual `bpfConnectTimeLoadBalancing: TCP`, `Enabled` o `Disabled`; el booleano `bpfConnectTimeLoadBalancingEnabled` sigue aceptado pero obsoleto |
+| Detección de direcciones | `calicoNetwork.nodeAddressAutodetectionV4` / `V6` del operador, o entorno de arranque en instalación por manifiestos; no campos Felix `ipAutoDetectionMethod`/`ipv6AutoDetectionMethod` |
+| Visibilidad de flujos | Configuración compatible Goldmane/Whisker; Open Source no acepta los campos de archivo Enterprise del ejemplo anterior |
+| MTU y túneles | Derivar de red subyacente, encapsulación y cifrado; coordinar Installation/IPPool, no elegir 1440/1410/1420 arbitrariamente ni habilitar todos los túneles |
+| Puertos failsafe de host | Revisar acceso API/BGP/etcd/administrativo antes de sustituir listas; las antiguas listas reducidas podían eliminar excepciones necesarias |
+| Duraciones | Usar `reportingInterval`, `reportingTTL`, `iptablesPostWriteCheckInterval`, `iptablesLockProbeInterval`; no añadir `Secs`/`Millis` mecánicamente |
 
-```
-                         ┌─────────────────────────────────────────┐
-                         │              FORWARD Chain              │
-                         └─────────────────┬───────────────────────┘
-                                           │
-                         ┌─────────────────▼───────────────────────┐
-                         │          cali-FORWARD (Calico)          │
-                         └─────────────────┬───────────────────────┘
-                                           │
-              ┌────────────────────────────┼────────────────────────────┐
-              │                            │                            │
-┌─────────────▼─────────────┐ ┌────────────▼────────────┐ ┌─────────────▼─────────────┐
-│   cali-from-wl-dispatch   │ │   cali-to-wl-dispatch   │ │    cali-from-host-ep     │
-│  (from workload traffic)  │ │  (to workload traffic)  │ │   (from host endpoints)   │
-└─────────────┬─────────────┘ └────────────┬────────────┘ └─────────────┬─────────────┘
-              │                            │                            │
-┌─────────────▼─────────────┐ ┌────────────▼────────────┐ ┌─────────────▼─────────────┐
-│    cali-fw-caliXXXXXX     │ │    cali-tw-caliXXXXXX   │ │    Per-endpoint policy    │
-│    (per-endpoint rules)   │ │   (per-endpoint rules)  │ │          chains           │
-└───────────────────────────┘ └─────────────────────────┘ └───────────────────────────┘
-```
+El esquema rechaza los antiguos `iptablesLockFilePath`, `iptablesLockTimeoutSecs`, `iptablesLockProbeIntervalMillis`, `iptablesPostWriteCheckIntervalSecs`, `reportingIntervalSecs` y `reportingTTLSecs`. Consulte [Felix](https://docs.tigera.io/calico/latest/reference/resources/felixconfig) y la [API del operador](https://docs.tigera.io/calico/latest/reference/installation/api). Cambios de dirección/dataplane necesitan comprobaciones de rollout propias.
+
+### Estructura de reglas iptables de Felix
+
+Estos son prefijos seleccionados de las [definiciones publicadas](https://github.com/projectcalico/calico/blob/v3.32.2/felix/rules/rule_defs.go), no el grafo completo. Describen iptables; inspeccione las reglas reales del modo instalado.
+
+| Cadena/prefijo | Función |
+|---|---|
+| `cali-FORWARD` | Hook de reenvío Calico |
+| `cali-from-wl-dispatch` | Distribución desde interfaces de cargas |
+| `cali-to-wl-dispatch` | Distribución hacia interfaces de cargas |
+| `cali-fw-…` / `cali-tw-…` | Cadenas por carga y dirección |
+| `cali-pi-…` / `cali-po-…` | Cadenas de política entrante/saliente |
 
 ### Flujo de datos de Felix
 
-![Diagrama de secuencia que muestra a Felix recibiendo actualizaciones de políticas, endpoints y pools de IP del datastore y traduciendo cada una en reglas de iptables, entradas de tabla de rutas o configuración de interfaces de red.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-2.svg)
+Al crear un Pod, el runtime invoca CNI/IPAM, configura la red y registra endpoints. Felix observa cambios y programa políticas/rutas; BGP sigue su vía confd/BIRD cuando está habilitado. Running no demuestra convergencia de rutas o políticas.
 
-## BIRD: daemon de enrutamiento BGP
+## BIRD: demonio de enrutamiento BGP
 
-BIRD (BIRD Internet Routing Daemon) es el daemon BGP que Calico utiliza para distribuir rutas entre nodos.
+BIRD (BIRD Internet Routing Daemon) intercambia rutas BGP cuando está habilitado el backend BGP de Calico. BIRD/confd no son obligatorios en instalaciones solo de políticas o VXLAN sin BGP. Las topologías siguientes necesitan un clúster BGP diseñado adecuadamente; no se añaden al laboratorio kind introductorio con BGP desactivado.
 
-### BIRD en la arquitectura de Calico
+### BIRD en Calico
 
-![Diagrama que muestra instancias de BIRD en cada nodo formando una malla iBGP completa para intercambiar rutas de Pod y, a continuación, estableciendo peering mediante eBGP con el switch top-of-rack y el router central para anunciar esas rutas externamente.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-3.svg)
+![BIRD en tres nodos forma una malla iBGP completa para rutas de Pods y se conecta por eBGP al switch ToR, que propaga las rutas al router central.](../../.gitbook/assets/en-networking-calico-02-architecture-3.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-3.html)
+
+Las líneas son sesiones BGP, no tránsito de paquetes de aplicación por BIRD. Los tamaños son orientación ilustrativa, no requisitos del protocolo ni umbrales fijos para reflectores.
 
 ### Tipos de sesión BGP
 
-| Tipo de sesión          | Caso de uso                    | Configuración          |
+| Tipo | Uso | Configuración |
 | --------------------- | --------------------------- | ---------------------- |
-| **Malla de nodo a nodo** | Predeterminado para clústeres pequeños  | Automática, malla completa   |
-| **Route Reflector**   | Clústeres grandes (100+ nodos) | Nodos RR dedicados     |
-| **Peering externo**  | Integración on-premises     | Configuración manual de pares BGP |
+| **Malla entre nodos** | Predeterminada en clústeres pequeños | Automática y completa |
+| **Reflector de rutas** | Reducir sesiones según la topología | Preparar y verificar primero peers sustitutos |
+| **Peering externo** | Integración local | Configuración BGP manual |
 
-### Ejemplos de configuración BGP
+### Ejemplos BGP
 
-#### Malla de nodo a nodo (predeterminada)
+#### Malla entre nodos (predeterminada)
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -161,40 +125,43 @@ spec:
   asNumber: 64512
 ```
 
-#### Configuración de Route Reflector
+#### Reflectores de rutas
 
-```yaml
-# Disable node-to-node mesh
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  nodeToNodeMeshEnabled: false
-  asNumber: 64512
----
-# Configure route reflector nodes
-apiVersion: projectcalico.org/v3
-kind: Node
-metadata:
-  name: node-rr-1
-  labels:
-    route-reflector: "true"
-spec:
-  bgp:
-    routeReflectorClusterID: 224.0.0.1
----
-# Configure BGP peer to route reflector
+Siga la [transición BGP oficial](https://docs.tigera.io/calico/latest/networking/configuring/bgp). Asignar un cluster ID de reflector elimina inmediatamente el nodo de la malla y puede interrumpir cargas. Prepare nodos dedicados sin aplicaciones o una migración de mantenimiento explícita. No sustituya un Calico Node existente por un objeto parcial que omita sus demás ajustes.
+
+Con datastore Kubernetes API, la anotación documentada conserva los campos existentes. Sustituya los nombres por los nodos preparados:
+
+```bash
+# Existing, prepared RR nodes with no application workloads.
+kubectl get nodes rr-1 rr-2 -o yaml > rr-nodes-before.yaml
+kubectl get bgpconfiguration.projectcalico.org default -o yaml > bgp-before.yaml
+kubectl annotate node rr-1 projectcalico.org/RouteReflectorClusterID=244.0.0.1 --overwrite
+kubectl annotate node rr-2 projectcalico.org/RouteReflectorClusterID=244.0.0.2 --overwrite
+kubectl label nodes rr-1 rr-2 route-reflector=true --overwrite
+kubectl apply -f - <<'YAML'
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
-  name: peer-to-rr
+  name: nodes-to-route-reflectors
 spec:
-  nodeSelector: "!has(route-reflector)"
-  peerSelector: route-reflector == "true"
+  nodeSelector: all()
+  peerSelector: route-reflector == 'true'
+YAML
 ```
 
+`all()` hacia el selector RR cubre clientes y conexiones entre RR; verifique ambos reflectores y rutas cliente. Espere sesiones establecidas y confirme conectividad antes de desactivar la malla antigua. Established no demuestra que se aceptaran las rutas necesarias.
+
+```bash
+# Only after replacement sessions, routes and test traffic have been verified.
+kubectl patch bgpconfiguration.projectcalico.org default --type merge \
+  -p '{"spec":{"nodeToNodeMeshEnabled":false}}'
+```
+
+Es una transición ordenada, no aplicación simultánea ni garantía sin interrupciones. Conserve configuración y recuperación probada. Direcciones, ASN y números AS reutilizados en la red externa necesitan políticas y manejo de bucles deliberados.
+
 #### Peering BGP externo
+
+Sustituya dirección, ASN y selector de rack por la topología prevista. La contraseña requiere Secret/clave coincidentes en el namespace del componente de nodo y configuración compatible en el router. Autentica la sesión BGP, no los datos de la carga.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -213,299 +180,180 @@ spec:
   keepOriginalNextHop: false
 ```
 
-### Proceso de propagación de rutas
+### Propagación de rutas
 
-![Diagrama de secuencia que muestra cómo Felix asigna la ruta de un nuevo Pod, la añade a la tabla de enrutamiento local de BIRD y la propaga a los nodos pares mediante una actualización BGP UPDATE para que la instalen y enruten Felix según corresponda.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-4.svg)
+![Diagrama que muestra cómo Felix añade una ruta a la tabla de enrutamiento del kernel, BIRD obtiene esa información mediante su gestión de sesiones BGP y su función de intercambio de rutas anuncia el CIDR del Pod a otros nodos y routers externos mediante un BGP UPDATE; también se muestran la compatibilidad con reflectores de rutas para clústeres grandes y el filtrado de rutas basado en filtros de exportación como funciones adicionales de BIRD.](../../.gitbook/assets/en-networking-calico-02-architecture-4.png)
 
-### Comandos de estado de BIRD
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-4.html)
+
+Es una vía de información. El protocolo kernel de BIRD también instala rutas aprendidas, y confd/IPAM contribuye a la configuración generada. Los filtros BGP son política de rutas, no aplicación de Kubernetes NetworkPolicy.
+
+### Comandos de estado BIRD
+
+Seleccione un nodo con BIRD activo. El [script de arranque publicado](https://github.com/projectcalico/calico/blob/v3.32.2/node/filesystem/etc/service/available/bird/run) fija el socket IPv4 indicado. Las instalaciones por manifiestos pueden usar otro namespace.
 
 ```bash
-# Access BIRD CLI on a Calico node
-kubectl exec -n calico-system calico-node-xxxxx -c calico-node -- birdcl
-
-# Show BGP protocol status
-birdcl> show protocols
-name     proto    table    state  since       info
-kernel1  Kernel   master   up     2024-01-01
-device1  Device   master   up     2024-01-01
-direct1  Direct   master   up     2024-01-01
-Mesh_10_0_1_10  BGP  master  up   2024-01-01  Established
-Mesh_10_0_1_11  BGP  master  up   2024-01-01  Established
-
-# Show BGP routes
-birdcl> show route protocol Mesh_10_0_1_10
-192.168.1.0/26     via 10.0.1.10 on eth0 [Mesh_10_0_1_10 2024-01-01] * (100/0) [i]
-192.168.1.64/26    via 10.0.1.10 on eth0 [Mesh_10_0_1_10 2024-01-01] * (100/0) [i]
-
-# Show route details
-birdcl> show route 192.168.1.0/26 all
+CALICO_NODE=worker-node-name
+CALICO_POD=$(kubectl -n calico-system get pods -l k8s-app=calico-node \
+  --field-selector "spec.nodeName=$CALICO_NODE" -o jsonpath='{.items[0].metadata.name}')
+: "${CALICO_POD:?No Calico Pod on the selected node}"
+kubectl -n calico-system exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show protocols
+kubectl -n calico-system exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show route
 ```
 
-## confd: administración de configuración
+Use nombres y prefijos reales para consultas detalladas. Comandos y salida de consola son distintos: los antiguos prompts `birdcl>` no eran comandos Bash. Estas comprobaciones de lectura no configuran rutas.
 
-confd es una herramienta ligera de administración de configuración que observa el datastore de Calico y genera archivos de configuración de BIRD.
+## confd: gestión de configuración
 
-### Flujo de trabajo de confd
+confd es una herramienta ligera que observa el datastore y genera archivos de BIRD.
 
-![Diagrama que muestra al watcher de confd reaccionando a recursos de configuración BGP, pares y nodos en el datastore de Calico, generando un archivo bird.cfg a partir de plantillas y entregándolo al proceso BIRD en ejecución.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-5.svg)
+### Flujo de confd
 
-### Procesamiento de plantillas de confd
+Observa la configuración BGP, renderiza la plantilla, comprueba el candidato y solicita a BIRD recargar.
 
-confd utiliza plantillas Go para generar la configuración de BIRD:
+### Procesamiento de plantillas
 
-```
-# Template: /etc/calico/confd/templates/bird.cfg.template
-# Output: /etc/calico/confd/config/bird.cfg
+Use la [plantilla publicada](https://github.com/projectcalico/calico/blob/v3.32.2/confd/etc/calico/confd/templates/bird.cfg.template), no una estructura inventada `.NodeIP` / `.BGPPeers`. Este extracto ilustra sincronización con el kernel; los filtros y contexto se definen aparte, por lo que no es un `bird.cfg` completo.
 
-router id {{.NodeIP}};
-
+```text
 protocol kernel {
-    learn;
-    persist;
-    scan time 2;
-    import all;
-    export {{if .ExportKernel}}all{{else}}none{{end}};
+  learn;
+  persist;
+  scan time 2;
+  import all;
+  export filter calico_kernel_programming;
+  graceful restart;
+  merge paths on;
 }
-
-protocol device {
-    scan time 2;
-}
-
-{{range .BGPPeers}}
-protocol bgp {{.Name}} {
-    local as {{$.LocalAS}};
-    neighbor {{.PeerIP}} as {{.PeerAS}};
-    import all;
-    export {{if .ExportFilter}}filter {{.ExportFilter}}{{else}}all{{end}};
-    {{if .Password}}password "{{.Password}}";{{end}}
-    graceful restart;
-}
-{{end}}
 ```
+
+La [definición confd](https://github.com/projectcalico/calico/blob/v3.32.2/confd/etc/calico/confd/conf.d/bird.toml) escribe `/etc/calico/confd/config/bird.cfg`, valida con `bird -p -c {{.src}}` y recarga mediante `sv hup bird || true`. BIRD puede exportar rutas aprendidas seleccionadas al kernel; no recibe simplemente todas de Felix. Recarga y reinicio ordenado necesitan comprobación de estado/tráfico. Gestione BGP mediante el propietario API, no editando el archivo generado.
 
 ## Typha: componente de escalado
 
-Typha es un proxy de fan-out que se sitúa entre el servidor API de Kubernetes y los agentes Felix. Reduce la carga en el servidor API al almacenar en caché y distribuir actualizaciones del datastore.
+Typha distribuye actualizaciones entre Kubernetes API y los agentes Felix. Reduce carga del API almacenando y distribuyendo cambios del datastore.
 
 ### ¿Por qué Typha?
 
-![Diagrama comparativo que muestra a cada Felix observando directamente la API de Kubernetes en un clúster pequeño frente a Pods de Typha que distribuyen actualizaciones en caché a cientos de agentes Felix en un clúster grande.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-6.svg)
+La caché de estado y el streaming a varios clientes reducen el procesamiento repetido. Además del número de nodos importan la propiedad, TLS y la lógica real de escalado.
 
-### Cálculo de escalado de Typha
+### Escalado de Typha en operator 1.42.6
 
-El número recomendado de réplicas de Typha depende del tamaño del clúster:
+El operador despliega y escala Typha; no existe la regla universal «solo por encima de 50 nodos». La [implementación fijada](https://github.com/tigera/operator/blob/v1.42.6/pkg/controller/installation/typha_autoscaler.go) cuenta nodos no marcados unschedulable, excluye virtuales AKS y comprueba por separado que haya suficientes nodos Linux. Taints y demás restricciones siguen importando.
 
-```
-Typha Replicas = max(3, ceil(Nodes / 200))
+La [función real](https://github.com/tigera/operator/blob/v1.42.6/pkg/common/autoscale.go), no su comentario abreviado, devuelve:
 
-Examples:
-- 50 nodes:   3 Typha replicas (minimum)
-- 200 nodes:  3 Typha replicas
-- 500 nodes:  3 Typha replicas
-- 1000 nodes: 5 Typha replicas
-- 2000 nodes: 10 Typha replicas
-```
+- 1 réplica para 1–2 nodos contados.
+- 2 réplicas para 3–4 nodos contados.
+- `max(3, floor(N / 200) + 2)` para 5 o más.
 
-### Configuración del Deployment de Typha
+| Nodos contados | Réplicas deseadas en esta versión |
+|---|---|
+| 50 | 3 |
+| 200 | 3 |
+| 500 | 4 |
+| 1,000 | 7 |
+| 2,000 | 12 |
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: calico-typha
-  namespace: calico-system
-spec:
-  replicas: 3
-  revisionHistoryLimit: 2
-  selector:
-    matchLabels:
-      k8s-app: calico-typha
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-  template:
-    metadata:
-      labels:
-        k8s-app: calico-typha
-    spec:
-      nodeSelector:
-        kubernetes.io/os: linux
-      tolerations:
-      - key: CriticalAddonsOnly
-        operator: Exists
-      priorityClassName: system-cluster-critical
-      serviceAccountName: calico-typha
-      containers:
-      - name: calico-typha
-        image: calico/typha:v3.29.0
-        ports:
-        - containerPort: 5473
-          name: calico-typha
-          protocol: TCP
-        env:
-        - name: TYPHA_LOGSEVERITYSCREEN
-          value: "info"
-        - name: TYPHA_LOGFILEPATH
-          value: "none"
-        - name: TYPHA_LOGSEVERITYSYS
-          value: "none"
-        - name: TYPHA_CONNECTIONREBALANCINGMODE
-          value: "kubernetes"
-        - name: TYPHA_DATASTORETYPE
-          value: "kubernetes"
-        - name: TYPHA_HEALTHENABLED
-          value: "true"
-        - name: TYPHA_PROMETHEUSMETRICSENABLED
-          value: "true"
-        - name: TYPHA_PROMETHEUSMETRICSPORT
-          value: "9093"
-        livenessProbe:
-          httpGet:
-            path: /liveness
-            port: 9098
-          periodSeconds: 30
-          initialDelaySeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /readiness
-            port: 9098
-          periodSeconds: 10
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 1000m
-            memory: 512Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: calico-typha
-  namespace: calico-system
-spec:
-  ports:
-  - port: 5473
-    protocol: TCP
-    targetPort: calico-typha
-    name: calico-typha
-  selector:
-    k8s-app: calico-typha
+Es un número deseado específico de versión, no capacidad garantizada por réplica ni recomendación universal. El modo non-cluster-host cuenta HostEndpoints elegibles por separado. La antigua tabla `max(3, ceil(N / 200))` no describía este operador.
+
+### Configuración Typha administrada
+
+Mantenga juntos Deployment, ServiceAccount/RBAC, Service, presupuesto de interrupción y TLS. El antiguo Deployment manual omitía dependencias esenciales y podía sobrescribir ajustes administrados. TLS Felix–Typha usa CA fiable, certificado/clave del servidor e identidad esperada del cliente Felix. 5473 es el puerto de sincronización, no un proxy de tráfico de usuario.
+
+```bash
+# Change the operator's supported setting through its API.
+kubectl patch installation.operator.tigera.io default --type merge \
+  -p '{"spec":{"typhaMetricsPort":9093}}'
+kubectl -n calico-system get deployment calico-typha -o yaml
+kubectl -n calico-system get service calico-typha -o yaml
+kubectl -n calico-system get pdb
 ```
 
-### Arquitectura de fan-out de Typha
+El endpoint de estado de Typha utiliza localhost:9098 de forma predeterminada. Este operador deriva el puerto de estado restando uno al puerto de estado de Felix configurado y configura las sondas en consecuencia. Un Deployment con red de Pod cuya sonda apunta a la IP del Pod no alcanzará un listener vinculado únicamente a localhost; copiar sondas sin sus ajustes de red/dirección de escucha no es seguro. El código fuente del operador proporciona montajes TLS y ajustes de identidad del cliente ausentes en el antiguo ejemplo independiente.
 
-![Diagrama de arquitectura que muestra dos flujos de observación del servidor API alimentando dos Pods de Typha, cada uno almacenando actualizaciones localmente en caché y distribuyéndolas a aproximadamente cien agentes Felix en su grupo de nodos.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-7.svg)
+### Arquitectura de distribución de Typha
 
-## kube-controllers: integración con Kubernetes
+Cada Typha conserva estado para sus streams. Los grupos de clientes del dibujo no especifican capacidad fija por instancia.
 
-El Pod calico-kube-controllers ejecuta un conjunto de controllers que sincronizan los recursos de Kubernetes con el datastore de Calico.
+## kube-controllers: integración Kubernetes
 
-### Descripción general de controllers
+calico-kube-controllers ejecuta funciones de reconciliación seleccionadas. Qué controladores se ejecutan depende del almacén de datos, la edición y la configuración de instalación. La proyección de políticas/espacios de nombres/cuentas de servicio a un almacén de datos etcd es distinta del tratamiento del almacén de datos de la API de Kubernetes.
 
-| Controller                      | Propósito                                           |
+### Roles disponibles
+
+| Controlador | Propósito |
 | ------------------------------- | ------------------------------------------------- |
-| **Node Controller**             | Sincroniza los nodos de Kubernetes con los recursos de nodos de Calico |
-| **Policy Controller**           | Sincroniza NetworkPolicy de Kubernetes con la política de Calico |
-| **Namespace Controller**        | Sincroniza las etiquetas de namespace para la administración de perfiles     |
-| **ServiceAccount Controller**   | Sincroniza las etiquetas de service account para RBAC             |
-| **WorkloadEndpoint Controller** | Limpia endpoints de carga de trabajo obsoletos                |
+| **Node Controller** | Sincroniza nodos Kubernetes y recursos Calico |
+| **Policy Controller** | Sincroniza NetworkPolicy y políticas Calico |
+| **Namespace Controller** | Sincroniza etiquetas de namespace para perfiles |
+| **ServiceAccount Controller** | Proyecta etiquetas a perfiles; no concede RBAC Kubernetes |
+| **WorkloadEndpoint Controller** | Actualiza metadatos, como etiquetas Pod, en la vía de datastore correspondiente |
 
-### Bucle de reconciliación del controller
+### Bucle de reconciliación
 
-![Diagrama de secuencia que muestra a kube-controllers listando repetidamente recursos de Kubernetes y Calico, comparándolos y escribiendo los cambios en el datastore de Calico o no realizando ninguna acción cuando ambos ya están sincronizados.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-8.svg)
+![Diagrama de secuencia que muestra cómo kube-controllers enumera repetidamente recursos de Kubernetes y Calico, compara sus diferencias y escribe cambios en el almacén de datos de Calico o no realiza ninguna acción cuando ambos ya están sincronizados.](../../.gitbook/assets/en-networking-calico-02-architecture-8.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-8.html)
+
+Es un esquema lógico entre estado deseado y observado, no una traza que demuestre dos LIST remotos por intervalo. Los controladores reales usan watches/cachés y roles dependientes del datastore/instalación.
 
 ### Configuración de kube-controllers
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: calico-kube-controllers-config
-  namespace: calico-system
-data:
-  config: |
-    {
-      "logSeverityScreen": "info",
-      "healthEnabled": true,
-      "prometheusPort": 9094,
-      "controllers": {
-        "node": {
-          "hostEndpoint": {
-            "autoCreate": "Disabled"
-          },
-          "syncLabels": "Enabled",
-          "leakGracePeriod": "15m"
-        },
-        "policy": {
-          "reconcilerPeriod": "5m"
-        },
-        "workloadEndpoint": {
-          "reconcilerPeriod": "5m"
-        },
-        "namespace": {
-          "reconcilerPeriod": "5m"
-        },
-        "serviceAccount": {
-          "reconcilerPeriod": "5m"
-        }
-      }
-    }
+Con el operador use la [API KubeControllersConfiguration](https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig). El Deployment de esta guía no consume un ConfigMap arbitrario llamado `calico-kube-controllers-config`.
+
+```bash
+kubectl get kubecontrollersconfiguration.projectcalico.org default -o yaml
+kubectl patch kubecontrollersconfiguration.projectcalico.org default --type merge \
+  -p '{"spec":{"logSeverityScreen":"Info","healthChecks":"Enabled","prometheusMetricsPort":9094}}'
 ```
+
+Este parche de fusión conserva la configuración existente de `controllers`. Si GitOps gestiona el recurso, realice en su lugar el cambio equivalente en su estado deseado. Un manifiesto de sustitución con objetos de controlador vacíos puede alterar ajustes existentes de reconciliación o asignación.
+
+Operator 1.42.6 selecciona `ENABLED_CONTROLLERS=node,loadbalancer` en Open Source estándar. La lista anterior describe roles disponibles, no cinco controladores siempre activos. Su [renderer](https://github.com/tigera/operator/blob/v1.42.6/pkg/render/kubecontrollers/kube-controllers.go) indica una réplica y `Recreate`; la antigua afirmación de elección de líder no estaba respaldada. Mantenga esta carga bajo el propietario, sin reemplazarla ni escalarla manualmente.
 
 ## Opciones de datastore
 
-Calico admite dos backends de datastore para almacenar su configuración y estado.
+Los ejemplos usan Kubernetes API. El estado puede incluir CRD Calico y objetos nativos; no todo recurso lógico es un CRD separado. El servidor agregado habitual expone `projectcalico.org/v3` sobre la representación interna. Los CRD v3 nativos son una vista previa técnica separada de 3.32 con migración propia.
 
-### Datastore de API de Kubernetes (recomendado)
+Typha distribuye actualizaciones de lectura/observación; no es un proxy general de escritura para Felix. Los componentes que actualizan estados o recursos utilizan su propio acceso al almacén de datos. Kubernetes persiste el estado de su API en su almacén de respaldo, pero los usuarios de Calico no necesitan un clúster etcd de Calico separado para este modo.
 
-![Diagrama que muestra a Felix, Typha y kube-controllers leyendo y escribiendo el estado de Calico mediante el servidor API de Kubernetes, que a su vez persiste en etcd; no se requiere un clúster etcd de Calico independiente.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-9.svg)
+El acceso directo etcdv3 es otra elección con límites explícitos. No suponga que es más rápido, ilimitado o necesario por encima de 5,000 nodos. eBPF requiere datastore Kubernetes. etcd directo necesita confianza TLS, credenciales, disponibilidad y copias/restauración coherentes propias.
 
-**Ventajas:**
+| Aspecto | Kubernetes API | etcdv3 directo |
+|---|---|---|
+| Acceso | Autenticación/RBAC Kubernetes y vía Calico adecuada | Autenticación/TLS y permisos etcd |
+| Operaciones | Reutilizar API; seguir copias del proveedor | Operar y respaldar el etcd elegido |
+| Hosts/VM | Comprobar instalación y edición | Comprobar instalación y edición |
+| Selección | Usado en esta guía | Diseño validado aparte, no atajo por número de nodos |
 
-* No hay un clúster etcd independiente que administrar
-* Utiliza Kubernetes RBAC para el control de acceso
-* Modelo operativo más sencillo
-* Funciona con cualquier distribución de Kubernetes
+En Kubernetes administrado, «backup Kubernetes» no implica acceso directo a snapshots etcd del control plane. Respalde recursos compatibles con el procedimiento de la plataforma.
 
-### Datastore etcd (heredado)
+## Secuencia entre componentes
 
-![Diagrama que muestra a Felix y Typha leyendo y escribiendo directamente en un clúster etcd de Calico dedicado mientras kube-controllers conecta ese clúster con el servidor API de Kubernetes: la opción de datastore heredada y desacoplada.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-10.svg)
-
-**Ventajas:**
-
-* Desacoplado del servidor API de Kubernetes
-* Se puede utilizar para cargas de trabajo que no son de Kubernetes (VM, bare metal)
-* Opción histórica para clústeres muy grandes
-
-### Comparación de datastores
-
-| Característica                    | API de Kubernetes    | etcd               |
-| -------------------------- | ----------------- | ------------------ |
-| **Complejidad operativa** | Menor             | Mayor             |
-| **Escalabilidad**            | Buena (con Typha) | Excelente          |
-| **Cargas de trabajo no K8s**      | Limitadas           | Compatibilidad completa       |
-| **Backup/Restore**         | Mediante K8s           | Herramientas independientes   |
-| **Control de acceso**         | K8s RBAC          | Autenticación de etcd          |
-| **Recomendación**         | Opción predeterminada    | Solo casos especiales |
-
-## Secuencia de interacción de componentes
-
-![Diagrama de secuencia que rastrea una NetworkPolicy y la creación de un Pod desde la API de Kubernetes a través de kube-controllers y Typha hasta Felix, que programa el plano de datos local y actualiza las rutas BGP.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-11.svg)
+Kubelet solicita crear el entorno al runtime, que invoca CNI/IPAM. Los datos de endpoints/políticas llegan a Felix por el datastore/watch seleccionado. En BGP, confd/BIRD configuran rutas por separado. La convergencia es asíncrona: verifique conectividad y aplicación reales.
 
 ## Análisis del flujo de paquetes
 
-### Flujo de paquetes de entrada (Pod a Pod, mismo nodo)
+### Entrada entre Pods del mismo nodo
 
-![Diagrama que muestra un paquete que pasa de un Pod a otro en el mismo nodo mediante sus interfaces veth y la comprobación de políticas de iptables/eBPF del host.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-12.svg)
+![Diagrama que muestra un paquete que cruza de un pod a otro en el mismo nodo a través de sus interfaces veth y la comprobación de políticas iptables/eBPF del host.](../../.gitbook/assets/en-networking-calico-02-architecture-12.png)
 
-### Flujo de paquetes de salida (Pod a Pod, nodos diferentes con IPIP)
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-12.html)
 
-![Diagrama que muestra un paquete que sale del Pod de un nodo mediante su veth y la comprobación de iptables, se encapsula con IPIP a través del switch de red física y se desencapsula y entrega a un Pod en un segundo nodo.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-13.svg)
+El cuadro de política resume salida del origen y entrada del destino en el kernel. Los veth pertenecen a las rutas de ambos Pods; no se envían paquetes a través del proceso Felix.
 
-### Comparación de estructuras de paquetes
+### Salida entre Pods de distintos nodos con IPIP
+
+![Diagrama de secuencia que muestra cómo un paquete del Pod A pasa la comprobación de política de salida Felix/iptables en el Nodo 1, llega al Nodo 2 encapsulado con IPIP/VXLAN o reenviado directamente mediante una ruta BGP, y después pasa la comprobación de política de entrada y llega al Pod B.](../../.gitbook/assets/en-networking-calico-02-architecture-13.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-13.html)
+
+Las dos rutas son alternativas. «Felix/iptables» son reglas del kernel programadas por Felix, no reenvío del demonio. BIRD aporta control de rutas BGP y no transporta paquetes de aplicación.
+
+### Comparación de estructura de paquetes
 
 ```
 Original Pod-to-Pod Packet:
@@ -526,21 +374,21 @@ IPIP Encapsulated Packet:
 
 ## Resumen
 
-La arquitectura de Calico está diseñada para ofrecer escalabilidad, rendimiento y simplicidad operativa:
+La arquitectura busca escalabilidad, rendimiento y sencillez operativa:
 
-1. **Felix**: El agente principal en cada nodo, que programa rutas y ACL
-2. **BIRD**: Distribuye rutas mediante BGP, lo que permite la integración con el enrutamiento nativo
-3. **confd**: Conecta el datastore con la configuración de BIRD
-4. **Typha**: Escala el sistema al reducir la carga del servidor API
+1. **Felix**: Agente principal por nodo que programa rutas y ACL
+2. **BIRD**: Distribuye rutas BGP para integración nativa
+3. **confd**: Conecta datastore y configuración BIRD
+4. **Typha**: Escala reduciendo carga del API server
 5. **kube-controllers**: Mantiene Kubernetes y Calico sincronizados
-6. **Datastore**: API de Kubernetes (recomendada) o etcd para el almacenamiento de configuración
+6. **Datastore**: Kubernetes API recomendado o etcd para configuración
 
-Comprender estos componentes y sus interacciones es esencial para:
+Comprender componentes e interacciones es esencial para:
 
-* Solucionar problemas de conectividad
-* Optimizar el rendimiento a escala
-* Planificar la capacidad y la arquitectura
-* Integrarse con la infraestructura de red existente
+* Diagnosticar conectividad
+* Optimizar rendimiento a escala
+* Planificar capacidad y arquitectura
+* Integrar infraestructura de red existente
 
 [Anterior: Parte 1 - Introducción a Calico](01-introduction.md)
 
@@ -550,4 +398,4 @@ Comprender estos componentes y sus interacciones es esencial para:
 
 ## Cuestionario
 
-Para poner a prueba lo aprendido en este capítulo, prueba el [Cuestionario de arquitectura](../../quizzes/networking/calico/02-architecture-quiz.md).
+Compruebe lo aprendido con el [cuestionario de arquitectura](../../quizzes/networking/calico/02-architecture-quiz.md).

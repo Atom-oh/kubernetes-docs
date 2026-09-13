@@ -1,0 +1,88 @@
+{
+  "reviewedAt": "2026-09-13T02:42:24.563172+00:00",
+  "auditDate": "2026-09-11",
+  "status": "passed",
+  "scope": [
+    {
+      "path": "en/eks-hybrid-nodes/07-node-lifecycle.md",
+      "sha256": "f2020521e23dd463aae541053508c21cd6345d29618ad7081a768d2c57dfbe40",
+      "lines": 799,
+      "localLinksPassed": true,
+      "markdownVuePassed": true,
+      "legacyAnchorsPreserved": true
+    },
+    {
+      "path": "ko/eks-hybrid-nodes/07-node-lifecycle.md",
+      "sha256": "fc4904daa7d0924b69ff5090c88bfc62bc523c8641125ed8ee3d8862ef9bd2a3",
+      "lines": 799,
+      "localLinksPassed": true,
+      "markdownVuePassed": true,
+      "legacyAnchorsPreserved": true
+    },
+    {
+      "path": "en/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+      "sha256": "bbae341c663b5146902aa719a3746bc7f9c5b767f497bcc202f25f8d8d54e850",
+      "lines": 147,
+      "localLinksPassed": true,
+      "markdownVuePassed": true,
+      "legacyAnchorsPreserved": true
+    },
+    {
+      "path": "ko/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+      "sha256": "71c265841fd11ff42d80dc676b45d7395488e989a6083a8a74d4562724e7aa4e",
+      "lines": 147,
+      "localLinksPassed": true,
+      "markdownVuePassed": true,
+      "legacyAnchorsPreserved": true
+    }
+  ],
+  "fullyReadOriginalLines": [
+    {
+      "path": "en/eks-hybrid-nodes/07-node-lifecycle.md",
+      "lines": 863,
+      "sha256": "c1eb3023f2ced4237f2102abfd6303f3350a142a8a0dbb7bcd0c6f78b86c907b"
+    },
+    {
+      "path": "ko/eks-hybrid-nodes/07-node-lifecycle.md",
+      "lines": 864,
+      "sha256": "76629c056ba7a8ab0e3e2df8f55017d2419653392e204faab64f2789651a8861"
+    },
+    {
+      "path": "en/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+      "lines": 147,
+      "sha256": "c10a504e181fa732d285c10e797c69ae5bf927df46d749495c1c7763e5192207"
+    },
+    {
+      "path": "ko/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+      "lines": 147,
+      "sha256": "cb543de11806b61b9e89a24d4a24863936b2f863e8f62e0dc4e3aecd8b780e35"
+    }
+  ],
+  "validation": {
+    "nativeMockTests": {
+      "testsRun": 14,
+      "failures": 0,
+      "errors": 0,
+      "successful": true,
+      "scope": "Synthetic Node/Lease/credential-error mocks and local synthetic OpenSSL certificates only; no actual AWS/Kubernetes/host operations."
+    },
+    "structuralChecks": 49,
+    "markdownCompiled": 4,
+    "quizQuestionsPerLocale": 8,
+    "allOldAnchorsPreserved": true,
+    "localLinksPassed": true,
+    "shellFences": "bash -n for all paired source fences; no execution of cloud/host mutation commands"
+  },
+  "limitations": [
+    "No actual host installation, node upgrade, fleet rollout, credential refresh, CA rollover, Kubernetes admission, CNI/DNS/storage or production SLO execution.",
+    "Observer image is an explicit unexecuted replacement placeholder. Ansible expressions were parsed, not run against hosts.",
+    "Only Node inventory/conditions/Lease and local synthetic certificates tested; these do not prove whole-workload health or every PKI/IAM restriction."
+  ],
+  "sourcesNote": "FreshAWSMCPnodeadm/upgrade/RAAPIchecks; Ciliumrendereddocs403replacedbyofficialtaggedsource. IncorrectoldSSMCLIredirectcachewasnotusedasproof.",
+  "preservation": "Allfiveoriginalchaptertopics/eightquestionsretained; removeddangerousbulkloops/fakeCAendpoint/unconditionalrestarts,retainedhistorical1.31skewtableasexplicitarithmeticexample;oldfragmentIDsretained.",
+  "evidenceProvenance": {
+    "originalReport": ".vitepress/cache/core-audit/eks-hybrid-lifecycle/final-validation.json",
+    "originalSha256": "019452fd3e99e139e531f1403768d109e8f0c3e16843bb81e39170d0d5b402c2",
+    "adoption": "Existingdomainworkerfullread/nativeevidence preserved;current4MDhashesmatchreviewedbatchrows. No new native/cloud execution claimed."
+  }
+}

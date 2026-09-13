@@ -1,424 +1,120 @@
-# Linkerd セキュリティ
+# Linkerdセキュリティ
 
-> **サポート対象バージョン**: Linkerd 2.16+
-> **最終更新**: February 22, 2026
+> **最終更新**: September 11, 2026 · Linkerd edge-26.9.1 · cert-manager例は1.21.1で確認
 
-## 概要
-
-Linkerd はセキュリティを中核的な価値として扱い、設定なしで自動的に mTLS を適用します。このドキュメントでは、自動 mTLS、ワークロードアイデンティティシステム、認可ポリシー、証明書管理、外部 CA 統合について詳しく説明します。
+Linkerdはproxyが扱う通信にworkload認証、転送暗号化、受信認可を提供します。参加、policy、証明書ライフサイクル、アプリsecurityは明示設計が必要です。[導入ガイド](01-installation.md)の対応Kubernetes/Gateway API構成を使います。以下はその導入と既存workloadを前提とします。
 
 ## セキュリティアーキテクチャ
 
-```mermaid
-graph TB
-    subgraph "Security Components"
-        subgraph "Control Plane"
-            ID[Identity Controller<br/>Certificate Issuance]
-            POL[Policy Controller<br/>Authorization Policies]
-        end
+![論理署名chainと制御の役割。rootがissuerへ署名し、Identityがissuerでworkload証明書へ署名する。root秘密鍵をcluster内へ保存する意味ではない。](../../.gitbook/assets/en-service-mesh-linkerd-04-security-0.png)
 
-        subgraph "Data Plane"
-            P1[Proxy 1<br/>mTLS Termination]
-            P2[Proxy 2<br/>mTLS Termination]
-        end
-    end
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-04-security-0.html)
 
-    subgraph "Certificate Chain"
-        TA[Trust Anchor<br/>Root CA]
-        II[Identity Issuer<br/>Intermediate CA]
-        WC[Workload Certs<br/>Per Proxy]
-    end
+## 自動mTLS
 
-    TA --> II
-    II --> WC
-    ID --> P1
-    ID --> P2
-    POL --> P1
-    POL --> P2
-    P1 <-->|mTLS| P2
-```
+LinkerdはメッシュPod間の適格TCPに自動mTLSを使います。両proxyが参加しchainを信頼して通信を受ける必要があります。skip portは迂回し、UDPは対象外です。片端にproxyがあるだけで未参加endpointとの通信がmTLSになるわけではありません。
 
-## 自動 mTLS
+平文HTTPアプリでは送信proxyが宛先proxyを認証しネットワークホップを暗号化、受信proxyがcallerを認証しローカルアプリへHTTPを渡します。アプリ開始TLSはメッシュ内でも暗号化を維持できます。Linkerdは全外部/不透明TLSを自動復号しません。
 
-Linkerd の最も強力なセキュリティ機能は、設定なしですべてのメッシュトラフィックを自動的に暗号化することです。
+| 特性 | 意味と境界 |
+|---|---|
+| 透過暗号化 | 適格proxy間ホップでアプリTLS実装は不要 |
+| 相互認証 | Workload IDを認証し、エンドユーザーではない |
+| TLS 1.3 | 選択releaseのメッシュTLS |
+| 自動leaf更新 | Proxyが通常短命workload証明書を更新 |
+| Root/issuerライフサイクル | 別認証情報でrotationと監視が必要 |
 
-### mTLS の仕組み
+デフォルトは未参加sourceの平文も受け、認可policyで拒否できます。「mTLS有効」と「全受信に認証済みID必須」は異なります。proxy迂回/不在経路はNetworkPolicyとadmissionでも制御する必要があります。
 
-```mermaid
-sequenceDiagram
-    participant App1 as Application A
-    participant P1 as Proxy A
-    participant P2 as Proxy B
-    participant App2 as Application B
-
-    App1->>P1: Plain HTTP
-    Note over P1: Check if destination is in mesh
-    P1->>P1: Initialize TLS with certificate
-    P1->>P2: mTLS Handshake
-    Note over P1,P2: Mutual SPIFFE ID verification
-    P1->>P2: Encrypted Request
-    P2->>P2: TLS Termination
-    P2->>App2: Plain HTTP
-    App2-->>P2: Plain HTTP Response
-    P2-->>P1: Encrypted Response
-    P1-->>App1: Plain HTTP Response
-```
-
-### mTLS の特性
-
-| 特性 | 説明 |
-|----------------|-------------|
-| 設定不要 | セットアップなしで自動的に有効化 |
-| 透過的な暗号化 | アプリケーションコードの変更は不要 |
-| 相互認証 | クライアントとサーバーの両方を認証 |
-| 自動更新 | 有効期限前に証明書を自動更新 |
-| TLS 1.3 | 最新の TLS プロトコルを使用 |
-
-### mTLS ステータスの確認
+### 暗号化とIDの観測
 
 ```bash
-# Check mesh traffic encryption status
-linkerd viz edges deploy -n my-app
-
-# Expected output:
-# SRC          DST          SRC_NS    DST_NS    SECURED
-# web          api          my-app    my-app    √
-# api          database     my-app    my-app    √
-# ingress      web          ingress   my-app    √
-
-# Check individual connection status
-linkerd viz tap deploy/web -n my-app
-
-# TLS status is displayed:
-# req id=0:0 proxy=out src=10.0.0.1:54321 dst=10.0.0.2:80 tls=true :method=GET :path=/api
+linkerd check --proxy
+linkerd viz edges deploy -n production
+linkerd viz tap deploy/api -n production --method GET
+linkerd identity -n production -l app=api
+kubectl -n production get pods -l app=api \
+  -o custom-columns=NAME:.metadata.name,SERVICEACCOUNT:.spec.serviceAccountName
 ```
 
-### メッシュ外トラフィックの処理
+`viz edges`は観測resource edgeとsecurity状態で、全可能/idle接続一覧ではありません。`tap`は対応観測通信で、完全なpacket/security監査ではありません。表示はPrometheus TLSラベル値と同じインターフェースではありません。意図client IDから許可と意図的拒否の両通信を確認します。
 
-```mermaid
-graph LR
-    subgraph "External"
-        EXT[External Client<br/>Outside Mesh]
-    end
+`linkerd identity`はport-forwardで選択Podの公開証明書を取得します。SAN、issuer、期限を確認します。proxy内の固定pathにleafがあると想定せずに済みます。
 
-    subgraph "Mesh"
-        P1[Proxy<br/>Inside Mesh]
-        APP[Application]
-    end
+## ワークロードID
 
-    EXT -->|Plain HTTP| P1
-    P1 -->|Plain HTTP| APP
+標準Kubernetes経路ではDNS形式IDを使います。
 
-    style EXT fill:#ffcdd2
-    style P1 fill:#c8e6c9
+```text
+<service-account>.<namespace>.serviceaccount.identity.<control-plane-namespace>.<trust-domain>
+
+web.production.serviceaccount.identity.linkerd.cluster.local
+api.production.serviceaccount.identity.linkerd.cluster.local
 ```
 
-メッシュ外からのトラフィックは自動的に検出され、プレーンテキストとして処理されます。
+例はcontrol-plane名前空間`linkerd`とtrust domain `cluster.local`です。root証明書のcommon name自体はworkload trust-domain設定ではありません。以前のIstio型`spiffe://.../ns/.../sa/...` URIではありません。同ServiceAccountのPodは認可IDを共有しますが、鍵/証明書は別々です。
 
-```bash
-# Check non-mesh traffic
-linkerd viz tap deploy/web -n my-app --method GET
+proxyは鍵とCSRを生成し、投影ServiceAccount tokenとCSRをIdentityへ送ります。IdentityはTokenReviewで検証し、要求IDを確認して**issuerの**鍵で署名します。rootはissuerへ署名し、全proxy要求には署名しません。秘密鍵はServiceAccount tokenから導出されません。
 
-# tls=false indicates traffic from outside mesh
-# req id=0:0 proxy=in src=10.0.1.100:54321 dst=10.0.0.2:80 tls=false
-```
-
-## ワークロードアイデンティティシステム
-
-Linkerd は SPIFFE 互換のアイデンティティシステムを使用して、各ワークロードに一意のアイデンティティを割り当てます。
-
-### SPIFFE ID 形式
-
-```
-spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
-
-# Examples:
-spiffe://root.linkerd.cluster.local/ns/production/sa/web-server
-spiffe://root.linkerd.cluster.local/ns/production/sa/api-gateway
-spiffe://root.linkerd.cluster.local/ns/database/sa/postgres
-```
-
-### アイデンティティ発行プロセス
-
-```mermaid
-sequenceDiagram
-    participant Pod as Pod/Proxy
-    participant SA as ServiceAccount
-    participant ID as Identity Controller
-    participant CA as Trust Anchor
-
-    Note over Pod: Pod starts
-    Pod->>SA: Obtain ServiceAccount token
-    Pod->>Pod: Generate CSR (with SPIFFE ID)
-    Pod->>ID: Send CSR + SA token
-
-    ID->>ID: Validate SA token
-    ID->>ID: Validate Pod info
-    ID->>ID: Generate SPIFFE ID
-    ID->>CA: Certificate signing request
-    CA-->>ID: Signed certificate
-
-    ID-->>Pod: Workload certificate
-    Note over Pod: Valid for 24 hours
-```
-
-### アイデンティティの検証
-
-```bash
-# Check Pod's SPIFFE ID
-kubectl exec -n my-app deploy/web -c linkerd-proxy -- \
-  cat /var/run/linkerd/identity/end-entity.crt | \
-  openssl x509 -noout -text | grep URI
-
-# Example output:
-# URI:spiffe://root.linkerd.cluster.local/ns/my-app/sa/web
-
-# Check issuance in Identity Controller logs
-kubectl logs -n linkerd deploy/linkerd-identity | grep "issued"
-```
+既定workload証明書は約24時間で期限前更新されます。証明書要求は新ServiceAccountを作らず、更新も毎回全鍵rotationの証明ではありません。[アーキテクチャガイド](02-architecture.md)を参照します。
 
 ## 認可ポリシー
 
-Linkerd は、Server、ServerAuthorization、AuthorizationPolicy を通じてきめ細かなアクセス制御を提供します。
+これらはLinkerdの`policy.linkerd.io` APIです。`AuthorizationPolicy`はGateway API resourceではなくLinkerd 2.12導入で、Gateway API定義のrouteを対象にできます。
 
-### ポリシーモデル
+| リソース | 役割 |
+|---|---|
+| Server | 名前空間内の一致Podの宣言受信portを選択 |
+| Server接続HTTPRoute/GRPCRoute | 受信要求の部分集合を選択 |
+| MeshTLSAuthentication | 許可メッシュIDを記述 |
+| NetworkAuthentication | 許可client IP networkを記述。mTLSは提供しない |
+| AuthorizationPolicy | 認証要件一致時にtargetアクセスを許可 |
+| ServerAuthorization | 旧Server専用許可。選択CRDで`v1beta1`対応 |
 
-```mermaid
-graph TB
-    subgraph "Authorization Model"
-        SRV[Server<br/>Define Inbound Port]
-        SA[ServerAuthorization<br/>Define Access Rights]
-        AP[AuthorizationPolicy<br/>Apply Policy]
-    end
+`ServerAuthorization`と`AuthorizationPolicy`は代替許可で順次pipelineではありません。複数許可は範囲を広げ得ますが、1 policy内の複数`requiredAuthenticationRefs`は**すべて**一致が必要です。namespace対象policyはそこで定義されたpolicy targetを対象とし、全未宣言portへの自動policyではありません。
 
-    subgraph "Policy Modes"
-        DENY[default-deny<br/>Explicit Allow Only]
-        ALLOW[default-allow<br/>Explicit Deny Only]
-    end
+ServerはPod/port対を重複選択してはいけません。Pod specにアプリportを宣言します。namespace既定が許容的でもServerは未一致を既定拒否します。`accessPolicy: audit`は準備中の未一致観察に有用ですが、その通信を許可し強制ではありません。
 
-    SRV --> SA
-    SA --> AP
-    AP --> DENY
-    AP --> ALLOW
-```
+### デフォルトポリシー
 
-### Server リソース
-
-Server は、特定の Pod へのインバウンドトラフィックを定義します。
+参加名前空間の新規proxyへ次を設定します。
 
 ```yaml
-apiVersion: policy.linkerd.io/v1beta2
-kind: Server
-metadata:
-  name: web-http
-  namespace: production
-spec:
-  # Target Pod selection
-  podSelector:
-    matchLabels:
-      app: web
-
-  # Port specification
-  port: 8080
-  # Or specify by name
-  # port: http
-
-  # Protocol (HTTP/1, HTTP/2, gRPC, opaque)
-  proxyProtocol: HTTP/1
-
----
-# gRPC server
-apiVersion: policy.linkerd.io/v1beta2
-kind: Server
-metadata:
-  name: api-grpc
-  namespace: production
-spec:
-  podSelector:
-    matchLabels:
-      app: api
-  port: 9090
-  proxyProtocol: gRPC
-
----
-# TCP (opaque) server
-apiVersion: policy.linkerd.io/v1beta2
-kind: Server
-metadata:
-  name: database-tcp
-  namespace: database
-spec:
-  podSelector:
-    matchLabels:
-      app: postgres
-  port: 5432
-  proxyProtocol: opaque
-```
-
-### ServerAuthorization リソース
-
-ServerAuthorization は Server へのアクセス権を定義します。
-
-```yaml
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: web-authz
-  namespace: production
-spec:
-  # Target Server
-  server:
-    name: web-http
-
-  # Allowed clients
-  client:
-    # Mesh internal mTLS clients
-    meshTLS:
-      # Allow specific ServiceAccounts only
-      serviceAccounts:
-        - name: api-gateway
-          namespace: production
-        - name: monitoring
-          namespace: monitoring
-
----
-# Allow access from multiple namespaces
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: api-authz
-  namespace: production
-spec:
-  server:
-    name: api-grpc
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: web
-          namespace: production
-        - name: mobile-backend
-          namespace: mobile
-        - name: admin-service
-          namespace: admin
-
----
-# Allow all mesh clients
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: public-api-authz
-  namespace: production
-spec:
-  server:
-    name: public-api
-  client:
-    meshTLS:
-      identities:
-        - "*"  # Allow all mesh IDs
-
----
-# Allow unauthenticated clients (health checks, etc.)
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: health-authz
-  namespace: production
-spec:
-  server:
-    name: health-server
-  client:
-    unauthenticated: true
-```
-
-### AuthorizationPolicy（Gateway API）
-
-Linkerd 2.14+ は Gateway API の AuthorizationPolicy もサポートします。
-
-```yaml
-apiVersion: policy.linkerd.io/v1alpha1
-kind: AuthorizationPolicy
-metadata:
-  name: web-policy
-  namespace: production
-spec:
-  # Target workload
-  targetRef:
-    group: core
-    kind: Namespace
-    name: production
-
-  # Required authentication
-  requiredAuthenticationRefs:
-    - name: mesh-tls
-      kind: MeshTLSAuthentication
-      group: policy.linkerd.io
-
----
-apiVersion: policy.linkerd.io/v1alpha1
-kind: MeshTLSAuthentication
-metadata:
-  name: mesh-tls
-  namespace: production
-spec:
-  # Allowed identities
-  identities:
-    - "spiffe://root.linkerd.cluster.local/ns/production/*"
-    - "spiffe://root.linkerd.cluster.local/ns/monitoring/*"
-```
-
-### ポリシーモードの設定
-
-#### Default-Deny（推奨）
-
-デフォルトですべてのトラフィックを拒否し、明示的に許可したトラフィックのみを許可します。
-
-```yaml
-# Apply default-deny to namespace
 apiVersion: v1
 kind: Namespace
 metadata:
   name: production
   annotations:
+    linkerd.io/inject: enabled
     config.linkerd.io/default-inbound-policy: deny
 ```
 
-```bash
-# Or global configuration
-linkerd install --set policyController.defaultPolicy=deny | kubectl apply -f -
+namespaceアノテーション変更は既存proxyの初期化済みdefaultへ遡及しません。workload別rolloutとreadinessを調整します。動的policy CRDは別機構で、全Podを置換せず更新できます。
 
-# Configure with Helm
-helm install linkerd-control-plane linkerd/linkerd-control-plane \
-  --set policyController.defaultPolicy=deny
-```
-
-#### Default-Allow
-
-デフォルトですべてのトラフィックを許可します（既存の動作と互換性があります）。
+全体Helm値は`policyController.defaultPolicy`でなく`proxy.defaultInboundPolicy`です。CAとrelease所有権を保ち、完全valuesへマージします。
 
 ```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: legacy-app
-  annotations:
-    config.linkerd.io/default-inbound-policy: all-unauthenticated
+proxy:
+  defaultInboundPolicy: deny
 ```
 
-#### ポリシーモードのオプション
+| デフォルト | 意味 |
+|---|---|
+| all-unauthenticated | メッシュ認証なしを許可。導入時既定 |
+| all-authenticated | 適切に信頼されたmulticlusterも含む認証済みclient必須 |
+| cluster-authenticated | 同clusterの認証済みclient必須 |
+| cluster-unauthenticated | 設定cluster network範囲でメッシュ認証なしを許可 |
+| deny | 明示policyと文書化probe処理に従い未一致を拒否 |
+| audit | 未一致を許可し監査証拠を記録 |
 
-| モード | 説明 |
-|------|-------------|
-| `deny` | すべてのトラフィックを拒否（default-deny） |
-| `all-unauthenticated` | すべてのトラフィックを許可 |
-| `all-authenticated` | メッシュ mTLS トラフィックのみを許可 |
-| `cluster-unauthenticated` | クラスター内部のトラフィックを許可 |
-| `cluster-authenticated` | クラスター内部の mTLS トラフィックのみを許可 |
+cluster範囲はエンドユーザーIDやアプリ認可境界ではありません。設定networkとproxyから見えるsourceを確認します。
 
-### 実践例: マイクロサービスのポリシー
+### マイクロサービス例
+
+独立例用に`production`へ`app: frontend/api/postgres`、下の宣言portと対応ServiceAccountを持つメッシュfrontend/API/PostgreSQLを準備します。`ingress`にはServiceAccount `edge-gateway`のメッシュIngress workloadを用意します。名前だけでGateway導入/認証はされません。
 
 ```yaml
-# 1. Frontend - accessible only from ingress
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
   name: frontend-http
@@ -429,25 +125,24 @@ spec:
       app: frontend
   port: 8080
   proxyProtocol: HTTP/1
-
+  accessPolicy: deny
 ---
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
 metadata:
-  name: frontend-authz
+  name: frontend-from-gateway
   namespace: production
 spec:
-  server:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
     name: frontend-http
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: ingress-nginx
-          namespace: ingress-nginx
-
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: edge-gateway
+    namespace: ingress
 ---
-# 2. API Server - accessible only from frontend
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
   name: api-http
@@ -458,25 +153,24 @@ spec:
       app: api
   port: 8080
   proxyProtocol: HTTP/1
-
+  accessPolicy: deny
 ---
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
 metadata:
-  name: api-authz
+  name: api-from-frontend
   namespace: production
 spec:
-  server:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
     name: api-http
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: frontend
-          namespace: production
-
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: frontend
+    namespace: production
 ---
-# 3. Database - accessible only from API server
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
   name: database-tcp
@@ -487,216 +181,167 @@ spec:
       app: postgres
   port: 5432
   proxyProtocol: opaque
-
+  accessPolicy: deny
 ---
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: database-from-api
+  namespace: production
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: database-tcp
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: api
+    namespace: production
+```
+
+意図chainはgateway → frontend → API → DBです。YAMLのServiceAccount名だけでは足りず、callerが認証済みIDを提示する必要があります。広いnamespace/Server許可が不要callerを許していないか確認します。
+
+Serverに明示routeがない場合、通常Linkerdは宣言HTTP health/readiness probeの認可を追加します。HTTPRoute/GRPCRouteを接続すると既定probe許可は作られません。必要probe routeと限定アクセスを明示します。1 probe成功のため業務port全体を未認証許可しないでください。
+
+参考として、この**旧方式の代替許可**はAPIのfrontend-client許可と同等で、上のAuthorizationPolicyとの併用は不要です。
+
+```yaml
+apiVersion: policy.linkerd.io/v1beta1
 kind: ServerAuthorization
 metadata:
-  name: database-authz
+  name: api-from-frontend-legacy
   namespace: production
 spec:
   server:
-    name: database-tcp
+    name: api-http
   client:
     meshTLS:
       serviceAccounts:
-        - name: api
-          namespace: production
+      - name: frontend
+        namespace: production
+```
 
----
-# 4. Monitoring - Prometheus collects metrics from all services
-apiVersion: policy.linkerd.io/v1beta2
+選択版は`ServerAuthorization/v1beta2`を提供しません。Server版から他resource版を推測しないでください。`client.unauthenticated:true`は未認証を許し、`meshTLS.identities:["*"]`はメッシュIDを要求しつつ非常に広く許可します。
+
+### メトリクスポートと検証
+
+API Podの明示宣言**アプリメトリクスポート9091**への許可例:
+
+```yaml
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
-  name: metrics-server
+  name: api-app-metrics
   namespace: production
 spec:
   podSelector:
     matchLabels:
-      linkerd.io/control-plane-ns: linkerd
-  port: 4191
+      app: api
+  port: 9091
   proxyProtocol: HTTP/1
-
+  accessPolicy: deny
 ---
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
 metadata:
-  name: metrics-authz
+  name: metrics-from-prometheus
   namespace: production
 spec:
-  server:
-    name: metrics-server
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: prometheus
-          namespace: monitoring
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: api-app-metrics
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: monitoring
 ```
+
+proxy自身の通常**4191** adminとは別です。proxy-initはadmin/control portを通常受信捕捉から除外します。4191のServerを作ってもmTLS保護アプリportにはなりません。管理endpointには実cluster/network制御と限定経路を使います。
+
+```bash
+kubectl -n production get servers,authorizationpolicies,serverauthorizations
+kubectl -n production get server api-http -o yaml
+# Set this to an actual selected API Pod.
+api_pod=api-example-pod
+linkerd diagnostics policy -n production "pod/$api_pod" 8080 -o json
+linkerd viz authz deploy/api -n production
+```
+
+既知HTTP policy拒否は通常403、opaque/TCPは接続レベルで拒否され得ます。変更で既存接続が中断する場合があります。Kubernetes `Forbidden`イベントはproxy認可拒否の自動要求別記録ではありません。policy診断と適切なHTTP/TCP認可メトリクスを使います。
+
 
 ## 証明書管理
 
-### 証明書階層
+| 認証情報 | 目的 | 既定/手動所有権の考慮 |
+|---|---|---|
+| Trust anchor bundle | メッシュが受け入れる公開root | 通常ConfigMap `linkerd-identity-trust-roots`、キー`ca-bundle.crt` |
+| Identity issuer証明書/鍵 | Identityがworkload leafへ署名する中間CA | Secret `linkerd-identity-issuer`。キー名はscheme依存 |
+| Workload証明書/鍵 | Proxy別TLS認証情報 | Proxyが自動更新する短命leaf |
 
-```mermaid
-graph TB
-    subgraph "Certificate Hierarchy"
-        TA[Trust Anchor<br/>Root CA<br/>Validity: 1-10 years]
-        II[Identity Issuer<br/>Intermediate CA<br/>Validity: 1 year]
-        WC1[Workload Cert<br/>Validity: 24 hours]
-        WC2[Workload Cert<br/>Validity: 24 hours]
-    end
+既定CLI生成root/issuerは1年、workload leafは通常24時間です。手動10年rootは可能ですが普遍的推奨や導入defaultではありません。CA方針と復旧から寿命/更新余裕を選び、chainの全証明書を追跡します。
 
-    TA --> II
-    II --> WC1
-    II --> WC2
+Linkerdのroot/issuerには**ECDSA P-256**が必要です。[導入ガイド](01-installation.md)に明示生成パラメーターとローカル秘密鍵処理があります。root署名鍵は公開trust bundleと分離し、公開ConfigMapへ決して含めません。
 
-    style TA fill:#ffeb3b
-    style II fill:#03a9f4
-    style WC1 fill:#4caf50
-    style WC2 fill:#4caf50
-```
-
-### Trust Anchor 管理
+### 実効公開認証情報を読む
 
 ```bash
-# Create Trust Anchor (step CLI)
-step certificate create root.linkerd.cluster.local ca.crt ca.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h  # 10 years
+set -euo pipefail
+umask 077
+# Public trust bundle: ConfigMap data is not base64-encoded.
+kubectl -n linkerd get configmap linkerd-identity-trust-roots -o json \
+  | jq -er '.data["ca-bundle.crt"] | select(length > 0)' > current-trust.pem
+# Select only public certificate data from the issuer Secret, never its key.
+kubectl -n linkerd get secret linkerd-identity-issuer -o json \
+  | jq -er '(.data["tls.crt"] // .data["crt.pem"]) | select(length > 0)' \
+  | base64 -d > current-issuer.pem
 
-# Check current Trust Anchor expiration
-kubectl get secret linkerd-identity-trust-roots -n linkerd -o json | \
-  jq -r '.data["ca-bundle.crt"]' | base64 -d | \
-  openssl x509 -noout -enddate
-
-# Store Trust Anchor as Secret
-kubectl create secret generic linkerd-identity-trust-roots \
-  --from-file=ca-bundle.crt=ca.crt \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
+# Show every certificate in a multi-root bundle, not only its first entry.
+openssl crl2pkcs7 -nocrl -certfile current-trust.pem \
+  | openssl pkcs7 -print_certs -text -noout
+openssl x509 -in current-issuer.pem -noout -subject -issuer -dates
+# Nonzero exit means expiration is within this window or parsing failed.
+openssl x509 -in current-issuer.pem -noout -checkend 86400
 ```
 
-### Identity Issuer 管理
+既定`linkerd.io/tls`は`crt.pem`/`key.pem`、`kubernetes.io/tls`は`tls.crt`/`tls.key`です。コマンドは公開証明書だけを選びます。変更前にschemeと所有者を確認します。
+
+bundle内の全rootを調べます。`openssl x509`だけでは最初しか調べず、完全な複数root期限監査ではありません。日付に加え意図trust anchorに対するissuer chainを検証し、必要なら中間証明書を供給します。解析/API読取失敗は「正常」でなく失敗と報告します。
+
+### Trust anchorを変えないissuer更新
+
+所有者経由で更新します。Linkerd所有Secretは完全Helm/CLI証明書values、管理Secretは証明書controllerを使います。Identityはマウントissuerを監視し、置換を検証して有効issuerを再読込します。全Identity Deployment再起動が毎回必須ではありません。
 
 ```bash
-# Create Issuer certificate
-step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
-  --profile intermediate-ca \
-  --ca ca.crt \
-  --ca-key ca.key \
-  --no-password \
-  --insecure \
-  --not-after=8760h  # 1 year
-
-# Check Issuer certificate expiration
-kubectl get secret linkerd-identity-issuer -n linkerd -o json | \
-  jq -r '.data["tls.crt"]' | base64 -d | \
-  openssl x509 -noout -enddate
-
-# Update Issuer Secret
-kubectl create secret tls linkerd-identity-issuer \
-  --cert=issuer.crt \
-  --key=issuer.key \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n linkerd get events --field-selector reason=IssuerUpdated
+kubectl -n linkerd get events --field-selector reason=IssuerUpdateSkipped
+kubectl -n linkerd logs deployment/linkerd-identity -c identity --tail=100
+linkerd check --proxy
+linkerd identity -n production -l app=api
 ```
 
-### 証明書ローテーション
+`IssuerUpdated`はIdentityが更新を受理したことです。`IssuerUpdateSkipped`や検証エラーを調査します。既存proxy leafは通常更新まで旧issuer署名のままでよく、両chainが有効な間は想定どおりです。全leaf即時置換は別の協調workload操作です。
 
-#### Trust Anchor のローテーション（ダウンタイムなし）
+### Trust anchorローテーション
 
-```bash
-# 1. Create new Trust Anchor
-step certificate create root.linkerd.cluster.local ca-new.crt ca-new.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h
+root置換には段階移行が必要です。有効root手順は期限切れrootの復旧保証ではありません。
 
-# 2. Create bundle (existing + new)
-cat ca.crt ca-new.crt > ca-bundle.crt
+1. 現bundle、issuer chain、管理resource、control-plane proxy、workload、外部workload、リンクclusterなど全consumerを棚卸し。rollout容量/readinessを確認。
+2. 新rootを生成し、**公開の旧+新bundle**を保持。実所有者経由で更新。
+3. issuer切り替え前に重複bundleを全consumerへ配布。proxyは導入/注入設定で信頼を受け、ConfigMap書込だけでは既存process再読込の証明にならない。
+4. `linkerd check --proxy`とworkload/cluster間チェックで配布確認後、新root署名issuerを発行・読込。
+5. leafの通常更新を待つか意図的に調整し、全関連client/serverの新chainを確認。固定sleepやcontroller rollout成功だけでは不十分。
+6. 所有者経由で旧rootを除き、最終bundleを全consumerへ伝播、接続/信頼を再確認。
 
-# 3. Update Trust Anchor Secret
-kubectl create secret generic linkerd-identity-trust-roots \
-  --from-file=ca-bundle.crt=ca-bundle.crt \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
+rollback素材を保持し各段階を監視します。reviewしたメッシュworkload controllerだけを適切なreadiness/中断処理で再起動します。全namespace Deploymentループは他workloadを見逃し無関係なものを中断し得ます。未検証rotationの無停止をこの文書は主張しません。
 
-# 4. Reissue Issuer with new Trust Anchor
-step certificate create identity.linkerd.cluster.local issuer-new.crt issuer-new.key \
-  --profile intermediate-ca \
-  --ca ca-new.crt \
-  --ca-key ca-new.key \
-  --no-password \
-  --insecure \
-  --not-after=8760h
+## 外部証明書管理
 
-# 5. Update Issuer Secret
-kubectl create secret tls linkerd-identity-issuer \
-  --cert=issuer-new.crt \
-  --key=issuer-new.key \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
+### cert-managerによるissuer更新
 
-# 6. Restart Identity Controller
-kubectl rollout restart deploy/linkerd-identity -n linkerd
-
-# 7. Restart all proxies (progressively)
-for ns in $(kubectl get ns -o name | cut -d/ -f2); do
-  kubectl rollout restart deploy -n $ns
-  sleep 30
-done
-
-# 8. Remove old Trust Anchor (after all proxies renewed)
-cp ca-new.crt ca-bundle.crt
-kubectl create secret generic linkerd-identity-trust-roots \
-  --from-file=ca-bundle.crt=ca-bundle.crt \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
-```
-
-#### 自動ローテーションの監視
-
-```bash
-# Certificate expiration alert script
-#!/bin/bash
-
-DAYS_WARNING=30
-
-# Check Trust Anchor
-TRUST_ANCHOR_EXPIRY=$(kubectl get secret linkerd-identity-trust-roots -n linkerd -o json | \
-  jq -r '.data["ca-bundle.crt"]' | base64 -d | \
-  openssl x509 -noout -enddate | cut -d= -f2)
-
-TRUST_ANCHOR_EPOCH=$(date -d "$TRUST_ANCHOR_EXPIRY" +%s)
-NOW_EPOCH=$(date +%s)
-DAYS_LEFT=$(( (TRUST_ANCHOR_EPOCH - NOW_EPOCH) / 86400 ))
-
-if [ $DAYS_LEFT -lt $DAYS_WARNING ]; then
-  echo "WARNING: Trust Anchor expires in $DAYS_LEFT days"
-fi
-
-# Check Issuer
-ISSUER_EXPIRY=$(kubectl get secret linkerd-identity-issuer -n linkerd -o json | \
-  jq -r '.data["tls.crt"]' | base64 -d | \
-  openssl x509 -noout -enddate | cut -d= -f2)
-
-ISSUER_EPOCH=$(date -d "$ISSUER_EXPIRY" +%s)
-ISSUER_DAYS_LEFT=$(( (ISSUER_EPOCH - NOW_EPOCH) / 86400 ))
-
-if [ $ISSUER_DAYS_LEFT -lt $DAYS_WARNING ]; then
-  echo "WARNING: Identity Issuer expires in $ISSUER_DAYS_LEFT days"
-fi
-```
-
-## 外部 CA 統合
-
-### cert-manager 統合
+`linkerd`のSecret `linkerd-trust-anchor`に既存の検証済みCA証明書とECDSA P-256署名鍵がある前提です。cert-manager CA Issuerは鍵をcluster内に置くため、信頼モデルに合わなければ別CA統合を選びます。cert-manager版はKubernetes対応が必要です。
 
 ```yaml
-# cert-manager Issuer configuration
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -705,56 +350,7 @@ metadata:
 spec:
   ca:
     secretName: linkerd-trust-anchor
-
 ---
-# Automatic Identity Issuer certificate issuance
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: linkerd-identity-issuer
-  namespace: linkerd
-spec:
-  secretName: linkerd-identity-issuer
-  duration: 8760h  # 1 year
-  renewBefore: 720h  # Renew 30 days before
-  issuerRef:
-    name: linkerd-trust-anchor
-    kind: Issuer
-  commonName: identity.linkerd.cluster.local
-  isCA: true
-  privateKey:
-    algorithm: ECDSA
-    size: 256
-  usages:
-    - cert sign
-    - crl sign
-    - server auth
-    - client auth
-```
-
-### Vault 統合
-
-```yaml
-# Vault PKI configuration
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: vault-issuer
-  namespace: linkerd
-spec:
-  vault:
-    path: pki_int/sign/linkerd-identity
-    server: https://vault.example.com
-    auth:
-      kubernetes:
-        role: linkerd-issuer
-        mountPath: /v1/auth/kubernetes
-        secretRef:
-          name: vault-token
-          key: token
-
----
-# Issue Identity Issuer certificate from Vault
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -765,128 +361,90 @@ spec:
   duration: 8760h
   renewBefore: 720h
   issuerRef:
-    name: vault-issuer
+    name: linkerd-trust-anchor
     kind: Issuer
+    group: cert-manager.io
   commonName: identity.linkerd.cluster.local
   isCA: true
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+  - cert sign
+  - crl sign
+  - server auth
+  - client auth
 ```
 
-### 外部 CA の Helm 設定
+workload leafへ署名するためissuerはCAです。`rotationPolicy: Always`で鍵rotationを明示します。8760hは365日、`renewBefore:720h`は30日ごとでなく**期限30日前**の更新です。親CAに十分な残存期間が必要です。CA Issuerは全chain寿命/path-length制約を自動強制せず、CA Secret更新で全依存証明書を自動再発行しません。
+
+```bash
+kubectl -n linkerd get issuer linkerd-trust-anchor
+kubectl -n linkerd get certificate linkerd-identity-issuer
+kubectl -n linkerd describe certificate linkerd-identity-issuer
+# Inspect public certificate contents and effective issuer loading as above.
+```
+
+CertificateがReady、Secretが期待キー/chainを持ち、Identityが受理して初めて動作する統合です。
+
+### Trust bundle所有権を明示選択
+
+**選択肢A: cert-managerがissuer、Helmが公開trust bundleを所有。** `managed-issuer-values.yaml`として保存し、完全なレビュー済みvaluesでroot bundleを供給します。
 
 ```yaml
-# values.yaml
+identity:
+  externalCA: false
+  issuer:
+    scheme: kubernetes.io/tls
+```
+
+```bash
+# Merge into the complete reviewed values from the installation guide.
+# In this option, Helm owns the public trust bundle; cert-manager owns the issuer.
+helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
+  --version 2026.9.1 -n linkerd \
+  -f reviewed-values.yaml -f managed-issuer-values.yaml \
+  --set-file identityTrustAnchorsPEM=ca.crt > reviewed-control-plane.yaml
+```
+
+`kubernetes.io/tls`ではチャートはLinkerd形式Secretを作らず既存issuerを期待します。`externalCA:false`では公開trust ConfigMapをHelmが作ります。導入前にrenderと既存所有権を確認します。
+
+**選択肢B: 外部controllerがtrust ConfigMapも所有。** その別モデルでは次のようにします。
+
+```yaml
 identity:
   externalCA: true
   issuer:
     scheme: kubernetes.io/tls
 ```
 
-```bash
-# Install with external CA mode
-helm install linkerd-control-plane linkerd/linkerd-control-plane \
-  -n linkerd \
-  --set identity.externalCA=true \
-  --set-file identityTrustAnchorsPEM=ca.crt
-```
+`identity.externalCA:true`ではチャートは`linkerd-identity-trust-roots`を作成**しません**。trust-managerなど外部controllerがcontrol-plane名前空間へ`ca-bundle.crt`付きConfigMapを供給する必要があります。外部ConfigMapなしで`identityTrustAnchorsPEM`を渡すだけでは完了しません。
 
-## ネットワークとアプリケーションのセキュリティ
+管理root rotationでは旧**公開証明書**を重複bundleに残し、issuer更新とconsumer rolloutを調整してから廃止します。公開証明書保持だけのためCA Secret全体をコピーしないでください。cert-manager/trust-managerは全workload再起動/信頼移行を自動にしません。
 
-### セキュリティレイヤー
+### Vault統合の境界
 
-```mermaid
-graph TB
-    subgraph "Security Layers"
-        subgraph "Network Level (Linkerd)"
-            MTLS[mTLS Encryption]
-            AUTHZ[Service Authorization]
-            ID[Workload Identity]
-        end
+VaultはCA設計に参加できますが、通常PKI `sign/<role>` leaf署名手順は完全Linkerd issuer手順ではありません。実中間CAが必要で、Certificateの`isCA:true`だけではVault endpointがその能力を許す証明になりません。
 
-        subgraph "Application Level"
-            JWT[JWT/OAuth]
-            RBAC[Application RBAC]
-            INPUT[Input Validation]
-        end
-    end
+選択統合の署名endpointとrequest/response対応を確認します。Vaultには特権`root/sign-intermediate`とissuer別中間署名endpointがあり、利用権限はCA発行能力を与えるため意図的に限定したrole/policyが必要です。ECDSA P-256、返却chain、issuer寿命、Vault信頼、更新も確認します。
 
-    MTLS --> JWT
-    AUTHZ --> RBAC
-    ID --> INPUT
-```
+cert-manager認証は適切なら文書化された短命ServiceAccount tokenフローを優先し、必要TokenRequest RBAC、Vault Kubernetes/JWT認証、audienceを設定します。`vault-token`というSecretだけでは不十分です。旧YAMLはこれらと検証済み中間CA発行経路を欠くため、テスト済みデプロイ手順としては示しません。
 
-| レイヤー | Linkerd の役割 | アプリケーションの役割 |
-|-------|--------------|------------------|
-| トランスポートの暗号化 | mTLS（自動） | HTTPS（任意） |
-| サービス認証 | SPIFFE ID | API キー、JWT |
-| サービス認可 | ServerAuthorization | RBAC、権限チェック |
-| データ検証 | - | 入力検証、サニタイズ |
+## アプリセキュリティと監視
 
-### 多層防御の例
+| 責務 | Linkerdの貢献 | 追加制御 |
+|---|---|---|
+| ネットワークホップ | 適格proxy間mTLS | 他ホップTLS、ネットワーク制限、endpoint公開 |
+| Workload認証 | ServiceAccount由来メッシュID | エンドユーザー/API-client認証、token検証 |
+| Serviceアクセス | 受信認可policy | アプリrole、tenant、object認可 |
+| データ処理 | 業務入力を検証しない | 入力検証、出力処理、データ保護 |
 
-```yaml
-# Linkerd: Service-level authorization
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: api-authz
-  namespace: production
-spec:
-  server:
-    name: api-server
-  client:
-    meshTLS:
-      serviceAccounts:
-        - name: web
-          namespace: production
+許可されたfrontend IDは、そのcallerが管理者という証明ではありません。アプリは入力に加えuser認証情報と業務権限を検証します。
 
----
-# Application: JWT-based user authorization (pseudocode)
-# @app.route('/api/admin')
-# @require_role('admin')  # Application-level RBAC
-# def admin_endpoint():
-#     # Linkerd handles service authentication
-#     # Application handles user authorization only
-#     return handle_admin_request()
-```
+### 意味のあるセキュリティアラート
 
-## セキュリティ監視
-
-### ポリシー違反の検出
-
-```bash
-# Check denied requests
-linkerd viz tap deploy/api -n production | grep "forbidden"
-
-# Check policy events
-kubectl get events -n production --field-selector reason=Forbidden
-
-# Check authorization failures in proxy logs
-kubectl logs deploy/api -n production -c linkerd-proxy | grep "authorization"
-```
-
-### 証明書ステータスの監視
-
-```bash
-# Check certificate status with linkerd check
-linkerd check --proxy
-
-# Expected output:
-# linkerd-identity
-# ----------------
-# √ certificate config is valid
-# √ trust anchors are using supported crypto algorithm
-# √ trust anchors are within their validity period
-# √ trust anchors are valid for at least 60 days
-# √ issuer cert is using supported crypto algorithm
-# √ issuer cert is within its validity period
-# √ issuer cert is valid for at least 60 days
-# √ issuer cert is issued by the trust anchor
-
-# Monitor with Prometheus metrics
-# identity_cert_expiration_timestamp_seconds
-```
-
-### Prometheus アラートルール
+以下にはPrometheus Operator、このPrometheusRuleを選ぶPrometheus、示すnamespace/deploymentとproxy TLS IDラベルを保持する収集が必要です。共有backendはtarget/cluster範囲を確認します。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -898,37 +456,56 @@ spec:
   groups:
   - name: linkerd-security
     rules:
-    - alert: LinkerdIdentityCertExpiringSoon
-      expr: |
-        identity_cert_expiration_timestamp_seconds - time() < 86400 * 7
-      for: 1h
+    - alert: LinkerdWorkloadCertificateExpiring
+      expr: identity_cert_expiration_timestamp_seconds{namespace="production"} - time() < 3600
+      for: 10m
       labels:
         severity: warning
       annotations:
-        summary: "Linkerd identity certificate expiring soon"
-        description: "Certificate will expire in less than 7 days"
-
-    - alert: LinkerdMTLSDisabled
-      expr: |
-        sum(response_total{tls="false", direction="inbound"})
-        / sum(response_total{direction="inbound"}) > 0.1
+        summary: Proxy workload certificate has less than one hour remaining
+    - alert: LinkerdIssuerCertificateExpiring
+      expr: issuer_cert_ttl_seconds{job="linkerd-controller",component="identity"} < 86400
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Identity issuer has less than one day remaining
+    - alert: LinkerdInboundHTTPWithoutMeshIdentity
+      expr: |-
+        ((sum(rate(response_total{namespace="production",deployment="api",direction="inbound"}[5m])) - (sum(rate(response_total{namespace="production",deployment="api",direction="inbound",tls="true",client_id!=""}[5m])) or vector(0))) / sum(rate(response_total{namespace="production",deployment="api",direction="inbound"}[5m])) > 0.10)
+        and on() (sum(rate(response_total{namespace="production",deployment="api",direction="inbound"}[5m])) > 0)
       for: 5m
       labels:
-        severity: critical
+        severity: warning
       annotations:
-        summary: "High percentage of non-mTLS traffic"
-        description: "More than 10% of inbound traffic is not encrypted"
+        summary: More than 10% of observed API HTTP responses lack authenticated mesh client identity
+    - alert: LinkerdInboundHTTPAuthorizationDenied
+      expr: sum(rate(inbound_http_authz_deny_total{namespace="production",deployment="api"}[5m])) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: API inbound HTTP authorization denials observed
 ```
 
-## 次のステップ
+`identity_cert_expiration_timestamp_seconds`は**proxy leafの絶対期限**です。7日前警告は正常な既定24時間leafに常に一致します。controllerの`issuer_cert_ttl_seconds`は残り期間なので`time()`を引きません。selectorは既定Viz controller job/componentラベルで、そのscrapeにnamespaceラベルは付きません。custom collectorで変わるなら合わせます。寿命と期待更新間隔でしきい値を決め、公開rootとscrape可用性は別監視します。
 
-- [オブザーバビリティ](./05-observability.md): メトリクスとダッシュボード
-- [マルチクラスター](./06-multi-cluster.md): クラスター間セキュリティ
-- [ベストプラクティス](./07-best-practices.md): 本番環境向けセキュリティ設定
+選択proxyのTLSラベルには`true`、`no_identity`、`disabled`、`opaque`があり、旧`tls="false"`は意図系列に一致しません。`tls="true"`だけではclient IDがない場合もあります。例は受信API HTTP完了応答と、TLSおよび空でない認証済み`client_id`付き応答を、rateと正の通信ガードで比較します。
 
-## 参考資料
+この比率は**全ネットワークバイトや全平文通信の割合ではありません**。迂回経路/opaque TCPを含まず、IDラベル保持に依存します。想定probeや意図した未認証routeは独自範囲/基準が必要です。全認証済みで未認証系列がなければ元の比率は0で、このアラートは鳴りません。無通信/欠損は安全証明ではありません。
 
-- [Linkerd Security](https://linkerd.io/2/features/automatic-mtls/)
-- [Authorization Policy](https://linkerd.io/2/features/server-policy/)
-- [Certificate Management](https://linkerd.io/2/tasks/automatically-rotating-control-plane-tls-credentials/)
-- [SPIFFE](https://spiffe.io/)
+HTTP認可拒否カウンターとアプリログイン失敗は別です。opaque接続はTCP認可counterを使い、scrape欠損から「拒否なし」と推測しません。auditのログ/メトリクスは許可した未一致通信を記録し、強制拒否ではありません。
+
+## 次のステップと参考資料
+
+- [可観測性](05-observability.md)、[マルチクラスター](06-multi-cluster.md)、[ベストプラクティス](07-best-practices.md)、[セキュリティクイズ](../../quizzes/service-mesh/linkerd/security.md)
+- [自動mTLS](https://linkerd.io/docs/features/automatic-mtls/)
+- [認可動作](https://linkerd.io/docs/features/server-policy/)と[API参照](https://linkerd.io/docs/reference/authorization-policy/)
+- [Identity CLI](https://linkerd.io/docs/reference/cli/identity/)
+- [手動認証情報rotation](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/)
+- [管理された認証情報rotation](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/)
+- [Proxyメトリクス](https://linkerd.io/docs/reference/proxy-metrics/)
+- [リリースIdentity再読込/issuer metrics実装](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/pkg/identity/service.go)
+- [リリースチャートの認証情報所有権](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/templates/identity.yaml)
+- [cert-manager CA Issuer](https://cert-manager.io/docs/configuration/ca/)と[Vault認証](https://cert-manager.io/docs/configuration/vault/)
+- [Vault中間署名](https://developer.hashicorp.com/vault/api-docs/secret/pki#sign-intermediate)

@@ -1,613 +1,562 @@
-# Linkerd マルチクラスター
+# Linkerdマルチクラスター
 
-> **サポート対象バージョン**: Linkerd 2.16+
-> **最終更新**: February 22, 2026
+> **最終更新**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Gateway API 1.5.1
 
-## 概要
+Linkerdは選択サービス情報をクラスター間で複製します。動作するcontrol-plane検出経路と適切なdata-plane経路の両方が必要です。cluster統合、アプリデータ複製、シャドーテスト用の全要求複製はしません。
 
-Linkerdのマルチクラスター機能は、Service Mirroringアーキテクチャを通じて、複数のKubernetesクラスター間で安全かつ透過的な通信を提供します。このドキュメントでは、EKS環境におけるマルチクラスターのセットアップ、Service Mirroring、フェイルオーバー、設定について説明します。
+## 通信モード
 
-## マルチクラスターアーキテクチャ
+| モード | 検出/Service選択 | データ経路とID |
+|---|---|---|
+| 階層型 | 既定`mirror.linkerd.io/exported=true` | Source client proxy → target Gateway → server。元caller IDはGatewayで失われる |
+| フラット / remote discovery | `mirror.linkerd.io/exported=remote-discovery` | cluster間Pod直接接続。元workload IDを保持 |
+| Federated Service | `mirror.linkerd.io/federated=member` | フラット網で同名/同namespace Serviceの和集合。メッシュclient必須 |
 
-```mermaid
-graph TB
-    subgraph "Cluster West"
-        subgraph "Control Plane West"
-            MC_W[Multicluster<br/>Extension]
-            SM_W[Service Mirror<br/>Controller]
-        end
+sourceのmirror controllerは他mirrorでなく**target Kubernetes API**を監視します。mirror Serviceは検出オブジェクトでTLS処理プロセスではありません。通常名は対応namespaceの`<service>-<Link cluster name>`です。
 
-        subgraph "Data Plane West"
-            GW_W[Gateway<br/>Ingress]
-            SVC_W[web-service]
-            PROXY_W[linkerd-proxy]
-        end
+![階層経路。source client proxyがremote Gatewayへ接続し、Gatewayが別接続でメッシュserverへ送る。source側Gatewayホップは必須でなく、最終serverに元client IDは届かない。](../../.gitbook/assets/en-service-mesh-linkerd-06-multi-cluster-2.png)
 
-        SM_W --> SVC_W
-    end
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-06-multi-cluster-2.html)
 
-    subgraph "Cluster East"
-        subgraph "Control Plane East"
-            MC_E[Multicluster<br/>Extension]
-            SM_E[Service Mirror<br/>Controller]
-        end
+階層型はsource clientからtarget Gatewayへの到達性が必要です。flat/federatedにはさらにcluster間の直接で曖昧さのないPod IP routingと同じcontrol-plane namespaceが必要です。内部LBやVPC endpoint単体ではflat networkは成立しません。
 
-        subgraph "Data Plane East"
-            GW_E[Gateway<br/>Ingress]
-            SVC_E[web-service]
-            SVC_E_MIRROR[web-service-west<br/>Mirror Service]
-            PROXY_E[linkerd-proxy]
-        end
+## 前提条件と共有信頼
 
-        SM_E --> SVC_E_MIRROR
-    end
+明示context `west`/`east`の準備済み2 clusterを使います。local別名でAWS account/Regionの証明ではありません。[導入ガイド](01-installation.md)の互換Kubernetes/Gateway API、Linux worker/CNI、固定CLIを使い、最新Kubernetesを互換性と同一視しません。
 
-    GW_W <-->|mTLS| GW_E
-    SM_E -->|Watch| SM_W
-    SVC_E_MIRROR -->|Route| GW_W
-```
+両Linkerdは関連issuer chainを信頼する必要があります。共通公開rootが最も単純で、複数適切rootを含む共有bundleも対応します。issuer秘密鍵やworkload証明書は共有不要です。
 
-## Service Mirroringの概念
+![共通公開root、cluster別issuer、proxy別leafというPKI例。root秘密鍵は全proxyへ配布しない。issuer分離だけで同名ServiceAccountが別cluster IDになるわけではない。](../../.gitbook/assets/en-service-mesh-linkerd-06-multi-cluster-3.png)
 
-### 仕組み
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-06-multi-cluster-3.html)
 
-```mermaid
-sequenceDiagram
-    participant App as Application<br/>(Cluster East)
-    participant Mirror as Mirror Service<br/>(web-west)
-    participant Gateway as Gateway<br/>(Cluster West)
-    participant Target as Target Service<br/>(Cluster West)
-
-    Note over App,Target: Service Mirroring Flow
-
-    App->>Mirror: Request to web-west
-    Mirror->>Mirror: Resolve to Gateway IP
-    Mirror->>Gateway: mTLS Connection
-    Gateway->>Gateway: Verify identity
-    Gateway->>Target: Forward request
-    Target-->>Gateway: Response
-    Gateway-->>Mirror: mTLS Response
-    Mirror-->>App: Response
-```
-
-### Service Mirroringの特性
-
-| 特性 | 説明 |
-|----------------|-------------|
-| Transparent Discovery | リモートServiceがローカルServiceとして表示されます |
-| mTLS Security | クラスター間通信は暗号化されます |
-| Health Checks | リモートServiceの可用性を自動的に確認します |
-| Load Balancing | EWMAアルゴリズムによるレイテンシーベースの分散 |
-
-## マルチクラスターのセットアップ
-
-### 前提条件
+**新規の隔離演習専用**として共通rootと別ECDSA P-256 issuerを作ります。root 10年は例でCLI defaultや普遍的推奨ではありません。
 
 ```bash
-# Linkerd must be installed on both clusters
-# Must use the same Trust Anchor (important!)
-
-# Check cluster contexts
-kubectl config get-contexts
-
-# Example contexts:
-# - west (us-west-2)
-# - east (us-east-1)
-```
-
-### 共有Trust Anchorの作成
-
-```bash
-# Both clusters need the same Trust Anchor for mutual trust
-
-# Create Trust Anchor
+set -euo pipefail
+umask 077
+# New lab PKI only. The chosen root lifetime is an example, not a default.
 step certificate create root.linkerd.cluster.local ca.crt ca.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h
-
-# Create Issuer for each cluster
-# Cluster West
+  --profile root-ca --kty EC --curve P-256 \
+  --not-after 87600h --no-password --insecure
 step certificate create identity.linkerd.cluster.local issuer-west.crt issuer-west.key \
-  --profile intermediate-ca \
-  --ca ca.crt \
-  --ca-key ca.key \
-  --no-password \
-  --insecure \
-  --not-after=8760h
-
-# Cluster East
+  --profile intermediate-ca --kty EC --curve P-256 \
+  --ca ca.crt --ca-key ca.key --not-after 8760h --no-password --insecure
 step certificate create identity.linkerd.cluster.local issuer-east.crt issuer-east.key \
-  --profile intermediate-ca \
-  --ca ca.crt \
-  --ca-key ca.key \
-  --no-password \
-  --insecure \
-  --not-after=8760h
+  --profile intermediate-ca --kty EC --curve P-256 \
+  --ca ca.crt --ca-key ca.key --not-after 8760h --no-password --insecure
+cp ca.crt shared-roots.pem
 ```
 
-### 両方のクラスターにLinkerdをインストール
+`--no-password --insecure`は暗号化なし秘密鍵ファイルを作ります。保護した作業場所に置き、公開trust bundleと各clusterに必要issuerだけ配布します。既存meshは[段階的trust rotation](04-security.md)を使い、新規例のためだけにrootを置換しません。
+
+### 明示contextでcoreを導入
+
+両clusterで導入ガイドのGateway API/CNI前提を完了した後のCLI所有core経路です。Helm所有はその所有者を維持し、reviewしたvaluesでcluster別認証情報を渡します。
+
+互換Linux workerの既定proxy-init経路を示します。Linkerd CNIでは選択導入設定に`cniEnabled:true`も渡します。
 
 ```bash
-# Install on Cluster West
-kubectl config use-context west
-
-linkerd install --crds | kubectl apply -f -
-linkerd install \
-  --identity-trust-anchors-file ca.crt \
+set -euo pipefail
+# New CLI-owned installations only; complete Gateway API/CNI prerequisites first.
+linkerd --context west install --crds | kubectl --context west apply -f -
+linkerd --context west install \
+  --identity-trust-anchors-file shared-roots.pem \
   --identity-issuer-certificate-file issuer-west.crt \
-  --identity-issuer-key-file issuer-west.key \
-  | kubectl apply -f -
+  --identity-issuer-key-file issuer-west.key | kubectl --context west apply -f -
 
-# Install on Cluster East
-kubectl config use-context east
-
-linkerd install --crds | kubectl apply -f -
-linkerd install \
-  --identity-trust-anchors-file ca.crt \
+linkerd --context east install --crds | kubectl --context east apply -f -
+linkerd --context east install \
+  --identity-trust-anchors-file shared-roots.pem \
   --identity-issuer-certificate-file issuer-east.crt \
-  --identity-issuer-key-file issuer-east.key \
-  | kubectl apply -f -
+  --identity-issuer-key-file issuer-east.key | kubectl --context east apply -f -
+linkerd --context west check
+linkerd --context east check
 ```
 
-### Multicluster Extensionのインストール
+通信統計が必要ならVizを別導入します。multicluster自身の確認はアプリ/業務検証ではありません。
 
-```bash
-# Cluster West
-kubectl config use-context west
-linkerd multicluster install | kubectl apply -f -
-linkerd multicluster check
+## 拡張と方向付きリンク
 
-# Cluster East
-kubectl config use-context east
-linkerd multicluster install | kubectl apply -f -
-linkerd multicluster check
-```
+演習はHelmでmulticluster拡張とpeer controllerを所有します。旧`multicluster link`は非推奨です。`link-gen`でLink/認証Secretを生成し、チャートの`controllers`リストと併用します。
 
-### クラスターのリンク
+### 基本導入
 
-```bash
-# Register West cluster credentials to East
-kubectl config use-context west
-
-# Create Link (so East can see West)
-linkerd multicluster link --cluster-name west | kubectl --context=east apply -f -
-
-# Verify connection
-kubectl --context=east get links
-
-# Check gateway status
-linkerd --context=east multicluster gateways
-
-# Expected output:
-# CLUSTER  ALIVE    NUM_SVC  LATENCY
-# west     True           3      5ms
-```
-
-### 双方向接続
-
-```bash
-# East -> West connection
-kubectl config use-context east
-linkerd multicluster link --cluster-name east | kubectl --context=west apply -f -
-
-# Verify on both sides
-linkerd --context=west multicluster gateways
-linkerd --context=east multicluster gateways
-```
-
-## ServiceのExportとImport
-
-### ServiceのExport
+**AWS Load Balancer Controller導入済みEKS**用に`mc-base-values.yaml`へ保存します。内部TCP NLBを要求し、peer経路、DNS、SG、必要portは設計済みにします。他platformには対応LB設定が必要です。
 
 ```yaml
-# Export service from West cluster
+gateway:
+  enabled: true
+  serviceType: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  serviceAnnotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
+```
+
+```bash
+helm repo add linkerd-edge https://helm.linkerd.io/edge
+helm repo update linkerd-edge
+# Initially install gateway/remote-access prerequisites, without peer controllers.
+helm --kube-context west upgrade --install linkerd-multicluster \
+  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
+  --wait --timeout 10m
+helm --kube-context east upgrade --install linkerd-multicluster \
+  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
+  --wait --timeout 10m
+kubectl --context west -n linkerd-multicluster get svc linkerd-gateway -o yaml
+kubectl --context east -n linkerd-multicluster get svc linkerd-gateway -o yaml
+```
+
+gateway型Link生成にはtarget Serviceのingress IP**またはhost名**が必要です。AWS NLBは通常host名で、`link-gen`は受け入れます。データは既定4143、準備probeは4191です。どちらへの到達性もremote APIや全アプリの健全性を証明しません。
+
+### EastからWestを利用
+
+希望controller一覧を`mc-east-links.yaml`として保存します。
+
+```yaml
+controllers:
+- link:
+    ref:
+      name: west
+```
+
+```bash
+set -euo pipefail
+umask 077
+# Read West's configuration; install the generated credentials/Link into East.
+linkerd --context west multicluster link-gen --cluster-name west > west-link.yaml
+# Review public metadata and target endpoint without printing credential values.
+kubectl --context east apply -f west-link.yaml
+helm --kube-context east upgrade linkerd-multicluster \
+  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  -n linkerd-multicluster -f mc-base-values.yaml -f mc-east-links.yaml \
+  --wait --timeout 10m
+kubectl --context east -n linkerd-multicluster get links.multicluster.linkerd.io
+linkerd --context east multicluster check
+linkerd --context east multicluster gateways
+```
+
+`link-gen`はWest API位置/CAと選択remote-access ServiceAccount tokenを読み、Linkと、`linkerd-multicluster`およびcontrol-planeの`linkerd`向け2 Secretを出します。ネットワーク経路やsource mirror controllerは導入しません。
+
+生成ファイルは認証情報として制限し、commitやログへの内容出力をしません。kubeconfigは自己完結したAPI CAと、到達可能で証明書有効なserver addressを含み、controllerから使える必要があります。workstation endpointが不適なら、実controller到達APIへ対応`--api-server-address`を使います。
+
+Linkは方向付きです。Westで生成しEastへ適用すると**EastがWestを検出**できます。既存導入更新では希望Helm一覧の全peerを保持します。配列を1件例で置換すると他controllerを削除し得ます。
+
+### 任意の逆方向
+
+`mc-west-links.yaml`を保存します。
+
+```yaml
+controllers:
+- link:
+    ref:
+      name: east
+```
+
+```bash
+set -euo pipefail
+umask 077
+linkerd --context east multicluster link-gen --cluster-name east > east-link.yaml
+kubectl --context west apply -f east-link.yaml
+helm --kube-context west upgrade linkerd-multicluster \
+  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  -n linkerd-multicluster -f mc-base-values.yaml -f mc-west-links.yaml \
+  --wait --timeout 10m
+linkerd --context west multicluster check
+```
+
+peer別remote-access ServiceAccountは選択的失効に役立ちます。RBACと認証情報更新を調整します。これはKubernetes API認証情報で、mesh workload証明書とは別です。
+
+## Serviceの公開と利用
+
+両clusterにアプリ名前空間を準備します。チャートは既定で欠けたmirror namespaceを作りません。
+
+`mc-namespace.yaml`として保存します。
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mc-demo
+  annotations:
+    linkerd.io/inject: enabled
+```
+
+8080で待つ`app:web`のテスト済みメッシュ`web`と、要求確認用の既存メッシュ`client`を使います。このページは版不明`client:latest`を導入せず、部分Deploymentが有効とも主張しません。
+
+この**West** Serviceを`west-web-service.yaml`へ保存します。
+
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: web
-  namespace: production
+  namespace: mc-demo
   labels:
-    mirror.linkerd.io/exported: "true"  # Export with this label
+    mirror.linkerd.io/exported: 'true'
 spec:
   selector:
     app: web
   ports:
-  - port: 80
+  - name: http
+    port: 80
     targetPort: 8080
+    appProtocol: http
 ```
 
 ```bash
-# Or add label to existing service
-kubectl --context=west label svc web -n production mirror.linkerd.io/exported=true
+# Apply the Namespace manifest to both contexts before creating workloads/mirrors.
+kubectl --context west apply -f mc-namespace.yaml
+kubectl --context east apply -f mc-namespace.yaml
+kubectl --context west apply -f west-web-service.yaml
+# Alternative for an existing West Service:
+kubectl --context west -n mc-demo label service/web mirror.linkerd.io/exported=true --overwrite
+kubectl --context east -n mc-demo get service web-west
+# Hierarchical mode: current service-mirror still manages legacy Endpoints.
+kubectl --context east -n mc-demo get endpoints web-west -o yaml
+kubectl --context east -n mc-demo get endpointslices.discovery.k8s.io \
+  -l kubernetes.io/service-name=web-west -o yaml
+# Existing meshed client with curl installed and the expected app endpoint.
+kubectl --context east -n mc-demo exec deployment/client -c client -- \
+  curl --fail --show-error --retry 0 --max-time 10 http://web-west.mc-demo.svc.cluster.local/
 ```
 
-### Mirror Serviceの確認
+新Serviceはnamespace/workload準備後にマニフェスト適用します。ラベルコマンドは既存Service向け代替です。export labelは検出を選び、アクセス制御境界ではありません。Link selector/RBACが一致するpeerだけに作用します。
 
-```bash
-# Check mirror services in East cluster
-kubectl --context=east get svc -n production
+選択service-mirrorは階層mirrorに旧`Endpoints`を維持します。存在するEndpointSliceも見ますが、診断コマンド変更でcontrollerが移行すると装わないでください。remote-discoveryではdestinationがremote endpointを照会するため、local Endpointsが意図的にない場合があります。
 
-# Expected output:
-# NAME        TYPE        CLUSTER-IP      PORT(S)
-# web         ClusterIP   10.100.0.1      80/TCP      # Local service
-# web-west    ClusterIP   10.100.0.2      80/TCP      # Mirrored from West
+## 明示的なローカル/リモートルーティング
 
-# Check endpoints
-kubectl --context=east get endpoints web-west -n production
-```
-
-### Mirror Serviceの使用
+**East**のlocal web用apex/local backendを`east-web-services.yaml`へ保存します。
 
 ```yaml
-# Call West service from application in East cluster
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: client
-  namespace: production
-spec:
-  template:
-    spec:
-      containers:
-      - name: client
-        image: client:latest
-        env:
-        # Local service
-        - name: WEB_URL
-          value: "http://web.production.svc.cluster.local"
-        # West cluster service
-        - name: WEB_WEST_URL
-          value: "http://web-west.production.svc.cluster.local"
-```
-
-## クラスター間トラフィックの分割
-
-### クラスター間トラフィック分散のためのTrafficSplit
-
-```yaml
-# Split traffic between local and West in East cluster
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
-metadata:
-  name: web-split
-  namespace: production
-spec:
-  service: web  # Main service
-  backends:
-  - service: web          # Local (East)
-    weight: 80
-  - service: web-west     # Remote (West)
-    weight: 20
-```
-
-### フェイルオーバー設定
-
-```yaml
-# Default: local priority, failover to remote on failure
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
-metadata:
-  name: web-failover
-  namespace: production
-spec:
-  service: web
-  backends:
-  - service: web          # Primary (local)
-    weight: 100
-  - service: web-west     # Backup (remote)
-    weight: 0
-# Manual weight adjustment required when local service fails
-```
-
-### 自動フェイルオーバー（Flaggerを使用）
-
-```yaml
-# Configure automatic failover with Flagger
-apiVersion: flagger.app/v1beta1
-kind: Canary
+apiVersion: v1
+kind: Service
 metadata:
   name: web
-  namespace: production
+  namespace: mc-demo
+spec:
+  selector:
+    app: web
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    appProtocol: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-local
+  namespace: mc-demo
+spec:
+  selector:
+    app: web
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    appProtocol: http
+```
+
+`east-web-route.yaml`で適格mesh clientをlocal backendとimport Serviceへ分割します。
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web-cluster-route
+  namespace: mc-demo
+spec:
+  parentRefs:
+  - group: ''
+    kind: Service
+    name: web
+    port: 80
+  rules:
+  - backendRefs:
+    - name: web-local
+      port: 80
+      weight: 80
+    - name: web-west
+      port: 80
+      weight: 20
+```
+
+```bash
+kubectl --context east apply -f east-web-services.yaml
+kubectl --context east apply -f east-web-route.yaml
+kubectl --context east -n mc-demo get httproute web-cluster-route -o yaml
+linkerd --context east diagnostics policy -n mc-demo service/web 80 -o json
+```
+
+core Service group `""`とService port 80を使います。local/remote準備、route受理、実効client policyを確認します。競合ServiceProfileは現送信policyより優先し得ます。[トラフィック管理](03-traffic-management.md)を参照します。
+
+### 手動移行と自動フェイルオーバー
+
+100/0設定は0重みbackendを自動的にactive standbyへ変えません。手動所有routeの明示review済みremote-only状態は次です。
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web-cluster-route
+  namespace: mc-demo
+spec:
+  parentRefs:
+  - group: ''
+    kind: Service
+    name: web
+    port: 80
+  rules:
+  - backendRefs:
+    - name: web-local
+      port: 80
+      weight: 0
+    - name: web-west
+      port: 80
+      weight: 100
+```
+
+状態を意図的に適用し、アプリ結果、remote容量、データ整合性を確認してから復旧と扱います。既存要求/書込結果が不明な場合もあり、routing変更はDB複製やcommit済み操作取消をしません。
+
+旧Flagger rollback webhookは未導入/未検証`/failover`を参照し、別名TrafficSplitへpatchしていました。信頼できる地域切り替えは成立していません。Flaggerはtrafficガイドで別に扱います。
+
+SMI TrafficSplitとLinkerd Failover拡張は非推奨です。公式移行先はflat網がある場合のfederated serviceで、全階層網や厳格local-primary要件の自動代替ではありません。
+
+
+## フラットネットワークとFederated Service
+
+別の**flat専用設定**ではGatewayを省き、`flat-base-values.yaml`へ保存します。
+
+```yaml
+gateway:
+  enabled: false
+```
+
+East peer valuesの`flat-east-links.yaml`もGateway probeを省きます。
+
+```yaml
+controllers:
+- link:
+    ref:
+      name: west
+  gateway:
+    enabled: false
+```
+
+同じ基本導入 → Link/Secret → Helm controller順で、これらとLink生成の`--gateway=false`を使います。先に両clusterのPod経路、namespace、信頼を用意します。既存移行では最後の階層consumer移動までGatewayを保持します。
+
+```bash
+set -euo pipefail
+umask 077
+# Separate flat-network setup: both base installs omit the gateway.
+# Use flat-base-values.yaml plus the corresponding flat controller values.
+linkerd --context west multicluster link-gen --cluster-name west \
+  --gateway=false > west-flat-link.yaml
+kubectl --context east apply -f west-flat-link.yaml
+helm --kube-context east upgrade linkerd-multicluster \
+  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  -n linkerd-multicluster -f flat-base-values.yaml -f flat-east-links.yaml \
+  --wait --timeout 10m
+kubectl --context west -n mc-demo label service/web \
+  mirror.linkerd.io/exported=remote-discovery --overwrite
+linkerd --context east diagnostics endpoints web-west.mc-demo.svc.cluster.local:80
+```
+
+remote-discoveryはendpoint検索場所を変え、Pod経路、SG、remote APIアクセスは作りません。対応control-plane認証情報はdestination componentからも動く必要があります。
+
+### Federated Serviceのメンバー
+
+同名/同namespace Serviceはfederated Serviceに参加でき、例では通常`web-federated`です。
+
+```bash
+# Flat connectivity, matching namespaces and the required directional Links first.
+kubectl --context west -n mc-demo label service/web mirror.linkerd.io/federated=member --overwrite
+kubectl --context east -n mc-demo label service/web mirror.linkerd.io/federated=member --overwrite
+kubectl --context east -n mc-demo get service web-federated
+kubectl --context east -n linkerd-multicluster get link west -o yaml
+linkerd --context east diagnostics endpoints web-federated.mc-demo.svc.cluster.local:80
+```
+
+関連方向Link/controllerがある場所にfederated Serviceが存在します。mesh clientはGatewayなしで検出member endpointへ直接分散します。耐障害性の基盤ですが即時復旧、厳格local-first、アプリ/データ可用性は保証しません。
+
+endpoint準備、failure-accrual、ネットワーク分断、検出鮮度、client再試行意味を確認します。member Serviceが異なるとmetadata/port選択も重要です。競合アノテーションが全部意図通りマージされると想定しないでください。
+
+headless mirroringは別の任意controller機能（設定の`enableHeadlessServices`）です。適切な名前付きhostが必要でendpoint動作が異なり、headlessはfederatedに参加できません。
+
+## クラスター間認可
+
+階層Gatewayは受信mesh接続を認証し、別の送信接続を作ります。最終serverは元remote client IDでGateway経由callerを区別できません。
+
+**flat/federated通信**ではWestの次policyが保持された`client.mc-demo.serviceaccount.identity.linkerd.cluster.local`を許可します。
+
+```yaml
+apiVersion: policy.linkerd.io/v1beta3
+kind: Server
+metadata:
+  name: web-http
+  namespace: mc-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  port: 8080
+  proxyProtocol: HTTP/1
+  accessPolicy: deny
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: web-from-client
+  namespace: mc-demo
 spec:
   targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web
-
-  service:
-    port: 80
-
-  analysis:
-    interval: 30s
-    threshold: 3
-    metrics:
-    - name: request-success-rate
-      thresholdRange:
-        min: 99
-      interval: 1m
-
-    # Failover to remote cluster on failure
-    webhooks:
-    - name: failover-to-west
-      type: rollback
-      url: http://flagger-loadtester/failover
-      metadata:
-        cmd: |
-          kubectl patch trafficsplit web-split -p '{"spec":{"backends":[{"service":"web","weight":0},{"service":"web-west","weight":100}]}}'
+    group: policy.linkerd.io
+    kind: Server
+    name: web-http
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: client
+    namespace: mc-demo
 ```
 
-## クラスター間トラフィックフロー
+APIはServer `v1beta3`とLinkerd AuthorizationPolicyで、存在しないServerAuthorization `v1beta2`ではありません。標準Kubernetes IDはDNS形式で、旧Istio型SPIFFE URIではありません。
 
-```mermaid
-sequenceDiagram
-    participant Client as Client Pod<br/>(East)
-    participant Proxy_C as Client Proxy<br/>(East)
-    participant GW_E as Gateway<br/>(East)
-    participant GW_W as Gateway<br/>(West)
-    participant Proxy_S as Server Proxy<br/>(West)
-    participant Server as Server Pod<br/>(West)
+同ServiceAccount/namespace/trust-domainの組は複数clusterで同じIDになれます。別issuer鍵でも暗黙の暗号学的cluster IDは加わりません。このpolicyはworkload IDを許し、「Eastのみ」の証明ではありません。必要な別ID/信頼境界を設計し、各強制点で実際に見えるIDを評価します。
 
-    Client->>Proxy_C: HTTP Request
-    Note over Proxy_C: Target: web-west.production
+Gateway型では最終serverから見えるGateway IDと、Gateway/network境界制御を考慮します。export labelや内部LBは認可を代替しません。
 
-    Proxy_C->>GW_W: mTLS (via Internet/VPN)
-    Note over Proxy_C,GW_W: Cross-cluster mTLS
+## EKS接続と所有権
 
-    GW_W->>Proxy_S: Forward to local service
-    Proxy_S->>Server: HTTP Request
+基本valuesは**AWS Load Balancer Controller**、`service.k8s.aws/nlb`、IP target、内部NLBを前提とします。非推奨cross-zoneでなく現load-balancer attributesアノテーションを使います。Auto Modeは別owner/classの`eks.amazonaws.com/nlb`で、対応アノテーションを別確認します。
 
-    Server-->>Proxy_S: HTTP Response
-    Proxy_S-->>GW_W: Response
-    GW_W-->>Proxy_C: mTLS Response
-    Proxy_C-->>Client: HTTP Response
-```
+Linkerd TCP/mTLS経路を維持します。ALB HTTP routing/TLS終端は交換可能なGateway転送ではありません。source→Gateway data 4143、mirror controller→Gateway probe 4191、source control plane→target APIを別に考慮し、実routing/SNAT/SG設計でsourceを制限します。
 
-## EKSマルチクラスターのパターン
+| 接続 | 提供するもの |
+|---|---|
+| VPC peering / 適切なTGW routing | 経路、アドレス、DNS、security設定時の私設接続 |
+| AWS PrivateLink | endpoint経由の選択サービス/リソースアクセス。peeringや任意Pod間自動routingではない |
+| EKS private Kubernetes API endpoint | VPC/適切な接続網からそのclusterのKubernetes APIへアクセス |
+| EKS interface VPC endpoint | AWS EKS管理APIへのprivateアクセス。Kubernetes API endpointではない |
 
-### マルチリージョンセットアップ
+flatでは非競合で直接到達可能なPodアドレスが必要です。Gatewayだけでは不足します。階層では任意remote Pod routingがなくてもGatewayとremote API到達性を設計します。
 
-```bash
-# Create clusters (eksctl)
-# US West region
-eksctl create cluster \
-  --name linkerd-west \
-  --region us-west-2 \
-  --nodegroup-name workers \
-  --node-type m5.large \
-  --nodes 3
+review済みインフラ手順でcluster/networkを用意し、対象AWS account/profileと互換版を選びます。2つの`eksctl create cluster`に違う名前を付けても別accountにはなりません。監査ではcluster作成、Gateway作成、実地域間通信はしていません。
 
-# US East region
-eksctl create cluster \
-  --name linkerd-east \
-  --region us-east-1 \
-  --nodegroup-name workers \
-  --node-type m5.large \
-  --nodes 3
-```
+AWS管理を行う運用者/controllerにIAMが必要です。生成mirror認証情報はKubernetes ServiceAccount token/RBACで認証し、全runtime Linkに一律cross-account IAMが必須ではありません。信頼関係を分離します。
 
-### NLB Gateway設定
+## 可観測性とFederation
+
+`multicluster gateways`はtarget Gateway probeで、全exportアプリのend-to-end healthではありません。probe metricsはsource mirror controllerに属し、`target_cluster_name`付き`gateway_alive`、`gateway_probe_latency_ms`などです。local Gateway proxyの通常metricsではありません。
+
+中央Prometheus向けの以下は、**Basic認証付きの導入済みprivate HTTPS endpoint用client設定例**です。実DNS、CA/passwordファイル、server認証、到達性、scrape認可を用意します。既定Vizは自動公開しません。
 
 ```yaml
-# multicluster-values.yaml (for EKS)
-gateway:
-  serviceType: LoadBalancer
-  serviceAnnotations:
-    # Use NLB
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    # Internet facing (accessible from other regions)
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-    # Cross-zone load balancing
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-    # IP target
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-```
-
-```bash
-# Install with Helm
-helm install linkerd-multicluster linkerd/linkerd-multicluster \
-  -n linkerd-multicluster \
-  --create-namespace \
-  -f multicluster-values.yaml
-```
-
-### プライベートリンク（VPC Peering）
-
-```yaml
-# Internal-only NLB configuration
-gateway:
-  serviceType: LoadBalancer
-  serviceAnnotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-
-# Requires VPC Peering or Transit Gateway connection
-```
-
-### マルチアカウントセットアップ
-
-```bash
-# Cluster in Account A
-eksctl create cluster \
-  --name linkerd-account-a \
-  --region us-west-2
-
-# Cluster in Account B
-eksctl create cluster \
-  --name linkerd-account-b \
-  --region us-west-2
-
-# Cross-account IAM role setup required
-# VPC Peering or PrivateLink configuration required
-```
-
-## クラスター間セキュリティ
-
-### 共有Trust Anchor
-
-```mermaid
-graph TB
-    subgraph "Shared PKI"
-        TA[Trust Anchor<br/>Shared Root CA]
-        II_W[Issuer West<br/>Intermediate CA]
-        II_E[Issuer East<br/>Intermediate CA]
-    end
-
-    subgraph "Cluster West"
-        WC_W1[Workload Cert W1]
-        WC_W2[Workload Cert W2]
-    end
-
-    subgraph "Cluster East"
-        WC_E1[Workload Cert E1]
-        WC_E2[Workload Cert E2]
-    end
-
-    TA --> II_W
-    TA --> II_E
-    II_W --> WC_W1
-    II_W --> WC_W2
-    II_E --> WC_E1
-    II_E --> WC_E2
-```
-
-### クラスターごとの認可ポリシー
-
-```yaml
-# Allow only specific services from East cluster in West cluster
-apiVersion: policy.linkerd.io/v1beta2
-kind: ServerAuthorization
-metadata:
-  name: allow-east-cluster
-  namespace: production
-spec:
-  server:
-    name: web-server
-  client:
-    meshTLS:
-      identities:
-        # Allow only specific service from East cluster
-        - "spiffe://root.linkerd.cluster.local/ns/production/sa/api-gateway"
-```
-
-## 可観測性（マルチクラスター）
-
-### クラスター間メトリクス
-
-```bash
-# Check gateway status
-linkerd multicluster gateways
-
-# Expected output:
-# CLUSTER  ALIVE    NUM_SVC  LATENCY
-# west     True           5      10ms
-# east     True           3       8ms
-
-# Mirror service status
-linkerd viz stat deploy -n production --to svc/web-west
-```
-
-### Prometheus Federation
-
-```yaml
-# Collect metrics from each cluster in central Prometheus
-# prometheus-federation.yaml
 scrape_configs:
-  - job_name: 'federate-west'
-    honor_labels: true
-    metrics_path: '/federate'
-    params:
-      'match[]':
-        - '{__name__=~"response_total|request_total|response_latency_ms_bucket"}'
-    static_configs:
-      - targets:
-        - 'prometheus-west.monitoring:9090'
-    relabel_configs:
-      - target_label: cluster
-        replacement: west
-
-  - job_name: 'federate-east'
-    honor_labels: true
-    metrics_path: '/federate'
-    params:
-      'match[]':
-        - '{__name__=~"response_total|request_total|response_latency_ms_bucket"}'
-    static_configs:
-      - targets:
-        - 'prometheus-east.monitoring:9090'
-    relabel_configs:
-      - target_label: cluster
-        replacement: east
+- job_name: federate-west
+  scheme: https
+  honor_labels: true
+  metrics_path: /federate
+  params:
+    match[]:
+    - '{job=~"linkerd-proxy|linkerd-controller"}'
+  static_configs:
+  - targets:
+    - prometheus-west.internal.example.com:443
+  tls_config:
+    ca_file: /etc/prometheus/federation/ca.crt
+  basic_auth:
+    username: federation-reader
+    password_file: /etc/prometheus/federation/west/password
+  metric_relabel_configs:
+  - target_label: origin_cluster
+    replacement: west
+- job_name: federate-east
+  scheme: https
+  honor_labels: true
+  metrics_path: /federate
+  params:
+    match[]:
+    - '{job=~"linkerd-proxy|linkerd-controller"}'
+  static_configs:
+  - targets:
+    - prometheus-east.internal.example.com:443
+  tls_config:
+    ca_file: /etc/prometheus/federation/ca.crt
+  basic_auth:
+    username: federation-reader
+    password_file: /etc/prometheus/federation/east/password
+  metric_relabel_configs:
+  - target_label: origin_cluster
+    replacement: east
 ```
 
-### クラスター間ダッシュボード
+`honor_labels:true`はsource labelを保持します。target relabelだけでは競合exported labelを確実に上書きできません。ここではscrape後にmetric relabelでcollector管理の`origin_cluster`を設定します。集約で保持し重複収集を避けます。
+
+メトリクス起点ごとのbackend成功率:
 
 ```promql
-# Success rate by cluster
-sum(rate(response_total{classification="success"}[5m])) by (cluster)
-/
-sum(rate(response_total[5m])) by (cluster)
+(sum by (origin_cluster) (rate(response_total{namespace="mc-demo",deployment="web",direction="inbound",classification="success"}[5m]))
+ or on(origin_cluster) (0 * sum by (origin_cluster) (rate(response_total{namespace="mc-demo",deployment="web",direction="inbound"}[5m])))) / sum by (origin_cluster) (rate(response_total{namespace="mc-demo",deployment="web",direction="inbound"}[5m]))
+and on(origin_cluster) (sum by (origin_cluster) (rate(response_total{namespace="mc-demo",deployment="web",direction="inbound"}[5m])) > 0)
+```
 
-# Cross-cluster traffic latency
+メトリクス起点ごとのclient観測TTFB:
+
+```promql
 histogram_quantile(0.99,
-  sum(rate(response_latency_ms_bucket{dst_cluster!=""}[5m])) by (le, src_cluster, dst_cluster)
+  sum by (le, origin_cluster) (rate(response_latency_ms_bucket{namespace="mc-demo",deployment="client",direction="outbound"}[5m]))
 )
 ```
 
+2つ目がその経路を表すにはデモclientが意図remote通信を送る必要があります。アプリ/proxy/network時間を含み、純粋な地域間RTTではありません。`src_cluster`/`dst_cluster`はこの設定で追加される保証がありません。詳細なcluster間次元を作る前に実系列を確認します。
+
+欠けたsuccess系列はclusterごとのtotalに合わせ、idle/欠損totalは100%成功と報告しません。分類、単位、scrape health、dashboard前提は[可観測性ガイド](05-observability.md)を参照します。
+
 ## トラブルシューティング
 
-### 接続の問題
-
 ```bash
-# Check gateway connection
-linkerd multicluster gateways
-
-# If ALIVE is False:
-# 1. Check network connectivity
-kubectl --context=east get svc -n linkerd-multicluster
-
-# 2. Check Gateway logs
-kubectl --context=west logs -n linkerd-multicluster deploy/linkerd-gateway
-
-# 3. Check probe status
-linkerd --context=east diagnostics proxy-metrics -n linkerd-multicluster deploy/linkerd-gateway | grep probe
+linkerd --context east multicluster check
+linkerd --context east multicluster gateways
+kubectl --context east -n linkerd-multicluster get link west -o yaml
+kubectl --context east -n linkerd-multicluster logs deployment/controller-west -c controller --tail=100
+kubectl --context west -n linkerd-multicluster logs deployment/linkerd-gateway -c linkerd-proxy --tail=100
+linkerd --context east viz stat deployment/client -n mc-demo --to service/web-west
+linkerd --context west check --proxy
+linkerd --context east check --proxy
 ```
 
-### Service Mirroringの問題
+Link statusとcontrollerログでremote API/RBAC/namespace問題を確認します。Gateway問題は**target** Service ingress、probe経路/port、networkを調べます。正常probeはdata portや業務ロジックを検証しません。flatではGateway統計を期待せずdestination診断と直接Pod接続を使います。
+
+実公開trust bundleを読みます。
 
 ```bash
-# Mirror controller logs
-kubectl --context=east logs -n linkerd-multicluster deploy/linkerd-service-mirror-west
-
-# Check mirror services
-kubectl --context=east get svc -n production | grep west
-
-# Check endpoints
-kubectl --context=east get endpoints -n production | grep west
+set -euo pipefail
+# Public bundle data, not private keys or the generated Link kubeconfig.
+kubectl --context west -n linkerd get configmap linkerd-identity-trust-roots -o json \
+  | jq -er '.data["ca-bundle.crt"] | select(length > 0)' > west-trust.pem
+kubectl --context east -n linkerd get configmap linkerd-identity-trust-roots -o json \
+  | jq -er '.data["ca-bundle.crt"] | select(length > 0)' > east-trust.pem
+openssl crl2pkcs7 -nocrl -certfile west-trust.pem | openssl pkcs7 -print_certs -text -noout
+openssl crl2pkcs7 -nocrl -certfile east-trust.pem | openssl pkcs7 -print_certs -text -noout
 ```
 
-### 証明書の問題
+全証明書と期限/issuer chainを調べます。PEM順/形式だけでは同等信頼テストではなく、旧configの短いgrepも完全検証ではありません。変更はsecurityガイドの段階rotationを使います。
 
-```bash
-# Verify Trust Anchor match
-# Both clusters must have the same Trust Anchor
+## 参考資料と次のステップ
 
-kubectl --context=west get cm linkerd-config -n linkerd -o yaml | grep -A5 "trustAnchorsPem"
-kubectl --context=east get cm linkerd-config -n linkerd -o yaml | grep -A5 "trustAnchorsPem"
-
-# Validate certificate chain
-linkerd --context=west check --proxy
-linkerd --context=east check --proxy
-```
-
-## 次のステップ
-
-- [ベストプラクティス](./07-best-practices.md): 本番環境向けマルチクラスターセットアップ
-
-## 参考資料
-
-- [Linkerd マルチクラスター](https://linkerd.io/2/features/multicluster/)
-- [Service Mirroring](https://linkerd.io/2/tasks/installing-multicluster/)
-- [Multicluster Communication](https://linkerd.io/2/tasks/multicluster/)
+- [ベストプラクティス](07-best-practices.md)、[マルチクラスタークイズ](../../quizzes/service-mesh/linkerd/multi-cluster.md)
+- [Multicluster参照](https://linkerd.io/docs/reference/multicluster/)と[導入](https://linkerd.io/docs/tasks/installing-multicluster/)
+- [Pod間モード](https://linkerd.io/docs/tasks/pod-to-pod-multicluster/)と[Federated Service](https://linkerd.io/docs/tasks/federated-services/)
+- [非推奨failover拡張](https://linkerd.io/docs/tasks/automatic-failover/)
+- [リリースlink-gen実装](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/cmd/link-gen.go)
+- [リリースservice-mirror endpoint処理](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/service-mirror/cluster_watcher.go)
+- [AWS LB Controllerアノテーション](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
+- [EKS Auto Mode NLB](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)
+- [VPC peering](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html)と[AWS PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html)
+- [EKS Kubernetes API endpoint](https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html)と[EKS interface endpoint](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)

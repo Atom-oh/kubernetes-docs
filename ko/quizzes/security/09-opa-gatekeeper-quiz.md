@@ -1,5 +1,7 @@
 # OPA Gatekeeper 퀴즈
 
+> **마지막 업데이트**: 2026년 9월 13일
+
 다음 질문들을 통해 OPA Gatekeeper와 Rego 정책 언어에 대한 이해도를 점검해보세요.
 
 ***
@@ -22,17 +24,19 @@
 **설명:** OPA(Open Policy Agent)는 Rego라는 선언적 정책 언어를 사용합니다. Rego는 JSON/YAML 데이터를 쿼리하고 정책 결정을 내리는 데 최적화되어 있습니다.
 
 ```rego
-package kubernetes.admission
-
-violation[{"msg": msg}] {
-    input.request.kind.kind == "Pod"
-    container := input.request.object.spec.containers[_]
-    not container.resources.limits.memory
-    msg := sprintf("Container %v has no memory limit", [container.name])
+package docsrequiredlabels
+valid_label(key) if {
+  value := input.review.object.metadata.labels[key]
+  is_string(value)
+  value != ""
+}
+violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
+  some key in input.parameters.labels
+  not valid_label(key)
 }
 ```
 
-Kyverno와 달리 새로운 언어를 배워야 하지만, 더 복잡한 정책 로직을 표현할 수 있습니다.
+Rego의 집합·comprehension·JSON 입력 계약을 익히고 실제 요구와 테스트에 맞춰 정책 도구를 선택합니다.
 
 </details>
 
@@ -57,27 +61,41 @@ Kyverno와 달리 새로운 언어를 배워야 하지만, 더 복잡한 정책 
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
-  name: k8srequiredlabels
+  name: docsrequiredlabels
 spec:
   crd:
     spec:
       names:
-        kind: K8sRequiredLabels
+        kind: DocsRequiredLabels
       validation:
         openAPIV3Schema:
           type: object
           properties:
             labels:
               type: array
+              minItems: 1
               items:
                 type: string
+                minLength: 1
+          required:
+          - labels
   targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package k8srequiredlabels
-        violation[{"msg": msg}] {
-            # Rego 정책 로직
-        }
+  - target: admission.k8s.gatekeeper.sh
+    code:
+    - engine: Rego
+      source:
+        version: v1
+        rego: |
+          package docsrequiredlabels
+          valid_label(key) if {
+            value := input.review.object.metadata.labels[key]
+            is_string(value)
+            value != ""
+          }
+          violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
+            some key in input.parameters.labels
+            not valid_label(key)
+          }
 ```
 
 ConstraintTemplate을 기반으로 Constraint를 생성하여 실제 정책을 적용합니다.
@@ -107,15 +125,22 @@ ConstraintTemplate을 기반으로 Constraint를 생성하여 실제 정책을 �
 
 ```yaml
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
+kind: DocsRequiredLabels
 metadata:
-  name: require-labels
+  name: required-labels
 spec:
-  enforcementAction: deny  # 또는 dryrun, warn
+  enforcementAction: deny
   match:
     kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
+    namespaces:
+    - policy-lab
+  parameters:
+    labels:
+    - app.kubernetes.io/name
 ```
 
 audit은 enforcementAction이 아니라 Gatekeeper의 백그라운드 감사 기능입니다.
@@ -141,17 +166,17 @@ audit은 enforcementAction이 아니라 Gatekeeper의 백그라운드 감사 기
 
 ```rego
 # 모든 컨테이너 순회
-container := input.request.object.spec.containers[_]
+container := input.review.object.spec.containers[_]
 
 # 모든 레이블 키 순회
-label := input.request.object.metadata.labels[_]
+key := object.keys(input.review.object.metadata.labels)[_]
 
 # 특정 인덱스
-first_container := input.request.object.spec.containers[0]
+first_container := input.review.object.spec.containers[0]
 
 # 인덱스와 값 모두 필요할 때
 some i
-container := input.request.object.spec.containers[i]
+container := input.review.object.spec.containers[i]
 ```
 
 이 구문은 Rego의 핵심 패턴으로, 규칙 내에서 여러 값을 평가할 때 사용됩니다.
@@ -181,7 +206,7 @@ container := input.request.object.spec.containers[i]
 
 ```bash
 # Constraint의 위반 사항 확인
-kubectl describe k8srequiredlabels require-labels
+kubectl describe docsrequiredlabels required-labels
 
 # Status 섹션에서 위반 확인:
 # Status:
@@ -199,7 +224,9 @@ kubectl describe k8srequiredlabels require-labels
 
 ***
 
-### 6. Gatekeeper v3.10+에서 지원하는 리소스 자동 수정 기능의 CRD는?
+<span id="_6-gatekeeper-v3-10-에서-지원하는-리소스-자동-수정-기능의-crd는"></span>
+
+### 6. Gatekeeper 3.23.1에서 지원하는 리소스 자동 수정 기능의 CRD는?
 
 * A) MutatingPolicy
 * B) Assign / AssignMetadata
@@ -292,7 +319,7 @@ all := required | provided
 
 **정답: B) Config의 sync.syncOnly**
 
-**설명:** Gatekeeper가 외부 데이터를 참조하려면 Config 리소스로 동기화 설정이 필요합니다:
+**설명:** 이 예제는 Kubernetes 객체를 inventory로 동기화합니다. 외부 HTTP provider나 임의 bundle 자동 연동과는 다릅니다:
 
 ```yaml
 apiVersion: config.gatekeeper.sh/v1alpha1
@@ -338,68 +365,56 @@ other_ingress := data.inventory.namespace[ns]["networking.k8s.io/v1"]["Ingress"]
 
 ```bash
 # 설치
-go install github.com/open-policy-agent/gatekeeper/cmd/gator@latest
+gator version  # verified 3.23.1 release binary
 
 # 정책 검증
-gator verify ./policies/
+gator verify tests/suite.yaml --verbose
 
 # 테스트 스위트 실행
-gator test ./tests/
+gator test -f templates/ -f constraints/ -f tests/fixtures/labels-present.yaml --output=json
 ```
 
 테스트 스위트 예시:
 
 ```yaml
-kind: Suite
 apiVersion: test.gatekeeper.sh/v1alpha1
+kind: Suite
 metadata:
-  name: required-labels-test
+  name: docs-gatekeeper
 tests:
-  - name: "Pod without labels should fail"
-    template: ../templates/k8srequiredlabels.yaml
-    constraint: ../constraints/require-labels.yaml
-    cases:
-      - name: pod-without-labels
-        object: fixtures/pod-no-labels.yaml
-        assertions:
-          - violations: yes
+- name: required-labels
+  template: ../templates/docsrequiredlabels.yaml
+  constraint: ../constraints/required-labels.yaml
+  cases:
+  - name: labels-present
+    object: fixtures/labels-present.yaml
+    assertions:
+    - violations: 0
+  - name: labels-absent
+    object: fixtures/labels-absent.yaml
+    assertions:
+    - violations: 1
 ```
 
 </details>
 
 ***
 
-### 10. Gatekeeper와 Kyverno 비교 시 Gatekeeper의 장점은?
+<span id="_10-gatekeeper와-kyverno-비교-시-gatekeeper의-장점은"></span>
 
-* A) 더 낮은 학습 곡선
-* B) YAML 네이티브 정책
-* C) 리소스 생성(Generate) 기능
-* D) 복잡한 정책 로직 표현력
+### 10. Rego 정책을 선택할 구체적인 요구 사례는?
+
+* A) 어떤 정책이든 더 적은 메모리가 보장되어야 한다
+* B) 모든 리소스를 검사 없이 자동 생성해야 한다
+* C) 다른 엔진보다 항상 복잡한 로직을 처리해야 한다
+* D) JSON 입력에 집합 연산과 comprehension을 적용하고 테스트로 검증하려 한다
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: D) 복잡한 정책 로직 표현력**
+**정답: D) JSON 입력에 집합 연산과 comprehension을 적용하고 테스트로 검증하려 한다**
 
-**설명:** Gatekeeper(OPA) vs Kyverno 비교:
-
-| 특성     | Gatekeeper | Kyverno  |
-| ------ | ---------- | -------- |
-| 정책 언어  | Rego       | YAML     |
-| 학습 곡선  | 높음         | 낮음       |
-| 복잡한 로직 | 매우 유연      | 제한적      |
-| 리소스 생성 | 미지원        | 지원       |
-| 외부 데이터 | OPA 번들 지원  | API Call |
-
-Gatekeeper는 Rego의 유연성 덕분에:
-
-* 복잡한 조건 조합
-* 재귀적 데이터 구조 처리
-* 고급 집합 연산
-* 외부 데이터 통합
-
-등이 더 쉽습니다.
+**설명:** Rego는 이 요구에 맞는 선언적 연산을 제공합니다. 특정 정책의 표현 방식, 팀의 숙련도, 테스트, 운영 요구를 비교해야 하며 Gatekeeper가 항상 더 빠르거나 더 복잡한 정책을 표현한다고 일반화하지 않습니다.
 
 </details>
 
@@ -418,27 +433,23 @@ Gatekeeper는 Rego의 유연성 덕분에:
 
 **정답: B) 모든 규칙을 OR로 평가**
 
-**설명:** Rego에서 같은 이름의 규칙이 여러 개 있으면 OR로 평가됩니다:
+**설명:** 같은 partial-set violation rule의 여러 정의는 각각의 결과를 집합에 추가합니다:
 
 ```rego
-# 규칙 1: privileged 컨테이너 검사
-violation[{"msg": msg}] {
-    container := input.request.object.spec.containers[_]
-    container.securityContext.privileged == true
-    msg := "Privileged containers not allowed"
+package examples
+violation contains {"msg": "Privileged container"} if {
+  container := input.review.object.spec.containers[_]
+  container.securityContext.privileged == true
 }
-
-# 규칙 2: root 실행 검사
-violation[{"msg": msg}] {
-    container := input.request.object.spec.containers[_]
-    container.securityContext.runAsUser == 0
-    msg := "Running as root not allowed"
+violation contains {"msg": "Explicit root user"} if {
+  container := input.review.object.spec.containers[_]
+  container.securityContext.runAsUser == 0
 }
-
-# 둘 중 하나라도 위반하면 violation 발생
 ```
 
 각 violation 규칙의 결과는 집합에 추가되며, 하나 이상의 위반이 있으면 전체 정책이 실패합니다.
+
+같은 partial-set violation rule의 결과를 합칩니다. 각 본문의 조건은 AND이며 complete-document rule의 충돌까지 OR로 해결하지는 않습니다. 이 조각은 전체 PSS 구현이 아닙니다.
 
 </details>
 
@@ -461,24 +472,23 @@ violation[{"msg": msg}] {
 
 ```yaml
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
+kind: DocsRequiredLabels
 metadata:
-  name: require-labels-prod
+  name: required-labels
 spec:
   enforcementAction: deny
   match:
     kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
     namespaces:
-      - production
-      - staging
-    excludedNamespaces:
-      - kube-system
-      - gatekeeper-system
-    namespaceSelector:
-      matchLabels:
-        environment: production
+    - production
+    - staging
+  parameters:
+    labels:
+    - app.kubernetes.io/name
 ```
 
 * `namespaces`: 포함할 네임스페이스 목록
@@ -504,6 +514,6 @@ spec:
 
 ## 관련 문서
 
-* [OPA Gatekeeper](09-opa-gatekeeper-quiz.md)
+* [OPA Gatekeeper](../../security/09-opa-gatekeeper.md)
 * [Kyverno 정책 관리](01-kyverno-policy-management-quiz.md)
 * [Pod Security Standards](03-pod-security-standards-quiz.md)

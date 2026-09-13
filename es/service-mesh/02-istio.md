@@ -1,321 +1,234 @@
 # Istio
 
-> **Versiones compatibles**: Istio 1.28.0
-> **Versión de EKS**: 1.34 (Kubernetes 1.28+)
-> **Última actualización**: February 23, 2026
+> **Última actualización**: 11 de septiembre de 2026 · Guía de Istio 1.31
 
-## Tabla de contenidos
+Esta introducción conserva la URL del capítulo anterior. El [índice mantenido de Istio](istio/README.md) y la [guía de instalación](istio/01-installation.md) contienen procedimientos detallados y matriz de compatibilidad; úselos para configurar actualmente.
+
+## Contenido
 
 - [Introducción](#introduction)
-- [Características principales](#key-features)
-- [Descripción general de la arquitectura](#architecture-overview)
+- [Funciones principales](#key-features)
+- [Arquitectura](#architecture-overview)
 - [Documentación detallada](#detailed-documentation)
 - [Inicio rápido](#quick-start)
 - [Recursos de aprendizaje](#learning-resources)
 
-## Introducción
+## Introducción {#introduction}
 
-Istio es una plataforma de service mesh de código abierto para aplicaciones de microservicios. Un service mesh es una capa de infraestructura que maneja la comunicación entre servicios, lo que permite controlar y observar la comunicación entre servicios sin modificar el código de la aplicación.
+Istio es una plataforma de malla de servicios de código abierto para aplicaciones de microservicios. Una malla de servicios es una capa de infraestructura que gestiona la comunicación entre servicios y permite controlar y observar esa comunicación a nivel de infraestructura. La propagación del contexto de trazas de la aplicación, el apagado ordenado y la idempotencia de negocio siguen requiriendo participación de la aplicación.
 
-### ¿Qué es un Service Mesh?
+### ¿Qué es un service mesh?
 
-Un service mesh proporciona las siguientes capacidades principales:
+Sus capacidades principales son:
 
-1. **Gestión de tráfico**: Controla el flujo de tráfico entre servicios
-2. **Seguridad**: Cifrado y autenticación de la comunicación entre servicios
-3. **Observabilidad**: Visibilidad de la comunicación entre servicios
+1. **Gestión de tráfico**: Controlar flujos entre servicios
+2. **Seguridad**: Cifrar y autenticar comunicaciones
+3. **Observabilidad**: Hacer visibles esas comunicaciones
 
-### Beneficios principales de Istio
+### Ventajas principales
 
-- **Independencia de la plataforma**: Funciona en diversos entornos (Kubernetes, VM, etc.)
-- **Integración transparente**: Puede aplicarse sin cambios en el código de la aplicación
-- **mTLS automático**: Cifrado automático de la comunicación entre servicios
-- **Gestión avanzada de tráfico**: Enrutamiento, balanceo de carga, inyección de fallos, etc.
-- **Métricas detalladas**: Métricas detalladas sobre la comunicación entre servicios
-- **Aplicación de políticas**: Control de acceso y limitación de tasa
+- **Independencia de plataforma**: Kubernetes, VM y otros entornos
+- **Integración transparente**: Muchos controles no requieren cambiar lógica de negocio
+- **mTLS de cargas**: Identidad y protección de transporte en rutas inscritas; verificar aplicación y excepciones
+- **Tráfico avanzado**: Rutas, balanceo e inyección de fallos
+- **Métricas detalladas**: Comunicación entre servicios
+- **Aplicación de políticas**: Acceso y limitación local/global explícitamente configurada
 
-## Características principales
+## Funciones principales {#key-features}
 
 ### 1. Gestión de tráfico
 
-Istio proporciona potentes capacidades de gestión de tráfico:
+Istio proporciona capacidades potentes:
 
-- **Gateway**: Enruta el tráfico externo al mesh
-- **VirtualService**: Define reglas de enrutamiento entre servicios
-- **DestinationRule**: Configura el balanceo de carga y los grupos de conexiones
-- **División de tráfico**: Compatibilidad con despliegues Canary y pruebas A/B
-- **Integración con Argo Rollouts**: Entrega progresiva automatizada
+- **Gateways**: Enrutamiento externo; diferenciar Istio Gateway de Kubernetes Gateway API
+- **VirtualService / HTTPRoute**: Usar la API soportada por dataplane/controlador elegidos
+- **DestinationRule**: Balanceo y pools de conexión
+- **División de tráfico**: Canary y pruebas A/B
+- **Argo Rollouts**: Entrega progresiva con análisis y fallos configurados aparte
 
 ### 2. Seguridad
 
-Funciones de seguridad integrales:
+Funciones integrales:
 
-- **mTLS**: Cifrado automático entre servicios
-- **Authorization Policy**: Control de acceso granular
-- **Request Authentication**: Autenticación basada en JWT
-- **Peer Authentication**: Políticas de autenticación entre servicios
+- **mTLS**: Identidad y cifrado del transporte de cargas inscritas
+- **Política de autorización**: Acceso detallado
+- **Autenticación de solicitudes**: Validar JWT; AuthorizationPolicy para exigir su presencia
+- **Autenticación de peers**: Política mTLS entrante
 
 ### 3. Observabilidad
 
-Visibilidad completa del service mesh:
+Telemetría e integraciones según el modo:
 
-- **Métricas**: Integración con Prometheus
-- **Trazado distribuido**: Compatibilidad con Jaeger/Zipkin
-- **Registro**: Logs de acceso y registro estructurado
-- **Visualización**: Dashboard de Kiali
+- **Métricas**: Prometheus
+- **Tracing distribuido**: Proveedor/backend, por ejemplo OpenTelemetry con Jaeger; la app propaga contexto
+- **Logs**: Acceso y registros estructurados
+- **Visualización**: Dashboard Kiali
 
 ### 4. Resiliencia
 
-Patrones de resiliencia de servicios:
+Patrones de resiliencia:
 
-- **Circuit Breaker**: Prevención de sobrecargas
-- **Retry**: Reintentos automáticos
-- **Timeout**: Configuración del tiempo de espera de solicitudes
-- **Outlier Detection**: Excluye instancias no saludables
-- **Rate Limiting**: Limitación de la tasa de solicitudes
+- **Circuit breaker**: Límites de pools de conexiones/solicitudes, no garantía contra sobrecarga
+- **Reintentos**: Presupuestos explícitos para operaciones que se pueden reintentar de forma segura; desactivar los reintentos de escrituras cuyo resultado es incierto
+- **Timeout**: Plazos de solicitudes
+- **Detección de outliers**: Excluir instancias no saludables
+- **Limitación de tasa**: Buckets locales o servicio global configurados
 
-## Descripción general de la arquitectura
+## Arquitectura {#architecture-overview}
 
-Istio consta de un **Control Plane** y un **Data Plane**.
+Istio consta de un **plano de control** y un **plano de datos**. La figura representa sidecar, no ambient.
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane[Control Plane]
-        Istiod[istiod<br/>Service Discovery, Configuration Management, Certificate Management]
-    end
+![Istiod, en el plano de control, envía configuración a los proxies sidecar Envoy que se ejecutan junto a los contenedores de aplicaciones en tres pods del plano de datos, y esos proxies establecen conexiones TLS mutuas directamente entre sí.](../.gitbook/assets/en-service-mesh-02-istio-0.png)
 
-    subgraph DataPlane[Data Plane]
-        subgraph Pod1[Pod A]
-            App1[App Container]
-            Proxy1[Envoy Proxy]
-        end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-02-istio-0.html)
 
-        subgraph Pod2[Pod B]
-            App2[App Container]
-            Proxy2[Envoy Proxy]
-        end
+### Plano de control (istiod)
 
-        subgraph Pod3[Pod C]
-            App3[App Container]
-            Proxy3[Envoy Proxy]
-        end
-    end
+istiod es el control central y proporciona:
 
-    Istiod -->|Configuration Distribution| Proxy1
-    Istiod -->|Configuration Distribution| Proxy2
-    Istiod -->|Configuration Distribution| Proxy3
+- **Descubrimiento**: Mantiene el registro de servicios
+- **Configuración**: Observa, traduce y distribuye ajustes; Kubernetes persiste recursos API
+- **Certificados**: Gestiona solicitudes y rotación con la CA configurada
 
-    Proxy1 <-->|mTLS| Proxy2
-    Proxy2 <-->|mTLS| Proxy3
-    Proxy1 <-->|mTLS| Proxy3
+### Plano de datos: sidecar y ambient
 
-    %% Style definitions
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataPlane fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+En sidecar, Envoy acompaña cada Pod inscrito:
 
-    %% Class application
-    class Istiod controlPlane;
-    class Proxy1,Proxy2,Proxy3 dataPlane;
-    class App1,App2,App3 app;
-```
-
-### Control Plane (istiod)
-
-istiod es el componente de control central de Istio y proporciona:
-
-- **Service Discovery**: Mantiene el registro de servicios del mesh
-- **Configuration Management**: Almacena y distribuye la configuración de Istio
-- **Certificate Management**: Genera y rota certificados para mTLS
-
-### Data Plane (Envoy Proxy)
-
-Envoy es un proxy de alto rendimiento desplegado como sidecar en cada Pod:
-
-- **Enrutamiento de tráfico**: Controla el tráfico entre servicios
-- **Balanceo de carga**: Distribuye el tráfico entre las instancias de servicio
+- **Enrutamiento**: Control del tráfico entre servicios
+- **Balanceo**: Distribución entre instancias
 - **Seguridad**: Cifrado y autenticación mTLS
-- **Observabilidad**: Recopila métricas, logs y trazas
+- **Observabilidad**: Métricas, logs y trazas
 
-## Documentación detallada
+Ambient utiliza ztunnel a nivel de nodo para el transporte L4 y waypoints Envoy opcionales para funciones L7 compatibles. No inyecta un Envoy en cada Pod de aplicación. La compatibilidad de funciones, la asociación de políticas y el consumo de recursos difieren según el modo; de esta topología no se deriva un porcentaje fijo de ahorro de recursos ni una superioridad universal de rendimiento. Consulte [Modo Ambient](istio/advanced/01-ambient-mode.md).
 
-Guías detalladas para todas las características de Istio.
+## Documentación detallada {#detailed-documentation}
+
+Los enlaces orientan hacia el subárbol mantenido. Su índice incluye otros temas y novedades.
 
 ### 📚 Documentación básica
 
 | Documento | Descripción |
 |----------|-------------|
-| [Guía de instalación](istio/01-installation.md) | Instalación de Istio y configuración inicial |
-| [Conceptos principales](istio/02-basic-concepts.md) | Conceptos básicos y terminología de Istio |
-| [Componentes](istio/03-architecture.md) | Arquitectura y componentes de Istio |
+| [Instalación](istio/01-installation.md) | Instalación y configuración inicial |
+| [Conceptos fundamentales](istio/02-basic-concepts.md) | Conceptos y terminología |
+| [Componentes](istio/03-architecture.md) | Arquitectura y componentes |
 
 ### 🚦 Gestión de tráfico
 
 | Documento | Descripción |
 |----------|-------------|
-| [Gateway & VirtualService](istio/traffic-management/01-gateway-virtualservice.md) | Configuración de Gateway de Ingress/Egress |
-| [Enrutamiento](istio/traffic-management/02-routing.md) | Reglas de enrutamiento de VirtualService |
-| [DestinationRule](istio/traffic-management/03-destination-rule.md) | Políticas de tráfico de servicios |
-| [División de tráfico](istio/traffic-management/04-traffic-splitting.md) | Despliegue Canary y pruebas A/B |
-| [Timeout y Retry](istio/traffic-management/05-retry-timeout.md) | Políticas de Timeout y Retry |
-| [Balanceo de carga](istio/traffic-management/06-load-balancing.md) | Diversas estrategias de balanceo de carga |
-| [Circuit Breaker](istio/traffic-management/07-circuit-breaker.md) | Implementación del patrón Circuit Breaker |
+| [Gateway y VirtualService](istio/traffic-management/01-gateway-virtualservice.md) | Gateways de entrada/salida |
+| [Rutas](istio/traffic-management/02-routing.md) | Reglas VirtualService |
+| [DestinationRule](istio/traffic-management/03-destination-rule.md) | Políticas de tráfico |
+| [División de tráfico](istio/traffic-management/04-traffic-splitting.md) | Canary y A/B |
+| [Timeout y reintentos](istio/traffic-management/05-retry-timeout.md) | Políticas de plazos/reintentos |
+| [Balanceo](istio/traffic-management/06-load-balancing.md) | Estrategias de balanceo |
+| [Circuit breaker](istio/traffic-management/07-circuit-breaker.md) | Implementación del patrón |
 | [Inyección de fallos](istio/traffic-management/08-fault-injection.md) | Ingeniería del caos |
-| [Reflejo de tráfico](istio/traffic-management/09-traffic-mirror.md) | Reflejo de tráfico y pruebas shadow |
-| [Afinidad de sesión](istio/traffic-management/10-session-affinity.md) | Configuración de afinidad de sesión |
+| [Espejo de tráfico](istio/traffic-management/09-traffic-mirror.md) | Duplicación y pruebas sombra |
+| [Afinidad de sesión](istio/traffic-management/10-session-affinity.md) | Configuración de afinidad |
 
 ### 🔐 Seguridad
 
 | Documento | Descripción |
 |----------|-------------|
-| [mTLS](istio/security/01-mtls.md) | Configuración de mTLS entre servicios |
-| [Authorization Policy](istio/security/03-authorization.md) | Políticas de control de acceso |
-| [Request Authentication](istio/security/02-authentication.md) | Autenticación basada en JWT |
-| [Peer Authentication](istio/security/02-authentication.md) | Autenticación entre servicios |
+| [mTLS](istio/security/01-mtls.md) | mTLS entre servicios |
+| [Autorización](istio/security/03-authorization.md) | Políticas de acceso |
+| [Autenticación de solicitudes](istio/security/02-authentication.md) | Autenticación JWT |
+| [Autenticación de peers](istio/security/01-mtls.md) | Autenticación entre servicios |
 
 ### 📊 Observabilidad
 
 | Documento | Descripción |
 |----------|-------------|
-| [Métricas](istio/observability/01-metrics.md) | Recopilación de métricas de Prometheus |
-| [Trazado distribuido](istio/observability/02-tracing.md) | Integración con Jaeger/Zipkin |
-| [Registro](istio/observability/03-logging.md) | Logs de acceso y registro estructurado |
-| [Visualización](istio/observability/04-dashboards.md) | Dashboards de Kiali y Grafana |
+| [Métricas](istio/observability/01-metrics.md) | Recopilación Prometheus |
+| [Tracing distribuido](istio/observability/02-tracing.md) | Jaeger/Zipkin |
+| [Logs](istio/observability/03-logging.md) | Acceso y registros estructurados |
+| [Visualización](istio/observability/04-dashboards.md) | Dashboards Kiali/Grafana |
 
 ### 💪 Resiliencia
 
 | Documento | Descripción |
 |----------|-------------|
-| [Outlier Detection](istio/resilience/01-outlier-detection.md) | Detección de instancias no saludables |
-| [Rate Limiting](istio/resilience/02-rate-limiting.md) | Limitación de tasa local y global |
-| [Enrutamiento con reconocimiento de zona](istio/resilience/03-zone-aware-routing.md) | Enrutamiento con reconocimiento de localidad |
+| [Outliers](istio/resilience/01-outlier-detection.md) | Detección de instancias no saludables |
+| [Limitación de tasa](istio/resilience/02-rate-limiting.md) | Límites locales/globales |
+| [Rutas por zona](istio/resilience/03-zone-aware-routing.md) | Enrutamiento según localidad |
 
 ### 🚀 Temas avanzados
 
 | Documento | Descripción |
 |----------|-------------|
-| [Modo Ambient](istio/advanced/01-ambient-mode.md) | Service mesh sin sidecar |
-| [Multi-cluster](istio/advanced/02-multi-cluster.md) | Configuración de mesh multi-cluster |
-| [EnvoyFilter](istio/advanced/03-envoy-filter.md) | Personalización de Envoy |
-| [Caché de DNS](istio/advanced/04-dns-cache.md) | Mejora del rendimiento con caché de DNS |
-| [gRPC](istio/advanced/05-grpc.md) | Compatibilidad con el protocolo gRPC |
-| [WebSocket](istio/advanced/06-websocket.md) | Compatibilidad con conexiones WebSocket |
-| [Inyección de sidecar](istio/advanced/07-sidecar-injection.md) | Mecanismo de inyección de sidecar |
+| [Ambient](istio/advanced/01-ambient-mode.md) | Malla sin sidecars |
+| [Multiclúster](istio/advanced/02-multi-cluster.md) | Configuración de malla multiclúster |
+| [EnvoyFilter](istio/advanced/03-envoy-filter.md) | Personalización Envoy |
+| [Captura y caché DNS](istio/advanced/04-dns-cache.md) | Captura, resolución y comportamiento medido |
+| [gRPC](istio/advanced/05-grpc.md) | Soporte gRPC |
+| [WebSocket](istio/advanced/06-websocket.md) | Soporte de conexiones WebSocket |
+| [Inyección sidecar](istio/advanced/07-sidecar-injection.md) | Mecanismo de inyección |
 | [Argo Rollouts](istio/advanced/08-argo-rollouts.md) | Integración de entrega progresiva |
 
-### ✅ Mejores prácticas
+### ✅ Buenas prácticas
 
 | Documento | Descripción |
 |----------|-------------|
-| [Mejores prácticas](istio/best-practices.md) | Lista de verificación y recomendaciones para producción |
+| [Buenas prácticas](istio/best-practices.md) | Lista y recomendaciones de producción |
 
-## Inicio rápido
+## Inicio rápido {#quick-start}
 
-### 1. Requisitos previos
+1. Compruebe la intersección exacta de compatibilidad de Istio/Kubernetes/EKS en la [guía de instalación](istio/01-installation.md). Un requisito previo genérico de «Kubernetes 1.28+» no basta para una versión actual de Istio.
+2. Elija sidecar/ambient y siga CLI/chart fijados, namespace aislado y requisitos de plataforma. No descargue una CLI última sin especificar para luego entrar en un directorio antiguo.
+3. Use Bookinfo de versión coincidente y las instrucciones gateway mantenidas. El perfil predeterminado no crea automáticamente un Deployment ingress gateway; un objeto Gateway no crea todos los componentes/LoadBalancer necesarios.
+4. Verifique dirección real, puerto Service, estado de ruta y respuesta HTTP. El LB puede publicar IP o hostname; no suponga un campo exclusivo AWS ni nombre de puerto específico.
+5. Instale/configure [backends de observabilidad](istio/observability/README.md) antes de comandos de dashboard. Prometheus, Grafana, Kiali y almacenamiento de trazas no se instalan automáticamente.
 
-- Clúster de Kubernetes (v1.28+)
-- kubectl configurado
-- Privilegios de administrador
-
-### 2. Instalar Istio
-
-```bash
-# Download Istioctl
-curl -L https://istio.io/downloadIstio | sh -
-cd istio-1.28.0
-export PATH=$PWD/bin:$PATH
-
-# Install with default profile
-istioctl install --set profile=default -y
-
-# Enable Sidecar injection on namespace
-kubectl label namespace default istio-injection=enabled
-```
-
-### 3. Desplegar la aplicación de ejemplo
+Comprobación básica después del procedimiento:
 
 ```bash
-# Deploy Bookinfo sample application
-kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
-
-# Create Gateway
-kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
-
-# Verify installation
-kubectl get pods
-kubectl get svc istio-ingressgateway -n istio-system
+istioctl version
+istioctl analyze -A
+istioctl proxy-status
 ```
 
-### 4. Enviar tráfico
+El estado del proxy es solo una entrada diagnóstica. Inscripción ambient y ztunnel necesitan comprobaciones propias; un analyzer limpio no prueba tráfico extremo a extremo.
 
-```bash
-# Check Ingress Gateway address
-export INGRESS_HOST=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-export INGRESS_PORT=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
-export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-
-# Access application
-curl -s "http://${GATEWAY_URL}/productpage"
-```
-
-### 5. Acceder a las herramientas de observabilidad
-
-```bash
-# Kiali dashboard
-istioctl dashboard kiali
-
-# Prometheus
-istioctl dashboard prometheus
-
-# Grafana
-istioctl dashboard grafana
-
-# Jaeger
-istioctl dashboard jaeger
-```
-
-## Recursos de aprendizaje
+## Recursos de aprendizaje {#learning-resources}
 
 ### Documentación oficial
 
-- [Documentación oficial de Istio](https://istio.io/latest/docs/)
-- [Repositorio de Istio en GitHub](https://github.com/istio/istio)
-- [Documentación de Envoy Proxy](https://www.envoyproxy.io/docs/envoy/latest/)
+- [Documentación Istio](https://istio.io/latest/docs/)
+- [Repositorio Istio](https://github.com/istio/istio)
+- [Documentación Envoy](https://www.envoyproxy.io/docs/envoy/latest/)
 
-### Relacionado con AWS
+### AWS y comunidad
 
-- [AWS EKS Workshop - Istio](https://www.eksworkshop.com/docs/security/servicemesh/)
-- [AWS App Mesh vs Istio](https://aws.amazon.com/blogs/containers/choosing-between-aws-app-mesh-and-istio/)
-
-### Comunidad
-
-- [Istio Discuss](https://discuss.istio.io/)
-- [Istio Slack](https://istio.slack.com/)
-- [Grupo de trabajo de CNCF sobre Istio](https://github.com/cncf/tag-app-delivery)
+- [Istio en Amazon EKS](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
+- [Guía AWS mantenida](istio/04-aws-integration.md)
+- [Ciclo de vida AWS App Mesh](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html): AWS indica fin de soporte el 30 de septiembre de 2026. Evalúe migración; no es recomendación de nuevo despliegue.
+- [Comunidad, canales y grupos Istio](https://istio.io/latest/get-involved/)
 
 ### Recursos adicionales
 
-- [Patrones de Service Mesh (O'Reilly)](https://www.oreilly.com/library/view/service-mesh-patterns/9781492086444/)
+- [Service Mesh Patterns (O'Reilly)](https://www.oreilly.com/library/view/service-mesh-patterns/9781492086444/)
 - [Istio in Action (Manning)](https://www.manning.com/books/istio-in-action)
-- [Guía de optimización del rendimiento de Istio](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+- [Optimización de rendimiento Istio](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
 
 ## Cuestionario
 
-Para comprobar su comprensión de Istio, pruebe el [Cuestionario de Istio](../quizzes/service-mesh/02-istio-quiz.md).
+Compruebe su comprensión con el [cuestionario Istio](../quizzes/service-mesh/02-istio-quiz.md).
 
-El cuestionario cubre los siguientes temas:
+Incluye:
 
-- Conceptos básicos de service mesh
-- Arquitectura de Istio
-- Gestión de tráfico (despliegue Canary)
-- Seguridad (mTLS)
+- Conceptos de service mesh
+- Arquitectura Istio
+- Gestión de tráfico y canary
+- Seguridad mTLS
 - Gateway e Ingress
 - Herramientas de observabilidad
-- Tendencias más recientes de service mesh
-- Rate Limiting
-- Enrutamiento de localidad
-- Integración con Amazon EKS
+- Modos sidecar/ambient
+- Limitación de tasa
+- Enrutamiento local
+- Integración EKS
 
 ---
 
-**Siguientes pasos**: Consulte la [Guía de instalación](istio/01-installation.md) para instalar Istio y aprenda los conceptos básicos en [Conceptos principales](istio/02-basic-concepts.md).
+**Próximos pasos**: Siga la [instalación](istio/01-installation.md) y aprenda los [conceptos fundamentales](istio/02-basic-concepts.md).

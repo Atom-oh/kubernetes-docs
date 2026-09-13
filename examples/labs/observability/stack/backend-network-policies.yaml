@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: lab-loki-ingress
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      lab-role: loki
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          lab-role: collector-management
+    - podSelector:
+        matchLabels:
+          lab-role: grafana
+    ports:
+    - protocol: TCP
+      port: 3100
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: lab-tempo-ingress
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      lab-role: tempo
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          lab-role: collector-management
+    ports:
+    - protocol: TCP
+      port: 4318
+  - from:
+    - podSelector:
+        matchLabels:
+          lab-role: grafana
+    ports:
+    - protocol: TCP
+      port: 3200

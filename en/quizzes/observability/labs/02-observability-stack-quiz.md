@@ -1,185 +1,177 @@
-# Observability Lab Part 2: Observability Stack Quiz
+# Observability Lab 02 Quiz
 
-> **Last Updated**: February 22, 2026
+<span id="observability-lab-part-2-observability-stack-quiz"></span>
 
-Test your understanding of the observability stack concepts covered in the Observability End-to-End Lab Part 2.
+> **Last Updated**: September 13, 2026
 
----
-
-1. What is the key difference between DaemonSet and Gateway deployment patterns for OpenTelemetry Collector?
-   - A) DaemonSet pattern is deprecated and Gateway is the only recommended approach
-   - B) DaemonSet runs a collector on each node for local collection while Gateway centralizes collection for cross-node processing
-   - C) Gateway pattern cannot handle metrics, only traces
-   - D) DaemonSet pattern requires more network bandwidth between clusters
+1. What endpoint should cross-cluster collection use?
+   - A) Only the other cluster’s service DNS.
+   - B) A private endpoint with actual routing, DNS and TLS.
+   - C) Always disable TLS verification.
+   - D) Use the kubeconfig file as a URL.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) DaemonSet runs a collector on each node for local collection while Gateway centralizes collection for cross-node processing**
+**Answer: B) A private endpoint with actual routing, DNS and TLS.**
 
-**Explanation:**
-The DaemonSet pattern deploys an OTel Collector pod on every node, collecting telemetry locally with low latency and reducing network hops. The Gateway pattern uses a centralized deployment (Deployment or StatefulSet) that receives telemetry from all sources, enabling cross-node processing like tail-based sampling. Often both patterns are combined: DaemonSet collectors gather local data and forward to a Gateway for aggregation and export to backends.
+The NLB forwards TCP and the server validates client certificates.
 
 </details>
 
 ---
 
-2. How does the OpenTelemetry Collector pipeline architecture organize data flow?
-   - A) Exporter → Processor → Receiver
-   - B) Receiver → Processor → Exporter
-   - C) Processor → Receiver → Exporter
-   - D) All components run in parallel without ordering
+2. What is the CRI log parsing order?
+   - A) Only a Docker JSON parser.
+   - B) Container/CRI parser followed by JSON parsing.
+   - C) Treat the entire prefix as a JSON field.
+   - D) Make every trace ID a stream label.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Receiver → Processor → Exporter**
+**Answer: B) Container/CRI parser followed by JSON parsing.**
 
-**Explanation:**
-The OTel Collector pipeline follows a clear data flow: Receivers ingest telemetry data from various sources (OTLP, Prometheus, Jaeger, etc.), Processors transform, filter, or enrich the data (batching, attribute manipulation, sampling), and Exporters send the processed data to backends (Prometheus, Jaeger, cloud services). Multiple pipelines can be defined for different signal types (metrics, traces, logs), and they can share components.
+Verify preservation of service/level/trace_id from the app body.
 
 </details>
 
 ---
 
-3. How does authentication work when configuring Prometheus remote write to Amazon Managed Prometheus (AMP)?
-   - A) Username and password stored in Kubernetes secrets
-   - B) IRSA provides IAM credentials, and the SigV4 extension signs requests with AWS Signature Version 4
-   - C) API keys generated in the AMP console
-   - D) mTLS certificates issued by AWS Certificate Manager
+3. How should mTLS Prometheus be probed?
+   - A) Default HTTPS probes without certificates always succeed.
+   - B) A promtool exec probe using client-certificate configuration.
+   - C) Delete all probes.
+   - D) Always return readiness true.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) IRSA provides IAM credentials, and the SigV4 extension signs requests with AWS Signature Version 4**
+**Answer: B) A promtool exec probe using client-certificate configuration.**
 
-**Explanation:**
-AMP uses AWS IAM for authentication. The remote write component (Prometheus, OTel Collector, or Grafana Agent) uses IRSA to obtain temporary IAM credentials. The SigV4 (AWS Signature Version 4) extension or proxy signs each request with these credentials. This approach leverages AWS's identity infrastructure, eliminating the need to manage long-lived credentials and providing audit trails through CloudTrail.
+Actual Operator merging and Prometheus TLS ready/healthy behavior were tested.
 
 </details>
 
 ---
 
-4. How is VictoriaMetrics compatible with Prometheus?
-   - A) It requires data migration tools to import Prometheus data
-   - B) It implements the Prometheus remote write/read API and supports PromQL for queries
-   - C) It only works as a Prometheus sidecar
-   - D) Compatibility requires a paid enterprise license
+4. Which Tempo3 configuration change matters?
+   - A) Copy only old Tempo2 ingester values.
+   - B) Use live-store/backend scheduler/worker and current chart values.
+   - C) Copy Loki configuration.
+   - D) Chart and app versions are always identical.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) It implements the Prometheus remote write/read API and supports PromQL for queries**
+**Answer: B) Use live-store/backend scheduler/worker and current chart values.**
 
-**Explanation:**
-VictoriaMetrics is designed as a drop-in replacement for Prometheus storage. It implements the Prometheus remote write and remote read APIs, allowing any Prometheus-compatible client to send metrics and any PromQL-compatible tool to query them. It extends PromQL with MetricsQL for additional functions. This compatibility means existing Grafana dashboards, alerting rules, and recording rules work without modification.
+Check chart rendering separately from actual binary configuration/startup.
 
 </details>
 
 ---
 
-5. What characterizes Grafana Mimir's single binary mode?
-   - A) It only supports single-tenant deployments
-   - B) All Mimir components (ingester, querier, compactor, etc.) run in a single process for simplified deployment
-   - C) It cannot scale horizontally
-   - D) Single binary mode disables long-term storage
+5. What does the single-instance Loki/Tempo baseline mean?
+   - A) Production HA is automatic.
+   - B) A durable lab instance, not an HA/capacity guarantee.
+   - C) No storage costs.
+   - D) Backups are automatically guaranteed.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) All Mimir components (ingester, querier, compactor, etc.) run in a single process for simplified deployment**
+**Answer: B) A durable lab instance, not an HA/capacity guarantee.**
 
-**Explanation:**
-Mimir's single binary mode (monolithic mode) runs all components—distributor, ingester, querier, query-frontend, compactor, store-gateway, and ruler—in a single process. This simplifies deployment and operations for smaller environments. Despite running in one process, it can still scale horizontally by running multiple replicas. For larger deployments, components can be separated into microservices mode for independent scaling.
+Verify retention, PVCs, cleanup and failure impact.
 
 </details>
 
 ---
 
-6. What are the components in Grafana Loki's SimpleScalable deployment mode?
-   - A) Only a single read-write pod
-   - B) Separate read, write, and backend components that can scale independently
-   - C) Ingester and querier only, with external compactor
-   - D) Monolithic mode with automatic sharding
+6. What JSON does the AIOps CloudWatch path need?
+   - A) Only query strings.
+   - B) Structured logs preserving service/level/trace_id.
+   - C) All plaintext passwords.
+   - D) Traces automatically create logs.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Separate read, write, and backend components that can scale independently**
+**Answer: B) Structured logs preserving service/level/trace_id.**
 
-**Explanation:**
-Loki's SimpleScalable mode (also called Simple Scalable Deployment or SSD) divides components into three targets: Write (distributor, ingester), Read (query-frontend, querier), and Backend (compactor, index-gateway, ruler). This allows independent scaling—write path scales with ingestion volume, read path scales with query load. It's a middle ground between monolithic (single binary) and microservices (fully distributed) modes, balancing operational simplicity with scalability.
+raw_log behavior and actual exporter PutLogEvents messages were checked locally.
 
 </details>
 
 ---
 
-7. What are the advantages of using ClickHouse as a log store compared to traditional solutions?
-   - A) ClickHouse only supports structured JSON logs
-   - B) Column-oriented storage, high compression, and fast analytical queries on large log volumes
-   - C) It requires less storage but has slower query performance
-   - D) ClickHouse is primarily designed for metrics, not logs
+7. What is required for Grafana correlation?
+   - A) Only enable a UI option.
+   - B) Matching UIDs, field names, actual data and retention.
+   - C) Only match display names.
+   - D) Always uppercase trace_id.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Column-oriented storage, high compression, and fast analytical queries on large log volumes**
+**Answer: B) Matching UIDs, field names, actual data and retention.**
 
-**Explanation:**
-ClickHouse is a column-oriented OLAP database optimized for analytical queries. For log storage, this means: excellent compression ratios (often 10x better than row-based stores) because similar data in columns compresses well, extremely fast aggregation queries across billions of log entries, and efficient filtering on specific columns without reading entire rows. These characteristics make it cost-effective for high-volume log storage with interactive query performance.
+Align prometheus/loki/tempo UIDs and escaped derived-field expressions.
 
 </details>
 
 ---
 
-8. What are the key differences between FluentBit and Grafana Alloy for log collection?
-   - A) FluentBit is written in Go while Alloy is written in C
-   - B) FluentBit is lightweight and focused on log forwarding while Alloy is a unified telemetry collector supporting metrics, logs, traces, and profiles
-   - C) Alloy only supports Grafana backends while FluentBit is vendor-agnostic
-   - D) FluentBit requires more memory than Alloy for equivalent workloads
+8. How are exemplars handled by service Prometheus remote-write?
+   - A) Always automatically retained.
+   - B) Verify sendExemplars, receiving/storage and datasource linking.
+   - C) A label automatically creates a trace.
+   - D) Every request is necessarily stored.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) FluentBit is lightweight and focused on log forwarding while Alloy is a unified telemetry collector supporting metrics, logs, traces, and profiles**
+**Answer: B) Verify sendExemplars, receiving/storage and datasource linking.**
 
-**Explanation:**
-FluentBit is a lightweight, high-performance log processor and forwarder written in C, designed for resource-constrained environments. Grafana Alloy (evolution of Grafana Agent) is a unified observability collector that handles all telemetry signals—metrics, logs, traces, and profiles. Alloy uses a component-based configuration model and integrates tightly with Grafana's ecosystem. Choose FluentBit for minimal footprint log forwarding; choose Alloy for unified collection across all signal types.
+Verify the representative trace exists, not just the transport option.
 
 </details>
 
 ---
 
-9. How do you configure Tempo-Loki TraceID derived field correlation?
-   - A) Correlation is automatic and requires no configuration
-   - B) Configure a derived field in Loki data source that extracts TraceID from logs and links to Tempo using the trace ID
-   - C) Install a separate correlation service between Tempo and Loki
-   - D) TraceID correlation only works with Jaeger, not Tempo
+9. How should node-log DaemonSet permissions be treated?
+   - A) Always enable hostPID and every capability.
+   - B) Allow only scoped read-only host mounts, read RBAC and the explicit root exception.
+   - C) Full cluster-admin.
+   - D) Host-log paths have no permission implications.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Configure a derived field in Loki data source that extracts TraceID from logs and links to Tempo using the trace ID**
+**Answer: B) Allow only scoped read-only host mounts, read RBAC and the explicit root exception.**
 
-**Explanation:**
-In Grafana's Loki data source settings, you configure derived fields that use regex to extract trace IDs from log lines. The derived field specifies an internal link to the Tempo data source, using the extracted trace ID as a variable. When viewing logs, clickable links appear next to log lines containing trace IDs, enabling direct navigation from a log entry to its corresponding distributed trace in Tempo.
+Validate namespace admission and actual file permissions together.
 
 </details>
 
 ---
 
-10. How do you configure Alertmanager to send notifications to AWS SNS?
-    - A) Alertmanager has native SNS support requiring only the topic ARN
-    - B) Configure an SNS receiver with the topic ARN, region, and IAM authentication via IRSA or access keys
-    - C) SNS integration requires a webhook proxy service
-    - D) Alertmanager cannot send to SNS; use CloudWatch Alarms instead
+10. How should optional backends and durable queues be described?
+   - A) All backends are already deployed.
+   - B) They require separate validation; the baseline does not guarantee persistent offsets/queues.
+   - C) Loss/duplicates are impossible on restart.
+   - D) 24-hour retention proves a30-day SLO.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Configure an SNS receiver with the topic ARN, region, and IAM authentication via IRSA or access keys**
+**Answer: B) They require separate validation; the baseline does not guarantee persistent offsets/queues.**
 
-**Explanation:**
-Alertmanager supports SNS as a native receiver type. Configuration requires the SNS topic ARN, AWS region, and authentication credentials. For EKS deployments, use IRSA by configuring the service account with an IAM role that has `sns:Publish` permission. The receiver configuration includes `sigv4` settings for AWS authentication. This enables direct alert delivery to SNS, which can then fan out to email, SMS, Lambda, SQS, or other SNS subscribers.
+Record only actual configuration and validation as successful.
 
 </details>
+
+---
+
+[Return to the guide](../../../labs/observability/02-observability-stack-lab.md)

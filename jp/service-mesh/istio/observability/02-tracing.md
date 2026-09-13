@@ -1,90 +1,63 @@
-# Istio 分散トレーシング
+# Istio分散トレーシング
 
-> **対応バージョン**: Istio 1.28
-> **最終更新**: February 19, 2026
+> **対応バージョン**: Istio 1.31
+> **最終更新**: September 11, 2026
 
-分散トレーシングは、マイクロサービス間のリクエストフローを追跡・可視化し、レイテンシのボトルネックの特定、エラーの根本原因分析、サービス依存関係の把握を可能にします。
+> **検証範囲**: 演習設定は公式資料とオフライン検証器で確認し、クラスターはデプロイしていません。名前空間、ID、ストレージ、バックエンド、負荷の前提は各例で示し、対象環境で検証する必要があります。
+
+分散トレーシングはマイクロサービス間の要求の流れを追跡・可視化し、遅延ボトルネックの特定、エラー根本原因分析、サービス依存関係の理解を可能にします。
 
 ## 目次
 
-1. [分散トレーシングの概要](#distributed-tracing-overview)
-2. [OpenTelemetry 統合](#opentelemetry-integration)
-3. [Jaeger 統合](#jaeger-integration)
-4. [Zipkin 統合](#zipkin-integration)
+1. [分散トレーシング概要](#distributed-tracing-overview)
+2. [OpenTelemetry統合](#opentelemetry-integration)
+3. [Jaeger統合](#jaeger-integration)
+4. [Zipkin統合](#zipkin-integration)
 5. [コンテキスト伝播](#context-propagation)
 6. [サンプリング戦略](#sampling-strategies)
 7. [トレース分析](#trace-analysis)
-8. [カスタム Span の追加](#adding-custom-spans)
-9. [パフォーマンス最適化](#performance-optimization)
+8. [カスタムスパン追加](#adding-custom-spans)
+9. [性能最適化](#performance-optimization)
 10. [トラブルシューティング](#troubleshooting)
 
-## 分散トレーシングの概要
+## 分散トレーシング概要 {#distributed-tracing-overview}
 
 ### W3C Trace Context
 
-Istio は、標準化されたトレース伝播を実現するために W3C Trace Context 標準をサポートしています。
+Istioは互換トレースproviderでW3C trace contextをサポートします。アプリは自身の要求間でコンテキストを伝播する必要があります。図のアプリスパンには初期化済みSDK/エージェントが必要です。例はサイドカー/waypoint用で、ztunnelはHTTPトレーススパンを生成しません。
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box rgba(0, 199, 183, 0.1) Frontend
-    participant Client as Client
-    end
-    box rgba(70, 107, 176, 0.1) Service A
-    participant EnvoyA as Envoy Proxy
-    participant AppA as App A
-    end
-    box rgba(70, 107, 176, 0.1) Service B
-    participant EnvoyB as Envoy Proxy
-    participant AppB as App B
-    end
-    box rgba(230, 82, 44, 0.1) Tracing Backend
-    participant Jaeger as Jaeger Collector
-    end
+![クライアント要求がService A/BのEnvoyサイドカーとアプリコンテナを通じてW3Cコンテキストを伝播し、各Envoyとアプリが非同期にJaeger Collectorへスパンを送るシーケンス。](../../../.gitbook/assets/en-service-mesh-istio-observability-02-tracing-0.png)
 
-    Client->>EnvoyA: HTTP Request
-    Note over EnvoyA: Generate Trace ID<br/>+ Span ID
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-observability-02-tracing-0.html)
 
-    EnvoyA->>AppA: Forward with<br/>traceparent header
-    Note over AppA: Extract context<br/>Create child span
+### 中核概念
 
-    AppA->>EnvoyB: HTTP Request<br/>with traceparent
-    Note over EnvoyB: Extract parent context<br/>Create new span
+#### トレース
 
-    EnvoyB->>AppB: Forward with<br/>updated traceparent
+単一要求のシステム内の全経路を表すスパンの集合
 
-    EnvoyA-->>Jaeger: Export Span
-    EnvoyB-->>Jaeger: Export Span
-    AppA-->>Jaeger: Export Span (optional)
-    AppB-->>Jaeger: Export Span (optional)
-```
+#### スパン
 
-### 基本概念
-
-#### Trace
-
-システム内を通過する単一リクエストの完全な経路を表す Span の集合
-
-#### Span
-
-特定の操作の開始と終了を表す単位
-- **Span ID**: 一意の識別子
-- **Parent Span ID**: 親 Span への参照
+特定操作の開始と終了を表す単位
+- **Span ID**: 一意識別子
+- **Parent Span ID**: 親スパンへの参照
 - **Trace ID**: トレース全体の識別子
-- **Operation Name**: 操作の名前（例: `HTTP GET /api/products`）
-- **Duration**: 操作にかかった時間
-- **Tags**: メタデータ（サービス名、HTTP ステータスなど）
-- **Logs**: タイムスタンプ付きイベント
+- **操作名**: 操作の名前（例: `HTTP GET /api/products`）
+- **所要時間**: 操作にかかった時間
+- **タグ**: メタデータ（サービス名、HTTP状態など）
+- **ログ**: タイムスタンプ付きイベント
 
 #### Baggage
 
-トレース全体に伝播されるキー・バリューのペア
+アプリ/propagatorが対応する場合に伝播するコンテキストのキー値ペアです。自動的にスパン属性になるわけではなく、シークレットを含めてはいけません。
 
-## OpenTelemetry 統合
+## OpenTelemetry統合 {#opentelemetry-integration}
 
-OpenTelemetry は最新のオブザーバビリティ標準であり、Istio 1.28 で推奨されるトレーシングバックエンドです。
+OpenTelemetryは計装、プロトコル、collectorを提供し、トレース保存backendではありません。例はOTLPをcollectorへ、その後Jaegerへ送ります。ZipkinとTempoは代替backendです。
 
-### 1. OpenTelemetry Collector のインストール
+### 1. OpenTelemetry Collectorのインストール
+
+テスト前に`observability`を作り、下のJaegerをデプロイします。メモリ内テールサンプリング状態を持つ単一レプリカ例です。複数テールサンプラーの前の通常Serviceは1トレースの全スパンをまとめないため、本番拡張にはトレースIDルーティング、容量計画、遅延スパン処理が必要です。内部OTLPは演習では平文です。ネットワーク制限かTLS/mTLSを設定します。health拡張と内部メトリクスリスナーは明示有効です。
 
 ```yaml
 apiVersion: v1
@@ -94,6 +67,9 @@ metadata:
   namespace: observability
 data:
   config.yaml: |
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
     receivers:
       otlp:
         protocols:
@@ -101,96 +77,76 @@ data:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
-
     processors:
-      batch:
-        timeout: 10s
-        send_batch_size: 1024
-        send_batch_max_size: 2048
-
       memory_limiter:
         check_interval: 1s
         limit_mib: 1024
-
-      # Add span attributes
-      attributes:
-        actions:
-        - key: cluster.name
+      resource:
+        attributes:
+        - key: k8s.cluster.name
           value: production-k8s
-          action: insert
-        - key: deployment.environment
+          action: upsert
+        - key: deployment.environment.name
           value: production
-          action: insert
-
-      # Span filtering
-      filter:
-        spans:
-          include:
-            match_type: regexp
-            services:
-            - ".*"
-          exclude:
-            match_type: strict
-            span_names:
-            - /health
-            - /readiness
-            - /liveness
-
-      # Tail sampling (intelligent sampling)
+          action: upsert
+      filter/health:
+        error_mode: ignore
+        trace_conditions:
+        - span.name == "/health" or span.name == "/readiness" or span.name == "/liveness"
       tail_sampling:
+        decision_wait: 30s
+        num_traces: 50000
         policies:
-        # 100% sampling for traces with errors
-        - name: errors-policy
+        - name: errors
           type: status_code
           status_code:
             status_codes:
             - ERROR
-        # 100% sampling for slow requests
-        - name: slow-requests-policy
+        - name: slow
           type: latency
           latency:
             threshold_ms: 1000
-        # 10% sampling for normal requests
-        - name: probabilistic-policy
+        - name: baseline
           type: probabilistic
           probabilistic:
             sampling_percentage: 10
-
+      batch:
+        timeout: 10s
+        send_batch_size: 1024
+        send_batch_max_size: 2048
     exporters:
-      # Export to Jaeger
-      jaeger:
-        endpoint: jaeger-collector.observability.svc.cluster.local:14250
+      otlp_grpc/jaeger:
+        endpoint: jaeger-collector.observability.svc.cluster.local:4317
         tls:
           insecure: true
-
-      # Export to Zipkin
-      zipkin:
-        endpoint: http://zipkin.observability.svc.cluster.local:9411/api/v2/spans
-
-      # Export to Tempo (Grafana ecosystem)
-      otlp/tempo:
-        endpoint: tempo.observability.svc.cluster.local:4317
-        tls:
-          insecure: true
-
-      # Logging for debugging
-      logging:
-        loglevel: info
-        sampling_initial: 5
-        sampling_thereafter: 200
-
+      debug:
+        verbosity: basic
     service:
+      extensions:
+      - health_check
       pipelines:
         traces:
-          receivers: [otlp]
-          processors: [memory_limiter, batch, attributes, filter, tail_sampling]
-          exporters: [jaeger, otlp/tempo, logging]
-
+          receivers:
+          - otlp
+          processors:
+          - memory_limiter
+          - resource
+          - filter/health
+          - tail_sampling
+          - batch
+          exporters:
+          - otlp_grpc/jaeger
+          - debug
       telemetry:
         logs:
           level: info
         metrics:
-          address: :8888
+          readers:
+          - pull:
+              exporter:
+                prometheus:
+                  host: 0.0.0.0
+                  port: 8888
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -198,7 +154,7 @@ metadata:
   name: otel-collector
   namespace: observability
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: otel-collector
@@ -206,10 +162,12 @@ spec:
     metadata:
       labels:
         app: otel-collector
+      annotations:
+        sidecar.istio.io/inject: 'false'
     spec:
       containers:
       - name: otel-collector
-        image: otel/opentelemetry-collector-contrib:0.96.0
+        image: otel/opentelemetry-collector-contrib:0.160.0
         args:
         - --config=/etc/otel/config.yaml
         ports:
@@ -222,6 +180,8 @@ spec:
         - containerPort: 8888
           name: metrics
           protocol: TCP
+        - containerPort: 13133
+          name: health
         volumeMounts:
         - name: config
           mountPath: /etc/otel
@@ -231,7 +191,7 @@ spec:
             memory: 1Gi
           limits:
             cpu: 2000m
-            memory: 4Gi
+            memory: 2Gi
         livenessProbe:
           httpGet:
             path: /
@@ -250,6 +210,8 @@ kind: Service
 metadata:
   name: otel-collector
   namespace: observability
+  labels:
+    app: otel-collector
 spec:
   selector:
     app: otel-collector
@@ -266,36 +228,32 @@ spec:
   type: ClusterIP
 ```
 
-### 2. Istio での OpenTelemetry の有効化
+廃止`jaeger`はOTLP/gRPC、`logging`は`debug`に置き換えます。フィルターは実観測スパン名に完全一致するため、計装に合わせ、スパン破棄による完全性への影響を考慮します。テールポリシーが保持できるのは実際に届く対象トレースで、上流破棄は復元できません。検証後は診断出力を除去します。
 
-#### MeshConfig の設定
+### 2. IstioでOpenTelemetryを有効化
+
+#### MeshConfig設定
+
+`istioctl install -f`で既存設定へproviderをマージし、`istio` ConfigMap全体を上書きしないでください。`maxTagLength`はパスタグを制限し、全スパン属性ではありません。
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing:
-        sampling: 100.0  # Initially 100% sampling, tail sampling at collector
-        max_path_tag_length: 256
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    enableTracing: true
     extensionProviders:
     - name: otel-tracing
       opentelemetry:
         service: otel-collector.observability.svc.cluster.local
         port: 4317
-        resource_detectors:
-          environment: {}
-          dynatrace: {}
+        maxTagLength: 256
 ```
 
-#### Telemetry API によるトレーシングの有効化
+#### Telemetry APIによるトレース有効化
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: otel-tracing
@@ -314,10 +272,12 @@ spec:
           value: "production"
 ```
 
-### 3. Namespace ごとのトレーシング設定
+名前空間ごとに該当するセレクターなしTelemetryを1つ使い、競合例を適用せずトレース/ログ設定をマージします。ヘッダータグは未信頼要求メタデータで、認証済みIDではありません。承認された仮名のユーザー相関値だけを使います。環境タグはアプリ環境変数でなくプロキシ環境を読みます。
+
+### 3. 名前空間ごとのトレース設定
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: namespace-tracing
@@ -349,13 +309,54 @@ spec:
           defaultValue: "unknown"
 ```
 
-## Jaeger 統合
+## Jaeger統合 {#jaeger-integration}
 
-Jaeger は最も広く使用されているオープンソースの分散トレーシングシステムです。
+### Jaeger 2の開発用デプロイ
 
-### Jaeger All-in-One Deployment（開発/テスト）
+Jaeger 2は明示設定ファイルと`jaegertracing/jaeger`イメージを使います。以下のメモリ型インスタンスは開発用で、再起動でトレースを失います。Query/OTLPはクラスター内部に置き、UIはport-forwardで接続します。
 
 ```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jaeger-config
+  namespace: observability
+data:
+  config.yaml: |
+    extensions:
+      jaeger_storage:
+        backends:
+          traces:
+            memory:
+              max_traces: 50000
+      jaeger_query:
+        storage:
+          traces: traces
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch: {}
+    exporters:
+      jaeger_storage_exporter:
+        trace_storage: traces
+    service:
+      extensions:
+      - jaeger_storage
+      - jaeger_query
+      pipelines:
+        traces:
+          receivers:
+          - otlp
+          processors:
+          - batch
+          exporters:
+          - jaeger_storage_exporter
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -370,45 +371,36 @@ spec:
     metadata:
       labels:
         app: jaeger
+      annotations:
+        sidecar.istio.io/inject: 'false'
     spec:
       containers:
       - name: jaeger
-        image: jaegertracing/all-in-one:1.55
-        env:
-        - name: COLLECTOR_ZIPKIN_HOST_PORT
-          value: :9411
-        - name: COLLECTOR_OTLP_ENABLED
-          value: "true"
+        image: jaegertracing/jaeger:2.20.0
+        args:
+        - --config=/etc/jaeger/config.yaml
         ports:
-        - containerPort: 5775
-          protocol: UDP
-        - containerPort: 6831
-          protocol: UDP
-        - containerPort: 6832
-          protocol: UDP
-        - containerPort: 5778
-          protocol: TCP
+        - containerPort: 4317
+          name: otlp-grpc
+        - containerPort: 4318
+          name: otlp-http
         - containerPort: 16686
-          protocol: TCP
-        - containerPort: 14250
-          protocol: TCP
-        - containerPort: 14268
-          protocol: TCP
-        - containerPort: 14269
-          protocol: TCP
-        - containerPort: 4317  # OTLP gRPC
-          protocol: TCP
-        - containerPort: 4318  # OTLP HTTP
-          protocol: TCP
-        - containerPort: 9411
-          protocol: TCP
+          name: query-http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/jaeger
+          readOnly: true
         resources:
           requests:
-            cpu: 100m
-            memory: 256Mi
+            cpu: 200m
+            memory: 512Mi
           limits:
-            cpu: 500m
-            memory: 1Gi
+            cpu: 1000m
+            memory: 2Gi
+      volumes:
+      - name: config
+        configMap:
+          name: jaeger-config
 ---
 apiVersion: v1
 kind: Service
@@ -419,21 +411,12 @@ spec:
   selector:
     app: jaeger
   ports:
-  - name: jaeger-collector-http
-    port: 14268
-    targetPort: 14268
-  - name: jaeger-collector-grpc
-    port: 14250
-    targetPort: 14250
   - name: otlp-grpc
     port: 4317
-    targetPort: 4317
+    targetPort: otlp-grpc
   - name: otlp-http
     port: 4318
-    targetPort: 4318
-  - name: zipkin
-    port: 9411
-    targetPort: 9411
+    targetPort: otlp-http
 ---
 apiVersion: v1
 kind: Service
@@ -446,157 +429,75 @@ spec:
   ports:
   - name: query-http
     port: 16686
-    targetPort: 16686
-  type: LoadBalancer
+    targetPort: query-http
+  type: ClusterIP
 ```
 
-### Jaeger Production Deployment（Elasticsearch バックエンド）
+### 本番ストレージとスケーリング
+
+耐久ストレージには、対応する管理Elasticsearch/OpenSearchと一致Jaegerドライバーを使います。Jaeger 2.20の公表Elasticsearch表は**7.x/8.x**です。最新リリースから新メジャー対応を推測しないでください。既存ECKもOperator/クラスター互換性を確認します。EKSの`gp3`にはEBS CSIドライバーと実StorageClassが必要です。
+
+Elasticsearchでは`jaeger-config`内メモリbackendをこの断片に置き換え、storage名`traces`でreceiver、exporter、query、pipeline設定を保持します。制限した`jaeger`ユーザーの`password`とサーバー証明書に一致する公開`ca.crt`を持つSecret `jaeger-es-client`を作成します。サーバーホスト名検証は有効のままです。
 
 ```yaml
-# Elasticsearch (Storage Backend)
-apiVersion: elasticsearch.k8s.elastic.co/v1
-kind: Elasticsearch
-metadata:
-  name: jaeger-es
-  namespace: observability
-spec:
-  version: 8.12.0
-  nodeSets:
-  - name: default
-    count: 3
-    config:
-      node.store.allow_mmap: false
-    volumeClaimTemplates:
-    - metadata:
-        name: elasticsearch-data
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 100Gi
-        storageClassName: gp3
----
-# Jaeger Collector (Collection)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: jaeger-collector
-  namespace: observability
+extensions:
+  jaeger_storage:
+    backends:
+      traces:
+        elasticsearch:
+          server_urls:
+          - https://jaeger-es-es-http.observability.svc.cluster.local:9200
+          auth:
+            basic:
+              username: jaeger
+              password_file: /etc/jaeger/es/password
+          tls:
+            ca_file: /etc/jaeger/es/ca.crt
+          indices:
+            index_prefix: production
+```
+
+次のDeployment断片を既存`jaeger`にマージします（イメージ、引数、設定マウント、他フィールドを保持）。共有耐久ストレージがあればcollector/query兼用インスタンスはステートレスで複製できます。独立スケーリングが必要なら同じJaeger 2バイナリで役割を分離できます。
+
+```yaml
 spec:
   replicas: 3
-  selector:
-    matchLabels:
-      app: jaeger-collector
   template:
-    metadata:
-      labels:
-        app: jaeger-collector
     spec:
       containers:
-      - name: jaeger-collector
-        image: jaegertracing/jaeger-collector:1.55
-        env:
-        - name: SPAN_STORAGE_TYPE
-          value: elasticsearch
-        - name: ES_SERVER_URLS
-          value: https://jaeger-es-es-http:9200
-        - name: ES_USERNAME
-          value: elastic
-        - name: ES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: jaeger-es-elastic-user
-              key: elastic
-        - name: COLLECTOR_OTLP_ENABLED
-          value: "true"
-        - name: COLLECTOR_ZIPKIN_HOST_PORT
-          value: :9411
-        ports:
-        - containerPort: 14250
-          name: grpc
-        - containerPort: 14268
-          name: http
-        - containerPort: 4317
-          name: otlp-grpc
-        - containerPort: 4318
-          name: otlp-http
-        resources:
-          requests:
-            cpu: 500m
-            memory: 1Gi
-          limits:
-            cpu: 2000m
-            memory: 4Gi
----
-# Jaeger Query (UI)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: jaeger-query
-  namespace: observability
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: jaeger-query
-  template:
-    metadata:
-      labels:
-        app: jaeger-query
-    spec:
-      containers:
-      - name: jaeger-query
-        image: jaegertracing/jaeger-query:1.55
-        env:
-        - name: SPAN_STORAGE_TYPE
-          value: elasticsearch
-        - name: ES_SERVER_URLS
-          value: https://jaeger-es-es-http:9200
-        - name: ES_USERNAME
-          value: elastic
-        - name: ES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: jaeger-es-elastic-user
-              key: elastic
-        ports:
-        - containerPort: 16686
-          name: query
-        resources:
-          requests:
-            cpu: 200m
-            memory: 512Mi
-          limits:
-            cpu: 1000m
-            memory: 2Gi
+      - name: jaeger
+        volumeMounts:
+        - name: es-client
+          mountPath: /etc/jaeger/es
+          readOnly: true
+      volumes:
+      - name: es-client
+        secret:
+          secretName: jaeger-es-client
 ```
 
-### Istio で Jaeger を直接使用する
+[Jaeger Elasticsearchガイド](https://www.jaegertracing.io/docs/2.20/storage/elasticsearch/)とリリーススキーマで、初期化、インデックスローテーション/保持、バックアップ、ストレージ側権限を設定します。旧1.xの環境変数/イメージデプロイはJaeger 2設定ではありません。既存トレース移行前にリリースノートを確認します。
+
+### Istio → Jaeger OTLPの直接接続という代替
+
+別collectorとそのテールサンプリングを迂回します。ワークロードに適したヘッドサンプリングを使います。provider選択の代替として既存導入へマージし、該当Telemetryで意図したproviderだけを選びます。
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing:
-        sampling: 100.0
-        zipkin:
-          address: jaeger-collector.observability:9411
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    enableTracing: true
     extensionProviders:
     - name: jaeger
-      zipkin:
+      opentelemetry:
         service: jaeger-collector.observability.svc.cluster.local
-        port: 9411
+        port: 4317
         maxTagLength: 256
 ```
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: jaeger-tracing
@@ -605,14 +506,14 @@ spec:
   tracing:
   - providers:
     - name: jaeger
-    randomSamplingPercentage: 100.0
+    randomSamplingPercentage: 1
 ```
 
-## Zipkin 統合
+## Zipkin統合 {#zipkin-integration}
 
-Zipkin も広く利用されている分散トレーシングシステムです。
+### Zipkinの開発用デプロイ
 
-### Zipkin Deployment
+代替例はテスト用Zipkin 3.6.1とメモリストレージで、再起動時にデータを失います。本番には対応永続backend、認証/TLS、ネットワーク設定が必要です。[Zipkinサーバー設定](https://github.com/openzipkin/zipkin/blob/3.6.1/zipkin-server/README.md)でbackendを選び、未導入`elasticsearch:9200`を指定しないでください。
 
 ```yaml
 apiVersion: apps/v1
@@ -629,17 +530,18 @@ spec:
     metadata:
       labels:
         app: zipkin
+      annotations:
+        sidecar.istio.io/inject: 'false'
     spec:
       containers:
       - name: zipkin
-        image: openzipkin/zipkin:2.24
+        image: openzipkin/zipkin:3.6.1
         ports:
         - containerPort: 9411
+          name: http
         env:
         - name: STORAGE_TYPE
-          value: elasticsearch
-        - name: ES_HOSTS
-          value: elasticsearch:9200
+          value: mem
         resources:
           requests:
             cpu: 200m
@@ -657,15 +559,32 @@ spec:
   selector:
     app: zipkin
   ports:
-  - port: 9411
-    targetPort: 9411
-  type: LoadBalancer
+  - name: http
+    port: 9411
+    targetPort: http
+  type: ClusterIP
 ```
 
-### Istio での Zipkin の設定
+### Istio providerの設定
+
+Telemetry参照前にproviderが存在する必要があります。導入入力をマージし、collector/Jaeger選択の代わりにこのTelemetryを使います。
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    enableTracing: true
+    extensionProviders:
+    - name: zipkin
+      zipkin:
+        service: zipkin.observability.svc.cluster.local
+        port: 9411
+        maxTagLength: 256
+```
+
+```yaml
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: zipkin-tracing
@@ -674,16 +593,16 @@ spec:
   tracing:
   - providers:
     - name: zipkin
-    randomSamplingPercentage: 100.0
+    randomSamplingPercentage: 1
 ```
 
-## コンテキスト伝播
+## コンテキスト伝播 {#context-propagation}
 
-分散トレーシングの要点は、サービス間でトレースコンテキストを正しく伝播することです。
+分散トレースの鍵は、サービス間でコンテキストを正しく伝播することです。
 
-### 必須の HTTP ヘッダー
+### 必要なHTTPヘッダー
 
-アプリケーションは次のヘッダーを伝播する必要があります。
+プロキシ/backendに設定した形式を伝播します。W3CとB3は選択肢か、明示設定した複数形式伝播です。`x-request-id`も転送します。B3は引き続き対応し、デバッグ用`X-B3-Flags: 1`を無差別に有効にしないでください。
 
 #### W3C Trace Context（推奨）
 
@@ -692,7 +611,7 @@ traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01
 tracestate: congo=t61rcWkgMzE
 ```
 
-#### B3 ヘッダー（レガシー）
+#### B3ヘッダー
 
 **単一ヘッダー形式（推奨）**:
 ```
@@ -705,189 +624,264 @@ X-B3-TraceId: 80f198ee56343ba864fe8b2a57d3eff7
 X-B3-SpanId: e457b5a2e4d86bd1
 X-B3-ParentSpanId: 05e3ac9a4f6e3b90
 X-B3-Sampled: 1
-X-B3-Flags: 0
 ```
 
-### アプリケーション別のコンテキスト伝播
+### アプリによるコンテキスト伝播
+
+以下は既存collectorと`service-b:8080/api/service-b`を前提とします。互換API/SDK/exporter/instrumentation依存を導入し、**要求処理の前**にSDKを初期化します。演習は内部平文OTLPで、実デプロイでは信頼するTLS/mTLSとネットワーク制限を設定します。SDK自動計装と手動伝播でクライアントスパンを重複させないでください。Istio相関用の`x-request-id`は別に保持します。
 
 #### Python（Flask + OpenTelemetry）
 
+Flask、requests、`opentelemetry-sdk`、`opentelemetry-exporter-otlp-proto-grpc`、`opentelemetry-instrumentation-flask`、`opentelemetry-instrumentation-requests`をアプリ環境に導入します。Flask/requests計装が抽出/注入を管理します。手動伝播APIは元の不正importでなく`opentelemetry.propagate.extract`です。
+
 ```python
+import atexit
+import requests
 from flask import Flask, request
 from opentelemetry import trace
-from opentelemetry.propagators import extract
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.propagate import inject
-import requests
+from opentelemetry.propagate import set_global_textmap
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
+provider = TracerProvider(resource=Resource.create({"service.name": "service-a"}))
+provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(
+    endpoint="otel-collector.observability.svc.cluster.local:4317", insecure=True
+)))
+trace.set_tracer_provider(provider)
+set_global_textmap(TraceContextTextMapPropagator())
+atexit.register(provider.shutdown)
 app = Flask(__name__)
-
-# Enable automatic instrumentation
+FlaskInstrumentor().instrument_app(app)
 RequestsInstrumentor().instrument()
+tracer = trace.get_tracer(__name__)
 
-@app.route('/api/service-a')
+@app.get("/api/service-a")
 def service_a():
-    # Extract incoming trace context
-    ctx = extract(request.headers)
-
-    with trace.get_tracer(__name__).start_as_current_span("process-request", context=ctx):
-        # Business logic
-        result = do_something()
-
-        # Call another service
+    # Flask instrumentation extracted the parent; requests instrumentation injects its child.
+    with tracer.start_as_current_span("process-request"):
         headers = {}
-        inject(headers)  # Automatically adds traceparent header
+        if request.headers.get("x-request-id"):
+            headers["x-request-id"] = request.headers["x-request-id"]
+        response = requests.get("http://service-b:8080/api/service-b",
+                                headers=headers, timeout=3)
+        response.raise_for_status()
+        return response.text, response.status_code, {
+            "Content-Type": response.headers.get("Content-Type", "text/plain")
+        }
 
-        response = requests.get(
-            'http://service-b:8080/api/service-b',
-            headers=headers
-        )
-
-    return result
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
 ```
 
+Flask開発サーバーはローカルテスト専用です。本番サーバーとSDK終了ライフサイクルでデプロイします。
+
 #### Go（Gin + OpenTelemetry）
+
+実tracer providerとW3C propagatorを初期化します。`Start`が返すコンテキストを下流要求に使い、エラー処理と応答bodyのcloseを行います。importモジュールをアプリの`go.mod`に加え、コンテキスト/エラー戻り値を捨てないでください。
 
 ```go
 package main
 
 import (
-    "context"
-    "net/http"
+	"context"
+	"io"
+	"log"
+	"net/http"
+	"time"
 
-    "github.com/gin-gonic/gin"
-    "go.opentelemetry.io/otel"
-    "go.opentelemetry.io/otel/propagation"
-    "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-    "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 func main() {
-    router := gin.Default()
-
-    // Add OpenTelemetry middleware (auto context extraction/propagation)
-    router.Use(otelgin.Middleware("service-a"))
-
-    router.GET("/api/service-a", func(c *gin.Context) {
-        ctx := c.Request.Context()
-
-        // Create child span
-        _, span := otel.Tracer("service-a").Start(ctx, "process-request")
-        defer span.End()
-
-        // Call another service (auto trace context propagation)
-        client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
-        req, _ := http.NewRequestWithContext(ctx, "GET", "http://service-b:8080/api/service-b", nil)
-        resp, _ := client.Do(req)
-
-        c.JSON(200, gin.H{"status": "ok"})
-    })
-
-    router.Run(":8080")
+	exporter, err := otlptracegrpc.New(context.Background(),
+		otlptracegrpc.WithEndpoint("otel-collector.observability.svc.cluster.local:4317"),
+		otlptracegrpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+	provider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(resource.NewSchemaless(attribute.String("service.name", "service-a"))))
+	otel.SetTracerProvider(provider)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := provider.Shutdown(ctx); err != nil {
+			log.Print(err)
+		}
+	}()
+	client := &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport), Timeout: 3 * time.Second}
+	router := gin.Default()
+	router.Use(otelgin.Middleware("service-a"))
+	router.GET("/api/service-a", func(c *gin.Context) {
+		ctx, span := otel.Tracer("service-a").Start(c.Request.Context(), "process-request")
+		defer span.End()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://service-b:8080/api/service-b", nil)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		if id := c.GetHeader("x-request-id"); id != "" {
+			req.Header.Set("x-request-id", id)
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "downstream request failed")
+			c.Status(http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+		// Bound this demonstration response to 1 MiB.
+		body, err := io.ReadAll(io.LimitReader(resp.Body, (1<<20)+1))
+		if err != nil || len(body) > 1<<20 {
+			c.Status(http.StatusBadGateway)
+			return
+		}
+		c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), body)
+	})
+	if err := router.Run(":8080"); err != nil {
+		log.Print(err)
+	}
 }
 ```
 
-#### Java（Spring Boot + OpenTelemetry）
+#### Java（Spring WebFlux + OpenTelemetry Java Agent）
+
+互換OpenTelemetry Java agentとOTLPエンドポイントでSpring WebFluxを起動します。agentはリアクティブserver/clientライフサイクルと伝播を計装します。`try (Scope ...) { return Mono... } finally { span.end(); }`は購読完了前にスパンを終え、非同期処理では不正です。このcontrollerはagentの対応WebFlux/Reactor計装に依存します。
+
+```bash
+OTEL_SERVICE_NAME=service-a \
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.observability.svc.cluster.local:4317 \
+java -javaagent:/opt/otel/opentelemetry-javaagent.jar -jar app.jar
+```
 
 ```java
+import java.time.Duration;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
 @RestController
-@RequestMapping("/api")
 public class ServiceAController {
+    private final WebClient webClient;
+    public ServiceAController(WebClient.Builder builder) {
+        this.webClient = builder.baseUrl("http://service-b:8080").build();
+    }
 
-    @Autowired
-    private WebClient webClient;
-
-    @Autowired
-    private Tracer tracer;
-
-    @GetMapping("/service-a")
-    public Mono<String> serviceA(@RequestHeader HttpHeaders headers) {
-        // Spring Boot + OpenTelemetry auto instrumentation automatically extracts and propagates context
-
-        Span span = tracer.spanBuilder("process-request")
-                .setSpanKind(SpanKind.INTERNAL)
-                .startSpan();
-
-        try (Scope scope = span.makeCurrent()) {
-            // WebClient automatically propagates trace context
-            return webClient.get()
-                    .uri("http://service-b:8080/api/service-b")
-                    .retrieve()
-                    .bodyToMono(String.class);
-        } finally {
-            span.end();
-        }
+    @GetMapping("/api/service-a")
+    public Mono<String> serviceA(@RequestHeader(value = "x-request-id", required = false) String requestId) {
+        return webClient.get().uri("/api/service-b")
+                .headers(headers -> { if (requestId != null) headers.set("x-request-id", requestId); })
+                .retrieve().bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(3));
     }
 }
 ```
 
-#### Node.js（Express + OpenTelemetry）
+#### Node.js（CommonJS Express + OpenTelemetry）
+
+`express`、`axios`、`@opentelemetry/api`、`@opentelemetry/sdk-node`、`@opentelemetry/auto-instrumentations-node`、`@opentelemetry/exporter-trace-otlp-grpc`を導入します。アプリimport前に計装を読み込みます。APIのimportだけではSDK/exporterは設定されません。
 
 ```javascript
-const express = require('express');
-const { trace, context, propagation } = require('@opentelemetry/api');
-const axios = require('axios');
+// instrumentation.cjs: load before Express, HTTP clients, or application modules.
+const { NodeSDK } = require('@opentelemetry/sdk-node');
+const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
+const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-grpc');
+const sdk = new NodeSDK({
+  traceExporter: new OTLPTraceExporter(),
+  instrumentations: [getNodeAutoInstrumentations()],
+});
+sdk.start();
+process.once('SIGTERM', () => sdk.shutdown().finally(() => process.exit(0)));
+```
 
+```javascript
+// app.cjs
+const express = require('express');
+const axios = require('axios');
+const { trace, SpanStatusCode } = require('@opentelemetry/api');
 const app = express();
 const tracer = trace.getTracer('service-a');
-
 app.get('/api/service-a', async (req, res) => {
-  // Express instrumentation automatically extracts context
-  const span = tracer.startSpan('process-request');
-
-  try {
-    await context.with(trace.setSpan(context.active(), span), async () => {
-      // Automatic trace context propagation on axios calls
-      const response = await axios.get('http://service-b:8080/api/service-b');
-      res.json({ result: response.data });
-    });
-  } finally {
-    span.end();
-  }
+  await tracer.startActiveSpan('process-request', async (span) => {
+    try {
+      const headers = {};
+      if (req.headers['x-request-id']) headers['x-request-id'] = req.headers['x-request-id'];
+      const response = await axios.get('http://service-b:8080/api/service-b', {headers, timeout: 3000});
+      res.json({result: response.data});
+    } catch (error) {
+      span.recordException(error);
+      span.setStatus({code: SpanStatusCode.ERROR});
+      res.status(502).json({error: 'Downstream request failed'});
+    } finally {
+      span.end();
+    }
+  });
 });
-
 app.listen(8080);
+```
+
+```bash
+OTEL_SERVICE_NAME=service-a \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.observability.svc.cluster.local:4317 \
+node --require ./instrumentation.cjs app.cjs
 ```
 
 ### トレースコンテキストの検証
 
+テスト要求がbackendで同じtrace IDと意図した親子関係を生成するか確認します。管理されたアプリテストで送受信ヘッダーを調べます。デフォルトEnvoyアクセスログは全トレースヘッダーを含まず、プロキシデバッグ有効化はアクセスログ有効化やヘッダー出力保証ではありません。必要なら形式を明示設定し、認証情報/baggageの記録を避けます。
+
 ```bash
-# 1. Verify trace context is included in request headers
-kubectl logs -n <namespace> <pod-name> -c istio-proxy --tail=50 | grep -i traceparent
-
-# 2. Check trace ID in Envoy access logs
-istioctl proxy-config log <pod-name> -n <namespace> --level debug
-kubectl logs -n <namespace> <pod-name> -c istio-proxy | grep "x-b3-traceid"
-
-# 3. Verify trace ID is included in application logs
-kubectl logs -n <namespace> <pod-name> -c <container-name>
+istioctl proxy-config listeners <pod-name> -n <namespace> -o json | \
+  jq '.. | objects | select(has("tracing")) | .tracing'
+istioctl proxy-config clusters <pod-name> -n <namespace> \
+  --fqdn otel-collector.observability.svc.cluster.local
+kubectl logs -n observability deployment/otel-collector --tail=100
 ```
 
-## サンプリング戦略
+## サンプリング戦略 {#sampling-strategies}
 
 ### サンプリングレベル
 
-#### 1. Head Sampling（初期サンプリング）
+#### 1. ヘッドサンプリング（開始時）
 
-リクエストがシステムに入る時点でサンプリングを決定します。
+ヘッドサンプリングは早い段階で判断します。以下の割合は選択肢で、上流判断とSDK samplerも到達スパンに影響します。collectorが全トレースのエラー/遅延を評価するなら、テール前に90%捨てず全対象スパンを送ります。
 
-**Mesh 全体レベル**:
+**メッシュ全体**:
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
 metadata:
-  name: istio
+  name: mesh-head-sampling
   namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing:
-        sampling: 10.0  # 10% sampling
+spec:
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 10.0
 ```
 
-**Namespace レベル**:
+**名前空間単位**:
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: sampling-config
@@ -899,9 +893,9 @@ spec:
     randomSamplingPercentage: 25.0  # 25% sampling
 ```
 
-**Workload レベル**:
+**ワークロード単位**:
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: critical-service-tracing
@@ -916,9 +910,9 @@ spec:
     randomSamplingPercentage: 100.0  # 100% sampling for critical services
 ```
 
-#### 2. Tail Sampling（事後サンプリング）
+#### 2. テールサンプリング（事後）
 
-トレースの完了後に Collector でサンプリングを決定します。
+テールは判断期間中に蓄積したスパンから判断し、完全トレースが保証されるわけではありません。想定時間/量に合わせ窓とバッファを決め、1トレースを同じcollectorへ送り、遅延スパン、再起動、超過を考慮します。以下は到着した一致トレースを保持します。traces pipelineのbatch前にprocessorをマージします。
 
 ```yaml
 # OpenTelemetry Collector's tail_sampling processor
@@ -953,6 +947,12 @@ processors:
       - name: http-errors
         type: numeric_attribute
         numeric_attribute:
+          key: http.response.status_code
+          min_value: 500
+          max_value: 599
+      - name: legacy-http-errors
+        type: numeric_attribute
+        numeric_attribute:
           key: http.status_code
           min_value: 500
           max_value: 599
@@ -964,15 +964,15 @@ processors:
           sampling_percentage: 5
 ```
 
-### 適応型サンプリング
+### レート制限付きサンプリング
 
-トラフィックパターンに基づいてサンプリングレートを自動調整します。
+rate-limitingポリシーはスパンレートのトークンバケットで、自己調整するエラー/遅延samplerではありません。代替ポリシーリストです。他keepポリシーと並べても、それらが保持するトレースへの全体上限にはなりません。短い期間ではバーストとトレース単位判断が影響します。
 
 ```yaml
 processors:
   tail_sampling:
     policies:
-      - name: adaptive-sampling
+      - name: rate-limited-sampling
         type: rate_limiting
         rate_limiting:
           spans_per_second: 1000  # Keep maximum 1000 spans per second
@@ -980,17 +980,18 @@ processors:
 
 ### サンプリング戦略ガイド
 
-| 環境 | 推奨サンプリングレート | 戦略 |
-|-------------|---------------------------|----------|
-| 開発 | 100% | Head sampling |
-| ステージング | 50% | Head sampling |
-| 本番（低トラフィック） | 100% | Head sampling |
-| 本番（高トラフィック） | 1-10% | Tail sampling |
-| 重要なサービス | 100% | Tail sampling（すべてのエラー/低速リクエストを保持） |
+| 目標 | ヘッド入力 | Collector/ストレージ判断 |
+|------|------------|----------------------------|
+| 小規模開発テスト | 100% | 全保持し伝播確認 |
+| 本番量の制限 | 実測割合 | 受信サンプルを保存 |
+| エラー/遅いトレース保持 | 全対象スパン | テールで一致トレースと基準サンプルを保持 |
+| 保持量制限 | テール判断用の全対象スパン | 明示レート/複合ポリシーと容量制限 |
 
-## トレース分析
+設計選択であり普遍的環境デフォルトではありません。低いヘッド割合とテールの併用は全エラー保持を保証できません。実スパン状態と属性名を確認します（現OpenTelemetry規約は`http.response.status_code`、一部プロキシ/旧スパンは`http.status_code`）。
 
-### Jaeger UI でのトレース検索
+## トレース分析 {#trace-analysis}
+
+### Jaeger UIでトレース検索
 
 ```bash
 # Access Jaeger UI
@@ -1002,14 +1003,14 @@ kubectl port-forward -n observability svc/jaeger-query 16686:16686
 **検索オプション**:
 - **Service**: サービス名
 - **Operation**: 操作名（例: `GET /api/products`）
-- **Tags**: Tag フィルター（例: `http.status_code=500`）
-- **Min Duration**: 最小レイテンシ
-- **Max Duration**: 最大レイテンシ
-- **Limit Results**: 結果数の上限
+- **Tags**: タグフィルター（例: `http.status_code=500`）
+- **Min Duration**: 最小遅延
+- **Max Duration**: 最大遅延
+- **Limit Results**: 結果数上限
 
-### 便利なトレースクエリ
+### 有用なトレースクエリ
 
-#### 1. エラーを含むトレースを検索する
+#### 1. エラーのあるトレースを検索
 
 ```
 Tags: error=true
@@ -1021,47 +1022,51 @@ Tags: error=true
 Tags: http.status_code=500
 ```
 
-#### 2. 低速なリクエストを検索する
+#### 2. 遅い要求を検索
 
 ```
 Min Duration: 1s
 ```
 
-#### 3. 特定ユーザーのリクエストを追跡する
+#### 3. 特定ユーザー要求を追跡
 
 ```
-Tags: user.id=12345
+Tags: user_id=12345
 ```
 
-#### 4. 特定の API エンドポイントを分析する
+#### 4. 特定APIエンドポイントを分析
 
 ```
 Operation: GET /api/products/{id}
 ```
 
-### Jaeger API によるプログラム分析
+### Jaeger UI API診断
+
+上のport-forward後、UIクエリエンドポイントで対話的診断ができます。内部UI APIで安定アプリ契約ではありません。長期統合には文書化されたJaeger query APIを使います。
 
 ```bash
 # Query traces for a specific service
-curl "http://jaeger-query:16686/api/traces?service=productpage&limit=10"
+curl "http://localhost:16686/api/traces?service=productpage&limit=10"
 
 # Query specific trace ID
-curl "http://jaeger-query:16686/api/traces/0af7651916cd43dd8448eb211c80319c"
+curl "http://localhost:16686/api/traces/0af7651916cd43dd8448eb211c80319c"
 
 # Query service list
-curl "http://jaeger-query:16686/api/services"
+curl "http://localhost:16686/api/services"
 
 # Query operations for a specific service
-curl "http://jaeger-query:16686/api/services/productpage/operations"
+curl "http://localhost:16686/api/services/productpage/operations"
 ```
 
-### レイテンシのボトルネックの特定
+### 遅延ボトルネックの特定
 
-1. **Waterfall View で最も長い Span を見つける**
-2. **Critical Path を確認する**: リクエスト全体の時間に最も影響する経路
-3. **並列実行と逐次実行**: 並列で実行できるタスクが逐次実行されていないかを確認する
+1. **ウォーターフォールと自身だけの時間を確認**: 親スパンは子の時間を含み、最長の親だけでは原因を特定できない。
+2. **クリティカルパスを確認**: 全体要求時間に最も影響する経路
+3. **並列と順次の実行**: 並列可能な処理が順次実行されていないか確認
 
-### Grafana Tempo 統合
+### Grafana Tempo統合
+
+Tempoは代替トレースbackendです。デフォルトHTTP**クエリ**ポートは3200、OTLP取り込みは4317など別設定receiverです。以下をGrafanaの`provisioning/datasources`へマウントするかチャートのデータソース設定を使います。ConfigMapだけでは自動読込されません。
 
 ```yaml
 apiVersion: v1
@@ -1074,36 +1079,43 @@ data:
     apiVersion: 1
     datasources:
     - name: Tempo
+      uid: tempo
       type: tempo
       access: proxy
-      url: http://tempo:3100
+      url: http://tempo.observability.svc.cluster.local:3200
       jsonData:
-        tracesToLogs:
-          datasourceUid: 'loki'
-          tags: ['job', 'instance', 'pod', 'namespace']
-          mappedTags: [{ key: 'service.name', value: 'service' }]
+        tracesToLogsV2:
+          datasourceUid: loki
+          tags:
+          - key: service.name
+            value: app
+          filterByTraceID: false
+          filterBySpanID: false
         tracesToMetrics:
-          datasourceUid: 'prometheus'
-          tags: [{ key: 'service.name', value: 'service' }]
+          datasourceUid: prometheus
+          tags:
+          - key: service.name
+            value: destination_canonical_service
           queries:
-          - name: 'Request rate'
-            query: 'sum(rate(istio_requests_total{$__tags}[5m]))'
-        serviceMap:
-          datasourceUid: 'prometheus'
-        search:
-          hide: false
+          - name: Request rate
+            query: sum(rate(istio_requests_total{reporter="destination",$$__tags}[5m]))
         nodeGraph:
           enabled: true
 ```
 
-## カスタム Span の追加
+例には既存UID `loki`と`prometheus`が必要です。SDKの`service.name`、Lokiの`app`、Istioの`destination_canonical_service`を合わせ、違えばマッピングを変えます。サービス名衝突時は名前空間/クラスター対応を追加します。Grafanaプロビジョニングは`$$__tags`をリテラルのクエリ変数`$__tags`へ変換します。ログにtrace IDがある場合だけIDフィルターを有効にします。Tempo Service graphにはPrometheusの生成service-graph/spanメトリクスも必要で、通常Istio要求メトリクスだけでは提供されません。
 
-より詳細なトレーシングのために、アプリケーションコードへカスタム Span を追加します。
+## カスタムスパン追加 {#adding-custom-spans}
 
-### Python の例
+詳細なトレースのためアプリコードにカスタムスパンを加えます。
+
+### Python例
+
+初期化済みアプリ内の関数です。`check_inventory`、`process_payment`、`PaymentError`はアプリ定義のコールバック/型です。
 
 ```python
 from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 
 tracer = trace.get_tracer(__name__)
 
@@ -1113,12 +1125,13 @@ def process_order(order_id):
         span.set_attribute("order.amount", 99.99)
 
         # Check inventory
-        with tracer.start_as_current_span("check-inventory"):
+        with tracer.start_as_current_span("check-inventory") as inventory_span:
             inventory = check_inventory(order_id)
-            span.set_attribute("inventory.available", inventory)
+            inventory_span.set_attribute("inventory.available", inventory)
 
         # Process payment
-        with tracer.start_as_current_span("process-payment") as payment_span:
+        with tracer.start_as_current_span("process-payment", record_exception=False,
+                                          set_status_on_exception=False) as payment_span:
             try:
                 payment_result = process_payment(order_id)
                 payment_span.set_attribute("payment.status", "success")
@@ -1129,14 +1142,15 @@ def process_order(order_id):
 
         # Record event
         span.add_event("Order processed successfully", {
-            "order.id": order_id,
-            "timestamp": time.time()
+            "order.id": order_id
         })
 
         return {"status": "success"}
 ```
 
-### Go の例
+### Go例
+
+アプリの断片で、`checkInventory`と`processPayment`はアプリ関数です。両子スパンは親processコンテキストを使い、paymentが終了済みinventoryの子にならないようにします。
 
 ```go
 import (
@@ -1158,8 +1172,8 @@ func processOrder(ctx context.Context, orderID string) error {
     )
 
     // Check inventory
-    ctx, inventorySpan := tracer.Start(ctx, "check-inventory")
-    inventory, err := checkInventory(ctx, orderID)
+    inventoryCtx, inventorySpan := tracer.Start(ctx, "check-inventory")
+    inventory, err := checkInventory(inventoryCtx, orderID)
     if err != nil {
         inventorySpan.RecordError(err)
         inventorySpan.SetStatus(codes.Error, err.Error())
@@ -1170,8 +1184,8 @@ func processOrder(ctx context.Context, orderID string) error {
     inventorySpan.End()
 
     // Process payment
-    ctx, paymentSpan := tracer.Start(ctx, "process-payment")
-    err = processPayment(ctx, orderID)
+    paymentCtx, paymentSpan := tracer.Start(ctx, "process-payment")
+    err = processPayment(paymentCtx, orderID)
     if err != nil {
         paymentSpan.RecordError(err)
         paymentSpan.SetStatus(codes.Error, err.Error())
@@ -1188,30 +1202,13 @@ func processOrder(ctx context.Context, orderID string) error {
 }
 ```
 
-## パフォーマンス最適化
+## 性能最適化 {#performance-optimization}
 
 ### トレースデータサイズの最適化
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing:
-        sampling: 10.0
-        max_path_tag_length: 256  # Limit URL path length
-        custom_tags:
-          # Add only necessary tags
-          cluster_id:
-            literal:
-              value: "prod"
-```
+前述providerの`maxTagLength`とTelemetryカスタムタグを使います。必要に応じてSDK/collectorで属性/イベントを制限します。パス短縮はURLやタグ内シークレットのマスキングではありません。必要属性だけを保存し、可能なら生IDでなくルートテンプレートを使います。
 
-### Collector のパフォーマンスチューニング
+### Collector性能調整
 
 ```yaml
 processors:
@@ -1222,111 +1219,62 @@ processors:
 
   memory_limiter:
     check_interval: 1s
-    limit_mib: 2048
-    spike_limit_mib: 512
+    limit_mib: 1024
+    spike_limit_mib: 256
 ```
 
-### ストレージの最適化
+### ストレージ最適化
 
-#### Elasticsearch インデックス管理
+永続Jaegerは実`production`インデックスプレフィックスと選択ローテーションモードの保持を設定します。実取り込み/クエリ負荷に合わせシャード/レプリカを決めます。版互換の初期化とElasticsearch ILM（またはbackendのライフサイクル機構）を使い、期限切れにする前にバックアップと検索期間を確認します。7日は例の保持判断で、普遍的デフォルトではありません。
+
+旧単独Curator手順は設定プレフィックスと不一致で、ストレージ認証情報/TLSとローテーション前提を欠いていました。[Jaeger 2.20ストレージライフサイクル手順](https://www.jaegertracing.io/docs/2.20/storage/elasticsearch/)とリリーススキーマに従い、トレース診断として広範なインデックス削除を実行しないでください。
+
+## トラブルシューティング {#troubleshooting}
+
+### トレースがない
+
+実効HTTP connection-managerのトレース設定とproviderクラスターを確認し、受信、出力、保存を区別します。`.bootstrap.tracing`だけでは動的トレース設定を見逃します。次の読み取り専用確認を使います。
 
 ```bash
-# Delete old indices (using Curator)
-curator --config curator.yml delete_indices.yml
-```
-
-```yaml
-# delete_indices.yml
-actions:
-  1:
-    action: delete_indices
-    description: Delete jaeger indices older than 7 days
-    options:
-      ignore_empty_list: True
-      disable_action: False
-    filters:
-    - filtertype: pattern
-      kind: prefix
-      value: jaeger-span-
-    - filtertype: age
-      source: name
-      direction: older
-      timestring: '%Y-%m-%d'
-      unit: days
-      unit_count: 7
-```
-
-## トラブルシューティング
-
-### トレースが表示されない場合
-
-#### 1. Envoy がトレースを生成しているか確認する
-
-```bash
-# Check Envoy access logs
-kubectl logs -n <namespace> <pod-name> -c istio-proxy | grep -i trace
-
-# Check tracing in Envoy config
-istioctl proxy-config bootstrap <pod-name> -n <namespace> -o json | jq '.bootstrap.tracing'
-```
-
-#### 2. Collector がトレースを受信しているか確認する
-
-```bash
-# Check Collector logs
-kubectl logs -n observability deployment/otel-collector
-
-# Check Collector metrics
+istioctl proxy-config listeners <pod-name> -n <namespace> -o json | \
+  jq '.. | objects | select(has("tracing")) | .tracing'
+istioctl proxy-config clusters <pod-name> -n <namespace> \
+  --fqdn otel-collector.observability.svc.cluster.local
+kubectl logs -n observability deployment/otel-collector --tail=100
+kubectl logs -n observability deployment/jaeger --tail=100
+# Keep this running; use a second terminal for the curl command below.
 kubectl port-forward -n observability svc/otel-collector 8888:8888
-curl http://localhost:8888/metrics | grep otelcol_receiver_accepted_spans
 ```
 
-#### 3. トレースが Jaeger/Zipkin に保存されているか確認する
-
 ```bash
-# Check Jaeger storage
-kubectl logs -n observability deployment/jaeger-query
-
-# Check Elasticsearch indices
-curl -X GET "elasticsearch:9200/_cat/indices/jaeger-*?v"
+curl -fsS http://localhost:8888/metrics | \
+  rg 'otelcol_(receiver_accepted|exporter_sent|exporter_send_failed)_spans'
 ```
 
-### トレースコンテキストが伝播しない場合
+スパン受理は出力や耐久保存を証明しません。exporterエラー、backend接続/認証、保存trace IDを確認します。テールサンプリングとメモリ保存は意図的に保持量を減らします。メトリクス接尾辞はcollector telemetry設定で変わり得ます。
+
+### コンテキスト伝播の不具合
+
+独立要求ごとに新テストtrace IDを使い、backendのアプリ/serverスパンを確認します。新しい送信呼び出しではアプリがアクティブ子コンテキストを注入する必要があります。W3C/B3がproviderとSDK propagatorに一致し、HTTPライブラリ読込前に計装が始まるか確認します。プロキシログレベル変更はアクセスログを有効にしません。必要ならTelemetryのアクセスログproviderを明示設定します。
+
+### 予期しないサンプリング
 
 ```bash
-# 1. Check headers in application logs
-kubectl logs -n <namespace> <pod-name> -c <container> | grep -i "traceparent\|x-b3"
-
-# 2. Enable Envoy access log
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl -X POST http://localhost:15000/logging?level=debug
-
-# 3. Test for header propagation verification
-kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- \
-  curl -H "traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01" \
-  http://service-a:8080/api/test
-```
-
-### サンプリングレートが適用されない場合
-
-```bash
-# 1. Check Telemetry resources
 kubectl get telemetry -A
-
-# 2. Check Telemetry configuration details
 kubectl describe telemetry <name> -n <namespace>
-
-# 3. Check if reflected in Envoy config
-istioctl proxy-config bootstrap <pod-name> -n <namespace> -o json | \
-  jq '.bootstrap.tracing.http.config.sampling'
+istioctl analyze -n <namespace>
+istioctl proxy-config listeners <pod-name> -n <namespace> -o json | \
+  jq '.. | objects | select(has("tracing")) | .tracing'
 ```
+
+root/namespace/workloadの継承、上流sampledフラグ、SDK sampler、collectorポリシーを一緒に確認します。Collectorはヘッドで捨てたトレースを再構成できません。
 
 ## 参考資料
 
-- [Istio 分散トレーシング](https://istio.io/latest/docs/tasks/observability/distributed-tracing/)
-- [OpenTelemetry ドキュメント](https://opentelemetry.io/docs/)
-- [Jaeger ドキュメント](https://www.jaegertracing.io/docs/)
-- [Zipkin ドキュメント](https://zipkin.io/)
+- [Istio分散トレーシング](https://istio.io/latest/docs/tasks/observability/distributed-tracing/)
+- [OpenTelemetryドキュメント](https://opentelemetry.io/docs/)
+- [Jaegerドキュメント](https://www.jaegertracing.io/docs/)
+- [Zipkinドキュメント](https://zipkin.io/)
 - [W3C Trace Context](https://www.w3.org/TR/trace-context/)
-- [B3 伝播](https://github.com/openzipkin/b3-propagation)
+- [B3伝播](https://github.com/openzipkin/b3-propagation)
 - [Grafana Tempo](https://grafana.com/docs/tempo/latest/)

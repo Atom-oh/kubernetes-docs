@@ -1,91 +1,86 @@
-# Kafka on EKS Deep Dive
+# EKS上のKafka詳解
 
-## Overview
+## 概要
 
-Apache Kafka は、イベント駆動型アーキテクチャとリアルタイムストリーミングパイプラインの中核であり、microservices 間の非同期通信、ログ/メトリクス集約、CDC (Change Data Capture) パイプラインなど、さまざまなユースケースで使用されます。EKS では、生の StatefulSets を直接管理するのではなく、**Strimzi Kubernetes Operator** を通じて Kafka を実行するのが標準的なアプローチです。Strimzi を使うと、Kubernetes-native CRDs (Custom Resource Definitions) を通じて、Kafka cluster の運用ライフサイクル全体（作成、スケーリング、ローリングアップグレード、証明書管理、rack-aware 配置）を宣言的に管理できます。
+このガイドでは、EKS上でKafkaを自己管理する選択肢としてStrimzi Operatorを使用します。OperatorはPod、ストレージ、リスナー、証明書、アップグレードを調整しますが、データ、可用性、セキュリティ方針への責任をなくすものではありません。第6部ではAmazon MSKなどのマネージドな代替サービスを比較します。
 
-> **対応バージョン**: Kafka 3.7-3.9 (KRaft mode), Strimzi Operator 0.45+
-> **最終更新**: July 9, 2026
+> **最終更新**: September 12, 2026。Strimzi 1.2.0 / Kafka 4.3.1。
+> **アップグレード要件**: Strimzi 1.0以降はCRD API `v1`のみをサポートします。Operatorのアップグレード前に、公式移行手順に従って既存の`v1beta2` / `v1beta1` / `v1alpha1`リソースを変換し、CRDを準備してください。バージョン番号を変更するだけではアップグレード計画になりません。
 
-## Core Architecture Concepts
+Strimzi 1.2.0はKafka 4.2.0、4.2.1、4.3.0、4.3.1をサポートし、デフォルトは4.3.1です。このガイドは互換性のある組み合わせに固定しています。インストール前にはディストリビューション、Kubernetesバージョン、アップグレード経路も確認してください。
 
-Kafka cluster は、**brokers** と呼ばれる一連のプロセスで構成されます。各 broker は 1 つ以上の **topics** を保存し、各 topic は並列性とスケーラビリティのために複数の **partitions** に分割されます。各 partition は耐久性のために異なる brokers に replicas を保持します。Producers は messages を partitions に書き込み、**consumer groups** は partitions をメンバー間で分割して messages を並列に消費し、offsets によって進捗を追跡します。
+## アーキテクチャの主要概念
 
-歴史的に、Kafka は cluster metadata（topics、partition assignments、ACLs など）を管理するために、別個の ZooKeeper ensemble に依存していました。Kafka 3.x 以降、**KRaft (Kafka Raft)** mode により、Kafka は Raft-based controller quorum を通じて自身の metadata を管理できるようになり、ZooKeeper が不要になり、運用する components の数を減らし、controller failover を大幅に高速化できます。Kafka 4.0 では ZooKeeper support が完全に削除され、KRaft が唯一サポートされる metadata mechanism になっています。そのため、EKS 上の新しい Kafka deployment は、最初から KRaft を前提に設計する必要があります。
+ブローカーはトピックのパーティションレプリカを格納します。KafkaConsumerグループはパーティションを分担し、1つのメンバーが複数パーティションを所有する場合があります。別のコントローラークォーラムがメタデータのRaftログを管理します。
 
-Strimzi は、これらすべての components を Kubernetes resources としてラップします。`Kafka` や `KafkaNodePool` などの CRDs を通じて desired state を宣言すると、Strimzi Operator がその state を調整し、broker/controller Pods、PVCs、Services、Secrets を作成・管理します。
+KRaftは2.8で早期アクセスとして登場し、3.3で本番利用可能になりました。Kafka 4.0ではZooKeeperモードが削除されました。コントローラーとブローカーは専用ロールにできます。ZooKeeperを削除しても、コントローラー、ストレージ、復旧の運用がなくなるわけではありません。
 
-```mermaid
-graph TB
-    U[Operator/User] -->|Apply Kafka / KafkaNodePool CR| API[Kubernetes API Server]
-    API --> OP[Strimzi Operator]
+ユーザーはKafkaやKafkaNodePoolなどのカスタムリソースを宣言し、StrimziがPod、PVC、Service、Secretを調整します。次の図は関係を簡略化したものであり、HA構成のレプリカ数を定めたデプロイ仕様ではありません。
 
-    OP -->|Creates/reconciles| P1[Broker Pod 1]
-    OP -->|Creates/reconciles| P2[Broker Pod 2]
-    OP -->|Creates/reconciles| P3[Controller Pod]
+![StrimziによるKafka/KafkaNodePoolからPod/PVCへの調整を簡略化した図。実際のブローカーとコントローラーのレプリカ数は別途設計が必要](../../.gitbook/assets/en-data-on-eks-kafka-readme-0.png)
 
-    P1 --> V1[EBS gp3 PVC]
-    P2 --> V2[EBS gp3 PVC]
-    P3 --> V3[EBS gp3 PVC]
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-kafka-readme-0.html)
 
-    style OP fill:#4fc3f7
-    style P1 fill:#81c784
-    style P2 fill:#81c784
-    style P3 fill:#ffb74d
-```
+## 詳解の目次
 
-## Deep Dive Table of Contents
-
-**[1. Kafka Fundamentals](01-kafka-fundamentals.md)**
-- Brokers と topic/partition 構造
-- Replication と durability guarantees
-- Consumer groups と offset management
-- KRaft controller quorum architecture
+**[1. Kafkaの基礎](01-kafka-fundamentals.md)**
+- ブローカーとトピック/パーティションの構造
+- レプリケーションと耐久性の保証
+- コンシューマーグループとオフセット管理
+- KRaftコントローラークォーラムのアーキテクチャ
 
 **[2. Strimzi Operator](02-strimzi-operator.md)**
-- Strimzi のインストールと設定
-- `Kafka` と `KafkaNodePool` CRDs の詳細
-- EKS 上への Kafka cluster のデプロイ
+- Strimziのインストールと設定
+- `Kafka`と`KafkaNodePool` CRDの詳細
+- EKSへのKafkaクラスターのデプロイ
 
-**[3. Kafka Operations](03-kafka-operations.md)**
-- EBS/gp3 を使った storage 設計
-- Broker scaling strategies
-- Cruise Control による partition rebalancing
-- Zero-downtime rolling upgrades
+**[3. Kafkaの運用](03-kafka-operations.md)**
+- EBS/gp3を用いたストレージ設計
+- ブローカーのスケーリング戦略
+- Cruise Controlによるパーティションのリバランス
+- 互換性と可用性の確認を伴うローリングアップグレード
 
 **[4. Schema Registry](04-schema-registry.md)**
-- Avro/Protobuf schemas の設計
-- Karapace と Apicurio Registry の比較
-- Compatibility strategies: BACKWARD/FORWARD/FULL
+- Avro/Protobufスキーマの設計
+- KarapaceとApicurio Registryの比較
+- 互換性戦略: BACKWARD/FORWARD/FULL
 
-**[5. Kafka Connect and MirrorMaker](05-kafka-connect-mirrormaker.md)**
-- Kafka Connect のデプロイと connectors の設定
-- Source connectors と sink connectors の運用
-- MirrorMaker2 による disaster recovery と cross-region replication
+**[5. Kafka ConnectとMirrorMaker](05-kafka-connect-mirrormaker.md)**
+- Kafka Connectのデプロイとコネクターの設定
+- ソースコネクターとシンクコネクターの運用
+- MirrorMaker2による災害復旧とリージョン間レプリケーション
 
-**[6. MSK Integration](06-msk-integration.md)**
-- Amazon MSK と self-managed Strimzi の比較
-- MSK Connect の使用
-- Kinesis Data Streams との統合と比較
+**[6. MSKとの統合](06-msk-integration.md)**
+- Amazon MSKと自己管理のStrimziの比較
+- MSK Connectの使用
+- Kinesis Data Streamsとの統合と比較
 
-**[7. Monitoring](07-monitoring.md)**
-- Prometheus/Grafana による broker metrics の収集
-- Consumer lag の監視
-- KEDA による consumers の autoscaling
+**[7. 監視](07-monitoring.md)**
+- Prometheus/Grafanaによるブローカーメトリクスの収集
+- コンシューマーラグの監視
+- KEDAによるコンシューマーの自動スケーリング
 
-**[8. Best Practices](08-best-practices.md)**
-- Partition count と key design strategies
-- Producer/consumer performance tuning
-- mTLS/SASL による security
-- Storage と instance cost optimization
+**[8. ベストプラクティス](08-best-practices.md)**
+- パーティション数とキーの設計戦略
+- プロデューサー/コンシューマーの性能チューニング
+- mTLS/SASLによるセキュリティ
+- ストレージとインスタンスのコスト最適化
 
-## References
+**[9. Kafka実測ベンチマーク](09-kafka-benchmark.md)**
+- gp3ボリューム上の3ブローカーKRaftクラスターで実測したRF3とRF1の取り込み上限
+- acks=0/1/allにおけるスループットとp99レイテンシーのトレードオフ
+- 圧縮コーデックとレコードサイズごとのスループットおよびCPUコスト
+- コールドコンシューマーと混在ワークロードがプロデューサーのスループットに及ぼす影響
 
-- [Strimzi Documentation](https://strimzi.io/docs/operators/latest/overview)
-- [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
-- [KIP-500: Replace ZooKeeper with a Self-Managed Metadata Quorum](https://cwiki.apache.org/confluence/display/KAFKA/KIP-500)
-- [AWS Data on EKS Project](https://awslabs.github.io/data-on-eks/)
+## 参考資料
 
-## Quiz
+- [Strimzi 1.2.0のリリース](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
 
-このセクションで学んだ内容を確認するには、[Kafka Fundamentals Quiz](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md) に挑戦してください。
+- [Strimziドキュメント](https://strimzi.io/docs/operators/1.2.0/overview.html)
+- [Apache Kafkaドキュメント](https://kafka.apache.org/43/design/design/)
+- [KRaft運用ガイド](https://kafka.apache.org/43/operations/kraft/)
+- [AWS Data on EKSプロジェクト](https://awslabs.github.io/data-on-eks/)
+
+## クイズ
+
+このセクションの学習内容を確認するには、[Kafkaの基礎クイズ](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)に挑戦してください。ベンチマークの数値を設計判断に結び付けられるかを確認するには、[Kafka実測ベンチマーククイズ](../../quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)にも挑戦してください。

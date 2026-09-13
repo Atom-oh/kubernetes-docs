@@ -1,253 +1,117 @@
-# Linkerd アーキテクチャ
+# Linkerdアーキテクチャ
 
-> **対応バージョン**: Linkerd 2.16+
-> **最終更新**: February 22, 2026
+> **最終更新**: September 11, 2026 · Linkerd edge-26.9.1 / proxy release/v2.368.0
 
-## 概要
-
-Linkerd は、control plane（制御プレーン）と data plane（データプレーン）で構成される service mesh アーキテクチャに従います。このドキュメントでは、各コンポーネントの役割、それらの相互作用、証明書階層、および proxy のライフサイクルについて詳しく説明します。
+現コンポーネントの役割、ID階層、通信捕捉、注入ライフサイクルを説明します。対応release/cluster構成と固定成果物は[インストールガイド](01-installation.md)を使います。以下は設定例で、監査では実デプロイやCA rotationをしていません。
 
 ## 全体アーキテクチャ
 
-```mermaid
-graph TB
-    subgraph "Control Plane (linkerd namespace)"
-        subgraph "Core Components"
-            DEST[Destination Controller<br/>Service Discovery<br/>Policy Distribution]
-            ID[Identity Controller<br/>Certificate Issuance<br/>CA Management]
-            PI[Proxy Injector<br/>Sidecar Injection<br/>Admission Webhook]
-        end
+![Linkerdの中核3 Deploymentとメッシュpeer 2つの簡略図。policy controllerはDestination内で別表示せず、接続の一部を示す。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-0.png)
 
-        subgraph "Policy Engine"
-            POL[Policy Controller<br/>Server/Authorization<br/>Policy Validation]
-        end
-    end
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-0.html)
 
-    subgraph "Data Plane"
-        subgraph "Application Pod A"
-            APP_A[Application Container]
-            PROXY_A[linkerd-proxy<br/>Rust Micro Proxy]
-            INIT_A[linkerd-init<br/>iptables Setup]
-        end
+デフォルトcontrol-plane名前空間はlinkerdです。固定チャートの中核はlinkerd-destination、linkerd-identity、linkerd-proxy-injectorの3 Deploymentです。DestinationにはpolicyとServiceProfile-validatorコンテナもあり、論理役割と独立Deploymentは同じではありません。任意Viz/multiclusterは独自ライフサイクルを持ちます。
 
-        subgraph "Application Pod B"
-            APP_B[Application Container]
-            PROXY_B[linkerd-proxy]
-            INIT_B[linkerd-init]
-        end
-    end
+データプレーンは参加アプリに併設するRustプロキシです。このreleaseはnative sidecarがデフォルトです。Identity Deploymentは意図的に通常proxyとstartup wait無効を使うため、containersとinitContainers両方を確認します。
 
-    subgraph "Extensions"
-        VIZ[Viz Extension<br/>Metrics/Dashboard]
-        JAEGER[Jaeger Extension<br/>Distributed Tracing]
-        MC[Multicluster Extension<br/>Cluster Linking]
-    end
-
-    %% Control Plane Interactions
-    PI -->|Webhook| PROXY_A
-    PI -->|Webhook| PROXY_B
-    ID -->|Certificate| PROXY_A
-    ID -->|Certificate| PROXY_B
-    DEST -->|Endpoints| PROXY_A
-    DEST -->|Endpoints| PROXY_B
-    POL -->|Policy| PROXY_A
-    POL -->|Policy| PROXY_B
-
-    %% Data Plane Traffic
-    APP_A --> PROXY_A
-    PROXY_A -->|mTLS| PROXY_B
-    PROXY_B --> APP_B
-
-    %% Extension Interactions
-    VIZ -->|Metrics Collection| PROXY_A
-    VIZ -->|Metrics Collection| PROXY_B
-
-    classDef control fill:#e1f5fe
-    classDef data fill:#f3e5f5
-    classDef ext fill:#e8f5e9
-
-    class DEST,ID,PI,POL control
-    class APP_A,APP_B,PROXY_A,PROXY_B,INIT_A,INIT_B data
-    class VIZ,JAEGER,MC ext
-```
-
-## Control Plane
-
-control plane は `linkerd` namespace にデプロイされ、data plane proxy を設定および管理するコンポーネントで構成されます。
+## コントロールプレーン
 
 ### Destination Controller
 
-Destination controller は、service discovery と policy 配布を担う中核コンポーネントです。
+Destinationは検出状態を監視し、streaming APIでendpoint、期待ID、profile情報を提供します。現デフォルトはEndpointSliceです。ServiceProfileは従来設定として残り、Gateway APIルーティング/認可にはpolicy controllerも関わります。現routingをSMI TrafficSplitだけと説明したり、Destinationが旧拡張リソースを直接監視すると想定したりしないでください。
 
-```mermaid
-graph LR
-    subgraph "Destination Controller"
-        API[Destination API<br/>gRPC Server]
-        DISC[Service Discovery<br/>Endpoint Lookup]
-        PROF[ServiceProfile<br/>Routing Info]
-        SPLIT[TrafficSplit<br/>Traffic Distribution]
-    end
+| 責務 | 意味 |
+|---|---|
+| 検出 | 要求Serviceのendpoint追加/削除とメタデータ |
+| 期待ID | 送信proxyが選択peerを認証するための情報 |
+| Profile | メトリクス、再試行、timeout用の対応route/profile設定 |
+| 負荷分散入力 | endpointと設定重み。実遅延観測と要求/接続選択はproxyが行う |
 
-    subgraph "Kubernetes"
-        SVC[Services]
-        EP[Endpoints]
-        SP[ServiceProfiles]
-        TS[TrafficSplits]
-    end
+以下はGoでなく**Protocol Buffersサービス抜粋**です。message定義とimportは固定proxy APIにあります。
 
-    subgraph "Proxies"
-        P1[Proxy 1]
-        P2[Proxy 2]
-    end
-
-    SVC --> DISC
-    EP --> DISC
-    SP --> PROF
-    TS --> SPLIT
-
-    API --> P1
-    API --> P2
-```
-
-**主な機能:**
-
-| 機能 | 説明 |
-|----------|-------------|
-| Service Discovery | Kubernetes Service と Endpoint を監視し、リアルタイムの更新を proxy に提供します |
-| Policy Distribution | ServiceProfile や TrafficSplit などの policy を proxy に配信します |
-| Load Balancing Info | EWMA ベースの load balancing 用の Endpoint 重み情報 |
-| Service Profiles | ルートごとの retry、timeout、および metrics 設定 |
-
-**Destination API の動作:**
-
-```go
-// Destination API sends updates to proxies via gRPC streaming
-// Proxy requests information about target service
+```protobuf
+// Excerpt: message definitions/imports are in the linked API source.
 service Destination {
-    // Get returns update stream for a specific destination
-    rpc Get(GetDestination) returns (stream Update);
-
-    // GetProfile returns service profile update stream
-    rpc GetProfile(GetDestination) returns (stream DestinationProfile);
+  rpc Get(GetDestination) returns (stream Update) {}
+  rpc GetProfile(GetDestination) returns (stream DestinationProfile) {}
 }
 ```
 
+Getはdestination更新、GetProfileはprofile更新をstreamします。streamやローカルcacheが設定を即時化したり、利用不能endpointへの対処を不要にしたりはしません。
+
 ### Identity Controller
 
-Identity controller は mTLS の証明書発行と管理を処理します。
+デフォルトKubernetes IDフロー:
 
-```mermaid
-sequenceDiagram
-    participant Proxy as linkerd-proxy
-    participant Identity as Identity Controller
-    participant CA as Trust Anchor (CA)
+1. Proxy起動でローカル秘密鍵/CSR素材を確立。
+2. Identity clientがCSR、要求ID、ServiceAccount tokenを送信。
+3. IdentityがKubernetes TokenReviewでtokenを検証しDNS形式IDを導出。
+4. 設定された**issuer署名認証情報**（通常中間issuer）がworkload証明書へ署名。
+5. Clientが証明書/chainを読込み、期限前に更新。
 
-    Note over Proxy: Pod starts
-    Proxy->>Identity: CSR (Certificate Signing Request)
-    Identity->>Identity: Validate ServiceAccount
-    Identity->>CA: Certificate signing request
-    CA-->>Identity: Signed certificate
-    Identity-->>Proxy: Workload certificate
+trust anchorはchain検証の基盤です。その秘密鍵はIdentity controllerに不要で、rootが全workload CSRのonline署名者になるわけではありません。
 
-    Note over Proxy: Before certificate expiration
-    Proxy->>Identity: Renewal CSR
-    Identity-->>Proxy: New certificate
-```
-
-**証明書発行プロセス:**
-
-1. Proxy は起動時に CSR（Certificate Signing Request）を生成します
-2. Identity controller は Pod の ServiceAccount を検証します
-3. Trust Anchor（Root CA）で証明書に署名します
-4. workload 証明書を proxy に配信します
-5. デフォルトの有効期間は 24 時間で、自動的に更新されます
-
-**Identity 設定:**
+以下は所有者用**Helm values断片**です。
 
 ```yaml
-# Identity settings in linkerd-config ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: linkerd-config
-  namespace: linkerd
-data:
-  values: |
-    identity:
-      issuer:
-        # Certificate issuance lifetime (default 24 hours)
-        issuanceLifetime: 24h0m0s
-        # Clock skew allowance
-        clockSkewAllowance: 20s
-        # Issuer scheme (kubernetes.io/tls)
-        scheme: kubernetes.io/tls
+identity:
+  issuer:
+    issuanceLifetime: 24h0m0s
+    clockSkewAllowance: 20s
+    scheme: linkerd.io/tls
 ```
+
+linkerd.io/tlsがデフォルトissuer schemeです。kubernetes.io/tls統合は対応する外部管理Secret形式を使います。所有者/キーを合わせずschemeを変えたり、部分identity ConfigMapでlinkerd-configのvalues全体を上書きしたりしないでください。
 
 ### Proxy Injector
 
-Proxy Injector は Kubernetes Admission Webhook として動作し、Pod に sidecar を自動的に inject します。
+![Linkerd CNIなしの適格Podの概念的admissionフロー。API serverがinjector変更を適用し、native proxy配置と除外は本文で説明する。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
 
-```mermaid
-sequenceDiagram
-    participant User as kubectl
-    participant API as API Server
-    participant PI as Proxy Injector
-    participant Pod as Pod
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-3.html)
 
-    User->>API: Pod creation request
-    API->>PI: Admission Review
-    PI->>PI: Check injection conditions
-    alt Injection enabled
-        PI->>PI: Add linkerd-proxy container
-        PI->>PI: Add linkerd-init container
-        PI->>PI: Configure volumes/env vars
-        PI-->>API: Mutated Pod Spec
-    else Injection disabled
-        PI-->>API: Original Pod Spec
-    end
-    API->>Pod: Create Pod
-```
+injectorはmutating admission webhookです。応答はAPI serverが適用する変更を記述し、図は概念でwire形式例ではありません。実Webhook選択、Pod上書き、platform適格性は引き続き適用されます。
 
-**Injection 条件:**
+選択名前空間を有効にします。
 
 ```yaml
-# Namespace-level injection enablement
 apiVersion: v1
 kind: Namespace
 metadata:
   name: my-app
   annotations:
     linkerd.io/inject: enabled
-
----
-# Pod-level injection control
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-pod
-  annotations:
-    # Enable injection
-    linkerd.io/inject: enabled
-    # Or disable
-    # linkerd.io/inject: disabled
 ```
 
-**Inject されるコンポーネント:**
+Deploymentの上書きは**Podテンプレート**へ置きます。既存定義内の断片です。
 
-| コンポーネント | 役割 |
-|-----------|------|
-| `linkerd-init` | Init container、iptables ルールを設定 |
-| `linkerd-proxy` | Sidecar container、トラフィック proxy |
-| Volumes | Identity token、設定 |
-| Environment Variables | Proxy 設定、destination address |
+```yaml
+spec:
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: enabled
+        config.linkerd.io/proxy-cpu-request: 100m
+        config.linkerd.io/proxy-memory-request: 64Mi
+        config.linkerd.io/proxy-cpu-limit: '1'
+        config.linkerd.io/proxy-memory-limit: 250Mi
+        config.linkerd.io/proxy-log-level: warn,linkerd=info
+```
+
+enabled|disabledではなくenabledかdisabledの1リテラル値を使います。アノテーション追加は既存Podを変更しません。Webhookは指定system名前空間を除外し、明示Pod上書きで有効な注入を無効にもできます。
+
+| 注入/設定項目 | 役割 |
+|---|---|
+| linkerd-init | Linkerd CNIなしの場合のPodネットワーク捕捉設定 |
+| linkerd-proxy | データプレーンproxy。このreleaseでは通常再起動可能initコンテナ |
+| 投影ID tokenとローカルID保存 | Bootstrapとworkload証明書用。proxy鍵は共有workload Secretとして配布されない |
+| 環境/プローブ/リソース | 注入で生成する版固有runtime設定 |
 
 ### Policy Controller
 
-Policy Controller は Linkerd の authorization policy を管理します。
+policyは受信認可と対応送信/要求ルーティングを制御します。例はapp:webラベルとhttpという宣言ポートのPodを選び、my-appのメッシュapi-gateway ServiceAccountを認可します。
 
 ```yaml
-# Server resource - defines inbound traffic
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1beta3
 kind: Server
 metadata:
   name: web-http
@@ -258,13 +122,34 @@ spec:
       app: web
   port: http
   proxyProtocol: HTTP/1
-
+  accessPolicy: deny
 ---
-# ServerAuthorization - defines access permissions
-apiVersion: policy.linkerd.io/v1beta2
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: web-api-gateway
+  namespace: my-app
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: web-http
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: api-gateway
+```
+
+Serverは既存Pod/port対を選び、アプリ、Service、listenerを作りません。名前付きportは存在が必要です。該当ポリシーか明示代替アクセス方針で許可しなければ、選択通信はデフォルト拒否です。強制前に範囲を段階的にテストします。
+
+AuthorizationPolicyはServerか対応routeを対象にできます。ServiceAccount参照は便利な認証要件で、MeshTLSAuthenticationとNetworkAuthenticationは追加ID/ネットワーク集合を表します。1 policy内の全required認証参照に一致が必要です。他の認可可能policyも確認します。
+
+既存ServerAuthorization手順では以下は対応**代替**で、前の認可と一緒に適用する追加要件ではありません。
+
+```yaml
+apiVersion: policy.linkerd.io/v1beta1
 kind: ServerAuthorization
 metadata:
-  name: web-authz
+  name: web-authz-legacy
   namespace: my-app
 spec:
   server:
@@ -272,546 +157,187 @@ spec:
   client:
     meshTLS:
       serviceAccounts:
-        - name: api-gateway
-          namespace: my-app
+      - name: api-gateway
+        namespace: my-app
 ```
 
-## Data Plane
+リリースCRDはServerAuthorization v1beta1を提供し、旧例のv1beta2ではありません。Server v1beta2は提供継続し、例は現storage v1beta3です。AuthorizationPolicyが柔軟な推奨インターフェースです。別API groupのIstio同名リソースと混同しないでください。
 
-Data Plane は、application Pod に inject される `linkerd-proxy` sidecar で構成されます。
+## データプレーン
 
-### linkerd2-proxy
+### Proxy動作とプロトコル範囲
 
-Linkerd の data plane proxy は、Rust で記述された非常に軽量な micro-proxy です。
+linkerd2-proxyはRust製のメッシュ専用proxyです。HTTP/1.1、HTTP/2、gRPC、TCP対応です。HTTPルーティング/メトリクスは見えるHTTPが必要で、アプリ開始TLSは不透明、UDP/QUICやskip通信はTCP proxy経路の対象外です。
 
-```mermaid
-graph TB
-    subgraph "Pod"
-        subgraph "linkerd-proxy"
-            IN[Inbound Listener<br/>:4143]
-            OUT[Outbound Listener<br/>:4140]
-            ADMIN[Admin Server<br/>:4191]
+適格なメッシュTCP peerには転送mTLSを提供します。文書化されたメッシュ転送はTLS 1.3で、アプリTLSパススルーは別層です。未参加peerや明示捕捉迂回は別検討です。デフォルト受信policyは未参加の平文も受け、自動mTLSは全sourceの認証必須と同義ではありません。
 
-            subgraph "Processing"
-                TLS[TLS Termination/Origination]
-                LB[Load Balancing<br/>EWMA]
-                RETRY[Retries]
-                TO[Timeouts]
-                CB[Circuit Breaking]
-                METRICS[Metrics Collection]
-            end
-        end
+proxyはHTTP要求に遅延対応負荷分散、不透明TCPに接続単位分散を使います。endpoint重み/route規則とruntime遅延推定は別です。EWMAを全要求が決定的に最速の1先へ行く保証と解釈しないでください。
 
-        APP[Application]
-    end
+普遍的10MBメモリ、p99<1ms、固定binary size保証はありません。測定は版/build、architecture、接続数、policy/設定、workload、計装に依存します。
 
-    EXT_IN[External Inbound] --> IN
-    IN --> TLS
-    TLS --> APP
+### Proxyトラフィックフロー
 
-    APP --> OUT
-    OUT --> LB
-    LB --> TLS
-    TLS --> EXT_OUT[External Outbound]
+![新しいメッシュ接続のHTTP要求。送信proxyが宛先を検出/選択し、両proxyがmTLSを確立、受信policyを経てアプリへ届く。既存接続は再利用可能。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-5.png)
 
-    ADMIN --> METRICS
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-5.html)
+
+送信検出、routing/balancing、再試行、timeoutと受信認可は異なります。新接続は検出/mTLS設定を行い、既存接続やcache設定を再利用できます。安全な再試行は特に書込でアプリ/プロトコルの判断です。
+
+### 通信捕捉: linkerd-initまたはCNI
+
+生成proxy-initまたはLinkerd CNI設定を使います。次は概念順序で、**実行するhost iptablesコマンドではありません**。
+
+```text
+Inside the Pod network namespace:
+  outbound TCP -> evaluate proxy-UID and configured bypass rules first
+               -> redirect intercepted traffic to the outbound proxy (default 4140)
+  inbound TCP  -> evaluate configured bypass rules
+               -> redirect intercepted traffic to the inbound proxy (default 4143)
+
+Linkerd CNI: installs the Linkerd-specific capture setup through the CNI chain.
+linkerd-init: performs the setup at Pod startup when Linkerd CNI is not used.
 ```
 
-**Proxy の特性:**
+旧例は全TCP REDIRECT後にproxy UID迂回を追加しており、proxy自身の送信を保護できませんでした。host名前空間への適用もPod固有Linkerd設定ではありません。実装は追加除外/chainを含み、設定iptablesモードをサポートします。
 
-| 特性 | 値 |
-|----------------|-------|
-| 言語 | Rust |
-| Memory 使用量 | ~10MB |
-| CPU overhead | 最小限 |
-| Latency overhead | <1ms p99 |
-| Protocol | HTTP/1.1, HTTP/2, gRPC, TCP |
-| TLS | TLS 1.3 (rustls) |
+opaque portはプロトコル検出をskipしつつproxy転送を維持します。skip portはproxyとメッシュ機能を迂回します。server-firstでは適切なopaque/protocol設定の代わりにskipしないでください。
 
-**Istio Envoy との比較:**
+### Proxyを手組みせず生成Podを確認
 
-| 特性 | linkerd2-proxy | Envoy (Istio) |
-|----------------|---------------|---------------|
-| 言語 | Rust | C++ |
-| Memory | ~10MB | ~50-100MB |
-| Binary サイズ | ~10MB | ~60MB |
-| Latency | <1ms p99 | 2-5ms p99 |
-| Config の複雑さ | 低い（自動） | 高い（xDS） |
-| 拡張性 | 制限あり | Wasm, Lua |
-| Protocol サポート | HTTP, gRPC, TCP | 非常に広範囲 |
-
-### Proxy のトラフィックフロー
-
-```mermaid
-sequenceDiagram
-    participant Client as Client App
-    participant CProxy as Client Proxy<br/>(Outbound)
-    participant SProxy as Server Proxy<br/>(Inbound)
-    participant Server as Server App
-
-    Client->>CProxy: HTTP Request<br/>(localhost)
-    Note over CProxy: iptables redirect
-    CProxy->>CProxy: Lookup target service<br/>(Destination API)
-    CProxy->>CProxy: Load balancing<br/>(EWMA)
-    CProxy->>CProxy: mTLS handshake
-    CProxy->>SProxy: Encrypted Request
-    SProxy->>SProxy: mTLS verification
-    SProxy->>SProxy: Policy check
-    SProxy->>Server: HTTP Request
-    Server-->>SProxy: HTTP Response
-    SProxy-->>CProxy: Encrypted Response
-    CProxy-->>Client: HTTP Response
-```
-
-### linkerd-init（Init Container）
-
-`linkerd-init` は、トラフィックを proxy に redirect する iptables ルールを設定します。
+旧手組みPodはidentity/bootstrap素材が欠け、利用できない上流stable-2.16.0イメージを前提としていました。選択CLIと導入済みcontrol-plane設定で生成/確認します。
 
 ```bash
-# Example iptables rules set by linkerd-init
-# Redirect outbound traffic (to port 4140)
-iptables -t nat -A OUTPUT -p tcp -j REDIRECT --to-port 4140
+# The input is a complete, reviewed application manifest.
+# Default mode adds the injection annotation for server-side admission.
+linkerd inject web.yaml > web-annotated.yaml
 
-# Redirect inbound traffic (to port 4143)
-iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 4143
-
-# Exclude proxy's own traffic
-iptables -t nat -A OUTPUT -m owner --uid-owner 2102 -j RETURN
+# Manual mode materializes the proxy spec using the selected cluster configuration.
+# Review/remove conflicting input config annotations before selecting CLI flags.
+linkerd inject --manual --native-sidecar \
+  --proxy-cpu-request 100m --proxy-memory-request 64Mi \
+  --proxy-cpu-limit 1 --proxy-memory-limit 250Mi \
+  web.yaml > web-manually-injected.yaml
 ```
 
-**Inject された Pod 構造:**
+デフォルトinjectはアノテーション変換です。edge-26.9.1のmanual生成も入力設定アノテーションを消費し、観測CPU request 700m指定は100m CLIフラグより優先され、入力log-levelも適用されました。競合入力を更新/削除して実proxyフィールドを確認します。manual生成proxyは後のアノテーション編集で自動再生成されません。短縮containerを完全導入としてコピーせず、所有者経由で生成workloadを更新します。
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-app
-  annotations:
-    linkerd.io/inject: enabled
-spec:
-  initContainers:
-  - name: linkerd-init
-    image: cr.l5d.io/linkerd/proxy-init:v2.3.0
-    args:
-    - --incoming-proxy-port=4143
-    - --outgoing-proxy-port=4140
-    - --proxy-uid=2102
-    securityContext:
-      capabilities:
-        add:
-        - NET_ADMIN
-        - NET_RAW
-
-  containers:
-  - name: my-app
-    image: my-app:latest
-
-  - name: linkerd-proxy
-    image: cr.l5d.io/linkerd/proxy:stable-2.16.0
-    ports:
-    - containerPort: 4143  # Inbound
-      name: linkerd-proxy
-    - containerPort: 4191  # Admin/Metrics
-      name: linkerd-admin
-    env:
-    - name: LINKERD2_PROXY_LOG
-      value: warn,linkerd=info
-    - name: LINKERD2_PROXY_DESTINATION_SVC_ADDR
-      value: linkerd-dst.linkerd.svc.cluster.local:8086
-    - name: LINKERD2_PROXY_IDENTITY_SVC_ADDR
-      value: linkerd-identity.linkerd.svc.cluster.local:8080
-    resources:
-      requests:
-        cpu: 100m
-        memory: 64Mi
-      limits:
-        cpu: 1000m
-        memory: 250Mi
-    readinessProbe:
-      httpGet:
-        path: /ready
-        port: 4191
-    livenessProbe:
-      httpGet:
-        path: /live
-        port: 4191
+```bash
+: "${APP_POD:?Set an application Pod name in my-app}"
+kubectl -n my-app get pod "$APP_POD" -o json |
+  jq '{pod: .metadata.name, proxies: ([.spec.containers[]?, .spec.initContainers[]?] | map(select(.name == "linkerd-proxy") | {image, restartPolicy, resources, startupProbe, readinessProbe, livenessProbe}))}'
 ```
+
+native sidecarはrestartPolicy: AlwaysのinitContainersです。CNI経路設定時はlinkerd-initが省略されます。proxy healthは設定admin port（既定4191）の/liveと/readyです。native startup/readinessとアプリreadinessは別です。
 
 ## 証明書階層
 
-Linkerd は、階層型 PKI（Public Key Infrastructure）を使用して mTLS を実装します。
+| 素材 | デフォルトの役割/保存 |
+|---|---|
+| Trust anchor証明書/bundle | 公開信頼基盤。linkerd-identity-trust-roots ConfigMapのca-bundle.crt |
+| Root CA秘密鍵 | PKI所有者の素材。Linkerd実行に不要 |
+| Issuer証明書/秘密鍵 | linkerd-identity-issuer Secret。既定crt.pem/key.pem |
+| Kubernetes TLS issuer統合 | tls.crt/tls.keyと一致schemeを使う意図的代替 |
+| Workload鍵/証明書 | Proxyローカル認証素材。公称24h、自動更新 |
 
-### 証明書階層構造
+issuer/trust anchorの期限はPKI設定によります。既定CLI生成root/issuerは1年で、カスタム10年例はデフォルトや普遍的推奨ではありません。固定例時刻をコピーせず実日付を確認します。
 
-```mermaid
-graph TB
-    subgraph "Certificate Hierarchy"
-        TA[Trust Anchor<br/>Root CA<br/>Validity: 10 years]
-        II[Identity Issuer<br/>Intermediate CA<br/>Validity: 1 year]
-        WC1[Workload Cert 1<br/>Validity: 24 hours]
-        WC2[Workload Cert 2<br/>Validity: 24 hours]
-        WC3[Workload Cert 3<br/>Validity: 24 hours]
-    end
+### KubernetesワークロードID
 
-    TA --> II
-    II --> WC1
-    II --> WC2
-    II --> WC3
+デフォルトKubernetes ID機構ではDNS形式です。
 
-    style TA fill:#ff9800
-    style II fill:#2196f3
-    style WC1 fill:#4caf50
-    style WC2 fill:#4caf50
-    style WC3 fill:#4caf50
+```text
+<service-account>.<namespace>.serviceaccount.identity.<linkerd-namespace>.<identity-trust-domain>
+
+web-service.my-app.serviceaccount.identity.linkerd.cluster.local
 ```
 
-### Trust Anchor（Root CA）
+同じServiceAccountの複数PodはIDを共有し、ローカル認証情報は各自が持ちます。identity trust domainは設定可能な概念で、変更したKubernetes DNS suffixと必ずしも同じではありません。
 
-Trust Anchor は PKI の root であり、すべての証明書 chain における信頼の基盤です。
+元のspiffe://root.linkerd.cluster.local/ns/.../sa/...はデフォルト形式ではありません。SPIFFE/SPIRE IDは別の[外部ワークロード・メッシュ拡張経路](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/)で対応します。Kubernetes TokenReviewをそのID/bootstrapモデルに置換しないでください。
+
+### 更新とローテーション
+
+proxy release/v2.368.0のidentity clientは通常、設定最小/最大更新間隔で制限し、**残存**有効期間の70%時点に次の証明書試行を予定します。error/期限切れ経路は最小遅延を使う場合があります。全証明書の固定時刻保証ではありません。
+
+clientは更新要求時に読込済み鍵/CSRを再利用します。証明書更新と秘密鍵、issuer、trust anchorのrotationは同じではありません。
 
 ```bash
-# Create Trust Anchor (using step CLI)
-step certificate create root.linkerd.cluster.local ca.crt ca.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h  # 10 years
-
-# Verify Trust Anchor
-openssl x509 -in ca.crt -text -noout
-
-# Example output:
-# Certificate:
-#     Data:
-#         Version: 3 (0x2)
-#         Serial Number: ...
-#         Signature Algorithm: ecdsa-with-SHA256
-#         Issuer: CN = root.linkerd.cluster.local
-#         Validity
-#             Not Before: Feb 21 00:00:00 2026 GMT
-#             Not After : Feb 21 00:00:00 2036 GMT
-#         Subject: CN = root.linkerd.cluster.local
-#         ...
-#         X509v3 extensions:
-#             X509v3 Key Usage: critical
-#                 Certificate Sign, CRL Sign
-#             X509v3 Basic Constraints: critical
-#                 CA:TRUE
+set -euo pipefail
+kubectl -n linkerd get configmap linkerd-identity-trust-roots \
+  -o jsonpath='{.data.ca-bundle\.crt}' > trust-bundle.pem
+openssl crl2pkcs7 -nocrl -certfile trust-bundle.pem |
+  openssl pkcs7 -print_certs -text -noout
+kubectl -n linkerd get secret linkerd-identity-issuer -o json |
+  jq -er '.data["crt.pem"] // .data["tls.crt"]' |
+  base64 -d | openssl x509 -noout -dates
 ```
 
-**Trust Anchor の保存先:**
+完全なtrust anchor移行には複数段階があります。
 
-```yaml
-# Stored as Kubernetes Secret
-apiVersion: v1
-kind: Secret
-metadata:
-  name: linkerd-identity-trust-roots
-  namespace: linkerd
-type: Opaque
-data:
-  ca-bundle.crt: <base64-encoded-ca.crt>
-```
+1. 現有効root、issuer、全consumer、導入/PKI所有者を棚卸し。
+2. 所有者設定で旧rootと並べ新rootを追加。対象proxy/control planeとmulticluster peerが重複bundleを実読込することを確認。
+3. 新root署名のissuerへrotationし、identityが読込したことを確認。
+4. 設定ソースに応じconsumerを更新/再作成し、実新認証情報と対象経路mTLSを確認。
+5. 必要peerが旧rootに依存しなくなってから削除し、最終bundleを伝播・再検証。
 
-### Identity Issuer（Intermediate CA）
-
-Identity Issuer は workload 証明書を発行する intermediate CA です。
+旧ConfigMap更新と1名前空間再起動はissuer移行と旧root除去の前で終わり、完全rotationではありませんでした。Helm/cert-manager/trust-managerと競合する直接変更を避けます。期限切れrootには通常の有効root切り替えでなく復旧手順が必要です。
 
 ```bash
-# Create Identity Issuer certificate
-step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
-  --profile intermediate-ca \
-  --ca ca.crt \
-  --ca-key ca.key \
-  --no-password \
-  --insecure \
-  --not-after=8760h  # 1 year
-
-# Verify Issuer certificate
-openssl x509 -in issuer.crt -text -noout
+linkerd check
+linkerd check --proxy
+kubectl -n linkerd get events --field-selector reason=IssuerUpdated
+# Inspect each affected namespace/workload and its actual proxy version/identity.
+kubectl -n my-app get pods -o wide
 ```
 
-**Identity Issuer Secret:**
+IssuerUpdatedは1観測で、全proxy/remote cluster移行の証明ではありません。cert-managerはissuer更新、trust-managerはbundle配布を自動化できますが、root切り替えは協調検証が必要です。実PKI設計の[手動](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/)または[管理された認証情報手順](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/)に従います。この章はrotationを実行していません。
 
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: linkerd-identity-issuer
-  namespace: linkerd
-type: kubernetes.io/tls
-data:
-  tls.crt: <base64-encoded-issuer.crt>
-  tls.key: <base64-encoded-issuer.key>
-  ca.crt: <base64-encoded-ca.crt>
-```
+## サイドカー注入の詳細
 
-### Workload 証明書
+![Pod作成前にnamespace意図、Podテンプレート上書き、適格性を組み合わせて判断する。アノテーションは全Pod注入の保証ではない。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-8.png)
 
-各 proxy は一意の workload 証明書を受け取ります。
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-8.html)
 
-```mermaid
-sequenceDiagram
-    participant Proxy as linkerd-proxy
-    participant ID as Identity Controller
-    participant SA as ServiceAccount
+controller workloadではPodテンプレートアノテーションと結果Podを確認します。1 YAML map内のmetadata重複キーは上書き/競合するため、namespace/workload例は別リソース/断片として保持します。
 
-    Note over Proxy: Pod starts
-    Proxy->>SA: Obtain ServiceAccount token
-    Proxy->>Proxy: Generate CSR (with SPIFFE ID)
-    Proxy->>ID: Send CSR + SA token
-    ID->>ID: Validate SA token
-    ID->>ID: Validate SPIFFE ID
-    ID->>ID: Sign certificate with Issuer key
-    ID-->>Proxy: Signed certificate (24-hour validity)
-
-    Note over Proxy: After 22 hours (2 hours before expiration)
-    Proxy->>ID: Renewal CSR
-    ID-->>Proxy: New certificate
-```
-
-**SPIFFE ID 形式:**
-
-```
-spiffe://root.linkerd.cluster.local/ns/<namespace>/sa/<service-account>
-
-# Example:
-spiffe://root.linkerd.cluster.local/ns/my-app/sa/web-service
-```
-
-### 証明書ローテーション
-
-```yaml
-# Certificate lifetime configuration
-identity:
-  issuer:
-    # Workload certificate lifetime (default 24 hours)
-    issuanceLifetime: 24h0m0s
-    # Clock skew allowance (default 20 seconds)
-    clockSkewAllowance: 20s
-
-# Proxy automatically renews certificates before expiration
-# By default, renewal starts at 70% of certificate lifetime
-```
-
-**Trust Anchor のローテーション:**
-
-```bash
-# Create new Trust Anchor
-step certificate create root.linkerd.cluster.local ca-new.crt ca-new.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h
-
-# Create bundle (existing + new)
-cat ca.crt ca-new.crt > ca-bundle.crt
-
-# Update ConfigMap
-kubectl create configmap linkerd-identity-trust-roots \
-  --from-file=ca-bundle.crt=ca-bundle.crt \
-  -n linkerd \
-  --dry-run=client -o yaml | kubectl apply -f -
-
-# Then restart all proxies to apply new bundle
-kubectl rollout restart deploy -n my-app
-```
-
-## Sidecar Injection の詳細
-
-### Injection ワークフロー
-
-```mermaid
-graph TB
-    subgraph "Injection Flow"
-        REQ[Pod Creation Request]
-        WH[Webhook Call]
-        CHK[Check Injection Conditions]
-        INJ[Inject Sidecar]
-        POD[Create Pod]
-    end
-
-    subgraph "Injection Conditions"
-        NS[Namespace Annotation]
-        POD_ANN[Pod Annotation]
-        WL[Workload Type]
-    end
-
-    REQ --> WH
-    WH --> CHK
-    CHK --> NS
-    CHK --> POD_ANN
-    CHK --> WL
-    NS --> INJ
-    POD_ANN --> INJ
-    WL --> INJ
-    INJ --> POD
-```
-
-### Injection annotation
-
-```yaml
-# Namespace level
-metadata:
-  annotations:
-    linkerd.io/inject: enabled  # Inject into all Pods
-
-# Pod/Deployment level
-metadata:
-  annotations:
-    # Enable/disable injection
-    linkerd.io/inject: enabled|disabled
-
-    # Proxy configuration overrides
-    config.linkerd.io/proxy-cpu-request: "100m"
-    config.linkerd.io/proxy-memory-request: "64Mi"
-    config.linkerd.io/proxy-cpu-limit: "1"
-    config.linkerd.io/proxy-memory-limit: "250Mi"
-
-    # Proxy log level
-    config.linkerd.io/proxy-log-level: "warn,linkerd=info"
-
-    # Skip ports (bypass proxy)
-    config.linkerd.io/skip-inbound-ports: "25,587"
-    config.linkerd.io/skip-outbound-ports: "25,587"
-
-    # Opaque ports (bypass protocol detection)
-    config.linkerd.io/opaque-ports: "3306,5432"
-```
-
-### Proxy Readiness/Liveness
-
-```yaml
-# Proxy health check endpoints
-livenessProbe:
-  httpGet:
-    path: /live
-    port: 4191
-  initialDelaySeconds: 10
-  periodSeconds: 10
-
-readinessProbe:
-  httpGet:
-    path: /ready
-    port: 4191
-  initialDelaySeconds: 2
-  periodSeconds: 10
-```
+先のresource/logアノテーションは意図するrequests/limitsとlog設定で、実消費測定ではありません。opaque-port上書きはDBポート2つを追加するだけでなくデフォルトリストを置換するため、必要port全部を保持します。skip-portは意図的にメッシュ処理から外します。
 
 ## コンポーネント間通信
 
-```mermaid
-graph TB
-    subgraph "Control Plane"
-        DEST[Destination<br/>:8086]
-        ID[Identity<br/>:8080]
-        PI[Proxy Injector<br/>:8443]
-        POL[Policy<br/>:8090]
-    end
+![検出、ID検証、policy、admissionという一部制御通信の役割。現デフォルトはEndpointSliceとTokenReviewを使い、ポート表はopaque TCPも含む。](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-9.png)
 
-    subgraph "Data Plane"
-        P1[Proxy 1]
-        P2[Proxy 2]
-    end
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-9.html)
 
-    subgraph "Kubernetes"
-        API[API Server]
-        WH[Webhook Config]
-    end
+| コンポーネント/経路 | 既定ポート | プロトコル/目的 |
+|---|---|---|
+| Destination Service | 8086 | 検出/profileのstreaming gRPC |
+| Identity Service | 8080 | 証明書API gRPC |
+| Policy Service | 8090 | Policy gRPC |
+| Proxy Injector | Service 443 → Pod 8443 | HTTPS admission webhook |
+| Proxy inbound | 4143 | HTTP/gRPC/opaqueを含む捕捉TCP |
+| Proxy outbound | 4140 | 捕捉送信TCP |
+| Proxy admin | 4191 | HTTPメトリクスとhealth |
 
-    P1 -->|gRPC| DEST
-    P2 -->|gRPC| DEST
-    P1 -->|gRPC| ID
-    P2 -->|gRPC| ID
-    P1 -->|gRPC| POL
-    P2 -->|gRPC| POL
+ポートは設定可能で、一律ネットワーク許可ではありません。adminはEnvoy型routing設定インターフェースではなく、policy/設定はcontrol-plane APIで届きます。
 
-    API -->|Admission| PI
-    WH --> PI
+## Istioアーキテクチャとの比較
 
-    DEST --> API
-    ID --> API
-    POL --> API
-```
+| 観点 | Linkerd | Istio |
+|---|---|---|
+| 制御の配置 | この版では中核3 Deployment内に複数論理controller | 主要制御は統一Istiod、加えてmode固有component |
+| データプレーン | 専用Rust proxy | Envoy sidecarまたはambient ztunnelと選択waypoint |
+| 設定 | Linkerd streaming gRPC APIと対応resource | Envoy xDSと対応Istio/Gateway API設定 |
+| 拡張 | 対応Linkerd機能/API範囲を確認 | mode/版固有Envoy/Wasm/Luaと接続を確認 |
+| リソース/性能比較 | 同等workloadと実設定で測定 | 同等workloadと実設定で測定 |
 
-**Port の一覧:**
+xDSも通常gRPCを使い、プロトコル名は本質的複雑さの順位ではありません。CRD数は版/拡張で変わり、runtime負荷を測りません。requests/limitsは設定予約/上限で、観測メモリ/遅延ではありません。同じworkload、通信、protocol、policy、障害予算を比較して選びます。[保守されている比較](../istio/comparison/README.md)を参照してください。
 
-| コンポーネント | Port | Protocol | 用途 |
-|-----------|------|----------|---------|
-| Destination | 8086 | gRPC | Service discovery API |
-| Identity | 8080 | gRPC | 証明書発行 API |
-| Policy | 8090 | gRPC | Policy API |
-| Proxy Injector | 8443 | HTTPS | Admission Webhook |
-| Proxy (Inbound) | 4143 | HTTP/gRPC | Inbound トラフィック |
-| Proxy (Outbound) | 4140 | HTTP/gRPC | Outbound トラフィック |
-| Proxy (Admin) | 4191 | HTTP | Metrics、health check |
+## 次のステップと出典
 
-## Istio アーキテクチャとの比較
-
-### Control Plane の比較
-
-```mermaid
-graph TB
-    subgraph "Linkerd Control Plane"
-        L_DEST[Destination]
-        L_ID[Identity]
-        L_PI[Proxy Injector]
-    end
-
-    subgraph "Istio Control Plane"
-        ISTIOD[istiod<br/>Pilot + Citadel + Galley]
-    end
-
-    subgraph "Linkerd Data Plane"
-        L_PROXY[linkerd-proxy<br/>Rust, ~10MB]
-    end
-
-    subgraph "Istio Data Plane"
-        ENVOY[Envoy<br/>C++, ~50-100MB]
-    end
-```
-
-| 特性 | Linkerd | Istio |
-|----------------|---------|-------|
-| Control Plane | 分散型（3 コンポーネント） | 統合型（istiod） |
-| Proxy | linkerd2-proxy（Rust） | Envoy（C++） |
-| Config Protocol | Custom gRPC | xDS（複雑） |
-| CRD 数 | ~10 | ~50+ |
-| 学習曲線 | 緩やか | 急峻 |
-| リソース使用量 | 低い | 高い |
-| 拡張性 | 制限あり | Wasm, Lua |
-
-### Proxy の比較
-
-```yaml
-# Linkerd Proxy Resources (typical)
-resources:
-  requests:
-    cpu: 100m
-    memory: 64Mi
-  limits:
-    cpu: 1000m
-    memory: 250Mi
-
-# Envoy Proxy Resources (typical)
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 2000m
-    memory: 1Gi
-```
-
-## 次のステップ
-
-- [Traffic Management](./03-traffic-management.md): ServiceProfile と traffic splitting
-- [Security](./04-security.md): mTLS と authorization policy
-- [Observability](./05-observability.md): Metrics と dashboard
-
-## 参考資料
-
-- [Linkerd アーキテクチャ](https://linkerd.io/2/reference/architecture/)
-- [linkerd2-proxy GitHub](https://github.com/linkerd/linkerd2-proxy)
-- [Linkerd Identity](https://linkerd.io/2/features/automatic-mtls/)
-- [Proxy Injection](https://linkerd.io/2/features/proxy-injection/)
+- [トラフィック管理](03-traffic-management.md)、[セキュリティ](04-security.md)、[可観測性](05-observability.md)
+- [アーキテクチャクイズ](../../quizzes/service-mesh/linkerd/architecture.md)
+- [公式アーキテクチャ](https://linkerd.io/docs/reference/architecture/)、[注入](https://linkerd.io/docs/features/proxy-injection/)、[policy参照](https://linkerd.io/docs/reference/authorization-policy/)
+- [自動mTLS](https://linkerd.io/docs/features/automatic-mtls/)、[プロトコル処理](https://linkerd.io/docs/features/protocol-detection/)、[負荷分散](https://linkerd.io/docs/features/load-balancing/)
+- [固定Destination API](https://github.com/linkerd/linkerd2-proxy-api/blob/v0.20.0/proto/destination.proto)
+- [Kubernetes token検証](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/validator.go)と[ID形式](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/controller/identity/domain.go)
+- [固定証明書更新実装](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/proxy/identity-client/src/certify.rs)

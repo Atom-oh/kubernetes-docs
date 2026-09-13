@@ -1,10 +1,12 @@
-# Kafka Operations クイズ
+# Kafka運用クイズ
 
-このクイズでは、EKS 上の Strimzi 管理 Kafka cluster における storage design、broker scaling、Cruise Control rebalancing、rolling upgrades、failure handling の理解を確認します。
+> **最終更新**: September 12, 2026、Strimzi 1.2.0 / Kafka 4.3.1。
 
-## 多肢選択問題
+このクイズはEKS上のStrimzi管理Kafkaクラスターのストレージ設計、ブローカースケーリング、Cruise Controlリバランス、ローリングアップグレード、障害処理の理解を確認します。
 
-1. 多数の consumer group が散在した offset を読み取ることで heavy random I/O が発生し、厳格な p99 latency SLA がある workload には、どの EBS volume type がより適していますか？
+## 選択問題
+
+1. AWSが低レイテンシー、高IOPS、高耐久性向けに設計したSSDはどれですか？
    - A) gp2
    - B) gp3
    - C) io2
@@ -14,13 +16,13 @@
 
 <summary>解答を表示</summary>
 
-**解答: C) io2**
+**正解: C) io2**
 
 **解説:**
-io2 は IOPS に基づいて課金され、最大 256,000 IOPS と 99.999% の耐久性を提供するため、小さな random I/O が中心の latency-sensitive workload に適しています。ほとんどの event-streaming workload は throughput-bound であるため、gp3 がより cost-effective な出発点です。io2 への切り替えは、spiky consumer lag や厳格な p99 SLA など、random I/O が bottleneck になる場合にのみ価値があります。
+io2 Block Expressは低レイテンシー、高IOPS、耐久性を目指します。最大256,000 IOPSにはNitroなど適切な条件が必要です。設計耐久性99.999%とAFR 0.001%を区別します。容量とIOPSが費用に寄与するため、測定、要件、料金で選びます。
 </details>
 
-2. `KafkaNodePool` で broker が複数の独立した volume を使用するように設定する storage type はどれですか？
+2. `KafkaNodePool`でブローカーに複数の独立ボリュームを使用させるストレージタイプはどれですか？
    - A) `type: persistent-claim`
    - B) `type: jbod`
    - C) `type: ephemeral`
@@ -30,93 +32,93 @@ io2 は IOPS に基づいて課金され、最大 256,000 IOPS と 99.999% の�
 
 <summary>解答を表示</summary>
 
-**解答: B) `type: jbod`**
+**正解: B) `type: jbod`**
 
 **解説:**
-`storage.type: jbod` (Just a Bunch Of Disks) を使用すると、broker ごとに複数の独立した volume を `volumes` list で定義できます。各 volume は `id` で識別され、partition はそれらに round-robin で分散されます。`persistent-claim` は、JBOD configuration 内の個々の volume entry に使用される type です。
+JBODは独立したボリュームIDを提供します。Kafka 4.3.1は新ログで通常パーティションログの少ないディレクトリを優先し、ラウンドロビンやバイト均等配置は保証されません。既存データ移動は別です。
 </details>
 
-3. retention period が 7 日、peak throughput が 100MB/s、replication factor が 3、headroom が 30% の場合、cluster 全体に必要な disk capacity を求める formula はどれですか？
-   - A) 100MB/s × 7 日 (秒) × 3
-   - B) 100MB/s × 7 日 (秒) × 3 × 1.3
-   - C) 100MB/s × 7 日 (秒) ÷ 3
+3. 持続100MB/sの保持ログ、7日保持、RF=3の場合、総容量の30%を空ける式はどれですか？
+   - A) 100MB/s × 7日（秒換算） × 3
+   - B) 100MB/s × 7日（秒換算） × 3 ÷ 0.70
+   - C) 100MB/s × 7日（秒換算） ÷ 3
    - D) 100MB/s × 3 × 1.3
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: B) 100MB/s × 7 日 (秒) × 3 × 1.3**
+**正解: B) 100MB/s × 7日（秒換算） × 3 ÷ 0.70**
 
 **解説:**
-sizing formula は `retention period × peak throughput × replication factor × (1 + headroom ratio)` です。retention を秒に変換し、peak throughput を掛けて raw data volume を求め、replica を考慮するために replication factor を掛け、最後に safety margin を残すため headroom factor（30% headroom = 1.3x）を掛けます。
+データサイズに30%加えても総容量の空きは約23.08%です。30%空けるには複製済みデータを0.70で割ります。持続した保持/圧縮ログバイト数、実保持期間、別の運用オーバーヘッドを使います。
 </details>
 
-4. Strimzi 管理 Kafka cluster で storage volume を format するために、operator が手動で実行しなければならない script はどれですか？
-   - A) `kafka-storage.sh format` をすべての broker で手動実行する必要がある
-   - B) `kafka-configs.sh` を使用して format settings を適用する必要がある
-   - C) なし — Strimzi Operator は broker Pod の起動時にこれを自動的に処理する
-   - D) `kafka-reassign-partitions.sh --format` を使用する必要がある
+4. Strimzi管理Kafkaクラスターのストレージをフォーマットするため、運用者が手動実行すべきスクリプトは何ですか？
+   - A) 全ブローカーで`kafka-storage.sh format`を手動実行する必要がある
+   - B) `kafka-configs.sh`でフォーマット設定を適用する必要がある
+   - C) なし。ブローカーPod起動時にStrimzi Operatorが自動処理する
+   - D) `kafka-reassign-partitions.sh --format`を使う必要がある
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: C) なし — Strimzi Operator は broker Pod が起動するとこれを自動的に処理します**
+**正解: C) なし。ブローカーPod起動時にStrimzi Operatorが自動処理する**
 
 **解説:**
-Strimzi では、broker Pod が起動すると Operator が volume formatting を自動的に処理します。これは、通常の open-source Kafka を手動で実行する場合に自分で `kafka-storage.sh format` を実行する必要があるのと比べて便利です。
+Strimzi/起動スクリプトが新ストレージメタデータの必要初期化を管理します。起動ごとに既存データが消去されるわけではありません。Operator管理ボリュームを任意に手動フォーマットしないでください。
 </details>
 
-5. `KafkaNodePool` の `replicas` を増やして broker を scale out すると、新しい broker では何が自動的に起こりますか？
-   - A) 既存の partition はすぐに新しい broker へ再分散される
-   - B) 新しい broker は cluster に参加するが、既存の topic partition は自動的には reassignment されない
-   - C) 新しい broker はすべての partition の leader に自動的になる
-   - D) 新しい broker は controller としてのみ機能する
+5. 一致するautoRebalanceモードがない場合、ブローカープールのreplicasを増やすとどうなりますか？
+   - A) 既存パーティションが即座に新ブローカーへ再分散される
+   - B) 新ブローカーは参加するが、既存トピックパーティションは自動再割り当てされない
+   - C) 新ブローカーが全パーティションのリーダーになる
+   - D) 新ブローカーはコントローラーとしてのみ動作する
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: B) 新しい broker は cluster に参加しますが、既存の topic partition は自動的には reassignment されません**
+**正解: B) 新ブローカーは参加するが、既存トピックパーティションは自動再割り当てされない**
 
 **解説:**
-`replicas` を増やすと、Strimzi は新しい broker Pod を作成し cluster に参加させますが、既存の topic partition をそれらへ移動することは自動では行われません。新しい broker の capacity を実際に活用するには、`kafka-reassign-partitions.sh` による手動 reassignment、または `add-brokers` mode の Cruise Control rebalance が必要です。
+一致するautoRebalanceモードがない場合の説明です。Strimzi 1.2はadd-brokers自動化を設定すれば、既存プールのreplicas増加後に自動リバランスできます。プール作成/削除は別イベントです。
 </details>
 
-6. broker を scale down する前に何を行う必要がありますか？
-   - A) 何もしない — Strimzi が自動的に drain する
-   - B) 削除される broker 上の partition は、先に残りの broker へ reassignment する必要がある
-   - C) cluster を restart する必要がある
-   - D) すべての topic を削除する必要がある
+6. ブローカー削除前に満たすべきデータ状態の要件は何ですか？
+   - A) なし。Strimziが自動で退避する
+   - B) 削除ブローカーのパーティションを先に残るブローカーへ再割り当てする
+   - C) クラスターを再起動する
+   - D) 全トピックを削除する
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: B) 削除される broker 上の partition は、先に残りの broker へ reassignment する必要があります**
+**正解: B) 削除ブローカーのパーティションを先に残るブローカーへ再割り当てする**
 
 **解説:**
-Strimzi は broker を scale down するときに partition を自動的に drain しません。`replicas` を減らす前に、削除される broker 上のすべての replica を残りの broker に reassignment する必要があります。そうしないと、under-replicated partition や完全な data loss のリスクがあります。
+削除前に全レプリカを安全に退避する必要があります。手動手順には内部トピックも含めます。設定済みremove-brokers autoRebalanceは自動で退避を調整できます。空でないブローカーのチェックを維持し、削除IDを確認します。
 </details>
 
-7. Cruise Control の主な役割は何ですか？
-   - A) topic の作成と削除を自動化する
-   - B) broker load metrics を収集し、goal-based partition reassignment plan を自動的に生成/実行する
-   - C) consumer group offset commit を管理する
-   - D) TLS certificate を自動的に更新する
+7. Cruise Controlの主な役割は何ですか？
+   - A) トピック作成/削除を自動化
+   - B) ブローカー負荷メトリクスを収集し、ゴールに基づくパーティション再割り当て計画を自動生成/実行
+   - C) コンシューマーグループのオフセットコミットを管理
+   - D) TLS証明書を自動更新
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: B) broker load metric を収集し、goal-based partition reassignment plan を自動的に生成/実行します**
+**正解: B) ブローカー負荷メトリクスを収集し、ゴールに基づくパーティション再割り当て計画を自動生成/実行**
 
 **解説:**
-Cruise Control は broker ごとの load metric（disk usage、CPU、network throughput）を継続的に収集し、設定された goal を使用して partition reassignment plan を自動的に生成して実行します。これにより、routine rebalancing のために `kafka-reassign-partitions.sh` を手動で実行する必要がなくなります。
+Cruise Controlは負荷/ゴールから提案を計算し、承認/自動化方針に従って実行します。提案生成と移動は別です。メトリクス不足やハードゴール失敗を安易に迂回しないでください。
 </details>
 
-8. `KafkaRebalance` resource の `mode` field で、新しく追加された broker に partition を移動して load を埋めることに重点を置く mode はどれですか？
+8. `KafkaRebalance`の`mode`で、新規ブローカーへパーティションを移し負荷を配分するモードはどれですか？
    - A) `full`
    - B) `add-brokers`
    - C) `remove-brokers`
@@ -126,29 +128,29 @@ Cruise Control は broker ごとの load metric（disk usage、CPU、network thr
 
 <summary>解答を表示</summary>
 
-**解答: B) `add-brokers`**
+**正解: B) `add-brokers`**
 
 **解説:**
-`add-brokers` mode は、新しく追加された broker に partition を移動することに重点を置くため、関連のない broker を含むすべての broker 間で reassignment する `full` mode よりも高速で範囲が限定されています。逆に、`remove-brokers` mode は、削除予定の broker から partition を移動することに重点を置き、scale down 前の有用な drain step になります。
+add-brokersは指定新ブローカーを対象とし、実IDが必要です。ゴール、データ量、ラック制約が時間/影響を決め、常にfullより速いわけではありません。remove-brokersは削除前にブローカーを退避します。
 </details>
 
-9. KRaft-mode cluster の Kafka version を 3.8 から 3.9 に upgrade する正しい手順はどれですか？
-   - A) `version` と `metadataVersion` を一度に 3.9 に変更する
-   - B) まず新しい broker/controller software を roll out するために `version` のみを 3.9 に変更し、すべての node が置き換えられた後でのみ `metadataVersion` を 3.9-IV0 に上げる
-   - C) まず `metadataVersion` を上げてから、`version` を変更する
-   - D) cluster 全体を停止し、すべての値を一度に変更する
+9. 検証期間に旧メタデータ形式を保持し、Kafka 4.2.1を4.3.1へ更新するパターンはどれですか？
+   - A) versionとmetadataVersionを即座に両方上げる
+   - B) versionを4.3.1に上げ、metadataVersion 4.2-IV1を維持し、検証後に4.3-IV0へ変更する
+   - C) バイナリ互換性確認前にmetadataVersionを上げる
+   - D) 全データを削除して再起動する
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: B) まず新しい broker/controller software を roll out するために `version` のみを 3.9 に変更し、すべての node が置き換えられた後でのみ `metadataVersion` を 3.9-IV0 に上げます**
+**正解: B) versionを4.3.1に上げ、metadataVersion 4.2-IV1を維持し、検証後に4.3-IV0へ変更する**
 
 **解説:**
-KRaft mode には `inter.broker.protocol.version`/`log.message.format.version` はありません（これらは ZooKeeper 時代の設定です）。代わりに、`spec.kafka.version`（software version）と `spec.kafka.metadataVersion`（controller quorum が metadata を永続化するために使用する format）は 2 つの phase で上げる必要があります。Phase 1 では、`metadataVersion` を古い format に固定したまま software version のみを上げます。これにより、rollout 中に古い node と新しい node の両方が動作している間も、controller quorum 内で相互に compatible な状態を維持できます。Phase 2 では、すべての node が置き換えられたことを確認した後にのみ `metadataVersion` を上げます。この順序を逆にすると、古い binary のままの node が新しい metadata format を理解できず、controller quorum communication error が発生します。
+検証用に旧metadataVersionを明示維持する運用パターンです。省略するとStrimziはバイナリ更新後にメタデータを更新する場合があります。Operatorは現/対象Kafkaをサポートする必要があり、後の形式変更はダウングレードを妨げることがあります。
 </details>
 
-10. Strimzi が `KafkaNodePool` ごとに自動的に作成し、voluntary eviction を制限する Kubernetes resource はどれですか？
+10. Strimzi Kafkaクラスターの自発的退避を制限するKubernetesリソースはどれですか？
     - A) ResourceQuota
     - B) NetworkPolicy
     - C) PodDisruptionBudget
@@ -158,65 +160,65 @@ KRaft mode には `inter.broker.protocol.version`/`log.message.format.version` �
 
 <summary>解答を表示</summary>
 
-**解答: C) PodDisruptionBudget**
+**正解: C) PodDisruptionBudget**
 
 **解説:**
-Strimzi はすべての `KafkaNodePool` に対して `PodDisruptionBudget` (PDB) を自動的に作成します。デフォルトでは、一度に 1 つの broker Pod だけが voluntary eviction（node drain、autoscaler node replacement など）を受けられるようにし、複数の broker が同時に停止して availability が損なわれることを防ぎます。
+Strimzi 1.2は通常クラスターごとにKafka PDBを1つ作り、全プールのKafka Podを対象とします。自発的退避を制約し、ノード/AZ障害や強制削除は制約しません。
 </details>
 
 ## 短答問題
 
-11. rolling restart 中に partition の available replica count が必要最小数を下回らないよう、Strimzi が尊重する Kafka config value は何ですか？
+11. Kafkaのローリング可用性確認で考慮する最小ISR設定は何ですか？
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: `min.insync.replicas`**
+**正解: `min.insync.replicas`**
 
 **解説:**
-CR spec の変更によって rolling restart が triggered されると、Strimzi Operator は各 partition の `min.insync.replicas` requirement が引き続き満たされていることを確認しながら、broker を 1 つずつ restart します。これにより、restart によって partition の available in-sync replica count が必要な threshold を下回ることを防ぎます。下回ると write failure や availability loss が発生する可能性があります。
+min.insync.replicasは重要な可用性入力で、あらゆるローリング処理中の無条件保証ではありません。実ISR、コントローラークォーラム、ストレージ/ネットワーク、クライアントタイムアウト/再試行を確認します。
 </details>
 
-12. Kafka cluster 自体の version を upgrade する前に、どの component を upgrade すべきですか？
+12. アップグレード前に、現Kafkaと対象Kafkaの両方をサポート表に含む必要があるコンポーネントは何ですか？
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: Strimzi Operator**
+**正解: Strimzi Operator**
 
 **解説:**
-各 Strimzi release は特定範囲の Kafka version を support しており、実行中の Operator が認識しない Kafka version に CR を変更すると validation に失敗します。そのため、Kafka software version を上げる前に、Strimzi Operator 自体を最新 version に upgrade する必要があります。
+現/対象Kafka両方をサポートするStrimzi版を確認します。すでに対応するならOperator更新は必須ではありません。最新Operatorが現Kafkaのサポートを外す場合、中間版とAPI/CRD移行を計画します。
 </details>
 
-13. partition reassignment plan を実際に実行する前に、指定した broker list に対して plan を生成するために使用する `kafka-reassign-partitions.sh` の option は何ですか？
+13. パーティション再割り当てを実行する前に、指定ブローカー一覧への計画を生成する`kafka-reassign-partitions.sh`オプションは何ですか？
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: `--generate`**
+**正解: `--generate`**
 
 **解説:**
-`--generate` option は、実際には実行せずに、`--topics-to-move-json-file` と `--broker-list` に基づいて reassignment plan（JSON）を生成します。plan を review した後、`--execute` で適用し、`--verify` で進捗と完了を確認します。
+--generateは移動を実行せず、現在と提案の割り当てを表示します。Proposedを別に抽出し、RF、ID、ラック、容量を確認します。preserve-throttlesなしでは、完了した--verifyがスロットル設定を解除する場合があります。
 </details>
 
-14. `acks=all` で設定された producer が data を失わずに broker rolling restart を乗り切れる理由を、1 文で説明してください。
+14. acks=allの耐久性前提と、ローリング処理中のリクエスト成功保証を区別してください。
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: restart される broker が partition leader だった場合、controller は restart が進む前に in-sync replica (ISR) set から新しい leader を選出し、`min.insync.replicas` が満たされている限り committed data は保持されます。**
+**解答: 同期済みコピーと機能するクォーラム/リーダーが残る間は耐久性が高まりますが、リクエストはタイムアウトしたり再試行が必要になったりします。**
 
 **解説:**
-`acks=all` producer は、message を committed と見なす前に、`min.insync.replicas` を満たすのに十分な replica に message が書き込まれるのを待ちます。broker restart の前に leader が変更されると、producer はその変更を検出し、metadata を更新し、新しい leader に対して retry します。短い latency spike は発生する可能性がありますが、すでに committed された data は失われません。`acks=1` 以下を使用する producer にはそのような保証はなく、in-flight message を失うリスクがあります。
+acks=allは最小ISRを満たしつつ、現在の全ISRを待ちます。同期済みコピーと利用可能なリーダー/クォーラム/ストレージ条件の維持が必要です。タイムアウト、再試行、繰り返し処理を別途扱います。
 </details>
 
-## ハンズオン問題
+## 実践問題
 
-15. 3 つの volume を持つ JBOD storage を使用し、それぞれ gp3 上で 300Gi の、`broker` という名前の `KafkaNodePool` YAML を書いてください。
+15. 300Giのgp3ボリューム3つを持つ、新環境用ブローカープールの例を定義してください。
 
 <details>
 
@@ -224,41 +226,65 @@ CR spec の変更によって rolling restart が triggered されると、Strim
 
 **解答:**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: broker
+  namespace: kafka
   labels:
     strimzi.io/cluster: my-cluster
 spec:
   replicas: 3
   roles:
-    - broker
+  - broker
   storage:
     type: jbod
     volumes:
-      - id: 0
-        type: persistent-claim
-        size: 300Gi
-        class: gp3
-        deleteClaim: false
-      - id: 1
-        type: persistent-claim
-        size: 300Gi
-        class: gp3
-        deleteClaim: false
-      - id: 2
-        type: persistent-claim
-        size: 300Gi
-        class: gp3
-        deleteClaim: false
+    - id: 0
+      type: persistent-claim
+      size: 300Gi
+      class: gp3-kafka
+      deleteClaim: false
+      kraftMetadata: shared
+    - id: 1
+      type: persistent-claim
+      size: 300Gi
+      class: gp3-kafka
+      deleteClaim: false
+    - id: 2
+      type: persistent-claim
+      size: 300Gi
+      class: gp3-kafka
+      deleteClaim: false
+  resources:
+    requests:
+      cpu: '2'
+      memory: 4Gi
+    limits:
+      memory: 4Gi
+  template:
+    pod:
+      metadata:
+        labels:
+          docs.example.com/kafka-role: broker
+      topologySpreadConstraints:
+      - maxSkew: 1
+        minDomains: 3
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        nodeAffinityPolicy: Honor
+        nodeTaintsPolicy: Honor
+        labelSelector:
+          matchLabels:
+            strimzi.io/cluster: my-cluster
+            docs.example.com/kafka-role: broker
 ```
 
 **解説:**
-`storage.type: jbod` を設定し、`volumes` list に 3 つの `persistent-claim` volume を定義し、それぞれに一意の `id`（0、1、2）を付けることで、broker に 3 つの独立した volume が与えられます。`deleteClaim: false` は、broker が recreated されたり scaled down されたりしたときに PVC が削除されないよう保護し、その data を safeguard します。
+新環境の定義で、500Giへ拡張済みのボリュームを縮小する指示ではありません。第2部のgp3-kafkaを使い、メタデータボリュームを1つ選びます。Retain/deleteClaim設定はバックアップではありません。
 </details>
 
-16. `my-cluster` という名前の cluster に対して `full` mode の `KafkaRebalance` resource を作成し、生成された rebalance proposal を approve する command を書いてください。
+16. `my-cluster`クラスター用に`full`モードの`KafkaRebalance`を作成し、生成提案を承認するコマンドを書いてください。
 
 <details>
 
@@ -266,34 +292,35 @@ spec:
 
 **解答:**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaRebalance
 metadata:
-  name: my-rebalance
+  name: reviewed-full-rebalance
   namespace: kafka
   labels:
     strimzi.io/cluster: my-cluster
+  annotations:
+    strimzi.io/rebalance-auto-approval: "false"
 spec:
   mode: full
 ```
 
 ```bash
-# Check proposal generation status (PendingProposal → ProposalReady)
-kubectl get kafkarebalance my-rebalance -n kafka -o yaml
-
-# Approve the proposal to execute it
-kubectl annotate kafkarebalance my-rebalance -n kafka \
-  strimzi.io/rebalance=approve
-
-# Watch progress
-kubectl get kafkarebalance my-rebalance -n kafka -w
+kubectl create -f rebalance-full.yaml
+kubectl -n kafka wait kafkarebalance/reviewed-full-rebalance \
+  --for=condition=ProposalReady --timeout=30m
+kubectl -n kafka get kafkarebalance reviewed-full-rebalance -o yaml
+# Review the proposal before executing:
+kubectl -n kafka annotate kafkarebalance reviewed-full-rebalance \
+  strimzi.io/rebalance=approve --overwrite
+kubectl -n kafka get kafkarebalance reviewed-full-rebalance -w
 ```
 
 **解説:**
-`KafkaRebalance` CR を作成すると、Cruise Control が rebalance proposal を自動的に生成し、`ProposalReady` state で待機します。partition move を実際に実行するには、`strimzi.io/rebalance=approve` annotation が必要です。`mode: full` は、cluster 内のすべての broker を対象とする goal-based plan を生成します。
+有効なメトリクス/ゴールでCruise Controlを有効にする必要があります。自動承認はfalseです。ProposalReadyを確認してから承認します。手動要求と自動スケーリング要求を区別します。
 </details>
 
-17. broker を 3 台（ID 0,1,2）から 6 台（ID 0-5）に scale した後、新しい broker を含む完全な broker list 全体に `orders` topic の partition を reassignment するための 3-step command（generate → execute → verify）を書いてください。
+17. ブローカー拡張後、実IDとTLS管理者設定を使い、orders再割り当てを生成、抽出、実行、確認してください。
 
 <details>
 
@@ -301,39 +328,31 @@ kubectl get kafkarebalance my-rebalance -n kafka -w
 
 **解答:**
 ```bash
-# 1) Define the topic to move
-cat <<EOF > topics-to-move.json
-{
-  "topics": [{"topic": "orders"}],
-  "version": 1
-}
-EOF
-
-# 2) Generate the plan
-kubectl exec -it my-cluster-broker-0 -n kafka -- \
-  bin/kafka-reassign-partitions.sh \
-  --bootstrap-server localhost:9092 \
-  --topics-to-move-json-file topics-to-move.json \
-  --broker-list "0,1,2,3,4,5" \
-  --generate
-
-# 3) Execute the plan (using the generated reassignment.json)
-kubectl exec -it my-cluster-broker-0 -n kafka -- \
-  bin/kafka-reassign-partitions.sh \
-  --bootstrap-server localhost:9092 \
-  --reassignment-json-file reassignment.json \
-  --execute
-
-# 4) Verify completion
-kubectl exec -it my-cluster-broker-0 -n kafka -- \
-  bin/kafka-reassign-partitions.sh \
-  --bootstrap-server localhost:9092 \
-  --reassignment-json-file reassignment.json \
-  --verify
+set -euo pipefail
+: "${DOCS_BOOTSTRAP:?Set reachable TLS bootstrap}"
+: "${DOCS_ADMIN_CONFIG:?Set local admin properties file}"
+: "${DOCS_BROKER_IDS:?Set verified comma-separated broker IDs}"
+: "${DOCS_MOVE_BYTES_PER_SEC:?Choose reviewed throttle bytes/second}"
+cat > topics-to-move.json <<'JSON'
+{"version":1,"topics":[{"topic":"orders"}]}
+JSON
+kafka-reassign-partitions.sh \
+  --bootstrap-server "$DOCS_BOOTSTRAP" --command-config "$DOCS_ADMIN_CONFIG" \
+  --topics-to-move-json-file topics-to-move.json --broker-list "$DOCS_BROKER_IDS" \
+  --generate > generate-output.txt
+python3 extract_reassignment.py generate-output.txt reassignment.json
+python3 -m json.tool reassignment.json
+# Review the exact proposal before movement:
+kafka-reassign-partitions.sh \
+  --bootstrap-server "$DOCS_BOOTSTRAP" --command-config "$DOCS_ADMIN_CONFIG" \
+  --reassignment-json-file reassignment.json --execute --throttle "$DOCS_MOVE_BYTES_PER_SEC"
+kafka-reassign-partitions.sh \
+  --bootstrap-server "$DOCS_BOOTSTRAP" --command-config "$DOCS_ADMIN_CONFIG" \
+  --reassignment-json-file reassignment.json --verify --preserve-throttles
 ```
 
 **解説:**
-`--generate` は、指定された `--broker-list`（ここでは新しい broker を含む 0-5）を対象とする partition move plan を生成します。`--execute` は実際の reassignment を開始し、`--verify` は reassignment が完了し under-replicated partition が残っていないことを確認します。この process の後になって初めて、新しく追加された broker が実際に partition leader/follower role を保持します。
+CLI実行環境にファイルを置きます。実ブローカーIDとTLS管理者設定を使い、CurrentでなくProposedを抽出します。移動状態に--verify --preserve-throttlesを使い、URP/min-ISR/オフライン状態を別途確認します。1トピックの移動ではブローカーの完全退避は証明されません。
 </details>
 
 ---

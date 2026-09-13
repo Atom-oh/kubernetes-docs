@@ -130,27 +130,14 @@
   * [Parte 6: Integración de MSK](data-on-eks/kafka/06-msk-integration.md)
   * [Parte 7: Monitoreo](data-on-eks/kafka/07-monitoring.md)
   * [Parte 8: Mejores prácticas](data-on-eks/kafka/08-best-practices.md)
-* [Análisis detallado de Spark en EKS](data-on-eks/spark/README.md)
-  * [Parte 1: Fundamentos de Spark en Kubernetes](data-on-eks/spark/01-spark-fundamentals.md)
-  * [Parte 2: Operator Spark](data-on-eks/spark/02-spark-operator.md)
-  * [Parte 3: Amazon EMR en EKS](data-on-eks/spark/03-emr-on-eks.md)
-  * [Parte 4: Ajuste de rendimiento y costos](data-on-eks/spark/04-performance-tuning.md)
-  * [Parte 5: Mejores prácticas y seguridad](data-on-eks/spark/05-best-practices.md)
-* [Análisis detallado de Airflow en EKS](data-on-eks/airflow/README.md)
-  * [Parte 1: Arquitectura de Airflow en Kubernetes](data-on-eks/airflow/01-architecture.md)
-  * [Parte 2: Implementación con Helm y elección de Executor](data-on-eks/airflow/02-helm-deployment.md)
-  * [Parte 3: Patrones de DAG y KubernetesPodOperator](data-on-eks/airflow/03-dag-patterns.md)
-  * [Parte 4: Integración de Amazon MWAA](data-on-eks/airflow/04-mwaa-integration.md)
-  * [Parte 5: Operaciones y seguridad](data-on-eks/airflow/05-operations.md)
-* [Análisis detallado de Flink en EKS](data-on-eks/flink/README.md)
-  * [Parte 1: Arquitectura de Flink en Kubernetes](data-on-eks/flink/01-architecture.md)
-  * [Parte 2: Flink Kubernetes Operator](data-on-eks/flink/02-flink-kubernetes-operator.md)
-  * [Parte 3: Estado, checkpointing y patrones de streaming](data-on-eks/flink/03-state-checkpointing-streaming.md)
-  * [Parte 4: Operaciones, alta disponibilidad y Flink administrado](data-on-eks/flink/04-operations-ha.md)
+  * [Benchmark de Kafka, parte 9 (guía en inglés)](data-on-eks/kafka/09-kafka-benchmark.md)
 
 ## Redes
 
 * [Descripción general de redes](networking/README.md)
+  * [Fundamentos de redes, parte 1 (guía en inglés)](basics/06-network-fundamentals-part1.md)
+  * [Fundamentos de redes, parte 2 (guía en inglés)](basics/06-network-fundamentals-part2.md)
+  * [Fundamentos de redes, parte 3 (guía en inglés)](basics/06-network-fundamentals-part3.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Análisis detallado de Cilium](networking/cilium/README.md)
   * [Parte 1: Introducción](networking/cilium/01-introduction.md)
@@ -267,14 +254,6 @@
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
 
-## Registro de contenedores
-
-* [Descripción general del registro de contenedores](container-registry/README.md)
-* [Docker Hub](container-registry/01-docker-hub.md)
-* [Amazon ECR](container-registry/02-amazon-ecr.md)
-* [Harbor](container-registry/03-harbor.md)
-* [Mejores prácticas para registros de contenedores](container-registry/04-best-practices.md)
-
 ## Ingeniería de plataformas
 
 * [Descripción general de ingeniería de plataformas](platform-engineering/00-platform-engineering-overview.md)
@@ -303,7 +282,7 @@
     * [Seguridad](gitops/argocd/07-security.md)
     * [Notificaciones](gitops/argocd/08-notifications.md)
     * [Mejores prácticas](gitops/argocd/09-best-practices.md)
-    * [Análisis detallado de experimentos de Rollouts](gitops/argocd/10-rollouts-experiment.md)
+
   * [FluxCD](gitops/02-fluxcd.md)
   * [Comparación de herramientas de GitOps](gitops/03-gitops-comparison.md)
   * [Entrega progresiva con Flagger](gitops/04-flagger.md)
@@ -367,7 +346,8 @@
   * [Laboratorio de almacenamiento](labs/core/04-storage-lab.md)
   * [Laboratorio de ConfigMap y Secret](labs/core/05-configuration-secrets-lab.md)
   * [Laboratorio de creación de clúster de EKS](labs/eks/01-eks-cluster-creation-lab.md)
-  * [Laboratorios integrales de observabilidad](lab-guides/labs/observability-end-to-end/README.md)
+
+  * Laboratorios integrales de observabilidad
     * [Introducción a la serie de laboratorios](labs/observability/README.md)
     * [Parte 1: Configuración de infraestructura](labs/observability/01-infrastructure-setup-lab.md)
     * [Parte 2: Stack de observabilidad](labs/observability/02-observability-stack-lab.md)
@@ -476,20 +456,8 @@
   * [Cuestionario de la parte 6: integración de MSK](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
   * [Cuestionario de la parte 7: monitoreo](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [Cuestionario de la parte 8: mejores prácticas](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
-  * [Cuestionario de la parte 1: fundamentos de Spark en Kubernetes](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
-  * [Cuestionario de la parte 2: Operator Spark](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
-  * [Cuestionario de la parte 3: Amazon EMR en EKS](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
-  * [Cuestionario de la parte 4: ajuste de rendimiento y costos](quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
-  * [Cuestionario de la parte 5: mejores prácticas y seguridad](quizzes/data-on-eks/spark/05-best-practices-quiz.md)
-  * [Cuestionario de la parte 1: arquitectura de Airflow en Kubernetes](quizzes/data-on-eks/airflow/01-architecture-quiz.md)
-  * [Cuestionario de la parte 2: implementación con Helm y elección de Executor](quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
-  * [Cuestionario de la parte 3: patrones de DAG y KubernetesPodOperator](quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
-  * [Cuestionario de la parte 4: integración de Amazon MWAA](quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
-  * [Cuestionario de la parte 5: operaciones y seguridad](quizzes/data-on-eks/airflow/05-operations-quiz.md)
-  * [Cuestionario de la parte 1: arquitectura de Flink en Kubernetes](quizzes/data-on-eks/flink/01-architecture-quiz.md)
-  * [Cuestionario de la parte 2: Flink Kubernetes Operator](quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
-  * [Cuestionario de la parte 3: estado, checkpointing y patrones de streaming](quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
-  * [Cuestionario de la parte 4: operaciones, alta disponibilidad y Flink administrado](quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
+  * [Cuestionario del benchmark de Kafka, parte 9 (en inglés)](quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+
 * Redes
   * [Cuestionario de descripción general de redes](quizzes/networking/00-networking-overview-quiz.md)
   * [Cuestionario de VPC CNI](quizzes/networking/01-vpc-cni-quiz.md)
@@ -555,11 +523,7 @@
   * [Cuestionario de cert-manager](quizzes/security/10-cert-manager-quiz.md)
   * [Cuestionario de Kubescape](quizzes/security/11-kubescape-quiz.md)
   * [Cuestionario de SPIFFE/SPIRE](quizzes/security/12-spiffe-spire-quiz.md)
-* Registro de contenedores
-  * [Cuestionario de Docker Hub](quizzes/container-registry/01-docker-hub-quiz.md)
-  * [Cuestionario de Amazon ECR](quizzes/container-registry/02-amazon-ecr-quiz.md)
-  * [Cuestionario de Harbor](quizzes/container-registry/03-harbor-quiz.md)
-  * [Cuestionario de mejores prácticas para registros de contenedores](quizzes/container-registry/04-best-practices-quiz.md)
+
 * GitOps
   * [Cuestionario de ArgoCD](quizzes/gitops/01-argocd-quiz.md)
   * Cuestionario detallado de ArgoCD

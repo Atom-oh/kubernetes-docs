@@ -1,6 +1,7 @@
 # 실습 가이드
 
-> **마지막 업데이트**: 2026년 2월 22일
+
+> **마지막 업데이트**: 2026년 9월 13일
 
 이 섹션에서는 Kubernetes와 관련 기술을 직접 실습해볼 수 있는 가이드를 제공합니다. 각 실습은 단계별 지침과 검증 방법을 포함하고 있어, 이론으로 배운 내용을 실제 환경에서 확인할 수 있습니다.
 
@@ -16,8 +17,8 @@
 | 6 | [스토리지 실습](core/04-storage-lab.md) | 중급 | kubectl, K8s 클러스터 |
 | 7 | [ConfigMap과 Secret 실습](core/05-configuration-secrets-lab.md) | 초급 | kubectl, K8s 클러스터 |
 | 8 | [EKS 클러스터 생성 실습](eks/01-eks-cluster-creation-lab.md) | 중급 | AWS CLI, eksctl |
-| 9 | [Observability E2E: 시리즈 소개](observability/README.md) | 고급 | AWS 계정, Terraform, Helm |
-| 10 | [Observability E2E: 인프라 구성](observability/01-infrastructure-setup-lab.md) | 중급 | Part 0 완료 |
+| 9 | [Observability E2E: 시리즈 소개](observability/README.md) | 고급 | 승인된 AWS 환경, Helm, Python |
+| 10 | [Observability E2E: 인프라 구성](observability/01-infrastructure-setup-lab.md) | 중급 | 시리즈 소개·네트워크 준비 |
 | 11 | [Observability E2E: Observability 스택](observability/02-observability-stack-lab.md) | 고급 | Part 1 완료 |
 | 12 | [Observability E2E: MSA 배포 및 카나리](observability/03-msa-deployment-lab.md) | 고급 | Part 2 완료 |
 | 13 | [Observability E2E: 부하 테스트 및 스케일링](observability/04-load-testing-scaling-lab.md) | 중급 | Part 3 완료 |
@@ -38,15 +39,11 @@
 - Docker Desktop 또는 Docker Engine
 
 ### Kubernetes 환경 (핵심 실습용)
-```bash
-# minikube 설치 및 시작
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-sudo install minikube-linux-amd64 /usr/local/bin/minikube
-minikube start
+OS·CPU 아키텍처에 맞는 도구를 설치하고 해당 실습의 cluster/version 요구 사항을 따릅니다. macOS·ARM 환경에 Linux AMD64 바이너리를 그대로 설치하지 않습니다.
 
-# kubectl 설치
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-sudo install kubectl /usr/local/bin/kubectl
+```bash
+kubectl version --client
+kubectl config current-context
 ```
 
 ### AWS 환경 (EKS 실습용)

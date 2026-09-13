@@ -1,0 +1,23 @@
+extraEnvs:
+- name: AWS_REGION
+  value: REPLACE_WITH_REGION
+- name: APPLICATION_LOG_GROUP
+  value: REPLACE_WITH_CREATED_LOG_GROUP
+config:
+  exporters:
+    awscloudwatchlogs:
+      region: ${env:AWS_REGION}
+      log_group_name: ${env:APPLICATION_LOG_GROUP}
+      log_stream_name: lab-application
+      raw_log: true
+  service:
+    pipelines:
+      logs:
+        receivers:
+        - otlp
+        processors:
+        - memory_limiter
+        - batch
+        exporters:
+        - otlp_http/loki
+        - awscloudwatchlogs

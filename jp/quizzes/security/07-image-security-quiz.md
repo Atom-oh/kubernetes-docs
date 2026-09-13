@@ -1,290 +1,220 @@
-# Container Image Security クイズ
+<span id="quiz-questions"></span>
 
-このクイズでは、image scanning、image signing、supply chain security、base image の選択に関する理解を確認します。
+# コンテナイメージセキュリティクイズ
+> **最終更新**: September 13, 2026
 
-## クイズ問題
+<span id="_1-what-is-the-correct-command-to-scan-a-container-image-with-trivy"></span>
 
-### 1. Trivy で container image をスキャンする正しいコマンドはどれですか？
+### 1. 指定イメージ参照をTrivyでスキャンするコマンドはどれですか？
 
-A. trivy scan nginx:latest
-B. trivy image nginx:latest
-C. trivy container nginx:latest
-D. trivy check nginx:latest
+- A. trivy scan "$IMAGE_REF"
+- B. trivy image "$IMAGE_REF"
+- C. trivy container "$IMAGE_REF"
+- D. trivy check "$IMAGE_REF"
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B. trivy image nginx:latest**
+**正解: B. trivy image "$IMAGE_REF"**
 
-**解説:**
-Trivy の image scanning コマンド:
-```bash
-trivy image nginx:latest
-trivy image --severity HIGH,CRITICAL nginx:latest
-trivy image --format json nginx:latest
-```
-
-`trivy image` は container image の脆弱性をスキャンします。
+trivy imageがイメージスキャンコマンドです。IMAGE_REFに実ダイジェスト参照を設定します。有効構文だけではregistryアクセス、DB鮮度、package検出範囲は成立しません。
 
 </details>
 
-### 2. image signing と verification に使用されるツールはどれですか？
+<span id="_2-which-tool-is-used-for-image-signing-and-verification"></span>
 
-A. Trivy
-B. Cosign/Sigstore
-C. Clair
-D. Anchore
+### 2. イメージダイジェストと承認署名者の関係を検証するツールはどれですか？
+
+- A. TrivyのCVEデータベース
+- B. Cosign/Sigstore
+- C. Clairのパッケージスキャナー
+- D. Docker imagePullPolicy
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B. Cosign/Sigstore**
+**正解: B. Cosign/Sigstore**
 
-**解説:**
-Cosign は Sigstore project の一部であり、container image signing と verification のためのツールです:
-```bash
-# Sign image
-cosign sign --key cosign.key myregistry/myimage:tag
-
-# Verify signature
-cosign verify --key cosign.pub myregistry/myimage:tag
-```
-
-Trivy、Clair、Anchore は vulnerability scanner です。
+Cosignは鍵またはOIDC identity/issuer、digest、必要な透明性証拠を検証します。署名は既知脆弱性がないことを保証しません。
 
 </details>
 
-### 3. 「Shift-Left」security approach とは何を意味しますか？
+<span id="_3-what-does-the-shift-left-security-approach-mean"></span>
 
-A. security を operations phase まで延期する
-B. security を development の早期段階に移動する
-C. Security team のみが責任を持つ
-D. automation を削除する
+### 3. シフトレフトセキュリティとは何ですか？
+
+- A. 本番まで確認を先送りする
+- B. 開発、PR、ビルドの早い段階で確認する
+- C. ソースアクセスをセキュリティチームに限定する
+- D. 本番での再スキャンをなくす
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B. security を development の早期段階に移動する**
+**正解: B. 開発、PR、ビルドの早い段階で確認する**
 
-**解説:**
-Shift-Left security は、security check を development cycle の可能な限り早い段階に移動します:
-- IDE 段階での scanning
-- CI/CD pipeline での build gate
-- PR review 中の security check
-
-問題が早く見つかるほど、修正コストは低くなります。
+早期確認はフィードバックを短縮します。新CVEと実行時動作にはrelease後もregistry再スキャンとruntime検出が必要です。
 
 </details>
 
-### 4. Distroless image の主な特徴は何ですか？
+<span id="_4-what-is-the-main-characteristic-of-distroless-images"></span>
 
-A. すべての Linux utilities を含む
-B. application の実行に必要な最小限の component のみを含む
-C. debugging tools を含む
-D. package manager を含む
+### 4. 標準distroless runtimeイメージの特性は何ですか？
+
+- A. 全Linuxツールを含む
+- B. 最小限のアプリruntime構成要素
+- C. シェルとdebuggerを必ず含む
+- D. package managerが必須
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B. application の実行に必要な最小限の component のみを含む**
+**正解: B. 最小限のアプリruntime構成要素**
 
-**解説:**
-Distroless image には次の特徴があります:
-- shell（bash、sh など）がない
-- package manager がない
-- 不要な utilities がない
-- 最小限の attack surface
-- application runtime のみ
-
-security と image size の面でメリットがあります。
+標準runtimeはshell/package managerを省き、debug版は異なります。アプリbinary/libraryには脆弱性が残り得ます。
 
 </details>
 
-### 5. Amazon ECR image scanning の 2 つのタイプは何ですか？
+<span id="_5-what-are-the-two-types-of-amazon-ecr-image-scanning"></span>
 
-A. Basic scanning、Enhanced scanning
-B. Automatic scanning、Manual scanning
-C. Quick scanning、Deep scanning
-D. Free scanning、Paid scanning
+### 5. 現在のECR BasicとEnhancedはどう異なりますか？
+
+- A. BasicはAWSネイティブOSスキャン、EnhancedはInspectorでOS/言語packageをスキャン
+- B. Basicは常にClair、EnhancedはOSだけ
+- C. 両方がpushを自動拒否
+- D. Enhancedは全イメージを永久スキャン
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: A. Basic scanning、Enhanced scanning**
+**正解: A. BasicはAWSネイティブOSスキャン、EnhancedはInspectorでOS/言語packageをスキャン**
 
-**解説:**
-Amazon ECR scanning のタイプ:
-- **Basic scanning**: Clair ベース、OS package vulnerability scan
-- **Enhanced scanning**: Amazon Inspector ベース、OS + programming language packages、continuous scanning
-
-Enhanced scanning には追加コストがかかりますが、より包括的です。
+Basicは手動/scan-on-push、Enhancedはscan-on-push/continuousに対応します。findingsとenhancedFindings、ECRとInspectorイベントを区別します。
 
 </details>
 
-### 6. SBOM（Software Bill of Materials）とは何ですか？
+<span id="_6-what-is-sbom-software-bill-of-materials"></span>
 
-A. software license のリスト
-B. software component のリスト
-C. security vulnerability のリスト
-D. build command のリスト
+### 6. SBOMは何を提供しますか？
+
+- A. 脆弱性がない認証
+- B. ツールが検出したソフトウェア構成要素一覧
+- C. 承認署名者の自動証明
+- D. デプロイ認可
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B. software component のリスト**
+**正解: B. ツールが検出したソフトウェア構成要素一覧**
 
-**解説:**
-SBOM は、software に含まれるすべての component（libraries、dependencies、versions など）のリストです。supply chain security と vulnerability management に不可欠です:
-```bash
-# Generate SBOM with Trivy
-trivy image --format spdx-json -o sbom.json nginx:latest
-```
+SBOMは構成要素と関係を記録しますが、範囲が不完全な場合があります。digestへ結び付ける署名付きattestationと検証policyを別評価します。
 
 </details>
 
-### 7. Kyverno で image signature を検証する policy type はどれですか？
+<span id="_7-what-policy-type-verifies-image-signatures-in-kyverno"></span>
 
-A. validate
-B. mutate
-C. verifyImages
-D. generate
+### 7. 旧Kyverno ClusterPolicyでイメージ署名を確認するルールはどれですか？
+
+- A. validateのみ
+- B. mutateのみ
+- C. verifyImages
+- D. generateのみ
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C. verifyImages**
+**正解: C. verifyImages**
 
-**解説:**
-Kyverno の `verifyImages` rule は container image signature を検証します:
-```yaml
-spec:
-  rules:
-  - name: verify-signature
-    verifyImages:
-    - imageReferences:
-      - "myregistry/*"
-      attestors:
-      - entries:
-        - keys:
-            publicKeys: |-
-              -----BEGIN PUBLIC KEY-----
-              ...
-              -----END PUBLIC KEY-----
-```
+旧verifyImagesと新ImageValidatingPolicyを区別します。Kyverno 1.19.1例はCEL policyと、通常/init/ephemeralを対象とするregistry/digest制限を併用します。
 
 </details>
 
-### 8. image tag の代わりに digest を使用すべきなのはなぜですか？
+<span id="_8-why-should-you-use-digests-instead-of-image-tags"></span>
 
-A. 名前が短くなる
-B. immutability が保証される
-C. pull が速くなる
-D. storage space を節約できる
+### 8. タグでなくダイジェストを固定する理由は何ですか？
+
+- A. 常に短いから
+- B. 特定のイメージ内容を識別するから
+- C. 自動で署名検証するから
+- D. CVEを除去するから
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B. immutability が保証される**
+**正解: B. 特定のイメージ内容を識別するから**
 
-**解説:**
-Tag（例: `nginx:latest`）は、別の image を指すように変更できます。Digest（例: `nginx@sha256:abc123...`）は特定の image content の hash であり、immutable です:
-```yaml
-image: nginx@sha256:abc123def456...
-```
-
-これにより reproducibility と security が確保されます。
+タグは移動し得ますがdigestは内容を識別します。再現可能な成果物選択を支えますが、署名者信頼、脆弱性確認、可用性検証の代わりではありません。
 
 </details>
 
-### 9. Trivy がスキャンしないものはどれですか？
+<span id="_9-what-does-trivy-not-scan"></span>
 
-A. OS package vulnerabilities
-B. Language-specific dependencies
-C. Runtime behavior
-D. Secret detection
+### 9. Trivyの静的確認と別の領域はどれですか？
+
+- A. OS package識別
+- B. 言語依存スキャン
+- C. 稼働中syscall/process動作検出
+- D. ソース内secret検出
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C. Runtime behavior**
+**正解: C. 稼働中syscall/process動作検出**
 
-**解説:**
-Trivy は次をスキャンする static analysis tool です:
-- OS package vulnerabilities
-- Language-specific dependencies（npm、pip、go など）
-- IaC misconfigurations
-- Hardcoded secrets
-- Licenses
-
-runtime behavior analysis は Falco のような runtime security tool の領域です。
+package、設定誤り、secretスキャンとruntime動作検出は異なります。Falcoなどruntimeツールを別設計します。
 
 </details>
 
-### 10. container image registry security の best practice ではないものはどれですか？
+<span id="_10-which-is-not-a-container-image-registry-security-best-practice"></span>
 
-A. private registry を使用する
-B. image scanning を有効化する
-C. anonymous pulling を許可する
-D. vulnerable image push をブロックする
+### 10. 不適切なregistryアクセス運用はどれですか？
+
+- A. privateイメージの承認済みpull ID
+- B. publicイメージのdigest/署名検証
+- C. 任意の匿名push/削除を許可
+- D. registry、admission、scan gate権限を分離
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C. anonymous pulling を許可する**
+**正解: C. 任意の匿名push/削除を許可**
 
-**解説:**
-Registry security の best practice:
-- private registry を使用する
-- IAM ベースの authentication
-- image scanning を有効化する
-- vulnerable image push/pull をブロックする
-- Image signature verification
-- immutable tags または digests を使用する
-
-anonymous pulling は security risk であり、production environment では無効化すべきです。
+意図的publicイメージの匿名readは本質的に脆弱性ではありません。機密性、書込/削除権限、来歴、レート制限を別々に制御します。
 
 </details>
 
-### 11. CI/CD pipeline で image scanning が失敗した場合に推奨される action は何ですか？
+<span id="_11-what-is-the-recommended-action-when-image-scanning-fails-in-ci-cd-pipeline"></span>
 
-A. warning のみをログに記録する
-B. build を停止する
-C. 自動修正する
-D. 無視して続行する
+### 11. 合意したCIスキャン判定を通過しない場合、どうすべきですか？
+
+- A. 常に無視
+- B. 公開/署名前に停止して原因を調べる
+- C. 別イメージを再ビルドし未スキャンでpush
+- D. 終了コード0を強制
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B. build を停止する**
+**正解: B. 公開/署名前に停止して原因を調べる**
 
-**解説:**
-CI/CD pipeline では、Critical/High vulnerabilities が見つかった場合に build を停止すべきです:
-```bash
-trivy image --exit-code 1 --severity HIGH,CRITICAL myimage:tag
-```
-
-`--exit-code 1` は vulnerabilities が見つかった場合に non-zero exit code を返し、pipeline を失敗させます。
+policy違反とscanner/DB/権限エラーを区別し、結果を保持します。scan後に再ビルドした別成果物をデプロイしないでください。例外には理由、所有者、期限が必要です。
 
 </details>
 
-### 12. Alpine base image の利点ではないものはどれですか？
+<span id="_12-what-is-not-an-advantage-of-alpine-base-images"></span>
 
-A. サイズが小さい
-B. vulnerabilities が少ない
-C. glibc compatibility
-D. build が速い
+### 12. Alpineについて誤った想定はどれですか？
+
+- A. musl libcを使う
+- B. apk package managerを使う
+- C. glibc依存アプリと常に完全互換
+- D. 選択releaseのサポート寿命確認が必要
 
 <details>
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C. glibc compatibility**
+**正解: C. glibc依存アプリと常に完全互換**
 
-**解説:**
-Alpine Linux の特徴:
-- サイズが小さい（~5MB）
-- 最小限の packages
-- musl libc を使用する（glibc ではない）
-
-Alpine は glibc ではなく musl libc を使用するため、glibc に依存する一部の application では compatibility issues が発生する可能性があります。
+Alpineはmuslなのでglibc依存binaryで互換問題が起こり得ます。イメージサイズだけでは脆弱性数もビルド速度も保証されません。
 
 </details>

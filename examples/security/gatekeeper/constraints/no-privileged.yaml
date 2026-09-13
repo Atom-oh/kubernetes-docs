@@ -1,0 +1,14 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: DocsNoPrivileged
+metadata:
+  name: no-privileged
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
+    namespaces:
+    - policy-lab

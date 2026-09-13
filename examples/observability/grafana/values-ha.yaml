@@ -1,0 +1,50 @@
+replicas: 2
+deploymentStrategy:
+  type: RollingUpdate
+persistence:
+  enabled: false
+headlessService: true
+envValueFrom:
+  POD_IP:
+    fieldRef:
+      fieldPath: status.podIP
+extraSecretMounts:
+- name: grafana-runtime
+  secretName: grafana-runtime
+  mountPath: /run/grafana-secrets
+  readOnly: true
+  defaultMode: 288
+- name: grafana-database
+  secretName: grafana-database
+  mountPath: /run/grafana-database
+  readOnly: true
+  defaultMode: 288
+grafana.ini:
+  server:
+    root_url: https://grafana.example.com/
+  database:
+    type: postgres
+    host: $__file{/run/grafana-database/host}
+    name: grafana
+    user: grafana
+    password: $__file{/run/grafana-database/password}
+    ssl_mode: verify-full
+    ca_cert_path: /run/grafana-database/ca.crt
+  security:
+    cookie_secure: true
+  unified_alerting:
+    ha_listen_address: ${POD_IP}:9094
+    ha_advertise_address: ${POD_IP}:9094
+    ha_peers: grafana-headless.monitoring.svc.cluster.local:9094
+podDisruptionBudget:
+  minAvailable: 1
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/instance: grafana
+            app.kubernetes.io/name: grafana
+        topologyKey: kubernetes.io/hostname

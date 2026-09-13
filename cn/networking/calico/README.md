@@ -1,175 +1,111 @@
-# Calico 深入解析：企业级 Kubernetes 网络
+# Calico 深入解析：Kubernetes 网络与策略
 
-> **支持的版本**: Calico v3.29+ / Kubernetes 1.28+
-> **最后更新**: July 27, 2026
+> **审查基线**：Calico Open Source 3.32.2 · **最后更新**：2026 年 9 月 12 日
+> Calico 3.32 针对 Kubernetes 1.34–1.36 进行了测试。这不是无上限的 `3.29+ / Kubernetes 1.28+` 兼容性保证。
 
 ## 概述
 
-本节将帮助你全面了解 Calico 的核心概念和技术。我们将深入探讨 Calico 的架构、网络模式、网络策略、安全功能，以及与云服务提供商的集成。
+Calico 为 Kubernetes 提供网络和网络策略，另有取决于部署和产品版本的主机及虚拟机能力。本系列涵盖架构、封装与路由、BGP、策略、eBPF、EKS 集成和运维。应根据[当前要求](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)选择配置，不要依据未注明日期的成熟度或资源用量排名。
 
-## 什么是 Calico？
+### 2026 年 7 月：面向 Kubernetes 虚拟机的 Calico
 
-Calico 是一款面向容器、虚拟机和原生基于主机工作负载的开源网络与网络安全解决方案。Calico 最初由 Tigera 开发，如今已成为部署最广泛的 Kubernetes CNI 插件之一，凭借其稳定性、性能和强大的网络策略能力，受到全球企业的信赖。
+Tigera 的[官方公告](https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/)日期为 **2026 年 7 月 23 日**。它介绍 VMware 迁移中的虚拟机/容器网络、IP 连续性、L2 网桥扩展、策略和可观测性。这是产品公告，不承诺每项宣传能力都包含在 Calico Open Source 中。请检查确切版本、拓扑和功能状态：[Enterprise 3.23 发布说明](https://docs.tigera.io/calico-enterprise/latest/release-notes/)仍将 KubeVirt 在线迁移标记为技术预览。市场宣传中的可用性不会消除这一具体功能限制。
 
-### 2026 年 7 月更新：Kubernetes 上用于 VM 的 Calico
+## 兼容性和功能边界
 
-2026 年 7 月 21 日，Tigera 发布了 **Calico for VMs on Kubernetes**，这是一个由 eBPF 驱动的平台，可在单一 Kubernetes 原生控制平面上为虚拟机和容器提供网络与网络安全。它面向 VMware/NSX 迁移：迁移到 Kubernetes 上的 VM 可保留其 IP 地址，通过 L2 桥接扩展继续使用现有 VLAN，并继承与其相邻容器相同的 Calico 网络策略、微分段（包括策略层级和暂存策略）、路由、负载均衡和流量可见性。详见[新闻稿](https://www.storagenewsletter.com/2026/07/21/tigera-launches-calico-unified-platform-3-23-the-definitive-vmware-migration-solution-with-one-network-and-one-security-model-for-every-vm-and-container-on-kubernetes/)。
+- Calico 3.32.2 于 2026 年 8 月 30 日发布。已测试 Kubernetes 次版本为 1.34、1.35 和 1.36；Kubernetes 1.37 已可用不能证明兼容。
+- 一般 Linux 要求为内核 5.10 或更高版本及所需模块。受支持架构、厂商回移补丁及各功能更高要求请参阅 eBPF 指南。
+- Linux 数据平面包括 iptables、nftables 和 eBPF。默认值取决于安装器/平台；当前自主管理的 kubeadm Operator 安装可能默认使用 eBPF。不存在全面功能对等保证。
+- [Calico for Windows](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations) 支持特定 IPv4 VXLAN 和 BGP 配置，但不支持 Linux eBPF、IPIP、IPv6/双栈、WireGuard，也不支持所有 Linux 策略功能。
+- Open Source 包含分层策略、Goldmane 流聚合和 Whisker UI。DNS/FQDN 策略、应用层策略及其他高级能力在[产品比较](https://docs.tigera.io/calico/latest/about/calico-product-editions)中有版本边界。
 
-### 核心优势
+## Calico 与 Cilium
 
-1. **久经生产环境验证的成熟度**：自 2016 年以来被数千家组织用于生产环境
-2. **灵活的数据平面**：可选择 iptables、nftables 或 eBPF 数据平面
-3. **原生 BGP 支持**：为本地部署和混合部署提供一流的 BGP 集成
-4. **全面的网络策略**：Kubernetes NetworkPolicy 加上扩展的 Calico 策略
-5. **Windows 支持**：完整支持 Windows 容器网络
-6. **企业功能**：Tigera Calico Enterprise 增加可观测性、合规性和威胁防御功能
-7. **云原生集成**：与 AWS、GCP、Azure 和本地基础设施无缝集成
+| 需求 | Calico | Cilium |
+|---|---|---|
+| Linux 数据平面 | iptables / nftables / eBPF，取决于配置 | eBPF，适用 L7 功能使用 Envoy |
+| Kubernetes NetworkPolicy | 支持，另有 Calico 策略和层 | 支持，另有 Cilium 策略 |
+| L7 / DNS 策略 | 检查 Enterprise/Cloud 许可及功能状态 | 提供 HTTP 和 DNS 策略；有协议专属限制 |
+| BGP | 在适用网络模式中使用基于 BIRD 的路由 | BGP 控制平面通告；评估所需路由和拓扑 |
+| 可观测性 | Open Source Goldmane/Whisker 和指标；付费功能增加能力 | Hubble 和指标 |
+| Windows | 支持部分配置，但有显著限制 | Cilium 1.20 代理要求 Linux；不是 Windows beta 数据平面 |
+| kube-proxy 替代 | eBPF 数据平面提供 | 配置后可用 |
+| 多集群 / 网格 | 独立功能和集成；取决于版本 | Cluster Mesh 和可选服务网格功能；并非安装后全部启用 |
 
-### 为什么选择 Calico？
+两者都可用于生产。资源用量和运维复杂性取决于规则、流量、平台和调优。应在目标环境验证所需功能。不要仅因两种主 CNI 在不同环境各自可用，就将它们同时安装到一个集群。Cilium 的[带版本要求](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst)和本站 [Cilium 服务网格指南](../../service-mesh/cilium-service-mesh/README.md)介绍其平台及网格边界。
 
-- **经大规模验证**：为处理数十亿笔交易的公司提供生产工作负载支持
-- **运维简单**：安装和配置直接明了
-- **强大的社区**：拥有活跃的开源社区和丰富的文档
-- **供应商灵活性**：可在任何 Kubernetes 发行版中保持一致运行
-- **已具备合规能力**：内置审计日志和策略执行功能
+## 架构
 
-## 版本亮点：Calico v3.29
+![使用 Kubernetes 数据存储、可选 Typha、Felix、confd 和 BIRD 的 Calico BGP 部署示意。](../../.gitbook/assets/en-networking-calico-readme-0.png)
 
-Calico v3.29 在网络、安全和可观测性方面带来了显著改进：
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-readme-0.html)
 
-### 网络增强
-- **eBPF 数据平面 GA**：具备完整功能对等性的生产就绪 eBPF 数据平面
-- **改进的 BGP 性能**：优化路由收敛并降低内存占用
-- **增强的 VXLAN**：通过自动 MTU 检测改善跨子网路由
-- **IPv6 双栈**：全面支持双栈网络环境
+图中是 BGP 部署示意，不是强制组件布局。下方 EKS 仅策略示例使用 Kubernetes 数据存储，省略 BIRD/confd。“控制平面”描述逻辑角色，不表示组件放在 EKS 托管控制平面机器上。Typha 是独立 Deployment，不是每节点进程。
 
-### 安全改进
-- **DNS 策略增强**：更精细的基于 FQDN 的网络策略
-- **策略建议**：基于观测流量的 AI 辅助策略生成
-- **加密选项**：简化 WireGuard 的节点间加密配置
+| 组件 | 作用和范围 |
+|---|---|
+| Felix | 在工作负载节点上配置策略和适用路由 |
+| BIRD / confd | 该后端启用时提供 BGP 及其配置；仅策略模式下不存在 |
+| Typha | 可选数据存储更新缓存/扇出；Operator 随安装规模扩缩副本，不一定为三个 |
+| kube-controllers | Kubernetes 资源协调、同步和清理 |
+| Calico CNI / IPAM | Calico 管理网络时负责接口和 Pod 地址；EKS 示例中 Amazon VPC CNI/IPAM 保留这些职责 |
+| Calico API 服务器 | 默认模型中，在内部 CRD 之上提供聚合 `projectcalico.org/v3` API；原生 v3 CRD 是独立技术预览 |
 
-### 运维功能
-- **Calico API Server**：针对 Calico 资源的原生 Kubernetes API 聚合
-- **改进的诊断**：增强的故障排除工具和健康检查
-- **资源优化**：降低 CPU 和内存消耗
+使用[架构参考](https://docs.tigera.io/calico/latest/reference/architecture/overview)和实际渲染工作负载识别已启用组件。本指南使用 Kubernetes API 数据存储；基于 etcd 的设计有独立安装和功能约束。
 
-## CNI 对比
+## 网络模式和 MTU
 
-| 功能 | Calico | Cilium |
-|---------|--------|--------|
-| **核心技术** | iptables/eBPF | eBPF |
-| **成熟度** | 非常高（2016+） | 高（2017+） |
-| **网络策略** | L3-L4（L7 Enterprise） | L3-L7 |
-| **Service Mesh** | 独立（Enterprise） | 内置 |
-| **BGP 支持** | 强（原生） | 支持 |
-| **可观测性** | 基础（Enterprise：高级） | Hubble（强大） |
-| **Windows 支持** | 完整 | Beta |
-| **eBPF 数据平面** | 可选 | 必需 |
-| **学习曲线** | 中等 | 更陡峭 |
-| **资源使用量** | 较低 | 较高 |
-| **kube-proxy 替代** | 是（eBPF 模式） | 是 |
-| **多集群** | Federation | Cluster Mesh |
+| 模式 | 封装和路由 | 1500 字节 IPv4 底层网络的 Pod MTU 示例 |
+|---|---|---|
+| IPIP | IPv4 内封装 IPv4，通常用 BGP 分发路由 | 1480 |
+| VXLAN | 默认 UDP 4789；VXLAN Pod 路由不需要 BGP | 1450 |
+| 非封装 | 底层网络必须路由 Pod 地址；BGP 是分发路由的一种方式 | 1500 |
+| CrossSubnet | IPIP 或 VXLAN 设置，仅跨节点子网时封装 | 仍需为需要隧道的路径预留相应开销 |
 
-## 架构概述
+这些 MTU 是示例，不是通用常量。IPv6 VXLAN 开销、巨帧底层网络、WireGuard 和云路径限制会改变计算。IPIP 仅支持 IPv4；IPv4 VXLAN 也可用于不适合 IPIP 的环境。参阅 [MTU 配置](https://docs.tigera.io/calico/latest/networking/configuring/mtu)和[覆盖网络要求](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)。仅 BGP 可用不能证明每个底层跳点都能路由 Pod CIDR；同二层邻接不是非封装路由网络的通用前提。选择模式前应规划底层网络、端口、地址族和平台。
 
-Calico 的架构由多个关键组件协同工作，以提供网络和网络安全。
+## EKS：保留 Amazon VPC CNI 并添加 Calico 策略
 
-```mermaid
-flowchart TD
-    subgraph CP["Control Plane"]
-        A[kube-controllers]
-        B[Typha]
-        C[Calico API Server]
-    end
+此示例适用于已安装受支持 Amazon VPC CNI 的 Linux EC2 节点。它不替换 Pod 网络，也不是 Auto Mode 或 Fargate 安装方案。[官方 EKS 指南](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)要求：
 
-    subgraph DP["Data Plane - Per Node"]
-        D[Felix]
-        E[BIRD]
-        F[confd]
-        G[iptables/eBPF]
-    end
+1. 选择 Calico 为策略引擎前，禁用 Amazon VPC CNI 原生网络策略执行；同时运行两者会冲突。对于已有保护的集群，应规划并验证策略交接，避免出现无保护转换阶段。
+2. 设置 VPC CNI `ANNOTATE_POD_IP=true`，并授予其 `aws-node` ServiceAccount 对 Pod 的 `patch` 权限。通过已安装插件/配置所有者管理这些设置，防止协调将其还原。应用下方增量 RBAC 示例前，先检查实际 ServiceAccount 名称。
+3. 不要声称覆盖设有 `ENABLE_V4_EGRESS=true` 的 IPv6 Pod：Calico EKS 指南明确排除此组合的策略执行。
+4. 从下方选择**一种**安装方法。这些是全新安装示例，不是接管现有 Operator 或迁移活动 CNI 的命令。
 
-    subgraph DS["Datastore"]
-        H[Kubernetes API]
-        I[etcd - optional]
-    end
-
-    A -->|Watches| H
-    B -->|Fan-out| D
-    C -->|Aggregates| H
-    D -->|Programs| G
-    D -->|Configures| F
-    F -->|Templates| E
-    E -->|BGP Routes| E
-    H -->|Config| B
-
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef dataPlane fill:#FA8320,stroke:#333,stroke-width:1px,color:white
-    classDef datastore fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C controlPlane
-    class D,E,F,G dataPlane
-    class H,I datastore
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: calico-vpc-cni-pod-ip-patch
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: calico-vpc-cni-pod-ip-patch
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: calico-vpc-cni-pod-ip-patch
+subjects:
+  - kind: ServiceAccount
+    name: aws-node
+    namespace: kube-system
 ```
 
-### 关键组件
-
-| 组件 | 作用 | 运行位置 |
-|-----------|------|---------|
-| **Felix** | 在每个主机上配置路由和 ACL | 每个节点 |
-| **BIRD** | 用于路由分发的 BGP 守护进程 | 每个节点 |
-| **confd** | 监视 datastore，生成 BIRD 配置 | 每个节点 |
-| **Typha** | 用于降低 API server 负载的缓存代理 | 专用 Pod |
-| **kube-controllers** | 将 Kubernetes 资源与 Calico 同步 | 控制平面 |
-| **Calico API Server** | Kubernetes API 聚合层 | 控制平面 |
-
-## 网络模式
-
-Calico 支持多种网络模式，以满足不同的基础设施需求：
-
-### 1. IPIP 模式（默认）
-- 用于跨子网流量的 IP-in-IP 封装
-- MTU：1480 字节
-- 最适合：云环境、简单配置
-
-### 2. VXLAN 模式
-- VXLAN 封装（UDP 端口 4789）
-- MTU：1450 字节
-- 最适合：需要标准 overlay 协议的环境
-
-### 3. Direct/Unencapsulated 模式
-- 无封装，原生路由
-- MTU：1500 字节（完整）
-- 最适合：使用 BGP 的本地部署环境、对性能要求严格的工作负载
-
-### 模式选择指南
-
-```mermaid
-flowchart TD
-    A[Choose Networking Mode] --> B{BGP Available?}
-    B -->|Yes| C{L2 Adjacency?}
-    B -->|No| D[VXLAN Mode]
-    C -->|Yes| E[Direct Mode]
-    C -->|No| F{Cross-Subnet?}
-    F -->|Yes| G[IPIP CrossSubnet]
-    F -->|No| E
-    D --> H[Configure IPPool]
-    E --> H
-    G --> H
-```
-
-## Amazon EKS 集成
-
-Calico 可与 Amazon EKS 无缝集成，提供增强的网络策略能力。
-
-### 在 EKS 上快速安装
+### 方法 A：固定版本 Operator 清单
 
 ```bash
-# Install Calico operator
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/tigera-operator.yaml
-
-# Configure Calico for EKS (VXLAN mode)
-cat <<EOF | kubectl apply -f -
+set -euo pipefail
+CALICO_VERSION=v3.32.2
+kubectl create -f "https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/v1_crd_projectcalico_org.yaml"
+kubectl create -f "https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/tigera-operator.yaml"
+kubectl -n tigera-operator rollout status deployment/tigera-operator --timeout=300s
+kubectl apply -f - <<'YAML'
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
@@ -177,163 +113,128 @@ metadata:
 spec:
   kubernetesProvider: EKS
   cni:
-    type: Calico
+    type: AmazonVPC
   calicoNetwork:
     bgp: Disabled
-    ipPools:
-    - blockSize: 26
-      cidr: 10.244.0.0/16
-      encapsulation: VXLAN
-      natOutgoing: Enabled
-      nodeSelector: all()
-EOF
-
-# Verify installation
-kubectl get pods -n calico-system
-```
-
-### 使用 VPC CNI + Calico Policy 的 EKS
-
-对于使用 AWS VPC CNI 进行网络连接、但需要高级网络策略的 EKS 环境：
-
-```bash
-# Install Calico for network policy only
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
-```
-
-## 安装方法
-
-### 方法 1：Tigera Operator（推荐）
-
-```bash
-# Install the operator
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/tigera-operator.yaml
-
-# Install Calico with custom configuration
-cat <<EOF | kubectl apply -f -
+    linuxDataplane: Iptables
+---
 apiVersion: operator.tigera.io/v1
-kind: Installation
+kind: APIServer
 metadata:
   name: default
-spec:
-  calicoNetwork:
-    ipPools:
-    - blockSize: 26
-      cidr: 192.168.0.0/16
-      encapsulation: IPIP
-      natOutgoing: Enabled
-      nodeSelector: all()
-EOF
+spec: {}
+YAML
 ```
 
-### 方法 2：Helm 安装
+### 方法 B：固定版本 Helm 安装
 
-```bash
-# Add Calico Helm repository
-helm repo add projectcalico https://docs.tigera.io/calico/charts
-helm repo update
-
-# Install Calico
-helm install calico projectcalico/tigera-operator \
-  --version v3.29.0 \
-  --namespace tigera-operator \
-  --create-namespace \
-  --set installation.kubernetesProvider=EKS
-```
-
-### 方法 3：基于 Manifest 的安装
-
-```bash
-# For clusters with 50 nodes or less
-kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/calico.yaml
-
-# For larger clusters (enables Typha)
-kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/calico-typha.yaml
-```
-
-## 网络策略示例
-
-### 基本 Kubernetes NetworkPolicy
+完成相同 VPC CNI 前提条件。Calico 3.32 将 CRD 安装与 Operator chart 分离；新集群仅安装小型 Operator chart 不够。将这些 values 保存为 `calico-eks-values.yaml`：
 
 ```yaml
+installation:
+  kubernetesProvider: EKS
+  cni:
+    type: AmazonVPC
+  calicoNetwork:
+    bgp: Disabled
+    linuxDataplane: Iptables
+apiServer:
+  enabled: true
+```
+
+```bash
+set -euo pipefail
+helm repo add projectcalico https://docs.tigera.io/calico/charts
+helm repo update projectcalico
+helm template calico-crds projectcalico/crd.projectcalico.org.v1 --version v3.32.2   | kubectl apply --server-side -f -
+helm install calico projectcalico/tigera-operator --version v3.32.2   --namespace tigera-operator --create-namespace -f calico-eks-values.yaml
+```
+
+固定版本 chart 默认还启用 Goldmane 和 Whisker。审核渲染清单中的这些组件和访问控制。原生 `projectcalico.org/v3` CRD 是独立技术预览；此处示例使用常规内部 CRD 加聚合 API 服务器。
+
+### 先验证，再测试策略行为
+
+```bash
+kubectl get tigerastatus
+kubectl -n calico-system get pods -o wide
+kubectl -n calico-system rollout status daemonset/calico-node --timeout=300s
+kubectl wait --for=condition=Available apiservice/v3.projectcalico.org --timeout=300s
+kubectl get felixconfigurations.projectcalico.org
+```
+
+在依赖策略执行前，检查 degraded/progressing 状态，并用可销毁工作负载测试允许和拒绝的流量。Ready DaemonSet 不能证明策略有效。在 AmazonVPC 仅策略模式下，Calico IPPool 为空或没有 BIRD 会话不一定是故障：AWS 仍提供 Pod IPAM 和网络。
+
+### 完整 Calico 网络和其他安装方法
+
+EKS 上的完整 Calico 网络是独立的新集群设计。官方流程从没有工作负载节点开始，在添加节点前更改 CNI；不要在运行中的 VPC CNI 集群上应用 `cni.type: Calico` 片段。参阅 [EKS 集成](08-eks-integration.md)和官方 EKS 流程。对于没有现有 CNI 的自主管理集群，使用[本地部署指南](https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises)。直接清单仍是备选，但命名空间、Typha 配置和生命周期不同于 Operator 安装。应选择一个所有者，不要叠加 Helm、Operator 和 `calico.yaml` 安装。
+
+## 具有明确范围的策略示例
+
+使用专用 `calico-demo` 命名空间。以下入站和出站示例仅选择该命名空间；不是集群范围零信任部署。现有 Calico 层和更早的策略仍可改变结果。
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: calico-demo
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-frontend-to-backend
-  namespace: production
+  namespace: calico-demo
 spec:
   podSelector:
     matchLabels:
       app: backend
-  policyTypes:
-  - Ingress
+  policyTypes: [Ingress]
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: frontend
-    ports:
-    - protocol: TCP
-      port: 8080
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
 ```
 
-### Calico GlobalNetworkPolicy
+对等方 `podSelector` 指**同一命名空间**中的 frontend Pod。它不验证用户身份，不允许所有同命名空间流量，也不设置出站策略。下一个独立示例将演示命名空间的出站流量限制为通过 UDP/TCP 53 访问选定 CoreDNS Pod，并拒绝其他出站流量：
 
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
-  name: deny-all-egress-except-dns
+  name: calico-demo-dns-only
 spec:
+  namespaceSelector: kubernetes.io/metadata.name == 'calico-demo'
   selector: all()
-  types:
-  - Egress
+  order: 100
+  types: [Egress]
   egress:
-  - action: Allow
-    protocol: UDP
-    destination:
-      ports:
-      - 53
-  - action: Allow
-    protocol: TCP
-    destination:
-      ports:
-      - 53
-  - action: Deny
+    - action: Allow
+      protocol: UDP
+      destination:
+        namespaceSelector: kubernetes.io/metadata.name == 'kube-system'
+        selector: k8s-app == 'kube-dns'
+        ports: [53]
+    - action: Allow
+      protocol: TCP
+      destination:
+        namespaceSelector: kubernetes.io/metadata.name == 'kube-system'
+        selector: k8s-app == 'kube-dns'
+        ports: [53]
+    - action: Deny
 ```
 
-### 使用 FQDN 的 Calico NetworkPolicy
+先确认真实 DNS 端点和标签。此基于选择器的示例针对普通 CoreDNS Pod；不是 NodeLocal DNSCache 或 Auto Mode 系统解析器策略。仅端口 53 不能标识获授权 DNS 服务器。若还需要应用出站流量，应在启用最终拒绝前设计并测试显式允许规则。后续独立允许不能覆盖更早匹配的 Calico Deny。
+
+### FQDN 策略因产品版本而异
+
+Calico Enterprise/Cloud DNS 策略使用的 `destination.domains` 字段**不在 Open Source 3.32.2 NetworkPolicy 模式中**。不要将其应用于此 Open Source 安装。对于具有相应许可的部署，使用[基于域名的策略指南](https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy)，配置可信 DNS 服务器并允许 DNS 路径。有计划地限制域名：`*.amazonaws.com` 是宽泛允许，不是对一个 AWS 账户或服务的授权。DNS 到 IP 的授权不等同于验证 HTTP Host 或 TLS 身份。
+
+## 监控和健康状况
 
 ```yaml
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: allow-external-api
-  namespace: production
-spec:
-  selector: app == 'web'
-  types:
-  - Egress
-  egress:
-  - action: Allow
-    protocol: TCP
-    destination:
-      domains:
-      - "api.example.com"
-      - "*.amazonaws.com"
-      ports:
-      - 443
-```
-
-## 监控和可观测性
-
-### Prometheus 指标
-
-Calico 通过 Prometheus 暴露指标。需要监控的关键指标：
-
-```yaml
-# Felix metrics endpoint configuration
 apiVersion: projectcalico.org/v3
 kind: FelixConfiguration
 metadata:
@@ -343,121 +244,56 @@ spec:
   prometheusMetricsPort: 9091
 ```
 
-### 关键指标
+Felix 默认禁用指标。启用此监听器不会创建 Prometheus 抓取任务，也不意味着可安全公开；请按[指标指南](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)配置私有发现和访问控制。`flowLogsFileEnabled` 不是 Open Source FelixConfiguration 字段。使用受支持的 [Goldmane/Whisker 流日志路径](https://docs.tigera.io/calico/latest/observability/view-flow-logs)，不要复制 Enterprise 文件日志设置。
 
-| 指标 | 描述 |
-|--------|-------------|
-| `felix_active_local_endpoints` | 节点上的活跃 endpoint 数量 |
-| `felix_iptables_rules` | 已配置的 iptables 规则数量 |
-| `felix_ipsets_calico` | 维护的 IP 集合数量 |
-| `felix_int_dataplane_failures` | 数据平面配置失败次数 |
-| `felix_cluster_num_hosts` | 集群中的主机总数 |
+| 指标 | 含义 |
+|---|---|
+| `felix_active_local_endpoints` | 活动本地工作负载和主机端点 |
+| `felix_active_local_policies` | 此节点端点上生效的策略 |
+| `felix_iptables_rules` | 活动 iptables 规则；取决于数据平面 |
+| `felix_int_dataplane_failures` | 失败且将重试的数据平面更新 |
+| `felix_cluster_num_hosts` | Felix 的集群范围主机数；不要跨每个 Felix 实例求和 |
+| `typha_connections_accepted` | 累计接受的连接数，不是当前连接数 |
+| `typha_connections_active` | 当前打开的客户端连接 |
 
-### 健康检查端点
+参阅 [Felix](https://docs.tigera.io/calico/latest/reference/felix/prometheus) 和 [Typha](https://docs.tigera.io/calico/latest/reference/typha/prometheus) 指标参考。这些是组件健康/配置指标，不是通用拒绝数据包计数器。Felix 健康服务默认位于 localhost:9099；Typha 健康服务启用时通常使用 9098。检查前先阅读已部署探针：在笔记本电脑上运行 `curl localhost` 不能检查节点健康服务器。
 
-```bash
-# Check Felix health
-curl -s http://localhost:9099/liveness
-curl -s http://localhost:9099/readiness
-
-# Check Typha health
-curl -s http://localhost:9098/liveness
-```
-
-## 故障排除快速参考
-
-### 常用命令
+## 故障排除
 
 ```bash
-# Check Calico system status
-kubectl get pods -n calico-system
-
-# View Calico node status
-kubectl get nodes -o custom-columns=NAME:.metadata.name,CALICO:.status.conditions[*].type
-
-# Check IP pools
-kubectl get ippools -o wide
-
-# View network policies
-kubectl get networkpolicies -A
-kubectl get globalnetworkpolicies
-
-# Felix logs
-kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node
-
-# BIRD status (BGP)
-kubectl exec -n calico-system calico-node-xxxxx -c calico-node -- birdcl show protocols
+kubectl -n calico-system get pods -o wide
+kubectl -n calico-system logs -l k8s-app=calico-node -c calico-node --tail=100
+kubectl get installations.operator.tigera.io default -o yaml
+kubectl get networkpolicies.networking.k8s.io -A
+kubectl get networkpolicies.projectcalico.org -A
+kubectl get globalnetworkpolicies.projectcalico.org
+kubectl get ippools.projectcalico.org -o wide
 ```
 
-### 常见问题和解决方案
+Operator 安装通常使用 `calico-system`；直接清单可能使用 `kube-system`。使用完全限定 API 资源名区分 Kubernetes 和 Calico NetworkPolicy。`kubectl get nodes ...status.conditions` 不是 Calico 路由状态命令。BIRD 状态命令仅适用于启用 BGP 的情况，`calicoctl node status` 需要适当 Calico 节点环境，而非任意管理员笔记本电脑。
 
-| 问题 | 诊断 | 解决方案 |
-|-------|-----------|----------|
-| Pod 卡在 ContainerCreating | 检查 Felix 日志中的 IPAM 错误 | 验证 IPPool 配置 |
-| 跨节点连接失败 | 检查封装模式 | 确保已启用 IPIP/VXLAN |
-| 网络策略未生效 | 检查策略顺序和 selector | 使用 `calicoctl` 验证策略 |
-| Felix CPU 使用率高 | iptables 规则过多 | 考虑使用 eBPF 数据平面 |
+| 症状 | 更改配置前的调查内容 |
+|---|---|
+| Pod 没有 IP | 先确定 IPAM 所有者：仅策略 EKS 检查 VPC CNI 日志/容量，否则检查 Calico IPAM |
+| 跨节点失败 | 路由、底层网络/防火墙权限、MTU 和所选封装；盲目启用隧道可能加重故障 |
+| 策略不匹配 | 端点标签、命名空间、方向、层/顺序、现有策略和实际数据平面 |
+| CPU 高 | 流量/规则规模及指标/性能剖析证据；eBPF 迁移是规划更改，不是即时通用修复 |
 
-## 深入解析目录
+仅在需要时使用匹配版本的 [calicoctl](https://docs.tigera.io/calico/latest/reference/calicoctl/)，选择实际操作系统/CPU 架构并验证发布制品。绝不能仅因缺少 BGP 或 Calico IPAM 状态就判定仅策略模式故障。
 
-**[第 1 部分：Calico 简介](01-introduction.md)**
-- 什么是 Calico 及其项目历史
-- Lab 环境设置
-- 核心功能概述
-- 使用案例和部署场景
-- 社区和治理
+## 深入学习目录
 
-**[第 2 部分：Calico 架构深入解析](02-architecture.md)**
-- 组件架构概述
-- Felix：Calico Agent
-- BIRD：BGP 路由守护进程
-- confd：配置管理
-- Typha：扩展组件
-- kube-controllers：Kubernetes 集成
-- Datastore 选项
-- 数据包流分析
+| 部分 | 主题 |
+|---|---|
+| [1](01-introduction.md) | 简介、项目历史和实验设置 |
+| [2](02-architecture.md) | 组件、数据存储和数据包流程 |
+| [3](03-networking-modes.md) | 封装、直接路由和 MTU |
+| [4](04-bgp-deep-dive.md) | BGP、路由反射器和外部集成 |
+| [5](05-network-policy.md) | NetworkPolicy、策略层和策略设计 |
+| [6](06-ebpf-dataplane.md) | eBPF 设置、限制和故障排除 |
+| [7](07-advanced-topics.md) | 高级网络/安全主题 |
+| [8](08-eks-integration.md) | EKS 和 VPC CNI 集成 |
+| [9](09-operations.md) | 运维和诊断 |
+| [术语表](glossary.md) | 术语 |
 
-**[第 3 部分：网络模式](03-networking-modes.md)**
-- IPIP 封装模式
-- VXLAN 封装模式
-- Direct/Unencapsulated 模式
-- 模式比较和选择
-- 性能基准测试
-- 云服务提供商兼容性
-- MTU 优化
-
-## 选择指南：Calico 与 Cilium
-
-### 在以下情况下选择 Calico：
-- 你需要经过生产环境验证的稳定性和成熟度
-- 需要 Windows 容器支持
-- 与现有网络基础设施的 BGP 集成至关重要
-- 相比高级功能，你更偏好运维简单性
-- 资源效率是优先事项
-- 你已熟悉基于 iptables 的网络
-
-### 在以下情况下选择 Cilium：
-- 你需要高级 L7 网络策略
-- 希望具备内置 Service Mesh 能力
-- Hubble 的深度可观测性非常重要
-- 你希望利用前沿 eBPF 功能
-- 需要使用 Cluster Mesh 的多集群连接
-
-### 混合方式
-一些组织同时使用两者：
-- 对需要稳定性的生产工作负载使用 Calico
-- 对探索新功能的开发/预发布环境使用 Cilium
-
-## 参考资料
-
-- [Calico 官方文档](https://docs.tigera.io/calico/latest/about/)
-- [Calico GitHub 仓库](https://github.com/projectcalico/calico)
-- [Tigera Calico Enterprise](https://www.tigera.io/tigera-products/calico-enterprise/)
-- [Calico 网络策略指南](https://docs.tigera.io/calico/latest/network-policy/)
-- [Amazon EKS Calico 集成](https://docs.aws.amazon.com/eks/latest/userguide/calico.html)
-- [calicoctl 参考](https://docs.tigera.io/calico/latest/reference/calicoctl/)
-- [Calico eBPF 数据平面](https://docs.tigera.io/calico/latest/operations/ebpf/)
-
-## 测验
-
-要测试你在本节中学到的内容，请尝试 [Calico 深入解析测验](../../quizzes/networking/calico/01-introduction-quiz.md)。
+[Calico 简介测验](../../quizzes/networking/calico/01-introduction-quiz.md) · [官方文档](https://docs.tigera.io/calico/latest/about/) · [3.32.2 发布](https://github.com/projectcalico/calico/releases/tag/v3.32.2)

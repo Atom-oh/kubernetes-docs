@@ -1,2296 +1,335 @@
 # vCluster
 
-> **支持的版本**: vCluster v0.21+, vCluster Pro v0.21+
-> **最后更新**: June 2025
+> **最后更新**：2026 年 9 月 13 日 · 审查基线：vCluster 0.37.0
 
-## Table of Contents
+## 概念和隔离边界
 
-- [Overview](#overview)
-- [Learning Objectives](#learning-objectives)
-- [vCluster Architecture](#vcluster-architecture)
-- [EKS Installation and Configuration](#eks-installation-and-configuration)
-- [Virtual Cluster Operations](#virtual-cluster-operations)
-- [Multi-Tenancy Patterns](#multi-tenancy-patterns)
-- [Security and Isolation](#security-and-isolation)
-- [Backstage + vCluster Integration](#backstage--vcluster-integration)
-- [Production Operations](#production-operations)
-- [Best Practices](#best-practices)
-- [References](#references)
+vCluster 可为租户提供独立 Kubernetes API、控制器和数据存储。在此**共享节点**示例中，工作负载运行于宿主集群节点，共享内核、CNI、CSI 和容量。独立 API/RBAC 不等于完整硬件、网络或性能隔离。
 
----
+| 模式 | 需评估的边界 |
+| --- | --- |
+| 命名空间 | 共享 API 服务器、集群资源和节点；需要 RBAC、配额和网络策略。 |
+| 共享节点 vCluster | 分离租户 API，同时共享工作负载节点、CNI 和 CSI。 |
+| 专用/私有节点 | 验证节点放置及实际 Private Nodes CNI/CSI 边界。 |
+| Standalone | 在没有宿主控制平面集群的基础设施上运行的另一部署模式。 |
+| 独立 Kubernetes 集群 | 隔离仍取决于共享账户、VPC、管理员和硬件。 |
 
-## Overview
+公共仓库使用 Apache 2.0。单独检查发行镜像、Platform 功能、支持和许可。原先“自 2024 年 11 月起为 CNCF Sandbox”的说法无法从官方项目页面确认，已移除。Kubernetes 一致性不同于 CNCF 项目成员资格。
 
-### What is vCluster?
+不要承诺 30 秒内创建、100–200MiB 开销、数百集群或节省 60–70%。测量实际配置、宿主 API 负载、PVC、镜像拉取、工作负载和计费模型。
 
-vCluster 是 Loft Labs 推出的开源项目，用于创建功能完整的 virtual Kubernetes clusters（虚拟 Kubernetes 集群），这些集群运行在 host Kubernetes cluster（宿主 Kubernetes 集群）的 namespace 内。每个 virtual cluster 都有自己专用的 API server、control plane（控制平面）和 Syncer，但会共享 host cluster 底层的 worker nodes 和 container runtime。从用户或 workload 的视角看，virtual cluster 与真实 cluster 无法区分 -- 它支持 CRDs、admission webhooks、RBAC 以及完整的 Kubernetes API -- 但不需要额外基础设施。
+![共享节点控制平面和共享工作节点](../.gitbook/assets/en-platform-engineering-08-vcluster-10.png)
 
-不同于仅依赖 namespaces 和 RBAC 的传统 multi-tenancy 方法，vCluster 提供真正的 control plane 隔离。每个 tenant 都会获得完整的 Kubernetes control plane，可在其中以 cluster-admin 身份操作，安装自己的 CRDs，配置自己的 admission controllers，并管理 cluster-scoped resources -- 这一切都不会影响其他 tenants 或 host cluster。
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-10.html)
 
-### Why Virtual Clusters?
+## 当前版本和基线
 
-Kubernetes 中传统的 multi-tenancy 方法各自都有明显取舍：
+审查时，GitHub latest 端点返回 0.36.1，但已验证 2026 年 9 月 8 日的显式稳定 0.37.0 发布。因此示例针对 CLI/chart 0.37.0 和已验证 ghcr.io/loft-sh/kubernetes:v1.36.3 镜像。镜像执行及完整运行时兼容性仍需单独检查。
 
-- **Namespace isolation** 提供基本隔离，但无法隔离 CRDs、cluster-scoped resources 或 admission webhooks。Tenants 共享单个 API server，并且必须围绕共享资源进行协调。
-- **Separate physical clusters** 提供强隔离，但会成倍增加基础设施成本、运维开销和管理复杂度。Provisioning 一个新 cluster 需要数分钟到数小时。
-- **Virtual clusters** 介于两者之间：它们在共享底层 compute、storage 和 networking 基础设施的同时，提供强隔离（每个 tenant 都获得自己的 API server 和完整 cluster-admin 访问权限）。
+当前模式没有旧 k3s/k0s 发行版设置。区分 k8s 配置、后备存储和确切版本。默认 chart 镜像为 vcluster-pro；仅名称不决定源码许可或免费使用权。
 
-### Multi-Tenancy Approach Comparison
-
-| Criteria | Namespace Isolation | vCluster | Physical Cluster |
-|----------|-------------------|----------|-----------------|
-| **Isolation Level** | Low (shared API server) | High (dedicated API server) | Highest (separate infrastructure) |
-| **CRD Isolation** | None (shared across cluster) | Full (per-vCluster CRDs) | Full |
-| **Cluster-Admin Access** | Not possible for tenants | Yes (within vCluster) | Yes |
-| **Admission Webhooks** | Shared (cluster-wide) | Isolated (per-vCluster) | Isolated |
-| **RBAC Complexity** | High (many role bindings) | Low (cluster-admin per tenant) | Low |
-| **Provisioning Time** | Seconds (create namespace) | Seconds to minutes | Minutes to hours |
-| **Infrastructure Cost** | Lowest (shared everything) | Low (shared nodes, minimal overhead) | Highest (dedicated nodes) |
-| **Resource Overhead** | None | ~100-200 MiB per vCluster | Full control plane per cluster |
-| **Operational Overhead** | Low | Medium | High (cluster lifecycle) |
-| **Node Sharing** | Yes | Yes | No (unless multi-cluster scheduling) |
-| **Network Isolation** | Requires NetworkPolicy | Requires NetworkPolicy + Syncer rules | Physical separation possible |
-| **Scalability** | Limited by API server load | Hundreds per host cluster | Limited by infrastructure budget |
-| **GitOps Compatibility** | Native | Native (standard kubeconfig) | Native |
-
-### CNCF Sandbox Project
-
-vCluster 于 2024 年 11 月被 CNCF Sandbox 接纳，这表明 cloud-native 社区认可 virtual clusters 是 multi-tenancy 和 platform engineering 的合法模式。该项目在 GitHub 上已有超过 7,000 个 stars，并被从初创公司到 Fortune 500 企业的各种组织用于生产环境。vCluster Pro 是 Loft Labs 的商业产品，增加了 centralized management、Sleep Mode、Auto-Delete 和 advanced RBAC 等功能 -- 这些功能面向大规模 multi-tenant 运维而设计。
-
----
-
-## Learning Objectives
-
-完成本文档后，你将能够：
-
-1. **解释** virtual cluster 概念，以及 vCluster 如何在单个 host cluster 内实现 control plane 隔离
-2. **比较** multi-tenancy 方法（namespaces、vCluster、physical clusters），并为你的用例选择合适策略
-3. **安装** vCluster 到 Amazon EKS，使用 CLI 和 Helm，并配置 EKS-specific 设置以支持 EBS CSI、ALB Ingress 和 IRSA
-4. **创建和管理** virtual clusters -- 包括 pause、resume 和 deletion 等 lifecycle operations
-5. **配置** resource synchronization 规则，以控制哪些 Kubernetes resources 在 virtual cluster 与 host cluster 之间流动
-6. **设计** 面向 development environments、CI/CD pipelines、preview environments 和 multi-tenant SaaS platforms 的 multi-tenancy patterns
-7. **实现** 安全控制，包括 NetworkPolicy isolation、ResourceQuota enforcement、Pod Security Standards 和 RBAC
-8. **集成** vCluster 与 Backstage 和 ArgoCD，在 Internal Developer Platform 中实现 self-service virtual cluster provisioning
-9. **运营** 生产环境中的 vCluster，包括 monitoring、backup、upgrade strategies，并通过 Sleep Mode 和 Auto-Delete 进行 cost optimization
-
----
-
-## vCluster Architecture
-
-### Virtual Control Plane
-
-每个 vCluster 都在 host cluster 上的单个 pod（或 StatefulSet）中运行一个轻量级 Kubernetes control plane。virtual control plane 由 API server、controller manager 和 data store（etcd 或轻量级替代方案）组成。Syncer 组件通过在两者之间同步选定资源，连接 virtual cluster 与 host cluster。
-
-```mermaid
-graph TB
-    subgraph "Host Cluster (EKS)"
-        subgraph "Namespace: team-alpha"
-            subgraph "vCluster Pod"
-                API1[API Server<br/>k3s / k0s / k8s]
-                CM1[Controller Manager]
-                ETCD1[Data Store<br/>SQLite / etcd]
-                SYNC1[Syncer]
-            end
-            SVC1[Service:<br/>vcluster-team-alpha]
-        end
-
-        subgraph "Namespace: team-beta"
-            subgraph "vCluster Pod "
-                API2[API Server]
-                CM2[Controller Manager]
-                ETCD2[Data Store]
-                SYNC2[Syncer]
-            end
-            SVC2[Service:<br/>vcluster-team-beta]
-        end
-
-        NODES[Shared Worker Nodes]
-    end
-
-    API1 --> SYNC1
-    SYNC1 -->|"Sync pods, services<br/>to host namespace"| NODES
-    API2 --> SYNC2
-    SYNC2 -->|"Sync pods, services<br/>to host namespace"| NODES
-
-    DEV1[Developer A<br/>kubectl] -->|kubeconfig| SVC1
-    DEV2[Developer B<br/>kubectl] -->|kubeconfig| SVC2
-
-    style API1 fill:#2196F3,color:#fff
-    style API2 fill:#4CAF50,color:#fff
-    style SYNC1 fill:#FF9800,color:#fff
-    style SYNC2 fill:#FF9800,color:#fff
-    style NODES fill:#9C27B0,color:#fff
-```
-
-### Syncer Component
-
-Syncer 是 vCluster 背后的核心创新。它充当 virtual cluster 与 host cluster 之间的双向桥梁，跨边界翻译和同步 Kubernetes resources。当用户在 vCluster 内创建 Pod 时，Syncer 会在 host namespace 中创建对应的 Pod -- 但会重写名称、labels 和 metadata，以避免 virtual clusters 之间发生冲突。
-
-```mermaid
-sequenceDiagram
-    participant User as Developer
-    participant vAPI as vCluster API Server
-    participant Syncer as Syncer
-    participant Host as Host Cluster API
-
-    User->>vAPI: kubectl apply -f deployment.yaml
-    vAPI->>vAPI: Store in vCluster etcd
-    vAPI->>vAPI: Controller creates Pods
-    Syncer->>vAPI: Watch for new Pods
-    vAPI-->>Syncer: New Pod detected
-    Syncer->>Syncer: Rewrite metadata<br/>(name, namespace, labels)
-    Syncer->>Host: Create Pod in host namespace
-    Host-->>Syncer: Pod scheduled, running
-    Syncer->>vAPI: Update Pod status
-
-    Note over Syncer: Continuous reconciliation loop
-    Host-->>Syncer: Pod status change
-    Syncer->>vAPI: Sync status to vCluster
-```
-
-**Resource synchronization behavior:**
-
-| Resource Type | Direction | Behavior |
-|--------------|-----------|----------|
-| Pods | vCluster -> Host | Created in host namespace with rewritten names |
-| Services | vCluster -> Host | Synced to host; ClusterIP re-mapped |
-| Endpoints | Bidirectional | Kept in sync for service discovery |
-| ConfigMaps | vCluster -> Host (for mounted) | Only synced if referenced by a synced Pod |
-| Secrets | vCluster -> Host (for mounted) | Only synced if referenced by a synced Pod |
-| Ingresses | vCluster -> Host | Synced to host for ingress controller processing |
-| PersistentVolumeClaims | vCluster -> Host | Synced to host for storage provisioning |
-| PersistentVolumes | Host -> vCluster | Synced from host after PVC binding |
-| StorageClasses | Host -> vCluster | Synced from host so tenants can select storage |
-| IngressClasses | Host -> vCluster | Synced from host for ingress configuration |
-| CSIDrivers | Host -> vCluster | Synced from host for volume support |
-| CSINodes | Host -> vCluster | Synced from host for scheduling |
-| Nodes | Host -> vCluster (virtual) | Fake or real node objects synced for scheduling |
-
-### Backing Distributions
-
-vCluster 支持三种 Kubernetes distributions 作为 virtual control plane backend：
-
-| Distribution | Default | Control Plane Footprint | CRD Support | Notes |
-|-------------|---------|------------------------|-------------|-------|
-| **k3s** | Yes | ~100 MiB RAM, ~0.5 CPU | Full | Lightweight, fast startup. Built-in CoreDNS, Traefik disabled in vCluster mode. |
-| **k0s** | No | ~150 MiB RAM, ~0.5 CPU | Full | Zero-friction Kubernetes by Mirantis. Single binary, minimal dependencies. |
-| **Vanilla k8s** | No | ~500 MiB RAM, ~1 CPU | Full | Upstream Kubernetes API server + etcd. Highest fidelity, highest resource cost. Recommended when exact API compatibility is critical. |
-
-Distribution 的选择会影响资源开销，但不会影响功能。三者都支持 CRDs、admission webhooks 和完整的 Kubernetes API surface。对大多数 platform engineering 用例而言，k3s 在兼容性与资源效率之间提供最佳平衡。
-
-### Relationship with Host Cluster
-
-virtual cluster 与 host cluster 之间保持清晰的职责分离：
-
-- **Virtual cluster owns**：API resources（Deployments、StatefulSets、CRDs、RBAC、admission webhooks）、workload scheduling decisions（从 tenant 视角看）以及 vCluster 内的 namespace-scoped objects。
-- **Host cluster owns**：在 nodes 上实际调度 Pod、networking（CNI、NetworkPolicy enforcement）、storage provisioning（CSI drivers、StorageClasses）以及物理资源分配。
-- **Syncer bridges**：将 virtual cluster resources 翻译为 host cluster resources，并将状态传播回去。Syncer 会重写 resource names 以包含 vCluster name，从而防止冲突。例如，vCluster `team-alpha` 中名为 `nginx` 的 Pod 会在 host namespace 中变为 `nginx-x-default-x-team-alpha`。
-
----
-
-## EKS Installation and Configuration
-
-### Prerequisites
-
-在 EKS 上安装 vCluster 之前，请确保满足以下条件：
-
-```bash
-# Verify EKS cluster access
-kubectl cluster-info
-kubectl get nodes
-
-# Required: Helm v3.10+
-helm version
-
-# Required: kubectl v1.28+
-kubectl version --client
-```
-
-### vCluster CLI Installation
-
-vCluster CLI 提供了创建和管理 virtual clusters 的最简单方式：
-
-```bash
-# macOS
-brew install loft-sh/tap/vcluster
-
-# Linux (amd64)
-curl -L -o vcluster "https://github.com/loft-sh/vcluster/releases/latest/download/vcluster-linux-amd64"
-chmod +x vcluster
-sudo mv vcluster /usr/local/bin/
-
-# Verify installation
-vcluster --version
-# vcluster version 0.21.x
-```
-
-### Helm Installation
-
-对于 GitOps workflows 和 programmatic management，可以通过 Helm 部署 vCluster：
-
-```bash
-# Add the vCluster Helm repository
-helm repo add loft-sh https://charts.loft.sh
-helm repo update
-
-# Install a vCluster named "team-alpha" in namespace "team-alpha"
-kubectl create namespace team-alpha
-
-helm install team-alpha loft-sh/vcluster \
-  --namespace team-alpha \
-  --values vcluster-values.yaml \
-  --version 0.21.0
-```
-
-### vcluster.yaml Configuration File
-
-`vcluster.yaml` 文件控制 virtual cluster 的方方面面。下面是一个面向 EKS 的完整、production-ready 配置：
+此共享节点配置使用一个副本、嵌入式数据库和 PVC。操作员必须准备 gp3 存储/CSI、配额、身份和宿主策略。
 
 ```yaml
-# vcluster.yaml -- Complete EKS production configuration
-# Documentation: https://www.vcluster.com/docs/vcluster/configure/vcluster-yaml
-
-# --- Control Plane Configuration ---
 controlPlane:
-  # Backing distribution: k3s (default), k0s, or k8s
   distro:
-    k3s:
+    k8s:
       enabled: true
       image:
-        repository: rancher/k3s
-        tag: v1.31.2-k3s1
-      # Disable k3s built-in components not needed in vCluster
-      extraArgs:
-        - --disable=traefik,servicelb,metrics-server,local-storage
-
-  # StatefulSet configuration for the vCluster control plane
+        tag: v1.36.3
+  backingStore:
+    database:
+      embedded:
+        enabled: true
   statefulSet:
+    highAvailability:
+      replicas: 1
     resources:
       requests:
         cpu: 200m
-        memory: 256Mi
+        memory: 512Mi
+        ephemeral-storage: 1Gi
       limits:
-        cpu: "1"
-        memory: 1Gi
+        cpu: "2"
+        memory: 4Gi
+        ephemeral-storage: 10Gi
     persistence:
-      # Use EBS for the vCluster data store
-      size: 10Gi
-      storageClass: gp3
-    labels:
-      app.kubernetes.io/managed-by: vcluster
-      team: platform
-    scheduling:
-      nodeSelector:
-        node.kubernetes.io/instance-type: m6i.large
-      tolerations:
-        - key: dedicated
-          operator: Equal
-          value: vcluster
-          effect: NoSchedule
-
-  # Ingress for API server access (optional -- alternative to LoadBalancer)
-  ingress:
-    enabled: false
-
-  # Service configuration for API server access
+      volumeClaim:
+        enabled: true
+        storageClass: gp3
+        size: 10Gi
+        retentionPolicy: Retain
   service:
     spec:
-      type: ClusterIP  # Use ClusterIP with vcluster connect, or LoadBalancer for direct access
-
-# --- Syncer Configuration ---
+      type: ClusterIP
+  ingress:
+    enabled: false
 sync:
-  # Resources synced FROM the virtual cluster TO the host cluster
+  fromHost:
+    nodes:
+      enabled: false
+    storageClasses:
+      enabled: true
   toHost:
     pods:
       enabled: true
     services:
       enabled: true
-    configmaps:
+    configMaps:
       enabled: true
+      all: false
     secrets:
       enabled: true
-    endpoints:
-      enabled: true
-    persistentvolumeclaims:
+      all: false
+    persistentVolumeClaims:
       enabled: true
     ingresses:
-      enabled: true
-    serviceaccounts:
-      enabled: true
-    networkpolicies:
-      enabled: true
-
-  # Resources synced FROM the host cluster TO the virtual cluster
-  fromHost:
-    nodes:
-      enabled: true
-      selector:
-        labels:
-          vcluster-enabled: "true"
-    storageClasses:
-      enabled: true
-    ingressClasses:
-      enabled: true
-    csiDrivers:
-      enabled: true
-    csiNodes:
-      enabled: true
-    csiStorageCapacities:
-      enabled: true
-
-# --- Networking Configuration ---
-networking:
-  # Reuse host cluster DNS for external resolution
-  replicateServices:
-    fromHost:
-      - from: kube-system/aws-load-balancer-webhook-service
-        to: kube-system/aws-load-balancer-webhook-service
-    toHost: []
-
-  # Resolve DNS via host cluster CoreDNS
-  resolveDNS:
-    - hostname: "*.amazonaws.com"
-      target: host
-      service: ""
-
-# --- Plugin Configuration ---
-plugins: {}
-
-# --- RBAC Configuration ---
-rbac:
-  # Role used by the Syncer on the host cluster
-  role:
-    # Extra rules needed for EKS-specific resources
-    extraRules:
-      - apiGroups: ["networking.k8s.io"]
-        resources: ["networkpolicies"]
-        verbs: ["create", "delete", "patch", "update", "get", "list", "watch"]
-
-  # ClusterRole for host-level access
-  clusterRole:
-    extraRules:
-      - apiGroups: ["storage.k8s.io"]
-        resources: ["storageclasses", "csinodes", "csidrivers", "csistoragecapacities"]
-        verbs: ["get", "list", "watch"]
-
-# --- Export / Import CRDs ---
-exportKubeconfig:
-  context: vcluster-team-alpha
-  server: https://localhost:8443
-
-# --- Telemetry ---
+      enabled: false
+    serviceAccounts:
+      enabled: false
+    networkPolicies:
+      enabled: false
+privateNodes:
+  enabled: false
+policies:
+  podSecurityStandard: restricted
 telemetry:
   enabled: false
 ```
 
-### EKS-Specific Configuration
+配置通过实际模式和 Helm 检查。但 Helm 也能渲染运行时源码拒绝的嵌入式数据库/三副本组合。高可用需要受支持存储、法定人数、存储及恢复验证；仅增加副本不够。
 
-#### EBS CSI Driver Integration
+configMaps、serviceAccounts 和 persistentVolumeClaims 等键区分大小写。StorageClass/CSI 自动默认值取决于部署模式，因此不会普遍同步。此配置显式禁用 Ingress、ServiceAccount 和 NetworkPolicy 同步。
 
-Amazon EBS CSI driver 在 host cluster 上运行。vCluster tenants 通过 StorageClass synchronization 透明地使用它：
+![Pod 和被引用资源同步](../.gitbook/assets/en-platform-engineering-08-vcluster-11.png)
 
-```yaml
-# Verify EBS CSI driver is running on the host
-# kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-ebs-csi-driver
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-11.html)
 
-# vcluster.yaml -- StorageClass sync (enabled by default)
-sync:
-  fromHost:
-    storageClasses:
-      enabled: true
+区分虚拟 Deployment/ReplicaSet 控制器和实际宿主 Pod。Syncer 名称/标签转换取决于模式、长度和版本；不要在 IRSA 信任或运维脚本猜测名称。fromHost.nodes 可见性不会自动强制工作负载节点隔离。
 
-# Inside the vCluster, tenants can now use EBS StorageClasses:
-# kubectl get sc
-# NAME            PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE
-# gp3 (default)   ebs.csi.aws.com         Delete          WaitForFirstConsumer
-```
+## 安装和访问
 
-要让特定 StorageClass 在 vCluster 内可用：
-
-```yaml
-# StorageClass on the host cluster
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: gp3
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
-provisioner: ebs.csi.aws.com
-parameters:
-  type: gp3
-  encrypted: "true"
-volumeBindingMode: WaitForFirstConsumer
-allowVolumeExpansion: true
-```
-
-#### ALB Ingress Controller Integration
-
-AWS Load Balancer Controller 在 host cluster 上运行。vCluster 会将 Ingress resources 同步到 host，由 controller 处理：
-
-```yaml
-# vcluster.yaml -- Ingress sync configuration
-sync:
-  toHost:
-    ingresses:
-      enabled: true
-
-# Inside the vCluster, tenants create Ingresses that reference the ALB class:
-# ---
-# apiVersion: networking.k8s.io/v1
-# kind: Ingress
-# metadata:
-#   name: my-app
-#   annotations:
-#     alb.ingress.kubernetes.io/scheme: internet-facing
-#     alb.ingress.kubernetes.io/target-type: ip
-# spec:
-#   ingressClassName: alb
-#   rules:
-#     - host: app.example.com
-#       http:
-#         paths:
-#           - path: /
-#             pathType: Prefix
-#             backend:
-#               service:
-#                 name: my-app
-#                 port:
-#                   number: 80
-```
-
-#### IRSA (IAM Roles for Service Accounts) Integration
-
-IRSA 需要在 vCluster 与 host cluster 之间协调，因为实际的 Pods 运行在 host 上。Syncer 必须将 ServiceAccount annotations 同步到 host，以便 IRSA mutating webhook 能注入正确的 IAM credentials：
-
-```yaml
-# vcluster.yaml -- ServiceAccount sync for IRSA
-sync:
-  toHost:
-    serviceaccounts:
-      enabled: true
-
-# Step 1: Create the IAM role with the OIDC trust policy
-# The trust policy must reference the HOST cluster's OIDC provider,
-# and the service account namespace must be the HOST namespace (e.g., team-alpha),
-# not the vCluster's internal namespace.
-
-# Step 2: Inside the vCluster, create a ServiceAccount with the IAM role annotation
-# ---
-# apiVersion: v1
-# kind: ServiceAccount
-# metadata:
-#   name: s3-reader
-#   namespace: default
-#   annotations:
-#     eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/vcluster-team-alpha-s3-reader
-```
-
-**IRSA trust policy for vCluster workloads:**
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:sub": "system:serviceaccount:team-alpha:s3-reader-x-default-x-team-alpha"
-        }
-      }
-    }
-  ]
-}
-```
-
-请注意 `sub` claim 中重写后的 ServiceAccount name：`s3-reader-x-default-x-team-alpha`。Syncer 会重写 ServiceAccount name 以包含 vCluster namespace，OIDC trust policy 必须匹配这个重写后的名称。
-
-#### Resource Limits for vCluster Control Plane
-
-为 vCluster control plane 应用 resource limits，防止单个 vCluster 消耗过多 host resources：
-
-```yaml
-# vcluster.yaml -- Resource limits
-controlPlane:
-  statefulSet:
-    resources:
-      requests:
-        cpu: 200m
-        memory: 256Mi
-      limits:
-        cpu: "1"
-        memory: 1Gi
-    persistence:
-      size: 10Gi
-      storageClass: gp3
-
-# Additionally, set a ResourceQuota on the host namespace
-# to limit the total resources a vCluster's workloads can consume
-# ---
-# apiVersion: v1
-# kind: ResourceQuota
-# metadata:
-#   name: team-alpha-quota
-#   namespace: team-alpha
-# spec:
-#   hard:
-#     requests.cpu: "8"
-#     requests.memory: 16Gi
-#     limits.cpu: "16"
-#     limits.memory: 32Gi
-#     pods: "50"
-#     persistentvolumeclaims: "10"
-```
-
----
-
-## Virtual Cluster Operations
-
-### Create a Virtual Cluster
+为正确操作系统/架构选择 CLI 制品，并验证官方校验和。这些示例命令可影响真实集群；先验证 HOST_CONTEXT 和命名空间。本审计未执行 create/delete/snapshot 操作。
 
 ```bash
-# Using the vCluster CLI (quickest method)
-vcluster create team-alpha \
-  --namespace team-alpha \
-  --connect=false \
-  --values vcluster-values.yaml
+helm repo add loft-sh https://charts.loft.sh
+helm repo update
+helm template team-alpha loft-sh/vcluster   --version 0.37.0 --namespace vcluster-team-alpha   -f examples/platform/vcluster/vcluster.yaml
 
-# Using Helm (GitOps-friendly)
-helm install team-alpha loft-sh/vcluster \
-  --namespace team-alpha \
-  --create-namespace \
-  --values vcluster-values.yaml
+# After the reviewed host prerequisites are ready:
+vcluster create team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --chart-version 0.37.0   --values examples/platform/vcluster/vcluster.yaml --connect=false
 
-# Verify the vCluster is running
-kubectl get pods -n team-alpha
-# NAME                                    READY   STATUS    RESTARTS   AGE
-# team-alpha-0                            1/1     Running   0          45s
-
-kubectl get statefulset -n team-alpha
-# NAME         READY   AGE
-# team-alpha   1/1     50s
+# Keep the forwarding lifetime tied to the child command:
+vcluster connect team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --background-proxy=false --   kubectl get namespaces
 ```
 
-### Connect and Access the Virtual Cluster
+connect 管理访问路径和 kubeconfig。旧 --update-current/--kube-config 选项是已弃用别名，不是已移除标志。--print 可输出凭证；应存入受限文件，而非聊天、日志或 PR。
 
-```bash
-# Connect using the CLI (sets up port forwarding + kubeconfig automatically)
-vcluster connect team-alpha --namespace team-alpha
+可复用外部 kubeconfig 需要可达 API 端点、匹配证书 SAN/CA 和适当凭证到期。保存 localhost 转发地址不会在转发停止后保留访问。后台代理可能需要 Docker 和另一镜像。使用每用户最小权限 ServiceAccount，审核 --token-expiration，不共享管理员凭证。
 
-# This modifies your kubeconfig and switches context.
-# You are now inside the virtual cluster:
-kubectl get namespaces
-# NAME              STATUS   AGE
-# default           Active   2m
-# kube-system       Active   2m
-# kube-public       Active   2m
-# kube-node-lease   Active   2m
+宿主操作使用 --context HOST_CONTEXT，避免命名空间删除/备份意外指向租户上下文。并行预置培训环境时收集每个退出状态，不要失败后仍报告全部就绪。
 
-# Verify you have cluster-admin access
-kubectl auth can-i '*' '*'
-# yes
+## EKS 存储、Ingress 和 IAM
 
-# Disconnect (restore previous kubeconfig context)
-vcluster disconnect
-```
+共享节点模式下，PVC 同步到宿主，由宿主 CSI 处理卷。一起检查 StorageClass、volumeBindingMode、拓扑、回收和保留。当前配置使用 statefulSet.persistence.volumeClaim.storageClass/size。
 
-### Export Kubeconfig for External Access
+同步 Ingress 需要真实宿主 LBC/IngressClass、Service 引用、TLS、安全组和获准访问路径。将宿主 LBC webhook Service 复制到租户不建立 ALB 集成。Service 注解放在 controlPlane.service.annotations；service.spec.annotations 不是 Kubernetes ServiceSpec 字段。
 
-对于 CI/CD pipelines 或团队分发，可导出 standalone kubeconfig：
+禁用 ServiceAccount 同步时，适用宿主工作负载 ServiceAccount 行为；启用时验证实际转换和同步。仅复制虚拟 Pod 注解不配置 IRSA。检查宿主 ServiceAccount、令牌 issuer/subject/audience、角色信任和注入。限制租户控制的 IAM 角色注解。
 
-```bash
-# Export kubeconfig to a file
-vcluster connect team-alpha \
-  --namespace team-alpha \
-  --update-current=false \
-  --kube-config ./team-alpha-kubeconfig.yaml
-
-# Use the exported kubeconfig
-export KUBECONFIG=./team-alpha-kubeconfig.yaml
-kubectl get nodes
-```
-
-如果需要不通过 port forwarding 的持久访问，可通过 LoadBalancer 或 Ingress 暴露 vCluster API server：
+## 隔离和治理
 
 ```yaml
-# vcluster.yaml -- LoadBalancer service for direct access
-controlPlane:
-  service:
-    spec:
-      type: LoadBalancer
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-scheme: internal
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb
-```
-
-### Delete a Virtual Cluster
-
-```bash
-# Using the CLI
-vcluster delete team-alpha --namespace team-alpha
-
-# Using Helm
-helm uninstall team-alpha --namespace team-alpha
-
-# Clean up the namespace (optional -- removes PVCs and any remaining resources)
-kubectl delete namespace team-alpha
-```
-
-当 vCluster 被删除时，Syncer 会清理它在 host namespace 中创建的所有 resources。由 vCluster workload provision 的任何 PersistentVolumes 都受 StorageClass reclaim policy 约束。
-
-### Pause and Resume (vCluster Pro)
-
-vCluster Pro 支持暂停 virtual clusters，以便在非工作时间节省资源。暂停的 vCluster 会将其 StatefulSet 扩缩到零副本，释放 CPU 和 memory，同时保留磁盘上的所有数据：
-
-```bash
-# Pause a vCluster (scales to 0 replicas)
-vcluster pause team-alpha --namespace team-alpha
-
-# Verify the vCluster is paused
-kubectl get statefulset -n team-alpha
-# NAME         READY   AGE
-# team-alpha   0/1     24h
-
-# Resume a vCluster
-vcluster resume team-alpha --namespace team-alpha
-
-# The vCluster restarts with all state intact
-kubectl get statefulset -n team-alpha
-# NAME         READY   AGE
-# team-alpha   1/1     24h
-```
-
-### Resource Synchronization Rules
-
-#### syncToHost -- Virtual Cluster to Host
-
-在 vCluster 内创建、且需要存在于 host cluster 上以便实际执行的 resources：
-
-```yaml
-# vcluster.yaml
-sync:
-  toHost:
-    # Core workload resources
-    pods:
-      enabled: true
-      # Translate labels to avoid conflicts
-      translatePatches:
-        - path: metadata.labels.app
-          expression: "'vcluster-' + value"
-    services:
-      enabled: true
-    endpoints:
-      enabled: true
-
-    # Configuration resources (synced only if referenced by a Pod)
-    configmaps:
-      enabled: true
-    secrets:
-      enabled: true
-
-    # Storage resources
-    persistentvolumeclaims:
-      enabled: true
-
-    # Networking resources
-    ingresses:
-      enabled: true
-    networkpolicies:
-      enabled: true
-
-    # Custom resources (sync CRDs from vCluster to host)
-    customResources:
-      certificates.cert-manager.io:
-        enabled: true
-```
-
-#### syncFromHost -- Host to Virtual Cluster
-
-存在于 host cluster 上、且应在 vCluster 内可见的 resources：
-
-```yaml
-# vcluster.yaml
-sync:
-  fromHost:
-    # Node information for scheduling decisions
-    nodes:
-      enabled: true
-      selector:
-        labels:
-          vcluster-enabled: "true"
-      # Optionally clear node status to hide host details
-      clearImageStatus: true
-
-    # Storage infrastructure
-    storageClasses:
-      enabled: true
-    csiDrivers:
-      enabled: true
-    csiNodes:
-      enabled: true
-    csiStorageCapacities:
-      enabled: true
-
-    # Networking infrastructure
-    ingressClasses:
-      enabled: true
-
-    # Custom resources from host
-    customResources:
-      clusterissuers.cert-manager.io:
-        enabled: true
-```
-
-### Storage Synchronization
-
-当 tenant 在 vCluster 内创建 PVC 时，Syncer 会在 host namespace 中创建对应的 PVC。host cluster 的 CSI driver 会 provision 实际 volume：
-
-```yaml
-# Inside the vCluster -- tenant creates a PVC
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: Namespace
 metadata:
-  name: data-volume
-  namespace: default
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: gp3
-  resources:
-    requests:
-      storage: 20Gi
+  name: vcluster-team-alpha
+  labels:
+    platform.example.com/tenant: team-alpha
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: v1.36
 ---
-# On the host cluster, the Syncer creates:
-# PVC name: data-volume-x-default-x-team-alpha
-# Namespace: team-alpha
-# The EBS CSI driver provisions the volume as usual
-```
-
-### Service Exposure
-
-Tenants 可以使用三种方式从 vCluster 内暴露 services：
-
-**LoadBalancer (recommended for production services):**
-
-```yaml
-# Inside the vCluster
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-api
-  namespace: default
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb
-spec:
-  type: LoadBalancer
-  selector:
-    app: my-api
-  ports:
-    - port: 443
-      targetPort: 8443
-      protocol: TCP
-# The Syncer creates this Service on the host cluster.
-# The AWS Load Balancer Controller provisions an NLB.
-```
-
-**Ingress (recommended for HTTP/HTTPS services):**
-
-```yaml
-# Inside the vCluster
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-app
-  namespace: default
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:123456789012:certificate/abc-123
-spec:
-  ingressClassName: alb
-  rules:
-    - host: myapp.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: my-app
-                port:
-                  number: 80
-```
-
-**NodePort (for testing and development):**
-
-```yaml
-# Inside the vCluster
-apiVersion: v1
-kind: Service
-metadata:
-  name: debug-service
-  namespace: default
-spec:
-  type: NodePort
-  selector:
-    app: debug
-  ports:
-    - port: 8080
-      targetPort: 8080
-      nodePort: 30080
-```
-
----
-
-## Multi-Tenancy Patterns
-
-### Pattern 1: Development Environment Isolation (Per-Team vCluster)
-
-为每个开发团队分配一个专用 vCluster，用于日常工作。团队在自己的 vCluster 内获得 cluster-admin 访问权限，可以安装所需的任何 CRDs 或工具，而不会影响其他团队。
-
-```mermaid
-graph TB
-    subgraph "EKS Host Cluster"
-        subgraph "team-frontend"
-            VF[vCluster: frontend<br/>React + Node.js team]
-        end
-        subgraph "team-backend"
-            VB[vCluster: backend<br/>Java + Go team]
-        end
-        subgraph "team-data"
-            VD[vCluster: data<br/>Spark + Flink team]
-        end
-        subgraph "team-ml"
-            VM[vCluster: ml<br/>PyTorch + TensorFlow team]
-        end
-        SHARED[Shared: Nodes, CNI, CSI, Monitoring]
-    end
-
-    style VF fill:#2196F3,color:#fff
-    style VB fill:#4CAF50,color:#fff
-    style VD fill:#FF9800,color:#fff
-    style VM fill:#9C27B0,color:#fff
-    style SHARED fill:#607D8B,color:#fff
-```
-
-```yaml
-# vcluster-team-frontend.yaml
-controlPlane:
-  distro:
-    k3s:
-      enabled: true
-  statefulSet:
-    resources:
-      requests:
-        cpu: 200m
-        memory: 256Mi
-      limits:
-        cpu: "1"
-        memory: 1Gi
-    labels:
-      team: frontend
-      environment: development
-
-sync:
-  toHost:
-    pods:
-      enabled: true
-    services:
-      enabled: true
-    ingresses:
-      enabled: true
-    persistentvolumeclaims:
-      enabled: true
-  fromHost:
-    storageClasses:
-      enabled: true
-    ingressClasses:
-      enabled: true
-    nodes:
-      enabled: true
-```
-
-```bash
-# Create vClusters for each team
-for team in frontend backend data ml; do
-  kubectl create namespace "team-${team}"
-
-  vcluster create "${team}" \
-    --namespace "team-${team}" \
-    --values "vcluster-team-${team}.yaml" \
-    --connect=false
-done
-
-# Distribute kubeconfigs to each team
-for team in frontend backend data ml; do
-  vcluster connect "${team}" \
-    --namespace "team-${team}" \
-    --update-current=false \
-    --kube-config "./kubeconfigs/${team}-kubeconfig.yaml"
-done
-```
-
-### Pattern 2: CI/CD Ephemeral Environments
-
-为每次 CI/CD pipeline run 创建一个全新的 vCluster。vCluster 在 pipeline 开始时创建，测试在其中运行，并在 pipeline 完成时销毁。这保证了每次测试运行都有干净环境。
-
-```yaml
-# .github/workflows/integration-test.yaml
-name: Integration Tests
-on:
-  push:
-    branches: [main, develop]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install vCluster CLI
-        run: |
-          curl -L -o vcluster "https://github.com/loft-sh/vcluster/releases/latest/download/vcluster-linux-amd64"
-          chmod +x vcluster
-          sudo mv vcluster /usr/local/bin/
-
-      - name: Configure kubectl
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::123456789012:role/github-actions-eks
-          aws-region: us-west-2
-      - run: aws eks update-kubeconfig --name my-cluster --region us-west-2
-
-      - name: Create ephemeral vCluster
-        run: |
-          VCLUSTER_NAME="ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          vcluster create "${VCLUSTER_NAME}" \
-            --namespace ci-environments \
-            --connect=true \
-            --values ci-vcluster.yaml
-
-      - name: Run integration tests
-        run: |
-          kubectl apply -f ./k8s/manifests/
-          kubectl wait --for=condition=available deployment/my-app --timeout=120s
-          make integration-test
-
-      - name: Cleanup vCluster
-        if: always()
-        run: |
-          VCLUSTER_NAME="ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          vcluster delete "${VCLUSTER_NAME}" \
-            --namespace ci-environments \
-            --delete-namespace=false
-```
-
-```yaml
-# ci-vcluster.yaml -- Minimal configuration for CI
-controlPlane:
-  distro:
-    k3s:
-      enabled: true
-  statefulSet:
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-    persistence:
-      size: 5Gi
-
-sync:
-  toHost:
-    pods:
-      enabled: true
-    services:
-      enabled: true
-    configmaps:
-      enabled: true
-    secrets:
-      enabled: true
-  fromHost:
-    storageClasses:
-      enabled: true
-```
-
-### Pattern 3: Preview Environments (Per-PR vCluster)
-
-为每个 pull request 创建一个 vCluster，让 reviewers 可以访问变更的 live preview：
-
-```yaml
-# .github/workflows/preview.yaml
-name: Preview Environment
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-jobs:
-  preview:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup tools
-        run: |
-          curl -L -o vcluster "https://github.com/loft-sh/vcluster/releases/latest/download/vcluster-linux-amd64"
-          chmod +x vcluster && sudo mv vcluster /usr/local/bin/
-
-      - name: Configure EKS access
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::123456789012:role/github-actions-eks
-          aws-region: us-west-2
-      - run: aws eks update-kubeconfig --name my-cluster --region us-west-2
-
-      - name: Create or update preview vCluster
-        run: |
-          VCLUSTER_NAME="pr-${{ github.event.pull_request.number }}"
-
-          # Create if it does not exist
-          if ! vcluster list --namespace preview-envs | grep -q "${VCLUSTER_NAME}"; then
-            vcluster create "${VCLUSTER_NAME}" \
-              --namespace preview-envs \
-              --values preview-vcluster.yaml \
-              --connect=true
-          else
-            vcluster connect "${VCLUSTER_NAME}" \
-              --namespace preview-envs
-          fi
-
-          # Deploy the application
-          kubectl apply -f ./k8s/manifests/
-          kubectl set image deployment/my-app \
-            my-app=123456789012.dkr.ecr.us-west-2.amazonaws.com/my-app:pr-${{ github.event.pull_request.number }}
-
-      - name: Post preview URL
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `Preview environment ready: https://pr-${context.issue.number}.preview.example.com`
-            })
-```
-
-```yaml
-# Cleanup workflow when PR is closed
-# .github/workflows/preview-cleanup.yaml
-name: Preview Cleanup
-on:
-  pull_request:
-    types: [closed]
-
-jobs:
-  cleanup:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete preview vCluster
-        run: |
-          VCLUSTER_NAME="pr-${{ github.event.pull_request.number }}"
-          vcluster delete "${VCLUSTER_NAME}" \
-            --namespace preview-envs \
-            --delete-namespace=false
-```
-
-### Pattern 4: Training Environments
-
-为 Kubernetes training sessions provision 隔离的 vClusters。每位参与者都会获得自己的 cluster，并预安装 sample applications：
-
-```bash
-#!/bin/bash
-# provision-training.sh -- Create vClusters for a training session
-
-TRAINING_ID="k8s-workshop-$(date +%Y%m%d)"
-PARTICIPANT_COUNT=25
-
-for i in $(seq 1 ${PARTICIPANT_COUNT}); do
-  VCLUSTER_NAME="${TRAINING_ID}-student-${i}"
-
-  vcluster create "${VCLUSTER_NAME}" \
-    --namespace training \
-    --values training-vcluster.yaml \
-    --connect=false &
-
-  echo "Creating vCluster for student ${i}..."
-done
-
-wait
-echo "All ${PARTICIPANT_COUNT} vClusters created."
-
-# Export kubeconfigs for distribution
-for i in $(seq 1 ${PARTICIPANT_COUNT}); do
-  VCLUSTER_NAME="${TRAINING_ID}-student-${i}"
-
-  vcluster connect "${VCLUSTER_NAME}" \
-    --namespace training \
-    --update-current=false \
-    --kube-config "./kubeconfigs/student-${i}.yaml"
-done
-```
-
-```yaml
-# training-vcluster.yaml
-controlPlane:
-  distro:
-    k3s:
-      enabled: true
-  statefulSet:
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-    persistence:
-      size: 2Gi
-
-sync:
-  toHost:
-    pods:
-      enabled: true
-    services:
-      enabled: true
-  fromHost:
-    storageClasses:
-      enabled: true
-    nodes:
-      enabled: true
-```
-
-### Pattern 5: Multi-Tenant SaaS Platform
-
-对于向客户提供 Kubernetes-based 功能的 SaaS platforms，vCluster 可以在共享基础设施上实现 per-customer isolation：
-
-```mermaid
-graph TB
-    subgraph "SaaS Platform (EKS)"
-        CP[Control Plane<br/>Tenant Provisioner]
-
-        subgraph "Customer A"
-            VA[vCluster: customer-a<br/>3 app replicas<br/>PostgreSQL]
-        end
-
-        subgraph "Customer B"
-            VB[vCluster: customer-b<br/>5 app replicas<br/>PostgreSQL + Redis]
-        end
-
-        subgraph "Customer C (Enterprise)"
-            VC[vCluster: customer-c<br/>10 app replicas<br/>PostgreSQL + Redis + Kafka]
-        end
-
-        INFRA[Shared Infrastructure<br/>Nodes, Networking, Storage, Monitoring]
-    end
-
-    CP -->|Provision| VA
-    CP -->|Provision| VB
-    CP -->|Provision| VC
-
-    style CP fill:#F44336,color:#fff
-    style VA fill:#2196F3,color:#fff
-    style VB fill:#4CAF50,color:#fff
-    style VC fill:#FF9800,color:#fff
-    style INFRA fill:#607D8B,color:#fff
-```
-
-```yaml
-# saas-customer-vcluster.yaml -- Per-customer vCluster with tiered resources
-controlPlane:
-  distro:
-    k3s:
-      enabled: true
-  statefulSet:
-    resources:
-      requests:
-        cpu: 200m
-        memory: 256Mi
-      limits:
-        cpu: "2"
-        memory: 2Gi
-    persistence:
-      size: 20Gi
-      storageClass: gp3
-
-sync:
-  toHost:
-    pods:
-      enabled: true
-    services:
-      enabled: true
-    ingresses:
-      enabled: true
-    persistentvolumeclaims:
-      enabled: true
-    networkpolicies:
-      enabled: true
-  fromHost:
-    storageClasses:
-      enabled: true
-    ingressClasses:
-      enabled: true
-    nodes:
-      enabled: true
-      selector:
-        labels:
-          node-pool: saas-tenants
-```
-
----
-
-## Security and Isolation
-
-### NetworkPolicy Isolation
-
-在 host cluster 上应用 NetworkPolicies，以限制 vCluster namespaces 之间的流量。由于 Syncer 会在 host namespace 中创建实际 Pods，因此 host-level NetworkPolicies 会由 CNI 强制执行：
-
-```yaml
-# host-network-policy.yaml -- Isolate vCluster namespace traffic
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: vcluster-isolation
-  namespace: team-alpha
-spec:
-  podSelector: {}   # Apply to all Pods in the namespace
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    # Allow traffic within the same namespace
-    - from:
-        - podSelector: {}
-    # Allow traffic from the vCluster control plane
-    - from:
-        - podSelector:
-            matchLabels:
-              app: vcluster
-  egress:
-    # Allow traffic within the same namespace
-    - to:
-        - podSelector: {}
-    # Allow DNS resolution
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: UDP
-          port: 53
-        - protocol: TCP
-          port: 53
-    # Allow egress to AWS services (S3, RDS, etc.)
-    - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-            except:
-              - 10.0.0.0/8     # Block access to other private subnets
-      ports:
-        - protocol: TCP
-          port: 443
----
-# Deny cross-namespace traffic from other vClusters
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: deny-cross-vcluster
-  namespace: team-alpha
-spec:
-  podSelector: {}
-  policyTypes:
-    - Ingress
-  ingress:
-    # Only allow from same namespace
-    - from:
-        - podSelector: {}
-```
-
-### ResourceQuota Enforcement
-
-在 host namespace 上应用 ResourceQuotas，为 vCluster 可以消耗的总 resources 设置上限。这可以防止任何单个 tenant 使其他 tenant 资源不足：
-
-```yaml
-# host-resource-quota.yaml
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: vcluster-resource-quota
-  namespace: team-alpha
+  name: vcluster-budget
+  namespace: vcluster-team-alpha
 spec:
   hard:
-    # Compute limits
     requests.cpu: "8"
     requests.memory: 16Gi
     limits.cpu: "16"
     limits.memory: 32Gi
-
-    # Object count limits
+    requests.ephemeral-storage: 20Gi
+    limits.ephemeral-storage: 80Gi
     pods: "50"
     services: "20"
-    services.loadbalancers: "2"
-    services.nodeports: "5"
+    services.loadbalancers: "0"
+    services.nodeports: "0"
     persistentvolumeclaims: "10"
-    secrets: "50"
-    configmaps: "50"
-
-    # Storage limits
     requests.storage: 100Gi
 ---
-# LimitRange for default resource requests/limits
 apiVersion: v1
 kind: LimitRange
 metadata:
-  name: vcluster-limit-range
-  namespace: team-alpha
+  name: workload-defaults
+  namespace: vcluster-team-alpha
 spec:
   limits:
     - type: Container
-      default:
-        cpu: 500m
-        memory: 512Mi
       defaultRequest:
         cpu: 100m
         memory: 128Mi
-      max:
-        cpu: "4"
-        memory: 8Gi
-    - type: PersistentVolumeClaim
-      max:
-        storage: 50Gi
+        ephemeral-storage: 128Mi
+      default:
+        cpu: "1"
+        memory: 512Mi
+        ephemeral-storage: 1Gi
 ```
 
-### Pod Security Standards
+LimitRange 还为省略 ephemeral-storage requests/limits 的普通及初始化容器提供默认值。没有该 limit 的 Pod 可能逃过临时存储配额执行；检查最终转换的租户 Pod 和控制平面初始化容器。这些示例值支持配额记账，不是容量预留或性能保证。
 
-在 host namespace 上强制执行 Pod Security Standards，以限制 vCluster tenants 创建的 Pods 的安全能力。由于 Syncer 会在 host namespace 中创建真实 Pods，这些限制会在 host level 执行：
+Chart 将控制平面 Syncer 渲染为 UID 0。盲目对宿主命名空间应用 restricted 可能拒绝控制平面。宿主 baseline 准入和配置中的 policies.podSecurityStandard: restricted 针对不同层：宿主 Pod 与虚拟工作负载验证。根据实际宿主策略检查转换后的 Pod。
+
+配额预算包含控制平面、CoreDNS、租户工作负载和存储。配额不预留节点容量，也不保证性能。检查生成 Role/ClusterRole 和 Secret 访问；不要授予租户任意宿主 Secret/Role 修改权限。
+
+可选使用这些 values 渲染 chart 网络策略。
 
 ```yaml
-# Apply Pod Security Standards to the host namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: team-alpha
-  labels:
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: latest
-    pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/audit-version: latest
-    pod-security.kubernetes.io/warn: restricted
-    pod-security.kubernetes.io/warn-version: latest
+policies:
+  networkPolicy:
+    enabled: true
+    workload:
+      publicEgress:
+        enabled: false
 ```
 
-如需更细粒度控制，可在 host cluster 上使用 Kyverno 等 policy engine：
+实际渲染禁用工作负载公共出站，但保留包括 443/8443/6443 在内的宽泛控制平面出站。这里不将其描述为完整阻断宿主 API。NetworkPolicy 允许规则可叠加；添加独立“拒绝”策略无法削减现有允许。
+
+Syncer 需要宿主 API 访问。对控制平面应用相同拒绝出站可能停止同步。验证 DNS、端点 IP/DNAT、所需应用/数据库/仓库路径和 CNI 行为。默认拒绝及例外使用可信控制平面/工作负载分类。
+
+![每团队 API 和共享资源预算](../.gitbook/assets/en-platform-engineering-08-vcluster-12.png)
+
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-12.html)
+
+## 暂停、休眠、删除和快照
+
+当前 CLI pause 缩减虚拟控制平面并移除工作负载，resume 时重建。PVC 和 Service 遵循独立保留行为。这不是保留 Pod 内存的挂起，也不是数据备份。区分手动 pause 和自动休眠/唤醒条件。
+
+这些生命周期设置可选。先验证产品许可、控制器和工作负载行为。此处不启用自动删除。
 
 ```yaml
-# kyverno-policy-vcluster.yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: vcluster-pod-restrictions
-spec:
-  validationFailureAction: Enforce
-  background: true
-  rules:
-    - name: restrict-host-namespaces
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - "team-*"
-      validate:
-        message: "Pods in vCluster namespaces must not use host namespaces."
-        pattern:
-          spec:
-            =(hostNetwork): false
-            =(hostPID): false
-            =(hostIPC): false
-
-    - name: restrict-privileged
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - "team-*"
-      validate:
-        message: "Privileged containers are not allowed in vCluster namespaces."
-        pattern:
-          spec:
-            containers:
-              - =(securityContext):
-                  =(privileged): false
-            =(initContainers):
-              - =(securityContext):
-                  =(privileged): false
-
-    - name: restrict-image-registries
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - "team-*"
-      validate:
-        message: "Images must come from approved registries."
-        pattern:
-          spec:
-            containers:
-              - image: "123456789012.dkr.ecr.*.amazonaws.com/* | docker.io/library/*"
-            =(initContainers):
-              - image: "123456789012.dkr.ecr.*.amazonaws.com/* | docker.io/library/*"
+# Optional configuration: verify product entitlement and workload behavior first.
+sleep:
+  auto:
+    afterInactivity: 30m
+    schedule: "0 20 * * 1-5"
+    timezone: Etc/UTC
+    wakeup:
+      schedule: "0 8 * * 1-5"
+# No automatic deletion is enabled by this example.
+deletion:
+  prevent: true
 ```
 
-### Admission Webhook Synchronization
+当前设置使用 sleep.auto 和 deletion.auto 等路径。旧虚构 management.loft.sh/VirtualCluster 字段不是当前配置约定。仅 TTL 标签/注解不会触发删除；使用实际控制器策略并审核所有权、活动工作负载和备份。
 
-默认情况下，在 vCluster 内配置的 admission webhooks 只适用于该 vCluster 内的 resources。不过，host cluster 的 admission webhooks 会应用于所有 namespaces 中的所有 Pods，包括 Syncer 创建的 Pods。这形成了分层安全模型：
+删除命名空间可移除 PVC 和剩余工作负载。区分 vcluster delete、Helm uninstall 和 ArgoCD Application 移除，包括 PVC 保留、PV 回收及外部资源。防删除设置不一定阻止宿主管理员直接删除命名空间。
 
-1. **Host cluster webhooks**（例如 Kyverno、OPA Gatekeeper、Pod Security Admission）为所有 vClusters 强制执行 baseline security
-2. **vCluster-local webhooks** 强制执行该 tenant 特定的额外 policies
+snapshot create 提交异步请求。请求成功不等于 ready 状态或恢复成功。PV 名不是 EBS 卷 ID；EBS 应验证 spec.csi.driver 和 volumeHandle。在线数据库快照需要一致性、静默和恢复测试。
 
-```yaml
-# Inside a vCluster, a tenant can install their own admission webhooks:
-# For example, installing Kyverno inside the vCluster:
-# helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
+Chart 0.37 拒绝 deploy.volumeSnapshotController，但再次支持成对 volumeSnapshots/volumeSnapshotContents 同步。过时模式注释不被视为所有快照同步已移除的证明。准备 CSI 快照控制器/类和两个选项，再单独测试恢复。Secret 明文导出不是完整备份策略。
 
-# The tenant's Kyverno policies affect resources INSIDE the vCluster.
-# The host cluster's Kyverno policies affect the ACTUAL Pods on the host.
-```
+![生命周期操作和保留边界](../.gitbook/assets/en-platform-engineering-08-vcluster-14.png)
 
-### RBAC Configuration
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-14.html)
 
-**Host cluster RBAC** -- 限制谁可以管理 vClusters：
+## Backstage、ArgoCD 和临时环境
 
-```yaml
-# ClusterRole for vCluster administrators
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: vcluster-admin
-rules:
-  - apiGroups: [""]
-    resources: ["namespaces"]
-    verbs: ["create", "get", "list", "watch"]
-  - apiGroups: ["apps"]
-    resources: ["statefulsets"]
-    verbs: ["*"]
-  - apiGroups: [""]
-    resources: ["services", "configmaps", "secrets", "serviceaccounts"]
-    verbs: ["*"]
-  - apiGroups: ["rbac.authorization.k8s.io"]
-    resources: ["roles", "rolebindings"]
-    verbs: ["*"]
----
-# Bind to the platform engineering team
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: vcluster-admin-binding
-subjects:
-  - kind: Group
-    name: platform-engineering
-    apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name: vcluster-admin
-  apiGroup: rbac.authorization.k8s.io
-```
+团队开发、CI、预览、培训和 SaaS 有不同信任、性能及生命周期要求。不要假定开发工作负载容忍每次 Spot 中断，或 SaaS 租户无法相互影响。
 
-**Inside the vCluster** -- tenants 默认拥有完整 cluster-admin 访问权限。要限制 vCluster 内的访问权限（例如对子团队）：
+CI 中配置宿主身份、可信事件/分支和 OIDC 权限。不要向不可信 fork 代码暴露宿主凭证。在创建、连接、测试和清理全过程使用显式命名空间/上下文，将转发生命周期绑定测试。独立清理任务也需要工具和身份；检查全部退出状态。
+
+此 ApplicationSet 包含此前缺失的 $values sourceRef。将 gitops-config.yaml 保存为 vclusters/team-alpha/config.yaml，将已审核 vcluster.yaml 放在旁边。用获准值替换仓库和 AppProject/目标权限。
 
 ```yaml
-# Inside the vCluster -- restrict a sub-team to specific namespaces
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: developer
-  namespace: app-staging
-rules:
-  - apiGroups: ["", "apps", "batch"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["ingresses"]
-    verbs: ["get", "list", "watch", "create", "update", "patch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: developer-binding
-  namespace: app-staging
-subjects:
-  - kind: Group
-    name: sub-team-alpha
-    apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: Role
-  name: developer
-  apiGroup: rbac.authorization.k8s.io
-```
-
-### Host Cluster Access Restriction
-
-默认情况下，Syncer 在 host cluster 上以有限权限运行。可以通过限制 Syncer 能做的事情来进一步收紧权限：
-
-```yaml
-# vcluster.yaml -- Restrict Syncer permissions
-rbac:
-  role:
-    # Only allow the Syncer to manage specific resource types
-    extraRules: []
-    # The default rules cover pods, services, configmaps, secrets, etc.
-
-  clusterRole:
-    # Disable cluster-level access if not needed
-    extraRules: []
-
-# Restrict which namespaces the vCluster's Pods can reference
-sync:
-  toHost:
-    pods:
-      enabled: true
-      # Enforce that pods cannot mount host paths
-      patches:
-        - path: spec.volumes[*].hostPath
-          op: remove
-```
-
----
-
-## Backstage + vCluster Integration
-
-### Provisioning vCluster from Backstage Templates
-
-将 vCluster provisioning 集成到你的 [Backstage](./06-backstage-idp.md) Internal Developer Platform，使开发人员可以通过表单 self-service 创建 virtual clusters：
-
-```yaml
-# backstage-template-vcluster.yaml
-apiVersion: scaffolder.backstage.io/v1beta3
-kind: Template
-metadata:
-  name: provision-vcluster
-  title: Provision Virtual Kubernetes Cluster
-  description: Self-service virtual cluster for development and testing
-  tags:
-    - vcluster
-    - kubernetes
-    - multi-tenancy
-spec:
-  owner: platform-team
-  type: environment
-
-  parameters:
-    - title: Virtual Cluster Configuration
-      required:
-        - name
-        - team
-        - purpose
-      properties:
-        name:
-          title: Cluster Name
-          type: string
-          pattern: '^[a-z][a-z0-9-]{2,28}[a-z0-9]$'
-          description: Lowercase alphanumeric with hyphens, 4-30 characters
-        team:
-          title: Team
-          type: string
-          enum:
-            - frontend
-            - backend
-            - data
-            - ml
-            - qa
-        purpose:
-          title: Purpose
-          type: string
-          enum:
-            - development
-            - testing
-            - preview
-            - training
-          default: development
-        size:
-          title: Cluster Size
-          type: string
-          enum:
-            - small
-            - medium
-            - large
-          default: small
-          description: |
-            small: 4 CPU / 8Gi, 20 pods
-            medium: 8 CPU / 16Gi, 50 pods
-            large: 16 CPU / 32Gi, 100 pods
-        ttlHours:
-          title: Time-to-Live (hours)
-          type: integer
-          default: 72
-          minimum: 1
-          maximum: 720
-          description: Auto-delete after this many hours (max 30 days)
-
-    - title: Repository
-      required:
-        - repoUrl
-      properties:
-        repoUrl:
-          title: Infrastructure Repository
-          type: string
-          ui:field: RepoUrlPicker
-          ui:options:
-            allowedHosts:
-              - github.com
-
-  steps:
-    - id: generate
-      name: Generate vCluster manifests
-      action: fetch:template
-      input:
-        url: ./skeleton
-        targetPath: ./vcluster
-        values:
-          name: ${{ parameters.name }}
-          team: ${{ parameters.team }}
-          purpose: ${{ parameters.purpose }}
-          size: ${{ parameters.size }}
-          ttlHours: ${{ parameters.ttlHours }}
-          namespace: "vc-${{ parameters.team }}-${{ parameters.name }}"
-
-    - id: publish
-      name: Create Pull Request
-      action: publish:github:pull-request
-      input:
-        repoUrl: ${{ parameters.repoUrl }}
-        branchName: "vcluster/${{ parameters.team }}/${{ parameters.name }}"
-        title: "Provision vCluster: ${{ parameters.name }} for ${{ parameters.team }}"
-        description: |
-          ## Virtual Cluster Provisioning Request
-
-          | Parameter | Value |
-          |-----------|-------|
-          | Name | ${{ parameters.name }} |
-          | Team | ${{ parameters.team }} |
-          | Purpose | ${{ parameters.purpose }} |
-          | Size | ${{ parameters.size }} |
-          | TTL | ${{ parameters.ttlHours }} hours |
-
-          Created by the Backstage self-service portal.
-          Merging will trigger ArgoCD to provision the vCluster.
-
-  output:
-    links:
-      - title: Pull Request
-        url: ${{ steps.publish.output.remoteUrl }}
-```
-
-Template skeleton：
-
-```yaml
-# skeleton/vcluster.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ${{ values.namespace }}
-  labels:
-    managed-by: backstage
-    team: ${{ values.team }}
-    purpose: ${{ values.purpose }}
-    vcluster.loft.sh/auto-delete: "${{ values.ttlHours }}h"
----
-# skeleton/helm-release.yaml (for ArgoCD or FluxCD)
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: vcluster-${{ values.name }}
-  namespace: argocd
-  labels:
-    team: ${{ values.team }}
-    purpose: ${{ values.purpose }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  project: vcluster-tenants
-  source:
-    repoURL: https://charts.loft.sh
-    chart: vcluster
-    targetRevision: 0.21.0
-    helm:
-      valuesObject:
-        controlPlane:
-          distro:
-            k3s:
-              enabled: true
-          statefulSet:
-            resources:
-              requests:
-                cpu: |-
-                  {%- if values.size == "small" %}200m{%- elif values.size == "medium" %}400m{%- else %}800m{%- endif %}
-                memory: |-
-                  {%- if values.size == "small" %}256Mi{%- elif values.size == "medium" %}512Mi{%- else %}1Gi{%- endif %}
-        sync:
-          toHost:
-            pods:
-              enabled: true
-            services:
-              enabled: true
-            ingresses:
-              enabled: true
-          fromHost:
-            storageClasses:
-              enabled: true
-            ingressClasses:
-              enabled: true
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: ${{ values.namespace }}
-  syncPolicy:
-    automated:
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-```
-
-### GitOps Workflow: ArgoCD + vCluster
-
-完全通过 GitOps 管理 vCluster lifecycle。ArgoCD 监听 repository 中的 vCluster Helm releases，并将它们应用到 host cluster：
-
-```yaml
-# argocd-appset-vclusters.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: vclusters
+  name: reviewed-vclusters
   namespace: argocd
 spec:
   goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: https://github.com/your-org/platform-config
+        repoURL: https://github.com/REPLACE_APPROVED_ORG/platform-config
         revision: main
-        directories:
-          - path: vclusters/*/
-
+        files:
+          - path: vclusters/*/config.yaml
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   template:
     metadata:
-      name: "vcluster-{{ .path.basename }}"
-      namespace: argocd
+      name: "vcluster-{{ .name }}"
     spec:
       project: vcluster-tenants
-      source:
-        repoURL: https://github.com/your-org/platform-config
-        targetRevision: main
-        path: "{{ .path.path }}"
+      sources:
+        - repoURL: https://charts.loft.sh
+          chart: vcluster
+          targetRevision: "0.37.0"
+          helm:
+            releaseName: "{{ .name }}"
+            valueFiles:
+              - "$values/vclusters/{{ .name }}/vcluster.yaml"
+        - repoURL: https://github.com/REPLACE_APPROVED_ORG/platform-config
+          targetRevision: main
+          ref: values
       destination:
         server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
       syncPolicy:
         automated:
           selfHeal: true
-          prune: true
-        syncOptions:
-          - CreateNamespace=true
+          prune: false
+        syncOptions: [CreateNamespace=true]
 ```
 
-这个 ApplicationSet 会为 config repository 中 `vclusters/` 下的每个目录自动创建一个 ArgoCD Application。要 provision 新 vCluster，添加包含 Helm values 的目录；要 decommission 某个 vCluster，则移除该目录。
+preserveResourcesOnDeletion 和 prune:false 是有意选择，避免将配置移除视为立即删除数据。跟踪保留资源所有权/成本，并建立独立退役流程。Backstage debug:log 操作不实现审批或等待部署。
 
-### Self-Service Dev Environments in IDP
+![经审核的请求和限定范围访问](../.gitbook/assets/en-platform-engineering-08-vcluster-13.png)
 
-self-service virtual clusters 的完整开发人员工作流：
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-13.html)
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant BS as Backstage
-    participant GH as GitHub
-    participant Argo as ArgoCD
-    participant Host as Host Cluster
-    participant VC as vCluster
+## 可观测性、资源和成本
 
-    Dev->>BS: Request vCluster (form)
-    BS->>GH: Create PR with Helm values
-    GH-->>Dev: PR link
-    Note over GH: Auto-approve via policy<br/>or manual review
-    GH->>Argo: Merge triggers sync
-    Argo->>Host: Create Namespace + Helm Release
-    Host->>VC: vCluster Pod starts
-    VC-->>Host: API Server ready
-    Host-->>Argo: Healthy
-    Argo-->>BS: Status update
-    BS-->>Dev: Kubeconfig + access URL
+不要对有意暂停、期望副本为零的 StatefulSet 自动警报。单个聚合 absent() 可能在一个集群失败、另一个健康时漏报。使用实际 job/namespace/pod/container 标签、指标端点和期望状态清单。Chart 容器名为 syncer；不要虚构 vcluster_syncer_* 指标。
 
-    Note over Dev,VC: Developer uses vCluster as<br/>a normal Kubernetes cluster
-    Dev->>VC: kubectl apply workloads
-    VC->>Host: Syncer creates Pods on host
-```
-
----
-
-## Production Operations
-
-### Monitoring and Alerting
-
-使用 Prometheus metrics 从 host cluster 监控 vCluster health：
-
-```yaml
-# prometheus-vcluster-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: vcluster-alerts
-  namespace: monitoring
-spec:
-  groups:
-    - name: vcluster.health
-      rules:
-        - alert: VClusterDown
-          expr: |
-            kube_statefulset_status_replicas_ready{
-              statefulset=~".*",
-              namespace=~"team-.*|vc-.*"
-            } == 0
-          for: 5m
-          labels:
-            severity: critical
-          annotations:
-            summary: "vCluster {{ $labels.statefulset }} in {{ $labels.namespace }} is down"
-            description: "The vCluster StatefulSet has 0 ready replicas for 5 minutes."
-
-        - alert: VClusterHighMemory
-          expr: |
-            container_memory_working_set_bytes{
-              pod=~".*-0",
-              namespace=~"team-.*|vc-.*",
-              container="syncer"
-            } / container_spec_memory_limit_bytes{
-              pod=~".*-0",
-              namespace=~"team-.*|vc-.*",
-              container="syncer"
-            } > 0.85
-          for: 10m
-          labels:
-            severity: warning
-          annotations:
-            summary: "vCluster {{ $labels.pod }} memory usage above 85%"
-            description: "Consider increasing memory limits or reducing workload."
-
-        - alert: VClusterPVCNearFull
-          expr: |
-            kubelet_volume_stats_used_bytes{
-              namespace=~"team-.*|vc-.*",
-              persistentvolumeclaim=~"data-.*"
-            } / kubelet_volume_stats_capacity_bytes{
-              namespace=~"team-.*|vc-.*",
-              persistentvolumeclaim=~"data-.*"
-            } > 0.80
-          for: 15m
-          labels:
-            severity: warning
-          annotations:
-            summary: "vCluster PVC {{ $labels.persistentvolumeclaim }} is 80% full"
-
-        - alert: VClusterSyncErrors
-          expr: |
-            rate(
-              vcluster_syncer_reconcile_errors_total[5m]
-            ) > 0.1
-          for: 10m
-          labels:
-            severity: warning
-          annotations:
-            summary: "vCluster Syncer reconciliation errors detected"
-```
-
-**Grafana dashboard queries for vCluster monitoring:**
-
-```
-# Total vClusters running
-count(kube_statefulset_status_replicas_ready{namespace=~"team-.*|vc-.*"} > 0)
-
-# CPU usage per vCluster
-sum by (namespace) (rate(container_cpu_usage_seconds_total{namespace=~"team-.*|vc-.*"}[5m]))
-
-# Memory usage per vCluster
-sum by (namespace) (container_memory_working_set_bytes{namespace=~"team-.*|vc-.*"})
-
-# Pods per vCluster namespace
-count by (namespace) (kube_pod_info{namespace=~"team-.*|vc-.*"})
-```
-
-### Backup and Recovery
-
-通过备份 vCluster StatefulSet 使用的 PersistentVolume 来备份 vCluster state。该 PV 包含 vCluster 的 etcd data（或 k3s 的 SQLite database）：
-
-```yaml
-# Velero backup for vCluster data
-# Install Velero on the host cluster first
-# (see observability and ops documentation for Velero setup)
-
-# Schedule regular backups of vCluster namespaces
-apiVersion: velero.io/v1
-kind: Schedule
-metadata:
-  name: vcluster-backup
-  namespace: velero
-spec:
-  schedule: "0 2 * * *"   # Daily at 2 AM
-  template:
-    includedNamespaces:
-      - "team-*"
-      - "vc-*"
-    includedResources:
-      - persistentvolumeclaims
-      - persistentvolumes
-      - statefulsets
-      - services
-      - configmaps
-      - secrets
-    storageLocation: aws-s3
-    volumeSnapshotLocations:
-      - aws-ebs
-    ttl: 168h   # Retain for 7 days
-```
-
-**Recovery procedure:**
+Requests 不是利用率或账单。CPU 1 与 250m，或内存 1Gi 与 512Mi，不能作为裸数字字符串相加。examples/platform/vcluster/usage 使用 Kubernetes PodRequests 处理单位、初始化容器、开销和 Pod 级 requests。
 
 ```bash
-# List available backups
-velero backup get
-
-# Restore a specific vCluster
-velero restore create \
-  --from-backup vcluster-backup-20250620020000 \
-  --include-namespaces team-alpha \
-  --restore-volumes=true
-
-# Verify the vCluster restarts with its state intact
-kubectl get statefulset -n team-alpha
-kubectl get pvc -n team-alpha
+# Run inside examples/platform/vcluster/usage with the pinned Go dependencies:
+kubectl --context HOST_CONTEXT get pods -n vcluster-team-alpha -o json | go run .
 ```
 
-### Upgrade Strategy
+工具汇总非终态 Pod 基于 spec 的 requests，不是实际 RSS/CPU、resize 状态或 PVC 成本。测试了三个合成用例；未对工具执行真实集群查询。
 
-#### Upgrading the vCluster CLI
+将活动时间从 168 降为 50 小时，不会同比减少节点、EBS、负载均衡器和许可成本。将实际节点缩容、保留存储、承诺和最小容量与账单比较。Kubernetes 标签不会自动成为 AWS 成本分摊标签。
 
-```bash
-# Check current version
-vcluster --version
+不要指示 EKS 用户直接调整托管 API 服务器/etcd 副本或实例大小。审核受支持托管控制平面设置/配额和请求负载。固定 chart/CLI/Kubernetes/存储组合，验证备份/预发布，并考虑不同命名空间中的相同 Helm 发布名。
 
-# Upgrade via package manager
-brew upgrade loft-sh/tap/vcluster
+## 已执行检查
 
-# Or download the latest release
-curl -L -o vcluster "https://github.com/loft-sh/vcluster/releases/latest/download/vcluster-linux-amd64"
-chmod +x vcluster && sudo mv vcluster /usr/local/bin/
-```
+阅读了 1,998 行韩文和 2,171 行英文指南、两份各 143 行的测验及 106 个唯一代码块。验证了 0.37.0 模式、Helm 配置、生命周期/网络策略渲染、官方校验和/镜像索引及 Kubernetes 资源记账。记录模式与运行时验证的差异。
 
-#### Upgrading vCluster Instances
+两次使用 0.36.1 检查已弃用连接标志的尝试，以只读方式查询现有集群并因 Unauthorized 失败。未更改资源；后续 0.37 检查限于 version/help/源码和离线 chart。未验证 vCluster 创建、镜像执行、休眠/删除/快照/恢复、网络隔离、IAM 身份验证、负载或成本节省。
 
-通过更新 Helm release 来升级单个 vClusters：
+- [vCluster 0.37.0](https://github.com/loft-sh/vcluster/releases/tag/v0.37.0)
+- [带版本配置](https://github.com/loft-sh/vcluster/blob/v0.37.0/config/values.yaml)
+- [带版本模式](https://github.com/loft-sh/vcluster/blob/v0.37.0/chart/values.schema.json)
+- [架构](https://www.vcluster.com/docs/vcluster/introduction/architecture)
+- [休眠配置](https://www.vcluster.com/docs/vcluster/configure/vcluster-yaml/sleep)
 
-```bash
-# Check current chart version
-helm list -n team-alpha
-# NAME         NAMESPACE    REVISION  STATUS    CHART            APP VERSION
-# team-alpha   team-alpha   1         deployed  vcluster-0.21.0  0.21.0
+[Backstage](06-backstage-idp.md) · [Crossplane](07-crossplane.md)
 
-# Review release notes for breaking changes
-# https://github.com/loft-sh/vcluster/releases
-
-# Upgrade to a new version
-helm upgrade team-alpha loft-sh/vcluster \
-  --namespace team-alpha \
-  --version 0.22.0 \
-  --values vcluster-values.yaml \
-  --wait
-
-# Verify the upgrade
-kubectl get statefulset -n team-alpha -w
-# Wait for the new Pod to become Ready
-
-# Test connectivity
-vcluster connect team-alpha --namespace team-alpha
-kubectl get nodes
-kubectl get namespaces
-```
-
-**Upgrade best practices:**
-
-1. **每次升级前阅读 release notes**，了解 breaking changes 或新的 configuration options
-2. **先升级 non-production vClusters**，并在升级 production instances 前运行 smoke tests
-3. **升级前备份 PVC**，以便在需要 rollback 时使用
-4. **一次升级一个 vCluster**，而不是同时 batch-upgrading 所有 instances
-5. **在 GitOps manifests 中 pin Helm chart versions**；绝不要使用 `latest`
-
-#### Rolling Upgrade Across All vClusters
-
-```bash
-#!/bin/bash
-# upgrade-all-vclusters.sh
-TARGET_VERSION="0.22.0"
-
-# Get all vCluster Helm releases
-VCLUSTERS=$(helm list --all-namespaces -f 'vcluster' -q)
-
-for vc in ${VCLUSTERS}; do
-  NS=$(helm list --all-namespaces -f "^${vc}$" -o json | jq -r '.[0].namespace')
-
-  echo "Upgrading ${vc} in ${NS} to ${TARGET_VERSION}..."
-
-  helm upgrade "${vc}" loft-sh/vcluster \
-    --namespace "${NS}" \
-    --version "${TARGET_VERSION}" \
-    --reuse-values \
-    --wait \
-    --timeout 5m
-
-  # Verify health before continuing
-  kubectl rollout status statefulset/"${vc}" -n "${NS}" --timeout=120s
-
-  echo "Successfully upgraded ${vc}."
-done
-```
-
-### Cost Management
-
-#### Sleep Mode (vCluster Pro)
-
-在非工作时间自动暂停 vClusters，以节省 compute costs：
-
-```yaml
-# vcluster-pro-sleep.yaml
-# Requires vCluster Pro license
-apiVersion: management.loft.sh/v1
-kind: VirtualCluster
-metadata:
-  name: team-alpha
-  namespace: team-alpha
-spec:
-  sleepMode:
-    # Auto-sleep after 30 minutes of inactivity
-    afterInactivity: 1800
-    # Schedule-based sleep: pause at 8 PM, wake at 8 AM (UTC)
-    sleepSchedule: "0 20 * * 1-5"     # Sleep at 8 PM weekdays
-    wakeSchedule: "0 8 * * 1-5"       # Wake at 8 AM weekdays
-    # Auto-wake on API request
-    autoWakeup: true
-```
-
-**Cost savings calculation:**
-
-| Metric | Without Sleep Mode | With Sleep Mode | Savings |
-|--------|-------------------|-----------------|---------|
-| Active hours/week | 168 | 50 (10h x 5 days) | 70% |
-| vCluster CPU (per vCluster) | 0.2 CPU x 168h | 0.2 CPU x 50h | 70% |
-| Workload CPU (per vCluster, ~2 CPU avg) | 2 CPU x 168h | 2 CPU x 50h | 70% |
-| Cost per vCluster/month (m5.large @ $0.096/hr) | ~$30 | ~$9 | ~$21 saved |
-| 50 vClusters/month | ~$1,500 | ~$450 | ~$1,050 saved |
-
-#### Auto-Delete (vCluster Pro)
-
-自动删除超过 TTL 的 vClusters，以防止 resource sprawl：
-
-```yaml
-# vcluster-pro-auto-delete.yaml
-apiVersion: management.loft.sh/v1
-kind: VirtualCluster
-metadata:
-  name: ci-run-12345
-  namespace: ci-environments
-spec:
-  autoDelete:
-    # Delete after 4 hours of inactivity
-    afterInactivity: 14400
-```
-
-对于 open-source vCluster，可使用 CronJob 实现 TTL：
-
-```yaml
-# vcluster-ttl-cleaner.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: vcluster-ttl-cleaner
-  namespace: platform-system
-spec:
-  schedule: "*/30 * * * *"   # Run every 30 minutes
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: vcluster-cleaner
-          containers:
-            - name: cleaner
-              image: bitnami/kubectl:1.31
-              command:
-                - /bin/bash
-                - -c
-                - |
-                  # Find vCluster namespaces past their TTL
-                  for ns in $(kubectl get ns -l managed-by=backstage -o name); do
-                    CREATED=$(kubectl get ${ns} -o jsonpath='{.metadata.creationTimestamp}')
-                    TTL=$(kubectl get ${ns} -o jsonpath='{.metadata.labels.vcluster\.loft\.sh/auto-delete}' 2>/dev/null)
-
-                    if [ -z "${TTL}" ]; then
-                      continue
-                    fi
-
-                    TTL_SECONDS=$(echo "${TTL}" | sed 's/h//' | awk '{print $1 * 3600}')
-                    CREATED_EPOCH=$(date -d "${CREATED}" +%s)
-                    NOW_EPOCH=$(date +%s)
-                    AGE=$((NOW_EPOCH - CREATED_EPOCH))
-
-                    if [ ${AGE} -gt ${TTL_SECONDS} ]; then
-                      echo "Deleting expired vCluster namespace: ${ns}"
-                      kubectl delete ${ns}
-                    fi
-                  done
-          restartPolicy: OnFailure
-```
-
-### Large-Scale Operation Considerations
-
-在单个 host cluster 上运行数十到数百个 vClusters 时：
-
-| Concern | Recommendation |
-|---------|---------------|
-| **API server load** | Each vCluster Syncer makes API calls to the host. Use `--max-reconcile-rate` to throttle. Consider dedicated API server nodes. |
-| **etcd performance** | Host cluster etcd stores metadata for all synced resources. Monitor etcd latency and consider larger instance types for the control plane. |
-| **Node capacity** | Each vCluster control plane consumes ~200 MiB. 100 vClusters need ~20 GiB just for control planes. Use dedicated node pools. |
-| **IP address exhaustion** | Each synced Pod gets a host cluster IP. Plan VPC CIDR ranges for the expected Pod count across all vClusters. |
-| **DNS load** | vClusters generate DNS queries to host CoreDNS. Scale CoreDNS replicas and enable NodeLocal DNSCache. |
-| **Storage IOPS** | Each vCluster PVC needs sustained IOPS for its data store. Use gp3 volumes with provisioned IOPS for host-intensive workloads. |
-| **Monitoring cardinality** | Hundreds of vClusters multiply Prometheus metric cardinality. Use recording rules and aggregation to manage costs. |
-
-```yaml
-# Dedicated node pool for vCluster control planes
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: vcluster-control-planes
-spec:
-  template:
-    metadata:
-      labels:
-        node-pool: vcluster
-    spec:
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: default
-      requirements:
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values: ["m6i.large", "m6i.xlarge"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
-      taints:
-        - key: dedicated
-          value: vcluster
-          effect: NoSchedule
-  limits:
-    cpu: "64"
-    memory: 128Gi
-```
-
----
-
-## Best Practices
-
-### Resource Governance
-
-1. **始终在 host namespaces 上设置 ResourceQuotas**：每个 vCluster namespace 都应有一个与团队资源分配匹配的 ResourceQuota。如果没有 quotas，单个 vCluster 的 workloads 可能无限制地消耗 host resources。
-
-2. **使用 LimitRanges 设置默认值**：通过 LimitRange 设置默认 resource requests 和 limits，使没有显式 resource 定义的 Pods 仍然获得有界分配。
-
-3. **分离 control plane 和 workload node pools**：在专用 nodes 上运行 vCluster StatefulSets，防止 control plane 不稳定影响 workloads，反之亦然。
-
-4. **监控 host cluster capacity**：跟踪所有 vClusters 的 aggregate resource consumption。当 total committed resources 接近 host capacity 时发出告警。
-
-### Naming Conventions
-
-建立一致命名，使 vCluster resources 在规模化环境中易于识别：
-
-| Resource | Convention | Example |
-|----------|-----------|---------|
-| Namespace | `vc-<team>-<name>` or `team-<name>` | `vc-frontend-dev`, `team-alpha` |
-| vCluster name | `<team>-<purpose>` or `<purpose>-<id>` | `frontend-dev`, `ci-12345` |
-| Helm release | Same as vCluster name | `frontend-dev` |
-| Kubeconfig context | `vcluster-<team>-<name>` | `vcluster-frontend-dev` |
-| Labels | `team`, `purpose`, `environment` | `team: frontend`, `purpose: development` |
-| Host NetworkPolicy | `vcluster-isolation-<namespace>` | `vcluster-isolation-team-alpha` |
-
-### Lifecycle Management
-
-1. **为 ephemeral vClusters 实现 TTL**：CI/CD 和 preview vClusters 应设置 maximum TTL。使用 Auto-Delete（Pro）或上文描述的 CronJob 方法。
-
-2. **对 development vClusters 使用 Sleep Mode**：Development environments 通常只在工作时间活跃。Sleep Mode 可降低 60-70% 成本。
-
-3. **审计未使用的 vClusters**：每周运行一次审计，识别 workload Pods 数量为零的 vClusters。通知所属团队，并在 grace period 后自动删除。
-
-4. **标准化 vCluster configurations**：维护经过验证的 `vcluster.yaml` profiles（small、medium、large）库，而不是允许任意配置。通过 Backstage templates 暴露这些 profiles。
-
-5. **为所有组件 pin 版本**：Pin vCluster Helm chart version、backing distribution version（k3s tag）和 vCluster CLI version。记录经过测试的组合矩阵。
-
-### Cost Optimization
-
-1. **合理调整 control plane resources**：监控 vCluster Pods 的实际 CPU 和 memory usage，并调整 resource requests 以匹配。Control plane 过度 provision 是常见浪费来源。
-
-2. **为 workload nodes 使用 Spot instances**：vCluster workloads（尤其是 development 和 CI/CD）可以容忍中断。对 workload node pools 使用 Karpenter 和 Spot instance provisioning。
-
-3. **整合 idle vClusters**：如果多个团队的 vClusters 利用率较低，可考虑共享更少、更大的 vClusters，而不是维护许多 idle vClusters。
-
-4. **为所有 resources 打 tag 以进行 cost allocation**：使用 Syncer 的 label rewriting 确保所有 host-level resources 都携带 cost allocation tags。这支持在 AWS Cost Explorer 中按团队和按 vCluster 进行 cost attribution。
-
-5. **设置 storage limits**：通过 LimitRange 限制 PVC sizes，并通过 ResourceQuota 限制 total storage。无界 storage requests 是意外成本的常见来源。
-
----
-
-## References
-
-### Official Documentation
-
-- [vCluster 官方文档](https://www.vcluster.com/docs)
-- [vCluster GitHub Repository](https://github.com/loft-sh/vcluster)
-- [vCluster Configuration Reference (vcluster.yaml)](https://www.vcluster.com/docs/vcluster/configure/vcluster-yaml)
-- [vCluster Pro Documentation](https://www.vcluster.com/docs/vcluster-pro)
-- [vCluster Helm Chart](https://artifacthub.io/packages/helm/loft/vcluster)
-
-### CNCF and Community
-
-- [CNCF vCluster Sandbox Page](https://www.cncf.io/projects/vcluster/)
-- [Loft Labs Blog](https://loft.sh/blog)
-- [vCluster Slack Community](https://slack.loft.sh/)
-- [Virtual Clusters: Scalable Multi-Tenancy (KubeCon talk)](https://www.youtube.com/results?search_query=vcluster+kubecon)
-
-### AWS and EKS Integration
-
-- [EKS IRSA Documentation](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-- [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-- [Amazon EBS CSI Driver](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)
-- [EKS Best Practices Guide - Multi-Tenancy](https://aws.github.io/aws-eks-best-practices/security/docs/multitenancy/)
-
-### Related Documentation in This Repository
-
-- [Crossplane](./07-crossplane.md) -- 通过 Kubernetes API 进行 infrastructure provisioning；可与 vCluster 结合用于 per-tenant infrastructure
-- [Backstage IDP](./06-backstage-idp.md) -- Internal Developer Platform framework；与 vCluster 集成以实现 self-service virtual cluster provisioning
-- [Platform Engineering Overview](./00-platform-engineering-overview.md) -- IDP concepts 和 reference architecture
-- [Network Policies](../security/04-network-policies.md) -- vCluster namespaces 的 host-level network isolation
-- [Pod Security Standards](../security/03-pod-security-standards.md) -- 在 vCluster workloads 上强制执行 security baselines
-- [Kyverno Policy Management](../security/01-kyverno-policy-management.md) -- 针对 vCluster namespaces 的 policy enforcement
-- [ArgoCD](../gitops/argocd/README.md) -- vCluster lifecycle management 的 GitOps deployment
-- [Karpenter](../autoscaling/02-karpenter.md) -- 用于 vCluster workload node pools 的 node autoscaling
-
----
-
-[上一页：Crossplane](./07-crossplane.md) | Next: None
+[vCluster 测验](../quizzes/platform-engineering/08-vcluster-quiz.md)

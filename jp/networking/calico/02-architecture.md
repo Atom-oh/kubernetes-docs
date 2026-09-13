@@ -1,44 +1,47 @@
-# パート 2: アーキテクチャ
+# 第2部: アーキテクチャ
 
-> **対応バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
+> **レビュー基準**: Calico Open Source 3.32.2 / operator 1.42.6。Calico 3.32はKubernetes 1.34–1.36でテストされています。
+> **最終更新**: September 12, 2026。例は設定の参考であり、実クラスターでの検証ではありません。
 
 ## 概要
 
-このセクションでは、Calico のアーキテクチャを詳細に解説します。各コンポーネントの動作と相互作用を理解することは、本番環境における Calico の効果的なデプロイ、トラブルシューティング、最適化に不可欠です。
+このセクションはCalicoのアーキテクチャを詳しく説明します。各コンポーネントの動作と相互作用を理解することは、本番環境でCalicoを効果的にデプロイし、トラブルシューティングし、最適化するために不可欠です。
 
-## アーキテクチャ全体図
+## 全体アーキテクチャ図
 
-![Kubernetes コントロールプレーン、Calico コントロールプレーン（API server、kube-controllers、Typha）、および Felix がローカルデータプレーンをプログラムし、confd/BIRD がノード BGP メッシュを通じてルートを配布する worker node。](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
+![Kubernetes APIとTyphaからFelixへの状態配布、およびBGP設定経路の簡略図。中間コンポーネントは省略。](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-0.html)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-0.html)
 
-## Felix: Calico エージェント
+これは制御状態の簡略図です。BIRDへの辺では設定をレンダリングするconfdを省略しており、TyphaはBIRDを直接設定するAPIではありません。BIRD/confdとTyphaはインストールモードに依存し、コントロールプレーンの全コンポーネントを示してはいません。
 
-Felix は、クラスター内のすべてのノードで実行される主要な Calico エージェントです。必要な接続性とネットワークポリシーの適用を提供するため、ホスト上のルートおよび ACL（Access Control List）をプログラムします。
+## Felix: Calicoエージェント
 
-### Felix の責務
+Felixは選択したワークロードノードのCalicoノードエージェント内で動作し、該当する経路、インターフェース設定、ポリシーをカーネルに設定します。Linuxの完全ネットワーキング経路では、コンテナランタイムがCNIチェーンを呼び出し、CNI/IPAMプラグインがインターフェースを作成してアドレスを割り当てます。Felixはエンドポイント変更を非同期に観測し、直接CNI ADD呼び出しを処理するものではありません。具体的なコンポーネントはOperator、プラットフォーム、ネットワークモードで決まります。
 
-![Felix の Datastore Watcher がルート、ACL、インターフェース、IPAM マネージャーに分岐し、それらがノードのルーティングテーブル、iptables ルール、IP セット、ネットワークインターフェースをプログラムする図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-1.svg)
+### Felixの責務
 
-### コア機能
+Linux CNI/IPAMがPodインターフェースとアドレスを作成します。Felixはエンドポイント状態とカーネルポリシーを調整します。HTTPヘルス応答の提供とデータストアへの状態報告は別の機能です。
 
-1. **ルートのプログラミング**: Pod CIDR ブロックのルートを管理
-2. **ACL の適用**: ネットワークポリシー用の iptables/nftables/eBPF ルールをプログラム
-3. **インターフェース管理**: ワークロードエンドポイントのインターフェースを設定
-4. **ヘルスレポート**: ノードおよびエンドポイントの正常性を datastore に報告
-5. **IPAM の連携**: ローカルワークロードの IP アドレス割り当てを管理
+### 中核機能
 
-### Felix のデータプレーンオプション
+1. **経路設定**: 該当するワークロードとトンネルの経路を調整。BGPモードではBIRDのカーネルプロトコルも学習経路を設定
+2. **ACL適用**: ネットワークポリシー用のiptables/nftables/eBPFルールを設定
+3. **インターフェース管理**: エンドポイントのインターフェース状態と関連カーネル設定を調整。Linux veth作成はCNI経路の担当
+4. **ヘルス報告**: ノードとエンドポイントの健全性をデータストアへ報告
+5. **エンドポイント調整**: ワークロードエンドポイント状態を監視し、該当ポリシー/経路を設定。アドレス割り当てとLinux Podインターフェース作成はCNI/IPAMプラグインが担当
 
-Felix は複数のデータプレーンバックエンドをサポートしています。
+### Felixのデータプレーン選択肢
 
-| データプレーン | 説明                   | 最適な用途                             |
-| ------------ | ---------------------- | -------------------------------------- |
-| **iptables** | 従来の Linux ファイアウォール | 互換性、成熟したデプロイメント                 |
-| **nftables** | 最新の Linux ファイアウォール | 新しいカーネル、より優れたパフォーマンス         |
-| **eBPF**     | カーネル内でプログラム可能     | 最大のパフォーマンス、kube-proxy の置き換え |
+Felixは複数のデータプレーンバックエンドをサポートします。
 
-### FelixConfiguration リソース
+| データプレーン | 説明 | 適した用途 |
+| ------------ | -------------------------- | ------------------------------------------- |
+| **iptables** | 従来のLinuxファイアウォール | 互換性、成熟したデプロイ |
+| **nftables** | ネイティブnftables実装 | 対応カーネル、プラットフォーム、機能群を確認 |
+| **eBPF** | カーネル内でプログラム可能 | オプションのService処理。調整された移行と対応機能が必要 |
+
+### FelixConfigurationリソース
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -46,109 +49,70 @@ kind: FelixConfiguration
 metadata:
   name: default
 spec:
-  # Logging configuration
   logSeverityScreen: Info
-  logSeverityFile: Warning
-  logFilePath: /var/log/calico/felix.log
-
-  # Data plane selection
-  bpfEnabled: false                    # Set true for eBPF data plane
-  bpfDataIfacePattern: ^((en|wl|eth).*|bond[0-9]+)$
-  bpfConnectTimeLoadBalancingEnabled: true
-  bpfExternalServiceMode: Tunnel
-
-  # iptables configuration
-  iptablesBackend: Auto               # Auto, Legacy, NFT
-  iptablesRefreshInterval: 90s
-  iptablesPostWriteCheckIntervalSecs: 1
-  iptablesLockFilePath: /run/xtables.lock
-  iptablesLockTimeoutSecs: 0
-  iptablesLockProbeIntervalMillis: 50
-
-  # Performance tuning
-  ipipMTU: 1440
-  vxlanMTU: 1410
-  wireguardMTU: 1420
-
-  # Health and metrics
   healthEnabled: true
   healthPort: 9099
   prometheusMetricsEnabled: true
   prometheusMetricsPort: 9091
-  prometheusGoMetricsEnabled: true
-  prometheusProcessMetricsEnabled: true
-
-  # Policy configuration
-  defaultEndpointToHostAction: Drop
-  failsafeInboundHostPorts:
-    - protocol: TCP
-      port: 22
-    - protocol: UDP
-      port: 68
-  failsafeOutboundHostPorts:
-    - protocol: UDP
-      port: 53
-    - protocol: UDP
-      port: 67
-
-  # Interface configuration
-  interfacePrefix: cali
-  chainInsertMode: Insert
-
-  # Reporting
-  reportingIntervalSecs: 30
-  reportingTTLSecs: 90
+  reportingInterval: 30s
+  reportingTTL: 90s
 ```
 
-### Felix の iptables ルール構造
+この最小例はCalico 3.32.2で受け入れられるフィールドを使います。設定の所有者を通じて変更してください。データプレーン移行や性能調整の手順ではありません。Felixのヘルスホストのデフォルトはlocalhostです。メトリクスの有効化はPrometheusのスクレイプを設定せず、公開を適切にするものでもありません。
 
-Felix は効率的な処理のため、iptables ルールをチェーンに編成します。
+| 設定上の観点 | 正しい所有者 / 解釈 |
+|---|---|
+| Linuxデータプレーン | Operatorの`Installation.spec.calicoNetwork.linuxDataplane`で、対応構成の`Iptables`、`Nftables`、`BPF`を選択 |
+| `bpfEnabled` | 低レベルのFelix設定。単独パッチではなくOperator管理の移行、kube-proxy/API到達性を調整 |
+| `iptablesBackend: NFT` | iptables-nftツールのバックエンドを選択。Calicoネイティブnftablesデータプレーンではない |
+| 接続時負荷分散 | 現在のフィールドは`bpfConnectTimeLoadBalancing: TCP`、`Enabled`、`Disabled`。旧ブール値`bpfConnectTimeLoadBalancingEnabled`も受理されるが非推奨 |
+| ノードアドレス検出 | Operatorの`calicoNetwork.nodeAddressAutodetectionV4` / `V6`、またはマニフェスト管理インストールのノード起動環境。`ipAutoDetectionMethod`や`ipv6AutoDetectionMethod`というFelixフィールドではない |
+| フロー可視性 | 対応するGoldmane/Whisker設定を使用。Open Sourceは以前の例のEnterpriseファイルログフィールドを受け入れない |
+| MTUとトンネルモード | アンダーレイ、カプセル化、暗号化から導出。1440/1410/1420を任意に設定したり全トンネルを有効にしたりせず、Installation/IPPool設定を調整 |
+| ホストのフェイルセーフポート | デフォルト一覧の置換前に実際のAPI/BGP/etcd/管理アクセス到達性を確認。旧短縮一覧では必要な例外が消える可能性があった |
+| 期間 | `reportingInterval`、`reportingTTL`、`iptablesPostWriteCheckInterval`、`iptablesLockProbeInterval`など現在の名前を使用。機械的に`Secs`/`Millis`を追加しない |
 
-```
-                         ┌─────────────────────────────────────────┐
-                         │              FORWARD Chain              │
-                         └─────────────────┬───────────────────────┘
-                                           │
-                         ┌─────────────────▼───────────────────────┐
-                         │          cali-FORWARD (Calico)          │
-                         └─────────────────┬───────────────────────┘
-                                           │
-              ┌────────────────────────────┼────────────────────────────┐
-              │                            │                            │
-┌─────────────▼─────────────┐ ┌────────────▼────────────┐ ┌─────────────▼─────────────┐
-│   cali-from-wl-dispatch   │ │   cali-to-wl-dispatch   │ │    cali-from-host-ep     │
-│  (from workload traffic)  │ │  (to workload traffic)  │ │   (from host endpoints)   │
-└─────────────┬─────────────┘ └────────────┬────────────┘ └─────────────┬─────────────┘
-              │                            │                            │
-┌─────────────▼─────────────┐ ┌────────────▼────────────┐ ┌─────────────▼─────────────┐
-│    cali-fw-caliXXXXXX     │ │    cali-tw-caliXXXXXX   │ │    Per-endpoint policy    │
-│    (per-endpoint rules)   │ │   (per-endpoint rules)  │ │          chains           │
-└───────────────────────────┘ └─────────────────────────┘ └───────────────────────────┘
-```
+リリースされたスキーマは、旧名の`iptablesLockFilePath`、`iptablesLockTimeoutSecs`、`iptablesLockProbeIntervalMillis`、`iptablesPostWriteCheckIntervalSecs`、`reportingIntervalSecs`、`reportingTTLSecs`を拒否します。[Felixリソースリファレンス](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)と[Operator API](https://docs.tigera.io/calico/latest/reference/installation/api)を参照してください。アドレスやデータプレーンの変更には独自のロールアウト確認が必要です。
 
-### Felix のデータフロー
+### Felixのiptablesルール構造
 
-![Felix が datastore からポリシー、エンドポイント、IP プールの更新を受け取り、それぞれを iptables ルール、ルーティングテーブルエントリ、またはネットワークインターフェース設定に変換するシーケンス図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-2.svg)
+以下は[リリース済みルール定義](https://github.com/projectcalico/calico/blob/v3.32.2/felix/rules/rule_defs.go)から選んだプレフィックスであり、完全なチェーングラフではありません。iptablesデータプレーンを説明しています。インストールしたモードと設定の実際のルールを確認してください。
 
-## BIRD: BGP ルーティングデーモン
+| チェーン/プレフィックス | 役割 |
+|---|---|
+| `cali-FORWARD` | Calico転送フック |
+| `cali-from-wl-dispatch` | ワークロードインターフェースからの振り分け |
+| `cali-to-wl-dispatch` | ワークロードインターフェースへの振り分け |
+| `cali-fw-…` / `cali-tw-…` | ワークロードごとの方向別チェーン |
+| `cali-pi-…` / `cali-po-…` | 受信/送信ポリシーチェーン |
 
-BIRD（BIRD Internet Routing Daemon）は、ノード間でルートを配布するために Calico が使用する BGP デーモンです。
+### Felixのデータフロー
 
-### Calico アーキテクチャにおける BIRD
+Pod作成時にランタイムがCNI/IPAMチェーンを呼び出し、ネットワークを設定してエンドポイント状態を記録します。Felixは関連変更を観測してポリシー/経路を設定します。有効な場合、BGP設定は独自のconfd/BIRD経路に従います。PodがRunningでも、ルーティングやポリシーの収束は証明されません。
 
-![各ノードの BIRD インスタンスが Pod ルートを交換するための完全な iBGP メッシュを形成し、その後 top-of-rack switch および core router と eBGP ピアリングして、これらのルートを外部に広報する図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-3.svg)
+## BIRD: BGPルーティングデーモン
 
-### BGP セッションタイプ
+BIRD（BIRD Internet Routing Daemon）はCalicoのBGPバックエンドが有効な場合にBGP経路を交換します。ポリシー専用やBGP無効のVXLANインストールではBIRD/confdは必須ではありません。以下のトポロジー例には適切に設計されたBGP有効クラスターが必要で、入門のBGP無効kind演習に追加するものではありません。
 
-| セッションタイプ           | ユースケース                  | 設定                     |
+### CalicoアーキテクチャにおけるBIRD
+
+![3ノードそれぞれのBIRDが完全なiBGPメッシュを形成してPod経路を交換し、さらにトップオブラックスイッチとeBGPでピア接続し、スイッチがコアルーターへ経路を渡す図。](../../.gitbook/assets/en-networking-calico-02-architecture-3.png)
+
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-3.html)
+
+線はBGPセッションを表し、BIRDを通るアプリケーションパケットの経路ではありません。規模ラベルは目安であり、プロトコル要件やルートリフレクターの固定しきい値ではありません。
+
+### BGPセッションの種類
+
+| セッションタイプ | 用途 | 設定 |
 | --------------------- | --------------------------- | ---------------------- |
-| **Node-to-Node Mesh** | 小規模クラスターのデフォルト     | 自動、フルメッシュ          |
-| **Route Reflector**   | 大規模クラスター（100+ ノード） | 専用の RR ノード          |
-| **External Peering**  | オンプレミス統合              | 手動による BGP ピア設定 |
+| **ノード間メッシュ** | 小規模クラスターのデフォルト | 自動、フルメッシュ |
+| **ルートリフレクター** | トポロジー要件に応じてメッシュのセッション数を削減 | 代替ピアを先に設定・確認 |
+| **外部ピアリング** | オンプレミス統合 | BGPピアを手動設定 |
 
-### BGP 設定例
+### BGP設定例
 
-#### Node-to-Node Mesh（デフォルト）
+#### ノード間メッシュ（デフォルト）
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -161,40 +125,43 @@ spec:
   asNumber: 64512
 ```
 
-#### Route Reflector の設定
+#### ルートリフレクターの設定
 
-```yaml
-# Disable node-to-node mesh
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  nodeToNodeMeshEnabled: false
-  asNumber: 64512
----
-# Configure route reflector nodes
-apiVersion: projectcalico.org/v3
-kind: Node
-metadata:
-  name: node-rr-1
-  labels:
-    route-reflector: "true"
-spec:
-  bgp:
-    routeReflectorClusterID: 224.0.0.1
----
-# Configure BGP peer to route reflector
+[公式BGP移行手順](https://docs.tigera.io/calico/latest/networking/configuring/bgp)を使います。ルートリフレクターのクラスターIDを割り当てると、そのノードは即座に既存ノードメッシュから外れ、ワークロードを中断する可能性があります。アプリケーションワークロードのない専用ノードを準備するか、明示的な保守移行を計画してください。他の設定を省略した部分オブジェクトで既存Calico Nodeを置き換えないでください。
+
+Kubernetes APIデータストアでは、文書化されたノードアノテーションが既存Nodeフィールドを保持します。例の名前を準備したノードに置き換えてください。
+
+```bash
+# Existing, prepared RR nodes with no application workloads.
+kubectl get nodes rr-1 rr-2 -o yaml > rr-nodes-before.yaml
+kubectl get bgpconfiguration.projectcalico.org default -o yaml > bgp-before.yaml
+kubectl annotate node rr-1 projectcalico.org/RouteReflectorClusterID=244.0.0.1 --overwrite
+kubectl annotate node rr-2 projectcalico.org/RouteReflectorClusterID=244.0.0.2 --overwrite
+kubectl label nodes rr-1 rr-2 route-reflector=true --overwrite
+kubectl apply -f - <<'YAML'
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
-  name: peer-to-rr
+  name: nodes-to-route-reflectors
 spec:
-  nodeSelector: "!has(route-reflector)"
-  peerSelector: route-reflector == "true"
+  nodeSelector: all()
+  peerSelector: route-reflector == 'true'
+YAML
 ```
 
-#### 外部 BGP ピアリング
+RRセレクターへの`all()`はクライアントとRR間のピアリングをカバーします。両リフレクターとクライアント経路を確認してください。セッションの確立を待ち、実際の到達性を確認してから旧ノードメッシュを無効にします。Establishedセッションだけでは、必要な経路が受理された証明にはなりません。
+
+```bash
+# Only after replacement sessions, routes and test traffic have been verified.
+kubectl patch bgpconfiguration.projectcalico.org default --type merge \
+  -p '{"spec":{"nodeToNodeMeshEnabled":false}}'
+```
+
+これは順序のある移行で、全ブロックの同時適用指示でも無中断保証でもありません。保存した設定と検証済み復旧経路を保持してください。外部ファブリック例のアドレス、ASN、再利用AS番号には、意図的な経路ポリシーとASループ処理が必要です。
+
+#### 外部BGPピアリング
+
+例のピアアドレス、ASN、ラックセレクターを計画したトポロジーに置き換えます。パスワード参照には、Calicoノードコンポーネントの名前空間内の一致するSecret/キーと、対応ルーター設定が必要です。BGPセッションを認証し、ワークロードのペイロードは認証しません。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -213,297 +180,178 @@ spec:
   keepOriginalNextHop: false
 ```
 
-### ルート伝播プロセス
+### 経路伝播の処理
 
-![新しい Pod のルートが Felix により割り当てられ、BIRD のローカルルーティングテーブルに追加され、BGP UPDATE を通じてピアノードへ伝播されることで、それらのノードがルートをインストールし、Felix がそれに応じてルーティングするシーケンス図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-4.svg)
+![Felixがカーネルルーティングテーブルに経路を追加し、BIRDがBGPセッション管理を通じて経路情報を取得して、BGP UPDATEでPod CIDRを他ノードや外部ルーターへ広告する図。大規模クラスター向けルートリフレクターと、エクスポートフィルターによる経路フィルタリングもBIRDの機能として示す。](../../.gitbook/assets/en-networking-calico-02-architecture-4.png)
 
-### BIRD ステータスコマンド
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-4.html)
+
+これは経路情報の1つの流れを示します。BIRDのカーネルプロトコルも学習経路を設定でき、confd/IPAMデータはルーティング設定の生成に寄与します。BGP経路フィルターはルーティングポリシーであり、Kubernetes NetworkPolicyの適用ではありません。
+
+### BIRD状態確認コマンド
+
+BIRDが動作するノードを選びます。リリース済みの[起動スクリプト](https://github.com/projectcalico/calico/blob/v3.32.2/node/filesystem/etc/service/available/bird/run)は、以下のIPv4制御ソケットを設定します。マニフェスト管理インストールでは別の名前空間を使う場合があります。
 
 ```bash
-# Access BIRD CLI on a Calico node
-kubectl exec -n calico-system calico-node-xxxxx -c calico-node -- birdcl
-
-# Show BGP protocol status
-birdcl> show protocols
-name     proto    table    state  since       info
-kernel1  Kernel   master   up     2024-01-01
-device1  Device   master   up     2024-01-01
-direct1  Direct   master   up     2024-01-01
-Mesh_10_0_1_10  BGP  master  up   2024-01-01  Established
-Mesh_10_0_1_11  BGP  master  up   2024-01-01  Established
-
-# Show BGP routes
-birdcl> show route protocol Mesh_10_0_1_10
-192.168.1.0/26     via 10.0.1.10 on eth0 [Mesh_10_0_1_10 2024-01-01] * (100/0) [i]
-192.168.1.64/26    via 10.0.1.10 on eth0 [Mesh_10_0_1_10 2024-01-01] * (100/0) [i]
-
-# Show route details
-birdcl> show route 192.168.1.0/26 all
+CALICO_NODE=worker-node-name
+CALICO_POD=$(kubectl -n calico-system get pods -l k8s-app=calico-node \
+  --field-selector "spec.nodeName=$CALICO_NODE" -o jsonpath='{.items[0].metadata.name}')
+: "${CALICO_POD:?No Calico Pod on the selected node}"
+kubectl -n calico-system exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show protocols
+kubectl -n calico-system exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show route
 ```
+
+詳細な照会には、出力の実際のプロトコル名とプレフィックスを使用します。コマンドとコンソール出力例は別です。以前の`birdcl>`プロンプトはBashコマンドではありませんでした。これらの読み取り専用確認はルーティングを設定しません。
 
 ## confd: 設定管理
 
-confd は、Calico datastore を監視し、BIRD 設定ファイルを生成する軽量な設定管理ツールです。
+confdはCalicoデータストアを監視してBIRD設定ファイルを生成する軽量な設定管理ツールです。
 
-### confd のワークフロー
+### confdのワークフロー
 
-![confd の watcher が Calico datastore 内の BGP 設定、ピア、ノードリソースに反応し、テンプレートから bird.cfg ファイルをレンダリングして、実行中の BIRD プロセスに渡す図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-5.svg)
+confdは関連BGP設定を監視し、テンプレートをレンダリングして候補を検査し、BIRDに再読み込みを通知します。
 
-### confd のテンプレート処理
+### confdのテンプレート処理
 
-confd は Go テンプレートを使用して BIRD 設定を生成します。
+架空の`.NodeIP` / `.BGPPeers`データ構造でなく、[リリース済みテンプレート](https://github.com/projectcalico/calico/blob/v3.32.2/confd/etc/calico/confd/templates/bird.cfg.template)を使います。この抜粋はカーネル同期を示します。フィルターと周囲の設定は別の場所で定義されるため、完全な`bird.cfg`ではありません。
 
-```
-# Template: /etc/calico/confd/templates/bird.cfg.template
-# Output: /etc/calico/confd/config/bird.cfg
-
-router id {{.NodeIP}};
-
+```text
 protocol kernel {
-    learn;
-    persist;
-    scan time 2;
-    import all;
-    export {{if .ExportKernel}}all{{else}}none{{end}};
+  learn;
+  persist;
+  scan time 2;
+  import all;
+  export filter calico_kernel_programming;
+  graceful restart;
+  merge paths on;
 }
-
-protocol device {
-    scan time 2;
-}
-
-{{range .BGPPeers}}
-protocol bgp {{.Name}} {
-    local as {{$.LocalAS}};
-    neighbor {{.PeerIP}} as {{.PeerAS}};
-    import all;
-    export {{if .ExportFilter}}filter {{.ExportFilter}}{{else}}all{{end}};
-    {{if .Password}}password "{{.Password}}";{{end}}
-    graceful restart;
-}
-{{end}}
 ```
+
+[confdテンプレート定義](https://github.com/projectcalico/calico/blob/v3.32.2/confd/etc/calico/confd/conf.d/bird.toml)は`/etc/calico/confd/config/bird.cfg`を書き込み、`bird -p -c {{.src}}`で候補を検証し、再読み込みアクションとして`sv hup bird || true`を使います。これはBIRDが選択した学習経路をカーネルへエクスポートできることを示し、単に全経路をFelixから受け取るわけではありません。再読み込みとグレースフルリスタートの動作には状態と通信の確認が依然必要です。生成ファイルを編集せず、API所有者を通じてBGP設定を管理してください。
 
 ## Typha: スケーリングコンポーネント
 
-Typha は Kubernetes API server と Felix エージェントの間に配置される fan-out プロキシです。datastore の更新をキャッシュして配布することで、API server の負荷を軽減します。
+TyphaはKubernetes APIサーバーとFelixエージェントの間に置かれる配布プロキシです。データストア更新をキャッシュ・配布し、APIサーバーの負荷を減らします。
 
-### Typha が必要な理由
+### Typhaを使う理由
 
-![小規模クラスターではすべての Felix が Kubernetes API を直接監視するのに対し、大規模クラスターでは Typha Pod がキャッシュ済みの更新を数百の Felix エージェントに fan-out する比較図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-6.svg)
+Typhaは状態をキャッシュし、複数クライアントへ変更をストリーミングすることで、繰り返しのデータストア更新処理を削減します。ノード数だけでなく、インストールの所有権、TLS、実際のスケーリングロジックも重要です。
 
-### Typha のスケーリング計算
+### operator 1.42.6のTyphaスケーリング
 
-推奨される Typha レプリカ数は、クラスターのサイズによって異なります。
+OperatorはTyphaをデプロイしてスケーリングします。「50ノード超だけ」という普遍的なルールはありません。固定バージョンの[オートスケーラー実装](https://github.com/tigera/operator/blob/v1.42.6/pkg/controller/installation/typha_autoscaler.go)は、スケジュール不可とされていないノードを数え、AKS仮想ノードを除外し、希望レプリカを配置する十分なLinuxノードがあるかを別に確認します。Taintや他の配置制約も重要です。
 
-```
-Typha Replicas = max(3, ceil(Nodes / 200))
+短縮されたコメントではなく、実際の[スケール関数](https://github.com/tigera/operator/blob/v1.42.6/pkg/common/autoscale.go)は次を返します。
 
-Examples:
-- 50 nodes:   3 Typha replicas (minimum)
-- 200 nodes:  3 Typha replicas
-- 500 nodes:  3 Typha replicas
-- 1000 nodes: 5 Typha replicas
-- 2000 nodes: 10 Typha replicas
-```
+- カウント対象ノードが1–2台なら1レプリカ。
+- カウント対象ノードが3–4台なら2レプリカ。
+- カウント対象ノードが5台以上なら`max(3, floor(N / 200) + 2)`。
 
-### Typha Deployment 設定
+| カウント対象ノード数 | このバージョンでの希望レプリカ数 |
+|---|---|
+| 50 | 3 |
+| 200 | 3 |
+| 500 | 4 |
+| 1,000 | 7 |
+| 2,000 | 12 |
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: calico-typha
-  namespace: calico-system
-spec:
-  replicas: 3
-  revisionHistoryLimit: 2
-  selector:
-    matchLabels:
-      k8s-app: calico-typha
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-  template:
-    metadata:
-      labels:
-        k8s-app: calico-typha
-    spec:
-      nodeSelector:
-        kubernetes.io/os: linux
-      tolerations:
-      - key: CriticalAddonsOnly
-        operator: Exists
-      priorityClassName: system-cluster-critical
-      serviceAccountName: calico-typha
-      containers:
-      - name: calico-typha
-        image: calico/typha:v3.29.0
-        ports:
-        - containerPort: 5473
-          name: calico-typha
-          protocol: TCP
-        env:
-        - name: TYPHA_LOGSEVERITYSCREEN
-          value: "info"
-        - name: TYPHA_LOGFILEPATH
-          value: "none"
-        - name: TYPHA_LOGSEVERITYSYS
-          value: "none"
-        - name: TYPHA_CONNECTIONREBALANCINGMODE
-          value: "kubernetes"
-        - name: TYPHA_DATASTORETYPE
-          value: "kubernetes"
-        - name: TYPHA_HEALTHENABLED
-          value: "true"
-        - name: TYPHA_PROMETHEUSMETRICSENABLED
-          value: "true"
-        - name: TYPHA_PROMETHEUSMETRICSPORT
-          value: "9093"
-        livenessProbe:
-          httpGet:
-            path: /liveness
-            port: 9098
-          periodSeconds: 30
-          initialDelaySeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /readiness
-            port: 9098
-          periodSeconds: 10
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 1000m
-            memory: 512Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: calico-typha
-  namespace: calico-system
-spec:
-  ports:
-  - port: 5473
-    protocol: TCP
-    targetPort: calico-typha
-    name: calico-typha
-  selector:
-    k8s-app: calico-typha
+これはバージョン固有の希望数であり、レプリカあたり容量の保証や全インストールへの推奨ではありません。非クラスターホストモードは別の適格HostEndpoint数を使います。以前の`max(3, ceil(N / 200))`表はこのOperatorを説明していませんでした。
+
+### Operator管理のTypha設定
+
+OperatorのDeployment、ServiceAccount/RBAC、Service、Disruption Budget、TLS設定をまとめて保持します。以前の手書きDeploymentは必須依存関係を欠き、Operator管理設定を上書きする可能性がありました。FelixからTyphaへのTLSは、信頼するCA、Typhaサーバー証明書/キー、期待されるFelixクライアントIDを使います。5473はデフォルト同期ポートで、ユーザートラフィックのプロキシではありません。
+
+```bash
+# Change the operator's supported setting through its API.
+kubectl patch installation.operator.tigera.io default --type merge \
+  -p '{"spec":{"typhaMetricsPort":9093}}'
+kubectl -n calico-system get deployment calico-typha -o yaml
+kubectl -n calico-system get service calico-typha -o yaml
+kubectl -n calico-system get pdb
 ```
 
-### Typha の fan-out アーキテクチャ
+Typhaのヘルスエンドポイントのデフォルトはlocalhost:9098です。このOperatorは設定したFelixヘルスポートから1を引いてヘルスポートを決定し、プローブも対応して設定します。PodネットワークのDeploymentでPod IPを対象とするプローブは、localhostだけで待ち受けるリスナーに届きません。ネットワーク/バインド設定なしでプローブをコピーするのは安全ではありません。Operatorソースは、旧単独例にはなかったTLSマウントとクライアントID設定を提供します。
 
-![2 つの API server watch ストリームが 2 つの Typha Pod に入力され、それぞれが更新をローカルにキャッシュし、各ノードグループ内のおよそ 100 の Felix エージェントに fan-out するアーキテクチャ図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-7.svg)
+### Typhaの配布アーキテクチャ
 
-## kube-controllers: Kubernetes 統合
+各Typhaはクライアントストリーム用のキャッシュ状態を維持します。図のクライアントグループ分けは、インスタンスあたりの固定容量仕様ではありません。
 
-calico-kube-controllers Pod は、Kubernetes リソースを Calico datastore と同期する一連のコントローラーを実行します。
+## kube-controllers: Kubernetes統合
 
-### コントローラーの概要
+calico-kube-controllersは選択された調整機能を実行します。実行されるコントローラーはデータストア、エディション、インストール設定に依存します。etcdデータストアへのポリシー/名前空間/サービスアカウントの投影は、Kubernetes APIデータストアの処理とは異なります。
 
-| コントローラー                      | 目的                                              |
+### 利用可能なコントローラーの役割
+
+| コントローラー | 目的 |
 | ------------------------------- | ------------------------------------------------- |
-| **Node Controller**             | Kubernetes ノードを Calico ノードリソースと同期する |
-| **Policy Controller**           | Kubernetes NetworkPolicy を Calico ポリシーと同期する |
-| **Namespace Controller**        | プロファイル管理のため Namespace ラベルを同期する     |
-| **ServiceAccount Controller**   | RBAC のため ServiceAccount ラベルを同期する             |
-| **WorkloadEndpoint Controller** | 古いワークロードエンドポイントをクリーンアップする                |
+| **Node Controller** | KubernetesノードとCalicoノードリソースを同期 |
+| **Policy Controller** | Kubernetes NetworkPolicyとCalicoポリシーを同期 |
+| **Namespace Controller** | プロファイル管理用に名前空間ラベルを同期 |
+| **ServiceAccount Controller** | サービスアカウントラベルをCalicoプロファイルに投影。Kubernetes RBACは付与しない |
+| **WorkloadEndpoint Controller** | 該当データストア経路でPodラベルなどのワークロードエンドポイントメタデータを更新 |
 
 ### コントローラーの調整ループ
 
-![kube-controllers が Kubernetes および Calico リソースを繰り返しリストし、それらの差分を比較して、変更を Calico datastore に書き込むか、すでに同期済みの場合は何も実行しないことを示すシーケンス図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-8.svg)
+![kube-controllersがKubernetesとCalicoリソースの一覧を繰り返し取得し、差分を比較してCalicoデータストアへ変更を書き込むか、同期済みなら何もしないシーケンス図。](../../.gitbook/assets/en-networking-calico-02-architecture-8.png)
 
-### kube-controllers 設定
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-8.html)
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: calico-kube-controllers-config
-  namespace: calico-system
-data:
-  config: |
-    {
-      "logSeverityScreen": "info",
-      "healthEnabled": true,
-      "prometheusPort": 9094,
-      "controllers": {
-        "node": {
-          "hostEndpoint": {
-            "autoCreate": "Disabled"
-          },
-          "syncLabels": "Enabled",
-          "leakGracePeriod": "15m"
-        },
-        "policy": {
-          "reconcilerPeriod": "5m"
-        },
-        "workloadEndpoint": {
-          "reconcilerPeriod": "5m"
-        },
-        "namespace": {
-          "reconcilerPeriod": "5m"
-        },
-        "serviceAccount": {
-          "reconcilerPeriod": "5m"
-        }
-      }
-    }
+これは期待状態と観測状態の論理的な調整の概略であり、毎周期2つのリモートLIST呼び出しがあると証明するトレースではありません。実際のコントローラーはwatch/キャッシュを使い、有効な役割はデータストアとインストールに依存します。
+
+### kube-controllersの設定
+
+Operatorインストールでは、実際の[KubeControllersConfiguration API](https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig)を設定します。このガイドのDeploymentは`calico-kube-controllers-config`という任意のConfigMapを読みません。
+
+```bash
+kubectl get kubecontrollersconfiguration.projectcalico.org default -o yaml
+kubectl patch kubecontrollersconfiguration.projectcalico.org default --type merge \
+  -p '{"spec":{"logSeverityScreen":"Info","healthChecks":"Enabled","prometheusMetricsPort":9094}}'
 ```
 
-## Datastore オプション
+このマージパッチは既存の`controllers`設定を保持します。GitOps管理なら、代わりに期待状態で同等の変更を行ってください。空のコントローラーオブジェクトを持つ置換マニフェストは、既存の調整や割り当て設定を変える場合があります。
 
-Calico は、設定と状態を保存するための 2 つの datastore バックエンドをサポートします。
+Operator 1.42.6は標準Open Sourceデプロイで`ENABLED_CONTROLLERS=node,loadbalancer`を選択します。上の広い一覧は利用可能な役割を説明し、全データストアで必ず5コントローラーが動作する意味ではありません。[レンダラー](https://github.com/tigera/operator/blob/v1.42.6/pkg/render/kubecontrollers/kube-controllers.go)は1レプリカと`Recreate`戦略を指定し、以前のリーダー選出の主張はその設定で裏付けられていませんでした。置換や手動スケーリングをせず、インストール所有者の管理下に置いてください。
 
-### Kubernetes API Datastore（推奨）
+## データストアの選択肢
 
-![Felix、Typha、kube-controllers のすべてが Kubernetes API server を通じて Calico の状態を読み書きし、API server 自体が etcd に永続化する図。個別の Calico etcd クラスターは不要です。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-9.svg)
+このOperator例はKubernetes APIデータストアを使います。Calico状態にはCalico CRDとネイティブKubernetesオブジェクトが関与し、論理的な全Calicoリソースが個別CRDになるわけではありません。通常の集約APIサーバーは内部表現の上に`projectcalico.org/v3`を公開します。ネイティブv3 CRDは別のCalico 3.32技術プレビューで、独自の移行手順があります。
 
-**利点:**
+Typhaは読み取り/watch更新を配布し、Felixの汎用書き込みプロキシではありません。状態やリソースを更新するコンポーネントは独自のデータストアアクセスを使います。Kubernetesは背後のストアにAPI状態を永続化しますが、このモードで利用者が別のCalico etcdクラスターを必要とするわけではありません。
 
-* 管理する個別の etcd クラスターが不要
-* アクセス制御に Kubernetes RBAC を使用
-* よりシンプルな運用モデル
-* 任意の Kubernetes ディストリビューションで動作
+etcdv3への直接アクセスは、明示的なサポートと機能制約がある別のインストール選択肢です。高速、無制限、5,000ノード超で必須だと推測しないでください。eBPFデータプレーンにはKubernetesデータストアが必要です。直接etcdデプロイには、独自のTLS信頼、認証情報、可用性、整合性のあるバックアップ/復元設計も必要です。
 
-### etcd Datastore（レガシー）
+| 観点 | Kubernetes APIデータストア | 直接etcdv3 |
+|---|---|---|
+| アクセス制御 | Kubernetes認証/RBACと適切なCalico API経路 | etcd認証/TLSとアクセス制御 |
+| 運用 | クラスターAPIを再利用し、プロバイダー固有のバックアップ手順に従う | 選択したetcdデプロイを運用・バックアップ |
+| ホスト/VM対応 | 具体的なインストールとエディションを確認 | 具体的なインストールとエディションを確認 |
+| 選択 | このOperatorガイドで使用 | 別途検証した設計。ノード数に基づく近道ではない |
 
-![Felix と Typha が専用の Calico etcd クラスターを直接読み書きし、kube-controllers がそのクラスターと Kubernetes API server の橋渡しをする図。これはレガシーで分離された datastore オプションです。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-10.svg)
+マネージドKubernetesの「Kubernetesバックアップ」は、利用者が直接コントロールプレーンのetcdスナップショットを取得できる意味ではありません。プラットフォーム手順で対応リソースをバックアップしてください。
 
-**利点:**
+## コンポーネント間の連携シーケンス
 
-* Kubernetes API server から分離される
-* Kubernetes 以外のワークロード（VM、ベアメタル）にも使用可能
-* 非常に大規模なクラスター向けの歴史的な選択肢
+kubeletはコンテナランタイムを通じてサンドボックス作成を要求し、ランタイムがCNI/IPAMを呼び出します。エンドポイントとポリシーデータは、選択したデータストア/watch経路でFelixへ届きます。BGPモードではconfdとBIRDがルーティング設定を別に処理します。これらは非同期に収束するため、実際の接続性と適用を確認してください。
 
-### Datastore の比較
+## パケットフローの分析
 
-| 機能                       | Kubernetes API       | etcd                   |
-| -------------------------- | ----------------- | ------------------ |
-| **運用の複雑さ** | 低い             | 高い             |
-| **スケーラビリティ**            | 良好（Typha 使用時） | 優れている          |
-| **非 K8s ワークロード**      | 制限あり           | 完全サポート       |
-| **バックアップ/リストア**         | K8s 経由           | 個別のツール       |
-| **アクセス制御**         | K8s RBAC          | etcd 認証          |
-| **推奨**         | デフォルトの選択    | 特殊なケースのみ |
+### Ingressパケットフロー（同一ノードのPod間）
 
-## コンポーネント相互作用のシーケンス
+![同一ノードのPodから別のPodへ、それぞれのvethインターフェースとホストのiptables/eBPFポリシーチェックを通過するパケットの図。](../../.gitbook/assets/en-networking-calico-02-architecture-12.png)
 
-![Kubernetes API での NetworkPolicy と Pod の作成が、kube-controllers と Typha を経由して Felix に到達し、Felix がローカルデータプレーンをプログラムして BGP ルートを更新するまでを追跡するシーケンス図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-11.svg)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-12.html)
 
-## パケットフロー分析
+ポリシーのボックスは、該当する送信元Egressと宛先Ingressのカーネルチェックをまとめています。vethインターフェースは両Podのネットワーク経路に属し、パケットはFelixプロセスを通りません。
 
-### Ingress パケットフロー（Pod 間、同一ノード）
+### Egressパケットフロー（IPIPを使う異なるノードのPod間）
 
-![同一ノード上で、パケットが各 Pod の veth インターフェースとホストの iptables/eBPF ポリシーチェックを通って、一方の Pod からもう一方へ渡る様子を示す図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-12.svg)
+![Pod Aのパケットがノード1のFelix/iptables Egressポリシーチェックを通り、IPIP/VXLANでカプセル化されるかBGP経路で直接転送されてノード2へ到達し、Ingressポリシーチェック後にPod Bへ届くシーケンス図。](../../.gitbook/assets/en-networking-calico-02-architecture-13.png)
 
-### Egress パケットフロー（Pod 間、IPIP を使用する異なるノード）
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-13.html)
 
-![一方のノードの Pod から出たパケットが veth と iptables チェックを通過し、物理ネットワークスイッチをまたいで IPIP カプセル化され、2 番目のノードでカプセル化解除されて Pod に配信される図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-13.svg)
+2つの経路は選択肢として読んでください。「Felix/iptables」はFelixが設定するカーネルルールを意味し、デーモンによるパケット転送ではありません。BIRDはBGPモードで経路制御情報を提供し、アプリケーションパケットは運びません。
 
 ### パケット構造の比較
 
@@ -526,28 +374,28 @@ IPIP Encapsulated Packet:
 
 ## まとめ
 
-Calico のアーキテクチャは、スケーラビリティ、パフォーマンス、運用の簡潔さを考慮して設計されています。
+Calicoのアーキテクチャは拡張性、性能、運用の簡素さを重視して設計されています。
 
-1. **Felix**: すべてのノードで動作し、ルートと ACL をプログラムする主力エージェント
-2. **BIRD**: BGP 経由でルートを配布し、ネイティブなルーティング統合を実現
-3. **confd**: datastore と BIRD 設定の橋渡しを担う
-4. **Typha**: API server の負荷を軽減することでシステムをスケールさせる
-5. **kube-controllers**: Kubernetes と Calico の同期を維持する
-6. **Datastore**: 設定ストレージ用の Kubernetes API（推奨）または etcd
+1. **Felix**: 各ノードで経路とACLを設定する主力エージェント
+2. **BIRD**: BGPで経路を配布し、ネイティブルーティング統合を可能にする
+3. **confd**: データストアとBIRD設定を橋渡し
+4. **Typha**: APIサーバー負荷を減らしてシステムを拡張
+5. **kube-controllers**: KubernetesとCalicoを同期状態に保つ
+6. **データストア**: 設定保存にKubernetes API（推奨）またはetcdを使用
 
-これらのコンポーネントとその相互作用を理解することは、以下に不可欠です。
+これらのコンポーネントと相互作用の理解は、次に不可欠です。
 
-* 接続性に関する問題のトラブルシューティング
-* 大規模環境でのパフォーマンス最適化
-* キャパシティとアーキテクチャの計画
-* 既存のネットワークインフラストラクチャとの統合
+* 接続問題のトラブルシューティング
+* 大規模環境での性能最適化
+* 容量とアーキテクチャの計画
+* 既存ネットワークインフラとの統合
 
-[前へ: パート 1 - Calico の概要](01-introduction.md)
+[前: 第1部 - Calico入門](01-introduction.md)
 
-[次へ: パート 3 - ネットワーキングモード](03-networking-modes.md)
+[次: 第3部 - ネットワーキングモード](03-networking-modes.md)
 
-[Calico 概要に戻る](./README.md)
+[Calicoの概要に戻る](./README.md)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[アーキテクチャクイズ](../../quizzes/networking/calico/02-architecture-quiz.md)に挑戦してください。
+この章の学習内容を確認するには、[アーキテクチャクイズ](../../quizzes/networking/calico/02-architecture-quiz.md)に挑戦してください。

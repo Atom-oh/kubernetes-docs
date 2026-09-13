@@ -1,133 +1,126 @@
 # Resiliencia
 
-Las características de resiliencia de Istio garantizan que el service mesh funcione de forma fiable incluso en escenarios de fallo.
+> **Última actualización**: 11 de septiembre de 2026 · Istio 1.31. Ejemplos sidecar independientes en `default`, con HTTP `myapp` en 8080. No aplique juntos todos los ejemplos del mismo host. Valide configuración real y capacidad; no se desplegaron ni probaron con carga. Ambient L7 requiere waypoint y asociación de política admitida.
 
-## Tabla de contenido
+Las funciones de resiliencia Istio ayudan a contener fallos cuando se configuran según semántica y capacidad de la aplicación.
 
-1. [Detección de valores atípicos](01-outlier-detection.md)
-2. [Limitación de velocidad](02-rate-limiting.md)
+## Índice
+
+1. [Detección de anomalías](01-outlier-detection.md)
+2. [Limitación de tasa](02-rate-limiting.md)
 3. [Enrutamiento consciente de zona](03-zone-aware-routing.md)
 
-### Patrones adicionales de resiliencia
+### Patrones adicionales
 
-Esta documentación también cubre los siguientes patrones:
-- **Circuit Breaker**: Interrupción de circuito mediante Connection Pool
-- **Retry**: Políticas de reintento
-- **Timeout**: Límites de tiempo de solicitud
-- **Fault Injection**: Pruebas de inyección de fallos
+La documentación también cubre:
+
+- **Circuit breaker**: Interrupción mediante pools de conexiones
+- **Reintento**: Políticas de retry
+- **Timeout**: Límites temporales
+- **Inyección de fallos**: Pruebas de fallos inducidos
 
 ## Descripción general
 
-La resiliencia es una característica crítica en los sistemas distribuidos. Istio puede implementar automáticamente diversos patrones de resiliencia.
+La resiliencia es esencial en sistemas distribuidos. Istio puede implementar automáticamente varios patrones.
 
-### Patrones principales de resiliencia
+### Patrones principales
 
-```mermaid
-flowchart TB
-    Request[Client Request]
+![Una solicitud pasa por detección de anomalías, limitación y routing zonal para llegar a Pods saludables, excluyendo uno no saludable.](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-0.png)
 
-    subgraph Resilience["Istio Resilience Patterns"]
-        Outlier[Outlier Detection<br/>Exclude Unhealthy Instances]
-        RateLimit[Rate Limiting<br/>Request Rate Control]
-        ZoneAware[Zone Aware Routing<br/>Locality-Preferred Routing]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-0.html)
 
-    subgraph Healthy["Healthy Instances"]
-        Pod1[Pod 1<br/>Zone A]
-        Pod2[Pod 2<br/>Zone B]
-    end
+Las figuras resumen conceptos, no una secuencia fija de servicios de red. Outlier detection y localidad son decisiones de balanceo del proxy; los filtros HTTP de tasa se ejecutan en listener/ruta seleccionados.
 
-    subgraph Unhealthy["Unhealthy Instances"]
-        Pod3[Pod 3<br/>Error Occurring]
-    end
+### 1. Detección de anomalías
 
-    Request --> Outlier
-    Outlier --> RateLimit
-    RateLimit --> ZoneAware
-
-    ZoneAware -->|Preferred| Pod1
-    ZoneAware -->|Failover| Pod2
-
-    Outlier -.->|Excluded| Pod3
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef resilience fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef healthy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Outlier,RateLimit,ZoneAware resilience;
-    class Pod1,Pod2 healthy;
-    class Pod3 unhealthy;
-```
-
-### 1. Detección de valores atípicos
-
-Detecta automáticamente las instancias de Service que presentan un comportamiento anómalo y las excluye del conjunto de tráfico.
+Detecta automáticamente instancias con comportamiento anómalo y las excluye del pool de tráfico.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
+  namespace: default
 spec:
   host: myapp
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
 
-**Características principales**:
+**Funciones principales**:
 - Detección de errores consecutivos
-- Exclusión y recuperación automáticas
-- Funciona con Circuit Breaker
+- Expulsión temporal y elegibilidad para tráfico posterior
+- Funciona con circuit breaker
 
-### 2. Limitación de velocidad
+La expulsión es local a cada proxy observador, no elimina Pod ni da un veredicto global de salud. Fallos consecutivos pueden detectar inmediatamente; `interval` es el período de barrido. La expulsión caduca y puede repetirse; no prueba recuperación.
 
-Limita la tasa de solicitudes para proteger los Services de la sobrecarga.
+### 2. Limitación de tasa
+
+Limita solicitudes para proteger de sobrecarga.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: ratelimit
+  namespace: default
 spec:
   configPatches:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        portNumber: 8080
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 100
             tokens_per_fill: 10
             fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+  workloadSelector:
+    labels:
+      app: myapp
 ```
 
-**Características principales**:
-- Algoritmo Token Bucket
-- Limitación de velocidad local y global
-- Límites por cliente y por ruta
+**Funciones principales**:
+- Algoritmo token bucket
+- Límites locales y globales
+- Límites por cliente y ruta
+
+El ejemplo aplica un bucket por proceso Envoy al listener HTTP coincidente: 100 tokens iniciales y después 10/s. No es cuota de todo el servicio; réplicas y distribución afectan throughput agregado. Una cuota global necesita servicio y descriptores. Clasificar clientes/rutas requiere confianza adicional; una cabecera del llamante no es identidad autenticada.
 
 ### 3. Enrutamiento consciente de zona
 
-Optimiza el tráfico entre Availability Zones para reducir la latencia y ahorrar costos.
+Optimiza tráfico entre AZ para reducir latencia y costes.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
+  namespace: default
 spec:
   host: myapp
   trafficPolicy:
@@ -135,156 +128,186 @@ spec:
       localityLbSetting:
         enabled: true
         distribute:
-        - from: us-east-1a/*
+        - from: us-east-1/us-east-1a/*
           to:
-            "us-east-1a/*": 80
-            "us-east-1b/*": 20
+            us-east-1/us-east-1a/*: 80
+            us-east-1/us-east-1b/*: 20
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 0
 ```
 
-**Características principales**:
-- Prioriza el tráfico en la misma AZ
-- Reduce los costos entre AZ
-- Failover automático ante fallos
+**Funciones principales**:
+- Prioriza tráfico de la misma AZ
+- Reduce costes entre AZ
+- Permite configurar una política separada de failover por localidad
 
-### 4. Circuit Breaker
+Las rutas de localidad son `region/zone/subzone`. El ejemplo distribuye deliberadamente 80/20 con ambas zonas sanas; el 20% es tráfico normal entre zonas, no reserva de failover. Use otro patrón de prioridades para preferencia local con desbordamiento y no combine `distribute` con `failover`/`failoverPriority`. Requiere detección de anomalías, endpoints Ready y capacidad de reserva; el ahorro depende del tráfico facturado.
 
-Limita los conteos de conexiones y solicitudes para evitar la sobrecarga del Service.
+### 4. Circuit breaker
+
+Limita conexiones y solicitudes para evitar sobrecarga.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: circuit-breaker
+  namespace: default
 spec:
   host: myapp
   trafficPolicy:
     connectionPool:
       tcp:
-        maxConnections: 100              # Maximum TCP connections
+        maxConnections: 100
       http:
-        http1MaxPendingRequests: 10      # Maximum pending requests
-        http2MaxRequests: 100            # Maximum HTTP/2 requests
-        maxRequestsPerConnection: 2       # Maximum requests per connection
+        http1MaxPendingRequests: 10
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
-**Cómo funciona**:
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client
-    participant Envoy as Envoy Proxy
-    participant Service as Service
+**Funcionamiento**:
+![Envoy reenvía solicitudes normales y luego rechaza una que supera el límite con 503 de circuit breaker abierto en lugar de reenviarla.](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-1.png)
 
-    Client->>Envoy: Requests 1-100 (normal)
-    Envoy->>Service: Forward
-    Service->>Envoy: Response
-    Envoy->>Client: Response
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-1.html)
 
-    Client->>Envoy: Request 101 (limit exceeded)
-    Envoy-->>Client: 503 Circuit Breaker Open
-
-    Note over Envoy,Service: Connection limit reached<br/>New connections blocked
-```
-
-**Características principales**:
+**Funciones principales**:
 - Límites de conexiones TCP
 - Límites de solicitudes HTTP
 - Límites de solicitudes pendientes
-- Fail Fast ante desbordamiento
+- Fallo rápido al desbordarse
 
-### 5. Retry
+Los breakers son locales al clúster upstream y prioridad de cada proxy, no un límite global por Pod servidor. `http2MaxRequests` también aplica a HTTP/1.1. Alcanzar conexiones puede encolar una solicitud hasta superar límites pendientes/activos; la figura ilustra overflow HTTP 503/UO, no toda conexión que alcanza umbral. Overflow TCP no tiene estado HTTP.
 
-Reintenta automáticamente las solicitudes ante fallos transitorios.
+### 5. Reintento
+
+Reintenta solicitudes automáticamente ante fallos transitorios.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: default
 spec:
   hosts:
   - myapp
   http:
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
+    route:
+    - destination:
+        host: myapp
+    timeout: 10s
+    retries:
+      attempts: 0
   - route:
     - destination:
         host: myapp
     retries:
-      attempts: 3                        # Maximum 3 retries
-      perTryTimeout: 2s                  # Timeout per attempt
-      retryOn: 5xx,reset,connect-failure,refused-stream  # Retry conditions
-    timeout: 10s                         # Total request timeout
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream
+    timeout: 10s
+    name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: myapp
+    timeout: 10s
+    retries:
+      attempts: 0
 ```
 
-**Condiciones de reintento** (`retryOn`):
-- `5xx`: Errores del servidor (500, 502, 503, 504)
-- `reset`: Restablecimiento de conexión TCP
+**Condiciones de retry** (`retryOn`):
+- `5xx`: Errores servidor 500, 502, 503, 504
+- `reset`: Reset de conexión TCP
 - `connect-failure`: Fallo de conexión
 - `refused-stream`: Flujo HTTP/2 rechazado
-- `retriable-4xx`: 4xx reintentable (p. ej., 409)
-- `gateway-error`: Errores de Gateway (502, 503, 504)
+- `retriable-4xx`: Solo HTTP 409 bajo esta política Envoy
+- `gateway-error`: Errores gateway 502, 503, 504
 
-**Espera exponencial**:
+**Backoff y localidad, fragmento para la ruta de lectura anterior**:
 ```yaml
 retries:
   attempts: 5
   perTryTimeout: 2s
-  retryOn: 5xx
-  retryRemoteLocalities: true            # Retry to other localities
+  retryOn: gateway-error,connect-failure,refused-stream
+  backoff: 25ms
+  retryRemoteLocalities: true
 ```
 
-**Cómo funciona**:
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client
-    participant Envoy as Envoy Proxy
-    participant Pod1 as Pod 1 (failure)
-    participant Pod2 as Pod 2 (success)
+**Funcionamiento**:
+![El primer intento Envoy a Pod 1 falla con 503; reintenta la misma solicitud en Pod 2, que devuelve 200 OK.](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-2.png)
 
-    Client->>Envoy: Request
-    Envoy->>Pod1: Attempt 1
-    Pod1-->>Envoy: 503 Service Unavailable
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-2.html)
 
-    Note over Envoy: Retry condition met<br/>Retry to different Pod
-
-    Envoy->>Pod2: Attempt 2
-    Pod2->>Envoy: 200 OK
-    Envoy->>Client: 200 OK
-```
+`attempts: 3` permite hasta tres reintentos después del inicial. El timeout puede detener antes. Coincidir por método de lectura supone idempotencia; PUT/DELETE y claves de idempotencia requieren verificación antes de habilitar retries. Omitir puede heredar retries de malla, por eso escritura/fallback usan `attempts: 0`. Un retry puede volver al mismo host y no garantiza éxito. El backoff es exponencial con jitter; permitir localidades remotas no lo configura.
 
 ### 6. Timeout
 
-Establece límites de tiempo para evitar que las solicitudes esperen indefinidamente.
+Establece límites para evitar esperas indefinidas.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: default
 spec:
   hosts:
   - myapp
   http:
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
+    route:
+    - destination:
+        host: myapp
+    timeout: 5s
+    retries:
+      attempts: 0
   - route:
     - destination:
         host: myapp
-    timeout: 5s                          # Request timeout
+    timeout: 5s
     retries:
       attempts: 3
-      perTryTimeout: 2s                  # Per-retry timeout
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream
+    name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: myapp
+    timeout: 5s
+    retries:
+      attempts: 0
 ```
 
-**Jerarquía de Timeout**:
+**Jerarquía de timeout**, requiere `my-gateway` configurado aparte en `default`:
 ```yaml
-# Gateway level timeout
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: gateway-timeout
+  namespace: default
 spec:
   gateways:
   - my-gateway
@@ -294,14 +317,15 @@ spec:
   - route:
     - destination:
         host: frontend
-    timeout: 30s                         # Gateway -> Frontend: 30 seconds
-
+    timeout: 30s
+    retries:
+      attempts: 0
 ---
-# Service level timeout
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: service-timeout
+  namespace: default
 spec:
   hosts:
   - backend
@@ -309,49 +333,50 @@ spec:
   - route:
     - destination:
         host: backend
-    timeout: 5s                          # Frontend -> Backend: 5 seconds
+    timeout: 5s
+    retries:
+      attempts: 0
 ```
 
-**Configuración recomendada**:
-- Gateway -> Frontend: 30-60 segundos (orientado al usuario)
-- Service -> Service: 5-10 segundos (comunicación interna)
-- Consultas a base de datos: 2-5 segundos
-- APIs externas: 10-30 segundos
+**Presupuestos ilustrativos, derive valores reales de SLO y dependencias**:
+- Gateway -> Frontend: 30-60 segundos, orientado al usuario
+- Service -> Service: 5-10 segundos, comunicación interna
+- Consultas DB: 2-5 segundos
+- API externas: 10-30 segundos
 
-### 7. Fault Injection
+Timeouts HTTP no configuran timeouts cliente/consulta DB ni garantizan cancelar trabajo downstream. Propague deadlines; un total menor permite deliberadamente menos reintentos.
 
-Inyecta fallos intencionadamente para la ingeniería del caos.
+### 7. Inyección de fallos
+
+Introduce fallos deliberados para ingeniería del caos.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: fault-injection
+  namespace: default
 spec:
   hosts:
   - myapp
   http:
   - fault:
-      # Delay injection
       delay:
         percentage:
-          value: 10.0                    # 10% of requests delayed
-        fixedDelay: 5s                   # 5 second delay
-
-      # Error injection
+          value: 10.0
+        fixedDelay: 5s
       abort:
         percentage:
-          value: 5.0                     # 5% of requests fail
-        httpStatus: 503                  # Return 503 error
-
+          value: 5.0
+        httpStatus: 503
     route:
     - destination:
         host: myapp
 ```
 
-**Escenarios de caso de uso**:
+**Escenarios de uso**:
 
-1. **Simulación de latencia de red**:
+1. **Simular latencia de red**:
 ```yaml
 fault:
   delay:
@@ -360,21 +385,22 @@ fault:
     fixedDelay: 7s
 ```
 
-2. **Pruebas de fallos intermitentes**:
+2. **Probar fallos intermitentes**:
 ```yaml
 fault:
   abort:
     percentage:
-      value: 20.0                        # 20% failure rate
+      value: 20.0
     httpStatus: 500
 ```
 
-3. **Inyectar fallos solo para usuarios específicos**:
+3. **Inyectar solo para usuarios concretos**:
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: fault-injection-user
+  namespace: default
 spec:
   hosts:
   - myapp
@@ -382,7 +408,7 @@ spec:
   - match:
     - headers:
         end-user:
-          exact: test-user               # Apply only to test-user
+          exact: test-user
     fault:
       abort:
         percentage:
@@ -391,61 +417,90 @@ spec:
     route:
     - destination:
         host: myapp
+  - name: ordinary-traffic
+    route:
+    - destination:
+        host: myapp
+    retries:
+      attempts: 0
 ```
 
-## Combinaciones de patrones de resiliencia
+Es una operación de laboratorio controlada. En una ruta cliente con `fault`, Istio no habilita retries/timeouts de esa ruta. Pruebe retries con fallos en otro salto downstream. Una cabecera de usuario de prueba solo delimita tráfico; controle quién puede enviarla. El fallback normal evita dejar solicitudes sin coincidencia.
 
-### Detección de valores atípicos + Circuit Breaker
+## Combinaciones de patrones
+
+### Detección de anomalías + circuit breaker
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp-resilient
+  namespace: default
 spec:
   host: myapp
   trafficPolicy:
-    # Connection Pool (Circuit Breaker)
     connectionPool:
       tcp:
         maxConnections: 100
       http:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
-
-    # Outlier Detection
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
-      minHealthPercent: 50
+      minHealthPercent: 0
 ```
 
-### Limitación de velocidad + Retry
+### Limitación de tasa + retry
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: default
 spec:
   hosts:
   - myapp
   http:
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
+    route:
+    - destination:
+        host: myapp
+    timeout: 10s
+    retries:
+      attempts: 0
   - route:
     - destination:
         host: myapp
     retries:
       attempts: 3
       perTryTimeout: 2s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: gateway-error,connect-failure,refused-stream
     timeout: 10s
+    name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: myapp
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: ratelimit
+  namespace: default
 spec:
   workloadSelector:
     labels:
@@ -454,144 +509,124 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        portNumber: 8080
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 1000
             tokens_per_fill: 100
             fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
 ```
 
 ## Arquitectura de resiliencia
 
-```mermaid
-flowchart TB
-    Client[Client]
+![La solicitud entra por gateway limitado, outlier detection excluye Pod A3 y envía solo a Pods sanos de Service A, que llaman a Service B de la misma zona.](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-3.png)
 
-    subgraph Gateway["Ingress Gateway"]
-        GW[Gateway<br/>Rate Limiting]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-3.html)
 
-    subgraph ServiceA["Service A"]
-        A1[Pod A1<br/>Zone A<br/>Healthy]
-        A2[Pod A2<br/>Zone B<br/>Healthy]
-        A3[Pod A3<br/>Zone A<br/>Unhealthy]
-    end
+## Métricas de resiliencia {#resilience-metrics}
 
-    subgraph ServiceB["Service B"]
-        B1[Pod B1<br/>Zone A]
-        B2[Pod B2<br/>Zone B]
-    end
+Recoja un endpoint proxy previsto por Pod como en [métricas](../observability/01-metrics.md). Envoy no exporta toda estadística opcional por defecto. Combine la anotación en la plantilla relevante y despliegue proxies nuevos antes de comprobar nombres/etiquetas reales:
 
-    subgraph Policies["Resilience Policies"]
-        OD[Outlier Detection<br/>A3 Excluded]
-        RL[Rate Limiting<br/>100 req/s]
-        ZA[Zone Aware<br/>A -> B Same Zone]
-    end
-
-    Client -->|Request| GW
-    GW -->|Rate Limit Passed| OD
-    OD -->|Healthy Pods Only| A1
-    OD -->|Healthy Pods Only| A2
-    OD -.->|Excluded| A3
-
-    A1 -->|Zone A -> Zone A Preferred| B1
-    A2 -->|Zone B -> Zone B Preferred| B2
-
-    ZA -.->|Affects| B1
-    ZA -.->|Affects| B2
-    RL -.->|Applied| GW
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class GW gateway;
-    class A1,A2,B1,B2 service;
-    class A3 unhealthy;
-    class OD,RL,ZA policy;
+```yaml
+spec:
+  template:
+    metadata:
+      annotations:
+        proxy.istio.io/config: |
+          proxyStatsMatcher:
+            inclusionRegexps:
+            - ".*outlier_detection.*"
+            - ".*circuit_breakers.*"
+            - ".*upstream_rq_retry.*"
+            - ".*upstream_rq_timeout.*"
+            - ".*upstream_rq_.*overflow.*"
+            - ".*http_local_rate_limit.*"
+            - ".*fault.*"
 ```
 
-## Métricas de resiliencia
+### Consultas Prometheus
 
-### Consultas de Prometheus
+Las tasas son por segundo; `_open` es gauge de estado de capacidad 0/1 y `ejections_active` cuenta hosts actuales. Se suponen etiquetas `namespace`/`pod` de un clúster; restrinja clúster destino para una dependencia. El prefijo de rate limit depende de `stat_prefix` y nombre emitido. `rate_limited` cuenta escasez de tokens aunque no se aplique; `enforced`, límites efectivos. Los contadores de overflow activo varían por Envoy: examine `upstream_rq_active_overflow` si está expuesto, sin asumir que todo aumenta pending.
 
 ```promql
-# 1. Outlier Detection: Ejected instance count
-envoy_cluster_outlier_detection_ejections_active
+# Active ejections per observed cluster
+ envoy_cluster_outlier_detection_ejections_active{namespace="default"}
 
-# 2. Rate Limiting: Rate-limited request count
-rate(envoy_http_local_rate_limit_rate_limited[5m])
+# Locally rate-limited requests per second, retaining Pod identity
+sum by (namespace, pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="default"}[5m]))
 
-# 3. Zone Aware: Traffic ratio between zones
-sum(rate(istio_requests_total[5m])) by (source_zone, destination_zone)
+# Request circuit breaker currently at capacity (not a cumulative count)
+envoy_cluster_circuit_breakers_default_rq_open{namespace="default"}
 
-# 4. Circuit Breaker: Open circuit count
-envoy_cluster_circuit_breakers_default_rq_open
+# Pending-queue circuit-breaker overflows per second
+sum(rate(envoy_cluster_upstream_rq_pending_overflow{namespace="default"}[5m]))
 
-# 5. Circuit Breaker: Requests rejected due to overflow
-envoy_cluster_circuit_breakers_default_rq_overflow
+# Retry attempts and retry-success events per second (different event counters)
+sum(rate(envoy_cluster_upstream_rq_retry{namespace="default"}[5m]))
+sum(rate(envoy_cluster_upstream_rq_retry_success{namespace="default"}[5m]))
 
-# 6. Retry: Retried request count
-sum(rate(envoy_cluster_upstream_rq_retry[5m]))
+# Upstream request timeouts per second
+sum(rate(envoy_cluster_upstream_rq_timeout{namespace="default"}[5m]))
 
-# 7. Retry: Retry success rate
-sum(rate(envoy_cluster_upstream_rq_retry_success[5m])) /
-sum(rate(envoy_cluster_upstream_rq_retry[5m])) * 100
-
-# 8. Timeout: Timeout occurrence count
-sum(rate(envoy_cluster_upstream_rq_timeout[5m]))
-
-# 9. Overall request success rate
-sum(rate(istio_requests_total{response_code!~"5.."}[5m])) /
-sum(rate(istio_requests_total[5m])) * 100
+# Observed destination HTTP 2xx/3xx fraction; define your own SLI for 4xx/gRPC
+sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="default",response_code=~"[23].."}[5m])) /
+sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="default"}[5m]))
 ```
 
-### Paneles del dashboard de Grafana
+`source_zone` y `destination_zone` no son etiquetas estándar. Informes AZ necesitan enriquecimiento validado u otra fuente zonal; IDs de clúster no son IDs de AZ. Destination omite solicitudes que nunca llegaron, así que revise también señales de fallo source.
 
-**Estado de Circuit Breaker**:
+### Paneles Grafana
+
+Muestre conexiones activas, estado abierto/cerrado y tasa de overflow aparte. No hay gauge estándar de capacidad `envoy_cluster_circuit_breakers_default_cx_max` ni breaker `...rq_overflow`. Use umbrales efectivos al calcular capacidad; nunca divida por un flag abierto 0/1.
+
 ```promql
-# Active connections vs max connections
-envoy_cluster_upstream_cx_active /
-envoy_cluster_circuit_breakers_default_cx_max * 100
+envoy_cluster_upstream_cx_active{namespace="default"}
+envoy_cluster_circuit_breakers_default_cx_open{namespace="default"}
+
+# Source-side observed final HTTP 5xx fraction, not hypothetical no-retry errors
+sum(rate(istio_requests_total{reporter="source",destination_service_namespace="default",response_code=~"5.."}[5m])) /
+sum(rate(istio_requests_total{reporter="source",destination_service_namespace="default"}[5m]))
 ```
 
-**Eficacia de Retry**:
-```promql
-# Error rate without retries
-sum(rate(envoy_cluster_upstream_rq_xx{envoy_response_code_class="5"}[5m])) /
-sum(rate(envoy_cluster_upstream_rq_xx[5m])) * 100
+Los contadores de retry no reconstruyen una «tasa de errores sin reintentos» contrafactual. Correlacione intentos, resultados finales, latencia y carga con mediciones acotadas; tráfico cero/series ausentes requieren otro tratamiento.
 
-# Actual error rate after retries
-sum(rate(istio_requests_total{response_code=~"5.."}[5m])) /
-sum(rate(istio_requests_total[5m])) * 100
-```
+## Buenas prácticas
 
-## Prácticas recomendadas
-
-### 1. Ajuste de umbrales de detección de valores atípicos
+### 1. Ajustar umbrales de anomalías
 
 ```yaml
 # Adjust according to service characteristics
 outlierDetection:
-  consecutiveErrors: 5          # 5 consecutive failures
+  consecutive5xxErrors: 5          # 5 consecutive failures
   interval: 30s                 # Evaluate every 30 seconds
   baseEjectionTime: 30s         # 30 second ejection
   maxEjectionPercent: 50        # Maximum 50% ejected
-  minHealthPercent: 50          # Maintain at least 50%
+  minHealthPercent: 0           # Disable unhealthy-pool fail-open threshold
 ```
 
-### 2. Limitación de velocidad por etapas
+`minHealthPercent` no garantiza capacidad saludable: bajo un umbral no nulo se desactiva outlier detection y el proxy puede usar hosts sanos y enfermos. `0` desactiva ese umbral. Expulsiones repetidas pueden durar más que `baseEjectionTime`; monitorice hosts expulsados y capacidad restante.
+
+### 2. Limitación por etapas
 
 ```yaml
 # Apply limits at Gateway -> Service stages
@@ -599,121 +634,49 @@ outlierDetection:
 # Service: Individual service limit
 ```
 
-### 3. Prioridad de enrutamiento consciente de zona
+### 3. Prioridad de routing zonal
+
+Para preferencia local con failover use prioridades, no distribución 80/20. Confirme etiquetas región/zona de nodos y endpoints disponibles. El [capítulo zonal](03-zone-aware-routing.md) trata distribución y failover como modos distintos.
+
+### 4. Configurar circuit breaker
+
+Dimensione límites de clúster destino de cada proxy llamante según concurrencia medida y capacidad. Importan llamantes, multiplexación HTTP, distribución y aumentos de rollout; multiplicar Pods por un factor arbitrario no crea límite global de admisión. Colas grandes pueden ocultar sobrecarga.
 
 ```yaml
-# Prioritize same AZ, use other AZs for failover
-distribute:
-- from: us-east-1a/*
-  to:
-    "us-east-1a/*": 80    # Same AZ 80%
-    "us-east-1b/*": 20    # Other AZ 20% (failover)
-```
-
-### 4. Configuración de Circuit Breaker
-
-```yaml
-# Configure according to service capacity
+# DestinationRule trafficPolicy fragment; example values require load tests
 connectionPool:
   tcp:
-    maxConnections: 100              # Maximum connections per pod
+    maxConnections: 100
   http:
-    http1MaxPendingRequests: 10      # Queue size (keep small)
+    http1MaxPendingRequests: 10
     http2MaxRequests: 100
-    maxRequestsPerConnection: 2       # Keep-alive limit
-
-# Avoid overly large values
-connectionPool:
-  tcp:
-    maxConnections: 10000            # Excessively large
-  http:
-    http1MaxPendingRequests: 1000    # Queue too long
+    maxRequestsPerConnection: 0
+    maxRetries: 10
 ```
 
-**Valores recomendados**:
-- `maxConnections`: Conteo de Pod x conexiones simultáneas esperadas x 1.5
-- `http1MaxPendingRequests`: 10-50 (es importante fallar rápidamente)
-- `maxRequestsPerConnection`: 1-5 (limita la reutilización de conexiones)
+`maxRequestsPerConnection: 0` permite reutilizar sin ese máximo; `1` desactiva keep-alive. Valores 1–5 no son optimización universal. `maxRetries` limita retries concurrentes pendientes por clúster upstream, no por solicitud.
 
-### 5. Política de Retry
+### 5. Política de reintentos
 
-```yaml
-# Retry only idempotent requests
-retries:
-  attempts: 3
-  perTryTimeout: 2s
-  retryOn: 5xx,reset,connect-failure    # GET requests
+Use la protección de escritura y coincidencia de lectura explícitas del ejemplo completo. Un comentario YAML «solo GET» no restringe coincidencias. Reintente solo operaciones seguras de repetir, con intentos/backoff acotados y deadline total. No reintente automáticamente 429 o sobrecarga: puede neutralizar límites y agravar fallos. El ejemplo combinado usa bucket local mayor, 1000 tokens iniciales y 100/s, no cuota global.
 
-# Avoid indiscriminate retries on POST/PUT requests
-retries:
-  attempts: 5
-  retryOn: 5xx                           # Risk of duplicate data creation
+### 6. Configurar timeout
+
+Presupueste todo el grafo: primer intento, retries, backoff y procesamiento. Si deben caber todos:
+
+```text
+route budget >= (1 + attempts) × perTryTimeout + backoff + other overhead
 ```
 
-**Pautas para Retry**:
-- **GET, HEAD, OPTIONS**: Es seguro reintentar
-- **POST, PUT, PATCH**: Reintenta solo si se garantiza la idempotencia
-- **DELETE**: Es seguro reintentar (idempotente)
+Con `attempts: 3` y `perTryTimeout: 2s`, cuatro intentos completos consumen 8 segundos antes del backoff/otros costes. `timeout: 10s` es presupuesto de ejemplo, no garantía; `timeout: 5s` no puede acomodar deliberadamente cuatro intentos completos de dos segundos. Los deadlines de aplicación deben incluir carga/streaming y propagar cancelación apropiadamente.
 
-### 6. Configuración de Timeout
+### 7. Pruebas de inyección de fallos
 
-```yaml
-# Hierarchical timeouts (parent > child)
-# Gateway
-timeout: 30s
-retries:
-  perTryTimeout: 10s
+Use ruta completa por cabecera y fallback normal. Separe el salto que produce el fallo de la política retry/timeout probada. Empiece en entorno desechable y luego grupo acotado con criterios de aborto en staging. Producción requiere autorización por carga, observabilidad y umbrales de rollback; un calendario fijo 1%→5%→10% no es universalmente seguro.
 
-# Service A -> Service B
-timeout: 10s
-retries:
-  perTryTimeout: 3s
+## Resolución de problemas
 
-# Avoid child timeout larger than parent
-timeout: 5s
-retries:
-  perTryTimeout: 10s                     # perTryTimeout > timeout
-```
-
-**Fórmula de Timeout**:
-```
-total timeout >= (perTryTimeout x attempts) + overhead
-```
-
-Ejemplo: `timeout: 10s`, `perTryTimeout: 2s`, `attempts: 3`
-- Mínimo requerido: 2s x 3 = 6s
-- Recomendado: 10s (con margen)
-
-### 7. Pruebas de Fault Injection
-
-```yaml
-# In production, limit to specific users/headers
-- match:
-  - headers:
-      x-chaos-test:
-        exact: "true"
-  fault:
-    delay:
-      percentage:
-        value: 100.0
-      fixedDelay: 5s
-
-# Avoid indiscriminate fault injection in production
-fault:
-  abort:
-    percentage:
-      value: 50.0                        # 50% failure!
-    httpStatus: 500
-```
-
-**Etapas de prueba**:
-1. **Desarrollo**: Prueba exhaustivamente con inyección de fallos al 100 %
-2. **Staging**: Aplica únicamente a grupos de usuarios específicos
-3. **Producción**: Enfoque canary gradual (1% -> 5% -> 10%)
-
-## Solución de problemas
-
-### La detección de valores atípicos no funciona
+### No funciona outlier detection
 
 ```bash
 # 1. Check DestinationRule
@@ -723,11 +686,10 @@ kubectl get destinationrule -A
 istioctl proxy-config clusters <pod-name> -n <namespace>
 
 # 3. Check Outlier Detection metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep outlier
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep outlier
 ```
 
-### La limitación de velocidad no se aplica
+### No se aplica rate limiting
 
 ```bash
 # 1. Check EnvoyFilter
@@ -737,41 +699,37 @@ kubectl get envoyfilter -A
 istioctl proxy-config listener <pod-name> -n <namespace> -o json
 
 # 3. Check Rate Limit metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep rate_limit
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep rate_limit
 ```
 
-### El enrutamiento consciente de zona no funciona
+### No funciona routing zonal
 
 ```bash
 # 1. Check DestinationRule
 kubectl get destinationrule -A
 
-# 2. Check Pod Zone labels
-kubectl get pods -n <namespace> -o wide \
-  -L topology.kubernetes.io/zone
+# 2. Map Pods to node topology; Pod zone labels are not added automatically
+kubectl get pods -n <namespace> -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
 
 # 3. Check Locality information
 istioctl proxy-config endpoints <pod-name> -n <namespace>
 ```
 
-### Circuit Breaker no se abre
+### Circuit breaker no abre
 
 ```bash
 # 1. Check DestinationRule connectionPool settings
 kubectl get destinationrule <name> -o yaml
 
 # 2. Check Circuit Breaker metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep circuit_breakers
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep circuit_breakers
 
 # 3. Check for overflow
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep overflow
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep overflow
 
 # 4. Check active connection count
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep upstream_cx_active
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep upstream_cx_active
 ```
 
 ### Retry no funciona
@@ -781,15 +739,14 @@ kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
 kubectl get virtualservice <name> -o yaml
 
 # 2. Check Retry metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep retry
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep retry
 
-# 3. Check Envoy logs for retries
+# 3. Inspect enabled access/debug logs; default logs need not contain each retry
 kubectl logs -n <namespace> <pod-name> -c istio-proxy | grep retry
 
 # 4. Check retry conditions
 istioctl proxy-config routes <pod-name> -n <namespace> -o json | \
-  jq '.[] | select(.name | contains("your-service")) | .virtualHosts[].routes[].route.retryPolicy'
+  jq '.[] | .virtualHosts[]? | {name, domains, routes: [.routes[]? | {name, match, retryPolicy: .route.retryPolicy}]}'
 ```
 
 ### Timeout no se aplica
@@ -799,19 +756,17 @@ istioctl proxy-config routes <pod-name> -n <namespace> -o json | \
 kubectl get virtualservice <name> -o yaml | grep timeout
 
 # 2. Check Timeout metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep timeout
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep timeout
 
 # 3. Check request duration
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep request_duration
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep request_duration
 
 # 4. Check Envoy route configuration
 istioctl proxy-config routes <pod-name> -n <namespace> -o json | \
   jq '.[] | .virtualHosts[].routes[].route.timeout'
 ```
 
-### Fault Injection no funciona
+### Inyección de fallos no funciona
 
 ```bash
 # 1. Check VirtualService fault configuration
@@ -822,40 +777,39 @@ curl -H "end-user: test-user" http://your-service/api
 
 # 3. Check Envoy filters
 istioctl proxy-config routes <pod-name> -n <namespace> -o json | \
-  jq '.[] | .virtualHosts[].routes[].route.rateLimits'
+  jq '.[] | .virtualHosts[]?.routes[]? | select(.typedPerFilterConfig["envoy.filters.http.fault"] != null) | {name, fault: .typedPerFilterConfig["envoy.filters.http.fault"]}'
 
 # 4. Check Fault metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep fault
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep fault
 ```
 
-## Próximos pasos
+## Siguientes pasos
 
-1. **[Detección de valores atípicos](01-outlier-detection.md)**: Detección automática de instancias no saludables
-2. **[Limitación de velocidad](02-rate-limiting.md)**: Control de tasa de solicitudes
-3. **[Enrutamiento consciente de zona](03-zone-aware-routing.md)**: Enrutamiento consciente de localidad
+1. **[Detección de anomalías](01-outlier-detection.md)**: Detectar instancias no saludables automáticamente
+2. **[Limitación de tasa](02-rate-limiting.md)**: Controlar tasa de solicitudes
+3. **[Routing consciente de zona](03-zone-aware-routing.md)**: Enrutamiento por localidad
 
 ## Referencias
 
 ### Documentación oficial
-- [Resiliencia de Istio](https://istio.io/latest/docs/concepts/traffic-management/#network-resilience-and-testing)
-- [Detección de valores atípicos](https://istio.io/latest/docs/reference/config/networking/destination-rule/#OutlierDetection)
-- [Circuit Breaking](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
+- [Resiliencia Istio](https://istio.io/latest/docs/concepts/traffic-management/#network-resilience-and-testing)
+- [Detección de anomalías](https://istio.io/latest/docs/reference/config/networking/destination-rule/#OutlierDetection)
+- [Circuit breaking](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
 - [Timeouts de solicitudes](https://istio.io/latest/docs/tasks/traffic-management/request-timeouts/)
 - [Reintentos](https://istio.io/latest/docs/concepts/traffic-management/#retries)
-- [Limitación de velocidad](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
-- [Fault Injection](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
-- [Balanceo de carga por localidad](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+- [Limitación de tasa](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
+- [Inyección de fallos](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
+- [Balanceo por localidad](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
 
-### Recursos relacionados con AWS
-- [Mejora de la resiliencia de red con Istio en Amazon EKS](https://aws.amazon.com/blogs/opensource/enhancing-network-resilience-with-istio-on-amazon-eks/)
-- [Prácticas recomendadas de Amazon EKS - Service Mesh](https://aws.github.io/aws-eks-best-practices/reliability/docs/networkmanagement/#service-mesh)
+### Recursos AWS
+- [Mejorar resiliencia de red con Istio en EKS](https://aws.amazon.com/blogs/opensource/enhancing-network-resilience-with-istio-on-amazon-eks/)
+- [Buenas prácticas EKS: fiabilidad](https://docs.aws.amazon.com/eks/latest/best-practices/reliability.html)
 
 ### Patrones y arquitectura
-- [Patrones de microservicios - Circuit Breaker](https://microservices.io/patterns/reliability/circuit-breaker.html)
-- [Release It! - Patrones de estabilidad](https://pragprog.com/titles/mnee2/release-it-second-edition/)
+- [Patrones de microservicios: circuit breaker](https://microservices.io/patterns/reliability/circuit-breaker.html)
+- [Release It!: patrones de estabilidad](https://pragprog.com/titles/mnee2/release-it-second-edition/)
 - [Principios de ingeniería del caos](https://principlesofchaos.org/)
 
 ## Cuestionario
 
-Para comprobar tus conocimientos de este capítulo, prueba el [cuestionario de resiliencia de Istio](../../../quizzes/service-mesh/istio/resilience.md).
+Pruebe lo aprendido con el [cuestionario de resiliencia Istio](../../../quizzes/service-mesh/istio/resilience.md).

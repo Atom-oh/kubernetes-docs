@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Two EKS clusters and lab infrastructure",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1190,
+      670
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "mgmt",
+      "type": "backend",
+      "label": "Management EKS",
+      "sublabel": "1.36 / managed context",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Service EKS",
+      "sublabel": "1.36 / service context",
+      "pos": [
+        440,
+        80
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "data",
+      "type": "database",
+      "label": "Aurora · SNS · SQS",
+      "sublabel": "Dedicated DB / event path",
+      "pos": [
+        840,
+        80
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "obs",
+      "type": "database",
+      "label": "Prometheus · Loki · Tempo",
+      "sublabel": "Grafana / management Collector",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "source",
+      "type": "backend",
+      "label": "Prometheus + Collector",
+      "sublabel": "scrape / CRI logs / OTLP traces",
+      "pos": [
+        440,
+        350
+      ],
+      "size": [
+        290,
+        64
+      ]
+    },
+    {
+      "id": "cw",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "Structured logs / AIOps",
+      "pos": [
+        860,
+        500
+      ],
+      "size": [
+        250,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e0",
+      "from": "mgmt",
+      "to": "obs",
+      "label": "hosts",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e1",
+      "from": "svc",
+      "to": "source",
+      "label": "collect",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e2",
+      "from": "svc",
+      "to": "data",
+      "label": "SQL / events"
+    },
+    {
+      "id": "e3",
+      "from": "source",
+      "to": "obs",
+      "label": "mTLS",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "e4",
+      "from": "obs",
+      "to": "cw",
+      "label": "JSON logs",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
+  ],
+  "boundaries": [],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Prepare and create",
+      "items": [
+        "EKS1.36 / AL2023 / encrypted gp3",
+        "Reuse VPC; verify nonoverlapping service CIDRs"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Credentials",
+      "items": [
+        "IRSA restricted by namespace, ServiceAccount and audience",
+        "Dedicated runtime DML account instead of DB master"
+      ]
+    }
+  ]
+}

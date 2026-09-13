@@ -1,310 +1,188 @@
-# Linkerd のインストールとセットアップ
+# Linkerdのインストールと設定
 
-> **サポート対象バージョン**: Linkerd 2.16+
-> **最終更新**: February 22, 2026
+> **最終更新**: September 11, 2026 · 公開CLI: edge-26.9.1 · 対応チャート: 2026.9.1
 
-## 概要
+管理されたKubernetes導入、Helm/CLI所有権、HA、任意拡張、EKS、更新、削除を扱います。上流はedge成果物を公開し、stableディストリビューションの導入/サポートはベンダーごとです。2.20という節目は上流stable-2.20.0ダウンロードではありません。
 
-このドキュメントでは、Kubernetes クラスターに Linkerd をインストールするさまざまな方法を扱います。CLI ツールのインストール、Control Plane のインストール、高可用性（HA）構成、Viz、Jaeger、Multicluster を含む拡張機能のインストールを包括的に説明します。
+PowerShell表記以外はBashを使います。意図したkubeconfig/contextと所有者を使用します。CLIとHelmは**代替手順**で、Helm所有リリースへCLI生成リソースを適用しないでください。オフライン確認では本番サイズ、ストレージ、ネットワーク適用、アプリ互換性は成立しません。
 
 ## 前提条件
 
-### Kubernetes バージョン
+### KubernetesとGateway API
 
-| Linkerd バージョン | 最小 Kubernetes バージョン | 推奨 Kubernetes バージョン |
-|-----------------|---------------------------|-------------------------------|
-| 2.16.x | 1.25+ | 1.28+ |
-| 2.15.x | 1.24+ | 1.27+ |
-| 2.14.x | 1.22+ | 1.26+ |
+| 系列/版 | Kubernetesの根拠 | Gateway APIの根拠 |
+|---|---|---|
+| Linkerd 2.20の節目/ディストリビューション | 公表表1.31–1.35。ベンダー対応を確認 | 公表表1.2.1–1.5.1 |
+| ここでの公開edge-26.9.1 | CLI最小1.31.0。edge-26.8.2でテスト最大1.36へ引き上げ | 1.5.1対応をリリース。このガイドはStandardバンドル |
+| 過去の2.16 | 公表表1.22–1.29 | 現在の導入推奨ではない |
+| 過去の2.15 / 2.14 | 公表範囲1.22–1.29 / 1.21–1.28 | 対応リリースを確認。「以降すべてのKubernetes」対応と推測しない |
 
-### クラスター要件
+CLIの最小版チェックは最大対応チェックではありません。check --pre成功は新Kubernetes/Gateway API互換性の証明ではありません。EKSでは提供版とサポート期間も確認します。監査のHelm検証はKubernetes 1.35 capabilityを使いました。
 
-```yaml
-# Minimum Requirements
-CPU: 100m (entire control plane)
-Memory: 200Mi (entire control plane)
-Nodes: 1+ (3+ recommended for production)
+### 容量とプラットフォーム
 
-# Recommended Requirements (Production)
-CPU: 500m - 1000m
-Memory: 500Mi - 1Gi
-Nodes: 3+ (HA configuration)
-```
+一律100m CPU/200Miという主張で制御全体をサイジングしないでください。controller、policy container、proxy、init、拡張のレンダリング済みrequests/limitsを確認し、実通信/接続負荷を測ります。HAは必須node anti-affinityのため最低3適格ノードと更新中の余裕が必要です。ゾーン分散は希望で、異なる3ゾーン保証ではありません。
 
-### ネットワーク要件
+説明はLinux Kubernetesノードが対象です。Windows CLIダウンロードはWindowsワークロード対応の証明ではありません。選択版のworkload/platform対応は別確認です。Cilium kube-proxy置換ではsocketLB.hostNamespaceOnly、Linkerd CNIチェイニングでは他プラグインを許すcni.exclusiveを確認します。
 
-- TCP ポート 443: Webhook 通信
-- TCP ポート 8443: Proxy injector
-- TCP ポート 8089: Tap API
-- クラスター内での DNS 名前解決
+### ネットワーク経路と事前確認
 
-### 事前検証
+全場所に開くポート一覧でなく、送信元/宛先経路を検証します。
 
-```bash
-# Run pre-flight checks if Linkerd CLI is installed
-linkerd check --pre
+| 経路 | 固定レンダリングのデフォルト例 |
+|---|---|
+| API server → admission | Service 443 → injector/SP-validator 8443、policy-validator 9443 |
+| Proxy → control plane | Identity 8080、destination 8086、policy 8090 |
+| メッシュアプリ通信 | Proxy inbound 4143と実アプリ/Service経路 |
+| Viz（導入時） | Tap API server 8089、tap gRPC 8088、metrics API 8085、Prometheus 9090 |
+| 診断 | Proxy metrics 4191、web UI 8084、別web admin/readiness 9994 |
 
-# Expected output:
-# kubernetes-api
-# --------------
-# √ can initialize the client
-# √ can query the Kubernetes API
-#
-# kubernetes-version
-# ------------------
-# √ is running the minimum Kubernetes API version
-#
-# pre-kubernetes-setup
-# --------------------
-# √ control plane namespace does not already exist
-# √ can create non-namespaced resources
-# √ can create ServiceAccounts
-# √ can create Services
-# √ can create Deployments
-# √ can create CronJobs
-# √ can create ConfigMaps
-# √ can create Secrets
-# √ can read Secrets
-# √ can read extension-apiserver-authentication configmap
-# √ no clock skew detected
-#
-# Status check results are √
-```
-
-## Linkerd CLI のインストール
-
-### Linux/macOS（curl）
+コンポーネントのポートで、無制限SGルール群ではありません。DNS、Kubernetes API、選択CNI/NetworkPolicy動作も含めます。実Service targetPortsとWebhook設定を確認します。
 
 ```bash
-# Install latest stable version
-curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
-
-# Add to PATH
-export PATH=$HOME/.linkerd2/bin:$PATH
-
-# Permanently add to PATH (bash)
-echo 'export PATH=$HOME/.linkerd2/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
-
-# Permanently add to PATH (zsh)
-echo 'export PATH=$HOME/.linkerd2/bin:$PATH' >> ~/.zshrc
-source ~/.zshrc
+LINKERD_CHART_VERSION=2026.9.1
+CNI_ENABLED=false  # Set true only after installing/verifying Linkerd CNI.
+kubectl config current-context
+kubectl version
+kubectl get nodes -L kubernetes.io/os,kubernetes.io/arch,topology.kubernetes.io/zone
+kubectl get crd httproutes.gateway.networking.k8s.io \
+  -o 'jsonpath={.metadata.annotations.gateway\.networking\.k8s\.io/bundle-version}'
+# For a new lab without a conflicting installed bundle, after ownership review:
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
+linkerd check --pre --linkerd-cni-enabled="$CNI_ENABLED"
 ```
 
-### 特定バージョンのインストール
+既存CRD所有権と全利用controller確認後、必要な場合だけGateway APIバンドルを適用します。Linkerd CNI選択時は制御前に導入/確認し、後述CNI対応チェックを使います。実出力と終了コードを読みます。旧例の長い「全部緑」出力はあなたのクラスター結果ではありません。
+
+## Linkerd CLIのインストール
+
+### 固定Linux/macOSバイナリ
+
+正確な公開assetを選び、公式release metadataのSHA256と比較します。PATH変更は現在のシェルだけです。
 
 ```bash
-# Install specific version (e.g., 2.16.0)
-curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh -s -- --version stable-2.16.0
-
-# Install edge version
-curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install-edge | sh
+set -euo pipefail
+LINKERD_VERSION=edge-26.9.1
+case "$(uname -s)/$(uname -m)" in
+  Linux/x86_64) suffix=linux-amd64; expected=094e1de06215fbe76fc011cf62c96214f8dae0cd5a58135fb40307be88b6b176 ;;
+  Linux/aarch64|Linux/arm64) suffix=linux-arm64; expected=f92eddc52dc1f3089b65fd16014cdb1bc6b07c3fd177091c365cf3d8c0ea1a8b ;;
+  Darwin/x86_64) suffix=darwin; expected=acff9471f26552dd0ebb9560925a98d5ca1213a13dfc81464a2b815c9201664d ;;
+  Darwin/arm64) suffix=darwin-arm64; expected=5050da9d974e0c2f548a2e9f145540ec035582cfd67f47c58c37411ae3008913 ;;
+  *) echo "No verified asset for this OS/architecture in this example" >&2; exit 1 ;;
+esac
+CLI_DIR="$PWD/linkerd-cli/$LINKERD_VERSION"
+mkdir -p "$CLI_DIR"
+curl --proto '=https' --tlsv1.2 -fsSL \
+  "https://github.com/linkerd/linkerd2/releases/download/$LINKERD_VERSION/linkerd2-cli-$LINKERD_VERSION-$suffix" \
+  -o "$CLI_DIR/linkerd.download"
+if command -v sha256sum >/dev/null; then
+  actual=$(sha256sum "$CLI_DIR/linkerd.download" | awk '{print $1}')
+else
+  actual=$(shasum -a 256 "$CLI_DIR/linkerd.download" | awk '{print $1}')
+fi
+test "$actual" = "$expected"
+chmod 755 "$CLI_DIR/linkerd.download"
+mv "$CLI_DIR/linkerd.download" "$CLI_DIR/linkerd"
+export PATH="$CLI_DIR:$PATH"
+linkerd version --client
 ```
 
-### macOS（Homebrew）
+列挙assetはLinux amd64/arm64、macOS Intel/Apple Siliconです。installerの汎用ARM分岐から32ビットARM公開を推測しないでください。監査ではネイティブLinux arm64 CLIを実行し、他platformは公式metadataで確認しました。
+
+### 公式installerという代替
+
+旧run.linkerd.io/installは非推奨で、stableでなくedgeを導入します。現installerは環境変数LINKERD2_VERSIONを受け取ります。旧sh --version stable-2.16.0は対応上流stableを選択しません。
 
 ```bash
-# Install via Homebrew
-brew install linkerd
-
-# Upgrade
-brew upgrade linkerd
+curl --proto '=https' --tlsv1.2 -fsSL https://run.linkerd.io/install-edge -o install-linkerd.sh
+# Inspect the downloaded script before execution.
+LINKERD2_VERSION=edge-26.9.1 INSTALLROOT="$PWD/linkerd-installer" sh ./install-linkerd.sh
+export PATH="$PWD/linkerd-installer/bin:$PATH"
+linkerd version --client
 ```
 
-### Windows（Chocolatey）
+互換表からGateway APIバンドルを選びます。installer完了メッセージには独自例の版がありますが、本ガイドは選択release確認後1.5.1に固定します。パッケージ管理/ベンダー版は別版を選び得ます。Homebrew/Chocolateyだからここの固定版と考えず、出所と版を検証します。シェルprofile編集は不要です。
+
+### Windowsバイナリ
+
+release asset名はwindows-amd64.exeでなくwindows.exeです。
 
 ```powershell
-# Install via Chocolatey
-choco install linkerd2
-
-# Upgrade
-choco upgrade linkerd2
+$ErrorActionPreference = "Stop"
+$LinkerdVersion = "edge-26.9.1"
+$ExpectedSha256 = "d50119c635a0052bfcc7e0b96dcc985676b237ebc87464380677c413344d99a9"
+$Download = Join-Path (Get-Location) "linkerd.download.exe"
+$Url = "https://github.com/linkerd/linkerd2/releases/download/$LinkerdVersion/linkerd2-cli-$LinkerdVersion-windows.exe"
+Invoke-WebRequest -Uri $Url -OutFile $Download
+if ((Get-FileHash -Algorithm SHA256 $Download).Hash.ToLowerInvariant() -ne $ExpectedSha256) {
+    throw "Linkerd release checksum mismatch"
+}
+Move-Item $Download (Join-Path (Get-Location) "linkerd.exe") -Force
+.\linkerd.exe version --client
 ```
 
-### Windows（手動インストール）
+残りのBash例には設定済みWSLなど適切なシェルか、ネイティブPowerShellへの変換が必要です。監査ではPowerShell実行やWindows workloadテストはしていません。
 
-```powershell
-# Download in PowerShell
-$version = "stable-2.16.0"
-$arch = "windows-amd64"
-$url = "https://github.com/linkerd/linkerd2/releases/download/$version/linkerd2-cli-$version-$arch.exe"
+## コントロールプレーンのインストール
 
-Invoke-WebRequest -Uri $url -OutFile linkerd.exe
+### CLIによる導入
 
-# Add to PATH or move to desired location
-Move-Item linkerd.exe C:\tools\linkerd.exe
-```
-
-### インストールの確認
+新しいCLI所有導入では、制御の生成/導入前にLinkerd CRDを適用します。
 
 ```bash
-# Check version
-linkerd version
-
-# Example output:
-# Client version: stable-2.16.0
-# Server version: unavailable (when server not installed)
-```
-
-## Control Plane のインストール
-
-### 基本インストール（CLI）
-
-```bash
-# Step 1: Install CRDs
-linkerd install --crds | kubectl apply -f -
-
-# Step 2: Install control plane
-linkerd install | kubectl apply -f -
-
-# Verify installation
-linkerd check
-
-# Expected output:
-# kubernetes-api
-# --------------
-# √ can initialize the client
-# √ can query the Kubernetes API
-#
-# linkerd-existence
-# -----------------
-# √ 'linkerd-config' config map exists
-# √ heartbeat ServiceAccount exist
-# √ control plane replica sets are ready
-# √ no unschedulable pods
-# √ control plane pods are ready
-# √ cluster networks contains all pods
-# √ cluster networks contains all services
-#
-# linkerd-config
-# --------------
-# √ control plane Namespace exists
-# √ control plane ClusterRoles exist
-# √ control plane ClusterRoleBindings exist
-# √ control plane ServiceAccounts exist
-# √ control plane CustomResourceDefinitions exist
-# √ control plane MutatingWebhookConfigurations exist
-# √ control plane ValidatingWebhookConfigurations exist
-# √ proxy-init container runs as root user if docker container runtime is used
-#
-# linkerd-identity
-# ----------------
-# √ certificate config is valid
-# √ trust anchors are using supported crypto algorithm
-# √ trust anchors are within their validity period
-# √ trust anchors are valid for at least 60 days
-# √ issuer cert is using supported crypto algorithm
-# √ issuer cert is within its validity period
-# √ issuer cert is valid for at least 60 days
-# √ issuer cert is issued by the trust anchor
-#
-# linkerd-webhooks-and-apisvc-tls
-# -------------------------------
-# √ proxy-injector webhook has valid cert
-# √ proxy-injector cert is valid for at least 60 days
-# √ sp-validator webhook has valid cert
-# √ sp-validator cert is valid for at least 60 days
-# √ policy-validator webhook has valid cert
-# √ policy-validator cert is valid for at least 60 days
-#
-# linkerd-version
-# ---------------
-# √ can determine the latest version
-# √ cli is up-to-date
-#
-# control-plane-version
-# ---------------------
-# √ can retrieve the control plane version
-# √ control plane is up-to-date
-# √ control plane and cli versions match
-#
-# Status check results are √
-```
-
-### インストールマニフェストのプレビュー
-
-```bash
-# Preview resources to be installed
 linkerd install --crds > linkerd-crds.yaml
-linkerd install > linkerd-control-plane.yaml
-
-# Review and apply
 kubectl apply -f linkerd-crds.yaml
+linkerd install --linkerd-cni-enabled="$CNI_ENABLED" > linkerd-control-plane.yaml
+# Review the generated resources and trust credentials before applying.
 kubectl apply -f linkerd-control-plane.yaml
+linkerd check
 ```
 
-### Helm を使用したインストール
+コマンドはマニフェストを生成し、kubectlが導入します。CLI生成のデフォルトtrust anchor/issuer認証情報は有限の寿命を持ち、rotation計画が必要です。共有信頼multiclusterでは各clusterで別rootを生成せず、意図的に供給した認証情報が必要です。
 
-Helm を使用すると、よりきめ細かな構成が可能になります。
+### Helmによる導入
 
-#### Helm リポジトリの追加
+Helmは反復可能なrelease/values手順を提供します。チャート版はCLIタグと別に固定します。
 
 ```bash
-# Add Linkerd Helm repository
-helm repo add linkerd https://helm.linkerd.io/stable
-helm repo update
-
-# Repository for edge versions
 helm repo add linkerd-edge https://helm.linkerd.io/edge
+helm repo update linkerd-edge
+helm show chart linkerd-edge/linkerd-control-plane --version "$LINKERD_CHART_VERSION"
 ```
 
-#### 証明書の生成
+対応公開チャートはlinkerd-crds、linkerd-control-plane、linkerd-viz、linkerd-multicluster、linkerd2-cniの2026.9.1です。現core appVersionはedge-26.9.1です。未固定の古いstableリポジトリチャートを入れ、CLIに合うと想定しないでください。
 
-Helm でインストールする場合は、証明書を指定する必要があります。
+#### Trust anchorとissuer
+
+Helmにはtrust anchor証明書とissuer証明書/秘密鍵、または意図的に設定した対応外部issuer-secret統合が必要です。root CA秘密鍵のアップロードは不要です。
+
+導入済み[Smallstep CLI](https://smallstep.com/docs/step-cli/installation/)と公開certificate-createインターフェースを使います。このECDSA P-256例は元のデモ寿命を保持し、--not-after後の壊れた継続を修正します。
 
 ```bash
-# Install step CLI (for certificate generation)
-# macOS
-brew install step
-
-# Linux
-wget https://dl.step.sm/gh-release/cli/docs-cli-install/v0.25.0/step-cli_0.25.0_amd64.deb
-sudo dpkg -i step-cli_0.25.0_amd64.deb
-
-# Generate Trust Anchor (Root CA)
-step certificate create root.linkerd.cluster.local ca.crt ca.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after=87600h  # 10 years
-
-# Generate Issuer certificate
-step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
-  --profile intermediate-ca \
-  --not-after=8760h \  # 1 year
-  --no-password \
-  --insecure \
-  --ca ca.crt \
-  --ca-key ca.key
+umask 077
+mkdir linkerd-pki
+(
+  cd linkerd-pki
+  # Demonstration lifetimes, not a universal certificate policy.
+  step certificate create root.linkerd.cluster.local ca.crt ca.key \
+    --profile root-ca --kty EC --curve P-256 \
+    --not-after 87600h --no-password --insecure
+  step certificate create identity.linkerd.cluster.local issuer.crt issuer.key \
+    --profile intermediate-ca --kty EC --curve P-256 \
+    --not-after 8760h --no-password --insecure \
+    --ca ca.crt --ca-key ca.key
+  openssl verify -CAfile ca.crt issuer.crt
+  openssl x509 -in issuer.crt -noout -text
+)
 ```
 
-#### Helm による CRD のインストール
+導入前にchain、algorithm、期限を確認します。root秘密鍵はKubernetes外に置き、以下には公開trust anchorとissuer署名認証情報だけを渡します。--no-password/--insecureは暗号化なしローカル鍵を作るため、例は制限directory/umaskを使います。本番PKIには承認済み鍵保存/rotation処理が必要です。監査は公式文書でフラグを確認し、Smallstep証明書生成は実行していません。
 
-```bash
-# Install CRDs
-helm install linkerd-crds linkerd/linkerd-crds \
-  -n linkerd \
-  --create-namespace \
-  --wait
-```
+#### カスタムvalues
 
-#### Helm による Control Plane のインストール
-
-```bash
-# Install control plane
-helm install linkerd-control-plane linkerd/linkerd-control-plane \
-  -n linkerd \
-  --set-file identityTrustAnchorsPEM=ca.crt \
-  --set-file identity.issuer.tls.crtPEM=issuer.crt \
-  --set-file identity.issuer.tls.keyPEM=issuer.key \
-  --wait
-```
-
-#### Helm values ファイルの使用
+linkerd-values.yamlとして保存します。サイジング例で、workload保証ではありません。
 
 ```yaml
-# values.yaml
-# Proxy resource settings
 proxy:
   resources:
     cpu:
@@ -313,199 +191,96 @@ proxy:
     memory:
       request: 64Mi
       limit: 250Mi
-
-# Proxy log level
-proxyLogLevel: warn,linkerd=info
-
-# Proxy log format
-proxyLogFormat: plain
-
-# Identity settings
+  logLevel: warn,linkerd=info
+  logFormat: plain
 identity:
   issuer:
     clockSkewAllowance: 20s
     issuanceLifetime: 24h0m0s
-
-# Control plane resources
-controllerResources: &controller_resources
+controllerResources: &id001
   cpu:
     request: 100m
     limit: 1000m
   memory:
     request: 50Mi
     limit: 250Mi
-
-destinationResources: *controller_resources
-identityResources: *controller_resources
-proxyInjectorResources: *controller_resources
-
-# Pod anti-affinity settings
-enablePodAntiAffinity: false
-
-# Namespace metadata
-namespace:
-  labels:
-    linkerd.io/control-plane-ns: linkerd
+destinationResources: *id001
+identityResources: *id001
+proxyInjectorResources: *id001
 ```
+
+実際のネストキーはproxy.logLevelとproxy.logFormatです。destinationResources、identityResources、proxyInjectorResourcesは基本valuesにすべて載らなくても対応しており、同梱HAとtemplateが使います。旧namespace.labels mapと最上位proxyLogLevel/proxyLogFormatは消費されませんでした。チャートはデフォルトで設定proxy log selectorにヘッダー/要求ログ抑制規則を追加します。最終環境値を確認します。
 
 ```bash
-# Install with values file
-helm install linkerd-control-plane linkerd/linkerd-control-plane \
-  -n linkerd \
-  -f values.yaml \
-  --set-file identityTrustAnchorsPEM=ca.crt \
-  --set-file identity.issuer.tls.crtPEM=issuer.crt \
-  --set-file identity.issuer.tls.keyPEM=issuer.key \
-  --wait
+helm install linkerd-crds linkerd-edge/linkerd-crds \
+  --version "$LINKERD_CHART_VERSION" -n linkerd --create-namespace --wait
+
+helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
+  --version "$LINKERD_CHART_VERSION" -n linkerd -f linkerd-values.yaml \
+  --set "cniEnabled=$CNI_ENABLED" \
+  --set-file identityTrustAnchorsPEM=linkerd-pki/ca.crt \
+  --set-file identity.issuer.tls.crtPEM=linkerd-pki/issuer.crt \
+  --set-file identity.issuer.tls.keyPEM=linkerd-pki/issuer.key \
+  > linkerd-rendered.yaml
+# Review the render, then install through Helm (do not apply the render as another owner).
+helm install linkerd-control-plane linkerd-edge/linkerd-control-plane \
+  --version "$LINKERD_CHART_VERSION" -n linkerd -f linkerd-values.yaml \
+  --set "cniEnabled=$CNI_ENABLED" \
+  --set-file identityTrustAnchorsPEM=linkerd-pki/ca.crt \
+  --set-file identity.issuer.tls.crtPEM=linkerd-pki/issuer.crt \
+  --set-file identity.issuer.tls.keyPEM=linkerd-pki/issuer.key \
+  --wait --timeout 10m
+linkerd check
 ```
+
+生成マニフェストとHelm valuesバックアップにはissuer秘密鍵が含まれ得ます。制限して保存し、診断レポートへ貼らないでください。後の更新も同じrelease/認証情報所有者を維持します。
 
 ## 高可用性（HA）インストール
 
-本番環境には高可用性構成を推奨します。
-
-### CLI を使用した HA インストール
+固定チャート同梱のvalues-ha.yamlを使います。
 
 ```bash
-# Install with HA profile
-linkerd install --crds | kubectl apply -f -
-linkerd install --ha | kubectl apply -f -
+helm pull linkerd-edge/linkerd-control-plane --version "$LINKERD_CHART_VERSION"
+tar -xOf "linkerd-control-plane-$LINKERD_CHART_VERSION.tgz" \
+  linkerd-control-plane/values-ha.yaml > linkerd-ha.yaml
+# For the Helm render/install above, use:
+# -f linkerd-ha.yaml -f linkerd-values.yaml
+# For a new CLI-owned installation, render with:
+linkerd install --ha --linkerd-cni-enabled="$CNI_ENABLED" > linkerd-ha-rendered.yaml
 ```
 
-### Helm を使用した HA インストール
+Helmではrenderとinstallの両方でカスタムvaluesの**前に**HAファイルを使います。後の上書きが必要HAを無効にしないか確認します。
 
-```yaml
-# ha-values.yaml
-# HA base settings
-enablePodAntiAffinity: true
+同梱profileは主要コンポーネント3レプリカ、必須node分離、希望zone分離、PDB、Fail admission-webhookを有効にします。冗長な提供インスタンスで、3メンバー合意クォーラムではありません。可用性はAPI server/ネットワーク、認証情報、容量、アプリにも依存します。
 
-# Control plane replicas
-controllerReplicas: 3
-
-# Destination controller settings
-destination:
-  replicas: 3
-  resources:
-    cpu:
-      request: 100m
-      limit: 1000m
-    memory:
-      request: 50Mi
-      limit: 250Mi
-
-# Identity controller settings
-identity:
-  replicas: 3
-  resources:
-    cpu:
-      request: 100m
-      limit: 1000m
-    memory:
-      request: 10Mi
-      limit: 250Mi
-
-# Proxy Injector settings
-proxyInjector:
-  replicas: 3
-  resources:
-    cpu:
-      request: 100m
-      limit: 1000m
-    memory:
-      request: 50Mi
-      limit: 250Mi
-
-# PodDisruptionBudget settings
-podDisruptionBudget:
-  maxUnavailable: 1
-
-# Proxy resources (increased for HA)
-proxy:
-  resources:
-    cpu:
-      request: 100m
-      limit: 1000m
-    memory:
-      request: 64Mi
-      limit: 250Mi
-
-# Pod anti-affinity
-podAntiAffinity:
-  preferredDuringSchedulingIgnoredDuringExecution:
-  - weight: 100
-    podAffinityTerm:
-      labelSelector:
-        matchLabels:
-          linkerd.io/control-plane-component: destination
-      topologyKey: kubernetes.io/hostname
-
-# Topology spread constraints
-topologySpreadConstraints:
-  - maxSkew: 1
-    topologyKey: topology.kubernetes.io/zone
-    whenUnsatisfiable: ScheduleAnyway
-    labelSelector:
-      matchLabels:
-        linkerd.io/control-plane-ns: linkerd
-```
+旧手書きdestination.replicas/identity.resources/proxyInjector.resourcesでは対象containerを設定できませんでした。root podDisruptionBudget mapではPDBが作られず、root topologySpreadConstraintsも消費されません。旧例のオフラインrenderは3レプリカでしたがcontroller resource不足、PDBなしでした。実同梱profileを使い結果を確認します。
 
 ```bash
-# Install with HA values
-helm install linkerd-control-plane linkerd/linkerd-control-plane \
-  -n linkerd \
-  -f ha-values.yaml \
-  --set-file identityTrustAnchorsPEM=ca.crt \
-  --set-file identity.issuer.tls.crtPEM=issuer.crt \
-  --set-file identity.issuer.tls.keyPEM=issuer.key \
-  --wait
+kubectl -n linkerd get pods -o wide
+kubectl -n linkerd get pdb
+kubectl -n linkerd get deployments -o yaml
 ```
 
-### HA 構成の確認
+適格ノード3未満なら必須anti-affinityでPendingになる場合があります。HAに依存する前にadmission Fail動作と中断を確認します。汎用可用性修正としてWebhookポリシーを弱めないでください。
+
+
+## 拡張のインストール
+
+### Viz: ダッシュボードとメトリクス
+
+CLI所有拡張では次を使います。
 
 ```bash
-# Check control plane Pod distribution
-kubectl get pods -n linkerd -o wide
-
-# Check PodDisruptionBudget
-kubectl get pdb -n linkerd
-
-# Verify anti-affinity (deployed on different nodes)
-kubectl get pods -n linkerd -o custom-columns=NAME:.metadata.name,NODE:.spec.nodeName
-```
-
-## 拡張機能のインストール
-
-### Viz 拡張機能（ダッシュボードとメトリクス）
-
-Viz 拡張機能は Linkerd の可観測性機能を提供します。
-
-#### CLI を使用したインストール
-
-```bash
-# Install Viz extension
-linkerd viz install | kubectl apply -f -
-
-# Verify installation
+linkerd viz install > linkerd-viz.yaml
+# Review the optional extension and its metrics backend.
+kubectl apply -f linkerd-viz.yaml
 linkerd viz check
-
-# Open dashboard
-linkerd viz dashboard &
+linkerd viz dashboard
 ```
 
-#### Helm を使用したインストール
-
-```bash
-# Viz extension Helm installation
-helm install linkerd-viz linkerd/linkerd-viz \
-  -n linkerd-viz \
-  --create-namespace \
-  --wait
-```
-
-#### Viz values のカスタマイズ
+Helmではviz-values.yamlとして保存し、renderされたPVC、Deployment、resource設定を確認します。
 
 ```yaml
-# viz-values.yaml
-# Prometheus settings
 prometheus:
   enabled: true
   resources:
@@ -516,15 +291,9 @@ prometheus:
       request: 300Mi
       limit: 1Gi
   persistence:
-    enabled: true
     storageClass: gp3
     size: 10Gi
-
-# Disable Grafana (when using external Grafana)
-grafana:
-  enabled: false
-
-# Dashboard settings
+    accessMode: ReadWriteOnce
 dashboard:
   replicas: 1
   resources:
@@ -534,10 +303,6 @@ dashboard:
     memory:
       request: 50Mi
       limit: 250Mi
-  # Disable authentication (development only)
-  # enforcedHostRegexp: ""
-
-# Tap settings
 tap:
   replicas: 1
   resources:
@@ -547,8 +312,6 @@ tap:
     memory:
       request: 50Mi
       limit: 250Mi
-
-# Metrics API settings
 metricsAPI:
   replicas: 1
   resources:
@@ -561,471 +324,321 @@ metricsAPI:
 ```
 
 ```bash
-# Install with custom values
-helm install linkerd-viz linkerd/linkerd-viz \
-  -n linkerd-viz \
-  --create-namespace \
-  -f viz-values.yaml \
-  --wait
+helm install linkerd-viz linkerd-edge/linkerd-viz \
+  --version "$LINKERD_CHART_VERSION" -n linkerd-viz --create-namespace \
+  -f viz-values.yaml --wait --timeout 10m
+linkerd viz check
 ```
 
-### Jaeger 拡張機能（分散トレーシング）
+選択チャートはpersistenceの**mapが存在する**と永続化をサポートします。persistence.enabledはスイッチではありません。PVC templateはaccessMode必須で、旧例は省略してnullをrenderしていました。map省略はemptyDirです。gp3 StorageClassは前提例でVizが作るものではありません。EKSではEBS CSI、権限、volume topologyを確認します。
 
-#### CLI を使用したインストール
+同梱Prometheusは1レプリカで、永続化はRecreate戦略を選びます。PVCは適切なPod置換をまたいで保存しますが、保存HAや無停止保証にはなりません。2026.9.1はPrometheus v2.55.1と6時間保持がデフォルトです。保守、保持、可用性要件を明示選択します。
 
-```bash
-# Install Jaeger extension
-linkerd jaeger install | kubectl apply -f -
-
-# Verify installation
-linkerd jaeger check
-```
-
-#### Helm を使用したインストール
-
-```bash
-# Jaeger extension Helm installation
-helm install linkerd-jaeger linkerd/linkerd-jaeger \
-  -n linkerd-jaeger \
-  --create-namespace \
-  --wait
-```
-
-#### Jaeger values のカスタマイズ
+設定済み外部Prometheusには、この**代替**valuesを使います。
 
 ```yaml
-# jaeger-values.yaml
-# Collector settings
-collector:
-  replicas: 1
-  resources:
-    cpu:
-      request: 100m
-      limit: 500m
-    memory:
-      request: 50Mi
-      limit: 250Mi
-
-# Jaeger UI/Query settings
-jaeger:
-  replicas: 1
-  resources:
-    cpu:
-      request: 100m
-      limit: 500m
-    memory:
-      request: 50Mi
-      limit: 250Mi
-
-# Sampling settings
-webhook:
-  collectorSvcAddr: collector.linkerd-jaeger:55678
-  collectorSvcAccount: collector
+prometheus:
+  enabled: false
+prometheusUrl: http://prometheus.monitoring.svc.cluster.local:9090
 ```
 
-### Multicluster 拡張機能
+切り替え前に外部サーバーのLinkerd scrape/relabelとアクセスを設定します。HTTP-readyだけでなく実Vizクエリ/メトリクスを検証します。dashboard、tap、metricsAPI resource設定は対応しています。grafana.enabledは導入スイッチではなく、別管理Grafanaへのリンク設定を提供します。
 
-#### CLI を使用したインストール
+初期手順はlocalhost dashboardを使います。dashboard.enforcedHostRegexpはHost値検証でユーザー認証ではありません。空値はチャートのデフォルトhost制限を選びます。組織Ingressには別認証/認可、承認された公開範囲、許可hostが必要です。
+
+### 分散トレーシング
+
+edge-26.9.1にlinkerd jaegerサブコマンドはありません。公開linkerd-jaegerチャート履歴は2025.9.4で止まり、2026.9.1対応拡張ではありません。旧install/check/upgrade/uninstallを別管理collector/backendと選択proxy tracing設定へ置き換えます。
+
+トレースには受信コンテキスト、アプリ伝播、互換collector/exportプロトコルが必要です。Vizトポロジー/メトリクスグラフは分散トレースではありません。完全経路は[可観測性ガイド](05-observability.md)と[公式トレース文書](https://linkerd.io/docs/features/distributed-tracing/)を参照します。この監査は未テストcollector/Jaegerのend-to-end動作を主張しません。旧linkerd-jaeger releaseがあるならデータを棚卸し・移行し、元の所有者で廃止します。現CLIは削除拡張を管理できません。
+
+### マルチクラスター
+
+CLIで基本拡張をrenderできます。
 
 ```bash
-# Install Multicluster extension
-linkerd multicluster install | kubectl apply -f -
-
-# Verify installation
+linkerd multicluster install > linkerd-multicluster.yaml
+# Review network exposure, shared trust and actual gateway configuration first.
+kubectl apply -f linkerd-multicluster.yaml
 linkerd multicluster check
 ```
 
-#### Helm を使用したインストール
+適用前にネットワークに合うGateway公開を選びます。拡張だけではclusterリンク、共有信頼、remote Kubernetes APIアクセスは作られません。
 
-```bash
-# Multicluster extension Helm installation
-helm install linkerd-multicluster linkerd/linkerd-multicluster \
-  -n linkerd-multicluster \
-  --create-namespace \
-  --wait
-```
-
-#### Multicluster values
+**AWS Load Balancer Controller**を使うEKS例は内部NLBを選び、Linkerd GatewayまでTCPを保持します。
 
 ```yaml
-# multicluster-values.yaml
-# Gateway settings
 gateway:
   replicas: 1
-  resources:
-    cpu:
-      request: 100m
-      limit: 500m
-    memory:
-      request: 50Mi
-      limit: 250Mi
-  # LoadBalancer settings (for EKS)
   serviceType: LoadBalancer
-  loadBalancerIP: ""
-  # When using NLB
+  loadBalancerClass: service.k8s.aws/nlb
   serviceAnnotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-
-# Service Account settings
-remoteMirrorServiceAccountName: linkerd-service-mirror-remote-access
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
+remoteMirrorServiceAccountName: linkerd-service-mirror-remote-access-default
 ```
 
-## Amazon EKS 固有の構成
-
-### EKS クラスターの準備
+multicluster-values.yamlとして保存し、Helmの代替を使います。
 
 ```bash
-# Create EKS cluster (using eksctl)
-eksctl create cluster \
-  --name linkerd-cluster \
-  --version 1.28 \
-  --region us-west-2 \
-  --nodegroup-name standard-workers \
-  --node-type m5.large \
-  --nodes 3 \
-  --nodes-min 1 \
-  --nodes-max 5 \
-  --managed
-
-# Update kubeconfig
-aws eks update-kubeconfig --name linkerd-cluster --region us-west-2
+helm install linkerd-multicluster linkerd-edge/linkerd-multicluster \
+  --version "$LINKERD_CHART_VERSION" -n linkerd-multicluster --create-namespace \
+  -f multicluster-values.yaml --wait --timeout 10m
 ```
 
-### EKS CNI の互換性
+loadBalancerClassは対象controllerを選びます。Auto Modeは別class/設定契約なので混同せず、既存Service所有権を安易に変えないでください。remote側から内部Gatewayとprobe経路へ解決/到達できる必要があります。無関係なACM listenerでLinkerd転送mTLSを終端しないでください。
 
-Linkerd はほとんどの CNI と互換性があります。
+gateway.resourcesは固定チャートに消費されません。proxyリソースは注入設定由来です。無視されるvaluesでlimitが変わると思わず実Podを確認します。同梱HA上書きはgateway.replicasとanti-affinityを使います。
+
+現edgeのremote認証情報はexec auth providerを拒否します。[マルチクラスターガイド](06-multi-cluster.md)の対応フローを使い、service-mirror controller/版と最小権限APIアクセスを検証します。
+
+## CNIとAmazon EKS設定
+
+### 任意のLinkerd CNI
+
+Linkerd CNIは主CNIに連結し、Amazon VPC CNIやCiliumを置き換えません。control planeとメッシュworkloadがCNI有効設定を使う**前に**対象ノードで準備完了する必要があります。
 
 ```bash
-# Check Amazon VPC CNI version
-kubectl describe daemonset aws-node -n kube-system | grep Image
-
-# Install Linkerd CNI plugin (optional, for use with Amazon VPC CNI)
-linkerd install-cni | kubectl apply -f -
+# Optional branch, before control-plane installation.
+helm install linkerd-cni linkerd-edge/linkerd2-cni \
+  --version "$LINKERD_CHART_VERSION" -n linkerd-cni --create-namespace --wait
+kubectl -n linkerd-cni rollout status daemonset/linkerd-cni --timeout=180s
+CNI_ENABLED=true
+linkerd check --pre --linkerd-cni-enabled
+# Use --linkerd-cni-enabled=true for CLI control-plane installation,
+# or --set cniEnabled=true for the control-plane Helm chart.
 ```
 
-### EKS IAM 構成
+ノードのCNI設定/バイナリdirectoryとplugin動作を確認します。デフォルトは/etc/cni/net.dと/opt/cni/binで、普遍的パスではありません。選択control-planeチャートはcniEnabledを消費し、renderでlinkerd-initが意図どおり省略される必要があります。
 
-```yaml
-# linkerd-service-account.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: linkerd-destination
-  namespace: linkerd
-  annotations:
-    # When using IRSA (if needed)
-    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/LinkerdDestinationRole
-```
+Linkerd CNIなしでは通常initリダイレクトにNET_ADMINが必要で、CNIありではノードpluginへ移ります。このreleaseはnative sidecarがデフォルトなので、診断時はcontainersとinitContainers両方を調べます。Identity Deploymentは意図的に通常proxyでstartup waitを無効にしており、注入失敗と分類しないでください。native無効化はinit network/startup順序を変えます。bypass UIDは汎用セキュリティ修正ではありません。
 
-### EKS Ingress のセットアップ（AWS Load Balancer Controller）
+Cilium kube-proxy置換では、文書化されたsocketLB.hostNamespaceOnly=trueによりPod通信が検出用Serviceアドレスを保持します。Linkerd CNI連結にはcni.exclusive=falseも必要です。主CNI設定を盲目的に置換せず所有者とレビューします。
 
-```yaml
-# linkerd-viz-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: linkerd-viz
-  namespace: linkerd-viz
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:ACCOUNT_ID:certificate/CERT_ID
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/healthcheck-path: /ready
-spec:
-  rules:
-  - host: linkerd.example.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: web
-            port:
-              number: 8084
-```
+### 既存EKSクラスター
 
-### EKS NLB Gateway のセットアップ（Multicluster）
+対応既存clusterを使い、Linkerd系列とEKS提供状況の両方で版を確認します。旧EKS 1.28作成コマンドは現在の案内として古いものです。Linux手順は互換EC2ノードを前提とします。Fargateは示すCNI DaemonSetを実行できず、交換可能な対象ではありません。
 
-```yaml
-# multicluster-gateway-nlb.yaml
-# Helm values
-gateway:
-  serviceType: LoadBalancer
-  serviceAnnotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-```
-
-### EKS Security Group の構成
+専用kubeconfigを準備する場合:
 
 ```bash
-# Allow required ports in cluster security group
-# - TCP 4143: Linkerd proxy
-# - TCP 4191: Linkerd proxy metrics
-# - TCP 8443: Proxy injector webhook
-# - TCP 8089: Tap API
-
-# Add security group rules with eksctl (example)
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-xxxxxxxxx \
-  --protocol tcp \
-  --port 4143 \
-  --source-group sg-xxxxxxxxx
+: "${EKS_CLUSTER_NAME:?Set the intended existing cluster}"
+: "${EKS_REGION:?Set its region}"
+aws eks describe-cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION"   --query 'cluster.{version:version,endpoint:endpoint}' --output json
+aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION"   --kubeconfig "$PWD/linkerd.kubeconfig" --alias linkerd-lab
+export KUBECONFIG="$PWD/linkerd.kubeconfig"
+kubectl config current-context
+kubectl -n kube-system get daemonset aws-node   -o jsonpath='{.spec.template.spec.containers[*].image}'
 ```
 
-## インストールの検証とバリデーション
+変更前に対象endpoint/contextを確認します。標準Linkerd controllerはKubernetes API認証情報を使い、linkerd-destinationがServiceを検出するだけならIAMロールは不要です。AWS API権限はLB Controller、EBS CSI、telemetry collectorなど実callerに、対応IRSA/Pod Identity設定で付与します。
 
-### 完全なステータスチェック
+### EKSダッシュボードとネットワーク
+
+旧internet-facing ALB例は認証設計なしに管理dashboardを公開していました。組織の認証付きIngressを設定・テストするまでlocalhost管理を使います。
+
+web Serviceの8084は有効です。別admin/readinessは9994で、その/readyにprobeがあります。UI listenerに同じhealth意味を想定しないでください。ALBではtarget health、SG、host検証、証明書所有権、認証を合わせます。TLS証明書だけでは利用者認証になりません。
+
+SGとNetworkPolicyを実送受信ロールに限定します。component port表は診断情報で、proxy metrics/Webhookを全sourceに公開する依頼ではありません。実clusterでCNI起動、DNS、admission、identity、node間経路を検証します。
+
+## インストールの検証
 
 ```bash
-# Comprehensive status check
 linkerd check
+linkerd check --proxy -n my-app
+linkerd viz check
+linkerd multicluster check
+kubectl -n linkerd get pods,services,pdb -o wide
+kubectl -n linkerd-viz get pods,services -o wide
+```
 
-# Status check including extensions
+拡張チェックは導入済みだけ実行します。check --proxyはデータプレーン確認で「全拡張を含む」意味ではありません。業務ロジックは検証しません。
+
+サンプルアプリは固定マニフェストを確認して適用し、選択名前空間だけに注入指定して対象workloadを再作成します。変更可能なemojivoto URLと全稼働Deploymentの再適用は再現可能入力ではありません。イメージ/architecture、Serviceポート、準備、実HTTP/TCP結果を確認します。
+
+```bash
+kubectl annotate namespace my-app linkerd.io/inject=enabled
+kubectl -n my-app rollout restart deployment/my-app
+kubectl -n my-app rollout status deployment/my-app
+linkerd check --proxy -n my-app
+linkerd viz stat deploy/my-app -n my-app
+linkerd viz top deploy/my-app -n my-app
+```
+
+my-appを実名前空間/Deploymentに置換します。metrics/tap/topは設定拡張と対応プロトコルに依存し、全通信暗号化や全業務成功を証明しません。
+
+## Linkerdアップグレード
+
+### 更新計画
+
+正確なtarget CLI/chartを選び、release note、互換性、対応skew、現healthを確認します。ここのtargetは全旧2.14/2.16から直接更新できる約束ではありません。必要中間更新とベンダー案内に従います。edgeタグはsemver保証ではありません。各所有者を通じ、CLI、CRD/control plane、導入拡張、最後にdata-plane proxyを更新します。
+
+既存導入はcheckとcheck --proxyを使います。check --preは名前空間/設定前提を含む新規事前確認で、更新計画の代わりではありません。現信頼認証情報を保持し、更新前に削除CRD版を確認します。
+
+### CLI所有の導入
+
+```bash
+# First install/verify the selected target CLI and review the supported upgrade path.
+linkerd version --client
+linkerd check
 linkerd check --proxy
-
-# Viz extension status check
-linkerd viz check
-
-# Multicluster extension status check
-linkerd multicluster check
-
-# Jaeger extension status check
-linkerd jaeger check
-```
-
-### コンポーネントのステータスチェック
-
-```bash
-# Control plane Pod status
-kubectl get pods -n linkerd
-
-# Extension Pod status
-kubectl get pods -n linkerd-viz
-kubectl get pods -n linkerd-jaeger
-kubectl get pods -n linkerd-multicluster
-
-# Service status
-kubectl get svc -n linkerd
-kubectl get svc -n linkerd-viz
-
-# Check CRDs
-kubectl get crds | grep linkerd
-```
-
-### サンプルアプリケーションによるテスト
-
-```bash
-# Install emojivoto sample app
-curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/emojivoto.yml | kubectl apply -f -
-
-# Inject proxy
-kubectl get -n emojivoto deploy -o yaml | linkerd inject - | kubectl apply -f -
-
-# Verify deployment
-kubectl get pods -n emojivoto
-
-# Check statistics
-linkerd viz stat deploy -n emojivoto
-
-# Check real-time traffic
-linkerd viz top deploy -n emojivoto
-```
-
-## Linkerd のアップグレード
-
-### Stable Channel のアップグレード
-
-```bash
-# Upgrade CLI
-curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
-
-# Check new version
-linkerd version
-
-# Pre-upgrade check
-linkerd check --pre
-
-# Upgrade CRDs
-linkerd upgrade --crds | kubectl apply -f -
-
-# Upgrade control plane
-linkerd upgrade | kubectl apply -f -
-
-# Verify upgrade
+linkerd upgrade --crds > linkerd-crds-upgrade.yaml
+kubectl apply -f linkerd-crds-upgrade.yaml
+linkerd upgrade > linkerd-upgrade.yaml
+# Review retained configuration and credentials before applying.
+kubectl apply -f linkerd-upgrade.yaml
 linkerd check
-
-# Upgrade extensions
-linkerd viz upgrade | kubectl apply -f -
+linkerd viz install > linkerd-viz-upgrade.yaml
+kubectl apply -f linkerd-viz-upgrade.yaml
 linkerd viz check
+# Likewise review/install the selected multicluster extension if present.
+linkerd prune > linkerd-obsolete.yaml
+# Review ownership and contents before any kubectl delete -f linkerd-obsolete.yaml.
 ```
 
-### Helm のアップグレード
+拡張更新のrenderはinstallコマンドで、viz upgradeではありません。helpが終了0でも親コマンドhelpの場合があります。コマンド一覧と生成内容を確認します。削除前にprune出力を確認します。multicluster controller更新には対応手順での再リンクが必要な場合があります。
+
+### Helm所有の導入
 
 ```bash
-# Update Helm repository
-helm repo update
-
-# Backup current values
+umask 077
 helm get values linkerd-control-plane -n linkerd > current-values.yaml
-
-# Upgrade CRDs
-helm upgrade linkerd-crds linkerd/linkerd-crds -n linkerd --wait
-
-# Upgrade control plane
-helm upgrade linkerd-control-plane linkerd/linkerd-control-plane \
-  -n linkerd \
-  -f current-values.yaml \
-  --set-file identityTrustAnchorsPEM=ca.crt \
-  --set-file identity.issuer.tls.crtPEM=issuer.crt \
-  --set-file identity.issuer.tls.keyPEM=issuer.key \
-  --wait
-
-# Upgrade Viz extension
-helm upgrade linkerd-viz linkerd/linkerd-viz -n linkerd-viz --wait
+helm get manifest linkerd-control-plane -n linkerd > current-manifest.yaml
+# Migrate intentional overrides to reviewed-values.yaml; preserve current trust credentials.
+helm upgrade linkerd-crds linkerd-edge/linkerd-crds \
+  --version "$LINKERD_CHART_VERSION" -n linkerd --wait
+helm upgrade linkerd-control-plane linkerd-edge/linkerd-control-plane \
+  --version "$LINKERD_CHART_VERSION" -n linkerd \
+  --reset-values -f reviewed-values.yaml --wait --timeout 10m
+# Upgrade each installed extension with its own reviewed values and pinned chart.
+linkerd check
 ```
 
-### Edge Channel
+レビュー済みvaluesに意図したHA/CNIと**既存**trust/issuer設定か対応外部Secret参照を含めます。それらを保持しない--reset-valuesは動作変更/失敗を起こし得て、--reuse-valuesは古い設定を残し得ます。target defaultと上書きを比較し、通常更新の一環としてCAを再生成しないでください。
+
+### データプレーン更新
+
+可用性方針に従い、対象workloadを1つずつ更新します。
 
 ```bash
-# Install edge version (latest features, more frequent updates)
-curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install-edge | sh
-
-# Edge Helm repository
-helm repo add linkerd-edge https://helm.linkerd.io/edge
+kubectl -n my-app rollout restart deployment/my-app
+kubectl -n my-app rollout status deployment/my-app
+linkerd check --proxy -n my-app
+kubectl -n my-app get pods -o json |
+  jq '.items[] | {pod: .metadata.name, proxies: ([.spec.containers[]?, .spec.initContainers[]?] | map(select(.name == "linkerd-proxy") | {image, restartPolicy}))}'
 ```
 
-### Data Plane のアップグレード（Proxy Rolling Restart）
-
-```bash
-# Restart all meshed workloads to apply new proxy
-kubectl rollout restart deploy -n my-namespace
-
-# Or specific Deployment only
-kubectl rollout restart deploy/my-app -n my-namespace
-
-# Check proxy version
-linkerd viz stat deploy -n my-namespace -o wide
-```
+statは通信統計でproxyイメージ版一覧ではありません。上では通常/native両配置を確認します。関連skew案内と再作成後の実準備/通信を確認します。
 
 ## トラブルシューティング
 
-### 一般的なインストール問題
-
-#### Webhook 接続の失敗
+### Admissionとリソース
 
 ```bash
-# Symptom: Proxy injection not working
-# Cause: Cannot connect to webhook service
-
-# Solution 1: Check webhook service
-kubectl get svc -n linkerd linkerd-proxy-injector
-
-# Solution 2: Check webhook configuration
+kubectl -n linkerd get service linkerd-proxy-injector
 kubectl get mutatingwebhookconfiguration linkerd-proxy-injector-webhook-config -o yaml
-
-# Solution 3: Check network policies
-kubectl get networkpolicy -n linkerd
+kubectl -n linkerd get networkpolicy
+kubectl -n linkerd get events --sort-by='.lastTimestamp'
+: "${LINKERD_POD:?Set a control-plane Pod name}"
+kubectl -n linkerd describe pod "$LINKERD_POD"
 ```
 
-#### 証明書の問題
+注入失敗はCA bundle、Webhook選択/ネットワーク、設定拒否、Pod securityが原因になり、常にService接続とは限りません。Pendingはanti-affinity、Taint、volume、quota、resourceなどを反映します。limit/security変更前に実イベントを確認します。
+
+### 証明書
+
+デフォルトではtrust rootは**ConfigMap**、issuer署名鍵/証明書はSecretです。
 
 ```bash
-# Symptom: Identity-related errors
-# Certificate errors when running linkerd check
-
-# Solution: Check certificate status
-linkerd check --proxy
-
-# Check trust anchor expiration
-kubectl get secret linkerd-identity-trust-roots -n linkerd -o json | \
-  jq -r '.data["ca-bundle.crt"]' | base64 -d | \
-  openssl x509 -noout -dates
-
-# Check issuer certificate
-kubectl get secret linkerd-identity-issuer -n linkerd -o json | \
-  jq -r '.data["crt.pem"]' | base64 -d | \
-  openssl x509 -noout -dates
+set -euo pipefail
+kubectl -n linkerd get configmap linkerd-identity-trust-roots \
+  -o jsonpath='{.data.ca-bundle\.crt}' > trust-bundle.pem
+openssl crl2pkcs7 -nocrl -certfile trust-bundle.pem |
+  openssl pkcs7 -print_certs -text -noout
+kubectl -n linkerd get secret linkerd-identity-issuer -o json |
+  jq -er '.data["crt.pem"] // .data["tls.crt"]' |
+  base64 -d | openssl x509 -noout -dates
 ```
 
-#### リソース不足
+デフォルトissuerはcrt.pem、kubernetes.io/tls統合はtls.crtを使います。全Secretが同じと想定せずschemeを確認します。カスタムtrustは保存所有者を変え得ます。全trust証明書、時刻/期限、issuer可用性、identityエラーを調べ、計画外root置換を避けます。
+
+### コンポーネントとプロキシのログ
 
 ```bash
-# Symptom: Pods stuck in Pending state
-# Cause: Insufficient node resources
-
-# Solution: Check resource requests
-kubectl describe pod -n linkerd <pod-name>
-
-# Check node resources
-kubectl describe nodes | grep -A 5 "Allocated resources"
+kubectl -n linkerd logs deployment/linkerd-destination -c destination
+kubectl -n linkerd logs deployment/linkerd-destination -c policy
+kubectl -n linkerd logs deployment/linkerd-identity -c identity
+kubectl -n linkerd logs deployment/linkerd-proxy-injector -c proxy-injector
+: "${APP_POD:?Set an application Pod name}"
+kubectl -n my-app logs "$APP_POD" -c linkerd-proxy
+linkerd diagnostics proxy-metrics "$APP_POD" -n my-app
 ```
 
-### デバッグコマンド
-
-```bash
-# Check control plane logs
-kubectl logs -n linkerd deploy/linkerd-destination -c destination
-kubectl logs -n linkerd deploy/linkerd-identity
-kubectl logs -n linkerd deploy/linkerd-proxy-injector
-
-# Check proxy logs
-kubectl logs <pod-name> -c linkerd-proxy
-
-# Check events
-kubectl get events -n linkerd --sort-by='.lastTimestamp'
-
-# Check proxy status
-linkerd diagnostics proxy-metrics <pod-name>
-```
+導入版の実component/container名を使います。Pod削除/置換前に関連ログを保持します。
 
 ## アンインストール
 
-### CLI を使用したアンインストール
+### 先にアプリプロキシを除去
+
+メッシュ転送ポリシー、経路、観測の喪失を計画します。所有者を通じて注入元と手動proxy設定を除去し、workloadを再作成、control plane除去前に両container配置を確認します。
 
 ```bash
-# Remove extensions first
-linkerd viz uninstall | kubectl delete -f -
-linkerd jaeger uninstall | kubectl delete -f -
-linkerd multicluster uninstall | kubectl delete -f -
-
-# Remove control plane
-linkerd uninstall | kubectl delete -f -
+# Choose the actual application namespace/Deployment and review all injection sources.
+kubectl annotate namespace my-app linkerd.io/inject-
+# Also remove any Pod-template injection override/manual proxy using its manifest owner.
+kubectl -n my-app rollout restart deployment/my-app
+kubectl -n my-app rollout status deployment/my-app
+kubectl -n my-app get pods -o json |
+  jq '.items[] | {pod: .metadata.name, containers: ([.spec.containers[]?, .spec.initContainers[]?] | map(.name))}'
 ```
 
-### Helm を使用したアンインストール
+namespaceアノテーション除去だけではPodテンプレート指定を上書きせず、手動proxyも除去しません。メッシュ離脱後のアプリ接続/セキュリティを検証します。残る注入workloadをforceで迂回しないでください。
+
+### CLI所有の削除
 
 ```bash
-# Remove extensions
+# Only after applications are unmeshed and extension dependencies are removed.
+linkerd viz uninstall > remove-viz.yaml
+linkerd multicluster uninstall > remove-multicluster.yaml
+# Inspect each manifest and remove only the extensions actually installed via CLI.
+kubectl delete -f remove-viz.yaml
+kubectl delete -f remove-multicluster.yaml
+linkerd uninstall > remove-linkerd.yaml
+# This includes namespace-scoped resources and cluster-wide CRDs.
+kubectl delete -f remove-linkerd.yaml
+```
+
+導入拡張だけを除去します。生成control-plane削除はCRDも含み、削除するとCRインスタンスも消えます。保持すべきものを棚卸し・バックアップします。単なるDeployment削除ではありません。
+
+### Helm所有の削除
+
+```bash
+# Only the releases actually installed through Helm, after unmeshing applications.
 helm uninstall linkerd-viz -n linkerd-viz
-helm uninstall linkerd-jaeger -n linkerd-jaeger
 helm uninstall linkerd-multicluster -n linkerd-multicluster
-
-# Remove control plane
 helm uninstall linkerd-control-plane -n linkerd
-
-# Remove CRDs
+# Inventory/back up CR instances before removing the CRDs.
 helm uninstall linkerd-crds -n linkerd
-
-# Remove namespaces
-kubectl delete namespace linkerd linkerd-viz linkerd-jaeger linkerd-multicluster
 ```
+
+Linkerd CNIを入れた場合は依存workloadがなくなってから別途node-plugin cleanupに従い、主CNIが無傷か確認します。名前空間は所有権と残存内容を確認後にだけ削除し、4名前空間を無条件に片付けないでください。
 
 ## 次のステップ
 
-- [アーキテクチャ](./02-architecture.md): Linkerd の内部構造を詳しく理解する
-- [トラフィック管理](./03-traffic-management.md): ServiceProfile とトラフィック分割の構成
-- [セキュリティ](./04-security.md): mTLS と認可ポリシーのセットアップ
+- [アーキテクチャ](02-architecture.md)
+- [トラフィック管理](03-traffic-management.md)
+- [セキュリティと証明書ライフサイクル](04-security.md)
+- [可観測性](05-observability.md)
+- [マルチクラスター](06-multi-cluster.md)
+- [インストールクイズ](../../quizzes/service-mesh/linkerd/installation.md)
 
-## 参照
+## 参考資料
 
-- [Linkerd インストールガイド](https://linkerd.io/2/getting-started/)
-- [Helm Chart ドキュメント](https://linkerd.io/2/tasks/install-helm/)
-- [HA インストールガイド](https://linkerd.io/2/features/ha/)
-- [EKS ガイド](https://linkerd.io/2/reference/cluster-configuration/)
+- [リリースモデル](https://linkerd.io/releases/)と[edge-26.9.1成果物](https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1)
+- [Kubernetes対応表](https://linkerd.io/docs/reference/k8s-versions/)と[Gateway API互換性](https://linkerd.io/docs/features/gateway-api/)
+- [Helm導入](https://linkerd.io/docs/tasks/install-helm/)と[公式edgeチャート索引](https://helm.linkerd.io/edge/index.yaml)
+- [HA動作](https://linkerd.io/docs/features/ha/)と[cluster/Cilium設定](https://linkerd.io/docs/reference/cluster-configuration/)
+- [証明書生成](https://linkerd.io/docs/tasks/generate-certificates/)と[Smallstep create参照](https://smallstep.com/docs/step-cli/reference/certificate/create/)
+- [CNI](https://linkerd.io/docs/features/cni/)、[更新](https://linkerd.io/docs/tasks/upgrade/)、[削除](https://linkerd.io/docs/tasks/uninstall/)
+- [AWS LB ControllerのService設定](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)と[EKS Fargate制約](https://docs.aws.amazon.com/eks/latest/userguide/fargate.html)

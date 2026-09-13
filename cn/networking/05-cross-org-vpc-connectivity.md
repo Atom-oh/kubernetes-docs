@@ -1,131 +1,153 @@
-# 跨 Organization VPC 连接
+# 跨组织 VPC 连接
 
-> **最后更新**: September 1, 2026
+> **原始报告时间戳**：September 1, 2026
+>
+> **内容审查**：September 12, 2026
 
-本文介绍跨越两个不同 AWS Organization **连接 VPC 的五种方式**——例如，当 GPU 工作负载由独立于现有 MSP 付款方的单独付款方（独立 Organization）签约时。本文所有数字均来自在两个真实 Organization 之间进行的实际构建和测量验证（ap-northeast-2，两个账户均固定在 ZoneId `apne2-az1`）。
+本章比较连接**不同 AWS Organizations 中账户**的五种模式，例如连接现有环境与单独治理的 GPU 环境。表格保留早期文档报告的测量值。本次审查检查 AWS 行为和算术计算；不声称进行了新的实际部署或独立复现了基准测试。
 
 ## 目录
 
-1. [为何需要跨 Organization 连接](#why-cross-org-connectivity)
-2. [五种方案对比](#comparing-the-five-options)
-3. [现场验证结果](#field-verification-results)
+1. [为什么需要跨组织连接](#why-cross-org-connectivity)
+2. [五种方案比较](#comparing-the-five-options)
+3. [原报告中的验证结果](#reported-verification-results)
 4. [延迟测量（M1–M7）](#latency-measurements-m1m7)
-5. [现场运维发现](#operational-findings-from-the-field)
-6. [按场景推荐的架构](#recommended-architecture-by-scenario)
-7. [结论](#conclusion)
+5. [运维发现](#operational-findings)
+6. [按需求选择架构](#architecture-selection-by-requirement)
+7. [限制和后续检查](#limitations-and-next-checks)
 
-## 为何需要跨 Organization 连接
+## 为什么需要跨组织连接 {#why-cross-org-connectivity}
 
-GPU 实例（P5/P6 等）的成本很高，因此 Organization 越来越多地选择通过**独立付款方（独立 AWS Organization）**而非现有 MSP 付款方来签约。这种做法的常见动机包括：
+合同所有权、收购、独立治理或隔离要求，可能使 GPU 工作负载与现有服务位于不同 Organizations。组织结构应遵循这些要求，而不是假定第二个 Organization 会自动改善 GPU 折扣、配额或合规性。
 
-- **计费分离**：GPU 专属批量折扣 / EDP 优化
-- **Service quota 隔离**：独立管理 GPU vCPU 限额和 Capacity Blocks
-- **爆炸半径控制**：让 SCP 配置错误和安全事件远离现有生产环境
-- **法规合规**：为 AI/ML 工作负载分隔数据边界和审计轨迹
+EC2 资源配额通常按**账户和区域**设置；单独的账户即可实现这种分离，不必另建 Organization。计费汇总、协商折扣及重复的治理工作也需要审查。Organization 边界不能替代应用授权、网络分段或审计控制。
 
-关键挑战是连接现有环境（ORG A）与 GPU 环境（ORG B）。从 EKS 视角来看，这包括训练集群（ORG B）访问现有数据管道（ORG A），或将推理 API 暴露给现有服务。
+对于 EKS，应区分访问数据管道/推理 API 的普通 IP 通信与 GPU 集合通信。CPU 实例上的请求/响应基准测试不能证明 NCCL、吞吐量或 RDMA 性能。**EFA 操作系统旁路流量不能跨越 VPC 或可用区**；其 ENA 接口的普通 IP 流量仍可路由。
 
-## 五种方案对比
+## 五种方案比较 {#comparing-the-five-options}
 
-| 方面 | ① TGW RAM 共享 | ② VPC Peering | ③ PrivateLink | ④ TGW Peering | ⑤ VPC Lattice |
+PrivateLink 和 Lattice 列描述的是**已测试的基于 NLB 的端点服务模式和 HTTP 服务模式**。PrivateLink 还具有资源端点和服务网络端点类型；Lattice 也具有 TCP 资源配置。不能将这些产品一概描述为“必须使用 NLB”或“仅支持 L7”。
+
+| 方面 | ① TGW RAM 共享 | ② VPC 对等连接 | ③ PrivateLink 端点服务 | ④ TGW 对等连接 | ⑤ VPC Lattice HTTP 服务 |
 |---|---|---|---|---|---|
-| 机制 | 通过 RAM 将 TGW 共享给外部账户 | 1:1 VPC 连接 | 基于 NLB 的终端节点 | 每个 ORG 的 TGW 之间进行 Peering | L7 服务网络 |
-| 重叠的 CIDR | ❌ | ❌ | ✅（基于 ENI） | ❌ | ✅（基于 link-local） |
-| 方向 | 双向 L3 | 双向 L3 | 单向（Consumer→Provider） | 双向 L3 | 单向（Consumer→Provider） |
-| 传递路由 | ✅ 通过 TGW RT | ❌ | ❌ | ✅ | ❌（按服务） |
-| 路由控制 | **TGW 所有者账户（ORG A）** | 双方独立 | Provider 控制主体 | **每个 ORG 独立** | 服务网络所有者 |
-| 预置时间（实测） | TGW 约 3 分钟 + 接受步骤 | **不到 1 分钟** | Endpoint 约 3 分钟 | **约 7 分钟（最长）** | 约 5 分钟 |
+| 机制 | 与外部账户共享 TGW | 直接连接一对 VPC | 使用方接口端点 → 提供方 NLB/服务 | 连接各所有者的 TGW | 将服务和客户端 VPC 关联到服务网络 |
+| 地址重叠 | 直接路由需要无歧义的地址规划 | CIDR 重叠的 VPC 无法建立对等连接 | 服务访问可处理 VPC CIDR 重叠 | 直接路由需要无歧义的地址规划 | 服务访问可处理 VPC CIDR 重叠 |
+| 连接模型 | 获准时提供双向 IP 路由 | 获准时提供双向 IP 路由 | 使用方发起；响应可通过该连接返回 | 获准时提供双向 IP 路由 | 客户端向已发布服务发起请求；反向访问需要独立配置 |
+| 路由设置 | VPC 路由加 TGW 路由表/关联 | 两端配置路由；VPC 对等连接不具传递性 | 端点/服务权限和网络控制，而非通用 VPC 中转 | 显式配置通向对端的静态路由，并配置 VPC 路由 | 服务/网络关联和策略，而非通用 VPC 中转 |
+| 控制权 | TGW 所有者管理其 TGW 路由表；使用方保留自身 VPC 控制权 | 各 VPC 所有者 | 提供方控制服务权限/目标；使用方控制自身端点 | 各 TGW 所有者，并协调路由 | 网络/服务所有者及客户端网络控制 |
+| 原报告中的预置时间 | TGW 约 3 分钟，另加接受操作 | 不到 1 分钟 | 端点约 3 分钟 | 约 7 分钟 | 约 5 分钟 |
 
-## 现场验证结果
+预置时间是原始报告中的观测值，不是 SLA 或端到端交付时间估算。路由一行描述本章的双 TGW 拓扑；不表示可通过任意对等连接链进行无限制中转。NAT 或地址重新规划是处理重叠的其他方法，需要各自的设计。
 
-五种方案均已在两个不同 Organization 的账户之间构建，并通过控制平面（连接建立）和数据平面（真实流量）进行测试。**五种方案都可以实现。**没有任何方案被 Organization 边界本身阻止——该边界只体现为显式流程：**指定账户 ID，并由接收方接受**。
+## 原报告中的验证结果 {#reported-verification-results}
 
-![跨 Organization 的五条实测路径拓扑](../../assets/cross-org-5paths-latency.png)
+原始报告称，已在两个 Organizations 之间建立全部五种模式并交换流量。AWS 文档支持这些模式的跨账户部署；本质上不要求属于同一个 Organization。不过，IAM/SCP/共享限制可能阻止设置，而路由、安全组、NACL、DNS 和服务授权决定流量能否正常通信。仅有账户 ID 和接受操作还不够。
 
-## 延迟测量（M1–M7）
+![原始跨组织拓扑展示了对等连接、TGW 和 PrivateLink 路径的 TCP_RR p50 值，以及 Lattice HTTP 服务路径的 HTTP keep-alive p50 值。](../.gitbook/assets/en-networking-05-cross-org-vpc-connectivity-0.png)
 
-**测量设计**——信号低于 1 毫秒，因此测量误差必须小于信号：
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-05-cross-org-vpc-connectivity-0.html)
 
-- 使用 **c7g.large** 实例（不使用突发型实例）；响应端为**一个 EC2 实例（nginx 固定 200）**——负载均衡器仅在结构上必需的位置出现（③⑤，以及为隔离 NLB hop 的 M7）
-- 响应端有 3 个 ENI（每条路径子网配备独立的返回路由表），因此 **M1–M7 以轮询交错方式运行 ×5 轮**，无需切换路由
-- 主要指标：**持久 TCP_RR ping-pong，每条路径 1,500 个样本**（消除进程启动和握手成本）；次要指标：每条路径 ICMP 100 次、HTTP keep-alive 275 次
+图中保留原始观测。Lattice 的值是 **HTTP KA**，而其他展示值是 **TCP_RR**；它们不是可以直接比较的同一种指标。“GPU”标签标识拟议环境，不表示 GPU 基准测试。
+
+
+
+## 延迟测量（M1–M7） {#latency-measurements-m1m7}
+
+**报告中的设置：** `ap-northeast-2`、跨账户匹配的 ZoneId `apne2-az1`、`c7g.large`，以及一个使用 nginx 返回固定 HTTP 200 的 EC2 响应端。报告描述了三个 ENI、各路径的子网/返回路由、五轮轮询交错测量、每路径 1,500 个持久连接 TCP_RR 样本、每路径 100 个 ICMP 样本，以及每路径 275 个 HTTP keep-alive 样本。
+
+nginx 的描述标识 HTTP 响应端；本页未说明 TCP_RR 实现或消息大小。此处未链接原始样本、软件/内核版本、计时边界或 Linux 返回路径策略配置。持久连接旨在减少重复建立连接的影响，但无法仅凭这些表格独立检查计时边界。
+
+**下方所有延迟值的单位均为毫秒；TTL 是独立的数据包字段。** TCP_RR 和 ICMP 是请求/响应往返测量。HTTP KA 包含应用处理。下方两组测量必须分别解释。
 
 | ID | 路径 | ICMP p50 | TCP_RR p50 | RR p99 | RR sd | HTTP KA p50 | TTL |
 |---|---|---|---|---|---|---|---|
-| M1 | 同一 VPC → EC2（基线） | 0.121 | **0.049** | 0.062 | 0.007 | 0.087 | 127 |
-| M2 | ② VPC Peering → EC2 | 0.125 | **0.048** | 0.057 | 0.011 | 0.080 | 127 |
+| M1 | 同 VPC → EC2（基线） | 0.121 | **0.049** | 0.062 | 0.007 | 0.087 | 127 |
+| M2 | ② VPC 对等连接 → EC2 | 0.125 | **0.048** | 0.057 | 0.011 | 0.080 | 127 |
 | M3 | ① 共享 TGW（RAM）→ EC2 | 0.535 | **0.619** | 0.695 | 0.141 | 0.686 | 126 |
-| M4 | ④ TGW Peering（2 hops）→ EC2 | 0.912 | **0.599** | 0.855 | 0.133 | 0.488 | 125 |
-| M5 | ③ PrivateLink → NLB → EC2 | not measured | **0.961** | 1.084 | 0.035 | 0.711 | — |
-| M6 | ⑤ VPC Lattice → EC2 target | not measured | not measured（仅 L7） | — | — | **1.635** | — |
-| M7 | ② Peering → NLB → EC2（NLB hop 隔离） | not measured | **0.841** | 0.909 | 0.119 | 0.883 | — |
+| M4 | ④ TGW 对等连接（两个 TGW）→ EC2 | 0.912 | **0.599** | 0.855 | 0.133 | 0.488 | 125 |
+| M5 | ③ PrivateLink → NLB → EC2 | 未测量 | **0.961** | 1.084 | 0.035 | 0.711 | — |
+| M6 | ⑤ VPC Lattice → EC2 目标 | 未测量 | 此 HTTP 服务未测量 | — | — | **1.635** | — |
+| M7 | ② 对等连接 → NLB → EC2（分离 NLB 跳点影响） | 未测量 | **0.841** | 0.909 | 0.119 | 0.883 | — |
 
-**派生指标（p50，毫秒）：**
+### 报告中位数之间的差值
 
-| 指标 | 定义 | TCP_RR | ICMP |
-|---|---|---|---|
-| TGW 1-hop 成本 | M3 − M2 | **+0.571** | +0.410 |
-| TGW 2-hop 成本 | M4 − M2 | **+0.551** | +0.787 |
-| NLB hop 成本 | M7 − M2 | **+0.793** | — |
-| 纯 PrivateLink ENI 开销 | M5 − M7 | **+0.120** | — |
-| Lattice proxy 成本（HTTP） | M6 − M2 | +1.555 | — |
+这些是**路径中位数之差**，不是分离出来的单向跳点开销，也不是单个 ENI/代理组件的测量值。
 
-**结论：**
+| 观测路径比较 | 差值 | Δ TCP_RR p50 | Δ ICMP p50 | Δ HTTP KA p50 |
+|---|---|---|---|---|
+| 对等连接与同 VPC 基线 | M2 − M1 | -0.001 | +0.004 | -0.007 |
+| 共享 TGW 路径与对等连接 | M3 − M2 | +0.571 | +0.410 | +0.606 |
+| 双 TGW 路径与对等连接 | M4 − M2 | +0.551 | +0.787 | +0.408 |
+| 带 NLB 的对等连接与直接对等连接 | M7 − M2 | +0.793 | — | +0.803 |
+| PrivateLink/NLB 与对等连接/NLB | M5 − M7 | +0.120 | — | -0.172 |
+| Lattice HTTP 服务与直接对等连接 HTTP | M6 − M2 | — | — | +1.555 |
 
-> **在同一 AZ 内，TGW hop 在 p50 时增加 0.4–0.6 毫秒**——与常见的“每 hop 低于 1 毫秒”观察结果一致。
-> **VPC Peering 的延迟成本在测量范围内为零**（M2 0.048 ≈ M1 基线 0.049）。
-> **PrivateLink ENI 本身仅增加 +0.12 毫秒**——PrivateLink 总延迟（0.96 毫秒）的主要部分来自结构上必需的 **NLB hop（+0.79 毫秒）**。Lattice 的 L7 proxy 成本为 +1.6 毫秒。
+- M2 接近同 VPC 基线，但表格不能证明统计等效或零开销。
+- 双 TGW 路径的 TCP_RR 中位数低于单个共享 TGW 路径的中位数。因此，数据不支持通用的“每 TGW 跳点 0.4–0.6 ms”或线性跳点开销公式。
+- M5−M7 的差值为 **TCP_RR +0.120 ms，但 HTTP KA −0.172 ms**。不能将其标为纯 PrivateLink ENI 开销。
+- Lattice 比较是 **HTTP +1.555 ms**，不是 TCP_RR。它描述本次 HTTP 服务测试，不代表每种 Lattice 模式。
+- 没有初始 TTL 及相关网络行为信息，TTL 不能揭示路径跳数。
 
-**补充测量——服务前置的公平比较（每条路径均使用 NLB）：**在实际部署中，Peering 和 TGW 路径也会通过 NLB 将服务前置，因此还为每条 L3 路径构建并测量了采用 NLB 前置的配置（每子网 NLB、IP target、相同方法）。
+### 独立的服务前置测量
+
+原始报告还在每条 L3 路径前放置了 NLB。对于这种服务暴露模式，这是有用的比较，但不是每个生产对等连接/TGW 部署的要求。
 
 | 配置 | TCP_RR p50 | HTTP KA p50 |
 |---|---|---|
-| ② Peering → NLB → EC2 | **0.622** | 0.648 |
+| ② 对等连接 → NLB → EC2 | **0.622** | 0.648 |
 | ③ PrivateLink → NLB → EC2 | **0.658** | 0.845 |
 | ① 共享 TGW → NLB → EC2 | **1.273** | 1.257 |
-| ④ TGW Peering → NLB → EC2 | **1.425** | 1.279 |
-| ⑤ Lattice（自身充当 LB——无需 NLB） | — | **1.680** |
+| ④ TGW 对等连接 → NLB → EC2 | **1.425** | 1.279 |
+| ⑤ Lattice HTTP 服务（本次测试无独立 NLB） | — | **1.680** |
 
-> **服务暴露框架的结论：**纯 PrivateLink ENI 成本为 +0.036 毫秒（N5−N2）——实际上为零。在响应端前方部署 NLB 作为常见基线的真实服务暴露设置中，**③ PrivateLink 与 Peering+NLB 相当，并且比 TGW 路径 + NLB 快约 2 倍。**“直连 TGW 优于 PrivateLink”仅在没有 LB 的直连框架中成立。Lattice 自身充当负载均衡器，因此不需要单独的 NLB——在相同框架下，它与 TGW+NLB 的差距缩小为 +0.3–0.4 毫秒。
+在这组测量中，PrivateLink/NLB 减去对等连接/NLB 为 **TCP_RR +0.036 ms** 和 **HTTP KA +0.197 ms**。共享 TGW 与对等 TGW 的 TCP_RR 中位数分别为 PrivateLink 中位数的 **1.93× 和 2.17×**；HTTP 比率为 **1.49× 和 1.51×**。这些是延迟比率，不是吞吐量倍数，也不能证明路径等效。
 
-**方法论经验**（为何舍弃并重做了较早的一轮测量）：将突发型实例（t-family）、两阶段 NLB→ALB proxy 链以及每个请求的新连接（curl）组合在一起，会让低于 1 毫秒的信号淹没在噪声中（与路径无关的 p95 约为 7 毫秒）。新 TCP 流在首次经由 TGW/NLB 的 RTT 中确实会产生 +0.6–1.6 毫秒的 flow-setup 成本，因此**应分别评估 keep-alive/长连接工作负载（gRPC、NCCL、DB pools）与一次性连接工作负载的延迟**。
+Lattice 的 HTTP 中位数分别比共享 TGW/NLB 和对等 TGW/NLB 的 HTTP 中位数高 **+0.423 ms 和 +0.401 ms**。不要将这组测量与 M1–M7 组结合来推导组件开销：即使对等连接/NLB 的中位数，在不同运行之间也有差异。
 
-## 现场运维发现
+原始报告还描述了一个已舍弃的预试验：使用突发性能实例、NLB→ALB 和每次新建连接的 curl，p95 约为 **7 ms**，首个流的增量为 **0.6–1.6 ms**。这些仍是归属于原报告、但未链接原始样本的观测，不是 AWS 保证。应针对实际应用分别测量连接建立和稳态行为。
 
-1. **跨 Organization 的 RAM 共享需要明确的邀请接受步骤**——未使用 `--allow-external-principals` 时共享会被拒绝，并且资源在接收方运行 `accept-resource-share-invitation` 前不可见（TGW 和 Lattice 均如此）。自动化流水线需要此接受步骤。
-2. **外部 ORG 对共享 TGW 的 attachment 会停留在 `pendingAcceptance`**——TGW 所有者必须接受它。“所有者侧集中控制”在 API 层面得到强制执行。
-3. **TGW Peering 在两端显示不同的 attachment ID**——使用请求方 ID 调用接受 API 会返回 `NotFound`。接受方账户必须列出并找到自己的 ID，传播大约需要 2 分钟。
-4. **TGW Peering 不支持 BGP**——必须手动向两个 TGW 路由表添加静态路由。
-5. **Lattice 数据平面流量来自 link-local（169.254.171.0/24）**——如果 target SG 只允许 VPC CIDR，则所有 health check 都会变为 UNHEALTHY。请将托管前缀列表 `com.amazonaws.<region>.vpc-lattice` 添加至 SG。
-6. **静态 TGW 路由优先于传播路由**——两者共存时应留意非预期的路径选择。
-7. **账户自动化会干扰资源清理**——GuardDuty Runtime Monitoring 的托管 SG 会阻止 VPC 删除（DependencyViolation），自动附加的 IAM policy 会阻止 role 删除；残留的 Lattice target group 同样会阻止 VPC 删除。
+## 运维发现 {#operational-findings}
 
-## 按场景推荐的架构
+1. **RAM 外部共享：** 必须允许外部主体，Organization 外部账户必须接受共享邀请。`CreateResourceShare` API 的 `allowExternalPrincipals` 默认值为 **true**；显式设置 `--allow-external-principals` 可记录意图，但省略这个具体 CLI 标志并不总是失败原因。验证生效的共享配置和权限。
+2. **共享 TGW VPC 附件的接受操作：** `AutoAcceptSharedAttachments` 禁用时（默认值），TGW 所有者必须接受共享附件。启用该选项会改变此流程。接受 RAM 共享和接受 TGW 附件是不同步骤。使用方不能修改所有者的 TGW 路由表，但仍控制自身 VPC 路由和安全设置。
+3. **TGW 对等连接的接受操作：** 接受方 TGW 所有者应**在接受方区域**接受待处理的对等连接请求，即使对等连接位于同一账户也如此。使用该请求的 `TransitGatewayAttachmentId`；不要与 TGW ID 或 VPC 附件 ID 混淆。`NotFound` 响应不能证明两端必须使用不同 ID。原报告中约两分钟的可见性延迟是观测，不是固定等待时间保证。
+4. **对等连接路由：** 直接 TGW 到 TGW 的对等连接使用显式配置的静态路由，不通过对等附件传播 BGP 路由。双向配置相关 TGW 和 VPC 路由表。自动化可管理这些静态路由。
+5. **路由优先级：** 首先使用最长前缀匹配。**目的前缀相同**时，静态路由优先于传播路由；更宽泛的静态路由不会覆盖更具体的传播路由。
+6. **Lattice 目标安全组：** 对于文档中的 VPC 关联服务路径，在实际目标和健康检查端口上使用对应区域/IP 地址族的托管前缀列表（`com.amazonaws.REGION.vpc-lattice` 和 `com.amazonaws.REGION.ipv6.vpc-lattice`）。原始 `169.254.171.0/24` 示例不是通用列表定义；托管列表可包含链路本地地址或不可路由的公有地址。端点/资源网关路径有自己的控制。还必须配置 IAM 服务身份验证；仅关联 VPC 不会启用它。
+7. **清理所有权：** 原报告描述了 GuardDuty 管理的网络依赖、IAM 策略附加和剩余 Lattice 资源对拆除的影响。操作前检查实际依赖 ID 和所属服务。不要仅为强制删除 VPC/角色而禁用托管安全控制或删除无关资源。
 
-| 场景 | 首选方案 | 理由（实测） |
+## 按需求选择架构 {#architecture-selection-by-requirement}
+
+| 需求 | 候选模式 | 重要检查 |
 |---|---|---|
-| 完整 GPU ORG 分离、双向批量流量（训练数据） | **④ TGW Peering** | 每个 ORG 独立路由 + 每 hop 0.4–0.6 毫秒的代价可忽略不计 |
-| 仅暴露推理 API（单向） | **③ PrivateLink** | 最小化暴露，可接受重叠 CIDR，在服务前置比较中与 Peering+NLB 相当（比 TGW 路径 + NLB 快约 2 倍） |
-| 无法避免的 CIDR 重叠（M&A、MSP 迁移） | **③ PrivateLink / ⑤ Lattice** | 基于 ENI / link-local——不依赖 CIDR |
-| 仅向现有 TGW 添加一个 GPU 账户 | **① TGW RAM 共享** | 复用现有 hub；外部 ORG 无法更改路由 |
-| 小型 PoC（1–2 个 VPC） | **② VPC Peering** | 设置时间不到 1 分钟，延迟成本 ≈ 0，无需额外基础设施 |
-| 需要 L7 auth/governance 的服务暴露 | **⑤ VPC Lattice** | 内置 IAM Auth 和服务发现（接受 +1.6 毫秒的 proxy 成本） |
+| 每个 Organization 必须保留自身 TGW 路由管理权 | ④ TGW 对等连接 | 静态路由协调、地址规划、吞吐量、可用性、流量检查及传输费用 |
+| 仅暴露少量推理/服务端点 | ③ PrivateLink 端点服务 | 受支持协议/模型、端点接受、应用身份验证、DNS、成本及实际载荷/并发 |
+| 跨重叠 CIDR 访问服务 | ③ PrivateLink 或 ⑤ Lattice | 服务/资源范围；若需更广 IP 路由，评估 NAT/地址重新规划 |
+| 另一账户可使用集中控制的枢纽 | ① TGW RAM 共享 | 外部共享策略、接受设置及所有者的 TGW 控制模型 |
+| 少量直接连接的 VPC 对 | ② VPC 对等连接 | 不重叠 CIDR、成对路由维护、配额和数据传输费用 |
+| 需要托管 HTTP 服务身份、发现和治理 | ⑤ VPC Lattice | 显式 IAM 身份验证策略、签名请求、服务连接及工作负载测量 |
 
-对于大多数 GPU 分离场景，**④ TGW Peering（双向基础设施）+ ③ PrivateLink（推理 API 暴露）**的混合方案最优，测量结果支持这一建议。
+TGW 对等连接与 PrivateLink 的混合方案可能适合独立网络治理加有限 API 暴露的需求。已发布延迟表不能证明它对大多数 GPU 环境最优。应根据所需连接和控制选择，再测量实际工作负载。
 
-## 结论
+## 限制和后续检查 {#limitations-and-next-checks}
 
-- 五种方案都可以纯粹通过 API 在不同 Organization 之间配置；Organization 边界仅表现为“指定账户 ID + 由接收方接受”。
-- 在同一 AZ 内：TGW 为每 hop 0.4–0.6 毫秒，VPC Peering ≈ 0，NLB hop +0.79 毫秒，PrivateLink ENI +0.12 毫秒，Lattice proxy +1.6 毫秒——延迟成本会随 hop 和 proxy 层数如实增长。
-- 对于 EKS：通过 TGW 路由批量训练数据传输（长连接），并通过 PrivateLink 暴露推理 API。
+原始报告未包含 Network Firewall 流量检查路径的实测、跨区域延迟以及吞吐量/并发测量。它报告了地址重叠的功能检查，但未公布重叠场景的延迟结果。本页也未确立 GPU 集合通信、EFA/RDMA、代表性载荷大小、不确定性估计或完整复现制品。
 
-**限制（未测量）：**经由 Network Firewall 检查的路径、Cross-Region、CIDR 重叠环境（仅确认功能可用）以及吞吐量/并发轴。
-
----
+将报告数值保留为历史背景。部署前，验证目标账户的策略和受支持连接模型、所需双向路由或服务访问、故障行为，以及应用延迟/吞吐量预算。本次审查未执行 AWS 预置或实际基准测试。
 
 ## 参考资料
 
-- [构建可扩展的多 VPC 网络基础设施（AWS 白皮书）](https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html)
-- [通过 RAM 进行 TGW 跨 Organization 共享（AWS Prescriptive Guidance）](https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-3-1.html)
-- [选择单个还是多个 Organization（AWS Architecture Blog）](https://aws.amazon.com/blogs/architecture/choosing-between-single-or-multiple-organizations-in-aws-organizations/)
-- [VPC Lattice（本系列）](02-vpc-lattice.md)
+- [可扩展多 VPC 网络白皮书](https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html)
+- [跨账户 TGW 共享](https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-3-1.html)
+- [单个或多个 Organizations](https://aws.amazon.com/blogs/architecture/choosing-between-single-or-multiple-organizations-in-aws-organizations/)
+- [RAM CreateResourceShare API](https://docs.aws.amazon.com/ram/latest/APIReference/API_CreateResourceShare.html)
+- [TGW 接受选项](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_TransitGatewayRequestOptions.html)
+- [接受 TGW 对等连接](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering-accept-reject.html)
+- [TGW 路由和评估顺序](https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html)
+- [PrivateLink 端点类型](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html)
+- [私有 NAT 和重叠网络](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-scenarios.html)
+- [Lattice 安全组](https://docs.aws.amazon.com/vpc-lattice/latest/ug/security-groups.html)
+- [EC2 账户/区域配额](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html)
+- [EFA 限制](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html)
+- [VPC Lattice 指南](02-vpc-lattice.md)
+- [跨组织测验](../quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)

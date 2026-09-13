@@ -35,7 +35,7 @@
           "gw-standby",
           "api"
         ],
-        "note": "2개 레플리카가 Kubernetes Lease로 리더를 선출하고, 스탠바이는 다른 서브넷에서 승격을 대기한다."
+        "note": "모든 replica가 CiliumNode를 감시하고 로컬 VXLAN/FDB/neighbor/route를 유지한다. Leader만 AWS route와 VTEP 설정을 바꾼다."
       }
     ],
     "legend": {
@@ -245,7 +245,7 @@
       "title": "라우팅",
       "items": [
         "Hybrid Pod CIDR → 리더 게이트웨이 ENI 라우트를 VPC 라우트 테이블에 자동 갱신",
-        "노드 추가/삭제를 감지해 FDB · ARP · 라우트 엔트리 갱신"
+        "모든 replica가 CiliumNode 변경에 맞춰 로컬 엔트리 갱신"
       ]
     }
   ]

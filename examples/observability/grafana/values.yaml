@@ -1,0 +1,98 @@
+replicas: 1
+image:
+  registry: docker.io
+  repository: grafana/grafana
+  tag: 13.2.1
+  sha: sha256:f772d434e8fab0049deb2b1b30abd43342bcfca1537614aa8d36080232cf4283
+deploymentStrategy:
+  type: Recreate
+admin:
+  existingSecret: grafana-admin-credentials
+  userKey: admin-user
+  passwordKey: admin-password
+service:
+  type: ClusterIP
+  port: 80
+ingress:
+  enabled: false
+persistence:
+  enabled: true
+  type: pvc
+  storageClassName: gp3
+  size: 10Gi
+  accessModes:
+  - ReadWriteOnce
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: '1'
+    memory: 1Gi
+initChownData:
+  enabled: false
+rbac:
+  create: false
+serviceAccount:
+  create: true
+  name: grafana
+  automountServiceAccountToken: false
+envFromConfigMaps:
+- name: grafana-endpoints
+extraSecretMounts:
+- name: grafana-runtime
+  secretName: grafana-runtime
+  mountPath: /run/grafana-secrets
+  readOnly: true
+  defaultMode: 288
+extraConfigmapMounts:
+- name: grafana-datasources
+  configMap: grafana-datasources
+  mountPath: /etc/grafana/provisioning/datasources
+  readOnly: true
+- name: grafana-alerts
+  configMap: grafana-alerts
+  mountPath: /etc/grafana/provisioning/alerting
+  readOnly: true
+dashboardProviders:
+  providers.yaml:
+    apiVersion: 1
+    providers:
+    - name: docs
+      orgId: 1
+      folder: Observability
+      type: file
+      disableDeletion: false
+      allowUiUpdates: false
+      updateIntervalSeconds: 30
+      options:
+        path: /var/lib/grafana/dashboards/docs
+dashboardsConfigMaps:
+  docs: grafana-docs-dashboards
+grafana.ini:
+  server:
+    root_url: http://localhost:3000/
+  security:
+    secret_key: $__file{/run/grafana-secrets/secret-key}
+    cookie_samesite: lax
+  users:
+    allow_sign_up: false
+    auto_assign_org_role: Viewer
+  auth.anonymous:
+    enabled: false
+  unified_alerting:
+    enabled: true
+    min_interval: 10s
+  analytics:
+    reporting_enabled: false
+    check_for_updates: false
+    check_for_plugin_updates: false
+  plugins:
+    preinstall_disabled: true
+  metrics:
+    enabled: true
+    basic_auth_username: metrics
+    basic_auth_password: $__file{/run/grafana-secrets/metrics-password}
+testFramework:
+  enabled: false
+automountServiceAccountToken: false

@@ -1,0 +1,162 @@
+{{- if ne .Release.Namespace "msa" }}{{ fail "Install this bounded lab chart in namespace msa" }}{{ end -}}
+{{- $image := printf "%s:%s" (required "image.repository is required" .Values.image.repository) (required "image.tag is required" .Values.image.tag) -}}
+{{- $region := required "region is required" .Values.region -}}
+{{- $topic := required "eventTopicArn is required" .Values.eventTopicArn -}}
+{{- range $role, $settings := .Values.roles }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $role }}
+  {{- if ne $role "api-gateway" }}
+  annotations:
+    eks.amazonaws.com/role-arn: {{ required (printf "roleArns.%s is required" $role) (index $.Values.roleArns $role) | quote }}
+    eks.amazonaws.com/sts-regional-endpoints: "true"
+  {{- end }}
+  labels:
+    app.kubernetes.io/part-of: observability-lab
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $role }}
+  labels:
+    app.kubernetes.io/part-of: observability-lab
+    app.kubernetes.io/name: {{ $role }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/part-of: observability-lab
+    app.kubernetes.io/name: {{ $role }}
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
+{{- $rollout := and (eq $role "payment-service") $.Values.rollouts.enabled }}
+apiVersion: {{ if $rollout }}argoproj.io/v1alpha1{{ else }}apps/v1{{ end }}
+kind: {{ if $rollout }}Rollout{{ else }}Deployment{{ end }}
+metadata:
+  name: {{ $role }}
+  labels:
+    app.kubernetes.io/part-of: observability-lab
+spec:
+  replicas: {{ $settings.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: observability-lab
+      app.kubernetes.io/name: {{ $role }}
+  {{- if $rollout }}
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20
+      - pause: {}
+      - analysis:
+          templates:
+          - templateName: lab-payment-health
+          args:
+          - name: revision
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 100
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: observability-lab
+        app.kubernetes.io/name: {{ $role }}
+    spec:
+      serviceAccountName: {{ $role }}
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: application
+        image: {{ $image | quote }}
+        imagePullPolicy: {{ $.Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+        env:
+        - name: LAB_ROLE
+          value: {{ $role | quote }}
+        - name: AWS_REGION
+          value: {{ $region | quote }}
+        - name: AWS_DEFAULT_REGION
+          value: {{ $region | quote }}
+        - name: EVENT_TOPIC_ARN
+          value: {{ $topic | quote }}
+        - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+          value: {{ $.Values.collectorEndpoint | quote }}
+        - name: ORDER_SERVICE_URL
+          value: http://order-service.msa.svc.cluster.local:8080
+        - name: PAYMENT_SERVICE_URL
+          value: http://payment-service.msa.svc.cluster.local:8080
+        - name: LAB_REVISION
+          {{- if $rollout }}
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['rollouts-pod-template-hash']
+          {{- else }}
+          value: {{ $.Values.image.tag | quote }}
+          {{- end }}
+        {{- if ne $role "api-gateway" }}
+        - name: DATABASE_URL_FILE
+          value: /run/database/connection.json
+        {{- end }}
+        {{- if eq $role "notification" }}
+        - name: QUEUE_URL
+          value: {{ required "notificationQueueURL is required" $.Values.notificationQueueURL | quote }}
+        {{- else if eq $role "analytics" }}
+        - name: QUEUE_URL
+          value: {{ required "analyticsQueueURL is required" $.Values.analyticsQueueURL | quote }}
+        {{- end }}
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          {{- toYaml $.Values.resources | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        {{- if ne $role "api-gateway" }}
+        - name: database
+          mountPath: /run/database
+          readOnly: true
+        - name: database-ca
+          mountPath: /run/database-ca
+          readOnly: true
+        {{- end }}
+      volumes:
+      - name: tmp
+        emptyDir:
+          sizeLimit: 32Mi
+      {{- if ne $role "api-gateway" }}
+      - name: database
+        secret:
+          secretName: {{ $.Values.databaseSecret }}
+      - name: database-ca
+        configMap:
+          name: lab-database-ca
+      {{- end }}
+{{- end }}

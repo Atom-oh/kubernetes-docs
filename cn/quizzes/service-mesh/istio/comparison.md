@@ -1,159 +1,183 @@
-# Istio 对比测验
+# Istio 比较测验
 
-> **支持的版本**: Istio 1.30 / EKS 1.36
-> **最后更新**: August 21, 2026
+> **历史报告**：Istio 1.30.2 / EKS 1.36.2；不是当前支持矩阵
+> **最后更新**：2026 年 9 月 11 日
 
-本测验检验你对 sidecar 与 ambient 模式选择标准的理解，尤其是 EKS 1.36 测试结果。
+本测验检验您对 Sidecar 与 Ambient 模式选择标准的理解，尤其是报告中 EKS 测量的局限。审计未重现这些实验。
 
 ## 选择题（1-6）
 
-### 问题 1：ambient waypoint 503 的根本原因
+### 问题 1：Ambient waypoint 503 的证据
 
-在 ambient 模式中，发布期间 waypoint 路径上间歇性出现 503 的根本原因是什么？
+仅根据汇总的滚动发布计数，对于报告中 waypoint 503 的原因可得出什么结论？
 
-A. Pod 重启时发生重复 IP 分配
-B. waypoint 会复用以目标 IP:Port 为键的连接，而当 Pod 终止时 ztunnel 不会通知 waypoint
-C. NetworkPolicy 阻止了 waypoint 流量
-D. waypoint 不支持 STRICT mTLS
+A. 已证实重复 IP 分配
+
+B. 连接生命周期竞争是一种假设；确定原因需要代理响应标志及端点/连接时间线
+
+C. 已证实所有失败均由 NetworkPolicy 导致
+
+D. 计数证明不支持 STRICT mTLS
 
 <details>
-<summary>答案与说明</summary>
+<summary>答案和解释</summary>
 
 **答案：B**
 
-**说明：**
+**解释：**
 
-waypoint（Envoy）管理并复用一个以目标 IP:Port 为键的连接池。当目标 Pod 终止时，ztunnel 不会显式通知 waypoint。如果已终止 Pod 的 IP 被重新分配给新的 Pod，waypoint 可能会复用一个现已失效的连接并返回 503。这正是该问题背后的机制——**连接生命周期管理**，而非重复 IP 分配——§4 中测得的 503 比率也与此一致。
+汇总 HTTP 状态计数不能确立根因。Pod 终止、端点传播、应用/代理排空、超时和连接池都可能参与其中。原始 IP 复用/ztunnel 通知解释没有保留的诊断时间线支撑。应调查实际上游主机、响应标志、Pod UID 和连接事件，不要将假设作为已证明机制讲授。
 
 **参考资料：**
+
 - [Sidecar 与 Ambient 模式选择指南](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
-- [Ambient 模式：Waypoint Proxy](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+- [Ambient 模式：Waypoint 代理](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 
 </details>
 
 ---
 
-### 问题 2：解读 EKS 1.36 测试结果
+### 问题 2：解释报告中的 EKS 结果
 
-在一个专用单租户 EKS 1.36 集群上，以 100 qps x 600s（60,000 次请求）的负载进行重复发布时，sidecar 的 503 比率为 0.5%，ambient-L4（无 waypoint）没有实际 503（但有 0.3% 的 TCP 错误），而 ambient-L7（有 waypoint）的 503 比率为 2.6%。正确的解读是什么？
+未调优样本中，Sidecar 的 60,000 次调用记录 324 个 HTTP 503 和 2 个非 HTTP 错误；Ambient L4 的 60,000 次调用分别为 0 和 195；Ambient L7 的 59,913 次调用分别为 1,528 和 84。哪种解释得到支持？
 
-A. Ambient 始终比 sidecar 更稳定
-B. 通过 waypoint 路由会产生比 sidecar 更高的 503 比率，但仅使用 L4（无 waypoint）则不会产生实际 503
-C. ambient-L4 的 TCP 错误（0.3%）与 waypoint 的 503 是同一种现象
-D. socket 使用量最低的模式最稳定
+A. Ambient 总是更稳定
+
+B. L7 样本观察到的 HTTP 503 比例更高，而 L4 虽无 HTTP 503，仍有 195 次非 HTTP 失败
+
+C. 已证实所有错误类别具有相同底层原因
+
+D. Fortio SocketCount 直接测量 waypoint 上游连接池
 
 <details>
-<summary>答案与说明</summary>
+<summary>答案和解释</summary>
 
 **答案：B**
 
-**说明：**
+**解释：**
 
-数据表明，“ambient”并非普遍优于或劣于 sidecar——流量是否经过 **waypoint** 才是决定变量。Ambient-L7（有 waypoint）的 503 比率约为 sidecar 的 5 倍（2.6% 对 0.5%），而 ambient-L4（无 waypoint）没有实际 503。不过，这并不意味着 ambient-L4 没有故障——它反而暴露了不同的故障模式：TCP 层连接中断（0.3%），这不同于 waypoint 将请求转发到失效连接并返回 503 的情况（因此 C 不正确）。Socket 使用量并非稳定性指标，只是衡量连接重新建立频率的代理指标（因此 D 不正确）——事实上，ambient-L4 消耗的 socket *最多*，却没有 503。
+实测比例为 Sidecar 0.54%、L7 约 2.55%，这些样本中的比值约 4.72。这不是产品固有倍数。HTTP 503 为零不等于总失败为零。没有错误详情，Fortio 非 HTTP 状态码 -1 不能识别具体重置/EOF/超时原因。SocketCount 关乎客户端套接字；L7 套接字最多（2,486），不是 L4（1,652）。请求 QPS 乘以时长不保证精确完成调用数，且不同滚动发布次数限制因果比较。
 
 **参考资料：**
-- [Sidecar 与 Ambient 模式选择指南：零停机发布结果](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+
+- [Sidecar 与 Ambient 模式选择指南：零停机滚动发布结果](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
 
 ---
 
-### 问题 3：NetworkPolicy 与 ambient
+### 问题 3：NetworkPolicy 和 Ambient
 
-在使用基于端口的 NetworkPolicy 的集群中，流量无法到达 ambient 模式的 Pod。应用程序监听端口 8080。最可能的原因和修复方法是什么？
+报告中的 VPC CNI 实验已验证策略执行，仅允许 8080 的入站规则阻止了观察到的 HBONE 路径。接下来应检查什么？
 
-A. Ambient 不支持 NetworkPolicy，因此应移除 NetworkPolicy
-B. 实际流量通过 HBONE 隧道（TCP 15008）到达，因此 NetworkPolicy 需要为 15008 添加入站允许规则
-C. 应将 PeerAuthentication 改为 PERMISSIVE
-D. 需要重启 istio-cni DaemonSet
+A. 移除所有 NetworkPolicy
+
+B. 在适当范围内允许所需 TCP 15008 隧道路径，再验证来源、身份和内部端口策略边界
+
+C. 将 mTLS 改为 PERMISSIVE
+
+D. 重启 CNI 并假定策略正确
 
 <details>
-<summary>答案与说明</summary>
+<summary>答案和解释</summary>
 
 **答案：B**
 
-**说明：**
+**解释：**
 
-在 ambient 模式中，ztunnel 将 Pod 流量封装在 HBONE（mTLS）隧道中，并通过端口 15008 传输。仅允许应用程序端口（8080）的 NetworkPolicy 会阻止实际到达的 15008 流量。修复方法是在目标 Pod 上添加针对 TCP 15008 的入站允许规则。Sidecar 不需要此额外规则，因为 sidecar 与应用程序共享相同的 Pod 网络命名空间。
+报告流量在允许 TCP 15008 后恢复。这是该测试路径的证据，不证明所有 CNI 或现有策略行为相同。允许外层隧道不是隧道内部流量的完整最小权限策略。验证来源选择器、waypoint 遍历、DNS/控制平面依赖及实际执行。Sidecar 观察到的应用端口结果同样是限定范围观测。
 
 **参考资料：**
+
 - [Sidecar 与 Ambient 模式选择指南：NetworkPolicy](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
 
 ---
 
-### 问题 4：非幂等 API 与重试策略
+### 问题 4：非幂等 API 和重试
 
-为什么建议默认不要在订单创建等非幂等 API 路径上启用网格级重试（例如 waypoint 重试、VirtualService 重试）？
+为什么创建订单等非幂等命令路径应默认显式禁用网格重试？
 
-A. 重试会增加过多 CPU 开销
-B. 当 waypoint 将请求转发到失效连接并返回 503 时，重试可能会重新执行已在服务器端完成的请求，从而导致重复执行（例如重复下单）
+A. 重试总比应用消耗更多 CPU
+
+B. 响应失败或丢失可能使服务器端结果未知，重放可能重复已提交命令
+
 C. 重试与 STRICT mTLS 不兼容
-D. Ambient 模式不支持重试
+
+D. Ambient 没有 L7 重试能力
 
 <details>
-<summary>答案与说明</summary>
+<summary>答案和解释</summary>
 
 **答案：B**
 
-**说明：**
+**解释：**
 
-503 是客户端可见的故障，但该故障类别中隐藏着请求实际上已到达服务器并完成处理的情况——由于连接中断与应用程序完成工作之间的竞争，只有*响应*丢失。在这种情况下，网格重试会通过另一条连接重新发送相同的逻辑请求；如果服务器无法保证幂等性，该请求会被处理两次。对于订单创建等不可逆操作，这种风险尤其严重，因此默认不启用重试并单独验证会更安全。后续测试（T2）在 sidecar 和 ambient-L7 waypoint 重试中都进行了 300s 的持续发布扰动，且该次运行中未发现重复执行——这降低了该竞争条件*常见*的可能性，但并不能证明其*安全*，因为它需要非常狭窄的时间窗口，而更长时间或更高吞吐量的测试仍可能捕获它。
+超时、重置或错误响应不总能证明命令未生效。除非服务器提供合适的持久幂等性/事务语义，否则重放结果不明的写入可能重复工作。此风险不取决于能否证明某个特定 waypoint 竞争。旧 T2 报告的零重复计数不能确立安全性，甚至不能给出可靠频率估计：客户端无界、报告计数与所述时长/速率冲突，观测器错误可能被隐藏。修订后的有界观测器仍不是业务事务台账。应以完整观测测量稳定命令 ID 和响应丢失情况。
 
 **参考资料：**
-- [Sidecar 与 Ambient 模式选择指南：作为缓解措施的重试风险](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+
+- [Sidecar 与 Ambient 模式选择指南：以重试缓解问题的风险](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
 
 ---
 
-### 问题 5：公平比较 sidecar 与 ambient 发布
+### 问题 5：公平比较数据平面行为
 
-在发布测试中，sidecar 产生的客户端可见 503 少于 ambient。哪种实验最能确定这是否反映了其数据平面本质上更加稳定？
+要区分原始失败与被重试隐藏的失败，哪个实验是必要起点？
 
-A. 仅发送 GET 请求，并比较最终的 200 计数
-B. 保留 sidecar 上的默认重试，但禁用 ambient 上的重试
-C. 在两种模式中都将写入路由重试设为 `attempts: 0`，并分别记录原始 HTTP/TCP 故障、重试计数和最终结果
-D. 将平均 CPU 使用量较低的模式视为更稳定
+A. 仅比较最终 GET 成功数
+
+B. 保留 Sidecar 重试但禁用 Ambient 重试
+
+C. 两种模式的写入路由都设为 attempts: 0，收集原始 HTTP/非 HTTP 错误、重试计数器、上游交付及最终结果
+
+D. 选择平均 CPU 最低的模式
 
 <details>
-<summary>答案与说明</summary>
+<summary>答案和解释</summary>
 
 **答案：C**
 
-**说明：**
+**解释：**
 
-Sidecar Envoy 和 waypoint Envoy 可通过 L7 重试向客户端隐藏原始故障，而 ztunnel 是 L4 proxy，无法解释 HTTP 503 或重放 HTTP 请求。等效地禁用写入重试，并分别记录 HTTP 503、TCP reset/EOF、`upstream_rq_retry`、实际的 upstream 交付以及最终客户端结果。否则，测试无法区分“发生的故障较少”和“重试隐藏了更多故障”。
+Sidecar 和 waypoint Envoy 可执行 L7 重试；ztunnel 不能解释 HTTP 503 或重放 HTTP 请求。以相同方式禁用写入重试，并记录 upstream_rq_retry、实际交付、稳定命令 ID 和客户端记账。同时控制负载、版本、资源和滚动发布暴露，重复实验。这可更公平地区分观测；单次运行仍不能证明产品固有稳定性。
 
 **参考资料：**
-- [Sidecar 与 Ambient 模式选择指南：原始故障测量](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
-- [重试与超时](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
+
+- [Sidecar 与 Ambient 模式选择指南：原始失败测量](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+- [重试和超时](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
 
 </details>
 
 ---
 
-### 问题 6：Cilium 身份验证与加密
+### 问题 6：Cilium 身份验证和加密
 
-对于已建立且 mutual authentication 设置为 `required` 的 Cilium 数据平面，以下哪项陈述是正确的？
+对于 Cilium 文档中的带外双向身份验证机制，将 authentication 设为 required 意味着什么？
 
-A. 每个应用程序负载都会自动使用 workload TLS 加密
-B. Endpoint 身份验证与负载加密是相互独立的；机密性需要 WireGuard/IPsec 或受支持的原生 ztunnel mTLS
-C. 它在实现、成熟度和运维语义上与 Istio `PeerAuthentication STRICT` 完全相同
-D. 启用 mutual authentication 后便不再需要 CiliumNetworkPolicy
+A. 每个载荷自动使用工作负载 TLS
+
+B. 带外对等身份握手与载荷加密独立；加密必须单独配置和验证
+
+C. 它在实现和成熟度上与 Istio PeerAuthentication STRICT 完全相同
+
+D. 不再需要授权策略
 
 <details>
-<summary>答案与说明</summary>
+<summary>答案和解释</summary>
 
 **答案：B**
 
-**说明：**
+**解释：**
 
-已建立的 Cilium mutual authentication 通过独立于应用程序数据路径的带外握手验证对等方身份。仅凭身份验证策略不会自动加密负载，因此请单独选择 WireGuard/IPsec，或在受支持的平台上验证原生 ztunnel mTLS 预览版。应分别评估身份授权、对等身份验证和传输中加密，而不是将结果视为与 Istio `STRICT` workload mTLS 相同。
+发布的 Cilium 1.20.1 文档将此机制标为 Beta，介绍了独立于应用数据路径的带外握手。仅身份验证策略不加密应用载荷。单独评估受支持的 WireGuard/IPsec 加密，包括平台和流量覆盖限制。Cilium 1.20.1 还有独立的 ztunnel 加密 beta，要求命名空间纳管，仅支持 TCP，并有策略/平台限制。此带外身份验证策略设置不会激活它。
 
 **参考资料：**
-- [Cilium Service Mesh 安全性](../../../service-mesh/cilium-service-mesh/03-security.md)
+
+- [Cilium 服务网格安全](../../../service-mesh/cilium-service-mesh/03-security.md)
 
 </details>
 
@@ -161,14 +185,19 @@ D. 启用 mutual authentication 后便不再需要 CiliumNetworkPolicy
 
 ## 评分
 
-- 统计你答对了 6 道题中的几道。
-- 6/6：你能够基于实测证据解释 sidecar、ambient 和 Cilium 的选择，以及重试风险。
-- 4-5/6：复习原始故障测量或身份验证与加密之间的区别。
-- 0-3/6：从头重新阅读[Sidecar 与 Ambient 模式选择指南](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)。
+- 统计 6 道题中答对的数量。
+- 6/6：您能依据测量证据解释 Sidecar、Ambient 和 Cilium 选择，以及重试风险。
+- 4-5/6：复习原始失败测量或身份验证与加密的区别。
+- 0-3/6：从头重读 [Sidecar 与 Ambient 模式选择指南](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)。
 
 ## 学习资源
 
 - [Sidecar 与 Ambient 模式选择指南](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 - [Ambient 模式](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 - [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Cilium Service Mesh 安全性](../../../service-mesh/cilium-service-mesh/03-security.md)
+- [Cilium 服务网格安全](../../../service-mesh/cilium-service-mesh/03-security.md)
+
+## 官方证据
+
+- [Istio Ambient L7 功能状态](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md)
+- [Cilium 1.20.1 双向身份验证](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)

@@ -1,183 +1,170 @@
-# Cuestionario de Istio
+# Cuestionario sobre Istio
 
-> **Versión compatible**: Istio 1.28.0
-> **Versión de EKS**: 1.34 (Kubernetes 1.28+)
-> **Última actualización**: February 19, 2026
+> **Última actualización**: 11 de septiembre de 2026 · Comprobaciones de ejemplos: Istio 1.31.0 / Argo Rollouts 1.10.0
 
-Este cuestionario evalúa tu comprensión del service mesh de Istio.
+El cuestionario cubre las [guías mantenidas de Istio](../../service-mesh/istio/README.md). La compatibilidad corresponde a la [guía de instalación](../../service-mesh/istio/01-installation.md); un mínimo genérico Kubernetes no es una matriz de soporte. Los ejemplos son ayudas didácticas, no despliegues probados en producción. Sustituya namespaces, hosts, identidades y endpoints ilustrativos por entradas verificadas.
 
-## Pregunta 1: Conceptos básicos de Service Mesh
+## Pregunta 1: Conceptos básicos de malla de servicios
 
 <details>
-<summary>¿Qué es un service mesh y cuáles son sus características principales?</summary>
+<summary>¿Qué es una malla de servicios y cuáles son sus funciones principales?</summary>
 
-**Respuesta:**
-Un service mesh es una capa de infraestructura que gestiona la comunicación de servicio a servicio, lo que te permite controlar y observar la comunicación entre servicios sin modificar el código de la aplicación.
+Una malla añade control y observación de comunicaciones a nivel de infraestructura. Incluye enrutamiento/balanceo, reintentos/timeouts con presupuestos explícitos, identidad de cargas y seguridad de transporte, autorización, métricas, logs de acceso e integración de trazas.
 
-**Características principales:**
-1. **Gestión de tráfico**: Controla el flujo de tráfico entre servicios
-   - Enrutamiento, balanceo de carga, despliegues canary
-   - Timeout, Retry, Circuit Breaker
-   - Duplicación de tráfico y pruebas shadow
+Istio ofrece planos sidecar y ambient con capacidades L4/L7 y asociaciones de políticas diferentes. Muchos controles no requieren cambios de negocio, pero las aplicaciones siguen participando en propagación de contexto, cierre ordenado e idempotencia duradera. Una malla no hace seguros automáticamente los reintentos no idempotentes ni instala todos los backends de observabilidad.
 
-2. **Seguridad**: Cifrado y autenticación para la comunicación de servicio a servicio
-   - mTLS automático (TLS mutuo)
-   - Authorization Policy (control de acceso)
-   - Request Authentication (JWT)
-
-3. **Observabilidad**: Visibilidad de la comunicación de servicio a servicio
-   - Recopilación de métricas (Prometheus)
-   - Trazado distribuido (Jaeger/Zipkin)
-   - Registro y visualización (Kiali, Grafana)
-
-**Características de Istio:**
-- Se integra de forma transparente en aplicaciones distribuidas existentes
-- Usa el patrón de proxy sidecar (Envoy)
-- Admite Ambient Mode (arquitectura sin sidecar)
-- Gestión de políticas mediante configuración declarativa
 </details>
 
 ## Pregunta 2: Arquitectura de Istio
 
 <details>
-<summary>¿Cuáles son los componentes y roles principales de Istio 1.28.0?</summary>
+<summary>¿Qué funciones tienen los planos de control y datos?</summary>
 
-**Respuesta:**
-**Control Plane:**
-- **Istiod**: Control Plane unificado en un único binario
-  - **Service Discovery**: Mantiene el registro de servicios del mesh
-  - **Configuration Management**: Almacena y distribuye la configuración de Istio
-  - **Certificate Management**: Genera y rota certificados para mTLS
+- **Istiod** observa servicios/configuración, la traduce y distribuye a proxies. Kubernetes persiste los CRD. La emisión/renovación de certificados usa la integración CA configurada en Istiod.
+- **Modo sidecar** usa Envoy junto a cada Pod inscrito para su tráfico interceptado.
+- **Modo ambient** usa ztunnel por nodo para transporte/identidad L4 y waypoints Envoy opcionales para funciones L7 admitidas.
+- **Gateways** gestionan rutas de entrada/salida elegidas. Su Deployment/controlador es independiente del recurso de configuración de rutas.
 
-**Data Plane:**
-- **Envoy Proxy**: Desplegado como sidecar, intermedia toda la comunicación de red
-  - Enrutamiento de tráfico y balanceo de carga
-  - Cifrado y autenticación mTLS
-  - Recopilación de métricas, logs y trazas
+«Todo el tráfico se intercepta» exige verificar exclusiones, protocolos e inscripción. No hay reducción universal del 85%: compare proxies reales, requests/limits, uso, capacidad waypoint, empaquetado de nodos y coste operativo. Consulte [arquitectura](../../service-mesh/istio/03-architecture.md) y el [modelo de recursos ambient](../../service-mesh/istio/advanced/01-ambient-mode.md).
 
-**Ambient Mode (opcional):**
-- **ztunnel**: Proxy a nivel de nodo (L4)
-- **waypoint proxy**: Proxy L7 opcional
-
-**Características clave:**
-- Control Plane unificado en un único binario (Istiod)
-- Arquitectura escalable y de alta disponibilidad
-- Configuración basada en CRD nativa de Kubernetes
-- Posibilidad de reducir recursos en más de un 85% con Ambient Mode
 </details>
 
-## Pregunta 3: Gestión de tráfico e integración con Argo Rollouts
+## Pregunta 3: Gestión de tráfico e integración Argo Rollouts
 
 <details>
-<summary>¿Cómo implementas despliegues canary automatizados mediante Istio y Argo Rollouts?</summary>
+<summary>¿Cómo combinan Istio y el análisis Argo un despliegue canary?</summary>
 
-**Respuesta:**
-Argo Rollouts se integra con Istio para proporcionar despliegues canary automáticos basados en métricas.
+Argo cambia pesos en una ruta HTTP Istio nombrada manteniendo la selección de backend estable/canary. Rollout también necesita selector, plantilla Pod, Services reales, namespace inscrito y VirtualService correspondiente. Lo siguiente es **solo un fragmento bajo Rollout.spec**, del ejemplo basado en hosts de la [guía completa](../../service-mesh/istio/advanced/08-argo-rollouts.md):
 
-**1. Definición del recurso Rollout:**
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: reviews
-spec:
-  replicas: 5
-  strategy:
-    canary:
-      # Istio traffic control
-      trafficRouting:
-        istio:
-          virtualService:
-            name: reviews-vsvc
-            routes:
-            - primary
-          destinationRule:
-            name: reviews-destrule
-            canarySubsetName: canary
-            stableSubsetName: stable
-
-      # Staged deployment
-      steps:
-      - setWeight: 10    # 10% Canary
-      - pause: {duration: 2m}
-      - setWeight: 25    # 25% Canary
-      - pause: {duration: 2m}
-      - setWeight: 50    # 50% Canary
-      - pause: {duration: 2m}
-
-      # Automatic metrics analysis
-      analysis:
+strategy:
+  canary:
+    stableService: test-stable
+    canaryService: test-canary
+    maxSurge: 1
+    maxUnavailable: 0
+    trafficRouting:
+      istio:
+        virtualService:
+          name: test
+          routes:
+          - primary
+    steps:
+    - setWeight: 10
+    - pause:
+        duration: 5m
+    - analysis:
         templates:
         - templateName: success-rate
-        - templateName: latency
-        startingStep: 1
+        args:
+        - name: service-name
+          value: test-canary
+        - name: namespace
+          value: rollouts-demo
+    - setWeight: 50
+    - pause:
+        duration: 5m
+    - analysis:
+        templates:
+        - templateName: success-rate
+        args:
+        - name: service-name
+          value: test-canary
+        - name: namespace
+          value: rollouts-demo
+    - setWeight: 80
+    - pause:
+        duration: 5m
+    - analysis:
+        templates:
+        - templateName: success-rate
+        args:
+        - name: service-name
+          value: test-canary
+        - name: namespace
+          value: rollouts-demo
 ```
 
-**2. AnalysisTemplate - Rollback automático:**
+La plantilla nombrada de tasa de éxito es finita. Comprueba volumen y disponibilidad HTTP del **Service canary**, usando un único reporter para no contar ambos proxies:
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: success-rate
+  namespace: rollouts-demo
 spec:
+  args:
+  - name: service-name
+  - name: namespace
   metrics:
-  - name: success-rate
-    successCondition: result >= 0.95  # 95% or higher
-    failureLimit: 2  # Auto-rollback after 2 failures
+  - name: request-volume
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
     provider:
       prometheus:
-        query: |
-          sum(rate(istio_requests_total{
-            response_code!~"5.*"
-          }[2m])) / sum(rate(istio_requests_total[2m]))
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+  - name: http-availability
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code!~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
 ```
 
-**Características clave:**
-- Progresión/rollback automáticos basados en métricas
-- Incremento gradual del tráfico (10% → 25% → 50% → 100%)
-- Análisis de métricas de Prometheus en tiempo real
-- Rollback automático inmediato ante errores
+Prometheus debe existir y recoger los proxies pertinentes. El ejemplo sidecar espera métricas HTTP del reporter source y tráfico canary real; una ruta ambient L4 sola no proporciona esas mediciones L7.
+
+El resultado Prometheus de Argo es un array, por lo que se consulta result[0] solo tras comprobar longitud. Vacío, NaN e infinito no deben pasar. El fallback cero del numerador maneja tráfico totalmente fallido, y el control de volumen impide declarar saludable tráfico cero/ausente. «Disponibilidad» excluye aquí 5xx y código 0; no garantiza éxito de negocio ni solo respuestas 2xx.
+
+El antiguo escalar result >= 0.95, dirección del proveedor omitida, plantilla de latencia ausente y Rollout incompleto no eran una receta completa. failureLimit cuenta **fallos permitidos**: 2 permite dos y falla al tercero; aquí se usa 0. La reacción depende de intervalos, reconciliación y propagación, no promete rollback inmediato.
+
 </details>
 
-## Pregunta 4: Características de seguridad
+## Pregunta 4: Funciones de seguridad
 
 <details>
-<summary>¿Cuáles son las características de mTLS y Authorization Policy en Istio 1.28.0?</summary>
+<summary>¿En qué difieren mTLS, autorización y validación JWT?</summary>
 
-**Respuesta:**
-**Beneficios de mTLS:**
-- Cifrado automático de la comunicación de servicio a servicio
-- Seguridad mejorada mediante autenticación mutua
-- Se aplica sin cambios en el código de la aplicación
-- Emisión y renovación automáticas de certificados
+PeerAuthentication controla el mTLS entrante aceptado. No establece la política TLS saliente del cliente. La política siguiente supone llamantes preparados para STRICT; ubicarla en el namespace raíz tendría mayor alcance:
 
-**1. PeerAuthentication - Política mTLS:**
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
-  namespace: istio-system
+  namespace: app
 spec:
   mtls:
-    mode: STRICT  # STRICT recommended for production
+    mode: STRICT
 ```
 
-**2. AuthorizationPolicy - Control de acceso detallado:**
-```yaml
-# Deny by default
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all
-spec: {}  # Deny all requests
+Para Pods backend **inscritos con sidecar**, estas políticas exigen conjuntamente identidad frontend, JWT validado y ruta GET permitida:
 
----
-# Allow specific
-apiVersion: security.istio.io/v1beta1
+```yaml
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-frontend
+  name: backend-default-deny
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: backend
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: backend-read
+  namespace: app
 spec:
   selector:
     matchLabels:
@@ -186,56 +173,58 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
+        principals:
+        - cluster.local/ns/app/sa/frontend
+        requestPrincipals:
+        - '*'
     to:
     - operation:
-        methods: ["GET", "POST"]
-        paths: ["/api/*"]
-```
-
-**3. RequestAuthentication - Validación de JWT:**
-```yaml
-apiVersion: security.istio.io/v1beta1
+        methods:
+        - GET
+        paths:
+        - /api/*
+---
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
-  name: jwt-auth
+  name: backend-jwt
+  namespace: app
 spec:
+  selector:
+    matchLabels:
+      app: backend
   jwtRules:
-  - issuer: "https://auth.example.com"
-    jwksUri: "https://auth.example.com/.well-known/jwks.json"
+  - issuer: https://auth.example.com
+    jwksUri: https://auth.example.com/.well-known/jwks.json
+    audiences:
+    - backend-api
 ```
 
-**Prácticas recomendadas:**
-- Usa políticas deny-by-default
-- Aplica el principio de mínimo privilegio
-- Autenticación basada en Service Account
-- Aislamiento de Namespace
+La primera es una política **ALLOW** vacía del backend seleccionado, que deniega por defecto hasta que coincida una regla ALLOW. No es un DENY explícito que anule el permiso posterior. Otras ALLOW coincidentes pueden ampliar acceso; revise el conjunto completo.
+
+RequestAuthentication valida un JWT proporcionado, pero por sí sola acepta solicitudes sin él. requestPrincipals hace obligatorio el JWT validado aquí. Issuer, URL JWKS y audience son marcadores para un proveedor real. Principal de carga y principal JWT son identidades distintas.
+
+Las políticas L7 en ambient requieren asociación waypoint admitida; no copie una política HTTP con selector sidecar a ztunnel. Consulte las [guías de seguridad](../../service-mesh/istio/security/README.md) para targetRefs, migración y confianza.
+
 </details>
 
 ## Pregunta 5: Gateway e Ingress
 
 <details>
-<summary>¿Cuál es el rol de Istio Gateway y cómo configuras TLS?</summary>
+<summary>¿Cómo se configuran terminación TLS y rutas de aplicación?</summary>
 
-**Respuesta:**
-**Rol de Gateway:**
-- Punto de entrada para el tráfico externo hacia los servicios internos del cluster
-- Control de tráfico Ingress/Egress
-- Terminación de TLS y gestión de certificados
-- Integración con balanceadores de carga
+Este ejemplo usa **Istio Gateway**, no Kubernetes Gateway API. Deben estar configurados Deployment de gateway, etiquetas Pod coincidentes y puertos Service. La aplicación está en bookinfo; gateway y credencial, en istio-ingress:
 
-**Ejemplo de configuración:**
 ```yaml
-# Gateway Definition
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
+  namespace: istio-ingress
 spec:
   selector:
     istio: ingressgateway
   servers:
-  # HTTPS (443)
   - port:
       number: 443
       name: https
@@ -245,320 +234,277 @@ spec:
       credentialName: bookinfo-secret
     hosts:
     - bookinfo.example.com
-
-  # HTTP (80) - Redirect to HTTPS
   - port:
       number: 80
       name: http
       protocol: HTTP
     hosts:
-    - "*"
+    - bookinfo.example.com
     tls:
       httpsRedirect: true
-
 ---
-# VirtualService - Connect to Gateway
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: bookinfo-vs
+  name: bookinfo
+  namespace: bookinfo
 spec:
   hosts:
   - bookinfo.example.com
   gateways:
-  - bookinfo-gateway
+  - istio-ingress/bookinfo-gateway
   http:
-  - match:
-    - uri:
-        prefix: /productpage
-    route:
+  - route:
     - destination:
-        host: productpage
+        host: productpage.bookinfo.svc.cluster.local
         port:
           number: 9080
     timeout: 10s
     retries:
-      attempts: 3
-      perTryTimeout: 2s
+      attempts: 0
 ```
 
-**Creación de certificado TLS:**
+SIMPLE termina TLS downstream y VirtualService enruta HTTP. El listener HTTP redirige solo el dominio de ejemplo admitido. La ruta desactiva explícitamente reintentos, incluidas escrituras. Sustituya dominio propio y namespace/Service/selector reales antes de usar.
+
 ```bash
-# Create TLS certificate as Kubernetes Secret
-kubectl create -n istio-system secret tls bookinfo-secret \
+kubectl -n istio-ingress create secret tls bookinfo-secret \
   --key=bookinfo.key \
-  --cert=bookinfo.crt
+  --cert=bookinfo-fullchain.pem
 ```
+
+Esto empaqueta un certificado/clave existente; no emite certificado ni establece confianza del cliente. Revise SAN, cadena, caducidad y acceso a credenciales del gateway. Kubernetes Gateway API usa asociación GatewayClass/Gateway/HTTPRoute y estado del controlador en vez de este esquema.
+
 </details>
 
 ## Pregunta 6: Herramientas de observabilidad
 
 <details>
-<summary>¿Qué herramientas de observabilidad proporciona Istio 1.28.0 y cuáles son sus roles?</summary>
+<summary>¿Qué miden los componentes de telemetría y qué debe configurarse?</summary>
 
-**Respuesta:**
-**1. Prometheus - Recopilación de métricas:**
+Prometheus recoge métricas; Grafana renderiza dashboards; Kiali usa telemetría y estado configurados; Jaeger u otro backend almacena trazas enviadas mediante el proveedor/collector. Son integraciones, no herramientas instaladas automáticamente por el perfil predeterminado Istio.
+
+Las consultas seleccionan un flujo source-reporter para reviews en app. La latencia está en **segundos**, el tráfico en **solicitudes/segundo**, y los errores incluyen 5xx más código 0:
+
 ```promql
-# Golden Signals Monitoring
-# 1. Latency (P95)
-histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
-)
+# latency
+histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="reviews",destination_service_namespace="app"}[5m]))) / 1000
 
-# 2. Traffic (Request count)
-sum(rate(istio_requests_total[5m]))
+# traffic
+sum(rate(istio_requests_total{reporter="source",destination_service_name="reviews",destination_service_namespace="app"}[5m]))
 
-# 3. Errors (Error rate)
-sum(rate(istio_requests_total{response_code=~"5.."}[5m]))
-/ sum(rate(istio_requests_total[5m]))
+# error
+(sum(rate(istio_requests_total{reporter="source",destination_service_name="reviews",destination_service_namespace="app",response_code=~"5..|0"}[5m])) or vector(0)) / sum(rate(istio_requests_total{reporter="source",destination_service_name="reviews",destination_service_namespace="app"}[5m]))
 
-# 4. Saturation (CPU usage)
-sum(rate(container_cpu_usage_seconds_total{pod=~".*istio-proxy.*"}[5m]))
+# cpu
+sum(rate(container_cpu_usage_seconds_total{namespace="app",container="istio-proxy",pod!=""}[5m]))
 ```
 
-**2. Jaeger - Trazado distribuido:**
+La consulta CPU selecciona la etiqueta **container**, no un nombre Pod ficticio que contenga istio-proxy. Devuelve núcleos consumidos, no por sí misma saturación porcentual; compare límites/capacidad y throttling. Necesita kubelet/cAdvisor correspondientes. Denominadores vacíos/cero generan no-data/NaN, no salud; el fallback del numerador es 0 solo con un total positivo.
+
+Para trazas, configure un receptor OTLP gRPC real y un proveedor nombrado, y selecciónelo con Telemetry:
+
 ```yaml
-# Enable Tracing
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
-    defaultConfig:
-      tracing:
-        sampling: 100.0  # 100% sampling
+    enableTracing: true
+    extensionProviders:
+    - name: otel
+      opentelemetry:
+        service: otel-collector.observability.svc.cluster.local
+        port: 4317
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: tracing
+  namespace: app
+spec:
+  tracing:
+  - providers:
+    - name: otel
+    randomSamplingPercentage: 1.0
 ```
 
-**3. Kiali - Visualización de Service Mesh:**
-- Visualización de topología en tiempo real
-- Análisis del flujo de tráfico
-- Validación de configuración
-- Visualización de métricas de rendimiento
+IstioOperator es entrada de instalación istioctl. No despliega el collector ni Jaeger. El 1% de muestreo es ilustrativo, no objetivo universal; las aplicaciones deben propagar contexto. Revise protocolos backend, retención y costes antes de cambiarlos.
 
-**4. Grafana - Dashboards:**
-- Istio Service Dashboard
-- Istio Workload Dashboard
-- Istio Performance Dashboard
-- Creación de dashboards personalizados
+Los comandos de dashboard solo conectan con backends instalados y descubribles:
 
-**Método de acceso:**
 ```bash
 istioctl dashboard kiali
 istioctl dashboard prometheus
 istioctl dashboard grafana
 istioctl dashboard jaeger
 ```
+
 </details>
 
-## Pregunta 7: Ambient Mode
+## Pregunta 7: Modo ambient
 
 <details>
-<summary>¿Qué es Ambient Mode en Istio 1.28.0 y en qué se diferencia de Sidecar Mode?</summary>
+<summary>¿En qué difiere ambient del modo sidecar?</summary>
 
-**Respuesta:**
-**Concepto de Ambient Mode:**
-- Arquitectura de service mesh sin sidecar
-- ztunnel (proxy L4 a nivel de nodo) + waypoint (proxy L7 opcional)
-- Reducción de recursos de más del 85%
+| Aspecto | Sidecar | Ambient |
+|---|---|---|
+| Ubicación | Envoy junto a cada Pod inscrito | ztunnel por nodo y waypoints elegidos |
+| Transporte L4 | Proxy de carga | ztunnel/HBONE |
+| Funciones L7 | Funciones Envoy y alcance API admitidos | Requieren waypoint y asociación/API compatibles |
+| Recursos | Dependen de Pods, carga y configuración | Dependen de nodos, despliegue/capacidad waypoint y carga |
+| Adopción | Inyección/recreación de Pods previstos | Requisitos CNI/inscripción; retirar sidecars existentes aún requiere rollout controlado |
+| Rendimiento | Medir carga real | Medir L4 y L7 separadamente; sin superioridad ni ahorro fijo |
 
-**Comparación de arquitecturas:**
+Use la [guía de instalación/migración ambient](../../service-mesh/istio/advanced/01-ambient-mode.md). Aplicar profile=ambient a una instalación compartida arbitraria y etiquetar default no es una migración completa segura. Revise compatibilidad CNI, NetworkPolicy/HBONE, etiquetas sidecar en conflicto, funciones waypoint e inscripción efectiva.
 
-| Característica | Sidecar Mode | Ambient Mode |
-|---------|-------------|--------------|
-| Despliegue | Inyección de Envoy por Pod | 1 ztunnel por nodo |
-| Uso de recursos | Alto (50-100MB por Pod) | Bajo (50MB por nodo) |
-| Complejidad del despliegue | Alta (se requiere redespliegue) | Baja (aplicación transparente) |
-| Características L4 | Compatible | Compatible mediante ztunnel |
-| Características L7 | Compatibilidad completa | Requiere waypoint |
-| Rendimiento | Ligeramente más lento | Rápido (solo L4) |
-
-**Activación de Ambient Mode:**
 ```bash
-# Install Ambient Mode
-istioctl install --set profile=ambient -y
-
-# Enable Ambient Mode on Namespace
-kubectl label namespace default istio.io/dataplane-mode=ambient
+kubectl get namespace app --show-labels
+istioctl ztunnel-config workloads -n istio-system
 ```
 
-**Casos de uso:**
-- Entornos con recursos limitados
-- Clusters a gran escala (más de 1000 Pods)
-- Cuando solo se necesitan características L4
-- Adopción gradual de Istio
+Estas comprobaciones de lectura no inscriben cargas ni demuestran políticas L7. Número de Services/Pods y «50MB por nodo» fijos no bastan para predecir consumo o ahorro.
+
 </details>
 
 ## Pregunta 8: Patrones de resiliencia
 
 <details>
-<summary>¿Cuáles son las diferencias entre Outlier Detection, Circuit Breaker y Rate Limiting en Istio?</summary>
+<summary>¿En qué difieren detección de anomalías, límites de pools y rate limiting?</summary>
 
-**Respuesta:**
-**1. Outlier Detection - Excluir instancias no saludables:**
+La detección de anomalías expulsa endpoints no saludables por fallos observados; los circuit breakers de pools acotan recursos como conexiones, solicitudes pendientes o activas. No imponen una cuota de solicitudes por segundo.
+
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
+  namespace: app
 spec:
-  host: reviews
-  trafficPolicy:
-    outlierDetection:
-      consecutiveErrors: 5       # 5 consecutive failures
-      interval: 30s              # Evaluate every 30s
-      baseEjectionTime: 30s      # 30s ejection
-      maxEjectionPercent: 50     # Max 50% ejection
-```
-
-**2. Circuit Breaker - Evitar sobrecargas:**
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
+  host: reviews.app.svc.cluster.local
   trafficPolicy:
     connectionPool:
       tcp:
         maxConnections: 100
       http:
         http1MaxPendingRequests: 50
-        maxRequestsPerConnection: 2
+        http2MaxRequests: 100
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
 ```
 
-**3. Rate Limiting - Control de la tasa de solicitudes:**
+consecutive5xxErrors es el campo actual. La detección consecutiva puede actuar en línea; interval no promete esperar 30 segundos antes de cada expulsión. baseEjectionTime puede aumentar con repeticiones, e importan endpoint/capacidad por proxy. maxEjectionPercent no es garantía global de disponibilidad.
+
+Para un listener HTTP **entrante del sidecar** en 9080, este bucket local ilustrativo empieza con capacidad de ráfaga 100 y repone 10 tokens/s:
+
 ```yaml
-# Local Rate Limiting
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: local-rate-limit
+  name: reviews-local-rate-limit
+  namespace: app
 spec:
+  workloadSelector:
+    labels:
+      app: reviews
   configPatches:
   - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        portNumber: 9080
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 100
             tokens_per_fill: 10
             fill_interval: 1s
+          filter_enabled:
+            runtime_key: local_rate_limit_enabled
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            runtime_key: local_rate_limit_enforced
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
 ```
 
-**Diferencias:**
-- **Outlier Detection**: Reactivo (excluye tras un error)
-- **Circuit Breaker**: Preventivo (limita conexiones)
-- **Rate Limiting**: Control de la tasa de solicitudes (token bucket)
+Type URL, coincidencia de carga/listener/router y fracciones de habilitación/aplicación son necesarios. Un bucket configurado pero no habilitado/aplicado no limita efectivamente. El límite es local al proceso por defecto; las réplicas multiplican capacidad agregada, no es cuota global de malla. EnvoyFilter en waypoint no está soportado. Límites globales requieren servicio y descriptores coincidentes; consulte [rate limiting](../../service-mesh/istio/resilience/02-rate-limiting.md).
 
-**Uso combinado:**
-```yaml
-trafficPolicy:
-  connectionPool:     # Circuit Breaker
-    tcp:
-      maxConnections: 100
-  outlierDetection:   # Outlier Detection
-    consecutiveErrors: 5
-```
 </details>
 
-## Pregunta 9: Balanceo de carga por localidad (enrutamiento consciente de zona)
+## Pregunta 9: Balanceo por localidad en EKS
 
 <details>
-<summary>¿Qué es la característica Locality Load Balancing de Istio y cómo se utiliza con AWS EKS?</summary>
+<summary>¿Qué aporta la preferencia de localidad y qué no garantiza?</summary>
 
-**Respuesta:**
-**Concepto de Locality Load Balancing:**
-- Enrutamiento prioritario a servicios en la misma Availability Zone (AZ)
-- Reducción de la latencia de red
-- Ahorro en costes de transferencia de datos entre AZ (~85%)
+La localidad usa topología de endpoints/origen para preferir destinos adecuados. Esta **alternativa** al DestinationRule reviews anterior usa prioridad región/zona con detección de anomalías:
 
-**Configuración:**
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
+  namespace: app
 spec:
-  host: reviews
+  host: reviews.app.svc.cluster.local
   trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
     loadBalancer:
       localityLbSetting:
         enabled: true
-        distribute:
-        # Same AZ priority, other AZ for failover
-        - from: us-east-1/us-east-1a/*
-          to:
-            "us-east-1/us-east-1a/*": 80  # Same AZ 80%
-            "us-east-1/us-east-1b/*": 20  # Other AZ 20%
-
-        # Failover policy
-        failover:
-        - from: us-east-1
-          to: us-west-2
+        failoverPriority:
+        - topology.kubernetes.io/region
+        - topology.kubernetes.io/zone
 ```
 
-**Uso de AWS EKS:**
-1. **Ahorro de costes:**
-   - Tráfico entre AZ: $0.01/GB
-   - Tráfico en la misma AZ: Gratis
-   - Ahorro de costes significativo con un 80% de enrutamiento en la misma AZ
+No combine distribute con failover o failoverPriority en un ajuste. Una regla 80/20 envía deliberadamente 20% remoto mientras todo está sano; no es «remoto solo si falla». Failover necesita endpoints descubiertos y accesibles y capacidad suficiente. No alcanza una AZ/clúster remota excluida por el Service o ausente del registro.
 
-2. **Mejora del rendimiento:**
-   - Latencia dentro de la AZ: ~1ms
-   - Latencia entre AZ: ~2-3ms
-
-3. **Failover automático:**
-   - Failover automático a otra AZ ante un fallo de AZ
-   - Combinado con Outlier Detection
-
-**Configuración de topología de Pod:**
-```yaml
-# EKS nodes automatically set topology labels
-topology.kubernetes.io/region: us-east-1
-topology.kubernetes.io/zone: us-east-1a
+```bash
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
 ```
+
+Verifique etiquetas reales y localidad de endpoints del proxy. Los nombres AZ pueden diferir entre cuentas AWS; use mapeo AZ-ID al comparar zonas físicas. El coste depende de volumen y ruta exacta EC2/balanceador/red; habilitar localidad no implica precio universal $0.01/GB, latencia fija ni ahorro del 85%.
+
 </details>
 
-## Pregunta 10: Integración con Amazon EKS y prácticas recomendadas
+## Pregunta 10: Integración Amazon EKS y buenas prácticas
 
 <details>
-<summary>¿Cuáles son las consideraciones y prácticas recomendadas al integrar Istio 1.28.0 con Amazon EKS 1.34?</summary>
+<summary>¿Qué debe comprobarse antes de instalar u operar Istio en EKS?</summary>
 
-**Respuesta:**
-**1. Instalación y configuración:**
-```bash
-# Install Istioctl
-curl -L https://istio.io/downloadIstio | sh -
-cd istio-1.28.0
-export PATH=$PWD/bin:$PATH
+1. Use la intersección exacta admitida Istio/Kubernetes/EKS y CLI/chart fijados. No existe perfil production integrado. Use configuración Helm/istioctl revisada mediante su propietario.
+2. Identifique el controlador LB: AWS Load Balancer Controller, Auto Mode y aprovisionamiento heredado tienen propietarios/ajustes distintos. Haga coincidir selectores/puertos Service con el gateway real. Decida terminar TLS en NLB o gateway; no envíe texto plano a un listener TLS ni añada TLS doble accidental.
+3. Conceda permisos AWS al componente que llama API AWS, como controlador LB o collector. Envoy no necesita IAM solo para reenviar. Configure confianza y permisos IRSA o Pod Identity compatible; una anotación no basta.
+4. Abra solo rutas direccionales necesarias. Los puertos de interceptación no son una lista para exponer indiscriminadamente en grupos de seguridad. Incluya webhook/xDS, salud y rutas reales ingress/ambient donde proceda.
+5. Dimensione Istiod/proxies con evidencia y capacidad de planificación/disponibilidad. PDB cubre interrupciones voluntarias concretas; réplicas por sí solas no garantizan diversidad zonal ni protegen de todos los fallos.
+6. Configure métricas, logs y trazas separadamente. Un fragmento de salida Fluent Bit cloudwatch_logs no es Container Insights ni un pipeline completo CRI/parser/IAM/log-stream.
 
-# Install with production profile
-istioctl install --set profile=production -y
-```
+Una entrada ilustrativa de instalación para HPA del plano de control y requests/limits de proxy es:
 
-**2. Integración con AWS Load Balancer:**
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: istio-ingressgateway
-  namespace: istio-system
-  annotations:
-    # Network Load Balancer
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-
-    # TLS termination (ACM certificate)
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account:certificate/id"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-spec:
-  type: LoadBalancer
-```
-
-**3. Optimización de recursos:**
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
@@ -571,9 +517,8 @@ spec:
             cpu: 500m
             memory: 2Gi
         hpaSpec:
-          minReplicas: 2
+          minReplicas: 3
           maxReplicas: 5
-
   values:
     global:
       proxy:
@@ -583,150 +528,98 @@ spec:
             memory: 128Mi
           limits:
             cpu: 500m
-            memory: 1024Mi
+            memory: 1Gi
 ```
 
-**4. Configuración de seguridad:**
-```yaml
-# VPC Security Group settings
-# - Istiod: 15010, 15012, 8080
-# - Envoy: 15001, 15006, 15021, 15090
-# - Gateway: 80, 443
+Las 3–5 réplicas y recursos son ejemplos, no dimensionamiento productivo validado. Revise métricas HPA, ubicación y capacidad. Evalúe ambient y alcance de configuración con mediciones reales de recursos/facturación; no hay garantía general de ahorro del 85% o 30–50%.
 
-# IAM Role (IRSA)
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: istio-ingressgateway
-  namespace: istio-system
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::account:role/istio-gateway
-```
+Use la [guía de integración AWS](../../service-mesh/istio/04-aws-integration.md) y [buenas prácticas](../../service-mesh/istio/best-practices.md) para procedimientos completos.
 
-**5. Integración de monitorización:**
-```yaml
-# CloudWatch Container Insights
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-data:
-  output.conf: |
-    [OUTPUT]
-        Name cloudwatch_logs
-        Match *
-        region us-east-1
-        log_group_name /aws/eks/cluster/istio
-```
-
-**6. Prácticas recomendadas:**
-- Usa el perfil de producción
-- Alta disponibilidad de Control Plane (réplicas >= 3)
-- Modo mTLS STRICT
-- Configuración de PodDisruptionBudget
-- Habilita Locality Load Balancing
-- Monitorización con Prometheus + Grafana
-- Actualizaciones regulares de versión (enfoque Canary)
-
-**7. Optimización de costes:**
-- Considera Ambient Mode (reducción de recursos del 85%)
-- Locality Load Balancing (ahorro de costes entre AZ)
-- Limitación de Sidecar Scope (reducción de memoria del 30-50%)
 </details>
 
-## Pregunta adicional: Progressive Delivery
+## Pregunta adicional: Entrega progresiva
 
 <details>
-<summary>¿Cómo implementas Progressive Delivery totalmente automatizado con Istio + Argo Rollouts?</summary>
+<summary>¿Qué hace útil el análisis de entrega progresiva y cuáles son sus límites?</summary>
 
-**Respuesta:**
-Progressive Delivery es un enfoque que avanza o revierte automáticamente los despliegues basándose en métricas.
+Un rollout completo necesita destinos reales, capacidad estable, argumentos explícitos y una política de medición finita y significativa. La plantilla amplía el ejemplo canary con volumen, disponibilidad HTTP y latencia P95:
 
-**Ejemplo de automatización completa:**
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: myapp
-spec:
-  replicas: 10
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: myapp-vsvc
-            routes:
-            - primary
-
-      steps:
-      # Stage 1: 10% Canary
-      - setWeight: 10
-      - pause: {duration: 1m}
-      - analysis:
-          templates:
-          - templateName: success-rate
-          - templateName: latency
-
-      # Stage 2: 25% Canary (auto-progress)
-      - setWeight: 25
-      - pause: {duration: 1m}
-      - analysis:
-          templates:
-          - templateName: success-rate
-          - templateName: latency
-
-      # Stage 3: 50% Canary (auto-progress)
-      - setWeight: 50
-      - pause: {duration: 2m}
-      - analysis:
-          templates:
-          - templateName: success-rate
-          - templateName: latency
-
-      # Stage 4: 100% Canary (auto-complete)
-```
-
-**Condiciones de rollback automático:**
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: success-rate
+  name: comprehensive-analysis
+  namespace: rollouts-demo
 spec:
+  args:
+  - name: service-name
+  - name: namespace
   metrics:
-  - name: success-rate
+  - name: request-volume
     interval: 30s
-    count: 4
-    successCondition: result >= 0.95
-    failureLimit: 2  # Immediate rollback after 2 failures
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 20
+    failureLimit: 0
     provider:
       prometheus:
-        query: |
-          # Success rate < 95% or
-          # Latency > 500ms or
-          # Error rate > 5%
-          # → Auto rollback
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: sum(increase(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+  - name: http-availability
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.99
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code!~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
+  - name: latency-p95
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.5
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          histogram_quantile(0.95,
+            sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+          ) / 1000
+    count: 5
+  - name: http-error-rate
+    interval: 30s
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <= 0.01
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |-
+          (sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}",response_code=~"5..|0"}[2m])) or vector(0))
+          /
+          sum(rate(istio_requests_total{reporter="source",destination_service_name="{{args.service-name}}",destination_service_namespace="{{args.namespace}}"}[2m]))
+    count: 5
 ```
 
-**Beneficios clave:**
-- Automatización completa (no se necesita intervención humana)
-- Rollback inmediato (en segundos tras detectar un error)
-- Despliegues seguros (verificación basada en métricas)
-- Proceso consistente (estandarizado)
+Referencie la plantilla desde un paso de análisis correspondiente de un Rollout completo. No sustituye selector/plantilla/Services ausentes en un ejemplo incompleto. Los umbrales son ilustrativos; selectores, unidades, volumen y SLO de negocio deben coincidir.
+
+Medición fallida, error de proveedor, resultado inconcluso, aborto y despliegue posterior de una revisión anterior son estados distintos. Inspeccione AnalysisRun/Rollout; no los llame a todos rollback instantáneo. Abortar no deshace escrituras de base de datos ni otros efectos. Intervalos de controladores, disponibilidad del backend estable y propagación acotan la recuperación.
+
+Automatizar reduce decisiones repetitivas, pero ningún control métrico establece despliegue universalmente seguro ni garantiza que no haga falta diagnóstico humano. Pruebe sin tráfico, series ausentes, fallos totales, NaN/infinito y recuperación. La [guía completa](../../service-mesh/istio/advanced/08-argo-rollouts.md) contiene recursos circundantes y límites de validación.
+
 </details>
 
----
+## Autoevaluación
 
-**Puntuación:**
-- 10-11 correctas: Excelente (nivel experto en Istio)
-- 8-9 correctas: Bien (capaz de operar en producción)
-- 6-7 correctas: Promedio (se recomienda aprendizaje adicional)
-- 4-5 correctas: Insuficiente (se debe revisar los conceptos básicos)
-- 0-3 correctas: Se necesita volver a estudiar
+Use las 11 respuestas para identificar qué repasar. Una puntuación alta no demuestra preparación operativa de producción; incluya revisión y validación práctica en un entorno controlado.
 
-**Recursos de aprendizaje:**
+## Recursos de aprendizaje
+
+- [Documentación mantenida de Istio](../../service-mesh/istio/README.md)
 - [Documentación oficial de Istio](https://istio.io/latest/docs/)
-- [Documentación de Argo Rollouts](https://argo-rollouts.readthedocs.io/)
-- [EKS Workshop - Istio](https://www.eksworkshop.com/docs/security/servicemesh/)
-- [Documentación detallada de esta guía](../../service-mesh/istio/README.md)
+- [Integración Istio de Argo Rollouts](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/istio/)
+- [Semántica de análisis Argo](https://argo-rollouts.readthedocs.io/en/stable/features/analysis/)
+- [Resultados de consulta instantánea Prometheus](https://argo-rollouts.readthedocs.io/en/stable/analysis/prometheus/)
+- [Configuración TLS de Istio](https://istio.io/latest/docs/ops/configuration/traffic-management/tls-configuration/)
+- [Referencia API de Istio](https://istio.io/latest/docs/reference/config/)

@@ -1,1172 +1,160 @@
 # Part 3: MSA 배포 및 카나리
 
-> **난이도**: 고급 (Advanced) **예상 소요 시간**: 60분 **마지막 업데이트**: 2026년 9월 9일
+<span id="argo-rollouts-dashboard"></span>
+<span id="canary-배포-상태-다이어그램"></span>
+<span id="dockerfile-예시"></span>
+<span id="git-저장소-구조"></span>
+<span id="grafana에서-트래픽-분할-확인"></span>
+<span id="step-3-1-msa-애플리케이션-소개"></span>
+<span id="step-3-2-karpenter-nodepool-구성"></span>
+<span id="step-3-3-keda-scaledobject-구성"></span>
+<span id="step-3-4-argocd-application-applicationset"></span>
+<span id="step-3-5-초기-배포-확인"></span>
+<span id="step-3-6-otel-auto-instrumentation-구성"></span>
+<span id="step-3-7-argo-rollouts-canary-배포"></span>
+<span id="step-3-8-의도적-실패-주입-및-자동-롤백"></span>
+<span id="검증-verification"></span>
+<span id="검증-항목"></span>
+<span id="다음-단계"></span>
+<span id="서비스-구성"></span>
+<span id="서비스-코드-예시"></span>
+<span id="아키텍처-개요"></span>
+<span id="예상-결과"></span>
+<span id="예상-결과-1"></span>
+<span id="참조-문서"></span>
+<span id="학습-목표"></span>
 
-## 학습 목표
+> **난이도**: 고급
+> **마지막 업데이트**: 2026년 9월 13일
+실제 실행 가능한 5개 Python 역할을 별도 workload로 배포합니다. [application README](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)가 코드·DB·이미지·차트 입력의 기준입니다. 결제/알림은 합성 실습이며 실제 결제나 이메일/SMS 발송을 수행하지 않습니다.
 
-* ArgoCD 멀티 클러스터 MSA 배포
-* Argo Rollouts Canary 배포 및 AnalysisTemplate 구성
-* OpenTelemetry auto-instrumentation 적용
-
-## 아키텍처 개요
-
-![API Gateway가 클라이언트 요청을 주문·결제 서비스로 라우팅하고, 두 서비스가 Aurora PostgreSQL에 기록하며 SQS·SNS로 이벤트를 발행하고, 알림 서비스가 SQS를 소비하고, MWAA가 분석 배치를 트리거하며, 각 서비스의 텔레메트리가 OpenTelemetry Agent를 거쳐 관측성 백엔드로 전달되는 MSA 서비스 맵을 보여준다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-10.png)
+![별도 workload와 트랜잭션 outbox·SNS fanout·큐 소비](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-10.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-03-msa-deployment-lab-10.html)
 
-![API 게이트웨이가 주문·결제 서비스로 요청을 분배하고, 각 서비스가 Aurora PostgreSQL에 기록하며 SQS·SNS로 비동기 이벤트를 발행·구독하고, MWAA가 트리거하는 분석 배치가 다시 Aurora에 기록하는 MSA 배포 아키텍처를 보여준다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-0.png)
+## 1. 공유 API·저장 계약 {#contracts}
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-03-msa-deployment-lab-0.html)
+| Request/role | Contract |
+|---|---|
+| `POST /orders` | 201 + `id`; order and outbox commit together |
+| `POST /payments` | 200 + `status: completed`; same order/amount/method is idempotent |
+| `GET /orders/{id}` | 200 + same ID, or404 |
+| `notification` | Own SQS queue, persisted synthetic notification |
+| `analytics` | Separate SQS queue, independent persisted result |
 
-***
+gateway→service HTTP와 producer→consumer에 W3C context를 전달합니다. Outbox publish 성공 후 DB mark 전에 실패하면 재전송되므로 소비자는 event ID를 DB transaction으로 dedup합니다. 외부 이메일/결제 side effect까지 DB transaction으로 exactly-once라고 주장하지 않습니다. 주문 POST 자체의 일반 Idempotency-Key 처리는 포함하지 않습니다.
 
-## Step 3.1: MSA 애플리케이션 소개
+앱 metric은 `lab_http_requests_total`, `lab_http_request_duration_seconds`이며 service/route/status/revision label만 사용합니다. JSON 로그에 service/level/trace_id/span_id를 기록하고 고객·결제 payload를 metric label로 쓰지 않습니다.
 
-### 서비스 구성
+## 2. DB 파일과 이미지 {#image-database}
 
-| 서비스                  | 언어/프레임워크           | 포트   | 역할          | OTel SDK                                         |
-| -------------------- | ------------------ | ---- | ----------- | ------------------------------------------------ |
-| api-gateway          | Go / Gin           | 8080 | API 라우팅, 인증 | Manual                                           |
-| order-service        | Python / FastAPI   | 8000 | 주문 CRUD     | Auto (opentelemetry-instrument)                  |
-| payment-service      | Java / Spring Boot | 8080 | 결제 처리       | Auto (javaagent)                                 |
-| notification-service | Node.js / Express  | 3000 | 알림 발송       | Auto (@opentelemetry/auto-instrumentations-node) |
-| analytics-batch      | Python / Pandas    | -    | 배치 분석       | Auto (opentelemetry-instrument)                  |
-
-### Git 저장소 구조
-
-```
-observability-lab-code/
-├── apps/
-│   ├── api-gateway/
-│   │   ├── main.go
-│   │   ├── Dockerfile
-│   │   └── k8s/
-│   │       ├── deployment.yaml
-│   │       └── service.yaml
-│   ├── order-service/
-│   │   ├── main.py
-│   │   ├── requirements.txt
-│   │   ├── Dockerfile
-│   │   └── k8s/
-│   ├── payment-service/
-│   │   ├── src/main/java/...
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── k8s/
-│   ├── notification-service/
-│   │   ├── index.js
-│   │   ├── package.json
-│   │   ├── Dockerfile
-│   │   └── k8s/
-│   └── analytics-batch/
-│       ├── batch.py
-│       ├── requirements.txt
-│       ├── Dockerfile
-│       └── dags/
-├── argocd/
-│   ├── app-of-apps.yaml
-│   └── applications/
-└── rollouts/
-    ├── rollout.yaml
-    └── analysis-template.yaml
-```
-
-### 서비스 코드 예시
-
-**API Gateway (Go)**
-
-```go
-// apps/api-gateway/main.go
-package main
-
-import (
-    "context"
-    "net/http"
-    "os"
-
-    "github.com/gin-gonic/gin"
-    "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-    "go.opentelemetry.io/otel"
-    "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-    "go.opentelemetry.io/otel/propagation"
-    "go.opentelemetry.io/otel/sdk/resource"
-    sdktrace "go.opentelemetry.io/otel/sdk/trace"
-    semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
-)
-
-func initTracer() (*sdktrace.TracerProvider, error) {
-    ctx := context.Background()
-
-    exporter, err := otlptracegrpc.New(ctx,
-        otlptracegrpc.WithEndpoint(os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")),
-        otlptracegrpc.WithInsecure(),
-    )
-    if err != nil {
-        return nil, err
-    }
-
-    tp := sdktrace.NewTracerProvider(
-        sdktrace.WithBatcher(exporter),
-        sdktrace.WithResource(resource.NewWithAttributes(
-            semconv.SchemaURL,
-            semconv.ServiceNameKey.String("api-gateway"),
-            semconv.ServiceVersionKey.String("v1.0.0"),
-        )),
-    )
-
-    otel.SetTracerProvider(tp)
-    otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-        propagation.TraceContext{},
-        propagation.Baggage{},
-    ))
-
-    return tp, nil
-}
-
-func main() {
-    tp, err := initTracer()
-    if err != nil {
-        panic(err)
-    }
-    defer tp.Shutdown(context.Background())
-
-    r := gin.Default()
-    r.Use(otelgin.Middleware("api-gateway"))
-
-    // Health check
-    r.GET("/health", func(c *gin.Context) {
-        c.JSON(http.StatusOK, gin.H{"status": "healthy"})
-    })
-
-    // Order endpoints - proxy to order-service
-    r.POST("/orders", proxyToService("order-service:8000"))
-    r.GET("/orders/:id", proxyToService("order-service:8000"))
-
-    // Payment endpoints - proxy to payment-service
-    r.POST("/payments", proxyToService("payment-service:8080"))
-    r.GET("/payments/:id", proxyToService("payment-service:8080"))
-
-    r.Run(":8080")
-}
-
-func proxyToService(target string) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        // Proxy implementation with trace context propagation
-        // ...
-    }
-}
-```
-
-**Order Service (Python/FastAPI)**
-
-```python
-# apps/order-service/main.py
-import os
-import json
-import logging
-from datetime import datetime
-from typing import Optional
-
-import boto3
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-# OpenTelemetry auto-instrumentation handles this
-# Just need to configure via environment variables
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-app = FastAPI(title="Order Service")
-
-# Database setup
-DATABASE_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
-Base = declarative_base()
-
-# SQS client
-sqs = boto3.client('sqs', region_name=os.getenv("AWS_REGION", "us-east-1"))
-SQS_QUEUE_URL = os.getenv("SQS_QUEUE_URL")
-
-class Order(Base):
-    __tablename__ = "orders"
-    id = Column(Integer, primary_key=True)
-    customer_id = Column(String(50))
-    product_id = Column(String(50))
-    quantity = Column(Integer)
-    status = Column(String(20), default="pending")
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-class OrderCreate(BaseModel):
-    customer_id: str
-    product_id: str
-    quantity: int
-
-class OrderResponse(BaseModel):
-    id: int
-    customer_id: str
-    product_id: str
-    quantity: int
-    status: str
-    created_at: datetime
-
-@app.get("/health")
-async def health():
-    return {"status": "healthy", "service": "order-service"}
-
-@app.post("/orders", response_model=OrderResponse, status_code=201)
-async def create_order(order: OrderCreate):
-    logger.info(f"Creating order for customer {order.customer_id}")
-
-    db = SessionLocal()
-    try:
-        db_order = Order(
-            customer_id=order.customer_id,
-            product_id=order.product_id,
-            quantity=order.quantity
-        )
-        db.add(db_order)
-        db.commit()
-        db.refresh(db_order)
-
-        # Publish to SQS
-        message = {
-            "event_type": "order_created",
-            "order_id": db_order.id,
-            "customer_id": db_order.customer_id,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        sqs.send_message(
-            QueueUrl=SQS_QUEUE_URL,
-            MessageBody=json.dumps(message)
-        )
-        logger.info(f"Order {db_order.id} created and event published")
-
-        return db_order
-    except Exception as e:
-        logger.error(f"Error creating order: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        db.close()
-
-@app.get("/orders/{order_id}", response_model=OrderResponse)
-async def get_order(order_id: int):
-    db = SessionLocal()
-    try:
-        order = db.query(Order).filter(Order.id == order_id).first()
-        if not order:
-            raise HTTPException(status_code=404, detail="Order not found")
-        return order
-    finally:
-        db.close()
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-```
-
-**Payment Service (Java/Spring Boot)**
-
-```java
-// apps/payment-service/src/main/java/com/obslab/payment/PaymentController.java
-package com.obslab.payment;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import software.amazon.awssdk.services.sns.SnsClient;
-import software.amazon.awssdk.services.sns.model.PublishRequest;
-
-import java.time.LocalDateTime;
-
-@RestController
-@RequestMapping("/payments")
-public class PaymentController {
-
-    private static final Logger logger = LoggerFactory.getLogger(PaymentController.class);
-
-    @Autowired
-    private PaymentRepository paymentRepository;
-
-    @Autowired
-    private SnsClient snsClient;
-
-    @Value("${aws.sns.topic-arn}")
-    private String snsTopicArn;
-
-    @PostMapping
-    public ResponseEntity<Payment> createPayment(@RequestBody PaymentRequest request) {
-        logger.info("Processing payment for order {}", request.getOrderId());
-
-        Payment payment = new Payment();
-        payment.setOrderId(request.getOrderId());
-        payment.setAmount(request.getAmount());
-        payment.setPaymentMethod(request.getPaymentMethod());
-        payment.setStatus("completed");
-        payment.setCreatedAt(LocalDateTime.now());
-
-        Payment saved = paymentRepository.save(payment);
-
-        // Publish to SNS
-        String message = String.format(
-            "{\"event_type\":\"payment_completed\",\"payment_id\":%d,\"order_id\":%d,\"amount\":%.2f}",
-            saved.getId(), saved.getOrderId(), saved.getAmount()
-        );
-
-        snsClient.publish(PublishRequest.builder()
-            .topicArn(snsTopicArn)
-            .message(message)
-            .build());
-
-        logger.info("Payment {} completed for order {}", saved.getId(), saved.getOrderId());
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Payment> getPayment(@PathVariable Long id) {
-        return paymentRepository.findById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/health")
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("{\"status\":\"healthy\",\"service\":\"payment-service\"}");
-    }
-}
-```
-
-**Notification Service (Node.js/Express)**
-
-```javascript
-// apps/notification-service/index.js
-const express = require('express');
-const { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } = require('@aws-sdk/client-sqs');
-
-// OpenTelemetry auto-instrumentation is loaded via -r flag
-// node -r @opentelemetry/auto-instrumentations-node/register index.js
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-const sqsClient = new SQSClient({ region: process.env.AWS_REGION || 'us-east-1' });
-const queueUrl = process.env.SQS_QUEUE_URL;
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'notification-service' });
-});
-
-// SQS Consumer
-async function pollMessages() {
-  while (true) {
-    try {
-      const command = new ReceiveMessageCommand({
-        QueueUrl: queueUrl,
-        MaxNumberOfMessages: 10,
-        WaitTimeSeconds: 20,
-        MessageAttributeNames: ['All'],
-      });
-
-      const response = await sqsClient.send(command);
-
-      if (response.Messages) {
-        for (const message of response.Messages) {
-          await processMessage(message);
-        }
-      }
-    } catch (error) {
-      console.error('Error polling messages:', error);
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    }
-  }
-}
-
-async function processMessage(message) {
-  console.log('Processing message:', message.MessageId);
-
-  try {
-    const body = JSON.parse(message.Body);
-
-    // Send notification based on event type
-    if (body.event_type === 'order_created') {
-      await sendNotification({
-        type: 'email',
-        to: body.customer_id,
-        subject: 'Order Confirmation',
-        body: `Your order ${body.order_id} has been created.`,
-      });
-    }
-
-    // Delete message from queue
-    await sqsClient.send(new DeleteMessageCommand({
-      QueueUrl: queueUrl,
-      ReceiptHandle: message.ReceiptHandle,
-    }));
-
-    console.log('Message processed successfully:', message.MessageId);
-  } catch (error) {
-    console.error('Error processing message:', error);
-    throw error;
-  }
-}
-
-async function sendNotification(notification) {
-  // Simulate notification sending
-  console.log('Sending notification:', notification);
-  await new Promise(resolve => setTimeout(resolve, 100));
-  console.log('Notification sent:', notification.type);
-}
-
-app.listen(port, () => {
-  console.log(`Notification service listening on port ${port}`);
-  pollMessages();
-});
-```
-
-### Dockerfile 예시
-
-**Order Service Dockerfile**
-
-```dockerfile
-# apps/order-service/Dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install OpenTelemetry instrumentation
-RUN pip install opentelemetry-distro opentelemetry-exporter-otlp
-RUN opentelemetry-bootstrap -a install
-
-COPY . .
-
-# Use opentelemetry-instrument to auto-instrument
-CMD ["opentelemetry-instrument", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-**Payment Service Dockerfile**
-
-```dockerfile
-# apps/payment-service/Dockerfile
-FROM eclipse-temurin:21-jdk-alpine AS builder
-
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-
-RUN ./mvnw clean package -DskipTests
-
-FROM eclipse-temurin:21-jre-alpine
-
-WORKDIR /app
-
-# Download OpenTelemetry Java agent
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.2.0/opentelemetry-javaagent.jar /app/opentelemetry-javaagent.jar
-
-COPY --from=builder /app/target/*.jar app.jar
-
-# Run with Java agent
-ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-jar", "app.jar"]
-```
-
-***
-
-## Step 3.2: Karpenter NodePool 구성
-
-**Step 3.2.1: Service Cluster Karpenter 설정**
+Part1의 전용 runtime 계정과 private connection file을 사용합니다. Pod에서는 CA 경로 `/run/database-ca/global-bundle.pem`, connection path `/run/database/connection.json`을 사용합니다. 연결 파일과 public RDS CA를 각각 Secret/ConfigMap으로 mount합니다.
 
 ```bash
-# Service Cluster로 전환
-kubectl config use-context service
+cd examples/labs/observability/application
+kubectl --context service create namespace msa --dry-run=client -o yaml | kubectl --context service apply -f -
+kubectl --context service -n msa create secret generic lab-database --from-file=connection.json="$LAB_STATE/runtime-pod-connection.json"
+kubectl --context service -n msa create configmap lab-database-ca --from-file=global-bundle.pem="$LAB_STATE/global-bundle.pem"
+docker buildx build --platform linux/amd64 \
+  --tag "$IMAGE_REPOSITORY:$IMAGE_TAG" --push .
+docker buildx imagetools inspect "$IMAGE_REPOSITORY:$IMAGE_TAG"
 ```
+태그는 Part1에서 선택한 immutable version과 일치시킵니다. 기존 Secret을 갱신할 때는 값을 출력하거나 chart에 넣지 말고 조직의 secret rotation 절차를 사용합니다. Dockerfile은 고정 base digest·non-root UID10001·제한된 build context를 사용합니다.
 
-```yaml
-# karpenter-nodepool.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: msa-workloads
-spec:
-  template:
-    metadata:
-      labels:
-        workload-type: msa
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot", "on-demand"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - m5.large
-            - m5.xlarge
-            - m5.2xlarge
-            - m6i.large
-            - m6i.xlarge
-            - m6i.2xlarge
-            - c5.large
-            - c5.xlarge
-            - c6i.large
-            - c6i.xlarge
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: default
-  limits:
-    cpu: 200
-    memory: 400Gi
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 30s
-    budgets:
-      - nodes: "20%"
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: default
-spec:
-  amiSelectorTerms:
-    - alias: al2023@latest
-  role: KarpenterNodeRole-obs-service
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: obs-service-cluster
-  securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: obs-service-cluster
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 100Gi
-        volumeType: gp3
-        iops: 3000
-        throughput: 125
-        deleteOnTermination: true
-  tags:
-    Environment: lab
-    ManagedBy: karpenter
-```
+생성되는 `m6i.large` 노드는 AMD64입니다. AMD64 또는 해당 대상의 교차 빌드를 지원하는 Buildx builder를 사용하고, 배포 전에 push된 manifest의 `linux/amd64`를 확인합니다. 감사에서 실행한 로컬 ARM64 smoke test는 AMD64 빌드 검증을 대신하지 않습니다.
 
-```bash
-kubectl apply -f karpenter-nodepool.yaml
-```
-
-***
-
-## Step 3.3: KEDA ScaledObject 구성
-
-| Scaler     | Target Service       | Trigger         | Scale 기준  |
-| ---------- | -------------------- | --------------- | --------- |
-| SQS        | notification-service | SQS Queue Depth | 메시지 > 10개 |
-| Prometheus | order-service        | Request Rate    | RPS > 100 |
-
-**Step 3.3.1: KEDA 설치**
+## 3. controller와 chart 설치 {#deployment}
 
 ```bash
 helm repo add kedacore https://kedacore.github.io/charts
-helm repo update
-
-helm install keda kedacore/keda \
-  --namespace keda \
-  --create-namespace \
-  --wait
+helm repo add argo https://argoproj.github.io/argo-helm
+helm upgrade --install keda kedacore/keda --version 2.20.2   --kube-context service -n keda --create-namespace -f "$LAB_STATE/helm-inputs/keda.yaml"
+helm upgrade --install argo-rollouts argo/argo-rollouts --version 2.43.1   --kube-context service -n argo-rollouts --create-namespace
+helm upgrade --install observability-lab ./chart --kube-context service -n msa   -f "$LAB_STATE/helm-inputs/application.yaml"
+kubectl --context service -n msa get deployment,rollout,pods,svc,scaledobject
 ```
+5개 ServiceAccount의 역할과 IRSA subject를 확인합니다. gateway는 AWS 역할이 없고, publisher는 SNS, 소비자는 자기 queue, KEDA는 queue attributes만 접근합니다. 기존 Pod Identity와 IRSA를 같은 workload에 중복 구성하지 않습니다. readiness는 DB/schema를 확인하지만 SQS/IAM delivery 성공까지 의미하지 않습니다.
 
-**Step 3.3.2: SQS Scaler (notification-service)**
+ServiceMonitor label은 service Prometheus release와 일치합니다. `honorLabels`로 앱 service label을 유지합니다. NodePool이 없는 환경에서도 EKS managed node group에서 실행할 수 있으며, Karpenter는 [별도 가이드](../../autoscaling/02-karpenter.md)의 IAM·discovery·EC2NodeClass·AMI·taint 검증 후 추가합니다.
 
-```yaml
-# keda-sqs-scaler.yaml
-apiVersion: keda.sh/v1alpha1
-kind: TriggerAuthentication
-metadata:
-  name: aws-credentials
-  namespace: msa
-spec:
-  podIdentity:
-    provider: aws-eks
----
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: notification-service-scaler
-  namespace: msa
-spec:
-  scaleTargetRef:
-    name: notification-service
-  pollingInterval: 15
-  cooldownPeriod: 60
-  minReplicaCount: 1
-  maxReplicaCount: 20
-  triggers:
-    - type: aws-sqs-queue
-      authenticationRef:
-        name: aws-credentials
-      metadata:
-        queueURL: "${SQS_QUEUE_URL}"
-        queueLength: "10"
-        awsRegion: "us-east-1"
-        identityOwner: operator
-```
+![관리와 서비스 영역의 배포·관측 연결](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-0.png)
 
-**Step 3.3.3: Prometheus Scaler (order-service)**
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-03-msa-deployment-lab-0.html)
 
-```yaml
-# keda-prometheus-scaler.yaml
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: order-service-scaler
-  namespace: msa
-spec:
-  scaleTargetRef:
-    name: order-service
-  pollingInterval: 15
-  cooldownPeriod: 60
-  minReplicaCount: 2
-  maxReplicaCount: 15
-  triggers:
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus-operated.monitoring.svc:9090
-        metricName: http_requests_total
-        query: sum(rate(http_requests_total{service="order-service"}[1m]))
-        threshold: "100"
-```
+## 4. 기본 트래픽과 비동기 처리 검증 {#verify}
 
 ```bash
-envsubst < keda-sqs-scaler.yaml | kubectl apply -f -
-kubectl apply -f keda-prometheus-scaler.yaml
+kubectl --context service -n msa port-forward svc/api-gateway 8080:8080
+# Run in another terminal from the repository root:
+BASE_URL=http://127.0.0.1:8080 LOAD_PROFILE=smoke   k6 run --no-usage-report examples/labs/observability/load-test/k6-scenario.js
 ```
+생성한 ID로만 조회하고 합성 결제 상태까지 검증합니다. 두 큐에 각각 이벤트가 도착하는지, consumer의 `/stats`·DB count·log가 증가하는지 확인합니다. 같은 큐를 notification과 analytics가 경쟁 소비하면 fanout이 아니므로 큐를 분리했습니다. 실패/poison message는 ack하지 않고 DLQ 정책으로 처리합니다.
 
-***
+CloudWatch·Loki의 JSON trace_id와 Tempo의 실제 span, Prometheus exemplar ID를 대조합니다. 수집기만 설치한 상태를 전체 E2E 성공으로 기록하지 않습니다.
 
-## Step 3.4: ArgoCD Application/ApplicationSet
+## 5. 카나리·GitOps 책임 {#canary}
 
-**Step 3.4.1: App-of-Apps 패턴**
 
-```yaml
-# argocd/app-of-apps.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: obs-lab-apps
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  project: obs-lab
-  source:
-    repoURL: https://github.com/example/observability-lab-code.git
-    targetRevision: main
-    path: argocd/applications
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-```
-
-**Step 3.4.2: ApplicationSet (서비스별)**
-
-```yaml
-# argocd/applications/msa-apps.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: msa-services
-  namespace: argocd
-spec:
-  generators:
-    - list:
-        elements:
-          - name: api-gateway
-            path: apps/api-gateway/k8s
-          - name: order-service
-            path: apps/order-service/k8s
-          - name: payment-service
-            path: apps/payment-service/k8s
-          - name: notification-service
-            path: apps/notification-service/k8s
-
-  template:
-    metadata:
-      name: '{{name}}'
-      namespace: argocd
-      labels:
-        app.kubernetes.io/part-of: obs-lab-msa
-    spec:
-      project: obs-lab
-      source:
-        repoURL: https://github.com/example/observability-lab-code.git
-        targetRevision: main
-        path: '{{path}}'
-      destination:
-        server: https://obs-service-cluster-endpoint
-        namespace: msa
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - ApplyOutOfSyncOnly=true
-```
-
-```bash
-# Managed Cluster로 전환
-kubectl config use-context managed
-
-# App-of-Apps 배포
-kubectl apply -f argocd/app-of-apps.yaml
-```
-
-***
-
-## Step 3.5: 초기 배포 확인
-
-```bash
-# ArgoCD Application 상태 확인
-argocd app list
-
-# Service Cluster의 MSA Pod 확인
-kubectl --context service get pods -n msa -o wide
-
-# 모든 서비스 Ready 대기
-kubectl --context service wait --for=condition=Ready pod -l app.kubernetes.io/part-of=obs-lab-msa -n msa --timeout=300s
-```
-
-### 예상 결과
-
-| Application          | Sync Status | Health Status |
-| -------------------- | ----------- | ------------- |
-| api-gateway          | Synced      | Healthy       |
-| order-service        | Synced      | Healthy       |
-| payment-service      | Synced      | Healthy       |
-| notification-service | Synced      | Healthy       |
-
-***
-
-## Step 3.6: OTel Auto-Instrumentation 구성
-
-| 서비스                  | 언어      | Instrumentation 방식                | 설정 방법                 |
-| -------------------- | ------- | --------------------------------- | --------------------- |
-| api-gateway          | Go      | Manual SDK                        | 코드에 직접 통합             |
-| order-service        | Python  | Auto (opentelemetry-instrument)   | Dockerfile ENTRYPOINT |
-| payment-service      | Java    | Auto (javaagent)                  | -javaagent JVM 옵션     |
-| notification-service | Node.js | Auto (auto-instrumentations-node) | -r 플래그                |
-| analytics-batch      | Python  | Auto (opentelemetry-instrument)   | Dockerfile ENTRYPOINT |
-
-**Step 3.6.1: OTel 환경 변수 ConfigMap**
-
-```yaml
-# otel-env-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: otel-env
-  namespace: msa
-data:
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-agent-collector.msa.svc:4317"
-  OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
-  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=obs-lab,deployment.environment=lab"
-  OTEL_TRACES_SAMPLER: "parentbased_traceidratio"
-  OTEL_TRACES_SAMPLER_ARG: "1.0"
-  OTEL_LOGS_EXPORTER: "otlp"
-  OTEL_METRICS_EXPORTER: "otlp"
-```
-
-**Step 3.6.2: 서비스별 Deployment에 환경 변수 적용**
-
-```yaml
-# apps/order-service/k8s/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: order-service
-  namespace: msa
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: order-service
-  template:
-    metadata:
-      labels:
-        app: order-service
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8000"
-    spec:
-      serviceAccountName: msa-service-account
-      containers:
-        - name: order-service
-          image: ${ECR_REPO}/order-service:v1.0.0
-          ports:
-            - containerPort: 8000
-          envFrom:
-            - configMapRef:
-                name: otel-env
-          env:
-            - name: OTEL_SERVICE_NAME
-              value: "order-service"
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: aurora-credentials
-                  key: url
-            - name: SQS_QUEUE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: aws-resources
-                  key: sqs-queue-url
-            - name: AWS_REGION
-              value: "us-east-1"
-          resources:
-            requests:
-              cpu: 200m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 512Mi
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 5
-```
-
-**Step 3.6.3: Java 서비스 (Payment) - javaagent 설정**
-
-```yaml
-# apps/payment-service/k8s/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: payment-service
-  namespace: msa
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: payment-service
-  template:
-    metadata:
-      labels:
-        app: payment-service
-    spec:
-      serviceAccountName: msa-service-account
-      containers:
-        - name: payment-service
-          image: ${ECR_REPO}/payment-service:v1.0.0
-          ports:
-            - containerPort: 8080
-          env:
-            - name: OTEL_SERVICE_NAME
-              value: "payment-service"
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-agent-collector.msa.svc:4317"
-            - name: OTEL_TRACES_EXPORTER
-              value: "otlp"
-            - name: OTEL_METRICS_EXPORTER
-              value: "otlp"
-            - name: OTEL_LOGS_EXPORTER
-              value: "otlp"
-            - name: JAVA_TOOL_OPTIONS
-              value: "-javaagent:/app/opentelemetry-javaagent.jar"
-            - name: SPRING_DATASOURCE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: aurora-credentials
-                  key: jdbc-url
-          resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-            limits:
-              cpu: 2000m
-              memory: 1Gi
-```
-
-***
-
-## Step 3.7: Argo Rollouts Canary 배포
-
-### Canary 배포 상태 다이어그램
-
-![Argo Rollouts 카나리 상태 머신에서 v2 트래픽 비중을 SetWeight 20에서 시작해 대기 후 Analysis 1 게이트를 통과하면 40%, 60%, 80%로 올리고 Analysis 2 게이트까지 통과하면 SetWeight 100으로 v2를 승격하며, 어느 게이트에서든 성공률·지연시간 지표가 기준을 넘지 못하면 즉시 v1으로 롤백하는 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-1.png)
+![수동 확인·카나리 전용 분석·승격 또는 중단](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-03-msa-deployment-lab-1.html)
+payment-service는 Rollout 하나만 소유합니다. 기본 5 replicas의 20% step은 replica 비율 기반이며 실제 요청 20%를 보장하지 않습니다. 기본 pause에서 새 revision에 트래픽을 만든 뒤 분석합니다. 쿼리는 `rollouts-pod-template-hash` revision으로 제한하고 최근 요청5개 이상·성공률99% 이상을 요구합니다. empty/NaN/Inf/multi-series는 통과하지 않습니다.
 
-**Step 3.7.1: Rollout 리소스**
+Argo Rollouts1.10.0의 실제 조건 평가와 PromQL을 검증했지만 실제 클러스터 promotion은 실행하지 않았습니다. abort는 Git revert나 desired image 복구가 아닙니다. ArgoCD를 선택하면 [설치 가이드](../../gitops/argocd/01-installation.md)를 따라 이 저장소의 실제 chart 경로와 검토한 revision을 사용하고, 직접 Helm 관리와 동시에 소유하지 않습니다. Secret은 Git에 넣지 않고 기존 이름을 참조합니다. App-of-apps sync wave만으로 child readiness가 보장된다고 가정하지 않습니다.
 
-```yaml
-# rollouts/order-service-rollout.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: order-service
-  namespace: msa
-spec:
-  replicas: 4
-  revisionHistoryLimit: 3
-  selector:
-    matchLabels:
-      app: order-service
-  template:
-    metadata:
-      labels:
-        app: order-service
-    spec:
-      serviceAccountName: msa-service-account
-      containers:
-        - name: order-service
-          image: ${ECR_REPO}/order-service:v1.0.0
-          ports:
-            - containerPort: 8000
-          envFrom:
-            - configMapRef:
-                name: otel-env
-          env:
-            - name: OTEL_SERVICE_NAME
-              value: "order-service"
-          resources:
-            requests:
-              cpu: 200m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 512Mi
-  strategy:
-    canary:
-      canaryService: order-service-canary
-      stableService: order-service-stable
-      trafficRouting:
-        nginx:
-          stableIngress: order-service-ingress
-      steps:
-        - setWeight: 20
-        - pause: { duration: 30s }
-        - analysis:
-            templates:
-              - templateName: success-rate-latency
-            args:
-              - name: service-name
-                value: order-service
-        - setWeight: 40
-        - pause: { duration: 30s }
-        - setWeight: 60
-        - pause: { duration: 30s }
-        - setWeight: 80
-        - analysis:
-            templates:
-              - templateName: success-rate-latency
-            args:
-              - name: service-name
-                value: order-service
-        - setWeight: 100
-      analysis:
-        successfulRunHistoryLimit: 3
-        unsuccessfulRunHistoryLimit: 3
-```
+### 수동 pause 실습 절차
 
-**Step 3.7.2: AnalysisTemplate**
-
-```yaml
-# rollouts/analysis-template.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: success-rate-latency
-  namespace: msa
-spec:
-  args:
-    - name: service-name
-  metrics:
-    - name: success-rate
-      interval: 30s
-      count: 3
-      successCondition: result[0] >= 0.95
-      failureLimit: 1
-      provider:
-        prometheus:
-          address: http://prometheus-operated.monitoring.svc:9090
-          query: |
-            sum(rate(http_requests_total{service="{{args.service-name}}", status=~"2.."}[5m])) /
-            sum(rate(http_requests_total{service="{{args.service-name}}"}[5m]))
-
-    - name: p99-latency
-      interval: 30s
-      count: 3
-      successCondition: result[0] < 2
-      failureLimit: 1
-      provider:
-        prometheus:
-          address: http://prometheus-operated.monitoring.svc:9090
-          query: |
-            histogram_quantile(0.99,
-              sum(rate(http_request_duration_seconds_bucket{service="{{args.service-name}}"}[5m])) by (le)
-            )
-
-    - name: error-rate
-      interval: 30s
-      count: 3
-      successCondition: result[0] < 0.05
-      failureLimit: 1
-      provider:
-        prometheus:
-          address: http://prometheus-operated.monitoring.svc:9090
-          query: |
-            sum(rate(http_requests_total{service="{{args.service-name}}", status=~"5.."}[5m])) /
-            sum(rate(http_requests_total{service="{{args.service-name}}"}[5m]))
-```
-
-**Step 3.7.3: Service 리소스**
-
-```yaml
-# rollouts/services.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-service-stable
-  namespace: msa
-spec:
-  selector:
-    app: order-service
-  ports:
-    - port: 8000
-      targetPort: 8000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-service-canary
-  namespace: msa
-spec:
-  selector:
-    app: order-service
-  ports:
-    - port: 8000
-      targetPort: 8000
-```
+아래는 Helm이 desired state를 소유하는 실습입니다. GitOps로 관리 중이면 검토한 image 변경과 복구를 Git에서 수행하고 직접 Helm 변경을 섞지 않습니다. [Argo Rollouts 1.10.0 release](https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0)에서 OS/CPU에 맞는 CLI와 checksum을 확인한 후 설치합니다.
 
 ```bash
-# Rollout 및 AnalysisTemplate 배포
-kubectl --context service apply -f rollouts/
+# ROLLOUTS_BINARY: checksum-verified binary for your OS/architecture.
+: "${ROLLOUTS_BINARY:?Set the verified Argo Rollouts 1.10.0 binary path}"
+mkdir -p "$HOME/.local/bin"
+install -m 755 "$ROLLOUTS_BINARY" "$HOME/.local/bin/kubectl-argo-rollouts"
+export PATH="$HOME/.local/bin:$PATH"
+kubectl argo rollouts version --short
 ```
 
-***
-
-## Step 3.8: 의도적 실패 주입 및 자동 롤백
-
-**Step 3.8.1: 버그가 있는 v2 버전 배포**
+안정 상태의 Rollout과 기존 values를 확인한 뒤 Part3 빌드 절차로 실제 검토한 AMD64 이미지를 새 immutable tag로 게시합니다. 초기 설치는 기존 stable revision이 없으므로 그 자체로 canary update 실습이 되지 않습니다. 이 chart의 image 값은 모든 앱 역할이 공유하므로 새 tag 적용 시 다른 역할도 일반 Deployment update를 수행하며 payment만 Rollout 단계를 거칩니다.
 
 ```bash
-# v2 이미지 (의도적으로 500 에러 발생)
-kubectl --context service set image rollout/order-service \
-  order-service=${ECR_REPO}/order-service:v2-buggy \
-  -n msa
-
-# Rollout 상태 관찰
-kubectl argo rollouts get rollout order-service -n msa --watch
+# Run from examples/labs/observability/application.
+: "${CANARY_IMAGE_TAG:?Set an actually built and reviewed immutable AMD64 image tag}"
+# Keep the original application.yaml as the stable revision's complete values.
+CANARY_VALUES="$LAB_STATE/helm-inputs/canary-image.yaml"
+python3 - "$CANARY_VALUES" "$CANARY_IMAGE_TAG" <<'PYIMAGE'
+import sys, json
+with open(sys.argv[1], "w") as output:
+    json.dump({"image": {"tag": sys.argv[2]}}, output)
+PYIMAGE
+helm upgrade observability-lab ./chart --kube-context service -n msa \
+  -f "$LAB_STATE/helm-inputs/application.yaml" -f "$CANARY_VALUES"
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
 ```
 
-**Step 3.8.2: 자동 롤백 확인**
+`--watch` 창은 별도 터미널에서 유지하고 필요하면 Ctrl+C로 종료합니다. 트래픽과 promote/abort 명령은 다른 터미널에서 실행합니다.
+
+`Paused` 상태에서 4절의 트래픽을 계속 생성하고 새 `rollouts-pod-template-hash` revision에 최근 요청이 최소 5개 도착했는지 Prometheus에서 확인합니다. 조회 실패·트래픽 부재를 정상으로 간주하지 않습니다. 검증 후 다음 명령으로 수동 pause를 해제하면 chart의 AnalysisRun을 거쳐 나머지 단계가 실행됩니다. `--full`은 분석·pause를 건너뛰므로 이 실습에서는 사용하지 않습니다.
 
 ```bash
-# AnalysisRun 상태 확인
-kubectl --context service get analysisrun -n msa
-
-# 롤백 이벤트 확인
-kubectl --context service get events -n msa --sort-by='.lastTimestamp' | grep -i rollback
+kubectl argo rollouts promote payment-service --context service -n msa
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
+kubectl --context service -n msa get analysisruns
 ```
 
-### 예상 결과
-
-```
-NAME                                   STATUS   STEP  SETWEIGHT  ACTUALWEIGHT
-order-service-6b7d8f9c5d              Degraded 2     20         20
-
-AnalysisRun:
-NAME                                    STATUS   AGE
-order-service-6b7d8f9c5d-2-analysis-1  Failed   2m
-
-Events:
-RolloutAborted   Rollout is aborted due to AnalysisRun 'order-service-6b7d8f9c5d-2-analysis-1' failure
-```
-
-***
-
-## 검증 (Verification)
-
-### Argo Rollouts Dashboard
+문제가 생기면 승격 대신 중단하고 원래 전체 values로 desired image도 복구합니다. Abort만으로 spec.template이나 Git이 이전 버전으로 바뀌지는 않습니다.
 
 ```bash
-# Rollouts Dashboard 포트 포워딩
-kubectl --context service port-forward svc/argo-rollouts-dashboard 3100:3100 -n argo-rollouts &
-
-# 브라우저에서 http://localhost:3100 접속
+kubectl argo rollouts abort payment-service --context service -n msa
+helm upgrade observability-lab ./chart --kube-context service -n msa \
+  -f "$LAB_STATE/helm-inputs/application.yaml"
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
 ```
 
-### Grafana에서 트래픽 분할 확인
+승격에 성공하면 승인한 image overlay를 이후 Helm 명령에도 유지하거나 관리하는 desired values에 반영합니다. 실패 분석 기록을 보존한 뒤 결과를 확인합니다. 이 감사에서는 CLI checksum·help와 chart/분석 로직을 확인했으며 위 cluster update/promote/abort 명령은 실행하지 않았습니다.
 
-```promql
-# v1 vs v2 트래픽 비율
-sum(rate(http_requests_total{service="order-service", version="v1"}[5m])) /
-sum(rate(http_requests_total{service="order-service"}[5m]))
+[Part4](./04-load-testing-scaling-lab.md)로 진행합니다. 전체 정리는 [Part6](./06-distributed-tracing-lab.md#cleanup)의 소유권·의존성 순서를 따릅니다.
 
-sum(rate(http_requests_total{service="order-service", version="v2"}[5m])) /
-sum(rate(http_requests_total{service="order-service"}[5m]))
-```
+## 검증 범위
 
-### 검증 항목
-
-| 항목                | 확인 방법                             | 예상 결과              |
-| ----------------- | --------------------------------- | ------------------ |
-| ArgoCD Sync       | `argocd app list`                 | All Synced/Healthy |
-| MSA Pods          | `kubectl get pods -n msa`         | All Running        |
-| OTel Traces       | Grafana Tempo                     | Traces visible     |
-| KEDA ScaledObject | `kubectl get scaledobject -n msa` | Active             |
-| Rollout Status    | `kubectl argo rollouts status`    | Healthy            |
-
-***
-
-## 참조 문서
-
-* [ArgoCD 설치](../../gitops/argocd/01-installation.md)
-* [트래픽 관리](../../gitops/argocd/05-traffic-management.md)
-* [KEDA 이벤트 기반 스케일링](../../autoscaling/01-keda.md)
-* [Karpenter 오토스케일링](../../autoscaling/02-karpenter.md)
-
-***
-
-## 다음 단계
-
-MSA 배포가 완료되었습니다. [Part 4: 부하 테스트 및 스케일링](04-load-testing-scaling-lab.md)로 진행하여 실제 부하 상황에서의 Observability를 확인합니다.
+로컬 SQLite/PostgreSQL·HTTP3서비스·OTel상관관계·SDK모의SNS/SQS·container smoke·Helm/CRD·PromQL/Argo조건을 확인했습니다. 실제 AuroraTLS·EKS/IRSA·SQSfanout·KEDA/Karpenter·canary traffic split은 실행하지 않았습니다.

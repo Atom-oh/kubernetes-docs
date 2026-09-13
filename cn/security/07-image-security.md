@@ -1,38 +1,38 @@
 # 容器镜像安全
 
-> **最后更新**: September 13, 2026
-> **验证基线**: Trivy 0.74.0, Trivy Operator 0.34.0/chart 0.36.0, Cosign 3.1.3, Kyverno 1.19.1, Connaisseur 3.12.0/chart 2.12.0。这些是 CLI/配置基线，并不代表已在所有 Kubernetes 版本上完成部署测试。
+> **最后更新**：2026 年 9 月 13 日
+> **验证基线**：Trivy 0.74.0、Trivy Operator 0.34.0/chart 0.36.0、Cosign 3.1.3、Kyverno 1.19.1、Connaisseur 3.12.0/chart 2.12.0。这些是 CLI/配置基线，不代表已对全部 Kubernetes 版本进行部署测试。
 
-镜像安全始于确认**构建、扫描和部署的制品相同**。扫描可识别已知漏洞和配置问题；签名可将签名者关联到摘要。二者都不能保证应用程序安全。
+镜像安全首先确认**构建、扫描和部署的是同一制品**。扫描识别已知漏洞和配置问题；签名将签名者与摘要关联。两者都不保证应用安全。
 
 ## 目录
 
-1. [镜像扫描概览](#image-scanning-overview)
+1. [镜像扫描概述](#image-scanning-overview)
 2. [Trivy](#trivy)
 3. [Amazon ECR 镜像扫描](#amazon-ecr-image-scanning)
-4. [使用 Cosign/Sigstore 对镜像签名](#image-signing-with-cosignsigstore)
-5. [在准入控制中验证镜像](#image-verification-in-admission-control)
+4. [使用 Cosign/Sigstore 签名镜像](#image-signing-with-cosignsigstore)
+5. [准入控制中的镜像验证](#image-verification-in-admission-control)
 6. [供应链安全](#supply-chain-security)
 7. [基础镜像选择](#base-image-selection)
-8. [镜像注册表最佳实践](#image-registry-best-practices)
+8. [镜像仓库最佳实践](#image-registry-best-practices)
 9. [CI/CD 流水线集成](#cicd-pipeline-integration)
 
 <span id="shift-left-security"></span>
 <span id="scan-targets"></span>
 
-## 镜像扫描概览
+## 镜像扫描概述 {#image-scanning-overview}
 
-左移（Shift-left）会在 IDE、PR 和构建阶段引入检查。新的 CVE 会在发布后出现，因此注册表重新扫描和运行时检测仍是独立的要求。
+安全左移在 IDE、PR 和构建中引入检查。发布后会出现新 CVE，因此仓库重新扫描和运行时检测仍是独立要求。
 
-| 目标 | 检查项 | 示例工具 |
+| 目标 | 检查 | 工具示例 |
 |---|---|---|
-| OS/语言包 | 识别、数据库时效、已修复版本、VEX 决策 | Trivy, Grype |
-| IaC/Dockerfile | 非 root 执行、权限、配置 | Trivy misconfig, Checkov |
-| Secret | 镜像层或源代码中的凭证 | Trivy secret, TruffleHog |
-| 许可证/SBOM | 组件和许可证检测覆盖范围 | Syft, Trivy |
+| 操作系统/语言软件包 | 识别、数据库年龄、修复版本、VEX 决策 | Trivy、Grype |
+| IaC/Dockerfile | 非 root 执行、权限、配置 | Trivy misconfig、Checkov |
+| 密钥 | 镜像层或源码中的凭证 | Trivy secret、TruffleHog |
+| 许可证/SBOM | 组件和许可证检测覆盖 | Syft、Trivy |
 | 运行时行为 | 实时系统调用、进程、网络 | Falco 等独立工具 |
 
-流程为 `source checks → build once → scan that artifact → push → sign/verify digest → admission checks → rescan`。组织应定义严重性门禁，并为例外指定负责人、理由和到期时间。
+流程为 `source checks → build once → scan that artifact → push → sign/verify digest → admission checks → rescan`。组织定义严重性门禁，并为例外指定所有者、理由和到期。
 
 <span id="trivy-installation"></span>
 <span id="image-scanning"></span>
@@ -40,11 +40,11 @@
 <span id="trivy-configuration-file"></span>
 <span id="trivy-operator-kubernetes-integration"></span>
 
-## Trivy
+## Trivy {#trivy}
 
 ### 安装和扫描
 
-验证适用于操作系统/CPU 架构的官方发行包及其校验和。不要在 Linux ARM64 上安装 amd64 二进制文件，也不要使用已废弃的 apt-key 指令。在自动化中固定 CLI/action 版本。
+验证对应操作系统/CPU 架构的官方发布包和校验和。不要在 Linux ARM64 安装 amd64 二进制，也不要使用退役的 apt-key 说明。自动化中固定 CLI/action 版本。
 
 ```bash
 trivy --version
@@ -59,7 +59,7 @@ trivy config ./k8s/
 trivy config ./charts/my-app/ --helm-values ./charts/my-app/values.yaml
 ```
 
-`IMAGE_REF` 是一个有意设置的占位符，需要替换为真实摘要。使用 `misconfig`，而不是 `--scanners config`。`--ignore-unfixed` 会隐藏尚未修复的漏洞，因此不要在默认门禁中不加区分地启用它。检查注册表、漏洞/Java 数据库和检查包的网络/缓存要求。`trivy config` 没有 `--offline-scan` 选项。
+`IMAGE_REF` 是需真实摘要替换的有意占位符。使用 `misconfig`，不是 `--scanners config`。`--ignore-unfixed` 隐藏尚无修复的漏洞，因此默认门禁不要无差别启用。检查仓库、漏洞/Java 数据库和检查包的网络/缓存要求。`trivy config` 没有 `--offline-scan` 选项。
 
 ### 配置和例外
 
@@ -81,7 +81,7 @@ vulnerability:
   ignore-unfixed: false
 ```
 
-这是镜像/文件系统扫描基线。不要添加不受支持的 vulnerability.type 或顶层忽略列表。通过 .trivyignore/受支持的忽略策略格式管理例外，并区分 Secret 和漏洞例外。示例 .trivyignore 不含默认排除项。
+这是镜像/文件系统扫描基线。不要添加不支持的 vulnerability.type 或顶层忽略列表。通过 .trivyignore/受支持 ignore-policy 格式管理例外，区分密钥与漏洞例外。示例 .trivyignore 没有默认排除项。
 
 <span id="trivy-overview"></span>
 
@@ -94,24 +94,24 @@ helm upgrade --install trivy-operator aqua/trivy-operator   --version 0.36.0 --n
 kubectl get vulnerabilityreports -A
 ```
 
-Chart 0.36.0 部署应用程序 0.34.0。[values 文件](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml)明确设置了 ignoreUnfixed:false。报告是 Operator 生成的结果；不要将虚构的 CVE/包版本清单作为扫描证据应用。检查实际报告架构、被监视的 namespace、注册表凭证、扫描 Job 权限和资源。本审计仅渲染了 Chart。
+Chart 0.36.0 部署应用 0.34.0。[Values 文件](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml)显式设置 ignoreUnfixed:false。报告是 Operator 生成结果；不要应用虚构 CVE/软件包版本清单作为扫描证据。检查实际报告模式、监视命名空间、仓库凭证、扫描 Job 权限和资源。本审计仅渲染 chart。
 
 <span id="basic-scanning-vs-enhanced-scanning"></span>
 <span id="enabling-enhanced-scanning"></span>
 <span id="retrieving-scan-results"></span>
 <span id="notifications-via-eventbridge"></span>
 
-## Amazon ECR 镜像扫描
+## Amazon ECR 镜像扫描 {#amazon-ecr-image-scanning}
 
-| 属性 | 基础 | 增强 |
+| 属性 | Basic | Enhanced |
 |---|---|---|
 | 当前引擎 | AWS 原生扫描器 | Amazon Inspector |
-| 覆盖范围 | OS 包漏洞 | OS 和受支持的语言包 |
-| 频率 | 手动或推送时扫描 | 推送时扫描或持续扫描 |
+| 覆盖 | 操作系统软件包漏洞 | 操作系统和受支持语言软件包 |
+| 频率 | 手动或推送时扫描 | 推送时或持续扫描 |
 | 结果 | imageScanFindings.findings | imageScanFindings.enhancedFindings |
-| 事件 | ECR 基础扫描完成 | Inspector2 扫描/发现事件 |
+| 事件 | ECR Basic 扫描完成 | Inspector2 扫描/发现事件 |
 
-应将较早的 Clair 描述与当前的 Basic 引擎区分开来。切换扫描模式可能改变既有结果的可见性。增强扫描覆盖范围取决于存储库筛选器、重新扫描时长和受支持镜像条件；并非每个镜像都会被永久扫描。归档镜像必须先恢复才能扫描。
+区分旧 Clair 描述和当前 Basic 引擎。切换扫描模式可改变已有结果可见性。Enhanced 覆盖取决于仓库过滤器、重扫时长和支持镜像条件；不是每个镜像永久扫描。归档镜像必须先还原才能扫描。
 
 ```bash
 aws ecr put-registry-scanning-configuration --scan-type ENHANCED --rules '[
@@ -122,13 +122,13 @@ aws ecr put-registry-scanning-configuration --scan-type ENHANCED --rules '[
 aws ecr describe-image-scan-findings --repository-name production/my-app   --image-id imageDigest=sha256:REPLACE_WITH_64_HEX_DIGEST   --query 'imageScanFindings.enhancedFindings[?severity==`CRITICAL`]'
 ```
 
-该配置命令会写入注册表设置，本审计未执行它。使用 DescribeImageScanFindings，而不要依赖 DescribeImages 中旧版 Basic 摘要。启用 ECR 扫描不会自动阻止有漏洞的镜像被推送、拉取或部署。
+配置命令写入仓库设置，本审计未执行。使用 DescribeImageScanFindings，不依赖 DescribeImages 中旧 Basic 摘要。启用 ECR 扫描不会自动阻止漏洞镜像推送、拉取或部署。
 
 ### Inspector 警报和权限
 
-使用 source aws.inspector2、detail-type Inspector2 Finding 和 detail.severity/status/resources[].type 筛选 Enhanced 发现。不要将其与 Basic ECR Image Scan 和 finding-severity-counts 混用。数值为零的字段仍然存在；exists:true 并不意味着存在正数漏洞计数。
+使用 source aws.inspector2、detail-type Inspector2 Finding 和 detail.severity/status/resources[].type 过滤 Enhanced 发现。不要与 Basic ECR Image Scan 及 finding-severity-counts 混用。数值为零的字段仍存在；exists:true 不表示漏洞数为正。
 
-[完整的 CloudFormation 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml)将加密的 SNS topic 连接到 EventBridge 执行角色。它需要一个现有的、同一账户/Region 的对称客户托管 KMS key，其策略允许 IAM 委派；经批准的 SNS 消费者订阅需单独配置。当前 EventBridge 支持为 SNS target 使用执行角色。不要将 event-bus KMS SourceArn/SourceAccount 条件复制到直接 service-principal-to-encrypted-SNS 路径中。该模板已通过 cfn-lint；实际投递、KMS 授权和重试需要在部署环境中测试。
+[完整 CloudFormation 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml)将加密 SNS 主题连接到 EventBridge 执行角色。要求现有同账户/区域对称客户托管 KMS 密钥，其策略允许 IAM 委托；获准 SNS 使用方订阅独立配置。当前 EventBridge 支持 SNS 目标执行角色。不要将事件总线 KMS SourceArn/SourceAccount 条件复制到服务主体直接访问加密 SNS 的路径。模板通过 cfn-lint；实际交付、KMS 授权和重试需要部署环境测试。
 
 <span id="cosign-overview"></span>
 <span id="cosign-installation"></span>
@@ -136,11 +136,13 @@ aws ecr describe-image-scan-findings --repository-name production/my-app   --ima
 <span id="keyless-signing-oidc-based"></span>
 <span id="github-actions-integration"></span>
 
-## 使用 Cosign/Sigstore 对镜像签名
+
+
+## 使用 Cosign/Sigstore 签名镜像 {#image-signing-with-cosignsigstore}
 
 ### 签名顺序和信任
 
-对于常见的注册表流程，推送镜像、获取其摘要，然后对该摘要签名。验证受信任的 key 或精确的 OIDC issuer/identity、摘要以及所需的透明度/时间戳证据。单独的签名并不能证明签名者已获批准或不存在漏洞。
+常规仓库流程中，先推送镜像、获取摘要，再签署该摘要。验证可信密钥或确切 OIDC 签发者/身份、摘要和必需透明性/时间戳证据。仅签名不确立签名者已获准，也不证明无漏洞。
 
 ```bash
 cosign version
@@ -149,22 +151,22 @@ cosign sign --key cosign.key "$IMAGE_REF"
 cosign verify --key cosign.pub "$IMAGE_REF"
 ```
 
-不要提交私钥。通过凭证管理器/KMS 或等效控制措施管理其生命周期。无密钥 GitHub Actions 使用 id-token:write 和 Actions OIDC 环境。GITHUB_TOKEN 是注册表/API 凭证，而不是 OIDC ID token 本身。
+不要提交私钥。通过凭证管理器/KMS 或等效控制管理生命周期。无密钥 GitHub Actions 使用 id-token:write 和 Actions OIDC 环境。GITHUB_TOKEN 是仓库/API 凭证，不是 OIDC ID 令牌本身。
 
 ```bash
 cosign sign --yes "$IMAGE_REF"
 cosign verify   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'   "$IMAGE_REF"
 ```
 
-将 identity 替换为获批准的 workflow。--certificate-identity-regexp 接受正则表达式，而非 glob。优先使用精确 identity 或锚定的 regexp，而不是 `https://github.com/org/repo/*` 等宽松表达式。检查 Cosign 3 bundle/OCI-referrer 与下游验证器的兼容性。
+将身份替换为获准工作流。--certificate-identity-regexp 接受正则表达式，不是 glob。优先精确身份或锚定正则，不使用 `https://github.com/org/repo/*` 等宽松表达式。检查 Cosign 3 bundle/OCI referrer 与下游验证器兼容性。
 
 <span id="kyverno-imageverify"></span>
 
-## 在准入控制中验证镜像
+## 准入控制中的镜像验证 {#image-verification-in-admission-control}
 
-Kyverno 1.19.1 警告 ClusterPolicy 已弃用。新示例使用 policies.kyverno.io/v1 ValidatingPolicy 和 ImageValidatingPolicy。旧版 verifyImages rule 并不是新 policy kind 的名称。
+Kyverno 1.19.1 警告 ClusterPolicy 已弃用。新示例使用 policies.kyverno.io/v1 ValidatingPolicy 和 ImageValidatingPolicy。旧 verifyImages 规则不是新策略种类名称。
 
-### 注册表和摘要策略
+### 仓库和摘要策略
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -196,9 +198,9 @@ spec:
       message: All container images must use the approved repository and a SHA-256 digest.
 ```
 
-此策略覆盖普通、init 和 ephemeral container，包括 pods/ephemeralcontainers 更新。将 example-org 替换为获批准的存储库。摘要格式会固定内容地址；它不会执行签名或漏洞验证。
+覆盖普通、初始化和临时容器，包括 pods/ephemeralcontainers 更新。将 example-org 替换为获准仓库。摘要格式固定内容地址；不执行签名或漏洞验证。
 
-### Workflow 签名策略
+### 工作流签名策略
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -249,15 +251,15 @@ spec:
       message: Image signature must match the approved workflow and transparency proof.
 ```
 
-matchImageReferences 之外的镜像可能被镜像验证跳过，因此也应应用注册表策略。设计 namespace 例外、PolicyException 访问权限、webhook 可用性/超时、注册表凭证和 TLS 信任，然后测试实际准入请求。签名策略已根据 CRD schema 检查；这并非实时注册表/Fulcio/Rekor 验证的证据。生产示例不会禁用透明度检查。
+matchImageReferences 外的镜像可能被镜像验证跳过，因此也应用仓库策略。设计命名空间例外、PolicyException 访问、webhook 可用性/超时、仓库凭证和 TLS 信任，再测试实际准入请求。签名策略已对照 CRD 模式检查；不是实际仓库/Fulcio/Rekor 验证证据。生产示例不禁用透明性检查。
 
 <span id="connaisseur"></span>
 
-### Connaisseur 替代方案 — 旧版签名路径
+### Connaisseur 替代方案——旧签名路径
 
-**Connaisseur 3.12.0 不使用默认 Cosign 3 bundle。**它使用带有旧版 signature tag 和 SimpleSigning payload 的 cosign/v2 验证路径。请使用独立的兼容性生产者。[旧版签名脚本](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)明确设置 Cosign 3.1.3 `--new-bundle-format=false --registry-referrers-mode=legacy`，同时保留透明度上传/验证。随附的签名配置为旧版验证器的日志格式明确选择 Rekor v1。提供真实获批准的 key 和摘要。此路径独立于 secure-build.yaml 的默认 bundle 格式；不要将该 workflow 的默认输出直接提供给 Connaisseur。旧版 flag 已弃用，因此应规划协调的生产者/验证器迁移。CLI 选项和两个源合同均已检查；未执行注册表/签名集成。
+**Connaisseur 3.12.0 无法使用默认 Cosign 3 bundle。** 它采用 cosign/v2 验证路径，使用旧签名标签和 SimpleSigning 载荷。使用独立兼容生成方。[旧签名脚本](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)显式设置 Cosign 3.1.3 `--new-bundle-format=false --registry-referrers-mode=legacy`，同时保留透明性上传/验证。配套签名配置为旧验证器日志格式显式选择 Rekor v1。提供真实获准密钥和摘要。此路径独立于 secure-build.yaml 默认 bundle 格式；不要将该工作流默认输出直接交给 Connaisseur。旧标志已弃用，应规划协调的生成方/验证器迁移。CLI 选项及两端源码约定已检查；未执行仓库/签名集成。
 
-Connaisseur 3.12.0/chart 2.12.0 是另一种选择。在 [values 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)中，validator 和 policy 位于 application 下，deny 是明确定义的静态 validator。附带的公钥是合成测试 key，必须替换为真实信任 key。
+Connaisseur 3.12.0/chart 2.12.0 是另一选项。[Values 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)中，validators 和 policy 位于 application 下，deny 是显式定义的静态验证器。所含公钥是合成测试密钥，必须替换为真实信任密钥。
 
 ```bash
 helm repo add connaisseur https://sse-secure-systems.github.io/connaisseur/charts
@@ -265,13 +267,13 @@ helm upgrade --install connaisseur connaisseur/connaisseur   --version 2.12.0 --
 kubectl label namespace production securesystemsengineering.connaisseur/webhook=validate
 ```
 
-该示例使用 namespaced-validation validate 模式，并且只检查带有该 label 的 namespace。允许更改 namespace label 的 identity 可以绕过此选择，因此应治理这些权限。Kyverno 和 Connaisseur 是替代方案，而不是要求同时安装两者。Helm 渲染不能替代实际签名允许/拒绝测试。
+示例使用 namespaced-validation validate 模式，仅检查带该标签的命名空间。有权改变命名空间标签的身份可绕过选择，因此需治理权限。Kyverno 和 Connaisseur 是备选，不要求同时安装。Helm 渲染不替代真实签名允许/拒绝测试。
 
 <span id="sbom-software-bill-of-materials-generation"></span>
 <span id="sbom-based-vulnerability-scanning"></span>
 <span id="slsa-supply-chain-levels-for-software-artifacts"></span>
 
-## 供应链安全
+## 供应链安全 {#supply-chain-security}
 
 ### SBOM 和证明
 
@@ -285,34 +287,34 @@ cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$IMAGE_REF"
 cosign verify-attestation --type spdxjson   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' "$IMAGE_REF"
 ```
 
-Syft/Trivy 生成命令是替代方案。SBOM 会清点工具检测到的内容；完整性和安全性无法保证。cosign attach sbom 已弃用，普通附件与已签名证明不同。应一起验证 predicate 内容、subject 摘要、签名者、验证时间和策略。
+Syft/Trivy 生成命令是备选。SBOM 清点工具检测到的内容；不保证完整或安全。cosign attach sbom 已弃用，普通附件不同于签名证明。一起验证 predicate 内容、subject 摘要、签名者、验证时间和策略。
 
-### SLSA 溯源
+### SLSA 来源证明
 
-溯源记录构建输入、构建器和制品之间的关系。调用生成 action 并不会自动满足 SLSA Build Level 3。请单独评估相关的隔离性、溯源伪造抵抗能力和源策略要求。
+来源证明记录构建输入、构建器和制品之间关系。调用生成 action 不自动满足 SLSA Build Level 3。单独评估相关隔离、抗来源证明伪造和源策略要求。
 
-对于现有的 slsa-github-generator 可复用 workflow，请检查受支持的工具链和调用方要求。以下新 workflow 使用当前的 actions/attest。对于公共与私有存储库，请检查 GitHub plan 和 Sigstore trust root 的差异。
+现有 slsa-github-generator 可复用工作流应检查受支持工具链和调用方要求。下方新工作流使用当前 actions/attest。attest-build-provenance 第 4 版是包装器；新实现被指引使用 actions/attest。检查公共与私有仓库的 GitHub 计划及 Sigstore 信任根差异。
 
 <span id="image-type-comparison"></span>
 <span id="using-distroless-images"></span>
 <span id="using-chainguard-images"></span>
 <span id="alpine-security-hardening"></span>
 
-## 基础镜像选择
+## 基础镜像选择 {#base-image-selection}
 
-| 镜像 | 特性 | 检查项 |
+| 镜像 | 特点 | 检查 |
 |---|---|---|
-| Distroless | 标准运行时不含 shell/package manager | Debug 变体、库和应用依赖不同 |
-| Alpine | 小型基于 musl 的发行版 | glibc 兼容性、维护生命周期、实际摘要 |
-| Chainguard | 不同的最小运行时和 dev 变体 | 不要假定运行时镜像包含 shell/pip |
-| Ubuntu/Debian | 更广泛的包/工具选择 | 单靠大小不能决定漏洞数量 |
-| Scratch | 空的基础镜像 | 复制的二进制文件、CA 文件和应用依赖仍可能存在漏洞 |
+| Distroless | 标准运行时不含 shell/软件包管理器 | 调试变体、库和应用依赖不同 |
+| Alpine | 基于 musl 的小型发行版 | glibc 兼容性、维护寿命、实际摘要 |
+| Chainguard | 独立最小运行时和开发变体 | 不要假定运行时镜像包含 shell/pip |
+| Ubuntu/Debian | 更广软件包/工具选择 | 仅大小不决定漏洞数 |
+| Scratch | 空基础镜像 | 复制的二进制、CA 文件和应用依赖仍可能有漏洞 |
 
-不要将旧的 Go 1.22/Alpine 3.19 示例误认为当前受支持的基线。更新时检查维护状态、OS EOL、CPU ABI、摘要和扫描发现。Distroless 从构建阶段获取二进制文件；遵循 Chainguard Python 模式，在 dev 阶段准备依赖/venv，并将它们复制到运行时。本文件未执行 Dockerfile 构建或比较漏洞数量。
+不要将旧 Go 1.22/Alpine 3.19 示例误当当前受支持基线。更新时检查维护、操作系统生命周期、CPU ABI、摘要和扫描发现。Distroless 从构建阶段接收二进制；遵循 Chainguard Python 模式，在开发阶段准备依赖/venv，再复制到运行时。本文未执行 Dockerfile 构建或比较漏洞数。
 
 ### 最小基础镜像构建示例
 
-[完整构建上下文](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/image-security/base-images)包含打印固定消息的 Go/Python 程序和三个 Dockerfile。选择一个 Dockerfile 以比较这些模式；它们不是 web-server 示例。已检查基础索引摘要和 amd64/arm64 可用性，但未执行容器构建/运行时。
+[完整构建上下文](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/image-security/base-images)包含打印固定消息的 Go/Python 程序和三个 Dockerfile。选择 Dockerfile 比较模式；它们不是 Web 服务器示例。基础索引摘要和 amd64/arm64 可用性已检查，但未执行容器构建/运行。
 
 **Dockerfile.distroless**
 
@@ -353,32 +355,34 @@ USER 10001:10001
 ENTRYPOINT ["python3", "/app/app.py"]
 ```
 
-应用已使用 Go 1.27.1 和 Python 3.12 直接运行，且三个 Dockerfile 均通过了 HIGH/CRITICAL 配置检查。此 fixture 中的 Python requirements 为空。添加真实依赖时需要锁定文件/哈希、构建器/运行时 ABI 检查和漏洞扫描。请单独管理 Alpine apk 存储库和基础摘要更新。
+应用直接使用 Go 1.27.1 和 Python 3.12 运行，三个 Dockerfile 均通过 HIGH/CRITICAL 配置检查。此测试样例 Python requirements 为空。添加真实依赖需要锁定/哈希、构建器/运行时 ABI 检查和漏洞扫描。单独管理 Alpine apk 仓库及基础摘要更新。
 
 <span id="using-private-registries"></span>
 <span id="image-pull-policies"></span>
 <span id="immutable-tag-policy-kyverno"></span>
 
-## 镜像注册表最佳实践
+## 镜像仓库最佳实践 {#image-registry-best-practices}
 
-- 私有镜像需要获批准的拉取 identity。ECR kubelet/node/Fargate 执行角色不同于应用程序 Pod Identity。
-- 外部注册表可以使用有效的 kubernetes.io/dockerconfigjson Secret 和 ServiceAccount imagePullSecrets。Base64 不是加密。
-- imagePullPolicy:Always 控制注册表引用检查，而非签名验证。请分别配置摘要固定、准入验证和扫描门禁。
-- 仅禁止 latest 的模式可能遗漏省略 tag 的镜像以及 init/ephemeral 镜像。使用上面的注册表/摘要策略测试范围。
-- 有意公开的镜像允许匿名拉取并非天生漏洞。应区分机密性、推送权限、溯源、速率限制和许可证要求。
-- 确保保留/垃圾回收不会删除活跃摘要或所需的签名/证明 referrer；测试恢复过程。
+- 私有镜像需要获准拉取身份。ECR kubelet/节点/Fargate 执行角色不同于应用 Pod Identity。
+- 外部仓库可使用有效 kubernetes.io/dockerconfigjson Secret 和 ServiceAccount imagePullSecrets。Base64 不是加密。
+- imagePullPolicy:Always 控制仓库引用检查，不验证签名。单独配置摘要固定、准入验证和扫描门禁。
+- 仅禁止 latest 的模式可能遗漏省略标签及初始化/临时镜像。用上方仓库/摘要策略测试范围。
+- 有意公开镜像的匿名拉取本身不是漏洞。区分保密性、推送权限、来源、限速和许可要求。
+- 确保保留/垃圾回收不移除活动摘要或所需签名/证明 referrer；测试恢复。
 
 <span id="complete-image-security-pipeline"></span>
 
-## CI/CD 流水线集成
 
-在应用程序存储库中将其放置于 .github/workflows/secure-build.yaml 前，请审查[完整 workflow 文件](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/secure-build.yaml)。真实的 Dockerfile 和构建上下文是先决条件。其预期属性如下：
 
-1. PR 扫描使用没有注册表发布/OIDC 签名权限的只读 job。
-2. main-push 发布 job 只构建一次并扫描该本地镜像。
-3. 它在不重新构建的情况下推送，并捕获 RepoDigest。
-4. 签名、验证、SBOM 证明和溯源使用相同的摘要。
-5. Actions 固定到经过审查的 commit SHA；独立的 artifact-storage record 已禁用。
+## CI/CD 流水线集成 {#cicd-pipeline-integration}
+
+将[完整工作流文件](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/secure-build.yaml)放到应用仓库 .github/workflows/secure-build.yaml 前先审核。真实 Dockerfile 和构建上下文是前提。预期属性如下：
+
+1. PR 扫描使用只读任务，不发布仓库镜像或执行 OIDC 签名。
+2. main 推送发布任务只构建一次，并扫描该本地镜像。
+3. 不重建就推送，并捕获 RepoDigest。
+4. 签名、验证、SBOM 证明和来源证明使用同一摘要。
+5. Action 固定到已审核提交 SHA；禁用独立制品存储记录。
 
 ```yaml
 name: Secure Image Build
@@ -503,32 +507,32 @@ jobs:
           create-storage-record: false
 ```
 
-配置 GHCR package 权限、Actions OIDC、attestation-plan 支持和网络访问。已检查 workflow YAML/action input 和 shell 语法，但未执行 GitHub runner 构建/推送/签名/证明 workflow。不要忽略 SBOM/签名失败，也不要将空摘要继续传递下去。如果添加 SARIF 上传，请单独处理 fork-PR security-events 权限以及扫描失败后保留结果的问题。
+配置 GHCR 包权限、Actions OIDC、证明计划支持和网络访问。工作流 YAML/action 输入及 shell 语法已检查，但未执行 GitHub runner 构建/推送/签名/证明工作流。不要忽略 SBOM/签名失败或向下游传空摘要。添加 SARIF 上传时，单独处理 fork PR 的 security-events 权限，以及扫描失败后保留结果。
 
-## 已执行的检查和限制
+## 已执行检查和限制
 
-- Trivy 0.74：两个合成 Secret case 和两个 Dockerfile 非 root 检查。未进行实际 CVE 数据库或远程镜像扫描。
-- Cosign 3.1.3：有效/篡改的合成本地 key/blob 验证。在该私有 fixture 中省略透明度，并不代表生产注册表/OIDC 验证的证据。
-- Kyverno 1.19.1：六个 CEL 注册表/摘要 object case，包括 init/ephemeral container，以及两个固定的 CRD schema。未进行实时准入或网络签名验证。
-- 已运行 Trivy Operator/Connaisseur Helm 渲染、合成 ECR API-model/JMESPath fixture、CloudFormation lint 和 actionlint。未执行 AWS 资源、通知或注册表推送。
+- Trivy 0.74：两个合成密钥用例和两个 Dockerfile 非 root 检查。未实际扫描 CVE 数据库或远程镜像。
+- Cosign 3.1.3：有效/被篡改的合成本地密钥/blob 验证。私有测试样例省略透明性，不是生产仓库/OIDC 验证证据。
+- Kyverno 1.19.1：六个 CEL 仓库/摘要对象用例，含初始化/临时容器，另加两个固定 CRD 模式。无实际准入或网络签名验证。
+- 执行了 Trivy Operator/Connaisseur Helm 渲染、合成 ECR API 模型/JMESPath 样例、CloudFormation lint 和 actionlint。未执行 AWS 资源、通知或仓库推送。
 
 <span id="summary"></span>
 <span id="recommendations"></span>
 
 ## 参考资料
 
-- [Trivy 发行版](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0)
+- [Trivy 发布](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0)
 - [Trivy 文档](https://aquasecurity.github.io/trivy/)
-- [Trivy Operator Chart](https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm)
+- [Trivy Operator chart](https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm)
 - [ECR 扫描](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html)
-- [Inspector 事件架构](https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html)
-- [EventBridge target 授权](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
+- [Inspector 事件模式](https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html)
+- [EventBridge 目标授权](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
 - [SNS KMS 兼容性](https://docs.aws.amazon.com/sns/latest/dg/sns-key-management.html)
 - [Cosign 3.1.3](https://github.com/sigstore/cosign/releases/tag/v3.1.3)
 - [Sigstore 验证](https://docs.sigstore.dev/cosign/verifying/verify/)
 - [Kyverno CEL 迁移](https://kyverno.io/docs/guides/migration-to-cel/)
 - [Kyverno ImageValidatingPolicy](https://kyverno.io/docs/policy-types/image-validating-policy/)
-- [Connaisseur namespaced validation](https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md)
+- [Connaisseur 命名空间验证](https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md)
 - [SLSA 要求](https://slsa.dev/spec/v1.2/build-requirements)
 - [GitHub attest action](https://github.com/actions/attest/tree/v4.2.2)
 - [Distroless](https://github.com/GoogleContainerTools/distroless)
