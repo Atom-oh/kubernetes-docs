@@ -64,10 +64,13 @@ cd examples/labs/observability/application
 kubectl --context service create namespace msa --dry-run=client -o yaml | kubectl --context service apply -f -
 kubectl --context service -n msa create secret generic lab-database --from-file=connection.json="$LAB_STATE/runtime-pod-connection.json"
 kubectl --context service -n msa create configmap lab-database-ca --from-file=global-bundle.pem="$LAB_STATE/global-bundle.pem"
-docker build -t "$IMAGE_REPOSITORY:$IMAGE_TAG" .
-docker push "$IMAGE_REPOSITORY:$IMAGE_TAG"
+docker buildx build --platform linux/amd64 \
+  --tag "$IMAGE_REPOSITORY:$IMAGE_TAG" --push .
+docker buildx imagetools inspect "$IMAGE_REPOSITORY:$IMAGE_TAG"
 ```
 Use the immutable version selected in Part1. Update existing Secrets through the organization’s rotation procedure without printing values or placing them in chart files. The Dockerfile pins a base digest, UID10001 and a bounded build context.
+
+The generated `m6i.large` nodes use AMD64. Use an AMD64 or cross-platform-capable Buildx builder and verify `linux/amd64` in the pushed manifest before deployment. The audit's local ARM64 smoke test does not validate the AMD64 build.
 
 ## 3. Install controllers and chart {#deployment}
 

@@ -2,6 +2,7 @@
 
 import json
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from opentelemetry import propagate, trace
@@ -43,7 +44,21 @@ class Telemetry:
 
     def server_span(self, route, headers):
         context = propagate.extract(dict(headers))
-        return self.tracer.start_as_current_span(route, context=context, kind=SpanKind.SERVER)
+        return self.span(route, context=context, kind=SpanKind.SERVER)
+
+    @contextmanager
+    def span(self, name, *, kind, context=None):
+        # SDK defaults include exception text/stacktraces and status descriptions.
+        # Those can contain SQL parameters or upstream request contents.
+        with self.tracer.start_as_current_span(
+            name, context=context, kind=kind,
+            record_exception=False, set_status_on_exception=False,
+        ) as span:
+            try:
+                yield span
+            except Exception:
+                span.set_status(Status(StatusCode.ERROR))
+                raise
 
     @staticmethod
     def inject():

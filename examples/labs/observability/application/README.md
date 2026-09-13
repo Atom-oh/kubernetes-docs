@@ -27,6 +27,12 @@ customer/payment payloads are excluded. `/health` is liveness; `/ready` addition
 checks DB connectivity and schema for DB-backed roles. It does not prove IAM or
 SQS delivery. Inspect actual background work and queues separately.
 
+HTTP/database spans disable automatic exception text, stacktraces and status
+descriptions. Failed operations retain an error status and bounded HTTP metrics;
+unexpected request failures return a generic 500 response. SQLAlchemy also hides
+bound parameters in its error strings. Failure-path tests check exported spans,
+logs and responses using synthetic sentinel inputs.
+
 ## Infrastructure and credentials
 
 `infra.yaml` creates a private Aurora PostgreSQL cluster/writer, an encrypted SNS
@@ -109,9 +115,15 @@ Build and push an immutable image tag to the approved registry. The Dockerfile
 pins the Python multi-platform base digest and runs as UID/GID 10001. No private
 state is part of the build context.
 
+The generated `m6i.large` node groups require **linux/amd64**. Use an AMD64 builder
+or a Buildx builder configured for that target; an ARM64-only image cannot run on
+these nodes. Inspect the pushed manifest before deploying. The audit's local
+ARM64 smoke test is separate evidence, not an AMD64 build validation.
+
 ```bash
-docker build -t "$IMAGE_REPOSITORY:$IMAGE_TAG" .
-docker push "$IMAGE_REPOSITORY:$IMAGE_TAG"
+docker buildx build --platform linux/amd64 \
+  --tag "$IMAGE_REPOSITORY:$IMAGE_TAG" --push .
+docker buildx imagetools inspect "$IMAGE_REPOSITORY:$IMAGE_TAG"
 .venv/bin/python prepare_values.py \
   --outputs-file "$LAB_STATE/infra-outputs.json" --region "$AWS_REGION" \
   --image-repository "$IMAGE_REPOSITORY" --image-tag "$IMAGE_TAG" \

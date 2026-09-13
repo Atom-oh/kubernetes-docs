@@ -86,7 +86,7 @@ helm upgrade --install lab-tempo grafana-community/tempo --version 3.0.0   --kub
 ```
 Prometheus web가 mTLS를 요구하므로 기본 kubelet HTTPS probe는 인증서를 제공하지 못합니다. `promtool check ready/healthy --http.config.file=...` exec probe와 client Secret을 사용하며 Operator의 probe merge도 검증했습니다. Grafana와 Tempo metrics-generator 역시 mTLS client 인증서를 사용합니다.
 
-Loki는 Monolithic·TSDB/v13·filesystem PVC입니다. Tempo3는 live-store/backend scheduler/worker를 사용합니다. Tempo2의 ingester/compactor 설정을 섞지 않습니다. Grafana replicas1·PVC·private admin Secret을 사용하며 알려진 공통 비밀번호를 배포하지 않습니다.
+Loki는 Monolithic·TSDB/v13·filesystem PVC입니다. Tempo3는 live-store/backend scheduler/worker를 사용합니다. Tempo2의 ingester/compactor 설정을 섞지 않습니다. Grafana replicas1·PVC·private admin Secret을 사용하며 알려진 공통 비밀번호를 배포하지 않습니다. Grafana는 사용하지 않는 dashboard sidecar·API token·RBAC를 비활성화하고, 데이터 소스 파일은 지정된 Secret에서 마운트합니다.
 
 ## 4. Collector·endpoint·서비스 수집 {#collectors}
 
@@ -120,3 +120,5 @@ VictoriaMetrics/Mimir/AMP, ClickHouse/OpenSearch, X-Ray, AMG, MWAA는 선택 확
 ## 검증 범위
 
 차트/CRD/native config, 실제 local Collector mTLS·CRI/JSON forwarding, Prometheus mTLS probe, synthetic PKI, NetworkPolicy schema를 검증했습니다. 실제 EKS/LBC/DNS·NetworkPolicy enforcement·IRSA·Grafana live datasource는 실행하지 않았습니다.
+
+DaemonSet 프로필은 `lab-agent.observability.svc.cluster.local:4318` Service를 명시적으로 생성합니다. 기본 `internalTrafficPolicy: Local`에서는 앱이 있는 노드에 준비된 Collector Pod가 있어야 하므로 taint·toleration과 DaemonSet ready 상태를 확인합니다.

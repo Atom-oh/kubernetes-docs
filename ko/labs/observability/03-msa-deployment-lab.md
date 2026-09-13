@@ -55,10 +55,13 @@ cd examples/labs/observability/application
 kubectl --context service create namespace msa --dry-run=client -o yaml | kubectl --context service apply -f -
 kubectl --context service -n msa create secret generic lab-database --from-file=connection.json="$LAB_STATE/runtime-pod-connection.json"
 kubectl --context service -n msa create configmap lab-database-ca --from-file=global-bundle.pem="$LAB_STATE/global-bundle.pem"
-docker build -t "$IMAGE_REPOSITORY:$IMAGE_TAG" .
-docker push "$IMAGE_REPOSITORY:$IMAGE_TAG"
+docker buildx build --platform linux/amd64 \
+  --tag "$IMAGE_REPOSITORY:$IMAGE_TAG" --push .
+docker buildx imagetools inspect "$IMAGE_REPOSITORY:$IMAGE_TAG"
 ```
 태그는 Part1에서 선택한 immutable version과 일치시킵니다. 기존 Secret을 갱신할 때는 값을 출력하거나 chart에 넣지 말고 조직의 secret rotation 절차를 사용합니다. Dockerfile은 고정 base digest·non-root UID10001·제한된 build context를 사용합니다.
+
+생성되는 `m6i.large` 노드는 AMD64입니다. AMD64 또는 해당 대상의 교차 빌드를 지원하는 Buildx builder를 사용하고, 배포 전에 push된 manifest의 `linux/amd64`를 확인합니다. 감사에서 실행한 로컬 ARM64 smoke test는 AMD64 빌드 검증을 대신하지 않습니다.
 
 ## 3. controller와 chart 설치 {#deployment}
 

@@ -82,7 +82,7 @@ helm upgrade --install lab-tempo grafana-community/tempo --version 3.0.0   --kub
 ```
 Prometheus web requires mTLS, so default kubelet HTTPS probes cannot provide the client certificate. Use the `promtool check ready/healthy --http.config.file=...` exec probes/client Secret; Operator probe merging was verified. Grafana and Tempo metrics-generator also use client certificates.
 
-Loki uses Monolithic/TSDB-v13/filesystem-PVC. Tempo3 uses live-store/backend scheduler/worker, not mixed Tempo2 ingester/compactor settings. Grafana uses one replica, PVC and a private admin Secret rather than a known shared password.
+Loki uses Monolithic/TSDB-v13/filesystem-PVC. Tempo3 uses live-store/backend scheduler/worker, not mixed Tempo2 ingester/compactor settings. Grafana uses one replica, PVC and a private admin Secret rather than a known shared password. Grafana disables the unused dashboard sidecar, API token and RBAC; datasource files remain mounted from the designated Secret.
 
 ## 4. Collectors, endpoints and service collection {#collectors}
 
@@ -116,3 +116,5 @@ VictoriaMetrics/Mimir/AMP, ClickHouse/OpenSearch, X-Ray, AMG and MWAA are option
 ## Validation scope
 
 Validation covered chart/CRD/native config, actual local Collector mTLS/CRI/JSON forwarding, Prometheus mTLS probes, synthetic PKI and NetworkPolicy schemas. Real EKS/LBC/DNS, policy enforcement, IRSA and Grafana live datasource execution were not performed.
+
+The DaemonSet profile explicitly creates the `lab-agent.observability.svc.cluster.local:4318` Service. Its default `internalTrafficPolicy: Local` requires a ready Collector on each application node; check taints, tolerations and DaemonSet readiness.

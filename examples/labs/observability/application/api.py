@@ -43,6 +43,10 @@ def create_app(role, store, telemetry, *, order_url=None, payment_url=None, dela
                 response = await call_next(request)
                 status = response.status_code
                 return response
+            except Exception:
+                # Keep unexpected failures out of the ASGI server's raw
+                # exception logger as well as the exported trace.
+                return JSONResponse({"detail": "Internal service error"}, status_code=500)
             finally:
                 route = getattr(request.scope.get("route"), "path", "unmatched")
                 name = f"{request.method} {route}"
@@ -75,7 +79,7 @@ def create_app(role, store, telemetry, *, order_url=None, payment_url=None, dela
         def create_order(body: OrderInput):
             if delay_ms:
                 time.sleep(delay_ms / 1000)
-            with telemetry.tracer.start_as_current_span("order transaction", kind=SpanKind.CLIENT) as span:
+            with telemetry.span("order transaction", kind=SpanKind.CLIENT) as span:
                 span.set_attribute("db.system.name", store.engine.dialect.name)
                 span.set_attribute("db.operation.name", "INSERT")
                 return store.create_order(
@@ -85,7 +89,7 @@ def create_app(role, store, telemetry, *, order_url=None, payment_url=None, dela
 
         @app.get("/orders/{order_id}")
         def get_order(order_id: str):
-            with telemetry.tracer.start_as_current_span("read order", kind=SpanKind.CLIENT) as span:
+            with telemetry.span("read order", kind=SpanKind.CLIENT) as span:
                 span.set_attribute("db.system.name", store.engine.dialect.name)
                 span.set_attribute("db.operation.name", "SELECT")
                 result = store.get_order(order_id)
@@ -99,7 +103,7 @@ def create_app(role, store, telemetry, *, order_url=None, payment_url=None, dela
 
         @app.post("/payments")
         def create_payment(body: PaymentInput):
-            with telemetry.tracer.start_as_current_span("GET order", kind=SpanKind.CLIENT) as span:
+            with telemetry.span("GET order", kind=SpanKind.CLIENT) as span:
                 span.set_attribute("http.request.method", "GET")
                 try:
                     result = httpx.get(
@@ -128,7 +132,7 @@ def create_app(role, store, telemetry, *, order_url=None, payment_url=None, dela
             raise ValueError("api-gateway requires order_url and payment_url")
 
         def forward(method, base, path, body=None):
-            with telemetry.tracer.start_as_current_span(f"{method} upstream", kind=SpanKind.CLIENT) as span:
+            with telemetry.span(f"{method} upstream", kind=SpanKind.CLIENT) as span:
                 span.set_attribute("http.request.method", method)
                 try:
                     response = httpx.request(

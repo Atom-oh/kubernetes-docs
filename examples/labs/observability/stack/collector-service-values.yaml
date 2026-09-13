@@ -1,5 +1,8 @@
 fullnameOverride: lab-agent
 mode: daemonset
+service:
+  enabled: true
+  type: ClusterIP
 image:
   repository: otel/opentelemetry-collector-contrib
   tag: 0.160.0

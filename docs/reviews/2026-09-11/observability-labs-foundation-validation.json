@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "reviewedAt": "2026-09-13T07:42:35.359364+00:00",
+  "reviewedAt": "2026-09-13T08:22:13.600481+00:00",
   "scope": "16Korean/Englishfoundationlab/index/quizdocuments,60questions,38examplefiles,18diagrams;twoPart6referencefollowups",
   "originalFiles": [
     {
@@ -210,7 +210,7 @@
       },
       {
         "path": "ko/labs/observability/02-observability-stack-lab.md",
-        "sha256": "332387ba06f5bcf84ffb743c53347a9a894521fa937ae0e4f29760c01b8d8b72",
+        "sha256": "61c6e9735e52009e6fa5ce07464d27808c0110a07cb377e05294dd305df496af",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -287,7 +287,7 @@
       },
       {
         "path": "ko/labs/observability/03-msa-deployment-lab.md",
-        "sha256": "db3450cdd014323455620905598146c7a742c3691cd25ee7b49fd91b32255cf8",
+        "sha256": "561e2e66802e50037f4e28c77997cd5b0b9b1678b49c3df28a67694010059fa1",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -587,7 +587,7 @@
       },
       {
         "path": "en/labs/observability/02-observability-stack-lab.md",
-        "sha256": "872c73be26e930cf725df25ac58576237265203e71c1fbf8a8e0b26d5dd0733a",
+        "sha256": "d979bef4619b37d966c1eff688eff032541c459c59a82f20c06e5bf047bdac1e",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -660,7 +660,7 @@
       },
       {
         "path": "en/labs/observability/03-msa-deployment-lab.md",
-        "sha256": "752044d86350230897794dd0ed5d32c6f41fba50ed95450cb058ba9b51e16445",
+        "sha256": "5108fe29480400783365b92d7ef1d6b83e1e367b45be02daf3397c6b42fdc653",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -1019,13 +1019,13 @@
     },
     {
       "path": "ko/labs/observability/02-observability-stack-lab.md",
-      "sha256": "332387ba06f5bcf84ffb743c53347a9a894521fa937ae0e4f29760c01b8d8b72",
-      "bytes": 9925
+      "sha256": "61c6e9735e52009e6fa5ce07464d27808c0110a07cb377e05294dd305df496af",
+      "bytes": 10383
     },
     {
       "path": "ko/labs/observability/03-msa-deployment-lab.md",
-      "sha256": "db3450cdd014323455620905598146c7a742c3691cd25ee7b49fd91b32255cf8",
-      "bytes": 8864
+      "sha256": "561e2e66802e50037f4e28c77997cd5b0b9b1678b49c3df28a67694010059fa1",
+      "bytes": 9241
     },
     {
       "path": "ko/labs/observability/README.md",
@@ -1059,13 +1059,13 @@
     },
     {
       "path": "en/labs/observability/02-observability-stack-lab.md",
-      "sha256": "872c73be26e930cf725df25ac58576237265203e71c1fbf8a8e0b26d5dd0733a",
-      "bytes": 8595
+      "sha256": "d979bef4619b37d966c1eff688eff032541c459c59a82f20c06e5bf047bdac1e",
+      "bytes": 8973
     },
     {
       "path": "en/labs/observability/03-msa-deployment-lab.md",
-      "sha256": "752044d86350230897794dd0ed5d32c6f41fba50ed95450cb058ba9b51e16445",
-      "bytes": 7864
+      "sha256": "5108fe29480400783365b92d7ef1d6b83e1e367b45be02daf3397c6b42fdc653",
+      "bytes": 8164
     },
     {
       "path": "en/labs/observability/README.md",
@@ -1089,18 +1089,18 @@
     },
     {
       "path": "examples/labs/observability/application/storage.py",
-      "sha256": "e0944b73fdc1f96ef44e7b66055d058b025c01a367764adf932f21bf2a8305e5",
-      "bytes": 6237
+      "sha256": "ea719bf3422797e735bda27790dc62a17b9818d1f2458e2ecda07dd7254522e7",
+      "bytes": 6259
     },
     {
       "path": "examples/labs/observability/application/telemetry.py",
-      "sha256": "b5046ba75ec22748f8aa551a12132278289c6b2f3e997a42c41413940bb86c9f",
-      "bytes": 3626
+      "sha256": "e998990c6d967dcd6d022b630bac9c74e014c5807057adbf00e6677647a74310",
+      "bytes": 4200
     },
     {
       "path": "examples/labs/observability/application/api.py",
-      "sha256": "af2c2451c98b4a8df3644adbce182ce867c8c9fd58f6ddeb7b53db7d97930418",
-      "bytes": 7286
+      "sha256": "f6149181adc75c4b28f68531e6d6eec7e61eddf4cf5da18a00a7c96f353d8f7c",
+      "bytes": 7449
     },
     {
       "path": "examples/labs/observability/application/messaging.py",
@@ -1149,8 +1149,8 @@
     },
     {
       "path": "examples/labs/observability/application/README.md",
-      "sha256": "42af74f89c333ad84792bf65cf07fecb0ff3fe015a71516bb7e85dd11f3eb7c6",
-      "bytes": 8521
+      "sha256": "e9d53b61ad116fecfd5ee46b9e63f1aff633c510c6cfc52d1cacd480a4c46773",
+      "bytes": 9272
     },
     {
       "path": "examples/labs/observability/application/prepare_clusters.py",
@@ -1224,8 +1224,8 @@
     },
     {
       "path": "examples/labs/observability/stack/collector-service-values.yaml",
-      "sha256": "e3037adf69d7ff7533fdeed375f92c102e1f59302801240fcb86f4866b9e7516",
-      "bytes": 3336
+      "sha256": "07cba5baff4d237eeb9552731d83269281c2fc07527e6652bcf9b26bab838224",
+      "bytes": 3379
     },
     {
       "path": "examples/labs/observability/stack/loki-values.yaml",
@@ -1234,8 +1234,8 @@
     },
     {
       "path": "examples/labs/observability/stack/monitoring-management-values.yaml",
-      "sha256": "1e69c4bc968c6f43ec95092bf7908d4e3bac5e4b221b6013a1ce43f908c943ec",
-      "bytes": 4010
+      "sha256": "9c28717d76a3a8cf9b2576bc44fe2dbdd898a897945255f931fd50d5af0ec23e",
+      "bytes": 4153
     },
     {
       "path": "examples/labs/observability/stack/prometheus-probe.yaml",
@@ -1274,8 +1274,8 @@
     },
     {
       "path": "examples/labs/observability/stack/README.md",
-      "sha256": "1ae4c0686697cd455847a322fe7f33d753aaaae153975f2afef9dd9f2c0affe2",
-      "bytes": 8665
+      "sha256": "e2948eaa4b25eb71b16505c1de9ba1ca1ce808d2eea6d968ae92c61ceea075f1",
+      "bytes": 9136
     },
     {
       "path": "assets/diagrams/archify/en-labs-observability-01-infrastructure-setup-lab-0.architecture.json",
@@ -1419,7 +1419,7 @@
     },
     {
       "path": "public/archmaps/ko-labs-observability-01-infrastructure-setup-lab-0.html",
-      "sha256": "9d45416f297c1320502b1cea97b691dfb557da92e263b252ffaf84cf3302176c",
+      "sha256": "6dc4a38c164f395d5288b8675887ff29bc64607bc7576485df4f542e41306697",
       "bytes": 706784
     },
     {
@@ -1434,7 +1434,7 @@
     },
     {
       "path": "public/archmaps/ko-labs-observability-02-observability-stack-lab-0.html",
-      "sha256": "fc36bb4c3226985e73f3a8d8460a8962d0b6be85a87e554c90055911eceaffbf",
+      "sha256": "f51d0e66adaced2684596a58e425458eb05384909455ea0dab0fbba53e36997b",
       "bytes": 712198
     },
     {
@@ -1449,7 +1449,7 @@
     },
     {
       "path": "public/archmaps/ko-labs-observability-03-msa-deployment-lab-0.html",
-      "sha256": "4900714a5a7511ad8437b1b4fc2fef63b4a7bf0df06ffc146ac2f0b49722e931",
+      "sha256": "69170b4145ed4d6746ae193327d5a12ce59c7ec6073187db19ab3acfd79d7bda",
       "bytes": 714180
     },
     {
@@ -1464,7 +1464,7 @@
     },
     {
       "path": "public/archmaps/ko-labs-observability-03-msa-deployment-lab-1.html",
-      "sha256": "24a91da15a262c456c7fd2ba22f29956918493d3cc825ff8fae7274e1f1c5f48",
+      "sha256": "76dc3b2ea304a41ff02e037eda05d0507ac692bd22347d3b6509f567c932f8c6",
       "bytes": 706136
     },
     {
@@ -1479,7 +1479,7 @@
     },
     {
       "path": "public/archmaps/ko-labs-observability-03-msa-deployment-lab-10.html",
-      "sha256": "f22e65d86dcac05b47ca75ec510e410abac56856106889425269c5b80635803d",
+      "sha256": "90f300fdca0c590df29cadb27eb337f6e052e1e054a3459ce422b333d9655ac5",
       "bytes": 714222
     },
     {
@@ -1494,7 +1494,7 @@
     },
     {
       "path": "public/archmaps/ko-labs-observability-overview-0.html",
-      "sha256": "ced4a048c2bd5216e693494605e9d8a726f9b94aabd40ac0284a28e39174bcc3",
+      "sha256": "42229c3c2da00e3598ea27a5c0164e361677336031c533da1baca6ecfee1905e",
       "bytes": 706773
     },
     {
@@ -1509,7 +1509,7 @@
     },
     {
       "path": "public/archmaps/ko-labs-observability-overview-1.html",
-      "sha256": "f188265a6761670f3f0d7a5968b9f036031848be92ba1ff0a84b7c3800ad2012",
+      "sha256": "a84ee2acc828e582a461226f7624367acb98f4dbe6f04a68a4dd8b01c9881f2e",
       "bytes": 707135
     },
     {
@@ -1524,7 +1524,7 @@
     },
     {
       "path": "public/archmaps/ko-labs-observability-overview-2.html",
-      "sha256": "14a28e8aa3d7d01dec85f5c6dfbf2137223052424304a7cff660fc2d5300d5ce",
+      "sha256": "858d49bf67507555cc888fbde13c66864c71d6758176e4e2f1c6ddfb56f8e092",
       "bytes": 705326
     },
     {
@@ -1539,7 +1539,7 @@
     },
     {
       "path": "public/archmaps/ko-labs-observability-overview-3.html",
-      "sha256": "61b2f5ffc85352c6baa71a99cd39c46275bcf113291c5c67c7d79e629a0e9efc",
+      "sha256": "13518b7b03c53cdbcfcab28f0cf2eacefa186f5e3ea92c56dc9e1db05a9120c4",
       "bytes": 715470
     },
     {
@@ -1556,6 +1556,11 @@
       "path": "en/labs/observability/06-distributed-tracing-lab.md",
       "sha256": "9cbb31f92e53814a7a5b7134b460cbfbfc3f0256dd538eb07b4caa45dd9a0208",
       "bytes": 11596
+    },
+    {
+      "path": "examples/labs/observability/application/tests/test_error_telemetry.py",
+      "sha256": "eea68926dfea306e864f75ddc6e571382904bd92d99058f5379e1d724778414a",
+      "bytes": 2801
     }
   ],
   "native": {
@@ -1626,25 +1631,25 @@
     },
     "docker": {
       "status": "passed",
-      "imageId": "sha256:5f37fb1106ea7b25a1ec873dc31184a8acd8fd84b74032b6aa3e2423c22b794c",
-      "size": 253219230,
+      "imageId": "sha256:ef44423ec44b9b326ddfab5fbec1694fa60a6f0d6e08888f3f0fe45b40649cd1",
+      "architecture": "arm64",
       "user": "10001:10001",
       "checks": [
-        "nonroot-readonly-network-none-DBinit",
-        "nonroot-readonly-gateway-health-and-ready"
+        "20 portable tests inside actual rebuilt image including two sensitive-error subcases",
+        "nonroot/read-only/network-none/cap-dropALL container"
       ],
       "sourceHashes": {
         "Dockerfile": "b4ecfd4b97fb238290431755c046cc27a8ac0c199423c523f6b54450ab2b07b9",
         ".dockerignore": "ae2678e5252e9293a06fb754a95c0c201c1a317db98584bc4931ae89955e1fce",
         "requirements.txt": "0f06f28c80276b92ad78a06af85d83e8b9408d4ffdc8612660e8e69ff3f1abba",
-        "api.py": "af2c2451c98b4a8df3644adbce182ce867c8c9fd58f6ddeb7b53db7d97930418",
+        "api.py": "f6149181adc75c4b28f68531e6d6eec7e61eddf4cf5da18a00a7c96f353d8f7c",
         "db_config.py": "4a5b8e984288413274d04e023d6e3be103efd2172b0fec98361b5034c5bec68b",
         "main.py": "ace4dfc5ccc61d102eff6578d6e8df420f5ebe2289435c09dd0e9ca3083383dc",
         "messaging.py": "7e3937f339f8e246bf6c23d2ff59679325d5712835d673ef3d650e6dd28c3840",
-        "storage.py": "e0944b73fdc1f96ef44e7b66055d058b025c01a367764adf932f21bf2a8305e5",
-        "telemetry.py": "b5046ba75ec22748f8aa551a12132278289c6b2f3e997a42c41413940bb86c9f"
+        "storage.py": "ea719bf3422797e735bda27790dc62a17b9818d1f2458e2ecda07dd7254522e7",
+        "telemetry.py": "e998990c6d967dcd6d022b630bac9c74e014c5807057adbf00e6677647a74310"
       },
-      "limits": "LocalARM64build/smokeonly;noAWS/IRSA/K8s/realDBorqueue"
+      "limits": "Local ARM64 build and tests only; actual AMD64 build/registry push/EKS/IRSA/realAWS not executed. Deployment instructions explicitly select linux/amd64 for m6i node groups."
     },
     "appSchema": {
       "status": "passed",
@@ -1816,7 +1821,7 @@
         },
         {
           "name": "collector-service",
-          "resources": 5,
+          "resources": 6,
           "publishedCRDSchemaChecks": 0,
           "passed": true
         },
@@ -1828,7 +1833,7 @@
         },
         {
           "name": "monitoring-management",
-          "resources": 80,
+          "resources": 77,
           "publishedCRDSchemaChecks": 41,
           "passed": true
         },
@@ -1945,8 +1950,8 @@
   },
   "unitTests": {
     "passed": true,
-    "count": 19,
-    "scope": "PortableSQLite/OTel/FastAPI/messaging/DBconfigtests;actualHTTP/PostgreSQL/SDKexperimentsreportedseparately"
+    "count": 20,
+    "scope": "Portable tests run in rebuilt network-isolated ARM64 image, including two error subcases checking sentinel exclusion, error statuses and HTTP500 metric."
   },
   "siteTests": 126,
   "infra": {
@@ -3283,5 +3288,126 @@
     "TLSandNetworkHelpers": "repassedcurrentfiles",
     "networkValidatorEnvironment": "SystemPythonwithjsonschema;applicationvenvlacksjsonschema",
     "note": "SchemaandhelperchecksafterfinalIRSA/namespace/Infinity/DNSedits"
+  },
+  "reviewFix": {
+    "findings": [
+      "FOUNDATION-R1-001",
+      "FOUNDATION-R1-002",
+      "FOUNDATION-R1-003",
+      "FOUNDATION-R1-004",
+      "FOUNDATION-R1-005"
+    ],
+    "priorDockerEvidence": {
+      "status": "passed",
+      "imageId": "sha256:5f37fb1106ea7b25a1ec873dc31184a8acd8fd84b74032b6aa3e2423c22b794c",
+      "size": 253219230,
+      "user": "10001:10001",
+      "checks": [
+        "nonroot-readonly-network-none-DBinit",
+        "nonroot-readonly-gateway-health-and-ready"
+      ],
+      "sourceHashes": {
+        "Dockerfile": "b4ecfd4b97fb238290431755c046cc27a8ac0c199423c523f6b54450ab2b07b9",
+        ".dockerignore": "ae2678e5252e9293a06fb754a95c0c201c1a317db98584bc4931ae89955e1fce",
+        "requirements.txt": "0f06f28c80276b92ad78a06af85d83e8b9408d4ffdc8612660e8e69ff3f1abba",
+        "api.py": "af2c2451c98b4a8df3644adbce182ce867c8c9fd58f6ddeb7b53db7d97930418",
+        "db_config.py": "4a5b8e984288413274d04e023d6e3be103efd2172b0fec98361b5034c5bec68b",
+        "main.py": "ace4dfc5ccc61d102eff6578d6e8df420f5ebe2289435c09dd0e9ca3083383dc",
+        "messaging.py": "7e3937f339f8e246bf6c23d2ff59679325d5712835d673ef3d650e6dd28c3840",
+        "storage.py": "e0944b73fdc1f96ef44e7b66055d058b025c01a367764adf932f21bf2a8305e5",
+        "telemetry.py": "b5046ba75ec22748f8aa551a12132278289c6b2f3e997a42c41413940bb86c9f"
+      },
+      "limits": "LocalARM64build/smokeonly;noAWS/IRSA/K8s/realDBorqueue"
+    },
+    "currentImageTests": {
+      "status": "passed",
+      "imageId": "sha256:ef44423ec44b9b326ddfab5fbec1694fa60a6f0d6e08888f3f0fe45b40649cd1",
+      "architecture": "arm64",
+      "user": "10001:10001",
+      "checks": [
+        "20 portable tests inside actual rebuilt image including two sensitive-error subcases",
+        "nonroot/read-only/network-none/cap-dropALL container"
+      ],
+      "sourceHashes": {
+        "Dockerfile": "b4ecfd4b97fb238290431755c046cc27a8ac0c199423c523f6b54450ab2b07b9",
+        ".dockerignore": "ae2678e5252e9293a06fb754a95c0c201c1a317db98584bc4931ae89955e1fce",
+        "requirements.txt": "0f06f28c80276b92ad78a06af85d83e8b9408d4ffdc8612660e8e69ff3f1abba",
+        "api.py": "f6149181adc75c4b28f68531e6d6eec7e61eddf4cf5da18a00a7c96f353d8f7c",
+        "db_config.py": "4a5b8e984288413274d04e023d6e3be103efd2172b0fec98361b5034c5bec68b",
+        "main.py": "ace4dfc5ccc61d102eff6578d6e8df420f5ebe2289435c09dd0e9ca3083383dc",
+        "messaging.py": "7e3937f339f8e246bf6c23d2ff59679325d5712835d673ef3d650e6dd28c3840",
+        "storage.py": "ea719bf3422797e735bda27790dc62a17b9818d1f2458e2ecda07dd7254522e7",
+        "telemetry.py": "e998990c6d967dcd6d022b630bac9c74e014c5807057adbf00e6677647a74310"
+      },
+      "limits": "Local ARM64 build and tests only; actual AMD64 build/registry push/EKS/IRSA/realAWS not executed. Deployment instructions explicitly select linux/amd64 for m6i node groups."
+    },
+    "grafanaRBAC": {
+      "status": "passed",
+      "finding": "FOUNDATION-R1-003",
+      "resources": 77,
+      "checks": [
+        "one Grafana container, no sidecars",
+        "Pod API token disabled",
+        "no Grafana Role/ClusterRole or binding",
+        "dedicated datasource Secret mount preserved"
+      ],
+      "valuesSha256": "9c28717d76a3a8cf9b2576bc44fe2dbdd898a897945255f931fd50d5af0ec23e",
+      "limits": "Actual pinned chart render; no Kubernetes installation"
+    },
+    "collectorServiceBinding": {
+      "status": "passed",
+      "finding": "FOUNDATION-R1-004",
+      "resources": 6,
+      "service": "lab-agent",
+      "endpoint": "http://lab-agent.observability.svc.cluster.local:4318/v1/traces",
+      "checks": [
+        "application endpoint host matches generated Service",
+        "OTLP HTTP port4318 maps to container port4318",
+        "Service selectors match DaemonSet Pod labels"
+      ],
+      "internalTrafficPolicy": "Local",
+      "valuesSha256": "07cba5baff4d237eeb9552731d83269281c2fc07527e6652bcf9b26bab838224",
+      "limits": "Pinned chart render/cross-file contract; real EKS DNS/forwarding not executed"
+    },
+    "language": [
+      {
+        "path": "public/archmaps/ko-labs-observability-01-infrastructure-setup-lab-0.html",
+        "onlyPrimaryLanguageChanged": true
+      },
+      {
+        "path": "public/archmaps/ko-labs-observability-02-observability-stack-lab-0.html",
+        "onlyPrimaryLanguageChanged": true
+      },
+      {
+        "path": "public/archmaps/ko-labs-observability-03-msa-deployment-lab-0.html",
+        "onlyPrimaryLanguageChanged": true
+      },
+      {
+        "path": "public/archmaps/ko-labs-observability-03-msa-deployment-lab-1.html",
+        "onlyPrimaryLanguageChanged": true
+      },
+      {
+        "path": "public/archmaps/ko-labs-observability-03-msa-deployment-lab-10.html",
+        "onlyPrimaryLanguageChanged": true
+      },
+      {
+        "path": "public/archmaps/ko-labs-observability-overview-0.html",
+        "onlyPrimaryLanguageChanged": true
+      },
+      {
+        "path": "public/archmaps/ko-labs-observability-overview-1.html",
+        "onlyPrimaryLanguageChanged": true
+      },
+      {
+        "path": "public/archmaps/ko-labs-observability-overview-2.html",
+        "onlyPrimaryLanguageChanged": true
+      },
+      {
+        "path": "public/archmaps/ko-labs-observability-overview-3.html",
+        "onlyPrimaryLanguageChanged": true
+      }
+    ],
+    "runtimeEvidenceScope": "Prior HTTP/PG/SDK/mTLS experiments retained as historical contract evidence. Current changed application code was exercised by all20portable tests in the newly built image; affected chart endpoint/RBAC bindings re-rendered. AMD64 build remains unexecuted.",
+    "buildCommands": "BothguidesandapplicationREADME explicitly buildx--platformlinux/amd64--push and inspect publishedmanifest before m6i deployment."
   }
 }

@@ -164,3 +164,11 @@ and CRI/JSON forwarding, Prometheus mTLS probes and Operator merge behavior,
 synthetic certificate/SAN/EKU checks, and schema checks. Actual EKS/LBC routing,
 NetworkPolicy enforcement, live IRSA, Grafana UI data queries and production
 availability were not executed during the audit.
+
+Grafana reads datasource provisioning files from its dedicated Secret mount. The
+unused dashboard sidecar, Kubernetes API token mount and Grafana RBAC are disabled;
+the lab does not need cluster-wide ConfigMap or Secret discovery.
+
+The service Collector explicitly enables the `lab-agent` ClusterIP Service on
+OTLP HTTP port4318. Its `internalTrafficPolicy: Local` requires a ready Collector
+on each application node; verify taints, tolerations and DaemonSet readiness.

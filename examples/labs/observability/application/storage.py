@@ -43,7 +43,7 @@ inbox = Table(
 
 class Store:
     def __init__(self, url):
-        self.engine = create_engine(url, pool_pre_ping=True)
+        self.engine = create_engine(url, pool_pre_ping=True, hide_parameters=True)
 
     def initialize(self):
         # Run as an explicit migration/init step before starting replicas.

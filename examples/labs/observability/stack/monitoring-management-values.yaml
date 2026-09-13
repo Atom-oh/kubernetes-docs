@@ -153,6 +153,7 @@ grafana:
   sidecar:
     dashboards:
       searchNamespace: monitoring
+      enabled: false
     datasources:
       searchNamespace: monitoring
       enabled: false
@@ -164,3 +165,8 @@ grafana:
   defaultDashboardsEnabled: false
   podLabels:
     lab-role: grafana
+  rbac:
+    create: false
+  serviceAccount:
+    automountServiceAccountToken: false
+  automountServiceAccountToken: false
