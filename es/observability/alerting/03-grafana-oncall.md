@@ -2,6 +2,8 @@
 
 > **Última actualización**: September 13, 2026
 
+<span id="tabla-de-contenido"></span>
+
 ## Tabla de contenidos
 
 - [Visión general de Grafana OnCall](#grafana-oncall-overview)
@@ -19,6 +21,8 @@
 
 ---
 
+<span id="descripcion-general-de-grafana-oncall"></span>
+
 ## Visión general de Grafana OnCall {#grafana-oncall-overview}
 
 **Grafana OnCall OSS se archivó el 2026-03-24.** Su repositorio se trasladó a `grafana-cold-storage/oncall` y es de solo lectura. Este capítulo sirve para revisar o migrar instalaciones existentes; no es una recomendación para un nuevo despliegue OSS en producción. Consulte por separado las funcionalidades, las API y los planes de Grafana Cloud IRM que sí reciben mantenimiento.
@@ -26,6 +30,8 @@
 **Cloud Connection finalizó el 2026-03-24.** Las notificaciones push móviles en OSS a través de la aplicación Grafana IRM y las notificaciones por SMS o voz que dependían de Cloud Connection ya no funcionan. Twilio u otros servicios de notificación configurados por separado son rutas distintas; esto no significa que todos los mecanismos de teléfono/SMS autoalojados hayan terminado.
 
 El código fuente archivado que se revisó es `af0fbd40558c9a63bcf438589894c440fc434a54`. La última versión publicada está etiquetada como v1.16.11, mientras que el chart de Helm/appVersion de ese código es 1.15.6; no son identificadores de versión intercambiables. Los ejemplos se verificaron contra ese código fuente y la documentación oficial de la API de OnCall. No se creó ninguna cuenta real de OnCall ni se realizaron escrituras por API o notificaciones.
+
+<span id="caracteristicas-principales"></span>
 
 ### Funcionalidades principales
 
@@ -35,6 +41,8 @@ El código fuente archivado que se revisó es `af0fbd40558c9a63bcf438589894c440f
 4. **Diversas integraciones**: Alertmanager, Grafana, CloudWatch, Webhook
 5. **ChatOps**: integración con Slack, MS Teams, Telegram
 6. **Canales de notificación**: su disponibilidad depende del despliegue, las integraciones y las reglas de usuario
+
+<span id="grafana-oncall-frente-a-pagerduty-y-opsgenie"></span>
 
 ### Grafana OnCall vs PagerDuty vs OpsGenie
 
@@ -47,6 +55,8 @@ El código fuente archivado que se revisó es `af0fbd40558c9a63bcf438589894c440f
 No seleccione un producto basándose en recuentos fijos de integraciones, precios antiguos o clasificaciones subjetivas de básico/avanzado.
 
 ---
+
+<span id="arquitectura"></span>
 
 ## Arquitectura {#architecture}
 
@@ -67,6 +77,8 @@ Son responsabilidades lógicas, no necesariamente Deployments (despliegues) sepa
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-1.html)
 
 ---
+
+<span id="instalacion"></span>
 
 ## Instalación {#installation}
 
@@ -104,6 +116,8 @@ No pase valores reales mediante argumentos --from-literal ni values de Helm en t
 
 ---
 
+<span id="configuracion-de-integraciones"></span>
+
 ## Configuración de integraciones {#integration-setup}
 
 ### Integración con Alertmanager
@@ -140,6 +154,8 @@ Compruebe el contact point admitido y la integración generada para las versione
 
 Utilice los requisitos de confirmación de SNS, firma y tratamiento del payload propios de la integración específica para CloudWatch. Suscribir SNS a cualquier webhook genérico no garantiza la compatibilidad. Pruebe las transiciones ALARM/OK/INSUFFICIENT_DATA, la confirmación, los duplicados/reintentos, los permisos de topic/endpoint y la entrega real. Esta auditoría no creó ninguna suscripción de SNS ni acción de alarma.
 
+<span id="integracion-con-webhook"></span>
+
 ### Integración por Webhook
 
 Un payload de webhook genérico debe coincidir con las plantillas de parseo, agrupación y resolución configuradas explícitamente. Enviar alert_uid, state y labels no hace que todas las integraciones los interpreten igual. Serialice el JSON correctamente y diseñe la verificación HTTPS, los tiempos de espera, el manejo de errores y el comportamiento de reintento/deduplicación. Mantenga las URL, los tokens y los datos personales fuera de los logs.
@@ -149,6 +165,8 @@ La API pública utiliza el **token de Authorization sin procesar** documentado; 
 La [herramienta de inventario de solo lectura](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/oncall) utiliza únicamente GET y valida el origen/la colección/el recuento de la paginación, TLS, las redirecciones y los permisos de archivo. Su salida puede contener URL de integración secretas y datos personales; no es una copia de seguridad completa de base de datos/claves/historial ni una instantánea de migración atómica. Doce pruebas locales con fixtures TLS pasaron sin consultar una cuenta real.
 
 ---
+
+<span id="configuracion-del-calendario-de-guardias"></span>
 
 ## Configuración del calendario de guardias {#on-call-schedule-configuration}
 
@@ -198,6 +216,8 @@ La recurrencia semanal requiere `week_start`, un `interval` positivo y el índic
 
 Diecinueve comprobaciones ejecutan validadores puros reales del upstream e inspeccionan los campos del serializador. No demuestran la existencia de usuarios o turnos en la base de datos ni las asignaciones finales del calendario.
 
+<span id="configuracion-de-anulaciones"></span>
+
 ### Configuración de excepciones (overrides)
 
 En este código fuente, una excepción es un tipo aparte de `/api/v1/on_call_shifts/`, no la antigua solicitud supuesta `/schedules/<id>/overrides/`. Conéctela al calendario previsto conservando los IDs de turno existentes. Verifique el comportamiento de asociación y prioridad de la API instalada e inspeccione los responsables finales en un periodo de prueba delimitado.
@@ -216,7 +236,11 @@ En este código fuente, una excepción es un tipo aparte de `/api/v1/on_call_shi
 
 ---
 
+<span id="cadenas-de-escalamiento"></span>
+
 ## Cadenas de escalado {#escalation-chains}
+
+<span id="estructura-de-la-cadena-de-escalamiento"></span>
 
 ### Estructura de una cadena de escalado
 
@@ -225,6 +249,8 @@ Acknowledge, Resolve y Silence son estados diferentes. Confirmar la recepción (
 ![Pasos ilustrativos de espera y notificación que conducen a la confirmación; la confirmación no es la resolución en el origen.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-3.html)
+
+<span id="creacion-de-una-cadena-de-escalamiento"></span>
 
 ### Creación de una cadena de escalado
 
@@ -240,6 +266,8 @@ Verifique los IDs y permisos de las cadenas, calendarios y usuarios existentes; 
 ```
 
 
+<span id="tipos-de-politicas-de-escalamiento"></span>
+
 ### Tipos de política de escalado
 
 El serializador del código fuente admite notificación a calendario/usuario/equipo/grupo, esperas, condiciones de tiempo y recuento, webhooks personalizados y declaración de incidentes cuando la funcionalidad está habilitada. La referencia al webhook personalizado es action_to_trigger; no dé por supuesto el antiguo webhook_id ni un campo repeat_after universal. declare_incident existe, pero requiere que la funcionalidad esté habilitada en la organización.
@@ -247,12 +275,16 @@ El serializador del código fuente admite notificación a calendario/usuario/equ
 important:true selecciona las **reglas de notificación importantes** configuradas por el usuario; no distribuye incondicionalmente a todos los canales. Revise por usuario el orden de las reglas default/important, las esperas, los canales y su disponibilidad real.
 
 
+<span id="cadenas-de-escalamiento-por-gravedad"></span>
+
 ### Cadenas de escalado por severidad
 
 Acuerde el propósito, las ventanas de respuesta, los respaldos, el horario laboral y el comportamiento de reaviso según la severidad. Notificar de nuevo al mismo calendario no siempre implica notificar a un responsable distinto. Verifique los campos reales de la API para pasos repetidos o condicionales y evite avisos duplicados para un mismo incidente. La entrega real por teléfono/SMS/webhook requiere una ruta de prueba aprobada y aquí no se utilizó.
 
 
 ---
+
+<span id="agrupacion-y-enrutamiento-de-alertas"></span>
 
 ## Agrupación y enrutamiento de alertas {#alert-grouping-and-routing}
 
@@ -283,6 +315,8 @@ Este ejemplo utiliza campos presentes en el serializador de rutas inspeccionado.
 ```
 
 
+<span id="configuracion-de-agrupacion-de-alertas"></span>
+
 ### Configuración de la agrupación de alertas
 
 Incluya en las claves de agrupación un alcance adecuado de cluster/entorno/namespace/service para evitar colisiones. Con muy pocos campos se fusionan incidentes no relacionados; con IDs sin límite los grupos se fragmentan. El antiguo YAML que mezclaba group_wait/group_interval/resolve_timeout no era un esquema universal de integración de OnCall. Distinga los temporizadores de Alertmanager de las plantillas de agrupación y resolución de OnCall.
@@ -291,6 +325,8 @@ Elija las variables de plantilla a partir del payload real de la integración. p
 
 
 ---
+
+<span id="integracion-de-chatops"></span>
 
 ## Integración con ChatOps {#chatops-integration}
 
@@ -303,6 +339,8 @@ Verifique los secretos de OAuth y de firma, los scopes y la conexión con el wor
 
 La antigua lista de /oncall ack, /oncall resolve y /oncall silence no está respaldada por el código fuente inspeccionado. Este utiliza un comando raíz configurable y ejemplos con /grafana. Consulte la ayuda o documentación actual de la aplicación instalada y sus botones; los comandos slash no son comandos de Bash.
 
+
+<span id="flujo-de-trabajo-de-slack"></span>
 
 ### Flujo de trabajo en Slack
 
@@ -324,6 +362,8 @@ El chart archivado utiliza los ajustes anidados oncall.telegram token/existingSe
 
 ---
 
+<span id="integracion-de-grafana-irm"></span>
+
 ## Integración con Grafana IRM {#grafana-irm-integration}
 
 ### Gestión de respuesta a incidentes
@@ -340,7 +380,11 @@ El código fuente inspeccionado contiene un paso declare_incident real, pero val
 
 ---
 
+<span id="aplicacion-movil"></span>
+
 ## Aplicación móvil {#mobile-app}
+
+<span id="caracteristicas-de-la-aplicacion-movil"></span>
 
 ### Funcionalidades de la aplicación móvil
 
@@ -364,12 +408,18 @@ Important/default seleccionan conjuntos distintos de reglas personales de notifi
 
 <span id="pagerdutyopsgenie-comparison"></span>
 
+<span id="comparacion-con-pagerduty-opsgenie"></span>
+
 ## Comparación con PagerDuty/OpsGenie {#pagerduty-opsgenie-comparison}
+
+<span id="comparacion-de-caracteristicas"></span>
 
 ### Comparación de funcionalidades
 
 Compare los mismos requisitos frente a planes, uso y contratos reales. Los precios antiguos por usuario, los recuentos de integraciones y las clasificaciones de básico/avanzado no son evidencia actual para la selección. Compruebe calendarios y excepciones, escalado condicional, SSO, retención, permisos de API, límites por canal y país, soporte y coste de migración. OnCall OSS está archivado, y Opsgenie requiere planificar la migración conforme a su ciclo de vida anunciado.
 
+
+<span id="consideraciones-de-migracion"></span>
 
 ### Consideraciones sobre la migración
 
@@ -394,12 +444,16 @@ Un solapamiento fijo de una a dos semanas no es una garantía, y un inventario p
 
 ---
 
+<span id="practicas-recomendadas"></span>
+
 ## Buenas prácticas {#best-practices}
 
 ### Diseño del calendario de guardias
 
 Acuerde los calendarios usando zonas horarias, festivos, relevos, respaldos y dotación de personal reales. Turnos semanales, relevos a las 09:00 o un mínimo de tres o cuatro personas no son respuestas universales. Transfiera los incidentes en curso, los silencios que expiran y los huecos de cobertura.
 
+
+<span id="diseno-de-escalamiento"></span>
 
 ### Diseño del escalado
 
@@ -410,6 +464,8 @@ Documente las acciones y objetivos de respuesta por severidad, las rutas de resp
 
 Revise la repetición, los falsos positivos, los eventos no detectados, los fallos de entrega y los resultados reales de respuesta. Vuelva a comprobar los datos y las transiciones de estado después de cambiar filtros, plantillas, agrupación o URL de origen, y conserve una ruta segura de restauración.
 
+
+<span id="bienestar-durante-las-guardias"></span>
 
 ### Bienestar del personal de guardia
 

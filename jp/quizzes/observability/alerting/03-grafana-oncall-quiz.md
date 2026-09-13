@@ -190,6 +190,8 @@ important は、ユーザーの重要な個人用通知ルールセットを選�
 
 ---
 
+<span id="追加学習リソース"></span>
+
 ## 追加の学習リソース
 
 - [Grafana OnCall ドキュメント](https://grafana.com/docs/oncall/latest/)

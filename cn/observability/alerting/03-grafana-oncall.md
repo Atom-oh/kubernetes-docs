@@ -19,6 +19,8 @@
 
 ---
 
+<span id="grafana-oncall-概述"></span>
+
 ## Grafana OnCall 概述 {#grafana-oncall-overview}
 
 **Grafana OnCall OSS 已于 2026-03-24 归档。** 其仓库已迁移至 `grafana-cold-storage/oncall`，且为只读状态。本章用于支持对现有安装的评审/迁移，并不表示推荐将其用于新的生产环境 OSS 部署。请另行确认仍在维护的 Grafana Cloud IRM 功能、API 与套餐。
@@ -48,6 +50,8 @@
 
 ---
 
+<span id="架构"></span>
+
 ## 架构 {#architecture}
 
 ### Grafana OnCall 组件
@@ -68,6 +72,8 @@
 
 ---
 
+<span id="安装"></span>
+
 ## 安装 {#installation}
 
 ### 通过 Helm 安装（EKS）
@@ -75,6 +81,8 @@
 在考虑做出变更之前，先盘点现有的 release/chart/image 摘要（digest）、数据库、broker、Grafana 插件、认证与渠道依赖。对比 helm list、工作负载镜像以及受保护的 helm get values/manifest 输出。Values/manifests 可能包含真实凭据：请私密保存，不要放入聊天、Git 或构建日志中。
 
 已归档的 chart 包含旧版本的 cert-manager、ingress-nginx 与数据库依赖。不要将不相关的当前版本 Grafana chart 与已归档源代码版本混用，也不要把一条简单的 helm install 命令当作当前仍有安全支持的证据。
+
+<span id="基础-values-yaml-配置"></span>
 
 ### 基本 values.yaml 配置
 
@@ -103,6 +111,8 @@
 不要通过 --from-literal 参数或明文 Helm values 传递真实值。请使用经批准的密钥存储/受保护文件，并将现有加密密钥与数据库备份一并管理。盲目更改现有安装的 Mirage key/IV 可能导致已存储数据无法解密。公共 API token、集成 webhook URL 以及 Slack/Twilio/Telegram 凭据具有不同的权限与轮换要求。
 
 ---
+
+<span id="集成设置"></span>
 
 ## 集成配置 {#integration-setup}
 
@@ -150,7 +160,11 @@ amtool 0.34 验证了语法以及 critical/warning/info/fallback 四种路由场
 
 ---
 
+<span id="值班计划配置"></span>
+
 ## On-Call 排班配置 {#on-call-schedule-configuration}
+
+<span id="计划概念"></span>
 
 ### 排班概念
 
@@ -159,6 +173,8 @@ amtool 0.34 验证了语法以及 critical/warning/info/fallback 四种路由场
 ![班次 ID、优先级、时区与覆盖共同决定最终排班；备份升级需要单独的策略。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-2.html)
+
+<span id="创建计划-api"></span>
 
 ### 创建排班（API）
 
@@ -198,6 +214,8 @@ web 类型排班的 `shifts` 包含的是**已有班次的 ID**，而不是嵌�
 
 19 项检查实际执行了上游的纯校验器并检查了 serializer 字段。它们无法证明数据库中用户/班次的存在性，也无法证明最终的日历分配结果。
 
+<span id="覆盖设置"></span>
+
 ### 覆盖（Override）设置
 
 在该源代码中，override 是 `/api/v1/on_call_shifts/` 下的一种独立类型，而不是旧文档所假设的 `/schedules/<id>/overrides/` 请求。请在保留现有班次 ID 的前提下，将其关联到目标排班。请确认所安装 API 的关联/优先级行为，并在受限的测试时间段内检查最终响应人。
@@ -215,6 +233,8 @@ web 类型排班的 `shifts` 包含的是**已有班次的 ID**，而不是嵌�
 
 
 ---
+
+<span id="升级链"></span>
 
 ## 升级链（Escalation Chains） {#escalation-chains}
 
@@ -254,6 +274,8 @@ important:true 会选用该用户配置的**重要通知规则**；它不会无�
 
 ---
 
+<span id="告警分组与路由"></span>
+
 ## 告警分组与路由 {#alert-grouping-and-routing}
 
 ### 路由设置
@@ -292,6 +314,8 @@ important:true 会选用该用户配置的**重要通知规则**；它不会无�
 
 ---
 
+<span id="chatops-集成"></span>
+
 ## ChatOps 集成 {#chatops-integration}
 
 ### Slack 集成
@@ -324,7 +348,11 @@ Acknowledge/Resolve/Silence 按钮通过已授权用户的操作来改变 OnCall
 
 ---
 
+<span id="grafana-irm-集成"></span>
+
 ## Grafana IRM 集成 {#grafana-irm-integration}
+
+<span id="事件响应管理"></span>
 
 ### 事件响应管理（IRM）
 
@@ -339,6 +367,8 @@ Acknowledge/Resolve/Silence 按钮通过已授权用户的操作来改变 OnCall
 所检查的源代码中确实包含真实的 declare_incident 步骤，但会校验组织是否启用了该功能。随意添加 severity/title_template YAML 并不能配置出一个事件集成。请区分 alert group、incident、确认、解决与复盘（postmortem），并在经批准的测试中确认归属与状态转换。
 
 ---
+
+<span id="移动应用"></span>
 
 ## 移动应用 {#mobile-app}
 
@@ -363,6 +393,8 @@ Important/default 分别对应不同的个人通知规则集。其顺序、等�
 ---
 
 <span id="pagerdutyopsgenie-comparison"></span>
+
+<span id="pagerduty-opsgenie-对比"></span>
 
 ## PagerDuty/OpsGenie 对比 {#pagerduty-opsgenie-comparison}
 
@@ -394,7 +426,11 @@ Important/default 分别对应不同的个人通知规则集。其顺序、等�
 
 ---
 
+<span id="最佳实践"></span>
+
 ## 最佳实践 {#best-practices}
+
+<span id="值班计划设计"></span>
 
 ### On-Call 排班设计
 
@@ -410,6 +446,8 @@ Important/default 分别对应不同的个人通知规则集。其顺序、等�
 
 请评审重复、误报、漏报、投递失败以及实际的响应结果。在更改过滤器/模板/分组/源端 URL 之后，重新核对数据与状态转换，并保留一条安全的恢复路径。
 
+
+<span id="值班健康"></span>
 
 ### On-Call 健康度
 

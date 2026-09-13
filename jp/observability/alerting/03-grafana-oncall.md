@@ -19,6 +19,8 @@
 
 ---
 
+<span id="grafana-oncall-の概要"></span>
+
 ## Grafana OnCall の概要 {#grafana-oncall-overview}
 
 **Grafana OnCall OSS は 2026-03-24 にアーカイブされました。** リポジトリは `grafana-cold-storage/oncall` に移動し、読み取り専用です。この章は既存インストールのレビューおよび移行を支援するものであり、新規の本番 OSS デプロイを推奨するものではありません。維持管理されている Grafana Cloud IRM の機能、API、プランは個別に確認してください。
@@ -48,7 +50,11 @@
 
 ---
 
+<span id="アーキテクチャ"></span>
+
 ## アーキテクチャ {#architecture}
+
+<span id="grafana-oncall-のコンポーネント"></span>
 
 ### Grafana OnCall コンポーネント
 
@@ -68,7 +74,11 @@
 
 ---
 
+<span id="インストール"></span>
+
 ## インストール {#installation}
+
+<span id="helm-を使用したインストール-eks"></span>
 
 ### Helm によるインストール (EKS)
 
@@ -98,11 +108,15 @@
 
 既存デプロイの所有者は、DB/Redis の TLS 検証、ロール固有のシークレット配布、ネットワークアクセス、バックアップ/復元、移行をレビューする必要があります。インターネット公開の ALB や外部データベースのホスト名があっても、設定が本番対応になるわけではありません。この監査では EKS のデプロイ、HA のテスト、実際の通知プロバイダーの実行は行っていません。
 
+<span id="secret-の作成"></span>
+
 ### シークレットの作成
 
 実際の値を --from-literal 引数や平文の Helm values に渡さないでください。承認済みのシークレットストアまたは保護されたファイルを使用し、既存の暗号化キーはデータベースバックアップとともに管理してください。既存インストールの Mirage key/IV を無計画に変更すると、保存済みデータを復号できなくなる可能性があります。公開 API トークン、統合 webhook URL、Slack/Twilio/Telegram の認証情報には、それぞれ異なる権限とローテーション要件があります。
 
 ---
+
+<span id="統合のセットアップ"></span>
 
 ## 統合の設定 {#integration-setup}
 
@@ -150,6 +164,8 @@ CloudWatch 固有の統合における SNS 確認、署名、ペイロード処�
 
 ---
 
+<span id="オンコールスケジュールの設定"></span>
+
 ## オンコールスケジュールの設定 {#on-call-schedule-configuration}
 
 ### スケジュールの概念
@@ -192,11 +208,15 @@ web schedule の `shifts` には、ネストされた shift オブジェクト�
 ```
 
 
+<span id="ローテーションのタイプ"></span>
+
 ### ローテーションタイプ
 
 週次繰り返しには `week_start`、正の `interval`、rolling_users の開始ユーザーインデックスが必要です。日次/週次/時間次の繰り返しは、duration のみを変更することと同じではありません。ソース validator は、別個の time_zone とともに start を `YYYY-MM-DDTHH:MM:SS` として受け入れます。古いオフセット付き文字列をコピーしないでください。JSON の日付は例示用のサンプルであり、運用スケジュールではありません。
 
 19 のチェックで、実際の upstream pure validator を実行し、serializer フィールドを確認します。データベースの user/shift の存在や、最終的なカレンダー割り当てを証明するものではありません。
+
+<span id="オーバーライド設定"></span>
 
 ### 上書き設定
 
@@ -215,6 +235,8 @@ web schedule の `shifts` には、ネストされた shift オブジェクト�
 
 
 ---
+
+<span id="エスカレーションチェーン"></span>
 
 ## エスカレーションチェーン {#escalation-chains}
 
@@ -240,6 +262,8 @@ Acknowledge、Resolve、Silence は異なる状態です。確認応答は根本
 ```
 
 
+<span id="エスカレーションポリシーのタイプ"></span>
+
 ### エスカレーションポリシータイプ
 
 ソース serializer は、schedule/user/team/group 通知、wait、時間/回数条件、custom webhook、機能が有効な incident 宣言をサポートします。custom webhook の参照は action_to_trigger です。古い webhook_id や汎用的な repeat_after フィールドを想定しないでください。declare_incident は存在しますが、organization の機能有効化が必要です。
@@ -247,12 +271,16 @@ Acknowledge、Resolve、Silence は異なる状態です。確認応答は根本
 important:true はユーザーに設定された**重要な通知ルール**を選択します。すべてのチャネルへ無条件に配信するわけではありません。ユーザーごとの default/important ルールの順序、待機、チャネル、実際の可用性をレビューしてください。
 
 
+<span id="重要度別のエスカレーションチェーン"></span>
+
 ### 重大度別のエスカレーションチェーン
 
 重大度別の目的、対応時間枠、バックアップ、勤務時間、再ページング動作について合意してください。同じ schedule に再度通知しても、必ず異なる次の対応者に通知することを意味するわけではありません。実際の repeat/conditional-step API フィールドを確認し、1 つの incident に対する重複ページングを防止してください。実際の電話/SMS/webhook 配信には承認済みのテストパスが必要であり、ここでは実行していません。
 
 
 ---
+
+<span id="アラートのグループ化とルーティング"></span>
 
 ## アラートのグループ化とルーティング {#alert-grouping-and-routing}
 
@@ -283,6 +311,8 @@ important:true はユーザーに設定された**重要な通知ルール**を�
 ```
 
 
+<span id="アラートのグループ化設定"></span>
+
 ### アラートグループ化の設定
 
 衝突を避けるため、グループ化キーには適切な cluster/environment/namespace/service スコープを含めてください。フィールドが少なすぎると無関係な incident が統合され、無制限の ID はグループを細分化します。古い混在した group_wait/group_interval/resolve_timeout YAML は、汎用的な OnCall 統合スキーマではありません。Alertmanager の timer と OnCall のグループ化/解決テンプレートを区別してください。
@@ -291,6 +321,8 @@ important:true はユーザーに設定された**重要な通知ルール**を�
 
 
 ---
+
+<span id="chatops-統合"></span>
 
 ## ChatOps 統合 {#chatops-integration}
 
@@ -324,7 +356,11 @@ Microsoft が現在サポートしている webhook/workflow と card format を
 
 ---
 
+<span id="grafana-irm-統合"></span>
+
 ## Grafana IRM 統合 {#grafana-irm-integration}
+
+<span id="インシデントレスポンス管理"></span>
 
 ### インシデント対応管理
 
@@ -340,6 +376,8 @@ Microsoft が現在サポートしている webhook/workflow と card format を
 
 ---
 
+<span id="モバイルアプリ"></span>
+
 ## モバイルアプリ {#mobile-app}
 
 ### モバイルアプリの機能
@@ -351,6 +389,8 @@ Microsoft が現在サポートしている webhook/workflow と card format を
 
 古い mobile.firebase block は、確認したアーカイブ済み chart のキーではありません。任意の Firebase service-account ファイルで動作するプッシュが確立されるわけではありません。Cloud Connection は終了しています。この接続を使用する OSS Grafana IRM アプリのプッシュおよび SMS/音声は利用できません。個別にサポートされる Twilio/notification-service 経路または移行先を設定して検証してください。Firebase project/account やプッシュ通知は作成していません。
 
+
+<span id="通知チャネルの優先度"></span>
 
 ### 通知チャネルの優先順位
 
@@ -364,12 +404,16 @@ Important/default は、別々の個人用通知ルールセットを選択し�
 
 <span id="pagerdutyopsgenie-comparison"></span>
 
+<span id="pagerduty-opsgenie-の比較"></span>
+
 ## PagerDuty/OpsGenie の比較 {#pagerduty-opsgenie-comparison}
 
 ### 機能比較
 
 同一の要件を、実際のプラン、使用状況、契約に照らして比較してください。古いユーザー単価、統合数、基本/高度のランキングは、現在の選定根拠ではありません。schedule/override、条件付きエスカレーション、SSO、保持、API 権限、チャネル/国の制限、サポート、移行コストを確認してください。OnCall OSS はアーカイブ済みであり、Opsgenie は発表済みのライフサイクルに対する移行計画が必要です。
 
+
+<span id="移行時の考慮事項"></span>
 
 ### 移行に関する考慮事項
 
@@ -394,6 +438,8 @@ PagerDuty/Opsgenie から OnCall OSS への新規移行は、もはやデフォ�
 
 ---
 
+<span id="ベストプラクティス"></span>
+
 ## ベストプラクティス {#best-practices}
 
 ### オンコールスケジュールの設計
@@ -405,6 +451,8 @@ PagerDuty/Opsgenie から OnCall OSS への新規移行は、もはやデフォ�
 
 重大度別のアクション/対応目標、バックアップ/管理経路、再ページング、停止条件を文書化してください。割り込みページには実行可能な対応が必要です。緊急でない情報には別の経路を使用できます。important は電話/SMS 配信を保証しません。
 
+
+<span id="アラート品質の管理"></span>
 
 ### アラート品質管理
 

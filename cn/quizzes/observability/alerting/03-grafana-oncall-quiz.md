@@ -190,6 +190,8 @@ important 会选用该用户的 important 个人通知规则集。已配置的�
 
 ---
 
+<span id="附加学习资源"></span>
+
 ## 补充学习资源
 
 - [Grafana OnCall Documentation](https://grafana.com/docs/oncall/latest/)
