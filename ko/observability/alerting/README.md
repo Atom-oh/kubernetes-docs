@@ -513,7 +513,7 @@ EKS 1.28 이상은 일부 컨트롤 플레인 지표를 AWS/EKS에 제공합니�
 - [Google SRE Book - Practical Alerting](https://sre.google/sre-book/practical-alerting/)
 - [AWS CloudWatch Alarms Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
 - [Grafana OnCall Documentation](https://grafana.com/docs/oncall/latest/)
-- [PagerDuty Operations Guide](https://www.pagerduty.com/resources/operations/)
+- [PagerDuty Incident Response](https://response.pagerduty.com/)
 
 - [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/)
 - [EKS control-plane metrics](https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html)

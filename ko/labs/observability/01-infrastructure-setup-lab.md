@@ -79,7 +79,7 @@ kubectl --context service get nodes
 
 ## 3. 스토리지·LB·OIDC 전제 {#platform-prerequisites}
 
-EBS CSI와 검토한 `gp3` StorageClass, NetworkPolicy를 실제 적용하는 CNI, AWS Load Balancer Controller(`service.k8s.aws/nlb`)가 필요합니다. 공유 StorageClass를 무작정 덮지 않습니다. 관리/서비스 OIDC issuer와 대응 IAM provider ARN을 확보합니다. issuer는 https://를 제거한 host/path이며 provider ARN suffix와 일치해야 합니다.
+EBS CSI와 검토한 `gp3` StorageClass, NetworkPolicy를 실제 적용하는 CNI, AWS Load Balancer Controller(`service.k8s.aws/nlb`)가 필요합니다. 공유 StorageClass를 무작정 덮지 않습니다. 관리/서비스 OIDC issuer와 대응 IAM provider ARN을 확보합니다. issuer는 `https://`를 제거한 host/path이며 provider ARN suffix와 일치해야 합니다.
 
 ```bash
 aws eks describe-cluster --name "$LAB_PREFIX-managed" --query cluster.identity.oidc.issuer --output text
