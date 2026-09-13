@@ -2,304 +2,144 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Hybrid Alerting Pipeline",
+    "title": "Hybrid Alerting with Explicit Integrations",
     "locale": "en",
     "output": "en-observability-alerting-readme-7.html",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "views": [
-      {
-        "id": "sources",
-        "label": "Alert sources",
-        "focus": [
-          "prometheus",
-          "cloudwatch",
-          "alertmanager"
-        ],
-        "note": "Prometheus rules and CloudWatch alarms both feed Alertmanager for primary alert processing."
-      },
-      {
-        "id": "oncall",
-        "label": "On-call routing",
-        "focus": [
-          "alertmanager",
-          "oncall",
-          "pagerduty"
-        ],
-        "note": "Alertmanager routes to Grafana OnCall or PagerDuty for on-call management and escalation."
-      },
-      {
-        "id": "channels",
-        "label": "Notification channels",
-        "focus": [
-          "oncall",
-          "pagerduty",
-          "slack",
-          "email",
-          "sms"
-        ],
-        "note": "Either on-call tool fans out to Slack, email, and SMS."
-      }
-    ],
-    "viewBox": [
-      1250,
-      600
-    ]
+    "animation": "trace"
   },
   "components": [
     {
       "id": "prometheus",
       "type": "backend",
       "label": "Prometheus",
-      "sublabel": "alert rules",
+      "sublabel": "metric rules",
       "pos": [
         40,
-        120
+        80
       ],
       "size": [
-        150,
-        60
+        220,
+        70
       ]
     },
     {
       "id": "cloudwatch",
       "type": "cloud",
       "label": "CloudWatch",
-      "sublabel": "AWS service metrics",
+      "sublabel": "alarm actions",
       "pos": [
         40,
-        320
+        290
       ],
       "size": [
-        150,
-        60
+        220,
+        70
       ]
     },
     {
       "id": "alertmanager",
       "type": "messagebus",
       "label": "Alertmanager",
-      "sublabel": "grouping / routing",
+      "sublabel": "group / route",
       "pos": [
-        290,
-        220
+        320,
+        80
       ],
       "size": [
-        160,
-        60
+        220,
+        70
+      ]
+    },
+    {
+      "id": "integration",
+      "type": "messagebus",
+      "label": "SNS / integration",
+      "sublabel": "supported adapter",
+      "pos": [
+        320,
+        290
+      ],
+      "size": [
+        220,
+        70
       ]
     },
     {
       "id": "oncall",
-      "type": "backend",
-      "label": "Grafana OnCall",
-      "sublabel": "on-call + escalation",
+      "type": "external",
+      "label": "On-call service",
+      "sublabel": "ack / schedule / escalate",
       "pos": [
-        540,
-        220
+        620,
+        180
       ],
       "size": [
-        160,
-        60
+        220,
+        70
       ]
     },
     {
-      "id": "pagerduty",
+      "id": "channels",
       "type": "external",
-      "label": "PagerDuty",
-      "sublabel": "on-call + escalation",
+      "label": "Channels",
+      "sublabel": "configured phone / chat / mail",
       "pos": [
-        1050,
-        220
+        940,
+        180
       ],
       "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "slack",
-      "type": "external",
-      "label": "Slack",
-      "sublabel": "ChatOps",
-      "pos": [
-        800,
-        60
-      ],
-      "size": [
-        140,
-        60
-      ]
-    },
-    {
-      "id": "email",
-      "type": "external",
-      "label": "Email",
-      "sublabel": "notification",
-      "pos": [
-        800,
-        220
-      ],
-      "size": [
-        140,
-        60
-      ]
-    },
-    {
-      "id": "sms",
-      "type": "external",
-      "label": "SMS",
-      "sublabel": "notification",
-      "pos": [
-        800,
-        380
-      ],
-      "size": [
-        140,
-        60
+        220,
+        70
       ]
     }
   ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Alert sources",
-      "wraps": [
-        "prometheus",
-        "cloudwatch"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Routing",
-      "wraps": [
-        "alertmanager"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "On-call management",
-      "wraps": [
-        "oncall"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Notification",
-      "wraps": [
-        "slack",
-        "email",
-        "sms"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "On-call management",
-      "wraps": [
-        "pagerduty"
-      ]
-    }
-  ],
+  "boundaries": [],
   "connections": [
     {
-      "id": "prom-to-am",
+      "id": "prom-am",
       "from": "prometheus",
       "to": "alertmanager",
-      "label": "alerts",
       "variant": "emphasis"
     },
     {
-      "id": "cw-to-am",
+      "id": "cw-integration",
       "from": "cloudwatch",
-      "to": "alertmanager",
-      "label": "alarms"
+      "to": "integration"
     },
     {
-      "id": "am-to-oncall",
+      "id": "am-oncall",
       "from": "alertmanager",
       "to": "oncall",
-      "label": "route",
       "variant": "emphasis"
     },
     {
-      "id": "am-to-pd",
-      "from": "alertmanager",
-      "to": "pagerduty",
-      "label": "route",
-      "fromSide": "bottom",
-      "toSide": "bottom",
-      "via": [
-        [
-          370,
-          530
-        ],
-        [
-          1130,
-          530
-        ]
-      ]
+      "id": "integration-oncall",
+      "from": "integration",
+      "to": "oncall"
     },
     {
-      "id": "oncall-to-slack",
+      "id": "oncall-channels",
       "from": "oncall",
-      "to": "slack",
+      "to": "channels",
       "variant": "emphasis"
-    },
-    {
-      "id": "oncall-to-email",
-      "from": "oncall",
-      "to": "email"
-    },
-    {
-      "id": "oncall-to-sms",
-      "from": "oncall",
-      "to": "sms"
-    },
-    {
-      "id": "pd-to-slack",
-      "from": "pagerduty",
-      "to": "slack",
-      "fromSide": "left",
-      "toSide": "right"
-    },
-    {
-      "id": "pd-to-email",
-      "from": "pagerduty",
-      "to": "email",
-      "fromSide": "left",
-      "toSide": "right"
-    },
-    {
-      "id": "pd-to-sms",
-      "from": "pagerduty",
-      "to": "sms",
-      "fromSide": "left",
-      "toSide": "right"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Collect",
+      "title": "No automatic bridge",
       "items": [
-        "Prometheus + Alertmanager: metric collection and primary alert processing",
-        "CloudWatch: AWS service metric collection (control plane, EC2, EBS, ALB/NLB)"
+        "CloudWatch does not natively push directly to Alertmanager",
+        "Verify selected SNS/service integration and payload mapping"
       ]
     },
     {
       "dot": "amber",
-      "title": "Escalate",
+      "title": "Operations",
       "items": [
-        "Grafana OnCall or PagerDuty: on-call management and escalation",
-        "Alertmanager alone has no on-call management (only basic escalation)"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "Notify",
-      "items": [
-        "Slack: real-time alerts and collaboration",
-        "Email and SMS as additional channels"
+        "Protect credentials, delivery retries and deduplication keys",
+        "Test resolved events and missing-data behavior"
       ]
     }
   ]

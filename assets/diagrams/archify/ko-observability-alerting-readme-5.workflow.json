@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "SRE 온콜 로테이션",
+    "title": "4주 온콜 교대 예시",
     "animation": "trace",
     "quality_profile": "showcase",
     "viewBox": [
@@ -13,13 +13,14 @@
       "mode": "auto",
       "entries": {
         "frontend": {
-          "label": "현재 온콜 담당 주"
+          "label": "첫 교대 예시"
         },
         "backend": {
           "label": "예정된 온콜 주"
         }
       }
-    }
+    },
+    "output": "ko-observability-alerting-readme-5.html"
   },
   "lanes": [
     {
@@ -42,26 +43,26 @@
   "phases": [
     {
       "id": "w1",
-      "label": "02-17",
+      "label": "1주",
       "fromCol": 0,
       "toCol": 0,
       "variant": "emphasis"
     },
     {
       "id": "w2",
-      "label": "02-24",
+      "label": "2주",
       "fromCol": 1,
       "toCol": 1
     },
     {
       "id": "w3",
-      "label": "03-03",
+      "label": "3주",
       "fromCol": 2,
       "toCol": 2
     },
     {
       "id": "w4",
-      "label": "03-10",
+      "label": "4주",
       "fromCol": 3,
       "toCol": 3
     }
@@ -79,8 +80,7 @@
       "col": 0,
       "type": "frontend",
       "label": "온콜 담당",
-      "sublabel": "7일",
-      "tag": "현재"
+      "sublabel": "7일"
     },
     {
       "id": "shift_b",
@@ -136,12 +136,11 @@
     },
     {
       "dot": "cyan",
-      "title": "권장 하이브리드 구성",
+      "title": "인계",
       "items": [
-        "Prometheus + Alertmanager: 메트릭 수집 및 1차 알림 처리",
-        "CloudWatch: AWS 서비스 메트릭 수집",
-        "Grafana OnCall 또는 PagerDuty: 온콜 관리 및 에스컬레이션",
-        "Slack: 실시간 알림 및 협업"
+        "시간대·대응 범위·백업 담당자 합의",
+        "진행 중 사건·만료 예정 silence 인계",
+        "일정·보상은 조직 정책에 따름"
       ]
     }
   ]

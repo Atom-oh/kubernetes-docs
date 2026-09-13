@@ -1,6 +1,10 @@
 # 알림 개요
 
-> **마지막 업데이트**: 2026년 2월 20일
+> **마지막 업데이트**: 2026년 9월 13일
+
+
+> 검토 기준: Prometheus 3.14.0, Alertmanager 0.34.0. 예제는 단일 클러스터 수집과 중복 제거된 시계열을 가정합니다. 실제 job/라벨·수집기·지표 노출을 확인하고 임계값을 조정하세요. 로컬 규칙·라우팅 검증만 수행했으며 클러스터나 알림 채널은 실행하지 않았습니다.
+
 
 ## 목차
 
@@ -18,9 +22,9 @@
 
 ### 관측성 3대 축에서 알림의 위치
 
-현대적인 관측성(Observability)은 세 가지 핵심 축으로 구성됩니다:
+메트릭·로그·트레이스는 관측성에서 자주 사용하는 신호입니다. 프로파일 등 다른 신호도 있으며, 모든 규칙 엔진이 세 신호를 직접 평가하는 것은 아닙니다:
 
-![메트릭, 로그, 트레이스라는 관측성의 세 데이터가 모두 알림 규칙으로 모이고, 이어서 알림 전송과 에스컬레이션으로 이어지는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-0.png)
+![관측성 신호를 지원하는 백엔드 규칙 또는 추출 메트릭으로 평가한 뒤 통보·인시던트 통합에 연결하는 흐름.](../../.gitbook/assets/ko-observability-alerting-readme-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-0.html)
 
@@ -28,7 +32,7 @@
 - **로그(Logs)**: 이벤트의 상세한 기록
 - **트레이스(Traces)**: 분산 시스템에서의 요청 흐름
 
-**알림(Alerting)**은 이 세 가지 데이터 소스를 기반으로 이상 상태를 감지하고, 적시에 담당자에게 통보하여 신속한 대응을 가능하게 합니다.
+Prometheus 규칙은 메트릭을 평가합니다. 로그·트레이스는 해당 백엔드의 규칙이나 추출한 메트릭을 통해 알림에 연결합니다. 감지, 통보, 담당자 확인은 서로 다른 단계이며 전달 성공은 별도로 감시해야 합니다.
 
 ### 알림이 필요한 이유
 
@@ -52,9 +56,9 @@
 
 ## 알림 생명주기
 
-알림은 다음과 같은 생명주기를 거칩니다:
+그림은 규칙 상태와 인시던트 대응을 함께 보여주는 개념도입니다. Prometheus 상태는 inactive/pending/firing이며, acknowledged/in-progress는 온콜 도구의 상태입니다. 담당자가 인시던트를 닫아도 규칙은 계속 firing일 수 있습니다. 시계열 소실도 규칙을 비활성화할 수 있으므로 이를 복구 증거로 취급하지 않습니다:
 
-![알림이 비활성에서 시작해 대기, 발생, 통보, 확인, 조치, 해결을 거쳐 종료되며, 임계값 이내 복귀나 자동 해결 시 조기에 비활성 상태로 되돌아갈 수 있음을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-1.png)
+![Prometheus 규칙 상태와 별도 인시던트 대응 상태. 사건 종료나 시계열 소실은 서비스 복구의 증거가 아니다.](../../.gitbook/assets/ko-observability-alerting-readme-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-1.html)
 
@@ -66,15 +70,15 @@
 - **로그 패턴**: 특정 로그 패턴 발생 시
 
 ```yaml
-# Prometheus 알림 규칙 예시
 groups:
   - name: node-alerts
     rules:
       - alert: HighCPUUsage
-        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-        for: 5m  # 5분 동안 지속 시 알림 발생
+        expr: 100 * (1 - avg by (cluster, instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 80
+        for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
           summary: "High CPU usage detected"
           description: "CPU usage is above 80% for 5 minutes on {{ $labels.instance }}"
@@ -85,22 +89,22 @@ groups:
 - **채널 선택**: Slack, Email, SMS, PagerDuty 등
 - **라우팅**: 알림 유형에 따라 적절한 수신자에게 전달
 - **그룹화**: 관련 알림을 묶어서 전송
-- **중복 제거**: 동일 알림 반복 전송 방지
+- **중복 제거**: 중복 통보를 줄이지만 repeat_interval 재통보·장애 복구 재전송은 가능하며 exactly-once 전달은 보장하지 않음
 
 ### 3. Escalation (에스컬레이션)
 
 - **시간 기반**: 일정 시간 내 응답 없으면 다음 담당자에게 전달
 - **심각도 기반**: 심각도에 따라 다른 에스컬레이션 경로
-- **자동 에스컬레이션**: 정해진 규칙에 따라 자동 상위 보고
+- **자동 에스컬레이션**: 온콜 서비스에 별도로 구성. Alertmanager의 repeat_interval은 미응답 확인이나 담당자 교대 기능이 아님
 
-![1차 담당자가 15분 내 응답하지 않으면 2차 담당자, 다시 없으면 팀 리드로 순차 상향되고, 끝까지 응답이 없으면 전체 팀에 알리는 시간 기반 에스컬레이션 경로를 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-2.png)
+![온콜 서비스에서 구성하는 에스컬레이션 시간 예시. 확인·백업·재호출 동작은 정책에 따른다.](../../.gitbook/assets/ko-observability-alerting-readme-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-2.html)
 
 ### 4. Resolution (해결)
 
-- **수동 해결**: 담당자가 문제 해결 후 알림 종료
-- **자동 해결**: 메트릭이 정상 범위로 돌아오면 자동 종료
+- **수동 해결**: 담당자가 인시던트 도구에서 사건을 종료하며 규칙 상태는 별도로 확인
+- **자동 해결**: 규칙 조건 해제·수집 상태를 확인한 후 연동 정책에 따라 사건 상태 갱신
 - **해결 알림**: 문제 해결 시 해결 알림 전송
 
 ---
@@ -109,7 +113,7 @@ groups:
 
 ### 1. Actionable Alerts (실행 가능한 알림)
 
-모든 알림은 수신자가 즉각적인 조치를 취할 수 있어야 합니다.
+사람을 깨우는 페이지는 즉시 실행 가능한 조치가 있어야 합니다. 정보성 이벤트와 장기 개선 과제는 티켓·대시보드로 분리할 수 있습니다.
 
 **잘못된 예:**
 ```
@@ -119,15 +123,15 @@ Alert: Database connection count increased
 **올바른 예:**
 ```
 Alert: Database connection pool exhausted
-Action Required: Scale up database or investigate connection leaks
-Runbook: https://wiki.company.com/db-connection-exhausted
+Action Required: Confirm user impact; inspect pool saturation and connection leaks using the runbook
+Runbook: https://example.com/runbooks/replace-db-runbook
 ```
 
 ### 2. Alert Fatigue 방지 (알림 피로 방지)
 
 너무 많은 알림은 오히려 중요한 알림을 놓치게 만듭니다.
 
-![과도한 알림이 알림 무시, 중요 알림 누락, 인시던트 발생, 더 많은 알림 추가로 이어지는 악순환과, 알림 정제가 적절한 임계값, 알림 그룹화, 정기적 리뷰로 이어져 서로를 강화하는 개선 순환을 나란히 대조하여 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-3.png)
+![알림 피로와 실행 가능성·그룹화·비긴급 작업 분리를 개선하는 검토 순환.](../../.gitbook/assets/ko-observability-alerting-readme-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-3.html)
 
@@ -141,7 +145,7 @@ Runbook: https://wiki.company.com/db-connection-exhausted
 
 ### 3. Severity Levels (심각도 수준)
 
-일관된 심각도 체계를 정의하고 준수합니다:
+아래 대응 시간은 조직별 정책을 설명하는 예시이며 제품 SLA나 보편적 권장값이 아닙니다:
 
 | 심각도 | 설명 | 대응 시간 | 예시 |
 |--------|------|-----------|------|
@@ -151,23 +155,31 @@ Runbook: https://wiki.company.com/db-connection-exhausted
 | **Info** | 정보성 알림 | 업무 시간 내 | 배포 완료, 백업 성공 |
 
 ```yaml
-# 심각도별 알림 규칙 예시
 groups:
   - name: disk-alerts
     rules:
       - alert: DiskSpaceCritical
-        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 5
+        expr: |
+          (100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 5)
+          and node_filesystem_readonly == 0
+          and node_filesystem_size_bytes > 0
         for: 5m
         labels:
           severity: critical
+          team: sre
         annotations:
           summary: "Disk space critical"
-
       - alert: DiskSpaceWarning
-        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 20
+        expr: |
+          (100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 20)
+          and node_filesystem_readonly == 0
+          and node_filesystem_size_bytes > 0
         for: 10m
         labels:
           severity: warning
+          team: sre
         annotations:
           summary: "Disk space low"
 ```
@@ -183,16 +195,11 @@ groups:
 
 ```yaml
 annotations:
-  summary: "High memory usage on {{ $labels.instance }}"
-  description: |
-    Memory usage is above 90% on {{ $labels.instance }}.
-    Current value: {{ $value | printf "%.2f" }}%
-  impact: "Application may experience OOM kills and service degradation"
-  action: |
-    1. Check for memory leaks: kubectl top pods -n {{ $labels.namespace }}
-    2. Review recent deployments
-    3. Consider scaling horizontally
-  runbook_url: "https://wiki.company.com/runbooks/high-memory"
+  summary: "Investigate the affected operation"
+  description: "Check the rule expression, its units, labels, and collection health."
+  impact: "Document the affected user operation before paging."
+  action: "Use the owning team's reviewed runbook; do not scale resources blindly."
+  runbook_url: "https://example.com/runbooks/replace-with-reviewed-runbook"
 ```
 
 ---
@@ -203,51 +210,49 @@ annotations:
 
 알림은 다양한 기준에 따라 적절한 수신자에게 전달되어야 합니다:
 
-![알림이 심각도에 따라 전화·Slack·이메일 등 채널로 나뉘고, 다시 인프라·애플리케이션·데이터베이스·보안 담당 팀으로 갈라지는 2단계 라우팅 구조를 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-4.png)
+![통보 전에 라벨로 온콜·담당 팀 receiver를 선택한다. critical만 매칭되면 default는 추가 호출되지 않는다.](../../.gitbook/assets/ko-observability-alerting-readme-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-4.html)
 
 ### 라우팅 트리 설계
 
+아래는 **통보를 전송하지 않는** 완전한 라우팅 검증용 설정입니다. 빈 receivers는 의도적이며 운영 적용 전에 선택한 통합과 Secret 파일을 설정해야 합니다. critical은 온콜 receiver와 담당 팀에 함께 전달됩니다. team이 없으면 default로 가지만 critical만 매칭되면 default를 추가 호출하지 않습니다. group_wait 등 대기 시간이 있어 즉시 전화가 보장되지 않습니다. 디스크 critical은 같은 instance/device/mountpoint의 warning만 억제합니다.
+
 ```yaml
-# Alertmanager 라우팅 설정 예시
 route:
-  receiver: 'default-receiver'
-  group_by: ['alertname', 'cluster', 'service']
+  receiver: default-receiver
+  group_by: [alertname, cluster, namespace, service]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
-
   routes:
-    # Critical 알림 - 즉시 전화
-    - match:
-        severity: critical
-      receiver: 'pagerduty-critical'
+    - matchers: ['severity="critical"']
+      receiver: critical-oncall
       continue: true
-
-    # 인프라 팀 알림
-    - match_re:
-        alertname: ^(Node|Disk|CPU|Memory).*
-      receiver: 'sre-team'
-      routes:
-        - match:
-            severity: critical
-          receiver: 'sre-oncall'
-
-    # 애플리케이션 팀 알림
-    - match_re:
-        namespace: ^(app|api|web).*
-      receiver: 'dev-team'
-
-    # 데이터베이스 알림
-    - match_re:
-        alertname: ^(MySQL|PostgreSQL|Redis|MongoDB).*
-      receiver: 'dba-team'
+    - matchers: ['team="sre"']
+      receiver: sre-team
+    - matchers: ['team="app"']
+      receiver: dev-team
+    - matchers: ['team="database"']
+      receiver: dba-team
+    - matchers: ['team="security"']
+      receiver: security-team
+receivers:
+  - name: default-receiver
+  - name: critical-oncall
+  - name: sre-team
+  - name: dev-team
+  - name: dba-team
+  - name: security-team
+inhibit_rules:
+  - source_matchers: ['alertname="DiskSpaceCritical"', 'instance!=""', 'device!=""', 'mountpoint!=""']
+    target_matchers: ['alertname="DiskSpaceWarning"', 'instance!=""', 'device!=""', 'mountpoint!=""']
+    equal: [cluster, instance, device, mountpoint]
 ```
 
 ### 에스컬레이션 정책
 
-시간 기반 에스컬레이션 정책을 설정하여 알림이 무시되지 않도록 합니다:
+다음 표는 예시입니다. 온콜 서비스에서 근무 시간대·확인 시간·백업 담당자·재호출 조건을 구성하고 모의 훈련으로 검증합니다:
 
 | 단계 | 시간 | 대상 | 채널 |
 |------|------|------|------|
@@ -265,7 +270,7 @@ route:
 
 온콜(On-Call)은 지정된 기간 동안 시스템 문제에 대응할 책임을 가진 담당자를 의미합니다.
 
-![SRE 팀 네 명의 엔지니어가 7일 단위로 온콜을 순차적으로 이어받는 4주 로테이션 일정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-5.png)
+![4주 교대와 인계 예시. 실제 시간대·인원·백업·보상은 합의한 정책에 따른다.](../../.gitbook/assets/ko-observability-alerting-readme-5.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-5.html)
 
@@ -291,7 +296,7 @@ route:
 
 ### EKS 특화 알림 영역
 
-![EKS 클러스터의 알림 대상을 컨트롤 플레인, 데이터 플레인, 네트워킹, 스토리지 네 영역으로 나누고 각 영역의 핵심 감시 대상을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-6.png)
+![스크레이프 실패·대상 누락·Ready·리소스 신호를 구분한 EKS 감시 범위와 수집 한계.](../../.gitbook/assets/ko-observability-alerting-readme-6.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-6.html)
 
@@ -299,110 +304,145 @@ route:
 
 #### 1. 클러스터 수준 알림
 
+예제의 job 이름은 환경에 맞게 바꿉니다. up=0은 스크레이프 실패이며 API 전체 장애를 확정하지 않습니다. absent 규칙은 단일 수집 범위용이고, 여러 클러스터에서는 기대 대상 목록과 cluster 라벨을 연결해야 합니다. Cluster Autoscaler 카운터는 누적값 대신 increase를 사용합니다. 과거 10분의 증가가 5분간 보였다는 뜻이지 오류가 5분 내내 발생했다는 뜻은 아닙니다. Karpenter/EKS Auto Mode에는 이 규칙을 그대로 적용하지 않습니다.
+
 ```yaml
-# 클러스터 수준 알림 예시
 groups:
   - name: eks-cluster
     rules:
-      - alert: EKSAPIServerDown
+      - alert: EKSAPIServerScrapeFailed
         expr: up{job="kubernetes-apiservers"} == 0
         for: 1m
         labels:
           severity: critical
+          team: sre
         annotations:
-          summary: "EKS API Server is down"
-
+          summary: "Prometheus cannot scrape the configured API server target"
+      - alert: EKSAPIServerTargetMissing
+        expr: absent(up{job="kubernetes-apiservers"})
+        for: 5m
+        labels:
+          severity: warning
+          team: sre
+        annotations:
+          summary: "No API server target series in this Prometheus"
       - alert: EKSNodeNotReady
         expr: kube_node_status_condition{condition="Ready",status="true"} == 0
         for: 5m
         labels:
           severity: critical
+          team: sre
         annotations:
           summary: "Node {{ $labels.node }} is not ready"
-
-      - alert: EKSClusterAutoscalerError
-        expr: cluster_autoscaler_errors_total > 0
+      - alert: EKSClusterAutoscalerRecentErrors
+        expr: increase(cluster_autoscaler_errors_total[10m]) > 0
         for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
-          summary: "Cluster Autoscaler is experiencing errors"
+          summary: "Cluster Autoscaler recorded failed loops in the last 10 minutes"
 ```
 
 #### 2. 워크로드 수준 알림
 
+CrashLoopBackOff 지표는 재시도 중 잠시 사라질 수 있습니다. 아래 규칙은 최근 5분의 관측값이 있는 상태가 10분 지속되면 발생합니다. 따라서 현재 계속 Waiting인지가 아니라 반복 관측을 감지하며, 마지막 관측 후 최대 5분 동안 유지될 수 있습니다. 짧은 일회성 상태·반복 재시도·복구를 실제 rule 테스트로 구분합니다.
+
 ```yaml
-# 워크로드 수준 알림 예시
 groups:
   - name: eks-workloads
     rules:
       - alert: PodCrashLooping
-        expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 3
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod {{ $labels.pod }} is crash looping"
-
-      - alert: PodNotReady
-        expr: |
-          sum by (namespace, pod) (
-            kube_pod_status_phase{phase=~"Pending|Unknown"}
-          ) > 0
-        for: 15m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod {{ $labels.pod }} has been pending for 15 minutes"
-
-      - alert: DeploymentReplicasMismatch
-        expr: |
-          kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+        expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]) >= 1
         for: 10m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Deployment {{ $labels.deployment }} has replica mismatch"
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} repeatedly observed in CrashLoopBackOff"
+      - alert: PodFrequentRestarts
+        expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has frequent restarts"
+      - alert: PodNotReady
+        expr: |
+          (kube_pod_status_ready{condition="true"} == 0)
+          and on (namespace, pod, uid)
+          (kube_pod_status_phase{phase=~"Pending|Running|Unknown"} == 1)
+        for: 15m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Active pod {{ $labels.namespace }}/{{ $labels.pod }} is not ready"
+      - alert: DeploymentReplicasMismatch
+        expr: |
+          kube_deployment_spec_replicas
+            > on (namespace, deployment) kube_deployment_status_replicas_available
+        for: 10m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has fewer available replicas than desired"
 ```
 
 #### 3. 리소스 수준 알림
 
+CFS 예제는 시간 비율이 아니라 **스로틀된 기간 수/전체 기간 수**입니다. cAdvisor 지표가 실제 노출되는지 확인하세요. 무제한 메모리는 0 또는 매우 큰 값으로 보고될 수 있으므로 명시적 limit이 있는 컨테이너만 대상으로 제한해야 합니다. PVC 통계는 CSI 드라이버·볼륨 유형에 따라 없을 수 있습니다. 0 분모는 제외하지만 지표 누락 자체를 정상으로 판단하지 않습니다.
+
 ```yaml
-# 리소스 수준 알림 예시
 groups:
   - name: eks-resources
     rules:
       - alert: ContainerCPUThrottling
         expr: |
-          rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0.25
+          (
+            sum by (namespace, pod, container) (
+              rate(container_cpu_cfs_throttled_periods_total{container!="",container!="POD"}[5m]))
+            / sum by (namespace, pod, container) (
+              rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m]))
+          ) > 0.25
+          and sum by (namespace, pod, container) (
+            rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m])) > 0
         for: 5m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Container {{ $labels.container }} is being CPU throttled"
-
+          summary: "More than 25% of CFS periods throttled for {{ $labels.pod }}/{{ $labels.container }}"
       - alert: ContainerMemoryNearLimit
         expr: |
-          (container_memory_working_set_bytes / container_spec_memory_limit_bytes) > 0.9
+          (
+            container_memory_working_set_bytes{container!="",container!="POD"}
+            / container_spec_memory_limit_bytes{container!="",container!="POD"}
+          ) > 0.9
+          and container_spec_memory_limit_bytes{container!="",container!="POD"} > 0
         for: 5m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Container {{ $labels.container }} memory usage is near limit"
-
+          summary: "Container {{ $labels.pod }}/{{ $labels.container }} memory is near its reported limit"
       - alert: PVCAlmostFull
         expr: |
-          (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.85
+          (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.85)
+          and kubelet_volume_stats_capacity_bytes > 0
         for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
-          summary: "PVC {{ $labels.persistentvolumeclaim }} is almost full"
+          summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is almost full"
 ```
 
 ### AWS 서비스 통합 알림
 
-EKS는 다양한 AWS 서비스와 통합되므로, 이에 대한 알림도 필요합니다:
+EKS 1.28 이상은 일부 컨트롤 플레인 지표를 AWS/EKS에 제공합니다. 모든 내부 구성 요소를 직접 스크레이프할 수 있다는 뜻은 아닙니다. 인증 오류를 조사하는 컨트롤 플레인 로그는 별도 활성화해야 하며, 가용성은 수집 상태·API 요청 실패·외부 프로브를 함께 판단합니다:
 
 | AWS 서비스 | 모니터링 항목 | 알림 도구 |
 |------------|---------------|-----------|
@@ -410,8 +450,8 @@ EKS는 다양한 AWS 서비스와 통합되므로, 이에 대한 알림도 필�
 | EC2 (노드) | 인스턴스 상태, 시스템 검사 | CloudWatch |
 | EBS | 볼륨 상태, IOPS 사용량 | CloudWatch |
 | EFS | 처리량, 연결 수 | CloudWatch |
-| ALB/NLB | 요청 수, 오류율, 지연시간 | CloudWatch |
-| VPC | 네트워크 트래픽, NAT 게이트웨이 | CloudWatch/VPC Flow Logs |
+| ALB / NLB | ALB HTTP 요청·오류·응답 시간; NLB 흐름·TCP 재설정·대상 상태 | CloudWatch: 제품별 지표 확인 |
+| VPC / NAT Gateway | NAT 지표, 별도 활성화한 Flow Logs의 허용·거부 기록 | CloudWatch 지표/Logs; Flow Logs 자체는 알람 엔진이 아님 |
 
 ---
 
@@ -419,44 +459,40 @@ EKS는 다양한 AWS 서비스와 통합되므로, 이에 대한 알림도 필�
 
 ### 주요 알림 솔루션 비교표
 
-| 기능 | Alertmanager | CloudWatch Alarms | Grafana OnCall | PagerDuty | OpsGenie |
-|------|--------------|-------------------|----------------|-----------|----------|
-| **유형** | 오픈소스 | AWS 네이티브 | 오픈소스/SaaS | SaaS | SaaS |
-| **비용** | 무료 | 알림 수 기반 과금 | 무료/유료 | 유료 | 유료 |
-| **EKS 통합** | Prometheus 연동 | 네이티브 | Alertmanager 연동 | 다양한 연동 | 다양한 연동 |
-| **온콜 관리** | 없음 | 없음 | 있음 | 있음 | 있음 |
-| **에스컬레이션** | 기본 | 없음 | 있음 | 고급 | 고급 |
-| **모바일 앱** | 없음 | 없음 | 있음 | 있음 | 있음 |
-| **ChatOps** | Webhook | SNS | Slack, Teams | 다양함 | 다양함 |
-| **복잡도** | 중간 | 낮음 | 중간 | 낮음 | 낮음 |
+| 제품 | 역할과 운영 조건 |
+|------|--------------------|
+| Alertmanager | 오픈소스 그룹화·라우팅·억제·재통보. 호스팅 비용과 운영 필요. 온콜 스케줄·미응답 기반 에스컬레이션 없음 |
+| CloudWatch Alarms | AWS 지표/지원되는 쿼리 평가·상태 변경·구성된 액션. 온콜 스케줄은 별도 |
+| Grafana OnCall OSS | 2026-03-24 보관 처리. 신규 운영 기본 선택으로 권장하지 않음 |
+| Grafana Cloud IRM / PagerDuty | 온콜·에스컬레이션 후보. 현재 요금제·채널·지역·계약 조건 확인 |
+| Opsgenie | 2025-06-04 신규 판매 종료; 2027-04-05 지원 종료·서비스 종료 예정. 기존 사용자는 이전 계획 수립 |
 
 ### 솔루션 선택 가이드
 
-![온콜 관리 필요 여부, AWS 네이티브 선호, 예산과 기존 도구에 따라 CloudWatch Alarms, Alertmanager, Grafana OnCall, PagerDuty, OpsGenie 중 하나로 좁혀가는 선택 과정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-7.png)
+![요구사항에 맞춰 유지보수되는 규칙·라우팅·온콜 도구를 선택하고 보관된 OnCall OSS와 종료 예정 Opsgenie의 이전을 계획한다.](../../.gitbook/assets/ko-observability-alerting-readme-7.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-7.html)
 
 #### 상황별 권장 솔루션
 
-1. **소규모 팀, 비용 중시**: Alertmanager + Slack
-2. **AWS 올인 환경**: CloudWatch Alarms + SNS + Lambda
-3. **중간 규모, 온콜 필요**: Grafana OnCall
-4. **대규모 조직, 복잡한 에스컬레이션**: PagerDuty
-5. **Atlassian 생태계 사용**: OpsGenie
+1. Prometheus 중심: Alertmanager로 그룹화·라우팅하고 필요한 통보 채널을 연결합니다.
+2. AWS 지표 중심: CloudWatch Alarms와 SNS/지원되는 인시던트 통합을 검토합니다.
+3. 24시간 대응: 인원·백업·시간대·확인·에스컬레이션·비용을 기준으로 유지보수되는 온콜 서비스를 선택합니다.
+4. Grafana OnCall OSS·Opsgenie 기존 사용자: 기능·이력·스케줄·연동 이전을 검증합니다.
 
 ### 하이브리드 접근법
 
-대부분의 프로덕션 환경에서는 여러 솔루션을 조합하여 사용합니다:
+여러 솔루션을 조합할 수 있습니다. CloudWatch→Alertmanager 직접 전송이 자동 제공되는 것은 아닙니다. 아래 구성은 SNS/지원되는 통합으로 온콜 서비스에 연결하며, Alertmanager를 경유하려면 별도 변환·인증·중복/해결 상태 설계가 필요합니다:
 
-![Prometheus와 CloudWatch의 알림이 Alertmanager로 모여 Grafana OnCall과 PagerDuty로 나뉘고, 다시 Slack, Email, SMS 채널로 전달되는 프로덕션 알림 구성을 보여준다.](../../.gitbook/assets/ko-observability-alerting-readme-8.png)
+![Prometheus는 Alertmanager를, CloudWatch는 명시적 SNS·서비스 통합을 통해 온콜 서비스에 연결하며 자동 직접 브리지는 없다.](../../.gitbook/assets/ko-observability-alerting-readme-8.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-readme-8.html)
 
-**권장 아키텍처:**
+**구성 예시:**
 
 1. **Prometheus + Alertmanager**: 메트릭 수집 및 1차 알림 처리
 2. **CloudWatch**: AWS 서비스 메트릭 수집
-3. **Grafana OnCall 또는 PagerDuty**: 온콜 관리 및 에스컬레이션
+3. **유지보수되는 온콜 서비스**: 온콜 관리 및 에스컬레이션
 4. **Slack**: 실시간 알림 및 협업
 
 ---
@@ -467,7 +503,7 @@ EKS는 다양한 AWS 서비스와 통합되므로, 이에 대한 알림도 필�
 
 - [Prometheus Alertmanager](./01-alertmanager.md): 오픈소스 알림 관리
 - [CloudWatch Alarms](./02-cloudwatch-alarms.md): AWS 네이티브 알림
-- [Grafana OnCall](./03-grafana-oncall.md): 온콜 및 인시던트 관리
+- [Grafana OnCall](./03-grafana-oncall.md): 기존 설치 검토와 이전 시 고려사항
 
 ---
 
@@ -478,3 +514,7 @@ EKS는 다양한 AWS 서비스와 통합되므로, 이에 대한 알림도 필�
 - [AWS CloudWatch Alarms Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
 - [Grafana OnCall Documentation](https://grafana.com/docs/oncall/latest/)
 - [PagerDuty Operations Guide](https://www.pagerduty.com/resources/operations/)
+
+- [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/)
+- [EKS control-plane metrics](https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html)
+- [Opsgenie lifecycle and migration](https://www.atlassian.com/software/opsgenie)

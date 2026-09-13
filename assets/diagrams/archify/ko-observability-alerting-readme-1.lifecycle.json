@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "lifecycle",
   "meta": {
-    "title": "알림 생명주기",
+    "title": "규칙 상태와 인시던트 대응",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
@@ -14,7 +14,7 @@
           "pending",
           "firing"
         ],
-        "note": "조건이 임계값을 초과한 규칙은 Pending에 들어가며, for: 기간이 경과한 뒤에야 Firing으로 전환됩니다."
+        "note": "이 예시는 for: 5m입니다. for가 없으면 첫 평가에서 firing이 될 수 있습니다."
       },
       {
         "id": "notification",
@@ -24,7 +24,7 @@
           "notified",
           "acknowledged"
         ],
-        "note": "발생한 알림은 수신자(receiver)로 라우팅되고, 이어서 담당자가 확인합니다."
+        "note": "통보·담당자 확인은 통합/인시던트 상태이며 Prometheus 규칙 상태가 아닙니다."
       },
       {
         "id": "resolution",
@@ -35,7 +35,7 @@
           "resolved",
           "inactive"
         ],
-        "note": "담당자가 문제를 해결하면 수동으로, 메트릭이 정상 범위로 돌아오면 자동으로 해결됩니다."
+        "note": "인시던트 종료가 firing 규칙을 해제하지 않습니다. 시계열 누락도 복구 없이 규칙을 해제할 수 있습니다."
       }
     ],
     "legend": {
@@ -56,7 +56,8 @@
           "label": "해결"
         }
       }
-    }
+    },
+    "output": "ko-observability-alerting-readme-1.html"
   },
   "lanes": [
     {
@@ -94,7 +95,7 @@
       "id": "firing",
       "type": "failure",
       "label": "Firing",
-      "sublabel": "수신자 전송 대기",
+      "sublabel": "규칙 조건 활성",
       "lane": "main",
       "col": 2
     },
@@ -125,8 +126,8 @@
     {
       "id": "resolved",
       "type": "success",
-      "label": "Resolved",
-      "sublabel": "문제 해결됨",
+      "label": "인시던트 종료",
+      "sublabel": "규칙·수집 상태 별도 확인",
       "lane": "terminal",
       "col": 2
     }
@@ -190,7 +191,7 @@
     {
       "from": "firing",
       "to": "inactive",
-      "label": "자동 해결",
+      "label": "활성 시계열 없음",
       "variant": "dashed",
       "fromSide": "top",
       "toSide": "left",
@@ -213,27 +214,26 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "감지",
+      "title": "규칙",
       "items": [
-        "임계값·변화율·이상 탐지·로그 패턴 기반 감지",
-        "for: 조건이 지속될 때까지 알림을 Pending으로 유지"
+        "inactive / pending / firing",
+        "조건 지속 중 for 기간을 채운 뒤 firing"
       ]
     },
     {
       "dot": "cyan",
-      "title": "알림 전송",
+      "title": "통보",
       "items": [
-        "알림 유형에 따라 적절한 수신자로 라우팅",
-        "관련 알림을 그룹화하고 반복 알림은 중복 제거"
+        "그룹화·억제·재통보를 구성",
+        "exactly-once 전달 보장 없음"
       ]
     },
     {
       "dot": "emerald",
-      "title": "해결",
+      "title": "인시던트",
       "items": [
-        "수동: 담당자가 문제 해결 후 알림 종료",
-        "자동: 메트릭이 정상 범위로 돌아오면 자동 종료",
-        "문제 해결 시 해결 알림 전송"
+        "확인·종료는 인시던트 도구 상태",
+        "규칙 해제가 복구를 입증하지 않음"
       ]
     }
   ]

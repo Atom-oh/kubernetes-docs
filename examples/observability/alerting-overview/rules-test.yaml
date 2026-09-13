@@ -1,0 +1,533 @@
+rule_files:
+- rules.yaml
+evaluation_interval: 1m
+tests:
+- name: CPU above threshold
+  interval: 1m
+  input_series:
+  - series: node_cpu_seconds_total{cluster="c",instance="n",cpu="0",mode="idle"}
+    values: 0+6x30
+  promql_expr_test:
+  - expr: count((100 * (1 - avg by (cluster, instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])))
+      > 80)) or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: CPU below threshold
+  interval: 1m
+  input_series:
+  - series: node_cpu_seconds_total{cluster="c",instance="n",cpu="0",mode="idle"}
+    values: 0+30x30
+  promql_expr_test:
+  - expr: count((100 * (1 - avg by (cluster, instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])))
+      > 80)) or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: disk critical
+  interval: 1m
+  input_series:
+  - series: node_filesystem_avail_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 4+0x30
+  - series: node_filesystem_size_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 100+0x30
+  - series: node_filesystem_readonly{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 0+0x30
+  promql_expr_test:
+  - expr: "count(((100 * node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs\"\
+      }\n  / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs\"} < 5)\n\
+      and node_filesystem_readonly == 0\nand node_filesystem_size_bytes > 0\n)) or\
+      \ vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: disk healthy
+  interval: 1m
+  input_series:
+  - series: node_filesystem_avail_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 30+0x30
+  - series: node_filesystem_size_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 100+0x30
+  - series: node_filesystem_readonly{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 0+0x30
+  promql_expr_test:
+  - expr: "count(((100 * node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs\"\
+      }\n  / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs\"} < 5)\n\
+      and node_filesystem_readonly == 0\nand node_filesystem_size_bytes > 0\n)) or\
+      \ vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: disk read-only
+  interval: 1m
+  input_series:
+  - series: node_filesystem_avail_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 4+0x30
+  - series: node_filesystem_size_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 100+0x30
+  - series: node_filesystem_readonly{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 1+0x30
+  promql_expr_test:
+  - expr: "count(((100 * node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs\"\
+      }\n  / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs\"} < 5)\n\
+      and node_filesystem_readonly == 0\nand node_filesystem_size_bytes > 0\n)) or\
+      \ vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: disk zero-size
+  interval: 1m
+  input_series:
+  - series: node_filesystem_avail_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 0+0x30
+  - series: node_filesystem_size_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 0+0x30
+  - series: node_filesystem_readonly{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 0+0x30
+  promql_expr_test:
+  - expr: "count(((100 * node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs\"\
+      }\n  / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs\"} < 5)\n\
+      and node_filesystem_readonly == 0\nand node_filesystem_size_bytes > 0\n)) or\
+      \ vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: disk warning threshold
+  interval: 1m
+  input_series:
+  - series: node_filesystem_avail_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 10+0x30
+  - series: node_filesystem_size_bytes{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 100+0x30
+  - series: node_filesystem_readonly{instance="n",device="/dev/x",mountpoint="/",fstype="ext4"}
+    values: 0+0x30
+  promql_expr_test:
+  - expr: "count(((100 * node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs\"\
+      }\n  / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs\"} < 20)\n\
+      and node_filesystem_readonly == 0\nand node_filesystem_size_bytes > 0\n)) or\
+      \ vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: scrape target failing
+  interval: 1m
+  input_series:
+  - series: up{job="kubernetes-apiservers",instance="a"}
+    values: 0+0x30
+  promql_expr_test:
+  - expr: count((up{job="kubernetes-apiservers"} == 0)) or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: scrape absent is not up-zero
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: count((up{job="kubernetes-apiservers"} == 0)) or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: expected target missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: count((absent(up{job="kubernetes-apiservers"}))) or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: expected target present
+  interval: 1m
+  input_series:
+  - series: up{job="kubernetes-apiservers",instance="a"}
+    values: 1+0x30
+  promql_expr_test:
+  - expr: count((absent(up{job="kubernetes-apiservers"}))) or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: node not ready
+  interval: 1m
+  input_series:
+  - series: kube_node_status_condition{node="n",condition="Ready",status="true"}
+    values: 0+0x30
+  promql_expr_test:
+  - expr: count((kube_node_status_condition{condition="Ready",status="true"} == 0))
+      or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: old counter error does not page forever
+  interval: 1m
+  input_series:
+  - series: cluster_autoscaler_errors_total{type="cloud"}
+    values: 7+0x30
+  promql_expr_test:
+  - expr: count((increase(cluster_autoscaler_errors_total[10m]) > 0)) or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: new counter errors
+  interval: 1m
+  input_series:
+  - series: cluster_autoscaler_errors_total{type="cloud"}
+    values: 0+1x30
+  promql_expr_test:
+  - expr: count((increase(cluster_autoscaler_errors_total[10m]) > 0)) or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: CrashLoopBackOff state
+  interval: 1m
+  input_series:
+  - series: kube_pod_container_status_waiting_reason{namespace="app",pod="p",container="c",reason="CrashLoopBackOff"}
+    values: 1+0x30
+  promql_expr_test:
+  - expr: count((max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m])
+      >= 1)) or vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: restarts are separately named
+  interval: 1m
+  input_series:
+  - series: kube_pod_container_status_restarts_total{namespace="app",pod="p",container="c"}
+    values: 0+1x30
+  promql_expr_test:
+  - expr: count((increase(kube_pod_container_status_restarts_total[15m]) > 3)) or
+      vector(0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: readiness Running ready=0
+  interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="app",pod="p",uid="u",condition="true"}
+    values: 0+0x30
+  - series: kube_pod_status_phase{namespace="app",pod="p",uid="u",phase="Running"}
+    values: 1+0x30
+  promql_expr_test:
+  - expr: 'count(((kube_pod_status_ready{condition="true"} == 0)
+
+      and on (namespace, pod, uid)
+
+      (kube_pod_status_phase{phase=~"Pending|Running|Unknown"} == 1)
+
+      )) or vector(0)'
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: readiness Pending ready=0
+  interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="app",pod="p",uid="u",condition="true"}
+    values: 0+0x30
+  - series: kube_pod_status_phase{namespace="app",pod="p",uid="u",phase="Pending"}
+    values: 1+0x30
+  promql_expr_test:
+  - expr: 'count(((kube_pod_status_ready{condition="true"} == 0)
+
+      and on (namespace, pod, uid)
+
+      (kube_pod_status_phase{phase=~"Pending|Running|Unknown"} == 1)
+
+      )) or vector(0)'
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: readiness Succeeded ready=0
+  interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="app",pod="p",uid="u",condition="true"}
+    values: 0+0x30
+  - series: kube_pod_status_phase{namespace="app",pod="p",uid="u",phase="Succeeded"}
+    values: 1+0x30
+  promql_expr_test:
+  - expr: 'count(((kube_pod_status_ready{condition="true"} == 0)
+
+      and on (namespace, pod, uid)
+
+      (kube_pod_status_phase{phase=~"Pending|Running|Unknown"} == 1)
+
+      )) or vector(0)'
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: readiness Running ready=1
+  interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="app",pod="p",uid="u",condition="true"}
+    values: 1+0x30
+  - series: kube_pod_status_phase{namespace="app",pod="p",uid="u",phase="Running"}
+    values: 1+0x30
+  promql_expr_test:
+  - expr: 'count(((kube_pod_status_ready{condition="true"} == 0)
+
+      and on (namespace, pod, uid)
+
+      (kube_pod_status_phase{phase=~"Pending|Running|Unknown"} == 1)
+
+      )) or vector(0)'
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: deployment available=1
+  interval: 1m
+  input_series:
+  - series: kube_deployment_spec_replicas{namespace="app",deployment="d"}
+    values: 2+0x30
+  - series: kube_deployment_status_replicas_available{namespace="app",deployment="d"}
+    values: 1+0x30
+  promql_expr_test:
+  - expr: "count((kube_deployment_spec_replicas\n  > on (namespace, deployment) kube_deployment_status_replicas_available\n\
+      )) or vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: deployment available=2
+  interval: 1m
+  input_series:
+  - series: kube_deployment_spec_replicas{namespace="app",deployment="d"}
+    values: 2+0x30
+  - series: kube_deployment_status_replicas_available{namespace="app",deployment="d"}
+    values: 2+0x30
+  promql_expr_test:
+  - expr: "count((kube_deployment_spec_replicas\n  > on (namespace, deployment) kube_deployment_status_replicas_available\n\
+      )) or vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: deployment available=3
+  interval: 1m
+  input_series:
+  - series: kube_deployment_spec_replicas{namespace="app",deployment="d"}
+    values: 2+0x30
+  - series: kube_deployment_status_replicas_available{namespace="app",deployment="d"}
+    values: 3+0x30
+  promql_expr_test:
+  - expr: "count((kube_deployment_spec_replicas\n  > on (namespace, deployment) kube_deployment_status_replicas_available\n\
+      )) or vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: CFS periods 30/100
+  interval: 1m
+  input_series:
+  - series: container_cpu_cfs_throttled_periods_total{namespace="app",pod="p",container="c",instance="n"}
+    values: 0+30x30
+  - series: container_cpu_cfs_periods_total{namespace="app",pod="p",container="c",instance="n"}
+    values: 0+100x30
+  promql_expr_test:
+  - expr: "count(((\n  sum by (namespace, pod, container) (\n    rate(container_cpu_cfs_throttled_periods_total{container!=\"\
+      \",container!=\"POD\"}[5m]))\n  / sum by (namespace, pod, container) (\n   \
+      \ rate(container_cpu_cfs_periods_total{container!=\"\",container!=\"POD\"}[5m]))\n\
+      ) > 0.25\nand sum by (namespace, pod, container) (\n  rate(container_cpu_cfs_periods_total{container!=\"\
+      \",container!=\"POD\"}[5m])) > 0\n)) or vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: CFS periods 20/100
+  interval: 1m
+  input_series:
+  - series: container_cpu_cfs_throttled_periods_total{namespace="app",pod="p",container="c",instance="n"}
+    values: 0+20x30
+  - series: container_cpu_cfs_periods_total{namespace="app",pod="p",container="c",instance="n"}
+    values: 0+100x30
+  promql_expr_test:
+  - expr: "count(((\n  sum by (namespace, pod, container) (\n    rate(container_cpu_cfs_throttled_periods_total{container!=\"\
+      \",container!=\"POD\"}[5m]))\n  / sum by (namespace, pod, container) (\n   \
+      \ rate(container_cpu_cfs_periods_total{container!=\"\",container!=\"POD\"}[5m]))\n\
+      ) > 0.25\nand sum by (namespace, pod, container) (\n  rate(container_cpu_cfs_periods_total{container!=\"\
+      \",container!=\"POD\"}[5m])) > 0\n)) or vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: CFS periods 0/0
+  interval: 1m
+  input_series:
+  - series: container_cpu_cfs_throttled_periods_total{namespace="app",pod="p",container="c",instance="n"}
+    values: 0+0x30
+  - series: container_cpu_cfs_periods_total{namespace="app",pod="p",container="c",instance="n"}
+    values: 0+0x30
+  promql_expr_test:
+  - expr: "count(((\n  sum by (namespace, pod, container) (\n    rate(container_cpu_cfs_throttled_periods_total{container!=\"\
+      \",container!=\"POD\"}[5m]))\n  / sum by (namespace, pod, container) (\n   \
+      \ rate(container_cpu_cfs_periods_total{container!=\"\",container!=\"POD\"}[5m]))\n\
+      ) > 0.25\nand sum by (namespace, pod, container) (\n  rate(container_cpu_cfs_periods_total{container!=\"\
+      \",container!=\"POD\"}[5m])) > 0\n)) or vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: memory limit=100
+  interval: 1m
+  input_series:
+  - series: container_memory_working_set_bytes{namespace="app",pod="p",container="c",instance="n"}
+    values: 95+0x30
+  - series: container_spec_memory_limit_bytes{namespace="app",pod="p",container="c",instance="n"}
+    values: 100+0x30
+  promql_expr_test:
+  - expr: "count(((\n  container_memory_working_set_bytes{container!=\"\",container!=\"\
+      POD\"}\n  / container_spec_memory_limit_bytes{container!=\"\",container!=\"\
+      POD\"}\n) > 0.9\nand container_spec_memory_limit_bytes{container!=\"\",container!=\"\
+      POD\"} > 0\n)) or vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: memory limit=0
+  interval: 1m
+  input_series:
+  - series: container_memory_working_set_bytes{namespace="app",pod="p",container="c",instance="n"}
+    values: 95+0x30
+  - series: container_spec_memory_limit_bytes{namespace="app",pod="p",container="c",instance="n"}
+    values: 0+0x30
+  promql_expr_test:
+  - expr: "count(((\n  container_memory_working_set_bytes{container!=\"\",container!=\"\
+      POD\"}\n  / container_spec_memory_limit_bytes{container!=\"\",container!=\"\
+      POD\"}\n) > 0.9\nand container_spec_memory_limit_bytes{container!=\"\",container!=\"\
+      POD\"} > 0\n)) or vector(0)"
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: PVC capacity=100
+  interval: 1m
+  input_series:
+  - series: kubelet_volume_stats_used_bytes{namespace="app",persistentvolumeclaim="data"}
+    values: 90+0x30
+  - series: kubelet_volume_stats_capacity_bytes{namespace="app",persistentvolumeclaim="data"}
+    values: 100+0x30
+  promql_expr_test:
+  - expr: 'count(((kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes
+      > 0.85)
+
+      and kubelet_volume_stats_capacity_bytes > 0
+
+      )) or vector(0)'
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: PVC capacity=0
+  interval: 1m
+  input_series:
+  - series: kubelet_volume_stats_used_bytes{namespace="app",persistentvolumeclaim="data"}
+    values: 90+0x30
+  - series: kubelet_volume_stats_capacity_bytes{namespace="app",persistentvolumeclaim="data"}
+    values: 0+0x30
+  promql_expr_test:
+  - expr: 'count(((kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes
+      > 0.85)
+
+      and kubelet_volume_stats_capacity_bytes > 0
+
+      )) or vector(0)'
+    eval_time: 20m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: for duration distinguishes pending and firing
+  interval: 1m
+  input_series:
+  - series: node_cpu_seconds_total{cluster="c",instance="n",cpu="0",mode="idle"}
+    values: 0+6x30
+  alert_rule_test:
+  - eval_time: 4m
+    alertname: HighCPUUsage
+    exp_alerts: []
+  - eval_time: 7m
+    alertname: HighCPUUsage
+    exp_alerts:
+    - exp_labels:
+        cluster: c
+        instance: n
+        severity: warning
+        team: sre
+      exp_annotations:
+        summary: High CPU usage detected
+        description: CPU usage is above 80% for 5 minutes on n
+- name: CrashLoop recurring retry gaps still fire
+  interval: 1m
+  input_series:
+  - series: kube_pod_container_status_waiting_reason{namespace="app",pod="p",container="c",reason="CrashLoopBackOff"}
+    values: 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale
+      1 1 1 1 stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale
+  alert_rule_test:
+  - eval_time: 9m
+    alertname: PodCrashLooping
+    exp_alerts: []
+  - eval_time: 28m
+    alertname: PodCrashLooping
+    exp_alerts:
+    - exp_labels: &id001
+        namespace: app
+        pod: p
+        container: c
+        reason: CrashLoopBackOff
+        severity: warning
+        team: app
+      exp_annotations: &id002
+        summary: Pod app/p repeatedly observed in CrashLoopBackOff
+- name: CrashLoop brief transient never fires
+  interval: 1m
+  input_series:
+  - series: kube_pod_container_status_waiting_reason{namespace="app",pod="p",container="c",reason="CrashLoopBackOff"}
+    values: 1 stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale stale stale
+  alert_rule_test:
+  - eval_time: 4m
+    alertname: PodCrashLooping
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: PodCrashLooping
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: PodCrashLooping
+    exp_alerts: []
+- name: CrashLoop recovery clears after observation window
+  interval: 1m
+  input_series:
+  - series: kube_pod_container_status_waiting_reason{namespace="app",pod="p",container="c",reason="CrashLoopBackOff"}
+    values: 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale
+      1 1 1 1 stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale
+  alert_rule_test:
+  - eval_time: 32m
+    alertname: PodCrashLooping
+    exp_alerts:
+    - exp_labels: *id001
+      exp_annotations: *id002
+  - eval_time: 35m
+    alertname: PodCrashLooping
+    exp_alerts: []
+  - eval_time: 40m
+    alertname: PodCrashLooping
+    exp_alerts: []

@@ -1,6 +1,10 @@
 # Alerting Overview
 
-> **Last Updated**: February 20, 2026
+> **Last Updated**: September 13, 2026
+
+
+> Review baseline: Prometheus 3.14.0 and Alertmanager 0.34.0. Examples assume one cluster and deduplicated series. Verify actual jobs, labels, exporters and metric availability, then tune thresholds. Only local rule/routing checks were run; no cluster or notification channel was exercised.
+
 
 ## Table of Contents
 
@@ -18,9 +22,9 @@
 
 ### Alerting's Position in the Three Pillars of Observability
 
-Modern observability consists of three core pillars:
+Metrics, logs and traces are common observability signals; profiles and other signals also exist. A rule engine does not necessarily evaluate all three directly:
 
-![Architecture diagram showing metrics, logs, and traces feeding a shared alert-rules engine that notifies and escalates to responders.](../../.gitbook/assets/en-observability-alerting-readme-0.png)
+![Common observability signals feed compatible backend rules or derived metrics, then configured notification and incident integrations.](../../.gitbook/assets/en-observability-alerting-readme-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-0.html)
 
@@ -28,7 +32,7 @@ Modern observability consists of three core pillars:
 - **Logs**: Detailed records of events
 - **Traces**: Request flow in distributed systems
 
-**Alerting** detects anomalies based on these three data sources and notifies the responsible personnel in a timely manner, enabling rapid response.
+Prometheus rules evaluate metrics. Logs and traces feed alerts through backend-specific rules or derived metrics. Detection, notification and human acknowledgment are separate stages, and delivery success needs its own monitoring.
 
 ### Why Alerting is Necessary
 
@@ -52,9 +56,9 @@ Modern observability consists of three core pillars:
 
 ## Alert Lifecycle
 
-Alerts go through the following lifecycle:
+The diagram combines rule state and incident response. Prometheus uses inactive/pending/firing; acknowledgment and work-in-progress belong to an on-call tool. Closing an incident does not clear a firing rule. A disappearing time series can also deactivate a rule and must not be treated as proof of recovery:
 
-![State machine showing an alert moving from inactive through pending, firing, notification, and acknowledgment to resolution, with early-return paths back to inactive.](../../.gitbook/assets/en-observability-alerting-readme-1.png)
+![Prometheus rule states and separate incident-response states; closing an incident or losing a series does not prove service recovery.](../../.gitbook/assets/en-observability-alerting-readme-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-1.html)
 
@@ -66,15 +70,15 @@ Alerts go through the following lifecycle:
 - **Log patterns**: When specific log patterns occur
 
 ```yaml
-# Prometheus alert rule example
 groups:
   - name: node-alerts
     rules:
       - alert: HighCPUUsage
-        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-        for: 5m  # Alert fires if condition persists for 5 minutes
+        expr: 100 * (1 - avg by (cluster, instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 80
+        for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
           summary: "High CPU usage detected"
           description: "CPU usage is above 80% for 5 minutes on {{ $labels.instance }}"
@@ -85,22 +89,22 @@ groups:
 - **Channel selection**: Slack, Email, SMS, PagerDuty, etc.
 - **Routing**: Deliver to appropriate receivers based on alert type
 - **Grouping**: Bundle related alerts together
-- **Deduplication**: Prevent repeated sending of identical alerts
+- **Deduplication**: Reduce duplicate notifications; repeat_interval reminders and retries remain possible, without an exactly-once guarantee
 
 ### 3. Escalation
 
 - **Time-based**: Escalate to next responder if no response within specified time
 - **Severity-based**: Different escalation paths based on severity
-- **Automatic escalation**: Automatic escalation according to defined rules
+- **Automatic escalation**: Configure it in the on-call service. Alertmanager repeat_interval neither checks acknowledgment nor rotates responders
 
-![Flowchart showing an alert escalating every 15 minutes from the primary on-call through secondary and team-lead responders to a full-team page, until any responder acts.](../../.gitbook/assets/en-observability-alerting-readme-2.png)
+![Illustrative escalation windows implemented in an on-call service, with acknowledgment and backup behavior set by policy.](../../.gitbook/assets/en-observability-alerting-readme-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-2.html)
 
 ### 4. Resolution
 
-- **Manual resolution**: Responder closes alert after fixing the problem
-- **Auto-resolution**: Automatically closes when metrics return to normal range
+- **Manual resolution**: A responder closes the incident in the incident tool; rule state is checked separately
+- **Auto-resolution**: Update incident state according to integration policy after checking rule and collection health
 - **Resolution notification**: Send resolution notification when problem is fixed
 
 ---
@@ -109,7 +113,7 @@ groups:
 
 ### 1. Actionable Alerts
 
-All alerts should enable the receiver to take immediate action.
+Pages that interrupt a person need an immediate actionable response. Informational events and longer-term work can instead go to tickets or dashboards.
 
 **Bad example:**
 ```
@@ -119,15 +123,15 @@ Alert: Database connection count increased
 **Good example:**
 ```
 Alert: Database connection pool exhausted
-Action Required: Scale up database or investigate connection leaks
-Runbook: https://wiki.company.com/db-connection-exhausted
+Action Required: Confirm user impact; inspect pool saturation and connection leaks using the runbook
+Runbook: https://example.com/runbooks/replace-db-runbook
 ```
 
 ### 2. Preventing Alert Fatigue
 
 Too many alerts can cause important alerts to be missed.
 
-![Two reinforcing cycles: a vicious cycle where excessive alerts get ignored and cause missed incidents that add even more alerts, alongside a prevention cycle where refining alerts into better thresholds and grouping is sustained by regular review.](../../.gitbook/assets/en-observability-alerting-readme-3.png)
+![Alert fatigue and a review cycle that improves actionability, grouping and the handling of non-urgent work.](../../.gitbook/assets/en-observability-alerting-readme-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-3.html)
 
@@ -141,7 +145,7 @@ Too many alerts can cause important alerts to be missed.
 
 ### 3. Severity Levels
 
-Define and follow a consistent severity system:
+These response times are illustrative organizational policy, not a product SLA or universal recommendation:
 
 | Severity | Description | Response Time | Examples |
 |----------|-------------|---------------|----------|
@@ -151,23 +155,31 @@ Define and follow a consistent severity system:
 | **Info** | Informational alert | Within business hours | Deployment complete, backup success |
 
 ```yaml
-# Alert rules by severity example
 groups:
   - name: disk-alerts
     rules:
       - alert: DiskSpaceCritical
-        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 5
+        expr: |
+          (100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 5)
+          and node_filesystem_readonly == 0
+          and node_filesystem_size_bytes > 0
         for: 5m
         labels:
           severity: critical
+          team: sre
         annotations:
           summary: "Disk space critical"
-
       - alert: DiskSpaceWarning
-        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 20
+        expr: |
+          (100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 20)
+          and node_filesystem_readonly == 0
+          and node_filesystem_size_bytes > 0
         for: 10m
         labels:
           severity: warning
+          team: sre
         annotations:
           summary: "Disk space low"
 ```
@@ -183,16 +195,11 @@ All alerts should include the following information:
 
 ```yaml
 annotations:
-  summary: "High memory usage on {{ $labels.instance }}"
-  description: |
-    Memory usage is above 90% on {{ $labels.instance }}.
-    Current value: {{ $value | printf "%.2f" }}%
-  impact: "Application may experience OOM kills and service degradation"
-  action: |
-    1. Check for memory leaks: kubectl top pods -n {{ $labels.namespace }}
-    2. Review recent deployments
-    3. Consider scaling horizontally
-  runbook_url: "https://wiki.company.com/runbooks/high-memory"
+  summary: "Investigate the affected operation"
+  description: "Check the rule expression, its units, labels, and collection health."
+  impact: "Document the affected user operation before paging."
+  action: "Use the owning team's reviewed runbook; do not scale resources blindly."
+  runbook_url: "https://example.com/runbooks/replace-with-reviewed-runbook"
 ```
 
 ---
@@ -203,51 +210,49 @@ annotations:
 
 Alerts should be delivered to appropriate receivers based on various criteria:
 
-![Architecture diagram grouping Amazon EKS alerting targets into four areas: control plane (API server, etcd, scheduler/controller manager), data plane (node, pod, container status), networking (VPC CNI, Service/Ingress, CoreDNS), and storage (EBS/EFS CSI, PV/PVC).](../../.gitbook/assets/en-observability-alerting-readme-4.png)
+![Alert labels select on-call and team receivers before delivery; critical-only matches do not also call the default receiver.](../../.gitbook/assets/en-observability-alerting-readme-5.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
 
 ### Routing Tree Design
 
+This is a complete **non-notifying** routing-validation configuration. Empty receivers are intentional; configure reviewed integrations and Secret files before production use. Critical alerts fan out to the on-call receiver and matching team. Missing team labels fall back to default, except that a critical-only match does not also call default. Grouping delays mean there is no immediate-phone guarantee. Disk critical inhibits warning only for the same instance/device/mountpoint.
+
 ```yaml
-# Alertmanager routing configuration example
 route:
-  receiver: 'default-receiver'
-  group_by: ['alertname', 'cluster', 'service']
+  receiver: default-receiver
+  group_by: [alertname, cluster, namespace, service]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
-
   routes:
-    # Critical alerts - immediate phone call
-    - match:
-        severity: critical
-      receiver: 'pagerduty-critical'
+    - matchers: ['severity="critical"']
+      receiver: critical-oncall
       continue: true
-
-    # Infrastructure team alerts
-    - match_re:
-        alertname: ^(Node|Disk|CPU|Memory).*
-      receiver: 'sre-team'
-      routes:
-        - match:
-            severity: critical
-          receiver: 'sre-oncall'
-
-    # Application team alerts
-    - match_re:
-        namespace: ^(app|api|web).*
-      receiver: 'dev-team'
-
-    # Database alerts
-    - match_re:
-        alertname: ^(MySQL|PostgreSQL|Redis|MongoDB).*
-      receiver: 'dba-team'
+    - matchers: ['team="sre"']
+      receiver: sre-team
+    - matchers: ['team="app"']
+      receiver: dev-team
+    - matchers: ['team="database"']
+      receiver: dba-team
+    - matchers: ['team="security"']
+      receiver: security-team
+receivers:
+  - name: default-receiver
+  - name: critical-oncall
+  - name: sre-team
+  - name: dev-team
+  - name: dba-team
+  - name: security-team
+inhibit_rules:
+  - source_matchers: ['alertname="DiskSpaceCritical"', 'instance!=""', 'device!=""', 'mountpoint!=""']
+    target_matchers: ['alertname="DiskSpaceWarning"', 'instance!=""', 'device!=""', 'mountpoint!=""']
+    equal: [cluster, instance, device, mountpoint]
 ```
 
 ### Escalation Policy
 
-Set up time-based escalation policies to ensure alerts are not ignored:
+The following is illustrative. Configure time zones, acknowledgment windows, backups and re-page behavior in the on-call service and test them in a drill:
 
 | Step | Time | Target | Channel |
 |------|------|--------|---------|
@@ -265,13 +270,10 @@ Set up time-based escalation policies to ensure alerts are not ignored:
 
 On-call refers to a designated responder responsible for system issues during a specified period.
 
-![Gantt chart showing four SRE engineers each taking a sequential seven-day on-call shift over four weeks.](../../.gitbook/assets/en-observability-alerting-readme-8.png)
+![An illustrative four-week rotation with handoffs; actual time zones, staffing, backup and compensation require an agreed policy.](../../.gitbook/assets/en-observability-alerting-readme-8.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
 
-![Flowchart showing an alert routed first by severity to a phone, PagerDuty, Slack, or email channel, then, for the three actionable severities, routed again by owning team to SRE, dev, DBA, or security.](../../.gitbook/assets/en-observability-alerting-readme-5.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
 
 ### On-Call Best Practices
 
@@ -295,118 +297,153 @@ On-call refers to a designated responder responsible for system issues during a 
 
 ### EKS-Specific Alerting Areas
 
-![Flowchart guiding the choice of an alerting solution: whether on-call management is needed, then AWS-native preference or budget, ending at CloudWatch Alarms, Alertmanager, Grafana OnCall, PagerDuty, or OpsGenie.](../../.gitbook/assets/en-observability-alerting-readme-6.png)
+![EKS monitoring scopes and collection limits, separating scrape failures, target absence, readiness and resource signals.](../../.gitbook/assets/en-observability-alerting-readme-4.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-6.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
 
 ### Alerting Strategy by Layer
 
 #### 1. Cluster-Level Alerts
 
+Replace the job name with the deployed target. up=0 proves a scrape failure, not a complete API outage. The absent rule covers one collection scope; multi-cluster setups need expected-target inventory and cluster labels. Use increase for the cumulative Cluster Autoscaler error counter. A recent increase present for five minutes does not mean errors occurred continuously for five minutes. This rule does not apply unchanged to Karpenter or EKS Auto Mode.
+
 ```yaml
-# Cluster-level alert examples
 groups:
   - name: eks-cluster
     rules:
-      - alert: EKSAPIServerDown
+      - alert: EKSAPIServerScrapeFailed
         expr: up{job="kubernetes-apiservers"} == 0
         for: 1m
         labels:
           severity: critical
+          team: sre
         annotations:
-          summary: "EKS API Server is down"
-
+          summary: "Prometheus cannot scrape the configured API server target"
+      - alert: EKSAPIServerTargetMissing
+        expr: absent(up{job="kubernetes-apiservers"})
+        for: 5m
+        labels:
+          severity: warning
+          team: sre
+        annotations:
+          summary: "No API server target series in this Prometheus"
       - alert: EKSNodeNotReady
         expr: kube_node_status_condition{condition="Ready",status="true"} == 0
         for: 5m
         labels:
           severity: critical
+          team: sre
         annotations:
           summary: "Node {{ $labels.node }} is not ready"
-
-      - alert: EKSClusterAutoscalerError
-        expr: cluster_autoscaler_errors_total > 0
+      - alert: EKSClusterAutoscalerRecentErrors
+        expr: increase(cluster_autoscaler_errors_total[10m]) > 0
         for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
-          summary: "Cluster Autoscaler is experiencing errors"
+          summary: "Cluster Autoscaler recorded failed loops in the last 10 minutes"
 ```
 
 #### 2. Workload-Level Alerts
 
+The CrashLoopBackOff series can disappear briefly between retries. This rule fires after a recent five-minute observation window remains populated for ten minutes. It detects recurring observations, not continuous current Waiting, and can remain active for up to five minutes after the last observation. Native rule tests distinguish a short transient, recurring retries and recovery.
+
 ```yaml
-# Workload-level alert examples
 groups:
   - name: eks-workloads
     rules:
       - alert: PodCrashLooping
-        expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 3
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod {{ $labels.pod }} is crash looping"
-
-      - alert: PodNotReady
-        expr: |
-          sum by (namespace, pod) (
-            kube_pod_status_phase{phase=~"Pending|Unknown"}
-          ) > 0
-        for: 15m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod {{ $labels.pod }} has been pending for 15 minutes"
-
-      - alert: DeploymentReplicasMismatch
-        expr: |
-          kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+        expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]) >= 1
         for: 10m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Deployment {{ $labels.deployment }} has replica mismatch"
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} repeatedly observed in CrashLoopBackOff"
+      - alert: PodFrequentRestarts
+        expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has frequent restarts"
+      - alert: PodNotReady
+        expr: |
+          (kube_pod_status_ready{condition="true"} == 0)
+          and on (namespace, pod, uid)
+          (kube_pod_status_phase{phase=~"Pending|Running|Unknown"} == 1)
+        for: 15m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Active pod {{ $labels.namespace }}/{{ $labels.pod }} is not ready"
+      - alert: DeploymentReplicasMismatch
+        expr: |
+          kube_deployment_spec_replicas
+            > on (namespace, deployment) kube_deployment_status_replicas_available
+        for: 10m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has fewer available replicas than desired"
 ```
 
 #### 3. Resource-Level Alerts
 
+The CFS example measures **throttled periods / total periods**, not a fraction of elapsed time. Verify cAdvisor exports these metrics. Unlimited memory can appear as zero or a very large value; restrict the memory rule to containers with explicit limits. PVC statistics depend on the CSI driver and volume type. Zero denominators are excluded, but missing metrics do not prove health.
+
 ```yaml
-# Resource-level alert examples
 groups:
   - name: eks-resources
     rules:
       - alert: ContainerCPUThrottling
         expr: |
-          rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0.25
+          (
+            sum by (namespace, pod, container) (
+              rate(container_cpu_cfs_throttled_periods_total{container!="",container!="POD"}[5m]))
+            / sum by (namespace, pod, container) (
+              rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m]))
+          ) > 0.25
+          and sum by (namespace, pod, container) (
+            rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m])) > 0
         for: 5m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Container {{ $labels.container }} is being CPU throttled"
-
+          summary: "More than 25% of CFS periods throttled for {{ $labels.pod }}/{{ $labels.container }}"
       - alert: ContainerMemoryNearLimit
         expr: |
-          (container_memory_working_set_bytes / container_spec_memory_limit_bytes) > 0.9
+          (
+            container_memory_working_set_bytes{container!="",container!="POD"}
+            / container_spec_memory_limit_bytes{container!="",container!="POD"}
+          ) > 0.9
+          and container_spec_memory_limit_bytes{container!="",container!="POD"} > 0
         for: 5m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Container {{ $labels.container }} memory usage is near limit"
-
+          summary: "Container {{ $labels.pod }}/{{ $labels.container }} memory is near its reported limit"
       - alert: PVCAlmostFull
         expr: |
-          (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.85
+          (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.85)
+          and kubelet_volume_stats_capacity_bytes > 0
         for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
-          summary: "PVC {{ $labels.persistentvolumeclaim }} is almost full"
+          summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is almost full"
 ```
 
 ### AWS Service Integration Alerts
 
-EKS integrates with various AWS services, so alerts for these are also needed:
+EKS 1.28+ supplies selected control-plane metrics in AWS/EKS; this does not expose every internal component for scraping. Enable control-plane logs separately to investigate authentication errors. Assess availability using collection health, API request failures and external probes:
 
 | AWS Service | Monitoring Items | Alert Tool |
 |-------------|------------------|------------|
@@ -414,8 +451,8 @@ EKS integrates with various AWS services, so alerts for these are also needed:
 | EC2 (Nodes) | Instance status, system checks | CloudWatch |
 | EBS | Volume status, IOPS usage | CloudWatch |
 | EFS | Throughput, connection count | CloudWatch |
-| ALB/NLB | Request count, error rate, latency | CloudWatch |
-| VPC | Network traffic, NAT Gateway | CloudWatch/VPC Flow Logs |
+| ALB / NLB | ALB HTTP requests/errors/response time; NLB flows/TCP resets/target health | CloudWatch: use product-specific metrics |
+| VPC / NAT Gateway | NAT metrics; accepted/rejected records in separately enabled Flow Logs | CloudWatch metrics/Logs; Flow Logs is not an alarm engine |
 
 ---
 
@@ -423,40 +460,40 @@ EKS integrates with various AWS services, so alerts for these are also needed:
 
 ### Major Alerting Solution Comparison Table
 
-| Feature | Alertmanager | CloudWatch Alarms | Grafana OnCall | PagerDuty | OpsGenie |
-|---------|--------------|-------------------|----------------|-----------|----------|
-| **Type** | Open Source | AWS Native | Open Source/SaaS | SaaS | SaaS |
-| **Cost** | Free | Per-alarm pricing | Free/Paid | Paid | Paid |
-| **EKS Integration** | Prometheus integration | Native | Alertmanager integration | Various integrations | Various integrations |
-| **On-Call Management** | None | None | Yes | Yes | Yes |
-| **Escalation** | Basic | None | Yes | Advanced | Advanced |
-| **Mobile App** | None | None | Yes | Yes | Yes |
-| **ChatOps** | Webhook | SNS | Slack, Teams | Various | Various |
-| **Complexity** | Medium | Low | Medium | Low | Low |
+| Product | Role and operating constraints |
+|---------|--------------------------------|
+| Alertmanager | Open-source grouping, routing, inhibition and reminders; hosting and operation required. No on-call schedules or acknowledgment-based escalation |
+| CloudWatch Alarms | Evaluates AWS metrics/supported queries, changes state and invokes configured actions; schedules are separate |
+| Grafana OnCall OSS | Archived on 2026-03-24; not a default choice for new production deployment |
+| Grafana Cloud IRM / PagerDuty | On-call/escalation candidates; verify current plans, channels, regions and contracts |
+| Opsgenie | End of sale 2025-06-04; support and service end scheduled for 2027-04-05. Existing users need a migration plan |
 
 ### Solution Selection Guide
 
+![Select maintained rule, routing and on-call tools by requirements; plan migration for archived OnCall OSS and ending Opsgenie.](../../.gitbook/assets/en-observability-alerting-readme-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-6.html)
+
 #### Recommended Solutions by Situation
 
-1. **Small team, cost-conscious**: Alertmanager + Slack
-2. **All-in AWS environment**: CloudWatch Alarms + SNS + Lambda
-3. **Mid-size, need on-call**: Grafana OnCall
-4. **Large organization, complex escalation**: PagerDuty
-5. **Atlassian ecosystem**: OpsGenie
+1. Prometheus-focused: use Alertmanager for grouping/routing and connect the required channels.
+2. AWS-metric-focused: evaluate CloudWatch Alarms with SNS or supported incident integrations.
+3. Around-the-clock response: choose a maintained on-call service based on staffing, backups, time zones, acknowledgment, escalation and cost.
+4. Existing Grafana OnCall OSS/Opsgenie: verify migration of features, history, schedules and integrations.
 
 ### Hybrid Approach
 
-Most production environments use a combination of solutions:
+Solutions can be combined. CloudWatch does not automatically send directly to Alertmanager. This example uses SNS/a supported integration to the on-call service; routing through Alertmanager requires a separately designed adapter, authentication and duplicate/resolution handling:
 
-![Architecture diagram of a hybrid alerting pipeline: Prometheus and CloudWatch feed Alertmanager, which routes to Grafana OnCall and PagerDuty for on-call management, fanning out to Slack, email, and SMS notification channels.](../../.gitbook/assets/en-observability-alerting-readme-7.png)
+![Prometheus uses Alertmanager; CloudWatch uses explicit SNS or service integrations to an on-call service, with no automatic direct bridge.](../../.gitbook/assets/en-observability-alerting-readme-7.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
 
-**Recommended Architecture:**
+**Example architecture:**
 
 1. **Prometheus + Alertmanager**: Metric collection and primary alert processing
 2. **CloudWatch**: AWS service metric collection
-3. **Grafana OnCall or PagerDuty**: On-call management and escalation
+3. **Maintained on-call service**: On-call management and escalation
 4. **Slack**: Real-time alerts and collaboration
 
 ---
@@ -467,7 +504,7 @@ This section covered the basic concepts and strategies of alerting. For detailed
 
 - [Prometheus Alertmanager](./01-alertmanager.md): Open source alert management
 - [CloudWatch Alarms](./02-cloudwatch-alarms.md): AWS native alerting
-- [Grafana OnCall](./03-grafana-oncall.md): On-call and incident management
+- [Grafana OnCall](./03-grafana-oncall.md): existing-installation review and migration considerations
 
 ---
 
@@ -478,3 +515,7 @@ This section covered the basic concepts and strategies of alerting. For detailed
 - [AWS CloudWatch Alarms Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
 - [Grafana OnCall Documentation](https://grafana.com/docs/oncall/latest/)
 - [PagerDuty Operations Guide](https://www.pagerduty.com/resources/operations/)
+
+- [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/)
+- [EKS control-plane metrics](https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html)
+- [Opsgenie lifecycle and migration](https://www.atlassian.com/software/opsgenie)

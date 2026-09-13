@@ -2,247 +2,128 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "알림 솔루션 선택",
-    "animation": "trace",
+    "title": "유지보수되는 알림 도구 선택",
+    "output": "ko-observability-alerting-readme-7.html",
     "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "no-oncall",
-        "label": "온콜 관리 불필요",
-        "focus": [
-          "start",
-          "q_oncall",
-          "q_aws",
-          "cloudwatch",
-          "alertmanager"
-        ],
-        "note": "온콜 관리가 필요 없다면 AWS 네이티브 CloudWatch Alarms 또는 오픈소스 Alertmanager 중에서 선택한다."
-      },
-      {
-        "id": "oncall",
-        "label": "온콜 관리 필요",
-        "focus": [
-          "q_oncall",
-          "q_budget",
-          "grafana_oncall",
-          "q_tools",
-          "pagerduty",
-          "opsgenie"
-        ],
-        "note": "예산에 따라 Grafana OnCall과 엔터프라이즈 SaaS로 나뉘고, Atlassian 도구를 쓰고 있다면 OpsGenie로 향한다."
-      }
-    ],
+    "animation": "trace",
     "legend": {
       "entries": {
         "frontend": {
-          "label": "시작"
-        },
-        "security": {
-          "label": "결정 지점"
+          "label": "요구사항"
         },
         "backend": {
-          "label": "오픈소스 도구"
+          "label": "라우팅 / 도구"
         },
-        "cloud": {
-          "label": "AWS 네이티브 서비스"
+        "security": {
+          "label": "판단 / 검증"
         },
         "external": {
-          "label": "상용 SaaS"
+          "label": "수신자 / 서비스"
+        },
+        "messagebus": {
+          "label": "알림"
         }
       }
     }
   },
   "lanes": [
     {
-      "id": "entry",
-      "label": "시작"
+      "id": "main",
+      "label": "주 흐름"
     },
     {
-      "id": "self",
-      "label": "온콜 관리 불필요"
-    },
-    {
-      "id": "oss",
-      "label": "오픈소스"
-    },
-    {
-      "id": "oncall",
-      "label": "온콜 관리 필요"
-    },
-    {
-      "id": "atlassian",
-      "label": "Atlassian 생태계"
+      "id": "lower",
+      "label": "조건부 경로"
     }
   ],
   "mainPath": [
-    "start",
-    "q_oncall",
-    "q_budget",
-    "grafana_oncall"
+    "needs",
+    "signals",
+    "oncall",
+    "test"
   ],
   "nodes": [
     {
-      "id": "start",
-      "lane": "entry",
+      "id": "needs",
+      "lane": "main",
       "col": 0,
       "type": "frontend",
-      "label": "알림 솔루션 선택",
-      "sublabel": "EKS 환경",
-      "width": 200
+      "label": "요구사항 정의",
+      "sublabel": "신호 + 대응 인력",
+      "width": 190
     },
     {
-      "id": "q_oncall",
-      "lane": "entry",
+      "id": "signals",
+      "lane": "main",
       "col": 1,
-      "type": "security",
-      "label": "온콜 관리 필요?",
-      "sublabel": "스케줄, 에스컬레이션",
-      "width": 160
-    },
-    {
-      "id": "q_aws",
-      "lane": "self",
-      "col": 2,
-      "type": "security",
-      "label": "AWS 네이티브 선호?",
-      "width": 160
-    },
-    {
-      "id": "cloudwatch",
-      "lane": "self",
-      "col": 3,
-      "type": "cloud",
-      "label": "CloudWatch Alarms",
-      "sublabel": "AWS 올인 환경",
-      "width": 160
-    },
-    {
-      "id": "alertmanager",
-      "lane": "oss",
-      "col": 3,
       "type": "backend",
-      "label": "Alertmanager",
-      "sublabel": "소규모 팀, 비용 중시",
-      "width": 160
+      "label": "규칙 / 라우팅",
+      "sublabel": "Prometheus · CloudWatch",
+      "width": 190
     },
     {
-      "id": "grafana_oncall",
-      "lane": "oss",
+      "id": "oncall",
+      "lane": "main",
       "col": 2,
-      "type": "backend",
-      "label": "Grafana OnCall",
-      "sublabel": "중간 규모, 온콜 필요",
-      "width": 160
+      "type": "external",
+      "label": "온콜 서비스",
+      "sublabel": "일정 + 에스컬레이션",
+      "width": 190
     },
     {
-      "id": "q_budget",
-      "lane": "oncall",
+      "id": "test",
+      "lane": "main",
+      "col": 3,
+      "type": "security",
+      "label": "연동 시험",
+      "sublabel": "전달 + 복구 + 비용",
+      "width": 190
+    },
+    {
+      "id": "migrate",
+      "lane": "lower",
       "col": 1,
-      "type": "security",
-      "label": "예산?",
-      "sublabel": "오픈소스 또는 엔터프라이즈",
-      "width": 160
-    },
-    {
-      "id": "q_tools",
-      "lane": "oncall",
-      "col": 2,
-      "type": "security",
-      "label": "기존 도구?",
-      "width": 160
-    },
-    {
-      "id": "pagerduty",
-      "lane": "oncall",
-      "col": 3,
-      "type": "external",
-      "label": "PagerDuty",
-      "sublabel": "대규모 조직, 복잡한 에스컬레이션",
-      "width": 160
-    },
-    {
-      "id": "opsgenie",
-      "lane": "atlassian",
-      "col": 3,
-      "type": "external",
-      "label": "OpsGenie",
-      "sublabel": "Atlassian 생태계",
-      "width": 160
+      "type": "backend",
+      "label": "기존 종료 예정 도구",
+      "sublabel": "OnCall OSS · Opsgenie",
+      "width": 190
     }
   ],
   "edges": [
     {
-      "from": "start",
-      "to": "q_oncall"
+      "from": "needs",
+      "to": "signals"
     },
     {
-      "from": "q_oncall",
-      "to": "q_aws",
-      "label": "아니오",
-      "role": "branch"
+      "from": "signals",
+      "to": "oncall"
     },
     {
-      "from": "q_oncall",
-      "to": "q_budget",
-      "label": "예",
-      "variant": "emphasis"
+      "from": "oncall",
+      "to": "test"
     },
     {
-      "from": "q_aws",
-      "to": "cloudwatch",
-      "label": "예",
-      "role": "branch"
-    },
-    {
-      "from": "q_aws",
-      "to": "alertmanager",
-      "label": "아니오",
-      "role": "branch"
-    },
-    {
-      "from": "q_budget",
-      "to": "grafana_oncall",
-      "label": "오픈소스",
-      "variant": "emphasis"
-    },
-    {
-      "from": "q_budget",
-      "to": "q_tools",
-      "label": "엔터프라이즈",
-      "role": "branch"
-    },
-    {
-      "from": "q_tools",
-      "to": "pagerduty",
-      "label": "없음",
-      "role": "branch"
-    },
-    {
-      "from": "q_tools",
-      "to": "opsgenie",
-      "label": "Atlassian",
+      "from": "migrate",
+      "to": "oncall",
+      "label": "이전",
       "role": "branch"
     }
   ],
   "cards": [
     {
-      "dot": "emerald",
-      "title": "상황별 권장 솔루션",
+      "dot": "cyan",
+      "title": "후보",
       "items": [
-        "소규모 팀, 비용 중시: Alertmanager + Slack",
-        "AWS 올인 환경: CloudWatch Alarms + SNS + Lambda",
-        "중간 규모, 온콜 필요: Grafana OnCall",
-        "대규모 조직, 복잡한 에스컬레이션: PagerDuty",
-        "Atlassian 생태계 사용: OpsGenie"
+        "소스·필요 통보 채널에 맞춰 선택",
+        "유지보수 상태·요금제·운영비 검토"
       ]
     },
     {
       "dot": "amber",
-      "title": "온콜 관리 지원",
+      "title": "수명주기",
       "items": [
-        "Alertmanager, CloudWatch Alarms: 온콜 관리 기능 없음",
-        "Grafana OnCall, PagerDuty, OpsGenie: 스케줄, 에스컬레이션, 모바일 앱 지원",
-        "Grafana OnCall은 무료/유료 오픈소스, PagerDuty와 OpsGenie는 유료 SaaS"
+        "OnCall OSS: 2026-03-24 보관 처리",
+        "Opsgenie: 2027-04-05 서비스 종료 예정"
       ]
     }
   ]
