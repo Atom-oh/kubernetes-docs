@@ -26,7 +26,7 @@ Landing-zone Config integration deploys Config resources into service-integratio
 
 ### Security OU placement and baseline scope
 
-In Control Tower 3.x, administrators manually created a designated Security OU. **In 4.0, the OU containing the service integration Accounts is automatically designated as the Security OU.** Three constraints follow from this.
+Earlier landing zones included Control Tower-managed Security OU creation. **Version 4.0 no longer manages that creation; the common parent OU containing service-integration Accounts is designated as the Security OU.** Check these baseline-scope constraints.
 
 1. `AWSControlTowerBaseline` and the Config Baseline cannot be applied to this OU (shown as `Not Applicable`, which is normal). `BackupBaseline` can be applied.
 2. If a non-service-integration Account is placed in this OU, it won't receive baseline resources.
@@ -53,7 +53,7 @@ Based on which service integrations and OU baselines you activate, you need to d
 
 ## 2. Auto-Enrollment
 
-With Landing Zone 3.1+, moving an Account into a registered OU automatically applies that OU's baselines and controls (auto-enrollment). Still, there are things it doesn't do for you.
+With Landing Zone 3.1+, enable auto-enrollment through landing-zone settings/API before moving an Account into a registered OU to automatically apply that OU’s baselines and controls. Still, there are things it doesn't do for you.
 
 - **It doesn't resolve pre-existing configuration conflicts or failure recovery automatically.** Pre-checks (Config, CloudTrail, SCP, IAM conflicts) need to be done separately.
 - Unenrollment can remove managed baseline resources. Verify retention of existing logs and evidence separately. Keeping governance while restricting changes is an operational option for retiring Accounts, not an AWS requirement that every OU remain enrolled.
@@ -99,7 +99,7 @@ A few more confirmed constraints:
 | Policy type | Role |
 |---|---|
 | SCP | Limits a principal's maximum permissions (doesn't grant permissions) |
-| RCP | Limits the maximum scope a supported resource's resource policy can grant (doesn't directly grant permissions) |
+| RCP | Limits maximum permissions available for supported resources in member Accounts (does not grant permissions) |
 | Declarative policy | Maintains org-wide common baseline settings for supported services |
 | Tag Policy | Checks and enforces tag standard compliance |
 | Control Tower control | Preventive/proactive/detective control at the OU level |

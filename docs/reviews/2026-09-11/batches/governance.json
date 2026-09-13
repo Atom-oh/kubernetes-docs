@@ -11,7 +11,7 @@
     "path": "en/governance/01-landing-zone-and-ou.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "77e5ce9a20eccd58d1135acea0272396845220338ebbd487a6c6bbd3bc5063a1",
+    "reviewedSha256": "ac97656f0abd1f071e9d48a3a5252da96e7d0a56bc1965ff5419070a98c9fd98",
     "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
     "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
   },
@@ -43,7 +43,7 @@
     "path": "en/governance/05-data-security-boundaries.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "145cde333ead9ce2a14b1b939c4f4e92f9a4f3f293d688848379bedfd7ff546b",
+    "reviewedSha256": "374ef3e2b35efe4e1510a13c477c0b394f425b23f65028558ca2cf64707ab46c",
     "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
     "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
   },
@@ -123,7 +123,7 @@
     "path": "ko/governance/01-landing-zone-and-ou.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "ab35befd8f81b7a98a76673b171d090a53d4da0627cc6d71dcb178d28deacbc0",
+    "reviewedSha256": "6b1c4059046750710fc59651d367a7c4b309421dc4dc80edb03b836981b46f52",
     "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
     "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
   },
@@ -155,7 +155,7 @@
     "path": "ko/governance/05-data-security-boundaries.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "9e268f202a81667cc226a9f0e1ea03364ee368ff70837e595a176b6d42bf7199",
+    "reviewedSha256": "03e494d082ccae5eec5adeb07f6198f387d18f25954432cd763261f03ac8b55f",
     "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
     "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
   },

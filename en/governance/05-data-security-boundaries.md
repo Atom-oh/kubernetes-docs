@@ -66,9 +66,11 @@ Turning "block direct access" into concrete API-level paths yields a coverage ma
 | Path | Control mechanism |
 |---|---|
 | AWS Backup cross-account copy | `backup:CopyTargets`/`CopyTargetOrgPaths` SCP conditions, destination vault access policy |
-| RDS manual snapshot sharing | Restrict `rds:ModifyDBSnapshotAttribute` to approved automation; validate target Accounts during deployment |
-| RDS snapshot public sharing | Restrict sharing APIs; reject `restore=all` in automation and add detection/remediation |
-| EBS snapshot sharing / EC2 Allowed AMIs | Restrict `ec2:ModifySnapshotAttribute`, allowlist source Accounts |
+| RDS DB-instance snapshot sharing | Restrict `rds:ModifyDBSnapshotAttribute` to approved automation; audit recipients with `DescribeDBSnapshotAttributes` |
+| Aurora DB-cluster snapshot sharing | Restrict `rds:ModifyDBClusterSnapshotAttribute` to approved automation; audit recipients with `DescribeDBClusterSnapshotAttributes` |
+| RDS/Aurora public snapshot sharing | Validate recipient allowlists and rejection of `restore=all` for both sharing APIs; retain KMS, detection, and remediation controls |
+| Outbound EBS snapshot sharing | Restrict/audit `ec2:ModifySnapshotAttribute` and recipient createVolumePermission |
+| EC2 Allowed AMIs(consumption) | Account/Region settings or declarative policy limit discovery/use of public/shared AMIs; Account-owned AMIs are excluded |
 | S3 Batch Replication / cross-account replication | Bucket policy, restrict replication roles, RCP |
 | Movement via DMS/Glue | That service's network/IAM path |
 | CDC streams (MSK/Kinesis/DMS) | Resource policy + restrict cross-account consumers |
@@ -136,3 +138,6 @@ For a way to make all decisions across boundaries, accounts, IAM, network, and d
 - [AWS SRA Security Tooling](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/security-tooling.html)
 - [Supported services for shared subnets](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-service-behavior.html)
 - [Logically air-gapped vault sharing and restore](https://docs.aws.amazon.com/aws-backup/latest/devguide/logicallyairgappedvault.html)
+
+- [Aurora snapshot sharing API](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ModifyDBClusterSnapshotAttribute.html)
+- [EC2 Allowed AMIs scope](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html)

@@ -66,9 +66,11 @@ S3는 VPC에 배치되는 리소스가 아닙니다. bucket/Account ownership, V
 | 경로 | 통제 수단 |
 |---|---|
 | AWS Backup cross-account copy | `backup:CopyTargets`/`CopyTargetOrgPaths` SCP 조건, destination vault access policy |
-| RDS 수동 스냅샷 공유 | `rds:ModifyDBSnapshotAttribute`를 승인된 자동화로 제한; 대상 Account는 배포 검증에서 검사 |
-| RDS 스냅샷 public 공유 | 공유 변경 API를 제한하고 자동화에서 `restore=all` 거부; 탐지·복구 병행 |
-| EBS 스냅샷 공유 / EC2 Allowed AMIs | `ec2:ModifySnapshotAttribute` 제한, 소스 Account allowlist |
+| RDS DB instance snapshot 공유 | `rds:ModifyDBSnapshotAttribute`를 승인된 자동화로 제한; `DescribeDBSnapshotAttributes`로 공유 대상 감사 |
+| Aurora DB cluster snapshot 공유 | `rds:ModifyDBClusterSnapshotAttribute`를 승인된 자동화로 제한; `DescribeDBClusterSnapshotAttributes`로 공유 대상 감사 |
+| RDS/Aurora snapshot public 공유 | 두 sharing API 모두에서 대상 Account allowlist와 `restore=all` 거부를 검증; KMS·탐지·복구 병행 |
+| EBS snapshot 외부 공유 | `ec2:ModifySnapshotAttribute` 권한과 대상 Account의 createVolumePermission을 제한·감사 |
+| EC2 Allowed AMIs(소비 측) | Account/Region별 설정 또는 declarative policy로 public/shared AMI의 검색·사용 조건을 제한; 자기 Account 소유 AMI는 제외 |
 | S3 Batch Replication / cross-account replication | bucket policy, replication role 제한, RCP |
 | DMS/Glue 경유 이동 | 해당 서비스의 network·IAM 경로 |
 | CDC stream (MSK/Kinesis/DMS) | resource policy + cross-account consumer 제한 |
@@ -136,3 +138,6 @@ Amazon MQ의 RabbitMQ처럼 공식 목록에 명시적으로 제외된 engine은
 - [AWS SRA Security Tooling](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/security-tooling.html)
 - [Shared subnet 지원 서비스](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-service-behavior.html)
 - [Logically air-gapped vault sharing and restore](https://docs.aws.amazon.com/aws-backup/latest/devguide/logicallyairgappedvault.html)
+
+- [Aurora snapshot sharing API](https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ModifyDBClusterSnapshotAttribute.html)
+- [EC2 Allowed AMIs scope](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html)

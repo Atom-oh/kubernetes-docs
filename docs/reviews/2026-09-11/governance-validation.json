@@ -209,7 +209,7 @@
       },
       {
         "path": "en/governance/01-landing-zone-and-ou.md",
-        "sha256": "77e5ce9a20eccd58d1135acea0272396845220338ebbd487a6c6bbd3bc5063a1",
+        "sha256": "ac97656f0abd1f071e9d48a3a5252da96e7d0a56bc1965ff5419070a98c9fd98",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -516,7 +516,7 @@
       },
       {
         "path": "en/governance/05-data-security-boundaries.md",
-        "sha256": "145cde333ead9ce2a14b1b939c4f4e92f9a4f3f293d688848379bedfd7ff546b",
+        "sha256": "374ef3e2b35efe4e1510a13c477c0b394f425b23f65028558ca2cf64707ab46c",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -862,7 +862,7 @@
       },
       {
         "path": "ko/governance/01-landing-zone-and-ou.md",
-        "sha256": "ab35befd8f81b7a98a76673b171d090a53d4da0627cc6d71dcb178d28deacbc0",
+        "sha256": "6b1c4059046750710fc59651d367a7c4b309421dc4dc80edb03b836981b46f52",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -1169,7 +1169,7 @@
       },
       {
         "path": "ko/governance/05-data-security-boundaries.md",
-        "sha256": "9e268f202a81667cc226a9f0e1ea03364ee368ff70837e595a176b6d42bf7199",
+        "sha256": "03e494d082ccae5eec5adeb07f6198f387d18f25954432cd763261f03ac8b55f",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -2415,6 +2415,22 @@
       "sha256": "c79c12d9beb86cb6057bd06daded0f384c6b5d0f7b2068146855a1109edcd0d2",
       "textPath": "sources/92086a392d40.txt",
       "characters": 65111
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ModifyDBClusterSnapshotAttribute.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ModifyDBClusterSnapshotAttribute.html",
+      "sha256": "2c27410f137b2278b3c5af2586b0113f432f48bda7ad408a74ba18355706b7ad",
+      "textPath": "sources/9859b221bb99.txt",
+      "characters": 6481
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html",
+      "sha256": "b6bbc60b6f2dcdecf646879520e28a86285afa1807b6991a526e8c6fcb2be4d3",
+      "textPath": "sources/848063e73905.txt",
+      "characters": 16130
     }
   ],
   "contentPreservation": [
@@ -2454,5 +2470,62 @@
     "AWSBackupcopydocumentationhasbothdestinationkeytypesanddefault-vaultwarning;guiderecommendsexplicitdedicatedvaultconfigurationwithoutclaimingavariantwasruntime-tested.",
     "OriginalgovernancepageshaveoneASCIIbaselinechain,noimageassets;all56questiontopicsretained.",
     "FullVitePressbuildrunsinCI;localNodeheap512MiB."
-  ]
+  ],
+  "reviewFixes": {
+    "ids": [
+      "GOV-R1-001",
+      "GOV-R1-002",
+      "GOV-R1-003",
+      "GOV-R1-004",
+      "GOV-R1-005"
+    ],
+    "scope": "RCPsupported-resourcepermissionceiling;separateRDSinstance/AurorasnapshotsharingAPIs;separateEBSsharingfromAllowedAMIconsumption",
+    "validation": "4exact-sourceMarkdowncompilations;officialRDS/AllowedAMI/ControlTowerreferences;noAWSrequestexecution",
+    "apiModelValidation": {
+      "status": "passed",
+      "botocoreVersion": "1.43.93",
+      "apiVersion": "2014-10-31",
+      "operations": [
+        {
+          "operation": "ModifyDBSnapshotAttribute",
+          "identifierField": "DBSnapshotIdentifier",
+          "modelFields": [
+            "AttributeName",
+            "DBSnapshotIdentifier",
+            "ValuesToAdd",
+            "ValuesToRemove"
+          ],
+          "syntheticInputValid": true
+        },
+        {
+          "operation": "DescribeDBSnapshotAttributes",
+          "identifierField": "DBSnapshotIdentifier",
+          "modelFields": [
+            "DBSnapshotIdentifier"
+          ],
+          "syntheticInputValid": true
+        },
+        {
+          "operation": "ModifyDBClusterSnapshotAttribute",
+          "identifierField": "DBClusterSnapshotIdentifier",
+          "modelFields": [
+            "AttributeName",
+            "DBClusterSnapshotIdentifier",
+            "ValuesToAdd",
+            "ValuesToRemove"
+          ],
+          "syntheticInputValid": true
+        },
+        {
+          "operation": "DescribeDBClusterSnapshotAttributes",
+          "identifierField": "DBClusterSnapshotIdentifier",
+          "modelFields": [
+            "DBClusterSnapshotIdentifier"
+          ],
+          "syntheticInputValid": true
+        }
+      ],
+      "scope": "LocalbotocoreRDSrequest-shapes;noclients/credentials/APIcalls/IAMenforcementoractualsnapshots"
+    }
+  }
 }

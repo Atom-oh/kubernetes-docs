@@ -26,7 +26,7 @@ Landing Zone의 Config integration은 service integration Account에 Config 리�
 
 ### Security OU의 배치와 baseline 범위
 
-Control Tower 3.x에서는 지정 Security OU를 관리자가 직접 만들었지만, **4.0에서는 service integration Account들이 위치한 OU가 자동으로 Security OU로 지정**됩니다. 여기서 파생되는 제약이 세 가지 있습니다.
+이전 landing zone은 Control Tower가 Security OU 생성을 관리했습니다. **4.0은 그 OU 생성을 더 이상 관리하지 않으며 service integration Account들이 위치한 공통 parent OU를 Security OU로 지정**합니다. 다음 baseline 범위를 확인합니다.
 
 1. 이 OU에는 `AWSControlTowerBaseline`과 Config Baseline을 적용할 수 없습니다(`Not Applicable` 상태로 표시되며 정상 동작입니다). `BackupBaseline`은 적용 가능합니다.
 2. Security OU 안에 service integration Account가 아닌 일반 Account를 두면 baseline 리소스를 받지 못합니다.
@@ -53,7 +53,7 @@ Control Tower가 활성화할 service integration과 OU baseline 조합에 따�
 
 ## 2. Auto-enrollment
 
-Landing Zone 3.1 이상에서는 Account를 등록된 OU로 이동하면 해당 OU의 baseline·control이 자동으로 적용되는 auto-enrollment를 쓸 수 있습니다. 다만 이 기능이 대신해주지 않는 것들이 있습니다.
+Landing Zone 3.1 이상에서 설정/API로 auto-enrollment를 먼저 활성화하면, Account를 등록된 OU로 이동할 때 해당 OU의 baseline·control을 자동 적용할 수 있습니다. 다만 이 기능이 대신해주지 않는 것들이 있습니다.
 
 - **기존 설정 충돌이나 실패 복구는 자동으로 해결되지 않습니다.** 사전 검사(Config·CloudTrail·SCP·IAM 충돌)는 별도로 수행해야 합니다.
 - 등록 해제는 관리형 baseline 리소스를 정리할 수 있습니다. 기존 로그·증거의 보존 정책은 별도로 확인합니다. 폐기 대기 Account의 governance 유지와 변경 제한은 검토할 운영 방안이며, 모든 OU가 반드시 등록되어야 한다는 AWS 요구사항은 아닙니다.
