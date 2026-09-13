@@ -1,7 +1,7 @@
 # 커널 데이터패스 — link-local 인터셉트의 실제
 
 > **지원 버전**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, Linux 6.1 / 6.12 / 6.18 (Amazon Linux 2023)
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
@@ -190,12 +190,31 @@ aws-samples 레퍼런스 구현의 구조입니다 — init container가 iptable
 | 3 | 메시의 기타 예외 대역 → `RETURN` | 메시 인터셉트 제외 |
 | 4 | 나머지 → Envoy로 `REDIRECT` | 메시 인터셉트 |
 
-**규칙 2가 규칙 4보다 앞에 있어야** Lattice 트래픽이 Envoy가 아니라 서명 프록시로 갑니다. 두 init container가 각자 규칙을 심으면 순서가 실행 순서에 의존하므로, **실제 규칙을 덤프해서 확인**하는 것이 유일하게 신뢰할 수 있는 검증입니다.
+**규칙 2가 규칙 4보다 앞에 있어야** Lattice 트래픽이 Envoy가 아니라 서명 프록시로 갑니다. 두 init container가 각자 규칙을 심으면 순서가 실행 순서에 의존합니다.
+
+다행히 메시 쪽 순서는 확인이 가능합니다 — Istio의 경우 아래에서 소스로 검증했습니다.
+
+### Istio의 실제 규칙 순서 (소스 확인)
+
+Istio의 `istio-iptables`(`tools/istio-iptables/pkg/capture/run.go`)가 `ISTIO_OUTPUT` 체인에 규칙을 **append하는 순서**입니다.
+
+| 순서 | 규칙 | 목적 |
+|---|---|---|
+| 1 | 포트 기반 제외 → `RETURN` | "connections back to self" 리다이렉트보다 먼저 적용되어야 함 (소스 주석) |
+| 2 | loopback·자기 호출 처리 | `appN => Envoy => Envoy => appN` 경로 처리 |
+| 3 | **`-m owner --uid-owner <proxy-uid>` → `RETURN`** | **루프 방지.** 소스 주석: "Avoid infinite loops. Don't redirect Envoy traffic directly back to Envoy" |
+| 4 | **제외 CIDR(`excludeOutboundIPRanges`) → `RETURN`** | 인터셉트 대상에서 제외 |
+| 5 | 포함 포트 처리 | |
+| 6 | **`-j ISTIO_REDIRECT` (와일드카드 catch-all)** | 나머지 전부를 Envoy로 |
+
+**핵심 확인 사항**: 제외 CIDR의 `RETURN`(4)이 catch-all `REDIRECT`(6)보다 **앞에 놓입니다.** 따라서 Istio의 `traffic.sidecar.istio.io/excludeOutboundIPRanges`에 Lattice 대역을 넣는 것만으로 올바르게 동작하며, 별도의 순서 조정이 필요하지 않습니다.
+
+그리고 **프록시 UID `RETURN`(3)이 제외 CIDR보다도 먼저**입니다. 즉 Istio 자신도 이 문서에서 설명한 UID 기반 루프 방지를 같은 방식으로 쓰고 있습니다.
 
 ::: warning 확인 필요
-위 순서는 netfilter의 평가 규칙(체인 내 순차 평가, 첫 매치에서 동작)과 각 규칙의 목적에서 **논리적으로 도출한 것**이며, 특정 메시 버전의 init container가 심는 실제 규칙 순서를 검증한 것은 아닙니다.
+위 순서는 **Istio** 소스에서 확인한 것입니다. **App Mesh의 init container가 심는 실제 규칙 순서는 검증하지 못했습니다** — 별개 구현이며, App Mesh는 2026년 9월 30일 지원이 종료됩니다.
 
-메시 구현마다 체인 이름과 삽입 위치가 다르므로, **반드시 대상 환경에서 `iptables -t nat -L -n -v`로 실제 규칙을 덤프해 순서를 확인**하십시오. 두 init container의 실행 순서는 Pod 스펙의 `initContainers` 배열 순서로 정해집니다.
+또한 **서명 프록시 init container를 함께 쓰는 구성**은 두 init container가 각자 규칙을 심으므로 순서가 `initContainers` 배열 순서에 의존합니다. 이 조합은 **대상 환경에서 `iptables -t nat -L -n -v`로 실제 규칙을 덤프해 확인**하십시오.
 :::
 
 ## conntrack — 이 구성에서의 거동
@@ -285,3 +304,4 @@ echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/ne
 - [aws-samples — IAM authentication with VPC Lattice and EKS](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
 - [AWS Gateway API Controller — Deploy the controller](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
 - [iptables-extensions(8) — owner match](https://man7.org/linux/man-pages/man8/iptables-extensions.8.html)
+- [istio/istio — tools/istio-iptables/pkg/capture/run.go](https://github.com/istio/istio/blob/master/tools/istio-iptables/pkg/capture/run.go) — 규칙 순서의 1차 근거

@@ -1,7 +1,7 @@
 # EKS 노드 커널 튜닝
 
 > **지원 버전**: Amazon Linux 2023 (커널 6.1 / 6.12 / 6.18), Kubernetes 1.33+ (Amazon EKS)
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
@@ -53,7 +53,11 @@
 **둘째, conntrack은 kube-proxy가 덮어씁니다.** [컨테이너 커널 기능](./01-container-primitives.md)에서 언급한 내용인데, 실무에서 가장 자주 걸리는 함정이라 다시 씁니다 — EKS에는 `kube-proxy-config` ConfigMap이 기본 존재하고 **커맨드라인 인자보다 우선**합니다. 부트스트랩에서 sysctl로 올려놔도 kube-proxy가 자기 값으로 되돌릴 수 있습니다.
 
 ::: warning 확인 필요
-Bottlerocket에서 kube-proxy 설정 우선순위로 인해 conntrack 설정이 의도대로 적용되지 않는 이슈가 보고된 바 있습니다(bottlerocket-os/bottlerocket#4221). 해당 이슈의 현재 해결 상태는 확인하지 못했습니다. **어느 경로로 설정하든 적용 후 노드에서 실제 값을 직접 확인**하십시오.
+Bottlerocket에서 `settings.kernel.sysctl`로 conntrack 상한을 올려도 적용되지 않는 이슈가 있습니다([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), 2024년 9월 등록). 원인은 **kube-proxy 설정 파일(`/var/lib/kube-proxy-config/config`)이 커맨드라인 인자보다 우선**하기 때문입니다.
+
+알려진 우회책은 kube-proxy 인자에 **`--conntrack-max-per-core=0 --conntrack-min=0`**을 주는 것입니다 — 여기서 **0은 "변경하지 않음"**을 뜻하므로, kube-proxy가 conntrack을 건드리지 않고 노드 sysctl로 설정한 값이 살아남습니다.
+
+**이 이슈가 특정 Bottlerocket 릴리스에서 해결되었는지는 확인하지 못했습니다.** 어느 경로로 설정하든 적용 후 노드에서 실제 값을 직접 확인하십시오.
 
 ```bash
 # 노드에서 실제 적용값 확인
@@ -107,11 +111,21 @@ Linux 6.6에서 CFS의 태스크 선택 로직이 **EEVDF**(Earliest Eligible Vi
 
 운영 관점의 의미: **지연 민감 워크로드의 깨우기 지연 특성이 달라질 수 있습니다.** 대개 개선 방향이지만, 커널 6.1에서 6.18로 넘어갈 때 p99가 바뀌면 이 변화가 후보 중 하나입니다.
 
-::: warning 확인 필요
-EEVDF 도입과 함께 CFS 시절의 튜너블(`sched_latency_ns`, `sched_wakeup_granularity_ns` 등)이 **어느 커널 버전에서 제거·대체되었는지, 대체 튜너블(`sched_base_slice_ns` 등)의 정확한 이름과 위치**는 공식 문서로 확정하지 못했습니다. 이 계열 값은 커널 6.x에서 sysctl이 아니라 debugfs(`/sys/kernel/debug/sched/`)에 있고 버전에 따라 다릅니다.
+### 튜너블의 실제 위치
 
-**스케줄러 튜너블은 권장 튜닝 대상이 아닙니다.** 건드리기 전에 해당 노드에서 실제 존재 여부를 확인하고, 대부분의 경우 애플리케이션의 스레드 수 조정이나 cgroup limit 조정이 더 나은 답입니다.
-:::
+커널 소스(`kernel/sched/debug.c`)에서 확인한 결과입니다.
+
+| 항목 | 상태 |
+|---|---|
+| `sched_latency_ns` | **제거됨** — `kernel/sched/fair.c`에 참조가 남아 있지 않음 |
+| `sched_wakeup_granularity_ns` | **제거됨** — 동일 |
+| **`/sys/kernel/debug/sched/base_slice_ns`** | **현재의 대응 튜너블.** 내부 변수는 `sysctl_sched_base_slice`이고 debugfs에 `base_slice_ns`로 노출됨 |
+
+즉 CFS 시절의 지연·선점 휴리스틱 튜너블은 사라지고, **기본 타임슬라이스 하나(`base_slice_ns`)**로 정리되었습니다. 이름에 `sched_` 접두어가 없다는 점에 주의하십시오 — 경로는 `/sys/kernel/debug/sched/base_slice_ns`입니다.
+
+EEVDF는 이와 별개로 `sched_setattr()` 시스템 콜로 **태스크가 자기 타임슬라이스를 직접 요청**할 수 있게 했습니다. 지연 민감 애플리케이션에는 전역 튜너블을 건드리는 것보다 이 경로가 맞습니다.
+
+**그래도 스케줄러 튜너블은 권장 튜닝 대상이 아닙니다.** debugfs는 커널 디버그 인터페이스라 프로덕션에서 마운트되지 않을 수 있고, 대부분의 경우 애플리케이션의 스레드 수 조정이나 cgroup limit 조정이 더 나은 답입니다.
 
 ### CPU limit — throttling이 진짜 문제인 경우
 
@@ -290,6 +304,8 @@ cat /sys/fs/cgroup/<path>/memory.pressure
 - [Running kube-proxy in nftables Mode — EKS Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/nftables.html)
 - [KEP-5495: Deprecate IPVS mode in kube-proxy](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)
 - [EEVDF Scheduler — Linux kernel documentation](https://docs.kernel.org/scheduler/sched-eevdf.html)
+- [kernel/sched/debug.c — debugfs 튜너블 정의](https://github.com/torvalds/linux/blob/master/kernel/sched/debug.c)
+- [bottlerocket-os/bottlerocket#4221 — conntrack limit not applied](https://github.com/bottlerocket-os/bottlerocket/issues/4221)
 - [PSI - Pressure Stall Information](https://docs.kernel.org/accounting/psi.html)
 - [Reserve Compute Resources for System Daemons (Kubernetes)](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/)
 - [Using sysctls in a Kubernetes Cluster](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/)

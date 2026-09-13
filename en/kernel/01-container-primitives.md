@@ -1,7 +1,7 @@
 # Kernel Features Behind Containers
 
 > **Supported Versions**: Linux 6.1 / 6.12 / 6.18 (Amazon Linux 2023), Kubernetes 1.25+ (cgroup v2)
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 13, 2026
 
 ## What This Document Covers
 
@@ -61,8 +61,20 @@ A user namespace **maps** root (UID 0) inside the container to an unprivileged U
 
 Yet it was not the default for a long time. The reason is **file ownership.** Files on a volume are recorded with host UIDs; if the container sees a different UID, permissions do not line up. Solving it requires translating UIDs at mount time (idmapped mounts, kernel 5.12+), and storage drivers and CSI must support it too.
 
+### Kubernetes user namespace support status
+
+Per [KEP-127](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/kep.yaml), the maturity stages are:
+
+| Stage | Version |
+|---|---|
+| alpha | v1.25 |
+| beta | v1.35 |
+| **stable (GA)** | **v1.36** |
+
+The feature gate is `UserNamespacesSupport`, applying to kubelet and kube-apiserver. **From 1.36 it is GA, so `hostUsers: false` works without enabling a feature gate.**
+
 ::: warning Needs verification
-Kubernetes user namespace support (`hostUsers: false`) has matured in stages, and **which version has which maturity level, and whether it is usable on EKS, varies by version.** If you are considering it, check the official documentation for your Kubernetes version and EKS support directly. This document does not assert a maturity level for any specific version.
+Those maturity stages are upstream Kubernetes. **Whether EKS offers that version, and whether your container runtime and CSI drivers support idmapped mounts, are separate questions.** Confirm the EKS supported version and your runtime/storage combination before adopting.
 :::
 
 ## cgroups — How Much Can It Use
@@ -206,7 +218,9 @@ Since Kubernetes DNATs every Service, **every Service connection creates a connt
 Raising `nf_conntrack_max` **increases node memory use.** Each entry costs memory, so you cannot raise it without bound — it must match node size. Concrete settings are in [EKS Node Kernel Tuning](./03-eks-node-tuning.md).
 
 ::: warning Needs verification
-An issue has been reported where conntrack settings do not apply as intended on Bottlerocket due to kube-proxy configuration precedence (bottlerocket-os/bottlerocket#4221). **If you run Bottlerocket nodes, verify the actual value on the node after configuring.** The current resolution status of that issue could not be confirmed.
+On Bottlerocket, raising the conntrack ceiling via `settings.kernel.sysctl` does not take effect ([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), filed September 2024). The cause is that **the kube-proxy config file (`/var/lib/kube-proxy-config/config`) takes precedence over command-line arguments**, and the known workaround is passing **`--conntrack-max-per-core=0 --conntrack-min=0`** to kube-proxy (0 meaning "do not change") so kube-proxy leaves it alone and the node's sysctl value survives.
+
+**Whether this was resolved in a specific Bottlerocket release could not be confirmed.** Whichever path you use, verify the actual value on the node after applying. Configuration paths are covered in [EKS Node Kernel Tuning](./03-eks-node-tuning.md).
 :::
 
 ### Reducing conntrack pressure
@@ -251,6 +265,8 @@ Next: [Kernel Networking Stack](./02-network-stack.md) walks the full path a pac
 - [Control Group v2 — Linux kernel documentation](https://docs.kernel.org/admin-guide/cgroup-v2.html)
 - [PSI - Pressure Stall Information](https://docs.kernel.org/accounting/psi.html)
 - [namespaces(7) — Linux manual](https://man7.org/linux/man-pages/man7/namespaces.7.html)
+- [KEP-127: Support User Namespaces](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/README.md)
+- [bottlerocket-os/bottlerocket#4221 — conntrack limit not applied](https://github.com/bottlerocket-os/bottlerocket/issues/4221)
 - [NFTables mode for kube-proxy (Kubernetes Blog)](https://kubernetes.io/blog/2025/02/28/nftables-kube-proxy/)
 - [KEP-5495: Deprecate IPVS mode in kube-proxy](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)
 - [Running kube-proxy in nftables Mode — EKS Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/nftables.html)

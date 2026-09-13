@@ -1,7 +1,7 @@
 # 컨테이너를 지탱하는 커널 기능
 
 > **지원 버전**: Linux 6.1 / 6.12 / 6.18 (Amazon Linux 2023), Kubernetes 1.25+ (cgroup v2)
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
@@ -61,8 +61,20 @@ user namespace는 컨테이너 안의 root(UID 0)를 호스트의 비특권 UID�
 
 그런데 오래 기본이 아니었습니다. 이유는 **파일 소유권**입니다. 볼륨의 파일이 호스트 UID로 기록되어 있는데 컨테이너가 다른 UID로 보면 권한이 맞지 않습니다. 이를 해결하려면 마운트 시점에 UID를 변환해야 하고(idmapped mounts, 커널 5.12+), 스토리지 드라이버와 CSI도 이를 지원해야 합니다.
 
+### Kubernetes의 user namespace 지원 현황
+
+[KEP-127](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/kep.yaml) 기준으로 성숙 단계는 다음과 같습니다.
+
+| 단계 | 버전 |
+|---|---|
+| alpha | v1.25 |
+| beta | v1.35 |
+| **stable (GA)** | **v1.36** |
+
+feature gate는 `UserNamespacesSupport`이며 kubelet과 kube-apiserver에 적용됩니다. **1.36부터는 GA이므로 feature gate를 켜지 않아도 `hostUsers: false`를 쓸 수 있습니다.**
+
 ::: warning 확인 필요
-Kubernetes의 user namespace 지원(`hostUsers: false`)은 단계적으로 성숙해 온 기능이고, **어느 버전에서 어떤 성숙도인지, EKS에서 사용 가능한지는 버전에 따라 다릅니다.** 도입을 검토한다면 사용 중인 Kubernetes 버전의 공식 문서와 EKS 지원 여부를 직접 확인하십시오. 이 문서는 특정 버전의 성숙도를 단정하지 않습니다.
+위 성숙도는 Kubernetes 업스트림 기준입니다. **EKS가 해당 버전을 제공하는지, 그리고 사용 중인 컨테이너 런타임과 CSI 드라이버가 idmapped mounts를 지원하는지는 별개**입니다. 도입 전에 EKS 지원 버전과 런타임·스토리지 조합을 확인하십시오.
 :::
 
 ## cgroup — 얼마나 쓸 수 있는가
@@ -206,7 +218,9 @@ Kubernetes가 Service마다 DNAT를 하므로 **모든 Service 통신이 conntra
 `nf_conntrack_max`를 올리면 **노드 메모리 사용이 늘어납니다.** 항목당 메모리를 쓰므로 무한정 올릴 수 없고, 노드 크기에 맞춰야 합니다. 구체적 설정은 [EKS 노드 커널 튜닝](./03-eks-node-tuning.md)에서 다룹니다.
 
 ::: warning 확인 필요
-Bottlerocket에서 conntrack 설정이 kube-proxy 설정 우선순위 때문에 의도대로 적용되지 않는 이슈가 보고된 바 있습니다(bottlerocket-os/bottlerocket#4221). **Bottlerocket 노드를 쓴다면 설정 후 노드에서 실제 값을 직접 확인**하십시오. 해당 이슈의 현재 해결 상태는 확인하지 못했습니다.
+Bottlerocket에서 `settings.kernel.sysctl`로 conntrack 상한을 올려도 적용되지 않는 이슈가 있습니다([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), 2024년 9월 등록). 원인은 **kube-proxy 설정 파일(`/var/lib/kube-proxy-config/config`)이 커맨드라인 인자보다 우선**하기 때문이고, 알려진 우회책은 kube-proxy 인자에 **`--conntrack-max-per-core=0 --conntrack-min=0`**(0은 "변경하지 않음")을 주어 kube-proxy가 손대지 않게 하고 노드 sysctl 값이 살아남게 하는 것입니다.
+
+**이 이슈가 특정 Bottlerocket 릴리스에서 해결되었는지는 확인하지 못했습니다.** 어느 경로로 설정하든 적용 후 노드에서 실제 값을 직접 확인하십시오. 자세한 설정 경로는 [EKS 노드 커널 튜닝](./03-eks-node-tuning.md)에 있습니다.
 :::
 
 ### conntrack을 피하는 방향
@@ -251,6 +265,8 @@ conntrack 부하 자체를 줄이는 접근도 있습니다.
 - [Control Group v2 — Linux kernel documentation](https://docs.kernel.org/admin-guide/cgroup-v2.html)
 - [PSI - Pressure Stall Information](https://docs.kernel.org/accounting/psi.html)
 - [namespaces(7) — Linux manual](https://man7.org/linux/man-pages/man7/namespaces.7.html)
+- [KEP-127: Support User Namespaces](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/README.md)
+- [bottlerocket-os/bottlerocket#4221 — conntrack limit not applied](https://github.com/bottlerocket-os/bottlerocket/issues/4221)
 - [NFTables mode for kube-proxy (Kubernetes Blog)](https://kubernetes.io/blog/2025/02/28/nftables-kube-proxy/)
 - [KEP-5495: Deprecate IPVS mode in kube-proxy](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)
 - [Running kube-proxy in nftables Mode — EKS Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/nftables.html)

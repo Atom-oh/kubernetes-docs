@@ -1,7 +1,7 @@
 # Running Blockchain Nodes on EKS
 
 > **Supported Versions**: Kubernetes 1.33+ (Amazon EKS), Hyperledger Fabric 2.5 / 3.x
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 13, 2026
 
 ## What This Document Covers
 
@@ -123,10 +123,29 @@ Chain data grows **monotonically.** That changes the nature of capacity planning
 
 **EBS volumes support online expansion** (followed by a filesystem grow), so the standard response is a StorageClass with `allowVolumeExpansion: true` plus disk-utilization alarms.
 
-::: warning Needs verification
-Commonly cited estimates for Ethereum node disk requirements are roughly **0.9–1.3 TB for the execution client, 80–200 GB for the consensus client, and an additional 100–150 GB for blob data** (community and vendor estimates as of early 2026).
+### Official hardware guidance — EIP-7870
 
-**These figures are not official AWS or Ethereum Foundation specifications — they come from third-party blogs and vendor material, and they vary considerably by client, pruning configuration, and fork.** Size against the official documentation and release notes for the client you will use, and measure the growth rate yourself in a PoC.
+Ethereum's node hardware requirements are governed by **[EIP-7870](https://eips.ethereum.org/EIPS/eip-7870)**, which [ethereum.org's Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/) page cites.
+
+| Item | Minimum | **Recommended (EIP-7870, full node)** |
+|---|---|---|
+| **CPU** | 2+ cores | 4+ cores (**8+ if validating**) |
+| **RAM** | 16 GB (32 GB recommended) | 32 GB (**64 GB if validating**) |
+| **Disk** | **2 TB NVMe SSD** | **4 TB NVMe SSD** (DRAM-less and QLC drives are **discouraged**) |
+| **Bandwidth** | 25+ Mbit/s | 50 Mbit/s down / 15+ Mbit/s up (**25+ up if validating**) |
+
+Three things matter in how you read this.
+
+**① The bottleneck is disk.** ethereum.org states it explicitly — "The bottleneck for your hardware is mostly disk space. Syncing the Ethereum blockchain is very input/output intensive." That is why IOPS came first above.
+
+**② Drive quality is part of the spec.** "DRAM-less and QLC drives are discouraged" — matching the capacity and IOPS numbers is not enough; **the drive type is a requirement.** On EBS, using gp3/io2 manages this, but it is something to check if you use instance store or your own hardware.
+
+**③ The 2 TB minimum has an expiry date.** ethereum.org notes 2 TB is "likely exceeded by 2027" — **the reason growth must be in your capacity plan.**
+
+::: warning Needs verification
+The figures above are for a **full node.** **An archive node needs far more storage, and actual usage varies by client, pruning configuration, and fork.**
+
+In particular, Fusaka's PeerDAS changed blob handling, so check current requirements in your client's release notes and **measure the growth rate yourself in a PoC.**
 :::
 
 ### Snapshot strategy
@@ -374,6 +393,7 @@ Next: [Amazon Managed Blockchain](./03-managed-blockchain.md) examines how much 
 ## References
 
 - [Ethereum — Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/)
+- [EIP-7870: Hardware and Bandwidth Recommendations](https://eips.ethereum.org/EIPS/eip-7870) — official hardware guidance
 - [Ethereum roadmap](https://ethereum.org/roadmap/) / [Pectra](https://ethereum.org/roadmap/pectra/) / [Fusaka](https://ethereum.org/roadmap/fusaka/)
 - [Pectra Mainnet Announcement (Ethereum Foundation)](https://blog.ethereum.org/2025/04/23/pectra-mainnet)
 - [Fusaka Mainnet Announcement (Ethereum Foundation)](https://blog.ethereum.org/2025/11/06/fusaka-mainnet-announcement)

@@ -1,6 +1,6 @@
 # 금융권 관점
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
@@ -129,10 +129,27 @@
 | **멀티시그** | 프로토콜 수준에서 N-of-M 서명 요구 | 체인·컨트랙트 지원 필요. 거래 비용 증가 |
 | **콜드/핫 분리** | 대량은 오프라인, 소량만 온라인 | 운영 절차 부담 |
 
-::: warning 확인 필요
-AWS KMS와 CloudHSM이 **특정 블록체인이 요구하는 서명 알고리즘·곡선(예: secp256k1, BLS12-381, Ed25519)을 지원하는지, 그리고 그 지원이 해당 프로토콜의 서명 형식과 호환되는지**는 서비스와 프로토콜 조합마다 다릅니다. 이 문서에서 조합별 지원 여부를 확인하지 못했습니다.
+### 곡선별 지원 현황 — 계층에 따라 갈립니다
 
-**설계 전에 KMS/CloudHSM 공식 문서에서 지원 알고리즘을 확인하고, 실제 서명이 해당 체인에서 검증되는지 PoC로 검증**하십시오. "KMS를 쓴다"는 계획이 알고리즘 미지원으로 무너지는 것은 흔한 실패 패턴입니다.
+**이것이 키 관리 설계에서 가장 자주 무너지는 가정입니다.** "KMS를 쓴다"는 계획이 알고리즘 미지원으로 깨지는데, 중요한 점은 **Ethereum의 두 계층이 서로 다른 곡선을 쓴다**는 것입니다.
+
+| 계층 | 곡선 | 용도 | AWS KMS / CloudHSM |
+|---|---|---|---|
+| **실행 계층** (계정·거래) | **secp256k1** | 거래 서명, EOA 계정 | **✅ 지원** — KMS 키 스펙 `ECC_SECG_P256K1`, 용도는 `SIGN_VERIFY` 전용 |
+| **컨센서스 계층** (검증자) | **BLS12-381** | 블록 제안·증명 서명 | **❌ 미지원** |
+
+**실행 계층은 해결된 문제입니다.** KMS에 `ECC_SECG_P256K1` 키를 만들고 `SIGN_VERIFY`로 쓰면 Ethereum 거래에 서명할 수 있습니다. AWS가 공식 블로그로 이 패턴을 문서화하고 있습니다. Bitcoin도 같은 곡선입니다.
+
+**컨센서스 계층이 문제입니다.** BLS12-381은 KMS의 키 스펙에 없고 CloudHSM도 지원하지 않습니다. **즉 검증자 서명 키를 KMS/HSM에 넣는 설계는 성립하지 않습니다.**
+
+AWS가 제시하는 대안은 **Nitro Enclaves**입니다 — 격리된 실행 환경 안에서 Web3Signer 같은 서명기를 돌려, 키가 엔클레이브를 떠나지 않게 하는 구조입니다. 키 생성(EIP-2335 형식 BLS12-381 키스토어) 역시 별도 방식이 필요합니다.
+
+**설계 함의**: 앞서 다룬 검증자 키의 모순(온라인 상시 + 격리 + 이중 서명 금지)에 **"HSM으로 키를 보호한다"는 표준 답이 통하지 않는다**는 제약이 하나 더 붙습니다. 검증자 운영을 검토한다면 이것이 KMS 기반 설계와 갈리는 첫 분기점입니다.
+
+::: warning 확인 필요
+위 지원 현황은 조사 시점 기준이며, **BLS12-381의 HSM 지원은 업계에서 오래 논의되어 온 주제라 향후 달라질 수 있습니다.** 또한 Ethereum 외 프로토콜(Ed25519를 쓰는 체인 등)의 곡선별 지원은 별도 확인이 필요합니다.
+
+**설계 전에 [KMS 키 스펙 참조 문서](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html)에서 현재 지원 목록을 확인하고, 실제 서명이 대상 체인에서 검증되는지 PoC로 반드시 검증**하십시오.
 :::
 
 ### 검증자 키의 특수성
@@ -225,6 +242,9 @@ PoS 검증자를 운영하는 경우 추가 문제가 있습니다.
 - [Hyperledger Fabric — Private data](https://hyperledger-fabric.readthedocs.io/en/latest/private-data/private-data.html)
 - [Hyperledger Fabric — Channels](https://hyperledger-fabric.readthedocs.io/en/latest/channels.html)
 - [AWS CloudHSM 문서](https://docs.aws.amazon.com/cloudhsm/) / [AWS KMS 문서](https://docs.aws.amazon.com/kms/)
+- [AWS KMS 키 스펙 참조](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html) — `ECC_SECG_P256K1` 포함
+- [Use AWS KMS to securely manage Ethereum accounts (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/use-key-management-service-aws-kms-to-securely-manage-ethereum-accounts-part-1/)
+- [AWS Nitro Enclaves for running Ethereum validators (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/aws-nitro-enclaves-for-running-ethereum-validators-part-1/) — BLS12-381 미지원에 대한 대안
 - [Amazon Managed Blockchain](./03-managed-blockchain.md) — 서비스 종료 위험과 완화
 - [블록체인 기초 개념](./01-fundamentals.md) — 합의와 파이널리티
 - [EKS에서 블록체인 노드 운영](./02-nodes-on-eks.md) — 운영 체계

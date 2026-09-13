@@ -1,7 +1,7 @@
 # EKS에서 블록체인 노드 운영
 
 > **지원 버전**: Kubernetes 1.33+ (Amazon EKS), Hyperledger Fabric 2.5 / 3.x
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
@@ -123,10 +123,29 @@ spec:
 
 **EBS 볼륨은 온라인 확장이 가능**하므로(확장 후 파일시스템 확장 필요), PVC에 `allowVolumeExpansion: true` StorageClass를 쓰고 디스크 사용률 알람을 걸어두는 것이 표준 대응입니다.
 
-::: warning 확인 필요
-Ethereum 노드의 디스크 요구량에 대해 자주 인용되는 추정치는 **실행 클라이언트 약 0.9~1.3 TB, 컨센서스 클라이언트 약 80~200 GB, 블롭 데이터 추가 100~150 GB** 수준입니다(2026년 초 기준 커뮤니티·벤더 추정).
+### 공식 하드웨어 가이던스 — EIP-7870
 
-**이 수치들은 AWS나 Ethereum Foundation의 공식 스펙이 아니라 서드파티 블로그·벤더 자료 기반이며, 클라이언트 종류·프루닝 설정·포크 시점에 따라 크게 달라집니다.** 실제 사이징은 사용할 클라이언트의 공식 문서와 릴리스 노트에서 확인하고, PoC로 증가율을 직접 측정하십시오.
+Ethereum의 노드 하드웨어 요건은 **[EIP-7870](https://eips.ethereum.org/EIPS/eip-7870)**이 공식 가이던스이고, [ethereum.org의 Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/) 문서가 이를 인용합니다.
+
+| 항목 | 최소 | **권장 (EIP-7870, full node)** |
+|---|---|---|
+| **CPU** | 2+ 코어 | 4+ 코어 (**검증자는 8+**) |
+| **RAM** | 16 GB (32 GB 권장) | 32 GB (**검증자는 64 GB**) |
+| **디스크** | **2 TB NVMe SSD** | **4 TB NVMe SSD** (DRAM-less·QLC 드라이브는 **비권장**) |
+| **대역폭** | 25+ Mbit/s | 50 Mbit/s 하향 / 15+ Mbit/s 상향 (**검증자는 상향 25+**) |
+
+읽는 방법에서 중요한 세 가지입니다.
+
+**① 병목은 디스크입니다.** ethereum.org가 명시합니다 — "The bottleneck for your hardware is mostly disk space. Syncing the Ethereum blockchain is very input/output intensive." 앞에서 IOPS를 먼저 다룬 이유입니다.
+
+**② 드라이브 품질이 스펙에 들어가 있습니다.** "DRAM-less and QLC drives are discouraged" — 용량·IOPS 숫자만 맞추면 되는 게 아니라 **드라이브 종류가 요건**입니다. EBS에서는 gp3/io2를 쓰면 이 문제가 관리되지만, 인스턴스 스토어나 자체 하드웨어를 쓴다면 확인 대상입니다.
+
+**③ 2 TB 최소치는 수명이 정해져 있습니다.** ethereum.org는 2 TB가 "likely exceeded by 2027"이라고 적고 있습니다. **용량 계획에 증가를 반드시 넣어야 하는 근거**입니다.
+
+::: warning 확인 필요
+위 수치는 **full node** 기준입니다. **아카이브 노드는 훨씬 큰 스토리지가 필요하고, 실제 사용량은 클라이언트 종류·프루닝 설정·포크 시점에 따라 달라집니다.**
+
+특히 Fusaka의 PeerDAS로 블롭 처리 방식이 바뀌었으므로, 사용할 클라이언트의 릴리스 노트에서 현재 요건을 확인하고 **PoC로 증가율을 직접 측정**하십시오.
 :::
 
 ### 스냅샷 전략
@@ -374,6 +393,7 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 ## 참고 자료
 
 - [Ethereum — Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/)
+- [EIP-7870: Hardware and Bandwidth Recommendations](https://eips.ethereum.org/EIPS/eip-7870) — 공식 하드웨어 가이던스
 - [Ethereum roadmap](https://ethereum.org/roadmap/) / [Pectra](https://ethereum.org/roadmap/pectra/) / [Fusaka](https://ethereum.org/roadmap/fusaka/)
 - [Pectra Mainnet Announcement (Ethereum Foundation)](https://blog.ethereum.org/2025/04/23/pectra-mainnet)
 - [Fusaka Mainnet Announcement (Ethereum Foundation)](https://blog.ethereum.org/2025/11/06/fusaka-mainnet-announcement)

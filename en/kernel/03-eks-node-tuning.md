@@ -1,7 +1,7 @@
 # EKS Node Kernel Tuning
 
 > **Supported Versions**: Amazon Linux 2023 (kernel 6.1 / 6.12 / 6.18), Kubernetes 1.33+ (Amazon EKS)
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 13, 2026
 
 ## What This Document Covers
 
@@ -53,7 +53,11 @@ Also, kubelet rejects "unsafe" sysctls by default. If you need one, allow it exp
 **Second, kube-proxy overwrites conntrack.** This was mentioned in [Container Kernel Features](./01-container-primitives.md), but it is the pitfall most frequently hit in practice so it bears repeating — EKS ships a `kube-proxy-config` ConfigMap by default and **it takes precedence over command-line arguments.** Raising the sysctl at bootstrap can be reverted by kube-proxy.
 
 ::: warning Needs verification
-An issue has been reported where conntrack settings do not apply as intended on Bottlerocket due to kube-proxy configuration precedence (bottlerocket-os/bottlerocket#4221). The current resolution status could not be confirmed. **Whichever path you use, verify the actual value on the node after applying.**
+On Bottlerocket, raising the conntrack ceiling via `settings.kernel.sysctl` does not take effect ([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), filed September 2024). The cause is that **the kube-proxy config file (`/var/lib/kube-proxy-config/config`) takes precedence over command-line arguments.**
+
+The known workaround is passing **`--conntrack-max-per-core=0 --conntrack-min=0`** to kube-proxy — where **0 means "do not change"** — so kube-proxy leaves conntrack alone and the value set via node sysctl survives.
+
+**Whether this was resolved in a specific Bottlerocket release could not be confirmed.** Whichever path you use, verify the actual value on the node after applying.
 
 ```bash
 # Check the actually applied values on the node
@@ -107,11 +111,21 @@ So it is accurate to see this as **an evolution that replaced the selection logi
 
 Operationally: **wake-up latency characteristics for latency-sensitive workloads may change.** Usually for the better, but if p99 shifts when moving from kernel 6.1 to 6.18, this is one candidate.
 
-::: warning Needs verification
-**Which kernel version removed or replaced the CFS-era tunables** (`sched_latency_ns`, `sched_wakeup_granularity_ns`, …) alongside EEVDF, and **the exact name and location of replacements** (`sched_base_slice_ns`, etc.), could not be confirmed against official documentation. These values live in debugfs (`/sys/kernel/debug/sched/`) rather than sysctl on kernel 6.x and vary by version.
+### Where the tunables actually live
 
-**Scheduler tunables are not a recommended tuning target.** Verify they exist on your node before touching them, and in most cases adjusting the application's thread count or cgroup limits is a better answer.
-:::
+Confirmed from kernel source (`kernel/sched/debug.c`):
+
+| Item | Status |
+|---|---|
+| `sched_latency_ns` | **Removed** — no references remain in `kernel/sched/fair.c` |
+| `sched_wakeup_granularity_ns` | **Removed** — same |
+| **`/sys/kernel/debug/sched/base_slice_ns`** | **The current equivalent.** The internal variable is `sysctl_sched_base_slice`, exposed in debugfs as `base_slice_ns` |
+
+So the CFS-era latency and preemption heuristic tunables are gone, consolidated into **a single base timeslice (`base_slice_ns`)**. Note there is no `sched_` prefix in the name — the path is `/sys/kernel/debug/sched/base_slice_ns`.
+
+Separately, EEVDF lets a task **request its own timeslice** via the `sched_setattr()` syscall. For latency-sensitive applications that path is more appropriate than touching a global tunable.
+
+**Scheduler tunables are still not a recommended tuning target.** debugfs is a kernel debug interface and may not be mounted in production, and in most cases adjusting the application's thread count or cgroup limits is a better answer.
 
 ### CPU limits — when throttling is the real problem
 
@@ -290,6 +304,8 @@ More important long-term than the tuning itself is **how you manage it.**
 - [Running kube-proxy in nftables Mode — EKS Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/nftables.html)
 - [KEP-5495: Deprecate IPVS mode in kube-proxy](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)
 - [EEVDF Scheduler — Linux kernel documentation](https://docs.kernel.org/scheduler/sched-eevdf.html)
+- [kernel/sched/debug.c — debugfs tunable definitions](https://github.com/torvalds/linux/blob/master/kernel/sched/debug.c)
+- [bottlerocket-os/bottlerocket#4221 — conntrack limit not applied](https://github.com/bottlerocket-os/bottlerocket/issues/4221)
 - [PSI - Pressure Stall Information](https://docs.kernel.org/accounting/psi.html)
 - [Reserve Compute Resources for System Daemons (Kubernetes)](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/)
 - [Using sysctls in a Kubernetes Cluster](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/)

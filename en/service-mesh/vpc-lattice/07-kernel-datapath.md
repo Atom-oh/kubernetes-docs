@@ -1,7 +1,7 @@
 # Kernel Datapath — How Link-Local Interception Actually Works
 
 > **Supported Versions**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, Linux 6.1 / 6.12 / 6.18 (Amazon Linux 2023)
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 13, 2026
 
 ## What This Document Covers
 
@@ -188,12 +188,31 @@ The logically required order is:
 | 3 | mesh's other exception ranges → `RETURN` | Exclude from mesh interception |
 | 4 | everything else → `REDIRECT` to Envoy | Mesh interception |
 
-**Rule 2 must precede rule 4** for Lattice traffic to reach the signing proxy rather than Envoy. When two init containers each install rules, the order depends on execution order, so **dumping the actual rules is the only trustworthy verification.**
+**Rule 2 must precede rule 4** for Lattice traffic to reach the signing proxy rather than Envoy. When two init containers each install rules, the order depends on execution order.
+
+Fortunately the mesh side can be verified — for Istio it is confirmed from source below.
+
+### Istio's actual rule order (confirmed from source)
+
+The order in which Istio's `istio-iptables` (`tools/istio-iptables/pkg/capture/run.go`) **appends** rules to the `ISTIO_OUTPUT` chain:
+
+| Order | Rule | Purpose |
+|---|---|---|
+| 1 | Port-based exclusions → `RETURN` | Source comment: "Must be applied before connections back to self are redirected" |
+| 2 | loopback / self-call handling | Handles the `appN => Envoy => Envoy => appN` path |
+| 3 | **`-m owner --uid-owner <proxy-uid>` → `RETURN`** | **Loop prevention.** Source comment: "Avoid infinite loops. Don't redirect Envoy traffic directly back to Envoy" |
+| 4 | **Excluded CIDRs (`excludeOutboundIPRanges`) → `RETURN`** | Exclude from interception |
+| 5 | Included ports handling | |
+| 6 | **`-j ISTIO_REDIRECT` (wildcard catch-all)** | Everything else to Envoy |
+
+**The key finding**: the excluded-CIDR `RETURN` (4) is placed **before** the catch-all `REDIRECT` (6). So putting the Lattice range in Istio's `traffic.sidecar.istio.io/excludeOutboundIPRanges` works correctly on its own, with no ordering adjustment needed.
+
+And the **proxy UID `RETURN` (3) comes even before the excluded CIDRs** — meaning Istio itself uses the same UID-based loop prevention described in this document.
 
 ::: warning Needs verification
-The ordering above is **derived logically** from netfilter's evaluation rules (sequential within a chain, acting on first match) and each rule's purpose. It has not been validated against the actual rule order a specific mesh version's init container installs.
+The order above was confirmed from **Istio's** source. **The actual rule order App Mesh's init container installs has not been validated** — it is a separate implementation, and App Mesh reaches end of support on September 30, 2026.
 
-Chain names and insertion points differ per mesh implementation, so **always dump the real rules with `iptables -t nat -L -n -v` in your target environment and verify the order.** The execution order of two init containers is determined by the order of the `initContainers` array in the Pod spec.
+Also, a configuration that **adds a signing proxy init container** has two init containers each installing rules, so ordering depends on the `initContainers` array order. For that combination, **dump the real rules with `iptables -t nat -L -n -v` in your target environment** and verify.
 :::
 
 ## conntrack — Behavior in This Configuration
@@ -283,3 +302,4 @@ This symptom narrows to a few causes.
 - [aws-samples — IAM authentication with VPC Lattice and EKS](https://github.com/aws-samples/migrating-from-aws-app-mesh-to-amazon-vpc-lattice/blob/main/vpc-lattice-config/IAMAUTH.md)
 - [AWS Gateway API Controller — Deploy the controller](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
 - [iptables-extensions(8) — owner match](https://man7.org/linux/man-pages/man8/iptables-extensions.8.html)
+- [istio/istio — tools/istio-iptables/pkg/capture/run.go](https://github.com/istio/istio/blob/master/tools/istio-iptables/pkg/capture/run.go) — primary source for the rule ordering

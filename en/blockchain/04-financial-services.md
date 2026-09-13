@@ -1,6 +1,6 @@
 # Financial Services Perspective
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 13, 2026
 
 ## What This Document Covers
 
@@ -129,10 +129,27 @@ This contradiction is **the hardest part to design** in financial-services block
 | **Multisig** | N-of-M signatures required at the protocol level | Needs chain/contract support. Higher transaction cost |
 | **Cold/hot separation** | Bulk offline, only small amounts online | Operational procedure burden |
 
-::: warning Needs verification
-Whether AWS KMS and CloudHSM **support the signature algorithms and curves a given blockchain requires (e.g. secp256k1, BLS12-381, Ed25519), and whether that support is compatible with the protocol's signature format**, differs per service/protocol combination. This document could not confirm support per combination.
+### Support by curve — it splits along the layer
 
-**Before designing, check supported algorithms in the KMS/CloudHSM documentation and verify with a PoC that the actual signature validates on the target chain.** A plan built on "we will use KMS" collapsing due to an unsupported algorithm is a common failure pattern.
+**This is the assumption that most often collapses in key management design.** A plan built on "we will use KMS" breaks on algorithm support — and the key point is that **Ethereum's two layers use different curves.**
+
+| Layer | Curve | Used for | AWS KMS / CloudHSM |
+|---|---|---|---|
+| **Execution layer** (accounts, transactions) | **secp256k1** | Transaction signing, EOA accounts | **✅ Supported** — KMS key spec `ECC_SECG_P256K1`, usage restricted to `SIGN_VERIFY` |
+| **Consensus layer** (validators) | **BLS12-381** | Block proposal and attestation signing | **❌ Not supported** |
+
+**The execution layer is a solved problem.** Create an `ECC_SECG_P256K1` key in KMS, use it with `SIGN_VERIFY`, and you can sign Ethereum transactions. AWS documents this pattern in official blog posts. Bitcoin uses the same curve.
+
+**The consensus layer is the problem.** BLS12-381 is not among KMS's key specs and CloudHSM does not support it either. **So a design that puts validator signing keys in KMS/HSM simply does not work.**
+
+AWS's proposed alternative is **Nitro Enclaves** — running a signer such as Web3Signer inside an isolated execution environment so the key never leaves the enclave. Key generation (EIP-2335 format BLS12-381 keystores) also needs a separate approach.
+
+**Design implication**: on top of the validator key contradiction covered above (continuously online + isolated + no double signing), there is one more constraint — **the standard answer of "protect the key in an HSM" does not apply.** If you are evaluating validator operations, this is the first branch point away from a KMS-based design.
+
+::: warning Needs verification
+The support status above is as of the time of research, and **HSM support for BLS12-381 has been a long-discussed topic in the industry, so it may change.** Support by curve for protocols other than Ethereum (chains using Ed25519, for example) also needs separate confirmation.
+
+**Before designing, check the current list in the [KMS key spec reference](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html) and always verify with a PoC that the actual signature validates on the target chain.**
 :::
 
 ### The special case of validator keys
@@ -225,6 +242,9 @@ The point of this table is that **stages 2 and 3 come before technology.** Even 
 - [Hyperledger Fabric — Private data](https://hyperledger-fabric.readthedocs.io/en/latest/private-data/private-data.html)
 - [Hyperledger Fabric — Channels](https://hyperledger-fabric.readthedocs.io/en/latest/channels.html)
 - [AWS CloudHSM documentation](https://docs.aws.amazon.com/cloudhsm/) / [AWS KMS documentation](https://docs.aws.amazon.com/kms/)
+- [AWS KMS key spec reference](https://docs.aws.amazon.com/kms/latest/developerguide/symm-asymm-choose-key-spec.html) — includes `ECC_SECG_P256K1`
+- [Use AWS KMS to securely manage Ethereum accounts (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/use-key-management-service-aws-kms-to-securely-manage-ethereum-accounts-part-1/)
+- [AWS Nitro Enclaves for running Ethereum validators (AWS Web3 Blog)](https://aws.amazon.com/blogs/web3/aws-nitro-enclaves-for-running-ethereum-validators-part-1/) — the alternative given BLS12-381 is unsupported
 - [Amazon Managed Blockchain](./03-managed-blockchain.md) — discontinuation risk and mitigation
 - [Blockchain Fundamentals](./01-fundamentals.md) — consensus and finality
 - [Running Blockchain Nodes on EKS](./02-nodes-on-eks.md) — operations
