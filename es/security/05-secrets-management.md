@@ -22,7 +22,7 @@ Este capítulo separa las responsabilidades y los requisitos de integración de 
 - [Resumen](#summary)
 - [Referencias](#references)
 
-## Secrets nativos de Kubernetes
+## Secrets nativos de Kubernetes {#kubernetes-native-secrets}
 
 ### Descripción general de Secret
 
@@ -114,7 +114,7 @@ spec:
             path: host
 ```
 
-## Límites de cifrado, actualizaciones y auditoría
+## Límites de cifrado, actualizaciones y auditoría {#encryption-updates-and-audit-boundaries}
 
 ### Limitaciones de Secrets
 
@@ -147,7 +147,7 @@ receta de instalación de EKS. Habilitar el cifrado no vuelve a escribir automá
 objeto almacenado existente. Siga un procedimiento de respaldo, migración y verificación.
 
 
-## External Secrets Operator (ESO)
+## External Secrets Operator (ESO) {#external-secrets-operator-eso}
 
 ### Descripción general de ESO
 
@@ -259,7 +259,7 @@ spec:
         property: host
 ```
 
-## PushSecret (sincronización inversa)
+## PushSecret (sincronización inversa) {#pushsecret-reverse-sync}
 
 PushSecret es una capacidad separada de escritura inversa, no parte del ejemplo de solo lectura
 anterior. La versión **2.10.0** aún expone su API como `external-secrets.io/v1alpha1`; verifique
@@ -272,7 +272,7 @@ pull/push en la misma clave. Los permisos de lectura del store no conceden permi
 al proveedor.
 
 
-## Integración de AWS Secrets Manager
+## Integración de AWS Secrets Manager {#aws-secrets-manager-integration}
 
 ### Configuración de IRSA
 
@@ -338,7 +338,7 @@ una prueba aprobada. Un workload que consume un Secret nativo no necesita hereda
 }
 ```
 
-## Integración de AWS Systems Manager Parameter Store
+## Integración de AWS Systems Manager Parameter Store {#aws-systems-manager-parameter-store-integration}
 
 ### Configuración de Parameter Store
 
@@ -394,7 +394,7 @@ spec:
         key: /production/api/key
 ```
 
-## Sealed Secrets
+## Sealed Secrets {#sealed-secrets}
 
 ### Descripción general de Sealed Secrets
 
@@ -462,7 +462,7 @@ controller y la clave actual; el recifrado no elimina el texto cifrado antiguo d
 una credencial ya filtrada. Pruebe la recuperación antes de depender de un respaldo.
 
 
-## Integración de HashiCorp Vault
+## Integración de HashiCorp Vault {#hashicorp-vault-integration}
 
 ### Arquitectura de Vault
 
@@ -573,7 +573,7 @@ spec:
           image: registry.example.com/team/app:replace-with-reviewed-tag
 ```
 
-## Vault CSI Driver y Argo CD Vault Plugin
+## Vault CSI Driver y Argo CD Vault Plugin {#vault-csi-driver-and-argo-cd-vault-plugin}
 
 ### Vault CSI Driver
 
@@ -610,7 +610,7 @@ restrinja el acceso al repositorio y a la aplicación e impida que la salida de 
 manifiestos.
 
 
-## SOPS (Secrets OPerationS)
+## SOPS (Secrets OPerationS) {#sops-secrets-operations}
 
 ### Descripción general de SOPS
 
@@ -706,7 +706,7 @@ autoricen el descifrado; los grupos de claves de umbral son una función separad
 archivo. Ninguno cambia la credencial de aplicación/base de datos almacenada en el archivo.
 
 
-## EKS Pod Identity e IRSA
+## EKS Pod Identity e IRSA {#eks-pod-identity-and-irsa}
 
 ### IRSA (IAM Roles for Service Accounts)
 
@@ -755,7 +755,7 @@ spec:
       region: ap-northeast-2
 ```
 
-## Comparación de herramientas
+## Comparación de herramientas {#tool-comparison}
 
 ### Tabla de comparación de herramientas de gestión de Secrets
 
@@ -775,7 +775,7 @@ contener referencias de ESO sin valores, texto cifrado de SealedSecret o texto c
 Ninguna herramienta por sí sola establece cumplimiento ni hace automáticamente auditable todo uso.
 
 
-## Prácticas recomendadas
+## Prácticas recomendadas {#best-practices}
 
 ### 1. Creación y almacenamiento de Secrets
 
@@ -812,7 +812,7 @@ como lectores autorizados de Secret.
 Use rutas de proveedor separadas, roles restringidos, stores de namespace y propietarios operativos
 para desarrollo y producción. Un nombre de recurso por sí solo no es aislamiento.
 
-## Resumen
+## Resumen {#summary}
 
 Los Secrets nativos siguen siendo objetos de entrega válidos para producción cuando se controlan su
 acceso, almacenamiento, consumo y ciclo de vida. Los stores externos y las herramientas de cifrado
@@ -825,7 +825,7 @@ y un proceso observado de rotación/recarga. La evidencia de validación local s
 deliberadamente de la prueba de despliegue en producción.
 
 
-## Referencias
+## Referencias {#references}
 
 - [Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
 - [EKS default envelope encryption](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)

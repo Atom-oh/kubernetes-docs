@@ -22,7 +22,7 @@
 - [总结](#summary)
 - [参考资料](#references)
 
-## Kubernetes 原生 Secret
+## Kubernetes 原生 Secret {#kubernetes-native-secrets}
 
 ### Secret 概览
 
@@ -111,7 +111,7 @@ spec:
             path: host
 ```
 
-## 加密、更新与审计边界
+## 加密、更新与审计边界 {#encryption-updates-and-audit-boundaries}
 
 ### Secret 的限制
 
@@ -139,7 +139,7 @@ spec:
 安装方案。启用加密不会自动重写每个现有存储对象。请遵循备份、迁移和验证流程。
 
 
-## External Secrets Operator (ESO)
+## External Secrets Operator (ESO) {#external-secrets-operator-eso}
 
 ### ESO 概览
 
@@ -247,7 +247,7 @@ spec:
         property: host
 ```
 
-## PushSecret（反向同步）
+## PushSecret（反向同步） {#pushsecret-reverse-sync}
 
 PushSecret 是独立的反向写入功能，并非上述只读
 示例的一部分。版本 **2.10.0** 仍将其 API 暴露为
@@ -259,7 +259,7 @@ PushSecret 是独立的反向写入功能，并非上述只读
 可能会覆盖其他系统使用的凭证。避免在同一 key 上形成 pull/push 反馈循环。Store 读取权限不授予 provider 写入权限。
 
 
-## AWS Secrets Manager 集成
+## AWS Secrets Manager 集成 {#aws-secrets-manager-integration}
 
 ### IRSA 设置
 
@@ -321,7 +321,7 @@ kubectl -n production wait externalsecret/database-credentials   --for=condition
 }
 ```
 
-## AWS Systems Manager Parameter Store 集成
+## AWS Systems Manager Parameter Store 集成 {#aws-systems-manager-parameter-store-integration}
 
 ### Parameter Store 设置
 
@@ -377,7 +377,7 @@ spec:
         key: /production/api/key
 ```
 
-## Sealed Secrets
+## Sealed Secrets {#sealed-secrets}
 
 ### Sealed Secrets 概览
 
@@ -422,9 +422,7 @@ kubectl -n production create secret generic app-sealed   --from-file=password=/s
 
 ### SealedSecret YAML
 
-使用实际生成的 `bitnami.com/v1alpha1` SealedSecret。以
-`...` 结尾的字符串仅为说明，不能解密为 ciphertext。保持 metadata 和 template
-名称/namespace 一致。
+使用实际生成的 `bitnami.com/v1alpha1` SealedSecret。以 `...` 结尾的字符串仅用于说明，并非可解密的密文。保持 metadata 和 template 的名称/namespace 一致。
 
 ### Scope 设置
 
@@ -441,7 +439,7 @@ Sealing key 按 controller 配置的计划更新（默认 30 天）；
 泄露的凭证。依赖备份前请测试恢复。
 
 
-## HashiCorp Vault 集成
+## HashiCorp Vault 集成 {#hashicorp-vault-integration}
 
 ### Vault 架构
 
@@ -546,7 +544,7 @@ spec:
           image: registry.example.com/team/app:replace-with-reviewed-tag
 ```
 
-## Vault CSI Driver 和 Argo CD Vault Plugin
+## Vault CSI Driver 和 Argo CD Vault Plugin {#vault-csi-driver-and-argo-cd-vault-plugin}
 
 ### Vault CSI Driver
 
@@ -576,7 +574,7 @@ sidecar 的 Vault 认证、CA、发现或显式选择、共享 socket 和隔离�
 和 application 访问，并防止 debug 输出暴露 manifest。
 
 
-## SOPS (Secrets OPerationS)
+## SOPS (Secrets OPerationS) {#sops-secrets-operations}
 
 ### SOPS 概览
 
@@ -666,7 +664,7 @@ spec:
 key。两者都不会更改文件中存储的应用程序/数据库凭证。
 
 
-## EKS Pod Identity 和 IRSA
+## EKS Pod Identity 和 IRSA {#eks-pod-identity-and-irsa}
 
 ### IRSA（IAM Roles for Service Accounts）
 
@@ -714,7 +712,7 @@ spec:
       region: ap-northeast-2
 ```
 
-## 工具对比
+## 工具对比 {#tool-comparison}
 
 ### Secrets 管理工具对比表
 
@@ -732,7 +730,7 @@ spec:
 团队运营能力、灾难恢复和成本选择。Git 可以保存不含值的 ESO reference、SealedSecret ciphertext 或 SOPS ciphertext。任何工具本身都无法建立合规性，也无法自动使所有使用都可审计。
 
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ### 1. Secret 创建和存储
 
@@ -766,7 +764,7 @@ ServiceAccount 都归类为已获授权的 secret reader。
 为开发和生产使用独立的 provider path、受限 role、namespace store 和运营
 owner。仅有 resource name 并不构成隔离。
 
-## 总结
+## 总结 {#summary}
 
 当访问、存储、使用和生命周期受到控制时，Native Secret 仍是有效的生产交付对象。外部 store 和加密
 工具解决额外问题；它们不会消除 Kubernetes/application
@@ -778,7 +776,7 @@ owner。仅有 resource name 并不构成隔离。
 以及经过观测的轮换/重新加载流程。本地验证证据有意与生产部署证明分开。
 
 
-## 参考资料
+## 参考资料 {#references}
 
 - [Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
 - [EKS default envelope encryption](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)

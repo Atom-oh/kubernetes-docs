@@ -22,7 +22,7 @@
 - [Summary](#summary)
 - [References](#references)
 
-## Kubernetes Native Secrets
+## Kubernetes Native Secrets {#kubernetes-native-secrets}
 
 ### Secret Overview
 
@@ -103,7 +103,7 @@ spec:
             path: host
 ```
 
-## Encryption, Updates and Audit Boundaries
+## Encryption, Updates and Audit Boundaries {#encryption-updates-and-audit-boundaries}
 
 ### Limitations of Secrets
 
@@ -120,7 +120,7 @@ spec:
 自己管理 KMS v2 統合では、実際のプラグインソケット、可用性、キーライフサイクルを Kubernetes のドキュメントに従って構成してください。以前の例は AES-CBC、KMS v1 形式のキャッシュ、EKS ラベルを混在させており、EKS のインストール手順ではありませんでした。暗号化を有効にしても、既存の保存済みオブジェクトがすべて自動的に再書き込みされるわけではありません。バックアップ、移行、検証の手順に従ってください。
 
 
-## External Secrets Operator (ESO)
+## External Secrets Operator (ESO) {#external-secrets-operator-eso}
 
 ### ESO Overview
 
@@ -216,14 +216,14 @@ spec:
         property: host
 ```
 
-## PushSecret (Reverse Sync)
+## PushSecret (Reverse Sync) {#pushsecret-reverse-sync}
 
 PushSecret は、上記の読み取り専用の例には含まれない、別個の逆方向書き込み機能です。バージョン **2.10.0** では依然として API が `external-secrets.io/v1alpha1` として公開されています。すべての ESO リソースを盲目的に v1 へ変更するのではなく、インストール済みの CRD を確認してください。
 
 有効にする前に、別個の writer identity、許可するリモートキー、`updatePolicy`、`deletionPolicy` を選択してください。そうしない場合、ローカル Kubernetes の書き込みによって、他のシステムで使用される認証情報が上書きされる可能性があります。同じキーで pull/push のフィードバックループを避けてください。ストアの読み取り権限は、プロバイダーへの書き込み権限を付与しません。
 
 
-## AWS Secrets Manager Integration
+## AWS Secrets Manager Integration {#aws-secrets-manager-integration}
 
 ### IRSA Setup
 
@@ -275,7 +275,7 @@ kubectl -n production wait externalsecret/database-credentials   --for=condition
 }
 ```
 
-## AWS Systems Manager Parameter Store Integration
+## AWS Systems Manager Parameter Store Integration {#aws-systems-manager-parameter-store-integration}
 
 ### Parameter Store Setup
 
@@ -324,7 +324,7 @@ spec:
         key: /production/api/key
 ```
 
-## Sealed Secrets
+## Sealed Secrets {#sealed-secrets}
 
 ### Sealed Secrets Overview
 
@@ -375,7 +375,7 @@ kubectl -n production create secret generic app-sealed   --from-file=password=/s
 シーリングキーは controller の構成済みスケジュール（デフォルト 30 日）で更新されます。古いキーは復号用に保持されます。これはアプリケーションのパスワードをローテーションするものではありません。**必要なすべての過去のシーリングキー**のバックアップを、プライベートなファイル権限と Git 外部のストレージで保護してください。`kubeseal --re-encrypt` は controller と現在のキーを使用します。再暗号化しても古い Git 暗号文が消去されたり、すでに漏洩した認証情報が無効化されたりすることはありません。バックアップに依存する前にリカバリーをテストしてください。
 
 
-## HashiCorp Vault Integration
+## HashiCorp Vault Integration {#hashicorp-vault-integration}
 
 ### Vault Architecture
 
@@ -463,7 +463,7 @@ spec:
           image: registry.example.com/team/app:replace-with-reviewed-tag
 ```
 
-## Vault CSI Driver and Argo CD Vault Plugin
+## Vault CSI Driver and Argo CD Vault Plugin {#vault-csi-driver-and-argo-cd-vault-plugin}
 
 ### Vault CSI Driver
 
@@ -482,7 +482,7 @@ image には AVP **1.18.1** とその依存関係が含まれている必要が�
 `<password>` のような AVP プレースホルダーは、マニフェスト生成中に解決されます。復号された値は Argo CD のレンダリング/cache/API パスを通過します。repo と application のアクセスを制限し、debug 出力でマニフェストが露出しないようにしてください。
 
 
-## SOPS (Secrets OPerationS)
+## SOPS (Secrets OPerationS) {#sops-secrets-operations}
 
 ### SOPS Overview
 
@@ -557,7 +557,7 @@ spec:
 有効な KMS key ARN と制限された identity/key policy を使用してください。複数の recipient は通常、すべてのキーが復号を認可する必要があることを自動的に意味するのではなく、代替の復号者を提供します。threshold key group は別の機能です。`sops updatekeys` は recipient を変更し、`sops rotate` はファイルの data key をローテーションします。いずれもファイル内に保存されたアプリケーション/データベース認証情報を変更するものではありません。
 
 
-## EKS Pod Identity and IRSA
+## EKS Pod Identity and IRSA {#eks-pod-identity-and-irsa}
 
 ### IRSA (IAM Roles for Service Accounts)
 
@@ -596,7 +596,7 @@ spec:
       region: ap-northeast-2
 ```
 
-## Tool Comparison
+## Tool Comparison {#tool-comparison}
 
 ### Secrets Management Tool Comparison Table
 
@@ -613,7 +613,7 @@ spec:
 信頼できる情報源、ローテーション/再ロードのニーズ、platform サポート、チームの運用能力、災害復旧、コストに基づいて選択してください。Git には、値を含まない ESO reference、SealedSecret の暗号文、または SOPS の暗号文を保持できます。単一のツールだけでコンプライアンスを確立したり、すべての利用を自動的に監査可能にしたりすることはできません。
 
 
-## Best Practices
+## Best Practices {#best-practices}
 
 ### 1. Secret Creation and Storage
 
@@ -635,7 +635,7 @@ Falco syscall event には Kubernetes API audit field が自動的に含まれ�
 
 開発環境と本番環境には、別々のプロバイダーパス、制限された role、namespace store、運用 owner を使用してください。リソース名だけでは分離になりません。
 
-## Summary
+## Summary {#summary}
 
 Native Secret は、そのアクセス、ストレージ、消費、ライフサイクルが制御されている場合、有効な本番環境の配信オブジェクトであり続けます。外部ストアと暗号化ツールは追加の問題を解決しますが、Kubernetes/アプリケーションのセキュリティ要件を取り除くものではありません。
 
@@ -644,7 +644,7 @@ Native Secret は、そのアクセス、ストレージ、消費、ライフサ
 定義された信頼できる情報源、最小権限、保護されたキー、検証済みのリカバリー、観測されたローテーション/再ロードプロセスを使用してください。ローカル検証の証跡は、本番デプロイメントの証明とは意図的に分離されています。
 
 
-## References
+## References {#references}
 
 - [Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
 - [EKS default envelope encryption](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html)
