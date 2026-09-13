@@ -1,185 +1,177 @@
 # Dynatrace 测验
 
-测试您对 Dynatrace 的了解。
+> **最后更新**: September 13, 2026
 
 ---
 
-1. 以下哪项不是 Dynatrace 核心技术 OneAgent 的特性？
-   - A) 使用单个 agent 进行全栈监控
-   - B) 自动代码插桩
-   - C) 需要手动配置
-   - D) 自动进程发现
+1. 关于 OneAgent 的说法中，哪一项是错误的？
+   - A) 它可以发现受支持的进程。
+   - B) 它可以对受支持的技术进行插桩（instrument）。
+   - C) 安装后即可免除所有权限、范围和连通性方面的前提条件。
+   - D) 覆盖范围取决于部署模式和技术支持情况。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 需要手动配置**
+**答案：C) 安装后即可免除所有权限、范围和连通性方面的前提条件。**
 
-**说明：**
-OneAgent 的关键特性是自动发现和自动插桩。安装后，它会自动发现并监控主机上的进程、Service 和应用程序，无需额外手动配置。这体现了 Dynatrace 的“零配置”理念。
+自动发现并不能消除安装权限、受支持运行时的要求、出站网络访问（egress）、令牌配置、注入选择或数据隐私方面的决策。它也不保证捕获每一个方法或请求。
 
 </details>
 
 ---
 
-2. 在 EKS 中部署 Dynatrace 的推荐方式是什么？
-   - A) 直接使用 kubectl apply 部署
-   - B) 使用 Dynatrace Operator
-   - C) 仅使用 Helm 部署 OneAgent
-   - D) 使用 Lambda 函数部署
+2. 哪个组件负责在 Kubernetes 中管理 DynaKube 资源和 Dynatrace 工作负载？
+   - A) 独立的 kubectl 二进制文件。
+   - B) Dynatrace Operator。
+   - C) 仅 OneAgent 进程。
+   - D) 自动创建的 Lambda 函数。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 使用 Dynatrace Operator**
+**答案：B) Dynatrace Operator。**
 
-**说明：**
-Dynatrace Operator 可自动管理 Kubernetes 环境中 Dynatrace 组件（OneAgent、ActiveGate 等）的生命周期。通过 DynaKube CR 以声明式方式进行配置，并提供自动更新、滚动部署和状态监控。
+Helm 或 manifest 都用于安装 Operator，二者并非互相竞争的监控模式。所审阅的 Operator/chart 版本为 1.10.2。其发布的 CRD 提供 v1beta5 和 v1beta6，其中 v1beta6 为存储版本；旧的 v1beta2 示例已不是当前提供的 API。组件版本和更新行为仍需审查。
 
 </details>
 
 ---
 
-3. 以下哪项不是 Davis AI 引擎的主要功能？
-   - A) 自动学习基线
-   - B) 异常检测
-   - C) 自动修复代码
-   - D) 根本原因分析
+3. 启用问题检测和根因分析并不意味着以下哪种结果？
+   - A) 基线与异常分析。
+   - B) 具备拓扑感知的调查。
+   - C) 自动授权未经审查的生产代码变更。
+   - D) 使用所收集证据进行影响分析。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 自动修复代码**
+**答案：C) 自动授权未经审查的生产代码变更。**
 
-**说明：**
-Davis AI 可自动学习基线、检测异常并分析问题的根本原因。但是，它不会自动修复代码。Davis 可以诊断问题并提出解决方向，但实际的代码修复必须由开发人员完成。
+Davis 这一术语仍出现在较旧的资料中；当前文档使用 Dynatrace Intelligence。可以配置经批准的智能体式（agentic）操作/工作流，包括 Preview 功能，因此“AI 永远不能执行操作”这种说法也过于绝对。仅有检测能力并不赋予修复权限，也不能证明诊断结论正确。
 
 </details>
 
 ---
 
-4. Dynatrace 中 Cloud Native Full Stack 和 Classic Full Stack 部署模式有什么区别？
-   - A) Cloud Native 仅支持 Windows
-   - B) Cloud Native 使用代码模块注入
-   - C) Classic 无法在云环境中使用
-   - D) 两种模式提供完全相同的功能
+4. cloudNativeFullStack 结合了什么？
+   - A) 仅 Windows 监控。
+   - B) 主机监控与基于 webhook 的应用代码模块注入。
+   - C) 仅应用监控，不含主机组件。
+   - D) 保证在所有工作负载中降低开销。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Cloud Native 使用代码模块注入**
+**答案：B) 主机监控与基于 webhook 的应用代码模块注入。**
 
-**说明：**
-Cloud Native Full Stack 是一种轻量级方法，它通过 CSI Driver 将代码模块注入到 Pod 中。Classic Full Stack 则在每个节点上以 DaemonSet 的形式部署完整的 OneAgent。Cloud Native 的资源使用量更低，并且支持在 Pod 级别进行精细控制，但对主机级监控存在限制。
+已发布的 Operator 将 cloudNativeFullStack 描述为结合 hostMonitoring 和 applicationMonitoring，并使用其 CSI 基础设施。它不仅仅是一个应用 sidecar。classicFullStack 在所审阅的版本中仍然存在，不要称其已被移除。模式、操作系统和 CSI 权限决定其适用性。
 
 </details>
 
 ---
 
-5. Dynatrace 的 PurePath 技术提供什么功能？
-   - A) 日志压缩
-   - B) 代码级分布式追踪
-   - C) 网络数据包捕获
-   - D) 数据库备份
+5. 与 PurePath 相关联的能力是什么？
+   - A) 日志压缩。
+   - B) 具备受支持的代码级上下文的分布式追踪。
+   - C) 通用抓包设备。
+   - D) 数据库备份。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 代码级分布式追踪**
+**答案：B) 具备受支持的代码级上下文的分布式追踪。**
 
-**说明：**
-PurePath 是 Dynatrace 专有的分布式追踪技术，可将请求在系统中的完整路径追踪到代码级别。它不仅记录 Service 之间的调用，还会详细记录每个 Service 内的方法调用、数据库查询和外部 API 调用。
+追踪和代码可见性取决于受支持的技术、插桩、捕获/采样设置以及可用的遥测数据。“完整路径”并不能证明每个请求、方法或异步关系都被保留。
 
 </details>
 
 ---
 
-6. 计算 Dynatrace Host Units 的正确公式是什么？
-   - A) vCPU + Memory(GB)
-   - B) max(Memory(GB) / 16, vCPU / 1.5)
-   - C) vCPU * Memory(GB) / 100
-   - D) (vCPU + Memory(GB)) / 2
+6. 当前基于主机的 DPS Full-Stack Monitoring 使用哪种计量方式？
+   - A) vCPU 加 RAM。
+   - B) 按适用价目表计费的受监控内存 GiB 小时数。
+   - C) max(RAM/16, vCPU/1.5) 个 Host Unit。
+   - D) 每个 Kubernetes namespace 一个固定单位。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) max(Memory(GB) / 16, vCPU / 1.5)**
+**答案：B) 按适用价目表计费的受监控内存 GiB 小时数。**
 
-**说明：**
-Dynatrace Host Units 根据内存和 CPU 中数值较大的一项计算。16GB 内存或 1.5 vCPU 等于 1 个 Host Unit。例如，一台拥有 8 vCPU 和 32GB RAM 的主机，其结果为 max(2, 5.33) = 5.33 Host Units。
+厂商文档说明了 15 分钟的计费间隔、RAM 按 0.25 GiB 取整以及每主机 4 GiB 的最低值。基于容器的仅应用监控具有不同的内存和最低值规则。旧的 CPU/RAM 取最大值公式不是当前 DPS 的计算方式。用量计算不等于账单：承诺用量、价目表、额度以及单独计费的功能都会产生影响。
 
 </details>
 
 ---
 
-7. 以下哪项不是 Dynatrace ActiveGate 的角色？
-   - A) 数据路由
-   - B) Kubernetes API 监控
-   - C) 长期数据存储
-   - D) 网络区域隔离
+7. 以下哪项不是 ActiveGate 的职责？
+   - A) 路由遥测数据。
+   - B) 已配置的 Kubernetes API 监控。
+   - C) 作为长期分析数据湖仓（data lakehouse）。
+   - D) 提供经批准的到环境的连通路径。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 长期数据存储**
+**答案：C) 作为长期分析数据湖仓（data lakehouse）。**
 
-**说明：**
-ActiveGate 负责 OneAgent 与 Dynatrace SaaS 之间的数据路由、Kubernetes API 监控，以及隔离网络环境中的代理角色。长期数据存储由 Dynatrace 的 Grail 数据湖仓负责；ActiveGate 不存储数据，只负责转发。
+路由/监控和本地缓冲与长期后端存储不同。某些容器化 ActiveGate 的数据摄取配置需要 PVC。SaaS 路径仍然需要连通性；代理并不能让完全断网的网络访问到 SaaS。
 
 </details>
 
 ---
 
-8. 在 Dynatrace 中使用 namespaceSelector 的目的是什么？
-   - A) 创建 namespace
-   - B) 仅监控特定 namespace
-   - C) 阻止 namespace 之间的通信
-   - D) 设置资源配额
+8. oneAgent.cloudNativeFullStack.namespaceSelector 选择的是什么？
+   - A) 要创建的 namespace。
+   - B) 符合所配置的 webhook 注入条件的 namespace。
+   - C) 网络隔离边界。
+   - D) 主机监控和 Kubernetes API 监控的完整范围。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 仅监控特定 namespace**
+**答案：B) 符合所配置的 webhook 注入条件的 namespace。**
 
-**说明：**
-在 DynaKube CR 中使用 namespaceSelector，可以将带有特定标签的 namespace 指定为监控目标。这使得仅监控生产环境或选择性监控特定团队的 namespace 成为可能，从而优化成本。
+该选择器和 Pod 注入注解控制 webhook 注入。它们不会限制 OneAgent 的主机监控或 ActiveGate 的 Kubernetes API 监控。元数据增强和 OTLP exporter 自动配置各有自己的选择器。请保护标签和 DynaKube 的更新权限；选择器既不是 RBAC，也不是计费上限。
 
 </details>
 
 ---
 
-9. 将 Dynatrace 与 OpenTelemetry 集成时使用什么协议？
-   - A) 仅支持 gRPC
-   - B) 仅支持 HTTP
-   - C) OTLP (gRPC and HTTP)
-   - D) 仅支持专有协议
+9. 文档中记载的原生 Dynatrace SaaS/ActiveGate OTLP API 接受哪种传输方式？
+   - A) 仅 gRPC。
+   - B) 使用二进制 Protocol Buffers 的 HTTP。
+   - C) gRPC 和 HTTP/JSON 可互换使用。
+   - D) 仅一种专有的非 OTLP 格式。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) OTLP (gRPC and HTTP)**
+**答案：B) 使用二进制 Protocol Buffers 的 HTTP。**
 
-**说明：**
-Dynatrace 原生支持 OpenTelemetry Protocol (OTLP)。使用 OTEL Collector 中的 otlphttp exporter，您可以将 traces、metrics 和 logs 发送到 Dynatrace API endpoint。gRPC 和 HTTP 均受支持。
+原生端点支持 HTTP/protobuf，不支持 gRPC 或 protobuf JSON。Collector 可以接收 gRPC 并以 HTTP 方式导出到 Dynatrace。请使用正确的 /api/v2/otlp 基础路径和信号后缀、TLS 以及所选端点要求的令牌类型/权限范围。不要用 .apps 浏览器 URL 代替。
 
 </details>
 
 ---
 
-10. Dynatrace 的 Smartscape 提供什么功能？
-    - A) 智能告警过滤
-    - B) 实时拓扑映射
-    - C) 自动扩缩容
-    - D) 代码审查
+10. Smartscape 提供什么？
+   - A) 通用的告警静音开关。
+   - B) 基于观测数据的拓扑和依赖关系映射。
+   - C) 自动授权扩缩容。
+   - D) 源代码审查。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 实时拓扑映射**
+**答案：B) 基于观测数据的拓扑和依赖关系映射。**
 
-**说明：**
-Smartscape 是 Dynatrace 的实时拓扑映射技术。它会自动发现并可视化基础设施（主机、容器）、进程、Service 和应用程序之间的关系。这有助于了解系统依赖关系，并识别问题影响的范围。
+依赖关系图支持影响分析和问题调查。其覆盖范围取决于受监控的技术和遥测数据；不能把缺失的关系或数据空缺当作不存在依赖关系的证据。
 
 </details>
 
 ---
+
+[返回指南](../../../observability/tracing/04-dynatrace.md)
